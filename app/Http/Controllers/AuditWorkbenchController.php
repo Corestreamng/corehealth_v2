@@ -74,6 +74,38 @@ class AuditWorkbenchController extends Controller
     }
 
     /**
+     * Helper to render patient details from database row query objects in drilldown modals.
+     */
+    protected function renderPatientDetailsFromRow($r)
+    {
+        if (!$r) {
+            return '<div class="font-weight-bold text-dark">Walk-in / N/A</div>';
+        }
+
+        $name = !empty(trim($r->patient_name ?? '')) ? trim($r->patient_name) : (!empty(trim($r->patient_user_name ?? '')) ? trim($r->patient_user_name) : 'Walk-in / N/A');
+        $fileNo = $r->file_no ?? 'N/A';
+        $hmoName = $r->hmo_name ?? 'Private/Cash';
+        $schemeName = $r->scheme_name ?? '';
+        $hmoNo = $r->hmo_no ?? 'N/A';
+
+        if ($name === 'Walk-in / N/A' && $fileNo === 'N/A' && empty($r->hmo_name)) {
+            return '<div class="font-weight-bold text-dark">Walk-in / N/A</div>';
+        }
+
+        $html = '<div class="font-weight-bold text-dark"><i class="mdi mdi-account"></i> ' . e($name) . '</div>';
+        $html .= '<small class="text-muted d-block" style="line-height: 1.2;"><i class="mdi mdi-folder-account"></i> File: #' . e($fileNo) . '</small>';
+
+        if (!empty($r->hmo_name) || !empty($r->hmo_id)) {
+            $schemeDisplay = $schemeName ? ' - ' . $schemeName : '';
+            $html .= '<small class="text-info d-block" style="line-height: 1.2;"><i class="mdi mdi-shield-account"></i> ' . e($hmoName) . e($schemeDisplay) . ' (ID: ' . e($hmoNo) . ')</small>';
+        } else {
+            $html .= '<small class="text-success d-block" style="line-height: 1.2;"><i class="mdi mdi-cash"></i> ' . e($hmoName) . '</small>';
+        }
+
+        return $html;
+    }
+
+    /**
      * Standardized helper to render payment entity details (Patient, Organization, or Staff)
      */
     protected function renderPaymentEntityDetails($r, $defaultName = 'Walk-in / N/A')
@@ -6160,7 +6192,469 @@ class AuditWorkbenchController extends Controller
                 ];
                 $headers = ['Date & Time', 'Reference', 'Settlement Type', 'Service / Item(s)', 'Payment Method', 'Settled Amount', 'Receiving Cashier'];
                 break;
+
+            // ==================== INVENTORY & HMO DRILL-DOWN CASES ====================
+            case 'batch-valuation':
+            case 'product-turnover-rate':
+            case 'substore-valuation':
+                $title = 'Stock Batches Drill-down (Key: ' . e($key) . ')';
+                $q = \DB::table('stock_batches as sb')
+                    ->join('products as p', 'sb.product_id', '=', 'p.id')
+                    ->join('stores as s', 'sb.store_id', '=', 's.id')
+                    ->leftJoin('prices as pp', 'p.id', '=', 'pp.product_id')
+                    ->select('sb.*', 'p.product_name', 's.store_name', \DB::raw('COALESCE(NULLIF(sb.cost_price,0), pp.pr_buy_price, 0) as calc_cost'))
+                    ->whereBetween('sb.created_at', [$startDate, $endDate]);
+
+                if ($story === 'batch-valuation') {
+                    $q->where('p.category_id', $key);
+                    if ($zone === 'main-store') {
+                        $q->where(function ($sq) {
+                            $sq->where('s.distribution_role', 'central')
+                                ->orWhere('s.store_type', 'warehouse');
+                        });
+                    }
+                } elseif ($story === 'substore-valuation') {
+                    $q->where('sb.store_id', $key);
+                } else {
+                    $q->where('sb.product_id', $key);
+                }
+
+                $records = $q->orderByDesc('sb.created_at')->get();
+                $rows = $records->map(fn($r) => [
+                    'batch' => '<span class="badge bg-light text-dark border font-weight-bold">' . e($r->batch_number ?? ('#' . $r->id)) . '</span>',
+                    'product' => e($r->product_name),
+                    'store' => e($r->store_name),
+                    'qty' => '<span class="badge ' . ($r->current_qty < $r->initial_qty ? 'bg-warning text-dark' : 'bg-info text-white') . ' font-weight-bold">' . number_format($r->current_qty) . '</span> / <span class="text-muted">' . number_format($r->initial_qty) . '</span>',
+                    'cost' => '<span class="font-weight-bold text-success">₦' . number_format($r->calc_cost, 2) . '</span>',
+                    'expiry' => $r->expiry_date ? \Carbon\Carbon::parse($r->expiry_date)->format('Y-m-d') : 'N/A',
+                ]);
+                $cards = [
+                    ['label' => 'Total Batches', 'value' => $records->count(), 'class' => 'bg-primary text-white'],
+                    ['label' => 'Total Current Qty', 'value' => number_format($records->sum('current_qty')), 'class' => 'bg-info text-white'],
+                    ['label' => 'Total Stock Value ₦', 'value' => '₦' . number_format($records->sum(fn($r) => $r->current_qty * $r->calc_cost), 2), 'class' => 'bg-success text-white'],
+                ];
+                $headers = ['Batch #', 'Product', 'Store', 'Qty (Left / Init)', 'Cost Price ₦', 'Expiry Date'];
+                break;
+
+            case 'hmo-claims-by-provider':
+            case 'validation-status-aging':
+            case 'scheme-breakdown':
+            case 'coverage-mode-analysis':
+            case 'remittance-vs-claims-matching':
+            case 'dispensing-revenue-attribution':
+            case 'store-dispensing-contribution':
+            case 'service-category-revenue':
+            case 'doctor-referral-billing':
+            case 'service-vs-hmo-compliance':
+                $title = 'Medical Request / Claims Details (' . ucfirst(str_replace('-', ' ', $story)) . ' : ' . e($key) . ')';
+                $q = \DB::table('product_or_service_requests as posr')
+                    ->leftJoin('products as p', 'posr.product_id', '=', 'p.id')
+                    ->leftJoin('services as sv', 'posr.service_id', '=', 'sv.id')
+                    ->leftJoin('patients as pat', function($join) {
+                        $join->on('posr.patient_id', '=', 'pat.id')
+                             ->orOn('posr.user_id', '=', 'pat.user_id');
+                    })
+                    ->leftJoin('users as pu', function($join) {
+                        $join->on('pat.user_id', '=', 'pu.id')
+                             ->orOn('posr.user_id', '=', 'pu.id');
+                    })
+                    ->leftJoin('hmos as h', function($join) {
+                        $join->on('posr.hmo_id', '=', 'h.id')
+                             ->orOn('pat.hmo_id', '=', 'h.id');
+                    })
+                    ->leftJoin('hmo_schemes as hs', 'h.hmo_scheme_id', '=', 'hs.id')
+                    ->leftJoin('encounters as enc', 'posr.encounter_id', '=', 'enc.id')
+                    ->leftJoin('users as doc', 'enc.doctor_id', '=', 'doc.id')
+                    ->select('posr.*', 'p.product_name', 'sv.service_name', 'sv.category_id as service_cat_id', 'h.name as hmo_name', 'hs.name as scheme_name', 'hs.code as scheme_code', \DB::raw("CONCAT_WS(' ', pu.firstname, pu.surname) as patient_name"), 'pat.file_no', 'pat.hmo_no', \DB::raw("CONCAT_WS(' ', doc.firstname, doc.surname) as doctor_name"))
+                    ->whereBetween('posr.created_at', [$startDate, $endDate]);
+
+                if ($story === 'hmo-claims-by-provider') $q->where('posr.hmo_id', $key);
+                elseif ($story === 'validation-status-aging') $q->where('posr.validation_status', $key);
+                elseif ($story === 'scheme-breakdown') $q->where('h.hmo_scheme_id', $key);
+                elseif ($story === 'coverage-mode-analysis') $q->where('posr.coverage_mode', $key);
+                elseif ($story === 'remittance-vs-claims-matching') $q->where('posr.hmo_remittance_id', $key);
+                elseif ($story === 'dispensing-revenue-attribution') $q->where('posr.product_id', $key);
+                elseif ($story === 'store-dispensing-contribution') $q->where('posr.dispensed_from_store_id', $key);
+                elseif ($story === 'service-category-revenue') $q->where('sv.category_id', $key);
+                elseif ($story === 'doctor-referral-billing') $q->where('enc.doctor_id', $key);
+                elseif ($story === 'service-vs-hmo-compliance') $q->where('posr.service_id', $key);
+
+                $records = $q->orderByDesc('posr.created_at')->limit(500)->get();
+                $rows = $records->map(fn($r) => [
+                    'date' => \Carbon\Carbon::parse($r->created_at)->format('Y-m-d H:i'),
+                    'code' => '<span class="badge bg-light text-dark border">' . e($r->request_code ?? ('#' . $r->id)) . '</span>',
+                    'patient' => $this->renderPatientDetailsFromRow($r),
+                    'item' => e($r->service_name ?? $r->product_name ?? 'Medical Item'),
+                    'hmo_scheme' => e(($r->hmo_name ? $r->hmo_name . ' — ' : '') . ($r->scheme_name ?? 'Cash')),
+                    'claims' => '<span class="font-weight-bold text-success">₦' . number_format((float)($r->claims_amount > 0 ? $r->claims_amount : $r->payable_amount), 2) . '</span>',
+                    'payable' => '<span class="font-weight-bold text-primary">₦' . number_format((float)($r->payable_amount ?? 0), 2) . '</span>',
+                    'status' => '<span class="badge ' . ($r->validation_status === 'approved' ? 'bg-success' : ($r->validation_status === 'awaiting_code' ? 'bg-danger' : 'bg-warning text-dark')) . '">' . e(ucfirst($r->validation_status ?? 'pending')) . '</span>',
+                ]);
+                $cards = [
+                    ['label' => 'Total Request Lines', 'value' => $records->count(), 'class' => 'bg-primary text-white'],
+                    ['label' => 'Total Claims ₦', 'value' => '₦' . number_format((float)$records->sum(fn($r) => $r->claims_amount > 0 ? $r->claims_amount : $r->payable_amount), 2), 'class' => 'bg-success text-white'],
+                    ['label' => 'Total Payable ₦', 'value' => '₦' . number_format((float)$records->sum('payable_amount'), 2), 'class' => 'bg-info text-white'],
+                ];
+                $headers = ['Date', 'Code', 'Patient', 'Item / Service', 'HMO & Scheme', 'Claims ₦', 'Payable ₦', 'Validation Status'];
+                break;
+
+            case 'dispenser-performance':
+            case 'prescription-adaptation-audit':
+            case 'drug-category-dispensing':
+                $title = 'Pharmacy Dispensing Lines Details (' . e($story) . ')';
+                $q = \DB::table('product_requests as pr')
+                    ->join('products as p', 'pr.product_id', '=', 'p.id')
+                    ->leftJoin('patients as pat', 'pr.patient_id', '=', 'pat.id')
+                    ->leftJoin('users as pu', 'pat.user_id', '=', 'pu.id')
+                    ->leftJoin('hmos as h', 'pat.hmo_id', '=', 'h.id')
+                    ->leftJoin('hmo_schemes as hs', 'h.hmo_scheme_id', '=', 'hs.id')
+                    ->leftJoin('users as du', 'pr.dispensed_by', '=', 'du.id')
+                    ->select('pr.*', 'p.product_name', \DB::raw("CONCAT_WS(' ', pu.firstname, pu.surname) as patient_name"), 'pat.file_no', 'pat.hmo_no', 'h.name as hmo_name', 'hs.name as scheme_name', \DB::raw("CONCAT_WS(' ', du.firstname, du.surname) as dispenser_name"))
+                    ->whereBetween('pr.created_at', [$startDate, $endDate]);
+
+                if ($story === 'dispenser-performance') $q->where('pr.dispensed_by', $key);
+                elseif ($story === 'prescription-adaptation-audit') $q->where('pr.adapted_from_product_id', $key);
+                elseif ($story === 'drug-category-dispensing') $q->where('p.category_id', $key);
+
+                $records = $q->orderByDesc('pr.created_at')->limit(500)->get();
+                $rows = $records->map(fn($r) => [
+                    'date' => \Carbon\Carbon::parse($r->created_at)->format('Y-m-d H:i'),
+                    'product' => e($r->product_name),
+                    'patient' => $this->renderPatientDetailsFromRow($r),
+                    'qty' => '<span class="badge bg-info text-white">' . number_format($r->qty) . '</span>',
+                    'dispenser' => e($r->dispenser_name ?? 'System'),
+                    'adapted' => '<span class="badge ' . (($r->is_adapted || $r->adapted_from_product_id) ? 'bg-warning text-dark' : 'bg-light text-dark border') . '">' . (($r->is_adapted || $r->adapted_from_product_id) ? 'Adapted' : 'Normal') . '</span>',
+                ]);
+                $cards = [
+                    ['label' => 'Total Lines', 'value' => $records->count(), 'class' => 'bg-primary text-white'],
+                    ['label' => 'Total Qty', 'value' => number_format($records->sum('qty')), 'class' => 'bg-success text-white'],
+                ];
+                $headers = ['Date & Time', 'Product Dispensed', 'Patient', 'Qty', 'Dispenser', 'Adaptation Status'];
+                break;
+
+            case 'damage-expiry-losses':
+                $title = 'Damage & Expiry Losses Details (Key: ' . e(ucfirst($key)) . ')';
+                if ($key === 'expired') {
+                    $q = \DB::table('stock_batches as sb')
+                        ->join('products as p', 'sb.product_id', '=', 'p.id')
+                        ->join('stores as s', 'sb.store_id', '=', 's.id')
+                        ->leftJoin('prices as pp', 'p.id', '=', 'pp.product_id')
+                        ->select('sb.*', 'p.product_name', 's.store_name', \DB::raw('COALESCE(NULLIF(sb.cost_price,0), pp.pr_buy_price, 0) as calc_cost'))
+                        ->where(function ($sq) {
+                            $sq->where('s.distribution_role', 'central')
+                                ->orWhere('s.store_type', 'warehouse');
+                        })
+                        ->where('sb.current_qty', '>', 0)
+                        ->whereNotNull('sb.expiry_date')
+                        ->where(function ($sq) use ($startDate, $endDate) {
+                            $sq->whereBetween('sb.expiry_date', [$startDate, $endDate])
+                                ->orWhere('sb.expiry_date', '<=', now());
+                        });
+
+                    $records = $q->orderByDesc('sb.created_at')->limit(500)->get();
+                    $rows = $records->map(fn($r) => [
+                        'batch' => '<span class="badge bg-light text-dark border font-weight-bold">' . e($r->batch_number ?? ('#' . $r->id)) . '</span>',
+                        'product' => e($r->product_name),
+                        'store' => e($r->store_name),
+                        'qty' => '<span class="badge bg-danger text-white font-weight-bold">' . number_format($r->current_qty) . ' Units</span>',
+                        'cost' => '<span class="font-weight-bold text-success">₦' . number_format($r->calc_cost, 2) . '</span>',
+                        'total_loss' => '<span class="font-weight-bold text-danger">₦' . number_format($r->current_qty * $r->calc_cost, 2) . '</span>',
+                        'expiry' => '<span class="badge bg-warning text-dark">' . ($r->expiry_date ? \Carbon\Carbon::parse($r->expiry_date)->format('Y-m-d') : 'Expired') . '</span>',
+                    ]);
+                    $cards = [
+                        ['label' => 'Total Expired Batches', 'value' => $records->count(), 'class' => 'bg-primary text-white'],
+                        ['label' => 'Total Expired Qty', 'value' => number_format($records->sum('current_qty')), 'class' => 'bg-info text-white'],
+                        ['label' => 'Total Expired Stock Loss ₦', 'value' => '₦' . number_format($records->sum(fn($r) => $r->current_qty * $r->calc_cost), 2), 'class' => 'bg-danger text-white'],
+                    ];
+                    $headers = ['Batch #', 'Product', 'Store', 'Qty Expired', 'Unit Cost ₦', 'Total Loss ₦', 'Expiry Date'];
+                } else {
+                    $q = \DB::table('store_damages as sd')
+                        ->join('products as p', 'sd.product_id', '=', 'p.id')
+                        ->join('stores as s', 'sd.store_id', '=', 's.id')
+                        ->select('sd.*', 'p.product_name', 's.store_name')
+                        ->where('sd.damage_type', $key)
+                        ->whereBetween('sd.discovered_date', [$startDate, $endDate]);
+
+                    $records = $q->orderByDesc('sd.discovered_date')->limit(500)->get();
+                    $rows = $records->map(fn($r) => [
+                        'date' => \Carbon\Carbon::parse($r->discovered_date)->format('Y-m-d'),
+                        'product' => e($r->product_name),
+                        'store' => e($r->store_name),
+                        'qty' => '<span class="badge bg-danger text-white">' . number_format($r->qty_damaged) . '</span>',
+                        'value' => '<span class="font-weight-bold text-danger">₦' . number_format($r->total_value, 2) . '</span>',
+                        'status' => '<span class="badge ' . ($r->status === 'pending' ? 'bg-warning text-dark' : 'bg-success') . '">' . ucfirst($r->status ?? 'recorded') . '</span>',
+                    ]);
+                    $cards = [
+                        ['label' => 'Total Damaged Records', 'value' => $records->count(), 'class' => 'bg-primary text-white'],
+                        ['label' => 'Total Loss Value ₦', 'value' => '₦' . number_format($records->sum('total_value'), 2), 'class' => 'bg-danger text-white'],
+                    ];
+                    $headers = ['Discovery Date', 'Product', 'Store', 'Qty Damaged', 'Total Value ₦', 'Status'];
+                }
+                break;
+
+            case 'requisition-fulfillment':
+                $store = \App\Models\Store::find($key);
+                $storeName = $store->store_name ?? ('Store #' . $key);
+                $title = 'Store Requisitions Drill-down: ' . $storeName;
+
+                $q = \DB::table('store_requisitions as sr')
+                    ->join('stores as fs', 'sr.from_store_id', '=', 'fs.id')
+                    ->join('stores as ts', 'sr.to_store_id', '=', 'ts.id')
+                    ->leftJoin('users as u', 'sr.requested_by', '=', 'u.id')
+                    ->select('sr.*', 'fs.store_name as from_store_name', 'ts.store_name as to_store_name', \DB::raw("CONCAT_WS(' ', u.firstname, u.surname) as requester_name"))
+                    ->where(function($sq) use ($key) {
+                        $sq->where('sr.from_store_id', $key)->orWhere('sr.to_store_id', $key);
+                    })
+                    ->whereBetween('sr.created_at', [$startDate, $endDate]);
+
+                $records = $q->orderByDesc('sr.created_at')->get();
+                $rows = $records->map(fn($r) => [
+                    'date' => \Carbon\Carbon::parse($r->created_at)->format('Y-m-d H:i'),
+                    'code' => '<span class="badge bg-light text-dark border font-weight-bold">' . e($r->requisition_number ?? ('#' . $r->id)) . '</span>',
+                    'flow' => e($r->from_store_name) . ' <i class="mdi mdi-arrow-right text-muted"></i> ' . e($r->to_store_name),
+                    'requester' => e($r->requester_name ?? 'System'),
+                    'status' => '<span class="badge ' . ($r->status === 'fulfilled' || $r->status === 'approved' ? 'bg-success' : ($r->status === 'rejected' ? 'bg-danger' : 'bg-warning text-dark')) . '">' . e(ucfirst($r->status ?? 'pending')) . '</span>',
+                ]);
+                $cards = [
+                    ['label' => 'Total Requisitions', 'value' => $records->count(), 'class' => 'bg-primary text-white'],
+                    ['label' => 'Fulfilled / Approved', 'value' => $records->whereIn('status', ['fulfilled', 'approved'])->count(), 'class' => 'bg-success text-white'],
+                    ['label' => 'Pending / Processing', 'value' => $records->whereNotIn('status', ['fulfilled', 'approved', 'rejected'])->count(), 'class' => 'bg-warning text-dark'],
+                ];
+                $headers = ['Requisition Date', 'Requisition Code', 'Store Flow', 'Requested By', 'Status'];
+                break;
+
+            case 'requisition-items-audit':
+                $prod = \App\Models\Product::find($key);
+                $prodName = $prod->product_name ?? ('Product #' . $key);
+                $title = 'Requisition Items Audit: ' . $prodName;
+
+                $q = \DB::table('store_requisition_items as sri')
+                    ->join('store_requisitions as sr', 'sri.store_requisition_id', '=', 'sr.id')
+                    ->join('stores as fs', 'sr.from_store_id', '=', 'fs.id')
+                    ->join('stores as ts', 'sr.to_store_id', '=', 'ts.id')
+                    ->join('products as p', 'sri.product_id', '=', 'p.id')
+                    ->select('sri.*', 'sr.requisition_number', 'sr.status as req_status', 'sr.created_at as req_date', 'fs.store_name as from_store_name', 'ts.store_name as to_store_name', 'p.product_name')
+                    ->where('sri.product_id', $key)
+                    ->whereBetween('sr.created_at', [$startDate, $endDate]);
+
+                $records = $q->orderByDesc('sr.created_at')->get();
+                $rows = $records->map(fn($r) => [
+                    'date' => \Carbon\Carbon::parse($r->req_date)->format('Y-m-d H:i'),
+                    'code' => '<span class="badge bg-light text-dark border">' . e($r->requisition_number ?? ('#' . $r->id)) . '</span>',
+                    'flow' => e($r->from_store_name) . ' &rarr; ' . e($r->to_store_name),
+                    'req_qty' => '<span class="badge bg-info text-white">' . number_format($r->requested_qty) . '</span>',
+                    'app_qty' => '<span class="badge bg-primary text-white">' . number_format($r->approved_qty ?? 0) . '</span>',
+                    'ful_qty' => '<span class="badge bg-success text-white">' . number_format($r->fulfilled_qty ?? 0) . '</span>',
+                    'gap' => '<span class="badge ' . (($r->requested_qty - ($r->fulfilled_qty ?? 0)) > 0 ? 'bg-danger' : 'bg-light text-dark border') . '">' . number_format(max(0, $r->requested_qty - ($r->fulfilled_qty ?? 0))) . '</span>',
+                ]);
+                $cards = [
+                    ['label' => 'Total Requisition Lines', 'value' => $records->count(), 'class' => 'bg-primary text-white'],
+                    ['label' => 'Total Requested Qty', 'value' => number_format($records->sum('requested_qty')), 'class' => 'bg-info text-white'],
+                    ['label' => 'Total Fulfilled Qty', 'value' => number_format($records->sum('fulfilled_qty')), 'class' => 'bg-success text-white'],
+                    ['label' => 'Unfulfilled Gap Qty', 'value' => number_format(max(0, $records->sum('requested_qty') - $records->sum('fulfilled_qty'))), 'class' => 'bg-danger text-white'],
+                ];
+                $headers = ['Requisition Date', 'Code', 'Store Flow', 'Requested Qty', 'Approved Qty', 'Fulfilled Qty', 'Unfulfilled Gap'];
+                break;
+
+            case 'ward-stock-movement':
+            case 'daily-stock-movement-trend':
+                $title = 'Stock Movements Ledger (' . e($key) . ')';
+                $q = \DB::table('stock_batch_transactions as sbt')
+                    ->join('stock_batches as sb', 'sbt.stock_batch_id', '=', 'sb.id')
+                    ->join('products as p', 'sb.product_id', '=', 'p.id')
+                    ->join('stores as s', 'sb.store_id', '=', 's.id')
+                    ->leftJoin('users as u', 'sbt.performed_by', '=', 'u.id')
+                    ->select('sbt.*', 'sb.batch_number', 'p.product_name', 's.store_name', \DB::raw("CONCAT_WS(' ', u.firstname, u.surname) as performer_name"));
+
+                if ($story === 'ward-stock-movement') {
+                    $q->where('sb.store_id', $key)->whereBetween('sbt.created_at', [$startDate, $endDate]);
+                } else {
+                    $q->whereDate('sbt.created_at', $key);
+                }
+
+                $records = $q->orderByDesc('sbt.created_at')->limit(500)->get();
+                $rows = $records->map(fn($r) => [
+                    'date' => \Carbon\Carbon::parse($r->created_at)->format('Y-m-d H:i'),
+                    'product' => e($r->product_name),
+                    'batch' => '<span class="badge bg-light text-dark border">' . e($r->batch_number ?? 'N/A') . '</span>',
+                    'store' => e($r->store_name),
+                    'type' => '<span class="badge ' . ($r->type === 'in' ? 'bg-success' : ($r->type === 'out' ? 'bg-danger' : 'bg-warning text-dark')) . '">' . e(strtoupper($r->type)) . '</span>',
+                    'qty' => '<span class="font-weight-bold text-dark">' . number_format($r->qty) . '</span>',
+                    'performer' => e($r->performer_name ?? 'System'),
+                ]);
+                $cards = [
+                    ['label' => 'Total Transactions', 'value' => $records->count(), 'class' => 'bg-primary text-white'],
+                    ['label' => 'Total Movement Qty', 'value' => number_format($records->sum('qty')), 'class' => 'bg-info text-white'],
+                ];
+                $headers = ['Date & Time', 'Product', 'Batch #', 'Store', 'Movement Type', 'Qty', 'Recorded By'];
+                break;
+
+            case 'return-analysis':
+            case 'return-damage-write-off':
+                $title = 'Store & Patient Returns Details (Key: ' . e($key) . ')';
+                $q = \DB::table('store_requisition_returns as srr')
+                    ->join('products as p', 'srr.product_id', '=', 'p.id')
+                    ->join('stores as s', 'srr.source_store_id', '=', 's.id')
+                    ->leftJoin('prices as pp', 'p.id', '=', 'pp.product_id')
+                    ->leftJoin('users as u', 'srr.created_by', '=', 'u.id')
+                    ->select('srr.*', 'p.product_name', 's.store_name', \DB::raw("CONCAT_WS(' ', u.firstname, u.surname) as creator_name"), \DB::raw('COALESCE(pp.pr_buy_price, 0) as calc_cost'))
+                    ->whereBetween('srr.created_at', [$startDate, $endDate]);
+
+                if ($key) {
+                    $q->where(function($sq) use ($key) {
+                        $sq->where('srr.source_store_id', $key)->orWhere('srr.product_id', $key);
+                    });
+                }
+
+                $records = $q->orderByDesc('srr.created_at')->limit(500)->get();
+                $rows = $records->map(fn($r) => [
+                    'date' => \Carbon\Carbon::parse($r->created_at)->format('Y-m-d H:i'),
+                    'product' => e($r->product_name),
+                    'store' => e($r->store_name),
+                    'qty' => '<span class="badge bg-warning text-dark font-weight-bold">' . number_format($r->qty_returned) . ' Units</span>',
+                    'cost' => '<span class="font-weight-bold text-danger">₦' . number_format($r->qty_returned * $r->calc_cost, 2) . '</span>',
+                    'reason' => e($r->reason ?? 'Return to Main Store'),
+                    'returned_by' => e($r->creator_name ?? 'Staff'),
+                ]);
+                $cards = [
+                    ['label' => 'Total Return Entries', 'value' => $records->count(), 'class' => 'bg-primary text-white'],
+                    ['label' => 'Total Qty Returned', 'value' => number_format($records->sum('qty_returned')), 'class' => 'bg-warning text-dark'],
+                    ['label' => 'Total Cost Value ₦', 'value' => '₦' . number_format($records->sum(fn($r) => $r->qty_returned * $r->calc_cost), 2), 'class' => 'bg-danger text-white'],
+                ];
+                $headers = ['Return Date', 'Product Item', 'Source Store', 'Returned Qty', 'Cost Value ₦', 'Reason / Notes', 'Returned By'];
+                break;
+
+            case 'batch-source-breakdown':
+                $title = 'Stock Acquisition Source Details: ' . strtoupper(str_replace('_', ' ', $key));
+                $q = \DB::table('stock_batches as sb')
+                    ->join('products as p', 'sb.product_id', '=', 'p.id')
+                    ->join('stores as s', 'sb.store_id', '=', 's.id')
+                    ->leftJoin('prices as pp', 'p.id', '=', 'pp.product_id')
+                    ->select('sb.*', 'p.product_name', 's.store_name', \DB::raw('COALESCE(NULLIF(sb.cost_price,0), pp.pr_buy_price, 0) as calc_cost'))
+                    ->where('sb.source', $key)
+                    ->whereBetween('sb.created_at', [$startDate, $endDate]);
+
+                $records = $q->orderByDesc('sb.created_at')->get();
+                $rows = $records->map(fn($r) => [
+                    'batch' => '<span class="badge bg-light text-dark border font-weight-bold">' . e($r->batch_number ?? ('#' . $r->id)) . '</span>',
+                    'product' => e($r->product_name),
+                    'store' => e($r->store_name),
+                    'received' => $r->received_date ? \Carbon\Carbon::parse($r->received_date)->format('Y-m-d') : 'N/A',
+                    'qty' => '<span class="badge bg-info text-white">' . number_format($r->current_qty) . ' / ' . number_format($r->initial_qty) . '</span>',
+                    'cost' => '<span class="font-weight-bold text-success">₦' . number_format($r->calc_cost, 2) . '</span>',
+                    'value' => '<span class="font-weight-bold text-primary">₦' . number_format($r->initial_qty * $r->calc_cost, 2) . '</span>',
+                ]);
+                $cards = [
+                    ['label' => 'Total Batches Created', 'value' => $records->count(), 'class' => 'bg-primary text-white'],
+                    ['label' => 'Total Initial Units', 'value' => number_format($records->sum('initial_qty')), 'class' => 'bg-info text-white'],
+                    ['label' => 'Total Acquisition Value ₦', 'value' => '₦' . number_format($records->sum(fn($r) => $r->initial_qty * $r->calc_cost), 2), 'class' => 'bg-success text-white'],
+                ];
+                $headers = ['Batch #', 'Product', 'Store', 'Received Date', 'Qty (Current / Init)', 'Cost Price ₦', 'Acquisition Value ₦'];
+                break;
+
+            case 'unbilled-encounters':
+                $title = 'Unbilled Encounters Leakage Details';
+                $q = \DB::table('encounters as e')
+                    ->leftJoin('product_or_service_requests as posr', 'e.id', '=', 'posr.encounter_id')
+                    ->leftJoin('patients as pat', 'e.patient_id', '=', 'pat.id')
+                    ->leftJoin('users as pu', 'pat.user_id', '=', 'pu.id')
+                    ->leftJoin('hmos as h', 'pat.hmo_id', '=', 'h.id')
+                    ->leftJoin('hmo_schemes as hs', 'h.hmo_scheme_id', '=', 'hs.id')
+                    ->leftJoin('users as du', 'e.doctor_id', '=', 'du.id')
+                    ->select('e.*', \DB::raw("CONCAT_WS(' ', pu.firstname, pu.surname) as patient_name"), 'pat.file_no', 'pat.hmo_no', 'h.name as hmo_name', 'hs.name as scheme_name', \DB::raw("CONCAT_WS(' ', du.firstname, du.surname) as doctor_name"))
+                    ->whereNull('posr.id')
+                    ->whereBetween('e.created_at', [$startDate, $endDate]);
+
+                if ($key) {
+                    $q->where('e.doctor_id', $key);
+                }
+
+                $records = $q->groupBy('e.id', 'e.created_at', 'pu.firstname', 'pu.surname', 'pat.file_no', 'pat.hmo_no', 'h.name', 'hs.name', 'du.firstname', 'du.surname')->orderByDesc('e.created_at')->limit(500)->get();
+                $rows = $records->map(fn($r) => [
+                    'date' => \Carbon\Carbon::parse($r->created_at)->format('Y-m-d H:i'),
+                    'patient' => $this->renderPatientDetailsFromRow($r),
+                    'doctor' => 'Dr. ' . e($r->doctor_name ?? 'Duty Doctor'),
+                    'status' => '<span class="badge bg-danger">Zero Billing Lines</span>',
+                ]);
+                $cards = [
+                    ['label' => 'Total Unbilled Encounters', 'value' => $records->count(), 'class' => 'bg-danger text-white'],
+                ];
+                $headers = ['Encounter Date', 'Patient Details', 'Attending Doctor', 'Audit Status'];
+                break;
+
+            case 'procedure-billing-audit':
+                $title = 'Procedure & Theatre Billing Audit Details';
+                $q = \DB::table('procedures as prc')
+                    ->join('patients as pat', 'prc.patient_id', '=', 'pat.id')
+                    ->leftJoin('users as pu', 'pat.user_id', '=', 'pu.id')
+                    ->leftJoin('hmos as h', 'pat.hmo_id', '=', 'h.id')
+                    ->leftJoin('hmo_schemes as hs', 'h.hmo_scheme_id', '=', 'hs.id')
+                    ->leftJoin('services as sv', 'prc.service_id', '=', 'sv.id')
+                    ->leftJoin('users as du', 'prc.requested_by', '=', 'du.id')
+                    ->select('prc.*', 'sv.service_name', \DB::raw("CONCAT_WS(' ', pu.firstname, pu.surname) as patient_name"), 'pat.file_no', 'pat.hmo_no', 'h.name as hmo_name', 'hs.name as scheme_name', \DB::raw("CONCAT_WS(' ', du.firstname, du.surname) as doctor_name"))
+                    ->whereBetween('prc.created_at', [$startDate, $endDate]);
+
+                if ($key) {
+                    $q->where('prc.procedure_status', $key);
+                }
+
+                $records = $q->orderByDesc('prc.created_at')->limit(500)->get();
+                $rows = $records->map(fn($r) => [
+                    'date' => \Carbon\Carbon::parse($r->created_at)->format('Y-m-d H:i'),
+                    'patient' => $this->renderPatientDetailsFromRow($r),
+                    'procedure' => e($r->service_name ?? 'Surgical Procedure'),
+                    'requested_by' => 'Dr. ' . e($r->doctor_name ?? 'Surgeon'),
+                    'status' => '<span class="badge ' . ($r->procedure_status === 'completed' ? 'bg-success' : 'bg-warning text-dark') . '">' . e(ucfirst($r->procedure_status ?? 'pending')) . '</span>',
+                ]);
+                $cards = [
+                    ['label' => 'Total Procedures', 'value' => $records->count(), 'class' => 'bg-primary text-white'],
+                    ['label' => 'Completed Procedures', 'value' => $records->where('procedure_status', 'completed')->count(), 'class' => 'bg-success text-white'],
+                ];
+                $headers = ['Date', 'Patient Details', 'Procedure Item', 'Requested By', 'Procedure Status'];
+                break;
+
+            case 'consumption-vs-billing-gap':
+            case 'ward-consumable-billing-kit':
+                $title = 'Consumables & Utilization Audit Details';
+                $q = \DB::table('stock_utilizations as su')
+                    ->join('products as p', 'su.product_id', '=', 'p.id')
+                    ->join('stores as s', 'su.store_id', '=', 's.id')
+                    ->leftJoin('patients as pat', 'su.patient_id', '=', 'pat.id')
+                    ->leftJoin('users as pu', 'pat.user_id', '=', 'pu.id')
+                    ->leftJoin('hmos as h', 'pat.hmo_id', '=', 'h.id')
+                    ->leftJoin('hmo_schemes as hs', 'h.hmo_scheme_id', '=', 'hs.id')
+                    ->select('su.*', 'p.product_name', 's.store_name', \DB::raw("CONCAT_WS(' ', pu.firstname, pu.surname) as patient_name"), 'pat.file_no', 'pat.hmo_no', 'h.name as hmo_name', 'hs.name as scheme_name')
+                    ->whereBetween('su.created_at', [$startDate, $endDate]);
+
+                if ($key) {
+                    $q->where(function($sq) use ($key) {
+                        $sq->where('su.store_id', $key)->orWhere('su.product_id', $key);
+                    });
+                }
+
+                $records = $q->orderByDesc('su.created_at')->limit(500)->get();
+                $rows = $records->map(fn($r) => [
+                    'date' => \Carbon\Carbon::parse($r->created_at)->format('Y-m-d H:i'),
+                    'product' => e($r->product_name),
+                    'store' => e($r->store_name),
+                    'patient' => $this->renderPatientDetailsFromRow($r),
+                    'consumed' => '<span class="badge bg-warning text-dark">' . number_format($r->qty) . ' Consumed</span>',
+                    'billed' => '<span class="badge ' . ($r->is_billed ? 'bg-success' : 'bg-danger') . '">' . ($r->is_billed ? 'Billed' : 'Unbilled Gap') . '</span>',
+                ]);
+                $cards = [
+                    ['label' => 'Total Utilization Entries', 'value' => $records->count(), 'class' => 'bg-primary text-white'],
+                    ['label' => 'Total Consumed Qty', 'value' => number_format($records->sum('qty')), 'class' => 'bg-warning text-dark'],
+                    ['label' => 'Billed Lines', 'value' => $records->where('is_billed', 1)->count(), 'class' => 'bg-success text-white'],
+                ];
+                $headers = ['Date & Time', 'Product Item', 'Store', 'Patient', 'Consumed Qty', 'Billed Status'];
+                break;
+                $title = 'Audit Details (' . ucfirst(str_replace('-', ' ', $story)) . ')';
+                $cards = [['label' => 'Records Found', 'value' => 0, 'class' => 'bg-secondary text-white']];
+                $headers = ['Item', 'Details'];
+                $rows = collect([]);
+                break;
         }
+
 
         return response()->json([
             'title' => $title,
@@ -6684,7 +7178,7 @@ class AuditWorkbenchController extends Controller
         }
 
         if ($tab === 'purchase-orders') {
-            $query = \App\Models\PurchaseOrder::with(['supplier', 'user'])
+            $query = \App\Models\PurchaseOrder::with(['supplier', 'creator'])
                 ->whereBetween('created_at', [$startDate, $endDate]);
             $query = $this->applyMultidimensionalFilters($query, $request);
 
@@ -6956,7 +7450,7 @@ class AuditWorkbenchController extends Controller
         $startDate = $request->start_date ? \Carbon\Carbon::parse($request->start_date)->startOfDay() : now()->subDays(30)->startOfDay();
         $endDate = $request->end_date ? \Carbon\Carbon::parse($request->end_date)->endOfDay() : now()->endOfDay();
 
-        if ($tab === 'services') {
+        if ($tab === 'clinical-services' || $tab === 'services') {
             $query = \App\Models\Encounter::with(['patient.user', 'doctor'])
                 ->whereBetween('created_at', [$startDate, $endDate]);
             $query = $this->applyMultidimensionalFilters($query, $request);
@@ -6972,14 +7466,17 @@ class AuditWorkbenchController extends Controller
                 ->addColumn('doctor_details', function($r) {
                     return '<div class="font-weight-bold text-dark">Dr. ' . ($r->doctor->fullname ?? ($r->doctor->name ?? 'Doctor')) . '</div>';
                 })
+                ->addColumn('doctor_name', function($r) {
+                    return '<div class="font-weight-bold text-dark">Dr. ' . ($r->doctor->fullname ?? ($r->doctor->name ?? 'Doctor')) . '</div>';
+                })
                 ->addColumn('action', function($r) {
                     return $this->renderAuditAction($r, 'Encounter');
                 })
-                ->rawColumns(['created_at', 'patient_details', 'doctor_details', 'action'])
+                ->rawColumns(['created_at', 'patient_details', 'doctor_details', 'doctor_name', 'action'])
                 ->make(true);
         }
 
-        if ($tab === 'billing') {
+        if ($tab === 'billed-services' || $tab === 'billing') {
             $query = \App\Models\ProductOrServiceRequest::with(['user', 'patient.user', 'service.category'])
                 ->whereNotNull('service_id')
                 ->whereBetween('created_at', [$startDate, $endDate]);
@@ -7003,10 +7500,14 @@ class AuditWorkbenchController extends Controller
                     $amt = $r->payable_amount > 0 ? $r->payable_amount : $r->amount;
                     return '<span class="font-weight-bold text-success">₦' . number_format($amt, 2) . '</span>';
                 })
+                ->addColumn('total_formatted', function($r) {
+                    $amt = $r->payable_amount > 0 ? $r->payable_amount : $r->amount;
+                    return '<span class="font-weight-bold text-success">₦' . number_format($amt, 2) . '</span>';
+                })
                 ->addColumn('action', function($r) {
                     return $this->renderAuditAction($r, 'ProductOrServiceRequest');
                 })
-                ->rawColumns(['created_at', 'patient_details', 'service_details', 'amount_formatted', 'action'])
+                ->rawColumns(['created_at', 'patient_details', 'service_details', 'amount_formatted', 'total_formatted', 'action'])
                 ->make(true);
         }
 
@@ -7017,6 +7518,9 @@ class AuditWorkbenchController extends Controller
 
             $this->interceptBulkStamp($query, $request, \App\Models\Procedure::class, 'service_registers_billing');
             return DataTables::eloquent($query)
+                ->editColumn('created_at', function($r) {
+                    return '<div class="font-weight-bold">' . $r->created_at->format('M d, Y') . '</div><small class="text-muted">' . $r->created_at->format('h:i A') . '</small>';
+                })
                 ->addColumn('date_cat', function($r) {
                     $cat = $r->procedureDefinition->procedureCategory->name ?? 'General Procedure';
                     $isSurgical = $r->procedureDefinition->is_surgical ?? false;
@@ -7030,6 +7534,10 @@ class AuditWorkbenchController extends Controller
                     $name = $r->is_free_form ? $r->free_form_name : ($r->procedureDefinition->name ?? ($r->service->service_name ?? 'Procedure'));
                     return '<div class="font-weight-bold text-dark">' . $name . '</div>';
                 })
+                ->addColumn('procedure_name', function($r) {
+                    $name = $r->is_free_form ? $r->free_form_name : ($r->procedureDefinition->name ?? ($r->service->service_name ?? 'Procedure'));
+                    return '<div class="font-weight-bold text-dark">' . $name . '</div>';
+                })
                 ->addColumn('status_badge', function($r) {
                     $cls = $r->procedure_status === 'completed' ? 'bg-success' : 'bg-warning text-dark';
                     return '<span class="badge ' . $cls . '">' . ucfirst($r->procedure_status ?? ($r->status ?? 'Pending')) . '</span>';
@@ -7037,7 +7545,7 @@ class AuditWorkbenchController extends Controller
                 ->addColumn('action', function($r) {
                     return $this->renderAuditAction($r, 'Procedure');
                 })
-                ->rawColumns(['date_cat', 'patient_details', 'proc_name', 'status_badge', 'action'])
+                ->rawColumns(['created_at', 'date_cat', 'patient_details', 'proc_name', 'procedure_name', 'status_badge', 'action'])
                 ->make(true);
         }
 
@@ -7048,6 +7556,9 @@ class AuditWorkbenchController extends Controller
 
             $this->interceptBulkStamp($query, $request, \App\Models\MaternityEnrollment::class, 'service_registers_billing');
             return DataTables::eloquent($query)
+                ->editColumn('created_at', function($r) {
+                    return '<div class="font-weight-bold">' . $r->created_at->format('M d, Y') . '</div><small class="text-muted">' . $r->created_at->format('h:i A') . '</small>';
+                })
                 ->addColumn('enrollment_date', function($r) {
                     return '<div class="font-weight-bold">' . $r->created_at->format('M d, Y') . '</div>';
                 })
@@ -7064,7 +7575,7 @@ class AuditWorkbenchController extends Controller
                 ->addColumn('action', function($r) {
                     return $this->renderAuditAction($r, 'MaternityEnrollment');
                 })
-                ->rawColumns(['enrollment_date', 'patient_details', 'edd_gestation', 'status_badge', 'action'])
+                ->rawColumns(['created_at', 'enrollment_date', 'patient_details', 'edd_gestation', 'status_badge', 'action'])
                 ->make(true);
         }
 
@@ -7174,8 +7685,1408 @@ class AuditWorkbenchController extends Controller
 
         return response()->json(['error' => 'Invalid tab'], 400);
     }
+
+    // =====================================================================
+    // PAGE 5 — MAIN STORE STOCK — Story Data
+    // =====================================================================
+    public function mainStoreStoryData(Request $request, $story)
+    {
+        [$startDate, $endDate] = $this->parseAuditPeriod($request);
+
+        switch ($story) {
+
+            case 'batch-valuation':
+                $rows = \DB::table('stock_batches as sb')
+                    ->join('stores as s', 'sb.store_id', '=', 's.id')
+                    ->join('products as p', 'sb.product_id', '=', 'p.id')
+                    ->leftJoin('product_categories as pc', 'p.category_id', '=', 'pc.id')
+                    ->leftJoin('prices as pp', 'p.id', '=', 'pp.product_id')
+                    ->select(
+                        'pc.id as category_id',
+                        'pc.category_name',
+                        \DB::raw('COUNT(sb.id) as batch_count'),
+                        \DB::raw('SUM(sb.current_qty) as total_units'),
+                        \DB::raw('SUM(sb.current_qty * COALESCE(NULLIF(sb.cost_price,0), pp.pr_buy_price, 0)) as total_value'),
+                        \DB::raw('SUM(CASE WHEN sb.expiry_date < NOW() AND sb.expiry_date IS NOT NULL AND sb.current_qty > 0 THEN sb.current_qty * COALESCE(NULLIF(sb.cost_price,0), pp.pr_buy_price, 0) ELSE 0 END) as expired_value')
+                    )
+                    ->where(function ($q) {
+                        $q->where('s.distribution_role', 'central')
+                            ->orWhere('s.store_type', 'warehouse');
+                    })
+                    ->where('sb.current_qty', '>', 0)
+                    ->groupBy('pc.id', 'pc.category_name')
+                    ->orderByDesc('total_value')
+                    ->get();
+
+                $totalValue = $rows->sum('total_value');
+                $expiredValue = $rows->sum('expired_value');
+
+                $formattedRows = $rows->map(fn($r) => [
+                    'action' => '<button class="btn btn-xs btn-outline-primary story-detail-btn font-weight-bold py-1 px-2" data-zone="main-store" data-story="batch-valuation" data-key="' . e($r->category_id) . '"><i class="mdi mdi-eye"></i> Details</button>',
+                    'category' => '<div class="font-weight-bold text-dark"><i class="mdi mdi-tag text-primary"></i> ' . e($r->category_name ?? 'Uncategorised') . '</div>',
+                    'batch_count' => '<span class="badge bg-light text-dark border font-weight-bold px-2 py-1">' . (int)$r->batch_count . ' Batches</span>',
+                    'total_units' => '<span class="badge bg-info text-white px-2 py-1">' . number_format($r->total_units) . ' Units</span>',
+                    'total_value' => '<span class="font-weight-bold text-success" style="font-size:1.05rem;">₦' . number_format($r->total_value, 2) . '</span>',
+                    'expired_value' => '<span class="font-weight-bold text-danger">₦' . number_format($r->expired_value, 2) . '</span>',
+                ]);
+
+                $cards = [
+                    ['label' => 'Total Stock Value', 'value' => '₦' . number_format($totalValue, 2), 'class' => 'bg-success text-white'],
+                    ['label' => 'Expired Stock Value', 'value' => '₦' . number_format($expiredValue, 2), 'class' => 'bg-danger text-white'],
+                    ['label' => 'Categories Stocked', 'value' => $rows->count(), 'class' => 'bg-primary text-white'],
+                    ['label' => 'Total Units on Hand', 'value' => number_format($rows->sum('total_units')), 'class' => 'bg-secondary text-white'],
+                ];
+                return response()->json(['cards' => $cards, 'rows' => $formattedRows->values(), 'headers' => ['Action', 'Product Category', 'Batches', 'Total Units', 'Total Value ₦', 'Expired Value ₦']]);
+
+            case 'procurement-performance':
+                $rows = \DB::table('purchase_order_items as poi')
+                    ->join('purchase_orders as po', 'poi.purchase_order_id', '=', 'po.id')
+                    ->leftJoin('suppliers as sup', 'po.supplier_id', '=', 'sup.id')
+                    ->leftJoin('products as p', 'poi.product_id', '=', 'p.id')
+                    ->select(
+                        'po.id as po_id',
+                        'po.po_number',
+                        \DB::raw('COALESCE(sup.company_name, sup.contact_person, "Unknown Supplier") as supplier_name'),
+                        \DB::raw('COUNT(poi.id) as item_lines'),
+                        \DB::raw('SUM(poi.received_qty) as total_received_qty'),
+                        \DB::raw('SUM(poi.received_qty * poi.actual_unit_cost) as received_value'),
+                        \DB::raw('SUM(poi.received_qty * poi.unit_cost) as system_value'),
+                        \DB::raw('SUM(poi.received_qty * (poi.actual_unit_cost - poi.unit_cost)) as variance')
+                    )
+                    ->whereBetween('po.created_at', [$startDate, $endDate])
+                    ->groupBy('po.id', 'po.po_number', 'supplier_name')
+                    ->orderByDesc('received_value')
+                    ->get();
+
+                $formattedRows = $rows->map(function ($r) {
+                    $varClass = $r->variance > 0 ? 'text-danger' : ($r->variance < 0 ? 'text-success' : 'text-muted');
+                    return [
+                        'action' => '<button class="btn btn-xs btn-outline-primary story-detail-btn font-weight-bold py-1 px-2" data-zone="main-store" data-story="procurement-performance" data-key="' . e($r->po_id) . '"><i class="mdi mdi-eye"></i> Details</button>',
+                        'po' => '<div class="font-weight-bold text-dark"><i class="mdi mdi-file-document text-primary"></i> ' . e($r->po_number ?? 'PO#' . $r->po_id) . '</div><small class="text-muted"><i class="mdi mdi-truck"></i> ' . e($r->supplier_name) . '</small>',
+                        'item_lines' => '<span class="badge bg-light text-dark border">' . (int)$r->item_lines . ' Lines</span>',
+                        'received_qty' => '<span class="badge bg-info text-white">' . number_format($r->total_received_qty) . ' Units</span>',
+                        'received_value' => '<span class="font-weight-bold text-success">₦' . number_format($r->received_value, 2) . '</span>',
+                        'system_value' => '<span class="font-weight-bold text-dark">₦' . number_format($r->system_value, 2) . '</span>',
+                        'variance' => '<span class="font-weight-bold ' . $varClass . '">₦' . number_format($r->variance, 2) . '</span>',
+                    ];
+                });
+
+                $totalVariance = $rows->sum('variance');
+                $cards = [
+                    ['label' => 'Total Received Value', 'value' => '₦' . number_format($rows->sum('received_value'), 2), 'class' => 'bg-success text-white'],
+                    ['label' => 'Total Price Variance', 'value' => '₦' . number_format(abs($totalVariance), 2), 'class' => $totalVariance > 0 ? 'bg-danger text-white' : 'bg-success text-white'],
+                    ['label' => 'POs Processed', 'value' => $rows->count(), 'class' => 'bg-primary text-white'],
+                    ['label' => 'Total Lines Received', 'value' => number_format($rows->sum('item_lines')), 'class' => 'bg-secondary text-white'],
+                ];
+                return response()->json(['cards' => $cards, 'rows' => $formattedRows->values(), 'headers' => ['Action', 'Purchase Order', 'Line Items', 'Received Qty', 'Received Value ₦', 'System Cost ₦', 'Variance ₦']]);
+
+            case 'supplier-analysis':
+                $rows = \DB::table('purchase_orders as po')
+                    ->join('suppliers as sup', 'po.supplier_id', '=', 'sup.id')
+                    ->select(
+                        'sup.id as supplier_id',
+                        \DB::raw('COALESCE(sup.company_name, sup.contact_person, "Unknown") as supplier_name'),
+                        \DB::raw('COUNT(po.id) as po_count'),
+                        \DB::raw('SUM(po.total_amount) as total_ordered'),
+                        \DB::raw('SUM(po.amount_paid) as total_paid'),
+                        \DB::raw('SUM(po.total_amount - po.amount_paid) as outstanding'),
+                        \DB::raw('SUM(CASE WHEN po.payment_status NOT IN ("paid","fully_paid") THEN 1 ELSE 0 END) as unpaid_pos')
+                    )
+                    ->whereBetween('po.created_at', [$startDate, $endDate])
+                    ->groupBy('sup.id', 'supplier_name')
+                    ->orderByDesc('outstanding')
+                    ->get();
+
+                $formattedRows = $rows->map(fn($r) => [
+                    'action' => '<button class="btn btn-xs btn-outline-primary story-detail-btn font-weight-bold py-1 px-2" data-zone="main-store" data-story="supplier-analysis" data-key="' . e($r->supplier_id) . '"><i class="mdi mdi-eye"></i> Details</button>',
+                    'supplier' => '<div class="font-weight-bold text-dark"><i class="mdi mdi-truck text-primary"></i> ' . e($r->supplier_name) . '</div>',
+                    'po_count' => '<span class="badge bg-light text-dark border">' . (int)$r->po_count . ' POs</span>',
+                    'total_ordered' => '<span class="font-weight-bold text-dark">₦' . number_format($r->total_ordered, 2) . '</span>',
+                    'total_paid' => '<span class="font-weight-bold text-success">₦' . number_format($r->total_paid, 2) . '</span>',
+                    'outstanding' => '<span class="font-weight-bold ' . ($r->outstanding > 0 ? 'text-danger' : 'text-success') . '" style="font-size:1.05rem;">₦' . number_format($r->outstanding, 2) . '</span>',
+                    'unpaid_pos' => '<span class="badge ' . ($r->unpaid_pos > 0 ? 'bg-danger' : 'bg-success') . '">' . (int)$r->unpaid_pos . ' Unpaid</span>',
+                ]);
+
+                $cards = [
+                    ['label' => 'Total Amount Due', 'value' => '₦' . number_format($rows->sum('total_ordered'), 2), 'class' => 'bg-primary text-white'],
+                    ['label' => 'Total Paid', 'value' => '₦' . number_format($rows->sum('total_paid'), 2), 'class' => 'bg-success text-white'],
+                    ['label' => 'Total Outstanding', 'value' => '₦' . number_format($rows->sum('outstanding'), 2), 'class' => $rows->sum('outstanding') > 0 ? 'bg-danger text-white' : 'bg-success text-white'],
+                    ['label' => 'Suppliers', 'value' => $rows->count(), 'class' => 'bg-secondary text-white'],
+                ];
+                return response()->json(['cards' => $cards, 'rows' => $formattedRows->values(), 'headers' => ['Action', 'Supplier', 'POs', 'Total Ordered ₦', 'Paid ₦', 'Outstanding ₦', 'Unpaid POs']]);
+
+            case 'damage-expiry-losses':
+                $damages = \DB::table('store_damages as sd')
+                    ->join('stores as s', 'sd.store_id', '=', 's.id')
+                    ->join('products as p', 'sd.product_id', '=', 'p.id')
+                    ->select(
+                        'sd.damage_type',
+                        \DB::raw('COUNT(sd.id) as incident_count'),
+                        \DB::raw('SUM(sd.qty_damaged) as total_qty'),
+                        \DB::raw('SUM(sd.total_value) as total_value'),
+                        \DB::raw('SUM(CASE WHEN sd.status = "pending" THEN 1 ELSE 0 END) as pending_count')
+                    )
+                    ->where(function ($q) {
+                        $q->where('s.distribution_role', 'central')
+                            ->orWhere('s.store_type', 'warehouse');
+                    })
+                    ->whereBetween('sd.discovered_date', [$startDate, $endDate])
+                    ->groupBy('sd.damage_type')
+                    ->get();
+
+                $expiredBatches = \DB::table('stock_batches as sb')
+                    ->join('stores as s', 'sb.store_id', '=', 's.id')
+                    ->join('products as p', 'sb.product_id', '=', 'p.id')
+                    ->leftJoin('prices as pp', 'p.id', '=', 'pp.product_id')
+                    ->select(
+                        \DB::raw('"expired" as damage_type'),
+                        \DB::raw('COUNT(sb.id) as incident_count'),
+                        \DB::raw('SUM(sb.current_qty) as total_qty'),
+                        \DB::raw('SUM(sb.current_qty * COALESCE(NULLIF(sb.cost_price,0), pp.pr_buy_price, 0)) as total_value'),
+                        \DB::raw('0 as pending_count')
+                    )
+                    ->where(function ($q) {
+                        $q->where('s.distribution_role', 'central')
+                            ->orWhere('s.store_type', 'warehouse');
+                    })
+                    ->where('sb.current_qty', '>', 0)
+                    ->whereNotNull('sb.expiry_date')
+                    ->where(function ($q) use ($startDate, $endDate) {
+                        $q->whereBetween('sb.expiry_date', [$startDate, $endDate])
+                            ->orWhere('sb.expiry_date', '<=', now());
+                    })
+                    ->groupBy('damage_type')
+                    ->get();
+
+                $rows = $damages->concat($expiredBatches);
+
+                $formattedRows = $rows->map(fn($r) => [
+                    'action' => '<button class="btn btn-xs btn-outline-primary story-detail-btn font-weight-bold py-1 px-2" data-zone="main-store" data-story="damage-expiry-losses" data-key="' . e($r->damage_type) . '"><i class="mdi mdi-eye"></i> Details</button>',
+                    'type' => '<span class="badge ' . ($r->damage_type === 'expired' ? 'bg-warning text-dark' : 'bg-danger') . ' px-2 py-1"><i class="mdi mdi-alert-circle"></i> ' . ucfirst($r->damage_type ?? 'Damage') . '</span>',
+                    'incidents' => '<span class="badge bg-light text-dark border">' . (int)$r->incident_count . ' Incidents</span>',
+                    'total_qty' => '<span class="font-weight-bold text-dark">' . number_format($r->total_qty) . ' Units</span>',
+                    'total_value' => '<span class="font-weight-bold text-danger" style="font-size:1.05rem;">₦' . number_format($r->total_value, 2) . '</span>',
+                    'pending' => '<span class="badge ' . ($r->pending_count > 0 ? 'bg-warning text-dark' : 'bg-success') . '">' . (int)$r->pending_count . ' Pending Approval</span>',
+                ]);
+
+                $cards = [
+                    ['label' => 'Total Loss Value', 'value' => '₦' . number_format($rows->sum('total_value'), 2), 'class' => 'bg-danger text-white'],
+                    ['label' => 'Damaged Items Qty', 'value' => number_format($rows->where('damage_type', '!=', 'expired')->sum('total_qty')), 'class' => 'bg-warning text-dark'],
+                    ['label' => 'Expired Items Qty', 'value' => number_format($rows->where('damage_type', 'expired')->sum('total_qty')), 'class' => 'bg-secondary text-white'],
+                    ['label' => 'Pending Approval', 'value' => $rows->sum('pending_count'), 'class' => 'bg-primary text-white'],
+                ];
+                return response()->json(['cards' => $cards, 'rows' => $formattedRows->values(), 'headers' => ['Action', 'Loss Type', 'Incidents', 'Total Qty', 'Total Value ₦', 'Pending Approval']]);
+
+            case 'batch-source-breakdown':
+                $rows = \DB::table('stock_batches as sb')
+                    ->leftJoin('prices as pp', 'sb.product_id', '=', 'pp.product_id')
+                    ->select(
+                        'sb.source',
+                        \DB::raw('COUNT(sb.id) as batch_count'),
+                        \DB::raw('SUM(sb.initial_qty) as total_initial_qty'),
+                        \DB::raw('SUM(sb.current_qty) as total_current_qty'),
+                        \DB::raw('SUM(sb.initial_qty * COALESCE(NULLIF(sb.cost_price,0), pp.pr_buy_price, 0)) as total_acquisition_value'),
+                        \DB::raw('SUM(sb.current_qty * COALESCE(NULLIF(sb.cost_price,0), pp.pr_buy_price, 0)) as remaining_value')
+                    )
+                    ->whereBetween('sb.received_date', [$startDate, $endDate])
+                    ->groupBy('sb.source')
+                    ->orderByDesc('batch_count')
+                    ->get();
+
+                $sourceLabels = ['purchase_order' => 'PO Reception', 'manual' => 'Manual Creation', 'transfer_in' => 'Inter-Store Transfer', 'opening_stock' => 'Opening Stock'];
+                $sourceIcons = ['purchase_order' => 'mdi-truck text-primary', 'manual' => 'mdi-pencil text-info', 'transfer_in' => 'mdi-swap-horizontal text-success', 'opening_stock' => 'mdi-archive text-secondary'];
+
+                $formattedRows = $rows->map(fn($r) => [
+                    'action' => '<button class="btn btn-xs btn-outline-primary story-detail-btn font-weight-bold py-1 px-2" data-zone="main-store" data-story="batch-source-breakdown" data-key="' . e($r->source) . '"><i class="mdi mdi-eye"></i> Details</button>',
+                    'source' => '<div class="font-weight-bold text-dark"><i class="mdi ' . ($sourceIcons[$r->source] ?? 'mdi-package text-secondary') . '"></i> ' . e($sourceLabels[$r->source] ?? ucfirst(str_replace('_', ' ', $r->source))) . '</div>',
+                    'batches' => '<span class="badge bg-light text-dark border font-weight-bold">' . number_format($r->batch_count) . ' Batches</span>',
+                    'initial_qty' => '<span class="badge bg-info text-white">' . number_format($r->total_initial_qty) . ' Units</span>',
+                    'current_qty' => '<span class="badge bg-primary text-white">' . number_format($r->total_current_qty) . ' Remaining</span>',
+                    'acquisition_value' => '<span class="font-weight-bold text-success" style="font-size:1.05rem;">₦' . number_format($r->total_acquisition_value, 2) . '</span>',
+                    'remaining_value' => '<span class="font-weight-bold text-primary">₦' . number_format($r->remaining_value, 2) . '</span>',
+                ]);
+
+                $cards = [
+                    ['label' => 'PO-Sourced Value ₦', 'value' => '₦' . number_format($rows->firstWhere('source', 'purchase_order')?->total_acquisition_value ?? 0, 2), 'class' => 'bg-primary text-white'],
+                    ['label' => 'Manually Created Value ₦', 'value' => '₦' . number_format($rows->firstWhere('source', 'manual')?->total_acquisition_value ?? 0, 2), 'class' => 'bg-info text-white'],
+                    ['label' => 'Transfer-In Value ₦', 'value' => '₦' . number_format($rows->firstWhere('source', 'transfer_in')?->total_acquisition_value ?? 0, 2), 'class' => 'bg-success text-white'],
+                    ['label' => 'Total Batches Created', 'value' => number_format($rows->sum('batch_count')), 'class' => 'bg-secondary text-white'],
+                ];
+                return response()->json(['cards' => $cards, 'rows' => $formattedRows->values(), 'headers' => ['Action', 'Source Type', 'Batches', 'Initial Qty', 'Current Qty', 'Acquisition Value ₦', 'Remaining Value ₦']]);
+
+            default:
+                return response()->json(['error' => 'Unknown story: ' . $story], 404);
+        }
+    }
+
+    // =====================================================================
+    // PAGE 6 — SUB-STORE & WARD STORES — Story Data (ALL store roles)
+    // =====================================================================
+    public function wardDeptStoryData(Request $request, $story)
+    {
+        [$startDate, $endDate] = $this->parseAuditPeriod($request);
+
+        $allSubRoles = ['pharmacy_hub', 'pharmacy_satellite', 'department', 'ward', 'lab', 'imaging', 'other'];
+        $roleLabels = \App\Models\Store::ROLE_LABELS;
+
+        switch ($story) {
+
+            case 'substore-valuation':
+                $rows = \DB::table('stock_batches as sb')
+                    ->join('stores as s', 'sb.store_id', '=', 's.id')
+                    ->join('products as p', 'sb.product_id', '=', 'p.id')
+                    ->leftJoin('prices as pp', 'p.id', '=', 'pp.product_id')
+                    ->leftJoin('store_stocks as ss', function ($j) {
+                        $j->on('ss.store_id', '=', 'sb.store_id')->on('ss.product_id', '=', 'sb.product_id');
+                    })
+                    ->select(
+                        's.id as store_id',
+                        's.store_name',
+                        's.distribution_role',
+                        \DB::raw('COUNT(sb.id) as batch_count'),
+                        \DB::raw('SUM(sb.current_qty) as total_units'),
+                        \DB::raw('SUM(sb.current_qty * COALESCE(NULLIF(sb.cost_price,0), pp.pr_buy_price, 0)) as total_value'),
+                        \DB::raw('SUM(CASE WHEN sb.current_qty <= COALESCE(ss.reorder_level, 10) THEN 1 ELSE 0 END) as low_stock_lines')
+                    )
+                    ->whereIn('s.distribution_role', $allSubRoles)
+                    ->where('sb.current_qty', '>', 0)
+                    ->groupBy('s.id', 's.store_name', 's.distribution_role')
+                    ->orderByDesc('total_value')
+                    ->get();
+
+                $formattedRows = $rows->map(fn($r) => [
+                    'action' => '<button class="btn btn-xs btn-outline-primary story-detail-btn font-weight-bold py-1 px-2" data-zone="ward-dept" data-story="substore-valuation" data-key="' . e($r->store_id) . '"><i class="mdi mdi-eye"></i> Details</button>',
+                    'store' => '<div class="font-weight-bold text-dark"><i class="mdi mdi-store text-primary"></i> ' . e($r->store_name) . '</div><span class="badge bg-light text-dark border mt-1">' . e($roleLabels[$r->distribution_role] ?? $r->distribution_role) . '</span>',
+                    'batches' => '<span class="badge bg-light text-dark border">' . (int)$r->batch_count . ' Batches</span>',
+                    'total_units' => '<span class="badge bg-info text-white">' . number_format($r->total_units) . ' Units</span>',
+                    'total_value' => '<span class="font-weight-bold text-success" style="font-size:1.05rem;">₦' . number_format($r->total_value, 2) . '</span>',
+                    'low_stock' => '<span class="badge ' . ($r->low_stock_lines > 0 ? 'bg-danger' : 'bg-success') . '">' . (int)$r->low_stock_lines . ' Low-Stock Lines</span>',
+                ]);
+
+                $cards = [
+                    ['label' => 'Total Sub-Store Value', 'value' => '₦' . number_format($rows->sum('total_value'), 2), 'class' => 'bg-success text-white'],
+                    ['label' => 'Sub-Stores Tracked', 'value' => $rows->count(), 'class' => 'bg-primary text-white'],
+                    ['label' => 'Low-Stock Lines', 'value' => $rows->sum('low_stock_lines'), 'class' => 'bg-danger text-white'],
+                    ['label' => 'Total Units Across All Sub-Stores', 'value' => number_format($rows->sum('total_units')), 'class' => 'bg-secondary text-white'],
+                ];
+                return response()->json(['cards' => $cards, 'rows' => $formattedRows->values(), 'headers' => ['Action', 'Store', 'Batches', 'Total Units', 'Total Value ₦', 'Low-Stock Lines']]);
+
+            case 'requisition-fulfillment':
+                $rows = \DB::table('store_requisitions as sr')
+                    ->join('stores as fs', 'sr.from_store_id', '=', 'fs.id')
+                    ->join('stores as ts', 'sr.to_store_id', '=', 'ts.id')
+                    ->select(
+                        'fs.id as from_store_id',
+                        'fs.store_name as from_store_name',
+                        'fs.distribution_role as from_role',
+                        'ts.store_name as to_store_name',
+                        \DB::raw('COUNT(sr.id) as req_count'),
+                        \DB::raw('SUM(CASE WHEN sr.status = "fulfilled" THEN 1 ELSE 0 END) as fulfilled_count'),
+                        \DB::raw('SUM(CASE WHEN sr.status = "rejected" THEN 1 ELSE 0 END) as rejected_count'),
+                        \DB::raw('SUM(CASE WHEN sr.status IN ("pending","approved") THEN 1 ELSE 0 END) as pending_count'),
+                        \DB::raw('AVG(CASE WHEN sr.fulfilled_at IS NOT NULL THEN DATEDIFF(sr.fulfilled_at, sr.created_at) ELSE NULL END) as avg_days_to_fulfill')
+                    )
+                    ->whereBetween('sr.created_at', [$startDate, $endDate])
+                    ->groupBy('fs.id', 'fs.store_name', 'fs.distribution_role', 'ts.store_name')
+                    ->orderByDesc('req_count')
+                    ->get();
+
+                $formattedRows = $rows->map(function ($r) use ($roleLabels) {
+                    $fulfillRate = $r->req_count > 0 ? round(($r->fulfilled_count / $r->req_count) * 100, 1) : 0;
+                    return [
+                        'action' => '<button class="btn btn-xs btn-outline-primary story-detail-btn font-weight-bold py-1 px-2" data-zone="ward-dept" data-story="requisition-fulfillment" data-key="' . e($r->from_store_id) . '"><i class="mdi mdi-eye"></i> Details</button>',
+                        'store' => '<div class="font-weight-bold text-dark">' . e($r->from_store_name) . '</div><span class="badge bg-light text-dark border mt-1">' . e($roleLabels[$r->from_role] ?? $r->from_role) . '</span><small class="text-muted d-block"><i class="mdi mdi-arrow-right"></i> from: ' . e($r->to_store_name) . '</small>',
+                        'req_count' => '<span class="badge bg-light text-dark border font-weight-bold">' . (int)$r->req_count . ' Reqs</span>',
+                        'fulfilled' => '<span class="badge bg-success">' . (int)$r->fulfilled_count . ' Fulfilled</span>',
+                        'rejected' => '<span class="badge bg-danger">' . (int)$r->rejected_count . ' Rejected</span>',
+                        'pending' => '<span class="badge bg-warning text-dark">' . (int)$r->pending_count . ' Pending</span>',
+                        'avg_days' => '<span class="font-weight-bold text-info">' . ($r->avg_days_to_fulfill !== null ? round($r->avg_days_to_fulfill, 1) . ' days avg' : 'N/A') . '</span>',
+                        'fulfillment_rate' => '<div class="d-flex align-items-center"><span class="font-weight-bold me-2 ' . ($fulfillRate >= 80 ? 'text-success' : 'text-warning') . '">' . $fulfillRate . '%</span><div class="progress flex-grow-1" style="height:6px;"><div class="progress-bar ' . ($fulfillRate >= 80 ? 'bg-success' : 'bg-warning') . '" style="width:' . min($fulfillRate, 100) . '%"></div></div></div>',
+                    ];
+                });
+
+                $cards = [
+                    ['label' => 'Total Requisitions', 'value' => $rows->sum('req_count'), 'class' => 'bg-primary text-white'],
+                    ['label' => 'Fulfilled', 'value' => $rows->sum('fulfilled_count'), 'class' => 'bg-success text-white'],
+                    ['label' => 'Pending / In Progress', 'value' => $rows->sum('pending_count'), 'class' => 'bg-warning text-dark'],
+                    ['label' => 'Avg Lead Time', 'value' => round($rows->avg('avg_days_to_fulfill') ?? 0, 1) . ' days', 'class' => 'bg-info text-white'],
+                ];
+                return response()->json(['cards' => $cards, 'rows' => $formattedRows->values(), 'headers' => ['Action', 'Requesting Store', 'Requisitions', 'Fulfilled', 'Rejected', 'Pending', 'Avg Days', 'Fulfillment Rate']]);
+
+            case 'requisition-items-audit':
+                $rows = \DB::table('store_requisition_items as sri')
+                    ->join('store_requisitions as sr', 'sri.store_requisition_id', '=', 'sr.id')
+                    ->join('products as p', 'sri.product_id', '=', 'p.id')
+                    ->leftJoin('product_categories as pc', 'p.category_id', '=', 'pc.id')
+                    ->leftJoin('stock_batches as sb', 'sri.source_batch_id', '=', 'sb.id')
+                    ->select(
+                        'sri.product_id',
+                        'p.product_name',
+                        'pc.category_name',
+                        \DB::raw('COUNT(sri.id) as line_count'),
+                        \DB::raw('SUM(sri.requested_qty) as total_requested'),
+                        \DB::raw('SUM(sri.approved_qty) as total_approved'),
+                        \DB::raw('SUM(sri.fulfilled_qty) as total_fulfilled'),
+                        \DB::raw('SUM(sri.requested_qty - sri.fulfilled_qty) as total_gap')
+                    )
+                    ->whereBetween('sr.created_at', [$startDate, $endDate])
+                    ->groupBy('sri.product_id', 'p.product_name', 'pc.category_name')
+                    ->orderByDesc('total_requested')
+                    ->get();
+
+                $formattedRows = $rows->map(fn($r) => [
+                    'action' => '<button class="btn btn-xs btn-outline-primary story-detail-btn font-weight-bold py-1 px-2" data-zone="ward-dept" data-story="requisition-items-audit" data-key="' . e($r->product_id) . '"><i class="mdi mdi-eye"></i> Details</button>',
+                    'product' => '<div class="font-weight-bold text-dark">' . e($r->product_name) . '</div><small class="text-muted"><i class="mdi mdi-tag"></i> ' . e($r->category_name ?? 'N/A') . '</small>',
+                    'requested' => '<span class="badge bg-primary text-white">' . number_format($r->total_requested) . ' Req</span>',
+                    'approved' => '<span class="badge bg-info text-white">' . number_format($r->total_approved) . ' Appr</span>',
+                    'fulfilled' => '<span class="badge bg-success">' . number_format($r->total_fulfilled) . ' Filled</span>',
+                    'gap' => '<span class="badge ' . ($r->total_gap > 0 ? 'bg-danger' : 'bg-success') . ' font-weight-bold">' . number_format($r->total_gap) . ' Gap</span>',
+                    'lines' => '<span class="badge bg-light text-dark border">' . (int)$r->line_count . ' Lines</span>',
+                ]);
+
+                $cards = [
+                    ['label' => 'Total Requested Qty', 'value' => number_format($rows->sum('total_requested')), 'class' => 'bg-primary text-white'],
+                    ['label' => 'Total Fulfilled Qty', 'value' => number_format($rows->sum('total_fulfilled')), 'class' => 'bg-success text-white'],
+                    ['label' => 'Total Gap (Unfulfilled)', 'value' => number_format($rows->sum('total_gap')), 'class' => $rows->sum('total_gap') > 0 ? 'bg-danger text-white' : 'bg-success text-white'],
+                    ['label' => 'Unique Products Requested', 'value' => $rows->count(), 'class' => 'bg-secondary text-white'],
+                ];
+                return response()->json(['cards' => $cards, 'rows' => $formattedRows->values(), 'headers' => ['Action', 'Product', 'Requested', 'Approved', 'Fulfilled', 'Gap', 'Req Lines']]);
+
+            case 'ward-stock-movement':
+                $rows = \DB::table('stock_batch_transactions as sbt')
+                    ->join('stock_batches as sb', 'sbt.stock_batch_id', '=', 'sb.id')
+                    ->join('stores as s', 'sb.store_id', '=', 's.id')
+                    ->leftJoin('users as u', 'sbt.performed_by', '=', 'u.id')
+                    ->select(
+                        's.id as store_id',
+                        's.store_name',
+                        's.distribution_role',
+                        'sbt.type',
+                        \DB::raw('COUNT(sbt.id) as txn_count'),
+                        \DB::raw('SUM(sbt.qty) as total_qty')
+                    )
+                    ->whereIn('s.distribution_role', $allSubRoles)
+                    ->whereBetween('sbt.created_at', [$startDate, $endDate])
+                    ->groupBy('s.id', 's.store_name', 's.distribution_role', 'sbt.type')
+                    ->orderBy('s.store_name')
+                    ->orderBy('sbt.type')
+                    ->get();
+
+                $inboundTypes = ['in', 'transfer_in', 'return', 'req_return'];
+                $outboundTypes = ['out', 'transfer_out', 'expired', 'damaged'];
+                $typeColors = ['in' => 'bg-success', 'transfer_in' => 'bg-info', 'return' => 'bg-primary', 'req_return' => 'bg-primary', 'out' => 'bg-warning text-dark', 'transfer_out' => 'bg-danger', 'expired' => 'bg-danger', 'damaged' => 'bg-danger'];
+
+                $formattedRows = $rows->map(fn($r) => [
+                    'action' => '<button class="btn btn-xs btn-outline-primary story-detail-btn font-weight-bold py-1 px-2" data-zone="ward-dept" data-story="ward-stock-movement" data-key="' . e($r->store_id) . '"><i class="mdi mdi-eye"></i> Details</button>',
+                    'store' => '<div class="font-weight-bold text-dark">' . e($r->store_name) . '</div><span class="badge bg-light text-dark border mt-1">' . e($roleLabels[$r->distribution_role] ?? $r->distribution_role) . '</span>',
+                    'direction' => '<span class="badge ' . (in_array($r->type, $inboundTypes) ? 'bg-success' : 'bg-danger') . '">' . (in_array($r->type, $inboundTypes) ? '▲ IN' : '▼ OUT') . '</span>',
+                    'type' => '<span class="badge ' . ($typeColors[$r->type] ?? 'bg-secondary') . '">' . strtoupper(str_replace('_', ' ', $r->type)) . '</span>',
+                    'txn_count' => '<span class="badge bg-light text-dark border">' . (int)$r->txn_count . ' Txns</span>',
+                    'total_qty' => '<span class="font-weight-bold ' . (in_array($r->type, $inboundTypes) ? 'text-success' : 'text-danger') . '">' . (in_array($r->type, $inboundTypes) ? '+' : '-') . number_format($r->total_qty) . ' Units</span>',
+                ]);
+
+                $cards = [
+                    ['label' => 'Total Inbound Qty', 'value' => number_format($rows->whereIn('type', $inboundTypes)->sum('total_qty')), 'class' => 'bg-success text-white'],
+                    ['label' => 'Total Outbound Qty', 'value' => number_format($rows->whereIn('type', $outboundTypes)->sum('total_qty')), 'class' => 'bg-danger text-white'],
+                    ['label' => 'Net Movement', 'value' => number_format($rows->whereIn('type', $inboundTypes)->sum('total_qty') - $rows->whereIn('type', $outboundTypes)->sum('total_qty')) . ' Units', 'class' => 'bg-info text-white'],
+                    ['label' => 'Active Sub-Stores', 'value' => $rows->pluck('store_id')->unique()->count(), 'class' => 'bg-primary text-white'],
+                ];
+                return response()->json(['cards' => $cards, 'rows' => $formattedRows->values(), 'headers' => ['Action', 'Store', 'Direction', 'Movement Type', 'Transactions', 'Qty']]);
+
+            case 'return-analysis':
+                // Source A: Store Requisition Returns
+                $reqReturns = \DB::table('store_requisition_returns as srr')
+                    ->join('products as p', 'srr.product_id', '=', 'p.id')
+                    ->leftJoin('product_categories as pc', 'p.category_id', '=', 'pc.id')
+                    ->leftJoin('stores as src', 'srr.source_store_id', '=', 'src.id')
+                    ->leftJoin('stock_batches as sb', 'srr.batch_id', '=', 'sb.id')
+                    ->leftJoin('prices as pp', 'p.id', '=', 'pp.product_id')
+                    ->select(
+                        'srr.product_id',
+                        'p.product_name',
+                        'pc.category_name',
+                        \DB::raw('SUM(srr.qty_returned) as qty_returned'),
+                        \DB::raw('SUM(srr.qty_returned * COALESCE(NULLIF(sb.cost_price,0), pp.pr_buy_price, 0)) as cost_value'),
+                        \DB::raw('"requisition_return" as return_source')
+                    )
+                    ->whereBetween('srr.created_at', [$startDate, $endDate])
+                    ->groupBy('srr.product_id', 'p.product_name', 'pc.category_name')
+                    ->get();
+
+                // Source B: Pharmacy Workbench Returns (ProductRequest where returned_qty > 0)
+                $pharmacyReturns = \DB::table('product_requests as pr')
+                    ->join('products as p', 'pr.product_id', '=', 'p.id')
+                    ->leftJoin('product_categories as pc', 'p.category_id', '=', 'pc.id')
+                    ->leftJoin('stock_batches as sb', 'pr.dispensed_from_batch_id', '=', 'sb.id')
+                    ->leftJoin('prices as pp', 'p.id', '=', 'pp.product_id')
+                    ->select(
+                        'pr.product_id',
+                        'p.product_name',
+                        'pc.category_name',
+                        \DB::raw('SUM(pr.returned_qty) as qty_returned'),
+                        \DB::raw('SUM(COALESCE(pr.refund_amount, 0)) as refund_amount'),
+                        \DB::raw('SUM(pr.returned_qty * COALESCE(NULLIF(sb.cost_price,0), pp.pr_buy_price, 0)) as cost_value'),
+                        \DB::raw('"pharmacy_return" as return_source')
+                    )
+                    ->whereNotNull('pr.returned_qty')
+                    ->where('pr.returned_qty', '>', 0)
+                    ->whereNull('pr.deleted_at')
+                    ->whereBetween('pr.created_at', [$startDate, $endDate])
+                    ->groupBy('pr.product_id', 'p.product_name', 'pc.category_name')
+                    ->get();
+
+                $allReturns = $reqReturns->merge($pharmacyReturns)->sortByDesc('cost_value');
+
+                $formattedRows = $allReturns->map(function ($r) {
+                    $isPharmacy = ($r->return_source === 'pharmacy_return');
+                    return [
+                        'action' => '<button class="btn btn-xs btn-outline-primary story-detail-btn font-weight-bold py-1 px-2" data-zone="ward-dept" data-story="return-analysis" data-key="' . e($r->product_id) . '"><i class="mdi mdi-eye"></i> Details</button>',
+                        'product' => '<div class="font-weight-bold text-dark">' . e($r->product_name) . '</div><small class="text-muted"><i class="mdi mdi-tag"></i> ' . e($r->category_name ?? 'N/A') . '</small>',
+                        'source' => '<span class="badge ' . ($isPharmacy ? 'bg-primary' : 'bg-info') . '"><i class="mdi ' . ($isPharmacy ? 'mdi-pill' : 'mdi-swap-horizontal') . '"></i> ' . ($isPharmacy ? 'Pharmacy Return' : 'Req Return') . '</span>',
+                        'qty_returned' => '<span class="font-weight-bold text-warning">' . number_format($r->qty_returned) . ' Units</span>',
+                        'refund_amount' => '<span class="font-weight-bold text-danger">₦' . number_format($r->refund_amount ?? 0, 2) . '</span>',
+                        'cost_value' => '<span class="font-weight-bold text-dark">₦' . number_format($r->cost_value, 2) . '</span>',
+                    ];
+                });
+
+                $cards = [
+                    ['label' => 'Req Returns Qty', 'value' => number_format($reqReturns->sum('qty_returned')), 'class' => 'bg-info text-white'],
+                    ['label' => 'Pharmacy Returns Qty', 'value' => number_format($pharmacyReturns->sum('qty_returned')), 'class' => 'bg-primary text-white'],
+                    ['label' => 'Total Refunds Paid', 'value' => '₦' . number_format($pharmacyReturns->sum('refund_amount'), 2), 'class' => 'bg-danger text-white'],
+                    ['label' => 'Total Cost of Returns', 'value' => '₦' . number_format($allReturns->sum('cost_value'), 2), 'class' => 'bg-warning text-dark'],
+                ];
+                return response()->json(['cards' => $cards, 'rows' => $formattedRows->values(), 'headers' => ['Action', 'Product', 'Return Source', 'Qty Returned', 'Refund Paid ₦', 'Cost of Return ₦']]);
+
+            default:
+                return response()->json(['error' => 'Unknown story: ' . $story], 404);
+        }
+    }
+
+    // =====================================================================
+    // PAGE 7 — STORE UTILIZATION vs INCOME — Story Data
+    // =====================================================================
+    public function storeUtilizationStoryData(Request $request, $story)
+    {
+        if (in_array($story, ['transactions', 'revenue', 'movements'])) {
+            return $this->storeUtilizationRevenueData($request, $story);
+        }
+
+        [$startDate, $endDate] = $this->parseAuditPeriod($request);
+
+        switch ($story) {
+
+            case 'dispensing-revenue-attribution':
+                $rows = \DB::table('product_or_service_requests as posr')
+                    ->join('products as p', 'posr.product_id', '=', 'p.id')
+                    ->leftJoin('product_categories as pc', 'p.category_id', '=', 'pc.id')
+                    ->leftJoin('prices as pp', 'p.id', '=', 'pp.product_id')
+                    ->select(
+                        'posr.product_id',
+                        'p.product_name',
+                        'pc.category_name',
+                        \DB::raw('COUNT(posr.id) as item_count'),
+                        \DB::raw('SUM(posr.qty) as total_qty'),
+                        \DB::raw('SUM(posr.payable_amount) as total_revenue'),
+                        \DB::raw('SUM(CASE WHEN posr.claims_amount > 0 THEN posr.claims_amount ELSE 0 END) as total_claims'),
+                        \DB::raw('AVG(COALESCE(NULLIF(pp.pr_buy_price,0), 0)) as avg_cost_price')
+                    )
+                    ->whereNotNull('posr.product_id')
+                    ->whereBetween('posr.created_at', [$startDate, $endDate])
+                    ->groupBy('posr.product_id', 'p.product_name', 'pc.category_name')
+                    ->orderByDesc('total_revenue')
+                    ->get();
+
+                $formattedRows = $rows->map(function ($r) {
+                    $cogs = round($r->total_qty * $r->avg_cost_price, 2);
+                    $margin = $r->total_revenue - $cogs;
+                    return [
+                        'action' => '<button class="btn btn-xs btn-outline-primary story-detail-btn font-weight-bold py-1 px-2" data-zone="store-utilization" data-story="dispensing-revenue-attribution" data-key="' . e($r->product_id) . '"><i class="mdi mdi-eye"></i> Details</button>',
+                        'product' => '<div class="font-weight-bold text-dark"><i class="mdi mdi-pill text-primary"></i> ' . e($r->product_name) . '</div><small class="text-muted">' . e($r->category_name ?? 'N/A') . '</small>',
+                        'qty' => '<span class="badge bg-light text-dark border font-weight-bold">' . number_format($r->total_qty) . ' Units</span>',
+                        'revenue' => '<span class="font-weight-bold text-success" style="font-size:1.05rem;">₦' . number_format($r->total_revenue, 2) . '</span>',
+                        'claims' => '<span class="font-weight-bold text-info">₦' . number_format($r->total_claims, 2) . '</span>',
+                        'cogs' => '<span class="font-weight-bold text-dark">₦' . number_format($cogs, 2) . '</span>',
+                        'margin' => '<span class="font-weight-bold ' . ($margin >= 0 ? 'text-success' : 'text-danger') . '">₦' . number_format($margin, 2) . '</span>',
+                    ];
+                });
+
+                $totalRevenue = $rows->sum('total_revenue');
+                $totalClaims = $rows->sum('total_claims');
+                $totalCogs = $rows->sum(fn($r) => $r->total_qty * $r->avg_cost_price);
+
+                $cards = [
+                    ['label' => 'Total Product Revenue', 'value' => '₦' . number_format($totalRevenue, 2), 'class' => 'bg-success text-white'],
+                    ['label' => 'Total HMO Claims', 'value' => '₦' . number_format($totalClaims, 2), 'class' => 'bg-info text-white'],
+                    ['label' => 'Est. Total COGS', 'value' => '₦' . number_format($totalCogs, 2), 'class' => 'bg-primary text-white'],
+                    ['label' => 'Est. Gross Margin', 'value' => '₦' . number_format($totalRevenue - $totalCogs, 2), 'class' => 'bg-secondary text-white'],
+                ];
+                return response()->json(['cards' => $cards, 'rows' => $formattedRows->values(), 'headers' => ['Action', 'Product', 'Qty Sold', 'Revenue ₦', 'Claims ₦', 'Est. COGS ₦', 'Est. Margin ₦']]);
+
+            case 'store-dispensing-contribution':
+                $rows = \DB::table('product_or_service_requests as posr')
+                    ->join('stores as s', 'posr.dispensed_from_store_id', '=', 's.id')
+                    ->select(
+                        's.id as store_id',
+                        's.store_name',
+                        's.distribution_role',
+                        \DB::raw('COUNT(posr.id) as item_count'),
+                        \DB::raw('SUM(posr.qty) as total_qty'),
+                        \DB::raw('SUM(posr.payable_amount) as total_revenue'),
+                        \DB::raw('SUM(CASE WHEN posr.claims_amount > 0 THEN posr.claims_amount ELSE 0 END) as total_claims')
+                    )
+                    ->whereNotNull('posr.product_id')
+                    ->whereNotNull('posr.dispensed_from_store_id')
+                    ->whereBetween('posr.created_at', [$startDate, $endDate])
+                    ->groupBy('s.id', 's.store_name', 's.distribution_role')
+                    ->orderByDesc('total_revenue')
+                    ->get();
+
+                $roleLabels = \App\Models\Store::ROLE_LABELS;
+                $formattedRows = $rows->map(fn($r) => [
+                    'action' => '<button class="btn btn-xs btn-outline-primary story-detail-btn font-weight-bold py-1 px-2" data-zone="store-utilization" data-story="store-dispensing-contribution" data-key="' . e($r->store_id) . '"><i class="mdi mdi-eye"></i> Details</button>',
+                    'store' => '<div class="font-weight-bold text-dark"><i class="mdi mdi-store text-primary"></i> ' . e($r->store_name) . '</div><span class="badge bg-light text-dark border mt-1">' . e($roleLabels[$r->distribution_role] ?? $r->distribution_role) . '</span>',
+                    'items' => '<span class="badge bg-light text-dark border">' . number_format($r->item_count) . ' Lines</span>',
+                    'qty' => '<span class="badge bg-info text-white">' . number_format($r->total_qty) . ' Units</span>',
+                    'revenue' => '<span class="font-weight-bold text-success" style="font-size:1.05rem;">₦' . number_format($r->total_revenue, 2) . '</span>',
+                    'claims' => '<span class="font-weight-bold text-info">₦' . number_format($r->total_claims, 2) . '</span>',
+                ]);
+
+                $cards = [
+                    ['label' => 'Top Dispensing Store', 'value' => $rows->first()?->store_name ?? 'N/A', 'class' => 'bg-primary text-white'],
+                    ['label' => 'Total Dispensed Revenue', 'value' => '₦' . number_format($rows->sum('total_revenue'), 2), 'class' => 'bg-success text-white'],
+                    ['label' => 'Total HMO Claims', 'value' => '₦' . number_format($rows->sum('total_claims'), 2), 'class' => 'bg-info text-white'],
+                    ['label' => 'Private Cash Portion', 'value' => '₦' . number_format($rows->sum('total_revenue') - $rows->sum('total_claims'), 2), 'class' => 'bg-secondary text-white'],
+                ];
+                return response()->json(['cards' => $cards, 'rows' => $formattedRows->values(), 'headers' => ['Action', 'Store', 'Billing Lines', 'Total Qty', 'Revenue ₦', 'Claims ₦']]);
+
+            case 'consumption-vs-billing-gap':
+                $rows = \DB::table('stock_utilizations as su')
+                    ->join('products as p', 'su.product_id', '=', 'p.id')
+                    ->leftJoin('product_categories as pc', 'p.category_id', '=', 'pc.id')
+                    ->leftJoin('prices as pp', 'p.id', '=', 'pp.product_id')
+                    ->select(
+                        'su.product_id',
+                        'p.product_name',
+                        'pc.category_name',
+                        \DB::raw('SUM(su.qty) as total_consumed'),
+                        \DB::raw('SUM(CASE WHEN su.is_billed = 1 THEN su.qty ELSE 0 END) as billed_qty'),
+                        \DB::raw('SUM(CASE WHEN su.is_billed = 0 OR su.is_billed IS NULL THEN su.qty ELSE 0 END) as unbilled_qty'),
+                        \DB::raw('COALESCE(pp.current_sale_price, 0) as sell_price')
+                    )
+                    ->whereBetween('su.created_at', [$startDate, $endDate])
+                    ->groupBy('su.product_id', 'p.product_name', 'pc.category_name', 'pp.current_sale_price')
+                    ->orderByDesc('total_consumed')
+                    ->get();
+
+                $formattedRows = $rows->map(function ($r) {
+                    $gapValue = round($r->unbilled_qty * $r->sell_price, 2);
+                    return [
+                        'action' => '<button class="btn btn-xs btn-outline-primary story-detail-btn font-weight-bold py-1 px-2" data-zone="store-utilization" data-story="consumption-vs-billing-gap" data-key="' . e($r->product_id) . '"><i class="mdi mdi-eye"></i> Details</button>',
+                        'product' => '<div class="font-weight-bold text-dark">' . e($r->product_name) . '</div><small class="text-muted">' . e($r->category_name ?? 'N/A') . '</small>',
+                        'consumed' => '<span class="badge bg-primary text-white font-weight-bold">' . number_format($r->total_consumed) . ' Units</span>',
+                        'billed' => '<span class="badge bg-success">' . number_format($r->billed_qty) . ' Billed</span>',
+                        'unbilled' => '<span class="badge ' . ($r->unbilled_qty > 0 ? 'bg-danger' : 'bg-success') . ' font-weight-bold">' . number_format($r->unbilled_qty) . ' Unbilled</span>',
+                        'gap_value' => '<span class="font-weight-bold ' . ($gapValue > 0 ? 'text-danger' : 'text-success') . '">₦' . number_format($gapValue, 2) . '</span>',
+                    ];
+                });
+
+                $cards = [
+                    ['label' => 'Total Consumed Qty', 'value' => number_format($rows->sum('total_consumed')), 'class' => 'bg-primary text-white'],
+                    ['label' => 'Billed Qty', 'value' => number_format($rows->sum('billed_qty')), 'class' => 'bg-success text-white'],
+                    ['label' => 'Unbilled Qty', 'value' => number_format($rows->sum('unbilled_qty')), 'class' => 'bg-danger text-white'],
+                    ['label' => 'Unbilled Revenue Gap ₦', 'value' => '₦' . number_format($rows->sum(fn($r) => $r->unbilled_qty * $r->sell_price), 2), 'class' => 'bg-warning text-dark'],
+                ];
+                return response()->json(['cards' => $cards, 'rows' => $formattedRows->values(), 'headers' => ['Action', 'Product', 'Consumed', 'Billed', 'Unbilled', 'Revenue Gap ₦']]);
+
+            case 'daily-stock-movement-trend':
+                $rows = \DB::table('stock_batch_transactions as sbt')
+                    ->select(
+                        \DB::raw('DATE(sbt.created_at) as date'),
+                        \DB::raw('SUM(CASE WHEN sbt.type IN ("in","transfer_in","return","req_return") THEN sbt.qty ELSE 0 END) as inbound'),
+                        \DB::raw('SUM(CASE WHEN sbt.type IN ("out","transfer_out","expired","damaged") THEN sbt.qty ELSE 0 END) as outbound'),
+                        \DB::raw('COUNT(sbt.id) as txn_count')
+                    )
+                    ->whereBetween('sbt.created_at', [$startDate, $endDate])
+                    ->groupByRaw('DATE(sbt.created_at)')
+                    ->orderBy('date')
+                    ->get();
+
+                $formattedRows = $rows->map(fn($r) => [
+                    'action' => '<button class="btn btn-xs btn-outline-primary story-detail-btn font-weight-bold py-1 px-2" data-zone="store-utilization" data-story="daily-stock-movement-trend" data-key="' . e($r->date) . '"><i class="mdi mdi-eye"></i> Details</button>',
+                    'date' => '<div class="font-weight-bold text-dark"><i class="mdi mdi-calendar text-primary"></i> ' . e($r->date) . '</div>',
+                    'txn_count' => '<span class="badge bg-light text-dark border">' . (int)$r->txn_count . ' Txns</span>',
+                    'inbound' => '<span class="font-weight-bold text-success">+' . number_format($r->inbound) . ' Units</span>',
+                    'outbound' => '<span class="font-weight-bold text-danger">-' . number_format($r->outbound) . ' Units</span>',
+                    'net' => '<span class="font-weight-bold ' . ($r->inbound - $r->outbound >= 0 ? 'text-primary' : 'text-warning') . '">' . ($r->inbound - $r->outbound >= 0 ? '+' : '') . number_format($r->inbound - $r->outbound) . ' Net</span>',
+                ]);
+
+                $peakInbound = $rows->sortByDesc('inbound')->first();
+                $peakOutbound = $rows->sortByDesc('outbound')->first();
+                $cards = [
+                    ['label' => 'Total Inbound Qty', 'value' => number_format($rows->sum('inbound')), 'class' => 'bg-success text-white'],
+                    ['label' => 'Total Outbound Qty', 'value' => number_format($rows->sum('outbound')), 'class' => 'bg-danger text-white'],
+                    ['label' => 'Peak Inbound Day', 'value' => ($peakInbound?->date ?? 'N/A') . ' (' . number_format($peakInbound?->inbound ?? 0) . ' units)', 'class' => 'bg-primary text-white'],
+                    ['label' => 'Active Days', 'value' => $rows->count(), 'class' => 'bg-info text-white'],
+                ];
+                return response()->json(['cards' => $cards, 'rows' => $formattedRows->values(), 'headers' => ['Action', 'Date', 'Transactions', 'Inbound', 'Outbound', 'Net Movement'], 'chart' => true]);
+
+            case 'product-turnover-rate':
+                $rows = \DB::table('stock_batches as sb')
+                    ->join('products as p', 'sb.product_id', '=', 'p.id')
+                    ->leftJoin('product_categories as pc', 'p.category_id', '=', 'pc.id')
+                    ->leftJoin('prices as pp', 'p.id', '=', 'pp.product_id')
+                    ->select(
+                        'sb.product_id',
+                        'p.product_name',
+                        'pc.category_name',
+                        \DB::raw('SUM(sb.initial_qty) as total_initial'),
+                        \DB::raw('SUM(sb.sold_qty) as total_sold'),
+                        \DB::raw('SUM(sb.current_qty) as total_remaining'),
+                        \DB::raw('SUM(sb.current_qty * COALESCE(NULLIF(sb.cost_price,0), pp.pr_buy_price, 0)) as value_remaining')
+                    )
+                    ->whereBetween('sb.received_date', [$startDate, $endDate])
+                    ->groupBy('sb.product_id', 'p.product_name', 'pc.category_name')
+                    ->havingRaw('total_initial > 0')
+                    ->orderByRaw('(total_sold / total_initial) DESC')
+                    ->get();
+
+                $formattedRows = $rows->map(function ($r) {
+                    $turnover = $r->total_initial > 0 ? round(($r->total_sold / $r->total_initial) * 100, 1) : 0;
+                    $cls = $turnover >= 50 ? 'text-success' : ($turnover >= 10 ? 'text-warning' : 'text-danger');
+                    return [
+                        'action' => '<button class="btn btn-xs btn-outline-primary story-detail-btn font-weight-bold py-1 px-2" data-zone="store-utilization" data-story="product-turnover-rate" data-key="' . e($r->product_id) . '"><i class="mdi mdi-eye"></i> Details</button>',
+                        'product' => '<div class="font-weight-bold text-dark">' . e($r->product_name) . '</div><small class="text-muted">' . e($r->category_name ?? 'N/A') . '</small>',
+                        'initial' => '<span class="badge bg-light text-dark border">' . number_format($r->total_initial) . ' Initial</span>',
+                        'sold' => '<span class="badge bg-success">' . number_format($r->total_sold) . ' Sold</span>',
+                        'remaining' => '<span class="badge bg-info text-white">' . number_format($r->total_remaining) . ' Left</span>',
+                        'turnover' => '<span class="font-weight-bold ' . $cls . '" style="font-size:1.05rem;">' . $turnover . '%</span>',
+                        'idle_value' => '<span class="font-weight-bold text-dark">₦' . number_format($r->value_remaining, 2) . '</span>',
+                    ];
+                });
+
+                $totalInitial = $rows->sum('total_initial');
+                $totalSold = $rows->sum('total_sold');
+                $avgTurnover = $totalInitial > 0 ? round(($totalSold / $totalInitial) * 100, 1) : 0;
+
+                $cards = [
+                    ['label' => 'Avg Turnover Rate', 'value' => $avgTurnover . '%', 'class' => $avgTurnover >= 50 ? 'bg-success text-white' : 'bg-warning text-dark'],
+                    ['label' => 'Fast Movers (>50%)', 'value' => $rows->filter(fn($r) => $r->total_initial > 0 && ($r->total_sold / $r->total_initial) >= 0.5)->count(), 'class' => 'bg-success text-white'],
+                    ['label' => 'Dead Stock (<5%)', 'value' => $rows->filter(fn($r) => $r->total_initial > 0 && ($r->total_sold / $r->total_initial) < 0.05)->count(), 'class' => 'bg-danger text-white'],
+                    ['label' => 'Idle Stock Value ₦', 'value' => '₦' . number_format($rows->sum('value_remaining'), 2), 'class' => 'bg-secondary text-white'],
+                ];
+                return response()->json(['cards' => $cards, 'rows' => $formattedRows->values(), 'headers' => ['Action', 'Product', 'Initial Qty', 'Sold', 'Remaining', 'Turnover Rate', 'Idle Value ₦']]);
+
+            default:
+                return response()->json(['error' => 'Unknown story: ' . $story], 404);
+        }
+    }
+
+    // =====================================================================
+    // PAGE 8 — HMO & NHIS AUDIT — Story Data
+    // Scheme always displayed via: JOIN hmos JOIN hmo_schemes ON hmos.hmo_scheme_id = hmo_schemes.id
+    // =====================================================================
+    public function hmoNhisStoryData(Request $request, $story)
+    {
+        if (in_array($story, ['services', 'claims', 'remittances'])) {
+            return $this->hmoNhisData($request, $story);
+        }
+
+        [$startDate, $endDate] = $this->parseAuditPeriod($request);
+
+        switch ($story) {
+
+            case 'hmo-claims-by-provider':
+                $rows = \DB::table('product_or_service_requests as posr')
+                    ->join('hmos as h', 'posr.hmo_id', '=', 'h.id')
+                    ->join('hmo_schemes as hs', 'h.hmo_scheme_id', '=', 'hs.id')
+                    ->select(
+                        'h.id as hmo_id',
+                        'h.name as hmo_name',
+                        'hs.name as scheme_name',
+                        'hs.code as scheme_code',
+                        \DB::raw('COUNT(posr.id) as item_count'),
+                        \DB::raw('SUM(CASE WHEN posr.claims_amount > 0 THEN posr.claims_amount ELSE posr.payable_amount END) as total_claims'),
+                        \DB::raw('SUM(posr.payable_amount) as total_payable'),
+                        \DB::raw('SUM(CASE WHEN posr.hmo_remittance_id IS NOT NULL THEN CASE WHEN posr.claims_amount > 0 THEN posr.claims_amount ELSE posr.payable_amount END ELSE 0 END) as remitted'),
+                        \DB::raw('SUM(CASE WHEN posr.validation_status = "approved" THEN 1 ELSE 0 END) as approved_count'),
+                        \DB::raw('SUM(CASE WHEN posr.validation_status = "pending" OR posr.validation_status IS NULL THEN 1 ELSE 0 END) as pending_count'),
+                        \DB::raw('SUM(CASE WHEN posr.validation_status = "awaiting_code" THEN 1 ELSE 0 END) as awaiting_count')
+                    )
+                    ->whereNotNull('posr.hmo_id')
+                    ->where('posr.hmo_id', '!=', 1)
+                    ->whereBetween('posr.created_at', [$startDate, $endDate])
+                    ->groupBy('h.id', 'h.name', 'hs.name', 'hs.code')
+                    ->orderByDesc('total_claims')
+                    ->get();
+
+                $formattedRows = $rows->map(function ($r) {
+                    $outstanding = $r->total_claims - $r->remitted;
+                    return [
+                        'action' => '<button class="btn btn-xs btn-outline-primary story-detail-btn font-weight-bold py-1 px-2" data-zone="hmo-nhis" data-story="hmo-claims-by-provider" data-key="' . e($r->hmo_id) . '"><i class="mdi mdi-eye"></i> Details</button>',
+                        'hmo' => '<div class="font-weight-bold text-dark"><i class="mdi mdi-shield-account text-primary"></i> ' . e($r->hmo_name) . '</div><span class="badge bg-info text-white mt-1">' . e($r->scheme_name) . ' (' . e($r->scheme_code) . ')</span>',
+                        'items' => '<span class="badge bg-light text-dark border">' . (int)$r->item_count . ' Items</span>',
+                        'validation' => '<span class="badge bg-success">' . (int)$r->approved_count . ' Appr</span> <span class="badge bg-warning text-dark">' . (int)$r->pending_count . ' Pend</span>' . ($r->awaiting_count > 0 ? ' <span class="badge bg-danger">' . (int)$r->awaiting_count . ' Await</span>' : ''),
+                        'claims' => '<span class="font-weight-bold text-success" style="font-size:1.05rem;">₦' . number_format($r->total_claims, 2) . '</span>',
+                        'payable' => '<span class="font-weight-bold text-primary">₦' . number_format($r->total_payable, 2) . '</span>',
+                        'remitted' => '<span class="font-weight-bold text-info">₦' . number_format($r->remitted, 2) . '</span>',
+                        'outstanding' => '<span class="font-weight-bold ' . ($outstanding > 0 ? 'text-danger' : 'text-success') . '" style="font-size:1.05rem;">₦' . number_format($outstanding, 2) . '</span>',
+                    ];
+                });
+
+                $totalClaims = $rows->sum('total_claims');
+                $totalRemitted = $rows->sum('remitted');
+                $cards = [
+                    ['label' => 'Total Claims Value', 'value' => '₦' . number_format($totalClaims, 2), 'class' => 'bg-primary text-white'],
+                    ['label' => 'Total Remitted', 'value' => '₦' . number_format($totalRemitted, 2), 'class' => 'bg-success text-white'],
+                    ['label' => 'Outstanding (Unremitted)', 'value' => '₦' . number_format($totalClaims - $totalRemitted, 2), 'class' => 'bg-danger text-white'],
+                    ['label' => 'HMO Providers', 'value' => $rows->count(), 'class' => 'bg-secondary text-white'],
+                ];
+                return response()->json(['cards' => $cards, 'rows' => $formattedRows->values(), 'headers' => ['Action', 'HMO & Scheme', 'Items', 'Validation', 'Claims ₦', 'Payable ₦', 'Remitted ₦', 'Outstanding ₦']]);
+
+            case 'validation-status-aging':
+                $rows = \DB::table('product_or_service_requests as posr')
+                    ->join('hmos as h', 'posr.hmo_id', '=', 'h.id')
+                    ->join('hmo_schemes as hs', 'h.hmo_scheme_id', '=', 'hs.id')
+                    ->select(
+                        \DB::raw('COALESCE(posr.validation_status, "pending") as validation_status'),
+                        \DB::raw('COUNT(posr.id) as item_count'),
+                        \DB::raw('SUM(CASE WHEN posr.claims_amount > 0 THEN posr.claims_amount ELSE posr.payable_amount END) as total_claims'),
+                        \DB::raw('SUM(posr.payable_amount) as total_payable'),
+                        \DB::raw('MIN(posr.created_at) as oldest_item')
+                    )
+                    ->whereNotNull('posr.hmo_id')
+                    ->where('posr.hmo_id', '!=', 1)
+                    ->whereBetween('posr.created_at', [$startDate, $endDate])
+                    ->groupByRaw('COALESCE(posr.validation_status, "pending")')
+                    ->get();
+
+                $statusConfig = ['approved' => ['bg-success', 'mdi-check-circle'], 'pending' => ['bg-warning text-dark', 'mdi-clock-outline'], 'awaiting_code' => ['bg-danger', 'mdi-alert-circle']];
+
+                $formattedRows = $rows->map(function ($r) use ($statusConfig) {
+                    $cfg = $statusConfig[$r->validation_status] ?? ['bg-secondary', 'mdi-help-circle'];
+                    return [
+                        'action' => '<button class="btn btn-xs btn-outline-primary story-detail-btn font-weight-bold py-1 px-2" data-zone="hmo-nhis" data-story="validation-status-aging" data-key="' . e($r->validation_status) . '"><i class="mdi mdi-eye"></i> Details</button>',
+                        'status' => '<span class="badge ' . $cfg[0] . ' px-2 py-1"><i class="mdi ' . $cfg[1] . '"></i> ' . ucfirst(str_replace('_', ' ', $r->validation_status)) . '</span>',
+                        'item_count' => '<span class="badge bg-light text-dark border font-weight-bold">' . number_format($r->item_count) . ' Items</span>',
+                        'total_claims' => '<span class="font-weight-bold text-dark" style="font-size:1.05rem;">₦' . number_format($r->total_claims, 2) . '</span>',
+                        'total_payable' => '<span class="font-weight-bold text-primary">₦' . number_format($r->total_payable, 2) . '</span>',
+                        'oldest_item' => '<small class="text-muted">' . \Carbon\Carbon::parse($r->oldest_item)->format('M d, Y') . '</small>',
+                    ];
+                });
+
+                $cards = [
+                    ['label' => 'Approved ₦', 'value' => '₦' . number_format($rows->firstWhere('validation_status', 'approved')?->total_claims ?? 0, 2), 'class' => 'bg-success text-white'],
+                    ['label' => 'Pending ₦', 'value' => '₦' . number_format($rows->firstWhere('validation_status', 'pending')?->total_claims ?? 0, 2), 'class' => 'bg-warning text-dark'],
+                    ['label' => 'Awaiting Code ₦ (At Risk)', 'value' => '₦' . number_format($rows->firstWhere('validation_status', 'awaiting_code')?->total_claims ?? 0, 2), 'class' => 'bg-danger text-white'],
+                    ['label' => 'Unresolved Count', 'value' => number_format($rows->whereIn('validation_status', ['pending', 'awaiting_code'])->sum('item_count')), 'class' => 'bg-secondary text-white'],
+                ];
+                return response()->json(['cards' => $cards, 'rows' => $formattedRows->values(), 'headers' => ['Action', 'Validation Status', 'Items', 'Claims ₦', 'Payable ₦', 'Oldest Item']]);
+
+            case 'scheme-breakdown':
+                // Groups by ALL hmo_schemes — no LIKE filter
+                $rows = \DB::table('product_or_service_requests as posr')
+                    ->join('hmos as h', 'posr.hmo_id', '=', 'h.id')
+                    ->join('hmo_schemes as hs', 'h.hmo_scheme_id', '=', 'hs.id')
+                    ->select(
+                        'hs.id as scheme_id',
+                        'hs.name as scheme_name',
+                        'hs.code as scheme_code',
+                        \DB::raw('COUNT(DISTINCT h.id) as hmo_count'),
+                        \DB::raw('COUNT(posr.id) as item_count'),
+                        \DB::raw('SUM(CASE WHEN posr.claims_amount > 0 THEN posr.claims_amount ELSE posr.payable_amount END) as total_claims'),
+                        \DB::raw('SUM(posr.payable_amount) as total_payable'),
+                        \DB::raw('SUM(CASE WHEN posr.hmo_remittance_id IS NOT NULL THEN CASE WHEN posr.claims_amount > 0 THEN posr.claims_amount ELSE posr.payable_amount END ELSE 0 END) as remitted'),
+                        \DB::raw('SUM(CASE WHEN posr.validation_status = "approved" THEN 1 ELSE 0 END) as approved_count'),
+                        \DB::raw('SUM(CASE WHEN posr.validation_status != "approved" OR posr.validation_status IS NULL THEN 1 ELSE 0 END) as unresolved_count')
+                    )
+                    ->whereNotNull('posr.hmo_id')
+                    ->where('posr.hmo_id', '!=', 1)
+                    ->whereBetween('posr.created_at', [$startDate, $endDate])
+                    ->groupBy('hs.id', 'hs.name', 'hs.code')
+                    ->orderByDesc('total_claims')
+                    ->get();
+
+                $formattedRows = $rows->map(function ($r) {
+                    $outstanding = $r->total_claims - $r->remitted;
+                    return [
+                        'action' => '<button class="btn btn-xs btn-outline-primary story-detail-btn font-weight-bold py-1 px-2" data-zone="hmo-nhis" data-story="scheme-breakdown" data-key="' . e($r->scheme_id) . '"><i class="mdi mdi-eye"></i> Details</button>',
+                        'scheme' => '<div class="font-weight-bold text-dark"><i class="mdi mdi-shield text-primary"></i> ' . e($r->scheme_name) . '</div><span class="badge bg-secondary text-white mt-1">' . e($r->scheme_code) . '</span>',
+                        'hmo_count' => '<span class="badge bg-light text-dark border">' . (int)$r->hmo_count . ' HMOs</span>',
+                        'item_count' => '<span class="badge bg-info text-white">' . number_format($r->item_count) . ' Items</span>',
+                        'claims' => '<span class="font-weight-bold text-success" style="font-size:1.05rem;">₦' . number_format($r->total_claims, 2) . '</span>',
+                        'payable' => '<span class="font-weight-bold text-primary">₦' . number_format($r->total_payable, 2) . '</span>',
+                        'remitted' => '<span class="font-weight-bold text-info">₦' . number_format($r->remitted, 2) . '</span>',
+                        'outstanding' => '<span class="font-weight-bold ' . ($outstanding > 0 ? 'text-danger' : 'text-success') . '" style="font-size:1.05rem;">₦' . number_format($outstanding, 2) . '</span>',
+                        'validation' => '<span class="badge bg-success">' . (int)$r->approved_count . '</span> / <span class="badge bg-warning text-dark">' . (int)$r->unresolved_count . '</span>',
+                    ];
+                });
+
+                $totalClaims = $rows->sum('total_claims');
+                $cards = [
+                    ['label' => 'Total Across All Schemes', 'value' => '₦' . number_format($totalClaims, 2), 'class' => 'bg-primary text-white'],
+                    ['label' => 'Total Remitted', 'value' => '₦' . number_format($rows->sum('remitted'), 2), 'class' => 'bg-success text-white'],
+                    ['label' => 'Outstanding ₦', 'value' => '₦' . number_format($totalClaims - $rows->sum('remitted'), 2), 'class' => 'bg-danger text-white'],
+                    ['label' => 'Schemes Active', 'value' => $rows->count(), 'class' => 'bg-secondary text-white'],
+                ];
+                return response()->json(['cards' => $cards, 'rows' => $formattedRows->values(), 'headers' => ['Action', 'Scheme', 'HMO Providers', 'Items', 'Claims ₦', 'Payable ₦', 'Remitted ₦', 'Outstanding ₦', 'Appr / Unresolved']]);
+
+            case 'coverage-mode-analysis':
+                $rows = \DB::table('product_or_service_requests as posr')
+                    ->join('hmos as h', 'posr.hmo_id', '=', 'h.id')
+                    ->join('hmo_schemes as hs', 'h.hmo_scheme_id', '=', 'hs.id')
+                    ->select(
+                        \DB::raw('COALESCE(posr.coverage_mode, "none") as coverage_mode'),
+                        \DB::raw('COUNT(posr.id) as item_count'),
+                        \DB::raw('SUM(CASE WHEN posr.claims_amount > 0 THEN posr.claims_amount ELSE 0 END) as total_claims'),
+                        \DB::raw('SUM(posr.payable_amount) as total_payable')
+                    )
+                    ->whereNotNull('posr.hmo_id')
+                    ->whereBetween('posr.created_at', [$startDate, $endDate])
+                    ->groupByRaw('COALESCE(posr.coverage_mode, "none")')
+                    ->get();
+
+                $modeConfig = ['primary' => 'bg-primary text-white', 'secondary' => 'bg-purple text-white', 'express' => 'bg-warning text-dark', 'none' => 'bg-secondary text-white'];
+
+                $formattedRows = $rows->map(fn($r) => [
+                    'action' => '<button class="btn btn-xs btn-outline-primary story-detail-btn font-weight-bold py-1 px-2" data-zone="hmo-nhis" data-story="coverage-mode-analysis" data-key="' . e($r->coverage_mode) . '"><i class="mdi mdi-eye"></i> Details</button>',
+                    'mode' => '<span class="badge ' . ($modeConfig[$r->coverage_mode] ?? 'bg-secondary text-white') . ' px-2 py-1">' . ucfirst($r->coverage_mode) . '</span>',
+                    'items' => '<span class="badge bg-light text-dark border font-weight-bold">' . number_format($r->item_count) . ' Items</span>',
+                    'claims' => '<span class="font-weight-bold text-success">₦' . number_format($r->total_claims, 2) . '</span>',
+                    'payable' => '<span class="font-weight-bold text-primary">₦' . number_format($r->total_payable, 2) . '</span>',
+                ]);
+
+                $cards = [
+                    ['label' => 'Primary Coverage ₦', 'value' => '₦' . number_format($rows->firstWhere('coverage_mode', 'primary')?->total_claims ?? 0, 2), 'class' => 'bg-primary text-white'],
+                    ['label' => 'Secondary Coverage ₦', 'value' => '₦' . number_format($rows->firstWhere('coverage_mode', 'secondary')?->total_claims ?? 0, 2), 'class' => 'bg-info text-white'],
+                    ['label' => 'Express Coverage ₦', 'value' => '₦' . number_format($rows->firstWhere('coverage_mode', 'express')?->total_claims ?? 0, 2), 'class' => 'bg-warning text-dark'],
+                    ['label' => 'Cash / None ₦', 'value' => '₦' . number_format($rows->firstWhere('coverage_mode', 'none')?->total_payable ?? 0, 2), 'class' => 'bg-secondary text-white'],
+                ];
+                return response()->json(['cards' => $cards, 'rows' => $formattedRows->values(), 'headers' => ['Action', 'Coverage Mode', 'Items', 'Claims ₦', 'Payable ₦']]);
+
+            case 'remittance-vs-claims-matching':
+                $rows = \App\Models\HmoRemittance::with(['hmo.scheme', 'bank', 'claims'])
+                    ->whereBetween('payment_date', [$startDate, $endDate])
+                    ->get();
+
+                $formattedRows = $rows->map(function ($r) {
+                    // Domain logic from HmoReportsController: sum claims_amount linked to hmo_remittance_id
+                    $linkedClaims = $r->claims->sum(fn($c) => $c->claims_amount > 0 ? $c->claims_amount : $c->payable_amount);
+                    $variance = $r->amount - $linkedClaims;
+                    $hmoName = $r->hmo?->name ?? 'Unknown HMO';
+                    $schemeName = $r->hmo?->scheme?->name ?? 'Standard Scheme';
+                    $schemeCode = $r->hmo?->scheme?->code ? (' (' . $r->hmo->scheme->code . ')') : '';
+
+                    return [
+                        'action' => '<button class="btn btn-xs btn-outline-primary story-detail-btn font-weight-bold py-1 px-2" data-zone="hmo-nhis" data-story="remittance-vs-claims-matching" data-key="' . e($r->id) . '"><i class="mdi mdi-eye"></i> Details</button>',
+                        'hmo' => '<div class="font-weight-bold text-dark"><i class="mdi mdi-shield-account text-primary"></i> ' . e($hmoName) . '</div><span class="badge bg-info text-white mt-1">' . e($schemeName) . e($schemeCode) . '</span>',
+                        'remittance' => '<span class="font-weight-bold text-success" style="font-size:1.05rem;">₦' . number_format($r->amount, 2) . '</span>',
+                        'period' => '<small class="text-muted">' . ($r->period_from ? \Carbon\Carbon::parse($r->period_from)->format('M d') : 'N/A') . ' — ' . ($r->period_to ? \Carbon\Carbon::parse($r->period_to)->format('M d, Y') : 'N/A') . '</small>',
+                        'bank' => '<span class="badge bg-light text-dark border"><i class="mdi mdi-bank"></i> ' . e($r->bank?->name ?? $r->bank_name ?? 'N/A') . '</span>',
+                        'linked_claims' => '<span class="font-weight-bold ' . ($linkedClaims > 0 ? 'text-primary' : 'text-muted') . '">₦' . number_format($linkedClaims, 2) . '</span>' . ($linkedClaims == 0 ? ' <span class="badge bg-warning text-dark ms-1" style="font-size:0.75rem;">Unlinked</span>' : ''),
+                        'variance' => '<span class="font-weight-bold ' . (abs($variance) < 1 ? 'text-success' : 'text-danger') . '">₦' . number_format($variance, 2) . '</span>',
+                        'ref' => '<small class="text-muted">' . e($r->reference_number ?? 'N/A') . '</small>',
+                    ];
+                });
+
+                $totalRemitted = $rows->sum('amount');
+                $cards = [
+                    ['label' => 'Total Remittances', 'value' => $rows->count(), 'class' => 'bg-primary text-white'],
+                    ['label' => 'Total Remitted ₦', 'value' => '₦' . number_format($totalRemitted, 2), 'class' => 'bg-success text-white'],
+                    ['label' => 'HMOs Remitted', 'value' => $rows->pluck('hmo_id')->unique()->count(), 'class' => 'bg-info text-white'],
+                ];
+                return response()->json(['cards' => $cards, 'rows' => $formattedRows->values(), 'headers' => ['Action', 'HMO & Scheme', 'Remittance ₦', 'Period', 'Bank', 'Linked Claims ₦', 'Variance ₦', 'Reference']]);
+
+            default:
+                return response()->json(['error' => 'Unknown story: ' . $story], 404);
+        }
+    }
+
+    // =====================================================================
+    // PAGE 9 — SERVICE REGISTERS vs BILLING — Story Data
+    // =====================================================================
+    public function serviceRegistersStoryData(Request $request, $story)
+    {
+        if (in_array($story, ['clinical-services', 'billed-services', 'procedures', 'maternity'])) {
+            return $this->serviceRegistersBillingData($request, $story);
+        }
+
+        [$startDate, $endDate] = $this->parseAuditPeriod($request);
+
+        switch ($story) {
+
+            case 'service-category-revenue':
+                $rows = \DB::table('product_or_service_requests as posr')
+                    ->join('services as sv', 'posr.service_id', '=', 'sv.id')
+                    ->leftJoin('service_categories as sc', 'sv.category_id', '=', 'sc.id')
+                    ->select(
+                        'sc.id as category_id',
+                        'sc.category_name',
+                        \DB::raw('COUNT(posr.id) as item_count'),
+                        \DB::raw('COUNT(DISTINCT posr.service_id) as unique_services'),
+                        \DB::raw('SUM(posr.payable_amount) as total_revenue'),
+                        \DB::raw('SUM(CASE WHEN posr.claims_amount > 0 THEN posr.claims_amount ELSE 0 END) as total_claims'),
+                        \DB::raw('SUM(CASE WHEN posr.validation_status = "approved" THEN 1 ELSE 0 END) as approved_count'),
+                        \DB::raw('SUM(CASE WHEN posr.validation_status = "pending" OR posr.validation_status IS NULL THEN 1 ELSE 0 END) as pending_count')
+                    )
+                    ->whereNotNull('posr.service_id')
+                    ->whereBetween('posr.created_at', [$startDate, $endDate])
+                    ->groupBy('sc.id', 'sc.category_name')
+                    ->orderByDesc('total_revenue')
+                    ->get();
+
+                $formattedRows = $rows->map(fn($r) => [
+                    'action' => '<button class="btn btn-xs btn-outline-primary story-detail-btn font-weight-bold py-1 px-2" data-zone="service-registers" data-story="service-category-revenue" data-key="' . e($r->category_id) . '"><i class="mdi mdi-eye"></i> Details</button>',
+                    'category' => '<div class="font-weight-bold text-dark"><i class="mdi mdi-medical-bag text-primary"></i> ' . e($r->category_name ?? 'Uncategorised') . '</div><small class="text-muted">' . (int)$r->unique_services . ' unique services</small>',
+                    'items' => '<span class="badge bg-light text-dark border font-weight-bold">' . number_format($r->item_count) . ' Billings</span>',
+                    'revenue' => '<span class="font-weight-bold text-success" style="font-size:1.05rem;">₦' . number_format($r->total_revenue, 2) . '</span>',
+                    'claims' => '<span class="font-weight-bold text-info">₦' . number_format($r->total_claims, 2) . '</span>',
+                    'validation' => '<span class="badge bg-success">' . (int)$r->approved_count . ' Appr</span> <span class="badge bg-warning text-dark">' . (int)$r->pending_count . ' Pend</span>',
+                ]);
+
+                $cards = [
+                    ['label' => 'Top Service Category', 'value' => $rows->first()?->category_name ?? 'N/A', 'class' => 'bg-primary text-white'],
+                    ['label' => 'Total Service Revenue', 'value' => '₦' . number_format($rows->sum('total_revenue'), 2), 'class' => 'bg-success text-white'],
+                    ['label' => 'Total HMO Claims', 'value' => '₦' . number_format($rows->sum('total_claims'), 2), 'class' => 'bg-info text-white'],
+                    ['label' => 'Unique Categories', 'value' => $rows->count(), 'class' => 'bg-secondary text-white'],
+                ];
+                return response()->json(['cards' => $cards, 'rows' => $formattedRows->values(), 'headers' => ['Action', 'Service Category', 'Billings', 'Revenue ₦', 'HMO Claims ₦', 'Validation']]);
+
+            case 'doctor-referral-billing':
+                $rows = \DB::table('product_or_service_requests as posr')
+                    ->join('encounters as e', 'posr.encounter_id', '=', 'e.id')
+                    ->join('users as u', 'e.doctor_id', '=', 'u.id')
+                    ->select(
+                        'e.doctor_id',
+                        \DB::raw("CONCAT_WS(' ', u.firstname, u.surname) as doctor_name"),
+                        \DB::raw('COUNT(DISTINCT posr.encounter_id) as encounter_count'),
+                        \DB::raw('COUNT(posr.id) as service_count'),
+                        \DB::raw('SUM(posr.payable_amount) as total_billed'),
+                        \DB::raw('SUM(CASE WHEN posr.claims_amount > 0 THEN posr.claims_amount ELSE 0 END) as hmo_claims')
+                    )
+                    ->whereNotNull('posr.encounter_id')
+                    ->whereBetween('posr.created_at', [$startDate, $endDate])
+                    ->groupBy('e.doctor_id', 'u.firstname', 'u.surname')
+                    ->orderByDesc('total_billed')
+                    ->get();
+
+                $formattedRows = $rows->map(function ($r) {
+                    $avg = $r->encounter_count > 0 ? round($r->total_billed / $r->encounter_count, 2) : 0;
+                    return [
+                        'action' => '<button class="btn btn-xs btn-outline-primary story-detail-btn font-weight-bold py-1 px-2" data-zone="service-registers" data-story="doctor-referral-billing" data-key="' . e($r->doctor_id) . '"><i class="mdi mdi-eye"></i> Details</button>',
+                        'doctor' => '<div class="font-weight-bold text-dark"><i class="mdi mdi-doctor text-primary"></i> Dr. ' . e($r->doctor_name ?? 'Doctor') . '</div>',
+                        'encounters' => '<span class="badge bg-light text-dark border">' . (int)$r->encounter_count . ' Encounters</span>',
+                        'services' => '<span class="badge bg-info text-white">' . (int)$r->service_count . ' Services</span>',
+                        'total_billed' => '<span class="font-weight-bold text-success" style="font-size:1.05rem;">₦' . number_format($r->total_billed, 2) . '</span>',
+                        'hmo_claims' => '<span class="font-weight-bold text-info">₦' . number_format($r->hmo_claims, 2) . '</span>',
+                        'avg_per_encounter' => '<span class="text-muted font-weight-bold">₦' . number_format($avg, 2) . '</span>',
+                    ];
+                });
+
+                $cards = [
+                    ['label' => 'Top Billing Doctor', 'value' => $rows->first()?->doctor_name ?? 'N/A', 'class' => 'bg-primary text-white'],
+                    ['label' => 'Total Revenue Linked', 'value' => '₦' . number_format($rows->sum('total_billed'), 2), 'class' => 'bg-success text-white'],
+                    ['label' => 'Total HMO Claims', 'value' => '₦' . number_format($rows->sum('hmo_claims'), 2), 'class' => 'bg-info text-white'],
+                    ['label' => 'Avg Per Encounter', 'value' => '₦' . number_format($rows->sum('encounter_count') > 0 ? $rows->sum('total_billed') / $rows->sum('encounter_count') : 0, 2), 'class' => 'bg-secondary text-white'],
+                ];
+                return response()->json(['cards' => $cards, 'rows' => $formattedRows->values(), 'headers' => ['Action', 'Doctor', 'Encounters', 'Services', 'Total Billed ₦', 'HMO Claims ₦', 'Avg / Encounter']]);
+
+            case 'service-vs-hmo-compliance':
+                $rows = \DB::table('product_or_service_requests as posr')
+                    ->join('services as sv', 'posr.service_id', '=', 'sv.id')
+                    ->join('hmos as h', 'posr.hmo_id', '=', 'h.id')
+                    ->join('hmo_schemes as hs', 'h.hmo_scheme_id', '=', 'hs.id')
+                    ->select(
+                        'posr.service_id',
+                        'sv.service_name',
+                        \DB::raw('COALESCE(posr.validation_status, "pending") as validation_status'),
+                        'hs.name as scheme_name',
+                        'hs.code as scheme_code',
+                        \DB::raw('COUNT(posr.id) as item_count'),
+                        \DB::raw('SUM(CASE WHEN posr.claims_amount > 0 THEN posr.claims_amount ELSE posr.payable_amount END) as total_claims')
+                    )
+                    ->whereNotNull('posr.service_id')
+                    ->whereNotNull('posr.hmo_id')
+                    ->where('posr.hmo_id', '!=', 1)
+                    ->whereBetween('posr.created_at', [$startDate, $endDate])
+                    ->groupBy('posr.service_id', 'sv.service_name', 'validation_status', 'hs.name', 'hs.code')
+                    ->orderByDesc('total_claims')
+                    ->get();
+
+                $formattedRows = $rows->map(fn($r) => [
+                    'action' => '<button class="btn btn-xs btn-outline-primary story-detail-btn font-weight-bold py-1 px-2" data-zone="service-registers" data-story="service-vs-hmo-compliance" data-key="' . e($r->service_id) . '"><i class="mdi mdi-eye"></i> Details</button>',
+                    'service' => '<div class="font-weight-bold text-dark">' . e($r->service_name) . '</div><span class="badge bg-info text-white mt-1">' . e($r->scheme_name) . ' (' . e($r->scheme_code) . ')</span>',
+                    'status' => '<span class="badge ' . ($r->validation_status === 'approved' ? 'bg-success' : ($r->validation_status === 'awaiting_code' ? 'bg-danger' : 'bg-warning text-dark')) . '">' . ucfirst(str_replace('_', ' ', $r->validation_status)) . '</span>',
+                    'items' => '<span class="badge bg-light text-dark border">' . (int)$r->item_count . ' Items</span>',
+                    'claims' => '<span class="font-weight-bold ' . ($r->validation_status === 'awaiting_code' ? 'text-danger' : 'text-success') . '">₦' . number_format($r->total_claims, 2) . '</span>',
+                ]);
+
+                $awaitingRisk = $rows->where('validation_status', 'awaiting_code')->sum('total_claims');
+                $cards = [
+                    ['label' => 'Approved ₦', 'value' => '₦' . number_format($rows->where('validation_status', 'approved')->sum('total_claims'), 2), 'class' => 'bg-success text-white'],
+                    ['label' => 'Pending ₦', 'value' => '₦' . number_format($rows->where('validation_status', 'pending')->sum('total_claims'), 2), 'class' => 'bg-warning text-dark'],
+                    ['label' => 'Awaiting Code ₦ (At Risk)', 'value' => '₦' . number_format($awaitingRisk, 2), 'class' => 'bg-danger text-white'],
+                    ['label' => 'Services Checked', 'value' => $rows->pluck('service_id')->unique()->count(), 'class' => 'bg-primary text-white'],
+                ];
+                return response()->json(['cards' => $cards, 'rows' => $formattedRows->values(), 'headers' => ['Action', 'Service & Scheme', 'Validation Status', 'Items', 'Claims ₦']]);
+
+            case 'unbilled-encounters':
+                $rows = \DB::table('encounters as e')
+                    ->leftJoin('product_or_service_requests as posr', 'e.id', '=', 'posr.encounter_id')
+                    ->leftJoin('patients as pat', 'e.patient_id', '=', 'pat.id')
+                    ->leftJoin('users as pu', 'pat.user_id', '=', 'pu.id')
+                    ->leftJoin('users as du', 'e.doctor_id', '=', 'du.id')
+                    ->select(
+                        'e.id as encounter_id',
+                        'e.created_at as encounter_date',
+                        \DB::raw("CONCAT_WS(' ', pu.firstname, pu.surname) as patient_name"),
+                        'pat.file_no',
+                        \DB::raw("CONCAT_WS(' ', du.firstname, du.surname) as doctor_name")
+                    )
+                    ->whereNull('posr.id')
+                    ->whereBetween('e.created_at', [$startDate, $endDate])
+                    ->groupBy('e.id', 'e.created_at', 'pu.firstname', 'pu.surname', 'pat.file_no', 'du.firstname', 'du.surname')
+                    ->orderBy('e.created_at', 'desc')
+                    ->get();
+
+                $totalEncounters = \DB::table('encounters')->whereBetween('created_at', [$startDate, $endDate])->count();
+                $avgRevenuePerEncounter = \DB::table('product_or_service_requests')->whereBetween('created_at', [$startDate, $endDate])->whereNotNull('encounter_id')->avg('payable_amount') ?? 0;
+
+                $formattedRows = $rows->map(fn($r) => [
+                    'action' => '<button class="btn btn-xs btn-outline-primary story-detail-btn font-weight-bold py-1 px-2" data-zone="service-registers" data-story="unbilled-encounters" data-key="' . e($r->encounter_id) . '"><i class="mdi mdi-eye"></i> Details</button>',
+                    'date' => '<div class="font-weight-bold">' . \Carbon\Carbon::parse($r->encounter_date)->format('M d, Y') . '</div><small class="text-muted">' . \Carbon\Carbon::parse($r->encounter_date)->format('h:i A') . '</small>',
+                    'patient' => '<div class="font-weight-bold text-dark"><i class="mdi mdi-account"></i> ' . e($r->patient_name ?? 'Patient') . '</div><small class="text-muted">File: ' . e($r->file_no ?? 'N/A') . '</small>',
+                    'doctor' => '<div class="font-weight-bold text-dark">Dr. ' . e($r->doctor_name ?? 'Doctor') . '</div>',
+                    'status' => '<span class="badge bg-danger"><i class="mdi mdi-alert-circle"></i> No Billing</span>',
+                ]);
+
+                $cards = [
+                    ['label' => 'Unbilled Encounters', 'value' => $rows->count(), 'class' => 'bg-danger text-white'],
+                    ['label' => 'Total Encounters in Period', 'value' => $totalEncounters, 'class' => 'bg-primary text-white'],
+                    ['label' => 'Unbilled %', 'value' => $totalEncounters > 0 ? round(($rows->count() / $totalEncounters) * 100, 1) . '%' : '0%', 'class' => 'bg-warning text-dark'],
+                    ['label' => 'Est. Revenue Gap ₦', 'value' => '₦' . number_format($rows->count() * $avgRevenuePerEncounter, 2), 'class' => 'bg-secondary text-white'],
+                ];
+                return response()->json(['cards' => $cards, 'rows' => $formattedRows->values(), 'headers' => ['Action', 'Encounter Date', 'Patient', 'Doctor', 'Status']]);
+
+            case 'procedure-billing-audit':
+                $rows = \DB::table('procedures as pr')
+                    ->leftJoin('product_or_service_requests as posr', 'pr.product_or_service_request_id', '=', 'posr.id')
+                    ->leftJoin('patients as pat', 'pr.patient_id', '=', 'pat.id')
+                    ->leftJoin('users as pu', 'pat.user_id', '=', 'pu.id')
+                    ->leftJoin('procedure_definitions as pd', 'pr.procedure_definition_id', '=', 'pd.id')
+                    ->leftJoin('procedure_categories as pc', 'pd.procedure_category_id', '=', 'pc.id')
+                    ->select(
+                        'pc.id as category_id',
+                        'pc.name as category_name',
+                        \DB::raw('COUNT(pr.id) as procedure_count'),
+                        \DB::raw('SUM(CASE WHEN pr.procedure_status = "completed" THEN 1 ELSE 0 END) as completed_count'),
+                        \DB::raw('SUM(CASE WHEN posr.payment_id IS NULL AND pr.procedure_status = "completed" THEN 1 ELSE 0 END) as unbilled_completed'),
+                        \DB::raw('SUM(CASE WHEN posr.payment_id IS NULL AND pr.procedure_status = "completed" THEN COALESCE(posr.payable_amount, 0) ELSE 0 END) as unbilled_value')
+                    )
+                    ->whereBetween('pr.created_at', [$startDate, $endDate])
+                    ->groupBy('pc.id', 'pc.name')
+                    ->orderByDesc('unbilled_completed')
+                    ->get();
+
+                $formattedRows = $rows->map(fn($r) => [
+                    'action' => '<button class="btn btn-xs btn-outline-primary story-detail-btn font-weight-bold py-1 px-2" data-zone="service-registers" data-story="procedure-billing-audit" data-key="' . e($r->category_id) . '"><i class="mdi mdi-eye"></i> Details</button>',
+                    'category' => '<div class="font-weight-bold text-dark"><i class="mdi mdi-surgery text-primary"></i> ' . e($r->category_name ?? 'Uncategorised') . '</div>',
+                    'total' => '<span class="badge bg-light text-dark border">' . (int)$r->procedure_count . ' Total</span>',
+                    'completed' => '<span class="badge bg-success">' . (int)$r->completed_count . ' Completed</span>',
+                    'unbilled' => '<span class="badge ' . ($r->unbilled_completed > 0 ? 'bg-danger' : 'bg-success') . ' font-weight-bold">' . (int)$r->unbilled_completed . ' Unbilled</span>',
+                    'gap_value' => '<span class="font-weight-bold ' . ($r->unbilled_value > 0 ? 'text-danger' : 'text-success') . '">₦' . number_format($r->unbilled_value, 2) . '</span>',
+                ]);
+
+                $cards = [
+                    ['label' => 'Total Procedures', 'value' => $rows->sum('procedure_count'), 'class' => 'bg-primary text-white'],
+                    ['label' => 'Completed', 'value' => $rows->sum('completed_count'), 'class' => 'bg-success text-white'],
+                    ['label' => 'Completed but Unbilled', 'value' => $rows->sum('unbilled_completed'), 'class' => 'bg-danger text-white'],
+                    ['label' => 'Unbilled Revenue Gap ₦', 'value' => '₦' . number_format($rows->sum('unbilled_value'), 2), 'class' => 'bg-warning text-dark'],
+                ];
+                return response()->json(['cards' => $cards, 'rows' => $formattedRows->values(), 'headers' => ['Action', 'Procedure Category', 'Total', 'Completed', 'Unbilled', 'Revenue Gap ₦']]);
+
+            default:
+                return response()->json(['error' => 'Unknown story: ' . $story], 404);
+        }
+    }
+
+    // =====================================================================
+    // PAGE 10 — PHARMACY & MORTUARY — Story Data
+    // =====================================================================
+    public function pharmacyMortuaryStoryData(Request $request, $story)
+    {
+        if (in_array($story, ['pharmacy-dispense', 'ward-direct-billing', 'mortuary'])) {
+            return $this->pharmacyMortuaryData($request, $story);
+        }
+
+        [$startDate, $endDate] = $this->parseAuditPeriod($request);
+
+        switch ($story) {
+
+            case 'dispenser-performance':
+                $rows = \DB::table('product_requests as pr')
+                    ->join('users as u', 'pr.dispensed_by', '=', 'u.id')
+                    ->select(
+                        'pr.dispensed_by',
+                        \DB::raw("CONCAT_WS(' ', u.firstname, u.surname) as dispenser_name"),
+                        \DB::raw('COUNT(pr.id) as dispense_count'),
+                        \DB::raw('SUM(pr.qty) as total_qty'),
+                        \DB::raw('SUM(CASE WHEN (pr.is_adapted = 1 OR pr.adapted_from_product_id IS NOT NULL) THEN 1 ELSE 0 END) as adapted_count'),
+                        \DB::raw('SUM(CASE WHEN pr.qty_adjusted_from IS NOT NULL THEN 1 ELSE 0 END) as qty_adjusted_count'),
+                        \DB::raw('SUM(CASE WHEN pr.returned_qty > 0 THEN 1 ELSE 0 END) as return_count')
+                    )
+                    ->whereNotNull('pr.dispensed_by')
+                    ->whereNull('pr.deleted_at')
+                    ->whereBetween('pr.created_at', [$startDate, $endDate])
+                    ->groupBy('pr.dispensed_by', 'u.firstname', 'u.surname')
+                    ->orderByDesc('dispense_count')
+                    ->get();
+
+                $formattedRows = $rows->map(function ($r) {
+                    $adaptRate = $r->dispense_count > 0 ? round(($r->adapted_count / $r->dispense_count) * 100, 1) : 0;
+                    return [
+                        'action' => '<button class="btn btn-xs btn-outline-primary story-detail-btn font-weight-bold py-1 px-2" data-zone="pharmacy-mortuary" data-story="dispenser-performance" data-key="' . e($r->dispensed_by) . '"><i class="mdi mdi-eye"></i> Details</button>',
+                        'pharmacist' => '<div class="font-weight-bold text-dark"><i class="mdi mdi-account-tie text-primary"></i> ' . e($r->dispenser_name) . '</div>',
+                        'dispenses' => '<span class="badge bg-success font-weight-bold">' . number_format($r->dispense_count) . ' Dispenses</span>',
+                        'qty' => '<span class="badge bg-info text-white">' . number_format($r->total_qty) . ' Units</span>',
+                        'adapted' => '<span class="badge ' . ($r->adapted_count > 0 ? 'bg-warning text-dark' : 'bg-light text-dark border') . '">' . (int)$r->adapted_count . ' Adapted</span>',
+                        'adjusted' => '<span class="badge ' . ($r->qty_adjusted_count > 0 ? 'bg-info text-white' : 'bg-light text-dark border') . '">' . (int)$r->qty_adjusted_count . ' Qty-Adj</span>',
+                        'returns' => '<span class="badge ' . ($r->return_count > 0 ? 'bg-danger' : 'bg-light text-dark border') . '">' . (int)$r->return_count . ' Returns</span>',
+                        'adapt_rate' => '<span class="font-weight-bold ' . ($adaptRate > 5 ? 'text-warning' : 'text-success') . '">' . $adaptRate . '%</span>',
+                    ];
+                });
+
+                $cards = [
+                    ['label' => 'Active Dispensers', 'value' => $rows->count(), 'class' => 'bg-primary text-white'],
+                    ['label' => 'Total Dispenses', 'value' => number_format($rows->sum('dispense_count')), 'class' => 'bg-success text-white'],
+                    ['label' => 'Total Adaptations', 'value' => number_format($rows->sum('adapted_count')), 'class' => 'bg-warning text-dark'],
+                    ['label' => 'Total Returns', 'value' => number_format($rows->sum('return_count')), 'class' => 'bg-danger text-white'],
+                ];
+                return response()->json(['cards' => $cards, 'rows' => $formattedRows->values(), 'headers' => ['Action', 'Pharmacist', 'Dispenses', 'Total Qty', 'Adapted', 'Qty-Adjusted', 'Returns', 'Adapt Rate']]);
+
+            case 'prescription-adaptation-audit':
+                $rows = \DB::table('product_requests as pr')
+                    ->join('products as orig', 'pr.adapted_from_product_id', '=', 'orig.id')
+                    ->join('products as sub', 'pr.product_id', '=', 'sub.id')
+                    ->leftJoin('product_categories as pc', 'sub.category_id', '=', 'pc.id')
+                    ->leftJoin('users as u', 'pr.adapted_by', '=', 'u.id')
+                    ->select(
+                        'pr.adapted_from_product_id',
+                        'orig.product_name as original_drug',
+                        'pr.product_id as substituted_id',
+                        'sub.product_name as substituted_drug',
+                        'pc.category_name',
+                        \DB::raw('COUNT(pr.id) as adaptation_count'),
+                        \DB::raw("CONCAT_WS(' ', u.firstname, u.surname) as most_recent_pharmacist")
+                    )
+                    ->where(function($q) {
+                        $q->where('pr.is_adapted', 1)
+                          ->orWhereNotNull('pr.adapted_from_product_id');
+                    })
+                    ->whereNull('pr.deleted_at')
+                    ->whereBetween('pr.created_at', [$startDate, $endDate])
+                    ->groupBy('pr.adapted_from_product_id', 'orig.product_name', 'pr.product_id', 'sub.product_name', 'pc.category_name', 'u.firstname', 'u.surname')
+                    ->orderByDesc('adaptation_count')
+                    ->get();
+
+                $formattedRows = $rows->map(fn($r) => [
+                    'action' => '<button class="btn btn-xs btn-outline-primary story-detail-btn font-weight-bold py-1 px-2" data-zone="pharmacy-mortuary" data-story="prescription-adaptation-audit" data-key="' . e($r->adapted_from_product_id) . '"><i class="mdi mdi-eye"></i> Details</button>',
+                    'original' => '<div class="font-weight-bold text-danger"><i class="mdi mdi-close-circle text-danger"></i> ' . e($r->original_drug) . '</div>',
+                    'substituted' => '<div class="font-weight-bold text-success"><i class="mdi mdi-check-circle text-success"></i> ' . e($r->substituted_drug) . '</div><small class="text-muted">' . e($r->category_name ?? 'N/A') . '</small>',
+                    'count' => '<span class="badge bg-warning text-dark font-weight-bold px-2 py-1">' . (int)$r->adaptation_count . 'x Adapted</span>',
+                    'pharmacist' => '<small class="text-muted">' . e($r->most_recent_pharmacist ?? 'N/A') . '</small>',
+                ]);
+
+                $cards = [
+                    ['label' => 'Total Adaptations', 'value' => $rows->sum('adaptation_count'), 'class' => 'bg-warning text-dark'],
+                    ['label' => 'Unique Drugs Substituted', 'value' => $rows->pluck('substituted_id')->unique()->count(), 'class' => 'bg-primary text-white'],
+                    ['label' => 'Most Substituted Drug', 'value' => $rows->first()?->original_drug ?? 'N/A', 'class' => 'bg-danger text-white'],
+                    ['label' => 'Original Drugs Involved', 'value' => $rows->pluck('adapted_from_product_id')->unique()->count(), 'class' => 'bg-secondary text-white'],
+                ];
+                return response()->json(['cards' => $cards, 'rows' => $formattedRows->values(), 'headers' => ['Action', 'Original Drug', 'Substituted With', 'Adaptation Count', 'Pharmacist']]);
+
+            case 'ward-consumable-billing-kit':
+                $rows = \DB::table('stock_utilizations as su')
+                    ->join('products as p', 'su.product_id', '=', 'p.id')
+                    ->leftJoin('product_categories as pc', 'p.category_id', '=', 'pc.id')
+                    ->join('stores as s', 'su.store_id', '=', 's.id')
+                    ->leftJoin('prices as pp', 'p.id', '=', 'pp.product_id')
+                    ->leftJoin('patients as pat', 'su.patient_id', '=', 'pat.id')
+                    ->leftJoin('users as pu', 'pat.user_id', '=', 'pu.id')
+                    ->select(
+                        'su.store_id',
+                        's.store_name',
+                        's.distribution_role',
+                        'su.product_id',
+                        'p.product_name',
+                        'pc.category_name',
+                        \DB::raw('SUM(su.qty) as total_consumed'),
+                        \DB::raw('SUM(CASE WHEN su.is_billed = 1 THEN su.qty ELSE 0 END) as billed_qty'),
+                        \DB::raw('SUM(CASE WHEN su.is_billed = 0 OR su.is_billed IS NULL THEN su.qty ELSE 0 END) as unbilled_qty'),
+                        \DB::raw('COALESCE(pp.current_sale_price, 0) as sell_price')
+                    )
+                    ->whereBetween('su.created_at', [$startDate, $endDate])
+                    ->groupBy('su.store_id', 's.store_name', 's.distribution_role', 'su.product_id', 'p.product_name', 'pc.category_name', 'pp.current_sale_price')
+                    ->orderByDesc('total_consumed')
+                    ->get();
+
+                $roleLabels = \App\Models\Store::ROLE_LABELS;
+                $formattedRows = $rows->map(function ($r) use ($roleLabels) {
+                    $gapValue = round($r->unbilled_qty * $r->sell_price, 2);
+                    return [
+                        'action' => '<button class="btn btn-xs btn-outline-primary story-detail-btn font-weight-bold py-1 px-2" data-zone="pharmacy-mortuary" data-story="ward-consumable-billing-kit" data-key="' . e($r->store_id) . '"><i class="mdi mdi-eye"></i> Details</button>',
+                        'store_product' => '<div class="font-weight-bold text-dark">' . e($r->product_name) . '</div><small class="text-muted"><i class="mdi mdi-store"></i> ' . e($r->store_name) . ' <span class="badge bg-light text-dark border">' . e($roleLabels[$r->distribution_role] ?? $r->distribution_role) . '</span></small>',
+                        'category' => '<span class="badge bg-info text-white">' . e($r->category_name ?? 'N/A') . '</span>',
+                        'consumed' => '<span class="badge bg-primary text-white font-weight-bold">' . number_format($r->total_consumed) . ' Units</span>',
+                        'billed' => '<span class="badge bg-success">' . number_format($r->billed_qty) . ' Billed</span>',
+                        'unbilled' => '<span class="badge ' . ($r->unbilled_qty > 0 ? 'bg-danger' : 'bg-success') . ' font-weight-bold">' . number_format($r->unbilled_qty) . ' Unbilled</span>',
+                        'gap_value' => '<span class="font-weight-bold ' . ($gapValue > 0 ? 'text-danger' : 'text-success') . '">₦' . number_format($gapValue, 2) . '</span>',
+                    ];
+                });
+
+                $cards = [
+                    ['label' => 'Total Consumed Qty', 'value' => number_format($rows->sum('total_consumed')), 'class' => 'bg-primary text-white'],
+                    ['label' => 'Billed Consumables ₦', 'value' => '₦' . number_format($rows->sum(fn($r) => $r->billed_qty * $r->sell_price), 2), 'class' => 'bg-success text-white'],
+                    ['label' => 'Unbilled Qty', 'value' => number_format($rows->sum('unbilled_qty')), 'class' => 'bg-danger text-white'],
+                    ['label' => 'Unbilled Revenue Gap ₦', 'value' => '₦' . number_format($rows->sum(fn($r) => $r->unbilled_qty * $r->sell_price), 2), 'class' => 'bg-warning text-dark'],
+                ];
+                return response()->json(['cards' => $cards, 'rows' => $formattedRows->values(), 'headers' => ['Action', 'Store / Product', 'Category', 'Consumed', 'Billed', 'Unbilled', 'Revenue Gap ₦']]);
+
+            case 'drug-category-dispensing':
+                $rows = \DB::table('product_requests as pr')
+                    ->join('products as p', 'pr.product_id', '=', 'p.id')
+                    ->leftJoin('product_categories as pc', 'p.category_id', '=', 'pc.id')
+                    ->leftJoin('product_packagings as pkg', 'pr.packaging_id', '=', 'pkg.id')
+                    ->join('stores as s', 'pr.dispensed_from_store_id', '=', 's.id')
+                    ->select(
+                        'pc.id as category_id',
+                        'pc.category_name',
+                        \DB::raw('COUNT(pr.id) as dispense_count'),
+                        \DB::raw('SUM(pr.qty) as total_base_qty'),
+                        \DB::raw('COUNT(DISTINCT pr.patient_id) as unique_patients'),
+                        \DB::raw('MAX(pkg.name) as packaging_name')
+                    )
+                    ->whereIn('s.distribution_role', ['pharmacy_hub', 'pharmacy_satellite'])
+                    ->whereNull('pr.deleted_at')
+                    ->whereBetween('pr.created_at', [$startDate, $endDate])
+                    ->groupBy('pc.id', 'pc.category_name')
+                    ->orderByDesc('total_base_qty')
+                    ->get();
+
+                $formattedRows = $rows->map(fn($r) => [
+                    'action' => '<button class="btn btn-xs btn-outline-primary story-detail-btn font-weight-bold py-1 px-2" data-zone="pharmacy-mortuary" data-story="drug-category-dispensing" data-key="' . e($r->category_id) . '"><i class="mdi mdi-eye"></i> Details</button>',
+                    'category' => '<div class="font-weight-bold text-dark"><i class="mdi mdi-pill text-primary"></i> ' . e($r->category_name ?? 'Uncategorised') . '</div>',
+                    'dispenses' => '<span class="badge bg-light text-dark border font-weight-bold">' . number_format($r->dispense_count) . ' Events</span>',
+                    'qty' => '<span class="font-weight-bold text-success" style="font-size:1.05rem;">' . number_format($r->total_base_qty) . ' Base Units</span>',
+                    'patients' => '<span class="badge bg-info text-white">' . number_format($r->unique_patients) . ' Patients</span>',
+                ]);
+
+                $cards = [
+                    ['label' => 'Top Drug Category', 'value' => $rows->first()?->category_name ?? 'N/A', 'class' => 'bg-primary text-white'],
+                    ['label' => 'Total Qty Dispensed', 'value' => number_format($rows->sum('total_base_qty')) . ' Units', 'class' => 'bg-success text-white'],
+                    ['label' => 'Unique Patients Served', 'value' => number_format($rows->sum('unique_patients')), 'class' => 'bg-info text-white'],
+                    ['label' => 'Dispense Events', 'value' => number_format($rows->sum('dispense_count')), 'class' => 'bg-secondary text-white'],
+                ];
+                return response()->json(['cards' => $cards, 'rows' => $formattedRows->values(), 'headers' => ['Action', 'Drug Category', 'Dispense Events', 'Total Qty', 'Unique Patients']]);
+
+            case 'return-damage-write-off':
+                // Source A: Pharmacy & Patient Returns (ProductRequest where returned_qty > 0 or return_reason is set)
+                $pharmacyReturns = \DB::table('product_requests as pr')
+                    ->join('products as p', 'pr.product_id', '=', 'p.id')
+                    ->leftJoin('product_categories as pc', 'p.category_id', '=', 'pc.id')
+                    ->leftJoin('stock_batches as sb', 'pr.dispensed_from_batch_id', '=', 'sb.id')
+                    ->leftJoin('prices as pp', 'p.id', '=', 'pp.product_id')
+                    ->select(
+                        'pr.product_id',
+                        'p.product_name',
+                        'pc.category_name',
+                        \DB::raw('SUM(COALESCE(pr.returned_qty, 1)) as qty_returned'),
+                        \DB::raw('SUM(COALESCE(pr.refund_amount, 0)) as refund_amount'),
+                        \DB::raw('SUM(COALESCE(pr.returned_qty, 1) * COALESCE(NULLIF(sb.cost_price, 0), pp.pr_buy_price, 0)) as cost_of_return'),
+                        \DB::raw('"pharmacy_return" as loss_type')
+                    )
+                    ->where(function($q) {
+                        $q->where('pr.returned_qty', '>', 0)
+                          ->orWhereNotNull('pr.return_reason');
+                    })
+                    ->whereNull('pr.deleted_at')
+                    ->whereBetween('pr.created_at', [$startDate, $endDate])
+                    ->groupBy('pr.product_id', 'p.product_name', 'pc.category_name')
+                    ->get();
+
+                // Source B: Stock Batch Transactions — damaged, expired, req_return, write_off
+                $writeOffs = \DB::table('stock_batch_transactions as sbt')
+                    ->join('stock_batches as sb', 'sbt.stock_batch_id', '=', 'sb.id')
+                    ->join('products as p', 'sb.product_id', '=', 'p.id')
+                    ->leftJoin('product_categories as pc', 'p.category_id', '=', 'pc.id')
+                    ->leftJoin('prices as pp', 'p.id', '=', 'pp.product_id')
+                    ->select(
+                        'sb.product_id',
+                        'p.product_name',
+                        'pc.category_name',
+                        \DB::raw('SUM(sbt.qty) as qty_returned'),
+                        \DB::raw('0 as refund_amount'),
+                        \DB::raw('SUM(sbt.qty * COALESCE(NULLIF(sb.cost_price, 0), pp.pr_buy_price, 0)) as cost_of_return'),
+                        \DB::raw('sbt.type as loss_type')
+                    )
+                    ->whereIn('sbt.type', ['damaged', 'expired', 'req_return', 'return', 'write_off'])
+                    ->whereBetween('sbt.created_at', [$startDate, $endDate])
+                    ->groupBy('sb.product_id', 'p.product_name', 'pc.category_name', 'sbt.type')
+                    ->get();
+
+                // Source C: Expired Stock Inventory Losses (Batches expired before now with positive stock)
+                $expiredStock = \DB::table('stock_batches as sb')
+                    ->join('products as p', 'sb.product_id', '=', 'p.id')
+                    ->leftJoin('product_categories as pc', 'p.category_id', '=', 'pc.id')
+                    ->leftJoin('prices as pp', 'p.id', '=', 'pp.product_id')
+                    ->select(
+                        'sb.product_id',
+                        'p.product_name',
+                        'pc.category_name',
+                        \DB::raw('SUM(sb.current_qty) as qty_returned'),
+                        \DB::raw('0 as refund_amount'),
+                        \DB::raw('SUM(sb.current_qty * COALESCE(NULLIF(sb.cost_price, 0), pp.pr_buy_price, 0)) as cost_of_return'),
+                        \DB::raw('"expired_batch" as loss_type')
+                    )
+                    ->where('sb.expiry_date', '<', now())
+                    ->where('sb.current_qty', '>', 0)
+                    ->groupBy('sb.product_id', 'p.product_name', 'pc.category_name')
+                    ->get();
+
+                $allLosses = $pharmacyReturns->concat($writeOffs)->concat($expiredStock)->sortByDesc('cost_of_return');
+
+                $lossTypeConfig = [
+                    'pharmacy_return' => ['bg-primary', 'mdi-arrow-u-left-top'],
+                    'req_return' => ['bg-info text-white', 'mdi-tray-arrow-down'],
+                    'damaged' => ['bg-warning text-dark', 'mdi-alert'],
+                    'expired' => ['bg-danger', 'mdi-calendar-remove'],
+                    'expired_batch' => ['bg-danger', 'mdi-calendar-alert']
+                ];
+
+                $formattedRows = $allLosses->map(fn($r) => [
+                    'action' => '<button class="btn btn-xs btn-outline-primary story-detail-btn font-weight-bold py-1 px-2" data-zone="pharmacy-mortuary" data-story="return-damage-write-off" data-key="' . e($r->product_id) . '"><i class="mdi mdi-eye"></i> Details</button>',
+                    'product' => '<div class="font-weight-bold text-dark">' . e($r->product_name) . '</div><small class="text-muted">' . e($r->category_name ?? 'N/A') . '</small>',
+                    'type' => '<span class="badge ' . ($lossTypeConfig[$r->loss_type][0] ?? 'bg-secondary') . '"><i class="mdi ' . ($lossTypeConfig[$r->loss_type][1] ?? 'mdi-help') . '"></i> ' . ucfirst(str_replace('_', ' ', $r->loss_type)) . '</span>',
+                    'qty' => '<span class="font-weight-bold text-dark">' . number_format($r->qty_returned) . ' Units</span>',
+                    'refund' => '<span class="font-weight-bold text-danger">₦' . number_format($r->refund_amount, 2) . '</span>',
+                    'cost_value' => '<span class="font-weight-bold text-warning">₦' . number_format($r->cost_of_return, 2) . '</span>',
+                ]);
+
+                $cards = [
+                    ['label' => 'Pharmacy Returns ₦', 'value' => '₦' . number_format($pharmacyReturns->sum('cost_of_return'), 2), 'class' => 'bg-primary text-white'],
+                    ['label' => 'Total Refunds Paid', 'value' => '₦' . number_format($pharmacyReturns->sum('refund_amount'), 2), 'class' => 'bg-danger text-white'],
+                    ['label' => 'Write-Off & Expired ₦', 'value' => '₦' . number_format($writeOffs->sum('cost_of_return') + $expiredStock->sum('cost_of_return'), 2), 'class' => 'bg-warning text-dark'],
+                    ['label' => 'Combined Loss ₦', 'value' => '₦' . number_format($allLosses->sum('cost_of_return'), 2), 'class' => 'bg-secondary text-white'],
+                ];
+                return response()->json(['cards' => $cards, 'rows' => $formattedRows->values(), 'headers' => ['Action', 'Product', 'Loss Type', 'Qty', 'Refund Paid ₦', 'Cost ₦']]);
+
+            default:
+                return response()->json(['error' => 'Unknown story: ' . $story], 404);
+        }
+    }
+
     public function queriesDashboardData(Request $request, $tab)
     {
+
         $startDate = $request->start_date ? \Carbon\Carbon::parse($request->start_date)->startOfDay() : now()->subDays(30)->startOfDay();
         $endDate = $request->end_date ? \Carbon\Carbon::parse($request->end_date)->endOfDay() : now()->endOfDay();
 
