@@ -4143,14 +4143,32 @@ class AuditWorkbenchController extends Controller
 
         // 2. Discharges
         $dischargesQuery = \App\Models\AdmissionRequest::with(['patient.user', 'preferredWard', 'bed.wardRelation'])
-            ->whereBetween('discharge_date', [$startDate, $endDate])
-            ->whereIn('status', ['discharged', 'cleared', 'absconded', 'dama']);
+            ->where(function ($q) {
+                $q->where('discharged', 1)
+                    ->orWhereIn('admission_status', ['discharged', 'cleared', 'absconded', 'dama', 'discharge_requested', 'discharge_checklist'])
+                    ->orWhereIn('status', ['discharged', 'cleared', 'absconded', 'dama']);
+            });
+
+        if ($request->filled('start_date') || $request->filled('end_date')) {
+            $dischargesQuery->where(function ($q) use ($startDate, $endDate) {
+                $q->whereBetween('discharge_date', [$startDate, $endDate])
+                    ->orWhereBetween('updated_at', [$startDate, $endDate]);
+            });
+        }
 
         $totalDischarges = (clone $dischargesQuery)->count();
-        $pendingClearance = (clone $dischargesQuery)->where('status', 'discharged')->count();
-        $abscondedDama = (clone $dischargesQuery)->whereIn('status', ['absconded', 'dama'])->count();
+        $pendingClearance = (clone $dischargesQuery)->where(function ($q) {
+            $q->where('admission_status', 'discharged')
+                ->orWhere('status', 'discharged')
+                ->orWhere('discharged', 1);
+        })->count();
 
-        $discharges = $dischargesQuery->orderBy('discharge_date', 'desc')->paginate(50, ['*'], 'disc_page');
+        $abscondedDama = (clone $dischargesQuery)->where(function ($q) {
+            $q->whereIn('admission_status', ['absconded', 'dama'])
+                ->orWhereIn('status', ['absconded', 'dama']);
+        })->count();
+
+        $discharges = $dischargesQuery->orderBy('updated_at', 'desc')->paginate(50, ['*'], 'disc_page');
 
         // 3. Ward Triangulation (Admissions + Ward Requisitions + Patient Accumulated Bills)
         $wards = \App\Models\Ward::all();
@@ -6709,29 +6727,44 @@ class AuditWorkbenchController extends Controller
 
         if ($tab === 'discharges') {
             $query = \App\Models\AdmissionRequest::with(['patient.user', 'preferredWard', 'bed.wardRelation'])
-                ->whereBetween('discharge_date', [$startDate, $endDate])
-                ->whereIn('status', ['discharged', 'cleared', 'absconded', 'dama']);
+                ->where(function ($q) {
+                    $q->where('discharged', 1)
+                        ->orWhereIn('admission_status', ['discharged', 'cleared', 'absconded', 'dama', 'discharge_requested', 'discharge_checklist'])
+                        ->orWhereIn('status', ['discharged', 'cleared', 'absconded', 'dama']);
+                });
+
+            if ($request->filled('start_date') || $request->filled('end_date')) {
+                $query->where(function ($q) use ($startDate, $endDate) {
+                    $q->whereBetween('discharge_date', [$startDate, $endDate])
+                        ->orWhereBetween('updated_at', [$startDate, $endDate]);
+                });
+            }
+
             $query = $this->applyMultidimensionalFilters($query, $request);
 
             $this->interceptBulkStamp($query, $request, \App\Models\AdmissionRequest::class, 'zone_dynamic');
             return DataTables::eloquent($query)
                 ->editColumn('discharge_date', function($r) {
                     $d = $r->discharge_date ? \Carbon\Carbon::parse($r->discharge_date) : $r->updated_at;
-                    return '<div class="font-weight-bold">' . $d->format('M d, Y') . '</div>';
+                    return '<div class="font-weight-bold">' . $d->format('M d, Y') . '</div><small class="text-muted">' . $d->format('h:i A') . '</small>';
                 })
                 ->addColumn('patient_details', function($r) {
                     return $this->renderPatientDetails($r->patient, 'Inpatient');
                 })
                 ->addColumn('ward_bed', function($r) {
-                    $w = $r->ward->name ?? ($r->bed->ward->name ?? 'Ward');
-                    return '<div class="font-weight-bold text-dark">' . $w . '</div>';
+                    $w = $r->preferredWard->name ?? ($r->bed->wardRelation->name ?? ($r->ward->name ?? 'Ward'));
+                    $b = $r->bed->name ?? '';
+                    return '<div class="font-weight-bold text-dark">' . $w . '</div>' . ($b ? '<small class="text-muted"><i class="mdi mdi-bed"></i> ' . $b . '</small>' : '');
                 })
                 ->addColumn('stay_days', function($r) {
-                    $days = $r->created_at->diffInDays($r->updated_at);
+                    $end = $r->discharge_date ? \Carbon\Carbon::parse($r->discharge_date) : $r->updated_at;
+                    $days = $r->created_at->diffInDays($end);
                     return '<span class="badge bg-light text-dark border">' . $days . ' Days</span>';
                 })
                 ->addColumn('status_badge', function($r) {
-                    return '<span class="badge bg-success">' . ucfirst($r->status) . '</span>';
+                    $st = !empty($r->admission_status) ? $r->admission_status : ($r->discharged ? 'discharged' : $r->status);
+                    $cls = in_array($st, ['discharged', 'cleared']) ? 'bg-success' : (in_array($st, ['absconded', 'dama']) ? 'bg-danger' : 'bg-info');
+                    return '<span class="badge ' . $cls . '">' . ucfirst($st) . '</span>';
                 })
                 ->addColumn('action', function($r) {
                     return $this->renderAuditAction($r, 'AdmissionRequest');
