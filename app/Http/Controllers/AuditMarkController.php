@@ -121,29 +121,35 @@ class AuditMarkController extends Controller
         $baseClass = class_basename($modelClass);
         $autoStamp = $request->boolean('auto_stamp', true);
 
-        $queryMark = AuditMark::where(function($q) use ($modelClass, $baseClass) {
+        $queryMarks = AuditMark::where(function($q) use ($modelClass, $baseClass) {
                 $q->where('auditable_type', $modelClass)
                   ->orWhere('auditable_type', $baseClass)
                   ->orWhere('auditable_type', 'App\\Models\\' . $baseClass);
             })
             ->where('auditable_id', $request->model_id)
             ->where('status', 'queried')
-            ->latest()
-            ->first();
+            ->get();
 
-        if (!$queryMark) {
-            $queryMark = AuditMark::where('auditable_id', $request->model_id)
+        if ($queryMarks->isEmpty()) {
+            $queryMarks = AuditMark::where('auditable_id', $request->model_id)
                 ->where('status', 'queried')
-                ->latest()
-                ->first();
+                ->get();
         }
 
-        if ($queryMark) {
-            $queryMark->status = 'resolved';
-            $queryMark->query_resolved_by = auth()->id();
-            $queryMark->query_resolved_at = now();
-            $queryMark->query_resolution_notes = $request->resolution_notes;
-            $queryMark->save();
+        if ($queryMarks->isNotEmpty()) {
+            $lastZoneKey = 'general';
+            $lastAuditorId = auth()->id() ?? 1;
+
+            foreach ($queryMarks as $queryMark) {
+                $lastZoneKey = $queryMark->zone_key ?? $lastZoneKey;
+                $lastAuditorId = $queryMark->auditor_id ?? $lastAuditorId;
+
+                $queryMark->status = 'resolved';
+                $queryMark->query_resolved_by = auth()->id();
+                $queryMark->query_resolved_at = now();
+                $queryMark->query_resolution_notes = $request->resolution_notes;
+                $queryMark->save();
+            }
 
             // Sync direct table columns if present & optionally auto-stamp as audited
             if (class_exists($modelClass)) {
@@ -174,8 +180,8 @@ class AuditMarkController extends Controller
                 $stampMark = new AuditMark();
                 $stampMark->auditable_type = $modelClass;
                 $stampMark->auditable_id = $request->model_id;
-                $stampMark->zone_key = $queryMark->zone_key ?? 'general';
-                $stampMark->auditor_id = auth()->id() ?? $queryMark->auditor_id ?? 1;
+                $stampMark->zone_key = $lastZoneKey;
+                $stampMark->auditor_id = auth()->id() ?? $lastAuditorId;
                 $stampMark->status = 'audited';
                 $stampMark->save();
             }
