@@ -718,7 +718,15 @@
 
                     <div class="mb-3">
                         <label class="form-label font-weight-bold text-dark">Resolution Notes & Findings <span class="text-danger">*</span></label>
-                        <textarea name="resolution_notes" id="resolve_notes" class="form-control border-secondary shadow-sm rounded-3 p-3" rows="5" required placeholder="Describe how this query was verified and resolved (e.g. Receipt verified, missing claim document attached, supervisor approved mismatch)..."></textarea>
+                        <textarea name="resolution_notes" id="resolve_notes" class="form-control border-secondary shadow-sm rounded-3 p-3" rows="4" required placeholder="Describe how this query was verified and resolved (e.g. Receipt verified, missing claim document attached, supervisor approved mismatch)..."></textarea>
+                    </div>
+
+                    <div class="form-check bg-white p-3 rounded-3 border shadow-sm mb-2 d-flex align-items-center">
+                        <input class="form-check-input ms-1 me-3 mt-0" type="checkbox" name="auto_stamp" id="resolve_auto_stamp" value="1" checked style="transform: scale(1.35);">
+                        <label class="form-check-label user-select-none font-weight-bold text-dark mb-0" for="resolve_auto_stamp" style="font-size:0.9rem;">
+                            <i class="mdi mdi-check-decagram text-success me-1"></i> Automatically stamp record as audited upon resolution
+                            <small class="text-muted d-block font-weight-normal mt-0.5" style="font-size:0.8rem;">Marks the underlying entry as verified/audited (`is_audited = 1`) immediately after closing the query.</small>
+                        </label>
                     </div>
                 </form>
             </div>
