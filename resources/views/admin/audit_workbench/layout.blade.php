@@ -259,6 +259,18 @@
 
 @push('scripts')
 <script>
+    // Global DataTables configuration: auto-highlight queried rows in yellow
+    if (window.jQuery && $.fn && $.fn.dataTable) {
+        $.extend(true, $.fn.dataTable.defaults, {
+            createdRow: function(row, data, dataIndex) {
+                var str = typeof data === 'object' ? JSON.stringify(data) : String(data);
+                if (str.includes('Resolve Query') || str.includes('Active Query Flagged') || str.includes('btn-warning')) {
+                    $(row).addClass('table-warning bg-warning bg-opacity-10');
+                }
+            }
+        });
+    }
+
     // Global function for the Green Audit Tick
     function markAudited(arg1, arg2, arg3) {
         let btnElement, modelType, modelId;
