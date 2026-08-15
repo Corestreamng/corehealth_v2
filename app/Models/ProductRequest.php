@@ -4,13 +4,17 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use App\Traits\IsAuditable;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use App\Models\StockBatch;
 
 use OwenIt\Auditing\Contracts\Auditable;
 
+
 class ProductRequest extends Model implements Auditable
 {
+    use IsAuditable;
+
     use HasFactory, SoftDeletes;
     use \OwenIt\Auditing\Auditable;
     protected $fillable = [

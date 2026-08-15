@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use App\Traits\IsAuditable;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use OwenIt\Auditing\Contracts\Auditable;
 
@@ -18,6 +19,7 @@ use OwenIt\Auditing\Contracts\Auditable;
 class Procedure extends Model implements Auditable
 {
     use HasFactory;
+    use IsAuditable;
     use SoftDeletes;
     use \OwenIt\Auditing\Auditable;
 
