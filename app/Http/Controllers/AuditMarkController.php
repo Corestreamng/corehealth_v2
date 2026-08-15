@@ -144,7 +144,7 @@ class AuditMarkController extends Controller
             $queryMark->query_resolution_notes = $request->resolution_notes;
             $queryMark->save();
 
-            // Sync direct table columns if present
+            // Sync direct table columns if present & auto-stamp as audited
             if (class_exists($modelClass)) {
                 $record = $modelClass::find($request->model_id);
                 if ($record) {
@@ -156,12 +156,28 @@ class AuditMarkController extends Controller
                             $record->query_resolved_at = now();
                             $record->query_resolution_notes = $request->resolution_notes;
                         }
-                        $record->save();
                     }
+                    if (\Illuminate\Support\Facades\Schema::hasColumn($table, 'is_audited')) {
+                        $record->is_audited = 1;
+                        if (\Illuminate\Support\Facades\Schema::hasColumn($table, 'audited_by')) {
+                            $record->audited_by = auth()->id();
+                            $record->audited_at = now();
+                        }
+                    }
+                    $record->save();
                 }
             }
 
-            return response()->json(['success' => true, 'message' => 'Audit query resolved successfully.']);
+            // Create an audited mark entry in audit_marks for audit trail consistency
+            $stampMark = new AuditMark();
+            $stampMark->auditable_type = $modelClass;
+            $stampMark->auditable_id = $request->model_id;
+            $stampMark->zone_key = $queryMark->zone_key ?? 'general';
+            $stampMark->auditor_id = auth()->id();
+            $stampMark->status = 'audited';
+            $stampMark->save();
+
+            return response()->json(['success' => true, 'message' => 'Audit query resolved and item automatically stamped as audited.']);
         }
 
         return response()->json(['success' => false, 'message' => 'No active query found to resolve.'], 404);
