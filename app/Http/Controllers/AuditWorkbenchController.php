@@ -8858,32 +8858,109 @@ class AuditWorkbenchController extends Controller
 
     protected function renderAuditAction($record, $modelType)
     {
-        $html = '<div class="d-flex gap-1 flex-wrap">';
-        
-        $activeQuery = method_exists($record, 'activeQuery') ? $record->activeQuery : null;
-        $latestAudit = method_exists($record, 'latestAudit') ? $record->latestAudit : null;
-        // Check if there was ever a resolved query using auditMarks if loaded, otherwise null
-        $resolvedQuery = method_exists($record, 'auditMarks') && $record->relationLoaded('auditMarks') 
-                            ? $record->auditMarks->where('status', 'queried')->whereNotNull('query_resolved_at')->first() 
-                            : null;
+        if (!$record) {
+            return '';
+        }
 
+        $fullModelClass = str_starts_with($modelType, 'App\\Models\\') ? $modelType : 'App\\Models\\' . $modelType;
+        $shortModelClass = class_basename($fullModelClass);
+
+        // 1. Determine active query
+        $activeQuery = null;
+        if (method_exists($record, 'activeQuery') && $record->activeQuery) {
+            $activeQuery = $record->activeQuery;
+        } elseif (isset($record->is_queried) && $record->is_queried && empty($record->query_resolved_at)) {
+            $activeQuery = (object)[
+                'auditor' => (object)['name' => 'Auditor'],
+                'query_notes' => $record->query_notes ?? 'Flagged discrepancy'
+            ];
+        } else {
+            $activeQuery = \App\Models\AuditMark::with('auditor')
+                ->where(function($q) use ($fullModelClass, $shortModelClass) {
+                    $q->where('auditable_type', $fullModelClass)
+                      ->orWhere('auditable_type', $shortModelClass);
+                })
+                ->where('auditable_id', $record->id)
+                ->where('status', 'queried')
+                ->latest()
+                ->first();
+        }
+
+        // 2. Determine latest audit
+        $latestAudit = null;
+        if (method_exists($record, 'latestAudit') && $record->latestAudit) {
+            $latestAudit = $record->latestAudit;
+        } elseif (isset($record->is_audited) && $record->is_audited) {
+            $latestAudit = (object)[
+                'auditor' => (object)['name' => 'Auditor'],
+                'created_at' => isset($record->audited_at) ? \Carbon\Carbon::parse($record->audited_at) : now()
+            ];
+        } else {
+            $latestAudit = \App\Models\AuditMark::with('auditor')
+                ->where(function($q) use ($fullModelClass, $shortModelClass) {
+                    $q->where('auditable_type', $fullModelClass)
+                      ->orWhere('auditable_type', $shortModelClass);
+                })
+                ->where('auditable_id', $record->id)
+                ->where('status', 'audited')
+                ->latest()
+                ->first();
+        }
+
+        // 3. Determine resolved query
+        $resolvedQuery = null;
+        if (!$activeQuery) {
+            if (isset($record->query_resolved_at) && !empty($record->query_resolved_at)) {
+                $resolvedQuery = (object)[
+                    'query_resolution_notes' => $record->query_resolution_notes ?? 'Resolved'
+                ];
+            } else {
+                $resolvedQuery = \App\Models\AuditMark::where(function($q) use ($fullModelClass, $shortModelClass) {
+                        $q->where('auditable_type', $fullModelClass)
+                          ->orWhere('auditable_type', $shortModelClass);
+                    })
+                    ->where('auditable_id', $record->id)
+                    ->where('status', 'resolved')
+                    ->latest()
+                    ->first();
+            }
+        }
+
+        $html = '<div class="d-flex gap-1 flex-wrap align-items-center">';
+        
         if ($activeQuery) {
-            $html .= '<button class="btn btn-sm btn-warning text-dark font-weight-bold" onclick="openResolveQueryModal(\'' . $modelType . '\', ' . $record->id . ')" title="Queried by ' . ($activeQuery->auditor->name ?? 'System') . ': ' . htmlspecialchars($activeQuery->query_notes) . '"><i class="mdi mdi-alert-circle"></i> Resolve Query</button>';
+            $auditorName = isset($activeQuery->auditor->firstname)
+                ? trim(($activeQuery->auditor->firstname ?? '') . ' ' . ($activeQuery->auditor->surname ?? ''))
+                : ($activeQuery->auditor->name ?? 'Auditor');
+            if (empty($auditorName)) $auditorName = 'Auditor';
+
+            $notes = htmlspecialchars($activeQuery->query_notes ?? 'Discrepancy flagged', ENT_QUOTES);
+
+            $html .= '<button class="btn btn-sm btn-warning text-dark font-weight-bold shadow-sm px-2.5 py-1 text-nowrap" onclick="openResolveQueryModal(\'' . addslashes($fullModelClass) . '\', ' . $record->id . ')" title="Queried by ' . $auditorName . ': ' . $notes . '"><i class="mdi mdi-alert-circle me-1"></i> Resolve Query</button>';
         } else {
             if ($latestAudit) {
-                $html .= '<button class="btn btn-sm btn-success disabled" title="Audited by ' . ($latestAudit->auditor->name ?? 'System') . '"><i class="mdi mdi-check-decagram"></i> Audited</button>';
+                $auditorName = isset($latestAudit->auditor->firstname)
+                    ? trim(($latestAudit->auditor->firstname ?? '') . ' ' . ($latestAudit->auditor->surname ?? ''))
+                    : ($latestAudit->auditor->name ?? 'Auditor');
+                if (empty($auditorName)) $auditorName = 'Auditor';
+
+                $html .= '<button class="btn btn-sm btn-success disabled px-2 py-1 text-nowrap" title="Audited by ' . $auditorName . '"><i class="mdi mdi-check-decagram me-1"></i> Audited</button>';
             } else {
-                $html .= '<button class="btn btn-sm btn-outline-success audit-tick-btn" onclick="markAudited(this, \'' . $modelType . '\', ' . $record->id . ')" title="Mark as Audited"><i class="mdi mdi-check"></i> Stamp</button>';
+                $html .= '<button class="btn btn-sm btn-outline-success audit-tick-btn px-2 py-1 text-nowrap" onclick="markAudited(this, \'' . addslashes($fullModelClass) . '\', ' . $record->id . ')" title="Mark as Audited"><i class="mdi mdi-check me-1"></i> Stamp</button>';
             }
-            $html .= '<button class="btn btn-sm btn-outline-warning" onclick="openRaiseQueryModal(\'' . $modelType . '\', ' . $record->id . ')" title="Raise Query"><i class="mdi mdi-flag"></i> Flag</button>';
+            $html .= '<button class="btn btn-sm btn-outline-warning px-2 py-1 text-nowrap" onclick="openRaiseQueryModal(\'' . addslashes($fullModelClass) . '\', ' . $record->id . ')" title="Raise Query"><i class="mdi mdi-flag me-1"></i> Flag</button>';
         }
         $html .= '</div>';
-        if ($latestAudit) {
-            $html .= '<small class="d-block text-success mt-1"><i class="mdi mdi-check-all"></i> Stamped ' . $latestAudit->created_at->diffForHumans() . '</small>';
+
+        if ($activeQuery) {
+            $html .= '<small class="d-block text-danger font-weight-bold mt-1" style="font-size:0.75rem;"><i class="mdi mdi-alert-circle me-1"></i> Active Query Flagged</small>';
+        } elseif ($latestAudit) {
+            $stampedTime = (isset($latestAudit->created_at) && is_object($latestAudit->created_at)) ? $latestAudit->created_at->diffForHumans() : 'Recently';
+            $html .= '<small class="d-block text-success mt-1" style="font-size:0.75rem;"><i class="mdi mdi-check-all me-1"></i> Stamped ' . $stampedTime . '</small>';
+        } elseif ($resolvedQuery) {
+            $html .= '<small class="d-block text-info mt-1" style="font-size:0.75rem;"><i class="mdi mdi-information me-1"></i> Query Resolved</small>';
         }
-        if ($resolvedQuery && !$activeQuery) {
-             $html .= '<small class="d-block text-info mt-1"><i class="mdi mdi-information"></i> Had query (Resolved)</small>';
-        }
+
         return $html;
     }
 }
