@@ -8700,6 +8700,33 @@ class AuditWorkbenchController extends Controller
             ->rawColumns(['created_at', 'record_details', 'query_info', 'status_badge', 'action'])
             ->make(true);
     }
+
+    public function getQueryDetails($id)
+    {
+        $mark = \App\Models\AuditMark::with(['auditor', 'resolver'])->find($id);
+
+        if (!$mark) {
+            return response()->json(['error' => 'Query record not found.'], 404);
+        }
+
+        $auditorName = $mark->auditor ? trim(($mark->auditor->firstname ?? '') . ' ' . ($mark->auditor->surname ?? '')) : 'System';
+        $resolverName = $mark->resolver ? trim(($mark->resolver->firstname ?? '') . ' ' . ($mark->resolver->surname ?? '')) : null;
+
+        return response()->json([
+            'id' => $mark->id,
+            'status' => $mark->status,
+            'model_type' => class_basename($mark->auditable_type),
+            'full_model_type' => $mark->auditable_type,
+            'model_id' => $mark->auditable_id,
+            'zone_key' => $mark->zone_key ?? 'General',
+            'query_notes' => $mark->query_notes,
+            'auditor' => $auditorName,
+            'created_at' => $mark->created_at ? $mark->created_at->format('M d, Y h:i A') : 'N/A',
+            'resolution_notes' => $mark->resolution_notes,
+            'resolver' => $resolverName,
+            'resolved_at' => $mark->resolved_at ? $mark->resolved_at->format('M d, Y h:i A') : null,
+        ]);
+    }
     protected function interceptBulkStamp($query, \Illuminate\Http\Request $request, $modelType, $zoneKey)
     {
         if ($request->action === 'bulk_stamp') {
