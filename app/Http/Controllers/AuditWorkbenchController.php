@@ -8710,7 +8710,82 @@ class AuditWorkbenchController extends Controller
         }
 
         $auditorName = $mark->auditor ? trim(($mark->auditor->firstname ?? '') . ' ' . ($mark->auditor->surname ?? '')) : 'System';
-        $resolverName = $mark->resolver ? trim(($mark->resolver->firstname ?? '') . ' ' . ($mark->resolver->surname ?? '')) : null;
+        if (empty($auditorName) && $mark->auditor) {
+            $auditorName = $mark->auditor->name ?? 'Auditor';
+        }
+
+        $resolverName = $mark->resolver ? trim(($mark->resolver->firstname ?? '') . ' ' . ($mark->resolver->surname ?? '')) : 'N/A';
+        if ($resolverName === 'N/A' && $mark->resolver) {
+            $resolverName = $mark->resolver->name ?? 'System User';
+        }
+
+        // Target record details formatting
+        $targetDetails = [];
+        try {
+            $modelClass = $mark->auditable_type;
+            if (class_exists($modelClass)) {
+                $record = $modelClass::find($mark->auditable_id);
+                if ($record) {
+                    $targetDetails['id'] = $record->id;
+                    $targetDetails['created_at'] = isset($record->created_at) ? \Carbon\Carbon::parse($record->created_at)->format('M d, Y h:i A') : 'N/A';
+
+                    // Patient resolution
+                    $patient = null;
+                    if (isset($record->patient)) {
+                        $patient = $record->patient;
+                    } elseif (method_exists($record, 'patient')) {
+                        $patient = $record->patient;
+                    }
+
+                    if ($patient) {
+                        $pUser = $patient->user ?? null;
+                        $pName = $pUser ? trim(($pUser->firstname ?? '') . ' ' . ($pUser->surname ?? '')) : ($patient->fullname ?? 'Unknown Patient');
+                        $targetDetails['patient_name'] = $pName ?: 'Unknown Patient';
+                        $targetDetails['file_no'] = $patient->file_no ?? 'N/A';
+                        $targetDetails['hmo_name'] = $patient->hmo->name ?? null;
+                        $targetDetails['hmo_scheme'] = $patient->hmoScheme->name ?? null;
+                        $targetDetails['hmo_no'] = $patient->hmo_no ?? null;
+                    }
+
+                    // Item / Service / Product name
+                    if (isset($record->product_name)) {
+                        $targetDetails['item_name'] = $record->product_name;
+                    } elseif (isset($record->service_name)) {
+                        $targetDetails['item_name'] = $record->service_name;
+                    } elseif (isset($record->product->product_name)) {
+                        $targetDetails['item_name'] = $record->product->product_name;
+                    } elseif (isset($record->service->service_name)) {
+                        $targetDetails['item_name'] = $record->service->service_name;
+                    } elseif (isset($record->procedure->procedure_name)) {
+                        $targetDetails['item_name'] = $record->procedure->procedure_name;
+                    }
+
+                    // Amounts & Quantities
+                    if (isset($record->amount)) {
+                        $targetDetails['amount'] = '₦' . number_format((float)$record->amount, 2);
+                    } elseif (isset($record->total_amount)) {
+                        $targetDetails['amount'] = '₦' . number_format((float)$record->total_amount, 2);
+                    } elseif (isset($record->total_price)) {
+                        $targetDetails['amount'] = '₦' . number_format((float)$record->total_price, 2);
+                    } elseif (isset($record->cost_price)) {
+                        $targetDetails['amount'] = '₦' . number_format((float)$record->cost_price, 2);
+                    }
+
+                    if (isset($record->qty)) {
+                        $targetDetails['qty'] = number_format($record->qty) . ' Units';
+                    } elseif (isset($record->quantity)) {
+                        $targetDetails['qty'] = number_format($record->quantity) . ' Units';
+                    }
+
+                    // Status
+                    if (isset($record->status)) {
+                        $targetDetails['record_status'] = ucfirst(str_replace('_', ' ', $record->status));
+                    }
+                }
+            }
+        } catch (\Throwable $e) {
+            // Soft fallback if eager load fails
+        }
 
         return response()->json([
             'id' => $mark->id,
@@ -8718,13 +8793,14 @@ class AuditWorkbenchController extends Controller
             'model_type' => class_basename($mark->auditable_type),
             'full_model_type' => $mark->auditable_type,
             'model_id' => $mark->auditable_id,
-            'zone_key' => $mark->zone_key ?? 'General',
+            'zone_key' => ucfirst(str_replace(['_', '-'], ' ', $mark->zone_key ?? 'General')),
             'query_notes' => $mark->query_notes,
             'auditor' => $auditorName,
-            'created_at' => $mark->created_at ? $mark->created_at->format('M d, Y h:i A') : 'N/A',
-            'resolution_notes' => $mark->resolution_notes,
+            'created_at' => $mark->created_at ? \Carbon\Carbon::parse($mark->created_at)->format('M d, Y h:i A') : 'N/A',
+            'resolution_notes' => $mark->query_resolution_notes ?? $mark->resolution_notes,
             'resolver' => $resolverName,
-            'resolved_at' => $mark->resolved_at ? $mark->resolved_at->format('M d, Y h:i A') : null,
+            'resolved_at' => $mark->query_resolved_at ? \Carbon\Carbon::parse($mark->query_resolved_at)->format('M d, Y h:i A') : null,
+            'target_details' => $targetDetails,
         ]);
     }
     protected function interceptBulkStamp($query, \Illuminate\Http\Request $request, $modelType, $zoneKey)
