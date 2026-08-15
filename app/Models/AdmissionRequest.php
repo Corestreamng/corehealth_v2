@@ -120,6 +120,11 @@ class AdmissionRequest extends Model implements Auditable
         return $this->belongsTo(Ward::class, 'preferred_ward_id');
     }
 
+    public function ward()
+    {
+        return $this->belongsTo(Ward::class, 'preferred_ward_id');
+    }
+
     public function patient()
     {
         return $this->belongsTo(Patient::class, 'patient_id', 'id');
