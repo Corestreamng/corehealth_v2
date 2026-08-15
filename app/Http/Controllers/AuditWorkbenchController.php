@@ -4190,9 +4190,27 @@ class AuditWorkbenchController extends Controller
                 }
             }
 
-            $patientBillsQuery = \App\Models\ProductOrServiceRequest::whereHas('admissionRequest', function ($q) use ($w) {
+            $admIds = \App\Models\AdmissionRequest::where(function ($q) use ($w) {
                 $q->where('preferred_ward_id', $w->id)
                     ->orWhereHas('bed', fn($bq) => $bq->where('ward_id', $w->id));
+            })->pluck('id')->toArray();
+
+            $patientIds = \App\Models\AdmissionRequest::where(function ($q) use ($w) {
+                $q->where('preferred_ward_id', $w->id)
+                    ->orWhereHas('bed', fn($bq) => $bq->where('ward_id', $w->id));
+            })->pluck('patient_id')->toArray();
+
+            $patientBillsQuery = \App\Models\ProductOrServiceRequest::where(function($q) use ($w, $admIds, $patientIds) {
+                $q->whereHas('admissionRequest', function ($sq) use ($w) {
+                    $sq->where('preferred_ward_id', $w->id)
+                        ->orWhereHas('bed', fn($bq) => $bq->where('ward_id', $w->id));
+                });
+                if (!empty($admIds)) {
+                    $q->orWhereIn('admission_request_id', $admIds);
+                }
+                if (!empty($patientIds)) {
+                    $q->orWhereIn('patient_id', $patientIds);
+                }
             });
             if ($hasDateFilter) {
                 $patientBillsQuery->whereBetween('created_at', [$startDate, $endDate]);
