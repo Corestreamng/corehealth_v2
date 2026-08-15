@@ -83,6 +83,11 @@ class Encounter extends Model implements Auditable
         return $this->belongsTo(ProductOrServiceRequest::class, 'service_request_id', 'id');
     }
 
+    public function productOrServiceRequests()
+    {
+        return $this->hasMany(ProductOrServiceRequest::class, 'encounter_id', 'id');
+    }
+
     public function service()
     {
         return $this->belongsTo(Service::class, 'service_id', 'id');
