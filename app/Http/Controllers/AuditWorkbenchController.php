@@ -4155,23 +4155,34 @@ class AuditWorkbenchController extends Controller
         // 3. Ward Triangulation (Admissions + Ward Requisitions + Patient Accumulated Bills)
         $wards = \App\Models\Ward::all();
         $wardTriangulation = [];
-        foreach ($wards as $w) {
-            $associatedStore = \App\Models\Store::where(function ($q) use ($w) {
-                $q->where('ward_id', $w->id)
-                    ->orWhere('store_name', 'LIKE', "%{$w->name}%")
-                    ->orWhere('store_name', 'LIKE', '%ward%');
-            })->first();
+        $hasDateFilter = $request->filled('start_date') || $request->filled('end_date');
 
-            $admCount = \App\Models\AdmissionRequest::where(function ($q) use ($w) {
+        foreach ($wards as $w) {
+            $associatedStore = \App\Models\Store::where('ward_id', $w->id)
+                ->orWhere('store_name', 'LIKE', "%{$w->name}%")
+                ->first();
+
+            $admQuery = \App\Models\AdmissionRequest::where(function ($q) use ($w) {
                 $q->where('preferred_ward_id', $w->id)
                     ->orWhereHas('bed', fn($bq) => $bq->where('ward_id', $w->id));
-            })->whereBetween('created_at', [$startDate, $endDate])->count();
+            });
+            if ($hasDateFilter) {
+                $admQuery->whereBetween('created_at', [$startDate, $endDate]);
+            }
+            $admCount = $admQuery->count();
 
             $reqFulfilledValue = 0;
             if ($associatedStore) {
-                $reqItems = \App\Models\StoreRequisitionItem::whereHas('requisition', function ($q) use ($associatedStore) {
-                    $q->where('from_store_id', $associatedStore->id)->where('status', 'fulfilled');
-                })->whereBetween('created_at', [$startDate, $endDate])->with(['product.price', 'sourceBatch'])->get();
+                $reqItemsQuery = \App\Models\StoreRequisitionItem::whereHas('requisition', function ($q) use ($associatedStore) {
+                    $q->where(function($sq) use ($associatedStore) {
+                        $sq->where('to_store_id', $associatedStore->id)
+                          ->orWhere('from_store_id', $associatedStore->id);
+                    })->where('status', 'fulfilled');
+                });
+                if ($hasDateFilter) {
+                    $reqItemsQuery->whereBetween('created_at', [$startDate, $endDate]);
+                }
+                $reqItems = $reqItemsQuery->with(['product.price', 'sourceBatch'])->get();
 
                 foreach ($reqItems as $item) {
                     $unitCost = $item->sourceBatch->unit_cost ?? $item->sourceBatch->cost_price ?? $item->product->cost_price ?? ($item->product->price->pr_buy_price ?? 0);
@@ -4179,19 +4190,22 @@ class AuditWorkbenchController extends Controller
                 }
             }
 
-            $patientBillsValue = \App\Models\ProductOrServiceRequest::whereHas('admissionRequest', function ($q) use ($w) {
+            $patientBillsQuery = \App\Models\ProductOrServiceRequest::whereHas('admissionRequest', function ($q) use ($w) {
                 $q->where('preferred_ward_id', $w->id)
                     ->orWhereHas('bed', fn($bq) => $bq->where('ward_id', $w->id));
-            })->whereBetween('created_at', [$startDate, $endDate])
-                ->sum(\Illuminate\Support\Facades\DB::raw('COALESCE(payable_amount, amount)'));
+            });
+            if ($hasDateFilter) {
+                $patientBillsQuery->whereBetween('created_at', [$startDate, $endDate]);
+            }
+            $patientBillsValue = $patientBillsQuery->sum(\Illuminate\Support\Facades\DB::raw('COALESCE(payable_amount, amount)'));
 
             $wardTriangulation[] = (object) [
                 'ward' => $w,
                 'store' => $associatedStore,
                 'admissions_count' => $admCount,
                 'req_fulfilled_value' => $reqFulfilledValue,
-                'patient_bills_value' => $patientBillsValue,
-                'variance' => $patientBillsValue - $reqFulfilledValue,
+                'patient_bills_value' => (float)$patientBillsValue,
+                'variance' => (float)($patientBillsValue - $reqFulfilledValue),
             ];
         }
 
