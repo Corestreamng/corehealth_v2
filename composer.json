@@ -6,6 +6,7 @@
     "license": "MIT",
     "require": {
         "php": "^7.3|^8.0",
+        "barryvdh/laravel-dompdf": "^2.2",
         "cmgmyr/messenger": "^2.29",
         "doctrine/dbal": "^4.4",
         "fruitcake/laravel-cors": "^2.0",
