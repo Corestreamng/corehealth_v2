@@ -1206,6 +1206,8 @@ Route::middleware(['auth'])->prefix('audit-workbench')->name('audit.')->group(fu
     Route::get('/data/hmo-nhis-stories/{story}', [\App\Http\Controllers\AuditWorkbenchController::class, 'hmoNhisStoryData'])->name('hmo-nhis-stories.data');
     Route::get('/data/service-registers-stories/{story}', [\App\Http\Controllers\AuditWorkbenchController::class, 'serviceRegistersStoryData'])->name('service-registers-stories.data');
     Route::get('/data/pharmacy-mortuary-stories/{story}', [\App\Http\Controllers\AuditWorkbenchController::class, 'pharmacyMortuaryStoryData'])->name('pharmacy-mortuary-stories.data');
+    Route::get('/data/consultations-clinics-stories/{story}', [\App\Http\Controllers\AuditWorkbenchController::class, 'consultationsClinicsStoryData'])->name('consultations-clinics-stories.data');
+    Route::get('/data/admissions-discharges-stories/{story}', [\App\Http\Controllers\AuditWorkbenchController::class, 'admissionsDischargesStoryData'])->name('admissions-discharges-stories.data');
 
     Route::get('/consultations-clinics', [\App\Http\Controllers\AuditWorkbenchController::class, 'consultationsClinicsAudit'])->name('consultations-clinics');
     Route::match(['get', 'post'], '/data/consultations-clinics/{tab}', [\App\Http\Controllers\AuditWorkbenchController::class, 'consultationsClinicsData'])->name('consultations-clinics.data');
