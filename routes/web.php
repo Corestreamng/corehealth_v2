@@ -1234,6 +1234,7 @@ Route::middleware(['auth'])->prefix('audit-workbench')->name('audit.')->group(fu
     // Unified Query Dashboard
     Route::get('/queries-dashboard', [\App\Http\Controllers\AuditWorkbenchController::class, 'queriesDashboard'])->name('queries-dashboard');
     Route::match(['get', 'post'], '/data/queries-dashboard/{tab}', [\App\Http\Controllers\AuditWorkbenchController::class, 'queriesDashboardData'])->name('queries-dashboard.data');
+    Route::get('/data/query-details/{id}', [\App\Http\Controllers\AuditWorkbenchController::class, 'getQueryDetails'])->name('query-details.data');
 
     // Audit actions
     // Audit Mark Polymorphic Endpoints
