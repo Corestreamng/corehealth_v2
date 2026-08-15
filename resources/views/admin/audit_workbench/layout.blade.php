@@ -497,8 +497,88 @@
     }
     
 
+    function viewQueryDetails(queryId) {
+        var $modal = $('#viewQueryModal');
+        $('#viewQueryModalTitle').html('<i class="mdi mdi-spin mdi-loading me-2"></i> Loading Query Details...');
+        $('#viewQueryModalBody').html('<div class="text-center py-4"><div class="spinner-border text-primary" role="status"></div></div>');
+        $modal.modal('show');
+
+        var url = "{{ route('audit.query-details.data', ':id') }}".replace(':id', queryId);
+
+        $.get(url, function(res) {
+            var statusBadge = res.status === 'resolved' 
+                ? '<span class="badge bg-success font-weight-bold px-2 py-1"><i class="mdi mdi-check-circle me-1"></i> Resolved</span>' 
+                : '<span class="badge bg-warning text-dark font-weight-bold px-2 py-1"><i class="mdi mdi-alert-circle me-1"></i> Active Query</span>';
+
+            $('#viewQueryModalTitle').html('<i class="mdi mdi-alert-circle-outline text-warning me-2"></i> Audit Query Details (Query #' + res.id + ')');
+
+            var bodyHtml = `
+                <div class="row g-3 mb-3">
+                    <div class="col-md-6">
+                        <small class="text-muted d-block text-uppercase font-weight-bold" style="font-size:0.75rem;">Target Record</small>
+                        <div class="font-weight-bold text-dark fs-6">${res.model_type} #${res.model_id}</div>
+                        <small class="text-muted"><i class="mdi mdi-folder me-1"></i> Zone: ${res.zone_key}</small>
+                    </div>
+                    <div class="col-md-6">
+                        <small class="text-muted d-block text-uppercase font-weight-bold" style="font-size:0.75rem;">Status</small>
+                        <div>${statusBadge}</div>
+                    </div>
+                </div>
+                <div class="card bg-light border-0 mb-3 rounded-3">
+                    <div class="card-body p-3">
+                        <h6 class="font-weight-bold text-danger mb-2"><i class="mdi mdi-comment-alert-outline me-1"></i> Query Reason / Flag Details</h6>
+                        <p class="mb-2 text-dark font-weight-bold" style="white-space: pre-wrap; font-size: 0.95rem;">${res.query_notes || 'No details provided.'}</p>
+                        <small class="text-muted"><i class="mdi mdi-account me-1"></i> Flagged by <strong>${res.auditor}</strong> on ${res.created_at}</small>
+                    </div>
+                </div>
+            `;
+
+            if (res.status === 'resolved') {
+                bodyHtml += `
+                    <div class="card bg-success bg-opacity-10 border border-success border-opacity-25 mb-2 rounded-3">
+                        <div class="card-body p-3">
+                            <h6 class="font-weight-bold text-success mb-2"><i class="mdi mdi-check-decagram me-1"></i> Resolution Details</h6>
+                            <p class="mb-2 text-dark font-weight-bold" style="white-space: pre-wrap; font-size: 0.95rem;">${res.resolution_notes || 'No resolution notes entered.'}</p>
+                            <small class="text-muted"><i class="mdi mdi-account-check me-1"></i> Resolved by <strong>${res.resolver || 'Unknown'}</strong> on ${res.resolved_at}</small>
+                        </div>
+                    </div>
+                `;
+                $('#viewQueryModalResolveBtn').hide();
+            } else {
+                $('#viewQueryModalResolveBtn').show().off('click').on('click', function() {
+                    $modal.modal('hide');
+                    openResolveQueryModal(res.full_model_type, res.model_id);
+                });
+            }
+
+            $('#viewQueryModalBody').html(bodyHtml);
+        }).fail(function() {
+            $('#viewQueryModalBody').html('<div class="alert alert-danger mb-0 font-weight-bold"><i class="mdi mdi-alert-circle me-1"></i> Failed to load query details. Please try again.</div>');
+        });
+    }
 </script>
 @endpush
+
+{{-- View Query Modal --}}
+<div class="modal fade" id="viewQueryModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header bg-dark text-white">
+                <h5 class="modal-title text-white" id="viewQueryModalTitle"><i class="mdi mdi-alert-circle-outline text-warning"></i> Audit Query Details</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-4" id="viewQueryModalBody">
+                <div class="text-center py-4"><div class="spinner-border text-primary" role="status"></div></div>
+            </div>
+            <div class="modal-footer bg-light border-0 justify-content-between">
+                <button type="button" class="btn btn-secondary px-4" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-warning text-dark font-weight-bold px-4" id="viewQueryModalResolveBtn">
+                    <i class="mdi mdi-check-circle me-1"></i> Resolve Query
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
 
 {{-- Universal Stamp Modal --}}
 <div class="modal fade" id="universalStampModal" tabindex="-1" aria-hidden="true">
