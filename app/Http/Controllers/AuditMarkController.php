@@ -7,6 +7,15 @@ use App\Models\AuditMark;
 
 class AuditMarkController extends Controller
 {
+    private function resolveModelClass(string $modelType): string
+    {
+        $clean = ltrim($modelType, '\\');
+        if (str_starts_with($clean, 'App\\Models\\')) {
+            return $clean;
+        }
+        return 'App\\Models\\' . $clean;
+    }
+
     /**
      * Individually mark an item as audited.
      */
@@ -18,7 +27,7 @@ class AuditMarkController extends Controller
             'zone_key' => 'required|string'
         ]);
 
-        $modelClass = 'App\\Models\\' . $request->model_type;
+        $modelClass = $this->resolveModelClass($request->model_type);
 
         if (!class_exists($modelClass)) {
             return response()->json(['success' => false, 'message' => 'Invalid model type.'], 400);
@@ -38,6 +47,17 @@ class AuditMarkController extends Controller
         $mark->status = 'audited';
         $mark->save();
 
+        // Sync direct table columns if present
+        $table = $record->getTable();
+        if (\Illuminate\Support\Facades\Schema::hasColumn($table, 'is_audited')) {
+            $record->is_audited = 1;
+            if (\Illuminate\Support\Facades\Schema::hasColumn($table, 'audited_by')) {
+                $record->audited_by = auth()->id();
+                $record->audited_at = now();
+            }
+            $record->save();
+        }
+
         return response()->json(['success' => true, 'message' => 'Item marked as audited successfully.']);
     }
 
@@ -53,7 +73,7 @@ class AuditMarkController extends Controller
             'query_notes' => 'required|string'
         ]);
 
-        $modelClass = 'App\\Models\\' . $request->model_type;
+        $modelClass = $this->resolveModelClass($request->model_type);
 
         if (!class_exists($modelClass)) {
             return response()->json(['success' => false, 'message' => 'Invalid model type.'], 400);
@@ -67,6 +87,21 @@ class AuditMarkController extends Controller
         $mark->status = 'queried';
         $mark->query_notes = $request->query_notes;
         $mark->save();
+
+        // Sync direct table columns if present
+        $record = $modelClass::find($request->model_id);
+        if ($record) {
+            $table = $record->getTable();
+            if (\Illuminate\Support\Facades\Schema::hasColumn($table, 'is_queried')) {
+                $record->is_queried = 1;
+                if (\Illuminate\Support\Facades\Schema::hasColumn($table, 'queried_by')) {
+                    $record->queried_by = auth()->id();
+                    $record->queried_at = now();
+                    $record->query_notes = $request->query_notes;
+                }
+                $record->save();
+            }
+        }
 
         return response()->json(['success' => true, 'message' => 'Audit query raised successfully.']);
     }
@@ -82,20 +117,49 @@ class AuditMarkController extends Controller
             'resolution_notes' => 'required|string'
         ]);
 
-        $modelClass = 'App\\Models\\' . $request->model_type;
+        $modelClass = $this->resolveModelClass($request->model_type);
+        $baseClass = class_basename($modelClass);
 
-        $queryMark = AuditMark::where('auditable_type', $modelClass)
+        $queryMark = AuditMark::where(function($q) use ($modelClass, $baseClass) {
+                $q->where('auditable_type', $modelClass)
+                  ->orWhere('auditable_type', $baseClass)
+                  ->orWhere('auditable_type', 'App\\Models\\' . $baseClass);
+            })
             ->where('auditable_id', $request->model_id)
             ->where('status', 'queried')
-            ->whereNull('query_resolved_at')
             ->latest()
             ->first();
 
+        if (!$queryMark) {
+            $queryMark = AuditMark::where('auditable_id', $request->model_id)
+                ->where('status', 'queried')
+                ->latest()
+                ->first();
+        }
+
         if ($queryMark) {
+            $queryMark->status = 'resolved';
             $queryMark->query_resolved_by = auth()->id();
             $queryMark->query_resolved_at = now();
             $queryMark->query_resolution_notes = $request->resolution_notes;
             $queryMark->save();
+
+            // Sync direct table columns if present
+            if (class_exists($modelClass)) {
+                $record = $modelClass::find($request->model_id);
+                if ($record) {
+                    $table = $record->getTable();
+                    if (\Illuminate\Support\Facades\Schema::hasColumn($table, 'is_queried')) {
+                        $record->is_queried = 0;
+                        if (\Illuminate\Support\Facades\Schema::hasColumn($table, 'query_resolved_by')) {
+                            $record->query_resolved_by = auth()->id();
+                            $record->query_resolved_at = now();
+                            $record->query_resolution_notes = $request->resolution_notes;
+                        }
+                        $record->save();
+                    }
+                }
+            }
 
             return response()->json(['success' => true, 'message' => 'Audit query resolved successfully.']);
         }
@@ -114,7 +178,7 @@ class AuditMarkController extends Controller
             'zone_key' => 'required|string'
         ]);
         
-        $modelClass = 'App\\Models\\' . $request->model_type;
+        $modelClass = $this->resolveModelClass($request->model_type);
         $ids = $request->ids;
         $zoneKey = $request->zone_key;
         $auditorId = auth()->id();
