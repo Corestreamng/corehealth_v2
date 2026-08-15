@@ -4120,7 +4120,7 @@ class AuditWorkbenchController extends Controller
         $zoneKey = 'admissions-discharges';
 
         // 1. Inpatient Admissions
-        $admissionsQuery = \App\Models\AdmissionRequest::with(['patient.user', 'ward', 'bed.ward', 'doctor'])
+        $admissionsQuery = \App\Models\AdmissionRequest::with(['patient.user', 'preferredWard', 'bed.wardRelation', 'doctor'])
             ->whereBetween('created_at', [$startDate, $endDate]);
 
         $totalAdmissions = (clone $admissionsQuery)->count();
@@ -4142,7 +4142,7 @@ class AuditWorkbenchController extends Controller
         $admissions = $admissionsQuery->orderBy('created_at', 'desc')->paginate(50, ['*'], 'adms_page');
 
         // 2. Discharges
-        $dischargesQuery = \App\Models\AdmissionRequest::with(['patient.user', 'ward', 'bed.ward'])
+        $dischargesQuery = \App\Models\AdmissionRequest::with(['patient.user', 'preferredWard', 'bed.wardRelation'])
             ->whereBetween('discharge_date', [$startDate, $endDate])
             ->whereIn('status', ['discharged', 'cleared', 'absconded', 'dama']);
 
@@ -6661,7 +6661,7 @@ class AuditWorkbenchController extends Controller
         $endDate = $request->end_date ? \Carbon\Carbon::parse($request->end_date)->endOfDay() : now()->endOfDay();
 
         if ($tab === 'admissions') {
-            $query = \App\Models\AdmissionRequest::with(['patient.user', 'ward', 'bed.ward', 'doctor'])
+            $query = \App\Models\AdmissionRequest::with(['patient.user', 'preferredWard', 'bed.wardRelation', 'doctor'])
                 ->whereBetween('created_at', [$startDate, $endDate]);
             $query = $this->applyMultidimensionalFilters($query, $request);
 
@@ -6674,7 +6674,7 @@ class AuditWorkbenchController extends Controller
                     return $this->renderPatientDetails($r->patient, 'Inpatient');
                 })
                 ->addColumn('ward_bed', function($r) {
-                    $w = $r->ward->name ?? ($r->bed->ward->name ?? 'Ward');
+                    $w = $r->preferredWard->name ?? ($r->bed->wardRelation->name ?? ($r->ward->name ?? 'Ward'));
                     $b = $r->bed->name ?? 'Bed';
                     return '<div class="font-weight-bold text-dark">' . $w . '</div><small class="text-muted"><i class="mdi mdi-bed"></i> ' . $b . '</small>';
                 })
@@ -6690,7 +6690,7 @@ class AuditWorkbenchController extends Controller
         }
 
         if ($tab === 'discharges') {
-            $query = \App\Models\AdmissionRequest::with(['patient.user', 'ward', 'bed.ward'])
+            $query = \App\Models\AdmissionRequest::with(['patient.user', 'preferredWard', 'bed.wardRelation'])
                 ->whereBetween('discharge_date', [$startDate, $endDate])
                 ->whereIn('status', ['discharged', 'cleared', 'absconded', 'dama']);
             $query = $this->applyMultidimensionalFilters($query, $request);

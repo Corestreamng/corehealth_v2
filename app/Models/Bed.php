@@ -79,6 +79,11 @@ class Bed extends Model implements Auditable
         return $this->belongsTo(Ward::class, 'ward_id');
     }
 
+    public function ward()
+    {
+        return $this->belongsTo(Ward::class, 'ward_id');
+    }
+
     public function admissions()
     {
         return $this->hasMany(AdmissionRequest::class, 'bed_id', 'id');

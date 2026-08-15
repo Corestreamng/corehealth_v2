@@ -27,10 +27,10 @@
             </li>
         </ul>
     </div>
-    
+
     <div class="card-body p-4 bg-light">
         <div class="tab-content" id="admissionsTabsContent">
-            
+
             {{-- Admissions Tab --}}
             <div class="tab-pane fade show active" id="admissions" role="tabpanel">
                 <div class="row g-3 mb-4">
@@ -164,9 +164,9 @@
                                         <td class="font-weight-bold text-dark">{{ $row->ward->name }}</td>
                                         <td>
                                             @if($row->store)
-                                                <span class="badge bg-light text-dark border"><i class="mdi mdi-store"></i> {{ $row->store->store_name }}</span>
+                                            <span class="badge bg-light text-dark border"><i class="mdi mdi-store"></i> {{ $row->store->store_name }}</span>
                                             @else
-                                                <span class="badge bg-secondary">No Linked Store</span>
+                                            <span class="badge bg-secondary">No Linked Store</span>
                                             @endif
                                         </td>
                                         <td><span class="badge bg-primary fs-6">{{ $row->admissions_count }}</span></td>
@@ -175,8 +175,8 @@
                                         <td class="text-nowrap font-weight-bold {{ $row->variance >= 0 ? 'text-success' : 'text-danger' }}">
                                             ₦{{ number_format($row->variance, 2) }}
                                             @if($row->variance < 0)
-                                                <span class="badge bg-danger ms-1">Leakage Risk</span>
-                                            @endif
+                                                <span class="badge bg-danger ms-1"><span class="text-white">Leakage Risk</span></span>
+                                                @endif
                                         </td>
                                     </tr>
                                     @endforeach
@@ -186,7 +186,7 @@
                     </div>
                 </div>
             </div>
-            
+
         </div>
     </div>
 </div>
@@ -194,62 +194,102 @@
 
 @push('scripts')
 <script>
-$(document).ready(function() {
-    let startDate = $('#filter_start_date').val();
-    let endDate = $('#filter_end_date').val();
-    let hmoId = $('#filter_hmo_id').val();
-    let gender = $('#filter_gender').val();
-    let ageRange = $('#filter_age_range').val();
+    $(document).ready(function() {
+        let startDate = $('#filter_start_date').val();
+        let endDate = $('#filter_end_date').val();
+        let hmoId = $('#filter_hmo_id').val();
+        let gender = $('#filter_gender').val();
+        let ageRange = $('#filter_age_range').val();
 
-    let commonDtConfig = {
-        dom: '<"d-flex justify-content-between align-items-center mb-3"<"d-flex gap-2"B><"d-flex align-items-center"f>>rt<"d-flex justify-content-between align-items-center mt-3"ip>',
-        iDisplayLength: 25,
-        lengthMenu: [[10, 25, 50, 100, -1], [10, 25, 50, 100, "All"]],
-        buttons: ['pageLength', 'copy', 'excel', 'pdf', 'print', 'colvis'],
-        processing: true,
-        serverSide: true,
-        responsive: true,
-        order: [[0, 'desc']]
-    };
+        let commonDtConfig = {
+            dom: '<"d-flex justify-content-between align-items-center mb-3"<"d-flex gap-2"B><"d-flex align-items-center"f>>rt<"d-flex justify-content-between align-items-center mt-3"ip>',
+            iDisplayLength: 25,
+            lengthMenu: [
+                [10, 25, 50, 100, -1],
+                [10, 25, 50, 100, "All"]
+            ],
+            buttons: ['pageLength', 'copy', 'excel', 'pdf', 'print', 'colvis'],
+            processing: true,
+            serverSide: true,
+            responsive: true,
+            order: [
+                [0, 'desc']
+            ]
+        };
 
-    function appendMultidimData(d) {
-        d.start_date = $('#filter_start_date').val();
-        d.end_date = $('#filter_end_date').val();
-        d.hmo_scheme_id = $('#filter_hmo_scheme_id').val();
-        d.hmo_id = $('#filter_hmo_id').val();
-        d.gender = $('#filter_gender').val();
-        d.age_range = $('#filter_age_range').val();
-        d.audit_status = $('#filter_audit_status').val();
-    }
+        function appendMultidimData(d) {
+            d.start_date = $('#filter_start_date').val();
+            d.end_date = $('#filter_end_date').val();
+            d.hmo_scheme_id = $('#filter_hmo_scheme_id').val();
+            d.hmo_id = $('#filter_hmo_id').val();
+            d.gender = $('#filter_gender').val();
+            d.age_range = $('#filter_age_range').val();
+            d.audit_status = $('#filter_audit_status').val();
+        }
 
-    $('#table-admissions').DataTable($.extend({}, commonDtConfig, {
-        ajax: {
-            url: "{{ route('audit.admissions-discharges.data', 'admissions') }}",
-            data: appendMultidimData
-        },
-        columns: [
-            { data: 'created_at', name: 'created_at' },
-            { data: 'patient_details', name: 'patient.user.surname' },
-            { data: 'ward_bed', name: 'ward.name' },
-            { data: 'status_badge', name: 'status' },
-            { data: 'action', name: 'action', orderable: false, searchable: false }
-        ]
-    }));
+        $('#table-admissions').DataTable($.extend({}, commonDtConfig, {
+            ajax: {
+                url: "{{ route('audit.admissions-discharges.data', 'admissions') }}",
+                data: appendMultidimData
+            },
+            columns: [{
+                    data: 'created_at',
+                    name: 'created_at'
+                },
+                {
+                    data: 'patient_details',
+                    name: 'patient.user.surname'
+                },
+                {
+                    data: 'ward_bed',
+                    name: 'ward.name'
+                },
+                {
+                    data: 'status_badge',
+                    name: 'status'
+                },
+                {
+                    data: 'action',
+                    name: 'action',
+                    orderable: false,
+                    searchable: false
+                }
+            ]
+        }));
 
-    $('#table-discharges').DataTable($.extend({}, commonDtConfig, {
-        ajax: {
-            url: "{{ route('audit.admissions-discharges.data', 'discharges') }}",
-            data: appendMultidimData
-        },
-        columns: [
-            { data: 'discharge_date', name: 'discharge_date' },
-            { data: 'patient_details', name: 'patient.user.surname' },
-            { data: 'ward_bed', name: 'ward.name' },
-            { data: 'stay_days', name: 'created_at' },
-            { data: 'status_badge', name: 'status' },
-            { data: 'action', name: 'action', orderable: false, searchable: false }
-        ]
-    }));
-});
+        $('#table-discharges').DataTable($.extend({}, commonDtConfig, {
+            ajax: {
+                url: "{{ route('audit.admissions-discharges.data', 'discharges') }}",
+                data: appendMultidimData
+            },
+            columns: [{
+                    data: 'discharge_date',
+                    name: 'discharge_date'
+                },
+                {
+                    data: 'patient_details',
+                    name: 'patient.user.surname'
+                },
+                {
+                    data: 'ward_bed',
+                    name: 'ward.name'
+                },
+                {
+                    data: 'stay_days',
+                    name: 'created_at'
+                },
+                {
+                    data: 'status_badge',
+                    name: 'status'
+                },
+                {
+                    data: 'action',
+                    name: 'action',
+                    orderable: false,
+                    searchable: false
+                }
+            ]
+        }));
+    });
 </script>
 @endpush
