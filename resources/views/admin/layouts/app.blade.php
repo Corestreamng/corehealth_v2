@@ -36,28 +36,32 @@
     <link href="{{ asset('assets/css/inter-font.css') }}" rel="stylesheet">
 
     @php
+        if (!function_exists('adjustBrightness')) {
+            function adjustBrightness($hex, $percent) {
+                $hex = str_replace('#', '', $hex);
+                $r = hexdec(substr($hex, 0, 2));
+                $g = hexdec(substr($hex, 2, 2));
+                $b = hexdec(substr($hex, 4, 2));
+                $r = min(255, $r + ($r * $percent / 100));
+                $g = min(255, $g + ($g * $percent / 100));
+                $b = min(255, $b + ($b * $percent / 100));
+                return sprintf('#%02x%02x%02x', $r, $g, $b);
+            }
+        }
+
+        if (!function_exists('hexToRgba')) {
+            function hexToRgba($hex, $alpha) {
+                $hex = str_replace('#', '', $hex);
+                $r = hexdec(substr($hex, 0, 2));
+                $g = hexdec(substr($hex, 2, 2));
+                $b = hexdec(substr($hex, 4, 2));
+                return "rgba($r, $g, $b, $alpha)";
+            }
+        }
+
         $primaryColor = appsettings()->hos_color ?? '#011b33';
         $hoverColor = adjustBrightness($primaryColor, 20);
         $lightColor = hexToRgba($primaryColor, 0.1);
-
-        function adjustBrightness($hex, $percent) {
-            $hex = str_replace('#', '', $hex);
-            $r = hexdec(substr($hex, 0, 2));
-            $g = hexdec(substr($hex, 2, 2));
-            $b = hexdec(substr($hex, 4, 2));
-            $r = min(255, $r + ($r * $percent / 100));
-            $g = min(255, $g + ($g * $percent / 100));
-            $b = min(255, $b + ($b * $percent / 100));
-            return sprintf('#%02x%02x%02x', $r, $g, $b);
-        }
-
-        function hexToRgba($hex, $alpha) {
-            $hex = str_replace('#', '', $hex);
-            $r = hexdec(substr($hex, 0, 2));
-            $g = hexdec(substr($hex, 2, 2));
-            $b = hexdec(substr($hex, 4, 2));
-            return "rgba($r, $g, $b, $alpha)";
-        }
     @endphp
 
     <style>
@@ -2141,7 +2145,7 @@ rgba(255, 255, 255, 0.7) !important;
                             </div>
                         </div><!-- /.container-fluid -->
                         <div>
-                            @if (count($errors))
+                            @if (!empty($errors) && count($errors) > 0)
                                 <div class="alert alert-danger alert-dismissible">
                                     <button type="button" class="close" data-dismiss="alert" aria-hidden="true">×</button>
                                     <!-- <h5><i class="icon fa fa-info"></i> Alert!</h5> -->

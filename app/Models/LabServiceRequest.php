@@ -4,12 +4,16 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use App\Traits\IsAuditable;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 
 use OwenIt\Auditing\Contracts\Auditable;
+
 class LabServiceRequest extends Model implements Auditable
 {
+    use IsAuditable;
+
     use HasFactory, SoftDeletes;
     use \OwenIt\Auditing\Auditable;
 protected $fillable = [
@@ -50,6 +54,9 @@ protected $fillable = [
         'free_form_name',
         'treatment_plan_id',
         'treatment_plan_name',
+        'audited_at',
+        'audited_by',
+        'audit_notes',
     ];
 
     protected $appends = ['service_name'];
@@ -171,5 +178,13 @@ protected $fillable = [
     public function getServiceNameAttribute()
     {
         return $this->is_free_form ? $this->free_form_name : ($this->service ? $this->service->service_name : 'Unknown Service');
+    }
+
+    /**
+     * Get the user who audited this item.
+     */
+    public function auditor()
+    {
+        return $this->belongsTo(User::class, 'audited_by');
     }
 }

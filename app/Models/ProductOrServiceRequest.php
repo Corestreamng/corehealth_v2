@@ -8,8 +8,12 @@ use Illuminate\Database\Eloquent\Model;
 
 use OwenIt\Auditing\Contracts\Auditable;
 
+use App\Traits\IsAuditable;
+
 class ProductOrServiceRequest extends Model implements Auditable
 {
+    use IsAuditable;
+
     use HasFactory;
     use \OwenIt\Auditing\Auditable;
     protected $fillable = [
@@ -48,6 +52,9 @@ class ProductOrServiceRequest extends Model implements Auditable
         'reception_validation_notes',
         'parent_id',
         'is_bundle_item',
+        'audited_at',
+        'audited_by',
+        'audit_notes',
     ];
 
     public function receptionValidator()
@@ -184,5 +191,13 @@ class ProductOrServiceRequest extends Model implements Auditable
     public function children()
     {
         return $this->hasMany(ProductOrServiceRequest::class, 'parent_id');
+    }
+
+    /**
+     * Get the user who audited this item.
+     */
+    public function auditor()
+    {
+        return $this->belongsTo(User::class, 'audited_by');
     }
 }

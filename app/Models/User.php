@@ -12,8 +12,12 @@ use Spatie\Permission\Traits\HasRoles;
 
 
 use OwenIt\Auditing\Contracts\Auditable;
+use App\Traits\IsAuditable;
 class User extends Authenticatable implements Auditable
 {
+    use \OwenIt\Auditing\Auditable;
+    use IsAuditable;
+
     protected static function booted()
     {
         static::saved(function ($user) {
