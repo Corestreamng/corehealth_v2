@@ -171,6 +171,7 @@
                             'encounter-to-service-billing-gap' => ['id' => 'st-unbilled-gap', 'label' => '6. Unbilled Encounters Gap', 'icon' => 'mdi-alert-circle-outline', 'color' => 'text-danger'],
                             'encounter-outcome-distribution' => ['id' => 'st-enc-out', 'label' => '7. Encounter Outcomes', 'icon' => 'mdi-file-chart-outline', 'color' => 'text-dark'],
                             'daily-encounter-throughput-trend' => ['id' => 'st-daily-trend', 'label' => '8. Daily Throughput Trend', 'icon' => 'mdi-chart-timeline-variant', 'color' => 'text-purple'],
+                            'referrals-analysis' => ['id' => 'st-referrals', 'label' => '9. Referrals Analysis', 'icon' => 'mdi-hospital-marker', 'color' => 'text-danger'],
                         ];
                     @endphp
                     @foreach($ccStoriesList as $sSlug => $sMeta)

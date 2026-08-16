@@ -229,6 +229,7 @@
                             'ward-bed-fee-revenue-attribution' => ['id' => 'st-bed-fee', 'label' => '10. Bed Fee Revenue', 'icon' => 'mdi-currency-ngn', 'color' => 'text-success'],
                             'ward-drug-administration-audit' => ['id' => 'st-drug-admin', 'label' => '11. Drug Admin Audit', 'icon' => 'mdi-pill', 'color' => 'text-info'],
                             'ward-cost-per-patient-day' => ['id' => 'st-cost-day', 'label' => '12. Cost per Patient Day', 'icon' => 'mdi-chart-areaspline', 'color' => 'text-warning'],
+                            'clinic-admission-volume' => ['id' => 'st-clinic-adm', 'label' => '13. Clinic Admissions', 'icon' => 'mdi-hospital-building', 'color' => 'text-purple'],
                         ];
                     @endphp
                     @foreach($admsStoriesList as $sSlug => $sMeta)
