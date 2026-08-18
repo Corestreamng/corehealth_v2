@@ -97,6 +97,7 @@ Route::middleware(['auth'])->prefix('inventory')->name('inventory.')->group(func
     // ===== STORE WORKBENCH =====
         Route::prefix('inventory-reports')->name('inventory-reports.')->group(function () {
         Route::get('/summary', [InventoryReportController::class, 'getSummary'])->name('summary');
+        Route::get('/summary/print', [InventoryReportController::class, 'printSummary'])->name('summary.print');
         Route::get('/drill-down', [InventoryReportController::class, 'getDrillDown'])->name('drill-down');
     });
     Route::prefix('store-workbench')->name('store-workbench.')->group(function () {

@@ -29,7 +29,7 @@ class InventoryReportService
 
         if ($mode === 'given') {
             // 1. Requisitions fulfilled FROM these stores
-            $reqItems = StoreRequisitionItem::with(['product.category', 'requisition.toStore', 'sourceBatch'])
+            $reqItems = StoreRequisitionItem::with(['product.category', 'product.price', 'requisition.toStore', 'sourceBatch'])
                 ->whereHas('requisition', function ($q) use ($storeIds, $start, $end) {
                     $q->whereIn('from_store_id', $storeIds)
                       ->where('status', 'fulfilled')
@@ -40,7 +40,7 @@ class InventoryReportService
             $this->aggregateRequisitions($reqItems, $aggregates, $groupBy, 'toStore');
 
             // 2. Dispenses made FROM these stores
-            $dispenses = ProductRequest::with(['product.category', 'encounter.service', 'encounter.admission_request.preferredWard', 'dispensedFromBatch'])
+            $dispenses = ProductRequest::with(['product.category', 'product.price', 'encounter.service', 'encounter.admission_request.preferredWard', 'dispensedFromBatch', 'productOrServiceRequest'])
                 ->whereIn('dispensed_from_store_id', $storeIds)
                 ->where('status', 'dispensed')
                 ->whereBetween('dispense_date', [$start, $end])
@@ -50,7 +50,7 @@ class InventoryReportService
         } else {
             // Received mode
             // 1. Requisitions fulfilled INTO these stores
-            $reqItems = StoreRequisitionItem::with(['product.category', 'requisition.fromStore', 'destinationBatch'])
+            $reqItems = StoreRequisitionItem::with(['product.category', 'product.price', 'requisition.fromStore', 'destinationBatch'])
                 ->whereHas('requisition', function ($q) use ($storeIds, $start, $end) {
                     $q->whereIn('to_store_id', $storeIds)
                       ->where('status', 'fulfilled')
@@ -72,6 +72,10 @@ class InventoryReportService
                 'grouping_key' => $key,
                 'total_qty' => $data['qty'],
                 'total_value' => $data['value'],
+                'cash_revenue' => $data['cash_revenue'] ?? 0,
+                'claims_revenue' => $data['claims_revenue'] ?? 0,
+                'potential_revenue' => $data['potential_revenue'] ?? 0,
+                'profit' => $data['profit'] ?? 0,
             ];
         }
 
@@ -90,7 +94,7 @@ class InventoryReportService
         $details = [];
 
         if ($mode === 'given') {
-            $reqItems = StoreRequisitionItem::with(['product', 'sourceBatch', 'requisition.toStore', 'product.category'])
+            $reqItems = StoreRequisitionItem::with(['product.category', 'product.price', 'sourceBatch', 'requisition.toStore'])
                 ->whereHas('requisition', function ($q) use ($storeIds, $start, $end) {
                     $q->whereIn('from_store_id', $storeIds)
                       ->where('status', 'fulfilled')
@@ -100,7 +104,7 @@ class InventoryReportService
 
             $this->extractDrillDownRequisitions($reqItems, $details, $groupBy, $groupKey, 'toStore');
 
-            $dispenses = ProductRequest::with(['product', 'dispensedFromBatch', 'encounter.service', 'encounter.admission_request.preferredWard', 'product.category'])
+            $dispenses = ProductRequest::with(['product.category', 'product.price', 'dispensedFromBatch', 'encounter.service', 'encounter.admission_request.preferredWard', 'productOrServiceRequest'])
                 ->whereIn('dispensed_from_store_id', $storeIds)
                 ->where('status', 'dispensed')
                 ->whereBetween('dispense_date', [$start, $end])
@@ -108,7 +112,7 @@ class InventoryReportService
 
             $this->extractDrillDownDispenses($dispenses, $details, $groupBy, $groupKey);
         } else {
-            $reqItems = StoreRequisitionItem::with(['product', 'destinationBatch', 'requisition.fromStore', 'product.category'])
+            $reqItems = StoreRequisitionItem::with(['product.category', 'product.price', 'destinationBatch', 'requisition.fromStore'])
                 ->whereHas('requisition', function ($q) use ($storeIds, $start, $end) {
                     $q->whereIn('to_store_id', $storeIds)
                       ->where('status', 'fulfilled')
@@ -131,18 +135,25 @@ class InventoryReportService
             $batch = $storeRelation === 'toStore' ? $item->sourceBatch : $item->destinationBatch;
             $cost = $batch->cost_price ?? 0;
             $val = $qty * $cost;
+            
+            $salePrice = $item->product->price->current_sale_price ?? 0;
+            $potentialRev = $qty * $salePrice;
 
             if ($groupBy === 'category') {
                 $key = $item->product->category->category_name ?? 'Uncategorized';
+            } elseif ($groupBy === 'product') {
+                $key = $item->product->product_name ?? 'Unknown Product';
             } else {
                 $key = $item->requisition->$storeRelation->store_name ?? 'Unknown Store';
             }
 
             if (!isset($aggregates[$key])) {
-                $aggregates[$key] = ['qty' => 0, 'value' => 0];
+                $aggregates[$key] = ['qty' => 0, 'value' => 0, 'cash_revenue' => 0, 'claims_revenue' => 0, 'potential_revenue' => 0, 'profit' => 0];
             }
             $aggregates[$key]['qty'] += $qty;
             $aggregates[$key]['value'] += $val;
+            $aggregates[$key]['potential_revenue'] += $potentialRev;
+            $aggregates[$key]['profit'] += ($potentialRev - $val);
         }
     }
 
@@ -155,18 +166,35 @@ class InventoryReportService
             $batch = $item->dispensedFromBatch;
             $cost = $batch->cost_price ?? 0;
             $val = $qty * $cost;
+            
+            $cashRev = 0;
+            $claimsRev = 0;
+            $psr = $item->productOrServiceRequest;
+            
+            if ($psr) {
+                $cashRev = (float)($psr->payable_amount ?? 0);
+                $claimsRev = (float)($psr->claims_amount ?? 0);
+            } else {
+                $salePrice = $item->price_override ?? $item->price_original ?? ($item->product->price->current_sale_price ?? 0);
+                $cashRev = $qty * $salePrice;
+            }
 
             if ($groupBy === 'category') {
                 $key = $item->product->category->category_name ?? 'Uncategorized';
+            } elseif ($groupBy === 'product') {
+                $key = $item->product->product_name ?? 'Unknown Product';
             } else {
                 $key = $this->resolveDispenseDestination($item);
             }
 
             if (!isset($aggregates[$key])) {
-                $aggregates[$key] = ['qty' => 0, 'value' => 0];
+                $aggregates[$key] = ['qty' => 0, 'value' => 0, 'cash_revenue' => 0, 'claims_revenue' => 0, 'potential_revenue' => 0, 'profit' => 0];
             }
             $aggregates[$key]['qty'] += $qty;
             $aggregates[$key]['value'] += $val;
+            $aggregates[$key]['cash_revenue'] += $cashRev;
+            $aggregates[$key]['claims_revenue'] += $claimsRev;
+            $aggregates[$key]['profit'] += (($cashRev + $claimsRev) - $val);
         }
     }
 
@@ -178,12 +206,15 @@ class InventoryReportService
 
             $key = ($groupBy === 'category') 
                 ? ($item->product->category->category_name ?? 'Uncategorized')
-                : ($item->requisition->$storeRelation->store_name ?? 'Unknown Store');
+                : (($groupBy === 'product') ? ($item->product->product_name ?? 'Unknown Product') : ($item->requisition->$storeRelation->store_name ?? 'Unknown Store'));
 
             if (strtolower($key) !== strtolower($targetKey)) continue;
 
             $batch = $storeRelation === 'toStore' ? $item->sourceBatch : $item->destinationBatch;
             $cost = $batch->cost_price ?? 0;
+
+            $salePrice = $item->product->price->current_sale_price ?? 0;
+            $potentialRev = $qty * $salePrice;
 
             $this->addDrillDownRow($details, [
                 'type' => 'Requisition',
@@ -195,6 +226,10 @@ class InventoryReportService
                 'qty' => $qty,
                 'cost_price' => $cost,
                 'total_value' => $qty * $cost,
+                'cash_paid' => 0,
+                'claims_paid' => 0,
+                'total_revenue' => $potentialRev,
+                'profit' => $potentialRev - ($qty * $cost),
             ]);
         }
     }
@@ -207,12 +242,24 @@ class InventoryReportService
 
             $key = ($groupBy === 'category') 
                 ? ($item->product->category->category_name ?? 'Uncategorized')
-                : $this->resolveDispenseDestination($item);
+                : (($groupBy === 'product') ? ($item->product->product_name ?? 'Unknown Product') : $this->resolveDispenseDestination($item));
 
             if (strtolower($key) !== strtolower($targetKey)) continue;
 
             $batch = $item->dispensedFromBatch;
             $cost = $batch->cost_price ?? 0;
+
+            $cashRev = 0;
+            $claimsRev = 0;
+            $psr = $item->productOrServiceRequest;
+            
+            if ($psr) {
+                $cashRev = (float)($psr->payable_amount ?? 0);
+                $claimsRev = (float)($psr->claims_amount ?? 0);
+            } else {
+                $salePrice = $item->price_override ?? $item->price_original ?? ($item->product->price->current_sale_price ?? 0);
+                $cashRev = $qty * $salePrice;
+            }
 
             $this->addDrillDownRow($details, [
                 'type' => 'Dispense',
@@ -224,6 +271,10 @@ class InventoryReportService
                 'qty' => $qty,
                 'cost_price' => $cost,
                 'total_value' => $qty * $cost,
+                'cash_paid' => $cashRev,
+                'claims_paid' => $claimsRev,
+                'total_revenue' => $cashRev + $claimsRev,
+                'profit' => ($cashRev + $claimsRev) - ($qty * $cost),
             ]);
         }
     }
@@ -237,6 +288,10 @@ class InventoryReportService
         } else {
             $details[$hash]['qty'] += $row['qty'];
             $details[$hash]['total_value'] += $row['total_value'];
+            $details[$hash]['cash_paid'] += $row['cash_paid'];
+            $details[$hash]['claims_paid'] += $row['claims_paid'];
+            $details[$hash]['total_revenue'] += $row['total_revenue'];
+            $details[$hash]['profit'] += $row['profit'];
         }
     }
 
