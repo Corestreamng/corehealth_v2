@@ -6,6 +6,7 @@ use App\Http\Controllers\PurchaseOrderReturnController;
 use App\Http\Controllers\StoreRequisitionController;
 use App\Http\Controllers\StoreRequisitionReturnController;
 use App\Http\Controllers\StoreDamagesController;
+use App\Http\Controllers\InventoryReportController;
 use App\Http\Controllers\StoreWorkbenchController;
 use App\Http\Controllers\StoreGovernanceController;
 use App\Http\Controllers\ExpenseController;
@@ -94,6 +95,10 @@ Route::middleware(['auth'])->prefix('inventory')->name('inventory.')->group(func
     });
 
     // ===== STORE WORKBENCH =====
+        Route::prefix('inventory-reports')->name('inventory-reports.')->group(function () {
+        Route::get('/summary', [InventoryReportController::class, 'getSummary'])->name('summary');
+        Route::get('/drill-down', [InventoryReportController::class, 'getDrillDown'])->name('drill-down');
+    });
     Route::prefix('store-workbench')->name('store-workbench.')->group(function () {
         Route::get('/', [StoreWorkbenchController::class, 'index'])->name('index');
         Route::get('/stock-overview', [StoreWorkbenchController::class, 'stockOverview'])->name('stock-overview');
