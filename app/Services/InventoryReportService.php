@@ -29,7 +29,7 @@ class InventoryReportService
 
         if ($mode === 'given') {
             // 1. Requisitions fulfilled FROM these stores
-            $reqItems = StoreRequisitionItem::with(['product.category', 'requisition.toStore'])
+            $reqItems = StoreRequisitionItem::with(['product.category', 'requisition.toStore', 'sourceBatch'])
                 ->whereHas('requisition', function ($q) use ($storeIds, $start, $end) {
                     $q->whereIn('from_store_id', $storeIds)
                       ->where('status', 'fulfilled')
@@ -40,7 +40,7 @@ class InventoryReportService
             $this->aggregateRequisitions($reqItems, $aggregates, $groupBy, 'toStore');
 
             // 2. Dispenses made FROM these stores
-            $dispenses = ProductRequest::with(['product.category', 'encounter.service', 'encounter.admission_request.preferredWard'])
+            $dispenses = ProductRequest::with(['product.category', 'encounter.service', 'encounter.admission_request.preferredWard', 'dispensedFromBatch'])
                 ->whereIn('dispensed_from_store_id', $storeIds)
                 ->where('status', 'dispensed')
                 ->whereBetween('dispense_date', [$start, $end])
@@ -50,7 +50,7 @@ class InventoryReportService
         } else {
             // Received mode
             // 1. Requisitions fulfilled INTO these stores
-            $reqItems = StoreRequisitionItem::with(['product.category', 'requisition.fromStore'])
+            $reqItems = StoreRequisitionItem::with(['product.category', 'requisition.fromStore', 'destinationBatch'])
                 ->whereHas('requisition', function ($q) use ($storeIds, $start, $end) {
                     $q->whereIn('to_store_id', $storeIds)
                       ->where('status', 'fulfilled')
@@ -128,7 +128,8 @@ class InventoryReportService
             $qty = $item->fulfilled_qty ?? 0;
             if ($qty <= 0) continue;
             
-            $cost = $item->product->cost_price ?? 0;
+            $batch = $storeRelation === 'toStore' ? $item->sourceBatch : $item->destinationBatch;
+            $cost = $batch->cost_price ?? 0;
             $val = $qty * $cost;
 
             if ($groupBy === 'category') {
@@ -151,7 +152,8 @@ class InventoryReportService
             $qty = $item->qty ?? 0;
             if ($qty <= 0) continue;
             
-            $cost = $item->product->cost_price ?? 0;
+            $batch = $item->dispensedFromBatch;
+            $cost = $batch->cost_price ?? 0;
             $val = $qty * $cost;
 
             if ($groupBy === 'category') {
@@ -181,7 +183,7 @@ class InventoryReportService
             if (strtolower($key) !== strtolower($targetKey)) continue;
 
             $batch = $storeRelation === 'toStore' ? $item->sourceBatch : $item->destinationBatch;
-            $cost = $item->product->cost_price ?? 0;
+            $cost = $batch->cost_price ?? 0;
 
             $this->addDrillDownRow($details, [
                 'type' => 'Requisition',
@@ -210,7 +212,7 @@ class InventoryReportService
             if (strtolower($key) !== strtolower($targetKey)) continue;
 
             $batch = $item->dispensedFromBatch;
-            $cost = $item->product->cost_price ?? 0;
+            $cost = $batch->cost_price ?? 0;
 
             $this->addDrillDownRow($details, [
                 'type' => 'Dispense',
