@@ -138,6 +138,7 @@
                         <a href="{{ route('inventory.requisitions.index') }}" class="btn btn-secondary btn-sm">
                             <i class="mdi mdi-arrow-left"></i> Requisitions Index
                         </a>
+
                     </div>
                 </div>
             </div>
@@ -155,6 +156,11 @@
                     <li class="nav-item">
                         <a class="nav-link" id="history-tab" data-toggle="tab" href="#history-pane" role="tab" aria-controls="history-pane" aria-selected="false">
                             <i class="mdi mdi-history mr-1"></i> Utilization &amp; Transaction History
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" id="aggregate-tab" data-toggle="tab" href="#aggregate-pane" role="tab" aria-controls="aggregate-pane" aria-selected="false">
+                            <i class="mdi mdi-chart-pie mr-1"></i> Aggregate Summaries
                         </a>
                     </li>
                 </ul>
@@ -278,6 +284,26 @@
                                     </tr>
                                 </thead>
                             </table>
+                        </div>
+                    </div>
+
+                    <!-- TAB 3: Aggregate Summaries -->
+                    <div class="tab-pane fade" id="aggregate-pane" role="tabpanel" aria-labelledby="aggregate-tab">
+                        <div class="row mb-3">
+                            <div class="col-12">
+                                <ul class="nav nav-pills nav-justified mb-3">
+                                    <li class="nav-item"><a class="nav-link active" data-toggle="pill" href="#ms-sr-given">Stock Used Up / Dispensed</a></li>
+                                    <li class="nav-item"><a class="nav-link" data-toggle="pill" href="#ms-sr-received">Stock Received</a></li>
+                                </ul>
+                                <div class="tab-content border rounded p-3 bg-white shadow-sm">
+                                    <div class="tab-pane fade show active" id="ms-sr-given">
+                                        @include('admin.inventory.components.summary-report-ui', ['storeIds' => $activeStore->id ?? 0, 'storeName' => $activeStore->store_name ?? 'Active Store', 'mode' => 'given'])
+                                    </div>
+                                    <div class="tab-pane fade" id="ms-sr-received">
+                                        @include('admin.inventory.components.summary-report-ui', ['storeIds' => $activeStore->id ?? 0, 'storeName' => $activeStore->store_name ?? 'Active Store', 'mode' => 'received'])
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
 

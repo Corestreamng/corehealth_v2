@@ -4412,6 +4412,11 @@
                         </button>
                     </li>
                     <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="pharm-aggregate-tab" data-bs-toggle="tab" data-bs-target="#pharm-aggregate-content" type="button" role="tab">
+                            <i class="mdi mdi-chart-donut"></i> Aggregate Summaries
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
                         <button class="nav-link" id="pharm-dispensing-tab" data-bs-toggle="tab" data-bs-target="#pharm-dispensing-content" type="button" role="tab">
                             <i class="mdi mdi-pill"></i> Dispensing
                         </button>
@@ -4740,6 +4745,29 @@
                                                 </tbody>
                                             </table>
                                         </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Aggregate Summaries Tab -->
+                    <div class="tab-pane fade" id="pharm-aggregate-content" role="tabpanel">
+                        <div class="card mb-4 border-0 shadow-sm">
+                            <div class="card-header bg-white">
+                                <h6 class="mb-0"><i class="mdi mdi-chart-donut"></i> Dispense & Requisition Summary</h6>
+                            </div>
+                            <div class="card-body">
+                                <ul class="nav nav-pills nav-justified mb-3">
+                                    <li class="nav-item"><a class="nav-link active" data-toggle="pill" href="#pharm-sr-given">Stock Given Out (Dispensed/Transferred)</a></li>
+                                    <li class="nav-item"><a class="nav-link" data-toggle="pill" href="#pharm-sr-received">Stock Received</a></li>
+                                </ul>
+                                <div class="tab-content border rounded p-3 bg-light">
+                                    <div class="tab-pane fade show active" id="pharm-sr-given">
+                                        @include('admin.inventory.components.summary-report-ui', ['storeIds' => implode(',', $managedStoreIds ?? []), 'storeName' => $resolvedStore->store_name ?? 'Multiple Pharmacy Units', 'mode' => 'given'])
+                                    </div>
+                                    <div class="tab-pane fade" id="pharm-sr-received">
+                                        @include('admin.inventory.components.summary-report-ui', ['storeIds' => implode(',', $managedStoreIds ?? []), 'storeName' => $resolvedStore->store_name ?? 'Multiple Pharmacy Units', 'mode' => 'received'])
                                     </div>
                                 </div>
                             </div>
