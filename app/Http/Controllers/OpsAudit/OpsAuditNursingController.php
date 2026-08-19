@@ -15,7 +15,7 @@ class OpsAuditNursingController extends OpsAuditBaseController
         $wards = \App\Models\Ward::orderBy('name')->pluck('name', 'id');
         $hmos = \App\Models\Hmo::with('scheme')->orderBy('name')->get()->groupBy(fn($hmo) => $hmo->scheme ? $hmo->scheme->name : 'Other Schemes');
         $hmoSchemes = \App\Models\HmoScheme::orderBy('name')->pluck('name', 'id');
-        $stores = \App\Models\Store::orderBy('store_name')->get()->mapWithKeys(fn($s) => [$s->id => trim($s->store_name . ' (' . $s->distributionRoleLabel() . ')')]);
+        $stores = $this->getPermittedStoresForFilter(['roles' => ['ward', 'department']]);
 
         return view('admin.ops_audit.nursing', compact('wards', 'hmos', 'hmoSchemes', 'stores'));
     }

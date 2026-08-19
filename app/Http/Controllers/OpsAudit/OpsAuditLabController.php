@@ -15,7 +15,7 @@ class OpsAuditLabController extends OpsAuditBaseController
         $hmos = \App\Models\Hmo::with('scheme')->orderBy('name')->get()->groupBy(fn($hmo) => $hmo->scheme ? $hmo->scheme->name : 'Other Schemes');
         $hmoSchemes = \App\Models\HmoScheme::orderBy('name')->pluck('name', 'id');
         $cashiers = \App\Models\User::role(['SUPERADMIN', 'ADMIN', 'ACCOUNTS', 'BILLER'])->orderBy('firstname')->get()->mapWithKeys(fn($u) => [$u->id => trim($u->firstname . ' ' . ($u->othername ?? '') . ' ' . $u->surname)]);
-        $stores = \App\Models\Store::orderBy('store_name')->get()->mapWithKeys(fn($s) => [$s->id => trim($s->store_name . ' (' . $s->distributionRoleLabel() . ')')]);
+        $stores = $this->getPermittedStoresForFilter(['roles' => ['lab']]);
 
         return view('admin.ops_audit.lab', compact('hmos', 'hmoSchemes', 'cashiers', 'stores'));
     }

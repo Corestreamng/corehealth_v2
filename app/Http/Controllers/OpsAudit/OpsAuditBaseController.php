@@ -235,6 +235,28 @@ abstract class OpsAuditBaseController extends Controller
         return $html;
     }
 
+    protected function getPermittedStoresForFilter(?array $config)
+    {
+        $query = \App\Models\Store::orderBy('store_name');
+
+        if ($config && (!empty($config['roles']) || !empty($config['name_match']))) {
+            $query->where(function ($q) use ($config) {
+                $q->where('distribution_role', 'main_store');
+
+                if (!empty($config['roles'])) {
+                    $q->orWhereIn('distribution_role', $config['roles']);
+                }
+                if (!empty($config['name_match'])) {
+                    foreach ($config['name_match'] as $match) {
+                        $q->orWhere('store_name', 'like', $match);
+                    }
+                }
+            });
+        }
+
+        return $query->get()->mapWithKeys(fn($s) => [$s->id => trim($s->store_name . ' (' . $s->distributionRoleLabel() . ')')]);
+    }
+
     protected function buildDataTableResponse($query, Request $request, callable $customizer, callable $rowMapper, callable $kpiBuilder, $kpiQuery = null)
     {
         if ($request->input('action') === 'print') {
