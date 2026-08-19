@@ -124,7 +124,9 @@
                         <th>Approved By</th>
                         <th>Fulfilled By</th>
                         <th>Items</th>
-                        <th>Total Value</th>
+                        <th>Req Value</th>
+                        <th>Appr Value</th>
+                        <th>Ful Value</th>
                         <th>Audit ⚡</th>
                     </tr>
                 </thead>
@@ -300,18 +302,21 @@ $(function() {
     }
 
     var dtRequisitions = $('#dt-requisitions').DataTable(commonOpts(requisitionsUrl, [
-        { data: 'date' },
-        { data: 'req_no' },
-        { data: 'from_store' },
-        { data: 'to_store' },
-        { data: 'status' },
-        { data: 'requested_by' },
-        { data: 'approved_by' },
-        { data: 'fulfilled_by' },
-        { data: 'items_count' },
-        { data: 'total_value' },
-        { data: 'audit', orderable: false, searchable: false }
-    ], 'kpi-requisitions'));
+            { data: 'date', name: 'date' },
+            { data: 'req_no', name: 'req_no' },
+            { data: 'from_store', name: 'from_store' },
+            { data: 'to_store', name: 'to_store' },
+            { data: 'status', name: 'status' },
+            { data: 'requested_by', name: 'requested_by' },
+            { data: 'approved_by', name: 'approved_by' },
+            { data: 'fulfilled_by', name: 'fulfilled_by' },
+            { data: 'items_count', name: 'items_count' },
+            { data: 'req_value', name: 'req_value' },
+            { data: 'appr_value', name: 'appr_value' },
+            { data: 'ful_value', name: 'ful_value' },
+            { data: 'rej_value', name: 'rej_value' },
+            { data: 'audit', name: 'audit', orderable: false, searchable: false, className: 'text-center' }
+        ], 'kpi-requisitions'));
 
     var dtPurchaseOrders = null;
     var dtBatches = null;

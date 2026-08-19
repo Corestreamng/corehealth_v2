@@ -28,6 +28,7 @@ class OpsAuditPharmacyController extends OpsAuditBaseController
                 'dispenses' => ProductRequest::class,
                 'returns' => ProductRequest::class,
                 'stock' => StoreRequisitionItem::class,
+                'requisitions' => \App\Models\StoreRequisition::class,
                 'cashbook' => Payment::class,
             ];
             $request->merge(['zone_key' => 'ops_audit.pharmacy.' . $tab]);
@@ -41,6 +42,8 @@ class OpsAuditPharmacyController extends OpsAuditBaseController
                 return $this->returnsData($request);
             case 'stock':
                 return $this->stockData($request);
+            case 'requisitions':
+                return $this->moduleRequisitionsData($request, ['roles' => ['pharmacy_hub', 'pharmacy_satellite']]);
             case 'cashbook':
                 return $this->cashbookData($request);
             default:
