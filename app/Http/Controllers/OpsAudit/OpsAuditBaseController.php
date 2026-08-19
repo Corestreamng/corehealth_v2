@@ -36,7 +36,7 @@ abstract class OpsAuditBaseController extends Controller
     {
         if (!$patient) return '-';
 
-        $patientId = $patient->patient_id ?? 'Unknown';
+        $patientId = $patient->file_no ?? $patient->old_patient_id ?? 'Unknown';
         $name = $user ? trim($user->firstname . ' ' . ($user->othername ?? '') . ' ' . $user->surname) : 'Unknown Patient';
         
         $hmoHtml = '';
@@ -177,6 +177,21 @@ abstract class OpsAuditBaseController extends Controller
         }
 
         $html = '<div class="d-flex gap-1 flex-wrap align-items-center">';
+
+        $typeMap = [
+            'App\\Models\\AdmissionRequest' => 'admission',
+            'App\\Models\\StoreRequisition' => 'requisition',
+            'App\\Models\\StoreRequisitionItem' => 'requisition',
+        ];
+        
+        $detailsType = $typeMap[$fullModelClass] ?? null;
+        if ($detailsType) {
+            $detailsId = $record->id;
+            if ($fullModelClass === 'App\\Models\\StoreRequisitionItem') {
+                $detailsId = $record->store_requisition_id;
+            }
+            $html .= '<button class="btn btn-sm btn-info text-white px-2 py-1 text-nowrap" onclick="openOpsAuditDetail(\'' . $detailsType . '\', ' . $detailsId . ')" title="View Details"><i class="mdi mdi-information-outline me-1"></i> Details</button>';
+        }
 
         if ($activeQuery) {
             $auditorName = $activeQuery->auditor->name ?? 'Auditor';
@@ -654,24 +669,29 @@ abstract class OpsAuditBaseController extends Controller
         }
 
         // 2. Staff (Users)
-        $staff = \App\Models\User::where(function($query) use ($q) {
+        $staff = \App\Models\User::with('staff')->where(function($query) use ($q) {
             $query->where('firstname', 'like', "%{$q}%")
-                  ->orWhere('surname', 'like', "%{$q}%");
+                  ->orWhere('surname', 'like', "%{$q}%")
+                  ->orWhereHas('staff', function($sq) use ($q) {
+                      $sq->where('employee_id', 'like', "%{$q}%");
+                  });
         })->where('is_admin', '!=', 19)->limit(10)->get();
         if ($staff->isNotEmpty()) {
             $staffOptions = [];
             foreach ($staff as $u) {
-                $staffOptions[] = ['id' => 'STAFF:' . $u->id, 'text' => trim($u->firstname . ' ' . $u->surname)];
+                $code = $u->staff && $u->staff->employee_id ? ' (' . $u->staff->employee_id . ')' : '';
+                $staffOptions[] = ['id' => 'STAFF:' . $u->id, 'text' => trim($u->firstname . ' ' . $u->surname) . $code];
             }
             $results[] = ['text' => 'Staff / Users', 'children' => $staffOptions];
         }
 
         // 3. Patients
-        $patients = \App\Models\Patient::with('user')->whereHas('user', function($query) use ($q) {
-            $query->where('firstname', 'like', "%{$q}%")
-                  ->orWhere('surname', 'like', "%{$q}%");
-        })->orWhere('file_no', 'like', "%{$q}%")
-          ->limit(10)->get();
+        $patients = \App\Models\Patient::with('user')->where(function($qBuilder) use ($q) {
+            $qBuilder->whereHas('user', function($query) use ($q) {
+                $query->where('firstname', 'like', "%{$q}%")
+                      ->orWhere('surname', 'like', "%{$q}%");
+            })->orWhere('file_no', 'like', "%{$q}%");
+        })->limit(10)->get();
           
         if ($patients->isNotEmpty()) {
             $patOptions = [];
@@ -683,5 +703,66 @@ abstract class OpsAuditBaseController extends Controller
         }
 
         return response()->json(['results' => $results]);
+    }
+
+    /**
+     * Generic Details Endpoint for OpsAudit Modal
+     */
+    public function getRecordDetails($type, $id)
+    {
+        if ($type === 'admission') {
+            return $this->getAdmissionDetails($id);
+        } elseif ($type === 'requisition') {
+            return $this->getRequisitionDetails($id);
+        }
+
+        return response()->json([
+            'html' => '<div class="alert alert-warning m-3">Details view for type "' . e($type) . '" is not implemented yet.</div>',
+            'title' => '<i class="mdi mdi-alert me-2 text-warning"></i> Unsupported Type'
+        ]);
+    }
+
+    private function getAdmissionDetails($id)
+    {
+        $controller = new \App\Http\Controllers\AdmissionModuleController();
+        $response = $controller->getAdmissionDetail($id);
+        
+        if ($response->status() !== 200) {
+            return response()->json([
+                'html' => '<div class="alert alert-danger m-3">Error fetching admission details.</div>',
+                'title' => 'Error'
+            ]);
+        }
+
+        $data = json_decode($response->getContent(), true);
+
+        return response()->json([
+            'html' => view('admin.ops_audit.details.admission', ['data' => $data])->render(),
+            'title' => '<i class="mdi mdi-bed me-2 text-primary"></i> Admission Details — ' . ($data['patient_name'] ?? 'Unknown')
+        ]);
+    }
+
+    private function getRequisitionDetails($id)
+    {
+        $requisition = \App\Models\StoreRequisition::with([
+            'items.product.packagings', 
+            'fromStore', 
+            'toStore', 
+            'requester', 
+            'approver', 
+            'fulfiller'
+        ])->find($id);
+
+        if (!$requisition) {
+            return response()->json([
+                'html' => '<div class="alert alert-danger m-3">Requisition not found.</div>',
+                'title' => 'Error'
+            ]);
+        }
+
+        return response()->json([
+            'html' => view('admin.ops_audit.details.requisition', compact('requisition'))->render(),
+            'title' => '<i class="mdi mdi-swap-horizontal me-2 text-primary"></i> Requisition Details — ' . $requisition->requisition_number
+        ]);
     }
 }

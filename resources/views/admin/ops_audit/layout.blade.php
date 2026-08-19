@@ -381,6 +381,11 @@
 @endsection
 
 @push('scripts')
+<style>
+    .ajax-entity-search + .select2-container {
+        min-width: 200px !important;
+    }
+</style>
 <script>
     $(function() {
         if ($.fn.select2) {
@@ -504,6 +509,39 @@
             modelType = arg1; modelId = arg2; btnElement = arg3;
         }
         openUniversalStampModal('single', modelType, modelId, btnElement);
+    }
+
+    // Global variable for current bulk target
+    window._currentBulkTarget = null;
+
+    /**
+     * Open Generic Details Modal
+     */
+    function openOpsAuditDetail(type, id) {
+        $('#opsAuditGenericModalTitle').html('<i class="mdi mdi-information-outline me-2 text-primary"></i> Details Loading...');
+        $('#opsAuditGenericModalBody').html('<div class="d-flex justify-content-center align-items-center h-100 p-5"><i class="mdi mdi-loading mdi-spin text-primary" style="font-size: 3rem;"></i></div>');
+        $('#opsAuditGenericModal').modal('show');
+
+        $.ajax({
+            url: '/ops-audit/details/' + type + '/' + id,
+            type: 'GET',
+            success: function(res) {
+                if(res.html) {
+                    $('#opsAuditGenericModalBody').html(res.html);
+                    if(res.title) {
+                        $('#opsAuditGenericModalTitle').html(res.title);
+                    } else {
+                        $('#opsAuditGenericModalTitle').html('<i class="mdi mdi-text-box-search-outline me-2 text-primary"></i> Record Details');
+                    }
+                } else {
+                    $('#opsAuditGenericModalBody').html('<div class="alert alert-danger m-3">Unexpected response format.</div>');
+                }
+            },
+            error: function(err) {
+                console.error(err);
+                $('#opsAuditGenericModalBody').html('<div class="alert alert-danger m-3">Error loading details.</div>');
+            }
+        });
     }
 
     function openUniversalStampModal(mode, modelType, modelId, btnElement) {
@@ -734,6 +772,25 @@
 @endpush
 
 {{-- Universal Stamp Modal --}}
+{{-- Generic Details Modal --}}
+<div class="modal fade" id="opsAuditGenericModal" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-scrollable" role="document">
+        <div class="modal-content">
+            <div class="modal-header bg-light">
+                <h5 class="modal-title font-weight-bold" id="opsAuditGenericModalTitle">
+                    <i class="mdi mdi-information-outline me-2 text-primary"></i> Details
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-0" id="opsAuditGenericModalBody" style="min-height: 400px;">
+                <div class="d-flex justify-content-center align-items-center h-100 p-5">
+                    <i class="mdi mdi-loading mdi-spin text-primary" style="font-size: 3rem;"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
 <div class="modal fade" id="universalStampModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered modal-xl">
         <div class="modal-content border-0 shadow">

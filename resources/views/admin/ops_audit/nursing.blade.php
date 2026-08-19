@@ -133,6 +133,11 @@
 
         <div class="row g-2 mb-2">
             <div class="col-md-2">
+                <select name="entity" class="form-select form-select-sm ajax-entity-search ops-tab-filter" data-tab="notes" data-placeholder="Search Entity/Patient...">
+                    <option value="">All Entities</option>
+                </select>
+            </div>
+            <div class="col-md-2">
                 <select name="completed" class="form-select form-select-sm ops-tab-filter" data-tab="notes">
                     <option value="">All Status</option>
                     <option value="1">Completed</option>
@@ -164,7 +169,14 @@
     <div class="tab-pane fade" id="pane-bills" role="tabpanel">
         <div class="row g-2 mb-3 ops-kpi-row" id="kpi-bills"></div>
         
-        <div class="table-responsive">
+        <div class="row g-2 mb-2">
+            <div class="col-md-2">
+                <select name="entity" class="form-select form-select-sm ajax-entity-search ops-tab-filter" data-tab="bills" data-placeholder="Search Entity/Patient...">
+                    <option value="">All Entities</option>
+                </select>
+            </div>
+</div>
+<div class="table-responsive">
             <table class="table table-sm table-bordered table-striped ops-datatable w-100" id="dt-bills">
                 <thead>
                     <tr>

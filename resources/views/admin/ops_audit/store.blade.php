@@ -76,7 +76,7 @@
         <div class="alert alert-info">
             <i class="mdi mdi-information me-1"></i> For detailed stock movement analysis, cost valuations, and profit/loss breakdown, please refer to the main <strong>Inventory -> Summary Reports</strong> module.
         </div>
-        <a href="{{ route('admin.inventory.summary') ?? '#' }}" class="btn btn-outline-primary">Go to Summary Reports</a>
+        <a href="{{ Route::has('admin.inventory.summary') ? route('admin.inventory.summary') : '#' }}" class="btn btn-outline-primary">Go to Summary Reports</a>
     </div>
 
     {{-- Tab 2: Requisitions --}}

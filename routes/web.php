@@ -1258,6 +1258,7 @@ Route::middleware(['auth'])->prefix('audit-workbench')->name('audit.')->group(fu
 Route::middleware(['auth'])->prefix('ops-audit')->name('ops-audit.')->group(function () {
     // Shared AJAX
     Route::get('/search-entities', [\App\Http\Controllers\OpsAudit\OpsAuditBillingController::class, 'searchEntities'])->name('search-entities');
+    Route::get('/details/{type}/{id}', [\App\Http\Controllers\OpsAudit\OpsAuditBillingController::class, 'getRecordDetails'])->name('details');
 
     // Module 1: Reception
     Route::get('/reception', [\App\Http\Controllers\OpsAudit\OpsAuditReceptionController::class, 'index'])->name('reception');
