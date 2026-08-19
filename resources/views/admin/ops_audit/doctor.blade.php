@@ -116,6 +116,11 @@
 
         <div class="row g-2 mb-2">
             <div class="col-md-2">
+                <select name="entity" class="form-select form-select-sm ajax-entity-search ops-tab-filter" data-tab="encounters" data-placeholder="Search Entity/Patient...">
+                    <option value="">All Entities</option>
+                </select>
+            </div>
+            <div class="col-md-2">
                 <select name="completed" class="form-select form-select-sm ops-tab-filter" data-tab="encounters">
                     <option value="">All Status</option>
                     <option value="1">Completed</option>
@@ -363,6 +368,11 @@
     <div class="tab-pane fade" id="pane-referrals" role="tabpanel">
         <div class="row g-2 mb-3 ops-kpi-row" id="kpi-referrals"></div>
         <div class="row g-2 mb-2">
+            <div class="col-md-2">
+                <select name="entity" class="form-select form-select-sm ajax-entity-search ops-tab-filter" data-tab="referrals" data-placeholder="Search Entity/Patient...">
+                    <option value="">All Entities</option>
+                </select>
+            </div>
             <div class="col-md-2">
                 <select name="referral_type" class="form-select form-select-sm ops-tab-filter" data-tab="referrals">
                     <option value="">All Types</option>

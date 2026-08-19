@@ -14,7 +14,7 @@ class OpsAuditStoreController extends OpsAuditBaseController
     public function index(Request $request)
     {
         $stores = \App\Models\Store::orderBy('store_name')->get()->mapWithKeys(fn($s) => [$s->id => trim($s->store_name . ' (' . $s->distributionRoleLabel() . ')')]);
-        $users = \App\Models\User::role(['SUPERADMIN', 'ADMIN', 'STORE', 'PHARMACY'])->orderBy('firstname')->get()->mapWithKeys(fn($u) => [$u->id => trim($u->firstname . ' ' . ($u->othername ?? '') . ' ' . $u->surname)]);
+        $users = \App\Models\User::role(['SUPERADMIN', 'ADMIN', 'STORE', 'PHARMACIST'])->orderBy('firstname')->get()->mapWithKeys(fn($u) => [$u->id => trim($u->firstname . ' ' . ($u->othername ?? '') . ' ' . $u->surname)]);
         $suppliers = \App\Models\Supplier::orderBy('company_name')->pluck('company_name', 'id');
         $products = \App\Models\Product::orderBy('product_name')->pluck('product_name', 'id');
 
@@ -44,9 +44,9 @@ class OpsAuditStoreController extends OpsAuditBaseController
         $query = StoreRequisition::with([
             'fromStore',
             'toStore',
-            'requestedBy',
-            'approvedBy',
-            'fulfilledBy',
+            'requester',
+            'approver',
+            'fulfiller',
             'items' // If we want to sum values
         ]);
 
@@ -72,9 +72,9 @@ class OpsAuditStoreController extends OpsAuditBaseController
                 'from_store' => $row->fromStore ? ($row->fromStore->store_name . '<br><small class="text-muted">' . $row->fromStore->distributionRoleLabel() . '</small>') : '-',
                 'to_store' => $row->toStore ? ($row->toStore->store_name . '<br><small class="text-muted">' . $row->toStore->distributionRoleLabel() . '</small>') : '-',
                 'status' => '<span class="badge bg-' . $sColor . '">' . ucfirst($row->status ?? '-') . '</span>',
-                'requested_by' => $row->requestedBy?->firstname ? ($row->requestedBy->firstname . ' ' . ($row->requestedBy->surname ?? '')) : '-',
-                'approved_by' => $row->approvedBy?->firstname ? ($row->approvedBy->firstname . ' ' . ($row->approvedBy->surname ?? '')) : '-',
-                'fulfilled_by' => $row->fulfilledBy?->firstname ? ($row->fulfilledBy->firstname . ' ' . ($row->fulfilledBy->surname ?? '')) : '-',
+                'requested_by' => $row->requester?->firstname ? ($row->requester->firstname . ' ' . ($row->requester->surname ?? '')) : '-',
+                'approved_by' => $row->approver?->firstname ? ($row->approver->firstname . ' ' . ($row->approver->surname ?? '')) : '-',
+                'fulfilled_by' => $row->fulfiller?->firstname ? ($row->fulfiller->firstname . ' ' . ($row->fulfiller->surname ?? '')) : '-',
                 'items_count' => $row->items ? $row->items->count() : '-',
                 'total_value' => '₦' . number_format($totalValue, 2),
                 'payment_info' => $this->renderPaymentInfo($row),

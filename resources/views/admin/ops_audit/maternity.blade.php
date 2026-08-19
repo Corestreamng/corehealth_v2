@@ -45,11 +45,11 @@
             <select name="hmo_id" class="form-control form-control-modern select2 ops-hmo-select2" style="width: 100%;">
                 <option value="">All HMOs</option>
                 @foreach($hmos as $schemeName => $schemeHmos)
-                    <optgroup label="{{ $schemeName }}">
-                        @foreach($schemeHmos as $hmo)
-                            <option value="{{ $hmo->id }}">{{ $hmo->name }}</option>
-                        @endforeach
-                    </optgroup>
+                <optgroup label="{{ $schemeName }}">
+                    @foreach($schemeHmos as $hmo)
+                    <option value="{{ $hmo->id }}">{{ $hmo->name }}</option>
+                    @endforeach
+                </optgroup>
                 @endforeach
             </select>
         </div>
@@ -143,6 +143,13 @@
     <div class="tab-pane fade" id="pane-anc" role="tabpanel">
         <div class="row g-2 mb-3 ops-kpi-row" id="kpi-anc"></div>
 
+        <div class="row g-2 mb-2">
+            <div class="col-md-2">
+                <select name="entity" class="form-select form-select-sm ajax-entity-search ops-tab-filter" data-tab="anc" data-placeholder="Search Entity/Patient...">
+                    <option value="">All Entities</option>
+                </select>
+            </div>
+        </div>
         <div class="table-responsive">
             <table class="table table-sm table-bordered table-striped ops-datatable w-100" id="dt-anc">
                 <thead>
@@ -167,6 +174,13 @@
     <div class="tab-pane fade" id="pane-deliveries" role="tabpanel">
         <div class="row g-2 mb-3 ops-kpi-row" id="kpi-deliveries"></div>
 
+        <div class="row g-2 mb-2">
+            <div class="col-md-2">
+                <select name="entity" class="form-select form-select-sm ajax-entity-search ops-tab-filter" data-tab="deliveries" data-placeholder="Search Entity/Patient...">
+                    <option value="">All Entities</option>
+                </select>
+            </div>
+        </div>
         <div class="table-responsive">
             <table class="table table-sm table-bordered table-striped ops-datatable w-100" id="dt-deliveries">
                 <thead>
@@ -213,6 +227,13 @@
     <div class="tab-pane fade" id="pane-postnatal" role="tabpanel">
         <div class="row g-2 mb-3 ops-kpi-row" id="kpi-postnatal"></div>
 
+        <div class="row g-2 mb-2">
+            <div class="col-md-2">
+                <select name="entity" class="form-select form-select-sm ajax-entity-search ops-tab-filter" data-tab="postnatal" data-placeholder="Search Entity/Patient...">
+                    <option value="">All Entities</option>
+                </select>
+            </div>
+        </div>
         <div class="table-responsive">
             <table class="table table-sm table-bordered table-striped ops-datatable w-100" id="dt-postnatal">
                 <thead>
@@ -236,6 +257,13 @@
     <div class="tab-pane fade" id="pane-immunizations" role="tabpanel">
         <div class="row g-2 mb-3 ops-kpi-row" id="kpi-immunizations"></div>
 
+        <div class="row g-2 mb-2">
+            <div class="col-md-2">
+                <select name="entity" class="form-select form-select-sm ajax-entity-search ops-tab-filter" data-tab="immunizations" data-placeholder="Search Entity/Patient...">
+                    <option value="">All Entities</option>
+                </select>
+            </div>
+        </div>
         <div class="table-responsive">
             <table class="table table-sm table-bordered table-striped ops-datatable w-100" id="dt-immunizations">
                 <thead>
@@ -259,6 +287,13 @@
     <div class="tab-pane fade" id="pane-bills" role="tabpanel">
         <div class="row g-2 mb-3 ops-kpi-row" id="kpi-bills"></div>
 
+        <div class="row g-2 mb-2">
+            <div class="col-md-2">
+                <select name="entity" class="form-select form-select-sm ajax-entity-search ops-tab-filter" data-tab="bills" data-placeholder="Search Entity/Patient...">
+                    <option value="">All Entities</option>
+                </select>
+            </div>
+        </div>
         <div class="table-responsive">
             <table class="table table-sm table-bordered table-striped ops-datatable w-100" id="dt-bills">
                 <thead>
@@ -286,129 +321,278 @@
 
 @push('ops_audit_scripts')
 <script>
-$(function() {
-    var dataUrls = {
-        enrollments: "{{ route('ops-audit.maternity.data', 'enrollments') }}",
-        anc: "{{ route('ops-audit.maternity.data', 'anc') }}",
-        deliveries: "{{ route('ops-audit.maternity.data', 'deliveries') }}",
-        babies: "{{ route('ops-audit.maternity.data', 'babies') }}",
-        postnatal: "{{ route('ops-audit.maternity.data', 'postnatal') }}",
-        immunizations: "{{ route('ops-audit.maternity.data', 'immunizations') }}",
-        bills: "{{ route('ops-audit.maternity.data', 'bills') }}"
-    };
-
-    var dtInstances = {};
-
-    function commonOpts(url, columns, kpiContainer) {
-        return {
-            dom: '<"d-flex justify-content-between align-items-center mb-2"<"d-flex gap-2"B>f>rt<"d-flex justify-content-between align-items-center mt-2"ip>',
-            buttons: [
-                { extend: 'copy', className: 'btn btn-xs btn-outline-secondary font-weight-bold' },
-                { extend: 'excel', className: 'btn btn-xs btn-outline-success font-weight-bold' },
-                { extend: 'pdf', className: 'btn btn-xs btn-outline-danger font-weight-bold' },
-                { extend: 'print', className: 'btn btn-xs btn-outline-info font-weight-bold' }
-            ],
-            processing: true,
-            serverSide: true,
-            ajax: {
-                url: url,
-                type: 'GET',
-                data: function(d) {
-                    var form = $('#ops_audit_filter_form').serializeArray();
-                    form.forEach(function(f) { d[f.name] = f.value; });
-                    var tabName = kpiContainer ? kpiContainer.replace('kpi-', '') : '';
-                    $(`.ops-tab-filter[data-tab="${tabName}"]`).each(function() {
-                        d[$(this).attr('name')] = $(this).val();
-                    });
-                },
-                dataSrc: function(json) {
-                    if (json.kpis && kpiContainer) {
-                        renderOpsKpis(json.kpis, kpiContainer);
-                    }
-                    return json.data;
-                }
-            },
-            columns: columns,
-            order: [[0, 'desc']],
-            pageLength: 25,
-            lengthMenu: [[10, 25, 50, 100], [10, 25, 50, 100]],
-            language: {
-                zeroRecords: '<div class="text-center py-3 text-muted"><i class="mdi mdi-database-off" style="font-size:2rem;"></i><br>No records found.</div>',
-                processing: '<div class="text-center py-3"><i class="mdi mdi-loading mdi-spin text-primary" style="font-size:1.5rem;"></i> Loading...</div>'
-            }
+    $(function() {
+        var dataUrls = {
+            enrollments: "{{ route('ops-audit.maternity.data', 'enrollments') }}",
+            anc: "{{ route('ops-audit.maternity.data', 'anc') }}",
+            deliveries: "{{ route('ops-audit.maternity.data', 'deliveries') }}",
+            babies: "{{ route('ops-audit.maternity.data', 'babies') }}",
+            postnatal: "{{ route('ops-audit.maternity.data', 'postnatal') }}",
+            immunizations: "{{ route('ops-audit.maternity.data', 'immunizations') }}",
+            bills: "{{ route('ops-audit.maternity.data', 'bills') }}"
         };
-    }
 
-    // Init tab 1
-    dtInstances.enrollments = $('#dt-enrollments').DataTable(commonOpts(dataUrls.enrollments, [
-        { data: 'date' }, { data: 'patient' }, { data: 'hmo' }, { data: 'lmp' }, { data: 'edd' },
-        { data: 'gravida_parity' }, { data: 'status' }, { data: 'anc_count' }, { data: 'babies_count' }, { data: 'postnatal_count' },
-        { data: 'audit', orderable: false, searchable: false }
-    ], 'kpi-enrollments'));
+        var dtInstances = {};
 
-    // Lazy init others
-    $('a[data-bs-toggle="tab"]').on('shown.bs.tab', function(e) {
-        var tabId = $(e.target).attr('id').replace('tab-', '');
-        
-        if (tabId === 'anc' && !dtInstances.anc) {
-            dtInstances.anc = $('#dt-anc').DataTable(commonOpts(dataUrls.anc, [
-                { data: 'date' }, { data: 'patient' }, { data: 'hmo' }, { data: 'visit_no' }, { data: 'ga' },
-                { data: 'bp' }, { data: 'weight' }, { data: 'fhr' },
-                { data: 'audit', orderable: false, searchable: false }
-            ], 'kpi-anc'));
-        }
-        else if (tabId === 'deliveries' && !dtInstances.deliveries) {
-            dtInstances.deliveries = $('#dt-deliveries').DataTable(commonOpts(dataUrls.deliveries, [
-                { data: 'date' }, { data: 'patient' }, { data: 'hmo' }, { data: 'type' }, { data: 'place' },
-                { data: 'babies' }, { data: 'blood_loss' }, { data: 'delivered_by' },
-                { data: 'audit', orderable: false, searchable: false }
-            ], 'kpi-deliveries'));
-        }
-        else if (tabId === 'babies' && !dtInstances.babies) {
-            dtInstances.babies = $('#dt-babies').DataTable(commonOpts(dataUrls.babies, [
-                { data: 'date' }, { data: 'mother' }, { data: 'sex' }, { data: 'weight' }, { data: 'apgar' },
-                { data: 'status' },
-                { data: 'audit', orderable: false, searchable: false }
-            ], 'kpi-babies'));
-        }
-        else if (tabId === 'postnatal' && !dtInstances.postnatal) {
-            dtInstances.postnatal = $('#dt-postnatal').DataTable(commonOpts(dataUrls.postnatal, [
-                { data: 'date' }, { data: 'patient' }, { data: 'hmo' }, { data: 'days_pp' }, { data: 'bp' },
-                { data: 'condition' }, { data: 'baby_weight' },
-                { data: 'audit', orderable: false, searchable: false }
-            ], 'kpi-postnatal'));
-        }
-        else if (tabId === 'immunizations' && !dtInstances.immunizations) {
-            dtInstances.immunizations = $('#dt-immunizations').DataTable(commonOpts(dataUrls.immunizations, [
-                { data: 'date' }, { data: 'patient' }, { data: 'hmo' }, { data: 'vaccine' }, { data: 'dose' },
-                { data: 'route' }, { data: 'administered_at' },
-                { data: 'audit', orderable: false, searchable: false }
-            ], 'kpi-immunizations'));
-        }
-        else if (tabId === 'bills' && !dtInstances.bills) {
-            dtInstances.bills = $('#dt-bills').DataTable(commonOpts(dataUrls.bills, [
-                { data: 'date' }, { data: 'patient' }, { data: 'hmo' }, { data: 'amount' },
-                { data: 'payable' }, { data: 'claims' }, { data: 'billed_by' }, { data: 'cashier' },
-                { data: 'method' }, { data: 'pay_status' },
-                { data: 'audit', orderable: false, searchable: false }
-            ], 'kpi-bills'));
+        function commonOpts(url, columns, kpiContainer) {
+            return {
+                dom: '<"d-flex justify-content-between align-items-center mb-2"<"d-flex gap-2"B>f>rt<"d-flex justify-content-between align-items-center mt-2"ip>',
+                buttons: [{
+                        extend: 'copy',
+                        className: 'btn btn-xs btn-outline-secondary font-weight-bold'
+                    },
+                    {
+                        extend: 'excel',
+                        className: 'btn btn-xs btn-outline-success font-weight-bold'
+                    },
+                    {
+                        extend: 'pdf',
+                        className: 'btn btn-xs btn-outline-danger font-weight-bold'
+                    },
+                    {
+                        extend: 'print',
+                        className: 'btn btn-xs btn-outline-info font-weight-bold'
+                    }
+                ],
+                processing: true,
+                serverSide: true,
+                ajax: {
+                    url: url,
+                    type: 'GET',
+                    data: function(d) {
+                        var form = $('#ops_audit_filter_form').serializeArray();
+                        form.forEach(function(f) {
+                            d[f.name] = f.value;
+                        });
+                        var tabName = kpiContainer ? kpiContainer.replace('kpi-', '') : '';
+                        $(`.ops-tab-filter[data-tab="${tabName}"]`).each(function() {
+                            d[$(this).attr('name')] = $(this).val();
+                        });
+                    },
+                    dataSrc: function(json) {
+                        if (json.kpis && kpiContainer) {
+                            renderOpsKpis(json.kpis, kpiContainer);
+                        }
+                        return json.data;
+                    }
+                },
+                columns: columns,
+                order: [
+                    [0, 'desc']
+                ],
+                pageLength: 25,
+                lengthMenu: [
+                    [10, 25, 50, 100],
+                    [10, 25, 50, 100]
+                ],
+                language: {
+                    zeroRecords: '<div class="text-center py-3 text-muted"><i class="mdi mdi-database-off" style="font-size:2rem;"></i><br>No records found.</div>',
+                    processing: '<div class="text-center py-3"><i class="mdi mdi-loading mdi-spin text-primary" style="font-size:1.5rem;"></i> Loading...</div>'
+                }
+            };
         }
 
-        setTimeout(function() {
-            $.fn.dataTable.tables({ visible: true, api: true }).columns.adjust();
-        }, 200);
-    });
+        // Init tab 1
+        dtInstances.enrollments = $('#dt-enrollments').DataTable(commonOpts(dataUrls.enrollments, [{
+                data: 'date'
+            }, {
+                data: 'patient'
+            }, {
+                data: 'hmo'
+            }, {
+                data: 'lmp'
+            }, {
+                data: 'edd'
+            },
+            {
+                data: 'gravida_parity'
+            }, {
+                data: 'status'
+            }, {
+                data: 'anc_count'
+            }, {
+                data: 'babies_count'
+            }, {
+                data: 'postnatal_count'
+            },
+            {
+                data: 'audit',
+                orderable: false,
+                searchable: false
+            }
+        ], 'kpi-enrollments'));
 
-    $('#btnApplyFilters').on('click', function() {
-        Object.values(dtInstances).forEach(function(dt) {
-            if (dt) dt.ajax.reload();
+        // Lazy init others
+        $('a[data-bs-toggle="tab"]').on('shown.bs.tab', function(e) {
+            var tabId = $(e.target).attr('id').replace('tab-', '');
+
+            if (tabId === 'anc' && !dtInstances.anc) {
+                dtInstances.anc = $('#dt-anc').DataTable(commonOpts(dataUrls.anc, [{
+                        data: 'date'
+                    }, {
+                        data: 'patient'
+                    }, {
+                        data: 'hmo'
+                    }, {
+                        data: 'visit_no'
+                    }, {
+                        data: 'ga'
+                    },
+                    {
+                        data: 'bp'
+                    }, {
+                        data: 'weight'
+                    }, {
+                        data: 'fhr'
+                    },
+                    {
+                        data: 'audit',
+                        orderable: false,
+                        searchable: false
+                    }
+                ], 'kpi-anc'));
+            } else if (tabId === 'deliveries' && !dtInstances.deliveries) {
+                dtInstances.deliveries = $('#dt-deliveries').DataTable(commonOpts(dataUrls.deliveries, [{
+                        data: 'date'
+                    }, {
+                        data: 'patient'
+                    }, {
+                        data: 'hmo'
+                    }, {
+                        data: 'type'
+                    }, {
+                        data: 'place'
+                    },
+                    {
+                        data: 'babies'
+                    }, {
+                        data: 'blood_loss'
+                    }, {
+                        data: 'delivered_by'
+                    },
+                    {
+                        data: 'audit',
+                        orderable: false,
+                        searchable: false
+                    }
+                ], 'kpi-deliveries'));
+            } else if (tabId === 'babies' && !dtInstances.babies) {
+                dtInstances.babies = $('#dt-babies').DataTable(commonOpts(dataUrls.babies, [{
+                        data: 'date'
+                    }, {
+                        data: 'mother'
+                    }, {
+                        data: 'sex'
+                    }, {
+                        data: 'weight'
+                    }, {
+                        data: 'apgar'
+                    },
+                    {
+                        data: 'status'
+                    },
+                    {
+                        data: 'audit',
+                        orderable: false,
+                        searchable: false
+                    }
+                ], 'kpi-babies'));
+            } else if (tabId === 'postnatal' && !dtInstances.postnatal) {
+                dtInstances.postnatal = $('#dt-postnatal').DataTable(commonOpts(dataUrls.postnatal, [{
+                        data: 'date'
+                    }, {
+                        data: 'patient'
+                    }, {
+                        data: 'hmo'
+                    }, {
+                        data: 'days_pp'
+                    }, {
+                        data: 'bp'
+                    },
+                    {
+                        data: 'condition'
+                    }, {
+                        data: 'baby_weight'
+                    },
+                    {
+                        data: 'audit',
+                        orderable: false,
+                        searchable: false
+                    }
+                ], 'kpi-postnatal'));
+            } else if (tabId === 'immunizations' && !dtInstances.immunizations) {
+                dtInstances.immunizations = $('#dt-immunizations').DataTable(commonOpts(dataUrls.immunizations, [{
+                        data: 'date'
+                    }, {
+                        data: 'patient'
+                    }, {
+                        data: 'hmo'
+                    }, {
+                        data: 'vaccine'
+                    }, {
+                        data: 'dose'
+                    },
+                    {
+                        data: 'route'
+                    }, {
+                        data: 'administered_at'
+                    },
+                    {
+                        data: 'audit',
+                        orderable: false,
+                        searchable: false
+                    }
+                ], 'kpi-immunizations'));
+            } else if (tabId === 'bills' && !dtInstances.bills) {
+                dtInstances.bills = $('#dt-bills').DataTable(commonOpts(dataUrls.bills, [{
+                        data: 'date'
+                    }, {
+                        data: 'patient'
+                    }, {
+                        data: 'hmo'
+                    }, {
+                        data: 'amount'
+                    },
+                    {
+                        data: 'payable'
+                    }, {
+                        data: 'claims'
+                    }, {
+                        data: 'billed_by'
+                    }, {
+                        data: 'cashier'
+                    },
+                    {
+                        data: 'method'
+                    }, {
+                        data: 'pay_status'
+                    },
+                    {
+                        data: 'audit',
+                        orderable: false,
+                        searchable: false
+                    }
+                ], 'kpi-bills'));
+            }
+
+            setTimeout(function() {
+                $.fn.dataTable.tables({
+                    visible: true,
+                    api: true
+                }).columns.adjust();
+            }, 200);
+        });
+
+        $('#btnApplyFilters').on('click', function() {
+            Object.values(dtInstances).forEach(function(dt) {
+                if (dt) dt.ajax.reload();
+            });
+        });
+
+        $(document).on('change', '.ops-tab-filter', function() {
+            var tab = $(this).data('tab');
+            if (dtInstances[tab]) dtInstances[tab].ajax.reload();
         });
     });
-
-    $(document).on('change', '.ops-tab-filter', function() {
-        var tab = $(this).data('tab');
-        if (dtInstances[tab]) dtInstances[tab].ajax.reload();
-    });
-});
 </script>
 @endpush
