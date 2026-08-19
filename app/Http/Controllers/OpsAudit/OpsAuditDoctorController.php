@@ -100,7 +100,10 @@ class OpsAuditDoctorController extends OpsAuditBaseController
             return $q->withCount([
                 'productRequests as rx_count',
                 'labRequests as lab_count',
-                'imagingRequests as imaging_count'
+                'imagingRequests as imaging_count',
+                'admissionRequests as adm_count',
+                'procedures as proc_count',
+                'referrals as ref_count'
             ]);
         }, function ($row) {
             $patient = $row->patient;
@@ -113,10 +116,9 @@ class OpsAuditDoctorController extends OpsAuditBaseController
                 ? Carbon::parse($row->started_at)->diffInMinutes(Carbon::parse($row->completed_at)) 
                 : '-';
 
-            // Procedures and admissions require separate counts as they might not have direct encounter relations in all models
-            $admCount = AdmissionRequest::where('encounter_id', $row->id)->count();
-            $procCount = Procedure::where('encounter_id', $row->id)->count();
-            $refCount = SpecialistReferral::where('encounter_id', $row->id)->count();
+            $admCount = $row->adm_count ?? 0;
+            $procCount = $row->proc_count ?? 0;
+            $refCount = $row->ref_count ?? 0;
 
             return [
                 'date' => $row->created_at ? Carbon::parse($row->created_at)->format('d M Y H:i') : '-',
@@ -137,13 +139,12 @@ class OpsAuditDoctorController extends OpsAuditBaseController
                 'audit' => $this->renderAuditAction($row, 'Encounter'),
             ];
         }, function ($kpiQuery) {
-            $all = $kpiQuery->get();
             return [
-                ['label' => 'Total Encounters', 'value' => number_format($all->count()), 'color' => '#0d6efd'],
-                ['label' => 'Completed', 'value' => number_format($all->where('completed', 1)->count()), 'color' => '#198754'],
-                ['label' => 'Ongoing', 'value' => number_format($all->where('completed', 0)->count()), 'color' => '#ffc107'],
-                ['label' => 'Avg Duration', 'value' => $all->where('completed', 1)->count() > 0 
-                    ? round($all->where('completed', 1)->avg(fn($r) => Carbon::parse($r->started_at)->diffInMinutes(Carbon::parse($r->completed_at)))) . 'm' 
+                ['label' => 'Total Encounters', 'value' => number_format((clone $kpiQuery)->count()), 'color' => '#0d6efd'],
+                ['label' => 'Completed', 'value' => number_format((clone $kpiQuery)->where('completed', 1)->count()), 'color' => '#198754'],
+                ['label' => 'Ongoing', 'value' => number_format((clone $kpiQuery)->where('completed', 0)->count()), 'color' => '#ffc107'],
+                ['label' => 'Avg Duration', 'value' => (clone $kpiQuery)->where('completed', 1)->count() > 0 
+                    ? round((clone $kpiQuery)->where('completed', 1)->avg(\Illuminate\Support\Facades\DB::raw('TIMESTAMPDIFF(MINUTE, started_at, completed_at)'))) . 'm' 
                     : '-', 'color' => '#6f42c1'],
             ];
         }, $kpiQuery);
@@ -160,8 +161,8 @@ class OpsAuditDoctorController extends OpsAuditBaseController
             'doctor',
             'ward',
             'bed',
-        
             'productOrServiceRequest.payment.user',
+            'bills.payment'
         ]);
 
         $this->applyDateFilter($query, $request);
@@ -193,7 +194,7 @@ class OpsAuditDoctorController extends OpsAuditBaseController
 
             // Aggregate bills for this admission request
             // We find all ProductOrServiceRequests linked to this admission
-            $bills = \App\Models\ProductOrServiceRequest::where('admission_request_id', $row->id)->with('payment')->get();
+            $bills = $row->bills;
             $totalAmount = $bills->sum('amount');
             $totalPayable = $bills->sum('payable_amount');
             $totalClaims = $bills->sum('claims_amount');
@@ -232,12 +233,11 @@ class OpsAuditDoctorController extends OpsAuditBaseController
                 'audit' => $this->renderAuditAction($row, 'AdmissionRequest'),
             ];
         }, function ($kpiQuery) {
-            $all = $kpiQuery->get();
             return [
-                ['label' => 'Total', 'value' => number_format($all->count()), 'color' => '#0d6efd'],
-                ['label' => 'Active', 'value' => number_format($all->where('admission_status', 'admitted')->count()), 'color' => '#198754'],
-                ['label' => 'Pending Checklist', 'value' => number_format($all->where('admission_status', 'pending_checklist')->count()), 'color' => '#ffc107'],
-                ['label' => 'Discharged', 'value' => number_format($all->where('admission_status', 'discharged')->count()), 'color' => '#6c757d'],
+                ['label' => 'Total', 'value' => number_format((clone $kpiQuery)->count()), 'color' => '#0d6efd'],
+                ['label' => 'Active', 'value' => number_format((clone $kpiQuery)->where('admission_status', 'admitted')->count()), 'color' => '#198754'],
+                ['label' => 'Pending Checklist', 'value' => number_format((clone $kpiQuery)->where('admission_status', 'pending_checklist')->count()), 'color' => '#ffc107'],
+                ['label' => 'Discharged', 'value' => number_format((clone $kpiQuery)->where('admission_status', 'discharged')->count()), 'color' => '#6c757d'],
             ];
         }, $kpiQuery);
     }
@@ -304,13 +304,12 @@ class OpsAuditDoctorController extends OpsAuditBaseController
                 'audit' => $this->renderAuditAction($row, 'ProductRequest'),
             ];
         }, function ($kpiQuery) {
-            $all = $kpiQuery->get();
             return [
-                ['label' => 'Total', 'value' => number_format($all->count()), 'color' => '#0d6efd'],
-                ['label' => 'Pending', 'value' => number_format($all->where('status', 1)->count()), 'color' => '#ffc107'],
-                ['label' => 'Approved', 'value' => number_format($all->where('status', 2)->count()), 'color' => '#0dcaf0'],
-                ['label' => 'Dispensed', 'value' => number_format($all->where('status', 3)->count()), 'color' => '#198754'],
-                ['label' => 'Returned', 'value' => number_format($all->where('status', 4)->count()), 'color' => '#dc3545'],
+                ['label' => 'Total', 'value' => number_format((clone $kpiQuery)->count()), 'color' => '#0d6efd'],
+                ['label' => 'Pending', 'value' => number_format((clone $kpiQuery)->where('status', 1)->count()), 'color' => '#ffc107'],
+                ['label' => 'Approved', 'value' => number_format((clone $kpiQuery)->where('status', 2)->count()), 'color' => '#0dcaf0'],
+                ['label' => 'Dispensed', 'value' => number_format((clone $kpiQuery)->where('status', 3)->count()), 'color' => '#198754'],
+                ['label' => 'Returned', 'value' => number_format((clone $kpiQuery)->where('status', 4)->count()), 'color' => '#dc3545'],
             ];
         }, $kpiQuery);
     }
@@ -368,13 +367,12 @@ class OpsAuditDoctorController extends OpsAuditBaseController
                 'audit' => $this->renderAuditAction($row, 'LabServiceRequest'),
             ];
         }, function ($kpiQuery) {
-            $all = $kpiQuery->get();
             return [
-                ['label' => 'Total', 'value' => number_format($all->count()), 'color' => '#0d6efd'],
-                ['label' => 'Ordered', 'value' => number_format($all->where('status', 1)->count()), 'color' => '#ffc107'],
-                ['label' => 'Sample Collected', 'value' => number_format($all->where('status', 2)->count()), 'color' => '#0dcaf0'],
-                ['label' => 'Result Entered', 'value' => number_format($all->where('status', 3)->count()), 'color' => '#0d6efd'],
-                ['label' => 'Approved', 'value' => number_format($all->where('status', 4)->count()), 'color' => '#198754'],
+                ['label' => 'Total', 'value' => number_format((clone $kpiQuery)->count()), 'color' => '#0d6efd'],
+                ['label' => 'Ordered', 'value' => number_format((clone $kpiQuery)->where('status', 1)->count()), 'color' => '#ffc107'],
+                ['label' => 'Sample Collected', 'value' => number_format((clone $kpiQuery)->where('status', 2)->count()), 'color' => '#0dcaf0'],
+                ['label' => 'Result Entered', 'value' => number_format((clone $kpiQuery)->where('status', 3)->count()), 'color' => '#0d6efd'],
+                ['label' => 'Approved', 'value' => number_format((clone $kpiQuery)->where('status', 4)->count()), 'color' => '#198754'],
             ];
         }, $kpiQuery);
     }
@@ -432,13 +430,12 @@ class OpsAuditDoctorController extends OpsAuditBaseController
                 'audit' => $this->renderAuditAction($row, 'ImagingServiceRequest'),
             ];
         }, function ($kpiQuery) {
-            $all = $kpiQuery->get();
             return [
-                ['label' => 'Total', 'value' => number_format($all->count()), 'color' => '#0d6efd'],
-                ['label' => 'Ordered', 'value' => number_format($all->where('status', 1)->count()), 'color' => '#ffc107'],
-                ['label' => 'Image Captured', 'value' => number_format($all->where('status', 2)->count()), 'color' => '#0dcaf0'],
-                ['label' => 'Result Entered', 'value' => number_format($all->where('status', 3)->count()), 'color' => '#0d6efd'],
-                ['label' => 'Approved', 'value' => number_format($all->where('status', 4)->count()), 'color' => '#198754'],
+                ['label' => 'Total', 'value' => number_format((clone $kpiQuery)->count()), 'color' => '#0d6efd'],
+                ['label' => 'Ordered', 'value' => number_format((clone $kpiQuery)->where('status', 1)->count()), 'color' => '#ffc107'],
+                ['label' => 'Image Captured', 'value' => number_format((clone $kpiQuery)->where('status', 2)->count()), 'color' => '#0dcaf0'],
+                ['label' => 'Result Entered', 'value' => number_format((clone $kpiQuery)->where('status', 3)->count()), 'color' => '#0d6efd'],
+                ['label' => 'Approved', 'value' => number_format((clone $kpiQuery)->where('status', 4)->count()), 'color' => '#198754'],
             ];
         }, $kpiQuery);
     }
@@ -494,13 +491,12 @@ class OpsAuditDoctorController extends OpsAuditBaseController
                 'audit' => $this->renderAuditAction($row, 'Procedure'),
             ];
         }, function ($kpiQuery) {
-            $all = $kpiQuery->get();
             return [
-                ['label' => 'Total', 'value' => number_format($all->count()), 'color' => '#0d6efd'],
-                ['label' => 'Requested', 'value' => number_format($all->where('procedure_status', 'requested')->count()), 'color' => '#ffc107'],
-                ['label' => 'In Progress', 'value' => number_format($all->where('procedure_status', 'in_progress')->count()), 'color' => '#0dcaf0'],
-                ['label' => 'Completed', 'value' => number_format($all->where('procedure_status', 'completed')->count()), 'color' => '#198754'],
-                ['label' => 'Cancelled', 'value' => number_format($all->where('procedure_status', 'cancelled')->count()), 'color' => '#dc3545'],
+                ['label' => 'Total', 'value' => number_format((clone $kpiQuery)->count()), 'color' => '#0d6efd'],
+                ['label' => 'Requested', 'value' => number_format((clone $kpiQuery)->where('procedure_status', 'requested')->count()), 'color' => '#ffc107'],
+                ['label' => 'In Progress', 'value' => number_format((clone $kpiQuery)->where('procedure_status', 'in_progress')->count()), 'color' => '#0dcaf0'],
+                ['label' => 'Completed', 'value' => number_format((clone $kpiQuery)->where('procedure_status', 'completed')->count()), 'color' => '#198754'],
+                ['label' => 'Cancelled', 'value' => number_format((clone $kpiQuery)->where('procedure_status', 'cancelled')->count()), 'color' => '#dc3545'],
             ];
         }, $kpiQuery);
     }
@@ -554,13 +550,12 @@ class OpsAuditDoctorController extends OpsAuditBaseController
                 'audit' => $this->renderAuditAction($row, 'SpecialistReferral'),
             ];
         }, function ($kpiQuery) {
-            $all = $kpiQuery->get();
             return [
-                ['label' => 'Total Issued', 'value' => number_format($all->count()), 'color' => '#0d6efd'],
-                ['label' => 'Internal', 'value' => number_format($all->where('referral_type', 'internal')->count()), 'color' => '#0d6efd'],
-                ['label' => 'External', 'value' => number_format($all->where('referral_type', 'external')->count()), 'color' => '#dc3545'],
-                ['label' => 'Pending', 'value' => number_format($all->where('status', 'pending')->count()), 'color' => '#ffc107'],
-                ['label' => 'Referred Out', 'value' => number_format($all->where('status', 'referred_out')->count()), 'color' => '#6610f2'],
+                ['label' => 'Total Issued', 'value' => number_format((clone $kpiQuery)->count()), 'color' => '#0d6efd'],
+                ['label' => 'Internal', 'value' => number_format((clone $kpiQuery)->where('referral_type', 'internal')->count()), 'color' => '#0d6efd'],
+                ['label' => 'External', 'value' => number_format((clone $kpiQuery)->where('referral_type', 'external')->count()), 'color' => '#dc3545'],
+                ['label' => 'Pending', 'value' => number_format((clone $kpiQuery)->where('status', 'pending')->count()), 'color' => '#ffc107'],
+                ['label' => 'Referred Out', 'value' => number_format((clone $kpiQuery)->where('status', 'referred_out')->count()), 'color' => '#6610f2'],
             ];
         }, $kpiQuery);
     }
