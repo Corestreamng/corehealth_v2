@@ -55,11 +55,10 @@ class OpsAuditBillingController extends OpsAuditBaseController
         $this->applyDateFilter($query, $request);
         $this->applyShiftFilter($query, $request);
 
-        if ($request->filled('cashier_id')) $query->where('user_id', $request->cashier_id);
-        if ($request->filled('payment_method')) $query->where('payment_method', $request->payment_method);
+        $this->applyPaymentFilters($query, $request, 'self_payment');
+
         if ($request->filled('payment_type')) $query->where('payment_type', $request->payment_type);
         if ($request->filled('hmo_id')) $query->where('hmo_id', $request->hmo_id);
-        if ($request->filled('bank_id')) $query->where('bank_id', $request->bank_id);
         if ($request->filled('is_audited')) $query->where('is_audited', $request->is_audited);
 
         $kpiQuery = clone $query;
@@ -70,21 +69,18 @@ class OpsAuditBillingController extends OpsAuditBaseController
             $hmo = $patient?->hmo;
             $cashier = $row->user;
 
-            $entity = '-';
-            $balance = '-';
+            $entity = $this->renderPaymentEntityDetails($row);
             
+            $balance = '-';
             if ($row->payment_method === 'BILL_TO_STAFF' && $row->staffBill) {
-                $su = $row->staffBill->staffUser;
-                $entity = $su ? ($su->firstname . ' ' . ($su->surname ?? '')) : '-';
                 $balance = '₦' . number_format($row->staffBill->outstanding_amount ?? 0, 2);
             } elseif ($row->payment_method === 'BILL_TO_ORG' && $row->organizationBill) {
-                $entity = $row->organizationBill->organization?->name ?? '-';
                 $balance = '₦' . number_format($row->organizationBill->outstanding_amount ?? 0, 2);
             } elseif ($row->payment_method === 'ACCOUNT') {
-                $entity = 'Patient Account';
-                // Just try to grab patient_accounts balance if relationship exists or fallback
                 $balance = $row->patientAccount ? '₦' . number_format($row->patientAccount->balance ?? 0, 2) : '?';
             }
+
+            $bankHtml = $this->renderBankDetails($row);
 
             return [
                 'date_time' => $row->created_at ? Carbon::parse($row->created_at)->format('d M Y H:i') : '-',
@@ -95,7 +91,7 @@ class OpsAuditBillingController extends OpsAuditBaseController
                 'discount' => '₦' . number_format($row->total_discount ?? 0, 2),
                 'method' => '<span class="badge bg-light text-dark border">' . ucfirst(str_replace('_', ' ', $row->payment_method ?? '-')) . '</span>',
                 'type' => ucfirst(str_replace('_', ' ', $row->payment_type ?? '-')),
-                'bank' => $row->bank?->name ?? '-',
+                'bank' => $bankHtml,
                 'entity' => $entity,
                 'balance' => $balance,
                 'cashier' => $cashier?->firstname ? ($cashier->firstname . ' ' . ($cashier->surname ?? '')) : '-',

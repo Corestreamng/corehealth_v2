@@ -163,6 +163,18 @@
                 </select>
             </div>
             <div class="col-md-2">
+                <select name="bank_id" class="form-select form-select-sm ops-tab-filter" data-tab="cashbook">
+                    <option value="">All Banks</option>
+                    @php $banks = \App\Models\Bank::active()->orderBy('name')->get(); @endphp
+                    @foreach($banks as $b) <option value="{{ $b->id }}">{{ $b->name }}</option> @endforeach
+                </select>
+            </div>
+            <div class="col-md-2">
+                <select name="entity" class="form-select form-select-sm ajax-entity-search ops-tab-filter" data-tab="cashbook" data-placeholder="Search Entity/Patient...">
+                    <option value="">All Entities</option>
+                </select>
+            </div>
+            <div class="col-md-2">
                 <select name="cashier_id" class="form-select form-select-sm ops-tab-filter" data-tab="cashbook">
                     <option value="">All Cashiers</option>
                     @foreach($cashiers as $id => $name)
@@ -178,7 +190,9 @@
                     <tr>
                         <th>Date</th>
                         <th>Reference</th>
+                        <th width="15%">Entity</th>
                         <th>Patient</th>
+                        <th width="12%">Bank</th>
                         <th>Total</th>
                         <th>Method</th>
                         <th>Cashier</th>
@@ -265,8 +279,14 @@ $(function() {
         }
         else if (tabId === 'cashbook' && !dtInstances.cashbook) {
             dtInstances.cashbook = $('#dt-cashbook').DataTable(commonOpts(dataUrls.cashbook, [
-                { data: 'date' }, { data: 'reference' }, { data: 'patient' }, { data: 'total' }, 
-                { data: 'method' }, { data: 'cashier' },
+                { data: 'date' },
+                { data: 'reference' },
+                { data: 'entity' },
+                { data: 'patient' },
+                { data: 'bank' },
+                { data: 'total' },
+                { data: 'method' },
+                { data: 'cashier' },
                 { data: 'audit', orderable: false, searchable: false }
             ], 'kpi-cashbook'));
         }

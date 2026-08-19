@@ -382,6 +382,26 @@
 
 @push('scripts')
 <script>
+    $(function() {
+        if ($.fn.select2) {
+            $('.ajax-entity-search').select2({
+                placeholder: 'Search Entity/Patient...',
+                allowClear: true,
+                ajax: {
+                    url: "{{ route('ops-audit.search-entities') }}",
+                    dataType: 'json',
+                    delay: 250,
+                    data: function (params) {
+                        return { q: params.term };
+                    },
+                    processResults: function (data) {
+                        return { results: data.results };
+                    },
+                    cache: true
+                }
+            });
+        }
+    });
     // Global DataTables configuration: auto-highlight queried rows
     if (window.jQuery && $.fn && $.fn.dataTable) {
         $.extend(true, $.fn.dataTable.defaults, {

@@ -207,15 +207,13 @@ class OpsAuditSurgeryController extends OpsAuditBaseController
         $query = Payment::with([
             'patient.user',
             'staff_user',
+            'bank',
             'product_or_service_request'
         ])->whereHas('product_or_service_request.procedure');
 
         $this->applyDateFilter($query, $request);
         $this->applyShiftFilter($query, $request);
         $this->applyPaymentFilters($query, $request, 'self_payment');
-
-        if ($request->filled('cashier_id')) $query->where('user_id', $request->cashier_id);
-        if ($request->filled('payment_method')) $query->where('payment_method', $request->payment_method);
 
         $kpiQuery = clone $query;
 
@@ -228,7 +226,10 @@ class OpsAuditSurgeryController extends OpsAuditBaseController
                 'reference' => $row->reference_no ?? '-',
                 'patient' => $this->renderPatient($user, $patient, null),
                 'total' => '₦' . number_format($row->total ?? 0, 2),
-                'payment_info' => $this->renderPaymentInfo($row),
+                'method' => $row->payment_method ? '<span class="badge bg-light text-dark border">'.$row->payment_method.'</span>' : '-',
+                'cashier' => $row->staff_user?->firstname ? ($row->staff_user->firstname . ' ' . ($row->staff_user->surname ?? '')) : '-',
+                'bank' => $this->renderBankDetails($row),
+                'entity' => $this->renderPaymentEntityDetails($row),
                 'audit' => $this->renderAuditAction($row, 'Payment'),
             ];
         }, function ($kpiQuery) {

@@ -34,14 +34,98 @@ abstract class OpsAuditBaseController extends Controller
      */
     protected function renderPatient($user, $patient, $hmo)
     {
-        if (!$user) return '<span class="text-muted">-</span>';
-        $name = trim(($user->firstname ?? '') . ' ' . ($user->surname ?? ''));
-        $fileNo = $patient?->file_no ?? 'N/A';
-        $html = '<div class="font-weight-bold text-dark" style="font-size:0.82rem;"><i class="mdi mdi-account text-primary me-1"></i>' . e($name) . ' <span class="badge bg-light text-dark border" style="font-size:0.7rem;">#' . e($fileNo) . '</span></div>';
+        if (!$patient) return '-';
+
+        $patientId = $patient->patient_id ?? 'Unknown';
+        $name = $user ? trim($user->firstname . ' ' . ($user->othername ?? '') . ' ' . $user->surname) : 'Unknown Patient';
+        
+        $hmoHtml = '';
         if ($hmo) {
-            $html .= '<small class="text-info font-weight-bold" style="font-size:0.72rem;"><i class="mdi mdi-hospital-building me-1"></i>' . e($hmo->name ?? '') . ($hmo->scheme ? ' (' . e($hmo->scheme->name) . ')' : '') . '</small>';
+            $scheme = $hmo->scheme ? $hmo->scheme->name : '';
+            $hmoHtml = '<small class="text-info d-block" style="font-size:0.65rem; line-height: 1;"><i class="mdi mdi-shield-account"></i> ' . e($hmo->name) . ($scheme ? '<br><span class="text-muted">' . e($scheme) . '</span>' : '') . '</small>';
+        } else {
+            $hmoHtml = '<small class="text-success d-block" style="font-size:0.65rem; line-height: 1;"><i class="mdi mdi-cash"></i> Private <span class="text-muted text-xs">(Self/Private)</span></small>';
         }
-        return $html;
+
+        return '
+            <div style="line-height: 1.1;">
+                <div class="font-weight-bold text-dark mb-1" style="font-size: 0.8rem;"><i class="mdi mdi-account text-primary"></i> ' . e($name) . '</div>
+                <small class="text-muted d-block mb-1">#' . e($patientId) . '</small>
+                ' . $hmoHtml . '
+            </div>
+        ';
+    }
+
+    /**
+     * Standardized helper to render payment entity details (Patient, Organization, or Staff)
+     */
+    public function renderPaymentEntityDetails($r, $defaultName = 'Walk-in / N/A')
+    {
+        if (!$r) {
+            return '<div class="font-weight-bold text-dark">' . $defaultName . '</div>';
+        }
+
+        $isStaff = ($r->payment_type === 'STAFF_BILL_SETTLEMENT' || $r->payment_method === 'BILL_TO_STAFF' || $r->payment_method === 'STAFF_BILL');
+        $isOrg = ($r->payment_type === 'ORGANIZATION_BILL_SETTLEMENT' || $r->payment_method === 'BILL_TO_ORG' || $r->payment_method === 'ORG_BILL');
+
+        if ($isStaff) {
+            $staffBill = \App\Models\StaffBill::where('settlement_payment_id', $r->id)->orWhere('payment_id', $r->id)->with('staffUser')->first();
+            if (!$staffBill) {
+                $alloc = \Illuminate\Support\Facades\DB::table('staff_bill_payment_allocations')->where('payment_id', $r->id)->first();
+                if ($alloc) {
+                    $staffBill = \App\Models\StaffBill::with('staffUser')->find($alloc->staff_bill_id);
+                }
+            }
+            $name = $staffBill->staffUser->firstname ?? 'Staff Member';
+            if (isset($staffBill->staffUser->surname)) {
+                $name .= ' ' . $staffBill->staffUser->surname;
+            }
+            return '<div class="font-weight-bold text-dark"><i class="mdi mdi-account-tie text-primary"></i> ' . e($name) . '</div><small class="badge bg-primary text-white mt-1">Staff Bill</small>';
+        }
+
+        if ($isOrg) {
+            $orgBill = \App\Models\OrganizationBill::where('settlement_payment_id', $r->id)->orWhere('payment_id', $r->id)->with('organization')->first();
+            if (!$orgBill) {
+                $alloc = \Illuminate\Support\Facades\DB::table('organization_bill_payment_allocations')->where('payment_id', $r->id)->first();
+                if ($alloc) {
+                    $orgBill = \App\Models\OrganizationBill::with('organization')->find($alloc->organization_bill_id);
+                }
+            }
+            if (!$orgBill) {
+                $posr = \App\Models\ProductOrServiceRequest::where('payment_id', $r->id)->with('organization')->first();
+                if ($posr && $posr->organization) {
+                    $name = $posr->organization->name ?? $posr->organization->company_name;
+                    return '<div class="font-weight-bold text-dark"><i class="mdi mdi-domain text-info"></i> ' . e($name) . '</div><small class="badge bg-info text-white mt-1">Corporate Retainership</small>';
+                }
+            }
+            $name = $orgBill->organization->name ?? $orgBill->organization->company_name ?? 'Organization';
+            return '<div class="font-weight-bold text-dark"><i class="mdi mdi-domain text-info"></i> ' . e($name) . '</div><small class="badge bg-info text-white mt-1">Corporate Retainership</small>';
+        }
+
+        $patient = $r->patient;
+        if (!$patient) {
+            $posr = \App\Models\ProductOrServiceRequest::where('payment_id', $r->id)->with('patient.user', 'patient.hmo.scheme')->first();
+            if ($posr && $posr->patient) {
+                $patient = $posr->patient;
+            }
+        }
+
+        if ($patient) {
+            return $this->renderPatient($patient->user, $patient, $patient->hmo);
+        }
+
+        return '<div class="font-weight-bold text-dark">' . $defaultName . '</div>';
+    }
+
+    /**
+     * Shared helper to render Bank details for Cashbook/Payments tables
+     */
+    public function renderBankDetails($payment)
+    {
+        if (in_array($payment->payment_method, ['POS', 'TRANSFER', 'BANK_TRANSFER', 'CHEQUE', 'MOBILE'])) {
+            return '<div class="font-weight-bold text-primary" style="font-size:0.8rem;"><i class="mdi mdi-bank"></i> ' . e($payment->bank?->name ?? 'No Bank') . '</div>';
+        }
+        return '-';
     }
 
     /**
@@ -476,35 +560,128 @@ abstract class OpsAuditBaseController extends Controller
     }
 
     /**
-     * Shared helper to apply Cashier and Payment Method filters
+     * Shared helper to apply Cashier, Payment Method, Bank, and Entity filters
      */
     protected function applyPaymentFilters($query, Request $request, $posrRelationPath = '')
     {
-        if (!$request->filled('payment_method') && !$request->filled('cashier_id')) {
+        $hasFilters = $request->filled('payment_method') || $request->filled('cashier_id') || $request->filled('bank_id') || $request->filled('entity');
+        
+        if (!$hasFilters) {
             return $query;
         }
 
-        // If the model is a Payment
-        if ($posrRelationPath === 'self_payment') {
-            if ($request->filled('payment_method')) {
-                $query->where('payment_method', $request->payment_method);
-            }
-            if ($request->filled('cashier_id')) {
-                $query->where('user_id', $request->cashier_id);
-            }
-            return $query;
-        }
-
-        // Otherwise, it relates to POSR which relates to Payment
-        $paymentRel = $posrRelationPath ? $posrRelationPath . '.payment' : 'payment';
-
-        return $query->whereHas($paymentRel, function ($q) use ($request) {
+        $applyPaymentSpecificFilters = function ($q) use ($request) {
             if ($request->filled('payment_method')) {
                 $q->where('payment_method', $request->payment_method);
             }
             if ($request->filled('cashier_id')) {
                 $q->where('user_id', $request->cashier_id);
             }
-        });
+            if ($request->filled('bank_id')) {
+                $q->where('bank_id', $request->bank_id);
+            }
+        };
+
+        if ($request->filled('payment_method') || $request->filled('cashier_id') || $request->filled('bank_id')) {
+            if ($posrRelationPath === 'self_payment') {
+                $applyPaymentSpecificFilters($query);
+            } elseif (!empty($posrRelationPath)) {
+                $query->whereHas($posrRelationPath . '.payment', function ($q) use ($applyPaymentSpecificFilters) {
+                    $applyPaymentSpecificFilters($q);
+                });
+            }
+        }
+
+        if ($request->filled('entity')) {
+            $parts = explode(':', $request->entity);
+            if (count($parts) === 2) {
+                $type = $parts[0];
+                $id = $parts[1];
+
+                if ($posrRelationPath === 'self_payment') {
+                    if ($type === 'ORG') {
+                        $query->where(function($sub) use ($id) {
+                            $sub->whereHas('organizationBills', fn($sq) => $sq->where('organization_id', $id))
+                                ->orWhereHas('product_or_service_request', fn($sq) => $sq->where('organization_id', $id));
+                        });
+                    } elseif ($type === 'STAFF') {
+                        $query->whereHas('staffBills', fn($sq) => $sq->where('staff_user_id', $id));
+                    } elseif ($type === 'PATIENT') {
+                        $query->where(function($sub) use ($id) {
+                            $sub->where('patient_id', $id)
+                                ->orWhereHas('product_or_service_request', fn($sq) => $sq->where('patient_id', $id));
+                        });
+                    }
+                } else {
+                    if ($type === 'PATIENT') {
+                        $query->where('patient_id', $id);
+                    } elseif ($type === 'ORG' && !empty($posrRelationPath)) {
+                        $query->whereHas($posrRelationPath . '.payment', function ($q) use ($id) {
+                            $q->whereHas('organizationBills', fn($sq) => $sq->where('organization_id', $id))
+                              ->orWhereHas('product_or_service_request', fn($sq) => $sq->where('organization_id', $id));
+                        });
+                    } elseif ($type === 'STAFF' && !empty($posrRelationPath)) {
+                        $query->whereHas($posrRelationPath . '.payment', function ($q) use ($id) {
+                            $q->whereHas('staffBills', fn($sq) => $sq->where('staff_user_id', $id));
+                        });
+                    }
+                }
+            }
+        }
+
+        return $query;
+    }
+
+    /**
+     * AJAX Endpoint for Entity Search
+     */
+    public function searchEntities(Request $request)
+    {
+        $q = $request->input('q');
+        if (!$q) return response()->json(['results' => []]);
+
+        $results = [];
+
+        // 1. Organizations
+        $orgs = \App\Models\Organization::where('name', 'like', "%{$q}%")
+            ->limit(10)->get();
+        if ($orgs->isNotEmpty()) {
+            $orgOptions = [];
+            foreach ($orgs as $org) {
+                $orgOptions[] = ['id' => 'ORG:' . $org->id, 'text' => $org->name];
+            }
+            $results[] = ['text' => 'Organizations (Corporate)', 'children' => $orgOptions];
+        }
+
+        // 2. Staff (Users)
+        $staff = \App\Models\User::where(function($query) use ($q) {
+            $query->where('firstname', 'like', "%{$q}%")
+                  ->orWhere('surname', 'like', "%{$q}%");
+        })->where('is_admin', '!=', 19)->limit(10)->get();
+        if ($staff->isNotEmpty()) {
+            $staffOptions = [];
+            foreach ($staff as $u) {
+                $staffOptions[] = ['id' => 'STAFF:' . $u->id, 'text' => trim($u->firstname . ' ' . $u->surname)];
+            }
+            $results[] = ['text' => 'Staff / Users', 'children' => $staffOptions];
+        }
+
+        // 3. Patients
+        $patients = \App\Models\Patient::with('user')->whereHas('user', function($query) use ($q) {
+            $query->where('firstname', 'like', "%{$q}%")
+                  ->orWhere('surname', 'like', "%{$q}%");
+        })->orWhere('file_no', 'like', "%{$q}%")
+          ->limit(10)->get();
+          
+        if ($patients->isNotEmpty()) {
+            $patOptions = [];
+            foreach ($patients as $p) {
+                $name = $p->user ? trim($p->user->firstname . ' ' . $p->user->surname) : 'Unknown';
+                $patOptions[] = ['id' => 'PATIENT:' . $p->id, 'text' => $name . ' (' . $p->file_no . ')'];
+            }
+            $results[] = ['text' => 'Patients', 'children' => $patOptions];
+        }
+
+        return response()->json(['results' => $results]);
     }
 }
