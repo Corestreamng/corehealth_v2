@@ -13,11 +13,11 @@ class OpsAuditStoreController extends OpsAuditBaseController
 {
     public function index(Request $request)
     {
-        $stores = \App\Models\Store::orderBy('store_name')->pluck('store_name', 'id');
-        $users = \App\Models\User::orderBy('firstname')->get()->mapWithKeys(fn($u) => [$u->id => trim($u->firstname . ' ' . $u->surname)]);
+        $stores = \App\Models\Store::orderBy('store_name')->get()->mapWithKeys(fn($s) => [$s->id => trim($s->store_name . ' (' . $s->distributionRoleLabel() . ')')]);
+        $users = \App\Models\User::role(['SUPERADMIN', 'ADMIN', 'STORE', 'PHARMACY'])->orderBy('firstname')->get()->mapWithKeys(fn($u) => [$u->id => trim($u->firstname . ' ' . ($u->othername ?? '') . ' ' . $u->surname)]);
         $suppliers = \App\Models\Supplier::orderBy('company_name')->pluck('company_name', 'id');
         $products = \App\Models\Product::orderBy('product_name')->pluck('product_name', 'id');
-        
+
         return view('admin.ops_audit.store', compact('stores', 'users', 'suppliers', 'products'));
     }
 
@@ -69,8 +69,8 @@ class OpsAuditStoreController extends OpsAuditBaseController
             return [
                 'date' => $row->created_at ? Carbon::parse($row->created_at)->format('d M Y') : '-',
                 'req_no' => $row->requisition_number ?? '-',
-                'from_store' => $row->fromStore?->name ?? '-',
-                'to_store' => $row->toStore?->name ?? '-',
+                'from_store' => $row->fromStore ? ($row->fromStore->store_name . '<br><small class="text-muted">' . $row->fromStore->distributionRoleLabel() . '</small>') : '-',
+                'to_store' => $row->toStore ? ($row->toStore->store_name . '<br><small class="text-muted">' . $row->toStore->distributionRoleLabel() . '</small>') : '-',
                 'status' => '<span class="badge bg-' . $sColor . '">' . ucfirst($row->status ?? '-') . '</span>',
                 'requested_by' => $row->requestedBy?->firstname ? ($row->requestedBy->firstname . ' ' . ($row->requestedBy->surname ?? '')) : '-',
                 'approved_by' => $row->approvedBy?->firstname ? ($row->approvedBy->firstname . ' ' . ($row->approvedBy->surname ?? '')) : '-',
@@ -113,7 +113,7 @@ class OpsAuditStoreController extends OpsAuditBaseController
         return $this->buildDataTableResponse($query, $request, fn($q) => $q, function ($row) {
             $statusColors = ['draft' => 'secondary', 'submitted' => 'warning text-dark', 'approved' => 'info', 'received' => 'success', 'cancelled' => 'danger'];
             $sColor = $statusColors[$row->status] ?? 'secondary';
-            
+
             $payColors = ['unpaid' => 'warning text-dark', 'partial' => 'info', 'paid' => 'success'];
             $pColor = $payColors[$row->payment_status] ?? 'secondary';
 
@@ -122,8 +122,8 @@ class OpsAuditStoreController extends OpsAuditBaseController
             return [
                 'date' => $row->created_at ? Carbon::parse($row->created_at)->format('d M Y') : '-',
                 'po_no' => $row->po_number ?? '-',
-                'supplier' => $row->supplier?->name ?? '-',
-                'store' => $row->targetStore?->name ?? '-',
+                'supplier' => $row->supplier?->company_name ?? '-',
+                'store' => $row->targetStore ? ($row->targetStore->store_name . '<br><small class="text-muted">' . $row->targetStore->distributionRoleLabel() . '</small>') : '-',
                 'status' => '<span class="badge bg-' . $sColor . '">' . ucfirst($row->status ?? '-') . '</span>',
                 'pay_status' => '<span class="badge bg-' . $pColor . '">' . ucfirst(str_replace('_', ' ', $row->payment_status ?? '-')) . '</span>',
                 'total' => '₦' . number_format($row->total_amount ?? 0, 2),
@@ -164,7 +164,7 @@ class OpsAuditStoreController extends OpsAuditBaseController
 
         return $this->buildDataTableResponse($query, $request, fn($q) => $q, function ($row) {
             $totalValue = ($row->initial_qty ?? 0) * ($row->cost_price ?? 0);
-            
+
             $expiryColor = 'text-dark';
             if ($row->expiry_date) {
                 if (Carbon::parse($row->expiry_date)->isPast()) $expiryColor = 'text-danger font-weight-bold';
@@ -173,8 +173,8 @@ class OpsAuditStoreController extends OpsAuditBaseController
 
             return [
                 'date' => $row->created_at ? Carbon::parse($row->created_at)->format('d M Y') : '-',
-                'store' => $row->store?->name ?? '-',
-                'product' => $row->product?->name ?? '-',
+                'store' => $row->store ? ($row->store->store_name . '<br><small class="text-muted">' . $row->store->distributionRoleLabel() . '</small>') : '-',
+                'product' => $row->product?->product_name ?? '-',
                 'batch_no' => $row->batch_number ?? '-',
                 'qty' => number_format($row->initial_qty ?? 0),
                 'unit_cost' => '₦' . number_format($row->cost_price ?? 0, 2),
@@ -188,7 +188,7 @@ class OpsAuditStoreController extends OpsAuditBaseController
             $all = $kpiQuery->get();
             $totalValue = $all->sum(fn($r) => ($r->initial_qty ?? 0) * ($r->cost_price ?? 0));
             $expiring = $all->filter(fn($r) => $r->expiry_date && Carbon::parse($r->expiry_date)->isBefore(now()->addMonths(3)))->count();
-            
+
             return [
                 ['label' => 'Total Manual Batches', 'value' => number_format($all->count()), 'color' => '#0d6efd'],
                 ['label' => 'Total Qty', 'value' => number_format($all->sum('initial_qty')), 'color' => '#198754'],
@@ -205,7 +205,7 @@ class OpsAuditStoreController extends OpsAuditBaseController
             'purchase_orders' => PurchaseOrder::class,
             'batches' => StockBatch::class,
         ];
-        
+
         $request->merge(['zone_key' => 'ops_audit.store.' . $tab]);
         return $this->processBulkStamp($request, $tab, $modelMap);
     }
