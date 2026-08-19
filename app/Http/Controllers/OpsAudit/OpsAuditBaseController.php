@@ -105,10 +105,19 @@ abstract class OpsAuditBaseController extends Controller
         $html .= '</div>';
 
         if ($activeQuery) {
+            $notes = htmlspecialchars($activeQuery->query_notes ?? 'Flagged', ENT_QUOTES);
             $html .= '<small class="d-block text-danger font-weight-bold mt-1" style="font-size:0.72rem;"><i class="mdi mdi-alert-circle me-1"></i>Active Query</small>';
+            $html .= '<div class="text-muted mt-1" style="font-size: 0.7rem; white-space: normal; line-height: 1.2; word-break: break-word; max-width: 200px;">' . $notes . '</div>';
         } elseif ($latestAudit) {
-            $stampedTime = (isset($latestAudit->created_at) && is_object($latestAudit->created_at)) ? $latestAudit->created_at->diffForHumans() : 'Recently';
-            $html .= '<small class="d-block text-success mt-1" style="font-size:0.72rem;"><i class="mdi mdi-check-all me-1"></i>Stamped ' . $stampedTime . '</small>';
+            $stampedTime = (isset($latestAudit->created_at) && is_object($latestAudit->created_at)) ? $latestAudit->created_at->format('d M y H:i') : 'Recently';
+            $auditorName = '-';
+            if (isset($latestAudit->auditor)) {
+                $auditorName = trim(($latestAudit->auditor->firstname ?? $latestAudit->auditor->name ?? 'Auditor') . ' ' . ($latestAudit->auditor->surname ?? ''));
+            }
+            $html .= '<div class="mt-1">';
+            $html .= '<small class="d-block text-success font-weight-bold" style="font-size:0.72rem;"><i class="mdi mdi-check-all me-1"></i>Stamped by ' . htmlspecialchars($auditorName, ENT_QUOTES) . '</small>';
+            $html .= '<small class="d-block text-muted" style="font-size: 0.7rem;">' . $stampedTime . '</small>';
+            $html .= '</div>';
         }
 
         return $html;
