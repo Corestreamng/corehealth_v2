@@ -122,10 +122,32 @@
                     <h6 class="mb-0"><span class="badge badge-primary mr-1">1</span> Search Dispensed Item</h6>
                 </div>
                 <div class="card-body">
-                    <input type="text" class="form-control" id="dispensedItemSearch"
-                           placeholder="🔍 Search by patient name, file no, or product name...">
-                    <small class="form-text text-muted">Type at least 2 characters to search</small>
-                    <div id="dispensedItemResults" class="mt-2" style="max-height: 300px; overflow-y: auto;"></div>
+                    <div class="row g-2 mb-3">
+                        <div class="col-md-4">
+                            <input type="date" class="form-control form-control-sm" id="dispensed-search-start" value="{{ date('Y-m-d', strtotime('-30 days')) }}">
+                        </div>
+                        <div class="col-md-4">
+                            <input type="date" class="form-control form-control-sm" id="dispensed-search-end" value="{{ date('Y-m-d') }}">
+                        </div>
+                        <div class="col-md-4">
+                            <button type="button" class="btn btn-sm btn-primary w-100" id="btn-search-dispensed">Apply Date Filter</button>
+                        </div>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table table-sm table-bordered table-striped w-100" id="dt-dispensed-items">
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Patient</th>
+                                    <th>Product</th>
+                                    <th>Qty</th>
+                                    <th>Amount</th>
+                                    <th>Store</th>
+                                    <th width="80">Action</th>
+                                </tr>
+                            </thead>
+                        </table>
+                    </div>
                 </div>
             </div>
 
