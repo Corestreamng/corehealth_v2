@@ -164,14 +164,13 @@ class OpsAuditPharmacyController extends OpsAuditBaseController
     {
         $query = StoreRequisitionItem::with([
             'requisition',
-            'product'
+            'product',
         
-            'productOrServiceRequest.payment.user',
+            
         ]);
 
         $this->applyDateFilter($query, $request);
         $this->applyShiftFilter($query, $request);
-        $this->applyPaymentFilters($query, $request, 'productOrServiceRequest');
 
         if ($request->filled('status')) $query->where('status', $request->status);
 

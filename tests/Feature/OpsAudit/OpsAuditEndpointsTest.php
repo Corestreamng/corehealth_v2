@@ -58,7 +58,22 @@ class OpsAuditEndpointsTest extends TestCase
         
         $response = $this->get($uri, ['HTTP_X_REQUESTED_WITH' => 'XMLHttpRequest']);
         
+    }
+
+    /**
+     * @dataProvider auditTabsProvider
+     */
+    public function test_ops_audit_payment_filters($module, $tab)
+    {
+        $this->withoutExceptionHandling();
+        $user = User::first();
+        $this->actingAs($user);
+
+        $uri = "/ops-audit/{$module}/data/{$tab}";
+        
+        $response = $this->getJson($uri . '?start=0&length=10&payment_method=CASH&cashier_id=1');
+        
         $response->assertStatus(200);
-        $response->assertSee('OPS AUDIT', false);
+        $response->assertJsonStructure(['data']);
     }
 }

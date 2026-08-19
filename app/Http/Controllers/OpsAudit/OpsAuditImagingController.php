@@ -56,7 +56,7 @@ class OpsAuditImagingController extends OpsAuditBaseController
             'biller',
             'resultBy',
             'approver',
-            'productOrServiceRequest.payment.staff_user'
+            'productOrServiceRequest.payment.staff_user',
         
             'productOrServiceRequest.payment.user',
         ]);
@@ -119,7 +119,7 @@ class OpsAuditImagingController extends OpsAuditBaseController
 
         $this->applyDateFilter($query, $request);
         $this->applyShiftFilter($query, $request);
-        $this->applyPaymentFilters($query, $request, 'productOrServiceRequest');
+        $this->applyPaymentFilters($query, $request, '');
 
         if ($request->filled('hmo_id')) $query->whereHas('patient.hmo', fn($q) => $q->where('id', $request->hmo_id));
 

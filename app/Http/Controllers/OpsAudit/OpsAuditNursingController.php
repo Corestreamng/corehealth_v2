@@ -53,7 +53,7 @@ class OpsAuditNursingController extends OpsAuditBaseController
             'patient.hmo.scheme',
             'doctor',
             'ward',
-            'bed'
+            'bed',
         
             'productOrServiceRequest.payment.user',
         ]);
@@ -137,14 +137,13 @@ class OpsAuditNursingController extends OpsAuditBaseController
             'patient.user',
             'patient.hmo.scheme',
             'createdBy',
-            'type'
+            'type',
         
-            'productOrServiceRequest.payment.user',
+            
         ]);
 
         $this->applyDateFilter($query, $request);
         $this->applyShiftFilter($query, $request);
-        $this->applyPaymentFilters($query, $request, 'productOrServiceRequest');
 
         if ($request->filled('completed')) $query->where('completed', $request->completed);
 

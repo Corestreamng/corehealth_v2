@@ -121,14 +121,14 @@ class OpsAuditMaternityController extends OpsAuditBaseController
             'patient.user',
             'patient.hmo.scheme',
         
-            'serviceRequest.payment.user',
+            
         
             'encounter.productOrServiceRequest.payment.user',
         ]);
 
         $this->applyDateFilter($query, $request);
         $this->applyShiftFilter($query, $request);
-        $this->applyPaymentFilters($query, $request, 'serviceRequest');
+        $this->applyPaymentFilters($query, $request, 'encounter.productOrServiceRequest');
 
         if ($request->filled('hmo_id')) $query->whereHas('patient.hmo', fn($q) => $q->where('id', $request->hmo_id));
 
@@ -218,7 +218,7 @@ class OpsAuditMaternityController extends OpsAuditBaseController
 
         $this->applyDateFilter($query, $request);
         $this->applyShiftFilter($query, $request);
-        $this->applyPaymentFilters($query, $request, 'encounter.productOrServiceRequest');
+        $this->applyPaymentFilters($query, $request, 'enrollment.serviceRequest');
 
         if ($request->filled('hmo_id')) $query->whereHas('patient.hmo', fn($q) => $q->where('id', $request->hmo_id));
 
@@ -301,14 +301,14 @@ class OpsAuditMaternityController extends OpsAuditBaseController
         $query = ImmunizationRecord::with([
             'patient.user',
             'patient.hmo.scheme',
-            'product'
+            'product',
         
-            'encounter.productOrServiceRequest.payment.user',
+            'productOrServiceRequest.payment.user',
         ]);
 
         $this->applyDateFilter($query, $request);
         $this->applyShiftFilter($query, $request);
-        $this->applyPaymentFilters($query, $request, 'encounter.productOrServiceRequest');
+        $this->applyPaymentFilters($query, $request, 'productOrServiceRequest');
 
         if ($request->filled('hmo_id')) $query->whereHas('patient.hmo', fn($q) => $q->where('id', $request->hmo_id));
 
