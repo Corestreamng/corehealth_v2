@@ -2,19 +2,19 @@
         <div class="row g-2 mb-3 ops-kpi-row" id="kpi-requisitions"></div>
 
         <div class="row g-2 mb-2">
-            <div class="col-md-2">
+            <div class="col-md-3">
                 <select name="from_store_id" class="form-select form-select-sm ops-tab-filter" data-tab="requisitions">
                     <option value="">From Store</option>
                     @foreach($stores as $id => $name)
-                        <option value="{{ $id }}">{{ $name }}</option>
+                        <option value="{{ $id }}">{{ Str::limit($name, 40) }}</option>
                     @endforeach
                 </select>
             </div>
-            <div class="col-md-2">
+            <div class="col-md-3">
                 <select name="to_store_id" class="form-select form-select-sm ops-tab-filter" data-tab="requisitions">
                     <option value="">To Store</option>
                     @foreach($stores as $id => $name)
-                        <option value="{{ $id }}">{{ $name }}</option>
+                        <option value="{{ $id }}">{{ Str::limit($name, 40) }}</option>
                     @endforeach
                 </select>
             </div>
