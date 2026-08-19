@@ -1256,6 +1256,9 @@ Route::middleware(['auth'])->prefix('audit-workbench')->name('audit.')->group(fu
 // Ops Audit Workbench (12 modules)
 // ============================================================
 Route::middleware(['auth'])->prefix('ops-audit')->name('ops-audit.')->group(function () {
+    // Shared AJAX
+    Route::get('/search-entities', [\App\Http\Controllers\OpsAudit\OpsAuditBillingController::class, 'searchEntities'])->name('search-entities');
+
     // Module 1: Reception
     Route::get('/reception', [\App\Http\Controllers\OpsAudit\OpsAuditReceptionController::class, 'index'])->name('reception');
     Route::match(['get', 'post'], '/reception/data/{tab}', [\App\Http\Controllers\OpsAudit\OpsAuditReceptionController::class, 'data'])->name('reception.data');

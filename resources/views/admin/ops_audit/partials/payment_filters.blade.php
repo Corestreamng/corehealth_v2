@@ -23,3 +23,19 @@
         @endforeach
     </select>
 </div>
+<div class="col-md-2">
+    <select name="bank_id" class="form-select form-select-sm ops-tab-filter" data-tab="{{ $tab }}">
+        <option value="">All Banks</option>
+        @php
+            $banks = \App\Models\Bank::active()->orderBy('name')->get();
+        @endphp
+        @foreach($banks as $bank)
+            <option value="{{ $bank->id }}">{{ $bank->name }}</option>
+        @endforeach
+    </select>
+</div>
+<div class="col-md-2">
+    <select name="entity" class="form-select form-select-sm ajax-entity-search ops-tab-filter" data-tab="{{ $tab }}" data-placeholder="Search Entity/Patient...">
+        <option value="">All Entities</option>
+    </select>
+</div>

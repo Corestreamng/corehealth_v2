@@ -45,11 +45,11 @@
             <select name="hmo_id" class="form-control form-control-modern select2 ops-hmo-select2" style="width: 100%;">
                 <option value="">All HMOs</option>
                 @foreach($hmos as $schemeName => $schemeHmos)
-                    <optgroup label="{{ $schemeName }}">
-                        @foreach($schemeHmos as $hmo)
-                            <option value="{{ $hmo->id }}">{{ $hmo->name }}</option>
-                        @endforeach
-                    </optgroup>
+                <optgroup label="{{ $schemeName }}">
+                    @foreach($schemeHmos as $hmo)
+                    <option value="{{ $hmo->id }}">{{ $hmo->name }}</option>
+                    @endforeach
+                </optgroup>
                 @endforeach
             </select>
         </div>
@@ -58,7 +58,7 @@
             <select name="cashier_id" class="form-select">
                 <option value="">All Cashiers</option>
                 @foreach($cashiers as $id => $name)
-                    <option value="{{ $id }}">{{ $name }}</option>
+                <option value="{{ $id }}">{{ $name }}</option>
                 @endforeach
             </select>
         </div>
@@ -159,7 +159,7 @@
     {{-- Tab 3: Cashbook --}}
     <div class="tab-pane fade" id="pane-cashbook" role="tabpanel">
         <div class="row g-2 mb-3 ops-kpi-row" id="kpi-cashbook"></div>
-        
+
         <div class="row g-2 mb-2">
             <div class="col-md-2">
                 <select name="payment_method" class="form-select form-select-sm ops-tab-filter" data-tab="cashbook">
@@ -175,6 +175,18 @@
                     <option value="TRANSFER">Transfer</option>
                 </select>
             </div>
+            <div class="col-md-2">
+                <select name="bank_id" class="form-select form-select-sm ops-tab-filter" data-tab="cashbook">
+                    <option value="">All Banks</option>
+                    @php $banks = \App\Models\Bank::active()->orderBy('name')->get(); @endphp
+                    @foreach($banks as $b) <option value="{{ $b->id }}">{{ $b->name }}</option> @endforeach
+                </select>
+            </div>
+            <div class="col-md-2">
+                <select name="entity" class="form-select form-select-sm ajax-entity-search ops-tab-filter" data-tab="cashbook" data-placeholder="Search Entity/Patient...">
+                    <option value="">All Entities</option>
+                </select>
+            </div>
         </div>
 
         <div class="table-responsive">
@@ -183,7 +195,9 @@
                     <tr>
                         <th>Date</th>
                         <th>Reference</th>
+                        <th width="15%">Entity</th>
                         <th>Patient</th>
+                        <th width="12%">Bank</th>
                         <th>Total</th>
                         <th>Method</th>
                         <th>Cashier</th>
@@ -199,98 +213,194 @@
 
 @push('ops_audit_scripts')
 <script>
-$(function() {
-    var dataUrls = {
-        requests: "{{ route('ops-audit.lab.data', 'requests') }}",
-        bills: "{{ route('ops-audit.lab.data', 'bills') }}",
-        cashbook: "{{ route('ops-audit.lab.data', 'cashbook') }}"
-    };
-
-    var dtInstances = {};
-
-    function commonOpts(url, columns, kpiContainer) {
-        return {
-            dom: '<"d-flex justify-content-between align-items-center mb-2"<"d-flex gap-2"B>f>rt<"d-flex justify-content-between align-items-center mt-2"ip>',
-            buttons: [
-                { extend: 'copy', className: 'btn btn-xs btn-outline-secondary font-weight-bold' },
-                { extend: 'excel', className: 'btn btn-xs btn-outline-success font-weight-bold' },
-                { extend: 'pdf', className: 'btn btn-xs btn-outline-danger font-weight-bold' },
-                { extend: 'print', className: 'btn btn-xs btn-outline-info font-weight-bold' }
-            ],
-            processing: true,
-            serverSide: true,
-            ajax: {
-                url: url,
-                type: 'GET',
-                data: function(d) {
-                    var form = $('#ops_audit_filter_form').serializeArray();
-                    form.forEach(function(f) { d[f.name] = f.value; });
-                    var tabName = kpiContainer ? kpiContainer.replace('kpi-', '') : '';
-                    $(`.ops-tab-filter[data-tab="${tabName}"]`).each(function() {
-                        d[$(this).attr('name')] = $(this).val();
-                    });
-                },
-                dataSrc: function(json) {
-                    if (json.kpis && kpiContainer) {
-                        renderOpsKpis(json.kpis, kpiContainer);
-                    }
-                    return json.data;
-                }
-            },
-            columns: columns,
-            order: [[0, 'desc']],
-            pageLength: 25,
-            lengthMenu: [[10, 25, 50, 100], [10, 25, 50, 100]],
-            language: {
-                zeroRecords: '<div class="text-center py-3 text-muted"><i class="mdi mdi-database-off" style="font-size:2rem;"></i><br>No records found.</div>',
-                processing: '<div class="text-center py-3"><i class="mdi mdi-loading mdi-spin text-primary" style="font-size:1.5rem;"></i> Loading...</div>'
-            }
+    $(function() {
+        var dataUrls = {
+            requests: "{{ route('ops-audit.lab.data', 'requests') }}",
+            bills: "{{ route('ops-audit.lab.data', 'bills') }}",
+            cashbook: "{{ route('ops-audit.lab.data', 'cashbook') }}"
         };
-    }
 
-    // Init tab 1
-    dtInstances.requests = $('#dt-requests').DataTable(commonOpts(dataUrls.requests, [
-        { data: 'date' }, { data: 'patient' }, { data: 'hmo' }, { data: 'test' }, { data: 'doctor' },
-        { data: 'status' }, { data: 'result_by' }, { data: 'approved_by' }, { data: 'billed_by' },
-        { data: 'payment_info', name: 'payment_info', orderable: false, searchable: false },
-        { data: 'audit', orderable: false, searchable: false }
-    ], 'kpi-requests'));
+        var dtInstances = {};
 
-    // Lazy init others
-    $('a[data-bs-toggle="tab"]').on('shown.bs.tab', function(e) {
-        var tabId = $(e.target).attr('id').replace('tab-', '');
-        
-        if (tabId === 'bills' && !dtInstances.bills) {
-            dtInstances.bills = $('#dt-bills').DataTable(commonOpts(dataUrls.bills, [
-                { data: 'date' }, { data: 'patient' }, { data: 'hmo' }, { data: 'test' }, { data: 'amount' },
-                { data: 'payable' }, { data: 'claims' }, { data: 'billed_by' }, { data: 'cashier' },
-                { data: 'method' }, { data: 'pay_status' },
-                { data: 'audit', orderable: false, searchable: false }
-            ], 'kpi-bills'));
+        function commonOpts(url, columns, kpiContainer) {
+            return {
+                dom: '<"d-flex justify-content-between align-items-center mb-2"<"d-flex gap-2"B>f>rt<"d-flex justify-content-between align-items-center mt-2"ip>',
+                buttons: [{
+                        extend: 'copy',
+                        className: 'btn btn-xs btn-outline-secondary font-weight-bold'
+                    },
+                    {
+                        extend: 'excel',
+                        className: 'btn btn-xs btn-outline-success font-weight-bold'
+                    },
+                    {
+                        extend: 'pdf',
+                        className: 'btn btn-xs btn-outline-danger font-weight-bold'
+                    },
+                    {
+                        extend: 'print',
+                        className: 'btn btn-xs btn-outline-info font-weight-bold'
+                    }
+                ],
+                processing: true,
+                serverSide: true,
+                ajax: {
+                    url: url,
+                    type: 'GET',
+                    data: function(d) {
+                        var form = $('#ops_audit_filter_form').serializeArray();
+                        form.forEach(function(f) {
+                            d[f.name] = f.value;
+                        });
+                        var tabName = kpiContainer ? kpiContainer.replace('kpi-', '') : '';
+                        $(`.ops-tab-filter[data-tab="${tabName}"]`).each(function() {
+                            d[$(this).attr('name')] = $(this).val();
+                        });
+                    },
+                    dataSrc: function(json) {
+                        if (json.kpis && kpiContainer) {
+                            renderOpsKpis(json.kpis, kpiContainer);
+                        }
+                        return json.data;
+                    }
+                },
+                columns: columns,
+                order: [
+                    [0, 'desc']
+                ],
+                pageLength: 25,
+                lengthMenu: [
+                    [10, 25, 50, 100],
+                    [10, 25, 50, 100]
+                ],
+                language: {
+                    zeroRecords: '<div class="text-center py-3 text-muted"><i class="mdi mdi-database-off" style="font-size:2rem;"></i><br>No records found.</div>',
+                    processing: '<div class="text-center py-3"><i class="mdi mdi-loading mdi-spin text-primary" style="font-size:1.5rem;"></i> Loading...</div>'
+                }
+            };
         }
-        else if (tabId === 'cashbook' && !dtInstances.cashbook) {
-            dtInstances.cashbook = $('#dt-cashbook').DataTable(commonOpts(dataUrls.cashbook, [
-                { data: 'date' }, { data: 'reference' }, { data: 'patient' }, { data: 'total' }, 
-                { data: 'method' }, { data: 'cashier' },
-                { data: 'audit', orderable: false, searchable: false }
-            ], 'kpi-cashbook'));
-        }
 
-        setTimeout(function() {
-            $.fn.dataTable.tables({ visible: true, api: true }).columns.adjust();
-        }, 200);
-    });
+        // Init tab 1
+        dtInstances.requests = $('#dt-requests').DataTable(commonOpts(dataUrls.requests, [{
+                data: 'date'
+            }, {
+                data: 'patient'
+            }, {
+                data: 'hmo'
+            }, {
+                data: 'test'
+            }, {
+                data: 'doctor'
+            },
+            {
+                data: 'status'
+            }, {
+                data: 'result_by'
+            }, {
+                data: 'approved_by'
+            }, {
+                data: 'billed_by'
+            },
+            {
+                data: 'payment_info',
+                name: 'payment_info',
+                orderable: false,
+                searchable: false
+            },
+            {
+                data: 'audit',
+                orderable: false,
+                searchable: false
+            }
+        ], 'kpi-requests'));
 
-    $('#btnApplyFilters').on('click', function() {
-        Object.values(dtInstances).forEach(function(dt) {
-            if (dt) dt.ajax.reload();
+        // Lazy init others
+        $('a[data-bs-toggle="tab"]').on('shown.bs.tab', function(e) {
+            var tabId = $(e.target).attr('id').replace('tab-', '');
+
+            if (tabId === 'bills' && !dtInstances.bills) {
+                dtInstances.bills = $('#dt-bills').DataTable(commonOpts(dataUrls.bills, [{
+                        data: 'date'
+                    }, {
+                        data: 'patient'
+                    }, {
+                        data: 'hmo'
+                    }, {
+                        data: 'test'
+                    }, {
+                        data: 'amount'
+                    },
+                    {
+                        data: 'payable'
+                    }, {
+                        data: 'claims'
+                    }, {
+                        data: 'billed_by'
+                    }, {
+                        data: 'cashier'
+                    },
+                    {
+                        data: 'method'
+                    }, {
+                        data: 'pay_status'
+                    },
+                    {
+                        data: 'audit',
+                        orderable: false,
+                        searchable: false
+                    }
+                ], 'kpi-bills'));
+            } else if (tabId === 'cashbook' && !dtInstances.cashbook) {
+                dtInstances.cashbook = $('#dt-cashbook').DataTable(commonOpts(dataUrls.cashbook, [{
+                        data: 'date'
+                    },
+                    {
+                        data: 'reference'
+                    },
+                    {
+                        data: 'entity'
+                    },
+                    {
+                        data: 'patient'
+                    },
+                    {
+                        data: 'bank'
+                    },
+                    {
+                        data: 'total'
+                    },
+                    {
+                        data: 'method'
+                    },
+                    {
+                        data: 'cashier'
+                    },
+                    {
+                        data: 'audit',
+                        orderable: false,
+                        searchable: false
+                    }
+                ], 'kpi-cashbook'));
+            }
+
+            setTimeout(function() {
+                $.fn.dataTable.tables({
+                    visible: true,
+                    api: true
+                }).columns.adjust();
+            }, 200);
+        });
+
+        $('#btnApplyFilters').on('click', function() {
+            Object.values(dtInstances).forEach(function(dt) {
+                if (dt) dt.ajax.reload();
+            });
+        });
+
+        $(document).on('change', '.ops-tab-filter', function() {
+            var tab = $(this).data('tab');
+            if (dtInstances[tab]) dtInstances[tab].ajax.reload();
         });
     });
-
-    $(document).on('change', '.ops-tab-filter', function() {
-        var tab = $(this).data('tab');
-        if (dtInstances[tab]) dtInstances[tab].ajax.reload();
-    });
-});
 </script>
 @endpush
