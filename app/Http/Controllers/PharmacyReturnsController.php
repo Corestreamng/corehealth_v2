@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Yajra\DataTables\Facades\DataTables;
+use Carbon\Carbon;
 
 class PharmacyReturnsController extends Controller
 {
@@ -56,50 +57,91 @@ class PharmacyReturnsController extends Controller
      */
     public function searchDispensedItems(Request $request)
     {
-        $query = $request->get('term');
-        $patientId = $request->get('patient_id');
-
-        $items = ProductRequest::with(['product', 'patient.user', 'productOrServiceRequest', 'dispensedFromStore'])
+        $query = ProductRequest::with(['product', 'patient.user', 'productOrServiceRequest', 'dispensedFromStore'])
             ->where('status', 3) // Only dispensed items
-            ->whereNotNull('dispense_date')
-            ->when($patientId, function($q) use ($patientId) {
-                return $q->where('patient_id', $patientId);
-            })
-            ->when($query, function($q) use ($query) {
-                return $q->where(function($outer) use ($query) {
-                    $outer->whereHas('product', function($q2) use ($query) {
-                        $q2->where('product_name', 'like', "%{$query}%");
-                    })
-                    ->orWhereHas('patient.user', function($q2) use ($query) {
-                        $q2->where('firstname', 'like', "%{$query}%")
-                           ->orWhere('surname', 'like', "%{$query}%");
-                    })
-                    ->orWhereHas('patient', function($q2) use ($query) {
-                        $q2->where('file_no', 'like', "%{$query}%");
-                    });
-                });
-            })
-            ->orderBy('dispense_date', 'desc')
-            ->limit(20)
-            ->get();
+            ->where('is_free_form', 0) // Free form items cannot be returned
+            ->whereNotNull('dispense_date');
 
-        return response()->json($items->map(function($item) {
-            $billReq = $item->productOrServiceRequest;
-            return [
-                'id' => $item->id,
-                'product_name' => $item->product->product_name ?? 'Unknown',
-                'patient_name' => $item->patient->user->name ?? 'Unknown',
-                'patient_id' => $item->patient_id,
-                'file_number' => $item->patient->file_no ?? '',
-                'qty' => $item->qty,
-                'dispensed_date' => $item->dispense_date ? (is_string($item->dispense_date) ? $item->dispense_date : $item->dispense_date->format('M d, Y h:i A')) : '',
-                'store' => $item->dispensedFromStore->store_name ?? 'Unknown Store',
-                'amount' => $billReq ? $billReq->payable_amount + $billReq->claims_amount : 0,
-                'payable_amount' => $billReq ? $billReq->payable_amount : 0,
-                'claims_amount' => $billReq ? $billReq->claims_amount : 0,
-                'bill_request_id' => $billReq ? $billReq->id : null,
-            ];
-        }));
+        if ($request->filled('start_date')) {
+            $query->whereDate('dispense_date', '>=', $request->start_date);
+        }
+        if ($request->filled('end_date')) {
+            $query->whereDate('dispense_date', '<=', $request->end_date);
+        }
+
+        if ($request->filled('patient_id')) {
+            $query->where('patient_id', $request->patient_id);
+        }
+
+        return DataTables::of($query)
+            ->filter(function ($q) use ($request) {
+                if ($request->has('search') && !empty($request->search['value'])) {
+                    $term = $request->search['value'];
+                    $q->where(function($outer) use ($term) {
+                        $outer->whereHas('product', function($q2) use ($term) {
+                            $q2->where('product_name', 'like', "%{$term}%");
+                        })
+                        ->orWhereHas('patient.user', function($q2) use ($term) {
+                            $q2->where('firstname', 'like', "%{$term}%")
+                               ->orWhere('surname', 'like', "%{$term}%");
+                        })
+                        ->orWhereHas('patient', function($q2) use ($term) {
+                            $q2->where('file_no', 'like', "%{$term}%");
+                        });
+                    });
+                }
+            })
+            ->addColumn('patient', function($item) {
+                $name = htmlspecialchars($item->patient->user->name ?? 'Unknown', ENT_QUOTES);
+                $file = htmlspecialchars($item->patient->file_no ?? '', ENT_QUOTES);
+                return "<div><strong>{$name}</strong><br><small class='text-muted'>{$file}</small></div>";
+            })
+            ->addColumn('product', function($item) {
+                return htmlspecialchars($item->item_name ?? 'Unknown', ENT_QUOTES);
+            })
+            ->addColumn('qty', function($item) {
+                return "<span class='badge badge-primary'>{$item->qty}</span>";
+            })
+            ->addColumn('store', function($item) {
+                return htmlspecialchars($item->dispensedFromStore->store_name ?? ($item->is_free_form ? 'External / NA' : 'Unknown Store'), ENT_QUOTES);
+            })
+            ->addColumn('amount', function($item) {
+                $billReq = $item->productOrServiceRequest;
+                $amount = $billReq ? ($billReq->payable_amount + $billReq->claims_amount) : 0;
+                return "₦" . number_format($amount, 2);
+            })
+            ->addColumn('date', function($item) {
+                $date = $item->dispense_date;
+                if (!$date) return '';
+                return is_string($date) ? Carbon::parse($date)->format('M d, Y h:i A') : $date->format('M d, Y h:i A');
+            })
+            ->addColumn('action', function($item) {
+                $billReq = $item->productOrServiceRequest;
+                $amount = $billReq ? ($billReq->payable_amount + $billReq->claims_amount) : 0;
+                $payable = $billReq ? $billReq->payable_amount : 0;
+                $claims = $billReq ? $billReq->claims_amount : 0;
+                
+                $prod = htmlspecialchars($item->item_name ?? 'Unknown', ENT_QUOTES);
+                $pat = htmlspecialchars($item->patient->user->name ?? 'Unknown', ENT_QUOTES);
+                $store = htmlspecialchars($item->dispensedFromStore->store_name ?? ($item->is_free_form ? 'External / NA' : 'Unknown Store'), ENT_QUOTES);
+                
+                $dateStr = $item->dispense_date ? (is_string($item->dispense_date) ? Carbon::parse($item->dispense_date)->format('Y-m-d H:i:s') : $item->dispense_date->format('Y-m-d H:i:s')) : '';
+                
+                return "<button class='btn btn-sm btn-outline-primary return-item-select w-100' 
+                    data-id='{$item->id}' 
+                    data-product='{$prod}' 
+                    data-patient='{$pat}' 
+                    data-qty='{$item->qty}' 
+                    data-amount='{$amount}' 
+                    data-store='{$store}' 
+                    data-payable='{$payable}' 
+                    data-claims='{$claims}' 
+                    data-date='{$dateStr}'>
+                    <i class='mdi mdi-arrow-right-circle'></i> Select
+                </button>";
+            })
+            ->rawColumns(['patient', 'qty', 'action'])
+            ->make(true);
     }
 
     /**
