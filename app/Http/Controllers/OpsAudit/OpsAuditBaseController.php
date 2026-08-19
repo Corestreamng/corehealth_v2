@@ -328,7 +328,7 @@ abstract class OpsAuditBaseController extends Controller
         $claims = number_format((float) $posr->claims_amount, 2);
         
         if (!$payment) {
-            $paymentMethod = '<span class="badge bg-danger bg-opacity-10 text-danger border border-danger" style="font-weight: 500;"><i class="mdi mdi-alert-circle-outline me-1"></i>No Payment</span>';
+            $paymentMethod = '<span class="text-danger fw-bold"><i class="mdi mdi-alert-circle-outline me-1"></i>No Payment</span>';
             $cashier = '-';
             $time = '-';
         } else {
@@ -343,11 +343,11 @@ abstract class OpsAuditBaseController extends Controller
             $hmoName = $hmo ? $hmo->name : 'Unknown HMO';
             $schemeName = ($hmo && $hmo->scheme) ? $hmo->scheme->name : '';
             
-            $validationBadge = '<span class="badge bg-secondary text-white" style="font-weight: 500;"><i class="mdi mdi-clock-outline me-1"></i>Claims Pending</span>';
+            $validationBadge = '<span class="text-secondary fw-bold"><i class="mdi mdi-clock-outline me-1"></i>Claims Pending</span>';
             if ($posr->validation_status === 'approved') {
-                $validationBadge = '<span class="badge bg-success text-white" style="font-weight: 500;"><i class="mdi mdi-check-circle me-1"></i>Claims Approved</span>';
+                $validationBadge = '<span class="text-success fw-bold"><i class="mdi mdi-check-circle me-1"></i>Claims Approved</span>';
             } elseif ($posr->validation_status === 'rejected') {
-                $validationBadge = '<span class="badge bg-danger text-white" style="font-weight: 500;"><i class="mdi mdi-close-circle me-1"></i>Claims Rejected</span>';
+                $validationBadge = '<span class="text-danger fw-bold"><i class="mdi mdi-close-circle me-1"></i>Claims Rejected</span>';
             }
 
             $approverName = '';
@@ -359,7 +359,7 @@ abstract class OpsAuditBaseController extends Controller
                 $approverName .= '</small>';
             }
 
-            $coverageMode = $posr->coverage_mode ? "<span class='badge bg-info text-white' style='font-size:0.65rem; font-weight: 500;'><i class='mdi mdi-shield-check me-1'></i>Mode: {$posr->coverage_mode}</span>" : '<span class="text-muted">Coverage: Not Set</span>';
+            $coverageMode = $posr->coverage_mode ? "<span class='text-info fw-bold' style='font-size:0.65rem;'><i class='mdi mdi-shield-check me-1'></i>Mode: {$posr->coverage_mode}</span>" : '<span class="text-muted">Coverage: Not Set</span>';
 
             $hmoHtml = "
                 <div class='mt-1 pt-1 border-top border-light'>
@@ -385,14 +385,14 @@ abstract class OpsAuditBaseController extends Controller
     {
         $methodDisplay = $payment->payment_method ?: 'Unknown';
         $channel = '';
-        $badgeClass = 'bg-secondary bg-opacity-10 text-secondary border border-secondary';
+        $textClass = 'text-secondary';
         $icon = 'mdi-account-cash';
         
         $methodLower = strtolower($methodDisplay);
         if (str_contains($methodLower, 'transfer') || str_contains($methodLower, 'pos') || str_contains($methodLower, 'bank')) {
             if ($payment->bank) {
                 $channel = 'Bank: ' . $payment->bank->name;
-                $badgeClass = 'bg-success bg-opacity-10 text-success border border-success';
+                $textClass = 'text-success fw-bold';
                 $icon = 'mdi-bank';
             }
         } elseif (str_contains($methodLower, 'staff') || $payment->staffBill) {
@@ -400,7 +400,7 @@ abstract class OpsAuditBaseController extends Controller
                 $staffUser = \App\Models\User::find($payment->staffBill->staff_user_id);
                 if ($staffUser) {
                     $channel = 'Staff: ' . trim($staffUser->firstname . ' ' . $staffUser->surname);
-                    $badgeClass = 'bg-primary bg-opacity-10 text-primary border border-primary';
+                    $textClass = 'text-primary fw-bold';
                     $icon = 'mdi-account-tie';
                 }
             }
@@ -409,7 +409,7 @@ abstract class OpsAuditBaseController extends Controller
                 $org = \App\Models\Organization::find($payment->organizationBill->organization_id);
                 if ($org) {
                     $channel = 'Corporate: ' . $org->name;
-                    $badgeClass = 'bg-info bg-opacity-10 text-info border border-info';
+                    $textClass = 'text-info fw-bold';
                     $icon = 'mdi-domain';
                 }
             }
@@ -420,13 +420,13 @@ abstract class OpsAuditBaseController extends Controller
                 if ($hmo->scheme) {
                     $channel .= ' (' . $hmo->scheme->name . ')';
                 }
-                $badgeClass = 'bg-warning bg-opacity-10 text-dark border border-warning';
+                $textClass = 'text-warning fw-bold';
                 $icon = 'mdi-hospital-building';
             }
         }
 
         if ($channel) {
-            return $methodDisplay . " <span class='d-block mt-1'><span class='badge {$badgeClass}' style='font-size:0.65rem; font-weight: 500;'><i class='mdi {$icon} me-1'></i>{$channel}</span></span>";
+            return $methodDisplay . " <span class='d-block mt-1'><span class='{$textClass}' style='font-size:0.65rem;'><i class='mdi {$icon} me-1'></i>{$channel}</span></span>";
         }
         return $methodDisplay;
     }
