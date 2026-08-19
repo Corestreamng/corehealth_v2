@@ -669,7 +669,7 @@
 
     function fetchAuditTimeline(modelType, modelId, containerId) {
         $.ajax({
-            url: '{{ route("mark.timeline") }}',
+            url: '{{ route("audit.mark.timeline") }}',
             type: 'GET',
             data: { model_type: modelType, model_id: modelId },
             success: function(res) {
