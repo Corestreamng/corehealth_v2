@@ -116,7 +116,7 @@ abstract class OpsAuditBaseController extends Controller
                 $queriedBy = trim(($activeQuery->auditor->firstname ?? $activeQuery->auditor->name ?? 'Auditor') . ' ' . ($activeQuery->auditor->surname ?? ''));
             }
 
-            $html .= '<div class="mt-1">';
+            $html .= '<div class="mt-1" style="cursor: pointer; padding: 4px; border-radius: 4px; transition: background 0.2s;" onmouseover="this.style.background=\'#fff3cd\'" onmouseout="this.style.background=\'transparent\'" onclick="viewTimeline(\'' . addslashes($fullModelClass) . '\', ' . $record->id . ')" title="Click to view full timeline">';
             $html .= '<small class="d-block text-danger font-weight-bold" style="font-size:0.72rem;"><i class="mdi mdi-alert-circle me-1"></i>Queried by ' . htmlspecialchars($queriedBy, ENT_QUOTES) . '</small>';
             $html .= '<small class="d-block text-muted" style="font-size: 0.7rem;">' . $queryTime . '</small>';
             $html .= '<div class="text-muted mt-1" style="font-size: 0.7rem; white-space: normal; line-height: 1.2; word-break: break-word; max-width: 200px;">' . $notes . '</div>';
@@ -127,7 +127,7 @@ abstract class OpsAuditBaseController extends Controller
             if (isset($latestAudit->auditor)) {
                 $auditorName = trim(($latestAudit->auditor->firstname ?? $latestAudit->auditor->name ?? 'Auditor') . ' ' . ($latestAudit->auditor->surname ?? ''));
             }
-            $html .= '<div class="mt-1">';
+            $html .= '<div class="mt-1" style="cursor: pointer; padding: 4px; border-radius: 4px; transition: background 0.2s;" onmouseover="this.style.background=\'#d1e7dd\'" onmouseout="this.style.background=\'transparent\'" onclick="viewTimeline(\'' . addslashes($fullModelClass) . '\', ' . $record->id . ')" title="Click to view full timeline">';
             $html .= '<small class="d-block text-success font-weight-bold" style="font-size:0.72rem;"><i class="mdi mdi-check-all me-1"></i>Stamped by ' . htmlspecialchars($auditorName, ENT_QUOTES) . '</small>';
             $html .= '<small class="d-block text-muted" style="font-size: 0.7rem;">' . $stampedTime . '</small>';
             $html .= '</div>';
