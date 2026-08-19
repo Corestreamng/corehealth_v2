@@ -117,6 +117,21 @@
                     <option value="refund">Refund</option>
                 </select>
             </div>
+            <div class="col-md-2">
+                <select name="bank_id" class="form-select form-select-sm ops-tab-filter" data-tab="payments">
+                    <option value="">All Banks</option>
+                    @foreach($banks as $id => $name)
+                        <option value="{{ $id }}">{{ $name }}</option>
+                    @endforeach
+                </select>
+            </div>
+            <div class="col-md-2">
+                <select name="is_audited" class="form-select form-select-sm ops-tab-filter" data-tab="payments">
+                    <option value="">Audit Status</option>
+                    <option value="0">Pending Audit</option>
+                    <option value="1">Audited</option>
+                </select>
+            </div>
         </div>
 
         <div class="table-responsive">
@@ -166,6 +181,13 @@
                     <option value="rejected">Rejected</option>
                 </select>
             </div>
+            <div class="col-md-2">
+                <select name="is_audited" class="form-select form-select-sm ops-tab-filter" data-tab="organization_bills">
+                    <option value="">Audit Status</option>
+                    <option value="0">Pending Audit</option>
+                    <option value="1">Audited</option>
+                </select>
+            </div>
         </div>
 
         <div class="table-responsive">
@@ -212,6 +234,13 @@
                     <option value="pending">Pending</option>
                     <option value="paid">Paid</option>
                     <option value="rejected">Rejected</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <select name="is_audited" class="form-select form-select-sm ops-tab-filter" data-tab="staff_bills">
+                    <option value="">Audit Status</option>
+                    <option value="0">Pending Audit</option>
+                    <option value="1">Audited</option>
                 </select>
             </div>
         </div>

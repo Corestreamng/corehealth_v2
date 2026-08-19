@@ -17,8 +17,9 @@ class OpsAuditBillingController extends OpsAuditBaseController
         $hmoSchemes = \App\Models\HmoScheme::orderBy('name')->pluck('name', 'id');
         $users = \App\Models\User::role(['SUPERADMIN', 'ADMIN', 'ACCOUNTS', 'BILLER'])->orderBy('firstname')->get()->mapWithKeys(fn($u) => [$u->id => trim($u->firstname . ' ' . ($u->othername ?? '') . ' ' . $u->surname)]);
         $organizations = \App\Models\Organization::orderBy('name')->pluck('name', 'id');
+        $banks = \App\Models\Bank::orderBy('name')->pluck('name', 'id');
 
-        return view('admin.ops_audit.billing', compact('hmos', 'hmoSchemes', 'users', 'organizations'));
+        return view('admin.ops_audit.billing', compact('hmos', 'hmoSchemes', 'users', 'organizations', 'banks'));
     }
 
     public function data(Request $request, $tab)
@@ -58,6 +59,8 @@ class OpsAuditBillingController extends OpsAuditBaseController
         if ($request->filled('payment_method')) $query->where('payment_method', $request->payment_method);
         if ($request->filled('payment_type')) $query->where('payment_type', $request->payment_type);
         if ($request->filled('hmo_id')) $query->where('hmo_id', $request->hmo_id);
+        if ($request->filled('bank_id')) $query->where('bank_id', $request->bank_id);
+        if ($request->filled('is_audited')) $query->where('is_audited', $request->is_audited);
 
         $kpiQuery = clone $query;
 
@@ -128,6 +131,7 @@ class OpsAuditBillingController extends OpsAuditBaseController
 
         if ($request->filled('organization_id')) $query->where('organization_id', $request->organization_id);
         if ($request->filled('status')) $query->where('status', $request->status);
+        if ($request->filled('is_audited')) $query->where('is_audited', $request->is_audited);
 
         $kpiQuery = clone $query;
 
@@ -184,6 +188,7 @@ class OpsAuditBillingController extends OpsAuditBaseController
         if ($request->filled('staff_user_id')) $query->where('staff_user_id', $request->staff_user_id);
         if ($request->filled('status')) $query->where('status', $request->status);
         if ($request->filled('cashier_id')) $query->whereHas('checkoutPayment', fn($q) => $q->where('user_id', $request->cashier_id));
+        if ($request->filled('is_audited')) $query->where('is_audited', $request->is_audited);
 
         $kpiQuery = clone $query;
 
