@@ -173,7 +173,7 @@ class OpsAuditBillingController extends OpsAuditBaseController
             'patient.user',
             'patient.hmo.scheme',
             'staffUser',
-            'payment.user',
+            'checkoutPayment.user',
             'settlementPayment'
         ]);
 
@@ -181,7 +181,7 @@ class OpsAuditBillingController extends OpsAuditBaseController
 
         if ($request->filled('staff_user_id')) $query->where('staff_user_id', $request->staff_user_id);
         if ($request->filled('status')) $query->where('status', $request->status);
-        if ($request->filled('cashier_id')) $query->whereHas('payment', fn($q) => $q->where('user_id', $request->cashier_id));
+        if ($request->filled('cashier_id')) $query->whereHas('checkoutPayment', fn($q) => $q->where('user_id', $request->cashier_id));
 
         $kpiQuery = clone $query;
 
@@ -189,7 +189,7 @@ class OpsAuditBillingController extends OpsAuditBaseController
             $patient = $row->patient;
             $user = $patient?->user;
             $hmo = $patient?->hmo;
-            $cashier = $row->payment?->user;
+            $cashier = $row->checkoutPayment?->user;
             $staff = $row->staffUser;
 
             $statusColors = ['pending' => 'warning text-dark', 'paid' => 'success', 'rejected' => 'danger'];

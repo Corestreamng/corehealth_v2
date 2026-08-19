@@ -57,7 +57,6 @@ class OpsAuditReceptionController extends OpsAuditBaseController
             'patient.hmo.scheme',
             'clinic',
             'doctor.user',
-            'staff.user',
             'receptionist.user',
             'request_entry.payment.user',
         ]);

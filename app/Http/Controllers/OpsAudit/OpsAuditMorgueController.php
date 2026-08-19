@@ -53,7 +53,7 @@ class OpsAuditMorgueController extends OpsAuditBaseController
             'patient.hmo.scheme',
             'admittedBy',
             'releasedBy',
-            'serviceRequest.payment.staff_user'
+            'serviceRequest.payment.staff_user',
         
             'serviceRequest.payment.user',
         ]);
@@ -112,7 +112,7 @@ class OpsAuditMorgueController extends OpsAuditBaseController
 
         $this->applyDateFilter($query, $request);
         $this->applyShiftFilter($query, $request);
-        $this->applyPaymentFilters($query, $request, 'serviceRequest');
+        $this->applyPaymentFilters($query, $request, '');
 
         if ($request->filled('hmo_id')) $query->whereHas('patient.hmo', fn($q) => $q->where('id', $request->hmo_id));
 

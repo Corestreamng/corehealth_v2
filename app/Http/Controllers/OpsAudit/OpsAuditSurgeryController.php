@@ -56,7 +56,7 @@ class OpsAuditSurgeryController extends OpsAuditBaseController
             'patient.hmo.scheme',
             'requestedByUser',
             'service',
-            'productOrServiceRequest.payment.staff_user'
+            'productOrServiceRequest.payment.staff_user',
         
             'productOrServiceRequest.payment.user',
         ]);
@@ -112,7 +112,7 @@ class OpsAuditSurgeryController extends OpsAuditBaseController
             'patient.user',
             'service',
             'preNotesBy',
-            'postNotesBy'
+            'postNotesBy',
         
             'productOrServiceRequest.payment.user',
         ]);
@@ -162,7 +162,7 @@ class OpsAuditSurgeryController extends OpsAuditBaseController
 
         $this->applyDateFilter($query, $request);
         $this->applyShiftFilter($query, $request);
-        $this->applyPaymentFilters($query, $request, 'self_payment');
+        $this->applyPaymentFilters($query, $request, '');
 
         if ($request->filled('hmo_id')) $query->whereHas('patient.hmo', fn($q) => $q->where('id', $request->hmo_id));
 
