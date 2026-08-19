@@ -69,45 +69,33 @@ abstract class OpsAuditBaseController extends Controller
         $isOrg = ($r->payment_type === 'ORGANIZATION_BILL_SETTLEMENT' || $r->payment_method === 'BILL_TO_ORG' || $r->payment_method === 'ORG_BILL');
 
         if ($isStaff) {
-            $staffBill = \App\Models\StaffBill::where('settlement_payment_id', $r->id)->orWhere('payment_id', $r->id)->with('staffUser')->first();
-            if (!$staffBill) {
-                $alloc = \Illuminate\Support\Facades\DB::table('staff_bill_payment_allocations')->where('payment_id', $r->id)->first();
-                if ($alloc) {
-                    $staffBill = \App\Models\StaffBill::with('staffUser')->find($alloc->staff_bill_id);
-                }
+            $staffBill = $r->staffBills->first() ?? $r->staffBill;
+            if ($staffBill && $staffBill->staffUser) {
+                $name = trim($staffBill->staffUser->firstname . ' ' . ($staffBill->staffUser->surname ?? ''));
+                return '<div class="font-weight-bold text-dark"><i class="mdi mdi-account-tie text-primary"></i> ' . e($name) . '</div><small class="badge bg-primary text-white mt-1">Staff Bill</small>';
             }
-            $name = $staffBill->staffUser->firstname ?? 'Staff Member';
-            if (isset($staffBill->staffUser->surname)) {
-                $name .= ' ' . $staffBill->staffUser->surname;
-            }
-            return '<div class="font-weight-bold text-dark"><i class="mdi mdi-account-tie text-primary"></i> ' . e($name) . '</div><small class="badge bg-primary text-white mt-1">Staff Bill</small>';
+            return '<div class="font-weight-bold text-dark"><i class="mdi mdi-account-tie text-primary"></i> Staff Member</div><small class="badge bg-primary text-white mt-1">Staff Bill</small>';
         }
 
         if ($isOrg) {
-            $orgBill = \App\Models\OrganizationBill::where('settlement_payment_id', $r->id)->orWhere('payment_id', $r->id)->with('organization')->first();
-            if (!$orgBill) {
-                $alloc = \Illuminate\Support\Facades\DB::table('organization_bill_payment_allocations')->where('payment_id', $r->id)->first();
-                if ($alloc) {
-                    $orgBill = \App\Models\OrganizationBill::with('organization')->find($alloc->organization_bill_id);
-                }
-            }
-            if (!$orgBill) {
-                $posr = \App\Models\ProductOrServiceRequest::where('payment_id', $r->id)->with('organization')->first();
-                if ($posr && $posr->organization) {
+            $orgBill = $r->organizationBills->first() ?? $r->organizationBill;
+            if (!$orgBill && $r->product_or_service_request) {
+                $posr = $r->product_or_service_request;
+                if ($posr->organization) {
                     $name = $posr->organization->name ?? $posr->organization->company_name;
                     return '<div class="font-weight-bold text-dark"><i class="mdi mdi-domain text-info"></i> ' . e($name) . '</div><small class="badge bg-info text-white mt-1">Corporate Retainership</small>';
                 }
             }
-            $name = $orgBill->organization->name ?? $orgBill->organization->company_name ?? 'Organization';
-            return '<div class="font-weight-bold text-dark"><i class="mdi mdi-domain text-info"></i> ' . e($name) . '</div><small class="badge bg-info text-white mt-1">Corporate Retainership</small>';
+            if ($orgBill && $orgBill->organization) {
+                $name = $orgBill->organization->name ?? $orgBill->organization->company_name;
+                return '<div class="font-weight-bold text-dark"><i class="mdi mdi-domain text-info"></i> ' . e($name) . '</div><small class="badge bg-info text-white mt-1">Corporate Retainership</small>';
+            }
+            return '<div class="font-weight-bold text-dark"><i class="mdi mdi-domain text-info"></i> Organization</div><small class="badge bg-info text-white mt-1">Corporate Retainership</small>';
         }
 
         $patient = $r->patient;
-        if (!$patient) {
-            $posr = \App\Models\ProductOrServiceRequest::where('payment_id', $r->id)->with('patient.user', 'patient.hmo.scheme')->first();
-            if ($posr && $posr->patient) {
-                $patient = $posr->patient;
-            }
+        if (!$patient && $r->product_or_service_request) {
+            $patient = $r->product_or_service_request->patient;
         }
 
         if ($patient) {
@@ -152,10 +140,12 @@ abstract class OpsAuditBaseController extends Controller
         $activeQuery = null;
         if (isset($record->is_queried) && $record->is_queried && empty($record->query_resolved_at)) {
             $activeQuery = (object)[
-                'auditor' => (object)['name' => 'Auditor'], 
+                'auditor' => (object)['name' => 'Auditor'],
                 'query_notes' => $record->query_notes ?? 'Flagged',
                 'created_at' => isset($record->queried_at) ? \Carbon\Carbon::parse($record->queried_at) : now()
             ];
+        } else if (method_exists($record, 'auditMarks') && $record->relationLoaded('auditMarks')) {
+            $activeQuery = $record->auditMarks->where('status', 'queried')->sortByDesc('created_at')->first();
         } else {
             $activeQuery = AuditMark::with('auditor')
                 ->where(fn($q) => $q->where('auditable_type', $fullModelClass)->orWhere('auditable_type', $shortModelClass))
@@ -168,6 +158,8 @@ abstract class OpsAuditBaseController extends Controller
         $latestAudit = null;
         if (isset($record->is_audited) && $record->is_audited) {
             $latestAudit = (object)['auditor' => (object)['name' => 'Auditor'], 'created_at' => isset($record->audited_at) ? Carbon::parse($record->audited_at) : now()];
+        } else if (method_exists($record, 'auditMarks') && $record->relationLoaded('auditMarks')) {
+            $latestAudit = $record->auditMarks->where('status', 'audited')->sortByDesc('created_at')->first();
         } else {
             $latestAudit = AuditMark::with('auditor')
                 ->where(fn($q) => $q->where('auditable_type', $fullModelClass)->orWhere('auditable_type', $shortModelClass))
@@ -351,9 +343,12 @@ abstract class OpsAuditBaseController extends Controller
         $this->applyShiftFilter($query, $request);
 
         if ($request->action === 'bulk_stamp_preview') {
+            if (method_exists(app($modelClass), 'auditMarks')) {
+                $query->with('auditMarks');
+            }
             $all = $query->get();
-            $queried = $all->filter(fn($r) => (isset($r->is_queried) && $r->is_queried && empty($r->query_resolved_at)) || AuditMark::where('auditable_type', $modelClass)->where('auditable_id', $r->id)->where('status', 'queried')->exists())->count();
-            $alreadyAudited = $all->filter(fn($r) => (isset($r->is_audited) && $r->is_audited) || AuditMark::where('auditable_type', $modelClass)->where('auditable_id', $r->id)->where('status', 'audited')->exists())->count();
+            $queried = $all->filter(fn($r) => (isset($r->is_queried) && $r->is_queried && empty($r->query_resolved_at)) || ($r->relationLoaded('auditMarks') ? $r->auditMarks->where('status', 'queried')->count() > 0 : AuditMark::where('auditable_type', $modelClass)->where('auditable_id', $r->id)->where('status', 'queried')->exists()))->count();
+            $alreadyAudited = $all->filter(fn($r) => (isset($r->is_audited) && $r->is_audited) || ($r->relationLoaded('auditMarks') ? $r->auditMarks->where('status', 'audited')->count() > 0 : AuditMark::where('auditable_type', $modelClass)->where('auditable_id', $r->id)->where('status', 'audited')->exists()))->count();
             $valid = $all->count() - $queried - $alreadyAudited;
 
             $totalAmount = 0;
@@ -390,14 +385,17 @@ abstract class OpsAuditBaseController extends Controller
         if ($request->action === 'bulk_stamp') {
             $stamped = 0;
             $skipped = 0;
+            if (method_exists(app($modelClass), 'auditMarks')) {
+                $query->with('auditMarks');
+            }
             $records = $query->get();
             $zoneKey = $request->input('zone_key', 'ops_audit.general.' . $tab);
 
             foreach ($records as $record) {
                 $isQueried = (isset($record->is_queried) && $record->is_queried && empty($record->query_resolved_at)) ||
-                    AuditMark::where('auditable_type', $modelClass)->where('auditable_id', $record->id)->where('status', 'queried')->exists();
+                    ($record->relationLoaded('auditMarks') ? $record->auditMarks->where('status', 'queried')->count() > 0 : AuditMark::where('auditable_type', $modelClass)->where('auditable_id', $record->id)->where('status', 'queried')->exists());
                 $isAudited = (isset($record->is_audited) && $record->is_audited) ||
-                    AuditMark::where('auditable_type', $modelClass)->where('auditable_id', $record->id)->where('status', 'audited')->exists();
+                    ($record->relationLoaded('auditMarks') ? $record->auditMarks->where('status', 'audited')->count() > 0 : AuditMark::where('auditable_type', $modelClass)->where('auditable_id', $record->id)->where('status', 'audited')->exists());
 
                 if ($isQueried || $isAudited) {
                     $skipped++;
