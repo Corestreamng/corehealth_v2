@@ -76,7 +76,7 @@ class OpsAuditDoctorController extends OpsAuditBaseController
             'patient.user',
             'patient.hmo.scheme',
             'doctor',
-            'queue.clinic'
+            'queue.clinic',
         
             'productOrServiceRequest.payment.user',
         ]);
@@ -159,7 +159,7 @@ class OpsAuditDoctorController extends OpsAuditBaseController
             'patient.hmo.scheme',
             'doctor',
             'ward',
-            'bed'
+            'bed',
         
             'productOrServiceRequest.payment.user',
         ]);
@@ -252,7 +252,7 @@ class OpsAuditDoctorController extends OpsAuditBaseController
             'patient.hmo.scheme',
             'doctor',
             'product',
-            'productOrServiceRequest.payment'
+            'productOrServiceRequest.payment',
         
             'productOrServiceRequest.payment.user',
         ]);
@@ -319,7 +319,7 @@ class OpsAuditDoctorController extends OpsAuditBaseController
             'biller',
             'resultBy',
             'approver',
-            'productOrServiceRequest.payment'
+            'productOrServiceRequest.payment',
         
             'productOrServiceRequest.payment.user',
         ]);
@@ -383,7 +383,7 @@ class OpsAuditDoctorController extends OpsAuditBaseController
             'biller',
             'resultBy',
             'approver',
-            'productOrServiceRequest.payment'
+            'productOrServiceRequest.payment',
         
             'productOrServiceRequest.payment.user',
         ]);
@@ -445,7 +445,7 @@ class OpsAuditDoctorController extends OpsAuditBaseController
             'requestedByUser', // effectively doctor
             'service',
             'billedByUser',
-            'productOrServiceRequest.payment'
+            'productOrServiceRequest.payment',
         
             'productOrServiceRequest.payment.user',
         ]);
