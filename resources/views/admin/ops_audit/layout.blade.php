@@ -4,7 +4,7 @@
 
 @push('styles')
 <link rel="stylesheet" href="{{ asset('plugins/dataT/datatables.min.css') }}">
-<link rel="stylesheet" href="{{ asset('plugins/select2/css/select2.min.css') }}">
+<link rel="stylesheet" href="{{ asset('plugins/select2/select2.min.css') }}">
 <style>
     .select2-container--default .select2-selection--single {
         border-radius: 0.25rem;
@@ -256,7 +256,7 @@
 
 @push('scripts')
 <script src="{{ asset('plugins/dataT/datatables.min.js') }}"></script>
-<script src="{{ asset('plugins/select2/js/select2.min.js') }}"></script>
+<script src="{{ asset('plugins/select2/select2.min.js') }}"></script>
 <script>
     $(document).ready(function() {
         if (typeof $.fn.select2 !== 'undefined') {
