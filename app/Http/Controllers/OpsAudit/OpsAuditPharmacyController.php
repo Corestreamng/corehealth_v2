@@ -115,11 +115,10 @@ class OpsAuditPharmacyController extends OpsAuditBaseController
                 'audit' => $this->renderAuditAction($row, 'ProductRequest'),
             ];
         }, function ($kpiQuery) {
-            $all = $kpiQuery->get();
             return [
-                ['label' => 'Total Prescriptions', 'value' => number_format($all->count()), 'color' => '#0d6efd'],
-                ['label' => 'Dispensed', 'value' => number_format($all->where('status', 3)->count()), 'color' => '#198754'],
-                ['label' => 'Pending/Approved', 'value' => number_format($all->whereIn('status', [1,2])->count()), 'color' => '#ffc107'],
+                ['label' => 'Total Prescriptions', 'value' => number_format((clone $kpiQuery)->count()), 'color' => '#0d6efd'],
+                ['label' => 'Dispensed', 'value' => number_format((clone $kpiQuery)->where('status', 3)->count()), 'color' => '#198754'],
+                ['label' => 'Pending/Approved', 'value' => number_format((clone $kpiQuery)->whereIn('status', [1,2])->count()), 'color' => '#ffc107'],
             ];
         }, $kpiQuery);
     }
@@ -169,12 +168,11 @@ class OpsAuditPharmacyController extends OpsAuditBaseController
                 'audit' => $this->renderAuditAction($row, 'ProductRequest'),
             ];
         }, function ($kpiQuery) {
-            $all = $kpiQuery->get();
             return [
-                ['label' => 'Total Returns/Damages', 'value' => number_format($all->count()), 'color' => '#dc3545'],
-                ['label' => 'Returned Qty', 'value' => number_format($all->sum('returned_qty')), 'color' => '#ffc107'],
-                ['label' => 'Damaged Qty', 'value' => number_format($all->sum('damaged_qty')), 'color' => '#dc3545'],
-                ['label' => 'Total Refunds', 'value' => '₦' . number_format($all->sum('refund_amount'), 2), 'color' => '#0d6efd'],
+                ['label' => 'Total Returns/Damages', 'value' => number_format((clone $kpiQuery)->count()), 'color' => '#dc3545'],
+                ['label' => 'Returned Qty', 'value' => number_format((clone $kpiQuery)->sum('returned_qty')), 'color' => '#ffc107'],
+                ['label' => 'Damaged Qty', 'value' => number_format((clone $kpiQuery)->sum('damaged_qty')), 'color' => '#dc3545'],
+                ['label' => 'Total Refunds', 'value' => '₦' . number_format((clone $kpiQuery)->sum('refund_amount'), 2), 'color' => '#0d6efd'],
             ];
         }, $kpiQuery);
     }
@@ -213,11 +211,10 @@ class OpsAuditPharmacyController extends OpsAuditBaseController
                 'audit' => $this->renderAuditAction($row, 'StoreRequisitionItem'),
             ];
         }, function ($kpiQuery) {
-            $all = $kpiQuery->get();
             return [
-                ['label' => 'Total Items Req', 'value' => number_format($all->count()), 'color' => '#0d6efd'],
-                ['label' => 'Fulfilled', 'value' => number_format($all->where('status', 'fulfilled')->count()), 'color' => '#198754'],
-                ['label' => 'Pending', 'value' => number_format($all->where('status', 'pending')->count()), 'color' => '#ffc107'],
+                ['label' => 'Total Items Req', 'value' => number_format((clone $kpiQuery)->count()), 'color' => '#0d6efd'],
+                ['label' => 'Fulfilled', 'value' => number_format((clone $kpiQuery)->where('status', 'fulfilled')->count()), 'color' => '#198754'],
+                ['label' => 'Pending', 'value' => number_format((clone $kpiQuery)->where('status', 'pending')->count()), 'color' => '#ffc107'],
             ];
         }, $kpiQuery);
     }
@@ -233,7 +230,7 @@ class OpsAuditPharmacyController extends OpsAuditBaseController
             'bank',
             'product_or_service_request'
         ])->whereHas('product_or_service_request', function($q) {
-            $q->where('type', 'product');
+            $q->whereNotNull('product_id');
         });
 
         $this->applyDateFilter($query, $request);
@@ -258,12 +255,11 @@ class OpsAuditPharmacyController extends OpsAuditBaseController
                 'audit' => $this->renderAuditAction($row, 'Payment'),
             ];
         }, function ($kpiQuery) {
-            $all = $kpiQuery->get();
             return [
-                ['label' => 'Total Transactions', 'value' => number_format($all->count()), 'color' => '#0d6efd'],
-                ['label' => 'Total Revenue', 'value' => '₦' . number_format($all->sum('total'), 2), 'color' => '#198754'],
-                ['label' => 'Cash', 'value' => '₦' . number_format($all->where('payment_method', 'cash')->sum('total'), 2), 'color' => '#ffc107'],
-                ['label' => 'POS/Transfer', 'value' => '₦' . number_format($all->whereIn('payment_method', ['pos', 'transfer'])->sum('total'), 2), 'color' => '#6610f2'],
+                ['label' => 'Total Transactions', 'value' => number_format((clone $kpiQuery)->count()), 'color' => '#0d6efd'],
+                ['label' => 'Total Revenue', 'value' => '₦' . number_format((clone $kpiQuery)->sum('total'), 2), 'color' => '#198754'],
+                ['label' => 'Cash', 'value' => '₦' . number_format((clone $kpiQuery)->where('payment_method', 'cash')->sum('total'), 2), 'color' => '#ffc107'],
+                ['label' => 'POS/Transfer', 'value' => '₦' . number_format((clone $kpiQuery)->whereIn('payment_method', ['pos', 'transfer'])->sum('total'), 2), 'color' => '#6610f2'],
             ];
         }, $kpiQuery);
     }

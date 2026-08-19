@@ -89,11 +89,10 @@ class OpsAuditMorgueController extends OpsAuditBaseController
                 'audit' => $this->renderAuditAction($row, 'MorgueAdmission'),
             ];
         }, function ($kpiQuery) {
-            $all = $kpiQuery->get();
             return [
-                ['label' => 'Total Admitted', 'value' => number_format($all->count()), 'color' => '#0d6efd'],
-                ['label' => 'Currently in Morgue', 'value' => number_format($all->where('status', 'admitted')->count()), 'color' => '#dc3545'],
-                ['label' => 'Released', 'value' => number_format($all->where('status', 'released')->count()), 'color' => '#198754'],
+                ['label' => 'Total Admitted', 'value' => number_format((clone $kpiQuery)->count()), 'color' => '#0d6efd'],
+                ['label' => 'Currently in Morgue', 'value' => number_format((clone $kpiQuery)->where('status', 'admitted')->count()), 'color' => '#dc3545'],
+                ['label' => 'Released', 'value' => number_format((clone $kpiQuery)->where('status', 'released')->count()), 'color' => '#198754'],
             ];
         }, $kpiQuery);
     }
@@ -134,12 +133,11 @@ class OpsAuditMorgueController extends OpsAuditBaseController
                 'audit' => $this->renderAuditAction($row, 'ProductOrServiceRequest'),
             ];
         }, function ($kpiQuery) {
-            $all = $kpiQuery->get();
             return [
-                ['label' => 'Total Bills', 'value' => number_format($all->count()), 'color' => '#0d6efd'],
-                ['label' => 'Total Amount', 'value' => '₦' . number_format($all->sum('amount'), 2), 'color' => '#6610f2'],
-                ['label' => 'Payable', 'value' => '₦' . number_format($all->sum('payable_amount'), 2), 'color' => '#198754'],
-                ['label' => 'Claims', 'value' => '₦' . number_format($all->sum('claims_amount'), 2), 'color' => '#0dcaf0'],
+                ['label' => 'Total Bills', 'value' => number_format((clone $kpiQuery)->count()), 'color' => '#0d6efd'],
+                ['label' => 'Total Amount', 'value' => '₦' . number_format((clone $kpiQuery)->sum('amount'), 2), 'color' => '#6610f2'],
+                ['label' => 'Payable', 'value' => '₦' . number_format((clone $kpiQuery)->sum('payable_amount'), 2), 'color' => '#198754'],
+                ['label' => 'Claims', 'value' => '₦' . number_format((clone $kpiQuery)->sum('claims_amount'), 2), 'color' => '#0dcaf0'],
             ];
         }, $kpiQuery);
     }
@@ -178,10 +176,9 @@ class OpsAuditMorgueController extends OpsAuditBaseController
                 'audit' => $this->renderAuditAction($row, 'Payment'),
             ];
         }, function ($kpiQuery) {
-            $all = $kpiQuery->get();
             return [
-                ['label' => 'Total Transactions', 'value' => number_format($all->count()), 'color' => '#0d6efd'],
-                ['label' => 'Total Revenue', 'value' => '₦' . number_format($all->sum('total'), 2), 'color' => '#198754'],
+                ['label' => 'Total Transactions', 'value' => number_format((clone $kpiQuery)->count()), 'color' => '#0d6efd'],
+                ['label' => 'Total Revenue', 'value' => '₦' . number_format((clone $kpiQuery)->sum('total'), 2), 'color' => '#198754'],
             ];
         }, $kpiQuery);
     }
