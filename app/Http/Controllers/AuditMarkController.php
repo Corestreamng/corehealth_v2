@@ -253,4 +253,50 @@ class AuditMarkController extends Controller
             'skipped_count' => count($queriedIds)
         ]);
     }
+
+    /**
+     * Fetch timeline of audit marks for a given record.
+     */
+    public function timeline(Request $request)
+    {
+        $request->validate([
+            'model_type' => 'required|string',
+            'model_id' => 'required|integer'
+        ]);
+
+        $modelClass = $this->resolveModelClass($request->model_type);
+        $baseClass = class_basename($modelClass);
+
+        $marks = AuditMark::with('auditor')
+            ->where(function($q) use ($modelClass, $baseClass) {
+                $q->where('auditable_type', $modelClass)
+                  ->orWhere('auditable_type', $baseClass)
+                  ->orWhere('auditable_type', 'App\\Models\\' . $baseClass);
+            })
+            ->where('auditable_id', $request->model_id)
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        $timeline = $marks->map(function ($mark) {
+            $auditorName = 'System / Unknown';
+            if ($mark->auditor) {
+                $auditorName = trim(($mark->auditor->firstname ?? $mark->auditor->name ?? '') . ' ' . ($mark->auditor->surname ?? ''));
+            }
+            
+            return [
+                'id' => $mark->id,
+                'status' => $mark->status, // audited, queried, resolved
+                'auditor_name' => $auditorName ?: 'System',
+                'zone_key' => $mark->zone_key,
+                'notes' => $mark->status === 'queried' ? $mark->query_notes : ($mark->status === 'resolved' ? $mark->query_resolution_notes : null),
+                'created_at' => $mark->created_at ? $mark->created_at->format('d M Y, h:i A') : 'Unknown Date',
+                'created_at_human' => $mark->created_at ? $mark->created_at->diffForHumans() : ''
+            ];
+        });
+
+        return response()->json([
+            'success' => true,
+            'timeline' => $timeline
+        ]);
+    }
 }

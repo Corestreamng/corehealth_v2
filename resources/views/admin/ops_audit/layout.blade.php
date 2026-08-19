@@ -499,8 +499,10 @@
         document.getElementById('btnSubmitUniversalStamp').disabled = true;
 
         var myModal = new bootstrap.Modal(document.getElementById('universalStampModal'));
+        let timelineContainer = document.getElementById('stamp_timeline_container');
 
         if (mode === 'bulk') {
+            timelineContainer.innerHTML = '<div class="text-center text-muted mt-5"><i class="mdi mdi-information-outline fs-1"></i><br>Timeline not available for bulk operations.</div>';
             titleEl.innerHTML = '<i class="mdi mdi-check-all"></i> Bulk Stamp View';
             let activeTab = document.querySelector('.audit-content .ops-tabs .nav-link.active');
             if (!activeTab) activeTab = document.querySelector('.audit-content .nav-tabs .nav-link.active');
@@ -554,7 +556,9 @@
         } else {
             titleEl.innerHTML = '<i class="mdi mdi-check-decagram"></i> Confirm Stamp';
             textEl.innerHTML = 'You are about to mark this record as audited.';
+            timelineContainer.innerHTML = '<div class="text-center text-muted mt-5"><i class="mdi mdi-loading mdi-spin fs-2"></i><br>Loading timeline...</div>';
             myModal.show();
+            fetchAuditTimeline(modelType, modelId, 'stamp_timeline_container');
         }
     }
 
@@ -614,7 +618,9 @@
         document.getElementById('query_model_type').value = modelType;
         document.getElementById('query_model_id').value = modelId;
         document.getElementById('query_notes').value = '';
+        document.getElementById('raise_timeline_container').innerHTML = '<div class="text-center text-muted mt-5"><i class="mdi mdi-loading mdi-spin fs-2"></i><br>Loading timeline...</div>';
         new bootstrap.Modal(document.getElementById('raiseQueryModal')).show();
+        fetchAuditTimeline(modelType, modelId, 'raise_timeline_container');
     }
 
     function submitRaiseQuery() {
@@ -636,7 +642,9 @@
         document.getElementById('resolve_model_type').value = modelType;
         document.getElementById('resolve_model_id').value = modelId;
         document.getElementById('resolve_notes').value = '';
+        document.getElementById('resolve_timeline_container').innerHTML = '<div class="text-center text-muted mt-5"><i class="mdi mdi-loading mdi-spin fs-2"></i><br>Loading timeline...</div>';
         new bootstrap.Modal(document.getElementById('resolveQueryModal')).show();
+        fetchAuditTimeline(modelType, modelId, 'resolve_timeline_container');
     }
 
     function submitResolveQuery() {
@@ -651,30 +659,88 @@
             error: function(xhr) { toastr.error(xhr.responseJSON?.message || 'Error.'); btn.disabled = false; btn.innerHTML = 'Resolve Query'; }
         });
     }
+
+    function viewTimeline(modelType, modelId) {
+        let container = document.getElementById('view_timeline_container');
+        container.innerHTML = '<div class="text-center text-muted mt-5"><i class="mdi mdi-loading mdi-spin fs-2"></i><br>Loading timeline...</div>';
+        new bootstrap.Modal(document.getElementById('viewTimelineModal')).show();
+        fetchAuditTimeline(modelType, modelId, 'view_timeline_container');
+    }
+
+    function fetchAuditTimeline(modelType, modelId, containerId) {
+        $.ajax({
+            url: '{{ route("mark.timeline") }}',
+            type: 'GET',
+            data: { model_type: modelType, model_id: modelId },
+            success: function(res) {
+                let container = document.getElementById(containerId);
+                if (res.success && res.timeline.length > 0) {
+                    let html = '<h6 class="text-muted fw-bold mb-3 border-bottom pb-2">Audit History</h6><div class="timeline-wrapper" style="position:relative; padding-left:20px; border-left:2px solid #e9ecef;">';
+                    res.timeline.forEach(item => {
+                        let icon = 'mdi-check-decagram text-success';
+                        let bg = 'bg-success-subtle';
+                        let title = 'Stamped';
+                        if (item.status === 'queried') { icon = 'mdi-alert-circle text-danger'; bg = 'bg-danger-subtle'; title = 'Queried'; }
+                        else if (item.status === 'resolved') { icon = 'mdi-check-circle text-info'; bg = 'bg-info-subtle'; title = 'Resolved'; }
+                        
+                        html += `
+                            <div class="timeline-item position-relative mb-3 pb-2">
+                                <div class="timeline-icon position-absolute d-flex align-items-center justify-content-center bg-white rounded-circle border shadow-sm" style="width: 32px; height: 32px; left: -37px; top: 0;">
+                                    <i class="mdi ${icon} fs-5"></i>
+                                </div>
+                                <div class="timeline-content rounded-3 p-3 shadow-sm border ${bg}">
+                                    <div class="d-flex justify-content-between align-items-center mb-1">
+                                        <strong class="text-dark">${title}</strong>
+                                        <small class="text-muted" title="${item.created_at}">${item.created_at_human}</small>
+                                    </div>
+                                    <div class="small text-muted mb-1"><i class="mdi mdi-account-outline"></i> ${item.auditor_name}</div>
+                                    ${item.notes ? `<div class="small mt-2 p-2 bg-white rounded border border-light"><em>${item.notes}</em></div>` : ''}
+                                </div>
+                            </div>
+                        `;
+                    });
+                    html += '</div>';
+                    container.innerHTML = html;
+                } else {
+                    container.innerHTML = '<div class="text-center text-muted mt-5"><i class="mdi mdi-history fs-1"></i><br>No audit history found for this record.</div>';
+                }
+            },
+            error: function() {
+                document.getElementById(containerId).innerHTML = '<div class="text-center text-danger mt-5"><i class="mdi mdi-alert fs-2"></i><br>Failed to load timeline.</div>';
+            }
+        });
+    }
 </script>
 @endpush
 
 {{-- Universal Stamp Modal --}}
 <div class="modal fade" id="universalStampModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered modal-lg">
+    <div class="modal-dialog modal-dialog-centered modal-xl">
         <div class="modal-content border-0 shadow">
             <div class="modal-header bg-success text-white">
                 <h5 class="modal-title" id="stamp_modal_title"><i class="mdi mdi-check-decagram"></i> Confirm Stamp</h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <div class="modal-body p-4">
-                <input type="hidden" id="stamp_mode">
-                <input type="hidden" id="stamp_model_type">
-                <input type="hidden" id="stamp_model_id">
-                <div class="text-center mb-4">
-                    <i class="mdi mdi-shield-check-outline text-success" style="font-size: 3.5rem;"></i>
-                    <p class="mt-3 mb-0 fs-6" id="stamp_modal_text">You are about to mark the selected record as audited.</p>
-                </div>
-                <div class="form-check bg-light p-3 rounded border d-flex align-items-center">
-                    <input class="form-check-input ms-1 me-3 mt-0" type="checkbox" id="stamp_confirm_check" onchange="toggleUniversalStampButton(this)" style="transform: scale(1.5);">
-                    <label class="form-check-label user-select-none" for="stamp_confirm_check">
-                        <strong>I confirm</strong> I have reviewed the data and want to stamp it.
-                    </label>
+            <div class="modal-body p-0">
+                <div class="row g-0">
+                    <div class="col-md-7 p-4">
+                        <input type="hidden" id="stamp_mode">
+                        <input type="hidden" id="stamp_model_type">
+                        <input type="hidden" id="stamp_model_id">
+                        <div class="text-center mb-4">
+                            <i class="mdi mdi-shield-check-outline text-success" style="font-size: 3.5rem;"></i>
+                            <p class="mt-3 mb-0 fs-6" id="stamp_modal_text">You are about to mark the selected record as audited.</p>
+                        </div>
+                        <div class="form-check bg-light p-3 rounded border d-flex align-items-center">
+                            <input class="form-check-input ms-1 me-3 mt-0" type="checkbox" id="stamp_confirm_check" onchange="toggleUniversalStampButton(this)" style="transform: scale(1.5);">
+                            <label class="form-check-label user-select-none" for="stamp_confirm_check">
+                                <strong>I confirm</strong> I have reviewed the data and want to stamp it.
+                            </label>
+                        </div>
+                    </div>
+                    <div class="col-md-5 bg-light border-start p-4" id="stamp_timeline_container" style="max-height: 400px; overflow-y: auto;">
+                        <!-- Timeline JS injected here -->
+                    </div>
                 </div>
             </div>
             <div class="modal-footer bg-light border-0 justify-content-between">
@@ -689,25 +755,32 @@
 
 {{-- Raise Query Modal --}}
 <div class="modal fade" id="raiseQueryModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-dialog modal-dialog-centered modal-xl">
         <div class="modal-content border-0 shadow">
             <div class="modal-header bg-warning">
                 <h5 class="modal-title text-dark"><i class="mdi mdi-alert-circle"></i> Raise Audit Query</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <div class="modal-body">
-                <form id="formRaiseQuery">
-                    @csrf
-                    <input type="hidden" name="model_type" id="query_model_type">
-                    <input type="hidden" name="model_id" id="query_model_id">
-                    <div class="alert alert-warning py-2 small">
-                        Raising a query blocks this record from being audited until resolved.
+            <div class="modal-body p-0">
+                <div class="row g-0">
+                    <div class="col-md-7 p-4">
+                        <form id="formRaiseQuery">
+                            @csrf
+                            <input type="hidden" name="model_type" id="query_model_type">
+                            <input type="hidden" name="model_id" id="query_model_id">
+                            <div class="alert alert-warning py-2 small">
+                                Raising a query blocks this record from being audited until resolved.
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label small font-weight-bold">Query Reason <span class="text-danger">*</span></label>
+                                <textarea name="query_notes" id="query_notes" class="form-control border-secondary" rows="4" required placeholder="Why is this record being flagged?"></textarea>
+                            </div>
+                        </form>
                     </div>
-                    <div class="mb-3">
-                        <label class="form-label small font-weight-bold">Query Reason <span class="text-danger">*</span></label>
-                        <textarea name="query_notes" id="query_notes" class="form-control border-secondary" rows="4" required placeholder="Why is this record being flagged?"></textarea>
+                    <div class="col-md-5 bg-light border-start p-4" id="raise_timeline_container" style="max-height: 400px; overflow-y: auto;">
+                        <!-- Timeline JS injected here -->
                     </div>
-                </form>
+                </div>
             </div>
             <div class="modal-footer bg-light border-0">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
@@ -719,7 +792,7 @@
 
 {{-- Resolve Query Modal --}}
 <div class="modal fade" id="resolveQueryModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-dialog modal-xl modal-dialog-centered">
         <div class="modal-content border-0 shadow-lg rounded-3 overflow-hidden">
             <div class="modal-header text-white py-3 px-4" style="background: linear-gradient(135deg, #065f46 0%, #047857 100%); border-bottom: 3px solid #10b981;">
                 <h5 class="modal-title font-weight-bold text-white d-flex align-items-center">
@@ -727,28 +800,53 @@
                 </h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <div class="modal-body p-4" style="background-color: #f8fafc;">
-                <form id="formResolveQuery">
-                    @csrf
-                    <input type="hidden" name="model_type" id="resolve_model_type">
-                    <input type="hidden" name="model_id" id="resolve_model_id">
-                    <div class="mb-3">
-                        <label class="form-label font-weight-bold text-dark">Resolution Notes <span class="text-danger">*</span></label>
-                        <textarea name="resolution_notes" id="resolve_notes" class="form-control border-secondary shadow-sm rounded-3 p-3" rows="4" required placeholder="Describe how this query was resolved..."></textarea>
+            <div class="modal-body p-0" style="background-color: #f8fafc;">
+                <div class="row g-0">
+                    <div class="col-md-7 p-4">
+                        <form id="formResolveQuery">
+                            @csrf
+                            <input type="hidden" name="model_type" id="resolve_model_type">
+                            <input type="hidden" name="model_id" id="resolve_model_id">
+                            <div class="mb-3">
+                                <label class="form-label font-weight-bold text-dark">Resolution Notes <span class="text-danger">*</span></label>
+                                <textarea name="resolution_notes" id="resolve_notes" class="form-control border-secondary shadow-sm rounded-3 p-3" rows="4" required placeholder="Describe how this query was resolved..."></textarea>
+                            </div>
+                            <div class="form-check bg-white p-3 rounded-3 border shadow-sm mb-2 d-flex align-items-center">
+                                <input class="form-check-input ms-1 me-3 mt-0" type="checkbox" name="auto_stamp" id="resolve_auto_stamp" value="1" checked style="transform: scale(1.35);">
+                                <label class="form-check-label user-select-none font-weight-bold text-dark mb-0" for="resolve_auto_stamp">
+                                    <i class="mdi mdi-check-decagram text-success me-1"></i> Auto-stamp on resolution
+                                </label>
+                            </div>
+                        </form>
                     </div>
-                    <div class="form-check bg-white p-3 rounded-3 border shadow-sm mb-2 d-flex align-items-center">
-                        <input class="form-check-input ms-1 me-3 mt-0" type="checkbox" name="auto_stamp" id="resolve_auto_stamp" value="1" checked style="transform: scale(1.35);">
-                        <label class="form-check-label user-select-none font-weight-bold text-dark mb-0" for="resolve_auto_stamp">
-                            <i class="mdi mdi-check-decagram text-success me-1"></i> Auto-stamp on resolution
-                        </label>
+                    <div class="col-md-5 bg-white border-start p-4" id="resolve_timeline_container" style="max-height: 400px; overflow-y: auto;">
+                        <!-- Timeline JS injected here -->
                     </div>
-                </form>
+                </div>
             </div>
             <div class="modal-footer bg-white border-top py-2 px-4 justify-content-between">
                 <button type="button" class="btn btn-secondary px-4 font-weight-bold rounded-pill" data-bs-dismiss="modal">Cancel</button>
                 <button type="button" class="btn btn-success px-4 font-weight-bold rounded-pill shadow-sm" id="btnSubmitResolve" onclick="submitResolveQuery()">
                     <i class="mdi mdi-check-circle me-1"></i> Mark as Resolved
                 </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{{-- Standalone View Timeline Modal --}}
+<div class="modal fade" id="viewTimelineModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-md">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header bg-light">
+                <h5 class="modal-title"><i class="mdi mdi-history text-secondary"></i> Audit Timeline</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-4" id="view_timeline_container" style="max-height: 500px; overflow-y: auto; background-color: #f8fafc;">
+                <!-- Timeline JS injected here -->
+            </div>
+            <div class="modal-footer bg-white border-top">
+                <button type="button" class="btn btn-secondary btn-sm px-3" data-bs-dismiss="modal">Close</button>
             </div>
         </div>
     </div>

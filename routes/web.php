@@ -1249,6 +1249,7 @@ Route::middleware(['auth'])->prefix('audit-workbench')->name('audit.')->group(fu
     Route::post('/audit-workbench/mark-audited', [AuditWorkbenchController::class, 'markAudited'])->name('audit.mark-audited');
     Route::post('/raise-query', [\App\Http\Controllers\AuditWorkbenchController::class, 'raiseQuery'])->name('raise-query');
     Route::post('/resolve-query', [\App\Http\Controllers\AuditWorkbenchController::class, 'resolveQuery'])->name('resolve-query');
+    Route::get('/audit/mark/timeline', [\App\Http\Controllers\AuditMarkController::class, 'timeline'])->name('mark.timeline');
 });
 
 // ============================================================
