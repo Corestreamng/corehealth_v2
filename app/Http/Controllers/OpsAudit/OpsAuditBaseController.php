@@ -309,7 +309,7 @@ abstract class OpsAuditBaseController extends Controller
             // For Payment cashbook rows
             if ($record instanceof \App\Models\Payment) {
                 $payment = $record;
-                $paymentMethod = $payment->payment_method ?: '-';
+                $paymentMethod = $this->formatPaymentMethodWithChannel($payment);
                 $cashier = ($payment->user) ? ($payment->user->firstname . ' ' . ($payment->user->surname ?? '')) : '-';
                 $time = $payment->created_at ? $payment->created_at->format('d M y H:i') : '-';
                 return "
@@ -327,9 +327,48 @@ abstract class OpsAuditBaseController extends Controller
         $payable = number_format((float) $posr->payable_amount, 2);
         $claims = number_format((float) $posr->claims_amount, 2);
         
-        $paymentMethod = $payment ? $payment->payment_method : '-';
-        $cashier = ($payment && $payment->user) ? ($payment->user->firstname . ' ' . ($payment->user->surname ?? '')) : '-';
-        $time = ($payment && $payment->created_at) ? $payment->created_at->format('d M y H:i') : '-';
+        if (!$payment) {
+            $paymentMethod = '<span class="badge bg-danger bg-opacity-10 text-danger border border-danger" style="font-weight: 500;"><i class="mdi mdi-alert-circle-outline me-1"></i>No Payment</span>';
+            $cashier = '-';
+            $time = '-';
+        } else {
+            $paymentMethod = $this->formatPaymentMethodWithChannel($payment);
+            $cashier = ($payment->user) ? ($payment->user->firstname . ' ' . ($payment->user->surname ?? '')) : '-';
+            $time = $payment->created_at ? $payment->created_at->format('d M y H:i') : '-';
+        }
+
+        $hmoHtml = '';
+        if ($posr->hmo_id) {
+            $hmo = \App\Models\Hmo::with('scheme')->find($posr->hmo_id);
+            $hmoName = $hmo ? $hmo->name : 'Unknown HMO';
+            $schemeName = ($hmo && $hmo->scheme) ? $hmo->scheme->name : '';
+            
+            $validationBadge = '<span class="badge bg-secondary text-white" style="font-weight: 500;"><i class="mdi mdi-clock-outline me-1"></i>Claims Pending</span>';
+            if ($posr->validation_status === 'approved') {
+                $validationBadge = '<span class="badge bg-success text-white" style="font-weight: 500;"><i class="mdi mdi-check-circle me-1"></i>Claims Approved</span>';
+            } elseif ($posr->validation_status === 'rejected') {
+                $validationBadge = '<span class="badge bg-danger text-white" style="font-weight: 500;"><i class="mdi mdi-close-circle me-1"></i>Claims Rejected</span>';
+            }
+
+            $approverName = '';
+            if ($posr->validatedBy) {
+                $approverName = ' <small class="text-muted d-block mt-1">Processed by: ' . trim($posr->validatedBy->firstname . ' ' . $posr->validatedBy->surname);
+                if ($posr->validated_at) {
+                    $approverName .= ' on ' . \Carbon\Carbon::parse($posr->validated_at)->format('d M y H:i');
+                }
+                $approverName .= '</small>';
+            }
+
+            $coverageMode = $posr->coverage_mode ? "<span class='badge bg-info text-white' style='font-size:0.65rem; font-weight: 500;'><i class='mdi mdi-shield-check me-1'></i>Mode: {$posr->coverage_mode}</span>" : '<span class="text-muted">Coverage: Not Set</span>';
+
+            $hmoHtml = "
+                <div class='mt-1 pt-1 border-top border-light'>
+                    <div class='mb-1'><strong>HMO:</strong> {$hmoName} " . ($schemeName ? "<small class='text-muted'>({$schemeName})</small>" : '') . "</div>
+                    <div class='mb-1'>{$coverageMode}</div>
+                    <div>{$validationBadge}{$approverName}</div>
+                </div>
+            ";
+        }
 
         return "
             <div style='font-size: 0.75rem; line-height: 1.2;'>
@@ -337,8 +376,59 @@ abstract class OpsAuditBaseController extends Controller
                 <div class='mb-1'><strong>Method:</strong> {$paymentMethod}</div>
                 <div class='mb-1'><strong>Cashier:</strong> {$cashier}</div>
                 <div class='text-muted'>{$time}</div>
+                {$hmoHtml}
             </div>
         ";
+    }
+
+    protected function formatPaymentMethodWithChannel($payment)
+    {
+        $methodDisplay = $payment->payment_method ?: 'Unknown';
+        $channel = '';
+        $badgeClass = 'bg-secondary bg-opacity-10 text-secondary border border-secondary';
+        $icon = 'mdi-account-cash';
+        
+        $methodLower = strtolower($methodDisplay);
+        if (str_contains($methodLower, 'transfer') || str_contains($methodLower, 'pos') || str_contains($methodLower, 'bank')) {
+            if ($payment->bank) {
+                $channel = 'Bank: ' . $payment->bank->name;
+                $badgeClass = 'bg-success bg-opacity-10 text-success border border-success';
+                $icon = 'mdi-bank';
+            }
+        } elseif (str_contains($methodLower, 'staff') || $payment->staffBill) {
+            if ($payment->staffBill) {
+                $staffUser = \App\Models\User::find($payment->staffBill->staff_user_id);
+                if ($staffUser) {
+                    $channel = 'Staff: ' . trim($staffUser->firstname . ' ' . $staffUser->surname);
+                    $badgeClass = 'bg-primary bg-opacity-10 text-primary border border-primary';
+                    $icon = 'mdi-account-tie';
+                }
+            }
+        } elseif (str_contains($methodLower, 'org') || str_contains($methodLower, 'corporate') || $payment->organizationBill) {
+            if ($payment->organizationBill) {
+                $org = \App\Models\Organization::find($payment->organizationBill->organization_id);
+                if ($org) {
+                    $channel = 'Corporate: ' . $org->name;
+                    $badgeClass = 'bg-info bg-opacity-10 text-info border border-info';
+                    $icon = 'mdi-domain';
+                }
+            }
+        } elseif ($payment->hmo_id) {
+            $hmo = \App\Models\Hmo::with('scheme')->find($payment->hmo_id);
+            if ($hmo) {
+                $channel = 'HMO: ' . $hmo->name;
+                if ($hmo->scheme) {
+                    $channel .= ' (' . $hmo->scheme->name . ')';
+                }
+                $badgeClass = 'bg-warning bg-opacity-10 text-dark border border-warning';
+                $icon = 'mdi-hospital-building';
+            }
+        }
+
+        if ($channel) {
+            return $methodDisplay . " <span class='d-block mt-1'><span class='badge {$badgeClass}' style='font-size:0.65rem; font-weight: 500;'><i class='mdi {$icon} me-1'></i>{$channel}</span></span>";
+        }
+        return $methodDisplay;
     }
 
     /**
