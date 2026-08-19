@@ -105,6 +105,11 @@ protected $fillable = [
         return $this->belongsTo(User::class, 'billed_by', 'id');
     }
 
+    public function sampler()
+    {
+        return $this->belongsTo(User::class, 'sample_taken_by', 'id');
+    }
+
     public function results_person()
     {
         return $this->belongsTo(User::class, 'result_by', 'id');
