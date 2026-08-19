@@ -259,6 +259,7 @@ class OpsAuditReceptionController extends OpsAuditBaseController
                 'urgency' => '<span class="badge bg-' . ($row->urgency === 'emergency' ? 'danger' : ($row->urgency === 'urgent' ? 'warning text-dark' : 'light text-dark border')) . '">' . ucfirst($row->urgency ?? '-') . '</span>',
                 'status' => '<span class="badge bg-' . ($statusColors[$row->status] ?? 'secondary') . ' font-weight-bold">' . ucfirst($row->status ?? '-') . '</span>',
                 'actioned_by' => $row->actionedBy?->firstname ? ($row->actionedBy->firstname . ' ' . ($row->actionedBy->surname ?? '')) : '-',
+                'payment_info' => $this->renderPaymentInfo($row),
                 'audit' => $this->renderAuditAction($row, 'SpecialistReferral'),
             ];
         }, function ($kpiQuery) {

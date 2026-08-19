@@ -97,6 +97,7 @@ class OpsAuditBillingController extends OpsAuditBaseController
                 'balance' => $balance,
                 'cashier' => $cashier?->firstname ? ($cashier->firstname . ' ' . ($cashier->surname ?? '')) : '-',
                 'shift' => $row->shift?->name ?? '-',
+                'payment_info' => $this->renderPaymentInfo($row),
                 'audit' => $this->renderAuditAction($row, 'Payment'),
             ];
         }, function ($kpiQuery) {
@@ -153,6 +154,7 @@ class OpsAuditBillingController extends OpsAuditBaseController
                 'cashier' => $cashier?->firstname ? ($cashier->firstname . ' ' . ($cashier->surname ?? '')) : '-',
                 'method' => $row->payment?->payment_method ?? '-',
                 'pay_status' => $row->status === 'paid' ? '<span class="badge bg-success">Paid</span>' : '<span class="badge bg-warning text-dark">Unpaid</span>',
+                'payment_info' => $this->renderPaymentInfo($row),
                 'audit' => $this->renderAuditAction($row, 'OrganizationBill'),
             ];
         }, function ($kpiQuery) {
@@ -208,6 +210,7 @@ class OpsAuditBillingController extends OpsAuditBaseController
                 'audited' => $row->is_audited ? '<i class="mdi mdi-check text-success"></i> Yes' : '<i class="mdi mdi-close text-danger"></i> No',
                 'cashier' => $cashier?->firstname ? ($cashier->firstname . ' ' . ($cashier->surname ?? '')) : '-',
                 'pay_status' => $row->status === 'paid' ? '<span class="badge bg-success">Paid</span>' : '<span class="badge bg-warning text-dark">Unpaid</span>',
+                'payment_info' => $this->renderPaymentInfo($row),
                 'audit' => $this->renderAuditAction($row, 'StaffBill'),
             ];
         }, function ($kpiQuery) {
