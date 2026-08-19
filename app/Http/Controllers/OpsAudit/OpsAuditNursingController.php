@@ -54,10 +54,13 @@ class OpsAuditNursingController extends OpsAuditBaseController
             'doctor',
             'ward',
             'bed'
+        
+            'productOrServiceRequest.payment.user',
         ]);
 
         $this->applyDateFilter($query, $request);
         $this->applyShiftFilter($query, $request);
+        $this->applyPaymentFilters($query, $request, 'productOrServiceRequest');
 
         if ($request->filled('ward_id')) $query->where('ward_id', $request->ward_id);
         if ($request->filled('status')) $query->where('admission_status', $request->status);
@@ -112,11 +115,7 @@ class OpsAuditNursingController extends OpsAuditBaseController
                 'status' => $statusBadge,
                 'los' => $los !== '-' ? $los . ' days' : '-',
                 'total_bill' => $totalAmount > 0 ? '₦' . number_format($totalAmount, 2) : '-',
-                'payable' => $totalPayable > 0 ? '₦' . number_format($totalPayable, 2) : '-',
-                'claims' => $totalClaims > 0 ? '₦' . number_format($totalClaims, 2) : '-',
-                'cashier' => $cashier,
-                'method' => $paymentMethod,
-                'pay_status' => $payStatus,
+                'payment_info' => $this->renderPaymentInfo($row),
                 'audit' => $this->renderAuditAction($row, 'AdmissionRequest'),
             ];
         }, function ($kpiQuery) {
@@ -139,10 +138,13 @@ class OpsAuditNursingController extends OpsAuditBaseController
             'patient.hmo.scheme',
             'createdBy',
             'type'
+        
+            'productOrServiceRequest.payment.user',
         ]);
 
         $this->applyDateFilter($query, $request);
         $this->applyShiftFilter($query, $request);
+        $this->applyPaymentFilters($query, $request, 'productOrServiceRequest');
 
         if ($request->filled('completed')) $query->where('completed', $request->completed);
 

@@ -104,6 +104,7 @@
                     <option value="4">Approved</option>
                 </select>
             </div>
+            @include('admin.ops_audit.partials.payment_filters', ['tab' => 'requests'])
         </div>
 
         <div class="table-responsive">
@@ -119,11 +120,7 @@
                         <th>Result By</th>
                         <th>Approved By</th>
                         <th>Billed By</th>
-                        <th>Payable</th>
-                        <th>Claims</th>
-                        <th>Cashier</th>
-                        <th>Method</th>
-                        <th>Pay Status</th>
+                        <th style="min-width: 150px;">Payment Info</th>
                         <th>Audit ⚡</th>
                     </tr>
                 </thead>
@@ -249,7 +246,7 @@ $(function() {
     dtInstances.requests = $('#dt-requests').DataTable(commonOpts(dataUrls.requests, [
         { data: 'date' }, { data: 'patient' }, { data: 'hmo' }, { data: 'test' }, { data: 'doctor' },
         { data: 'status' }, { data: 'result_by' }, { data: 'approved_by' }, { data: 'billed_by' },
-        { data: 'payable' }, { data: 'claims' }, { data: 'cashier' }, { data: 'method' }, { data: 'pay_status' },
+        { data: 'payment_info', name: 'payment_info', orderable: false, searchable: false },
         { data: 'audit', orderable: false, searchable: false }
     ], 'kpi-requests'));
 

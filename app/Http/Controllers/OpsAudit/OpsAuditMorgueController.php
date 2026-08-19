@@ -54,10 +54,13 @@ class OpsAuditMorgueController extends OpsAuditBaseController
             'admittedBy',
             'releasedBy',
             'serviceRequest.payment.staff_user'
+        
+            'serviceRequest.payment.user',
         ]);
 
         $this->applyDateFilter($query, $request);
         $this->applyShiftFilter($query, $request);
+        $this->applyPaymentFilters($query, $request, 'serviceRequest');
 
         if ($request->filled('status')) $query->where('status', $request->status);
         if ($request->filled('hmo_id')) $query->whereHas('patient.hmo', fn($q) => $q->where('id', $request->hmo_id));
@@ -82,11 +85,7 @@ class OpsAuditMorgueController extends OpsAuditBaseController
                 'arrival' => $row->arrival_time ? Carbon::parse($row->arrival_time)->format('d M Y H:i') : '-',
                 'release' => $row->release_time ? Carbon::parse($row->release_time)->format('d M Y H:i') : '-',
                 'status' => '<span class="badge bg-'.($statusColors[$row->status] ?? 'secondary').'">'.ucfirst($row->status ?? '-').'</span>',
-                'payable' => $posr ? '₦' . number_format($posr->payable_amount ?? 0, 2) : '-',
-                'claims' => $posr ? '₦' . number_format($posr->claims_amount ?? 0, 2) : '-',
-                'cashier' => $payment?->staff_user?->firstname ? ($payment->staff_user->firstname . ' ' . ($payment->staff_user->surname ?? '')) : '-',
-                'method' => $payment?->payment_method ? '<span class="badge bg-light text-dark border">' . $payment->payment_method . '</span>' : '-',
-                'pay_status' => $payment ? '<span class="badge bg-success">Paid</span>' : ($posr ? '<span class="badge bg-warning text-dark">Unpaid</span>' : '-'),
+                'payment_info' => $this->renderPaymentInfo($row),
                 'audit' => $this->renderAuditAction($row, 'MorgueAdmission'),
             ];
         }, function ($kpiQuery) {
@@ -113,6 +112,7 @@ class OpsAuditMorgueController extends OpsAuditBaseController
 
         $this->applyDateFilter($query, $request);
         $this->applyShiftFilter($query, $request);
+        $this->applyPaymentFilters($query, $request, 'serviceRequest');
 
         if ($request->filled('hmo_id')) $query->whereHas('patient.hmo', fn($q) => $q->where('id', $request->hmo_id));
 
@@ -129,12 +129,8 @@ class OpsAuditMorgueController extends OpsAuditBaseController
                 'patient' => $this->renderPatient($user, $patient, $hmo),
                 'hmo' => $this->renderHmo($hmo),
                 'amount' => '₦' . number_format($row->amount ?? 0, 2),
-                'payable' => '₦' . number_format($row->payable_amount ?? 0, 2),
-                'claims' => '₦' . number_format($row->claims_amount ?? 0, 2),
-                'billed_by' => $row->staff?->firstname ? ($row->staff->firstname . ' ' . ($row->staff->surname ?? '')) : '-',
-                'cashier' => $payment?->staff_user?->firstname ? ($payment->staff_user->firstname . ' ' . ($payment->staff_user->surname ?? '')) : '-',
-                'method' => $payment?->payment_method ? '<span class="badge bg-light text-dark border">' . $payment->payment_method . '</span>' : '-',
-                'pay_status' => $payment ? '<span class="badge bg-success">Paid</span>' : '<span class="badge bg-warning text-dark">Unpaid</span>',
+                'payment_info' => $this->renderPaymentInfo($row),
+                                'billed_by' => $row->staff?->firstname ? ($row->staff->firstname . ' ' . ($row->staff->surname ?? '')) : '-',
                 'audit' => $this->renderAuditAction($row, 'ProductOrServiceRequest'),
             ];
         }, function ($kpiQuery) {
@@ -176,8 +172,6 @@ class OpsAuditMorgueController extends OpsAuditBaseController
                 'reference' => $row->reference_no ?? '-',
                 'patient' => $this->renderPatient($user, $patient, null),
                 'total' => '₦' . number_format($row->total ?? 0, 2),
-                'method' => $row->payment_method ? '<span class="badge bg-light text-dark border">'.$row->payment_method.'</span>' : '-',
-                'cashier' => $row->staff_user?->firstname ? ($row->staff_user->firstname . ' ' . ($row->staff_user->surname ?? '')) : '-',
                 'audit' => $this->renderAuditAction($row, 'Payment'),
             ];
         }, function ($kpiQuery) {

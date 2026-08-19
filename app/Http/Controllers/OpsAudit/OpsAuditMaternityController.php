@@ -66,10 +66,13 @@ class OpsAuditMaternityController extends OpsAuditBaseController
         $query = MaternityEnrollment::with([
             'patient.user',
             'patient.hmo.scheme',
+        
+            'serviceRequest.payment.user',
         ]);
 
         $this->applyDateFilter($query, $request);
         $this->applyShiftFilter($query, $request);
+        $this->applyPaymentFilters($query, $request, 'serviceRequest');
 
         if ($request->filled('status')) $query->where('status', $request->status);
         if ($request->filled('hmo_id')) $query->whereHas('patient.hmo', fn($q) => $q->where('id', $request->hmo_id));
@@ -96,6 +99,7 @@ class OpsAuditMaternityController extends OpsAuditBaseController
                 'anc_count' => $row->anc_visits_count > 0 ? '<span class="badge bg-info">'.$row->anc_visits_count.'</span>' : '-',
                 'postnatal_count' => $row->postnatal_visits_count > 0 ? '<span class="badge bg-secondary">'.$row->postnatal_visits_count.'</span>' : '-',
                 'babies_count' => $row->babies_count > 0 ? '<span class="badge bg-danger">'.$row->babies_count.'</span>' : '-',
+                'payment_info' => $this->renderPaymentInfo($row),
                 'audit' => $this->renderAuditAction($row, 'MaternityEnrollment'),
             ];
         }, function ($kpiQuery) {
@@ -116,10 +120,15 @@ class OpsAuditMaternityController extends OpsAuditBaseController
         $query = AncVisit::with([
             'patient.user',
             'patient.hmo.scheme',
+        
+            'serviceRequest.payment.user',
+        
+            'encounter.productOrServiceRequest.payment.user',
         ]);
 
         $this->applyDateFilter($query, $request);
         $this->applyShiftFilter($query, $request);
+        $this->applyPaymentFilters($query, $request, 'serviceRequest');
 
         if ($request->filled('hmo_id')) $query->whereHas('patient.hmo', fn($q) => $q->where('id', $request->hmo_id));
 
@@ -139,6 +148,7 @@ class OpsAuditMaternityController extends OpsAuditBaseController
                 'bp' => $row->blood_pressure_systolic ? ($row->blood_pressure_systolic . '/' . $row->blood_pressure_diastolic) : '-',
                 'weight' => $row->weight_kg ? $row->weight_kg . ' kg' : '-',
                 'fhr' => $row->fetal_heart_rate ?? '-',
+                'payment_info' => $this->renderPaymentInfo($row),
                 'audit' => $this->renderAuditAction($row, 'AncVisit'),
             ];
         }, function ($kpiQuery) {
@@ -158,10 +168,13 @@ class OpsAuditMaternityController extends OpsAuditBaseController
         $query = DeliveryRecord::with([
             'patient.user',
             'patient.hmo.scheme',
+        
+            'encounter.productOrServiceRequest.payment.user',
         ]);
 
         $this->applyDateFilter($query, $request);
         $this->applyShiftFilter($query, $request);
+        $this->applyPaymentFilters($query, $request, 'encounter.productOrServiceRequest');
 
         if ($request->filled('hmo_id')) $query->whereHas('patient.hmo', fn($q) => $q->where('id', $request->hmo_id));
 
@@ -181,6 +194,7 @@ class OpsAuditMaternityController extends OpsAuditBaseController
                 'babies' => $row->number_of_babies ?? '-',
                 'blood_loss' => $row->blood_loss_ml ? $row->blood_loss_ml . ' ml' : '-',
                 'delivered_by' => $row->delivered_by ?? '-',
+                'payment_info' => $this->renderPaymentInfo($row),
                 'audit' => $this->renderAuditAction($row, 'DeliveryRecord'),
             ];
         }, function ($kpiQuery) {
@@ -204,6 +218,7 @@ class OpsAuditMaternityController extends OpsAuditBaseController
 
         $this->applyDateFilter($query, $request);
         $this->applyShiftFilter($query, $request);
+        $this->applyPaymentFilters($query, $request, 'encounter.productOrServiceRequest');
 
         if ($request->filled('hmo_id')) $query->whereHas('patient.hmo', fn($q) => $q->where('id', $request->hmo_id));
 
@@ -221,6 +236,7 @@ class OpsAuditMaternityController extends OpsAuditBaseController
                 'weight' => $row->birth_weight_kg ? $row->birth_weight_kg . ' kg' : '-',
                 'apgar' => $row->apgar_1_min ? $row->apgar_1_min . '/' . ($row->apgar_5_min ?? '-') : '-',
                 'status' => '<span class="badge bg-'.($row->status === 'alive' ? 'success' : 'danger').'">'.ucfirst($row->status ?? '-').'</span>',
+                'payment_info' => $this->renderPaymentInfo($row),
                 'audit' => $this->renderAuditAction($row, 'MaternityBaby'),
             ];
         }, function ($kpiQuery) {
@@ -241,10 +257,13 @@ class OpsAuditMaternityController extends OpsAuditBaseController
         $query = PostnatalVisit::with([
             'patient.user',
             'patient.hmo.scheme',
+        
+            'encounter.productOrServiceRequest.payment.user',
         ]);
 
         $this->applyDateFilter($query, $request);
         $this->applyShiftFilter($query, $request);
+        $this->applyPaymentFilters($query, $request, 'encounter.productOrServiceRequest');
 
         if ($request->filled('hmo_id')) $query->whereHas('patient.hmo', fn($q) => $q->where('id', $request->hmo_id));
 
@@ -263,6 +282,7 @@ class OpsAuditMaternityController extends OpsAuditBaseController
                 'bp' => $row->blood_pressure ?? '-',
                 'condition' => $row->general_condition ?? '-',
                 'baby_weight' => $row->baby_weight_kg ? $row->baby_weight_kg . ' kg' : '-',
+                'payment_info' => $this->renderPaymentInfo($row),
                 'audit' => $this->renderAuditAction($row, 'PostnatalVisit'),
             ];
         }, function ($kpiQuery) {
@@ -282,10 +302,13 @@ class OpsAuditMaternityController extends OpsAuditBaseController
             'patient.user',
             'patient.hmo.scheme',
             'product'
+        
+            'encounter.productOrServiceRequest.payment.user',
         ]);
 
         $this->applyDateFilter($query, $request);
         $this->applyShiftFilter($query, $request);
+        $this->applyPaymentFilters($query, $request, 'encounter.productOrServiceRequest');
 
         if ($request->filled('hmo_id')) $query->whereHas('patient.hmo', fn($q) => $q->where('id', $request->hmo_id));
 
@@ -304,6 +327,7 @@ class OpsAuditMaternityController extends OpsAuditBaseController
                 'dose' => $row->dose_number ?? '-',
                 'route' => $row->route ?? '-',
                 'administered_at' => $row->administered_at ? Carbon::parse($row->administered_at)->format('d M Y') : '-',
+                'payment_info' => $this->renderPaymentInfo($row),
                 'audit' => $this->renderAuditAction($row, 'ImmunizationRecord'),
             ];
         }, function ($kpiQuery) {

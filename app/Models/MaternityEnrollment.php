@@ -49,6 +49,11 @@ class MaternityEnrollment extends Model implements Auditable
         return $this->belongsTo(Patient::class, 'patient_id');
     }
 
+    public function serviceRequest()
+    {
+        return $this->belongsTo(ProductOrServiceRequest::class, 'service_request_id');
+    }
+
     public function enrolledBy()
     {
         return $this->belongsTo(User::class, 'enrolled_by');

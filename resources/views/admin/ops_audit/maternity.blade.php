@@ -114,6 +114,7 @@
                     <option value="completed">Completed</option>
                 </select>
             </div>
+            @include('admin.ops_audit.partials.payment_filters', ['tab' => 'enrollments'])
         </div>
 
         <div class="table-responsive">

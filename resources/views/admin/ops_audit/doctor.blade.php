@@ -179,6 +179,7 @@
                     <option value="discharged">Discharged</option>
                 </select>
             </div>
+            @include('admin.ops_audit.partials.payment_filters', ['tab' => 'admissions'])
         </div>
 
         <div class="table-responsive">
@@ -195,11 +196,7 @@
                         <th>Status</th>
                         <th>LOS</th>
                         <th>Total Bill</th>
-                        <th>Payable</th>
-                        <th>Claims</th>
-                        <th>Cashier</th>
-                        <th>Method</th>
-                        <th>Pay Status</th>
+                        <th style="min-width: 150px;">Payment Info</th>
                         <th>Audit ⚡</th>
                     </tr>
                 </thead>
@@ -222,6 +219,7 @@
                     <option value="4">Returned</option>
                 </select>
             </div>
+            @include('admin.ops_audit.partials.payment_filters', ['tab' => 'prescriptions'])
         </div>
 
         <div class="table-responsive">
@@ -238,11 +236,7 @@
                         <th>Status</th>
                         <th>Billed By</th>
                         <th>Dispensed By</th>
-                        <th>Payable</th>
-                        <th>Claims</th>
-                        <th>Cashier</th>
-                        <th>Method</th>
-                        <th>Pay Status</th>
+                        <th style="min-width: 150px;">Payment Info</th>
                         <th>Audit ⚡</th>
                     </tr>
                 </thead>
@@ -264,6 +258,7 @@
                     <option value="4">Approved</option>
                 </select>
             </div>
+            @include('admin.ops_audit.partials.payment_filters', ['tab' => 'labs'])
         </div>
         <div class="table-responsive">
             <table class="table table-sm table-bordered table-striped ops-datatable w-100" id="dt-labs">
@@ -279,11 +274,7 @@
                         <th>Result By</th>
                         <th>Approved By</th>
                         <th>Billed By</th>
-                        <th>Payable</th>
-                        <th>Claims</th>
-                        <th>Cashier</th>
-                        <th>Method</th>
-                        <th>Pay Status</th>
+                        <th style="min-width: 150px;">Payment Info</th>
                         <th>Audit ⚡</th>
                     </tr>
                 </thead>
@@ -305,6 +296,7 @@
                     <option value="4">Approved</option>
                 </select>
             </div>
+            @include('admin.ops_audit.partials.payment_filters', ['tab' => 'imaging'])
         </div>
         <div class="table-responsive">
             <table class="table table-sm table-bordered table-striped ops-datatable w-100" id="dt-imaging">
@@ -320,11 +312,7 @@
                         <th>Result By</th>
                         <th>Approved By</th>
                         <th>Billed By</th>
-                        <th>Payable</th>
-                        <th>Claims</th>
-                        <th>Cashier</th>
-                        <th>Method</th>
-                        <th>Pay Status</th>
+                        <th style="min-width: 150px;">Payment Info</th>
                         <th>Audit ⚡</th>
                     </tr>
                 </thead>
@@ -346,6 +334,7 @@
                     <option value="cancelled">Cancelled</option>
                 </select>
             </div>
+            @include('admin.ops_audit.partials.payment_filters', ['tab' => 'procedures'])
         </div>
         <div class="table-responsive">
             <table class="table table-sm table-bordered table-striped ops-datatable w-100" id="dt-procedures">
@@ -361,11 +350,7 @@
                         <th>Outcome</th>
                         <th>OR</th>
                         <th>Billed By</th>
-                        <th>Payable</th>
-                        <th>Claims</th>
-                        <th>Cashier</th>
-                        <th>Method</th>
-                        <th>Pay Status</th>
+                        <th style="min-width: 150px;">Payment Info</th>
                         <th>Audit ⚡</th>
                     </tr>
                 </thead>
@@ -409,11 +394,7 @@
                         <th>Urgency</th>
                         <th>Status</th>
                         <th>Actioned By</th>
-                        <th>Payable</th>
-                        <th>Claims</th>
-                        <th>Cashier</th>
-                        <th>Method</th>
-                        <th>Pay Status</th>
+                        <th style="min-width: 150px;">Payment Info</th>
                         <th>Audit ⚡</th>
                     </tr>
                 </thead>
@@ -495,7 +476,7 @@ $(function() {
             dtInstances.admissions = $('#dt-admissions').DataTable(commonOpts(dataUrls.admissions, [
                 { data: 'date' }, { data: 'patient' }, { data: 'hmo' }, { data: 'doctor' }, { data: 'ward' },
                 { data: 'bed' }, { data: 'esi' }, { data: 'status' }, { data: 'los' }, { data: 'total_bill' },
-                { data: 'payable' }, { data: 'claims' }, { data: 'cashier' }, { data: 'method' }, { data: 'pay_status' },
+                { data: 'payment_info', name: 'payment_info', orderable: false, searchable: false },
                 { data: 'audit', orderable: false, searchable: false }
             ], 'kpi-admissions'));
         }
@@ -503,7 +484,7 @@ $(function() {
             dtInstances.prescriptions = $('#dt-prescriptions').DataTable(commonOpts(dataUrls.prescriptions, [
                 { data: 'date' }, { data: 'patient' }, { data: 'hmo' }, { data: 'doctor' }, { data: 'product' },
                 { data: 'qty' }, { data: 'store' }, { data: 'status' }, { data: 'billed_by' }, { data: 'dispensed_by' },
-                { data: 'payable' }, { data: 'claims' }, { data: 'cashier' }, { data: 'method' }, { data: 'pay_status' },
+                { data: 'payment_info', name: 'payment_info', orderable: false, searchable: false },
                 { data: 'audit', orderable: false, searchable: false }
             ], 'kpi-prescriptions'));
         }
@@ -511,7 +492,7 @@ $(function() {
             dtInstances.labs = $('#dt-labs').DataTable(commonOpts(dataUrls.labs, [
                 { data: 'date' }, { data: 'patient' }, { data: 'hmo' }, { data: 'test' }, { data: 'doctor' },
                 { data: 'status' }, { data: 'sample_by' }, { data: 'result_by' }, { data: 'approved_by' }, { data: 'billed_by' },
-                { data: 'payable' }, { data: 'claims' }, { data: 'cashier' }, { data: 'method' }, { data: 'pay_status' },
+                { data: 'payment_info', name: 'payment_info', orderable: false, searchable: false },
                 { data: 'audit', orderable: false, searchable: false }
             ], 'kpi-labs'));
         }
@@ -519,7 +500,7 @@ $(function() {
             dtInstances.imaging = $('#dt-imaging').DataTable(commonOpts(dataUrls.imaging, [
                 { data: 'date' }, { data: 'patient' }, { data: 'hmo' }, { data: 'test' }, { data: 'doctor' },
                 { data: 'status' }, { data: 'sample_by' }, { data: 'result_by' }, { data: 'approved_by' }, { data: 'billed_by' },
-                { data: 'payable' }, { data: 'claims' }, { data: 'cashier' }, { data: 'method' }, { data: 'pay_status' },
+                { data: 'payment_info', name: 'payment_info', orderable: false, searchable: false },
                 { data: 'audit', orderable: false, searchable: false }
             ], 'kpi-imaging'));
         }
@@ -527,7 +508,7 @@ $(function() {
             dtInstances.procedures = $('#dt-procedures').DataTable(commonOpts(dataUrls.procedures, [
                 { data: 'date' }, { data: 'patient' }, { data: 'hmo' }, { data: 'procedure' }, { data: 'doctor' },
                 { data: 'status' }, { data: 'consent' }, { data: 'outcome' }, { data: 'or' }, { data: 'billed_by' },
-                { data: 'payable' }, { data: 'claims' }, { data: 'cashier' }, { data: 'method' }, { data: 'pay_status' },
+                { data: 'payment_info', name: 'payment_info', orderable: false, searchable: false },
                 { data: 'audit', orderable: false, searchable: false }
             ], 'kpi-procedures'));
         }
@@ -535,7 +516,7 @@ $(function() {
             dtInstances.referrals = $('#dt-referrals').DataTable(commonOpts(dataUrls.referrals, [
                 { data: 'date' }, { data: 'patient' }, { data: 'hmo' }, { data: 'referring_doctor' }, { data: 'type' },
                 { data: 'target' }, { data: 'urgency' }, { data: 'status' }, { data: 'actioned_by' }, 
-                { data: 'payable' }, { data: 'claims' }, { data: 'cashier' }, { data: 'method' }, { data: 'pay_status' },
+                { data: 'payment_info', name: 'payment_info', orderable: false, searchable: false },
                 { data: 'audit', orderable: false, searchable: false }
             ], 'kpi-referrals'));
         }

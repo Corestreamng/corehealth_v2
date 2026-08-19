@@ -57,10 +57,13 @@ class OpsAuditSurgeryController extends OpsAuditBaseController
             'requestedByUser',
             'service',
             'productOrServiceRequest.payment.staff_user'
+        
+            'productOrServiceRequest.payment.user',
         ]);
 
         $this->applyDateFilter($query, $request);
         $this->applyShiftFilter($query, $request);
+        $this->applyPaymentFilters($query, $request, 'productOrServiceRequest');
 
         if ($request->filled('status')) $query->where('procedure_status', $request->status);
         if ($request->filled('hmo_id')) $query->whereHas('patient.hmo', fn($q) => $q->where('id', $request->hmo_id));
@@ -86,11 +89,7 @@ class OpsAuditSurgeryController extends OpsAuditBaseController
                 'consent' => $row->consent_status ? '<span class="badge bg-success">Signed</span>' : '<span class="badge bg-warning text-dark">Pending</span>',
                 'outcome' => ucfirst($row->outcome ?? '-'),
                 'or' => $row->operating_room ?? '-',
-                'payable' => $posr ? '₦' . number_format($posr->payable_amount ?? 0, 2) : '-',
-                'claims' => $posr ? '₦' . number_format($posr->claims_amount ?? 0, 2) : '-',
-                'cashier' => $payment?->staff_user?->firstname ? ($payment->staff_user->firstname . ' ' . ($payment->staff_user->surname ?? '')) : '-',
-                'method' => $payment?->payment_method ? '<span class="badge bg-light text-dark border">' . $payment->payment_method . '</span>' : '-',
-                'pay_status' => $payment ? '<span class="badge bg-success">Paid</span>' : ($posr ? '<span class="badge bg-warning text-dark">Unpaid</span>' : '-'),
+                'payment_info' => $this->renderPaymentInfo($row),
                 'audit' => $this->renderAuditAction($row, 'Procedure'),
             ];
         }, function ($kpiQuery) {
@@ -114,10 +113,13 @@ class OpsAuditSurgeryController extends OpsAuditBaseController
             'service',
             'preNotesBy',
             'postNotesBy'
+        
+            'productOrServiceRequest.payment.user',
         ]);
 
         $this->applyDateFilter($query, $request);
         $this->applyShiftFilter($query, $request);
+        $this->applyPaymentFilters($query, $request, 'productOrServiceRequest');
 
         $kpiQuery = clone $query;
 
@@ -160,6 +162,7 @@ class OpsAuditSurgeryController extends OpsAuditBaseController
 
         $this->applyDateFilter($query, $request);
         $this->applyShiftFilter($query, $request);
+        $this->applyPaymentFilters($query, $request, 'self_payment');
 
         if ($request->filled('hmo_id')) $query->whereHas('patient.hmo', fn($q) => $q->where('id', $request->hmo_id));
 
@@ -180,12 +183,8 @@ class OpsAuditSurgeryController extends OpsAuditBaseController
                 'hmo' => $this->renderHmo($hmo),
                 'procedure' => $procName,
                 'amount' => '₦' . number_format($row->amount ?? 0, 2),
-                'payable' => '₦' . number_format($row->payable_amount ?? 0, 2),
-                'claims' => '₦' . number_format($row->claims_amount ?? 0, 2),
-                'billed_by' => $row->staff?->firstname ? ($row->staff->firstname . ' ' . ($row->staff->surname ?? '')) : '-',
-                'cashier' => $payment?->staff_user?->firstname ? ($payment->staff_user->firstname . ' ' . ($payment->staff_user->surname ?? '')) : '-',
-                'method' => $payment?->payment_method ? '<span class="badge bg-light text-dark border">' . $payment->payment_method . '</span>' : '-',
-                'pay_status' => $payment ? '<span class="badge bg-success">Paid</span>' : '<span class="badge bg-warning text-dark">Unpaid</span>',
+                'payment_info' => $this->renderPaymentInfo($row),
+                                'billed_by' => $row->staff?->firstname ? ($row->staff->firstname . ' ' . ($row->staff->surname ?? '')) : '-',
                 'audit' => $this->renderAuditAction($row, 'ProductOrServiceRequest'),
             ];
         }, function ($kpiQuery) {
@@ -212,6 +211,7 @@ class OpsAuditSurgeryController extends OpsAuditBaseController
 
         $this->applyDateFilter($query, $request);
         $this->applyShiftFilter($query, $request);
+        $this->applyPaymentFilters($query, $request, 'self_payment');
 
         if ($request->filled('cashier_id')) $query->where('user_id', $request->cashier_id);
         if ($request->filled('payment_method')) $query->where('payment_method', $request->payment_method);
@@ -227,8 +227,6 @@ class OpsAuditSurgeryController extends OpsAuditBaseController
                 'reference' => $row->reference_no ?? '-',
                 'patient' => $this->renderPatient($user, $patient, null),
                 'total' => '₦' . number_format($row->total ?? 0, 2),
-                'method' => $row->payment_method ? '<span class="badge bg-light text-dark border">'.$row->payment_method.'</span>' : '-',
-                'cashier' => $row->staff_user?->firstname ? ($row->staff_user->firstname . ' ' . ($row->staff_user->surname ?? '')) : '-',
                 'audit' => $this->renderAuditAction($row, 'Payment'),
             ];
         }, function ($kpiQuery) {
