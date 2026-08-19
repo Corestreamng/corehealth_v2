@@ -312,9 +312,20 @@ abstract class OpsAuditBaseController extends Controller
                 $paymentMethod = $this->formatPaymentMethodWithChannel($payment);
                 $cashier = ($payment->user) ? ($payment->user->firstname . ' ' . ($payment->user->surname ?? '')) : '-';
                 $time = $payment->created_at ? $payment->created_at->format('d M y H:i') : '-';
+                $accountHtml = '';
+                if ($payment->payment_method === 'ACCOUNT' && $payment->patient) {
+                    $billingPatientId = $payment->patient->billing_patient_id;
+                    $account = \App\Models\PatientAccount::where('patient_id', $billingPatientId)->first();
+                    if ($account) {
+                        $balance = number_format($account->balance, 2);
+                        $accountHtml = "<div class='mb-1 text-primary'><strong>Acct Balance:</strong> ₦{$balance}</div>";
+                    }
+                }
+
                 return "
                     <div style='font-size: 0.75rem; line-height: 1.2;'>
                         <div class='mb-1'><strong>Method:</strong> {$paymentMethod}</div>
+                        {$accountHtml}
                         <div class='mb-1'><strong>Cashier:</strong> {$cashier}</div>
                         <div class='text-muted'>{$time}</div>
                     </div>
@@ -370,10 +381,21 @@ abstract class OpsAuditBaseController extends Controller
             ";
         }
 
+        $accountHtml = '';
+        if ($payment && $payment->payment_method === 'ACCOUNT' && $posr->patient) {
+            $billingPatientId = $posr->patient->billing_patient_id;
+            $account = \App\Models\PatientAccount::where('patient_id', $billingPatientId)->first();
+            if ($account) {
+                $balance = number_format($account->balance, 2);
+                $accountHtml = "<div class='mb-1 text-primary'><strong>Acct Balance:</strong> ₦{$balance}</div>";
+            }
+        }
+
         return "
             <div style='font-size: 0.75rem; line-height: 1.2;'>
                 <div class='mb-1'><strong>Payable:</strong> {$payable} &nbsp;|&nbsp; <strong>Claims:</strong> {$claims}</div>
                 <div class='mb-1'><strong>Method:</strong> {$paymentMethod}</div>
+                {$accountHtml}
                 <div class='mb-1'><strong>Cashier:</strong> {$cashier}</div>
                 <div class='text-muted'>{$time}</div>
                 {$hmoHtml}
