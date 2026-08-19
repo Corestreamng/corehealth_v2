@@ -100,7 +100,7 @@ abstract class OpsAuditBaseController extends Controller
             $html .= '<button class="btn btn-sm btn-warning text-dark font-weight-bold shadow-sm px-2 py-1 text-nowrap" onclick="openResolveQueryModal(\'' . addslashes($fullModelClass) . '\', ' . $record->id . ')" title="Queried: ' . $notes . '"><i class="mdi mdi-alert-circle me-1"></i> Resolve</button>';
         } else {
             if ($latestAudit) {
-                $html .= '<button class="btn btn-sm btn-success disabled px-2 py-1 text-nowrap"><i class="mdi mdi-check-decagram me-1"></i> Audited</button>';
+                $html .= '<button class="btn btn-sm btn-success px-2 py-1 text-nowrap" onclick="viewTimeline(\'' . addslashes($fullModelClass) . '\', ' . $record->id . ')" title="View Audit Timeline"><i class="mdi mdi-check-decagram me-1"></i> Audited</button>';
             } else {
                 $html .= '<button class="btn btn-sm btn-outline-success audit-tick-btn px-2 py-1 text-nowrap" onclick="markAudited(this, \'' . addslashes($fullModelClass) . '\', ' . $record->id . ')"><i class="mdi mdi-check me-1"></i> Stamp</button>';
             }
