@@ -67,7 +67,11 @@ abstract class OpsAuditBaseController extends Controller
         // Active query?
         $activeQuery = null;
         if (isset($record->is_queried) && $record->is_queried && empty($record->query_resolved_at)) {
-            $activeQuery = (object)['auditor' => (object)['name' => 'Auditor'], 'query_notes' => $record->query_notes ?? 'Flagged'];
+            $activeQuery = (object)[
+                'auditor' => (object)['name' => 'Auditor'], 
+                'query_notes' => $record->query_notes ?? 'Flagged',
+                'created_at' => isset($record->queried_at) ? \Carbon\Carbon::parse($record->queried_at) : now()
+            ];
         } else {
             $activeQuery = AuditMark::with('auditor')
                 ->where(fn($q) => $q->where('auditable_type', $fullModelClass)->orWhere('auditable_type', $shortModelClass))
@@ -106,8 +110,17 @@ abstract class OpsAuditBaseController extends Controller
 
         if ($activeQuery) {
             $notes = htmlspecialchars($activeQuery->query_notes ?? 'Flagged', ENT_QUOTES);
-            $html .= '<small class="d-block text-danger font-weight-bold mt-1" style="font-size:0.72rem;"><i class="mdi mdi-alert-circle me-1"></i>Active Query</small>';
+            $queryTime = (isset($activeQuery->created_at) && is_object($activeQuery->created_at)) ? $activeQuery->created_at->format('d M y H:i') : 'Recently';
+            $queriedBy = 'Auditor';
+            if (isset($activeQuery->auditor)) {
+                $queriedBy = trim(($activeQuery->auditor->firstname ?? $activeQuery->auditor->name ?? 'Auditor') . ' ' . ($activeQuery->auditor->surname ?? ''));
+            }
+
+            $html .= '<div class="mt-1">';
+            $html .= '<small class="d-block text-danger font-weight-bold" style="font-size:0.72rem;"><i class="mdi mdi-alert-circle me-1"></i>Queried by ' . htmlspecialchars($queriedBy, ENT_QUOTES) . '</small>';
+            $html .= '<small class="d-block text-muted" style="font-size: 0.7rem;">' . $queryTime . '</small>';
             $html .= '<div class="text-muted mt-1" style="font-size: 0.7rem; white-space: normal; line-height: 1.2; word-break: break-word; max-width: 200px;">' . $notes . '</div>';
+            $html .= '</div>';
         } elseif ($latestAudit) {
             $stampedTime = (isset($latestAudit->created_at) && is_object($latestAudit->created_at)) ? $latestAudit->created_at->format('d M y H:i') : 'Recently';
             $auditorName = '-';
