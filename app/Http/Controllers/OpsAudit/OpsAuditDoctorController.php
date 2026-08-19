@@ -541,6 +541,7 @@ class OpsAuditDoctorController extends OpsAuditBaseController
                 'status' => '<span class="badge bg-' . ($statusColors[$row->status] ?? 'secondary') . ' font-weight-bold">' . ucfirst($row->status ?? '-') . '</span>',
                 'actioned_by' => $row->actionedBy?->firstname ? ($row->actionedBy->firstname . ' ' . ($row->actionedBy->surname ?? '')) : '-',
                 'payable' => '-', // Missing direct billing relation on referral, would need context
+                'payment_info' => $this->renderPaymentInfo($row),
                 'audit' => $this->renderAuditAction($row, 'SpecialistReferral'),
             ];
         }, function ($kpiQuery) {

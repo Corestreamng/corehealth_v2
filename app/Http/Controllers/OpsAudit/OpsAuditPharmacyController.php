@@ -98,6 +98,7 @@ class OpsAuditPharmacyController extends OpsAuditBaseController
                 'cashier' => $payment?->staff_user?->firstname ? ($payment->staff_user->firstname . ' ' . ($payment->staff_user->surname ?? '')) : '-',
                 'method' => $payment?->payment_method ? '<span class="badge bg-light text-dark border">' . $payment->payment_method . '</span>' : '-',
                 'pay_status' => $payment ? '<span class="badge bg-success">Paid</span>' : ($posr ? '<span class="badge bg-warning text-dark">Unpaid</span>' : '-'),
+                'payment_info' => $this->renderPaymentInfo($row),
                 'audit' => $this->renderAuditAction($row, 'ProductRequest'),
             ];
         }, function ($kpiQuery) {
@@ -232,6 +233,7 @@ class OpsAuditPharmacyController extends OpsAuditBaseController
                 'total' => '₦' . number_format($row->total ?? 0, 2),
                 'method' => $row->payment_method ? '<span class="badge bg-light text-dark border">'.$row->payment_method.'</span>' : '-',
                 'cashier' => $row->staff_user?->firstname ? ($row->staff_user->firstname . ' ' . ($row->staff_user->surname ?? '')) : '-',
+                'payment_info' => $this->renderPaymentInfo($row),
                 'audit' => $this->renderAuditAction($row, 'Payment'),
             ];
         }, function ($kpiQuery) {

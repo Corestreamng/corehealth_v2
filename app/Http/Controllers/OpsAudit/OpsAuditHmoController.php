@@ -83,6 +83,7 @@ class OpsAuditHmoController extends OpsAuditBaseController
                 'payment_ref' => $row->payment_reference ?? '-',
                 'cashier' => $cashier?->firstname ? ($cashier->firstname . ' ' . ($cashier->surname ?? '')) : '-',
                 'pay_status' => $payment ? '<span class="badge bg-success">Paid</span>' : '-',
+                'payment_info' => $this->renderPaymentInfo($row),
                 'audit' => $this->renderAuditAction($row, 'HmoClaim'),
             ];
         }, function ($kpiQuery) {
@@ -159,6 +160,7 @@ class OpsAuditHmoController extends OpsAuditBaseController
                 'cashier' => $cashier?->firstname ? ($cashier->firstname . ' ' . ($cashier->surname ?? '')) : '-',
                 'method' => $payment?->payment_method ? '<span class="badge bg-light text-dark border">' . $payment->payment_method . '</span>' : '-',
                 'pay_status' => $payment ? '<span class="badge bg-success">Paid</span>' : '<span class="badge bg-warning text-dark">Unpaid</span>',
+                'payment_info' => $this->renderPaymentInfo($row),
                 'audit' => $this->renderAuditAction($row, 'ProductOrServiceRequest'),
             ];
         }, function ($kpiQuery) {
@@ -203,6 +205,7 @@ class OpsAuditHmoController extends OpsAuditBaseController
                 'payment_method' => $row->payment_method ?? '-',
                 'bank' => $row->bank?->name ?? $row->bank_name ?? '-',
                 'created_by' => $row->createdBy?->firstname ? ($row->createdBy->firstname . ' ' . ($row->createdBy->surname ?? '')) : '-',
+                'payment_info' => $this->renderPaymentInfo($row),
                 'audit' => $this->renderAuditAction($row, 'HmoRemittance'),
             ];
         }, function ($kpiQuery) {

@@ -162,6 +162,7 @@ class OpsAuditNursingController extends OpsAuditBaseController
                 'author' => $row->createdBy?->firstname ? ($row->createdBy->firstname . ' ' . ($row->createdBy->surname ?? '')) : '-',
                 'status' => $row->status ?? '-',
                 'completed' => $row->completed ? '<span class="badge bg-success">Yes</span>' : '<span class="badge bg-warning text-dark">No</span>',
+                'payment_info' => $this->renderPaymentInfo($row),
                 'audit' => $this->renderAuditAction($row, 'NursingNote'),
             ];
         }, function ($kpiQuery) {
@@ -224,6 +225,7 @@ class OpsAuditNursingController extends OpsAuditBaseController
                 'cashier' => $payment?->staff_user?->firstname ? ($payment->staff_user->firstname . ' ' . ($payment->staff_user->surname ?? '')) : '-',
                 'method' => $payment?->payment_method ? '<span class="badge bg-light text-dark border">' . $payment->payment_method . '</span>' : '-',
                 'pay_status' => $payment ? '<span class="badge bg-success">Paid</span>' : '<span class="badge bg-warning text-dark">Unpaid</span>',
+                'payment_info' => $this->renderPaymentInfo($row),
                 'audit' => $this->renderAuditAction($row, 'ProductOrServiceRequest'),
             ];
         }, function ($kpiQuery) {
