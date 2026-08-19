@@ -34,12 +34,32 @@ class Payment extends Model implements Auditable
         return $this->hasOne(invoice::class);
     }
 
+    public function organizationBill()
+    {
+        return $this->hasOne(OrganizationBill::class, 'payment_id', 'id');
+    }
+
+    public function staffBill()
+    {
+        return $this->hasOne(StaffBill::class, 'payment_id', 'id');
+    }
+
+    public function patientAccount()
+    {
+        return $this->belongsTo(PatientAccount::class, 'account_id', 'id');
+    }
+
     public function patient()
     {
         return $this->belongsTo(Patient::class, 'patient_id', 'id');
     }
 
     public function staff_user()
+    {
+        return $this->belongsTo(User::class, 'user_id', 'id');
+    }
+
+    public function user()
     {
         return $this->belongsTo(User::class, 'user_id', 'id');
     }

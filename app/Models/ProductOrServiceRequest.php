@@ -200,4 +200,17 @@ class ProductOrServiceRequest extends Model implements Auditable
     {
         return $this->belongsTo(User::class, 'audited_by');
     }
+
+    /**
+     * Get the user who audited this item.
+     */
+    public function requestedBy()
+    {
+        return $this->belongsTo(User::class, 'requested_by');
+    }
+
+    public function validatedBy()
+    {
+        return $this->belongsTo(User::class, 'validated_by');
+    }
 }

@@ -59,6 +59,16 @@ class Patient extends Model implements Auditable
         return $this->hasOne(DeathRecord::class);
     }
 
+    public function maternityEnrollments()
+    {
+        return $this->hasMany(MaternityEnrollment::class);
+    }
+
+    public function morgueAdmissions()
+    {
+        return $this->hasMany(MorgueAdmission::class);
+    }
+
     public function hmoPrincipal()
     {
         return $this->belongsTo(Patient::class, 'hmo_principal_id');
