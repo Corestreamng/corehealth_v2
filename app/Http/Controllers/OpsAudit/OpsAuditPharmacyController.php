@@ -58,7 +58,9 @@ class OpsAuditPharmacyController extends OpsAuditBaseController
             'patient.hmo.scheme',
             'doctor',
             'product',
-            'productOrServiceRequest.payment.staff_user'
+            'productOrServiceRequest.payment.staff_user',
+            'biller',
+            'dispenser'
         ]);
 
         $this->applyDateFilter($query, $request);
@@ -84,6 +86,14 @@ class OpsAuditPharmacyController extends OpsAuditBaseController
 
             $statusColors = [1 => 'warning text-dark', 2 => 'info', 3 => 'success', 4 => 'danger'];
             $statusTexts = [1 => 'Pending', 2 => 'Approved', 3 => 'Dispensed', 4 => 'Returned'];
+            
+            $statusHtml = '<span class="badge bg-'.($statusColors[$row->status] ?? 'secondary').'">'.($statusTexts[$row->status] ?? $row->status).'</span>';
+            if ($row->biller) {
+                $statusHtml .= '<div class="mt-1 text-muted fw-bold" style="font-size:0.7rem;"><i class="mdi mdi-receipt me-1"></i>Billed: ' . trim($row->biller->firstname . ' ' . $row->biller->surname) . '</div>';
+            }
+            if ($row->dispenser && $row->status >= 3) {
+                $statusHtml .= '<div class="mt-1 text-muted fw-bold" style="font-size:0.7rem;"><i class="mdi mdi-pill me-1"></i>Dispensed: ' . trim($row->dispenser->firstname . ' ' . $row->dispenser->surname) . '</div>';
+            }
 
             return [
                 'date' => $row->created_at ? Carbon::parse($row->created_at)->format('d M Y') : '-',
@@ -92,7 +102,7 @@ class OpsAuditPharmacyController extends OpsAuditBaseController
                 'doctor' => $row->doctor?->firstname ? ($row->doctor->firstname . ' ' . ($row->doctor->surname ?? '')) : '-',
                 'product' => $row->product?->product_name ?? ($row->is_free_form ? $row->free_form_name : '-'),
                 'qty' => $row->qty ?? '-',
-                'status' => '<span class="badge bg-'.($statusColors[$row->status] ?? 'secondary').'">'.($statusTexts[$row->status] ?? $row->status).'</span>',
+                'status' => $statusHtml,
                 'payable' => $posr ? '₦' . number_format($posr->payable_amount ?? 0, 2) : '-',
                 'claims' => $posr ? '₦' . number_format($posr->claims_amount ?? 0, 2) : '-',
                 'cashier' => $payment?->staff_user?->firstname ? ($payment->staff_user->firstname . ' ' . ($payment->staff_user->surname ?? '')) : '-',
@@ -118,7 +128,9 @@ class OpsAuditPharmacyController extends OpsAuditBaseController
     {
         $query = ProductRequest::with([
             'patient.user',
-            'product'
+            'product',
+            'biller',
+            'dispenser'
         ])->where(function($q) {
             $q->where('status', 4)->orWhere('damaged_qty', '>', 0);
         });
@@ -134,6 +146,12 @@ class OpsAuditPharmacyController extends OpsAuditBaseController
             $user = $patient?->user;
             
             $type = $row->status == 4 ? '<span class="badge bg-warning text-dark">Return</span>' : '<span class="badge bg-danger">Damage</span>';
+            if ($row->biller) {
+                $type .= '<div class="mt-1 text-muted fw-bold" style="font-size:0.7rem;"><i class="mdi mdi-receipt me-1"></i>Billed: ' . trim($row->biller->firstname . ' ' . $row->biller->surname) . '</div>';
+            }
+            if ($row->dispenser) {
+                $type .= '<div class="mt-1 text-muted fw-bold" style="font-size:0.7rem;"><i class="mdi mdi-pill me-1"></i>Dispensed: ' . trim($row->dispenser->firstname . ' ' . $row->dispenser->surname) . '</div>';
+            }
 
             return [
                 'date' => $row->created_at ? Carbon::parse($row->created_at)->format('d M Y') : '-',
