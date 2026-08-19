@@ -299,6 +299,10 @@ abstract class OpsAuditBaseController extends Controller
             $posr = $record->productOrServiceRequest;
         } elseif (method_exists($record, 'serviceRequest') && $record->serviceRequest instanceof \App\Models\ProductOrServiceRequest) {
             $posr = $record->serviceRequest;
+        } elseif (method_exists($record, 'encounter') && $record->encounter && $record->encounter->productOrServiceRequest instanceof \App\Models\ProductOrServiceRequest) {
+            $posr = $record->encounter->productOrServiceRequest;
+        } elseif (method_exists($record, 'enrollment') && $record->enrollment && method_exists($record->enrollment, 'serviceRequest') && $record->enrollment->serviceRequest instanceof \App\Models\ProductOrServiceRequest) {
+            $posr = $record->enrollment->serviceRequest;
         }
 
         if (!$posr) {
@@ -320,12 +324,12 @@ abstract class OpsAuditBaseController extends Controller
         }
 
         $payment = $posr->payment;
-        $payable = number_format($posr->payable_amount, 2);
-        $claims = number_format($posr->claims_amount, 2);
+        $payable = number_format((float) $posr->payable_amount, 2);
+        $claims = number_format((float) $posr->claims_amount, 2);
         
         $paymentMethod = $payment ? $payment->payment_method : '-';
         $cashier = ($payment && $payment->user) ? ($payment->user->firstname . ' ' . ($payment->user->surname ?? '')) : '-';
-        $time = $payment ? $payment->created_at->format('d M y H:i') : '-';
+        $time = ($payment && $payment->created_at) ? $payment->created_at->format('d M y H:i') : '-';
 
         return "
             <div style='font-size: 0.75rem; line-height: 1.2;'>
