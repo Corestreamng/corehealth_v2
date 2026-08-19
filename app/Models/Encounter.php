@@ -43,6 +43,8 @@ class Encounter extends Model implements Auditable
         return $this->hasOne(DeathRecord::class);
     }
 
+
+
     protected $casts = [
         'completed'    => 'boolean',
         'started_at'   => 'datetime',
