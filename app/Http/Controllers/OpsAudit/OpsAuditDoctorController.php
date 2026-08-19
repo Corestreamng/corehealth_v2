@@ -22,7 +22,7 @@ class OpsAuditDoctorController extends OpsAuditBaseController
         $clinics = \App\Models\Clinic::orderBy('name')->pluck('name', 'id');
         $hmos = \App\Models\Hmo::with('scheme')->orderBy('name')->get()->groupBy(fn($hmo) => $hmo->scheme ? $hmo->scheme->name : 'Other Schemes');
         $hmoSchemes = \App\Models\HmoScheme::orderBy('name')->pluck('name', 'id');
-        $doctors = \App\Models\User::role(['DOCTOR', 'SPECIALIST'])->orderBy('firstname')->get()->pluck('full_name', 'id');
+        $doctors = \App\Models\User::role('DOCTOR')->orderBy('firstname')->get()->mapWithKeys(fn($u) => [$u->id => trim($u->firstname . ' ' . ($u->othername ?? '') . ' ' . $u->surname)]);
 
         return view('admin.ops_audit.doctor', compact('clinics', 'hmos', 'hmoSchemes', 'doctors'));
     }
