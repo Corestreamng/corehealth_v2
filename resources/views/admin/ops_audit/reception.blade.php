@@ -312,7 +312,7 @@ $(function() {
                     form.forEach(function(f) { d[f.name] = f.value; });
 
                     // Tab-specific filters
-                    var tabName = $(this).closest('.tab-pane').attr('id')?.replace('pane-', '') || '';
+                    var tabName = kpiContainer ? kpiContainer.replace('kpi-', '') : '';
                     $(`.ops-tab-filter[data-tab="${tabName}"]`).each(function() {
                         d[$(this).attr('name')] = $(this).val();
                     });
