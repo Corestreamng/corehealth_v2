@@ -124,6 +124,7 @@ class OpsAuditPharmacyController extends OpsAuditBaseController
 
         $this->applyDateFilter($query, $request);
         $this->applyShiftFilter($query, $request);
+        $this->applyPaymentFilters($query, $request, 'productOrServiceRequest');
 
         $kpiQuery = clone $query;
 
@@ -142,6 +143,7 @@ class OpsAuditPharmacyController extends OpsAuditBaseController
                 'reason' => $row->return_reason ?? $row->damage_reason ?? '-',
                 'condition' => $row->return_condition ?? '-',
                 'refund' => '₦' . number_format($row->refund_amount ?? 0, 2),
+                'payment_info' => $this->renderPaymentInfo($row),
                 'audit' => $this->renderAuditAction($row, 'ProductRequest'),
             ];
         }, function ($kpiQuery) {
@@ -163,10 +165,13 @@ class OpsAuditPharmacyController extends OpsAuditBaseController
         $query = StoreRequisitionItem::with([
             'requisition',
             'product'
+        
+            'productOrServiceRequest.payment.user',
         ]);
 
         $this->applyDateFilter($query, $request);
         $this->applyShiftFilter($query, $request);
+        $this->applyPaymentFilters($query, $request, 'productOrServiceRequest');
 
         if ($request->filled('status')) $query->where('status', $request->status);
 
@@ -183,6 +188,7 @@ class OpsAuditPharmacyController extends OpsAuditBaseController
                 'approved_qty' => $row->approved_qty ?? '-',
                 'fulfilled_qty' => $row->fulfilled_qty ?? '-',
                 'status' => '<span class="badge bg-'.($statusColors[$row->status] ?? 'secondary').'">'.ucfirst($row->status ?? '-').'</span>',
+                'payment_info' => $this->renderPaymentInfo($row),
                 'audit' => $this->renderAuditAction($row, 'StoreRequisitionItem'),
             ];
         }, function ($kpiQuery) {
