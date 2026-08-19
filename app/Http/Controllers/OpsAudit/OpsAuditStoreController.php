@@ -77,6 +77,7 @@ class OpsAuditStoreController extends OpsAuditBaseController
                 'fulfilled_by' => $row->fulfilledBy?->firstname ? ($row->fulfilledBy->firstname . ' ' . ($row->fulfilledBy->surname ?? '')) : '-',
                 'items_count' => $row->items ? $row->items->count() : '-',
                 'total_value' => '₦' . number_format($totalValue, 2),
+                'payment_info' => $this->renderPaymentInfo($row),
                 'audit' => $this->renderAuditAction($row, 'StoreRequisition'),
             ];
         }, function ($kpiQuery) {
@@ -130,6 +131,7 @@ class OpsAuditStoreController extends OpsAuditBaseController
                 'balance' => '₦' . number_format($balance, 2),
                 'created_by' => $row->createdBy?->firstname ? ($row->createdBy->firstname . ' ' . ($row->createdBy->surname ?? '')) : '-',
                 'approved_by' => $row->approvedBy?->firstname ? ($row->approvedBy->firstname . ' ' . ($row->approvedBy->surname ?? '')) : '-',
+                'payment_info' => $this->renderPaymentInfo($row),
                 'audit' => $this->renderAuditAction($row, 'PurchaseOrder'),
             ];
         }, function ($kpiQuery) {
@@ -179,6 +181,7 @@ class OpsAuditStoreController extends OpsAuditBaseController
                 'total_value' => '₦' . number_format($totalValue, 2),
                 'expiry' => '<span class="' . $expiryColor . '">' . ($row->expiry_date ? Carbon::parse($row->expiry_date)->format('d M Y') : '-') . '</span>',
                 'created_by' => $row->createdBy?->firstname ? ($row->createdBy->firstname . ' ' . ($row->createdBy->surname ?? '')) : '-',
+                'payment_info' => $this->renderPaymentInfo($row),
                 'audit' => $this->renderAuditAction($row, 'StockBatch'),
             ];
         }, function ($kpiQuery) {

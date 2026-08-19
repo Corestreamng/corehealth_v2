@@ -135,6 +135,7 @@ class OpsAuditSurgeryController extends OpsAuditBaseController
                 'pre_by' => $row->preNotesBy?->firstname ? ($row->preNotesBy->firstname . ' ' . ($row->preNotesBy->surname ?? '')) : '-',
                 'post_notes' => $row->post_notes ? '<i class="mdi mdi-check text-success"></i> Yes' : '<i class="mdi mdi-close text-danger"></i> No',
                 'post_by' => $row->postNotesBy?->firstname ? ($row->postNotesBy->firstname . ' ' . ($row->postNotesBy->surname ?? '')) : '-',
+                'payment_info' => $this->renderPaymentInfo($row),
                 'audit' => $this->renderAuditAction($row, 'Procedure'),
             ];
         }, function ($kpiQuery) {
@@ -227,6 +228,7 @@ class OpsAuditSurgeryController extends OpsAuditBaseController
                 'reference' => $row->reference_no ?? '-',
                 'patient' => $this->renderPatient($user, $patient, null),
                 'total' => '₦' . number_format($row->total ?? 0, 2),
+                'payment_info' => $this->renderPaymentInfo($row),
                 'audit' => $this->renderAuditAction($row, 'Payment'),
             ];
         }, function ($kpiQuery) {

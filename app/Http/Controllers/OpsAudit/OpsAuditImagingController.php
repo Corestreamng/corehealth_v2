@@ -184,6 +184,7 @@ class OpsAuditImagingController extends OpsAuditBaseController
                 'total' => '₦' . number_format($row->total ?? 0, 2),
                 'method' => $row->payment_method ? '<span class="badge bg-light text-dark border">'.$row->payment_method.'</span>' : '-',
                 'cashier' => $row->staff_user?->firstname ? ($row->staff_user->firstname . ' ' . ($row->staff_user->surname ?? '')) : '-',
+                'payment_info' => $this->renderPaymentInfo($row),
                 'audit' => $this->renderAuditAction($row, 'Payment'),
             ];
         }, function ($kpiQuery) {

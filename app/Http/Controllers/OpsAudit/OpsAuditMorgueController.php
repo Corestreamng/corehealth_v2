@@ -172,6 +172,7 @@ class OpsAuditMorgueController extends OpsAuditBaseController
                 'reference' => $row->reference_no ?? '-',
                 'patient' => $this->renderPatient($user, $patient, null),
                 'total' => '₦' . number_format($row->total ?? 0, 2),
+                'payment_info' => $this->renderPaymentInfo($row),
                 'audit' => $this->renderAuditAction($row, 'Payment'),
             ];
         }, function ($kpiQuery) {
