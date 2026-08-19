@@ -15,7 +15,7 @@ class OpsAuditPharmacyController extends OpsAuditBaseController
     {
         $hmos = \App\Models\Hmo::with('scheme')->orderBy('name')->get()->groupBy(fn($hmo) => $hmo->scheme ? $hmo->scheme->name : 'Other Schemes');
         $hmoSchemes = \App\Models\HmoScheme::orderBy('name')->pluck('name', 'id');
-        $stores = Store::orderBy('name')->pluck('name', 'id');
+        $stores = Store::orderBy('store_name')->pluck('store_name', 'id');
         $cashiers = \App\Models\User::role(['SUPERADMIN', 'ADMIN', 'ACCOUNTS', 'BILLER'])->orderBy('firstname')->get()->mapWithKeys(fn($u) => [$u->id => trim($u->firstname . ' ' . ($u->othername ?? '') . ' ' . $u->surname)]);
 
         return view('admin.ops_audit.pharmacy', compact('hmos', 'hmoSchemes', 'stores', 'cashiers'));

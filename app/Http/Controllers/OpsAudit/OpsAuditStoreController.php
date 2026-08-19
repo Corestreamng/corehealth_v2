@@ -13,7 +13,7 @@ class OpsAuditStoreController extends OpsAuditBaseController
 {
     public function index(Request $request)
     {
-        $stores = \App\Models\Store::orderBy('name')->pluck('name', 'id');
+        $stores = \App\Models\Store::orderBy('store_name')->pluck('store_name', 'id');
         $users = \App\Models\User::orderBy('firstname')->get()->mapWithKeys(fn($u) => [$u->id => trim($u->firstname . ' ' . $u->surname)]);
         $suppliers = \App\Models\Supplier::orderBy('name')->pluck('name', 'id');
         $products = \App\Models\Product::orderBy('name')->pluck('name', 'id');
