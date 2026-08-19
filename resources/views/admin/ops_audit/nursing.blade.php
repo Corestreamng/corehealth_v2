@@ -87,6 +87,11 @@
             <i class="mdi mdi-receipt me-1"></i> Ward Bills
         </a>
     </li>
+    <li class="nav-item">
+        <a class="nav-link" id="tab-requisitions" data-bs-toggle="tab" href="#pane-requisitions" role="tab">
+            <i class="mdi mdi-truck-delivery me-1"></i> Requisitions
+        </a>
+    </li>
 </ul>
 
 <div class="tab-content bg-white border border-top-0 rounded-bottom p-3">
@@ -175,15 +180,15 @@
                     <option value="">All Entities</option>
                 </select>
             </div>
-</div>
-<div class="table-responsive">
+        </div>
+        <div class="table-responsive">
             <table class="table table-sm table-bordered table-striped ops-datatable w-100" id="dt-bills">
                 <thead>
                     <tr>
                         <th>Date</th>
                         <th>Patient</th>
                         <th>HMO</th>
-                        <th>Item</th>
+                        <th>Item/Service</th>
                         <th>Qty</th>
                         <th>Amount</th>
                         <th>Payable</th>
@@ -199,6 +204,10 @@
             </table>
         </div>
     </div>
+
+    {{-- Tab 4: Requisitions --}}
+    @include('admin.ops_audit.partials.requisitions_tab_pane')
+
 </div>
 @endsection
 
@@ -208,7 +217,8 @@ $(function() {
     var dataUrls = {
         admissions: "{{ route('ops-audit.nursing.data', 'admissions') }}",
         notes: "{{ route('ops-audit.nursing.data', 'notes') }}",
-        bills: "{{ route('ops-audit.nursing.data', 'bills') }}"
+        bills: "{{ route('ops-audit.nursing.data', 'bills') }}",
+        requisitions: "{{ route('ops-audit.nursing.data', 'requisitions') }}"
     };
 
     var dtInstances = {};
@@ -279,16 +289,27 @@ $(function() {
                 { data: 'audit', orderable: false, searchable: false }
             ], 'kpi-bills'));
         }
+        else if (tabId === 'requisitions' && !dtInstances.requisitions) {
+            dtInstances.requisitions = $('#dt-requisitions').DataTable(commonOpts(dataUrls.requisitions, [
+                { data: 'date' }, { data: 'req_no' }, { data: 'from_store' }, { data: 'to_store' },
+                { data: 'status' }, { data: 'requested_by' }, { data: 'approved_by' },
+                { data: 'fulfilled_by' }, { data: 'items_count' }, 
+                { data: 'req_value' }, { data: 'appr_value' }, { data: 'ful_value' }, { data: 'rej_value' },
+                { data: 'audit', orderable: false, searchable: false, className: 'text-center' }
+            ], 'kpi-requisitions'));
+        }
 
         setTimeout(function() {
             $.fn.dataTable.tables({ visible: true, api: true }).columns.adjust();
         }, 200);
     });
 
-    $('#btnApplyFilters').on('click', function() {
-        Object.values(dtInstances).forEach(function(dt) {
-            if (dt) dt.ajax.reload();
-        });
+    $('#btnApplyFilters').on('click', function(e) {
+        e.preventDefault();
+        if(dtInstances.admissions) dtInstances.admissions.ajax.reload(null, false);
+        if(dtInstances.notes) dtInstances.notes.ajax.reload(null, false);
+        if(dtInstances.bills) dtInstances.bills.ajax.reload(null, false);
+        if(dtInstances.requisitions) dtInstances.requisitions.ajax.reload(null, false);
     });
 
     $(document).on('change', '.ops-tab-filter', function() {

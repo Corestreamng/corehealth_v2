@@ -15,8 +15,9 @@ class OpsAuditNursingController extends OpsAuditBaseController
         $wards = \App\Models\Ward::orderBy('name')->pluck('name', 'id');
         $hmos = \App\Models\Hmo::with('scheme')->orderBy('name')->get()->groupBy(fn($hmo) => $hmo->scheme ? $hmo->scheme->name : 'Other Schemes');
         $hmoSchemes = \App\Models\HmoScheme::orderBy('name')->pluck('name', 'id');
+        $stores = \App\Models\Store::orderBy('store_name')->get()->mapWithKeys(fn($s) => [$s->id => trim($s->store_name . ' (' . $s->distributionRoleLabel() . ')')]);
 
-        return view('admin.ops_audit.nursing', compact('wards', 'hmos', 'hmoSchemes'));
+        return view('admin.ops_audit.nursing', compact('wards', 'hmos', 'hmoSchemes', 'stores'));
     }
 
     public function data(Request $request, $tab)
@@ -26,6 +27,7 @@ class OpsAuditNursingController extends OpsAuditBaseController
                 'admissions' => AdmissionRequest::class,
                 'notes' => NursingNote::class,
                 'bills' => ProductOrServiceRequest::class,
+                'requisitions' => \App\Models\StoreRequisition::class,
             ];
             $request->merge(['zone_key' => 'ops_audit.nursing.' . $tab]);
             return $this->handleBulkStamp($request, $tab, $modelMap);
@@ -38,6 +40,8 @@ class OpsAuditNursingController extends OpsAuditBaseController
                 return $this->notesData($request);
             case 'bills':
                 return $this->billsData($request);
+            case 'requisitions':
+                return $this->moduleRequisitionsData($request, ['roles' => ['ward', 'department']]);
             default:
                 return response()->json(['error' => 'Invalid tab'], 400);
         }

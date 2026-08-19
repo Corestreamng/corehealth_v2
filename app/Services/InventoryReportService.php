@@ -133,7 +133,7 @@ class InventoryReportService
             if ($qty <= 0) continue;
             
             $batch = $storeRelation === 'toStore' ? $item->sourceBatch : $item->destinationBatch;
-            $cost = $batch->cost_price ?? 0;
+            $cost = ($batch && (float)$batch->cost_price > 0) ? (float)$batch->cost_price : (float)($item->product->price->pr_buy_price ?? 0);
             $val = $qty * $cost;
             
             $salePrice = $item->product->price->current_sale_price ?? 0;
@@ -164,7 +164,7 @@ class InventoryReportService
             if ($qty <= 0) continue;
             
             $batch = $item->dispensedFromBatch;
-            $cost = $batch->cost_price ?? 0;
+            $cost = ($batch && (float)$batch->cost_price > 0) ? (float)$batch->cost_price : (float)($item->product->price->pr_buy_price ?? 0);
             $val = $qty * $cost;
             
             $cashRev = 0;
@@ -211,7 +211,7 @@ class InventoryReportService
             if (strtolower($key) !== strtolower($targetKey)) continue;
 
             $batch = $storeRelation === 'toStore' ? $item->sourceBatch : $item->destinationBatch;
-            $cost = $batch->cost_price ?? 0;
+            $cost = ($batch && (float)$batch->cost_price > 0) ? (float)$batch->cost_price : (float)($item->product->price->pr_buy_price ?? 0);
 
             $salePrice = $item->product->price->current_sale_price ?? 0;
             $potentialRev = $qty * $salePrice;
@@ -247,7 +247,7 @@ class InventoryReportService
             if (strtolower($key) !== strtolower($targetKey)) continue;
 
             $batch = $item->dispensedFromBatch;
-            $cost = $batch->cost_price ?? 0;
+            $cost = ($batch && (float)$batch->cost_price > 0) ? (float)$batch->cost_price : (float)($item->product->price->pr_buy_price ?? 0);
 
             $cashRev = 0;
             $claimsRev = 0;

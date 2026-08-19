@@ -84,7 +84,12 @@
     </li>
     <li class="nav-item">
         <a class="nav-link" id="tab-stock" data-bs-toggle="tab" href="#pane-stock" role="tab">
-            <i class="mdi mdi-package-down me-1"></i> Stock Received
+            <i class="mdi mdi-package-down me-1"></i> Stock Received (Items)
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link" id="tab-requisitions" data-bs-toggle="tab" href="#pane-requisitions" role="tab">
+            <i class="mdi mdi-truck-delivery me-1"></i> Requisitions
         </a>
     </li>
     <li class="nav-item">
@@ -141,8 +146,8 @@
                     <option value="">All Entities</option>
                 </select>
             </div>
-</div>
-<div class="table-responsive">
+        </div>
+        <div class="table-responsive">
             <table class="table table-sm table-bordered table-striped ops-datatable w-100" id="dt-returns">
                 <thead>
                     <tr>
@@ -197,7 +202,10 @@
         </div>
     </div>
 
-    {{-- Tab 4: Cashbook --}}
+    {{-- Tab 4: Requisitions --}}
+    @include('admin.ops_audit.partials.requisitions_tab_pane')
+
+    {{-- Tab 5: Cashbook --}}
     <div class="tab-pane fade" id="pane-cashbook" role="tabpanel">
         <div class="row g-2 mb-3 ops-kpi-row" id="kpi-cashbook"></div>
         
@@ -259,6 +267,7 @@ $(function() {
         dispenses: "{{ route('ops-audit.pharmacy.data', 'dispenses') }}",
         returns: "{{ route('ops-audit.pharmacy.data', 'returns') }}",
         stock: "{{ route('ops-audit.pharmacy.data', 'stock') }}",
+        requisitions: "{{ route('ops-audit.pharmacy.data', 'requisitions') }}",
         cashbook: "{{ route('ops-audit.pharmacy.data', 'cashbook') }}"
     };
 
@@ -328,6 +337,14 @@ $(function() {
                 { data: 'approved_qty' }, { data: 'fulfilled_qty' }, { data: 'status' },
                 { data: 'audit', orderable: false, searchable: false }
             ], 'kpi-stock'));
+        }
+        else if (tabId === 'requisitions' && !dtInstances.requisitions) {
+            dtInstances.requisitions = $('#dt-requisitions').DataTable(commonOpts(dataUrls.requisitions, [
+                { data: 'date' }, { data: 'req_no' }, { data: 'from_store' }, { data: 'to_store' },
+                { data: 'status' }, { data: 'requested_by' }, { data: 'approved_by' },
+                { data: 'fulfilled_by' }, { data: 'items_count' }, 
+                { data: 'req_value' }, { data: 'appr_value' }, { data: 'ful_value' }, { data: 'rej_value' },
+                { data: 'audit', orderable: false, searchable: false, className: 'text-center' }          ], 'kpi-requisitions'));
         }
         else if (tabId === 'cashbook' && !dtInstances.cashbook) {
             dtInstances.cashbook = $('#dt-cashbook').DataTable(commonOpts(dataUrls.cashbook, [

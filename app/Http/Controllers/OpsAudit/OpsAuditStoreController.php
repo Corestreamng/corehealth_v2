@@ -41,55 +41,7 @@ class OpsAuditStoreController extends OpsAuditBaseController
 
     protected function requisitionsData(Request $request)
     {
-        $query = StoreRequisition::with([
-            'fromStore',
-            'toStore',
-            'requester',
-            'approver',
-            'fulfiller',
-            'items' // If we want to sum values
-        ]);
-
-        $this->applyDateFilter($query, $request);
-
-        if ($request->filled('from_store_id')) $query->where('from_store_id', $request->from_store_id);
-        if ($request->filled('to_store_id')) $query->where('to_store_id', $request->to_store_id);
-        if ($request->filled('status')) $query->where('status', $request->status);
-        if ($request->filled('requested_by')) $query->where('requested_by', $request->requested_by);
-
-        $kpiQuery = clone $query;
-
-        return $this->buildDataTableResponse($query, $request, fn($q) => $q, function ($row) {
-            $statusColors = ['pending' => 'warning text-dark', 'approved' => 'info', 'fulfilled' => 'success', 'rejected' => 'danger'];
-            $sColor = $statusColors[$row->status] ?? 'secondary';
-
-            // Calculate total value if items loaded, otherwise generic
-            $totalValue = $row->items ? $row->items->sum(fn($i) => ($i->supplied_qty ?? $i->requested_qty) * ($i->unit_cost ?? 0)) : 0;
-
-            return [
-                'date' => $row->created_at ? Carbon::parse($row->created_at)->format('d M Y') : '-',
-                'req_no' => $row->requisition_number ?? '-',
-                'from_store' => $row->fromStore ? ($row->fromStore->store_name . '<br><small class="text-muted">' . $row->fromStore->distributionRoleLabel() . '</small>') : '-',
-                'to_store' => $row->toStore ? ($row->toStore->store_name . '<br><small class="text-muted">' . $row->toStore->distributionRoleLabel() . '</small>') : '-',
-                'status' => '<span class="badge bg-' . $sColor . '">' . ucfirst($row->status ?? '-') . '</span>',
-                'requested_by' => $row->requester?->firstname ? ($row->requester->firstname . ' ' . ($row->requester->surname ?? '')) : '-',
-                'approved_by' => $row->approver?->firstname ? ($row->approver->firstname . ' ' . ($row->approver->surname ?? '')) : '-',
-                'fulfilled_by' => $row->fulfiller?->firstname ? ($row->fulfiller->firstname . ' ' . ($row->fulfiller->surname ?? '')) : '-',
-                'items_count' => $row->items ? $row->items->count() : '-',
-                'total_value' => '₦' . number_format($totalValue, 2),
-                'payment_info' => $this->renderPaymentInfo($row),
-                'audit' => $this->renderAuditAction($row, 'StoreRequisition'),
-            ];
-        }, function ($kpiQuery) {
-            $all = $kpiQuery->get();
-            return [
-                ['label' => 'Total Requisitions', 'value' => number_format($all->count()), 'color' => '#0d6efd'],
-                ['label' => 'Pending', 'value' => number_format($all->where('status', 'pending')->count()), 'color' => '#ffc107'],
-                ['label' => 'Approved', 'value' => number_format($all->where('status', 'approved')->count()), 'color' => '#0dcaf0'],
-                ['label' => 'Fulfilled', 'value' => number_format($all->where('status', 'fulfilled')->count()), 'color' => '#198754'],
-                ['label' => 'Rejected', 'value' => number_format($all->where('status', 'rejected')->count()), 'color' => '#dc3545'],
-            ];
-        }, $kpiQuery);
+        return $this->moduleRequisitionsData($request);
     }
 
     protected function purchaseOrdersData(Request $request)

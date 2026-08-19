@@ -79,6 +79,11 @@
         </a>
     </li>
     <li class="nav-item">
+        <a class="nav-link" id="tab-requisitions" data-bs-toggle="tab" href="#pane-requisitions" role="tab">
+            <i class="mdi mdi-truck-delivery me-1"></i> Requisitions
+        </a>
+    </li>
+    <li class="nav-item">
         <a class="nav-link" id="tab-cashbook" data-bs-toggle="tab" href="#pane-cashbook" role="tab">
             <i class="mdi mdi-cash-register me-1"></i> Cashbook
         </a>
@@ -188,8 +193,11 @@
             </table>
         </div>
     </div>
+
+    {{-- Tab 4: Requisitions --}}
+    @include('admin.ops_audit.partials.requisitions_tab_pane')
     
-    {{-- Tab 4: Cashbook --}}
+    {{-- Tab 5: Cashbook --}}
     <div class="tab-pane fade" id="pane-cashbook" role="tabpanel">
         <div class="row g-2 mb-3 ops-kpi-row" id="kpi-cashbook"></div>
         
@@ -259,6 +267,7 @@ $(function() {
         procedures: "{{ route('ops-audit.surgery.data', 'procedures') }}",
         notes: "{{ route('ops-audit.surgery.data', 'notes') }}",
         bills: "{{ route('ops-audit.surgery.data', 'bills') }}",
+        requisitions: "{{ route('ops-audit.surgery.data', 'requisitions') }}",
         cashbook: "{{ route('ops-audit.surgery.data', 'cashbook') }}"
     };
 
@@ -331,6 +340,15 @@ $(function() {
                 { data: 'audit', orderable: false, searchable: false }
             ], 'kpi-bills'));
         }
+        else if (tabId === 'requisitions' && !dtInstances.requisitions) {
+            dtInstances.requisitions = $('#dt-requisitions').DataTable(commonOpts(dataUrls.requisitions, [
+                { data: 'date' }, { data: 'req_no' }, { data: 'from_store' }, { data: 'to_store' },
+                { data: 'status' }, { data: 'requested_by' }, { data: 'approved_by' },
+                { data: 'fulfilled_by' }, { data: 'items_count' }, 
+                { data: 'req_value' }, { data: 'appr_value' }, { data: 'ful_value' }, { data: 'rej_value' },
+                { data: 'audit', orderable: false, searchable: false, className: 'text-center' }
+            ], 'kpi-requisitions'));
+        }
         else if (tabId === 'cashbook' && !dtInstances.cashbook) {
             dtInstances.cashbook = $('#dt-cashbook').DataTable(commonOpts(dataUrls.cashbook, [
                 { data: 'date' },
@@ -350,10 +368,13 @@ $(function() {
         }, 200);
     });
 
-    $('#btnApplyFilters').on('click', function() {
-        Object.values(dtInstances).forEach(function(dt) {
-            if (dt) dt.ajax.reload();
-        });
+    $('#btnApplyFilters').on('click', function(e) {
+        e.preventDefault();
+        if(dtInstances.procedures) dtInstances.procedures.ajax.reload(null, false);
+        if(dtInstances.notes) dtInstances.notes.ajax.reload(null, false);
+        if(dtInstances.bills) dtInstances.bills.ajax.reload(null, false);
+        if(dtInstances.requisitions) dtInstances.requisitions.ajax.reload(null, false);
+        if(dtInstances.cashbook) dtInstances.cashbook.ajax.reload(null, false);
     });
 
     $(document).on('change', '.ops-tab-filter', function() {
