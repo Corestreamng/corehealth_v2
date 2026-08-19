@@ -17060,8 +17060,7 @@ function hidePharmacyReturns() {
 function showReturnCreateForm() {
     $('#pharmacy-returns-view').removeClass('active').hide();
     $('#pharmacy-return-create-view').show().addClass('active');
-    $('#dispensedItemResults').html('');
-    $('#dispensedItemSearch').val('');
+    loadDispensedItemsTable();
     $('#returnDetailsSection').hide();
     $('#return-je-preview').hide();
     $('#createReturnForm')[0].reset();
@@ -17124,45 +17123,41 @@ function loadReturnsStats() {
         });
 }
 
-// Returns: Search dispensed items (debounced)
-var returnSearchTimer = null;
-$('#dispensedItemSearch').on('keyup', function() {
-    var q = $(this).val().trim();
-    clearTimeout(returnSearchTimer);
-    if (q.length < 2) { $('#dispensedItemResults').html(''); return; }
+// Returns: Search dispensed items (DataTable)
+var dtDispensedItems = null;
+function loadDispensedItemsTable() {
+    if (dtDispensedItems) {
+        dtDispensedItems.ajax.reload();
+        return;
+    }
+    dtDispensedItems = $('#dt-dispensed-items').DataTable({
+        processing: true,
+        serverSide: true,
+        ajax: {
+            url: '{{ route("pharmacy.returns.search-dispensed") }}',
+            data: function (d) {
+                d.start_date = $('#dispensed-search-start').val();
+                d.end_date = $('#dispensed-search-end').val();
+            }
+        },
+        columns: [
+            { data: 'date', name: 'dispense_date' },
+            { data: 'patient', name: 'patient_id', orderable: false, searchable: false },
+            { data: 'product', name: 'product.product_name', orderable: false, searchable: false },
+            { data: 'qty', name: 'qty', orderable: false, searchable: false },
+            { data: 'amount', name: 'amount', orderable: false, searchable: false },
+            { data: 'store', name: 'dispensedFromStore.store_name', orderable: false, searchable: false },
+            { data: 'action', name: 'action', orderable: false, searchable: false }
+        ],
+        order: [[0, 'desc']],
+        pageLength: 5,
+        dom: '<"row"<"col-sm-12 col-md-6"l><"col-sm-12 col-md-6"f>>rt<"row"<"col-sm-12 col-md-5"i><"col-sm-12 col-md-7"p>>',
+    });
+}
 
-    returnSearchTimer = setTimeout(function() {
-        $('#dispensedItemResults').html('<p class="text-center text-muted p-2"><i class="mdi mdi-loading mdi-spin"></i> Searching...</p>');
-
-        $.get('{{ route("pharmacy.returns.search-dispensed") }}', { term: q })
-            .done(function(res) {
-                var items = res.items || res.data || res;
-                if (!items.length) {
-                    $('#dispensedItemResults').html('<p class="text-muted text-center p-3"><i class="mdi mdi-magnify"></i> No dispensed items match your search.</p>');
-                    return;
-                }
-                var html = '<div class="list-group">';
-                items.forEach(function(item) {
-                    html += '<a href="#" class="list-group-item list-group-item-action return-item-select" ' +
-                        'data-id="'+item.id+'" data-product="'+(item.product_name||'')+'" data-patient="'+(item.patient_name||'')+'" ' +
-                        'data-qty="'+(item.qty||0)+'" data-amount="'+(item.amount||0)+'" data-store="'+(item.store||'')+'" ' +
-                        'data-payable="'+(item.payable_amount||0)+'" data-claims="'+(item.claims_amount||0)+'" ' +
-                        'data-date="'+(item.dispensed_date||'')+'">' +
-                        '<div class="d-flex justify-content-between align-items-start">' +
-                        '<div><strong>'+(item.product_name||'Unknown')+'</strong>' +
-                        '<br><small class="text-muted">Patient: '+(item.patient_name||'N/A')+' ('+(item.file_number||'')+') | Store: '+(item.store||'')+
-                        '</small></div>' +
-                        '<div class="text-right"><span class="badge badge-primary">Qty: '+(item.qty||0)+'</span>' +
-                        '<br><small class="text-success fw-bold">₦'+formatMoneyPharmacy(item.amount||0)+'</small></div>' +
-                        '</div>' +
-                        '<small class="text-muted"><i class="mdi mdi-calendar"></i> '+(item.dispensed_date||'')+'</small>' +
-                        '</a>';
-                });
-                html += '</div>';
-                $('#dispensedItemResults').html(html);
-            })
-            .fail(function() { toastr.error('Search failed'); });
-    }, 400);
+$('#btn-search-dispensed').on('click', function(e) {
+    e.preventDefault();
+    loadDispensedItemsTable();
 });
 
 // Returns: Select item from search
@@ -17178,7 +17173,7 @@ $(document).on('click', '.return-item-select', function(e) {
         '<div class="col-md-4"><strong>Total Amount:</strong> ₦' + formatMoneyPharmacy($el.data('amount')) + '</div>' +
         '<div class="col-md-4"><strong>Store:</strong> ' + $el.data('store') + '</div>' +
         '</div>';
-    if ($el.data('claims')> 0) {
+    if ($el.data('claims') > 0) {
         infoHtml += '<div class="mt-1"><span class="badge badge-info">HMO Split</span> Patient: ₦' +
             formatMoneyPharmacy($el.data('payable')) + ' | HMO: ₦' + formatMoneyPharmacy($el.data('claims')) + '</div>';
     }
@@ -17192,8 +17187,11 @@ $(document).on('click', '.return-item-select', function(e) {
     $('#return_qty_returned').data('payable', $el.data('payable'));
     $('#return_qty_returned').data('claims', $el.data('claims'));
     $('#returnDetailsSection').slideDown(200);
-    $('#dispensedItemResults').html('');
-    $('#dispensedItemSearch').val('');
+    
+    $('#pharmacy-return-create-view .queue-view-content').animate({
+        scrollTop: $('#returnDetailsSection').position().top
+    }, 500);
+    
     updateReturnJEPreview();
 });
 
