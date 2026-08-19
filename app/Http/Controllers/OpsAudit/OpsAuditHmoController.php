@@ -87,17 +87,16 @@ class OpsAuditHmoController extends OpsAuditBaseController
                 'audit' => $this->renderAuditAction($row, 'HmoClaim'),
             ];
         }, function ($kpiQuery) {
-            $all = $kpiQuery->get();
-            $processed = $all->where('processed_at', '!=', null);
+            $processed = (clone $kpiQuery)->where('processed_at', '!=', null);
             return [
-                ['label' => 'Total Claims', 'value' => number_format($all->count()), 'color' => '#0d6efd'],
-                ['label' => 'Pending', 'value' => number_format($all->where('status', 'pending')->count()), 'color' => '#ffc107'],
-                ['label' => 'Approved', 'value' => number_format($all->where('status', 'approved')->count()), 'color' => '#0dcaf0'],
-                ['label' => 'Rejected', 'value' => number_format($all->where('status', 'rejected')->count()), 'color' => '#dc3545'],
-                ['label' => 'Paid', 'value' => number_format($all->where('status', 'paid')->count()), 'color' => '#198754'],
-                ['label' => 'Total Claims Amount', 'value' => '₦' . number_format($all->sum('claims_amount'), 2), 'color' => '#6610f2'],
-                ['label' => 'Recovered', 'value' => '₦' . number_format($all->where('status', 'paid')->sum('claims_amount'), 2), 'color' => '#198754'],
-                ['label' => 'Avg Processing (hrs)', 'value' => $processed->count() > 0 ? round($processed->avg(fn($r) => Carbon::parse($r->created_at)->diffInHours(Carbon::parse($r->processed_at)))) : '-', 'color' => '#6c757d'],
+                ['label' => 'Total Claims', 'value' => number_format((clone $kpiQuery)->count()), 'color' => '#0d6efd'],
+                ['label' => 'Pending', 'value' => number_format((clone $kpiQuery)->where('status', 'pending')->count()), 'color' => '#ffc107'],
+                ['label' => 'Approved', 'value' => number_format((clone $kpiQuery)->where('status', 'approved')->count()), 'color' => '#0dcaf0'],
+                ['label' => 'Rejected', 'value' => number_format((clone $kpiQuery)->where('status', 'rejected')->count()), 'color' => '#dc3545'],
+                ['label' => 'Paid', 'value' => number_format((clone $kpiQuery)->where('status', 'paid')->count()), 'color' => '#198754'],
+                ['label' => 'Total Claims Amount', 'value' => '₦' . number_format((clone $kpiQuery)->sum('claims_amount'), 2), 'color' => '#6610f2'],
+                ['label' => 'Recovered', 'value' => '₦' . number_format((clone $kpiQuery)->where('status', 'paid')->sum('claims_amount'), 2), 'color' => '#198754'],
+                ['label' => 'Avg Processing (hrs)', 'value' => (clone $processed)->count() > 0 ? round((clone $processed)->avg(\Illuminate\Support\Facades\DB::raw('TIMESTAMPDIFF(HOUR, created_at, processed_at)'))) : '-', 'color' => '#6c757d'],
             ];
         }, $kpiQuery);
     }
@@ -164,16 +163,15 @@ class OpsAuditHmoController extends OpsAuditBaseController
                 'audit' => $this->renderAuditAction($row, 'ProductOrServiceRequest'),
             ];
         }, function ($kpiQuery) {
-            $all = $kpiQuery->get();
             return [
-                ['label' => 'Total Items', 'value' => number_format($all->count()), 'color' => '#0d6efd'],
-                ['label' => 'Express', 'value' => number_format($all->where('coverage_mode', 'express')->count()), 'color' => '#198754'],
-                ['label' => 'Primary', 'value' => number_format($all->where('coverage_mode', 'primary')->count()), 'color' => '#0dcaf0'],
-                ['label' => 'Secondary', 'value' => number_format($all->where('coverage_mode', 'secondary')->count()), 'color' => '#ffc107'],
-                ['label' => 'Pending Vetting', 'value' => number_format($all->where('validation_status', 'pending')->count()), 'color' => '#dc3545'],
-                ['label' => 'Validated', 'value' => number_format($all->where('validation_status', 'validated')->count()), 'color' => '#198754'],
-                ['label' => 'Total Claims Value', 'value' => '₦' . number_format($all->sum('claims_amount'), 2), 'color' => '#6610f2'],
-                ['label' => 'Total Payable', 'value' => '₦' . number_format($all->sum('payable_amount'), 2), 'color' => '#0d6efd'],
+                ['label' => 'Total Items', 'value' => number_format((clone $kpiQuery)->count()), 'color' => '#0d6efd'],
+                ['label' => 'Express', 'value' => number_format((clone $kpiQuery)->where('coverage_mode', 'express')->count()), 'color' => '#198754'],
+                ['label' => 'Primary', 'value' => number_format((clone $kpiQuery)->where('coverage_mode', 'primary')->count()), 'color' => '#0dcaf0'],
+                ['label' => 'Secondary', 'value' => number_format((clone $kpiQuery)->where('coverage_mode', 'secondary')->count()), 'color' => '#ffc107'],
+                ['label' => 'Pending Vetting', 'value' => number_format((clone $kpiQuery)->where('validation_status', 'pending')->count()), 'color' => '#dc3545'],
+                ['label' => 'Validated', 'value' => number_format((clone $kpiQuery)->where('validation_status', 'validated')->count()), 'color' => '#198754'],
+                ['label' => 'Total Claims Value', 'value' => '₦' . number_format((clone $kpiQuery)->sum('claims_amount'), 2), 'color' => '#6610f2'],
+                ['label' => 'Total Payable', 'value' => '₦' . number_format((clone $kpiQuery)->sum('payable_amount'), 2), 'color' => '#0d6efd'],
             ];
         }, $kpiQuery);
     }
@@ -209,11 +207,10 @@ class OpsAuditHmoController extends OpsAuditBaseController
                 'audit' => $this->renderAuditAction($row, 'HmoRemittance'),
             ];
         }, function ($kpiQuery) {
-            $all = $kpiQuery->get();
             return [
-                ['label' => 'Total Remittances', 'value' => number_format($all->count()), 'color' => '#0d6efd'],
-                ['label' => 'Total Remitted Amount', 'value' => '₦' . number_format($all->sum('amount'), 2), 'color' => '#198754'],
-                ['label' => 'Avg Remittance', 'value' => $all->count() > 0 ? '₦' . number_format($all->avg('amount'), 2) : '-', 'color' => '#0dcaf0'],
+                ['label' => 'Total Remittances', 'value' => number_format((clone $kpiQuery)->count()), 'color' => '#0d6efd'],
+                ['label' => 'Total Remitted Amount', 'value' => '₦' . number_format((clone $kpiQuery)->sum('amount'), 2), 'color' => '#198754'],
+                ['label' => 'Avg Remittance', 'value' => (clone $kpiQuery)->count() > 0 ? '₦' . number_format((clone $kpiQuery)->avg('amount'), 2) : '-', 'color' => '#0dcaf0'],
             ];
         }, $kpiQuery);
     }

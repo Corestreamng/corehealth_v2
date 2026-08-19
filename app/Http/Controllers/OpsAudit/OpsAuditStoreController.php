@@ -49,8 +49,8 @@ class OpsAuditStoreController extends OpsAuditBaseController
         $query = PurchaseOrder::with([
             'supplier',
             'targetStore',
-            'createdBy',
-            'approvedBy'
+            'creator',
+            'approver'
         ]);
 
         $this->applyDateFilter($query, $request);
@@ -81,19 +81,18 @@ class OpsAuditStoreController extends OpsAuditBaseController
                 'total' => '₦' . number_format($row->total_amount ?? 0, 2),
                 'paid' => '₦' . number_format($row->amount_paid ?? 0, 2),
                 'balance' => '₦' . number_format($balance, 2),
-                'created_by' => $row->createdBy?->firstname ? ($row->createdBy->firstname . ' ' . ($row->createdBy->surname ?? '')) : '-',
-                'approved_by' => $row->approvedBy?->firstname ? ($row->approvedBy->firstname . ' ' . ($row->approvedBy->surname ?? '')) : '-',
+                'created_by' => $row->creator?->firstname ? ($row->creator->firstname . ' ' . ($row->creator->surname ?? '')) : '-',
+                'approved_by' => $row->approver?->firstname ? ($row->approver->firstname . ' ' . ($row->approver->surname ?? '')) : '-',
                 'payment_info' => $this->renderPaymentInfo($row),
                 'audit' => $this->renderAuditAction($row, 'PurchaseOrder'),
             ];
         }, function ($kpiQuery) {
-            $all = $kpiQuery->get();
             return [
-                ['label' => 'Total POs', 'value' => number_format($all->count()), 'color' => '#0d6efd'],
-                ['label' => 'Draft/Submitted', 'value' => number_format($all->whereIn('status', ['draft', 'submitted'])->count()), 'color' => '#ffc107'],
-                ['label' => 'Approved/Received', 'value' => number_format($all->whereIn('status', ['approved', 'received'])->count()), 'color' => '#198754'],
-                ['label' => 'Total Value', 'value' => '₦' . number_format($all->sum('total_amount'), 2), 'color' => '#6610f2'],
-                ['label' => 'Outstanding', 'value' => '₦' . number_format($all->sum('total_amount') - $all->sum('amount_paid'), 2), 'color' => '#dc3545'],
+                ['label' => 'Total POs', 'value' => number_format((clone $kpiQuery)->count()), 'color' => '#0d6efd'],
+                ['label' => 'Draft/Submitted', 'value' => number_format((clone $kpiQuery)->whereIn('status', ['draft', 'submitted'])->count()), 'color' => '#ffc107'],
+                ['label' => 'Approved/Received', 'value' => number_format((clone $kpiQuery)->whereIn('status', ['approved', 'received'])->count()), 'color' => '#198754'],
+                ['label' => 'Total Value', 'value' => '₦' . number_format((clone $kpiQuery)->sum('total_amount'), 2), 'color' => '#6610f2'],
+                ['label' => 'Outstanding', 'value' => '₦' . number_format((clone $kpiQuery)->sum('total_amount') - (clone $kpiQuery)->sum('amount_paid'), 2), 'color' => '#dc3545'],
             ];
         }, $kpiQuery);
     }
@@ -103,7 +102,7 @@ class OpsAuditStoreController extends OpsAuditBaseController
         $query = StockBatch::with([
             'store',
             'product',
-            'createdBy'
+            'creator'
         ])->where('source', 'manual');
 
         $this->applyDateFilter($query, $request);
@@ -132,18 +131,17 @@ class OpsAuditStoreController extends OpsAuditBaseController
                 'unit_cost' => '₦' . number_format($row->cost_price ?? 0, 2),
                 'total_value' => '₦' . number_format($totalValue, 2),
                 'expiry' => '<span class="' . $expiryColor . '">' . ($row->expiry_date ? Carbon::parse($row->expiry_date)->format('d M Y') : '-') . '</span>',
-                'created_by' => $row->createdBy?->firstname ? ($row->createdBy->firstname . ' ' . ($row->createdBy->surname ?? '')) : '-',
+                'created_by' => $row->creator?->firstname ? ($row->creator->firstname . ' ' . ($row->creator->surname ?? '')) : '-',
                 'payment_info' => $this->renderPaymentInfo($row),
                 'audit' => $this->renderAuditAction($row, 'StockBatch'),
             ];
         }, function ($kpiQuery) {
-            $all = $kpiQuery->get();
-            $totalValue = $all->sum(fn($r) => ($r->initial_qty ?? 0) * ($r->cost_price ?? 0));
-            $expiring = $all->filter(fn($r) => $r->expiry_date && Carbon::parse($r->expiry_date)->isBefore(now()->addMonths(3)))->count();
+            $totalValue = (clone $kpiQuery)->sum(\Illuminate\Support\Facades\DB::raw('initial_qty * cost_price'));
+            $expiring = (clone $kpiQuery)->whereNotNull('expiry_date')->where('expiry_date', '<', now()->addMonths(3))->count();
 
             return [
-                ['label' => 'Total Manual Batches', 'value' => number_format($all->count()), 'color' => '#0d6efd'],
-                ['label' => 'Total Qty', 'value' => number_format($all->sum('initial_qty')), 'color' => '#198754'],
+                ['label' => 'Total Manual Batches', 'value' => number_format((clone $kpiQuery)->count()), 'color' => '#0d6efd'],
+                ['label' => 'Total Qty', 'value' => number_format((clone $kpiQuery)->sum('initial_qty')), 'color' => '#198754'],
                 ['label' => 'Total Value', 'value' => '₦' . number_format($totalValue, 2), 'color' => '#6610f2'],
                 ['label' => 'Expiring < 3 months', 'value' => number_format($expiring), 'color' => '#dc3545'],
             ];

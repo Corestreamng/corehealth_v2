@@ -100,15 +100,14 @@ class OpsAuditBillingController extends OpsAuditBaseController
                 'audit' => $this->renderAuditAction($row, 'Payment'),
             ];
         }, function ($kpiQuery) {
-            $all = $kpiQuery->get();
             return [
-                ['label' => 'Total Collected', 'value' => '₦' . number_format($all->sum('total'), 2), 'color' => '#0d6efd'],
-                ['label' => 'Cash', 'value' => '₦' . number_format($all->where('payment_method', 'CASH')->sum('total'), 2), 'color' => '#198754'],
-                ['label' => 'POS', 'value' => '₦' . number_format($all->where('payment_method', 'POS')->sum('total'), 2), 'color' => '#0dcaf0'],
-                ['label' => 'Transfer', 'value' => '₦' . number_format($all->where('payment_method', 'TRANSFER')->sum('total'), 2), 'color' => '#6610f2'],
-                ['label' => 'HMO Full Cover', 'value' => '₦' . number_format($all->where('payment_method', 'HMO_FULL_COVER')->sum('total'), 2), 'color' => '#dc3545'],
-                ['label' => 'Refunds', 'value' => '₦' . number_format($all->where('payment_method', 'REFUND')->sum('total'), 2), 'color' => '#ffc107'],
-                ['label' => 'Total Discounts', 'value' => '₦' . number_format($all->sum('total_discount'), 2), 'color' => '#6c757d'],
+                ['label' => 'Total Collected', 'value' => '₦' . number_format((clone $kpiQuery)->sum('total'), 2), 'color' => '#0d6efd'],
+                ['label' => 'Cash', 'value' => '₦' . number_format((clone $kpiQuery)->where('payment_method', 'CASH')->sum('total'), 2), 'color' => '#198754'],
+                ['label' => 'POS', 'value' => '₦' . number_format((clone $kpiQuery)->where('payment_method', 'POS')->sum('total'), 2), 'color' => '#0dcaf0'],
+                ['label' => 'Transfer', 'value' => '₦' . number_format((clone $kpiQuery)->where('payment_method', 'TRANSFER')->sum('total'), 2), 'color' => '#6610f2'],
+                ['label' => 'HMO Full Cover', 'value' => '₦' . number_format((clone $kpiQuery)->where('payment_method', 'HMO_FULL_COVER')->sum('total'), 2), 'color' => '#dc3545'],
+                ['label' => 'Refunds', 'value' => '₦' . number_format((clone $kpiQuery)->where('payment_method', 'REFUND')->sum('total'), 2), 'color' => '#ffc107'],
+                ['label' => 'Total Discounts', 'value' => '₦' . number_format((clone $kpiQuery)->sum('total_discount'), 2), 'color' => '#6c757d'],
             ];
         }, $kpiQuery);
     }
@@ -158,13 +157,12 @@ class OpsAuditBillingController extends OpsAuditBaseController
                 'audit' => $this->renderAuditAction($row, 'OrganizationBill'),
             ];
         }, function ($kpiQuery) {
-            $all = $kpiQuery->get();
             return [
-                ['label' => 'Total Bills', 'value' => number_format($all->count()), 'color' => '#0d6efd'],
-                ['label' => 'Pending Audit', 'value' => number_format($all->where('status', 'pending_audit')->count()), 'color' => '#6c757d'],
-                ['label' => 'Paid', 'value' => number_format($all->where('status', 'paid')->count()), 'color' => '#198754'],
-                ['label' => 'Pending', 'value' => number_format($all->where('status', 'pending')->count()), 'color' => '#ffc107'],
-                ['label' => 'Outstanding Value', 'value' => '₦' . number_format($all->sum('outstanding_amount'), 2), 'color' => '#dc3545'],
+                ['label' => 'Total Bills', 'value' => number_format((clone $kpiQuery)->count()), 'color' => '#0d6efd'],
+                ['label' => 'Pending Audit', 'value' => number_format((clone $kpiQuery)->where('status', 'pending_audit')->count()), 'color' => '#6c757d'],
+                ['label' => 'Paid', 'value' => number_format((clone $kpiQuery)->where('status', 'paid')->count()), 'color' => '#198754'],
+                ['label' => 'Pending', 'value' => number_format((clone $kpiQuery)->where('status', 'pending')->count()), 'color' => '#ffc107'],
+                ['label' => 'Outstanding Value', 'value' => '₦' . number_format((clone $kpiQuery)->sum('outstanding_amount'), 2), 'color' => '#dc3545'],
             ];
         }, $kpiQuery);
     }
@@ -215,12 +213,11 @@ class OpsAuditBillingController extends OpsAuditBaseController
                 'audit' => $this->renderAuditAction($row, 'StaffBill'),
             ];
         }, function ($kpiQuery) {
-            $all = $kpiQuery->get();
             return [
-                ['label' => 'Total Bills', 'value' => number_format($all->count()), 'color' => '#0d6efd'],
-                ['label' => 'Paid', 'value' => number_format($all->where('status', 'paid')->count()), 'color' => '#198754'],
-                ['label' => 'Pending', 'value' => number_format($all->where('status', 'pending')->count()), 'color' => '#ffc107'],
-                ['label' => 'Outstanding Value', 'value' => '₦' . number_format($all->sum('outstanding_amount'), 2), 'color' => '#dc3545'],
+                ['label' => 'Total Bills', 'value' => number_format((clone $kpiQuery)->count()), 'color' => '#0d6efd'],
+                ['label' => 'Paid', 'value' => number_format((clone $kpiQuery)->where('status', 'paid')->count()), 'color' => '#198754'],
+                ['label' => 'Pending', 'value' => number_format((clone $kpiQuery)->where('status', 'pending')->count()), 'color' => '#ffc107'],
+                ['label' => 'Outstanding Value', 'value' => '₦' . number_format((clone $kpiQuery)->sum('outstanding_amount'), 2), 'color' => '#dc3545'],
             ];
         }, $kpiQuery);
     }

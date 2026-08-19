@@ -98,12 +98,11 @@ class OpsAuditImagingController extends OpsAuditBaseController
                 'audit' => $this->renderAuditAction($row, 'ImagingServiceRequest'),
             ];
         }, function ($kpiQuery) {
-            $all = $kpiQuery->get();
             return [
-                ['label' => 'Total Scans', 'value' => number_format($all->count()), 'color' => '#0d6efd'],
-                ['label' => 'Ordered', 'value' => number_format($all->where('status', 1)->count()), 'color' => '#ffc107'],
-                ['label' => 'Approved', 'value' => number_format($all->where('status', 4)->count()), 'color' => '#198754'],
-                ['label' => 'Pending Results', 'value' => number_format($all->whereIn('status', [1,2,3])->count()), 'color' => '#dc3545'],
+                ['label' => 'Total Scans', 'value' => number_format((clone $kpiQuery)->count()), 'color' => '#0d6efd'],
+                ['label' => 'Ordered', 'value' => number_format((clone $kpiQuery)->where('status', 1)->count()), 'color' => '#ffc107'],
+                ['label' => 'Approved', 'value' => number_format((clone $kpiQuery)->where('status', 4)->count()), 'color' => '#198754'],
+                ['label' => 'Pending Results', 'value' => number_format((clone $kpiQuery)->whereIn('status', [1,2,3])->count()), 'color' => '#dc3545'],
             ];
         }, $kpiQuery);
     }
@@ -146,12 +145,11 @@ class OpsAuditImagingController extends OpsAuditBaseController
                 'audit' => $this->renderAuditAction($row, 'ProductOrServiceRequest'),
             ];
         }, function ($kpiQuery) {
-            $all = $kpiQuery->get();
             return [
-                ['label' => 'Total Bills', 'value' => number_format($all->count()), 'color' => '#0d6efd'],
-                ['label' => 'Total Amount', 'value' => '₦' . number_format($all->sum('amount'), 2), 'color' => '#6610f2'],
-                ['label' => 'Payable', 'value' => '₦' . number_format($all->sum('payable_amount'), 2), 'color' => '#198754'],
-                ['label' => 'Claims', 'value' => '₦' . number_format($all->sum('claims_amount'), 2), 'color' => '#0dcaf0'],
+                ['label' => 'Total Bills', 'value' => number_format((clone $kpiQuery)->count()), 'color' => '#0d6efd'],
+                ['label' => 'Total Amount', 'value' => '₦' . number_format((clone $kpiQuery)->sum('amount'), 2), 'color' => '#6610f2'],
+                ['label' => 'Payable', 'value' => '₦' . number_format((clone $kpiQuery)->sum('payable_amount'), 2), 'color' => '#198754'],
+                ['label' => 'Claims', 'value' => '₦' . number_format((clone $kpiQuery)->sum('claims_amount'), 2), 'color' => '#0dcaf0'],
             ];
         }, $kpiQuery);
     }
@@ -167,7 +165,7 @@ class OpsAuditImagingController extends OpsAuditBaseController
             'bank',
             'product_or_service_request'
         ])->whereHas('product_or_service_request', function($q) {
-            $q->where('type', 'imaging');
+            $q->whereHas('imagingRequest');
         });
 
         $this->applyDateFilter($query, $request);
@@ -192,12 +190,11 @@ class OpsAuditImagingController extends OpsAuditBaseController
                 'audit' => $this->renderAuditAction($row, 'Payment'),
             ];
         }, function ($kpiQuery) {
-            $all = $kpiQuery->get();
             return [
-                ['label' => 'Total Transactions', 'value' => number_format($all->count()), 'color' => '#0d6efd'],
-                ['label' => 'Total Revenue', 'value' => '₦' . number_format($all->sum('total'), 2), 'color' => '#198754'],
-                ['label' => 'Cash', 'value' => '₦' . number_format($all->where('payment_method', 'cash')->sum('total'), 2), 'color' => '#ffc107'],
-                ['label' => 'POS/Transfer', 'value' => '₦' . number_format($all->whereIn('payment_method', ['pos', 'transfer'])->sum('total'), 2), 'color' => '#6610f2'],
+                ['label' => 'Total Transactions', 'value' => number_format((clone $kpiQuery)->count()), 'color' => '#0d6efd'],
+                ['label' => 'Total Revenue', 'value' => '₦' . number_format((clone $kpiQuery)->sum('total'), 2), 'color' => '#198754'],
+                ['label' => 'Cash', 'value' => '₦' . number_format((clone $kpiQuery)->where('payment_method', 'cash')->sum('total'), 2), 'color' => '#ffc107'],
+                ['label' => 'POS/Transfer', 'value' => '₦' . number_format((clone $kpiQuery)->whereIn('payment_method', ['pos', 'transfer'])->sum('total'), 2), 'color' => '#6610f2'],
             ];
         }, $kpiQuery);
     }

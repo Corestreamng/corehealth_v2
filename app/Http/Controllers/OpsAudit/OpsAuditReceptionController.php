@@ -129,19 +129,18 @@ class OpsAuditReceptionController extends OpsAuditBaseController
                 'audit' => $this->renderAuditAction($row, 'DoctorQueue'),
             ];
         }, function ($kpiQuery) {
-            $all = $kpiQuery->get();
-            $total = $all->count();
+            $total = (clone $kpiQuery)->count();
 
             return [
                 ['label' => 'Total Registrations', 'value' => number_format($total), 'color' => '#0d6efd'],
-                ['label' => 'Emergency', 'value' => number_format($all->where('source', 'emergency_intake')->count()), 'color' => '#dc3545'],
-                ['label' => 'Routine', 'value' => number_format($all->where('priority', 'routine')->count()), 'color' => '#198754'],
-                ['label' => 'Walk-Ins', 'value' => number_format($all->where('source', 'reception')->count()), 'color' => '#6c757d'],
-                ['label' => 'Appointment', 'value' => number_format($all->where('source', 'appointment')->count()), 'color' => '#0dcaf0'],
-                ['label' => 'Maternity', 'value' => number_format($all->where('source', 'maternity')->count()), 'color' => '#d63384'],
-                ['label' => 'Completed', 'value' => number_format($all->where('status', 5)->count()), 'color' => '#198754'],
-                ['label' => 'Avg Wait (min)', 'value' => $all->where('consultation_started_at', '!=', null)->count() > 0
-                    ? round($all->where('consultation_started_at', '!=', null)->avg(fn($r) => Carbon::parse($r->created_at)->diffInMinutes(Carbon::parse($r->consultation_started_at))))
+                ['label' => 'Emergency', 'value' => number_format((clone $kpiQuery)->where('source', 'emergency_intake')->count()), 'color' => '#dc3545'],
+                ['label' => 'Routine', 'value' => number_format((clone $kpiQuery)->where('priority', 'routine')->count()), 'color' => '#198754'],
+                ['label' => 'Walk-Ins', 'value' => number_format((clone $kpiQuery)->where('source', 'reception')->count()), 'color' => '#6c757d'],
+                ['label' => 'Appointment', 'value' => number_format((clone $kpiQuery)->where('source', 'appointment')->count()), 'color' => '#0dcaf0'],
+                ['label' => 'Maternity', 'value' => number_format((clone $kpiQuery)->where('source', 'maternity')->count()), 'color' => '#d63384'],
+                ['label' => 'Completed', 'value' => number_format((clone $kpiQuery)->where('status', 5)->count()), 'color' => '#198754'],
+                ['label' => 'Avg Wait (min)', 'value' => (clone $kpiQuery)->where('consultation_started_at', '!=', null)->count() > 0
+                    ? round((clone $kpiQuery)->where('consultation_started_at', '!=', null)->avg(\Illuminate\Support\Facades\DB::raw('TIMESTAMPDIFF(MINUTE, created_at, consultation_started_at)')))
                     : '-', 'color' => '#6610f2'],
             ];
         }, $kpiQuery);
@@ -200,14 +199,13 @@ class OpsAuditReceptionController extends OpsAuditBaseController
                 'audit' => $this->renderAuditAction($row, 'DoctorAppointment'),
             ];
         }, function ($kpiQuery) {
-            $all = $kpiQuery->get();
             return [
-                ['label' => 'Total', 'value' => number_format($all->count()), 'color' => '#0d6efd'],
-                ['label' => 'Confirmed', 'value' => number_format($all->where('status', 1)->count()), 'color' => '#0d6efd'],
-                ['label' => 'Completed', 'value' => number_format($all->where('status', 3)->count()), 'color' => '#198754'],
-                ['label' => 'No-Shows', 'value' => number_format($all->where('status', 5)->count()), 'color' => '#ffc107'],
-                ['label' => 'Cancellations', 'value' => number_format($all->where('status', 4)->count()), 'color' => '#dc3545'],
-                ['label' => 'Prepaid Follow-Ups', 'value' => number_format($all->where('is_prepaid_followup', true)->count()), 'color' => '#6610f2'],
+                ['label' => 'Total', 'value' => number_format((clone $kpiQuery)->count()), 'color' => '#0d6efd'],
+                ['label' => 'Confirmed', 'value' => number_format((clone $kpiQuery)->where('status', 1)->count()), 'color' => '#0d6efd'],
+                ['label' => 'Completed', 'value' => number_format((clone $kpiQuery)->where('status', 3)->count()), 'color' => '#198754'],
+                ['label' => 'No-Shows', 'value' => number_format((clone $kpiQuery)->where('status', 5)->count()), 'color' => '#ffc107'],
+                ['label' => 'Cancellations', 'value' => number_format((clone $kpiQuery)->where('status', 4)->count()), 'color' => '#dc3545'],
+                ['label' => 'Prepaid Follow-Ups', 'value' => number_format((clone $kpiQuery)->where('is_prepaid_followup', true)->count()), 'color' => '#6610f2'],
             ];
         }, $kpiQuery);
     }
@@ -263,14 +261,13 @@ class OpsAuditReceptionController extends OpsAuditBaseController
                 'audit' => $this->renderAuditAction($row, 'SpecialistReferral'),
             ];
         }, function ($kpiQuery) {
-            $all = $kpiQuery->get();
             return [
-                ['label' => 'Total', 'value' => number_format($all->count()), 'color' => '#0d6efd'],
-                ['label' => 'Internal', 'value' => number_format($all->where('referral_type', 'internal')->count()), 'color' => '#0d6efd'],
-                ['label' => 'External', 'value' => number_format($all->where('referral_type', 'external')->count()), 'color' => '#dc3545'],
-                ['label' => 'Pending', 'value' => number_format($all->where('status', 'pending')->count()), 'color' => '#ffc107'],
-                ['label' => 'Booked', 'value' => number_format($all->where('status', 'booked')->count()), 'color' => '#0dcaf0'],
-                ['label' => 'Referred Out', 'value' => number_format($all->where('status', 'referred_out')->count()), 'color' => '#6610f2'],
+                ['label' => 'Total', 'value' => number_format((clone $kpiQuery)->count()), 'color' => '#0d6efd'],
+                ['label' => 'Internal', 'value' => number_format((clone $kpiQuery)->where('referral_type', 'internal')->count()), 'color' => '#0d6efd'],
+                ['label' => 'External', 'value' => number_format((clone $kpiQuery)->where('referral_type', 'external')->count()), 'color' => '#dc3545'],
+                ['label' => 'Pending', 'value' => number_format((clone $kpiQuery)->where('status', 'pending')->count()), 'color' => '#ffc107'],
+                ['label' => 'Booked', 'value' => number_format((clone $kpiQuery)->where('status', 'booked')->count()), 'color' => '#0dcaf0'],
+                ['label' => 'Referred Out', 'value' => number_format((clone $kpiQuery)->where('status', 'referred_out')->count()), 'color' => '#6610f2'],
             ];
         }, $kpiQuery);
     }

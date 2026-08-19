@@ -103,11 +103,10 @@ class OpsAuditMaternityController extends OpsAuditBaseController
                 'audit' => $this->renderAuditAction($row, 'MaternityEnrollment'),
             ];
         }, function ($kpiQuery) {
-            $all = $kpiQuery->get();
             return [
-                ['label' => 'Total Enrollments', 'value' => number_format($all->count()), 'color' => '#0d6efd'],
-                ['label' => 'Active/Postnatal', 'value' => number_format($all->where('status', '!=', 'completed')->count()), 'color' => '#198754'],
-                ['label' => 'Completed', 'value' => number_format($all->where('status', 'completed')->count()), 'color' => '#6c757d'],
+                ['label' => 'Total Enrollments', 'value' => number_format((clone $kpiQuery)->count()), 'color' => '#0d6efd'],
+                ['label' => 'Active/Postnatal', 'value' => number_format((clone $kpiQuery)->where('status', '!=', 'completed')->count()), 'color' => '#198754'],
+                ['label' => 'Completed', 'value' => number_format((clone $kpiQuery)->where('status', 'completed')->count()), 'color' => '#6c757d'],
             ];
         }, $kpiQuery);
     }
@@ -152,10 +151,9 @@ class OpsAuditMaternityController extends OpsAuditBaseController
                 'audit' => $this->renderAuditAction($row, 'AncVisit'),
             ];
         }, function ($kpiQuery) {
-            $all = $kpiQuery->get();
             return [
-                ['label' => 'Total ANC Visits', 'value' => number_format($all->count()), 'color' => '#0d6efd'],
-                ['label' => 'Unique Patients', 'value' => number_format($all->pluck('patient_id')->unique()->count()), 'color' => '#198754'],
+                ['label' => 'Total ANC Visits', 'value' => number_format((clone $kpiQuery)->count()), 'color' => '#0d6efd'],
+                ['label' => 'Unique Patients', 'value' => number_format((clone $kpiQuery)->distinct()->count('patient_id')), 'color' => '#198754'],
             ];
         }, $kpiQuery);
     }
@@ -198,10 +196,9 @@ class OpsAuditMaternityController extends OpsAuditBaseController
                 'audit' => $this->renderAuditAction($row, 'DeliveryRecord'),
             ];
         }, function ($kpiQuery) {
-            $all = $kpiQuery->get();
             return [
-                ['label' => 'Total Deliveries', 'value' => number_format($all->count()), 'color' => '#0d6efd'],
-                ['label' => 'Total Babies', 'value' => number_format($all->sum('number_of_babies')), 'color' => '#dc3545'],
+                ['label' => 'Total Deliveries', 'value' => number_format((clone $kpiQuery)->count()), 'color' => '#0d6efd'],
+                ['label' => 'Total Babies', 'value' => number_format((clone $kpiQuery)->sum('number_of_babies')), 'color' => '#dc3545'],
             ];
         }, $kpiQuery);
     }
@@ -240,11 +237,10 @@ class OpsAuditMaternityController extends OpsAuditBaseController
                 'audit' => $this->renderAuditAction($row, 'MaternityBaby'),
             ];
         }, function ($kpiQuery) {
-            $all = $kpiQuery->get();
             return [
-                ['label' => 'Total Babies', 'value' => number_format($all->count()), 'color' => '#0d6efd'],
-                ['label' => 'Alive', 'value' => number_format($all->where('status', 'alive')->count()), 'color' => '#198754'],
-                ['label' => 'Stillbirths/Deceased', 'value' => number_format($all->where('status', '!=', 'alive')->count()), 'color' => '#dc3545'],
+                ['label' => 'Total Babies', 'value' => number_format((clone $kpiQuery)->count()), 'color' => '#0d6efd'],
+                ['label' => 'Alive', 'value' => number_format((clone $kpiQuery)->where('status', 'alive')->count()), 'color' => '#198754'],
+                ['label' => 'Stillbirths/Deceased', 'value' => number_format((clone $kpiQuery)->where('status', '!=', 'alive')->count()), 'color' => '#dc3545'],
             ];
         }, $kpiQuery);
     }
@@ -286,9 +282,8 @@ class OpsAuditMaternityController extends OpsAuditBaseController
                 'audit' => $this->renderAuditAction($row, 'PostnatalVisit'),
             ];
         }, function ($kpiQuery) {
-            $all = $kpiQuery->get();
             return [
-                ['label' => 'Total Visits', 'value' => number_format($all->count()), 'color' => '#0d6efd'],
+                ['label' => 'Total Visits', 'value' => number_format((clone $kpiQuery)->count()), 'color' => '#0d6efd'],
             ];
         }, $kpiQuery);
     }
@@ -331,9 +326,8 @@ class OpsAuditMaternityController extends OpsAuditBaseController
                 'audit' => $this->renderAuditAction($row, 'ImmunizationRecord'),
             ];
         }, function ($kpiQuery) {
-            $all = $kpiQuery->get();
             return [
-                ['label' => 'Total Vaccines Given', 'value' => number_format($all->count()), 'color' => '#0d6efd'],
+                ['label' => 'Total Vaccines Given', 'value' => number_format((clone $kpiQuery)->count()), 'color' => '#0d6efd'],
             ];
         }, $kpiQuery);
     }
@@ -381,12 +375,11 @@ class OpsAuditMaternityController extends OpsAuditBaseController
                 'audit' => $this->renderAuditAction($row, 'ProductOrServiceRequest'),
             ];
         }, function ($kpiQuery) {
-            $all = $kpiQuery->get();
             return [
-                ['label' => 'Total Bills', 'value' => number_format($all->count()), 'color' => '#0d6efd'],
-                ['label' => 'Total Amount', 'value' => '₦' . number_format($all->sum('amount'), 2), 'color' => '#6610f2'],
-                ['label' => 'Payable', 'value' => '₦' . number_format($all->sum('payable_amount'), 2), 'color' => '#198754'],
-                ['label' => 'Claims', 'value' => '₦' . number_format($all->sum('claims_amount'), 2), 'color' => '#0dcaf0'],
+                ['label' => 'Total Bills', 'value' => number_format((clone $kpiQuery)->count()), 'color' => '#0d6efd'],
+                ['label' => 'Total Amount', 'value' => '₦' . number_format((clone $kpiQuery)->sum('amount'), 2), 'color' => '#6610f2'],
+                ['label' => 'Payable', 'value' => '₦' . number_format((clone $kpiQuery)->sum('payable_amount'), 2), 'color' => '#198754'],
+                ['label' => 'Claims', 'value' => '₦' . number_format((clone $kpiQuery)->sum('claims_amount'), 2), 'color' => '#0dcaf0'],
             ];
         }, $kpiQuery);
     }
