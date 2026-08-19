@@ -54,10 +54,10 @@ class OpsAuditLabController extends OpsAuditBaseController
             'doctor',
             'service',
             'biller',
+            'sampler',
             'resultBy',
             'approver',
             'productOrServiceRequest.payment.staff_user',
-        
             'productOrServiceRequest.payment.user',
         ]);
 
@@ -79,6 +79,11 @@ class OpsAuditLabController extends OpsAuditBaseController
 
             $statusColors = [1 => 'warning text-dark', 2 => 'info', 3 => 'primary', 4 => 'success'];
             $statusTexts = [1 => 'Ordered', 2 => 'Sample Collected', 3 => 'Result Entered', 4 => 'Approved'];
+            
+            $statusHtml = '<span class="badge bg-'.($statusColors[$row->status] ?? 'secondary').'">'.($statusTexts[$row->status] ?? $row->status).'</span>';
+            if ($row->sampler && $row->status >= 2) {
+                $statusHtml .= '<div class="mt-1 text-muted fw-bold" style="font-size:0.7rem;"><i class="mdi mdi-flask me-1"></i>Sample: ' . trim($row->sampler->firstname . ' ' . $row->sampler->surname) . '</div>';
+            }
 
             return [
                 'date' => $row->created_at ? Carbon::parse($row->created_at)->format('d M Y') : '-',
@@ -86,7 +91,7 @@ class OpsAuditLabController extends OpsAuditBaseController
                 'hmo' => $this->renderHmo($hmo),
                 'test' => $row->service?->service_name ?? ($row->is_free_form ? $row->free_form_name : '-'),
                 'doctor' => $row->doctor?->firstname ? ($row->doctor->firstname . ' ' . ($row->doctor->surname ?? '')) : '-',
-                'status' => '<span class="badge bg-'.($statusColors[$row->status] ?? 'secondary').'">'.($statusTexts[$row->status] ?? $row->status).'</span>',
+                'status' => $statusHtml,
                 'result_by' => $row->resultBy?->firstname ? ($row->resultBy->firstname . ' ' . ($row->resultBy->surname ?? '')) : '-',
                 'approved_by' => $row->approver?->firstname ? ($row->approver->firstname . ' ' . ($row->approver->surname ?? '')) : '-',
                 'billed_by' => $row->biller?->firstname ? ($row->biller->firstname . ' ' . ($row->biller->surname ?? '')) : '-',

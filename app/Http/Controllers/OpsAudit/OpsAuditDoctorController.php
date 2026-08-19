@@ -253,8 +253,9 @@ class OpsAuditDoctorController extends OpsAuditBaseController
             'doctor',
             'product',
             'productOrServiceRequest.payment',
-        
             'productOrServiceRequest.payment.user',
+            'biller',
+            'dispenser'
         ]);
 
         $this->applyDateFilter($query, $request);
@@ -277,8 +278,15 @@ class OpsAuditDoctorController extends OpsAuditBaseController
             $statusColors = [1 => 'warning text-dark', 2 => 'info', 3 => 'success', 4 => 'danger'];
             $statusTexts = [1 => 'Pending', 2 => 'Approved', 3 => 'Dispensed', 4 => 'Returned'];
             
-            $biller = $posr?->biller;
-            $billerName = $biller?->firstname ? ($biller->firstname . ' ' . ($biller->surname ?? '')) : '-';
+            $statusHtml = '<span class="badge bg-'.($statusColors[$row->status] ?? 'secondary').'">'.($statusTexts[$row->status] ?? $row->status).'</span>';
+            
+            $biller = $row->biller ?? $posr?->biller;
+            if ($biller) {
+                $statusHtml .= '<div class="mt-1 text-muted fw-bold" style="font-size:0.7rem;"><i class="mdi mdi-receipt me-1"></i>Billed: ' . trim($biller->firstname . ' ' . $biller->surname) . '</div>';
+            }
+            if ($row->dispenser && $row->status >= 3) {
+                $statusHtml .= '<div class="mt-1 text-muted fw-bold" style="font-size:0.7rem;"><i class="mdi mdi-pill me-1"></i>Dispensed: ' . trim($row->dispenser->firstname . ' ' . $row->dispenser->surname) . '</div>';
+            }
 
             return [
                 'date' => $row->created_at ? Carbon::parse($row->created_at)->format('d M Y') : '-',
@@ -287,10 +295,10 @@ class OpsAuditDoctorController extends OpsAuditBaseController
                 'doctor' => $row->doctor?->firstname ? ($row->doctor->firstname . ' ' . ($row->doctor->surname ?? '')) : '-',
                 'product' => $row->product?->product_name ?? ($row->is_free_form ? $row->free_form_name : '-'),
                 'qty' => $row->qty ?? '-',
-                'store' => '-', // Missing store relation in basic model dump, omit or show N/A
-                'status' => '<span class="badge bg-'.($statusColors[$row->status] ?? 'secondary').'">'.($statusTexts[$row->status] ?? $row->status).'</span>',
-                'billed_by' => $billerName,
-                'dispensed_by' => '-', // Missing dispensed_by relation logic for now
+                'store' => '-',
+                'status' => $statusHtml,
+                'billed_by' => $row->biller?->firstname ? ($row->biller->firstname . ' ' . ($row->biller->surname ?? '')) : '-',
+                'dispensed_by' => $row->dispenser?->firstname ? ($row->dispenser->firstname . ' ' . ($row->dispenser->surname ?? '')) : '-',
                 'payment_info' => $this->renderPaymentInfo($row),
                 'audit' => $this->renderAuditAction($row, 'ProductRequest'),
             ];
