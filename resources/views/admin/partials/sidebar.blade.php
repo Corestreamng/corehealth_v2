@@ -1169,6 +1169,12 @@
                     <span class="menu-title">{{ __('sidebar.audit_workbench') }}</span>
                 </a>
             </li>
+            <li class="nav-item {{ request()->routeIs('ops-audit.*') ? 'active' : '' }}">
+                <a class="nav-link {{ request()->routeIs('ops-audit.*') ? 'active' : '' }}" href="{{ route('ops-audit.reception') }}" id="sidebar-ops-audit">
+                    <i class="mdi mdi-clipboard-check-multiple menu-icon"></i>
+                    <span class="menu-title">Ops Audit</span>
+                </a>
+            </li>
             @endif
             {{-- ========================================
                  ADMINISTRATION SECTION (SUPERADMIN/ADMIN Only)
