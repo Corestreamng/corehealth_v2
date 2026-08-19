@@ -56,12 +56,20 @@
                         <tr>
                             <th>Item</th>
                             <th class="text-center">Status</th>
+                            <th class="text-end">Unit Cost</th>
                             <th class="text-end">Requested</th>
                             <th class="text-end">Approved</th>
                             <th class="text-end">Fulfilled</th>
+                            <th class="text-end text-danger">Rejected</th>
                         </tr>
                     </thead>
                     <tbody>
+                        @php
+                            $grandReq = 0;
+                            $grandAppr = 0;
+                            $grandFul = 0;
+                            $grandRej = 0;
+                        @endphp
                         @forelse($requisition->items as $item)
                             @php
                                 $pkg = $item->packaging ?? optional($item->product)->packagings->firstWhere('is_default_purchase', true) ?? optional($item->product)->packagings->first();
@@ -85,6 +93,19 @@
                                 if($item->status === 'fulfilled') $itemStatusColor = 'success';
                                 if($item->status === 'rejected') $itemStatusColor = 'danger';
                                 if($item->status === 'partial') $itemStatusColor = 'warning';
+
+                                $cost = ($item->sourceBatch && (float)$item->sourceBatch->cost_price > 0) ? (float)$item->sourceBatch->cost_price : (float)(optional(optional($item->product)->price)->pr_buy_price ?? 0);
+                                
+                                $isRejected = $item->status === 'rejected';
+                                $reqVal = $isRejected ? 0 : $cost * ($item->requested_qty ?? 0);
+                                $apprVal = $isRejected ? 0 : $cost * ($item->approved_qty ?? 0);
+                                $fulVal = $isRejected ? 0 : $cost * ($item->fulfilled_qty ?? 0);
+                                $rejVal = $isRejected ? $cost * ($item->requested_qty ?? 0) : 0;
+
+                                $grandReq += $reqVal;
+                                $grandAppr += $apprVal;
+                                $grandFul += $fulVal;
+                                $grandRej += $rejVal;
                             @endphp
                             <tr>
                                 <td>
@@ -96,16 +117,39 @@
                                 <td class="text-center">
                                     <span class="badge bg-{{ $itemStatusColor }}">{{ ucfirst($item->status) }}</span>
                                 </td>
-                                <td class="text-end">{!! $formatQty($item->requested_qty) !!}</td>
-                                <td class="text-end">{!! $formatQty($item->approved_qty) !!}</td>
-                                <td class="text-end">{!! $formatQty($item->fulfilled_qty) !!}</td>
+                                <td class="text-end fw-bold">₦{{ number_format($cost, 2) }}</td>
+                                <td class="text-end">
+                                    {!! $formatQty($item->requested_qty) !!}
+                                    <div class="small text-muted mt-1">₦{{ number_format($reqVal, 2) }}</div>
+                                </td>
+                                <td class="text-end">
+                                    {!! $formatQty($item->approved_qty) !!}
+                                    <div class="small text-muted mt-1">₦{{ number_format($apprVal, 2) }}</div>
+                                </td>
+                                <td class="text-end">
+                                    {!! $formatQty($isRejected ? 0 : $item->fulfilled_qty) !!}
+                                    <div class="small text-muted mt-1">₦{{ number_format($fulVal, 2) }}</div>
+                                </td>
+                                <td class="text-end">
+                                    {!! $formatQty($isRejected ? $item->requested_qty : 0) !!}
+                                    <div class="small text-danger mt-1">₦{{ number_format($rejVal, 2) }}</div>
+                                </td>
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="5" class="text-center text-muted p-4">No items found for this requisition.</td>
+                                <td colspan="7" class="text-center text-muted p-4">No items found for this requisition.</td>
                             </tr>
                         @endforelse
                     </tbody>
+                    <tfoot class="bg-light">
+                        <tr>
+                            <th colspan="3" class="text-end font-weight-bold text-dark">Grand Total:</th>
+                            <th class="text-end text-dark">₦{{ number_format($grandReq, 2) }}</th>
+                            <th class="text-end text-dark">₦{{ number_format($grandAppr, 2) }}</th>
+                            <th class="text-end text-dark">₦{{ number_format($grandFul, 2) }}</th>
+                            <th class="text-end text-danger">₦{{ number_format($grandRej, 2) }}</th>
+                        </tr>
+                    </tfoot>
                 </table>
             </div>
         </div>

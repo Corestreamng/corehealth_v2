@@ -708,6 +708,109 @@ abstract class OpsAuditBaseController extends Controller
     /**
      * Generic Details Endpoint for OpsAudit Modal
      */
+    protected function moduleRequisitionsData(Request $request, $storeRoleConfig = null)
+    {
+        $query = \App\Models\StoreRequisition::with([
+            'fromStore',
+            'toStore',
+            'requester',
+            'approver',
+            'fulfiller',
+            'items.product.price',
+            'items.sourceBatch'
+        ]);
+
+        $this->applyDateFilter($query, $request);
+
+        if ($request->filled('from_store_id')) $query->where('from_store_id', $request->from_store_id);
+        if ($request->filled('to_store_id')) $query->where('to_store_id', $request->to_store_id);
+        if ($request->filled('status')) $query->where('status', $request->status);
+        if ($request->filled('requested_by')) $query->where('requested_by', $request->requested_by);
+
+        if ($storeRoleConfig) {
+            $query->where(function ($q) use ($storeRoleConfig) {
+                $q->whereHas('fromStore', function ($sub) use ($storeRoleConfig) {
+                    if (!empty($storeRoleConfig['roles'])) {
+                        $sub->whereIn('distribution_role', $storeRoleConfig['roles']);
+                    }
+                    if (!empty($storeRoleConfig['name_match'])) {
+                        $sub->where(function ($nameSub) use ($storeRoleConfig) {
+                            foreach ($storeRoleConfig['name_match'] as $match) {
+                                $nameSub->orWhere('store_name', 'like', $match);
+                            }
+                        });
+                    }
+                })->orWhereHas('toStore', function ($sub) use ($storeRoleConfig) {
+                    if (!empty($storeRoleConfig['roles'])) {
+                        $sub->whereIn('distribution_role', $storeRoleConfig['roles']);
+                    }
+                    if (!empty($storeRoleConfig['name_match'])) {
+                        $sub->where(function ($nameSub) use ($storeRoleConfig) {
+                            foreach ($storeRoleConfig['name_match'] as $match) {
+                                $nameSub->orWhere('store_name', 'like', $match);
+                            }
+                        });
+                    }
+                });
+            });
+        }
+
+        $kpiQuery = clone $query;
+
+        return $this->buildDataTableResponse($query, $request, fn($q) => $q, function ($row) {
+            $statusColors = ['pending' => 'warning text-dark', 'approved' => 'info', 'fulfilled' => 'success', 'rejected' => 'danger', 'partial' => 'warning'];
+            $sColor = $statusColors[$row->status] ?? 'secondary';
+
+            $getCost = fn($i) => ($i->sourceBatch && (float)$i->sourceBatch->cost_price > 0) ? (float)$i->sourceBatch->cost_price : (float)($i->product->price->pr_buy_price ?? 0);
+
+            $reqValue = $row->items ? $row->items->sum(fn($i) => $i->status !== 'rejected' ? (($i->requested_qty ?? 0) * $getCost($i)) : 0) : 0;
+            $apprValue = $row->items ? $row->items->sum(fn($i) => $i->status !== 'rejected' ? (($i->approved_qty ?? 0) * $getCost($i)) : 0) : 0;
+            $fulValue = $row->items ? $row->items->sum(fn($i) => $i->status !== 'rejected' ? (($i->fulfilled_qty ?? 0) * $getCost($i)) : 0) : 0;
+            $rejValue = $row->items ? $row->items->sum(fn($i) => $i->status === 'rejected' ? (($i->requested_qty ?? 0) * $getCost($i)) : 0) : 0;
+
+            return [
+                'date' => $row->created_at ? \Carbon\Carbon::parse($row->created_at)->format('d M Y') : '-',
+                'req_no' => $row->requisition_number ?? '-',
+                'from_store' => $row->fromStore ? ($row->fromStore->store_name . '<br><small class="text-muted">' . $row->fromStore->distributionRoleLabel() . '</small>') : '-',
+                'to_store' => $row->toStore ? ($row->toStore->store_name . '<br><small class="text-muted">' . $row->toStore->distributionRoleLabel() . '</small>') : '-',
+                'status' => '<span class="badge bg-' . $sColor . '">' . ucfirst($row->status ?? '-') . '</span>',
+                'requested_by' => $row->requester?->firstname ? ($row->requester->firstname . ' ' . ($row->requester->surname ?? '')) : '-',
+                'approved_by' => $row->approver?->firstname ? ($row->approver->firstname . ' ' . ($row->approver->surname ?? '')) : '-',
+                'fulfilled_by' => $row->fulfiller?->firstname ? ($row->fulfiller->firstname . ' ' . ($row->fulfiller->surname ?? '')) : '-',
+                'items_count' => $row->items ? $row->items->count() : '-',
+                'req_value' => '₦' . number_format($reqValue, 2),
+                'appr_value' => '₦' . number_format($apprValue, 2),
+                'ful_value' => '₦' . number_format($fulValue, 2),
+                'rej_value' => '₦' . number_format($rejValue, 2),
+                'payment_info' => $this->renderPaymentInfo($row),
+                'audit' => $this->renderAuditAction($row, 'StoreRequisition'),
+            ];
+        }, function ($kpiQuery) {
+            $all = $kpiQuery->get();
+            $getCost = fn($i) => ($i->sourceBatch && (float)$i->sourceBatch->cost_price > 0) ? (float)$i->sourceBatch->cost_price : (float)($i->product->price->pr_buy_price ?? 0);
+            
+            $totalReqCost = $all->sum(function($req) use ($getCost) {
+                return $req->items ? $req->items->sum(fn($i) => $i->status !== 'rejected' ? (($i->requested_qty ?? 0) * $getCost($i)) : 0) : 0;
+            });
+            $totalApprCost = $all->sum(function($req) use ($getCost) {
+                return $req->items ? $req->items->sum(fn($i) => $i->status !== 'rejected' ? (($i->approved_qty ?? 0) * $getCost($i)) : 0) : 0;
+            });
+            $totalFulCost = $all->sum(function($req) use ($getCost) {
+                return $req->items ? $req->items->sum(fn($i) => $i->status !== 'rejected' ? (($i->fulfilled_qty ?? 0) * $getCost($i)) : 0) : 0;
+            });
+            $totalRejCost = $all->sum(function($req) use ($getCost) {
+                return $req->items ? $req->items->sum(fn($i) => $i->status === 'rejected' ? (($i->requested_qty ?? 0) * $getCost($i)) : 0) : 0;
+            });
+            return [
+                ['label' => 'Total Requisitions', 'value' => number_format($all->count()), 'color' => '#0d6efd'],
+                ['label' => 'Req Value (Cost)', 'value' => '₦' . number_format($totalReqCost, 2), 'color' => '#17a2b8'],
+                ['label' => 'Appr Value (Cost)', 'value' => '₦' . number_format($totalApprCost, 2), 'color' => '#ffc107'],
+                ['label' => 'Ful Value (Cost)', 'value' => '₦' . number_format($totalFulCost, 2), 'color' => '#28a745'],
+                ['label' => 'Rej Value (Cost)', 'value' => '₦' . number_format($totalRejCost, 2), 'color' => '#dc3545'],
+            ];
+        }, $kpiQuery);
+    }
+
     public function getRecordDetails($type, $id)
     {
         if ($type === 'admission') {
@@ -746,6 +849,8 @@ abstract class OpsAuditBaseController extends Controller
     {
         $requisition = \App\Models\StoreRequisition::with([
             'items.product.packagings', 
+            'items.product.price',
+            'items.sourceBatch',
             'fromStore', 
             'toStore', 
             'requester', 
