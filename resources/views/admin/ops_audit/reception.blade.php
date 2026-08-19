@@ -136,6 +136,7 @@
                     <option value="female">Female</option>
                 </select>
             </div>
+            @include('admin.ops_audit.partials.payment_filters', ['tab' => 'queues'])
         </div>
 
         <div class="table-responsive">
@@ -153,6 +154,7 @@
                         <th>Status</th>
                         <th>Wait</th>
                         <th>Vitals</th>
+                        <th style="min-width: 150px;">Payment Info</th>
                         <th>Audit ⚡</th>
                     </tr>
                 </thead>
@@ -202,6 +204,7 @@
                     <option value="female">Female</option>
                 </select>
             </div>
+            @include('admin.ops_audit.partials.payment_filters', ['tab' => 'appointments'])
         </div>
 
         <div class="table-responsive">
@@ -217,11 +220,7 @@
                         <th>Status</th>
                         <th>Booked By</th>
                         <th>Cancel Reason</th>
-                        <th>Payable</th>
-                        <th>Claims</th>
-                        <th>Cashier</th>
-                        <th>Method</th>
-                        <th>Pay Status</th>
+                        <th style="min-width: 150px;">Payment Info</th>
                         <th>Audit ⚡</th>
                     </tr>
                 </thead>
@@ -350,6 +349,7 @@ $(function() {
         { data: 'status' },
         { data: 'wait' },
         { data: 'vitals' },
+        { data: 'payment_info', name: 'payment_info', orderable: false, searchable: false },
         { data: 'audit', orderable: false, searchable: false }
     ], 'kpi-queues'));
 
@@ -369,11 +369,7 @@ $(function() {
                 { data: 'status' },
                 { data: 'booked_by' },
                 { data: 'cancel_reason' },
-                { data: 'payable' },
-                { data: 'claims' },
-                { data: 'cashier' },
-                { data: 'method' },
-                { data: 'pay_status' },
+                { data: 'payment_info', name: 'payment_info', orderable: false, searchable: false },
                 { data: 'audit', orderable: false, searchable: false }
             ], 'kpi-appointments'));
         }

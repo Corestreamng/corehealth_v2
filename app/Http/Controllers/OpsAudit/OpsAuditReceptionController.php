@@ -56,13 +56,16 @@ class OpsAuditReceptionController extends OpsAuditBaseController
             'patient.user',
             'patient.hmo.scheme',
             'clinic',
-            'doctor',
-            'receptionist',
+            'doctor.user',
+            'staff.user',
+            'receptionist.user',
+            'request_entry.payment.user',
         ]);
 
         // Apply filters
         $this->applyDateFilter($query, $request);
         $this->applyShiftFilter($query, $request);
+        $this->applyPaymentFilters($query, $request, 'request_entry');
 
         if ($request->filled('source')) {
             $query->where('source', $request->source);
@@ -118,11 +121,12 @@ class OpsAuditReceptionController extends OpsAuditBaseController
                 'source' => '<span class="badge bg-' . ($row->source === 'emergency_intake' ? 'danger' : 'light text-dark border') . '">' . ucfirst(str_replace('_', ' ', $row->source)) . '</span>',
                 'priority' => '<span class="badge bg-' . ($row->priority === 'emergency' ? 'danger' : ($row->priority === 'urgent' ? 'warning text-dark' : 'light text-dark border')) . ' font-weight-bold">' . ucfirst($row->priority) . '</span>',
                 'clinic' => $row->clinic?->name ?? '<span class="text-muted">-</span>',
-                'doctor' => $doctor?->firstname ? ($doctor->firstname . ' ' . ($doctor->surname ?? '')) : '<span class="text-muted">-</span>',
-                'receptionist' => $row->receptionist?->firstname ? ($row->receptionist->firstname . ' ' . ($row->receptionist->surname ?? '')) : '<span class="text-muted">-</span>',
+                'doctor' => $doctor?->user?->firstname ? ($doctor->user->firstname . ' ' . ($doctor->user->surname ?? '')) : '<span class="text-muted">-</span>',
+                'receptionist' => $row->receptionist?->user?->firstname ? ($row->receptionist->user->firstname . ' ' . ($row->receptionist->user->surname ?? '')) : '<span class="text-muted">-</span>',
                 'status' => '<span class="badge bg-' . $s[1] . ' font-weight-bold">' . $s[0] . '</span>',
                 'wait' => is_numeric($waitMins) ? $waitMins . ' min' : $waitMins,
                 'vitals' => $row->vitals_taken ? '<i class="mdi mdi-check-circle text-success"></i>' : '<i class="mdi mdi-close-circle text-danger"></i>',
+                'payment_info' => $this->renderPaymentInfo($row),
                 'audit' => $this->renderAuditAction($row, 'DoctorQueue'),
             ];
         }, function ($kpiQuery) {
@@ -153,13 +157,14 @@ class OpsAuditReceptionController extends OpsAuditBaseController
             'patient.user',
             'patient.hmo.scheme',
             'clinic',
-            'doctor',
-            'bookedBy',
-            'serviceRequest.payment',
+            'doctor.user',
+            'bookedBy.user',
+            'serviceRequest.payment.user',
         ]);
 
         $this->applyDateFilter($query, $request);
         $this->applyShiftFilter($query, $request);
+        $this->applyPaymentFilters($query, $request, 'serviceRequest');
 
         if ($request->filled('appointment_type')) $query->where('appointment_type', $request->appointment_type);
         if ($request->filled('status')) $query->where('status', $request->status);
@@ -188,15 +193,11 @@ class OpsAuditReceptionController extends OpsAuditBaseController
                 'hmo' => $this->renderHmo($hmo),
                 'type' => '<span class="badge bg-light text-dark border">' . ucfirst(str_replace('_', ' ', $row->appointment_type ?? '-')) . '</span>',
                 'clinic' => $row->clinic?->name ?? '-',
-                'doctor' => $row->doctor?->firstname ? ($row->doctor->firstname . ' ' . ($row->doctor->surname ?? '')) : '-',
+                'doctor' => $row->doctor?->user?->firstname ? ($row->doctor->user->firstname . ' ' . ($row->doctor->user->surname ?? '')) : '-',
                 'status' => '<span class="badge bg-' . $s[1] . ' font-weight-bold">' . $s[0] . '</span>',
-                'booked_by' => $row->bookedBy?->firstname ? ($row->bookedBy->firstname . ' ' . ($row->bookedBy->surname ?? '')) : '-',
+                'booked_by' => $row->bookedBy?->user?->firstname ? ($row->bookedBy->user->firstname . ' ' . ($row->bookedBy->user->surname ?? '')) : '-',
                 'cancel_reason' => $row->cancellation_reason ? '<small class="text-danger">' . e(\Illuminate\Support\Str::limit($row->cancellation_reason, 30)) . '</small>' : '-',
-                'payable' => $sr ? '₦' . number_format($sr->payable_amount ?? 0, 2) : '-',
-                'claims' => $sr ? '₦' . number_format($sr->claims_amount ?? 0, 2) : '-',
-                'cashier' => $payment?->user?->firstname ? ($payment->user->firstname . ' ' . ($payment->user->surname ?? '')) : '-',
-                'method' => $payment?->payment_method ? '<span class="badge bg-light text-dark border">' . $payment->payment_method . '</span>' : '-',
-                'pay_status' => $payment ? '<span class="badge bg-success">Paid</span>' : ($sr ? '<span class="badge bg-warning text-dark">Unpaid</span>' : '-'),
+                'payment_info' => $this->renderPaymentInfo($row),
                 'audit' => $this->renderAuditAction($row, 'DoctorAppointment'),
             ];
         }, function ($kpiQuery) {

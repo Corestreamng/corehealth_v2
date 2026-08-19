@@ -284,4 +284,89 @@ abstract class OpsAuditBaseController extends Controller
 
         return response()->json(['success' => false, 'message' => 'Invalid action']);
     }
+
+    /**
+     * Shared helper to render POSR Payment Information
+     */
+    protected function renderPaymentInfo($record)
+    {
+        $posr = null;
+        if ($record instanceof \App\Models\ProductOrServiceRequest) {
+            $posr = $record;
+        } elseif (method_exists($record, 'request_entry') && $record->request_entry instanceof \App\Models\ProductOrServiceRequest) {
+            $posr = $record->request_entry;
+        } elseif (method_exists($record, 'productOrServiceRequest') && $record->productOrServiceRequest instanceof \App\Models\ProductOrServiceRequest) {
+            $posr = $record->productOrServiceRequest;
+        } elseif (method_exists($record, 'serviceRequest') && $record->serviceRequest instanceof \App\Models\ProductOrServiceRequest) {
+            $posr = $record->serviceRequest;
+        }
+
+        if (!$posr) {
+            // For Payment cashbook rows
+            if ($record instanceof \App\Models\Payment) {
+                $payment = $record;
+                $paymentMethod = $payment->payment_method ?: '-';
+                $cashier = ($payment->user) ? ($payment->user->firstname . ' ' . ($payment->user->surname ?? '')) : '-';
+                $time = $payment->created_at ? $payment->created_at->format('d M y H:i') : '-';
+                return "
+                    <div style='font-size: 0.75rem; line-height: 1.2;'>
+                        <div class='mb-1'><strong>Method:</strong> {$paymentMethod}</div>
+                        <div class='mb-1'><strong>Cashier:</strong> {$cashier}</div>
+                        <div class='text-muted'>{$time}</div>
+                    </div>
+                ";
+            }
+            return '<span class="text-muted">-</span>';
+        }
+
+        $payment = $posr->payment;
+        $payable = number_format($posr->payable_amount, 2);
+        $claims = number_format($posr->claims_amount, 2);
+        
+        $paymentMethod = $payment ? $payment->payment_method : '-';
+        $cashier = ($payment && $payment->user) ? ($payment->user->firstname . ' ' . ($payment->user->surname ?? '')) : '-';
+        $time = $payment ? $payment->created_at->format('d M y H:i') : '-';
+
+        return "
+            <div style='font-size: 0.75rem; line-height: 1.2;'>
+                <div class='mb-1'><strong>Payable:</strong> {$payable} &nbsp;|&nbsp; <strong>Claims:</strong> {$claims}</div>
+                <div class='mb-1'><strong>Method:</strong> {$paymentMethod}</div>
+                <div class='mb-1'><strong>Cashier:</strong> {$cashier}</div>
+                <div class='text-muted'>{$time}</div>
+            </div>
+        ";
+    }
+
+    /**
+     * Shared helper to apply Cashier and Payment Method filters
+     */
+    protected function applyPaymentFilters($query, Request $request, $posrRelationPath = '')
+    {
+        if (!$request->filled('payment_method') && !$request->filled('cashier_id')) {
+            return $query;
+        }
+
+        // If the model is a Payment
+        if ($posrRelationPath === 'self_payment') {
+            if ($request->filled('payment_method')) {
+                $query->where('payment_method', $request->payment_method);
+            }
+            if ($request->filled('cashier_id')) {
+                $query->where('user_id', $request->cashier_id);
+            }
+            return $query;
+        }
+
+        // Otherwise, it relates to POSR which relates to Payment
+        $paymentRel = $posrRelationPath ? $posrRelationPath . '.payment' : 'payment';
+
+        return $query->whereHas($paymentRel, function ($q) use ($request) {
+            if ($request->filled('payment_method')) {
+                $q->where('payment_method', $request->payment_method);
+            }
+            if ($request->filled('cashier_id')) {
+                $q->where('user_id', $request->cashier_id);
+            }
+        });
+    }
 }

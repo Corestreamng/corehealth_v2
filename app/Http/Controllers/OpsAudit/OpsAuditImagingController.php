@@ -57,10 +57,13 @@ class OpsAuditImagingController extends OpsAuditBaseController
             'resultBy',
             'approver',
             'productOrServiceRequest.payment.staff_user'
+        
+            'productOrServiceRequest.payment.user',
         ]);
 
         $this->applyDateFilter($query, $request);
         $this->applyShiftFilter($query, $request);
+        $this->applyPaymentFilters($query, $request, 'productOrServiceRequest');
 
         if ($request->filled('status')) $query->where('status', $request->status);
         if ($request->filled('hmo_id')) $query->whereHas('patient.hmo', fn($q) => $q->where('id', $request->hmo_id));
@@ -87,11 +90,7 @@ class OpsAuditImagingController extends OpsAuditBaseController
                 'result_by' => $row->resultBy?->firstname ? ($row->resultBy->firstname . ' ' . ($row->resultBy->surname ?? '')) : '-',
                 'approved_by' => $row->approver?->firstname ? ($row->approver->firstname . ' ' . ($row->approver->surname ?? '')) : '-',
                 'billed_by' => $row->biller?->firstname ? ($row->biller->firstname . ' ' . ($row->biller->surname ?? '')) : '-',
-                'payable' => $posr ? '₦' . number_format($posr->payable_amount ?? 0, 2) : '-',
-                'claims' => $posr ? '₦' . number_format($posr->claims_amount ?? 0, 2) : '-',
-                'cashier' => $payment?->staff_user?->firstname ? ($payment->staff_user->firstname . ' ' . ($payment->staff_user->surname ?? '')) : '-',
-                'method' => $payment?->payment_method ? '<span class="badge bg-light text-dark border">' . $payment->payment_method . '</span>' : '-',
-                'pay_status' => $payment ? '<span class="badge bg-success">Paid</span>' : ($posr ? '<span class="badge bg-warning text-dark">Unpaid</span>' : '-'),
+                'payment_info' => $this->renderPaymentInfo($row),
                 'audit' => $this->renderAuditAction($row, 'ImagingServiceRequest'),
             ];
         }, function ($kpiQuery) {
@@ -120,6 +119,7 @@ class OpsAuditImagingController extends OpsAuditBaseController
 
         $this->applyDateFilter($query, $request);
         $this->applyShiftFilter($query, $request);
+        $this->applyPaymentFilters($query, $request, 'productOrServiceRequest');
 
         if ($request->filled('hmo_id')) $query->whereHas('patient.hmo', fn($q) => $q->where('id', $request->hmo_id));
 
@@ -137,12 +137,8 @@ class OpsAuditImagingController extends OpsAuditBaseController
                 'hmo' => $this->renderHmo($hmo),
                 'test' => $row->service?->service_name ?? '-',
                 'amount' => '₦' . number_format($row->amount ?? 0, 2),
-                'payable' => '₦' . number_format($row->payable_amount ?? 0, 2),
-                'claims' => '₦' . number_format($row->claims_amount ?? 0, 2),
-                'billed_by' => $row->staff?->firstname ? ($row->staff->firstname . ' ' . ($row->staff->surname ?? '')) : '-',
-                'cashier' => $payment?->staff_user?->firstname ? ($payment->staff_user->firstname . ' ' . ($payment->staff_user->surname ?? '')) : '-',
-                'method' => $payment?->payment_method ? '<span class="badge bg-light text-dark border">' . $payment->payment_method . '</span>' : '-',
-                'pay_status' => $payment ? '<span class="badge bg-success">Paid</span>' : '<span class="badge bg-warning text-dark">Unpaid</span>',
+                'payment_info' => $this->renderPaymentInfo($row),
+                                'billed_by' => $row->staff?->firstname ? ($row->staff->firstname . ' ' . ($row->staff->surname ?? '')) : '-',
                 'audit' => $this->renderAuditAction($row, 'ProductOrServiceRequest'),
             ];
         }, function ($kpiQuery) {

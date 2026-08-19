@@ -103,6 +103,7 @@
                     <option value="discharged">Discharged</option>
                 </select>
             </div>
+            @include('admin.ops_audit.partials.payment_filters', ['tab' => 'admissions'])
         </div>
 
         <div class="table-responsive">
@@ -117,11 +118,7 @@
                         <th>Status</th>
                         <th>LOS</th>
                         <th>Total Bill</th>
-                        <th>Payable</th>
-                        <th>Claims</th>
-                        <th>Cashier</th>
-                        <th>Method</th>
-                        <th>Pay Status</th>
+                        <th style="min-width: 150px;">Payment Info</th>
                         <th>Audit ⚡</th>
                     </tr>
                 </thead>
@@ -247,8 +244,7 @@ $(function() {
     // Init tab 1
     dtInstances.admissions = $('#dt-admissions').DataTable(commonOpts(dataUrls.admissions, [
         { data: 'date' }, { data: 'patient' }, { data: 'hmo' }, { data: 'ward' }, { data: 'bed' },
-        { data: 'status' }, { data: 'los' }, { data: 'total_bill' }, { data: 'payable' }, { data: 'claims' },
-        { data: 'cashier' }, { data: 'method' }, { data: 'pay_status' },
+        { data: 'status' }, { data: 'los' }, { data: 'total_bill' }, { data: 'payment_info', name: 'payment_info', orderable: false, searchable: false },
         { data: 'audit', orderable: false, searchable: false }
     ], 'kpi-admissions'));
 
