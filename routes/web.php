@@ -1251,6 +1251,59 @@ Route::middleware(['auth'])->prefix('audit-workbench')->name('audit.')->group(fu
     Route::post('/resolve-query', [\App\Http\Controllers\AuditWorkbenchController::class, 'resolveQuery'])->name('resolve-query');
 });
 
+// ============================================================
+// Ops Audit Workbench (12 modules)
+// ============================================================
+Route::middleware(['auth'])->prefix('ops-audit')->name('ops-audit.')->group(function () {
+    // Module 1: Reception
+    Route::get('/reception', [\App\Http\Controllers\OpsAudit\OpsAuditReceptionController::class, 'index'])->name('reception');
+    Route::match(['get', 'post'], '/reception/data/{tab}', [\App\Http\Controllers\OpsAudit\OpsAuditReceptionController::class, 'data'])->name('reception.data');
+
+    // Module 2: Doctor
+    Route::get('/doctor', [\App\Http\Controllers\OpsAudit\OpsAuditDoctorController::class, 'index'])->name('doctor');
+    Route::match(['get', 'post'], '/doctor/data/{tab}', [\App\Http\Controllers\OpsAudit\OpsAuditDoctorController::class, 'data'])->name('doctor.data');
+
+    // Module 3: Nursing
+    Route::get('/nursing', [\App\Http\Controllers\OpsAudit\OpsAuditNursingController::class, 'index'])->name('nursing');
+    Route::match(['get', 'post'], '/nursing/data/{tab}', [\App\Http\Controllers\OpsAudit\OpsAuditNursingController::class, 'data'])->name('nursing.data');
+
+    // Module 4: Pharmacy
+    Route::get('/pharmacy', [\App\Http\Controllers\OpsAudit\OpsAuditPharmacyController::class, 'index'])->name('pharmacy');
+    Route::match(['get', 'post'], '/pharmacy/data/{tab}', [\App\Http\Controllers\OpsAudit\OpsAuditPharmacyController::class, 'data'])->name('pharmacy.data');
+
+    // Module 5: Lab
+    Route::get('/lab', [\App\Http\Controllers\OpsAudit\OpsAuditLabController::class, 'index'])->name('lab');
+    Route::match(['get', 'post'], '/lab/data/{tab}', [\App\Http\Controllers\OpsAudit\OpsAuditLabController::class, 'data'])->name('lab.data');
+
+    // Module 6: Imaging
+    Route::get('/imaging', [\App\Http\Controllers\OpsAudit\OpsAuditImagingController::class, 'index'])->name('imaging');
+    Route::match(['get', 'post'], '/imaging/data/{tab}', [\App\Http\Controllers\OpsAudit\OpsAuditImagingController::class, 'data'])->name('imaging.data');
+
+    // Module 7: Maternity
+    Route::get('/maternity', [\App\Http\Controllers\OpsAudit\OpsAuditMaternityController::class, 'index'])->name('maternity');
+    Route::match(['get', 'post'], '/maternity/data/{tab}', [\App\Http\Controllers\OpsAudit\OpsAuditMaternityController::class, 'data'])->name('maternity.data');
+
+    // Module 8: Surgery
+    Route::get('/surgery', [\App\Http\Controllers\OpsAudit\OpsAuditSurgeryController::class, 'index'])->name('surgery');
+    Route::match(['get', 'post'], '/surgery/data/{tab}', [\App\Http\Controllers\OpsAudit\OpsAuditSurgeryController::class, 'data'])->name('surgery.data');
+
+    // Module 9: Morgue
+    Route::get('/morgue', [\App\Http\Controllers\OpsAudit\OpsAuditMorgueController::class, 'index'])->name('morgue');
+    Route::match(['get', 'post'], '/morgue/data/{tab}', [\App\Http\Controllers\OpsAudit\OpsAuditMorgueController::class, 'data'])->name('morgue.data');
+
+    // Module 10: HMO
+    Route::get('/hmo', [\App\Http\Controllers\OpsAudit\OpsAuditHmoController::class, 'index'])->name('hmo');
+    Route::match(['get', 'post'], '/hmo/data/{tab}', [\App\Http\Controllers\OpsAudit\OpsAuditHmoController::class, 'data'])->name('hmo.data');
+
+    // Module 11: Billing
+    Route::get('/billing', [\App\Http\Controllers\OpsAudit\OpsAuditBillingController::class, 'index'])->name('billing');
+    Route::match(['get', 'post'], '/billing/data/{tab}', [\App\Http\Controllers\OpsAudit\OpsAuditBillingController::class, 'data'])->name('billing.data');
+
+    // Module 12: Store
+    Route::get('/store', [\App\Http\Controllers\OpsAudit\OpsAuditStoreController::class, 'index'])->name('store');
+    Route::match(['get', 'post'], '/store/data/{tab}', [\App\Http\Controllers\OpsAudit\OpsAuditStoreController::class, 'data'])->name('store.data');
+});
+
 // Workbench Shared Modals (Hospital Contacts & Price List)
 Route::middleware(['auth'])->group(function () {
     // Hospital Contacts
