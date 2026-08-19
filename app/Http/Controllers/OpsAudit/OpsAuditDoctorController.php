@@ -255,7 +255,8 @@ class OpsAuditDoctorController extends OpsAuditBaseController
             'productOrServiceRequest.payment',
             'productOrServiceRequest.payment.user',
             'biller',
-            'dispenser'
+            'dispenser',
+            'dispensedFromStore'
         ]);
 
         $this->applyDateFilter($query, $request);
@@ -295,7 +296,7 @@ class OpsAuditDoctorController extends OpsAuditBaseController
                 'doctor' => $row->doctor?->firstname ? ($row->doctor->firstname . ' ' . ($row->doctor->surname ?? '')) : '-',
                 'product' => $row->product?->product_name ?? ($row->is_free_form ? $row->free_form_name : '-'),
                 'qty' => $row->qty ?? '-',
-                'store' => '-',
+                'store' => $row->dispensedFromStore ? ($row->dispensedFromStore->store_name . '<br><small class="text-muted">' . $row->dispensedFromStore->distributionRoleLabel() . '</small>') : '-',
                 'status' => $statusHtml,
                 'billed_by' => $row->biller?->firstname ? ($row->biller->firstname . ' ' . ($row->biller->surname ?? '')) : '-',
                 'dispensed_by' => $row->dispenser?->firstname ? ($row->dispenser->firstname . ' ' . ($row->dispenser->surname ?? '')) : '-',
