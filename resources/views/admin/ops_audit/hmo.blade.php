@@ -96,6 +96,11 @@
 
         <div class="row g-2 mb-2">
             <div class="col-md-2">
+                <select name="entity" class="form-select form-select-sm ajax-entity-search ops-tab-filter" data-tab="claims" data-placeholder="Search Entity/Patient...">
+                    <option value="">All Entities</option>
+                </select>
+            </div>
+            <div class="col-md-2">
                 <select name="status" class="form-select form-select-sm ops-tab-filter" data-tab="claims">
                     <option value="">All Statuses</option>
                     <option value="pending">Pending</option>
@@ -157,6 +162,11 @@
         <div class="row g-2 mb-3 ops-kpi-row" id="kpi-coverage"></div>
 
         <div class="row g-2 mb-2">
+            <div class="col-md-2">
+                <select name="entity" class="form-select form-select-sm ajax-entity-search ops-tab-filter" data-tab="coverage" data-placeholder="Search Entity/Patient...">
+                    <option value="">All Entities</option>
+                </select>
+            </div>
             <div class="col-md-2">
                 <select name="coverage_mode" class="form-select form-select-sm ops-tab-filter" data-tab="coverage">
                     <option value="">All Modes</option>

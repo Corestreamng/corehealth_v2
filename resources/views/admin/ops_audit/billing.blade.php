@@ -177,6 +177,11 @@
 
         <div class="row g-2 mb-2">
             <div class="col-md-2">
+                <select name="entity" class="form-select form-select-sm ajax-entity-search ops-tab-filter" data-tab="organization-bills" data-placeholder="Search Entity/Patient...">
+                    <option value="">All Entities</option>
+                </select>
+            </div>
+            <div class="col-md-2">
                 <select name="organization_id" class="form-select form-select-sm ops-tab-filter" data-tab="organization_bills">
                     <option value="">All Organizations</option>
                     @foreach($organizations as $id => $name)
@@ -232,6 +237,11 @@
         <div class="row g-2 mb-3 ops-kpi-row" id="kpi-staff-bills"></div>
 
         <div class="row g-2 mb-2">
+            <div class="col-md-2">
+                <select name="entity" class="form-select form-select-sm ajax-entity-search ops-tab-filter" data-tab="staff-bills" data-placeholder="Search Entity/Patient...">
+                    <option value="">All Entities</option>
+                </select>
+            </div>
             <div class="col-md-2">
                 <select name="staff_user_id" class="form-select form-select-sm ops-tab-filter" data-tab="staff_bills">
                     <option value="">Staff Member</option>

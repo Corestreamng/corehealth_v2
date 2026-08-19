@@ -235,6 +235,11 @@
 
         <div class="row g-2 mb-2">
             <div class="col-md-2">
+                <select name="entity" class="form-select form-select-sm ajax-entity-search ops-tab-filter" data-tab="referrals" data-placeholder="Search Entity/Patient...">
+                    <option value="">All Entities</option>
+                </select>
+            </div>
+            <div class="col-md-2">
                 <select name="referral_type" class="form-select form-select-sm ops-tab-filter" data-tab="referrals">
                     <option value="">All Types</option>
                     <option value="internal">Internal</option>
