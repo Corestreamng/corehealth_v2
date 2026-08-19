@@ -73,10 +73,35 @@
 <div class="tab-content bg-white border border-top-0 rounded-bottom p-3">
     {{-- Tab 1: Summary --}}
     <div class="tab-pane fade" id="pane-summary" role="tabpanel">
-        <div class="alert alert-info">
-            <i class="mdi mdi-information me-1"></i> For detailed stock movement analysis, cost valuations, and profit/loss breakdown, please refer to the main <strong>Inventory -> Summary Reports</strong> module.
+        <ul class="nav nav-pills mb-3" id="store-summary-pills" role="tablist">
+            <li class="nav-item">
+                <a class="nav-link active font-weight-bold" id="pill-summary-given" data-bs-toggle="pill" href="#pane-summary-given" role="tab">
+                    <i class="mdi mdi-arrow-top-right text-danger me-1"></i> Stock Issued (Given)
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link font-weight-bold" id="pill-summary-received" data-bs-toggle="pill" href="#pane-summary-received" role="tab">
+                    <i class="mdi mdi-arrow-bottom-left text-success me-1"></i> Stock Received
+                </a>
+            </li>
+        </ul>
+        
+        <div class="tab-content border-0 p-0">
+            <div class="tab-pane fade show active" id="pane-summary-given" role="tabpanel">
+                @include('admin.inventory.components.summary-report-ui', [
+                    'storeIds' => implode(',', array_keys($stores->toArray())), 
+                    'storeName' => 'All Stores (Global)', 
+                    'mode' => 'given'
+                ])
+            </div>
+            <div class="tab-pane fade" id="pane-summary-received" role="tabpanel">
+                @include('admin.inventory.components.summary-report-ui', [
+                    'storeIds' => implode(',', array_keys($stores->toArray())), 
+                    'storeName' => 'All Stores (Global)', 
+                    'mode' => 'received'
+                ])
+            </div>
         </div>
-        <a href="{{ Route::has('admin.inventory.summary') ? route('admin.inventory.summary') : '#' }}" class="btn btn-outline-primary">Go to Summary Reports</a>
     </div>
 
     {{-- Tab 2: Requisitions --}}
@@ -127,6 +152,7 @@
                         <th>Req Value</th>
                         <th>Appr Value</th>
                         <th>Ful Value</th>
+                        <th>Rej Value</th>
                         <th>Audit ⚡</th>
                     </tr>
                 </thead>
