@@ -40,7 +40,7 @@ class OpsAuditEndpointsTest extends TestCase
 
         $uri = "/ops-audit/{$module}/data/{$tab}";
         
-        $response = $this->getJson($uri . '?start=0&length=10');
+        $response = $this->getJson($uri . '?start=0&length=500');
         
         $response->assertStatus(200);
         $response->assertJsonStructure(['data']);
@@ -71,7 +71,7 @@ class OpsAuditEndpointsTest extends TestCase
 
         $uri = "/ops-audit/{$module}/data/{$tab}";
         
-        $response = $this->getJson($uri . '?start=0&length=10&payment_method=CASH&cashier_id=1');
+        $response = $this->getJson($uri . '?start=0&length=500&payment_method=CASH&cashier_id=1');
         
         $response->assertStatus(200);
         $response->assertJsonStructure(['data']);
