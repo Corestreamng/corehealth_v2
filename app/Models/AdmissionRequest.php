@@ -171,6 +171,11 @@ class AdmissionRequest extends Model implements Auditable
         return $this->hasOne(DischargeChecklist::class, 'admission_request_id');
     }
 
+    public function bills()
+    {
+        return $this->hasMany(ProductOrServiceRequest::class, 'admission_request_id');
+    }
+
     // =====================
     // Scopes
     // =====================

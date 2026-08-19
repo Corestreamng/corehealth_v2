@@ -114,4 +114,14 @@ class Encounter extends Model implements Auditable
     {
         return $this->hasMany(SpecialistReferral::class, 'encounter_id', 'id');
     }
+
+    public function admissionRequests()
+    {
+        return $this->hasMany(AdmissionRequest::class, 'encounter_id', 'id');
+    }
+
+    public function procedures()
+    {
+        return $this->hasMany(Procedure::class, 'encounter_id', 'id');
+    }
 }

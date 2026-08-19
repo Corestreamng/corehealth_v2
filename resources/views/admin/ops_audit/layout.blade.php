@@ -291,7 +291,7 @@
             </div>
             <div class="nav-item">
                 <a href="{{ route('ops-audit.nursing') }}" class="nav-link {{ request()->routeIs('ops-audit.nursing*') ? 'active' : '' }}">
-                    <i class="mdi mdi-bed"></i> Nursing / Ward
+                    <i class="mdi mdi-heart-pulse"></i> Nursing / Ward
                 </a>
             </div>
             <div class="nav-item">
@@ -313,7 +313,7 @@
             <div class="menu-section">Specialized</div>
             <div class="nav-item">
                 <a href="{{ route('ops-audit.maternity') }}" class="nav-link {{ request()->routeIs('ops-audit.maternity*') ? 'active' : '' }}">
-                    <i class="mdi mdi-baby-carriage"></i> Maternity
+                    <i class="mdi mdi-mother-nurse"></i> Maternity
                 </a>
             </div>
             <div class="nav-item">
