@@ -60,7 +60,7 @@ class OpsAuditPharmacyController extends OpsAuditBaseController
             'patient.user',
             'patient.hmo.scheme',
             'doctor',
-            'product',
+            'product.category',
             'productOrServiceRequest.payment.staff_user',
             'biller',
             'dispenser'
@@ -75,8 +75,10 @@ class OpsAuditPharmacyController extends OpsAuditBaseController
         } else {
             $query->where('status', '>=', 1);
         }
-        
+
         if ($request->filled('hmo_id')) $query->whereHas('patient.hmo', fn($q) => $q->where('id', $request->hmo_id));
+
+        $this->applyItemFilters($query, $request, '', ['product']);
 
         $kpiQuery = clone $query;
 
@@ -89,8 +91,8 @@ class OpsAuditPharmacyController extends OpsAuditBaseController
 
             $statusColors = [1 => 'warning text-dark', 2 => 'info', 3 => 'success', 4 => 'danger'];
             $statusTexts = [1 => 'Pending', 2 => 'Approved', 3 => 'Dispensed', 4 => 'Returned'];
-            
-            $statusHtml = '<span class="badge bg-'.($statusColors[$row->status] ?? 'secondary').'">'.($statusTexts[$row->status] ?? $row->status).'</span>';
+
+            $statusHtml = '<span class="badge bg-' . ($statusColors[$row->status] ?? 'secondary') . '">' . ($statusTexts[$row->status] ?? $row->status) . '</span>';
             if ($row->biller) {
                 $statusHtml .= '<div class="mt-1 text-muted fw-bold" style="font-size:0.7rem;"><i class="mdi mdi-receipt me-1"></i>Billed: ' . trim($row->biller->firstname . ' ' . $row->biller->surname) . '</div>';
             }
@@ -103,7 +105,7 @@ class OpsAuditPharmacyController extends OpsAuditBaseController
                 'patient' => $this->renderPatient($user, $patient, $hmo),
                 'hmo' => $this->renderHmo($hmo),
                 'doctor' => $row->doctor?->firstname ? ($row->doctor->firstname . ' ' . ($row->doctor->surname ?? '')) : '-',
-                'product' => $row->product?->product_name ?? ($row->is_free_form ? $row->free_form_name : '-'),
+                'product' => $this->renderItemDetails($row),
                 'qty' => $row->qty ?? '-',
                 'status' => $statusHtml,
                 'payable' => $posr ? '₦' . number_format($posr->payable_amount ?? 0, 2) : '-',
@@ -118,7 +120,7 @@ class OpsAuditPharmacyController extends OpsAuditBaseController
             return [
                 ['label' => 'Total Prescriptions', 'value' => number_format((clone $kpiQuery)->count()), 'color' => '#0d6efd'],
                 ['label' => 'Dispensed', 'value' => number_format((clone $kpiQuery)->where('status', 3)->count()), 'color' => '#198754'],
-                ['label' => 'Pending/Approved', 'value' => number_format((clone $kpiQuery)->whereIn('status', [1,2])->count()), 'color' => '#ffc107'],
+                ['label' => 'Pending/Approved', 'value' => number_format((clone $kpiQuery)->whereIn('status', [1, 2])->count()), 'color' => '#ffc107'],
             ];
         }, $kpiQuery);
     }
@@ -130,23 +132,24 @@ class OpsAuditPharmacyController extends OpsAuditBaseController
     {
         $query = ProductRequest::with([
             'patient.user',
-            'product',
+            'product.category',
             'biller',
             'dispenser'
-        ])->where(function($q) {
+        ])->where(function ($q) {
             $q->where('status', 4)->orWhere('damaged_qty', '>', 0);
         });
 
         $this->applyDateFilter($query, $request);
         $this->applyShiftFilter($query, $request);
         $this->applyPaymentFilters($query, $request, 'productOrServiceRequest');
+        $this->applyItemFilters($query, $request, 'productOrServiceRequest');
 
         $kpiQuery = clone $query;
 
         return $this->buildDataTableResponse($query, $request, fn($q) => $q, function ($row) {
             $patient = $row->patient;
             $user = $patient?->user;
-            
+
             $type = $row->status == 4 ? '<span class="badge bg-warning text-dark">Return</span>' : '<span class="badge bg-danger">Damage</span>';
             if ($row->biller) {
                 $type .= '<div class="mt-1 text-muted fw-bold" style="font-size:0.7rem;"><i class="mdi mdi-receipt me-1"></i>Billed: ' . trim($row->biller->firstname . ' ' . $row->biller->surname) . '</div>';
@@ -158,7 +161,7 @@ class OpsAuditPharmacyController extends OpsAuditBaseController
             return [
                 'date' => $row->created_at ? Carbon::parse($row->created_at)->format('d M Y') : '-',
                 'patient' => $this->renderPatient($user, $patient, null),
-                'product' => $row->product?->product_name ?? ($row->is_free_form ? $row->free_form_name : '-'),
+                'product' => $this->renderItemDetails($row),
                 'type' => $type,
                 'qty' => $row->returned_qty > 0 ? $row->returned_qty : $row->damaged_qty,
                 'reason' => $row->return_reason ?? $row->damage_reason ?? '-',
@@ -184,9 +187,7 @@ class OpsAuditPharmacyController extends OpsAuditBaseController
     {
         $query = StoreRequisitionItem::with([
             'requisition',
-            'product',
-        
-            
+            'product.category',
         ]);
 
         $this->applyDateFilter($query, $request);
@@ -198,15 +199,15 @@ class OpsAuditPharmacyController extends OpsAuditBaseController
 
         return $this->buildDataTableResponse($query, $request, fn($q) => $q, function ($row) {
             $statusColors = ['pending' => 'warning text-dark', 'approved' => 'info', 'fulfilled' => 'success', 'rejected' => 'danger'];
-            
+
             return [
                 'date' => $row->created_at ? Carbon::parse($row->created_at)->format('d M Y') : '-',
                 'requisition_no' => $row->requisition?->requisition_no ?? '-',
-                'product' => $row->product?->product_name ?? '-',
+                'product' => $this->renderItemDetails($row),
                 'requested_qty' => $row->requested_qty ?? '-',
                 'approved_qty' => $row->approved_qty ?? '-',
                 'fulfilled_qty' => $row->fulfilled_qty ?? '-',
-                'status' => '<span class="badge bg-'.($statusColors[$row->status] ?? 'secondary').'">'.ucfirst($row->status ?? '-').'</span>',
+                'status' => '<span class="badge bg-' . ($statusColors[$row->status] ?? 'secondary') . '">' . ucfirst($row->status ?? '-') . '</span>',
                 'payment_info' => $this->renderPaymentInfo($row),
                 'audit' => $this->renderAuditAction($row, 'StoreRequisitionItem'),
             ];
@@ -228,27 +229,31 @@ class OpsAuditPharmacyController extends OpsAuditBaseController
             'patient.user',
             'staff_user',
             'bank',
-            'product_or_service_request'
-        ])->whereHas('product_or_service_request', function($q) {
+            'product_or_service_request',
+            'product_or_service_request.product.category',
+            'product_or_service_request.service.category'
+        ])->whereHas('product_or_service_request', function ($q) {
             $q->whereNotNull('product_id');
         });
 
         $this->applyDateFilter($query, $request);
         $this->applyShiftFilter($query, $request);
         $this->applyPaymentFilters($query, $request, 'self_payment');
+        $this->applyItemFilters($query, $request, 'product_or_service_request');
 
         $kpiQuery = clone $query;
 
         return $this->buildDataTableResponse($query, $request, fn($q) => $q, function ($row) {
             $patient = $row->patient;
             $user = $patient?->user;
-            
+
             return [
                 'date' => $row->created_at ? Carbon::parse($row->created_at)->format('d M Y H:i') : '-',
                 'reference' => $row->reference_no ?? '-',
+                'item' => $this->renderPosrItem($row->product_or_service_request, $row->id),
                 'patient' => $this->renderPatient($user, $patient, null),
                 'total' => '₦' . number_format($row->total ?? 0, 2),
-                'method' => $row->payment_method ? '<span class="badge bg-light text-dark border">'.$row->payment_method.'</span>' : '-',
+                'method' => $row->payment_method ? '<span class="badge bg-light text-dark border">' . $row->payment_method . '</span>' : '-',
                 'cashier' => $row->staff_user?->firstname ? ($row->staff_user->firstname . ' ' . ($row->staff_user->surname ?? '')) : '-',
                 'bank' => $this->renderBankDetails($row),
                 'entity' => $this->renderPaymentEntityDetails($row),

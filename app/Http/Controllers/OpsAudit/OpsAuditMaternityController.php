@@ -64,15 +64,16 @@ class OpsAuditMaternityController extends OpsAuditBaseController
     protected function enrollmentsData(Request $request)
     {
         $query = MaternityEnrollment::with([
-            'patient.user',
+'patient.user',
             'patient.hmo.scheme',
         
             'serviceRequest.payment.user',
-        ]);
+]);
 
         $this->applyDateFilter($query, $request);
         $this->applyShiftFilter($query, $request);
         $this->applyPaymentFilters($query, $request, 'serviceRequest');
+        $this->applyItemFilters($query, $request, 'serviceRequest');
 
         if ($request->filled('status')) $query->where('status', $request->status);
         if ($request->filled('hmo_id')) $query->whereHas('patient.hmo', fn($q) => $q->where('id', $request->hmo_id));
@@ -117,17 +118,18 @@ class OpsAuditMaternityController extends OpsAuditBaseController
     protected function ancData(Request $request)
     {
         $query = AncVisit::with([
-            'patient.user',
+'patient.user',
             'patient.hmo.scheme',
         
             
         
             'encounter.productOrServiceRequest.payment.user',
-        ]);
+]);
 
         $this->applyDateFilter($query, $request);
         $this->applyShiftFilter($query, $request);
         $this->applyPaymentFilters($query, $request, 'encounter.productOrServiceRequest');
+        $this->applyItemFilters($query, $request, 'encounter.productOrServiceRequest');
 
         if ($request->filled('hmo_id')) $query->whereHas('patient.hmo', fn($q) => $q->where('id', $request->hmo_id));
 
@@ -164,15 +166,16 @@ class OpsAuditMaternityController extends OpsAuditBaseController
     protected function deliveriesData(Request $request)
     {
         $query = DeliveryRecord::with([
-            'patient.user',
+'patient.user',
             'patient.hmo.scheme',
         
             'encounter.productOrServiceRequest.payment.user',
-        ]);
+]);
 
         $this->applyDateFilter($query, $request);
         $this->applyShiftFilter($query, $request);
         $this->applyPaymentFilters($query, $request, 'encounter.productOrServiceRequest');
+        $this->applyItemFilters($query, $request, 'encounter.productOrServiceRequest');
 
         if ($request->filled('hmo_id')) $query->whereHas('patient.hmo', fn($q) => $q->where('id', $request->hmo_id));
 
@@ -209,13 +212,14 @@ class OpsAuditMaternityController extends OpsAuditBaseController
     protected function babiesData(Request $request)
     {
         $query = MaternityBaby::with([
-            'patient.user', // Mother
+'patient.user', // Mother
             'patient.hmo.scheme',
-        ]);
+]);
 
         $this->applyDateFilter($query, $request);
         $this->applyShiftFilter($query, $request);
         $this->applyPaymentFilters($query, $request, 'enrollment.serviceRequest');
+        $this->applyItemFilters($query, $request, 'enrollment.serviceRequest');
 
         if ($request->filled('hmo_id')) $query->whereHas('patient.hmo', fn($q) => $q->where('id', $request->hmo_id));
 
@@ -251,15 +255,16 @@ class OpsAuditMaternityController extends OpsAuditBaseController
     protected function postnatalData(Request $request)
     {
         $query = PostnatalVisit::with([
-            'patient.user',
+'patient.user',
             'patient.hmo.scheme',
         
             'encounter.productOrServiceRequest.payment.user',
-        ]);
+]);
 
         $this->applyDateFilter($query, $request);
         $this->applyShiftFilter($query, $request);
         $this->applyPaymentFilters($query, $request, 'encounter.productOrServiceRequest');
+        $this->applyItemFilters($query, $request, 'encounter.productOrServiceRequest');
 
         if ($request->filled('hmo_id')) $query->whereHas('patient.hmo', fn($q) => $q->where('id', $request->hmo_id));
 
@@ -294,16 +299,17 @@ class OpsAuditMaternityController extends OpsAuditBaseController
     protected function immunizationsData(Request $request)
     {
         $query = ImmunizationRecord::with([
-            'patient.user',
+'patient.user',
             'patient.hmo.scheme',
-            'product',
+            'product.category',
         
             'productOrServiceRequest.payment.user',
-        ]);
+]);
 
         $this->applyDateFilter($query, $request);
         $this->applyShiftFilter($query, $request);
         $this->applyPaymentFilters($query, $request, 'productOrServiceRequest');
+        $this->applyItemFilters($query, $request, 'productOrServiceRequest');
 
         if ($request->filled('hmo_id')) $query->whereHas('patient.hmo', fn($q) => $q->where('id', $request->hmo_id));
 
@@ -339,11 +345,11 @@ class OpsAuditMaternityController extends OpsAuditBaseController
     {
         // Get all bills where patient is in maternity enrollments
         $query = ProductOrServiceRequest::with([
-            'patient.user',
+'patient.user',
             'patient.hmo.scheme',
             'staff',
             'payment.staff_user',
-        ])->whereHas('patient', function($q) {
+])->whereHas('patient', function($q) {
             $q->whereHas('maternityEnrollments');
         });
 

@@ -53,18 +53,19 @@ class OpsAuditReceptionController extends OpsAuditBaseController
     protected function queuesData(Request $request)
     {
         $query = DoctorQueue::with([
-            'patient.user',
+'patient.user',
             'patient.hmo.scheme',
             'clinic',
             'doctor.user',
             'receptionist.user',
             'request_entry.payment.user',
-        ]);
+]);
 
         // Apply filters
         $this->applyDateFilter($query, $request);
         $this->applyShiftFilter($query, $request);
         $this->applyPaymentFilters($query, $request, 'request_entry');
+        $this->applyItemFilters($query, $request, 'request_entry');
 
         if ($request->filled('source')) {
             $query->where('source', $request->source);
@@ -152,17 +153,18 @@ class OpsAuditReceptionController extends OpsAuditBaseController
     protected function appointmentsData(Request $request)
     {
         $query = DoctorAppointment::with([
-            'patient.user',
+'patient.user',
             'patient.hmo.scheme',
             'clinic',
             'doctor.user',
             'bookedBy.user',
             'serviceRequest.payment.user',
-        ]);
+]);
 
         $this->applyDateFilter($query, $request);
         $this->applyShiftFilter($query, $request);
         $this->applyPaymentFilters($query, $request, 'serviceRequest');
+        $this->applyItemFilters($query, $request, 'serviceRequest');
 
         if ($request->filled('appointment_type')) $query->where('appointment_type', $request->appointment_type);
         if ($request->filled('status')) $query->where('status', $request->status);
@@ -216,13 +218,13 @@ class OpsAuditReceptionController extends OpsAuditBaseController
     protected function referralsData(Request $request)
     {
         $query = SpecialistReferral::with([
-            'patient.user',
+'patient.user',
             'patient.hmo.scheme',
             'referringDoctor',
             'referringClinic',
             'targetClinic',
             'actionedBy',
-        ]);
+]);
 
         $this->applyDateFilter($query, $request);
         $this->applyShiftFilter($query, $request);

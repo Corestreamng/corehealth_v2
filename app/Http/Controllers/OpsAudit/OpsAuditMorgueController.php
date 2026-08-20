@@ -49,18 +49,19 @@ class OpsAuditMorgueController extends OpsAuditBaseController
     protected function admissionsData(Request $request)
     {
         $query = MorgueAdmission::with([
-            'patient.user',
+'patient.user',
             'patient.hmo.scheme',
             'admittedBy',
             'releasedBy',
             'serviceRequest.payment.staff_user',
         
             'serviceRequest.payment.user',
-        ]);
+]);
 
         $this->applyDateFilter($query, $request);
         $this->applyShiftFilter($query, $request);
         $this->applyPaymentFilters($query, $request, 'serviceRequest');
+        $this->applyItemFilters($query, $request, 'serviceRequest');
 
         if ($request->filled('status')) $query->where('status', $request->status);
         if ($request->filled('hmo_id')) $query->whereHas('patient.hmo', fn($q) => $q->where('id', $request->hmo_id));
@@ -103,15 +104,16 @@ class OpsAuditMorgueController extends OpsAuditBaseController
     protected function billsData(Request $request)
     {
         $query = ProductOrServiceRequest::with([
-            'patient.user',
+'patient.user',
             'patient.hmo.scheme',
             'staff',
             'payment.staff_user'
-        ])->whereHas('patient.morgueAdmissions');
+])->whereHas('patient.morgueAdmissions');
 
         $this->applyDateFilter($query, $request);
         $this->applyShiftFilter($query, $request);
         $this->applyPaymentFilters($query, $request, '');
+        $this->applyItemFilters($query, $request, '');
 
         if ($request->filled('hmo_id')) $query->whereHas('patient.hmo', fn($q) => $q->where('id', $request->hmo_id));
 
@@ -148,15 +150,16 @@ class OpsAuditMorgueController extends OpsAuditBaseController
     protected function cashbookData(Request $request)
     {
         $query = Payment::with([
-            'patient.user',
+'patient.user',
             'staff_user',
             'bank',
-            'product_or_service_request'
-        ])->whereHas('product_or_service_request.patient.morgueAdmissions');
+            'product_or_service_request', 'product_or_service_request.product.category', 'product_or_service_request.service.category'
+])->whereHas('product_or_service_request.patient.morgueAdmissions');
 
         $this->applyDateFilter($query, $request);
         $this->applyShiftFilter($query, $request);
         $this->applyPaymentFilters($query, $request, 'self_payment');
+        $this->applyItemFilters($query, $request, 'product_or_service_request');
 
         $kpiQuery = clone $query;
 
@@ -167,6 +170,7 @@ class OpsAuditMorgueController extends OpsAuditBaseController
             return [
                 'date' => $row->created_at ? Carbon::parse($row->created_at)->format('d M Y H:i') : '-',
                 'reference' => $row->reference_no ?? '-',
+                'item' => $this->renderPosrItem($row->product_or_service_request, $row->id),
                 'patient' => $this->renderPatient($user, $patient, null),
                 'total' => '₦' . number_format($row->total ?? 0, 2),
                 'method' => $row->payment_method ? '<span class="badge bg-light text-dark border">'.$row->payment_method.'</span>' : '-',

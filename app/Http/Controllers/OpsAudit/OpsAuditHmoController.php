@@ -42,13 +42,13 @@ class OpsAuditHmoController extends OpsAuditBaseController
     protected function claimsData(Request $request)
     {
         $query = HmoClaim::with([
-            'patient.user',
+'patient.user',
             'patient.hmo.scheme',
             'hmo',
             'createdBy',
             'processedBy',
             'payment.user' // cashier
-        ]);
+]);
 
         $this->applyDateFilter($query, $request);
         $this->applyShiftFilter($query, $request);
@@ -104,13 +104,13 @@ class OpsAuditHmoController extends OpsAuditBaseController
     protected function coverageData(Request $request)
     {
         $query = ProductOrServiceRequest::with([
-            'patient.user',
+'patient.user',
             'patient.hmo.scheme',
             'payment.user',
             'validatedBy',
-            'product',
+            'product.category',
             'service'
-        ])->whereNotNull('hmo_id'); // Ensure it's HMO related
+])->whereNotNull('hmo_id'); // Ensure it's HMO related
 
         $this->applyDateFilter($query, $request);
         $this->applyShiftFilter($query, $request);
@@ -148,7 +148,7 @@ class OpsAuditHmoController extends OpsAuditBaseController
                 'hmo' => $this->renderHmo($hmo),
                 'coverage_mode' => '<span class="badge bg-light text-dark border">' . ucfirst($row->coverage_mode ?? 'None') . '</span>',
                 'type' => ucfirst($row->type ?? '-'),
-                'item' => $item,
+                'item' => $this->renderItemDetails($row),
                 'qty' => $row->qty ?? 1,
                 'amount' => '₦' . number_format($row->amount ?? 0, 2),
                 'payable' => '₦' . number_format($row->payable_amount ?? 0, 2),
@@ -179,10 +179,10 @@ class OpsAuditHmoController extends OpsAuditBaseController
     protected function remittancesData(Request $request)
     {
         $query = HmoRemittance::with([
-            'hmo',
+'hmo',
             'bank',
             'createdBy'
-        ]);
+]);
 
         $this->applyDateFilter($query, $request, 'payment_date');
 

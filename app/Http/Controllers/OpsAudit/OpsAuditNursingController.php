@@ -53,18 +53,19 @@ class OpsAuditNursingController extends OpsAuditBaseController
     protected function admissionsData(Request $request)
     {
         $query = AdmissionRequest::with([
-            'patient.user',
+'patient.user',
             'patient.hmo.scheme',
             'doctor',
             'ward',
             'bed',
             'productOrServiceRequest.payment.user',
             'bills.payment'
-        ]);
+]);
 
         $this->applyDateFilter($query, $request);
         $this->applyShiftFilter($query, $request);
         $this->applyPaymentFilters($query, $request, 'productOrServiceRequest');
+        $this->applyItemFilters($query, $request, 'productOrServiceRequest');
 
         if ($request->filled('ward_id')) $query->where('ward_id', $request->ward_id);
         if ($request->filled('status')) $query->where('admission_status', $request->status);
@@ -139,13 +140,11 @@ class OpsAuditNursingController extends OpsAuditBaseController
     protected function notesData(Request $request)
     {
         $query = NursingNote::with([
-            'patient.user',
+'patient.user',
             'patient.hmo.scheme',
             'createdBy',
             'type',
-        
-            
-        ]);
+]);
 
         $this->applyDateFilter($query, $request);
         $this->applyShiftFilter($query, $request);
@@ -186,13 +185,13 @@ class OpsAuditNursingController extends OpsAuditBaseController
     {
         // Bills created by nurses or attached to an admission
         $query = ProductOrServiceRequest::with([
-            'patient.user',
+'patient.user',
             'patient.hmo.scheme',
             'staff',
             'payment.user',
-            'product',
+            'product.category',
             'service'
-        ])->where(function($q) {
+])->where(function($q) {
             $q->whereNotNull('admission_request_id')
               ->orWhereHas('staff', function($q2) {
                   $q2->whereHas('roles', fn($r) => $r->where('name', 'NURSE'));

@@ -78,10 +78,10 @@ abstract class OpsAuditBaseController extends Controller
         }
 
         if ($isOrg) {
-            $orgBill = $r->organizationBills->first() ?? $r->organizationBill;
+            $orgBill = $r->organizationBills instanceof \Illuminate\Support\Collection ? $r->organizationBills->first() : ($r->organizationBills ?? $r->organizationBill);
             if (!$orgBill && $r->product_or_service_request) {
-                $posr = $r->product_or_service_request;
-                if ($posr->organization) {
+                $posr = $r->product_or_service_request instanceof \Illuminate\Support\Collection ? $r->product_or_service_request->first() : $r->product_or_service_request;
+                if ($posr && $posr->organization) {
                     $name = $posr->organization->name ?? $posr->organization->company_name;
                     return '<div class="font-weight-bold text-dark"><i class="mdi mdi-domain text-info"></i> ' . e($name) . '</div><small class="badge bg-info text-white mt-1">Corporate Retainership</small>';
                 }
@@ -95,7 +95,8 @@ abstract class OpsAuditBaseController extends Controller
 
         $patient = $r->patient;
         if (!$patient && $r->product_or_service_request) {
-            $patient = $r->product_or_service_request->patient;
+            $posr = $r->product_or_service_request instanceof \Illuminate\Support\Collection ? $r->product_or_service_request->first() : $r->product_or_service_request;
+            $patient = $posr ? $posr->patient : null;
         }
 
         if ($patient) {
@@ -544,6 +545,34 @@ abstract class OpsAuditBaseController extends Controller
         ";
     }
 
+    
+    protected function renderPosrItem($posr, $payment_id = null)
+    {
+        if (!$posr) return '-';
+
+        if ($posr instanceof \Illuminate\Support\Collection || is_array($posr)) {
+            $count = count($posr);
+            if ($count === 0) return '-';
+            
+            if ($count > 1 && $payment_id) {
+                return '<button type="button" class="btn btn-sm btn-outline-primary rounded-pill px-3 py-1" onclick="openOpsAuditDetail(\'payment_items\', '.$payment_id.')"><i class="mdi mdi-format-list-bulleted me-1"></i>View '.$count.' Items</button>';
+            }
+
+            $names = [];
+            foreach ($posr as $p) {
+                if ($p->product) $names[] = $p->product->product_name;
+                elseif ($p->service) $names[] = $p->service->service_name;
+                elseif ($p->procedure) $names[] = $p->procedure->is_free_form ? $p->procedure->free_form_name : ($p->procedure->service?->service_name ?? '-');
+            }
+            return empty($names) ? '-' : implode(', ', $names);
+        }
+
+        if ($posr->product) return $posr->product->product_name;
+        if ($posr->service) return $posr->service->service_name;
+        if ($posr->procedure) return $posr->procedure->is_free_form ? $posr->procedure->free_form_name : ($posr->procedure->service?->service_name ?? '-');
+        return '-';
+    }
+
     protected function formatPaymentMethodWithChannel($payment)
     {
         $methodDisplay = $payment->payment_method ?: 'Unknown';
@@ -592,6 +621,66 @@ abstract class OpsAuditBaseController extends Controller
             return $methodDisplay . " <span class='d-block mt-1'><span class='{$textClass}' style='font-size:0.65rem;'><i class='mdi {$icon} me-1'></i>{$channel}</span></span>";
         }
         return $methodDisplay;
+    }
+
+    /**
+     * Eager-loaded helper to display product or service with its category cleanly
+     */
+    protected function renderItemDetails($record)
+    {
+        if (isset($record->product) && $record->product) {
+            $name = $record->product->name ?? $record->product->product_name;
+            $cat = $record->product->category ? $record->product->category->category_name : 'Uncategorized Product';
+            return "<div class='font-weight-bold text-dark'>" . e($name) . "</div><small class='badge bg-secondary text-white mt-1'>" . e($cat) . "</small>";
+        }
+        if (isset($record->service) && $record->service) {
+            $name = $record->service->name ?? $record->service->service_name;
+            $cat = $record->service->category ? $record->service->category->category_name : 'Uncategorized Service';
+            return "<div class='font-weight-bold text-dark'>" . e($name) . "</div><small class='badge bg-secondary text-white mt-1'>" . e($cat) . "</small>";
+        }
+        if (isset($record->item_name)) {
+            return "<div class='font-weight-bold text-dark'>" . e($record->item_name) . "</div>";
+        }
+        return '-';
+    }
+
+    /**
+     * Shared helper to apply Product and Service filters
+     */
+    protected function applyItemFilters($query, Request $request, $relationPath = '', $allowedTypes = ['product', 'service'])
+    {
+        $hasFilters = $request->filled('product_id') || $request->filled('service_id') || $request->filled('product_category_id') || $request->filled('service_category_id');
+
+        if (!$hasFilters) {
+            return $query;
+        }
+
+        $apply = function ($q) use ($request, $allowedTypes) {
+            if (in_array('product', $allowedTypes)) {
+                if ($request->filled('product_id')) {
+                    $q->where('product_id', $request->product_id);
+                }
+                if ($request->filled('product_category_id')) {
+                    $q->whereHas('product', fn($prodQuery) => $prodQuery->where('category_id', $request->product_category_id));
+                }
+            }
+            if (in_array('service', $allowedTypes)) {
+                if ($request->filled('service_id')) {
+                    $q->where('service_id', $request->service_id);
+                }
+                if ($request->filled('service_category_id')) {
+                    $q->whereHas('service', fn($srvQuery) => $srvQuery->where('category_id', $request->service_category_id));
+                }
+            }
+        };
+
+        if ($relationPath) {
+            $query->whereHas($relationPath, $apply);
+        } else {
+            $apply($query);
+        }
+
+        return $query;
     }
 
     /**
@@ -837,6 +926,8 @@ abstract class OpsAuditBaseController extends Controller
             return $this->getAdmissionDetails($id);
         } elseif ($type === 'requisition') {
             return $this->getRequisitionDetails($id);
+        } elseif ($type === 'payment_items') {
+            return $this->getPaymentItemsDetails($id);
         }
 
         return response()->json([
@@ -862,6 +953,27 @@ abstract class OpsAuditBaseController extends Controller
         return response()->json([
             'html' => view('admin.ops_audit.details.admission', ['data' => $data])->render(),
             'title' => '<i class="mdi mdi-bed me-2 text-primary"></i> Admission Details — ' . ($data['patient_name'] ?? 'Unknown')
+        ]);
+    }
+
+    private function getPaymentItemsDetails($id)
+    {
+        $payment = \App\Models\Payment::with([
+            'product_or_service_request.product',
+            'product_or_service_request.service',
+            'product_or_service_request.procedure.service'
+        ])->find($id);
+
+        if (!$payment) {
+            return response()->json([
+                'html' => '<div class="alert alert-danger m-3">Payment not found.</div>',
+                'title' => 'Error'
+            ]);
+        }
+
+        return response()->json([
+            'html' => view('admin.ops_audit.details.payment_items', ['payment' => $payment])->render(),
+            'title' => '<i class="mdi mdi-format-list-bulleted me-2 text-primary"></i> Payment Items (' . e($payment->reference_no ?? 'N/A') . ')'
         ]);
     }
 
