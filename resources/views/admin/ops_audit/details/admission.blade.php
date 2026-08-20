@@ -1,4 +1,4 @@
-<div class="container-fluid p-4">
+<div class="container-fluid px-5 py-4">
     <div class="row mb-4 bg-light rounded p-3 align-items-center">
         <div class="col-md-6">
             <div class="d-flex align-items-center gap-3">
@@ -32,7 +32,7 @@
         <!-- Totals & HMO summary on the left -->
         <div class="col-md-5">
             <div class="card-modern shadow-sm border-0 mb-3">
-                <div class="card-modern-body bg-dark text-white rounded">
+                <div class="card-modern-body p-3 bg-dark text-white rounded">
                     <h6 class="text-white-50 border-bottom border-secondary pb-2 mb-3"><i class="mdi mdi-cash-register me-1"></i> Billing Totals</h6>
                     <div class="d-flex justify-content-between mb-2">
                         <span>Gross Total</span>
@@ -59,7 +59,7 @@
 
             @if(isset($data['hmo_claims']) && $data['hmo_claims']['total_items'] > 0)
             <div class="card-modern shadow-sm border-0 border-start border-success border-4 mb-3 bg-light">
-                <div class="card-modern-body">
+                <div class="card-modern-body p-3">
                     <h6 class="font-weight-bold border-bottom pb-2 mb-3 text-success"><i class="mdi mdi-shield-check me-1"></i> HMO Claims Summary</h6>
                     <div class="d-flex justify-content-between mb-2 small">
                         <span class="text-muted">Total Claim Items</span>
@@ -91,7 +91,7 @@
                     <div class="card-modern-header bg-white border-0 p-0" id="heading-{{ $index }}">
                         <button class="btn btn-link w-100 text-decoration-none text-start p-3 d-flex justify-content-between align-items-center" type="button" data-bs-toggle="collapse" data-bs-target="#collapse-{{ $index }}" style="box-shadow: none;">
                             <div class="d-flex align-items-center">
-                                <div class="bg-primary bg-opacity-10 text-primary rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 40px; height: 40px;">
+                                <div class="rounded-circle d-flex align-items-center justify-content-center me-3 text-primary" style="background-color: #eff6ff; width: 40px; height: 40px;">
                                     <i class="mdi {{ $cat['icon'] }} fs-5"></i>
                                 </div>
                                 <div>

@@ -112,11 +112,11 @@ class AdmissionModuleController extends Controller
 
         $categoryIcons = [
             'accommodation' => 'mdi-bed',
-            'nursing' => 'mdi-account-nurse',
+            'nursing' => 'mdi-mother-nurse',
             'consultation' => 'mdi-stethoscope',
             'laboratory' => 'mdi-flask',
-            'radiology' => 'mdi-radiology-box',
-            'pharmacy' => 'mdi-pill',
+            'radiology' => 'mdi-radioactive',
+            'pharmacy' => 'mdi-pharmacy',
             'procedure' => 'mdi-medical-bag',
             'consumables' => 'mdi-bandage',
             'other' => 'mdi-file-document',
