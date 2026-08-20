@@ -1307,6 +1307,11 @@ Route::middleware(['auth'])->prefix('ops-audit')->name('ops-audit.')->group(func
     // Module 12: Store
     Route::get('/store', [\App\Http\Controllers\OpsAudit\OpsAuditStoreController::class, 'index'])->name('store');
     Route::match(['get', 'post'], '/store/data/{tab}', [\App\Http\Controllers\OpsAudit\OpsAuditStoreController::class, 'data'])->name('store.data');
+
+    // Module 13: Queries
+    Route::get('/queries', [\App\Http\Controllers\OpsAudit\OpsAuditQueryController::class, 'index'])->name('queries');
+    Route::match(['get', 'post'], '/queries/data/{tab}', [\App\Http\Controllers\OpsAudit\OpsAuditQueryController::class, 'data'])->name('queries.data');
+    Route::get('/queries/details/{id}', [\App\Http\Controllers\OpsAudit\OpsAuditQueryController::class, 'details'])->name('queries.details.data');
 });
 
 // Workbench Shared Modals (Hospital Contacts & Price List)

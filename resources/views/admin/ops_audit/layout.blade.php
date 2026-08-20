@@ -345,6 +345,13 @@
                     <i class="mdi mdi-store"></i> Store / Inventory
                 </a>
             </div>
+            
+            <div class="menu-section mt-4">Monitoring</div>
+            <div class="nav-item">
+                <a href="{{ route('ops-audit.queries') }}" class="nav-link {{ request()->routeIs('ops-audit.queries*') ? 'active' : '' }}">
+                    <i class="mdi mdi-alert-circle text-danger"></i> Unified Queries
+                </a>
+            </div>
         </div>
     </div>
 
@@ -562,7 +569,7 @@
         checkbox.disabled = false;
         document.getElementById('btnSubmitUniversalStamp').disabled = true;
 
-        var myModal = new bootstrap.Modal(document.getElementById('universalStampModal'));
+        var $myModal = $('#universalStampModal');
         let timelineContainer = document.getElementById('stamp_timeline_container');
 
         if (mode === 'bulk') {
@@ -573,7 +580,7 @@
             let tabName = activeTab ? activeTab.innerText.trim() : 'the current';
 
             textEl.innerHTML = 'Fetching preview... <i class="mdi mdi-loading mdi-spin"></i>';
-            myModal.show();
+            $myModal.modal('show');
 
             let filterData = $('#ops_audit_filter_form').serializeArray();
             filterData.push({name: 'action', value: 'bulk_stamp_preview'});
@@ -621,7 +628,7 @@
             titleEl.innerHTML = '<i class="mdi mdi-check-decagram"></i> Confirm Stamp';
             textEl.innerHTML = 'You are about to mark this record as audited.';
             timelineContainer.innerHTML = '<div class="text-center text-muted mt-5"><i class="mdi mdi-loading mdi-spin fs-2"></i><br>Loading timeline...</div>';
-            myModal.show();
+            $myModal.modal('show');
             fetchAuditTimeline(modelType, modelId, 'stamp_timeline_container');
         }
     }
@@ -670,8 +677,9 @@
                     if (response.success) {
                         toastr.success(response.message);
                         setTimeout(() => { $('.ops-datatable:visible').each(function() { if ($.fn.DataTable.isDataTable(this)) $(this).DataTable().ajax.reload(); }); }, 500);
-                    } else { toastr.error(response.message); btn.disabled = false; btn.innerHTML = originalHtml; }
-                    bootstrap.Modal.getInstance(document.getElementById('universalStampModal'))?.hide();
+                        $('#universalStampModal').modal('hide');
+                    } else { toastr.error(response.message); }
+                    btn.disabled = false; btn.innerHTML = originalHtml;
                 },
                 error: function(xhr) { toastr.error(xhr.responseJSON?.message || 'Error.'); btn.disabled = false; btn.innerHTML = originalHtml; }
             });
@@ -683,22 +691,29 @@
         document.getElementById('query_model_id').value = modelId;
         document.getElementById('query_notes').value = '';
         document.getElementById('raise_timeline_container').innerHTML = '<div class="text-center text-muted mt-5"><i class="mdi mdi-loading mdi-spin fs-2"></i><br>Loading timeline...</div>';
-        new bootstrap.Modal(document.getElementById('raiseQueryModal')).show();
+        $('#raiseQueryModal').modal('show');
         fetchAuditTimeline(modelType, modelId, 'raise_timeline_container');
     }
 
     function submitRaiseQuery() {
         let btn = document.getElementById('btnSubmitQuery');
-        btn.disabled = true; btn.innerHTML = 'Submitting...';
+        let originalHtml = btn.innerHTML;
+        btn.disabled = true; btn.innerHTML = '<i class="mdi mdi-loading mdi-spin me-1"></i> Submitting...';
         let data = $('#formRaiseQuery').serializeArray();
         data.push({name: 'zone_key', value: 'ops_audit'});
         $.ajax({
             url: '{{ route("audit.mark.raise-query") }}', type: 'POST', data: $.param(data),
             success: function(res) {
-                if (res.success) { toastr.success(res.message); setTimeout(() => { $('.ops-datatable:visible').each(function() { if ($.fn.DataTable.isDataTable(this)) $(this).DataTable().ajax.reload(); }); }, 500); bootstrap.Modal.getInstance(document.getElementById('raiseQueryModal'))?.hide(); }
-                else { toastr.error(res.message); btn.disabled = false; btn.innerHTML = 'Raise Query'; }
+                if (res.success) { 
+                    toastr.success(res.message); 
+                    setTimeout(() => { $('.ops-datatable:visible').each(function() { if ($.fn.DataTable.isDataTable(this)) $(this).DataTable().ajax.reload(); }); }, 500); 
+                    $('#raiseQueryModal').modal('hide');
+                } else { 
+                    toastr.error(res.message); 
+                }
+                btn.disabled = false; btn.innerHTML = originalHtml;
             },
-            error: function(xhr) { toastr.error(xhr.responseJSON?.message || 'Error.'); btn.disabled = false; btn.innerHTML = 'Raise Query'; }
+            error: function(xhr) { toastr.error(xhr.responseJSON?.message || 'Error.'); btn.disabled = false; btn.innerHTML = originalHtml; }
         });
     }
 
@@ -707,27 +722,34 @@
         document.getElementById('resolve_model_id').value = modelId;
         document.getElementById('resolve_notes').value = '';
         document.getElementById('resolve_timeline_container').innerHTML = '<div class="text-center text-muted mt-5"><i class="mdi mdi-loading mdi-spin fs-2"></i><br>Loading timeline...</div>';
-        new bootstrap.Modal(document.getElementById('resolveQueryModal')).show();
+        $('#resolveQueryModal').modal('show');
         fetchAuditTimeline(modelType, modelId, 'resolve_timeline_container');
     }
 
     function submitResolveQuery() {
         let btn = document.getElementById('btnSubmitResolve');
-        btn.disabled = true; btn.innerHTML = 'Resolving...';
+        let originalHtml = btn.innerHTML;
+        btn.disabled = true; btn.innerHTML = '<i class="mdi mdi-loading mdi-spin me-1"></i> Resolving...';
         $.ajax({
             url: '{{ route("audit.mark.resolve-query") }}', type: 'POST', data: $('#formResolveQuery').serialize(),
             success: function(res) {
-                if (res.success) { toastr.success(res.message); setTimeout(() => { $('.ops-datatable:visible').each(function() { if ($.fn.DataTable.isDataTable(this)) $(this).DataTable().ajax.reload(); }); }, 500); bootstrap.Modal.getInstance(document.getElementById('resolveQueryModal'))?.hide(); }
-                else { toastr.error(res.message); btn.disabled = false; btn.innerHTML = 'Resolve Query'; }
+                if (res.success) { 
+                    toastr.success(res.message); 
+                    setTimeout(() => { $('.ops-datatable:visible').each(function() { if ($.fn.DataTable.isDataTable(this)) $(this).DataTable().ajax.reload(); }); }, 500); 
+                    $('#resolveQueryModal').modal('hide');
+                } else { 
+                    toastr.error(res.message); 
+                }
+                btn.disabled = false; btn.innerHTML = originalHtml;
             },
-            error: function(xhr) { toastr.error(xhr.responseJSON?.message || 'Error.'); btn.disabled = false; btn.innerHTML = 'Resolve Query'; }
+            error: function(xhr) { toastr.error(xhr.responseJSON?.message || 'Error.'); btn.disabled = false; btn.innerHTML = originalHtml; }
         });
     }
 
     function viewTimeline(modelType, modelId) {
         let container = document.getElementById('view_timeline_container');
         container.innerHTML = '<div class="text-center text-muted mt-5"><i class="mdi mdi-loading mdi-spin fs-2"></i><br>Loading timeline...</div>';
-        new bootstrap.Modal(document.getElementById('viewTimelineModal')).show();
+        $('#viewTimelineModal').modal('show');
         fetchAuditTimeline(modelType, modelId, 'view_timeline_container');
     }
 
@@ -739,26 +761,28 @@
             success: function(res) {
                 let container = document.getElementById(containerId);
                 if (res.success && res.timeline.length > 0) {
-                    let html = '<h6 class="text-muted fw-bold mb-3 border-bottom pb-2">Audit History</h6><div class="timeline-wrapper" style="position:relative; padding-left:20px; border-left:2px solid #e9ecef;">';
+                    let html = '<h6 class="text-dark font-weight-bold mb-4 border-bottom pb-2"><i class="mdi mdi-history text-secondary me-1"></i> Audit Ledger History</h6><div class="timeline-wrapper" style="position:relative; padding-left:24px; border-left:3px solid #cbd5e1;">';
                     res.timeline.forEach(item => {
-                        let icon = 'mdi-check-decagram text-success';
-                        let bg = 'bg-success-subtle';
-                        let title = 'Stamped';
-                        if (item.status === 'queried') { icon = 'mdi-alert-circle text-danger'; bg = 'bg-danger-subtle'; title = 'Queried'; }
-                        else if (item.status === 'resolved') { icon = 'mdi-check-circle text-info'; bg = 'bg-info-subtle'; title = 'Resolved'; }
+                        let icon = 'mdi-check-decagram text-white';
+                        let iconBg = 'bg-success';
+                        let bg = 'bg-white';
+                        let border = 'border-success';
+                        let title = 'Stamped as Audited';
+                        if (item.status === 'queried') { icon = 'mdi-alert-circle text-white'; iconBg = 'bg-danger'; border = 'border-danger'; title = 'Queried / Flagged'; }
+                        else if (item.status === 'resolved') { icon = 'mdi-check-circle text-white'; iconBg = 'bg-info'; border = 'border-info'; title = 'Query Resolved'; }
                         
                         html += `
-                            <div class="timeline-item position-relative mb-3 pb-2">
-                                <div class="timeline-icon position-absolute d-flex align-items-center justify-content-center bg-white rounded-circle border shadow-sm" style="width: 32px; height: 32px; left: -37px; top: 0;">
+                            <div class="timeline-item position-relative mb-4">
+                                <div class="timeline-icon position-absolute d-flex align-items-center justify-content-center rounded-circle shadow-sm ${iconBg}" style="width: 36px; height: 36px; left: -43px; top: 0; z-index: 10;">
                                     <i class="mdi ${icon} fs-5"></i>
                                 </div>
-                                <div class="timeline-content rounded-3 p-3 shadow-sm border ${bg}">
-                                    <div class="d-flex justify-content-between align-items-center mb-1">
-                                        <strong class="text-dark">${title}</strong>
-                                        <small class="text-muted" title="${item.created_at}">${item.created_at_human}</small>
+                                <div class="timeline-content rounded-3 p-3 shadow-sm border-start border-4 ${border} ${bg}">
+                                    <div class="d-flex justify-content-between align-items-start mb-2">
+                                        <strong class="text-dark font-weight-bold" style="font-size:0.95rem;">${title}</strong>
+                                        <small class="text-muted font-weight-bold" title="${item.created_at}">${item.created_at_human}</small>
                                     </div>
-                                    <div class="small text-muted mb-1"><i class="mdi mdi-account-outline"></i> ${item.auditor_name}</div>
-                                    ${item.notes ? `<div class="small mt-2 p-2 bg-white rounded border border-light"><em>${item.notes}</em></div>` : ''}
+                                    <div class="small text-muted mb-2"><i class="mdi mdi-account-circle text-secondary fs-6 me-1"></i> <strong>${item.auditor_name}</strong></div>
+                                    ${item.notes ? `<div class="p-2 mt-2 rounded bg-light border text-dark font-weight-bold" style="font-size:0.85rem; white-space:pre-wrap;">${item.notes}</div>` : ''}
                                 </div>
                             </div>
                         `;
@@ -766,12 +790,111 @@
                     html += '</div>';
                     container.innerHTML = html;
                 } else {
-                    container.innerHTML = '<div class="text-center text-muted mt-5"><i class="mdi mdi-history fs-1"></i><br>No audit history found for this record.</div>';
+                    container.innerHTML = '<div class="text-center text-muted mt-5 py-5 bg-white rounded-3 border border-dashed"><i class="mdi mdi-text-box-search-outline fs-1 text-secondary"></i><p class="mt-3 mb-0 font-weight-bold">No Audit History</p><small>This record has a clean ledger.</small></div>';
                 }
             },
             error: function() {
                 document.getElementById(containerId).innerHTML = '<div class="text-center text-danger mt-5"><i class="mdi mdi-alert fs-2"></i><br>Failed to load timeline.</div>';
             }
+        });
+    }
+
+    function viewQueryDetails(queryId) {
+        var $modal = $('#viewQueryModal');
+        $('#viewQueryModalTitle').html('<i class="mdi mdi-spin mdi-loading me-2 text-info"></i> Loading Query Details...');
+        $('#viewQueryModalBody').html('<div class="text-center py-5"><div class="spinner-border text-primary" role="status"><span class="sr-only">Loading...</span></div></div>');
+        $modal.modal('show');
+
+        var url = "{{ route('ops-audit.queries.details.data', ':id') }}".replace(':id', queryId);
+
+        $.get(url, function(res) {
+            var statusBadge = res.status === 'resolved' 
+                ? '<span class="badge bg-success px-3 py-1.5 font-weight-bold fs-14"><i class="mdi mdi-check-decagram me-1"></i> Resolved</span>' 
+                : '<span class="badge bg-warning text-dark px-3 py-1.5 font-weight-bold fs-14"><i class="mdi mdi-alert-circle me-1"></i> Active Query</span>';
+
+            $('#viewQueryModalTitle').html('<i class="mdi mdi-shield-search text-info me-2"></i> Query Details & Ledger #' + res.id);
+
+            var targetHtml = '';
+            if (res.target_details && (res.target_details.patient_name || res.target_details.item_name)) {
+                var t = res.target_details;
+                targetHtml += `
+                    <div class="card border-0 shadow-sm mb-4 rounded-3 overflow-hidden" style="background: #ffffff; border-left: 4px solid #3b82f6 !important;">
+                        <div class="card-body p-3">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <span class="badge bg-primary px-2.5 py-1 font-weight-bold"><i class="mdi mdi-cube-outline me-1"></i> ${res.model_type} #${res.model_id}</span>
+                                <span class="text-muted small"><i class="mdi mdi-folder me-1"></i> Zone: <strong>${res.zone_key}</strong></span>
+                            </div>
+                            <div class="row g-2 align-items-center">
+                                ${t.patient_name ? `
+                                    <div class="col-md-6">
+                                        <small class="text-muted d-block text-uppercase font-weight-bold" style="font-size:0.7rem;">Patient Details</small>
+                                        <div class="font-weight-bold text-dark"><i class="mdi mdi-account text-primary me-1"></i> ${t.patient_name} <span class="badge bg-light text-dark border">#${t.file_no || 'N/A'}</span></div>
+                                        ${t.hmo_name ? `<small class="text-info font-weight-bold"><i class="mdi mdi-hospital-building me-1"></i> ${t.hmo_name} ${t.hmo_scheme ? ' (' + t.hmo_scheme + ')' : ''}</small>` : ''}
+                                    </div>
+                                ` : ''}
+                                ${t.item_name ? `
+                                    <div class="col-md-6">
+                                        <small class="text-muted d-block text-uppercase font-weight-bold" style="font-size:0.7rem;">Item / Service Requested</small>
+                                        <div class="font-weight-bold text-dark"><i class="mdi mdi-pill text-success me-1"></i> ${t.item_name}</div>
+                                        ${t.amount ? `<small class="text-danger font-weight-bold me-2">Amount: ${t.amount}</small>` : ''}
+                                        ${t.qty ? `<small class="text-muted font-weight-bold">Qty: ${t.qty}</small>` : ''}
+                                    </div>
+                                ` : ''}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+
+            var bodyHtml = `
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <div>
+                        <h5 class="mb-0 font-weight-bold text-dark">${res.model_type} Query Audit Log</h5>
+                        <small class="text-muted">Query ID #${res.id} &bull; Flagged in ${res.zone_key}</small>
+                    </div>
+                    <div>${statusBadge}</div>
+                </div>
+
+                ${targetHtml}
+
+                <div class="card border-0 shadow-sm mb-3 rounded-3" style="background-color: #fef2f2; border-left: 4px solid #ef4444 !important;">
+                    <div class="card-body p-3">
+                        <h6 class="font-weight-bold text-danger mb-2 d-flex align-items-center">
+                            <i class="mdi mdi-alert-circle me-1" style="font-size:1.1rem;"></i> Query Reason & Flag Notes
+                        </h6>
+                        <p class="mb-2 text-dark font-weight-bold" style="white-space: pre-wrap; font-size: 0.95rem; line-height: 1.5;">${res.query_notes || 'No query notes provided.'}</p>
+                        <small class="text-muted d-block mt-2 border-top pt-2 border-danger border-opacity-10">
+                            <i class="mdi mdi-account me-1"></i> Flagged by <strong>${res.auditor}</strong> on ${res.created_at}
+                        </small>
+                    </div>
+                </div>
+            `;
+
+            if (res.status === 'resolved') {
+                bodyHtml += `
+                    <div class="card border-0 shadow-sm mb-2 rounded-3" style="background-color: #ecfdf5; border-left: 4px solid #10b981 !important;">
+                        <div class="card-body p-3">
+                            <h6 class="font-weight-bold text-success mb-2 d-flex align-items-center">
+                                <i class="mdi mdi-check-decagram me-1" style="font-size:1.1rem;"></i> Resolution Details & Outcome
+                            </h6>
+                            <p class="mb-2 text-dark font-weight-bold" style="white-space: pre-wrap; font-size: 0.95rem; line-height: 1.5;">${res.resolution_notes || 'No resolution details recorded.'}</p>
+                            <small class="text-muted d-block mt-2 border-top pt-2 border-success border-opacity-10">
+                                <i class="mdi mdi-account-check me-1"></i> Resolved by <strong>${res.resolver || 'System User'}</strong> on ${res.resolved_at || 'N/A'}
+                            </small>
+                        </div>
+                    </div>
+                `;
+                $('#viewQueryModalResolveBtn').hide();
+            } else {
+                $('#viewQueryModalResolveBtn').show().off('click').on('click', function() {
+                    $modal.modal('hide');
+                    openResolveQueryModal(res.full_model_type, res.model_id);
+                });
+            }
+
+            $('#viewQueryModalBody').html(bodyHtml);
+        }).fail(function() {
+            $('#viewQueryModalBody').html('<div class="alert alert-danger mb-0 font-weight-bold"><i class="mdi mdi-alert-circle me-1"></i> Failed to load query details. Please try again.</div>');
         });
     }
 </script>
@@ -793,43 +916,58 @@
                     <i class="mdi mdi-loading mdi-spin text-primary" style="font-size: 3rem;"></i>
                 </div>
             </div>
+            <div class="modal-footer bg-light">
+                <button type="button" class="btn btn-secondary fw-bold px-4" data-bs-dismiss="modal">Close</button>
+            </div>
         </div>
     </div>
 </div>
 
 <div class="modal fade" id="universalStampModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered modal-xl">
-        <div class="modal-content border-0 shadow">
-            <div class="modal-header bg-success text-white">
-                <h5 class="modal-title" id="stamp_modal_title"><i class="mdi mdi-check-decagram"></i> Confirm Stamp</h5>
+    <div class="modal-dialog modal-xl modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg rounded-3 overflow-hidden">
+            <div class="modal-header text-white py-3 px-4" style="background: linear-gradient(135deg, #065f46 0%, #047857 100%); border-bottom: 3px solid #10b981;">
+                <h5 class="modal-title font-weight-bold text-white d-flex align-items-center" id="stamp_modal_title">
+                    <i class="mdi mdi-check-decagram text-white me-2" style="font-size:1.4rem;"></i> Confirm Audit Stamp
+                </h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <div class="modal-body p-0">
+            <div class="modal-body p-0" style="background-color: #f8fafc;">
                 <div class="row g-0">
                     <div class="col-md-7 p-4">
                         <input type="hidden" id="stamp_mode">
                         <input type="hidden" id="stamp_model_type">
                         <input type="hidden" id="stamp_model_id">
-                        <div class="text-center mb-4">
-                            <i class="mdi mdi-shield-check-outline text-success" style="font-size: 3.5rem;"></i>
-                            <p class="mt-3 mb-0 fs-6" id="stamp_modal_text">You are about to mark the selected record as audited.</p>
+                        
+                        <div class="card border-0 shadow-sm mb-4 rounded-3 p-3 bg-white border-start border-success border-4">
+                            <div class="d-flex align-items-center">
+                                <div class="rounded-circle bg-success bg-opacity-10 p-2 me-3 text-success">
+                                    <i class="mdi mdi-shield-check" style="font-size:1.8rem;"></i>
+                                </div>
+                                <div>
+                                    <h6 class="mb-1 font-weight-bold text-dark">Confirm Audit Stamp</h6>
+                                    <p class="mb-0 text-muted small" id="stamp_modal_text">You are about to mark the selected record as audited and verified.</p>
+                                </div>
+                            </div>
                         </div>
-                        <div class="form-check bg-light p-3 rounded border d-flex align-items-center">
-                            <input class="form-check-input ms-1 me-3 mt-0" type="checkbox" id="stamp_confirm_check" onchange="toggleUniversalStampButton(this)" style="transform: scale(1.5);">
-                            <label class="form-check-label user-select-none" for="stamp_confirm_check">
-                                <strong>I confirm</strong> I have reviewed the data and want to stamp it.
+
+                        <div class="form-check bg-white p-3 rounded-3 border shadow-sm mb-2 d-flex align-items-center">
+                            <input class="form-check-input ms-1 me-3 mt-0" type="checkbox" id="stamp_confirm_check" onchange="toggleUniversalStampButton(this)" style="transform: scale(1.35);">
+                            <label class="form-check-label user-select-none font-weight-bold text-dark mb-0" for="stamp_confirm_check" style="font-size:0.9rem;">
+                                <i class="mdi mdi-check-decagram text-success me-1"></i> I confirm I have reviewed this record
+                                <small class="text-muted d-block font-weight-normal mt-0.5" style="font-size:0.8rem;">This will permanently mark the record as audited and lock it from further queries.</small>
                             </label>
                         </div>
                     </div>
-                    <div class="col-md-5 bg-light border-start p-4" id="stamp_timeline_container" style="max-height: 400px; overflow-y: auto;">
+                    <div class="col-md-5 bg-white border-start p-4" id="stamp_timeline_container" style="max-height: 400px; overflow-y: auto;">
                         <!-- Timeline JS injected here -->
                     </div>
                 </div>
             </div>
-            <div class="modal-footer bg-light border-0 justify-content-between">
-                <button type="button" class="btn btn-outline-secondary px-4" data-bs-dismiss="modal">Cancel</button>
-                <button type="button" class="btn btn-success px-4" id="btnSubmitUniversalStamp" onclick="submitUniversalStamp()" disabled>
-                    <i class="mdi mdi-check"></i> Stamp Records
+            <div class="modal-footer bg-white border-top py-2.5 px-4 justify-content-between">
+                <button type="button" class="btn btn-secondary px-4 font-weight-bold rounded-pill" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-success px-4 font-weight-bold rounded-pill shadow-sm" id="btnSubmitUniversalStamp" onclick="submitUniversalStamp()" disabled>
+                    <i class="mdi mdi-check-circle me-1"></i> Stamp Records
                 </button>
             </div>
         </div>
@@ -838,36 +976,50 @@
 
 {{-- Raise Query Modal --}}
 <div class="modal fade" id="raiseQueryModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered modal-xl">
-        <div class="modal-content border-0 shadow">
-            <div class="modal-header bg-warning">
-                <h5 class="modal-title text-dark"><i class="mdi mdi-alert-circle"></i> Raise Audit Query</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+    <div class="modal-dialog modal-xl modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg rounded-3 overflow-hidden">
+            <div class="modal-header text-dark py-3 px-4" style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); border-bottom: 3px solid #b45309;">
+                <h5 class="modal-title font-weight-bold text-white d-flex align-items-center">
+                    <i class="mdi mdi-alert-circle text-white me-2" style="font-size:1.4rem;"></i> Raise Audit Query
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <div class="modal-body p-0">
+            <div class="modal-body p-0" style="background-color: #f8fafc;">
                 <div class="row g-0">
                     <div class="col-md-7 p-4">
                         <form id="formRaiseQuery">
                             @csrf
                             <input type="hidden" name="model_type" id="query_model_type">
                             <input type="hidden" name="model_id" id="query_model_id">
-                            <div class="alert alert-warning py-2 small">
-                                Raising a query blocks this record from being audited until resolved.
+                            
+                            <div class="card border-0 shadow-sm mb-4 rounded-3 p-3 bg-white border-start border-warning border-4">
+                                <div class="d-flex align-items-center">
+                                    <div class="rounded-circle bg-warning bg-opacity-10 p-2 me-3 text-warning">
+                                        <i class="mdi mdi-alert-circle" style="font-size:1.8rem;"></i>
+                                    </div>
+                                    <div>
+                                        <h6 class="mb-1 font-weight-bold text-dark">Flag Record for Investigation</h6>
+                                        <p class="mb-0 text-muted small">Raising a query blocks this record from being audited until resolved.</p>
+                                    </div>
+                                </div>
                             </div>
+
                             <div class="mb-3">
-                                <label class="form-label small font-weight-bold">Query Reason <span class="text-danger">*</span></label>
-                                <textarea name="query_notes" id="query_notes" class="form-control border-secondary" rows="4" required placeholder="Why is this record being flagged?"></textarea>
+                                <label class="form-label font-weight-bold text-dark">Query Reason & Notes <span class="text-danger">*</span></label>
+                                <textarea name="query_notes" id="query_notes" class="form-control border-secondary shadow-sm rounded-3 p-3" rows="4" required placeholder="Describe in detail why this record is being flagged (e.g. Missing signature, mismatched amounts, awaiting supervisor approval)..."></textarea>
                             </div>
                         </form>
                     </div>
-                    <div class="col-md-5 bg-light border-start p-4" id="raise_timeline_container" style="max-height: 400px; overflow-y: auto;">
+                    <div class="col-md-5 bg-white border-start p-4" id="raise_timeline_container" style="max-height: 400px; overflow-y: auto;">
                         <!-- Timeline JS injected here -->
                     </div>
                 </div>
             </div>
-            <div class="modal-footer bg-light border-0">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                <button type="button" class="btn btn-warning text-dark font-weight-bold" id="btnSubmitQuery" onclick="submitRaiseQuery()">Raise Query</button>
+            <div class="modal-footer bg-white border-top py-2.5 px-4 justify-content-between">
+                <button type="button" class="btn btn-secondary px-4 font-weight-bold rounded-pill" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-warning text-dark font-weight-bold px-4 rounded-pill shadow-sm" id="btnSubmitQuery" onclick="submitRaiseQuery()">
+                    <i class="mdi mdi-flag me-1"></i> Raise Query
+                </button>
             </div>
         </div>
     </div>
@@ -890,14 +1042,28 @@
                             @csrf
                             <input type="hidden" name="model_type" id="resolve_model_type">
                             <input type="hidden" name="model_id" id="resolve_model_id">
-                            <div class="mb-3">
-                                <label class="form-label font-weight-bold text-dark">Resolution Notes <span class="text-danger">*</span></label>
-                                <textarea name="resolution_notes" id="resolve_notes" class="form-control border-secondary shadow-sm rounded-3 p-3" rows="4" required placeholder="Describe how this query was resolved..."></textarea>
+                            <div class="card border-0 shadow-sm mb-4 rounded-3 p-3 bg-white border-start border-success border-4">
+                                <div class="d-flex align-items-center">
+                                    <div class="rounded-circle bg-success bg-opacity-10 p-2 me-3 text-success">
+                                        <i class="mdi mdi-shield-check" style="font-size:1.8rem;"></i>
+                                    </div>
+                                    <div>
+                                        <h6 class="mb-1 font-weight-bold text-dark">Resolving Flagged Query</h6>
+                                        <p class="mb-0 text-muted small">Enter the resolution outcome or corrective action taken to close this discrepancy.</p>
+                                    </div>
+                                </div>
                             </div>
+
+                            <div class="mb-3">
+                                <label class="form-label font-weight-bold text-dark">Resolution Notes & Findings <span class="text-danger">*</span></label>
+                                <textarea name="resolution_notes" id="resolve_notes" class="form-control border-secondary shadow-sm rounded-3 p-3" rows="4" required placeholder="Describe how this query was verified and resolved (e.g. Receipt verified, missing claim document attached, supervisor approved mismatch)..."></textarea>
+                            </div>
+
                             <div class="form-check bg-white p-3 rounded-3 border shadow-sm mb-2 d-flex align-items-center">
                                 <input class="form-check-input ms-1 me-3 mt-0" type="checkbox" name="auto_stamp" id="resolve_auto_stamp" value="1" checked style="transform: scale(1.35);">
-                                <label class="form-check-label user-select-none font-weight-bold text-dark mb-0" for="resolve_auto_stamp">
-                                    <i class="mdi mdi-check-decagram text-success me-1"></i> Auto-stamp on resolution
+                                <label class="form-check-label user-select-none font-weight-bold text-dark mb-0" for="resolve_auto_stamp" style="font-size:0.9rem;">
+                                    <i class="mdi mdi-check-decagram text-success me-1"></i> Automatically stamp record as audited upon resolution
+                                    <small class="text-muted d-block font-weight-normal mt-0.5" style="font-size:0.8rem;">Marks the underlying entry as verified/audited (`is_audited = 1`) immediately after closing the query.</small>
                                 </label>
                             </div>
                         </form>
@@ -920,16 +1086,41 @@
 {{-- Standalone View Timeline Modal --}}
 <div class="modal fade" id="viewTimelineModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered modal-md">
-        <div class="modal-content border-0 shadow">
-            <div class="modal-header bg-light">
-                <h5 class="modal-title"><i class="mdi mdi-history text-secondary"></i> Audit Timeline</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        <div class="modal-content border-0 shadow-lg rounded-3 overflow-hidden">
+            <div class="modal-header text-white py-3 px-4" style="background: linear-gradient(135deg, #1e293b 0%, #334155 100%); border-bottom: 3px solid #64748b;">
+                <h5 class="modal-title font-weight-bold text-white d-flex align-items-center">
+                    <i class="mdi mdi-history text-white me-2"></i> Audit Ledger Timeline
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <div class="modal-body p-4" id="view_timeline_container" style="max-height: 500px; overflow-y: auto; background-color: #f8fafc;">
+            <div class="modal-body p-4" id="view_timeline_container" style="max-height: 550px; overflow-y: auto; background-color: #f8fafc;">
                 <!-- Timeline JS injected here -->
             </div>
-            <div class="modal-footer bg-white border-top">
-                <button type="button" class="btn btn-secondary btn-sm px-3" data-bs-dismiss="modal">Close</button>
+            <div class="modal-footer bg-white border-top py-2.5 px-4 justify-content-end">
+                <button type="button" class="btn btn-secondary px-4 font-weight-bold rounded-pill" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{{-- View Query Modal --}}
+<div class="modal fade" id="viewQueryModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content border-0 shadow-lg rounded-3 overflow-hidden">
+            <div class="modal-header text-white py-3 px-4" style="background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); border-bottom: 3px solid #3b82f6;">
+                <h5 class="modal-title font-weight-bold text-white d-flex align-items-center" id="viewQueryModalTitle">
+                    <i class="mdi mdi-shield-search text-info me-2"></i> Audit Query Details
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-4" id="viewQueryModalBody" style="background-color: #f8fafc;">
+                <div class="text-center py-5"><div class="spinner-border text-primary" role="status"></div></div>
+            </div>
+            <div class="modal-footer bg-white border-top py-2.5 px-4 justify-content-between">
+                <button type="button" class="btn btn-secondary px-4 font-weight-bold rounded-pill" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-warning text-dark font-weight-bold px-4 rounded-pill" id="viewQueryModalResolveBtn">
+                    <i class="mdi mdi-check-circle me-1"></i> Resolve Query
+                </button>
             </div>
         </div>
     </div>

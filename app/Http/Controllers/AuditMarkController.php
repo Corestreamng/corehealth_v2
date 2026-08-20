@@ -119,7 +119,7 @@ class AuditMarkController extends Controller
 
         $modelClass = $this->resolveModelClass($request->model_type);
         $baseClass = class_basename($modelClass);
-        $autoStamp = $request->boolean('auto_stamp', true);
+        $autoStamp = $request->boolean('auto_stamp');
 
         $queryMarks = AuditMark::where(function($q) use ($modelClass, $baseClass) {
                 $q->where('auditable_type', $modelClass)
