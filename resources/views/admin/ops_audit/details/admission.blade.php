@@ -31,8 +31,8 @@
     <div class="row">
         <!-- Totals & HMO summary on the left -->
         <div class="col-md-5">
-            <div class="card shadow-sm border-0 mb-3">
-                <div class="card-body bg-dark text-white rounded">
+            <div class="card-modern shadow-sm border-0 mb-3">
+                <div class="card-modern-body bg-dark text-white rounded">
                     <h6 class="text-white-50 border-bottom border-secondary pb-2 mb-3"><i class="mdi mdi-cash-register me-1"></i> Billing Totals</h6>
                     <div class="d-flex justify-content-between mb-2">
                         <span>Gross Total</span>
@@ -58,8 +58,8 @@
             </div>
 
             @if(isset($data['hmo_claims']) && $data['hmo_claims']['total_items'] > 0)
-            <div class="card shadow-sm border-0 border-start border-success border-4 mb-3 bg-light">
-                <div class="card-body">
+            <div class="card-modern shadow-sm border-0 border-start border-success border-4 mb-3 bg-light">
+                <div class="card-modern-body">
                     <h6 class="font-weight-bold border-bottom pb-2 mb-3 text-success"><i class="mdi mdi-shield-check me-1"></i> HMO Claims Summary</h6>
                     <div class="d-flex justify-content-between mb-2 small">
                         <span class="text-muted">Total Claim Items</span>
@@ -85,32 +85,40 @@
         <!-- Categories on the right -->
         <div class="col-md-7">
             <h6 class="font-weight-bold mb-3 text-secondary"><i class="mdi mdi-format-list-bulleted me-1"></i> Bill Items Breakdown</h6>
-            <div class="accordion shadow-sm border rounded" id="accordionCategories">
+            <div class="d-flex flex-column gap-3" id="accordionCategories">
                 @foreach($data['categories'] as $index => $cat)
-                <div class="accordion-item border-0 border-bottom">
-                    <h2 class="accordion-header" id="heading-{{ $index }}">
-                        <button class="accordion-button collapsed bg-white text-dark" type="button" data-bs-toggle="collapse" data-bs-target="#collapse-{{ $index }}">
-                            <div class="d-flex justify-content-between align-items-center w-100 pe-3">
-                                <div>
-                                    <i class="mdi {{ $cat['icon'] }} text-primary me-2 fs-5"></i> 
-                                    <span class="font-weight-bold">{{ $cat['name'] }}</span>
-                                    <span class="badge bg-secondary ms-2 rounded-pill">{{ $cat['count'] }} Items</span>
+                <div class="card-modern border-0 shadow-sm rounded-3 overflow-hidden">
+                    <div class="card-modern-header bg-white border-0 p-0" id="heading-{{ $index }}">
+                        <button class="btn btn-link w-100 text-decoration-none text-start p-3 d-flex justify-content-between align-items-center" type="button" data-bs-toggle="collapse" data-bs-target="#collapse-{{ $index }}" style="box-shadow: none;">
+                            <div class="d-flex align-items-center">
+                                <div class="bg-primary bg-opacity-10 text-primary rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 40px; height: 40px;">
+                                    <i class="mdi {{ $cat['icon'] }} fs-5"></i>
                                 </div>
-                                <div class="font-weight-bold text-dark">₦{{ number_format($cat['total'], 2) }}</div>
+                                <div>
+                                    <div class="font-weight-bold text-dark" style="font-size:1.05rem;">{{ $cat['name'] }}</div>
+                                    <small class="text-muted">{{ $cat['count'] }} {{ Str::plural('Item', $cat['count']) }}</small>
+                                </div>
+                            </div>
+                            <div class="d-flex align-items-center gap-3">
+                                <div class="font-weight-bold text-dark fs-6">₦{{ number_format($cat['total'], 2) }}</div>
+                                <i class="mdi mdi-chevron-down text-muted fs-4"></i>
                             </div>
                         </button>
-                    </h2>
-                    <div id="collapse-{{ $index }}" class="accordion-collapse collapse" data-bs-parent="#accordionCategories">
-                        <div class="accordion-body p-0 bg-light">
+                    </div>
+                    <div id="collapse-{{ $index }}" class="collapse bg-light border-top" data-bs-parent="#accordionCategories">
+                        <div class="card-modern-body p-0">
                             <ul class="list-group list-group-flush">
                                 @foreach($cat['items'] as $item)
-                                    <li class="list-group-item d-flex justify-content-between align-items-center bg-transparent">
+                                    <li class="list-group-item d-flex justify-content-between align-items-center bg-transparent py-3">
                                         <div>
-                                            <div class="font-weight-bold text-dark" style="font-size:0.9rem;">{{ $item['name'] }}</div>
-                                            <small class="text-muted"><i class="mdi mdi-clock-outline"></i> {{ $item['date'] }} &bull; Qty: {{ $item['qty'] }}</small>
+                                            <div class="font-weight-bold text-dark" style="font-size:0.95rem;">{{ $item['name'] }}</div>
+                                            <small class="text-muted"><i class="mdi mdi-clock-outline me-1"></i>{{ $item['date'] }} &bull; Qty: {{ $item['qty'] }}</small>
                                         </div>
                                         <div class="text-end">
-                                            <div class="font-weight-bold text-dark">₦{{ number_format($item['amount'], 2) }}</div>
+                                            <div class="font-weight-bold text-dark mb-1">₦{{ number_format($item['amount'], 2) }}</div>
+                                            @if($item['paid'])
+                                                <span class="badge bg-success text-white py-1 px-2 shadow-sm" style="font-size:0.75rem;"><i class="mdi mdi-check-circle me-1"></i>Paid</span>
+                                            @endif
                                         </div>
                                     </li>
                                 @endforeach
