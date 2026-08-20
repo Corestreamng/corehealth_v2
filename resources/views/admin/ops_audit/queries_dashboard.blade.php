@@ -10,8 +10,8 @@
 
 @include('admin.audit_workbench.partials.datetime_filter', ['zoneKey' => 'queries-dashboard', 'zoneLabel' => 'Unified Query Dashboard'])
 
-<div class="card shadow-sm border-0 mb-4 rounded-3 overflow-hidden" style="width: 100%;">
-    <div class="card-header bg-white border-bottom p-0">
+<div class="card-modern shadow-sm border-0 mb-4 rounded-3 overflow-hidden" style="width: 100%;">
+    <div class="card-modern-header bg-white border-bottom p-0">
         <ul class="nav nav-tabs nav-fill audit-tabs" id="queryTabs" role="tablist">
             <li class="nav-item" role="presentation">
                 <button class="nav-link active py-3 font-weight-bold" id="active-queries-tab" data-bs-toggle="tab" data-bs-target="#active-queries" type="button" role="tab">
@@ -31,23 +31,23 @@
         </ul>
     </div>
     
-    <div class="card-body p-4 bg-light">
+    <div class="card-modern-body p-4 bg-light">
         <div class="tab-content" id="queryTabsContent">
             
             {{-- Active Queries Tab --}}
             <div class="tab-pane fade show active" id="active-queries" role="tabpanel">
                 <div class="row g-3 mb-4">
                     <div class="col-md-6">
-                        <div class="card bg-danger text-white h-100 shadow-sm border-0">
-                            <div class="card-body">
+                        <div class="card-modern bg-danger text-white h-100 shadow-sm border-0">
+                            <div class="card-modern-body">
                                 <h6>Total Active Queries (Hospital-wide)</h6>
                                 <h3 class="mb-0">{{ $kpis['total_active'] ?? 0 }}</h3>
                             </div>
                         </div>
                     </div>
                     <div class="col-md-6">
-                        <div class="card bg-warning text-dark h-100 shadow-sm border-0">
-                            <div class="card-body">
+                        <div class="card-modern bg-warning text-dark h-100 shadow-sm border-0">
+                            <div class="card-modern-body">
                                 <h6>Active Queries in Period</h6>
                                 <h3 class="mb-0">{{ $kpis['active_in_period'] ?? 0 }}</h3>
                             </div>
@@ -55,8 +55,8 @@
                     </div>
                 </div>
 
-                <div class="card shadow-sm border-0">
-                    <div class="card-body p-3">
+                <div class="card-modern shadow-sm border-0">
+                    <div class="card-modern-body p-3">
                         <div class="table-responsive">
                             <table id="table-active-queries" class="table table-hover align-middle w-100 ops-datatable">
                                 <thead class="bg-light">
@@ -79,16 +79,16 @@
             <div class="tab-pane fade" id="resolved-queries" role="tabpanel">
                 <div class="row g-3 mb-4">
                     <div class="col-md-6">
-                        <div class="card bg-success text-white h-100 shadow-sm border-0">
-                            <div class="card-body">
+                        <div class="card-modern bg-success text-white h-100 shadow-sm border-0">
+                            <div class="card-modern-body">
                                 <h6>Total Resolved Queries (Hospital-wide)</h6>
                                 <h3 class="mb-0">{{ $kpis['total_resolved'] ?? 0 }}</h3>
                             </div>
                         </div>
                     </div>
                     <div class="col-md-6">
-                        <div class="card bg-info text-white h-100 shadow-sm border-0">
-                            <div class="card-body">
+                        <div class="card-modern bg-info text-white h-100 shadow-sm border-0">
+                            <div class="card-modern-body">
                                 <h6>Resolved Queries in Period</h6>
                                 <h3 class="mb-0">{{ $kpis['resolved_in_period'] ?? 0 }}</h3>
                             </div>
@@ -96,8 +96,8 @@
                     </div>
                 </div>
 
-                <div class="card shadow-sm border-0">
-                    <div class="card-body p-3">
+                <div class="card-modern shadow-sm border-0">
+                    <div class="card-modern-body p-3">
                         <div class="table-responsive">
                             <table id="table-resolved-queries" class="table table-hover align-middle w-100 ops-datatable">
                                 <thead class="bg-light">
