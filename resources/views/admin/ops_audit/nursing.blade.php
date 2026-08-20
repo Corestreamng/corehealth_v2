@@ -188,7 +188,7 @@
                         <th>Date</th>
                         <th>Patient</th>
                         <th>HMO</th>
-                        <th>Item/Service</th>
+                        <th>Item</th>
                         <th>Qty</th>
                         <th>Amount</th>
                         <th>Payable</th>
@@ -196,7 +196,7 @@
                         <th>Billed By</th>
                         <th>Cashier</th>
                         <th>Method</th>
-                        <th>Pay Status</th>
+                        <th>Status</th>
                         <th>Audit ⚡</th>
                     </tr>
                 </thead>

@@ -302,12 +302,8 @@
                         <th>Patient</th>
                         <th>HMO</th>
                         <th>Amount</th>
-                        <th>Payable</th>
-                        <th>Claims</th>
+                        <th>Payment Info</th>
                         <th>Billed By</th>
-                        <th>Cashier</th>
-                        <th>Method</th>
-                        <th>Pay Status</th>
                         <th>Audit ⚡</th>
                     </tr>
                 </thead>
@@ -553,20 +549,7 @@
                     }, {
                         data: 'amount'
                     },
-                    {
-                        data: 'payable'
-                    }, {
-                        data: 'claims'
-                    }, {
-                        data: 'billed_by'
-                    }, {
-                        data: 'cashier'
-                    },
-                    {
-                        data: 'method'
-                    }, {
-                        data: 'pay_status'
-                    },
+                    { data: 'payment_info' }, { data: 'billed_by' },
                     {
                         data: 'audit',
                         orderable: false,

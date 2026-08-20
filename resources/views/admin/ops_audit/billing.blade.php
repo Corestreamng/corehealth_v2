@@ -112,8 +112,8 @@
             <div class="col-md-2">
                 <select name="bank_id" class="form-select form-select-sm ops-tab-filter" data-tab="payments">
                     <option value="">All Banks</option>
-                    @php $banks = \App\Models\Bank::active()->orderBy('name')->get(); @endphp
-                    @foreach($banks as $b) <option value="{{ $b->id }}">{{ $b->name }}</option> @endforeach
+                    @php $activeBanks = \App\Models\Bank::active()->orderBy('name')->get(); @endphp
+                    @foreach($activeBanks as $b) <option value="{{ $b->id }}">{{ $b->name }}</option> @endforeach
                 </select>
             </div>
             <div class="col-md-2">
@@ -129,14 +129,7 @@
                     <option value="refund">Refund</option>
                 </select>
             </div>
-            <div class="col-md-2">
-                <select name="bank_id" class="form-select form-select-sm ops-tab-filter" data-tab="payments">
-                    <option value="">All Banks</option>
-                    @foreach($banks as $id => $name)
-                        <option value="{{ $id }}">{{ $name }}</option>
-                    @endforeach
-                </select>
-            </div>
+
             <div class="col-md-2">
                 <select name="is_audited" class="form-select form-select-sm ops-tab-filter" data-tab="payments">
                     <option value="">Audit Status</option>

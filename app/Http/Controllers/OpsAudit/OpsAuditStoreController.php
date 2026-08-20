@@ -47,11 +47,11 @@ class OpsAuditStoreController extends OpsAuditBaseController
     protected function purchaseOrdersData(Request $request)
     {
         $query = PurchaseOrder::with([
-            'supplier',
+'supplier',
             'targetStore',
             'creator',
             'approver'
-        ]);
+]);
 
         $this->applyDateFilter($query, $request);
 
@@ -100,10 +100,10 @@ class OpsAuditStoreController extends OpsAuditBaseController
     protected function batchesData(Request $request)
     {
         $query = StockBatch::with([
-            'store',
-            'product',
+'store',
+            'product.category',
             'creator'
-        ])->where('source', 'manual');
+])->where('source', 'manual');
 
         $this->applyDateFilter($query, $request);
 
@@ -125,7 +125,7 @@ class OpsAuditStoreController extends OpsAuditBaseController
             return [
                 'date' => $row->created_at ? Carbon::parse($row->created_at)->format('d M Y') : '-',
                 'store' => $row->store ? ($row->store->store_name . '<br><small class="text-muted">' . $row->store->distributionRoleLabel() . '</small>') : '-',
-                'product' => $row->product?->product_name ?? '-',
+                'product' => $this->renderItemDetails($row),
                 'batch_no' => $row->batch_number ?? '-',
                 'qty' => number_format($row->initial_qty ?? 0),
                 'unit_cost' => '₦' . number_format($row->cost_price ?? 0, 2),

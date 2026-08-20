@@ -405,6 +405,12 @@
                     cache: true
                 }
             });
+
+            // Modernize all standard select filters
+            $('select.ops-tab-filter:not(.ajax-entity-search):not(.ajax-product-search):not(.ajax-service-search):not(.ops-hmo-select2)').select2({
+                minimumResultsForSearch: 10,
+                width: '100%'
+            });
         }
     });
     // Global DataTables configuration: auto-highlight queried rows

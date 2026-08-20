@@ -59,18 +59,19 @@ class OpsAuditSurgeryController extends OpsAuditBaseController
     protected function proceduresData(Request $request)
     {
         $query = Procedure::with([
-            'patient.user',
+'patient.user',
             'patient.hmo.scheme',
             'requestedByUser',
-            'service',
+            'service.category',
             'productOrServiceRequest.payment.staff_user',
         
             'productOrServiceRequest.payment.user',
-        ]);
+]);
 
         $this->applyDateFilter($query, $request);
         $this->applyShiftFilter($query, $request);
         $this->applyPaymentFilters($query, $request, 'productOrServiceRequest');
+        $this->applyItemFilters($query, $request, 'productOrServiceRequest');
 
         if ($request->filled('status')) $query->where('procedure_status', $request->status);
         if ($request->filled('hmo_id')) $query->whereHas('patient.hmo', fn($q) => $q->where('id', $request->hmo_id));
@@ -84,13 +85,13 @@ class OpsAuditSurgeryController extends OpsAuditBaseController
             $posr = $row->productOrServiceRequest;
             $payment = $posr?->payment;
 
-            $statusColors = ['pending' => 'warning text-dark', 'in_progress' => 'info', 'completed' => 'success', 'cancelled' => 'danger'];
+            $statusColors = ['requested' => 'warning text-dark', 'in_progress' => 'info', 'completed' => 'success', 'cancelled' => 'danger'];
             
             return [
                 'date' => $row->created_at ? Carbon::parse($row->created_at)->format('d M Y') : '-',
                 'patient' => $this->renderPatient($user, $patient, $hmo),
                 'hmo' => $this->renderHmo($hmo),
-                'procedure' => $row->is_free_form ? $row->free_form_name : ($row->service?->service_name ?? '-'),
+                'procedure' => $this->renderItemDetails($row),
                 'doctor' => $row->requestedByUser?->firstname ? ($row->requestedByUser->firstname . ' ' . ($row->requestedByUser->surname ?? '')) : '-',
                 'status' => '<span class="badge bg-'.($statusColors[$row->procedure_status] ?? 'secondary').'">'.ucfirst(str_replace('_', ' ', $row->procedure_status ?? '-')).'</span>',
                 'consent' => $row->consent_status ? '<span class="badge bg-success">Signed</span>' : '<span class="badge bg-warning text-dark">Pending</span>',
@@ -102,7 +103,7 @@ class OpsAuditSurgeryController extends OpsAuditBaseController
         }, function ($kpiQuery) {
             return [
                 ['label' => 'Total Procedures', 'value' => number_format((clone $kpiQuery)->count()), 'color' => '#0d6efd'],
-                ['label' => 'Pending', 'value' => number_format((clone $kpiQuery)->where('procedure_status', 'pending')->count()), 'color' => '#ffc107'],
+                ['label' => 'Requested', 'value' => number_format((clone $kpiQuery)->where('procedure_status', 'requested')->count()), 'color' => '#ffc107'],
                 ['label' => 'Completed', 'value' => number_format((clone $kpiQuery)->where('procedure_status', 'completed')->count()), 'color' => '#198754'],
                 ['label' => 'Consent Pending', 'value' => number_format((clone $kpiQuery)->where('consent_status', 0)->count()), 'color' => '#dc3545'],
             ];
@@ -115,17 +116,18 @@ class OpsAuditSurgeryController extends OpsAuditBaseController
     protected function notesData(Request $request)
     {
         $query = Procedure::with([
-            'patient.user',
-            'service',
+'patient.user',
+            'service.category',
             'preNotesBy',
             'postNotesBy',
         
             'productOrServiceRequest.payment.user',
-        ]);
+]);
 
         $this->applyDateFilter($query, $request);
         $this->applyShiftFilter($query, $request);
         $this->applyPaymentFilters($query, $request, 'productOrServiceRequest');
+        $this->applyItemFilters($query, $request, 'productOrServiceRequest');
 
         $kpiQuery = clone $query;
 
@@ -136,7 +138,7 @@ class OpsAuditSurgeryController extends OpsAuditBaseController
             return [
                 'date' => $row->created_at ? Carbon::parse($row->created_at)->format('d M Y') : '-',
                 'patient' => $this->renderPatient($user, $patient, null),
-                'procedure' => $row->is_free_form ? $row->free_form_name : ($row->service?->service_name ?? '-'),
+                'procedure' => $this->renderItemDetails($row),
                 'pre_notes' => $row->pre_notes ? '<i class="mdi mdi-check text-success"></i> Yes' : '<i class="mdi mdi-close text-danger"></i> No',
                 'pre_by' => $row->preNotesBy?->firstname ? ($row->preNotesBy->firstname . ' ' . ($row->preNotesBy->surname ?? '')) : '-',
                 'post_notes' => $row->post_notes ? '<i class="mdi mdi-check text-success"></i> Yes' : '<i class="mdi mdi-close text-danger"></i> No',
@@ -159,16 +161,17 @@ class OpsAuditSurgeryController extends OpsAuditBaseController
     protected function billsData(Request $request)
     {
         $query = ProductOrServiceRequest::with([
-            'patient.user',
+'patient.user',
             'patient.hmo.scheme',
             'staff',
             'payment.staff_user',
             'procedure'
-        ])->whereHas('procedure');
+])->whereHas('procedure');
 
         $this->applyDateFilter($query, $request);
         $this->applyShiftFilter($query, $request);
         $this->applyPaymentFilters($query, $request, '');
+        $this->applyItemFilters($query, $request, '');
 
         if ($request->filled('hmo_id')) $query->whereHas('patient.hmo', fn($q) => $q->where('id', $request->hmo_id));
 
@@ -209,15 +212,16 @@ class OpsAuditSurgeryController extends OpsAuditBaseController
     protected function cashbookData(Request $request)
     {
         $query = Payment::with([
-            'patient.user',
+'patient.user',
             'staff_user',
             'bank',
-            'product_or_service_request'
-        ])->whereHas('product_or_service_request.procedure');
+            'product_or_service_request', 'product_or_service_request.product.category', 'product_or_service_request.service.category'
+])->whereHas('product_or_service_request.procedure');
 
         $this->applyDateFilter($query, $request);
         $this->applyShiftFilter($query, $request);
         $this->applyPaymentFilters($query, $request, 'self_payment');
+        $this->applyItemFilters($query, $request, 'product_or_service_request');
 
         $kpiQuery = clone $query;
 
@@ -228,6 +232,7 @@ class OpsAuditSurgeryController extends OpsAuditBaseController
             return [
                 'date' => $row->created_at ? Carbon::parse($row->created_at)->format('d M Y H:i') : '-',
                 'reference' => $row->reference_no ?? '-',
+                'item' => $this->renderPosrItem($row->product_or_service_request, $row->id),
                 'patient' => $this->renderPatient($user, $patient, null),
                 'total' => '₦' . number_format($row->total ?? 0, 2),
                 'method' => $row->payment_method ? '<span class="badge bg-light text-dark border">'.$row->payment_method.'</span>' : '-',

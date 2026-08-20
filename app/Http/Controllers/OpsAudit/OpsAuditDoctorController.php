@@ -73,17 +73,18 @@ class OpsAuditDoctorController extends OpsAuditBaseController
     protected function encountersData(Request $request)
     {
         $query = Encounter::with([
-            'patient.user',
+'patient.user',
             'patient.hmo.scheme',
             'doctor',
             'queue.clinic',
         
             'productOrServiceRequest.payment.user',
-        ]);
+]);
 
         $this->applyDateFilter($query, $request);
         $this->applyShiftFilter($query, $request);
         $this->applyPaymentFilters($query, $request, 'productOrServiceRequest');
+        $this->applyItemFilters($query, $request, 'productOrServiceRequest');
 
         if ($request->filled('doctor_id')) $query->where('doctor_id', $request->doctor_id);
         if ($request->filled('clinic_id')) $query->whereHas('queue', fn($q) => $q->where('clinic_id', $request->clinic_id));
@@ -156,18 +157,19 @@ class OpsAuditDoctorController extends OpsAuditBaseController
     protected function admissionsData(Request $request)
     {
         $query = AdmissionRequest::with([
-            'patient.user',
+'patient.user',
             'patient.hmo.scheme',
             'doctor',
             'ward',
             'bed',
             'productOrServiceRequest.payment.user',
             'bills.payment'
-        ]);
+]);
 
         $this->applyDateFilter($query, $request);
         $this->applyShiftFilter($query, $request);
         $this->applyPaymentFilters($query, $request, 'productOrServiceRequest');
+        $this->applyItemFilters($query, $request, 'productOrServiceRequest');
 
         if ($request->filled('doctor_id')) $query->where('doctor_id', $request->doctor_id);
         if ($request->filled('hmo_id')) $query->whereHas('patient.hmo', fn($q) => $q->where('id', $request->hmo_id));
@@ -248,20 +250,21 @@ class OpsAuditDoctorController extends OpsAuditBaseController
     protected function prescriptionsData(Request $request)
     {
         $query = ProductRequest::with([
-            'patient.user',
+'patient.user',
             'patient.hmo.scheme',
             'doctor',
-            'product',
+            'product.category',
             'productOrServiceRequest.payment',
             'productOrServiceRequest.payment.user',
             'biller',
             'dispenser',
             'dispensedFromStore'
-        ]);
+]);
 
         $this->applyDateFilter($query, $request);
         $this->applyShiftFilter($query, $request);
         $this->applyPaymentFilters($query, $request, 'productOrServiceRequest');
+        $this->applyItemFilters($query, $request, 'productOrServiceRequest');
 
         if ($request->filled('doctor_id')) $query->where('doctor_id', $request->doctor_id);
         if ($request->filled('hmo_id')) $query->whereHas('patient.hmo', fn($q) => $q->where('id', $request->hmo_id));
@@ -294,7 +297,7 @@ class OpsAuditDoctorController extends OpsAuditBaseController
                 'patient' => $this->renderPatient($user, $patient, $hmo),
                 'hmo' => $this->renderHmo($hmo),
                 'doctor' => $row->doctor?->firstname ? ($row->doctor->firstname . ' ' . ($row->doctor->surname ?? '')) : '-',
-                'product' => $row->product?->product_name ?? ($row->is_free_form ? $row->free_form_name : '-'),
+                'product' => $this->renderItemDetails($row),
                 'qty' => $row->qty ?? '-',
                 'store' => $row->dispensedFromStore ? ($row->dispensedFromStore->store_name . '<br><small class="text-muted">' . $row->dispensedFromStore->distributionRoleLabel() . '</small>') : '-',
                 'status' => $statusHtml,
@@ -320,21 +323,22 @@ class OpsAuditDoctorController extends OpsAuditBaseController
     protected function labsData(Request $request)
     {
         $query = LabServiceRequest::with([
-            'patient.user',
+'patient.user',
             'patient.hmo.scheme',
             'doctor',
-            'service',
+            'service.category',
             'biller',
             'resultBy',
             'approver',
             'productOrServiceRequest.payment',
         
             'productOrServiceRequest.payment.user',
-        ]);
+]);
 
         $this->applyDateFilter($query, $request);
         $this->applyShiftFilter($query, $request);
         $this->applyPaymentFilters($query, $request, 'productOrServiceRequest');
+        $this->applyItemFilters($query, $request, 'productOrServiceRequest');
         
         if ($request->filled('doctor_id')) $query->where('doctor_id', $request->doctor_id);
         if ($request->filled('hmo_id')) $query->whereHas('patient.hmo', fn($q) => $q->where('id', $request->hmo_id));
@@ -383,21 +387,22 @@ class OpsAuditDoctorController extends OpsAuditBaseController
     protected function imagingData(Request $request)
     {
         $query = ImagingServiceRequest::with([
-            'patient.user',
+'patient.user',
             'patient.hmo.scheme',
             'doctor',
-            'service',
+            'service.category',
             'biller',
             'resultBy',
             'approver',
             'productOrServiceRequest.payment',
         
             'productOrServiceRequest.payment.user',
-        ]);
+]);
 
         $this->applyDateFilter($query, $request);
         $this->applyShiftFilter($query, $request);
         $this->applyPaymentFilters($query, $request, 'productOrServiceRequest');
+        $this->applyItemFilters($query, $request, 'productOrServiceRequest');
         
         if ($request->filled('doctor_id')) $query->where('doctor_id', $request->doctor_id);
         if ($request->filled('hmo_id')) $query->whereHas('patient.hmo', fn($q) => $q->where('id', $request->hmo_id));
@@ -446,19 +451,20 @@ class OpsAuditDoctorController extends OpsAuditBaseController
     protected function proceduresData(Request $request)
     {
         $query = Procedure::with([
-            'patient.user',
+'patient.user',
             'patient.hmo.scheme',
             'requestedByUser', // effectively doctor
-            'service',
+            'service.category',
             'billedByUser',
             'productOrServiceRequest.payment',
         
             'productOrServiceRequest.payment.user',
-        ]);
+]);
 
         $this->applyDateFilter($query, $request);
         $this->applyShiftFilter($query, $request);
         $this->applyPaymentFilters($query, $request, 'productOrServiceRequest');
+        $this->applyItemFilters($query, $request, 'productOrServiceRequest');
         
         if ($request->filled('doctor_id')) $query->where('requested_by', $request->doctor_id);
         if ($request->filled('hmo_id')) $query->whereHas('patient.hmo', fn($q) => $q->where('id', $request->hmo_id));
@@ -480,7 +486,7 @@ class OpsAuditDoctorController extends OpsAuditBaseController
                 'date' => $row->created_at ? Carbon::parse($row->created_at)->format('d M Y') : '-',
                 'patient' => $this->renderPatient($user, $patient, $hmo),
                 'hmo' => $this->renderHmo($hmo),
-                'procedure' => $row->service?->service_name ?? ($row->is_free_form ? $row->free_form_name : '-'),
+                'procedure' => $this->renderItemDetails($row),
                 'doctor' => $row->requestedByUser?->firstname ? ($row->requestedByUser->firstname . ' ' . ($row->requestedByUser->surname ?? '')) : '-',
                 'status' => '<span class="badge bg-'.($statusColors[$row->procedure_status] ?? 'secondary').'">'.ucfirst(str_replace('_', ' ', $row->procedure_status ?? '')).'</span>',
                 'consent' => $row->consent_status === 'obtained' ? '<span class="badge bg-success">Obtained</span>' : '<span class="badge bg-danger">Not Obtained</span>',
@@ -508,13 +514,13 @@ class OpsAuditDoctorController extends OpsAuditBaseController
     protected function referralsData(Request $request)
     {
         $query = SpecialistReferral::with([
-            'patient.user',
+'patient.user',
             'patient.hmo.scheme',
             'referringDoctor',
             'referringClinic',
             'targetClinic',
             'actionedBy',
-        ]);
+]);
 
         $this->applyDateFilter($query, $request);
         $this->applyShiftFilter($query, $request);

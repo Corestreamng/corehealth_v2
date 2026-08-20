@@ -244,6 +244,7 @@
                     <tr>
                         <th>Date</th>
                         <th>Reference</th>
+                        <th>Item</th>
                         <th width="15%">Entity</th>
                         <th>Patient</th>
                         <th width="12%">Bank</th>
@@ -350,6 +351,7 @@ $(function() {
             dtInstances.cashbook = $('#dt-cashbook').DataTable(commonOpts(dataUrls.cashbook, [
                 { data: 'date' },
                 { data: 'reference' },
+                { data: 'item' },
                 { data: 'entity' },
                 { data: 'patient' },
                 { data: 'bank' },
