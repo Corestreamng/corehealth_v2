@@ -53,21 +53,22 @@ class OpsAuditImagingController extends OpsAuditBaseController
     protected function requestsData(Request $request)
     {
         $query = ImagingServiceRequest::with([
-            'patient.user',
+'patient.user',
             'patient.hmo.scheme',
             'doctor',
-            'service',
+            'service.category',
             'biller',
             'resultBy',
             'approver',
             'productOrServiceRequest.payment.staff_user',
         
             'productOrServiceRequest.payment.user',
-        ]);
+]);
 
         $this->applyDateFilter($query, $request);
         $this->applyShiftFilter($query, $request);
         $this->applyPaymentFilters($query, $request, 'productOrServiceRequest');
+        $this->applyItemFilters($query, $request, 'productOrServiceRequest');
 
         if ($request->filled('status')) $query->where('status', $request->status);
         if ($request->filled('hmo_id')) $query->whereHas('patient.hmo', fn($q) => $q->where('id', $request->hmo_id));
@@ -113,16 +114,17 @@ class OpsAuditImagingController extends OpsAuditBaseController
     protected function billsData(Request $request)
     {
         $query = ProductOrServiceRequest::with([
-            'patient.user',
+'patient.user',
             'patient.hmo.scheme',
             'staff',
             'payment.staff_user',
             'service'
-        ])->where('type', 'imaging');
+])->whereHas('imagingRequest');
 
         $this->applyDateFilter($query, $request);
         $this->applyShiftFilter($query, $request);
         $this->applyPaymentFilters($query, $request, '');
+        $this->applyItemFilters($query, $request, '');
 
         if ($request->filled('hmo_id')) $query->whereHas('patient.hmo', fn($q) => $q->where('id', $request->hmo_id));
 
@@ -160,17 +162,18 @@ class OpsAuditImagingController extends OpsAuditBaseController
     protected function cashbookData(Request $request)
     {
         $query = Payment::with([
-            'patient.user',
+'patient.user',
             'staff_user',
             'bank',
-            'product_or_service_request'
-        ])->whereHas('product_or_service_request', function($q) {
+            'product_or_service_request', 'product_or_service_request.product.category', 'product_or_service_request.service.category'
+])->whereHas('product_or_service_request', function($q) {
             $q->whereHas('imagingRequest');
         });
 
         $this->applyDateFilter($query, $request);
         $this->applyShiftFilter($query, $request);
         $this->applyPaymentFilters($query, $request, 'self_payment');
+        $this->applyItemFilters($query, $request, 'product_or_service_request');
 
         $kpiQuery = clone $query;
 
@@ -181,6 +184,7 @@ class OpsAuditImagingController extends OpsAuditBaseController
             return [
                 'date' => $row->created_at ? Carbon::parse($row->created_at)->format('d M Y H:i') : '-',
                 'reference' => $row->reference_no ?? '-',
+                'item' => $this->renderPosrItem($row->product_or_service_request, $row->id),
                 'patient' => $this->renderPatient($user, $patient, null),
                 'total' => '₦' . number_format($row->total ?? 0, 2),
                 'method' => $row->payment_method ? '<span class="badge bg-light text-dark border">'.$row->payment_method.'</span>' : '-',

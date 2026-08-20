@@ -99,7 +99,7 @@
             <div class="col-md-2">
                 <select name="status" class="form-select form-select-sm ops-tab-filter" data-tab="procedures">
                     <option value="">All Statuses</option>
-                    <option value="pending">Pending</option>
+                    <option value="requested">Requested</option>
                     <option value="in_progress">In Progress</option>
                     <option value="completed">Completed</option>
                     <option value="cancelled">Cancelled</option>
@@ -180,12 +180,8 @@
                         <th>HMO</th>
                         <th>Procedure</th>
                         <th>Amount</th>
-                        <th>Payable</th>
-                        <th>Claims</th>
+                        <th>Payment Info</th>
                         <th>Billed By</th>
-                        <th>Cashier</th>
-                        <th>Method</th>
-                        <th>Pay Status</th>
                         <th>Audit ⚡</th>
                     </tr>
                 </thead>
@@ -244,6 +240,7 @@
                     <tr>
                         <th>Date</th>
                         <th>Reference</th>
+                        <th>Item</th>
                         <th width="15%">Entity</th>
                         <th>Patient</th>
                         <th width="12%">Bank</th>
@@ -335,8 +332,7 @@ $(function() {
         else if (tabId === 'bills' && !dtInstances.bills) {
             dtInstances.bills = $('#dt-bills').DataTable(commonOpts(dataUrls.bills, [
                 { data: 'date' }, { data: 'patient' }, { data: 'hmo' }, { data: 'procedure' }, { data: 'amount' },
-                { data: 'payable' }, { data: 'claims' }, { data: 'billed_by' }, { data: 'cashier' },
-                { data: 'method' }, { data: 'pay_status' },
+                { data: 'payment_info' }, { data: 'billed_by' },
                 { data: 'audit', orderable: false, searchable: false }
             ], 'kpi-bills'));
         }
@@ -353,6 +349,7 @@ $(function() {
             dtInstances.cashbook = $('#dt-cashbook').DataTable(commonOpts(dataUrls.cashbook, [
                 { data: 'date' },
                 { data: 'reference' },
+                { data: 'item' },
                 { data: 'entity' },
                 { data: 'patient' },
                 { data: 'bank' },

@@ -43,19 +43,20 @@ class OpsAuditBillingController extends OpsAuditBaseController
     protected function paymentsData(Request $request)
     {
         $query = Payment::with([
-            'patient.user',
+'patient.user',
             'patient.hmo.scheme',
             'user', // cashier
             'bank',
             'organizationBill.organization',
             'staffBill.staffUser',
             'patientAccount' // if it exists
-        ]);
+]);
 
         $this->applyDateFilter($query, $request);
         $this->applyShiftFilter($query, $request);
 
         $this->applyPaymentFilters($query, $request, 'self_payment');
+        $this->applyItemFilters($query, $request, 'product_or_service_request');
 
         if ($request->filled('payment_type')) $query->where('payment_type', $request->payment_type);
         if ($request->filled('hmo_id')) $query->where('hmo_id', $request->hmo_id);
@@ -115,12 +116,12 @@ class OpsAuditBillingController extends OpsAuditBaseController
     protected function orgBillsData(Request $request)
     {
         $query = OrganizationBill::with([
-            'patient.user',
+'patient.user',
             'patient.hmo.scheme',
             'organization',
             'payment.user',
             'settlementPayment'
-        ]);
+]);
 
         $this->applyDateFilter($query, $request);
 
@@ -170,12 +171,12 @@ class OpsAuditBillingController extends OpsAuditBaseController
     protected function staffBillsData(Request $request)
     {
         $query = StaffBill::with([
-            'patient.user',
+'patient.user',
             'patient.hmo.scheme',
             'staffUser',
             'checkoutPayment.user',
             'settlementPayment'
-        ]);
+]);
 
         $this->applyDateFilter($query, $request);
 

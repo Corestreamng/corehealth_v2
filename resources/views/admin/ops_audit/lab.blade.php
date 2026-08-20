@@ -154,12 +154,8 @@
                         <th>HMO</th>
                         <th>Test</th>
                         <th>Amount</th>
-                        <th>Payable</th>
-                        <th>Claims</th>
+                        <th>Payment Info</th>
                         <th>Billed By</th>
-                        <th>Cashier</th>
-                        <th>Method</th>
-                        <th>Pay Status</th>
                         <th>Audit ⚡</th>
                     </tr>
                 </thead>
@@ -210,6 +206,7 @@
                     <tr>
                         <th>Date</th>
                         <th>Reference</th>
+                        <th>Item</th>
                         <th width="15%">Entity</th>
                         <th>Patient</th>
                         <th width="12%">Bank</th>
@@ -336,9 +333,8 @@
 
             if (tabId === 'bills' && !dtInstances.bills) {
                 dtInstances.bills = $('#dt-bills').DataTable(commonOpts(dataUrls.bills, [
-                    { data: 'date' }, { data: 'entity' }, { data: 'patient' }, { data: 'tests' },
-                    { data: 'qty' }, { data: 'amount' }, { data: 'status' },
-                    { data: 'auditor', orderable: false, searchable: false },
+                    { data: 'date' }, { data: 'patient' }, { data: 'hmo' }, { data: 'test' },
+                    { data: 'amount' }, { data: 'payment_info' }, { data: 'billed_by' },
                     { data: 'audit', orderable: false, searchable: false, className: 'text-center' }
                 ], 'kpi-bills'));
             }
@@ -355,12 +351,9 @@
                 dtInstances.cashbook = $('#dt-cashbook').DataTable(commonOpts(dataUrls.cashbook, [{
                         data: 'date'
                     },
-                    {
-                        data: 'reference'
-                    },
-                    {
-                        data: 'entity'
-                    },
+                    { data: 'reference' },
+                { data: 'item' },
+                { data: 'entity' },
                     {
                         data: 'patient'
                     },
