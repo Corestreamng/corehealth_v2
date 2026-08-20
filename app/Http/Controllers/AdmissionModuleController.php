@@ -89,7 +89,26 @@ class AdmissionModuleController extends Controller
             return response()->json(['error' => 'Admission date not set'], 400);
         }
 
-        $query = ProductOrServiceRequest::with(['service.category', 'product.category', 'payment', 'hmo', 'validator'])
+        $query = ProductOrServiceRequest::with([
+            'service.category', 
+            'product.category', 
+            'payment.user', 
+            'payment.bank', 
+            'payment.staffBill', 
+            'payment.organizationBill', 
+            'hmo', 
+            'validator',
+            'labRequest.sampler',
+            'labRequest.resultBy',
+            'imagingRequest.resultBy',
+            'productRequest',
+            'encounter.doctor',
+            'encounter.queue.clinic',
+            'procedure.requestedByUser',
+            'doctor_queue_entry.clinic',
+            'doctor_queue_entry.doctor',
+            'staff'
+        ])
             ->where('user_id', $patient->user_id)
             ->where('created_at', '>=', $admitDate);
 
@@ -111,7 +130,7 @@ class AdmissionModuleController extends Controller
         ];
 
         $categoryIcons = [
-            'accommodation' => 'mdi-bed',
+            'accommodation' => 'mdi-hotel',
             'nursing' => 'mdi-mother-nurse',
             'consultation' => 'mdi-stethoscope',
             'laboratory' => 'mdi-flask',
@@ -156,6 +175,14 @@ class AdmissionModuleController extends Controller
 
         // Bill items for full detail table
         $billItems = [];
+
+        $orgCache = [];
+        $staffCache = [];
+        $cashiers = [];
+        $paymentMethods = [];
+        $banks = [];
+        $billedTo = [];
+        $availableCategories = [];
 
         foreach ($billingItems as $item) {
             $itemCategory = 'other';
@@ -240,20 +267,86 @@ class AdmissionModuleController extends Controller
             $categories[$itemCategory]['total'] += $payable;
             $categories[$itemCategory]['count']++;
 
-            // Timeline
+            // Extract rich payment info
+            $cashierName = null;
+            $paymentMethod = null;
+            $bankName = null;
+            $billedToName = null;
+
+            if ($item->payment) {
+                $payment = $item->payment;
+                if ($payment->user) {
+                    $cashierName = trim($payment->user->firstname . ' ' . $payment->user->surname . ' ' . ($payment->user->othername ?? ''));
+                }
+                $paymentMethod = $payment->payment_method;
+                
+                if ($payment->bank) {
+                    $bankName = $payment->bank->name;
+                }
+                
+                if ($payment->staffBill) {
+                    $staffId = $payment->staffBill->staff_user_id;
+                    if (!isset($staffCache[$staffId])) {
+                        $staffUser = \App\Models\User::find($staffId);
+                        $staffCache[$staffId] = $staffUser ? trim($staffUser->firstname . ' ' . $staffUser->surname . ' ' . ($staffUser->othername ?? '')) : null;
+                    }
+                    $billedToName = $staffCache[$staffId] ? 'Staff: ' . $staffCache[$staffId] : null;
+                } elseif ($payment->organizationBill) {
+                    $orgId = $payment->organizationBill->organization_id;
+                    if (!isset($orgCache[$orgId])) {
+                        $org = \App\Models\Organization::find($orgId);
+                        $orgCache[$orgId] = $org ? $org->name : null;
+                    }
+                    $billedToName = $orgCache[$orgId] ? 'Corporate: ' . $orgCache[$orgId] : null;
+                } elseif ($item->hmo_id && $item->hmo) {
+                    $billedToName = 'HMO: ' . $item->hmo->name;
+                }
+            }
+
+            // Add to filter lists
+            if ($cashierName && !in_array($cashierName, $cashiers)) $cashiers[] = $cashierName;
+            if ($paymentMethod && !in_array($paymentMethod, $paymentMethods)) $paymentMethods[] = $paymentMethod;
+            if ($bankName && !in_array($bankName, $banks)) $banks[] = $bankName;
+            if ($billedToName && !in_array($billedToName, $billedTo)) $billedTo[] = $billedToName;
+            
+            $availableCategories[$itemCategory] = $categoryLabels[$itemCategory] ?? ucfirst($itemCategory);
+
+            // Timeline grouped by day -> category -> items
             $dayKey = Carbon::parse($item->created_at)->format('Y-m-d');
             if (!isset($timeline[$dayKey])) {
                 $timeline[$dayKey] = [
                     'date' => Carbon::parse($item->created_at)->format('D, d M Y'),
                     'day_number' => Carbon::parse($admitDate)->diffInDays(Carbon::parse($item->created_at)) + 1,
+                    'categories' => [],
+                    'total' => 0,
+                ];
+            }
+            
+            if (!isset($timeline[$dayKey]['categories'][$itemCategory])) {
+                $timeline[$dayKey]['categories'][$itemCategory] = [
+                    'name' => $categoryLabels[$itemCategory] ?? ucfirst($itemCategory),
+                    'icon' => $categoryIcons[$itemCategory] ?? 'mdi-file-document',
                     'items' => [],
                     'total' => 0,
                 ];
             }
-            $timeline[$dayKey]['items'][] = [
+
+            $timeline[$dayKey]['categories'][$itemCategory]['items'][] = [
                 'name' => $itemName,
+                'qty' => $qty,
+                'price' => $price,
                 'amount' => $payable,
+                'date' => Carbon::parse($item->created_at)->format('H:i'),
+                'paid' => $paid > 0,
+                'cashier' => $cashierName,
+                'payment_method' => $paymentMethod,
+                'bank' => $bankName,
+                'billed_to' => $billedToName,
+                'hmo_claims' => $hmo > 0 ? $hmo : null,
+                'category_key' => $itemCategory,
+                'model' => $item,
             ];
+            $timeline[$dayKey]['categories'][$itemCategory]['total'] += $payable;
             $timeline[$dayKey]['total'] += $payable;
 
             // Full bill item for detail modal
@@ -322,6 +415,13 @@ class AdmissionModuleController extends Controller
             ],
             'categories' => array_values($categories),
             'timeline' => array_values($timeline),
+            'filters' => [
+                'categories' => $availableCategories,
+                'cashiers' => $cashiers,
+                'payment_methods' => $paymentMethods,
+                'banks' => $banks,
+                'billed_to' => $billedTo,
+            ],
             'bill_items' => $billItems,
             'hmo_claims' => $hmoClaims,
             'totals' => [
