@@ -818,8 +818,8 @@
             if (res.target_details && (res.target_details.patient_name || res.target_details.item_name)) {
                 var t = res.target_details;
                 targetHtml += `
-                    <div class="card border-0 shadow-sm mb-4 rounded-3 overflow-hidden" style="background: #ffffff; border-left: 4px solid #3b82f6 !important;">
-                        <div class="card-body p-3">
+                    <div class="card-modern border-0 shadow-sm mb-4 rounded-3 overflow-hidden" style="background: #ffffff; border-left: 4px solid #3b82f6 !important;">
+                        <div class="card-modern-body p-3">
                             <div class="d-flex justify-content-between align-items-center mb-2">
                                 <span class="badge bg-primary px-2.5 py-1 font-weight-bold"><i class="mdi mdi-cube-outline me-1"></i> ${res.model_type} #${res.model_id}</span>
                                 <span class="text-muted small"><i class="mdi mdi-folder me-1"></i> Zone: <strong>${res.zone_key}</strong></span>
@@ -857,8 +857,8 @@
 
                 ${targetHtml}
 
-                <div class="card border-0 shadow-sm mb-3 rounded-3" style="background-color: #fef2f2; border-left: 4px solid #ef4444 !important;">
-                    <div class="card-body p-3">
+                <div class="card-modern border-0 shadow-sm mb-3 rounded-3" style="background-color: #fef2f2; border-left: 4px solid #ef4444 !important;">
+                    <div class="card-modern-body p-3">
                         <h6 class="font-weight-bold text-danger mb-2 d-flex align-items-center">
                             <i class="mdi mdi-alert-circle me-1" style="font-size:1.1rem;"></i> Query Reason & Flag Notes
                         </h6>
@@ -872,8 +872,8 @@
 
             if (res.status === 'resolved') {
                 bodyHtml += `
-                    <div class="card border-0 shadow-sm mb-2 rounded-3" style="background-color: #ecfdf5; border-left: 4px solid #10b981 !important;">
-                        <div class="card-body p-3">
+                    <div class="card-modern border-0 shadow-sm mb-2 rounded-3" style="background-color: #ecfdf5; border-left: 4px solid #10b981 !important;">
+                        <div class="card-modern-body p-3">
                             <h6 class="font-weight-bold text-success mb-2 d-flex align-items-center">
                                 <i class="mdi mdi-check-decagram me-1" style="font-size:1.1rem;"></i> Resolution Details & Outcome
                             </h6>
@@ -939,7 +939,7 @@
                         <input type="hidden" id="stamp_model_type">
                         <input type="hidden" id="stamp_model_id">
                         
-                        <div class="card border-0 shadow-sm mb-4 rounded-3 p-3 bg-white border-start border-success border-4">
+                        <div class="card-modern border-0 shadow-sm mb-4 rounded-3 p-3 bg-white border-start border-success border-4">
                             <div class="d-flex align-items-center">
                                 <div class="rounded-circle bg-success bg-opacity-10 p-2 me-3 text-success">
                                     <i class="mdi mdi-shield-check" style="font-size:1.8rem;"></i>
@@ -992,7 +992,7 @@
                             <input type="hidden" name="model_type" id="query_model_type">
                             <input type="hidden" name="model_id" id="query_model_id">
                             
-                            <div class="card border-0 shadow-sm mb-4 rounded-3 p-3 bg-white border-start border-warning border-4">
+                            <div class="card-modern border-0 shadow-sm mb-4 rounded-3 p-3 bg-white border-start border-warning border-4">
                                 <div class="d-flex align-items-center">
                                     <div class="rounded-circle bg-warning bg-opacity-10 p-2 me-3 text-warning">
                                         <i class="mdi mdi-alert-circle" style="font-size:1.8rem;"></i>
@@ -1042,7 +1042,7 @@
                             @csrf
                             <input type="hidden" name="model_type" id="resolve_model_type">
                             <input type="hidden" name="model_id" id="resolve_model_id">
-                            <div class="card border-0 shadow-sm mb-4 rounded-3 p-3 bg-white border-start border-success border-4">
+                            <div class="card-modern border-0 shadow-sm mb-4 rounded-3 p-3 bg-white border-start border-success border-4">
                                 <div class="d-flex align-items-center">
                                     <div class="rounded-circle bg-success bg-opacity-10 p-2 me-3 text-success">
                                         <i class="mdi mdi-shield-check" style="font-size:1.8rem;"></i>
