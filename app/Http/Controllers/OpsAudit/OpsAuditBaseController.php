@@ -959,9 +959,22 @@ abstract class OpsAuditBaseController extends Controller
     private function getPaymentItemsDetails($id)
     {
         $payment = \App\Models\Payment::with([
-            'product_or_service_request.product',
-            'product_or_service_request.service',
-            'product_or_service_request.procedure.service'
+            'product_or_service_request.product.price',
+            'product_or_service_request.product.category',
+            'product_or_service_request.service.price',
+            'product_or_service_request.service.category',
+            'product_or_service_request.procedure.service.price',
+            'product_or_service_request.procedure.service.category',
+            'product_or_service_request.staff',
+            'product_or_service_request.labRequest.sampler',
+            'product_or_service_request.labRequest.resultBy',
+            'product_or_service_request.imagingRequest.resultBy',
+            'product_or_service_request.productRequest',
+            'product_or_service_request.encounter.doctor',
+            'product_or_service_request.encounter.queue.clinic',
+            'product_or_service_request.procedure.requestedByUser',
+            'product_or_service_request.doctor_queue_entry.clinic',
+            'product_or_service_request.doctor_queue_entry.doctor',
         ])->find($id);
 
         if (!$payment) {
