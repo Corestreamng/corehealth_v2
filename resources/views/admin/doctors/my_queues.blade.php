@@ -109,6 +109,56 @@
 
         /* ── History tab inner tabs ───────────────────────────────────── */
         .history-inner-tabs .nav-link { font-size: 0.85rem; padding: 8px 18px; }
+
+        /* ── MOBILE LAYOUT ────────────────────────────────────────────── */
+        @media (max-width: 767.98px) {
+            /* Scrollable Pill Bar */
+            .status-pill-bar {
+                flex-wrap: nowrap;
+                overflow-x: auto;
+                padding-bottom: 5px;
+                -webkit-overflow-scrolling: touch;
+            }
+            .status-pill-bar::-webkit-scrollbar {
+                display: none;
+            }
+            
+            /* Card-based DataTables */
+            #unified-queue-table,
+            #unified-queue-table thead,
+            #unified-queue-table tbody,
+            #unified-queue-table th,
+            #unified-queue-table td,
+            #unified-queue-table tr {
+                display: block;
+                width: 100%;
+            }
+            #unified-queue-table thead {
+                display: none;
+            }
+            #unified-queue-table tr {
+                background: #fff;
+                border: 1px solid #dee2e6;
+                border-radius: 8px;
+                margin-bottom: 12px;
+                box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+                padding: 10px;
+                position: relative;
+            }
+            #unified-queue-table td {
+                border: none !important;
+                padding: 4px 0 !important;
+                position: relative;
+                font-size: 0.85rem;
+            }
+            /* Action Button Column (usually last) */
+            #unified-queue-table td:last-child {
+                text-align: left !important;
+                padding-top: 8px !important;
+                margin-top: 8px;
+                border-top: 1px solid #f1f3f5 !important;
+            }
+        }
     </style>
 @endpush
 @section('content')

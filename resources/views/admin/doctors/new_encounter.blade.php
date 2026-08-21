@@ -162,8 +162,100 @@
 
         .encounter-sidebar .nav-link.active i,
         .encounter-sidebar .nav-link.active .sidebar-text {
-            color: #ffffff !important;
+            color: #fff;
         }
+
+        /* Prevent FABs from blocking the bottom nav & overlapping each other */
+        @media (max-width: 767.98px) {
+            #chat-floating-btn {
+                bottom: 80px !important;
+                right: 15px !important;
+                transform: none !important;
+            }
+            #ai-quick-actions-fab {
+                bottom: 145px !important;
+                right: 15px !important;
+                transform: none !important;
+            }
+        }
+
+        /* --- MOBILE LAYOUT START --- */
+        @media (max-width: 767.98px) {
+            .encounter-workspace-layout {
+                display: block !important;
+            }
+            .mobile-bottom-nav {
+                position: fixed;
+                bottom: 0;
+                left: 0;
+                right: 0;
+                height: 70px;
+                background: #fff;
+                box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
+                z-index: 1040;
+                display: flex;
+                flex-direction: row;
+                align-items: center;
+                justify-content: space-around;
+                padding: 0 5px;
+                border-top: 1px solid #dee2e6;
+            }
+            .mobile-bottom-nav .nav-item {
+                flex: 1 1 auto;
+                text-align: center;
+            }
+            .mobile-bottom-nav .nav-link {
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                padding: 8px 5px;
+                color: #6c757d;
+                font-size: 0.65rem;
+                font-weight: 500;
+                border-radius: 8px;
+                text-decoration: none;
+                transition: all 0.2s;
+                cursor: pointer;
+            }
+            .mobile-bottom-nav .nav-link.active {
+                color: var(--hos-color-var);
+            }
+            .mobile-bottom-nav .nav-link i {
+                font-size: 1.3rem;
+                margin-bottom: 3px;
+                color: inherit;
+            }
+            .mobile-bottom-nav .nav-link .sidebar-text {
+                white-space: nowrap;
+                line-height: 1;
+            }
+            .encounter-main-content {
+                padding-bottom: 85px !important;
+            }
+            #mobileMoreSheet .nav-link {
+                padding: 12px 15px;
+                border-bottom: 1px solid #f8f9fa;
+                display: flex;
+                align-items: center;
+                color: #495057;
+                text-decoration: none;
+                font-weight: 500;
+            }
+            #mobileMoreSheet .nav-link i {
+                font-size: 1.2rem;
+                width: 25px;
+                color: #6c757d;
+            }
+            #mobileMoreSheet .nav-link.active {
+                background: #f1f3f5;
+                color: var(--hos-color-var);
+            }
+            #mobileMoreSheet .nav-link.active i {
+                color: var(--hos-color-var);
+            }
+        }
+        /* --- MOBILE LAYOUT END --- */
 
         /* Collapsed state styles */
         .encounter-workspace-layout.sidebar-collapsed .sidebar-text,
@@ -251,8 +343,8 @@
     @endpush
 
     <div class="encounter-workspace-layout" style="gap: 15px;">
-        <!-- Sidebar Navigation -->
-        <div class="encounter-sidebar-wrapper">
+        <!-- Sidebar Navigation (Desktop) -->
+        <div class="encounter-sidebar-wrapper d-none d-md-block">
             <ul class="nav nav-pills flex-column encounter-sidebar" id="myTab" role="tablist">
                 {{-- Top Collapse Header Button --}}
                 <li class="nav-item mb-2 pb-2 border-bottom w-100 text-center toggle-sidebar-btn">
@@ -343,11 +435,114 @@
             </ul>
         </div>
 
+        <!-- Mobile Bottom Navigation -->
+        <div class="mobile-bottom-nav d-md-none">
+            @if($plansEnabled)
+            <!-- 1. Treatment Plans (Conditional) -->
+            <div class="nav-item" role="presentation">
+                <a class="nav-link active" id="mobile_treatment_plans_tab" data-toggle="tab" href="#treatment_plans" data-target="#treatment_plans" data-bs-toggle="tab" data-bs-target="#treatment_plans" role="tab" aria-controls="treatment_plans" aria-selected="true">
+                    <i class="mdi mdi-clipboard-pulse"></i><span class="sidebar-text">Plans</span>
+                    <span class="badge bg-teal rounded-circle position-absolute tp-plan-count-badge" style="display:none; top: 5px; right: 25%;"></span>
+                </a>
+            </div>
+            @endif
+            <!-- 2. Story -->
+            <div class="nav-item" role="presentation">
+                <a class="nav-link {{ !$plansEnabled ? 'active' : '' }}" id="mobile_clinical_story_tab" data-toggle="tab" href="#clinical_story" data-target="#clinical_story" data-bs-toggle="tab" data-bs-target="#clinical_story" role="tab" aria-controls="clinical_story" aria-selected="{{ !$plansEnabled ? 'true' : 'false' }}">
+                    <i class="mdi mdi-history"></i><span class="sidebar-text">Story</span>
+                </a>
+            </div>
+            <!-- 3. Vitals -->
+            <div class="nav-item" role="presentation">
+                <a class="nav-link" id="mobile_vitals_data_tab" data-toggle="tab" href="#vitals" data-target="#vitals" data-bs-toggle="tab" data-bs-target="#vitals" role="tab" aria-controls="vitals_data" aria-selected="false">
+                    <i class="mdi mdi-heart-pulse"></i><span class="sidebar-text">Vitals</span>
+                </a>
+            </div>
+            <!-- 4. Notes -->
+            <div class="nav-item" role="presentation">
+                <a class="nav-link" id="mobile_clinical_notes_tab" data-toggle="tab" href="#clinical_notes" data-target="#clinical_notes" data-bs-toggle="tab" data-bs-target="#clinical_notes" role="tab" aria-controls="clinical_notes" aria-selected="false">
+                    <i class="mdi mdi-note-text"></i><span class="sidebar-text">Notes</span>
+                </a>
+            </div>
+            <!-- 5. More (Opens Bottom Sheet) -->
+            <div class="nav-item">
+                <a class="nav-link" data-bs-toggle="modal" data-bs-target="#mobileMoreSheet" style="cursor:pointer;">
+                    <i class="mdi mdi-dots-horizontal"></i><span class="sidebar-text">More</span>
+                </a>
+            </div>
+        </div>
+
+        <!-- Mobile More Sheet Modal -->
+        <div class="modal fade d-md-none" id="mobileMoreSheet" tabindex="-1" role="dialog" aria-labelledby="mobileMoreSheetLabel" aria-hidden="true" style="padding-right: 0 !important;">
+            <div class="modal-dialog m-0 h-100 d-flex flex-column justify-content-end" role="document" style="max-width: 100%;">
+                <div class="modal-content" style="border-radius: 1.5rem 1.5rem 0 0; border: none; padding-bottom: 75px; max-height: 75vh;">
+                    <div class="modal-header border-bottom">
+                        <h6 class="modal-title fw-bold" id="mobileMoreSheetLabel">More Sections</h6>
+                        <button type="button" class="close btn-close" data-bs-dismiss="modal" aria-label="Close" style="background: none; border: none; font-size: 1.5rem; line-height: 1;">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body p-0" style="overflow-y: auto;">
+                        <ul class="nav nav-pills flex-column" role="tablist" style="margin-bottom: 0;">
+                            <li class="nav-item" role="presentation">
+                                <a class="nav-link" id="mobile_laboratory_services_tab" data-toggle="tab" href="#laboratory_services" data-target="#laboratory_services" data-bs-toggle="tab" data-bs-target="#laboratory_services" role="tab" data-bs-dismiss="modal">
+                                    <i class="mdi mdi-flask me-3"></i> Laboratory Services
+                                    <span class="badge bg-danger rounded-pill ms-auto lab-unviewed-badge" style="display: none; font-size: 0.7rem; padding: 0.25em 0.6em;"></span>
+                                </a>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <a class="nav-link" id="mobile_medications_tab" data-toggle="tab" href="#medications" data-target="#medications" data-bs-toggle="tab" data-bs-target="#medications" role="tab" data-bs-dismiss="modal">
+                                    <i class="mdi mdi-pill me-3"></i> Medications
+                                </a>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <a class="nav-link" id="mobile_nurse_charts_tab" data-toggle="tab" href="#nurse_charts" data-target="#nurse_charts" data-bs-toggle="tab" data-bs-target="#nurse_charts" role="tab" data-bs-dismiss="modal">
+                                    <i class="mdi mdi-notebook me-3"></i> Nurse Charts
+                                </a>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <a class="nav-link" id="mobile_inj_imm_history_tab" data-toggle="tab" href="#inj_imm_history" data-target="#inj_imm_history" data-bs-toggle="tab" data-bs-target="#inj_imm_history" role="tab" data-bs-dismiss="modal">
+                                    <i class="mdi mdi-needle me-3"></i> Inj / Imm History
+                                </a>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <a class="nav-link" id="mobile_imaging_services_tab" data-toggle="tab" href="#imaging_services" data-target="#imaging_services" data-bs-toggle="tab" data-bs-target="#imaging_services" role="tab" data-bs-dismiss="modal">
+                                    <i class="mdi mdi-radioactive me-3"></i> Imaging Services
+                                    <span class="badge bg-danger rounded-pill ms-auto imaging-unviewed-badge" style="display: none; font-size: 0.7rem; padding: 0.25em 0.6em;"></span>
+                                </a>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <a class="nav-link" id="mobile_non_pharm_tab" data-toggle="tab" href="#non_pharm" data-target="#non_pharm" data-bs-toggle="tab" data-bs-target="#non_pharm" role="tab" data-bs-dismiss="modal">
+                                    <i class="mdi mdi-heart-pulse me-3"></i> Care Plan / Non-Pharm
+                                </a>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <a class="nav-link" id="mobile_procedures_tab" data-toggle="tab" href="#procedures" data-target="#procedures" data-bs-toggle="tab" data-bs-target="#procedures" role="tab" data-bs-dismiss="modal">
+                                    <i class="mdi mdi-medical-bag me-3"></i> Procedures
+                                </a>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <a class="nav-link" id="mobile_admissions_tab" data-toggle="tab" href="#admissions" data-target="#admissions" data-bs-toggle="tab" data-bs-target="#admissions" role="tab" data-bs-dismiss="modal">
+                                    <i class="mdi mdi-bed me-3"></i> Admission History
+                                </a>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <a class="nav-link" id="mobile_referrals_tab" data-toggle="tab" href="#referrals" data-target="#referrals" data-bs-toggle="tab" data-bs-target="#referrals" role="tab" data-bs-dismiss="modal">
+                                    <i class="mdi mdi-account-switch me-3"></i> Referrals
+                                    <span class="badge bg-purple ms-auto referral-count-badge" style="display:none;">0</span>
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Main Content Area -->
         <div class="encounter-main-content" style="min-width: 0;">
     <div class="tab-content tp-context-borderable" id="myTabContent">
         {{-- Patient Clinical Story Tab --}}
-        <div class="tab-pane fade" id="clinical_story" role="tabpanel" aria-labelledby="clinical_story_tab">
+        <div class="tab-pane fade {{ !$plansEnabled ? 'show active' : '' }}" id="clinical_story" role="tabpanel" aria-labelledby="clinical_story_tab">
             <!-- Top Tab Navigation -->
             <div class="d-flex justify-content-between align-items-center mb-3 pb-2 border-bottom">
                 <div>
@@ -436,6 +631,25 @@
                             window.initUnifiedVitals({{ $patient->id }}, null, @json($clinic_name ?? null), @json($vitals_template ?? null), @json($dynamic_ranges ?? []));
                         }
                     });
+                }
+            });
+
+            // Fallback for BS4 modal hide on mobile sheet
+            $('#mobileMoreSheet .nav-link').on('click', function() {
+                $('#mobileMoreSheet').modal('hide');
+            });
+
+            // Global fix for multiple tab triggers (sidebar, mobile nav, mobile sheet)
+            // This syncs active links across all navs so Bootstrap can correctly find and hide the previous pane!
+            $('a[data-toggle="tab"], a[data-bs-toggle="tab"]').on('shown.bs.tab', function (e) {
+                var targetId = $(e.target).attr('href');
+                if (targetId && targetId.startsWith('#')) {
+                    // Sync all tab links pointing to this target
+                    $('a[data-toggle="tab"], a[data-bs-toggle="tab"]').removeClass('active');
+                    $('a[data-toggle="tab"][href="'+targetId+'"], a[data-bs-toggle="tab"][href="'+targetId+'"]').addClass('active');
+                    
+                    // Scroll to the top smoothly using jQuery to target all possible scroll containers
+                    $('html, body, .content-wrapper, .encounter-sidebar-wrapper').animate({ scrollTop: 0 }, 'fast');
                 }
             });
         </script>
@@ -786,10 +1000,7 @@
         </div>
         @endif
 
-        {{-- Clinical Story --}}
-        <div class="tab-pane fade {{ !$plansEnabled ? 'show active' : '' }}" id="clinical_story" role="tabpanel" aria-labelledby="clinical_story_tab">
-            @include('admin.partials.clinical_story')
-        </div>
+
 
         <div class="tab-pane fade" id="nurse_charts" role="tabpanel" aria-labelledby="nurse_charts_tab">
             <!-- Top Tab Navigation -->
@@ -1998,7 +2209,17 @@
     <script>
         function switch_tab(e, id_of_next_tab) {
             e.preventDefault();
-            $('#' + id_of_next_tab).click();
+            var $tab = $('#' + id_of_next_tab);
+            
+            // Trigger Bootstrap tab switch
+            if ($tab.tab) {
+                $tab.tab('show');
+            } else {
+                $tab.click();
+            }
+            
+            // Fallback explicit scroll in case the event listener misses it
+            $('html, body, .content-wrapper, .encounter-sidebar-wrapper').animate({ scrollTop: 0 }, 'fast');
         }
 
         function toggleAdmitNote(obj) {
@@ -4578,7 +4799,7 @@
                     $('#referrals-loading').hide();
                     var html = '';
                     if (data.referrals && data.referrals.length> 0) {
-                        $('#referral-count-badge').text(data.referrals.length).show();
+                        $('.referral-count-badge').text(data.referrals.length).show();
                         $('#ref-encounter-count').text(data.referrals.length);
                         data.referrals.forEach(function(ref) {
                             var urgencyBadge = {
