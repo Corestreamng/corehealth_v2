@@ -543,9 +543,6 @@
                 </button>
             </div>
         </div>
-    </div>
-</div>
-
 @push('scripts')
 <script>
 /**
@@ -635,11 +632,14 @@ window.TreatmentPlansTab = (function($) {
             renderView();
 
             // Update tab badge
-            var badge = document.getElementById('tp-plan-count-badge');
-            if (badge) { badge.textContent = activeCount; badge.style.display = 'inline'; }
+            document.querySelectorAll('.tp-plan-count-badge').forEach(function(badge) {
+                badge.textContent = activeCount; 
+                badge.style.display = 'inline';
+            });
 
-            var pulse = document.getElementById('tp-tab-pulse');
-            if (pulse && activeCount > 0) pulse.style.display = 'inline-block';
+            document.querySelectorAll('.tp-tab-pulse').forEach(function(pulse) {
+                if (activeCount > 0) pulse.style.display = 'inline-block';
+            });
 
         }).fail(function() {
             $('#tp-plans-loading').hide();
