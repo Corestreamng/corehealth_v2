@@ -112,53 +112,303 @@
 
         /* ── MOBILE LAYOUT ────────────────────────────────────────────── */
         @media (max-width: 767.98px) {
-            /* Scrollable Pill Bar */
+            /* ── Compact Stats Strip ── */
+            .queue-stats-row {
+                flex-wrap: nowrap;
+                overflow-x: auto;
+                gap: 8px;
+                padding: 4px 2px 8px;
+                -webkit-overflow-scrolling: touch;
+            }
+            .queue-stats-row::-webkit-scrollbar { display: none; }
+            .queue-stat-card {
+                min-width: 80px;
+                flex: 0 0 auto;
+                padding: 8px 10px;
+                background: #ffffff !important;
+                border: 1px solid #e2e8f0 !important;
+                border-radius: 10px !important;
+                box-shadow: 0 1px 3px rgba(0,0,0,0.03);
+            }
+            .queue-stat-card .stat-num { font-size: 1.15rem; font-weight: 800; }
+            .queue-stat-card .stat-label { font-size: 0.62rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.3px; }
+
+            /* ── Scrollable Pill Bar ── */
             .status-pill-bar {
                 flex-wrap: nowrap;
                 overflow-x: auto;
-                padding-bottom: 5px;
+                padding-bottom: 6px;
+                gap: 6px;
                 -webkit-overflow-scrolling: touch;
             }
-            .status-pill-bar::-webkit-scrollbar {
-                display: none;
-            }
-            
-            /* Card-based DataTables */
-            #unified-queue-table,
-            #unified-queue-table thead,
-            #unified-queue-table tbody,
-            #unified-queue-table th,
-            #unified-queue-table td,
-            #unified-queue-table tr {
-                display: block;
+            .status-pill-bar::-webkit-scrollbar { display: none; }
+
+            /* ── Hide view toggle on mobile ── */
+            .view-toggle { display: none !important; }
+
+            /* ── Hide DataTable button toolbar on mobile ── */
+            .dataTables_wrapper .dt-buttons { display: none !important; }
+
+            /* ── Search Input Styling ── */
+            .dataTables_wrapper .dataTables_filter {
                 width: 100%;
+                float: none !important;
+                text-align: left !important;
+                margin-bottom: 12px;
+            }
+            .dataTables_wrapper .dataTables_filter label {
+                width: 100%;
+                display: flex;
+                align-items: center;
+                gap: 8px;
+                font-weight: 600;
+                color: #64748b;
+                font-size: 0.82rem;
+            }
+            .dataTables_wrapper .dataTables_filter input {
+                width: 100% !important;
+                min-width: 0 !important;
+                border-radius: 10px !important;
+                border: 1px solid #cbd5e1 !important;
+                padding: 8px 12px !important;
+                font-size: 0.85rem !important;
+                box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+            }
+
+            /* ── Tab bar compact ── */
+            #mainDoctorTabs .nav-link { font-size: 0.8rem; padding: 8px 14px; font-weight: 600; }
+        } /* End of @media (max-width: 767.98px) */
+
+        /* ── Card-based DataTables Global Flex Layout ── */
+            #unified-queue-table {
+                width: 100%;
+                border-collapse: separate;
+                border-spacing: 0 20px;
             }
             #unified-queue-table thead {
-                display: none;
+                display: none !important;
             }
-            #unified-queue-table tr {
-                background: #fff;
-                border: 1px solid #dee2e6;
-                border-radius: 8px;
-                margin-bottom: 12px;
-                box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-                padding: 10px;
-                position: relative;
+            #unified-queue-table tbody tr {
+                background: transparent !important;
+            }
+            #unified-queue-table tbody tr:hover {
+                background: transparent !important;
             }
             #unified-queue-table td {
                 border: none !important;
-                padding: 4px 0 !important;
+                padding: 0 !important;
+                background: transparent !important;
+            }
+            #unified-queue-table td:first-child {
+                display: none !important;
+            }
+
+            /* ── Queue Card Styling ── */
+            .queue-card {
+                display: flex;
+                flex-direction: column;
+                gap: 16px;
+                background: #ffffff;
+                border: 2px solid var(--primary-color);
+                border-radius: 24px;
+                padding: 20px;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+                transition: all 0.2s ease;
+            }
+            .queue-card:hover {
+                box-shadow: 0 8px 24px rgba(0,0,0,0.06);
+            }
+            
+            /* Header: Avatar, Info, Badges */
+            .queue-card-header {
+                display: flex;
+                align-items: flex-start;
+                gap: 14px;
+            }
+            .queue-card-avatar {
+                width: 45px;
+                height: 45px;
+                border-radius: 50%;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-weight: bold;
+                font-size: 1.1rem;
                 position: relative;
+                flex-shrink: 0;
+                background-color: #e2e8f0;
+                color: #475569;
+            }
+            .queue-card-status-dot {
+                position: absolute;
+                bottom: 0;
+                right: 2px;
+                width: 12px;
+                height: 12px;
+                border: 2px solid white;
+                border-radius: 50%;
+            }
+            .queue-card-patient-info {
+                flex-grow: 1;
+                display: flex;
+                flex-direction: column;
+                gap: 4px;
+                min-width: 0;
+            }
+            .queue-card-name {
+                font-size: 1.1rem;
+                font-weight: 700;
+                color: #1e293b;
+                letter-spacing: -0.01em;
+            }
+            .queue-card-name a {
+                color: inherit;
+                text-decoration: none;
+            }
+            .queue-card-name a:hover {
+                color: #0d6efd;
+            }
+            .queue-card-demo {
+                font-weight: 500;
                 font-size: 0.85rem;
+                color: #64748b;
+                margin-left: 4px;
             }
-            /* Action Button Column (usually last) */
-            #unified-queue-table td:last-child {
-                text-align: left !important;
-                padding-top: 8px !important;
-                margin-top: 8px;
-                border-top: 1px solid #f1f3f5 !important;
+            .queue-card-meta {
+                font-size: 0.85rem;
+                color: #64748b;
+                display: flex;
+                align-items: center;
+                gap: 10px;
+                flex-wrap: wrap;
+                margin-top: 2px;
             }
-        }
+            .queue-card-separator {
+                color: #cbd5e1;
+                font-size: 0.8rem;
+            }
+            .queue-card-badges {
+                display: flex;
+                flex-direction: column;
+                align-items: flex-end;
+                gap: 8px;
+                flex-shrink: 0;
+            }
+            .queue-card-badges .badge {
+                font-size: 0.75rem;
+                padding: 5px 12px;
+                border-radius: 20px;
+                font-weight: 700;
+                text-transform: uppercase;
+                letter-spacing: 0.02em;
+            }
+
+            /* Details Strip */
+            .queue-card-details {
+                display: flex;
+                flex-wrap: wrap;
+                align-items: center;
+                gap: 16px;
+                background-color: transparent;
+                padding: 0;
+                border: none;
+                margin-top: 4px;
+            }
+            .queue-card-detail-item {
+                display: flex;
+                align-items: center;
+                gap: 6px;
+                font-size: 0.85rem;
+                font-weight: 500;
+                color: #475569;
+            }
+            .queue-card-detail-item i {
+                color: #94a3b8;
+                font-size: 1rem;
+            }
+            .queue-card-detail-item .badge {
+                font-size: 0.75rem;
+                padding: 4px 10px;
+                border-radius: 12px;
+            }
+
+            /* Reason / Note */
+            .queue-card-reason {
+                font-size: 0.85rem;
+                color: #475569;
+                font-style: italic;
+                padding: 8px 14px;
+                border-left: 3px solid #cbd5e1;
+                background: #f8fafc;
+                border-radius: 0 8px 8px 0;
+            }
+
+            /* Actions */
+            .queue-card-actions {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                flex-wrap: wrap;
+                gap: 12px;
+                padding-top: 14px;
+                border-top: 1px solid #f1f5f9;
+            }
+            .queue-card-action-btn {
+                border-radius: 20px !important;
+                font-weight: 600 !important;
+                padding: 6px 20px !important;
+                box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+                transition: transform 0.1s ease;
+            }
+            .queue-card-action-btn:active {
+                transform: scale(0.98);
+            }
+            .queue-card-secondary-actions {
+                display: flex;
+                gap: 8px;
+                flex-wrap: wrap;
+            }
+            .queue-card-secondary-actions .btn {
+                border-radius: 20px !important;
+                padding: 4px 12px !important;
+                display: flex;
+                align-items: center;
+                gap: 4px;
+                font-size: 0.8rem;
+                font-weight: 500;
+                width: auto !important;
+                height: auto !important;
+                min-width: max-content !important;
+            }
+            .form-select-sm, .form-control-sm {
+                border-radius: 6px !important;
+                border: 1px solid #cbd5e1 !important;
+                font-size: 0.85rem !important;
+                color: #334155 !important;
+                background-color: #fff !important;
+                height: 36px !important;
+                box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03) !important;
+                transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+            }
+            .form-select-sm {
+                padding: 0.25rem 2rem 0.25rem 0.75rem !important;
+            }
+            .form-control-sm {
+                padding: 0.25rem 0.75rem !important;
+            }
+            .form-select-sm:focus, .form-control-sm:focus {
+                border-color: #86b7fe !important;
+                outline: 0 !important;
+                box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25) !important;
+            }
+            #appt_date_fetch_btn {
+                height: 36px;
+                display: inline-flex;
+                align-items: center;
+                border-radius: 6px;
+                padding: 0 16px;
+                font-weight: 600;
+            }
     </style>
 @endpush
 @section('content')
@@ -229,6 +479,37 @@
                         <input type="date" class="form-control form-control-sm" id="appt_end_date" value="{{ date('Y-m-d', strtotime('+30 days')) }}" style="max-width:150px;">
                     </div>
                     <div>
+                        <label class="form-label mb-0 small text-muted">Source</label>
+                        <select class="form-select form-select-sm" id="appt_source_filter" style="min-width:110px;">
+                            <option value="all">All Sources</option>
+                            <option value="scheduled">Scheduled</option>
+                            <option value="walk_in">Walk-in</option>
+                            <option value="emergency">Emergency</option>
+                            <option value="follow_up">Follow-up</option>
+                            <option value="referral">Referral</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="form-label mb-0 small text-muted">Priority</label>
+                        <select class="form-select form-select-sm" id="appt_priority_filter" style="min-width:110px;">
+                            <option value="all">All Priorities</option>
+                            <option value="emergency">Emergency</option>
+                            <option value="urgent">Urgent</option>
+                            <option value="routine">Routine</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="form-label mb-0 small text-muted">Clinic</label>
+                        <select class="form-select form-select-sm" id="appt_clinic_filter" style="min-width:120px; max-width:180px;">
+                            <option value="all">All Clinics</option>
+                            @if(isset($filterClinics))
+                                @foreach($filterClinics as $c)
+                                    <option value="{{ $c->id }}">{{ $c->name }}</option>
+                                @endforeach
+                            @endif
+                        </select>
+                    </div>
+                    <div>
                         <button class="btn btn-sm btn-primary" id="appt_date_fetch_btn"><i class="mdi mdi-magnify"></i> Fetch</button>
                     </div>
                 </div>
@@ -287,11 +568,7 @@
                             <thead class="table-light">
                                 <tr>
                                     <th style="width:30px;">#</th>
-                                    <th>Patient</th>
-                                    <th>Source / Time</th>
-                                    <th>Status</th>
-                                    <th>Delivery</th>
-                                    <th style="width:140px;">Action</th>
+                                    <th>Patient Queue</th>
                                 </tr>
                             </thead>
                         </table>
@@ -1008,15 +1285,14 @@
                     d.start_date = $('#appt_start_date').val() || moment().format('YYYY-MM-DD');
                     d.end_date   = $('#appt_end_date').val() || moment().add(30, 'days').format('YYYY-MM-DD');
                     d.status_filter = currentStatusFilter;
+                    d.source_filter = $('#appt_source_filter').val() || 'all';
+                    d.priority_filter = $('#appt_priority_filter').val() || 'all';
+                    d.clinic_filter = $('#appt_clinic_filter').val() || 'all';
                 }
             },
             columns: [
                 { data: "DT_RowIndex", name: "DT_RowIndex", orderable: false, searchable: false, width: "30px" },
-                { data: "patient_info", name: "patient_name", className: "align-middle" },
-                { data: "source_time", name: "source_time", orderable: false, className: "align-middle text-center", width: "120px" },
-                { data: "status_badge", name: "status_badge", orderable: false, className: "align-middle text-center", width: "150px" },
-                { data: "delivery_badge", name: "delivery_badge", orderable: false, className: "align-middle text-center", width: "130px" },
-                { data: "action", name: "action", orderable: false, searchable: false, className: "align-middle text-center", width: "140px" }
+                { data: "card_html", name: "patient_name", orderable: false }
             ],
             paging: true,
             drawCallback: function() { initMiniTimers(); },
@@ -1425,9 +1701,14 @@
         //  Badge & Stats Refresh
         // ═══════════════════════════════════════════════════════════════
         function loadQueueCounts() {
+            var start = $('#appt_start_date').val() || moment().format('YYYY-MM-DD');
+            var end = $('#appt_end_date').val() || moment().add(30, 'days').format('YYYY-MM-DD');
+            var clinic = $('#appt_clinic_filter').val() || 'all';
+
             $.ajax({
                 url: "{{ route('appointments.doctor.queue-counts') }}",
                 type: 'GET',
+                data: { start_date: start, end_date: end, clinic_filter: clinic },
                 success: function(c) {
                     var waiting = c.new || c.waiting || 0;
                     var vitals  = c.vitals_pending || 0;
@@ -1598,6 +1879,9 @@
 
         // Fetch button handlers for all three tabs
         $('#appt_date_fetch_btn').on('click', function() {
+            refreshCurrentView();
+        });
+        $('#appt_source_filter, #appt_priority_filter, #appt_clinic_filter').on('change', function() {
             refreshCurrentView();
         });
         $('#prev_fetch_btn').on('click', function() {
