@@ -95,16 +95,6 @@
             </div>
         </div>
 
-        {{-- Navigation Buttons (Save removed — imaging auto-saves on add) --}}
-        <div class="d-flex justify-content-between align-items-center mt-3 pt-3 border-top">
-            <button type="button" onclick="switch_tab(event,'laboratory_services_tab')" class="btn btn-secondary">
-                <i class="fa fa-arrow-left"></i> Previous
-            </button>
-            <div>
-                <button type="button" onclick="$('#medications_tab').click();" class="btn btn-success">
-                    <i class="fa fa-arrow-right"></i> Next
-                </button>
-            </div>
-        </div>
+
     </div>
 </div>

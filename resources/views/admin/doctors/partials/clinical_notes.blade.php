@@ -304,10 +304,7 @@
                 @endif
 
                 <br>
-                <div class="d-flex justify-content-between align-items-center">
-                    <button type="button" onclick="switch_tab(event,'inj_imm_history_tab')" class="btn btn-secondary">
-                        <i class="fa fa-arrow-left"></i> Previous
-                    </button>
+                <div class="d-flex justify-content-end align-items-center">
                     <div>
                         <button type="button" onclick="saveDiagnosisAndNext()" id="save_diagnosis_next_btn" class="btn btn-success me-2">
                             <i class="fa fa-save"></i> Save & Next
