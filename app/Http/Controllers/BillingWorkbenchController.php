@@ -246,16 +246,11 @@ class BillingWorkbenchController extends Controller
     {
         $filter = $request->get('filter', 'all');
 
-        $query = ProductOrServiceRequest::query()
-            ->whereNull('payment_id')
-            ->whereNull('invoice_id');
-
-        // Exclude fully HMO-covered approved items (₦0 payable)
-        $this->excludeFullyHmoCovered($query);
+        $query = \App\Models\BillingQueue::with(['patient.hmo', 'user']);
 
         // Apply filters
         if ($filter === 'hmo') {
-            $query->where('claims_amount', '>', 0);
+            $query->where('hmo_items_count', '>', 0);
         } elseif ($filter === 'credit') {
             // Filter for patients with credit accounts
             $creditPatientUserIds = PatientAccount::where('balance', '>', 0)
@@ -265,39 +260,12 @@ class BillingWorkbenchController extends Controller
         }
 
         $results = $query
-            ->select([
-                'user_id',
-                DB::raw('COUNT(*) as unpaid_count'),
-                DB::raw('SUM(CASE WHEN claims_amount > 0 THEN 1 ELSE 0 END) as hmo_items'),
-                DB::raw('MAX(created_at) as last_created')
-            ])
-            ->groupBy('user_id')
-            ->orderByDesc('last_created')
+            ->orderByDesc('is_emergency')
+            ->orderByDesc('latest_item_at')
             ->get();
 
-        // Preload patient data
-        $patients = Patient::with('user', 'hmo')
-            ->whereIn('user_id', $results->pluck('user_id'))
-            ->get()
-            ->keyBy('user_id');
-
-        // Detect emergency patients (have active emergency DoctorQueue or AdmissionRequest)
-        $patientIds = $patients->pluck('id')->toArray();
-        $emergencyPatientIds = collect();
-        if (!empty($patientIds)) {
-            $emergencyFromQueue = DoctorQueue::where('priority', 'emergency')
-                ->whereIn('patient_id', $patientIds)
-                ->whereIn('status', [1, 2, 3])
-                ->pluck('patient_id');
-            $emergencyFromAdmission = AdmissionRequest::where('priority', 'emergency')
-                ->whereIn('patient_id', $patientIds)
-                ->where('discharged', 0)
-                ->pluck('patient_id');
-            $emergencyPatientIds = $emergencyFromQueue->merge($emergencyFromAdmission)->unique();
-        }
-
-        $queue = $results->map(function ($item) use ($patients, $emergencyPatientIds) {
-            $patient = $patients->get($item->user_id);
+        $queue = $results->map(function ($item) {
+            $patient = $item->patient;
 
             // Skip if patient record not found
             if (!$patient) {
@@ -306,17 +274,14 @@ class BillingWorkbenchController extends Controller
 
             return [
                 'patient_id' => $patient->id,
-                'patient_name' => userfullname($item->user_id),
+                'patient_name' => trim($item->user->surname . ' ' . $item->user->firstname . ' ' . $item->user->othername),
                 'file_no' => $patient->file_no,
-                'unpaid_count' => $item->unpaid_count,
-                'hmo_items' => $item->hmo_items,
+                'unpaid_count' => $item->unpaid_items_count,
+                'hmo_items' => $item->hmo_items_count,
                 'hmo' => optional($patient->hmo)->name,
-                'is_emergency' => $emergencyPatientIds->contains($patient->id),
+                'is_emergency' => $item->is_emergency,
             ];
         })->filter(); // Remove null entries
-
-        // Sort emergency patients first
-        $queue = $queue->sortByDesc('is_emergency')->values();
 
         return response()->json($queue->values());
     }
@@ -326,31 +291,14 @@ class BillingWorkbenchController extends Controller
      */
     public function getQueueCounts()
     {
-        $unpaidQuery = ProductOrServiceRequest::whereNull('payment_id')
-            ->whereNull('invoice_id');
-        $this->excludeFullyHmoCovered($unpaidQuery);
-        $unpaidCount = $unpaidQuery->select('user_id')
-            ->distinct()
-            ->count();
+        $unpaidCount = \App\Models\BillingQueue::count();
 
-        $hmoQuery = ProductOrServiceRequest::whereNull('payment_id')
-            ->whereNull('invoice_id')
-            ->where('claims_amount', '>', 0);
-        $this->excludeFullyHmoCovered($hmoQuery);
-        $hmoCount = $hmoQuery->select('user_id')
-            ->distinct()
-            ->count();
+        $hmoCount = \App\Models\BillingQueue::where('hmo_items_count', '>', 0)->count();
 
         $creditPatientUserIds = PatientAccount::where('balance', '>', 0)
             ->pluck('patient_id');
         $creditUserIds = Patient::whereIn('id', $creditPatientUserIds)->pluck('user_id');
-        $creditQuery = ProductOrServiceRequest::whereNull('payment_id')
-            ->whereNull('invoice_id')
-            ->whereIn('user_id', $creditUserIds);
-        $this->excludeFullyHmoCovered($creditQuery);
-        $creditCount = $creditQuery->select('user_id')
-            ->distinct()
-            ->count();
+        $creditCount = \App\Models\BillingQueue::whereIn('user_id', $creditUserIds)->count();
 
         return response()->json([
             'unpaid' => $unpaidCount,
@@ -383,27 +331,7 @@ class BillingWorkbenchController extends Controller
      */
     private function getEmergencyBillingCount()
     {
-        $emergencyQuery = ProductOrServiceRequest::whereNull('payment_id')
-            ->whereNull('invoice_id');
-        $this->excludeFullyHmoCovered($emergencyQuery);
-        $unpaidPatientUserIds = $emergencyQuery->distinct()
-            ->pluck('user_id');
-
-        $unpaidPatientIds = Patient::whereIn('user_id', $unpaidPatientUserIds)->pluck('id');
-
-        $fromQueue = DoctorQueue::where('priority', 'emergency')
-            ->whereIn('patient_id', $unpaidPatientIds)
-            ->whereIn('status', [1, 2, 3])
-            ->distinct()
-            ->pluck('patient_id');
-
-        $fromAdmission = AdmissionRequest::where('priority', 'emergency')
-            ->whereIn('patient_id', $unpaidPatientIds)
-            ->where('discharged', 0)
-            ->distinct()
-            ->pluck('patient_id');
-
-        return $fromQueue->merge($fromAdmission)->unique()->count();
+        return \App\Models\BillingQueue::where('is_emergency', true)->count();
     }
 
     /**
