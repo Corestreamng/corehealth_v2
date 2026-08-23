@@ -123,6 +123,7 @@ class AppServiceProvider extends ServiceProvider
         Relation::morphMap([
             'payroll_batch' => \App\Models\HR\PayrollBatch::class,
             'purchase_order' => \App\Models\PurchaseOrder::class,
+            'Migration' => \App\Models\StockBatchTransaction::class, // Prevent Class "Migration" not found during eager loading
         ]);
 
         // Register HMO tariff auto-generation observers
