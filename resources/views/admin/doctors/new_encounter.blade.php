@@ -189,7 +189,7 @@
                 bottom: 0;
                 left: 0;
                 right: 0;
-                height: 70px;
+                height: 64px;
                 background: #fff;
                 box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
                 z-index: 1040;
@@ -197,7 +197,7 @@
                 flex-direction: row;
                 align-items: center;
                 justify-content: space-around;
-                padding: 0 5px;
+                padding: 0 4px;
                 border-top: 1px solid #dee2e6;
             }
             .mobile-bottom-nav .nav-item {
@@ -209,50 +209,88 @@
                 flex-direction: column;
                 align-items: center;
                 justify-content: center;
-                padding: 8px 5px;
+                padding: 6px 4px;
                 color: #6c757d;
-                font-size: 0.65rem;
-                font-weight: 500;
+                font-size: 0.6rem;
+                font-weight: 600;
                 border-radius: 8px;
                 text-decoration: none;
                 transition: all 0.2s;
                 cursor: pointer;
+                letter-spacing: 0.3px;
             }
             .mobile-bottom-nav .nav-link.active {
                 color: var(--hos-color-var);
             }
             .mobile-bottom-nav .nav-link i {
-                font-size: 1.3rem;
-                margin-bottom: 3px;
+                font-size: 1.25rem;
+                margin-bottom: 2px;
                 color: inherit;
             }
             .mobile-bottom-nav .nav-link .sidebar-text {
                 white-space: nowrap;
                 line-height: 1;
             }
-            .encounter-main-content {
-                padding-bottom: 85px !important;
+            /* "More" button — distinctive teal pill */
+            .mobile-bottom-nav .mobile-more-btn .nav-link {
+                background: var(--hos-color-var, #00897b);
+                color: #fff !important;
+                border-radius: 14px;
+                padding: 6px 10px;
+                margin: 4px 2px;
             }
-            #mobileMoreSheet .nav-link {
-                padding: 12px 15px;
-                border-bottom: 1px solid #f8f9fa;
+            .mobile-bottom-nav .mobile-more-btn .nav-link i {
+                color: #fff !important;
+            }
+            .encounter-main-content {
+                padding-bottom: 80px !important;
+            }
+            /* More Sheet — tile grid */
+            .mobile-more-grid {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 10px;
+                padding: 16px;
+            }
+            .mobile-more-tile {
                 display: flex;
                 align-items: center;
-                color: #495057;
+                gap: 12px;
+                padding: 14px 12px;
+                background: #f8f9fa;
+                border: 1px solid #e9ecef;
+                border-radius: 12px;
                 text-decoration: none;
-                font-weight: 500;
+                color: #343a40;
+                font-weight: 600;
+                font-size: 0.85rem;
+                transition: all 0.15s ease;
+                cursor: pointer;
             }
-            #mobileMoreSheet .nav-link i {
-                font-size: 1.2rem;
-                width: 25px;
-                color: #6c757d;
+            .mobile-more-tile:hover,
+            .mobile-more-tile:active {
+                background: #e0f2f1;
+                border-color: #80cbc4;
+                color: #00695c;
+                transform: scale(0.97);
             }
-            #mobileMoreSheet .nav-link.active {
-                background: #f1f3f5;
-                color: var(--hos-color-var);
+            .mobile-more-tile .tile-icon {
+                width: 38px;
+                height: 38px;
+                border-radius: 10px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 1.15rem;
+                flex-shrink: 0;
+                color: #fff;
             }
-            #mobileMoreSheet .nav-link.active i {
-                color: var(--hos-color-var);
+            .mobile-more-tile .tile-label {
+                flex: 1;
+                line-height: 1.2;
+            }
+            .mobile-more-tile .tile-badge {
+                margin-left: auto;
             }
         }
         /* --- MOBILE LAYOUT END --- */
@@ -465,7 +503,7 @@
                 </a>
             </div>
             <!-- 5. More (Opens Bottom Sheet) -->
-            <div class="nav-item">
+            <div class="nav-item mobile-more-btn">
                 <a class="nav-link" data-bs-toggle="modal" data-bs-target="#mobileMoreSheet" style="cursor:pointer;">
                     <i class="mdi mdi-dots-horizontal"></i><span class="sidebar-text">More</span>
                 </a>
@@ -477,62 +515,53 @@
             <div class="modal-dialog m-0 h-100 d-flex flex-column justify-content-end" role="document" style="max-width: 100%;">
                 <div class="modal-content" style="border-radius: 1.5rem 1.5rem 0 0; border: none; padding-bottom: 75px; max-height: 75vh;">
                     <div class="modal-header border-bottom">
-                        <h6 class="modal-title fw-bold" id="mobileMoreSheetLabel">More Sections</h6>
+                        <h6 class="modal-title fw-bold text-uppercase" id="mobileMoreSheetLabel" style="letter-spacing: 0.5px; font-size: 0.8rem; color: #6c757d;">Additional Sections</h6>
                         <button type="button" class="close btn-close" data-bs-dismiss="modal" aria-label="Close" style="background: none; border: none; font-size: 1.5rem; line-height: 1;">
                             <span aria-hidden="true">&times;</span>
                         </button>
                     </div>
                     <div class="modal-body p-0" style="overflow-y: auto;">
-                        <ul class="nav nav-pills flex-column" role="tablist" style="margin-bottom: 0;">
-                            <li class="nav-item" role="presentation">
-                                <a class="nav-link" id="mobile_laboratory_services_tab" data-toggle="tab" href="#laboratory_services" data-target="#laboratory_services" data-bs-toggle="tab" data-bs-target="#laboratory_services" role="tab" data-bs-dismiss="modal">
-                                    <i class="mdi mdi-flask me-3"></i> Laboratory Services
-                                    <span class="badge bg-danger rounded-pill ms-auto lab-unviewed-badge" style="display: none; font-size: 0.7rem; padding: 0.25em 0.6em;"></span>
-                                </a>
-                            </li>
-                            <li class="nav-item" role="presentation">
-                                <a class="nav-link" id="mobile_medications_tab" data-toggle="tab" href="#medications" data-target="#medications" data-bs-toggle="tab" data-bs-target="#medications" role="tab" data-bs-dismiss="modal">
-                                    <i class="mdi mdi-pill me-3"></i> Medications
-                                </a>
-                            </li>
-                            <li class="nav-item" role="presentation">
-                                <a class="nav-link" id="mobile_nurse_charts_tab" data-toggle="tab" href="#nurse_charts" data-target="#nurse_charts" data-bs-toggle="tab" data-bs-target="#nurse_charts" role="tab" data-bs-dismiss="modal">
-                                    <i class="mdi mdi-notebook me-3"></i> Nurse Charts
-                                </a>
-                            </li>
-                            <li class="nav-item" role="presentation">
-                                <a class="nav-link" id="mobile_inj_imm_history_tab" data-toggle="tab" href="#inj_imm_history" data-target="#inj_imm_history" data-bs-toggle="tab" data-bs-target="#inj_imm_history" role="tab" data-bs-dismiss="modal">
-                                    <i class="mdi mdi-needle me-3"></i> Inj / Imm History
-                                </a>
-                            </li>
-                            <li class="nav-item" role="presentation">
-                                <a class="nav-link" id="mobile_imaging_services_tab" data-toggle="tab" href="#imaging_services" data-target="#imaging_services" data-bs-toggle="tab" data-bs-target="#imaging_services" role="tab" data-bs-dismiss="modal">
-                                    <i class="mdi mdi-radioactive me-3"></i> Imaging Services
-                                    <span class="badge bg-danger rounded-pill ms-auto imaging-unviewed-badge" style="display: none; font-size: 0.7rem; padding: 0.25em 0.6em;"></span>
-                                </a>
-                            </li>
-                            <li class="nav-item" role="presentation">
-                                <a class="nav-link" id="mobile_non_pharm_tab" data-toggle="tab" href="#non_pharm" data-target="#non_pharm" data-bs-toggle="tab" data-bs-target="#non_pharm" role="tab" data-bs-dismiss="modal">
-                                    <i class="mdi mdi-heart-pulse me-3"></i> Care Plan / Non-Pharm
-                                </a>
-                            </li>
-                            <li class="nav-item" role="presentation">
-                                <a class="nav-link" id="mobile_procedures_tab" data-toggle="tab" href="#procedures" data-target="#procedures" data-bs-toggle="tab" data-bs-target="#procedures" role="tab" data-bs-dismiss="modal">
-                                    <i class="mdi mdi-medical-bag me-3"></i> Procedures
-                                </a>
-                            </li>
-                            <li class="nav-item" role="presentation">
-                                <a class="nav-link" id="mobile_admissions_tab" data-toggle="tab" href="#admissions" data-target="#admissions" data-bs-toggle="tab" data-bs-target="#admissions" role="tab" data-bs-dismiss="modal">
-                                    <i class="mdi mdi-bed me-3"></i> Admission History
-                                </a>
-                            </li>
-                            <li class="nav-item" role="presentation">
-                                <a class="nav-link" id="mobile_referrals_tab" data-toggle="tab" href="#referrals" data-target="#referrals" data-bs-toggle="tab" data-bs-target="#referrals" role="tab" data-bs-dismiss="modal">
-                                    <i class="mdi mdi-account-switch me-3"></i> Referrals
-                                    <span class="badge bg-purple ms-auto referral-count-badge" style="display:none;">0</span>
-                                </a>
-                            </li>
-                        </ul>
+                        <div class="mobile-more-grid">
+                            <a class="mobile-more-tile" id="mobile_laboratory_services_tab" data-toggle="tab" href="#laboratory_services" data-target="#laboratory_services" data-bs-toggle="tab" data-bs-target="#laboratory_services" role="tab" data-bs-dismiss="modal">
+                                <span class="tile-icon" style="background: #1565c0;"><i class="mdi mdi-flask"></i></span>
+                                <span class="tile-label">Lab Services</span>
+                                <span class="badge bg-danger rounded-pill tile-badge lab-unviewed-badge" style="display: none;"></span>
+                            </a>
+                            <a class="mobile-more-tile" id="mobile_imaging_services_tab" data-toggle="tab" href="#imaging_services" data-target="#imaging_services" data-bs-toggle="tab" data-bs-target="#imaging_services" role="tab" data-bs-dismiss="modal">
+                                <span class="tile-icon" style="background: #6a1b9a;"><i class="mdi mdi-radioactive"></i></span>
+                                <span class="tile-label">Imaging</span>
+                                <span class="badge bg-danger rounded-pill tile-badge imaging-unviewed-badge" style="display: none;"></span>
+                            </a>
+                            <a class="mobile-more-tile" id="mobile_medications_tab" data-toggle="tab" href="#medications" data-target="#medications" data-bs-toggle="tab" data-bs-target="#medications" role="tab" data-bs-dismiss="modal">
+                                <span class="tile-icon" style="background: #00897b;"><i class="mdi mdi-pill"></i></span>
+                                <span class="tile-label">Medications</span>
+                            </a>
+                            <a class="mobile-more-tile" id="mobile_nurse_charts_tab" data-toggle="tab" href="#nurse_charts" data-target="#nurse_charts" data-bs-toggle="tab" data-bs-target="#nurse_charts" role="tab" data-bs-dismiss="modal">
+                                <span class="tile-icon" style="background: #ef6c00;"><i class="mdi mdi-notebook"></i></span>
+                                <span class="tile-label">Nurse Charts</span>
+                            </a>
+                            <a class="mobile-more-tile" id="mobile_inj_imm_history_tab" data-toggle="tab" href="#inj_imm_history" data-target="#inj_imm_history" data-bs-toggle="tab" data-bs-target="#inj_imm_history" role="tab" data-bs-dismiss="modal">
+                                <span class="tile-icon" style="background: #c62828;"><i class="mdi mdi-needle"></i></span>
+                                <span class="tile-label">Inj / Imm</span>
+                            </a>
+                            <a class="mobile-more-tile" id="mobile_non_pharm_tab" data-toggle="tab" href="#non_pharm" data-target="#non_pharm" data-bs-toggle="tab" data-bs-target="#non_pharm" role="tab" data-bs-dismiss="modal">
+                                <span class="tile-icon" style="background: #e91e63;"><i class="mdi mdi-heart-pulse"></i></span>
+                                <span class="tile-label">Care Plan</span>
+                            </a>
+                            <a class="mobile-more-tile" id="mobile_procedures_tab" data-toggle="tab" href="#procedures" data-target="#procedures" data-bs-toggle="tab" data-bs-target="#procedures" role="tab" data-bs-dismiss="modal">
+                                <span class="tile-icon" style="background: #2e7d32;"><i class="mdi mdi-medical-bag"></i></span>
+                                <span class="tile-label">Procedures</span>
+                            </a>
+                            <a class="mobile-more-tile" id="mobile_admissions_tab" data-toggle="tab" href="#admissions" data-target="#admissions" data-bs-toggle="tab" data-bs-target="#admissions" role="tab" data-bs-dismiss="modal">
+                                <span class="tile-icon" style="background: #37474f;"><i class="mdi mdi-bed"></i></span>
+                                <span class="tile-label">Admissions</span>
+                            </a>
+                            <a class="mobile-more-tile" id="mobile_referrals_tab" data-toggle="tab" href="#referrals" data-target="#referrals" data-bs-toggle="tab" data-bs-target="#referrals" role="tab" data-bs-dismiss="modal">
+                                <span class="tile-icon" style="background: #4527a0;"><i class="mdi mdi-account-switch"></i></span>
+                                <span class="tile-label">Referrals</span>
+                                <span class="badge bg-purple rounded-pill tile-badge referral-count-badge" style="display:none;">0</span>
+                            </a>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -635,7 +664,7 @@
             });
 
             // Fallback for BS4 modal hide on mobile sheet
-            $('#mobileMoreSheet .nav-link').on('click', function() {
+            $('#mobileMoreSheet').on('click', '.nav-link, .mobile-more-tile', function() {
                 $('#mobileMoreSheet').modal('hide');
             });
 

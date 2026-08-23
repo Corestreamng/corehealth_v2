@@ -287,12 +287,57 @@
     }
 
     @media (max-width: 767.98px) {
-        .sch-compact-bar { padding: 8px 12px; }
+        .sticky-consultation-header {
+            border-radius: 0;
+            margin-bottom: 0;
+        }
+        .sch-compact-bar {
+            padding: 8px 10px;
+            gap: 8px;
+        }
+        .sch-compact-avatar,
+        .sch-compact-avatar-placeholder {
+            width: 34px;
+            height: 34px;
+            font-size: 0.8rem;
+        }
+        .sch-compact-name {
+            font-size: 0.9rem;
+        }
+        .sch-compact-name .file-no {
+            font-size: 0.7rem;
+        }
+        .sch-compact-sub {
+            font-size: 0.68rem;
+        }
+        /* Hide the desktop action buttons on mobile */
         .sch-compact-actions { display: none !important; }
-        .sch-details-grid { grid-template-columns: 1fr; }
-        .sch-expanded-actions { gap: 4px; }
-        .sch-expanded-actions .btn { font-size: 9pt; padding: 3px 7px; }
+        /* Show mobile back + overflow actions instead */
+        .sch-mobile-back {
+            display: flex !important;
+        }
+        .sch-mobile-actions {
+            display: flex !important;
+        }
+        .sch-details-grid { grid-template-columns: 1fr 1fr; gap: 8px; }
+        .sch-expanded-actions {
+            gap: 4px;
+            flex-wrap: nowrap;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            padding-bottom: 4px;
+        }
+        .sch-expanded-actions::-webkit-scrollbar { display: none; }
+        .sch-expanded-actions .btn {
+            font-size: 0.65rem;
+            padding: 4px 8px;
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
     }
+    /* Mobile-only elements hidden on desktop */
+    .sch-mobile-back { display: none; }
+    .sch-mobile-actions { display: none; }
 </style>
 @endpush
 
@@ -315,6 +360,10 @@
     {{-- ═══ ALWAYS-VISIBLE COMPACT BAR ═══ --}}
     <div class="sch-compact-bar">
 
+        {{-- Mobile Back Button --}}
+        <a href="{{ route('encounters.index') }}" class="sch-mobile-back" style="color:#fff; font-size:1.2rem; padding:4px; text-decoration:none; flex-shrink:0;" title="Back to Queue">
+            <i class="fa fa-chevron-left"></i>
+        </a>
         {{-- Avatar --}}
         @if($patient->user->filename)
             <img src="{!! url('storage/image/user/' . $patient->user->filename) !!}" class="sch-compact-avatar" alt="Patient" />
@@ -376,6 +425,27 @@
             <span id="sch-expand-text">Details</span>
             <i class="fa fa-chevron-down"></i>
         </button>
+
+        {{-- Mobile Overflow Actions (⋯ button) --}}
+        <div class="sch-mobile-actions dropdown" style="flex-shrink:0;">
+            <button class="sch-expand-toggle dropdown-toggle" type="button" data-bs-toggle="dropdown" data-toggle="dropdown" aria-expanded="false" style="border:none;">
+                <i class="fa fa-ellipsis-v" style="font-size:1rem;"></i>
+            </button>
+            <ul class="dropdown-menu dropdown-menu-end shadow-lg" style="border-radius:12px; min-width:180px; padding:6px;">
+                @if (isset($admission_request))
+                    @if(!$admission_request->discharged && $admission_request->admission_status !== 'discharge_requested')
+                    <li><a class="dropdown-item d-flex align-items-center gap-2 py-2" href="#" onclick="event.preventDefault(); openDischargeModal()"><i class="fa fa-sign-out-alt text-warning"></i> Discharge</a></li>
+                    @endif
+                @else
+                    <li><a class="dropdown-item d-flex align-items-center gap-2 py-2" href="#" onclick="event.preventDefault(); openAdmitModal()"><i class="fa fa-bed text-info"></i> Admit</a></li>
+                @endif
+                <li><a class="dropdown-item d-flex align-items-center gap-2 py-2 btn-manage-alerts" href="#" data-patient-id="{{ $patient->id }}" onclick="event.preventDefault();"><i class="mdi mdi-alert-octagon text-danger"></i> Alerts</a></li>
+                <li><a class="dropdown-item d-flex align-items-center gap-2 py-2" href="#" onclick="event.preventDefault(); openReportBuilder()"><i class="mdi mdi-file-document text-secondary"></i> Report</a></li>
+                <li><a class="dropdown-item d-flex align-items-center gap-2 py-2" href="#" onclick="event.preventDefault(); switch_tab(event, 'referrals_tab');"><i class="mdi mdi-account-switch text-primary"></i> Refer</a></li>
+                <li><hr class="dropdown-divider"></li>
+                <li><a class="dropdown-item d-flex align-items-center gap-2 py-2 text-success fw-bold" href="#" onclick="event.preventDefault(); $('#concludeEncounterModal').modal('show')"><i class="fa fa-check-circle"></i> Conclude</a></li>
+            </ul>
+        </div>
     </div>
 
     {{-- ═══ COLLAPSIBLE DETAILS PANEL ═══ --}}
