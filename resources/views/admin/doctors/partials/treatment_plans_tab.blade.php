@@ -532,17 +532,7 @@
     </div>
 </div>
 
-<!-- Bottom Tab Navigation -->
-        <div class="d-flex justify-content-between align-items-center mt-4 pt-3 border-top">
-            <div>
-                <a href="{{ route('encounters.index') }}" onclick="return confirm('Are you sure you wish to exit? Changes are yet to be saved')" class="btn btn-light" style="border-radius: 8px; font-weight: 600;">Exit</a>
-            </div>
-            <div>
-                <button type="button" class="btn btn-primary shadow-sm" onclick="switch_tab(event, 'clinical_story_tab')" style="border-radius: 8px; font-weight: 600;">
-                    Next (Clinical Story) <i class="fa fa-arrow-right ms-1"></i>
-                </button>
-            </div>
-        </div>
+
 @push('scripts')
 <script>
 /**
