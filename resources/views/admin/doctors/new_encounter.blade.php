@@ -269,9 +269,9 @@
             }
             .mobile-more-tile:hover,
             .mobile-more-tile:active {
-                background: #e0f2f1;
-                border-color: #80cbc4;
-                color: #00695c;
+                background: color-mix(in srgb, var(--hos-color-var, #007bff) 10%, white);
+                border-color: color-mix(in srgb, var(--hos-color-var, #007bff) 40%, white);
+                color: var(--hos-color-var, #007bff);
                 transform: scale(0.97);
             }
             .mobile-more-tile .tile-icon {
@@ -291,6 +291,153 @@
             }
             .mobile-more-tile .tile-badge {
                 margin-left: auto;
+            }
+
+            /* ═══ MOBILE NATIVE: Flatten card nesting ═══ */
+
+            /* Remove outer card chrome on mobile — edge-to-edge content */
+            .encounter-main-content .card-modern {
+                border: none !important;
+                border-radius: 0 !important;
+                box-shadow: none !important;
+                margin-bottom: 0.5rem !important;
+            }
+            .encounter-main-content .card-modern > .card-body {
+                padding: 10px 6px !important;
+            }
+            .encounter-main-content .card-modern > .card-header {
+                padding: 10px 8px !important;
+                border-radius: 0 !important;
+            }
+
+            /* Nested card-in-card: minimal chrome */
+            .encounter-main-content .card-modern .card-modern {
+                border: 1px solid #e9ecef !important;
+                border-radius: 10px !important;
+                margin-bottom: 0.75rem !important;
+            }
+            .encounter-main-content .card-modern .card-modern > .card-body {
+                padding: 8px !important;
+            }
+
+            /* Full-bleed tab content */
+            .encounter-main-content > .tab-content {
+                padding: 0 !important;
+            }
+
+            /* Clinical story edge-to-edge */
+            .clinical-story-wrapper {
+                border-radius: 0 !important;
+                padding: 12px 8px !important;
+                box-shadow: none !important;
+                margin-bottom: 0.5rem !important;
+            }
+
+            /* Section titles as mobile dividers */
+            .encounter-main-content .card-modern > .card-header h5,
+            .encounter-main-content .card-modern > .card-header h6 {
+                font-size: 0.8rem !important;
+                text-transform: uppercase;
+                letter-spacing: 0.5px;
+                font-weight: 700;
+            }
+
+            /* ═══ MOBILE NATIVE: Prev/Next Navigation ═══ */
+
+            /* Fixed bottom Prev/Next bar within each tab on mobile */
+            .mobile-tab-nav {
+                display: flex !important;
+                position: sticky;
+                bottom: 64px; /* above the bottom nav */
+                left: 0;
+                right: 0;
+                z-index: 1030;
+                background: #fff;
+                border-top: 1px solid #e9ecef;
+                padding: 8px 12px;
+                gap: 8px;
+                box-shadow: 0 -2px 8px rgba(0,0,0,0.06);
+            }
+            .mobile-tab-nav .btn {
+                flex: 1;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                gap: 6px;
+                font-size: 0.8rem;
+                font-weight: 600;
+                padding: 10px 12px;
+                border-radius: 10px;
+                min-height: 44px;
+            }
+            /* Hide the existing desktop Prev/Next bars on mobile */
+            .encounter-main-content .tab-pane > .d-flex.border-bottom,
+            .encounter-main-content .tab-pane > .d-flex.border-top {
+                display: none !important;
+            }
+
+            /* ═══ MOBILE NATIVE: Touch-friendly form controls ═══ */
+            .encounter-main-content .form-control,
+            .encounter-main-content .form-select {
+                min-height: 44px !important;
+                font-size: 16px !important; /* Prevents iOS zoom on focus */
+            }
+            .encounter-main-content textarea.form-control {
+                min-height: 80px !important;
+            }
+            .encounter-main-content .btn:not(.btn-sm):not(.btn-xs) {
+                min-height: 44px;
+            }
+
+            /* ═══ MOBILE NATIVE: Scale text for density ═══ */
+            .encounter-main-content .form-label,
+            .encounter-main-content label {
+                font-size: 0.85rem;
+            }
+            .encounter-main-content p,
+            .encounter-main-content .small,
+            .encounter-main-content small {
+                font-size: 0.85rem;
+            }
+            .encounter-main-content h5 {
+                font-size: 1rem;
+            }
+            .encounter-main-content h6 {
+                font-size: 0.9rem;
+            }
+
+            /* ═══ MOBILE NATIVE: DataTable responsiveness ═══ */
+            .encounter-main-content .dataTables_wrapper {
+                overflow-x: hidden !important;
+            }
+            .encounter-main-content .dataTables_wrapper table {
+                width: 100% !important;
+            }
+            .encounter-main-content .dataTables_wrapper .dt-buttons {
+                display: none !important;
+            }
+
+            /* ═══ MOBILE NATIVE: Tab sub-navigation (inner tabs) ═══ */
+            .encounter-main-content .nav-tabs {
+                flex-wrap: nowrap;
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
+                border-bottom: 2px solid #e9ecef;
+            }
+            .encounter-main-content .nav-tabs::-webkit-scrollbar { display: none; }
+            .encounter-main-content .nav-tabs .nav-link {
+                white-space: nowrap;
+                font-size: 0.8rem;
+                padding: 8px 14px;
+            }
+
+            /* ═══ Treatment Plans warning modal highlight ═══ */
+            .tp-highlight-pulse {
+                animation: tpPulse 0.6s ease-in-out 3;
+            }
+            @keyframes tpPulse {
+                0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(25, 135, 84, 0.4); }
+                50% { transform: scale(1.05); box-shadow: 0 0 0 10px rgba(25, 135, 84, 0); }
             }
         }
         /* --- MOBILE LAYOUT END --- */
@@ -5344,4 +5491,66 @@
             }
         });
     </script>
+
+    {{-- ═══ Mobile Prev/Next Tab Navigation (Injected Dynamically) ═══ --}}
+    <script>
+    $(document).ready(function() {
+        if (window.innerWidth >= 768) return; // Desktop — skip entirely
+
+        // Define the tab navigation order (tab_pane_id → sidebar_tab_id)
+        var tabOrder = [
+            @if($plansEnabled)
+            { pane: 'treatment_plans', tab: 'treatment_plans_tab', label: 'Plans' },
+            @endif
+            { pane: 'clinical_story', tab: 'clinical_story_tab', label: 'Story' },
+            { pane: 'vitals', tab: 'vitals_data_tab', label: 'Vitals' },
+            { pane: 'nurse_charts', tab: 'nurse_charts_tab', label: 'Nurse Charts' },
+            { pane: 'inj_imm_history', tab: 'inj_imm_history_tab', label: 'Inj/Imm' },
+            { pane: 'clinical_notes', tab: 'clinical_notes_tab', label: 'Notes' },
+            { pane: 'laboratory_services', tab: 'laboratory_services_tab', label: 'Labs' },
+            { pane: 'imaging_services', tab: 'imaging_services_tab', label: 'Imaging' },
+            { pane: 'medications', tab: 'medications_tab', label: 'Meds' },
+            { pane: 'non_pharm', tab: 'non_pharm_tab', label: 'Care Plan' },
+            { pane: 'procedures', tab: 'procedures_tab', label: 'Procedures' },
+            { pane: 'admissions', tab: 'admissions_tab', label: 'Admissions' },
+            { pane: 'referrals', tab: 'referrals_tab', label: 'Referrals' }
+        ];
+
+        tabOrder.forEach(function(item, idx) {
+            var $pane = $('#' + item.pane);
+            if (!$pane.length) return;
+
+            var navHtml = '<div class="mobile-tab-nav d-md-none">';
+
+            // Previous button
+            if (idx > 0) {
+                var prev = tabOrder[idx - 1];
+                navHtml += '<button class="btn btn-outline-secondary" onclick="switch_tab(event, \'' + prev.tab + '\')">' +
+                    '<i class="fa fa-chevron-left"></i> ' + prev.label + '</button>';
+            } else {
+                navHtml += '<div></div>'; // spacer
+            }
+
+            // Save buttons (for tabs that have forms — Story, Notes)
+            if (item.pane === 'clinical_story' || item.pane === 'clinical_notes') {
+                navHtml += '<button class="btn btn-outline-success btn-sm" style="flex:0 0 auto; min-width:auto; padding:8px 12px;" onclick="$(\'#\' + \'' + item.pane + '\').find(\'form:visible button[type=submit]:first, .btn-save:first\').click();">' +
+                    '<i class="fa fa-save"></i></button>';
+            }
+
+            // Next button
+            if (idx < tabOrder.length - 1) {
+                var next = tabOrder[idx + 1];
+                navHtml += '<button class="btn btn-primary" onclick="switch_tab(event, \'' + next.tab + '\')">' +
+                    next.label + ' <i class="fa fa-chevron-right"></i></button>';
+            } else {
+                navHtml += '<button class="btn btn-success" onclick="$(\'#concludeEncounterModal\').modal(\'show\')">' +
+                    '<i class="fa fa-check-circle"></i> Conclude</button>';
+            }
+
+            navHtml += '</div>';
+            $pane.append(navHtml);
+        });
+    });
+    </script>
 @endsection
+
