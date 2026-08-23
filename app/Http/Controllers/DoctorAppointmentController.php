@@ -1451,11 +1451,14 @@ class DoctorAppointmentController extends Controller
         $startDate = $request->input('start_date', Carbon::today()->toDateString());
         $endDate   = $request->input('end_date', Carbon::today()->toDateString());
         $statusFilter = $request->input('status_filter', '');
+        $sourceFilter = $request->input('source_filter', 'all');
+        $priorityFilter = $request->input('priority_filter', 'all');
+        $clinicFilter = $request->input('clinic_filter', 'all');
 
         $rows = collect();
 
         // ── 1. Scheduled Appointments (include all upcoming, not just today) ──
-        $appts = DoctorAppointment::with(['patient.user', 'patient.hmo', 'clinic'])
+        $appts = DoctorAppointment::with(['patient.user', 'patient.hmo', 'clinic', 'bookedBy.user'])
             ->where(function ($q) use ($doc) {
                 $q->where('staff_id', $doc->id)
                   ->orWhereIn('clinic_id', $doc->all_clinic_ids);
@@ -1499,6 +1502,10 @@ class DoctorAppointmentController extends Controller
                 'delivery_reason'  => 'Scheduled',
                 'delivery_hint'    => 'Check in to start encounter',
                 'next_step'        => $this->nextStepHint($appt->status, true, '', 'appointment'),
+                'booked_by'        => $appt->bookedBy ? userfullname($appt->bookedBy->user_id) : 'Unknown',
+                'datetime'         => $appt->created_at ? $appt->created_at->format('Y-m-d h:i A') : '-',
+                'gender'           => $user ? ($user->gender == 'Male' ? 'M' : ($user->gender == 'Female' ? 'F' : 'U')) : 'U',
+                'age'              => ($user && $user->dob) ? Carbon::parse($user->dob)->age : '?',
             ]);
         }
 
@@ -1533,7 +1540,7 @@ class DoctorAppointmentController extends Controller
             ->orderBy('created_at', 'DESC')
             ->get();
 
-        $queues->load(['patient.user', 'patient.hmo', 'clinic']);
+        $queues->load(['patient.user', 'patient.hmo', 'clinic', 'receptionist.user']);
 
         // Batch-load service requests for HMO delivery checks
         $reqEntryIds = $queues->pluck('request_entry_id')->filter()->unique()->toArray();
@@ -1605,12 +1612,31 @@ class DoctorAppointmentController extends Controller
                 'delivery_reason'  => $deliveryReason,
                 'delivery_hint'    => $deliveryHint,
                 'next_step'        => $this->nextStepHint($queue->status, $canDeliver, $deliveryReason, 'queue'),
+                'booked_by'        => $queue->receptionist ? userfullname($queue->receptionist->user_id) : 'Unknown',
+                'datetime'         => $queue->created_at ? $queue->created_at->format('Y-m-d h:i A') : '-',
+                'gender'           => $user ? ($user->gender == 'Male' ? 'M' : ($user->gender == 'Female' ? 'F' : 'U')) : 'U',
+                'age'              => ($user && $user->dob) ? Carbon::parse($user->dob)->age : '?',
             ]);
         }
 
         // Apply status filter
         if ($statusFilter !== '' && $statusFilter !== 'all') {
             $rows = $rows->filter(fn($r) => $r['status'] == (int) $statusFilter);
+        }
+        
+        // Apply source filter
+        if ($sourceFilter !== '' && $sourceFilter !== 'all') {
+            $rows = $rows->filter(fn($r) => $r['source'] === $sourceFilter);
+        }
+
+        // Apply priority filter
+        if ($priorityFilter !== '' && $priorityFilter !== 'all') {
+            $rows = $rows->filter(fn($r) => $r['priority'] === $priorityFilter);
+        }
+
+        // Apply clinic filter
+        if ($clinicFilter !== '' && $clinicFilter !== 'all') {
+            $rows = $rows->filter(fn($r) => $r['clinic_id'] == $clinicFilter);
         }
 
         // Sort: emergency first, then by time
@@ -1629,13 +1655,14 @@ class DoctorAppointmentController extends Controller
                             || str_contains(mb_strtolower($row['file_no'] ?? ''), $keyword)
                             || str_contains(mb_strtolower($row['hmo'] ?? ''), $keyword)
                             || str_contains(mb_strtolower($row['clinic'] ?? ''), $keyword)
-                            || str_contains(mb_strtolower($row['reason'] ?? ''), $keyword);
+                            || str_contains(mb_strtolower($row['reason'] ?? ''), $keyword)
+                            || str_contains(mb_strtolower($row['booked_by'] ?? ''), $keyword);
                     });
                 }
             })
             ->addIndexColumn()
-            ->addColumn('patient_info', function ($row) {
-                // Rich patient column: name + file_no + priority icon + HMO line
+            ->addColumn('card_html', function ($row) {
+                // ── Priority Icon ──
                 $priorityIcon = '';
                 if ($row['priority'] === 'emergency') {
                     $priorityIcon = '<i class="fa fa-bolt text-danger me-1" title="Emergency"></i>';
@@ -1643,29 +1670,32 @@ class DoctorAppointmentController extends Controller
                     $priorityIcon = '<i class="mdi mdi-alert text-warning me-1" title="Urgent"></i>';
                 }
 
-                $profileUrl = route('patient.show', $row['patient_id']);
-                $name = $priorityIcon . '<a href="' . $profileUrl . '" class="text-dark"><strong>' . e($row['patient_name']) . '</strong></a>';
-                $fileNo = '<span class="text-muted small">' . e($row['file_no']) . '</span>';
-
-                $hmoLine = '';
-                if (!empty($row['hmo'])) {
-                    $hmoLine = '<br><span class="badge bg-light text-dark border" style="font-size:0.68rem;"><i class="mdi mdi-shield-check-outline"></i> ' . e($row['hmo']) . '</span>';
+                // ── Avatar ──
+                $nameParts = explode(' ', e($row['patient_name']));
+                $initials = '';
+                if (count($nameParts) >= 2) {
+                    $initials = mb_strtoupper(mb_substr($nameParts[0], 0, 1) . mb_substr($nameParts[1], 0, 1));
+                } elseif (count($nameParts) == 1 && !empty($nameParts[0])) {
+                    $initials = mb_strtoupper(mb_substr($nameParts[0], 0, 2));
                 }
 
-                $reasonLine = '';
-                if (!empty($row['reason']) && $row['reason'] !== '-') {
-                    $reasonLine = '<br><span class="text-muted small fst-italic" title="' . e($row['reason']) . '"><i class="mdi mdi-note-text-outline"></i> ' . e($row['reason']) . '</span>';
+                $statusColor = '#94a3b8';
+                if ($row['status'] == QueueStatus::WAITING || $row['status'] == QueueStatus::READY) {
+                    $statusColor = '#10b981';
+                } elseif ($row['status'] == QueueStatus::VITALS_PENDING || $row['status'] == QueueStatus::IN_CONSULTATION) {
+                    $statusColor = '#3b82f6';
+                } elseif ($row['status'] == QueueStatus::SCHEDULED) {
+                    $statusColor = '#8b5cf6';
                 }
 
-                return '<div class="d-flex flex-column lh-sm">'
-                    . '<div>' . $name . ' <span class="text-muted mx-1">·</span> ' . $fileNo . '</div>'
-                    . $hmoLine
-                    . $reasonLine
-                    . '</div>';
-            })
-            ->addColumn('source_time', function ($row) {
-                // Combined source badge + time
-                $icons = [
+                // ── Demographics ──
+                $demographics = '';
+                if (!empty($row['gender']) && !empty($row['age'])) {
+                    $demographics = ' <span class="queue-card-demo">(' . e($row['gender']) . ', ' . e($row['age']) . ')</span>';
+                }
+
+                // ── Source Badge ──
+                $sourceIcons = [
                     'scheduled'   => '<span class="badge bg-purple-subtle text-purple source-badge"><i class="mdi mdi-calendar-check"></i> Scheduled</span>',
                     'follow_up'   => '<span class="badge bg-info-subtle text-info source-badge"><i class="mdi mdi-calendar-refresh"></i> Follow-up</span>',
                     'referral'    => '<span class="badge bg-warning-subtle text-warning source-badge"><i class="mdi mdi-share-variant"></i> Referral</span>',
@@ -1673,65 +1703,129 @@ class DoctorAppointmentController extends Controller
                     'emergency'   => '<span class="badge bg-danger-subtle text-danger source-badge"><i class="mdi mdi-ambulance"></i> Emergency</span>',
                     'walk_in'     => '<span class="badge bg-secondary-subtle text-secondary source-badge"><i class="mdi mdi-walk"></i> Walk-in</span>',
                 ];
-                $badge = $icons[$row['source']] ?? $icons['walk_in'];
-
+                $sourceBadge = $sourceIcons[$row['source']] ?? $sourceIcons['walk_in'];
                 if (!empty($row['is_follow_up'])) {
-                    $badge = '<span class="badge bg-info-subtle text-info source-badge"><i class="mdi mdi-link-variant"></i> Follow-up</span>';
+                    $sourceBadge = '<span class="badge bg-info-subtle text-info source-badge"><i class="mdi mdi-link-variant"></i> Follow-up</span>';
                 }
                 if (!empty($row['is_prepaid'])) {
-                    $badge .= ' <span class="badge bg-success-subtle text-success" title="Pre-paid"><i class="mdi mdi-cash-check"></i></span>';
+                    $sourceBadge .= ' <span class="badge bg-success-subtle text-success" title="Pre-paid"><i class="mdi mdi-cash-check"></i></span>';
                 }
 
+                // ── Status Badge ──
+                $statusBadge = $row['status_badge'];
+
+                // ── Delivery Badge ──
+                $deliveryBadge = '';
+                if ($row['event_type'] === 'appointment' && $row['status'] == QueueStatus::SCHEDULED) {
+                    // no delivery badge for scheduled
+                } elseif (!$row['can_deliver']) {
+                    $deliveryBadge = '<span class="badge bg-danger-subtle text-danger"><i class="mdi mdi-alert-circle"></i> ' . e($row['delivery_reason']) . '</span>';
+                }
+
+                // ── Time ──
+                $timeDisplay = e($row['time']);
                 if (!empty($row['is_future'])) {
-                    $dateLabel = \Carbon\Carbon::parse($row['appointment_date'])->format('M j');
-                    $time = '<div class="text-muted small mt-1"><i class="mdi mdi-calendar-arrow-right"></i> ' . e($dateLabel) . ' · ' . e($row['time']) . '</div>';
-                } else {
-                    $time = '<div class="text-muted small mt-1"><i class="mdi mdi-clock-outline"></i> ' . e($row['time']) . '</div>';
+                    $timeDisplay = \Carbon\Carbon::parse($row['appointment_date'])->format('M j') . ' · ' . $timeDisplay;
                 }
-                return $badge . $time;
-            })
-            ->addColumn('delivery_badge', function ($row) {
-                // Very small delivery status + next-step hint
-                $style = 'font-size:0.7rem;line-height:1.3;';
-                $nextStep = $row['next_step'] ?? '';
-                $hintLine = $nextStep ? '<br><span style="font-size:0.65rem;color:#0d6efd;font-style:italic;" title="' . e($nextStep) . '"><i class="mdi mdi-arrow-right-circle"></i> ' . e(\Illuminate\Support\Str::limit($nextStep, 35)) . '</span>' : '';
 
-                if ($row['event_type'] === 'appointment' && $row['status'] == QueueStatus::SCHEDULED) {
-                    return '<span class="text-muted" style="' . $style . 'cursor:default;" title="Check in first"><i class="mdi mdi-clock-outline"></i> Pending</span>' . $hintLine;
-                }
-                if ($row['can_deliver']) {
-                    return '<span class="text-success" style="' . $style . '" title="' . e($row['delivery_hint']) . '"><i class="mdi mdi-check-circle"></i> Ready</span>' . $hintLine;
-                }
-                return '<span class="text-danger" style="' . $style . 'cursor:help;" title="' . e($row['delivery_hint']) . '"><i class="mdi mdi-alert-circle"></i> ' . e($row['delivery_reason']) . '</span>' . $hintLine;
-            })
-            ->addColumn('action', function ($row) {
-                $btns = '<div class="d-flex gap-1 flex-wrap">';
+                // ── Action Button (primary) ──
+                $actionBtn = '';
                 if ($row['encounter_url']) {
-                    $btns .= '<a href="' . $row['encounter_url'] . '" class="btn btn-success btn-sm" title="Open Encounter"><i class="fa fa-street-view"></i> Encounter</a>';
+                    $actionBtn = '<a href="' . $row['encounter_url'] . '" class="btn btn-success btn-sm queue-card-action-btn"><i class="fa fa-street-view"></i> Start Encounter</a>';
                 } elseif ($row['event_type'] === 'queue' && !$row['can_deliver']) {
-                    $btns .= '<button class="btn btn-sm btn-secondary" disabled title="' . e($row['delivery_hint']) . '"><i class="fa fa-street-view"></i> Blocked</button>';
+                    $actionBtn = '<button class="btn btn-sm btn-secondary queue-card-action-btn" disabled title="' . e($row['delivery_hint']) . '"><i class="fa fa-ban"></i> Blocked</button>';
                 }
                 if ($row['event_type'] === 'appointment' && $row['status'] == QueueStatus::SCHEDULED) {
-                    $btns .= '<button class="btn btn-sm btn-primary btn-checkin-appt" data-id="' . $row['record_id'] . '" title="Check-In"><i class="mdi mdi-login"></i> Check-In</button>';
-                    $btns .= '<button class="btn btn-sm btn-warning btn-reschedule-queue" data-id="' . $row['record_id'] . '" data-clinic="' . $row['clinic_id'] . '" data-doctor="' . ($row['doctor_id'] ?? '') . '" data-patient="' . e($row['patient_name']) . '" title="Reschedule"><i class="mdi mdi-calendar-edit"></i> Reschedule</button>';
-                    $btns .= '<button class="btn btn-sm btn-purple btn-reassign-queue" data-id="' . $row['record_id'] . '" data-clinic="' . $row['clinic_id'] . '" data-patient="' . e($row['patient_name']) . '" title="Change Doctor"><i class="mdi mdi-account-switch"></i> Reassign</button>';
+                    $actionBtn = '<button class="btn btn-sm btn-primary btn-checkin-appt queue-card-action-btn" data-id="' . $row['record_id'] . '"><i class="mdi mdi-login"></i> Check-In</button>';
                 }
-                // Cancel — available for scheduled and active appointments
-                if ($row['event_type'] === 'appointment' && in_array($row['status'], [QueueStatus::SCHEDULED, QueueStatus::WAITING, QueueStatus::VITALS_PENDING])) {
-                    $btns .= '<button class="btn btn-sm btn-danger btn-cancel-appt" data-id="' . $row['record_id'] . '" title="Cancel"><i class="mdi mdi-close-circle"></i> Cancel</button>';
-                }
-                // No-Show — only for scheduled
+
+                // ── Secondary action buttons ──
+                $secondaryBtns = '';
                 if ($row['event_type'] === 'appointment' && $row['status'] == QueueStatus::SCHEDULED) {
-                    $btns .= '<button class="btn btn-sm btn-secondary btn-noshow-appt" data-id="' . $row['record_id'] . '" title="Mark No-Show"><i class="mdi mdi-account-off"></i> No-Show</button>';
+                    $secondaryBtns .= '<button class="btn btn-sm btn-outline-warning btn-reschedule-queue" data-id="' . $row['record_id'] . '" data-clinic="' . $row['clinic_id'] . '" data-doctor="' . ($row['doctor_id'] ?? '') . '" data-patient="' . e($row['patient_name']) . '" title="Reschedule"><i class="mdi mdi-calendar-edit"></i> Reschedule</button>';
+                    $secondaryBtns .= '<button class="btn btn-sm btn-outline-secondary btn-reassign-queue" data-id="' . $row['record_id'] . '" data-clinic="' . $row['clinic_id'] . '" data-patient="' . e($row['patient_name']) . '" title="Reassign"><i class="mdi mdi-account-switch"></i> Reassign</button>';
+                    $secondaryBtns .= '<button class="btn btn-sm btn-outline-danger btn-cancel-appt" data-id="' . $row['record_id'] . '" title="Cancel"><i class="mdi mdi-close-circle"></i> Cancel</button>';
+                    $secondaryBtns .= '<button class="btn btn-sm btn-outline-secondary btn-noshow-appt" data-id="' . $row['record_id'] . '" title="No-Show"><i class="mdi mdi-account-off"></i> No-Show</button>';
                 }
-                // Reschedule — also available for no-show
+                if ($row['event_type'] === 'appointment' && in_array($row['status'], [QueueStatus::WAITING, QueueStatus::VITALS_PENDING])) {
+                    $secondaryBtns .= '<button class="btn btn-sm btn-outline-danger btn-cancel-appt" data-id="' . $row['record_id'] . '" title="Cancel"><i class="mdi mdi-close-circle"></i> Cancel</button>';
+                }
                 if ($row['event_type'] === 'appointment' && $row['status'] == QueueStatus::NO_SHOW) {
-                    $btns .= '<button class="btn btn-sm btn-warning btn-reschedule-queue" data-id="' . $row['record_id'] . '" data-clinic="' . $row['clinic_id'] . '" data-doctor="' . ($row['doctor_id'] ?? '') . '" data-patient="' . e($row['patient_name']) . '" title="Reschedule"><i class="mdi mdi-calendar-edit"></i> Reschedule</button>';
+                    $secondaryBtns .= '<button class="btn btn-sm btn-outline-warning btn-reschedule-queue" data-id="' . $row['record_id'] . '" data-clinic="' . $row['clinic_id'] . '" data-doctor="' . ($row['doctor_id'] ?? '') . '" data-patient="' . e($row['patient_name']) . '" title="Reschedule"><i class="mdi mdi-calendar-edit"></i> Reschedule</button>';
                 }
-                $btns .= '</div>';
-                return $btns;
+
+                $profileUrl = route('patient.show', $row['patient_id']);
+
+                // ── Build Card HTML ──
+                $html  = '<div class="queue-card">';
+
+                // Row 1: Avatar + Patient Info + Status badges
+                $html .= '<div class="queue-card-header">';
+                $html .= '  <div class="queue-card-avatar">';
+                $html .= '    ' . $initials;
+                $html .= '    <span class="queue-card-status-dot" style="background-color:' . $statusColor . ';"></span>';
+                $html .= '  </div>';
+                $html .= '  <div class="queue-card-patient-info">';
+                $html .= '    <div class="queue-card-name">' . $priorityIcon . '<a href="' . $profileUrl . '">' . e($row['patient_name']) . '</a>' . $demographics . '</div>';
+                $html .= '    <div class="queue-card-meta">MRN: ' . e($row['file_no']);
+                if (!empty($row['hmo'])) {
+                    $html .= ' <span class="queue-card-separator">|</span> <i class="mdi mdi-shield-check-outline"></i> ' . e($row['hmo']);
+                }
+                $html .= '</div>';
+                $html .= '  </div>';
+                $html .= '  <div class="queue-card-badges">';
+                $html .= '    ' . $statusBadge;
+                if ($deliveryBadge) {
+                    $html .= ' ' . $deliveryBadge;
+                }
+                $html .= '  </div>';
+                $html .= '</div>';
+
+                // Row 2: Details strip
+                $html .= '<div class="queue-card-details">';
+                $html .= '  <div class="queue-card-detail-item">' . $sourceBadge . '</div>';
+                $html .= '  <div class="queue-card-detail-item"><i class="mdi mdi-clock-outline"></i> ' . $timeDisplay . '</div>';
+                if (!empty($row['clinic'])) {
+                    $html .= '<div class="queue-card-detail-item"><i class="mdi mdi-hospital-building"></i> ' . e($row['clinic']) . '</div>';
+                }
+                if (!empty($row['booked_by']) && $row['booked_by'] !== 'Unknown') {
+                    $html .= '<div class="queue-card-detail-item"><i class="mdi mdi-account-plus-outline"></i> ' . e($row['booked_by']) . '</div>';
+                }
+                $html .= '</div>';
+
+                // Row 3 (optional): Reason / triage note
+                if (!empty($row['reason']) && $row['reason'] !== '-') {
+                    $html .= '<div class="queue-card-reason"><i class="mdi mdi-note-text-outline"></i> ' . e($row['reason']) . '</div>';
+                }
+
+                // Row 3.5 (optional): Blockage Explanation (Delivery hint & next step)
+                if ($row['event_type'] !== 'appointment' || $row['status'] != QueueStatus::SCHEDULED) {
+                    if (!$row['can_deliver'] && (!empty($row['delivery_hint']) || !empty($row['next_step']))) {
+                        $html .= '<div class="queue-card-blockage mt-2" style="font-size:0.85rem; padding:8px 14px; background:#fff1f2; border-left:3px solid #f43f5e; border-radius:0 8px 8px 0; color:#9f1239;">';
+                        if (!empty($row['delivery_hint'])) {
+                            $html .= '<div style="margin-bottom:4px;"><i class="mdi mdi-information-outline"></i> <strong>Why:</strong> ' . e($row['delivery_hint']) . '</div>';
+                        }
+                        if (!empty($row['next_step'])) {
+                            $html .= '<div><i class="mdi mdi-arrow-right-circle"></i> <strong>Next Step:</strong> ' . e($row['next_step']) . '</div>';
+                        }
+                        $html .= '</div>';
+                    }
+                }
+
+                // Row 4: Action area
+                if ($actionBtn || $secondaryBtns) {
+                    $html .= '<div class="queue-card-actions">';
+                    $html .= $actionBtn;
+                    if ($secondaryBtns) {
+                        $html .= '<div class="queue-card-secondary-actions">' . $secondaryBtns . '</div>';
+                    }
+                    $html .= '</div>';
+                }
+
+                $html .= '</div>';
+                return $html;
             })
-            ->rawColumns(['patient_info', 'source_time', 'status_badge', 'delivery_badge', 'action'])
+            ->rawColumns(['card_html'])
             ->make(true);
     }
 
@@ -1740,7 +1834,7 @@ class DoctorAppointmentController extends Controller
     /**
      * Get queue counts for the doctor's view with status breakdown.
      */
-    public function getDoctorQueueCounts()
+    public function getDoctorQueueCounts(\Illuminate\Http\Request $request)
     {
         $doc = Staff::where('user_id', Auth::id())->first();
         if (!$doc) {
@@ -1749,20 +1843,35 @@ class DoctorAppointmentController extends Controller
 
         $today = Carbon::today();
 
-        $baseQuery = function () use ($doc, $today) {
-            return DoctorQueue::where(function ($q) use ($doc) {
-                $q->where('clinic_id', $doc->clinic_id)
+        $startDate = $request->input('start_date', Carbon::today()->toDateString());
+        $endDate = $request->input('end_date', Carbon::today()->toDateString());
+        $clinicFilter = $request->input('clinic_filter', 'all');
+
+        $clinicsToSearch = $doc->all_clinic_ids ?? [$doc->clinic_id];
+        if ($clinicFilter !== 'all') {
+            $clinicsToSearch = [$clinicFilter];
+        }
+
+        $baseQuery = function () use ($doc, $startDate, $endDate, $clinicsToSearch) {
+            return DoctorQueue::where(function ($q) use ($doc, $clinicsToSearch) {
+                $q->whereIn('clinic_id', $clinicsToSearch)
                   ->orWhere('staff_id', $doc->id);
-            })->whereDate('created_at', $today);
+            })->whereBetween('created_at', [
+                Carbon::parse($startDate)->startOfDay(),
+                Carbon::parse($endDate)->endOfDay()
+            ]);
         };
 
-        // Appointment base query — all upcoming scheduled (today + future)
-        $apptBase = function () use ($doc, $today) {
-            return DoctorAppointment::where(function ($q) use ($doc) {
+        // Appointment base query
+        $apptBase = function () use ($doc, $startDate, $endDate, $clinicsToSearch) {
+            return DoctorAppointment::where(function ($q) use ($doc, $clinicsToSearch) {
                 $q->where('staff_id', $doc->id)
-                  ->orWhere('clinic_id', $doc->clinic_id);
+                  ->orWhereIn('clinic_id', $clinicsToSearch);
             })
-            ->where('appointment_date', '>=', $today)
+            ->whereBetween('appointment_date', [
+                Carbon::parse($startDate)->startOfDay(),
+                Carbon::parse($endDate)->endOfDay()
+            ])
             ->where('status', QueueStatus::SCHEDULED);
         };
 
