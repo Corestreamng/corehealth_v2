@@ -95,14 +95,6 @@
             </div>
         </div>
 
-        {{-- Navigation Buttons (Save removed — labs auto-save on add) --}}
-        <div class="d-flex justify-content-between align-items-center mt-3 pt-3 border-top">
-            <button type="button" onclick="switch_tab(event,'clinical_notes_tab')" class="btn btn-secondary" style="border-radius: 8px; font-weight: 600;">
-                <i class="fa fa-arrow-left me-1"></i> Previous (Clinical Notes)
-            </button>
-            <button type="button" onclick="$('#imaging_services_tab').click();" class="btn btn-primary" style="border-radius: 8px; font-weight: 600;">
-                Next (Imaging Services) <i class="fa fa-arrow-right ms-1"></i>
-            </button>
-        </div>
+
     </div>
 </div>
