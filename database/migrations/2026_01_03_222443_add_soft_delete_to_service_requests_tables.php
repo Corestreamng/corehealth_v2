@@ -14,31 +14,37 @@ class AddSoftDeleteToServiceRequestsTables extends Migration
     public function up()
     {
         // Add soft delete columns to lab_service_requests
-        Schema::table('lab_service_requests', function (Blueprint $table) {
-            $table->timestamp('deleted_at')->nullable();
-            $table->unsignedBigInteger('deleted_by')->nullable();
-            $table->text('deletion_reason')->nullable();
+        if (!Schema::hasColumn('lab_service_requests', 'deleted_at')) {
+            Schema::table('lab_service_requests', function (Blueprint $table) {
+                $table->timestamp('deleted_at')->nullable();
+                $table->unsignedBigInteger('deleted_by')->nullable();
+                $table->text('deletion_reason')->nullable();
 
-            $table->foreign('deleted_by')->references('id')->on('users')->onDelete('set null');
-        });
+                $table->foreign('deleted_by')->references('id')->on('users')->onDelete('set null');
+            });
+        }
 
         // Add soft delete columns to imaging_service_requests
-        Schema::table('imaging_service_requests', function (Blueprint $table) {
-            $table->timestamp('deleted_at')->nullable();
-            $table->unsignedBigInteger('deleted_by')->nullable();
-            $table->text('deletion_reason')->nullable();
+        if (!Schema::hasColumn('imaging_service_requests', 'deleted_at')) {
+            Schema::table('imaging_service_requests', function (Blueprint $table) {
+                $table->timestamp('deleted_at')->nullable();
+                $table->unsignedBigInteger('deleted_by')->nullable();
+                $table->text('deletion_reason')->nullable();
 
-            $table->foreign('deleted_by')->references('id')->on('users')->onDelete('set null');
-        });
+                $table->foreign('deleted_by')->references('id')->on('users')->onDelete('set null');
+            });
+        }
 
         // Add soft delete columns to product_requests
-        Schema::table('product_requests', function (Blueprint $table) {
-            $table->timestamp('deleted_at')->nullable();
-            $table->unsignedBigInteger('deleted_by')->nullable();
-            $table->text('deletion_reason')->nullable();
+        if (!Schema::hasColumn('product_requests', 'deleted_at')) {
+            Schema::table('product_requests', function (Blueprint $table) {
+                $table->timestamp('deleted_at')->nullable();
+                $table->unsignedBigInteger('deleted_by')->nullable();
+                $table->text('deletion_reason')->nullable();
 
-            $table->foreign('deleted_by')->references('id')->on('users')->onDelete('set null');
-        });
+                $table->foreign('deleted_by')->references('id')->on('users')->onDelete('set null');
+            });
+        }
     }
 
     /**

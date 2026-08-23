@@ -61,6 +61,9 @@ class CreateInitialBatchesFromStoreStock extends Migration
             $batchName = "Legacy Stock - {$storeStock->store_name}";
             $now = Carbon::now();
 
+            $systemUser = DB::table('users')->first();
+            $systemUserId = $systemUser ? $systemUser->id : null;
+
             // Create the batch
             $batchId = DB::table('stock_batches')->insertGetId([
                 'batch_name' => $batchName,
@@ -76,7 +79,7 @@ class CreateInitialBatchesFromStoreStock extends Migration
                 'received_date' => $now->toDateString(),
                 'source' => 'manual',
                 'source_requisition_id' => null,
-                'created_by' => 1, // System user
+                'created_by' => $systemUserId, // Dynamic System user
                 'is_active' => true,
                 'created_at' => $now,
                 'updated_at' => $now,
@@ -90,7 +93,7 @@ class CreateInitialBatchesFromStoreStock extends Migration
                 'balance_after' => $storeStock->current_quantity,
                 'reference_type' => 'Migration',
                 'reference_id' => null,
-                'performed_by' => 1, // System user
+                'performed_by' => $systemUserId, // Dynamic System user
                 'notes' => 'Initial batch creation from legacy store stock',
                 'created_at' => $now,
                 'updated_at' => $now,
