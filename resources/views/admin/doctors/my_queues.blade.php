@@ -180,26 +180,26 @@
         } /* End of @media (max-width: 767.98px) */
 
         /* ── Card-based DataTables Global Flex Layout ── */
-            #unified-queue-table {
-                width: 100%;
+            .card-datatable {
+                width: 100% !important;
                 border-collapse: separate;
                 border-spacing: 0 20px;
             }
-            #unified-queue-table thead {
+            .card-datatable thead {
                 display: none !important;
             }
-            #unified-queue-table tbody tr {
+            .card-datatable tbody tr {
                 background: transparent !important;
             }
-            #unified-queue-table tbody tr:hover {
+            .card-datatable tbody tr:hover {
                 background: transparent !important;
             }
-            #unified-queue-table td {
+            .card-datatable td {
                 border: none !important;
                 padding: 0 !important;
                 background: transparent !important;
             }
-            #unified-queue-table td:first-child {
+            .card-datatable td:first-child {
                 display: none !important;
             }
 
@@ -209,7 +209,7 @@
                 flex-direction: column;
                 gap: 16px;
                 background: #ffffff;
-                border: 2px solid var(--primary-color);
+                border: 1px solid var(--primary-color);
                 border-radius: 24px;
                 padding: 20px;
                 box-shadow: 0 4px 12px rgba(0,0,0,0.03);
@@ -564,11 +564,11 @@
                 {{-- Table View (default) --}}
                 <div id="table-wrapper" class="px-2">
                     <div class="table-responsive">
-                        <table class="table table-sm table-bordered table-striped table-hover" id="unified-queue-table" style="width:100%">
+                        <table class="card-datatable" id="unified-queue-table" style="width:100%">
                             <thead class="table-light">
                                 <tr>
                                     <th style="width:30px;">#</th>
-                                    <th>Patient Queue</th>
+                                    <th>Card</th>
                                 </tr>
                             </thead>
                         </table>
@@ -651,18 +651,11 @@
                                         </div>
                                     </div>
                                     <div class="table-responsive">
-                                        <table class="table table-sm table-bordered table-striped" id="prev_consult_list" style="width:100%">
+                                        <table class="card-datatable" id="prev_consult_list" style="width:100%">
                                             <thead>
                                                 <tr>
                                                     <th>#</th>
-                                                    <th>Patient Name</th>
-                                                    <th>File No</th>
-                                                    <th>HMO/Insurance</th>
-                                                    <th>Clinic</th>
-                                                    <th>Doctor</th>
-                                                    <th>Time</th>
-                                                    <th>Delivery</th>
-                                                    <th>Action</th>
+                                                    <th>Card</th>
                                                 </tr>
                                             </thead>
                                         </table>
@@ -697,18 +690,11 @@
                                         </div>
                                     </div>
                                     <div class="table-responsive">
-                                        <table class="table table-sm table-bordered table-striped" id="my_admissions_list" style="width:100%">
+                                        <table class="card-datatable" id="my_admissions_list" style="width:100%">
                                             <thead>
                                                 <tr>
-                                                    <th>SN</th>
-                                                    <th>Patient</th>
-                                                    <th>File No</th>
-                                                    <th>HMO/Insurance</th>
-                                                    <th>HMO No</th>
-                                                    <th>Requested By</th>
-                                                    <th>Bills</th>
-                                                    <th>Bed</th>
-                                                    <th>View</th>
+                                                    <th>#</th>
+                                                    <th>Card</th>
                                                 </tr>
                                             </thead>
                                         </table>
@@ -752,18 +738,11 @@
                                         </div>
                                     </div>
                                     <div class="table-responsive">
-                                        <table class="table table-sm table-bordered table-striped" id="other_admissions_list" style="width:100%">
+                                        <table class="card-datatable" id="other_admissions_list" style="width:100%">
                                             <thead>
                                                 <tr>
-                                                    <th>SN</th>
-                                                    <th>Patient</th>
-                                                    <th>File No</th>
-                                                    <th>HMO/Insurance</th>
-                                                    <th>HMO No</th>
-                                                    <th>Requested By</th>
-                                                    <th>Bills</th>
-                                                    <th>Bed</th>
-                                                    <th>View</th>
+                                                    <th>#</th>
+                                                    <th>Card</th>
                                                 </tr>
                                             </thead>
                                         </table>
@@ -820,20 +799,11 @@
                                         </div>
                                     </div>
                                     <div class="table-responsive">
-                                        <table class="table table-sm table-bordered table-striped table-hover" id="my_referrals_list" style="width:100%">
+                                        <table class="card-datatable" id="my_referrals_list" style="width:100%">
                                             <thead class="table-light">
                                                 <tr>
                                                     <th>#</th>
-                                                    <th>Patient</th>
-                                                    <th>File No</th>
-                                                    <th>Urgency</th>
-                                                    <th>Type</th>
-                                                    <th>From</th>
-                                                    <th>To</th>
-                                                    <th>Reason</th>
-                                                    <th>Status</th>
-                                                    <th>Date</th>
-                                                    <th style="min-width:130px;">Actions</th>
+                                                    <th>Card</th>
                                                 </tr>
                                             </thead>
                                         </table>
@@ -900,20 +870,11 @@
                                         </div>
                                     </div>
                                     <div class="table-responsive">
-                                        <table class="table table-sm table-bordered table-striped table-hover" id="all_referrals_list" style="width:100%">
+                                        <table class="card-datatable" id="all_referrals_list" style="width:100%">
                                             <thead class="table-light">
                                                 <tr>
                                                     <th>#</th>
-                                                    <th>Patient</th>
-                                                    <th>File No</th>
-                                                    <th>Urgency</th>
-                                                    <th>Type</th>
-                                                    <th>From</th>
-                                                    <th>To</th>
-                                                    <th>Reason</th>
-                                                    <th>Status</th>
-                                                    <th>Date</th>
-                                                    <th style="min-width:130px;">Actions</th>
+                                                    <th>Card</th>
                                                 </tr>
                                             </thead>
                                         </table>
@@ -1792,30 +1753,9 @@
         //  Secondary DataTables (Previous, Admissions)
         // ═══════════════════════════════════════════════════════════════
         function getSecondaryColumns(selector) {
-            if (selector === '#my_admissions_list' || selector === '#other_admissions_list') {
-                return [
-                    { data: "DT_RowIndex", name: "DT_RowIndex" },
-                    { data: "patient", name: "patient" },
-                    { data: "file_no", name: "file_no" },
-                    { data: "hmo", name: "hmo" },
-                    { data: "hmo_no", name: "hmo_no" },
-                    { data: "doctor_id", name: "doctor_id" },
-                    { data: "billed_by", name: "billed_by" },
-                    { data: "bed_id", name: "bed_id" },
-                    { data: "show", name: "show" }
-                ];
-            }
-            // Previous
             return [
-                { data: "DT_RowIndex", name: "DT_RowIndex" },
-                { data: "fullname", name: "fullname" },
-                { data: "file_no", name: "file_no" },
-                { data: "hmo_id", name: "hmo_id" },
-                { data: "clinic_id", name: "clinic_id" },
-                { data: "staff_id", name: "staff_id" },
-                { data: "created_at", name: "created_at" },
-                { data: "delivery_status", name: "delivery_status" },
-                { data: "view", name: "view" }
+                { data: "DT_RowIndex", name: "DT_RowIndex", orderable: false, searchable: false, width: '30px' },
+                { data: "card_html", name: "card_html", orderable: false }
             ];
         }
 
@@ -1905,16 +1845,7 @@
         // ═══════════════════════════════════════════════════════════════
         var referralColumns = [
             { data: "DT_RowIndex", name: "DT_RowIndex", orderable: false, searchable: false, width: '30px' },
-            { data: "patient_name", name: "patient_name" },
-            { data: "patient_file_no", name: "patient_file_no" },
-            { data: "urgency_badge", name: "urgency_badge", orderable: false },
-            { data: "type_badge", name: "type_badge", orderable: false },
-            { data: "from_info", name: "from_info" },
-            { data: "to_info", name: "to_info" },
-            { data: "reason_short", name: "reason_short" },
-            { data: "status_badge", name: "status_badge", orderable: false },
-            { data: "time", name: "time" },
-            { data: "actions", name: "actions", orderable: false, searchable: false }
+            { data: "card_html", name: "card_html", orderable: false }
         ];
 
         function initReferralTable(selector, ajaxUrl, isMine) {
@@ -1939,7 +1870,7 @@
                 },
                 columns: referralColumns,
                 paging: true,
-                order: [[9, 'desc']]
+                order: []
             });
         }
 
