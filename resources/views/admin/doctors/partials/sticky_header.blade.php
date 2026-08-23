@@ -292,23 +292,30 @@
             margin-bottom: 0;
         }
         .sch-compact-bar {
-            padding: 8px 10px;
-            gap: 8px;
+            padding: 6px 10px;
+            gap: 6px;
         }
         .sch-compact-avatar,
         .sch-compact-avatar-placeholder {
-            width: 34px;
-            height: 34px;
-            font-size: 0.8rem;
+            width: 28px;
+            height: 28px;
+            font-size: 0.7rem;
+            border-width: 1.5px;
         }
         .sch-compact-name {
-            font-size: 0.9rem;
+            font-size: 0.85rem;
+            font-weight: 700;
         }
         .sch-compact-name .file-no {
-            font-size: 0.7rem;
+            font-size: 0.65rem;
         }
         .sch-compact-sub {
-            font-size: 0.68rem;
+            font-size: 0.62rem;
+            opacity: 0.92;
+        }
+        .sch-expand-toggle {
+            font-size: 0.65rem;
+            padding: 2px 6px;
         }
         /* Hide the desktop action buttons on mobile */
         .sch-compact-actions { display: none !important; }
@@ -319,7 +326,30 @@
         .sch-mobile-actions {
             display: flex !important;
         }
-        .sch-details-grid { grid-template-columns: 1fr 1fr; gap: 8px; }
+        /* Expanded panel: single column on narrow screens for max detail density */
+        .sch-details-panel {
+            padding: 8px 10px;
+        }
+        .sch-details-grid {
+            grid-template-columns: 1fr;
+            gap: 6px;
+        }
+        .sch-badge-compact {
+            font-size: 8pt;
+            padding: 1px 5px;
+        }
+        .sch-badge-compact i { font-size: 8pt; }
+        .sch-vital-pill {
+            font-size: 8pt;
+            padding: 1px 5px;
+        }
+        .sch-admin-line {
+            font-size: 8pt;
+        }
+        .sch-details-section-title {
+            font-size: 0.55rem;
+            margin-bottom: 2px;
+        }
         .sch-expanded-actions {
             gap: 4px;
             flex-wrap: nowrap;
