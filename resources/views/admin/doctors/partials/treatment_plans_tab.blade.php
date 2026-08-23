@@ -150,7 +150,7 @@
                     </button>
                 </div>
 
-                <button class="btn btn-teal btn-sm shadow-sm" onclick="TreatmentPlansTab.openCreateModal()" style="border-radius: 8px;">
+                <button class="btn btn-teal btn-sm shadow-sm" id="tp-create-plan-btn" onclick="TreatmentPlansTab.openCreateModal()" style="border-radius: 8px;">
                     <i class="fa fa-plus me-1"></i> Create New Plan
                 </button>
             </div>
@@ -287,7 +287,7 @@
                 @else
                 <div></div> <!-- spacer -->
                 @endif
-                <button type="button" class="btn btn-teal btn-sm shadow-sm" data-bs-dismiss="modal" style="border-radius: 8px;">
+                <button type="button" class="btn btn-teal btn-sm shadow-sm" id="tp-choose-plan-btn" style="border-radius: 8px;">
                     <i class="fa fa-clipboard-list me-1"></i> Choose Active Plan Now
                 </button>
             </div>
@@ -314,7 +314,7 @@
                     <input type="hidden" name="tp_priority" id="tp_create_priority" value="medium">
 
                     <!-- Section 1: Core Info & Priority -->
-                    <div class="card border-0 shadow-sm mb-3" style="border-radius: 12px; background: #ffffff;">
+                    <div class="card-modern border-0 shadow-sm mb-3" style="border-radius: 12px; background: #ffffff;">
                         <div class="card-body p-3">
                             <div class="d-flex align-items-center gap-2 mb-3 text-teal">
                                 <i class="mdi mdi-bookmark-outline fs-5"></i>
@@ -339,7 +339,7 @@
                     </div>
 
                     <!-- Section 2: Clinical Diagnoses (ICPC-2) -->
-                    <div class="card border-0 shadow-sm mb-3" style="border-radius: 12px; background: #ffffff;">
+                    <div class="card-modern border-0 shadow-sm mb-3" style="border-radius: 12px; background: #ffffff;">
                         <div class="card-body p-3">
                             <div class="d-flex justify-content-between align-items-center mb-3">
                                 <div class="d-flex align-items-center gap-2 text-teal">
@@ -380,7 +380,7 @@
                     </div>
 
                     <!-- Section 3: Goal & Clinical Context -->
-                    <div class="card border-0 shadow-sm mb-3" style="border-radius: 12px; background: #ffffff;">
+                    <div class="card-modern border-0 shadow-sm mb-3" style="border-radius: 12px; background: #ffffff;">
                         <div class="card-body p-3">
                             <div class="d-flex align-items-center gap-2 mb-3 text-teal">
                                 <i class="mdi mdi-target fs-5"></i>
@@ -400,7 +400,7 @@
                     </div>
 
                     <!-- Section 4: Department Access Control -->
-                    <div class="card border-0 shadow-sm mb-1" style="border-radius: 12px; background: #ffffff;">
+                    <div class="card-modern border-0 shadow-sm mb-1" style="border-radius: 12px; background: #ffffff;">
                         <div class="card-body p-3">
                             <div class="d-flex justify-content-between align-items-center mb-2 text-teal">
                                 <div class="d-flex align-items-center gap-2">
@@ -1349,6 +1349,30 @@ $(document).ready(function() {
                 $('#' + target).trigger('click');
             }
         }
+    });
+
+    // "Choose Active Plan Now" — navigate BACK to Treatment Plans tab + highlight Create Plan button
+    $('#tp-choose-plan-btn').on('click', function() {
+        tpPendingNavClick = null; // Clear pending navigation
+        $('#tpNoActivePlanPromptModal').modal('hide');
+        // Ensure we're on the Treatment Plans tab
+        var $tpTab = $('#treatment_plans_tab');
+        if ($tpTab.length) {
+            if ($tpTab.tab) { $tpTab.tab('show'); } else { $tpTab.click(); }
+        }
+        // Also check mobile bottom nav
+        var $mobileTpTab = $('#mobile_treatment_plans_tab');
+        if ($mobileTpTab.length) {
+            if ($mobileTpTab.tab) { $mobileTpTab.tab('show'); } else { $mobileTpTab.click(); }
+        }
+        // Scroll to top and highlight Create Plan button with pulse animation
+        $('html, body, .content-wrapper').animate({ scrollTop: 0 }, 'fast', function() {
+            var $createBtn = $('#tp-create-plan-btn');
+            if ($createBtn.length) {
+                $createBtn.addClass('tp-highlight-pulse');
+                setTimeout(function() { $createBtn.removeClass('tp-highlight-pulse'); }, 2000);
+            }
+        });
     });
 
     // Initialize Diagnosis Widget in Create Plan Modal

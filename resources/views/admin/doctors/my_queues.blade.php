@@ -177,6 +177,74 @@
 
             /* ── Tab bar compact ── */
             #mainDoctorTabs .nav-link { font-size: 0.8rem; padding: 8px 14px; font-weight: 600; }
+
+            /* ── Mobile Queue Card Responsive ── */
+            .queue-card {
+                border-radius: 16px;
+                padding: 14px;
+                gap: 10px;
+            }
+            .queue-card-header {
+                flex-wrap: wrap;
+                gap: 10px;
+            }
+            .queue-card-avatar {
+                width: 38px;
+                height: 38px;
+                font-size: 0.95rem;
+            }
+            .queue-card-name {
+                font-size: 0.95rem;
+            }
+            .queue-card-demo {
+                font-size: 0.78rem;
+            }
+            .queue-card-meta {
+                font-size: 0.78rem;
+                gap: 6px;
+            }
+            .queue-card-badges {
+                flex-direction: row;
+                align-items: center;
+                gap: 4px;
+                flex-wrap: wrap;
+            }
+            .queue-card-badges .badge {
+                font-size: 0.65rem;
+                padding: 3px 8px;
+            }
+            .queue-card-details {
+                flex-direction: column;
+                gap: 4px;
+            }
+            .queue-card-detail-item {
+                font-size: 0.8rem;
+            }
+            .queue-card-reason {
+                font-size: 0.8rem;
+                padding: 6px 10px;
+            }
+            .queue-card-actions {
+                flex-direction: column;
+                gap: 8px;
+                padding-top: 10px;
+            }
+            .queue-card-action-btn {
+                width: 100% !important;
+                text-align: center !important;
+                padding: 10px 16px !important;
+                font-size: 0.85rem !important;
+            }
+            .queue-card-secondary-actions {
+                width: 100%;
+                justify-content: stretch;
+            }
+            .queue-card-secondary-actions .btn {
+                flex: 1;
+                justify-content: center;
+                font-size: 0.75rem;
+                padding: 6px 8px !important;
+            }
         } /* End of @media (max-width: 767.98px) */
 
         /* ── Card-based DataTables Global Flex Layout ── */
