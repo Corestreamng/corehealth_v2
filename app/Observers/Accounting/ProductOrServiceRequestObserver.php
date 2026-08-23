@@ -103,6 +103,26 @@ class ProductOrServiceRequestObserver
     }
 
     /**
+     * Handle the ProductOrServiceRequest "saved" event.
+     */
+    public function saved(ProductOrServiceRequest $request): void
+    {
+        if ($request->user_id) {
+            \App\Services\BillingQueueService::syncForUser($request->user_id);
+        }
+    }
+
+    /**
+     * Handle the ProductOrServiceRequest "deleted" event.
+     */
+    public function deleted(ProductOrServiceRequest $request): void
+    {
+        if ($request->user_id) {
+            \App\Services\BillingQueueService::syncForUser($request->user_id);
+        }
+    }
+
+    /**
      * Auto-settle a fully HMO-covered item by creating a ₦0 payment.
      *
      * Conditions (ALL must be true):
