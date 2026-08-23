@@ -13,6 +13,9 @@ class AssignMaternityRoleToNurses extends Migration
      */
     public function up()
     {
+        // Ensure the MATERNITY role exists
+        $maternityRole = \Spatie\Permission\Models\Role::firstOrCreate(['name' => 'MATERNITY']);
+
         // Get all users who have the 'NURSE' role
         $nurses = \App\Models\User::role('NURSE')->get();
         
