@@ -432,43 +432,54 @@ class SpecialistReferralController extends Controller
     {
         return DataTables::of($query)
             ->addIndexColumn()
-            ->addColumn('patient_name', function ($ref) {
-                return $ref->patient ? userfullname($ref->patient->user_id) : 'N/A';
-            })
-            ->addColumn('patient_file_no', function ($ref) {
-                return $ref->patient->file_no ?? 'N/A';
-            })
-            ->addColumn('from_info', function ($ref) {
+            ->addColumn('card_html', function ($ref) use ($staff) {
+                $user = $ref->patient ? $ref->patient->user : null;
+                $patientName = $user ? ucwords(trim($user->surname . ' ' . $user->firstname . ' ' . ($user->othername ?? ''))) : 'N/A';
+                $fileNo = $ref->patient->file_no ?? 'N/A';
+                
                 $from = $ref->referringDoctor ? userfullname($ref->referringDoctor->user_id) : 'N/A';
                 if ($ref->referringClinic) {
-                    $from .= '<br><small class="text-muted">' . e($ref->referringClinic->name) . '</small>';
+                    $from .= ' (' . e($ref->referringClinic->name) . ')';
                 }
-                return $from;
-            })
-            ->addColumn('to_info', function ($ref) {
+
                 if ($ref->referral_type === 'internal') {
                     $to = $ref->targetClinic->name ?? 'Any Clinic';
                     if ($ref->targetDoctor) {
-                        $to .= '<br><small class="text-muted">' . userfullname($ref->targetDoctor->user_id) . '</small>';
+                        $to .= ' - ' . userfullname($ref->targetDoctor->user_id);
                     }
-                    return $to;
+                } else {
+                    $to = e($ref->external_facility_name ?? 'External');
                 }
-                return e($ref->external_facility_name ?? 'External');
-            })
-            ->addColumn('urgency_badge', function ($ref) {
-                $badges = [
-                    'emergency' => '<span class="badge bg-danger"><i class="mdi mdi-alert-circle me-1"></i>Emergency</span>',
-                    'urgent'    => '<span class="badge bg-warning text-dark"><i class="mdi mdi-alert me-1"></i>Urgent</span>',
+
+                $timeDisplay = $ref->created_at->format('M d, Y h:i A');
+
+                // Avatar
+                $nameParts = explode(' ', $patientName);
+                $initials = '';
+                if (count($nameParts) >= 2) {
+                    $initials = mb_strtoupper(mb_substr($nameParts[0], 0, 1) . mb_substr($nameParts[1], 0, 1));
+                } elseif (count($nameParts) == 1 && !empty($nameParts[0])) {
+                    $initials = mb_strtoupper(mb_substr($nameParts[0], 0, 2));
+                }
+
+                // Demographics
+                $demographics = '';
+                if ($user && $user->gender && $user->dob) {
+                    $demographics = ' <span class="queue-card-demo">(' . ($user->gender == 'Male' ? 'M' : ($user->gender == 'Female' ? 'F' : 'U')) . ', ' . \Carbon\Carbon::parse($user->dob)->age . ')</span>';
+                }
+
+                // Badges
+                $urgencyBadges = [
+                    'emergency' => '<span class="badge bg-danger"><i class="mdi mdi-alert-circle"></i> Emergency</span>',
+                    'urgent'    => '<span class="badge bg-warning text-dark"><i class="mdi mdi-alert"></i> Urgent</span>',
                     'routine'   => '<span class="badge bg-secondary">Routine</span>',
                 ];
-                return $badges[$ref->urgency] ?? $badges['routine'];
-            })
-            ->addColumn('type_badge', function ($ref) {
-                return $ref->referral_type === 'internal'
+                $urgencyBadge = $urgencyBadges[$ref->urgency] ?? $urgencyBadges['routine'];
+                
+                $typeBadge = $ref->referral_type === 'internal'
                     ? '<span class="badge bg-info">Internal</span>'
                     : '<span class="badge bg-dark">External</span>';
-            })
-            ->addColumn('status_badge', function ($ref) {
+
                 $statusBadges = [
                     'pending'      => '<span class="badge bg-warning text-dark">Pending</span>',
                     'booked'       => '<span class="badge bg-primary">Booked</span>',
@@ -477,41 +488,70 @@ class SpecialistReferralController extends Controller
                     'declined'     => '<span class="badge bg-dark">Declined</span>',
                     'referred_out' => '<span class="badge bg-purple text-white">Referred Out</span>',
                 ];
-                return $statusBadges[$ref->status] ?? '<span class="badge bg-secondary">' . ucfirst($ref->status) . '</span>';
-            })
-            ->addColumn('reason_short', function ($ref) {
-                return '<span title="' . e($ref->reason) . '">' . e(\Illuminate\Support\Str::limit($ref->reason, 50)) . '</span>';
-            })
-            ->addColumn('time', function ($ref) {
-                return $ref->created_at->format('M d, Y');
-            })
-            ->addColumn('actions', function ($ref) use ($staff) {
-                $buttons = '<div class="btn-group btn-group-sm" role="group">';
-                // View detail
-                $buttons .= '<button class="btn btn-outline-secondary btn-view-ref-detail" data-id="' . $ref->id . '" title="View Details"><i class="mdi mdi-eye"></i></button>';
+                $statusBadge = $statusBadges[$ref->status] ?? '<span class="badge bg-secondary">' . ucfirst($ref->status) . '</span>';
+                
+                $statusColor = '#6c757d';
+                if ($ref->status === 'pending') $statusColor = '#f59e0b';
+                if ($ref->status === 'completed') $statusColor = '#10b981';
+                if ($ref->status === 'booked') $statusColor = '#3b82f6';
+                if ($ref->status === 'cancelled' || $ref->status === 'declined') $statusColor = '#ef4444';
 
-                if ($ref->status === SpecialistReferral::STATUS_PENDING) {
-                    // Check if targeted at this doctor
+                $profileUrl = $ref->patient ? route('patient.show', $ref->patient->id) : '#';
+
+                // Build Card HTML
+                $html  = '<div class="queue-card">';
+                
+                // Row 1
+                $html .= '<div class="queue-card-header">';
+                $html .= '  <div class="queue-card-avatar">' . $initials;
+                $html .= '    <span class="queue-card-status-dot" style="background-color:' . $statusColor . ';"></span>';
+                $html .= '  </div>';
+                $html .= '  <div class="queue-card-patient-info">';
+                $html .= '    <div class="queue-card-name"><a href="' . $profileUrl . '">' . e($patientName) . '</a>' . $demographics . '</div>';
+                $html .= '    <div class="queue-card-meta">MRN: ' . e($fileNo) . '</div>';
+                $html .= '  </div>';
+                $html .= '  <div class="queue-card-badges">';
+                $html .= '    ' . $urgencyBadge . ' ' . $typeBadge . ' ' . $statusBadge;
+                $html .= '  </div>';
+                $html .= '</div>';
+                
+                // Row 2
+                $html .= '<div class="queue-card-details">';
+                $html .= '  <div class="queue-card-detail-item"><i class="mdi mdi-clock-outline"></i> ' . e($timeDisplay) . '</div>';
+                $html .= '  <div class="queue-card-detail-item"><i class="mdi mdi-logout"></i> From: ' . $from . '</div>';
+                $html .= '  <div class="queue-card-detail-item"><i class="mdi mdi-login"></i> To: ' . $to . '</div>';
+                $html .= '</div>';
+
+                if ($ref->reason) {
+                    $html .= '<div class="queue-card-reason"><i class="mdi mdi-note-text-outline"></i> ' . e(\Illuminate\Support\Str::limit($ref->reason, 150)) . '</div>';
+                }
+
+                // Actions
+                $buttons = '<div class="queue-card-actions">';
+                $buttons .= '<button class="btn btn-outline-secondary btn-sm btn-view-ref-detail queue-card-action-btn" data-id="' . $ref->id . '"><i class="mdi mdi-eye"></i> View Details</button>';
+
+                if ($ref->status === \App\Models\SpecialistReferral::STATUS_PENDING) {
                     $isTargeted = $staff && (
                         $ref->target_doctor_id == $staff->id ||
                         ($ref->target_clinic_id == $staff->clinic_id && !$ref->target_doctor_id)
                     );
-
                     if ($isTargeted) {
-                        $buttons .= '<button class="btn btn-success btn-accept-ref" data-id="' . $ref->id . '" title="Accept &amp; Start Encounter"><i class="mdi mdi-check-circle"></i></button>';
+                        $buttons .= '<button class="btn btn-success btn-sm btn-accept-ref" data-id="' . $ref->id . '" title="Accept &amp; Start Encounter"><i class="mdi mdi-check-circle"></i> Accept</button>';
                     }
-                    $buttons .= '<button class="btn btn-warning btn-decline-ref" data-id="' . $ref->id . '" title="Decline"><i class="mdi mdi-close-circle"></i></button>';
+                    $buttons .= '<button class="btn btn-warning btn-sm btn-decline-ref" data-id="' . $ref->id . '" title="Decline"><i class="mdi mdi-close-circle"></i> Decline</button>';
                 }
-
-                // Print for external
+                
                 if ($ref->referral_type === 'external') {
-                    $buttons .= '<button class="btn btn-outline-dark btn-view-ref-detail" data-id="' . $ref->id . '" title="Print"><i class="mdi mdi-printer"></i></button>';
+                    $buttons .= '<button class="btn btn-outline-dark btn-sm btn-view-ref-detail" data-id="' . $ref->id . '" title="Print"><i class="mdi mdi-printer"></i> Print</button>';
                 }
 
                 $buttons .= '</div>';
-                return $buttons;
+                $html .= $buttons;
+
+                $html .= '</div>';
+                return $html;
             })
-            ->rawColumns(['urgency_badge', 'type_badge', 'status_badge', 'reason_short', 'from_info', 'to_info', 'actions'])
+            ->rawColumns(['card_html'])
             ->make(true);
     }
 
