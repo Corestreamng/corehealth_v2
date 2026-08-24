@@ -455,7 +455,12 @@
 
         /* ═══ MOBILE OVERRIDES ═══ */
         @media (max-width: 767.98px) {
-            .encounter-floating-nav {
+            .encounter-floating-nav,
+            body.sidebar-collapse .encounter-floating-nav,
+            .encounter-workspace-layout.sidebar-collapsed .encounter-floating-nav,
+            .encounter-workspace-layout.sidebar-collapsed ~ .encounter-floating-nav,
+            body.sidebar-collapse .encounter-workspace-layout.sidebar-collapsed .encounter-floating-nav,
+            body.sidebar-collapse .encounter-workspace-layout.sidebar-collapsed ~ .encounter-floating-nav {
                 position: fixed !important;
                 bottom: 70px !important; /* Docked cleanly above mobile bottom tab bar (64px) */
                 left: 10px !important;
