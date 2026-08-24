@@ -814,8 +814,8 @@
         </div>
 
         <!-- Main Content Area -->
-        <div class="encounter-main-content" style="min-width: 0;">
-    <div id="tab-top-scroll-anchor" style="scroll-margin-top: 120px;"></div>
+        <div class="encounter-main-content" style="min-width: 0; position: relative;">
+    <div id="tab-top-scroll-anchor" style="position: absolute; top: -150px; left: 0;"></div>
     <div class="tab-content tp-context-borderable" id="myTabContent">
         {{-- Patient Clinical Story Tab --}}
         <div class="tab-pane fade {{ !$plansEnabled ? 'show active' : '' }}" id="clinical_story" role="tabpanel" aria-labelledby="clinical_story_tab">
