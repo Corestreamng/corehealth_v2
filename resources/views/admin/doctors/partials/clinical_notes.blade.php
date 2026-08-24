@@ -304,16 +304,6 @@
                 @endif
 
                 <br>
-                <div class="d-flex justify-content-end align-items-center">
-                    <div>
-                        <button type="button" onclick="saveDiagnosisAndNext()" id="save_diagnosis_next_btn" class="btn btn-success me-2">
-                            <i class="fa fa-save"></i> Save & Next
-                        </button>
-                        <button type="button" onclick="saveDiagnosis()" id="save_diagnosis_btn" class="btn btn-outline-success">
-                            <i class="fa fa-save"></i> Save
-                        </button>
-                    </div>
-                </div>
                 <div id="diagnosis_save_message" class="mt-2"></div>
             </div>
         </div>

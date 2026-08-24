@@ -1330,13 +1330,18 @@ $(document).ready(function() {
     $('#tp-prompt-proceed-btn').on('click', function() {
         window._hasShownNoActivePlanPrompt = true;
         $('#tpNoActivePlanPromptModal').modal('hide');
-        if (tpPendingNavClick) {
-            var target = tpPendingNavClick;
-            tpPendingNavClick = null;
-            if (target instanceof HTMLElement || (target.jquery && target.length)) {
+        var target = window.tpPendingNavClick || tpPendingNavClick;
+        window.tpPendingNavClick = null;
+        tpPendingNavClick = null;
+        if (target) {
+            if (typeof target === 'string') {
+                if (typeof switch_tab === 'function') {
+                    switch_tab(null, target);
+                } else if ($('#' + target).length) {
+                    $('#' + target).trigger('click');
+                }
+            } else if (target instanceof HTMLElement || (target.jquery && target.length)) {
                 $(target).trigger('click');
-            } else if (typeof target === 'string') {
-                $('#' + target).trigger('click');
             }
         }
     });
