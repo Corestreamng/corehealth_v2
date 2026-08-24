@@ -101,8 +101,20 @@ class PatientController extends Controller
                 ->editColumn('fullname', function ($pc) {
                     return ($pc->user) ? (userfullname($pc->user->id)) : ($pc->user_id);
                 })
+                ->filterColumn('fullname', function($query, $keyword) {
+                    $query->whereHas('user', function($q) use($keyword) {
+                        $q->where('firstname', 'like', "%{$keyword}%")
+                          ->orWhere('surname', 'like', "%{$keyword}%")
+                          ->orWhere('othername', 'like', "%{$keyword}%");
+                    });
+                })
                 ->addColumn('email', function ($patient) {
                     return $patient->user ? ($patient->user->email ?? 'N/A') : 'N/A';
+                })
+                ->filterColumn('email', function($query, $keyword) {
+                    $query->whereHas('user', function($q) use($keyword) {
+                        $q->where('email', 'like', "%{$keyword}%");
+                    });
                 })
                 ->editColumn('created_at', function ($patient) {
                     return date('D M j, Y', strtotime($patient->created_at));
@@ -110,18 +122,39 @@ class PatientController extends Controller
                 ->editColumn('hmo_id', function ($patient) {
                     return $patient->hmo ? $patient->hmo->name : 'N/A';
                 })
+                ->filterColumn('hmo_id', function($query, $keyword) {
+                    $query->whereHas('hmo', function($q) use($keyword) {
+                        $q->where('name', 'like', "%{$keyword}%");
+                    });
+                })
                 ->addColumn('scheme', function ($patient) {
                     return $patient->hmo && $patient->hmo->scheme ? $patient->hmo->scheme->name : 'N/A';
+                })
+                ->filterColumn('scheme', function($query, $keyword) {
+                    $query->whereHas('hmo.scheme', function($q) use($keyword) {
+                        $q->where('name', 'like', "%{$keyword}%");
+                    });
                 })
                 ->addColumn('age', function ($patient) {
                     if (!$patient->dob) return 'N/A';
                     return \Carbon\Carbon::parse($patient->dob)->age . ' yrs';
+                })
+                ->filterColumn('age', function($query, $keyword) {
+                    if (is_numeric(trim($keyword))) {
+                        $query->whereRaw('TIMESTAMPDIFF(YEAR, dob, CURDATE()) = ?', [trim($keyword)]);
+                    }
                 })
                 ->addColumn('nok', function ($patient) {
                     $name  = $patient->next_of_kin_name  ?? null;
                     $phone = $patient->next_of_kin_phone ?? null;
                     if (!$name && !$phone) return 'N/A';
                     return trim(($name ?? '') . ($phone ? ' · ' . $phone : ''));
+                })
+                ->filterColumn('nok', function($query, $keyword) {
+                    $query->where(function($q) use($keyword) {
+                        $q->where('next_of_kin_name', 'like', "%{$keyword}%")
+                          ->orWhere('next_of_kin_phone', 'like', "%{$keyword}%");
+                    });
                 })
                 ->addColumn('actions', function ($patient) {
                     $id = $patient->id;
@@ -163,6 +196,14 @@ class PatientController extends Controller
     public function PatientServicesRendered(Request $request, $patient_id)
     {
         $patient = Patient::where('id', $patient_id)->first();
+        
+        if (empty($request->start_from) || empty($request->stop_at)) {
+            $request->merge([
+                'start_from' => date('Y-m-01'),
+                'stop_at'    => date('Y-m-t')
+            ]);
+        }
+
         if (null != $request->start_from && null != $request->stop_at) {
             try {
                 $start = $request->start_from;
