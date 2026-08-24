@@ -229,40 +229,73 @@ class EncounterController extends Controller
 
             return DataTables::of($queue)
                 ->addIndexColumn()
-                ->editColumn('fullname', function ($queue) {
+                ->addColumn('card_html', function ($queue) use ($doc) {
                     $patient = Patient::find($queue->patient_id);
-                    return userfullname($patient->user_id);
-                })
-                ->editColumn('created_at', function ($note) {
-                    return date('h:i a D M j, Y', strtotime($note->created_at));
-                })
-                ->editColumn('hmo_id', function ($queue) {
-                    $patient = Patient::find($queue->patient_id);
-                    return Hmo::find($patient->hmo_id)->name ?? 'N/A';
-                })
-                ->editColumn('clinic_id', function ($queue) {
-                    $clinic = Clinic::find($queue->clinic_id);
-                    return $clinic->name ?? 'N/A';
-                })
-                ->editColumn('staff_id', function ($queue) use ($doc) {
-                    return userfullname($doc->user_id);
-                })
-                ->addColumn('file_no', function ($queue) {
-                    $patient = Patient::find($queue->patient_id);
-                    return $patient?->file_no;
-                })
-                ->addColumn('view', function ($queue) {
+                    $user = $patient ? $patient->user : null;
+                    $patientName = $user ? ucwords(trim($user->surname . ' ' . $user->firstname . ' ' . ($user->othername ?? ''))) : 'N/A';
+                    $fileNo = $patient->file_no ?? 'N/A';
+                    $hmoName = $patient && $patient->hmo_id ? (\App\Models\Hmo::find($patient->hmo_id)->name ?? 'N/A') : 'N/A';
+                    $clinicName = \App\Models\Clinic::find($queue->clinic_id)->name ?? 'N/A';
+                    $doctorName = userfullname($doc->user_id);
+                    $timeDisplay = date('h:i a D M j, Y', strtotime($queue->created_at));
+
+                    // Avatar
+                    $nameParts = explode(' ', $patientName);
+                    $initials = '';
+                    if (count($nameParts) >= 2) {
+                        $initials = mb_strtoupper(mb_substr($nameParts[0], 0, 1) . mb_substr($nameParts[1], 0, 1));
+                    } elseif (count($nameParts) == 1 && !empty($nameParts[0])) {
+                        $initials = mb_strtoupper(mb_substr($nameParts[0], 0, 2));
+                    }
+
+                    // Demographics
+                    $demographics = '';
+                    if ($user && $user->gender && $user->dob) {
+                        $demographics = ' <span class="queue-card-demo">(' . ($user->gender == 'Male' ? 'M' : ($user->gender == 'Female' ? 'F' : 'U')) . ', ' . \Carbon\Carbon::parse($user->dob)->age . ')</span>';
+                    }
+
+                    // URLs
                     $url = url('encounters/create') . '?patient_id=' . $queue->patient_id;
                     if ($queue->request_entry_id) {
                         $url .= '&req_entry_id=' . $queue->request_entry_id;
                     }
                     $url .= '&queue_id=' . $queue->id;
-                    return '<a href="' . e($url) . '" class="btn btn-success btn-sm"><i class="fa fa-street-view"></i> View</a>';
+                    $profileUrl = route('patient.show', $queue->patient_id);
+
+                    // Build Card HTML
+                    $html  = '<div class="queue-card">';
+                    
+                    // Row 1
+                    $html .= '<div class="queue-card-header">';
+                    $html .= '  <div class="queue-card-avatar">' . $initials;
+                    $html .= '    <span class="queue-card-status-dot" style="background-color:#94a3b8;"></span>';
+                    $html .= '  </div>';
+                    $html .= '  <div class="queue-card-patient-info">';
+                    $html .= '    <div class="queue-card-name"><a href="' . $profileUrl . '">' . e($patientName) . '</a>' . $demographics . '</div>';
+                    $html .= '    <div class="queue-card-meta">MRN: ' . e($fileNo) . ' <span class="queue-card-separator">|</span> <i class="mdi mdi-shield-check-outline"></i> ' . e($hmoName) . '</div>';
+                    $html .= '  </div>';
+                    $html .= '  <div class="queue-card-badges">';
+                    $html .= '    <span class="badge bg-secondary" title="Completed encounter">Completed</span>';
+                    $html .= '  </div>';
+                    $html .= '</div>';
+                    
+                    // Row 2
+                    $html .= '<div class="queue-card-details">';
+                    $html .= '  <div class="queue-card-detail-item"><i class="mdi mdi-clock-outline"></i> ' . e($timeDisplay) . '</div>';
+                    $html .= '  <div class="queue-card-detail-item"><i class="mdi mdi-hospital-building"></i> ' . e($clinicName) . '</div>';
+                    $html .= '  <div class="queue-card-detail-item"><i class="mdi mdi-account-tie"></i> Dr. ' . e($doctorName) . '</div>';
+                    $html .= '</div>';
+
+                    // Row 4
+                    $html .= '<div class="queue-card-actions">';
+                    $html .= '<a href="' . $url . '" class="btn btn-secondary btn-sm queue-card-action-btn"><i class="fa fa-history"></i> View Encounter Record</a>';
+                    $html .= '</div>';
+
+                    $html .= '</div>';
+
+                    return $html;
                 })
-                ->addColumn('delivery_status', function () {
-                    return '<span class="badge bg-secondary" title="Completed encounter">Completed</span>';
-                })
-                ->rawColumns(['fullname', 'view', 'delivery_status'])
+                ->rawColumns(['card_html'])
                 ->make(true);
         } catch (\Exception $e) {
             Log::error($e->getMessage(), ['exception' => $e]);

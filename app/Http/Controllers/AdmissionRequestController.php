@@ -54,49 +54,77 @@ class AdmissionRequestController extends Controller
 
         return Datatables::of($req)
             ->addIndexColumn()
-            ->addColumn('show', function ($r) {
+            ->addColumn('card_html', function ($r) {
+                $p = \App\Models\Patient::where('user_id', $r->patient->user_id)->first();
+                $user = $r->patient->user ?? null;
+                $patientName = $user ? ucwords(trim($user->surname . ' ' . $user->firstname . ' ' . ($user->othername ?? ''))) : 'N/A';
+                $fileNo = $p->file_no ?? 'N/A';
+                $hmoName = $p && $p->hmo_id ? (\App\Models\Hmo::find($p->hmo_id)->name ?? 'N/A') : 'N/A';
+                
+                $doctorName = $r->doctor_id ? userfullname($r->doctor_id) : 'N/A';
+                $timeDisplay = date('h:i a D M j, Y', strtotime($r->created_at));
+
+                // Avatar
+                $nameParts = explode(' ', $patientName);
+                $initials = '';
+                if (count($nameParts) >= 2) {
+                    $initials = mb_strtoupper(mb_substr($nameParts[0], 0, 1) . mb_substr($nameParts[1], 0, 1));
+                } elseif (count($nameParts) == 1 && !empty($nameParts[0])) {
+                    $initials = mb_strtoupper(mb_substr($nameParts[0], 0, 2));
+                }
+
+                // Demographics
+                $demographics = '';
+                if ($user && $user->gender && $user->dob) {
+                    $demographics = ' <span class="queue-card-demo">(' . ($user->gender == 'Male' ? 'M' : ($user->gender == 'Female' ? 'F' : 'U')) . ', ' . \Carbon\Carbon::parse($user->dob)->age . ')</span>';
+                }
+
+                $profileUrl = route('patient.show', $r->patient_id);
                 $url = url('encounters/create') . '?patient_id=' . $r->patient_id;
                 if ($r->service_request_id) {
                     $url .= '&req_entry_id=' . $r->service_request_id;
                 }
-                return '<a href="' . $url . '" class="btn btn-success btn-sm"><i class="fa fa-street-view"></i> View</a>';
+
+                // Status logic
+                $statusBadge = $r->discharged ? '<span class="badge bg-secondary">Discharged</span>' : '<span class="badge bg-success">Active</span>';
+                $statusColor = $r->discharged ? '#6c757d' : '#10b981';
+
+                $html  = '<div class="queue-card">';
+                
+                // Row 1
+                $html .= '<div class="queue-card-header">';
+                $html .= '  <div class="queue-card-avatar">' . $initials;
+                $html .= '    <span class="queue-card-status-dot" style="background-color:' . $statusColor . ';"></span>';
+                $html .= '  </div>';
+                $html .= '  <div class="queue-card-patient-info">';
+                $html .= '    <div class="queue-card-name"><a href="' . $profileUrl . '">' . e($patientName) . '</a>' . $demographics . '</div>';
+                $html .= '    <div class="queue-card-meta">MRN: ' . e($fileNo) . ' <span class="queue-card-separator">|</span> <i class="mdi mdi-shield-check-outline"></i> ' . e($hmoName) . '</div>';
+                $html .= '  </div>';
+                $html .= '  <div class="queue-card-badges">';
+                $html .= '    ' . $statusBadge;
+                $html .= '  </div>';
+                $html .= '</div>';
+                
+                // Row 2
+                $html .= '<div class="queue-card-details">';
+                $html .= '  <div class="queue-card-detail-item"><i class="mdi mdi-clock-outline"></i> ' . e($timeDisplay) . '</div>';
+                $html .= '  <div class="queue-card-detail-item"><i class="mdi mdi-account-tie"></i> Dr. ' . e($doctorName) . '</div>';
+                if ($r->bed) {
+                    $html .= '  <div class="queue-card-detail-item"><i class="mdi mdi-bed"></i> Bed: ' . e($r->bed->name) . ' (' . e($r->bed->ward) . ')</div>';
+                } else {
+                    $html .= '  <div class="queue-card-detail-item text-warning"><i class="mdi mdi-alert-circle"></i> No bed assigned</div>';
+                }
+                $html .= '</div>';
+
+                // Row 4
+                $html .= '<div class="queue-card-actions">';
+                $html .= '<a href="' . $url . '" class="btn btn-secondary btn-sm queue-card-action-btn"><i class="fa fa-history"></i> View Encounter Record</a>';
+                $html .= '</div>';
+
+                $html .= '</div>';
+                return $html;
             })
-            ->addColumn('patient', function ($r) {
-                return userfullname($r->patient->user_id);
-            })
-            ->addColumn('file_no', function ($r) {
-                $p = Patient::where('user_id', $r->patient->user_id)->first();
-                return $p->file_no ?? 'N/A';
-            })
-            ->addColumn('hmo', function ($r) {
-                $p = Patient::where('user_id', $r->patient->user_id)->first();
-                $hmo = Hmo::find($p->hmo_id);
-                return $hmo ? $hmo->name : 'N/A';
-            })
-            ->addColumn('hmo_no', function ($r) {
-                $p = Patient::where('user_id', $r->patient->user_id)->first();
-                return $p->hmo_no ?? 'N/A';
-            })
-            ->editColumn('bed_id', function ($r) {
-                $str = "<small>";
-                $str .= "<b>Bed:</b> " . ($r->bed ? $r->bed->name : 'N/A') . " <b>Ward:</b> " . ($r->bed ? $r->bed->ward : 'N/A') . " <b>Unit:</b> " . ($r->bed->unit ?? 'N/A') . "<br>";
-                $str .= "<b>Assigned By:</b> " . ($r->bed_assigned_by ? userfullname($r->bed_assigned_by) : 'N/A') . "<br>";
-                $str .= "<b>Date Assigned:</b> " . ($r->bed_assign_date ? date('h:i a D M j, Y', strtotime($r->bed_assign_date)) : 'N/A') . "<br>";
-                $str .= "<b>Discharged By:</b> " . ($r->discharged_by ? userfullname($r->discharged_by) : 'N/A') . " (" . ($r->discharge_date ? date('h:i a D M j, Y', strtotime($r->discharge_date)) : 'N/A') . ")<br>";
-                $str .= "</small>";
-                return $str;
-            })
-            ->editColumn('doctor_id', function ($r) {
-                return $r->doctor_id ? userfullname($r->doctor_id) : 'N/A';
-            })
-            ->editColumn('billed_by', function ($r) {
-                $str = "<small>";
-                $str .= "<b>Billed by:</b> " . ($r->billed_by ? userfullname($r->billed_by) : 'N/A') . "<br>";
-                $str .= "<b>Date:</b> " . ($r->billed_date ? date('h:i a D M j, Y', strtotime($r->billed_date)) : 'N/A') . "<br>";
-                $str .= "</small>";
-                return $str;
-            })
-            ->rawColumns(['show', 'bed_id', 'billed_by'])
+            ->rawColumns(['card_html'])
             ->make(true);
     }
     public function admissionRequests(Request $request)
@@ -128,49 +156,77 @@ class AdmissionRequestController extends Controller
 
         return Datatables::of($req)
             ->addIndexColumn()
-            ->addColumn('show', function ($r) {
+            ->addColumn('card_html', function ($r) {
+                $p = \App\Models\Patient::where('user_id', $r->patient->user_id)->first();
+                $user = $r->patient->user ?? null;
+                $patientName = $user ? ucwords(trim($user->surname . ' ' . $user->firstname . ' ' . ($user->othername ?? ''))) : 'N/A';
+                $fileNo = $p->file_no ?? 'N/A';
+                $hmoName = $p && $p->hmo_id ? (\App\Models\Hmo::find($p->hmo_id)->name ?? 'N/A') : 'N/A';
+                
+                $doctorName = $r->doctor_id ? userfullname($r->doctor_id) : 'N/A';
+                $timeDisplay = date('h:i a D M j, Y', strtotime($r->created_at));
+
+                // Avatar
+                $nameParts = explode(' ', $patientName);
+                $initials = '';
+                if (count($nameParts) >= 2) {
+                    $initials = mb_strtoupper(mb_substr($nameParts[0], 0, 1) . mb_substr($nameParts[1], 0, 1));
+                } elseif (count($nameParts) == 1 && !empty($nameParts[0])) {
+                    $initials = mb_strtoupper(mb_substr($nameParts[0], 0, 2));
+                }
+
+                // Demographics
+                $demographics = '';
+                if ($user && $user->gender && $user->dob) {
+                    $demographics = ' <span class="queue-card-demo">(' . ($user->gender == 'Male' ? 'M' : ($user->gender == 'Female' ? 'F' : 'U')) . ', ' . \Carbon\Carbon::parse($user->dob)->age . ')</span>';
+                }
+
+                $profileUrl = route('patient.show', $r->patient_id);
                 $url = url('encounters/create') . '?patient_id=' . $r->patient_id;
                 if ($r->service_request_id) {
                     $url .= '&req_entry_id=' . $r->service_request_id;
                 }
-                return '<a href="' . $url . '" class="btn btn-success btn-sm"><i class="fa fa-street-view"></i> View</a>';
+
+                // Status logic
+                $statusBadge = $r->discharged ? '<span class="badge bg-secondary">Discharged</span>' : '<span class="badge bg-success">Active</span>';
+                $statusColor = $r->discharged ? '#6c757d' : '#10b981';
+
+                $html  = '<div class="queue-card">';
+                
+                // Row 1
+                $html .= '<div class="queue-card-header">';
+                $html .= '  <div class="queue-card-avatar">' . $initials;
+                $html .= '    <span class="queue-card-status-dot" style="background-color:' . $statusColor . ';"></span>';
+                $html .= '  </div>';
+                $html .= '  <div class="queue-card-patient-info">';
+                $html .= '    <div class="queue-card-name"><a href="' . $profileUrl . '">' . e($patientName) . '</a>' . $demographics . '</div>';
+                $html .= '    <div class="queue-card-meta">MRN: ' . e($fileNo) . ' <span class="queue-card-separator">|</span> <i class="mdi mdi-shield-check-outline"></i> ' . e($hmoName) . '</div>';
+                $html .= '  </div>';
+                $html .= '  <div class="queue-card-badges">';
+                $html .= '    ' . $statusBadge;
+                $html .= '  </div>';
+                $html .= '</div>';
+                
+                // Row 2
+                $html .= '<div class="queue-card-details">';
+                $html .= '  <div class="queue-card-detail-item"><i class="mdi mdi-clock-outline"></i> ' . e($timeDisplay) . '</div>';
+                $html .= '  <div class="queue-card-detail-item"><i class="mdi mdi-account-tie"></i> Dr. ' . e($doctorName) . '</div>';
+                if ($r->bed) {
+                    $html .= '  <div class="queue-card-detail-item"><i class="mdi mdi-bed"></i> Bed: ' . e($r->bed->name) . ' (' . e($r->bed->ward) . ')</div>';
+                } else {
+                    $html .= '  <div class="queue-card-detail-item text-warning"><i class="mdi mdi-alert-circle"></i> No bed assigned</div>';
+                }
+                $html .= '</div>';
+
+                // Row 4
+                $html .= '<div class="queue-card-actions">';
+                $html .= '<a href="' . $url . '" class="btn btn-secondary btn-sm queue-card-action-btn"><i class="fa fa-history"></i> View Encounter Record</a>';
+                $html .= '</div>';
+
+                $html .= '</div>';
+                return $html;
             })
-            ->addColumn('patient', function ($r) {
-                return userfullname($r->patient->user_id);
-            })
-            ->addColumn('file_no', function ($r) {
-                $p = Patient::where('user_id', $r->patient->user_id)->first();
-                return $p->file_no ?? 'N/A';
-            })
-            ->addColumn('hmo', function ($r) {
-                $p = Patient::where('user_id', $r->patient->user_id)->first();
-                $hmo = Hmo::find($p->hmo_id);
-                return $hmo ? $hmo->name : 'N/A';
-            })
-            ->addColumn('hmo_no', function ($r) {
-                $p = Patient::where('user_id', $r->patient->user_id)->first();
-                return $p->hmo_no ?? 'N/A';
-            })
-            ->editColumn('bed_id', function ($r) {
-                $str = "<small>";
-                $str .= "<b>Bed:</b> " . ($r->bed ? $r->bed->name : 'N/A') . " <b>Ward:</b> " . ($r->bed ? $r->bed->ward : 'N/A') . " <b>Unit:</b> " . ($r->bed->unit ?? 'N/A') . "<br>";
-                $str .= "<b>Assigned By:</b> " . ($r->bed_assigned_by ? userfullname($r->bed_assigned_by) : 'N/A') . "<br>";
-                $str .= "<b>Date Assigned:</b> " . ($r->bed_assign_date ? date('h:i a D M j, Y', strtotime($r->bed_assign_date)) : 'N/A') . "<br>";
-                $str .= "<b>Discharged By:</b> " . ($r->discharged_by ? userfullname($r->discharged_by) : 'N/A') . " (" . ($r->discharge_date ? date('h:i a D M j, Y', strtotime($r->discharge_date)) : 'N/A') . ")<br>";
-                $str .= "</small>";
-                return $str;
-            })
-            ->editColumn('doctor_id', function ($r) {
-                return $r->doctor_id ? userfullname($r->doctor_id) : 'N/A';
-            })
-            ->editColumn('billed_by', function ($r) {
-                $str = "<small>";
-                $str .= "<b>Billed by:</b> " . ($r->billed_by ? userfullname($r->billed_by) : 'N/A') . "<br>";
-                $str .= "<b>Date:</b> " . ($r->billed_date ? date('h:i a D M j, Y', strtotime($r->billed_date)) : 'N/A') . "<br>";
-                $str .= "</small>";
-                return $str;
-            })
-            ->rawColumns(['show', 'bed_id', 'billed_by'])
+            ->rawColumns(['card_html'])
             ->make(true);
     }
 

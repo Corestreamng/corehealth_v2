@@ -106,14 +106,6 @@
             </div>
         </div>
 
-        {{-- Navigation Buttons (Save removed — prescriptions auto-save on add; Plan §4.5) --}}
-        <div class="d-flex justify-content-between align-items-center mt-3 pt-3 border-top">
-            <button type="button" onclick="switch_tab(event,'imaging_services_tab')" class="btn btn-secondary">
-                <i class="fa fa-arrow-left"></i> Previous
-            </button>
-            <button type="button" onclick="switch_tab(event,'non_pharm_tab')" class="btn btn-primary">
-                Next <i class="fa fa-arrow-right"></i>
-            </button>
-        </div>
+
     </div>
 </div>
