@@ -286,7 +286,65 @@
         gap: 4px;
     }
 
+    /* Scroll Hint */
+    .sch-scroll-hint { display: none; }
+    
     @media (max-width: 767.98px) {
+        .sch-expanded-actions-wrapper {
+            position: relative;
+        }
+        .sch-scroll-hint {
+            display: flex;
+            position: absolute;
+            right: 0;
+            top: 0;
+            bottom: 4px; /* account for padding-bottom */
+            width: 40px;
+            background: linear-gradient(to right, rgba(255,255,255,0), #fff 60%);
+            align-items: center;
+            justify-content: flex-end;
+            padding-right: 4px;
+            pointer-events: auto;
+            cursor: pointer;
+            color: var(--sch-color);
+            opacity: 0.8;
+            transition: opacity 0.3s;
+            z-index: 2;
+        }
+        .sch-scroll-hint i {
+            animation: schScrollBounce 1.5s infinite;
+        }
+        @keyframes schScrollBounce {
+            0%, 100% { transform: translateX(0); }
+            50% { transform: translateX(3px); }
+        }
+        
+        .sch-scroll-hint-left {
+            display: none;
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 4px; /* account for padding-bottom */
+            width: 40px;
+            background: linear-gradient(to left, rgba(255,255,255,0), #fff 60%);
+            align-items: center;
+            justify-content: flex-start;
+            padding-left: 4px;
+            pointer-events: auto;
+            cursor: pointer;
+            color: var(--sch-color);
+            opacity: 0;
+            transition: opacity 0.3s;
+            z-index: 2;
+        }
+        .sch-scroll-hint-left i {
+            animation: schScrollBounceLeft 1.5s infinite;
+        }
+        @keyframes schScrollBounceLeft {
+            0%, 100% { transform: translateX(0); }
+            50% { transform: translateX(-3px); }
+        }
+        
         .sticky-consultation-header {
             border-radius: 0;
             margin-bottom: 0;
@@ -574,8 +632,9 @@
         </div>{{-- /.sch-details-grid --}}
 
         {{-- Full action buttons row (moved in from compact bar when expanded) --}}
-        <div class="sch-expanded-actions">
-            {{-- Timer --}}
+        <div class="sch-expanded-actions-wrapper position-relative">
+            <div class="sch-expanded-actions" id="schExpandedActions">
+                {{-- Timer --}}
             @include('admin.doctors.partials.consultation_timer')
 
             {{-- All buttons with original Bootstrap styling --}}
@@ -603,6 +662,15 @@
             <button type="button" class="btn btn-success text-white d-flex align-items-center shadow-sm" onclick="$('#concludeEncounterModal').modal('show')">
                 <i class="fa fa-check-circle me-1"></i> Conclude
             </button>
+            </div>
+            
+            {{-- Scroll Hint Indicators --}}
+            <div class="sch-scroll-hint-left" id="schScrollHintLeft">
+                <i class="fa fa-chevron-left shadow-sm bg-white rounded-circle p-1"></i>
+            </div>
+            <div class="sch-scroll-hint" id="schScrollHint">
+                <i class="fa fa-chevron-right shadow-sm bg-white rounded-circle p-1"></i>
+            </div>
         </div>
 
     </div>{{-- /.sch-details-panel --}}
@@ -670,5 +738,62 @@
                 }
             }
         }, 1000);
+
+        // Handle Horizontal Scroll Hint Visibility
+        var actionsContainer = document.getElementById('schExpandedActions');
+        var scrollHint = document.getElementById('schScrollHint');
+        var scrollHintLeft = document.getElementById('schScrollHintLeft');
+        
+        if (actionsContainer && scrollHint) {
+            function checkScroll() {
+                // If scrollable
+                if (actionsContainer.scrollWidth > actionsContainer.clientWidth) {
+                    // Right hint
+                    if (actionsContainer.scrollWidth - actionsContainer.clientWidth <= actionsContainer.scrollLeft + 10) {
+                        scrollHint.style.opacity = '0';
+                    } else {
+                        scrollHint.style.opacity = '0.8';
+                    }
+                    
+                    // Left hint
+                    if (actionsContainer.scrollLeft > 10) {
+                        if (scrollHintLeft) {
+                            scrollHintLeft.style.display = 'flex';
+                            setTimeout(function() { scrollHintLeft.style.opacity = '0.8'; }, 10);
+                        }
+                    } else {
+                        if (scrollHintLeft) {
+                            scrollHintLeft.style.opacity = '0';
+                            setTimeout(function() { 
+                                if (actionsContainer.scrollLeft <= 10) scrollHintLeft.style.display = 'none'; 
+                            }, 300);
+                        }
+                    }
+                } else {
+                    scrollHint.style.opacity = '0';
+                    if (scrollHintLeft) {
+                        scrollHintLeft.style.opacity = '0';
+                        scrollHintLeft.style.display = 'none';
+                    }
+                }
+            }
+            
+            actionsContainer.addEventListener('scroll', checkScroll);
+            window.addEventListener('resize', checkScroll);
+            
+            // Add click-to-scroll functionality
+            scrollHint.addEventListener('click', function() {
+                actionsContainer.scrollBy({ left: 150, behavior: 'smooth' });
+            });
+            
+            if (scrollHintLeft) {
+                scrollHintLeft.addEventListener('click', function() {
+                    actionsContainer.scrollBy({ left: -150, behavior: 'smooth' });
+                });
+            }
+            
+            // Check after a short delay to ensure rendering is complete
+            setTimeout(checkScroll, 500);
+        }
     });
 </script>
