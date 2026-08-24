@@ -4371,12 +4371,19 @@
         // Helper function to disable/enable button
         function setButtonLoading(buttonId, loading) {
             const btn = document.getElementById(buttonId);
+            if (!btn) return;
+            
             if (loading) {
                 btn.disabled = true;
+                btn.dataset.originalHtml = btn.innerHTML;
                 btn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Saving...';
             } else {
                 btn.disabled = false;
-                btn.innerHTML = '<i class="fa fa-save"></i> Save & Next';
+                if (btn.dataset.originalHtml) {
+                    btn.innerHTML = btn.dataset.originalHtml;
+                } else {
+                    btn.innerHTML = '<i class="fa fa-save"></i> Save';
+                }
             }
         }
 
@@ -4412,9 +4419,34 @@
                 }
 
                 if (!parsedReasons || parsedReasons.length === 0) {
+                    // Inline highlight and error message
+                    $('#reasons_for_encounter_search').addClass('is-invalid');
+                    if ($('#reasons_inline_error').length === 0) {
+                        $('#reasons_for_encounter_search').parent().after('<div id="reasons_inline_error" class="invalid-feedback d-block fw-bold mb-2"><i class="fa fa-exclamation-triangle"></i> Please select at least one applicable diagnosis, or toggle off "Diagnosis Applicable".</div>');
+                    }
+                    
+                    // Scroll to the field
+                    $('html, body, .content-wrapper, .encounter-sidebar-wrapper').animate({
+                        scrollTop: $('#reasons_for_encounter_search').offset().top - 120
+                    }, 500);
+                    
+                    // Rich Modal alert
+                    if (typeof Swal !== 'undefined') {
+                        Swal.fire({
+                            icon: 'warning',
+                            title: 'Missing Diagnosis',
+                            html: 'You have indicated that a diagnosis is applicable.<br><br><b>Please select at least one diagnosis reason to proceed</b>, or toggle off the switch if no diagnosis is applicable yet.',
+                            confirmButtonColor: '#d33',
+                            confirmButtonText: '<i class="fa fa-check"></i> Understood'
+                        });
+                    }
+
                     showMessage('diagnosis_save_message', 'Please select at least one diagnosis reason or toggle off "Diagnosis Applicable"', 'error');
                     setButtonLoading('save_diagnosis_btn', false);
                     return;
+                } else {
+                    $('#reasons_for_encounter_search').removeClass('is-invalid');
+                    $('#reasons_inline_error').remove();
                 }
 
                 // Send reasons as values (code-name format) for backward compat
@@ -5543,7 +5575,7 @@
 
             // Save Button (for tabs that have forms — Notes)
             if (item.pane === 'clinical_notes') {
-                saveHtml = '<button type="button" class="btn btn-outline-success shadow-sm ms-2 me-2" onclick="if(typeof saveDiagnosis === \'function\') saveDiagnosis(false);" title="Save">' +
+                saveHtml = '<button type="button" id="save_diagnosis_btn" class="btn btn-outline-success shadow-sm ms-2 me-2" onclick="if(typeof saveDiagnosis === \'function\') saveDiagnosis(true);" title="Save">' +
                     '<i class="fa fa-save me-1"></i> Save</button>';
             }
 
@@ -5565,6 +5597,27 @@
         // Initialize floating nav for initial active tab
         var initialTab = $('#myTabContent > .tab-pane.active').attr('id') || 'treatment_plans';
         window.updateFloatingNav(initialTab);
+
+        // Listen for all Bootstrap tab changes to update floating nav automatically
+        $('a[data-toggle="tab"], a[data-bs-toggle="tab"], button[data-bs-toggle="tab"]').on('shown.bs.tab', function (e) {
+            var targetId = $(e.target).attr('href') || $(e.target).attr('data-bs-target') || $(e.target).attr('data-target');
+            if (targetId) {
+                targetId = targetId.replace('#', '');
+                
+                // Only update floating nav if it's a main tab (avoids resetting on sub-tab navigation)
+                var activePaneToCheck = targetId.replace('_tab', '').replace('mobile_', '').replace('_data', '');
+                var isMainTab = window.encounterTabOrder.some(function(t) { 
+                    return t.pane === activePaneToCheck || t.tab === targetId; 
+                });
+                
+                // Extra check for fallback tabs
+                if (targetId === 'vitals' || targetId === 'vitals_data_tab') isMainTab = true;
+                
+                if (isMainTab) {
+                    window.updateFloatingNav(targetId);
+                }
+            }
+        });
     });
     </script>
 @endsection
