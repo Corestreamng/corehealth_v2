@@ -286,13 +286,146 @@
         gap: 4px;
     }
 
+    /* Scroll Hint */
+    .sch-scroll-hint { display: none; }
+    
     @media (max-width: 767.98px) {
-        .sch-compact-bar { padding: 8px 12px; }
+        .sch-expanded-actions-wrapper {
+            position: relative;
+        }
+        .sch-scroll-hint {
+            display: flex;
+            position: absolute;
+            right: 0;
+            top: 0;
+            bottom: 4px; /* account for padding-bottom */
+            width: 40px;
+            background: linear-gradient(to right, rgba(255,255,255,0), #fff 60%);
+            align-items: center;
+            justify-content: flex-end;
+            padding-right: 4px;
+            pointer-events: auto;
+            cursor: pointer;
+            color: var(--sch-color);
+            opacity: 0.8;
+            transition: opacity 0.3s;
+            z-index: 2;
+        }
+        .sch-scroll-hint i {
+            animation: schScrollBounce 1.5s infinite;
+        }
+        @keyframes schScrollBounce {
+            0%, 100% { transform: translateX(0); }
+            50% { transform: translateX(3px); }
+        }
+        
+        .sch-scroll-hint-left {
+            display: none;
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 4px; /* account for padding-bottom */
+            width: 40px;
+            background: linear-gradient(to left, rgba(255,255,255,0), #fff 60%);
+            align-items: center;
+            justify-content: flex-start;
+            padding-left: 4px;
+            pointer-events: auto;
+            cursor: pointer;
+            color: var(--sch-color);
+            opacity: 0;
+            transition: opacity 0.3s;
+            z-index: 2;
+        }
+        .sch-scroll-hint-left i {
+            animation: schScrollBounceLeft 1.5s infinite;
+        }
+        @keyframes schScrollBounceLeft {
+            0%, 100% { transform: translateX(0); }
+            50% { transform: translateX(-3px); }
+        }
+        
+        .sticky-consultation-header {
+            border-radius: 0;
+            margin-bottom: 0;
+        }
+        .sch-compact-bar {
+            padding: 6px 10px;
+            gap: 6px;
+        }
+        .sch-compact-avatar,
+        .sch-compact-avatar-placeholder {
+            width: 28px;
+            height: 28px;
+            font-size: 0.7rem;
+            border-width: 1.5px;
+        }
+        .sch-compact-name {
+            font-size: 0.85rem;
+            font-weight: 700;
+        }
+        .sch-compact-name .file-no {
+            font-size: 0.65rem;
+        }
+        .sch-compact-sub {
+            font-size: 0.62rem;
+            opacity: 0.92;
+        }
+        .sch-expand-toggle {
+            font-size: 0.65rem;
+            padding: 2px 6px;
+        }
+        /* Hide the desktop action buttons on mobile */
         .sch-compact-actions { display: none !important; }
-        .sch-details-grid { grid-template-columns: 1fr; }
-        .sch-expanded-actions { gap: 4px; }
-        .sch-expanded-actions .btn { font-size: 9pt; padding: 3px 7px; }
+        /* Show mobile back + overflow actions instead */
+        .sch-mobile-back {
+            display: flex !important;
+        }
+        .sch-mobile-actions {
+            display: flex !important;
+        }
+        /* Expanded panel: single column on narrow screens for max detail density */
+        .sch-details-panel {
+            padding: 8px 10px;
+        }
+        .sch-details-grid {
+            grid-template-columns: 1fr;
+            gap: 6px;
+        }
+        .sch-badge-compact {
+            font-size: 8pt;
+            padding: 1px 5px;
+        }
+        .sch-badge-compact i { font-size: 8pt; }
+        .sch-vital-pill {
+            font-size: 8pt;
+            padding: 1px 5px;
+        }
+        .sch-admin-line {
+            font-size: 8pt;
+        }
+        .sch-details-section-title {
+            font-size: 0.55rem;
+            margin-bottom: 2px;
+        }
+        .sch-expanded-actions {
+            gap: 4px;
+            flex-wrap: nowrap;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            padding-bottom: 4px;
+        }
+        .sch-expanded-actions::-webkit-scrollbar { display: none; }
+        .sch-expanded-actions .btn {
+            font-size: 0.65rem;
+            padding: 4px 8px;
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
     }
+    /* Mobile-only elements hidden on desktop */
+    .sch-mobile-back { display: none; }
+    .sch-mobile-actions { display: none; }
 </style>
 @endpush
 
@@ -315,6 +448,10 @@
     {{-- ═══ ALWAYS-VISIBLE COMPACT BAR ═══ --}}
     <div class="sch-compact-bar">
 
+        {{-- Mobile Back Button --}}
+        <a href="{{ route('encounters.index') }}" class="sch-mobile-back" style="color:#fff; font-size:1.2rem; padding:4px; text-decoration:none; flex-shrink:0;" title="Back to Queue">
+            <i class="fa fa-chevron-left"></i>
+        </a>
         {{-- Avatar --}}
         @if($patient->user->filename)
             <img src="{!! url('storage/image/user/' . $patient->user->filename) !!}" class="sch-compact-avatar" alt="Patient" />
@@ -376,6 +513,27 @@
             <span id="sch-expand-text">Details</span>
             <i class="fa fa-chevron-down"></i>
         </button>
+
+        {{-- Mobile Overflow Actions (⋯ button) --}}
+        <div class="sch-mobile-actions dropdown" style="flex-shrink:0;">
+            <button class="sch-expand-toggle dropdown-toggle" type="button" data-bs-toggle="dropdown" data-toggle="dropdown" aria-expanded="false" style="border:none;">
+                <i class="fa fa-ellipsis-v" style="font-size:1rem;"></i>
+            </button>
+            <ul class="dropdown-menu dropdown-menu-end shadow-lg" style="border-radius:12px; min-width:180px; padding:6px;">
+                @if (isset($admission_request))
+                    @if(!$admission_request->discharged && $admission_request->admission_status !== 'discharge_requested')
+                    <li><a class="dropdown-item d-flex align-items-center gap-2 py-2" href="#" onclick="event.preventDefault(); openDischargeModal()"><i class="fa fa-sign-out-alt text-warning"></i> Discharge</a></li>
+                    @endif
+                @else
+                    <li><a class="dropdown-item d-flex align-items-center gap-2 py-2" href="#" onclick="event.preventDefault(); openAdmitModal()"><i class="fa fa-bed text-info"></i> Admit</a></li>
+                @endif
+                <li><a class="dropdown-item d-flex align-items-center gap-2 py-2 btn-manage-alerts" href="#" data-patient-id="{{ $patient->id }}" onclick="event.preventDefault();"><i class="mdi mdi-alert-octagon text-danger"></i> Alerts</a></li>
+                <li><a class="dropdown-item d-flex align-items-center gap-2 py-2" href="#" onclick="event.preventDefault(); openReportBuilder()"><i class="mdi mdi-file-document text-secondary"></i> Report</a></li>
+                <li><a class="dropdown-item d-flex align-items-center gap-2 py-2" href="#" onclick="event.preventDefault(); switch_tab(event, 'referrals_tab');"><i class="mdi mdi-account-switch text-primary"></i> Refer</a></li>
+                <li><hr class="dropdown-divider"></li>
+                <li><a class="dropdown-item d-flex align-items-center gap-2 py-2 text-success fw-bold" href="#" onclick="event.preventDefault(); $('#concludeEncounterModal').modal('show')"><i class="fa fa-check-circle"></i> Conclude</a></li>
+            </ul>
+        </div>
     </div>
 
     {{-- ═══ COLLAPSIBLE DETAILS PANEL ═══ --}}
@@ -474,8 +632,9 @@
         </div>{{-- /.sch-details-grid --}}
 
         {{-- Full action buttons row (moved in from compact bar when expanded) --}}
-        <div class="sch-expanded-actions">
-            {{-- Timer --}}
+        <div class="sch-expanded-actions-wrapper position-relative">
+            <div class="sch-expanded-actions" id="schExpandedActions">
+                {{-- Timer --}}
             @include('admin.doctors.partials.consultation_timer')
 
             {{-- All buttons with original Bootstrap styling --}}
@@ -503,6 +662,15 @@
             <button type="button" class="btn btn-success text-white d-flex align-items-center shadow-sm" onclick="$('#concludeEncounterModal').modal('show')">
                 <i class="fa fa-check-circle me-1"></i> Conclude
             </button>
+            </div>
+            
+            {{-- Scroll Hint Indicators --}}
+            <div class="sch-scroll-hint-left" id="schScrollHintLeft">
+                <i class="fa fa-chevron-left shadow-sm bg-white rounded-circle p-1"></i>
+            </div>
+            <div class="sch-scroll-hint" id="schScrollHint">
+                <i class="fa fa-chevron-right shadow-sm bg-white rounded-circle p-1"></i>
+            </div>
         </div>
 
     </div>{{-- /.sch-details-panel --}}
@@ -570,5 +738,62 @@
                 }
             }
         }, 1000);
+
+        // Handle Horizontal Scroll Hint Visibility
+        var actionsContainer = document.getElementById('schExpandedActions');
+        var scrollHint = document.getElementById('schScrollHint');
+        var scrollHintLeft = document.getElementById('schScrollHintLeft');
+        
+        if (actionsContainer && scrollHint) {
+            function checkScroll() {
+                // If scrollable
+                if (actionsContainer.scrollWidth > actionsContainer.clientWidth) {
+                    // Right hint
+                    if (actionsContainer.scrollWidth - actionsContainer.clientWidth <= actionsContainer.scrollLeft + 10) {
+                        scrollHint.style.opacity = '0';
+                    } else {
+                        scrollHint.style.opacity = '0.8';
+                    }
+                    
+                    // Left hint
+                    if (actionsContainer.scrollLeft > 10) {
+                        if (scrollHintLeft) {
+                            scrollHintLeft.style.display = 'flex';
+                            setTimeout(function() { scrollHintLeft.style.opacity = '0.8'; }, 10);
+                        }
+                    } else {
+                        if (scrollHintLeft) {
+                            scrollHintLeft.style.opacity = '0';
+                            setTimeout(function() { 
+                                if (actionsContainer.scrollLeft <= 10) scrollHintLeft.style.display = 'none'; 
+                            }, 300);
+                        }
+                    }
+                } else {
+                    scrollHint.style.opacity = '0';
+                    if (scrollHintLeft) {
+                        scrollHintLeft.style.opacity = '0';
+                        scrollHintLeft.style.display = 'none';
+                    }
+                }
+            }
+            
+            actionsContainer.addEventListener('scroll', checkScroll);
+            window.addEventListener('resize', checkScroll);
+            
+            // Add click-to-scroll functionality
+            scrollHint.addEventListener('click', function() {
+                actionsContainer.scrollBy({ left: 150, behavior: 'smooth' });
+            });
+            
+            if (scrollHintLeft) {
+                scrollHintLeft.addEventListener('click', function() {
+                    actionsContainer.scrollBy({ left: -150, behavior: 'smooth' });
+                });
+            }
+            
+            // Check after a short delay to ensure rendering is complete
+            setTimeout(checkScroll, 500);
+        }
     });
 </script>

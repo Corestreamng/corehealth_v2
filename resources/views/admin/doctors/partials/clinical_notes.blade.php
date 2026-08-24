@@ -11,7 +11,10 @@
 <div class="card-modern">
     <div class="card-body">
         {{-- Nav tabs for History and New Entry --}}
-        <ul class="nav nav-tabs nav-tabs-custom" role="tablist">
+        <ul class="nav nav-tabs nav-tabs-custom flex-nowrap overflow-auto" role="tablist" style="scrollbar-width: none; -ms-overflow-style: none;">
+            <style>
+                .nav-tabs-custom::-webkit-scrollbar { display: none; }
+            </style>
             <li class="nav-item" role="presentation">
                 <button class="nav-link active smooth-transition" id="notes-history-tab" data-bs-toggle="tab" data-bs-target="#notes-history" type="button" role="tab" aria-controls="notes-history" aria-selected="true">
                     <i class="mdi mdi-history"></i> Notes History
@@ -64,12 +67,12 @@
                 {{-- Treatment Plan Context Widget (Phase 8) --}}
                 <input type="hidden" name="treatment_plan_id" id="notes_treatment_plan_id" value="">
                 <div class="tp-notes-context-widget mt-1 mb-3" id="tp-notes-context-widget">
-                    <div class="d-flex align-items-center gap-3 p-2 rounded-3 border"
+                    <div class="d-flex flex-wrap align-items-center gap-2 p-2 rounded-3 border"
                          style="background: linear-gradient(135deg, #e0f7fa 0%, #b2dfdb 100%); border-color: #00897b !important;">
                         <i class="fa fa-clipboard-list" style="color: #00796b; font-size: 1.1rem;"></i>
-                        <div class="flex-grow-1">
-                            <select class="form-select form-select-sm rounded-pill tp-plan-selector"
-                                    id="tp-notes-plan-selector" style="max-width: 350px; border-color: #00897b; font-size: 0.82rem;"
+                        <div class="flex-grow-1" style="min-width: 200px;">
+                            <select class="form-select form-select-sm rounded-pill tp-plan-selector w-100"
+                                    id="tp-notes-plan-selector" style="border-color: #00897b; font-size: 0.82rem;"
                                     onchange="ClinicalOrdersKit.onNotesPlanSelected(this)">
                                 <option value="">— No plan selected (notes independent) —</option>
                                 {{-- Populated by JS with patient's active plans --}}
@@ -304,19 +307,6 @@
                 @endif
 
                 <br>
-                <div class="d-flex justify-content-between align-items-center">
-                    <button type="button" onclick="switch_tab(event,'inj_imm_history_tab')" class="btn btn-secondary">
-                        <i class="fa fa-arrow-left"></i> Previous
-                    </button>
-                    <div>
-                        <button type="button" onclick="saveDiagnosisAndNext()" id="save_diagnosis_next_btn" class="btn btn-success me-2">
-                            <i class="fa fa-save"></i> Save & Next
-                        </button>
-                        <button type="button" onclick="saveDiagnosis()" id="save_diagnosis_btn" class="btn btn-outline-success">
-                            <i class="fa fa-save"></i> Save
-                        </button>
-                    </div>
-                </div>
                 <div id="diagnosis_save_message" class="mt-2"></div>
             </div>
         </div>
