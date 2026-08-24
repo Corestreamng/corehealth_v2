@@ -165,15 +165,14 @@
             color: #fff;
         }
 
-        /* Prevent FABs from blocking the bottom nav & overlapping each other */
         @media (max-width: 767.98px) {
             #chat-floating-btn {
-                bottom: 80px !important;
+                bottom: 135px !important;
                 right: 15px !important;
                 transform: none !important;
             }
             #ai-quick-actions-fab {
-                bottom: 145px !important;
+                bottom: 195px !important;
                 right: 15px !important;
                 transform: none !important;
             }
@@ -342,71 +341,139 @@
                 font-weight: 700;
             }
 
-        /* ═══ Universal TRULY FIXED Bottom Prev/Next Navigation (Desktop + Mobile) ═══ */
-        .encounter-main-content .tab-pane > .d-flex.border-bottom,
-        .encounter-main-content .tab-pane > .d-flex.border-top {
-            display: none !important;
+            /* ═══ MOBILE NATIVE: Touch-friendly form controls ═══ */
+            .encounter-main-content .form-control,
+            .encounter-main-content .form-select {
+                min-height: 44px !important;
+                font-size: 16px !important; /* Prevents iOS zoom on focus */
+            }
+            .encounter-main-content textarea.form-control {
+                min-height: 80px !important;
+            }
+            .encounter-main-content .btn:not(.btn-sm):not(.btn-xs) {
+                min-height: 44px;
+            }
+
+            /* ═══ MOBILE NATIVE: Scale text for density ═══ */
+            .encounter-main-content .form-label,
+            .encounter-main-content label {
+                font-size: 0.85rem;
+            }
+            .encounter-main-content p,
+            .encounter-main-content .small,
+            .encounter-main-content small {
+                font-size: 0.85rem;
+            }
+            .encounter-main-content h5 {
+                font-size: 1rem;
+            }
+            .encounter-main-content h6 {
+                font-size: 0.9rem;
+            }
+
+            /* ═══ MOBILE NATIVE: DataTable responsiveness ═══ */
+            .encounter-main-content .dataTables_wrapper {
+                overflow-x: hidden !important;
+            }
+            .encounter-main-content .dataTables_wrapper table {
+                width: 100% !important;
+            }
+            .encounter-main-content .dataTables_wrapper .dt-buttons {
+                display: none !important;
+            }
+
+            /* ═══ MOBILE NATIVE: Tab sub-navigation (inner tabs) ═══ */
+            .encounter-main-content .nav-tabs {
+                flex-wrap: nowrap;
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
+                border-bottom: 2px solid #e9ecef;
+            }
+            .encounter-main-content .nav-tabs::-webkit-scrollbar { display: none; }
+            .encounter-main-content .nav-tabs .nav-link {
+                white-space: nowrap;
+                font-size: 0.8rem;
+                padding: 8px 14px;
+            }
+
+            /* ═══ Treatment Plans warning modal highlight ═══ */
+            .tp-highlight-pulse {
+                animation: tpPulse 0.6s ease-in-out 3;
+            }
+            @keyframes tpPulse {
+                0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(25, 135, 84, 0.4); }
+                50% { transform: scale(1.05); box-shadow: 0 0 0 10px rgba(25, 135, 84, 0); }
+            }
+        }
+        /* --- MOBILE LAYOUT END --- */
+
+        /* ═══ Universal Floating Action Bar (Desktop Base) ═══ */
+        .encounter-floating-nav {
+            position: fixed !important;
+            bottom: 75px !important; /* Raised higher so it floats cleanly above the Copyright page footer */
+            left: calc(var(--sidebar-width, 240px) + 290px) !important; /* Shy of the sub-sidebar with clean gap */
+            right: 105px !important; /* Ends 105px from right edge so it doesn't overlap floating message/wand icons */
+            z-index: 1040 !important;
+            background: rgba(255, 255, 255, 0.96) !important;
+            backdrop-filter: blur(10px) !important;
+            -webkit-backdrop-filter: blur(10px) !important;
+            border: 1px solid rgba(203, 213, 225, 0.8) !important;
+            border-radius: 14px !important;
+            padding: 10px 18px !important;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15), 0 2px 8px rgba(0, 0, 0, 0.06) !important;
+            transition: left 0.3s ease, right 0.3s ease, bottom 0.3s ease !important;
         }
 
-        .mobile-tab-nav {
-            display: flex !important;
-            position: fixed !important;
-            bottom: 0 !important;
-            left: 0 !important;
-            right: 0 !important;
-            z-index: 1040 !important;
-            background: #ffffff !important;
-            border-top: 1px solid #cbd5e1 !important;
-            padding: 10px 24px !important;
-            gap: 16px !important;
-            box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.12) !important;
+        .encounter-workspace-layout.sidebar-collapsed .encounter-floating-nav,
+        .encounter-workspace-layout.sidebar-collapsed ~ .encounter-floating-nav {
+            left: calc(var(--sidebar-collapsed-width, 65px) + 290px) !important;
         }
-        .mobile-tab-nav .btn {
-            flex: 1;
+
+        body.sidebar-collapse .encounter-floating-nav {
+            left: calc(var(--sidebar-width, 240px) + 110px) !important;
+        }
+
+        body.sidebar-collapse .encounter-workspace-layout.sidebar-collapsed .encounter-floating-nav,
+        body.sidebar-collapse .encounter-workspace-layout.sidebar-collapsed ~ .encounter-floating-nav {
+            left: calc(var(--sidebar-collapsed-width, 65px) + 110px) !important;
+        }
+
+        .encounter-floating-nav .btn {
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 8px;
+            gap: 6px;
             font-size: 0.88rem;
             font-weight: 600;
-            padding: 9px 18px;
+            padding: 9px 20px;
             border-radius: 10px;
         }
 
-        @media (min-width: 992px) {
-            .mobile-tab-nav {
-                left: 260px !important; /* Offset for desktop left sidebar */
-            }
-            .encounter-main-content {
-                padding-bottom: 75px !important;
-            }
+        .encounter-main-content {
+            padding-bottom: 140px !important;
         }
 
-        @media (min-width: 768px) and (max-width: 991.98px) {
-            .mobile-tab-nav {
-                left: 210px !important;
-            }
-            .encounter-main-content {
-                padding-bottom: 75px !important;
-            }
-        }
-
+        /* ═══ MOBILE OVERRIDES ═══ */
         @media (max-width: 767.98px) {
-            .mobile-tab-nav {
-                left: 0 !important;
-                bottom: 56px !important; /* Docked right above mobile bottom tab bar */
+            .encounter-floating-nav {
+                position: fixed !important;
+                bottom: 70px !important; /* Docked cleanly above mobile bottom tab bar (64px) */
+                left: 10px !important;
+                right: 10px !important;
+                z-index: 1040 !important;
+                margin-top: 0 !important;
                 padding: 8px 12px !important;
-                gap: 8px !important;
+                border-radius: 12px !important;
             }
-            .mobile-tab-nav .btn {
-                font-size: 0.8rem;
-                padding: 10px 12px;
+            .encounter-floating-nav .btn {
+                font-size: 0.82rem;
+                padding: 10px 14px;
                 min-height: 44px;
             }
             .encounter-main-content {
-                padding-bottom: 130px !important;
+                padding-bottom: 145px !important;
             }
-        }
+
 
             /* ═══ MOBILE NATIVE: Touch-friendly form controls ═══ */
             .encounter-main-content .form-control,
@@ -1373,9 +1440,19 @@
             </div>
         </form>
         
-    </div>
+    </div> <!-- end #myTabContent -->
+
     </div> <!-- end encounter-main-content -->
 </div> <!-- end encounter-workspace-layout -->
+
+<!-- Universal Floating Action Bar (Desktop + Mobile) -->
+<div class="encounter-floating-nav" id="encounterFloatingNav">
+    <div class="d-flex align-items-center justify-content-between w-100">
+        <div id="floating-nav-prev-container"></div>
+        <div id="floating-nav-save-container"></div>
+        <div id="floating-nav-next-container"></div>
+    </div>
+</div>
 
     <!-- Medication Details Modal (Read-Only for Doctors) -->
     <div class="modal fade" id="medDetailsModal" tabindex="-1" aria-labelledby="medDetailsModalLabel" aria-hidden="true">
@@ -2266,6 +2343,20 @@
                 if (typeof e.preventDefault === 'function') e.preventDefault();
                 if (typeof e.stopPropagation === 'function') e.stopPropagation();
             }
+
+            // Intercept leaving Treatment Plans tab if no active plan is selected
+            if (id_of_next_tab !== 'treatment_plans_tab' && id_of_next_tab !== 'treatment_plans') {
+                var $tpPane = $('#treatment_plans');
+                var isTpActive = ($tpPane.length && $tpPane.hasClass('active')) || $('#treatment_plans_tab').hasClass('active');
+                var tpReq = (typeof _PI_TP_REQUIRED !== 'undefined' && _PI_TP_REQUIRED) || false;
+                var needsPrompt = tpReq ? !window._activeTreatmentPlan : (!window._activeTreatmentPlan && !window._hasShownNoActivePlanPrompt);
+                if (isTpActive && needsPrompt && $('#tpNoActivePlanPromptModal').length) {
+                    window.tpPendingNavClick = id_of_next_tab;
+                    $('#tpNoActivePlanPromptModal').modal('show');
+                    return false;
+                }
+            }
+
             var $tab = $('#' + id_of_next_tab);
 
             // Explicitly deactivate all top-level tab panes to prevent tab stacking
@@ -2290,8 +2381,23 @@
             $('.encounter-sidebar .nav-link, .mobile-bottom-nav .nav-link').removeClass('active');
             $tab.addClass('active');
 
+            if (typeof window.updateFloatingNav === 'function') {
+                window.updateFloatingNav(id_of_next_tab);
+            }
+
             if ($tab.length && typeof $.fn.tab === 'function') {
                 try { $tab.tab('show'); } catch(err) {}
+            }
+            
+            // Explicitly trigger the shown event because manual class manipulation above 
+            // often causes Bootstrap to skip firing it.
+            if ($tab.length) {
+                $tab.trigger('shown.bs.tab');
+                if ($tab[0]) {
+                    try {
+                        $tab[0].dispatchEvent(new Event('shown.bs.tab', { bubbles: true, cancelable: true }));
+                    } catch(e) {}
+                }
             }
 
             // Scroll to top
@@ -5414,43 +5520,51 @@
             { pane: 'referrals', tab: 'referrals_tab', label: 'Referrals' }
         ];
 
-        tabOrder.forEach(function(item, idx) {
-            var $pane = $('#' + item.pane);
-            if (!$pane.length) return;
+        window.encounterTabOrder = tabOrder;
 
-            // Remove any existing nav bar to prevent duplicates
-            $pane.find('.mobile-tab-nav').remove();
+        window.updateFloatingNav = function(activeTabId) {
+            var activePane = activeTabId ? activeTabId.replace('_tab', '').replace('mobile_', '').replace('_data', '') : 'treatment_plans';
+            var idx = window.encounterTabOrder.findIndex(function(t) { return t.pane === activePane || t.tab === activeTabId; });
+            if (idx === -1) {
+                // Fallback check
+                if (activeTabId === 'vitals_data_tab' || activeTabId === 'vitals') idx = 2;
+                else idx = 0;
+            }
 
-            var navHtml = '<div class="mobile-tab-nav">';
+            var item = window.encounterTabOrder[idx];
+            var prevHtml = '', saveHtml = '', nextHtml = '';
 
-            // Previous button
+            // Previous Button
             if (idx > 0) {
-                var prev = tabOrder[idx - 1];
-                navHtml += '<button class="btn btn-outline-secondary" onclick="switch_tab(event, \'' + prev.tab + '\')">' +
-                    '<i class="fa fa-chevron-left"></i> ' + prev.label + '</button>';
+                var prev = window.encounterTabOrder[idx - 1];
+                prevHtml = '<button type="button" class="btn btn-outline-secondary shadow-sm" onclick="switch_tab(event, \'' + prev.tab + '\')">' +
+                    '<i class="fa fa-chevron-left me-1"></i> ' + prev.label + '</button>';
+            }
+
+            // Save Button (for tabs that have forms — Notes)
+            if (item.pane === 'clinical_notes') {
+                saveHtml = '<button type="button" class="btn btn-outline-success shadow-sm ms-2 me-2" onclick="$(\'#\' + \'' + item.pane + '\').find(\'form:visible button[type=submit]:first, .btn-save:first\').click();" title="Save">' +
+                    '<i class="fa fa-save me-1"></i> Save</button>';
+            }
+
+            // Next Button
+            if (idx < window.encounterTabOrder.length - 1) {
+                var next = window.encounterTabOrder[idx + 1];
+                nextHtml = '<button type="button" class="btn btn-primary shadow-sm" onclick="switch_tab(event, \'' + next.tab + '\')">' +
+                    next.label + ' <i class="fa fa-chevron-right ms-1"></i></button>';
             } else {
-                navHtml += '<div></div>'; // spacer
+                nextHtml = '<button type="button" class="btn btn-success shadow-sm" onclick="$(\'#concludeEncounterModal\').modal(\'show\')">' +
+                    '<i class="fa fa-check-circle me-1"></i> Conclude Encounter</button>';
             }
 
-            // Save buttons (for tabs that have forms — Story, Notes)
-            if (item.pane === 'clinical_story' || item.pane === 'clinical_notes') {
-                navHtml += '<button class="btn btn-outline-success btn-sm" style="flex:0 0 auto; min-width:auto; padding:8px 12px;" onclick="$(\'#\' + \'' + item.pane + '\').find(\'form:visible button[type=submit]:first, .btn-save:first\').click();">' +
-                    '<i class="fa fa-save"></i></button>';
-            }
+            $('#floating-nav-prev-container').html(prevHtml);
+            $('#floating-nav-save-container').html(saveHtml);
+            $('#floating-nav-next-container').html(nextHtml);
+        };
 
-            // Next button
-            if (idx < tabOrder.length - 1) {
-                var next = tabOrder[idx + 1];
-                navHtml += '<button class="btn btn-primary" onclick="switch_tab(event, \'' + next.tab + '\')">' +
-                    next.label + ' <i class="fa fa-chevron-right"></i></button>';
-            } else {
-                navHtml += '<button class="btn btn-success" onclick="$(\'#concludeEncounterModal\').modal(\'show\')">' +
-                    '<i class="fa fa-check-circle"></i> Conclude</button>';
-            }
-
-            navHtml += '</div>';
-            $pane.append(navHtml);
-        });
+        // Initialize floating nav for initial active tab
+        var initialTab = $('#myTabContent > .tab-pane.active').attr('id') || 'treatment_plans';
+        window.updateFloatingNav(initialTab);
     });
     </script>
 @endsection
