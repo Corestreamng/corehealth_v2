@@ -5543,7 +5543,7 @@
 
             // Save Button (for tabs that have forms — Notes)
             if (item.pane === 'clinical_notes') {
-                saveHtml = '<button type="button" class="btn btn-outline-success shadow-sm ms-2 me-2" onclick="$(\'#\' + \'' + item.pane + '\').find(\'form:visible button[type=submit]:first, .btn-save:first\').click();" title="Save">' +
+                saveHtml = '<button type="button" class="btn btn-outline-success shadow-sm ms-2 me-2" onclick="if(typeof saveDiagnosis === \'function\') saveDiagnosis(false);" title="Save">' +
                     '<i class="fa fa-save me-1"></i> Save</button>';
             }
 
