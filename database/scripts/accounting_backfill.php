@@ -14,14 +14,14 @@ use Illuminate\Support\Facades\App;
 echo "Starting Accounting Backfill Script for _corehealth_db_v2_hopehill...\n";
 
 // 1. Switch Database Connection
-DB::purge('mysql');
-Config::set('database.connections.mysql.database', '_corehealth_db_v2_hopehill');
-DB::reconnect('mysql');
+// DB::purge('mysql');
+// Config::set('database.connections.mysql.database', '_corehealth_db_v2_hopehill');
+// DB::reconnect('mysql');
 
 $dbName = DB::connection('mysql')->getDatabaseName();
-if ($dbName !== '_corehealth_db_v2_hopehill') {
-    die("Failed to switch database connection. Current DB: {$dbName}\n");
-}
+// if ($dbName !== '_corehealth_db_v2_hopehill') {
+//     die("Failed to switch database connection. Current DB: {$dbName}\n");
+// }
 
 echo "Successfully connected to: {$dbName}\n";
 
@@ -48,7 +48,7 @@ $retainedEarningsAccId = $retainedEarningsAcc ? $retainedEarningsAcc->id : null;
 for ($year = $startYear; $year <= $currentYear; $year++) {
     $startDate = Carbon::create($year, 1, 1)->startOfDay();
     $endDate = Carbon::create($year, 12, 31)->endOfDay();
-    
+
     $fiscalYear = FiscalYear::firstOrCreate(
         ['year_name' => "FY {$year}"],
         [
@@ -58,13 +58,13 @@ for ($year = $startYear; $year <= $currentYear; $year++) {
             'retained_earnings_account_id' => $retainedEarningsAccId
         ]
     );
-    
+
     echo "Ensured Fiscal Year: FY {$year}\n";
-    
+
     for ($month = 1; $month <= 12; $month++) {
         $periodStart = Carbon::create($year, $month, 1)->startOfDay();
         $periodEnd = $periodStart->copy()->endOfMonth()->endOfDay();
-        
+
         AccountingPeriod::firstOrCreate(
             [
                 'fiscal_year_id' => $fiscalYear->id,
@@ -139,7 +139,7 @@ foreach ($posrs as $posr) {
         $exists = JournalEntry::where('reference_type', ProductOrServiceRequest::class)
             ->where('reference_id', $posr->id)
             ->exists();
-            
+
         if (!$exists) {
             $createHmoMethod->invoke($posrObserver, $posr);
             $posrCount++;

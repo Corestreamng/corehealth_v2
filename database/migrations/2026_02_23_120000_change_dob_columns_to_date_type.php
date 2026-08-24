@@ -20,6 +20,9 @@ return new class extends Migration
                 // Clean up missing/empty first
                 DB::statement("UPDATE patients SET dob = NULL WHERE dob = '' OR dob = '0000-00-00' OR dob = '0000-00-00 00:00:00'");
 
+                // Fix DD/MM/YYYY format first (if day > 12)
+                DB::statement("UPDATE patients SET dob = DATE_FORMAT(STR_TO_DATE(dob, '%d/%m/%Y'), '%Y-%m-%d') WHERE dob REGEXP '^[0-9]{1,2}/[0-9]{1,2}/[0-9]{4}$' AND CAST(SUBSTRING_INDEX(dob, '/', 1) AS UNSIGNED) > 12");
+                
                 // Fix MM/DD/YYYY format using STR_TO_DATE (if it matches ##/##/####)
                 DB::statement("UPDATE patients SET dob = DATE_FORMAT(STR_TO_DATE(dob, '%m/%d/%Y'), '%Y-%m-%d') WHERE dob REGEXP '^[0-9]{1,2}/[0-9]{1,2}/[0-9]{4}$'");
 

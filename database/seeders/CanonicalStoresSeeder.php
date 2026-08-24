@@ -12,8 +12,8 @@ class CanonicalStoresSeeder extends Seeder
 {
     public function run(): void
     {
-        // 1. CANONICAL CENTRAL STORE — id=3
-        $central = Store::find(3);
+        // 1. CANONICAL CENTRAL STORE — id=3 or code=CNT
+        $central = Store::where('code', 'CNT')->first() ?? Store::find(3);
         if ($central) {
             Store::withoutEvents(function () use ($central) {
                 $central->update([
@@ -22,10 +22,11 @@ class CanonicalStoresSeeder extends Seeder
                     'is_default' => false, 'is_immutable' => true, 'status' => 1,
                 ]);
             });
-            $this->command->info('Central Store (id=3) set as immutable ROLE_CENTRAL.');
+            $this->command->info('Central Store set as immutable ROLE_CENTRAL.');
         } else {
             Store::withoutEvents(function () {
                 Store::create([
+                    'id' => 3, // Try to force ID 3 if possible
                     'store_name' => 'Central Store', 'code' => 'CNT',
                     'description' => 'Main bulk stock. Canonical.',
                     'location' => 'Basement', 'store_type' => 'warehouse',
@@ -36,8 +37,8 @@ class CanonicalStoresSeeder extends Seeder
             $this->command->info('Central Store created as immutable ROLE_CENTRAL.');
         }
 
-        // 2. CANONICAL PHARMACY HUB — id=2
-        $pharmacy = Store::find(2);
+        // 2. CANONICAL PHARMACY HUB — id=2 or code=PHR
+        $pharmacy = Store::where('code', 'PHR')->first() ?? Store::find(2);
         if ($pharmacy) {
             Store::withoutEvents(function () use ($pharmacy) {
                 $pharmacy->update([
@@ -47,10 +48,11 @@ class CanonicalStoresSeeder extends Seeder
                     'is_default' => true, 'is_immutable' => true, 'status' => 1,
                 ]);
             });
-            $this->command->info('Pharmacy (id=2) set as immutable ROLE_PHARMACY_HUB.');
+            $this->command->info('Pharmacy set as immutable ROLE_PHARMACY_HUB.');
         } else {
             Store::withoutEvents(function () {
                 Store::create([
+                    'id' => 2, // Try to force ID 2 if possible
                     'store_name' => 'Pharmacy', 'code' => 'PHR',
                     'description' => 'Primary pharmacy hub. Canonical.',
                     'location' => 'Ground Floor', 'store_type' => 'pharmacy',
