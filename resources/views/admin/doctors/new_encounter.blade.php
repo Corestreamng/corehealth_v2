@@ -162,8 +162,384 @@
 
         .encounter-sidebar .nav-link.active i,
         .encounter-sidebar .nav-link.active .sidebar-text {
-            color: #ffffff !important;
+            color: #fff;
         }
+
+        @media (max-width: 767.98px) {
+            #chat-floating-btn {
+                bottom: 135px !important;
+                right: 15px !important;
+                transform: none !important;
+            }
+            #ai-quick-actions-fab {
+                bottom: 195px !important;
+                right: 15px !important;
+                transform: none !important;
+            }
+        }
+
+        /* --- MOBILE LAYOUT START --- */
+        @media (max-width: 767.98px) {
+            .encounter-workspace-layout {
+                display: block !important;
+            }
+            .mobile-bottom-nav {
+                position: fixed;
+                bottom: 0;
+                left: 0;
+                right: 0;
+                height: 64px;
+                background: #fff;
+                box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
+                z-index: 1040;
+                display: flex;
+                flex-direction: row;
+                align-items: center;
+                justify-content: space-around;
+                padding: 0 4px;
+                border-top: 1px solid #dee2e6;
+            }
+            .mobile-bottom-nav .nav-item {
+                flex: 1 1 auto;
+                text-align: center;
+            }
+            .mobile-bottom-nav .nav-link {
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                padding: 6px 4px;
+                color: #6c757d;
+                font-size: 0.6rem;
+                font-weight: 600;
+                border-radius: 8px;
+                text-decoration: none;
+                transition: all 0.2s;
+                cursor: pointer;
+                letter-spacing: 0.3px;
+            }
+            .mobile-bottom-nav .nav-link.active {
+                color: var(--hos-color-var);
+            }
+            .mobile-bottom-nav .nav-link i {
+                font-size: 1.25rem;
+                margin-bottom: 2px;
+                color: inherit;
+            }
+            .mobile-bottom-nav .nav-link .sidebar-text {
+                white-space: nowrap;
+                line-height: 1;
+            }
+            /* "More" button — distinctive teal pill */
+            .mobile-bottom-nav .mobile-more-btn .nav-link {
+                background: var(--hos-color-var, #00897b);
+                color: #fff !important;
+                border-radius: 14px;
+                padding: 6px 10px;
+                margin: 4px 2px;
+            }
+            .mobile-bottom-nav .mobile-more-btn .nav-link i {
+                color: #fff !important;
+            }
+            .encounter-main-content {
+                padding-bottom: 80px !important;
+            }
+            /* More Sheet — tile grid */
+            .mobile-more-grid {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 10px;
+                padding: 16px;
+            }
+            .mobile-more-tile {
+                display: flex;
+                align-items: center;
+                gap: 12px;
+                padding: 14px 12px;
+                background: #f8f9fa;
+                border: 1px solid #e9ecef;
+                border-radius: 12px;
+                text-decoration: none;
+                color: #343a40;
+                font-weight: 600;
+                font-size: 0.85rem;
+                transition: all 0.15s ease;
+                cursor: pointer;
+            }
+            .mobile-more-tile:hover,
+            .mobile-more-tile:active {
+                background: color-mix(in srgb, var(--hos-color-var, #007bff) 10%, white);
+                border-color: color-mix(in srgb, var(--hos-color-var, #007bff) 40%, white);
+                color: var(--hos-color-var, #007bff);
+                transform: scale(0.97);
+            }
+            .mobile-more-tile .tile-icon {
+                width: 38px;
+                height: 38px;
+                border-radius: 10px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 1.15rem;
+                flex-shrink: 0;
+                color: #fff;
+            }
+            .mobile-more-tile .tile-label {
+                flex: 1;
+                line-height: 1.2;
+            }
+            .mobile-more-tile .tile-badge {
+                margin-left: auto;
+            }
+
+            /* ═══ MOBILE NATIVE: Flatten card nesting ═══ */
+
+            /* Remove outer card chrome on mobile — edge-to-edge content */
+            .encounter-main-content .card-modern {
+                border: none !important;
+                border-radius: 0 !important;
+                box-shadow: none !important;
+                margin-bottom: 0.5rem !important;
+            }
+            .encounter-main-content .card-modern > .card-body {
+                padding: 10px 6px !important;
+            }
+            .encounter-main-content .card-modern > .card-header {
+                padding: 10px 8px !important;
+                border-radius: 0 !important;
+            }
+
+            /* Nested card-in-card: minimal chrome */
+            .encounter-main-content .card-modern .card-modern {
+                border: 1px solid #e9ecef !important;
+                border-radius: 10px !important;
+                margin-bottom: 0.75rem !important;
+            }
+            .encounter-main-content .card-modern .card-modern > .card-body {
+                padding: 8px !important;
+            }
+
+            /* Full-bleed tab content */
+            .encounter-main-content > .tab-content {
+                padding: 0 !important;
+            }
+
+            /* Clinical story edge-to-edge */
+            .clinical-story-wrapper {
+                border-radius: 0 !important;
+                padding: 12px 8px !important;
+                box-shadow: none !important;
+                margin-bottom: 0.5rem !important;
+            }
+
+            /* Section titles as mobile dividers */
+            .encounter-main-content .card-modern > .card-header h5,
+            .encounter-main-content .card-modern > .card-header h6 {
+                font-size: 0.8rem !important;
+                text-transform: uppercase;
+                letter-spacing: 0.5px;
+                font-weight: 700;
+            }
+
+            /* ═══ MOBILE NATIVE: Touch-friendly form controls ═══ */
+            .encounter-main-content .form-control,
+            .encounter-main-content .form-select {
+                min-height: 44px !important;
+                font-size: 16px !important; /* Prevents iOS zoom on focus */
+            }
+            .encounter-main-content textarea.form-control {
+                min-height: 80px !important;
+            }
+            .encounter-main-content .btn:not(.btn-sm):not(.btn-xs) {
+                min-height: 44px;
+            }
+
+            /* ═══ MOBILE NATIVE: Scale text for density ═══ */
+            .encounter-main-content .form-label,
+            .encounter-main-content label {
+                font-size: 0.85rem;
+            }
+            .encounter-main-content p,
+            .encounter-main-content .small,
+            .encounter-main-content small {
+                font-size: 0.85rem;
+            }
+            .encounter-main-content h5 {
+                font-size: 1rem;
+            }
+            .encounter-main-content h6 {
+                font-size: 0.9rem;
+            }
+
+            /* ═══ MOBILE NATIVE: DataTable responsiveness ═══ */
+            .encounter-main-content .dataTables_wrapper {
+                overflow-x: hidden !important;
+            }
+            .encounter-main-content .dataTables_wrapper table {
+                width: 100% !important;
+            }
+            .encounter-main-content .dataTables_wrapper .dt-buttons {
+                display: none !important;
+            }
+
+            /* ═══ MOBILE NATIVE: Tab sub-navigation (inner tabs) ═══ */
+            .encounter-main-content .nav-tabs {
+                flex-wrap: nowrap;
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
+                border-bottom: 2px solid #e9ecef;
+            }
+            .encounter-main-content .nav-tabs::-webkit-scrollbar { display: none; }
+            .encounter-main-content .nav-tabs .nav-link {
+                white-space: nowrap;
+                font-size: 0.8rem;
+                padding: 8px 14px;
+            }
+
+            /* ═══ Treatment Plans warning modal highlight ═══ */
+            .tp-highlight-pulse {
+                animation: tpPulse 0.6s ease-in-out 3;
+            }
+            @keyframes tpPulse {
+                0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(25, 135, 84, 0.4); }
+                50% { transform: scale(1.05); box-shadow: 0 0 0 10px rgba(25, 135, 84, 0); }
+            }
+        }
+        /* --- MOBILE LAYOUT END --- */
+
+        /* ═══ Universal Floating Action Bar (Desktop Base) ═══ */
+        .encounter-floating-nav {
+            position: fixed !important;
+            bottom: 75px !important; /* Raised higher so it floats cleanly above the Copyright page footer */
+            left: calc(var(--sidebar-width, 240px) + 290px) !important; /* Shy of the sub-sidebar with clean gap */
+            right: 105px !important; /* Ends 105px from right edge so it doesn't overlap floating message/wand icons */
+            z-index: 1040 !important;
+            background: rgba(255, 255, 255, 0.96) !important;
+            backdrop-filter: blur(10px) !important;
+            -webkit-backdrop-filter: blur(10px) !important;
+            border: 1px solid rgba(203, 213, 225, 0.8) !important;
+            border-radius: 14px !important;
+            padding: 10px 18px !important;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15), 0 2px 8px rgba(0, 0, 0, 0.06) !important;
+            transition: left 0.3s ease, right 0.3s ease, bottom 0.3s ease !important;
+        }
+
+        .encounter-workspace-layout.sidebar-collapsed .encounter-floating-nav,
+        .encounter-workspace-layout.sidebar-collapsed ~ .encounter-floating-nav {
+            left: calc(var(--sidebar-collapsed-width, 65px) + 290px) !important;
+        }
+
+        body.sidebar-collapse .encounter-floating-nav {
+            left: calc(var(--sidebar-width, 240px) + 110px) !important;
+        }
+
+        body.sidebar-collapse .encounter-workspace-layout.sidebar-collapsed .encounter-floating-nav,
+        body.sidebar-collapse .encounter-workspace-layout.sidebar-collapsed ~ .encounter-floating-nav {
+            left: calc(var(--sidebar-collapsed-width, 65px) + 110px) !important;
+        }
+
+        .encounter-floating-nav .btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            font-size: 0.88rem;
+            font-weight: 600;
+            padding: 9px 20px;
+            border-radius: 10px;
+        }
+
+        .encounter-main-content {
+            padding-bottom: 140px !important;
+        }
+
+        /* ═══ MOBILE OVERRIDES ═══ */
+        @media (max-width: 767.98px) {
+            .encounter-floating-nav {
+                position: fixed !important;
+                bottom: 70px !important; /* Docked cleanly above mobile bottom tab bar (64px) */
+                left: 10px !important;
+                right: 10px !important;
+                z-index: 1040 !important;
+                margin-top: 0 !important;
+                padding: 8px 12px !important;
+                border-radius: 12px !important;
+            }
+            .encounter-floating-nav .btn {
+                font-size: 0.82rem;
+                padding: 10px 14px;
+                min-height: 44px;
+            }
+            .encounter-main-content {
+                padding-bottom: 145px !important;
+            }
+
+
+            /* ═══ MOBILE NATIVE: Touch-friendly form controls ═══ */
+            .encounter-main-content .form-control,
+            .encounter-main-content .form-select {
+                min-height: 44px !important;
+                font-size: 16px !important; /* Prevents iOS zoom on focus */
+            }
+            .encounter-main-content textarea.form-control {
+                min-height: 80px !important;
+            }
+            .encounter-main-content .btn:not(.btn-sm):not(.btn-xs) {
+                min-height: 44px;
+            }
+
+            /* ═══ MOBILE NATIVE: Scale text for density ═══ */
+            .encounter-main-content .form-label,
+            .encounter-main-content label {
+                font-size: 0.85rem;
+            }
+            .encounter-main-content p,
+            .encounter-main-content .small,
+            .encounter-main-content small {
+                font-size: 0.85rem;
+            }
+            .encounter-main-content h5 {
+                font-size: 1rem;
+            }
+            .encounter-main-content h6 {
+                font-size: 0.9rem;
+            }
+
+            /* ═══ MOBILE NATIVE: DataTable responsiveness ═══ */
+            .encounter-main-content .dataTables_wrapper {
+                overflow-x: hidden !important;
+            }
+            .encounter-main-content .dataTables_wrapper table {
+                width: 100% !important;
+            }
+            .encounter-main-content .dataTables_wrapper .dt-buttons {
+                display: none !important;
+            }
+
+            /* ═══ MOBILE NATIVE: Tab sub-navigation (inner tabs) ═══ */
+            .encounter-main-content .nav-tabs {
+                flex-wrap: nowrap;
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
+                border-bottom: 2px solid #e9ecef;
+            }
+            .encounter-main-content .nav-tabs::-webkit-scrollbar { display: none; }
+            .encounter-main-content .nav-tabs .nav-link {
+                white-space: nowrap;
+                font-size: 0.8rem;
+                padding: 8px 14px;
+            }
+
+            /* ═══ Treatment Plans warning modal highlight ═══ */
+            .tp-highlight-pulse {
+                animation: tpPulse 0.6s ease-in-out 3;
+            }
+            @keyframes tpPulse {
+                0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(25, 135, 84, 0.4); }
+                50% { transform: scale(1.05); box-shadow: 0 0 0 10px rgba(25, 135, 84, 0); }
+            }
+        }
+        /* --- MOBILE LAYOUT END --- */
 
         /* Collapsed state styles */
         .encounter-workspace-layout.sidebar-collapsed .sidebar-text,
@@ -251,8 +627,8 @@
     @endpush
 
     <div class="encounter-workspace-layout" style="gap: 15px;">
-        <!-- Sidebar Navigation -->
-        <div class="encounter-sidebar-wrapper">
+        <!-- Sidebar Navigation (Desktop) -->
+        <div class="encounter-sidebar-wrapper d-none d-md-block">
             <ul class="nav nav-pills flex-column encounter-sidebar" id="myTab" role="tablist">
                 {{-- Top Collapse Header Button --}}
                 <li class="nav-item mb-2 pb-2 border-bottom w-100 text-center toggle-sidebar-btn">
@@ -343,24 +719,107 @@
             </ul>
         </div>
 
-        <!-- Main Content Area -->
-        <div class="encounter-main-content" style="min-width: 0;">
-    <div class="tab-content tp-context-borderable" id="myTabContent">
-        {{-- Patient Clinical Story Tab --}}
-        <div class="tab-pane fade" id="clinical_story" role="tabpanel" aria-labelledby="clinical_story_tab">
-            <!-- Top Tab Navigation -->
-            <div class="d-flex justify-content-between align-items-center mb-3 pb-2 border-bottom">
-                <div>
-                    <button type="button" class="btn btn-sm btn-outline-secondary" onclick="switch_tab(event, 'treatment_plans_tab')" style="border-radius: 8px; font-weight: 500;">
-                        <i class="fa fa-arrow-left me-1"></i> Prev (Patient Data)
-                    </button>
-                </div>
-                <div>
-                    <button type="button" class="btn btn-sm btn-primary shadow-sm" onclick="switch_tab(event, 'vitals_data_tab')" style="border-radius: 8px; font-weight: 500;">
-                        Next (Vitals/Allergies) <i class="fa fa-arrow-right ms-1"></i>
-                    </button>
+        <!-- Mobile Bottom Navigation -->
+        <div class="mobile-bottom-nav d-md-none">
+            @if($plansEnabled)
+            <!-- 1. Treatment Plans (Conditional) -->
+            <div class="nav-item" role="presentation">
+                <a class="nav-link active" id="mobile_treatment_plans_tab" data-toggle="tab" href="#treatment_plans" data-target="#treatment_plans" data-bs-toggle="tab" data-bs-target="#treatment_plans" role="tab" aria-controls="treatment_plans" aria-selected="true">
+                    <i class="mdi mdi-clipboard-pulse"></i><span class="sidebar-text">Plans</span>
+                    <span class="badge bg-teal rounded-circle position-absolute tp-plan-count-badge" style="display:none; top: 5px; right: 25%;"></span>
+                </a>
+            </div>
+            @endif
+            <!-- 2. Story -->
+            <div class="nav-item" role="presentation">
+                <a class="nav-link {{ !$plansEnabled ? 'active' : '' }}" id="mobile_clinical_story_tab" data-toggle="tab" href="#clinical_story" data-target="#clinical_story" data-bs-toggle="tab" data-bs-target="#clinical_story" role="tab" aria-controls="clinical_story" aria-selected="{{ !$plansEnabled ? 'true' : 'false' }}">
+                    <i class="mdi mdi-history"></i><span class="sidebar-text">Story</span>
+                </a>
+            </div>
+            <!-- 3. Vitals -->
+            <div class="nav-item" role="presentation">
+                <a class="nav-link" id="mobile_vitals_data_tab" data-toggle="tab" href="#vitals" data-target="#vitals" data-bs-toggle="tab" data-bs-target="#vitals" role="tab" aria-controls="vitals_data" aria-selected="false">
+                    <i class="mdi mdi-heart-pulse"></i><span class="sidebar-text">Vitals</span>
+                </a>
+            </div>
+            <!-- 4. Notes -->
+            <div class="nav-item" role="presentation">
+                <a class="nav-link" id="mobile_clinical_notes_tab" data-toggle="tab" href="#clinical_notes" data-target="#clinical_notes" data-bs-toggle="tab" data-bs-target="#clinical_notes" role="tab" aria-controls="clinical_notes" aria-selected="false">
+                    <i class="mdi mdi-note-text"></i><span class="sidebar-text">Notes</span>
+                </a>
+            </div>
+            <!-- 5. More (Opens Bottom Sheet) -->
+            <div class="nav-item mobile-more-btn">
+                <a class="nav-link" data-bs-toggle="modal" data-bs-target="#mobileMoreSheet" style="cursor:pointer;">
+                    <i class="mdi mdi-dots-horizontal"></i><span class="sidebar-text">More</span>
+                </a>
+            </div>
+        </div>
+
+        <!-- Mobile More Sheet Modal -->
+        <div class="modal fade d-md-none" id="mobileMoreSheet" tabindex="-1" role="dialog" aria-labelledby="mobileMoreSheetLabel" aria-hidden="true" style="padding-right: 0 !important;">
+            <div class="modal-dialog m-0 h-100 d-flex flex-column justify-content-end" role="document" style="max-width: 100%;">
+                <div class="modal-content" style="border-radius: 1.5rem 1.5rem 0 0; border: none; padding-bottom: 75px; max-height: 75vh;">
+                    <div class="modal-header border-bottom">
+                        <h6 class="modal-title fw-bold text-uppercase" id="mobileMoreSheetLabel" style="letter-spacing: 0.5px; font-size: 0.8rem; color: #6c757d;">Additional Sections</h6>
+                        <button type="button" class="close btn-close" data-bs-dismiss="modal" aria-label="Close" style="background: none; border: none; font-size: 1.5rem; line-height: 1;">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body p-0" style="overflow-y: auto;">
+                        <div class="mobile-more-grid">
+                            <a class="mobile-more-tile" id="mobile_laboratory_services_tab" data-toggle="tab" href="#laboratory_services" data-target="#laboratory_services" data-bs-toggle="tab" data-bs-target="#laboratory_services" role="tab" data-bs-dismiss="modal">
+                                <span class="tile-icon" style="background: #1565c0;"><i class="mdi mdi-flask"></i></span>
+                                <span class="tile-label">Lab Services</span>
+                                <span class="badge bg-danger rounded-pill tile-badge lab-unviewed-badge" style="display: none;"></span>
+                            </a>
+                            <a class="mobile-more-tile" id="mobile_imaging_services_tab" data-toggle="tab" href="#imaging_services" data-target="#imaging_services" data-bs-toggle="tab" data-bs-target="#imaging_services" role="tab" data-bs-dismiss="modal">
+                                <span class="tile-icon" style="background: #6a1b9a;"><i class="mdi mdi-radioactive"></i></span>
+                                <span class="tile-label">Imaging</span>
+                                <span class="badge bg-danger rounded-pill tile-badge imaging-unviewed-badge" style="display: none;"></span>
+                            </a>
+                            <a class="mobile-more-tile" id="mobile_medications_tab" data-toggle="tab" href="#medications" data-target="#medications" data-bs-toggle="tab" data-bs-target="#medications" role="tab" data-bs-dismiss="modal">
+                                <span class="tile-icon" style="background: #00897b;"><i class="mdi mdi-pill"></i></span>
+                                <span class="tile-label">Medications</span>
+                            </a>
+                            <a class="mobile-more-tile" id="mobile_nurse_charts_tab" data-toggle="tab" href="#nurse_charts" data-target="#nurse_charts" data-bs-toggle="tab" data-bs-target="#nurse_charts" role="tab" data-bs-dismiss="modal">
+                                <span class="tile-icon" style="background: #ef6c00;"><i class="mdi mdi-notebook"></i></span>
+                                <span class="tile-label">Nurse Charts</span>
+                            </a>
+                            <a class="mobile-more-tile" id="mobile_inj_imm_history_tab" data-toggle="tab" href="#inj_imm_history" data-target="#inj_imm_history" data-bs-toggle="tab" data-bs-target="#inj_imm_history" role="tab" data-bs-dismiss="modal">
+                                <span class="tile-icon" style="background: #c62828;"><i class="mdi mdi-needle"></i></span>
+                                <span class="tile-label">Inj / Imm</span>
+                            </a>
+                            <a class="mobile-more-tile" id="mobile_non_pharm_tab" data-toggle="tab" href="#non_pharm" data-target="#non_pharm" data-bs-toggle="tab" data-bs-target="#non_pharm" role="tab" data-bs-dismiss="modal">
+                                <span class="tile-icon" style="background: #e91e63;"><i class="mdi mdi-heart-pulse"></i></span>
+                                <span class="tile-label">Care Plan</span>
+                            </a>
+                            <a class="mobile-more-tile" id="mobile_procedures_tab" data-toggle="tab" href="#procedures" data-target="#procedures" data-bs-toggle="tab" data-bs-target="#procedures" role="tab" data-bs-dismiss="modal">
+                                <span class="tile-icon" style="background: #2e7d32;"><i class="mdi mdi-medical-bag"></i></span>
+                                <span class="tile-label">Procedures</span>
+                            </a>
+                            <a class="mobile-more-tile" id="mobile_admissions_tab" data-toggle="tab" href="#admissions" data-target="#admissions" data-bs-toggle="tab" data-bs-target="#admissions" role="tab" data-bs-dismiss="modal">
+                                <span class="tile-icon" style="background: #37474f;"><i class="mdi mdi-bed"></i></span>
+                                <span class="tile-label">Admissions</span>
+                            </a>
+                            <a class="mobile-more-tile" id="mobile_referrals_tab" data-toggle="tab" href="#referrals" data-target="#referrals" data-bs-toggle="tab" data-bs-target="#referrals" role="tab" data-bs-dismiss="modal">
+                                <span class="tile-icon" style="background: #4527a0;"><i class="mdi mdi-account-switch"></i></span>
+                                <span class="tile-label">Referrals</span>
+                                <span class="badge bg-purple rounded-pill tile-badge referral-count-badge" style="display:none;">0</span>
+                            </a>
+                        </div>
+                    </div>
                 </div>
             </div>
+        </div>
+
+        <!-- Main Content Area -->
+        <div class="encounter-main-content" style="min-width: 0; position: relative;">
+    <div id="tab-top-scroll-anchor" style="position: absolute; top: -150px; left: 0;"></div>
+    <div class="tab-content tp-context-borderable" id="myTabContent">
+        {{-- Patient Clinical Story Tab --}}
+        <div class="tab-pane fade {{ !$plansEnabled ? 'show active' : '' }}" id="clinical_story" role="tabpanel" aria-labelledby="clinical_story_tab">
+
 
             <div class="card-modern mt-2">
                 <div class="card-body">
@@ -368,54 +827,18 @@
                 </div>
             </div>
 
-            <!-- Bottom Tab Navigation -->
-            <div class="d-flex justify-content-between align-items-center mt-4 pt-3 border-top">
-                <div>
-                    <button type="button" class="btn btn-secondary" onclick="switch_tab(event, 'treatment_plans_tab')" style="border-radius: 8px; font-weight: 600;">
-                        <i class="fa fa-arrow-left me-1"></i> Previous (Patient Data)
-                    </button>
-                </div>
-                <div>
-                    <button type="button" class="btn btn-primary shadow-sm" onclick="switch_tab(event, 'vitals_data_tab')" style="border-radius: 8px; font-weight: 600;">
-                        Next (Vitals/Allergies) <i class="fa fa-arrow-right ms-1"></i>
-                    </button>
-                </div>
-            </div>
+
         </div>
 
         <div class="tab-pane fade" id="vitals" role="tabpanel" aria-labelledby="vitals_tab">
-            <!-- Top Tab Navigation -->
-            <div class="d-flex justify-content-between align-items-center mb-3 pb-2 border-bottom">
-                <div>
-                    <button type="button" class="btn btn-sm btn-outline-secondary" onclick="switch_tab(event, 'clinical_story_tab')" style="border-radius: 8px; font-weight: 500;">
-                        <i class="fa fa-arrow-left me-1"></i> Prev (Clinical Story)
-                    </button>
-                </div>
-                <div>
-                    <button type="button" class="btn btn-sm btn-primary shadow-sm" onclick="switch_tab(event, 'nurse_charts_tab')" style="border-radius: 8px; font-weight: 500;">
-                        Next (Nurse Charts) <i class="fa fa-arrow-right ms-1"></i>
-                    </button>
-                </div>
-            </div>
+
 
             <div class="mt-2">
                 @include('admin.partials.unified_vitals', ['patient' => $patient])
             </div>
             <div class="card-modern mt-2 border-0">
                  <div class="card-body px-0">
-                    <!-- Bottom Tab Navigation -->
-                    <div class="d-flex justify-content-between align-items-center mt-4 pt-3 border-top">
-                        <div>
-                            <button type="button" class="btn btn-secondary" onclick="switch_tab(event, 'clinical_story_tab')" style="border-radius: 8px; font-weight: 600;">
-                                <i class="fa fa-arrow-left me-1"></i> Previous (Clinical Story)
-                            </button>
-                        </div>
-                        <div>
-                            <button type="button" class="btn btn-primary shadow-sm" onclick="switch_tab(event, 'nurse_charts_tab')" style="border-radius: 8px; font-weight: 600;">
-                                Next (Nurse Charts) <i class="fa fa-arrow-right ms-1"></i>
-                            </button>
-                        </div>
-                    </div>
+
                  </div>
             </div>
         </div>
@@ -438,6 +861,25 @@
                     });
                 }
             });
+
+            // Fallback for BS4 modal hide on mobile sheet
+            $('#mobileMoreSheet').on('click', '.nav-link, .mobile-more-tile', function() {
+                $('#mobileMoreSheet').modal('hide');
+            });
+
+            // Global fix for multiple tab triggers (sidebar, mobile nav, mobile sheet)
+            // This syncs active links across all navs so Bootstrap can correctly find and hide the previous pane!
+            $('a[data-toggle="tab"], a[data-bs-toggle="tab"]').on('shown.bs.tab', function (e) {
+                var targetId = $(e.target).attr('href');
+                if (targetId && targetId.startsWith('#')) {
+                    // Sync all tab links pointing to this target
+                    $('a[data-toggle="tab"], a[data-bs-toggle="tab"]').removeClass('active');
+                    $('a[data-toggle="tab"][href="'+targetId+'"], a[data-bs-toggle="tab"][href="'+targetId+'"]').addClass('active');
+                    
+                    // Scroll to the top smoothly using jQuery to target all possible scroll containers
+                    $('html, body, .content-wrapper, .encounter-sidebar-wrapper').animate({ scrollTop: 0 }, 'fast');
+                }
+            });
         </script>
         @endpush
         <div class="tab-pane fade" id="laboratory_services" role="tabpanel" aria-labelledby="laboratory_services_tab">
@@ -456,19 +898,7 @@
 
         {{-- Non-Pharmacological Care Orders / Care Plan --}}
         <div class="tab-pane fade" id="non_pharm" role="tabpanel" aria-labelledby="non_pharm_tab">
-            <!-- Top Tab Navigation -->
-            <div class="d-flex justify-content-between align-items-center mb-3 pb-2 border-bottom">
-                <div>
-                    <button type="button" class="btn btn-sm btn-outline-secondary" onclick="switch_tab(event, 'medications_tab')" style="border-radius: 8px; font-weight: 500;">
-                        <i class="fa fa-arrow-left me-1"></i> Prev (Medications)
-                    </button>
-                </div>
-                <div>
-                    <button type="button" class="btn btn-sm btn-primary shadow-sm" onclick="switch_tab(event, 'procedures_tab')" style="border-radius: 8px; font-weight: 500;">
-                        Next (Procedures) <i class="fa fa-arrow-right ms-1"></i>
-                    </button>
-                </div>
-            </div>
+
 
             <div class="card-modern mt-2 tp-context-borderable">
                 <div class="card-body">
@@ -478,19 +908,7 @@
                 </div>
             </div>
 
-            <!-- Bottom Tab Navigation -->
-            <div class="d-flex justify-content-between align-items-center mt-4 pt-3 border-top">
-                <div>
-                    <button type="button" class="btn btn-secondary" onclick="switch_tab(event, 'medications_tab')" style="border-radius: 8px; font-weight: 600;">
-                        <i class="fa fa-arrow-left me-1"></i> Previous (Medications)
-                    </button>
-                </div>
-                <div>
-                    <button type="button" class="btn btn-primary shadow-sm" onclick="switch_tab(event, 'procedures_tab')" style="border-radius: 8px; font-weight: 600;">
-                        Next (Procedures) <i class="fa fa-arrow-right ms-1"></i>
-                    </button>
-                </div>
-            </div>
+
         </div>
 
         {{-- Procedures Tab --}}
@@ -500,19 +918,7 @@
 
         {{-- Admission History --}}
         <div class="tab-pane fade" id="admissions" role="tabpanel" aria-labelledby="admissions_tab">
-            <!-- Top Tab Navigation -->
-            <div class="d-flex justify-content-between align-items-center mb-3 pb-2 border-bottom">
-                <div>
-                    <button type="button" class="btn btn-sm btn-outline-secondary" onclick="switch_tab(event, 'procedures_tab')" style="border-radius: 8px; font-weight: 500;">
-                        <i class="fa fa-arrow-left me-1"></i> Prev (Procedures)
-                    </button>
-                </div>
-                <div>
-                    <button type="button" class="btn btn-sm btn-primary shadow-sm" onclick="switch_tab(event, 'referrals_tab')" style="border-radius: 8px; font-weight: 500;">
-                        Next (Referrals) <i class="fa fa-arrow-right ms-1"></i>
-                    </button>
-                </div>
-            </div>
+
 
             <div class="card-modern mt-2 tp-context-borderable">
                 <div class="card-body">
@@ -522,33 +928,11 @@
                 </div>
             </div>
 
-            <!-- Bottom Tab Navigation -->
-            <div class="d-flex justify-content-between align-items-center mt-4 pt-3 border-top">
-                <div>
-                    <button type="button" class="btn btn-secondary" onclick="switch_tab(event, 'procedures_tab')" style="border-radius: 8px; font-weight: 600;">
-                        <i class="fa fa-arrow-left me-1"></i> Previous (Procedures)
-                    </button>
-                </div>
-                <div>
-                    <button type="button" class="btn btn-primary shadow-sm" onclick="switch_tab(event, 'referrals_tab')" style="border-radius: 8px; font-weight: 600;">
-                        Next (Referrals) <i class="fa fa-arrow-right ms-1"></i>
-                    </button>
-                </div>
-            </div>
+
         </div>
 
         <div class="tab-pane fade" id="referrals" role="tabpanel" aria-labelledby="referrals_tab">
-            <!-- Top Tab Navigation -->
-            <div class="d-flex justify-content-between align-items-center mb-3 pb-2 border-bottom">
-                <div>
-                    <button type="button" class="btn btn-sm btn-outline-secondary" onclick="switch_tab(event, 'admissions_tab')" style="border-radius: 8px; font-weight: 500;">
-                        <i class="fa fa-arrow-left me-1"></i> Prev (Admission History)
-                    </button>
-                </div>
-                <div>
-                    <span class="text-muted small"><i class="fa fa-info-circle me-1"></i> Last Tab</span>
-                </div>
-            </div>
+
 
             <div class="card-modern mt-2 tp-context-borderable">
                 <div class="card-body">
@@ -786,25 +1170,10 @@
         </div>
         @endif
 
-        {{-- Clinical Story --}}
-        <div class="tab-pane fade {{ !$plansEnabled ? 'show active' : '' }}" id="clinical_story" role="tabpanel" aria-labelledby="clinical_story_tab">
-            @include('admin.partials.clinical_story')
-        </div>
+
 
         <div class="tab-pane fade" id="nurse_charts" role="tabpanel" aria-labelledby="nurse_charts_tab">
-            <!-- Top Tab Navigation -->
-            <div class="d-flex justify-content-between align-items-center mb-3 pb-2 border-bottom">
-                <div>
-                    <button type="button" class="btn btn-sm btn-outline-secondary" onclick="switch_tab(event, 'vitals_data_tab')" style="border-radius: 8px; font-weight: 500;">
-                        <i class="fa fa-arrow-left me-1"></i> Prev (Vitals/Allergies)
-                    </button>
-                </div>
-                <div>
-                    <button type="button" class="btn btn-sm btn-primary shadow-sm" onclick="switch_tab(event, 'inj_imm_history_tab')" style="border-radius: 8px; font-weight: 500;">
-                        Next (Inj/Imm History) <i class="fa fa-arrow-right ms-1"></i>
-                    </button>
-                </div>
-            </div>
+
 
             <div class="card-modern mt-2">
                 <div class="card-body">
@@ -941,55 +1310,19 @@
                         </div>
                     </div>
 
-                    <!-- Bottom Tab Navigation -->
-                    <div class="d-flex justify-content-between align-items-center mt-4 pt-3 border-top">
-                        <div>
-                            <button type="button" class="btn btn-secondary" onclick="switch_tab(event, 'vitals_data_tab')" style="border-radius: 8px; font-weight: 600;">
-                                <i class="fa fa-arrow-left me-1"></i> Previous (Vitals/Allergies)
-                            </button>
-                        </div>
-                        <div>
-                            <button type="button" class="btn btn-primary shadow-sm" onclick="switch_tab(event, 'inj_imm_history_tab')" style="border-radius: 8px; font-weight: 600;">
-                                Next (Inj/Imm History) <i class="fa fa-arrow-right ms-1"></i>
-                            </button>
-                        </div>
-                    </div>
+
                 </div>
             </div>
         </div>
         {{-- Injection & Immunization History Tab --}}
         <div class="tab-pane fade" id="inj_imm_history" role="tabpanel" aria-labelledby="inj_imm_history_tab">
-            <!-- Top Tab Navigation -->
-            <div class="d-flex justify-content-between align-items-center mb-3 pb-2 border-bottom">
-                <div>
-                    <button type="button" class="btn btn-sm btn-outline-secondary" onclick="switch_tab(event, 'nurse_charts_tab')" style="border-radius: 8px; font-weight: 500;">
-                        <i class="fa fa-arrow-left me-1"></i> Prev (Nurse Charts)
-                    </button>
-                </div>
-                <div>
-                    <button type="button" class="btn btn-sm btn-primary shadow-sm" onclick="switch_tab(event, 'clinical_notes_tab')" style="border-radius: 8px; font-weight: 500;">
-                        Next (Clinical Notes) <i class="fa fa-arrow-right ms-1"></i>
-                    </button>
-                </div>
-            </div>
+
 
             <div class="card-modern mt-2">
                 <div class="card-body">
                     @include('admin.patients.partials.injection_immunization_history', ['patient' => $patient])
 
-                    <!-- Bottom Tab Navigation -->
-                    <div class="d-flex justify-content-between align-items-center mt-4 pt-3 border-top">
-                        <div>
-                            <button type="button" class="btn btn-secondary" onclick="switch_tab(event, 'nurse_charts_tab')" style="border-radius: 8px; font-weight: 600;">
-                                <i class="fa fa-arrow-left me-1"></i> Previous (Nurse Charts)
-                            </button>
-                        </div>
-                        <div>
-                            <button type="button" class="btn btn-primary shadow-sm" onclick="switch_tab(event, 'clinical_notes_tab')" style="border-radius: 8px; font-weight: 600;">
-                                Next (Clinical Notes) <i class="fa fa-arrow-right ms-1"></i>
-                            </button>
-                        </div>
-                    </div>
+
                 </div>
             </div>
         </div>
@@ -1108,9 +1441,19 @@
             </div>
         </form>
         
-    </div>
+    </div> <!-- end #myTabContent -->
+
     </div> <!-- end encounter-main-content -->
 </div> <!-- end encounter-workspace-layout -->
+
+<!-- Universal Floating Action Bar (Desktop + Mobile) -->
+<div class="encounter-floating-nav" id="encounterFloatingNav">
+    <div class="d-flex align-items-center justify-content-between w-100">
+        <div id="floating-nav-prev-container"></div>
+        <div id="floating-nav-save-container"></div>
+        <div id="floating-nav-next-container"></div>
+    </div>
+</div>
 
     <!-- Medication Details Modal (Read-Only for Doctors) -->
     <div class="modal fade" id="medDetailsModal" tabindex="-1" aria-labelledby="medDetailsModalLabel" aria-hidden="true">
@@ -1997,8 +2340,69 @@
     </script>
     <script>
         function switch_tab(e, id_of_next_tab) {
-            e.preventDefault();
-            $('#' + id_of_next_tab).click();
+            if (e) {
+                if (typeof e.preventDefault === 'function') e.preventDefault();
+                if (typeof e.stopPropagation === 'function') e.stopPropagation();
+            }
+
+            // Intercept leaving Treatment Plans tab if no active plan is selected
+            if (id_of_next_tab !== 'treatment_plans_tab' && id_of_next_tab !== 'treatment_plans') {
+                var $tpPane = $('#treatment_plans');
+                var isTpActive = ($tpPane.length && $tpPane.hasClass('active')) || $('#treatment_plans_tab').hasClass('active');
+                var tpReq = (typeof _PI_TP_REQUIRED !== 'undefined' && _PI_TP_REQUIRED) || false;
+                var needsPrompt = tpReq ? !window._activeTreatmentPlan : (!window._activeTreatmentPlan && !window._hasShownNoActivePlanPrompt);
+                if (isTpActive && needsPrompt && $('#tpNoActivePlanPromptModal').length) {
+                    window.tpPendingNavClick = id_of_next_tab;
+                    $('#tpNoActivePlanPromptModal').modal('show');
+                    return false;
+                }
+            }
+
+            var $tab = $('#' + id_of_next_tab);
+
+            // Explicitly deactivate all top-level tab panes to prevent tab stacking
+            $('#myTabContent > .tab-pane').removeClass('show active');
+
+            // Find target pane ID from href or data attributes
+            var targetPaneId = $tab.attr('data-bs-target') || $tab.attr('data-target') || $tab.attr('href');
+            var $targetPane = null;
+            if (targetPaneId && targetPaneId.indexOf('#') !== -1) {
+                $targetPane = $('#' + targetPaneId.replace('#', ''));
+            }
+            if (!$targetPane || !$targetPane.length) {
+                var inferredId = id_of_next_tab.replace('_tab', '').replace('mobile_', '').replace('_data', '');
+                $targetPane = $('#' + inferredId);
+            }
+
+            if ($targetPane && $targetPane.length) {
+                $targetPane.addClass('show active');
+            }
+
+            // Sync sidebar / mobile tab active states
+            $('.encounter-sidebar .nav-link, .mobile-bottom-nav .nav-link').removeClass('active');
+            $tab.addClass('active');
+
+            if (typeof window.updateFloatingNav === 'function') {
+                window.updateFloatingNav(id_of_next_tab);
+            }
+
+            if ($tab.length && typeof $.fn.tab === 'function') {
+                try { $tab.tab('show'); } catch(err) {}
+            }
+            
+            // Explicitly trigger the shown event because manual class manipulation above 
+            // often causes Bootstrap to skip firing it.
+            if ($tab.length) {
+                $tab.trigger('shown.bs.tab');
+                if ($tab[0]) {
+                    try {
+                        $tab[0].dispatchEvent(new Event('shown.bs.tab', { bubbles: true, cancelable: true }));
+                    } catch(e) {}
+                }
+            }
+
+            // Scroll to top
+            $('html, body, .content-wrapper, .encounter-sidebar-wrapper').animate({ scrollTop: 0 }, 'fast');
         }
 
         function toggleAdmitNote(obj) {
@@ -3968,12 +4372,19 @@
         // Helper function to disable/enable button
         function setButtonLoading(buttonId, loading) {
             const btn = document.getElementById(buttonId);
+            if (!btn) return;
+            
             if (loading) {
                 btn.disabled = true;
+                btn.dataset.originalHtml = btn.innerHTML;
                 btn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Saving...';
             } else {
                 btn.disabled = false;
-                btn.innerHTML = '<i class="fa fa-save"></i> Save & Next';
+                if (btn.dataset.originalHtml) {
+                    btn.innerHTML = btn.dataset.originalHtml;
+                } else {
+                    btn.innerHTML = '<i class="fa fa-save"></i> Save';
+                }
             }
         }
 
@@ -4009,9 +4420,34 @@
                 }
 
                 if (!parsedReasons || parsedReasons.length === 0) {
+                    // Inline highlight and error message
+                    $('#reasons_for_encounter_search').addClass('is-invalid');
+                    if ($('#reasons_inline_error').length === 0) {
+                        $('#reasons_for_encounter_search').parent().after('<div id="reasons_inline_error" class="invalid-feedback d-block fw-bold mb-2"><i class="fa fa-exclamation-triangle"></i> Please select at least one applicable diagnosis, or toggle off "Diagnosis Applicable".</div>');
+                    }
+                    
+                    // Scroll to the field
+                    $('html, body, .content-wrapper, .encounter-sidebar-wrapper').animate({
+                        scrollTop: $('#reasons_for_encounter_search').offset().top - 120
+                    }, 500);
+                    
+                    // Rich Modal alert
+                    if (typeof Swal !== 'undefined') {
+                        Swal.fire({
+                            icon: 'warning',
+                            title: 'Missing Diagnosis',
+                            html: 'You have indicated that a diagnosis is applicable.<br><br><b>Please select at least one diagnosis reason to proceed</b>, or toggle off the switch if no diagnosis is applicable yet.',
+                            confirmButtonColor: '#d33',
+                            confirmButtonText: '<i class="fa fa-check"></i> Understood'
+                        });
+                    }
+
                     showMessage('diagnosis_save_message', 'Please select at least one diagnosis reason or toggle off "Diagnosis Applicable"', 'error');
                     setButtonLoading('save_diagnosis_btn', false);
                     return;
+                } else {
+                    $('#reasons_for_encounter_search').removeClass('is-invalid');
+                    $('#reasons_inline_error').remove();
                 }
 
                 // Send reasons as values (code-name format) for backward compat
@@ -4578,7 +5014,7 @@
                     $('#referrals-loading').hide();
                     var html = '';
                     if (data.referrals && data.referrals.length> 0) {
-                        $('#referral-count-badge').text(data.referrals.length).show();
+                        $('.referral-count-badge').text(data.referrals.length).show();
                         $('#ref-encounter-count').text(data.referrals.length);
                         data.referrals.forEach(function(ref) {
                             var urgencyBadge = {
@@ -5094,4 +5530,103 @@
             }
         });
     </script>
+
+    {{-- ═══ Universal Sticky Bottom Prev/Next Tab Navigation ═══ --}}
+    <script>
+    $(document).ready(function() {
+        // Define the tab navigation order (tab_pane_id → sidebar_tab_id)
+        var tabOrder = [
+            @if($plansEnabled)
+            { pane: 'treatment_plans', tab: 'treatment_plans_tab', label: 'Plans' },
+            @endif
+            { pane: 'clinical_story', tab: 'clinical_story_tab', label: 'Story' },
+            { pane: 'vitals', tab: 'vitals_data_tab', label: 'Vitals' },
+            { pane: 'nurse_charts', tab: 'nurse_charts_tab', label: 'Nurse Charts' },
+            { pane: 'inj_imm_history', tab: 'inj_imm_history_tab', label: 'Inj/Imm' },
+            { pane: 'clinical_notes', tab: 'clinical_notes_tab', label: 'Notes' },
+            { pane: 'laboratory_services', tab: 'laboratory_services_tab', label: 'Labs' },
+            { pane: 'imaging_services', tab: 'imaging_services_tab', label: 'Imaging' },
+            { pane: 'medications', tab: 'medications_tab', label: 'Meds' },
+            { pane: 'non_pharm', tab: 'non_pharm_tab', label: 'Care Plan' },
+            { pane: 'procedures', tab: 'procedures_tab', label: 'Procedures' },
+            { pane: 'admissions', tab: 'admissions_tab', label: 'Admissions' },
+            { pane: 'referrals', tab: 'referrals_tab', label: 'Referrals' }
+        ];
+
+        window.encounterTabOrder = tabOrder;
+
+        window.updateFloatingNav = function(activeTabId) {
+            var activePane = activeTabId ? activeTabId.replace('_tab', '').replace('mobile_', '').replace('_data', '') : 'treatment_plans';
+            var idx = window.encounterTabOrder.findIndex(function(t) { return t.pane === activePane || t.tab === activeTabId; });
+            if (idx === -1) {
+                // Fallback check
+                if (activeTabId === 'vitals_data_tab' || activeTabId === 'vitals') idx = 2;
+                else idx = 0;
+            }
+
+            var item = window.encounterTabOrder[idx];
+            var prevHtml = '', saveHtml = '', nextHtml = '';
+
+            // Previous Button
+            if (idx > 0) {
+                var prev = window.encounterTabOrder[idx - 1];
+                prevHtml = '<button type="button" class="btn btn-outline-secondary shadow-sm" onclick="switch_tab(event, \'' + prev.tab + '\')">' +
+                    '<i class="fa fa-chevron-left me-1"></i> ' + prev.label + '</button>';
+            }
+
+            // Save Button (for tabs that have forms — Notes)
+            if (item.pane === 'clinical_notes') {
+                saveHtml = '<button type="button" id="save_diagnosis_btn" class="btn btn-outline-success shadow-sm ms-2 me-2" onclick="if(typeof saveDiagnosis === \'function\') saveDiagnosis(true);" title="Save">' +
+                    '<i class="fa fa-save me-1"></i> Save</button>';
+            }
+
+            // Next Button
+            if (idx < window.encounterTabOrder.length - 1) {
+                var next = window.encounterTabOrder[idx + 1];
+                nextHtml = '<button type="button" class="btn btn-primary shadow-sm" onclick="switch_tab(event, \'' + next.tab + '\')">' +
+                    next.label + ' <i class="fa fa-chevron-right ms-1"></i></button>';
+            } else {
+                nextHtml = '<button type="button" class="btn btn-success shadow-sm" onclick="$(\'#concludeEncounterModal\').modal(\'show\')">' +
+                    '<i class="fa fa-check-circle me-1"></i> Conclude Encounter</button>';
+            }
+
+            $('#floating-nav-prev-container').html(prevHtml);
+            $('#floating-nav-save-container').html(saveHtml);
+            $('#floating-nav-next-container').html(nextHtml);
+        };
+
+        // Initialize floating nav for initial active tab
+        var initialTab = $('#myTabContent > .tab-pane.active').attr('id') || 'treatment_plans';
+        window.updateFloatingNav(initialTab);
+
+        // Listen for all Bootstrap tab changes to update floating nav automatically
+        $('a[data-toggle="tab"], a[data-bs-toggle="tab"], button[data-bs-toggle="tab"]').on('shown.bs.tab', function (e) {
+            var targetId = $(e.target).attr('href') || $(e.target).attr('data-bs-target') || $(e.target).attr('data-target');
+            if (targetId) {
+                targetId = targetId.replace('#', '');
+                
+                // Only update floating nav if it's a main tab (avoids resetting on sub-tab navigation)
+                var activePaneToCheck = targetId.replace('_tab', '').replace('mobile_', '').replace('_data', '');
+                var isMainTab = window.encounterTabOrder.some(function(t) { 
+                    return t.pane === activePaneToCheck || t.tab === targetId; 
+                });
+                
+                // Extra check for fallback tabs
+                if (targetId === 'vitals' || targetId === 'vitals_data_tab') isMainTab = true;
+                
+                if (isMainTab) {
+                    window.updateFloatingNav(targetId);
+                    // Scroll to top of main content when switching main tabs, with a delay
+                    setTimeout(function() {
+                        var anchor = document.getElementById('tab-top-scroll-anchor');
+                        if (anchor) {
+                            anchor.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                        }
+                    }, 300);
+                }
+            }
+        });
+    });
+    </script>
 @endsection
+

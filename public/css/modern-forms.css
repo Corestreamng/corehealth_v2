@@ -360,3 +360,18 @@ textarea.form-control-modern {
     align-items: center !important;
     font-size: 0.95rem !important;
 }
+
+/* ═══ Mobile: Reduce card chrome globally ═══ */
+@media (max-width: 767.98px) {
+    .card-modern {
+        border-radius: 0.5rem;
+        margin-bottom: 0.75rem;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+    }
+    .card-modern > .card-body {
+        padding: 0.75rem;
+    }
+    .card-modern > .card-header {
+        padding: 0.6rem 0.75rem;
+    }
+}
