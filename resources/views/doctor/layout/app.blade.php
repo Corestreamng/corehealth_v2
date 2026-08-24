@@ -92,6 +92,16 @@
 <!-- Custom js for this page -->
 <script src="{{asset('admin/assets/js/dashboard.js')}}"></script>
 <!-- End custom js for this page -->
+<!-- Global AJAX Interceptor for Subfolder Hosting -->
+<script>
+    $.ajaxPrefilter(function(options, originalOptions, jqXHR) {
+        var baseUrl = "{{ url('/') }}";
+        if (baseUrl !== '/' && options.url && options.url.startsWith('/')) {
+            baseUrl = baseUrl.replace(/\/$/, "");
+            options.url = baseUrl + options.url;
+        }
+    });
+</script>
 </body>
 
 </html>

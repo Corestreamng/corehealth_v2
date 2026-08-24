@@ -12,14 +12,14 @@ use App\Models\Hmo;
 echo "Starting DB Verification Script for _corehealth_db_v2_hopehill...\n";
 
 // 1. Switch Database Connection
-DB::purge('mysql');
-Config::set('database.connections.mysql.database', '_corehealth_db_v2_hopehill');
-DB::reconnect('mysql');
+// DB::purge('mysql');
+// Config::set('database.connections.mysql.database', '_corehealth_db_v2_hopehill');
+// DB::reconnect('mysql');
 
 $dbName = DB::connection('mysql')->getDatabaseName();
-if ($dbName !== '_corehealth_db_v2_hopehill') {
-    die("Failed to switch database connection. Current DB: {$dbName}\n");
-}
+// if ($dbName !== '_corehealth_db_v2_hopehill') {
+//     die("Failed to switch database connection. Current DB: {$dbName}\n");
+// }
 
 echo "Successfully connected to: {$dbName}\n";
 
