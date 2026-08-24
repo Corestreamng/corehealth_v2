@@ -415,6 +415,7 @@ class EncounterController extends Controller
     {
         try {
             $query = Encounter::query()
+                ->with(['patient.user', 'patient.hmo', 'doctor', 'queue.clinic'])
                 ->when($request->filled(['start_date', 'end_date']), function ($query) use ($request) {
                     return $query->whereBetween('created_at', [
                         $request->start_date . ' 00:00:00',
@@ -426,30 +427,61 @@ class EncounterController extends Controller
             return DataTables::of($query)
                 ->addIndexColumn()
                 ->addColumn('fullname', function ($queue) {
-                    return ($queue->patient) ? userfullname($queue->patient->user_id) : 'N/A';
+                    if ($queue->patient && $queue->patient->user) {
+                        return trim($queue->patient->user->surname . ' ' . $queue->patient->user->firstname . ' ' . $queue->patient->user->othername);
+                    }
+                    return 'N/A';
+                })
+                ->filterColumn('fullname', function($query, $keyword) {
+                    $query->whereHas('patient', function($q) use($keyword) {
+                        $q->where('file_no', 'like', "%{$keyword}%")
+                          ->orWhereHas('user', function($q2) use($keyword) {
+                              $q2->where('firstname', 'like', "%{$keyword}%")
+                                 ->orWhere('surname', 'like', "%{$keyword}%")
+                                 ->orWhere('othername', 'like', "%{$keyword}%");
+                          });
+                    });
                 })
                 ->editColumn('created_at', function ($note) {
                     return date('h:i a D M j, Y', strtotime($note->created_at));
                 })
                 ->addColumn('hmo_id', function ($queue) {
-                    $patient = Patient::find($queue->patient_id);
-
-                    if (!$patient) return 'N/A';
-                    if (!$patient->hmo_id) return 'N/A';
-
-                    $hmo = Hmo::find($patient->hmo_id);
-                    return $hmo ? $hmo->name : 'N/A';
+                    if ($queue->patient && $queue->patient->hmo) {
+                        return $queue->patient->hmo->name;
+                    }
+                    return 'N/A';
+                })
+                ->filterColumn('hmo_id', function($query, $keyword) {
+                    $query->whereHas('patient.hmo', function($q) use($keyword) {
+                        $q->where('name', 'like', "%{$keyword}%");
+                    });
                 })
                 ->addColumn('clinic_id', function ($queue) {
-                    $clinic = Clinic::find($queue->clinic_id);
-                    return $clinic ? $clinic->name : 'N/A';
+                    if ($queue->queue && $queue->queue->clinic) {
+                        return $queue->queue->clinic->name;
+                    }
+                    return 'N/A';
+                })
+                ->filterColumn('clinic_id', function($query, $keyword) {
+                    $query->whereHas('queue.clinic', function($q) use($keyword) {
+                        $q->where('name', 'like', "%{$keyword}%");
+                    });
                 })
                 ->editColumn('doctor_id', function ($queue) {
-                    return $queue->doctor_id ? userfullname($queue->doctor_id) : 'N/A';
+                    if ($queue->doctor) {
+                        return trim($queue->doctor->surname . ' ' . $queue->doctor->firstname . ' ' . $queue->doctor->othername);
+                    }
+                    return 'N/A';
+                })
+                ->filterColumn('doctor_id', function($query, $keyword) {
+                    $query->whereHas('doctor', function($q) use($keyword) {
+                        $q->where('firstname', 'like', "%{$keyword}%")
+                          ->orWhere('surname', 'like', "%{$keyword}%")
+                          ->orWhere('othername', 'like', "%{$keyword}%");
+                    });
                 })
                 ->addColumn('file_no', function ($queue) {
-                    $patient = Patient::find($queue->patient_id);
-                    return $patient ? $patient->file_no : 'N/A';
+                    return $queue->patient ? $queue->patient->file_no : 'N/A';
                 })
                 ->addColumn('patient_link', function ($queue) {
                     return $queue->patient_id ? route('patient.show', $queue->patient_id) : '';
