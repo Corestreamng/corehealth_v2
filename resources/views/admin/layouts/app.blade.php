@@ -1981,6 +1981,12 @@ rgba(255, 255, 255, 0.7) !important;
 
         /* Prevent cards inside dataTables from becoming fullscreen on mobile */
         @media (max-width: 767.98px) {
+            /* Reduce whitespace on mobile */
+            .content-wrapper {
+                padding-left: 5px !important;
+                padding-right: 5px !important;
+            }
+
             .dataTables_wrapper .card,
             .table-responsive .card,
             .clinical-tab-body .card,
@@ -2242,6 +2248,18 @@ rgba(255, 255, 255, 0.7) !important;
     @endif
 
     <script>
+        // Global AJAX Interceptor for Subfolder Hosting
+        // Automatically prepends the base URL to any relative AJAX path that starts with "/"
+        $.ajaxPrefilter(function(options, originalOptions, jqXHR) {
+            var baseUrl = "{{ url('/') }}";
+            // If baseUrl is not just '/', and the request url starts with '/' but doesn't already have the baseUrl
+            if (baseUrl !== '/' && options.url && options.url.startsWith('/')) {
+                // Remove trailing slash from baseUrl if present
+                baseUrl = baseUrl.replace(/\/$/, "");
+                options.url = baseUrl + options.url;
+            }
+        });
+
         setInterval(function() {
             $.get('/csrf-token').done(function(data) {
                 $('meta[name="csrf-token"]').attr('content', data.token);
