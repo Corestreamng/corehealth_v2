@@ -26,22 +26,24 @@
         #print-header { display:none; }
 
         /* ── A4 print ─────────────────────────────────────────────── */
+        .thermal-only { display: none !important; }
         @media print {
             .no-print, .filter-bar { display:none !important; }
             body { background:#fff !important; }
             .card-modern { box-shadow:none !important; border:1px solid #ccc !important; }
             #print-header { display:block !important; }
-            /* thermal overrides – applied via body class */
+            body.thermal-mode .a4-only { display: none !important; }
+            body.thermal-mode .thermal-only { display: block !important; }
         }
         body.thermal-mode #print-header { display:block; }
-        body.thermal-mode .sr-container { max-width:320px !important; margin:0 auto; font-size:11px; }
-        body.thermal-mode .table th, body.thermal-mode .table td { padding:2px 4px !important; font-size:11px; }
+        body.thermal-mode .sr-container { max-width:320px !important; margin:0 auto; font-size:12px; font-family: monospace, sans-serif; color: #000; }
         body.thermal-mode #print-header .hos-logo { max-width:64px; }
-        body.thermal-mode #print-header h4 { font-size:13px; }
-        body.thermal-mode #print-header small { font-size:10px; }
-        @media print {
-            body.thermal-mode * { max-width:320px; }
-        }
+        body.thermal-mode #print-header h4 { font-size:14px; text-transform: uppercase; }
+        body.thermal-mode #print-header small { font-size:11px; }
+        body.thermal-mode .thermal-item { border-bottom: 1px dashed #888; padding: 4px 0; margin-bottom: 4px; }
+        body.thermal-mode .thermal-item:last-child { border-bottom: none; }
+        body.thermal-mode .thermal-row { display: flex; justify-content: space-between; gap: 4px; }
+        body.thermal-mode .section-header { background: transparent; color: #000; border-bottom: 1px solid #000; font-size: 13px; text-transform: uppercase; border-radius: 0; padding: 4px 0; margin-bottom: 4px; text-align: center; }
     </style>
 @endsection
 @section('content')
@@ -134,7 +136,7 @@
                 <div class="service-section">
                     <div class="section-header"><i class="mdi mdi-stethoscope mr-2"></i>Consultations ({{ count($consultation) }})</div>
                     <div class="card-modern" style="border-radius:0 0 6px 6px;">
-                        <div class="table-responsive">
+                        <div class="table-responsive a4-only">
                             <table class="table table-sm table-bordered table-striped mb-0">
                                 <thead class="thead-light">
                                     <tr><th>#</th><th>Date</th><th>Doctor</th><th>Specialization</th><th>Notes Summary</th></tr>
@@ -152,6 +154,19 @@
                                 </tbody>
                             </table>
                         </div>
+                        <div class="thermal-only">
+                            @foreach($consultation as $i => $con)
+                                <div class="thermal-item">
+                                    <div class="thermal-row">
+                                        <strong>{{ $con->created_at?->format('d M y') }}</strong>
+                                        <span>{{ $con->doctor && $con->doctor->staff_profile ? userfullname($con->doctor->staff_profile->user_id) : 'N/A' }}</span>
+                                    </div>
+                                    <div class="mt-1" style="font-size:0.9em;">
+                                        {!! $con->notes ? \Illuminate\Support\Str::limit(strip_tags($con->notes), 60) : '<em>No notes</em>' !!}
+                                    </div>
+                                </div>
+                            @endforeach
+                        </div>
                     </div>
                 </div>
             @endif
@@ -161,7 +176,7 @@
                 <div class="service-section">
                     <div class="section-header"><i class="mdi mdi-pill mr-2"></i>Prescriptions ({{ count($prescription) }})</div>
                     <div class="card-modern" style="border-radius:0 0 6px 6px;">
-                        <div class="table-responsive">
+                        <div class="table-responsive a4-only">
                             <table class="table table-sm table-bordered table-striped mb-0">
                                 <thead class="thead-light">
                                     <tr><th>#</th><th>Date</th><th>Product</th><th>Dose / Sig</th><th>Qty</th><th>Status</th><th>Prescribed By</th></tr>
@@ -186,6 +201,28 @@
                                 </tbody>
                             </table>
                         </div>
+                        <div class="thermal-only">
+                            @foreach($prescription as $i => $pres)
+                                @php
+                                    $statusLabels = [0=>'Pending',1=>'Dispensed',2=>'Partially Dispensed',3=>'Cancelled'];
+                                    $st = $pres->status ?? 0;
+                                @endphp
+                                <div class="thermal-item">
+                                    <div class="thermal-row">
+                                        <strong>{{ $pres->product ? $pres->product->product_name : 'N/A' }}</strong>
+                                        <span>x{{ $pres->quantity ?? '1' }}</span>
+                                    </div>
+                                    <div class="thermal-row mt-1" style="font-size:0.9em;">
+                                        <span>{{ $pres->dose ?? '' }} {{ $pres->sig ?? '' }}</span>
+                                        <span>[{{ $statusLabels[$st] ?? 'Unk' }}]</span>
+                                    </div>
+                                    <div class="thermal-row mt-1" style="font-size:0.8em;">
+                                        <span>{{ $pres->created_at?->format('d M y') }}</span>
+                                        <span>{{ $pres->doctor_id ? \Illuminate\Support\Str::limit(userfullname($pres->doctor_id), 15) : '' }}</span>
+                                    </div>
+                                </div>
+                            @endforeach
+                        </div>
                     </div>
                 </div>
             @endif
@@ -195,7 +232,7 @@
                 <div class="service-section">
                     <div class="section-header"><i class="mdi mdi-flask-outline mr-2"></i>Lab Investigations ({{ count($lab) }})</div>
                     <div class="card-modern" style="border-radius:0 0 6px 6px;">
-                        <div class="table-responsive">
+                        <div class="table-responsive a4-only">
                             <table class="table table-sm table-bordered table-striped mb-0">
                                 <thead class="thead-light">
                                     <tr><th>#</th><th>Date</th><th>Investigation</th><th>Result</th><th>Status</th><th>Requested By</th></tr>
@@ -219,6 +256,29 @@
                                 </tbody>
                             </table>
                         </div>
+                        <div class="thermal-only">
+                            @foreach($lab as $i => $la)
+                                @php
+                                    $labSt = $la->status ?? 0;
+                                    $labLabels  = [0=>'Pending',1=>'Approved',2=>'Resulted',3=>'Verified'];
+                                @endphp
+                                <div class="thermal-item">
+                                    <div class="thermal-row">
+                                        <strong>{{ $la->service ? $la->service->service_name : 'N/A' }}</strong>
+                                        <span>[{{ $labLabels[$labSt] ?? 'N/A' }}]</span>
+                                    </div>
+                                    @if($la->result)
+                                    <div class="mt-1" style="font-size:0.9em;">
+                                        <em>Res:</em> {{ \Illuminate\Support\Str::limit(strip_tags($la->result), 40) }}
+                                    </div>
+                                    @endif
+                                    <div class="thermal-row mt-1" style="font-size:0.8em;">
+                                        <span>{{ $la->created_at?->format('d M y') }}</span>
+                                        <span>Req: {{ \Illuminate\Support\Str::limit(userfullname($la->doctor_id), 12) }}</span>
+                                    </div>
+                                </div>
+                            @endforeach
+                        </div>
                     </div>
                 </div>
             @endif
@@ -228,7 +288,7 @@
                 <div class="service-section">
                     <div class="section-header"><i class="mdi mdi-bed-outline mr-2"></i>Admissions ({{ count($bed) }})</div>
                     <div class="card-modern" style="border-radius:0 0 6px 6px;">
-                        <div class="table-responsive">
+                        <div class="table-responsive a4-only">
                             <table class="table table-sm table-bordered table-striped mb-0">
                                 <thead class="thead-light">
                                     <tr><th>#</th><th>Admission Date</th><th>Discharge Date</th><th>Days</th><th>Ward / Bed</th><th>Status</th></tr>
@@ -260,6 +320,26 @@
                                 </tbody>
                             </table>
                         </div>
+                        <div class="thermal-only">
+                            @foreach($bed as $i => $be)
+                                @php
+                                    $admit = $be->created_at;
+                                    $disch = $be->discharge_date ? \Carbon\Carbon::parse($be->discharge_date) : null;
+                                    $bedLabel = $be->bed ? ($be->bed->name ?? 'N/A') : 'N/A';
+                                    $ward = $be->bed && $be->bed->ward ? $be->bed->ward->name : 'N/A';
+                                @endphp
+                                <div class="thermal-item">
+                                    <div class="thermal-row">
+                                        <strong>{{ $ward }} / {{ $bedLabel }}</strong>
+                                        <span>{{ $disch ? 'Discharged' : 'Active' }}</span>
+                                    </div>
+                                    <div class="thermal-row mt-1" style="font-size:0.8em;">
+                                        <span>In: {{ $admit?->format('d M y') }}</span>
+                                        <span>Out: {{ $disch ? $disch->format('d M y') : '—' }}</span>
+                                    </div>
+                                </div>
+                            @endforeach
+                        </div>
                     </div>
                 </div>
             @endif
@@ -269,7 +349,7 @@
                 <div class="service-section">
                     <div class="section-header"><i class="mdi mdi-clipboard-pulse-outline mr-2"></i>Nursing Services ({{ count($misc) }})</div>
                     <div class="card-modern" style="border-radius:0 0 6px 6px;">
-                        <div class="table-responsive">
+                        <div class="table-responsive a4-only">
                             <table class="table table-sm table-bordered table-striped mb-0">
                                 <thead class="thead-light">
                                     <tr><th>#</th><th>Date</th><th>Service</th><th>Category</th><th>Qty</th><th>Amount</th><th>Performed By</th></tr>
@@ -288,6 +368,20 @@
                                     @endforeach
                                 </tbody>
                             </table>
+                        </div>
+                        <div class="thermal-only">
+                            @foreach($misc as $i => $mis)
+                                <div class="thermal-item">
+                                    <div class="thermal-row">
+                                        <strong>{{ $mis->service ? \Illuminate\Support\Str::limit($mis->service->service_name, 20) : 'N/A' }}</strong>
+                                        <span>x{{ $mis->quantity ?? 1 }}</span>
+                                    </div>
+                                    <div class="thermal-row mt-1" style="font-size:0.8em;">
+                                        <span>{{ $mis->created_at?->format('d M y') }}</span>
+                                        <span>{{ \Illuminate\Support\Str::limit(userfullname($mis->created_by), 12) }}</span>
+                                    </div>
+                                </div>
+                            @endforeach
                         </div>
                     </div>
                 </div>
