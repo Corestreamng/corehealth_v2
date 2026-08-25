@@ -103,6 +103,9 @@ class ApplicationStatu extends Model implements Auditable
         'llm_config',
         'enable_structured_dose',
         'default_dose_mode',
+        'thermal_printer_width',
+        'doctor_full_admission',
+        'doctor_full_discharge',
     ];
 
     protected $casts = [

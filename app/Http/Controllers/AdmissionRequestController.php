@@ -653,7 +653,12 @@ class AdmissionRequestController extends Controller
             DB::commit();
 
             if ($request->expectsJson()) {
-                return response()->json(['message' => 'Admission request created successfully'], 201);
+                return response()->json([
+                    'message' => 'Admission request created successfully',
+                    'data' => [
+                        'id' => $admissionRequest->id
+                    ]
+                ], 201);
             }
 
             return back()->withMessage('Admission request created successfully')->withMessageType('success');
