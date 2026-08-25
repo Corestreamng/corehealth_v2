@@ -87,6 +87,7 @@ class HospitalConfigController extends Controller
             'timezone' => 'nullable|string|max:50',
             'language' => 'nullable|string|in:en,fr,nl,es,pt,ar,zh',
             'currency_symbol' => 'nullable|string|max:10',
+            'thermal_printer_width' => 'nullable|string|in:xp58,w58,w76,w80,w112',
 
             // Integration Settings
             'client_id' => 'nullable|string',
@@ -149,6 +150,9 @@ class HospitalConfigController extends Controller
             'allow_halve_sale' => 'boolean',
             'consent_template' => 'nullable|string',
             'llm_config' => 'nullable|array',
+            // Dose Settings
+            'enable_structured_dose' => 'boolean',
+            'default_dose_mode' => 'nullable|in:simple,structured',
         ]);
 
         $config = ApplicationStatu::first();
@@ -181,6 +185,8 @@ class HospitalConfigController extends Controller
         $validated['backup_compression'] = $request->has('backup_compression');
         $validated['allow_piece_sale'] = $request->has('allow_piece_sale');
         $validated['allow_halve_sale'] = $request->has('allow_halve_sale');
+        $validated['enable_structured_dose'] = $request->has('enable_structured_dose');
+        $validated['default_dose_mode'] = $request->input('default_dose_mode', 'structured');
 
         // Handle LLM Config Checkboxes and processing
         if ($request->has('llm_config')) {

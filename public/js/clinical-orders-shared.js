@@ -598,22 +598,22 @@ window.ClinicalOrdersKit = jQuery.extend(window.ClinicalOrdersKit || {}, (functi
 
         return '<div class="' + wrapCls + '"' + rowIdAttr + '>' +
             '<div class="row g-1 mb-1">' +
-                '<div class="col-4">' +
+                '<div class="col-4" style="min-width:90px;">' +
                     '<span class="co-field-label">Amount</span>' +
-                    '<input type="number" class="form-control form-control-sm ' + amtCls + '" placeholder="e.g. 500" min="0" step="0.01" ' + focusAttr + ' ' + blurAttr + ' ' + idleAttr + '>' +
+                    '<input type="number" class="form-control form-control-sm ' + amtCls + '" placeholder="e.g. 500" min="0" step="0.01" style="min-width:80px;" ' + focusAttr + ' ' + blurAttr + ' ' + idleAttr + '>' +
                     '<span class="co-field-hint">e.g. 500, 1.5</span>' +
                 '</div>' +
-                '<div class="col-4">' +
+                '<div class="col-4" style="min-width:90px;">' +
                     '<span class="co-field-label">Unit</span>' +
-                    '<select class="form-select form-select-sm ' + unitCls + '" ' + selAttr + '>' +
+                    '<select class="form-select form-select-sm ' + unitCls + '" style="min-width:80px;" ' + selAttr + '>' +
                         '<option value="mg">mg</option><option value="g">g</option><option value="ml">ml</option>' +
                         '<option value="IU">IU</option><option value="mcg">mcg</option><option value="units">units</option>' +
                         '<option value="drops">drops</option><option value="puffs">puffs</option>' +
                     '</select>' +
                 '</div>' +
-                '<div class="col-4">' +
+                '<div class="col-4" style="min-width:110px;">' +
                     '<span class="co-field-label">Route</span>' +
-                    '<select class="form-select form-select-sm ' + routeCls + '" ' + selAttr + '>' +
+                    '<select class="form-select form-select-sm ' + routeCls + '" style="min-width:100px;" ' + selAttr + '>' +
                         '<option value="PO">PO (Oral)</option><option value="IV">IV</option><option value="IM">IM</option>' +
                         '<option value="SC">SC</option><option value="SL">SL</option><option value="PR">PR</option>' +
                         '<option value="INH">INH (Inhaled)</option><option value="TOP">Topical</option>' +
@@ -623,29 +623,29 @@ window.ClinicalOrdersKit = jQuery.extend(window.ClinicalOrdersKit || {}, (functi
                 '</div>' +
             '</div>' +
             '<div class="row g-1">' +
-                '<div class="col-4">' +
+                '<div class="col-4" style="min-width:110px;">' +
                     '<span class="co-field-label">Frequency</span>' +
-                    '<select class="form-select form-select-sm ' + freqCls + '" ' + selAttr + '>' +
+                    '<select class="form-select form-select-sm ' + freqCls + '" style="min-width:100px;" ' + selAttr + '>' +
                         '<option value="OD">OD (once daily)</option><option value="BD">BD (twice daily)</option>' +
                         '<option value="TDS">TDS (3x daily)</option><option value="QID">QID (4x daily)</option>' +
                         '<option value="Q4H">Q4H</option><option value="Q6H">Q6H</option><option value="Q8H">Q8H</option>' +
                         '<option value="Q12H">Q12H</option><option value="PRN">PRN (as needed)</option><option value="STAT">STAT (once)</option>' +
                     '</select>' +
                 '</div>' +
-                '<div class="col-4">' +
+                '<div class="col-4" style="min-width:120px;">' +
                     '<span class="co-field-label">Duration</span>' +
                     '<div class="input-group input-group-sm">' +
-                        '<input type="number" class="form-control ' + durCls + '" placeholder="e.g. 5" min="1" ' + focusAttr + ' ' + blurAttr + ' ' + idleAttr + '>' +
-                        '<select class="form-select ' + durUCls + '" style="max-width:70px;" ' + selAttr + '>' +
+                        '<input type="number" class="form-control ' + durCls + '" placeholder="e.g. 5" min="1" style="min-width:52px;" ' + focusAttr + ' ' + blurAttr + ' ' + idleAttr + '>' +
+                        '<select class="form-select ' + durUCls + '" style="min-width:50px; max-width:70px;" ' + selAttr + '>' +
                             '<option value="days">d</option><option value="weeks">w</option><option value="months">m</option>' +
                         '</select>' +
                     '</div>' +
                     '<span class="co-field-hint">e.g. 5 days</span>' +
                 '</div>' +
-                '<div class="col-4">' +
+                '<div class="col-4" style="min-width:90px;">' +
                     '<span class="co-field-label">Qty to dispense</span>' +
                     '<div class="input-group input-group-sm">' +
-                        '<input type="number" class="form-control ' + qtyCls + '" placeholder="e.g. 10" min="1" ' + focusAttr + ' ' + blurAttr + ' ' + idleAttr + '>' +
+                        '<input type="number" class="form-control ' + qtyCls + '" placeholder="e.g. 10" min="1" style="min-width:75px;" ' + focusAttr + ' ' + blurAttr + ' ' + idleAttr + '>' +
                     '</div>' +
                     '<span class="co-field-hint">auto-calculated</span>' +
                 '</div>' +
@@ -853,20 +853,35 @@ window.ClinicalOrdersKit = jQuery.extend(window.ClinicalOrdersKit || {}, (functi
     function initDoseModeToggle(config) {
         var simpleRadio = document.getElementById(config.prefix + 'dose_mode_simple');
         var structuredRadio = document.getElementById(config.prefix + 'dose_mode_structured');
-        var state = { isStructured: true }; // Structured is default (Plan §2.2)
+        var state = { isStructured: false };
 
         if (!simpleRadio || !structuredRadio) {
-            // Fallback: try old checkbox
-            var checkbox = document.getElementById(config.prefix + 'dose_mode_toggle');
-            if (checkbox) {
-                state.isStructured = checkbox.checked;
+            var hiddenInput = document.querySelector('input[name="' + config.prefix + 'dose_mode"]');
+            if (hiddenInput) {
+                state.isStructured = (hiddenInput.value === 'structured');
+            } else {
+                var checkbox = document.getElementById(config.prefix + 'dose_mode_toggle');
+                if (checkbox) {
+                    state.isStructured = checkbox.checked;
+                }
             }
             return state;
         }
 
+        state.isStructured = !!(structuredRadio && structuredRadio.checked);
+
         function convertRows(isStructured) {
             $(config.tableSelector + ' tr').each(function () {
-                var $td = $(this).find('td:eq(2)');
+                var $row = $(this);
+                var $td = $row.find('input[name="' + config.doseInputName + '"]').closest('td');
+                if (!$td.length) {
+                    $td = $row.find('.structured-dose, .cr-structured-dose').closest('td');
+                }
+                if (!$td.length) {
+                    $td = $row.find('td:eq(1)');
+                }
+                if (!$td.length) return;
+
                 var hiddenId = $td.find('input[name="' + config.idInputName + '"]').prop('outerHTML') || '';
                 if (isStructured) {
                     var val = $td.find('input[name="' + config.doseInputName + '"]').val() || '';
@@ -874,18 +889,46 @@ window.ClinicalOrdersKit = jQuery.extend(window.ClinicalOrdersKit || {}, (functi
                         cssPrefix: config.cssPrefix,
                         hiddenName: config.doseInputName,
                         onchange: config.onchange,
-                        drugName: $(this).attr('data-drug-name') || '',
-                        rowId: $(this).attr('data-row-id') || ''
+                        drugName: $row.attr('data-drug-name') || '',
+                        rowId: $row.attr('data-row-id') || ''
                     }) + hiddenId);
+
+                    if (val) {
+                        var parts = val.split('|');
+                        var amtSel    = (config.cssPrefix || '') ? '.cr-dose-amount' : '.dose-amount';
+                        var unitSel   = (config.cssPrefix || '') ? '.cr-dose-unit' : '.dose-unit';
+                        var routeSel  = (config.cssPrefix || '') ? '.cr-dose-route' : '.dose-route';
+                        var freqSel   = (config.cssPrefix || '') ? '.cr-dose-freq' : '.dose-frequency';
+                        var durSel    = (config.cssPrefix || '') ? '.cr-dose-dur' : '.dose-duration';
+                        var durUSel   = (config.cssPrefix || '') ? '.cr-dose-dur-unit' : '.dose-duration-unit';
+                        var qtySel    = (config.cssPrefix || '') ? '.cr-dose-qty' : '.dose-qty';
+                        var hiddenSel = (config.cssPrefix || '') ? '.cr-structured-dose-value' : '.structured-dose-value';
+
+                        if (parts.length >= 7) {
+                            $td.find(amtSel).val(parts[0]);
+                            $td.find(unitSel).val(parts[1]);
+                            $td.find(routeSel).val(parts[2]);
+                            $td.find(freqSel).val(parts[3]);
+                            $td.find(durSel).val(parts[4]);
+                            $td.find(durUSel).val(parts[5]);
+                            $td.find(qtySel).val(parts[6]);
+                            $td.find(hiddenSel).val(val);
+                        } else {
+                            $td.find(hiddenSel).val(val);
+                        }
+                    }
                 } else {
                     var collapsed = collapseStructuredDose($td, config.cssPrefix);
+                    if (!collapsed) {
+                        collapsed = $td.find('input[name="' + config.doseInputName + '"]').val() || '';
+                    }
                     var oc = config.onchange;
                     var focusAttr = 'onfocus="ClinicalOrdersKit.startPeriodicSave(this)"';
                     var blurAttr  = 'onblur="ClinicalOrdersKit.stopPeriodicSave(this); ClinicalOrdersKit.cancelIdleTimer(this); ' + oc + '"';
                     var idleAttr  = 'oninput="ClinicalOrdersKit.scheduleIdleUpdate(this, function(){ ' + oc + ' }, 3000)"';
 
                     $td.html('<input type="text" class="form-control form-control-sm" name="' +
-                        config.doseInputName + '" value="' + collapsed + '" ' + focusAttr + ' ' + blurAttr + ' ' + idleAttr + ' required>' + hiddenId);
+                        config.doseInputName + '" value="' + collapsed + '" placeholder="e.g. 500mg BD x 5days" ' + focusAttr + ' ' + blurAttr + ' ' + idleAttr + ' required>' + hiddenId);
                 }
             });
         }
