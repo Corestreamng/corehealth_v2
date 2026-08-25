@@ -1455,213 +1455,207 @@ class DoctorAppointmentController extends Controller
         $priorityFilter = $request->input('priority_filter', 'all');
         $clinicFilter = $request->input('clinic_filter', 'all');
 
-        $rows = collect();
+        $patientNameSql = "TRIM(CONCAT(patient_users.surname, ' ', patient_users.firstname, ' ', COALESCE(patient_users.othername, '')))";
+        $bookedByNameSql = "TRIM(CONCAT(booked_by_users.surname, ' ', booked_by_users.firstname, ' ', COALESCE(booked_by_users.othername, '')))";
 
-        // ── 1. Scheduled Appointments (include all upcoming, not just today) ──
-        $appts = DoctorAppointment::with(['patient.user', 'patient.hmo', 'clinic', 'bookedBy.user'])
+        // Pre-fetch linked queue IDs to exclude them from the queues query
+        $linkedQueueIds = DB::table('doctor_appointments')
+            ->where('appointment_date', '>=', $startDate)
+            ->where('status', QueueStatus::SCHEDULED)
             ->where(function ($q) use ($doc) {
                 $q->where('staff_id', $doc->id)
                   ->orWhereIn('clinic_id', $doc->all_clinic_ids);
             })
-            ->where('status', QueueStatus::SCHEDULED)
-            ->where('appointment_date', '>=', $startDate)
-            ->orderBy('appointment_date')
-            ->orderBy('start_time')
-            ->get();
+            ->whereNotNull('doctor_queue_id')
+            ->pluck('doctor_queue_id')->toArray();
 
-        foreach ($appts as $appt) {
-            $user = $appt->patient->user ?? null;
-            $patientName = $user ? ucwords(trim($user->surname . ' ' . $user->firstname . ' ' . ($user->othername ?? ''))) : 'N/A';
-            $hmoName = $appt->patient && $appt->patient->hmo ? $appt->patient->hmo->name : '';
-
-            // Appointments don't have a service request yet — delivery N/A
-            $rows->push([
-                'event_type'       => 'appointment',
-                'record_id'        => $appt->id,
-                'patient_name'     => $patientName,
-                'file_no'          => $appt->patient->file_no ?? 'N/A',
-                'hmo'              => $hmoName,
-                'clinic'           => $appt->clinic->name ?? 'N/A',
-                'status'           => $appt->status,
-                'status_badge'     => QueueStatus::badge($appt->status),
-                'priority'         => $appt->priority ?? 'routine',
-                'source'           => $appt->appointment_type ?? 'scheduled',
-                'is_follow_up'     => $appt->parent_appointment_id !== null,
-                'is_prepaid'       => (bool) $appt->is_prepaid_followup,
-                'time'             => $appt->start_time ? Carbon::parse($appt->start_time)->format('h:i A') : '-',
-                'appointment_date' => $appt->appointment_date ? $appt->appointment_date->format('Y-m-d') : null,
-                'is_future'        => $appt->appointment_date && $appt->appointment_date->gt(Carbon::today()),
-                'sort_time'        => $appt->appointment_date . ' ' . $appt->start_time,
-                'reason'           => \Illuminate\Support\Str::limit($appt->reason ?? $appt->notes ?? '-', 50),
-                'patient_id'       => $appt->patient_id,
-                'clinic_id'        => $appt->clinic_id,
-                'doctor_id'        => $appt->staff_id,
-                'queue_id'         => $appt->doctor_queue_id,
-                'encounter_url'    => null,
-                'can_deliver'      => true,
-                'delivery_reason'  => 'Scheduled',
-                'delivery_hint'    => 'Check in to start encounter',
-                'next_step'        => $this->nextStepHint($appt->status, true, '', 'appointment'),
-                'booked_by'        => $appt->bookedBy ? userfullname($appt->bookedBy->user_id) : 'Unknown',
-                'datetime'         => $appt->created_at ? $appt->created_at->format('Y-m-d h:i A') : '-',
-                'gender'           => $user ? ($user->gender == 'Male' ? 'M' : ($user->gender == 'Female' ? 'F' : 'U')) : 'U',
-                'age'              => ($user && $user->dob) ? Carbon::parse($user->dob)->age : '?',
+        // Query A: Appointments
+        $qA = DB::table('doctor_appointments as da')
+            ->join('patients as p', 'da.patient_id', '=', 'p.id')
+            ->join('users as patient_users', 'p.user_id', '=', 'patient_users.id')
+            ->leftJoin('hmos as h', 'p.hmo_id', '=', 'h.id')
+            ->leftJoin('clinics as c', 'da.clinic_id', '=', 'c.id')
+            ->leftJoin('staff as booked_staff', 'da.booked_by', '=', 'booked_staff.id')
+            ->leftJoin('users as booked_by_users', 'booked_staff.user_id', '=', 'booked_by_users.id')
+            ->where('da.appointment_date', '>=', $startDate)
+            ->where('da.status', QueueStatus::SCHEDULED)
+            ->where(function ($q) use ($doc) {
+                $q->where('da.staff_id', $doc->id)
+                  ->orWhereIn('da.clinic_id', $doc->all_clinic_ids);
+            })
+            ->select([
+                DB::raw("'appointment' as event_type"),
+                'da.id as record_id',
+                'da.patient_id',
+                'da.clinic_id',
+                'da.staff_id as doctor_id',
+                'da.status',
+                'da.priority',
+                'da.appointment_type as source',
+                'da.appointment_date',
+                'da.start_time as time_val',
+                'da.created_at',
+                'da.reason as notes',
+                'da.parent_appointment_id',
+                'da.is_prepaid_followup as is_prepaid',
+                DB::raw("NULL as request_entry_id"),
+                DB::raw("NULL as consultation_started_at"),
+                DB::raw("NULL as last_paused_at"),
+                DB::raw("0 as consultation_paused_seconds"),
+                DB::raw("0 as is_paused"),
+                'p.file_no',
+                'p.gender',
+                'p.dob',
+                'p.phone_no as patient_phone',
+                DB::raw("{$patientNameSql} as patient_name"),
+                'h.name as hmo_name',
+                'c.name as clinic_name',
+                DB::raw("{$bookedByNameSql} as booked_by_name"),
+                DB::raw("CONCAT(da.appointment_date, ' ', da.start_time) as sort_time"),
+                DB::raw("CASE IFNULL(da.priority,'routine') WHEN 'emergency' THEN 1 WHEN 'urgent' THEN 2 WHEN 'routine' THEN 3 ELSE 4 END as priority_level")
             ]);
-        }
 
-        // Collect linked queue IDs
-        $linkedQueueIds = $appts->pluck('doctor_queue_id')->filter()->toArray();
-
-        // ── 2. Doctor Queue entries ────────────────────────────────────
-        $q1 = DoctorQueue::whereIn('clinic_id', $doc->all_clinic_ids)
-            ->whereBetween('created_at', [
+        // Query B: Queues
+        $qB = DB::table('doctor_queues as dq')
+            ->join('patients as p', 'dq.patient_id', '=', 'p.id')
+            ->join('users as patient_users', 'p.user_id', '=', 'patient_users.id')
+            ->leftJoin('hmos as h', 'p.hmo_id', '=', 'h.id')
+            ->leftJoin('clinics as c', 'dq.clinic_id', '=', 'c.id')
+            ->leftJoin('staff as rec_staff', 'dq.receptionist_id', '=', 'rec_staff.id')
+            ->leftJoin('users as booked_by_users', 'rec_staff.user_id', '=', 'booked_by_users.id')
+            ->whereBetween('dq.created_at', [
                 Carbon::parse($startDate)->startOfDay(),
                 Carbon::parse($endDate)->endOfDay(),
             ])
-            ->whereNotIn('status', [QueueStatus::COMPLETED, QueueStatus::CANCELLED, QueueStatus::NO_SHOW]);
+            ->whereNotIn('dq.status', [QueueStatus::COMPLETED, QueueStatus::CANCELLED, QueueStatus::NO_SHOW])
+            ->where(function ($q) use ($doc) {
+                $q->where('dq.staff_id', $doc->id)
+                  ->orWhereIn('dq.clinic_id', $doc->all_clinic_ids);
+            });
 
         if (!empty($linkedQueueIds)) {
-            $q1->whereNotIn('id', $linkedQueueIds);
+            $qB->whereNotIn('dq.id', $linkedQueueIds);
         }
 
-        $q2 = DoctorQueue::where('staff_id', $doc->id)
-            ->whereBetween('created_at', [
-                Carbon::parse($startDate)->startOfDay(),
-                Carbon::parse($endDate)->endOfDay(),
-            ])
-            ->whereNotIn('status', [QueueStatus::COMPLETED, QueueStatus::CANCELLED, QueueStatus::NO_SHOW]);
+        $qB->select([
+            DB::raw("'queue' as event_type"),
+            'dq.id as record_id',
+            'dq.patient_id',
+            'dq.clinic_id',
+            'dq.staff_id as doctor_id',
+            'dq.status',
+            DB::raw("dq.priority COLLATE utf8mb4_unicode_ci as priority"),
+            DB::raw("dq.source COLLATE utf8mb4_unicode_ci as source"),
+            DB::raw("NULL as appointment_date"),
+            DB::raw("TIME(dq.created_at) as time_val"),
+            'dq.created_at',
+            DB::raw("dq.triage_note COLLATE utf8mb4_unicode_ci as notes"),
+            DB::raw("NULL as parent_appointment_id"),
+            DB::raw("0 as is_prepaid"),
+            'dq.request_entry_id',
+            'dq.consultation_started_at',
+            'dq.last_paused_at',
+            'dq.consultation_paused_seconds',
+            'dq.is_paused',
+            'p.file_no',
+            'p.gender',
+            'p.dob',
+            'p.phone_no as patient_phone',
+            DB::raw("{$patientNameSql} as patient_name"),
+            'h.name as hmo_name',
+            'c.name as clinic_name',
+            DB::raw("{$bookedByNameSql} as booked_by_name"),
+            DB::raw("dq.created_at as sort_time"),
+            DB::raw("CASE IFNULL(dq.priority,'routine') WHEN 'emergency' THEN 1 WHEN 'urgent' THEN 2 WHEN 'routine' THEN 3 ELSE 4 END as priority_level")
+        ]);
 
-        if (!empty($linkedQueueIds)) {
-            $q2->whereNotIn('id', $linkedQueueIds);
-        }
+        $unionQuery = $qA->unionAll($qB);
 
-        $queues = $q1->union($q2)
-            ->orderByRaw("CASE IFNULL(priority,'routine') WHEN 'emergency' THEN 1 WHEN 'urgent' THEN 2 WHEN 'routine' THEN 3 ELSE 4 END ASC")
-            ->orderBy('created_at', 'DESC')
-            ->get();
+        $query = DB::table(DB::raw("({$unionQuery->toSql()}) as combined"))
+            ->mergeBindings($unionQuery)
+            ->when($statusFilter !== '' && $statusFilter !== 'all', function ($q) use ($statusFilter) {
+                $q->where('status', (int) $statusFilter);
+            })
+            ->when($sourceFilter !== '' && $sourceFilter !== 'all', function ($q) use ($sourceFilter) {
+                $q->where('source', $sourceFilter);
+            })
+            ->when($priorityFilter !== '' && $priorityFilter !== 'all', function ($q) use ($priorityFilter) {
+                $q->where('priority', $priorityFilter);
+            })
+            ->when($clinicFilter !== '' && $clinicFilter !== 'all', function ($q) use ($clinicFilter) {
+                $q->where('clinic_id', $clinicFilter);
+            })
+            ->orderBy('priority_level', 'asc')
+            ->orderBy('sort_time', 'asc');
 
-        $queues->load(['patient.user', 'patient.hmo', 'clinic', 'receptionist.user']);
-
-        // Batch-load service requests for HMO delivery checks
-        $reqEntryIds = $queues->pluck('request_entry_id')->filter()->unique()->toArray();
-        $reqEntries = !empty($reqEntryIds)
-            ? ProductOrServiceRequest::whereIn('id', $reqEntryIds)->get()->keyBy('id')
-            : collect();
-
-        foreach ($queues as $queue) {
-            $patient = $queue->patient;
-            $user = $patient->user ?? null;
-            $patientName = $user ? ucwords(trim($user->surname . ' ' . $user->firstname . ' ' . ($user->othername ?? ''))) : 'N/A';
-            $hmoName = ($patient && $patient->hmo) ? $patient->hmo->name : '';
-            $clinicName = $queue->clinic->name ?? '';
-
-            // HMO delivery check — determines encounter access + shown in table
-            $encounterUrl = null;
-            $canDeliver = true;
-            $deliveryReason = 'Ready';
-            $deliveryHint = 'Service is ready for delivery.';
-
-            if (in_array($queue->status, [QueueStatus::WAITING, QueueStatus::VITALS_PENDING, QueueStatus::READY, QueueStatus::IN_CONSULTATION])) {
-                $reqEntry = $queue->request_entry_id ? $reqEntries->get($queue->request_entry_id) : null;
-                $deliveryCheck = $reqEntry ? HmoHelper::canDeliverService($reqEntry) : ['can_deliver' => true, 'reason' => 'Ready', 'hint' => 'No service request linked.'];
-                $canDeliver = $deliveryCheck['can_deliver'] ?? true;
-                $deliveryReason = $deliveryCheck['reason'] ?? 'Ready';
-                $deliveryHint = $deliveryCheck['hint'] ?? '';
-
-                if ($canDeliver) {
-                    $encounterUrl = route('encounters.create', [
-                        'patient_id'  => $queue->patient_id,
-                        'req_entry_id' => $queue->request_entry_id,
-                        'queue_id'    => $queue->id,
-                    ]);
-                }
-            }
-
-            // Status badge with timer (use ISO 8601 format for reliable JS Date parsing)
-            $statusBadge = QueueStatus::badge($queue->status);
-            if ($queue->status == QueueStatus::IN_CONSULTATION && $queue->consultation_started_at) {
-                $startedIso = Carbon::parse($queue->consultation_started_at)->toIso8601String();
-                $pausedAtIso = $queue->last_paused_at ? Carbon::parse($queue->last_paused_at)->toIso8601String() : '';
-                $statusBadge .= ' <span class="badge bg-success-subtle text-success mini-timer" data-started="' . $startedIso . '" data-paused-seconds="' . ($queue->consultation_paused_seconds ?? 0) . '" data-is-paused="' . ($queue->is_paused ? '1' : '0') . '" data-last-paused-at="' . $pausedAtIso . '"><i class="mdi mdi-timer"></i> <span class="timer-value">00:00:00</span></span>';
-            }
-
-            $rows->push([
-                'event_type'       => 'queue',
-                'record_id'        => $queue->id,
-                'patient_name'     => $patientName,
-                'file_no'          => $patient->file_no ?? 'N/A',
-                'hmo'              => $hmoName,
-                'clinic'           => $clinicName,
-                'status'           => $queue->status,
-                'status_badge'     => $statusBadge,
-                'priority'         => $queue->priority ?? 'routine',
-                'source'           => $queue->source ?? 'walk_in',
-                'is_follow_up'     => $queue->source === 'follow_up',
-                'is_prepaid'       => false,
-                'time'             => Carbon::parse($queue->created_at)->format('h:i A'),
-                'appointment_date' => null,
-                'is_future'        => false,
-                'sort_time'        => $queue->created_at,
-                'reason'           => \Illuminate\Support\Str::limit($queue->triage_note ?? '-', 50),
-                'patient_id'       => $queue->patient_id,
-                'clinic_id'        => $queue->clinic_id,
-                'doctor_id'        => $queue->staff_id,
-                'queue_id'         => $queue->id,
-                'encounter_url'    => $encounterUrl,
-                'can_deliver'      => $canDeliver,
-                'delivery_reason'  => $deliveryReason,
-                'delivery_hint'    => $deliveryHint,
-                'next_step'        => $this->nextStepHint($queue->status, $canDeliver, $deliveryReason, 'queue'),
-                'booked_by'        => $queue->receptionist ? userfullname($queue->receptionist->user_id) : 'Unknown',
-                'datetime'         => $queue->created_at ? $queue->created_at->format('Y-m-d h:i A') : '-',
-                'gender'           => $user ? ($user->gender == 'Male' ? 'M' : ($user->gender == 'Female' ? 'F' : 'U')) : 'U',
-                'age'              => ($user && $user->dob) ? Carbon::parse($user->dob)->age : '?',
-            ]);
-        }
-
-        // Apply status filter
-        if ($statusFilter !== '' && $statusFilter !== 'all') {
-            $rows = $rows->filter(fn($r) => $r['status'] == (int) $statusFilter);
-        }
-        
-        // Apply source filter
-        if ($sourceFilter !== '' && $sourceFilter !== 'all') {
-            $rows = $rows->filter(fn($r) => $r['source'] === $sourceFilter);
-        }
-
-        // Apply priority filter
-        if ($priorityFilter !== '' && $priorityFilter !== 'all') {
-            $rows = $rows->filter(fn($r) => $r['priority'] === $priorityFilter);
-        }
-
-        // Apply clinic filter
-        if ($clinicFilter !== '' && $clinicFilter !== 'all') {
-            $rows = $rows->filter(fn($r) => $r['clinic_id'] == $clinicFilter);
-        }
-
-        // Sort: emergency first, then by time
-        $rows = $rows->sortBy([
-            fn($a, $b) => ($a['priority'] === 'emergency' ? 0 : ($a['priority'] === 'urgent' ? 1 : 2))
-                       <=> ($b['priority'] === 'emergency' ? 0 : ($b['priority'] === 'urgent' ? 1 : 2)),
-            fn($a, $b) => $a['sort_time'] <=> $b['sort_time'],
-        ])->values();
-
-        return DataTables::of($rows)
-            ->filter(function ($dataTable) use ($request) {
-                $keyword = mb_strtolower(trim($request->input('search.value', '')));
-                if (strlen($keyword) >= 1) {
-                    $dataTable->collection = $dataTable->collection->filter(function ($row) use ($keyword) {
-                        return str_contains(mb_strtolower($row['patient_name'] ?? ''), $keyword)
-                            || str_contains(mb_strtolower($row['file_no'] ?? ''), $keyword)
-                            || str_contains(mb_strtolower($row['hmo'] ?? ''), $keyword)
-                            || str_contains(mb_strtolower($row['clinic'] ?? ''), $keyword)
-                            || str_contains(mb_strtolower($row['reason'] ?? ''), $keyword)
-                            || str_contains(mb_strtolower($row['booked_by'] ?? ''), $keyword);
+        return DataTables::of($query)
+            ->filter(function ($query) use ($request) {
+                $keyword = $request->input('search.value', '');
+                if (strlen(trim($keyword)) >= 1) {
+                    $query->where(function ($q) use ($keyword) {
+                        $q->where('patient_name', 'LIKE', "%{$keyword}%")
+                          ->orWhere('file_no', 'LIKE', "%{$keyword}%")
+                          ->orWhere('hmo_name', 'LIKE', "%{$keyword}%")
+                          ->orWhere('patient_phone', 'LIKE', "%{$keyword}%")
+                          ->orWhere('clinic_name', 'LIKE', "%{$keyword}%")
+                          ->orWhere('notes', 'LIKE', "%{$keyword}%")
+                          ->orWhere('booked_by_name', 'LIKE', "%{$keyword}%");
                     });
                 }
             })
             ->addIndexColumn()
             ->addColumn('card_html', function ($row) {
+                
+                // Pre-process variables that were generated in the foreach before
+                $row = (array) $row;
+                $row['patient_name'] = ucwords(trim($row['patient_name'])) ?: 'N/A';
+                $row['hmo'] = $row['hmo_name'] ?: '';
+                $row['clinic'] = $row['clinic_name'] ?: 'N/A';
+                $row['is_follow_up'] = $row['parent_appointment_id'] !== null || $row['source'] === 'follow_up';
+                $row['is_future'] = $row['appointment_date'] && Carbon::parse($row['appointment_date'])->gt(Carbon::today());
+                $row['time'] = $row['time_val'] ? Carbon::parse($row['time_val'])->format('h:i A') : '-';
+                $row['reason'] = \Illuminate\Support\Str::limit($row['notes'] ?? '-', 50);
+                $row['age'] = $row['dob'] ? Carbon::parse($row['dob'])->age : '?';
+                $row['gender'] = $row['gender'] == 'Male' ? 'M' : ($row['gender'] == 'Female' ? 'F' : 'U');
+                $row['booked_by'] = $row['booked_by_name'] ?: 'Unknown';
+                
+                // Fetch HMO delivery checks if needed
+                $canDeliver = true;
+                $deliveryReason = 'Ready';
+                $deliveryHint = 'Service is ready for delivery.';
+                $encounterUrl = null;
+
+                if ($row['event_type'] === 'queue' && in_array($row['status'], [QueueStatus::WAITING, QueueStatus::VITALS_PENDING, QueueStatus::READY, QueueStatus::IN_CONSULTATION])) {
+                    if ($row['request_entry_id']) {
+                        $reqEntry = \App\Models\ProductOrServiceRequest::find($row['request_entry_id']);
+                        $deliveryCheck = $reqEntry ? \App\Helpers\HmoHelper::canDeliverService($reqEntry) : ['can_deliver' => true, 'reason' => 'Ready', 'hint' => 'No service request linked.'];
+                        $canDeliver = $deliveryCheck['can_deliver'] ?? true;
+                        $deliveryReason = $deliveryCheck['reason'] ?? 'Ready';
+                        $deliveryHint = $deliveryCheck['hint'] ?? '';
+                    }
+
+                    if ($canDeliver) {
+                        $encounterUrl = route('encounters.create', [
+                            'patient_id'  => $row['patient_id'],
+                            'req_entry_id' => $row['request_entry_id'],
+                            'queue_id'    => $row['record_id'],
+                        ]);
+                    }
+                }
+                $row['can_deliver'] = $canDeliver;
+                $row['delivery_reason'] = $deliveryReason;
+                $row['delivery_hint'] = $deliveryHint;
+                $row['encounter_url'] = $encounterUrl;
+                $row['next_step'] = $this->nextStepHint($row['status'], $canDeliver, $deliveryReason, $row['event_type']);
+                
+                // Status badge
+                $statusBadge = QueueStatus::badge($row['status']);
+                if ($row['event_type'] === 'queue' && $row['status'] == QueueStatus::IN_CONSULTATION && $row['consultation_started_at']) {
+                    $startedIso = Carbon::parse($row['consultation_started_at'])->toIso8601String();
+                    $pausedAtIso = $row['last_paused_at'] ? Carbon::parse($row['last_paused_at'])->toIso8601String() : '';
+                    $statusBadge .= ' <span class="badge bg-success-subtle text-success mini-timer" data-started="' . $startedIso . '" data-paused-seconds="' . ($row['consultation_paused_seconds'] ?? 0) . '" data-is-paused="' . ($row['is_paused'] ? '1' : '0') . '" data-last-paused-at="' . $pausedAtIso . '"><i class="mdi mdi-timer"></i> <span class="timer-value">00:00:00</span></span>';
+                }
+                $row['status_badge'] = $statusBadge;
                 // ── Priority Icon ──
                 $priorityIcon = '';
                 if ($row['priority'] === 'emergency') {

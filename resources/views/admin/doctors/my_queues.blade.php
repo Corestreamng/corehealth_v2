@@ -149,6 +149,11 @@
             /* ── Hide DataTable button toolbar on mobile ── */
             .dataTables_wrapper .dt-buttons { display: none !important; }
 
+            /* ── Add padding to prevent fixed footer blocking last card ── */
+            .dataTables_wrapper, #history-lists-pane {
+                margin-bottom: 120px !important;
+            }
+
             /* ── Search Input Styling ── */
             .dataTables_wrapper .dataTables_filter {
                 width: 100%;
