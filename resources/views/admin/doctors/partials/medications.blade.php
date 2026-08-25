@@ -93,16 +93,24 @@
                 </div>
                 <br>
                 <div class="table-responsive">
-                    <table class="table table-sm table-bordered table-striped">
+                    <table class="table table-sm table-bordered table-striped" id="presc-table" style="table-layout: auto; min-width: 600px;">
+                        <colgroup>
+                            {{-- Drug + Price stacked: fixed comfortable width --}}
+                            <col style="width: 200px; min-width: 160px;">
+                            {{-- Dose cell: takes all remaining space --}}
+                            <col style="min-width: 320px;">
+                            {{-- Remove button --}}
+                            <col style="width: 40px;">
+                        </colgroup>
                         <thead>
                             <th>Drug / Product</th>
-                            <th>Price</th>
                             <th>Dose / Freq.</th>
-                            <th style="width:40px;"><i class="fa fa-trash-alt text-muted" title="Remove"></i></th>
+                            <th><i class="fa fa-trash-alt text-muted" title="Remove"></i></th>
                         </thead>
                         <tbody id="selected-products"></tbody>
                     </table>
                 </div>
+
             </div>
         </div>
 

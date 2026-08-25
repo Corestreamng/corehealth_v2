@@ -386,7 +386,87 @@
                             </div>
                         </div>
 
+                        {{-- ===== Printing Settings Card ===== --}}
+                        <div class="card-modern mb-4" style="border-radius: 12px; border: none; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+                            <div class="card-header bg-white" style="border-bottom: 1px solid #e9ecef;">
+                                <h5 class="mb-0" style="font-weight: 600; color: #1a1a1a;">
+                                    <i class="mdi mdi-printer-pos mr-2" style="color: var(--primary-color);"></i>
+                                    Printing Settings
+                                </h5>
+                            </div>
+                            <div class="card-body" style="padding: 2rem;">
+                                <p class="text-muted mb-3" style="font-size: 0.9rem;">
+                                    <i class="mdi mdi-information-outline"></i>
+                                    Select the paper roll width of your thermal receipt printer. This setting applies to all
+                                    thermal receipts, invoices, account statements, admission bills, and service summaries
+                                    printed system-wide. <strong>Check the label on your paper roll or printer manual for the roll width.</strong>
+                                </p>
+                                <div class="row">
+                                    <div class="col-md-7 mb-3">
+                                        <label class="form-label" style="font-weight: 600; color: #495057;">
+                                            Thermal Printer Paper Width
+                                        </label>
+                                        <select class="form-control" name="thermal_printer_width" id="thermal_printer_width"
+                                                style="border-radius: 8px; padding: 0.75rem; font-size: 0.9rem;">
+                                            <optgroup label="─── 2-inch rolls (57.5 mm) ───">
+                                                <option value="xp58" {{ ($config->thermal_printer_width ?? 'w80') === 'xp58' ? 'selected' : '' }}>
+                                                    XP-58 / 48 mm effective print width
+                                                    — Xprinter XP-58IIL, XP-58IIN · Rongta RPP02N · HPRT TP805 · POS-5805DD
+                                                    (narrow 2-inch, common in cafeterias)
+                                                </option>
+                                                <option value="w58" {{ ($config->thermal_printer_width ?? 'w80') === 'w58' ? 'selected' : '' }}>
+                                                    58 mm / 54 mm effective print width
+                                                    — Generic 58 mm: ZJ-5890K · Sewoo LK-T210 · Approx APPPOS58MU
+                                                    (standard 2-inch roll with wider printable area)
+                                                </option>
+                                            </optgroup>
+                                            <optgroup label="─── 3-inch rolls (76 mm) ───">
+                                                <option value="w76" {{ ($config->thermal_printer_width ?? 'w80') === 'w76' ? 'selected' : '' }}>
+                                                    76 mm / 72 mm effective print width
+                                                    — Epson TM-U220 · Star SP200/SP700 · Bixolon SRP-270
+                                                    (3-inch impact/dot-matrix hybrid, common in labs &amp; kitchens)
+                                                </option>
+                                            </optgroup>
+                                            <optgroup label="─── 3-inch rolls (80 mm) — MOST COMMON ───">
+                                                <option value="w80" {{ ($config->thermal_printer_width ?? 'w80') === 'w80' ? 'selected' : '' }}>
+                                                    ★ 80 mm / 78 mm effective print width  [DEFAULT]
+                                                    — Epson TM-T20III · TM-T88VI · TM-T82III · Bixolon SRP-350III
+                                                    · Star TSP143IV · HPRT TP808 · Xprinter XP-N160II · Sewoo LK-T320
+                                                    (worldwide standard hospital POS printer)
+                                                </option>
+                                            </optgroup>
+                                            <optgroup label="─── 4-inch rolls (112 mm) ───">
+                                                <option value="w112" {{ ($config->thermal_printer_width ?? 'w80') === 'w112' ? 'selected' : '' }}>
+                                                    112 mm / 104 mm effective print width
+                                                    — Epson TM-T70 · Rongta RP850 · Wide-carriage thermal printers
+                                                    (used in high-volume or wide-format billing stations)
+                                                </option>
+                                            </optgroup>
+                                        </select>
+                                        <small class="text-muted mt-1 d-block">
+                                            <i class="mdi mdi-lightbulb-outline text-warning"></i>
+                                            <strong>80 mm</strong> is correct for the vast majority of hospital reception and billing POS thermal printers.
+                                            If receipts are being cut off, switch to a narrower setting (e.g. XP-58 / 48 mm).
+                                        </small>
+                                    </div>
+                                    <div class="col-md-5 mb-3 d-flex align-items-center">
+                                        <div id="thermal-width-preview" style="border: 2px dashed #adb5bd; border-radius: 12px; padding: 1.25rem; width: 100%; text-align: center; background: #f8f9fa;">
+                                            <i class="mdi mdi-printer-pos mdi-36px d-block mb-2" style="color: var(--primary-color);"></i>
+                                            <div id="thermal-preview-roll" style="font-size: 1.1rem; font-weight: 700; color: #1a1a1a; margin-bottom: 4px;">80 mm roll</div>
+                                            <div id="thermal-preview-print" style="font-size: 0.9rem; color: #6c757d;">78 mm printable width</div>
+                                            <div id="thermal-preview-models" style="font-size: 0.75rem; color: #adb5bd; margin-top: 6px; line-height: 1.4;">
+                                                Epson TM-T20III / TM-T88VI<br>Bixolon SRP-350 · Star TSP143
+                                            </div>
+                                            <span class="badge badge-success mt-2" id="thermal-preview-badge">Default</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {{-- ===== / Printing Settings Card ===== --}}
+
                         <!-- Integration Settings Card -->
+
                         <div class="card-modern mb-4" style="border-radius: 12px; border: none; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
                             <div class="card-header bg-white" style="border-bottom: 1px solid #e9ecef;">
                                 <h5 class="mb-0" style="font-weight: 600; color: #1a1a1a;">
@@ -943,7 +1023,7 @@
                             </div>
                             <div class="card-body" style="padding: 2rem;">
                                 <div class="mb-3">
-                                    <div class="feature-toggle-row d-flex align-items-center justify-content-between">
+                                    <div class="feature-toggle-row">
                                         <div>
                                             <label for="chat_enabled" class="mb-0" style="font-weight: 600; cursor: pointer;">
                                                 Chat Enabled
@@ -958,7 +1038,7 @@
                                 </div>
 
                                 <div class="mb-3">
-                                    <div class="feature-toggle-row d-flex align-items-center justify-content-between">
+                                    <div class="feature-toggle-row">
                                         <div>
                                             <label for="group_chat_enabled" class="mb-0" style="font-weight: 600; cursor: pointer;">
                                                 Group Chat Enabled
@@ -1008,7 +1088,7 @@
                             </div>
                             <div class="card-body" style="padding: 2rem;">
                                 <div class="mb-3">
-                                    <div class="feature-toggle-row d-flex align-items-center justify-content-between">
+                                    <div class="feature-toggle-row">
                                         <div>
                                             <label for="allow_piece_sale" class="mb-0" style="font-weight: 600; cursor: pointer;">
                                                 <i class="mdi mdi-pill text-primary mr-1"></i>Allow Piece Sale
@@ -1023,7 +1103,7 @@
                                 </div>
 
                                 <div class="mb-3">
-                                    <div class="feature-toggle-row d-flex align-items-center justify-content-between">
+                                    <div class="feature-toggle-row">
                                         <div>
                                             <label for="allow_halve_sale" class="mb-0" style="font-weight: 600; cursor: pointer;">
                                                 <i class="mdi mdi-content-cut text-warning mr-1"></i>Allow Halve Sale
@@ -1117,7 +1197,7 @@
                                 </h6>
 
                                 <div class="mb-3">
-                                    <div class="feature-toggle-row d-flex align-items-center justify-content-between">
+                                    <div class="feature-toggle-row">
                                         <div>
                                             <label class="mb-0" style="font-weight: 600; cursor: pointer;">
                                                 <i class="mdi mdi-doctor text-primary mr-1"></i>Send Appointment Emails to Doctors
@@ -1132,7 +1212,7 @@
                                 </div>
 
                                 <div class="mb-3">
-                                    <div class="feature-toggle-row d-flex align-items-center justify-content-between">
+                                    <div class="feature-toggle-row">
                                         <div>
                                             <label class="mb-0" style="font-weight: 600; cursor: pointer;">
                                                 <i class="mdi mdi-account-outline text-success mr-1"></i>Send Appointment Emails to Patients
@@ -1158,7 +1238,7 @@
                             </div>
                             <div class="card-body" style="padding: 2rem;">
                                 <div class="mb-3">
-                                    <div class="feature-toggle-row d-flex align-items-center justify-content-between">
+                                    <div class="feature-toggle-row">
                                         <div>
                                             <label for="goonline" class="mb-0" style="font-weight: 600; cursor: pointer;">
                                                 Go Online
@@ -1173,7 +1253,7 @@
                                 </div>
 
                                 <div class="mb-3">
-                                    <div class="feature-toggle-row d-flex align-items-center justify-content-between">
+                                    <div class="feature-toggle-row">
                                         <div>
                                             <label for="enable_treatment_plans_in_consult" class="mb-0" style="font-weight: 600; cursor: pointer;">
                                                 Enable Treatment Plans
@@ -1188,7 +1268,7 @@
                                 </div>
 
                                 <div class="mb-3">
-                                    <div class="feature-toggle-row d-flex align-items-center justify-content-between">
+                                    <div class="feature-toggle-row">
                                         <div>
                                             <label for="require_treatment_plan_in_consult" class="mb-0" style="font-weight: 600; cursor: pointer;">
                                                 Require Treatment Plan
@@ -1202,7 +1282,7 @@
                                     </div>
                                 </div>
                                 <div class="mb-3">
-                                    <div class="feature-toggle-row d-flex align-items-center justify-content-between">
+                                    <div class="feature-toggle-row">
                                         <div>
                                             <label for="requirediagnosis" class="mb-0" style="font-weight: 600; cursor: pointer;">
                                                 Require Diagnosis
@@ -1217,7 +1297,7 @@
                                 </div>
 
                                 <div class="mb-3">
-                                    <div class="feature-toggle-row d-flex align-items-center justify-content-between">
+                                    <div class="feature-toggle-row">
                                         <div>
                                             <label for="enable_twakto" class="mb-0" style="font-weight: 600; cursor: pointer;">
                                                 Enable Tawk.to
@@ -1232,10 +1312,53 @@
                                 </div>
 
                                 <hr class="my-3">
-                                <h6 class="text-muted mb-3" style="font-weight: 600;"><i class="mdi mdi-clipboard-check-outline mr-1"></i> Result Approval Workflow</h6>
+                                <h6 class="text-muted mb-3" style="font-weight: 600;"><i class="mdi mdi-pill mr-1"></i> Prescription / Dosage Settings</h6>
 
                                 <div class="mb-3">
-                                    <div class="feature-toggle-row d-flex align-items-center justify-content-between">
+                                    <div class="feature-toggle-row">
+                                        <div>
+                                            <label for="enable_structured_dose" class="mb-0" style="font-weight: 600; cursor: pointer;">
+                                                Enable Structured Dose Entry
+                                            </label>
+                                            <small class="text-muted d-block">When enabled, doctors can enter dosage in dedicated Amount / Unit / Route / Frequency / Duration / Qty fields. When disabled, only free-text (Simple Note) is available.</small>
+                                        </div>
+                                        <label class="toggle-switch">
+                                            <input type="checkbox" id="enable_structured_dose" name="enable_structured_dose" value="1" {{ ($config->enable_structured_dose ?? 1) ? 'checked' : '' }}>
+                                            <span class="toggle-slider"></span>
+                                        </label>
+                                    </div>
+                                </div>
+
+                                <div class="mb-3" id="default_dose_mode_row">
+                                    <div class="feature-toggle-row">
+                                        <div>
+                                            <label class="mb-0" style="font-weight: 600; cursor: default;">
+                                                Default Dose Entry Mode
+                                            </label>
+                                            <small class="text-muted d-block">Which mode is pre-selected when a doctor opens a prescription. Doctors can still switch manually during the consultation.</small>
+                                        </div>
+                                        <div class="btn-group btn-group-sm" role="group" aria-label="Default dose mode">
+                                            <input type="radio" class="btn-check" name="default_dose_mode" id="dose_mode_simple" value="simple" autocomplete="off"
+                                                {{ (($config->default_dose_mode ?? 'structured') === 'simple') ? 'checked' : '' }}>
+                                            <label class="btn btn-outline-secondary" for="dose_mode_simple">
+                                                <i class="fa fa-pen mr-1"></i> Simple Note
+                                            </label>
+
+                                            <input type="radio" class="btn-check" name="default_dose_mode" id="dose_mode_structured" value="structured" autocomplete="off"
+                                                {{ (($config->default_dose_mode ?? 'structured') === 'structured') ? 'checked' : '' }}>
+                                            <label class="btn btn-outline-primary" for="dose_mode_structured">
+                                                <i class="fa fa-th-list mr-1"></i> Structured
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <hr class="my-3">
+                                <h6 class="text-muted mb-3" style="font-weight: 600;"><i class="mdi mdi-clipboard-check-outline mr-1"></i> Result Approval Workflow</h6>
+
+
+                                <div class="mb-3">
+                                    <div class="feature-toggle-row">
                                         <div>
                                             <label for="lab_results_require_approval" class="mb-0" style="font-weight: 600; cursor: pointer;">
                                                 <i class="mdi mdi-flask-outline text-info mr-1"></i>Lab Results Require Approval
@@ -1250,7 +1373,7 @@
                                 </div>
 
                                 <div class="mb-3">
-                                    <div class="feature-toggle-row d-flex align-items-center justify-content-between">
+                                    <div class="feature-toggle-row">
                                         <div>
                                             <label for="imaging_results_require_approval" class="mb-0" style="font-weight: 600; cursor: pointer;">
                                                 <i class="mdi mdi-radiology-box-outline text-warning mr-1"></i>Imaging Results Require Approval
@@ -1268,7 +1391,7 @@
                                 <h6 class="text-muted mb-3" style="font-weight: 600;"><i class="mdi mdi-clipboard-edit-outline mr-1"></i> Result Entry Permissions</h6>
 
                                 <div class="mb-3">
-                                    <div class="feature-toggle-row d-flex align-items-center justify-content-between">
+                                    <div class="feature-toggle-row">
                                         <div>
                                             <label for="doctor_can_enter_lab_result" class="mb-0" style="font-weight: 600; cursor: pointer;">
                                                 <i class="mdi mdi-doctor text-primary mr-1"></i>Doctor Can Enter Lab Results
@@ -1283,7 +1406,7 @@
                                 </div>
 
                                 <div class="mb-3">
-                                    <div class="feature-toggle-row d-flex align-items-center justify-content-between">
+                                    <div class="feature-toggle-row">
                                         <div>
                                             <label for="nurse_can_enter_lab_result" class="mb-0" style="font-weight: 600; cursor: pointer;">
                                                 <i class="mdi mdi-nurse text-success mr-1"></i>Nurse Can Enter Lab Results
@@ -1298,7 +1421,7 @@
                                 </div>
 
                                 <div class="mb-3">
-                                    <div class="feature-toggle-row d-flex align-items-center justify-content-between">
+                                    <div class="feature-toggle-row">
                                         <div>
                                             <label for="doctor_can_enter_imaging_result" class="mb-0" style="font-weight: 600; cursor: pointer;">
                                                 <i class="mdi mdi-doctor text-primary mr-1"></i>Doctor Can Enter Imaging Results
@@ -1313,7 +1436,7 @@
                                 </div>
 
                                 <div class="mb-3">
-                                    <div class="feature-toggle-row d-flex align-items-center justify-content-between">
+                                    <div class="feature-toggle-row">
                                         <div>
                                             <label for="nurse_can_enter_imaging_result" class="mb-0" style="font-weight: 600; cursor: pointer;">
                                                 <i class="mdi mdi-nurse text-success mr-1"></i>Nurse Can Enter Imaging Results
@@ -1336,7 +1459,7 @@
                                 </h6>
 
                                 <div class="mb-3">
-                                    <div class="feature-toggle-row d-flex align-items-center justify-content-between">
+                                    <div class="feature-toggle-row">
                                         <div>
                                             <label for="doctor_self_approve_lab_result" class="mb-0" style="font-weight: 600; cursor: pointer;">
                                                 <i class="mdi mdi-doctor text-primary mr-1"></i>Doctor Can Self-Approve Lab Results
@@ -1351,7 +1474,7 @@
                                 </div>
 
                                 <div class="mb-3">
-                                    <div class="feature-toggle-row d-flex align-items-center justify-content-between">
+                                    <div class="feature-toggle-row">
                                         <div>
                                             <label for="nurse_self_approve_lab_result" class="mb-0" style="font-weight: 600; cursor: pointer;">
                                                 <i class="mdi mdi-nurse text-success mr-1"></i>Nurse Can Self-Approve Lab Results
@@ -1366,7 +1489,7 @@
                                 </div>
 
                                 <div class="mb-3">
-                                    <div class="feature-toggle-row d-flex align-items-center justify-content-between">
+                                    <div class="feature-toggle-row">
                                         <div>
                                             <label for="doctor_self_approve_imaging_result" class="mb-0" style="font-weight: 600; cursor: pointer;">
                                                 <i class="mdi mdi-doctor text-primary mr-1"></i>Doctor Can Self-Approve Imaging Results
@@ -1381,7 +1504,7 @@
                                 </div>
 
                                 <div class="mb-3">
-                                    <div class="feature-toggle-row d-flex align-items-center justify-content-between">
+                                    <div class="feature-toggle-row">
                                         <div>
                                             <label for="nurse_self_approve_imaging_result" class="mb-0" style="font-weight: 600; cursor: pointer;">
                                                 <i class="mdi mdi-nurse text-success mr-1"></i>Nurse Can Self-Approve Imaging Results
@@ -1407,7 +1530,7 @@
                             </div>
                             <div class="card-body" style="padding: 2rem;">
                                 <div class="mb-3">
-                                    <div class="feature-toggle-row d-flex align-items-center justify-content-between">
+                                    <div class="feature-toggle-row">
                                         <div>
                                             <label for="backup_compression" class="mb-0" style="font-weight: 600; cursor: pointer;">
                                                 <i class="mdi mdi-zip-box-outline text-info mr-1"></i>Enable Backup Compression
@@ -1492,6 +1615,24 @@
     .feature-toggle-row {
         padding: 0.75rem 0;
         border-bottom: 1px solid #f0f0f0;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+    }
+
+    /* Text side: can shrink and wrap freely */
+    .feature-toggle-row > div:first-child {
+        flex: 1 1 0;
+        min-width: 0;
+    }
+
+    /* Control side (toggle-switch or btn-group): never shrinks, never wraps */
+    .feature-toggle-row > .toggle-switch,
+    .feature-toggle-row > .btn-group {
+        flex: 0 0 auto;
+        align-self: flex-start;
+        margin-top: 2px;
     }
 
     .feature-toggle-row:last-child {
@@ -1547,6 +1688,18 @@
             });
         }
     });
+
+    // Dose settings: hide the default mode selector when structured dose is disabled
+    function syncDoseModeRow() {
+        var enabled = $('#enable_structured_dose').is(':checked');
+        $('#default_dose_mode_row').toggle(enabled);
+        if (!enabled) {
+            // Force simple when structured is disabled
+            $('#dose_mode_simple').prop('checked', true);
+        }
+    }
+    $('#enable_structured_dose').on('change', syncDoseModeRow);
+    syncDoseModeRow(); // run on load
 </script>
 <style>
     #consent-template .ck-editor__editable_inline {
