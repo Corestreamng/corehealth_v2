@@ -1070,6 +1070,7 @@ class BillingWorkbenchController extends Controller
                 'paymentType'       => $data['payment_type'],
                 'notes'             => '',
                 'currentUserName'   => $currentUserName,
+                'thermalWidth'      => getThermalPrinterWidth(),
             ])->render();
 
             DB::commit();
@@ -1195,6 +1196,7 @@ class BillingWorkbenchController extends Controller
             'paymentType'        => $paymentType,
             'notes'              => '',
             'currentUserName'    => $currentUserName,
+            'thermalWidth'       => getThermalPrinterWidth(),
         ])->render();
 
         return response()->json([
@@ -1316,6 +1318,7 @@ class BillingWorkbenchController extends Controller
             'amountInWords' => $amountInWords,
             'notes' => '',
             'currentUserName' => $currentUserName,
+            'thermalWidth' => getThermalPrinterWidth(),
         ])->render();
 
         return response()->json([
@@ -1699,6 +1702,7 @@ class BillingWorkbenchController extends Controller
             'previousBalance' => $previousBalance,
             'newBalance' => $newBalance,
             'notes' => $deposit->notes,
+            'thermalWidth' => getThermalPrinterWidth(),
         ];
 
         return [
@@ -1938,6 +1942,7 @@ class BillingWorkbenchController extends Controller
             'summary' => $summary,
             'showOpeningBalance' => $openingBalance != 0,
             'preparedBy' => userfullname(Auth::id()),
+            'thermalWidth' => getThermalPrinterWidth(),
         ];
 
         return response()->json([

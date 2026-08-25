@@ -236,14 +236,18 @@ class PatientController extends Controller
                     'lab' => $lab,
                     'bed' => $bed,
                     'misc' => $misc,
-                    'app' => appsettings()
+                    'app' => appsettings(),
+                    'thermalWidth' => getThermalPrinterWidth(),
                 ]);
             } catch (\Exception $e) {
                 Log::error($e->getMessage(), ['exception' => $e]);
                 return redirect()->back()->withInput()->with('error', $e->getMessage());
             }
         } else {
-            return view('admin.encounters.services_rendered')->with(['patient' => $patient]);
+            return view('admin.encounters.services_rendered')->with([
+                'patient' => $patient,
+                'thermalWidth' => getThermalPrinterWidth(),
+            ]);
         }
     }
 
