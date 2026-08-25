@@ -10,7 +10,7 @@
             font-size: 10px;
             color: #000;
             background: #fff;
-            width: 78mm;
+            width: {{ $thermalWidth ?? getThermalPrinterWidth() }};
             padding: 7px;
             line-height: 1.4;
         }
@@ -39,9 +39,9 @@
         .footer { text-align: center; font-size: 8px; color: #000; margin-top: 10px; border-top: 1px dashed #000; padding-top: 8px; line-height: 1.7; }
 
         @media print {
-            @page { size: 78mm auto; margin: 0; }
+            @page { size: {{ $thermalWidth ?? getThermalPrinterWidth() }} auto; margin: 0; }
             body { margin: 0; }
-            .admission-bill-thermal { width: 78mm; padding: 5px; }
+            .admission-bill-thermal { width: {{ $thermalWidth ?? getThermalPrinterWidth() }}; padding: 5px; }
         }
     </style>
 </head>

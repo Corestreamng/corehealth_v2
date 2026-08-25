@@ -533,6 +533,7 @@ class AdmissionModuleController extends Controller
             'billNo' => $billNo,
             'date' => $date,
             'currentUserName' => $currentUserName,
+            'thermalWidth' => getThermalPrinterWidth(),
         ])->render();
 
         return response()->json([
