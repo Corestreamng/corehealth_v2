@@ -42,6 +42,7 @@ class ApplicationStatu extends Model implements Auditable
         'timezone',
         'language',
         'currency_symbol',
+        'thermal_printer_width',
         'goonline',
         'chat_enabled',
         'group_chat_enabled',
@@ -100,6 +101,8 @@ class ApplicationStatu extends Model implements Auditable
         'last_slow_query_check',
         'consent_template',
         'llm_config',
+        'enable_structured_dose',
+        'default_dose_mode',
     ];
 
     protected $casts = [

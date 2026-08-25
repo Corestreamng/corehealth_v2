@@ -2159,8 +2159,13 @@
     </script>
     <script>
         // ─── Dose Mode State ───
-        // Plan §2.2: Structured is default (matches dose-mode-toggle partial's checked state)
-        let doseStructuredMode = true;
+        // §2.2: follows hospital config (default_dose_mode & enable_structured_dose)
+        @php
+            $enableStructuredDose = (bool) (appsettings('enable_structured_dose') ?? 1);
+            $defaultDoseMode      = appsettings('default_dose_mode') ?? 'structured';
+            if (!$enableStructuredDose) { $defaultDoseMode = 'simple'; }
+        @endphp
+        let doseStructuredMode = {{ ($enableStructuredDose && $defaultDoseMode === 'structured') ? 'true' : 'false' }};
 
         // Legacy dose functions (toggleDoseMode, buildStructuredDoseHtml, updateStructuredDoseValue,
         // autoCalculateQty, collapseStructuredDose, freqMultiplierMap, durUnitMultiplierMap) removed.
@@ -2237,8 +2242,10 @@
                     }
 
                     return '<tr data-record-id="' + recordId + '" data-record-type="prescription" data-service-id="' + id + '" data-drug-name="' + name.replace(/"/g, '&quot;') + '" data-row-id="' + rowId + '">' +
-                        '<td>' + name + coverageBadge + '</td>' +
-                        '<td>' + (payable ?? price) + '</td>' +
+                        '<td style="word-break:break-word; white-space:normal; vertical-align:top;">' +
+                            '<div class="fw-semibold" style="word-break:break-word;">' + name + coverageBadge + '</div>' +
+                            '<div class="text-muted small mt-1">' + (payable ?? price) + '</div>' +
+                        '</td>' +
                         doseCell +
                         '<td><button class="btn btn-danger btn-sm" onclick="removeProdRow(this)"><span class="co-remove-btn"><i class="fa fa-times"></i></span></button></td>' +
                     '</tr>';
