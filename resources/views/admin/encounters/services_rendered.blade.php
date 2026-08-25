@@ -36,7 +36,7 @@
             body.thermal-mode .thermal-only { display: block !important; }
         }
         body.thermal-mode #print-header { display:block; }
-        body.thermal-mode .sr-container { max-width:320px !important; margin:0 auto; font-size:12px; font-family: monospace, sans-serif; color: #000; }
+        body.thermal-mode .sr-container { max-width:{{ $thermalWidth ?? getThermalPrinterWidth() }} !important; margin:0 auto; font-size:12px; font-family: monospace, sans-serif; color: #000; }
         body.thermal-mode #print-header .hos-logo { max-width:64px; }
         body.thermal-mode #print-header h4 { font-size:14px; text-transform: uppercase; }
         body.thermal-mode #print-header small { font-size:11px; }
@@ -403,10 +403,13 @@
         });
         $('#btnPrintThermal').on('click', function () {
             $('body').addClass('thermal-mode');
+            const pageStyle = $('<style id="thermal-print-page-style">@media print { @page { size: {{ $thermalWidth ?? getThermalPrinterWidth() }} auto; margin: 0; } }</style>');
+            $('head').append(pageStyle);
             window.print();
-            // Remove class after printing so page returns to normal
+            // Remove class and dynamic page style after printing
             $(window).one('afterprint', function () {
                 $('body').removeClass('thermal-mode');
+                $('#thermal-print-page-style').remove();
             });
         });
     });

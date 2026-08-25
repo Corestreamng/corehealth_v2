@@ -333,6 +333,32 @@ if (!function_exists('clearAppSettingsCache')) {
     }
 }
 
+if (!function_exists('getThermalPrinterWidth')) {
+    /**
+     * Return the effective CSS print width for the configured thermal printer paper roll.
+     *
+     * Key → Paper Roll → Effective Print Width → Common Printers
+     * ─────────────────────────────────────────────────────────────────
+     * xp58  → 57.5 mm → 48 mm  → Xprinter XP-58IIL/IIN, Rongta RPP02N, HPRT TP805
+     * w58   → 57.5 mm → 54 mm  → Generic 58 mm: ZJ-5890K, Sewoo LK-T210
+     * w76   → 76 mm   → 72 mm  → Epson TM-U220, Star SP200, Bixolon SRP-270
+     * w80   → 80 mm   → 78 mm  → Epson TM-T20III/T88VI, Bixolon SRP-350, Star TSP143 (DEFAULT)
+     * w112  → 112 mm  → 104 mm → Epson TM-T70, Rongta RP850 (wide-format)
+     */
+    function getThermalPrinterWidth(): string
+    {
+        $map = [
+            'xp58' => '48mm',
+            'w58'  => '54mm',
+            'w76'  => '72mm',
+            'w80'  => '78mm',   // default — 80 mm roll
+            'w112' => '104mm',
+        ];
+        $key = appsettings('thermal_printer_width') ?: 'w80';
+        return $map[$key] ?? '78mm';
+    }
+}
+
 if (!function_exists('userfullname')) {
 
     function userfullname($id)

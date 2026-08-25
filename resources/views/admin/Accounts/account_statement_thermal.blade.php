@@ -9,7 +9,7 @@
             font-size: 10px;
             color: var(--ink);
             background: #fff;
-            width: 78mm;
+            width: {{ $thermalWidth ?? getThermalPrinterWidth() }};
             margin: 0 auto;
             padding: 7px;
             box-sizing: border-box;
@@ -136,7 +136,7 @@
 
         @media print {
             @page {
-                size: 78mm auto;
+                size: {{ $thermalWidth ?? getThermalPrinterWidth() }} auto;
                 margin: 0;
             }
 
@@ -145,7 +145,7 @@
             }
 
             .statement-thermal-wrapper {
-                width: 78mm;
+                width: {{ $thermalWidth ?? getThermalPrinterWidth() }};
                 margin: 0;
                 padding: 5px;
             }

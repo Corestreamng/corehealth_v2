@@ -332,6 +332,7 @@ class paymentController extends Controller
                     'paymentType' => $request->payment_type,
                     'notes' => $notes,
                     'currentUserName' => $currentUserName,
+                    'thermalWidth' => getThermalPrinterWidth(),
                 ])->render();
 
                 Session::forget(['selected', 'serviceQty', 'products', 'productQty']);
@@ -558,6 +559,7 @@ class paymentController extends Controller
                 'paymentType' => $data['payment_type'],
                 'notes' => '',
                 'currentUserName' => $currentUserName,
+                'thermalWidth' => getThermalPrinterWidth(),
             ])->render();
 
             DB::commit();

@@ -429,6 +429,7 @@ class PatientDepositController extends Controller
             'previousBalance' => $previousBalance,
             'newBalance' => $newBalance,
             'notes' => $deposit->notes,
+            'thermalWidth' => getThermalPrinterWidth(),
         ];
 
         return [

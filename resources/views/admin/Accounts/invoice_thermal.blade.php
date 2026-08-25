@@ -10,7 +10,7 @@
             font-size: 10px;
             color: #000;
             background: #fff;
-            width: 78mm;
+            width: {{ $thermalWidth ?? getThermalPrinterWidth() }};
             padding: 7px;
             line-height: 1.4;
         }
@@ -42,9 +42,9 @@
         .invoice-thermal .footer { text-align: center; font-size: 8px; color: #000; margin-top: 12px; border-top: 1px dashed #000; padding-top: 8px; line-height: 1.7; }
         .invoice-thermal .warning-note { background: #fef3c7; padding: 8px; font-size: 8px; text-align: center; margin-top: 8px; border: 1px solid #f59e0b; line-height: 1.5; }
         @media print {
-            @page { size: 78mm auto; margin: 0; }
+            @page { size: {{ $thermalWidth ?? getThermalPrinterWidth() }} auto; margin: 0; }
             body { margin: 0; }
-            .invoice-thermal { width: 78mm; padding: 5px; }
+            .invoice-thermal { width: {{ $thermalWidth ?? getThermalPrinterWidth() }}; padding: 5px; }
         }
     </style>
 </head>
