@@ -6,32 +6,44 @@
     $editorType = $editorType ?? 'textarea';
     $defaultLang = $defaultLang ?? 'en-US';
     $hosColor = appsettings('hos_color') ?? '#0066cc';
+    $llmConfig = is_string(appsettings('llm_config')) ? json_decode(appsettings('llm_config'), true) : (is_array(appsettings('llm_config')) ? appsettings('llm_config') : []);
+    $aiEnabled = $llmConfig['enabled'] ?? false;
+    $polishEnabled = $llmConfig['polish_note_enabled'] ?? true;
+    $dictationEnabled = $llmConfig['dictation_enabled'] ?? true;
+    $summaryBtnEnabled = $llmConfig['summary_button_enabled'] ?? true;
 @endphp
 
+@if($aiEnabled)
 <div class="speech-dictation-wrapper d-inline-flex flex-column {{ $class ?? '' }}" id="speech-wrapper-{{ $uniqueId }}">
     <div class="d-flex align-items-center gap-2 flex-wrap">
         {{-- Dictate Button --}}
+        @if($dictationEnabled)
         <button type="button" 
                 id="btn-voice-dictate-{{ $uniqueId }}" 
                 class="btn btn-speech-kit btn-speech-idle d-flex align-items-center gap-2">
             <span class="speech-mic-icon-wrapper"><i class="fa fa-microphone"></i></span> Start Dictation <span class="badge bg-danger rounded-pill py-0.5 px-1 ms-1" style="font-size: 0.55rem; line-height: 1;">BETA</span>
         </button>
+        @endif
         
         {{-- Polish Note Button (NLP Offline Retext Tool) --}}
+        @if($polishEnabled)
         <button type="button" 
                 id="btn-manual-format-{{ $uniqueId }}" 
                 class="btn btn-speech-kit btn-speech-format d-flex align-items-center gap-2"
                 title="Polish Note (Clean stutters, repeated words, and format medical headings)">
             <span class="speech-format-icon-wrapper"><i class="fa fa-magic"></i></span> Polish Note
         </button>
+        @endif
         
         {{-- Patient Summary Button --}}
+        @if($summaryBtnEnabled)
         <button type="button" 
                 id="btn-ai-summary-{{ $uniqueId }}" 
                 class="btn btn-speech-kit btn-speech-summary d-flex align-items-center gap-2"
                 title="Generate AI Clinical Patient Summary">
             <span class="speech-summary-icon-wrapper"><i class="fa fa-file-text-o"></i></span> AI Summary
         </button>
+        @endif
         
         @if($showLangSelect)
             <select id="select-speech-lang-{{ $uniqueId }}" 
@@ -559,3 +571,4 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 </script>
+@endif

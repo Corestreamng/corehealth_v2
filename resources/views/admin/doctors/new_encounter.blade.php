@@ -5518,23 +5518,34 @@
     });
     </script>
     
+    @php
+        $llmConfig = is_string(appsettings('llm_config')) ? json_decode(appsettings('llm_config'), true) : (is_array(appsettings('llm_config')) ? appsettings('llm_config') : []);
+        $aiEnabled = $llmConfig['enabled'] ?? false;
+    @endphp
+
     @include('admin.partials.clinical_alerts_modal')
-    @include('admin.partials.patient_summary_overlay')
-    @include('admin.partials.ai_quick_actions')
     <script src="{{ asset('js/clinical-alerts-shared.js') }}"></script>
-    <script src="{{ asset('js/patient-summary.js') }}"></script>
+
+    @if($aiEnabled)
+        @include('admin.partials.patient_summary_overlay')
+        @include('admin.partials.ai_quick_actions')
+        <script src="{{ asset('js/patient-summary.js') }}"></script>
+        <script>
+            $(document).ready(function() {
+                if (typeof PatientSummaryManager !== 'undefined') {
+                    window.patientSummary = new PatientSummaryManager({
+                        patientId: {{ $patient->id }},
+                        encounterId: {{ $encounter->id }},
+                        autoOpen: {{ isset($llmConfig['summary_auto_open']) && $llmConfig['summary_auto_open'] ? 'true' : 'false' }},
+                        voiceEnabled: {{ isset($llmConfig['summary_voice_enabled']) && $llmConfig['summary_voice_enabled'] ? 'true' : 'false' }},
+                        voiceRate: {{ $llmConfig['summary_voice_rate'] ?? 1.0 }}
+                    });
+                }
+            });
+        </script>
+    @endif
+    
     <script src="{{ asset('js/speech-dictation.js') }}"></script>
-    <script>
-        $(document).ready(function() {
-            if (typeof PatientSummaryManager !== 'undefined') {
-                window.patientSummary = new PatientSummaryManager({
-                    patientId: {{ $patient->id }},
-                    encounterId: {{ $encounter->id }},
-                    autoOpen: true
-                });
-            }
-        });
-    </script>
 
     {{-- ═══ Universal Sticky Bottom Prev/Next Tab Navigation ═══ --}}
     <script>

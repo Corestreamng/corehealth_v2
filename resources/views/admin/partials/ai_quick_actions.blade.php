@@ -1,11 +1,12 @@
 {{-- AI Quick Actions Floating Action Button (FAB) --}}
 @php
     $llmConfig = is_string(appsettings('llm_config')) ? json_decode(appsettings('llm_config'), true) : (is_array(appsettings('llm_config')) ? appsettings('llm_config') : []);
-    $aiEnabled = $llmConfig['enabled'] ?? true;
+    $aiEnabled = $llmConfig['enabled'] ?? false;
+    $wandEnabled = $llmConfig['wand_enabled'] ?? true;
     $hosColor = appsettings('hos_color') ?? '#0066cc';
 @endphp
 
-@if($aiEnabled)
+@if($aiEnabled && $wandEnabled)
 <div id="ai-quick-actions-fab" class="ai-fab-container d-none">
     {{-- Patient Summary Button (Always visible) --}}
     <button type="button" class="btn btn-ai-fab btn-ai-summary btn-patient-summary" id="fab-summary-btn" title="Generate AI Patient Summary">
