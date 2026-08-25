@@ -190,9 +190,16 @@ class HospitalConfigController extends Controller
 
             $llmConfig['enabled'] = isset($llmConfig['enabled']);
             $llmConfig['summary_voice_enabled'] = isset($llmConfig['summary_voice_enabled']);
+            $llmConfig['summary_auto_open'] = isset($llmConfig['summary_auto_open']);
+            $llmConfig['polish_note_enabled'] = isset($llmConfig['polish_note_enabled']);
+            $llmConfig['wand_enabled'] = isset($llmConfig['wand_enabled']);
+            $llmConfig['dictation_enabled'] = isset($llmConfig['dictation_enabled']);
+            $llmConfig['summary_button_enabled'] = isset($llmConfig['summary_button_enabled']);
+            
             // Ensure numbers are cast correctly if needed
             $llmConfig['summary_scope_months'] = (int) ($llmConfig['summary_scope_months'] ?? 3);
             $llmConfig['summary_scope_max_entries'] = (int) ($llmConfig['summary_scope_max_entries'] ?? 50);
+            $llmConfig['summary_voice_rate'] = (float) ($llmConfig['summary_voice_rate'] ?? 1.0);
 
             // Merge providers securely
             if (isset($llmConfig['providers']) && is_array($llmConfig['providers'])) {
@@ -218,7 +225,17 @@ class HospitalConfigController extends Controller
             } else {
                 $llmConfig['system_prompts'] = $existingLlmConfig['system_prompts'] ?? [];
             }
-            $llmConfig['rag_settings'] = $existingLlmConfig['rag_settings'] ?? [];
+            
+            // Process RAG settings if provided
+            if (isset($llmConfig['rag_settings']) && is_array($llmConfig['rag_settings'])) {
+                $llmConfig['rag_settings']['chunk_size'] = (int) ($llmConfig['rag_settings']['chunk_size'] ?? 512);
+                $llmConfig['rag_settings']['chunk_overlap'] = (int) ($llmConfig['rag_settings']['chunk_overlap'] ?? 50);
+                $llmConfig['rag_settings']['top_k_results'] = (int) ($llmConfig['rag_settings']['top_k_results'] ?? 10);
+                $llmConfig['rag_settings']['cache_ttl_hours'] = (int) ($llmConfig['rag_settings']['cache_ttl_hours'] ?? 24);
+                $llmConfig['rag_settings']['similarity_threshold'] = (float) ($llmConfig['rag_settings']['similarity_threshold'] ?? 0.7);
+            } else {
+                $llmConfig['rag_settings'] = $existingLlmConfig['rag_settings'] ?? [];
+            }
 
             $validated['llm_config'] = $llmConfig;
         }

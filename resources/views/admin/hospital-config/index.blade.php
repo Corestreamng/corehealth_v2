@@ -646,6 +646,7 @@
                                                     <input type="checkbox" class="custom-control-input" id="llmEnabledSwitch" name="llm_config[enabled]" value="1" {{ ($llmConfig['enabled'] ?? true) ? 'checked' : '' }}>
                                                     <label class="custom-control-label" for="llmEnabledSwitch">Enable AI Assistant globally</label>
                                                 </div>
+                                                <small class="text-muted d-block mt-2">Master switch. If disabled, all AI features below will be completely hidden.</small>
                                             </div>
                                         </div>
 
@@ -670,6 +671,7 @@
                                                         <option value="gemini-2.0-flash" {{ ($providers['gemini']['default_model'] ?? '') == 'gemini-2.0-flash' ? 'selected' : '' }}>Gemini 2.0 Flash</option>
                                                     @endif
                                                 </select>
+                                                <small class="text-muted d-block mt-1">Requires an active Google AI Studio account.</small>
                                             </div>
                                             
                                             <!-- Anthropic -->
@@ -688,6 +690,7 @@
                                                         <option value="claude-3-opus-20240229" {{ ($providers['anthropic']['default_model'] ?? '') == 'claude-3-opus-20240229' ? 'selected' : '' }}>Claude 3 Opus</option>
                                                     @endif
                                                 </select>
+                                                <small class="text-muted d-block mt-1">Requires Anthropic Console access.</small>
                                             </div>
                                             
                                             <!-- OpenAI -->
@@ -706,6 +709,7 @@
                                                         <option value="gpt-4-turbo" {{ ($providers['openai']['default_model'] ?? '') == 'gpt-4-turbo' ? 'selected' : '' }}>GPT-4 Turbo</option>
                                                     @endif
                                                 </select>
+                                                <small class="text-muted d-block mt-1">Requires OpenAI API subscription.</small>
                                             </div>
                                             
                                             <!-- Ollama -->
@@ -724,12 +728,32 @@
                                                         <option value="mistral" {{ ($providers['ollama']['default_model'] ?? '') == 'mistral' ? 'selected' : '' }}>Mistral</option>
                                                     @endif
                                                 </select>
+                                                <small class="text-muted d-block mt-1">URL to your local Ollama instance (requires no API key).</small>
+                                            </div>
+
+                                            <!-- Hugging Face -->
+                                            <div class="col-md-6 mb-3">
+                                                <label class="form-label" style="font-weight: 600;">Hugging Face API Key</label>
+                                                <input type="password" class="form-control mb-2" name="llm_config[providers][huggingface][api_key]" 
+                                                       value="" 
+                                                       placeholder="{{ !empty($providers['huggingface']['api_key']) ? '******** (Key stored. Leave blank to keep)' : 'hf_...' }}" style="border-radius: 8px;">
+                                                <select class="form-control form-control-sm" name="llm_config[providers][huggingface][default_model]" style="border-radius: 8px;">
+                                                    @if(!empty($providerModels['huggingface']))
+                                                        @foreach($providerModels['huggingface'] as $model)
+                                                            <option value="{{ $model['id'] }}" {{ ($providers['huggingface']['default_model'] ?? '') == $model['id'] ? 'selected' : '' }}>{{ $model['name'] }}</option>
+                                                        @endforeach
+                                                    @else
+                                                        <option value="mistralai/Mistral-7B-Instruct-v0.3" {{ ($providers['huggingface']['default_model'] ?? '') == 'mistralai/Mistral-7B-Instruct-v0.3' ? 'selected' : '' }}>Mistral-7B-Instruct-v0.3</option>
+                                                        <option value="meta-llama/Meta-Llama-3-8B-Instruct" {{ ($providers['huggingface']['default_model'] ?? '') == 'meta-llama/Meta-Llama-3-8B-Instruct' ? 'selected' : '' }}>Meta-Llama-3-8B-Instruct</option>
+                                                    @endif
+                                                </select>
+                                                <small class="text-muted d-block mt-1">Requires a Hugging Face Hub inference token.</small>
                                             </div>
                                         </div>
 
                                         <hr class="my-4">
                                         
-                                        <h6 class="font-weight-bold mb-3" style="color: var(--primary-color);">Patient Summary Settings</h6>
+                                        <h6 class="font-weight-bold mb-3" style="color: var(--primary-color);">Patient Summary & AI Settings</h6>
                                         <div class="row">
                                             <div class="col-md-6 mb-3">
                                                 <label class="form-label" style="font-weight: 600;">Data Scope Limiter (Months)</label>
@@ -743,11 +767,97 @@
                                                        value="{{ $llmConfig['summary_scope_max_entries'] ?? 50 }}" min="10" max="100" style="border-radius: 8px;">
                                                 <small class="text-muted d-block mt-1">Maximum entries per clinical type to prevent token overflow.</small>
                                             </div>
-                                            <div class="col-md-6 mb-3">
+                                            
+                                            <div class="col-md-6 mb-4">
+                                                <div class="custom-control custom-switch mt-2">
+                                                    <input type="checkbox" class="custom-control-input" id="wandEnabledSwitch" name="llm_config[wand_enabled]" value="1" {{ ($llmConfig['wand_enabled'] ?? true) ? 'checked' : '' }}>
+                                                    <label class="custom-control-label font-weight-bold" for="wandEnabledSwitch">Enable Floating AI Wand</label>
+                                                </div>
+                                                <small class="text-muted d-block mt-1 pl-4" style="margin-left: 0.5rem;">Shows the magic wand button on the bottom right of workbenches for quick patient summaries.</small>
+                                            </div>
+                                            <div class="col-md-6 mb-4">
+                                                <div class="custom-control custom-switch mt-2">
+                                                    <input type="checkbox" class="custom-control-input" id="dictationEnabledSwitch" name="llm_config[dictation_enabled]" value="1" {{ ($llmConfig['dictation_enabled'] ?? true) ? 'checked' : '' }}>
+                                                    <label class="custom-control-label font-weight-bold" for="dictationEnabledSwitch">Enable Speech Dictation Button</label>
+                                                </div>
+                                                <small class="text-muted d-block mt-1 pl-4" style="margin-left: 0.5rem;">Allows doctors to use voice-to-text natively inside clinical notes and forms.</small>
+                                            </div>
+                                            <div class="col-md-6 mb-4">
+                                                <div class="custom-control custom-switch mt-2">
+                                                    <input type="checkbox" class="custom-control-input" id="summaryBtnEnabledSwitch" name="llm_config[summary_button_enabled]" value="1" {{ ($llmConfig['summary_button_enabled'] ?? true) ? 'checked' : '' }}>
+                                                    <label class="custom-control-label font-weight-bold" for="summaryBtnEnabledSwitch">Enable AI Summary Button (Widget)</label>
+                                                </div>
+                                                <small class="text-muted d-block mt-1 pl-4" style="margin-left: 0.5rem;">Shows the "AI Summary" button inline inside the dictation toolbar.</small>
+                                            </div>
+                                            <div class="col-md-6 mb-4">
+                                                <div class="custom-control custom-switch mt-2">
+                                                    <input type="checkbox" class="custom-control-input" id="polishNoteEnabledSwitch" name="llm_config[polish_note_enabled]" value="1" {{ ($llmConfig['polish_note_enabled'] ?? true) ? 'checked' : '' }}>
+                                                    <label class="custom-control-label font-weight-bold" for="polishNoteEnabledSwitch">Enable Note Polishing</label>
+                                                </div>
+                                                <small class="text-muted d-block mt-1 pl-4" style="margin-left: 0.5rem;">Enables the "Magic Wand" offline NLP formatting tool in the dictation toolbar.</small>
+                                            </div>
+                                            <div class="col-md-6 mb-4">
+                                                <div class="custom-control custom-switch mt-2">
+                                                    <input type="checkbox" class="custom-control-input" id="summaryAutoOpenSwitch" name="llm_config[summary_auto_open]" value="1" {{ ($llmConfig['summary_auto_open'] ?? true) ? 'checked' : '' }}>
+                                                    <label class="custom-control-label font-weight-bold" for="summaryAutoOpenSwitch">Auto-Open Patient Summary</label>
+                                                </div>
+                                                <small class="text-muted d-block mt-1 pl-4" style="margin-left: 0.5rem;">Automatically opens the AI Patient Briefing overlay when a consultation begins.</small>
+                                            </div>
+                                            <div class="col-md-6 mb-4">
                                                 <div class="custom-control custom-switch mt-2">
                                                     <input type="checkbox" class="custom-control-input" id="voiceEnabledSwitch" name="llm_config[summary_voice_enabled]" value="1" {{ ($llmConfig['summary_voice_enabled'] ?? true) ? 'checked' : '' }}>
-                                                    <label class="custom-control-label" for="voiceEnabledSwitch">Enable Web Speech Narration</label>
+                                                    <label class="custom-control-label font-weight-bold" for="voiceEnabledSwitch">Enable Web Speech Narration</label>
                                                 </div>
+                                                <small class="text-muted d-block mt-1 pl-4" style="margin-left: 0.5rem;">Allows the browser to read the clinical summary aloud using Text-to-Speech.</small>
+                                            </div>
+                                            
+                                            <div class="col-md-6 mb-3">
+                                                <label class="form-label" style="font-weight: 600;">Voice Narration Speed</label>
+                                                <select class="form-control" name="llm_config[summary_voice_rate]" style="border-radius: 8px;">
+                                                    <option value="0.8" {{ ($llmConfig['summary_voice_rate'] ?? 1.0) == 0.8 ? 'selected' : '' }}>0.8x</option>
+                                                    <option value="1.0" {{ ($llmConfig['summary_voice_rate'] ?? 1.0) == 1.0 ? 'selected' : '' }}>1.0x (Normal)</option>
+                                                    <option value="1.2" {{ ($llmConfig['summary_voice_rate'] ?? 1.0) == 1.2 ? 'selected' : '' }}>1.2x</option>
+                                                    <option value="1.5" {{ ($llmConfig['summary_voice_rate'] ?? 1.0) == 1.5 ? 'selected' : '' }}>1.5x</option>
+                                                </select>
+                                            </div>
+                                        </div>
+
+                                        <hr class="my-4">
+                                        
+                                        <h6 class="font-weight-bold mb-3" style="color: var(--primary-color);">RAG (Retrieval-Augmented Generation) Settings</h6>
+                                        @php
+                                            $ragSettings = $llmConfig['rag_settings'] ?? [];
+                                        @endphp
+                                        <div class="row">
+                                            <div class="col-md-4 mb-3">
+                                                <label class="form-label" style="font-weight: 600;">Chunk Size (Tokens)</label>
+                                                <input type="number" class="form-control" name="llm_config[rag_settings][chunk_size]" 
+                                                       value="{{ $ragSettings['chunk_size'] ?? 512 }}" min="128" max="2048" style="border-radius: 8px;">
+                                                <small class="text-muted d-block mt-1">Tokens per chunk.</small>
+                                            </div>
+                                            <div class="col-md-4 mb-3">
+                                                <label class="form-label" style="font-weight: 600;">Chunk Overlap</label>
+                                                <input type="number" class="form-control" name="llm_config[rag_settings][chunk_overlap]" 
+                                                       value="{{ $ragSettings['chunk_overlap'] ?? 50 }}" min="0" max="200" style="border-radius: 8px;">
+                                                <small class="text-muted d-block mt-1">Overlap between chunks.</small>
+                                            </div>
+                                            <div class="col-md-4 mb-3">
+                                                <label class="form-label" style="font-weight: 600;">Top K Results</label>
+                                                <input type="number" class="form-control" name="llm_config[rag_settings][top_k_results]" 
+                                                       value="{{ $ragSettings['top_k_results'] ?? 10 }}" min="1" max="50" style="border-radius: 8px;">
+                                                <small class="text-muted d-block mt-1">Max context chunks to retrieve.</small>
+                                            </div>
+                                            <div class="col-md-4 mb-3">
+                                                <label class="form-label" style="font-weight: 600;">Similarity Threshold</label>
+                                                <input type="number" step="0.05" class="form-control" name="llm_config[rag_settings][similarity_threshold]" 
+                                                       value="{{ $ragSettings['similarity_threshold'] ?? 0.7 }}" min="0.1" max="1.0" style="border-radius: 8px;">
+                                                <small class="text-muted d-block mt-1">Minimum score for inclusion (0.0 to 1.0).</small>
+                                            </div>
+                                            <div class="col-md-4 mb-3">
+                                                <label class="form-label" style="font-weight: 600;">Cache TTL (Hours)</label>
+                                                <input type="number" class="form-control" name="llm_config[rag_settings][cache_ttl_hours]" 
+                                                       value="{{ $ragSettings['cache_ttl_hours'] ?? 24 }}" min="1" max="168" style="border-radius: 8px;">
+                                                <small class="text-muted d-block mt-1">Time-to-live for cached vector embeddings.</small>
                                             </div>
                                         </div>
 
@@ -758,10 +868,12 @@
                                             <div class="col-md-12 mb-3">
                                                 <label class="form-label" style="font-weight: 600;">Patient Summary Prompt</label>
                                                 <textarea class="form-control" name="llm_config[system_prompts][patient_summary]" rows="4" style="border-radius: 8px;" placeholder="System instructions for generating patient summaries...">{{ $llmConfig['system_prompts']['patient_summary'] ?? config('llm.prompts.patient_summary') }}</textarea>
+                                                <small class="text-muted d-block mt-1">This prompt instructs the LLM on how to analyze the RAG context and format the patient's clinical summary.</small>
                                             </div>
                                             <div class="col-md-12 mb-3">
                                                 <label class="form-label" style="font-weight: 600;">Note Polishing Prompt</label>
                                                 <textarea class="form-control" name="llm_config[system_prompts][polish_note]" rows="3" style="border-radius: 8px;" placeholder="System instructions for NLP offline polishing...">{{ $llmConfig['system_prompts']['polish_note'] ?? config('llm.prompts.polish_note') }}</textarea>
+                                                <small class="text-muted d-block mt-1">This prompt is used when the "Polish Note" button is clicked in the dictation toolbar to clean up grammar and medically format the raw text.</small>
                                             </div>
                                         </div>
                                     </div>
