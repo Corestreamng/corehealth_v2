@@ -134,13 +134,56 @@
                         <i class="fa fa-exclamation-triangle"></i> <strong>Note:</strong> <span id="warning_text">This will create an admission request.</span>
                     </div>
                 </form>
+
+                <!-- Checklist & Bed Assignment Section (Initially Hidden) -->
+                <div id="modal_checklist_section" style="display: none;">
+                    <h6 id="modal-checklist-title"><i class="mdi mdi-checkbox-marked-outline"></i> Checklist</h6>
+                    <div class="d-flex align-items-center mb-3">
+                        <span class="me-2 fw-bold"><i class="mdi mdi-checkbox-multiple-marked"></i> Progress:</span>
+                        <div class="progress flex-grow-1" style="height: 15px;">
+                            <div class="progress-bar bg-success" id="modal-checklist-progress-bar" role="progressbar" style="width: 0%"></div>
+                        </div>
+                        <span class="fw-bold ms-2" id="modal-checklist-progress-text">0%</span>
+                    </div>
+                    <div id="modal-checklist-items" class="mb-3 p-2 border rounded" style="max-height: 250px; overflow-y: auto; background-color: #f8f9fa;">
+                        <!-- Checklist items load here -->
+                    </div>
+
+                    <!-- Bed Assignment Section (For Admission) -->
+                    <div id="modal_bed_assignment_section" style="display: none;">
+                        <hr>
+                        <h6><i class="fa fa-bed"></i> Assign Bed</h6>
+                        <div class="mb-2">
+                            <select id="modal-ward-filter" class="form-control form-control-sm" onchange="modalLoadAvailableBeds()">
+                                <option value="">-- All Wards --</option>
+                            </select>
+                        </div>
+                        <div id="modal-available-beds-grid" class="d-flex flex-wrap gap-2 mb-3" style="max-height: 200px; overflow-y: auto;">
+                            <!-- Beds load here -->
+                        </div>
+                    </div>
+                </div>
+
             </div>
-            <div class="modal-footer">
+            <div class="modal-footer" id="modal_footer_actions">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
                     <i class="fa fa-times"></i> Cancel
                 </button>
                 <button type="button" class="btn btn-primary btn-lg" onclick="submitAdmitDischarge()" id="modal_submit_btn">
                     <i class="fa fa-bed" id="btn_icon"></i> <span id="btn_text">Submit Admission</span>
+                </button>
+            </div>
+            
+            <!-- Checklist Action Buttons (Initially Hidden) -->
+            <div class="modal-footer" id="modal_checklist_actions" style="display: none;">
+                <button type="button" class="btn btn-secondary" onclick="location.reload()">
+                    <i class="fa fa-handshake"></i> Hand off to Nurse
+                </button>
+                <button type="button" class="btn btn-primary" id="modal_assign_bed_btn" onclick="modalConfirmBedAssignment()" style="display:none;" disabled>
+                    <i class="fa fa-check"></i> Complete & Assign Bed
+                </button>
+                <button type="button" class="btn btn-warning" id="modal_complete_discharge_btn" onclick="modalConfirmDischarge()" style="display:none;" disabled>
+                    <i class="fa fa-check"></i> Complete Discharge
                 </button>
             </div>
             <div id="modal_message" class="px-3 pb-3"></div>
@@ -262,6 +305,9 @@ function openAdmitModal(patientId = null, patientName = null, encounterId = null
     // Show/hide sections
     document.getElementById('admission_section').style.display = 'block';
     document.getElementById('discharge_section').style.display = 'none';
+    document.getElementById('modal_checklist_section').style.display = 'none';
+    document.getElementById('modal_footer_actions').style.display = 'flex';
+    document.getElementById('modal_checklist_actions').style.display = 'none';
 
     // Load live ward availability
     loadWardAvailability();
@@ -290,6 +336,9 @@ function openDischargeModal(patientId = null, patientName = null, admissionReque
     // Show/hide sections
     document.getElementById('admission_section').style.display = 'none';
     document.getElementById('discharge_section').style.display = 'block';
+    document.getElementById('modal_checklist_section').style.display = 'none';
+    document.getElementById('modal_footer_actions').style.display = 'flex';
+    document.getElementById('modal_checklist_actions').style.display = 'none';
     $('#discharge-death-fields').hide(); // Reset death fields
 
     $('#admitDischargeModal').modal('show');
@@ -358,6 +407,25 @@ function submitAdmitDischarge() {
         processData: false,
         contentType: false,
         success: function(response) {
+            const isDoctorFullAdmission = {{ appsettings('doctor_full_admission') ? 'true' : 'false' }};
+            const isDoctorFullDischarge = {{ appsettings('doctor_full_discharge') ? 'true' : 'false' }};
+
+            if (action === 'admit' && isDoctorFullAdmission) {
+                const admissionReqId = response.data && response.data.id ? response.data.id : null;
+                if (admissionReqId) {
+                    admitDischargeShowMessage('modal_message', 'Admission request created! Proceeding to checklist...', 'success');
+                    modalTransitionToChecklist(admissionReqId, 'admission');
+                    return;
+                }
+            } else if (action === 'discharge' && isDoctorFullDischarge) {
+                const admissionReqId = formData.get('admission_request_id');
+                if (admissionReqId) {
+                    admitDischargeShowMessage('modal_message', 'Discharge request created! Proceeding to checklist...', 'success');
+                    modalTransitionToChecklist(admissionReqId, 'discharge');
+                    return;
+                }
+            }
+
             const successMsg = action === 'admit'
                 ? 'Admission request submitted! Nursing staff will process the admission checklist.'
                 : 'Discharge request submitted! Nursing staff will complete the discharge checklist before releasing the bed.';
@@ -373,6 +441,220 @@ function submitAdmitDischarge() {
             const originalText = action === 'admit' ? 'Submit Admission Request' : 'Submit Discharge Request';
             const originalIcon = action === 'admit' ? 'fa-bed' : 'fa-sign-out-alt';
             btn.innerHTML = `<i class=\"fa ${originalIcon}\"></i> ${originalText}`;
+        }
+    });
+}
+
+// ─── Checklist & Bed Assignment Logic ───
+let modalCurrentAdmissionId = null;
+let modalCurrentChecklistType = null;
+let modalSelectedBedId = null;
+
+function modalTransitionToChecklist(admissionRequestId, type) {
+    modalCurrentAdmissionId = admissionRequestId;
+    modalCurrentChecklistType = type;
+    
+    // Hide forms, show checklist
+    document.getElementById('admitDischargeForm').style.display = 'none';
+    document.getElementById('modal_footer_actions').style.display = 'none';
+    
+    document.getElementById('modal_checklist_section').style.display = 'block';
+    document.getElementById('modal_checklist_actions').style.display = 'flex';
+    
+    document.getElementById('modal-checklist-title').innerHTML = type === 'admission' 
+        ? '<i class="mdi mdi-checkbox-marked-outline"></i> Admission Checklist'
+        : '<i class="mdi mdi-checkbox-marked-outline"></i> Discharge Checklist';
+        
+    if (type === 'admission') {
+        document.getElementById('modal_assign_bed_btn').style.display = 'block';
+        document.getElementById('modal_complete_discharge_btn').style.display = 'none';
+    } else {
+        document.getElementById('modal_assign_bed_btn').style.display = 'none';
+        document.getElementById('modal_complete_discharge_btn').style.display = 'block';
+    }
+
+    modalLoadChecklist(admissionRequestId, type);
+}
+
+function modalLoadChecklist(id, type) {
+    const url = type === 'admission' 
+        ? '/nursing-workbench/admission/' + id + '/checklist'
+        : '/nursing-workbench/admission/' + id + '/discharge-checklist';
+
+    document.getElementById('modal-checklist-items').innerHTML = '<div class="text-center py-3"><i class="fa fa-spinner fa-spin"></i> Loading checklist...</div>';
+
+    $.get(url, function(checklist) {
+        if (!checklist || !checklist.items || checklist.items.length === 0) {
+            document.getElementById('modal-checklist-items').innerHTML = '<div class="text-center py-3 text-muted">No checklist items required.</div>';
+            modalUpdateProgress(100);
+        } else {
+            modalRenderChecklist(checklist.items);
+            modalUpdateProgress(checklist.progress || 0);
+        }
+    }).fail(function() {
+        document.getElementById('modal-checklist-items').innerHTML = '<div class="text-danger p-2">Failed to load checklist.</div>';
+    });
+}
+
+function modalRenderChecklist(items) {
+    let html = '';
+    items.forEach(function(item) {
+        const isDone = item.completed || item.waived;
+        const statusClass = item.completed ? 'bg-success-light border-success' : (item.waived ? 'bg-warning-light border-warning' : 'bg-white');
+        
+        html += `<div class="d-flex align-items-center justify-content-between p-2 mb-2 border rounded ${statusClass}">`;
+        html += `<div class="d-flex align-items-center">`;
+        html += `<input type="checkbox" class="me-3 mt-0" style="width: 1.5em; height: 1.5em; cursor: pointer;" 
+                  onchange="modalToggleChecklistItem(${item.id}, this.checked)" ${isDone ? 'checked disabled' : ''}>`;
+        html += `<div><strong>${item.name}</strong>`;
+        if (item.description) html += `<br><small class="text-muted">${item.description}</small>`;
+        if (item.waived) html += `<br><small class="text-warning"><i class="mdi mdi-alert"></i> Waived</small>`;
+        html += `</div></div>`;
+        
+        if (!isDone && item.is_waivable) {
+            html += `<button type="button" class="btn btn-sm btn-outline-warning" onclick="modalWaiveChecklistItem(${item.id})">Waive</button>`;
+        }
+        html += `</div>`;
+    });
+    document.getElementById('modal-checklist-items').innerHTML = html;
+}
+
+function modalToggleChecklistItem(itemId, checked) {
+    const url = modalCurrentChecklistType === 'admission' 
+        ? '/nursing-workbench/admission-checklist/item/' + itemId + '/complete'
+        : '/nursing-workbench/discharge-checklist/item/' + itemId + '/complete';
+
+    $.post(url, { _token: '{{ csrf_token() }}', completed: checked }, function(response) {
+        if (response.success) {
+            modalUpdateProgress(response.progress);
+            modalLoadChecklist(modalCurrentAdmissionId, modalCurrentChecklistType);
+        }
+    });
+}
+
+function modalWaiveChecklistItem(itemId) {
+    const reason = prompt("Enter reason for waiving:");
+    if (reason === null) return;
+    
+    const url = modalCurrentChecklistType === 'admission'
+        ? '/nursing-workbench/admission-checklist/item/' + itemId + '/waive'
+        : '/nursing-workbench/discharge-checklist/item/' + itemId + '/waive';
+
+    $.post(url, { _token: '{{ csrf_token() }}', reason: reason }, function(response) {
+        if (response.success) {
+            modalUpdateProgress(response.progress);
+            modalLoadChecklist(modalCurrentAdmissionId, modalCurrentChecklistType);
+        }
+    });
+}
+
+function modalUpdateProgress(progress) {
+    $('#modal-checklist-progress-bar').css('width', progress + '%');
+    $('#modal-checklist-progress-text').text(progress + '%');
+    
+    if (progress >= 100) {
+        if (modalCurrentChecklistType === 'admission') {
+            document.getElementById('modal_bed_assignment_section').style.display = 'block';
+            modalPopulateWardFilter();
+            modalLoadAvailableBeds();
+        } else {
+            document.getElementById('modal_complete_discharge_btn').disabled = false;
+        }
+    }
+}
+
+function modalPopulateWardFilter() {
+    $.get('{{ route("ward-availability") }}', function(wards) {
+        const select = document.getElementById('modal-ward-filter');
+        select.innerHTML = '<option value="">-- All Wards --</option>';
+        if (wards && wards.length) {
+            wards.forEach(w => {
+                select.innerHTML += `<option value="${w.id}">${w.name} (${w.type_label})</option>`;
+            });
+        }
+        const preferred = document.getElementById('preferred_ward_id').value;
+        if (preferred) {
+            select.value = preferred;
+        }
+    });
+}
+
+function modalLoadAvailableBeds() {
+    const wardId = document.getElementById('modal-ward-filter').value;
+    let url = '/nursing-workbench/ward-dashboard/available-beds';
+    if (wardId) url += '?ward_id=' + wardId;
+
+    document.getElementById('modal-available-beds-grid').innerHTML = '<div class="text-center py-2"><i class="fa fa-spinner fa-spin"></i> Loading beds...</div>';
+
+    $.get(url, function(beds) {
+        let html = '';
+        if (beds.length === 0) {
+            html = '<div class="w-100 text-center py-2 text-muted">No available beds found.</div>';
+        } else {
+            beds.forEach(bed => {
+                html += `
+                    <div class="p-2 border rounded modal-bed-item" style="cursor:pointer; width: 120px; text-align: center;" 
+                         data-id="${bed.id}" onclick="modalSelectBed(this, ${bed.id})">
+                        <i class="mdi mdi-bed-empty mdi-24px text-success"></i><br>
+                        <strong>${bed.name}</strong><br>
+                        <small class="text-muted" style="font-size:0.7em;">${bed.ward_name}</small>
+                    </div>`;
+            });
+        }
+        document.getElementById('modal-available-beds-grid').innerHTML = html;
+        modalSelectedBedId = null;
+        document.getElementById('modal_assign_bed_btn').disabled = true;
+    });
+}
+
+function modalSelectBed(el, bedId) {
+    $('.modal-bed-item').removeClass('border-primary bg-primary text-white').addClass('border');
+    $('.modal-bed-item i').removeClass('text-white').addClass('text-success');
+    
+    $(el).removeClass('border').addClass('border-primary bg-primary text-white');
+    $(el).find('i').removeClass('text-success').addClass('text-white');
+    
+    modalSelectedBedId = bedId;
+    document.getElementById('modal_assign_bed_btn').disabled = false;
+}
+
+function modalConfirmBedAssignment() {
+    if (!modalSelectedBedId) return;
+    
+    const btn = document.getElementById('modal_assign_bed_btn');
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Assigning...';
+
+    $.post('/nursing-workbench/admission/' + modalCurrentAdmissionId + '/assign-bed', {
+        _token: '{{ csrf_token() }}',
+        bed_id: modalSelectedBedId
+    }, function(response) {
+        if (response.success) {
+            admitDischargeShowMessage('modal_message', 'Patient fully admitted and bed assigned!', 'success');
+            setTimeout(() => { location.reload(); }, 1500);
+        } else {
+            admitDischargeShowMessage('modal_message', 'Failed to assign bed.', 'error');
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fa fa-check"></i> Complete & Assign Bed';
+        }
+    });
+}
+
+function modalConfirmDischarge() {
+    const btn = document.getElementById('modal_complete_discharge_btn');
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Discharging...';
+
+    $.post('/nursing-workbench/admission/' + modalCurrentAdmissionId + '/complete-discharge', {
+        _token: '{{ csrf_token() }}'
+    }, function(response) {
+        if (response.success) {
+            admitDischargeShowMessage('modal_message', 'Patient fully discharged and bed released!', 'success');
+            setTimeout(() => { location.reload(); }, 1500);
+        } else {
+            admitDischargeShowMessage('modal_message', 'Failed to complete discharge.', 'error');
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fa fa-check"></i> Complete Discharge';
         }
     });
 }

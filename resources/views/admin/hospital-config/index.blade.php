@@ -1312,6 +1312,39 @@
                                 </div>
 
                                 <hr class="my-3">
+                                <h6 class="text-muted mb-3" style="font-weight: 600;"><i class="mdi mdi-hospital-building mr-1"></i> Clinical Workflows</h6>
+
+                                <div class="mb-3">
+                                    <div class="feature-toggle-row">
+                                        <div>
+                                            <label for="doctor_full_admission" class="mb-0" style="font-weight: 600; cursor: pointer;">
+                                                Doctor Does Full Admission
+                                            </label>
+                                            <small class="text-muted d-block">When enabled, doctors can complete the admission checklist and assign beds directly from the admit modal without handing over to nurses.</small>
+                                        </div>
+                                        <label class="toggle-switch">
+                                            <input type="checkbox" id="doctor_full_admission" name="doctor_full_admission" value="1" {{ ($config->doctor_full_admission ?? 0) ? 'checked' : '' }}>
+                                            <span class="toggle-slider"></span>
+                                        </label>
+                                    </div>
+                                </div>
+
+                                <div class="mb-3">
+                                    <div class="feature-toggle-row">
+                                        <div>
+                                            <label for="doctor_full_discharge" class="mb-0" style="font-weight: 600; cursor: pointer;">
+                                                Doctor Does Full Discharge
+                                            </label>
+                                            <small class="text-muted d-block">When enabled, doctors can complete the discharge checklist and release beds directly from the discharge modal without handing over to nurses.</small>
+                                        </div>
+                                        <label class="toggle-switch">
+                                            <input type="checkbox" id="doctor_full_discharge" name="doctor_full_discharge" value="1" {{ ($config->doctor_full_discharge ?? 0) ? 'checked' : '' }}>
+                                            <span class="toggle-slider"></span>
+                                        </label>
+                                    </div>
+                                </div>
+
+                                <hr class="my-3">
                                 <h6 class="text-muted mb-3" style="font-weight: 600;"><i class="mdi mdi-pill mr-1"></i> Prescription / Dosage Settings</h6>
 
                                 <div class="mb-3">

@@ -153,6 +153,9 @@ class HospitalConfigController extends Controller
             // Dose Settings
             'enable_structured_dose' => 'boolean',
             'default_dose_mode' => 'nullable|in:simple,structured',
+            // Doctor Full Admission/Discharge
+            'doctor_full_admission' => 'boolean',
+            'doctor_full_discharge' => 'boolean',
         ]);
 
         $config = ApplicationStatu::first();
@@ -187,6 +190,8 @@ class HospitalConfigController extends Controller
         $validated['allow_halve_sale'] = $request->has('allow_halve_sale');
         $validated['enable_structured_dose'] = $request->has('enable_structured_dose');
         $validated['default_dose_mode'] = $request->input('default_dose_mode', 'structured');
+        $validated['doctor_full_admission'] = $request->has('doctor_full_admission');
+        $validated['doctor_full_discharge'] = $request->has('doctor_full_discharge');
 
         // Handle LLM Config Checkboxes and processing
         if ($request->has('llm_config')) {
