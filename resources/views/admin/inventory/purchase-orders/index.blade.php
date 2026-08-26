@@ -180,7 +180,7 @@ $(function() {
 function deletePO(id) {
     if (confirm('Are you sure you want to delete this Purchase Order?')) {
         $.ajax({
-            url: `/inventory/purchase-orders/${id}`,
+            url: `{{ url('/inventory/purchase-orders/${id}') }}`,
             type: 'DELETE',
             data: { _token: '{{ csrf_token() }}' },
             success: function(response) {

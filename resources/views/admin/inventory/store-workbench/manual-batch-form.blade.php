@@ -365,7 +365,7 @@
             if (!productId) return;
 
             $.ajax({
-                url: '/products/' + productId + '/packagings',
+                url: '{{ url('/products/') }}' + productId + '/packagings',
                 method: 'GET',
                 success: function(response) {
                     var baseUnit = response.base_unit_name || 'units';
