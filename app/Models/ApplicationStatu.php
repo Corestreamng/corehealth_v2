@@ -37,6 +37,7 @@ class ApplicationStatu extends Model implements Auditable
         'misc_service_category_id',
         'imaging_category_id',
         'consultation_cycle_duration',
+        'strict_encounter_navigation',
         'note_edit_window',
         'result_edit_duration',
         'timezone',
