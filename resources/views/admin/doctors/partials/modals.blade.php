@@ -453,7 +453,7 @@ $('#deletionReasonSelect').on('change', function() {
                 url: `/encounters/${encounterId}/finalize`,
                 method: 'POST',
                 data: {
-                    end_consultation: 0,
+                    end_consultation: 1,
                     consult_admit: 0,
                     admit_note: '',
                     queue_id: typeof queueId !== 'undefined' ? queueId : null,

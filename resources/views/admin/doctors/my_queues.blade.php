@@ -544,15 +544,15 @@
                 {{-- Date Range Filter --}}
                 <div class="d-flex gap-2 mb-2 mt-2 px-2 flex-wrap align-items-end">
                     <div>
-                        <label class="form-label mb-0 small text-muted">From</label>
+                        <label class="form-label mb-1 small text-muted d-block">From</label>
                         <input type="date" class="form-control form-control-sm" id="appt_start_date" value="{{ date('Y-m-d') }}" style="max-width:150px;">
                     </div>
                     <div>
-                        <label class="form-label mb-0 small text-muted">To</label>
+                        <label class="form-label mb-1 small text-muted d-block">To</label>
                         <input type="date" class="form-control form-control-sm" id="appt_end_date" value="{{ date('Y-m-d', strtotime('+30 days')) }}" style="max-width:150px;">
                     </div>
                     <div>
-                        <label class="form-label mb-0 small text-muted">Source</label>
+                        <label class="form-label mb-1 small text-muted d-block">Source</label>
                         <select class="form-select form-select-sm" id="appt_source_filter" style="min-width:110px;">
                             <option value="all">All Sources</option>
                             <option value="scheduled">Scheduled</option>
@@ -563,7 +563,7 @@
                         </select>
                     </div>
                     <div>
-                        <label class="form-label mb-0 small text-muted">Priority</label>
+                        <label class="form-label mb-1 small text-muted d-block">Priority</label>
                         <select class="form-select form-select-sm" id="appt_priority_filter" style="min-width:110px;">
                             <option value="all">All Priorities</option>
                             <option value="emergency">Emergency</option>
@@ -572,7 +572,7 @@
                         </select>
                     </div>
                     <div>
-                        <label class="form-label mb-0 small text-muted">Clinic</label>
+                        <label class="form-label mb-1 small text-muted d-block">Clinic</label>
                         <select class="form-select form-select-sm" id="appt_clinic_filter" style="min-width:120px; max-width:180px;">
                             <option value="all">All Clinics</option>
                             @if(isset($filterClinics))
@@ -580,6 +580,16 @@
                                     <option value="{{ $c->id }}">{{ $c->name }}</option>
                                 @endforeach
                             @endif
+                        </select>
+                    </div>
+                    <div>
+                        <label class="form-label mb-1 small text-muted d-block">Sort By</label>
+                        <select class="form-select form-select-sm" id="appt_sort_filter" style="min-width:140px;">
+                            <option value="newest">Time (Newest First)</option>
+                            <option value="oldest">Time (Oldest First)</option>
+                            <option value="patient_az">Patient (A-Z)</option>
+                            <option value="patient_za">Patient (Z-A)</option>
+                            <option value="priority">Priority (Highest)</option>
                         </select>
                     </div>
                     <div>
@@ -694,15 +704,15 @@
                                 <div class="card-body">
                                     <div class="d-flex gap-2 mb-2 flex-wrap align-items-end">
                                         <div>
-                                            <label class="form-label mb-0 small text-muted">From</label>
+                                            <label class="form-label mb-1 small text-muted d-block">From</label>
                                             <input type="date" class="form-control form-control-sm" id="prev_start_date" value="{{ date('Y-m-d', strtotime('-7 days')) }}" style="max-width:150px;">
                                         </div>
                                         <div>
-                                            <label class="form-label mb-0 small text-muted">To</label>
+                                            <label class="form-label mb-1 small text-muted d-block">To</label>
                                             <input type="date" class="form-control form-control-sm" id="prev_end_date" value="{{ date('Y-m-d') }}" style="max-width:150px;">
                                         </div>
                                         <div>
-                                            <label class="form-label mb-0 small text-muted">Clinic</label>
+                                            <label class="form-label mb-1 small text-muted d-block">Clinic</label>
                                             <select class="form-select form-select-sm" id="prev_clinic_filter" style="max-width:160px;">
                                                 <option value="">All Clinics</option>
                                                 @foreach($filterClinics as $fc)
@@ -711,12 +721,21 @@
                                             </select>
                                         </div>
                                         <div>
-                                            <label class="form-label mb-0 small text-muted">HMO</label>
+                                            <label class="form-label mb-1 small text-muted d-block">HMO</label>
                                             <select class="form-select form-select-sm" id="prev_hmo_filter" style="max-width:160px;">
                                                 <option value="">All HMOs</option>
                                                 @foreach($filterHmos as $fh)
                                                     <option value="{{ $fh->id }}">{{ $fh->name }}</option>
                                                 @endforeach
+                                            </select>
+                                        </div>
+                                        <div>
+                                            <label class="form-label mb-1 small text-muted d-block">Sort By</label>
+                                            <select class="form-select form-select-sm" id="prev_sort_filter" style="min-width:140px;">
+                                                <option value="newest">Time (Newest First)</option>
+                                                <option value="oldest">Time (Oldest First)</option>
+                                                <option value="patient_az">Patient (A-Z)</option>
+                                                <option value="patient_za">Patient (Z-A)</option>
                                             </select>
                                         </div>
                                         <div>
@@ -742,20 +761,29 @@
                                 <div class="card-body">
                                     <div class="d-flex gap-2 mb-2 flex-wrap align-items-end">
                                         <div>
-                                            <label class="form-label mb-0 small text-muted">From</label>
+                                            <label class="form-label mb-1 small text-muted d-block">From</label>
                                             <input type="date" class="form-control form-control-sm" id="my_adm_start_date" value="{{ date('Y-m-d', strtotime('-30 days')) }}" style="max-width:150px;">
                                         </div>
                                         <div>
-                                            <label class="form-label mb-0 small text-muted">To</label>
+                                            <label class="form-label mb-1 small text-muted d-block">To</label>
                                             <input type="date" class="form-control form-control-sm" id="my_adm_end_date" value="{{ date('Y-m-d') }}" style="max-width:150px;">
                                         </div>
                                         <div>
-                                            <label class="form-label mb-0 small text-muted">HMO</label>
+                                            <label class="form-label mb-1 small text-muted d-block">HMO</label>
                                             <select class="form-select form-select-sm" id="my_adm_hmo_filter" style="max-width:160px;">
                                                 <option value="">All HMOs</option>
                                                 @foreach($filterHmos as $fh)
                                                     <option value="{{ $fh->id }}">{{ $fh->name }}</option>
                                                 @endforeach
+                                            </select>
+                                        </div>
+                                        <div>
+                                            <label class="form-label mb-1 small text-muted d-block">Sort By</label>
+                                            <select class="form-select form-select-sm" id="my_adm_sort_filter" style="min-width:140px;">
+                                                <option value="newest">Time (Newest First)</option>
+                                                <option value="oldest">Time (Oldest First)</option>
+                                                <option value="patient_az">Patient (A-Z)</option>
+                                                <option value="patient_za">Patient (Z-A)</option>
                                             </select>
                                         </div>
                                         <div>
@@ -781,15 +809,15 @@
                                 <div class="card-body">
                                     <div class="d-flex gap-2 mb-2 flex-wrap align-items-end">
                                         <div>
-                                            <label class="form-label mb-0 small text-muted">From</label>
+                                            <label class="form-label mb-1 small text-muted d-block">From</label>
                                             <input type="date" class="form-control form-control-sm" id="other_adm_start_date" value="{{ date('Y-m-d', strtotime('-30 days')) }}" style="max-width:150px;">
                                         </div>
                                         <div>
-                                            <label class="form-label mb-0 small text-muted">To</label>
+                                            <label class="form-label mb-1 small text-muted d-block">To</label>
                                             <input type="date" class="form-control form-control-sm" id="other_adm_end_date" value="{{ date('Y-m-d') }}" style="max-width:150px;">
                                         </div>
                                         <div>
-                                            <label class="form-label mb-0 small text-muted">Doctor</label>
+                                            <label class="form-label mb-1 small text-muted d-block">Doctor</label>
                                             <select class="form-select form-select-sm" id="other_adm_doctor_filter" style="max-width:160px;">
                                                 <option value="">All Doctors</option>
                                                 @foreach($filterDoctors as $fd)
@@ -798,12 +826,21 @@
                                             </select>
                                         </div>
                                         <div>
-                                            <label class="form-label mb-0 small text-muted">HMO</label>
+                                            <label class="form-label mb-1 small text-muted d-block">HMO</label>
                                             <select class="form-select form-select-sm" id="other_adm_hmo_filter" style="max-width:160px;">
                                                 <option value="">All HMOs</option>
                                                 @foreach($filterHmos as $fh)
                                                     <option value="{{ $fh->id }}">{{ $fh->name }}</option>
                                                 @endforeach
+                                            </select>
+                                        </div>
+                                        <div>
+                                            <label class="form-label mb-1 small text-muted d-block">Sort By</label>
+                                            <select class="form-select form-select-sm" id="other_adm_sort_filter" style="min-width:140px;">
+                                                <option value="newest">Time (Newest First)</option>
+                                                <option value="oldest">Time (Oldest First)</option>
+                                                <option value="patient_az">Patient (A-Z)</option>
+                                                <option value="patient_za">Patient (Z-A)</option>
                                             </select>
                                         </div>
                                         <div>
@@ -832,15 +869,15 @@
                                     </div>
                                     <div class="d-flex gap-2 mb-2 flex-wrap align-items-end">
                                         <div>
-                                            <label class="form-label mb-0 small text-muted">From</label>
+                                            <label class="form-label mb-1 small text-muted d-block">From</label>
                                             <input type="date" class="form-control form-control-sm" id="my_ref_start_date" value="{{ date('Y-m-d', strtotime('-30 days')) }}" style="max-width:150px;">
                                         </div>
                                         <div>
-                                            <label class="form-label mb-0 small text-muted">To</label>
+                                            <label class="form-label mb-1 small text-muted d-block">To</label>
                                             <input type="date" class="form-control form-control-sm" id="my_ref_end_date" value="{{ date('Y-m-d') }}" style="max-width:150px;">
                                         </div>
                                         <div>
-                                            <label class="form-label mb-0 small text-muted">Status</label>
+                                            <label class="form-label mb-1 small text-muted d-block">Status</label>
                                             <select class="form-select form-select-sm" id="my_ref_status_filter" style="max-width:140px;">
                                                 <option value="">All Statuses</option>
                                                 <option value="pending" selected>Pending</option>
@@ -852,7 +889,7 @@
                                             </select>
                                         </div>
                                         <div>
-                                            <label class="form-label mb-0 small text-muted">Direction</label>
+                                            <label class="form-label mb-1 small text-muted d-block">Direction</label>
                                             <select class="form-select form-select-sm" id="my_ref_direction_filter" style="max-width:140px;">
                                                 <option value="">All</option>
                                                 <option value="sent">Sent by Me</option>
@@ -860,11 +897,20 @@
                                             </select>
                                         </div>
                                         <div>
-                                            <label class="form-label mb-0 small text-muted">Type</label>
+                                            <label class="form-label mb-1 small text-muted d-block">Type</label>
                                             <select class="form-select form-select-sm" id="my_ref_type_filter" style="max-width:130px;">
                                                 <option value="">All Types</option>
                                                 <option value="internal">Internal</option>
                                                 <option value="external">External</option>
+                                            </select>
+                                        </div>
+                                        <div>
+                                            <label class="form-label mb-1 small text-muted d-block">Sort By</label>
+                                            <select class="form-select form-select-sm" id="my_ref_sort_filter" style="min-width:140px;">
+                                                <option value="newest">Time (Newest First)</option>
+                                                <option value="oldest">Time (Oldest First)</option>
+                                                <option value="patient_az">Patient (A-Z)</option>
+                                                <option value="patient_za">Patient (Z-A)</option>
                                             </select>
                                         </div>
                                         <div>
@@ -893,15 +939,15 @@
                                     </div>
                                     <div class="d-flex gap-2 mb-2 flex-wrap align-items-end">
                                         <div>
-                                            <label class="form-label mb-0 small text-muted">From</label>
+                                            <label class="form-label mb-1 small text-muted d-block">From</label>
                                             <input type="date" class="form-control form-control-sm" id="all_ref_start_date" value="{{ date('Y-m-d', strtotime('-30 days')) }}" style="max-width:150px;">
                                         </div>
                                         <div>
-                                            <label class="form-label mb-0 small text-muted">To</label>
+                                            <label class="form-label mb-1 small text-muted d-block">To</label>
                                             <input type="date" class="form-control form-control-sm" id="all_ref_end_date" value="{{ date('Y-m-d') }}" style="max-width:150px;">
                                         </div>
                                         <div>
-                                            <label class="form-label mb-0 small text-muted">Status</label>
+                                            <label class="form-label mb-1 small text-muted d-block">Status</label>
                                             <select class="form-select form-select-sm" id="all_ref_status_filter" style="max-width:140px;">
                                                 <option value="">All Statuses</option>
                                                 <option value="pending">Pending</option>
@@ -913,7 +959,7 @@
                                             </select>
                                         </div>
                                         <div>
-                                            <label class="form-label mb-0 small text-muted">Clinic</label>
+                                            <label class="form-label mb-1 small text-muted d-block">Clinic</label>
                                             <select class="form-select form-select-sm" id="all_ref_clinic_filter" style="max-width:160px;">
                                                 <option value="">All Clinics</option>
                                                 @foreach($filterClinics as $fc)
@@ -922,7 +968,7 @@
                                             </select>
                                         </div>
                                         <div>
-                                            <label class="form-label mb-0 small text-muted">Doctor</label>
+                                            <label class="form-label mb-1 small text-muted d-block">Doctor</label>
                                             <select class="form-select form-select-sm" id="all_ref_doctor_filter" style="max-width:160px;">
                                                 <option value="">All Doctors</option>
                                                 @foreach($filterDoctors as $fd)
@@ -931,11 +977,20 @@
                                             </select>
                                         </div>
                                         <div>
-                                            <label class="form-label mb-0 small text-muted">Type</label>
+                                            <label class="form-label mb-1 small text-muted d-block">Type</label>
                                             <select class="form-select form-select-sm" id="all_ref_type_filter" style="max-width:130px;">
                                                 <option value="">All Types</option>
                                                 <option value="internal">Internal</option>
                                                 <option value="external">External</option>
+                                            </select>
+                                        </div>
+                                        <div>
+                                            <label class="form-label mb-1 small text-muted d-block">Sort By</label>
+                                            <select class="form-select form-select-sm" id="all_ref_sort_filter" style="min-width:140px;">
+                                                <option value="newest">Time (Newest First)</option>
+                                                <option value="oldest">Time (Oldest First)</option>
+                                                <option value="patient_az">Patient (A-Z)</option>
+                                                <option value="patient_za">Patient (Z-A)</option>
                                             </select>
                                         </div>
                                         <div>
@@ -1322,6 +1377,7 @@
                     d.source_filter = $('#appt_source_filter').val() || 'all';
                     d.priority_filter = $('#appt_priority_filter').val() || 'all';
                     d.clinic_filter = $('#appt_clinic_filter').val() || 'all';
+                    d.sort_filter = $('#appt_sort_filter').val() || 'newest';
                 }
             },
             columns: [
@@ -1866,14 +1922,16 @@
                     start_date: $('#prev_start_date').val(),
                     end_date:   $('#prev_end_date').val(),
                     clinic_id:  $('#prev_clinic_filter').val(),
-                    hmo_id:     $('#prev_hmo_filter').val()
+                    hmo_id:     $('#prev_hmo_filter').val(),
+                    sort_filter: $('#prev_sort_filter').val() || 'newest'
                 };
             }
             if (selector === '#my_admissions_list') {
                 return {
                     start_date: $('#my_adm_start_date').val(),
                     end_date:   $('#my_adm_end_date').val(),
-                    hmo_id:     $('#my_adm_hmo_filter').val()
+                    hmo_id:     $('#my_adm_hmo_filter').val(),
+                    sort_filter: $('#my_adm_sort_filter').val() || 'newest'
                 };
             }
             if (selector === '#other_admissions_list') {
@@ -1881,7 +1939,8 @@
                     start_date: $('#other_adm_start_date').val(),
                     end_date:   $('#other_adm_end_date').val(),
                     doctor_id:  $('#other_adm_doctor_filter').val(),
-                    hmo_id:     $('#other_adm_hmo_filter').val()
+                    hmo_id:     $('#other_adm_hmo_filter').val(),
+                    sort_filter: $('#other_adm_sort_filter').val() || 'newest'
                 };
             }
             return {};
@@ -1894,10 +1953,15 @@
         $('#appt_date_fetch_btn').on('click', function() {
             refreshCurrentView();
         });
-        $('#appt_source_filter, #appt_priority_filter, #appt_clinic_filter').on('change', function() {
+        $('#appt_source_filter, #appt_priority_filter, #appt_clinic_filter, #appt_sort_filter').on('change', function() {
             refreshCurrentView();
         });
         $('#prev_fetch_btn').on('click', function() {
+            if ($.fn.DataTable.isDataTable('#prev_consult_list')) {
+                $('#prev_consult_list').DataTable().ajax.reload(null, false);
+            }
+        });
+        $('#prev_sort_filter').on('change', function() {
             if ($.fn.DataTable.isDataTable('#prev_consult_list')) {
                 $('#prev_consult_list').DataTable().ajax.reload(null, false);
             }
@@ -1907,7 +1971,17 @@
                 $('#my_admissions_list').DataTable().ajax.reload(null, false);
             }
         });
+        $('#my_adm_sort_filter').on('change', function() {
+            if ($.fn.DataTable.isDataTable('#my_admissions_list')) {
+                $('#my_admissions_list').DataTable().ajax.reload(null, false);
+            }
+        });
         $('#other_adm_fetch_btn').on('click', function() {
+            if ($.fn.DataTable.isDataTable('#other_admissions_list')) {
+                $('#other_admissions_list').DataTable().ajax.reload(null, false);
+            }
+        });
+        $('#other_adm_sort_filter').on('change', function() {
             if ($.fn.DataTable.isDataTable('#other_admissions_list')) {
                 $('#other_admissions_list').DataTable().ajax.reload(null, false);
             }
@@ -1954,7 +2028,8 @@
                     end_date:   $('#my_ref_end_date').val(),
                     status:     $('#my_ref_status_filter').val(),
                     direction:  $('#my_ref_direction_filter').val(),
-                    referral_type: $('#my_ref_type_filter').val()
+                    referral_type: $('#my_ref_type_filter').val(),
+                    sort_filter: $('#my_ref_sort_filter').val() || 'newest'
                 };
             }
             if (selector === '#all_referrals_list') {
@@ -1964,7 +2039,8 @@
                     status:        $('#all_ref_status_filter').val(),
                     clinic_id:     $('#all_ref_clinic_filter').val(),
                     doctor_id:     $('#all_ref_doctor_filter').val(),
-                    referral_type: $('#all_ref_type_filter').val()
+                    referral_type: $('#all_ref_type_filter').val(),
+                    sort_filter: $('#all_ref_sort_filter').val() || 'newest'
                 };
             }
             return {};
@@ -1976,7 +2052,17 @@
                 $('#my_referrals_list').DataTable().ajax.reload(null, false);
             }
         });
+        $('#my_ref_sort_filter').on('change', function() {
+            if ($.fn.DataTable.isDataTable('#my_referrals_list')) {
+                $('#my_referrals_list').DataTable().ajax.reload(null, false);
+            }
+        });
         $('#all_ref_fetch_btn').on('click', function() {
+            if ($.fn.DataTable.isDataTable('#all_referrals_list')) {
+                $('#all_referrals_list').DataTable().ajax.reload(null, false);
+            }
+        });
+        $('#all_ref_sort_filter').on('change', function() {
             if ($.fn.DataTable.isDataTable('#all_referrals_list')) {
                 $('#all_referrals_list').DataTable().ajax.reload(null, false);
             }

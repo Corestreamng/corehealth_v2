@@ -750,38 +750,67 @@ class ReceptionWorkbenchController extends Controller
             DB::beginTransaction();
 
             $patient = Patient::find($request->patient_id);
+            $service = Service::with('price')->find($request->service_id);
+            $consultationCategoryId = appsettings('consultation_category_id');
 
-            // Create ProductOrServiceRequest
-            $serviceRequest = new ProductOrServiceRequest();
-            $serviceRequest->service_id = $request->service_id;
-            $serviceRequest->user_id = $patient->user_id;
-            $serviceRequest->staff_user_id = Auth::id();
+            $forceRebill = $request->input('force_rebill', 0);
+            $skipBilling = false;
+            $serviceRequestId = null;
 
-            // Apply HMO tariff if applicable
-            if ($patient->hmo_id && $patient->hmo_id > 1) {
-                try {
-                    $hmoData = HmoHelper::applyHmoTariff($patient->id, null, $request->service_id);
-                    if ($hmoData) {
-                        $serviceRequest->payable_amount = $hmoData['payable_amount'];
-                        $serviceRequest->claims_amount = $hmoData['claims_amount'];
-                        $serviceRequest->coverage_mode = $hmoData['coverage_mode'];
-                        $serviceRequest->validation_status = $hmoData['validation_status'];
-                    }
-                } catch (\Exception $e) {
-                    // No HMO tariff found - log but continue
-                    Log::warning('HMO tariff not found for service', [
-                        'patient_id' => $patient->id,
-                        'service_id' => $request->service_id,
-                        'error' => $e->getMessage()
-                    ]);
+            if (!$forceRebill && $service->category_id == $consultationCategoryId) {
+                $cycleDuration = $service->consult_cycle_duration ?? appsettings('consultation_cycle_duration') ?? 24;
+                $threshold = Carbon::now()->subHours($cycleDuration);
+
+                // Find most recent consultation queue for this patient within the duration threshold
+                $recentConsult = DoctorQueue::where('patient_id', $patient->id)
+                    ->whereHas('request_entry', function($q) use ($consultationCategoryId) {
+                        $q->whereHas('service', function($q2) use ($consultationCategoryId) {
+                            $q2->where('category_id', $consultationCategoryId);
+                        });
+                    })
+                    ->where('created_at', '>=', $threshold)
+                    ->latest()
+                    ->first();
+
+                if ($recentConsult) {
+                    $skipBilling = true;
+                    $serviceRequestId = $recentConsult->request_entry_id;
                 }
-            } else {
-                // Private patient - standard pricing
-                $service = Service::with('price')->find($request->service_id);
-                $serviceRequest->payable_amount = $service->price->sale_price ?? 0;
             }
 
-            $serviceRequest->save();
+            if (!$skipBilling) {
+                // Create ProductOrServiceRequest (Billing)
+                $serviceRequest = new ProductOrServiceRequest();
+                $serviceRequest->service_id = $request->service_id;
+                $serviceRequest->user_id = $patient->user_id;
+                $serviceRequest->staff_user_id = Auth::id();
+
+                // Apply HMO tariff if applicable
+                if ($patient->hmo_id && $patient->hmo_id > 1) {
+                    try {
+                        $hmoData = HmoHelper::applyHmoTariff($patient->id, null, $request->service_id);
+                        if ($hmoData) {
+                            $serviceRequest->payable_amount = $hmoData['payable_amount'];
+                            $serviceRequest->claims_amount = $hmoData['claims_amount'];
+                            $serviceRequest->coverage_mode = $hmoData['coverage_mode'];
+                            $serviceRequest->validation_status = $hmoData['validation_status'];
+                        }
+                    } catch (\Exception $e) {
+                        // No HMO tariff found - log but continue
+                        Log::warning('HMO tariff not found for service', [
+                            'patient_id' => $patient->id,
+                            'service_id' => $request->service_id,
+                            'error' => $e->getMessage()
+                        ]);
+                    }
+                } else {
+                    // Private patient - standard pricing
+                    $serviceRequest->payable_amount = $service->price->sale_price ?? 0;
+                }
+
+                $serviceRequest->save();
+                $serviceRequestId = $serviceRequest->id;
+            }
 
             // Create queue entry
             $receptionistStaff = Staff::where('user_id', Auth::id())->first();
@@ -793,7 +822,7 @@ class ReceptionWorkbenchController extends Controller
             $queue->patient_id = $patient->id;
             $queue->clinic_id = $request->clinic_id;
             $queue->receptionist_id = $receptionistStaff->id;
-            $queue->request_entry_id = $serviceRequest->id;
+            $queue->request_entry_id = $serviceRequestId;
             $queue->status = QueueStatus::WAITING;
 
             if ($request->doctor_id) {
@@ -814,7 +843,7 @@ class ReceptionWorkbenchController extends Controller
                     'status'           => QueueStatus::SCHEDULED,
                     'booked_by'        => $receptionistStaff->id,
                     'source'           => 'reception',
-                    'service_request_id' => $serviceRequest->id,
+                    'service_request_id' => $serviceRequestId,
                     'notes'            => $request->appointment_notes,
                 ]);
                 $queue->appointment_id = $appointment->id;

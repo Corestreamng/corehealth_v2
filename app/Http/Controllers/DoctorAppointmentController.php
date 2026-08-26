@@ -1454,6 +1454,7 @@ class DoctorAppointmentController extends Controller
         $sourceFilter = $request->input('source_filter', 'all');
         $priorityFilter = $request->input('priority_filter', 'all');
         $clinicFilter = $request->input('clinic_filter', 'all');
+        $sortFilter = $request->input('sort_filter', 'newest');
 
         $patientNameSql = "TRIM(CONCAT(patient_users.surname, ' ', patient_users.firstname, ' ', COALESCE(patient_users.othername, '')))";
         $bookedByNameSql = "TRIM(CONCAT(booked_by_users.surname, ' ', booked_by_users.firstname, ' ', COALESCE(booked_by_users.othername, '')))";
@@ -1584,9 +1585,26 @@ class DoctorAppointmentController extends Controller
             })
             ->when($clinicFilter !== '' && $clinicFilter !== 'all', function ($q) use ($clinicFilter) {
                 $q->where('clinic_id', $clinicFilter);
-            })
-            ->orderBy('priority_level', 'asc')
-            ->orderBy('sort_time', 'asc');
+            });
+
+        switch ($sortFilter) {
+            case 'oldest':
+                $query->orderBy('sort_time', 'asc');
+                break;
+            case 'patient_az':
+                $query->orderBy('patient_name', 'asc');
+                break;
+            case 'patient_za':
+                $query->orderBy('patient_name', 'desc');
+                break;
+            case 'priority':
+                $query->orderBy('priority_level', 'asc')->orderBy('sort_time', 'desc');
+                break;
+            case 'newest':
+            default:
+                $query->orderBy('sort_time', 'desc');
+                break;
+        }
 
         return DataTables::of($query)
             ->filter(function ($query) use ($request) {
