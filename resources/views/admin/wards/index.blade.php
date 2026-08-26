@@ -94,7 +94,7 @@ $(function() {
     $('.delete-confirm').click(function() {
         var id = $('#id_delete').val();
         $.ajax({
-            url: '/wards/' + id,
+            url: '{{ url('/wards') }}/' + id,
             type: 'DELETE',
             data: {
                 _token: '{{ csrf_token() }}'

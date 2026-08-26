@@ -2048,7 +2048,7 @@
                 showLoaderOnConfirm: true,
                 preConfirm: (qty) => {
                     return $.ajax({
-                        url: '/pharmacy-workbench/dispense-free-form',
+                        url: '{{ url('/pharmacy-workbench/dispense-free-form') }}',
                         method: 'POST',
                         data: {
                             _token: $('meta[name="csrf-token"]').attr('content'),
@@ -2211,7 +2211,7 @@
             const coverageBadge = ClinicalOrdersKit.renderCoverageBadge(coverageMode, payable ?? price, claims ?? 0);
 
             ClinicalOrdersKit.addItem({
-                url: `/encounters/${encounterId}/add-prescription`,
+                url: `{{ url('/encounters/${encounterId}/add-prescription') }}`,
                 payload: { product_id: id, dose: initialDose },
                 csrfToken: csrfToken,
                 tableSelector: '#selected-products',
@@ -2435,7 +2435,7 @@
             var csrfToken = $('meta[name="csrf-token"]').attr('content');
 
             ClinicalOrdersKit.addItem({
-                url: '/encounters/' + encounterId + '/add-lab',
+                url: '{{ url('/encounters/') }}' + encounterId + '/add-lab',
                 payload: { service_id: id, note: '' },
                 csrfToken: csrfToken,
                 tableSelector: '#selected-services',
@@ -2469,7 +2469,7 @@
             var csrfToken = $('meta[name="csrf-token"]').attr('content');
 
             ClinicalOrdersKit.addItem({
-                url: '/encounters/' + encounterId + '/add-imaging',
+                url: '{{ url('/encounters/') }}' + encounterId + '/add-imaging',
                 payload: { service_id: id, note: '' },
                 csrfToken: csrfToken,
                 tableSelector: '#selected-imaging-services',
@@ -4262,7 +4262,7 @@
         // When any structured dose field changes → updateDoseValue fires → triggers this handler
         ClinicalOrdersKit.onDoseUpdate('', function(recordId, doseValue, flashEl) {
             ClinicalOrdersKit.debouncedUpdate({
-                url: '/encounters/' + encounterId + '/prescriptions/' + recordId + '/dose',
+                url: '{{ url('/encounters/') }}' + encounterId + '/prescriptions/' + recordId + '/dose',
                 payload: { dose: doseValue },
                 csrfToken: $('meta[name="csrf-token"]').attr('content'),
                 flashTarget: flashEl,
@@ -4484,7 +4484,7 @@
             @endif
 
             $.ajax({
-                url: `/encounters/${encounterId}/save-diagnosis`,
+                url: `{{ url('/encounters/${encounterId}/save-diagnosis') }}`,
                 method: 'POST',
                 data: formData,
                 processData: false,
@@ -4571,7 +4571,7 @@
             setButtonLoading('save_labs_btn', true);
 
             $.ajax({
-                url: `/encounters/${encounterId}/save-labs`,
+                url: `{{ url('/encounters/${encounterId}/save-labs') }}`,
                 method: 'POST',
                 data: {
                     consult_invest_id: services,
@@ -4644,7 +4644,7 @@
             setButtonLoading('save_imaging_btn', true);
 
             $.ajax({
-                url: `/encounters/${encounterId}/save-imaging`,
+                url: `{{ url('/encounters/${encounterId}/save-imaging') }}`,
                 method: 'POST',
                 data: {
                     consult_imaging_id: services,
@@ -4732,7 +4732,7 @@
             setButtonLoading('save_prescriptions_btn', true);
 
             $.ajax({
-                url: `/encounters/${encounterId}/save-prescriptions`,
+                url: `{{ url('/encounters/${encounterId}/save-prescriptions') }}`,
                 method: 'POST',
                 data: {
                     consult_presc_id: products,
@@ -4787,7 +4787,7 @@
             btn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Completing...';
 
             $.ajax({
-                url: `/encounters/${encounterId}/finalize`,
+                url: `{{ url('/encounters/${encounterId}/finalize') }}`,
                 method: 'POST',
                 data: {
                     end_consultation: $('#end_consultation').is(':checked') ? 1 : 0,
@@ -4815,7 +4815,7 @@
         function updateSummary() {
             // Fetch real encounter data from database
             $.ajax({
-                url: `/encounters/${encounterId}/summary`,
+                url: `{{ url('/encounters/${encounterId}/summary') }}`,
                 method: 'GET',
                 success: function(response) {
                     if (response.success) {
@@ -5477,7 +5477,7 @@
             var combinedAllergies = currentAllergiesText ? currentAllergiesText + ", " + newAllergy : newAllergy;
             
             $.ajax({
-                url: '/patient/' + patientId + '/update-allergies',
+                url: '{{ url('/patient/') }}' + patientId + '/update-allergies',
                 method: 'PUT',
                 data: {
                     allergies: combinedAllergies,

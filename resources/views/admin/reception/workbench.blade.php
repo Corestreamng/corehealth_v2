@@ -7776,7 +7776,7 @@ function generateFileNumber() {
     $input.removeClass('status-valid status-checking status-duplicate');
 
     $.ajax({
-        url: '/reception/patient/next-file-number',
+        url: '{{ url('/reception/patient/next-file-number') }}',
         method: 'GET',
         success: function(response) {
             $input.val(response.file_no).addClass('status-valid');
@@ -7898,7 +7898,7 @@ function checkQRFileNumberDuplicate(fileNo) {
     // Debounce the AJAX call
     quickRegisterCheckTimeout = setTimeout(function() {
         $.ajax({
-            url: '/reception/patient/check-file-number',
+            url: '{{ url('/reception/patient/check-file-number') }}',
             method: 'POST',
             data: {
                 _token: '{{ csrf_token() }}',

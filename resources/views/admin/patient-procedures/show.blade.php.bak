@@ -1482,7 +1482,7 @@ $('#addTeamForm').on('submit', function(e) {
     e.preventDefault();
     const formData = $(this).serialize();
     $.ajax({
-        url: `/patient-procedures/${procedureId}/team`,
+        url: `{{ url('/patient-procedures/${procedureId}/team') }}`,
         type: 'POST',
         data: formData,
         headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') },
@@ -1504,7 +1504,7 @@ $('#addTeamForm').on('submit', function(e) {
 function removeTeamMember(memberId) {
     if (!confirm('Remove this team member?')) return;
     $.ajax({
-        url: `/patient-procedures/${procedureId}/team/${memberId}`,
+        url: `{{ url('/patient-procedures/${procedureId}/team/${memberId}') }}`,
         type: 'DELETE',
         headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') },
         success: function(response) {
@@ -1580,7 +1580,7 @@ function deleteNote(noteId) {
 
 function executeDeleteNote(noteId) {
     $.ajax({
-        url: `/patient-procedures/${procedureId}/notes/${noteId}`,
+        url: `{{ url('/patient-procedures/${procedureId}/notes/${noteId}') }}`,
         type: 'DELETE',
         headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') },
         success: function(response) {
@@ -1600,7 +1600,7 @@ function executeDeleteNote(noteId) {
 function editNote(noteId) {
     // Fetch note data
     $.ajax({
-        url: `/patient-procedures/${procedureId}/notes/${noteId}/edit`,
+        url: `{{ url('/patient-procedures/${procedureId}/notes/${noteId}/edit') }}`,
         type: 'GET',
         headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') },
         success: function(response) {
@@ -1779,7 +1779,7 @@ function removeItem(itemId) {
 
 function executeRemoveItem(itemId) {
     $.ajax({
-        url: `/patient-procedures/${procedureId}/items/${itemId}`,
+        url: `{{ url('/patient-procedures/${procedureId}/items/${itemId}') }}`,
         type: 'DELETE',
         headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') },
         success: function(response) {
@@ -1824,7 +1824,7 @@ function confirmDelete(type, id, title, message, subtext) {
 $('#cancelProcedureForm').on('submit', function(e) {
     e.preventDefault();
     $.ajax({
-        url: `/patient-procedures/${procedureId}/cancel`,
+        url: `{{ url('/patient-procedures/${procedureId}/cancel') }}`,
         type: 'POST',
         data: $(this).serialize(),
         headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') },
@@ -1863,7 +1863,7 @@ $('#outcome-form').on('submit', function(e) {
     btn.html('<i class="fa fa-spinner fa-spin"></i> Saving...').prop('disabled', true);
 
     $.ajax({
-        url: `/patient-procedures/${procedureId}/outcome`,
+        url: `{{ url('/patient-procedures/${procedureId}/outcome') }}`,
         type: 'PUT',
         data: $(this).serialize(),
         headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') },
@@ -1891,7 +1891,7 @@ function updateStatus(status) {
     btn.html('<i class="fa fa-spinner fa-spin"></i> Processing...').prop('disabled', true);
 
     $.ajax({
-        url: `/patient-procedures/${procedureId}`,
+        url: `{{ url('/patient-procedures/${procedureId}') }}`,
         type: 'PUT',
         data: { procedure_status: status },
         headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') },
@@ -1920,7 +1920,7 @@ function completeProcedure() {
     btn.html('<i class="fa fa-spinner fa-spin"></i> Processing...').prop('disabled', true);
 
     $.ajax({
-        url: `/patient-procedures/${procedureId}/complete`,
+        url: `{{ url('/patient-procedures/${procedureId}/complete') }}`,
         type: 'POST',
         headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') },
         success: function(response) {
@@ -2067,7 +2067,7 @@ function initLabHistoryTable() {
         autoWidth: false,
         dom: '<"top"f>rt<"bottom"lip><"clear">',
         ajax: {
-            url: `/patient-procedures/${procedureId}/lab-history`,
+            url: `{{ url('/patient-procedures/${procedureId}/lab-history') }}`,
             type: 'GET'
         },
         columns: [
@@ -2097,7 +2097,7 @@ function initImagingHistoryTable() {
         autoWidth: false,
         dom: '<"top"f>rt<"bottom"lip><"clear">',
         ajax: {
-            url: `/patient-procedures/${procedureId}/imaging-history`,
+            url: `{{ url('/patient-procedures/${procedureId}/imaging-history') }}`,
             type: 'GET'
         },
         columns: [
@@ -2127,7 +2127,7 @@ function initMedsHistoryTable() {
         autoWidth: false,
         dom: '<"top"f>rt<"bottom"lip><"clear">',
         ajax: {
-            url: `/patient-procedures/${procedureId}/medication-history`,
+            url: `{{ url('/patient-procedures/${procedureId}/medication-history') }}`,
             type: 'GET'
         },
         columns: [
@@ -2208,7 +2208,7 @@ function executeConsentUpdate() {
     btn.prop('disabled', true).html('<i class="fa fa-spinner fa-spin"></i> Saving...');
 
     $.ajax({
-        url: '/patient-procedures/' + procedureId + '/consent',
+        url: '{{ url('/patient-procedures/') }}' + procedureId + '/consent',
         method: 'POST',
         data: {
             _method: 'PATCH',
@@ -2246,7 +2246,7 @@ $('#upload-attachment-form').on('submit', function(e) {
     formData.append('label', $('#attachment-label').val());
 
     $.ajax({
-        url: '/patient-procedures/' + procedureId + '/attachments',
+        url: '{{ url('/patient-procedures/') }}' + procedureId + '/attachments',
         method: 'POST',
         data: formData,
         processData: false,
@@ -2272,7 +2272,7 @@ function deleteAttachment(attachmentId) {
 function executeDeleteAttachment(attachmentId) {
     $('#confirmActionModal').modal('hide');
     $.ajax({
-        url: '/patient-procedures/' + procedureId + '/attachments/' + attachmentId,
+        url: '{{ url('/patient-procedures/') }}' + procedureId + '/attachments/' + attachmentId,
         method: 'POST',
         data: {
             _method: 'DELETE',
