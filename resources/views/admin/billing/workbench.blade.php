@@ -3685,114 +3685,7 @@
                     </button>
                 </div>
 
-                <!-- Payment Modal -->
-                <div class="modal fade" id="paymentModal" tabindex="-1" role="dialog" aria-labelledby="paymentModalLabel" aria-hidden="true">
-                    <div class="modal-dialog modal-dialog-centered" role="document">
-                        <div class="modal-content">
-                            <div class="modal-header">
-                                <h5 class="modal-title" id="paymentModalLabel">
-                                    <i class="mdi mdi-cart-check"></i> Checkout
-                                    <span class="item-count-badge"><span id="modal-item-count">0</span> items</span>
-                                </h5>
-                                <button type="button" data-bs-dismiss="modal" class="btn- btn-close btn-close-white" aria-label="Close"></button>
-                            </div>
-                            <div class="modal-body">
-                                <div class="payment-summary-card" id="payment-summary-card">
-                                    <h5><i class="mdi mdi-calculator"></i> Payment Summary</h5>
-
-                                    <!-- Account Balance Info -->
-                                    <div class="account-balance-info" id="billing-account-balance" style="display: none;">
-                                        <div class="balance-row">
-                                            <span><i class="mdi mdi-wallet"></i> Account Balance:</span>
-                                            <span id="billing-balance-amount" class="balance-amount">₦0.00</span>
-                                        </div>
-                                    </div>
-
-                                    <div class="summary-details">
-                                        <div class="summary-row">
-                                            <span>Subtotal:</span>
-                                            <span id="summary-subtotal">₦0.00</span>
-                                        </div>
-                                        <div class="summary-row">
-                                            <span>Total Discount:</span>
-                                            <span id="summary-discount">₦0.00</span>
-                                        </div>
-                                        <div class="summary-row total">
-                                            <span>Total Payable:</span>
-                                            <span id="summary-total">₦0.00</span>
-                                        </div>
-                                    </div>
-                                    <div class="payment-method-section">
-                                        <label><i class="mdi mdi-cash-multiple"></i> Payment Method</label>
-                                        <select class="form-control" id="payment-method">
-                                            <option value="CASH">Cash</option>
-                                            <option value="POS">POS/Card</option>
-                                            <option value="TRANSFER">Bank Transfer</option>
-                                            <option value="MOBILE">Mobile Money</option>
-                                            <option value="BILL_TO_STAFF">Bill to Staff</option>
-                                            <option value="BILL_TO_ORGANIZATION">Bill to Organization</option>
-                                            <option value="ACCOUNT" id="account-payment-option" style="display: none;">Pay from Account Balance</option>
-                                        </select>
-                                        <small class="text-muted" id="account-payment-note" style="display: none;">
-                                            <i class="mdi mdi-information"></i> Payment will be deducted from account balance
-                                        </small>
-                                    </div>
-                                    <div class="staff-selection-section" id="staff-selection-section" style="display: none;">
-                                        <label><i class="mdi mdi-account-card-outline"></i> Select Staff to Bill</label>
-                                        <select class="form-control select2" id="payment-staff-id" style="width: 100%;">
-                                            <option value="">-- Select Staff --</option>
-                                        </select>
-                                    </div>
-                                    <div class="org-selection-section" id="org-selection-section" style="display: none;">
-                                        <label><i class="mdi mdi-domain"></i> Select Organization to Bill</label>
-                                        <select class="form-control select2" id="payment-organization-id" style="width: 100%;">
-                                            <option value="">-- Select Organization --</option>
-                                        </select>
-                                    </div>
-                                    <div class="bank-selection-section" id="bank-selection-section" style="display: none;">
-                                        <label><i class="mdi mdi-bank"></i> Select Bank</label>
-                                        <select class="form-control" id="payment-bank">
-                                            <option value="">-- Select Bank --</option>
-                                        </select>
-                                    </div>
-                                    <div class="payment-reference-section">
-                                        <label>Reference Number (Optional)</label>
-                                        <input type="text" class="form-control" id="payment-reference" placeholder="Enter transaction reference">
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="modal-footer">
-                                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
-                                    <i class="mdi mdi-close"></i> Cancel
-                                </button>
-                                <button type="button" class="btn btn-success btn-confirm-payment" id="confirm-payment-btn">
-                                    <i class="mdi mdi-check-circle"></i> Confirm Payment
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Receipt Display (after payment) -->
-                <div class="receipt-display" id="receipt-display" style="display: none;">
-                    <div class="receipt-tabs">
-                        <button class="receipt-tab active" data-format="a4">A4 Receipt</button>
-                        <button class="receipt-tab" data-format="thermal">Thermal Receipt</button>
-                    </div>
-                    <div class="receipt-content" id="receipt-content-a4"></div>
-                    <div class="receipt-content" id="receipt-content-thermal" style="display: none;"></div>
-                    <div class="receipt-actions">
-                        <button class="btn btn-primary" id="print-a4-receipt">
-                            <i class="mdi mdi-printer"></i> Print A4
-                        </button>
-                        <button class="btn btn-primary" id="print-thermal-receipt">
-                            <i class="mdi mdi-printer"></i> Print Thermal
-                        </button>
-                        <button class="btn btn-secondary" id="close-receipt">
-                            <i class="mdi mdi-close"></i> Close
-                        </button>
-                    </div>
-                </div>
+                                @include('admin.partials.payment_modal')
             </div>
 
             <div class="workspace-tab-content" id="receipts-tab">
@@ -4603,36 +4496,7 @@ function initializeEventListeners() {
         }
     });
 
-    // Payment method change handler
-    $('#payment-method').on('change', function() {
-        const method = $(this).val();
-        if (method === 'ACCOUNT') {
-            $('#account-payment-note').show();
-            $('#bank-selection-section').hide();
-            $('#staff-selection-section').hide();
-            $('#org-selection-section').hide();
-        } else if (['POS', 'TRANSFER', 'MOBILE'].includes(method)) {
-            $('#account-payment-note').hide();
-            $('#bank-selection-section').show();
-            $('#staff-selection-section').hide();
-            $('#org-selection-section').hide();
-        } else if (method === 'BILL_TO_STAFF') {
-            $('#account-payment-note').hide();
-            $('#bank-selection-section').hide();
-            $('#staff-selection-section').show();
-            $('#org-selection-section').hide();
-        } else if (method === 'BILL_TO_ORGANIZATION') {
-            $('#account-payment-note').hide();
-            $('#bank-selection-section').hide();
-            $('#staff-selection-section').hide();
-            $('#org-selection-section').show();
-        } else {
-            $('#account-payment-note').hide();
-            $('#bank-selection-section').hide();
-            $('#staff-selection-section').hide();
-            $('#org-selection-section').hide();
-        }
-    });
+    // Payment method change handler is now in payment_scripts.blade.php
 
     // Filter receipts
     $('#filter-receipts').on('click', function() {
@@ -4695,134 +4559,12 @@ function initializeEventListeners() {
         }
     });
 
-    // Receipt format tab switching
-    $(document).on('click', '.receipt-tab', function() {
-        const format = $(this).data('format');
-        $('.receipt-tab').removeClass('active');
-        $(this).addClass('active');
-
-        if (format === 'a4') {
-            $('#receipt-content-a4').show();
-            $('#receipt-content-thermal').hide();
-        } else {
-            $('#receipt-content-a4').hide();
-            $('#receipt-content-thermal').show();
-        }
-    });
-
-    // Print A4 receipt
-    $('#print-a4-receipt').on('click', function() {
-        printReceipt('receipt-content-a4');
-    });
-
-    // Print thermal receipt
-    $('#print-thermal-receipt').on('click', function() {
-        printReceipt('receipt-content-thermal');
-    });
-
-    // Close receipt display
-    $('#close-receipt').on('click', function() {
-        $('#receipt-display').hide();
-        $('#receipt-content-a4').empty();
-        $('#receipt-content-thermal').empty();
-    });
+    // Print and receipt tab logic moved to payment_scripts.blade.php
 }
 
-// Global banks cache
-let availableBanks = [];
+// loadBanks and loadStaffList moved to payment_scripts.blade.php
 
-function loadBanks() {
-    if (availableBanks.length> 0) {
-        return; // Already loaded
-    }
-
-    $.ajax({
-        url: '/banks/active',
-        method: 'GET',
-        success: function(response) {
-            if (response.success && response.banks) {
-                availableBanks = response.banks;
-                populateBankDropdowns();
-            }
-        },
-        error: function() {
-            console.error('Failed to load banks');
-        }
-    });
-}
-
-function populateBankDropdowns() {
-    const $paymentBank = $('#payment-bank');
-    const $transactionBank = $('#transaction-bank');
-
-    // Clear existing options except the placeholder
-    $paymentBank.find('option:not(:first)').remove();
-    $transactionBank.find('option:not(:first)').remove();
-
-    // Populate with banks
-    availableBanks.forEach(bank => {
-        const optionText = bank.account_number ? `${bank.name} - ${bank.account_number}` : bank.name;
-        const option = `<option value="${bank.id}">${optionText}</option>`;
-        $paymentBank.append(option);
-        $transactionBank.append(option);
-    });
-}
-
-// Global staff cache
-let activeStaffList = [];
-
-function loadStaffList() {
-    if (activeStaffList.length > 0) {
-        return; // Already loaded
-    }
-
-    $.ajax({
-        url: '/billing-workbench/staff-list',
-        method: 'GET',
-        success: function(response) {
-            if (response) {
-                activeStaffList = response;
-                populateStaffDropdown();
-            }
-        },
-        error: function() {
-            console.error('Failed to load staff list');
-        }
-    });
-}
-
-function populateStaffDropdown() {
-    const $paymentStaff = $('#payment-staff-id');
-    $paymentStaff.find('option:not(:first)').remove();
-
-    activeStaffList.forEach(staff => {
-        const option = `<option value="${staff.id}">${staff.text}</option>`;
-        $paymentStaff.append(option);
-    });
-
-    // Initialize Select2 if it exists
-    if ($.fn.select2) {
-        $paymentStaff.select2({
-            dropdownParent: $('#paymentModal'),
-            placeholder: '-- Select Staff --',
-            allowClear: true
-        });
-    }
-}
-
-function generateReferenceNumber() {
-    // Generate reference format: PAY-YYYYMMDD-HHMMSS
-    const now = new Date();
-    const year = now.getFullYear();
-    const month = String(now.getMonth() + 1).padStart(2, '0');
-    const day = String(now.getDate()).padStart(2, '0');
-    const hours = String(now.getHours()).padStart(2, '0');
-    const minutes = String(now.getMinutes()).padStart(2, '0');
-    const seconds = String(now.getSeconds()).padStart(2, '0');
-
-    const reference = `PAY-${year}${month}${day}-${hours}${minutes}${seconds}`;
-    $('#payment-reference').val(reference);
-}
+// generateReferenceNumber moved to payment_scripts.blade.php
 
 function loadPatient(patientId) {
     console.log('loadPatient called with ID:', patientId);
@@ -6503,289 +6245,7 @@ $(document).on('click', '#process-payment-btn', function() {
     paymentModal.show();
 });
 
-// Confirm payment button click (inside modal) - processes the payment
-$(document).on('click', '#confirm-payment-btn', function() {
-    processPayment();
-});
-
-function processPayment() {
-    const selectedItems = $('.billing-item-checkbox:checked');
-
-    if (selectedItems.length === 0) {
-        toastr.warning('Please select items to process payment');
-        $('#paymentModal').modal('hide');
-        return;
-    }
-
-    const items = [];
-    selectedItems.each(function() {
-        const row = $(this).closest('tr');
-        items.push({
-            id: $(this).data('id'),
-            qty: parseFloat(row.find('.item-qty-input').val()) || 1,
-            discount: parseFloat(row.find('.item-discount-input').val()) || 0
-        });
-    });
-
-    const paymentType = $('#payment-method').val();
-    const referenceNo = $('#payment-reference').val();
-    const bankId = $('#payment-bank').val();
-    const totalPayable = parseFloat($('#summary-total').text().replace('₦', '').replace(/,/g, ''));
-
-    // Validate bank selection for non-cash payments
-    if (['POS', 'TRANSFER', 'MOBILE'].includes(paymentType) && !bankId) {
-        toastr.warning('Please select a bank for this payment method');
-        return;
-    }
-
-    // Validate staff selection
-    if (paymentType === 'BILL_TO_STAFF') {
-        const staffId = $('#payment-staff-id').val();
-        if (!staffId) {
-            toastr.warning('Please select a staff member to bill');
-            return;
-        }
-    }
-
-    // Validate organization selection
-    if (paymentType === 'BILL_TO_ORGANIZATION') {
-        const orgId = $('#payment-organization-id').val();
-        if (!orgId) {
-            toastr.warning('Please select an organization to bill');
-            return;
-        }
-    }
-
-    // Validate account balance payment (Credit facility: allow negative balance with warning)
-    if (paymentType === 'ACCOUNT') {
-        const balanceAfter = currentAccountBalance - totalPayable;
-
-        if (totalPayable > currentAccountBalance) {
-            // Show warning for credit/negative balance
-            const warningMsg = currentAccountBalance >= 0
-                ? `This payment of ₦${totalPayable.toLocaleString()} exceeds the available balance of ₦${currentAccountBalance.toLocaleString()}.\n\nBalance after payment: ₦${balanceAfter.toLocaleString()} (CREDIT/DEBIT)\n\nDo you want to proceed with credit facility?`
-                : `Current balance is already ₦${currentAccountBalance.toLocaleString()} (debit).\n\nThis payment will increase the debit to ₦${balanceAfter.toLocaleString()}.\n\nDo you want to proceed?`;
-
-            if (!confirm(warningMsg)) {
-                return;
-            }
-        } else {
-            // Normal deduction - show confirmation
-            if (!confirm(`Deduct ₦${totalPayable.toLocaleString()} from account balance?\n\nBalance after: ₦${balanceAfter.toLocaleString()}`)) {
-                return;
-            }
-        }
-    }
-
-    // Show loading state
-    const $confirmBtn = $('#confirm-payment-btn');
-    const originalText = $confirmBtn.html();
-    $confirmBtn.prop('disabled', true).html('<i class="mdi mdi-loading mdi-spin"></i> Processing Payment...');
-
-    $.ajax({
-        url: '/billing-workbench/process-payment',
-        method: 'POST',
-        data: {
-            _token: '{{ csrf_token() }}',
-            patient_id: currentPatient,
-            payment_type: paymentType,
-            payment_method: paymentType,
-            bank_id: bankId || null,
-            staff_user_id: paymentType === 'BILL_TO_STAFF' ? $('#payment-staff-id').val() : null,
-            organization_id: paymentType === 'BILL_TO_ORGANIZATION' ? $('#payment-organization-id').val() : null,
-            reference_no: referenceNo,
-            items: items
-        },
-        success: function(response) {
-            // Reset button state
-            $confirmBtn.prop('disabled', false).html(originalText);
-
-            toastr.success('Payment processed successfully!');
-
-            // Close payment modal
-            $('#paymentModal').modal('hide');
-
-            // Generate new reference number for next payment
-            generateReferenceNumber();
-
-            // Display receipt in modal
-            $('#modal-receipt-a4').html(response.receipt_a4);
-            $('#modal-receipt-thermal').html(response.receipt_thermal);
-
-            // Reset tabs to A4
-            $('.receipt-modal-tab').removeClass('active');
-            $('.receipt-modal-tab[data-format="a4"]').addClass('active');
-            $('#modal-receipt-a4').show();
-            $('#modal-receipt-thermal').hide();
-
-            // Show receipt modal
-            $('#receiptPreviewModal').modal('show');
-
-            // Hide floating cart
-            $('#floating-cart').fadeOut(200);
-
-            // Clear all billing selections and reset summary
-            $('.billing-item-checkbox').prop('checked', false);
-            $('#select-all-items').prop('checked', false);
-            $('#summary-subtotal').text('₦0.00');
-            $('#summary-discount').text('₦0.00');
-            $('#summary-total').text('₦0.00');
-
-            // Reload billing items
-            loadBillingItems();
-
-            // Reload account balance to reflect payment deduction
-            loadAccountBalance(currentPatient);
-
-            // Refresh receipts to show new payment
-            loadPatientReceipts();
-
-            // If account tab is active, reload it
-            if ($('#account-tab').hasClass('active')) {
-                loadAccountSummary();
-            }
-
-            // Update queue counts
-            loadQueueCounts();
-        },
-        error: function(xhr) {
-            // Reset button state on error
-            $confirmBtn.prop('disabled', false).html(originalText);
-
-            toastr.error(xhr.responseJSON?.message || 'Payment processing failed');
-        }
-    });
-}
-
-$(document).on('click', '#print-thermal-receipt', function() {
-    printReceipt('receipt-content-thermal');
-});
-
-$(document).on('click', '#close-receipt', function() {
-    $('#receipt-display').hide();
-    $('#receipt-content-a4').empty();
-    $('#receipt-content-thermal').empty();
-    $('#payment-summary-card').show();
-});
-
-function printReceipt(elementId) {
-    const content = $(`#${elementId}`).html();
-    const printWindow = window.open('', '', 'height=600,width=800');
-    printWindow.document.write('<html><head><title>Receipt</title>');
-    printWindow.document.write('<style>body{font-family: Arial, sans-serif; padding: 20px;} table{width: 100%; border-collapse: collapse;} th, td{padding: 8px; text-align: left; border-bottom: 1px solid #ddd;}</style>');
-    printWindow.document.write('</head><body>');
-    printWindow.document.write(content);
-    printWindow.document.write('</body></html>');
-    printWindow.document.close();
-    printWindow.print();
-}
-
-function loadPatientReceipts() {
-    if (!currentPatient) return;
-
-    $.ajax({
-        url: `/billing-workbench/patient/${currentPatient}/receipts`,
-        method: 'GET',
-        success: function(response) {
-            renderReceipts(response.receipts);
-            if (response.stats) {
-                updateReceiptsStats(response.stats);
-            }
-        },
-        error: function(xhr) {
-            console.error('Failed to load receipts', xhr);
-            toastr.error('Failed to load receipts');
-        }
-    });
-}
-
-function printDepositReceiptFromList(depositId) {
-    if (!depositId) {
-        toastr.warning('Invalid deposit ID');
-        return;
-    }
-
-    toastr.info('Generating deposit receipt...');
-
-    $.ajax({
-        url: `/billing-workbench/print-deposit-receipt/${depositId}`,
-        method: 'GET',
-        success: function(response) {
-            if (response.receipt_a4 && response.receipt_thermal) {
-                $('#modal-receipt-a4').html(response.receipt_a4);
-                $('#modal-receipt-thermal').html(response.receipt_thermal);
-
-                // Reset tabs to A4
-                $('.receipt-modal-tab').removeClass('active');
-                $('.receipt-modal-tab[data-format="a4"]').addClass('active');
-                $('#modal-receipt-a4').show();
-                $('#modal-receipt-thermal').hide();
-
-                // Show modal
-                $('#receiptPreviewModal').modal('show');
-            } else {
-                toastr.error('Failed to generate deposit receipt');
-            }
-        },
-        error: function(xhr) {
-            toastr.error(xhr.responseJSON?.message || 'Failed to generate deposit receipt');
-        }
-    });
-}
-
-function updatePrintSelectedButton() {
-    const selected = $('.receipt-checkbox:checked').length;
-    $('#print-selected-receipts').prop('disabled', selected === 0);
-}
-
-$(document).on('click', '#print-selected-receipts', function() {
-    const paymentIds = [];
-    $('.receipt-checkbox:checked').each(function() {
-        paymentIds.push($(this).data('id'));
-    });
-    reprintReceipt(paymentIds);
-});
-
-function reprintReceipt(paymentIds) {
-    if (!paymentIds || paymentIds.length === 0) {
-        toastr.warning('Please select receipts to print');
-        return;
-    }
-
-    // Show loading state
-    toastr.info('Generating receipt...');
-
-    $.ajax({
-        url: '/billing-workbench/print-receipt',
-        method: 'POST',
-        data: {
-            _token: '{{ csrf_token() }}',
-            patient_id: currentPatient,
-            payment_ids: paymentIds
-        },
-        success: function(response) {
-            // Show in modal
-            $('#modal-receipt-a4').html(response.receipt_a4);
-            $('#modal-receipt-thermal').html(response.receipt_thermal);
-
-            // Reset tabs to A4
-            $('.receipt-modal-tab').removeClass('active');
-            $('.receipt-modal-tab[data-format="a4"]').addClass('active');
-            $('#modal-receipt-a4').show();
-            $('#modal-receipt-thermal').hide();
-
-            // Show modal
-            $('#receiptPreviewModal').modal('show');
-        },
-        error: function(xhr) {
-            toastr.error(xhr.responseJSON?.message || 'Failed to generate receipt');
-        }
-    });
-}
-
-// ==========================================
-// PRINT INVOICE FUNCTIONALITY (For Unpaid Items)
-// ==========================================
+// Payment scripts are now included via partial at the bottom of the file
 
 // Print invoice button click handler
 $(document).on('click', '#print-invoice-btn', function() {
@@ -9102,7 +8562,7 @@ const BillingShiftManager = {
             type: 'POST',
             data: {
                 shift_type: shiftType,
-                _token: CSRF_TOKEN
+                _token: '{{ csrf_token() }}'
             },
             success: function(response) {
                 $('#confirm-start-shift-btn').prop('disabled', false).html('<i class="mdi mdi-play-circle"></i> Start Shift');
@@ -9143,7 +8603,7 @@ const BillingShiftManager = {
             url: this.routes.end,
             type: 'POST',
             data: {
-                _token: CSRF_TOKEN
+                _token: '{{ csrf_token() }}'
             },
             success: function(response) {
                 $('#confirm-end-shift-btn').prop('disabled', false).html('<i class="mdi mdi-stop-circle"></i> End Shift');
@@ -9295,6 +8755,8 @@ const BillingShiftManager = {
 };
 
 </script>
+{{-- Payment Scripts --}}
+@include("admin.partials.payment_scripts")
 
 {{-- Investigation Result View Modal --}}
 @include('admin.partials.invest_res_view_modal')
