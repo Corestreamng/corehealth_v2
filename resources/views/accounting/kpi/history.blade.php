@@ -373,7 +373,7 @@ $(document).ready(function() {
         btn.prop('disabled', true).html('<i class="mdi mdi-loading mdi-spin"></i> Calculating...');
 
         $.ajax({
-            url: '/accounting/kpi/calculate-single/{{ $kpi->id }}',
+            url: '{{ url('/accounting/kpi/calculate-single/{{ $kpi->id }}') }}',
             type: 'POST',
             data: { _token: '{{ csrf_token() }}' },
             success: function(response) {

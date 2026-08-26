@@ -546,7 +546,7 @@ $(document).ready(function() {
     $('#approve-btn').click(function() {
         if (confirm('Are you sure you want to approve this transfer?')) {
             $.ajax({
-                url: '/accounting/transfers/' + transferId + '/approve',
+                url: '{{ url('/accounting/transfers/') }}' + transferId + '/approve',
                 type: 'POST',
                 data: { _token: '{{ csrf_token() }}' },
                 success: function(res) {
@@ -568,7 +568,7 @@ $(document).ready(function() {
             return;
         }
         $.ajax({
-            url: '/accounting/transfers/' + transferId + '/reject',
+            url: '{{ url('/accounting/transfers/') }}' + transferId + '/reject',
             type: 'POST',
             data: { _token: '{{ csrf_token() }}', rejection_reason: reason },
             success: function(res) {
@@ -584,7 +584,7 @@ $(document).ready(function() {
     // Confirm Clearance
     $('#confirm-clearance').click(function() {
         $.ajax({
-            url: '/accounting/transfers/' + transferId + '/confirm-clearance',
+            url: '{{ url('/accounting/transfers/') }}' + transferId + '/confirm-clearance',
             type: 'POST',
             data: {
                 _token: '{{ csrf_token() }}',
@@ -609,7 +609,7 @@ $(document).ready(function() {
             return;
         }
         $.ajax({
-            url: '/accounting/transfers/' + transferId + '/mark-failed',
+            url: '{{ url('/accounting/transfers/') }}' + transferId + '/mark-failed',
             type: 'POST',
             data: { _token: '{{ csrf_token() }}', failure_reason: reason },
             success: function(res) {
@@ -626,7 +626,7 @@ $(document).ready(function() {
     $('#cancel-btn').click(function() {
         if (confirm('Are you sure you want to cancel this transfer?')) {
             $.ajax({
-                url: '/accounting/transfers/' + transferId + '/cancel',
+                url: '{{ url('/accounting/transfers/') }}' + transferId + '/cancel',
                 type: 'POST',
                 data: { _token: '{{ csrf_token() }}' },
                 success: function(res) {

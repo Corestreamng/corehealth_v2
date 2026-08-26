@@ -464,7 +464,7 @@ $(document).ready(function() {
         var id = $(this).data('id');
         if (confirm('Submit this request for approval?')) {
             $.ajax({
-                url: '/accounting/capex/' + id + '/submit',
+                url: '{{ url('/accounting/capex/') }}' + id + '/submit',
                 type: 'POST',
                 data: { _token: '{{ csrf_token() }}' },
                 success: function(response) {
@@ -489,7 +489,7 @@ $(document).ready(function() {
 
         if (confirm('Approve this Capex request for ₦' + parseFloat(amount).toLocaleString() + '?')) {
             $.ajax({
-                url: '/accounting/capex/' + id + '/approve',
+                url: '{{ url('/accounting/capex/') }}' + id + '/approve',
                 type: 'POST',
                 data: { _token: '{{ csrf_token() }}', approved_amount: amount },
                 success: function(response) {
@@ -514,7 +514,7 @@ $(document).ready(function() {
 
         if (reason) {
             $.ajax({
-                url: '/accounting/capex/' + id + '/reject',
+                url: '{{ url('/accounting/capex/') }}' + id + '/reject',
                 type: 'POST',
                 data: { _token: '{{ csrf_token() }}', reason: reason },
                 success: function(response) {

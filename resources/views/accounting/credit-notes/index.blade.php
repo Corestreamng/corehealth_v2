@@ -343,7 +343,7 @@ $(document).ready(function() {
         allowClear: true,
         width: '100%',
         ajax: {
-            url: '/api/patients/search',
+            url: '{{ url('/api/patients/search') }}',
             dataType: 'json',
             delay: 250,
             data: function(params) {

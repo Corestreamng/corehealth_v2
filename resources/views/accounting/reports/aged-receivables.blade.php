@@ -1138,7 +1138,7 @@ $(document).ready(function() {
         $('#settlementBreakdownModal').modal('show');
 
         $.ajax({
-            url: "/audit-workbench/settlement-breakdown/" + paymentId,
+            url: "{{ url('/audit-workbench/settlement-breakdown/') }}" + paymentId,
             method: "GET",
             dataType: "json",
             success: function(response) {

@@ -195,7 +195,7 @@ $(document).ready(function() {
         btn.prop('disabled', true).html('<i class="mdi mdi-loading mdi-spin"></i>');
 
         $.ajax({
-            url: '/accounting/kpi/alerts/' + alertId + '/acknowledge',
+            url: '{{ url('/accounting/kpi/alerts/') }}' + alertId + '/acknowledge',
             type: 'POST',
             data: { _token: '{{ csrf_token() }}' },
             success: function(response) {

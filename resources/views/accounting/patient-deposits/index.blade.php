@@ -415,7 +415,7 @@ $(document).ready(function() {
         var id = $('#apply-deposit-id').val();
 
         $.ajax({
-            url: '/accounting/patient-deposits/' + id + '/apply',
+            url: '{{ url('/accounting/patient-deposits/') }}' + id + '/apply',
             type: 'POST',
             data: {
                 _token: '{{ csrf_token() }}',
@@ -448,7 +448,7 @@ $(document).ready(function() {
         var id = $('#refund-deposit-id').val();
 
         $.ajax({
-            url: '/accounting/patient-deposits/' + id + '/refund',
+            url: '{{ url('/accounting/patient-deposits/') }}' + id + '/refund',
             type: 'POST',
             data: {
                 _token: '{{ csrf_token() }}',
