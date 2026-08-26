@@ -202,11 +202,27 @@ class ReceptionWorkbenchController extends Controller
             }
         }
 
+        $familyUserIds = $patient->family_user_ids;
+        $familyMembers = \App\Models\Patient::with('user')
+            ->whereIn('user_id', $familyUserIds)
+            ->get()
+            ->map(function($f) {
+                return [
+                    'id' => $f->id,
+                    'user_id' => $f->user_id,
+                    'name' => userfullname($f->user_id),
+                    'file_no' => $f->file_no,
+                    'is_principal' => $f->id == $f->principal_id,
+                ];
+            });
+
         return response()->json([
             'patient' => [
                 'id' => $patient->id,
                 'user_id' => $patient->user_id,
                 'name' => userfullname($patient->user_id),
+                'is_family_principal' => $patient->id == $patient->principal_id,
+                'family_members' => $familyMembers,
                 'surname' => $patient->user->surname ?? '',
                 'firstname' => $patient->user->firstname ?? '',
                 'othername' => $patient->user->othername ?? '',
@@ -256,29 +272,81 @@ class ReceptionWorkbenchController extends Controller
     /**
      * Get patient's current queue entries
      */
+    /**
+     * Print routing slip for a queue entry
+     */
+    public function getRoutingSlip($queueId)
+    {
+        $queue = \App\Models\DoctorQueue::with(['patient.user', 'clinic', 'doctor.user', 'request_entry.service', 'appointment'])
+            ->findOrFail($queueId);
+
+        $html = '
+            <div style="font-family: Arial, sans-serif; text-align: center;">
+                <h2>ROUTING SLIP</h2>
+                <h3>' . appsettings('hospital_name') . '</h3>
+                <hr>
+                <div style="text-align: left;">
+                    <p><strong>Queue No:</strong> Q-' . str_pad($queue->id % 1000, 3, '0', STR_PAD_LEFT) . '</p>
+                    <p><strong>Patient:</strong> ' . userfullname($queue->patient->user_id) . ' (' . ($queue->patient->file_no ?? 'N/A') . ')</p>
+                    <p><strong>Date:</strong> ' . $queue->created_at->format('d M Y - h:i A') . '</p>
+                    <hr>
+                    <p><strong>Clinic:</strong> ' . ($queue->clinic->name ?? 'N/A') . '</p>
+                    <p><strong>Service:</strong> ' . ($queue->request_entry && $queue->request_entry->service ? $queue->request_entry->service->service_name : 'Consultation') . '</p>
+                    <p><strong>Doctor:</strong> ' . ($queue->doctor ? userfullname($queue->doctor->user_id) : 'Any Available') . '</p>
+                    <p><strong>Type:</strong> ' . ($queue->appointment ? ($queue->appointment->appointment_type == 'walk_in' ? 'Walk-In' : 'Scheduled') : 'Walk-In') . '</p>
+                </div>
+                <hr>
+                <p><small>Please proceed to the indicated clinic.</small></p>
+            </div>
+        ';
+
+        return response()->json([
+            'success' => true,
+            'html' => $html
+        ]);
+    }
+
     public function getPatientQueueEntries($id)
     {
         $today = Carbon::today();
+        $patient = Patient::findOrFail($id);
+        $familyPatientIds = $patient->family_patient_ids;
 
-        $entries = DoctorQueue::where('patient_id', $id)
+        $entries = DoctorQueue::whereIn('patient_id', $familyPatientIds)
             ->whereDate('created_at', $today)
             ->whereIn('status', [QueueStatus::WAITING, QueueStatus::VITALS_PENDING, QueueStatus::READY]) // Only active pre-consultation entries
-            ->with(['clinic', 'doctor.user', 'patient'])
+            ->with(['clinic', 'doctor.user', 'patient.user', 'request_entry.service', 'appointment'])
             ->orderBy('created_at', 'desc')
             ->get()
-            ->map(function ($entry) {
+            ->map(function ($entry) use ($id) {
                 // Generate queue number from ID (last 3-4 digits for readability)
                 $queueNo = str_pad($entry->id % 1000, 3, '0', STR_PAD_LEFT);
 
+                $isFamily = ($entry->patient_id != $id);
+                $req = $entry->request_entry;
+                $isPaid = $req && $req->payment_id ? true : false;
+                
                 return [
                     'id' => $entry->id,
                     'queue_no' => $queueNo,
                     'patient_name' => $entry->patient ? userfullname($entry->patient->user_id) : 'N/A',
                     'patient_file_no' => $entry->patient->file_no ?? 'N/A',
+                    'patient_age' => $entry->patient && $entry->patient->dob ? Carbon::parse($entry->patient->dob)->age : 'N/A',
+                    'patient_gender' => $entry->patient ? $entry->patient->gender : 'N/A',
+                    'is_family' => $isFamily,
                     'clinic_name' => $entry->clinic->name ?? 'N/A',
                     'doctor_name' => $entry->doctor ? userfullname($entry->doctor->user_id) : null,
+                    'service_name' => $req && $req->service ? $req->service->service_name : 'Consultation',
+                    'appointment_type' => $entry->appointment ? ($entry->appointment->appointment_type == 'walk_in' ? 'Walk-In' : 'Scheduled') : 'Walk-In',
                     'status' => $entry->status,
                     'created_at' => $entry->created_at->format('H:i'),
+                    'wait_time_mins' => $entry->created_at->diffInMinutes(now()),
+                    'is_paid' => $isPaid,
+                    'payable_amount' => $req ? $req->payable_amount : 0,
+                    'claims_amount' => $req ? $req->claims_amount : 0,
+                    'coverage_mode' => $req ? $req->coverage_mode : null,
+                    'validation_status' => $req ? $req->validation_status : null, // approval code
+                    'service_request_id' => $req ? $req->id : null
                 ];
             });
 
@@ -739,155 +807,194 @@ class ReceptionWorkbenchController extends Controller
      */
     public function bookConsultation(Request $request)
     {
-        $request->validate([
-            'patient_id' => 'required|exists:patients,id',
-            'service_id' => 'required|exists:services,id',
-            'clinic_id' => 'required|exists:clinics,id',
-            'doctor_id' => 'nullable|exists:staff,id',
-        ]);
+        // Support array of bookings for family batch booking, fallback to scalar for backward compatibility
+        if ($request->has('bookings') && is_array($request->bookings)) {
+            $bookings = $request->bookings;
+        } else {
+            $request->validate([
+                'patient_id' => 'required|exists:patients,id',
+                'service_id' => 'required|exists:services,id',
+                'clinic_id' => 'required|exists:clinics,id',
+                'doctor_id' => 'nullable|exists:staff,id',
+            ]);
+            
+            $bookings = [
+                [
+                    'patient_id' => $request->patient_id,
+                    'service_id' => $request->service_id,
+                    'clinic_id' => $request->clinic_id,
+                    'doctor_id' => $request->doctor_id,
+                    'force_rebill' => $request->input('force_rebill', 0),
+                    'appointment_date' => $request->appointment_date,
+                    'start_time' => $request->start_time,
+                    'end_time' => $request->end_time,
+                    'appointment_type' => $request->appointment_type,
+                    'appointment_notes' => $request->appointment_notes,
+                ]
+            ];
+        }
 
         try {
             DB::beginTransaction();
 
-            $patient = Patient::find($request->patient_id);
-            $service = Service::with('price')->find($request->service_id);
-            $consultationCategoryId = appsettings('consultation_category_id');
-
-            $forceRebill = $request->input('force_rebill', 0);
-            $skipBilling = false;
-            $serviceRequestId = null;
-
-            if (!$forceRebill && $service->category_id == $consultationCategoryId) {
-                $cycleDuration = $service->consult_cycle_duration ?? appsettings('consultation_cycle_duration') ?? 24;
-                $threshold = Carbon::now()->subHours($cycleDuration);
-
-                // Find most recent consultation queue for this patient within the duration threshold
-                $recentConsult = DoctorQueue::where('patient_id', $patient->id)
-                    ->whereHas('request_entry', function($q) use ($consultationCategoryId) {
-                        $q->whereHas('service', function($q2) use ($consultationCategoryId) {
-                            $q2->where('category_id', $consultationCategoryId);
-                        });
-                    })
-                    ->where('created_at', '>=', $threshold)
-                    ->latest()
-                    ->first();
-
-                if ($recentConsult) {
-                    $skipBilling = true;
-                    $serviceRequestId = $recentConsult->request_entry_id;
-                }
-            }
-
-            if (!$skipBilling) {
-                // Create ProductOrServiceRequest (Billing)
-                $serviceRequest = new ProductOrServiceRequest();
-                $serviceRequest->service_id = $request->service_id;
-                $serviceRequest->user_id = $patient->user_id;
-                $serviceRequest->staff_user_id = Auth::id();
-
-                // Apply HMO tariff if applicable
-                if ($patient->hmo_id && $patient->hmo_id > 1) {
-                    try {
-                        $hmoData = HmoHelper::applyHmoTariff($patient->id, null, $request->service_id);
-                        if ($hmoData) {
-                            $serviceRequest->payable_amount = $hmoData['payable_amount'];
-                            $serviceRequest->claims_amount = $hmoData['claims_amount'];
-                            $serviceRequest->coverage_mode = $hmoData['coverage_mode'];
-                            $serviceRequest->validation_status = $hmoData['validation_status'];
-                        }
-                    } catch (\Exception $e) {
-                        // No HMO tariff found - log but continue
-                        Log::warning('HMO tariff not found for service', [
-                            'patient_id' => $patient->id,
-                            'service_id' => $request->service_id,
-                            'error' => $e->getMessage()
-                        ]);
-                    }
-                } else {
-                    // Private patient - standard pricing
-                    $serviceRequest->payable_amount = $service->price->sale_price ?? 0;
-                }
-
-                $serviceRequest->save();
-                $serviceRequestId = $serviceRequest->id;
-            }
-
-            // Create queue entry
             $receptionistStaff = Staff::where('user_id', Auth::id())->first();
             if (!$receptionistStaff) {
                 return response()->json(['error' => 'Staff profile not found for current user.'], 422);
             }
 
-            $queue = new DoctorQueue();
-            $queue->patient_id = $patient->id;
-            $queue->clinic_id = $request->clinic_id;
-            $queue->receptionist_id = $receptionistStaff->id;
-            $queue->request_entry_id = $serviceRequestId;
-            $queue->status = QueueStatus::WAITING;
+            $consultationCategoryId = appsettings('consultation_category_id');
+            $responses = [];
 
-            if ($request->doctor_id) {
-                $queue->staff_id = $request->doctor_id;
-            }
+            foreach ($bookings as $booking) {
+                $patient = Patient::find($booking['patient_id'] ?? null);
+                $service = Service::with('price')->find($booking['service_id'] ?? null);
+                
+                if (!$patient || !$service) continue;
 
-            if ($request->has('appointment_date') && $request->appointment_date) {
-                // ── Scheduled appointment ────────────────────────────────
-                $appointment = DoctorAppointment::create([
-                    'patient_id'       => $patient->id,
-                    'clinic_id'        => $request->clinic_id,
-                    'staff_id'         => $request->doctor_id,
-                    'appointment_date' => $request->appointment_date,
-                    'start_time'       => $request->start_time ?? '09:00',
-                    'end_time'         => $request->end_time ?? '09:30',
-                    'duration_minutes' => (int) (Carbon::parse($request->start_time ?? '09:00')->diffInMinutes(Carbon::parse($request->end_time ?? '09:30'))),
-                    'appointment_type' => $request->appointment_type ?? 'scheduled',
-                    'status'           => QueueStatus::SCHEDULED,
-                    'booked_by'        => $receptionistStaff->id,
-                    'source'           => 'reception',
+                $forceRebill = $booking['force_rebill'] ?? 0;
+                $skipBilling = false;
+                $serviceRequestId = null;
+
+                if (!$forceRebill && $service->category_id == $consultationCategoryId) {
+                    $cycleDuration = $service->consult_cycle_duration ?? appsettings('consultation_cycle_duration') ?? 24;
+                    $threshold = Carbon::now()->subHours($cycleDuration);
+
+                    // Find most recent consultation queue for this patient within the duration threshold
+                    $recentConsult = DoctorQueue::where('patient_id', $patient->id)
+                        ->whereHas('request_entry', function($q) use ($consultationCategoryId) {
+                            $q->whereHas('service', function($q2) use ($consultationCategoryId) {
+                                $q2->where('category_id', $consultationCategoryId);
+                            });
+                        })
+                        ->where('created_at', '>=', $threshold)
+                        ->latest()
+                        ->first();
+
+                    if ($recentConsult) {
+                        $skipBilling = true;
+                        $serviceRequestId = $recentConsult->request_entry_id;
+                    }
+                }
+
+                if (!$skipBilling) {
+                    // Create ProductOrServiceRequest (Billing)
+                    $serviceRequest = new ProductOrServiceRequest();
+                    $serviceRequest->service_id = $booking['service_id'];
+                    $serviceRequest->user_id = $patient->user_id;
+                    $serviceRequest->staff_user_id = Auth::id();
+
+                    // Apply HMO tariff if applicable
+                    if ($patient->hmo_id && $patient->hmo_id > 1) {
+                        try {
+                            $hmoData = HmoHelper::applyHmoTariff($patient->id, null, $booking['service_id']);
+                            if ($hmoData) {
+                                $serviceRequest->payable_amount = $hmoData['payable_amount'];
+                                $serviceRequest->claims_amount = $hmoData['claims_amount'];
+                                $serviceRequest->coverage_mode = $hmoData['coverage_mode'];
+                                $serviceRequest->validation_status = $hmoData['validation_status'];
+                            }
+                        } catch (\Exception $e) {
+                            Log::warning('HMO tariff not found for service', [
+                                'patient_id' => $patient->id,
+                                'service_id' => $booking['service_id'],
+                                'error' => $e->getMessage()
+                            ]);
+                        }
+                    } else {
+                        // Private patient - standard pricing
+                        $serviceRequest->payable_amount = $service->price->sale_price ?? 0;
+                    }
+
+                    $serviceRequest->save();
+                    $serviceRequestId = $serviceRequest->id;
+                }
+
+                // Create queue entry
+                $queue = new DoctorQueue();
+                $queue->patient_id = $patient->id;
+                $queue->clinic_id = $booking['clinic_id'];
+                $queue->receptionist_id = $receptionistStaff->id;
+                $queue->request_entry_id = $serviceRequestId;
+                $queue->status = QueueStatus::WAITING;
+
+                if (!empty($booking['doctor_id'])) {
+                    $queue->staff_id = $booking['doctor_id'];
+                }
+
+                if (!empty($booking['appointment_date'])) {
+                    // ── Scheduled appointment ────────────────────────────────
+                    $appointment = DoctorAppointment::create([
+                        'patient_id'       => $patient->id,
+                        'clinic_id'        => $booking['clinic_id'],
+                        'staff_id'         => $booking['doctor_id'] ?? null,
+                        'appointment_date' => $booking['appointment_date'],
+                        'start_time'       => $booking['start_time'] ?? '09:00',
+                        'end_time'         => $booking['end_time'] ?? '09:30',
+                        'duration_minutes' => (int) (Carbon::parse($booking['start_time'] ?? '09:00')->diffInMinutes(Carbon::parse($booking['end_time'] ?? '09:30'))),
+                        'appointment_type' => $booking['appointment_type'] ?? 'scheduled',
+                        'status'           => QueueStatus::SCHEDULED,
+                        'booked_by'        => $receptionistStaff->id,
+                        'source'           => 'reception',
+                        'service_request_id' => $serviceRequestId,
+                        'notes'            => $booking['appointment_notes'] ?? null,
+                    ]);
+                    $queue->appointment_id = $appointment->id;
+                    $queue->status = QueueStatus::SCHEDULED;
+                    $queue->save();
+                } else {
+                    // ── Walk-in: save queue first, then create its appointment
+                    $queue->save();
+
+                    $slotDuration = (int) (appsettings('default_slot_duration') ?? 15);
+                    $now = Carbon::now();
+                    $startMinute = (int) floor($now->minute / $slotDuration) * $slotDuration;
+                    $start = $now->copy()->setTime($now->hour, $startMinute, 0);
+                    $end   = $start->copy()->addMinutes($slotDuration);
+
+                    $appointment = DoctorAppointment::create([
+                        'patient_id'         => $patient->id,
+                        'clinic_id'          => $booking['clinic_id'],
+                        'staff_id'           => $booking['doctor_id'] ?? null,
+                        'appointment_date'   => Carbon::today(),
+                        'start_time'         => $start->format('H:i'),
+                        'end_time'           => $end->format('H:i'),
+                        'duration_minutes'   => $slotDuration,
+                        'appointment_type'   => 'walk_in',
+                        'status'             => QueueStatus::WAITING,
+                        'booked_by'          => $receptionistStaff->id,
+                        'source'             => 'reception',
+                        'service_request_id' => $serviceRequestId,
+                        'doctor_queue_id'    => $queue->id,
+                        'checked_in_at'      => $now,
+                    ]);
+
+                    $queue->appointment_id = $appointment->id;
+                    $queue->save();
+                }
+
+                $payableAmount = 0;
+                if (!$skipBilling && isset($serviceRequest)) {
+                    $payableAmount = $serviceRequest->payable_amount;
+                }
+
+                $responses[] = [
+                    'patient_id' => $patient->id,
+                    'queue_id' => $queue->id,
+                    'appointment_id' => $queue->appointment_id,
                     'service_request_id' => $serviceRequestId,
-                    'notes'            => $request->appointment_notes,
-                ]);
-                $queue->appointment_id = $appointment->id;
-                $queue->status = QueueStatus::SCHEDULED;
-                $queue->save();
-            } else {
-                // ── Walk-in: save queue first, then create its appointment
-                $queue->save();
-
-                $slotDuration = (int) (appsettings('default_slot_duration') ?? 15);
-                $now = Carbon::now();
-                $startMinute = (int) floor($now->minute / $slotDuration) * $slotDuration;
-                $start = $now->copy()->setTime($now->hour, $startMinute, 0);
-                $end   = $start->copy()->addMinutes($slotDuration);
-
-                $appointment = DoctorAppointment::create([
-                    'patient_id'         => $patient->id,
-                    'clinic_id'          => $request->clinic_id,
-                    'staff_id'           => $request->doctor_id,
-                    'appointment_date'   => Carbon::today(),
-                    'start_time'         => $start->format('H:i'),
-                    'end_time'           => $end->format('H:i'),
-                    'duration_minutes'   => $slotDuration,
-                    'appointment_type'   => 'walk_in',
-                    'status'             => QueueStatus::WAITING,
-                    'booked_by'          => $receptionistStaff->id,
-                    'source'             => 'reception',
-                    'service_request_id' => $serviceRequestId,
-                    'doctor_queue_id'    => $queue->id,
-                    'checked_in_at'      => $now,
-                ]);
-
-                $queue->appointment_id = $appointment->id;
-                $queue->save();
+                    'is_new_bill' => !$skipBilling,
+                    'payable_amount' => $payableAmount
+                ];
             }
 
             DB::commit();
 
-            $isScheduled = $request->has('appointment_date') && $request->appointment_date;
             return response()->json([
                 'success' => true,
-                'message' => $isScheduled ? 'Appointment scheduled successfully' : 'Patient added to queue successfully',
-                'queue_id' => $queue->id,
-                'appointment_id' => $queue->appointment_id,
+                'message' => count($responses) > 1 ? count($responses) . ' appointments created successfully' : 'Patient added to queue successfully',
+                'queue_id' => $responses[0]['queue_id'] ?? null,
+                'appointment_id' => $responses[0]['appointment_id'] ?? null,
+                'batch_responses' => $responses
             ]);
 
         } catch (\Exception $e) {
@@ -2915,28 +3022,20 @@ class ReceptionWorkbenchController extends Controller
             $currentUserId = Auth::id();
             $serviceRequest = null;
             $posr = null;
+            $queue = null;
 
             switch ($type) {
                 case 'lab':
                     $serviceRequest = LabServiceRequest::with('productOrServiceRequest')->findOrFail($id);
                     $posr = $serviceRequest->productOrServiceRequest;
-                    if ($serviceRequest->status >= 2) {
-                        return response()->json(['success' => false, 'message' => 'Cannot discard — lab test is already in progress or completed'], 400);
-                    }
                     break;
                 case 'imaging':
                     $serviceRequest = ImagingServiceRequest::with('productOrServiceRequest')->findOrFail($id);
                     $posr = $serviceRequest->productOrServiceRequest;
-                    if ($serviceRequest->status >= 2) {
-                        return response()->json(['success' => false, 'message' => 'Cannot discard — imaging is already in progress or completed'], 400);
-                    }
                     break;
                 case 'product':
                     $serviceRequest = ProductRequest::with('productOrServiceRequest')->findOrFail($id);
                     $posr = $serviceRequest->productOrServiceRequest;
-                    if ($serviceRequest->status >= 3 || ($posr && $posr->sale)) {
-                        return response()->json(['success' => false, 'message' => 'Cannot discard — product has already been dispensed'], 400);
-                    }
                     break;
                 case 'service':
                     $posr = ProductOrServiceRequest::findOrFail($id);
@@ -2946,10 +3045,24 @@ class ReceptionWorkbenchController extends Controller
                         return response()->json(['success' => false, 'message' => 'Cannot discard — consultation is already in progress or completed'], 400);
                     }
                     break;
+                case 'queue':
+                    $queue = \App\Models\DoctorQueue::findOrFail($id);
+                    if (!in_array($queue->status, [\App\Enums\QueueStatus::WAITING, \App\Enums\QueueStatus::SCHEDULED])) {
+                        return response()->json(['success' => false, 'message' => 'Cannot discard — consultation is already in progress or completed'], 400);
+                    }
+                    if ($queue->request_entry_id) {
+                        $posr = ProductOrServiceRequest::find($queue->request_entry_id);
+                        
+                        // If it's a queue entry but the POSR is already paid, it means this was a free 
+                        // follow-up (cycle duration). We should ONLY delete the queue, NOT the POSR.
+                        if ($posr && $posr->payment_id) {
+                            $posr = null; // Unlink POSR so we don't try to delete or check payment on it
+                        }
+                    }
+                    break;
                 default:
                     return response()->json(['success' => false, 'message' => 'Invalid request type'], 400);
             }
-
             // Check if already paid
             if ($posr && $posr->payment_id) {
                 return response()->json([
@@ -2976,18 +3089,16 @@ class ReceptionWorkbenchController extends Controller
                 $serviceRequest->delete();
             }
 
+            // Delete the Queue if we found one
+            if (isset($queue) && $queue) {
+                if ($queue->appointment_id) {
+                    \App\Models\DoctorAppointment::where('id', $queue->appointment_id)->delete();
+                }
+                $queue->delete();
+            }
+
             // Also delete the ProductOrServiceRequest if exists
             if ($posr) {
-                // If it's a consultation service, delete the associated queue entry too
-                if ($type === 'service') {
-                    $queue = \App\Models\DoctorQueue::where('request_entry_id', $posr->id)->first();
-                    if ($queue) {
-                        if ($queue->appointment_id) {
-                            \App\Models\DoctorAppointment::where('id', $queue->appointment_id)->delete();
-                        }
-                        $queue->delete();
-                    }
-                }
                 $posr->delete();
             }
 

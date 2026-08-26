@@ -7,7 +7,6 @@
 <link rel="stylesheet" href="{{ asset('plugins/fullcalendar/fullcalendar.min.css') }}">
 <link rel="stylesheet" href="{{ asset('css/queue-status.css') }}">
 @endpush
-
 @section('content')
 @php
     $hosColor = appsettings()->hos_color ?? '#0066cc';
@@ -3902,28 +3901,13 @@
                                 </div>
                                 <div class="card-body">
                                     <form id="booking-form">
-                                        <div class="form-group mb-3">
-                                            <label><i class="mdi mdi-medical-bag"></i> Service <span class="text-danger">*</span></label>
-                                            <select class="form-control" id="booking-service" required>
-                                                <option value="">-- Select Service --</option>
-                                            </select>
-                                        </div>
-                                        <div class="form-group mb-3">
-                                            <label><i class="mdi mdi-hospital-building"></i> Clinic <span class="text-danger">*</span></label>
-                                            <select class="form-control" id="booking-clinic" required>
-                                                <option value="">-- Select Clinic --</option>
-                                            </select>
-                                        </div>
-                                        <div class="form-group mb-3">
-                                            <label><i class="mdi mdi-doctor"></i> Doctor</label>
-                                            <select class="form-control" id="booking-doctor">
-                                                <option value="">Any Available Doctor</option>
-                                            </select>
+                                        <div id="family-booking-container" class="mb-4 row">
+                                            <!-- Dynamically populated family members grid will go here -->
                                         </div>
 
                                         <!-- Appointment Type Toggle -->
-                                        <div class="form-group mb-3">
-                                            <label class="d-block mb-2"><i class="mdi mdi-calendar-clock"></i> Appointment Type</label>
+                                        <div class="form-group mb-3 mt-4 border-top pt-3">
+                                            <label class="d-block mb-2"><i class="mdi mdi-calendar-clock"></i> Appointment Type (Applies to all selected)</label>
                                             <div class="btn-group w-100" role="group">
                                                 <input type="radio" class="btn-check" name="booking_type" id="booking-type-walkin" value="walkin" checked autocomplete="off">
                                                 <label class="btn btn-outline-primary" for="booking-type-walkin"><i class="mdi mdi-walk"></i> Walk-in (Now)</label>
@@ -3960,54 +3944,60 @@
                                                         <option value="emergency">Emergency</option>
                                                     </select>
                                                 </div>
-                                                <div class="form-group">
-                                                    <label><i class="mdi mdi-note-text"></i> Notes</label>
-                                                    <textarea class="form-control" id="booking-appointment-notes" rows="2" placeholder="Optional notes..."></textarea>
+                                                <div class="form-group mb-0">
+                                                    <label><i class="mdi mdi-note-text-outline"></i> Notes</label>
+                                                    <textarea class="form-control" id="booking-appointment-notes" rows="2" placeholder="Optional notes for the doctor or scheduler"></textarea>
                                                 </div>
                                             </div>
                                         </div>
-                                        
-                                        <div class="form-group mb-3">
-                                            <div class="custom-control custom-switch">
-                                                <input type="checkbox" class="custom-control-input" id="force_rebill" name="force_rebill" value="1">
-                                                <label class="custom-control-label font-weight-bold" for="force_rebill">Force Rebill Consultation</label>
-                                                <p class="small text-muted mb-0">Check this to explicitly bill the patient even if their previous consultation cycle is still active.</p>
-                                            </div>
-                                        </div>
 
-                                        <button type="submit" class="btn btn-primary btn-lg w-100" id="btn-book-consultation">
-                                            <i class="mdi mdi-send"></i> Send to Queue
+                                        <div class="form-check mb-3">
+                                            <input type="checkbox" class="form-check-input" id="force_rebill">
+                                            <label class="form-check-label" for="force_rebill">
+                                                Force Re-bill Consultation (ignore cycle duration limits for all selected)
+                                            </label>
+                                        </div>
+                                        @hasanyrole('SUPERADMIN|ADMIN|ACCOUNTS|BILLER')
+                                        <button type="submit" class="btn btn-success w-100" id="btn-book-consultation">
+                                            <i class="mdi mdi-cart-check"></i> Checkout & Book
                                         </button>
+                                        @else
+                                        <button type="submit" class="btn btn-primary w-100" id="btn-book-consultation">
+                                            <i class="mdi mdi-check-circle"></i> Book Service
+                                        </button>
+                                        @endhasanyrole
                                     </form>
                                 </div>
                             </div>
                         </div>
                         <div class="col-md-5">
                             <div class="card-modern" id="tariff-preview-card" style="display: none;">
-                                <div class="card-header bg-warning">
-                                    <h5 class="mb-0"><i class="mdi mdi-calculator"></i> Tariff Preview</h5>
+                                <div class="card-header bg-primary text-white">
+                                    <h5 class="mb-0"><i class="mdi mdi-cart"></i> Booking Cart</h5>
                                 </div>
-                                <div class="card-body">
-                                    <table class="table table-sm">
-                                        <tbody>
+                                <div class="card-body p-0">
+                                    <table class="table table-sm mb-0">
+                                        <thead>
                                             <tr>
-                                                <td>Service Price:</td>
-                                                <td class="text-right"><strong id="tariff-base-price">₦0</strong></td>
+                                                <th>Patient</th>
+                                                <th>Service</th>
+                                                <th class="text-right">Price</th>
                                             </tr>
-                                            <tr id="tariff-hmo-row" style="display: none;">
-                                                <td>HMO Coverage (<span id="tariff-coverage-mode"></span>):</td>
-                                                <td class="text-right text-success"><strong id="tariff-claims-amount">₦0</strong></td>
-                                            </tr>
-                                            <tr class="table-primary">
-                                                <td><strong>Patient Pays:</strong></td>
-                                                <td class="text-right"><strong id="tariff-payable-amount">₦0</strong></td>
-                                            </tr>
+                                        </thead>
+                                        <tbody id="cart-preview-body">
+                                            <!-- Dynamically filled by JS -->
                                         </tbody>
+                                        <tfoot>
+                                            <tr class="table-primary">
+                                                <td colspan="2"><strong>Total Payable:</strong></td>
+                                                <td class="text-right"><strong id="cart-preview-total">₦0</strong></td>
+                                            </tr>
+                                        </tfoot>
                                     </table>
-                                    <div class="alert alert-info" id="tariff-validation-alert" style="display: none;">
-                                        <i class="mdi mdi-information"></i> <span id="tariff-validation-message"></span>
-                                    </div>
                                 </div>
+                            </div>
+                            <div class="alert alert-info" id="tariff-validation-alert" style="display: none;">
+                                <i class="mdi mdi-information"></i> <span id="tariff-validation-message"></span>
                             </div>
                             <div class="card-modern mt-3">
                                 <div class="card-header bg-secondary text-white">
@@ -5842,6 +5832,8 @@ function displayPatientInfo(patient) {
 
     // Update profile tab with patient details
     updateProfileTab(patient);
+    // Render Family Booking Grid
+    renderFamilyBookingGrid(patient);
 }
 
 /**
@@ -6016,48 +6008,124 @@ function updateProfileTab(patient) {
     loadBookingQueueEntries(patient.id);
 }
 
+function renderQueueCards(entries) {
+    if (!entries || entries.length === 0) {
+        return '<p class="text-muted">No active queue entries</p>';
+    }
+
+    let html = '<div class="queue-entries-list" style="display:flex; flex-direction:column; gap:12px;">';
+    entries.forEach(entry => {
+        const statusClass = {
+            1: 'badge-warning',
+            2: 'badge-info',
+            3: 'badge-primary',
+            4: 'badge-success'
+        }[entry.status] || 'badge-secondary';
+
+        const statusText = {
+            1: 'Waiting',
+            2: 'Vitals Pending',
+            3: 'In Consultation',
+            4: 'Completed'
+        }[entry.status] || 'Unknown';
+        
+        // Format initials
+        const names = (entry.patient_name || '').split(' ');
+        let initials = '?';
+        if (names.length > 0 && names[0]) {
+            initials = names.length > 1 && names[1] ? (names[0][0] + names[1][0]).toUpperCase() : names[0][0].toUpperCase();
+        }
+        
+        // Background for initials
+        const initialBg = entry.is_family ? '#6c757d' : 'var(--hospital-primary)';
+        
+        // Wait time string
+        let waitTimeStr = entry.wait_time_mins > 60 ? Math.floor(entry.wait_time_mins / 60) + 'h ' + (entry.wait_time_mins % 60) + 'm' : entry.wait_time_mins + ' mins';
+
+        // Payment / HMO Details
+        let paymentBadge = '';
+        let hmoDetails = '';
+        
+        if (entry.coverage_mode) {
+            paymentBadge = `<span class="badge badge-info"><i class="mdi mdi-shield-check"></i> HMO Covered</span>`;
+            hmoDetails = `<div class="mt-1" style="font-size:0.8rem; background:#f0f9ff; padding:4px 8px; border-radius:4px; border-left:3px solid #17a2b8;">
+                <strong>Mode:</strong> ${entry.coverage_mode} 
+                <span class="mx-1">|</span> 
+                <strong>Claim:</strong> ₦${parseFloat(entry.claims_amount).toLocaleString()}
+                ${entry.validation_status ? `<span class="mx-1">|</span> <strong>Auth:</strong> ${entry.validation_status}` : ''}
+            </div>`;
+        } else {
+            paymentBadge = entry.is_paid 
+                ? `<span class="badge badge-success"><i class="mdi mdi-check-circle"></i> Paid</span>` 
+                : `<span class="badge badge-warning text-dark"><i class="mdi mdi-clock-outline"></i> Pending Payment</span>`;
+        }
+        
+        const familyBadge = entry.is_family ? `<span class="badge badge-secondary ml-2" style="font-size:0.7rem;">Family Member</span>` : '';
+        const serviceName = entry.service_name || 'Consultation';
+
+        html += `
+            <div class="card-modern shadow-sm border-0 mb-0" style="border-radius: 8px;">
+                <div class="card-body p-3">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div class="d-flex">
+                            <div class="mr-3 mt-1 d-flex justify-content-center align-items-center text-white font-weight-bold" 
+                                style="width:40px; height:40px; border-radius:8px; background:${initialBg}; font-size:1.1rem;">
+                                ${initials}
+                            </div>
+                            <div>
+                                <h6 class="mb-0 font-weight-bold" style="font-size:1rem;">${entry.patient_name} ${familyBadge}</h6>
+                                <div class="text-muted" style="font-size:0.85rem;">
+                                    <i class="mdi mdi-identifier"></i> #${entry.patient_file_no} &bull; ${entry.patient_gender}, ${entry.patient_age} yrs
+                                </div>
+                                <div class="mt-2 text-dark font-weight-bold" style="font-size:0.9rem;">
+                                    ${serviceName} 
+                                    <span class="text-muted font-weight-normal ml-1">at ${entry.clinic_name}</span>
+                                </div>
+                                ${entry.doctor_name ? `<div class="text-muted" style="font-size:0.85rem;"><i class="mdi mdi-doctor"></i> Dr. ${entry.doctor_name}</div>` : ''}
+                                ${hmoDetails}
+                            </div>
+                        </div>
+                        
+                        <div class="text-right">
+                            <div class="mb-2">
+                                <h5 class="text-primary mb-0 font-weight-bold">Q-${entry.queue_no || 'N/A'}</h5>
+                                <div class="text-muted" style="font-size:0.75rem;">${entry.appointment_type} &bull; ${entry.created_at}</div>
+                            </div>
+                            <div>
+                                ${paymentBadge}
+                            </div>
+                            <div class="mt-1">
+                                <span class="badge ${statusClass}">${statusText}</span>
+                            </div>
+                            <div class="mt-1 text-muted" style="font-size:0.75rem;">
+                                <i class="mdi mdi-timer-sand"></i> Waiting ${waitTimeStr}
+                            </div>
+                            
+                            <div class="mt-2 d-flex justify-content-end align-items-center">
+                                <button class="btn btn-sm btn-outline-primary btn-print-routing mr-2" data-queue-id="${entry.id}" title="Print Routing Slip">
+                                    <i class="mdi mdi-printer"></i>
+                                </button>
+                                <button class="btn btn-sm btn-outline-danger btn-delete-queue" data-queue-id="${entry.id}" data-service-request-id="${entry.service_request_id || ''}" title="Delete Booking">
+                                    <i class="mdi mdi-trash-can"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+    });
+    html += '</div>';
+    return html;
+}
+
 function loadPatientQueueEntries(patientId) {
     $.get(`{{ url('reception/patient') }}/${patientId}/queue`, function(data) {
         const $container = $('#current-queue-entries');
         const entries = Array.isArray(data) ? data : (data.entries || []);
-
-        if (entries.length === 0) {
-            $container.html('<p class="text-muted">No active queue entries</p>');
-            return;
-        }
-
-        let html = '<div class="queue-entries-list">';
-        entries.forEach(entry => {
-            const statusClass = {
-                1: 'badge-warning',
-                2: 'badge-info',
-                3: 'badge-primary',
-                4: 'badge-success'
-            }[entry.status] || 'badge-secondary';
-
-            const statusText = {
-                1: 'Waiting',
-                2: 'Vitals Pending',
-                3: 'In Consultation',
-                4: 'Completed'
-            }[entry.status] || 'Unknown';
-
-            html += `
-                <div class="queue-entry-item d-flex justify-content-between align-items-center p-2 border-bottom">
-                    <div>
-                        <strong>Q-${entry.queue_no || 'N/A'}</strong>
-                        <span class="text-muted ml-2">${entry.clinic_name || 'N/A'}</span>
-                        <br><small><i class="mdi mdi-account"></i> ${entry.patient_name || 'N/A'} <span class="text-muted">(#${entry.patient_file_no || 'N/A'})</span></small>
-                        ${entry.doctor_name ? `<br><small class="text-muted"><i class="mdi mdi-doctor"></i> Dr. ${entry.doctor_name}</small>` : ''}
-                    </div>
-                    <span class="badge ${statusClass}">${statusText}</span>
-                </div>
-            `;
-        });
-        html += '</div>';
-        $container.html(html);
+        $container.html(renderQueueCards(entries));
     }).fail(function() {
-        $('#current-queue-entries').html('<p class="text-muted">Failed to load queue entries</p>');
+        $('#current-queue-entries').html('<p class="text-muted text-danger">Failed to load queue entries</p>');
     });
 }
 
@@ -6066,45 +6134,13 @@ function loadBookingQueueEntries(patientId) {
     $.get(`{{ url('reception/patient') }}/${patientId}/queue`, function(data) {
         const $container = $('#booking-current-queue');
         const entries = Array.isArray(data) ? data : (data.entries || []);
-
-        if (entries.length === 0) {
-            $container.html('<p class="text-muted">No active queue entries</p>');
-            return;
-        }
-
-        let html = '<div class="queue-entries-list">';
-        entries.forEach(entry => {
-            const statusClass = {
-                1: 'badge-warning',
-                2: 'badge-info',
-                3: 'badge-primary',
-                4: 'badge-success'
-            }[entry.status] || 'badge-secondary';
-
-            const statusText = {
-                1: 'Waiting',
-                2: 'Vitals Pending',
-                3: 'In Consultation',
-                4: 'Completed'
-            }[entry.status] || 'Unknown';
-
-            html += `
-                <div class="queue-entry-item d-flex justify-content-between align-items-center p-2 border-bottom">
-                    <div>
-                        <strong>Q-${entry.queue_no || 'N/A'}</strong>
-                        <span class="text-muted ml-2">${entry.clinic_name || 'N/A'}</span>
-                        ${entry.doctor_name ? `<br><small class="text-muted"><i class="mdi mdi-doctor"></i> Dr. ${entry.doctor_name}</small>` : ''}
-                    </div>
-                    <span class="badge ${statusClass}">${statusText}</span>
-                </div>
-            `;
-        });
-        html += '</div>';
-        $container.html(html);
+        $container.html(renderQueueCards(entries));
     }).fail(function() {
-        $('#booking-current-queue').html('<p class="text-muted">Failed to load queue entries</p>');
+        $('#booking-current-queue').html('<p class="text-muted text-danger">Failed to load queue entries</p>');
     });
 }
+
+
 
 // =============================================
 // WORKSPACE TABS
@@ -6681,6 +6717,50 @@ function initializeQueueDataTable(filter) {
 // =============================================
 // BOOK SERVICE FUNCTIONALITY
 // =============================================
+function updateBookingCart() {
+    const cartBody = $('#cart-preview-body');
+    const cartTotal = $('#cart-preview-total');
+    let totalAmount = 0;
+    
+    cartBody.empty();
+    
+    let hasItems = false;
+    
+    $('.family-booking-checkbox:checked').each(function() {
+        const idx = $(this).data('idx');
+        const id = $(this).data('patient-id');
+        const patientName = $(this).siblings('label').text().replace('Active', '').trim();
+
+        const serviceSelect = $(`#booking-service-${idx}`);
+        const selectedOption = serviceSelect.find('option:selected');
+        const serviceId = selectedOption.val();
+        
+        if (serviceId) {
+            hasItems = true;
+            const serviceName = selectedOption.text().split(' - ₦')[0]; // Extract name without price
+            const priceStr = selectedOption.attr('data-price') || '0';
+            const price = parseFloat(priceStr);
+            totalAmount += price;
+            
+            cartBody.append(`
+                <tr>
+                    <td><small>${patientName}</small></td>
+                    <td><small>${serviceName}</small></td>
+                    <td class="text-right">₦${price.toLocaleString()}</td>
+                </tr>
+            `);
+        }
+    });
+    
+    if (hasItems) {
+        $('#tariff-preview-card').show();
+        cartTotal.text(`₦${totalAmount.toLocaleString()}`);
+    } else {
+        $('#tariff-preview-card').hide();
+        cartTotal.text('₦0');
+    }
+}
+
 function updateTariffPreview() {
     if (!currentPatient) return;
 
@@ -6738,79 +6818,196 @@ function displayTariffPreview(data) {
     $card.show();
 }
 
+function renderFamilyBookingGrid(patient) {
+    const $container = $('#family-booking-container');
+    $container.empty();
+
+    let family = patient.family_members || [];
+    
+    // Create an array with the primary patient first, then dependents
+    let members = [
+        {
+            user_id: patient.user_id,
+            id: patient.id,
+            name: patient.name,
+            file_no: patient.file_no,
+            is_principal: patient.is_family_principal,
+            is_primary: true
+        }
+    ];
+
+    family.forEach(f => {
+        if (f.user_id !== patient.user_id) {
+            members.push({
+                user_id: f.user_id,
+                id: f.id,
+                name: f.name,
+                file_no: f.file_no,
+                is_principal: f.is_principal,
+                is_primary: false
+            });
+        }
+    });
+
+    let serviceOptions = '<option value="">-- Select Service --</option>';
+    if (cachedServices.consultation && cachedServices.consultation.length > 0) {
+        cachedServices.consultation.forEach(s => {
+            const priceLabel = s.price ? ` - ₦${parseFloat(s.price).toLocaleString()}` : '';
+            serviceOptions += `<option value="${s.id}" data-price="${s.price || 0}">${s.name}${priceLabel}</option>`;
+        });
+    }
+
+    // Populate clinic options string
+    let clinicOptions = '<option value="">-- Select Clinic --</option>';
+    if (cachedClinics && cachedClinics.length > 0) {
+        cachedClinics.forEach(c => {
+            clinicOptions += `<option value="${c.id}">${c.name}</option>`;
+        });
+    }
+
+    members.forEach((m, idx) => {
+        const checkedStatus = m.is_primary ? 'checked' : '';
+        const displayStatus = m.is_primary ? 'block' : 'none';
+
+        const card = `
+        <div class="col-md-6 mb-3">
+            <div class="card border mb-0 ${m.is_primary ? 'border-primary' : ''}">
+                <div class="card-header bg-light p-2 d-flex align-items-center">
+                    <div class="form-check mb-0">
+                        <input class="form-check-input family-booking-checkbox" type="checkbox" id="book-member-${idx}" data-idx="${idx}" data-patient-id="${m.id}" ${checkedStatus}>
+                        <label class="form-check-label mb-0 fw-bold" for="book-member-${idx}">
+                            ${m.name} ${m.is_primary ? '<span class="badge bg-primary text-white ms-1">Active</span>' : ''}
+                        </label>
+                    </div>
+                </div>
+                <div class="card-body p-2" id="family-booking-fields-${idx}" style="display: ${displayStatus};">
+                    <div class="form-group mb-2">
+                        <label class="small text-muted mb-0">Service <span class="text-danger">*</span></label>
+                        <select class="form-control form-control-sm family-booking-service" id="booking-service-${idx}" data-idx="${idx}">
+                            ${serviceOptions}
+                        </select>
+                    </div>
+                    <div class="form-group mb-2">
+                        <label class="small text-muted mb-0">Clinic <span class="text-danger">*</span></label>
+                        <select class="form-control form-control-sm family-booking-clinic" id="booking-clinic-${idx}" data-idx="${idx}" onchange="fetchDoctorsForGrid(this.value, 'booking-doctor-${idx}')">
+                            ${clinicOptions}
+                        </select>
+                    </div>
+                    <div class="form-group mb-0">
+                        <label class="small text-muted mb-0">Doctor</label>
+                        <select class="form-control form-control-sm family-booking-doctor" id="booking-doctor-${idx}">
+                            <option value="">Any Available Doctor</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+        </div>
+        `;
+        $container.append(card);
+    });
+
+    // Toggle fields based on checkbox
+    $('.family-booking-checkbox').on('change', function() {
+        const idx = $(this).data('idx');
+        if ($(this).is(':checked')) {
+            $(`#family-booking-fields-${idx}`).slideDown();
+            $(this).closest('.card').addClass('border-primary');
+        } else {
+            $(`#family-booking-fields-${idx}`).slideUp();
+            $(this).closest('.card').removeClass('border-primary');
+        }
+    });
+
+    // Bind events for live cart
+    $('.family-booking-checkbox, .family-booking-service').on('change', updateBookingCart);
+    updateBookingCart();
+}
+
+function fetchDoctorsForGrid(clinicId, doctorSelectId) {
+    if (!clinicId) {
+        $(`#${doctorSelectId}`).empty().append('<option value="">Any Available Doctor</option>');
+        return;
+    }
+    $.ajax({
+        type: 'GET',
+        url: `{{ url('get-doctors') }}/${clinicId}`,
+        success: function(data) {
+            $(`#${doctorSelectId}`).empty().append('<option value="">Any Available Doctor</option>');
+            data.forEach(d => {
+                $(`#${doctorSelectId}`).append(`<option value="${d.id}">${d.user?.surname || ''}, ${d.user?.firstname || ''} - ${d.specialization?.name || ''}</option>`);
+            });
+        }
+    });
+}
+
 function bookConsultation() {
     if (!currentPatient) {
         toastr.warning('Please select a patient first');
         return;
     }
 
-    const clinicId = $('#booking-clinic').val();
-    const doctorId = $('#booking-doctor').val();
-    const serviceId = $('#booking-service').val();
-    const serviceType = $('input[name="service-type"]:checked').val() || 'consultation';
-    const reason = $('#book-reason').val();
     const bookingType = $('input[name="booking_type"]:checked').val() || 'walkin';
+    const forceRebill = $('#force_rebill').is(':checked') ? 1 : 0;
+    
+    // Collect batch booking data
+    let bookings = [];
+    let hasErrors = false;
 
-    if (!clinicId) {
-        toastr.warning('Please select a clinic');
-        return;
-    }
+    $('.family-booking-checkbox:checked').each(function() {
+        const idx = $(this).data('idx');
+        const patientId = $(this).data('patient-id');
+        const serviceId = $(`#booking-service-${idx}`).val();
+        const clinicId = $(`#booking-clinic-${idx}`).val();
+        const doctorId = $(`#booking-doctor-${idx}`).val();
 
-    // Doctor selection is optional - patient can be queued without a specific doctor
-
-    if (!serviceId) {
-        toastr.warning('Please select a service');
-        return;
-    }
-
-    // Validate schedule fields if scheduling
-    if (bookingType === 'schedule') {
-        const apptDate = $('#booking-appointment-date').val();
-        const apptTime = getBookingTime();
-        if (!apptDate) {
-            toastr.warning('Please select a date for the appointment');
-            return;
+        if (!serviceId || !clinicId) {
+            hasErrors = true;
+            toastr.warning('Please select Service and Clinic for all checked family members.');
+            return false; // break each loop
         }
-        if (!apptTime) {
-            toastr.warning('Please select or enter a time for the appointment');
-            return;
+
+        let bookingPayload = {
+            patient_id: patientId,
+            service_id: serviceId,
+            clinic_id: clinicId,
+            doctor_id: doctorId,
+            force_rebill: forceRebill
+        };
+
+        if (bookingType === 'schedule') {
+            bookingPayload.appointment_date = $('#booking-appointment-date').val();
+            bookingPayload.start_time = getBookingTime();
+            bookingPayload.priority = $('#booking-priority').val();
+            bookingPayload.appointment_notes = $('#booking-appointment-notes').val();
+            bookingPayload.appointment_type = 'scheduled';
+            
+            if (!bookingPayload.appointment_date || !bookingPayload.start_time) {
+                hasErrors = true;
+                toastr.warning('Please select Date and Time for scheduled appointments.');
+                return false;
+            }
         }
+
+        bookings.push(bookingPayload);
+    });
+
+    if (hasErrors) return;
+
+    if (bookings.length === 0) {
+        toastr.warning('Please select at least one family member to book.');
+        return;
     }
 
     const $btn = $('#btn-book-consultation');
     const originalHtml = $btn.html();
     $btn.prop('disabled', true).html('<i class="mdi mdi-loading mdi-spin"></i> Booking...');
 
-    // Build request data
+    var requestUrl = '{{ route("reception.book-consultation") }}';
+    
     var requestData = {
         _token: '{{ csrf_token() }}',
-        patient_id: currentPatient,
-        clinic_id: clinicId,
-        doctor_id: doctorId,
-        service_id: serviceId,
-        service_type: serviceType,
-        reason: reason,
-        force_rebill: $('#force_rebill').is(':checked') ? 1 : 0
+        bookings: bookings
     };
-
-    var requestUrl = '{{ route("reception.book-consultation") }}';
-
-    // If scheduling, use the appointments API
-    if (bookingType === 'schedule') {
-        requestUrl = '{{ route("appointments.create") }}';
-        requestData.appointment_date = $('#booking-appointment-date').val();
-        requestData.start_time = getBookingTime();
-        requestData.priority = $('#booking-priority').val();
-        requestData.notes = $('#booking-appointment-notes').val();
-        requestData.appointment_type = 'scheduled';
-        // Flag custom time so backend skips slot availability check
-        if ($('#booking-custom-time-toggle').is(':checked')) {
-            requestData.custom_time = 1;
-        }
-    } else {
-        // Walk-in: include appointment_date/time in book-consultation if they exist
-        // (already handled by controller when appointment_date is present)
-    }
 
     $.ajax({
         url: requestUrl,
@@ -6818,23 +7015,50 @@ function bookConsultation() {
         data: requestData,
         success: function(response) {
             if (response.success) {
-                toastr.success(response.message || 'Service booked successfully');
-                // Reset form
-                $('#booking-clinic').val('');
-                $('#booking-doctor').empty().append('<option value="">Select Doctor</option>');
-                $('#booking-service').val('');
-                $('#book-reason').val('');
-                $('#tariff-preview-card').hide();
-                // Reset schedule fields
+                toastr.success(response.message || 'Service(s) booked successfully');
+                
+                // Trigger Checkout Flow if applicable
+                if ($btn.hasClass('btn-success') && typeof processPayment === 'function' && response.batch_responses) {
+                    let checkoutItems = [];
+                    let actualTotal = 0;
+
+                    response.batch_responses.forEach(r => {
+                        if (r.service_request_id && r.is_new_bill) {
+                            checkoutItems.push({
+                                id: r.service_request_id,
+                                qty: 1,
+                                discount: 0
+                            });
+                            actualTotal += r.payable_amount || 0;
+                        }
+                    });
+
+                    if (checkoutItems.length > 0) {
+                        window.pendingPaymentItems = checkoutItems;
+                        window.pendingPaymentPatientId = currentPatient;
+                        
+                        $('#summary-total').text('₦' + actualTotal.toLocaleString());
+                        $('#summary-subtotal').text('₦' + actualTotal.toLocaleString());
+                        $('#modal-item-count').text(checkoutItems.length);
+                        
+                        $('#paymentModal').modal('show');
+                    }
+                }
+                
+                // Reset form fields natively
+                $('.family-booking-service').val('');
+                $('.family-booking-clinic').val('');
+                $('.family-booking-doctor').empty().append('<option value="">Any Available Doctor</option>');
+                
                 $('#booking-appointment-date').val('');
                 $('#booking-appointment-time').empty().append('<option value="">-- Select date first --</option>');
                 $('#booking-appointment-notes').val('');
                 $('input[name="booking_type"][value="walkin"]').prop('checked', true).trigger('change');
+                
+                updateBookingCart();
 
-                // Refresh queue counts
                 loadQueueCounts();
 
-                // Refresh patient queue entries in both overview and booking tabs
                 if (currentPatient) {
                     loadPatientQueueEntries(currentPatient);
                     loadBookingQueueEntries(currentPatient);
@@ -7391,6 +7615,78 @@ $(document).on('click', '.discard-request-btn', function() {
     $('#discard_request_no').text(requestNo);
     $('#discard_reason').val('');
     $('#discardRequestModal').modal('show');
+});
+
+$(document).on('click', '.btn-print-routing', function(e) {
+    e.preventDefault();
+    const queueId = $(this).data('queue-id');
+    
+    toastr.info('Generating routing slip...');
+    
+    $.ajax({
+        url: `{{ url('reception/queue') }}/${queueId}/routing-slip`,
+        method: 'GET',
+        success: function(response) {
+            if (response.success && response.html) {
+                const printWindow = window.open('', '', 'height=600,width=800');
+                printWindow.document.write(response.html);
+                printWindow.document.close();
+                printWindow.print();
+            } else {
+                toastr.error('Failed to generate routing slip');
+            }
+        },
+        error: function(xhr) {
+            toastr.error(xhr.responseJSON?.message || 'Failed to print routing slip');
+        }
+    });
+});
+
+$(document).on('click', '.btn-delete-queue', function(e) {
+    e.preventDefault();
+    const queueId = $(this).data('queue-id');
+    const serviceRequestId = $(this).data('service-request-id');
+    const serviceName = $(this).closest('.card-body').find('h6').text().trim();
+    
+    discardRequestType = 'service';
+    discardRequestId = serviceRequestId; // Note: if serviceRequestId is null (skipped billing), this might need handling
+    
+    // If no service request (e.g. skipped billing), we might need to delete the queue directly
+    if (!serviceRequestId) {
+        // Fallback for cycle-duration skipped billings
+        discardRequestType = 'queue';
+        discardRequestId = queueId;
+    }
+
+    $('#discard_service_name').text(serviceName + ' (Queue Booking)');
+    $('#discard_request_no').text('Q-' + queueId);
+    $('#discard_reason').val('');
+    $('#discardRequestModal').modal('show');
+});
+
+$(document).on('click', '.btn-print-routing', function(e) {
+    e.preventDefault();
+    const queueId = $(this).data('queue-id');
+    
+    toastr.info('Generating routing slip...');
+    
+    $.ajax({
+        url: `{{ url('reception/queue') }}/${queueId}/routing-slip`,
+        method: 'GET',
+        success: function(response) {
+            if (response.success && response.html) {
+                const printWindow = window.open('', '', 'height=600,width=800');
+                printWindow.document.write(response.html);
+                printWindow.document.close();
+                printWindow.print();
+            } else {
+                toastr.error('Failed to generate routing slip');
+            }
+        },
+        error: function(xhr) {
+            toastr.error(xhr.responseJSON?.message || 'Failed to print routing slip');
+        }
+    });
 });
 
 $('#discardRequestForm').on('submit', function(e) {
@@ -10118,6 +10414,11 @@ function loadPatientAppointments(patientId) {
 @include('admin.partials.hospital_contacts_modal')
 @include('admin.partials.price_list_modal')
 <script src="{{ asset('js/clinical-alerts-shared.js') }}"></script>
+
+@hasanyrole('SUPERADMIN|ADMIN|ACCOUNTS|BILLER')
+    @include('admin.partials.payment_modal')
+    @include('admin.partials.payment_scripts')
+@endhasanyrole
 
 @endsection
 
