@@ -518,7 +518,7 @@ function addProcedure(procedure) {
     const categoryName = isFreeForm ? 'Free-form Request' : (procedure.category ? procedure.category.category_name : 'Procedures');
 
     ClinicalOrdersKit.addItem({
-        url: `/encounters/${encounterId}/add-procedure`,
+        url: `{{ url('/encounters/${encounterId}/add-procedure') }}`,
         payload: {
             service_id: procId,
             priority: priority,
@@ -573,7 +573,7 @@ function removeProcedure(btn, serviceId) {
 
     if (recordId) {
         ClinicalOrdersKit.removeItem({
-            url: '/encounters/' + encounterId + '/procedures/' + recordId,
+            url: '{{ url('/encounters/') }}' + encounterId + '/procedures/' + recordId,
             csrfToken: $('meta[name="csrf-token"]').attr('content'),
             rowSelector: $tr,
             type: 'procedures',
@@ -620,7 +620,7 @@ function viewProcedureDetails(procedureId) {
     $('#procedureDetailsModal').modal('show');
 
     $.ajax({
-        url: `/procedures/${procedureId}`,
+        url: `{{ url('/procedures/${procedureId}') }}`,
         type: 'GET',
         success: function(response) {
             renderProcedureDetails(response);
@@ -750,7 +750,7 @@ function openTeamModal(procedureId) {
 function loadTeamMembers(procedureId) {
     console.log('Loading team members for procedure:', procedureId);
     $.ajax({
-        url: `/procedures/${procedureId}/team`,
+        url: `{{ url('/procedures/${procedureId}/team') }}`,
         type: 'GET',
         success: function(response) {
             console.log('Team response:', response);
@@ -836,7 +836,7 @@ function addTeamMember() {
     }
 
     $.ajax({
-        url: `/procedures/${currentProcedureId}/team`,
+        url: `{{ url('/procedures/${currentProcedureId}/team') }}`,
         type: 'POST',
         headers: {
             'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
@@ -877,7 +877,7 @@ function removeTeamMember(memberId) {
     }
 
     $.ajax({
-        url: `/procedures/${currentProcedureId}/team/${memberId}`,
+        url: `{{ url('/procedures/${currentProcedureId}/team/${memberId}') }}`,
         type: 'DELETE',
         headers: {
             'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
@@ -955,7 +955,7 @@ function initializeNotesEditor() {
 
 function loadProcedureNotes(procedureId) {
     $.ajax({
-        url: `/procedures/${procedureId}/notes`,
+        url: `{{ url('/procedures/${procedureId}/notes') }}`,
         type: 'GET',
         success: function(response) {
             if (response.success) {
@@ -1047,7 +1047,7 @@ function addProcedureNote() {
     }
 
     $.ajax({
-        url: `/procedures/${currentProcedureId}/notes`,
+        url: `{{ url('/procedures/${currentProcedureId}/notes') }}`,
         type: 'POST',
         headers: {
             'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
@@ -1086,7 +1086,7 @@ function deleteProcedureNote(noteId) {
     }
 
     $.ajax({
-        url: `/procedures/${currentProcedureId}/notes/${noteId}`,
+        url: `{{ url('/procedures/${currentProcedureId}/notes/${noteId}') }}`,
         type: 'DELETE',
         headers: {
             'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
@@ -1186,7 +1186,7 @@ function cancelProcedure(procedureId, procedureName) {
 
 function executeCancelProcedure(procedureId, reason, processRefund) {
     $.ajax({
-        url: `/procedures/${procedureId}/cancel`,
+        url: `{{ url('/procedures/${procedureId}/cancel') }}`,
         type: 'POST',
         headers: {
             'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')

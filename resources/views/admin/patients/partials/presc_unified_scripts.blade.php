@@ -46,7 +46,7 @@ function initPrescBillingTable() {
         processing: true,
         serverSide: true,
         ajax: {
-            url: `/prescBillList/${prescPatientId}`,
+            url: `{{ url('/prescBillList/${prescPatientId}') }}`,
             type: 'GET'
         },
         columns: [
@@ -88,7 +88,7 @@ function initPrescPendingTable() {
         processing: true,
         serverSide: true,
         ajax: {
-            url: `/prescPendingList/${prescPatientId}`,
+            url: `{{ url('/prescPendingList/${prescPatientId}') }}`,
             type: 'GET'
         },
         columns: [
@@ -129,7 +129,7 @@ function initPrescDispenseTable() {
         processing: true,
         serverSide: true,
         ajax: {
-            url: `/prescReadyList/${prescPatientId}`,
+            url: `{{ url('/prescReadyList/${prescPatientId}') }}`,
             type: 'GET'
         },
         columns: [
@@ -171,7 +171,7 @@ function initPrescHistoryTable() {
         processing: true,
         serverSide: true,
         ajax: {
-            url: `/prescHistoryList/${prescPatientId}`,
+            url: `{{ url('/prescHistoryList/${prescPatientId}') }}`,
             type: 'GET'
         },
         columns: [
@@ -537,7 +537,7 @@ function searchProductsForPresc(query) {
             inputVal: query,
             minLength: 2,
             delay: 300,
-            url: '/live-search-products',
+            url: '{{ url('/live-search-products') }}',
             data: { term: query, patient_id: prescPatientId },
             onStart: function() {
                 $container.html('<li class="list-group-item text-center text-muted"><i class="mdi mdi-loading mdi-spin"></i> Searching...</li>').show();
@@ -556,7 +556,7 @@ function searchProductsForPresc(query) {
         }
 
         $.ajax({
-            url: '/live-search-products',
+            url: '{{ url('/live-search-products') }}',
             method: 'GET',
             dataType: 'json',
             data: { term: query, patient_id: prescPatientId },
@@ -691,7 +691,7 @@ function billPrescItems() {
     $btn.prop('disabled', true).html('<i class="mdi mdi-loading mdi-spin"></i> Billing...');
 
     $.ajax({
-        url: '/product-bill-patient-ajax',
+        url: '{{ url('/product-bill-patient-ajax') }}',
         method: 'POST',
         headers: {
             'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
@@ -752,7 +752,7 @@ function dispensePrescItems() {
     $btn.prop('disabled', true).html('<i class="mdi mdi-loading mdi-spin"></i> Dispensing...');
 
     $.ajax({
-        url: '/product-dispense-patient-ajax',
+        url: '{{ url('/product-dispense-patient-ajax') }}',
         method: 'POST',
         headers: {
             'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
@@ -804,7 +804,7 @@ function dismissPrescItems(type) {
     }
 
     $.ajax({
-        url: '/product-dismiss-patient-ajax',
+        url: '{{ url('/product-dismiss-patient-ajax') }}',
         method: 'POST',
         headers: {
             'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')

@@ -3735,7 +3735,7 @@
 
     function updateWsStockDisplay(productId, storeId) {
         $.ajax({
-            url: '/pharmacy-workbench/product/' + productId + '/stock',
+            url: '{{ url('/pharmacy-workbench/product/') }}' + productId + '/stock',
             method: 'GET',
             success: function(resp) {
                 var storeStock = (resp.stores || []).find(function(s) { return s.store_id == storeId; });

@@ -2783,7 +2783,7 @@ $sett = appsettings();
 
     function generateAncFileNumber() {
         $.ajax({
-            url: '/reception/patient/next-file-number',
+            url: '{{ url('/reception/patient/next-file-number') }}',
             method: 'GET',
             data: {
                 prefix: 'ANC-'
@@ -3096,7 +3096,7 @@ $sett = appsettings();
         $('#btn-clinical-context').prop('disabled', false).attr('title', 'View clinical context for patient');
 
         $.ajax({
-            url: `/maternity-workbench/patient/${patientId}/details`,
+            url: `{{ url('/maternity-workbench/patient/${patientId}/details') }}`,
             method: 'GET',
             success: function(data) {
                 currentPatientData = data;
@@ -4243,7 +4243,7 @@ $sett = appsettings();
             const formData = {};
             $(this).serializeArray().forEach(f => formData[f.name] = f.value);
             $.ajax({
-                url: `/maternity-workbench/enrollment/${currentEnrollmentId}`,
+                url: `{{ url('/maternity-workbench/enrollment/${currentEnrollmentId}') }}`,
                 method: 'PUT',
                 data: formData,
                 headers: {
@@ -4487,7 +4487,7 @@ $sett = appsettings();
             const data = {};
             form.serializeArray().forEach(f => data[f.name] = f.value);
             $.ajax({
-                url: `/maternity-workbench/medical-history/${_editId}`,
+                url: `{{ url('/maternity-workbench/medical-history/${_editId}') }}`,
                 method: 'PUT',
                 data: data,
                 headers: {
@@ -4515,7 +4515,7 @@ $sett = appsettings();
             };
             form.serializeArray().forEach(f => data.items[0][f.name] = f.value);
             $.ajax({
-                url: `/maternity-workbench/enrollment/${currentEnrollmentId}/medical-history`,
+                url: `{{ url('/maternity-workbench/enrollment/${currentEnrollmentId}/medical-history') }}`,
                 method: 'POST',
                 data: data,
                 headers: {
@@ -5528,7 +5528,7 @@ $sett = appsettings();
                 // Register debounced dose auto-save for medications
                 ClinicalOrdersKit.onDoseUpdate('mco-', function(recordId, doseValue, flashEl) {
                     ClinicalOrdersKit.debouncedUpdate({
-                        url: '/maternity-workbench/enrollment/' + enrollmentId + '/prescriptions/' + recordId + '/dose',
+                        url: '{{ url('/maternity-workbench/enrollment/') }}' + enrollmentId + '/prescriptions/' + recordId + '/dose',
                         payload: {
                             dose: doseValue
                         },
@@ -5747,7 +5747,7 @@ $sett = appsettings();
                 processing: true,
                 serverSide: true,
                 ajax: {
-                    url: '/prescHistoryList/' + patientId,
+                    url: '{{ url('/prescHistoryList/') }}' + patientId,
                     type: 'GET'
                 },
                 columns: [{
@@ -5774,7 +5774,7 @@ $sett = appsettings();
                 processing: true,
                 serverSide: true,
                 ajax: {
-                    url: '/investigationHistoryList/' + patientId,
+                    url: '{{ url('/investigationHistoryList/') }}' + patientId,
                     type: 'GET'
                 },
                 columns: [{
@@ -5801,7 +5801,7 @@ $sett = appsettings();
                 processing: true,
                 serverSide: true,
                 ajax: {
-                    url: '/imagingHistoryList/' + patientId,
+                    url: '{{ url('/imagingHistoryList/') }}' + patientId,
                     type: 'GET'
                 },
                 columns: [{
@@ -5828,7 +5828,7 @@ $sett = appsettings();
                 processing: true,
                 serverSide: true,
                 ajax: {
-                    url: '/procedureHistoryList/' + patientId,
+                    url: '{{ url('/procedureHistoryList/') }}' + patientId,
                     type: 'GET'
                 },
                 columns: [
@@ -6053,7 +6053,7 @@ $sett = appsettings();
             );
 
             ClinicalOrdersKit.addItem({
-                url: '/maternity-workbench/enrollment/' + enrollmentId + '/add-prescription',
+                url: '{{ url('/maternity-workbench/enrollment/') }}' + enrollmentId + '/add-prescription',
                 payload: {
                     product_id: id,
                     dose: ''
@@ -6102,7 +6102,7 @@ $sett = appsettings();
 
         function addLabService(name, id, price, mode, claims, payable) {
             ClinicalOrdersKit.addItem({
-                url: '/maternity-workbench/enrollment/' + enrollmentId + '/add-lab',
+                url: '{{ url('/maternity-workbench/enrollment/') }}' + enrollmentId + '/add-lab',
                 payload: {
                     service_id: id,
                     note: ''
@@ -6133,7 +6133,7 @@ $sett = appsettings();
 
         function addImagingService(name, id, price, mode, claims, payable) {
             ClinicalOrdersKit.addItem({
-                url: '/maternity-workbench/enrollment/' + enrollmentId + '/add-imaging',
+                url: '{{ url('/maternity-workbench/enrollment/') }}' + enrollmentId + '/add-imaging',
                 payload: {
                     service_id: id,
                     note: ''
@@ -6178,7 +6178,7 @@ $sett = appsettings();
             var priorityLabel = priority.charAt(0).toUpperCase() + priority.slice(1);
 
             ClinicalOrdersKit.addItem({
-                url: '/maternity-workbench/enrollment/' + enrollmentId + '/add-procedure',
+                url: '{{ url('/maternity-workbench/enrollment/') }}' + enrollmentId + '/add-procedure',
                 payload: {
                     service_id: id,
                     priority: priority,
@@ -6504,7 +6504,7 @@ $sett = appsettings();
             data.notes = getEditorData('delivery_notes', '#mat-delivery-notes-editor');
             data.complications = getEditorData('delivery_complications', '#mat-delivery-complications-editor');
             $.ajax({
-                url: `/maternity-workbench/enrollment/${currentEnrollmentId}/delivery`,
+                url: `{{ url('/maternity-workbench/enrollment/${currentEnrollmentId}/delivery') }}`,
                 method: 'POST',
                 data: data,
                 headers: {
@@ -6639,7 +6639,7 @@ $sett = appsettings();
                 data.notes = getEditorData('delivery_notes', '#mat-delivery-notes-editor');
                 data.complications = getEditorData('delivery_complications', '#mat-delivery-complications-editor');
                 $.ajax({
-                    url: `/maternity-workbench/delivery/${id}`,
+                    url: `{{ url('/maternity-workbench/delivery/${id}') }}`,
                     method: 'PUT',
                     data: data,
                     headers: {
@@ -6859,7 +6859,7 @@ $sett = appsettings();
         const btn = $(this);
         btn.prop('disabled', true).html('<i class="mdi mdi-loading mdi-spin"></i> Saving...');
         $.ajax({
-            url: `/maternity-workbench/baby/${bid}/growth`,
+            url: `{{ url('/maternity-workbench/baby/${bid}/growth') }}`,
             method: 'POST',
             data: data,
             headers: {
@@ -7719,7 +7719,7 @@ $sett = appsettings();
     function deleteNote(id) {
         if (!confirm('Delete this note?')) return;
         $.ajax({
-            url: `/maternity-workbench/note/${id}`,
+            url: `{{ url('/maternity-workbench/note/${id}') }}`,
             method: 'DELETE',
             headers: {
                 'X-CSRF-TOKEN': CSRF_TOKEN
@@ -8168,7 +8168,7 @@ $sett = appsettings();
 
         // Phase 1: Fetch warnings
         $.ajax({
-            url: `/maternity-workbench/enrollment/${currentEnrollmentId}/discharge`,
+            url: `{{ url('/maternity-workbench/enrollment/${currentEnrollmentId}/discharge') }}`,
             method: 'POST',
             headers: {
                 'X-CSRF-TOKEN': CSRF_TOKEN
@@ -8210,7 +8210,7 @@ $sett = appsettings();
             $btn.prop('disabled', true).html('<i class="mdi mdi-loading mdi-spin"></i> Discharging...');
 
             $.ajax({
-                url: `/maternity-workbench/enrollment/${currentEnrollmentId}/discharge`,
+                url: `{{ url('/maternity-workbench/enrollment/${currentEnrollmentId}/discharge') }}`,
                 method: 'POST',
                 headers: {
                     'X-CSRF-TOKEN': CSRF_TOKEN
@@ -8710,7 +8710,7 @@ $sett = appsettings();
     function deleteMatPartographEntry(enrollmentId, entryId) {
         if (!confirm('Delete this partograph entry?')) return;
         $.ajax({
-            url: `/maternity-workbench/enrollment/${enrollmentId}/maternity-partograph/${entryId}`,
+            url: `{{ url('/maternity-workbench/enrollment/${enrollmentId}/maternity-partograph/${entryId}') }}`,
             method: 'DELETE',
             headers: { 'X-CSRF-TOKEN': $('meta[name=csrf-token]').attr('content') },
             success: function(res) {
