@@ -169,15 +169,25 @@ class EncounterController extends Controller
 
     public function endOldEncounterReq()
     {
-        $currentDateTime = Carbon::now();
-        $timeThreshold = $currentDateTime->subHours(appsettings('consultation_cycle_duration') ?: 24);
+        $defaultCycleDuration = (int) (appsettings('consultation_cycle_duration') ?: 24);
 
-        $q = DoctorQueue::where('status', QueueStatus::VITALS_PENDING)
-            ->where('created_at', '<', $timeThreshold)->get();
+        $q = DoctorQueue::with('request_entry.service')
+            ->where('status', QueueStatus::VITALS_PENDING)
+            ->get();
+            
         foreach ($q as $r) {
-            $r->update([
-                'status' => QueueStatus::READY,
-            ]);
+            $cycleDuration = $defaultCycleDuration;
+            if ($r->request_entry && $r->request_entry->service && $r->request_entry->service->consult_cycle_duration) {
+                $cycleDuration = (int) $r->request_entry->service->consult_cycle_duration;
+            }
+            
+            $timeThreshold = Carbon::now()->subHours($cycleDuration);
+            
+            if ($r->created_at < $timeThreshold) {
+                $r->update([
+                    'status' => QueueStatus::READY,
+                ]);
+            }
         }
     }
 
@@ -225,7 +235,27 @@ class EncounterController extends Controller
                 });
             }
 
-            $queue = $queueQuery->orderBy('created_at', 'DESC')->get();
+            // Apply sort filter
+            $sortFilter = $request->input('sort_filter', 'newest');
+            if (in_array($sortFilter, ['patient_az', 'patient_za'])) {
+                $queueQuery->join('patients', 'doctor_queues.patient_id', '=', 'patients.id')
+                           ->join('users', 'patients.user_id', '=', 'users.id')
+                           ->select('doctor_queues.*');
+                
+                if ($sortFilter === 'patient_az') {
+                    $queueQuery->orderBy('users.surname', 'ASC')->orderBy('users.firstname', 'ASC');
+                } else {
+                    $queueQuery->orderBy('users.surname', 'DESC')->orderBy('users.firstname', 'DESC');
+                }
+            } else {
+                if ($sortFilter === 'oldest') {
+                    $queueQuery->orderBy('doctor_queues.created_at', 'ASC');
+                } else {
+                    $queueQuery->orderBy('doctor_queues.created_at', 'DESC');
+                }
+            }
+
+            $queue = $queueQuery->get();
 
             return DataTables::of($queue)
                 ->addIndexColumn()
@@ -254,12 +284,54 @@ class EncounterController extends Controller
                         $demographics = ' <span class="queue-card-demo">(' . ($user->gender == 'Male' ? 'M' : ($user->gender == 'Female' ? 'F' : 'U')) . ', ' . \Carbon\Carbon::parse($user->dob)->age . ')</span>';
                     }
 
-                    // URLs
-                    $url = url('encounters/create') . '?patient_id=' . $queue->patient_id;
-                    if ($queue->request_entry_id) {
-                        $url .= '&req_entry_id=' . $queue->request_entry_id;
+                    // Strict Navigation Logic
+                    $isStrict = appsettings('strict_encounter_navigation') == 1;
+                    $isCycleActive = false;
+                    $consultationDuration = appsettings('consultation_cycle_duration') ?: 24;
+                    
+                    if ($queue->request_entry && $queue->request_entry->service && $queue->request_entry->service->consult_cycle_duration) {
+                        $consultationDuration = $queue->request_entry->service->consult_cycle_duration;
                     }
-                    $url .= '&queue_id=' . $queue->id;
+
+                    if ($queue->status !== \App\Enums\QueueStatus::COMPLETED) {
+                        $isCycleActive = true;
+                    } else {
+                        if (\Carbon\Carbon::now()->diffInHours($queue->created_at) < $consultationDuration) {
+                            $isCycleActive = true;
+                        }
+                    }
+
+                    $admission = \App\Models\AdmissionRequest::where('patient_id', $queue->patient_id)->where('discharged', 0)->first();
+                    $isExempt = \Illuminate\Support\Facades\Auth::user()->hasAnyRole(['SUPERADMIN', 'ADMIN']) || ($doc && ($doc->is_unit_head || $doc->is_dept_head));
+                    if ($isStrict && !$isCycleActive && !$admission) {
+                        $expiredAt = $queue->created_at->copy()->addHours($consultationDuration)->format('M d, g:i A');
+                        $profileUrl = route('patient.show', $queue->patient_id) . '?strict_redirect=1&expired_at=' . urlencode($expiredAt);
+                        
+                        if ($isExempt) {
+                            $encounterUrl = url('encounters/create') . '?patient_id=' . $queue->patient_id;
+                            if ($queue->request_entry_id) {
+                                $encounterUrl .= '&req_entry_id=' . $queue->request_entry_id;
+                            }
+                            $btnHtml = '<a href="' . $encounterUrl . '" class="btn btn-primary btn-sm queue-card-action-btn"><i class="fa fa-stethoscope"></i> Encounter (Override)</a>';
+                            $btnHtml .= '<a href="' . $profileUrl . '" class="btn btn-info btn-sm queue-card-action-btn mt-1"><i class="fa fa-user"></i> Profile</a>';
+                            $btnHtml .= '<div class="small text-warning mt-1 text-center" style="font-size: 0.75rem; line-height:1.2;">Cycle Expired: ' . $expiredAt . '.<br>Admin override access granted.</div>';
+                        } else {
+                            $btnHtml = '<a href="' . $profileUrl . '" class="btn btn-info btn-sm queue-card-action-btn"><i class="fa fa-user"></i> View Patient Profile</a>';
+                            $btnHtml .= '<div class="small text-danger mt-1 text-center" style="font-size: 0.75rem; line-height:1.2;">Cycle Expired: ' . $expiredAt . '.<br>Read-Only. Active booking required.</div>';
+                        }
+                    } else {
+                        $url = url('encounters/create') . '?patient_id=' . $queue->patient_id;
+                        if ($queue->request_entry_id) {
+                            $url .= '&req_entry_id=' . $queue->request_entry_id;
+                        }
+                        if ($admission) {
+                            $url .= '&admission_req_id=' . $admission->id;
+                        } else {
+                            $url .= '&queue_id=' . $queue->id;
+                        }
+                        $btnHtml = '<a href="' . $url . '" class="btn btn-secondary btn-sm queue-card-action-btn"><i class="fa fa-history"></i> View Encounter Record</a>';
+                    }
+                    
                     $profileUrl = route('patient.show', $queue->patient_id);
 
                     // Build Card HTML
@@ -286,9 +358,10 @@ class EncounterController extends Controller
                     $html .= '  <div class="queue-card-detail-item"><i class="mdi mdi-account-tie"></i> Dr. ' . e($doctorName) . '</div>';
                     $html .= '</div>';
 
+
                     // Row 4
                     $html .= '<div class="queue-card-actions">';
-                    $html .= '<a href="' . $url . '" class="btn btn-secondary btn-sm queue-card-action-btn"><i class="fa fa-history"></i> View Encounter Record</a>';
+                    $html .= $btnHtml;
                     $html .= '</div>';
 
                     $html .= '</div>';
@@ -357,15 +430,62 @@ class EncounterController extends Controller
                     $patient = Patient::find($queue->patient_id);
                     return $patient->file_no;
                 })
-                ->addColumn('view', function ($queue) {
+                ->addColumn('view', function ($queue) use ($doc) {
                     $reqEntry = ProductOrServiceRequest::find($queue->request_entry_id);
                     $deliveryCheck = $reqEntry ? HmoHelper::canDeliverService($reqEntry) : ['can_deliver' => true, 'reason' => 'Ready', 'hint' => ''];
 
-                    $url = route('encounters.create', [
-                        'patient_id' => $queue->patient_id,
-                        'req_entry_id' => $queue->request_entry_id,
-                        'queue_id' => $queue->id
-                    ]);
+                    // Strict Navigation Logic
+                    $isStrict = appsettings('strict_encounter_navigation') == 1;
+                    $isCycleActive = false;
+                    $consultationDuration = appsettings('consultation_cycle_duration') ?: 24;
+                    
+                    if ($reqEntry && $reqEntry->service && $reqEntry->service->consult_cycle_duration) {
+                        $consultationDuration = $reqEntry->service->consult_cycle_duration;
+                    }
+
+                    if ($queue->status !== \App\Enums\QueueStatus::COMPLETED) {
+                        $isCycleActive = true;
+                    } else {
+                        if (\Carbon\Carbon::now()->diffInHours($queue->created_at) < $consultationDuration) {
+                            $isCycleActive = true;
+                        }
+                    }
+
+                    $admission = \App\Models\AdmissionRequest::where('patient_id', $queue->patient_id)->where('discharged', 0)->first();
+                    $isExempt = \Illuminate\Support\Facades\Auth::user()->hasAnyRole(['SUPERADMIN', 'ADMIN']) || ($doc && ($doc->is_unit_head || $doc->is_dept_head));
+                    
+                    if ($isStrict && !$isCycleActive && !$admission) {
+                        $expiredAt = $queue->created_at->copy()->addHours($consultationDuration)->format('M d, g:i A');
+                        $profileUrl = route('patient.show', $queue->patient_id) . '?strict_redirect=1&expired_at=' . urlencode($expiredAt);
+                        
+                        if ($isExempt) {
+                            $params = ['patient_id' => $queue->patient_id];
+                            if ($queue->request_entry_id) {
+                                $params['req_entry_id'] = $queue->request_entry_id;
+                            }
+                            $encounterUrl = url('encounters/create') . '?' . http_build_query($params);
+                            $btnHtml = '<a href="' . $encounterUrl . '" class="btn btn-primary btn-sm"><i class="fa fa-stethoscope"></i> Encounter (Override)</a><br>';
+                            $btnHtml .= '<a href="' . $profileUrl . '" class="btn btn-info btn-sm mt-1"><i class="fa fa-user"></i> Profile</a>';
+                            $btnHtml .= '<div class="small text-warning mt-1 text-center" style="font-size: 0.7rem; line-height:1.2;">Cycle Expired: ' . $expiredAt . '.<br>Admin override access granted.</div>';
+                            return $btnHtml;
+                        } else {
+                            $btnHtml = '<a href="' . $profileUrl . '" class="btn btn-info btn-sm"><i class="fa fa-user"></i> Patient Profile</a>';
+                            $btnHtml .= '<div class="small text-danger mt-1 text-center" style="font-size: 0.7rem; line-height:1.2;">Cycle Expired: ' . $expiredAt . '.<br>Read-Only. Active booking required.</div>';
+                            return $btnHtml;
+                        }
+                    }
+
+                    $params = ['patient_id' => $queue->patient_id];
+                    if ($queue->request_entry_id) {
+                        $params['req_entry_id'] = $queue->request_entry_id;
+                    }
+                    if ($admission) {
+                        $params['admission_req_id'] = $admission->id;
+                    } else {
+                        $params['queue_id'] = $queue->id;
+                    }
+                    
+                    $url = route('encounters.create', $params);
 
                     if (!$deliveryCheck['can_deliver']) {
                         $title = e($deliveryCheck['hint'] ?? $deliveryCheck['reason']);

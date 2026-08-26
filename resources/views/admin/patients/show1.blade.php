@@ -9,6 +9,19 @@
     $section = request()->get('section');
 @endphp
 
+@if(request()->has('strict_redirect'))
+<div class="alert alert-warning alert-dismissible fade show mb-4" role="alert" style="border-left: 5px solid #ffc107; font-weight: 500; font-size: 0.95rem; background-color: #fff8e5;">
+    <div class="d-flex align-items-center mb-2">
+        <i class="mdi mdi-alert-circle-outline text-warning mr-2" style="font-size: 1.5rem;"></i>
+        <h5 class="mb-0 text-dark">Consultation Cycle Expired: {{ urldecode(request()->get('expired_at', 'recently')) }}</h5>
+    </div>
+    <p class="mb-0 ml-4 pl-1 text-dark" style="opacity: 0.9;">
+        You have been redirected to the patient's profile in <strong>Read-Only mode</strong>. You may review patient history and previous documentation here, but an <strong>active Reception booking is required</strong> to document a new Encounter.
+    </p>
+    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+</div>
+@endif
+
 <div class="col-12">
     {{-- Workbench Patient Header --}}
     <div class="card-modern mb-3">
