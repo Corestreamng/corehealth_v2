@@ -135,7 +135,7 @@ function loadStats() {
 function deleteSupplier(id) {
     if (confirm('Are you sure you want to delete this supplier?')) {
         $.ajax({
-            url: '/suppliers/' + id,
+            url: '{{ url('/suppliers') }}/' + id,
             type: 'DELETE',
             data: { _token: '{{ csrf_token() }}' },
             success: function(response) {

@@ -227,7 +227,7 @@
                 $(this).prop('disabled', true).html('<i class="mdi mdi-loading mdi-spin"></i> Processing...');
 
                 $.ajax({
-                    url: `/products/${currentProductId}/toggle-status`,
+                    url: `{{ url('/products') }}/${currentProductId}/toggle-status`,
                     type: 'POST',
                     data: {
                         _token: '{{ csrf_token() }}'
