@@ -150,29 +150,48 @@ class QueueStatusService
     }
     public function autoConcludeOverdue(): void
     {
-        $cycleDuration = (int) (appsettings('consultation_cycle_duration') ?: 24);
-        $timeThreshold = \Carbon\Carbon::now()->subHours($cycleDuration);
+        $defaultCycleDuration = (int) (appsettings('consultation_cycle_duration') ?: 24);
 
-        DB::transaction(function () use ($timeThreshold) {
-            $overdueQueues = DoctorQueue::where('status', QueueStatus::IN_CONSULTATION)
-                ->where('updated_at', '<', $timeThreshold)
-                ->get(['id', 'appointment_id']);
-                
-            if ($overdueQueues->isEmpty()) {
-                return;
+        $activeQueues = DoctorQueue::with('request_entry.service')
+            ->where('status', QueueStatus::IN_CONSULTATION)
+            ->get();
+            
+        if ($activeQueues->isEmpty()) {
+            return;
+        }
+        
+        $queueIdsToConclude = [];
+        $appointmentIdsToConclude = [];
+        
+        foreach ($activeQueues as $queue) {
+            $cycleDuration = $defaultCycleDuration;
+            if ($queue->request_entry && $queue->request_entry->service && $queue->request_entry->service->consult_cycle_duration) {
+                $cycleDuration = (int) $queue->request_entry->service->consult_cycle_duration;
             }
+            
+            $timeThreshold = \Carbon\Carbon::now()->subHours($cycleDuration);
+            
+            if ($queue->updated_at < $timeThreshold) {
+                $queueIdsToConclude[] = $queue->id;
+                if ($queue->appointment_id) {
+                    $appointmentIdsToConclude[] = $queue->appointment_id;
+                }
+            }
+        }
 
-            $queueIds = $overdueQueues->pluck('id')->toArray();
-            $appointmentIds = $overdueQueues->pluck('appointment_id')->filter()->toArray();
+        if (empty($queueIdsToConclude)) {
+            return;
+        }
 
-            DoctorQueue::whereIn('id', $queueIds)->update([
+        DB::transaction(function () use ($queueIdsToConclude, $appointmentIdsToConclude) {
+            DoctorQueue::whereIn('id', $queueIdsToConclude)->update([
                 'status' => QueueStatus::COMPLETED,
                 'consultation_ended_at' => \Carbon\Carbon::now(),
                 'updated_at' => \Carbon\Carbon::now(),
             ]);
             
-            if (!empty($appointmentIds)) {
-                DoctorAppointment::whereIn('id', $appointmentIds)->update([
+            if (!empty($appointmentIdsToConclude)) {
+                DoctorAppointment::whereIn('id', $appointmentIdsToConclude)->update([
                     'status' => QueueStatus::COMPLETED,
                     'updated_at' => \Carbon\Carbon::now(),
                 ]);

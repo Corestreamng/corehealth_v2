@@ -148,6 +148,7 @@ class ServiceController extends Controller
             $myservice->category_id         = $request->category_id;
             $myservice->service_name        = trim($request->service_name);
             $myservice->service_code        = $request->service_code;
+            $myservice->consult_cycle_duration = $request->consult_cycle_duration;
             $myservice->is_combo            = $request->has('is_combo');
             $myservice->status              = 1;
             $myservice->save();
@@ -216,6 +217,7 @@ class ServiceController extends Controller
             $myservice->category_id    = $request->category_id;
             $myservice->service_name   = $request->service_name;
             $myservice->service_code   = $request->service_code;
+            $myservice->consult_cycle_duration = $request->consult_cycle_duration;
             $myservice->is_combo       = $request->has('is_combo');
             $myservice->update();
 
@@ -275,7 +277,8 @@ class ServiceController extends Controller
         $category = ServiceCategory::where('status', '=', 1)->pluck('category_name', 'id')->all();
         $procedureCategories = ProcedureCategory::where('status', 1)->orderBy('name')->get();
         $procedureCategoryId = appsettings('procedure_category_id');
-        return view('admin.service.create', compact('category', 'procedureCategories', 'procedureCategoryId', 'selectedCategory'));
+        $consultationCategoryId = appsettings('consultation_category_id');
+        return view('admin.service.create', compact('category', 'procedureCategories', 'procedureCategoryId', 'consultationCategoryId', 'selectedCategory'));
     }
 
     public function edit(Request $request, $id)
@@ -284,9 +287,10 @@ class ServiceController extends Controller
         $category = ServiceCategory::where('status', '=', 1)->pluck('category_name', 'id')->all();
         $procedureCategories = ProcedureCategory::where('status', 1)->orderBy('name')->get();
         $procedureCategoryId = appsettings('procedure_category_id');
+        $consultationCategoryId = appsettings('consultation_category_id');
         $procedure = $product->procedureDefinition;
         $selectedCategory = $product->category_id;
-        return view('admin.service.edit', compact('product', 'category', 'procedureCategories', 'procedureCategoryId', 'procedure', 'selectedCategory'));
+        return view('admin.service.edit', compact('product', 'category', 'procedureCategories', 'procedureCategoryId', 'consultationCategoryId', 'procedure', 'selectedCategory'));
     }
 
     public function show($id)
