@@ -109,6 +109,14 @@
                         <span class="text-muted">to</span>
                         <input type="date" name="stop_at" class="form-control form-control-sm" style="max-width:160px;"
                             value="{{ Request::get('stop_at') }}" required>
+                        <div class="custom-control custom-switch ml-2">
+                            <input type="checkbox" class="custom-control-input" id="toggleFullNotes">
+                            <label class="custom-control-label" for="toggleFullNotes">Full Notes</label>
+                        </div>
+                        <div class="custom-control custom-switch ml-2">
+                            <input type="checkbox" class="custom-control-input" id="toggleFullLabs">
+                            <label class="custom-control-label" for="toggleFullLabs">Full Labs</label>
+                        </div>
                         <button type="submit" class="btn btn-primary btn-sm ml-2">
                             <i class="mdi mdi-magnify"></i> Fetch
                         </button>
@@ -148,7 +156,20 @@
                                             <td>{{ $con->created_at?->format('d M Y') }}</td>
                                             <td>{{ $con->doctor && $con->doctor->staff_profile ? userfullname($con->doctor->staff_profile->user_id) : 'N/A' }}</td>
                                             <td>{{ $con->doctor && $con->doctor->staff_profile && $con->doctor->staff_profile->specialization ? $con->doctor->staff_profile->specialization->name : '—' }}</td>
-                                            <td class="small">{!! $con->notes ? \Illuminate\Support\Str::limit(strip_tags($con->notes), 150) : '<em class="text-muted">No notes</em>' !!}</td>
+                                            <td class="small">
+                                                @if($con->notes)
+                                                    <div class="con-short-content">
+                                                        {!! \Illuminate\Support\Str::limit(strip_tags($con->notes), 150) !!}
+                                                    </div>
+                                                    <div class="con-full-content d-none">
+                                                        <div class="p-2 border rounded bg-light mb-1">
+                                                            {!! $con->notes !!}
+                                                        </div>
+                                                    </div>
+                                                @else
+                                                    <em class="text-muted">No notes</em>
+                                                @endif
+                                            </td>
                                         </tr>
                                     @endforeach
                                 </tbody>
@@ -248,7 +269,20 @@
                                             <td>{{ $i + 1 }}</td>
                                             <td>{{ $la->created_at?->format('d M Y') }}</td>
                                             <td>{{ $la->service ? $la->service->service_name : 'N/A' }}</td>
-                                            <td class="small">{{ $la->result ? \Illuminate\Support\Str::limit(strip_tags($la->result), 100) : '—' }}</td>
+                                            <td class="small">
+                                                @if($la->result)
+                                                    <div class="lab-short-content">
+                                                        {!! \Illuminate\Support\Str::limit(strip_tags($la->result), 100) !!}
+                                                    </div>
+                                                    <div class="lab-full-content d-none">
+                                                        <div class="p-2 border rounded bg-light mb-1">
+                                                            {!! $la->result !!}
+                                                        </div>
+                                                    </div>
+                                                @else
+                                                    —
+                                                @endif
+                                            </td>
                                             <td><span class="badge badge-{{ $labClasses[$labSt] ?? 'secondary' }}">{{ $labLabels[$labSt] ?? 'N/A' }}</span></td>
                                             <td>{{ userfullname($la->doctor_id) }}</td>
                                         </tr>
@@ -411,6 +445,26 @@
                 $('body').removeClass('thermal-mode');
                 $('#thermal-print-page-style').remove();
             });
+        });
+
+        $('#toggleFullNotes').on('change', function() {
+            if ($(this).is(':checked')) {
+                $('.con-short-content').addClass('d-none');
+                $('.con-full-content').removeClass('d-none');
+            } else {
+                $('.con-full-content').addClass('d-none');
+                $('.con-short-content').removeClass('d-none');
+            }
+        });
+
+        $('#toggleFullLabs').on('change', function() {
+            if ($(this).is(':checked')) {
+                $('.lab-short-content').addClass('d-none');
+                $('.lab-full-content').removeClass('d-none');
+            } else {
+                $('.lab-full-content').addClass('d-none');
+                $('.lab-short-content').removeClass('d-none');
+            }
         });
     });
 </script>
