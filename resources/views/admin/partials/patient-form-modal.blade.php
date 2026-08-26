@@ -1697,7 +1697,7 @@ function checkDuplicatePatient() {
     if (_dupCheckTimeout) clearTimeout(_dupCheckTimeout);
     _dupCheckTimeout = setTimeout(function() {
         $.ajax({
-            url: '/reception/patient/check-duplicate',
+            url: '{{ url('/reception/patient/check-duplicate') }}',
             method: 'POST',
             data: {
                 _token: $('meta[name="csrf-token"]').attr('content'),
@@ -2872,7 +2872,7 @@ function enableWalkInMode(prefix) {
 
 function generatePrefixedFileNumber(prefix) {
     $.ajax({
-        url: '/reception/patient/next-file-number',
+        url: '{{ url('/reception/patient/next-file-number') }}',
         method: 'GET',
         data: { prefix: prefix },
         success: function(response) {
@@ -3011,7 +3011,7 @@ function disableWalkInMode() {
 
     function generateEmergencyFileNumber() {
         $.ajax({
-            url: '/reception/patient/next-file-number',
+            url: '{{ url('/reception/patient/next-file-number') }}',
             method: 'GET',
             data: { prefix: 'EX-' },
             success: function(response) {

@@ -217,7 +217,7 @@ $(function() {
         btn.prop('disabled', true).html('<i class="mdi mdi-loading mdi-spin mr-1"></i> Processing...');
 
         $.ajax({
-            url: `/banks/${bankId}`,
+            url: `{{ url('/banks') }}/${bankId}`,
             type: 'DELETE',
             headers: {
                 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
@@ -242,7 +242,8 @@ $(function() {
         e.preventDefault();
         const bankId = $('#bank_id').val();
         const isEdit = bankId ? true : false;
-        const url = isEdit ? `/banks/${bankId}` : '/banks';
+        const baseUrl = "{{ url('/') }}";
+        const url = isEdit ? `${baseUrl}/banks/${bankId}` : `${baseUrl}/banks`;
         const method = isEdit ? 'PUT' : 'POST';
         const btn = $('#saveBankBtn');
 

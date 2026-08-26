@@ -136,7 +136,7 @@
             jQuery.ajax({
                 headers: { 'X-CSRF-TOKEN': jQuery('meta[name="csrf-token"]').attr('content') },
                 type: 'POST',
-                url: '/hmo/' + hmoId + '/toggle-status',
+                url: '{{ url('/hmo') }}/' + hmoId + '/toggle-status',
                 success: function(data) {
                     if (data.success) {
                         toastr.success(data.message);

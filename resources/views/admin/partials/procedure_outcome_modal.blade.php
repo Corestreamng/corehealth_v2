@@ -81,7 +81,7 @@
             $btn.prop('disabled', true).html('<i class="fa fa-spinner fa-spin mr-1"></i>Saving...');
 
             $.ajax({
-                url: '/patient-procedures/' + procedureId + '/outcome',
+                url: '{{ url('/patient-procedures/') }}' + procedureId + '/outcome',
                 type: 'PUT',
                 data: {
                     _token: '{{ csrf_token() }}',
