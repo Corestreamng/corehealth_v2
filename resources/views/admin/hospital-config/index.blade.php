@@ -281,6 +281,15 @@
                                         </div>
                                         <small class="text-muted">Time before consultation expires</small>
                                     </div>
+                                    
+                                    <div class="col-md-4 mb-3">
+                                        <label class="form-label" style="font-weight: 600; color: #495057;">Strict Encounter Navigation</label>
+                                        <div class="custom-control custom-switch mt-2">
+                                            <input type="checkbox" class="custom-control-input" id="strict_encounter_navigation" name="strict_encounter_navigation" value="1" {{ ($config->strict_encounter_navigation) ? 'checked' : '' }}>
+                                            <label class="custom-control-label" for="strict_encounter_navigation" style="font-weight: normal;">Enable Strict Policy</label>
+                                        </div>
+                                        <small class="text-muted">Prevents access to new_encounter without active booking or admission</small>
+                                    </div>
 
                                     <div class="col-md-4 mb-3">
                                         <label class="form-label" style="font-weight: 600; color: #495057;">Note Edit Window</label>

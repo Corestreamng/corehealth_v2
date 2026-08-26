@@ -82,6 +82,7 @@ class HospitalConfigController extends Controller
 
             // Time Windows
             'consultation_cycle_duration' => 'nullable|integer|min:1',
+            'strict_encounter_navigation' => 'nullable|boolean',
             'note_edit_window' => 'nullable|integer|min:1',
             'result_edit_duration' => 'nullable|integer|min:1',
             'timezone' => 'nullable|string|max:50',
@@ -192,6 +193,7 @@ class HospitalConfigController extends Controller
         $validated['default_dose_mode'] = $request->input('default_dose_mode', 'structured');
         $validated['doctor_full_admission'] = $request->has('doctor_full_admission');
         $validated['doctor_full_discharge'] = $request->has('doctor_full_discharge');
+        $validated['strict_encounter_navigation'] = $request->has('strict_encounter_navigation');
 
         // Handle LLM Config Checkboxes and processing
         if ($request->has('llm_config')) {

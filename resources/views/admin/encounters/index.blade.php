@@ -23,16 +23,22 @@
 
             <div class="card-body">
                 {{-- Filter Bar --}}
-                <div class="filter-bar d-flex align-items-center gap-2 flex-wrap">
-                    <label class="mb-0 mr-2 font-weight-bold"><i class="mdi mdi-calendar-range mr-1"></i> Date Range:</label>
-                    <input type="date" id="start_date" class="form-control form-control-sm form-control-modern" style="max-width:160px;"
-                        value="{{ date('Y-m-d', strtotime('-1 day')) }}">
-                    <span class="text-muted">to</span>
-                    <input type="date" id="end_date" class="form-control form-control-sm form-control-modern" style="max-width:160px;"
-                        value="{{ date('Y-m-d') }}">
-                    <button id="fetchData" class="btn btn-primary btn-sm ml-2">
-                        <i class="mdi mdi-magnify"></i> Fetch
-                    </button>
+                <div class="filter-bar d-flex align-items-end gap-2 flex-wrap mb-4">
+                    <div>
+                        <label class="form-label mb-1 small text-muted font-weight-bold d-block">From</label>
+                        <input type="date" id="start_date" class="form-control form-control-sm form-control-modern" style="max-width:160px;"
+                            value="{{ date('Y-m-d', strtotime('-1 day')) }}">
+                    </div>
+                    <div>
+                        <label class="form-label mb-1 small text-muted font-weight-bold d-block">To</label>
+                        <input type="date" id="end_date" class="form-control form-control-sm form-control-modern" style="max-width:160px;"
+                            value="{{ date('Y-m-d') }}">
+                    </div>
+                    <div>
+                        <button id="fetchData" class="btn btn-primary btn-sm ml-2">
+                            <i class="mdi mdi-magnify"></i> Fetch
+                        </button>
+                    </div>
                 </div>
 
                 <div class="table-responsive">
