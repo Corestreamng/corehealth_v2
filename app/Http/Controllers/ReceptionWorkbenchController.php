@@ -871,7 +871,7 @@ class ReceptionWorkbenchController extends Controller
                     'status'             => QueueStatus::WAITING,
                     'booked_by'          => $receptionistStaff->id,
                     'source'             => 'reception',
-                    'service_request_id' => $serviceRequest->id,
+                    'service_request_id' => $serviceRequestId,
                     'doctor_queue_id'    => $queue->id,
                     'checked_in_at'      => $now,
                 ]);
