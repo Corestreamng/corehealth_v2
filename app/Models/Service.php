@@ -33,6 +33,7 @@ class Service extends Model implements Auditable
         'status',
         'result_template_v2',
         'is_combo',
+        'consult_cycle_duration',
     ];
 
     protected $casts = [

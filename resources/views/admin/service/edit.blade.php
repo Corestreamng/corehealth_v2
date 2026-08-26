@@ -92,8 +92,31 @@
                                     </div>
                                 </div>
 
+                                {{-- Consultation Details (conditional) --}}
+                                <div class="card-modern mt-3" id="consult-fields" style="display: none;">
+                                    <div class="card-header-modern">
+                                        <h5 class="card-title-modern">
+                                            <i class="mdi mdi-stethoscope text-primary"></i> Consultation Settings
+                                        </h5>
+                                    </div>
+                                    <div class="card-body p-4">
+                                        <div class="row g-3">
+                                            <div class="col-lg-6">
+                                                <label class="form-label-modern">Custom Cycle Duration</label>
+                                                <div class="input-group">
+                                                    <input type="number" class="form-control form-control-modern" name="consult_cycle_duration" value="{{ old('consult_cycle_duration', $product->consult_cycle_duration) }}" placeholder="e.g. 48" min="1">
+                                                    <div class="input-group-append">
+                                                        <span class="input-group-text">hours</span>
+                                                    </div>
+                                                </div>
+                                                <small class="text-muted">Leave blank to use the hospital default ({{ appsettings('consultation_cycle_duration') ?? 24 }} hours)</small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
                                 {{-- Procedure Details (conditional) --}}
-                                <div class="card-modern" id="procedure-fields" style="display: none;">
+                                <div class="card-modern mt-3" id="procedure-fields" style="display: none;">
                                     <div class="card-header-modern">
                                         <h5 class="card-title-modern">
                                             <i class="mdi mdi-hospital-box text-primary"></i> Procedure Details
@@ -234,7 +257,9 @@
 <script>
     $(document).ready(function() {
         const procedureCategoryId = {{ $procedureCategoryId ?? 'null' }};
+        const consultationCategoryId = {{ $consultationCategoryId ?? 'null' }};
         const $procedureFields = $('#procedure-fields');
+        const $consultFields = $('#consult-fields');
         const $procedureCategorySelect = $('#procedure_category_id');
 
         // Category card selector
@@ -249,6 +274,7 @@
 
         function toggleProcedureFields() {
             const selectedCategoryId = parseInt($('input[name="category_id"]:checked').val());
+            
             if (procedureCategoryId && selectedCategoryId === procedureCategoryId) {
                 $procedureFields.slideDown(300);
                 $procedureCategorySelect.attr('required', true);
@@ -256,7 +282,16 @@
                 $procedureFields.slideUp(300);
                 $procedureCategorySelect.attr('required', false);
             }
+            
+            if (consultationCategoryId && selectedCategoryId === consultationCategoryId) {
+                $consultFields.slideDown(300);
+            } else {
+                $consultFields.slideUp(300);
+            }
         }
+
+        // Initial call
+        toggleProcedureFields();
 
         $('#is_combo').on('change', function() {
             if ($(this).is(':checked')) {
