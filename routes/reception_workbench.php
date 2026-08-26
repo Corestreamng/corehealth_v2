@@ -26,6 +26,7 @@ Route::middleware(['auth'])->prefix('reception')->name('reception.')->group(func
     Route::get('/patient/{id}', [ReceptionWorkbenchController::class, 'getPatient'])->name('patient');
     Route::get('/patient/{id}/visits', [ReceptionWorkbenchController::class, 'getVisitHistory'])->name('patient.visits');
     Route::get('/patient/{id}/queue', [ReceptionWorkbenchController::class, 'getPatientQueueEntries'])->name('patient.queue');
+    Route::get('/queue/{id}/routing-slip', [ReceptionWorkbenchController::class, 'getRoutingSlip'])->name('queue.routing-slip');
     Route::put('/patient/{id}/update', [ReceptionWorkbenchController::class, 'updatePatient'])->name('patient.update');
 
     // Queue management
