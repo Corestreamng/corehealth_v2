@@ -329,45 +329,64 @@ class SpecialistReferralController extends Controller
         // Direction filter
         $direction = $request->input('direction', '');
         if ($direction === 'sent') {
-            $query->where('referring_doctor_id', $staff->id);
+            $query->where('specialist_referrals.referring_doctor_id', $staff->id);
         } elseif ($direction === 'received') {
             $query->where(function ($q) use ($staff) {
-                $q->where('target_doctor_id', $staff->id)
+                $q->where('specialist_referrals.target_doctor_id', $staff->id)
                   ->orWhere(function ($q2) use ($staff) {
-                      $q2->where('target_clinic_id', $staff->clinic_id)
-                         ->whereNull('target_doctor_id');
+                      $q2->where('specialist_referrals.target_clinic_id', $staff->clinic_id)
+                         ->whereNull('specialist_referrals.target_doctor_id');
                   });
             });
         } else {
             // All: sent by me OR targeted at me
             $query->where(function ($q) use ($staff) {
-                $q->where('referring_doctor_id', $staff->id)
-                  ->orWhere('target_doctor_id', $staff->id)
+                $q->where('specialist_referrals.referring_doctor_id', $staff->id)
+                  ->orWhere('specialist_referrals.target_doctor_id', $staff->id)
                   ->orWhere(function ($q2) use ($staff) {
-                      $q2->where('target_clinic_id', $staff->clinic_id)
-                         ->whereNull('target_doctor_id');
+                      $q2->where('specialist_referrals.target_clinic_id', $staff->clinic_id)
+                         ->whereNull('specialist_referrals.target_doctor_id');
                   });
             });
         }
 
         // Status filter
         if ($request->filled('status')) {
-            $query->where('status', $request->status);
+            $query->where('specialist_referrals.status', $request->status);
         }
         // Type filter
         if ($request->filled('referral_type')) {
-            $query->where('referral_type', $request->referral_type);
+            $query->where('specialist_referrals.referral_type', $request->referral_type);
         }
         // Date filter
         if ($request->filled('start_date')) {
-            $query->whereDate('created_at', '>=', $request->start_date);
+            $query->whereDate('specialist_referrals.created_at', '>=', $request->start_date);
         }
         if ($request->filled('end_date')) {
-            $query->whereDate('created_at', '<=', $request->end_date);
+            $query->whereDate('specialist_referrals.created_at', '<=', $request->end_date);
         }
 
-        $query->orderByRaw("CASE urgency WHEN 'emergency' THEN 1 WHEN 'urgent' THEN 2 WHEN 'routine' THEN 3 ELSE 4 END ASC")
-              ->orderBy('created_at', 'desc');
+        // Apply sort filter
+        $sortFilter = $request->input('sort_filter', 'newest');
+        
+        if (in_array($sortFilter, ['patient_az', 'patient_za'])) {
+            $query->join('patients', 'specialist_referrals.patient_id', '=', 'patients.id')
+                  ->join('users', 'patients.user_id', '=', 'users.id')
+                  ->select('specialist_referrals.*');
+                  
+            if ($sortFilter === 'patient_az') {
+                $query->orderBy('users.surname', 'ASC')->orderBy('users.firstname', 'ASC');
+            } else {
+                $query->orderBy('users.surname', 'DESC')->orderBy('users.firstname', 'DESC');
+            }
+        } else {
+            if ($sortFilter === 'oldest') {
+                $query->orderBy('specialist_referrals.created_at', 'ASC');
+            } else {
+                $query->orderByRaw("CASE urgency WHEN 'emergency' THEN 1 WHEN 'urgent' THEN 2 WHEN 'routine' THEN 3 ELSE 4 END ASC")
+                      ->orderBy('specialist_referrals.created_at', 'DESC');
+            }
+        }
 
         return $this->buildReferralDataTable($query, $staff);
     }
@@ -419,8 +438,27 @@ class SpecialistReferralController extends Controller
             $query->whereDate('created_at', '<=', $request->end_date);
         }
 
-        $query->orderByRaw("CASE urgency WHEN 'emergency' THEN 1 WHEN 'urgent' THEN 2 WHEN 'routine' THEN 3 ELSE 4 END ASC")
-              ->orderBy('created_at', 'desc');
+        // Apply sort filter
+        $sortFilter = $request->input('sort_filter', 'newest');
+        
+        if (in_array($sortFilter, ['patient_az', 'patient_za'])) {
+            $query->join('patients', 'specialist_referrals.patient_id', '=', 'patients.id')
+                  ->join('users', 'patients.user_id', '=', 'users.id')
+                  ->select('specialist_referrals.*');
+                  
+            if ($sortFilter === 'patient_az') {
+                $query->orderBy('users.surname', 'ASC')->orderBy('users.firstname', 'ASC');
+            } else {
+                $query->orderBy('users.surname', 'DESC')->orderBy('users.firstname', 'DESC');
+            }
+        } else {
+            if ($sortFilter === 'oldest') {
+                $query->orderBy('specialist_referrals.created_at', 'ASC');
+            } else {
+                $query->orderByRaw("CASE urgency WHEN 'emergency' THEN 1 WHEN 'urgent' THEN 2 WHEN 'routine' THEN 3 ELSE 4 END ASC")
+                      ->orderBy('specialist_referrals.created_at', 'DESC');
+            }
+        }
 
         return $this->buildReferralDataTable($query, $staff);
     }
