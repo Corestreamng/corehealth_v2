@@ -141,16 +141,46 @@ class Patient extends Model implements Auditable
         return $this->hasMany(OrganizationBill::class, 'patient_id');
     }
 
+    public function getFamilyPatientIdsAttribute()
+    {
+        $query = Patient::query();
+        
+        $query->where(function ($q) {
+            if ($this->principal_id) {
+                $q->where('principal_id', $this->principal_id)
+                  ->orWhere('id', $this->principal_id);
+            } else {
+                $q->where('principal_id', $this->id)
+                  ->orWhere('id', $this->id);
+            }
+        });
+
+        if (!empty($this->file_no)) {
+            $query->orWhere('file_no', $this->file_no);
+        }
+
+        return $query->pluck('id')->toArray();
+    }
+
     public function getFamilyUserIdsAttribute()
     {
-        if ($this->principal_id) {
-            return Patient::where('principal_id', $this->principal_id)
-                ->orWhere('id', $this->principal_id)
-                ->pluck('user_id')->toArray();
+        $query = Patient::query();
+        
+        $query->where(function ($q) {
+            if ($this->principal_id) {
+                $q->where('principal_id', $this->principal_id)
+                  ->orWhere('id', $this->principal_id);
+            } else {
+                $q->where('principal_id', $this->id)
+                  ->orWhere('id', $this->id);
+            }
+        });
+
+        if (!empty($this->file_no)) {
+            $query->orWhere('file_no', $this->file_no);
         }
-        return Patient::where('principal_id', $this->id)
-            ->orWhere('id', $this->id)
-            ->pluck('user_id')->toArray();
+
+        return $query->pluck('user_id')->toArray();
     }
 
     public function getBillingPatientIdAttribute()
