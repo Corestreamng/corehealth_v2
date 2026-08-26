@@ -122,7 +122,7 @@ $(function() {
     $('.delete-confirm').click(function() {
         var id = $('#id_delete').val();
         $.ajax({
-            url: '/checklist-templates/' + id,
+            url: '{{ url('/checklist-templates') }}/' + id,
             type: 'DELETE',
             data: {
                 _token: '{{ csrf_token() }}'

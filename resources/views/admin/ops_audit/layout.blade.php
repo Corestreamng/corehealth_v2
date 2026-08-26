@@ -536,7 +536,7 @@
         $('#opsAuditGenericModal').modal('show');
 
         $.ajax({
-            url: '/ops-audit/details/' + type + '/' + id,
+            url: '{{ url('/ops-audit/details/') }}' + type + '/' + id,
             type: 'GET',
             success: function(res) {
                 if(res.html) {

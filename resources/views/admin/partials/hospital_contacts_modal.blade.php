@@ -184,7 +184,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }).then((result) => {
             if (result.isConfirmed) {
                 $.ajax({
-                    url: '/hospital-contacts/' + id,
+                    url: '{{ url('/hospital-contacts/') }}' + id,
                     type: 'DELETE',
                     data: { _token: '{{ csrf_token() }}' },
                     success: function(response) {

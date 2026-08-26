@@ -68,25 +68,25 @@
     <div class="selector-area shadow-sm">
         <label class="small font-weight-bold text-uppercase text-muted mb-4 d-block">1. Select Management Axis</label>
         <div class="axis-selector-grid">
-            <div class="axis-card" data-type="product" onclick="window.location.href='/admin/hmo-tariffs'">
+            <div class="axis-card" data-type="product" onclick="window.location.href='{{ url('/admin/hmo-tariffs') }}'">
                 <i class="mdi mdi-check-circle active-check"></i>
                 <div class="axis-icon"><i class="mdi mdi-pills"></i></div>
                 <div class="axis-title">Product Axis</div>
                 <div class="axis-desc">Edit one drug across all HMOs</div>
             </div>
-            <div class="axis-card" data-type="service" onclick="window.location.href='/admin/hmo-tariffs'">
+            <div class="axis-card" data-type="service" onclick="window.location.href='{{ url('/admin/hmo-tariffs') }}'">
                 <i class="mdi mdi-check-circle active-check"></i>
                 <div class="axis-icon"><i class="mdi mdi-stethoscope"></i></div>
                 <div class="axis-title">Service Axis</div>
                 <div class="axis-desc">Edit one service across all HMOs</div>
             </div>
-            <div class="axis-card" data-type="hmo" onclick="window.location.href='/admin/hmo-tariffs'">
+            <div class="axis-card" data-type="hmo" onclick="window.location.href='{{ url('/admin/hmo-tariffs') }}'">
                 <i class="mdi mdi-check-circle active-check"></i>
                 <div class="axis-icon"><i class="mdi mdi-office-building"></i></div>
                 <div class="axis-title">HMO Axis</div>
                 <div class="axis-desc">Edit entire catalog for one HMO</div>
             </div>
-            <div class="axis-card" data-type="scheme" onclick="window.location.href='/admin/hmo-tariffs'">
+            <div class="axis-card" data-type="scheme" onclick="window.location.href='{{ url('/admin/hmo-tariffs') }}'">
                 <i class="mdi mdi-check-circle active-check"></i>
                 <div class="axis-icon"><i class="mdi mdi-domain"></i></div>
                 <div class="axis-title">Scheme Axis</div>
@@ -559,7 +559,7 @@
             }).then((result) => {
                 if (result.isConfirmed) {
                     $.ajax({
-                        url: '/admin/hmo-tariffs/overrides/' + id,
+                        url: '{{ url('/admin/hmo-tariffs/overrides') }}/' + id,
                         type: 'DELETE',
                         data: { _token: '{{ csrf_token() }}' },
                         success: function(response) {

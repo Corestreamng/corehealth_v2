@@ -744,7 +744,7 @@
         window.loadUnviewedCounts = function(pId) {
             if (!pId) return;
             $.ajax({
-                url: '/result-views/unviewed-counts/' + pId,
+                url: '{{ url('/result-views/unviewed-counts/') }}' + pId,
                 type: 'GET',
                 success: function(response) {
                     if (response.success) {
@@ -859,7 +859,7 @@
         `);
 
         $.ajax({
-            url: `/EncounterHistoryList/${patientId}`,
+            url: `{{ url('/EncounterHistoryList/${patientId}') }}`,
             method: 'GET',
             data: { length: 10, start: 0, draw: 1 },
             success: function(response) {
@@ -1106,7 +1106,7 @@
             processing: true,
             serverSide: false,
             ajax: {
-                url: `/nursing-workbench/patient/${patientId}/injections`,
+                url: `{{ url('/nursing-workbench/patient/${patientId}/injections') }}`,
                 dataSrc: ''
             },
             columns: [
@@ -1152,7 +1152,7 @@
         `);
 
         $.ajax({
-            url: `/nursing-workbench/patient/${patientId}/immunization-history`,
+            url: `{{ url('/nursing-workbench/patient/${patientId}/immunization-history') }}`,
             method: 'GET',
             success: function(response) {
                 if (!response.records || response.records.length === 0) {
@@ -1214,7 +1214,7 @@
             processing: true,
             serverSide: false,
             ajax: {
-                url: `/nursing-workbench/patient/${patientId}/immunization-history`,
+                url: `{{ url('/nursing-workbench/patient/${patientId}/immunization-history') }}`,
                 dataSrc: 'records'
             },
             columns: [
@@ -1338,7 +1338,7 @@
         // AJAX request to fetch prescription history
         // Using length=20 as requested
         $.ajax({
-            url: `/prescHistoryList/${patientId}`,
+            url: `{{ url('/prescHistoryList/${patientId}') }}`,
             method: 'GET',
             data: { length: 20, start: 0, draw: 1 },
             success: function(response) {
@@ -1460,7 +1460,7 @@
 
         // AJAX request to fetch procedures history
         $.ajax({
-            url: `/patient-procedures/list-by-patient/${patientId}`,
+            url: `{{ url('/patient-procedures/list-by-patient/${patientId}') }}`,
             method: 'GET',
             data: { length: 20, start: 0, draw: 1 },
             success: function(response) {
@@ -1603,7 +1603,7 @@
         $('#clinical-labs-container').html('<div class="text-center py-4"><i class="mdi mdi-loading mdi-spin mdi-36px text-muted"></i><p class="text-muted mt-2">Loading lab results...</p></div>');
 
         $.ajax({
-            url: `/clinical-context/patient/${patientId}/labs`,
+            url: `{{ url('/clinical-context/patient/${patientId}/labs') }}`,
             method: 'GET',
             success: function(labs) {
                 if (!labs || labs.length === 0) {
@@ -1823,7 +1823,7 @@
         $('#clinical-imaging-container').html('<div class="text-center py-4"><i class="mdi mdi-loading mdi-spin mdi-36px text-muted"></i><p class="text-muted mt-2">Loading imaging results...</p></div>');
 
         $.ajax({
-            url: `/clinical-context/patient/${patientId}/imaging`,
+            url: `{{ url('/clinical-context/patient/${patientId}/imaging') }}`,
             method: 'GET',
             success: function(images) {
                 if (!images || images.length === 0) {
