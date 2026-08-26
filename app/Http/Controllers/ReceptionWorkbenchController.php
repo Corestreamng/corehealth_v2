@@ -2441,21 +2441,15 @@ class ReceptionWorkbenchController extends Controller
 
                 $canDiscard = !$row['is_paid'] && ($row['created_by_id'] == $currentUserId || Auth::user()->hasRole(['SUPERADMIN', 'ADMIN']));
 
-                if ($canDiscard) {
-                    if (!empty($row['posr_id'])) {
-                        $actions .= ' <button class="btn btn-xs btn-outline-danger bk-remove-bill-btn" data-id="' . $row['posr_id'] . '" title="Remove Bill">
-                            <i class="mdi mdi-delete"></i>
-                        </button>';
-                    } else {
-                        $actions .= ' <button class="btn btn-xs btn-outline-danger discard-request-btn"
-                            data-type="' . $row['type'] . '"
-                            data-id="' . $row['id'] . '"
-                            data-name="' . htmlspecialchars($row['name']) . '"
-                            data-request-no="' . $row['request_no'] . '"
-                            title="Discard Request">
-                            <i class="mdi mdi-delete"></i>
-                        </button>';
-                    }
+                if ($canDiscard && $row['delivery_status_code'] === 'pending') {
+                    $actions .= ' <button class="btn btn-xs btn-outline-danger discard-request-btn"
+                        data-type="' . $row['type'] . '"
+                        data-id="' . $row['id'] . '"
+                        data-name="' . htmlspecialchars($row['name']) . '"
+                        data-request-no="' . $row['request_no'] . '"
+                        title="Discard Request">
+                        <i class="mdi mdi-delete"></i>
+                    </button>';
                 }
 
                 return $actions;
@@ -2919,22 +2913,42 @@ class ReceptionWorkbenchController extends Controller
             DB::beginTransaction();
 
             $currentUserId = Auth::id();
+            $serviceRequest = null;
+            $posr = null;
 
             switch ($type) {
                 case 'lab':
                     $serviceRequest = LabServiceRequest::with('productOrServiceRequest')->findOrFail($id);
+                    $posr = $serviceRequest->productOrServiceRequest;
+                    if ($serviceRequest->status >= 2) {
+                        return response()->json(['success' => false, 'message' => 'Cannot discard — lab test is already in progress or completed'], 400);
+                    }
                     break;
                 case 'imaging':
                     $serviceRequest = ImagingServiceRequest::with('productOrServiceRequest')->findOrFail($id);
+                    $posr = $serviceRequest->productOrServiceRequest;
+                    if ($serviceRequest->status >= 2) {
+                        return response()->json(['success' => false, 'message' => 'Cannot discard — imaging is already in progress or completed'], 400);
+                    }
                     break;
                 case 'product':
                     $serviceRequest = ProductRequest::with('productOrServiceRequest')->findOrFail($id);
+                    $posr = $serviceRequest->productOrServiceRequest;
+                    if ($serviceRequest->status >= 3 || ($posr && $posr->sale)) {
+                        return response()->json(['success' => false, 'message' => 'Cannot discard — product has already been dispensed'], 400);
+                    }
+                    break;
+                case 'service':
+                    $posr = ProductOrServiceRequest::findOrFail($id);
+                    // For consultation services, check if queue has been progressed
+                    $queue = \App\Models\DoctorQueue::where('request_entry_id', $posr->id)->first();
+                    if ($queue && !in_array($queue->status, [\App\Enums\QueueStatus::WAITING, \App\Enums\QueueStatus::SCHEDULED])) {
+                        return response()->json(['success' => false, 'message' => 'Cannot discard — consultation is already in progress or completed'], 400);
+                    }
                     break;
                 default:
                     return response()->json(['success' => false, 'message' => 'Invalid request type'], 400);
             }
-
-            $posr = $serviceRequest->productOrServiceRequest;
 
             // Check if already paid
             if ($posr && $posr->payment_id) {
@@ -2954,14 +2968,26 @@ class ReceptionWorkbenchController extends Controller
                 ], 403);
             }
 
-            // Soft delete the service request with reason
-            $serviceRequest->deleted_by = $currentUserId;
-            $serviceRequest->deletion_reason = $request->reason;
-            $serviceRequest->save();
-            $serviceRequest->delete();
+            // Soft delete the service request with reason if applicable
+            if ($serviceRequest) {
+                $serviceRequest->deleted_by = $currentUserId;
+                $serviceRequest->deletion_reason = $request->reason;
+                $serviceRequest->save();
+                $serviceRequest->delete();
+            }
 
             // Also delete the ProductOrServiceRequest if exists
             if ($posr) {
+                // If it's a consultation service, delete the associated queue entry too
+                if ($type === 'service') {
+                    $queue = \App\Models\DoctorQueue::where('request_entry_id', $posr->id)->first();
+                    if ($queue) {
+                        if ($queue->appointment_id) {
+                            \App\Models\DoctorAppointment::where('id', $queue->appointment_id)->delete();
+                        }
+                        $queue->delete();
+                    }
+                }
                 $posr->delete();
             }
 
