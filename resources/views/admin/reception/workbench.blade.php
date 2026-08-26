@@ -3966,6 +3966,14 @@
                                                 </div>
                                             </div>
                                         </div>
+                                        
+                                        <div class="form-group mb-3">
+                                            <div class="custom-control custom-switch">
+                                                <input type="checkbox" class="custom-control-input" id="force_rebill" name="force_rebill" value="1">
+                                                <label class="custom-control-label font-weight-bold" for="force_rebill">Force Rebill Consultation</label>
+                                                <p class="small text-muted mb-0">Check this to explicitly bill the patient even if their previous consultation cycle is still active.</p>
+                                            </div>
+                                        </div>
 
                                         <button type="submit" class="btn btn-primary btn-lg w-100" id="btn-book-consultation">
                                             <i class="mdi mdi-send"></i> Send to Queue
@@ -6781,7 +6789,8 @@ function bookConsultation() {
         doctor_id: doctorId,
         service_id: serviceId,
         service_type: serviceType,
-        reason: reason
+        reason: reason,
+        force_rebill: $('#force_rebill').is(':checked') ? 1 : 0
     };
 
     var requestUrl = '{{ route("reception.book-consultation") }}';
