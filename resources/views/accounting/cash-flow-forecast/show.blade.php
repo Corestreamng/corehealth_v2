@@ -593,7 +593,7 @@ $(document).ready(function() {
         var id = $('#actualsPeriodId').val();
 
         $.ajax({
-            url: '/accounting/cash-flow-forecast/periods/' + id + '/actuals',
+            url: '{{ url('/accounting/cash-flow-forecast/periods/') }}' + id + '/actuals',
             type: 'PUT',
             data: {
                 _token: '{{ csrf_token() }}',
