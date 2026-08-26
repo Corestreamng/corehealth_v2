@@ -4595,7 +4595,7 @@ function loadPatient(patientId) {
 
     // Load patient billing data
     $.ajax({
-        url: `/billing-workbench/patient/${patientId}/billing-data`,
+        url: `{{ url('/billing-workbench/patient/${patientId}/billing-data') }}`,
         method: 'GET',
         success: function(data) {
             console.log('Patient billing data loaded:', data);
@@ -4675,7 +4675,7 @@ function initializeHistoryDataTable(patientId) {
         autoWidth: false,
         dom: '<"top"f>rt<"bottom"lip><"clear">',
         ajax: {
-            url: `/investigationHistoryList/${patientId}`,
+            url: `{{ url('/investigationHistoryList/${patientId}') }}`,
             type: 'GET'
         },
         columns: [
@@ -4706,7 +4706,7 @@ function initializeHistoryDataTable(patientId) {
 function viewInvestigationResult(requestId) {
     // Open modal to view completed result
     $.ajax({
-        url: `/lab-workbench/lab-service-requests/${requestId}`,
+        url: `{{ url('/lab-workbench/lab-service-requests/${requestId}') }}`,
         method: 'GET',
         success: function(request) {
             // Show result in a view-only modal or open in new tab
@@ -5240,7 +5240,7 @@ let currentAccountBalance = 0;
 
 function loadAccountBalance(patientId) {
     $.ajax({
-        url: `/billing-workbench/patient/${patientId}/account-summary`,
+        url: `{{ url('/billing-workbench/patient/${patientId}/account-summary') }}`,
         method: 'GET',
         success: function(data) {
             currentAccountBalance = parseFloat(data.balance) || 0;
@@ -5336,7 +5336,7 @@ function loadAccountTransactions() {
 
     // Load account-specific transaction history
     $.ajax({
-        url: `/billing-workbench/patient/${currentPatient}/account-transactions`,
+        url: `{{ url('/billing-workbench/patient/${currentPatient}/account-transactions') }}`,
         method: 'GET',
         data: {
             from_date: fromDate,
@@ -5607,7 +5607,7 @@ function processAccountTransaction() {
     if (!confirm(confirmMsg)) return;
 
     $.ajax({
-        url: '/billing-workbench/account-transaction',
+        url: '{{ url('/billing-workbench/account-transaction') }}',
         method: 'POST',
         data: {
             _token: '{{ csrf_token() }}',
@@ -5705,7 +5705,7 @@ function filterReceipts() {
     if (paymentType) params.payment_type = paymentType;
 
     $.ajax({
-        url: `/billing-workbench/patient/${currentPatient}/receipts`,
+        url: `{{ url('/billing-workbench/patient/${currentPatient}/receipts') }}`,
         method: 'GET',
         data: params,
         success: function(data) {
@@ -5825,7 +5825,7 @@ function createPatientAccount() {
     if (!confirm('Create a new account for this patient?')) return;
 
     $.ajax({
-        url: '/billing-workbench/create-account',
+        url: '{{ url('/billing-workbench/create-account') }}',
         method: 'POST',
         data: {
             _token: '{{ csrf_token() }}',
@@ -5880,7 +5880,7 @@ function loadBillingItems() {
     if (!currentPatient) return;
 
     $.ajax({
-        url: `/billing-workbench/patient/${currentPatient}/billing-data`,
+        url: `{{ url('/billing-workbench/patient/${currentPatient}/billing-data') }}`,
         method: 'GET',
         success: function(response) {
             renderBillingItems(response.items);
@@ -6270,7 +6270,7 @@ function printInvoice() {
     toastr.info('Generating invoice...');
 
     $.ajax({
-        url: '/billing-workbench/print-invoice',
+        url: '{{ url('/billing-workbench/print-invoice') }}',
         method: 'POST',
         data: {
             _token: '{{ csrf_token() }}',
@@ -6449,7 +6449,7 @@ $(document).on('click', '#generate-statement-btn', function() {
     $btn.prop('disabled', true).html('<i class="mdi mdi-loading mdi-spin"></i> Generating...');
 
     $.ajax({
-        url: `/billing-workbench/patient/${currentPatient}/generate-statement`,
+        url: `{{ url('/billing-workbench/patient/${currentPatient}/generate-statement') }}`,
         method: 'POST',
         data: {
             _token: '{{ csrf_token() }}',
@@ -6563,7 +6563,7 @@ function loadAccountSummary() {
     if (!currentPatient) return;
 
     $.ajax({
-        url: `/billing-workbench/patient/${currentPatient}/account-summary`,
+        url: `{{ url('/billing-workbench/patient/${currentPatient}/account-summary') }}`,
         method: 'GET',
         success: function(response) {
             renderAccountSummary(response);
@@ -6772,7 +6772,7 @@ $(document).on('click', '#print-my-transactions', function() {
 
 function loadMyTransactions(fromDate, toDate, paymentType, bankId) {
     $.ajax({
-        url: '/billing-workbench/my-transactions',
+        url: '{{ url('/billing-workbench/my-transactions') }}',
         method: 'GET',
         data: {
             from: fromDate,
@@ -7190,7 +7190,7 @@ function loadExistingAttachments(requestId) {
     wrapper.hide();
 
     $.ajax({
-        url: `/lab-workbench/lab-service-requests/${requestId}/attachments`,
+        url: `{{ url('/lab-workbench/lab-service-requests/${requestId}/attachments') }}`,
         method: 'GET',
         success: function(attachments) {
             if (attachments && attachments.length> 0) {
@@ -7290,7 +7290,7 @@ function editLabResult(obj) {
     const requestId = $(obj).data('id');
 
     $.ajax({
-        url: `/lab-workbench/lab-service-requests/${requestId}`,
+        url: `{{ url('/lab-workbench/lab-service-requests/${requestId}') }}`,
         method: 'GET',
         success: function(request) {
             // Populate the form with template structure AND existing result data
@@ -7335,7 +7335,7 @@ $('#deleteRequestForm').on('submit', function(e) {
     }
 
     $.ajax({
-        url: `/lab-workbench/lab-service-requests/${deleteRequestId}`,
+        url: `{{ url('/lab-workbench/lab-service-requests/${deleteRequestId}') }}`,
         method: 'DELETE',
         data: {
             _token: '{{ csrf_token() }}',
@@ -7378,7 +7378,7 @@ $('#dismissRequestForm').on('submit', function(e) {
     }
 
     $.ajax({
-        url: `/lab-workbench/lab-service-requests/${dismissRequestId}/dismiss`,
+        url: `{{ url('/lab-workbench/lab-service-requests/${dismissRequestId}/dismiss') }}`,
         method: 'POST',
         data: {
             _token: '{{ csrf_token() }}',
@@ -7617,7 +7617,7 @@ function initializeQueueDataTable(filter) {
     // Initialize DataTable for payment queue
     queueDataTable = $('#queue-datatable').DataTable({
         ajax: {
-            url: '/billing-workbench/payment-queue',
+            url: '{{ url('/billing-workbench/payment-queue') }}',
             data: { filter: filter },
             dataSrc: ''
         },

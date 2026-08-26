@@ -112,7 +112,7 @@
                 <div class="axis-title">Scheme Axis</div>
                 <div class="axis-desc">Edit entire catalog for a Scheme</div>
             </div>
-            <div class="axis-card" data-type="overrides" onclick="window.location.href='/admin/hmo-tariffs/overrides'">
+            <div class="axis-card" data-type="overrides" onclick="window.location.href='{{ url('/admin/hmo-tariffs/overrides') }}'">
                 <i class="mdi mdi-check-circle active-check"></i>
                 <div class="axis-icon"><i class="mdi mdi-flash text-warning"></i></div>
                 <div class="axis-title">Overrides</div>

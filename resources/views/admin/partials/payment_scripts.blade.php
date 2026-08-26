@@ -116,7 +116,7 @@ function processPayment() {
     $confirmBtn.prop('disabled', true).html('<i class="mdi mdi-loading mdi-spin"></i> Processing Payment...');
 
     $.ajax({
-        url: '/billing-workbench/process-payment',
+        url: '{{ url('/billing-workbench/process-payment') }}',
         method: 'POST',
         data: {
             _token: '{{ csrf_token() }}',
@@ -238,7 +238,7 @@ function loadPatientReceipts() {
     if (!currentPatient) return;
 
     $.ajax({
-        url: `/billing-workbench/patient/${currentPatient}/receipts`,
+        url: `{{ url('/billing-workbench/patient/${currentPatient}/receipts') }}`,
         method: 'GET',
         success: function(response) {
             renderReceipts(response.receipts);
@@ -262,7 +262,7 @@ function printDepositReceiptFromList(depositId) {
     toastr.info('Generating deposit receipt...');
 
     $.ajax({
-        url: `/billing-workbench/print-deposit-receipt/${depositId}`,
+        url: `{{ url('/billing-workbench/print-deposit-receipt/${depositId}') }}`,
         method: 'GET',
         success: function(response) {
             if (response.receipt_a4 && response.receipt_thermal) {
@@ -310,7 +310,7 @@ function reprintReceipt(paymentIds) {
     toastr.info('Generating receipt...');
 
     $.ajax({
-        url: '/billing-workbench/print-receipt',
+        url: '{{ url('/billing-workbench/print-receipt') }}',
         method: 'POST',
         data: {
             _token: '{{ csrf_token() }}',
@@ -357,7 +357,7 @@ function loadBanks() {
     }
 
     $.ajax({
-        url: '/banks/active',
+        url: '{{ url('/banks/active') }}',
         method: 'GET',
         success: function(response) {
             if (response.success && response.banks) {
@@ -397,7 +397,7 @@ function loadStaffList() {
     }
 
     $.ajax({
-        url: '/billing-workbench/staff-list',
+        url: '{{ url('/billing-workbench/staff-list') }}',
         method: 'GET',
         success: function(response) {
             if (response) {
@@ -440,7 +440,7 @@ function loadOrganizationList() {
     }
 
     $.ajax({
-        url: '/billing-workbench/organization-list',
+        url: '{{ url('/billing-workbench/organization-list') }}',
         method: 'GET',
         success: function(response) {
             if (response) {

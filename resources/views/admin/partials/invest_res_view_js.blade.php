@@ -69,7 +69,7 @@ if (typeof loadResultAuditHistory !== 'function') {
         rows.empty();
         
         $.ajax({
-            url: '/result-views/' + type + '/' + id,
+            url: '{{ url('/result-views/') }}' + type + '/' + id,
             type: 'GET',
             success: function(response) {
                 if (response.success && response.views && response.views.length > 0) {
