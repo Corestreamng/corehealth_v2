@@ -50,7 +50,27 @@ class AdmissionRequestController extends Controller
             });
         }
 
-        $req = $query->orderBy('created_at', 'DESC')->get();
+        // Apply sort filter
+        $sortFilter = $request->input('sort_filter', 'newest');
+        if (in_array($sortFilter, ['patient_az', 'patient_za'])) {
+            $query->join('patients', 'admission_requests.patient_id', '=', 'patients.id')
+                  ->join('users', 'patients.user_id', '=', 'users.id')
+                  ->select('admission_requests.*');
+                  
+            if ($sortFilter === 'patient_az') {
+                $query->orderBy('users.surname', 'ASC')->orderBy('users.firstname', 'ASC');
+            } else {
+                $query->orderBy('users.surname', 'DESC')->orderBy('users.firstname', 'DESC');
+            }
+        } else {
+            if ($sortFilter === 'oldest') {
+                $query->orderBy('admission_requests.created_at', 'ASC');
+            } else {
+                $query->orderBy('admission_requests.created_at', 'DESC');
+            }
+        }
+
+        $req = $query->get();
 
         return Datatables::of($req)
             ->addIndexColumn()
@@ -130,18 +150,18 @@ class AdmissionRequestController extends Controller
     public function admissionRequests(Request $request)
     {
         // Build the query with date range filtering
-        $query = AdmissionRequest::where('discharged', 0)
-            ->where('status', 1);
+        $query = AdmissionRequest::where('admission_requests.discharged', 0)
+            ->where('admission_requests.status', 1);
 
         if ($request->filled('start_date') && $request->filled('end_date')) {
             $startDate = Carbon::parse($request->input('start_date'));
             $endDate = Carbon::parse($request->input('end_date'));
-            $query->whereBetween('created_at', [$startDate->startOfDay(), $endDate->endOfDay()]);
+            $query->whereBetween('admission_requests.created_at', [$startDate->startOfDay(), $endDate->endOfDay()]);
         }
 
         // Doctor filter
         if ($request->filled('doctor_id')) {
-            $query->where('doctor_id', $request->doctor_id);
+            $query->where('admission_requests.doctor_id', $request->doctor_id);
         }
 
         // HMO filter
@@ -152,7 +172,27 @@ class AdmissionRequestController extends Controller
             });
         }
 
-        $req = $query->orderBy('created_at', 'DESC')->get();
+        // Apply sort filter
+        $sortFilter = $request->input('sort_filter', 'newest');
+        if (in_array($sortFilter, ['patient_az', 'patient_za'])) {
+            $query->join('patients', 'admission_requests.patient_id', '=', 'patients.id')
+                  ->join('users', 'patients.user_id', '=', 'users.id')
+                  ->select('admission_requests.*');
+                  
+            if ($sortFilter === 'patient_az') {
+                $query->orderBy('users.surname', 'ASC')->orderBy('users.firstname', 'ASC');
+            } else {
+                $query->orderBy('users.surname', 'DESC')->orderBy('users.firstname', 'DESC');
+            }
+        } else {
+            if ($sortFilter === 'oldest') {
+                $query->orderBy('admission_requests.created_at', 'ASC');
+            } else {
+                $query->orderBy('admission_requests.created_at', 'DESC');
+            }
+        }
+
+        $req = $query->get();
 
         return Datatables::of($req)
             ->addIndexColumn()
