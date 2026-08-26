@@ -340,7 +340,7 @@ $(function() {
         const returnId = $('#approve_return_id').val();
 
         $.ajax({
-            url: `/pharmacy/returns/${returnId}/approve`,
+            url: `{{ url('/pharmacy/returns') }}/${returnId}/approve`,
             method: 'POST',
             data: $(this).serialize(),
             headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') },
@@ -366,7 +366,7 @@ $(function() {
         const returnId = $('#reject_return_id').val();
 
         $.ajax({
-            url: `/pharmacy/returns/${returnId}/reject`,
+            url: `{{ url('/pharmacy/returns') }}/${returnId}/reject`,
             method: 'POST',
             data: $(this).serialize(),
             headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') },

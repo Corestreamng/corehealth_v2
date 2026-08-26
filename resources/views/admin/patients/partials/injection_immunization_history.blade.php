@@ -202,7 +202,7 @@
             processing: true,
             serverSide: false,
             ajax: {
-                url: `/nursing-workbench/patient/${patientId}/injections`,
+                url: `{{ url('/nursing-workbench/patient/${patientId}/injections') }}`,
                 dataSrc: ''
             },
             columns: [
@@ -268,7 +268,7 @@
         `);
 
         $.ajax({
-            url: `/nursing-workbench/patient/${patientId}/immunization-history`,
+            url: `{{ url('/nursing-workbench/patient/${patientId}/immunization-history') }}`,
             method: 'GET',
             success: function(response) {
                 if (!response.records || response.records.length === 0) {
@@ -333,7 +333,7 @@
         `);
 
         $.ajax({
-            url: `/nursing-workbench/patient/${patientId}/immunization-history`,
+            url: `{{ url('/nursing-workbench/patient/${patientId}/immunization-history') }}`,
             method: 'GET',
             success: function(response) {
                 if (!response.records || response.records.length === 0) {
@@ -418,7 +418,7 @@
             processing: true,
             serverSide: false,
             ajax: {
-                url: `/nursing-workbench/patient/${patientId}/immunization-history`,
+                url: `{{ url('/nursing-workbench/patient/${patientId}/immunization-history') }}`,
                 dataSrc: 'records'
             },
             columns: [

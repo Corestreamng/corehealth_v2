@@ -431,7 +431,7 @@ $(function() {
         const damageId = $('#approve_damage_id').val();
 
         $.ajax({
-            url: `/pharmacy/damages/${damageId}/approve`,
+            url: `{{ url('/pharmacy/damages') }}/${damageId}/approve`,
             method: 'POST',
             data: $(this).serialize(),
             headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') },
@@ -457,7 +457,7 @@ $(function() {
         const damageId = $('#reject_damage_id').val();
 
         $.ajax({
-            url: `/pharmacy/damages/${damageId}/reject`,
+            url: `{{ url('/pharmacy/damages') }}/${damageId}/reject`,
             method: 'POST',
             data: $(this).serialize(),
             headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') },

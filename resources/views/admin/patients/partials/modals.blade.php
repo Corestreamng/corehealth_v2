@@ -1177,7 +1177,7 @@ $('#saveEncounterEditBtn').on('click', function() {
     console.log('Sending AJAX request with data:', ajaxData);
 
     $.ajax({
-        url: `/encounters/${encounterId}/notes`,
+        url: `{{ url('/encounters/${encounterId}/notes') }}`,
         type: 'PUT',
         headers: {
             'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
@@ -1242,7 +1242,7 @@ function deleteEncounter(encounterId, encounterDate) {
     }
 
     $.ajax({
-        url: `/encounters/${encounterId}`,
+        url: `{{ url('/encounters/${encounterId}') }}`,
         type: 'DELETE',
         headers: {
             'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')

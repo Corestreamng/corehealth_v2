@@ -450,7 +450,7 @@ $('#deletionReasonSelect').on('change', function() {
 
         followUpPromise.then(function(followUpResult) {
             $.ajax({
-                url: `/encounters/${encounterId}/finalize`,
+                url: `{{ url('/encounters/${encounterId}/finalize') }}`,
                 method: 'POST',
                 data: {
                     end_consultation: 1,
@@ -498,7 +498,7 @@ $('#deletionReasonSelect').on('change', function() {
     // Update modal summary (similar to updateSummary but targets modal elements)
     function updateModalSummary() {
         $.ajax({
-            url: `/encounters/${encounterId}/summary`,
+            url: `{{ url('/encounters/${encounterId}/summary') }}`,
             method: 'GET',
             success: function(response) {
                 if (response.success) {

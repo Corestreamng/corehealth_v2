@@ -9,7 +9,7 @@ function deleteLabRequest(labId, encounterId, serviceName) {
         itemName: serviceName,
         onConfirm: function (reason, callback) {
             $.ajax({
-                url: `/encounters/${encounterId}/labs/${labId}`,
+                url: `{{ url('/encounters/${encounterId}/labs/${labId}') }}`,
                 type: 'DELETE',
                 headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') },
                 data: { reason: reason },
@@ -37,7 +37,7 @@ function deleteImagingRequest(imagingId, encounterId, serviceName) {
         itemName: serviceName,
         onConfirm: function (reason, callback) {
             $.ajax({
-                url: `/encounters/${encounterId}/imaging/${imagingId}`,
+                url: `{{ url('/encounters/${encounterId}/imaging/${imagingId}') }}`,
                 type: 'DELETE',
                 headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') },
                 data: { reason: reason },
@@ -65,7 +65,7 @@ function deletePrescription(prescriptionId, encounterId, productName) {
         itemName: productName,
         onConfirm: function (reason, callback) {
             $.ajax({
-                url: `/encounters/${encounterId}/prescriptions/${prescriptionId}`,
+                url: `{{ url('/encounters/${encounterId}/prescriptions/${prescriptionId}') }}`,
                 type: 'DELETE',
                 headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') },
                 data: { reason: reason },
@@ -227,7 +227,7 @@ function deleteNurseClinicalRequest(type, id, name) {
         itemName: name,
         onConfirm: function (reason, callback) {
             $.ajax({
-                url: '/nursing-workbench/clinical-requests/' + pathMap[type] + '/' + id,
+                url: '{{ url('/nursing-workbench/clinical-requests/') }}' + pathMap[type] + '/' + id,
                 type: 'DELETE',
                 headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') },
                 data: { reason: reason },
@@ -409,7 +409,7 @@ $('#saveEncounterEditBtn').on('click', function() {
     $(this).prop('disabled', true).html('<i class="fa fa-spinner fa-spin"></i> Saving...');
 
     $.ajax({
-        url: `/encounters/${encounterId}/notes`,
+        url: `{{ url('/encounters/${encounterId}/notes') }}`,
         type: 'PUT',
         headers: {
             'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')

@@ -1667,7 +1667,7 @@
                     if (evt.encounter_url) {
                         window.location.href = evt.encounter_url;
                     } else if (evt.queue_id) {
-                        window.location.href = '/encounters/create?patient_id=' + evt.patient_id + '&queue_id=' + evt.queue_id;
+                        window.location.href = '{{ url('/encounters/create?patient_id=') }}' + evt.patient_id + '&queue_id=' + evt.queue_id;
                     }
                     break;
                 case 'checkin':
