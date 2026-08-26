@@ -1784,7 +1784,7 @@ function reverseItem(itemId) {
     }).then((result) => {
         if (result.isConfirmed) {
             $.ajax({
-                url: `/inventory/requisitions/{{ $requisition->id }}/items/${itemId}/reverse`,
+                url: `{{ url('/inventory/requisitions/{{ $requisition->id }}/items/${itemId}/reverse') }}`,
                 type: 'PATCH',
                 data: {
                     _token: '{{ csrf_token() }}'
