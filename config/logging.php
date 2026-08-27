@@ -50,9 +50,18 @@ return [
     'channels' => [
         'stack' => [
             'driver' => 'stack',
-            'channels' => ['single'],
+            'channels' => ['single', 'json'],
             'ignore_exceptions' => false,
         ],
+
+        'json' => [
+            'driver' => 'daily',
+            'path' => storage_path('logs/laravel-json.log'),
+            'level' => env('LOG_LEVEL', 'debug'),
+            'days' => 14,
+            'formatter' => Monolog\Formatter\JsonFormatter::class,
+        ],
+
 
         'single' => [
             'driver' => 'single',

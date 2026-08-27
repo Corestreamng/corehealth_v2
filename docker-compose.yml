@@ -1,0 +1,60 @@
+version: '3.8'
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    depends_on:
+      - mysql
+      - redis
+    environment:
+      APP_NAME: CoreHealth
+      APP_ENV: local
+      APP_KEY: base64:eW91cmFwcGtleWhlcmVwbGVhc2VnZW5lcmF0ZXdpdGhhcnRpc2Fu
+      APP_DEBUG: "true"
+      APP_URL: http://localhost:8000
+      DB_CONNECTION: mysql
+      DB_HOST: mysql
+      DB_PORT: 3306
+      DB_DATABASE: corehealth_v2
+      DB_USERNAME: root
+      DB_PASSWORD: secretpassword
+      CACHE_DRIVER: redis
+      QUEUE_CONNECTION: redis
+      SESSION_DRIVER: redis
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+    volumes:
+      - .:/var/www/html
+      - /var/www/html/vendor
+
+  mysql:
+    image: mysql:8.0
+    container_name: corehealth_mysql
+    ports:
+      - "3306:3306"
+    environment:
+      MYSQL_DATABASE: corehealth_v2
+      MYSQL_ROOT_PASSWORD: secretpassword
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./_corehealth_db_v2_test.sql:/docker-entrypoint-initdb.d/01_seed.sql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-psecretpassword"]
+      timeout: 20s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    container_name: corehealth_redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+
+volumes:
+  mysql_data:
+  redis_data:
