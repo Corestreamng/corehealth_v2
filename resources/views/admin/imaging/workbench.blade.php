@@ -2842,10 +2842,12 @@
                 <i class="mdi mdi-package-variant"></i>
                 <span>Inventory (Coming Soon)</span>
             </button>
-            <button class="quick-action-btn" onclick="showEmergencyIntakeModal()">
+            @if(appsettings()->enable_ei_imaging)
+<button class="quick-action-btn" onclick="showEmergencyIntakeModal()">
                 <i class="mdi mdi-ambulance text-danger"></i>
                 <span>Emergency Intake</span>
             </button>
+@endif
         </div>
     </div>
 

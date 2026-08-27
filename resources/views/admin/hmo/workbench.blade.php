@@ -488,9 +488,11 @@
                         <i class="mdi mdi-view-dashboard mr-1"></i>Queue
                     </button>
                 </div>
-                <button class="btn btn-danger btn-sm" onclick="showEmergencyIntakeModal()">
+                @if(appsettings()->enable_ei_hmo)
+<button class="btn btn-danger btn-sm" onclick="showEmergencyIntakeModal()">
                     <i class="mdi mdi-ambulance"></i> Emergency Intake
                 </button>
+@endif
                 <span><i class="mdi mdi-calendar mr-1"></i>{{ date('l, F j, Y') }}</span>
             </div>
         </div>

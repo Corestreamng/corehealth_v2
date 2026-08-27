@@ -3,6 +3,7 @@
 @section('page_name', 'Consultations')
 @section('subpage_name', 'My Queue')
 @push('styles')
+    <link rel="stylesheet" href="{{ asset('assets/css/select2.min.css') }}">
     <link rel="stylesheet" href="{{ asset('plugins/fullcalendar/fullcalendar.min.css') }}">
     <link rel="stylesheet" href="{{ asset('css/queue-status.css') }}">
     <style>
@@ -488,19 +489,28 @@
 
     {{-- ══ Two Main Tabs ════════════════════════════════════════════════ --}}
     <div class="full-screen-tabs">
-        <ul class="nav nav-tabs" id="mainDoctorTabs" role="tablist">
-            <li class="nav-item" role="presentation">
-                <button class="nav-link active" id="appt-calendar-tab" data-bs-toggle="tab" data-bs-target="#appt-calendar-pane" type="button" role="tab">
-                    <i class="mdi mdi-calendar-clock"></i> My Appt Calendar
-                    <span class="badge bg-primary tab-badge" id="tab-badge-active">0</span>
+        <div class="d-flex justify-content-between align-items-center bg-white border-bottom pe-3 me-0" style="position: sticky; top: 0; z-index: 50;">
+            <ul class="nav nav-tabs border-bottom-0" id="mainDoctorTabs" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active" id="appt-calendar-tab" data-bs-toggle="tab" data-bs-target="#appt-calendar-pane" type="button" role="tab">
+                        <i class="mdi mdi-calendar-clock"></i> My Appt Calendar
+                        <span class="badge bg-primary tab-badge" id="tab-badge-active">0</span>
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="history-lists-tab" data-bs-toggle="tab" data-bs-target="#history-lists-pane" type="button" role="tab">
+                        <i class="mdi mdi-history"></i> Encounter Hist / Admissions
+                    </button>
+                </li>
+            </ul>
+            @if(appsettings()->enable_ei_doctor)
+            <div class="py-1 pe-2">
+                <button class="btn btn-danger btn-sm font-weight-bold shadow-sm" onclick="showEmergencyIntakeModal()">
+                    <i class="mdi mdi-ambulance"></i> Emergency Intake
                 </button>
-            </li>
-            <li class="nav-item" role="presentation">
-                <button class="nav-link" id="history-lists-tab" data-bs-toggle="tab" data-bs-target="#history-lists-pane" type="button" role="tab">
-                    <i class="mdi mdi-history"></i> Encounter Hist / Admissions
-                </button>
-            </li>
-        </ul>
+            </div>
+            @endif
+        </div>
 
         <div class="tab-content">
             {{-- ══════════════════════════════════════════════════════════════ --}}
@@ -1268,6 +1278,7 @@
 
 @endsection
 @section('scripts')
+    <script src="{{ asset('assets/js/select2.min.js') }}"></script>
     <script src="{{ asset('/plugins/dataT/datatables.js') }}" defer></script>
     <script src="{{ asset('plugins/daterangepicker/moment.js') }}" defer></script>
     <script src="{{ asset('plugins/fullcalendar/fullcalendar.min.js') }}" defer></script>
@@ -2493,4 +2504,6 @@
 
     });
     </script>
+
+@include('admin.partials.patient-form-modal')
 @endsection

@@ -3151,10 +3151,12 @@
                 <i class="mdi mdi-file-chart"></i>
                 <span>Reports</span>
             </button>
-            <button class="quick-action-btn" onclick="showEmergencyIntakeModal()">
+            @if(appsettings()->enable_ei_reception)
+<button class="quick-action-btn" onclick="showEmergencyIntakeModal()">
                 <i class="mdi mdi-ambulance text-danger"></i>
                 <span>Emergency Intake</span>
             </button>
+@endif
             <button class="quick-action-btn" onclick="showMorgueAdmissionModal()">
                 <i class="mdi mdi-emoticon-dead text-dark"></i>
                 <span>Morgue Admission (BID)</span>
