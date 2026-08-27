@@ -1,6 +1,6 @@
 # CoreHealth v2 - Hospital Management Information System
 
-CoreHealth v2 is a comprehensive, enterprise-grade Hospital Management Information System (HMIS) built on Laravel. It provides an integrated platform for managing all aspects of healthcare facility operations, from patient care and clinical workflows to financial management and human resources.
+CoreHealth v2 is a comprehensive, enterprise-grade Hospital Management Information System (HMIS) built on Laravel. It provides an integrated platform for managing all aspects of healthcare facility operations, from patient care and clinical workflows to financial management, human resources, multi-store inventory, and AI-assisted clinical summarization.
 
 ## Table of Contents
 
@@ -11,10 +11,13 @@ CoreHealth v2 is a comprehensive, enterprise-grade Hospital Management Informati
 - [Accounting & Finance](#accounting--finance)
 - [Module Documentation](#module-documentation)
 - [Installation & Setup](#installation--setup)
+- [Docker Deployment](#docker-deployment)
 - [Development](#development)
 - [Artisan Commands](#artisan-commands)
 - [Testing](#testing)
+- [CI/CD & Governance](#cicd--governance)
 - [Contributing](#contributing)
+- [Security](#security)
 - [License](#license)
 
 ## Overview
@@ -25,12 +28,15 @@ CoreHealth v2 is designed to streamline hospital operations by integrating clini
 
 | Component       | Technology                                     |
 |-----------------|------------------------------------------------|
-| **Framework**   | Laravel 8.x (PHP 8.x)                         |
-| **Frontend**    | Blade Templates, jQuery, Select2, Chart.js     |
-| **Database**    | MySQL / MariaDB                                |
-| **Architecture**| MVC with Service-Observer pattern              |
+| **Framework**   | Laravel 8.x (PHP 8.3 target)                   |
+| **Container**   | Docker & Docker Compose (PHP 8.3 FPM + Nginx + MySQL 8.0 + Redis 7) |
+| **CI/CD**       | GitHub Actions Automated Pipeline              |
+| **Frontend**    | Blade Templates, Vanilla CSS, jQuery, Select2, Chart.js |
+| **Database**    | MySQL 8.0 / MariaDB                            |
+| **Architecture**| MVC with Service-Observer pattern (46 observers) |
 | **Auth & RBAC** | Laravel UI + Spatie Permission                 |
 | **DataTables**  | Yajra Laravel DataTables (server-side)         |
+| **Logging**     | Structured Monolog JSON Channel                |
 | **Auditing**    | owen-it/laravel-auditing                       |
 | **Assets**      | Laravel Mix (Webpack)                          |
 | **PDF/Invoices**| DomPDF, laraveldaily/laravel-invoices           |
@@ -111,7 +117,7 @@ CoreHealth v2 is designed to streamline hospital operations by integrating clini
 - **Manager KPIs** — custom KPI widgets for Pharmacy, Wards, and Central Stores
 
 ### 12. Billing & Revenue Cycle
-- **Billing Workbench** — payment queue, receipts, refunds
+- **Billing Workbench** — payment queue, receipts, refunds, materialized queue optimization
 - **Multi-Payment** — Cash, Card, Transfer, HMO, Patient Wallet
 - **Patient Deposits** — wallet system with auto-debit on billing
 - **My Transactions** — patient-facing billing portal
@@ -214,8 +220,10 @@ database/
 ├── migrations/           # Schema history
 └── seeders/              # Sample data
 
+docker/                   # Docker environment configs (Nginx & Supervisor)
 resources/views/admin/    # Blade templates (workbenches, modals, partials)
 routes/                   # 15 route files (web, accounting, hr, nursing, etc.)
+tests/                    # 35 domain-specific PHPUnit feature and unit test suites
 docs/                     # 30+ documentation files
 ```
 
@@ -368,17 +376,17 @@ The following transactions automatically create double-entry JEs via observers:
 
 ### Prerequisites
 
-- PHP >= 8.0
+- PHP >= 8.3
 - Composer
-- MySQL >= 5.7 or MariaDB >= 10.3
-- Node.js >= 14.x
+- MySQL >= 8.0 or MariaDB >= 10.3
+- Node.js >= 18.x
 - npm
 
 ### Installation Steps
 
 1. **Clone the repository**
    ```bash
-   git clone <repository-url>
+   git clone https://github.com/Corestreamng/corehealth_v2.git
    cd corehealth_v2
    ```
 
@@ -408,32 +416,54 @@ The following transactions automatically create double-entry JEs via observers:
    php artisan migrate
    ```
 
-7. **Seed the database** (optional)
-   ```bash
-   php artisan db:seed
-   ```
-
-8. **Compile assets**
+7. **Compile assets**
    ```bash
    npm run dev
    # or for production
    npm run production
    ```
 
-9. **Generate optimised autoloader** (required for production / Unix deploy)
+8. **Generate optimised autoloader** (required for production / Unix deploy)
    ```bash
    composer dump-autoload -o
    ```
    > ⚠️ **Case-sensitivity caveat**: Some model files use lowercase filenames (e.g. `patient.php` for class `patient`). PHP class names are case-insensitive at runtime, but Composer's PSR-4 autoloader maps `Patient` $\rightarrow$ `Patient.php` literally, which fails on case-sensitive filesystems (Linux/Unix). Running `composer dump-autoload -o` builds a full classmap that resolves classes by scanning file contents, bypassing the filename case issue.
-   >
-   > **You must re-run this command after adding new classes.** The long-term fix is renaming files to match PSR-4 PascalCase conventions.
 
-10. **Start the development server**
-    ```bash
-    php artisan serve
-    ```
+9. **Start the development server**
+   ```bash
+   php artisan serve
+   ```
 
 Visit `http://localhost:8000` to access the application.
+
+---
+
+## Docker Deployment
+
+CoreHealth v2 includes a complete containerized environment for development and production based on **PHP 8.3 FPM**, **Nginx**, **MySQL 8.0**, and **Redis 7**.
+
+### Launching with Docker Compose
+
+```bash
+# Build and start all services (app, mysql, redis)
+docker compose up -d --build # or: docker-compose up -d --build
+
+# Run migrations & seed database in the container
+docker compose exec app php artisan migrate --seed
+
+# Execute PHPUnit tests inside the container
+docker compose exec app vendor/bin/phpunit
+
+# View container status
+docker compose ps
+```
+
+
+The Docker stack includes:
+- **`Dockerfile`**: PHP 8.3 FPM image with essential extensions (`pdo_mysql`, `gd`, `zip`, `intl`, `mbstring`, `bcmath`, `opcache`), Composer, and Nginx.
+- **`docker/nginx.conf`**: Nginx web server configuration listening on port 8000.
+- **`docker/supervisord.conf`**: Process manager running PHP-FPM and Nginx concurrently.
+- **`docker-compose.yml`**: Multi-container orchestration linking application, MySQL 8.0 database, and Redis 7 caching service.
 
 ---
 
@@ -502,22 +532,35 @@ CoreHealth targets **MySQL/MariaDB**. Key compatibility notes:
 
 ## Testing
 
-### Running Tests
+### Automated Testing Suite (35 Domain Test Suites)
+
+The codebase features **35 domain-specific PHPUnit test suites** containing **155+ test methods**, verified against the live MySQL test database (`_corehealth_db_v2_test`).
+
+#### Running Tests
 
 ```bash
-# Run all tests
+# Run all tests via PHPUnit
+vendor/bin/phpunit
+
+# Or via Artisan
 php artisan test
 
-# Run specific test suite
-php artisan test --testsuite=Feature
+# Run a specific domain suite (e.g. Pharmacy FIFO Dispense)
+vendor/bin/phpunit tests/Feature/Pharmacy/FifoDispenseTest.php
 
-# Run with coverage
-php artisan test --coverage
+# Run with testdox formatted output
+vendor/bin/phpunit --testdox
 ```
+
+#### Test Architecture & Database Directives
+
+- **Database Standard**: All feature and unit tests run against MySQL to guarantee complete schema compatibility. SQLite and `RefreshDatabase` are strictly prohibited.
+- **Transactions**: `Tests\TestCase` base class uses `Illuminate\Foundation\Testing\DatabaseTransactions`. All database changes in tests automatically roll back upon completion.
+- **Domain Organization**: Test files are structured inside `tests/Feature/` and `tests/Unit/` by clinical and administrative domain (e.g., `tests/Feature/OpsAudit/`, `tests/Feature/HMO/`, `tests/Feature/Pharmacy/`).
 
 ### Development Utilities
 
-Several utility scripts are available in the project root:
+Several utility scripts are available in the project root for manual validation during development:
 
 - `check_*.php` — Database and configuration validation scripts
 - `debug_*.php` — Debugging tools for specific modules
@@ -528,22 +571,21 @@ See [Testing Checklist](docs/TESTING_CHECKLIST.md) for detailed testing procedur
 
 ---
 
+## CI/CD & Governance
+
+- **Automated CI Workflow** ([.github/workflows/ci.yml](.github/workflows/ci.yml)): GitHub Actions pipeline running PHP 8.3, setting up a MySQL 8.0 container, importing `_corehealth_db_v2_test.sql`, and executing PHPUnit on push / pull request.
+- **Structured JSON Logging**: Enabled via Monolog `JsonFormatter` channel in `config/logging.php`.
+- **Dependabot**: Configured in [.github/dependabot.yml](.github/dependabot.yml) for weekly Composer and NPM dependency security checks.
+- **Semantic Version Tags**: Tagged across 35 historic milestones starting from `v2.0.0.0` through `v2.5.0.1`.
+
+---
+
 ## Contributing
 
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/AmazingFeature`)
-3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push to the branch (`git push origin feature/AmazingFeature`)
-5. Open a Pull Request
-
-### Coding Standards
-
-- Follow PSR-12 coding standards for PHP
-- Use PascalCase for class names and filenames (PSR-4)
-- Run `composer dump-autoload -o` after adding new classes (required for Unix deploy)
-- Write comprehensive docblocks
-- Include unit tests for new features
-- Update documentation as needed
+1. Review [CONTRIBUTING.md](CONTRIBUTING.md) for PR requirements, branch workflow, and testing rules.
+2. Follow PSR-12 coding standards for PHP.
+3. Run `composer dump-autoload -o` after adding new classes.
+4. Ensure 100% of test suites pass cleanly before opening pull requests.
 
 ---
 
