@@ -1087,6 +1087,46 @@
                             </div>
                         </div>
 
+                        
+                        <!-- Emergency Intake Settings Card -->
+                        <div class="card-modern mb-4" style="border-radius: 12px; border: none; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+                            <div class="card-header bg-white" style="border-bottom: 1px solid #e9ecef;">
+                                <h5 class="mb-0" style="font-weight: 600; color: #1a1a1a;">
+                                    <i class="mdi mdi-ambulance mr-2" style="color: var(--primary-color);"></i>
+                                    Emergency Intake Access
+                                </h5>
+                            </div>
+                            <div class="card-body" style="padding: 2rem;">
+                                @php
+                                    $ei_toggles = [
+                                        'enable_ei_reception' => 'Reception',
+                                        'enable_ei_nursing' => 'Nursing',
+                                        'enable_ei_doctor' => 'Doctors',
+                                        'enable_ei_pharmacy' => 'Pharmacy',
+                                        'enable_ei_lab' => 'Laboratory',
+                                        'enable_ei_imaging' => 'Imaging',
+                                        'enable_ei_billing' => 'Billing',
+                                        'enable_ei_hmo' => 'HMO / Insurance'
+                                    ];
+                                @endphp
+                                
+                                @foreach($ei_toggles as $key => $label)
+                                <div class="mb-3">
+                                    <div class="feature-toggle-row" style="display: flex; justify-content: space-between; align-items: center;">
+                                        <div>
+                                            <strong>{{ $label }}</strong>
+                                            <div class="text-muted small">Enable emergency intake in {{ $label }}</div>
+                                        </div>
+                                        <div class="custom-control custom-switch custom-switch-primary">
+                                            <input type="checkbox" class="custom-control-input" id="{{ $key }}" name="{{ $key }}" {{ $config->$key ? 'checked' : '' }}>
+                                            <label class="custom-control-label" for="{{ $key }}"></label>
+                                        </div>
+                                    </div>
+                                </div>
+                                @endforeach
+                            </div>
+                        </div>
+
                         <!-- Inventory Settings Card -->
                         <div class="card-modern mb-4" style="border-radius: 12px; border: none; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
                             <div class="card-header bg-white" style="border-bottom: 1px solid #e9ecef;">
