@@ -573,7 +573,7 @@ function removeProcedure(btn, serviceId) {
 
     if (recordId) {
         ClinicalOrdersKit.removeItem({
-            url: '{{ url('/encounters/') }}' + encounterId + '/procedures/' + recordId,
+            url: '{{ url('/encounters') }}/' + encounterId + '/procedures/' + recordId,
             csrfToken: $('meta[name="csrf-token"]').attr('content'),
             rowSelector: $tr,
             type: 'procedures',

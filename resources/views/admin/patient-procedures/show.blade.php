@@ -3208,7 +3208,7 @@ $rawTemplate
             _token: $('meta[name="csrf-token"]').attr('content'),
         };
         $.ajax({
-            url: '{{ url('/patient-procedures/') }}' + procedureId + '/team',
+            url: '{{ url('/patient-procedures') }}/' + procedureId + '/team',
             method: 'POST',
             data: formData,
             success: function() {
@@ -3227,7 +3227,7 @@ $rawTemplate
     function removeTeamMember(memberId) {
         if (!confirm('Remove this team member?')) return;
         $.ajax({
-            url: '{{ url('/patient-procedures/') }}' + procedureId + '/team/' + memberId,
+            url: '{{ url('/patient-procedures') }}/' + procedureId + '/team/' + memberId,
             method: 'DELETE',
             data: {
                 _token: $('meta[name="csrf-token"]').attr('content')
@@ -3320,7 +3320,7 @@ $rawTemplate
     function deleteNote(noteId) {
         if (!confirm('Delete this note?')) return;
         $.ajax({
-            url: '{{ url('/patient-procedures/') }}' + procedureId + '/notes/' + noteId,
+            url: '{{ url('/patient-procedures') }}/' + procedureId + '/notes/' + noteId,
             method: 'POST',
             data: {
                 _token: $('meta[name="csrf-token"]').attr('content'),
@@ -3364,7 +3364,7 @@ $rawTemplate
             return;
         }
         $.ajax({
-            url: '{{ url('/patient-procedures/') }}' + procedureId + '/notes',
+            url: '{{ url('/patient-procedures') }}/' + procedureId + '/notes',
             method: 'POST',
             data: {
                 note_type: 'nursing',
@@ -3661,7 +3661,7 @@ $rawTemplate
     function removeItem(itemId) {
         if (!confirm('Remove this item?')) return;
         $.ajax({
-            url: '{{ url('/patient-procedures/') }}' + procedureId + '/items/' + itemId,
+            url: '{{ url('/patient-procedures') }}/' + procedureId + '/items/' + itemId,
             method: 'POST',
             data: {
                 _token: $('meta[name="csrf-token"]').attr('content'),
@@ -3688,7 +3688,7 @@ $rawTemplate
         const btn = $(this).find('button[type=submit]');
         btn.prop('disabled', true).html('<i class="fa fa-spin fa-spinner mr-1"></i>Cancelling…');
         $.ajax({
-            url: '{{ url('/patient-procedures/') }}' + procedureId + '/cancel',
+            url: '{{ url('/patient-procedures') }}/' + procedureId + '/cancel',
             method: 'POST',
             data: {
                 cancellation_reason: $('#cancellation_reason').val(),
@@ -3718,7 +3718,7 @@ $rawTemplate
         const btn = $(this).find('button[type=submit]');
         btn.prop('disabled', true).html('<i class="fa fa-spin fa-spinner mr-1"></i>Saving…');
         $.ajax({
-            url: '{{ url('/patient-procedures/') }}' + procedureId + '/outcome',
+            url: '{{ url('/patient-procedures') }}/' + procedureId + '/outcome',
             method: 'POST',
             data: {
                 outcome: $('#outcome').val(),
@@ -3740,7 +3740,7 @@ $rawTemplate
     /* ═══════════════ STATUS ═══════════════ */
     function updateStatus(status) {
         $.ajax({
-            url: '{{ url('/patient-procedures/') }}' + procedureId,
+            url: '{{ url('/patient-procedures') }}/' + procedureId,
             method: 'POST',
             data: {
                 procedure_status: status,
@@ -3759,7 +3759,7 @@ $rawTemplate
 
     function completeProcedure() {
         $.ajax({
-            url: '{{ url('/patient-procedures/') }}' + procedureId + '/complete',
+            url: '{{ url('/patient-procedures') }}/' + procedureId + '/complete',
             method: 'POST',
             data: {
                 _token: $('meta[name="csrf-token"]').attr('content')
@@ -3809,7 +3809,7 @@ $rawTemplate
         }
         btn.prop('disabled', true).html('<i class="fa fa-spin fa-spinner mr-1"></i>Saving…');
         $.ajax({
-            url: '{{ url('/patient-procedures/') }}' + procedureId,
+            url: '{{ url('/patient-procedures') }}/' + procedureId,
             method: 'POST',
             data: {
                 procedure_status: 'scheduled',
@@ -4146,7 +4146,7 @@ $rawTemplate
         btn.prop('disabled', true).html('<i class="fa fa-spin fa-spinner mr-2"></i>Generating Branded PDF…');
 
         $.ajax({
-            url: '{{ url('/patient-procedures/') }}' + procedureId + '/consent/sign',
+            url: '{{ url('/patient-procedures') }}/' + procedureId + '/consent/sign',
             method: 'POST',
             data: {
                 signee_name: signeeName,
@@ -4189,7 +4189,7 @@ $rawTemplate
         formData.append('label', $('#attachment-label').val());
         formData.append('_token', $('meta[name="csrf-token"]').attr('content'));
         $.ajax({
-            url: '{{ url('/patient-procedures/') }}' + procedureId + '/attachments',
+            url: '{{ url('/patient-procedures') }}/' + procedureId + '/attachments',
             method: 'POST',
             data: formData,
             processData: false,
@@ -4212,7 +4212,7 @@ $rawTemplate
 
     function executeDeleteAttachment(attId) {
         $.ajax({
-            url: '{{ url('/patient-procedures/') }}' + procedureId + '/attachments/' + attId,
+            url: '{{ url('/patient-procedures') }}/' + procedureId + '/attachments/' + attId,
             method: 'POST',
             data: {
                 _token: $('meta[name="csrf-token"]').attr('content'),

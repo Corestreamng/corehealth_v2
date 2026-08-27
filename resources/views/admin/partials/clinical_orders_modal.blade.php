@@ -309,7 +309,7 @@ function removeSurgeryProcedure(btn, id, name) {
             itemName: name,
             onConfirm: function(reason, callback) {
                 $.ajax({
-                    url: '{{ url('/nursing-workbench/clinical-requests/procedures/') }}' + id,
+                    url: '{{ url('/nursing-workbench/clinical-requests/procedures') }}/' + id,
                     type: 'DELETE',
                     headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') },
                     data: { reason: reason },
