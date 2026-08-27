@@ -223,6 +223,7 @@
             </div>
         </div>
     @endif
+@include('admin.partials.patient-form-modal')
 @endsection
 
 @section('style')

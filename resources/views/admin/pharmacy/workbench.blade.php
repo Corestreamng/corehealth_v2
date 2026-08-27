@@ -4134,10 +4134,12 @@
                 <i class="mdi mdi-file-invoice-dollar"></i>
                 <span>Generate Invoice (Coming Soon)</span>
             </button>
-            <button class="quick-action-btn" onclick="showEmergencyIntakeModal()">
+            @if(appsettings()->enable_ei_pharmacy)
+<button class="quick-action-btn" onclick="showEmergencyIntakeModal()">
                 <i class="mdi mdi-ambulance text-danger"></i>
                 <span>Emergency Intake</span>
             </button>
+@endif
         </div>
     </div>
 

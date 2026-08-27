@@ -19,6 +19,14 @@
                     </h2>
                     <p class="text-muted mb-0">Browse and review clinical encounter records</p>
                 </div>
+
+                <div>
+                    @if(appsettings()->enable_ei_doctor)
+                    <button class="btn btn-danger btn-sm" onclick="showEmergencyIntakeModal()">
+                        <i class="mdi mdi-ambulance"></i> Emergency Intake
+                    </button>
+                    @endif
+                </div>
             </div>
 
             <div class="card-body">
@@ -106,6 +114,8 @@
             });
         });
     </script>
+
+@include('admin.partials.patient-form-modal')
 @endsection
 
 
