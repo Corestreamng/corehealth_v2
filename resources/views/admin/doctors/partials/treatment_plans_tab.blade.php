@@ -1141,7 +1141,7 @@ window.TreatmentPlansTab = (function($) {
     /* ── Refresh Progress ── */
     function refreshProgress(planId) {
         $.ajax({
-            url: '{{ url('/treatment-plans/') }}' + planId + '/progress',
+            url: '{{ url('/treatment-plans') }}/' + planId + '/progress',
             method: 'PUT',
             data: { _token: $('meta[name="csrf-token"]').attr('content') },
             success: function(r) {
@@ -1205,7 +1205,7 @@ window.TreatmentPlansTab = (function($) {
         $btn.prop('disabled', true).html('<i class="fa fa-spinner fa-spin me-1"></i> Retiring...');
 
         $.ajax({
-            url: '{{ url('/treatment-plans/') }}' + planId + '/retire',
+            url: '{{ url('/treatment-plans') }}/' + planId + '/retire',
             method: 'PUT',
             data: {
                 _token: $('meta[name="csrf-token"]').attr('content'),

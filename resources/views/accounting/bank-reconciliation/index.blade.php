@@ -294,7 +294,7 @@ $(document).ready(function() {
 
     $('#confirm-approve').click(function() {
         $.ajax({
-            url: '{{ url('/accounting/bank-reconciliation/') }}' + currentId + '/approve',
+            url: '{{ url('/accounting/bank-reconciliation') }}/' + currentId + '/approve',
             type: 'POST',
             data: { _token: '{{ csrf_token() }}' },
             success: function(res) {

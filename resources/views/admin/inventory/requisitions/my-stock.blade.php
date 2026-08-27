@@ -690,7 +690,7 @@
             $pkgSelect.html('<option value="" data-base="1">Loading...</option>');
 
             $.ajax({
-                url: '{{ url('/products/') }}' + productId + '/packagings',
+                url: '{{ url('/products') }}/' + productId + '/packagings',
                 method: 'GET',
                 success: function(response) {
                     const baseUnit = response.base_unit_name || 'units';

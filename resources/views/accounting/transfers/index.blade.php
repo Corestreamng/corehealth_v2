@@ -1107,7 +1107,7 @@ $(document).ready(function() {
         var btn = $(this);
         btn.prop('disabled', true).html('<i class="mdi mdi-loading mdi-spin"></i> Processing...');
         $.ajax({
-            url: '{{ url('/accounting/transfers/') }}' + currentId + '/approve',
+            url: '{{ url('/accounting/transfers') }}/' + currentId + '/approve',
             type: 'POST',
             data: { _token: '{{ csrf_token() }}' },
             success: function(res) {
@@ -1133,7 +1133,7 @@ $(document).ready(function() {
         var btn = $(this);
         btn.prop('disabled', true);
         $.ajax({
-            url: '{{ url('/accounting/transfers/') }}' + currentId + '/reject',
+            url: '{{ url('/accounting/transfers') }}/' + currentId + '/reject',
             type: 'POST',
             data: { _token: '{{ csrf_token() }}', rejection_reason: reason },
             success: function(res) {
@@ -1154,7 +1154,7 @@ $(document).ready(function() {
         var btn = $(this);
         btn.prop('disabled', true).html('<i class="mdi mdi-loading mdi-spin"></i> Processing...');
         $.ajax({
-            url: '{{ url('/accounting/transfers/') }}' + currentId + '/confirm-clearance',
+            url: '{{ url('/accounting/transfers') }}/' + currentId + '/confirm-clearance',
             type: 'POST',
             data: {
                 _token: '{{ csrf_token() }}',
@@ -1179,7 +1179,7 @@ $(document).ready(function() {
         var btn = $(this);
         btn.prop('disabled', true);
         $.ajax({
-            url: '{{ url('/accounting/transfers/') }}' + currentId + '/cancel',
+            url: '{{ url('/accounting/transfers') }}/' + currentId + '/cancel',
             type: 'POST',
             data: { _token: '{{ csrf_token() }}' },
             success: function(res) {
@@ -1205,7 +1205,7 @@ $(document).ready(function() {
         var btn = $(this);
         btn.prop('disabled', true);
         $.ajax({
-            url: '{{ url('/accounting/transfers/') }}' + currentId + '/mark-failed',
+            url: '{{ url('/accounting/transfers') }}/' + currentId + '/mark-failed',
             type: 'POST',
             data: { _token: '{{ csrf_token() }}', failure_reason: reason },
             success: function(res) {

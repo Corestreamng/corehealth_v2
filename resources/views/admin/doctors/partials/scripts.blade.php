@@ -227,7 +227,7 @@ function deleteNurseClinicalRequest(type, id, name) {
         itemName: name,
         onConfirm: function (reason, callback) {
             $.ajax({
-                url: '{{ url('/nursing-workbench/clinical-requests/') }}' + pathMap[type] + '/' + id,
+                url: '{{ url('/nursing-workbench/clinical-requests') }}/' + pathMap[type] + '/' + id,
                 type: 'DELETE',
                 headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') },
                 data: { reason: reason },

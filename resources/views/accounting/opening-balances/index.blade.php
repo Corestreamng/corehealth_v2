@@ -344,7 +344,7 @@ $(document).ready(function() {
         $btn.prop('disabled', true).html('<i class="mdi mdi-loading mdi-spin mr-1"></i> Saving...');
 
         $.ajax({
-            url: '{{ url('/accounting/opening-balances/') }}' + accountId,
+            url: '{{ url('/accounting/opening-balances') }}/' + accountId,
             method: 'POST',
             data: $(this).serialize() + '&_method=PUT',
             headers: {

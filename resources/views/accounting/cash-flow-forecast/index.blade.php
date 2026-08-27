@@ -310,7 +310,7 @@ $(document).ready(function() {
         var id = $(this).data('id');
         if (confirm('Activate this forecast? This will deactivate any currently active forecast.')) {
             $.ajax({
-                url: '{{ url('/accounting/cash-flow-forecast/') }}' + id + '/activate',
+                url: '{{ url('/accounting/cash-flow-forecast') }}/' + id + '/activate',
                 type: 'POST',
                 data: { _token: '{{ csrf_token() }}' },
                 success: function(response) {

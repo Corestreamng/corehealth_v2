@@ -332,7 +332,7 @@ $(document).ready(function() {
         var id = $(this).data('id');
         if (confirm('Submit this budget for approval?')) {
             $.ajax({
-                url: '{{ url('/accounting/budgets/') }}' + id + '/submit',
+                url: '{{ url('/accounting/budgets') }}/' + id + '/submit',
                 type: 'POST',
                 data: { _token: '{{ csrf_token() }}' },
                 success: function(response) {
@@ -355,7 +355,7 @@ $(document).ready(function() {
         var id = $(this).data('id');
         if (confirm('Approve this budget?')) {
             $.ajax({
-                url: '{{ url('/accounting/budgets/') }}' + id + '/approve',
+                url: '{{ url('/accounting/budgets') }}/' + id + '/approve',
                 type: 'POST',
                 data: { _token: '{{ csrf_token() }}' },
                 success: function(response) {
@@ -379,7 +379,7 @@ $(document).ready(function() {
         var reason = prompt('Please provide a reason for rejection:');
         if (reason) {
             $.ajax({
-                url: '{{ url('/accounting/budgets/') }}' + id + '/reject',
+                url: '{{ url('/accounting/budgets') }}/' + id + '/reject',
                 type: 'POST',
                 data: { _token: '{{ csrf_token() }}', reason: reason },
                 success: function(response) {
@@ -404,7 +404,7 @@ $(document).ready(function() {
         if (reason && reason.length>= 10) {
             if (confirm('Are you sure you want to unapprove this budget? This action will be logged in the audit trail.')) {
                 $.ajax({
-                    url: '{{ url('/accounting/budgets/') }}' + id + '/unapprove',
+                    url: '{{ url('/accounting/budgets') }}/' + id + '/unapprove',
                     type: 'POST',
                     data: { _token: '{{ csrf_token() }}', reason: reason },
                     success: function(response) {
@@ -430,7 +430,7 @@ $(document).ready(function() {
         var id = $(this).data('id');
         if (confirm('⚠️ WARNING: Locking this budget will prevent all future changes, including unapproval. Are you sure?')) {
             $.ajax({
-                url: '{{ url('/accounting/budgets/') }}' + id + '/lock',
+                url: '{{ url('/accounting/budgets') }}/' + id + '/lock',
                 type: 'POST',
                 data: { _token: '{{ csrf_token() }}' },
                 success: function(response) {

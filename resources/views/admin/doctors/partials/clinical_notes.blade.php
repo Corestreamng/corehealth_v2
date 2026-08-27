@@ -709,7 +709,7 @@ function deleteFavorite(favoriteId, e) {
     if (!confirm('Delete this favorite?')) return;
 
     $.ajax({
-        url: '{{ url('/diagnosis-favorites/') }}' + favoriteId,
+        url: '{{ url('/diagnosis-favorites') }}/' + favoriteId,
         method: 'DELETE',
         data: { _token: $('meta[name="csrf-token"]').attr('content') },
         success: function() {

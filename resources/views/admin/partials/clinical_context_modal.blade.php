@@ -744,7 +744,7 @@
         window.loadUnviewedCounts = function(pId) {
             if (!pId) return;
             $.ajax({
-                url: '{{ url('/result-views/unviewed-counts/') }}' + pId,
+                url: '{{ url('/result-views/unviewed-counts') }}/' + pId,
                 type: 'GET',
                 success: function(response) {
                     if (response.success) {
