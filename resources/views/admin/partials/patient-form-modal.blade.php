@@ -1301,9 +1301,9 @@
     }
 
     /* Unidentified mode: hide irrelevant rows, show compact fields */
-    #pf-new-patient-wrapper.pf-unidentified-active .pf-hide-unidentified { display: none !important; }
+    .pf-unidentified-active .pf-hide-unidentified { display: none !important; }
     .pf-show-unidentified { display: none; }
-    #pf-new-patient-wrapper.pf-unidentified-active .pf-show-unidentified { display: flex !important; }
+    .pf-unidentified-active .pf-show-unidentified { display: flex !important; }
 
     /* Unidentified patient toggle */
     .emi-identity-mode .btn-check:checked + .btn-outline-warning {
@@ -1377,6 +1377,7 @@
 // Shared flag – used by both the main form logic (document.ready) and the
 // emergency-mode IIFE below.
 var pfEmergencyMode = false;
+var pfActiveScheme = '';
 
 // Patient Form Config - must be set by the including page
 if (typeof window.patientFormConfig === 'undefined') {
@@ -2132,6 +2133,11 @@ function validatePatientFormStep(step) {
     }
 
     if (step === 4) {
+        // Emergency mode: existing patients already have HMO on record — skip check.
+        if (pfEmergencyMode && $('#pf-emergency-patient-id').val()) return true;
+        // Emergency mode: new/unidentified patients default to Self/Private — safe to skip
+        // only if the user hasn't explicitly selected a non-private scheme.
+        if (pfEmergencyMode && (!pfActiveScheme || pfActiveScheme === 'Self/Private')) return true;
         if (pfActiveScheme !== 'Self/Private' && !$('#pf-hmo').val()) {
             toastr.warning('Please select an HMO provider.');
             return false;
@@ -2937,8 +2943,8 @@ function disableWalkInMode() {
 
     // Expose function to open modal in emergency mode
     window.showEmergencyIntakeModal = function() {
-        enableEmergencyMode();
         showPatientFormModal('create');
+        enableEmergencyMode();
     };
 
     // Expose function to open modal in direct morgue admission mode
@@ -2981,6 +2987,8 @@ function disableWalkInMode() {
 
     function enableEmergencyMode() {
         pfEmergencyMode = true;
+        // Default sequence includes HMO step (step 4). It is removed dynamically
+        // when an existing patient is selected (their HMO is already on file).
         pfStepSequence = [1, 5, 6, 4];
 
         var $modal = $('#patientFormModal');
@@ -2999,6 +3007,17 @@ function disableWalkInMode() {
         // Reset BID fields
         $('#pf-is-bid').prop('checked', false);
         $('#pf-bid-info').hide();
+
+        // Apply Select2 to bare emergency-step selects (ESI, arrival mode, etc.) if select2 plugin is loaded
+        if ($.fn && $.fn.select2) {
+            var s2Opts = { dropdownParent: $modal, width: '100%', allowClear: false };
+            ['#pf-esi-level', '#pf-arrival-mode', '#pf-gender', '#pf-approx-age-unid', '#pf-gender-unid'].forEach(function(sel) {
+                var $s = $(sel);
+                if ($s.length && !$s.hasClass('select2-hidden-accessible')) {
+                    $s.select2($.extend({}, s2Opts, { placeholder: $s.find('option:first').text() || 'Select...' }));
+                }
+            });
+        }
 
         // Generate EX- prefixed file number for emergency patients
         generateEmergencyFileNumber();
@@ -3104,14 +3123,20 @@ function disableWalkInMode() {
                     $results.html('<div class="list-group-item text-muted text-center">No patients found</div>');
                 } else {
                     patients.forEach(function(p) {
+                        var schemeBadgeClass = (p.hmo_scheme === 'Self/Private') ? 'bg-secondary' : 'bg-success';
                         $results.append(
                             '<a href="#" class="list-group-item list-group-item-action pf-emergency-patient-item py-1"' +
                             ' data-id="' + p.id + '" data-name="' + escapeHtml(p.name) + '" data-fileno="' + escapeHtml(p.file_no) + '"' +
-                            ' data-phone="' + escapeHtml(p.phone || '') + '" data-hmo="' + escapeHtml(p.hmo || '') + '" data-allergies="' + escapeHtml(p.allergies || '') + '">' +
+                            ' data-phone="' + escapeHtml(p.phone || '') + '"' +
+                            ' data-hmo="' + escapeHtml(p.hmo || 'Private') + '"' +
+                            ' data-hmo-id="' + (p.hmo_id || '') + '"' +
+                            ' data-hmo-scheme="' + escapeHtml(p.hmo_scheme || 'Self/Private') + '"' +
+                            ' data-hmo-no="' + escapeHtml(p.hmo_no || '') + '"' +
+                            ' data-allergies="' + escapeHtml(p.allergies || '') + '">' +
                             '<div class="d-flex justify-content-between align-items-center">' +
                             '<div><strong>' + escapeHtml(p.name) + '</strong>' +
                             '<small class="d-block text-muted">' + escapeHtml(p.file_no) + ' | ' + (p.gender || '') + ' | ' + escapeHtml(p.phone || '') + '</small></div>' +
-                            '<span class="badge bg-secondary">' + escapeHtml(p.hmo || 'Private') + '</span>' +
+                            '<span class="badge ' + schemeBadgeClass + '">' + escapeHtml(p.hmo || 'Private') + '</span>' +
                             '</div></a>'
                         );
                     });
@@ -3125,12 +3150,17 @@ function disableWalkInMode() {
     $(document).on('click', '.pf-emergency-patient-item', function(e) {
         e.preventDefault();
         var $el = $(this);
-        var name = $el.data('name');
+        var name       = $el.data('name');
+        var hmoId      = $el.data('hmo-id');
+        var hmoScheme  = $el.data('hmo-scheme') || 'Self/Private';
+        var hmoName    = $el.data('hmo')   || 'Private';
+        var hmoNo      = $el.data('hmo-no') || '';
+
         $('#pf-emergency-patient-id').val($el.data('id'));
         $('#pf-emergency-patient-name').text(name);
         $('#pf-emergency-patient-fileno').text($el.data('fileno'));
         $('#pf-emergency-patient-phone').text($el.data('phone'));
-        $('#pf-emergency-patient-hmo').text($el.data('hmo') || 'Private');
+        $('#pf-emergency-patient-hmo').text(hmoName);
         // Avatar initials
         var initials = name ? name.split(' ').map(function(w){ return w[0]; }).join('').substring(0,2).toUpperCase() : '?';
         $('#pf-emergency-patient-avatar').text(initials);
@@ -3139,9 +3169,30 @@ function disableWalkInMode() {
         $('#pf-emergency-patient-search').val('');
         $('#pf-existing-empty-state').hide();
 
+        // Pre-fill HMO step with patient's existing insurance
+        if (hmoId) {
+            $('#pf-hmo').val(hmoId);
+            if ($('#pf-hmo').hasClass('select2-hidden-accessible')) {
+                $('#pf-hmo').trigger('change');
+            }
+            $('#pf-hmo-no').val(hmoNo);
+            if (hmoNo) $('#pf-hmo-no-container').show();
+        }
+        // Activate correct scheme card so pfActiveScheme is in sync
+        pfActiveScheme = hmoScheme;
+        $('.pf-scheme-card').removeClass('active');
+        $('.pf-scheme-card[data-scheme="' + hmoScheme + '"]').addClass('active');
+        // Show/hide HMO provider select based on scheme
+        if (hmoScheme === 'Self/Private') {
+            $('#pf-hmo-select-col').hide();
+            $('#pf-hmo-no-container').hide();
+        } else {
+            $('#pf-hmo-select-col').show();
+        }
+
         // Pre-fill allergies if existing
         var allergies = $el.data('allergies');
-        if (allergies && allergies !== 'null' && String(allergies).length> 2) {
+        if (allergies && allergies !== 'null' && String(allergies).length > 2) {
             $('#pf-allergy-has').prop('checked', true).trigger('change');
             var clean = String(allergies);
             try { var arr = JSON.parse(clean); if (Array.isArray(arr)) clean = arr.join(', '); } catch(e) {}
@@ -3152,8 +3203,12 @@ function disableWalkInMode() {
         // Hide new-patient form fields when existing selected
         $('#pf-new-patient-wrapper').addClass('collapsed');
 
-        // In emergency mode, auto-skip to triage step after selecting existing patient
+        // In emergency mode with an existing patient:
+        // Remove step 4 (HMO) from the sequence — their insurance is already on file.
+        // Sequence becomes [1, 5, 6] so the modal goes Patient → Triage → Disposition.
         if (pfEmergencyMode) {
+            pfStepSequence = [1, 5, 6];
+            window._pfTotalSteps = pfStepSequence.length;
             setTimeout(function() { goToPatientFormStep(5); }, 400);
         }
     });
@@ -3163,7 +3218,11 @@ function disableWalkInMode() {
         $('#pf-emergency-patient-id').val('');
         $('#pf-emergency-selected-patient').removeClass('show');
         $('#pf-existing-empty-state').show();
-        // Don't uncollapse wrapper — user stays on "existing" tab
+        // Restore HMO step in sequence now that no existing patient is locked
+        if (pfEmergencyMode) {
+            pfStepSequence = [1, 5, 6, 4];
+            window._pfTotalSteps = pfStepSequence.length;
+        }
     });
 
     // ---- Patient Chooser Tab Switching ----
@@ -3183,8 +3242,8 @@ function disableWalkInMode() {
         $('#pf-chooser-body').removeClass('border-existing border-new border-unidentified')
             .addClass('border-' + panel);
 
-        // Reset unidentified class on wrapper
-        $('#pf-new-patient-wrapper').removeClass('pf-unidentified-active');
+        // Reset unidentified class on wrapper and emergency fields
+        $('#pf-new-patient-wrapper, .pf-emergency-fields').removeClass('pf-unidentified-active');
 
         if (panel === 'existing') {
             // Collapse new-patient wrapper (existing patient already selected or searching)
@@ -3210,7 +3269,7 @@ function disableWalkInMode() {
             $('#pf-emergency-selected-patient').removeClass('show');
             $('#pf-existing-empty-state').show();
             // Show wrapper but in unidentified mode — only Gender, Approx Age, Phone visible
-            $('#pf-new-patient-wrapper').removeClass('collapsed').addClass('pf-unidentified-active');
+            $('#pf-new-patient-wrapper, .pf-emergency-fields').removeClass('collapsed').addClass('pf-unidentified-active');
             $('#pf-is-unidentified').val('1');
             $('#pf-surname').val('Unknown');
             $('#pf-firstname').val('Patient');
@@ -3315,8 +3374,7 @@ function disableWalkInMode() {
 
     var pfDispositionLoaded = false;
     var pfAllBeds = []; // cache all beds for ward filter
-    var pfActiveScheme = '';
-    function loadDispositionData() {
+        function loadDispositionData() {
         if (pfDispositionLoaded) return;
         pfDispositionLoaded = true;
 
@@ -4670,10 +4728,10 @@ $(document).ready(function() {
                                             </div>
                                         </div>
                                     <div class="row g-2 mt-2">
-                                        <div class="col-md-4">
+                                        <div class="col-md-4 pf-hide-unidentified" id="pf-approx-age-col">
                                             <div class="form-group mb-3">
                                                 <label class="form-label mb-1">Approx Age</label>
-                                                <select class="form-control form-control-sm" id="pf-approx-age">
+                                                <select class="form-control" id="pf-approx-age">
                                                     <option value="">Select range (if DOB unknown)</option>
                                                     <option value="neonate">Neonate (0-28 days)</option>
                                                     <option value="infant">Infant (1-12 months)</option>
@@ -4685,13 +4743,13 @@ $(document).ready(function() {
                                                     <option value="adult_51_65">Adult (51-65 yrs)</option>
                                                     <option value="elderly">Elderly (65+ yrs)</option>
                                                 </select>
-                                                <small class="text-muted">Used when DOB unknown — auto-fills DOB estimate</small>
+                                                <small class="text-muted d-block mt-1" style="font-size:0.72rem;">Auto-fills DOB estimate</small>
                                             </div>
                                         </div>
                                         <div class="col-md-4">
                                             <div class="form-group mb-3">
                                                 <label class="form-label mb-1"><i class="mdi mdi-truck-fast"></i> Mode of Arrival</label>
-                                                <select class="form-control form-control-sm" id="pf-arrival-mode">
+                                                <select class="form-control" id="pf-arrival-mode">
                                                     <option value="walk_in">Walk-In</option>
                                                     <option value="ambulance">Ambulance</option>
                                                     <option value="police">Police / Security</option>
@@ -4700,18 +4758,16 @@ $(document).ready(function() {
                                                 </select>
                                             </div>
                                         </div>
-                                    </div>
-                                    <div class="row g-2">
                                         <div class="col-md-4">
                                             <div class="form-group mb-3">
                                                 <label class="form-label mb-1">Brought By (Name)</label>
-                                                <input type="text" class="form-control form-control-sm" id="pf-brought-by-name" placeholder="Name of escort/relative">
+                                                <input type="text" class="form-control" id="pf-brought-by-name" placeholder="Name of escort/relative">
                                             </div>
                                         </div>
                                         <div class="col-md-4">
                                             <div class="form-group mb-3">
                                                 <label class="form-label mb-1">Brought By (Phone)</label>
-                                                <input type="text" class="form-control form-control-sm" id="pf-brought-by-phone" placeholder="Phone number">
+                                                <input type="text" class="form-control" id="pf-brought-by-phone" placeholder="Phone number">
                                             </div>
                                         </div>
                                     </div>
