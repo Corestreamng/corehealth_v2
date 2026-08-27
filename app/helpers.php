@@ -463,3 +463,32 @@ if (!function_exists('showFileNumber')) {
 }
 
 $NAIRA_CODE = '₦';
+
+if (!function_exists('adjustBrightness')) {
+    function adjustBrightness($hex, $percent) {
+        $hex = str_replace('#', '', $hex);
+        if (strlen($hex) == 3) {
+            $hex = $hex[0].$hex[0].$hex[1].$hex[1].$hex[2].$hex[2];
+        }
+        $r = hexdec(substr($hex, 0, 2));
+        $g = hexdec(substr($hex, 2, 2));
+        $b = hexdec(substr($hex, 4, 2));
+        $r = max(0, min(255, $r + ($r * $percent / 100)));
+        $g = max(0, min(255, $g + ($g * $percent / 100)));
+        $b = max(0, min(255, $b + ($b * $percent / 100)));
+        return sprintf('#%02x%02x%02x', $r, $g, $b);
+    }
+}
+
+if (!function_exists('hexToRgba')) {
+    function hexToRgba($hex, $alpha) {
+        $hex = str_replace('#', '', $hex);
+        if (strlen($hex) == 3) {
+            $hex = $hex[0].$hex[0].$hex[1].$hex[1].$hex[2].$hex[2];
+        }
+        $r = hexdec(substr($hex, 0, 2));
+        $g = hexdec(substr($hex, 2, 2));
+        $b = hexdec(substr($hex, 4, 2));
+        return "rgba($r, $g, $b, $alpha)";
+    }
+}

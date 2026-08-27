@@ -28,7 +28,7 @@ class NonPharmOrderTest extends TestCase
 
         // Create patient and encounter
         $this->patient = Patient::factory()->create();
-        $this->encounter = Encounter::factory()->create([
+        $this->encounter = Encounter::create([
             'patient_id' => $this->patient->id
         ]);
     }

@@ -7,24 +7,6 @@
     $focusShadow = hexToRgba($primaryColor, 0.1);
     $hoverShadow = hexToRgba($primaryColor, 0.2);
 
-    function adjustBrightness($hex, $percent) {
-        $hex = str_replace('#', '', $hex);
-        $r = hexdec(substr($hex, 0, 2));
-        $g = hexdec(substr($hex, 2, 2));
-        $b = hexdec(substr($hex, 4, 2));
-        $r = min(255, $r + ($r * $percent / 100));
-        $g = min(255, $g + ($g * $percent / 100));
-        $b = min(255, $b + ($b * $percent / 100));
-        return sprintf('#%02x%02x%02x', $r, $g, $b);
-    }
-
-    function hexToRgba($hex, $alpha) {
-        $hex = str_replace('#', '', $hex);
-        $r = hexdec(substr($hex, 0, 2));
-        $g = hexdec(substr($hex, 2, 2));
-        $b = hexdec(substr($hex, 4, 2));
-        return "rgba($r, $g, $b, $alpha)";
-    }
 @endphp
 <style>
     .auth-wrapper {
