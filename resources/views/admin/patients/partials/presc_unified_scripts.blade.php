@@ -529,6 +529,9 @@ function updatePrescBillingTotal() {
 
 // ========== PRODUCT SEARCH ==========
 
+let fallbackSearchProdTimeout = null;
+let fallbackSearchProdRequest = null;
+
 function searchProductsForPresc(query) {
     const $container = $('#presc_product_results');
     
@@ -550,20 +553,34 @@ function searchProductsForPresc(query) {
             }
         });
     } else {
+        if (fallbackSearchProdRequest) {
+            fallbackSearchProdRequest.abort();
+        }
+        clearTimeout(fallbackSearchProdTimeout);
+
         if (!query || query.length < 2) {
             $container.html('').hide();
             return;
         }
 
-        $.ajax({
-            url: '{{ url('/live-search-products') }}',
-            method: 'GET',
-            dataType: 'json',
-            data: { term: query, patient_id: prescPatientId },
-            success: function(data) {
-                renderPrescProductResults(data);
-            }
-        });
+        $container.html('<li class="list-group-item text-center text-muted"><i class="fa fa-spinner fa-spin"></i> Loading...</li>').show();
+
+        fallbackSearchProdTimeout = setTimeout(function() {
+            fallbackSearchProdRequest = $.ajax({
+                url: '{{ url('/live-search-products') }}',
+                method: 'GET',
+                dataType: 'json',
+                data: { term: query, patient_id: prescPatientId },
+                success: function(data) {
+                    renderPrescProductResults(data);
+                },
+                error: function(jqXHR, textStatus) {
+                    if (textStatus !== 'abort') {
+                        $container.html('<li class="list-group-item text-center text-danger">Error fetching results</li>').show();
+                    }
+                }
+            });
+        }, 300);
     }
 }
 
