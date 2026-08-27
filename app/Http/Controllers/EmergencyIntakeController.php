@@ -728,7 +728,7 @@ class EmergencyIntakeController extends Controller
             return response()->json([]);
         }
 
-        $patients = Patient::with(['user', 'hmo'])
+        $patients = Patient::with(['user', 'hmo.scheme'])
             ->whereHas('user', function ($q) use ($query) {
                 $q->where('surname', 'like', "%{$query}%")
                   ->orWhere('firstname', 'like', "%{$query}%")
@@ -740,14 +740,17 @@ class EmergencyIntakeController extends Controller
             ->get()
             ->map(function ($patient) {
                 return [
-                    'id' => $patient->id,
-                    'user_id' => $patient->user_id,
-                    'name' => userfullname($patient->user_id),
-                    'file_no' => $patient->file_no ?? 'N/A',
-                    'phone' => $patient->phone_no ?? 'N/A',
-                    'gender' => $patient->gender,
-                    'hmo' => $patient->hmo->name ?? 'Private',
-                    'allergies' => $patient->allergies,
+                    'id'         => $patient->id,
+                    'user_id'    => $patient->user_id,
+                    'name'       => userfullname($patient->user_id),
+                    'file_no'    => $patient->file_no ?? 'N/A',
+                    'phone'      => $patient->phone_no ?? 'N/A',
+                    'gender'     => $patient->gender,
+                    'hmo'        => $patient->hmo->name ?? 'Private',
+                    'hmo_id'     => $patient->hmo_id ?? null,
+                    'hmo_scheme' => $patient->hmo->scheme->name ?? 'Self/Private',
+                    'hmo_no'     => $patient->hmo_no ?? '',
+                    'allergies'  => $patient->allergies,
                 ];
             });
 
