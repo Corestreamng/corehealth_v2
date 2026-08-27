@@ -1118,7 +1118,7 @@
                                             <div class="text-muted small">Enable emergency intake in {{ $label }}</div>
                                         </div>
                                         <div class="custom-control custom-switch custom-switch-primary">
-                                            <input type="checkbox" class="custom-control-input" id="{{ $key }}" name="{{ $key }}" {{ $config->$key ? 'checked' : '' }}>
+                                            <input type="checkbox" class="custom-control-input" id="{{ $key }}" name="{{ $key }}" value="1" {{ $config->$key ? 'checked' : '' }}>
                                             <label class="custom-control-label" for="{{ $key }}"></label>
                                         </div>
                                     </div>

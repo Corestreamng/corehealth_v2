@@ -107,6 +107,14 @@ class ApplicationStatu extends Model implements Auditable
         'thermal_printer_width',
         'doctor_full_admission',
         'doctor_full_discharge',
+        'enable_ei_reception',
+        'enable_ei_imaging',
+        'enable_ei_hmo',
+        'enable_ei_pharmacy',
+        'enable_ei_nursing',
+        'enable_ei_billing',
+        'enable_ei_lab',
+        'enable_ei_doctor',
     ];
 
     protected $casts = [
