@@ -157,6 +157,16 @@ class HospitalConfigController extends Controller
             // Doctor Full Admission/Discharge
             'doctor_full_admission' => 'boolean',
             'doctor_full_discharge' => 'boolean',
+
+            // Emergency Intake Toggles
+            'enable_ei_reception' => 'boolean',
+            'enable_ei_imaging' => 'boolean',
+            'enable_ei_hmo' => 'boolean',
+            'enable_ei_pharmacy' => 'boolean',
+            'enable_ei_nursing' => 'boolean',
+            'enable_ei_billing' => 'boolean',
+            'enable_ei_lab' => 'boolean',
+            'enable_ei_doctor' => 'boolean',
         ]);
 
         $config = ApplicationStatu::first();
@@ -194,6 +204,15 @@ class HospitalConfigController extends Controller
         $validated['doctor_full_admission'] = $request->has('doctor_full_admission');
         $validated['doctor_full_discharge'] = $request->has('doctor_full_discharge');
         $validated['strict_encounter_navigation'] = $request->has('strict_encounter_navigation');
+
+        $validated['enable_ei_reception'] = $request->has('enable_ei_reception');
+        $validated['enable_ei_imaging'] = $request->has('enable_ei_imaging');
+        $validated['enable_ei_hmo'] = $request->has('enable_ei_hmo');
+        $validated['enable_ei_pharmacy'] = $request->has('enable_ei_pharmacy');
+        $validated['enable_ei_nursing'] = $request->has('enable_ei_nursing');
+        $validated['enable_ei_billing'] = $request->has('enable_ei_billing');
+        $validated['enable_ei_lab'] = $request->has('enable_ei_lab');
+        $validated['enable_ei_doctor'] = $request->has('enable_ei_doctor');
 
         // Handle LLM Config Checkboxes and processing
         if ($request->has('llm_config')) {
