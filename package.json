@@ -18,7 +18,7 @@
         "postcss": "^8.1.14",
         "resolve-url-loader": "^5.0.0",
         "sass": "^1.32.11",
-        "sass-loader": "^11.0.1"
+        "sass-loader": "^17.0.0"
     },
     "dependencies": {
         "@selectize/selectize": "^0.15.2",
