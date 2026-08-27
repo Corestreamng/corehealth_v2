@@ -18,8 +18,15 @@
                             </div>
                         </div>
                     </div>
-                    <div class="dash-welcome-badge">
-                        <i class="mdi mdi-doctor me-1"></i> {{ __('dashboard.clinical_dashboard') }}
+                    <div class="dash-welcome-badge d-flex align-items-center gap-2">
+                        @if(appsettings()->enable_ei_doctor)
+                        <button class="btn btn-danger btn-sm shadow-sm font-weight-bold" onclick="showEmergencyIntakeModal()" style="border-radius: 6px; z-index: 10;">
+                            <i class="mdi mdi-ambulance"></i> Emergency Intake
+                        </button>
+                        @endif
+                        <span style="background: rgba(255,255,255,0.2); padding: 5px 12px; border-radius: 6px;">
+                            <i class="mdi mdi-doctor me-1"></i> {{ __('dashboard.clinical_dashboard') }}
+                        </span>
                     </div>
                 </div>
             </div>
@@ -153,6 +160,8 @@
             </div>
 
             <div class="row g-3 mt-1">
+
+
                 @if(Route::has('prescriptions.index'))
                 <div class="col-6 col-md-3">
                     <a href="{{ route('prescriptions.index') }}" class="text-decoration-none">
