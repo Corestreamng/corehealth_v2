@@ -2151,16 +2151,14 @@ rgba(255, 255, 255, 0.7) !important;
                             </div>
                         </div><!-- /.container-fluid -->
                         <div>
-                            @if (!empty($errors) && count($errors) > 0)
-                                <div class="alert alert-danger alert-dismissible">
+                            @if ($errors->any())
+                                <div class="alert alert-danger alert-dismissible fade show mb-3" style="border-radius: 8px; border-left: 4px solid #dc3545;">
                                     <button type="button" class="close" data-dismiss="alert" aria-hidden="true">×</button>
-                                    <!-- <h5><i class="icon fa fa-info"></i> Alert!</h5> -->
-                                    <ul>
-                                        @foreach ($errors as $error)
+                                    <ul class="mb-0 pl-3">
+                                        @foreach ($errors->all() as $error)
                                             <li>{{ $error }}</li>
                                         @endforeach
                                     </ul>
-
                                 </div>
                             @endif
                             @include('admin.partials.notification')
