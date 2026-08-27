@@ -400,7 +400,7 @@ $(document).ready(function() {
 
         var filterId = $(this).data('filter-id');
         $.ajax({
-            url: '{{ url('/accounting/reports/filters/') }}' + filterId,
+            url: '{{ url('/accounting/reports/filters') }}/' + filterId,
             method: 'DELETE',
             headers: {
                 'X-CSRF-TOKEN': '{{ csrf_token() }}'

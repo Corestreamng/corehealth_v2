@@ -17406,7 +17406,7 @@ $('#approveReturnForm').on('submit', function(e) {
     var $btn = $(this).find('button[type="submit"]');
     $btn.prop('disabled', true).html('<i class="mdi mdi-loading mdi-spin"></i> Approving...');
     $.ajax({
-        url: '{{ url('/pharmacy/returns/') }}' + id + '/approve',
+        url: '{{ url('/pharmacy/returns') }}/' + id + '/approve',
         method: 'POST',
         data: { approval_notes: notes },
         headers: { 'X-CSRF-TOKEN': '{{ csrf_token() }}' },
@@ -17429,7 +17429,7 @@ $('#rejectReturnForm').on('submit', function(e) {
     var $btn = $(this).find('button[type="submit"]');
     $btn.prop('disabled', true).html('<i class="mdi mdi-loading mdi-spin"></i> Rejecting...');
     $.ajax({
-        url: '{{ url('/pharmacy/returns/') }}' + id + '/reject',
+        url: '{{ url('/pharmacy/returns') }}/' + id + '/reject',
         method: 'POST',
         data: { rejection_reason: reason },
         headers: { 'X-CSRF-TOKEN': '{{ csrf_token() }}' },
@@ -17900,7 +17900,7 @@ $('#approveDamageForm').on('submit', function(e) {
     var $btn = $(this).find('button[type="submit"]');
     $btn.prop('disabled', true).html('<i class="mdi mdi-loading mdi-spin"></i> Approving...');
     $.ajax({
-        url: '{{ url('/pharmacy/damages/') }}' + id + '/approve',
+        url: '{{ url('/pharmacy/damages') }}/' + id + '/approve',
         method: 'POST',
         data: { approval_notes: notes },
         headers: { 'X-CSRF-TOKEN': '{{ csrf_token() }}' },
@@ -17923,7 +17923,7 @@ $('#rejectDamageForm').on('submit', function(e) {
     var $btn = $(this).find('button[type="submit"]');
     $btn.prop('disabled', true).html('<i class="mdi mdi-loading mdi-spin"></i> Rejecting...');
     $.ajax({
-        url: '{{ url('/pharmacy/damages/') }}' + id + '/reject',
+        url: '{{ url('/pharmacy/damages') }}/' + id + '/reject',
         method: 'POST',
         data: { rejection_reason: reason },
         headers: { 'X-CSRF-TOKEN': '{{ csrf_token() }}' },

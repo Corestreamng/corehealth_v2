@@ -228,7 +228,7 @@ $(document).ready(function() {
         btn.prop('disabled', true).html('<i class="mdi mdi-loading mdi-spin"></i>');
 
         $.ajax({
-            url: '{{ url('/accounting/kpi/') }}' + id + '/calculate',
+            url: '{{ url('/accounting/kpi') }}/' + id + '/calculate',
             type: 'POST',
             data: { _token: '{{ csrf_token() }}' },
             success: function(response) {
