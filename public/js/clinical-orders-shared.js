@@ -504,7 +504,7 @@ window.ClinicalOrdersKit = jQuery.extend(window.ClinicalOrdersKit || {}, (functi
         var stockHtml = (qty !== undefined && qty !== null)
             ? '<span class="co-search-stock text-muted">' + qty + ' avail.</span>'
             : '';
-        var clickAttr = (!alreadyAdded && onClick) ? ' onclick="' + onClick + '"' : '';
+        var clickAttr = (!alreadyAdded && onClick) ? ' onclick="' + onClick.replace(/"/g, "&quot;") + '"' : '';
         
         // Add combo badge if this is a combo
         var comboBadge = isCombo ? '<span class="badge bg-info ms-2" style="font-size:0.7rem;font-weight:600;">[COMBO]</span>' : '';

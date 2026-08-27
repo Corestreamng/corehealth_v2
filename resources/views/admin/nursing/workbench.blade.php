@@ -5228,6 +5228,7 @@
                                             <div class="table-responsive mt-3">
                                                 <table class="table table-sm table-bordered table-striped">
                                                     <thead><th>Lab Test</th><th>Price</th><th>Clinical Notes</th><th style="width:40px;"><i class="fa fa-trash-alt text-muted" title="Remove"></i></th></thead>
+                                                    <tbody id="cr-selected-labs"></tbody>
                                                 </table>
                                             </div>
                                             {{-- Phase 2d (Plan §4.5): Auto-save status — labs save on add --}}
@@ -5281,6 +5282,7 @@
                                             <div class="table-responsive mt-3">
                                                 <table class="table table-sm table-bordered table-striped">
                                                     <thead><th>Imaging Study</th><th>Price</th><th>Clinical Notes</th><th style="width:40px;"><i class="fa fa-trash-alt text-muted" title="Remove"></i></th></thead>
+                                                    <tbody id="cr-selected-imaging"></tbody>
                                                 </table>
                                             </div>
                                             {{-- Phase 2d (Plan §4.5): Auto-save status — imaging saves on add --}}
@@ -7662,7 +7664,7 @@ $(document).on('click', '#btn-submit-last-office', function() {
     $btn.prop('disabled', true).html('<i class="fa fa-spinner fa-spin"></i> Saving...');
 
     $.ajax({
-        url: '{{ url('/nursing-workbench/deceased/') }}' + recordId + '/last-office',
+        url: '{{ url('/nursing-workbench/deceased') }}/' + recordId + '/last-office',
         method: 'POST',
         data: {
             _token: '{{ csrf_token() }}',
@@ -8064,7 +8066,7 @@ const ClinicalRequests = (function() {
                 // Phase 2b (Plan §4.3): Register debounced dose auto-save for medications
                 ClinicalOrdersKit.onDoseUpdate('cr-', function(recordId, doseValue, flashEl) {
                     ClinicalOrdersKit.debouncedUpdate({
-                        url: '{{ url('/nursing-workbench/clinical-requests/prescriptions/') }}' + recordId + '/dose',
+                        url: '{{ url('/nursing-workbench/clinical-requests/prescriptions') }}/' + recordId + '/dose',
                         payload: { dose: doseValue },
                         csrfToken: CSRF_TOKEN,
                         flashTarget: flashEl,
@@ -8157,7 +8159,7 @@ const ClinicalRequests = (function() {
         }
         $('#cr_presc_history_list').DataTable({
             processing: true, serverSide: true,
-            ajax: { url: '{{ url('/prescHistoryList/') }}' + patientId, type: 'GET' },
+            ajax: { url: '{{ url('/prescHistoryList') }}/' + patientId, type: 'GET' },
             columns: [{ data: 'info', name: 'info', orderable: false }],
             order: [[0, 'desc']], pageLength: 10,
             language: { emptyTable: 'No prescription history', processing: '<i class="fa fa-spinner fa-spin"></i> Loading...' }
@@ -8169,7 +8171,7 @@ const ClinicalRequests = (function() {
         }
         $('#cr_lab_history_list').DataTable({
             processing: true, serverSide: true,
-            ajax: { url: '{{ url('/investigationHistoryList/') }}' + patientId, type: 'GET' },
+            ajax: { url: '{{ url('/investigationHistoryList') }}/' + patientId, type: 'GET' },
             columns: [{ data: 'info', name: 'info', orderable: false }],
             order: [[0, 'desc']], pageLength: 10,
             language: { emptyTable: 'No lab history', processing: '<i class="fa fa-spinner fa-spin"></i> Loading...' }
@@ -8181,7 +8183,7 @@ const ClinicalRequests = (function() {
         }
         $('#cr_imaging_history_list').DataTable({
             processing: true, serverSide: true,
-            ajax: { url: '{{ url('/imagingHistoryList/') }}' + patientId, type: 'GET' },
+            ajax: { url: '{{ url('/imagingHistoryList') }}/' + patientId, type: 'GET' },
             columns: [{ data: 'info', name: 'info', orderable: false }],
             order: [[0, 'desc']], pageLength: 10,
             language: { emptyTable: 'No imaging history', processing: '<i class="fa fa-spinner fa-spin"></i> Loading...' }
@@ -8193,7 +8195,7 @@ const ClinicalRequests = (function() {
         }
         $('#cr_proc_history_list').DataTable({
             processing: true, serverSide: true,
-            ajax: { url: '{{ url('/procedureHistoryList/') }}' + patientId, type: 'GET' },
+            ajax: { url: '{{ url('/procedureHistoryList') }}/' + patientId, type: 'GET' },
             columns: [
                 { data: 'info', name: 'info', orderable: false, searchable: false }
             ],
@@ -8293,57 +8295,73 @@ const ClinicalRequests = (function() {
     }
 
     // ===== SEARCH FUNCTIONS =====
+    let crSearchProdTimeout = null;
+    let crSearchProdRequest = null;
+
     function searchProducts(q) {
-        if (typeof SearchManager !== 'undefined') {
-            SearchManager.execute({
-                inputVal: q, minLength: 2, url: '{{ url('/live-search-products') }}', data: { term: q, patient_id: patientId },
-                onStart: () => $('#cr_presc_results').html('<li class="list-group-item text-center text-muted"><i class="mdi mdi-loading mdi-spin"></i> Searching...</li>'),
-                onEmptyQuery: () => $('#cr_presc_results').empty(),
-                onSuccess: (data) => {
-                    const $res = $('#cr_presc_results').empty();
+        if (crSearchProdRequest) crSearchProdRequest.abort();
+        clearTimeout(crSearchProdTimeout);
+
+        const $res = $('#cr_presc_results');
+        if (q.length < 2) { $res.empty().hide(); return; }
+
+        $res.html('<li class="list-group-item text-center text-muted"><i class="fa fa-spinner fa-spin"></i> Loading...</li>').show();
+
+        crSearchProdTimeout = setTimeout(() => {
+            crSearchProdRequest = $.ajax({
+                url: '{{ url('/live-search-products') }}',
+                method: 'GET',
+                dataType: 'json',
+                data: { term: q, patient_id: patientId },
+                success: (data) => {
+                    $res.empty();
                     ClinicalOrdersKit.appendFreeFormLink($res, q, 'Add Free-Form Medication', 'Enter medication name:', '#cr_presc_search', function(val) {
                         ClinicalRequests.addProduct(val + ' [Free-form]', 'FF_' + val, 0, 'cash', 0, 0);
                     });
-            if (!data.length) { ClinicalOrdersKit.showSearchEmpty('#cr_presc_results', 'products'); return; }
-            else {
-                data.forEach(item => {
-                    const name = item.product_name || 'Unknown';
-                    const code = item.product_code || '';
-                    const qty = item.stock?.current_quantity ?? 0;
-                    const price = item.price?.initial_sale_price ?? 0;
-                    const payable = item.payable_amount ?? price;
-                    const claims = item.claims_amount ?? 0;
-                    const mode = item.coverage_mode || null;
-                    const displayName = `${name}[${code}](${qty} avail.)`;
+                    if (!data.length) { ClinicalOrdersKit.showSearchEmpty('#cr_presc_results', 'products'); return; }
+                    else {
+                        data.forEach(item => {
+                            const name = item.product_name || 'Unknown';
+                            const code = item.product_code || '';
+                            const qty = item.stock?.current_quantity ?? 0;
+                            const price = item.price?.initial_sale_price ?? 0;
+                            const payable = item.payable_amount ?? price;
+                            const claims = item.claims_amount ?? 0;
+                            const mode = item.coverage_mode || null;
+                            const displayName = `${name}[${code}](${qty} avail.)`;
 
-                    const isCombo = item.is_combo || false;
-                    const bundleItems = item.bundle_items || [];
-                    if (isCombo) { window.comboDataMap = window.comboDataMap || {}; window.comboDataMap[item.id] = item; }
+                            const isCombo = item.is_combo || false;
+                            const bundleItems = item.bundle_items || [];
+                            if (isCombo) { window.comboDataMap = window.comboDataMap || {}; window.comboDataMap[item.id] = item; }
 
-                    // Phase 2c (Plan §4.4): Duplicate filtering for medications
-                    const alreadyAdded = isCombo ? false : ClinicalOrdersKit.isAlreadyAdded('meds', parseInt(item.id));
-                    const onClick = alreadyAdded ? '' : (isCombo ? `ClinicalRequests.applyProductCombo(${item.id}, '${name.replace(/'/g,"\\'")}')` : `ClinicalRequests.addProduct('${displayName.replace(/'/g,"\\'")}', ${item.id}, ${price}, '${mode}', ${claims}, ${payable})`);
-                    $res.append(ClinicalOrdersKit.renderSearchResultItem({
-                        id: item.id,
-                        name: name,
-                        code: code,
-                        qty: qty,
-                        price: price,
-                        payable: payable,
-                        claims: claims,
-                        mode: mode,
-                        alreadyAdded: alreadyAdded,
-                        alreadyLabel: 'Already Added',
-                        onClick: onClick,
-                        isCombo: isCombo,
-                        bundleItems: bundleItems
-                    }));
-                });
-            }
-            $res.show();
+                            const alreadyAdded = isCombo ? false : ClinicalOrdersKit.isAlreadyAdded('meds', parseInt(item.id));
+                            const onClick = alreadyAdded ? '' : (isCombo ? `ClinicalRequests.applyProductCombo(${item.id}, '${name.replace(/'/g,"\\'")}')` : `ClinicalRequests.addProduct('${displayName.replace(/'/g,"\\'")}', ${item.id}, ${price}, '${mode}', ${claims}, ${payable})`);
+                            $res.append(ClinicalOrdersKit.renderSearchResultItem({
+                                id: item.id,
+                                name: name,
+                                code: code,
+                                qty: qty,
+                                price: price,
+                                payable: payable,
+                                claims: claims,
+                                mode: mode,
+                                alreadyAdded: alreadyAdded,
+                                alreadyLabel: 'Already Added',
+                                onClick: onClick,
+                                isCombo: isCombo,
+                                bundleItems: bundleItems
+                            }));
+                        });
+                    }
+                    $res.show();
+                },
+                error: (jqXHR, textStatus) => {
+                    if (textStatus !== 'abort') {
+                        $res.html('<li class="list-group-item text-center text-danger">Error fetching results</li>').show();
+                    }
                 }
             });
-        }
+        }, 300);
     }
 
     function searchLabServices(q) {
@@ -15747,7 +15765,7 @@ $('#ws_store').on('change', function() {
 
 function updateWsStockDisplay(productId, storeId) {
     $.ajax({
-        url: '{{ url('/pharmacy-workbench/product/') }}' + productId + '/stock',
+        url: '{{ url('/pharmacy-workbench/product') }}/' + productId + '/stock',
         method: 'GET',
         success: function(resp) {
             var storeStock = (resp.stores || []).find(function(s) { return s.store_id == storeId; });
@@ -18276,7 +18294,7 @@ $(document).ready(function() {
             itemName: name,
             onConfirm: function (reason, callback) {
                 $.ajax({
-                    url: '{{ url('/nursing-workbench/clinical-requests/') }}' + pathMap[type] + '/' + id,
+                    url: '{{ url('/nursing-workbench/clinical-requests') }}/' + pathMap[type] + '/' + id,
                     type: 'DELETE',
                     headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') },
                     data: { reason: reason },
