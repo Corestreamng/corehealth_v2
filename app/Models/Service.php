@@ -29,12 +29,14 @@ class Service extends Model implements Auditable
         'category_id',
         'service_name',
         'service_code',
+        'price_id',
         'price_assign',
         'status',
         'result_template_v2',
         'is_combo',
         'consult_cycle_duration',
     ];
+
 
     protected $casts = [
         'result_template_v2' => 'array',
