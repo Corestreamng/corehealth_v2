@@ -180,6 +180,7 @@ class ProductController extends Controller
         $pc = $query
             ->with(['stock', 'category', 'price', 'packagings'])
             ->orderBy('product_name', 'ASC')
+            ->limit(50)
             ->get()
             ->map(function ($product) use ($request) {
                 $basePrice = optional($product->price)->initial_sale_price;

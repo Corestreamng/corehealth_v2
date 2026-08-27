@@ -2277,9 +2277,25 @@
             $('#consult_presc_res').html('');
         }
 
+        let searchProdTimeout = null;
+        let searchProdRequest = null;
+
         function searchProducts(q) {
-            if (q != "") {
-                searchRequest = $.ajax({
+            if (searchProdRequest) {
+                searchProdRequest.abort();
+            }
+            clearTimeout(searchProdTimeout);
+
+            if (q.length < 2) {
+                $('#consult_presc_res').html('').hide();
+                return;
+            }
+
+            // Show true loading state
+            $('#consult_presc_res').html('<li class="list-group-item text-center"><i class="fa fa-spinner fa-spin"></i> Loading...</li>').show();
+
+            searchProdTimeout = setTimeout(function() {
+                searchProdRequest = $.ajax({
                     url: "{{ url('live-search-products') }}",
                     method: "GET",
                     dataType: 'json',
@@ -2290,7 +2306,6 @@
                     success: function(data) {
                         // Clear existing options from the select field
                         $('#consult_presc_res').html('');
-                        console.log(data);
                         // data = JSON.parse(data);
 
                         ClinicalOrdersKit.appendFreeFormLink($('#consult_presc_res'), q, 'Add Free-Form Medication', 'Enter the medication name:', '#consult_presc_search', function(val) { setSearchValProd(val + ' [Free-form]', 'FF_' + val, 0, 'cash', 0, 0); });
@@ -2321,7 +2336,7 @@
                             } else {
                                 const displayName = `${name}[${code}](${qty} avail.)`;
                                 alreadyAdded = ClinicalOrdersKit.isAlreadyAdded('meds', parseInt(item.id));
-                                onClick = alreadyAdded ? '' : `setSearchValProd('${displayName}', '${item.id}', '${price}', '${mode}', '${claims}', '${payable}')`;
+                                onClick = alreadyAdded ? '' : `setSearchValProd('${displayName.replace(/'/g,"\\'")}', '${item.id}', '${price}', '${mode}', '${claims}', '${payable}')`;
                             }
 
                             var mk = ClinicalOrdersKit.renderSearchResultItem({
@@ -2343,11 +2358,14 @@
                             $('#consult_presc_res').append(mk);
                             $('#consult_presc_res').show();
                         }
+                    },
+                    error: function(jqXHR, textStatus) {
+                        if (textStatus !== 'abort') {
+                            $('#consult_presc_res').html('<li class="list-group-item text-center text-danger">Error fetching results</li>').show();
+                        }
                     }
                 });
-            } else {
-                $('#consult_presc_res').html('');
-            }
+            }, 300);
         }
     </script>
     <script>
@@ -2435,7 +2453,7 @@
             var csrfToken = $('meta[name="csrf-token"]').attr('content');
 
             ClinicalOrdersKit.addItem({
-                url: '{{ url('/encounters/') }}' + encounterId + '/add-lab',
+                url: '{{ url('/encounters') }}/' + encounterId + '/add-lab',
                 payload: { service_id: id, note: '' },
                 csrfToken: csrfToken,
                 tableSelector: '#selected-services',
@@ -2469,7 +2487,7 @@
             var csrfToken = $('meta[name="csrf-token"]').attr('content');
 
             ClinicalOrdersKit.addItem({
-                url: '{{ url('/encounters/') }}' + encounterId + '/add-imaging',
+                url: '{{ url('/encounters') }}/' + encounterId + '/add-imaging',
                 payload: { service_id: id, note: '' },
                 csrfToken: csrfToken,
                 tableSelector: '#selected-imaging-services',
@@ -4262,7 +4280,7 @@
         // When any structured dose field changes → updateDoseValue fires → triggers this handler
         ClinicalOrdersKit.onDoseUpdate('', function(recordId, doseValue, flashEl) {
             ClinicalOrdersKit.debouncedUpdate({
-                url: '{{ url('/encounters/') }}' + encounterId + '/prescriptions/' + recordId + '/dose',
+                url: '{{ url('/encounters') }}/' + encounterId + '/prescriptions/' + recordId + '/dose',
                 payload: { dose: doseValue },
                 csrfToken: $('meta[name="csrf-token"]').attr('content'),
                 flashTarget: flashEl,
@@ -5477,7 +5495,7 @@
             var combinedAllergies = currentAllergiesText ? currentAllergiesText + ", " + newAllergy : newAllergy;
             
             $.ajax({
-                url: '{{ url('/patient/') }}' + patientId + '/update-allergies',
+                url: '{{ url('/patient') }}/' + patientId + '/update-allergies',
                 method: 'PUT',
                 data: {
                     allergies: combinedAllergies,

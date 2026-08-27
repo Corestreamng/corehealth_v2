@@ -5528,7 +5528,7 @@ $sett = appsettings();
                 // Register debounced dose auto-save for medications
                 ClinicalOrdersKit.onDoseUpdate('mco-', function(recordId, doseValue, flashEl) {
                     ClinicalOrdersKit.debouncedUpdate({
-                        url: '{{ url('/maternity-workbench/enrollment/') }}' + enrollmentId + '/prescriptions/' + recordId + '/dose',
+                        url: '{{ url('/maternity-workbench/enrollment') }}/' + enrollmentId + '/prescriptions/' + recordId + '/dose',
                         payload: {
                             dose: doseValue
                         },
@@ -5747,7 +5747,7 @@ $sett = appsettings();
                 processing: true,
                 serverSide: true,
                 ajax: {
-                    url: '{{ url('/prescHistoryList/') }}' + patientId,
+                    url: '{{ url('/prescHistoryList') }}/' + patientId,
                     type: 'GET'
                 },
                 columns: [{
@@ -5774,7 +5774,7 @@ $sett = appsettings();
                 processing: true,
                 serverSide: true,
                 ajax: {
-                    url: '{{ url('/investigationHistoryList/') }}' + patientId,
+                    url: '{{ url('/investigationHistoryList') }}/' + patientId,
                     type: 'GET'
                 },
                 columns: [{
@@ -5801,7 +5801,7 @@ $sett = appsettings();
                 processing: true,
                 serverSide: true,
                 ajax: {
-                    url: '{{ url('/imagingHistoryList/') }}' + patientId,
+                    url: '{{ url('/imagingHistoryList') }}/' + patientId,
                     type: 'GET'
                 },
                 columns: [{
@@ -5828,7 +5828,7 @@ $sett = appsettings();
                 processing: true,
                 serverSide: true,
                 ajax: {
-                    url: '{{ url('/procedureHistoryList/') }}' + patientId,
+                    url: '{{ url('/procedureHistoryList') }}/' + patientId,
                     type: 'GET'
                 },
                 columns: [
@@ -5902,54 +5902,75 @@ $sett = appsettings();
             });
         }
 
+        let mcoSearchProdTimeout = null;
+        let mcoSearchProdRequest = null;
+
         function searchProducts(q) {
-            $.get('/live-search-products', {
-                term: q,
-                patient_id: patientId
-            }, function(results) {
-                const $res = $('#mco_presc_results').empty();
-                ClinicalOrdersKit.appendFreeFormLink($res, q, 'Add Free-Form Medication', 'Enter medication name:', '#mco_presc_search', function(val) {
-                    MaternityClinicalOrders.addProductService(val + ' [Free-form]', 'FF_' + val, 0, 'cash', 0, 0);
+            if (mcoSearchProdRequest) mcoSearchProdRequest.abort();
+            clearTimeout(mcoSearchProdTimeout);
+
+            const $res = $('#mco_presc_results');
+            if (q.length < 2) { $res.empty().hide(); return; }
+
+            $res.html('<li class="list-group-item text-center text-muted"><i class="fa fa-spinner fa-spin"></i> Loading...</li>').show();
+
+            mcoSearchProdTimeout = setTimeout(() => {
+                mcoSearchProdRequest = $.ajax({
+                    url: '{{ url('/live-search-products') }}',
+                    method: 'GET',
+                    dataType: 'json',
+                    data: { term: q, patient_id: patientId },
+                    success: (results) => {
+                        $res.empty();
+                        ClinicalOrdersKit.appendFreeFormLink($res, q, 'Add Free-Form Medication', 'Enter medication name:', '#mco_presc_search', function(val) {
+                            MaternityClinicalOrders.addProductService(val + ' [Free-form]', 'FF_' + val, 0, 'cash', 0, 0);
+                        });
+                        if (!results.length) {
+                            ClinicalOrdersKit.showSearchEmpty('#mco_presc_results', 'products');
+                            return;
+                        } else {
+                            results.forEach(item => {
+                                const name = item.product_name || 'Unknown';
+                                const code = item.product_code || '';
+                                const qty = item.stock?.current_quantity ?? 0;
+                                const price = item.price?.initial_sale_price ?? 0;
+                                const display = name + '[' + code + '](' + qty + ' avail.)';
+                                const isCombo = item.is_combo || false;
+                                const bundleItems = item.bundle_items || [];
+                                if (isCombo) { window.comboDataMap = window.comboDataMap || {}; window.comboDataMap[item.id] = item; }
+                                const alreadyAdded = isCombo ? false : ClinicalOrdersKit.isAlreadyAdded('meds', parseInt(item.id));
+                                const mode = item.coverage_mode || null;
+                                const payable = item.payable_amount ?? price;
+                                const claims = item.claims_amount ?? 0;
+                                const onClick = alreadyAdded ? '' : (isCombo 
+                                    ? `MaternityClinicalOrders.applyProductCombo(${item.id}, ${enrollmentId}, '${name.replace(/'/g, "\\'")}')`
+                                    : 'MaternityClinicalOrders.addProductService(\'' + display.replace(/'/g, "\\'") + '\', ' + item.id + ', ' + price + ', \'' + (mode || '') + '\', ' + claims + ', ' + payable + ')');
+                                $res.append(ClinicalOrdersKit.renderSearchResultItem({
+                                    id: item.id,
+                                    name: name,
+                                    code: code,
+                                    qty: qty,
+                                    price: price,
+                                    payable: payable,
+                                    claims: claims,
+                                    mode: mode,
+                                    alreadyAdded: alreadyAdded,
+                                    alreadyLabel: 'Already Added',
+                                    onClick: onClick,
+                                    isCombo: isCombo,
+                                    bundleItems: bundleItems
+                                }));
+                            });
+                        }
+                        $res.show();
+                    },
+                    error: (jqXHR, textStatus) => {
+                        if (textStatus !== 'abort') {
+                            $res.html('<li class="list-group-item text-center text-danger">Error fetching results</li>').show();
+                        }
+                    }
                 });
-                if (!results.length) {
-                    ClinicalOrdersKit.showSearchEmpty('#mco_presc_results', 'products');
-                    return;
-                } else {
-                    results.forEach(item => {
-                        const name = item.product_name || 'Unknown';
-                        const code = item.product_code || '';
-                        const qty = item.stock?.current_quantity ?? 0;
-                        const price = item.price?.initial_sale_price ?? 0;
-                        const display = name + '[' + code + '](' + qty + ' avail.)';
-                        const isCombo = item.is_combo || false;
-                        const bundleItems = item.bundle_items || [];
-                        if (isCombo) { window.comboDataMap = window.comboDataMap || {}; window.comboDataMap[item.id] = item; }
-                        const alreadyAdded = isCombo ? false : ClinicalOrdersKit.isAlreadyAdded('meds', parseInt(item.id));
-                        const mode = item.coverage_mode || null;
-                        const payable = item.payable_amount ?? price;
-                        const claims = item.claims_amount ?? 0;
-                        const onClick = alreadyAdded ? '' : (isCombo 
-                            ? `MaternityClinicalOrders.applyProductCombo(${item.id}, ${enrollmentId}, '${name.replace(/'/g, "\\'")}')`
-                            : 'MaternityClinicalOrders.addProductService(\'' + display.replace(/'/g, "\\'") + '\', ' + item.id + ', ' + price + ', \'' + (mode || '') + '\', ' + claims + ', ' + payable + ')');
-                        $res.append(ClinicalOrdersKit.renderSearchResultItem({
-                            id: item.id,
-                            name: name,
-                            code: code,
-                            qty: qty,
-                            price: price,
-                            payable: payable,
-                            claims: claims,
-                            mode: mode,
-                            alreadyAdded: alreadyAdded,
-                            alreadyLabel: 'Already Added',
-                            onClick: onClick,
-                            isCombo: isCombo,
-                            bundleItems: bundleItems
-                        }));
-                    });
-                }
-                $res.show();
-            });
+            }, 300);
         }
 
         function searchImagingServices(q) {
@@ -6053,7 +6074,7 @@ $sett = appsettings();
             );
 
             ClinicalOrdersKit.addItem({
-                url: '{{ url('/maternity-workbench/enrollment/') }}' + enrollmentId + '/add-prescription',
+                url: '{{ url('/maternity-workbench/enrollment') }}/' + enrollmentId + '/add-prescription',
                 payload: {
                     product_id: id,
                     dose: ''
@@ -6102,7 +6123,7 @@ $sett = appsettings();
 
         function addLabService(name, id, price, mode, claims, payable) {
             ClinicalOrdersKit.addItem({
-                url: '{{ url('/maternity-workbench/enrollment/') }}' + enrollmentId + '/add-lab',
+                url: '{{ url('/maternity-workbench/enrollment') }}/' + enrollmentId + '/add-lab',
                 payload: {
                     service_id: id,
                     note: ''
@@ -6133,7 +6154,7 @@ $sett = appsettings();
 
         function addImagingService(name, id, price, mode, claims, payable) {
             ClinicalOrdersKit.addItem({
-                url: '{{ url('/maternity-workbench/enrollment/') }}' + enrollmentId + '/add-imaging',
+                url: '{{ url('/maternity-workbench/enrollment') }}/' + enrollmentId + '/add-imaging',
                 payload: {
                     service_id: id,
                     note: ''
@@ -6178,7 +6199,7 @@ $sett = appsettings();
             var priorityLabel = priority.charAt(0).toUpperCase() + priority.slice(1);
 
             ClinicalOrdersKit.addItem({
-                url: '{{ url('/maternity-workbench/enrollment/') }}' + enrollmentId + '/add-procedure',
+                url: '{{ url('/maternity-workbench/enrollment') }}/' + enrollmentId + '/add-procedure',
                 payload: {
                     service_id: id,
                     priority: priority,
