@@ -27,6 +27,8 @@
     <script src="{{ asset('js/app.js') }}"></script>
     <link rel="stylesheet" href="{{ asset('/plugins/dataT/datatables.min.css') }}">
     <script src="{{ asset('plugins/chartjs/Chart.js') }}"></script>
+    {{-- Global config injected server-side (no secrets in JS source) --}}
+    <script>window.mapsApiKey = '{{ config("services.google_maps.key") }}';</script>
 
     <!-- Toastr CSS -->
     <link rel="stylesheet" href="{{ asset('assets/css/toastr.min.css') }}" />
