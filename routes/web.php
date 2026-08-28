@@ -160,10 +160,13 @@ Route::group(['middleware' => ['auth']], function () {
     });
 
     // Bank Configuration
+    Route::group(['middleware' => ['auth']], function () {
+        Route::get('banks/active', [BankController::class, 'getActiveBanks'])->name('banks.active');
+    });
+
     Route::group(['middleware' => ['auth', 'role:SUPERADMIN|ADMIN']], function () {
         Route::get('banks', [BankController::class, 'index'])->name('banks.index');
         Route::get('banks/list', [BankController::class, 'list'])->name('banks.list');
-        Route::get('banks/active', [BankController::class, 'getActiveBanks'])->name('banks.active');
         Route::post('banks', [BankController::class, 'store'])->name('banks.store');
         Route::put('banks/{bank}', [BankController::class, 'update'])->name('banks.update');
         Route::delete('banks/{bank}', [BankController::class, 'destroy'])->name('banks.destroy');

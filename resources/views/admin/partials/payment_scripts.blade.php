@@ -241,8 +241,10 @@ function loadPatientReceipts() {
         url: `{{ url('/billing-workbench/patient/${currentPatient}/receipts') }}`,
         method: 'GET',
         success: function(response) {
-            renderReceipts(response.receipts);
-            if (response.stats) {
+            if (typeof renderReceipts === 'function') {
+                renderReceipts(response.receipts);
+            }
+            if (typeof updateReceiptsStats === 'function' && response.stats) {
                 updateReceiptsStats(response.stats);
             }
         },
