@@ -23,16 +23,7 @@ class StockUtilizationTest extends TestCase
 
     protected function setUp(): void
     {
-        // Intercept PHPUnit's sqlite overrides and force mysql for testing environment
-        $_ENV['DB_CONNECTION'] = 'mysql';
-        $_SERVER['DB_CONNECTION'] = 'mysql';
-        $_ENV['DB_DATABASE'] = '_corehealth_db_v2_test';
-        $_SERVER['DB_DATABASE'] = '_corehealth_db_v2_test';
-
         parent::setUp();
-
-        config()->set('database.default', 'mysql');
-        config()->set('database.connections.mysql.database', '_corehealth_db_v2_test');
 
         // Setup base entities using Eloquent
         $this->user = User::create([
