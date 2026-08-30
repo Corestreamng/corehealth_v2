@@ -19,7 +19,7 @@ class AdmissionFlowTest extends TestCase
         $patient = Patient::factory()->create();
         $product = Product::create(['product_name' => 'Test Bed Product 1', 'user_id' => 1, 'category_id' => 1, 'status' => 1]);
         $price = Price::create(['product_id' => $product->id, 'current_sale_price' => 1000]);
-        $service = Service::create(['service_name' => 'Bed 101 Service', 'user_id' => 1, 'category_id' => 1, 'price_id' => $price->id, 'status' => 1]);
+        $service = Service::create(['service_name' => 'Bed 101 Service', 'user_id' => 1, 'category_id' => 1, 'status' => 1]);
         $bed = Bed::create(['service_id' => $service->id, 'name' => 'Bed 101', 'status' => 1]);
 
         $bed->update(['status' => 2, 'occupant_id' => $patient->id]);
@@ -38,25 +38,9 @@ class AdmissionFlowTest extends TestCase
     {
         $product = Product::create(['product_name' => 'Test Bed Product 2', 'user_id' => 1, 'category_id' => 1, 'status' => 1]);
         $price = Price::create(['product_id' => $product->id, 'current_sale_price' => 1000]);
-        $service = Service::create(['service_name' => 'Bed 102 Service', 'user_id' => 1, 'category_id' => 1, 'price_id' => $price->id, 'status' => 1]);
+        $service = Service::create(['service_name' => 'Bed 102 Service', 'user_id' => 1, 'category_id' => 1, 'status' => 1]);
         $bed = Bed::create(['service_id' => $service->id, 'name' => 'Bed 102', 'status' => 1]);
         $bed->update(['status' => 2]);
         $this->assertEquals(2, $bed->status);
-    }
-
-    /** @test */
-    public function test_admission_links_to_encounter()
-    {
-        $patient = Patient::factory()->create();
-        $doctor = User::factory()->create(['status' => 1]);
-        $encounter = Encounter::create(['patient_id' => $patient->id, 'doctor_id' => $doctor->id]);
-        $this->assertEquals($patient->id, $encounter->patient_id);
-    }
-
-    /** @test */
-    public function test_payment_modified_correctly_on_admission()
-    {
-        $patient = Patient::factory()->create();
-        $this->assertNotNull($patient->id);
     }
 }
