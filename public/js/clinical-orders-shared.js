@@ -395,13 +395,13 @@ window.ClinicalOrdersKit = jQuery.extend(window.ClinicalOrdersKit || {}, (functi
     /* ═══════════════════════════════════════════
        CONSTANTS  (Plan §2.1 — FREQ_MULTIPLIER_MAP / DUR_UNIT_MULTIPLIER_MAP)
        ═══════════════════════════════════════════ */
-    const FREQ_MULTIPLIER_MAP = {
+    var FREQ_MULTIPLIER_MAP = {
         'OD': 1, 'BD': 2, 'TDS': 3, 'QID': 4,
         'Q4H': 6, 'Q6H': 4, 'Q8H': 3, 'Q12H': 2,
         'PRN': 1, 'STAT': 1
     };
 
-    const DUR_UNIT_MULTIPLIER_MAP = {
+    var DUR_UNIT_MULTIPLIER_MAP = {
         'days': 1, 'weeks': 7, 'months': 30
     };
 
@@ -848,7 +848,7 @@ window.ClinicalOrdersKit = jQuery.extend(window.ClinicalOrdersKit || {}, (functi
      *   config.doseInputName  - e.g. 'consult_presc_dose[]' or 'cr_presc_dose[]'
      *   config.onchange       - JS string for field onchange (e.g. "updateStructuredDoseValue(this)")
      *   config.onToggle       - optional callback(isStructured)
-     * @returns {{ isStructured: boolean }}
+     * @returns { isStructured: boolean }
      */
     function initDoseModeToggle(config) {
         var simpleRadio = document.getElementById(config.prefix + 'dose_mode_simple');

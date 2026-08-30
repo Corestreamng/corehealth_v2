@@ -2,12 +2,10 @@
 
 namespace Tests\Feature;
 
-use App\Models\Patient;
 use App\Models\Product;
 use App\Models\ProductCategory;
 use App\Models\StockBatch;
 use App\Models\Store;
-use App\Models\StoreStock;
 use App\Models\User;
 use Tests\TestCase;
 
