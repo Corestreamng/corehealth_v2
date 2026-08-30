@@ -65,7 +65,6 @@ class BedObserver
                     'category_id' => $bedServiceCategoryId,
                     'service_name' => $serviceName,
                     'service_code' => $serviceCode,
-                    'price_id' => 1,
                     'status' => 1,
                     'price_assign' => 1,
                 ]);
