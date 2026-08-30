@@ -5,7 +5,7 @@
  * used across all workbenches (Nursing, HMO, Pharmacy, Lab, Imaging).
  *
  * Usage:
- *   <script src="{{ asset('js/clinical-context.js') }}"></script>
+ *   <script src=wbUrl('js/clinical-context.js')></script>
  *   ClinicalContext.load(patientId);
  *
  * The module relies on:

@@ -20,7 +20,7 @@ window.patientFormConfig = {
     nextFileNumberUrl: '/reception/patient/next-file-number',
     checkFileNumberUrl: '/reception/patient/check-file-number',
     updateUrl: '/reception/patient/__ID__/update',
-    registerUrl: '{{ route("reception.patient.quick-register") }}',
+    registerUrl: wbRoute('reception_patient_quick-register', '/reception/patient/quick-register'),
     hmos: @json(\App\Models\Hmo::with('scheme')->orderBy('name')->get()->map(fn($h) => ['id' => $h->id, 'name' => $h->name, 'scheme_name' => $h->scheme->name ?? 'Other'])),
     onSuccess: function(patientId, mode) {
         var newPatientId = patientId;
@@ -297,13 +297,13 @@ function initializeEventListeners() {
 // =============================================
 function loadReferenceData() {
     // Load clinics
-    $.get('{{ route("reception.clinics") }}', function(data) {
+    $.get(wbRoute('reception_clinics', '/reception/clinics'), function(data) {
         cachedClinics = Array.isArray(data) ? data : (data.clinics || []);
         populateClinicDropdowns();
     });
 
     // Load HMOs
-    $.get('{{ route("reception.hmos") }}', function(data) {
+    $.get(wbRoute('reception_hmos', '/reception/hmos'), function(data) {
         cachedHmos = Array.isArray(data) ? data : (data.hmos || []);
         populateHmoDropdown();
         // Keep shared patient form modal config in sync
@@ -313,23 +313,23 @@ function loadReferenceData() {
     });
 
     // Load consultation services
-    $.get('{{ route("reception.services.consultation") }}', function(data) {
+    $.get(wbRoute('reception_services_consultation', '/reception/services/consultation'), function(data) {
         cachedServices.consultation = Array.isArray(data) ? data : (data.services || []);
         populateConsultationServices();
     });
 
     // Load lab services
-    $.get('{{ route("reception.services.lab") }}', function(data) {
+    $.get(wbRoute('reception_services_lab', '/reception/services/lab'), function(data) {
         cachedServices.lab = Array.isArray(data) ? data : (data.services || []);
     });
 
     // Load imaging services
-    $.get('{{ route("reception.services.imaging") }}', function(data) {
+    $.get(wbRoute('reception_services_imaging', '/reception/services/imaging'), function(data) {
         cachedServices.imaging = Array.isArray(data) ? data : (data.services || []);
     });
 
     // Load products
-    $.get('{{ route("reception.products") }}', function(data) {
+    $.get(wbRoute('reception_products', '/reception/products'), function(data) {
         cachedProducts = Array.isArray(data) ? data : (data.products || []);
     });
 }
@@ -394,7 +394,7 @@ function loadDoctorsByClinic(clinicId) {
 
     if (!clinicId) return;
 
-    $.get(`{{ url('reception/clinics') }}/${clinicId}/doctors`, function(data) {
+    $.get(`${wbUrl('reception/clinics')}/${clinicId}/doctors`, function(data) {
         const doctors = Array.isArray(data) ? data : (data.doctors || []);
         doctors.forEach(doctor => {
             $doctorSelect.append(`<option value="${doctor.id}">${doctor.name}</option>`);
@@ -473,7 +473,7 @@ function loadPatient(patientId) {
 
     // Load patient data
     $.ajax({
-        url: `{{ url('reception/patient') }}/${patientId}`,
+        url: `${wbUrl('reception/patient')}/${patientId}`,
         method: 'GET',
         success: function(data) {
             currentPatientData = data.patient;
@@ -719,9 +719,9 @@ function displayUpcomingAppointments(appointments) {
 function quickCheckInFollowUp(appointmentId) {
     if (!confirm('This is a pre-paid follow-up. Check in without billing?')) return;
     $.ajax({
-        url: "{{ route('appointments.check-in', ['appointment' => '__AID__']) }}".replace('__AID__', appointmentId),
+        url: wbRoute('appointments_check-in', '/appointments/check-in').replace('__AID__', appointmentId),
         type: 'POST',
-        data: { _token: '{{ csrf_token() }}' },
+        data: { _token: (window.WORKBENCH_CONFIG?.csrf || $('meta[name="csrf-token"]').attr('content')) },
         success: function(res) {
             if (res.success) {
                 toastr.success(res.message || 'Follow-up checked in successfully.');
@@ -937,7 +937,7 @@ function renderQueueCards(entries) {
 }
 
 function loadPatientQueueEntries(patientId) {
-    $.get(`{{ url('reception/patient') }}/${patientId}/queue`, function(data) {
+    $.get(`${wbUrl('reception/patient')}/${patientId}/queue`, function(data) {
         const $container = $('#current-queue-entries');
         const entries = Array.isArray(data) ? data : (data.entries || []);
         $container.html(renderQueueCards(entries));
@@ -948,7 +948,7 @@ function loadPatientQueueEntries(patientId) {
 
 // Load queue entries for the booking tab
 function loadBookingQueueEntries(patientId) {
-    $.get(`{{ url('reception/patient') }}/${patientId}/queue`, function(data) {
+    $.get(`${wbUrl('reception/patient')}/${patientId}/queue`, function(data) {
         const $container = $('#booking-current-queue');
         const entries = Array.isArray(data) ? data : (data.entries || []);
         $container.html(renderQueueCards(entries));
@@ -999,7 +999,7 @@ function switchWorkspaceTab(tab) {
 // QUEUE MANAGEMENT
 // =============================================
 function loadQueueCounts() {
-    $.get('{{ route("reception.queue-counts") }}', function(counts) {
+    $.get(wbRoute('reception_queue-counts', '/reception/queue-counts'), function(counts) {
         $('#queue-waiting-count').text(counts.waiting || 0);
         $('#queue-vitals-count').text(counts.vitals_pending || 0);
         $('#queue-consultation-count').text(counts.in_consultation || 0);
@@ -1019,14 +1019,14 @@ function loadQueueCounts() {
     });
 
     // Load referrals count separately
-    $.get('{{ route("referrals.pending-count") }}', function(data) {
+    $.get(wbRoute('referrals_pending-count', '/referrals/pending-count'), function(data) {
         $('#queue-referrals-count').text(data.count || 0);
     }).fail(function() {
         console.error('Failed to load referral count');
     });
 
     // Load HMO pending validation count
-    $.get('{{ route("reception.hmo-pending-count") }}', function(data) {
+    $.get(wbRoute('reception_hmo-pending-count', '/reception/hmo-pending-count'), function(data) {
         var count = data.count || 0;
         $('#queue-hmo-pending-count').text(count);
         if (count> 0) {
@@ -1197,7 +1197,7 @@ function loadReportsStatistics() {
     const filters = getReportFilters();
 
     $.ajax({
-        url: '{{ route("reception.reports.statistics") }}',
+        url: wbRoute('reception_reports_statistics', '/reception/reports/statistics'),
         method: 'GET',
         data: filters,
         success: function(data) {
@@ -1235,7 +1235,7 @@ function loadChartData() {
     const filters = getReportFilters();
 
     $.ajax({
-        url: '{{ route("reception.reports.chart-data") }}',
+        url: wbRoute('reception_reports_chart-data', '/reception/reports/chart-data'),
         method: 'GET',
         data: filters,
         success: function(data) {
@@ -1356,7 +1356,7 @@ function initReportsDataTables() {
         processing: true,
         serverSide: true,
         ajax: {
-            url: '{{ route("reception.reports.registrations") }}',
+            url: wbRoute('reception_reports_registrations', '/reception/reports/registrations'),
             data: function(d) {
                 const filters = getReportFilters();
                 Object.assign(d, filters);
@@ -1389,7 +1389,7 @@ function initReportsDataTables() {
         processing: true,
         serverSide: true,
         ajax: {
-            url: '{{ route("reception.reports.queue") }}',
+            url: wbRoute('reception_reports_queue', '/reception/reports/queue'),
             data: function(d) {
                 const filters = getReportFilters();
                 Object.assign(d, filters);
@@ -1422,7 +1422,7 @@ function initReportsDataTables() {
         processing: true,
         serverSide: true,
         ajax: {
-            url: '{{ route("reception.reports.visits") }}',
+            url: wbRoute('reception_reports_visits', '/reception/reports/visits'),
             data: function(d) {
                 const filters = getReportFilters();
                 Object.assign(d, filters);
@@ -1485,7 +1485,7 @@ function initializeQueueDataTable(filter) {
         processing: true,
         serverSide: true,
         ajax: {
-            url: '{{ route("reception.queue-list") }}',
+            url: wbRoute('reception_queue-list', '/reception/queue-list'),
             data: function(d) {
                 d.filter = filter;
                 d.clinic_id = $('#queue-clinic-filter').val();
@@ -1593,10 +1593,10 @@ function updateTariffPreview() {
     const servicePrice = parseFloat($('#booking-service option:selected').data('price')) || 0;
 
     $.ajax({
-        url: '{{ route("reception.tariff-preview") }}',
+        url: wbRoute('reception_tariff-preview', '/reception/tariff-preview'),
         method: 'POST',
         data: {
-            _token: '{{ csrf_token() }}',
+            _token: (window.WORKBENCH_CONFIG?.csrf || $('meta[name="csrf-token"]').attr('content')),
             patient_id: currentPatient,
             service_id: serviceId
         },
@@ -1747,7 +1747,7 @@ function fetchDoctorsForGrid(clinicId, doctorSelectId) {
     }
     $.ajax({
         type: 'GET',
-        url: `{{ url('get-doctors') }}/${clinicId}`,
+        url: `${wbUrl('get-doctors')}/${clinicId}`,
         success: function(data) {
             $(`#${doctorSelectId}`).empty().append('<option value="">Any Available Doctor</option>');
             data.forEach(d => {
@@ -1819,10 +1819,10 @@ function bookConsultation() {
     const originalHtml = $btn.html();
     $btn.prop('disabled', true).html('<i class="mdi mdi-loading mdi-spin"></i> Booking...');
 
-    var requestUrl = '{{ route("reception.book-consultation") }}';
+    var requestUrl = wbRoute('reception_book-consultation', '/reception/book-consultation');
     
     var requestData = {
-        _token: '{{ csrf_token() }}',
+        _token: (window.WORKBENCH_CONFIG?.csrf || $('meta[name="csrf-token"]').attr('content')),
         bookings: bookings
     };
 
@@ -1981,10 +1981,10 @@ function addToWalkinCart(id, type, name, price) {
     // Fetch tariff preview with HMO calculations
     const isProduct = type === 'product';
     $.ajax({
-        url: '{{ route("reception.tariff-preview") }}',
+        url: wbRoute('reception_tariff-preview', '/reception/tariff-preview'),
         method: 'POST',
         data: {
-            _token: '{{ csrf_token() }}',
+            _token: (window.WORKBENCH_CONFIG?.csrf || $('meta[name="csrf-token"]').attr('content')),
             patient_id: currentPatient,
             service_id: isProduct ? null : id,
             product_id: isProduct ? id : null,
@@ -2132,10 +2132,10 @@ function submitWalkinServices() {
     $btn.prop('disabled', true).html('<i class="mdi mdi-loading mdi-spin"></i> Processing...');
 
     $.ajax({
-        url: '{{ route("reception.book-walkin") }}',
+        url: wbRoute('reception_book-walkin', '/reception/book-walkin'),
         method: 'POST',
         data: {
-            _token: '{{ csrf_token() }}',
+            _token: (window.WORKBENCH_CONFIG?.csrf || $('meta[name="csrf-token"]').attr('content')),
             patient_id: currentPatient,
             items: walkinCart
         },
@@ -2171,7 +2171,7 @@ function loadRecentRequests() {
     $container.html('<div class="text-center py-3"><i class="mdi mdi-loading mdi-spin"></i> Loading...</div>');
 
     $.ajax({
-        url: `{{ url('reception/patient') }}/${currentPatient}/recent-requests`,
+        url: `${wbUrl('reception/patient')}/${currentPatient}/recent-requests`,
         method: 'GET',
         success: function(response) {
             if (response.success && response.requests && response.requests.length> 0) {
@@ -2290,7 +2290,7 @@ function initializeServiceRequestsTable(patientId) {
         processing: true,
         serverSide: true,
         ajax: {
-            url: `{{ url('reception/patient') }}/${patientId}/service-requests`,
+            url: `${wbUrl('reception/patient')}/${patientId}/service-requests`,
             type: 'GET',
             data: function(d) {
                 d.date_from = $('#req-date-from').val();
@@ -2328,7 +2328,7 @@ function initializeServiceRequestsTable(patientId) {
 
 function loadServiceRequestsStats(patientId) {
     $.ajax({
-        url: `{{ url('reception/patient') }}/${patientId}/service-requests-stats`,
+        url: `${wbUrl('reception/patient')}/${patientId}/service-requests-stats`,
         method: 'GET',
         data: {
             date_from: $('#req-date-from').val(),
@@ -2382,7 +2382,7 @@ $(document).on('click', '#export-requests-excel', function() {
         delivery_status: $('#req-delivery-filter').val(),
         format: 'excel'
     });
-    window.location.href = `{{ url('reception/patient') }}/${currentPatient}/service-requests/export?${params}`;
+    window.location.href = `${wbUrl('reception/patient')}/${currentPatient}/service-requests/export?${params}`;
 });
 
 $(document).on('click', '#export-requests-pdf', function() {
@@ -2395,7 +2395,7 @@ $(document).on('click', '#export-requests-pdf', function() {
         delivery_status: $('#req-delivery-filter').val(),
         format: 'pdf'
     });
-    window.location.href = `{{ url('reception/patient') }}/${currentPatient}/service-requests/export?${params}`;
+    window.location.href = `${wbUrl('reception/patient')}/${currentPatient}/service-requests/export?${params}`;
 });
 
 $(document).on('click', '#print-requests', function() {
@@ -2407,7 +2407,7 @@ $(document).on('click', '#print-requests', function() {
         billing_status: $('#req-billing-filter').val(),
         delivery_status: $('#req-delivery-filter').val()
     });
-    window.open(`{{ url('reception/patient') }}/${currentPatient}/service-requests/print?${params}`, '_blank');
+    window.open(`${wbUrl('reception/patient')}/${currentPatient}/service-requests/print?${params}`, '_blank');
 });
 
 // View Request Details Handler
@@ -2441,7 +2441,7 @@ $(document).on('click', '.btn-print-routing', function(e) {
     toastr.info('Generating routing slip...');
     
     $.ajax({
-        url: `{{ url('reception/queue') }}/${queueId}/routing-slip`,
+        url: `${wbUrl('reception/queue')}/${queueId}/routing-slip`,
         method: 'GET',
         success: function(response) {
             if (response.success && response.html) {
@@ -2488,7 +2488,7 @@ $(document).on('click', '.btn-print-routing', function(e) {
     toastr.info('Generating routing slip...');
     
     $.ajax({
-        url: `{{ url('reception/queue') }}/${queueId}/routing-slip`,
+        url: `${wbUrl('reception/queue')}/${queueId}/routing-slip`,
         method: 'GET',
         success: function(response) {
             if (response.success && response.html) {
@@ -2519,10 +2519,10 @@ $('#discardRequestForm').on('submit', function(e) {
     $('#confirmDiscardBtn').prop('disabled', true).html('<i class="mdi mdi-loading mdi-spin"></i> Discarding...');
 
     $.ajax({
-        url: `{{ url('reception/request') }}/${discardRequestType}/${discardRequestId}/discard`,
+        url: `${wbUrl('reception/request')}/${discardRequestType}/${discardRequestId}/discard`,
         method: 'DELETE',
         data: {
-            _token: '{{ csrf_token() }}',
+            _token: (window.WORKBENCH_CONFIG?.csrf || $('meta[name="csrf-token"]').attr('content')),
             reason: reason
         },
         success: function(response) {
@@ -2553,7 +2553,7 @@ function initializeVisitHistoryTable(patientId) {
         processing: true,
         serverSide: true,
         ajax: {
-            url: `{{ url('reception/patient') }}/${patientId}/visits`,
+            url: `${wbUrl('reception/patient')}/${patientId}/visits`,
             type: 'GET'
         },
         columns: [
@@ -2593,7 +2593,7 @@ function generateFileNumber() {
     $input.removeClass('status-valid status-checking status-duplicate');
 
     $.ajax({
-        url: '{{ url('/reception/patient/next-file-number') }}',
+        url: wbUrl('/reception/patient/next-file-number'),
         method: 'GET',
         success: function(response) {
             $input.val(response.file_no).addClass('status-valid');
@@ -2715,10 +2715,10 @@ function checkQRFileNumberDuplicate(fileNo) {
     // Debounce the AJAX call
     quickRegisterCheckTimeout = setTimeout(function() {
         $.ajax({
-            url: '{{ url('/reception/patient/check-file-number') }}',
+            url: wbUrl('/reception/patient/check-file-number'),
             method: 'POST',
             data: {
-                _token: '{{ csrf_token() }}',
+                _token: (window.WORKBENCH_CONFIG?.csrf || $('meta[name="csrf-token"]').attr('content')),
                 file_no: fileNo
             },
             success: function(response) {
@@ -2784,10 +2784,10 @@ function submitQuickRegister() {
     $btn.prop('disabled', true).html('<i class="mdi mdi-loading mdi-spin"></i> Registering...');
 
     $.ajax({
-        url: '{{ route("reception.patient.quick-register") }}',
+        url: wbRoute('reception_patient_quick-register', '/reception/patient/quick-register'),
         method: 'POST',
         data: {
-            _token: '{{ csrf_token() }}',
+            _token: (window.WORKBENCH_CONFIG?.csrf || $('meta[name="csrf-token"]').attr('content')),
             surname: lastName,
             firstname: firstName,
             phone_no: phone,
@@ -2831,7 +2831,7 @@ function submitQuickRegister() {
 // =============================================
 function showTodayStats() {
     $.ajax({
-        url: '{{ route("reception.today-stats") }}',
+        url: wbRoute('reception_today-stats', '/reception/today-stats'),
         method: 'GET',
         success: function(data) {
             displayTodayStats(data);
@@ -2937,7 +2937,7 @@ $(window).on('beforeunload', function() {
 // HOSPITAL CARD FUNCTIONS
 // =============================================
 function showHospitalCard(patientData) {
-    const defaultAvatar = '{{ asset("assets/images/default-avatar.png") }}';
+    const defaultAvatar = wbUrl('assets/images/default-avatar.png');
 
     // Populate FRONT card data
     $('#card-patient-photo').attr('src', patientData.photo || defaultAvatar);
@@ -3036,7 +3036,7 @@ function printHospitalCard() {
         cardContent = document.getElementById('hospital-card-container').innerHTML;
     }
     var pageHeight = (activeTab === 'combined') ? '120mm' : '60mm';
-    const hosColor = '{{ appsettings()->hos_color ?? "#0066cc" }}';
+    const hosColor = '';
     const printWindow = window.open('', '_blank', 'width=500,height=700');
 
     // Use mm-based sizing for consistent print output (ISO ID-1 card: 85.6mm × 54mm)
@@ -3275,7 +3275,7 @@ function loadAvailableSlots() {
     // Remove any previous hint
     $('#custom-time-hint').remove();
 
-    $.get('{{ route("appointments.available-slots") }}', {
+    $.get(wbRoute('appointments_available-slots', '/appointments/available-slots'), {
         date: date,
         clinic_id: clinicId,
         doctor_id: doctorId
@@ -3440,9 +3440,9 @@ $('#hvc-confirm-btn').on('click', function() {
 
     if (_hvcMode === 'single' && _hvcId) {
         $.ajax({
-            url: '{{ url("reception/hmo-validate") }}/' + _hvcId,
+            url: '${wbUrl("reception/hmo-validate")}/' + _hvcId,
             method: 'POST',
-            data: { _token: '{{ csrf_token() }}', notes: notes },
+            data: { _token: (window.WORKBENCH_CONFIG?.csrf || $('meta[name="csrf-token"]').attr('content')), notes: notes },
             success: function(resp) {
                 $('#hmoValidateConfirmModal').modal('hide');
                 if (resp.success) {
@@ -3461,9 +3461,9 @@ $('#hvc-confirm-btn').on('click', function() {
         });
     } else if (_hvcMode === 'batch' && _hvcIds.length) {
         $.ajax({
-            url: '{{ route("reception.hmo-batch-validate") }}',
+            url: wbRoute('reception_hmo-batch-validate', '/reception/hmo-batch-validate'),
             method: 'POST',
-            data: { _token: '{{ csrf_token() }}', ids: _hvcIds, notes: notes },
+            data: { _token: (window.WORKBENCH_CONFIG?.csrf || $('meta[name="csrf-token"]').attr('content')), ids: _hvcIds, notes: notes },
             success: function(resp) {
                 $('#hmoValidateConfirmModal').modal('hide');
                 if (resp.success) {
@@ -3494,7 +3494,7 @@ function loadHmoValidationList() {
     var search = $('#hmo-validation-search').val() || '';
     $('#hmo-validation-body').html('<tr><td colspan="8" class="text-center text-muted py-4"><i class="mdi mdi-loading mdi-spin"></i> Loading...</td></tr>');
 
-    $.get('{{ route("reception.hmo-pending-validation") }}', { search: search }, function(resp) {
+    $.get(wbRoute('reception_hmo-pending-validation', '/reception/hmo-pending-validation'), { search: search }, function(resp) {
         var data = resp.data || [];
         $('#hmo-validation-total').text(data.length + ' pending');
         $('#hmo-select-all').prop('checked', false);
@@ -3586,7 +3586,7 @@ $('#appt-cal-clinic-filter').on('change', function() {
     var $docFilter = $('#appt-cal-doctor-filter');
     $docFilter.empty().append('<option value="">All Doctors</option>');
     if (clinicId) {
-        $.get('{{ url("reception/clinics") }}/' + clinicId + '/doctors', function(data) {
+        $.get('${wbUrl("reception/clinics")}/' + clinicId + '/doctors', function(data) {
             var doctors = Array.isArray(data) ? data : (data.doctors || []);
             doctors.forEach(function(doc) {
                 $docFilter.append('<option value="' + doc.id + '">' + doc.name + '</option>');
@@ -3635,7 +3635,7 @@ function initAppointmentsCalendar() {
 
     window.smoothRefreshApptCal = function() {
         if (!appointmentsCalendar) return;
-        $.get('{{ route("appointments.calendar-events") }}', apptCalFetchParams(), function(newEvents) {
+        $.get(wbRoute('appointments_calendar-events', '/appointments/calendar-events'), apptCalFetchParams(), function(newEvents) {
             var cal = $('#appointments-fullcalendar');
             var newMap = {};
             (newEvents || []).forEach(function(e) {
@@ -3688,7 +3688,7 @@ function initAppointmentsCalendar() {
         height: 'auto',
         contentHeight: 600,
         events: function(start, end, timezone, callback) {
-            $.get('{{ route("appointments.calendar-events") }}', {
+            $.get(wbRoute('appointments_calendar-events', '/appointments/calendar-events'), {
                 start: start.format('YYYY-MM-DD'),
                 end: end.format('YYYY-MM-DD'),
                 clinic_id: $('#appt-cal-clinic-filter').val(),
@@ -3860,7 +3860,7 @@ $(document).on('click', '.appt-context-menu .context-item', function(e) {
     switch (action) {
         case 'checkin':
             if (!confirm('Check in this appointment?')) return;
-            $.post("{{ route('appointments.check-in', ['appointment' => '__AID__']) }}".replace('__AID__', apptId), { _token: '{{ csrf_token() }}' }, function(res) {
+            $.post(wbRoute('appointments_check-in', '/appointments/check-in').replace('__AID__', apptId), { _token: (window.WORKBENCH_CONFIG?.csrf || $('meta[name="csrf-token"]').attr('content')) }, function(res) {
                 if (res.success) {
                     toastr.success(res.message || 'Checked in successfully.');
                     // Show actionable next-step guidance
@@ -3873,14 +3873,14 @@ $(document).on('click', '.appt-context-menu .context-item', function(e) {
         case 'cancel':
             var reason = prompt('Cancellation reason (optional):');
             if (reason === null) return;
-            $.post("{{ route('appointments.cancel', ['appointment' => '__AID__']) }}".replace('__AID__', apptId), { _token: '{{ csrf_token() }}', reason: reason }, function(res) {
+            $.post(wbRoute('appointments_cancel', '/appointments/cancel').replace('__AID__', apptId), { _token: (window.WORKBENCH_CONFIG?.csrf || $('meta[name="csrf-token"]').attr('content')), reason: reason }, function(res) {
                 if (res.success) { toastr.success(res.message); refreshAppointmentViews(); }
                 else toastr.error(res.message);
             }).fail(function(xhr) { toastr.error(xhr.responseJSON?.message || 'Cancel failed'); });
             break;
         case 'noshow':
             if (!confirm('Mark this appointment as No-Show?')) return;
-            $.post("{{ route('appointments.no-show', ['appointment' => '__AID__']) }}".replace('__AID__', apptId), { _token: '{{ csrf_token() }}' }, function(res) {
+            $.post(wbRoute('appointments_no-show', '/appointments/no-show').replace('__AID__', apptId), { _token: (window.WORKBENCH_CONFIG?.csrf || $('meta[name="csrf-token"]').attr('content')) }, function(res) {
                 if (res.success) { toastr.success(res.message); refreshAppointmentViews(); }
                 else toastr.error(res.message);
             }).fail(function(xhr) { toastr.error(xhr.responseJSON?.message || 'Failed'); });
@@ -3911,7 +3911,7 @@ $(document).on('click', '.appt-context-menu .context-item', function(e) {
             $('#reassign-doctor').empty().append('<option value="">Loading doctors...</option>');
             $('#reassign-reason').val('');
             $('#reassignDoctorModal').modal('show');
-            $.get("{{ route('appointments.available-doctors', ['appointment' => '__AID__']) }}".replace('__AID__', apptId), function(res) {
+            $.get(wbRoute('appointments_available-doctors', '/appointments/available-doctors').replace('__AID__', apptId), function(res) {
                 var $sel = $('#reassign-doctor');
                 $sel.empty().append('<option value="">-- Select Doctor --</option>');
                 if (res.success && res.doctors) {
@@ -3931,7 +3931,7 @@ $(document).on('click', '.appt-context-menu .context-item', function(e) {
             // Directly open chain modal (delegated events won't fire on detached elements)
             $('#chain-body').html('<div class="text-center py-4"><i class="mdi mdi-loading mdi-spin mdi-36px"></i></div>');
             $('#appointmentChainModal').modal('show');
-            $.get("{{ route('appointments.chain', ['appointment' => '__AID__']) }}".replace('__AID__', apptId), function(res) {
+            $.get(wbRoute('appointments_chain', '/appointments/chain').replace('__AID__', apptId), function(res) {
                 if (res.success && res.chain) {
                     var html = '<div class="appointment-chain-timeline">';
                     res.chain.forEach(function(item, idx) {
@@ -3996,7 +3996,7 @@ function initAppointmentsGlobalDataTable() {
         processing: true,
         serverSide: true,
         ajax: {
-            url: '{{ route("appointments.list") }}',
+            url: wbRoute('appointments_list', '/appointments/list'),
             data: function(d) {
                 d.clinic_id = $('#appt-cal-clinic-filter').val();
                 d.doctor_id = $('#appt-cal-doctor-filter').val();
@@ -4041,7 +4041,7 @@ function showReferralsQueueView() {
 $(document).on('click', '.btn-check-in-appointment', function() {
     var apptId = $(this).data('id');
     if (!confirm('Check in this appointment?')) return;
-    $.post("{{ route('appointments.check-in', ['appointment' => '__AID__']) }}".replace('__AID__', apptId), { _token: '{{ csrf_token() }}' }, function(res) {
+    $.post(wbRoute('appointments_check-in', '/appointments/check-in').replace('__AID__', apptId), { _token: (window.WORKBENCH_CONFIG?.csrf || $('meta[name="csrf-token"]').attr('content')) }, function(res) {
         if (res.success) {
             toastr.success(res.message);
             refreshAppointmentViews();
@@ -4057,7 +4057,7 @@ $(document).on('click', '.btn-cancel-appointment', function() {
     var apptId = $(this).data('id');
     var reason = prompt('Cancellation reason (optional):');
     if (reason === null) return;
-    $.post("{{ route('appointments.cancel', ['appointment' => '__AID__']) }}".replace('__AID__', apptId), { _token: '{{ csrf_token() }}', reason: reason }, function(res) {
+    $.post(wbRoute('appointments_cancel', '/appointments/cancel').replace('__AID__', apptId), { _token: (window.WORKBENCH_CONFIG?.csrf || $('meta[name="csrf-token"]').attr('content')), reason: reason }, function(res) {
         if (res.success) {
             toastr.success(res.message);
             refreshAppointmentViews();
@@ -4072,7 +4072,7 @@ $(document).on('click', '.btn-cancel-appointment', function() {
 $(document).on('click', '.btn-noshow-appointment', function() {
     var apptId = $(this).data('id');
     if (!confirm('Mark this appointment as No-Show?')) return;
-    $.post("{{ route('appointments.no-show', ['appointment' => '__AID__']) }}".replace('__AID__', apptId), { _token: '{{ csrf_token() }}' }, function(res) {
+    $.post(wbRoute('appointments_no-show', '/appointments/no-show').replace('__AID__', apptId), { _token: (window.WORKBENCH_CONFIG?.csrf || $('meta[name="csrf-token"]').attr('content')) }, function(res) {
         if (res.success) {
             toastr.success(res.message);
             refreshAppointmentViews();
@@ -4132,8 +4132,8 @@ $(document).on('click', '#confirm-book-referral', function() {
     var $btn = $(this);
     $btn.prop('disabled', true).html('<i class="fa fa-spinner fa-spin"></i> Booking...');
 
-    $.post("{{ route('referrals.book', ['referral' => '__RID__']) }}".replace('__RID__', refId), {
-        _token: '{{ csrf_token() }}',
+    $.post(wbRoute('referrals_book', '/referrals/book').replace('__RID__', refId), {
+        _token: (window.WORKBENCH_CONFIG?.csrf || $('meta[name="csrf-token"]').attr('content')),
         appointment_date: date,
         start_time: time,
         clinic_id: $('#book-ref-clinic-override').val() || $('#book-ref-clinic').val(),
@@ -4167,8 +4167,8 @@ $(document).on('click', '#confirm-refer-out', function() {
     var $btn = $(this);
     $btn.prop('disabled', true).html('<i class="fa fa-spinner fa-spin"></i> Processing...');
 
-    $.post("{{ route('referrals.refer-out', ['referral' => '__RID__']) }}".replace('__RID__', refId), {
-        _token: '{{ csrf_token() }}',
+    $.post(wbRoute('referrals_refer-out', '/referrals/refer-out').replace('__RID__', refId), {
+        _token: (window.WORKBENCH_CONFIG?.csrf || $('meta[name="csrf-token"]').attr('content')),
         action_notes: $('#refer-out-notes').val()
     }, function(res) {
         if (res.success) {
@@ -4203,8 +4203,8 @@ $(document).on('click', '#confirm-decline-referral', function() {
     var $btn = $(this);
     $btn.prop('disabled', true).html('<i class="fa fa-spinner fa-spin"></i> Declining...');
 
-    $.post("{{ route('referrals.decline', ['referral' => '__RID__']) }}".replace('__RID__', refId), {
-        _token: '{{ csrf_token() }}',
+    $.post(wbRoute('referrals_decline', '/referrals/decline').replace('__RID__', refId), {
+        _token: (window.WORKBENCH_CONFIG?.csrf || $('meta[name="csrf-token"]').attr('content')),
         reason: reason
     }, function(res) {
         if (res.success) {
@@ -4225,8 +4225,8 @@ $(document).on('click', '.btn-cancel-referral', function() {
     if (!confirm('Cancel this referral? This cannot be undone.')) return;
     var $btn = $(this);
     $btn.prop('disabled', true);
-    $.post("{{ route('referrals.cancel', ['referral' => '__RID__']) }}".replace('__RID__', refId), {
-        _token: '{{ csrf_token() }}'
+    $.post(wbRoute('referrals_cancel', '/referrals/cancel').replace('__RID__', refId), {
+        _token: (window.WORKBENCH_CONFIG?.csrf || $('meta[name="csrf-token"]').attr('content'))
     }, function(res) {
         if (res.success) {
             toastr.success(res.message);
@@ -4247,7 +4247,7 @@ $(document).on('click', '.btn-view-referral', function() {
     $('#btn-print-referral-letter').hide();
     $('#referralDetailModal').modal('show');
 
-    $.get("{{ route('referrals.detail', ['referral' => '__RID__']) }}".replace('__RID__', refId), function(data) {
+    $.get(wbRoute('referrals_detail', '/referrals/detail').replace('__RID__', refId), function(data) {
         if (!data.success) { toastr.error('Failed to load referral'); return; }
 
         var ref = data.referral;
@@ -4337,7 +4337,7 @@ $(document).on('click', '#btn-print-referral-letter', function() {
 // Print referral directly from table
 $(document).on('click', '.btn-print-referral', function() {
     var refId = $(this).data('id');
-    $.get("{{ route('referrals.detail', ['referral' => '__RID__']) }}".replace('__RID__', refId), function(data) {
+    $.get(wbRoute('referrals_detail', '/referrals/detail').replace('__RID__', refId), function(data) {
         if (data.success) {
             buildAndPrintReferralLetter(data);
         } else {
@@ -4493,7 +4493,7 @@ function _loadReferralsTable(statusFilter, titleText) {
         processing: true,
         serverSide: true,
         ajax: {
-            url: '{{ route("referrals.pending") }}',
+            url: wbRoute('referrals_pending', '/referrals/pending'),
             data: function(d) { d.status = statusFilter; }
         },
         columns: columns,
@@ -4526,7 +4526,7 @@ $(document).on('click', '.btn-referral-filter', function() {
 function loadRescheduleModalDoctors(clinicId, selectedDoctorId) {
     var $sel = $('#reschedule-doctor');
     if (!clinicId) { $sel.empty().append('<option value="">Same Doctor</option>'); return; }
-    $.get('{{ url("reception/clinics") }}/' + clinicId + '/doctors', function(doctors) {
+    $.get('${wbUrl("reception/clinics")}/' + clinicId + '/doctors', function(doctors) {
         $sel.empty().append('<option value="">Same Doctor</option>');
         if (doctors && doctors.length) {
             doctors.forEach(function(doc) {
@@ -4573,7 +4573,7 @@ $(document).on('change', '#reschedule-date, #reschedule-clinic, #reschedule-doct
         $('#reschedule-time').empty().append('<option value="">-- Select date & clinic first --</option>');
         return;
     }
-    $.get('{{ route("appointments.available-slots") }}', {
+    $.get(wbRoute('appointments_available-slots', '/appointments/available-slots'), {
         date: date, clinic_id: clinicId, doctor_id: doctorId
     }, function(response) {
         var $sel = $('#reschedule-time');
@@ -4627,10 +4627,10 @@ $(document).on('submit', '#reschedule-form', function(e) {
     }
 
     $.ajax({
-        url: "{{ route('appointments.reschedule', ['appointment' => '__AID__']) }}".replace('__AID__', apptId),
+        url: wbRoute('appointments_reschedule', '/appointments/reschedule').replace('__AID__', apptId),
         method: 'POST',
         data: {
-            _token: '{{ csrf_token() }}',
+            _token: (window.WORKBENCH_CONFIG?.csrf || $('meta[name="csrf-token"]').attr('content')),
             appointment_date: $('#reschedule-date').val(),
             start_time: startTime,
             end_time: endTime,
@@ -4676,7 +4676,7 @@ $(document).on('click', '.btn-reassign-appointment', function() {
     $('#reassignDoctorModal').modal('show');
 
     // Load available doctors for this appointment
-    $.get("{{ route('appointments.available-doctors', ['appointment' => '__AID__']) }}".replace('__AID__', apptId), function(res) {
+    $.get(wbRoute('appointments_available-doctors', '/appointments/available-doctors').replace('__AID__', apptId), function(res) {
         var $sel = $('#reassign-doctor');
         $sel.empty().append('<option value="">-- Select Doctor --</option>');
         if (res.success && res.doctors) {
@@ -4700,10 +4700,10 @@ $(document).on('submit', '#reassign-form', function(e) {
     $submitBtn.prop('disabled', true).html('<i class="mdi mdi-loading mdi-spin"></i> Reassigning...');
 
     $.ajax({
-        url: "{{ route('appointments.reassign', ['appointment' => '__AID__']) }}".replace('__AID__', apptId),
+        url: wbRoute('appointments_reassign', '/appointments/reassign').replace('__AID__', apptId),
         method: 'POST',
         data: {
-            _token: '{{ csrf_token() }}',
+            _token: (window.WORKBENCH_CONFIG?.csrf || $('meta[name="csrf-token"]').attr('content')),
             doctor_id: $('#reassign-doctor').val(),
             reason: $('#reassign-reason').val()
         },
@@ -4734,7 +4734,7 @@ $(document).on('click', '.btn-view-chain', function() {
     $('#chain-body').html('<div class="text-center py-4"><i class="mdi mdi-loading mdi-spin mdi-36px"></i></div>');
     $('#appointmentChainModal').modal('show');
 
-    $.get("{{ route('appointments.chain', ['appointment' => '__AID__']) }}".replace('__AID__', apptId), function(res) {
+    $.get(wbRoute('appointments_chain', '/appointments/chain').replace('__AID__', apptId), function(res) {
         if (res.success && res.chain) {
             var html = '<div class="appointment-chain-timeline">';
             res.chain.forEach(function(item, idx) {
@@ -4779,7 +4779,7 @@ function loadPatientAppointments(patientId) {
         processing: true,
         serverSide: true,
         ajax: {
-            url: '{{ route("appointments.list") }}',
+            url: wbRoute('appointments_list', '/appointments/list'),
             data: function(d) {
                 d.patient_id = patientId;
             }
