@@ -5380,6 +5380,4 @@
 @include('admin.pharmacy.partials._modals')
 @endsection
 
-@section('scripts')
 @include('admin.pharmacy.partials._scripts')
-@endsection

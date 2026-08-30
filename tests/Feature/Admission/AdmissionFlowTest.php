@@ -3,12 +3,10 @@
 namespace Tests\Feature\Admission;
 
 use App\Models\Bed;
-use App\Models\Encounter;
 use App\Models\Patient;
 use App\Models\Price;
 use App\Models\Product;
 use App\Models\Service;
-use App\Models\User;
 use Tests\TestCase;
 
 class AdmissionFlowTest extends TestCase

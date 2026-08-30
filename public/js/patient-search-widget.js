@@ -51,15 +51,18 @@ const PatientSearchWidget = (function() {
 
         $container.empty();
         list.forEach(p => {
+            if (!p || !p.name) return;
             const shortName = escHtml(p.name.split(' ')[0]);
+            const photoUrl = p.photo || wbUrl('assets/images/default-avatar.png');
             const $chip = $(`
-                <span class="ps-recent-chip" data-id="${p.id}" data-patient='${JSON.stringify(p).replace(/'/g, "&apos;")}' style="
+                <span class="ps-recent-chip" data-id="${p.id}" style="
                     display: inline-flex; align-items: center; background: #f1f3f5; padding: 4px 10px; border-radius: 16px; cursor: pointer; font-size: 0.85rem; transition: background 0.2s;">
-                    <img src="${escHtml(p.photo)}" alt="" style="width: 20px; height: 20px; border-radius: 50%; object-fit: cover; margin-right: 6px;">
+                    <img src="${escHtml(photoUrl)}" alt="" style="width: 20px; height: 20px; border-radius: 50%; object-fit: cover; margin-right: 6px;">
                     <span style="font-weight: 500; color: #333;">${shortName}</span>
                     ${p.file_no ? `<small style="color: #6c757d; margin-left: 4px;">${escHtml(p.file_no)}</small>` : ''}
                 </span>
             `);
+            $chip.data('patient', p);
             
             $chip.on('mouseenter', function() { $(this).css('background', '#e2e6ea'); })
                  .on('mouseleave', function() { $(this).css('background', '#f1f3f5'); });

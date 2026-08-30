@@ -4,7 +4,6 @@ namespace Tests\Feature\Clinical;
 
 use App\Models\Bed;
 use App\Models\Patient;
-use App\Models\Price;
 use App\Models\Service;
 use App\Models\User;
 use Tests\TestCase;

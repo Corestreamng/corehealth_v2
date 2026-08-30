@@ -3,7 +3,6 @@
 namespace Tests\Feature;
 
 use App\Models\Clinic;
-use App\Models\Staff;
 use App\Models\User;
 use App\Models\UserCategory;
 use Tests\TestCase;
