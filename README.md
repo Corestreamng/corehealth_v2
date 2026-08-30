@@ -323,11 +323,14 @@ Code quality and formatting are enforced via **PHP CS Fixer** configured in [.ph
 
 ---
 
-## Testing
+## Testing & Application Classification
+
+> [!NOTE]
+> **Application Classification**: CoreHealth v2 is a fullstack Laravel-based Hospital Management Information System (HMIS) monolithic web application. Database fixtures and test schemas are maintained under `database/dumps/_corehealth_db_v2_test.sql`.
 
 ### Automated Testing Suite (35 Domain Test Suites)
 
-The codebase features **35 domain-specific PHPUnit test suites** containing **155+ test methods**, verified against the live MySQL test database (`_corehealth_db_v2_test`).
+The codebase features **35 domain-specific PHPUnit test suites** containing **155+ test methods**, verified against the live MySQL test database schema (`database/dumps/_corehealth_db_v2_test.sql`).
 
 #### Key Test Suites
 - **`PatientRegistrationTest.php`** — Covers reception workbench view, patient creation, and file search.
