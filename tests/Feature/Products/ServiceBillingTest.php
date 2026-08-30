@@ -15,7 +15,7 @@ class ServiceBillingTest extends TestCase
     public function test_service_billed_correctly_on_request()
     {
         $patient = Patient::factory()->create();
-        $service = Service::create(['service_name' => 'Lab Test A 101', 'user_id' => 1, 'category_id' => 1, 'price_id' => 1, 'status' => 1]);
+        $service = Service::create(['service_name' => 'Lab Test A 101', 'user_id' => 1, 'category_id' => 1, 'status' => 1]);
 
         $request = ProductOrServiceRequest::create([
             'user_id' => 1,
@@ -62,7 +62,7 @@ class ServiceBillingTest extends TestCase
     /** @test */
     public function test_service_price_applied_at_billing_time()
     {
-        $service = Service::create(['service_name' => 'Consultation Fee 102', 'user_id' => 1, 'category_id' => 1, 'price_id' => 1, 'status' => 1]);
+        $service = Service::create(['service_name' => 'Consultation Fee 102', 'user_id' => 1, 'category_id' => 1, 'status' => 1]);
         $this->assertNotNull($service->id);
     }
 }
