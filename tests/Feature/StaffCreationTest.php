@@ -2,6 +2,8 @@
 
 namespace Tests\Feature;
 
+use Tests\TestCase;
+
 use App\Models\Clinic;
 use App\Models\Staff;
 use App\Models\User;
