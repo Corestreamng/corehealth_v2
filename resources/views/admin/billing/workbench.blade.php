@@ -13,16 +13,9 @@ $sett = appsettings();
 @endphp
 <style>
     :root {
-        --hospital-primary: {
-                {
-                appsettings('hos_color', '#007bff')
-            }
-        }
-
-        ;
-        --hospital-primary-rgb: 0,
-        123,
-        255;
+        --hospital-primary: {{ $hosColor }};
+        --hospital-secondary: {{ $hosColor }};
+        --hospital-primary-rgb: 0, 123, 255;
         --success: #28a745;
         --warning: #ffc107;
         --danger: #dc3545;
