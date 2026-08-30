@@ -2,6 +2,8 @@
 
 namespace Tests\Feature;
 
+use Tests\TestCase;
+
 use App\Models\ImagingServiceRequest;
 use App\Models\LabServiceRequest;
 use App\Models\Patient;

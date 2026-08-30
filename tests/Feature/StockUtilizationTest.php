@@ -2,6 +2,8 @@
 
 namespace Tests\Feature;
 
+use Tests\TestCase;
+
 use App\Models\Patient;
 use App\Models\Product;
 use App\Models\ProductCategory;
