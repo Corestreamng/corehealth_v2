@@ -12,6 +12,8 @@ CoreHealth v2 is a comprehensive, enterprise-grade Hospital Management Informati
 - [Module Documentation](#module-documentation)
 - [Installation & Setup](#installation--setup)
 - [Docker Deployment](#docker-deployment)
+- [Developer Ergonomics & Makefile](#developer-ergonomics--makefile)
+- [Code Style & Linting](#code-style--linting)
 - [Development](#development)
 - [Artisan Commands](#artisan-commands)
 - [Testing](#testing)
@@ -30,8 +32,10 @@ CoreHealth v2 is designed to streamline hospital operations by integrating clini
 |-----------------|------------------------------------------------|
 | **Framework**   | Laravel 8.x (PHP 8.3 target)                   |
 | **Container**   | Docker & Docker Compose (PHP 8.3 FPM + Nginx + MySQL 8.0 + Redis 7) |
-| **CI/CD**       | GitHub Actions Automated Pipeline              |
-| **Frontend**    | Blade Templates, Vanilla CSS, jQuery, Select2, Chart.js |
+| **CI/CD**       | GitHub Actions Automated Pipeline (PHPUnit + CS Fixer Lint + Audit) |
+| **Code Style**  | PSR-12 Enforced via `friendsofphp/php-cs-fixer` in `tools/` |
+| **Ergonomics**  | `Makefile` for 1-command local development & Docker orchestration |
+| **Frontend**    | Blade Templates (Modular Partials), Vanilla CSS, jQuery, Select2, Chart.js |
 | **Database**    | MySQL 8.0 / MariaDB                            |
 | **Architecture**| MVC with Service-Observer pattern (46 observers) |
 | **Auth & RBAC** | Laravel UI + Spatie Permission                 |
@@ -47,7 +51,7 @@ CoreHealth v2 is designed to streamline hospital operations by integrating clini
 ## Core Modules
 
 ### 1. Reception & Patient Management
-- **Patient Registration** — demographics, dependants, photo
+- **Patient Registration** — demographics, dependants, photo, covered by `PatientRegistrationTest`
 - **Queue Management** — doctor queue with priority routing
 - **Appointment Booking** — multi-provider scheduling, check-in, cancel/no-show, rescheduling, and doctor reassignments
 - **Reception Workbench** — real-time dashboard for front-desk staff
@@ -63,7 +67,7 @@ CoreHealth v2 is designed to streamline hospital operations by integrating clini
 - **Triage & Disposition** — rapid triage scoring, emergency bed search and assignment, and direct disposition routing (admission or consulting clinic)
 
 ### 4. Nursing
-- **Nursing Workbench** — vitals, medication chart, care plans, I&O charts
+- **Nursing Workbench** — modularized into partials (`_modals.blade.php`, `_scripts.blade.php`), vitals, medication chart, care plans, I&O charts
 - **Medication Administration** — scheduling, administration logging, PRN
 - **Intake & Output Charts** — fluid balance tracking
 - **Nursing Notes** — typed notes with customisable templates
@@ -94,7 +98,7 @@ CoreHealth v2 is designed to streamline hospital operations by integrating clini
 - **Result Management** — upload findings, radiologist review
 
 ### 9. Pharmacy
-- **Pharmacy Workbench** — prescription queue, dispensing, FIFO batch tracking
+- **Pharmacy Workbench** — modularized into partials (`_modals.blade.php`, `_scripts.blade.php`, `_damages.blade.php`, `_returns.blade.php`), prescription queue, dispensing, FIFO batch tracking
 - **Pharmacy Quick Actions** — returns (good/wrong_item/damaged/expired), damage reports
 - **Pharmacy Reports** — revenue, stock value, daily sales, dispensing trends
 - **Damage Reports** — auto-batch assignment, JE on approval (DR Expense, CR Inventory)
@@ -117,7 +121,7 @@ CoreHealth v2 is designed to streamline hospital operations by integrating clini
 - **Manager KPIs** — custom KPI widgets for Pharmacy, Wards, and Central Stores
 
 ### 12. Billing & Revenue Cycle
-- **Billing Workbench** — payment queue, receipts, refunds, materialized queue optimization
+- **Billing Workbench** — payment queue, receipts, refunds, materialized queue optimization, covered by `BillingWorkbenchTest`
 - **Multi-Payment** — Cash, Card, Transfer, HMO, Patient Wallet
 - **Patient Deposits** — wallet system with auto-debit on billing
 - **My Transactions** — patient-facing billing portal
@@ -221,154 +225,13 @@ database/
 └── seeders/              # Sample data
 
 docker/                   # Docker environment configs (Nginx & Supervisor)
-resources/views/admin/    # Blade templates (workbenches, modals, partials)
+resources/views/admin/    # Blade templates (workbenches modularized into partials)
 routes/                   # 15 route files (web, accounting, hr, nursing, etc.)
 tests/                    # 35 domain-specific PHPUnit feature and unit test suites
+tools/                    # Isolated tooling environment (friendsofphp/php-cs-fixer)
+Makefile                  # Unified developer command suite
 docs/                     # 30+ documentation files
 ```
-
-### Observer-Driven Automation
-
-CoreHealth uses **46 Eloquent observers** to automate side effects:
-
-| Observer Area | Count | Examples |
-|---------------|-------|---------|
-| **Accounting** | 30 | JE creation on payments, expenses, payroll, lease payments, disposals, deposits |
-| **Pharmacy**   | 2  | PharmacyDamageObserver (inventory write-off), PharmacyReturnObserver (restock + refund) |
-| **Stock**      | 1  | StockBatchObserver (auto-sync store_stocks + global stocks + prices) |
-| **Pricing**    | 2  | PriceObserver (HMO tariff sync), ServicePriceObserver |
-| **HR**         | 3  | Promotion, salary profile enhancements, medical exam status triggers |
-| **Other**      | 8  | BedObserver, HmoObserver, DoctorAppointmentObserver, ChatMessageObserver, etc. |
-
----
-
-## Inventory & Stock Management
-
-### Three-Tier Stock Architecture
-
-```
-┌─────────────────┐     ┌──────────────────┐     ┌─────────────────┐     ┌────────────┐
-│  stock_batches   │────▶│   store_stocks    │────▶│     stocks      │────▶│   prices   │
-│  (per-batch FIFO)│     │ (per-store cache) │     │ (global cache)  │     │ (buy price)│
-│  cost_price      │     │ current_quantity  │     │ current_quantity│     │ pr_buy_price│
-│  current_qty     │     │                  │     │                 │     │            │
-└─────────────────┘     └──────────────────┘     └─────────────────┘     └────────────┘
-```
-
-**Source of truth**: `stock_batches` table.
-
-All downstream tables are computed caches kept in sync by the `StockBatchObserver` $\rightarrow$ `StockService`:
-
-| Sync Step | Method | What it does |
-|-----------|--------|-------------|
-| 1. Store stock | `syncStoreStock()` | SUM of active batch `current_qty` $\rightarrow$ `store_stocks.current_quantity` |
-| 2. Global stock | `syncGlobalStock()` | SUM across all stores $\rightarrow$ `stocks.current_quantity` |
-| 3. Buy price | `syncProductPrice()` | Latest batch `cost_price` $\rightarrow$ `prices.pr_buy_price` |
-
-### Price Sync
-
-When a new stock batch is received (via purchase order, manual entry, or transfer), the system automatically updates the product's buy price (`prices.pr_buy_price`) to match the **latest batch's `cost_price`**. This ensures:
-
-- Damage write-offs use the current cost
-- COGS calculations reflect the most recent purchase cost
-- Stock value reports are accurate
-
-The sync is triggered automatically by the `StockBatchObserver` on every batch create/update, and can also be run in bulk via `php artisan stock:sync`.
-
-### FIFO Dispensing
-
-When dispensing medication, the system deducts from the **oldest batch first** (by `received_date`), ensuring proper inventory rotation and accurate COGS.
-
----
-
-## Accounting & Finance
-
-### Chart of Accounts (Key Codes)
-
-| Code | Account | Purpose |
-|------|---------|---------|
-| 1010 | Cash | Cash at hand |
-| 1110 | Accounts Receivable – HMO | Insurance claims |
-| 1300 | Inventory | Stock on hand |
-| 2200 | Customer Deposits | Patient wallet / prepayments |
-| 5030 | Damaged Inventory Expense | Damage write-offs |
-| 5040 | Expired Inventory Expense | Expiry write-offs |
-| 5050 | Theft/Shrinkage Expense | Theft write-offs |
-| 5060 | Loss on Returns | Non-restockable return losses |
-
-### Auto-Generated Journal Entries
-
-The following transactions automatically create double-entry JEs via observers:
-
-- **Pharmacy Dispensing** — DR COGS, CR Inventory
-- **Damage Approval** — DR Expense (5030/5040/5050), CR Inventory (1300)
-- **Return Approval** — DR Inventory (1300) if restockable, else DR Loss (5060); CR Customer Deposits (2200)
-- **Payment Receipt** — DR Cash/Bank, CR Revenue
-- **Expense** — DR Expense, CR Cash/Bank
-- **Fixed Asset Acquisition** — DR Asset, CR Cash/AP
-- **Depreciation** — DR Depreciation Expense, CR Accumulated Depreciation
-- **Asset Disposal** — DR Cash + Accumulated Dep, CR Asset + Gain/Loss
-- **Payroll** — DR Salary Expense, CR Cash + Statutory liabilities
-- **Lease Payments** — DR Lease Liability + Interest, CR Cash
-
----
-
-## Module Documentation
-
-### Accounting & Finance
-- [Accounting Plan](docs/Accounting%20_plan.md)
-- [Comprehensive Gap Analysis 2026](docs/ACCOUNTING_COMPREHENSIVE_GAP_ANALYSIS_2026.md)
-- [Gap Analysis](docs/ACCOUNTING_GAP_ANALYSIS.md)
-- [Implementation Checklist](docs/ACCOUNTING_IMPLEMENTATION_CHECKLIST.md)
-- [System Enhancement Plan](docs/ACCOUNTING_SYSTEM_ENHANCEMENT_PLAN.md)
-- [UI Implementation Plan](docs/ACCOUNTING_UI_IMPLEMENTATION_PLAN.md)
-- [Bank & Cash Statement Implementation](docs/BANK_CASH_STATEMENT_IMPLEMENTATION.md)
-
-### Clinical Workbenches
-- [Nursing Workbench Gap Analysis (Final)](docs/NURSING_WORKBENCH_GAP_ANALYSIS_FINAL.md)
-- [Nursing Workbench v2](docs/NURSING_WORKBENCH_GAP_ANALYSIS_v2.md)
-- [Pharmacy Workbench Implementation](docs/PHARMACY_WORKBENCH_IMPLEMENTATION_PLAN.md)
-- [Pharmacy Implementation Status](docs/PHARMACY_WORKBENCH_IMPLEMENTATION_STATUS.md)
-- [Billing Workbench](docs/BILLING_WORKBENCH_IMPLEMENTATION.md)
-
-### Inventory & Stock Management
-- [Inventory Implementation Plan](docs/INVENTORY_IMPLEMENTATION_PLAN.md)
-- [Batch Stock Gap Analysis](docs/BATCH_STOCK_GAP_ANALYSIS.md)
-- [Batch Stock Implementation Status](docs/BATCH_STOCK_IMPLEMENTATION_STATUS.md)
-- [Delivery Guards Setup](docs/DELIVERY_GUARDS_SETUP.md)
-- [Store Governance and Contextual Workbench Plan](docs/STORE_GOVERNANCE_AND_CONTEXTUAL_WORKBENCH_PLAN.md)
-
-### Fixed Assets & CAPEX
-- [CAPEX Column Mapping](CAPEX_COLUMN_MAPPING.md)
-- [CAPEX Sync Completed](CAPEX_SYNC_COMPLETED.md)
-- [Void vs Disposal Guide](VOID_VS_DISPOSAL_GUIDE.md)
-
-### Clinical Modules
-- [Procedure Module Design](docs/PROCEDURE_MODULE_DESIGN_PLAN.md)
-- [Lab Template Structure](docs/LAB_TEMPLATE_STRUCTURE.md)
-- [Injection & Immunization Update](docs/INJECTION_IMMUNIZATION_UPDATE.md)
-- [WYSIWYG & Result Edit Implementation](docs/WYSIWYG_AND_RESULT_EDIT_IMPLEMENTATION.md)
-- [Maternity Module Plan](MATERNITY_MODULE_PLAN.md)
-- [Maternity Enhancement Plan](MATERNITY_ENHANCEMENT_PLAN.md)
-- [Clinical Orders Plan](CLINICAL_ORDERS_PLAN.md)
-- [Appointment Enhancement Plan](APPOINTMENT_ENHANCEMENT_PLAN.md)
-
-### Insurance & Billing
-- [HMO Plan](docs/hmo_plan.md)
-- [Biller Plan](docs/BILLER_PLAN.md)
-- [My Transactions Implementation](docs/MY_TRANSACTIONS_IMPLEMENTATION.md)
-- [My Transactions Test Guide](docs/MY_TRANSACTIONS_TEST_GUIDE.md)
-
-### Human Resources
-- [HRMS Implementation Plan](docs/HRMS_IMPLEMENTATION_PLAN.md)
-- [Attendance Clocking Module Plan](docs/ATTENDANCE_CLOCKING_MODULE_PLAN.md)
-
-### Technical & Mobile Documentation
-- [Database Field Reference](docs/DATABASE_FIELD_REFERENCE.md)
-- [Environment Migration Guide](docs/ENV_TO_APPSETTINGS_MIGRATION.md)
-- [Testing Checklist](docs/TESTING_CHECKLIST.md)
-- [Mobile Web Parity Plan](MOBILE_WEB_PARITY_PLAN.md)
-- [Mobile Encounters Plan](docs/MOBILE_ENCOUNTERS_PLAN.md)
 
 ---
 
@@ -382,59 +245,24 @@ The following transactions automatically create double-entry JEs via observers:
 - Node.js >= 18.x
 - npm
 
-### Installation Steps
+### Quick Setup with Makefile
 
-1. **Clone the repository**
-   ```bash
-   git clone https://github.com/Corestreamng/corehealth_v2.git
-   cd corehealth_v2
-   ```
+```bash
+# Clone repository
+git clone https://github.com/Corestreamng/corehealth_v2.git
+cd corehealth_v2
 
-2. **Install PHP dependencies**
-   ```bash
-   composer install
-   ```
+# Start Docker environment in 1 command
+make up
 
-3. **Install JavaScript dependencies**
-   ```bash
-   npm install
-   ```
-
-4. **Environment configuration**
-   ```bash
-   cp .env.example .env
-   php artisan key:generate
-   ```
-
-5. **Configure database** — edit `.env` with your database credentials, then import schema:
-   ```bash
-   mysql -u root -p corehealth_v2 < _corehealth_db_v2_test.sql
-   ```
-
-6. **Run migrations** (if applicable)
-   ```bash
-   php artisan migrate
-   ```
-
-7. **Compile assets**
-   ```bash
-   npm run dev
-   # or for production
-   npm run production
-   ```
-
-8. **Generate optimised autoloader** (required for production / Unix deploy)
-   ```bash
-   composer dump-autoload -o
-   ```
-   > ⚠️ **Case-sensitivity caveat**: Some model files use lowercase filenames (e.g. `patient.php` for class `patient`). PHP class names are case-insensitive at runtime, but Composer's PSR-4 autoloader maps `Patient` $\rightarrow$ `Patient.php` literally, which fails on case-sensitive filesystems (Linux/Unix). Running `composer dump-autoload -o` builds a full classmap that resolves classes by scanning file contents, bypassing the filename case issue.
-
-9. **Start the development server**
-   ```bash
-   php artisan serve
-   ```
-
-Visit `http://localhost:8000` to access the application.
+# Or set up locally:
+composer install
+npm install
+cp .env.example .env
+php artisan key:generate
+make import-test-db
+composer dump-autoload -o
+```
 
 ---
 
@@ -442,91 +270,56 @@ Visit `http://localhost:8000` to access the application.
 
 CoreHealth v2 includes a complete containerized environment for development and production based on **PHP 8.3 FPM**, **Nginx**, **MySQL 8.0**, and **Redis 7**.
 
-### Launching with Docker Compose
+### Launching with Docker Compose / Makefile
 
 ```bash
-# Build and start all services (app, mysql, redis)
-docker compose up -d --build # or: docker-compose up -d --build
+# Build and start all services via Makefile
+make build
 
-# Run migrations & seed database in the container
-docker compose exec app php artisan migrate --seed
+# Or via Docker Compose directly:
+docker compose up -d --build
 
-# Execute PHPUnit tests inside the container
-docker compose exec app vendor/bin/phpunit
+# Execute tests in container
+make test
 
-# View container status
-docker compose ps
+# View logs
+make logs
 ```
-
-
-The Docker stack includes:
-- **`Dockerfile`**: PHP 8.3 FPM image with essential extensions (`pdo_mysql`, `gd`, `zip`, `intl`, `mbstring`, `bcmath`, `opcache`), Composer, and Nginx.
-- **`docker/nginx.conf`**: Nginx web server configuration listening on port 8000.
-- **`docker/supervisord.conf`**: Process manager running PHP-FPM and Nginx concurrently.
-- **`docker-compose.yml`**: Multi-container orchestration linking application, MySQL 8.0 database, and Redis 7 caching service.
 
 ---
 
-## Development
+## Developer Ergonomics & Makefile
 
-### Code Structure
-
-CoreHealth v2 follows Laravel conventions with additional patterns:
-
-- **Services** (`app/Services/`) — Business logic layer (47 services)
-- **Observers** (`app/Observers/`) — Automated side-effects on model events (46 observers)
-- **Policies** (`app/Policies/`) — Authorization rules
-- **Helpers** (`app/Helpers/`) — Utility functions, BatchHelper
-
-### Route Files
-
-| File | Purpose |
-|------|---------|
-| `routes/web.php` | Main application routes and legacy views |
-| `routes/accounting.php` | Accounting module (GL, assets, leases, budgets, petty cash, etc.) |
-| `routes/hr.php` | HR module (leave, payroll, disciplinary, ESS) |
-| `routes/inventory.php` | Inventory and PO/requisition module (replaces supply.php) |
-| `routes/nursing_workbench.php` | Nursing workbench and ward management |
-| `routes/nurse_chart.php` | Flow sheets, medication, and I&O charts |
-| `routes/reception_workbench.php` | Reception dashboard and queues |
-| `routes/appointments.php` | Multi-provider appointment bookings and calendars |
-| `routes/emergency_intake.php` | Walk-in emergency intake and triage routing |
-| `routes/maternity_workbench.php` | Maternity ANC, deliveries, wellness, and growth logs |
-| `routes/referrals.php` | Specialist referrals system |
-| `routes/surgery_workbench.php` | Theatre workbench procedures and consumables billing |
-| `routes/api.php` | API endpoints |
-
-### Asset Compilation
-
-```bash
-# Development with hot reload
-npm run watch
-
-# Production build
-npm run production
-```
-
-### Database Compatibility
-
-CoreHealth targets **MySQL/MariaDB**. Key compatibility notes:
-- Use `CURDATE()` / `DATEDIFF()` (not PostgreSQL functions)
-- Use `LIKE` (not `ILIKE`)
-- JSON columns use MariaDB-compatible syntax
-- `ENUM` columns are used for status fields
-
----
-
-## Artisan Commands
+The project includes a comprehensive [Makefile](file:///home/mrapollos/Documents/work/corehealth_v2/Makefile) providing simple, standardized developer commands:
 
 | Command | Description |
 |---------|-------------|
-| `php artisan stock:sync` | Reconcile stock across all tiers (batches $\rightarrow$ store $\rightarrow$ global $\rightarrow$ prices) |
-| `php artisan stock:sync --create-batches` | Also create reconciliation batches for unbatched store stock |
-| `php artisan stock:sync --dry-run` | Preview changes without writing |
-| `php artisan process:daily-bed-bills` | Generate daily bed billing charges (scheduler) |
-| `php artisan hmo:generate-tariffs` | Auto-generate HMO tariff entries |
-| `php artisan scan:routes` | Scan and cache route metadata |
-| `php artisan hmo:sync-executives` | Sync HMO executive user group |
+| `make help` | Display available targets and documentation |
+| `make up` | Start all Docker containers in background |
+| `make build` | Rebuild and launch Docker stack |
+| `make down` | Stop all Docker containers |
+| `make test` | Execute full PHPUnit test suite inside Docker |
+| `make test-local` | Run PHPUnit test suite locally |
+| `make lint` | Run CS Fixer code style checks in dry-run mode |
+| `make lint-fix` | Automatically format all PHP code to PSR-12 standard |
+| `make audit` | Perform security audits (`composer audit`, `npm audit`) |
+| `make fresh` | Drop tables and re-run migrations |
+| `make shell` | Open a interactive bash session inside PHP container |
+
+---
+
+## Code Style & Linting
+
+Code quality and formatting are enforced via **PHP CS Fixer** configured in [.php-cs-fixer.php](file:///home/mrapollos/Documents/work/corehealth_v2/.php-cs-fixer.php):
+
+- **Standard**: Strictly follows PSR-12 code style guidelines across `app/`, `config/`, `database/`, `routes/`, and `tests/`.
+- **Isolated Environment**: Maintained in an isolated `tools/` folder (`tools/vendor/bin/php-cs-fixer`) to prevent dependency conflicts with Laravel 8 core packages.
+- **Commands**:
+  ```bash
+  composer lint     # or make lint (dry-run check)
+  composer lint-fix # or make lint-fix (auto-fix formatting)
+  ```
+- **Automated Gating**: Enforced automatically on all pushes and pull requests via GitHub Actions.
 
 ---
 
@@ -536,69 +329,42 @@ CoreHealth targets **MySQL/MariaDB**. Key compatibility notes:
 
 The codebase features **35 domain-specific PHPUnit test suites** containing **155+ test methods**, verified against the live MySQL test database (`_corehealth_db_v2_test`).
 
+#### Key Test Suites
+- **`PatientRegistrationTest.php`** — Covers reception workbench view, patient creation, and file search.
+- **`BillingWorkbenchTest.php`** — Covers cash, HMO, wallet payments, observer triggers, and datatable queue responses.
+- **`AuthBootstrapTest.php` & `RolePermissionTest.php`** — Covers Spatie permission guards and authentication flows.
+- **`FifoDispenseTest.php` & `PharmacyReturnsTest.php`** — Covers stock sync, FIFO dispensing, and inventory returns.
+
 #### Running Tests
 
 ```bash
-# Run all tests via PHPUnit
-vendor/bin/phpunit
+# Run all tests via Makefile
+make test
 
-# Or via Artisan
-php artisan test
-
-# Run a specific domain suite (e.g. Pharmacy FIFO Dispense)
-vendor/bin/phpunit tests/Feature/Pharmacy/FifoDispenseTest.php
-
-# Run with testdox formatted output
+# Or via PHPUnit locally
 vendor/bin/phpunit --testdox
 ```
-
-#### Test Architecture & Database Directives
-
-- **Database Standard**: All feature and unit tests run against MySQL to guarantee complete schema compatibility. SQLite and `RefreshDatabase` are strictly prohibited.
-- **Transactions**: `Tests\TestCase` base class uses `Illuminate\Foundation\Testing\DatabaseTransactions`. All database changes in tests automatically roll back upon completion.
-- **Domain Organization**: Test files are structured inside `tests/Feature/` and `tests/Unit/` by clinical and administrative domain (e.g., `tests/Feature/OpsAudit/`, `tests/Feature/HMO/`, `tests/Feature/Pharmacy/`).
-
-### Development Utilities
-
-Several utility scripts are available in the project root for manual validation during development:
-
-- `check_*.php` — Database and configuration validation scripts
-- `debug_*.php` — Debugging tools for specific modules
-- `test_*.php` — Manual testing scripts for specific features
-- `trigger_*.php` — Event and observer testing scripts
-
-See [Testing Checklist](docs/TESTING_CHECKLIST.md) for detailed testing procedures.
 
 ---
 
 ## CI/CD & Governance
 
-- **Automated CI Workflow** ([.github/workflows/ci.yml](.github/workflows/ci.yml)): GitHub Actions pipeline running PHP 8.3, setting up a MySQL 8.0 container, importing `_corehealth_db_v2_test.sql`, and executing PHPUnit on push / pull request.
-- **Structured JSON Logging**: Enabled via Monolog `JsonFormatter` channel in `config/logging.php`.
+- **Automated CI Workflow** ([.github/workflows/ci.yml](.github/workflows/ci.yml)): GitHub Actions pipeline running PHP 8.3, setting up a MySQL 8.0 container, importing `_corehealth_db_v2_test.sql`, running PHP CS Fixer lint checks, executing PHPUnit tests, building assets, and auditing security.
+- **Structured JSON Logging**: Configured via Monolog `JsonFormatter` channel in `config/logging.php`.
 - **Dependabot**: Configured in [.github/dependabot.yml](.github/dependabot.yml) for weekly Composer and NPM dependency security checks.
-- **Semantic Version Tags**: Tagged across 35 historic milestones starting from `v2.0.0.0` through `v2.5.0.1`.
+- **Semantic Version Tags**: Tagged across 35 historic milestones starting from `v2.0.0.0` through `v2.5.0.2`.
 
 ---
 
 ## Contributing
 
 1. Review [CONTRIBUTING.md](CONTRIBUTING.md) for PR requirements, branch workflow, and testing rules.
-2. Follow PSR-12 coding standards for PHP.
+2. Follow PSR-12 coding standards using `make lint` / `composer lint`.
 3. Run `composer dump-autoload -o` after adding new classes.
-4. Ensure 100% of test suites pass cleanly before opening pull requests.
-
----
-
-## Security
-
-If you discover any security vulnerabilities, please email the security team immediately. Do not create public issues for security concerns.
+4. Ensure 100% of test suites pass cleanly (`make test`) before opening pull requests.
 
 ---
 
 ## License
 
 CoreHealth v2 is proprietary software. All rights reserved.
-
----
-
-**Built with Laravel** — The PHP Framework for Web Artisans
