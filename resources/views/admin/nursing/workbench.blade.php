@@ -5401,6 +5401,4 @@
 @include('admin.nursing.partials._modals')
 @endsection
 
-@section('scripts')
 @include('admin.nursing.partials._scripts')
-@endsection

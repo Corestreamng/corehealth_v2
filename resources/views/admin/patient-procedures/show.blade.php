@@ -73,13 +73,7 @@ $isSurgical = $procedure->procedureDefinition && $procedure->procedureDefinition
 <link rel="stylesheet" href="{{ asset('assets/css/chosen.min.css') }}">
 <style>
     :root {
-        --proc-primary: {
-                {
-                $hosColor
-            }
-        }
-
-        ;
+        --proc-primary: {{ $hosColor }};
     }
 
     .procedure-page {
@@ -3860,7 +3854,7 @@ $rawTemplate
         if ($.fn.DataTable.isDataTable("#procedure_lab_history")) return;
         $("#procedure_lab_history").DataTable({
             ajax: {
-                url: "{{ url('/investigationHistoryList/{{ $procedure->patient_id }}?procedure_id={{ $procedure->id }}') }}",
+                url: "{{ url('/investigationHistoryList/' . $procedure->patient_id . '?procedure_id=' . $procedure->id) }}",
                 type: "GET"
             },
             columns: [{
@@ -3880,7 +3874,7 @@ $rawTemplate
         if ($.fn.DataTable.isDataTable("#procedure_imaging_history")) return;
         $("#procedure_imaging_history").DataTable({
             ajax: {
-                url: "{{ url('/imagingHistoryList/{{ $procedure->patient_id }}?procedure_id={{ $procedure->id }}') }}",
+                url: "{{ url('/imagingHistoryList/' . $procedure->patient_id . '?procedure_id=' . $procedure->id) }}",
                 type: "GET"
             },
             columns: [{
@@ -3900,7 +3894,7 @@ $rawTemplate
         if ($.fn.DataTable.isDataTable("#procedure_meds_history")) return;
         $("#procedure_meds_history").DataTable({
             ajax: {
-                url: "{{ url('/prescHistoryList/{{ $procedure->patient_id }}?procedure_id={{ $procedure->id }}') }}",
+                url: "{{ url('/prescHistoryList/' . $procedure->patient_id . '?procedure_id=' . $procedure->id) }}",
                 type: "GET"
             },
             columns: [{
