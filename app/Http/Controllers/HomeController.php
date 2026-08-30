@@ -27,6 +27,7 @@ class HomeController extends Controller
 
         return view('admin.home');
     }
+
     public function fetchClinicAppointments(Request $request)
     {
         $startDate = $request->input('start');
@@ -64,7 +65,6 @@ class HomeController extends Controller
 
         return response()->json($data);
     }
-
 
     public function chartAppointmentsByClinic(Request $request)
     {
@@ -542,4 +542,3 @@ class HomeController extends Controller
         return response()->json($data);
     }
 }
-

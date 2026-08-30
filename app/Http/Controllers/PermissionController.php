@@ -3,14 +3,13 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use App\Http\Controllers\Controller;
-use Spatie\Permission\Models\Role;
-use Spatie\Permission\Models\Permission;
-use Illuminate\Support\Facades\Validator;
-use Response;
 use Illuminate\Support\Facades\DB;
-use Yajra\DataTables\DataTables;
+use Illuminate\Support\Facades\Validator;
 use RealRashid\SweetAlert\Facades\Alert;
+use Response;
+use Spatie\Permission\Models\Permission;
+use Spatie\Permission\Models\Role;
+use Yajra\DataTables\DataTables;
 
 class PermissionController extends Controller
 {
@@ -24,13 +23,15 @@ class PermissionController extends Controller
         // $this->middleware(['role:super-admin', 'permission:publish articles|edit articles']);
         // $this->middleware(['role:Super-Admin|Admin']);
     }
+
     public function listPermissions()
     {
         $permissions = Permission::orderBy('name', 'ASC')->get();
+
         return Datatables::of($permissions)
                 ->addIndexColumn()
-                ->addColumn('show',   '<a href="{{ route(\'permissions.show\', $id)}}" class="btn btn-success btn-sm" ><i class="fa fa-eye"></i> Show</a>')
-                ->addColumn('edit',   '<a href="{{ route(\'permissions.edit\', $id)}}" class="btn btn-info btn-sm" ><i class="fa fa-pencil"></i> Edit</a>')
+                ->addColumn('show', '<a href="{{ route(\'permissions.show\', $id)}}" class="btn btn-success btn-sm" ><i class="fa fa-eye"></i> Show</a>')
+                ->addColumn('edit', '<a href="{{ route(\'permissions.edit\', $id)}}" class="btn btn-info btn-sm" ><i class="fa fa-pencil"></i> Edit</a>')
                 ->addColumn('delete', '<button type="button" class="delete-modal btn btn-danger btn-sm" data-toggle="modal" data-id="{{$id}}"><i class="fa fa-trash"></i> Delete</button>')
                 ->rawColumns(['show','edit', 'delete'])
                 ->make(true);
@@ -44,6 +45,7 @@ class PermissionController extends Controller
     public function index()
     {
         $permission = Permission::get();
+
         return view('admin.access.permissions.index', compact('permission'));
     }
 
@@ -71,19 +73,21 @@ class PermissionController extends Controller
         ];
         $v = Validator::make($request->all(), $rules);
 
-        if( $v->fails() ) {
+        if ($v->fails()) {
             // return Response::json(array('errors' => $v->getMessageBag()->toArray()));
             Alert::error('Error Title', 'One or more information is needed.');
+
             return redirect()->back()->withInput()->with('errors', $v->messages()->all())->withInput();
         } else {
 
-            $permission              = new Permission;
-            $permission->name        = $request->name;
+            $permission = new Permission();
+            $permission->name = $request->name;
 
-            if( $permission->save() ) {
+            if ($permission->save()) {
                 $permission->syncPermissions($request->permission);
                 $msg = 'The Permission [' . $permission->name . '] was successfully Saved.';
                 Alert::success('Success ', $msg);
+
                 return redirect()->route('permissions.index')->withMessage($msg)->withMessageType('success');
                 // return response()->json($permission);
             }
@@ -99,6 +103,7 @@ class PermissionController extends Controller
     public function show($id)
     {
         $permission = Permission::find($id);
+
         return view('admin.access.permissions.show', compact('permission'));
     }
 
@@ -111,6 +116,7 @@ class PermissionController extends Controller
     public function edit($id)
     {
         $permission = Permission::find($id);
+
         return view('admin.access.permissions.edit', compact('permission'));
     }
 
@@ -130,9 +136,10 @@ class PermissionController extends Controller
 
         ];
         $v = Validator::make($request->all(), $rules);
-        if( $v->fails() ) {
+        if ($v->fails()) {
             // return Response::json(array('errors' => $v->getMessageBag()->toArray()));
             Alert::error('Error Title', 'One or more information is needed.');
+
             return redirect()->back()->withInput()->with('errors', $v->messages()->all())->withInput();
         } else {
 
@@ -142,6 +149,7 @@ class PermissionController extends Controller
             // return response()->json($permission);
             $msg = 'The Permission [' . $permission->name . '] was successfully updated.';
             Alert::success('Success ', $msg);
+
             return redirect()->route('permissions.index')->withMessage($msg)->withMessageType('success');
         }
     }
@@ -156,6 +164,7 @@ class PermissionController extends Controller
     {
         // $permission = DB::table("permissions")->where('id', $id)->delete();
         $permission = Permission::where('id', '=', $id)->delete();
+
         return response()->json($permission);
     }
 }

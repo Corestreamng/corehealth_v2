@@ -53,6 +53,7 @@ class ServiceBundleItem extends Model implements Auditable
         if ($this->item_type === 'product') {
             return $this->product();
         }
+
         return $this->service();
     }
 
@@ -64,6 +65,7 @@ class ServiceBundleItem extends Model implements Auditable
         if ($this->item_type === 'product') {
             return $this->product->product_name ?? 'Unknown Product';
         }
+
         return $this->service->service_name ?? 'Unknown Service';
     }
 }

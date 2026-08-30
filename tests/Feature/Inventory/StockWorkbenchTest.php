@@ -18,7 +18,6 @@ class StockWorkbenchTest extends TestCase
         $this->assertNotNull($response->status());
     }
 
-
     /** @test */
     public function test_purchase_order_creates_stock_batch_on_receive()
     {
@@ -66,16 +65,10 @@ class StockWorkbenchTest extends TestCase
         $this->assertEquals(250.50, $batch->cost_price);
     }
 
-
-
-
-
-
     /** @test */
     public function test_store_context_resolver_returns_correct_store()
     {
         $user = User::factory()->create(['status' => 1]);
         $this->assertNotNull($user->id);
     }
-
 }

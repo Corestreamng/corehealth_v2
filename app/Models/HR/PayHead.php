@@ -38,15 +38,15 @@ class PayHead extends Model implements Auditable
         'is_active' => 'boolean',
     ];
 
-    const TYPE_ADDITION = 'addition';
-    const TYPE_DEDUCTION = 'deduction';
+    public const TYPE_ADDITION = 'addition';
+    public const TYPE_DEDUCTION = 'deduction';
 
-    const CALC_FIXED = 'fixed';
-    const CALC_PERCENTAGE = 'percentage';
-    const CALC_FORMULA = 'formula';
+    public const CALC_FIXED = 'fixed';
+    public const CALC_PERCENTAGE = 'percentage';
+    public const CALC_FORMULA = 'formula';
 
-    const BASE_BASIC_SALARY = 'basic_salary';
-    const BASE_GROSS_SALARY = 'gross_salary';
+    public const BASE_BASIC_SALARY = 'basic_salary';
+    public const BASE_GROSS_SALARY = 'gross_salary';
 
     /**
      * Get salary profile items using this pay head

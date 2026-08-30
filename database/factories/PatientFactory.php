@@ -27,4 +27,3 @@ class PatientFactory extends Factory
         ];
     }
 }
-

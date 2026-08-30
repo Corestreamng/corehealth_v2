@@ -46,11 +46,11 @@ class TreatmentPlan extends Model
     ];
 
     protected $casts = [
-        'is_global'        => 'boolean',
+        'is_global' => 'boolean',
         'progress_percent' => 'integer',
-        'diagnosis_data'   => 'array',
-        'visibility'       => 'array',
-        'retired_at'       => 'datetime',
+        'diagnosis_data' => 'array',
+        'visibility' => 'array',
+        'retired_at' => 'datetime',
     ];
 
     /**
@@ -88,7 +88,7 @@ class TreatmentPlan extends Model
         }
 
         if (method_exists($user, 'getRoleNames')) {
-            $userRoles = $user->getRoleNames()->map(fn($r) => strtolower($r))->toArray();
+            $userRoles = $user->getRoleNames()->map(fn ($r) => strtolower($r))->toArray();
             if (count(array_intersect($userRoles, $allowed)) > 0) {
                 return true;
             }
@@ -163,14 +163,14 @@ class TreatmentPlan extends Model
     public function linkedItems(): Collection
     {
         return collect([
-            'labs'       => LabServiceRequest::with('service')->where('treatment_plan_id', $this->id)->get(),
-            'imaging'    => ImagingServiceRequest::with('service')->where('treatment_plan_id', $this->id)->get(),
-            'medications'=> ProductRequest::with('product')->where('treatment_plan_id', $this->id)->get(),
+            'labs' => LabServiceRequest::with('service')->where('treatment_plan_id', $this->id)->get(),
+            'imaging' => ImagingServiceRequest::with('service')->where('treatment_plan_id', $this->id)->get(),
+            'medications' => ProductRequest::with('product')->where('treatment_plan_id', $this->id)->get(),
             'procedures' => Procedure::with(['service', 'procedureDefinition'])->where('treatment_plan_id', $this->id)->get(),
-            'non_pharm'  => NonPharmOrder::where('treatment_plan_id', $this->id)->get(),
-            'referrals'  => SpecialistReferral::where('treatment_plan_id', $this->id)->get(),
+            'non_pharm' => NonPharmOrder::where('treatment_plan_id', $this->id)->get(),
+            'referrals' => SpecialistReferral::where('treatment_plan_id', $this->id)->get(),
             'admissions' => AdmissionRequest::where('treatment_plan_id', $this->id)->get(),
-            'notes'      => Encounter::where('treatment_plan_id', $this->id)->get(),
+            'notes' => Encounter::where('treatment_plan_id', $this->id)->get(),
         ]);
     }
 
@@ -216,6 +216,7 @@ class TreatmentPlan extends Model
                         } else {
                             $score += 0.25; // Prescribed / Requested (25%)
                         }
+
                         break;
 
                     case 'medications':
@@ -233,6 +234,7 @@ class TreatmentPlan extends Model
                         } else {
                             $score += 0.25; // Prescribed / Ordered (25%)
                         }
+
                         break;
 
                     case 'procedures':
@@ -251,6 +253,7 @@ class TreatmentPlan extends Model
                         } else {
                             $score += 0.25; // Requested (25%)
                         }
+
                         break;
 
                     case 'non_pharm':
@@ -264,6 +267,7 @@ class TreatmentPlan extends Model
                         } else {
                             $score += 0.25; // Pending (25%)
                         }
+
                         break;
 
                     case 'referrals':
@@ -277,6 +281,7 @@ class TreatmentPlan extends Model
                         } else {
                             $score += 0.25; // Pending (25%)
                         }
+
                         break;
 
                     case 'admissions':
@@ -292,6 +297,7 @@ class TreatmentPlan extends Model
                         } else {
                             $score += 0.25; // Requested / Pending Checklist (25%)
                         }
+
                         break;
 
                     case 'notes':
@@ -300,17 +306,21 @@ class TreatmentPlan extends Model
                         } else {
                             $score += 0.50; // Note Open / Draft (50%)
                         }
+
                         break;
 
                     default:
                         $score += 0.25;
+
                         break;
                 }
             }
         }
 
         $percent = $total > 0 ? (int) round(($score / $total) * 100) : 0;
-        if ($percent > 100) $percent = 100;
+        if ($percent > 100) {
+            $percent = 100;
+        }
 
         // Persist the computed progress
         $this->update(['progress_percent' => $percent]);
@@ -354,6 +364,7 @@ class TreatmentPlan extends Model
         if ($specialty) {
             return $query->where('specialty', $specialty);
         }
+
         return $query;
     }
 }

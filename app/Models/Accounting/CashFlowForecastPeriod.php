@@ -15,7 +15,8 @@ use OwenIt\Auditing\Contracts\Auditable;
  */
 class CashFlowForecastPeriod extends Model implements Auditable
 {
-    use HasFactory, \OwenIt\Auditing\Auditable;
+    use HasFactory;
+    use \OwenIt\Auditing\Auditable;
 
     protected $fillable = [
         'forecast_id',
@@ -97,7 +98,7 @@ class CashFlowForecastPeriod extends Model implements Auditable
             ->whereIn('cash_flow_category', [
                 'operating_inflow',
                 'investing_inflow',
-                'financing_inflow'
+                'financing_inflow',
             ])
             ->sum('forecasted_amount');
     }
@@ -111,7 +112,7 @@ class CashFlowForecastPeriod extends Model implements Auditable
             ->whereIn('cash_flow_category', [
                 'operating_outflow',
                 'investing_outflow',
-                'financing_outflow'
+                'financing_outflow',
             ])
             ->sum('forecasted_amount');
     }
@@ -122,6 +123,7 @@ class CashFlowForecastPeriod extends Model implements Auditable
     public function isCurrent(): bool
     {
         $now = now();
+
         return $this->period_start_date && $this->period_end_date &&
                $this->period_start_date->lte($now) &&
                $this->period_end_date->gte($now);

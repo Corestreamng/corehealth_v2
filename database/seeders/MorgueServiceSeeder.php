@@ -33,7 +33,7 @@ class MorgueServiceSeeder extends Seeder
             ['name' => 'Body Washing', 'code' => 'MORG-004', 'price' => 10000],
         ];
 
-        $admin = \App\Models\User::whereHas('roles', function($q) {
+        $admin = \App\Models\User::whereHas('roles', function ($q) {
             $q->where('name', 'ADMIN');
         })->first() ?? \App\Models\User::first();
 
@@ -44,7 +44,7 @@ class MorgueServiceSeeder extends Seeder
                     'service_name' => $s['name'],
                     'category_id' => 9,
                     'user_id' => $admin ? $admin->id : 1,
-                    'status' => 1
+                    'status' => 1,
                 ]
             );
 

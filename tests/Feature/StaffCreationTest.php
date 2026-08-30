@@ -14,7 +14,9 @@ class StaffCreationTest extends TestCase
     use RefreshDatabase;
 
     protected $admin;
+
     protected $category;
+
     protected $clinic;
 
     protected function setUp(): void
@@ -28,7 +30,7 @@ class StaffCreationTest extends TestCase
         $this->category = UserCategory::create([
             'id' => 21, // Doctors
             'name' => 'Doctors',
-            'status' => 1
+            'status' => 1,
         ]);
 
         $this->clinic = Clinic::create([

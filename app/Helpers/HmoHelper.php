@@ -31,7 +31,7 @@ class HmoHelper
         }
 
         $tariff = HmoTariff::where('hmo_id', $patient->hmo_id)
-            ->where(function($q) use ($productId, $serviceId) {
+            ->where(function ($q) use ($productId, $serviceId) {
                 if ($productId) {
                     $q->where('product_id', $productId)->whereNull('service_id');
                 } else {
@@ -78,12 +78,12 @@ class HmoHelper
                 if ($overrideData) {
                     $result['products'][$productId] = [
                         'payable_amount' => (float) $overrideData['payable_amount'],
-                        'claims_amount'  => (float) $overrideData['claims_amount'],
-                        'coverage_mode'  => $overrideData['coverage_mode'],
+                        'claims_amount' => (float) $overrideData['claims_amount'],
+                        'coverage_mode' => $overrideData['coverage_mode'],
                     ];
                 }
             }
-            
+
             // Get non-overridden products
             $remainingProductIds = array_diff($productIds, array_keys($result['products']));
             if (!empty($remainingProductIds)) {
@@ -94,8 +94,8 @@ class HmoHelper
                 foreach ($tariffs as $t) {
                     $result['products'][$t->product_id] = [
                         'payable_amount' => (float) $t->payable_amount,
-                        'claims_amount'  => (float) $t->claims_amount,
-                        'coverage_mode'  => $t->coverage_mode,
+                        'claims_amount' => (float) $t->claims_amount,
+                        'coverage_mode' => $t->coverage_mode,
                     ];
                 }
             }
@@ -107,12 +107,12 @@ class HmoHelper
                 if ($overrideData) {
                     $result['services'][$serviceId] = [
                         'payable_amount' => (float) $overrideData['payable_amount'],
-                        'claims_amount'  => (float) $overrideData['claims_amount'],
-                        'coverage_mode'  => $overrideData['coverage_mode'],
+                        'claims_amount' => (float) $overrideData['claims_amount'],
+                        'coverage_mode' => $overrideData['coverage_mode'],
                     ];
                 }
             }
-            
+
             // Get non-overridden services
             $remainingServiceIds = array_diff($serviceIds, array_keys($result['services']));
             if (!empty($remainingServiceIds)) {
@@ -123,8 +123,8 @@ class HmoHelper
                 foreach ($tariffs as $t) {
                     $result['services'][$t->service_id] = [
                         'payable_amount' => (float) $t->payable_amount,
-                        'claims_amount'  => (float) $t->claims_amount,
-                        'coverage_mode'  => $t->coverage_mode,
+                        'claims_amount' => (float) $t->claims_amount,
+                        'coverage_mode' => $t->coverage_mode,
                     ];
                 }
             }
@@ -145,9 +145,11 @@ class HmoHelper
 
         if ($productId) {
             $product = \App\Models\Product::with('price')->find($productId);
-            if (!$product) return null;
+            if (!$product) {
+                return null;
+            }
             $categoryId = $product->category_id;
-            
+
             // Use cost from latest active stock batch, fallback to product price
             $batch = \App\Models\StockBatch::active()->where('product_id', $productId)->latest()->first();
             if ($batch && $batch->cost_price > 0) {
@@ -157,41 +159,52 @@ class HmoHelper
             }
         } else {
             $service = \App\Models\Service::with('price')->find($serviceId);
-            if (!$service) return null;
+            if (!$service) {
+                return null;
+            }
             $categoryId = $service->category_id;
             $basePrice = $service->price->sale_price ?? 0;
         }
 
         $overrides = \App\Models\TariffOverride::where('is_active', 1)
-            ->where(function($q) use ($hmoId, $schemeId) {
+            ->where(function ($q) use ($hmoId, $schemeId) {
                 $q->where('hmo_id', $hmoId)
                   ->orWhere('hmo_scheme_id', $schemeId);
             })
-            ->where(function($q) use ($targetType, $targetId, $categoryId) {
-                $q->where(function($q2) use ($targetType, $targetId) {
+            ->where(function ($q) use ($targetType, $targetId, $categoryId) {
+                $q->where(function ($q2) use ($targetType, $targetId) {
                     $q2->where('target_type', $targetType)->where('target_id', $targetId);
                 })
-                ->orWhere(function($q2) use ($targetType, $categoryId) {
+                ->orWhere(function ($q2) use ($targetType, $categoryId) {
                     $q2->where('target_type', $targetType . '_category')->where('target_id', $categoryId);
                 });
             })
             ->get();
 
-        if ($overrides->isEmpty()) return null;
+        if ($overrides->isEmpty()) {
+            return null;
+        }
 
         // Sort overrides by priority:
         // 1. Exact HMO + Exact Product/Service
         // 2. Exact HMO + Category
         // 3. Scheme + Exact Product/Service
         // 4. Scheme + Category
-        $override = $overrides->sortBy(function($o) use ($targetType) {
+        $override = $overrides->sortBy(function ($o) use ($targetType) {
             $score = 0;
-            if ($o->hmo_id) $score += 10;
-            if ($o->target_type === $targetType) $score += 5;
+            if ($o->hmo_id) {
+                $score += 10;
+            }
+            if ($o->target_type === $targetType) {
+                $score += 5;
+            }
+
             return -$score;
         })->first();
 
-        if (!$override) return null;
+        if (!$override) {
+            return null;
+        }
 
         // Calculate payable amount
         $payableAmount = 0;
@@ -206,14 +219,14 @@ class HmoHelper
         // Fallback coverage mode to express
         $coverageMode = 'express';
         $existingTariff = \App\Models\HmoTariff::where('hmo_id', $hmoId)
-            ->where(function($q) use ($productId, $serviceId) {
+            ->where(function ($q) use ($productId, $serviceId) {
                 if ($productId) {
                     $q->where('product_id', $productId)->whereNull('service_id');
                 } else {
                     $q->where('service_id', $serviceId)->whereNull('product_id');
                 }
             })->first();
-        
+
         if ($existingTariff) {
             $coverageMode = $existingTariff->coverage_mode;
         }
@@ -246,8 +259,8 @@ class HmoHelper
         // If no tariff passed, look it up (only when HMO context exists)
         if (!$tariff && $request->hmo_id) {
             $lookedUp = HmoTariff::where('hmo_id', $request->hmo_id)
-                ->when($request->product_id, fn($q) => $q->where('product_id', $request->product_id)->whereNull('service_id'))
-                ->when($request->service_id, fn($q) => $q->where('service_id', $request->service_id)->whereNull('product_id'))
+                ->when($request->product_id, fn ($q) => $q->where('product_id', $request->product_id)->whereNull('service_id'))
+                ->when($request->service_id, fn ($q) => $q->where('service_id', $request->service_id)->whereNull('product_id'))
                 ->value('display_name');
 
             if ($lookedUp) {
@@ -314,7 +327,7 @@ class HmoHelper
                     return [
                         'can_deliver' => false,
                         'reason' => 'Bundle Payment/Approval Required',
-                        'hint' => 'This item is part of a bundle. ' . $parentStatus['hint']
+                        'hint' => 'This item is part of a bundle. ' . $parentStatus['hint'],
                     ];
                 }
             }
@@ -329,7 +342,7 @@ class HmoHelper
                     'hint' => sprintf(
                         'This service requires payment of ₦%s. Please complete payment before delivery.',
                         number_format($request->payable_amount, 2)
-                    )
+                    ),
                 ];
             }
         }
@@ -344,7 +357,7 @@ class HmoHelper
                         'This service requires HMO validation (Coverage: %s, Claims: ₦%s). Please wait for HMO executive approval.',
                         strtoupper($request->coverage_mode ?? 'N/A'),
                         number_format($request->claims_amount, 2)
-                    )
+                    ),
                 ];
             }
 
@@ -355,7 +368,7 @@ class HmoHelper
                     'hint' => sprintf(
                         'This service was rejected by HMO. Rejection reason: %s. Contact HMO executive for clarification.',
                         $request->validation_notes ?? 'No reason provided'
-                    )
+                    ),
                 ];
             }
 
@@ -366,7 +379,7 @@ class HmoHelper
         return [
             'can_deliver' => true,
             'reason' => 'Ready for Delivery',
-            'hint' => 'This service is ready to be delivered.'
+            'hint' => 'This service is ready to be delivered.',
         ];
     }
 
@@ -385,23 +398,27 @@ class HmoHelper
         switch ($itemType) {
             case 'lab':
                 $posr = \App\Models\LabServiceRequest::find($itemId)?->productOrServiceRequest;
+
                 break;
             case 'imaging':
                 $posr = \App\Models\ImagingServiceRequest::find($itemId)?->productOrServiceRequest;
+
                 break;
             case 'product':
                 $posr = \App\Models\ProductRequest::find($itemId)?->productOrServiceRequest;
+
                 break;
         }
 
         if ($posr && $posr->is_bundle_item && $posr->parent_id) {
             $parent = $posr->parent;
+
             return [
                 'is_bundled' => true,
                 'procedure_id' => $parent->id,
                 'procedure_name' => optional($parent->service)->service_name ?? 'Service Bundle',
                 'procedure_item' => $parent, // ProductOrServiceRequest model
-                'bundle_type' => 'service_combo'
+                'bundle_type' => 'service_combo',
             ];
         }
 
@@ -410,12 +427,15 @@ class HmoHelper
         switch ($itemType) {
             case 'lab':
                 $procedureItem = \App\Models\ProcedureItem::where('lab_service_request_id', $itemId)->first();
+
                 break;
             case 'imaging':
                 $procedureItem = \App\Models\ProcedureItem::where('imaging_service_request_id', $itemId)->first();
+
                 break;
             case 'product':
                 $procedureItem = \App\Models\ProcedureItem::where('product_request_id', $itemId)->first();
+
                 break;
         }
 
@@ -431,7 +451,7 @@ class HmoHelper
             'procedure_id' => $procedureItem->procedure_id,
             'procedure_name' => $procedureName,
             'procedure_item' => $procedureItem, // ProcedureItem model
-            'bundle_type' => 'legacy_procedure'
+            'bundle_type' => 'legacy_procedure',
         ];
     }
 
@@ -457,10 +477,11 @@ class HmoHelper
             if ($procedureItem->productOrServiceRequest) {
                 return self::canDeliverService($procedureItem->productOrServiceRequest);
             }
+
             return [
                 'can_deliver' => true,
                 'reason' => 'Ready for Delivery',
-                'hint' => 'This item is ready to be delivered.'
+                'hint' => 'This item is ready to be delivered.',
             ];
         }
 
@@ -471,7 +492,7 @@ class HmoHelper
             return [
                 'can_deliver' => false,
                 'reason' => 'Procedure Not Found',
-                'hint' => 'The parent procedure for this bundled item could not be found.'
+                'hint' => 'The parent procedure for this bundled item could not be found.',
             ];
         }
 
@@ -480,7 +501,7 @@ class HmoHelper
             return [
                 'can_deliver' => false,
                 'reason' => 'Procedure Cancelled',
-                'hint' => 'Cannot deliver items for a cancelled procedure.'
+                'hint' => 'Cannot deliver items for a cancelled procedure.',
             ];
         }
 
@@ -502,7 +523,7 @@ class HmoHelper
                         'This item is bundled with "%s" (legacy entry - no billing record). Procedure status: %s.',
                         $procedureName,
                         ucfirst(str_replace('_', ' ', $procedure->procedure_status))
-                    )
+                    ),
                 ];
             }
 
@@ -514,7 +535,7 @@ class HmoHelper
                     'This item is bundled with "%s". The procedure must be in progress or completed before bundled items can be delivered. Current status: %s.',
                     $procedureName,
                     ucfirst(str_replace('_', ' ', $procedure->procedure_status ?? 'unknown'))
-                )
+                ),
             ];
         }
 

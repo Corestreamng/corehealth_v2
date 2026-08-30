@@ -2,21 +2,21 @@
 
 namespace App\Http\Controllers\OpsAudit;
 
-use Illuminate\Http\Request;
-use Carbon\Carbon;
-use App\Models\ProductRequest;
-use App\Models\StoreRequisitionItem;
 use App\Models\Payment;
+use App\Models\ProductRequest;
 use App\Models\Store;
+use App\Models\StoreRequisitionItem;
+use Carbon\Carbon;
+use Illuminate\Http\Request;
 
 class OpsAuditPharmacyController extends OpsAuditBaseController
 {
     public function index(Request $request)
     {
-        $hmos = \App\Models\Hmo::with('scheme')->orderBy('name')->get()->groupBy(fn($hmo) => $hmo->scheme ? $hmo->scheme->name : 'Other Schemes');
+        $hmos = \App\Models\Hmo::with('scheme')->orderBy('name')->get()->groupBy(fn ($hmo) => $hmo->scheme ? $hmo->scheme->name : 'Other Schemes');
         $hmoSchemes = \App\Models\HmoScheme::orderBy('name')->pluck('name', 'id');
         $stores = $this->getPermittedStoresForFilter(['roles' => ['pharmacy_hub', 'pharmacy_satellite']]);
-        $cashiers = \App\Models\User::role(['SUPERADMIN', 'ADMIN', 'ACCOUNTS', 'BILLER'])->orderBy('firstname')->get()->mapWithKeys(fn($u) => [$u->id => trim($u->firstname . ' ' . ($u->othername ?? '') . ' ' . $u->surname)]);
+        $cashiers = \App\Models\User::role(['SUPERADMIN', 'ADMIN', 'ACCOUNTS', 'BILLER'])->orderBy('firstname')->get()->mapWithKeys(fn ($u) => [$u->id => trim($u->firstname . ' ' . ($u->othername ?? '') . ' ' . $u->surname)]);
 
         return view('admin.ops_audit.pharmacy', compact('hmos', 'hmoSchemes', 'stores', 'cashiers'));
     }
@@ -32,6 +32,7 @@ class OpsAuditPharmacyController extends OpsAuditBaseController
                 'cashbook' => Payment::class,
             ];
             $request->merge(['zone_key' => 'ops_audit.pharmacy.' . $tab]);
+
             return $this->handleBulkStamp($request, $tab, $modelMap);
         }
 
@@ -63,7 +64,7 @@ class OpsAuditPharmacyController extends OpsAuditBaseController
             'product.category',
             'productOrServiceRequest.payment.staff_user',
             'biller',
-            'dispenser'
+            'dispenser',
         ]);
 
         $this->applyDateFilter($query, $request);
@@ -76,13 +77,15 @@ class OpsAuditPharmacyController extends OpsAuditBaseController
             $query->where('status', '>=', 1);
         }
 
-        if ($request->filled('hmo_id')) $query->whereHas('patient.hmo', fn($q) => $q->where('id', $request->hmo_id));
+        if ($request->filled('hmo_id')) {
+            $query->whereHas('patient.hmo', fn ($q) => $q->where('id', $request->hmo_id));
+        }
 
         $this->applyItemFilters($query, $request, '', ['product']);
 
         $kpiQuery = clone $query;
 
-        return $this->buildDataTableResponse($query, $request, fn($q) => $q, function ($row) {
+        return $this->buildDataTableResponse($query, $request, fn ($q) => $q, function ($row) {
             $patient = $row->patient;
             $user = $patient?->user;
             $hmo = $patient?->hmo;
@@ -134,7 +137,7 @@ class OpsAuditPharmacyController extends OpsAuditBaseController
             'patient.user',
             'product.category',
             'biller',
-            'dispenser'
+            'dispenser',
         ])->where(function ($q) {
             $q->where('status', 4)->orWhere('damaged_qty', '>', 0);
         });
@@ -146,7 +149,7 @@ class OpsAuditPharmacyController extends OpsAuditBaseController
 
         $kpiQuery = clone $query;
 
-        return $this->buildDataTableResponse($query, $request, fn($q) => $q, function ($row) {
+        return $this->buildDataTableResponse($query, $request, fn ($q) => $q, function ($row) {
             $patient = $row->patient;
             $user = $patient?->user;
 
@@ -193,11 +196,13 @@ class OpsAuditPharmacyController extends OpsAuditBaseController
         $this->applyDateFilter($query, $request);
         $this->applyShiftFilter($query, $request);
 
-        if ($request->filled('status')) $query->where('status', $request->status);
+        if ($request->filled('status')) {
+            $query->where('status', $request->status);
+        }
 
         $kpiQuery = clone $query;
 
-        return $this->buildDataTableResponse($query, $request, fn($q) => $q, function ($row) {
+        return $this->buildDataTableResponse($query, $request, fn ($q) => $q, function ($row) {
             $statusColors = ['pending' => 'warning text-dark', 'approved' => 'info', 'fulfilled' => 'success', 'rejected' => 'danger'];
 
             return [
@@ -231,7 +236,7 @@ class OpsAuditPharmacyController extends OpsAuditBaseController
             'bank',
             'product_or_service_request',
             'product_or_service_request.product.category',
-            'product_or_service_request.service.category'
+            'product_or_service_request.service.category',
         ])->whereHas('product_or_service_request', function ($q) {
             $q->whereNotNull('product_id');
         });
@@ -243,7 +248,7 @@ class OpsAuditPharmacyController extends OpsAuditBaseController
 
         $kpiQuery = clone $query;
 
-        return $this->buildDataTableResponse($query, $request, fn($q) => $q, function ($row) {
+        return $this->buildDataTableResponse($query, $request, fn ($q) => $q, function ($row) {
             $patient = $row->patient;
             $user = $patient?->user;
 

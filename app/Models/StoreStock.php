@@ -4,7 +4,6 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-
 use OwenIt\Auditing\Contracts\Auditable;
 
 /**
@@ -139,6 +138,7 @@ class StoreStock extends Model implements Auditable
             return false;
         }
         $this->reserved_qty = ($this->reserved_qty ?? 0) + $qty;
+
         return $this->save();
     }
 
@@ -148,6 +148,7 @@ class StoreStock extends Model implements Auditable
     public function releaseReservation(int $qty): bool
     {
         $this->reserved_qty = max(0, ($this->reserved_qty ?? 0) - $qty);
+
         return $this->save();
     }
 }

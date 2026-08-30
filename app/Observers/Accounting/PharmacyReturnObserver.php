@@ -2,10 +2,8 @@
 
 namespace App\Observers\Accounting;
 
-use App\Models\PharmacyReturn;
-use App\Models\ProductOrServiceRequest;
 use App\Models\Accounting\Account;
-use App\Models\Accounting\JournalEntry;
+use App\Models\PharmacyReturn;
 use App\Services\Accounting\AccountingService;
 use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Log;
@@ -64,6 +62,7 @@ class PharmacyReturnObserver
                         'return_id' => $return->id,
                         'existing_je_id' => $return->journal_entry_id,
                     ]);
+
                     return;
                 }
 
@@ -72,7 +71,7 @@ class PharmacyReturnObserver
                 Log::error('PharmacyReturnObserver: Failed to create journal entry', [
                     'return_id' => $return->id,
                     'error' => $e->getMessage(),
-                    'trace' => $e->getTraceAsString()
+                    'trace' => $e->getTraceAsString(),
                 ]);
             }
         }
@@ -96,6 +95,7 @@ class PharmacyReturnObserver
                 'restock' => $return->restock,
                 'expected_account' => $return->restock ? self::INVENTORY_PHARMACY : self::LOSS_ON_RETURNS,
             ]);
+
             return;
         }
 
@@ -111,6 +111,7 @@ class PharmacyReturnObserver
             Log::warning('PharmacyReturnObserver: Customer Deposits account (2200) not found', [
                 'return_id' => $return->id,
             ]);
+
             return;
         }
 
@@ -123,6 +124,7 @@ class PharmacyReturnObserver
                 Log::warning('PharmacyReturnObserver: AR-HMO account (1110) not found', [
                     'return_id' => $return->id,
                 ]);
+
                 return;
             }
 

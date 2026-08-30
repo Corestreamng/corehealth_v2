@@ -2,20 +2,16 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\ApplicationStatu;
 use App\Models\Product;
+use App\Models\ProductCategory;
 use App\Models\ProductPackaging;
 use App\Models\Sale;
-use App\Models\ApplicationStatu;
 use App\Models\Stock;
-use App\Models\ProductCategory;
-use App\Http\Requests\StoreProductRequest;
-use App\Http\Requests\UpdateProductRequest;
 use Illuminate\Http\Request;
-use Illuminate\Http\Response;
-use Yajra\DataTables\DataTables;
-use RealRashid\SweetAlert\Facades\Alert;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Yajra\DataTables\DataTables;
 
 class ProductController extends Controller
 {
@@ -29,9 +25,9 @@ class ProductController extends Controller
             $query->where('status', 1);
         }
 
-        $query->with(['stock', 'category', 'price', 'packagings', 'stockBatches' => function($q) {
-                $q->active()->where('current_qty', '>', 0);
-            }])
+        $query->with(['stock', 'category', 'price', 'packagings', 'stockBatches' => function ($q) {
+            $q->active()->where('current_qty', '>', 0);
+        }])
             ->orderBy('product_name', 'ASC');
 
         // Type filter
@@ -71,6 +67,7 @@ class ProductController extends Controller
                     'consumable' => '<span class="badge" style="background:#fff3cd;color:#856404">Consumable</span>',
                     'utility' => '<span class="badge" style="background:#d1ecf1;color:#0c5460">Utility</span>',
                 ];
+
                 return $badges[$type] ?? $badges['drug'];
             })
             ->editColumn('current_quantity', function ($pc) {
@@ -88,6 +85,7 @@ class ProductController extends Controller
                 } else {
                     $alert = '<span class="badge badge-success">' . e($formatted) . '</span>';
                 }
+
                 return $alert;
             })
             ->addColumn('sale_price', function ($pc) {
@@ -96,6 +94,7 @@ class ProductController extends Controller
                 if ($pc->status == 0) {
                     $statusBadge = '<br><span class="badge badge-danger">Deactivated</span>';
                 }
+
                 return ($price ? '₦' . number_format($price, 2) : '<span class="text-muted">—</span>') . $statusBadge;
             })
             ->addColumn('actions', function ($pc) {
@@ -145,12 +144,12 @@ class ProductController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => 'Product status updated successfully.',
-                'new_status' => $product->status
+                'new_status' => $product->status,
             ]);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'An error occurred: ' . $e->getMessage()
+                'message' => 'An error occurred: ' . $e->getMessage(),
             ], 500);
         }
     }
@@ -209,7 +208,7 @@ class ProductController extends Controller
                     'category' => $product->category,
                     'stock' => $product->stock,
                     'price' => $product->price,
-                    'packagings' => $product->packagings->map(fn($p) => [
+                    'packagings' => $product->packagings->map(fn ($p) => [
                         'id' => $p->id,
                         'name' => $p->name,
                         'level' => $p->level,
@@ -260,16 +259,16 @@ class ProductController extends Controller
                         'product_code' => $combo->service_code ?? '',
                         'product_type' => 'combo',
                         'is_combo' => true,
-                        'bundle_items' => $combo->bundleItems->map(fn($item) => [
-                            'id'         => $item->id,
-                            'type'       => $item->item_type,
-                            'item_id'    => $item->item_id,
-                            'name'       => $item->item_type === 'service'
+                        'bundle_items' => $combo->bundleItems->map(fn ($item) => [
+                            'id' => $item->id,
+                            'type' => $item->item_type,
+                            'item_id' => $item->item_id,
+                            'name' => $item->item_type === 'service'
                                 ? ($item->service->service_name ?? 'Unknown')
                                 : ($item->product->product_name ?? 'Unknown'),
-                            'qty'        => $item->qty,
-                            'dose'       => $item->dose,
-                            'note'       => $item->note,
+                            'qty' => $item->qty,
+                            'dose' => $item->dose,
+                            'note' => $item->note,
                             'unit_price' => $item->unit_price ?? 0,
                         ])->toArray(),
                         'base_unit_name' => 'Package',
@@ -333,6 +332,7 @@ class ProductController extends Controller
     {
         $categories = ProductCategory::where('status', '=', 1)->pluck('category_name', 'id')->all();
         $stores = \App\Models\Store::where('status', 1)->orderBy('store_name')->get(['id', 'store_name']);
+
         return view('admin.product.index', compact('categories', 'stores'));
     }
 
@@ -345,6 +345,7 @@ class ProductController extends Controller
     {
         $application = ApplicationStatu::whereId(1)->first();
         $category = ProductCategory::where('status', '=', 1)->pluck('category_name', 'id')->all();
+
         return view('admin.product.create', compact('category', 'application'));
     }
 
@@ -354,19 +355,18 @@ class ProductController extends Controller
      * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\Response
      */
-
     public function store(Request $request)
     {
         $application = ApplicationStatu::whereId(1)->first();
 
         $rules = [
-            'category_id'       => 'required',
-            'product_name'      => 'required',
-            'product_code'      => 'required',
-            'reorder_alert'     => 'required',
-            'product_type'      => 'required|in:drug,consumable,utility',
-            'base_unit_name'    => 'required|string|max:50',
-            'packagings'        => 'nullable|array',
+            'category_id' => 'required',
+            'product_name' => 'required',
+            'product_code' => 'required',
+            'reorder_alert' => 'required',
+            'product_type' => 'required|in:drug,consumable,utility',
+            'base_unit_name' => 'required|string|max:50',
+            'packagings' => 'nullable|array',
             'packagings.*.name' => 'required_with:packagings|string|max:100',
             'packagings.*.units_in_parent' => 'required_with:packagings|numeric|min:0.0001',
         ];
@@ -398,49 +398,51 @@ class ProductController extends Controller
 
             DB::beginTransaction();
 
-            $myproduct                      = new Product();
-            $myproduct->user_id             = Auth::user()->id;
-            $myproduct->category_id         = $request->category_id;
-            $myproduct->product_name        = trim($request->product_name);
-            $myproduct->product_code        = $request->product_code;
-            $myproduct->reorder_alert       = $request->reorder_alert;
-            $myproduct->product_type        = $request->product_type;
-            $myproduct->base_unit_name      = $request->base_unit_name;
-            $myproduct->allow_decimal_qty   = $request->has('allow_decimal_qty') ? 1 : 0;
+            $myproduct = new Product();
+            $myproduct->user_id = Auth::user()->id;
+            $myproduct->category_id = $request->category_id;
+            $myproduct->product_name = trim($request->product_name);
+            $myproduct->product_code = $request->product_code;
+            $myproduct->reorder_alert = $request->reorder_alert;
+            $myproduct->product_type = $request->product_type;
+            $myproduct->base_unit_name = $request->base_unit_name;
+            $myproduct->allow_decimal_qty = $request->has('allow_decimal_qty') ? 1 : 0;
 
             if ($application->allow_halve_sale == 1) {
-                $myproduct->has_have        = $request->s1;
-                $myproduct->has_piece       = $request->s2;
-                $myproduct->howmany_to      = $request->quantity_in;
+                $myproduct->has_have = $request->s1;
+                $myproduct->has_piece = $request->s2;
+                $myproduct->howmany_to = $request->quantity_in;
             } else {
-                $myproduct->has_have        = 0;
-                $myproduct->has_piece       = 0;
-                $myproduct->howmany_to      = 0;
+                $myproduct->has_have = 0;
+                $myproduct->has_piece = 0;
+                $myproduct->howmany_to = 0;
             }
 
-            $myproduct->status             = 1;
-            $myproduct->current_quantity    = 0;
+            $myproduct->status = 1;
+            $myproduct->current_quantity = 0;
             $myproduct->save();
 
             // Save packaging levels
             $this->syncPackagings($myproduct, $request->input('packagings', []));
 
             // Create legacy stock record
-            $stock                     = new Stock();
-            $stock->product_id         = $myproduct->id;
-            $stock->initial_quantity   = 0;
-            $stock->order_quantity     = 0;
-            $stock->current_quantity   = 0;
-            $stock->quantity_sale      = 0;
+            $stock = new Stock();
+            $stock->product_id = $myproduct->id;
+            $stock->initial_quantity = 0;
+            $stock->order_quantity = 0;
+            $stock->current_quantity = 0;
+            $stock->quantity_sale = 0;
             $stock->save();
 
             DB::commit();
 
             $msg = 'The Product ' . $request->product_name . ' was Saved Successfully.';
+
             return redirect(route('products.index'))->withMessage($msg)->withMessageType('success');
 
         } catch (\Exception $e) {
             DB::rollBack();
+
             return redirect()->back()->withInput()->withMessage("An error occurred: " . $e->getMessage());
         }
     }
@@ -453,9 +455,9 @@ class ProductController extends Controller
      */
     public function show($id)
     {
-        $pp = Product::withoutGlobalScopes()->with(['category', 'price', 'stock', 'packagings' => function($q) {
+        $pp = Product::withoutGlobalScopes()->with(['category', 'price', 'stock', 'packagings' => function ($q) {
             $q->orderBy('level');
-        }, 'stockBatches' => function($q) {
+        }, 'stockBatches' => function ($q) {
             $q->active()->where('current_qty', '>', 0);
         }])->findOrFail($id);
 
@@ -479,10 +481,11 @@ class ProductController extends Controller
     {
         try {
             $application = ApplicationStatu::whereId(1)->first();
-            $product = Product::withoutGlobalScopes()->with(['packagings' => function($q) {
+            $product = Product::withoutGlobalScopes()->with(['packagings' => function ($q) {
                 $q->orderBy('level');
             }])->findOrFail($id);
             $category = ProductCategory::where('status', '=', 1)->pluck('category_name', 'id')->all();
+
             return view('admin.product.edit', compact('product', 'application', 'category'));
         } catch (\Exception $e) {
             return redirect()->back()->withInput()->withMessage("An error occurred " . $e->getMessage());
@@ -502,13 +505,13 @@ class ProductController extends Controller
             $application = ApplicationStatu::whereId(1)->first();
 
             $rules = [
-                'category_id'       => 'required',
-                'product_name'      => 'required',
-                'product_code'      => 'required',
-                'reorder_alert'     => 'required',
-                'product_type'      => 'required|in:drug,consumable,utility',
-                'base_unit_name'    => 'required|string|max:50',
-                'packagings'        => 'nullable|array',
+                'category_id' => 'required',
+                'product_name' => 'required',
+                'product_code' => 'required',
+                'reorder_alert' => 'required',
+                'product_type' => 'required|in:drug,consumable,utility',
+                'base_unit_name' => 'required|string|max:50',
+                'packagings' => 'nullable|array',
                 'packagings.*.name' => 'required_with:packagings|string|max:100',
                 'packagings.*.units_in_parent' => 'required_with:packagings|numeric|min:0.0001',
             ];
@@ -539,13 +542,13 @@ class ProductController extends Controller
 
             DB::beginTransaction();
 
-            $myproduct                 = Product::withoutGlobalScopes()->whereId($id)->first();
-            $myproduct->user_id        = Auth::user()->id;
-            $myproduct->category_id    = $request->category_id;
-            $myproduct->product_name   = $request->product_name;
-            $myproduct->product_code   = $request->product_code;
-            $myproduct->reorder_alert  = $request->reorder_alert;
-            $myproduct->product_type   = $request->product_type;
+            $myproduct = Product::withoutGlobalScopes()->whereId($id)->first();
+            $myproduct->user_id = Auth::user()->id;
+            $myproduct->category_id = $request->category_id;
+            $myproduct->product_name = $request->product_name;
+            $myproduct->product_code = $request->product_code;
+            $myproduct->reorder_alert = $request->reorder_alert;
+            $myproduct->product_type = $request->product_type;
             $myproduct->base_unit_name = $request->base_unit_name;
             $myproduct->allow_decimal_qty = $request->has('allow_decimal_qty') ? 1 : 0;
 
@@ -567,10 +570,12 @@ class ProductController extends Controller
             DB::commit();
 
             $msg = 'The Product ' . $request->product_name . ' Was Updated Successfully.';
+
             return redirect(route('products.index'))->withMessage($msg)->withMessageType('success');
 
         } catch (\Exception $e) {
             DB::rollBack();
+
             return redirect()->back()->withInput()->withMessage("An error occurred: " . $e->getMessage());
         }
     }
@@ -637,7 +642,7 @@ class ProductController extends Controller
      */
     public function getPackagings($productId)
     {
-        $product = Product::with(['packagings' => function($q) {
+        $product = Product::with(['packagings' => function ($q) {
             $q->orderBy('level');
         }, 'price'])->findOrFail($productId);
 
@@ -645,7 +650,7 @@ class ProductController extends Controller
             'base_unit_name' => $product->base_unit_name ?? 'Piece',
             'allow_decimal_qty' => (bool) $product->allow_decimal_qty,
             'price' => $product->price,
-            'packagings' => $product->packagings->map(fn($p) => [
+            'packagings' => $product->packagings->map(fn ($p) => [
                 'id' => $p->id,
                 'name' => $p->name,
                 'level' => $p->level,

@@ -2,8 +2,8 @@
 
 namespace App\Services;
 
-use App\Models\HR\LeaveRequest;
 use App\Models\HR\LeaveBalance;
+use App\Models\HR\LeaveRequest;
 use App\Models\HR\LeaveType;
 use App\Models\Staff;
 use App\Models\User;
@@ -406,7 +406,7 @@ class LeaveService
                 ->whereIn('status', [
                     LeaveRequest::STATUS_PENDING,
                     LeaveRequest::STATUS_SUPERVISOR_APPROVED,
-                    LeaveRequest::STATUS_APPROVED
+                    LeaveRequest::STATUS_APPROVED,
                 ])
                 ->count();
 
@@ -428,7 +428,7 @@ class LeaveService
             ->whereIn('status', [
                 LeaveRequest::STATUS_PENDING,
                 LeaveRequest::STATUS_SUPERVISOR_APPROVED,
-                LeaveRequest::STATUS_APPROVED
+                LeaveRequest::STATUS_APPROVED,
             ])
             ->where(function ($q) use ($startDate, $endDate) {
                 $q->whereBetween('start_date', [$startDate, $endDate])

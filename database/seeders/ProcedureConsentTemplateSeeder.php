@@ -45,7 +45,7 @@ HTML;
         $first = DB::table('application_status')->first();
         if ($first) {
             DB::table('application_status')->where('id', $first->id)->update([
-                'consent_template' => $defaultTemplate
+                'consent_template' => $defaultTemplate,
             ]);
         } else {
             // Seed a default record
@@ -53,7 +53,7 @@ HTML;
                 'site_name' => 'Hospital Management System',
                 'consent_template' => $defaultTemplate,
                 'created_at' => now(),
-                'updated_at' => now()
+                'updated_at' => now(),
             ]);
         }
     }

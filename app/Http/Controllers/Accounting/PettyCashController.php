@@ -3,20 +3,19 @@
 namespace App\Http\Controllers\Accounting;
 
 use App\Http\Controllers\Controller;
-use App\Models\Accounting\PettyCashFund;
-use App\Models\Accounting\PettyCashTransaction;
-use App\Models\Accounting\PettyCashReconciliation;
 use App\Models\Accounting\Account;
+use App\Models\Accounting\PettyCashFund;
+use App\Models\Accounting\PettyCashReconciliation;
+use App\Models\Accounting\PettyCashTransaction;
 use App\Models\Bank;
 use App\Models\Department;
 use App\Models\User;
-use App\Services\Accounting\PettyCashService;
 use App\Services\Accounting\ExcelExportService;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\DB;
+use App\Services\Accounting\PettyCashService;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Yajra\DataTables\Facades\DataTables;
 
 /**
@@ -32,6 +31,7 @@ use Yajra\DataTables\Facades\DataTables;
 class PettyCashController extends Controller
 {
     protected PettyCashService $pettyCashService;
+
     protected ExcelExportService $excelService;
 
     public function __construct(PettyCashService $pettyCashService, ExcelExportService $excelService)
@@ -89,9 +89,9 @@ class PettyCashController extends Controller
         }
 
         return DataTables::of($query)
-            ->addColumn('fund_name', fn($t) => $t->fund?->fund_name ?? '-')
-            ->addColumn('transaction_date_formatted', fn($t) => Carbon::parse($t->transaction_date)->format('M d, Y'))
-            ->addColumn('amount_formatted', fn($t) => '₦' . number_format($t->amount, 2))
+            ->addColumn('fund_name', fn ($t) => $t->fund?->fund_name ?? '-')
+            ->addColumn('transaction_date_formatted', fn ($t) => Carbon::parse($t->transaction_date)->format('M d, Y'))
+            ->addColumn('amount_formatted', fn ($t) => '₦' . number_format($t->amount, 2))
             ->addColumn('type_badge', function ($t) {
                 $colors = [
                     'disbursement' => 'danger',
@@ -99,6 +99,7 @@ class PettyCashController extends Controller
                     'adjustment' => 'warning',
                 ];
                 $color = $colors[$t->transaction_type] ?? 'secondary';
+
                 return '<span class="badge badge-' . $color . '">' . ucfirst($t->transaction_type) . '</span>';
             })
             ->addColumn('status_badge', function ($t) {
@@ -110,13 +111,15 @@ class PettyCashController extends Controller
                     'voided' => 'secondary',
                 ];
                 $color = $colors[$t->status] ?? 'secondary';
+
                 return '<span class="badge badge-' . $color . '">' . ucfirst($t->status) . '</span>';
             })
-            ->addColumn('requested_by_name', fn($t) => $t->requestedBy?->name ?? '-')
+            ->addColumn('requested_by_name', fn ($t) => $t->requestedBy?->name ?? '-')
             ->addColumn('je_link', function ($t) {
                 if ($t->journal_entry_id) {
                     return '<a href="' . route('accounting.journal-entries.show', $t->journal_entry_id) . '" class="btn btn-outline-secondary btn-sm" title="View Journal Entry"><i class="mdi mdi-book-open-variant"></i></a>';
                 }
+
                 return '-';
             })
             ->addColumn('actions', function ($t) {
@@ -137,6 +140,7 @@ class PettyCashController extends Controller
                 }
 
                 $actions .= '</div>';
+
                 return $actions;
             })
             ->rawColumns(['type_badge', 'status_badge', 'je_link', 'actions'])
@@ -179,13 +183,14 @@ class PettyCashController extends Controller
         }
 
         return DataTables::of($query)
-            ->addColumn('custodian_name', fn($f) => $f->custodian?->name ?? '-')
-            ->addColumn('department_name', fn($f) => $f->department?->name ?? '-')
-            ->addColumn('balance_formatted', fn($f) => '₦' . number_format($f->current_balance, 2))
-            ->addColumn('limit_formatted', fn($f) => '₦' . number_format($f->fund_limit, 2))
+            ->addColumn('custodian_name', fn ($f) => $f->custodian?->name ?? '-')
+            ->addColumn('department_name', fn ($f) => $f->department?->name ?? '-')
+            ->addColumn('balance_formatted', fn ($f) => '₦' . number_format($f->current_balance, 2))
+            ->addColumn('limit_formatted', fn ($f) => '₦' . number_format($f->fund_limit, 2))
             ->addColumn('utilization', function ($f) {
                 $pct = $f->fund_limit > 0 ? (($f->fund_limit - $f->current_balance) / $f->fund_limit) * 100 : 0;
                 $color = $pct > 80 ? 'danger' : ($pct > 50 ? 'warning' : 'success');
+
                 return '<div class="progress" style="height: 20px;">
                     <div class="progress-bar bg-' . $color . '" style="width: ' . $pct . '%">' . round($pct) . '%</div>
                 </div>';
@@ -197,6 +202,7 @@ class PettyCashController extends Controller
                     'closed' => 'secondary',
                 ];
                 $color = $colors[$f->status] ?? 'secondary';
+
                 return '<span class="badge badge-' . $color . '">' . ucfirst($f->status) . '</span>';
             })
             ->addColumn('actions', function ($f) {
@@ -206,6 +212,7 @@ class PettyCashController extends Controller
                 $actions .= '<a href="' . route('accounting.petty-cash.disbursement.create', $f->id) . '" class="btn btn-outline-danger" title="Disburse"><i class="mdi mdi-cash-remove mr-1"></i>Disburse</a>';
                 $actions .= '<a href="' . route('accounting.petty-cash.replenishment.create', $f->id) . '" class="btn btn-outline-success" title="Replenish"><i class="mdi mdi-cash-refund mr-1"></i>Replenish</a>';
                 $actions .= '</div>';
+
                 return $actions;
             })
             ->rawColumns(['utilization', 'status_badge', 'actions'])
@@ -277,6 +284,7 @@ class PettyCashController extends Controller
 
             try {
                 $this->pettyCashService->processReplenishment($fund, $fundingData);
+
                 return redirect()
                     ->route('accounting.petty-cash.funds.show', $fund->id)
                     ->with('success', 'Petty cash fund created and funded with ₦' . number_format($initialFunding, 2));
@@ -398,8 +406,8 @@ class PettyCashController extends Controller
         }
 
         return DataTables::of($query)
-            ->addColumn('transaction_date_formatted', fn($t) => Carbon::parse($t->transaction_date)->format('M d, Y'))
-            ->addColumn('amount_formatted', fn($t) => '₦' . number_format($t->amount, 2))
+            ->addColumn('transaction_date_formatted', fn ($t) => Carbon::parse($t->transaction_date)->format('M d, Y'))
+            ->addColumn('amount_formatted', fn ($t) => '₦' . number_format($t->amount, 2))
             ->addColumn('type_badge', function ($t) {
                 $colors = [
                     'disbursement' => 'danger',
@@ -407,6 +415,7 @@ class PettyCashController extends Controller
                     'adjustment' => 'warning',
                 ];
                 $color = $colors[$t->transaction_type] ?? 'secondary';
+
                 return '<span class="badge badge-' . $color . '">' . ucfirst($t->transaction_type) . '</span>';
             })
             ->addColumn('status_badge', function ($t) {
@@ -418,9 +427,10 @@ class PettyCashController extends Controller
                     'voided' => 'secondary',
                 ];
                 $color = $colors[$t->status] ?? 'secondary';
+
                 return '<span class="badge badge-' . $color . '">' . ucfirst($t->status) . '</span>';
             })
-            ->addColumn('requested_by_name', fn($t) => $t->requestedBy?->name ?? '-')
+            ->addColumn('requested_by_name', fn ($t) => $t->requestedBy?->name ?? '-')
             ->addColumn('actions', function ($t) {
                 $actions = '<div class="btn-group btn-group-sm">';
 
@@ -438,6 +448,7 @@ class PettyCashController extends Controller
                 }
 
                 $actions .= '</div>';
+
                 return $actions;
             })
             ->rawColumns(['type_badge', 'status_badge', 'actions'])
@@ -704,13 +715,14 @@ class PettyCashController extends Controller
         }
 
         return DataTables::of($query)
-            ->addColumn('reconciliation_date_formatted', fn($r) => Carbon::parse($r->reconciliation_date)->format('M d, Y'))
-            ->addColumn('fund_name', fn($r) => $r->fund?->fund_name ?? '-')
-            ->addColumn('expected_formatted', fn($r) => '₦' . number_format($r->expected_balance, 2))
-            ->addColumn('actual_formatted', fn($r) => '₦' . number_format($r->actual_cash_count, 2))
+            ->addColumn('reconciliation_date_formatted', fn ($r) => Carbon::parse($r->reconciliation_date)->format('M d, Y'))
+            ->addColumn('fund_name', fn ($r) => $r->fund?->fund_name ?? '-')
+            ->addColumn('expected_formatted', fn ($r) => '₦' . number_format($r->expected_balance, 2))
+            ->addColumn('actual_formatted', fn ($r) => '₦' . number_format($r->actual_cash_count, 2))
             ->addColumn('variance_formatted', function ($r) {
                 $prefix = $r->variance > 0 ? '-' : '+';
                 $color = $r->variance == 0 ? 'success' : ($r->variance > 0 ? 'danger' : 'warning');
+
                 return '<span class="text-' . $color . '">' . $prefix . '₦' . number_format(abs($r->variance), 2) . '</span>';
             })
             ->addColumn('status_badge', function ($r) {
@@ -720,6 +732,7 @@ class PettyCashController extends Controller
                     'overage' => 'warning',
                 ];
                 $color = $colors[$r->status] ?? 'secondary';
+
                 return '<span class="badge badge-' . $color . '">' . ucfirst($r->status) . '</span>';
             })
             ->addColumn('approval_badge', function ($r) {
@@ -735,9 +748,10 @@ class PettyCashController extends Controller
                 ];
                 $color = $colors[$r->approval_status] ?? 'secondary';
                 $label = $labels[$r->approval_status] ?? $r->approval_status;
+
                 return '<span class="badge badge-' . $color . '">' . $label . '</span>';
             })
-            ->addColumn('reconciled_by_name', fn($r) => $r->reconciledBy?->name ?? '-')
+            ->addColumn('reconciled_by_name', fn ($r) => $r->reconciledBy?->name ?? '-')
             ->addColumn('actions', function ($r) {
                 $actions = '<div class="btn-group btn-group-sm">';
 
@@ -756,6 +770,7 @@ class PettyCashController extends Controller
                 }
 
                 $actions .= '</div>';
+
                 return $actions;
             })
             ->rawColumns(['variance_formatted', 'status_badge', 'approval_badge', 'actions'])
@@ -823,8 +838,8 @@ class PettyCashController extends Controller
 
         $transactions = $fund->transactions()
             ->with(['requestedBy', 'approvedBy'])
-            ->when($request->filled('date_from'), fn($q) => $q->whereDate('transaction_date', '>=', $request->date_from))
-            ->when($request->filled('date_to'), fn($q) => $q->whereDate('transaction_date', '<=', $request->date_to))
+            ->when($request->filled('date_from'), fn ($q) => $q->whereDate('transaction_date', '>=', $request->date_from))
+            ->when($request->filled('date_to'), fn ($q) => $q->whereDate('transaction_date', '<=', $request->date_to))
             ->orderBy('transaction_date', 'desc')
             ->get();
 
@@ -850,8 +865,8 @@ class PettyCashController extends Controller
 
         $transactions = $fund->transactions()
             ->with(['requestedBy', 'approvedBy', 'expenseAccount'])
-            ->when($request->filled('date_from'), fn($q) => $q->whereDate('transaction_date', '>=', $request->date_from))
-            ->when($request->filled('date_to'), fn($q) => $q->whereDate('transaction_date', '<=', $request->date_to))
+            ->when($request->filled('date_from'), fn ($q) => $q->whereDate('transaction_date', '>=', $request->date_from))
+            ->when($request->filled('date_to'), fn ($q) => $q->whereDate('transaction_date', '<=', $request->date_to))
             ->orderBy('transaction_date', 'desc')
             ->get();
 
@@ -887,7 +902,7 @@ class PettyCashController extends Controller
                 ->whereYear('transaction_date', now()->year)
                 ->where('status', 'approved')
                 ->sum('amount'),
-            'low_balance_funds' => $activeFunds->filter(fn($f) => $f->current_balance < ($f->fund_limit * 0.2))->count(),
+            'low_balance_funds' => $activeFunds->filter(fn ($f) => $f->current_balance < ($f->fund_limit * 0.2))->count(),
         ];
     }
 }

@@ -28,7 +28,7 @@ class StaffSalaryProfile extends Model implements Auditable
         'effective_to',
         'is_active',
         'notes',
-        'created_by'
+        'created_by',
     ];
 
     protected $casts = [
@@ -41,9 +41,9 @@ class StaffSalaryProfile extends Model implements Auditable
         'is_active' => 'boolean',
     ];
 
-    const FREQUENCY_MONTHLY = 'monthly';
-    const FREQUENCY_BI_WEEKLY = 'bi_weekly';
-    const FREQUENCY_WEEKLY = 'weekly';
+    public const FREQUENCY_MONTHLY = 'monthly';
+    public const FREQUENCY_BI_WEEKLY = 'bi_weekly';
+    public const FREQUENCY_WEEKLY = 'weekly';
 
     /**
      * Get the staff member
@@ -104,7 +104,7 @@ class StaffSalaryProfile extends Model implements Auditable
     public function calculateGrossSalary(): float
     {
         $basic = (float) $this->basic_salary;
-        
+
         // Get all addition items
         $additionItems = $this->items()->whereHas('payHead', function ($q) {
             $q->where('type', PayHead::TYPE_ADDITION);
@@ -113,7 +113,7 @@ class StaffSalaryProfile extends Model implements Auditable
         // Pass 1: Calculate fixed and basic-percentage additions
         $fixedAndBasicTotal = 0;
         $grossBasedItems = [];
-        
+
         foreach ($additionItems as $item) {
             if ($item->calculation_type === PayHead::CALC_PERCENTAGE) {
                 if ($item->calculation_base === PayHead::BASE_BASIC_SALARY || $item->calculation_base === 'basic') {
@@ -149,14 +149,14 @@ class StaffSalaryProfile extends Model implements Auditable
     {
         $basic = (float) $this->basic_salary;
         $gross = $this->calculateGrossSalary();
-        
+
         // Get all deduction items
         $deductionItems = $this->items()->whereHas('payHead', function ($q) {
             $q->where('type', PayHead::TYPE_DEDUCTION);
         })->get();
 
         $totalDeductions = 0;
-        
+
         foreach ($deductionItems as $item) {
             if ($item->calculation_type === PayHead::CALC_PERCENTAGE) {
                 if ($item->calculation_base === PayHead::BASE_BASIC_SALARY || $item->calculation_base === 'basic') {

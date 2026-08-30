@@ -2,13 +2,13 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Seeder;
+use App\Models\Accounting\Account;
 use App\Models\Accounting\AccountClass;
 use App\Models\Accounting\AccountGroup;
-use App\Models\Accounting\Account;
-use App\Models\Accounting\FiscalYear;
 use App\Models\Accounting\AccountingPeriod;
+use App\Models\Accounting\FiscalYear;
 use Carbon\Carbon;
+use Illuminate\Database\Seeder;
 
 /**
  * Chart of Accounts Seeder

@@ -2,8 +2,8 @@
 
 namespace App\Helpers;
 
-use App\Models\StockBatch;
 use App\Models\Product;
+use App\Models\StockBatch;
 use App\Models\Store;
 use Illuminate\Support\Collection;
 
@@ -52,7 +52,9 @@ class BatchHelper
         $remainingQty = $requiredQty;
 
         foreach ($batches as $batch) {
-            if ($remainingQty <= 0) break;
+            if ($remainingQty <= 0) {
+                break;
+            }
 
             $useQty = min($batch->current_qty, $remainingQty);
             $selectedBatches->push([
@@ -267,7 +269,7 @@ class BatchHelper
             'required_qty' => $requiredQty,
             'available_qty' => $totalAvailable,
             'shortage' => $canFulfill ? 0 : $requiredQty - $totalAvailable,
-            'batches' => $batches->map(fn($b) => [
+            'batches' => $batches->map(fn ($b) => [
                 'batch_id' => $b['batch']->id,
                 'batch_number' => $b['batch']->batch_number,
                 'use_qty' => $b['use_qty'],

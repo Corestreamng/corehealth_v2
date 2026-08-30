@@ -33,11 +33,14 @@ class SubAccountService
      */
     public function getOrCreateHmoSubAccount($hmo): ?AccountSubAccount
     {
-        if (!$hmo) return null;
+        if (!$hmo) {
+            return null;
+        }
 
         $arHmo = Account::where('code', '1110')->first();
         if (!$arHmo) {
             Log::warning('SubAccountService: AR-HMO account (1110) not found');
+
             return null;
         }
 
@@ -64,11 +67,14 @@ class SubAccountService
      */
     public function getOrCreateSupplierSubAccount($supplier): ?AccountSubAccount
     {
-        if (!$supplier) return null;
+        if (!$supplier) {
+            return null;
+        }
 
         $ap = Account::where('code', '2100')->first();
         if (!$ap) {
             Log::warning('SubAccountService: Accounts Payable (2100) not found');
+
             return null;
         }
 
@@ -94,11 +100,14 @@ class SubAccountService
      */
     public function getOrCreatePatientSubAccount($patient): ?AccountSubAccount
     {
-        if (!$patient) return null;
+        if (!$patient) {
+            return null;
+        }
 
         $ar = Account::where('code', '1200')->first();
         if (!$ar) {
             Log::warning('SubAccountService: Accounts Receivable (1200) not found');
+
             return null;
         }
 
@@ -127,7 +136,9 @@ class SubAccountService
      */
     public function getOrCreateProductSubAccount(Account $account, $product): ?AccountSubAccount
     {
-        if (!$product) return null;
+        if (!$product) {
+            return null;
+        }
 
         return AccountSubAccount::firstOrCreate(
             ['account_id' => $account->id, 'product_id' => $product->id],
@@ -150,7 +161,9 @@ class SubAccountService
      */
     public function getOrCreateServiceSubAccount(Account $account, $service): ?AccountSubAccount
     {
-        if (!$service) return null;
+        if (!$service) {
+            return null;
+        }
 
         return AccountSubAccount::firstOrCreate(
             ['account_id' => $account->id, 'service_id' => $service->id],
@@ -173,7 +186,9 @@ class SubAccountService
      */
     public function getOrCreateServiceCategorySubAccount(Account $account, $category): ?AccountSubAccount
     {
-        if (!$category) return null;
+        if (!$category) {
+            return null;
+        }
 
         return AccountSubAccount::firstOrCreate(
             ['account_id' => $account->id, 'service_category_id' => $category->id],

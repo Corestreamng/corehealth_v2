@@ -3,24 +3,23 @@
 namespace App\Http\Controllers\Accounting;
 
 use App\Http\Controllers\Controller;
+use App\Models\Accounting\Account;
 use App\Models\Accounting\FixedAsset;
 use App\Models\Accounting\FixedAssetCategory;
 use App\Models\Accounting\FixedAssetDepreciation;
 use App\Models\Accounting\FixedAssetDisposal;
-use App\Models\Accounting\Account;
 use App\Models\Bank;
 use App\Models\Department;
 use App\Models\Supplier;
 use App\Models\User;
-use App\Services\Accounting\FixedAssetService;
 use App\Services\Accounting\ExcelExportService;
+use App\Services\Accounting\FixedAssetService;
+use Barryvdh\DomPDF\Facade\Pdf;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Yajra\DataTables\Facades\DataTables;
-use Barryvdh\DomPDF\Facade\Pdf;
-use Carbon\Carbon;
 
 /**
  * Fixed Asset Controller
@@ -81,11 +80,13 @@ class FixedAssetController extends Controller
             if ($request->export === 'pdf') {
                 $pdf = Pdf::loadView('accounting.fixed-assets.pdf.register', compact('assets', 'stats'))
                     ->setPaper('a4', 'landscape');
+
                 return $pdf->download('fixed-assets-register-' . now()->format('Y-m-d') . '.pdf');
             }
 
             if ($request->export === 'excel') {
                 $excelService = app(ExcelExportService::class);
+
                 return $excelService->fixedAssetsRegister($assets, $stats);
             }
         }
@@ -204,10 +205,13 @@ class FixedAssetController extends Controller
         }
 
         return DataTables::of($query)
-            ->addColumn('category_name', fn($a) => $a->category?->name ?? 'N/A')
-            ->addColumn('department_name', fn($a) => $a->department?->name ?? 'N/A')
+            ->addColumn('category_name', fn ($a) => $a->category?->name ?? 'N/A')
+            ->addColumn('department_name', fn ($a) => $a->department?->name ?? 'N/A')
             ->addColumn('depreciation_percent', function ($asset) {
-                if ($asset->total_cost <= 0) return 0;
+                if ($asset->total_cost <= 0) {
+                    return 0;
+                }
+
                 return round(($asset->accumulated_depreciation / $asset->total_cost) * 100, 1);
             })
             ->addColumn('status_badge', function ($a) {
@@ -220,6 +224,7 @@ class FixedAssetController extends Controller
                     'idle' => 'dark',
                     'voided' => 'danger',
                 ];
+
                 return '<span class="badge badge-' . ($colors[$a->status] ?? 'secondary') . '">'
                     . ucfirst(str_replace('_', ' ', $a->status)) . '</span>';
             })
@@ -238,6 +243,7 @@ class FixedAssetController extends Controller
                     $actions .= '<button type="button" class="btn btn-danger btn-dispose" data-id="' . $a->id . '" data-name="' . e($a->name) . '" title="Dispose"><i class="mdi mdi-delete"></i></button>';
                 }
                 $actions .= '</div>';
+
                 return $actions;
             })
             ->rawColumns(['status_badge', 'actions'])
@@ -351,7 +357,7 @@ class FixedAssetController extends Controller
             'custodian',
             'supplier',
             'journalEntry.lines.account',
-            'depreciations' => fn($q) => $q->latest()->limit(12),
+            'depreciations' => fn ($q) => $q->latest()->limit(12),
             'disposals.journalEntry.lines.account',
             'disposals.bank',
         ]);
@@ -370,11 +376,13 @@ class FixedAssetController extends Controller
         if (request()->has('export')) {
             if (request()->export === 'pdf') {
                 $pdf = Pdf::loadView('accounting.fixed-assets.pdf.detail', compact('fixedAsset', 'depreciationSchedule', 'depreciationHistory'));
+
                 return $pdf->download("asset-{$fixedAsset->asset_number}-" . now()->format('Y-m-d') . '.pdf');
             }
 
             if (request()->export === 'excel') {
                 $excelService = app(ExcelExportService::class);
+
                 return $excelService->fixedAssetDetail($fixedAsset, $depreciationSchedule, $depreciationHistory);
             }
         }
@@ -476,6 +484,7 @@ class FixedAssetController extends Controller
 
         } catch (\Exception $e) {
             Log::error('Depreciation run failed', ['error' => $e->getMessage()]);
+
             return response()->json([
                 'success' => false,
                 'message' => 'Depreciation failed: ' . $e->getMessage(),
@@ -525,6 +534,7 @@ class FixedAssetController extends Controller
                 'asset_id' => $fixedAsset->id,
                 'error' => $e->getMessage(),
             ]);
+
             return response()->json([
                 'success' => false,
                 'message' => 'Disposal failed: ' . $e->getMessage(),
@@ -594,7 +604,7 @@ class FixedAssetController extends Controller
             ->get(['id', 'asset_number', 'name', 'book_value', 'status', 'category_id', 'department_id']);
 
         return response()->json([
-            'results' => $assets->map(fn($a) => [
+            'results' => $assets->map(fn ($a) => [
                 'id' => $a->id,
                 'text' => "{$a->asset_number} - {$a->name}",
                 'book_value' => $a->book_value,
@@ -748,11 +758,13 @@ class FixedAssetController extends Controller
             ];
 
             $pdf = Pdf::loadView('accounting.fixed-assets.export-pdf', compact('assets', 'stats'));
+
             return $pdf->download('fixed-assets-' . now()->format('Y-m-d') . '.pdf');
         }
 
         // Default to Excel
         $excelService = app(ExcelExportService::class);
+
         return $excelService->fixedAssets($assets);
     }
 }

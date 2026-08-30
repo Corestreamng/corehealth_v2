@@ -12,8 +12,7 @@ use Illuminate\Support\Facades\Schema;
  * This table tracks payments made to statutory/regulatory bodies for payroll deductions.
  * Examples: PAYE to tax authority, Pension to PFA, NHF to FMBN, etc.
  */
-return new class extends Migration
-{
+return new class () extends Migration {
     /**
      * Run the migrations.
      */

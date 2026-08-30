@@ -2,12 +2,10 @@
 
 namespace App\Models;
 
+use App\Traits\IsAuditable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-
-
 use OwenIt\Auditing\Contracts\Auditable;
-use App\Traits\IsAuditable;
 
 class Payment extends Model implements Auditable
 {
@@ -15,14 +13,13 @@ class Payment extends Model implements Auditable
 
     use HasFactory;
     use \OwenIt\Auditing\Auditable;
+
     protected $fillable = [
         'reference_no', 'total', 'payment_type', 'payment_method', 'bank_id',
         'invoice_id', 'patient_id', 'user_id', 'hmo_id', 'total_discount',
         'journal_entry_id', // For linking to accounting journal entries
         'shift_id', // For billing shift tracking
     ];
-
-
 
     /**
      * Get the invoice associated with the payment

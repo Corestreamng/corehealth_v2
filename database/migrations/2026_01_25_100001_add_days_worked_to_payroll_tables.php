@@ -7,8 +7,7 @@ use Illuminate\Support\Facades\Schema;
 /**
  * Add days worked columns for pro-rata salary calculation
  */
-return new class extends Migration
-{
+return new class () extends Migration {
     /**
      * Run the migrations.
      */

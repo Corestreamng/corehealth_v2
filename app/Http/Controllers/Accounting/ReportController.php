@@ -3,16 +3,16 @@
 namespace App\Http\Controllers\Accounting;
 
 use App\Http\Controllers\Controller;
+use App\Models\Accounting\Account;
 use App\Models\Accounting\AccountingPeriod;
 use App\Models\Accounting\FiscalYear;
-use App\Models\Accounting\Account;
 use App\Models\Accounting\SavedReportFilter;
-use App\Services\Accounting\ReportService;
 use App\Services\Accounting\ExcelExportService;
+use App\Services\Accounting\ReportService;
+use Barryvdh\DomPDF\Facade\Pdf;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Carbon\Carbon;
-use Barryvdh\DomPDF\Facade\Pdf;
 
 /**
  * Report Controller
@@ -24,6 +24,7 @@ use Barryvdh\DomPDF\Facade\Pdf;
 class ReportController extends Controller
 {
     protected ReportService $reportService;
+
     protected ExcelExportService $excelService;
 
     public function __construct(ReportService $reportService, ExcelExportService $excelService)
@@ -89,6 +90,7 @@ class ReportController extends Controller
         if ($request->has('export')) {
             if ($request->export === 'pdf') {
                 $pdf = Pdf::loadView('accounting.reports.pdf.trial-balance', compact('report', 'period', 'asOfDate'));
+
                 return $pdf->download("trial-balance-{$asOfDate->format('Y-m-d')}.pdf");
             }
             if ($request->export === 'excel') {
@@ -131,6 +133,7 @@ class ReportController extends Controller
         if ($request->has('export')) {
             if ($request->export === 'pdf') {
                 $pdf = Pdf::loadView('accounting.reports.pdf.profit-loss', compact('report', 'startDate', 'endDate'));
+
                 return $pdf->download("profit-loss-{$startDate->format('Y-m-d')}-to-{$endDate->format('Y-m-d')}.pdf");
             }
             if ($request->export === 'excel') {
@@ -160,6 +163,7 @@ class ReportController extends Controller
         if ($request->has('export')) {
             if ($request->export === 'pdf') {
                 $pdf = Pdf::loadView('accounting.reports.pdf.balance-sheet', compact('report', 'asOfDate'));
+
                 return $pdf->download("balance-sheet-{$asOfDate->format('Y-m-d')}.pdf");
             }
             if ($request->export === 'excel') {
@@ -193,6 +197,7 @@ class ReportController extends Controller
         if ($request->has('export')) {
             if ($request->export === 'pdf') {
                 $pdf = Pdf::loadView('accounting.reports.pdf.cash-flow', compact('report', 'startDate', 'endDate'));
+
                 return $pdf->download("cash-flow-{$startDate->format('Y-m-d')}-to-{$endDate->format('Y-m-d')}.pdf");
             }
             if ($request->export === 'excel') {
@@ -258,6 +263,7 @@ class ReportController extends Controller
                 $filename = $selectedAccount
                     ? "general-ledger-{$selectedAccount->code}-{$startDate->format('Y-m-d')}-to-{$endDate->format('Y-m-d')}.pdf"
                     : "general-ledger-all-accounts-{$startDate->format('Y-m-d')}-to-{$endDate->format('Y-m-d')}.pdf";
+
                 return $pdf->download($filename);
             }
             if ($request->export === 'excel') {
@@ -303,6 +309,7 @@ class ReportController extends Controller
                     $ledgerData = $ledgerDataForExport;
                     $selectedAccount = $account;
                     $pdf = Pdf::loadView('accounting.reports.pdf.general-ledger', compact('ledgerData', 'selectedAccount', 'startDate', 'endDate'));
+
                     return $pdf->download("account-activity-{$account->code}-{$startDate->format('Y-m-d')}-to-{$endDate->format('Y-m-d')}.pdf");
                 }
                 if ($request->export === 'excel') {
@@ -351,6 +358,7 @@ class ReportController extends Controller
         if ($request->has('export')) {
             if ($request->export === 'pdf') {
                 $pdf = Pdf::loadView('accounting.reports.pdf.aged-receivables', compact('report', 'asOfDate'));
+
                 return $pdf->download("aged-receivables-{$asOfDate->format('Y-m-d')}.pdf");
             }
             if ($request->export === 'excel') {
@@ -364,7 +372,7 @@ class ReportController extends Controller
                 'staffUser.staff_profile',
                 'checkoutPayment',
                 'payments.bank',
-                'payments.journalEntry.lines.account'
+                'payments.journalEntry.lines.account',
             ])
             ->orderBy('created_at', 'desc')
             ->get();
@@ -410,6 +418,7 @@ class ReportController extends Controller
         if ($request->has('export')) {
             if ($request->export === 'pdf') {
                 $pdf = Pdf::loadView('accounting.reports.pdf.aged-payables', compact('report', 'asOfDate'));
+
                 return $pdf->download("aged-payables-{$asOfDate->format('Y-m-d')}.pdf");
             }
             if ($request->export === 'excel') {
@@ -447,7 +456,7 @@ class ReportController extends Controller
             'total_debits' => $entries->where('status', 'posted')->flatMap->lines->sum('debit'),
             'total_credits' => $entries->where('status', 'posted')->flatMap->lines->sum('credit'),
             'by_type' => $entries->groupBy('entry_type')->map->count(),
-            'by_user' => $entries->groupBy(function($entry) {
+            'by_user' => $entries->groupBy(function ($entry) {
                 return $entry->createdBy?->name ?? 'System';
             })->map->count(),
         ];
@@ -455,6 +464,7 @@ class ReportController extends Controller
         if ($request->has('export')) {
             if ($request->export === 'pdf') {
                 $pdf = Pdf::loadView('accounting.reports.pdf.daily-audit', compact('entries', 'stats', 'date'));
+
                 return $pdf->download("daily-audit-{$date->format('Y-m-d')}.pdf");
             }
             if ($request->export === 'excel') {
@@ -593,17 +603,25 @@ class ReportController extends Controller
                     // Amount filters
                     if ($request->filled('min_amount')) {
                         $amount = max($txn['debit'], $txn['credit']);
-                        if ($amount < $request->min_amount) return false;
+                        if ($amount < $request->min_amount) {
+                            return false;
+                        }
                     }
                     if ($request->filled('max_amount')) {
                         $amount = max($txn['debit'], $txn['credit']);
-                        if ($amount > $request->max_amount) return false;
+                        if ($amount > $request->max_amount) {
+                            return false;
+                        }
                     }
 
                     // Transaction type filter
                     if ($request->filled('transaction_type') && $request->transaction_type != 'all') {
-                        if ($request->transaction_type == 'deposits' && $txn['debit'] == 0) return false;
-                        if ($request->transaction_type == 'withdrawals' && $txn['credit'] == 0) return false;
+                        if ($request->transaction_type == 'deposits' && $txn['debit'] == 0) {
+                            return false;
+                        }
+                        if ($request->transaction_type == 'withdrawals' && $txn['credit'] == 0) {
+                            return false;
+                        }
                     }
 
                     return true;
@@ -633,6 +651,7 @@ class ReportController extends Controller
                         ->setOption('margin-bottom', '10mm')
                         ->setOption('margin-left', '10mm')
                         ->setOption('margin-right', '10mm');
+
                     return $pdf->download("bank-statement-{$selectedAccount->code}-{$startDate->format('Y-m-d')}-to-{$endDate->format('Y-m-d')}.pdf");
                 }
 

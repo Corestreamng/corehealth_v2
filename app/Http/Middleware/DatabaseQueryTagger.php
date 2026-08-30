@@ -2,10 +2,10 @@
 
 namespace App\Http\Middleware;
 
-use Closure;
-use App\Support\QueryContext;
-use Illuminate\Support\Facades\DB;
 use App\Database\CommenterMySqlGrammar;
+use App\Support\QueryContext;
+use Closure;
+use Illuminate\Support\Facades\DB;
 
 class DatabaseQueryTagger
 {
@@ -29,7 +29,7 @@ class DatabaseQueryTagger
     private function applyGrammar()
     {
         $grammar = new CommenterMySqlGrammar();
-        
+
         foreach (config('database.connections') as $name => $config) {
             if (isset($config['driver']) && $config['driver'] === 'mysql') {
                 DB::connection($name)->setQueryGrammar($grammar);

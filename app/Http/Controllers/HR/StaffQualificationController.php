@@ -27,24 +27,28 @@ class StaffQualificationController extends Controller
             $rows = $query->get();
             $csv = "Staff,Type,Qualification,Field of Study,Institution,Year,Date Obtained,Verified\n";
             foreach ($rows as $r) {
-                $csv .= '"'.($r->staff?->user?->surname.' '.$r->staff?->user?->firstname.' '.$r->staff?->user?->othername).'","'.ucfirst($r->type).'","'.($r->qualification_name ?? '').'","'.($r->field_of_study ?? '').'","'.($r->institution ?? '').'","'.($r->year_of_graduation ?? '').'","'.($r->date_obtained?->format('Y-m-d') ?? '').'","'.($r->result_seen ? 'Yes' : 'No')."\"\n";
+                $csv .= '"' . ($r->staff?->user?->surname . ' ' . $r->staff?->user?->firstname . ' ' . $r->staff?->user?->othername) . '","' . ucfirst($r->type) . '","' . ($r->qualification_name ?? '') . '","' . ($r->field_of_study ?? '') . '","' . ($r->institution ?? '') . '","' . ($r->year_of_graduation ?? '') . '","' . ($r->date_obtained?->format('Y-m-d') ?? '') . '","' . ($r->result_seen ? 'Yes' : 'No') . "\"\n";
             }
-            return response($csv)->header('Content-Type', 'text/csv')->header('Content-Disposition', 'attachment; filename=qualifications_'.date('Ymd').'.csv');
+
+            return response($csv)->header('Content-Type', 'text/csv')->header('Content-Disposition', 'attachment; filename=qualifications_' . date('Ymd') . '.csv');
         }
 
         if ($request->ajax()) {
             return DataTables::of($query)
                 ->addIndexColumn()
-                ->addColumn('staff_name', fn($q) => '<a href="' . route('hr.tracking.profile', $q->staff_id) . '" class="font-weight-bold text-dark" title="View Tracking Profile">' . e($q->staff?->user?->surname . ' ' . $q->staff?->user?->firstname . ' ' . $q->staff?->user?->othername) . '</a>')
+                ->addColumn('staff_name', fn ($q) => '<a href="' . route('hr.tracking.profile', $q->staff_id) . '" class="font-weight-bold text-dark" title="View Tracking Profile">' . e($q->staff?->user?->surname . ' ' . $q->staff?->user?->firstname . ' ' . $q->staff?->user?->othername) . '</a>')
                 ->addColumn('qualification_col', function ($q) {
                     $html = e($q->qualification_name);
-                    if ($q->field_of_study) $html .= '<br><small class="text-muted">' . e($q->field_of_study) . '</small>';
+                    if ($q->field_of_study) {
+                        $html .= '<br><small class="text-muted">' . e($q->field_of_study) . '</small>';
+                    }
                     $badge = $q->type == 'entry' ? 'primary' : 'info';
                     $html .= ' <span class="badge badge-' . $badge . ' ml-1">' . ucfirst($q->type) . '</span>';
+
                     return $html;
                 })
-                ->addColumn('institution_col', fn($q) => e($q->institution ?? '—'))
-                ->addColumn('year_col', fn($q) => $q->year_of_graduation ?? '—')
+                ->addColumn('institution_col', fn ($q) => e($q->institution ?? '—'))
+                ->addColumn('year_col', fn ($q) => $q->year_of_graduation ?? '—')
                 ->addColumn('action', function ($q) {
                     $html = '';
                     if ($q->result_seen) {
@@ -56,6 +60,7 @@ class StaffQualificationController extends Controller
                         $html .= '<a href="' . Storage::url($q->document_path) . '" target="_blank" class="btn btn-sm btn-outline-info" title="View"><i class="mdi mdi-file-document"></i></a> ';
                     }
                     $html .= '<button class="btn btn-sm btn-outline-danger delete-btn" data-url="' . route('hr.qualifications.destroy', $q) . '"><i class="mdi mdi-delete"></i></button>';
+
                     return $html;
                 })
                 ->rawColumns(['staff_name', 'qualification_col', 'action'])
@@ -69,7 +74,7 @@ class StaffQualificationController extends Controller
             $scopedStaff = Staff::with(['user', 'department', 'cadre', 'gradeLevel'])->find($request->staff_id);
         }
 
-        $statsQuery = $scopedStaff ? StaffQualification::where('staff_id', $scopedStaff->id) : new StaffQualification;
+        $statsQuery = $scopedStaff ? StaffQualification::where('staff_id', $scopedStaff->id) : new StaffQualification();
         $stats = [
             'total' => (clone $statsQuery)->count(),
             'verified' => (clone $statsQuery)->where('result_seen', true)->count(),
@@ -107,6 +112,7 @@ class StaffQualificationController extends Controller
         }
 
         Alert::success('Success', 'Qualification recorded.');
+
         return redirect()->back();
     }
 
@@ -123,6 +129,7 @@ class StaffQualificationController extends Controller
         }
 
         Alert::success('Success', 'Qualification verified.');
+
         return redirect()->back();
     }
 
@@ -138,6 +145,7 @@ class StaffQualificationController extends Controller
         }
 
         Alert::success('Success', 'Qualification removed.');
+
         return redirect()->back();
     }
 
@@ -145,6 +153,7 @@ class StaffQualificationController extends Controller
     {
         $headers = "staff_id,type,qualification_name,field_of_study,institution,year_of_graduation,date_obtained,notes\n";
         $headers .= "1,entry,B.Sc Nursing,Nursing Science,University of Lagos,2020,,Entry qualification\n";
+
         return response($headers)
             ->header('Content-Type', 'text/csv')
             ->header('Content-Disposition', 'attachment; filename=qualifications_import_template.csv');
@@ -160,7 +169,7 @@ class StaffQualificationController extends Controller
         $rows = $spreadsheet->getActiveSheet()->toArray(null, true, true, true);
 
         $header = array_shift($rows);
-        $headerMap = array_flip(array_map(fn($h) => strtolower(trim($h ?? '')), $header));
+        $headerMap = array_flip(array_map(fn ($h) => strtolower(trim($h ?? '')), $header));
 
         $staffIds = Staff::pluck('id')->toArray();
         $imported = 0;
@@ -181,18 +190,22 @@ class StaffQualificationController extends Controller
                 if (!empty(array_filter($data))) {
                     $errors[] = "Row {$rowNum}: staff_id and qualification_name are required.";
                 }
+
                 continue;
             }
 
             if (!in_array((int) $data['staff_id'], $staffIds)) {
                 $errors[] = "Row {$rowNum}: Staff ID {$data['staff_id']} not found.";
+
                 continue;
             }
 
             if (!empty($data['type']) && !in_array($data['type'], ['entry', 'additional'])) {
                 $data['type'] = 'additional';
             }
-            if (empty($data['type'])) $data['type'] = 'additional';
+            if (empty($data['type'])) {
+                $data['type'] = 'additional';
+            }
 
             $data['staff_id'] = (int) $data['staff_id'];
             $data['year_of_graduation'] = !empty($data['year_of_graduation']) ? (int) $data['year_of_graduation'] : null;
@@ -205,6 +218,7 @@ class StaffQualificationController extends Controller
         $msg = "{$imported} qualification(s) imported successfully.";
         if (!empty($errors)) {
             $msg .= ' ' . count($errors) . ' row(s) skipped.';
+
             return response()->json(['message' => $msg, 'errors_detail' => array_slice($errors, 0, 10)], 200);
         }
 

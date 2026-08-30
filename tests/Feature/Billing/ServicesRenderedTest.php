@@ -45,4 +45,3 @@ class ServicesRenderedTest extends TestCase
         $this->assertTrue(in_array($response->status(), [200, 302, 404]));
     }
 }
-

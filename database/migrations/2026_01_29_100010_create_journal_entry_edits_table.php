@@ -16,8 +16,7 @@ use Illuminate\Support\Facades\Schema;
  * This maintains the audit trail and ensures proper oversight of changes
  * to financial records.
  */
-return new class extends Migration
-{
+return new class () extends Migration {
     /**
      * Run the migrations.
      */

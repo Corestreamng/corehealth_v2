@@ -2,19 +2,18 @@
 
 namespace App\Http\Controllers\OpsAudit;
 
-use Illuminate\Http\Request;
-use Carbon\Carbon;
-use App\Models\StoreRequisition;
 use App\Models\PurchaseOrder;
 use App\Models\StockBatch;
-use App\Models\AuditMark;
+use App\Models\StoreRequisition;
+use Carbon\Carbon;
+use Illuminate\Http\Request;
 
 class OpsAuditStoreController extends OpsAuditBaseController
 {
     public function index(Request $request)
     {
-        $stores = \App\Models\Store::orderBy('store_name')->get()->mapWithKeys(fn($s) => [$s->id => trim($s->store_name . ' (' . $s->distributionRoleLabel() . ')')]);
-        $users = \App\Models\User::role(['SUPERADMIN', 'ADMIN', 'STORE', 'PHARMACIST'])->orderBy('firstname')->get()->mapWithKeys(fn($u) => [$u->id => trim($u->firstname . ' ' . ($u->othername ?? '') . ' ' . $u->surname)]);
+        $stores = \App\Models\Store::orderBy('store_name')->get()->mapWithKeys(fn ($s) => [$s->id => trim($s->store_name . ' (' . $s->distributionRoleLabel() . ')')]);
+        $users = \App\Models\User::role(['SUPERADMIN', 'ADMIN', 'STORE', 'PHARMACIST'])->orderBy('firstname')->get()->mapWithKeys(fn ($u) => [$u->id => trim($u->firstname . ' ' . ($u->othername ?? '') . ' ' . $u->surname)]);
         $suppliers = \App\Models\Supplier::orderBy('company_name')->pluck('company_name', 'id');
         $products = \App\Models\Product::orderBy('product_name')->pluck('product_name', 'id');
 
@@ -50,19 +49,27 @@ class OpsAuditStoreController extends OpsAuditBaseController
 'supplier',
             'targetStore',
             'creator',
-            'approver'
+            'approver',
 ]);
 
         $this->applyDateFilter($query, $request);
 
-        if ($request->filled('supplier_id')) $query->where('supplier_id', $request->supplier_id);
-        if ($request->filled('target_store_id')) $query->where('target_store_id', $request->target_store_id);
-        if ($request->filled('status')) $query->where('status', $request->status);
-        if ($request->filled('payment_status')) $query->where('payment_status', $request->payment_status);
+        if ($request->filled('supplier_id')) {
+            $query->where('supplier_id', $request->supplier_id);
+        }
+        if ($request->filled('target_store_id')) {
+            $query->where('target_store_id', $request->target_store_id);
+        }
+        if ($request->filled('status')) {
+            $query->where('status', $request->status);
+        }
+        if ($request->filled('payment_status')) {
+            $query->where('payment_status', $request->payment_status);
+        }
 
         $kpiQuery = clone $query;
 
-        return $this->buildDataTableResponse($query, $request, fn($q) => $q, function ($row) {
+        return $this->buildDataTableResponse($query, $request, fn ($q) => $q, function ($row) {
             $statusColors = ['draft' => 'secondary', 'submitted' => 'warning text-dark', 'approved' => 'info', 'received' => 'success', 'cancelled' => 'danger'];
             $sColor = $statusColors[$row->status] ?? 'secondary';
 
@@ -102,24 +109,33 @@ class OpsAuditStoreController extends OpsAuditBaseController
         $query = StockBatch::with([
 'store',
             'product.category',
-            'creator'
+            'creator',
 ])->where('source', 'manual');
 
         $this->applyDateFilter($query, $request);
 
-        if ($request->filled('store_id')) $query->where('store_id', $request->store_id);
-        if ($request->filled('product_id')) $query->where('product_id', $request->product_id);
-        if ($request->filled('created_by')) $query->where('created_by', $request->created_by);
+        if ($request->filled('store_id')) {
+            $query->where('store_id', $request->store_id);
+        }
+        if ($request->filled('product_id')) {
+            $query->where('product_id', $request->product_id);
+        }
+        if ($request->filled('created_by')) {
+            $query->where('created_by', $request->created_by);
+        }
 
         $kpiQuery = clone $query;
 
-        return $this->buildDataTableResponse($query, $request, fn($q) => $q, function ($row) {
+        return $this->buildDataTableResponse($query, $request, fn ($q) => $q, function ($row) {
             $totalValue = ($row->initial_qty ?? 0) * ($row->cost_price ?? 0);
 
             $expiryColor = 'text-dark';
             if ($row->expiry_date) {
-                if (Carbon::parse($row->expiry_date)->isPast()) $expiryColor = 'text-danger font-weight-bold';
-                elseif (Carbon::parse($row->expiry_date)->isBefore(now()->addMonths(3))) $expiryColor = 'text-warning font-weight-bold';
+                if (Carbon::parse($row->expiry_date)->isPast()) {
+                    $expiryColor = 'text-danger font-weight-bold';
+                } elseif (Carbon::parse($row->expiry_date)->isBefore(now()->addMonths(3))) {
+                    $expiryColor = 'text-warning font-weight-bold';
+                }
             }
 
             return [
@@ -157,6 +173,7 @@ class OpsAuditStoreController extends OpsAuditBaseController
         ];
 
         $request->merge(['zone_key' => 'ops_audit.store.' . $tab]);
+
         return $this->processBulkStamp($request, $tab, $modelMap);
     }
 }

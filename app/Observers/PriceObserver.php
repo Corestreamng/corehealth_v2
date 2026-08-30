@@ -2,9 +2,9 @@
 
 namespace App\Observers;
 
-use App\Models\Price;
 use App\Models\Hmo;
 use App\Models\HmoTariff;
+use App\Models\Price;
 use Illuminate\Support\Facades\Log;
 
 class PriceObserver

@@ -2,8 +2,8 @@
 
 namespace Database\Seeders;
 
-use App\Models\VaccineScheduleTemplate;
 use App\Models\VaccineScheduleItem;
+use App\Models\VaccineScheduleTemplate;
 use Illuminate\Database\Seeder;
 
 class VaccineScheduleSeeder extends Seeder

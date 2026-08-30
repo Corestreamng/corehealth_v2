@@ -17,8 +17,7 @@ use Illuminate\Support\Facades\Schema;
  * - Pension → 2040 Pension Payable
  * - Staff Loan → 2080 Staff Loans Recoverable
  */
-return new class extends Migration
-{
+return new class () extends Migration {
     public function up(): void
     {
         Schema::table('pay_heads', function (Blueprint $table) {

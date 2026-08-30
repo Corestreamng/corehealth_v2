@@ -2,13 +2,11 @@
 
 namespace App\Services\Accounting;
 
-use App\Models\Accounting\Account;
 use App\Models\Accounting\PettyCashFund;
-use App\Models\Accounting\PettyCashTransaction;
 use App\Models\Accounting\PettyCashReconciliation;
+use App\Models\Accounting\PettyCashTransaction;
 use App\Models\User;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
 /**
@@ -34,6 +32,7 @@ class PettyCashService
 
         return $query->get()->map(function ($fund) {
             $fund->computed_balance = $fund->getBalanceFromJournalEntries();
+
             return $fund;
         });
     }
@@ -63,6 +62,7 @@ class PettyCashService
             ->get()
             ->map(function ($fund) {
                 $fund->computed_balance = $fund->getBalanceFromJournalEntries();
+
                 return $fund;
             });
     }
@@ -177,7 +177,7 @@ class PettyCashService
         Log::info('PettyCashService::processReplenishment - Starting', [
             'fund_id' => $fund->id,
             'amount' => $data['amount'],
-            'payment_method' => $data['payment_method'] ?? 'bank_transfer'
+            'payment_method' => $data['payment_method'] ?? 'bank_transfer',
         ]);
 
         // Create the replenishment transaction
@@ -192,7 +192,7 @@ class PettyCashService
 
         Log::info('PettyCashService::processReplenishment - Transaction created', [
             'transaction_id' => $transaction->id,
-            'status' => $transaction->status
+            'status' => $transaction->status,
         ]);
 
         // Approve the transaction
@@ -200,7 +200,7 @@ class PettyCashService
 
         Log::info('PettyCashService::processReplenishment - Transaction approved', [
             'transaction_id' => $transaction->id,
-            'status' => $transaction->status
+            'status' => $transaction->status,
         ]);
 
         // Disburse (this triggers the observer to create JE)
@@ -209,7 +209,7 @@ class PettyCashService
         Log::info('PettyCashService::processReplenishment - Transaction disbursed', [
             'transaction_id' => $transaction->id,
             'status' => $transaction->status,
-            'journal_entry_id' => $transaction->journal_entry_id
+            'journal_entry_id' => $transaction->journal_entry_id,
         ]);
 
         return $transaction;

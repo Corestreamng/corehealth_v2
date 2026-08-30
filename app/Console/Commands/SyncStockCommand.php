@@ -2,14 +2,14 @@
 
 namespace App\Console\Commands;
 
+use App\Models\Product;
+use App\Models\Stock;
+use App\Models\StockBatch;
+use App\Models\Store;
+use App\Models\StoreStock;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use App\Models\StockBatch;
-use App\Models\StoreStock;
-use App\Models\Stock;
-use App\Models\Store;
-use App\Models\Product;
 use Illuminate\Support\Str;
 
 /**
@@ -59,14 +59,14 @@ class SyncStockCommand extends Command
         $this->info('══════════════════════════════════════════════');
 
         $batchTotals = StockBatch::select(
-                'product_id',
-                'store_id',
-                DB::raw('SUM(current_qty) as batch_total')
-            )
+            'product_id',
+            'store_id',
+            DB::raw('SUM(current_qty) as batch_total')
+        )
             ->where('is_active', true)
             ->whereNull('deleted_at')
-            ->when($storeId, fn($q) => $q->where('store_id', $storeId))
-            ->when($productId, fn($q) => $q->where('product_id', $productId))
+            ->when($storeId, fn ($q) => $q->where('store_id', $storeId))
+            ->when($productId, fn ($q) => $q->where('product_id', $productId))
             ->groupBy('product_id', 'store_id')
             ->get();
 
@@ -129,8 +129,8 @@ class SyncStockCommand extends Command
         $this->info('══════════════════════════════════════════════');
 
         $storeStocksQuery = StoreStock::where('current_quantity', '>', 0)
-            ->when($storeId, fn($q) => $q->where('store_id', $storeId))
-            ->when($productId, fn($q) => $q->where('product_id', $productId))
+            ->when($storeId, fn ($q) => $q->where('store_id', $storeId))
+            ->when($productId, fn ($q) => $q->where('product_id', $productId))
             ->get();
 
         $unbatchedRows = [];
@@ -147,6 +147,7 @@ class SyncStockCommand extends Command
                     'store_name' => $storeName,
                     'qty' => (int) $ss->current_quantity,
                 ];
+
                 continue;
             }
 
@@ -179,7 +180,7 @@ class SyncStockCommand extends Command
             $this->error("⚠  Found " . count($orphanedRows) . " orphaned store_stock rows (product no longer exists):");
             $this->table(
                 ['Product ID', 'Store', 'Qty (orphaned)'],
-                collect($orphanedRows)->map(fn($r) => [$r['product_id'], $r['store_name'], $r['qty']])->toArray()
+                collect($orphanedRows)->map(fn ($r) => [$r['product_id'], $r['store_name'], $r['qty']])->toArray()
             );
             $this->warn('→ These rows were SKIPPED. Consider cleaning them up manually: DELETE FROM store_stocks WHERE product_id NOT IN (SELECT id FROM products);');
         }
@@ -188,8 +189,8 @@ class SyncStockCommand extends Command
             $this->warn("Found " . count($unbatchedRows) . " product+store combos with stock that has no matching batch:");
             $this->table(
                 ['Product', 'Store', 'StoreStock Qty', 'Batch Sum', 'Unbatched'],
-                collect($unbatchedRows)->map(fn($r) => [
-                    $r['product_name'], $r['store_name'], $r['store_qty'], $r['batch_sum'], $r['unbatched']
+                collect($unbatchedRows)->map(fn ($r) => [
+                    $r['product_name'], $r['store_name'], $r['store_qty'], $r['batch_sum'], $r['unbatched'],
                 ])->toArray()
             );
 
@@ -286,7 +287,9 @@ class SyncStockCommand extends Command
                 ->orderByDesc('id')
                 ->first();
 
-            if (!$latestBatch) continue;
+            if (!$latestBatch) {
+                continue;
+            }
 
             $price = \App\Models\Price::where('product_id', $pid)->first();
             if ($price && (float) $price->pr_buy_price !== (float) $latestBatch->cost_price) {

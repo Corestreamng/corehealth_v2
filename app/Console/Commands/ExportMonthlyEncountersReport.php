@@ -2,11 +2,10 @@
 
 namespace App\Console\Commands;
 
-use Illuminate\Console\Command;
 use App\Models\Encounter;
 use Barryvdh\DomPDF\Facade\Pdf;
-use Illuminate\Support\Facades\Storage;
 use Carbon\Carbon;
+use Illuminate\Console\Command;
 
 class ExportMonthlyEncountersReport extends Command
 {
@@ -38,9 +37,9 @@ class ExportMonthlyEncountersReport extends Command
         $this->info("Generating Monthly Encounters Report for {$year}...");
 
         $relations = [
-            'doctor.staff_profile.clinic', 
-            'patient.user', 
-            'productOrServiceRequest.user'
+            'doctor.staff_profile.clinic',
+            'patient.user',
+            'productOrServiceRequest.user',
         ];
 
         if (method_exists(Encounter::class, 'queue')) {
@@ -55,6 +54,7 @@ class ExportMonthlyEncountersReport extends Command
 
         if ($encounters->isEmpty()) {
             $this->warn("No encounters found for the year {$year}.");
+
             return 1;
         }
 
@@ -62,7 +62,7 @@ class ExportMonthlyEncountersReport extends Command
         if (method_exists(Encounter::class, 'queue')) {
             $totalClinics = $encounters->pluck('queue.clinic_id')->unique()->filter()->count();
         }
-        
+
         if ($totalClinics === 0) {
             $totalClinics = $encounters->pluck('doctor.staff_profile.clinic_id')->unique()->filter()->count();
         }
@@ -75,7 +75,7 @@ class ExportMonthlyEncountersReport extends Command
         ];
 
         // Group by month
-        $grouped = $encounters->groupBy(function($encounter) {
+        $grouped = $encounters->groupBy(function ($encounter) {
             return Carbon::parse($encounter->created_at)->format('F');
         });
 
@@ -87,15 +87,15 @@ class ExportMonthlyEncountersReport extends Command
         $pdf = Pdf::loadView('reports.monthly_encounters_pdf', [
             'year' => $year,
             'stats' => $stats,
-            'grouped' => $grouped
+            'grouped' => $grouped,
         ]);
-        
+
         $pdf->setPaper('a4', 'landscape');
 
         $filename = "monthly_encounters_report_{$year}_" . time() . ".pdf";
         $directory = storage_path("app/reports");
         $path = $directory . '/' . $filename;
-        
+
         if (!file_exists($directory)) {
             mkdir($directory, 0755, true);
         }
@@ -103,6 +103,7 @@ class ExportMonthlyEncountersReport extends Command
         $pdf->save($path);
 
         $this->info("Report generated successfully: {$path}");
+
         return 0;
     }
 }

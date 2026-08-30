@@ -22,7 +22,7 @@ class DoctorAvailability extends Model implements Auditable
 
     protected $casts = [
         'day_of_week' => 'integer',
-        'is_active'   => 'boolean',
+        'is_active' => 'boolean',
     ];
 
     // ──────────────────────────────────────

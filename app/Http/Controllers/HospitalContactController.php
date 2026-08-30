@@ -20,21 +20,22 @@ class HospitalContactController extends Controller
 
             if ($request->filled('filter_role')) {
                 $role = $request->filter_role;
-                $query->whereHas('creator', function($q) use($role) {
+                $query->whereHas('creator', function ($q) use ($role) {
                     $q->role($role);
                 });
             }
 
             if ($request->filled('filter_department')) {
                 $deptId = $request->filter_department;
-                $query->whereHas('creator', function($q) use($deptId) {
-                    $q->whereHas('staff', function($sq) use($deptId) {
+                $query->whereHas('creator', function ($q) use ($deptId) {
+                    $q->whereHas('staff', function ($sq) use ($deptId) {
                         $sq->where('department_id', $deptId);
                     });
                 });
             }
 
             $contacts = $query->get();
+
             return DataTables::of($contacts)
                 ->addColumn('action', function ($contact) {
                     $user = Auth::user();
@@ -46,11 +47,13 @@ class HospitalContactController extends Controller
                         $btn .= '<button type="button" class="btn btn-sm btn-primary edit-contact" data-id="' . $contact->id . '"><i class="mdi mdi-pencil"></i> Edit</button>';
                         $btn .= ' <button type="button" class="btn btn-sm btn-danger delete-contact" data-id="' . $contact->id . '"><i class="mdi mdi-delete"></i></button>';
                     }
+
                     return $btn;
                 })
                 ->rawColumns(['action'])
                 ->make(true);
         }
+
         return abort(404);
     }
 
@@ -77,6 +80,7 @@ class HospitalContactController extends Controller
     public function show($id)
     {
         $contact = HospitalContact::findOrFail($id);
+
         return response()->json(['success' => true, 'data' => $contact]);
     }
 
@@ -84,7 +88,7 @@ class HospitalContactController extends Controller
     {
         $contact = HospitalContact::findOrFail($id);
         $user = Auth::user();
-        
+
         $isAdmin = in_array($user->is_admin, [1, 2, 3]);
         $isCreator = $user->id === $contact->created_by;
 
@@ -108,7 +112,7 @@ class HospitalContactController extends Controller
     {
         $contact = HospitalContact::findOrFail($id);
         $user = Auth::user();
-        
+
         $isAdmin = in_array($user->is_admin, [1, 2, 3]);
         $isCreator = $user->id === $contact->created_by;
 

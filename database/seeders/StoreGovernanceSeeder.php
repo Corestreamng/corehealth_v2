@@ -2,10 +2,9 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Seeder;
-use Illuminate\Support\Facades\DB;
 use App\Models\Store;
 use App\Models\StoreLanePolicy;
+use Illuminate\Database\Seeder;
 
 /**
  * StoreGovernanceSeeder — seeds the governance layer on top of existing stores.
@@ -28,32 +27,32 @@ class StoreGovernanceSeeder extends Seeder
 {
     // Keyword → distribution_role mapping (case-insensitive on store_name)
     private const NAME_MAP = [
-        'central'       => Store::ROLE_CENTRAL,
-        'main store'    => Store::ROLE_CENTRAL,
+        'central' => Store::ROLE_CENTRAL,
+        'main store' => Store::ROLE_CENTRAL,
         'main pharmacy' => Store::ROLE_PHARMACY_HUB,
         'central pharm' => Store::ROLE_PHARMACY_HUB,
-        'pharmacy hub'  => Store::ROLE_PHARMACY_HUB,
-        'satellite'     => Store::ROLE_PHARMACY_SATELLITE,
-        'dispensary'    => Store::ROLE_PHARMACY_SATELLITE,
-        'outpatient'    => Store::ROLE_PHARMACY_SATELLITE,
-        'theatre'       => Store::ROLE_DEPARTMENT,
-        'laboratory'    => Store::ROLE_DEPARTMENT,
-        'imaging'       => Store::ROLE_DEPARTMENT,
-        'radiology'     => Store::ROLE_DEPARTMENT,
-        'ward'          => Store::ROLE_WARD,
-        'postnatal'     => Store::ROLE_WARD,
-        'maternity'     => Store::ROLE_WARD,
-        'icu'           => Store::ROLE_WARD,
-        'nicu'          => Store::ROLE_WARD,
-        'picu'          => Store::ROLE_WARD,
+        'pharmacy hub' => Store::ROLE_PHARMACY_HUB,
+        'satellite' => Store::ROLE_PHARMACY_SATELLITE,
+        'dispensary' => Store::ROLE_PHARMACY_SATELLITE,
+        'outpatient' => Store::ROLE_PHARMACY_SATELLITE,
+        'theatre' => Store::ROLE_DEPARTMENT,
+        'laboratory' => Store::ROLE_DEPARTMENT,
+        'imaging' => Store::ROLE_DEPARTMENT,
+        'radiology' => Store::ROLE_DEPARTMENT,
+        'ward' => Store::ROLE_WARD,
+        'postnatal' => Store::ROLE_WARD,
+        'maternity' => Store::ROLE_WARD,
+        'icu' => Store::ROLE_WARD,
+        'nicu' => Store::ROLE_WARD,
+        'picu' => Store::ROLE_WARD,
     ];
 
     // store_type → distribution_role fallback when name keywords don't match
     private const TYPE_MAP = [
         'warehouse' => Store::ROLE_CENTRAL,
-        'pharmacy'  => Store::ROLE_PHARMACY_HUB,
-        'theatre'   => Store::ROLE_DEPARTMENT,
-        'ward'      => Store::ROLE_WARD,
+        'pharmacy' => Store::ROLE_PHARMACY_HUB,
+        'theatre' => Store::ROLE_DEPARTMENT,
+        'ward' => Store::ROLE_WARD,
     ];
 
     public function run(): void
@@ -110,13 +109,13 @@ class StoreGovernanceSeeder extends Seeder
         foreach (StoreLanePolicy::defaultMatrix() as $row) {
             StoreLanePolicy::updateOrCreate(
                 [
-                    'source_role'      => $row[0],
+                    'source_role' => $row[0],
                     'destination_role' => $row[1],
                 ],
                 [
-                    'allowed'                 => $row[2],
+                    'allowed' => $row[2],
                     'requires_approval_level' => $row[3],
-                    'notes'                   => $row[4],
+                    'notes' => $row[4],
                 ]
             );
         }
@@ -131,7 +130,7 @@ class StoreGovernanceSeeder extends Seeder
             ['rule_type' => 'fallback_behavior'],
             [
                 'fallback_action' => 'block',
-                'notes'           => 'Default: block all stock actions when store context cannot be resolved.',
+                'notes' => 'Default: block all stock actions when store context cannot be resolved.',
             ]
         );
     }

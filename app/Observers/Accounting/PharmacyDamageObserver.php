@@ -2,12 +2,11 @@
 
 namespace App\Observers\Accounting;
 
+use App\Models\Accounting\Account;
 use App\Models\PharmacyDamage;
 use App\Models\Product;
-use App\Models\StoreStock;
 use App\Models\StockBatch;
-use App\Models\Accounting\Account;
-use App\Models\Accounting\JournalEntry;
+use App\Models\StoreStock;
 use App\Services\Accounting\AccountingService;
 use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\DB;
@@ -68,6 +67,7 @@ class PharmacyDamageObserver
                         'damage_id' => $damage->id,
                         'existing_je_id' => $damage->journal_entry_id,
                     ]);
+
                     return;
                 }
 
@@ -80,7 +80,7 @@ class PharmacyDamageObserver
                 Log::error('PharmacyDamageObserver: Failed to process damage approval', [
                     'damage_id' => $damage->id,
                     'error' => $e->getMessage(),
-                    'trace' => $e->getTraceAsString()
+                    'trace' => $e->getTraceAsString(),
                 ]);
             }
         }
@@ -104,6 +104,7 @@ class PharmacyDamageObserver
                 'expense_found' => !is_null($expenseAccount),
                 'inventory_found' => !is_null($inventoryAccount),
             ]);
+
             return;
         }
 
@@ -168,6 +169,7 @@ class PharmacyDamageObserver
             Log::info('PharmacyDamageObserver: Stock already deducted, skipping', [
                 'damage_id' => $damage->id,
             ]);
+
             return;
         }
 

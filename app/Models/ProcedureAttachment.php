@@ -34,6 +34,7 @@ class ProcedureAttachment extends Model
         if ($this->file_size < 1048576) {
             return round($this->file_size / 1024, 1) . ' KB';
         }
+
         return round($this->file_size / 1048576, 1) . ' MB';
     }
 }

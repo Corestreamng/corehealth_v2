@@ -34,8 +34,8 @@ class MedicalReport extends Model implements Auditable
     /**
      * Status constants.
      */
-    const STATUS_DRAFT = 'draft';
-    const STATUS_FINALIZED = 'finalized';
+    public const STATUS_DRAFT = 'draft';
+    public const STATUS_FINALIZED = 'finalized';
 
     /**
      * Scope: only drafts.

@@ -46,6 +46,7 @@ class DatabaseBackup extends Command
         if (!$result['success']) {
             $this->error('✗ Backup failed: ' . $result['message']);
             Log::channel('backup')->error('Scheduled backup failed: ' . $result['message']);
+
             return 1;
         }
 

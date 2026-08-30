@@ -2,19 +2,19 @@
 
 namespace App\Http\Controllers\OpsAudit;
 
-use Illuminate\Http\Request;
-use Carbon\Carbon;
 use App\Models\MorgueAdmission;
-use App\Models\ProductOrServiceRequest;
 use App\Models\Payment;
+use App\Models\ProductOrServiceRequest;
+use Carbon\Carbon;
+use Illuminate\Http\Request;
 
 class OpsAuditMorgueController extends OpsAuditBaseController
 {
     public function index(Request $request)
     {
-        $hmos = \App\Models\Hmo::with('scheme')->orderBy('name')->get()->groupBy(fn($hmo) => $hmo->scheme ? $hmo->scheme->name : 'Other Schemes');
+        $hmos = \App\Models\Hmo::with('scheme')->orderBy('name')->get()->groupBy(fn ($hmo) => $hmo->scheme ? $hmo->scheme->name : 'Other Schemes');
         $hmoSchemes = \App\Models\HmoScheme::orderBy('name')->pluck('name', 'id');
-        $cashiers = \App\Models\User::role(['SUPERADMIN', 'ADMIN', 'ACCOUNTS', 'BILLER'])->orderBy('firstname')->get()->mapWithKeys(fn($u) => [$u->id => trim($u->firstname . ' ' . ($u->othername ?? '') . ' ' . $u->surname)]);
+        $cashiers = \App\Models\User::role(['SUPERADMIN', 'ADMIN', 'ACCOUNTS', 'BILLER'])->orderBy('firstname')->get()->mapWithKeys(fn ($u) => [$u->id => trim($u->firstname . ' ' . ($u->othername ?? '') . ' ' . $u->surname)]);
 
         return view('admin.ops_audit.morgue', compact('hmos', 'hmoSchemes', 'cashiers'));
     }
@@ -28,6 +28,7 @@ class OpsAuditMorgueController extends OpsAuditBaseController
                 'cashbook' => Payment::class,
             ];
             $request->merge(['zone_key' => 'ops_audit.morgue.' . $tab]);
+
             return $this->handleBulkStamp($request, $tab, $modelMap);
         }
 
@@ -54,7 +55,7 @@ class OpsAuditMorgueController extends OpsAuditBaseController
             'admittedBy',
             'releasedBy',
             'serviceRequest.payment.staff_user',
-        
+
             'serviceRequest.payment.user',
 ]);
 
@@ -63,12 +64,16 @@ class OpsAuditMorgueController extends OpsAuditBaseController
         $this->applyPaymentFilters($query, $request, 'serviceRequest');
         $this->applyItemFilters($query, $request, 'serviceRequest');
 
-        if ($request->filled('status')) $query->where('status', $request->status);
-        if ($request->filled('hmo_id')) $query->whereHas('patient.hmo', fn($q) => $q->where('id', $request->hmo_id));
+        if ($request->filled('status')) {
+            $query->where('status', $request->status);
+        }
+        if ($request->filled('hmo_id')) {
+            $query->whereHas('patient.hmo', fn ($q) => $q->where('id', $request->hmo_id));
+        }
 
         $kpiQuery = clone $query;
 
-        return $this->buildDataTableResponse($query, $request, fn($q) => $q, function ($row) {
+        return $this->buildDataTableResponse($query, $request, fn ($q) => $q, function ($row) {
             $patient = $row->patient;
             $user = $patient?->user;
             $hmo = $patient?->hmo;
@@ -85,7 +90,7 @@ class OpsAuditMorgueController extends OpsAuditBaseController
                 'location' => 'F: ' . ($row->fridge_number ?? '-') . ' / T: ' . ($row->tray_number ?? '-'),
                 'arrival' => $row->arrival_time ? Carbon::parse($row->arrival_time)->format('d M Y H:i') : '-',
                 'release' => $row->release_time ? Carbon::parse($row->release_time)->format('d M Y H:i') : '-',
-                'status' => '<span class="badge bg-'.($statusColors[$row->status] ?? 'secondary').'">'.ucfirst($row->status ?? '-').'</span>',
+                'status' => '<span class="badge bg-' . ($statusColors[$row->status] ?? 'secondary') . '">' . ucfirst($row->status ?? '-') . '</span>',
                 'payment_info' => $this->renderPaymentInfo($row),
                 'audit' => $this->renderAuditAction($row, 'MorgueAdmission'),
             ];
@@ -107,7 +112,7 @@ class OpsAuditMorgueController extends OpsAuditBaseController
 'patient.user',
             'patient.hmo.scheme',
             'staff',
-            'payment.staff_user'
+            'payment.staff_user',
 ])->whereHas('patient.morgueAdmissions');
 
         $this->applyDateFilter($query, $request);
@@ -115,11 +120,13 @@ class OpsAuditMorgueController extends OpsAuditBaseController
         $this->applyPaymentFilters($query, $request, '');
         $this->applyItemFilters($query, $request, '');
 
-        if ($request->filled('hmo_id')) $query->whereHas('patient.hmo', fn($q) => $q->where('id', $request->hmo_id));
+        if ($request->filled('hmo_id')) {
+            $query->whereHas('patient.hmo', fn ($q) => $q->where('id', $request->hmo_id));
+        }
 
         $kpiQuery = clone $query;
 
-        return $this->buildDataTableResponse($query, $request, fn($q) => $q, function ($row) {
+        return $this->buildDataTableResponse($query, $request, fn ($q) => $q, function ($row) {
             $patient = $row->patient;
             $user = $patient?->user;
             $hmo = $patient?->hmo;
@@ -143,7 +150,7 @@ class OpsAuditMorgueController extends OpsAuditBaseController
             ];
         }, $kpiQuery);
     }
-    
+
     /**
      * Tab 3: Cashbook
      */
@@ -153,7 +160,7 @@ class OpsAuditMorgueController extends OpsAuditBaseController
 'patient.user',
             'staff_user',
             'bank',
-            'product_or_service_request', 'product_or_service_request.product.category', 'product_or_service_request.service.category'
+            'product_or_service_request', 'product_or_service_request.product.category', 'product_or_service_request.service.category',
 ])->whereHas('product_or_service_request.patient.morgueAdmissions');
 
         $this->applyDateFilter($query, $request);
@@ -163,17 +170,17 @@ class OpsAuditMorgueController extends OpsAuditBaseController
 
         $kpiQuery = clone $query;
 
-        return $this->buildDataTableResponse($query, $request, fn($q) => $q, function ($row) {
+        return $this->buildDataTableResponse($query, $request, fn ($q) => $q, function ($row) {
             $patient = $row->patient;
             $user = $patient?->user;
-            
+
             return [
                 'date' => $row->created_at ? Carbon::parse($row->created_at)->format('d M Y H:i') : '-',
                 'reference' => $row->reference_no ?? '-',
                 'item' => $this->renderPosrItem($row->product_or_service_request, $row->id),
                 'patient' => $this->renderPatient($user, $patient, null),
                 'total' => '₦' . number_format($row->total ?? 0, 2),
-                'method' => $row->payment_method ? '<span class="badge bg-light text-dark border">'.$row->payment_method.'</span>' : '-',
+                'method' => $row->payment_method ? '<span class="badge bg-light text-dark border">' . $row->payment_method . '</span>' : '-',
                 'cashier' => $row->staff_user?->firstname ? ($row->staff_user->firstname . ' ' . ($row->staff_user->surname ?? '')) : '-',
                 'bank' => $this->renderBankDetails($row),
                 'entity' => $this->renderPaymentEntityDetails($row),

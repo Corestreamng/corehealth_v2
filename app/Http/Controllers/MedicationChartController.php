@@ -2,23 +2,20 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
-use App\Models\ProductOrServiceRequest;
-use App\Models\Patient;
-use App\Models\User;
-use App\Models\Store;
-use App\Models\StoreStock;
-use App\Models\ProductStock;
-use App\Models\StockBatch;
-use App\Services\StockService;
-use Illuminate\Support\Facades\Auth;
-use App\Models\MedicationAdministration;
-use App\Models\MedicationSchedule;
-use App\Models\MedicationHistory;
-use App\Models\ProductRequest;
-use App\Models\Product;
 use App\Helpers\HmoHelper;
+use App\Models\MedicationAdministration;
+use App\Models\MedicationHistory;
+use App\Models\MedicationSchedule;
+use App\Models\Patient;
+use App\Models\Product;
+use App\Models\ProductOrServiceRequest;
+use App\Models\ProductRequest;
+use App\Models\Store;
+use App\Models\User;
+use App\Services\StockService;
 use Carbon\Carbon;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 
@@ -31,7 +28,7 @@ class MedicationChartController extends Controller
             'productOrServiceRequest:id,payment_id,payable_amount,claims_amount,coverage_mode,validation_status',
             'productOrServiceRequest.payment:id',
             'doctor:id,surname,firstname,othername',
-            'dispensedFromStore:id,store_name'
+            'dispensedFromStore:id,store_name',
         ])
         ->where('patient_id', $patientId)
         ->whereIn('status', [1, 2, 3]) // exclude dismissed
@@ -125,6 +122,7 @@ class MedicationChartController extends Controller
                 if ($admin->drug_source === 'patient_own') {
                     return 'po_' . strtolower($admin->external_drug_name ?? 'unknown');
                 }
+
                 return 'ws_' . ($admin->product_id ?? $admin->id);
             })
             ->map(function ($group) {
@@ -150,8 +148,8 @@ class MedicationChartController extends Controller
                     'times_administered' => $group->count(),
                     'times_scheduled' => MedicationSchedule::where('patient_id', $first->patient_id)
                         ->where('drug_source', $first->drug_source)
-                        ->when($first->drug_source === 'ward_stock', fn($q) => $q->where('product_id', $first->product_id))
-                        ->when($first->drug_source === 'patient_own', fn($q) => $q->where('external_drug_name', $first->external_drug_name))
+                        ->when($first->drug_source === 'ward_stock', fn ($q) => $q->where('product_id', $first->product_id))
+                        ->when($first->drug_source === 'patient_own', fn ($q) => $q->where('external_drug_name', $first->external_drug_name))
                         ->count(),
                     'last_administered_at' => $group->max('administered_at'),
                     'nurse_name' => $nurseName,
@@ -220,15 +218,17 @@ class MedicationChartController extends Controller
         if ($adminCount > 0) {
             return response()->json([
                 'success' => false,
-                'message' => 'Cannot remove schedule: administration already exists.'
+                'message' => 'Cannot remove schedule: administration already exists.',
             ], 422);
         }
         $schedule->delete();
+
         return response()->json([
             'success' => true,
-            'message' => 'Schedule removed successfully.'
+            'message' => 'Schedule removed successfully.',
         ]);
     }
+
     /**
      * Overview endpoint: returns all medications with their schedules/administrations for a date range.
      * Powers the Overview and Prescriptions sub-tabs in the medication chart.
@@ -441,7 +441,7 @@ class MedicationChartController extends Controller
         // Return data with schedules included
         return response()->json([
             'prescriptions' => $prescriptions,
-            'administrations' => $administrations
+            'administrations' => $administrations,
         ]);
     }
 
@@ -469,7 +469,7 @@ class MedicationChartController extends Controller
             $startDate = Carbon::parse($startDateQuery)->startOfDay()->format('Y-m-d');
         }
         // If start_date URL parameter provided, use that
-        else if (!$startDate) {
+        elseif (!$startDate) {
             // Default to 15 days before today if no date is provided
             $startDate = Carbon::now()->subDays(15)->startOfDay()->format('Y-m-d');
         } else {
@@ -576,7 +576,6 @@ class MedicationChartController extends Controller
             $medication->resumed_by_id = $latestResume->user_id;
         }
 
-
         // Attach doctor's dose/freq, doctor name, and prescription date to the medication object for frontend
         $medication->doctor_dose = $medication->productRequest ? $medication->productRequest->dose : null;
         $medication->doctor_name = null;
@@ -606,8 +605,8 @@ class MedicationChartController extends Controller
             'adminHistory' => $adminHistory,
             'period' => [
                 'start' => $startDate,
-                'end' => $endDate
-            ]
+                'end' => $endDate,
+            ],
         ]);
     }
 
@@ -684,6 +683,7 @@ class MedicationChartController extends Controller
                 $admin->deletedBy->name = userfullname($admin->deleted_by);
                 $admin->deleted_by_name = userfullname($admin->deleted_by);
             }
+
             return $admin;
         });
 
@@ -728,6 +728,7 @@ class MedicationChartController extends Controller
                 $admin->deletedBy->name = userfullname($admin->deleted_by);
                 $admin->deleted_by_name = userfullname($admin->deleted_by);
             }
+
             return $admin;
         });
 
@@ -748,8 +749,8 @@ class MedicationChartController extends Controller
             'adminHistory' => $allAdmins,
             'period' => [
                 'start' => $startDate,
-                'end' => $endDate
-            ]
+                'end' => $endDate,
+            ],
         ]);
     }
 
@@ -861,7 +862,7 @@ class MedicationChartController extends Controller
             DB::commit();
 
             // Load relationships for response
-            $schedules = collect($schedules)->map(function($schedule) {
+            $schedules = collect($schedules)->map(function ($schedule) {
                 return $schedule->load(['patient', 'productOrServiceRequest', 'creator']);
             });
 
@@ -869,13 +870,14 @@ class MedicationChartController extends Controller
                 'success' => true,
                 'message' => 'Medication schedule created successfully',
                 'count' => count($schedules),
-                'schedules' => $schedules
+                'schedules' => $schedules,
             ]);
         } catch (\Exception $e) {
             DB::rollBack();
+
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to create medication schedule: ' . $e->getMessage()
+                'message' => 'Failed to create medication schedule: ' . $e->getMessage(),
             ], 500);
         }
     }
@@ -885,14 +887,14 @@ class MedicationChartController extends Controller
         // §6.5: Scheduled charting — always pharmacy_dispensed.
         // Ward stock and patient's own use administerDirect() instead.
         $validator = Validator::make($request->all(), [
-            'schedule_id'         => 'required|exists:medication_schedules,id',
-            'administered_at'     => 'required|date',
-            'administered_dose'   => 'required|string|max:100',
-            'qty'                 => 'nullable|numeric|min:0.01',
-            'route'               => 'required|string|max:50',
-            'comment'             => 'nullable|string|max:500',
-            'drug_source'         => 'nullable|in:pharmacy_dispensed',
-            'product_request_id'  => 'nullable|exists:product_requests,id',
+            'schedule_id' => 'required|exists:medication_schedules,id',
+            'administered_at' => 'required|date',
+            'administered_dose' => 'required|string|max:100',
+            'qty' => 'nullable|numeric|min:0.01',
+            'route' => 'required|string|max:50',
+            'comment' => 'nullable|string|max:500',
+            'drug_source' => 'nullable|in:pharmacy_dispensed',
+            'product_request_id' => 'nullable|exists:product_requests,id',
         ]);
 
         if ($validator->fails()) {
@@ -924,9 +926,10 @@ class MedicationChartController extends Controller
 
             if ($isDiscontinued) {
                 DB::rollBack();
+
                 return response()->json([
                     'success' => false,
-                    'message' => 'Cannot administer a discontinued medication'
+                    'message' => 'Cannot administer a discontinued medication',
                 ], 422);
             }
 
@@ -943,6 +946,7 @@ class MedicationChartController extends Controller
 
             if ($productRequest && $productRequest->patient_id !== $schedule->patient_id) {
                 DB::rollBack();
+
                 return response()->json([
                     'success' => false,
                     'message' => 'Prescription does not belong to this patient',
@@ -951,6 +955,7 @@ class MedicationChartController extends Controller
 
             if ($productRequest && $schedule->product_or_service_request_id && $productRequest->product_request_id !== $schedule->product_or_service_request_id) {
                 DB::rollBack();
+
                 return response()->json([
                     'success' => false,
                     'message' => 'Prescription does not match this schedule',
@@ -960,9 +965,10 @@ class MedicationChartController extends Controller
             // Validate: must be dispensed for charting
             if (!$productRequest || $productRequest->status !== 3) {
                 DB::rollBack();
+
                 return response()->json([
                     'success' => false,
-                    'message' => 'This prescription has not been dispensed yet'
+                    'message' => 'This prescription has not been dispensed yet',
                 ], 422);
             }
 
@@ -1000,13 +1006,14 @@ class MedicationChartController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => 'Medication administered successfully',
-                'administration' => $admin
+                'administration' => $admin,
             ]);
         } catch (\Exception $e) {
             DB::rollBack();
+
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to administer medication: ' . $e->getMessage()
+                'message' => 'Failed to administer medication: ' . $e->getMessage(),
             ], 500);
         }
     }
@@ -1016,7 +1023,7 @@ class MedicationChartController extends Controller
         $validator = Validator::make($request->all(), [
             'patient_id' => 'required|exists:patients,id',
             'product_or_service_request_id' => 'required|exists:product_or_service_requests,id',
-            'reason' => 'required|string'
+            'reason' => 'required|string',
         ]);
 
         if ($validator->fails()) {
@@ -1046,13 +1053,14 @@ class MedicationChartController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => 'Medication discontinued successfully',
-                'history' => $history
+                'history' => $history,
             ]);
         } catch (\Exception $e) {
             DB::rollBack();
+
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to discontinue medication: ' . $e->getMessage()
+                'message' => 'Failed to discontinue medication: ' . $e->getMessage(),
             ], 500);
         }
     }
@@ -1062,7 +1070,7 @@ class MedicationChartController extends Controller
         $validator = Validator::make($request->all(), [
             'patient_id' => 'required|exists:patients,id',
             'product_or_service_request_id' => 'required|exists:product_or_service_requests,id',
-            'reason' => 'required|string'
+            'reason' => 'required|string',
         ]);
 
         if ($validator->fails()) {
@@ -1092,13 +1100,14 @@ class MedicationChartController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => 'Medication resumed successfully',
-                'history' => $history
+                'history' => $history,
             ]);
         } catch (\Exception $e) {
             DB::rollBack();
+
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to resume medication: ' . $e->getMessage()
+                'message' => 'Failed to resume medication: ' . $e->getMessage(),
             ], 500);
         }
     }
@@ -1107,7 +1116,7 @@ class MedicationChartController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'administration_id' => 'required|exists:medication_administrations,id',
-            'reason' => 'required|string'
+            'reason' => 'required|string',
         ]);
 
         if ($validator->fails()) {
@@ -1130,9 +1139,10 @@ class MedicationChartController extends Controller
 
             if ($diffMinutes > $editWindow) {
                 DB::rollBack();
+
                 return response()->json([
                     'success' => false,
-                    'message' => "Cannot delete administration after {$editWindow} minutes"
+                    'message' => "Cannot delete administration after {$editWindow} minutes",
                 ], 422);
             }
 
@@ -1162,13 +1172,14 @@ class MedicationChartController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => 'Administration deleted successfully',
-                'administration' => $admin
+                'administration' => $admin,
             ]);
         } catch (\Exception $e) {
             DB::rollBack();
+
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to delete administration: ' . $e->getMessage()
+                'message' => 'Failed to delete administration: ' . $e->getMessage(),
             ], 500);
         }
     }
@@ -1181,7 +1192,7 @@ class MedicationChartController extends Controller
             'dose' => 'required|string',
             'route' => 'required|string',
             'comment' => 'nullable|string',
-            'edit_reason' => 'required|string'
+            'edit_reason' => 'required|string',
         ]);
 
         if ($validator->fails()) {
@@ -1204,9 +1215,10 @@ class MedicationChartController extends Controller
 
             if ($diffMinutes > $editWindow) {
                 DB::rollBack();
+
                 return response()->json([
                     'success' => false,
-                    'message' => "Cannot edit administration after {$editWindow} minutes"
+                    'message' => "Cannot edit administration after {$editWindow} minutes",
                 ], 422);
             }
 
@@ -1215,7 +1227,7 @@ class MedicationChartController extends Controller
                 'administered_at' => $admin->administered_at,
                 'dose' => $admin->dose,
                 'route' => $admin->route,
-                'comment' => $admin->comment
+                'comment' => $admin->comment,
             ];
 
             // Update the administration
@@ -1253,13 +1265,14 @@ class MedicationChartController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => 'Administration updated successfully',
-                'administration' => $admin
+                'administration' => $admin,
             ]);
         } catch (\Exception $e) {
             DB::rollBack();
+
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to update administration: ' . $e->getMessage()
+                'message' => 'Failed to update administration: ' . $e->getMessage(),
             ], 500);
         }
     }
@@ -1274,24 +1287,24 @@ class MedicationChartController extends Controller
 
         // Conditional validation rules per drug source
         $rules = [
-            'drug_source'        => 'required|in:patient_own,ward_stock',
-            'administered_at'    => 'required|date',
-            'administered_dose'  => 'required|string|max:100',
-            'route'              => 'required|string|max:50',
-            'note'               => 'nullable|string|max:500',
-            'schedule_id'        => 'nullable|exists:medication_schedules,id',
+            'drug_source' => 'required|in:patient_own,ward_stock',
+            'administered_at' => 'required|date',
+            'administered_dose' => 'required|string|max:100',
+            'route' => 'required|string|max:50',
+            'note' => 'nullable|string|max:500',
+            'schedule_id' => 'nullable|exists:medication_schedules,id',
         ];
 
         if ($drugSource === 'patient_own') {
-            $rules['external_drug_name']    = 'required|string|max:255';
-            $rules['external_qty']          = 'required|numeric|min:0.01';
+            $rules['external_drug_name'] = 'required|string|max:255';
+            $rules['external_qty'] = 'required|numeric|min:0.01';
             $rules['external_batch_number'] = 'nullable|string|max:50';
-            $rules['external_expiry_date']  = 'nullable|date';
-            $rules['external_source_note']  = 'nullable|string|max:500';
+            $rules['external_expiry_date'] = 'nullable|date';
+            $rules['external_source_note'] = 'nullable|string|max:500';
         } elseif ($drugSource === 'ward_stock') {
             $rules['product_id'] = 'required|exists:products,id';
-            $rules['store_id']   = 'required|exists:stores,id';
-            $rules['qty']        = 'required|integer|min:1';
+            $rules['store_id'] = 'required|exists:stores,id';
+            $rules['qty'] = 'required|integer|min:1';
             $rules['bill_patient'] = 'nullable|boolean';
         }
 
@@ -1340,7 +1353,7 @@ class MedicationChartController extends Controller
                 $admin->external_source_note = $data['external_source_note'] ?? null;
                 $admin->save();
 
-            // ─── PATH: WARD STOCK ────────────────────────────
+                // ─── PATH: WARD STOCK ────────────────────────────
             } elseif ($drugSource === 'ward_stock') {
 
                 $productId = $data['product_id'];
@@ -1354,9 +1367,10 @@ class MedicationChartController extends Controller
 
                 if ($availableStock < $qty) {
                     DB::rollBack();
+
                     return response()->json([
                         'success' => false,
-                        'message' => 'Insufficient stock. Available: ' . $availableStock . ', Requested: ' . $qty
+                        'message' => 'Insufficient stock. Available: ' . $availableStock . ', Requested: ' . $qty,
                     ], 422);
                 }
 
@@ -1377,14 +1391,14 @@ class MedicationChartController extends Controller
 
                     // Create ProductRequest (status=2 = billed, mirrors PharmacyWorkbenchController::billPrescriptions)
                     $productRequest = ProductRequest::create([
-                        'patient_id'   => $patientId,
-                        'product_id'   => $productId,
+                        'patient_id' => $patientId,
+                        'product_id' => $productId,
                         'encounter_id' => $patient->current_encounter_id ?? null,
-                        'doctor_id'    => null, // nurse-initiated
-                        'qty'          => $qty,
-                        'status'       => 2, // billed
-                        'billed_by'    => $userId,
-                        'billed_date'  => now(),
+                        'doctor_id' => null, // nurse-initiated
+                        'qty' => $qty,
+                        'status' => 2, // billed
+                        'billed_by' => $userId,
+                        'billed_date' => now(),
                     ]);
 
                     // Create POSR via tariff pipeline (mirrors PharmacyWorkbenchController)
@@ -1432,9 +1446,10 @@ class MedicationChartController extends Controller
 
         } catch (\Exception $e) {
             DB::rollBack();
+
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to administer: ' . $e->getMessage()
+                'message' => 'Failed to administer: ' . $e->getMessage(),
             ], 500);
         }
     }
@@ -1448,9 +1463,9 @@ class MedicationChartController extends Controller
         $tariffData = HmoHelper::applyHmoTariff($patient->id, $productId, null);
 
         if ($tariffData && isset($tariffData['payable_amount'])) {
-            $posr->payable_amount    = $tariffData['payable_amount'] * $qty;
-            $posr->claims_amount     = ($tariffData['claims_amount'] ?? 0) * $qty;
-            $posr->coverage_mode     = $tariffData['coverage_mode'] ?? null;
+            $posr->payable_amount = $tariffData['payable_amount'] * $qty;
+            $posr->claims_amount = ($tariffData['claims_amount'] ?? 0) * $qty;
+            $posr->coverage_mode = $tariffData['coverage_mode'] ?? null;
             $posr->validation_status = $tariffData['validation_status'] ?? null;
 
             if (isset($tariffData['hmo_id'])) {
@@ -1460,7 +1475,7 @@ class MedicationChartController extends Controller
             // Cash fallback — use product sale price
             $unitPrice = optional(optional($product)->price)->current_sale_price ?? 0;
             $posr->payable_amount = $unitPrice * $qty;
-            $posr->claims_amount  = 0;
+            $posr->claims_amount = 0;
         }
     }
 }

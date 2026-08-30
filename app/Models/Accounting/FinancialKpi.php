@@ -113,6 +113,7 @@ class FinancialKpi extends Model
             \Log::error("KPI calculation failed: {$this->kpi_code}", [
                 'error' => $e->getMessage(),
             ]);
+
             return null;
         }
     }
@@ -169,7 +170,7 @@ class FinancialKpi extends Model
 
         return Account::where('account_type', $accountType)
             ->get()
-            ->sum(fn($account) => $account->getBalance($asOfDate));
+            ->sum(fn ($account) => $account->getBalance($asOfDate));
     }
 
     /**
@@ -188,12 +189,14 @@ class FinancialKpi extends Model
         // For security, we use a simple parser instead of eval()
         if (preg_match('/^\s*([\d.]+)\s*\/\s*([\d.]+)\s*$/', $expression, $matches)) {
             $divisor = (float) $matches[2];
+
             return $divisor != 0 ? round((float) $matches[1] / $divisor, 4) : 0;
         }
 
         if (preg_match('/^\s*\(([\d.]+)\s*-\s*([\d.]+)\)\s*\/\s*([\d.]+)\s*$/', $expression, $matches)) {
             $divisor = (float) $matches[3];
             $numerator = (float) $matches[1] - (float) $matches[2];
+
             return $divisor != 0 ? round($numerator / $divisor, 4) : 0;
         }
 

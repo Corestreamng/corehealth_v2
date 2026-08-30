@@ -3,15 +3,14 @@
 namespace App\Http\Controllers\Accounting;
 
 use App\Http\Controllers\Controller;
-use App\Models\Accounting\FiscalYear;
-use App\Models\Accounting\AccountingPeriod;
-use App\Models\Accounting\JournalEntry;
 use App\Models\Accounting\Account;
+use App\Models\Accounting\AccountingPeriod;
+use App\Models\Accounting\FiscalYear;
+use App\Models\Accounting\JournalEntry;
 use App\Services\Accounting\AccountingService;
 use App\Services\Accounting\ReportService;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 use Carbon\Carbon;
+use Illuminate\Http\Request;
 
 /**
  * Accounting Dashboard Controller
@@ -23,6 +22,7 @@ use Carbon\Carbon;
 class AccountingController extends Controller
 {
     protected AccountingService $accountingService;
+
     protected ReportService $reportService;
 
     public function __construct(AccountingService $accountingService, ReportService $reportService)
@@ -99,7 +99,7 @@ class AccountingController extends Controller
         // Entry counts
         $stats['total_entries'] = JournalEntry::whereBetween('entry_date', [
             $period->start_date,
-            $period->end_date
+            $period->end_date,
         ])->count();
 
         $stats['pending_entries'] = JournalEntry::where('status', JournalEntry::STATUS_PENDING)->count();
@@ -190,6 +190,7 @@ class AccountingController extends Controller
 
         try {
             $this->accountingService->closePeriod($period);
+
             return redirect()->back()->with('success', "Period '{$period->name}' has been closed.");
         } catch (\Exception $e) {
             return redirect()->back()->with('error', $e->getMessage());
@@ -209,6 +210,7 @@ class AccountingController extends Controller
 
         try {
             $this->accountingService->closeYear($fiscalYear);
+
             return redirect()->back()->with('success', "Fiscal year '{$fiscalYear->name}' has been closed.");
         } catch (\Exception $e) {
             return redirect()->back()->with('error', $e->getMessage());

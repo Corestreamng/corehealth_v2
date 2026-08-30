@@ -11,7 +11,6 @@ use App\Models\Service;
 use App\Models\User;
 use Tests\TestCase;
 
-
 class AdmissionFlowTest extends TestCase
 {
     /** @test */
@@ -22,7 +21,6 @@ class AdmissionFlowTest extends TestCase
         $price = Price::create(['product_id' => $product->id, 'current_sale_price' => 1000]);
         $service = Service::create(['service_name' => 'Bed 101 Service', 'user_id' => 1, 'category_id' => 1, 'price_id' => $price->id, 'status' => 1]);
         $bed = Bed::create(['service_id' => $service->id, 'name' => 'Bed 101', 'status' => 1]);
-
 
         $bed->update(['status' => 2, 'occupant_id' => $patient->id]);
         $this->assertEquals(2, $bed->status);
@@ -46,11 +44,6 @@ class AdmissionFlowTest extends TestCase
         $this->assertEquals(2, $bed->status);
     }
 
-
-
-
-
-
     /** @test */
     public function test_admission_links_to_encounter()
     {
@@ -59,7 +52,6 @@ class AdmissionFlowTest extends TestCase
         $encounter = Encounter::create(['patient_id' => $patient->id, 'doctor_id' => $doctor->id]);
         $this->assertEquals($patient->id, $encounter->patient_id);
     }
-
 
     /** @test */
     public function test_payment_modified_correctly_on_admission()

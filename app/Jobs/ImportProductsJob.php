@@ -2,12 +2,12 @@
 
 namespace App\Jobs;
 
+use App\Models\Price;
 use App\Models\Product;
 use App\Models\ProductCategory;
-use App\Models\Price;
 use App\Models\Stock;
-use App\Models\StoreStock;
 use App\Models\Store;
+use App\Models\StoreStock;
 use App\Services\ImportProgressService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -16,22 +16,29 @@ use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Storage;
 use PhpOffice\PhpSpreadsheet\IOFactory;
 
 class ImportProductsJob implements ShouldQueue
 {
-    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
+    use Dispatchable;
+    use InteractsWithQueue;
+    use Queueable;
+    use SerializesModels;
 
-    const BATCH_SIZE = 400;
+    public const BATCH_SIZE = 400;
 
     protected string $importId;
+
     protected string $filePath;
+
     protected ?int $defaultStoreId;
+
     protected int $userId;
+
     protected string $duplicateAction;
 
     public $timeout = 7200; // 2 hours for large files
+
     public $tries = 1;
 
     public function __construct(string $importId, string $filePath, ?int $defaultStoreId, int $userId, string $duplicateAction = 'update')
@@ -75,6 +82,7 @@ class ImportProductsJob implements ShouldQueue
                     // Check for cancellation
                     if (ImportProgressService::isCancelled($this->importId)) {
                         $errors[] = 'Import was cancelled by user';
+
                         break;
                     }
 
@@ -95,8 +103,13 @@ class ImportProductsJob implements ShouldQueue
 
                     // Update progress
                     ImportProgressService::updateProgress(
-                        $this->importId, $processed, $created, $updated, $skipped,
-                        array_slice($errors, 0, 100), $batchIndex + 1
+                        $this->importId,
+                        $processed,
+                        $created,
+                        $updated,
+                        $skipped,
+                        array_slice($errors, 0, 100),
+                        $batchIndex + 1
                     );
 
                     $batch = [];
@@ -122,8 +135,13 @@ class ImportProductsJob implements ShouldQueue
                 }
 
                 ImportProgressService::updateProgress(
-                    $this->importId, $processed, $created, $updated, $skipped,
-                    array_slice($errors, 0, 100), $batchIndex + 1
+                    $this->importId,
+                    $processed,
+                    $created,
+                    $updated,
+                    $skipped,
+                    array_slice($errors, 0, 100),
+                    $batchIndex + 1
                 );
             }
 
@@ -182,9 +200,10 @@ class ImportProductsJob implements ShouldQueue
 
             if ($rowIndex === 1) {
                 // Headers
-                $headers = array_map(function($h) {
+                $headers = array_map(function ($h) {
                     return strtolower(trim(str_replace(['"', "'"], '', $h ?? '')));
                 }, $rowData);
+
                 continue;
             }
 
@@ -217,9 +236,10 @@ class ImportProductsJob implements ShouldQueue
             $rowIndex++;
 
             if ($rowIndex === 1) {
-                $headers = array_map(function($h) {
+                $headers = array_map(function ($h) {
                     return strtolower(trim(str_replace(['"', "'"], '', $h ?? '')));
                 }, $row);
+
                 continue;
             }
 
@@ -250,6 +270,7 @@ class ImportProductsJob implements ShouldQueue
         $newCategories = [];
 
         DB::beginTransaction();
+
         try {
             foreach ($batch as $item) {
                 $row = $item['row'];
@@ -258,6 +279,7 @@ class ImportProductsJob implements ShouldQueue
                 if (empty($row['product_name']) || empty($row['product_code'])) {
                     $errors[] = "Row {$rowNum}: Missing product_name or product_code";
                     $skipped++;
+
                     continue;
                 }
 
@@ -271,7 +293,7 @@ class ImportProductsJob implements ShouldQueue
                     if (!isset($categories[$categoryName])) {
                         $category = ProductCategory::create([
                             'category_name' => $categoryName,
-                            'category_description' => 'Auto-created during import'
+                            'category_description' => 'Auto-created during import',
                         ]);
                         $categories[$categoryName] = $category->id;
                         $newCategories[$categoryName] = $category->id;
@@ -297,6 +319,7 @@ class ImportProductsJob implements ShouldQueue
                     if ($duplicateAction === 'skip') {
                         // Skip existing records
                         $skipped++;
+
                         continue;
                     }
 

@@ -3,7 +3,6 @@
 namespace Tests\Feature\Pharmacy;
 
 use App\Models\Patient;
-use App\Models\User;
 use Tests\TestCase;
 
 class PharmacyReturnsTest extends TestCase

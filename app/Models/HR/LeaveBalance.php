@@ -21,7 +21,7 @@ class LeaveBalance extends Model implements Auditable
         'entitled_days',
         'used_days',
         'pending_days',
-        'carried_forward'
+        'carried_forward',
     ];
 
     protected $casts = [

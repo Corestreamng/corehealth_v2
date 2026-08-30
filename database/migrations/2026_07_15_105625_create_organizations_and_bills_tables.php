@@ -2,11 +2,10 @@
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
-return new class extends Migration
-{
+return new class () extends Migration {
     /**
      * Run the migrations.
      *
@@ -72,7 +71,6 @@ return new class extends Migration
                 $table->index('payment_id', 'obpa_payment_idx');
             });
         }
-
 
         // 4. Seed GL Account Code 1131 under Group 11 (Receivables) for organization receivables
         $group = DB::table('account_groups')->where('code', '11')->first();

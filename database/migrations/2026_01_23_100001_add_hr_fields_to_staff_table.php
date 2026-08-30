@@ -112,7 +112,7 @@ class AddHrFieldsToStaffTable extends Migration
                 'bank_name', 'bank_account_number', 'bank_account_name',
                 'emergency_contact_name', 'emergency_contact_phone', 'emergency_contact_relationship',
                 'tax_id', 'pension_id', 'hr_notes',
-                'suspended_at', 'suspended_by', 'suspension_reason', 'suspension_end_date'
+                'suspended_at', 'suspended_by', 'suspension_reason', 'suspension_end_date',
             ]);
         });
     }

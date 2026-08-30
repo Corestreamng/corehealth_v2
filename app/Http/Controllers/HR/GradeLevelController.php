@@ -12,6 +12,7 @@ class GradeLevelController extends Controller
     public function index()
     {
         $gradeLevels = GradeLevel::withCount('staff')->ordered()->get();
+
         return view('admin.hr.grade-levels.index', compact('gradeLevels'));
     }
 
@@ -35,6 +36,7 @@ class GradeLevelController extends Controller
         ]));
 
         Alert::success('Success', 'Grade level created successfully.');
+
         return redirect()->route('hr.grade-levels.index');
     }
 
@@ -58,9 +60,10 @@ class GradeLevelController extends Controller
         ]));
 
         // Recalculate exit dates for all staff on this grade level
-        $gradeLevel->staff->each(fn($s) => $s->recalculateExitDates());
+        $gradeLevel->staff->each(fn ($s) => $s->recalculateExitDates());
 
         Alert::success('Success', 'Grade level updated successfully.');
+
         return redirect()->route('hr.grade-levels.index');
     }
 
@@ -68,10 +71,12 @@ class GradeLevelController extends Controller
     {
         if ($gradeLevel->staff()->count() > 0) {
             Alert::error('Error', 'Cannot delete grade level with assigned staff.');
+
             return redirect()->route('hr.grade-levels.index');
         }
         $gradeLevel->delete();
         Alert::success('Success', 'Grade level deleted.');
+
         return redirect()->route('hr.grade-levels.index');
     }
 }

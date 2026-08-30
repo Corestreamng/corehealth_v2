@@ -2,9 +2,9 @@
 
 namespace App\Providers;
 
+use App\Policies\StoreGovernancePolicy;
 use Illuminate\Foundation\Support\Providers\AuthServiceProvider as ServiceProvider;
 use Illuminate\Support\Facades\Gate;
-use App\Policies\StoreGovernancePolicy;
 
 class AuthServiceProvider extends ServiceProvider
 {
@@ -59,4 +59,3 @@ class AuthServiceProvider extends ServiceProvider
         Gate::define('store-governance.manage', [StoreGovernancePolicy::class, 'manageGovernance']);
     }
 }
-

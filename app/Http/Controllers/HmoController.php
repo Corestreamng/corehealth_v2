@@ -7,8 +7,8 @@ use App\Models\HmoScheme;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
-use Yajra\DataTables\DataTables;
 use RealRashid\SweetAlert\Facades\Alert;
+use Yajra\DataTables\DataTables;
 
 class HmoController extends Controller
 {
@@ -28,22 +28,24 @@ class HmoController extends Controller
 
         return Datatables::of($hmos)
             ->addIndexColumn()
-            ->addColumn('scheme', function($hmo) {
+            ->addColumn('scheme', function ($hmo) {
                 return $hmo->scheme ? $hmo->scheme->name : 'N/A';
             })
-            ->addColumn('status_badge', function($hmo) {
+            ->addColumn('status_badge', function ($hmo) {
                 if ($hmo->status) {
                     return '<span class="badge badge-success">Active</span>';
                 }
+
                 return '<span class="badge badge-secondary">Inactive</span>';
             })
-            ->addColumn('toggle', function($hmo) {
+            ->addColumn('toggle', function ($hmo) {
                 $label = $hmo->status ? 'Deactivate' : 'Activate';
                 $btnClass = $hmo->status ? 'btn-warning' : 'btn-success';
                 $icon = $hmo->status ? 'fa-ban' : 'fa-check';
+
                 return '<button type="button" class="btn btn-sm ' . $btnClass . ' toggle-hmo-status" data-id="' . $hmo->id . '"><i class="fa ' . $icon . '"></i> ' . $label . '</button>';
             })
-            ->addColumn('edit',   '<a href="{{ route(\'hmo.edit\', $id)}}" class="btn btn-info btn-sm" ><i class="fa fa-pencil"></i> Edit</a>')
+            ->addColumn('edit', '<a href="{{ route(\'hmo.edit\', $id)}}" class="btn btn-info btn-sm" ><i class="fa fa-pencil"></i> Edit</a>')
             ->addColumn('delete', '<button type="button" class="delete-modal btn btn-danger btn-sm" data-toggle="modal" data-id="{{$id}}"><i class="fa fa-trash"></i> Delete</button>')
             ->rawColumns(['status_badge', 'toggle', 'edit', 'delete'])
             ->make(true);
@@ -57,6 +59,7 @@ class HmoController extends Controller
     public function create()
     {
         $schemes = HmoScheme::where('status', 1)->orderBy('name', 'ASC')->get();
+
         return view('admin.hmo.create', compact('schemes'));
     }
 
@@ -73,7 +76,7 @@ class HmoController extends Controller
                 [
                     'name' => 'required',
                     'description' => 'nullable',
-                    'discount' => 'required'
+                    'discount' => 'required',
 
                 ];
             $v = Validator::make($request->all(), $rules);
@@ -81,21 +84,23 @@ class HmoController extends Controller
                 return back()->with('errors', $v->messages()->all())->withInput();
             } else {
 
-                $hmo              = new Hmo;
-                $hmo->name        = $request->name;
+                $hmo = new Hmo();
+                $hmo->name = $request->name;
                 $hmo->desc = $request->description;
-                $hmo->discount    = $request->discount;
+                $hmo->discount = $request->discount;
                 $hmo->hmo_scheme_id = $request->hmo_scheme_id ?? 1;
 
                 if ($hmo->save()) {
                     $msg = 'The HMO [' . $hmo->name . '] was successfully Saved.';
                     Alert::success('Success ', $msg);
+
                     return redirect()->route('hmo.index')->withMessage($msg)->withMessageType('success');
                 }
             }
         } catch (\Exception $e) {
             Log::error($e->getMessage(), ['exception' => $e]);
-            return redirect()->back()->withInput()->with('error',$e->getMessage());
+
+            return redirect()->back()->withInput()->with('error', $e->getMessage());
         }
     }
 
@@ -119,6 +124,7 @@ class HmoController extends Controller
     public function edit(Hmo $hmo)
     {
         $schemes = HmoScheme::where('status', 1)->orderBy('name', 'ASC')->get();
+
         return view('admin.hmo.edit', compact('hmo', 'schemes'));
     }
 
@@ -136,7 +142,7 @@ class HmoController extends Controller
                 [
                     'name' => 'required',
                     'description' => 'nullable',
-                    'discount' => 'required'
+                    'discount' => 'required',
 
                 ];
             $v = Validator::make($request->all(), $rules);
@@ -144,19 +150,20 @@ class HmoController extends Controller
                 return back()->with('errors', $v->messages()->all())->withInput();
             } else {
 
-                $hmo->name        = $request->name;
-                $hmo->desc        = $request->description;
-                $hmo->discount    = $request->discount;
+                $hmo->name = $request->name;
+                $hmo->desc = $request->description;
+                $hmo->discount = $request->discount;
                 $hmo->hmo_scheme_id = $request->hmo_scheme_id ?? $hmo->hmo_scheme_id ?? 1;
 
                 if ($hmo->update()) {
                     $msg = 'The HMO [' . $hmo->name . '] was successfully Updated.';
                     Alert::success('Success ', $msg);
+
                     return redirect()->route('hmo.index')->withMessage($msg)->withMessageType('success');
                 }
             }
         } catch (\Exception $e) {
-            return redirect()->back()->withInput()->with('error',$e->getMessage());
+            return redirect()->back()->withInput()->with('error', $e->getMessage());
             Log::error($e->getMessage(), ['exception' => $e]);
         }
     }
@@ -181,6 +188,7 @@ class HmoController extends Controller
         $hmo->save();
 
         $state = $hmo->status ? 'activated' : 'deactivated';
+
         return response()->json([
             'success' => true,
             'message' => "HMO '{$hmo->name}' has been {$state}.",

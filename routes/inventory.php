@@ -1,16 +1,16 @@
 <?php
 
-use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\ExpenseController;
+use App\Http\Controllers\InventoryReportController;
 use App\Http\Controllers\PurchaseOrderController;
 use App\Http\Controllers\PurchaseOrderReturnController;
+use App\Http\Controllers\StockUtilizationController;
+use App\Http\Controllers\StoreDamagesController;
+use App\Http\Controllers\StoreGovernanceController;
 use App\Http\Controllers\StoreRequisitionController;
 use App\Http\Controllers\StoreRequisitionReturnController;
-use App\Http\Controllers\StoreDamagesController;
-use App\Http\Controllers\InventoryReportController;
 use App\Http\Controllers\StoreWorkbenchController;
-use App\Http\Controllers\StoreGovernanceController;
-use App\Http\Controllers\ExpenseController;
-use App\Http\Controllers\StockUtilizationController;
+use Illuminate\Support\Facades\Route;
 
 /**
  * Inventory Management Routes
@@ -95,7 +95,7 @@ Route::middleware(['auth'])->prefix('inventory')->name('inventory.')->group(func
     });
 
     // ===== STORE WORKBENCH =====
-        Route::prefix('inventory-reports')->name('inventory-reports.')->group(function () {
+    Route::prefix('inventory-reports')->name('inventory-reports.')->group(function () {
         Route::get('/summary', [InventoryReportController::class, 'getSummary'])->name('summary');
         Route::get('/summary/print', [InventoryReportController::class, 'printSummary'])->name('summary.print');
         Route::get('/drill-down', [InventoryReportController::class, 'getDrillDown'])->name('drill-down');
@@ -231,7 +231,6 @@ Route::middleware(['auth'])->prefix('pharmacy-workbench')->group(function () {
     Route::post('/prescription/{id}/adjust-price', [\App\Http\Controllers\PharmacyWorkbenchController::class, 'adjustPrice'])->name('pharmacy.adjust-price');
 });
 
-
 // ===== API ROUTES FOR STANDALONE PO/REQUISITION ACCESS =====
 // These provide top-level access for common operations
 Route::middleware(['auth'])->group(function () {
@@ -255,8 +254,8 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/requisitions/{requisition}/reject', [StoreRequisitionController::class, 'reject'])->name('requisitions.reject');
     Route::post('/requisitions/{requisition}/cancel', [StoreRequisitionController::class, 'cancel'])->name('requisitions.cancel');
     Route::post('/requisitions/{requisition}/fulfill', [StoreRequisitionController::class, 'fulfill'])->name('requisitions.fulfill');
-    Route::get('/requisitions/{requisition}/edit',    [StoreRequisitionController::class, 'edit'])->name('requisitions.edit');
-    Route::put('/requisitions/{requisition}',          [StoreRequisitionController::class, 'update'])->name('requisitions.update');
+    Route::get('/requisitions/{requisition}/edit', [StoreRequisitionController::class, 'edit'])->name('requisitions.edit');
+    Route::put('/requisitions/{requisition}', [StoreRequisitionController::class, 'update'])->name('requisitions.update');
 
     Route::get('/store-workbench', [StoreWorkbenchController::class, 'index'])->name('store-workbench.index');
 });

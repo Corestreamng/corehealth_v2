@@ -2,12 +2,12 @@
 
 namespace App\Services;
 
-use App\Services\LlmProviders\LlmProviderInterface;
 use App\Services\LlmProviders\AnthropicAdapter;
-use App\Services\LlmProviders\OpenAiAdapter;
 use App\Services\LlmProviders\GeminiAdapter;
-use App\Services\LlmProviders\OllamaAdapter;
 use App\Services\LlmProviders\HuggingFaceAdapter;
+use App\Services\LlmProviders\LlmProviderInterface;
+use App\Services\LlmProviders\OllamaAdapter;
+use App\Services\LlmProviders\OpenAiAdapter;
 use Illuminate\Support\Facades\Log;
 
 /**
@@ -64,6 +64,7 @@ class LlmGatewayService
                 'model' => $model,
                 'error' => $e->getMessage(),
             ]);
+
             throw $e;
         }
     }
@@ -74,6 +75,7 @@ class LlmGatewayService
     public function listModels(string $provider): array
     {
         $adapter = $this->getAdapter($provider);
+
         return $adapter->listModels();
     }
 
@@ -83,6 +85,7 @@ class LlmGatewayService
     public function testConnection(string $provider, string $apiKey = '', string $baseUrl = ''): array
     {
         $adapter = $this->createAdapter($provider, $apiKey, $baseUrl);
+
         return $adapter->validateConfig();
     }
 
@@ -114,8 +117,10 @@ class LlmGatewayService
     public function isEnabled(): bool
     {
         $provider = $this->config['active_provider'] ?? null;
-        if (!$provider) return false;
-        
+        if (!$provider) {
+            return false;
+        }
+
         $model = $this->config['active_model'] ?? ($this->config['providers'][$provider]['default_model'] ?? null);
 
         return ($this->config['enabled'] ?? false) && !empty($model);
@@ -148,7 +153,7 @@ class LlmGatewayService
         }
 
         $apiKey = $providerConfig['api_key'] ?? '';
-        
+
         // Attempt to decrypt the API key
         if (!empty($apiKey)) {
             try {

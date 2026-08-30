@@ -2,8 +2,8 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Seeder;
 use App\Models\Clinic;
+use Illuminate\Database\Seeder;
 
 class ClinicVitalsTemplateSeeder extends Seeder
 {
@@ -60,7 +60,7 @@ class ClinicVitalsTemplateSeeder extends Seeder
         foreach ($clinics as $clinic) {
             $template = $standardTemplate;
             $name = strtolower($clinic->name);
-            
+
             if (str_contains($name, 'ophthalmology')) {
                 $template = array_merge($template, $ophthalmologyExtras);
             } elseif (str_contains($name, 'pediatrics') || str_contains($name, 'neonatology')) {
@@ -72,7 +72,7 @@ class ClinicVitalsTemplateSeeder extends Seeder
             } elseif (str_contains($name, 'emergency')) {
                 $template = array_merge($template, $emergencyExtras);
             }
-            
+
             $clinic->update(['vitals_template' => $template]);
         }
     }

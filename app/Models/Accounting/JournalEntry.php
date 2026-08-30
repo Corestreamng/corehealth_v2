@@ -23,7 +23,9 @@ use OwenIt\Auditing\Contracts\Auditable;
  */
 class JournalEntry extends Model implements Auditable
 {
-    use HasFactory, SoftDeletes, \OwenIt\Auditing\Auditable;
+    use HasFactory;
+    use SoftDeletes;
+    use \OwenIt\Auditing\Auditable;
 
     protected $fillable = [
         'entry_number',
@@ -60,30 +62,30 @@ class JournalEntry extends Model implements Auditable
     ];
 
     // Status constants (must match database enum values)
-    const STATUS_DRAFT = 'draft';
-    const STATUS_PENDING = 'pending_approval';
-    const STATUS_PENDING_APPROVAL = 'pending_approval';  // Alias
-    const STATUS_APPROVED = 'approved';
-    const STATUS_POSTED = 'posted';
-    const STATUS_REJECTED = 'rejected';  // Note: May need migration if not in DB
-    const STATUS_REVERSED = 'reversed';
+    public const STATUS_DRAFT = 'draft';
+    public const STATUS_PENDING = 'pending_approval';
+    public const STATUS_PENDING_APPROVAL = 'pending_approval';  // Alias
+    public const STATUS_APPROVED = 'approved';
+    public const STATUS_POSTED = 'posted';
+    public const STATUS_REJECTED = 'rejected';  // Note: May need migration if not in DB
+    public const STATUS_REVERSED = 'reversed';
 
     // Entry type constants
-    const TYPE_AUTO = 'auto';
-    const TYPE_AUTOMATED = 'auto';  // Alias
-    const TYPE_MANUAL = 'manual';
-    const TYPE_OPENING = 'opening';
-    const TYPE_CLOSING = 'closing';
-    const TYPE_REVERSAL = 'reversal';
-    const TYPE_ADJUSTMENT = 'adjustment';  // Note: May need migration if not in DB
+    public const TYPE_AUTO = 'auto';
+    public const TYPE_AUTOMATED = 'auto';  // Alias
+    public const TYPE_MANUAL = 'manual';
+    public const TYPE_OPENING = 'opening';
+    public const TYPE_CLOSING = 'closing';
+    public const TYPE_REVERSAL = 'reversal';
+    public const TYPE_ADJUSTMENT = 'adjustment';  // Note: May need migration if not in DB
 
     // Source types for automated entries
-    const SOURCE_PAYMENT = 'App\\Models\\Payment';
-    const SOURCE_PURCHASE_ORDER = 'App\\Models\\PurchaseOrder';
-    const SOURCE_EXPENSE = 'App\\Models\\Expense';
-    const SOURCE_PAYROLL = 'App\\Models\\Payroll';
-    const SOURCE_CREDIT_NOTE = 'App\\Models\\Accounting\\CreditNote';
-    const SOURCE_MANUAL = null;
+    public const SOURCE_PAYMENT = 'App\\Models\\Payment';
+    public const SOURCE_PURCHASE_ORDER = 'App\\Models\\PurchaseOrder';
+    public const SOURCE_EXPENSE = 'App\\Models\\Expense';
+    public const SOURCE_PAYROLL = 'App\\Models\\Payroll';
+    public const SOURCE_CREDIT_NOTE = 'App\\Models\\Accounting\\CreditNote';
+    public const SOURCE_MANUAL = null;
 
     /**
      * Get the accounting period.
@@ -576,6 +578,7 @@ class JournalEntry extends Model implements Auditable
         if ($toDate) {
             $query->where('entry_date', '<=', $toDate);
         }
+
         return $query;
     }
 

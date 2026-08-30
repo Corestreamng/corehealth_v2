@@ -1,8 +1,8 @@
 <?php
 
-use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\NursingWorkbenchController;
 use App\Http\Controllers\ShiftController;
+use Illuminate\Support\Facades\Route;
 
 /*
 |--------------------------------------------------------------------------

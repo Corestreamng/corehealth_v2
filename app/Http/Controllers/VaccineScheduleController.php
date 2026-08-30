@@ -3,9 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Models\Product;
-use App\Models\VaccineScheduleTemplate;
-use App\Models\VaccineScheduleItem;
 use App\Models\VaccineProductMapping;
+use App\Models\VaccineScheduleItem;
+use App\Models\VaccineScheduleTemplate;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Yajra\DataTables\DataTables;
@@ -49,6 +49,7 @@ class VaccineScheduleController extends Controller
                 $badges[] = $template->is_active
                     ? '<span class="badge badge-success">Active</span>'
                     : '<span class="badge badge-secondary">Inactive</span>';
+
                 return implode(' ', $badges);
             })
             ->addColumn('actions', function ($template) {
@@ -60,6 +61,7 @@ class VaccineScheduleController extends Controller
                     $buttons .= '<button class="btn btn-danger btn-delete-template" data-id="' . $template->id . '" title="Delete"><i class="mdi mdi-delete"></i></button>';
                 }
                 $buttons .= '</div>';
+
                 return $buttons;
             })
             ->rawColumns(['status_badge', 'actions'])
@@ -285,6 +287,7 @@ class VaccineScheduleController extends Controller
                 $badges[] = $mapping->is_active
                     ? '<span class="badge badge-success">Active</span>'
                     : '<span class="badge badge-secondary">Inactive</span>';
+
                 return implode(' ', $badges);
             })
             ->addColumn('actions', function ($mapping) {
@@ -295,6 +298,7 @@ class VaccineScheduleController extends Controller
                 }
                 $buttons .= '<button class="btn btn-danger btn-delete-mapping" data-id="' . $mapping->id . '" title="Delete"><i class="mdi mdi-delete"></i></button>';
                 $buttons .= '</div>';
+
                 return $buttons;
             })
             ->rawColumns(['status_badge', 'actions'])

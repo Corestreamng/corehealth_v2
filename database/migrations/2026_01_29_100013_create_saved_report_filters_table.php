@@ -13,8 +13,7 @@ use Illuminate\Support\Facades\Schema;
  * Filters can be personal or shared with the team.
  * Each report type can have one default filter per user.
  */
-return new class extends Migration
-{
+return new class () extends Migration {
     /**
      * Run the migrations.
      */
@@ -31,7 +30,7 @@ return new class extends Migration
                 'accounts_payable',
                 'accounts_receivable',
                 'cash_flow',
-                'daily_audit'
+                'daily_audit',
             ]);
             $table->json('filters');                            // All filter parameters
             $table->boolean('is_default')->default(false);

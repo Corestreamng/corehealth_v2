@@ -3,8 +3,7 @@
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Support\Facades\DB;
 
-return new class extends Migration
-{
+return new class () extends Migration {
     /**
      * Add preferred_ward_id column to admission_requests table.
      * Allows doctors to optionally indicate a ward preference when requesting admission.

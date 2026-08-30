@@ -2,18 +2,17 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Encounter;
+use App\Models\ImagingServiceRequest;
 use App\Models\MedicalReport;
 use App\Models\Patient;
-use App\Models\Encounter;
-use App\Models\VitalSign;
-use App\Models\Staff;
-use App\Models\ImagingServiceRequest;
 use App\Models\Procedure;
+use App\Models\VitalSign;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use Carbon\Carbon;
 
 class MedicalReportController extends Controller
 {
@@ -48,6 +47,7 @@ class MedicalReportController extends Controller
             ]);
         } catch (\Exception $e) {
             Log::error('Medical report creation failed: ' . $e->getMessage());
+
             return response()->json([
                 'success' => false,
                 'message' => 'Failed to create report: ' . $e->getMessage(),
@@ -83,6 +83,7 @@ class MedicalReportController extends Controller
             ]);
         } catch (\Exception $e) {
             Log::error('Medical report update failed: ' . $e->getMessage());
+
             return response()->json([
                 'success' => false,
                 'message' => 'Failed to update report: ' . $e->getMessage(),
@@ -257,6 +258,7 @@ class MedicalReportController extends Controller
                 } else {
                     $diagList = array_map('trim', explode(',', $reasons));
                 }
+
                 return [
                     'date' => $e->created_at->format('M j, Y'),
                     'diagnoses' => $diagList,
@@ -347,6 +349,7 @@ class MedicalReportController extends Controller
             $data['clinical_notes'] = $notes->map(function ($n) {
                 $doctor = $n->doctor;
                 $doctorName = $doctor ? (($doctor->surname ?? '') . ' ' . ($doctor->firstname ?? '')) : '-';
+
                 return [
                     'doctor' => $doctorName,
                     'notes' => $n->notes,
@@ -360,6 +363,7 @@ class MedicalReportController extends Controller
             ]);
         } catch (\Exception $e) {
             Log::error('Failed to get patient data for report: ' . $e->getMessage());
+
             return response()->json([
                 'success' => false,
                 'message' => 'Failed to load patient data.',
@@ -373,6 +377,7 @@ class MedicalReportController extends Controller
     public function print(MedicalReport $medical_report)
     {
         $report = $medical_report->load('patient.user', 'doctor');
+
         return view('admin.medical_reports.print', compact('report'));
     }
 }

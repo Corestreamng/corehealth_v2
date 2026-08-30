@@ -37,9 +37,9 @@ class MaternityPartograph extends Model implements Auditable
     ];
 
     protected $casts = [
-        'recorded_at'          => 'datetime',
+        'recorded_at' => 'datetime',
         'cervical_dilation_cm' => 'decimal:1',
-        'maternal_temp'        => 'decimal:1',
+        'maternal_temp' => 'decimal:1',
     ];
 
     /* ── Relationships ─────────────────────── */

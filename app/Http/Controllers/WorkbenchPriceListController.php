@@ -2,11 +2,11 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Product;
-use App\Models\Service;
+use App\Models\Hmo;
 use App\Models\HmoScheme;
 use App\Models\HmoTariff;
-use App\Models\Hmo;
+use App\Models\Product;
+use App\Models\Service;
 use Illuminate\Http\Request;
 use Yajra\DataTables\DataTables;
 
@@ -31,16 +31,18 @@ class WorkbenchPriceListController extends Controller
                     $html .= '<strong style="font-size: 1.05rem; color: #2c3e50;">' . $product->product_name . '</strong>';
                     $html .= '<div class="text-muted small mt-1"><i class="mdi mdi-tag"></i> ' . $category . '</div>';
                     $html .= '</div>';
+
                     return $html;
                 })
                 ->addColumn('base_pricing', function ($product) {
                     $price = $product->price;
                     $salePrice = $price ? number_format($price->current_sale_price, 2) : '0.00';
-                    
+
                     $html = '<div>';
                     $html .= '<strong class="text-success" style="font-size: 1.1rem;">₦' . $salePrice . '</strong>';
                     $html .= '<div class="text-muted small mt-1">Base Price</div>';
                     $html .= '</div>';
+
                     return $html;
                 })
                 ->addColumn('tariff_action', function ($product) {
@@ -49,6 +51,7 @@ class WorkbenchPriceListController extends Controller
                 ->rawColumns(['item_details', 'base_pricing', 'tariff_action'])
                 ->make(true);
         }
+
         return abort(404);
     }
 
@@ -80,16 +83,18 @@ class WorkbenchPriceListController extends Controller
                     $html .= '<strong style="font-size: 1.05rem; color: #2c3e50;">' . $service->service_name . '</strong>';
                     $html .= '<div class="text-muted small mt-1"><i class="mdi mdi-tag"></i> ' . $category . '</div>';
                     $html .= '</div>';
+
                     return $html;
                 })
                 ->addColumn('base_pricing', function ($service) {
                     $price = $service->price;
                     $salePrice = $price ? number_format($price->sale_price, 2) : '0.00';
-                    
+
                     $html = '<div>';
                     $html .= '<strong class="text-success" style="font-size: 1.1rem;">₦' . $salePrice . '</strong>';
                     $html .= '<div class="text-muted small mt-1">Base Price</div>';
                     $html .= '</div>';
+
                     return $html;
                 })
                 ->addColumn('tariff_action', function ($service) {
@@ -98,6 +103,7 @@ class WorkbenchPriceListController extends Controller
                 ->rawColumns(['item_details', 'base_pricing', 'tariff_action'])
                 ->make(true);
         }
+
         return abort(404);
     }
 
@@ -121,7 +127,9 @@ class WorkbenchPriceListController extends Controller
         $schemeSummary = [];
         foreach ($schemes as $scheme) {
             $activeHmos = $scheme->hmos;
-            if ($activeHmos->isEmpty()) continue;
+            if ($activeHmos->isEmpty()) {
+                continue;
+            }
 
             $hmosData = [];
             foreach ($activeHmos as $hmo) {
@@ -163,7 +171,7 @@ class WorkbenchPriceListController extends Controller
         return response()->json([
             'success' => true,
             'schemeSummary' => $schemeSummary,
-            'standaloneData' => $standaloneData
+            'standaloneData' => $standaloneData,
         ]);
     }
 }

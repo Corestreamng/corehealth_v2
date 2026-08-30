@@ -2,15 +2,12 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\StoreStock;
-use App\Models\Store;
-use App\Models\Sale;
 use App\Models\Product;
+use App\Models\Sale;
+use App\Models\Store;
+use App\Models\StoreStock;
 use Illuminate\Http\Request;
-
-use Validator;
 use Yajra\DataTables\DataTables;
-use RealRashid\SweetAlert\Facades\Alert;
 
 class StoreStockController extends Controller
 {
@@ -29,12 +26,14 @@ class StoreStockController extends Controller
             ->addColumn('unsupply', function ($pc) {
                 $sales = Sale::where('product_id', '=', $pc->product->id)
                     ->where('store_id', '=', $pc->store_id)->where('supply', '=', 1)->sum('quantity_buy');
+
                 return ($sales);
             })
             ->addColumn('totalQt', function ($pc) {
                 $sumsale = Sale::where('product_id', '=', $pc->product->id)
                     ->where('store_id', '=', $pc->store_id)->where('supply', '=', 1)->sum('quantity_buy');
                 $TQt = $sumsale + $pc->current_quantity;
+
                 return ($TQt);
             })
             ->rawColumns(['product', 'movestock', 'unsupply', 'totalQt'])
@@ -66,17 +65,20 @@ class StoreStockController extends Controller
             ->addColumn('unsupply', function ($pc) {
                 $sales = Sale::where('product_id', '=', $pc->product->id)
                     ->where('store_id', '=', $pc->store_id)->where('supply', '=', 1)->sum('quantity_buy');
+
                 return ($sales);
             })
             ->addColumn('totalQt', function ($pc) {
                 $sumsale = Sale::where('product_id', '=', $pc->product->id)
                     ->where('store_id', '=', $pc->store_id)->where('supply', '=', 1)->sum('quantity_buy');
                 $TQt = $sumsale + $pc->current_quantity;
+
                 return ($TQt);
             })
             ->rawColumns(['product',  'unsupply', 'totalQt'])
             ->make(true);
     }
+
     /**
      * Display a listing of the resource.
      *
@@ -120,6 +122,7 @@ class StoreStockController extends Controller
 
         // $pc = StoreStock::where('store_id', '=', $id)->with('store','product')->get();
         $store = Store::find($id);
+
         return view('admin.stores.show', compact('store', 'id', 'now'));
     }
 

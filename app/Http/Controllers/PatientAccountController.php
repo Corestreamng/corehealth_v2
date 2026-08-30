@@ -6,13 +6,12 @@ use App\Models\MiscBill;
 use App\Models\Patient;
 use App\Models\PatientAccount;
 use App\Models\Payment;
-use App\Models\Product;
+use App\Models\Service;
+use App\Models\servicePrice;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use App\Models\Service;
-use App\Models\servicePrice;
 use Yajra\DataTables\DataTables;
 
 class PatientAccountController extends Controller
@@ -33,7 +32,7 @@ class PatientAccountController extends Controller
             $request->validate([
                 'patient_id' => 'required',
                 'acc_id' => 'required',
-                'amount' => 'required'
+                'amount' => 'required',
             ]);
 
             DB::beginTransaction();
@@ -41,10 +40,10 @@ class PatientAccountController extends Controller
             $acc = PatientAccount::where('id', $request->acc_id)->first();
             $new_bal = $acc->balance + $request->amount;
             $acc->update([
-                'balance' => $new_bal
+                'balance' => $new_bal,
             ]);
 
-            $pay = new payment;
+            $pay = new payment();
             $pay->patient_id = $request->patient_id;
             $pay->user_id = Auth::id();
             $pay->total = $request->amount;
@@ -52,10 +51,12 @@ class PatientAccountController extends Controller
             $pay->payment_type = 'ACC_DEPOSIT';
             $pay->save();
             DB::commit();
+
             return redirect()->back()->with(['message' => "Deposit Saved Successfully", 'message_type' => 'success']);
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error($e->getMessage(), ['exception' => $e]);
+
             return redirect()->back()->withInput()->with('error', $e->getMessage());
         }
     }
@@ -64,6 +65,7 @@ class PatientAccountController extends Controller
     {
 
         $hist = Payment::where('patient_id', $patient_id)->with('product_or_service_request', 'patient', 'staff_user')->get();
+
         //dd($pc);
         return Datatables::of($hist)
             ->addIndexColumn()
@@ -79,6 +81,7 @@ class PatientAccountController extends Controller
                     $str .= '<small>[' . ($rr?->service->category?->category_name ?? $rr?->product->category?->category_name) . '] '
                         . ($rr?->service->service_name ?? $rr?->product->product_name) . '(' . ($rr?->service->service_code ?? $rr?->product->product_code) . ')</small><br>';
                 }
+
                 return $str;
             })
             ->rawColumns(['product_or_service_request'])
@@ -105,20 +108,21 @@ class PatientAccountController extends Controller
     {
         try {
             $request->validate([
-                'patient_id' => 'required'
+                'patient_id' => 'required',
             ]);
 
-            $patient_account = new PatientAccount;
+            $patient_account = new PatientAccount();
             $patient_account->patient_id = $request->patient_id;
             $patient_account->save();
             $msg = 'Patient Account was successfully created.';
+
             return redirect()->back()->withMessage($msg)->withMessageType('success');
         } catch (\Exception $e) {
             Log::error($e->getMessage(), ['exception' => $e]);
+
             return redirect()->back()->withInput()->with('error', $e->getMessage());
         }
     }
-
 
     public function addMsicBill(Request $request)
     {
@@ -128,7 +132,7 @@ class PatientAccountController extends Controller
                 'prices' => 'array|required',
                 'names.*' => 'required|string',
                 'prices.*' => 'required|numeric',
-                'patient_id' => 'required'
+                'patient_id' => 'required',
             ]);
 
             $patient = Patient::where('id', $request->patient_id)->first();
@@ -138,31 +142,29 @@ class PatientAccountController extends Controller
             for ($i = 0; $i < count($request->names); $i++) {
 
                 //create a misc service to associate the Misc bill with
-                $misc_service                      = new service();
-                $misc_service->user_id             = Auth::user()->id;
-                $misc_service->category_id         = appsettings('misc_service_category_id');
-                $misc_service->service_name        = trim('[' . userfullname($patient->user_id) . '] ' . $request->names[$i]);
-                $misc_service->service_code        = trim($request->names[$i]);
-                $misc_service->price_assign        = 1;
-                $misc_service->status              = 1;
-
+                $misc_service = new service();
+                $misc_service->user_id = Auth::user()->id;
+                $misc_service->category_id = appsettings('misc_service_category_id');
+                $misc_service->service_name = trim('[' . userfullname($patient->user_id) . '] ' . $request->names[$i]);
+                $misc_service->service_code = trim($request->names[$i]);
+                $misc_service->price_assign = 1;
+                $misc_service->status = 1;
 
                 $misc_service->save();
 
-
                 //crete a price entry for the misc service creted above
-                $price_entry = new ServicePrice;
+                $price_entry = new ServicePrice();
                 $price_entry->service_id = $misc_service->id;
                 $price_entry->cost_price = $request->prices[$i];
                 $price_entry->sale_price = $request->prices[$i];
-                $price_entry->max_discount =  0;
+                $price_entry->max_discount = 0;
                 $price_entry->status = 1;
 
                 $price_entry->save();
 
                 //crete the actual misc bill entry, nowthat it has a service to be associated with
 
-                $misc_bill = new MiscBill;
+                $misc_bill = new MiscBill();
                 $misc_bill->created_by = Auth::id();
                 $misc_bill->creation_date = date('Y-m-d H:i:s');
                 $misc_bill->service_id = $misc_service->id;
@@ -171,10 +173,12 @@ class PatientAccountController extends Controller
             }
             DB::commit();
             $msg = 'Patient Misc. Bills Successfully Created.';
+
             return redirect()->back()->withMessage($msg)->withMessageType('success');
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error($e->getMessage(), ['exception' => $e]);
+
             return redirect()->back()->withInput()->with('error', $e->getMessage());
         }
     }

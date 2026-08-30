@@ -1,18 +1,12 @@
 <?php
 
 use App\Models\ApplicationStatu;
-use App\Models\User;
-use App\Models\StoreStoke;
-use App\Models\Patient;
 use App\Models\LabService;
-use App\Models\ModeOfPayment;
-use App\Models\BudgetYear;
-use App\Models\Dependant;
+use App\Models\Patient;
 use App\Models\StoreStock;
-use Illuminate\Support\Facades\Lang;
-use Illuminate\Support\Facades\Cache;
+use App\Models\User;
 use Carbon\Carbon;
-
+use Illuminate\Support\Facades\Cache;
 
 if (!function_exists('generateForm')) {
     function generateForm($formData)
@@ -91,6 +85,7 @@ if (!function_exists('generate_invoice_no')) {
         $dt = Carbon::now();
         $timestamp = $dt->hour . $dt->minute . $dt->second;
         $referenceNumber = randomDigits($REFERENCE_RANDOM_NUMBER_LENGTH);
+
         return $referenceNumber . $timestamp;
     }
 }
@@ -102,6 +97,7 @@ if (!function_exists('randomDigits')) {
         if ($numDigits <= 0) {
             return '';
         }
+
         return mt_rand(1, 9) . randomDigits($numDigits - 1);
     }
 }
@@ -130,6 +126,7 @@ if (!function_exists('formatMoney')) {
     {
         $symbol = appsettings('currency_symbol') ?? '₦';
         $formatted = $symbol . number_format(sprintf('%0.2f', preg_replace("/[^0-9.]/", "", $money)), 2);
+
         return $money < 0 ? "({$formatted})" : "{$formatted}";
     }
 }
@@ -137,48 +134,48 @@ if (!function_exists('convert_number_to_words')) {
 
     function convert_number_to_words($number)
     {
-        $hyphen      = '-';
+        $hyphen = '-';
         $conjunction = ' and ';
-        $separator   = ', ';
-        $negative    = 'negative ';
-        $decimal     = ' point ';
-        $dictionary  = array(
-            0                   => 'zero',
-            1                   => 'one',
-            2                   => 'two',
-            3                   => 'three',
-            4                   => 'four',
-            5                   => 'five',
-            6                   => 'six',
-            7                   => 'seven',
-            8                   => 'eight',
-            9                   => 'nine',
-            10                  => 'ten',
-            11                  => 'eleven',
-            12                  => 'twelve',
-            13                  => 'thirteen',
-            14                  => 'fourteen',
-            15                  => 'fifteen',
-            16                  => 'sixteen',
-            17                  => 'seventeen',
-            18                  => 'eighteen',
-            19                  => 'nineteen',
-            20                  => 'twenty',
-            30                  => 'thirty',
-            40                  => 'fourty',
-            50                  => 'fifty',
-            60                  => 'sixty',
-            70                  => 'seventy',
-            80                  => 'eighty',
-            90                  => 'ninety',
-            100                 => 'hundred',
-            1000                => 'thousand',
-            1000000             => 'million',
-            1000000000          => 'billion',
-            1000000000000       => 'trillion',
-            1000000000000000    => 'quadrillion',
-            1000000000000000000 => 'quintillion'
-        );
+        $separator = ', ';
+        $negative = 'negative ';
+        $decimal = ' point ';
+        $dictionary = [
+            0 => 'zero',
+            1 => 'one',
+            2 => 'two',
+            3 => 'three',
+            4 => 'four',
+            5 => 'five',
+            6 => 'six',
+            7 => 'seven',
+            8 => 'eight',
+            9 => 'nine',
+            10 => 'ten',
+            11 => 'eleven',
+            12 => 'twelve',
+            13 => 'thirteen',
+            14 => 'fourteen',
+            15 => 'fifteen',
+            16 => 'sixteen',
+            17 => 'seventeen',
+            18 => 'eighteen',
+            19 => 'nineteen',
+            20 => 'twenty',
+            30 => 'thirty',
+            40 => 'fourty',
+            50 => 'fifty',
+            60 => 'sixty',
+            70 => 'seventy',
+            80 => 'eighty',
+            90 => 'ninety',
+            100 => 'hundred',
+            1000 => 'thousand',
+            1000000 => 'million',
+            1000000000 => 'billion',
+            1000000000000 => 'trillion',
+            1000000000000000 => 'quadrillion',
+            1000000000000000000 => 'quintillion',
+        ];
 
         if (!is_numeric($number)) {
             return false;
@@ -190,6 +187,7 @@ if (!function_exists('convert_number_to_words')) {
                 'convert_number_to_words only accepts numbers between -' . PHP_INT_MAX . ' and ' . PHP_INT_MAX,
                 E_USER_WARNING
             );
+
             return false;
         }
 
@@ -206,22 +204,25 @@ if (!function_exists('convert_number_to_words')) {
         switch (true) {
             case $number < 21:
                 $string = $dictionary[$number];
+
                 break;
             case $number < 100:
-                $tens   = ((int) ($number / 10)) * 10;
-                $units  = $number % 10;
+                $tens = ((int) ($number / 10)) * 10;
+                $units = $number % 10;
                 $string = $dictionary[$tens];
                 if ($units) {
                     $string .= $hyphen . $dictionary[$units];
                 }
+
                 break;
             case $number < 1000:
-                $hundreds  = $number / 100;
+                $hundreds = $number / 100;
                 $remainder = $number % 100;
                 $string = $dictionary[$hundreds] . ' ' . $dictionary[100];
                 if ($remainder) {
                     $string .= $conjunction . convert_number_to_words($remainder);
                 }
+
                 break;
             default:
                 $baseUnit = pow(1000, floor(log($number, 1000)));
@@ -232,12 +233,13 @@ if (!function_exists('convert_number_to_words')) {
                     $string .= $remainder < 100 ? $conjunction : $separator;
                     $string .= convert_number_to_words($remainder);
                 }
+
                 break;
         }
 
         if (null !== $fraction && is_numeric($fraction)) {
             $string .= $decimal;
-            $words = array();
+            $words = [];
             foreach (str_split((string) $fraction) as $number) {
                 $words[] = $dictionary[$number];
             }
@@ -256,6 +258,7 @@ if (!function_exists('generateTransactionId')) {
         // $year = $dt->year;
         $timestamp = $dt->minute . $dt->second . $dt->year;
         $transactionNumber = randomDigits($REFERENCE_RANDOM_NUMBER_LENGTH);
+
         return  $transactionNumber . $timestamp;
     }
 }
@@ -316,6 +319,7 @@ if (!function_exists('appsettings')) {
                     'nursing_service_category' => 4,
                     'misc_service_category_id' => 5,
                 ];
+
                 return env($envKey, $defaults[$key] ?? null);
             }
 
@@ -349,12 +353,13 @@ if (!function_exists('getThermalPrinterWidth')) {
     {
         $map = [
             'xp58' => '48mm',
-            'w58'  => '54mm',
-            'w76'  => '72mm',
-            'w80'  => '78mm',   // default — 80 mm roll
+            'w58' => '54mm',
+            'w76' => '72mm',
+            'w80' => '78mm',   // default — 80 mm roll
             'w112' => '104mm',
         ];
         $key = appsettings('thermal_printer_width') ?: 'w80';
+
         return $map[$key] ?? '78mm';
     }
 }
@@ -428,10 +433,10 @@ if (!function_exists('generateFileNo')) {
         // $fileNumber = randomDigits(REFERENCE_FILE_NUMBER_LENGTH);
         // return  $fileNumber . $timestamp;
         $p = \App\Models\Patient::orderBy('file_no', 'DESC')->first()->file_no;
+
         return $p + 1;
     }
 }
-
 
 if (!function_exists('generateCashPaymentTransaction')) {
 
@@ -441,10 +446,10 @@ if (!function_exists('generateCashPaymentTransaction')) {
         // $year = $dt->year;
         $tstamp = $dt->year . $dt->minute . $dt->second;
         $transNumber = randomDigits($CASH_TRANSACTION_NUMBER_LENGTH);
+
         return  $transNumber . $tstamp;
     }
 }
-
 
 // function getLabId($id)
 // {
@@ -458,6 +463,7 @@ if (!function_exists('showFileNumber')) {
     {
         $pfile = Patient::where('user_id', '=', $id)->first();
         $getItem = $pfile->file_no;
+
         return $getItem;
     }
 }
@@ -465,10 +471,11 @@ if (!function_exists('showFileNumber')) {
 $NAIRA_CODE = '₦';
 
 if (!function_exists('adjustBrightness')) {
-    function adjustBrightness($hex, $percent) {
+    function adjustBrightness($hex, $percent)
+    {
         $hex = str_replace('#', '', $hex);
         if (strlen($hex) == 3) {
-            $hex = $hex[0].$hex[0].$hex[1].$hex[1].$hex[2].$hex[2];
+            $hex = $hex[0] . $hex[0] . $hex[1] . $hex[1] . $hex[2] . $hex[2];
         }
         $r = hexdec(substr($hex, 0, 2));
         $g = hexdec(substr($hex, 2, 2));
@@ -476,19 +483,22 @@ if (!function_exists('adjustBrightness')) {
         $r = max(0, min(255, $r + ($r * $percent / 100)));
         $g = max(0, min(255, $g + ($g * $percent / 100)));
         $b = max(0, min(255, $b + ($b * $percent / 100)));
+
         return sprintf('#%02x%02x%02x', $r, $g, $b);
     }
 }
 
 if (!function_exists('hexToRgba')) {
-    function hexToRgba($hex, $alpha) {
+    function hexToRgba($hex, $alpha)
+    {
         $hex = str_replace('#', '', $hex);
         if (strlen($hex) == 3) {
-            $hex = $hex[0].$hex[0].$hex[1].$hex[1].$hex[2].$hex[2];
+            $hex = $hex[0] . $hex[0] . $hex[1] . $hex[1] . $hex[2] . $hex[2];
         }
         $r = hexdec(substr($hex, 0, 2));
         $g = hexdec(substr($hex, 2, 2));
         $b = hexdec(substr($hex, 4, 2));
+
         return "rgba($r, $g, $b, $alpha)";
     }
 }

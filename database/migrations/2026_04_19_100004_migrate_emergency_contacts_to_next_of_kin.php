@@ -6,8 +6,7 @@ use Illuminate\Support\Facades\DB;
 /**
  * Migrate existing emergency_contact_* data into staff_next_of_kin table
  */
-return new class extends Migration
-{
+return new class () extends Migration {
     public function up(): void
     {
         $staff = DB::table('staff')

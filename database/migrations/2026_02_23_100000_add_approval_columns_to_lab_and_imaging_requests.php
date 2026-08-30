@@ -112,13 +112,20 @@ class AddApprovalColumnsToLabAndImagingRequests extends Migration
     {
         $columns = [
             'pending_result', 'pending_result_data', 'pending_attachments',
-            'approved_by', 'approved_at', 'rejected_by', 'rejected_at', 'rejection_reason'
+            'approved_by', 'approved_at', 'rejected_by', 'rejected_at', 'rejection_reason',
         ];
 
         Schema::table('lab_service_requests', function (Blueprint $table) use ($columns) {
             // Drop FKs first
-            try { $table->dropForeign(['approved_by']); } catch (\Exception $e) {}
-            try { $table->dropForeign(['rejected_by']); } catch (\Exception $e) {}
+            try {
+                $table->dropForeign(['approved_by']);
+            } catch (\Exception $e) {
+            }
+
+            try {
+                $table->dropForeign(['rejected_by']);
+            } catch (\Exception $e) {
+            }
 
             foreach ($columns as $col) {
                 if (Schema::hasColumn('lab_service_requests', $col)) {
@@ -128,8 +135,15 @@ class AddApprovalColumnsToLabAndImagingRequests extends Migration
         });
 
         Schema::table('imaging_service_requests', function (Blueprint $table) use ($columns) {
-            try { $table->dropForeign(['approved_by']); } catch (\Exception $e) {}
-            try { $table->dropForeign(['rejected_by']); } catch (\Exception $e) {}
+            try {
+                $table->dropForeign(['approved_by']);
+            } catch (\Exception $e) {
+            }
+
+            try {
+                $table->dropForeign(['rejected_by']);
+            } catch (\Exception $e) {
+            }
 
             foreach ($columns as $col) {
                 if (Schema::hasColumn('imaging_service_requests', $col)) {

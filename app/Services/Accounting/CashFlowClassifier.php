@@ -3,7 +3,6 @@
 namespace App\Services\Accounting;
 
 use App\Models\Accounting\Account;
-use App\Models\Accounting\AccountClass;
 
 /**
  * CashFlowClassifier
@@ -213,7 +212,7 @@ class CashFlowClassifier
     {
         return array_keys(array_filter(
             self::CASH_FLOW_MAP,
-            fn($activity) => $activity === $cashFlowActivity
+            fn ($activity) => $activity === $cashFlowActivity
         ));
     }
 
@@ -222,7 +221,10 @@ class CashFlowClassifier
      */
     public function isOperating(?string $category): bool
     {
-        if (!$category) return true; // Default assumption
+        if (!$category) {
+            return true;
+        } // Default assumption
+
         return ($self::CASH_FLOW_MAP[$category] ?? self::OPERATING) === self::OPERATING;
     }
 
@@ -231,7 +233,10 @@ class CashFlowClassifier
      */
     public function isInvesting(?string $category): bool
     {
-        if (!$category) return false;
+        if (!$category) {
+            return false;
+        }
+
         return ($self::CASH_FLOW_MAP[$category] ?? null) === self::INVESTING;
     }
 
@@ -240,7 +245,10 @@ class CashFlowClassifier
      */
     public function isFinancing(?string $category): bool
     {
-        if (!$category) return false;
+        if (!$category) {
+            return false;
+        }
+
         return ($self::CASH_FLOW_MAP[$category] ?? null) === self::FINANCING;
     }
 }

@@ -37,12 +37,14 @@ class SyncHmoExecutivesGroup extends Command
         $cacheKey = 'hmo_executives_group_sync';
         if (!$this->option('force') && Cache::has($cacheKey)) {
             $this->info('Sync was run recently. Use --force to sync anyway.');
+
             return 0;
         }
 
         $this->info('Starting HMO Executives group sync...');
 
         DB::beginTransaction();
+
         try {
             // Find or create the HMO Executives group
             $conversation = ChatConversation::firstOrCreate(
@@ -119,6 +121,7 @@ class SyncHmoExecutivesGroup extends Command
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString(),
             ]);
+
             return 1;
         }
     }

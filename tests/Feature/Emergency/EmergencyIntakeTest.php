@@ -27,7 +27,6 @@ class EmergencyIntakeTest extends TestCase
         $this->assertDatabaseHas('patients', ['id' => $patient->id]);
     }
 
-
     /** @test */
     public function test_emergency_patient_routed_to_correct_workbench()
     {

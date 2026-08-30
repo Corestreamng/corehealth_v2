@@ -2,18 +2,18 @@
 
 namespace App\Services\Accounting;
 
-use App\Models\Accounting\PatientDeposit;
-use App\Models\Accounting\PatientDepositApplication;
+use App\Models\Accounting\Account;
 use App\Models\Accounting\JournalEntry;
 use App\Models\Accounting\JournalEntryLine;
-use App\Models\Accounting\Account;
-use App\Models\Patient;
+use App\Models\Accounting\PatientDeposit;
+use App\Models\Accounting\PatientDepositApplication;
 use App\Models\Billing\Bill;
+use App\Models\Patient;
 use App\Models\Payment;
+use Carbon\Carbon;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Collection;
-use Carbon\Carbon;
 
 /**
  * Patient Deposit Service
@@ -37,6 +37,7 @@ class PatientDepositService
     public function createDeposit(array $data): PatientDeposit
     {
         DB::beginTransaction();
+
         try {
             // Generate deposit number if not provided
             if (empty($data['deposit_number'])) {
@@ -69,6 +70,7 @@ class PatientDepositService
                 'error' => $e->getMessage(),
                 'data' => $data,
             ]);
+
             throw $e;
         }
     }
@@ -87,6 +89,7 @@ class PatientDepositService
         }
 
         DB::beginTransaction();
+
         try {
             // Create journal entry for application
             // DEBIT: Patient Deposits Liability (2200)
@@ -171,6 +174,7 @@ class PatientDepositService
                 'payment_id' => $payment->id,
                 'error' => $e->getMessage(),
             ]);
+
             throw $e;
         }
     }
@@ -193,6 +197,7 @@ class PatientDepositService
         }
 
         DB::beginTransaction();
+
         try {
             // Refund method - observer will create JE
             $deposit->refund($amount, $reason, $refundedBy ?? auth()->id());
@@ -213,6 +218,7 @@ class PatientDepositService
                 'deposit_id' => $deposit->id,
                 'error' => $e->getMessage(),
             ]);
+
             throw $e;
         }
     }
@@ -230,6 +236,7 @@ class PatientDepositService
         }
 
         DB::beginTransaction();
+
         try {
             // Create reversal journal entry
             $originalJe = $application->journalEntry;
@@ -290,6 +297,7 @@ class PatientDepositService
                 'application_id' => $application->id,
                 'error' => $e->getMessage(),
             ]);
+
             throw $e;
         }
     }

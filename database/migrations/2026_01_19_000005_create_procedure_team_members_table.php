@@ -30,7 +30,7 @@ class CreateProcedureTeamMembersTable extends Migration
                 'perfusionist',
                 'radiologist',
                 'pathologist',
-                'other'
+                'other',
             ]);
             $table->string('custom_role', 100)->nullable(); // Used when role = 'other'
 

@@ -4,7 +4,6 @@ namespace App\Console\Commands;
 
 use App\Models\RouteMetadata;
 use Illuminate\Console\Command;
-use Illuminate\Support\Facades\DB;
 
 /**
  * Scan Routes Command
@@ -15,6 +14,7 @@ use Illuminate\Support\Facades\DB;
 class ScanRoutesCommand extends Command
 {
     protected $signature = 'routes:scan {--fresh : Clear existing metadata before scanning}';
+
     protected $description = 'Scan sidebar navigation and populate route metadata for search';
 
     /**

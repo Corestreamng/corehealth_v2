@@ -27,7 +27,7 @@ class AddGovernanceColumnsToStoresTable extends Migration
         Schema::table('stores', function (Blueprint $table) {
             // Core governance discriminator — drives lane policy, workbench tabs, Gate checks.
             // Plan §4: central | pharmacy_hub | pharmacy_satellite | department | ward | other
-            if (! Schema::hasColumn('stores', 'distribution_role')) {
+            if (!Schema::hasColumn('stores', 'distribution_role')) {
                 $table->string('distribution_role', 30)->default('other')->after('store_type');
             }
 
@@ -35,13 +35,13 @@ class AddGovernanceColumnsToStoresTable extends Migration
             //   ward_id       → NursingShift.ward_id  → resolveFromShift()
             //   department_id → User.department_id     → resolveFromUser()
             //   parent_store_id → satellite's hub      → replenishment lane default
-            if (! Schema::hasColumn('stores', 'department_id')) {
+            if (!Schema::hasColumn('stores', 'department_id')) {
                 $table->unsignedBigInteger('department_id')->nullable()->after('distribution_role');
             }
-            if (! Schema::hasColumn('stores', 'ward_id')) {
+            if (!Schema::hasColumn('stores', 'ward_id')) {
                 $table->unsignedBigInteger('ward_id')->nullable()->after('department_id');
             }
-            if (! Schema::hasColumn('stores', 'parent_store_id')) {
+            if (!Schema::hasColumn('stores', 'parent_store_id')) {
                 $table->unsignedBigInteger('parent_store_id')->nullable()->after('ward_id');
             }
 
@@ -49,10 +49,10 @@ class AddGovernanceColumnsToStoresTable extends Migration
             // allows_direct_patient_dispense: Gate check in dispenseMedication() L933
             // requires_shift_context:         Gate check in administerInjection() L775,
             //                                 administerImmunization() L1185, addConsumableBill() L1745
-            if (! Schema::hasColumn('stores', 'allows_direct_patient_dispense')) {
+            if (!Schema::hasColumn('stores', 'allows_direct_patient_dispense')) {
                 $table->boolean('allows_direct_patient_dispense')->default(false)->after('parent_store_id');
             }
-            if (! Schema::hasColumn('stores', 'requires_shift_context')) {
+            if (!Schema::hasColumn('stores', 'requires_shift_context')) {
                 $table->boolean('requires_shift_context')->default(false)->after('allows_direct_patient_dispense');
             }
         });
@@ -89,9 +89,20 @@ class AddGovernanceColumnsToStoresTable extends Migration
     {
         Schema::table('stores', function (Blueprint $table) {
             // Drop foreign keys before columns
-            try { $table->dropForeign(['department_id']); } catch (\Exception $e) {}
-            try { $table->dropForeign(['ward_id']); } catch (\Exception $e) {}
-            try { $table->dropForeign(['parent_store_id']); } catch (\Exception $e) {}
+            try {
+                $table->dropForeign(['department_id']);
+            } catch (\Exception $e) {
+            }
+
+            try {
+                $table->dropForeign(['ward_id']);
+            } catch (\Exception $e) {
+            }
+
+            try {
+                $table->dropForeign(['parent_store_id']);
+            } catch (\Exception $e) {
+            }
 
             $columns = [
                 'distribution_role',

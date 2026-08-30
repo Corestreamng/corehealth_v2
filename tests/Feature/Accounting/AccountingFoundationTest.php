@@ -2,8 +2,6 @@
 
 namespace Tests\Feature\Accounting;
 
-use App\Models\Accounting\Account;
-
 use App\Models\User;
 use Tests\TestCase;
 

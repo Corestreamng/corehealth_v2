@@ -3,8 +3,7 @@
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Support\Facades\DB;
 
-return new class extends Migration
-{
+return new class () extends Migration {
     /**
      * Create clinic_note_templates table for reusable clinical note templates by clinic.
      * Templates can be used by doctors to pre-fill clinical notes with standard content.

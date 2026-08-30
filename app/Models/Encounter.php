@@ -2,18 +2,18 @@
 
 namespace App\Models;
 
+use App\Traits\IsAuditable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use OwenIt\Auditing\Contracts\Auditable;
 
-use App\Traits\IsAuditable;
-
 class Encounter extends Model implements Auditable
 {
     use IsAuditable;
 
-    use HasFactory, SoftDeletes;
+    use HasFactory;
+    use SoftDeletes;
     use \OwenIt\Auditing\Auditable;
 
     protected $fillable = [
@@ -43,11 +43,9 @@ class Encounter extends Model implements Auditable
         return $this->hasOne(DeathRecord::class);
     }
 
-
-
     protected $casts = [
-        'completed'    => 'boolean',
-        'started_at'   => 'datetime',
+        'completed' => 'boolean',
+        'started_at' => 'datetime',
         'completed_at' => 'datetime',
     ];
 

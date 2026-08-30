@@ -15,8 +15,7 @@ use Illuminate\Support\Facades\Schema;
  * - Budget Management
  * - Financial KPI Dashboard
  */
-return new class extends Migration
-{
+return new class () extends Migration {
     public function up()
     {
         // ==========================================

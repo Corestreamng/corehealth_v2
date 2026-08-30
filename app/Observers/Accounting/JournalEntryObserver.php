@@ -36,18 +36,22 @@ class JournalEntryObserver
         switch ($entry->status) {
             case JournalEntry::STATUS_PENDING:
                 $notificationService->notifyEntrySubmitted($entry);
+
                 break;
 
             case JournalEntry::STATUS_APPROVED:
                 $notificationService->notifyEntryApproved($entry);
+
                 break;
 
             case JournalEntry::STATUS_REJECTED:
                 $notificationService->notifyEntryRejected($entry);
+
                 break;
 
             case JournalEntry::STATUS_POSTED:
                 $notificationService->notifyEntryPosted($entry);
+
                 break;
 
             case JournalEntry::STATUS_REVERSED:

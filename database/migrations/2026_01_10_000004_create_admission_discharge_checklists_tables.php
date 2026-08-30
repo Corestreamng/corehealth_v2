@@ -31,8 +31,7 @@ use Illuminate\Support\Facades\Schema;
  * @see App\Models\DischargeChecklist
  * @see App\Models\ChecklistTemplate
  */
-return new class extends Migration
-{
+return new class () extends Migration {
     /**
      * Run the migrations.
      */
@@ -73,7 +72,7 @@ return new class extends Migration
                 'pending',      // Not started
                 'in_progress',  // Some items completed
                 'completed',    // All required items done
-                'waived'        // Bypassed with reason
+                'waived',        // Bypassed with reason
             ])->default('pending');
 
             // Completion tracking
@@ -121,7 +120,7 @@ return new class extends Migration
                 'pending',      // Not started
                 'in_progress',  // Some items completed
                 'completed',    // All required items done
-                'waived'        // Bypassed with reason
+                'waived',        // Bypassed with reason
             ])->default('pending');
 
             // Completion tracking
@@ -166,7 +165,7 @@ return new class extends Migration
                 'admitted',             // Bed assigned, fully admitted
                 'discharge_requested',  // Doctor requested discharge
                 'discharge_checklist',  // Completing discharge checklist
-                'discharged'            // Fully discharged
+                'discharged',            // Fully discharged
             ])->default('admitted')->after('status')
                 ->comment('Workflow status for admission/discharge process');
         });

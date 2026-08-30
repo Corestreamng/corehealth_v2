@@ -2,14 +2,12 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Patient;
-use App\Models\VitalSign;
 use App\Models\Encounter;
-use App\Models\ProductRequest;
-use App\Models\LabServiceRequest;
 use App\Models\ImagingServiceRequest;
-use Illuminate\Http\Request;
-use Carbon\Carbon;
+use App\Models\LabServiceRequest;
+use App\Models\Patient;
+use App\Models\ProductRequest;
+use App\Models\VitalSign;
 
 /**
  * Shared Clinical Context Controller
@@ -259,6 +257,7 @@ class ClinicalContextController extends Controller
 
         return response()->json($procedures->map(function ($p) {
             $status = $p->procedure_status ?? 'requested';
+
             return [
                 'id' => $p->id,
                 'service_name' => $p->is_free_form ? $p->free_form_name : ($p->service ? $p->service->service_name : ($p->procedureDefinition ? $p->procedureDefinition->name : 'N/A')),

@@ -4,9 +4,8 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-
-
 use OwenIt\Auditing\Contracts\Auditable;
+
 class Service extends Model implements Auditable
 {
     use HasFactory;
@@ -37,23 +36,23 @@ class Service extends Model implements Auditable
         'consult_cycle_duration',
     ];
 
-
     protected $casts = [
         'result_template_v2' => 'array',
     ];
 
-    public function requests(){
-        return $this->hasMany(ProductOrServiceRequest::class,'product_id','id');
+    public function requests()
+    {
+        return $this->hasMany(ProductOrServiceRequest::class, 'product_id', 'id');
     }
 
     public function price()
     {
-        return $this->hasOne(ServicePrice::class,'service_id','id');
+        return $this->hasOne(ServicePrice::class, 'service_id', 'id');
     }
 
     public function category()
     {
-        return $this->belongsTo(ServiceCategory::class, 'category_id','id');
+        return $this->belongsTo(ServiceCategory::class, 'category_id', 'id');
     }
 
     /**
@@ -62,7 +61,7 @@ class Service extends Model implements Auditable
      */
     public function prices()
     {
-        return $this->belongsTo(price_list::class,'price_list_id','id');
+        return $this->belongsTo(price_list::class, 'price_list_id', 'id');
     }
 
     /**

@@ -18,7 +18,8 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  */
 class BankReconciliation extends Model
 {
-    use HasFactory, SoftDeletes;
+    use HasFactory;
+    use SoftDeletes;
 
     protected $table = 'bank_reconciliations';
 

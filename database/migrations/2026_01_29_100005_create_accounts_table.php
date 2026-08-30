@@ -18,8 +18,7 @@ use Illuminate\Support\Facades\Schema;
  * System accounts are protected from deletion and represent core accounts.
  * Bank accounts link to the existing banks table for reconciliation.
  */
-return new class extends Migration
-{
+return new class () extends Migration {
     /**
      * Run the migrations.
      */

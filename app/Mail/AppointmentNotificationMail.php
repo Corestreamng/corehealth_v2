@@ -14,10 +14,13 @@ use Illuminate\Queue\SerializesModels;
  */
 class AppointmentNotificationMail extends Mailable
 {
-    use Queueable, SerializesModels;
+    use Queueable;
+    use SerializesModels;
 
     public string $htmlContent;
+
     public string $fromAddr;
+
     public string $fromNameStr;
 
     public function __construct(string $subject, string $htmlContent, string $fromAddress, string $fromName)

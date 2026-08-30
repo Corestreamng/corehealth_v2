@@ -2,8 +2,8 @@
 
 namespace Database\Seeders;
 
-use App\Models\ServiceCategory;
 use App\Models\ApplicationStatu;
+use App\Models\ServiceCategory;
 use Illuminate\Database\Seeder;
 
 class ProcedureServiceCategorySeeder extends Seeder

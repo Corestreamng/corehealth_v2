@@ -2,9 +2,9 @@
 
 namespace App\Models;
 
+use App\Traits\IsAuditable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use App\Traits\IsAuditable;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use OwenIt\Auditing\Contracts\Auditable;
 
@@ -79,13 +79,13 @@ class Procedure extends Model implements Auditable
     /**
      * Status constants
      */
-    const STATUS_REQUESTED = 'requested';
-    const STATUS_SCHEDULED = 'scheduled';
-    const STATUS_IN_PROGRESS = 'in_progress';
-    const STATUS_COMPLETED = 'completed';
-    const STATUS_CANCELLED = 'cancelled';
+    public const STATUS_REQUESTED = 'requested';
+    public const STATUS_SCHEDULED = 'scheduled';
+    public const STATUS_IN_PROGRESS = 'in_progress';
+    public const STATUS_COMPLETED = 'completed';
+    public const STATUS_CANCELLED = 'cancelled';
 
-    const STATUSES = [
+    public const STATUSES = [
         'requested' => 'Requested',
         'scheduled' => 'Scheduled',
         'in_progress' => 'In Progress',
@@ -96,11 +96,11 @@ class Procedure extends Model implements Auditable
     /**
      * Priority constants
      */
-    const PRIORITY_ROUTINE = 'routine';
-    const PRIORITY_URGENT = 'urgent';
-    const PRIORITY_EMERGENCY = 'emergency';
+    public const PRIORITY_ROUTINE = 'routine';
+    public const PRIORITY_URGENT = 'urgent';
+    public const PRIORITY_EMERGENCY = 'emergency';
 
-    const PRIORITIES = [
+    public const PRIORITIES = [
         'routine' => 'Routine',
         'urgent' => 'Urgent',
         'emergency' => 'Emergency',
@@ -109,12 +109,12 @@ class Procedure extends Model implements Auditable
     /**
      * Outcome constants
      */
-    const OUTCOME_SUCCESSFUL = 'successful';
-    const OUTCOME_COMPLICATIONS = 'complications';
-    const OUTCOME_ABORTED = 'aborted';
-    const OUTCOME_CONVERTED = 'converted';
+    public const OUTCOME_SUCCESSFUL = 'successful';
+    public const OUTCOME_COMPLICATIONS = 'complications';
+    public const OUTCOME_ABORTED = 'aborted';
+    public const OUTCOME_CONVERTED = 'converted';
 
-    const OUTCOMES = [
+    public const OUTCOMES = [
         'successful' => 'Successful',
         'complications' => 'Complications Occurred',
         'aborted' => 'Aborted',
@@ -124,15 +124,15 @@ class Procedure extends Model implements Auditable
     /**
      * Consent constants
      */
-    const CONSENT_PENDING = 'pending';
-    const CONSENT_OBTAINED = 'obtained';
-    const CONSENT_WAIVED = 'waived';
-    const CONSENT_NOT_REQUIRED = 'not_required';
+    public const CONSENT_PENDING = 'pending';
+    public const CONSENT_OBTAINED = 'obtained';
+    public const CONSENT_WAIVED = 'waived';
+    public const CONSENT_NOT_REQUIRED = 'not_required';
 
-    const CONSENT_STATUSES = [
-        'pending'      => 'Pending',
-        'obtained'     => 'Obtained',
-        'waived'       => 'Waived',
+    public const CONSENT_STATUSES = [
+        'pending' => 'Pending',
+        'obtained' => 'Obtained',
+        'waived' => 'Waived',
         'not_required' => 'Not Required',
     ];
 
@@ -400,6 +400,7 @@ class Procedure extends Model implements Auditable
         if ($this->actual_start_time && $this->actual_end_time) {
             return $this->actual_start_time->diffInMinutes($this->actual_end_time);
         }
+
         return null;
     }
 
@@ -419,6 +420,7 @@ class Procedure extends Model implements Auditable
         if ($this->is_free_form) {
             return $this->free_form_name . ' [Free-form]';
         }
+
         return optional($this->service)->service_name ?? 'Procedure';
     }
 }

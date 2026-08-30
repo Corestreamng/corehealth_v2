@@ -86,7 +86,6 @@ class PaymentObserverTest extends TestCase
         $this->assertNotNull($payment->id);
     }
 
-
     /** @test */
     public function test_journal_entry_debit_credit_sums_balance()
     {
@@ -105,9 +104,4 @@ class PaymentObserverTest extends TestCase
         ]);
         $this->assertNotNull($payment->id);
     }
-
-
-
-
-
 }

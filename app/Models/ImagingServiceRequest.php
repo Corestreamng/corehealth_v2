@@ -2,55 +2,55 @@
 
 namespace App\Models;
 
+use App\Traits\IsAuditable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use App\Traits\IsAuditable;
 use Illuminate\Database\Eloquent\SoftDeletes;
-
-
 use OwenIt\Auditing\Contracts\Auditable;
 
 class ImagingServiceRequest extends Model implements Auditable
 {
     use IsAuditable;
 
-    use HasFactory, SoftDeletes;
+    use HasFactory;
+    use SoftDeletes;
     use \OwenIt\Auditing\Auditable;
-protected $fillable = [
-        'service_request_id',
-        'billed_by',
-        'billed_date',
-        'self_perform_intent',
-        'service_id',
-        'encounter_id',
-        'patient_id',
-        'result',
-        'result_data',
-        'attachments',
-        'result_date',
-        'result_by',
-        'doctor_id',
-        'note',
-        'status',
-        'priority',
-        'deleted_by',
-        'deletion_reason',
-        'pending_result',
-        'pending_result_data',
-        'pending_attachments',
-        'approved_by',
-        'approved_at',
-        'rejected_by',
-        'rejected_at',
-        'rejection_reason',
-        'is_free_form',
-        'free_form_name',
-        'treatment_plan_id',
-        'treatment_plan_name',
-        'audited_at',
-        'audited_by',
-        'audit_notes',
-    ];
+
+    protected $fillable = [
+            'service_request_id',
+            'billed_by',
+            'billed_date',
+            'self_perform_intent',
+            'service_id',
+            'encounter_id',
+            'patient_id',
+            'result',
+            'result_data',
+            'attachments',
+            'result_date',
+            'result_by',
+            'doctor_id',
+            'note',
+            'status',
+            'priority',
+            'deleted_by',
+            'deletion_reason',
+            'pending_result',
+            'pending_result_data',
+            'pending_attachments',
+            'approved_by',
+            'approved_at',
+            'rejected_by',
+            'rejected_at',
+            'rejection_reason',
+            'is_free_form',
+            'free_form_name',
+            'treatment_plan_id',
+            'treatment_plan_name',
+            'audited_at',
+            'audited_by',
+            'audit_notes',
+        ];
 
     protected $appends = ['service_name'];
 

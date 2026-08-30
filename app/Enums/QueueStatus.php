@@ -12,61 +12,61 @@ namespace App\Enums;
  */
 class QueueStatus
 {
-    const CANCELLED       = 0;
-    const WAITING         = 1;  // Queued, no vitals taken yet
-    const VITALS_PENDING  = 2;  // Nurse picked up patient
-    const READY           = 3;  // Vitals done, waiting for doctor
-    const IN_CONSULTATION = 4;  // Doctor started encounter
-    const COMPLETED       = 5;  // Encounter finalized
-    const SCHEDULED       = 6;  // Future appointment (not yet in queue)
-    const NO_SHOW         = 7;  // Patient didn't arrive
+    public const CANCELLED = 0;
+    public const WAITING = 1;  // Queued, no vitals taken yet
+    public const VITALS_PENDING = 2;  // Nurse picked up patient
+    public const READY = 3;  // Vitals done, waiting for doctor
+    public const IN_CONSULTATION = 4;  // Doctor started encounter
+    public const COMPLETED = 5;  // Encounter finalized
+    public const SCHEDULED = 6;  // Future appointment (not yet in queue)
+    public const NO_SHOW = 7;  // Patient didn't arrive
 
     /**
      * Human-readable labels indexed by status integer.
      */
-    const LABELS = [
-        self::CANCELLED       => 'Cancelled',
-        self::WAITING         => 'Waiting',
-        self::VITALS_PENDING  => 'Vitals Pending',
-        self::READY           => 'Ready',
+    public const LABELS = [
+        self::CANCELLED => 'Cancelled',
+        self::WAITING => 'Waiting',
+        self::VITALS_PENDING => 'Vitals Pending',
+        self::READY => 'Ready',
         self::IN_CONSULTATION => 'In Consultation',
-        self::COMPLETED       => 'Completed',
-        self::SCHEDULED       => 'Scheduled',
-        self::NO_SHOW         => 'No-Show',
+        self::COMPLETED => 'Completed',
+        self::SCHEDULED => 'Scheduled',
+        self::NO_SHOW => 'No-Show',
     ];
 
     /**
      * Bootstrap badge CSS classes for each status.
      */
-    const BADGE_CLASSES = [
-        self::CANCELLED       => 'bg-secondary',
-        self::WAITING         => 'bg-warning text-dark',
-        self::VITALS_PENDING  => 'bg-info text-white',
-        self::READY           => 'bg-primary',
+    public const BADGE_CLASSES = [
+        self::CANCELLED => 'bg-secondary',
+        self::WAITING => 'bg-warning text-dark',
+        self::VITALS_PENDING => 'bg-info text-white',
+        self::READY => 'bg-primary',
         self::IN_CONSULTATION => 'bg-success',
-        self::COMPLETED       => 'bg-dark',
-        self::SCHEDULED       => 'bg-purple',
-        self::NO_SHOW         => 'bg-danger',
+        self::COMPLETED => 'bg-dark',
+        self::SCHEDULED => 'bg-purple',
+        self::NO_SHOW => 'bg-danger',
     ];
 
     /**
      * Hex colors for calendar events and charts.
      */
-    const COLORS = [
-        self::CANCELLED       => '#6c757d', // grey
-        self::WAITING         => '#ffc107', // yellow
-        self::VITALS_PENDING  => '#17a2b8', // cyan
-        self::READY           => '#0d6efd', // blue
+    public const COLORS = [
+        self::CANCELLED => '#6c757d', // grey
+        self::WAITING => '#ffc107', // yellow
+        self::VITALS_PENDING => '#17a2b8', // cyan
+        self::READY => '#0d6efd', // blue
         self::IN_CONSULTATION => '#198754', // green
-        self::COMPLETED       => '#212529', // dark
-        self::SCHEDULED       => '#6f42c1', // purple
-        self::NO_SHOW         => '#dc3545', // red
+        self::COMPLETED => '#212529', // dark
+        self::SCHEDULED => '#6f42c1', // purple
+        self::NO_SHOW => '#dc3545', // red
     ];
 
     /**
      * Statuses that represent "active" queue entries (visible in live queue).
      */
-    const ACTIVE = [
+    public const ACTIVE = [
         self::WAITING,
         self::VITALS_PENDING,
         self::READY,
@@ -76,7 +76,7 @@ class QueueStatus
     /**
      * Statuses that represent terminal/resolved states.
      */
-    const TERMINAL = [
+    public const TERMINAL = [
         self::CANCELLED,
         self::COMPLETED,
         self::NO_SHOW,

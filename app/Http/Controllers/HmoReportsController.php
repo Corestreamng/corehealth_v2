@@ -3,22 +3,21 @@
 namespace App\Http\Controllers;
 
 use App\Helpers\HmoHelper;
+use App\Models\Bank;
 use App\Models\Hmo;
 use App\Models\HmoRemittance;
-use App\Models\ProductOrServiceRequest;
-use App\Models\PatientProfile;
 use App\Models\Patient;
-use App\Models\ServiceCategory;
-use App\Models\ProductCategory;
-use App\Models\Service;
 use App\Models\Product;
-use App\Models\Bank;
+use App\Models\ProductCategory;
+use App\Models\ProductOrServiceRequest;
+use App\Models\Service;
+use App\Models\ServiceCategory;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Yajra\DataTables\Facades\DataTables;
-use Barryvdh\DomPDF\Facade\Pdf;
 
 class HmoReportsController extends Controller
 {
@@ -31,6 +30,7 @@ class HmoReportsController extends Controller
         $serviceCategories = ServiceCategory::orderBy('category_name')->get();
         $productCategories = ProductCategory::orderBy('category_name')->get();
         $banks = Bank::where('is_active', true)->orderBy('name')->get();
+
         return view('admin.hmo.reports', compact('hmos', 'serviceCategories', 'productCategories', 'banks'));
     }
 
@@ -44,9 +44,9 @@ class HmoReportsController extends Controller
             'service.price',
             'product.price',
             'validator',
-            'staff'
+            'staff',
         ])
-        ->whereHas('user.patient_profile', function($q) {
+        ->whereHas('user.patient_profile', function ($q) {
             $q->whereNotNull('hmo_id');
         })
         ->whereNotNull('coverage_mode')
@@ -54,7 +54,7 @@ class HmoReportsController extends Controller
 
         // Apply filters
         if ($request->filled('hmo_id')) {
-            $query->whereHas('user.patient_profile', function($q) use ($request) {
+            $query->whereHas('user.patient_profile', function ($q) use ($request) {
                 $q->where('hmo_id', $request->hmo_id);
             });
         }
@@ -81,14 +81,14 @@ class HmoReportsController extends Controller
 
         // Service category filter
         if ($request->filled('service_category_id')) {
-            $query->whereHas('service', function($q) use ($request) {
+            $query->whereHas('service', function ($q) use ($request) {
                 $q->where('category_id', $request->service_category_id);
             });
         }
 
         // Product category filter
         if ($request->filled('product_category_id')) {
-            $query->whereHas('product', function($q) use ($request) {
+            $query->whereHas('product', function ($q) use ($request) {
                 $q->where('category_id', $request->product_category_id);
             });
         }
@@ -129,8 +129,13 @@ class HmoReportsController extends Controller
                 return $claim->created_at ? Carbon::parse($claim->created_at)->format('M d, Y') : 'N/A';
             })
             ->addColumn('item_type', function ($claim) {
-                if ($claim->product_id) return 'Product';
-                if ($claim->service_id) return 'Service';
+                if ($claim->product_id) {
+                    return 'Product';
+                }
+                if ($claim->service_id) {
+                    return 'Service';
+                }
+
                 return 'N/A';
             })
             ->addColumn('item_name', function ($claim) {
@@ -149,6 +154,7 @@ class HmoReportsController extends Controller
                 if ($claim->service_id && $claim->service && $claim->service->price) {
                     return number_format($claim->service->price->sale_price, 2);
                 }
+
                 return '0.00';
             })
             ->addColumn('claim_amount', function ($claim) {
@@ -158,8 +164,9 @@ class HmoReportsController extends Controller
                 $statusMap = [
                     'pending' => '<span class="badge badge-warning">Pending</span>',
                     'approved' => '<span class="badge badge-success">Approved</span>',
-                    'rejected' => '<span class="badge badge-danger">Rejected</span>'
+                    'rejected' => '<span class="badge badge-danger">Rejected</span>',
                 ];
+
                 return $statusMap[$claim->validation_status] ?? '<span class="badge badge-secondary">Unknown</span>';
             })
             ->addColumn('validated_by_name', function ($claim) {
@@ -169,12 +176,14 @@ class HmoReportsController extends Controller
                 if ($claim->submitted_to_hmo_at) {
                     return '<span class="badge badge-info">Submitted</span>';
                 }
+
                 return '<span class="badge badge-secondary">Not Submitted</span>';
             })
             ->addColumn('payment_badge', function ($claim) {
                 if ($claim->hmo_remittance_id) {
                     return '<span class="badge badge-success">Paid</span>';
                 }
+
                 return '<span class="badge badge-warning">Unpaid</span>';
             })
             ->rawColumns(['status_badge', 'submission_badge', 'payment_badge'])
@@ -192,7 +201,7 @@ class HmoReportsController extends Controller
 
         foreach ($hmos as $hmo) {
             // Get all approved claims for this HMO
-            $claims = ProductOrServiceRequest::whereHas('user.patient_profile', function($q) use ($hmo) {
+            $claims = ProductOrServiceRequest::whereHas('user.patient_profile', function ($q) use ($hmo) {
                 $q->where('hmo_id', $hmo->id);
             })
             ->whereNotNull('coverage_mode')
@@ -213,7 +222,7 @@ class HmoReportsController extends Controller
                 'current' => 0,    // 0-30 days
                 '31_60' => 0,      // 31-60 days
                 '61_90' => 0,      // 61-90 days
-                'over_90' => 0     // 90+ days
+                'over_90' => 0,     // 90+ days
             ];
 
             foreach ($claims->whereNull('hmo_remittance_id') as $claim) {
@@ -251,7 +260,7 @@ class HmoReportsController extends Controller
                 'total_claims' => collect($outstandingData)->sum('total_claims'),
                 'total_paid' => collect($outstandingData)->sum('paid'),
                 'total_outstanding' => collect($outstandingData)->sum('outstanding'),
-            ]
+            ],
         ]);
     }
 
@@ -265,7 +274,7 @@ class HmoReportsController extends Controller
         $claims = ProductOrServiceRequest::with([
             'service.price',
             'product.price',
-            'validator'
+            'validator',
         ])
         ->where('user_id', $patient->user_id)
         ->whereNotNull('coverage_mode')
@@ -280,7 +289,7 @@ class HmoReportsController extends Controller
                 'hmo_no' => $patient->hmo_no,
                 'hmo_name' => $patient->hmo->name ?? 'N/A',
             ],
-            'claims' => $claims->map(function($claim) {
+            'claims' => $claims->map(function ($claim) {
                 return [
                     'id' => $claim->id,
                     'date' => $claim->created_at ? Carbon::parse($claim->created_at)->format('M d, Y H:i') : 'N/A',
@@ -300,7 +309,7 @@ class HmoReportsController extends Controller
                 'approved_count' => $claims->where('validation_status', 'approved')->count(),
                 'rejected_count' => $claims->where('validation_status', 'rejected')->count(),
                 'pending_count' => $claims->where('validation_status', 'pending')->count(),
-            ]
+            ],
         ]);
     }
 
@@ -322,9 +331,9 @@ class HmoReportsController extends Controller
             ->get();
 
         // Group by HMO
-        $byHmo = $claims->groupBy(function($claim) {
+        $byHmo = $claims->groupBy(function ($claim) {
             return $claim->user->patient_profile->hmo->name ?? 'Unknown';
-        })->map(function($group, $hmoName) {
+        })->map(function ($group, $hmoName) {
             return [
                 'hmo_name' => $hmoName,
                 'total_claims' => $group->sum('claims_amount'),
@@ -397,6 +406,7 @@ class HmoReportsController extends Controller
                 if ($rem->period_from && $rem->period_to) {
                     return Carbon::parse($rem->period_from)->format('M d') . ' - ' . Carbon::parse($rem->period_to)->format('M d, Y');
                 }
+
                 return '-';
             })
             ->addColumn('created_by_name', function ($rem) {
@@ -449,7 +459,7 @@ class HmoReportsController extends Controller
             // If claim_ids are provided, link them to this remittance
             if ($request->filled('claim_ids') && is_array($request->claim_ids)) {
                 ProductOrServiceRequest::whereIn('id', $request->claim_ids)
-                    ->whereHas('user.patient_profile', function($q) use ($request) {
+                    ->whereHas('user.patient_profile', function ($q) use ($request) {
                         $q->where('hmo_id', $request->hmo_id);
                     })
                     ->update(['hmo_remittance_id' => $remittance->id]);
@@ -460,13 +470,14 @@ class HmoReportsController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => 'Remittance recorded successfully',
-                'data' => $remittance
+                'data' => $remittance,
             ]);
         } catch (\Exception $e) {
             DB::rollBack();
+
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to record remittance: ' . $e->getMessage()
+                'message' => 'Failed to record remittance: ' . $e->getMessage(),
             ], 500);
         }
     }
@@ -497,7 +508,7 @@ class HmoReportsController extends Controller
                 'created_by' => userfullname($remittance->created_by),
                 'created_at' => Carbon::parse($remittance->created_at)->format('M d, Y H:i'),
             ],
-            'claims' => $remittance->claims->map(function($claim) {
+            'claims' => $remittance->claims->map(function ($claim) {
                 return [
                     'id' => $claim->id,
                     'patient' => userfullname($claim->user_id),
@@ -543,7 +554,7 @@ class HmoReportsController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Remittance updated successfully',
-            'data' => $remittance
+            'data' => $remittance,
         ]);
     }
 
@@ -562,7 +573,7 @@ class HmoReportsController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => 'Remittance deleted successfully'
+            'message' => 'Remittance deleted successfully',
         ]);
     }
 
@@ -628,7 +639,7 @@ class HmoReportsController extends Controller
 
         // Apply same filters as getClaimsReport
         if ($request->filled('hmo_id')) {
-            $query->whereHas('user.patient_profile', function($q) use ($request) {
+            $query->whereHas('user.patient_profile', function ($q) use ($request) {
                 $q->where('hmo_id', $request->hmo_id);
             });
         }
@@ -672,7 +683,7 @@ class HmoReportsController extends Controller
                 'generated_at' => Carbon::now()->format('M d, Y H:i'),
                 'generated_by' => userfullname(Auth::id()),
             ],
-            'claims' => $claims->map(function($claim, $index) {
+            'claims' => $claims->map(function ($claim, $index) {
                 return [
                     'sn' => $index + 1,
                     'patient_name' => userfullname($claim->user_id),
@@ -713,7 +724,7 @@ class HmoReportsController extends Controller
 
         // Apply filters
         if ($request->filled('hmo_id')) {
-            $query->whereHas('user.patient_profile', function($q) use ($request) {
+            $query->whereHas('user.patient_profile', function ($q) use ($request) {
                 $q->where('hmo_id', $request->hmo_id);
             });
         }
@@ -739,7 +750,7 @@ class HmoReportsController extends Controller
             'Content-Disposition' => "attachment; filename=\"$filename\"",
         ];
 
-        $callback = function() use ($claims) {
+        $callback = function () use ($claims) {
             $file = fopen('php://output', 'w');
 
             // Header row
@@ -798,7 +809,7 @@ class HmoReportsController extends Controller
         $search = $request->input('q', '');
 
         $patients = Patient::with(['user', 'hmo'])
-            ->whereHas('user', function($q) use ($search) {
+            ->whereHas('user', function ($q) use ($search) {
                 $q->where('fname', 'like', "%$search%")
                   ->orWhere('lname', 'like', "%$search%");
             })
@@ -807,7 +818,7 @@ class HmoReportsController extends Controller
             ->limit(20)
             ->get();
 
-        return response()->json($patients->map(function($p) {
+        return response()->json($patients->map(function ($p) {
             return [
                 'id' => $p->id,
                 'text' => userfullname($p->user_id) . ' (' . ($p->file_no ?? 'No File#') . ')',
@@ -841,8 +852,9 @@ class HmoReportsController extends Controller
             ->orderByDesc('total_revenue')
             ->limit(10)
             ->get()
-            ->map(function($item) {
+            ->map(function ($item) {
                 $service = Service::with('category')->find($item->service_id);
+
                 return [
                     'name' => $service ? $service->service_name : 'Unknown',
                     'category' => $service && $service->category ? $service->category->category_name : 'Uncategorized',
@@ -862,8 +874,9 @@ class HmoReportsController extends Controller
             ->orderByDesc('total_revenue')
             ->limit(10)
             ->get()
-            ->map(function($item) {
+            ->map(function ($item) {
                 $product = Product::with('category')->find($item->product_id);
+
                 return [
                     'name' => $product ? $product->product_name : 'Unknown',
                     'category' => $product && $product->category ? $product->category->category_name : 'Uncategorized',
@@ -935,7 +948,7 @@ class HmoReportsController extends Controller
 
         // Filter by HMO
         if ($request->filled('hmo_id')) {
-            $query->whereHas('user.patient_profile', function($q) use ($request) {
+            $query->whereHas('user.patient_profile', function ($q) use ($request) {
                 $q->where('hmo_id', $request->hmo_id);
             });
         }
@@ -945,7 +958,7 @@ class HmoReportsController extends Controller
             if ($request->auth_status === 'with_code') {
                 $query->whereNotNull('auth_code')->where('auth_code', '!=', '');
             } elseif ($request->auth_status === 'without_code') {
-                $query->where(function($q) {
+                $query->where(function ($q) {
                     $q->whereNull('auth_code')->orWhere('auth_code', '');
                 });
             }
@@ -983,6 +996,7 @@ class HmoReportsController extends Controller
                 if ($claim->auth_code) {
                     return '<span class="badge badge-success">' . $claim->auth_code . '</span>';
                 }
+
                 return '<span class="badge badge-secondary">No Code</span>';
             })
             ->addColumn('claim_amount', function ($claim) {
@@ -992,8 +1006,9 @@ class HmoReportsController extends Controller
                 $statusMap = [
                     'pending' => '<span class="badge badge-warning">Pending</span>',
                     'approved' => '<span class="badge badge-success">Approved</span>',
-                    'rejected' => '<span class="badge badge-danger">Rejected</span>'
+                    'rejected' => '<span class="badge badge-danger">Rejected</span>',
                 ];
+
                 return $statusMap[$claim->validation_status] ?? '<span class="badge badge-secondary">Unknown</span>';
             })
             ->rawColumns(['auth_code_display', 'status_badge'])
@@ -1016,7 +1031,7 @@ class HmoReportsController extends Controller
 
         // Apply filters
         if ($request->filled('hmo_id')) {
-            $query->whereHas('user.patient_profile', function($q) use ($request) {
+            $query->whereHas('user.patient_profile', function ($q) use ($request) {
                 $q->where('hmo_id', $request->hmo_id);
             });
         }
@@ -1085,7 +1100,7 @@ class HmoReportsController extends Controller
         $claims = ProductOrServiceRequest::with([
             'service.price',
             'product.price',
-            'validator'
+            'validator',
         ])
         ->where('user_id', $patient->user_id)
         ->whereNotNull('coverage_mode')
@@ -1110,7 +1125,7 @@ class HmoReportsController extends Controller
                 'hmo_no' => $patient->hmo_no,
                 'hmo_name' => $patient->hmo->name ?? 'N/A',
             ],
-            'claims' => $claims->map(function($claim, $index) {
+            'claims' => $claims->map(function ($claim, $index) {
                 return [
                     'sn' => $index + 1,
                     'date' => $claim->created_at ? Carbon::parse($claim->created_at)->format('M d, Y') : 'N/A',

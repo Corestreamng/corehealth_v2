@@ -2,7 +2,6 @@
 
 namespace Tests\Feature\HR;
 
-use App\Models\Staff;
 use App\Models\User;
 use Tests\TestCase;
 

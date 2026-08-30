@@ -17,7 +17,7 @@ class BankControllerTest extends TestCase
         $response->assertStatus(200);
         $response->assertJsonStructure([
             'success',
-            'banks'
+            'banks',
         ]);
     }
 }

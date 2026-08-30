@@ -18,7 +18,7 @@ class StaffSalaryProfileItem extends Model implements Auditable
         'pay_head_id',
         'calculation_type',
         'calculation_base',
-        'value'
+        'value',
     ];
 
     protected $casts = [
@@ -51,6 +51,7 @@ class StaffSalaryProfileItem extends Model implements Auditable
                 $base = $this->calculation_base === PayHead::BASE_BASIC_SALARY
                     ? $basicSalary
                     : $grossSalary;
+
                 return round($base * ($this->value / 100), 2);
 
             case PayHead::CALC_FIXED:
@@ -80,6 +81,7 @@ class StaffSalaryProfileItem extends Model implements Auditable
             $base = $this->calculation_base === PayHead::BASE_BASIC_SALARY
                 ? 'Basic Salary'
                 : 'Gross Salary';
+
             return "{$this->value}% of {$base}";
         }
 

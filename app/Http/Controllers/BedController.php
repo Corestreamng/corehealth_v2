@@ -3,16 +3,16 @@
 namespace App\Http\Controllers;
 
 use App\Models\Bed;
-use App\Models\Ward;
-use App\Models\servicePrice;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Validator;
 use App\Models\Service;
-use Yajra\DataTables\DataTables;
-use RealRashid\SweetAlert\Facades\Alert;
+use App\Models\servicePrice;
+use App\Models\Ward;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Validator;
+use RealRashid\SweetAlert\Facades\Alert;
+use Yajra\DataTables\DataTables;
 
 class BedController extends Controller
 {
@@ -43,6 +43,7 @@ class BedController extends Controller
                     'reserved' => 'info',
                 ];
                 $color = $statusColors[$bed->bed_status] ?? 'secondary';
+
                 return '<span class="badge badge-' . $color . '">' . ucfirst($bed->bed_status ?? 'available') . '</span>';
             })
             ->addColumn('edit', '<a href="{{ route(\'beds.edit\', $id)}}" class="btn btn-info btn-sm" ><i class="fa fa-pencil"></i> Edit</a>')
@@ -59,6 +60,7 @@ class BedController extends Controller
     public function create()
     {
         $wards = Ward::where('is_active', true)->orderBy('name')->get();
+
         return view('admin.beds.create', compact('wards'));
     }
 
@@ -91,40 +93,42 @@ class BedController extends Controller
                     $wardName = $ward ? $ward->name : $request->ward;
                 }
 
-                $bed_servie_entry                      = new service;
-                $bed_servie_entry->user_id             = Auth::user()->id;
-                $bed_servie_entry->category_id         = appsettings('bed_service_category_id', 1);
-                $bed_servie_entry->service_name        = 'Bed ' . $request->name . " " . $wardName . " " . $request->unit;
-                $bed_servie_entry->service_code        = strtoupper('Bed ' . $request->name . " " . $wardName . " " . $request->unit);
-                $bed_servie_entry->status              = 1;
-                $bed_servie_entry->price_assign        = 1;
+                $bed_servie_entry = new service();
+                $bed_servie_entry->user_id = Auth::user()->id;
+                $bed_servie_entry->category_id = appsettings('bed_service_category_id', 1);
+                $bed_servie_entry->service_name = 'Bed ' . $request->name . " " . $wardName . " " . $request->unit;
+                $bed_servie_entry->service_code = strtoupper('Bed ' . $request->name . " " . $wardName . " " . $request->unit);
+                $bed_servie_entry->status = 1;
+                $bed_servie_entry->price_assign = 1;
                 $bed_servie_entry->save();
 
-                $bed_entry_service_price_entry                 = new ServicePrice();
-                $bed_entry_service_price_entry->service_id     = $bed_servie_entry->id;
-                $bed_entry_service_price_entry->cost_price     = $request->price;
-                $bed_entry_service_price_entry->sale_price     = $request->price;
-                $bed_entry_service_price_entry->max_discount   = $request->max_discount ?? 0;
-                $bed_entry_service_price_entry->status         = 1;
+                $bed_entry_service_price_entry = new ServicePrice();
+                $bed_entry_service_price_entry->service_id = $bed_servie_entry->id;
+                $bed_entry_service_price_entry->cost_price = $request->price;
+                $bed_entry_service_price_entry->sale_price = $request->price;
+                $bed_entry_service_price_entry->max_discount = $request->max_discount ?? 0;
+                $bed_entry_service_price_entry->status = 1;
                 $bed_entry_service_price_entry->save();
 
-                $bed              = new Bed;
-                $bed->name        = $request->name;
-                $bed->ward        = $wardName;
-                $bed->ward_id     = $request->ward_id;
-                $bed->unit        = $request->unit;
-                $bed->price       = $request->price;
-                $bed->bed_status  = $request->bed_status ?? 'available';
-                $bed->service_id  = $bed_servie_entry->id;
+                $bed = new Bed();
+                $bed->name = $request->name;
+                $bed->ward = $wardName;
+                $bed->ward_id = $request->ward_id;
+                $bed->unit = $request->unit;
+                $bed->price = $request->price;
+                $bed->bed_status = $request->bed_status ?? 'available';
+                $bed->service_id = $bed_servie_entry->id;
 
                 if ($bed->save()) {
                     $msg = 'The bed [' . $bed->name . '] was successfully Saved.';
                     DB::commit();
+
                     return redirect()->route('beds.index')->withMessage($msg)->withMessageType('success');
                 }
             }
         } catch (\Exception $e) {
             DB::rollBack();
+
             return redirect()->back()->withInput()->with('error', $e->getMessage());
             Log::error($e->getMessage(), ['exception' => $e]);
         }
@@ -136,7 +140,9 @@ class BedController extends Controller
      * @param  \App\Models\Bed  $bed
      * @return \Illuminate\Http\Response
      */
-    public function show(Bed $bed) {}
+    public function show(Bed $bed)
+    {
+    }
 
     /**
      * Show the form for editing the specified resource.
@@ -147,6 +153,7 @@ class BedController extends Controller
     public function edit(Bed $bed)
     {
         $wards = Ward::where('is_active', true)->orderBy('name')->get();
+
         return view('admin.beds.edit', compact('bed', 'wards'));
     }
 
@@ -216,16 +223,17 @@ class BedController extends Controller
                     ]
                 );
 
-                $bed->name        = $request->name;
-                $bed->ward        = $wardName;
-                $bed->ward_id     = $request->ward_id;
-                $bed->price       = $request->price;
-                $bed->unit        = $request->unit;
-                $bed->bed_status  = $request->bed_status ?? $bed->bed_status ?? 'available';
+                $bed->name = $request->name;
+                $bed->ward = $wardName;
+                $bed->ward_id = $request->ward_id;
+                $bed->price = $request->price;
+                $bed->unit = $request->unit;
+                $bed->bed_status = $request->bed_status ?? $bed->bed_status ?? 'available';
 
                 if ($bed->update()) {
                     $msg = 'The bed [' . $bed->name . '] was successfully Updated.';
                     Alert::success('Success ', $msg);
+
                     return redirect()->route('beds.index')->withMessage($msg)->withMessageType('success');
                 }
             }

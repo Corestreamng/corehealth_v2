@@ -2,8 +2,8 @@
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 class AddConsentTemplateToApplicationStatusTable extends Migration
 {
@@ -53,14 +53,14 @@ HTML;
             ->whereNull('consent_template')
             ->orWhere('consent_template', '')
             ->update([
-                'consent_template' => $defaultTemplate
+                'consent_template' => $defaultTemplate,
             ]);
-            
+
         // If there are no settings records, let's also update the first record just in case
         $first = DB::table('application_status')->first();
         if ($first && (empty($first->consent_template))) {
             DB::table('application_status')->where('id', $first->id)->update([
-                'consent_template' => $defaultTemplate
+                'consent_template' => $defaultTemplate,
             ]);
         }
     }

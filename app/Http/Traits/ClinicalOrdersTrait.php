@@ -2,22 +2,18 @@
 
 namespace App\Http\Traits;
 
-use App\Models\Encounter;
-use App\Models\LabServiceRequest;
-use App\Models\ImagingServiceRequest;
-use App\Models\ProductRequest;
-use App\Models\Procedure;
-use App\Models\ProcedureItem;
-use App\Models\ProductOrServiceRequest;
-use App\Models\Service;
-use App\Models\Product;
-use App\Models\Patient;
-use App\Models\ServicePrice;
-use App\Models\AdmissionRequest;
-use App\Models\DoctorQueue;
-use App\Models\QueueStatus;
-use App\Services\QueueStatusService;
 use App\Helpers\HmoHelper;
+use App\Models\AdmissionRequest;
+use App\Models\Encounter;
+use App\Models\ImagingServiceRequest;
+use App\Models\LabServiceRequest;
+use App\Models\Patient;
+use App\Models\Procedure;
+use App\Models\Product;
+use App\Models\ProductOrServiceRequest;
+use App\Models\ProductRequest;
+use App\Models\Service;
+use App\Models\ServicePrice;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -48,10 +44,10 @@ trait ClinicalOrdersTrait
         } else {
             $lab->service_id = $serviceId;
         }
-        $lab->note         = $note;
-        $lab->patient_id   = $patientId;
+        $lab->note = $note;
+        $lab->patient_id = $patientId;
         $lab->encounter_id = $encounterId; // null for nurse
-        $lab->doctor_id    = Auth::id();
+        $lab->doctor_id = Auth::id();
 
         if (isset($extra['service_request_id'])) {
             $lab->service_request_id = $extra['service_request_id'];
@@ -83,6 +79,7 @@ trait ClinicalOrdersTrait
         $lab = LabServiceRequest::findOrFail($id);
         $lab->note = $note;
         $lab->save();
+
         return $lab;
     }
 
@@ -102,7 +99,7 @@ trait ClinicalOrdersTrait
             throw new \RuntimeException($check['reason']);
         }
 
-        $lab->deleted_by      = Auth::id();
+        $lab->deleted_by = Auth::id();
         $lab->deletion_reason = $reason ?? 'Removed by requester';
         $lab->save();
         $lab->delete();
@@ -132,10 +129,10 @@ trait ClinicalOrdersTrait
         } else {
             $imaging->service_id = $serviceId;
         }
-        $imaging->note         = $note;
-        $imaging->patient_id   = $patientId;
+        $imaging->note = $note;
+        $imaging->patient_id = $patientId;
         $imaging->encounter_id = $encounterId;
-        $imaging->doctor_id    = Auth::id();
+        $imaging->doctor_id = Auth::id();
 
         if (isset($extra['service_request_id'])) {
             $imaging->service_request_id = $extra['service_request_id'];
@@ -167,6 +164,7 @@ trait ClinicalOrdersTrait
         $imaging = ImagingServiceRequest::findOrFail($id);
         $imaging->note = $note;
         $imaging->save();
+
         return $imaging;
     }
 
@@ -186,7 +184,7 @@ trait ClinicalOrdersTrait
             throw new \RuntimeException($check['reason']);
         }
 
-        $imaging->deleted_by      = Auth::id();
+        $imaging->deleted_by = Auth::id();
         $imaging->deletion_reason = $reason ?? 'Removed by requester';
         $imaging->save();
         $imaging->delete();
@@ -216,10 +214,10 @@ trait ClinicalOrdersTrait
         } else {
             $presc->product_id = $productId;
         }
-        $presc->dose          = $dose ?? '';
-        $presc->patient_id    = $patientId;
-        $presc->encounter_id  = $encounterId;
-        $presc->doctor_id     = Auth::id();
+        $presc->dose = $dose ?? '';
+        $presc->patient_id = $patientId;
+        $presc->encounter_id = $encounterId;
+        $presc->doctor_id = Auth::id();
 
         if (isset($extra['status'])) {
             $presc->status = $extra['status'];
@@ -251,6 +249,7 @@ trait ClinicalOrdersTrait
         $presc = ProductRequest::findOrFail($id);
         $presc->dose = $dose ?? '';
         $presc->save();
+
         return $presc;
     }
 
@@ -266,7 +265,7 @@ trait ClinicalOrdersTrait
             throw new \RuntimeException($check['reason']);
         }
 
-        $presc->deleted_by      = Auth::id();
+        $presc->deleted_by = Auth::id();
         $presc->deletion_reason = $reason ?? 'Removed by requester';
         $presc->save();
         $presc->delete();
@@ -293,26 +292,26 @@ trait ClinicalOrdersTrait
 
         if ($isFreeForm) {
             $freeFormName = str_replace(' [Free-form]', '', substr((string)$serviceId, 3));
-            
+
             $procedure = new Procedure();
-            $procedure->is_free_form     = true;
-            $procedure->free_form_name   = $freeFormName;
-            $procedure->patient_id       = $patientId;
-            $procedure->encounter_id     = $encounterId;
-            $procedure->requested_by     = \Illuminate\Support\Facades\Auth::id();
-            $procedure->requested_on     = now();
-            $procedure->priority         = $data['priority'] ?? 'routine';
+            $procedure->is_free_form = true;
+            $procedure->free_form_name = $freeFormName;
+            $procedure->patient_id = $patientId;
+            $procedure->encounter_id = $encounterId;
+            $procedure->requested_by = \Illuminate\Support\Facades\Auth::id();
+            $procedure->requested_on = now();
+            $procedure->priority = $data['priority'] ?? 'routine';
             $procedure->procedure_status = Procedure::STATUS_REQUESTED;
-            $procedure->pre_notes        = $data['pre_notes'] ?? null;
-            $procedure->pre_notes_by     = !empty($data['pre_notes']) ? \Illuminate\Support\Facades\Auth::id() : null;
+            $procedure->pre_notes = $data['pre_notes'] ?? null;
+            $procedure->pre_notes_by = !empty($data['pre_notes']) ? \Illuminate\Support\Facades\Auth::id() : null;
 
             if (!empty($data['scheduled_date'])) {
-                $procedure->scheduled_date   = $data['scheduled_date'];
+                $procedure->scheduled_date = $data['scheduled_date'];
                 $procedure->procedure_status = Procedure::STATUS_SCHEDULED;
             }
 
             $procedure->save();
-            
+
             // Skip billing entry for free form procedures
             return $procedure;
         }
@@ -325,18 +324,18 @@ trait ClinicalOrdersTrait
 
         // 1. Create Procedure record
         $procedure = new Procedure();
-        $procedure->service_id       = $service->id;
-        $procedure->patient_id       = $patientId;
-        $procedure->encounter_id     = $encounterId;         // null for nurse
-        $procedure->requested_by     = Auth::id();
-        $procedure->requested_on     = now();
-        $procedure->priority         = $data['priority'] ?? 'routine';
+        $procedure->service_id = $service->id;
+        $procedure->patient_id = $patientId;
+        $procedure->encounter_id = $encounterId;         // null for nurse
+        $procedure->requested_by = Auth::id();
+        $procedure->requested_on = now();
+        $procedure->priority = $data['priority'] ?? 'routine';
         $procedure->procedure_status = Procedure::STATUS_REQUESTED;
-        $procedure->pre_notes        = $data['pre_notes'] ?? null;
-        $procedure->pre_notes_by     = !empty($data['pre_notes']) ? Auth::id() : null;
+        $procedure->pre_notes = $data['pre_notes'] ?? null;
+        $procedure->pre_notes_by = !empty($data['pre_notes']) ? Auth::id() : null;
 
         if (!empty($data['scheduled_date'])) {
-            $procedure->scheduled_date   = $data['scheduled_date'];
+            $procedure->scheduled_date = $data['scheduled_date'];
             $procedure->procedure_status = Procedure::STATUS_SCHEDULED;
         }
 
@@ -367,29 +366,29 @@ trait ClinicalOrdersTrait
         $patient = Patient::find($patientId);
 
         $billing = new ProductOrServiceRequest();
-        $billing->type                 = 'service';
-        $billing->service_id           = $service->id;
-        $billing->user_id              = $patient->user_id;
-        $billing->staff_user_id        = Auth::id();
-        $billing->created_by           = Auth::id();
-        $billing->order_date           = now();
+        $billing->type = 'service';
+        $billing->service_id = $service->id;
+        $billing->user_id = $patient->user_id;
+        $billing->staff_user_id = Auth::id();
+        $billing->created_by = Auth::id();
+        $billing->order_date = now();
 
         if ($encounterId) {
-            $billing->encounter_id          = $encounterId;
-            $billing->admission_request_id  = $admissionRequestId;
+            $billing->encounter_id = $encounterId;
+            $billing->admission_request_id = $admissionRequestId;
         }
 
         if ($extra['is_bundle_item'] ?? false) {
             $billing->payable_amount = 0;
-            $billing->claims_amount  = 0;
-            $billing->coverage_mode  = $extra['coverage_mode'] ?? 'none';
-            $billing->parent_id      = $extra['parent_id'] ?? null;
+            $billing->claims_amount = 0;
+            $billing->coverage_mode = $extra['coverage_mode'] ?? 'none';
+            $billing->parent_id = $extra['parent_id'] ?? null;
             $billing->is_bundle_item = true;
         } elseif ($coverage && ($coverage['coverage_mode'] ?? '') === 'hmo') {
             $billing->payable_amount = $coverage['payable_amount'];
             $billing->claims_amount = $coverage['claims_amount'];
             $billing->coverage_mode = $coverage['coverage_mode'];
-            $billing->hmo_id        = $coverage['hmo_id'] ?? null;
+            $billing->hmo_id = $coverage['hmo_id'] ?? null;
             $billing->validation_status = $coverage['validation_status'] ?? 'pending';
         } else {
             $billing->payable_amount = $basePrice;
@@ -426,9 +425,9 @@ trait ClinicalOrdersTrait
         }
 
         $procedure->cancellation_reason = $reason ?? 'Removed by requester';
-        $procedure->cancelled_by        = Auth::id();
-        $procedure->cancelled_at        = now();
-        $procedure->procedure_status     = Procedure::STATUS_CANCELLED;
+        $procedure->cancelled_by = Auth::id();
+        $procedure->cancelled_at = now();
+        $procedure->procedure_status = Procedure::STATUS_CANCELLED;
         $procedure->save();
         $procedure->delete();
     }
@@ -486,15 +485,15 @@ trait ClinicalOrdersTrait
     protected function addSingleNonPharm(array $data, int $patientId, ?int $encounterId, array $extra = []): \App\Models\NonPharmOrder
     {
         $order = new \App\Models\NonPharmOrder();
-        $order->patient_id    = $patientId;
-        $order->encounter_id  = $encounterId;
-        $order->requested_by  = Auth::id();
-        $order->category      = $data['category'] ?? 'general';
+        $order->patient_id = $patientId;
+        $order->encounter_id = $encounterId;
+        $order->requested_by = Auth::id();
+        $order->category = $data['category'] ?? 'general';
         $order->target_executor = $data['target_executor'] ?? 'nurse';
-        $order->instructions  = $data['instructions'] ?? null;
-        $order->frequency     = $data['frequency'] ?? null;
-        $order->duration      = $data['duration'] ?? null;
-        $order->status        = 'active';
+        $order->instructions = $data['instructions'] ?? null;
+        $order->frequency = $data['frequency'] ?? null;
+        $order->duration = $data['duration'] ?? null;
+        $order->status = 'active';
 
         if (isset($extra['treatment_plan_id'])) {
             $order->treatment_plan_id = $extra['treatment_plan_id'];
@@ -502,6 +501,7 @@ trait ClinicalOrdersTrait
         }
 
         $order->save();
+
         return $order;
     }
 
@@ -521,14 +521,14 @@ trait ClinicalOrdersTrait
     protected function addSingleReferral(array $data, int $patientId, ?int $encounterId, array $extra = []): \App\Models\SpecialistReferral
     {
         $referral = new \App\Models\SpecialistReferral();
-        $referral->patient_id           = $patientId;
-        $referral->encounter_id         = $encounterId;
-        $referral->referring_doctor_id   = Auth::id();
-        $referral->referral_type        = $data['referral_type'] ?? 'internal';
-        $referral->reason               = $data['reason'] ?? null;
-        $referral->clinical_summary     = $data['clinical_summary'] ?? null;
-        $referral->urgency              = $data['urgency'] ?? 'routine';
-        $referral->status               = 'pending';
+        $referral->patient_id = $patientId;
+        $referral->encounter_id = $encounterId;
+        $referral->referring_doctor_id = Auth::id();
+        $referral->referral_type = $data['referral_type'] ?? 'internal';
+        $referral->reason = $data['reason'] ?? null;
+        $referral->clinical_summary = $data['clinical_summary'] ?? null;
+        $referral->urgency = $data['urgency'] ?? 'routine';
+        $referral->status = 'pending';
 
         if (isset($data['target_specialization_id'])) {
             $referral->target_specialization_id = $data['target_specialization_id'];
@@ -540,6 +540,7 @@ trait ClinicalOrdersTrait
         }
 
         $referral->save();
+
         return $referral;
     }
 
@@ -559,12 +560,12 @@ trait ClinicalOrdersTrait
     protected function addSingleAdmission(array $data, int $patientId, ?int $encounterId, array $extra = []): \App\Models\AdmissionRequest
     {
         $admission = new \App\Models\AdmissionRequest();
-        $admission->patient_id       = $patientId;
-        $admission->encounter_id     = $encounterId;
-        $admission->doctor_id        = Auth::id();
+        $admission->patient_id = $patientId;
+        $admission->encounter_id = $encounterId;
+        $admission->doctor_id = Auth::id();
         $admission->admission_reason = $data['admission_reason'] ?? null;
-        $admission->note             = $data['note'] ?? null;
-        $admission->priority         = $data['priority'] ?? 'routine';
+        $admission->note = $data['note'] ?? null;
+        $admission->priority = $data['priority'] ?? 'routine';
         $admission->admission_status = \App\Models\AdmissionRequest::STATUS_PENDING_CHECKLIST;
 
         if (isset($extra['treatment_plan_id'])) {
@@ -573,6 +574,7 @@ trait ClinicalOrdersTrait
         }
 
         $admission->save();
+
         return $admission;
     }
 
@@ -589,60 +591,79 @@ trait ClinicalOrdersTrait
         return DB::transaction(function () use ($planId, $patientId, $encounterId) {
             $plan = \App\Models\TreatmentPlan::with('items')->findOrFail($planId);
             $planExtra = [
-                'treatment_plan_id'   => $plan->id,
+                'treatment_plan_id' => $plan->id,
                 'treatment_plan_name' => $plan->name,
             ];
 
             $results = [
-                'labs'          => [],
-                'imaging'       => [],
+                'labs' => [],
+                'imaging' => [],
                 'prescriptions' => [],
-                'procedures'    => [],
-                'non_pharm'     => [],
-                'referrals'     => [],
-                'admissions'    => [],
+                'procedures' => [],
+                'non_pharm' => [],
+                'referrals' => [],
+                'admissions' => [],
             ];
 
             foreach ($plan->items as $item) {
                 switch ($item->item_type) {
                     case 'lab':
                         $results['labs'][] = $this->addSingleLab(
-                            $item->reference_id, $item->note, $patientId, $encounterId, $planExtra
+                            $item->reference_id,
+                            $item->note,
+                            $patientId,
+                            $encounterId,
+                            $planExtra
                         );
+
                         break;
                     case 'imaging':
                         $results['imaging'][] = $this->addSingleImaging(
-                            $item->reference_id, $item->note, $patientId, $encounterId, $planExtra
+                            $item->reference_id,
+                            $item->note,
+                            $patientId,
+                            $encounterId,
+                            $planExtra
                         );
+
                         break;
                     case 'medication':
                     case 'product':
                         $results['prescriptions'][] = $this->addSinglePrescription(
-                            $item->reference_id, $item->dose, $patientId, $encounterId, $planExtra
+                            $item->reference_id,
+                            $item->dose,
+                            $patientId,
+                            $encounterId,
+                            $planExtra
                         );
+
                         break;
                     case 'procedure':
                         $results['procedures'][] = $this->addSingleProcedure([
                             'service_id' => $item->reference_id,
-                            'priority'   => $item->priority ?? 'routine',
-                            'pre_notes'  => $item->note,
+                            'priority' => $item->priority ?? 'routine',
+                            'pre_notes' => $item->note,
                         ], $patientId, $encounterId, null, $planExtra);
+
                         break;
                     case 'non_pharm':
                         $results['non_pharm'][] = $this->addSingleNonPharm([
                             'instructions' => $item->note,
-                            'category'     => 'general',
+                            'category' => 'general',
                         ], $patientId, $encounterId, $planExtra);
+
                         break;
                     case 'referral':
                         $results['referrals'][] = $this->addSingleReferral([
                             'reason' => $item->note,
                         ], $patientId, $encounterId, $planExtra);
+
                         break;
                     case 'admission':
                         $results['admissions'][] = $this->addSingleAdmission([
                             'admission_reason' => $item->note,
                         ], $patientId, $encounterId, $planExtra);
+
                         break;
                     case 'encounter_note':
                         // Notes are associated at save-time via the notes widget,
@@ -661,19 +682,19 @@ trait ClinicalOrdersTrait
     protected function recentEncountersForPatient(int $patientId, int $limit = 5, ?int $exceptId = null): \Illuminate\Support\Collection
     {
         $encounters = Encounter::where('patient_id', $patientId)
-            ->when($exceptId, fn($q) => $q->where('id', '!=', $exceptId))
+            ->when($exceptId, fn ($q) => $q->where('id', '!=', $exceptId))
             ->orderByDesc('created_at')
             ->limit($limit)
             ->get();
 
         return $encounters->map(function ($enc) {
             return [
-                'id'         => $enc->id,
-                'date'       => $enc->created_at->format('d M Y, h:i A'),
-                'doctor'     => $enc->doctor_id ? userfullname($enc->doctor_id) : 'N/A',
-                'lab_count'  => LabServiceRequest::where('encounter_id', $enc->id)->count(),
+                'id' => $enc->id,
+                'date' => $enc->created_at->format('d M Y, h:i A'),
+                'doctor' => $enc->doctor_id ? userfullname($enc->doctor_id) : 'N/A',
+                'lab_count' => LabServiceRequest::where('encounter_id', $enc->id)->count(),
                 'imaging_count' => ImagingServiceRequest::where('encounter_id', $enc->id)->count(),
-                'rx_count'   => ProductRequest::where('encounter_id', $enc->id)->count(),
+                'rx_count' => ProductRequest::where('encounter_id', $enc->id)->count(),
                 'proc_count' => Procedure::where('encounter_id', $enc->id)->count(),
             ];
         });
@@ -690,26 +711,26 @@ trait ClinicalOrdersTrait
 
             // 1. Create Parent Billing Request
             $parentRequest = new ProductOrServiceRequest();
-            $parentRequest->user_id       = $patient->user_id;
+            $parentRequest->user_id = $patient->user_id;
             $parentRequest->staff_user_id = $staffId;
-            $parentRequest->created_by    = $staffId;
-            $parentRequest->service_id    = $combo->id;
-            $parentRequest->qty           = 1;
-            $parentRequest->encounter_id  = $encounterId;
-            $parentRequest->order_date    = now();
+            $parentRequest->created_by = $staffId;
+            $parentRequest->service_id = $combo->id;
+            $parentRequest->qty = 1;
+            $parentRequest->encounter_id = $encounterId;
+            $parentRequest->order_date = now();
 
             try {
                 $hmoData = HmoHelper::applyHmoTariff($patientId, null, $combo->id);
                 if ($hmoData) {
-                    $parentRequest->payable_amount   = $hmoData['payable_amount'];
-                    $parentRequest->claims_amount    = $hmoData['claims_amount'];
-                    $parentRequest->coverage_mode    = $hmoData['coverage_mode'];
+                    $parentRequest->payable_amount = $hmoData['payable_amount'];
+                    $parentRequest->claims_amount = $hmoData['claims_amount'];
+                    $parentRequest->coverage_mode = $hmoData['coverage_mode'];
                     $parentRequest->validation_status = $hmoData['validation_status'];
                 }
             } catch (\Exception $e) {
                 $price = ServicePrice::where('service_id', $combo->id)->value('sale_price') ?? 0;
                 $parentRequest->payable_amount = $price;
-                $parentRequest->coverage_mode  = 'cash';
+                $parentRequest->coverage_mode = 'cash';
             }
             $parentRequest->save();
 
@@ -721,70 +742,74 @@ trait ClinicalOrdersTrait
 
                 if ($bundleItem->item_type === 'service') {
                     $service = Service::find($bundleItem->item_id);
-                    if (!$service) continue;
+                    if (!$service) {
+                        continue;
+                    }
 
                     $childRequest = new ProductOrServiceRequest();
-                    $childRequest->user_id        = $patient->user_id;
-                    $childRequest->staff_user_id  = $staffId;
-                    $childRequest->created_by     = $staffId;
-                    $childRequest->service_id     = $service->id;
-                    $childRequest->qty            = $bundleItem->qty;
-                    $childRequest->encounter_id   = $encounterId;
+                    $childRequest->user_id = $patient->user_id;
+                    $childRequest->staff_user_id = $staffId;
+                    $childRequest->created_by = $staffId;
+                    $childRequest->service_id = $service->id;
+                    $childRequest->qty = $bundleItem->qty;
+                    $childRequest->encounter_id = $encounterId;
                     $childRequest->payable_amount = 0;
-                    $childRequest->claims_amount  = 0;
-                    $childRequest->coverage_mode  = $parentRequest->coverage_mode;
-                    $childRequest->parent_id      = $parentRequest->id;
+                    $childRequest->claims_amount = 0;
+                    $childRequest->coverage_mode = $parentRequest->coverage_mode;
+                    $childRequest->parent_id = $parentRequest->id;
                     $childRequest->is_bundle_item = true;
                     $childRequest->save();
 
                     if ($service->isLab()) {
                         $clinicalRecord = $this->addSingleLab($service->id, $bundleItem->note, $patientId, $encounterId, array_merge([
                             'service_request_id' => $childRequest->id,
-                            'status'             => 2,
-                            'billed_by'          => $staffId,
-                            'billed_date'        => now()
+                            'status' => 2,
+                            'billed_by' => $staffId,
+                            'billed_date' => now(),
                         ], $extra));
                     } elseif ($service->isImaging()) {
                         $clinicalRecord = $this->addSingleImaging($service->id, $bundleItem->note, $patientId, $encounterId, array_merge([
                             'service_request_id' => $childRequest->id,
-                            'status'             => 2,
-                            'billed_by'          => $staffId,
-                            'billed_date'        => now()
+                            'status' => 2,
+                            'billed_by' => $staffId,
+                            'billed_date' => now(),
                         ], $extra));
                     } elseif ($service->isProcedure()) {
                         $clinicalRecord = $this->addSingleProcedure([
                             'service_id' => $service->id,
-                            'priority'   => 'routine',
-                            'pre_notes'  => $bundleItem->note,
+                            'priority' => 'routine',
+                            'pre_notes' => $bundleItem->note,
                         ], $patientId, $encounterId, null, array_merge([
                             'is_bundle_item' => true,
-                            'parent_id'      => $parentRequest->id,
-                            'coverage_mode'  => $parentRequest->coverage_mode
+                            'parent_id' => $parentRequest->id,
+                            'coverage_mode' => $parentRequest->coverage_mode,
                         ], $extra));
                     }
                 } elseif ($bundleItem->item_type === 'product') {
                     $product = Product::find($bundleItem->item_id);
-                    if (!$product) continue;
+                    if (!$product) {
+                        continue;
+                    }
 
                     $childRequest = new ProductOrServiceRequest();
-                    $childRequest->user_id        = $patient->user_id;
-                    $childRequest->staff_user_id  = $staffId;
-                    $childRequest->created_by     = $staffId;
-                    $childRequest->product_id     = $product->id;
-                    $childRequest->qty            = $bundleItem->qty;
-                    $childRequest->encounter_id   = $encounterId;
+                    $childRequest->user_id = $patient->user_id;
+                    $childRequest->staff_user_id = $staffId;
+                    $childRequest->created_by = $staffId;
+                    $childRequest->product_id = $product->id;
+                    $childRequest->qty = $bundleItem->qty;
+                    $childRequest->encounter_id = $encounterId;
                     $childRequest->payable_amount = 0;
-                    $childRequest->claims_amount  = 0;
-                    $childRequest->coverage_mode  = $parentRequest->coverage_mode;
-                    $childRequest->parent_id      = $parentRequest->id;
+                    $childRequest->claims_amount = 0;
+                    $childRequest->coverage_mode = $parentRequest->coverage_mode;
+                    $childRequest->parent_id = $parentRequest->id;
                     $childRequest->is_bundle_item = true;
                     $childRequest->save();
 
                     $clinicalRecord = $this->addSinglePrescription($product->id, $bundleItem->dose, $patientId, $encounterId, array_merge([
-                        'status'             => 2,
-                        'billed_by'          => $staffId,
-                        'billed_date'        => now(),
-                        'product_request_id' => $childRequest->id
+                        'status' => 2,
+                        'billed_by' => $staffId,
+                        'billed_date' => now(),
+                        'product_request_id' => $childRequest->id,
                     ], $extra));
                 }
 
@@ -803,12 +828,12 @@ trait ClinicalOrdersTrait
     {
         return DB::transaction(function () use ($parentRequestId) {
             $parent = ProductOrServiceRequest::findOrFail($parentRequestId);
-            
+
             // Check if combo was already paid (payment_id not null means payment has been recorded)
             if ($parent->payment_id !== null) {
                 return [
                     'success' => false,
-                    'message' => 'Cannot remove paid combo. Contact billing for refund requests.'
+                    'message' => 'Cannot remove paid combo. Contact billing for refund requests.',
                 ];
             }
 
@@ -818,7 +843,7 @@ trait ClinicalOrdersTrait
             // Mark parent as removed
             $parent->update([
                 'removed_by' => $staffId,
-                'removed_at' => $removedAt
+                'removed_at' => $removedAt,
             ]);
 
             $childIds = ProductOrServiceRequest::where('parent_id', $parent->id)->pluck('id');
@@ -827,7 +852,7 @@ trait ClinicalOrdersTrait
             $childCount = ProductOrServiceRequest::whereIn('id', $childIds)
                 ->update([
                     'removed_by' => $staffId,
-                    'removed_at' => $removedAt
+                    'removed_at' => $removedAt,
                 ]);
 
             // Soft-delete linked clinical rows so they disappear from workbench/history tables
@@ -854,7 +879,7 @@ trait ClinicalOrdersTrait
             return [
                 'success' => true,
                 'message' => "Combo removed successfully. {$childCount} items removed.",
-                'parentRequestId' => $parent->id
+                'parentRequestId' => $parent->id,
             ];
         });
     }

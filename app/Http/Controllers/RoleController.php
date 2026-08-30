@@ -3,14 +3,13 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use App\Http\Controllers\Controller;
-use Spatie\Permission\Models\Role;
-use Spatie\Permission\Models\Permission;
-use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\DB;
-use Response;
-use Yajra\DataTables\DataTables;
+use Illuminate\Support\Facades\Validator;
 use RealRashid\SweetAlert\Facades\Alert;
+use Response;
+use Spatie\Permission\Models\Permission;
+use Spatie\Permission\Models\Role;
+use Yajra\DataTables\DataTables;
 
 class RoleController extends Controller
 {
@@ -32,7 +31,7 @@ class RoleController extends Controller
 
         return Datatables::of($role)
             ->addIndexColumn()
-            ->addColumn('edit',   '<a href="{{ route(\'roles.edit\', $id)}}" class="btn btn-info btn-sm" ><i class="fa fa-pencil"></i> Edit</a>')
+            ->addColumn('edit', '<a href="{{ route(\'roles.edit\', $id)}}" class="btn btn-info btn-sm" ><i class="fa fa-pencil"></i> Edit</a>')
             ->addColumn('delete', '<button type="button" class="delete-modal btn btn-danger btn-sm" data-toggle="modal" data-id="{{$id}}"><i class="fa fa-trash"></i> Delete</button>')
             ->rawColumns(['edit', 'delete'])
             ->make(true);
@@ -46,6 +45,7 @@ class RoleController extends Controller
     public function index(Request $request)
     {
         $permission = Permission::get();
+
         // $role = Role::find($request->id);
         // $rolePermissions = DB::table("role_has_permissions")->where("role_has_permissions.role_id",1)
         //     ->pluck('role_has_permissions.permission_id','role_has_permissions.permission_id')
@@ -62,6 +62,7 @@ class RoleController extends Controller
     public function create()
     {
         $permission = Permission::orderBy('name')->get();
+
         return view('admin.access.roles.create', compact('permission'));
     }
 
@@ -83,17 +84,19 @@ class RoleController extends Controller
         if ($v->fails()) {
             // return Response::json(array('errors' => $v->getMessageBag()->toArray()));
             Alert::error('Error Title', 'One or more information is needed.');
+
             return back()->with('errors', $v->messages()->all())->withInput();
         } else {
 
-            $role              = new Role;
-            $role->name        = $request->name;
+            $role = new Role();
+            $role->name = $request->name;
 
             if ($role->save()) {
                 $role->syncPermissions($request->permission);
                 // return response()->json($role);
                 $msg = 'The Role [' . $role->name . '] was successfully Saved.';
                 Alert::success('Success ', $msg);
+
                 return redirect()->route('roles.index')->withMessage($msg)->withMessageType('success');
             }
         }
@@ -123,6 +126,7 @@ class RoleController extends Controller
         $rolePermissions = DB::table("role_has_permissions")->where("role_has_permissions.role_id", $id)
             ->pluck('role_has_permissions.permission_id', 'role_has_permissions.permission_id')
             ->all();
+
         return view('admin.access.roles.edit', compact('role', 'permission', 'rolePermissions'));
     }
 
@@ -145,6 +149,7 @@ class RoleController extends Controller
         if ($v->fails()) {
             // return Response::json(array('errors' => $v->getMessageBag()->toArray()));
             Alert::error('Error Title', 'One or more information is needed.');
+
             return redirect()->back()->withInput()->with('errors', $v->messages()->all())->withInput();
         } else {
 
@@ -155,6 +160,7 @@ class RoleController extends Controller
 
             $msg = 'The Role [' . $role->name . '] was successfully updated.';
             Alert::success('Success ', $msg);
+
             return redirect()->route('roles.index')->withMessage($msg)->withMessageType('success');
             // return response()->json($role);
         }
@@ -169,6 +175,7 @@ class RoleController extends Controller
     public function destroy($id)
     {
         $role = DB::table("roles")->where('id', $id)->delete();
+
         return response()->json($role);
     }
 }

@@ -104,7 +104,7 @@ class LiabilityPaymentSchedule extends Model
     {
         return $query->whereBetween('due_date', [
             now()->startOfMonth()->toDateString(),
-            now()->endOfMonth()->toDateString()
+            now()->endOfMonth()->toDateString(),
         ])->where('status', self::STATUS_SCHEDULED);
     }
 

@@ -2,15 +2,13 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
+use App\Models\AdmissionRequest;
 use App\Models\Patient;
 use App\Models\Procedure;
-use App\Models\AdmissionRequest;
-use App\Services\StoreContextResolver;
 use App\Models\StoreContextRule;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\DB;
+use App\Services\StoreContextResolver;
 use Carbon\Carbon;
+use Illuminate\Http\Request;
 
 class SurgeryWorkbenchController extends Controller
 {
@@ -25,10 +23,10 @@ class SurgeryWorkbenchController extends Controller
         }
 
         // Store context resolution for consumable dispensing
-        $resolver              = app(StoreContextResolver::class);
-        $resolvedStore         = $resolver->resolve($user);
+        $resolver = app(StoreContextResolver::class);
+        $resolvedStore = $resolver->resolve($user);
         $contextFallbackAction = $resolvedStore ? null : StoreContextRule::fallbackAction();
-        $stores                = $resolver->candidateStores($user, 'ward');
+        $stores = $resolver->candidateStores($user, 'ward');
 
         return view('admin.surgery.workbench', compact('stores', 'resolvedStore', 'contextFallbackAction'));
     }
@@ -52,11 +50,11 @@ class SurgeryWorkbenchController extends Controller
             ->toArray();
 
         return response()->json([
-            'requested'   => $counts[Procedure::STATUS_REQUESTED]   ?? 0,
-            'scheduled'   => $counts[Procedure::STATUS_SCHEDULED]    ?? 0,
-            'in_progress' => $counts[Procedure::STATUS_IN_PROGRESS]  ?? 0,
-            'completed'   => $counts[Procedure::STATUS_COMPLETED]    ?? 0,
-            'cancelled'   => $counts[Procedure::STATUS_CANCELLED]    ?? 0,
+            'requested' => $counts[Procedure::STATUS_REQUESTED] ?? 0,
+            'scheduled' => $counts[Procedure::STATUS_SCHEDULED] ?? 0,
+            'in_progress' => $counts[Procedure::STATUS_IN_PROGRESS] ?? 0,
+            'completed' => $counts[Procedure::STATUS_COMPLETED] ?? 0,
+            'cancelled' => $counts[Procedure::STATUS_CANCELLED] ?? 0,
         ]);
     }
 
@@ -66,11 +64,11 @@ class SurgeryWorkbenchController extends Controller
      */
     public function getQueue(Request $request)
     {
-        $status    = $request->get('status');
-        $search    = $request->get('search');
-        $priority  = $request->get('priority');
-        $consent   = $request->get('consent');
-        $date      = $request->get('date');
+        $status = $request->get('status');
+        $search = $request->get('search');
+        $priority = $request->get('priority');
+        $consent = $request->get('consent');
+        $date = $request->get('date');
         $patientId = $request->get('patient_id');
 
         $query = Procedure::with([
@@ -144,26 +142,26 @@ class SurgeryWorkbenchController extends Controller
 
         $results = $procedures->map(function ($proc) {
             $patient = $proc->patient;
-            $user    = optional($patient)->user;
+            $user = optional($patient)->user;
 
             return [
-                'id'               => $proc->id,
-                'service_name'     => $proc->is_free_form ? ($proc->free_form_name . ' [Free-form]') : (optional($proc->service)->service_name ?? 'Procedure'),
-                'category'         => optional(optional($proc->procedureDefinition)->procedureCategory)->category_name ?? '',
+                'id' => $proc->id,
+                'service_name' => $proc->is_free_form ? ($proc->free_form_name . ' [Free-form]') : (optional($proc->service)->service_name ?? 'Procedure'),
+                'category' => optional(optional($proc->procedureDefinition)->procedureCategory)->category_name ?? '',
                 'procedure_status' => $proc->procedure_status,
-                'priority'         => $proc->priority,
-                'scheduled_date'   => $proc->scheduled_date ? $proc->scheduled_date->format('d M Y') : null,
-                'scheduled_time'   => $proc->scheduled_time,
-                'operating_room'   => $proc->operating_room,
-                'consent_status'   => $proc->consent_status,
-                'patient_id'       => optional($patient)->id,
-                'patient_name'     => $user ? trim("{$user->surname} {$user->firstname}") : 'Unknown',
-                'file_no'          => optional($patient)->file_no,
-                'hmo'              => optional(optional($patient)->hmo)->hmo_name ?? null,
-                'requested_by'     => optional($proc->requestedByUser)->name ?? null,
-                'requested_on'     => $proc->requested_on ? $proc->requested_on->format('d M Y') : null,
-                'team_count'       => $proc->teamMembers->count(),
-                'show_url'         => route('patient-procedures.show', $proc->id),
+                'priority' => $proc->priority,
+                'scheduled_date' => $proc->scheduled_date ? $proc->scheduled_date->format('d M Y') : null,
+                'scheduled_time' => $proc->scheduled_time,
+                'operating_room' => $proc->operating_room,
+                'consent_status' => $proc->consent_status,
+                'patient_id' => optional($patient)->id,
+                'patient_name' => $user ? trim("{$user->surname} {$user->firstname}") : 'Unknown',
+                'file_no' => optional($patient)->file_no,
+                'hmo' => optional(optional($patient)->hmo)->hmo_name ?? null,
+                'requested_by' => optional($proc->requestedByUser)->name ?? null,
+                'requested_on' => $proc->requested_on ? $proc->requested_on->format('d M Y') : null,
+                'team_count' => $proc->teamMembers->count(),
+                'show_url' => route('patient-procedures.show', $proc->id),
             ];
         });
 
@@ -188,15 +186,15 @@ class SurgeryWorkbenchController extends Controller
 
         $results = $procedures->map(function ($proc) {
             return [
-                'id'               => $proc->id,
-                'service_name'     => $proc->is_free_form ? ($proc->free_form_name . ' [Free-form]') : (optional($proc->service)->service_name ?? 'Procedure'),
-                'category'         => optional(optional($proc->procedureDefinition)->procedureCategory)->category_name ?? '',
+                'id' => $proc->id,
+                'service_name' => $proc->is_free_form ? ($proc->free_form_name . ' [Free-form]') : (optional($proc->service)->service_name ?? 'Procedure'),
+                'category' => optional(optional($proc->procedureDefinition)->procedureCategory)->category_name ?? '',
                 'procedure_status' => $proc->procedure_status,
-                'priority'         => $proc->priority,
-                'scheduled_date'   => $proc->scheduled_date ? $proc->scheduled_date->format('d M Y') : null,
-                'consent_status'   => $proc->consent_status,
-                'operating_room'   => $proc->operating_room,
-                'show_url'         => route('patient-procedures.show', $proc->id),
+                'priority' => $proc->priority,
+                'scheduled_date' => $proc->scheduled_date ? $proc->scheduled_date->format('d M Y') : null,
+                'consent_status' => $proc->consent_status,
+                'operating_room' => $proc->operating_room,
+                'show_url' => route('patient-procedures.show', $proc->id),
             ];
         });
 
@@ -250,13 +248,13 @@ class SurgeryWorkbenchController extends Controller
             ->toArray();
 
         $results = $patients->map(function ($patient) use ($procedureCounts, $nextScheduled, $admittedPatientIds) {
-            $user    = $patient->user;
-            $counts  = $procedureCounts->get($patient->id, collect());
+            $user = $patient->user;
+            $counts = $procedureCounts->get($patient->id, collect());
             $byStatus = $counts->pluck('cnt', 'procedure_status');
 
-            $nextProc     = optional($nextScheduled->get($patient->id, collect())->first());
-            $nextSvc      = $nextProc ? ($nextProc->is_free_form ? ($nextProc->free_form_name . ' [Free-form]') : (optional($nextProc->service)->service_name ?? 'Procedure')) : null;
-            $nextDate     = $nextProc->scheduled_date
+            $nextProc = optional($nextScheduled->get($patient->id, collect())->first());
+            $nextSvc = $nextProc ? ($nextProc->is_free_form ? ($nextProc->free_form_name . ' [Free-form]') : (optional($nextProc->service)->service_name ?? 'Procedure')) : null;
+            $nextDate = $nextProc->scheduled_date
                 ? Carbon::parse($nextProc->scheduled_date)->format('d M Y')
                 : null;
 
@@ -264,23 +262,23 @@ class SurgeryWorkbenchController extends Controller
             $age = $dob ? Carbon::parse($dob)->age : null;
 
             return [
-                'id'                   => $patient->id,
-                'user_id'              => $patient->user_id,
-                'name'                 => $user ? userfullname($patient->user_id) : 'Unknown',
-                'file_no'              => $patient->file_no,
-                'age'                  => $age,
-                'gender'               => $patient->sex ?? 'N/A',
-                'phone'                => $patient->phone_no ?? 'N/A',
-                'photo'                => $user && $user->filename ? asset('storage/image/user/' . $user->filename) : asset('assets/images/default-avatar.png'),
-                'hmo'                  => optional($patient->hmo)->hmo_name ?? null,
-                'is_admitted'          => in_array($patient->id, $admittedPatientIds),
+                'id' => $patient->id,
+                'user_id' => $patient->user_id,
+                'name' => $user ? userfullname($patient->user_id) : 'Unknown',
+                'file_no' => $patient->file_no,
+                'age' => $age,
+                'gender' => $patient->sex ?? 'N/A',
+                'phone' => $patient->phone_no ?? 'N/A',
+                'photo' => $user && $user->filename ? asset('storage/image/user/' . $user->filename) : asset('assets/images/default-avatar.png'),
+                'hmo' => optional($patient->hmo)->hmo_name ?? null,
+                'is_admitted' => in_array($patient->id, $admittedPatientIds),
                 // Surgery-specific
-                'active_procedures'    => (int) ($byStatus[Procedure::STATUS_IN_PROGRESS] ?? 0),
-                'scheduled_procedures' => (int) ($byStatus[Procedure::STATUS_SCHEDULED]   ?? 0),
-                'requested_procedures' => (int) ($byStatus[Procedure::STATUS_REQUESTED]   ?? 0),
-                'total_procedures'     => $counts->sum('cnt'),
-                'next_procedure_name'  => $nextSvc,
-                'next_scheduled_date'  => $nextDate,
+                'active_procedures' => (int) ($byStatus[Procedure::STATUS_IN_PROGRESS] ?? 0),
+                'scheduled_procedures' => (int) ($byStatus[Procedure::STATUS_SCHEDULED] ?? 0),
+                'requested_procedures' => (int) ($byStatus[Procedure::STATUS_REQUESTED] ?? 0),
+                'total_procedures' => $counts->sum('cnt'),
+                'next_procedure_name' => $nextSvc,
+                'next_scheduled_date' => $nextDate,
             ];
         });
 

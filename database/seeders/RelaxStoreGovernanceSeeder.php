@@ -2,8 +2,8 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Seeder;
 use App\Models\StoreLanePolicy;
+use Illuminate\Database\Seeder;
 
 class RelaxStoreGovernanceSeeder extends Seeder
 {
@@ -17,13 +17,13 @@ class RelaxStoreGovernanceSeeder extends Seeder
     {
         StoreLanePolicy::updateOrCreate(
             [
-                'source_role'      => 'central',
+                'source_role' => 'central',
                 'destination_role' => 'ward',
             ],
             [
-                'allowed'                 => true,
+                'allowed' => true,
                 'requires_approval_level' => 'none',
-                'notes'                   => 'Central → Ward Store (standard replenishment, relaxed to no approval required)',
+                'notes' => 'Central → Ward Store (standard replenishment, relaxed to no approval required)',
             ]
         );
 

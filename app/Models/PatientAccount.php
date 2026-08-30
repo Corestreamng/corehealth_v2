@@ -2,12 +2,10 @@
 
 namespace App\Models;
 
+use App\Traits\IsAuditable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-
-
 use OwenIt\Auditing\Contracts\Auditable;
-use App\Traits\IsAuditable;
 
 class PatientAccount extends Model implements Auditable
 {
@@ -15,13 +13,14 @@ class PatientAccount extends Model implements Auditable
 
     use HasFactory;
     use \OwenIt\Auditing\Auditable;
-protected $fillable = [
-        'patient_id',
-        'balance'
-    ];
 
+    protected $fillable = [
+            'patient_id',
+            'balance',
+        ];
 
-    public function patient(){
+    public function patient()
+    {
         return $this->belongsTo(Patient::class, 'patient_id', 'id');
     }
 }

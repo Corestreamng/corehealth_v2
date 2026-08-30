@@ -3,8 +3,8 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use OwenIt\Auditing\Models\Audit;
 use Illuminate\Support\Facades\Auth;
+use OwenIt\Auditing\Models\Audit;
 use Yajra\DataTables\Facades\DataTables;
 
 class AuditLogController extends Controller
@@ -27,9 +27,10 @@ class AuditLogController extends Controller
             ->map(function ($type) {
                 // Extract the model name from the full namespace
                 $parts = explode('\\', $type);
+
                 return [
                     'full' => $type,
-                    'short' => end($parts)
+                    'short' => end($parts),
                 ];
             });
 
@@ -45,7 +46,7 @@ class AuditLogController extends Controller
             ->map(function ($user) {
                 return [
                     'id' => $user->id,
-                    'name' => $user->firstname . ' ' . $user->surname
+                    'name' => $user->firstname . ' ' . $user->surname,
                 ];
             });
 
@@ -97,11 +98,13 @@ class AuditLogController extends Controller
                 if ($audit->user) {
                     return $audit->user->firstname . ' ' . $audit->user->surname;
                 }
+
                 return 'System';
             })
             ->editColumn('auditable_type', function ($audit) {
                 $parts = explode('\\', $audit->auditable_type);
                 $modelName = end($parts);
+
                 return '<span class="badge badge-info">' . $modelName . '</span>';
             })
             ->editColumn('event', function ($audit) {
@@ -112,6 +115,7 @@ class AuditLogController extends Controller
                     'restored' => 'warning',
                 ];
                 $color = $badges[$audit->event] ?? 'secondary';
+
                 return '<span class="badge badge-' . $color . '">' . ucfirst($audit->event) . '</span>';
             })
             ->addColumn('changes', function ($audit) {
@@ -123,6 +127,7 @@ class AuditLogController extends Controller
                 }
 
                 $changeCount = max(count($oldValues), count($newValues));
+
                 return '<button class="btn btn-sm btn-outline-info view-changes" data-audit-id="' . $audit->id . '">
                     <i class="fa fa-eye"></i> View Changes (' . $changeCount . ')
                 </button>';
@@ -215,7 +220,7 @@ class AuditLogController extends Controller
                 'Event',
                 'IP Address',
                 'URL',
-                'Changes'
+                'Changes',
             ]);
 
             // Data rows
@@ -241,7 +246,7 @@ class AuditLogController extends Controller
                     ucfirst($audit->event),
                     $audit->ip_address,
                     $audit->url,
-                    implode('; ', $changes)
+                    implode('; ', $changes),
                 ]);
             }
 
@@ -272,6 +277,7 @@ class AuditLogController extends Controller
             ->get()
             ->mapWithKeys(function ($item) {
                 $modelName = class_basename($item->auditable_type);
+
                 return [$modelName => $item->count];
             });
 

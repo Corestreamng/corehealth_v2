@@ -43,7 +43,7 @@ class LeaveRequest extends Model implements Auditable
         // Legacy/combined
         'reviewed_by',
         'reviewed_at',
-        'review_comments'
+        'review_comments',
     ];
 
     protected $casts = [
@@ -56,12 +56,12 @@ class LeaveRequest extends Model implements Auditable
     ];
 
     // Status Constants
-    const STATUS_PENDING = 'pending';                       // Awaiting first-level approval
-    const STATUS_SUPERVISOR_APPROVED = 'supervisor_approved'; // First level approved, awaiting HR
-    const STATUS_APPROVED = 'approved';                     // HR approved (final)
-    const STATUS_REJECTED = 'rejected';                     // Rejected at any stage
-    const STATUS_CANCELLED = 'cancelled';                   // Cancelled by staff
-    const STATUS_RECALLED = 'recalled';                     // Recalled after approval
+    public const STATUS_PENDING = 'pending';                       // Awaiting first-level approval
+    public const STATUS_SUPERVISOR_APPROVED = 'supervisor_approved'; // First level approved, awaiting HR
+    public const STATUS_APPROVED = 'approved';                     // HR approved (final)
+    public const STATUS_REJECTED = 'rejected';                     // Rejected at any stage
+    public const STATUS_CANCELLED = 'cancelled';                   // Cancelled by staff
+    public const STATUS_RECALLED = 'recalled';                     // Recalled after approval
 
     /**
      * Boot method for model events
@@ -89,6 +89,7 @@ class LeaveRequest extends Model implements Auditable
             ->first();
 
         $sequence = $lastRequest ? (int) substr($lastRequest->request_number, -6) + 1 : 1;
+
         return $prefix . $year . str_pad($sequence, 6, '0', STR_PAD_LEFT);
     }
 

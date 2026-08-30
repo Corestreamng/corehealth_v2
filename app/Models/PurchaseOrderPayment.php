@@ -8,7 +8,8 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 class PurchaseOrderPayment extends Model
 {
-    use HasFactory, SoftDeletes;
+    use HasFactory;
+    use SoftDeletes;
 
     protected $fillable = [
         'purchase_order_id',
@@ -31,10 +32,10 @@ class PurchaseOrderPayment extends Model
     /**
      * Payment method constants
      */
-    const METHOD_CASH = 'cash';
-    const METHOD_BANK_TRANSFER = 'bank_transfer';
-    const METHOD_CHEQUE = 'cheque';
-    const METHOD_CARD = 'card';
+    public const METHOD_CASH = 'cash';
+    public const METHOD_BANK_TRANSFER = 'bank_transfer';
+    public const METHOD_CHEQUE = 'cheque';
+    public const METHOD_CARD = 'card';
 
     /**
      * Get available payment methods

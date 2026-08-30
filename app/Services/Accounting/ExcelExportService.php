@@ -2,13 +2,12 @@
 
 namespace App\Services\Accounting;
 
+use Carbon\Carbon;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
-use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 use PhpOffice\PhpSpreadsheet\Style\Alignment;
 use PhpOffice\PhpSpreadsheet\Style\Border;
 use PhpOffice\PhpSpreadsheet\Style\Fill;
-use PhpOffice\PhpSpreadsheet\Style\Font;
-use Carbon\Carbon;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 /**
@@ -19,12 +18,19 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 class ExcelExportService
 {
     protected Spreadsheet $spreadsheet;
+
     protected $activeSheet;
+
     protected string $hospitalName;
+
     protected string $hospitalColor;
+
     protected string $hospitalAddress;
+
     protected string $hospitalPhone;
+
     protected string $hospitalEmail;
+
     protected int $currentRow = 1;
 
     public function __construct()
@@ -494,7 +500,9 @@ class ExcelExportService
         // Export by categories if present (new structure)
         if (isset($report['categories'])) {
             foreach ($report['categories'] as $catKey => $category) {
-                if (empty($category['details'])) continue;
+                if (empty($category['details'])) {
+                    continue;
+                }
 
                 // Category header
                 $this->activeSheet->setCellValue('A' . $this->currentRow, strtoupper($category['label'] ?? ucwords(str_replace('_', ' ', $catKey))));
@@ -607,7 +615,9 @@ class ExcelExportService
         // Export by categories if present (new structure)
         if (isset($report['categories'])) {
             foreach ($report['categories'] as $catKey => $category) {
-                if (empty($category['details'])) continue;
+                if (empty($category['details'])) {
+                    continue;
+                }
 
                 // Category header
                 $this->activeSheet->setCellValue('A' . $this->currentRow, strtoupper($category['label'] ?? ucwords(str_replace('_', ' ', $catKey))));
@@ -889,7 +899,7 @@ class ExcelExportService
         $this->addHeaderRow([
             'Lease Number', 'Type', 'Leased Item', 'Lessor', 'Department',
             'Monthly Payment', 'ROU Asset', 'Lease Liability',
-            'Commencement', 'End Date', 'Status'
+            'Commencement', 'End Date', 'Status',
         ]);
 
         $totalMonthly = 0;
@@ -921,7 +931,7 @@ class ExcelExportService
             number_format($totalMonthly, 2),
             number_format($totalROU, 2),
             number_format($totalLiability, 2),
-            '', '', ''
+            '', '', '',
         ], 1, true);
 
         $this->autoSizeColumns(1, 11);
@@ -950,7 +960,7 @@ class ExcelExportService
 
         $this->addHeaderRow([
             'Code', 'Name', 'Type', 'Department', 'Manager',
-            'Budget Amount', 'Status', 'Description'
+            'Budget Amount', 'Status', 'Description',
         ]);
 
         foreach ($costCenters as $center) {
@@ -1018,7 +1028,7 @@ class ExcelExportService
         $this->addHeaderRow([
             'Reference', 'Type', 'Creditor', 'Description',
             'Original Amount', 'Interest Rate', 'Outstanding Balance',
-            'Start Date', 'Maturity Date', 'Status'
+            'Start Date', 'Maturity Date', 'Status',
         ]);
 
         $totalOriginal = 0;
@@ -1046,7 +1056,7 @@ class ExcelExportService
             '', '', '', 'TOTALS:',
             number_format($totalOriginal, 2), '',
             number_format($totalOutstanding, 2),
-            '', '', ''
+            '', '', '',
         ], 1, true);
 
         $this->autoSizeColumns(1, 10);
@@ -1064,7 +1074,7 @@ class ExcelExportService
         $this->addHeaderRow([
             'Asset Number', 'Name', 'Category', 'Location',
             'Acquisition Date', 'Original Cost', 'Accumulated Depreciation',
-            'Net Book Value', 'Useful Life', 'Status'
+            'Net Book Value', 'Useful Life', 'Status',
         ]);
 
         $totalCost = 0;
@@ -1096,7 +1106,7 @@ class ExcelExportService
             number_format($totalCost, 2),
             number_format($totalDepreciation, 2),
             number_format($totalNBV, 2),
-            '', ''
+            '', '',
         ], 1, true);
 
         $this->autoSizeColumns(1, 10);
@@ -1114,7 +1124,7 @@ class ExcelExportService
 
         $this->addHeaderRow([
             'Budget Name', 'Fiscal Year', 'Department', 'Category',
-            'Budgeted Amount', 'Actual Spent', 'Variance', 'Utilization %', 'Status'
+            'Budgeted Amount', 'Actual Spent', 'Variance', 'Utilization %', 'Status',
         ]);
 
         $totalBudgeted = 0;
@@ -1151,7 +1161,7 @@ class ExcelExportService
             number_format($totalActual, 2),
             number_format($totalVariance, 2),
             number_format($totalUtilization, 1) . '%',
-            ''
+            '',
         ], 1, true);
 
         $this->autoSizeColumns(1, 9);
@@ -1187,19 +1197,19 @@ class ExcelExportService
 
         $this->addDataRow([
             'Total Budgeted:',
-            number_format($summary['total_budgeted'] ?? 0, 2)
+            number_format($summary['total_budgeted'] ?? 0, 2),
         ]);
         $this->addDataRow([
             'Total Actual:',
-            number_format($summary['total_actual'] ?? 0, 2)
+            number_format($summary['total_actual'] ?? 0, 2),
         ]);
         $this->addDataRow([
             'Total Variance:',
-            number_format($summary['total_variance'] ?? 0, 2)
+            number_format($summary['total_variance'] ?? 0, 2),
         ]);
         $this->addDataRow([
             'Variance %:',
-            number_format($summary['variance_percent'] ?? 0, 1) . '%'
+            number_format($summary['variance_percent'] ?? 0, 1) . '%',
         ]);
 
         $this->currentRow += 2;
@@ -1207,8 +1217,10 @@ class ExcelExportService
         // Budget details
         foreach ($reportData as $budget) {
             // Budget header
-            $this->activeSheet->setCellValue('A' . $this->currentRow,
-                $budget['budget_name'] . ' - ' . $budget['department'] . ' (' . $budget['fiscal_year'] . ')');
+            $this->activeSheet->setCellValue(
+                'A' . $this->currentRow,
+                $budget['budget_name'] . ' - ' . $budget['department'] . ' (' . $budget['fiscal_year'] . ')'
+            );
             $this->activeSheet->mergeCells('A' . $this->currentRow . ':G' . $this->currentRow);
             $this->activeSheet->getStyle('A' . $this->currentRow)->applyFromArray([
                 'font' => ['bold' => true, 'size' => 11],
@@ -1219,7 +1231,7 @@ class ExcelExportService
             // Line items header
             $this->addHeaderRow([
                 'Account Code', 'Account Name', 'Budgeted', 'Actual',
-                'Variance', 'Variance %', 'Utilization %'
+                'Variance', 'Variance %', 'Utilization %',
             ]);
 
             // Line items
@@ -1272,7 +1284,7 @@ class ExcelExportService
         $this->addHeaderRow([
             'Reference', 'Title', 'Category', 'Department',
             'Requested Amount', 'Approved Amount', 'Spent',
-            'Priority', 'Status', 'Requested By'
+            'Priority', 'Status', 'Requested By',
         ]);
 
         $totalRequested = 0;
@@ -1303,7 +1315,7 @@ class ExcelExportService
             number_format($totalRequested, 2),
             number_format($totalApproved, 2),
             number_format($totalSpent, 2),
-            '', '', ''
+            '', '', '',
         ], 1, true);
 
         $this->autoSizeColumns(1, 10);
@@ -1332,7 +1344,7 @@ class ExcelExportService
 
         $this->addHeaderRow([
             'Deposit Number', 'Patient Name', 'File No', 'Deposit Type',
-            'Amount', 'Applied', 'Balance', 'Payment Method', 'Date', 'Status'
+            'Amount', 'Applied', 'Balance', 'Payment Method', 'Date', 'Status',
         ]);
 
         foreach ($deposits as $deposit) {
@@ -1586,8 +1598,10 @@ class ExcelExportService
 
         if ($forecast->approved_by) {
             $this->activeSheet->setCellValue('A' . $this->currentRow, 'Approved By:');
-            $this->activeSheet->setCellValue('B' . $this->currentRow,
-                optional($forecast->approver)->name . ' on ' . optional($forecast->approved_at)->format('M d, Y'));
+            $this->activeSheet->setCellValue(
+                'B' . $this->currentRow,
+                optional($forecast->approver)->name . ' on ' . optional($forecast->approved_at)->format('M d, Y')
+            );
             $this->currentRow++;
         }
 
@@ -1615,7 +1629,7 @@ class ExcelExportService
             'Net Cash Flow',
             'Closing Balance',
             'Actual Closing',
-            'Variance'
+            'Variance',
         ]);
 
         $runningBalance = $currentCash;
@@ -1649,9 +1663,11 @@ class ExcelExportService
 
         foreach ($forecast->periods()->orderBy('period_start_date')->get() as $period) {
             // Period header
-            $this->activeSheet->setCellValue('A' . $this->currentRow,
+            $this->activeSheet->setCellValue(
+                'A' . $this->currentRow,
                 $period->period_name . ' (' . optional($period->period_start_date)->format('M d, Y') . ' - ' .
-                optional($period->period_end_date)->format('M d, Y') . ')');
+                optional($period->period_end_date)->format('M d, Y') . ')'
+            );
             $this->activeSheet->getStyle('A' . $this->currentRow)->getFont()->setBold(true)->setSize(11);
             $this->currentRow++;
 
@@ -1663,6 +1679,7 @@ class ExcelExportService
                 $this->activeSheet->setCellValue('A' . $this->currentRow, 'No line items defined for this period');
                 $this->activeSheet->getStyle('A' . $this->currentRow)->getFont()->setItalic(true)->getColor()->setRGB('999999');
                 $this->currentRow += 2;
+
                 continue;
             }
 
@@ -1786,25 +1803,25 @@ class ExcelExportService
             $summaryStartRow = $this->currentRow;
             $this->addDataRow([
                 'Total Inflows:',
-                '₦' . number_format($period->forecasted_inflows, 2)
+                '₦' . number_format($period->forecasted_inflows, 2),
             ]);
             $this->addDataRow([
                 'Total Outflows:',
-                '₦' . number_format($period->forecasted_outflows, 2)
+                '₦' . number_format($period->forecasted_outflows, 2),
             ]);
             $this->addDataRow([
                 'Net Cash Flow:',
-                '₦' . number_format($period->forecasted_inflows - $period->forecasted_outflows, 2)
+                '₦' . number_format($period->forecasted_inflows - $period->forecasted_outflows, 2),
             ], 1, true);
 
             if ($period->actual_closing_balance !== null) {
                 $this->addDataRow([
                     'Actual Closing Balance:',
-                    '₦' . number_format($period->actual_closing_balance, 2)
+                    '₦' . number_format($period->actual_closing_balance, 2),
                 ]);
                 $this->addDataRow([
                     'Variance:',
-                    '₦' . number_format($period->variance, 2)
+                    '₦' . number_format($period->variance, 2),
                 ]);
             }
 
@@ -2267,7 +2284,7 @@ class ExcelExportService
             'Initiated By',
             'Approved By',
             'JE #',
-            'Description'
+            'Description',
         ]);
 
         // Data rows
@@ -2310,7 +2327,7 @@ class ExcelExportService
             '', '', '', '',
             '₦' . number_format($totalAmount, 2),
             '₦' . number_format($totalFees, 2),
-            '', '', '', '', '', '', ''
+            '', '', '', '', '', '', '',
         ], 1, true);
 
         $this->autoSizeColumns(1, 15);

@@ -22,7 +22,9 @@ class StaffSalaryProfileEnhancedObserver
     public function deleted(StaffSalaryProfile $profile): void
     {
         $staff = $profile->staff;
-        if (!$staff) return;
+        if (!$staff) {
+            return;
+        }
 
         // Recalculate from remaining active profiles
         $latest = $staff->salaryProfiles()
@@ -44,10 +46,14 @@ class StaffSalaryProfileEnhancedObserver
 
     private function syncIncrementDate(StaffSalaryProfile $profile): void
     {
-        if (!$profile->is_active) return;
+        if (!$profile->is_active) {
+            return;
+        }
 
         $staff = $profile->staff;
-        if (!$staff) return;
+        if (!$staff) {
+            return;
+        }
 
         // If there was a previous profile, this counts as a salary increment
         $previousCount = $staff->salaryProfiles()

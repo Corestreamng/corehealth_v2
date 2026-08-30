@@ -62,7 +62,6 @@ return [
             'formatter' => Monolog\Formatter\JsonFormatter::class,
         ],
 
-
         'single' => [
             'driver' => 'single',
             'path' => storage_path('logs/laravel.log'),

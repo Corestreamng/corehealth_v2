@@ -2,15 +2,14 @@
 
 namespace App\Services;
 
+use App\Models\Expense;
 use App\Models\PurchaseOrder;
 use App\Models\PurchaseOrderItem;
 use App\Models\PurchaseOrderReturn;
 use App\Models\StockBatch;
 use App\Models\StockBatchTransaction;
-use App\Models\Expense;
-use App\Models\StoreStock;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
 
 /**
  * Service: PurchaseOrderService
@@ -167,6 +166,7 @@ class PurchaseOrderService
         return DB::transaction(function () use ($item, $po) {
             $item->delete();
             $po->updateTotal();
+
             return true;
         });
     }
@@ -262,7 +262,9 @@ class PurchaseOrderService
                 }
 
                 $qty = $receiveData['qty'] ?? 0;
-                if ($qty <= 0) continue;
+                if ($qty <= 0) {
+                    continue;
+                }
 
                 $actualCost = $receiveData['actual_cost'] ?? $item->unit_cost;
 
@@ -321,6 +323,7 @@ class PurchaseOrderService
             // Recalculate total based on actual costs
             $actualTotal = $po->items->sum(function ($item) {
                 $cost = $item->actual_unit_cost ?? $item->unit_cost;
+
                 return $item->received_qty * $cost;
             });
 
@@ -352,6 +355,7 @@ class PurchaseOrderService
             // Update the amount if it changed
             $existingExpense->amount = $po->total_amount;
             $existingExpense->save();
+
             return $existingExpense;
         }
 
@@ -397,15 +401,19 @@ class PurchaseOrderService
         switch ($period) {
             case 'today':
                 $query->whereDate('created_at', today());
+
                 break;
             case 'week':
                 $query->whereBetween('created_at', [now()->startOfWeek(), now()->endOfWeek()]);
+
                 break;
             case 'month':
                 $query->whereMonth('created_at', now()->month)->whereYear('created_at', now()->year);
+
                 break;
             case 'year':
                 $query->whereYear('created_at', now()->year);
+
                 break;
         }
 

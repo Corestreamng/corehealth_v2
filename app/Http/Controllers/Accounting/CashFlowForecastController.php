@@ -3,21 +3,20 @@
 namespace App\Http\Controllers\Accounting;
 
 use App\Http\Controllers\Controller;
-use App\Models\Accounting\CashFlowForecast;
-use App\Models\Accounting\CashFlowForecastPeriod;
-use App\Models\Accounting\CashFlowForecastItem;
-use App\Models\Accounting\CashFlowPattern;
 use App\Models\Accounting\Account;
+use App\Models\Accounting\CashFlowForecast;
+use App\Models\Accounting\CashFlowForecastItem;
+use App\Models\Accounting\CashFlowForecastPeriod;
+use App\Models\Accounting\CashFlowPattern;
 use App\Models\Accounting\FiscalYear;
-use App\Models\Accounting\JournalEntry;
 use App\Models\Accounting\JournalEntryLine;
 use App\Services\Accounting\ExcelExportService;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Log;
-use Carbon\Carbon;
 use Barryvdh\DomPDF\Facade\Pdf;
+use Carbon\Carbon;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 /**
  * CashFlowForecastController
@@ -45,10 +44,10 @@ class CashFlowForecastController extends Controller
         $fiscalYears = FiscalYear::orderBy('start_date', 'desc')->get();
 
         // Get current cash position - accounts in Asset class (code starts with 1)
-        $cashAccounts = Account::whereHas('accountGroup.accountClass', function($q) {
-                $q->where('code', '1'); // Asset class
-            })
-            ->where(function($q) {
+        $cashAccounts = Account::whereHas('accountGroup.accountClass', function ($q) {
+            $q->where('code', '1'); // Asset class
+        })
+            ->where(function ($q) {
                 $q->where('name', 'like', '%cash%')
                   ->orWhere('name', 'like', '%bank%')
                   ->orWhere('is_bank_account', true);
@@ -87,8 +86,8 @@ class CashFlowForecastController extends Controller
 
             $periodCount = $periods->count();
             // Use computed accessors from model
-            $forecastedInflows = $periods->sum(fn($p) => $p->forecasted_inflows);
-            $forecastedOutflows = $periods->sum(fn($p) => $p->forecasted_outflows);
+            $forecastedInflows = $periods->sum(fn ($p) => $p->forecasted_inflows);
+            $forecastedOutflows = $periods->sum(fn ($p) => $p->forecasted_outflows);
         }
 
         // Net forecast
@@ -112,7 +111,7 @@ class CashFlowForecastController extends Controller
             'active_forecasts' => $activeForecasts,
             'period_count' => $periodCount,
             'last_period_variance' => $lastPeriodVariance,
-            'active_forecast' => $activeForecast
+            'active_forecast' => $activeForecast,
         ];
     }
 
@@ -121,10 +120,10 @@ class CashFlowForecastController extends Controller
      */
     protected function getCurrentCashBalance()
     {
-        $cashAccounts = Account::whereHas('accountGroup.accountClass', function($q) {
-                $q->where('code', '1'); // Asset class
-            })
-            ->where(function($q) {
+        $cashAccounts = Account::whereHas('accountGroup.accountClass', function ($q) {
+            $q->where('code', '1'); // Asset class
+        })
+            ->where(function ($q) {
                 $q->where('code', 'like', '1001%')
                   ->orWhere('code', 'like', '1002%')
                   ->orWhere('name', 'like', '%cash%')
@@ -134,13 +133,13 @@ class CashFlowForecastController extends Controller
             ->where('is_active', true)
             ->pluck('id');
 
-        $debits = JournalEntryLine::whereHas('journalEntry', function($q) {
+        $debits = JournalEntryLine::whereHas('journalEntry', function ($q) {
             $q->where('status', 'posted');
         })
         ->whereIn('account_id', $cashAccounts)
         ->sum('debit');
 
-        $credits = JournalEntryLine::whereHas('journalEntry', function($q) {
+        $credits = JournalEntryLine::whereHas('journalEntry', function ($q) {
             $q->where('status', 'posted');
         })
         ->whereIn('account_id', $cashAccounts)
@@ -201,11 +200,11 @@ class CashFlowForecastController extends Controller
                           ->take($request->length ?? 10)
                           ->get();
 
-        $data = $forecasts->map(function($forecast) {
+        $data = $forecasts->map(function ($forecast) {
             $statusColors = [
                 'draft' => 'secondary',
                 'active' => 'success',
-                'closed' => 'dark'
+                'closed' => 'dark',
             ];
 
             $periodCount = $forecast->periods()->count();
@@ -219,7 +218,7 @@ class CashFlowForecastController extends Controller
                 'status' => '<span class="badge badge-' . ($statusColors[$forecast->status] ?? 'secondary') . '">' . ucfirst($forecast->status) . '</span>',
                 'created_by' => $forecast->creator->name ?? 'System',
                 'created_at' => $forecast->created_at->format('M d, Y'),
-                'actions' => $this->getActionButtons($forecast)
+                'actions' => $this->getActionButtons($forecast),
             ];
         });
 
@@ -227,7 +226,7 @@ class CashFlowForecastController extends Controller
             'draw' => intval($request->draw),
             'recordsTotal' => $totalRecords,
             'recordsFiltered' => $filteredRecords,
-            'data' => $data
+            'data' => $data,
         ]);
     }
 
@@ -244,6 +243,7 @@ class CashFlowForecastController extends Controller
         }
 
         $buttons .= '</div>';
+
         return $buttons;
     }
 
@@ -268,10 +268,11 @@ class CashFlowForecastController extends Controller
             'end_date' => 'required|date|after:start_date',
             'forecast_type' => 'required|in:weekly,monthly,quarterly,annual',
             'scenario' => 'nullable|in:base,optimistic,pessimistic',
-            'notes' => 'nullable|string'
+            'notes' => 'nullable|string',
         ]);
 
         DB::beginTransaction();
+
         try {
             $forecast = CashFlowForecast::create([
                 'forecast_name' => $request->forecast_name,
@@ -281,18 +282,20 @@ class CashFlowForecastController extends Controller
                 'scenario' => $request->scenario ?? 'base',
                 'notes' => $request->notes,
                 'status' => 'draft',
-                'created_by' => Auth::id()
+                'created_by' => Auth::id(),
             ]);
 
             // Generate periods
             $this->generatePeriods($forecast);
 
             DB::commit();
+
             return redirect()->route('accounting.cash-flow-forecast.show', $forecast->id)
                            ->with('success', 'Cash flow forecast created successfully');
 
         } catch (\Exception $e) {
             DB::rollback();
+
             return back()->withInput()->with('error', 'Failed to create forecast: ' . $e->getMessage());
         }
     }
@@ -314,15 +317,19 @@ class CashFlowForecastController extends Controller
             switch ($forecast->forecast_type) {
                 case 'weekly':
                     $periodEnd = $current->copy()->addDays(6)->endOfDay();
+
                     break;
                 case 'monthly':
                     $periodEnd = $current->copy()->endOfMonth();
+
                     break;
                 case 'quarterly':
                     $periodEnd = $current->copy()->addMonths(3)->subDay()->endOfDay();
+
                     break;
                 case 'annual':
                     $periodEnd = $current->copy()->addYear()->subDay()->endOfDay();
+
                     break;
             }
 
@@ -345,15 +352,19 @@ class CashFlowForecastController extends Controller
             switch ($forecast->forecast_type) {
                 case 'weekly':
                     $current->addWeek();
+
                     break;
                 case 'monthly':
                     $current->addMonth()->startOfMonth();
+
                     break;
                 case 'quarterly':
                     $current->addMonths(3);
+
                     break;
                 case 'annual':
                     $current->addYear();
+
                     break;
             }
         }
@@ -370,7 +381,7 @@ class CashFlowForecastController extends Controller
         $currentCash = $this->getCurrentCashBalance();
         $runningBalance = $currentCash;
 
-        $periodsWithBalance = $forecast->periods->map(function($period) use (&$runningBalance) {
+        $periodsWithBalance = $forecast->periods->map(function ($period) use (&$runningBalance) {
             $period->beginning_balance = $runningBalance;
             // Use model accessors for forecasted amounts
             $netCashFlow = $period->forecasted_inflows - $period->forecasted_outflows;
@@ -382,13 +393,13 @@ class CashFlowForecastController extends Controller
         });
 
         // Chart data
-        $chartData = $periodsWithBalance->map(function($period) {
+        $chartData = $periodsWithBalance->map(function ($period) {
             return [
                 'period' => Carbon::parse($period->period_start_date)->format('M d'),
                 'forecasted_inflows' => $period->forecasted_inflows,
                 'forecasted_outflows' => $period->forecasted_outflows,
                 'actual_closing_balance' => $period->actual_closing_balance,
-                'ending_balance' => $period->ending_balance
+                'ending_balance' => $period->ending_balance,
             ];
         });
 
@@ -405,16 +416,16 @@ class CashFlowForecastController extends Controller
         $openingBalance = $period->opening_balance ?? 0;
 
         // Get expense categories for items
-        $expenseAccounts = Account::whereHas('accountGroup.accountClass', function($q) {
-                $q->where('code', '5'); // Expense class
-            })
+        $expenseAccounts = Account::whereHas('accountGroup.accountClass', function ($q) {
+            $q->where('code', '5'); // Expense class
+        })
             ->where('is_active', true)
             ->orderBy('code')
             ->get();
 
-        $revenueAccounts = Account::whereHas('accountGroup.accountClass', function($q) {
-                $q->where('code', '4'); // Income/Revenue class
-            })
+        $revenueAccounts = Account::whereHas('accountGroup.accountClass', function ($q) {
+            $q->where('code', '4'); // Income/Revenue class
+        })
             ->where('is_active', true)
             ->orderBy('code')
             ->get();
@@ -432,7 +443,7 @@ class CashFlowForecastController extends Controller
             'items.*.item_description' => 'required|string|max:255',
             'items.*.cash_flow_category' => 'required|in:operating_inflow,operating_outflow,investing_inflow,investing_outflow,financing_inflow,financing_outflow',
             'items.*.forecasted_amount' => 'required|numeric|min:0',
-            'notes' => 'nullable|string'
+            'notes' => 'nullable|string',
         ]);
 
         DB::beginTransaction();
@@ -456,12 +467,12 @@ class CashFlowForecastController extends Controller
 
             // Calculate totals
             $inflowTotal = $items
-                ->filter(fn($item) => str_contains($item['cash_flow_category'], 'inflow'))
-                ->sum(fn($item) => (float) ($item['forecasted_amount'] ?? 0));
+                ->filter(fn ($item) => str_contains($item['cash_flow_category'], 'inflow'))
+                ->sum(fn ($item) => (float) ($item['forecasted_amount'] ?? 0));
 
             $outflowTotal = $items
-                ->filter(fn($item) => str_contains($item['cash_flow_category'], 'outflow'))
-                ->sum(fn($item) => (float) ($item['forecasted_amount'] ?? 0));
+                ->filter(fn ($item) => str_contains($item['cash_flow_category'], 'outflow'))
+                ->sum(fn ($item) => (float) ($item['forecasted_amount'] ?? 0));
 
             $netCashFlow = $inflowTotal - $outflowTotal;
             $closingBalance = ($period->opening_balance ?? 0) + $netCashFlow;
@@ -496,17 +507,18 @@ class CashFlowForecastController extends Controller
             'description' => 'required|string|max:255',
             'type' => 'required|in:inflow,outflow',
             'amount' => 'required|numeric|min:0',
-            'category' => 'nullable|string|max:100'
+            'category' => 'nullable|string|max:100',
         ]);
 
         DB::beginTransaction();
+
         try {
             CashFlowForecastItem::create([
                 'cash_flow_forecast_period_id' => $period->id,
                 'description' => $request->description,
                 'type' => $request->type,
                 'amount' => $request->amount,
-                'category' => $request->category
+                'category' => $request->category,
             ]);
 
             // Update period totals
@@ -517,10 +529,12 @@ class CashFlowForecastController extends Controller
             }
 
             DB::commit();
+
             return response()->json(['success' => true, 'message' => 'Item added successfully']);
 
         } catch (\Exception $e) {
             DB::rollback();
+
             return response()->json(['success' => false, 'message' => 'Failed to add item']);
         }
     }
@@ -543,7 +557,7 @@ class CashFlowForecastController extends Controller
         $request->validate([
             'pattern_ids' => 'nullable|array',
             'pattern_ids.*' => 'exists:cash_flow_recurring_patterns,id',
-            'overwrite' => 'nullable'
+            'overwrite' => 'nullable',
         ]);
 
         $patternIds = $request->input('pattern_ids');
@@ -560,11 +574,12 @@ class CashFlowForecastController extends Controller
         if ($patterns->isEmpty()) {
             return response()->json([
                 'success' => false,
-                'message' => 'No active patterns found to apply'
+                'message' => 'No active patterns found to apply',
             ], 422);
         }
 
         DB::beginTransaction();
+
         try {
             $itemsCreated = 0;
             $periodsAffected = 0;
@@ -624,14 +639,14 @@ class CashFlowForecastController extends Controller
                 'items_created' => $itemsCreated,
                 'periods_affected' => $periodsAffected,
                 'overwrite' => $overwrite,
-                'user_id' => Auth::id()
+                'user_id' => Auth::id(),
             ]);
 
             return response()->json([
                 'success' => true,
                 'message' => "Successfully applied {$patterns->count()} patterns. Created {$itemsCreated} items across {$periodsAffected} periods.",
                 'items_created' => $itemsCreated,
-                'periods_affected' => $periodsAffected
+                'periods_affected' => $periodsAffected,
             ]);
 
         } catch (\Exception $e) {
@@ -639,12 +654,12 @@ class CashFlowForecastController extends Controller
             Log::error('Failed to apply patterns to forecast', [
                 'forecast_id' => $forecast->id,
                 'error' => $e->getMessage(),
-                'user_id' => Auth::id()
+                'user_id' => Auth::id(),
             ]);
 
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to apply patterns: ' . $e->getMessage()
+                'message' => 'Failed to apply patterns: ' . $e->getMessage(),
             ], 500);
         }
     }
@@ -672,8 +687,10 @@ class CashFlowForecastController extends Controller
                 // For weekly forecasts, apply to first week of month
                 if ($forecastType === 'weekly') {
                     $dayOfPeriod = $pattern->day_of_period ?? 1;
+
                     return $periodStart->day <= 7 || $periodStart->day === $dayOfPeriod;
                 }
+
                 return false;
 
             case CashFlowPattern::FREQUENCY_QUARTERLY:
@@ -684,6 +701,7 @@ class CashFlowForecastController extends Controller
                 if ($forecastType === 'monthly') {
                     return in_array($periodStart->month, [1, 4, 7, 10]);
                 }
+
                 return false;
 
             case CashFlowPattern::FREQUENCY_ANNUALLY:
@@ -691,6 +709,7 @@ class CashFlowForecastController extends Controller
                 if ($forecastType === 'annual') {
                     return true;
                 }
+
                 // For other frequencies, apply in January or first period
                 return $period->period_number === 1 || $periodStart->month === 1;
 
@@ -749,18 +768,18 @@ class CashFlowForecastController extends Controller
         $period->refresh();
 
         $inflowTotal = $period->items
-            ->filter(fn($item) => str_contains($item->cash_flow_category, 'inflow'))
+            ->filter(fn ($item) => str_contains($item->cash_flow_category, 'inflow'))
             ->sum('forecasted_amount');
 
         $outflowTotal = $period->items
-            ->filter(fn($item) => str_contains($item->cash_flow_category, 'outflow'))
+            ->filter(fn ($item) => str_contains($item->cash_flow_category, 'outflow'))
             ->sum('forecasted_amount');
 
         $netCashFlow = $inflowTotal - $outflowTotal;
 
         $period->update([
             'net_cash_flow' => $netCashFlow,
-            'closing_balance' => ($period->opening_balance ?? 0) + $netCashFlow
+            'closing_balance' => ($period->opening_balance ?? 0) + $netCashFlow,
         ]);
     }
 
@@ -771,7 +790,7 @@ class CashFlowForecastController extends Controller
     {
         $data = $request->validate([
             'actual_closing_balance' => 'nullable|numeric',
-            'variance_explanation' => 'nullable|string|max:1000'
+            'variance_explanation' => 'nullable|string|max:1000',
         ]);
 
         // Only compute variance if a closing balance was provided
@@ -794,7 +813,7 @@ class CashFlowForecastController extends Controller
 
         Log::info('Cash flow patterns viewed', [
             'total_patterns' => $patterns->count(),
-            'user_id' => Auth::id()
+            'user_id' => Auth::id(),
         ]);
 
         return view('accounting.cash-flow-forecast.patterns', compact('patterns'));
@@ -812,7 +831,7 @@ class CashFlowForecastController extends Controller
             'expected_amount' => 'required|numeric|min:0',
             'day_of_period' => 'nullable|integer|min:1|max:31',
             'variance_percentage' => 'nullable|numeric|min:0|max:100',
-            'notes' => 'nullable|string'
+            'notes' => 'nullable|string',
         ]);
 
         try {
@@ -824,7 +843,7 @@ class CashFlowForecastController extends Controller
                 'day_of_period' => $request->day_of_period,
                 'variance_percentage' => $request->variance_percentage ?? 10,
                 'notes' => $request->notes,
-                'is_active' => $request->has('is_active')
+                'is_active' => $request->has('is_active'),
             ]);
 
             Log::info('Cash flow pattern created', [
@@ -832,7 +851,7 @@ class CashFlowForecastController extends Controller
                 'pattern_name' => $pattern->pattern_name,
                 'category' => $pattern->cash_flow_category,
                 'amount' => $pattern->expected_amount,
-                'user_id' => Auth::id()
+                'user_id' => Auth::id(),
             ]);
 
             return redirect()->route('accounting.cash-flow-forecast.patterns.index')
@@ -840,7 +859,7 @@ class CashFlowForecastController extends Controller
         } catch (\Exception $e) {
             Log::error('Failed to create cash flow pattern', [
                 'error' => $e->getMessage(),
-                'user_id' => Auth::id()
+                'user_id' => Auth::id(),
             ]);
 
             return redirect()->back()
@@ -861,7 +880,7 @@ class CashFlowForecastController extends Controller
             'expected_amount' => 'required|numeric|min:0',
             'day_of_period' => 'nullable|integer|min:1|max:31',
             'variance_percentage' => 'nullable|numeric|min:0|max:100',
-            'notes' => 'nullable|string'
+            'notes' => 'nullable|string',
         ]);
 
         try {
@@ -875,7 +894,7 @@ class CashFlowForecastController extends Controller
                 'day_of_period' => $request->day_of_period,
                 'variance_percentage' => $request->variance_percentage ?? 10,
                 'notes' => $request->notes,
-                'is_active' => $request->has('is_active')
+                'is_active' => $request->has('is_active'),
             ]);
 
             Log::info('Cash flow pattern updated', [
@@ -883,7 +902,7 @@ class CashFlowForecastController extends Controller
                 'pattern_name' => $pattern->pattern_name,
                 'old_data' => $oldData,
                 'new_data' => $pattern->fresh()->toArray(),
-                'user_id' => Auth::id()
+                'user_id' => Auth::id(),
             ]);
 
             return redirect()->route('accounting.cash-flow-forecast.patterns.index')
@@ -892,7 +911,7 @@ class CashFlowForecastController extends Controller
             Log::error('Failed to update cash flow pattern', [
                 'pattern_id' => $pattern->id,
                 'error' => $e->getMessage(),
-                'user_id' => Auth::id()
+                'user_id' => Auth::id(),
             ]);
 
             return redirect()->back()
@@ -914,23 +933,23 @@ class CashFlowForecastController extends Controller
             Log::info('Cash flow pattern deleted', [
                 'pattern_id' => $patternData['id'],
                 'pattern_name' => $patternData['pattern_name'],
-                'user_id' => Auth::id()
+                'user_id' => Auth::id(),
             ]);
 
             return response()->json([
                 'success' => true,
-                'message' => 'Pattern deleted successfully'
+                'message' => 'Pattern deleted successfully',
             ]);
         } catch (\Exception $e) {
             Log::error('Failed to delete cash flow pattern', [
                 'pattern_id' => $pattern->id,
                 'error' => $e->getMessage(),
-                'user_id' => Auth::id()
+                'user_id' => Auth::id(),
             ]);
 
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to delete pattern: ' . $e->getMessage()
+                'message' => 'Failed to delete pattern: ' . $e->getMessage(),
             ], 500);
         }
     }
@@ -952,23 +971,23 @@ class CashFlowForecastController extends Controller
                 'old_status' => $oldStatus,
                 'new_status' => $newStatus,
                 'action' => $request->action,
-                'user_id' => Auth::id()
+                'user_id' => Auth::id(),
             ]);
 
             return response()->json([
                 'success' => true,
-                'message' => 'Pattern ' . ($newStatus ? 'activated' : 'deactivated') . ' successfully'
+                'message' => 'Pattern ' . ($newStatus ? 'activated' : 'deactivated') . ' successfully',
             ]);
         } catch (\Exception $e) {
             Log::error('Failed to toggle cash flow pattern status', [
                 'pattern_id' => $pattern->id,
                 'error' => $e->getMessage(),
-                'user_id' => Auth::id()
+                'user_id' => Auth::id(),
             ]);
 
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to update pattern status: ' . $e->getMessage()
+                'message' => 'Failed to update pattern status: ' . $e->getMessage(),
             ], 500);
         }
     }
@@ -985,6 +1004,7 @@ class CashFlowForecastController extends Controller
     public function activate(CashFlowForecast $forecast)
     {
         DB::beginTransaction();
+
         try {
             // Close any currently active forecasts
             CashFlowForecast::where('status', 'active')
@@ -995,19 +1015,21 @@ class CashFlowForecastController extends Controller
             $forecast->update([
                 'status' => 'active',
                 'approved_by' => Auth::id(),
-                'approved_at' => now()
+                'approved_at' => now(),
             ]);
 
             DB::commit();
+
             return response()->json([
                 'success' => true,
-                'message' => 'Forecast activated successfully. Previous active forecasts have been archived.'
+                'message' => 'Forecast activated successfully. Previous active forecasts have been archived.',
             ]);
         } catch (\Exception $e) {
             DB::rollBack();
+
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to activate forecast: ' . $e->getMessage()
+                'message' => 'Failed to activate forecast: ' . $e->getMessage(),
             ], 500);
         }
     }

@@ -2,33 +2,33 @@
 
 namespace App\Services;
 
+use App\Models\AdmissionRequest;
 use App\Models\ChatConversation;
 use App\Models\ChatMessage;
 use App\Models\ChatParticipant;
-use App\Models\User;
-use App\Models\MedicationSchedule;
-use App\Models\AdmissionRequest;
-use App\Models\LabServiceRequest;
-use App\Models\ImagingServiceRequest;
-use App\Models\ProductRequest;
 use App\Models\Encounter;
+use App\Models\ImagingServiceRequest;
+use App\Models\LabServiceRequest;
+use App\Models\MedicationSchedule;
+use App\Models\ProductRequest;
+use App\Models\User;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
-use Carbon\Carbon;
 
 class DepartmentNotificationService
 {
     // Group names
-    const GROUP_NURSING = 'Nursing Staff';
-    const GROUP_LAB = 'Laboratory Staff';
-    const GROUP_IMAGING = 'Imaging Staff';
-    const GROUP_HMO = 'HMO Executives';
-    const GROUP_ACCOUNTS = 'Accounts Staff';
+    public const GROUP_NURSING = 'Nursing Staff';
+    public const GROUP_LAB = 'Laboratory Staff';
+    public const GROUP_IMAGING = 'Imaging Staff';
+    public const GROUP_HMO = 'HMO Executives';
+    public const GROUP_ACCOUNTS = 'Accounts Staff';
 
     // Cache durations
-    const CACHE_DURATION = 3600; // 1 hour for notification tracking
-    const GROUP_SYNC_INTERVAL = 3600; // Sync groups every hour
+    public const CACHE_DURATION = 3600; // 1 hour for notification tracking
+    public const GROUP_SYNC_INTERVAL = 3600; // Sync groups every hour
 
     /**
      * Get current hour key for cache cycling (resets every hour)
@@ -119,12 +119,12 @@ class DepartmentNotificationService
             );
 
             // Get users with the specified roles
-            $roleUsers = User::whereHas('roles', function($query) use ($roles) {
+            $roleUsers = User::whereHas('roles', function ($query) use ($roles) {
                 $query->whereIn('name', $roles);
             })->pluck('id');
 
             // Also add SUPERADMIN and ADMIN for oversight
-            $admins = User::whereHas('roles', function($query) {
+            $admins = User::whereHas('roles', function ($query) {
                 $query->whereIn('name', ['SUPERADMIN', 'ADMIN']);
             })->pluck('id');
 
@@ -132,6 +132,7 @@ class DepartmentNotificationService
 
             if ($allUserIds->isEmpty()) {
                 Cache::put($cacheKey, true, self::CACHE_DURATION);
+
                 return;
             }
 
@@ -148,7 +149,7 @@ class DepartmentNotificationService
                     ChatParticipant::create([
                         'conversation_id' => $conversation->id,
                         'user_id' => $userId,
-                        'joined_at' => now()
+                        'joined_at' => now(),
                     ]);
                     $addedCount++;
                 } catch (\Exception $e) {
@@ -174,7 +175,7 @@ class DepartmentNotificationService
     {
         $cacheKey = 'dept_conversation_' . str_replace(' ', '_', strtolower($groupName));
 
-        return Cache::remember($cacheKey, self::CACHE_DURATION, function() use ($groupName) {
+        return Cache::remember($cacheKey, self::CACHE_DURATION, function () use ($groupName) {
             return ChatConversation::firstOrCreate(
                 ['title' => $groupName],
                 ['is_group' => true]
@@ -188,6 +189,7 @@ class DepartmentNotificationService
     protected function wasNotified($type, $id)
     {
         $cacheKey = "notified_{$type}_{$id}_" . $this->getHourKey();
+
         return Cache::has($cacheKey);
     }
 
@@ -210,6 +212,7 @@ class DepartmentNotificationService
 
             if (!$conversation) {
                 Log::warning("Department notifications: No conversation found for {$groupName}");
+
                 return false;
             }
 
@@ -223,11 +226,13 @@ class DepartmentNotificationService
             ]);
 
             Log::info("Department notifications: Message sent successfully (ID: {$chatMessage->id})");
+
             return true;
 
         } catch (\Exception $e) {
             Log::error("Failed to send {$groupName} notification: " . $e->getMessage() . "\n" . $e->getTraceAsString());
         }
+
         return false;
     }
 
@@ -245,6 +250,7 @@ class DepartmentNotificationService
         if ($admission && $admission->bed) {
             return ($admission->bed->wardRelation->name ?? 'Ward') . ' - ' . $admission->bed->name;
         }
+
         return null;
     }
 
@@ -283,6 +289,7 @@ class DepartmentNotificationService
                 // Only notify for admitted patients
                 if (!$isAdmitted) {
                     $this->markNotified('lab', $request->id);
+
                     continue;
                 }
 
@@ -323,6 +330,7 @@ class DepartmentNotificationService
                 // Only notify for admitted patients
                 if (!$isAdmitted) {
                     $this->markNotified('imaging', $request->id);
+
                     continue;
                 }
 
@@ -356,7 +364,9 @@ class DepartmentNotificationService
             $byEncounter = $requests->groupBy('encounter_id');
 
             foreach ($byEncounter as $encounterId => $prescriptions) {
-                if (!$encounterId) continue;
+                if (!$encounterId) {
+                    continue;
+                }
 
                 $cacheKey = "presc_enc_{$encounterId}";
                 if ($this->wasNotified('prescription', $cacheKey)) {
@@ -370,6 +380,7 @@ class DepartmentNotificationService
                 // Only notify for admitted patients
                 if (!$isAdmitted) {
                     $this->markNotified('prescription', $cacheKey);
+
                     continue;
                 }
 
@@ -378,7 +389,7 @@ class DepartmentNotificationService
                 $wardBed = $this->getPatientWardBed($patientId);
                 $doctorName = $first->doctor ? $first->doctor->name : 'Unknown';
 
-                $medNames = $prescriptions->map(function($p) {
+                $medNames = $prescriptions->map(function ($p) {
                     return $p->product ? $p->product->product_name : 'Unknown';
                 })->take(5)->toArray();
 
@@ -482,6 +493,7 @@ class DepartmentNotificationService
                 $patient = $schedule->patient;
                 if (!$patient) {
                     $this->markNotified('med_schedule', $schedule->id);
+
                     continue;
                 }
 
@@ -489,6 +501,7 @@ class DepartmentNotificationService
                 if (!$wardBed) {
                     // Patient not admitted or no bed assigned
                     $this->markNotified('med_schedule', $schedule->id);
+
                     continue;
                 }
 
@@ -519,6 +532,7 @@ class DepartmentNotificationService
         if ($note) {
             $message .= "\n\nNote: " . substr($note, 0, 200) . (strlen($note) > 200 ? '...' : '');
         }
+
         return $this->sendNursingNotification('Ward Round Note Added', $message);
     }
 
@@ -526,6 +540,7 @@ class DepartmentNotificationService
     {
         $medList = is_array($medications) ? implode(', ', $medications) : $medications;
         $message = "Patient: **{$patientName}**\nLocation: {$wardBed}\nMedications: {$medList}\nOrdered by: Dr. {$doctorName}";
+
         return $this->sendToGroup(self::GROUP_NURSING, 'New Medication Order', $message, '💊');
     }
 
@@ -536,6 +551,7 @@ class DepartmentNotificationService
         if ($reason) {
             $message .= "\nReason: {$reason}";
         }
+
         return $this->sendToGroup(self::GROUP_NURSING, "{$priorityEmoji} Admission Request", $message, '🛏️');
     }
 
@@ -545,12 +561,14 @@ class DepartmentNotificationService
         if ($reason) {
             $message .= "\nReason: {$reason}";
         }
+
         return $this->sendToGroup(self::GROUP_NURSING, 'Discharge Request', $message, '🚪');
     }
 
     public function notifyMedicationDue($patientName, $wardBed, $medication, $dueTime)
     {
         $message = "Patient: **{$patientName}**\nLocation: {$wardBed}\nMedication: {$medication}\nDue at: {$dueTime}";
+
         return $this->sendToGroup(self::GROUP_NURSING, 'Medication Due Soon', $message, '⏰');
     }
 
@@ -570,6 +588,7 @@ class DepartmentNotificationService
             $message .= "\nLocation: {$wardBed}";
         }
         $message .= "\nTests: {$testList}\nOrdered by: Dr. {$doctorName}";
+
         return $this->sendLabNotification('New Lab Request', $message);
     }
 
@@ -589,6 +608,7 @@ class DepartmentNotificationService
             $message .= "\nLocation: {$wardBed}";
         }
         $message .= "\nStudies: {$testList}\nOrdered by: Dr. {$doctorName}";
+
         return $this->sendImagingNotification('New Imaging Request', $message);
     }
 
@@ -635,6 +655,7 @@ class DepartmentNotificationService
 
         if (!$groupName) {
             Log::warning("Unknown group constant: {$groupConstant}");
+
             return false;
         }
 

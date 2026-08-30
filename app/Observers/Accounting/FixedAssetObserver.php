@@ -2,11 +2,11 @@
 
 namespace App\Observers\Accounting;
 
+use App\Models\Accounting\Account;
+use App\Models\Accounting\AccountingPeriod;
 use App\Models\Accounting\FixedAsset;
 use App\Models\Accounting\JournalEntry;
 use App\Models\Accounting\JournalEntryLine;
-use App\Models\Accounting\Account;
-use App\Models\Accounting\AccountingPeriod;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
@@ -35,12 +35,14 @@ class FixedAssetObserver
 
         if ($asset->journal_entry_id) {
             Log::info('FixedAssetObserver: Already has JE', ['journal_entry_id' => $asset->journal_entry_id]);
+
             return; // Already has JE
         }
 
         // Don't create acquisition JE for voided assets
         if ($asset->status === FixedAsset::STATUS_VOIDED) {
             Log::info('FixedAssetObserver: Skipping JE creation for voided asset', ['asset_id' => $asset->id]);
+
             return;
         }
 
@@ -56,6 +58,7 @@ class FixedAssetObserver
                     'asset_id' => $asset->id,
                 ]);
                 DB::rollBack();
+
                 return;
             }
 
@@ -67,6 +70,7 @@ class FixedAssetObserver
                     'asset_account_id' => $category->asset_account_id,
                 ]);
                 DB::rollBack();
+
                 return;
             }
 
@@ -93,6 +97,7 @@ class FixedAssetObserver
                     'bank_account_id' => $asset->bank_account_id,
                 ]);
                 DB::rollBack();
+
                 return;
             }
 

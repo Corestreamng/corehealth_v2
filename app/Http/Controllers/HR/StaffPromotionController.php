@@ -26,21 +26,23 @@ class StaffPromotionController extends Controller
             $rows = $query->get();
             $csv = "Staff,From Grade,To Grade,New Title,Promotion Date,Effective Date,Next Due,Authority\n";
             foreach ($rows as $r) {
-                $csv .= '"'.($r->staff?->user?->surname.' '.$r->staff?->user?->firstname.' '.$r->staff?->user?->othername).'","'.($r->fromGradeLevel?->name ?? '').'","'.($r->toGradeLevel?->name ?? '').'","'.($r->to_job_title ?? '').'","'.($r->promotion_date?->format('Y-m-d') ?? '').'","'.($r->effective_date?->format('Y-m-d') ?? '').'","'.($r->next_promotion_due_date?->format('Y-m-d') ?? '').'","'.($r->authority ?? '')."\"\n";
+                $csv .= '"' . ($r->staff?->user?->surname . ' ' . $r->staff?->user?->firstname . ' ' . $r->staff?->user?->othername) . '","' . ($r->fromGradeLevel?->name ?? '') . '","' . ($r->toGradeLevel?->name ?? '') . '","' . ($r->to_job_title ?? '') . '","' . ($r->promotion_date?->format('Y-m-d') ?? '') . '","' . ($r->effective_date?->format('Y-m-d') ?? '') . '","' . ($r->next_promotion_due_date?->format('Y-m-d') ?? '') . '","' . ($r->authority ?? '') . "\"\n";
             }
-            return response($csv)->header('Content-Type', 'text/csv')->header('Content-Disposition', 'attachment; filename=promotions_'.date('Ymd').'.csv');
+
+            return response($csv)->header('Content-Type', 'text/csv')->header('Content-Disposition', 'attachment; filename=promotions_' . date('Ymd') . '.csv');
         }
 
         if ($request->ajax()) {
             return DataTables::of($query)
                 ->addIndexColumn()
-                ->addColumn('staff_name', fn($p) => '<a href="' . route('hr.tracking.profile', $p->staff_id) . '" class="font-weight-bold text-dark" title="View Tracking Profile">' . e($p->staff?->user?->surname . ' ' . $p->staff?->user?->firstname . ' ' . $p->staff?->user?->othername) . '</a>')
-                ->addColumn('grade_change', fn($p) => e($p->fromGradeLevel?->name ?? '—') . ' <i class="mdi mdi-arrow-right text-success"></i> <span class="badge badge-success">' . e($p->toGradeLevel?->name ?? '—') . '</span>')
-                ->addColumn('new_title', fn($p) => e($p->to_job_title ?? '—'))
-                ->addColumn('date_col', fn($p) => ($p->promotion_date?->format('d M Y') ?? '') . ($p->authority ? '<br><small class="text-muted">' . e($p->authority) . '</small>' : ''))
+                ->addColumn('staff_name', fn ($p) => '<a href="' . route('hr.tracking.profile', $p->staff_id) . '" class="font-weight-bold text-dark" title="View Tracking Profile">' . e($p->staff?->user?->surname . ' ' . $p->staff?->user?->firstname . ' ' . $p->staff?->user?->othername) . '</a>')
+                ->addColumn('grade_change', fn ($p) => e($p->fromGradeLevel?->name ?? '—') . ' <i class="mdi mdi-arrow-right text-success"></i> <span class="badge badge-success">' . e($p->toGradeLevel?->name ?? '—') . '</span>')
+                ->addColumn('new_title', fn ($p) => e($p->to_job_title ?? '—'))
+                ->addColumn('date_col', fn ($p) => ($p->promotion_date?->format('d M Y') ?? '') . ($p->authority ? '<br><small class="text-muted">' . e($p->authority) . '</small>' : ''))
                 ->addColumn('action', function ($p) {
                     $html = '<a href="' . route('hr.promotions.show', $p) . '" class="btn btn-sm btn-outline-info" title="View"><i class="mdi mdi-eye"></i></a> ';
                     $html .= '<button class="btn btn-sm btn-outline-danger delete-btn" data-url="' . route('hr.promotions.destroy', $p) . '" title="Delete"><i class="mdi mdi-delete"></i></button>';
+
                     return $html;
                 })
                 ->rawColumns(['staff_name', 'grade_change', 'date_col', 'action'])
@@ -55,7 +57,7 @@ class StaffPromotionController extends Controller
             $scopedStaff = Staff::with(['user', 'department', 'cadre', 'gradeLevel'])->find($request->staff_id);
         }
 
-        $statsQuery = $scopedStaff ? StaffPromotion::where('staff_id', $scopedStaff->id) : new StaffPromotion;
+        $statsQuery = $scopedStaff ? StaffPromotion::where('staff_id', $scopedStaff->id) : new StaffPromotion();
         $stats = [
             'total' => (clone $statsQuery)->count(),
             'this_year' => (clone $statsQuery)->whereYear('promotion_date', now()->year)->count(),
@@ -101,12 +103,14 @@ class StaffPromotionController extends Controller
         }
 
         Alert::success('Success', 'Promotion recorded for ' . ($staff->user?->surname ?? ''));
+
         return redirect()->route('hr.promotions.index');
     }
 
     public function show(StaffPromotion $promotion)
     {
         $promotion->load(['staff.user', 'fromGradeLevel', 'toGradeLevel', 'processedBy']);
+
         return view('admin.hr.promotions.show', compact('promotion'));
     }
 
@@ -116,6 +120,7 @@ class StaffPromotionController extends Controller
     public function staffHistory(Staff $staff)
     {
         $promotions = $staff->promotions()->with(['fromGradeLevel', 'toGradeLevel', 'processedBy'])->get();
+
         return view('admin.hr.promotions.staff-history', compact('staff', 'promotions'));
     }
 
@@ -128,6 +133,7 @@ class StaffPromotionController extends Controller
         }
 
         Alert::success('Success', 'Promotion record removed.');
+
         return redirect()->back();
     }
 }

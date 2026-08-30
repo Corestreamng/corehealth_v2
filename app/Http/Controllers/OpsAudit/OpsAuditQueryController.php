@@ -14,14 +14,14 @@ class OpsAuditQueryController extends OpsAuditBaseController
 
         $viewData = compact('startDate', 'endDate');
         $viewData['zoneKey'] = 'queries-dashboard';
-        
+
         $viewData['kpis'] = [
             'total_active' => \App\Models\AuditMark::where('status', 'queried')->count(),
             'total_resolved' => \App\Models\AuditMark::where('status', 'resolved')->count(),
             'active_in_period' => \App\Models\AuditMark::where('status', 'queried')->whereBetween('created_at', [$startDate, $endDate])->count(),
             'resolved_in_period' => \App\Models\AuditMark::where('status', 'resolved')->whereBetween('created_at', [$startDate, $endDate])->count(),
         ];
-        
+
         return view('admin.ops_audit.queries_dashboard', $viewData);
     }
 
@@ -40,25 +40,28 @@ class OpsAuditQueryController extends OpsAuditBaseController
         }
 
         return DataTables::eloquent($query)
-            ->editColumn('created_at', function($r) {
+            ->editColumn('created_at', function ($r) {
                 return '<div class="font-weight-bold">' . $r->created_at->format('M d, Y') . '</div><small class="text-muted"><i class="mdi mdi-clock-outline"></i> ' . $r->created_at->format('h:i A') . '</small>';
             })
-            ->addColumn('record_details', function($r) {
+            ->addColumn('record_details', function ($r) {
                 $type = class_basename($r->auditable_type);
                 $link = '<small class="text-primary">ID: ' . $r->auditable_id . '</small>';
+
                 return '<div class="font-weight-bold text-dark">' . $type . '</div>' . $link . '<br><small class="text-muted">Zone: ' . ($r->zone_key ?? 'General') . '</small>';
             })
-            ->addColumn('query_info', function($r) {
+            ->addColumn('query_info', function ($r) {
                 $auditor = $r->auditor->name ?? 'Auditor';
+
                 return '<div class="font-weight-bold text-danger">' . \Illuminate\Support\Str::limit($r->query_notes, 50) . '</div><small class="text-muted">By: ' . $auditor . '</small>';
             })
-            ->addColumn('status_badge', function($r) {
+            ->addColumn('status_badge', function ($r) {
                 if ($r->status === 'resolved') {
                     return '<span class="badge bg-success">Resolved</span><br><small class="text-muted">By: ' . ($r->resolver->name ?? 'Unknown') . '</small>';
                 }
+
                 return '<span class="badge bg-warning text-dark">Active Query</span>';
             })
-            ->addColumn('action', function($r) {
+            ->addColumn('action', function ($r) {
                 return '<button class="btn btn-sm btn-outline-primary" onclick="viewQueryDetails(' . $r->id . ')"><i class="mdi mdi-eye"></i> View</button>';
             })
             ->rawColumns(['created_at', 'record_details', 'query_info', 'status_badge', 'action'])
@@ -85,6 +88,7 @@ class OpsAuditQueryController extends OpsAuditBaseController
 
         // Target record details formatting
         $targetDetails = [];
+
         try {
             $modelClass = $mark->auditable_type;
             if (class_exists($modelClass)) {

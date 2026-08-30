@@ -38,20 +38,20 @@ class AccountClass extends Model
     ];
 
     // Normal balance constants
-    const BALANCE_DEBIT = 'debit';
-    const BALANCE_CREDIT = 'credit';
+    public const BALANCE_DEBIT = 'debit';
+    public const BALANCE_CREDIT = 'credit';
 
     // Cash flow categories
-    const CASH_FLOW_OPERATING = 'operating';
-    const CASH_FLOW_INVESTING = 'investing';
-    const CASH_FLOW_FINANCING = 'financing';
+    public const CASH_FLOW_OPERATING = 'operating';
+    public const CASH_FLOW_INVESTING = 'investing';
+    public const CASH_FLOW_FINANCING = 'financing';
 
     // Standard class codes
-    const CODE_ASSET = '1';
-    const CODE_LIABILITY = '2';
-    const CODE_EQUITY = '3';
-    const CODE_INCOME = '4';
-    const CODE_EXPENSE = '5';
+    public const CODE_ASSET = '1';
+    public const CODE_LIABILITY = '2';
+    public const CODE_EQUITY = '3';
+    public const CODE_INCOME = '4';
+    public const CODE_EXPENSE = '5';
 
     /**
      * Accessor for backward compatibility with code using class_code.

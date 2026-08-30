@@ -3,8 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\NursingShift;
-use App\Models\ShiftHandover;
 use App\Models\ShiftAction;
+use App\Models\ShiftHandover;
 use App\Models\Ward;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -71,6 +71,7 @@ class ShiftController extends Controller
             ]);
         } catch (\Exception $e) {
             Log::error('Error checking active shift: ' . $e->getMessage());
+
             return response()->json([
                 'success' => false,
                 'message' => 'Error checking shift status',
@@ -93,7 +94,7 @@ class ShiftController extends Controller
                 ->orderBy('created_at', 'desc');
 
             if ($wardId) {
-                $query->where(function($q) use ($wardId) {
+                $query->where(function ($q) use ($wardId) {
                     $q->forWard($wardId)->orWhereNull('ward_id');
                 });
             }
@@ -103,8 +104,8 @@ class ShiftController extends Controller
             // Also get count of unacknowledged critical handovers
             $criticalCount = ShiftHandover::unacknowledged()
                 ->withCriticalNotes()
-                ->when($wardId, function($q) use ($wardId) {
-                    $q->where(function($q2) use ($wardId) {
+                ->when($wardId, function ($q) use ($wardId) {
+                    $q->where(function ($q2) use ($wardId) {
                         $q2->forWard($wardId)->orWhereNull('ward_id');
                     });
                 })
@@ -112,7 +113,7 @@ class ShiftController extends Controller
 
             return response()->json([
                 'success' => true,
-                'handovers' => $handovers->map(function($handover) {
+                'handovers' => $handovers->map(function ($handover) {
                     return [
                         'id' => $handover->id,
                         'shift_type' => $handover->shift_type,
@@ -133,6 +134,7 @@ class ShiftController extends Controller
             ]);
         } catch (\Exception $e) {
             Log::error('Error getting pending handovers: ' . $e->getMessage());
+
             return response()->json([
                 'success' => false,
                 'message' => 'Error loading handovers',
@@ -178,7 +180,7 @@ class ShiftController extends Controller
                     'success' => false,
                     'requires_acknowledgment' => true,
                     'message' => 'Please acknowledge critical handovers before starting your shift.',
-                    'critical_handovers' => $remainingCritical->map(function($h) {
+                    'critical_handovers' => $remainingCritical->map(function ($h) {
                         return [
                             'id' => $h->id,
                             'created_by' => $h->creator->name ?? 'Unknown',
@@ -225,6 +227,7 @@ class ShiftController extends Controller
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error('Error starting shift: ' . $e->getMessage());
+
             return response()->json([
                 'success' => false,
                 'message' => 'Error starting shift: ' . $e->getMessage(),
@@ -306,6 +309,7 @@ class ShiftController extends Controller
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error('Error ending shift: ' . $e->getMessage());
+
             return response()->json([
                 'success' => false,
                 'message' => 'Error ending shift: ' . $e->getMessage(),
@@ -349,7 +353,7 @@ class ShiftController extends Controller
                         'icon' => $config['icon'],
                         'color' => $config['color'],
                         'count' => $data['count'],
-                        'events' => array_map(function($event, $count) {
+                        'events' => array_map(function ($event, $count) {
                             return ucfirst($event) . ": $count";
                         }, array_keys($data['events']), $data['events']),
                         'patients_count' => count($data['patients']),
@@ -385,6 +389,7 @@ class ShiftController extends Controller
             ]);
         } catch (\Exception $e) {
             Log::error('Error getting shift preview: ' . $e->getMessage());
+
             return response()->json([
                 'success' => false,
                 'message' => 'Error getting shift preview',
@@ -434,11 +439,11 @@ class ShiftController extends Controller
             // Search filter
             if ($request->search) {
                 $search = $request->search;
-                $query->where(function($q) use ($search) {
+                $query->where(function ($q) use ($search) {
                     $q->where('summary', 'like', "%{$search}%")
                       ->orWhere('critical_notes', 'like', "%{$search}%")
                       ->orWhere('concluding_notes', 'like', "%{$search}%")
-                      ->orWhereHas('creator', function($q2) use ($search) {
+                      ->orWhereHas('creator', function ($q2) use ($search) {
                           $q2->where('firstname', 'like', "%{$search}%")
                              ->orWhere('surname', 'like', "%{$search}%")
                              ->orWhere('email', 'like', "%{$search}%");
@@ -462,45 +467,48 @@ class ShiftController extends Controller
 
             // Otherwise return DataTable format
             return DataTables::of($query)
-                ->addColumn('shift_type_badge', function($handover) {
+                ->addColumn('shift_type_badge', function ($handover) {
                     return $handover->shift_type_badge;
                 })
-                ->addColumn('ward_name', function($handover) {
+                ->addColumn('ward_name', function ($handover) {
                     return $handover->ward->name ?? '<span class="text-muted">All Wards</span>';
                 })
-                ->addColumn('created_by_name', function($handover) {
+                ->addColumn('created_by_name', function ($handover) {
                     return $handover->creator->name ?? 'Unknown';
                 })
-                ->addColumn('created_at_formatted', function($handover) {
+                ->addColumn('created_at_formatted', function ($handover) {
                     return $handover->created_at->format('M d, Y h:i A');
                 })
-                ->addColumn('status_badge', function($handover) {
+                ->addColumn('status_badge', function ($handover) {
                     return $handover->status_badge;
                 })
-                ->addColumn('has_critical', function($handover) {
+                ->addColumn('has_critical', function ($handover) {
                     return $handover->has_critical_notes
                         ? '<span class="badge badge-danger"><i class="mdi mdi-alert"></i> Yes</span>'
                         : '<span class="text-muted">-</span>';
                 })
-                ->addColumn('pending_count', function($handover) {
+                ->addColumn('pending_count', function ($handover) {
                     $count = is_array($handover->pending_tasks) ? count($handover->pending_tasks) : 0;
+
                     return $count > 0
                         ? '<span class="badge badge-warning">' . $count . '</span>'
                         : '<span class="text-muted">0</span>';
                 })
-                ->addColumn('actions', function($handover) {
+                ->addColumn('actions', function ($handover) {
                     $buttons = '<div class="btn-group">';
                     $buttons .= '<button type="button" class="btn btn-sm btn-info view-handover" data-id="' . $handover->id . '" title="View Details"><i class="mdi mdi-eye"></i></button>';
                     if (!$handover->is_acknowledged) {
                         $buttons .= '<button type="button" class="btn btn-sm btn-success acknowledge-handover" data-id="' . $handover->id . '" title="Acknowledge"><i class="mdi mdi-check"></i></button>';
                     }
                     $buttons .= '</div>';
+
                     return $buttons;
                 })
                 ->rawColumns(['shift_type_badge', 'ward_name', 'status_badge', 'has_critical', 'pending_count', 'actions'])
                 ->make(true);
         } catch (\Exception $e) {
             Log::error('Error getting handovers: ' . $e->getMessage());
+
             return response()->json([
                 'error' => 'Error loading handovers',
             ], 500);
@@ -527,7 +535,7 @@ class ShiftController extends Controller
         $handovers = $query->paginate($perPage, ['*'], 'page', $page);
 
         // Format data for cards
-        $data = $handovers->map(function($handover) {
+        $data = $handovers->map(function ($handover) {
             $shiftLabels = [
                 'morning' => 'Morning',
                 'afternoon' => 'Afternoon',
@@ -618,6 +626,7 @@ class ShiftController extends Controller
             ]);
         } catch (\Exception $e) {
             Log::error('Error getting handover details: ' . $e->getMessage() . ' | Trace: ' . $e->getTraceAsString());
+
             return response()->json([
                 'success' => false,
                 'message' => 'Handover not found: ' . $e->getMessage(),
@@ -649,6 +658,7 @@ class ShiftController extends Controller
             ]);
         } catch (\Exception $e) {
             Log::error('Error acknowledging handover: ' . $e->getMessage());
+
             return response()->json([
                 'success' => false,
                 'message' => 'Error acknowledging handover',
@@ -690,6 +700,7 @@ class ShiftController extends Controller
             ]);
         } catch (\Exception $e) {
             Log::error('Error acknowledging multiple handovers: ' . $e->getMessage());
+
             return response()->json([
                 'success' => false,
                 'message' => 'Error acknowledging handovers',
@@ -721,6 +732,7 @@ class ShiftController extends Controller
             ]);
         } catch (\Exception $e) {
             Log::error('Error getting shift actions: ' . $e->getMessage());
+
             return response()->json([
                 'success' => false,
                 'message' => 'Error loading actions',
@@ -744,6 +756,7 @@ class ShiftController extends Controller
             ]);
         } catch (\Exception $e) {
             Log::error('Error loading wards: ' . $e->getMessage());
+
             return response()->json([
                 'success' => false,
                 'message' => 'Error loading wards',
@@ -767,7 +780,7 @@ class ShiftController extends Controller
                 ->where('user_id', auth()->id()) // Only show user's own shifts
                 ->get();
 
-            $events = $shifts->map(function($shift) {
+            $events = $shifts->map(function ($shift) {
                 $colors = [
                     'morning' => '#ffc107',
                     'afternoon' => '#17a2b8',
@@ -791,6 +804,7 @@ class ShiftController extends Controller
             return response()->json($events);
         } catch (\Exception $e) {
             Log::error('Error getting shift calendar: ' . $e->getMessage());
+
             return response()->json([], 500);
         }
     }
@@ -809,14 +823,16 @@ class ShiftController extends Controller
                 ->whereBetween('started_at', [$startDate, $endDate])
                 ->get();
 
-            $totalHours = $shifts->sum(function($shift) {
+            $totalHours = $shifts->sum(function ($shift) {
                 return $shift->elapsed_seconds / 3600;
             });
 
-            $byType = $shifts->groupBy('shift_type')->map(function($group) {
+            $byType = $shifts->groupBy('shift_type')->map(function ($group) {
                 return [
                     'count' => $group->count(),
-                    'hours' => round($group->sum(function($s) { return $s->elapsed_seconds / 3600; }), 1),
+                    'hours' => round($group->sum(function ($s) {
+                        return $s->elapsed_seconds / 3600;
+                    }), 1),
                 ];
             });
 
@@ -844,6 +860,7 @@ class ShiftController extends Controller
             ]);
         } catch (\Exception $e) {
             Log::error('Error getting shift statistics: ' . $e->getMessage());
+
             return response()->json([
                 'success' => false,
                 'message' => 'Error loading statistics',

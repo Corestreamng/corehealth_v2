@@ -7,7 +7,6 @@ use App\Models\Accounting\JournalEntry;
 use App\Models\Accounting\JournalEntryLine;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Support\Facades\DB;
 
 /**
  * Bank Model (Enhanced)
@@ -233,6 +232,7 @@ class Bank extends Model
         }
 
         $glBalance = $this->getBalanceFromJournalEntries($this->last_statement_date?->format('Y-m-d'));
+
         return round((float)$this->last_statement_balance - $glBalance, 2);
     }
 

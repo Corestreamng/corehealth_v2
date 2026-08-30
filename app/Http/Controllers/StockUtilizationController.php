@@ -7,16 +7,15 @@ use App\Models\Patient;
 use App\Models\Product;
 use App\Models\ProductOrServiceRequest;
 use App\Models\ProductRequest;
-use App\Models\Store;
-use App\Models\StoreStock;
 use App\Models\StockBatch;
 use App\Models\StockBatchTransaction;
 use App\Models\StockUtilization;
+use App\Models\Store;
+use App\Models\StoreStock;
 use App\Services\StockService;
 use App\Services\StoreContextResolver;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Yajra\DataTables\DataTables;
@@ -24,6 +23,7 @@ use Yajra\DataTables\DataTables;
 class StockUtilizationController extends Controller
 {
     protected StockService $stockService;
+
     protected StoreContextResolver $resolver;
 
     public function __construct(StockService $stockService, StoreContextResolver $resolver)
@@ -70,7 +70,7 @@ class StockUtilizationController extends Controller
         $request->validate([
             'store_id' => 'required|exists:stores,id',
             'search' => 'nullable|string',
-            'stock_level' => 'nullable|string|in:all,low,out,expiring_soon,expired'
+            'stock_level' => 'nullable|string|in:all,low,out,expiring_soon,expired',
         ]);
 
         $storeId = $request->store_id;
@@ -139,6 +139,7 @@ class StockUtilizationController extends Controller
         // Inject batches into each paginated item
         $products->getCollection()->transform(function ($item) use ($batchMap) {
             $item->batches = $batchMap->get($item->product_id, collect())->values();
+
             return $item;
         });
 
@@ -152,7 +153,7 @@ class StockUtilizationController extends Controller
     {
         $request->validate([
             'store_id' => 'required|exists:stores,id',
-            'product_id' => 'required|exists:products,id'
+            'product_id' => 'required|exists:products,id',
         ]);
 
         $storeId = $request->store_id;
@@ -194,7 +195,7 @@ class StockUtilizationController extends Controller
                     'name' => userfullname($patient->user_id),
                     'file_no' => $patient->file_no,
                     'hmo_name' => optional($patient->hmo)->name ?? 'None / Cash',
-                    'hmo_id' => $patient->hmo_id
+                    'hmo_id' => $patient->hmo_id,
                 ];
             });
 
@@ -207,7 +208,7 @@ class StockUtilizationController extends Controller
     public function searchPerformers(Request $request)
     {
         $term = $request->get('term', '');
-        
+
         $users = \App\Models\User::where('status', 1)
             ->where('is_admin', '!=', 19)
             ->where(function ($q) use ($term) {
@@ -220,7 +221,7 @@ class StockUtilizationController extends Controller
             ->map(function ($user) {
                 return [
                     'id' => $user->id,
-                    'name' => trim($user->firstname . ' ' . $user->surname . ' ' . $user->othername)
+                    'name' => trim($user->firstname . ' ' . $user->surname . ' ' . $user->othername),
                 ];
             });
 
@@ -235,7 +236,7 @@ class StockUtilizationController extends Controller
         $request->validate([
             'patient_id' => 'required|exists:patients,id',
             'product_id' => 'required|exists:products,id',
-            'qty' => 'required|integer|min:1'
+            'qty' => 'required|integer|min:1',
         ]);
 
         $patient = Patient::findOrFail($request->patient_id);
@@ -251,7 +252,7 @@ class StockUtilizationController extends Controller
                         'hmo_name' => optional($patient->hmo)->name,
                         'payable_amount' => $hmoData['payable_amount'] * $qty,
                         'claims_amount' => $hmoData['claims_amount'] * $qty,
-                        'coverage_mode' => $hmoData['coverage_mode']
+                        'coverage_mode' => $hmoData['coverage_mode'],
                     ]);
                 }
             }
@@ -268,7 +269,7 @@ class StockUtilizationController extends Controller
             'hmo_name' => 'Cash / None',
             'payable_amount' => $price * $qty,
             'claims_amount' => 0,
-            'coverage_mode' => 'none'
+            'coverage_mode' => 'none',
         ]);
     }
 
@@ -290,7 +291,7 @@ class StockUtilizationController extends Controller
             'stock_batch_id' => 'required_if:strategy,batch|nullable|exists:stock_batches,id',
             'start_date' => 'nullable|date',
             'end_date' => 'nullable|date',
-            'notes' => 'nullable|string'
+            'notes' => 'nullable|string',
         ]);
 
         $user = auth()->user();
@@ -325,6 +326,7 @@ class StockUtilizationController extends Controller
 
                         // Apply HMO Tariff
                         $hmoData = null;
+
                         try {
                             if ($patient->hmo_id) {
                                 $hmoData = HmoHelper::applyHmoTariff($patient->id, $productId, null);
@@ -381,7 +383,7 @@ class StockUtilizationController extends Controller
                     'start_date' => $request->start_date ? Carbon::parse($request->start_date) : null,
                     'end_date' => $request->end_date ? Carbon::parse($request->end_date) : null,
                     'notes' => $request->notes,
-                    'created_by' => $user->id
+                    'created_by' => $user->id,
                 ]);
 
                 // 3. Deduct stock using the StockService utilizing method
@@ -406,14 +408,15 @@ class StockUtilizationController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => 'Stock utilization logged successfully.',
-                'utilization' => $result
+                'utilization' => $result,
             ]);
 
         } catch (\Exception $e) {
             Log::error('Stock utilization recording failed: ' . $e->getMessage());
+
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to record stock utilization: ' . $e->getMessage()
+                'message' => 'Failed to record stock utilization: ' . $e->getMessage(),
             ], 500);
         }
     }
@@ -426,7 +429,7 @@ class StockUtilizationController extends Controller
         $request->validate([
             'store_id' => 'required|exists:stores,id',
             'start_date' => 'nullable|date',
-            'end_date' => 'nullable|date'
+            'end_date' => 'nullable|date',
         ]);
 
         $storeId = $request->store_id;
@@ -443,9 +446,9 @@ class StockUtilizationController extends Controller
             ->join('stock_batches as sb2', 'sb2.id', '=', 't2.stock_batch_id')
             ->whereColumn('sb2.product_id', 'stock_batches.product_id')
             ->whereColumn('sb2.store_id', 'stock_batches.store_id')
-            ->where(function($q) {
+            ->where(function ($q) {
                 $q->whereColumn('t2.created_at', '<', 'stock_batch_transactions.created_at')
-                  ->orWhere(function($q2) {
+                  ->orWhere(function ($q2) {
                       $q2->whereColumn('t2.created_at', '=', 'stock_batch_transactions.created_at')
                          ->whereColumn('t2.id', '<=', 'stock_batch_transactions.id');
                   });
@@ -456,14 +459,14 @@ class StockUtilizationController extends Controller
             ->with(['stockBatch.product.category', 'stockBatch.product.packagings', 'performer', 'reference'])
             ->where('stock_batches.store_id', $storeId)
             ->addSelect([
-                'product_running_balance' => $subquery
+                'product_running_balance' => $subquery,
             ]);
 
         // Apply date range filters
         if ($request->filled('start_date') && $request->filled('end_date')) {
             $query->whereBetween('stock_batch_transactions.created_at', [
                 Carbon::parse($request->start_date)->startOfDay(),
-                Carbon::parse($request->end_date)->endOfDay()
+                Carbon::parse($request->end_date)->endOfDay(),
             ]);
         }
 
@@ -517,7 +520,7 @@ class StockUtilizationController extends Controller
             }
             $uniqueProducts = max($uniqueProducts, $stat->unique_products);
         }
-        
+
         // Accurate distinct products count across all types
         $upQuery = clone $query;
         $upQuery->setEagerLoads([]);
@@ -539,7 +542,7 @@ class StockUtilizationController extends Controller
             'opening_balance_formatted' => '',
             'opening_balance_bulk' => '',
             'closing_balance_formatted' => '',
-            'closing_balance_bulk' => ''
+            'closing_balance_bulk' => '',
         ];
 
         if ($request->filled('product_id')) {
@@ -552,14 +555,14 @@ class StockUtilizationController extends Controller
                 $summary['total_out_bulk'] = $product->formatBulkQty($totalOut);
             }
 
-            $baseBalQuery = \App\Models\StockBatchTransaction::whereHas('stockBatch', function($q) use($storeId, $request) {
+            $baseBalQuery = \App\Models\StockBatchTransaction::whereHas('stockBatch', function ($q) use ($storeId, $request) {
                 $q->where('store_id', $storeId)->where('product_id', $request->product_id);
             });
             $rawSum = 'SUM(CASE WHEN type IN ("in", "transfer_in", "return", "req_return") THEN qty WHEN type IN ("out", "transfer_out", "expired", "damaged", "po_return") THEN -qty WHEN type = "adjustment" AND notes LIKE "Positive%" THEN qty WHEN type = "adjustment" AND notes NOT LIKE "Positive%" THEN -qty ELSE 0 END) as aggregate';
-            
+
             $closing = (clone $baseBalQuery)->selectRaw($rawSum)->value('aggregate') ?? 0;
             $summary['closing_balance'] = $closing;
-            
+
             if ($request->filled('start_date')) {
                 $opening = (clone $baseBalQuery)
                     ->where('created_at', '<', Carbon::parse($request->start_date)->startOfDay())
@@ -568,7 +571,7 @@ class StockUtilizationController extends Controller
             } else {
                 $summary['opening_balance'] = 0;
             }
-            
+
             if ($product) {
                 $summary['closing_balance_formatted'] = $product->formatQty($summary['closing_balance']);
                 $summary['closing_balance_bulk'] = $product->formatBulkQty($summary['closing_balance']);
@@ -579,8 +582,8 @@ class StockUtilizationController extends Controller
 
         return DataTables::of($query)
             ->with('summary_stats', $summary)
-            ->filterColumn('performer.name', function($query, $keyword) {
-                $query->whereHas('performer', function($q) use ($keyword) {
+            ->filterColumn('performer.name', function ($query, $keyword) {
+                $query->whereHas('performer', function ($q) use ($keyword) {
                     $q->where('firstname', 'like', "%{$keyword}%")
                       ->orWhere('surname', 'like', "%{$keyword}%")
                       ->orWhere('othername', 'like', "%{$keyword}%");
@@ -591,6 +594,7 @@ class StockUtilizationController extends Controller
                 $date = $t->created_at->format('M d, Y');
                 $time = $t->created_at->format('h:i A');
                 $human = $t->created_at->diffForHumans();
+
                 return '<div class="font-weight-bold">' . $date . '</div>' .
                        '<small class="text-muted"><i class="mdi mdi-clock-outline"></i> ' . $time . ' (' . $human . ')</small>';
             })
@@ -598,6 +602,7 @@ class StockUtilizationController extends Controller
                 $productName = $t->stockBatch->product->product_name ?? 'N/A';
                 $productCode = $t->stockBatch->product->product_code ?? 'No Code';
                 $categoryName = $t->stockBatch->product->category->category_name ?? 'No Category';
+
                 return '<div class="font-weight-bold text-dark">' . $productName . '</div>' .
                        '<div class="small mt-1"><span class="text-muted border-right pr-1 mr-1">Code: ' . $productCode . '</span>' .
                        '<span class="text-info"><i class="mdi mdi-tag"></i> ' . $categoryName . '</span></div>';
@@ -611,6 +616,7 @@ class StockUtilizationController extends Controller
                     $expClass = $exp->isPast() ? 'text-danger font-weight-bold' : ($exp->diffInDays(now()) < 90 ? 'text-warning' : 'text-muted');
                     $expiryHtml = '<div class="small mt-1"><span class="text-muted">Exp: </span><span class="' . $expClass . '">' . $exp->format('Y-m-d') . '</span></div>';
                 }
+
                 return '<div class="font-weight-bold">' . $batchNumber . '</div>' . $expiryHtml;
             })
             ->editColumn('type', function ($t) {
@@ -623,23 +629,23 @@ class StockUtilizationController extends Controller
                 $badgeClass = ($isOut || $isNegAdj) ? 'badge-danger' : 'badge-success';
                 $signedQty = ($isOut || $isNegAdj) ? -abs($t->qty) : abs($t->qty);
                 $product = $t->stockBatch->product;
-                
+
                 $qtyFormatted = $product ? $product->formatQty(abs($t->qty)) : abs($t->qty);
                 $qtyBulk = $product ? $product->formatBulkQty(abs($t->qty)) : '';
-                
+
                 $html = '<span class="badge ' . $badgeClass . '" style="font-size: 1.1em; padding: 0.4em 0.6em;">' . $sign . $qtyFormatted . '</span>';
                 if ($qtyBulk) {
                     $html .= '<div class="small text-muted mt-1">' . $qtyBulk . '</div>';
                 }
-                
+
                 if (isset($t->product_running_balance) || isset($t->balance_after)) {
                     $html .= '<hr class="my-2" style="border-color: #eee;">';
                     $html .= '<div class="small text-nowrap" style="line-height: 1.4;">';
-                    
+
                     if (isset($t->product_running_balance)) {
                         $totalAfter = $t->product_running_balance;
                         $totalBefore = $totalAfter - $signedQty;
-                        
+
                         $tbf = $product ? $product->formatQty($totalBefore) : $totalBefore;
                         $taf = $product ? $product->formatQty($totalAfter) : $totalAfter;
                         $tbBulk = $product ? $product->formatBulkQty($totalBefore) : '';
@@ -655,11 +661,11 @@ class StockUtilizationController extends Controller
                         }
                         $html .= '</div>';
                     }
-                    
+
                     if (isset($t->balance_after)) {
                         $batchAfter = $t->balance_after;
                         $batchBefore = $batchAfter - $signedQty;
-                        
+
                         $bbf = $product ? $product->formatQty($batchBefore) : $batchBefore;
                         $baf = $product ? $product->formatQty($batchAfter) : $batchAfter;
 
@@ -670,15 +676,16 @@ class StockUtilizationController extends Controller
                                     </div>
                                   </div>';
                     }
-                    
+
                     $html .= '</div>';
                 }
-                
+
                 return $html;
             })
             ->editColumn('performer', function ($t) {
                 $name = $t->performer->name ?? 'System';
                 $idLabel = $t->performer ? 'ID: #' . $t->performer->id : 'Automated';
+
                 return '<div class="font-weight-bold">' . $name . '</div><small class="text-muted">' . $idLabel . '</small>';
             })
             ->editColumn('reference', function ($t) {
@@ -689,8 +696,10 @@ class StockUtilizationController extends Controller
                         $pName = $u->patient ? userfullname($u->patient->user_id) : 'Patient';
                         $fileNo = $u->patient && $u->patient->file_no ? " [{$u->patient->file_no}]" : '';
                         $billingStatus = $u->is_billed ? ' (Billed)' : ' (Unbilled)';
+
                         return "Stock Utilization (Patient): {$pName}{$fileNo}{$billingStatus} - {$u->reason}";
                     }
+
                     return "Stock Utilization (Internal): {$u->reason}";
                 }
 
@@ -698,6 +707,7 @@ class StockUtilizationController extends Controller
                 if (str_contains((string)$t->reference_type, 'MedicationAdministration') && $t->reference) {
                     $pName = optional($t->reference->patient)->user_id ? userfullname($t->reference->patient->user_id) : 'Patient';
                     $fileNo = optional($t->reference->patient)->file_no ? " [" . $t->reference->patient->file_no . "]" : '';
+
                     return "Medication Administered to {$pName}{$fileNo} - Dose: " . ($t->reference->dose ?? 'N/A');
                 }
 
@@ -705,6 +715,7 @@ class StockUtilizationController extends Controller
                 if (str_contains((string)$t->reference_type, 'InjectionAdministration') && $t->reference) {
                     $pName = optional($t->reference->patient)->user_id ? userfullname($t->reference->patient->user_id) : 'Patient';
                     $fileNo = optional($t->reference->patient)->file_no ? " [" . $t->reference->patient->file_no . "]" : '';
+
                     return "Injection Administered to {$pName}{$fileNo} - Dose: " . ($t->reference->dose ?? 'N/A');
                 }
 
@@ -712,6 +723,7 @@ class StockUtilizationController extends Controller
                 if (str_contains((string)$t->reference_type, 'VaccineAdministration') && $t->reference) {
                     $pName = optional($t->reference->patient)->user_id ? userfullname($t->reference->patient->user_id) : 'Patient';
                     $fileNo = optional($t->reference->patient)->file_no ? " [" . $t->reference->patient->file_no . "]" : '';
+
                     return "Vaccine Administered to {$pName}{$fileNo}";
                 }
 
@@ -719,6 +731,7 @@ class StockUtilizationController extends Controller
                 if (str_contains((string)$t->reference_type, 'ProductRequest') && $t->reference) {
                     $pName = optional($t->reference->patient)->user_id ? userfullname($t->reference->patient->user_id) : 'Patient';
                     $fileNo = optional($t->reference->patient)->file_no ? " [" . $t->reference->patient->file_no . "]" : '';
+
                     return "Pharmacy Dispense (Prescription) for {$pName}{$fileNo}";
                 }
 
@@ -726,6 +739,7 @@ class StockUtilizationController extends Controller
                 if (str_contains((string)$t->reference_type, 'ProductOrServiceRequest') && $t->reference) {
                     $pName = optional($t->reference->patient)->user_id ? userfullname($t->reference->patient->user_id) : 'Patient';
                     $fileNo = optional($t->reference->patient)->file_no ? " [" . $t->reference->patient->file_no . "]" : '';
+
                     return "Consumable Billing/Direct Dispense for {$pName}{$fileNo}";
                 }
 

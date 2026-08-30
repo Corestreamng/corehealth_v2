@@ -29,7 +29,7 @@ class CreatePatientProceduresTable extends Migration
                 'scheduled',
                 'in_progress',
                 'completed',
-                'cancelled'
+                'cancelled',
             ])->default('requested')->after('status');
             $table->enum('priority', ['routine', 'urgent', 'emergency'])->default('routine')->after('procedure_status');
 
@@ -45,7 +45,7 @@ class CreatePatientProceduresTable extends Migration
                 'successful',
                 'complications',
                 'aborted',
-                'converted'
+                'converted',
             ])->nullable()->after('operating_room');
             $table->text('outcome_notes')->nullable()->after('outcome');
 

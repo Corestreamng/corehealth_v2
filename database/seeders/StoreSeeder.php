@@ -2,8 +2,8 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Seeder;
 use App\Models\Store;
+use Illuminate\Database\Seeder;
 
 /**
  * Seeder: StoreSeeder

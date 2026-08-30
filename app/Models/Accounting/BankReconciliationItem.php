@@ -346,6 +346,7 @@ class BankReconciliationItem extends Model
     public function getDisplayAmountAttribute(): string
     {
         $sign = $this->amount_type === self::AMOUNT_CREDIT ? '-' : '+';
+
         return $sign . number_format($this->amount, 2);
     }
 
@@ -363,6 +364,7 @@ class BankReconciliationItem extends Model
         if ($this->is_outstanding) {
             return 'outstanding';
         }
+
         return 'unmatched';
     }
 

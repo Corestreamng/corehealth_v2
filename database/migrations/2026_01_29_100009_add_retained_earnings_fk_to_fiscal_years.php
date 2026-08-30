@@ -12,8 +12,7 @@ use Illuminate\Support\Facades\Schema;
  * This migration adds the foreign key that couldn't be added in the initial
  * fiscal_years migration because journal_entries didn't exist yet.
  */
-return new class extends Migration
-{
+return new class () extends Migration {
     /**
      * Run the migrations.
      */

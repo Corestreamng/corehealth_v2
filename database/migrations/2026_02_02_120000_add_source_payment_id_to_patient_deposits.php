@@ -13,8 +13,7 @@ use Illuminate\Support\Facades\Schema;
  * This allows the PaymentObserver to skip JE creation for ACC_DEPOSIT
  * payments that have a corresponding PatientDeposit (which creates its own JE).
  */
-return new class extends Migration
-{
+return new class () extends Migration {
     public function up(): void
     {
         Schema::table('patient_deposits', function (Blueprint $table) {

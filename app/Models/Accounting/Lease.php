@@ -2,13 +2,13 @@
 
 namespace App\Models\Accounting;
 
-use App\Models\User;
 use App\Models\Department;
 use App\Models\Supplier;
+use App\Models\User;
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
-use Carbon\Carbon;
 
 /**
  * Lease Model (IFRS 16 Compliant)
@@ -20,7 +20,8 @@ use Carbon\Carbon;
  */
 class Lease extends Model
 {
-    use HasFactory, SoftDeletes;
+    use HasFactory;
+    use SoftDeletes;
 
     protected $table = 'leases';
 
@@ -225,6 +226,7 @@ class Lease extends Model
     public function calculateCurrentInterest(): float
     {
         $monthlyRate = ($this->incremental_borrowing_rate / 100) / 12;
+
         return round($this->current_lease_liability * $monthlyRate, 2);
     }
 

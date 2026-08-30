@@ -15,8 +15,7 @@ use Illuminate\Support\Facades\Schema;
  * - Approval workflow
  * - JE linkage for accounting
  */
-return new class extends Migration
-{
+return new class () extends Migration {
     public function up(): void
     {
         Schema::create('inter_account_transfers', function (Blueprint $table) {
@@ -49,7 +48,7 @@ return new class extends Migration
                 'eft',           // Electronic funds transfer
                 'cheque',        // By cheque
                 'rtgs',          // Real-time gross settlement
-                'neft'           // National electronic funds transfer
+                'neft',           // National electronic funds transfer
             ])->default('internal');
 
             // Clearance tracking (for inter-bank)
@@ -69,7 +68,7 @@ return new class extends Migration
                 'in_transit',    // For inter-bank
                 'cleared',       // Funds arrived
                 'failed',
-                'cancelled'
+                'cancelled',
             ])->default('draft');
 
             $table->foreignId('initiated_by')->constrained('users')->cascadeOnDelete();

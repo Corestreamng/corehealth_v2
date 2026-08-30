@@ -2,9 +2,9 @@
 
 namespace App\Services\Dashboard;
 
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Cache;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 
 class HmoDashboardService
 {
@@ -89,6 +89,7 @@ class HmoDashboardService
             ->get()
             ->map(function ($row, $index) use ($colors) {
                 $row->color = $colors[$index % count($colors)];
+
                 return (array) $row;
             })
             ->toArray();
@@ -144,6 +145,7 @@ class HmoDashboardService
                 $row->status_color = $colorMap[$row->validation_status] ?? 'warning';
                 $row->amount_formatted = '₦' . number_format($row->claims_amount ?? 0, 2);
                 $row->time = Carbon::parse($row->created_at)->format('M d, h:i A');
+
                 return $row;
             })
             ->toArray();

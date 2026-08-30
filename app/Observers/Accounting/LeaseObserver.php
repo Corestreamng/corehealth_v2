@@ -2,15 +2,15 @@
 
 namespace App\Observers\Accounting;
 
-use App\Models\Accounting\Lease;
-use App\Models\Accounting\LeasePaymentSchedule;
-use App\Models\Accounting\JournalEntry;
-use App\Models\Accounting\JournalEntryLine;
 use App\Models\Accounting\Account;
 use App\Models\Accounting\AccountingPeriod;
+use App\Models\Accounting\JournalEntry;
+use App\Models\Accounting\JournalEntryLine;
+use App\Models\Accounting\Lease;
+use App\Models\Accounting\LeasePaymentSchedule;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use Carbon\Carbon;
 
 /**
  * Lease Observer (IFRS 16 Compliant)
@@ -60,8 +60,9 @@ class LeaseObserver
         if ($lease->status !== Lease::STATUS_ACTIVE) {
             Log::info('LeaseObserver: Skipping JE for non-active lease', [
                 'lease_id' => $lease->id,
-                'status' => $lease->status
+                'status' => $lease->status,
             ]);
+
             return;
         }
 
@@ -69,10 +70,11 @@ class LeaseObserver
         if ($lease->isExemptFromIfrs16()) {
             Log::info('LeaseObserver: Lease is exempt from IFRS 16 recognition', [
                 'lease_id' => $lease->id,
-                'type' => $lease->lease_type
+                'type' => $lease->lease_type,
             ]);
             // For exempt leases, payments will be expensed as they occur
             $this->generatePaymentSchedule($lease);
+
             return;
         }
 
@@ -105,6 +107,7 @@ class LeaseObserver
                     'liability_account' => $liabilityAccount ? 'found' : 'missing',
                 ]);
                 DB::rollBack();
+
                 return;
             }
 

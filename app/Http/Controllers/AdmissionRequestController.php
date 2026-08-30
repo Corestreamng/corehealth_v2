@@ -3,19 +3,18 @@
 namespace App\Http\Controllers;
 
 use App\Helpers\HmoHelper;
-
 use App\Models\AdmissionRequest;
 use App\Models\Bed;
-use App\Models\Patient;
+use App\Models\DeathRecord;
 use App\Models\Hmo;
+use App\Models\Patient;
 use App\Models\ProductOrServiceRequest;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Yajra\DataTables\DataTables;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use App\Models\DeathRecord;
+use Yajra\DataTables\DataTables;
 
 class AdmissionRequestController extends Controller
 {
@@ -56,7 +55,7 @@ class AdmissionRequestController extends Controller
             $query->join('patients', 'admission_requests.patient_id', '=', 'patients.id')
                   ->join('users', 'patients.user_id', '=', 'users.id')
                   ->select('admission_requests.*');
-                  
+
             if ($sortFilter === 'patient_az') {
                 $query->orderBy('users.surname', 'ASC')->orderBy('users.firstname', 'ASC');
             } else {
@@ -80,7 +79,7 @@ class AdmissionRequestController extends Controller
                 $patientName = $user ? ucwords(trim($user->surname . ' ' . $user->firstname . ' ' . ($user->othername ?? ''))) : 'N/A';
                 $fileNo = $p->file_no ?? 'N/A';
                 $hmoName = $p && $p->hmo_id ? (\App\Models\Hmo::find($p->hmo_id)->name ?? 'N/A') : 'N/A';
-                
+
                 $doctorName = $r->doctor_id ? userfullname($r->doctor_id) : 'N/A';
                 $timeDisplay = date('h:i a D M j, Y', strtotime($r->created_at));
 
@@ -109,8 +108,8 @@ class AdmissionRequestController extends Controller
                 $statusBadge = $r->discharged ? '<span class="badge bg-secondary">Discharged</span>' : '<span class="badge bg-success">Active</span>';
                 $statusColor = $r->discharged ? '#6c757d' : '#10b981';
 
-                $html  = '<div class="queue-card">';
-                
+                $html = '<div class="queue-card">';
+
                 // Row 1
                 $html .= '<div class="queue-card-header">';
                 $html .= '  <div class="queue-card-avatar">' . $initials;
@@ -124,7 +123,7 @@ class AdmissionRequestController extends Controller
                 $html .= '    ' . $statusBadge;
                 $html .= '  </div>';
                 $html .= '</div>';
-                
+
                 // Row 2
                 $html .= '<div class="queue-card-details">';
                 $html .= '  <div class="queue-card-detail-item"><i class="mdi mdi-clock-outline"></i> ' . e($timeDisplay) . '</div>';
@@ -142,11 +141,13 @@ class AdmissionRequestController extends Controller
                 $html .= '</div>';
 
                 $html .= '</div>';
+
                 return $html;
             })
             ->rawColumns(['card_html'])
             ->make(true);
     }
+
     public function admissionRequests(Request $request)
     {
         // Build the query with date range filtering
@@ -178,7 +179,7 @@ class AdmissionRequestController extends Controller
             $query->join('patients', 'admission_requests.patient_id', '=', 'patients.id')
                   ->join('users', 'patients.user_id', '=', 'users.id')
                   ->select('admission_requests.*');
-                  
+
             if ($sortFilter === 'patient_az') {
                 $query->orderBy('users.surname', 'ASC')->orderBy('users.firstname', 'ASC');
             } else {
@@ -202,7 +203,7 @@ class AdmissionRequestController extends Controller
                 $patientName = $user ? ucwords(trim($user->surname . ' ' . $user->firstname . ' ' . ($user->othername ?? ''))) : 'N/A';
                 $fileNo = $p->file_no ?? 'N/A';
                 $hmoName = $p && $p->hmo_id ? (\App\Models\Hmo::find($p->hmo_id)->name ?? 'N/A') : 'N/A';
-                
+
                 $doctorName = $r->doctor_id ? userfullname($r->doctor_id) : 'N/A';
                 $timeDisplay = date('h:i a D M j, Y', strtotime($r->created_at));
 
@@ -231,8 +232,8 @@ class AdmissionRequestController extends Controller
                 $statusBadge = $r->discharged ? '<span class="badge bg-secondary">Discharged</span>' : '<span class="badge bg-success">Active</span>';
                 $statusColor = $r->discharged ? '#6c757d' : '#10b981';
 
-                $html  = '<div class="queue-card">';
-                
+                $html = '<div class="queue-card">';
+
                 // Row 1
                 $html .= '<div class="queue-card-header">';
                 $html .= '  <div class="queue-card-avatar">' . $initials;
@@ -246,7 +247,7 @@ class AdmissionRequestController extends Controller
                 $html .= '    ' . $statusBadge;
                 $html .= '  </div>';
                 $html .= '</div>';
-                
+
                 // Row 2
                 $html .= '<div class="queue-card-details">';
                 $html .= '  <div class="queue-card-detail-item"><i class="mdi mdi-clock-outline"></i> ' . e($timeDisplay) . '</div>';
@@ -264,12 +265,12 @@ class AdmissionRequestController extends Controller
                 $html .= '</div>';
 
                 $html .= '</div>';
+
                 return $html;
             })
             ->rawColumns(['card_html'])
             ->make(true);
     }
-
 
     public function patientAdmissionRequests($patient_id)
     {
@@ -373,7 +374,7 @@ class AdmissionRequestController extends Controller
                     $url_ward_round = route('encounters.create', [
                         'patient_id' => $r->patient_id,
                         'queue_id' => 'ward_round',
-                        'admission_req_id' => $r->id
+                        'admission_req_id' => $r->id,
                     ]);
 
                     $str .= '<div class="d-flex gap-2 flex-wrap mt-3">';
@@ -387,7 +388,9 @@ class AdmissionRequestController extends Controller
 
                     if ($r->bed_id != null) {
                         $days = date_diff(date_create($r->discharge_date ?? now()), date_create($r->bed_assign_date))->days;
-                        if ($days < 1) $days = 1;
+                        if ($days < 1) {
+                            $days = 1;
+                        }
                         $str .= "<button type='button' class='btn btn-info btn-sm' onclick='setBillModal(this)' data-id='$r->id' data-days='$days'
                             data-bed='<b>Bed</b>:" . $r->bed->name . " <b>Ward</b>: " . $r->bed->ward . " <b>Unit</b>: " . $r->bed->unit . "' data-price='" . $r->bed->price . "'>
                             <i class='fa fa-dollar'></i> Bill & Release Bed
@@ -416,7 +419,7 @@ class AdmissionRequestController extends Controller
             $request->validate([
                 'assign_bed_req_id' => 'required',
                 'assign_bed_reassign' => 'required', //redundent
-                'bed_id' => 'required|exists:beds,id'
+                'bed_id' => 'required|exists:beds,id',
             ]);
 
             DB::beginTransaction();
@@ -424,7 +427,7 @@ class AdmissionRequestController extends Controller
             $admit_req->update([
                 'bed_id' => $request->bed_id,
                 'bed_assign_date' => date('Y-m-d H:i:s'),
-                'bed_assigned_by' => Auth::id()
+                'bed_assigned_by' => Auth::id(),
             ]);
             $bed = Bed::where('id', $request->bed_id)->first();
             if ($bed) {
@@ -433,13 +436,15 @@ class AdmissionRequestController extends Controller
             $bed = Bed::where('id', $request->bed_id)->first();
             $admit_req = AdmissionRequest::where('id', $request->assign_bed_req_id)->first();
             $admit_req->update([
-                'service_id' => $bed->service_id
+                'service_id' => $bed->service_id,
             ]);
             DB::commit();
+
             return back()->withMessage('Bed Assigned')->withMessageType('success');
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error($e->getMessage(), ['exception' => $e]);
+
             return redirect()->back()->withMessage("An error occurred " . $e->getMessage());
         }
     }
@@ -450,7 +455,7 @@ class AdmissionRequestController extends Controller
             // dd($request->all());
             $request->validate([
                 'assign_bed_req_id' => 'required',
-                'days' => 'required'
+                'days' => 'required',
             ]);
 
             DB::beginTransaction();
@@ -482,6 +487,7 @@ class AdmissionRequestController extends Controller
                 }
             } catch (\Exception $e) {
                 DB::rollBack();
+
                 return back()->withErrors(['error' => 'HMO Tariff Error: ' . $e->getMessage()]);
             }
 
@@ -496,13 +502,15 @@ class AdmissionRequestController extends Controller
             $admit_req = AdmissionRequest::where('id', $request->assign_bed_req_id)->first();
             $admit_req->update([
                 'service_request_id' => $bill_req->id,
-                'bed_id' => null //once billed, the admission entry bed should be null, this will enable bed resaasignment, as bill bed will show after bed is reassigned
+                'bed_id' => null, //once billed, the admission entry bed should be null, this will enable bed resaasignment, as bill bed will show after bed is reassigned
             ]);
             DB::commit();
+
             return back()->withMessage('Bill Assigned, you can proceed to make payment in the payments section')->withMessageType('success');
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error($e->getMessage(), ['exception' => $e]);
+
             return redirect()->back()->withMessage("An error occurred " . $e->getMessage());
         }
     }
@@ -522,9 +530,10 @@ class AdmissionRequestController extends Controller
 
             if ($unpaidBills > 0) {
                 DB::rollBack();
+
                 return back()->with([
                     'message' => "Cannot discharge patient: {$unpaidBills} unpaid bed bill(s) found. Please process all payments before discharge.",
-                    'message_type' => 'error'
+                    'message_type' => 'error',
                 ]);
             }
 
@@ -532,7 +541,7 @@ class AdmissionRequestController extends Controller
             $invalidBills = ProductOrServiceRequest::where('user_id', $req->patient->user->id)
                 ->where('service_id', $req->service_id)
                 ->whereDate('created_at', '>=', $req->bed_assign_date)
-                ->where(function($q) {
+                ->where(function ($q) {
                     $q->where('validation_status', 'pending')
                       ->orWhere('validation_status', 'rejected');
                 })
@@ -541,9 +550,10 @@ class AdmissionRequestController extends Controller
 
             if ($invalidBills > 0) {
                 DB::rollBack();
+
                 return back()->with([
                     'message' => "Cannot discharge patient: {$invalidBills} bed bill(s) require HMO validation. Please validate all claims before discharge.",
-                    'message_type' => 'error'
+                    'message_type' => 'error',
                 ]);
             }
 
@@ -557,10 +567,12 @@ class AdmissionRequestController extends Controller
                 $bedToRelease->release();
             }
             DB::commit();
+
             return back()->withMessage('Patient Discharged')->withMessageType('success');
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error($e->getMessage(), ['exception' => $e]);
+
             return redirect()->back()->withMessage("An error occurred " . $e->getMessage());
         }
     }
@@ -588,11 +600,13 @@ class AdmissionRequestController extends Controller
             // Check if already discharged or discharge already requested
             if ($req->discharged) {
                 DB::rollBack();
+
                 return response()->json(['message' => 'Patient is already discharged'], 422);
             }
 
             if ($req->admission_status === AdmissionRequest::STATUS_DISCHARGE_REQUESTED) {
                 DB::rollBack();
+
                 return response()->json(['message' => 'Discharge request already submitted. Awaiting nursing staff to process.'], 422);
             }
 
@@ -617,7 +631,7 @@ class AdmissionRequestController extends Controller
                         'cause_of_death_description' => $request->discharge_note,
                         'certified_by_doctor_id' => Auth::id(),
                         'last_office_done' => false,
-                        'disposition' => 'pending'
+                        'disposition' => 'pending',
                     ]
                 );
 
@@ -626,16 +640,17 @@ class AdmissionRequestController extends Controller
             }
 
             DB::commit();
+
             return response()->json([
-                'message' => 'Discharge request submitted successfully. Nursing staff will process the discharge checklist before releasing the bed.'
+                'message' => 'Discharge request submitted successfully. Nursing staff will process the discharge checklist before releasing the bed.',
             ], 200);
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error($e->getMessage(), ['exception' => $e]);
+
             return response()->json(['message' => 'An error occurred: ' . $e->getMessage()], 500);
         }
     }
-
 
     /**
      * Show the form for creating a new resource.
@@ -686,7 +701,7 @@ class AdmissionRequestController extends Controller
                 }
                 $admissionRequest->update([
                     'bed_assign_date' => now(),
-                    'bed_assigned_by' => Auth::id()
+                    'bed_assigned_by' => Auth::id(),
                 ]);
             }
 
@@ -696,8 +711,8 @@ class AdmissionRequestController extends Controller
                 return response()->json([
                     'message' => 'Admission request created successfully',
                     'data' => [
-                        'id' => $admissionRequest->id
-                    ]
+                        'id' => $admissionRequest->id,
+                    ],
                 ], 201);
             }
 
@@ -770,7 +785,7 @@ class AdmissionRequestController extends Controller
         try {
             $request->validate([
                 'patient_id' => 'required|exists:patients,id',
-                'bed_id' => 'required|exists:beds,id'
+                'bed_id' => 'required|exists:beds,id',
             ]);
 
             $patient = Patient::find($request->patient_id);
@@ -779,7 +794,7 @@ class AdmissionRequestController extends Controller
             if (!$bed->service_id) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'This bed does not have an associated service'
+                    'message' => 'This bed does not have an associated service',
                 ], 400);
             }
 
@@ -795,7 +810,7 @@ class AdmissionRequestController extends Controller
                 'coverage_mode' => 'none',
                 'validation_status' => 'n/a',
                 'hmo_name' => null,
-                'requires_validation' => false
+                'requires_validation' => false,
             ];
 
             if ($patient->hmo_id) {
@@ -815,7 +830,7 @@ class AdmissionRequestController extends Controller
                             'coverage_mode' => $hmoData['coverage_mode'],
                             'validation_status' => $hmoData['validation_status'],
                             'hmo_name' => $patient->hmo->name ?? 'Unknown',
-                            'requires_validation' => $hmoData['claims_amount'] > 0
+                            'requires_validation' => $hmoData['claims_amount'] > 0,
                         ];
                     }
                 } catch (\Exception $e) {
@@ -826,13 +841,14 @@ class AdmissionRequestController extends Controller
 
             return response()->json([
                 'success' => true,
-                'coverage' => $coverage
+                'coverage' => $coverage,
             ]);
         } catch (\Exception $e) {
             Log::error('Error fetching bed coverage: ' . $e->getMessage(), ['exception' => $e]);
+
             return response()->json([
                 'success' => false,
-                'message' => 'Error fetching coverage information: ' . $e->getMessage()
+                'message' => 'Error fetching coverage information: ' . $e->getMessage(),
             ], 500);
         }
     }

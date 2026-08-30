@@ -45,18 +45,18 @@ class DepartmentObserver
             : 'D' . $department->id . '_DS';
 
         Store::create([
-            'store_name'             => $department->name . ' Store',
-            'code'                   => $code,
-            'description'            => "Auto-created department store for {$department->name}",
-            'location'               => $department->name,
-            'store_type'             => 'other',
-            'distribution_role'      => Store::ROLE_DEPARTMENT,
-            'department_id'          => $department->id,
+            'store_name' => $department->name . ' Store',
+            'code' => $code,
+            'description' => "Auto-created department store for {$department->name}",
+            'location' => $department->name,
+            'store_type' => 'other',
+            'distribution_role' => Store::ROLE_DEPARTMENT,
+            'department_id' => $department->id,
             'requires_shift_context' => false,
             'allows_direct_patient_dispense' => false,
-            'status'                 => 1,
-            'is_default'             => false,
-            'is_immutable'           => false,
+            'status' => 1,
+            'is_default' => false,
+            'is_immutable' => false,
         ]);
     }
 }

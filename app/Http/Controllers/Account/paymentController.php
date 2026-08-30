@@ -3,22 +3,18 @@
 namespace App\Http\Controllers\Account;
 
 use App\Http\Controllers\Controller;
+use App\Models\HmoClaim;
 use App\Models\invoice as in;
 use App\Models\Patient;
-use App\Models\PatientAccount;
 use App\Models\Payment;
-use App\Models\Product;
 use App\Models\ProductOrServiceRequest;
 use App\Models\Service;
-use App\Models\HmoClaim;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Facades\View;
-use LaravelDaily\Invoices\Classes\InvoiceItem;
-use LaravelDaily\Invoices\Classes\Party;
 use LaravelDaily\Invoices\Invoice;
 
 class paymentController extends Controller
@@ -73,6 +69,7 @@ class paymentController extends Controller
 
         session(['selected' => $checkboxServices]);
         session(['products' => $inputs]);
+
         // dd(session('selected'));
         return view('admin.Accounts.summary', compact('products', 'services', 'sumServices', 'sumProducts', 'productQty', 'serviceQty'));
     }
@@ -574,6 +571,7 @@ class paymentController extends Controller
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error('AJAX payment failed', ['error' => $e->getMessage()]);
+
             return response()->json(['message' => $e->getMessage()], 422);
         }
     }

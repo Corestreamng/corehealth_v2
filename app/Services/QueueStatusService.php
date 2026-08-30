@@ -15,14 +15,14 @@ class QueueStatusService
      * Key = current status, Value = array of valid next statuses.
      */
     public const ALLOWED_TRANSITIONS = [
-        QueueStatus::SCHEDULED       => [QueueStatus::WAITING, QueueStatus::CANCELLED, QueueStatus::NO_SHOW],
-        QueueStatus::WAITING         => [QueueStatus::VITALS_PENDING, QueueStatus::IN_CONSULTATION, QueueStatus::CANCELLED],
-        QueueStatus::VITALS_PENDING  => [QueueStatus::READY, QueueStatus::CANCELLED],
-        QueueStatus::READY           => [QueueStatus::IN_CONSULTATION, QueueStatus::CANCELLED],
+        QueueStatus::SCHEDULED => [QueueStatus::WAITING, QueueStatus::CANCELLED, QueueStatus::NO_SHOW],
+        QueueStatus::WAITING => [QueueStatus::VITALS_PENDING, QueueStatus::IN_CONSULTATION, QueueStatus::CANCELLED],
+        QueueStatus::VITALS_PENDING => [QueueStatus::READY, QueueStatus::CANCELLED],
+        QueueStatus::READY => [QueueStatus::IN_CONSULTATION, QueueStatus::CANCELLED],
         QueueStatus::IN_CONSULTATION => [QueueStatus::COMPLETED, QueueStatus::CANCELLED],
-        QueueStatus::COMPLETED       => [], // terminal
-        QueueStatus::CANCELLED       => [QueueStatus::SCHEDULED], // can reschedule
-        QueueStatus::NO_SHOW         => [QueueStatus::SCHEDULED], // can reschedule
+        QueueStatus::COMPLETED => [], // terminal
+        QueueStatus::CANCELLED => [QueueStatus::SCHEDULED], // can reschedule
+        QueueStatus::NO_SHOW => [QueueStatus::SCHEDULED], // can reschedule
     ];
 
     /**
@@ -87,6 +87,7 @@ class QueueStatusService
     public function canTransition(int $fromStatus, int $toStatus): bool
     {
         $allowed = self::ALLOWED_TRANSITIONS[$fromStatus] ?? [];
+
         return in_array($toStatus, $allowed, true);
     }
 
@@ -120,7 +121,7 @@ class QueueStatusService
         }
 
         $queue->update([
-            'is_paused'      => true,
+            'is_paused' => true,
             'last_paused_at' => now(),
         ]);
 
@@ -141,13 +142,14 @@ class QueueStatusService
             : 0;
 
         $queue->update([
-            'is_paused'                   => false,
-            'last_resumed_at'             => now(),
+            'is_paused' => false,
+            'last_resumed_at' => now(),
             'consultation_paused_seconds' => $queue->consultation_paused_seconds + $pausedSeconds,
         ]);
 
         return $queue->fresh();
     }
+
     public function autoConcludeOverdue(): void
     {
         $defaultCycleDuration = (int) (appsettings('consultation_cycle_duration') ?: 24);
@@ -155,22 +157,22 @@ class QueueStatusService
         $activeQueues = DoctorQueue::with('request_entry.service')
             ->where('status', QueueStatus::IN_CONSULTATION)
             ->get();
-            
+
         if ($activeQueues->isEmpty()) {
             return;
         }
-        
+
         $queueIdsToConclude = [];
         $appointmentIdsToConclude = [];
-        
+
         foreach ($activeQueues as $queue) {
             $cycleDuration = $defaultCycleDuration;
             if ($queue->request_entry && $queue->request_entry->service && $queue->request_entry->service->consult_cycle_duration) {
                 $cycleDuration = (int) $queue->request_entry->service->consult_cycle_duration;
             }
-            
+
             $timeThreshold = \Carbon\Carbon::now()->subHours($cycleDuration);
-            
+
             if ($queue->updated_at < $timeThreshold) {
                 $queueIdsToConclude[] = $queue->id;
                 if ($queue->appointment_id) {
@@ -189,7 +191,7 @@ class QueueStatusService
                 'consultation_ended_at' => \Carbon\Carbon::now(),
                 'updated_at' => \Carbon\Carbon::now(),
             ]);
-            
+
             if (!empty($appointmentIdsToConclude)) {
                 DoctorAppointment::whereIn('id', $appointmentIdsToConclude)->update([
                     'status' => QueueStatus::COMPLETED,

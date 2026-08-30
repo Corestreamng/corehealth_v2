@@ -4,8 +4,8 @@ namespace App\Models\Accounting;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use OwenIt\Auditing\Contracts\Auditable;
 
 /**
@@ -15,7 +15,9 @@ use OwenIt\Auditing\Contracts\Auditable;
  */
 class CashFlowPattern extends Model implements Auditable
 {
-    use HasFactory, SoftDeletes, \OwenIt\Auditing\Auditable;
+    use HasFactory;
+    use SoftDeletes;
+    use \OwenIt\Auditing\Auditable;
 
     protected $table = 'cash_flow_recurring_patterns';
 
@@ -38,19 +40,19 @@ class CashFlowPattern extends Model implements Auditable
     ];
 
     // Cash flow category constants
-    const CATEGORY_OPERATING_INFLOW = 'operating_inflow';
-    const CATEGORY_OPERATING_OUTFLOW = 'operating_outflow';
-    const CATEGORY_INVESTING_INFLOW = 'investing_inflow';
-    const CATEGORY_INVESTING_OUTFLOW = 'investing_outflow';
-    const CATEGORY_FINANCING_INFLOW = 'financing_inflow';
-    const CATEGORY_FINANCING_OUTFLOW = 'financing_outflow';
+    public const CATEGORY_OPERATING_INFLOW = 'operating_inflow';
+    public const CATEGORY_OPERATING_OUTFLOW = 'operating_outflow';
+    public const CATEGORY_INVESTING_INFLOW = 'investing_inflow';
+    public const CATEGORY_INVESTING_OUTFLOW = 'investing_outflow';
+    public const CATEGORY_FINANCING_INFLOW = 'financing_inflow';
+    public const CATEGORY_FINANCING_OUTFLOW = 'financing_outflow';
 
     // Frequency constants
-    const FREQUENCY_WEEKLY = 'weekly';
-    const FREQUENCY_BI_WEEKLY = 'bi_weekly';
-    const FREQUENCY_MONTHLY = 'monthly';
-    const FREQUENCY_QUARTERLY = 'quarterly';
-    const FREQUENCY_ANNUALLY = 'annually';
+    public const FREQUENCY_WEEKLY = 'weekly';
+    public const FREQUENCY_BI_WEEKLY = 'bi_weekly';
+    public const FREQUENCY_MONTHLY = 'monthly';
+    public const FREQUENCY_QUARTERLY = 'quarterly';
+    public const FREQUENCY_ANNUALLY = 'annually';
 
     /**
      * Get the account for this pattern.

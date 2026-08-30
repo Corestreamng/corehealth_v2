@@ -20,7 +20,9 @@ use App\Services\PayrollService;
 class HrWorkbenchController extends Controller
 {
     protected LeaveService $leaveService;
+
     protected PayrollService $payrollService;
+
     protected DisciplinaryService $disciplinaryService;
 
     public function __construct(

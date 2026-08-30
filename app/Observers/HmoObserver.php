@@ -3,9 +3,9 @@
 namespace App\Observers;
 
 use App\Models\Hmo;
+use App\Models\HmoTariff;
 use App\Models\Product;
 use App\Models\Service;
-use App\Models\HmoTariff;
 use Illuminate\Support\Facades\Log;
 
 class HmoObserver

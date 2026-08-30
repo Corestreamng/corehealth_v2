@@ -45,18 +45,22 @@ class CreditNoteObserver
         switch ($creditNote->status) {
             case CreditNote::STATUS_PENDING_APPROVAL:
                 $notificationService->notifyCreditNoteSubmitted($creditNote);
+
                 break;
 
             case CreditNote::STATUS_APPROVED:
                 $notificationService->notifyCreditNoteApproved($creditNote);
+
                 break;
 
             case CreditNote::STATUS_PROCESSED:
                 $notificationService->notifyCreditNoteProcessed($creditNote);
+
                 break;
 
             case CreditNote::STATUS_VOID:
                 $notificationService->notifyCreditNoteVoided($creditNote);
+
                 break;
         }
     }

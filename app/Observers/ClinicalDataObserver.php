@@ -44,7 +44,7 @@ class ClinicalDataObserver
             Log::error('ClinicalDataObserver failed to invalidate cache', [
                 'model' => get_class($model),
                 'id' => $model->id ?? null,
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ]);
         }
     }

@@ -4,8 +4,6 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-
-
 use OwenIt\Auditing\Contracts\Auditable;
 
 /**
@@ -47,7 +45,7 @@ class VitalSign extends Model implements Auditable
         'form_data',
         'time_taken',
         'status',
-        'source'
+        'source',
     ];
 
     /**
@@ -78,6 +76,7 @@ class VitalSign extends Model implements Auditable
         }
 
         $heightInMeters = $this->height / 100;
+
         return round($this->weight / ($heightInMeters * $heightInMeters), 1);
     }
 
@@ -94,9 +93,16 @@ class VitalSign extends Model implements Auditable
             return null;
         }
 
-        if ($bmi < 18.5) return 'Underweight';
-        if ($bmi < 25) return 'Normal';
-        if ($bmi < 30) return 'Overweight';
+        if ($bmi < 18.5) {
+            return 'Underweight';
+        }
+        if ($bmi < 25) {
+            return 'Normal';
+        }
+        if ($bmi < 30) {
+            return 'Overweight';
+        }
+
         return 'Obese';
     }
 
@@ -128,37 +134,53 @@ class VitalSign extends Model implements Auditable
             case 'temp':
                 $val = floatval($this->temp);
                 $keys = ['temp'];
+
                 break;
             case 'heart_rate':
                 $val = intval($this->heart_rate);
                 $keys = ['heart_rate'];
+
                 break;
             case 'resp_rate':
                 $val = intval($this->resp_rate);
                 $keys = ['resp_rate'];
+
                 break;
             case 'spo2':
                 $val = floatval($this->spo2);
                 $keys = ['spo2'];
+
                 break;
             case 'blood_pressure':
-                if (!$this->blood_pressure || !str_contains($this->blood_pressure, '/')) return '';
+                if (!$this->blood_pressure || !str_contains($this->blood_pressure, '/')) {
+                    return '';
+                }
                 [$systolic, $diastolic] = array_map('intval', explode('/', $this->blood_pressure));
-                
+
                 $sysRange = VitalRange::resolve('bp_sys', $ageDays, $gender);
                 $diaRange = VitalRange::resolve('bp_dia', $ageDays, $gender);
-                
+
                 $sysStatus = $sysRange ? $this->evaluateValue($systolic, $sysRange) : null;
                 $diaStatus = $diaRange ? $this->evaluateValue($diastolic, $diaRange) : null;
 
-                if ($sysStatus === 'vital-critical' || $diaStatus === 'vital-critical') return 'vital-critical';
-                if ($sysStatus === 'vital-warning' || $diaStatus === 'vital-warning') return 'vital-warning';
+                if ($sysStatus === 'vital-critical' || $diaStatus === 'vital-critical') {
+                    return 'vital-critical';
+                }
+                if ($sysStatus === 'vital-warning' || $diaStatus === 'vital-warning') {
+                    return 'vital-warning';
+                }
+
                 return $sysStatus ?? $diaStatus ?? 'vital-normal';
 
             case 'pain_score':
                 $val = intval($this->pain_score);
-                if ($val >= 7) return 'vital-critical';
-                if ($val >= 4) return 'vital-warning';
+                if ($val >= 7) {
+                    return 'vital-critical';
+                }
+                if ($val >= 4) {
+                    return 'vital-warning';
+                }
+
                 return 'vital-normal';
             default:
                 return '';
@@ -176,12 +198,20 @@ class VitalSign extends Model implements Auditable
 
     private function evaluateValue($val, $range): string
     {
-        if ($range->critical_min !== null && $val < $range->critical_min) return 'vital-critical';
-        if ($range->critical_max !== null && $val > $range->critical_max) return 'vital-critical';
-        
-        if ($range->warning_min !== null && $val < $range->warning_min) return 'vital-warning';
-        if ($range->warning_max !== null && $val > $range->warning_max) return 'vital-warning';
-        
+        if ($range->critical_min !== null && $val < $range->critical_min) {
+            return 'vital-critical';
+        }
+        if ($range->critical_max !== null && $val > $range->critical_max) {
+            return 'vital-critical';
+        }
+
+        if ($range->warning_min !== null && $val < $range->warning_min) {
+            return 'vital-warning';
+        }
+        if ($range->warning_max !== null && $val > $range->warning_max) {
+            return 'vital-warning';
+        }
+
         return 'vital-normal';
     }
 
@@ -193,33 +223,60 @@ class VitalSign extends Model implements Auditable
         switch ($vital) {
             case 'temp':
                 $val = floatval($this->temp);
-                if ($val < 34 || $val > 39) return 'vital-critical';
-                if ($val < 36.1 || $val > 38) return 'vital-warning';
+                if ($val < 34 || $val > 39) {
+                    return 'vital-critical';
+                }
+                if ($val < 36.1 || $val > 38) {
+                    return 'vital-warning';
+                }
+
                 return 'vital-normal';
 
             case 'heart_rate':
                 $val = intval($this->heart_rate);
-                if ($val < 50 || $val > 150) return 'vital-critical';
-                if ($val < 60 || $val > 100) return 'vital-warning';
+                if ($val < 50 || $val > 150) {
+                    return 'vital-critical';
+                }
+                if ($val < 60 || $val > 100) {
+                    return 'vital-warning';
+                }
+
                 return 'vital-normal';
 
             case 'resp_rate':
                 $val = intval($this->resp_rate);
-                if ($val < 8 || $val > 30) return 'vital-critical';
-                if ($val < 12 || $val > 20) return 'vital-warning';
+                if ($val < 8 || $val > 30) {
+                    return 'vital-critical';
+                }
+                if ($val < 12 || $val > 20) {
+                    return 'vital-warning';
+                }
+
                 return 'vital-normal';
 
             case 'spo2':
                 $val = floatval($this->spo2);
-                if ($val < 90) return 'vital-critical';
-                if ($val < 95) return 'vital-warning';
+                if ($val < 90) {
+                    return 'vital-critical';
+                }
+                if ($val < 95) {
+                    return 'vital-warning';
+                }
+
                 return 'vital-normal';
 
             case 'blood_pressure':
-                if (!$this->blood_pressure || !str_contains($this->blood_pressure, '/')) return '';
+                if (!$this->blood_pressure || !str_contains($this->blood_pressure, '/')) {
+                    return '';
+                }
                 [$systolic, $diastolic] = array_map('intval', explode('/', $this->blood_pressure));
-                if ($systolic > 180 || $systolic < 80 || $diastolic > 110 || $diastolic < 50) return 'vital-critical';
-                if ($systolic > 140 || $systolic < 90 || $diastolic > 90 || $diastolic < 60) return 'vital-warning';
+                if ($systolic > 180 || $systolic < 80 || $diastolic > 110 || $diastolic < 50) {
+                    return 'vital-critical';
+                }
+                if ($systolic > 140 || $systolic < 90 || $diastolic > 90 || $diastolic < 60) {
+                    return 'vital-warning';
+                }
+
                 return 'vital-normal';
 
             default:
@@ -227,15 +284,18 @@ class VitalSign extends Model implements Auditable
         }
     }
 
-    public function takenBy(){
+    public function takenBy()
+    {
         return $this->belongsTo(User::class, 'taken_by', 'id');
     }
 
-    public function requstedBy(){
+    public function requstedBy()
+    {
         return $this->belongsTo(User::class, 'requested_by', 'id');
     }
 
-    public function patient(){
+    public function patient()
+    {
         return $this->belongsTo(Patient::class, 'patient_id', 'id');
     }
 }

@@ -2,11 +2,10 @@
 
 namespace App\Observers\Accounting;
 
-use App\Models\Accounting\PatientDeposit;
-use App\Models\Accounting\PatientDepositApplication;
+use App\Models\Accounting\Account;
 use App\Models\Accounting\JournalEntry;
 use App\Models\Accounting\JournalEntryLine;
-use App\Models\Accounting\Account;
+use App\Models\Accounting\PatientDeposit;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
@@ -62,6 +61,7 @@ class PatientDepositObserver
                     'credit_code' => self::PATIENT_DEPOSITS_LIABILITY,
                 ]);
                 DB::rollBack();
+
                 return;
             }
 
@@ -169,6 +169,7 @@ class PatientDepositObserver
             if (!$debitAccount || !$creditAccount) {
                 Log::error('PatientDepositObserver: Required accounts not found for refund');
                 DB::rollBack();
+
                 return;
             }
 
@@ -251,6 +252,7 @@ class PatientDepositObserver
                         'account_id' => $account->id,
                         'account_code' => $account->code,
                     ]);
+
                     return $account;
                 }
             }

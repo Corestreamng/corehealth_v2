@@ -16,7 +16,7 @@ class AddFamilyFolderToPatientsTable extends Migration
         Schema::table('patients', function (Blueprint $table) {
             $table->boolean('is_family_principal')->default(false)->after('id');
             $table->unsignedBigInteger('principal_id')->nullable()->after('is_family_principal');
-            
+
             $table->foreign('principal_id')->references('id')->on('patients')->onDelete('set null');
         });
     }

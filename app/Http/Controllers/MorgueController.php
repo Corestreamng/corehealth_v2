@@ -50,6 +50,7 @@ class MorgueController extends Controller
             ->get()
             ->map(function ($a) {
                 $days = Carbon::parse($a->arrival_time)->diffInDays(now()) + 1;
+
                 return [
                     'id' => $a->id,
                     'patient_id' => $a->patient_id,
@@ -65,7 +66,7 @@ class MorgueController extends Controller
 
         return response()->json([
             'pending' => $pending,
-            'active' => $active
+            'active' => $active,
         ]);
     }
 
@@ -98,7 +99,7 @@ class MorgueController extends Controller
                         'time_of_death' => now()->toTimeString(),
                         'cause_of_death_primary' => 'Brought in Dead',
                         'certified_by_doctor_id' => Auth::id(),
-                        'disposition' => 'pending'
+                        'disposition' => 'pending',
                     ]
                 );
 
@@ -114,7 +115,7 @@ class MorgueController extends Controller
                 'user_id' => $deathRecord->patient->user_id,
                 'staff_user_id' => Auth::id(),
                 'status' => 1, // Pending
-                'qty' => 1
+                'qty' => 1,
             ]);
 
             // Generate Body Code
@@ -134,19 +135,20 @@ class MorgueController extends Controller
                 'daily_service_id' => $request->daily_service_id,
                 'current_service_request_id' => $serviceRequest->id,
                 'notes' => $request->notes,
-                'status' => 'stored'
+                'status' => 'stored',
             ]);
 
             DB::commit();
 
             return response()->json([
                 'success' => true,
-                'message' => 'Body successfully admitted to morgue.'
+                'message' => 'Body successfully admitted to morgue.',
             ]);
 
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error('Morgue admission error: ' . $e->getMessage());
+
             return response()->json(['success' => false, 'message' => 'Failed to admit: ' . $e->getMessage()], 500);
         }
     }
@@ -159,7 +161,7 @@ class MorgueController extends Controller
         $request->validate([
             'morgue_admission_id' => 'required|exists:morgue_admissions,id',
             'service_id' => 'required|exists:services,id',
-            'qty' => 'required|integer|min:1'
+            'qty' => 'required|integer|min:1',
         ]);
 
         try {
@@ -170,7 +172,7 @@ class MorgueController extends Controller
                 'user_id' => $admission->patient->user_id,
                 'staff_user_id' => Auth::id(),
                 'status' => 1,
-                'qty' => $request->qty
+                'qty' => $request->qty,
             ]);
 
             return response()->json(['success' => true, 'message' => 'Service added to bill.']);
@@ -204,7 +206,7 @@ class MorgueController extends Controller
                 'released_to_name' => $request->released_to_name,
                 'released_to_id_no' => $request->released_to_phone, // Using phone as ID for now
                 'notes' => $request->release_notes,
-                'status' => 'released'
+                'status' => 'released',
             ]);
 
             return response()->json(['success' => true, 'message' => 'Body released successfully.']);
@@ -219,7 +221,7 @@ class MorgueController extends Controller
     public function getReports(Request $request)
     {
         $dateFrom = $request->input('date_from', Carbon::now()->startOfMonth()->toDateString());
-        $dateTo   = $request->input('date_to',   Carbon::now()->toDateString());
+        $dateTo = $request->input('date_to', Carbon::now()->toDateString());
 
         $categoryId = appsettings('morgue_category_id') ??
                      DB::table('service_categories')->where('category_name', 'MORGUE')->orWhere('category_name', 'Morgue')->value('id') ?? 9;
@@ -228,7 +230,7 @@ class MorgueController extends Controller
         $admissionsInRange = MorgueAdmission::whereBetween('arrival_time', [$dateFrom . ' 00:00:00', $dateTo . ' 23:59:59']);
 
         $totalAdmissions = (clone $admissionsInRange)->count();
-        $totalReleased   = (clone $admissionsInRange)->where('status', 'released')->count();
+        $totalReleased = (clone $admissionsInRange)->where('status', 'released')->count();
         $currentlyStored = MorgueAdmission::whereNull('release_time')->where('status', 'stored')->count();
 
         // Average stay (in hours → convert to days) for released bodies in range
@@ -240,11 +242,11 @@ class MorgueController extends Controller
         $avgStayDays = $avgStay ? round($avgStay / 24, 1) : 0;
 
         // Revenue from morgue service requests in the range
-        $revenue = ProductOrServiceRequest::whereHas('service', fn($q) => $q->where('category_id', $categoryId))
+        $revenue = ProductOrServiceRequest::whereHas('service', fn ($q) => $q->where('category_id', $categoryId))
             ->whereBetween('created_at', [$dateFrom . ' 00:00:00', $dateTo . ' 23:59:59'])
             ->sum(DB::raw('qty * payable_amount'));
 
-        $pendingRevenue = ProductOrServiceRequest::whereHas('service', fn($q) => $q->where('category_id', $categoryId))
+        $pendingRevenue = ProductOrServiceRequest::whereHas('service', fn ($q) => $q->where('category_id', $categoryId))
             ->whereBetween('created_at', [$dateFrom . ' 00:00:00', $dateTo . ' 23:59:59'])
             ->whereNull('payment_id')
             ->sum(DB::raw('qty * payable_amount'));
@@ -258,18 +260,18 @@ class MorgueController extends Controller
             ->keyBy('month');
 
         $trendLabels = [];
-        $trendData   = [];
+        $trendData = [];
         for ($i = 11; $i >= 0; $i--) {
             $key = Carbon::now()->subMonths($i)->format('Y-m');
             $trendLabels[] = Carbon::now()->subMonths($i)->format('M Y');
-            $trendData[]   = $trend->has($key) ? (int) $trend[$key]->total : 0;
+            $trendData[] = $trend->has($key) ? (int) $trend[$key]->total : 0;
         }
 
         // ── Death Type Breakdown (in range) ───────────────────────────────
         $deathTypes = MorgueAdmission::with('deathRecord')
             ->whereBetween('arrival_time', [$dateFrom . ' 00:00:00', $dateTo . ' 23:59:59'])
             ->get()
-            ->groupBy(fn($a) => optional($a->deathRecord)->death_type ?? 'Unknown')
+            ->groupBy(fn ($a) => optional($a->deathRecord)->death_type ?? 'Unknown')
             ->map->count()
             ->toArray();
 
@@ -282,32 +284,33 @@ class MorgueController extends Controller
                 $stay = $a->release_time
                     ? Carbon::parse($a->arrival_time)->diffInDays($a->release_time)
                     : Carbon::parse($a->arrival_time)->diffInDays(now());
+
                 return [
-                    'id'          => $a->id,
-                    'patient_id'  => $a->patient_id,
-                    'name'        => userfullname($a->patient->user_id),
-                    'file_no'     => $a->patient->file_no,
-                    'body_code'   => $a->body_code,
-                    'death_type'  => optional($a->deathRecord)->death_type ?? 'N/A',
+                    'id' => $a->id,
+                    'patient_id' => $a->patient_id,
+                    'name' => userfullname($a->patient->user_id),
+                    'file_no' => $a->patient->file_no,
+                    'body_code' => $a->body_code,
+                    'death_type' => optional($a->deathRecord)->death_type ?? 'N/A',
                     'admitted_at' => Carbon::parse($a->arrival_time)->format('M d, Y H:i'),
                     'released_at' => $a->release_time ? Carbon::parse($a->release_time)->format('M d, Y H:i') : null,
-                    'days'        => $stay,
-                    'status'      => $a->status,
+                    'days' => $stay,
+                    'status' => $a->status,
                 ];
             });
 
         return response()->json([
             'stats' => [
                 'total_admissions' => $totalAdmissions,
-                'total_released'   => $totalReleased,
+                'total_released' => $totalReleased,
                 'currently_stored' => $currentlyStored,
-                'avg_stay_days'    => $avgStayDays,
-                'total_revenue'    => $revenue,
-                'pending_revenue'  => $pendingRevenue,
+                'avg_stay_days' => $avgStayDays,
+                'total_revenue' => $revenue,
+                'pending_revenue' => $pendingRevenue,
             ],
-            'trend'        => ['labels' => $trendLabels, 'data' => $trendData],
-            'death_types'  => $deathTypes,
-            'admissions'   => $admissions,
+            'trend' => ['labels' => $trendLabels, 'data' => $trendData],
+            'death_types' => $deathTypes,
+            'admissions' => $admissions,
         ]);
     }
 
@@ -323,35 +326,36 @@ class MorgueController extends Controller
 
         $requests = ProductOrServiceRequest::with(['service', 'payment'])
             ->where('user_id', $admission->patient->user_id)
-            ->whereHas('service', fn($q) => $q->where('category_id', $categoryId))
+            ->whereHas('service', fn ($q) => $q->where('category_id', $categoryId))
             ->orderByDesc('created_at')
             ->get()
             ->map(function ($r) {
                 $unitPrice = $r->payable_amount ?? optional($r->service->price)->sale_price ?? 0;
-                $total     = $r->qty * $unitPrice;
+                $total = $r->qty * $unitPrice;
+
                 return [
-                    'id'           => $r->id,
+                    'id' => $r->id,
                     'service_name' => optional($r->service)->service_name ?? 'Unknown',
-                    'date'         => $r->created_at->format('M d, Y H:i'),
-                    'qty'          => $r->qty,
-                    'unit_price'   => $unitPrice,
-                    'total'        => $total,
-                    'paid'         => !is_null($r->payment_id),
-                    'payment_ref'  => optional($r->payment)->reference_no,
+                    'date' => $r->created_at->format('M d, Y H:i'),
+                    'qty' => $r->qty,
+                    'unit_price' => $unitPrice,
+                    'total' => $total,
+                    'paid' => !is_null($r->payment_id),
+                    'payment_ref' => optional($r->payment)->reference_no,
                 ];
             });
 
-        $totalAmount   = $requests->sum('total');
-        $paidAmount    = $requests->where('paid', true)->sum('total');
+        $totalAmount = $requests->sum('total');
+        $paidAmount = $requests->where('paid', true)->sum('total');
         $pendingAmount = $requests->where('paid', false)->sum('total');
 
         return response()->json([
-            'patient_name'   => userfullname($admission->patient->user_id),
-            'file_no'        => $admission->patient->file_no,
-            'body_code'      => $admission->body_code,
-            'items'          => $requests->values(),
-            'total_amount'   => $totalAmount,
-            'paid_amount'    => $paidAmount,
+            'patient_name' => userfullname($admission->patient->user_id),
+            'file_no' => $admission->patient->file_no,
+            'body_code' => $admission->body_code,
+            'items' => $requests->values(),
+            'total_amount' => $totalAmount,
+            'paid_amount' => $paidAmount,
             'pending_amount' => $pendingAmount,
         ]);
     }
@@ -369,7 +373,7 @@ class MorgueController extends Controller
             ->where('category_id', $categoryId)
             ->with(['price', 'category']);
 
-        $services = $query->get()->map(function($service) use ($request) {
+        $services = $query->get()->map(function ($service) use ($request) {
             $basePrice = optional($service->price)->sale_price;
             $coverage = null;
 

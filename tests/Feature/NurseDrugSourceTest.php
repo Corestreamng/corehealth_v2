@@ -2,9 +2,8 @@
 
 namespace Tests\Feature;
 
-use App\Models\InjectionAdministration;
-use App\Models\MedicationAdministration;
 use App\Models\MedicationSchedule;
+use App\Models\Patient;
 use App\Models\Product;
 use App\Models\ProductCategory;
 use App\Models\ProductOrServiceRequest;
@@ -12,7 +11,6 @@ use App\Models\ProductRequest;
 use App\Models\StockBatch;
 use App\Models\Store;
 use App\Models\User;
-use App\Models\Patient;
 use App\Services\StockService;
 use Carbon\Carbon;
 use Illuminate\Database\Schema\Blueprint;
@@ -23,7 +21,6 @@ use Tests\TestCase;
 
 class NurseDrugSourceTest extends TestCase
 {
-
     protected function setUp(): void
     {
         putenv('DB_CONNECTION=sqlite');

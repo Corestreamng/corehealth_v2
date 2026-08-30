@@ -17,8 +17,7 @@ use Illuminate\Support\Facades\Schema;
  *
  * Only one of the polymorphic fields should be set per record.
  */
-return new class extends Migration
-{
+return new class () extends Migration {
     /**
      * Run the migrations.
      */

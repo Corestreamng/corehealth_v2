@@ -12,6 +12,7 @@ class CadreController extends Controller
     public function index()
     {
         $cadres = Cadre::withCount('staff')->ordered()->get();
+
         return view('admin.hr.cadres.index', compact('cadres'));
     }
 
@@ -25,6 +26,7 @@ class CadreController extends Controller
 
         Cadre::create($request->only(['name', 'code', 'description', 'is_active']));
         Alert::success('Success', 'Cadre created successfully.');
+
         return redirect()->route('hr.cadres.index');
     }
 
@@ -37,6 +39,7 @@ class CadreController extends Controller
 
         $cadre->update($request->only(['name', 'code', 'description', 'is_active']));
         Alert::success('Success', 'Cadre updated successfully.');
+
         return redirect()->route('hr.cadres.index');
     }
 
@@ -44,10 +47,12 @@ class CadreController extends Controller
     {
         if ($cadre->staff()->count() > 0) {
             Alert::error('Error', 'Cannot delete cadre with assigned staff.');
+
             return redirect()->route('hr.cadres.index');
         }
         $cadre->delete();
         Alert::success('Success', 'Cadre deleted.');
+
         return redirect()->route('hr.cadres.index');
     }
 }

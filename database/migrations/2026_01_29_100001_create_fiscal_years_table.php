@@ -12,8 +12,7 @@ use Illuminate\Support\Facades\Schema;
  * Stores fiscal year definitions for the accounting system.
  * Each fiscal year contains multiple accounting periods (typically 12 months).
  */
-return new class extends Migration
-{
+return new class () extends Migration {
     /**
      * Run the migrations.
      */

@@ -3,16 +3,15 @@
 namespace App\Http\Controllers\Accounting;
 
 use App\Http\Controllers\Controller;
-use App\Models\Accounting\JournalEntry;
-use App\Models\Accounting\JournalEntryLine;
-use App\Models\Accounting\JournalEntryEdit;
 use App\Models\Accounting\Account;
 use App\Models\Accounting\AccountingPeriod;
+use App\Models\Accounting\JournalEntry;
+use App\Models\Accounting\JournalEntryEdit;
+use App\Models\Accounting\JournalEntryLine;
 use App\Services\Accounting\AccountingService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
-use Carbon\Carbon;
 use Yajra\DataTables\Facades\DataTables;
 
 /**
@@ -121,6 +120,7 @@ class JournalEntryController extends Controller
                 if (in_array($entry->status, ['pending', 'approved'])) {
                     return '<input type="checkbox" class="row-checkbox" value="' . $entry->id . '">';
                 }
+
                 return '';
             })
             ->addColumn('entry_number', function ($entry) {
@@ -139,6 +139,7 @@ class JournalEntryController extends Controller
                     'closing' => 'danger',
                 ];
                 $color = $colors[$entry->entry_type] ?? 'secondary';
+
                 return '<span class="badge badge-' . $color . '">' . ucfirst($entry->entry_type) . '</span>';
             })
             ->addColumn('total_debit_formatted', function ($entry) {
@@ -157,6 +158,7 @@ class JournalEntryController extends Controller
                     'reversed' => 'dark',
                 ];
                 $color = $colors[$entry->status] ?? 'secondary';
+
                 return '<span class="badge badge-' . $color . '">' . ucfirst($entry->status) . '</span>';
             })
             ->addColumn('created_by_name', function ($entry) {
@@ -246,9 +248,10 @@ class JournalEntryController extends Controller
             if ($request->ajax()) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Total debits must equal total credits.'
+                    'message' => 'Total debits must equal total credits.',
                 ], 422);
             }
+
             return redirect()->back()
                 ->withInput()
                 ->with('error', 'Total debits must equal total credits.');
@@ -264,9 +267,10 @@ class JournalEntryController extends Controller
             if ($request->ajax()) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'No open accounting period for the selected date.'
+                    'message' => 'No open accounting period for the selected date.',
                 ], 422);
             }
+
             return redirect()->back()
                 ->withInput()
                 ->with('error', 'No open accounting period for the selected date.');
@@ -305,7 +309,7 @@ class JournalEntryController extends Controller
                     'success' => true,
                     'message' => 'Journal entry created successfully.',
                     'entry_id' => $entry->id,
-                    'redirect' => route('accounting.journal-entries.show', $entry->id)
+                    'redirect' => route('accounting.journal-entries.show', $entry->id),
                 ]);
             }
 
@@ -315,9 +319,10 @@ class JournalEntryController extends Controller
             if ($request->ajax()) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Error creating journal entry: ' . $e->getMessage()
+                    'message' => 'Error creating journal entry: ' . $e->getMessage(),
                 ], 500);
             }
+
             return redirect()->back()
                 ->withInput()
                 ->with('error', 'Error creating journal entry: ' . $e->getMessage());
@@ -339,7 +344,7 @@ class JournalEntryController extends Controller
             'originalEntry',
             'edits.requester',
             'edits.approver',
-            'edits.rejecter'
+            'edits.rejecter',
         ])->findOrFail($id);
 
         return view('accounting.journal-entries.show', compact('entry'));
@@ -460,6 +465,7 @@ class JournalEntryController extends Controller
             if ($request->ajax()) {
                 return response()->json(['message' => 'Only draft entries can be submitted.'], 400);
             }
+
             return redirect()->back()->with('error', 'Only draft entries can be submitted.');
         }
 
@@ -468,11 +474,13 @@ class JournalEntryController extends Controller
             if ($request->ajax()) {
                 return response()->json(['message' => 'Entry submitted for approval.']);
             }
+
             return redirect()->back()->with('success', 'Entry submitted for approval.');
         } catch (\Exception $e) {
             if ($request->ajax()) {
                 return response()->json(['message' => $e->getMessage()], 400);
             }
+
             return redirect()->back()->with('error', $e->getMessage());
         }
     }
@@ -488,6 +496,7 @@ class JournalEntryController extends Controller
             if ($request->ajax()) {
                 return response()->json(['message' => 'Only pending entries can be approved.'], 400);
             }
+
             return redirect()->back()->with('error', 'Only pending entries can be approved.');
         }
 
@@ -496,11 +505,13 @@ class JournalEntryController extends Controller
             if ($request->ajax()) {
                 return response()->json(['message' => 'Entry approved successfully.']);
             }
+
             return redirect()->back()->with('success', 'Entry approved successfully.');
         } catch (\Exception $e) {
             if ($request->ajax()) {
                 return response()->json(['message' => $e->getMessage()], 400);
             }
+
             return redirect()->back()->with('error', $e->getMessage());
         }
     }
@@ -516,6 +527,7 @@ class JournalEntryController extends Controller
             if ($request->ajax()) {
                 return response()->json(['message' => 'Only pending entries can be rejected.'], 400);
             }
+
             return redirect()->back()->with('error', 'Only pending entries can be rejected.');
         }
 
@@ -528,11 +540,13 @@ class JournalEntryController extends Controller
             if ($request->ajax()) {
                 return response()->json(['message' => 'Entry rejected.']);
             }
+
             return redirect()->back()->with('success', 'Entry rejected.');
         } catch (\Exception $e) {
             if ($request->ajax()) {
                 return response()->json(['message' => $e->getMessage()], 400);
             }
+
             return redirect()->back()->with('error', $e->getMessage());
         }
     }
@@ -548,6 +562,7 @@ class JournalEntryController extends Controller
             if ($request->ajax()) {
                 return response()->json(['message' => 'Only approved entries can be posted.'], 400);
             }
+
             return redirect()->back()->with('error', 'Only approved entries can be posted.');
         }
 
@@ -556,11 +571,13 @@ class JournalEntryController extends Controller
             if ($request->ajax()) {
                 return response()->json(['message' => 'Entry posted to ledger.']);
             }
+
             return redirect()->back()->with('success', 'Entry posted to ledger.');
         } catch (\Exception $e) {
             if ($request->ajax()) {
                 return response()->json(['message' => $e->getMessage()], 400);
             }
+
             return redirect()->back()->with('error', $e->getMessage());
         }
     }
@@ -576,6 +593,7 @@ class JournalEntryController extends Controller
             if ($request->ajax()) {
                 return response()->json(['message' => 'Only posted entries can be reversed.'], 400);
             }
+
             return redirect()->back()->with('error', 'Only posted entries can be reversed.');
         }
 
@@ -591,12 +609,14 @@ class JournalEntryController extends Controller
                     'reversal_entry_id' => $reversalEntry->id,
                 ]);
             }
+
             return redirect()->route('accounting.journal-entries.show', $reversalEntry->id)
                 ->with('success', 'Entry reversed successfully. Reversal entry created.');
         } catch (\Exception $e) {
             if ($request->ajax()) {
                 return response()->json(['message' => $e->getMessage()], 400);
             }
+
             return redirect()->back()->with('error', $e->getMessage());
         }
     }
@@ -676,6 +696,7 @@ class JournalEntryController extends Controller
             if ($request->ajax()) {
                 return response()->json(['message' => 'Edit requests are only for posted entries.'], 400);
             }
+
             return redirect()->back()->with('error', 'Edit requests are only for posted entries.');
         }
 
@@ -721,6 +742,7 @@ class JournalEntryController extends Controller
             if ($request->ajax()) {
                 return response()->json(['message' => 'This edit request has already been processed.'], 400);
             }
+
             return redirect()->back()->with('error', 'This edit request has already been processed.');
         }
 
@@ -731,10 +753,12 @@ class JournalEntryController extends Controller
             if ($request->ajax()) {
                 return response()->json(['message' => 'The journal entry is no longer in posted status.'], 400);
             }
+
             return redirect()->back()->with('error', 'The journal entry is no longer in posted status.');
         }
 
         DB::beginTransaction();
+
         try {
             // Update the edit request status
             $editRequest->update([
@@ -753,7 +777,7 @@ class JournalEntryController extends Controller
             if ($request->ajax()) {
                 return response()->json([
                     'message' => $message,
-                    'redirect' => route('accounting.journal-entries.create')
+                    'redirect' => route('accounting.journal-entries.create'),
                 ]);
             }
 
@@ -765,6 +789,7 @@ class JournalEntryController extends Controller
             if ($request->ajax()) {
                 return response()->json(['message' => 'Failed to approve edit request: ' . $e->getMessage()], 500);
             }
+
             return redirect()->back()->with('error', 'Failed to approve edit request: ' . $e->getMessage());
         }
     }
@@ -780,6 +805,7 @@ class JournalEntryController extends Controller
             if ($request->ajax()) {
                 return response()->json(['message' => 'This edit request has already been processed.'], 400);
             }
+
             return redirect()->back()->with('error', 'This edit request has already been processed.');
         }
 

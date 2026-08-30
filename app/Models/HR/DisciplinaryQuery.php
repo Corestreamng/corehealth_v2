@@ -33,7 +33,7 @@ class DisciplinaryQuery extends Model implements Auditable
         'outcome',
         'decided_by',
         'decided_at',
-        'issued_by'
+        'issued_by',
     ];
 
     protected $casts = [
@@ -43,22 +43,22 @@ class DisciplinaryQuery extends Model implements Auditable
         'decided_at' => 'datetime',
     ];
 
-    const STATUS_ISSUED = 'issued';
-    const STATUS_RESPONSE_RECEIVED = 'response_received';
-    const STATUS_UNDER_REVIEW = 'under_review';
-    const STATUS_CLOSED = 'closed';
+    public const STATUS_ISSUED = 'issued';
+    public const STATUS_RESPONSE_RECEIVED = 'response_received';
+    public const STATUS_UNDER_REVIEW = 'under_review';
+    public const STATUS_CLOSED = 'closed';
 
-    const SEVERITY_MINOR = 'minor';
-    const SEVERITY_MODERATE = 'moderate';
-    const SEVERITY_MAJOR = 'major';
-    const SEVERITY_GROSS_MISCONDUCT = 'gross_misconduct';
+    public const SEVERITY_MINOR = 'minor';
+    public const SEVERITY_MODERATE = 'moderate';
+    public const SEVERITY_MAJOR = 'major';
+    public const SEVERITY_GROSS_MISCONDUCT = 'gross_misconduct';
 
-    const OUTCOME_WARNING = 'warning';
-    const OUTCOME_FINAL_WARNING = 'final_warning';
-    const OUTCOME_SUSPENSION = 'suspension';
-    const OUTCOME_TERMINATION = 'termination';
-    const OUTCOME_DISMISSED = 'dismissed';
-    const OUTCOME_NO_ACTION = 'no_action';
+    public const OUTCOME_WARNING = 'warning';
+    public const OUTCOME_FINAL_WARNING = 'final_warning';
+    public const OUTCOME_SUSPENSION = 'suspension';
+    public const OUTCOME_TERMINATION = 'termination';
+    public const OUTCOME_DISMISSED = 'dismissed';
+    public const OUTCOME_NO_ACTION = 'no_action';
 
     /**
      * Boot method
@@ -86,6 +86,7 @@ class DisciplinaryQuery extends Model implements Auditable
             ->first();
 
         $sequence = $lastQuery ? (int) substr($lastQuery->query_number, -6) + 1 : 1;
+
         return $prefix . $year . str_pad($sequence, 6, '0', STR_PAD_LEFT);
     }
 

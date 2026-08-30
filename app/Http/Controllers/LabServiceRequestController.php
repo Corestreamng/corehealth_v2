@@ -3,25 +3,17 @@
 namespace App\Http\Controllers;
 
 use App\Helpers\HmoHelper;
-
-use Illuminate\Http\Request;
-use App\Models\LabServiceRequest;
-use App\Models\AdmissionRequest;
-use App\Models\Clinic;
-use App\Models\Encounter;
-use App\Models\DoctorQueue;
-use Yajra\DataTables\DataTables;
-use App\Models\User;
-use App\Models\Staff;
 use App\Models\Hmo;
-use Illuminate\Support\Facades\Auth;
+use App\Models\LabServiceRequest;
 use App\Models\Patient;
-use App\Models\Product;
 use App\Models\ProductOrServiceRequest;
 use App\Models\Service;
 use Carbon\Carbon;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Yajra\DataTables\DataTables;
 
 class LabServiceRequestController extends Controller
 {
@@ -51,7 +43,7 @@ class LabServiceRequestController extends Controller
                 'invest_res_entry_id' => 'required',
                 'invest_res_template_version' => 'required|in:1,2',
                 'invest_res_template_data' => 'nullable|string',
-                'result_attachments.*' => 'nullable|file|max:10240|mimes:pdf,jpg,jpeg,png,doc,docx'
+                'result_attachments.*' => 'nullable|file|max:10240|mimes:pdf,jpg,jpeg,png,doc,docx',
             ]);
 
             $labRequest = LabServiceRequest::findOrFail($request->invest_res_entry_id);
@@ -67,7 +59,7 @@ class LabServiceRequestController extends Controller
                 if (Carbon::now()->greaterThan($editDeadline)) {
                     return redirect()->back()->with([
                         'message' => "Edit window has expired. Results can only be edited within {$editDuration} minutes of submission.",
-                        'message_type' => 'error'
+                        'message_type' => 'error',
                     ]);
                 }
             }
@@ -100,7 +92,7 @@ class LabServiceRequestController extends Controller
 
                                 $enhancedData[$param['id']] = [
                                     'value' => $value,
-                                    'status' => $status
+                                    'status' => $status,
                                 ];
 
                                 // Generate HTML row
@@ -168,7 +160,7 @@ class LabServiceRequestController extends Controller
                         'name' => $file->getClientOriginalName(),
                         'path' => 'lab_results/' . $fileName,
                         'size' => $file->getSize(),
-                        'type' => $file->getClientOriginalExtension()
+                        'type' => $file->getClientOriginalExtension(),
                     ];
                 }
             }
@@ -199,7 +191,7 @@ class LabServiceRequestController extends Controller
                     'result' => $resultHtml,
                     'result_data' => $resultData,
                     'attachments' => !empty($allAttachments) ? json_encode($allAttachments) : null,
-                    'status' => 4
+                    'status' => 4,
                 ];
 
                 // Only update result_date and result_by if this is not an edit
@@ -223,9 +215,11 @@ class LabServiceRequestController extends Controller
             DB::commit();
 
             $message = $isEdit ? "Results Updated Successfully" : ($requiresApproval ? "Results saved — pending approval" : "Results Saved Successfully");
+
             return redirect()->back()->with(['message' => $message, 'message_type' => 'success']);
         } catch (\Exception $e) {
             DB::rollBack();
+
             return redirect()->back()->withInput()->withMessage("An error occurred " . $e->getMessage() . ' line' . $e->getLine());
         }
     }
@@ -257,6 +251,7 @@ class LabServiceRequestController extends Controller
             if (isset($refRange['reference_value'])) {
                 $boolValue = $value === true || $value === 'true';
                 $refValue = $refRange['reference_value'] === true;
+
                 return $boolValue === $refValue ? 'Normal' : 'Abnormal';
             }
         } elseif ($type === 'enum') {
@@ -329,7 +324,7 @@ class LabServiceRequestController extends Controller
             'High' => '<span class="badge badge-danger">High</span>',
             'Low' => '<span class="badge badge-warning">Low</span>',
             'Abnormal' => '<span class="badge badge-warning">Abnormal</span>',
-            'N/A' => '<span class="badge badge-secondary">N/A</span>'
+            'N/A' => '<span class="badge badge-secondary">N/A</span>',
         ];
 
         return $badges[$status] ?? $status;
@@ -338,7 +333,6 @@ class LabServiceRequestController extends Controller
     /**
      * bill selected service requets
      */
-
     public function bill(Request $request)
     {
         try {
@@ -347,17 +341,18 @@ class LabServiceRequestController extends Controller
                 'addedInvestBillRows' => 'nullable|array|required_with:consult_invest_note',
                 'selectedInvestBillRows' => 'array',
                 'patient_user_id' => 'required',
-                'patient_id' => 'required'
+                'patient_id' => 'required',
             ]);
 
             if (isset($request->dismiss_invest_bill) && isset($request->selectedInvestBillRows)) {
                 DB::beginTransaction();
                 for ($i = 0; $i < count($request->selectedInvestBillRows); $i++) {
                     LabServiceRequest::where('id', $request->selectedInvestBillRows[$i])->update([
-                        'status' => 0
+                        'status' => 0,
                     ]);
                 }
                 DB::commit();
+
                 return redirect()->back()->with(['message' => "Service Requests Dismissed Successfully", 'message_type' => 'success']);
             } else {
                 DB::beginTransaction();
@@ -365,7 +360,7 @@ class LabServiceRequestController extends Controller
                     for ($i = 0; $i < count($request->selectedInvestBillRows); $i++) {
                         $lab_req = LabServiceRequest::where('id', $request->selectedInvestBillRows[$i])->first();
                         $prod_id = $lab_req->service->id;
-                        $bill_req = new ProductOrServiceRequest;
+                        $bill_req = new ProductOrServiceRequest();
                         $bill_req->user_id = $request->patient_user_id;
                         $bill_req->staff_user_id = Auth::id();
                         $bill_req->service_id = $prod_id;
@@ -384,11 +379,11 @@ class LabServiceRequestController extends Controller
                             }
                         } catch (\Exception $e) {
                             DB::rollBack();
+
                             return redirect()->back()->withErrors(['error' => 'HMO Tariff Error: ' . $e->getMessage()])->withInput();
                         }
 
                         $bill_req->save();
-
 
                         LabServiceRequest::where('id', $request->selectedInvestBillRows[$i])->update([
                             'status' => 2,
@@ -400,7 +395,7 @@ class LabServiceRequestController extends Controller
                 }
                 if (isset($request->addedInvestBillRows)) {
                     for ($i = 0; $i < count($request->addedInvestBillRows); $i++) {
-                        $bill_req = new ProductOrServiceRequest;
+                        $bill_req = new ProductOrServiceRequest();
                         $bill_req->user_id = $request->patient_user_id;
                         $bill_req->staff_user_id = Auth::id();
                         $bill_req->service_id = $request->addedInvestBillRows[$i];
@@ -419,6 +414,7 @@ class LabServiceRequestController extends Controller
                             }
                         } catch (\Exception $e) {
                             DB::rollBack();
+
                             return redirect()->back()->withErrors(['error' => 'HMO Tariff Error: ' . $e->getMessage()])->withInput();
                         }
 
@@ -438,10 +434,12 @@ class LabServiceRequestController extends Controller
                     }
                 }
                 DB::commit();
+
                 return redirect()->back()->with(['message' => "Service Requests Billed Successfully", 'message_type' => 'success']);
             }
         } catch (\Exception $e) {
             DB::rollBack();
+
             return redirect()->back()->withInput()->withMessage("An error occurred " . $e->getMessage() . 'line' . $e->getLine());
         }
     }
@@ -452,17 +450,18 @@ class LabServiceRequestController extends Controller
             $request->validate([
                 'selectedInvestSampleRows' => 'array',
                 'patient_user_id' => 'required',
-                'patient_id' => 'required'
+                'patient_id' => 'required',
             ]);
 
             if (isset($request->dismiss_invest_sample) && isset($request->selectedInvestSampleRows)) {
                 DB::beginTransaction();
                 for ($i = 0; $i < count($request->selectedInvestSampleRows); $i++) {
                     LabServiceRequest::where('id', $request->selectedInvestSampleRows[$i])->update([
-                        'status' => 0
+                        'status' => 0,
                     ]);
                 }
                 DB::commit();
+
                 return redirect()->back()->with(['message' => "Service Requests Dismissed Successfully", 'message_type' => 'success']);
             } else {
                 DB::beginTransaction();
@@ -474,9 +473,10 @@ class LabServiceRequestController extends Controller
                         if ($labRequest->productOrServiceRequest) {
                             if (!\App\Helpers\HmoHelper::canPatientAccessService($labRequest->productOrServiceRequest)) {
                                 DB::rollBack();
+
                                 return redirect()->back()->with([
                                     'message' => 'Service requires HMO approval for Request ID: ' . $labRequest->id . '. Please contact HMO executive for validation.',
-                                    'message_type' => 'error'
+                                    'message_type' => 'error',
                                 ]);
                             }
                         }
@@ -485,16 +485,18 @@ class LabServiceRequestController extends Controller
                             'status' => 3,
                             'sample_taken_by' => Auth::id(),
                             'sample_date' => date('Y-m-d H:i:s'),
-                            'sample_taken' => true
+                            'sample_taken' => true,
                         ]);
                     }
                 }
 
                 DB::commit();
+
                 return redirect()->back()->with(['message' => "Service Requests Sample Taken Successfully", 'message_type' => 'success']);
             }
         } catch (\Exception $e) {
             DB::rollBack();
+
             return redirect()->back()->withInput()->withMessage("An error occurred " . $e->getMessage() . 'line' . $e->getLine());
         }
     }
@@ -503,6 +505,7 @@ class LabServiceRequestController extends Controller
     {
         $his = LabServiceRequest::with(['service', 'encounter', 'patient', 'productOrServiceRequest', 'doctor', 'biller'])
             ->where('status', '=', 3)->where('patient_id', $patient_id)->orderBy('created_at', 'DESC')->get();
+
         //dd($pc);
         return Datatables::of($his)
             ->addIndexColumn()
@@ -518,17 +521,19 @@ class LabServiceRequestController extends Controller
                         data-id='$h?->id'>
                         Enter Result
                     </button>";
+
                 return $str;
             })
             ->editColumn('created_at', function ($h) {
                 $str = "<small>";
-                $str .= "<b >Requested by: </b>" . ((isset($h?->doctor_id)  && $h?->doctor_id != null) ? (userfullname($h?->doctor_id) . ' (' . date('h:i a D M j, Y', strtotime($h?->created_at)) . ')') : "<span class='badge badge-secondary'>N/A</span>");
+                $str .= "<b >Requested by: </b>" . ((isset($h?->doctor_id) && $h?->doctor_id != null) ? (userfullname($h?->doctor_id) . ' (' . date('h:i a D M j, Y', strtotime($h?->created_at)) . ')') : "<span class='badge badge-secondary'>N/A</span>");
                 $str .= "<br><br><b >Last Updated On:</b> " . date('h:i a D M j, Y', strtotime($h?->updated_at));
                 $str .= "<br><br><b >Billed by:</b> " . ((isset($h?->billed_by) && $h?->billed_by != null) ? (userfullname($h?->billed_by) . ' (' . date('h:i a D M j, Y', strtotime($h?->billed_date)) . ')') : "<span class='badge badge-secondary'>Not billed</span>");
                 $str .= "<br><br><b >Sample taken by:</b> " . ((isset($h?->sample_taken_by) && $h?->sample_taken_by != null) ? (userfullname($h?->sample_taken_by) . ' (' . date('h:i a D M j, Y', strtotime($h?->sample_date)) . ')') : "<span class='badge badge-secondary'>Not taken</span>");
                 $str .= "<br><br><b >Results by:</b> " . ((isset($h?->result_by) && $h?->result_by != null) ? (userfullname($h?->result_by) . ' (' . date('h:i a D M j, Y', strtotime($h?->result_date)) . ')') : "<span class='badge badge-secondary'>Awaiting Results</span>");
                 $str .= "<br><br><b >Request Note:</b> " . ((isset($h?->note) && $h?->note != null) ? ($h?->note) : "<span class='badge badge-secondary'>N/A</span><br>");
                 $str .= "</small>";
+
                 return $str;
             })
             ->editColumn('result', function ($his) {
@@ -547,6 +552,7 @@ class LabServiceRequestController extends Controller
                         }
                     }
                 }
+
                 return $str;
             })
             ->rawColumns(['created_at', 'result', 'select'])
@@ -568,7 +574,7 @@ class LabServiceRequestController extends Controller
                 'patient.hmo',
                 'productOrServiceRequest',
                 'doctor',
-                'biller'
+                'biller',
             ])
                 ->whereIn('status', [1, 2, 3]);
 
@@ -588,6 +594,7 @@ class LabServiceRequestController extends Controller
                     }
 
                     $url = route('patient.show', [$request->patient->id, 'section' => 'investigationsCardBody']);
+
                     return "<a class='btn btn-primary' href='{$url}'>view</a>";
                 })
                 ->editColumn('patient_id', function ($request) {
@@ -635,6 +642,7 @@ class LabServiceRequestController extends Controller
                             "<span class='badge badge-secondary'>N/A</span>");
 
                     $str .= "</small>";
+
                     return $str;
                 })
                 ->editColumn('result', function ($request) {
@@ -655,6 +663,7 @@ class LabServiceRequestController extends Controller
                             }
                         }
                     }
+
                     return $str;
                 })
                 ->rawColumns(['created_at', 'result', 'select', 'patient_id'])
@@ -663,16 +672,15 @@ class LabServiceRequestController extends Controller
             Log::error('Lab Service Request Error: ' . $e->getMessage(), [
                 'file' => $e->getFile(),
                 'line' => $e->getLine(),
-                'trace' => $e->getTraceAsString()
+                'trace' => $e->getTraceAsString(),
             ]);
 
             return response()->json([
                 'error' => 'An error occurred while processing the request.',
-                'message' => config('app.debug') ? $e->getMessage() : 'Internal Server Error'
+                'message' => config('app.debug') ? $e->getMessage() : 'Internal Server Error',
             ], 500);
         }
     }
-
 
     /**
      * Format datetime to consistent format
@@ -703,9 +711,9 @@ class LabServiceRequestController extends Controller
             'jpeg' => '<i class="mdi mdi-file-image"></i>',
             'png' => '<i class="mdi mdi-file-image"></i>',
         ];
+
         return $icons[$extension] ?? '<i class="mdi mdi-file"></i>';
     }
-
 
     public function investHistoryList(Request $request)
     {
@@ -716,7 +724,7 @@ class LabServiceRequestController extends Controller
             'patient',
             'productOrServiceRequest',
             'doctor',
-            'biller'
+            'biller',
         ])->where('status', '=', 4);
 
         // Apply date filters if provided
@@ -735,6 +743,7 @@ class LabServiceRequestController extends Controller
                 <a class='btn btn-primary' href='$url'>
                     view
                 </a>";
+
                 return $str;
             })
             ->editColumn('patient_id', function ($h) {
@@ -744,17 +753,19 @@ class LabServiceRequestController extends Controller
                 $str .= "<br><br><b >Insurance/HMO :</b> : " . (($h?->patient->hmo) ? $h?->patient->hmo->name : "N/A");
                 $str .= "<br><br><b >HMO Number :</b> : " . (($h?->patient->hmo_no) ? $h?->patient->hmo_no : "N/A");
                 $str .= "</small>";
+
                 return $str;
             })
             ->editColumn('created_at', function ($h) {
                 $str = "<small>";
-                $str .= "<b >Requested by: </b>" . ((isset($h?->doctor_id)  && $h?->doctor_id != null) ? (userfullname($h?->doctor_id) . ' (' . date('h:i a D M j, Y', strtotime($h?->created_at)) . ')') : "<span class='badge badge-secondary'>N/A</span>");
+                $str .= "<b >Requested by: </b>" . ((isset($h?->doctor_id) && $h?->doctor_id != null) ? (userfullname($h?->doctor_id) . ' (' . date('h:i a D M j, Y', strtotime($h?->created_at)) . ')') : "<span class='badge badge-secondary'>N/A</span>");
                 $str .= "<br><br><b >Last Updated On:</b> " . date('h:i a D M j, Y', strtotime($h?->updated_at));
                 $str .= "<br><br><b >Billed by:</b> " . ((isset($h?->billed_by) && $h?->billed_by != null) ? (userfullname($h?->billed_by) . ' (' . date('h:i a D M j, Y', strtotime($h?->billed_date)) . ')') : "<span class='badge badge-secondary'>Not billed</span>");
                 $str .= "<br><br><b >Sample taken by:</b> " . ((isset($h?->sample_taken_by) && $h?->sample_taken_by != null) ? (userfullname($h?->sample_taken_by) . ' (' . date('h:i a D M j, Y', strtotime($h?->sample_date)) . ')') : "<span class='badge badge-secondary'>Not taken</span>");
                 $str .= "<br><br><b >Results by:</b> " . ((isset($h?->result_by) && $h?->result_by != null) ? (userfullname($h?->result_by) . ' (' . date('h:i a D M j, Y', strtotime($h?->result_date)) . ')') : "<span class='badge badge-secondary'>Awaiting Results</span>");
                 $str .= "<br><br><b >Request Note:</b> " . ((isset($h?->note) && $h?->note != null) ? ($h?->note) : "<span class='badge badge-secondary'>N/A</span><br>");
                 $str .= "</small>";
+
                 return $str;
             })
             ->editColumn('result', function ($his) {
@@ -776,13 +787,12 @@ class LabServiceRequestController extends Controller
 
                 $view_url = route('service-requests.show', $his?->id);
                 $str .= "<br><a href='$view_url' class = 'btn btn-primary btn-sm' target='_blank'><i class='fa fa-print'></i> Print</a>";
+
                 return $str;
             })
             ->rawColumns(['created_at', 'result', 'select', 'patient_id'])
             ->make(true);
     }
-
-
 
     /**
      * Show the form for creating a new resource.
@@ -815,17 +825,17 @@ class LabServiceRequestController extends Controller
     {
         $req = LabServiceRequest::with([
             'patient.user', 'patient.hmo', 'service', 'doctor',
-            'resultBy', 'approver', 'encounter', 'productOrServiceRequest'
+            'resultBy', 'approver', 'encounter', 'productOrServiceRequest',
         ])->findOrFail($id);
 
         // Record a server-side print view
         if (Auth::check() && $req->result) {
             \App\Models\ResultView::create([
                 'viewable_type' => LabServiceRequest::class,
-                'viewable_id'   => $req->id,
-                'user_id'       => Auth::id(),
-                'view_type'     => 'print',
-                'ip_address'    => request()->ip(),
+                'viewable_id' => $req->id,
+                'user_id' => Auth::id(),
+                'view_type' => 'print',
+                'ip_address' => request()->ip(),
             ]);
         }
 

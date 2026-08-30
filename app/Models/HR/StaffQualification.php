@@ -35,8 +35,8 @@ class StaffQualification extends Model implements Auditable
         'date_obtained' => 'date',
     ];
 
-    const TYPE_ENTRY = 'entry';
-    const TYPE_ADDITIONAL = 'additional';
+    public const TYPE_ENTRY = 'entry';
+    public const TYPE_ADDITIONAL = 'additional';
 
     public function staff()
     {

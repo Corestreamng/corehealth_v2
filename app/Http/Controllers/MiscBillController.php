@@ -3,7 +3,6 @@
 namespace App\Http\Controllers;
 
 use App\Helpers\HmoHelper;
-
 use App\Models\MiscBill;
 use App\Models\ProductOrServiceRequest;
 use Illuminate\Http\Request;
@@ -27,26 +26,27 @@ class MiscBillController extends Controller
     {
         $his = MiscBill::with(['service', 'creator', 'patient', 'productOrServiceRequest', 'biller'])
         ->where('status', 1)->where('patient_id', $patient_id)->orderBy('created_at', 'DESC')->get();
+
         // dd($pc);
         return Datatables::of($his)
             ->addIndexColumn()
             ->addColumn('select', function ($h) {
-                $str = "<input type='checkbox' name='selectedMiscBillRows[]' onclick='checkMiscBillRow(this)' data-price = '". (($h->service) ? $h->service->price->sale_price : "N/A") ."' value='$h->id' class='form-control'> ";
+                $str = "<input type='checkbox' name='selectedMiscBillRows[]' onclick='checkMiscBillRow(this)' data-price = '" . (($h->service) ? $h->service->price->sale_price : "N/A") . "' value='$h->id' class='form-control'> ";
 
                 return $str;
             })
             ->editColumn('created_at', function ($h) {
                 $str = '<small>';
-                $str .= '<b >Created By: </b>'.((isset($h->created_by) && $h->created_by != null) ? (userfullname($h->created_by).' ('.date('h:i a D M j, Y', strtotime($h->creation_date)).')') : "<span class='badge badge-secondary'>N/A</span>").'<br>';
-                $str .= '<b >Last Updated On: </b>'.date('h:i a D M j, Y', strtotime($h->updated_at)).'<br>';
-                $str .= '<b >Billed By: </b>'.((isset($h->billed_by) && $h->billed_by != null) ? (userfullname($h->billed_by).' ('.date('h:i a D M j, Y', strtotime($h->billed_date)).')') : "<span class='badge badge-secondary'>Not billed</span><br>");
+                $str .= '<b >Created By: </b>' . ((isset($h->created_by) && $h->created_by != null) ? (userfullname($h->created_by) . ' (' . date('h:i a D M j, Y', strtotime($h->creation_date)) . ')') : "<span class='badge badge-secondary'>N/A</span>") . '<br>';
+                $str .= '<b >Last Updated On: </b>' . date('h:i a D M j, Y', strtotime($h->updated_at)) . '<br>';
+                $str .= '<b >Billed By: </b>' . ((isset($h->billed_by) && $h->billed_by != null) ? (userfullname($h->billed_by) . ' (' . date('h:i a D M j, Y', strtotime($h->billed_date)) . ')') : "<span class='badge badge-secondary'>Not billed</span><br>");
                 $str .= '</small>';
 
                 return $str;
             })
             ->editColumn('dose', function ($his) {
-                $str = "<span class = 'badge badge-success'>".$his->service->service_name.'</span>';
-                $str .= '<hr> <b>Cost: </b> '.($his->service->price->sale_price ?? 'N/A');
+                $str = "<span class = 'badge badge-success'>" . $his->service->service_name . '</span>';
+                $str .= '<hr> <b>Cost: </b> ' . ($his->service->price->sale_price ?? 'N/A');
 
                 return $str;
             })
@@ -59,21 +59,22 @@ class MiscBillController extends Controller
         if (null != $patient_id) {
             $his = MiscBill::with(['service', 'creator', 'patient', 'productOrServiceRequest', 'biller'])
                 ->where('status', '>', 0)->where('patient_id', $patient_id)->orderBy('created_at', 'DESC')->get();
+
             // dd($pc);
             return Datatables::of($his)
                 ->addIndexColumn()
                 ->editColumn('created_at', function ($h) {
                     $str = '<small>';
-                    $str .= '<b >Created By: </b>'.((isset($h->created_by) && $h->created_by != null) ? (userfullname($h->created_by).' ('.date('h:i a D M j, Y', strtotime($h->creation_date)).')') : "<span class='badge badge-secondary'>N/A</span>").'<br>';
-                    $str .= '<b >Last Updated On: </b>'.date('h:i a D M j, Y', strtotime($h->updated_at)).'<br>';
-                    $str .= '<b >Billed By: </b>'.((isset($h->billed_by) && $h->billed_by != null) ? (userfullname($h->billed_by).' ('.date('h:i a D M j, Y', strtotime($h->billed_date)).')') : "<span class='badge badge-secondary'>Not billed</span><br>");
+                    $str .= '<b >Created By: </b>' . ((isset($h->created_by) && $h->created_by != null) ? (userfullname($h->created_by) . ' (' . date('h:i a D M j, Y', strtotime($h->creation_date)) . ')') : "<span class='badge badge-secondary'>N/A</span>") . '<br>';
+                    $str .= '<b >Last Updated On: </b>' . date('h:i a D M j, Y', strtotime($h->updated_at)) . '<br>';
+                    $str .= '<b >Billed By: </b>' . ((isset($h->billed_by) && $h->billed_by != null) ? (userfullname($h->billed_by) . ' (' . date('h:i a D M j, Y', strtotime($h->billed_date)) . ')') : "<span class='badge badge-secondary'>Not billed</span><br>");
                     $str .= '</small>';
 
                     return $str;
                 })
                 ->editColumn('dose', function ($his) {
-                    $str = "<span class = 'badge badge-success'>".$his->service->service_name.'</span>';
-                    $str .= '<hr> <b>Cost: </b> '.($his->service->price->sale_price ?? 'N/A');
+                    $str = "<span class = 'badge badge-success'>" . $his->service->service_name . '</span>';
+                    $str .= '<hr> <b>Cost: </b> ' . ($his->service->price->sale_price ?? 'N/A');
 
                     return $str;
                 })
@@ -82,26 +83,28 @@ class MiscBillController extends Controller
         } else {
             $his = MiscBill::with(['service', 'creator', 'patient', 'productOrServiceRequest', 'biller'])
             ->where('status', '>', 0)->orderBy('created_at', 'DESC')->get();
+
             // dd($pc);
             return Datatables::of($his)
                 ->addIndexColumn()
                 ->addColumn('patient', function ($h) {
-                    $str = "Name: ".userfullname($h->patient->user_id);
-                    $str .= "File No: ". (($h->patient) ? $h->patient->file_no : "N/A");
+                    $str = "Name: " . userfullname($h->patient->user_id);
+                    $str .= "File No: " . (($h->patient) ? $h->patient->file_no : "N/A");
+
                     return $str;
                 })
                 ->editColumn('created_at', function ($h) {
                     $str = '<small>';
-                    $str .= '<b >Created By: </b>'.((isset($h->created_by) && $h->created_by != null) ? (userfullname($h->created_by).' ('.date('h:i a D M j, Y', strtotime($h->creation_date)).')') : "<span class='badge badge-secondary'>N/A</span>").'<br>';
-                    $str .= '<b >Last Updated On: </b>'.date('h:i a D M j, Y', strtotime($h->updated_at)).'<br>';
-                    $str .= '<b >Billed By: </b>'.((isset($h->billed_by) && $h->billed_by != null) ? (userfullname($h->billed_by).' ('.date('h:i a D M j, Y', strtotime($h->billed_date)).')') : "<span class='badge badge-secondary'>Not billed</span><br>");
+                    $str .= '<b >Created By: </b>' . ((isset($h->created_by) && $h->created_by != null) ? (userfullname($h->created_by) . ' (' . date('h:i a D M j, Y', strtotime($h->creation_date)) . ')') : "<span class='badge badge-secondary'>N/A</span>") . '<br>';
+                    $str .= '<b >Last Updated On: </b>' . date('h:i a D M j, Y', strtotime($h->updated_at)) . '<br>';
+                    $str .= '<b >Billed By: </b>' . ((isset($h->billed_by) && $h->billed_by != null) ? (userfullname($h->billed_by) . ' (' . date('h:i a D M j, Y', strtotime($h->billed_date)) . ')') : "<span class='badge badge-secondary'>Not billed</span><br>");
                     $str .= '</small>';
 
                     return $str;
                 })
                 ->editColumn('dose', function ($his) {
-                    $str = "<span class = 'badge badge-success'>".$his->service->service_name.'</span>';
-                    $str .= '<hr> <b>Cost: </b> '.($his->service->price->sale_price ?? 'N/A');
+                    $str = "<span class = 'badge badge-success'>" . $his->service->service_name . '</span>';
+                    $str .= '<hr> <b>Cost: </b> ' . ($his->service->price->sale_price ?? 'N/A');
 
                     return $str;
                 })
@@ -155,6 +158,7 @@ class MiscBillController extends Controller
                             }
                         } catch (\Exception $e) {
                             DB::rollBack();
+
                             return redirect()->back()->withErrors(['error' => 'HMO Tariff Error: ' . $e->getMessage()])->withInput();
                         }
 
@@ -177,7 +181,7 @@ class MiscBillController extends Controller
             DB::rollBack();
             Log::error($e->getMessage(), ['exception' => $e]);
 
-            return redirect()->back()->withInput()->withMessage('An error occurred '.$e->getMessage().'line'.$e->getLine());
+            return redirect()->back()->withInput()->withMessage('An error occurred ' . $e->getMessage() . 'line' . $e->getLine());
         }
     }
 

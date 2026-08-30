@@ -7,8 +7,8 @@ use App\Models\Ward;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
-use Yajra\DataTables\DataTables;
 use RealRashid\SweetAlert\Facades\Alert;
+use Yajra\DataTables\DataTables;
 
 class WardController extends Controller
 {
@@ -50,12 +50,18 @@ class WardController extends Controller
                 ];
                 $color = $colors[$ward->type] ?? 'secondary';
                 $label = Ward::TYPES[$ward->type] ?? ucfirst($ward->type);
+
                 return '<span class="badge badge-' . $color . '">' . $label . '</span>';
             })
             ->addColumn('location_display', function ($ward) {
                 $parts = [];
-                if ($ward->building) $parts[] = $ward->building;
-                if ($ward->floor) $parts[] = $ward->floor;
+                if ($ward->building) {
+                    $parts[] = $ward->building;
+                }
+                if ($ward->floor) {
+                    $parts[] = $ward->floor;
+                }
+
                 return implode(', ', $parts) ?: '-';
             })
             ->addColumn('occupancy', function ($ward) {
@@ -63,6 +69,7 @@ class WardController extends Controller
                 $occupied = $ward->occupied_beds_count;
                 $percentage = $total > 0 ? round(($occupied / $total) * 100) : 0;
                 $color = $percentage >= 90 ? 'danger' : ($percentage >= 70 ? 'warning' : 'success');
+
                 return '<div class="progress" style="height: 20px;">
                             <div class="progress-bar bg-' . $color . '" role="progressbar" style="width: ' . $percentage . '%">
                                 ' . $occupied . '/' . $total . ' (' . $percentage . '%)
@@ -146,6 +153,7 @@ class WardController extends Controller
         });
 
         Alert::success('Success', 'Ward "' . $ward->name . '" created successfully!');
+
         return redirect()->route('wards.index');
     }
 
@@ -227,6 +235,7 @@ class WardController extends Controller
         });
 
         Alert::success('Success', 'Ward "' . $ward->name . '" updated successfully!');
+
         return redirect()->route('wards.index');
     }
 
@@ -242,7 +251,7 @@ class WardController extends Controller
         if ($ward->beds()->count() > 0) {
             return response()->json([
                 'success' => false,
-                'message' => 'Cannot delete ward with existing beds. Please reassign or delete the beds first.'
+                'message' => 'Cannot delete ward with existing beds. Please reassign or delete the beds first.',
             ], 422);
         }
 
@@ -251,7 +260,7 @@ class WardController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => 'Ward "' . $wardName . '" deleted successfully!'
+            'message' => 'Ward "' . $wardName . '" deleted successfully!',
         ]);
     }
 
@@ -295,16 +304,16 @@ class WardController extends Controller
                 : 0;
 
             return [
-                'id'             => $ward->id,
-                'name'           => $ward->name,
-                'type'           => $ward->type,
-                'type_label'     => Ward::TYPES[$ward->type] ?? ucfirst($ward->type),
-                'floor'          => $ward->floor,
-                'building'       => $ward->building,
-                'total_beds'     => (int) $ward->total_beds,
+                'id' => $ward->id,
+                'name' => $ward->name,
+                'type' => $ward->type,
+                'type_label' => Ward::TYPES[$ward->type] ?? ucfirst($ward->type),
+                'floor' => $ward->floor,
+                'building' => $ward->building,
+                'total_beds' => (int) $ward->total_beds,
                 'available_beds' => (int) $ward->available_beds,
-                'occupied_beds'  => (int) $ward->occupied_beds,
-                'occupancy_pct'  => $occupancyPct,
+                'occupied_beds' => (int) $ward->occupied_beds,
+                'occupancy_pct' => $occupancyPct,
             ];
         });
 

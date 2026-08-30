@@ -2,14 +2,13 @@
 
 namespace App\Models\Accounting;
 
-use App\Models\User;
 use App\Models\Department;
 use App\Models\Supplier;
-use App\Models\PurchaseOrder;
+use App\Models\User;
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
-use Carbon\Carbon;
 
 /**
  * Fixed Asset Model
@@ -22,7 +21,8 @@ use Carbon\Carbon;
  */
 class FixedAsset extends Model
 {
-    use HasFactory, SoftDeletes;
+    use HasFactory;
+    use SoftDeletes;
 
     protected $table = 'fixed_assets';
 
@@ -206,6 +206,7 @@ class FixedAsset extends Model
         if ($totalMonths <= 0) {
             return 0;
         }
+
         return round($this->depreciable_amount / $totalMonths, 2);
     }
 
@@ -314,6 +315,7 @@ class FixedAsset extends Model
                 'month' => $date->month,
                 'existing_id' => $existing->id,
             ]);
+
             return $existing;
         }
 

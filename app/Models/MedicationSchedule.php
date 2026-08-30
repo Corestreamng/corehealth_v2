@@ -6,33 +6,33 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-
-
 use OwenIt\Auditing\Contracts\Auditable;
+
 class MedicationSchedule extends Model implements Auditable
 {
     use HasFactory;
     use \OwenIt\Auditing\Auditable;
-protected $fillable = [
-        'patient_id',
-        'product_or_service_request_id',
-        'product_id',
-        'drug_source',
-        'external_drug_name',
-        'scheduled_date',
-        'scheduled_time',
-        'is_repeating',
-        'repeat_until',
-        'is_discontinued',
-        'discontinued_at',
-        'discontinue_reason',
-        'discontinued_by',
-        'is_resumed',
-        'resumed_at',
-        'resume_reason',
-        'resumed_by',
-        'created_by',
-    ];
+
+    protected $fillable = [
+            'patient_id',
+            'product_or_service_request_id',
+            'product_id',
+            'drug_source',
+            'external_drug_name',
+            'scheduled_date',
+            'scheduled_time',
+            'is_repeating',
+            'repeat_until',
+            'is_discontinued',
+            'discontinued_at',
+            'discontinue_reason',
+            'discontinued_by',
+            'is_resumed',
+            'resumed_at',
+            'resume_reason',
+            'resumed_by',
+            'created_by',
+        ];
 
     protected $casts = [
         'scheduled_date' => 'date',
@@ -121,6 +121,7 @@ protected $fillable = [
                 if ($this->is_resumed && $this->resumed_at) {
                     return $isWithinRange && $date->greaterThanOrEqualTo($this->resumed_at->startOfDay());
                 }
+
                 return false; // Discontinued and not resumed
             }
         }

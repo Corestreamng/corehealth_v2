@@ -2,15 +2,15 @@
 
 namespace App\Http\Controllers\OpsAudit;
 
-use Illuminate\Http\Request;
-use Carbon\Carbon;
-use App\Models\Encounter;
 use App\Models\AdmissionRequest;
-use App\Models\ProductRequest;
-use App\Models\LabServiceRequest;
+use App\Models\Encounter;
 use App\Models\ImagingServiceRequest;
+use App\Models\LabServiceRequest;
 use App\Models\Procedure;
+use App\Models\ProductRequest;
 use App\Models\SpecialistReferral;
+use Carbon\Carbon;
+use Illuminate\Http\Request;
 
 class OpsAuditDoctorController extends OpsAuditBaseController
 {
@@ -20,9 +20,9 @@ class OpsAuditDoctorController extends OpsAuditBaseController
     public function index(Request $request)
     {
         $clinics = \App\Models\Clinic::orderBy('name')->pluck('name', 'id');
-        $hmos = \App\Models\Hmo::with('scheme')->orderBy('name')->get()->groupBy(fn($hmo) => $hmo->scheme ? $hmo->scheme->name : 'Other Schemes');
+        $hmos = \App\Models\Hmo::with('scheme')->orderBy('name')->get()->groupBy(fn ($hmo) => $hmo->scheme ? $hmo->scheme->name : 'Other Schemes');
         $hmoSchemes = \App\Models\HmoScheme::orderBy('name')->pluck('name', 'id');
-        $doctors = \App\Models\User::role('DOCTOR')->orderBy('firstname')->get()->mapWithKeys(fn($u) => [$u->id => trim($u->firstname . ' ' . ($u->othername ?? '') . ' ' . $u->surname)]);
+        $doctors = \App\Models\User::role('DOCTOR')->orderBy('firstname')->get()->mapWithKeys(fn ($u) => [$u->id => trim($u->firstname . ' ' . ($u->othername ?? '') . ' ' . $u->surname)]);
 
         return view('admin.ops_audit.doctor', compact('clinics', 'hmos', 'hmoSchemes', 'doctors'));
     }
@@ -44,6 +44,7 @@ class OpsAuditDoctorController extends OpsAuditBaseController
                 'referrals' => SpecialistReferral::class,
             ];
             $request->merge(['zone_key' => 'ops_audit.doctor.' . $tab]);
+
             return $this->handleBulkStamp($request, $tab, $modelMap);
         }
 
@@ -77,7 +78,7 @@ class OpsAuditDoctorController extends OpsAuditBaseController
             'patient.hmo.scheme',
             'doctor',
             'queue.clinic',
-        
+
             'productOrServiceRequest.payment.user',
 ]);
 
@@ -86,13 +87,27 @@ class OpsAuditDoctorController extends OpsAuditBaseController
         $this->applyPaymentFilters($query, $request, 'productOrServiceRequest');
         $this->applyItemFilters($query, $request, 'productOrServiceRequest');
 
-        if ($request->filled('doctor_id')) $query->where('doctor_id', $request->doctor_id);
-        if ($request->filled('clinic_id')) $query->whereHas('queue', fn($q) => $q->where('clinic_id', $request->clinic_id));
-        if ($request->filled('hmo_id')) $query->whereHas('patient.hmo', fn($q) => $q->where('id', $request->hmo_id));
-        if ($request->filled('hmo_scheme_id')) $query->whereHas('patient.hmo', fn($q) => $q->where('hmo_scheme_id', $request->hmo_scheme_id));
-        if ($request->filled('gender')) $query->whereHas('patient.user', fn($q) => $q->where('gender', $request->gender));
-        if ($request->filled('completed')) $query->where('completed', $request->completed);
-        if ($request->filled('outcome')) $query->where('outcome', $request->outcome);
+        if ($request->filled('doctor_id')) {
+            $query->where('doctor_id', $request->doctor_id);
+        }
+        if ($request->filled('clinic_id')) {
+            $query->whereHas('queue', fn ($q) => $q->where('clinic_id', $request->clinic_id));
+        }
+        if ($request->filled('hmo_id')) {
+            $query->whereHas('patient.hmo', fn ($q) => $q->where('id', $request->hmo_id));
+        }
+        if ($request->filled('hmo_scheme_id')) {
+            $query->whereHas('patient.hmo', fn ($q) => $q->where('hmo_scheme_id', $request->hmo_scheme_id));
+        }
+        if ($request->filled('gender')) {
+            $query->whereHas('patient.user', fn ($q) => $q->where('gender', $request->gender));
+        }
+        if ($request->filled('completed')) {
+            $query->where('completed', $request->completed);
+        }
+        if ($request->filled('outcome')) {
+            $query->where('outcome', $request->outcome);
+        }
 
         $kpiQuery = clone $query;
 
@@ -104,7 +119,7 @@ class OpsAuditDoctorController extends OpsAuditBaseController
                 'imagingRequests as imaging_count',
                 'admissionRequests as adm_count',
                 'procedures as proc_count',
-                'referrals as ref_count'
+                'referrals as ref_count',
             ]);
         }, function ($row) {
             $patient = $row->patient;
@@ -113,8 +128,8 @@ class OpsAuditDoctorController extends OpsAuditBaseController
             $doctor = $row->doctor;
 
             $status = $row->completed ? ['Completed', 'success'] : ['Ongoing', 'warning text-dark'];
-            $duration = $row->started_at && $row->completed_at 
-                ? Carbon::parse($row->started_at)->diffInMinutes(Carbon::parse($row->completed_at)) 
+            $duration = $row->started_at && $row->completed_at
+                ? Carbon::parse($row->started_at)->diffInMinutes(Carbon::parse($row->completed_at))
                 : '-';
 
             $admCount = $row->adm_count ?? 0;
@@ -130,12 +145,12 @@ class OpsAuditDoctorController extends OpsAuditBaseController
                 'duration' => $duration !== '-' ? $duration . ' min' : '-',
                 'completed' => '<span class="badge bg-' . $status[1] . '">' . $status[0] . '</span>',
                 'outcome' => $row->outcome ? ucfirst($row->outcome) : '-',
-                'rx' => $row->rx_count > 0 ? '<span class="badge bg-primary">'.$row->rx_count.'</span>' : '-',
-                'labs' => $row->lab_count > 0 ? '<span class="badge bg-info">'.$row->lab_count.'</span>' : '-',
-                'imaging' => $row->imaging_count > 0 ? '<span class="badge bg-secondary">'.$row->imaging_count.'</span>' : '-',
-                'admissions' => $admCount > 0 ? '<span class="badge bg-danger">'.$admCount.'</span>' : '-',
-                'procedures' => $procCount > 0 ? '<span class="badge bg-warning text-dark">'.$procCount.'</span>' : '-',
-                'referrals' => $refCount > 0 ? '<span class="badge bg-dark">'.$refCount.'</span>' : '-',
+                'rx' => $row->rx_count > 0 ? '<span class="badge bg-primary">' . $row->rx_count . '</span>' : '-',
+                'labs' => $row->lab_count > 0 ? '<span class="badge bg-info">' . $row->lab_count . '</span>' : '-',
+                'imaging' => $row->imaging_count > 0 ? '<span class="badge bg-secondary">' . $row->imaging_count . '</span>' : '-',
+                'admissions' => $admCount > 0 ? '<span class="badge bg-danger">' . $admCount . '</span>' : '-',
+                'procedures' => $procCount > 0 ? '<span class="badge bg-warning text-dark">' . $procCount . '</span>' : '-',
+                'referrals' => $refCount > 0 ? '<span class="badge bg-dark">' . $refCount . '</span>' : '-',
                 'payment_info' => $this->renderPaymentInfo($row),
                 'audit' => $this->renderAuditAction($row, 'Encounter'),
             ];
@@ -144,8 +159,8 @@ class OpsAuditDoctorController extends OpsAuditBaseController
                 ['label' => 'Total Encounters', 'value' => number_format((clone $kpiQuery)->count()), 'color' => '#0d6efd'],
                 ['label' => 'Completed', 'value' => number_format((clone $kpiQuery)->where('completed', 1)->count()), 'color' => '#198754'],
                 ['label' => 'Ongoing', 'value' => number_format((clone $kpiQuery)->where('completed', 0)->count()), 'color' => '#ffc107'],
-                ['label' => 'Avg Duration', 'value' => (clone $kpiQuery)->where('completed', 1)->count() > 0 
-                    ? round((clone $kpiQuery)->where('completed', 1)->avg(\Illuminate\Support\Facades\DB::raw('TIMESTAMPDIFF(MINUTE, started_at, completed_at)'))) . 'm' 
+                ['label' => 'Avg Duration', 'value' => (clone $kpiQuery)->where('completed', 1)->count() > 0
+                    ? round((clone $kpiQuery)->where('completed', 1)->avg(\Illuminate\Support\Facades\DB::raw('TIMESTAMPDIFF(MINUTE, started_at, completed_at)'))) . 'm'
                     : '-', 'color' => '#6f42c1'],
             ];
         }, $kpiQuery);
@@ -163,7 +178,7 @@ class OpsAuditDoctorController extends OpsAuditBaseController
             'ward',
             'bed',
             'productOrServiceRequest.payment.user',
-            'bills.payment'
+            'bills.payment',
 ]);
 
         $this->applyDateFilter($query, $request);
@@ -171,26 +186,36 @@ class OpsAuditDoctorController extends OpsAuditBaseController
         $this->applyPaymentFilters($query, $request, 'productOrServiceRequest');
         $this->applyItemFilters($query, $request, 'productOrServiceRequest');
 
-        if ($request->filled('doctor_id')) $query->where('doctor_id', $request->doctor_id);
-        if ($request->filled('hmo_id')) $query->whereHas('patient.hmo', fn($q) => $q->where('id', $request->hmo_id));
-        if ($request->filled('hmo_scheme_id')) $query->whereHas('patient.hmo', fn($q) => $q->where('hmo_scheme_id', $request->hmo_scheme_id));
-        if ($request->filled('gender')) $query->whereHas('patient.user', fn($q) => $q->where('gender', $request->gender));
-        if ($request->filled('status')) $query->where('admission_status', $request->status);
+        if ($request->filled('doctor_id')) {
+            $query->where('doctor_id', $request->doctor_id);
+        }
+        if ($request->filled('hmo_id')) {
+            $query->whereHas('patient.hmo', fn ($q) => $q->where('id', $request->hmo_id));
+        }
+        if ($request->filled('hmo_scheme_id')) {
+            $query->whereHas('patient.hmo', fn ($q) => $q->where('hmo_scheme_id', $request->hmo_scheme_id));
+        }
+        if ($request->filled('gender')) {
+            $query->whereHas('patient.user', fn ($q) => $q->where('gender', $request->gender));
+        }
+        if ($request->filled('status')) {
+            $query->where('admission_status', $request->status);
+        }
 
         $kpiQuery = clone $query;
 
-        return $this->buildDataTableResponse($query, $request, fn($q) => $q, function ($row) {
+        return $this->buildDataTableResponse($query, $request, fn ($q) => $q, function ($row) {
             $patient = $row->patient;
             $user = $patient?->user;
             $hmo = $patient?->hmo;
-            
+
             $statusColors = [
                 'pending_checklist' => 'warning text-dark',
                 'admitted' => 'primary',
-                'discharged' => 'success'
+                'discharged' => 'success',
             ];
             $statusText = str_replace('_', ' ', ucfirst($row->admission_status ?? ''));
-            $statusBadge = '<span class="badge bg-'.($statusColors[$row->admission_status] ?? 'secondary').'">'.$statusText.'</span>';
+            $statusBadge = '<span class="badge bg-' . ($statusColors[$row->admission_status] ?? 'secondary') . '">' . $statusText . '</span>';
 
             $los = $row->admitted_at ? Carbon::parse($row->admitted_at)->diffInDays($row->discharged_at ? Carbon::parse($row->discharged_at) : now()) : '-';
 
@@ -200,18 +225,18 @@ class OpsAuditDoctorController extends OpsAuditBaseController
             $totalAmount = $bills->sum('amount');
             $totalPayable = $bills->sum('payable_amount');
             $totalClaims = $bills->sum('claims_amount');
-            
+
             $paymentMethod = '-';
             $cashier = '-';
             $payStatus = '<span class="badge bg-secondary">N/A</span>';
-            
+
             if ($bills->count() > 0) {
                 // Determine overall pay status based on whether all payable amount is paid
-                $paidBills = $bills->filter(fn($b) => $b->payment_id != null);
+                $paidBills = $bills->filter(fn ($b) => $b->payment_id != null);
                 if ($paidBills->count() == $bills->count()) {
                     $payStatus = '<span class="badge bg-success">Paid</span>';
                     $payment = $paidBills->first()->payment;
-                    $paymentMethod = $payment?->payment_method ? '<span class="badge bg-light text-dark border">'.$payment->payment_method.'</span>' : '-';
+                    $paymentMethod = $payment?->payment_method ? '<span class="badge bg-light text-dark border">' . $payment->payment_method . '</span>' : '-';
                     $cashier = $payment?->staff_user?->firstname ? ($payment->staff_user->firstname . ' ' . ($payment->staff_user->surname ?? '')) : '-';
                 } elseif ($paidBills->count() > 0) {
                     $payStatus = '<span class="badge bg-info">Partially Paid</span>';
@@ -227,7 +252,7 @@ class OpsAuditDoctorController extends OpsAuditBaseController
                 'doctor' => $row->doctor?->firstname ? ($row->doctor->firstname . ' ' . ($row->doctor->surname ?? '')) : '-',
                 'ward' => $row->ward?->name ?? '-',
                 'bed' => $row->bed?->name ?? '-',
-                'esi' => $row->esi_level ? '<span class="badge bg-danger">Level '.$row->esi_level.'</span>' : '-',
+                'esi' => $row->esi_level ? '<span class="badge bg-danger">Level ' . $row->esi_level . '</span>' : '-',
                 'status' => $statusBadge,
                 'los' => $los !== '-' ? $los . ' days' : '-',
                 'total_bill' => $totalAmount > 0 ? '₦' . number_format($totalAmount, 2) : '-',
@@ -258,7 +283,7 @@ class OpsAuditDoctorController extends OpsAuditBaseController
             'productOrServiceRequest.payment.user',
             'biller',
             'dispenser',
-            'dispensedFromStore'
+            'dispensedFromStore',
 ]);
 
         $this->applyDateFilter($query, $request);
@@ -266,13 +291,19 @@ class OpsAuditDoctorController extends OpsAuditBaseController
         $this->applyPaymentFilters($query, $request, 'productOrServiceRequest');
         $this->applyItemFilters($query, $request, 'productOrServiceRequest');
 
-        if ($request->filled('doctor_id')) $query->where('doctor_id', $request->doctor_id);
-        if ($request->filled('hmo_id')) $query->whereHas('patient.hmo', fn($q) => $q->where('id', $request->hmo_id));
-        if ($request->filled('status')) $query->where('status', $request->status);
+        if ($request->filled('doctor_id')) {
+            $query->where('doctor_id', $request->doctor_id);
+        }
+        if ($request->filled('hmo_id')) {
+            $query->whereHas('patient.hmo', fn ($q) => $q->where('id', $request->hmo_id));
+        }
+        if ($request->filled('status')) {
+            $query->where('status', $request->status);
+        }
 
         $kpiQuery = clone $query;
 
-        return $this->buildDataTableResponse($query, $request, fn($q) => $q, function ($row) {
+        return $this->buildDataTableResponse($query, $request, fn ($q) => $q, function ($row) {
             $patient = $row->patient;
             $user = $patient?->user;
             $hmo = $patient?->hmo;
@@ -281,9 +312,9 @@ class OpsAuditDoctorController extends OpsAuditBaseController
 
             $statusColors = [1 => 'warning text-dark', 2 => 'info', 3 => 'success', 4 => 'danger'];
             $statusTexts = [1 => 'Pending', 2 => 'Approved', 3 => 'Dispensed', 4 => 'Returned'];
-            
-            $statusHtml = '<span class="badge bg-'.($statusColors[$row->status] ?? 'secondary').'">'.($statusTexts[$row->status] ?? $row->status).'</span>';
-            
+
+            $statusHtml = '<span class="badge bg-' . ($statusColors[$row->status] ?? 'secondary') . '">' . ($statusTexts[$row->status] ?? $row->status) . '</span>';
+
             $biller = $row->biller ?? $posr?->biller;
             if ($biller) {
                 $statusHtml .= '<div class="mt-1 text-muted fw-bold" style="font-size:0.7rem;"><i class="mdi mdi-receipt me-1"></i>Billed: ' . trim($biller->firstname . ' ' . $biller->surname) . '</div>';
@@ -331,7 +362,7 @@ class OpsAuditDoctorController extends OpsAuditBaseController
             'resultBy',
             'approver',
             'productOrServiceRequest.payment',
-        
+
             'productOrServiceRequest.payment.user',
 ]);
 
@@ -339,14 +370,20 @@ class OpsAuditDoctorController extends OpsAuditBaseController
         $this->applyShiftFilter($query, $request);
         $this->applyPaymentFilters($query, $request, 'productOrServiceRequest');
         $this->applyItemFilters($query, $request, 'productOrServiceRequest');
-        
-        if ($request->filled('doctor_id')) $query->where('doctor_id', $request->doctor_id);
-        if ($request->filled('hmo_id')) $query->whereHas('patient.hmo', fn($q) => $q->where('id', $request->hmo_id));
-        if ($request->filled('status')) $query->where('status', $request->status);
+
+        if ($request->filled('doctor_id')) {
+            $query->where('doctor_id', $request->doctor_id);
+        }
+        if ($request->filled('hmo_id')) {
+            $query->whereHas('patient.hmo', fn ($q) => $q->where('id', $request->hmo_id));
+        }
+        if ($request->filled('status')) {
+            $query->where('status', $request->status);
+        }
 
         $kpiQuery = clone $query;
 
-        return $this->buildDataTableResponse($query, $request, fn($q) => $q, function ($row) {
+        return $this->buildDataTableResponse($query, $request, fn ($q) => $q, function ($row) {
             $patient = $row->patient;
             $user = $patient?->user;
             $hmo = $patient?->hmo;
@@ -362,7 +399,7 @@ class OpsAuditDoctorController extends OpsAuditBaseController
                 'hmo' => $this->renderHmo($hmo),
                 'test' => $row->service?->service_name ?? ($row->is_free_form ? $row->free_form_name : '-'),
                 'doctor' => $row->doctor?->firstname ? ($row->doctor->firstname . ' ' . ($row->doctor->surname ?? '')) : '-',
-                'status' => '<span class="badge bg-'.($statusColors[$row->status] ?? 'secondary').'">'.($statusTexts[$row->status] ?? $row->status).'</span>',
+                'status' => '<span class="badge bg-' . ($statusColors[$row->status] ?? 'secondary') . '">' . ($statusTexts[$row->status] ?? $row->status) . '</span>',
                 'sample_by' => '-', // Sample by logic
                 'result_by' => $row->resultBy?->firstname ? ($row->resultBy->firstname . ' ' . ($row->resultBy->surname ?? '')) : '-',
                 'approved_by' => $row->approver?->firstname ? ($row->approver->firstname . ' ' . ($row->approver->surname ?? '')) : '-',
@@ -395,7 +432,7 @@ class OpsAuditDoctorController extends OpsAuditBaseController
             'resultBy',
             'approver',
             'productOrServiceRequest.payment',
-        
+
             'productOrServiceRequest.payment.user',
 ]);
 
@@ -403,14 +440,20 @@ class OpsAuditDoctorController extends OpsAuditBaseController
         $this->applyShiftFilter($query, $request);
         $this->applyPaymentFilters($query, $request, 'productOrServiceRequest');
         $this->applyItemFilters($query, $request, 'productOrServiceRequest');
-        
-        if ($request->filled('doctor_id')) $query->where('doctor_id', $request->doctor_id);
-        if ($request->filled('hmo_id')) $query->whereHas('patient.hmo', fn($q) => $q->where('id', $request->hmo_id));
-        if ($request->filled('status')) $query->where('status', $request->status);
+
+        if ($request->filled('doctor_id')) {
+            $query->where('doctor_id', $request->doctor_id);
+        }
+        if ($request->filled('hmo_id')) {
+            $query->whereHas('patient.hmo', fn ($q) => $q->where('id', $request->hmo_id));
+        }
+        if ($request->filled('status')) {
+            $query->where('status', $request->status);
+        }
 
         $kpiQuery = clone $query;
 
-        return $this->buildDataTableResponse($query, $request, fn($q) => $q, function ($row) {
+        return $this->buildDataTableResponse($query, $request, fn ($q) => $q, function ($row) {
             $patient = $row->patient;
             $user = $patient?->user;
             $hmo = $patient?->hmo;
@@ -426,7 +469,7 @@ class OpsAuditDoctorController extends OpsAuditBaseController
                 'hmo' => $this->renderHmo($hmo),
                 'test' => $row->service?->service_name ?? ($row->is_free_form ? $row->free_form_name : '-'),
                 'doctor' => $row->doctor?->firstname ? ($row->doctor->firstname . ' ' . ($row->doctor->surname ?? '')) : '-',
-                'status' => '<span class="badge bg-'.($statusColors[$row->status] ?? 'secondary').'">'.($statusTexts[$row->status] ?? $row->status).'</span>',
+                'status' => '<span class="badge bg-' . ($statusColors[$row->status] ?? 'secondary') . '">' . ($statusTexts[$row->status] ?? $row->status) . '</span>',
                 'sample_by' => '-',
                 'result_by' => $row->resultBy?->firstname ? ($row->resultBy->firstname . ' ' . ($row->resultBy->surname ?? '')) : '-',
                 'approved_by' => $row->approver?->firstname ? ($row->approver->firstname . ' ' . ($row->approver->surname ?? '')) : '-',
@@ -457,7 +500,7 @@ class OpsAuditDoctorController extends OpsAuditBaseController
             'service.category',
             'billedByUser',
             'productOrServiceRequest.payment',
-        
+
             'productOrServiceRequest.payment.user',
 ]);
 
@@ -465,15 +508,23 @@ class OpsAuditDoctorController extends OpsAuditBaseController
         $this->applyShiftFilter($query, $request);
         $this->applyPaymentFilters($query, $request, 'productOrServiceRequest');
         $this->applyItemFilters($query, $request, 'productOrServiceRequest');
-        
-        if ($request->filled('doctor_id')) $query->where('requested_by', $request->doctor_id);
-        if ($request->filled('hmo_id')) $query->whereHas('patient.hmo', fn($q) => $q->where('id', $request->hmo_id));
-        if ($request->filled('status')) $query->where('procedure_status', $request->status);
-        if ($request->filled('outcome')) $query->where('outcome', $request->outcome);
+
+        if ($request->filled('doctor_id')) {
+            $query->where('requested_by', $request->doctor_id);
+        }
+        if ($request->filled('hmo_id')) {
+            $query->whereHas('patient.hmo', fn ($q) => $q->where('id', $request->hmo_id));
+        }
+        if ($request->filled('status')) {
+            $query->where('procedure_status', $request->status);
+        }
+        if ($request->filled('outcome')) {
+            $query->where('outcome', $request->outcome);
+        }
 
         $kpiQuery = clone $query;
 
-        return $this->buildDataTableResponse($query, $request, fn($q) => $q, function ($row) {
+        return $this->buildDataTableResponse($query, $request, fn ($q) => $q, function ($row) {
             $patient = $row->patient;
             $user = $patient?->user;
             $hmo = $patient?->hmo;
@@ -488,7 +539,7 @@ class OpsAuditDoctorController extends OpsAuditBaseController
                 'hmo' => $this->renderHmo($hmo),
                 'procedure' => $this->renderItemDetails($row),
                 'doctor' => $row->requestedByUser?->firstname ? ($row->requestedByUser->firstname . ' ' . ($row->requestedByUser->surname ?? '')) : '-',
-                'status' => '<span class="badge bg-'.($statusColors[$row->procedure_status] ?? 'secondary').'">'.ucfirst(str_replace('_', ' ', $row->procedure_status ?? '')).'</span>',
+                'status' => '<span class="badge bg-' . ($statusColors[$row->procedure_status] ?? 'secondary') . '">' . ucfirst(str_replace('_', ' ', $row->procedure_status ?? '')) . '</span>',
                 'consent' => $row->consent_status === 'obtained' ? '<span class="badge bg-success">Obtained</span>' : '<span class="badge bg-danger">Not Obtained</span>',
                 'outcome' => $row->outcome ? ucfirst($row->outcome) : '-',
                 'or' => $row->operating_room ?? '-',
@@ -524,15 +575,23 @@ class OpsAuditDoctorController extends OpsAuditBaseController
 
         $this->applyDateFilter($query, $request);
         $this->applyShiftFilter($query, $request);
-        
-        if ($request->filled('referring_doctor_id')) $query->where('referring_doctor_id', $request->referring_doctor_id);
-        if ($request->filled('hmo_id')) $query->whereHas('patient.hmo', fn($q) => $q->where('id', $request->hmo_id));
-        if ($request->filled('status')) $query->where('status', $request->status);
-        if ($request->filled('referral_type')) $query->where('referral_type', $request->referral_type);
+
+        if ($request->filled('referring_doctor_id')) {
+            $query->where('referring_doctor_id', $request->referring_doctor_id);
+        }
+        if ($request->filled('hmo_id')) {
+            $query->whereHas('patient.hmo', fn ($q) => $q->where('id', $request->hmo_id));
+        }
+        if ($request->filled('status')) {
+            $query->where('status', $request->status);
+        }
+        if ($request->filled('referral_type')) {
+            $query->where('referral_type', $request->referral_type);
+        }
 
         $kpiQuery = clone $query;
 
-        return $this->buildDataTableResponse($query, $request, fn($q) => $q, function ($row) {
+        return $this->buildDataTableResponse($query, $request, fn ($q) => $q, function ($row) {
             $patient = $row->patient;
             $user = $patient?->user;
             $hmo = $patient?->hmo;
@@ -545,7 +604,7 @@ class OpsAuditDoctorController extends OpsAuditBaseController
                 'hmo' => $this->renderHmo($hmo),
                 'referring_doctor' => $row->referringDoctor?->firstname ? ($row->referringDoctor->firstname . ' ' . ($row->referringDoctor->surname ?? '')) : '-',
                 'type' => '<span class="badge bg-' . ($row->referral_type === 'external' ? 'danger' : 'primary') . '">' . ucfirst($row->referral_type ?? '-') . '</span>',
-                'target' => $row->referral_type === 'external' 
+                'target' => $row->referral_type === 'external'
                     ? '<small class="text-muted">' . e($row->external_facility_name ?? '-') . '</small>'
                     : ($row->targetClinic?->name ?? '-'),
                 'urgency' => '<span class="badge bg-' . ($row->urgency === 'emergency' ? 'danger' : ($row->urgency === 'urgent' ? 'warning text-dark' : 'light text-dark border')) . '">' . ucfirst($row->urgency ?? '-') . '</span>',

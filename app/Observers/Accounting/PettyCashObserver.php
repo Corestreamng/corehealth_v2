@@ -42,8 +42,9 @@ class PettyCashObserver
             if ($transaction->journal_entry_id) {
                 Log::info('PettyCashObserver: Transaction already has JE', [
                     'transaction_id' => $transaction->id,
-                    'journal_entry_id' => $transaction->journal_entry_id
+                    'journal_entry_id' => $transaction->journal_entry_id,
                 ]);
+
                 return;
             }
 
@@ -51,7 +52,7 @@ class PettyCashObserver
                 'transaction_id' => $transaction->id,
                 'transaction_type' => $transaction->transaction_type,
                 'amount' => $transaction->amount,
-                'voucher_number' => $transaction->voucher_number
+                'voucher_number' => $transaction->voucher_number,
             ]);
 
             try {
@@ -61,7 +62,7 @@ class PettyCashObserver
                     'transaction_id' => $transaction->id,
                     'voucher_number' => $transaction->voucher_number,
                     'error' => $e->getMessage(),
-                    'trace' => $e->getTraceAsString()
+                    'trace' => $e->getTraceAsString(),
                 ]);
             }
         }
@@ -78,8 +79,9 @@ class PettyCashObserver
         $fund = $transaction->fund;
         if (!$fund || !$fund->account_id) {
             Log::warning('PettyCashObserver: Fund or account not configured', [
-                'transaction_id' => $transaction->id
+                'transaction_id' => $transaction->id,
             ]);
+
             return;
         }
 
@@ -90,7 +92,7 @@ class PettyCashObserver
             PettyCashTransaction::TYPE_REPLENISHMENT => $this->createReplenishmentEntry($transaction, $accountingService, $pettyCashAccount),
             PettyCashTransaction::TYPE_ADJUSTMENT => $this->createAdjustmentEntry($transaction, $accountingService, $pettyCashAccount),
             default => Log::warning('PettyCashObserver: Unknown transaction type', [
-                'type' => $transaction->transaction_type
+                'type' => $transaction->transaction_type,
             ])
         };
     }
@@ -114,7 +116,7 @@ class PettyCashObserver
         if (!$expenseAccount) {
             Log::warning('PettyCashObserver: Expense account not found', [
                 'transaction_id' => $transaction->id,
-                'expense_category' => $transaction->expense_category
+                'expense_category' => $transaction->expense_category,
             ]);
             // Use miscellaneous expense as fallback
             $expenseAccount = Account::where('code', '6090')->first();
@@ -122,6 +124,7 @@ class PettyCashObserver
 
         if (!$expenseAccount) {
             Log::error('PettyCashObserver: No expense account available');
+
             return;
         }
 
@@ -147,7 +150,7 @@ class PettyCashObserver
                 'description' => 'Petty Cash Disbursement',
                 // METADATA
                 'category' => 'petty_cash',
-            ]
+            ],
         ];
 
         $entry = $accountingService->createAndPostAutomatedEntry(
@@ -197,6 +200,7 @@ class PettyCashObserver
                 'payment_method' => $transaction->payment_method,
                 'bank_id' => $transaction->bank_id,
             ]);
+
             return;
         }
 
@@ -225,7 +229,7 @@ class PettyCashObserver
                 // METADATA
                 'category' => 'petty_cash_replenishment',
                 'bank_id' => $transaction->bank_id,
-            ]
+            ],
         ];
 
         $entry = $accountingService->createAndPostAutomatedEntry(
@@ -269,6 +273,7 @@ class PettyCashObserver
                         'bank_name' => $bank->name,
                         'account_code' => $account->code,
                     ]);
+
                     return $account;
                 }
             }
@@ -320,6 +325,7 @@ class PettyCashObserver
 
         if (!$shortOverAccount) {
             Log::error('PettyCashObserver: Cash short/over account not found');
+
             return;
         }
 
@@ -349,7 +355,7 @@ class PettyCashObserver
                     'credit_amount' => $amount,
                     'description' => 'Petty Cash Shortage',
                     'category' => 'petty_cash_adjustment',
-                ]
+                ],
             ];
         } else {
             // Overage: DEBIT Petty Cash, CREDIT Income
@@ -367,7 +373,7 @@ class PettyCashObserver
                     'credit_amount' => $amount,
                     'description' => 'Cash Overage Adjustment',
                     'category' => 'petty_cash_adjustment',
-                ]
+                ],
             ];
         }
 
@@ -423,6 +429,7 @@ class PettyCashObserver
         ];
 
         $code = $categoryMap[strtolower($category)] ?? '6090';
+
         return Account::where('code', $code)->first();
     }
 }

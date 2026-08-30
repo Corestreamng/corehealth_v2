@@ -2,23 +2,17 @@
 
 namespace App\Services;
 
-use App\Models\Patient;
-use App\Models\VitalSign;
-use App\Models\Encounter;
-use App\Models\NursingNote;
-use App\Models\MedicationAdministration;
-use App\Models\LabServiceRequest;
-use App\Models\ImagingServiceRequest;
-use App\Models\ProductRequest;
-use App\Models\Procedure;
 use App\Models\AdmissionRequest;
-use App\Models\SpecialistReferral;
-use App\Models\NonPharmOrder;
-use App\Models\InjectionAdministration;
-use App\Models\ImmunizationRecord;
+use App\Models\Encounter;
+use App\Models\ImagingServiceRequest;
+use App\Models\LabServiceRequest;
+use App\Models\MedicationAdministration;
+use App\Models\NursingNote;
+use App\Models\Patient;
+use App\Models\Procedure;
+use App\Models\VitalSign;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\Log;
 
 /**
  * Service for building semantic patient context for LLM prompts.
@@ -31,8 +25,8 @@ class PatientContextService
     public function __construct()
     {
         $settings = appsettings();
-        $this->config = is_string($settings->llm_config) 
-            ? json_decode($settings->llm_config, true) 
+        $this->config = is_string($settings->llm_config)
+            ? json_decode($settings->llm_config, true)
             : (is_array($settings->llm_config) ? $settings->llm_config : []);
     }
 
@@ -90,7 +84,7 @@ class PatientContextService
         $context = [];
         $context[] = $this->buildDemographicsChunk($patient);
         $context[] = $this->buildAllergiesChunk($patient);
-        
+
         // Fetch specific categories with dual scope limiter
         $context[] = $this->buildVitalsChunk($patientId, $dateLimit, 10); // Last 10 vitals
         $context[] = $this->buildActiveMedicationsChunk($patientId);
@@ -128,7 +122,9 @@ class PatientContextService
         // Assuming allergies are stored in a field or related table.
         // For now, checking typical fields:
         $allergies = $patient->allergies ?? 'None recorded';
-        if (empty($allergies)) return null;
+        if (empty($allergies)) {
+            return null;
+        }
 
         if (is_array($allergies)) {
             $allergies = implode(', ', $allergies);
@@ -145,18 +141,32 @@ class PatientContextService
             ->take($limit)
             ->get();
 
-        if ($vitals->isEmpty()) return null;
+        if ($vitals->isEmpty()) {
+            return null;
+        }
 
         $lines = ["--- RECENT VITALS (Last {$vitals->count()} readings) ---"];
         foreach ($vitals as $v) {
             $date = $v->time_taken->format('Y-m-d H:i');
             $readings = [];
-            if ($v->blood_pressure) $readings[] = "BP: {$v->blood_pressure}";
-            if ($v->temp) $readings[] = "Temp: {$v->temp}°C";
-            if ($v->heart_rate) $readings[] = "HR: {$v->heart_rate}";
-            if ($v->spo2) $readings[] = "SpO2: {$v->spo2}%";
-            if ($v->resp_rate) $readings[] = "RR: {$v->resp_rate}";
-            if ($v->weight) $readings[] = "Wt: {$v->weight}kg";
+            if ($v->blood_pressure) {
+                $readings[] = "BP: {$v->blood_pressure}";
+            }
+            if ($v->temp) {
+                $readings[] = "Temp: {$v->temp}°C";
+            }
+            if ($v->heart_rate) {
+                $readings[] = "HR: {$v->heart_rate}";
+            }
+            if ($v->spo2) {
+                $readings[] = "SpO2: {$v->spo2}%";
+            }
+            if ($v->resp_rate) {
+                $readings[] = "RR: {$v->resp_rate}";
+            }
+            if ($v->weight) {
+                $readings[] = "Wt: {$v->weight}kg";
+            }
 
             $lines[] = "[{$date}] " . implode(' | ', $readings);
         }
@@ -174,7 +184,9 @@ class PatientContextService
             ->get()
             ->unique('product_id');
 
-        if ($meds->isEmpty()) return null;
+        if ($meds->isEmpty()) {
+            return null;
+        }
 
         $lines = ["--- RECENT MEDICATIONS ---"];
         foreach ($meds as $m) {
@@ -197,13 +209,15 @@ class PatientContextService
             ->take($limit)
             ->get();
 
-        if ($labs->isEmpty()) return null;
+        if ($labs->isEmpty()) {
+            return null;
+        }
 
         $lines = ["--- LAB RESULTS ---"];
         foreach ($labs as $lab) {
             $name = $lab->service ? $lab->service->service_name : 'Unknown Test';
             $date = $lab->created_at->format('Y-m-d');
-            
+
             // Handle V1 (string) vs V2 (JSON/array) result data
             $resultText = '';
             if (!empty($lab->result_data) && is_array($lab->result_data)) {
@@ -241,20 +255,22 @@ class PatientContextService
             ->take($limit)
             ->get();
 
-        if ($imaging->isEmpty()) return null;
+        if ($imaging->isEmpty()) {
+            return null;
+        }
 
         $lines = ["--- IMAGING RESULTS ---"];
         foreach ($imaging as $img) {
             $name = $img->service ? $img->service->service_name : 'Unknown Scan';
             $date = $img->created_at->format('Y-m-d');
-            
+
             // Handle V1/V2 similar to labs
             $resultText = '';
             if (!empty($img->result_data) && is_array($img->result_data)) {
                 $resultText = "Structured report available";
                 // Add structured parsing if needed
                 if (isset($img->result_data['conclusion'])) {
-                     $resultText .= " - Conclusion: " . strip_tags($img->result_data['conclusion']);
+                    $resultText .= " - Conclusion: " . strip_tags($img->result_data['conclusion']);
                 }
             } else {
                 $resultText = mb_substr(strip_tags($img->result ?? 'Report available'), 0, 200) . '...';
@@ -276,22 +292,26 @@ class PatientContextService
             ->take($limit)
             ->get();
 
-        if ($encounters->isEmpty()) return null;
+        if ($encounters->isEmpty()) {
+            return null;
+        }
 
         $lines = ["--- CLINICAL NOTES (Past Encounters) ---"];
         foreach ($encounters as $enc) {
             $date = $enc->created_at->format('Y-m-d H:i');
             $diag = $this->parseDiagnosis($enc->reasons_for_encounter);
-            
+
             $lines[] = "[{$date}] Encounter";
-            if ($diag) $lines[] = "Diagnosis/Reason: {$diag}";
+            if ($diag) {
+                $lines[] = "Diagnosis/Reason: {$diag}";
+            }
             $lines[] = "Notes: " . strip_tags($enc->notes);
             $lines[] = "-";
         }
 
         return implode("\n", $lines);
     }
-    
+
     protected function buildNursingNotesChunk(int $patientId, Carbon $dateLimit, int $limit): ?string
     {
         $notes = NursingNote::where('patient_id', $patientId)
@@ -300,7 +320,9 @@ class PatientContextService
             ->take($limit)
             ->get();
 
-        if ($notes->isEmpty()) return null;
+        if ($notes->isEmpty()) {
+            return null;
+        }
 
         $lines = ["--- NURSING NOTES ---"];
         foreach ($notes as $note) {
@@ -321,7 +343,9 @@ class PatientContextService
             ->take($limit)
             ->get();
 
-        if ($procedures->isEmpty()) return null;
+        if ($procedures->isEmpty()) {
+            return null;
+        }
 
         $lines = ["--- PROCEDURES ---"];
         foreach ($procedures as $proc) {
@@ -329,15 +353,15 @@ class PatientContextService
             $name = $proc->service ? $proc->service->service_name : 'Unknown Procedure';
             $status = $proc->getStatusDisplayAttribute();
             $outcome = $proc->getOutcomeDisplayAttribute();
-            
+
             $details = "[{$date}] {$name} (Status: {$status}";
             if ($proc->outcome) {
                 $details .= ", Outcome: {$outcome}";
             }
             $details .= ")";
-            
+
             $lines[] = $details;
-            
+
             if ($proc->post_notes) {
                 $cleanNotes = mb_substr(strip_tags($proc->post_notes), 0, 150) . '...';
                 $lines[] = "  Notes: {$cleanNotes}";
@@ -355,7 +379,9 @@ class PatientContextService
             ->take($limit)
             ->get();
 
-        if ($admissions->isEmpty()) return null;
+        if ($admissions->isEmpty()) {
+            return null;
+        }
 
         $lines = ["--- ADMISSIONS ---"];
         foreach ($admissions as $adm) {
@@ -371,15 +397,19 @@ class PatientContextService
     protected function buildCurrentEncounterChunk(int $encounterId): ?string
     {
         $enc = Encounter::find($encounterId);
-        if (!$enc) return null;
+        if (!$enc) {
+            return null;
+        }
 
         $lines = ["--- CURRENT ENCOUNTER (Active) ---"];
         $date = $enc->created_at->format('Y-m-d H:i');
         $lines[] = "Started: {$date}";
-        
+
         $diag = $this->parseDiagnosis($enc->reasons_for_encounter);
-        if ($diag) $lines[] = "Working Diagnosis/Reason: {$diag}";
-        
+        if ($diag) {
+            $lines[] = "Working Diagnosis/Reason: {$diag}";
+        }
+
         if ($enc->notes) {
             $lines[] = "Current Notes Draft: " . strip_tags($enc->notes);
         }
@@ -389,7 +419,9 @@ class PatientContextService
 
     protected function parseDiagnosis(?string $reasons): string
     {
-        if (empty($reasons)) return '';
+        if (empty($reasons)) {
+            return '';
+        }
 
         $decoded = json_decode($reasons, true);
         if (is_array($decoded) && isset($decoded[0]['code'])) {
@@ -398,9 +430,10 @@ class PatientContextService
                 $status = !empty($dx['comment_1']) ? "({$dx['comment_1']})" : '';
                 $parts[] = "{$dx['name']} {$status}";
             }
+
             return implode(', ', $parts);
         }
-        
+
         return $reasons;
     }
 
@@ -413,7 +446,9 @@ class PatientContextService
             ->take($limit)
             ->get();
 
-        if ($prescriptions->isEmpty()) return null;
+        if ($prescriptions->isEmpty()) {
+            return null;
+        }
 
         $lines = ["--- PRESCRIPTIONS ---"];
         foreach ($prescriptions as $p) {
@@ -433,7 +468,9 @@ class PatientContextService
             ->take($limit)
             ->get();
 
-        if ($io->isEmpty()) return null;
+        if ($io->isEmpty()) {
+            return null;
+        }
 
         $lines = ["--- INTAKE & OUTPUT FLUID BALANCE ---"];
         foreach ($io as $period) {
@@ -461,7 +498,9 @@ class PatientContextService
             ->take($limit)
             ->get();
 
-        if ($injections->isEmpty() && $immunizations->isEmpty()) return null;
+        if ($injections->isEmpty() && $immunizations->isEmpty()) {
+            return null;
+        }
 
         $lines = ["--- INJECTIONS & IMMUNIZATIONS ---"];
         foreach ($injections as $inj) {
@@ -484,7 +523,9 @@ class PatientContextService
             ->take($limit)
             ->get();
 
-        if ($plans->isEmpty()) return null;
+        if ($plans->isEmpty()) {
+            return null;
+        }
 
         $lines = ["--- CARE PLANS & NON-PHARM ORDERS ---"];
         foreach ($plans as $plan) {
@@ -503,7 +544,9 @@ class PatientContextService
             ->take($limit)
             ->get();
 
-        if ($referrals->isEmpty()) return null;
+        if ($referrals->isEmpty()) {
+            return null;
+        }
 
         $lines = ["--- SPECIALIST REFERRALS ---"];
         foreach ($referrals as $ref) {
@@ -520,13 +563,19 @@ class PatientContextService
             ->orderBy('created_at', 'desc')
             ->first();
 
-        if (!$enrollment) return null;
+        if (!$enrollment) {
+            return null;
+        }
 
         $lines = ["--- MATERNITY STATUS ---"];
         $lines[] = "Enrolled on: " . $enrollment->created_at->format('Y-m-d');
-        if ($enrollment->edd) $lines[] = "Estimated Date of Delivery (EDD): " . Carbon::parse($enrollment->edd)->format('Y-m-d');
-        if ($enrollment->lmp) $lines[] = "Last Menstrual Period (LMP): " . Carbon::parse($enrollment->lmp)->format('Y-m-d');
-        
+        if ($enrollment->edd) {
+            $lines[] = "Estimated Date of Delivery (EDD): " . Carbon::parse($enrollment->edd)->format('Y-m-d');
+        }
+        if ($enrollment->lmp) {
+            $lines[] = "Last Menstrual Period (LMP): " . Carbon::parse($enrollment->lmp)->format('Y-m-d');
+        }
+
         $deliveries = \App\Models\DeliveryRecord::where('patient_id', $patientId)->orderBy('delivery_date', 'desc')->get();
         if ($deliveries->isNotEmpty()) {
             foreach ($deliveries as $del) {
@@ -547,13 +596,15 @@ class PatientContextService
                 'procedures',
                 'nonPharmOrders',
                 'creator',
-                'retirer'
+                'retirer',
             ])
             ->orderBy('created_at', 'desc')
             ->take(15)
             ->get();
 
-        if ($plans->isEmpty()) return null;
+        if ($plans->isEmpty()) {
+            return null;
+        }
 
         $lines = ["--- TREATMENT PLANS & GOALS ---"];
         foreach ($plans as $plan) {
@@ -561,7 +612,7 @@ class PatientContextService
             $creator = $plan->creator ? trim(($plan->creator->surname ?? '') . ' ' . ($plan->creator->firstname ?? '')) : 'System';
             $statusUpper = strtoupper($plan->status ?? 'ACTIVE');
             $header = "[{$createdDate}] Plan: \"{$plan->name}\" (Priority: " . ucfirst($plan->priority ?? 'medium') . " | Status: {$statusUpper} | Progress: {$plan->progress_percent}%) by {$creator}";
-            
+
             if ($plan->status !== 'active' && $plan->retired_at) {
                 $retireDate = $plan->retired_at->format('Y-m-d H:i');
                 $retirerName = $plan->retirer ? trim(($plan->retirer->surname ?? '') . ' ' . ($plan->retirer->firstname ?? '')) : 'Physician';

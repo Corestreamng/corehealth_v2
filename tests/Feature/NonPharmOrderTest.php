@@ -2,19 +2,21 @@
 
 namespace Tests\Feature;
 
-use Illuminate\Foundation\Testing\RefreshDatabase;
-use Tests\TestCase;
-use App\Models\User;
-use App\Models\Patient;
 use App\Models\Encounter;
 use App\Models\NonPharmOrder;
+use App\Models\Patient;
+use App\Models\User;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\TestCase;
 
 class NonPharmOrderTest extends TestCase
 {
     use RefreshDatabase;
 
     protected $user;
+
     protected $patient;
+
     protected $encounter;
 
     protected function setUp(): void
@@ -23,13 +25,13 @@ class NonPharmOrderTest extends TestCase
 
         // Create standard user
         $this->user = User::factory()->create([
-            'status' => 1
+            'status' => 1,
         ]);
 
         // Create patient and encounter
         $this->patient = Patient::factory()->create();
         $this->encounter = Encounter::create([
-            'patient_id' => $this->patient->id
+            'patient_id' => $this->patient->id,
         ]);
     }
 
@@ -43,7 +45,7 @@ class NonPharmOrderTest extends TestCase
             'encounter_id' => $this->encounter->id,
             'category' => 'Diet',
             'instructions' => 'Strict low sodium diabetic diet, fluids at bedside.',
-            'target_executor' => 'patient'
+            'target_executor' => 'patient',
         ];
 
         $response = $this->postJson('/non-pharm-orders', $payload);
@@ -51,7 +53,7 @@ class NonPharmOrderTest extends TestCase
         $response->assertStatus(200)
                  ->assertJson([
                      'success' => true,
-                     'message' => 'Care order added successfully'
+                     'message' => 'Care order added successfully',
                  ]);
 
         $this->assertDatabaseHas('non_pharm_orders', [
@@ -61,7 +63,7 @@ class NonPharmOrderTest extends TestCase
             'instructions' => 'Strict low sodium diabetic diet, fluids at bedside.',
             'target_executor' => 'patient',
             'status' => 'active',
-            'requested_by' => $this->user->id
+            'requested_by' => $this->user->id,
         ]);
     }
 
@@ -78,7 +80,7 @@ class NonPharmOrderTest extends TestCase
             'instructions' => 'Ambulate 3 times daily.',
             'target_executor' => 'patient',
             'status' => 'active',
-            'requested_by' => $this->user->id
+            'requested_by' => $this->user->id,
         ]);
 
         NonPharmOrder::create([
@@ -88,7 +90,7 @@ class NonPharmOrderTest extends TestCase
             'instructions' => 'Turn and reposition patient every 2 hours.',
             'target_executor' => 'nurse',
             'status' => 'active',
-            'requested_by' => $this->user->id
+            'requested_by' => $this->user->id,
         ]);
 
         $response = $this->getJson("/non-pharm-orders/patient/{$this->patient->id}");
@@ -97,12 +99,12 @@ class NonPharmOrderTest extends TestCase
                  ->assertJsonFragment([
                      'category' => 'Activity',
                      'instructions' => 'Ambulate 3 times daily.',
-                     'target_executor' => 'patient'
+                     'target_executor' => 'patient',
                  ])
                  ->assertJsonFragment([
                      'category' => 'Bedside Care',
                      'instructions' => 'Turn and reposition patient every 2 hours.',
-                     'target_executor' => 'nurse'
+                     'target_executor' => 'nurse',
                  ]);
     }
 
@@ -118,24 +120,24 @@ class NonPharmOrderTest extends TestCase
             'instructions' => 'Wound dressing check.',
             'target_executor' => 'nurse',
             'status' => 'active',
-            'requested_by' => $this->user->id
+            'requested_by' => $this->user->id,
         ]);
 
         $response = $this->postJson("/non-pharm-orders/{$order->id}/complete", [
-            'notes' => 'Wound dressing is clean, dry and intact. No signs of erythema.'
+            'notes' => 'Wound dressing is clean, dry and intact. No signs of erythema.',
         ]);
 
         $response->assertStatus(200)
                  ->assertJson([
                      'success' => true,
-                     'message' => 'Care order marked as completed'
+                     'message' => 'Care order marked as completed',
                  ]);
 
         $this->assertDatabaseHas('non_pharm_orders', [
             'id' => $order->id,
             'status' => 'completed',
             'completed_by' => $this->user->id,
-            'completed_notes' => 'Wound dressing is clean, dry and intact. No signs of erythema.'
+            'completed_notes' => 'Wound dressing is clean, dry and intact. No signs of erythema.',
         ]);
 
         $freshOrder = $order->fresh();
@@ -154,25 +156,25 @@ class NonPharmOrderTest extends TestCase
             'instructions' => 'Discuss discharge planning.',
             'target_executor' => 'patient',
             'status' => 'active',
-            'requested_by' => $this->user->id
+            'requested_by' => $this->user->id,
         ]);
 
         $response = $this->deleteJson("/non-pharm-orders/{$order->id}", [
             'action' => 'discontinue',
-            'reason' => 'Patient has been fully discharged.'
+            'reason' => 'Patient has been fully discharged.',
         ]);
 
         $response->assertStatus(200)
                  ->assertJson([
                      'success' => true,
-                     'message' => 'Care order discontinued successfully'
+                     'message' => 'Care order discontinued successfully',
                  ]);
 
         $this->assertDatabaseHas('non_pharm_orders', [
             'id' => $order->id,
             'status' => 'discontinued',
             'discontinue_reason' => 'Patient has been fully discharged.',
-            'discontinued_by' => $this->user->id
+            'discontinued_by' => $this->user->id,
         ]);
 
         $freshOrder = $order->fresh();

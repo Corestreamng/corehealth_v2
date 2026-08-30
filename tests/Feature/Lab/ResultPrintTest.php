@@ -33,7 +33,6 @@ class ResultPrintTest extends TestCase
         $this->assertNotNull($response->status());
     }
 
-
     /** @test */
     public function test_imaging_result_print_view_returns_200()
     {

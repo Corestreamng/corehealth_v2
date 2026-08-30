@@ -2,12 +2,11 @@
 
 namespace App\Services;
 
-use App\Models\SlowQuery;
 use App\Models\ApplicationStatu;
+use App\Models\SlowQuery;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Storage;
-use Carbon\Carbon;
 
 class SlowQueryService
 {
@@ -30,6 +29,7 @@ class SlowQueryService
             ];
         } catch (\Exception $e) {
             Log::error("SlowQueryService: Failed to check MySQL config: " . $e->getMessage());
+
             return null;
         }
     }
@@ -42,7 +42,7 @@ class SlowQueryService
         try {
             DB::statement("SET GLOBAL slow_query_log = 'ON'");
             DB::statement("SET GLOBAL long_query_time = {$threshold}");
-            
+
             if ($customPath) {
                 DB::statement("SET GLOBAL slow_query_log_file = '{$customPath}'");
             }
@@ -50,9 +50,10 @@ class SlowQueryService
             return ['success' => true, 'message' => 'MySQL configuration updated successfully.'];
         } catch (\Exception $e) {
             Log::error("SlowQueryService: Failed to configure MySQL: " . $e->getMessage());
+
             return [
-                'success' => false, 
-                'message' => 'Failed to configure MySQL. You may lack SUPER or SYSTEM_VARIABLES_ADMIN privileges. Details: ' . $e->getMessage()
+                'success' => false,
+                'message' => 'Failed to configure MySQL. You may lack SUPER or SYSTEM_VARIABLES_ADMIN privileges. Details: ' . $e->getMessage(),
             ];
         }
     }
@@ -63,10 +64,12 @@ class SlowQueryService
     public function parseLog()
     {
         $appSettings = ApplicationStatu::first();
-        if (!$appSettings) return;
+        if (!$appSettings) {
+            return;
+        }
 
         $logPath = $appSettings->slow_query_log_path;
-        
+
         // If no path set, try to detect from MySQL
         if (!$logPath) {
             $config = $this->checkConfiguration();
@@ -78,6 +81,7 @@ class SlowQueryService
 
         if (!$logPath || !file_exists($logPath) || !is_readable($logPath)) {
             Log::warning("SlowQueryService: Log file not found or not readable at: " . ($logPath ?? 'unknown'));
+
             return;
         }
 
@@ -90,7 +94,9 @@ class SlowQueryService
         }
 
         $handle = fopen($logPath, 'r');
-        if (!$handle) return;
+        if (!$handle) {
+            return;
+        }
 
         fseek($handle, $offset);
 
@@ -100,13 +106,15 @@ class SlowQueryService
         // Process in chunks
         while (!feof($handle)) {
             $chunk = fread($handle, 65536); // 64KB chunks
-            if (!$chunk) break;
+            if (!$chunk) {
+                break;
+            }
             $buffer .= $chunk;
 
             // Split buffer into entries using the "# User@Host:" marker as the start of an entry
             // but keep the "# Time:" if it exists just before it.
             $parts = preg_split('/(?=# Time:)|(?=# User@Host:)/', $buffer);
-            
+
             // The last part might be incomplete, keep it in buffer
             $buffer = array_pop($parts);
 
@@ -141,14 +149,16 @@ class SlowQueryService
     protected function processEntry($entryText)
     {
         $entryText = trim($entryText);
-        if (empty($entryText)) return false;
+        if (empty($entryText)) {
+            return false;
+        }
 
         // Extract metadata using regex
         // Format:
         // # Time: 2026-05-15T12:00:00.123456Z
         // # User@Host: root[root] @ localhost []  Id: 82438
         // # Query_time: 2.340000  Lock_time: 0.000000 Rows_sent: 1  Rows_examined: 25
-        
+
         $data = [
             'timestamp' => null,
             'user_host' => null,
@@ -163,7 +173,8 @@ class SlowQueryService
         if (preg_match('/# Time: ([\d\-\:T\.Z]+)/', $entryText, $matches)) {
             try {
                 $data['timestamp'] = Carbon::parse($matches[1]);
-            } catch (\Exception $e) {}
+            } catch (\Exception $e) {
+            }
         }
 
         // Extract User@Host
@@ -184,13 +195,18 @@ class SlowQueryService
         $queryLines = [];
         foreach ($lines as $line) {
             $line = trim($line);
-            if (empty($line)) continue;
-            if (str_starts_with($line, '#')) continue;
+            if (empty($line)) {
+                continue;
+            }
+            if (str_starts_with($line, '#')) {
+                continue;
+            }
             if (str_starts_with($line, 'SET timestamp=')) {
                 // If we didn't get a timestamp from # Time, use this
                 if (!$data['timestamp'] && preg_match('/SET timestamp=(\d+)/', $line, $tsMatches)) {
                     $data['timestamp'] = Carbon::createFromTimestamp($tsMatches[1]);
                 }
+
                 continue;
             }
             $queryLines[] = $line;
@@ -205,8 +221,12 @@ class SlowQueryService
             $data['query'] = trim(str_replace($sourceMatches[0], '', $data['query']));
         }
 
-        if (empty($data['query'])) return false;
-        if (!$data['timestamp']) $data['timestamp'] = now();
+        if (empty($data['query'])) {
+            return false;
+        }
+        if (!$data['timestamp']) {
+            $data['timestamp'] = now();
+        }
 
         // Generate a hash to avoid duplicates
         $hash = hash('sha256', $data['timestamp']->toDateTimeString() . $data['user_host'] . $data['query']);
@@ -226,6 +246,7 @@ class SlowQueryService
                     'source' => $data['source'],
                 ]
             );
+
             return true;
         } catch (\Exception $e) {
             // Probably a duplicate hash or DB error

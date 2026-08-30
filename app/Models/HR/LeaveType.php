@@ -32,7 +32,7 @@ class LeaveType extends Model implements Auditable
         'allow_carry_forward',
         'color',
         'gender_specific',
-        'applicable_employment_types'
+        'applicable_employment_types',
     ];
 
     protected $casts = [

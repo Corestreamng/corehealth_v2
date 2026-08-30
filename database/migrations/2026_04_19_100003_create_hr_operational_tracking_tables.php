@@ -8,8 +8,7 @@ use Illuminate\Support\Facades\Schema;
  * HR Enhancement - Operational Tracking Tables
  * Qualifications, Promotions, Trainings, Medical Exams, Next of Kin, Follow-ups
  */
-return new class extends Migration
-{
+return new class () extends Migration {
     public function up(): void
     {
         // Staff Qualifications - education & certifications

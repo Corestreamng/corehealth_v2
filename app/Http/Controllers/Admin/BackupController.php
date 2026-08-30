@@ -5,7 +5,6 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Services\BackupService;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Log;
 
 class BackupController extends Controller
 {
@@ -33,9 +32,9 @@ class BackupController extends Controller
         $dbSize = $this->backupService->getDatabaseSize();
 
         return response()->json([
-            'backups'  => $backups,
-            'db_size'  => $dbSize,
-            'total'    => count($backups),
+            'backups' => $backups,
+            'db_size' => $dbSize,
+            'total' => count($backups),
             'compression_enabled' => (bool) appsettings('backup_compression'),
         ]);
     }
@@ -55,12 +54,12 @@ class BackupController extends Controller
             $replicated = $this->backupService->replicateToExternalDrives($result['filename']);
 
             return response()->json([
-                'success'     => true,
-                'message'     => $result['message'],
-                'filename'    => $result['filename'],
-                'size'        => $result['size'],
-                'pruned'      => $pruned,
-                'replicated'  => $replicated,
+                'success' => true,
+                'message' => $result['message'],
+                'filename' => $result['filename'],
+                'size' => $result['size'],
+                'pruned' => $pruned,
+                'replicated' => $replicated,
             ]);
         }
 
@@ -79,7 +78,7 @@ class BackupController extends Controller
 
         return response()->json([
             'drives' => $drives,
-            'total'  => count($drives),
+            'total' => count($drives),
         ]);
     }
 
@@ -92,7 +91,7 @@ class BackupController extends Controller
 
         return response()->json([
             'backups' => $backups,
-            'total'   => count($backups),
+            'total' => count($backups),
         ]);
     }
 

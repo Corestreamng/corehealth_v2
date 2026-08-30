@@ -15,9 +15,9 @@ class WhoGrowthStandard extends Model
 
     protected $casts = [
         'age_months' => 'decimal:1',
-        'l_value'    => 'decimal:4',
-        'm_value'    => 'decimal:4',
-        's_value'    => 'decimal:5',
+        'l_value' => 'decimal:4',
+        'm_value' => 'decimal:4',
+        's_value' => 'decimal:5',
     ];
 
     /* ══════════════════════════════════════════════════════════════
@@ -101,7 +101,7 @@ class WhoGrowthStandard extends Model
             'sd_neg3' => round($this->measurementAtZ(-3), 2),
             'sd_neg2' => round($this->measurementAtZ(-2), 2),
             'sd_neg1' => round($this->measurementAtZ(-1), 2),
-            'median'  => round($this->measurementAtZ(0), 2),
+            'median' => round($this->measurementAtZ(0), 2),
             'sd_pos1' => round($this->measurementAtZ(1), 2),
             'sd_pos2' => round($this->measurementAtZ(2), 2),
             'sd_pos3' => round($this->measurementAtZ(3), 2),
@@ -158,13 +158,23 @@ class WhoGrowthStandard extends Model
         // Use BAZ for overweight/obesity classification if available
         $overweightZ = $baz ?? $waz;
 
-        if ($overweightZ !== null && $overweightZ > 3) return 'obese';
-        if ($overweightZ !== null && $overweightZ > 2) return 'overweight';
+        if ($overweightZ !== null && $overweightZ > 3) {
+            return 'obese';
+        }
+        if ($overweightZ !== null && $overweightZ > 2) {
+            return 'overweight';
+        }
 
         if ($waz !== null) {
-            if ($waz < -3) return 'severe_underweight';
-            if ($waz < -2) return 'moderate_underweight';
-            if ($waz < -1) return 'mild_underweight';
+            if ($waz < -3) {
+                return 'severe_underweight';
+            }
+            if ($waz < -2) {
+                return 'moderate_underweight';
+            }
+            if ($waz < -1) {
+                return 'mild_underweight';
+            }
         }
 
         return 'normal';
@@ -184,6 +194,7 @@ class WhoGrowthStandard extends Model
         return $rows->map(function ($row) {
             $sd = $row->getSdLines();
             $sd['month'] = (float) $row->age_months;
+
             return $sd;
         })->toArray();
     }

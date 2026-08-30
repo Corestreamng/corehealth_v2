@@ -2,11 +2,11 @@
 
 namespace App\Services\Dashboard;
 
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Cache;
-use Carbon\Carbon;
-use App\Models\StoreRequisition;
 use App\Models\PurchaseOrder;
+use App\Models\StoreRequisition;
+use Carbon\Carbon;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 
 class StoreDashboardService
 {
@@ -36,7 +36,7 @@ class StoreDashboardService
 
             $pendingPOs = PurchaseOrder::whereIn('status', [PurchaseOrder::STATUS_SUBMITTED])
                 ->count();
-            
+
             $approvedPOs = PurchaseOrder::whereIn('status', [PurchaseOrder::STATUS_APPROVED])
                 ->count();
 
@@ -114,7 +114,7 @@ class StoreDashboardService
             ->orderByDesc('created_at')
             ->limit(5)
             ->get();
-        
+
         $pos = PurchaseOrder::with(['supplier'])
             ->whereBetween('created_at', [$today->copy()->startOfDay(), $today->copy()->endOfDay()])
             ->orderByDesc('created_at')
@@ -149,7 +149,7 @@ class StoreDashboardService
             ];
         }
 
-        usort($activity, function($a, $b) {
+        usort($activity, function ($a, $b) {
             return $b['created_at'] <=> $a['created_at'];
         });
 
@@ -179,7 +179,7 @@ class StoreDashboardService
             ->where('current_qty', '>', 0)
             ->whereBetween('expiry_date', [now(), now()->addDays(30)])
             ->count();
-        
+
         if ($expiringCount > 0) {
             $insights[] = [
                 'type' => 'alert', 'severity' => 'danger', 'icon' => 'mdi-calendar-alert',
@@ -192,7 +192,7 @@ class StoreDashboardService
         $delayedFulfillment = StoreRequisition::whereIn('status', [StoreRequisition::STATUS_APPROVED])
             ->where('created_at', '<', now()->subDays(2))
             ->count();
-        
+
         if ($delayedFulfillment > 0) {
             $insights[] = [
                 'type' => 'info', 'severity' => 'info', 'icon' => 'mdi-truck-delivery',

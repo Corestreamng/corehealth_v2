@@ -9,7 +9,8 @@ use OwenIt\Auditing\Contracts\Auditable;
 
 class PurchaseOrderReturn extends Model implements Auditable
 {
-    use HasFactory, SoftDeletes;
+    use HasFactory;
+    use SoftDeletes;
     use \OwenIt\Auditing\Auditable;
 
     protected $fillable = [
@@ -38,25 +39,25 @@ class PurchaseOrderReturn extends Model implements Auditable
     ];
 
     protected $casts = [
-        'qty_returned'         => 'integer',
-        'unit_cost'            => 'decimal:2',
-        'total_value'          => 'decimal:2',
-        'expense_adjusted'     => 'boolean',
-        'stock_deducted'       => 'boolean',
-        'approved_at'          => 'datetime',
-        'expense_adjusted_at'  => 'datetime',
-        'stock_deducted_at'    => 'datetime',
+        'qty_returned' => 'integer',
+        'unit_cost' => 'decimal:2',
+        'total_value' => 'decimal:2',
+        'expense_adjusted' => 'boolean',
+        'stock_deducted' => 'boolean',
+        'approved_at' => 'datetime',
+        'expense_adjusted_at' => 'datetime',
+        'stock_deducted_at' => 'datetime',
     ];
 
-    const STATUS_PENDING  = 'pending';
-    const STATUS_APPROVED = 'approved';
-    const STATUS_REJECTED = 'rejected';
+    public const STATUS_PENDING = 'pending';
+    public const STATUS_APPROVED = 'approved';
+    public const STATUS_REJECTED = 'rejected';
 
-    const REASON_WRONG_ITEM    = 'wrong_item';
-    const REASON_DAMAGED       = 'damaged';
-    const REASON_EXCESS        = 'excess';
-    const REASON_QUALITY_ISSUE = 'quality_issue';
-    const REASON_OTHER         = 'other';
+    public const REASON_WRONG_ITEM = 'wrong_item';
+    public const REASON_DAMAGED = 'damaged';
+    public const REASON_EXCESS = 'excess';
+    public const REASON_QUALITY_ISSUE = 'quality_issue';
+    public const REASON_OTHER = 'other';
 
     // ===== RELATIONSHIPS =====
 
@@ -130,8 +131,8 @@ class PurchaseOrderReturn extends Model implements Auditable
     public static function generateReturnNumber(): string
     {
         $prefix = 'POR';
-        $year   = now()->format('Y');
-        $last   = static::whereYear('created_at', $year)->max('return_number');
+        $year = now()->format('Y');
+        $last = static::whereYear('created_at', $year)->max('return_number');
 
         if ($last) {
             preg_match('/(\d+)$/', $last, $m);

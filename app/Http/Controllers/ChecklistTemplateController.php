@@ -5,10 +5,10 @@ namespace App\Http\Controllers;
 use App\Models\ChecklistTemplate;
 use App\Models\ChecklistTemplateItem;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\DB;
-use Yajra\DataTables\DataTables;
+use Illuminate\Support\Facades\Validator;
 use RealRashid\SweetAlert\Facades\Alert;
+use Yajra\DataTables\DataTables;
 
 class ChecklistTemplateController extends Controller
 {
@@ -39,6 +39,7 @@ class ChecklistTemplateController extends Controller
             ->addColumn('type_badge', function ($template) {
                 $color = $template->type == 'admission' ? 'success' : 'info';
                 $icon = $template->type == 'admission' ? 'mdi-login' : 'mdi-logout';
+
                 return '<span class="badge badge-' . $color . '"><i class="mdi ' . $icon . '"></i> ' . ucfirst($template->type) . '</span>';
             })
             ->addColumn('status_badge', function ($template) {
@@ -48,6 +49,7 @@ class ChecklistTemplateController extends Controller
             })
             ->addColumn('items_count', function ($template) {
                 $required = $template->items->where('is_required', true)->count();
+
                 return '<span class="badge badge-primary">' . $template->items_count . ' items</span> ' .
                        '<small class="text-muted">(' . $required . ' required)</small>';
             })
@@ -127,10 +129,12 @@ class ChecklistTemplateController extends Controller
             DB::commit();
 
             Alert::success('Success', 'Checklist template "' . $template->name . '" created successfully!');
+
             return redirect()->route('checklist-templates.index');
 
         } catch (\Exception $e) {
             DB::rollBack();
+
             return back()->withInput()->with('error', 'Failed to create template: ' . $e->getMessage());
         }
     }
@@ -144,6 +148,7 @@ class ChecklistTemplateController extends Controller
     public function show(ChecklistTemplate $checklistTemplate)
     {
         $checklistTemplate->load('items');
+
         return view('admin.checklist-templates.show', compact('checklistTemplate'));
     }
 
@@ -158,6 +163,7 @@ class ChecklistTemplateController extends Controller
         $checklistTemplate->load(['items' => function ($query) {
             $query->orderBy('sort_order');
         }]);
+
         return view('admin.checklist-templates.edit', compact('checklistTemplate'));
     }
 
@@ -246,10 +252,12 @@ class ChecklistTemplateController extends Controller
             DB::commit();
 
             Alert::success('Success', 'Checklist template "' . $checklistTemplate->name . '" updated successfully!');
+
             return redirect()->route('checklist-templates.index');
 
         } catch (\Exception $e) {
             DB::rollBack();
+
             return back()->withInput()->with('error', 'Failed to update template: ' . $e->getMessage());
         }
     }
@@ -273,12 +281,12 @@ class ChecklistTemplateController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => 'Checklist template "' . $templateName . '" deleted successfully!'
+                'message' => 'Checklist template "' . $templateName . '" deleted successfully!',
             ]);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to delete template: ' . $e->getMessage()
+                'message' => 'Failed to delete template: ' . $e->getMessage(),
             ], 500);
         }
     }
@@ -301,7 +309,7 @@ class ChecklistTemplateController extends Controller
         if ($validator->fails()) {
             return response()->json([
                 'success' => false,
-                'message' => $validator->errors()->first()
+                'message' => $validator->errors()->first(),
             ], 422);
         }
 
@@ -318,7 +326,7 @@ class ChecklistTemplateController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Item added successfully!',
-            'item' => $item
+            'item' => $item,
         ]);
     }
 
@@ -340,7 +348,7 @@ class ChecklistTemplateController extends Controller
         if ($validator->fails()) {
             return response()->json([
                 'success' => false,
-                'message' => $validator->errors()->first()
+                'message' => $validator->errors()->first(),
             ], 422);
         }
 
@@ -353,7 +361,7 @@ class ChecklistTemplateController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Item updated successfully!',
-            'item' => $item
+            'item' => $item,
         ]);
     }
 
@@ -369,7 +377,7 @@ class ChecklistTemplateController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => 'Item deleted successfully!'
+            'message' => 'Item deleted successfully!',
         ]);
     }
 }

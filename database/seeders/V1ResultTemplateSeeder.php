@@ -2,8 +2,8 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Seeder;
 use App\Models\V1ResultTemplate;
+use Illuminate\Database\Seeder;
 
 class V1ResultTemplateSeeder extends Seeder
 {
@@ -34,13 +34,13 @@ class V1ResultTemplateSeeder extends Seeder
             $template = V1ResultTemplate::updateOrCreate(
                 ['name' => $t['name']],
                 [
-                    'description'   => $t['description'],
-                    'content'       => $t['content'],
-                    'category'      => $t['category'],
-                    'sort_order'    => $t['sort_order'],
+                    'description' => $t['description'],
+                    'content' => $t['content'],
+                    'category' => $t['category'],
+                    'sort_order' => $t['sort_order'],
                     'template_type' => $t['template_type'] ?? 'lab',
-                    'is_active'     => true,
-                    'created_by'    => 1,
+                    'is_active' => true,
+                    'created_by' => 1,
                 ]
             );
             if ($template->wasRecentlyCreated) {
@@ -2186,7 +2186,7 @@ class V1ResultTemplateSeeder extends Seeder
         </tr>
     </tbody>
 </table>',
-            ]
+            ],
         ];
     }
 
@@ -2392,9 +2392,7 @@ class V1ResultTemplateSeeder extends Seeder
         <tr><td>ALT (SGPT)</td><td></td><td>Up to 40 U/L</td></tr>
     </tbody>
 </table>',
-            ]
+            ],
         ];
     }
 }
-
-

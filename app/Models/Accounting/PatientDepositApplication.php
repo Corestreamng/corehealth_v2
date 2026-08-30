@@ -2,9 +2,9 @@
 
 namespace App\Models\Accounting;
 
-use App\Models\User;
 use App\Models\Billing\Bill;
 use App\Models\Payment;
+use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -19,7 +19,8 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  */
 class PatientDepositApplication extends Model
 {
-    use HasFactory, SoftDeletes;
+    use HasFactory;
+    use SoftDeletes;
 
     protected $table = 'patient_deposit_applications';
 

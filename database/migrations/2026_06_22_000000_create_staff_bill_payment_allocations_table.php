@@ -2,8 +2,8 @@
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 class CreateStaffBillPaymentAllocationsTable extends Migration
 {
@@ -45,12 +45,12 @@ class CreateStaffBillPaymentAllocationsTable extends Migration
             $amountPaid = max(0.00, $totalAmount - $outstanding - $discount);
 
             DB::table('staff_bill_payment_allocations')->insert([
-                'staff_bill_id'      => $bill->id,
-                'payment_id'        => $bill->settlement_payment_id,
-                'amount_allocated'   => $amountPaid,
+                'staff_bill_id' => $bill->id,
+                'payment_id' => $bill->settlement_payment_id,
+                'amount_allocated' => $amountPaid,
                 'discount_allocated' => $discount,
-                'created_at'        => $bill->settled_at ?? $bill->updated_at ?? now(),
-                'updated_at'        => $bill->settled_at ?? $bill->updated_at ?? now(),
+                'created_at' => $bill->settled_at ?? $bill->updated_at ?? now(),
+                'updated_at' => $bill->settled_at ?? $bill->updated_at ?? now(),
             ]);
         }
     }

@@ -3,8 +3,8 @@
 namespace App\Http\Controllers\Accounting;
 
 use App\Http\Controllers\Controller;
-use App\Models\Accounting\CreditNote;
 use App\Models\Accounting\Account;
+use App\Models\Accounting\CreditNote;
 use App\Models\Bank;
 use App\Models\Patient;
 use App\Services\Accounting\AccountingService;
@@ -111,6 +111,7 @@ class CreditNoteController extends Controller
                     return '<strong>' . e($row->patient->user->name) . '</strong>'
                         . '<br><small class="text-muted">' . e($row->patient->mrn ?? 'N/A') . '</small>';
                 }
+
                 return '<span class="text-muted">-</span>';
             })
             ->addColumn('payment_reference', function ($row) {
@@ -130,6 +131,7 @@ class CreditNoteController extends Controller
                     'processed' => '<span class="badge badge-info">Processed</span>',
                     'void' => '<span class="badge badge-dark">Voided</span>',
                 ];
+
                 return $badges[$row->status] ?? '<span class="badge badge-secondary">' . ucfirst($row->status) . '</span>';
             })
             ->addColumn('actions', function ($row) {
@@ -153,6 +155,7 @@ class CreditNoteController extends Controller
                 }
 
                 $html .= '</div></div>';
+
                 return $html;
             })
             ->rawColumns(['checkbox', 'credit_note_link', 'patient_name', 'status_badge', 'actions'])
@@ -232,7 +235,7 @@ class CreditNoteController extends Controller
                     'success' => true,
                     'message' => "Credit note {$creditNoteNumber} created as draft.",
                     'credit_note_id' => $creditNote->id,
-                    'redirect' => route('accounting.credit-notes.show', $creditNote->id)
+                    'redirect' => route('accounting.credit-notes.show', $creditNote->id),
                 ]);
             }
 
@@ -245,7 +248,7 @@ class CreditNoteController extends Controller
             if ($request->ajax()) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Error creating credit note: ' . $e->getMessage()
+                    'message' => 'Error creating credit note: ' . $e->getMessage(),
                 ], 500);
             }
 
@@ -269,7 +272,7 @@ class CreditNoteController extends Controller
             'approvedBy',
             'processedBy',
             'voidedBy',
-            'journalEntry.lines.account'
+            'journalEntry.lines.account',
         ])->findOrFail($id);
 
         // Get banks for the process refund modal
@@ -308,7 +311,7 @@ class CreditNoteController extends Controller
         if (!in_array($creditNote->status, [CreditNote::STATUS_DRAFT, CreditNote::STATUS_REJECTED])) {
             return response()->json([
                 'success' => false,
-                'message' => 'Only draft or rejected credit notes can be updated.'
+                'message' => 'Only draft or rejected credit notes can be updated.',
             ], 403);
         }
 
@@ -341,13 +344,14 @@ class CreditNoteController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => 'Credit note updated successfully.',
-                'redirect' => route('accounting.credit-notes.show', $creditNote->id)
+                'redirect' => route('accounting.credit-notes.show', $creditNote->id),
             ]);
         } catch (\Exception $e) {
             DB::rollBack();
+
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to update credit note: ' . $e->getMessage()
+                'message' => 'Failed to update credit note: ' . $e->getMessage(),
             ], 500);
         }
     }
@@ -363,6 +367,7 @@ class CreditNoteController extends Controller
             if ($request->ajax()) {
                 return response()->json(['success' => false, 'message' => 'Only draft credit notes can be submitted.'], 400);
             }
+
             return redirect()->back()->with('error', 'Only draft credit notes can be submitted.');
         }
 
@@ -375,7 +380,7 @@ class CreditNoteController extends Controller
         if ($request->ajax()) {
             return response()->json([
                 'success' => true,
-                'message' => "Credit note {$creditNote->credit_note_number} submitted for approval."
+                'message' => "Credit note {$creditNote->credit_note_number} submitted for approval.",
             ]);
         }
 
@@ -393,6 +398,7 @@ class CreditNoteController extends Controller
             if ($request->ajax()) {
                 return response()->json(['success' => false, 'message' => 'Only pending credit notes can be approved.'], 400);
             }
+
             return redirect()->back()->with('error', 'Only pending credit notes can be approved.');
         }
 
@@ -405,7 +411,7 @@ class CreditNoteController extends Controller
         if ($request->ajax()) {
             return response()->json([
                 'success' => true,
-                'message' => "Credit note {$creditNote->credit_note_number} approved."
+                'message' => "Credit note {$creditNote->credit_note_number} approved.",
             ]);
         }
 
@@ -423,6 +429,7 @@ class CreditNoteController extends Controller
             if ($request->ajax()) {
                 return response()->json(['success' => false, 'message' => 'This credit note cannot be voided.'], 400);
             }
+
             return redirect()->back()->with('error', 'This credit note cannot be voided.');
         }
 
@@ -440,7 +447,7 @@ class CreditNoteController extends Controller
         if ($request->ajax()) {
             return response()->json([
                 'success' => true,
-                'message' => "Credit note {$creditNote->credit_note_number} voided."
+                'message' => "Credit note {$creditNote->credit_note_number} voided.",
             ]);
         }
 
@@ -458,6 +465,7 @@ class CreditNoteController extends Controller
             if ($request->ajax()) {
                 return response()->json(['success' => false, 'message' => 'Only approved credit notes can be processed.'], 400);
             }
+
             return redirect()->back()->with('error', 'Only approved credit notes can be processed.');
         }
 
@@ -480,14 +488,14 @@ class CreditNoteController extends Controller
                     'account_id' => $revenueAccount->id,
                     'debit_amount' => $creditNote->amount,
                     'credit_amount' => 0,
-                    'description' => 'Revenue reversal - refund'
+                    'description' => 'Revenue reversal - refund',
                 ],
                 [
                     'account_id' => $refundAccount->id,
                     'debit_amount' => 0,
                     'credit_amount' => $creditNote->amount,
-                    'description' => "Refund via {$creditNote->refund_method}"
-                ]
+                    'description' => "Refund via {$creditNote->refund_method}",
+                ],
             ];
 
             $entry = $this->accountingService->createAndPostAutomatedEntry(
@@ -511,7 +519,7 @@ class CreditNoteController extends Controller
                 return response()->json([
                     'success' => true,
                     'message' => "Credit note {$creditNote->credit_note_number} processed and refund completed.",
-                    'journal_entry_id' => $entry->id
+                    'journal_entry_id' => $entry->id,
                 ]);
             }
 
@@ -552,7 +560,7 @@ class CreditNoteController extends Controller
     {
         $request->validate([
             'ids' => 'required|array',
-            'ids.*' => 'integer|exists:credit_notes,id'
+            'ids.*' => 'integer|exists:credit_notes,id',
         ]);
 
         $approved = 0;
@@ -574,7 +582,7 @@ class CreditNoteController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => "{$approved} credit note(s) approved" . ($failed > 0 ? ", {$failed} skipped (not pending)" : "")
+            'message' => "{$approved} credit note(s) approved" . ($failed > 0 ? ", {$failed} skipped (not pending)" : ""),
         ]);
     }
 

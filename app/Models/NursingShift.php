@@ -2,11 +2,11 @@
 
 namespace App\Models;
 
+use App\Traits\IsAuditable;
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use App\Traits\IsAuditable;
 use OwenIt\Auditing\Contracts\Auditable;
-use Carbon\Carbon;
 
 /**
  * NursingShift Model
@@ -183,12 +183,14 @@ class NursingShift extends Model implements Auditable
     public function getDurationAttribute(): string
     {
         $end = $this->ended_at ?? now();
+
         return $this->started_at->diffForHumans($end, true);
     }
 
     public function getDurationMinutesAttribute(): int
     {
         $end = $this->ended_at ?? now();
+
         return $this->started_at->diffInMinutes($end);
     }
 
@@ -197,6 +199,7 @@ class NursingShift extends Model implements Auditable
         if (!$this->is_active) {
             return 0;
         }
+
         return $this->started_at->diffInSeconds(now());
     }
 
@@ -205,6 +208,7 @@ class NursingShift extends Model implements Auditable
         if (!$this->is_active) {
             return 0;
         }
+
         return max(0, now()->diffInSeconds($this->scheduled_end_at, false));
     }
 
@@ -228,6 +232,7 @@ class NursingShift extends Model implements Auditable
             'cancelled' => 'danger',
         ];
         $color = $colors[$this->status] ?? 'secondary';
+
         return '<span class="badge badge-' . $color . '">' . self::STATUSES[$this->status] . '</span>';
     }
 
@@ -787,7 +792,7 @@ class NursingShift extends Model implements Auditable
         }
 
         // Sort by total events descending
-        usort($patientActivities, function($a, $b) {
+        usort($patientActivities, function ($a, $b) {
             return $b['total_events'] - $a['total_events'];
         });
 

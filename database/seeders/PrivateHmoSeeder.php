@@ -26,7 +26,7 @@ class PrivateHmoSeeder extends Seeder
                 'desc' => 'Private/Self-paying patients',
                 'status' => 1,
                 'discount' => 0,
-                'hmo_scheme_id' => $selfScheme ? $selfScheme->id : null
+                'hmo_scheme_id' => $selfScheme ? $selfScheme->id : null,
             ]
         );
 

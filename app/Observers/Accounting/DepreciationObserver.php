@@ -2,11 +2,10 @@
 
 namespace App\Observers\Accounting;
 
+use App\Models\Accounting\AccountingPeriod;
 use App\Models\Accounting\FixedAssetDepreciation;
 use App\Models\Accounting\JournalEntry;
 use App\Models\Accounting\JournalEntryLine;
-use App\Models\Accounting\Account;
-use App\Models\Accounting\AccountingPeriod;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
@@ -48,6 +47,7 @@ class DepreciationObserver
                     'depreciation_id' => $depreciation->id,
                 ]);
                 DB::rollBack();
+
                 return;
             }
 
@@ -58,6 +58,7 @@ class DepreciationObserver
                     'asset_id' => $asset->id,
                 ]);
                 DB::rollBack();
+
                 return;
             }
 
@@ -70,6 +71,7 @@ class DepreciationObserver
                     'depreciation_account_id' => $category->depreciation_account_id,
                 ]);
                 DB::rollBack();
+
                 return;
             }
 

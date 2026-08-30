@@ -18,7 +18,7 @@ class PayrollItemDetail extends Model implements Auditable
         'pay_head_id',
         'type',
         'pay_head_name',
-        'amount'
+        'amount',
     ];
 
     protected $casts = [
