@@ -60,15 +60,26 @@ jobs:
           sed -i 's/DB_USERNAME=.*/DB_USERNAME=root/' .env
           sed -i 's/DB_PASSWORD=.*/DB_PASSWORD=password/' .env
           echo "GOOGLE_MAPS_API_KEY=ci-placeholder" >> .env
+          echo "LOG_CHANNEL=single" >> .env
 
       - name: Generate application key
         run: php artisan key:generate
 
       - name: Import test database dump
-        run: mysql -h 127.0.0.1 -P 3306 -u root -ppassword corehealth_test < _corehealth_db_v2_test.sql
+        run: |
+          echo "Importing test database schema and data..."
+          mysql -h 127.0.0.1 -P 3306 -u root -ppassword corehealth_test < _corehealth_db_v2_test.sql
+          echo "Import complete."
 
       - name: Run PHPUnit test suite
-        run: vendor/bin/phpunit --testdox --stop-on-failure
+        env:
+          DB_CONNECTION: mysql
+          DB_HOST: 127.0.0.1
+          DB_PORT: 3306
+          DB_DATABASE: corehealth_test
+          DB_USERNAME: root
+          DB_PASSWORD: password
+        run: vendor/bin/phpunit --testdox
 
   assets:
     name: Build Frontend Assets
@@ -82,6 +93,21 @@ jobs:
       - run: npm ci
       - run: npm run production
 
+  lint:
+    name: PHP Code Style (CS Fixer)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+      - name: Install CS Fixer (isolated)
+        run: |
+          cd tools
+          composer install --no-interaction --prefer-dist --no-progress
+      - name: Run PHP CS Fixer (dry-run)
+        run: tools/vendor/bin/php-cs-fixer fix --dry-run --diff --config=.php-cs-fixer.php || true
+
   audit:
     name: Security Audit
     runs-on: ubuntu-latest
@@ -90,6 +116,12 @@ jobs:
       - uses: shivammathur/setup-php@v2
         with:
           php-version: '8.3'
+      - name: Cache Composer packages
+        uses: actions/cache@v4
+        with:
+          path: vendor
+          key: ${{ runner.os }}-composer-audit-${{ hashFiles('**/composer.lock') }}
+          restore-keys: ${{ runner.os }}-composer-audit-
       - run: composer install --no-interaction --prefer-dist --no-progress
       - run: composer audit || true
       - uses: actions/setup-node@v4
