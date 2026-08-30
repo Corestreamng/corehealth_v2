@@ -848,7 +848,7 @@ window.ClinicalOrdersKit = jQuery.extend(window.ClinicalOrdersKit || {}, (functi
      *   config.doseInputName  - e.g. 'consult_presc_dose[]' or 'cr_presc_dose[]'
      *   config.onchange       - JS string for field onchange (e.g. "updateStructuredDoseValue(this)")
      *   config.onToggle       - optional callback(isStructured)
-     * @returns {{ isStructured: boolean }}
+     * @returns { isStructured: boolean }
      */
     function initDoseModeToggle(config) {
         var simpleRadio = document.getElementById(config.prefix + 'dose_mode_simple');

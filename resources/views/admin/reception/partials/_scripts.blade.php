@@ -4,6 +4,20 @@
 <script src="{{ asset('assets/js/jsbarcode.all.min.js') }}"></script>
 <script src="{{ asset('plugins/daterangepicker/moment.js') }}"></script>
 <script src="{{ asset('plugins/fullcalendar/fullcalendar.min.js') }}"></script>
+<script>
+window.WORKBENCH_CONFIG = {
+    csrf: '{{ csrf_token() }}',
+    baseUrl: '{{ url("/") }}',
+    routes: {
+        reception_patient_quick_register: '{{ route("reception.patient.quick-register") }}',
+        reception_clinics: '{{ route("reception.clinics") }}',
+        reception_hmos: '{{ route("reception.hmos") }}',
+        reception_services_consultation: '{{ route("reception.services.consultation") }}',
+        reception_services_lab: '{{ route("reception.services.lab") }}'
+    }
+};
+</script>
+<script src="{{ asset('js/workbench-helper.js') }}"></script>
 @include('admin.partials.patient_search_js', ['search_context' => 'reception'])
 <script src="{{ asset('js/request-details.js') }}"></script>
 <script src="{{ asset('js/reception-workbench.js') }}?v={{ filemtime(public_path('js/reception-workbench.js')) }}"></script>

@@ -5,15 +5,25 @@
 <script src="{{ asset('js/clinical-orders-shared.js') }}"></script>
 <script src="{{ asset('js/clinical-context.js') }}"></script>
 <script>
+window.WORKBENCH_CONFIG = {
+    csrf: '{{ csrf_token() }}',
+    baseUrl: '{{ url("/") }}',
+    routes: {
+        nursing_workbench_admitted_patients: '{{ route("nursing-workbench.admitted-patients") }}',
+        nursing_workbench_vitals_queue: '{{ route("nursing-workbench.vitals-queue") }}',
+        nursing_workbench_bed_requests_queue: '{{ route("nursing-workbench.bed-requests-queue") }}',
+        nursing_workbench_discharge_queue: '{{ route("nursing-workbench.discharge-queue") }}'
+    }
+};
 window.BILLING_KIT_CONFIG = {
     csrf: '{{ csrf_token() }}',
     addServiceRoute: '{{ route("nursing-workbench.billing.add-service") }}',
     addLabRoute: '{{ route("nursing-workbench.billing.add-lab-bill") }}',
     addImagingRoute: '{{ route("nursing-workbench.billing.add-imaging-bill") }}',
     addConsumableRoute: '{{ route("nursing-workbench.billing.add-consumable") }}',
-    removeBillBase: '/nursing-workbench/remove-bill',
-    pendingBillsBase: '/nursing-workbench/patient',
-    serviceRequestsBase: '/nursing-workbench/patient',
+    removeBillBase: '{{ url("/nursing-workbench/remove-bill") }}',
+    pendingBillsBase: '{{ url("/nursing-workbench/patient") }}',
+    serviceRequestsBase: '{{ url("/nursing-workbench/patient") }}',
     searchServicesRoute: '{{ route("nursing-workbench.search-services") }}',
     searchProductsRoute: '{{ route("nursing-workbench.search-products") }}',
     productBatchesRoute: '{{ route("nursing-workbench.product-batches") }}',
@@ -24,6 +34,7 @@ window.BILLING_KIT_CONFIG = {
     showMedicationOption: true,
 };
 </script>
+<script src="{{ asset('js/workbench-helper.js') }}"></script>
 @include('admin.shared.modals.request_details')
 <script src="{{ asset('js/billing-shared.js') }}"></script>
 <script src="{{ asset('js/request-details.js') }}"></script>

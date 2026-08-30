@@ -204,7 +204,7 @@
 
         // Load patient billing data
         $.ajax({
-            url: `{{ url('/billing-workbench/patient/${patientId}/billing-data') }}`,
+            url: wbUrl(`/billing-workbench/patient/${patientId}/billing-data`),
             method: 'GET',
             success: function(data) {
                 console.log('Patient billing data loaded:', data);
@@ -286,7 +286,7 @@
             autoWidth: false,
             dom: '<"top"f>rt<"bottom"lip><"clear">',
             ajax: {
-                url: `{{ url('/investigationHistoryList/${patientId}') }}`,
+                url: wbUrl(`/investigationHistoryList/${patientId}`),
                 type: 'GET'
             },
             columns: [{
@@ -320,7 +320,7 @@
     function viewInvestigationResult(requestId) {
         // Open modal to view completed result
         $.ajax({
-            url: `{{ url('/lab-workbench/lab-service-requests/${requestId}') }}`,
+            url: wbUrl(`/lab-workbench/lab-service-requests/${requestId}`),
             method: 'GET',
             success: function(request) {
                 // Show result in a view-only modal or open in new tab
@@ -741,7 +741,7 @@
     }
 
     function loadQueueCounts() {
-        $.get('{{ route("billing.queue-counts") }}', function(counts) {
+        $.get(wbRoute('billing_queue-counts', '/billing/queue-counts'), function(counts) {
             $('#queue-all-count').text(counts.total || 0);
             $('#queue-hmo-count').text(counts.hmo || 0);
             $('#queue-credit-count').text(counts.credit || 0);
@@ -864,7 +864,7 @@
 
     function loadAccountBalance(patientId) {
         $.ajax({
-            url: `{{ url('/billing-workbench/patient/${patientId}/account-summary') }}`,
+            url: wbUrl(`/billing-workbench/patient/${patientId}/account-summary`),
             method: 'GET',
             success: function(data) {
                 currentAccountBalance = parseFloat(data.balance) || 0;
@@ -960,7 +960,7 @@
 
         // Load account-specific transaction history
         $.ajax({
-            url: `{{ url('/billing-workbench/patient/${currentPatient}/account-transactions') }}`,
+            url: wbUrl(`/billing-workbench/patient/${currentPatient}/account-transactions`),
             method: 'GET',
             data: {
                 from_date: fromDate,
@@ -1238,10 +1238,10 @@
         if (!confirm(confirmMsg)) return;
 
         $.ajax({
-            url: '{{ url('/billing-workbench/account-transaction') }}',
+            url: wbUrl('/billing-workbench/account-transaction'),
             method: 'POST',
             data: {
-                _token: '{{ csrf_token() }}',
+                _token: (window.WORKBENCH_CONFIG?.csrf || $('meta[name="csrf-token"]').attr('content')),
                 patient_id: currentPatientData.id,
                 transaction_type: type,
                 amount: amount,
@@ -1336,7 +1336,7 @@
         if (paymentType) params.payment_type = paymentType;
 
         $.ajax({
-            url: `{{ url('/billing-workbench/patient/${currentPatient}/receipts') }}`,
+            url: wbUrl(`/billing-workbench/patient/${currentPatient}/receipts`),
             method: 'GET',
             data: params,
             success: function(data) {
@@ -1456,10 +1456,10 @@
         if (!confirm('Create a new account for this patient?')) return;
 
         $.ajax({
-            url: '{{ url('/billing-workbench/create-account') }}',
+            url: wbUrl('/billing-workbench/create-account'),
             method: 'POST',
             data: {
-                _token: '{{ csrf_token() }}',
+                _token: (window.WORKBENCH_CONFIG?.csrf || $('meta[name="csrf-token"]').attr('content')),
                 patient_id: currentPatientData.id
             },
             success: function(response) {
@@ -1512,7 +1512,7 @@
         if (!currentPatient) return;
 
         $.ajax({
-            url: `{{ url('/billing-workbench/patient/${currentPatient}/billing-data') }}`,
+            url: wbUrl(`/billing-workbench/patient/${currentPatient}/billing-data`),
             method: 'GET',
             success: function(response) {
                 renderBillingItems(response.items);
@@ -1902,10 +1902,10 @@
         toastr.info('Generating invoice...');
 
         $.ajax({
-            url: '{{ url('/billing-workbench/print-invoice') }}',
+            url: wbUrl('/billing-workbench/print-invoice'),
             method: 'POST',
             data: {
-                _token: '{{ csrf_token() }}',
+                _token: (window.WORKBENCH_CONFIG?.csrf || $('meta[name="csrf-token"]').attr('content')),
                 patient_id: currentPatient,
                 item_ids: itemIds
             },
@@ -2081,10 +2081,10 @@
         $btn.prop('disabled', true).html('<i class="mdi mdi-loading mdi-spin"></i> Generating...');
 
         $.ajax({
-            url: `{{ url('/billing-workbench/patient/${currentPatient}/generate-statement') }}`,
+            url: wbUrl(`/billing-workbench/patient/${currentPatient}/generate-statement`),
             method: 'POST',
             data: {
-                _token: '{{ csrf_token() }}',
+                _token: (window.WORKBENCH_CONFIG?.csrf || $('meta[name="csrf-token"]').attr('content')),
                 date_from: dateFrom,
                 date_to: dateTo,
                 include_deposits: $('#include-deposits').is(':checked'),
@@ -2195,7 +2195,7 @@
         if (!currentPatient) return;
 
         $.ajax({
-            url: `{{ url('/billing-workbench/patient/${currentPatient}/account-summary') }}`,
+            url: wbUrl(`/billing-workbench/patient/${currentPatient}/account-summary`),
             method: 'GET',
             success: function(response) {
                 renderAccountSummary(response);
@@ -2403,7 +2403,7 @@
 
     function loadMyTransactions(fromDate, toDate, paymentType, bankId) {
         $.ajax({
-            url: '{{ url('/billing-workbench/my-transactions') }}',
+            url: wbUrl('/billing-workbench/my-transactions'),
             method: 'GET',
             data: {
                 from: fromDate,
@@ -2821,7 +2821,7 @@
         wrapper.hide();
 
         $.ajax({
-            url: `{{ url('/lab-workbench/lab-service-requests/${requestId}/attachments') }}`,
+            url: wbUrl(`/lab-workbench/lab-service-requests/${requestId}/attachments`),
             method: 'GET',
             success: function(attachments) {
                 if (attachments && attachments.length > 0) {
@@ -2921,7 +2921,7 @@
         const requestId = $(obj).data('id');
 
         $.ajax({
-            url: `{{ url('/lab-workbench/lab-service-requests/${requestId}') }}`,
+            url: wbUrl(`/lab-workbench/lab-service-requests/${requestId}`),
             method: 'GET',
             success: function(request) {
                 // Populate the form with template structure AND existing result data
@@ -2966,10 +2966,10 @@
         }
 
         $.ajax({
-            url: `{{ url('/lab-workbench/lab-service-requests/${deleteRequestId}') }}`,
+            url: wbUrl(`/lab-workbench/lab-service-requests/${deleteRequestId}`),
             method: 'DELETE',
             data: {
-                _token: '{{ csrf_token() }}',
+                _token: (window.WORKBENCH_CONFIG?.csrf || $('meta[name="csrf-token"]').attr('content')),
                 reason: reason
             },
             success: function(response) {
@@ -3009,10 +3009,10 @@
         }
 
         $.ajax({
-            url: `{{ url('/lab-workbench/lab-service-requests/${dismissRequestId}/dismiss') }}`,
+            url: wbUrl(`/lab-workbench/lab-service-requests/${dismissRequestId}/dismiss`),
             method: 'POST',
             data: {
-                _token: '{{ csrf_token() }}',
+                _token: (window.WORKBENCH_CONFIG?.csrf || $('meta[name="csrf-token"]').attr('content')),
                 reason: reason
             },
             success: function(response) {
@@ -3248,7 +3248,7 @@
         // Initialize DataTable for payment queue
         queueDataTable = $('#queue-datatable').DataTable({
             ajax: {
-                url: '{{ url('/billing-workbench/payment-queue') }}',
+                url: wbUrl('/billing-workbench/payment-queue'),
                 data: {
                     filter: filter
                 },
@@ -3370,7 +3370,7 @@
     function loadFilterOptions() {
         // Load doctors
         $.ajax({
-            url: '{{ route("lab.filterDoctors") }}',
+            url: wbRoute('lab_filterDoctors', '/lab/filterDoctors'),
             method: 'GET',
             success: function(doctors) {
                 let options = '<option value="">All Doctors</option>';
@@ -3386,7 +3386,7 @@
 
         // Load HMOs with optgroups
         $.ajax({
-            url: '{{ route("lab.filterHmos") }}',
+            url: wbRoute('lab_filterHmos', '/lab/filterHmos'),
             method: 'GET',
             success: function(hmoGroups) {
                 let options = '<option value="">All HMOs</option>';
@@ -3406,7 +3406,7 @@
 
         // Load services
         $.ajax({
-            url: '{{ route("lab.filterServices") }}',
+            url: wbRoute('lab_filterServices', '/lab/filterServices'),
             method: 'GET',
             success: function(services) {
                 let options = '<option value="">All Services</option>';
@@ -3437,7 +3437,7 @@
         }
 
         $.ajax({
-            url: '{{ route("lab.statistics") }}',
+            url: wbRoute('lab_statistics', '/lab/statistics'),
             method: 'GET',
             data: filters,
             success: function(data) {
@@ -3499,7 +3499,7 @@
             processing: true,
             serverSide: true,
             ajax: {
-                url: '{{ route("lab.reports") }}',
+                url: wbRoute('lab_reports', '/lab/reports'),
                 data: function(d) {
                     // Add filter values to request
                     d.date_from = $('#report-date-from').val();
@@ -3850,7 +3850,7 @@
         $('#stat-avg-tat').text('Loading...');
 
         $.ajax({
-            url: '{{ route("lab.statistics") }}',
+            url: wbRoute('lab_statistics', '/lab/statistics'),
             method: 'GET',
             data: filters,
             success: function(response) {
@@ -4243,7 +4243,7 @@
                 type: 'POST',
                 data: {
                     shift_type: shiftType,
-                    _token: '{{ csrf_token() }}'
+                    _token: (window.WORKBENCH_CONFIG?.csrf || $('meta[name="csrf-token"]').attr('content'))
                 },
                 success: function(response) {
                     $('#confirm-start-shift-btn').prop('disabled', false).html('<i class="mdi mdi-play-circle"></i> Start Shift');
@@ -4284,7 +4284,7 @@
                 url: this.routes.end,
                 type: 'POST',
                 data: {
-                    _token: '{{ csrf_token() }}'
+                    _token: (window.WORKBENCH_CONFIG?.csrf || $('meta[name="csrf-token"]').attr('content'))
                 },
                 success: function(response) {
                     $('#confirm-end-shift-btn').prop('disabled', false).html('<i class="mdi mdi-stop-circle"></i> End Shift');

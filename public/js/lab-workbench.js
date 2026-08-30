@@ -5,12 +5,12 @@ let queueRefreshInterval = null;
 let vitalTooltip = null;
 const isApprover = @json($isApprover ?? false);
 const requiresApproval = @json($requiresApproval ?? false);
-const currentUserId = {{ Auth::id() ?? 'null' }};
+const currentUserId = (window.CURRENT_USER_ID || null);
 let currentApprovalId = null;
 
-var _PI_LAB_REQ_APPROVAL = {{ appsettings('lab_results_require_approval') ? 'true' : 'false' }};
-var _PI_DR_SELF_LAB      = {{ appsettings('doctor_self_approve_lab_result') ? 'true' : 'false' }};
-var _PI_NR_SELF_LAB      = {{ appsettings('nurse_self_approve_lab_result') ? 'true' : 'false' }};
+var _PI_LAB_REQ_APPROVAL = true;
+var _PI_DR_SELF_LAB      = true;
+var _PI_NR_SELF_LAB      = true;
 
 function _autoApproveIfEnabled(requestId, type) {
     if ($('#invest_res_is_edit').val() == '1') { return; }
@@ -173,7 +173,7 @@ function initializeEventListeners() {
         clearTimeout(window._labNumCheckTimeout);
         if (val.length> 0) {
             window._labNumCheckTimeout = setTimeout(function() {
-                $.get('{{ route("lab.checkLabNumber") }}', { lab_number: val }, function(data) {
+                $.get(wbRoute('lab_checkLabNumber', '/lab/checkLabNumber'), { lab_number: val }, function(data) {
                     if (data.exists) {
                         let warn = 'This lab number is already used by ' + data.count + ' item(s)';
                         if (data.items && data.items.length> 0) {
@@ -210,7 +210,7 @@ function loadPatient(patientId) {
 
     // Load patient requests
     $.ajax({
-        url: `{{ url('/lab-workbench/patient/${patientId}/requests') }}`,
+        url: wbUrl(`/lab-workbench/patient/${patientId}/requests`),
         method: 'GET',
         success: function(data) {
             currentPatientData = data.patient; // Store patient data including allergies
@@ -250,7 +250,7 @@ function initializeHistoryDataTable(patientId) {
         autoWidth: false,
         dom: '<"top"f>rt<"bottom"lip><"clear">',
         ajax: {
-            url: `{{ url('/investigationHistoryList/${patientId}') }}`,
+            url: wbUrl(`/investigationHistoryList/${patientId}`),
             type: 'GET'
         },
         columns: [
@@ -281,7 +281,7 @@ function initializeHistoryDataTable(patientId) {
 function viewInvestigationResult(requestId) {
     // Open modal to view completed result
     $.ajax({
-        url: `{{ url('/lab-workbench/lab-service-requests/${requestId}') }}`,
+        url: wbUrl(`/lab-workbench/lab-service-requests/${requestId}`),
         method: 'GET',
         success: function(request) {
             // Show result in a view-only modal or open in new tab
@@ -309,7 +309,7 @@ function initializeProceduresDataTable(patientId) {
         autoWidth: false,
         dom: '<"top"f>rt<"bottom"lip><"clear">',
         ajax: {
-            url: `{{ url('/patient-procedures/list-by-patient/${patientId}') }}`,
+            url: wbUrl(`/patient-procedures/list-by-patient/${patientId}`),
             type: 'GET'
         },
         columns: [
@@ -586,8 +586,8 @@ function displayPendingRequests(requests) {
     window._bulkResultConfig = {
         fetchUrlPattern: '/lab-workbench/lab-service-requests/{id}',
         attachUrlPattern: '/lab-workbench/lab-service-requests/{id}/attachments',
-        saveUrl: '{{ route("lab.saveResult") }}',
-        csrfToken: '{{ csrf_token() }}',
+        saveUrl: wbRoute('lab_saveResult', '/lab/saveResult'),
+        csrfToken: (window.WORKBENCH_CONFIG?.csrf || $('meta[name="csrf-token"]').attr('content')),
         onAllSaved: function() { if (currentPatient) loadPatient(currentPatient); }
     };
 
@@ -1255,7 +1255,7 @@ function formatDateTime(dateString) {
 }
 
 function loadQueueCounts() {
-    $.get('{{ route("lab.queue-counts") }}', function(counts) {
+    $.get(wbRoute('lab_queue-counts', '/lab/queue-counts'), function(counts) {
         $('#queue-billing-count').text(counts.billing);
         $('#queue-sample-count').text(counts.sample);
         $('#queue-results-count').text(counts.results);
@@ -1386,10 +1386,10 @@ function loadUserPreferences() {
 // Action handlers for lab requests
 function recordBilling(requestIds) {
     $.ajax({
-        url: '{{ route("lab.recordBilling") }}',
+        url: wbRoute('lab_recordBilling', '/lab/recordBilling'),
         method: 'POST',
         data: {
-            _token: '{{ csrf_token() }}',
+            _token: (window.WORKBENCH_CONFIG?.csrf || $('meta[name="csrf-token"]').attr('content')),
             request_ids: requestIds,
             patient_id: currentPatient
         },
@@ -1449,7 +1449,7 @@ function autoGenerateLabNumber() {
     $('#labNumberDuplicateWarning').addClass('d-none');
 
     $.ajax({
-        url: '{{ route("lab.nextLabNumber") }}',
+        url: wbRoute('lab_nextLabNumber', '/lab/nextLabNumber'),
         method: 'GET',
         success: function(data) {
             $('#sample_lab_number').val(data.lab_number);
@@ -1488,10 +1488,10 @@ function confirmCollectSample() {
     $('#btnConfirmCollectSample').prop('disabled', true).html('<i class="mdi mdi-loading mdi-spin"></i> Collecting...');
 
     $.ajax({
-        url: '{{ route("lab.collectSample") }}',
+        url: wbRoute('lab_collectSample', '/lab/collectSample'),
         method: 'POST',
         data: {
-            _token: '{{ csrf_token() }}',
+            _token: (window.WORKBENCH_CONFIG?.csrf || $('meta[name="csrf-token"]').attr('content')),
             request_ids: requestIds,
             patient_id: currentPatient,
             lab_number: labNumber
@@ -1513,10 +1513,10 @@ function confirmCollectSample() {
 
 function dismissRequests(requestIds, section) {
     $.ajax({
-        url: '{{ route("lab.dismissRequests") }}',
+        url: wbRoute('lab_dismissRequests', '/lab/dismissRequests'),
         method: 'POST',
         data: {
-            _token: '{{ csrf_token() }}',
+            _token: (window.WORKBENCH_CONFIG?.csrf || $('meta[name="csrf-token"]').attr('content')),
             request_ids: requestIds,
             patient_id: currentPatient
         },
@@ -1751,10 +1751,10 @@ $('#deleteRequestForm').on('submit', function(e) {
 
 
     $.ajax({
-        url: `{{ url('/lab-workbench/lab-service-requests/${deleteRequestId}') }}`,
+        url: wbUrl(`/lab-workbench/lab-service-requests/${deleteRequestId}`),
         method: 'DELETE',
         data: {
-            _token: '{{ csrf_token() }}',
+            _token: (window.WORKBENCH_CONFIG?.csrf || $('meta[name="csrf-token"]').attr('content')),
             reason: reason
         },
         success: function(response) {
@@ -1800,10 +1800,10 @@ $('#dismissRequestForm').on('submit', function(e) {
 
 
     $.ajax({
-        url: `{{ url('/lab-workbench/lab-service-requests/${dismissRequestId}/dismiss') }}`,
+        url: wbUrl(`/lab-workbench/lab-service-requests/${dismissRequestId}/dismiss`),
         method: 'POST',
         data: {
-            _token: '{{ csrf_token() }}',
+            _token: (window.WORKBENCH_CONFIG?.csrf || $('meta[name="csrf-token"]').attr('content')),
             reason: reason
         },
         success: function(response) {
@@ -1837,7 +1837,7 @@ function restoreRequest(requestId, type) {
         url: url,
         method: 'POST',
         data: {
-            _token: '{{ csrf_token() }}'
+            _token: (window.WORKBENCH_CONFIG?.csrf || $('meta[name="csrf-token"]').attr('content'))
         },
         success: function(response) {
             toastr.success(response.message || 'Request restored successfully');
@@ -1879,7 +1879,7 @@ function loadTrashData() {
 
     // Load dismissed requests
     $.ajax({
-        url: `{{ url('/lab-workbench/dismissed-requests/${patientId || ') }}''}`,
+        url: `${wbUrl('/lab-workbench/dismissed-requests/${patientId || ')}''}`,
         method: 'GET',
         success: function(data) {
             $('#dismissed-count').text(data.length);
@@ -1916,7 +1916,7 @@ function loadTrashData() {
 
     // Load deleted requests
     $.ajax({
-        url: `{{ url('/lab-workbench/deleted-requests/${patientId || ') }}''}`,
+        url: `${wbUrl('/lab-workbench/deleted-requests/${patientId || ')}''}`,
         method: 'GET',
         success: function(data) {
             $('#deleted-count').text(data.length);
@@ -2035,7 +2035,7 @@ function loadAuditLogs() {
 
     auditLogTable = $('#audit-log-table').DataTable({
         ajax: {
-            url: '{{ url('/lab-workbench/audit-logs') }}',
+            url: wbUrl('/lab-workbench/audit-logs'),
             data: filters
         },
         columns: [
@@ -2103,7 +2103,7 @@ $(document).ready(function() {
         if (!$('#trashPanel').is(':visible')) {
             const patientId = currentPatient || null;
             $.ajax({
-                url: `{{ url('/lab-workbench/dismissed-requests/${patientId || ') }}''}`,
+                url: `${wbUrl('/lab-workbench/dismissed-requests/${patientId || ')}''}`,
                 method: 'GET',
                 success: function(data) {
                     $('#dismissed-count').text(data.length);
@@ -2111,7 +2111,7 @@ $(document).ready(function() {
                 }
             });
             $.ajax({
-                url: `{{ url('/lab-workbench/deleted-requests/${patientId || ') }}''}`,
+                url: `${wbUrl('/lab-workbench/deleted-requests/${patientId || ')}''}`,
                 method: 'GET',
                 success: function(data) {
                     $('#deleted-count').text(data.length);
@@ -2394,7 +2394,7 @@ function initializeQueueDataTable(filter) {
         processing: true,
         serverSide: true,
         ajax: {
-            url: '{{ url('/lab-workbench/queue') }}',
+            url: wbUrl('/lab-workbench/queue'),
             data: function(d) {
                 d.status = status;
                 if (startDate && endDate) {
@@ -2555,7 +2555,7 @@ function setDefaultDateFilters() {
 function loadFilterOptions() {
     // Load doctors
     $.ajax({
-        url: '{{ route("lab.filterDoctors") }}',
+        url: wbRoute('lab_filterDoctors', '/lab/filterDoctors'),
         method: 'GET',
         success: function(doctors) {
             let options = '<option value="">All Doctors</option>';
@@ -2571,7 +2571,7 @@ function loadFilterOptions() {
 
     // Load HMOs with optgroups
     $.ajax({
-        url: '{{ route("lab.filterHmos") }}',
+        url: wbRoute('lab_filterHmos', '/lab/filterHmos'),
         method: 'GET',
         success: function(hmoGroups) {
             let options = '<option value="">All HMOs</option>';
@@ -2591,7 +2591,7 @@ function loadFilterOptions() {
 
     // Load services
     $.ajax({
-        url: '{{ route("lab.filterServices") }}',
+        url: wbRoute('lab_filterServices', '/lab/filterServices'),
         method: 'GET',
         success: function(services) {
             let options = '<option value="">All Services</option>';
@@ -2622,7 +2622,7 @@ function loadReportsStatistics(filters = {}) {
     }
 
     $.ajax({
-        url: '{{ route("lab.statistics") }}',
+        url: wbRoute('lab_statistics', '/lab/statistics'),
         method: 'GET',
         data: filters,
         success: function(data) {
@@ -2684,7 +2684,7 @@ function initializeReportsDataTable() {
         processing: true,
         serverSide: true,
         ajax: {
-            url: '{{ route("lab.reports") }}',
+            url: wbRoute('lab_reports', '/lab/reports'),
             data: function(d) {
                 // Add filter values to request
                 d.date_from = $('#report-date-from').val();
@@ -3003,10 +3003,10 @@ function searchLabServices(q) {
             inputVal: q,
             minLength: 2,
             delay: 300,
-            url: "{{ url('live-search-services') }}",
+            url: wbUrl('live-search-services'),
             data: {
                 term: q,
-                category_id: {{ appsettings('investigation_category_id') ?? 2 }},
+                category_id: '',
                 patient_id: patientId
             },
             onStart: function() {
@@ -3029,12 +3029,12 @@ function searchLabServices(q) {
         $results.html('<li class="list-group-item text-center text-muted"><i class="mdi mdi-loading mdi-spin"></i> Searching...</li>').show();
         labSearchTimer = setTimeout(function() {
             $.ajax({
-                url: "{{ url('live-search-services') }}",
+                url: wbUrl('live-search-services'),
                 method: "GET",
                 dataType: 'json',
                 data: {
                     term: q,
-                    category_id: {{ appsettings('investigation_category_id') ?? 2 }},
+                    category_id: '',
                     patient_id: patientId
                 },
                 success: function(data) {
@@ -3183,7 +3183,7 @@ function applyLabComboWb(comboId) {
         mode        : mode,
         onConfirm   : function() {
             $.ajax({
-                url         : '{{ route("lab.applyCombo") }}',
+                url         : wbRoute('lab_applyCombo', '/lab/applyCombo'),
                 method      : 'POST',
                 contentType : 'application/json',
                 dataType    : 'json',
@@ -3250,7 +3250,7 @@ $('#new-lab-request-form').on('submit', function(e) {
     $submitBtn.prop('disabled', true).html('<i class="mdi mdi-loading mdi-spin"></i> Submitting...');
 
     $.ajax({
-        url: '{{ route("lab.storeRequest") }}',
+        url: wbRoute('lab_storeRequest', '/lab/storeRequest'),
         method: 'POST',
         data: {
             patient_id: patientId,
@@ -3300,7 +3300,7 @@ function loadReportsStatistics(filters = {}) {
     $('#stat-avg-tat').text('Loading...');
 
     $.ajax({
-        url: '{{ route("lab.statistics") }}',
+        url: wbRoute('lab_statistics', '/lab/statistics'),
         method: 'GET',
         data: filters,
         success: function(response) {
@@ -3641,9 +3641,9 @@ function confirmApproveLabResult() {
     $('#btn-confirm-approve').prop('disabled', true).html('<i class="mdi mdi-loading mdi-spin"></i> Approving...');
 
     $.ajax({
-        url: `{{ url('/lab-workbench/approval/${currentApprovalId}/approve') }}`,
+        url: wbUrl(`/lab-workbench/approval/${currentApprovalId}/approve`),
         type: 'POST',
-        data: { _token: '{{ csrf_token() }}' },
+        data: { _token: (window.WORKBENCH_CONFIG?.csrf || $('meta[name="csrf-token"]').attr('content')) },
         success: function(response) {
             $('#approveConfirmModal').modal('hide');
             if (response.success) {
@@ -3678,9 +3678,9 @@ function confirmReverseLabApproval() {
     $('#btn-confirm-reverse').prop('disabled', true).html('<i class="mdi mdi-loading mdi-spin"></i> Reversing...');
 
     $.ajax({
-        url: `{{ url('/lab-workbench/approval/${currentReverseId}/reverse') }}`,
+        url: wbUrl(`/lab-workbench/approval/${currentReverseId}/reverse`),
         type: 'POST',
-        data: { _token: '{{ csrf_token() }}' },
+        data: { _token: (window.WORKBENCH_CONFIG?.csrf || $('meta[name="csrf-token"]').attr('content')) },
         success: function(response) {
             $('#reverseApprovalModal').modal('hide');
             if (response.success) {
@@ -3719,10 +3719,10 @@ function confirmRejectLabResult() {
 
 
     $.ajax({
-        url: `{{ url('/lab-workbench/approval/${currentApprovalId}/reject') }}`,
+        url: wbUrl(`/lab-workbench/approval/${currentApprovalId}/reject`),
         type: 'POST',
         data: {
-            _token: '{{ csrf_token() }}',
+            _token: (window.WORKBENCH_CONFIG?.csrf || $('meta[name="csrf-token"]').attr('content')),
             rejection_reason: reason
         },
         success: function(response) {
@@ -3825,8 +3825,8 @@ $(document).on('click', '#btn-register-walkin', function() {
 });
 
 
-{{-- Emergency Intake Modal (replaced by unified patient-form-modal emergency mode) --}}
-{{-- @include('admin.partials.emergency-intake-modal') --}}
+/* Emergency Intake Modal (replaced by unified patient-form-modal emergency mode) */
+/* @include('admin.partials.emergency-intake-modal') */
 
 @include('admin.partials.bundle_view_modal')
 @include('admin.partials.bundle_remove_modal')

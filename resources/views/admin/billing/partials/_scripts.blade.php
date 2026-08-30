@@ -1,5 +1,20 @@
 @section('scripts')
 <script src="{{ asset('plugins/dataT/datatables.min.js') }}"></script>
+<script>
+window.WORKBENCH_CONFIG = {
+    csrf: '{{ csrf_token() }}',
+    baseUrl: '{{ url("/") }}',
+    routes: {
+        billing_queueCounts: '{{ route("billing.queue-counts") }}',
+        lab_filterDoctors: '{{ route("lab.filterDoctors") }}',
+        lab_filterHmos: '{{ route("lab.filterHmos") }}',
+        lab_filterServices: '{{ route("lab.filterServices") }}',
+        lab_statistics: '{{ route("lab.statistics") }}',
+        lab_reports: '{{ route("lab.reports") }}'
+    }
+};
+</script>
+<script src="{{ asset('js/workbench-helper.js') }}"></script>
 <script src="{{ asset('js/billing-workbench.js') }}?v={{ filemtime(public_path('js/billing-workbench.js')) }}"></script>
 
 {{-- Payment Scripts --}}
