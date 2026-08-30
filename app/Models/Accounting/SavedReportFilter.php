@@ -33,13 +33,13 @@ class SavedReportFilter extends Model
     ];
 
     // Report types
-    const REPORT_TRIAL_BALANCE = 'trial_balance';
-    const REPORT_JOURNAL_LIST = 'journal_list';
-    const REPORT_PROFIT_LOSS = 'profit_loss';
-    const REPORT_BALANCE_SHEET = 'balance_sheet';
-    const REPORT_CASH_FLOW = 'cash_flow';
-    const REPORT_GENERAL_LEDGER = 'general_ledger';
-    const REPORT_ACCOUNT_ACTIVITY = 'account_activity';
+    public const REPORT_TRIAL_BALANCE = 'trial_balance';
+    public const REPORT_JOURNAL_LIST = 'journal_list';
+    public const REPORT_PROFIT_LOSS = 'profit_loss';
+    public const REPORT_BALANCE_SHEET = 'balance_sheet';
+    public const REPORT_CASH_FLOW = 'cash_flow';
+    public const REPORT_GENERAL_LEDGER = 'general_ledger';
+    public const REPORT_ACCOUNT_ACTIVITY = 'account_activity';
 
     /**
      * Get available report types.
@@ -158,6 +158,7 @@ class SavedReportFilter extends Model
     public function getReportTypeLabelAttribute(): string
     {
         $types = self::getReportTypes();
+
         return $types[$this->report_type] ?? ucfirst(str_replace('_', ' ', $this->report_type));
     }
 

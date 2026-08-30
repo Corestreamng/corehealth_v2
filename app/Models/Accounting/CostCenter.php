@@ -2,12 +2,11 @@
 
 namespace App\Models\Accounting;
 
-use App\Models\User;
 use App\Models\Department;
+use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
-use Illuminate\Support\Facades\DB;
 
 /**
  * Cost Center Model
@@ -17,7 +16,8 @@ use Illuminate\Support\Facades\DB;
  */
 class CostCenter extends Model
 {
-    use HasFactory, SoftDeletes;
+    use HasFactory;
+    use SoftDeletes;
 
     protected $table = 'cost_centers';
 
@@ -103,11 +103,11 @@ class CostCenter extends Model
             });
 
         if ($fromDate) {
-            $query->whereHas('journalEntry', fn($q) => $q->where('entry_date', '>=', $fromDate));
+            $query->whereHas('journalEntry', fn ($q) => $q->where('entry_date', '>=', $fromDate));
         }
 
         if ($toDate) {
-            $query->whereHas('journalEntry', fn($q) => $q->where('entry_date', '<=', $toDate));
+            $query->whereHas('journalEntry', fn ($q) => $q->where('entry_date', '<=', $toDate));
         }
 
         if ($accountId) {

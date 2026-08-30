@@ -57,6 +57,7 @@ class StaffPromotion extends Model implements Auditable
     {
         $from = $this->from_job_title ?? $this->fromGradeLevel?->name ?? 'N/A';
         $to = $this->to_job_title ?? $this->toGradeLevel?->name ?? 'N/A';
+
         return "{$from} → {$to}";
     }
 }

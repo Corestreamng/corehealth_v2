@@ -3,8 +3,7 @@
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Support\Facades\DB;
 
-return new class extends Migration
-{
+return new class () extends Migration {
     /**
      * Create diagnosis_favorites table for doctors to save reusable diagnosis sets.
      * Supports per-diagnosis comments (status/course) stored as JSON.

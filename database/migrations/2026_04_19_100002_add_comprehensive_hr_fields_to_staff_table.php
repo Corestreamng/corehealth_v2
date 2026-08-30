@@ -8,8 +8,7 @@ use Illuminate\Support\Facades\Schema;
  * HR Enhancement - Add comprehensive staff fields
  * Covers all spreadsheet fields: personal, employment, licensing, confirmation, retirement
  */
-return new class extends Migration
-{
+return new class () extends Migration {
     public function up(): void
     {
         Schema::table('staff', function (Blueprint $table) {

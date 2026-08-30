@@ -88,7 +88,7 @@ class StoreGovernancePolicy
             return Response::allow();
         }
 
-        if (! $user->hasPermissionTo('can-approve-requisition-for-store')) {
+        if (!$user->hasPermissionTo('can-approve-requisition-for-store')) {
             return Response::deny('You do not have permission to approve requisitions.');
         }
 
@@ -133,11 +133,11 @@ class StoreGovernancePolicy
             return Response::allow();
         }
 
-        if (! $user->hasPermissionTo('dispense-from-store')) {
+        if (!$user->hasPermissionTo('dispense-from-store')) {
             return Response::deny('You do not have permission to dispense from any store.');
         }
 
-        if (! $store->canDispenseToPatient()) {
+        if (!$store->canDispenseToPatient()) {
             return Response::deny(
                 "Store \"{$store->store_name}\" is not configured for direct patient dispense. "
                 . 'Contact your administrator to enable this store for dispensing.'
@@ -167,7 +167,7 @@ class StoreGovernancePolicy
             return Response::allow();
         }
 
-        if (! $user->hasPermissionTo('administer-from-store')) {
+        if (!$user->hasPermissionTo('administer-from-store')) {
             return Response::deny('You do not have permission to administer drugs from ward stock.');
         }
 
@@ -177,7 +177,7 @@ class StoreGovernancePolicy
                 ->where('status', 'active')
                 ->exists();
 
-            if (! $activeShift) {
+            if (!$activeShift) {
                 return Response::deny(
                     "Ward stock actions require an active shift for \"{$store->store_name}\". "
                     . 'Please start your shift before administering from ward stock.'
@@ -204,7 +204,7 @@ class StoreGovernancePolicy
             return Response::allow();
         }
 
-        if (! $user->hasPermissionTo('bill-consumable-from-store')) {
+        if (!$user->hasPermissionTo('bill-consumable-from-store')) {
             return Response::deny('You do not have permission to bill consumables from store stock.');
         }
 
@@ -213,7 +213,7 @@ class StoreGovernancePolicy
                 ->where('status', 'active')
                 ->exists();
 
-            if (! $activeShift) {
+            if (!$activeShift) {
                 return Response::deny(
                     "Consumable billing from \"{$store->store_name}\" requires an active shift."
                 );

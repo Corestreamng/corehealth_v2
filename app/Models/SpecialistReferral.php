@@ -9,7 +9,8 @@ use OwenIt\Auditing\Contracts\Auditable;
 
 class SpecialistReferral extends Model implements Auditable
 {
-    use HasFactory, SoftDeletes;
+    use HasFactory;
+    use SoftDeletes;
     use \OwenIt\Auditing\Auditable;
 
     protected $fillable = [
@@ -49,16 +50,16 @@ class SpecialistReferral extends Model implements Auditable
     }
 
     // Status constants
-    public const STATUS_PENDING      = 'pending';
-    public const STATUS_BOOKED       = 'booked';
+    public const STATUS_PENDING = 'pending';
+    public const STATUS_BOOKED = 'booked';
     public const STATUS_REFERRED_OUT = 'referred_out';
-    public const STATUS_COMPLETED    = 'completed';
-    public const STATUS_DECLINED     = 'declined';
-    public const STATUS_CANCELLED    = 'cancelled';
+    public const STATUS_COMPLETED = 'completed';
+    public const STATUS_DECLINED = 'declined';
+    public const STATUS_CANCELLED = 'cancelled';
 
     // Urgency constants
-    public const URGENCY_ROUTINE   = 'routine';
-    public const URGENCY_URGENT    = 'urgent';
+    public const URGENCY_ROUTINE = 'routine';
+    public const URGENCY_URGENT = 'urgent';
     public const URGENCY_EMERGENCY = 'emergency';
 
     // ──────────────────────────────────────

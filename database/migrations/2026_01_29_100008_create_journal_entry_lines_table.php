@@ -17,8 +17,7 @@ use Illuminate\Support\Facades\Schema;
  * - Sum of debits must equal sum of credits for a balanced entry
  * - All account balances are calculated from posted journal entry lines
  */
-return new class extends Migration
-{
+return new class () extends Migration {
     /**
      * Run the migrations.
      */

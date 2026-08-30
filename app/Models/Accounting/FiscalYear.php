@@ -2,13 +2,13 @@
 
 namespace App\Models\Accounting;
 
+use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\SoftDeletes;
-use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use OwenIt\Auditing\Contracts\Auditable;
-use App\Models\User;
 
 /**
  * Fiscal Year Model
@@ -20,7 +20,9 @@ use App\Models\User;
  */
 class FiscalYear extends Model implements Auditable
 {
-    use HasFactory, SoftDeletes, \OwenIt\Auditing\Auditable;
+    use HasFactory;
+    use SoftDeletes;
+    use \OwenIt\Auditing\Auditable;
 
     protected $fillable = [
         'year_name',
@@ -41,9 +43,9 @@ class FiscalYear extends Model implements Auditable
     ];
 
     // Status constants
-    const STATUS_OPEN = 'open';
-    const STATUS_CLOSING = 'closing';
-    const STATUS_CLOSED = 'closed';
+    public const STATUS_OPEN = 'open';
+    public const STATUS_CLOSING = 'closing';
+    public const STATUS_CLOSED = 'closed';
 
     /**
      * Accessor for backward compatibility with code using name.

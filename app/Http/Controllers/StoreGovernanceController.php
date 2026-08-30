@@ -3,8 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\Store;
-use App\Models\StoreLanePolicy;
 use App\Models\StoreContextRule;
+use App\Models\StoreLanePolicy;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
@@ -47,9 +47,9 @@ class StoreGovernanceController extends Controller
             ->orderBy('store_name')
             ->get();
 
-        $wards       = \App\Models\Ward::orderBy('name')->get();
+        $wards = \App\Models\Ward::orderBy('name')->get();
         $departments = \App\Models\Department::orderBy('name')->get();
-        $managers    = \App\Models\User::whereHas('roles', fn ($q) => $q->whereIn('name', [
+        $managers = \App\Models\User::whereHas('roles', fn ($q) => $q->whereIn('name', [
             'ADMIN', 'SUPERADMIN', 'super-admin', 'PHARMACIST', 'STORE', 'NURSE',
         ]))
         ->select('id', 'surname', 'firstname')
@@ -59,7 +59,11 @@ class StoreGovernanceController extends Controller
         $distributionRoles = Store::DISTRIBUTION_ROLES;
 
         return view('admin.config.store-governance.index', compact(
-            'stores', 'wards', 'departments', 'managers', 'distributionRoles'
+            'stores',
+            'wards',
+            'departments',
+            'managers',
+            'distributionRoles'
         ));
     }
 
@@ -75,31 +79,30 @@ class StoreGovernanceController extends Controller
         Gate::authorize('store-governance.manage');
 
         $data = $request->validate([
-            'distribution_role'            => 'required|in:' . implode(',', Store::DISTRIBUTION_ROLES),
+            'distribution_role' => 'required|in:' . implode(',', Store::DISTRIBUTION_ROLES),
             'allows_direct_patient_dispense' => 'boolean',
-            'requires_shift_context'       => 'boolean',
-            'parent_store_id'              => 'nullable|exists:stores,id|different:id',
-            'ward_id'                      => 'nullable|exists:wards,id',
-            'department_id'                => 'nullable|exists:departments,id',
-            'manager_id'                   => 'nullable|exists:users,id',
+            'requires_shift_context' => 'boolean',
+            'parent_store_id' => 'nullable|exists:stores,id|different:id',
+            'ward_id' => 'nullable|exists:wards,id',
+            'department_id' => 'nullable|exists:departments,id',
+            'manager_id' => 'nullable|exists:users,id',
         ]);
 
         // Save guard (Plan §9.1 Section A): warn if disabling direct patient dispense
         // while there are pending ProductRequest records linked to this store.
         if (isset($data['allows_direct_patient_dispense'])
-            && ! $data['allows_direct_patient_dispense']
-            && $store->allows_direct_patient_dispense)
-        {
+            && !$data['allows_direct_patient_dispense']
+            && $store->allows_direct_patient_dispense) {
             $pendingCount = \App\Models\ProductRequest::where('dispensed_from_store_id', $store->id)
                 ->whereIn('status', [1, 2]) // pending/billed but not yet dispensed
                 ->count();
 
-            if ($pendingCount > 0 && ! $request->boolean('force_save')) {
+            if ($pendingCount > 0 && !$request->boolean('force_save')) {
                 return response()->json([
-                    'success'       => false,
-                    'save_guard'    => true,
+                    'success' => false,
+                    'save_guard' => true,
                     'pending_count' => $pendingCount,
-                    'message'       => "{$pendingCount} pending dispense(s) are linked to this store. "
+                    'message' => "{$pendingCount} pending dispense(s) are linked to this store. "
                                     . "Disabling direct patient dispense will block those dispenses. "
                                     . "Send force_save=1 to confirm.",
                 ], 409);
@@ -113,7 +116,7 @@ class StoreGovernanceController extends Controller
         return response()->json([
             'success' => true,
             'message' => "{$store->store_name} governance settings updated.",
-            'store'   => $store->fresh(['ward', 'department', 'parentStore', 'manager']),
+            'store' => $store->fresh(['ward', 'department', 'parentStore', 'manager']),
         ]);
     }
 
@@ -134,7 +137,7 @@ class StoreGovernanceController extends Controller
         $policies = StoreLanePolicy::orderBy('source_role')->orderBy('destination_role')->get();
 
         // Build a full matrix including pairs with no policy row (denied by default)
-        $roles  = Store::DISTRIBUTION_ROLES;
+        $roles = Store::DISTRIBUTION_ROLES;
         $matrix = [];
 
         foreach ($roles as $src) {
@@ -144,12 +147,12 @@ class StoreGovernanceController extends Controller
                 }
                 $policy = $policies->where('source_role', $src)->where('destination_role', $dst)->first();
                 $matrix[] = [
-                    'source_role'             => $src,
-                    'destination_role'        => $dst,
-                    'allowed'                 => $policy?->allowed ?? false,
+                    'source_role' => $src,
+                    'destination_role' => $dst,
+                    'allowed' => $policy?->allowed ?? false,
                     'requires_approval_level' => $policy?->requires_approval_level ?? 'none',
-                    'notes'                   => $policy?->notes ?? '',
-                    'id'                      => $policy?->id,
+                    'notes' => $policy?->notes ?? '',
+                    'id' => $policy?->id,
                 ];
             }
         }
@@ -168,15 +171,15 @@ class StoreGovernanceController extends Controller
         Gate::authorize('store-governance.manage');
 
         $data = $request->validate([
-            'source_role'             => 'required|in:' . implode(',', Store::DISTRIBUTION_ROLES),
-            'destination_role'        => 'required|in:' . implode(',', Store::DISTRIBUTION_ROLES) . '|different:source_role',
-            'allowed'                 => 'required|boolean',
+            'source_role' => 'required|in:' . implode(',', Store::DISTRIBUTION_ROLES),
+            'destination_role' => 'required|in:' . implode(',', Store::DISTRIBUTION_ROLES) . '|different:source_role',
+            'allowed' => 'required|boolean',
             'requires_approval_level' => 'required|in:none,manager,admin',
-            'notes'                   => 'nullable|string|max:255',
+            'notes' => 'nullable|string|max:255',
         ]);
 
         // Save guard: if disabling an active lane, count in-flight requisitions (Plan §9.4)
-        if (! $data['allowed']) {
+        if (!$data['allowed']) {
             $activeCount = \App\Models\StoreRequisition::whereHas('fromStore', fn ($q) =>
                     $q->where('distribution_role', $data['source_role']))
                 ->whereHas('toStore', fn ($q) =>
@@ -184,12 +187,12 @@ class StoreGovernanceController extends Controller
                 ->whereIn('status', ['pending', 'approved'])
                 ->count();
 
-            if ($activeCount > 0 && ! $request->boolean('force_save')) {
+            if ($activeCount > 0 && !$request->boolean('force_save')) {
                 return response()->json([
-                    'success'      => false,
-                    'save_guard'   => true,
+                    'success' => false,
+                    'save_guard' => true,
                     'active_count' => $activeCount,
-                    'message'      => "{$activeCount} active requisition(s) use this lane. "
+                    'message' => "{$activeCount} active requisition(s) use this lane. "
                                    . "Blocking it will prevent their approval/fulfillment. "
                                    . "Send force_save=1 to confirm.",
                 ], 409);
@@ -204,7 +207,7 @@ class StoreGovernanceController extends Controller
         return response()->json([
             'success' => true,
             'message' => "Lane policy updated.",
-            'policy'  => $policy,
+            'policy' => $policy,
         ]);
     }
 
@@ -222,13 +225,13 @@ class StoreGovernanceController extends Controller
     {
         Gate::authorize('store-governance.view');
 
-        $roleRules       = StoreContextRule::where('rule_type', 'role_default')->with('store')->get();
-        $deptRules       = StoreContextRule::where('rule_type', 'department_override')->with(['department', 'store'])->get();
-        $bucketRules     = StoreContextRule::where('rule_type', 'type_bucket')->get();
-        $fallbackRule    = StoreContextRule::where('rule_type', 'fallback_behavior')->first();
-        $stores          = Store::active()->orderBy('store_name')->get();
-        $departments     = \App\Models\Department::orderBy('name')->get();
-        $spatieRoles     = \Spatie\Permission\Models\Role::orderBy('name')->pluck('name');
+        $roleRules = StoreContextRule::where('rule_type', 'role_default')->with('store')->get();
+        $deptRules = StoreContextRule::where('rule_type', 'department_override')->with(['department', 'store'])->get();
+        $bucketRules = StoreContextRule::where('rule_type', 'type_bucket')->get();
+        $fallbackRule = StoreContextRule::where('rule_type', 'fallback_behavior')->first();
+        $stores = Store::active()->orderBy('store_name')->get();
+        $departments = \App\Models\Department::orderBy('name')->get();
+        $spatieRoles = \Spatie\Permission\Models\Role::orderBy('name')->pluck('name');
 
         // Roles that already bypass context rules via stores.candidate-all permission.
         // These should not appear in the "unconfigured" warning — they can always see all stores.
@@ -245,8 +248,15 @@ class StoreGovernanceController extends Controller
             ->get();
 
         return view('admin.config.store-governance.context-rules', compact(
-            'roleRules', 'deptRules', 'bucketRules', 'fallbackRule', 'stores', 'departments',
-            'spatieRoles', 'rolesWithCandidateAll', 'testUsers'
+            'roleRules',
+            'deptRules',
+            'bucketRules',
+            'fallbackRule',
+            'stores',
+            'departments',
+            'spatieRoles',
+            'rolesWithCandidateAll',
+            'testUsers'
         ));
     }
 
@@ -261,20 +271,20 @@ class StoreGovernanceController extends Controller
         Gate::authorize('store-governance.manage');
 
         $data = $request->validate([
-            'rule_type'       => 'required|in:role_default,department_override,fallback_behavior,type_bucket',
-            'user_role'       => 'required_if:rule_type,role_default|required_if:rule_type,type_bucket|nullable|string|max:60',
-            'department_id'   => 'required_if:rule_type,department_override|nullable|exists:departments,id',
-            'store_id'        => 'nullable|exists:stores,id',
-            'type_filter'     => 'required_if:rule_type,type_bucket|nullable|in:all,pharmacy,ward,department',
+            'rule_type' => 'required|in:role_default,department_override,fallback_behavior,type_bucket',
+            'user_role' => 'required_if:rule_type,role_default|required_if:rule_type,type_bucket|nullable|string|max:60',
+            'department_id' => 'required_if:rule_type,department_override|nullable|exists:departments,id',
+            'store_id' => 'nullable|exists:stores,id',
+            'type_filter' => 'required_if:rule_type,type_bucket|nullable|in:all,pharmacy,ward,department',
             'fallback_action' => 'required_if:rule_type,fallback_behavior|nullable|in:block,allow_manual,use_role_default',
-            'notes'           => 'nullable|string|max:255',
+            'notes' => 'nullable|string|max:255',
         ]);
 
         $uniqueMatch = match ($data['rule_type']) {
-            'role_default'        => ['rule_type' => 'role_default', 'user_role' => $data['user_role']],
+            'role_default' => ['rule_type' => 'role_default', 'user_role' => $data['user_role']],
             'department_override' => ['rule_type' => 'department_override', 'department_id' => $data['department_id']],
-            'fallback_behavior'   => ['rule_type' => 'fallback_behavior'],
-            'type_bucket'         => ['rule_type' => 'type_bucket', 'user_role' => $data['user_role'], 'type_filter' => $data['type_filter']],
+            'fallback_behavior' => ['rule_type' => 'fallback_behavior'],
+            'type_bucket' => ['rule_type' => 'type_bucket', 'user_role' => $data['user_role'], 'type_filter' => $data['type_filter']],
         };
 
         $rule = StoreContextRule::updateOrCreate(
@@ -285,7 +295,7 @@ class StoreGovernanceController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Context rule saved.',
-            'rule'    => $rule->load('store', 'department'),
+            'rule' => $rule->load('store', 'department'),
         ]);
     }
 
@@ -300,9 +310,9 @@ class StoreGovernanceController extends Controller
         Gate::authorize('store-governance.view');
 
         $request->validate([
-            'user_id'       => 'required|exists:users,id',
-            'ward_id'       => 'nullable|exists:wards,id',
-            'shift_active'  => 'boolean',
+            'user_id' => 'required|exists:users,id',
+            'ward_id' => 'nullable|exists:wards,id',
+            'shift_active' => 'boolean',
         ]);
 
         $user = \App\Models\User::findOrFail($request->user_id);
@@ -315,20 +325,20 @@ class StoreGovernanceController extends Controller
         }
 
         $resolver = app(\App\Services\StoreContextResolver::class);
-        $store    = $resolver->resolveWithMockShift($user, $mockShift);
+        $store = $resolver->resolveWithMockShift($user, $mockShift);
         $candidates = $resolver->candidateStores($user);
 
         return response()->json([
-            'success'          => true,
-            'resolved_store'   => $store ? [
-                'id'                => $store->id,
-                'name'              => $store->store_name,
+            'success' => true,
+            'resolved_store' => $store ? [
+                'id' => $store->id,
+                'name' => $store->store_name,
                 'distribution_role' => $store->distribution_role,
-                'role_label'        => $store->distributionRoleLabel(),
+                'role_label' => $store->distributionRoleLabel(),
             ] : null,
             'resolution_steps' => $resolver->lastResolutionTrace(),
             'candidate_stores' => $candidates->map(fn ($s) => [
-                'id'   => $s->id,
+                'id' => $s->id,
                 'name' => $s->store_name,
                 'role' => $s->distribution_role,
             ])->values(),
@@ -368,9 +378,9 @@ class StoreGovernanceController extends Controller
         Gate::authorize('store-governance.view');
 
         $resolver = app(\App\Services\StoreContextResolver::class);
-        $store    = $resolver->resolve(auth()->user());
+        $store = $resolver->resolve(auth()->user());
 
-        if (! $store) {
+        if (!$store) {
             return response()->json(['error' => 'No pharmacy store resolved for your account.'], 422);
         }
 
@@ -411,14 +421,14 @@ class StoreGovernanceController extends Controller
             ->count();
 
         return response()->json([
-            'store_id'           => $store->id,
-            'store_name'         => $store->store_name,
-            'dispenses_today'    => $dispensesToday,
+            'store_id' => $store->id,
+            'store_name' => $store->store_name,
+            'dispenses_today' => $dispensesToday,
             'near_expiry_batches' => $nearExpiryBatches,
             'stock_out_products' => $stockOutProducts,
-            'pending_dispense'   => $pendingDispense,
+            'pending_dispense' => $pendingDispense,
             'lane_overrides_today' => $laneOverridesToday,
-            'generated_at'       => now()->toISOString(),
+            'generated_at' => now()->toISOString(),
         ]);
     }
 
@@ -433,9 +443,9 @@ class StoreGovernanceController extends Controller
         Gate::authorize('store-governance.view');
 
         $resolver = app(\App\Services\StoreContextResolver::class);
-        $store    = $resolver->resolve(auth()->user());
+        $store = $resolver->resolve(auth()->user());
 
-        if (! $store) {
+        if (!$store) {
             return response()->json(['error' => 'No ward store resolved for your account.'], 422);
         }
 
@@ -484,15 +494,15 @@ class StoreGovernanceController extends Controller
             ->count();
 
         return response()->json([
-            'store_id'                 => $store->id,
-            'store_name'               => $store->store_name,
-            'active_shift_id'          => $shiftId,
-            'injections_this_shift'    => $injectionsThisShift,
+            'store_id' => $store->id,
+            'store_name' => $store->store_name,
+            'active_shift_id' => $shiftId,
+            'injections_this_shift' => $injectionsThisShift,
             'fifo_overrides_this_shift' => $fifoOverridesThisShift,
-            'below_reorder_count'      => $belowReorder,
-            'pending_requisitions_in'  => $pendingRequisitions,
-            'near_expiry_batches'      => $nearExpiryBatches,
-            'generated_at'             => now()->toISOString(),
+            'below_reorder_count' => $belowReorder,
+            'pending_requisitions_in' => $pendingRequisitions,
+            'near_expiry_batches' => $nearExpiryBatches,
+            'generated_at' => now()->toISOString(),
         ]);
     }
 
@@ -507,9 +517,9 @@ class StoreGovernanceController extends Controller
         Gate::authorize('store-governance.view');
 
         $resolver = app(\App\Services\StoreContextResolver::class);
-        $store    = $resolver->resolve(auth()->user());
+        $store = $resolver->resolve(auth()->user());
 
-        if (! $store) {
+        if (!$store) {
             return response()->json(['error' => 'No store resolved for your account.'], 422);
         }
 
@@ -550,15 +560,15 @@ class StoreGovernanceController extends Controller
             ->count('product_id');
 
         return response()->json([
-            'store_id'             => $store->id,
-            'store_name'           => $store->store_name,
+            'store_id' => $store->id,
+            'store_name' => $store->store_name,
             'pending_fulfillments' => $pendingFulfillments,
             'pos_awaiting_receive' => $posAwaitingReceive,
-            'lane_overrides'       => $laneOverrides,
-            'over_receive_events'  => $overReceiveEvents,
-            'near_expiry_batches'  => $nearExpiryBatches,
-            'active_products'      => $activeProducts,
-            'generated_at'         => now()->toISOString(),
+            'lane_overrides' => $laneOverrides,
+            'over_receive_events' => $overReceiveEvents,
+            'near_expiry_batches' => $nearExpiryBatches,
+            'active_products' => $activeProducts,
+            'generated_at' => now()->toISOString(),
         ]);
     }
 }

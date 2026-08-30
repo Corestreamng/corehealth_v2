@@ -97,15 +97,16 @@ class DoctorAppointmentObserver
                         : '',
                 ]);
             }
+
             return;
         }
 
         // Handle status transitions
         match ($newStatus) {
             QueueStatus::CANCELLED => $this->handleCancelled($appointment, $original),
-            QueueStatus::NO_SHOW   => $this->handleNoShow($appointment),
-            QueueStatus::WAITING   => $this->handleCheckedIn($appointment, $oldStatus),
-            default                => null,
+            QueueStatus::NO_SHOW => $this->handleNoShow($appointment),
+            QueueStatus::WAITING => $this->handleCheckedIn($appointment, $oldStatus),
+            default => null,
         };
 
         // Handle reassignment (staff_id changed)
@@ -165,7 +166,7 @@ class DoctorAppointmentObserver
         }
 
         $this->mailService->notify($appointment, 'reassigned', [
-            'old_doctor'          => $oldDoctorName,
+            'old_doctor' => $oldDoctorName,
             'reassignment_reason' => $appointment->reassignment_reason ?? '',
         ]);
     }
@@ -219,7 +220,7 @@ class DoctorAppointmentObserver
                 })
                 ->limit(50) // Safety limit — process max 50 per trigger
                 ->update([
-                    'status'            => QueueStatus::NO_SHOW,
+                    'status' => QueueStatus::NO_SHOW,
                     'no_show_marked_at' => now(),
                 ]);
 

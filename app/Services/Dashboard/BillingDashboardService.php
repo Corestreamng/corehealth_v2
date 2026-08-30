@@ -2,9 +2,9 @@
 
 namespace App\Services\Dashboard;
 
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Cache;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 
 class BillingDashboardService
 {
@@ -93,6 +93,7 @@ class BillingDashboardService
                 $row->amount_formatted = '₦' . number_format($row->amount, 2);
                 $row->time = Carbon::parse($row->created_at)->format('h:i A');
                 $row->method = $row->payment_type ?: 'Cash';
+
                 return $row;
             })
             ->toArray();

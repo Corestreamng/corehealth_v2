@@ -41,8 +41,9 @@ class TransferObserver
             if ($transfer->journal_entry_id) {
                 Log::info('TransferObserver: Transfer already has JE', [
                     'transfer_id' => $transfer->id,
-                    'journal_entry_id' => $transfer->journal_entry_id
+                    'journal_entry_id' => $transfer->journal_entry_id,
                 ]);
+
                 return;
             }
 
@@ -59,7 +60,7 @@ class TransferObserver
                     'transfer_id' => $transfer->id,
                     'transfer_number' => $transfer->transfer_number,
                     'error' => $e->getMessage(),
-                    'trace' => $e->getTraceAsString()
+                    'trace' => $e->getTraceAsString(),
                 ]);
             }
         }
@@ -82,6 +83,7 @@ class TransferObserver
                 'from_account_id' => $transfer->from_account_id,
                 'to_account_id' => $transfer->to_account_id,
             ]);
+
             return;
         }
 
@@ -116,7 +118,7 @@ class TransferObserver
                 ),
                 // METADATA
                 'category' => 'inter_account_transfer',
-            ]
+            ],
         ];
 
         // Add transfer fee entry if applicable

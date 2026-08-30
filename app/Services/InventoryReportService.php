@@ -2,17 +2,16 @@
 
 namespace App\Services;
 
+use App\Models\ProductRequest;
 use App\Models\Store;
 use App\Models\StoreRequisitionItem;
-use App\Models\ProductRequest;
 use Carbon\Carbon;
-use Illuminate\Support\Facades\DB;
 
 class InventoryReportService
 {
     /**
      * Get aggregate summary data.
-     * 
+     *
      * @param int|array $storeIds Target store ID(s)
      * @param string $mode 'given' (outbound) or 'received' (inbound)
      * @param string $groupBy 'category' or 'destination'
@@ -59,7 +58,7 @@ class InventoryReportService
                 ->get();
 
             $this->aggregateRequisitions($reqItems, $aggregates, $groupBy, 'fromStore');
-            
+
             // Note: For full accuracy of "Received" we might also need to look at Purchase Orders
             // or Stock Batches if the central store receives directly from vendors.
             // For now, based on user requirements, we focus on internal movement & dispenses.
@@ -80,7 +79,7 @@ class InventoryReportService
         }
 
         // Sort descending by value
-        usort($results, fn($a, $b) => $b['total_value'] <=> $a['total_value']);
+        usort($results, fn ($a, $b) => $b['total_value'] <=> $a['total_value']);
 
         return $results;
     }
@@ -90,7 +89,7 @@ class InventoryReportService
         $storeIds = (array) $storeIds;
         $start = Carbon::parse($startDate)->startOfDay();
         $end = Carbon::parse($endDate)->endOfDay();
-        
+
         $details = [];
 
         if ($mode === 'given') {
@@ -130,12 +129,14 @@ class InventoryReportService
     {
         foreach ($items as $item) {
             $qty = $item->fulfilled_qty ?? 0;
-            if ($qty <= 0) continue;
-            
+            if ($qty <= 0) {
+                continue;
+            }
+
             $batch = $storeRelation === 'toStore' ? $item->sourceBatch : $item->destinationBatch;
             $cost = ($batch && (float)$batch->cost_price > 0) ? (float)$batch->cost_price : (float)($item->product->price->pr_buy_price ?? 0);
             $val = $qty * $cost;
-            
+
             $salePrice = $item->product->price->current_sale_price ?? 0;
             $potentialRev = $qty * $salePrice;
 
@@ -161,16 +162,18 @@ class InventoryReportService
     {
         foreach ($items as $item) {
             $qty = $item->qty ?? 0;
-            if ($qty <= 0) continue;
-            
+            if ($qty <= 0) {
+                continue;
+            }
+
             $batch = $item->dispensedFromBatch;
             $cost = ($batch && (float)$batch->cost_price > 0) ? (float)$batch->cost_price : (float)($item->product->price->pr_buy_price ?? 0);
             $val = $qty * $cost;
-            
+
             $cashRev = 0;
             $claimsRev = 0;
             $psr = $item->productOrServiceRequest;
-            
+
             if ($psr) {
                 $cashRev = (float)($psr->payable_amount ?? 0);
                 $claimsRev = (float)($psr->claims_amount ?? 0);
@@ -202,13 +205,17 @@ class InventoryReportService
     {
         foreach ($items as $item) {
             $qty = $item->fulfilled_qty ?? 0;
-            if ($qty <= 0) continue;
+            if ($qty <= 0) {
+                continue;
+            }
 
-            $key = ($groupBy === 'category') 
+            $key = ($groupBy === 'category')
                 ? ($item->product->category->category_name ?? 'Uncategorized')
                 : (($groupBy === 'product') ? ($item->product->product_name ?? 'Unknown Product') : ($item->requisition->$storeRelation->store_name ?? 'Unknown Store'));
 
-            if (strtolower($key) !== strtolower($targetKey)) continue;
+            if (strtolower($key) !== strtolower($targetKey)) {
+                continue;
+            }
 
             $batch = $storeRelation === 'toStore' ? $item->sourceBatch : $item->destinationBatch;
             $cost = ($batch && (float)$batch->cost_price > 0) ? (float)$batch->cost_price : (float)($item->product->price->pr_buy_price ?? 0);
@@ -238,13 +245,17 @@ class InventoryReportService
     {
         foreach ($items as $item) {
             $qty = $item->qty ?? 0;
-            if ($qty <= 0) continue;
+            if ($qty <= 0) {
+                continue;
+            }
 
-            $key = ($groupBy === 'category') 
+            $key = ($groupBy === 'category')
                 ? ($item->product->category->category_name ?? 'Uncategorized')
                 : (($groupBy === 'product') ? ($item->product->product_name ?? 'Unknown Product') : $this->resolveDispenseDestination($item));
 
-            if (strtolower($key) !== strtolower($targetKey)) continue;
+            if (strtolower($key) !== strtolower($targetKey)) {
+                continue;
+            }
 
             $batch = $item->dispensedFromBatch;
             $cost = ($batch && (float)$batch->cost_price > 0) ? (float)$batch->cost_price : (float)($item->product->price->pr_buy_price ?? 0);
@@ -252,7 +263,7 @@ class InventoryReportService
             $cashRev = 0;
             $claimsRev = 0;
             $psr = $item->productOrServiceRequest;
-            
+
             if ($psr) {
                 $cashRev = (float)($psr->payable_amount ?? 0);
                 $claimsRev = (float)($psr->claims_amount ?? 0);
@@ -297,20 +308,26 @@ class InventoryReportService
 
     private function resolveDispenseDestination($item): string
     {
-        if (!$item->encounter) return 'General Outpatient';
-        
+        if (!$item->encounter) {
+            return 'General Outpatient';
+        }
+
         $enc = $item->encounter;
-        
+
         // Is it linked to a Procedure?
         if (class_exists(\App\Models\Procedure::class)) {
             $isProc = \App\Models\Procedure::where('encounter_id', $enc->id)->exists();
-            if ($isProc) return 'Theater / Procedure Room';
+            if ($isProc) {
+                return 'Theater / Procedure Room';
+            }
         }
 
         // Is it linked to Maternity?
         if (class_exists(\App\Models\MaternityEncounterLink::class)) {
             $isMat = \App\Models\MaternityEncounterLink::where('encounter_id', $enc->id)->exists();
-            if ($isMat) return 'Maternity Clinic';
+            if ($isMat) {
+                return 'Maternity Clinic';
+            }
         }
 
         // Is it linked to a Ward (Admission)?

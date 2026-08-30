@@ -2,20 +2,17 @@
 
 namespace App\Services\Accounting;
 
+use App\Models\Accounting\AccountingPeriod;
 use App\Models\Accounting\FixedAsset;
 use App\Models\Accounting\FixedAssetCategory;
-use App\Models\Accounting\FixedAssetDepreciation;
 use App\Models\Accounting\FixedAssetDisposal;
 use App\Models\Accounting\JournalEntry;
 use App\Models\Accounting\JournalEntryLine;
-use App\Models\Accounting\Account;
-use App\Models\Accounting\AccountingPeriod;
 use App\Models\PurchaseOrder;
 use App\Models\PurchaseOrderItem;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Collection;
-use Carbon\Carbon;
 
 /**
  * Fixed Asset Service
@@ -33,6 +30,7 @@ class FixedAssetService
     public function createAsset(array $data): FixedAsset
     {
         DB::beginTransaction();
+
         try {
             $category = FixedAssetCategory::findOrFail($data['category_id']);
 
@@ -114,6 +112,7 @@ class FixedAssetService
                 'error' => $e->getMessage(),
                 'data' => $data,
             ]);
+
             throw $e;
         }
     }
@@ -183,6 +182,7 @@ class FixedAssetService
                     'status' => 'skipped',
                     'reason' => 'Already depreciated or not eligible',
                 ];
+
                 continue;
             }
 
@@ -197,6 +197,7 @@ class FixedAssetService
                         'status' => 'skipped',
                         'reason' => 'Zero depreciation amount',
                     ];
+
                     continue;
                 }
 
@@ -251,6 +252,7 @@ class FixedAssetService
         }
 
         DB::beginTransaction();
+
         try {
             // Calculate gain/loss
             $proceeds = (float) ($disposalData['disposal_proceeds'] ?? 0);
@@ -293,6 +295,7 @@ class FixedAssetService
                 'asset_id' => $asset->id,
                 'error' => $e->getMessage(),
             ]);
+
             throw $e;
         }
     }
@@ -387,6 +390,7 @@ class FixedAssetService
             $q->whereNotIn('status', [FixedAsset::STATUS_DISPOSED]);
         }])->get()->map(function ($category) {
             $assets = $category->fixedAssets;
+
             return [
                 'category' => $category,
                 'asset_count' => $assets->count(),
@@ -433,6 +437,7 @@ class FixedAssetService
         }
 
         DB::beginTransaction();
+
         try {
             // Reverse the acquisition journal entry if it exists
             if ($asset->journalEntry) {
@@ -495,6 +500,7 @@ class FixedAssetService
                 'asset_id' => $asset->id,
                 'error' => $e->getMessage(),
             ]);
+
             throw $e;
         }
     }

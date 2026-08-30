@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Log;
 class HuggingFaceAdapter implements LlmProviderInterface
 {
     protected string $apiKey;
+
     protected string $baseUrl;
 
     public function __construct(string $apiKey, string $baseUrl = 'https://api-inference.huggingface.co')
@@ -37,6 +38,7 @@ class HuggingFaceAdapter implements LlmProviderInterface
         if ($response->failed()) {
             $error = $response->json('error', $response->body());
             Log::error('HuggingFace API error', ['status' => $response->status(), 'error' => $error]);
+
             throw new \Exception("HuggingFace API error: {$error}");
         }
 
@@ -44,6 +46,7 @@ class HuggingFaceAdapter implements LlmProviderInterface
         if (is_array($data) && isset($data[0]['generated_text'])) {
             return $data[0]['generated_text'];
         }
+
         return is_string($data) ? $data : json_encode($data);
     }
 
@@ -68,15 +71,23 @@ class HuggingFaceAdapter implements LlmProviderInterface
 
             if ($response->successful()) {
                 $name = $response->json('name', 'Unknown');
+
                 return ['valid' => true, 'message' => "Authenticated as: {$name}", 'models_count' => 5];
             }
+
             return ['valid' => false, 'message' => 'Invalid API token', 'models_count' => 0];
         } catch (\Exception $e) {
             return ['valid' => false, 'message' => $e->getMessage(), 'models_count' => 0];
         }
     }
 
-    public function getDisplayName(): string { return 'Hugging Face'; }
+    public function getDisplayName(): string
+    {
+        return 'Hugging Face';
+    }
 
-    public function estimateTokens(string $text): int { return (int) ceil(mb_strlen($text) / 4); }
+    public function estimateTokens(string $text): int
+    {
+        return (int) ceil(mb_strlen($text) / 4);
+    }
 }

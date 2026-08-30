@@ -25,9 +25,11 @@ class DataEndpoint extends Controller
     {
         try {
             $a = ApplicationStatu::first();
+
             return response()->json(['status' => true, 'message' => 'Successfully retrived data', 'data' => $a]);
         } catch (Exception $e) {
             Log::error('Failed to get Facility Settings: ' . $e->getMessage(), [$e]);
+
             return response()->json(['status' => false, 'message' => 'Failed to get Facility Settings'], 500);
         }
     }
@@ -35,7 +37,7 @@ class DataEndpoint extends Controller
     public function getFullStats()
     {
         try {
-            $patients  = Patient::count();
+            $patients = Patient::count();
             $bookings = DoctorQueue::count();
             $consultations = Encounter::count();
             $hmos = Hmo::count();
@@ -46,6 +48,7 @@ class DataEndpoint extends Controller
             $male_staff = Staff::where('gender', 'Male')->count();
             $female_staff = Staff::where('gender', 'Female')->count();
             $other_gender_staff = Staff::where('gender', 'Others')->count();
+
             return response()->json(['status' => true, 'message' => 'Successfully retrived data', 'data' => [
                 'all_patients' => $patients,
                 'all_bookings' => $bookings,
@@ -61,6 +64,7 @@ class DataEndpoint extends Controller
             ]]);
         } catch (Exception $e) {
             Log::error('Failed to get Facility Statistics: ' . $e->getMessage(), [$e]);
+
             return response()->json(['status' => false, 'message' => 'Failed to get Facility Statistics'], 500);
         }
     }
@@ -80,7 +84,7 @@ class DataEndpoint extends Controller
                 "18-35" => 0,
                 "36-55" => 0,
                 "55-64" => 0,
-                "65+" => 0
+                "65+" => 0,
             ];
 
             // Calculate age distribution
@@ -104,13 +108,14 @@ class DataEndpoint extends Controller
             // Create JSON object
             $jsonObject = [
                 "age_groups" => array_keys($ageCounts),
-                "counts" => array_values($ageCounts)
+                "counts" => array_values($ageCounts),
             ];
 
             // Return JSON response
             return response()->json(['status' => true, 'data' => $jsonObject]);
         } catch (Exception $e) {
             Log::error('Failed to get Facility Statistics: ' . $e->getMessage(), [$e]);
+
             return response()->json(['status' => false, 'message' => 'Failed to get Facility Statistics'], 500);
         }
     }
@@ -137,7 +142,6 @@ class DataEndpoint extends Controller
         }
     }
 
-
     public function encountersPerMonth($year)
     {
         try {
@@ -159,6 +163,7 @@ class DataEndpoint extends Controller
             return response()->json(['status' => true, 'data' => $encountersPerMonth]);
         } catch (Exception $e) {
             Log::error('Failed to get Facility Statistics: ' . $e->getMessage(), [$e]);
+
             return response()->json(['status' => false, 'message' => 'Failed to get Facility Statistics'], 500);
         }
     }
@@ -192,6 +197,7 @@ class DataEndpoint extends Controller
             return response()->json(['status' => true, 'data' => $hospitalizationssPerMonth]);
         } catch (Exception $e) {
             Log::error('Failed to get Facility Statistics: ' . $e->getMessage(), [$e]);
+
             return response()->json(['status' => false, 'message' => 'Failed to get Facility Statistics'], 500);
         }
     }
@@ -221,6 +227,7 @@ class DataEndpoint extends Controller
             return response()->json(['status' => true, 'data' => $investigationsPerMonth]);
         } catch (Exception $e) {
             Log::error('Failed to get Facility Statistics: ' . $e->getMessage(), [$e]);
+
             return response()->json(['status' => false, 'message' => 'Failed to get Facility Statistics'], 500);
         }
     }
@@ -231,41 +238,41 @@ class DataEndpoint extends Controller
             // Initialize an array to store the count of encounters per month
             $incomePerMonth = [
                 1 => [
-                    'consultations' => 0, 'investigations' => 0, 'admissions' => 0, 'nursing_services' => 0, 'misc_services' => 0
+                    'consultations' => 0, 'investigations' => 0, 'admissions' => 0, 'nursing_services' => 0, 'misc_services' => 0,
                 ],
                 2 => [
-                    'consultations' => 0, 'investigations' => 0, 'admissions' => 0, 'nursing_services' => 0, 'misc_services' => 0
+                    'consultations' => 0, 'investigations' => 0, 'admissions' => 0, 'nursing_services' => 0, 'misc_services' => 0,
                 ],
                 3 => [
-                    'consultations' => 0, 'investigations' => 0, 'admissions' => 0, 'nursing_services' => 0, 'misc_services' => 0
+                    'consultations' => 0, 'investigations' => 0, 'admissions' => 0, 'nursing_services' => 0, 'misc_services' => 0,
                 ],
                 4 => [
-                    'consultations' => 0, 'investigations' => 0, 'admissions' => 0, 'nursing_services' => 0, 'misc_services' => 0
+                    'consultations' => 0, 'investigations' => 0, 'admissions' => 0, 'nursing_services' => 0, 'misc_services' => 0,
                 ],
                 5 => [
-                    'consultations' => 0, 'investigations' => 0, 'admissions' => 0, 'nursing_services' => 0, 'misc_services' => 0
+                    'consultations' => 0, 'investigations' => 0, 'admissions' => 0, 'nursing_services' => 0, 'misc_services' => 0,
                 ],
                 6 => [
-                    'consultations' => 0, 'investigations' => 0, 'admissions' => 0, 'nursing_services' => 0, 'misc_services' => 0
+                    'consultations' => 0, 'investigations' => 0, 'admissions' => 0, 'nursing_services' => 0, 'misc_services' => 0,
                 ],
                 7 => [
-                    'consultations' => 0, 'investigations' => 0, 'admissions' => 0, 'nursing_services' => 0, 'misc_services' => 0
+                    'consultations' => 0, 'investigations' => 0, 'admissions' => 0, 'nursing_services' => 0, 'misc_services' => 0,
                 ],
                 8 => [
-                    'consultations' => 0, 'investigations' => 0, 'admissions' => 0, 'nursing_services' => 0, 'misc_services' => 0
+                    'consultations' => 0, 'investigations' => 0, 'admissions' => 0, 'nursing_services' => 0, 'misc_services' => 0,
                 ],
                 9 => [
-                    'consultations' => 0, 'investigations' => 0, 'admissions' => 0, 'nursing_services' => 0, 'misc_services' => 0
+                    'consultations' => 0, 'investigations' => 0, 'admissions' => 0, 'nursing_services' => 0, 'misc_services' => 0,
                 ],
                 10 => [
-                    'consultations' => 0, 'investigations' => 0, 'admissions' => 0, 'nursing_services' => 0, 'misc_services' => 0
+                    'consultations' => 0, 'investigations' => 0, 'admissions' => 0, 'nursing_services' => 0, 'misc_services' => 0,
                 ],
                 11 => [
-                    'consultations' => 0, 'investigations' => 0, 'admissions' => 0, 'nursing_services' => 0, 'misc_services' => 0
+                    'consultations' => 0, 'investigations' => 0, 'admissions' => 0, 'nursing_services' => 0, 'misc_services' => 0,
                 ],
                 12 => [
-                    'consultations' => 0, 'investigations' => 0, 'admissions' => 0, 'nursing_services' => 0, 'misc_services' => 0
-                ]
+                    'consultations' => 0, 'investigations' => 0, 'admissions' => 0, 'nursing_services' => 0, 'misc_services' => 0,
+                ],
             ];
 
             $bed_services = Service::where('category_id', appsettings('bed_service_category_id'))->get()->pluck('id')->toArray();
@@ -363,6 +370,7 @@ class DataEndpoint extends Controller
             return response()->json(['status' => true, 'data' => $incomePerMonth]);
         } catch (Exception $e) {
             Log::error('Failed to get Facility Statistics: ' . $e->getMessage(), [$e]);
+
             return response()->json(['status' => false, 'message' => 'Failed to get Facility Statistics'], 500);
         }
     }
@@ -416,10 +424,11 @@ class DataEndpoint extends Controller
                 'total' => $a->total(),
                 'last_page' => $a->lastPage(),
                 'next_page_url' => $a->nextPageUrl(),
-                'previous_page_url' => $a->previousPageUrl()
+                'previous_page_url' => $a->previousPageUrl(),
             ]]);
         } catch (Exception $e) {
             Log::error('Failed to get Facility Patients: ' . $e->getMessage(), [$e]);
+
             return response()->json(['status' => false, 'message' => 'Failed to get Facility Patients'], 500);
         }
     }
@@ -473,10 +482,11 @@ class DataEndpoint extends Controller
                 'total' => $a->total(),
                 'last_page' => $a->lastPage(),
                 'next_page_url' => $a->nextPageUrl(),
-                'previous_page_url' => $a->previousPageUrl()
+                'previous_page_url' => $a->previousPageUrl(),
             ]]);
         } catch (Exception $e) {
             Log::error('Failed to get Facility Bookings: ' . $e->getMessage(), [$e]);
+
             return response()->json(['status' => false, 'message' => 'Failed to get Facility Bookings'], 500);
         }
     }
@@ -524,17 +534,17 @@ class DataEndpoint extends Controller
             // Fetch products with applied filters, search, and sorting
             $a = $query->paginate($perPage, ['*'], 'page', $page);
 
-
             return response()->json(['status' => true, 'message' => 'Successfully retrived data', 'data' => $a->items(), 'metadata' => [
                 'current_page' => $a->currentPage(),
                 'per_page' => $a->perPage(),
                 'total' => $a->total(),
                 'last_page' => $a->lastPage(),
                 'next_page_url' => $a->nextPageUrl(),
-                'previous_page_url' => $a->previousPageUrl()
+                'previous_page_url' => $a->previousPageUrl(),
             ]]);
         } catch (Exception $e) {
             Log::error('Failed to get Facility Consultations: ' . $e->getMessage(), [$e]);
+
             return response()->json(['status' => false, 'message' => 'Failed to get Facility Consultations'], 500);
         }
     }
@@ -582,17 +592,17 @@ class DataEndpoint extends Controller
             // Fetch products with applied filters, search, and sorting
             $a = $query->paginate($perPage, ['*'], 'page', $page);
 
-
             return response()->json(['status' => true, 'message' => 'Successfully retrived data', 'data' => $a->items(), 'metadata' => [
                 'current_page' => $a->currentPage(),
                 'per_page' => $a->perPage(),
                 'total' => $a->total(),
                 'last_page' => $a->lastPage(),
                 'next_page_url' => $a->nextPageUrl(),
-                'previous_page_url' => $a->previousPageUrl()
+                'previous_page_url' => $a->previousPageUrl(),
             ]]);
         } catch (Exception $e) {
             Log::error('Failed to get Facility Staff: ' . $e->getMessage(), [$e]);
+
             return response()->json(['status' => false, 'message' => 'Failed to get Facility Staff'], 500);
         }
     }
@@ -647,17 +657,17 @@ class DataEndpoint extends Controller
             // Fetch products with applied filters, search, and sorting
             $a = $query->paginate($perPage, ['*'], 'page', $page);
 
-
             return response()->json(['status' => true, 'message' => 'Successfully retrived data', 'data' => $a->items(), 'metadata' => [
                 'current_page' => $a->currentPage(),
                 'per_page' => $a->perPage(),
                 'total' => $a->total(),
                 'last_page' => $a->lastPage(),
                 'next_page_url' => $a->nextPageUrl(),
-                'previous_page_url' => $a->previousPageUrl()
+                'previous_page_url' => $a->previousPageUrl(),
             ]]);
         } catch (Exception $e) {
             Log::error('Failed to get Facility Nurses: ' . $e->getMessage(), [$e]);
+
             return response()->json(['status' => false, 'message' => 'Failed to get Facility Nurses'], 500);
         }
     }
@@ -712,17 +722,17 @@ class DataEndpoint extends Controller
             // Fetch products with applied filters, search, and sorting
             $a = $query->paginate($perPage, ['*'], 'page', $page);
 
-
             return response()->json(['status' => true, 'message' => 'Successfully retrived data', 'data' => $a->items(), 'metadata' => [
                 'current_page' => $a->currentPage(),
                 'per_page' => $a->perPage(),
                 'total' => $a->total(),
                 'last_page' => $a->lastPage(),
                 'next_page_url' => $a->nextPageUrl(),
-                'previous_page_url' => $a->previousPageUrl()
+                'previous_page_url' => $a->previousPageUrl(),
             ]]);
         } catch (Exception $e) {
             Log::error('Failed to get Facility Nurses: ' . $e->getMessage(), [$e]);
+
             return response()->json(['status' => false, 'message' => 'Failed to get Facility Nurses'], 500);
         }
     }
@@ -735,8 +745,6 @@ class DataEndpoint extends Controller
             // Define pagination parameters
             $perPage = $request->input('per_page', 10);
             $page = $request->input('page', 1);
-
-
 
             // Apply filtering
             if ($request->has('filter_column') && $request->has('filter_value')) {
@@ -772,17 +780,17 @@ class DataEndpoint extends Controller
             // Fetch products with applied filters, search, and sorting
             $a = $query->paginate($perPage, ['*'], 'page', $page);
 
-
             return response()->json(['status' => true, 'message' => 'Successfully retrived data', 'data' => $a->items(), 'metadata' => [
                 'current_page' => $a->currentPage(),
                 'per_page' => $a->perPage(),
                 'total' => $a->total(),
                 'last_page' => $a->lastPage(),
                 'next_page_url' => $a->nextPageUrl(),
-                'previous_page_url' => $a->previousPageUrl()
+                'previous_page_url' => $a->previousPageUrl(),
             ]]);
         } catch (Exception $e) {
             Log::error('Failed to get Facility Admissions: ' . $e->getMessage(), [$e]);
+
             return response()->json(['status' => false, 'message' => 'Failed to get Facility Admissions'], 500);
         }
     }
@@ -825,17 +833,17 @@ class DataEndpoint extends Controller
             // Fetch products with applied filters, search, and sorting
             $a = $query->paginate($perPage, ['*'], 'page', $page);
 
-
             return response()->json(['status' => true, 'message' => 'Successfully retrived data', 'data' => $a->items(), 'metadata' => [
                 'current_page' => $a->currentPage(),
                 'per_page' => $a->perPage(),
                 'total' => $a->total(),
                 'last_page' => $a->lastPage(),
                 'next_page_url' => $a->nextPageUrl(),
-                'previous_page_url' => $a->previousPageUrl()
+                'previous_page_url' => $a->previousPageUrl(),
             ]]);
         } catch (Exception $e) {
             Log::error('Failed to get Facility Consultations: ' . $e->getMessage(), [$e]);
+
             return response()->json(['status' => false, 'message' => 'Failed to get Facility HMOs'], 500);
         }
     }

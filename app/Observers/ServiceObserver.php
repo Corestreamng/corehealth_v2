@@ -2,9 +2,9 @@
 
 namespace App\Observers;
 
-use App\Models\Service;
 use App\Models\Hmo;
 use App\Models\HmoTariff;
+use App\Models\Service;
 use Illuminate\Support\Facades\Log;
 
 class ServiceObserver

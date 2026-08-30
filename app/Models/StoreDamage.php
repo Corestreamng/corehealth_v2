@@ -9,7 +9,8 @@ use OwenIt\Auditing\Contracts\Auditable;
 
 class StoreDamage extends Model implements Auditable
 {
-    use HasFactory, SoftDeletes;
+    use HasFactory;
+    use SoftDeletes;
     use \OwenIt\Auditing\Auditable;
 
     protected $fillable = [
@@ -33,26 +34,26 @@ class StoreDamage extends Model implements Auditable
     ];
 
     protected $casts = [
-        'qty_damaged'      => 'decimal:2',
-        'unit_cost'        => 'decimal:2',
-        'total_value'      => 'decimal:2',
-        'stock_deducted'   => 'boolean',
-        'discovered_date'  => 'date',
-        'approved_at'      => 'datetime',
-        'stock_deducted_at'=> 'datetime',
+        'qty_damaged' => 'decimal:2',
+        'unit_cost' => 'decimal:2',
+        'total_value' => 'decimal:2',
+        'stock_deducted' => 'boolean',
+        'discovered_date' => 'date',
+        'approved_at' => 'datetime',
+        'stock_deducted_at' => 'datetime',
     ];
 
-    const STATUS_PENDING    = 'pending';
-    const STATUS_APPROVED   = 'approved';
-    const STATUS_REJECTED   = 'rejected';
-    const STATUS_WRITTEN_OFF = 'written_off';
+    public const STATUS_PENDING = 'pending';
+    public const STATUS_APPROVED = 'approved';
+    public const STATUS_REJECTED = 'rejected';
+    public const STATUS_WRITTEN_OFF = 'written_off';
 
-    const TYPE_EXPIRED      = 'expired';
-    const TYPE_BROKEN       = 'broken';
-    const TYPE_CONTAMINATED = 'contaminated';
-    const TYPE_SPOILED      = 'spoiled';
-    const TYPE_THEFT        = 'theft';
-    const TYPE_OTHER        = 'other';
+    public const TYPE_EXPIRED = 'expired';
+    public const TYPE_BROKEN = 'broken';
+    public const TYPE_CONTAMINATED = 'contaminated';
+    public const TYPE_SPOILED = 'spoiled';
+    public const TYPE_THEFT = 'theft';
+    public const TYPE_OTHER = 'other';
 
     // ===== RELATIONSHIPS =====
 

@@ -2,8 +2,8 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Seeder;
 use App\Models\Store;
+use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -33,7 +33,7 @@ class AssignLabImagingStoreRolesSeeder extends Seeder
         $this->command?->info('Current Store Roles (' . $allStores->count() . ' stores):');
         $this->command?->table(
             ['ID', 'Store Name', 'Code', 'Type', 'Current Role'],
-            $allStores->map(fn($s) => [
+            $allStores->map(fn ($s) => [
                 $s->id,
                 $s->store_name,
                 $s->code ?? '—',
@@ -92,7 +92,7 @@ class AssignLabImagingStoreRolesSeeder extends Seeder
         $this->command?->info('Updated Store Roles:');
         $this->command?->table(
             ['ID', 'Store Name', 'Code', 'Type', 'New Role'],
-            $afterStores->map(fn($s) => [
+            $afterStores->map(fn ($s) => [
                 $s->id,
                 $s->store_name,
                 $s->code ?? '—',

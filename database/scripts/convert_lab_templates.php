@@ -18,23 +18,25 @@ $skipped = 0;
 
 foreach ($services as $service) {
     $html = $service->template;
-    
+
     if (empty(trim($html))) {
         $skipped++;
+
         continue;
     }
 
     // Replace <table class="table"> with <table class="table table-bordered">
     // Handle single and double quotes
-    $html = preg_replace_callback('/<table[^>]*class\s*=\s*(["\'])(.*?)\1[^>]*>/i', function($matches) {
+    $html = preg_replace_callback('/<table[^>]*class\s*=\s*(["\'])(.*?)\1[^>]*>/i', function ($matches) {
         $quote = $matches[1];
         $classes = $matches[2];
         if (strpos($classes, 'table-bordered') === false) {
             $classes .= ' table-bordered';
         }
-        return str_replace($matches[1].$matches[2].$matches[1], $quote . trim($classes) . $quote, $matches[0]);
+
+        return str_replace($matches[1] . $matches[2] . $matches[1], $quote . trim($classes) . $quote, $matches[0]);
     }, $html);
-    
+
     // If table has no class attribute at all
     $html = preg_replace('/<table(?![^>]*class\s*=)[^>]*>/i', '<table class="table table-bordered">', $html);
 
@@ -48,21 +50,21 @@ foreach ($services as $service) {
 
     // Clean up any double spaces created by removing attributes
     $html = preg_replace('/\s{2,}/', ' ', $html);
-    
+
     // Remove empty class="" attributes just in case
     $html = preg_replace('/\s*class\s*=\s*(["\'])\1/i', '', $html);
-    
+
     $html = trim($html);
 
     $template = V1ResultTemplate::updateOrCreate(
         ['name' => $service->service_name],
         [
-            'description'   => 'Migrated from legacy services table',
-            'content'       => $html,
-            'category'      => 'Lab', // User requested category as "Lab"
+            'description' => 'Migrated from legacy services table',
+            'content' => $html,
+            'category' => 'Lab', // User requested category as "Lab"
             'template_type' => 'lab',
-            'is_active'     => true,
-            'created_by'    => 1,
+            'is_active' => true,
+            'created_by' => 1,
         ]
     );
 

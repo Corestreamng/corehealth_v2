@@ -3,12 +3,11 @@
 namespace App\Http\Controllers\Accounting;
 
 use App\Http\Controllers\Controller;
+use App\Models\Accounting\Account;
 use App\Models\Accounting\AccountClass;
 use App\Models\Accounting\AccountGroup;
-use App\Models\Accounting\Account;
 use App\Models\Accounting\AccountSubAccount;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 use Yajra\DataTables\Facades\DataTables;
 
 /**
@@ -36,7 +35,7 @@ class ChartOfAccountsController extends Controller
         $classes = AccountClass::with([
             'groups.accounts' => function ($query) {
                 $query->orderBy('code');
-            }
+            },
         ])
         ->orderBy('code')
         ->get();
@@ -99,6 +98,7 @@ class ChartOfAccountsController extends Controller
             })
             ->addColumn('account_link', function ($row) {
                 $code = '<code>' . e($row->account_code) . '</code>';
+
                 return '<a href="' . route('accounting.chart-of-accounts.show', $row->id) . '">' . $code . '</a>';
             })
             ->addColumn('account_name', function ($row) {
@@ -106,6 +106,7 @@ class ChartOfAccountsController extends Controller
                 if ($row->description) {
                     $html .= '<br><small class="text-muted">' . e(\Str::limit($row->description, 50)) . '</small>';
                 }
+
                 return $html;
             })
             ->addColumn('class_name', function ($row) {
@@ -116,18 +117,21 @@ class ChartOfAccountsController extends Controller
             })
             ->addColumn('balance_badge', function ($row) {
                 $color = $row->normal_balance === 'debit' ? 'info' : 'warning';
+
                 return '<span class="badge badge-' . $color . '">' . ucfirst($row->normal_balance) . '</span>';
             })
             ->addColumn('type_badge', function ($row) {
                 if ($row->is_bank_account) {
                     return '<span class="badge badge-success"><i class="mdi mdi-bank mr-1"></i>Bank</span>';
                 }
+
                 return '<span class="text-muted">-</span>';
             })
             ->addColumn('status_badge', function ($row) {
                 if ($row->is_active) {
                     return '<span class="badge badge-success">Active</span>';
                 }
+
                 return '<span class="badge badge-secondary">Inactive</span>';
             })
             ->addColumn('actions', function ($row) {
@@ -146,6 +150,7 @@ class ChartOfAccountsController extends Controller
                 }
 
                 $html .= '</div></div>';
+
                 return $html;
             })
             ->rawColumns(['account_link', 'account_name', 'balance_badge', 'type_badge', 'status_badge', 'actions'])
@@ -210,7 +215,7 @@ class ChartOfAccountsController extends Controller
                 }])
                 ->orderBy('created_at', 'desc')
                 ->limit(50);
-            }
+            },
         ])->findOrFail($id);
 
         // Calculate running balance
@@ -275,6 +280,7 @@ class ChartOfAccountsController extends Controller
             if ($request->ajax()) {
                 return response()->json(['success' => false, 'message' => 'Cannot deactivate account with non-zero balance.'], 400);
             }
+
             return redirect()->back()
                 ->with('error', 'Cannot deactivate account with non-zero balance.');
         }
@@ -313,6 +319,7 @@ class ChartOfAccountsController extends Controller
     public function createGroup()
     {
         $classes = AccountClass::orderBy('code')->get();
+
         return view('accounting.chart-of-accounts.create-group', compact('classes'));
     }
 

@@ -3,16 +3,16 @@
 namespace App\Http\Controllers\Accounting;
 
 use App\Http\Controllers\Controller;
-use App\Models\Accounting\LiabilitySchedule;
-use App\Models\Accounting\LiabilityPaymentSchedule;
 use App\Models\Accounting\Account;
+use App\Models\Accounting\LiabilityPaymentSchedule;
+use App\Models\Accounting\LiabilitySchedule;
 use App\Services\Accounting\ExcelExportService;
 use Barryvdh\DomPDF\Facade\Pdf;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use Carbon\Carbon;
 use Yajra\DataTables\Facades\DataTables;
 
 /**
@@ -72,7 +72,7 @@ class LiabilityController extends Controller
         // By type breakdown
         $byType = $liabilities->where('status', 'active')
             ->groupBy('liability_type')
-            ->map(fn($items) => [
+            ->map(fn ($items) => [
                 'count' => $items->count(),
                 'balance' => $items->sum('current_balance'),
             ])
@@ -120,10 +120,10 @@ class LiabilityController extends Controller
         }
 
         return DataTables::of($query)
-            ->addColumn('start_date_formatted', fn($l) => Carbon::parse($l->start_date)->format('M d, Y'))
-            ->addColumn('maturity_date_formatted', fn($l) => Carbon::parse($l->maturity_date)->format('M d, Y'))
-            ->addColumn('principal_formatted', fn($l) => '₦' . number_format($l->principal_amount, 2))
-            ->addColumn('balance_formatted', fn($l) => '₦' . number_format($l->current_balance, 2))
+            ->addColumn('start_date_formatted', fn ($l) => Carbon::parse($l->start_date)->format('M d, Y'))
+            ->addColumn('maturity_date_formatted', fn ($l) => Carbon::parse($l->maturity_date)->format('M d, Y'))
+            ->addColumn('principal_formatted', fn ($l) => '₦' . number_format($l->principal_amount, 2))
+            ->addColumn('balance_formatted', fn ($l) => '₦' . number_format($l->current_balance, 2))
             ->addColumn('type_badge', function ($l) {
                 $colors = [
                     'loan' => 'primary',
@@ -133,6 +133,7 @@ class LiabilityController extends Controller
                     'other' => 'secondary',
                 ];
                 $color = $colors[$l->liability_type] ?? 'secondary';
+
                 return '<span class="badge badge-' . $color . '">' . ucfirst(str_replace('_', ' ', $l->liability_type)) . '</span>';
             })
             ->addColumn('status_badge', function ($l) {
@@ -144,6 +145,7 @@ class LiabilityController extends Controller
                     'cancelled' => 'secondary',
                 ];
                 $color = $colors[$l->status] ?? 'secondary';
+
                 return '<span class="badge badge-' . $color . '">' . ucfirst(str_replace('_', ' ', $l->status)) . '</span>';
             })
             ->addColumn('actions', function ($l) {
@@ -441,6 +443,7 @@ class LiabilityController extends Controller
 
         } catch (\Exception $e) {
             DB::rollBack();
+
             return back()
                 ->withInput()
                 ->with('error', 'Failed to update liability: ' . $e->getMessage());
@@ -630,6 +633,7 @@ class LiabilityController extends Controller
 
             if (!$schedule) {
                 Log::warning('LiabilityController::recordPayment - No pending payments', ['liability_id' => $id]);
+
                 return back()->with('error', 'No pending payments found for this liability.');
             }
 
@@ -678,6 +682,7 @@ class LiabilityController extends Controller
                 'message' => $e->getMessage(),
                 'trace' => $e->getTraceAsString(),
             ]);
+
             return back()
                 ->withInput()
                 ->with('error', 'Failed to record payment: ' . $e->getMessage());
@@ -738,6 +743,7 @@ class LiabilityController extends Controller
         ];
 
         $pdf = Pdf::loadView('accounting.liabilities.export-pdf', compact('liabilities', 'stats'));
+
         return $pdf->download('liabilities-' . now()->format('Y-m-d') . '.pdf');
     }
 
@@ -771,6 +777,7 @@ class LiabilityController extends Controller
         ];
 
         $excelService = app(ExcelExportService::class);
+
         return $excelService->liabilities($liabilities, $stats);
     }
 
@@ -795,7 +802,9 @@ class LiabilityController extends Controller
         };
 
         $totalPayments = ($termMonths / 12) * $periodsPerYear;
-        if ($totalPayments < 1) $totalPayments = 1;
+        if ($totalPayments < 1) {
+            $totalPayments = 1;
+        }
 
         $periodicRate = ($annualRate / 100) / $periodsPerYear;
 
@@ -834,6 +843,7 @@ class LiabilityController extends Controller
         if ($termMonths <= $monthsToConsider) {
             return $principal;
         }
+
         return round($principal * ($monthsToConsider / $termMonths), 2);
     }
 
@@ -845,6 +855,7 @@ class LiabilityController extends Controller
         if ($termMonths <= $monthsToConsider) {
             return 0;
         }
+
         return round($principal * (($termMonths - $monthsToConsider) / $termMonths), 2);
     }
 
@@ -865,7 +876,9 @@ class LiabilityController extends Controller
         };
 
         $totalPayments = (int)(($data['term_months'] / 12) * $periodsPerYear);
-        if ($totalPayments < 1) $totalPayments = 1;
+        if ($totalPayments < 1) {
+            $totalPayments = 1;
+        }
 
         $periodicRate = ($data['interest_rate'] / 100) / $periodsPerYear;
         $balance = $data['principal_amount'];
@@ -909,7 +922,9 @@ class LiabilityController extends Controller
             }
 
             $balance -= $principalAmount;
-            if ($balance < 0) $balance = 0;
+            if ($balance < 0) {
+                $balance = 0;
+            }
 
             // Use correct column names from migration
             DB::table('liability_payment_schedules')->insert([

@@ -44,15 +44,15 @@ class LeaveBalanceController extends Controller
 
             // Search
             if ($searchValue) {
-                $query->where(function($q) use ($searchValue) {
-                    $q->whereHas('staff.user', function($q) use ($searchValue) {
+                $query->where(function ($q) use ($searchValue) {
+                    $q->whereHas('staff.user', function ($q) use ($searchValue) {
                         $q->where('firstname', 'like', "%{$searchValue}%")
                           ->orWhere('surname', 'like', "%{$searchValue}%");
                     })
-                    ->orWhereHas('staff', function($q) use ($searchValue) {
+                    ->orWhereHas('staff', function ($q) use ($searchValue) {
                         $q->where('employee_id', 'like', "%{$searchValue}%");
                     })
-                    ->orWhereHas('leaveType', function($q) use ($searchValue) {
+                    ->orWhereHas('leaveType', function ($q) use ($searchValue) {
                         $q->where('name', 'like', "%{$searchValue}%");
                     });
                 });
@@ -67,7 +67,7 @@ class LeaveBalanceController extends Controller
                 'draw' => intval($request->input('draw')),
                 'recordsTotal' => $totalRecords,
                 'recordsFiltered' => $filteredRecords,
-                'data' => $balances->map(function($balance, $index) use ($start) {
+                'data' => $balances->map(function ($balance, $index) use ($start) {
                     $available = $balance->entitled_days - $balance->used_days - $balance->pending_days + $balance->carried_forward;
 
                     return [
@@ -81,15 +81,15 @@ class LeaveBalanceController extends Controller
                         'carried_forward' => number_format($balance->carried_forward, 1),
                         'available' => $available,
                         'action' => '<button type="button" class="btn btn-sm btn-outline-primary adjust-btn"
-                                        data-id="'.$balance->id.'"
-                                        data-staff="'.$balance->staff->user->name.'"
-                                        data-type="'.$balance->leaveType->name.'"
-                                        data-available="'.number_format($available, 1).'"
+                                        data-id="' . $balance->id . '"
+                                        data-staff="' . $balance->staff->user->name . '"
+                                        data-type="' . $balance->leaveType->name . '"
+                                        data-available="' . number_format($available, 1) . '"
                                         style="border-radius: 6px;">
                                         <i class="mdi mdi-plus-minus"></i>
                                     </button>',
                     ];
-                })
+                }),
             ]);
         }
 

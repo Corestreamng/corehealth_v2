@@ -12,8 +12,7 @@ use Illuminate\Support\Facades\Schema;
  *
  * Plan Option B — candidateStores() DB-driven type expansion.
  */
-return new class extends Migration
-{
+return new class () extends Migration {
     public function up(): void
     {
         Schema::table('store_context_rules', function (Blueprint $table) {

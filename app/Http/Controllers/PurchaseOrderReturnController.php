@@ -2,16 +2,16 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
-use App\Models\PurchaseOrderReturn;
 use App\Models\PurchaseOrder;
 use App\Models\PurchaseOrderItem;
+use App\Models\PurchaseOrderReturn;
 use App\Models\StockBatch;
 use App\Models\StoreStock;
-use Yajra\DataTables\Facades\DataTables;
-use Illuminate\Support\Facades\DB;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Yajra\DataTables\Facades\DataTables;
 
 class PurchaseOrderReturnController extends Controller
 {
@@ -21,19 +21,19 @@ class PurchaseOrderReturnController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'purchase_order_id'      => 'required|exists:purchase_orders,id',
+            'purchase_order_id' => 'required|exists:purchase_orders,id',
             'purchase_order_item_id' => 'required|exists:purchase_order_items,id',
-            'batch_id'               => 'nullable|exists:stock_batches,id',
-            'qty_returned'           => 'required|integer|min:1',
-            'unit_cost'              => 'required|numeric|min:0',
-            'return_reason'          => 'required|in:wrong_item,damaged,excess,quality_issue,other',
-            'return_notes'           => 'nullable|string|max:1000',
+            'batch_id' => 'nullable|exists:stock_batches,id',
+            'qty_returned' => 'required|integer|min:1',
+            'unit_cost' => 'required|numeric|min:0',
+            'return_reason' => 'required|in:wrong_item,damaged,excess,quality_issue,other',
+            'return_notes' => 'nullable|string|max:1000',
         ]);
 
         try {
             DB::beginTransaction();
 
-            $po   = PurchaseOrder::findOrFail($validated['purchase_order_id']);
+            $po = PurchaseOrder::findOrFail($validated['purchase_order_id']);
             $item = PurchaseOrderItem::findOrFail($validated['purchase_order_item_id']);
 
             if ($item->purchase_order_id !== $po->id) {
@@ -80,21 +80,21 @@ class PurchaseOrderReturnController extends Controller
                 }
             }
 
-            $validated['product_id']              = $item->product_id;
-            $validated['store_id']                = $po->target_store_id;
-            $validated['total_value']             = $validated['qty_returned'] * $validated['unit_cost'];
+            $validated['product_id'] = $item->product_id;
+            $validated['store_id'] = $po->target_store_id;
+            $validated['total_value'] = $validated['qty_returned'] * $validated['unit_cost'];
             $validated['payment_status_at_return'] = $po->payment_status;
-            $validated['created_by']              = Auth::id();
-            $validated['status']                  = 'pending';
-            $validated['return_number']           = PurchaseOrderReturn::generateReturnNumber();
+            $validated['created_by'] = Auth::id();
+            $validated['status'] = 'pending';
+            $validated['return_number'] = PurchaseOrderReturn::generateReturnNumber();
 
             $return = PurchaseOrderReturn::create($validated);
 
             DB::commit();
 
             return response()->json([
-                'success'   => true,
-                'message'   => 'Return recorded. Awaiting approval.',
+                'success' => true,
+                'message' => 'Return recorded. Awaiting approval.',
                 'return_id' => $return->id,
             ]);
 
@@ -125,38 +125,38 @@ class PurchaseOrderReturnController extends Controller
         if ($request->ajax()) {
             return response()->json([
                 'success' => true,
-                'return'  => [
-                    'id'                      => $return->id,
-                    'return_number'           => $return->return_number,
-                    'po_number'               => $return->purchaseOrder->po_number ?? 'N/A',
-                    'supplier'                => $return->purchaseOrder->supplier->supplier_name ?? 'N/A',
-                    'product_name'            => $return->product->product_name ?? 'N/A',
-                    'store_name'              => $return->store->store_name ?? 'N/A',
-                    'batch_number'            => $return->batch->batch_number ?? 'N/A',
-                    'qty_returned'            => $return->qty_returned,
-                    'unit_cost'               => $return->unit_cost,
-                    'total_value'             => $return->total_value,
-                    'return_reason'           => $return->return_reason,
-                    'return_notes'            => $return->return_notes,
-                    'payment_status_at_return'=> $return->payment_status_at_return,
-                    'status'                  => $return->status,
-                    'expense_adjusted'        => $return->expense_adjusted,
-                    'stock_deducted'          => $return->stock_deducted,
-                    'created_by'              => $return->creator->name ?? 'N/A',
-                    'approved_by'             => $return->approver->name ?? null,
-                    'approval_notes'          => $return->approval_notes,
-                    'created_at'              => $return->created_at->format('M d, Y h:i A'),
-                    'approved_at'             => $return->approved_at ? $return->approved_at->format('M d, Y h:i A') : null,
-                    'journal_entry'           => $return->journalEntry ? [
-                        'id'           => $return->journalEntry->id,
+                'return' => [
+                    'id' => $return->id,
+                    'return_number' => $return->return_number,
+                    'po_number' => $return->purchaseOrder->po_number ?? 'N/A',
+                    'supplier' => $return->purchaseOrder->supplier->supplier_name ?? 'N/A',
+                    'product_name' => $return->product->product_name ?? 'N/A',
+                    'store_name' => $return->store->store_name ?? 'N/A',
+                    'batch_number' => $return->batch->batch_number ?? 'N/A',
+                    'qty_returned' => $return->qty_returned,
+                    'unit_cost' => $return->unit_cost,
+                    'total_value' => $return->total_value,
+                    'return_reason' => $return->return_reason,
+                    'return_notes' => $return->return_notes,
+                    'payment_status_at_return' => $return->payment_status_at_return,
+                    'status' => $return->status,
+                    'expense_adjusted' => $return->expense_adjusted,
+                    'stock_deducted' => $return->stock_deducted,
+                    'created_by' => $return->creator->name ?? 'N/A',
+                    'approved_by' => $return->approver->name ?? null,
+                    'approval_notes' => $return->approval_notes,
+                    'created_at' => $return->created_at->format('M d, Y h:i A'),
+                    'approved_at' => $return->approved_at ? $return->approved_at->format('M d, Y h:i A') : null,
+                    'journal_entry' => $return->journalEntry ? [
+                        'id' => $return->journalEntry->id,
                         'entry_number' => $return->journalEntry->entry_number ?? 'JE-' . $return->journalEntry->id,
-                        'description'  => $return->journalEntry->description,
-                        'status'       => $return->journalEntry->status,
-                        'lines'        => $return->journalEntry->lines->map(fn ($l) => [
+                        'description' => $return->journalEntry->description,
+                        'status' => $return->journalEntry->status,
+                        'lines' => $return->journalEntry->lines->map(fn ($l) => [
                             'account_name' => $l->account->name ?? 'N/A',
                             'account_code' => $l->account->code ?? '',
-                            'debit'        => $l->debit_amount,
-                            'credit'       => $l->credit_amount,
+                            'debit' => $l->debit_amount,
+                            'credit' => $l->credit_amount,
                         ]),
                     ] : null,
                 ],
@@ -206,7 +206,7 @@ class PurchaseOrderReturnController extends Controller
                 }
             }
 
-            $return->status      = 'approved';
+            $return->status = 'approved';
             $return->approved_by = Auth::id();
             $return->approved_at = now();
             $return->approval_notes = $validated['approval_notes'] ?? null;
@@ -223,8 +223,8 @@ class PurchaseOrderReturnController extends Controller
             }
 
             return response()->json([
-                'success'          => true,
-                'message'          => $message,
+                'success' => true,
+                'message' => $message,
                 'journal_entry_id' => $return->journal_entry_id,
             ]);
 
@@ -254,7 +254,7 @@ class PurchaseOrderReturnController extends Controller
                 return response()->json(['success' => false, 'message' => 'Only pending returns can be rejected'], 422);
             }
 
-            $return->status      = 'rejected';
+            $return->status = 'rejected';
             $return->approved_by = Auth::id();
             $return->approved_at = now();
             $return->approval_notes = $validated['rejection_reason'];
@@ -266,6 +266,7 @@ class PurchaseOrderReturnController extends Controller
 
         } catch (\Exception $e) {
             DB::rollBack();
+
             return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
         }
     }
@@ -303,10 +304,11 @@ class PurchaseOrderReturnController extends Controller
             ->addColumn('batch', fn ($r) => $r->batch->batch_number ?? 'N/A')
             ->editColumn('status', function ($r) {
                 $badges = [
-                    'pending'  => '<span class="status-badge status-pending">Pending</span>',
+                    'pending' => '<span class="status-badge status-pending">Pending</span>',
                     'approved' => '<span class="status-badge status-approved">Approved</span>',
                     'rejected' => '<span class="status-badge status-rejected">Rejected</span>',
                 ];
+
                 return $badges[$r->status] ?? $r->status;
             })
             ->addColumn('returned_by', fn ($r) => $r->creator ? ($r->creator->firstname . ' ' . $r->creator->surname) : 'N/A')
@@ -317,6 +319,7 @@ class PurchaseOrderReturnController extends Controller
                     $btns .= '<button class="btn btn-sm btn-danger" onclick="rejectPOReturn(' . $r->id . ')"><i class="mdi mdi-close"></i></button>';
                 }
                 $btns .= '</div>';
+
                 return $btns;
             })
             ->rawColumns(['status', 'actions'])
@@ -328,7 +331,7 @@ class PurchaseOrderReturnController extends Controller
      */
     public function getBatchesForItem(Request $request)
     {
-        $itemId  = $request->get('item_id');
+        $itemId = $request->get('item_id');
         $storeId = $request->get('store_id');
 
         if (!$itemId || !$storeId) {
@@ -346,12 +349,12 @@ class PurchaseOrderReturnController extends Controller
             ->get(['id', 'batch_number', 'expiry_date', 'current_qty', 'cost_price']);
 
         return response()->json(['batches' => $batches->map(fn ($b) => [
-            'id'          => $b->id,
-            'text'        => $b->batch_number . ' — Available: ' . $b->current_qty,
+            'id' => $b->id,
+            'text' => $b->batch_number . ' — Available: ' . $b->current_qty,
             'batch_number' => $b->batch_number,
             'expiry_date' => $b->expiry_date ? $b->expiry_date->format('Y-m-d') : null,
             'current_qty' => $b->current_qty,
-            'unit_cost'   => $b->cost_price,
+            'unit_cost' => $b->cost_price,
         ])->values()]);
     }
 
@@ -360,10 +363,10 @@ class PurchaseOrderReturnController extends Controller
      */
     public function searchPOs(Request $request)
     {
-        $q         = $request->get('q');
-        $storeId   = $request->get('store_id');
+        $q = $request->get('q');
+        $storeId = $request->get('store_id');
         $productId = $request->get('product_id');
-        $days      = $request->get('days', 30);
+        $days = $request->get('days', 30);
 
         $query = PurchaseOrder::query()
             ->whereIn('status', [PurchaseOrder::STATUS_PARTIAL, PurchaseOrder::STATUS_RECEIVED]);
@@ -376,7 +379,7 @@ class PurchaseOrderReturnController extends Controller
         if ($q) {
             $query->where('po_number', 'LIKE', "%{$q}%");
         } elseif ($productId) {
-            $query->whereHas('items', function($q2) use ($productId) {
+            $query->whereHas('items', function ($q2) use ($productId) {
                 $q2->where('product_id', $productId);
             });
 
@@ -384,7 +387,9 @@ class PurchaseOrderReturnController extends Controller
                 $isFallback = true;
                 $query = PurchaseOrder::query()
                     ->whereIn('status', [PurchaseOrder::STATUS_PARTIAL, PurchaseOrder::STATUS_RECEIVED]);
-                if ($storeId) $query->where('target_store_id', $storeId);
+                if ($storeId) {
+                    $query->where('target_store_id', $storeId);
+                }
             }
         }
 
@@ -402,13 +407,13 @@ class PurchaseOrderReturnController extends Controller
             'is_fallback' => $isFallback,
             'pos' => $pos->map(function ($po) {
                 return [
-                    'id'                 => $po->id,
-                    'po_number'          => $po->po_number,
-                    'supplier_name'      => $po->supplier->supplier_name ?? 'N/A',
-                    'items_count'        => $po->items_count,
-                    'received_at_label'  => $po->received_at ? $po->received_at->format('M d, Y') : $po->updated_at->format('M d, Y'),
+                    'id' => $po->id,
+                    'po_number' => $po->po_number,
+                    'supplier_name' => $po->supplier->supplier_name ?? 'N/A',
+                    'items_count' => $po->items_count,
+                    'received_at_label' => $po->received_at ? $po->received_at->format('M d, Y') : $po->updated_at->format('M d, Y'),
                 ];
-            })
+            }),
         ]);
     }
 
@@ -418,7 +423,9 @@ class PurchaseOrderReturnController extends Controller
     public function getPOItems(Request $request)
     {
         $poId = $request->get('purchase_order_id');
-        if (!$poId) return response()->json(['items' => []]);
+        if (!$poId) {
+            return response()->json(['items' => []]);
+        }
 
         $items = PurchaseOrderItem::where('purchase_order_id', $poId)
             ->with('product')
@@ -429,16 +436,16 @@ class PurchaseOrderReturnController extends Controller
             $returned = PurchaseOrderReturn::where('purchase_order_item_id', $it->id)
                 ->whereIn('status', ['pending', 'approved'])
                 ->sum('qty_returned');
-            
+
             $returnable = max(0, $it->received_qty - $returned);
 
             return [
-                'id'             => $it->id,
-                'product_id'     => $it->product_id,
-                'product_name'   => $it->product->product_name ?? 'Unknown',
-                'received_qty'   => $it->received_qty,
+                'id' => $it->id,
+                'product_id' => $it->product_id,
+                'product_name' => $it->product->product_name ?? 'Unknown',
+                'received_qty' => $it->received_qty,
                 'returnable_qty' => $returnable,
-                'unit_cost'      => $it->unit_cost,
+                'unit_cost' => $it->unit_cost,
             ];
         })]);
     }

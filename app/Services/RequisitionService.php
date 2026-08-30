@@ -2,13 +2,13 @@
 
 namespace App\Services;
 
+use App\Models\StockBatch;
+use App\Models\StockBatchTransaction;
 use App\Models\StoreRequisition;
 use App\Models\StoreRequisitionItem;
 use App\Models\StoreRequisitionReturn;
-use App\Models\StockBatch;
-use App\Models\StockBatchTransaction;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
 
 /**
  * Service: RequisitionService
@@ -118,7 +118,7 @@ class RequisitionService
      */
     public function updateRequisition(StoreRequisition $requisition, array $data): StoreRequisition
     {
-        if (! $requisition->canEditHeader()) {
+        if (!$requisition->canEditHeader()) {
             throw new \Exception("Requisition cannot be edited in status: {$requisition->status}");
         }
 
@@ -128,13 +128,17 @@ class RequisitionService
                 $requisition->request_notes = $data['request_notes'];
             }
             if ($requisition->status === StoreRequisition::STATUS_PENDING) {
-                if (!empty($data['to_store_id'])) $requisition->to_store_id = $data['to_store_id'];
-                if (!empty($data['from_store_id'])) $requisition->from_store_id = $data['from_store_id'];
+                if (!empty($data['to_store_id'])) {
+                    $requisition->to_store_id = $data['to_store_id'];
+                }
+                if (!empty($data['from_store_id'])) {
+                    $requisition->from_store_id = $data['from_store_id'];
+                }
             }
 
             // Stamp edit tracking
-            $requisition->edited_by  = auth()->id();
-            $requisition->edited_at  = now();
+            $requisition->edited_by = auth()->id();
+            $requisition->edited_at = now();
             $requisition->edit_count = ($requisition->edit_count ?? 0) + 1;
             $requisition->save();
 
@@ -144,36 +148,38 @@ class RequisitionService
                 if (empty($itemData['item_id']) && $requisition->canEditItems()) {
                     StoreRequisitionItem::create([
                         'store_requisition_id' => $requisition->id,
-                        'product_id'           => $itemData['product_id'],
-                        'requested_qty'        => (int) $itemData['qty'],
-                        'packaging_id'         => $itemData['packaging_id'] ?? null,
-                        'packaging_qty'        => $itemData['packaging_qty'] ?? null,
-                        'status'               => StoreRequisitionItem::STATUS_PENDING,
-                        'notes'                => $itemData['notes'] ?? null,
+                        'product_id' => $itemData['product_id'],
+                        'requested_qty' => (int) $itemData['qty'],
+                        'packaging_id' => $itemData['packaging_id'] ?? null,
+                        'packaging_qty' => $itemData['packaging_qty'] ?? null,
+                        'status' => StoreRequisitionItem::STATUS_PENDING,
+                        'notes' => $itemData['notes'] ?? null,
                     ]);
+
                     continue;
                 }
 
                 $item = StoreRequisitionItem::find($itemData['item_id'] ?? null);
-                if (! $item || $item->store_requisition_id !== $requisition->id) {
+                if (!$item || $item->store_requisition_id !== $requisition->id) {
                     continue;
                 }
 
                 // ── DELETE item (PENDING only) ───────────────────────────────
-                if (! empty($itemData['_delete'])) {
+                if (!empty($itemData['_delete'])) {
                     if ($requisition->canEditItems()) {
                         $item->delete();
                     }
+
                     continue;
                 }
 
                 // ── UPDATE qty ───────────────────────────────────────────────
                 if (isset($itemData['qty']) && $requisition->canEditItemQty($item)) {
-                    $floor  = $item->fulfilled_qty ?? 0;
+                    $floor = $item->fulfilled_qty ?? 0;
                     $newQty = max((int) $itemData['qty'], $floor + 1);
 
                     $item->requested_qty = $newQty;
-                    $item->packaging_id  = $itemData['packaging_id'] ?? $item->packaging_id;
+                    $item->packaging_id = $itemData['packaging_id'] ?? $item->packaging_id;
                     if (array_key_exists('packaging_qty', $itemData)) {
                         $item->packaging_qty = $itemData['packaging_qty'];
                     }
@@ -224,6 +230,7 @@ class RequisitionService
                 if ($item->status === StoreRequisitionItem::STATUS_REJECTED && $initialStatus === StoreRequisition::STATUS_PENDING) {
                     $item->approved_qty = 0;
                     $item->save();
+
                     continue;
                 }
 
@@ -263,6 +270,7 @@ class RequisitionService
         }
 
         $requisition->reject($reason);
+
         return $requisition;
     }
 
@@ -349,7 +357,9 @@ class RequisitionService
 
                     foreach ($fulfillData['batches'] as $batchId => $qty) {
                         $qty = (int) $qty;
-                        if ($qty <= 0) continue;
+                        if ($qty <= 0) {
+                            continue;
+                        }
 
                         // Validate batch exists and has enough stock
                         $sourceBatch = StockBatch::find($batchId);
@@ -400,7 +410,9 @@ class RequisitionService
                 } else {
                     // Legacy single-batch format for backward compatibility
                     $qty = $fulfillData['qty'] ?? $fulfillData['total_qty'] ?? 0;
-                    if ($qty <= 0) continue;
+                    if ($qty <= 0) {
+                        continue;
+                    }
 
                     $sourceBatchId = $fulfillData['batch_id'] ?? null;
 
@@ -440,6 +452,7 @@ class RequisitionService
             foreach ($requisition->items as $item) {
                 if (!$item->isFullyFulfilled()) {
                     $allFullyFulfilled = false;
+
                     break;
                 }
             }
@@ -516,16 +529,16 @@ class RequisitionService
                         : null;
 
                     $this->stockService->createBatch([
-                        'product_id'    => $return->product_id,
-                        'store_id'      => $return->destination_store_id,
-                        'batch_number'  => ($sourceBatch->batch_number ?? 'RET') . '-R' . $return->id,
-                        'qty'           => $qty,
-                        'cost_price'    => $sourceBatch->cost_price ?? 0,
+                        'product_id' => $return->product_id,
+                        'store_id' => $return->destination_store_id,
+                        'batch_number' => ($sourceBatch->batch_number ?? 'RET') . '-R' . $return->id,
+                        'qty' => $qty,
+                        'cost_price' => $sourceBatch->cost_price ?? 0,
                         'received_date' => now()->toDateString(),
-                        'source'        => StockBatch::SOURCE_MANUAL,
+                        'source' => StockBatch::SOURCE_MANUAL,
                         'reference_type' => StoreRequisitionReturn::class,
-                        'reference_id'   => $return->id,
-                        'notes'         => "Req Return #{$return->id} — new batch at origin store",
+                        'reference_id' => $return->id,
+                        'notes' => "Req Return #{$return->id} — new batch at origin store",
                     ]);
                 }
             }
@@ -561,7 +574,7 @@ class RequisitionService
                 'fulfilled_qty' => $item->fulfilled_qty,
                 'remaining_qty' => $item->remaining_qty,
                 'available_stock' => $availableBatches->sum('current_qty'),
-                'batches' => $availableBatches->map(fn($b) => [
+                'batches' => $availableBatches->map(fn ($b) => [
                     'id' => $b->id,
                     'batch_number' => $b->batch_number,
                     'current_qty' => $b->current_qty,

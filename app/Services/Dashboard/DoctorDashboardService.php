@@ -2,9 +2,9 @@
 
 namespace App\Services\Dashboard;
 
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Cache;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 
 class DoctorDashboardService
 {
@@ -85,6 +85,7 @@ class DoctorDashboardService
             ->get()
             ->map(function ($row) {
                 $row->time = Carbon::parse($row->created_at)->format('h:i A');
+
                 return $row;
             })
             ->toArray();

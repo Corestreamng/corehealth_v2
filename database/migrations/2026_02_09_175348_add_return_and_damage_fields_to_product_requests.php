@@ -58,7 +58,7 @@ class AddReturnAndDamageFieldsToProductRequests extends Migration
                 'refund_amount', 'return_reason', 'return_condition',
                 'damaged_by', 'damaged_date', 'damaged_qty',
                 'damage_reason', 'damage_type',
-                'approved_by', 'approved_at', 'approval_notes'
+                'approved_by', 'approved_at', 'approval_notes',
             ]);
         });
     }

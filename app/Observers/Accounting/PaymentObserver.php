@@ -2,11 +2,10 @@
 
 namespace App\Observers\Accounting;
 
-use App\Models\Payment;
-use App\Models\ProductOrServiceRequest;
 use App\Models\Accounting\Account;
 use App\Models\Accounting\AccountGroup;
-use App\Models\Accounting\JournalEntry;
+use App\Models\Payment;
+use App\Models\ProductOrServiceRequest;
 use App\Services\Accounting\AccountingService;
 use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Log;
@@ -74,6 +73,7 @@ class PaymentObserver
                     'payment_id' => $payment->id,
                     'journal_entry_id' => $payment->journal_entry_id,
                 ]);
+
                 return;
             }
 
@@ -87,6 +87,7 @@ class PaymentObserver
                         Log::info('PaymentObserver: Skipping JE for ACC_DEPOSIT - PatientDeposit exists', [
                             'payment_id' => $payment->id,
                         ]);
+
                         return;
                     }
                 }
@@ -99,7 +100,7 @@ class PaymentObserver
                 'payment_id' => $payment->id,
                 'payment_type' => $payment->payment_type,
                 'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
+                'trace' => $e->getTraceAsString(),
             ]);
         }
     }
@@ -118,6 +119,7 @@ class PaymentObserver
             Log::warning('PaymentObserver: Patient Deposits Liability account (2200) not found', [
                 'payment_id' => $payment->id,
             ]);
+
             return;
         }
 
@@ -131,7 +133,9 @@ class PaymentObserver
                 // Patient deposits money into their account
                 // DEBIT: Cash/Bank, CREDIT: Patient Deposits Liability
                 $cashAccount = $this->getCashBankAccount($payment);
-                if (!$cashAccount) return;
+                if (!$cashAccount) {
+                    return;
+                }
 
                 $description = "Patient account deposit - {$patientName} | Ref: {$payment->reference_no}";
                 $lines = [
@@ -152,6 +156,7 @@ class PaymentObserver
                         'category' => 'patient_deposit',
                     ],
                 ];
+
                 break;
 
             case 'ACC_WITHDRAW':
@@ -174,6 +179,7 @@ class PaymentObserver
                         Log::warning('PaymentObserver: Revenue account not found for ACC_WITHDRAW', [
                             'payment_id' => $payment->id,
                         ]);
+
                         return;
                     }
 
@@ -205,7 +211,9 @@ class PaymentObserver
                     // Manual withdrawal/refund - cash out to patient
                     // DEBIT: Patient Deposits Liability, CREDIT: Cash/Bank
                     $cashAccount = $this->getCashBankAccount($payment);
-                    if (!$cashAccount) return;
+                    if (!$cashAccount) {
+                        return;
+                    }
 
                     $description = "Patient account withdrawal - {$patientName} | Ref: {$payment->reference_no}";
                     $lines = [
@@ -227,6 +235,7 @@ class PaymentObserver
                         ],
                     ];
                 }
+
                 break;
 
             case 'ACC_ADJUSTMENT':
@@ -239,7 +248,9 @@ class PaymentObserver
                     $overageAccount = Account::where('code', self::CASH_OVERAGE)->first()
                         ?? Account::where('code', '4000')->first();
 
-                    if (!$overageAccount) return;
+                    if (!$overageAccount) {
+                        return;
+                    }
 
                     $description = "Patient account adjustment (+) - {$patientName} | Ref: {$payment->reference_no}";
                     $lines = [
@@ -266,7 +277,9 @@ class PaymentObserver
                     $shortageAccount = Account::where('code', self::CASH_SHORTAGE)->first()
                         ?? Account::where('code', '5000')->first();
 
-                    if (!$shortageAccount) return;
+                    if (!$shortageAccount) {
+                        return;
+                    }
 
                     $description = "Patient account adjustment (-) - {$patientName} | Ref: {$payment->reference_no}";
                     $lines = [
@@ -288,13 +301,16 @@ class PaymentObserver
                         ],
                     ];
                 }
+
                 break;
 
             default:
                 return;
         }
 
-        if (empty($lines)) return;
+        if (empty($lines)) {
+            return;
+        }
 
         $entry = $accountingService->createAndPostAutomatedEntry(
             Payment::class,
@@ -324,7 +340,9 @@ class PaymentObserver
         // If payment has a specific account_id set, use it directly
         if ($payment->account_id) {
             $account = Account::find($payment->account_id);
-            if ($account) return $account;
+            if ($account) {
+                return $account;
+            }
         }
 
         // If bank_id is set, use that bank's GL account
@@ -340,6 +358,7 @@ class PaymentObserver
                         'account_id' => $account->id,
                         'account_code' => $account->code,
                     ]);
+
                     return $account;
                 }
             }
@@ -375,11 +394,21 @@ class PaymentObserver
         if ($item) {
             if ($item->service) {
                 $categoryName = strtolower($item->service->category?->category_name ?? '');
-                if (str_contains($categoryName, 'consult')) return '4010';
-                if (str_contains($categoryName, 'lab')) return '4030';
-                if (str_contains($categoryName, 'imag') || str_contains($categoryName, 'radio')) return '4040';
-                if (str_contains($categoryName, 'procedure')) return '4050';
-                if (str_contains($categoryName, 'admission') || str_contains($categoryName, 'ward')) return '4060';
+                if (str_contains($categoryName, 'consult')) {
+                    return '4010';
+                }
+                if (str_contains($categoryName, 'lab')) {
+                    return '4030';
+                }
+                if (str_contains($categoryName, 'imag') || str_contains($categoryName, 'radio')) {
+                    return '4040';
+                }
+                if (str_contains($categoryName, 'procedure')) {
+                    return '4050';
+                }
+                if (str_contains($categoryName, 'admission') || str_contains($categoryName, 'ward')) {
+                    return '4060';
+                }
             }
             if ($item->product) {
                 return '4020'; // Pharmacy revenue
@@ -407,8 +436,9 @@ class PaymentObserver
             Log::warning('PaymentObserver: Skipped - accounts not configured', [
                 'payment_id' => $payment->id,
                 'debit_code' => $debitAccountCode,
-                'credit_code' => $creditAccountCode
+                'credit_code' => $creditAccountCode,
             ]);
+
             return;
         }
 

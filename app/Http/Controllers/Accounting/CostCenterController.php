@@ -6,19 +6,18 @@ use App\Http\Controllers\Controller;
 use App\Models\Accounting\Account;
 use App\Models\Accounting\CostCenter;
 use App\Models\Accounting\CostCenterBudget;
-use App\Models\Accounting\JournalEntryLine;
-use App\Models\Accounting\JournalEntry;
 use App\Models\Accounting\FiscalYear;
+use App\Models\Accounting\JournalEntry;
+use App\Models\Accounting\JournalEntryLine;
 use App\Models\Department;
 use App\Models\User;
 use App\Services\Accounting\ExcelExportService;
+use Barryvdh\DomPDF\Facade\Pdf;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Yajra\DataTables\Facades\DataTables;
-use Barryvdh\DomPDF\Facade\Pdf;
-use Carbon\Carbon;
 
 /**
  * Cost Center Controller
@@ -78,26 +77,26 @@ class CostCenterController extends Controller
 
         // MTD and YTD expenses
         $mtdExpenses = JournalEntryLine::whereNotNull('cost_center_id')
-            ->whereHas('journalEntry', fn($q) => $q
+            ->whereHas('journalEntry', fn ($q) => $q
                 ->where('status', JournalEntry::STATUS_POSTED)
                 ->whereBetween('entry_date', [$startOfMonth, $endOfMonth]))
-            ->whereHas('account.accountGroup.accountClass', fn($q) => $q->where('name', 'EXPENSE'))
+            ->whereHas('account.accountGroup.accountClass', fn ($q) => $q->where('name', 'EXPENSE'))
             ->sum('debit');
 
         $ytdExpenses = JournalEntryLine::whereNotNull('cost_center_id')
-            ->whereHas('journalEntry', fn($q) => $q
+            ->whereHas('journalEntry', fn ($q) => $q
                 ->where('status', JournalEntry::STATUS_POSTED)
                 ->whereBetween('entry_date', [$startOfYear, $endOfYear]))
-            ->whereHas('account.accountGroup.accountClass', fn($q) => $q->where('name', 'EXPENSE'))
+            ->whereHas('account.accountGroup.accountClass', fn ($q) => $q->where('name', 'EXPENSE'))
             ->sum('debit');
 
         // Top cost centers by expense
         $topCenters = CostCenter::where('is_active', true)
             ->withSum(['journalEntryLines' => function ($q) use ($startOfYear, $endOfYear) {
-                $q->whereHas('journalEntry', fn($je) => $je
+                $q->whereHas('journalEntry', fn ($je) => $je
                     ->where('status', JournalEntry::STATUS_POSTED)
                     ->whereBetween('entry_date', [$startOfYear, $endOfYear]))
-                  ->whereHas('account.accountGroup.accountClass', fn($a) => $a->where('name', 'EXPENSE'));
+                  ->whereHas('account.accountGroup.accountClass', fn ($a) => $a->where('name', 'EXPENSE'));
             }], 'debit')
             ->orderByDesc('journal_entry_lines_sum_debit')
             ->limit(5)
@@ -154,9 +153,9 @@ class CostCenterController extends Controller
         $endOfYear = now()->endOfYear()->toDateString();
 
         return DataTables::of($query)
-            ->addColumn('department_name', fn($c) => $c->department?->name ?? 'N/A')
-            ->addColumn('manager_name', fn($c) => $c->manager ? ($c->manager->surname . ' ' . $c->manager->firstname) : 'N/A')
-            ->addColumn('parent_name', fn($c) => $c->parent?->name ?? '-')
+            ->addColumn('department_name', fn ($c) => $c->department?->name ?? 'N/A')
+            ->addColumn('manager_name', fn ($c) => $c->manager ? ($c->manager->surname . ' ' . $c->manager->firstname) : 'N/A')
+            ->addColumn('parent_name', fn ($c) => $c->parent?->name ?? '-')
             ->addColumn('ytd_expenses', function ($c) use ($startOfYear, $endOfYear) {
                 return $c->getExpensesForPeriod($startOfYear, $endOfYear);
             })
@@ -167,6 +166,7 @@ class CostCenterController extends Controller
                     'service' => 'info',
                     'project' => 'warning',
                 ];
+
                 return '<span class="badge badge-' . ($colors[$c->center_type] ?? 'secondary') . '">'
                     . ucfirst($c->center_type) . '</span>';
             })
@@ -181,6 +181,7 @@ class CostCenterController extends Controller
                 $actions .= '<a href="' . route('accounting.cost-centers.edit', $c) . '" class="btn btn-warning" title="Edit"><i class="mdi mdi-pencil"></i></a>';
                 $actions .= '<a href="' . route('accounting.cost-centers.report', $c) . '" class="btn btn-primary" title="Report"><i class="mdi mdi-file-chart"></i></a>';
                 $actions .= '</div>';
+
                 return $actions;
             })
             ->rawColumns(['type_badge', 'status_badge', 'actions'])
@@ -264,7 +265,7 @@ class CostCenterController extends Controller
         // Recent transactions
         $recentTransactions = JournalEntryLine::where('cost_center_id', $costCenter->id)
             ->with(['journalEntry', 'account'])
-            ->whereHas('journalEntry', fn($q) => $q->where('status', JournalEntry::STATUS_POSTED))
+            ->whereHas('journalEntry', fn ($q) => $q->where('status', JournalEntry::STATUS_POSTED))
             ->orderByDesc('created_at')
             ->limit(20)
             ->get();
@@ -363,7 +364,7 @@ class CostCenterController extends Controller
 
         // Get expenses by account
         $expensesByAccount = JournalEntryLine::where('cost_center_id', $costCenter->id)
-            ->whereHas('journalEntry', fn($q) => $q
+            ->whereHas('journalEntry', fn ($q) => $q
                 ->where('status', JournalEntry::STATUS_POSTED)
                 ->whereBetween('entry_date', [$fromDate, $toDate]))
             ->with('account')
@@ -372,15 +373,16 @@ class CostCenterController extends Controller
                 SUM(credit) as total_credit')
             ->groupBy('account_id')
             ->get()
-            ->map(function($item) {
+            ->map(function ($item) {
                 $item->account_code = $item->account->code ?? 'N/A';
                 $item->account_name = $item->account->name ?? 'Unknown';
+
                 return $item;
             });
 
         // Monthly trend - get both revenue and expenses
         $monthlyTrend = JournalEntryLine::where('cost_center_id', $costCenter->id)
-            ->whereHas('journalEntry', fn($q) => $q
+            ->whereHas('journalEntry', fn ($q) => $q
                 ->where('status', JournalEntry::STATUS_POSTED)
                 ->whereBetween('entry_date', [$fromDate, $toDate]))
             ->join('journal_entries', 'journal_entry_lines.journal_entry_id', '=', 'journal_entries.id')
@@ -404,7 +406,7 @@ class CostCenterController extends Controller
 
         // Get all transactions for the period
         $transactions = JournalEntryLine::where('cost_center_id', $costCenter->id)
-            ->whereHas('journalEntry', fn($q) => $q
+            ->whereHas('journalEntry', fn ($q) => $q
                 ->where('status', JournalEntry::STATUS_POSTED)
                 ->whereBetween('entry_date', [$fromDate, $toDate]))
             ->with(['journalEntry', 'account'])
@@ -415,7 +417,7 @@ class CostCenterController extends Controller
         $summary = [
             'total_revenue' => $costCenter->getRevenueForPeriod($fromDate, $toDate),
             'total_expenses' => $costCenter->getExpensesForPeriod($fromDate, $toDate),
-            'transaction_count' => $transactions->count()
+            'transaction_count' => $transactions->count(),
         ];
 
         return view('accounting.cost-centers.report', compact(
@@ -442,7 +444,7 @@ class CostCenterController extends Controller
 
         // Get data (same as report method)
         $expensesByAccount = JournalEntryLine::where('cost_center_id', $costCenter->id)
-            ->whereHas('journalEntry', fn($q) => $q
+            ->whereHas('journalEntry', fn ($q) => $q
                 ->where('status', JournalEntry::STATUS_POSTED)
                 ->whereBetween('entry_date', [$fromDate, $toDate]))
             ->with('account')
@@ -451,14 +453,15 @@ class CostCenterController extends Controller
                 SUM(credit) as total_credit')
             ->groupBy('account_id')
             ->get()
-            ->map(function($item) {
+            ->map(function ($item) {
                 $item->account_code = $item->account->code ?? 'N/A';
                 $item->account_name = $item->account->name ?? 'Unknown';
+
                 return $item;
             });
 
         $monthlyTrend = JournalEntryLine::where('cost_center_id', $costCenter->id)
-            ->whereHas('journalEntry', fn($q) => $q
+            ->whereHas('journalEntry', fn ($q) => $q
                 ->where('status', JournalEntry::STATUS_POSTED)
                 ->whereBetween('entry_date', [$fromDate, $toDate]))
             ->join('journal_entries', 'journal_entry_lines.journal_entry_id', '=', 'journal_entries.id')
@@ -480,7 +483,7 @@ class CostCenterController extends Controller
             : null;
 
         $transactions = JournalEntryLine::where('cost_center_id', $costCenter->id)
-            ->whereHas('journalEntry', fn($q) => $q
+            ->whereHas('journalEntry', fn ($q) => $q
                 ->where('status', JournalEntry::STATUS_POSTED)
                 ->whereBetween('entry_date', [$fromDate, $toDate]))
             ->with(['journalEntry', 'account'])
@@ -490,7 +493,7 @@ class CostCenterController extends Controller
         $summary = [
             'total_revenue' => $costCenter->getRevenueForPeriod($fromDate, $toDate),
             'total_expenses' => $costCenter->getExpensesForPeriod($fromDate, $toDate),
-            'transaction_count' => $transactions->count()
+            'transaction_count' => $transactions->count(),
         ];
 
         $pdf = Pdf::loadView('accounting.cost-centers.report-pdf', compact(
@@ -517,7 +520,7 @@ class CostCenterController extends Controller
 
         // Get data
         $expensesByAccount = JournalEntryLine::where('cost_center_id', $costCenter->id)
-            ->whereHas('journalEntry', fn($q) => $q
+            ->whereHas('journalEntry', fn ($q) => $q
                 ->where('status', JournalEntry::STATUS_POSTED)
                 ->whereBetween('entry_date', [$fromDate, $toDate]))
             ->with('account')
@@ -526,14 +529,15 @@ class CostCenterController extends Controller
                 SUM(credit) as total_credit')
             ->groupBy('account_id')
             ->get()
-            ->map(function($item) {
+            ->map(function ($item) {
                 $item->account_code = $item->account->code ?? 'N/A';
                 $item->account_name = $item->account->name ?? 'Unknown';
+
                 return $item;
             });
 
         $transactions = JournalEntryLine::where('cost_center_id', $costCenter->id)
-            ->whereHas('journalEntry', fn($q) => $q
+            ->whereHas('journalEntry', fn ($q) => $q
                 ->where('status', JournalEntry::STATUS_POSTED)
                 ->whereBetween('entry_date', [$fromDate, $toDate]))
             ->with(['journalEntry', 'account'])
@@ -543,7 +547,7 @@ class CostCenterController extends Controller
         $summary = [
             'total_revenue' => $costCenter->getRevenueForPeriod($fromDate, $toDate),
             'total_expenses' => $costCenter->getExpensesForPeriod($fromDate, $toDate),
-            'transaction_count' => $transactions->count()
+            'transaction_count' => $transactions->count(),
         ];
 
         return $excelService->exportCostCenterReport(
@@ -565,8 +569,9 @@ class CostCenterController extends Controller
             ->orderByDesc('year')
             ->orderByDesc('created_at')
             ->get()
-            ->map(function($budget) {
+            ->map(function ($budget) {
                 $budget->fiscal_year = $budget->year; // Add fiscal_year property for view compatibility
+
                 return $budget;
             });
 
@@ -577,7 +582,7 @@ class CostCenterController extends Controller
             ->whereHas('accountGroup')
             ->orderBy('code')
             ->get()
-            ->groupBy(fn($account) => $account->accountGroup ? $account->accountGroup->name : 'Uncategorized');
+            ->groupBy(fn ($account) => $account->accountGroup ? $account->accountGroup->name : 'Uncategorized');
 
         return view('accounting.cost-centers.budgets', compact('costCenter', 'budgets', 'fiscalYears', 'accounts'));
     }
@@ -741,6 +746,7 @@ class CostCenterController extends Controller
                 ->with('success', 'Cost allocation recorded successfully.');
         } catch (\Exception $e) {
             DB::rollBack();
+
             return redirect()
                 ->back()
                 ->with('error', 'Failed to record allocation: ' . $e->getMessage())
@@ -775,8 +781,8 @@ class CostCenterController extends Controller
     public function exportPdf(Request $request)
     {
         $costCenters = CostCenter::with(['department', 'manager'])
-            ->when($request->type, fn($q, $type) => $q->where('type', $type))
-            ->when($request->is_active !== null, fn($q) => $q->where('is_active', $request->is_active))
+            ->when($request->type, fn ($q, $type) => $q->where('type', $type))
+            ->when($request->is_active !== null, fn ($q) => $q->where('is_active', $request->is_active))
             ->orderBy('code')
             ->get();
 
@@ -787,6 +793,7 @@ class CostCenterController extends Controller
         ];
 
         $pdf = Pdf::loadView('accounting.cost-centers.export-pdf', compact('costCenters', 'stats'));
+
         return $pdf->download('cost-centers-' . now()->format('Y-m-d') . '.pdf');
     }
 
@@ -796,8 +803,8 @@ class CostCenterController extends Controller
     public function exportExcel(Request $request)
     {
         $costCenters = CostCenter::with(['department', 'manager'])
-            ->when($request->type, fn($q, $type) => $q->where('type', $type))
-            ->when($request->is_active !== null, fn($q) => $q->where('is_active', $request->is_active))
+            ->when($request->type, fn ($q, $type) => $q->where('type', $type))
+            ->when($request->is_active !== null, fn ($q) => $q->where('is_active', $request->is_active))
             ->orderBy('code')
             ->get();
 
@@ -808,6 +815,7 @@ class CostCenterController extends Controller
         ];
 
         $excelService = app(ExcelExportService::class);
+
         return $excelService->costCenters($costCenters, $stats);
     }
 }

@@ -36,7 +36,8 @@ use OwenIt\Auditing\Contracts\Auditable;
  */
 class JournalEntryLine extends Model implements Auditable
 {
-    use HasFactory, \OwenIt\Auditing\Auditable;
+    use HasFactory;
+    use \OwenIt\Auditing\Auditable;
 
     protected $fillable = [
         'journal_entry_id',

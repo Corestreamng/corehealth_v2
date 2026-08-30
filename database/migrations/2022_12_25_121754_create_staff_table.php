@@ -18,7 +18,7 @@ class CreateStaffTable extends Migration
             $table->unsignedBigInteger('user_id');
             $table->unsignedBigInteger('specialization_id')->nullable();
             $table->unsignedBigInteger('clinic_id')->nullable();
-            $table->enum('gender',['Male','Female','Others'])->nullable();
+            $table->enum('gender', ['Male','Female','Others'])->nullable();
             $table->timestamp('date_of_birth')->nullable();
             $table->text('home_address')->nullable();
             $table->string('phone_number')->nullable();

@@ -1,8 +1,8 @@
 <?php
 
+use Carbon\Carbon;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Support\Facades\DB;
-use Carbon\Carbon;
 
 /**
  * Migration: Create Initial Stock Batches from Existing Store Stock

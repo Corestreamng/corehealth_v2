@@ -2,16 +2,16 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
 use App\Models\PharmacyDamage;
 use App\Models\Product;
-use App\Models\StoreStock;
 use App\Models\StockBatch;
 use App\Models\Store;
-use Yajra\DataTables\Facades\DataTables;
-use Illuminate\Support\Facades\DB;
+use App\Models\StoreStock;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Yajra\DataTables\Facades\DataTables;
 
 class PharmacyDamagesController extends Controller
 {
@@ -36,7 +36,7 @@ class PharmacyDamagesController extends Controller
                     'rejected' => $rejected,
                     'total_value' => $totalValue,
                     'stock_deducted' => $stockDeducted,
-                ]
+                ],
             ]);
         }
 
@@ -69,7 +69,7 @@ class PharmacyDamagesController extends Controller
             'damage_type' => 'required|in:expired,broken,contaminated,spoiled,theft,other',
             'damage_reason' => 'required|string|min:10',
             'discovered_date' => 'required|date|before_or_equal:today',
-            'notes' => 'nullable|string|max:1000'
+            'notes' => 'nullable|string|max:1000',
         ]);
 
         try {
@@ -86,7 +86,7 @@ class PharmacyDamagesController extends Controller
                 if ($batch->current_qty < $validated['qty_damaged']) {
                     return response()->json([
                         'success' => false,
-                        'message' => 'Insufficient quantity in selected batch. Available: ' . $batch->current_qty
+                        'message' => 'Insufficient quantity in selected batch. Available: ' . $batch->current_qty,
                     ], 422);
                 }
             } else {
@@ -109,9 +109,10 @@ class PharmacyDamagesController extends Controller
 
                     if (!$productStock || $productStock->current_quantity < $validated['qty_damaged']) {
                         $available = $productStock ? $productStock->current_quantity : 0;
+
                         return response()->json([
                             'success' => false,
-                            'message' => 'Insufficient stock. Available: ' . $available
+                            'message' => 'Insufficient stock. Available: ' . $available,
                         ], 422);
                     }
                 }
@@ -124,7 +125,7 @@ class PharmacyDamagesController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => 'Damage report created successfully. Awaiting approval.',
-                'damage_id' => $damage->id
+                'damage_id' => $damage->id,
             ]);
 
         } catch (\Exception $e) {
@@ -133,7 +134,7 @@ class PharmacyDamagesController extends Controller
 
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to create damage report: ' . $e->getMessage()
+                'message' => 'Failed to create damage report: ' . $e->getMessage(),
             ], 500);
         }
     }
@@ -149,7 +150,7 @@ class PharmacyDamagesController extends Controller
             'batch',
             'creator',
             'approver',
-            'journalEntry.lines.account'
+            'journalEntry.lines.account',
         ])->findOrFail($id);
 
         if ($request->ajax()) {
@@ -181,7 +182,7 @@ class PharmacyDamagesController extends Controller
                         'reference' => $damage->journalEntry->reference ?? 'JE-' . $damage->journalEntry->id,
                         'description' => $damage->journalEntry->description,
                         'status' => $damage->journalEntry->status ?? null,
-                        'lines' => $damage->journalEntry->lines->map(function($line) {
+                        'lines' => $damage->journalEntry->lines->map(function ($line) {
                             return [
                                 'account_name' => $line->account->name ?? 'N/A',
                                 'account_code' => $line->account->code ?? '',
@@ -189,9 +190,9 @@ class PharmacyDamagesController extends Controller
                                 'credit' => $line->credit_amount,
                                 'description' => $line->description,
                             ];
-                        })
+                        }),
                     ] : null,
-                ]
+                ],
             ]);
         }
 
@@ -204,7 +205,7 @@ class PharmacyDamagesController extends Controller
     public function approve(Request $request, $id)
     {
         $validated = $request->validate([
-            'approval_notes' => 'nullable|string|max:500'
+            'approval_notes' => 'nullable|string|max:500',
         ]);
 
         try {
@@ -215,7 +216,7 @@ class PharmacyDamagesController extends Controller
             if ($damage->status !== 'pending') {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Only pending damage reports can be approved'
+                    'message' => 'Only pending damage reports can be approved',
                 ], 422);
             }
 
@@ -225,7 +226,7 @@ class PharmacyDamagesController extends Controller
                 if ($batch->current_qty < $damage->qty_damaged) {
                     return response()->json([
                         'success' => false,
-                        'message' => 'Insufficient quantity in batch at approval time. Available: ' . $batch->current_qty
+                        'message' => 'Insufficient quantity in batch at approval time. Available: ' . $batch->current_qty,
                     ], 422);
                 }
             } else {
@@ -235,9 +236,10 @@ class PharmacyDamagesController extends Controller
 
                 if (!$productStock || $productStock->current_quantity < $damage->qty_damaged) {
                     $available = $productStock ? $productStock->current_quantity : 0;
+
                     return response()->json([
                         'success' => false,
-                        'message' => 'Insufficient stock at approval time. Available: ' . $available
+                        'message' => 'Insufficient stock at approval time. Available: ' . $available,
                     ], 422);
                 }
             }
@@ -273,7 +275,7 @@ class PharmacyDamagesController extends Controller
 
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to approve damage report: ' . $e->getMessage()
+                'message' => 'Failed to approve damage report: ' . $e->getMessage(),
             ], 500);
         }
     }
@@ -284,7 +286,7 @@ class PharmacyDamagesController extends Controller
     public function reject(Request $request, $id)
     {
         $validated = $request->validate([
-            'rejection_reason' => 'required|string|min:10'
+            'rejection_reason' => 'required|string|min:10',
         ]);
 
         try {
@@ -295,7 +297,7 @@ class PharmacyDamagesController extends Controller
             if ($damage->status !== 'pending') {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Only pending damage reports can be rejected'
+                    'message' => 'Only pending damage reports can be rejected',
                 ], 422);
             }
 
@@ -309,7 +311,7 @@ class PharmacyDamagesController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => 'Damage report rejected'
+                'message' => 'Damage report rejected',
             ]);
 
         } catch (\Exception $e) {
@@ -318,7 +320,7 @@ class PharmacyDamagesController extends Controller
 
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to reject damage report: ' . $e->getMessage()
+                'message' => 'Failed to reject damage report: ' . $e->getMessage(),
             ], 500);
         }
     }
@@ -333,7 +335,7 @@ class PharmacyDamagesController extends Controller
             'store:id,store_name',
             'batch:id,batch_number',
             'creator:id,surname,firstname,othername',
-            'approver:id,surname,firstname,othername'
+            'approver:id,surname,firstname,othername',
         ]);
 
         // Filter by status
@@ -374,12 +376,14 @@ class PharmacyDamagesController extends Controller
                 $product = $damage->product ? e($damage->product->product_name) : 'N/A';
                 $store = $damage->store ? e($damage->store->store_name) : 'N/A';
                 $batch = $damage->batch ? '<span class="text-info" title="Batch">' . e($damage->batch->batch_number) . '</span>' : '';
+
                 return '<strong>' . $product . '</strong>'
                     . '<br><small class="text-muted"><i class="mdi mdi-store"></i> ' . $store . '</small>'
                     . ($batch ? ' <small>' . $batch . '</small>' : '');
             })
             ->addColumn('details_info', function ($damage) {
                 $date = $damage->discovered_date ? $damage->discovered_date->format('M d, Y') : '-';
+
                 return '<span class="font-weight-bold">' . $damage->qty_damaged . '</span> × ₦' . number_format($damage->unit_cost, 2)
                     . '<br><small class="text-muted">' . $date . '</small>';
             })
@@ -402,6 +406,7 @@ class PharmacyDamagesController extends Controller
                 $stock = $damage->stock_deducted
                     ? '<span class="badge badge-success badge-sm"><i class="fa fa-check"></i></span>'
                     : '<span class="badge badge-secondary badge-sm">—</span>';
+
                 return $type . ' ' . $status . ' ' . $stock;
             })
             ->addColumn('damage_type_badge', function ($damage) {
@@ -413,6 +418,7 @@ class PharmacyDamagesController extends Controller
                     'theft' => '<span class="badge badge-dark">Theft</span>',
                     'other' => '<span class="badge badge-secondary">Other</span>',
                 ];
+
                 return $badges[$damage->damage_type] ?? $damage->damage_type;
             })
             ->addColumn('status_badge', function ($damage) {
@@ -421,6 +427,7 @@ class PharmacyDamagesController extends Controller
                     'approved' => '<span class="badge badge-success">Approved</span>',
                     'rejected' => '<span class="badge badge-danger">Rejected</span>',
                 ];
+
                 return $badges[$damage->status] ?? $damage->status;
             })
             ->addColumn('created_by_name', function ($damage) {
@@ -433,6 +440,7 @@ class PharmacyDamagesController extends Controller
                 if ($damage->stock_deducted) {
                     return '<span class="badge badge-success"><i class="fa fa-check"></i> Deducted</span>';
                 }
+
                 return '<span class="badge badge-secondary">Not Deducted</span>';
             })
             ->addColumn('actions', function ($damage) {
@@ -445,6 +453,7 @@ class PharmacyDamagesController extends Controller
                 }
 
                 $actions .= '</div>';
+
                 return $actions;
             })
             ->rawColumns(['damage_type_badge', 'status_badge', 'stock_deducted_badge', 'item_info', 'details_info', 'status_info', 'actions'])
@@ -464,17 +473,17 @@ class PharmacyDamagesController extends Controller
         }
 
         $products = Product::select(
-                'products.id',
-                'products.product_name',
-                'products.product_code',
-                'store_stocks.current_quantity',
-                'prices.pr_buy_price as unit_cost'
-            )
+            'products.id',
+            'products.product_name',
+            'products.product_code',
+            'store_stocks.current_quantity',
+            'prices.pr_buy_price as unit_cost'
+        )
             ->join('store_stocks', 'products.id', '=', 'store_stocks.product_id')
             ->leftJoin('prices', 'products.id', '=', 'prices.product_id')
             ->where('store_stocks.store_id', $storeId)
             ->where('store_stocks.current_quantity', '>', 0)
-            ->where(function($q) use ($search) {
+            ->where(function ($q) use ($search) {
                 $q->where('products.product_name', 'LIKE', "%{$search}%")
                   ->orWhere('products.product_code', 'LIKE', "%{$search}%");
             })
@@ -482,14 +491,14 @@ class PharmacyDamagesController extends Controller
             ->limit(50)
             ->get();
 
-        return response()->json($products->map(function($product) {
+        return response()->json($products->map(function ($product) {
             return [
                 'id' => $product->id,
                 'text' => $product->product_name . ($product->product_code ? ' (' . $product->product_code . ')' : '') . ' - Stock: ' . $product->current_quantity,
                 'product_name' => $product->product_name,
                 'product_code' => $product->product_code,
                 'current_quantity' => $product->current_quantity,
-                'unit_cost' => $product->unit_cost
+                'unit_cost' => $product->unit_cost,
             ];
         }));
     }
@@ -512,14 +521,14 @@ class PharmacyDamagesController extends Controller
             ->orderBy('expiry_date')
             ->get(['id', 'batch_number', 'expiry_date', 'current_qty', 'cost_price']);
 
-        return response()->json($batches->map(function($batch) {
+        return response()->json($batches->map(function ($batch) {
             return [
                 'id' => $batch->id,
                 'text' => $batch->batch_number . ' (Exp: ' . $batch->expiry_date . ') - Available: ' . $batch->current_qty,
                 'batch_number' => $batch->batch_number,
                 'expiry_date' => $batch->expiry_date ? $batch->expiry_date->format('Y-m-d') : null,
                 'quantity_available' => $batch->current_qty,
-                'unit_cost' => $batch->cost_price
+                'unit_cost' => $batch->cost_price,
             ];
         }));
     }

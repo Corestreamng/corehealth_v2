@@ -4,14 +4,13 @@ namespace App\Http\Controllers\HR;
 
 use App\Http\Controllers\Controller;
 use App\Models\Expense;
-use App\Models\HR\DisciplinaryQuery;
 use App\Models\HR\StaffTermination;
 use App\Models\Staff;
 use App\Services\DisciplinaryService;
 use App\Services\HrAttachmentService;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
-use Carbon\Carbon;
 
 /**
  * HRMS Implementation Plan - Section 7.2
@@ -20,6 +19,7 @@ use Carbon\Carbon;
 class StaffTerminationController extends Controller
 {
     protected DisciplinaryService $disciplinaryService;
+
     protected HrAttachmentService $attachmentService;
 
     public function __construct(DisciplinaryService $disciplinaryService, HrAttachmentService $attachmentService)
@@ -60,7 +60,7 @@ class StaffTerminationController extends Controller
         }
         if ($request->filled('status')) {
             if ($request->status === 'pending') {
-                $query->where(function($q) {
+                $query->where(function ($q) {
                     $q->where('clearance_completed', false)
                       ->orWhere('final_payment_processed', false);
                 });
@@ -76,6 +76,7 @@ class StaffTerminationController extends Controller
                 ->addIndexColumn()
                 ->addColumn('staff_name', function ($t) {
                     $user = $t->staff->user ?? null;
+
                     return $user ? $user->surname . ' ' . $user->firstname . ' ' . $user->othername : 'N/A';
                 })
                 ->addColumn('termination_type_badge', function ($t) {
@@ -84,9 +85,10 @@ class StaffTerminationController extends Controller
                         'involuntary' => 'danger',
                         'retirement' => 'success',
                         'death' => 'dark',
-                        'contract_end' => 'secondary'
+                        'contract_end' => 'secondary',
                     ];
                     $color = $colors[$t->type] ?? 'secondary';
+
                     return '<span class="badge badge-' . $color . '">' . ucfirst(str_replace('_', ' ', $t->type)) . '</span>';
                 })
                 ->editColumn('last_working_day', function ($t) {
@@ -104,6 +106,7 @@ class StaffTerminationController extends Controller
                 })
                 ->addColumn('status_badge', function ($t) {
                     $completed = $t->clearance_completed && $t->final_payment_processed;
+
                     return $completed
                         ? '<span class="badge badge-success">Completed</span>'
                         : '<span class="badge badge-warning">Pending</span>';
@@ -117,6 +120,7 @@ class StaffTerminationController extends Controller
                     if (!$t->clearance_completed || !$t->final_payment_processed) {
                         $completeBtn = '<button type="button" class="btn btn-sm btn-success complete-btn" data-id="' . $t->id . '" title="Complete Exit"><i class="mdi mdi-check-circle"></i></button>';
                     }
+
                     return $viewBtn . $completeBtn;
                 })
                 ->rawColumns(['termination_type_badge', 'exit_interview', 'clearance', 'status_badge', 'action'])
@@ -155,6 +159,7 @@ class StaffTerminationController extends Controller
             if ($request->ajax()) {
                 return response()->json(['success' => false, 'errors' => $validator->errors()], 422);
             }
+
             return back()->withErrors($validator)->withInput();
         }
 
@@ -187,7 +192,7 @@ class StaffTerminationController extends Controller
                 return response()->json([
                     'success' => true,
                     'message' => 'Termination has been processed. Staff member\'s access has been revoked.',
-                    'termination' => $termination->load(['staff.user', 'processedBy'])
+                    'termination' => $termination->load(['staff.user', 'processedBy']),
                 ]);
             }
 
@@ -197,6 +202,7 @@ class StaffTerminationController extends Controller
             if ($request->ajax()) {
                 return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
             }
+
             return back()->withErrors(['error' => $e->getMessage()])->withInput();
         }
     }
@@ -207,7 +213,7 @@ class StaffTerminationController extends Controller
             'staff.user',
             'processedBy',
             'disciplinaryQuery',
-            'attachments.uploadedBy'
+            'attachments.uploadedBy',
         ]);
 
         // Return JSON for AJAX requests
@@ -219,7 +225,7 @@ class StaffTerminationController extends Controller
                 'involuntary' => 'danger',
                 'retirement' => 'success',
                 'death' => 'dark',
-                'contract_end' => 'secondary'
+                'contract_end' => 'secondary',
             ];
             $color = $colors[$termination->type] ?? 'secondary';
 
@@ -251,7 +257,7 @@ class StaffTerminationController extends Controller
                 'disciplinary_query' => $termination->disciplinaryQuery ? [
                     'id' => $termination->disciplinaryQuery->id,
                     'query_number' => $termination->disciplinaryQuery->query_number,
-                    'subject' => $termination->disciplinaryQuery->subject
+                    'subject' => $termination->disciplinaryQuery->subject,
                 ] : null,
             ]);
         }
@@ -282,6 +288,7 @@ class StaffTerminationController extends Controller
             if ($request->ajax()) {
                 return response()->json(['success' => false, 'errors' => $validator->errors()], 422);
             }
+
             return back()->withErrors($validator)->withInput();
         }
 
@@ -298,7 +305,7 @@ class StaffTerminationController extends Controller
             if ($request->ajax()) {
                 return response()->json([
                     'success' => true,
-                    'message' => 'Termination record updated.'
+                    'message' => 'Termination record updated.',
                 ]);
             }
 
@@ -308,6 +315,7 @@ class StaffTerminationController extends Controller
             if ($request->ajax()) {
                 return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
             }
+
             return back()->withErrors(['error' => $e->getMessage()])->withInput();
         }
     }
@@ -326,6 +334,7 @@ class StaffTerminationController extends Controller
             if ($request->ajax()) {
                 return response()->json(['success' => false, 'errors' => $validator->errors()], 422);
             }
+
             return back()->withErrors($validator)->withInput();
         }
 
@@ -352,7 +361,7 @@ class StaffTerminationController extends Controller
             if ($request->ajax()) {
                 return response()->json([
                     'success' => true,
-                    'message' => 'Exit process updated successfully.'
+                    'message' => 'Exit process updated successfully.',
                 ]);
             }
 
@@ -362,6 +371,7 @@ class StaffTerminationController extends Controller
             if ($request->ajax()) {
                 return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
             }
+
             return back()->with('error', $e->getMessage());
         }
     }

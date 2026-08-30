@@ -31,6 +31,7 @@ class StoreRequisitionReturnObserver
         try {
             if ($return->stock_adjusted) {
                 Log::info('StoreRequisitionReturnObserver: Stock already adjusted, skipping', ['return_id' => $return->id]);
+
                 return;
             }
 
@@ -39,7 +40,7 @@ class StoreRequisitionReturnObserver
                 $service->returnItems($return);
 
                 $return->update([
-                    'stock_adjusted'    => true,
+                    'stock_adjusted' => true,
                     'stock_adjusted_at' => now(),
                 ]);
             });
@@ -47,7 +48,7 @@ class StoreRequisitionReturnObserver
         } catch (\Exception $e) {
             Log::error('StoreRequisitionReturnObserver: Failed', [
                 'return_id' => $return->id,
-                'error'     => $e->getMessage(),
+                'error' => $e->getMessage(),
             ]);
         }
     }

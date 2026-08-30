@@ -16,6 +16,7 @@ class SpecializationController extends Controller
     {
         // Retrieve all specializations and return them as a JSON response
         $specializations = Specialization::all();
+
         return view('admin.specialization.index', ['specializations' => $specializations]);
     }
 

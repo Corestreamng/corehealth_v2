@@ -2,33 +2,33 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
+use App\Helpers\BatchHelper;
+use App\Helpers\HmoHelper;
+use App\Models\AdmissionRequest;
+use App\Models\DoctorQueue;
+use App\Models\Hmo;
 use App\Models\Patient;
-use App\Models\ProductRequest;
-use App\Models\ProductOrServiceRequest;
 use App\Models\Product;
 use App\Models\ProductCategory;
-use App\Models\User;
-use App\Models\Store;
-use App\Models\StoreStock;
-use App\Models\StockBatch;
-use App\Models\Hmo;
-use App\Models\DoctorQueue;
-use App\Models\AdmissionRequest;
+use App\Models\ProductOrServiceRequest;
+use App\Models\ProductRequest;
 use App\Models\Service;
 use App\Models\ServiceBundleItem;
-use App\Helpers\HmoHelper;
-use App\Helpers\BatchHelper;
+use App\Models\StockBatch;
+use App\Models\Store;
+use App\Models\StoreContextRule;
+use App\Models\StoreStock;
+use App\Models\User;
 use App\Services\StockService;
 use App\Services\StoreContextResolver;
-use App\Models\StoreContextRule;
-use Illuminate\Support\Facades\Gate;
 use Carbon\Carbon;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Log;
-use Yajra\DataTables\DataTables;
 use PDF;
+use Yajra\DataTables\DataTables;
 
 /**
  * PharmacyWorkbenchController
@@ -53,8 +53,8 @@ class PharmacyWorkbenchController extends Controller
     public function index()
     {
         // ── Store Governance: context resolution (Plan §10, §B3) ─────────────
-        $resolver            = app(StoreContextResolver::class);
-        $resolvedStore       = $resolver->resolve(auth()->user());
+        $resolver = app(StoreContextResolver::class);
+        $resolvedStore = $resolver->resolve(auth()->user());
         $contextFallbackAction = $resolvedStore ? null : StoreContextRule::fallbackAction();
 
         // Candidate stores: pharmacy-type bucket + user's dept store + rule-configured stores.
@@ -74,21 +74,21 @@ class PharmacyWorkbenchController extends Controller
      */
     public function setStoreContext(\Illuminate\Http\Request $request)
     {
-        if (! auth()->user()->can('store-context.change-manual')) {
+        if (!auth()->user()->can('store-context.change-manual')) {
             return response()->json(['message' => 'You do not have permission to change the store context.'], 403);
         }
 
         $request->validate([
             'store_id' => 'required|integer|exists:stores,id',
-            'context'  => 'required|in:pharmacy,ward',
+            'context' => 'required|in:pharmacy,ward',
         ]);
 
         $store = Store::find($request->store_id);
-        if (! $store || ! $store->status) {
+        if (!$store || !$store->status) {
             return response()->json(['message' => 'The selected store is inactive.'], 422);
         }
 
-        $context  = $request->input('context');
+        $context = $request->input('context');
         $resolver = app(\App\Services\StoreContextResolver::class);
 
         // Enforce context-appropriate store — the store must appear in the user's
@@ -96,8 +96,9 @@ class PharmacyWorkbenchController extends Controller
         $candidateIds = $resolver->candidateStores(auth()->user(), $context)
             ->pluck('id');
 
-        if (! $candidateIds->contains($store->id)) {
+        if (!$candidateIds->contains($store->id)) {
             $label = $context === 'pharmacy' ? 'pharmacy workbench' : 'this workbench';
+
             return response()->json(['message' => "That store is not available for the {$label}."], 422);
         }
 
@@ -112,6 +113,7 @@ class PharmacyWorkbenchController extends Controller
     public function clearStoreContext()
     {
         app(\App\Services\StoreContextResolver::class)->clearSessionStore();
+
         return response()->json(['success' => true]);
     }
 
@@ -144,9 +146,9 @@ class PharmacyWorkbenchController extends Controller
                 return [
                     'store_id' => $ss->store_id,
                     'store_name' => $ss->store ? $ss->store->store_name : 'Unknown',
-                    'quantity' => $ss->current_quantity
+                    'quantity' => $ss->current_quantity,
                 ];
-            })
+            }),
         ];
 
         return response()->json($stocks);
@@ -160,7 +162,7 @@ class PharmacyWorkbenchController extends Controller
     {
         $items = ProductRequest::with([
             'product.price', 'product.category', 'encounter', 'patient', 'productOrServiceRequest.payment', 'doctor', 'biller', 'procedureItem.procedure.service',
-            'adaptedFromProduct', 'adapter', 'qtyAdjuster'
+            'adaptedFromProduct', 'adapter', 'qtyAdjuster',
         ])
             ->where('status', 1)
             ->where('patient_id', $patientId)
@@ -206,6 +208,7 @@ class PharmacyWorkbenchController extends Controller
                 if ($item->treatment_plan_id && $item->treatmentPlan && $item->treatmentPlan->isAccessibleBy(Auth::user(), 'pharmacy')) {
                     $html .= "<br><a href='#' class='tp-view-link badge mt-1' style='background-color: #e0f2f1; color: #00796b; border: 1px solid #00897b; text-decoration: none;' data-plan-id='{$item->treatment_plan_id}' onclick='ClinicalOrdersKit.viewTreatmentPlan({$item->treatment_plan_id}); return false;'><i class='fa fa-clipboard-list'></i> " . htmlspecialchars($item->treatment_plan_name) . "</a>";
                 }
+
                 return $html;
             })
             ->addColumn('product_code', function ($item) {
@@ -228,6 +231,7 @@ class PharmacyWorkbenchController extends Controller
                 }
 
                 $cashPrice = optional(optional($item->product)->price)->current_sale_price ?? 0;
+
                 return $cashPrice * ($item->qty ?? 1);
             })
             ->addColumn('claims_amount', function ($item) use ($tariffTotals, $patient) {
@@ -261,6 +265,7 @@ class PharmacyWorkbenchController extends Controller
             })
             ->addColumn('is_validated', function ($item) {
                 $status = optional($item->productOrServiceRequest)->validation_status;
+
                 return in_array($status, ['validated', 'approved', 'awaiting_code']);
             })
             ->addColumn('qty', function ($item) {
@@ -280,21 +285,28 @@ class PharmacyWorkbenchController extends Controller
             })
             ->addColumn('procedure_name', function ($item) {
                 $procedureItem = $item->procedureItem;
+
                 return $procedureItem ? (optional(optional($procedureItem->procedure)->service)->service_name ?? 'Procedure') : null;
             })
             ->addColumn('is_bundled', function ($item) {
                 $procedureItem = $item->procedureItem;
+
                 return $procedureItem ? $procedureItem->is_bundled : false;
             })
             ->addColumn('tariff_preview', function ($item) use ($tariffMap, $patient) {
-                if (!$patient || !$patient->hmo_id) return null;
+                if (!$patient || !$patient->hmo_id) {
+                    return null;
+                }
                 $t = $tariffMap[$item->product_id] ?? null;
-                if (!$t) return ['no_tariff' => true];
+                if (!$t) {
+                    return ['no_tariff' => true];
+                }
                 $qty = $item->qty ?? 1;
+
                 return [
                     'payable_amount' => round($t['payable_amount'] * $qty, 2),
-                    'claims_amount'  => round($t['claims_amount'] * $qty, 2),
-                    'coverage_mode'  => $t['coverage_mode'],
+                    'claims_amount' => round($t['claims_amount'] * $qty, 2),
+                    'coverage_mode' => $t['coverage_mode'],
                 ];
             })
             ->addColumn('price_override', function ($item) {
@@ -313,7 +325,10 @@ class PharmacyWorkbenchController extends Controller
                 return $item->price_override_at ? date('M j, Y h:i A', strtotime($item->price_override_at)) : null;
             })
             ->addColumn('global_stock', function ($item) {
-                if (!$item->product_id) return 0;
+                if (!$item->product_id) {
+                    return 0;
+                }
+
                 // Get stock from StockBatch (source of truth) - filtered by Hub & Satellite stores only
                 return (int) \App\Models\StockBatch::where('product_id', $item->product_id)
                     ->where('current_qty', '>', 0)
@@ -323,7 +338,9 @@ class PharmacyWorkbenchController extends Controller
                     ->sum('current_qty');
             })
             ->addColumn('store_stocks', function ($item) {
-                if (!$item->product_id) return [];
+                if (!$item->product_id) {
+                    return [];
+                }
                 // Get stock grouped by store from StockBatch - filtered by Hub & Satellite stores only
                 $storeStockData = \App\Models\StockBatch::where('product_id', $item->product_id)
                     ->where('current_qty', '>', 0)
@@ -341,9 +358,10 @@ class PharmacyWorkbenchController extends Controller
                     $storeStocks[] = [
                         'store_id' => $batch->store_id,
                         'store_name' => $store ? $store->store_name : 'Unknown Store',
-                        'quantity' => (int) $batch->total_qty
+                        'quantity' => (int) $batch->total_qty,
                     ];
                 }
+
                 return $storeStocks;
             })
             ->addColumn('adapted_from_product_name', function ($item) {
@@ -385,7 +403,7 @@ class PharmacyWorkbenchController extends Controller
     {
         $items = ProductRequest::with([
             'product.price', 'product.category', 'encounter', 'patient', 'productOrServiceRequest.payment', 'doctor', 'biller', 'procedureItem.procedure.service',
-            'adaptedFromProduct', 'adapter', 'qtyAdjuster'
+            'adaptedFromProduct', 'adapter', 'qtyAdjuster',
         ])
             ->where('status', 2)
             ->where('patient_id', $patientId)
@@ -461,6 +479,7 @@ class PharmacyWorkbenchController extends Controller
 
                 $str .= '<hr><b>Dose/Freq:</b> ' . ($item->dose ?? 'N/A');
                 $str .= '<br><b>Qty:</b> ' . ($item->qty ?? 1);
+
                 return $str;
             })
             ->editColumn('created_at', function ($item) {
@@ -468,6 +487,7 @@ class PharmacyWorkbenchController extends Controller
                 $str .= '<b>Requested By:</b> ' . ($item->doctor_id ? userfullname($item->doctor_id) . ' (' . date('h:i a D M j, Y', strtotime($item->created_at)) . ')' : "<span class='badge badge-secondary'>N/A</span>") . '<br>';
                 $str .= '<b>Billed By:</b> ' . ($item->billed_by ? userfullname($item->billed_by) . ' (' . date('h:i a D M j, Y', strtotime($item->billed_date)) . ')' : "<span class='badge badge-secondary'>Not billed</span>") . '<br>';
                 $str .= '</small>';
+
                 return $str;
             })
             ->addColumn('product_name', function ($item) {
@@ -475,6 +495,7 @@ class PharmacyWorkbenchController extends Controller
                 if ($item->treatment_plan_id && $item->treatmentPlan && $item->treatmentPlan->isAccessibleBy(Auth::user(), 'pharmacy')) {
                     $html .= "<br><a href='#' class='tp-view-link badge mt-1' style='background-color: #e0f2f1; color: #00796b; border: 1px solid #00897b; text-decoration: none;' data-plan-id='{$item->treatment_plan_id}' onclick='ClinicalOrdersKit.viewTreatmentPlan({$item->treatment_plan_id}); return false;'><i class='fa fa-clipboard-list'></i> " . htmlspecialchars($item->treatment_plan_name) . "</a>";
                 }
+
                 return $html;
             })
             ->addColumn('product_code', function ($item) {
@@ -485,6 +506,7 @@ class PharmacyWorkbenchController extends Controller
             })
             ->addColumn('payable_amount', function ($item) {
                 $posr = $item->productOrServiceRequest;
+
                 return $posr ? ($posr->payable_amount ?? 0) : (optional(optional($item->product)->price)->current_sale_price ?? 0);
             })
             ->addColumn('claims_amount', function ($item) {
@@ -501,13 +523,19 @@ class PharmacyWorkbenchController extends Controller
             })
             ->addColumn('can_dispense', function ($item) {
                 $posr = $item->productOrServiceRequest;
-                if (!$posr) return true;
+                if (!$posr) {
+                    return true;
+                }
                 $isPaid = optional($posr->payment)->payment_status === 'paid';
                 $isValidated = $posr->validation_status === 'validated';
+
                 return $isPaid || $isValidated;
             })
             ->addColumn('global_stock', function ($item) {
-                if (!$item->product_id) return 0;
+                if (!$item->product_id) {
+                    return 0;
+                }
+
                 // Get stock from StockBatch (source of truth) - filtered by Hub & Satellite stores only
                 return (int) \App\Models\StockBatch::where('product_id', $item->product_id)
                     ->where('current_qty', '>', 0)
@@ -517,7 +545,9 @@ class PharmacyWorkbenchController extends Controller
                     ->sum('current_qty');
             })
             ->addColumn('store_stocks', function ($item) {
-                if (!$item->product_id) return [];
+                if (!$item->product_id) {
+                    return [];
+                }
                 // Get stock grouped by store from StockBatch - filtered by Hub & Satellite stores only
                 $storeStockData = \App\Models\StockBatch::where('product_id', $item->product_id)
                     ->where('current_qty', '>', 0)
@@ -535,9 +565,10 @@ class PharmacyWorkbenchController extends Controller
                     $storeStocks[] = [
                         'store_id' => $batch->store_id,
                         'store_name' => $store ? $store->store_name : 'Unknown Store',
-                        'quantity' => (int) $batch->total_qty
+                        'quantity' => (int) $batch->total_qty,
                     ];
                 }
+
                 return $storeStocks;
             })
             ->addColumn('adapted_from_product_name', function ($item) {
@@ -578,7 +609,7 @@ class PharmacyWorkbenchController extends Controller
     {
         $items = ProductRequest::with([
             'product.price', 'product.category', 'encounter', 'patient', 'productOrServiceRequest.payment', 'productOrServiceRequest.parent.service', 'productOrServiceRequest.parent.children.service', 'productOrServiceRequest.parent.children.product', 'doctor', 'biller', 'dispenser', 'dispensedFromBatch', 'dispensedFromStore',
-            'adaptedFromProduct', 'adapter', 'qtyAdjuster'
+            'adaptedFromProduct', 'adapter', 'qtyAdjuster',
         ])
             ->where('status', 3)
             ->where('patient_id', $patientId)
@@ -593,51 +624,53 @@ class PharmacyWorkbenchController extends Controller
 
         return DataTables::of($items)
             ->addIndexColumn()
-            ->addColumn('product_name', function($item) {
+            ->addColumn('product_name', function ($item) {
                 $html = htmlspecialchars($item->item_name ?? '');
                 if ($item->treatment_plan_id && $item->treatmentPlan && $item->treatmentPlan->isAccessibleBy(Auth::user(), 'pharmacy')) {
                     $html .= "<br><a href='#' class='tp-view-link badge mt-1' style='background-color: #e0f2f1; color: #00796b; border: 1px solid #00897b; text-decoration: none;' data-plan-id='{$item->treatment_plan_id}' onclick='ClinicalOrdersKit.viewTreatmentPlan({$item->treatment_plan_id}); return false;'><i class='fa fa-clipboard-list'></i> " . htmlspecialchars($item->treatment_plan_name) . "</a>";
                 }
+
                 return $html;
             })
-            ->addColumn('product_code', function($item) {
+            ->addColumn('product_code', function ($item) {
                 return optional($item->product)->product_code ?? '';
             })
-            ->addColumn('requested_by', function($item) {
+            ->addColumn('requested_by', function ($item) {
                 return $item->doctor_id ? userfullname($item->doctor_id) : 'N/A';
             })
-            ->addColumn('requested_at', function($item) {
+            ->addColumn('requested_at', function ($item) {
                 return $item->created_at ? date('h:i a D M j, Y', strtotime($item->created_at)) : '';
             })
-            ->addColumn('billed_by', function($item) {
+            ->addColumn('billed_by', function ($item) {
                 return $item->billed_by ? userfullname($item->billed_by) : null;
             })
-            ->addColumn('billed_at', function($item) {
+            ->addColumn('billed_at', function ($item) {
                 return $item->billed_date ? date('h:i a D M j, Y', strtotime($item->billed_date)) : '';
             })
-            ->addColumn('dispensed_by', function($item) {
+            ->addColumn('dispensed_by', function ($item) {
                 return $item->dispensed_by ? userfullname($item->dispensed_by) : null;
             })
-            ->addColumn('dispensed_at', function($item) {
+            ->addColumn('dispensed_at', function ($item) {
                 return $item->dispense_date ? date('h:i a D M j, Y', strtotime($item->dispense_date)) : '';
             })
-            ->addColumn('payable_amount', function($item) {
+            ->addColumn('payable_amount', function ($item) {
                 return optional($item->productOrServiceRequest)->payable_amount ?? 0;
             })
-            ->addColumn('claims_amount', function($item) {
+            ->addColumn('claims_amount', function ($item) {
                 return optional($item->productOrServiceRequest)->claims_amount ?? 0;
             })
-            ->addColumn('is_paid', function($item) {
+            ->addColumn('is_paid', function ($item) {
                 return optional(optional($item->productOrServiceRequest)->payment)->status >= 1;
             })
-            ->addColumn('batch_number', function($item) {
+            ->addColumn('batch_number', function ($item) {
                 return optional($item->dispensedFromBatch)->batch_number ?? null;
             })
-            ->addColumn('batch_expiry', function($item) {
+            ->addColumn('batch_expiry', function ($item) {
                 $batch = $item->dispensedFromBatch;
+
                 return $batch && $batch->expiry_date ? date('M Y', strtotime($batch->expiry_date)) : null;
             })
-            ->addColumn('dispensed_from_store_name', function($item) {
+            ->addColumn('dispensed_from_store_name', function ($item) {
                 return optional($item->dispensedFromStore)->store_name ?? null;
             })
             ->editColumn('dose', function ($item) {
@@ -669,14 +702,14 @@ class PharmacyWorkbenchController extends Controller
                 if ($posr && $posr->is_bundle_item && $posr->parent_id) {
                     $parentReq = $posr->parent;
                     if ($parentReq) {
-                        $bName    = optional($parentReq->service)->service_name ?? 'Combo';
-                        $bPay     = $parentReq->payable_amount ?? 0;
-                        $bClaims  = $parentReq->claims_amount ?? 0;
+                        $bName = optional($parentReq->service)->service_name ?? 'Combo';
+                        $bPay = $parentReq->payable_amount ?? 0;
+                        $bClaims = $parentReq->claims_amount ?? 0;
                         $bChildren = $parentReq->children->map(function ($c) {
                             return ['name' => optional($c->service)->service_name ?? optional($c->product)->product_name ?? 'Item', 'qty' => $c->qty ?? 1, 'price' => $c->payable_amount ?? $c->amount ?? 0];
                         })->values()->toArray();
                         $bDataJson = htmlspecialchars(json_encode(['name' => $bName, 'payable_amount' => $bPay, 'claims_amount' => $bClaims, 'items' => $bChildren]), ENT_QUOTES);
-                        $bNameEsc  = htmlspecialchars($bName, ENT_QUOTES);
+                        $bNameEsc = htmlspecialchars($bName, ENT_QUOTES);
                         $str .= "<div class='bundle-info-block mt-1 p-2 bg-light rounded'>";
                         $str .= "<small class='text-muted d-block mb-1'><i class='mdi mdi-link-variant'></i> <strong>Combo: {$bNameEsc}</strong> &mdash; &#8358;" . number_format($bPay, 2) . " patient / &#8358;" . number_format($bClaims, 2) . " claims</small>";
                         $str .= "<button type='button' class='btn btn-outline-primary btn-sm' onclick='window.BundleViewModal && BundleViewModal.show({$bDataJson})' title='View combo details'><i class='fa fa-info-circle'></i> View Combo</button>";
@@ -692,6 +725,7 @@ class PharmacyWorkbenchController extends Controller
                 $str .= '<b>Billed By:</b> ' . ($item->billed_by ? userfullname($item->billed_by) . ' (' . date('h:i a D M j, Y', strtotime($item->billed_date)) . ')' : "N/A") . '<br>';
                 $str .= '<b>Dispensed By:</b> ' . ($item->dispensed_by ? userfullname($item->dispensed_by) . ' (' . date('h:i a D M j, Y', strtotime($item->dispense_date)) . ')' : "N/A") . '<br>';
                 $str .= '</small>';
+
                 return $str;
             })
             ->addColumn('price', function ($item) {
@@ -707,7 +741,10 @@ class PharmacyWorkbenchController extends Controller
                 return true;
             })
             ->addColumn('global_stock', function ($item) {
-                if (!$item->product_id) return 0;
+                if (!$item->product_id) {
+                    return 0;
+                }
+
                 // Get stock from StockBatch (source of truth) - filtered by Hub & Satellite stores only
                 return (int) \App\Models\StockBatch::where('product_id', $item->product_id)
                     ->where('current_qty', '>', 0)
@@ -717,7 +754,9 @@ class PharmacyWorkbenchController extends Controller
                     ->sum('current_qty');
             })
             ->addColumn('store_stocks', function ($item) {
-                if (!$item->product_id) return [];
+                if (!$item->product_id) {
+                    return [];
+                }
                 // Get stock grouped by store from StockBatch - filtered by Hub & Satellite stores only
                 $storeStockData = \App\Models\StockBatch::where('product_id', $item->product_id)
                     ->where('current_qty', '>', 0)
@@ -735,9 +774,10 @@ class PharmacyWorkbenchController extends Controller
                     $storeStocks[] = [
                         'store_id' => $batch->store_id,
                         'store_name' => $store ? $store->store_name : 'Unknown Store',
-                        'quantity' => (int) $batch->total_qty
+                        'quantity' => (int) $batch->total_qty,
                     ];
                 }
+
                 return $storeStocks;
             })
             ->addColumn('adapted_from_product_name', function ($item) {
@@ -850,7 +890,7 @@ class PharmacyWorkbenchController extends Controller
                 $query->where('status', 2);
             } elseif ($filter === 'hmo') {
                 // Filter for prescriptions with HMO coverage
-                $query->whereHas('productOrServiceRequest', function($q) {
+                $query->whereHas('productOrServiceRequest', function ($q) {
                     $q->where('claims_amount', '>', 0);
                 });
             }
@@ -862,7 +902,7 @@ class PharmacyWorkbenchController extends Controller
                 DB::raw('COUNT(*) as prescription_count'),
                 DB::raw('SUM(CASE WHEN status = 1 THEN 1 ELSE 0 END) as unbilled_count'),
                 DB::raw('SUM(CASE WHEN status = 2 THEN 1 ELSE 0 END) as ready_count'),
-                DB::raw('MAX(created_at) as last_created')
+                DB::raw('MAX(created_at) as last_created'),
             ])
             ->groupBy('patient_id')
             ->orderByDesc('last_created')
@@ -923,7 +963,7 @@ class PharmacyWorkbenchController extends Controller
     public function getQueueCounts()
     {
         $totalCount = ProductRequest::whereIn('status', [1, 2])
-            ->where(function($q) {
+            ->where(function ($q) {
                 $q->whereNull('is_free_form')->orWhere('is_free_form', 0);
             })
             ->select('patient_id')
@@ -931,7 +971,7 @@ class PharmacyWorkbenchController extends Controller
             ->count();
 
         $unbilledCount = ProductRequest::where('status', 1)
-            ->where(function($q) {
+            ->where(function ($q) {
                 $q->whereNull('is_free_form')->orWhere('is_free_form', 0);
             })
             ->select('patient_id')
@@ -939,7 +979,7 @@ class PharmacyWorkbenchController extends Controller
             ->count();
 
         $readyCount = ProductRequest::where('status', 2)
-            ->where(function($q) {
+            ->where(function ($q) {
                 $q->whereNull('is_free_form')->orWhere('is_free_form', 0);
             })
             ->select('patient_id')
@@ -947,10 +987,10 @@ class PharmacyWorkbenchController extends Controller
             ->count();
 
         $hmoCount = ProductRequest::whereIn('status', [1, 2])
-            ->where(function($q) {
+            ->where(function ($q) {
                 $q->whereNull('is_free_form')->orWhere('is_free_form', 0);
             })
-            ->whereHas('productOrServiceRequest', function($q) {
+            ->whereHas('productOrServiceRequest', function ($q) {
                 $q->where('claims_amount', '>', 0);
             })
             ->select('patient_id')
@@ -1018,7 +1058,7 @@ class PharmacyWorkbenchController extends Controller
             'productOrServiceRequest.parent.payment',
             'adaptedFromProduct',
             'adapter',
-            'qtyAdjuster'
+            'qtyAdjuster',
             ])
             ->where('patient_id', $patientId)
             ->where(function ($subQuery) {
@@ -1043,7 +1083,7 @@ class PharmacyWorkbenchController extends Controller
             } elseif ($statusFilter === 'billed') {
                 // Billed but not yet paid/validated for HMO
                 $query->where('status', 2)
-                      ->where(function($q) {
+                      ->where(function ($q) {
                           $q->where(function ($own) {
                               $own->whereHas('productOrServiceRequest', function ($sq) {
                                   $sq->whereNull('payment_id')
@@ -1067,17 +1107,17 @@ class PharmacyWorkbenchController extends Controller
             } elseif ($statusFilter === 'ready') {
                 // Ready to dispense: billed AND (paid OR HMO validated)
                 $query->where('status', 2)
-                      ->where(function($q) {
-                          $q->whereHas('productOrServiceRequest', function($sq) {
-                                $sq->whereNotNull('payment_id');
-                            })
-                            ->orWhereHas('productOrServiceRequest', function($sq) {
+                      ->where(function ($q) {
+                          $q->whereHas('productOrServiceRequest', function ($sq) {
+                              $sq->whereNotNull('payment_id');
+                          })
+                            ->orWhereHas('productOrServiceRequest', function ($sq) {
                                 $sq->whereIn('validation_status', ['validated', 'approved', 'awaiting_code']);
                             })
-                            ->orWhereHas('productOrServiceRequest.parent', function($sq) {
+                            ->orWhereHas('productOrServiceRequest.parent', function ($sq) {
                                 $sq->whereNotNull('payment_id');
                             })
-                            ->orWhereHas('productOrServiceRequest.parent', function($sq) {
+                            ->orWhereHas('productOrServiceRequest.parent', function ($sq) {
                                 $sq->whereIn('validation_status', ['validated', 'approved', 'awaiting_code']);
                             });
                       });
@@ -1102,80 +1142,80 @@ class PharmacyWorkbenchController extends Controller
         }
 
         $items = $records->map(function ($pr) use ($batchStocks) {
-                $basePrice = optional(optional($pr->product)->price)->current_sale_price ?? 0;
-                $posr = $pr->productOrServiceRequest;
-                $payment = optional($posr)->payment;
-                $parentPosr = optional($posr)->parent;
+            $basePrice = optional(optional($pr->product)->price)->current_sale_price ?? 0;
+            $posr = $pr->productOrServiceRequest;
+            $payment = optional($posr)->payment;
+            $parentPosr = optional($posr)->parent;
 
-                // Determine ready status
-                $isPaid = !is_null(optional($posr)->payment_id);
-                $isValidated = in_array(optional($posr)->validation_status, ['validated', 'approved', 'awaiting_code']);
-                $isParentPaid = !is_null(optional($parentPosr)->payment_id);
-                $isParentValidated = in_array(optional($parentPosr)->validation_status, ['validated', 'approved', 'awaiting_code']);
-                $isReady = $isPaid || $isValidated || $isParentPaid || $isParentValidated;
+            // Determine ready status
+            $isPaid = !is_null(optional($posr)->payment_id);
+            $isValidated = in_array(optional($posr)->validation_status, ['validated', 'approved', 'awaiting_code']);
+            $isParentPaid = !is_null(optional($parentPosr)->payment_id);
+            $isParentValidated = in_array(optional($parentPosr)->validation_status, ['validated', 'approved', 'awaiting_code']);
+            $isReady = $isPaid || $isValidated || $isParentPaid || $isParentValidated;
 
-                // Status label logic
-                $statusLabel = $pr->status == 1 ? 'Unbilled' : 'Billed';
-                if ($pr->status == 2 && $isReady) {
-                    $statusLabel = 'Ready to Dispense';
+            // Status label logic
+            $statusLabel = $pr->status == 1 ? 'Unbilled' : 'Billed';
+            if ($pr->status == 2 && $isReady) {
+                $statusLabel = 'Ready to Dispense';
+            }
+
+            // Get stock information from pre-loaded batches
+            $globalStock = 0;
+            $storeStocks = [];
+            if ($pr->product && $batchStocks->has($pr->product->id)) {
+                $productStocks = $batchStocks->get($pr->product->id);
+
+                foreach ($productStocks as $batch) {
+                    $qty = (int) $batch->total_qty;
+                    $globalStock += $qty;
+                    $storeStocks[] = [
+                        'store_id' => $batch->store_id,
+                        'store_name' => $batch->store_name,
+                        'quantity' => $qty,
+                    ];
                 }
+            }
 
-                // Get stock information from pre-loaded batches
-                $globalStock = 0;
-                $storeStocks = [];
-                if ($pr->product && $batchStocks->has($pr->product->id)) {
-                    $productStocks = $batchStocks->get($pr->product->id);
-                    
-                    foreach ($productStocks as $batch) {
-                        $qty = (int) $batch->total_qty;
-                        $globalStock += $qty;
-                        $storeStocks[] = [
-                            'store_id' => $batch->store_id,
-                            'store_name' => $batch->store_name,
-                            'quantity' => $qty
-                        ];
-                    }
-                }
-
-                return [
-                    'id' => $pr->id,
-                    'product_request_id' => $pr->id,
-                    'posr_id' => $pr->product_request_id,
-                    'product_id' => $pr->product_id,
-                    'is_free_form' => $pr->is_free_form,
-                    'product_name' => $pr->item_name,
-                    'product_code' => optional($pr->product)->product_code,
-                    'category' => optional(optional($pr->product)->category)->category_name,
-                    'dose' => $pr->dose ?? 'N/A',
-                    'qty' => $pr->qty ?? 1,
-                    'status' => $pr->status,
-                    'status_label' => $statusLabel,
-                    'is_ready' => $isReady,
-                    'is_paid' => $isPaid,
-                    'is_validated' => $isValidated,
-                    'price' => $posr ? $posr->payable_amount : $basePrice,
-                    'base_price' => $basePrice,
-                    'payable_amount' => optional($posr)->payable_amount ?? $basePrice,
-                    'claims_amount' => optional($posr)->claims_amount ?? 0,
-                    'coverage_mode' => optional($posr)->coverage_mode ?? 'none',
-                    'validation_status' => optional($posr)->validation_status ?? null,
-                    'doctor_name' => $pr->doctor ? userfullname($pr->doctor_id) : 'N/A',
-                    'billed_by' => $pr->billed_by ? userfullname($pr->billed_by) : null,
-                    'billed_date' => $pr->billed_date ? Carbon::parse($pr->billed_date)->format('Y-m-d H:i') : null,
-                    'created_at' => $pr->created_at->format('Y-m-d H:i'),
-                    'global_stock' => $globalStock,
-                    'store_stocks' => $storeStocks,
-                    'adapted_from_product_name' => optional($pr->adaptedFromProduct)->product_name,
-                    'adapted_from_product_code' => optional($pr->adaptedFromProduct)->product_code,
-                    'adaptation_note' => $pr->adaptation_note,
-                    'adapted_at' => $pr->adapted_at ? $pr->adapted_at->format('M j, Y h:i A') : null,
-                    'adapted_by_name' => $pr->adapted_by ? userfullname($pr->adapted_by) : null,
-                    'qty_adjusted_from' => $pr->qty_adjusted_from,
-                    'qty_adjustment_reason' => $pr->qty_adjustment_reason,
-                    'qty_adjusted_at' => $pr->qty_adjusted_at ? $pr->qty_adjusted_at->format('M j, Y h:i A') : null,
-                    'qty_adjusted_by_name' => $pr->qty_adjusted_by ? userfullname($pr->qty_adjusted_by) : null,
-                ];
-            });
+            return [
+                'id' => $pr->id,
+                'product_request_id' => $pr->id,
+                'posr_id' => $pr->product_request_id,
+                'product_id' => $pr->product_id,
+                'is_free_form' => $pr->is_free_form,
+                'product_name' => $pr->item_name,
+                'product_code' => optional($pr->product)->product_code,
+                'category' => optional(optional($pr->product)->category)->category_name,
+                'dose' => $pr->dose ?? 'N/A',
+                'qty' => $pr->qty ?? 1,
+                'status' => $pr->status,
+                'status_label' => $statusLabel,
+                'is_ready' => $isReady,
+                'is_paid' => $isPaid,
+                'is_validated' => $isValidated,
+                'price' => $posr ? $posr->payable_amount : $basePrice,
+                'base_price' => $basePrice,
+                'payable_amount' => optional($posr)->payable_amount ?? $basePrice,
+                'claims_amount' => optional($posr)->claims_amount ?? 0,
+                'coverage_mode' => optional($posr)->coverage_mode ?? 'none',
+                'validation_status' => optional($posr)->validation_status ?? null,
+                'doctor_name' => $pr->doctor ? userfullname($pr->doctor_id) : 'N/A',
+                'billed_by' => $pr->billed_by ? userfullname($pr->billed_by) : null,
+                'billed_date' => $pr->billed_date ? Carbon::parse($pr->billed_date)->format('Y-m-d H:i') : null,
+                'created_at' => $pr->created_at->format('Y-m-d H:i'),
+                'global_stock' => $globalStock,
+                'store_stocks' => $storeStocks,
+                'adapted_from_product_name' => optional($pr->adaptedFromProduct)->product_name,
+                'adapted_from_product_code' => optional($pr->adaptedFromProduct)->product_code,
+                'adaptation_note' => $pr->adaptation_note,
+                'adapted_at' => $pr->adapted_at ? $pr->adapted_at->format('M j, Y h:i A') : null,
+                'adapted_by_name' => $pr->adapted_by ? userfullname($pr->adapted_by) : null,
+                'qty_adjusted_from' => $pr->qty_adjusted_from,
+                'qty_adjustment_reason' => $pr->qty_adjustment_reason,
+                'qty_adjusted_at' => $pr->qty_adjusted_at ? $pr->qty_adjusted_at->format('M j, Y h:i A') : null,
+                'qty_adjusted_by_name' => $pr->qty_adjusted_by ? userfullname($pr->qty_adjusted_by) : null,
+            ];
+        });
 
         // Get counts for subtabs
         $allPending = ProductRequest::where('patient_id', $patientId)
@@ -1206,9 +1246,9 @@ class PharmacyWorkbenchController extends Controller
                     });
             })
             ->where('status', 2)
-            ->where(function($q) {
+            ->where(function ($q) {
                 $q->where(function ($own) {
-                    $own->whereHas('productOrServiceRequest', function($sq) {
+                    $own->whereHas('productOrServiceRequest', function ($sq) {
                         $sq->whereNull('payment_id')
                            ->where(function ($v) {
                                $v->whereNull('validation_status')
@@ -1237,17 +1277,17 @@ class PharmacyWorkbenchController extends Controller
                     });
             })
             ->where('status', 2)
-            ->where(function($q) {
-                $q->whereHas('productOrServiceRequest', function($sq) {
-                      $sq->whereNotNull('payment_id');
-                  })
-                  ->orWhereHas('productOrServiceRequest', function($sq) {
+            ->where(function ($q) {
+                $q->whereHas('productOrServiceRequest', function ($sq) {
+                    $sq->whereNotNull('payment_id');
+                })
+                  ->orWhereHas('productOrServiceRequest', function ($sq) {
                       $sq->whereIn('validation_status', ['validated', 'approved', 'awaiting_code']);
                   })
-                  ->orWhereHas('productOrServiceRequest.parent', function($sq) {
+                  ->orWhereHas('productOrServiceRequest.parent', function ($sq) {
                       $sq->whereNotNull('payment_id');
                   })
-                  ->orWhereHas('productOrServiceRequest.parent', function($sq) {
+                  ->orWhereHas('productOrServiceRequest.parent', function ($sq) {
                       $sq->whereIn('validation_status', ['validated', 'approved', 'awaiting_code']);
                   });
             })
@@ -1302,6 +1342,7 @@ class PharmacyWorkbenchController extends Controller
         $items = $history->map(function ($pr) {
             $posr = $pr->productOrServiceRequest;
             $basePrice = optional(optional($pr->product)->price)->current_sale_price ?? 0;
+
             return [
                 'product_request_id' => $pr->id,
                 'product_name' => $pr->item_name,
@@ -1337,7 +1378,7 @@ class PharmacyWorkbenchController extends Controller
         $request->validate([
             'product_request_ids' => 'required|array',
             'product_request_ids.*' => 'exists:product_requests,id',
-            'store_id' => 'required|exists:stores,id'
+            'store_id' => 'required|exists:stores,id',
         ]);
 
         $storeId = $request->store_id;
@@ -1354,10 +1395,11 @@ class PharmacyWorkbenchController extends Controller
                     'product_request_id' => $prId,
                     'valid' => false,
                     'error' => 'Product request not found',
-                    'error_type' => 'not_found'
+                    'error_type' => 'not_found',
                 ];
                 $allValid = false;
                 $totalIssues++;
+
                 continue;
             }
 
@@ -1368,7 +1410,7 @@ class PharmacyWorkbenchController extends Controller
                 'qty_required' => $productRequest->qty ?? 1,
                 'valid' => true,
                 'error' => null,
-                'error_type' => null
+                'error_type' => null,
             ];
 
             // Check status
@@ -1379,6 +1421,7 @@ class PharmacyWorkbenchController extends Controller
                 $allValid = false;
                 $totalIssues++;
                 $validationResults[] = $result;
+
                 continue;
             }
 
@@ -1398,6 +1441,7 @@ class PharmacyWorkbenchController extends Controller
                     $allValid = false;
                     $totalIssues++;
                     $validationResults[] = $result;
+
                     continue;
                 }
             } elseif ($productRequest->productOrServiceRequest) {
@@ -1410,6 +1454,7 @@ class PharmacyWorkbenchController extends Controller
                     $allValid = false;
                     $totalIssues++;
                     $validationResults[] = $result;
+
                     continue;
                 }
             }
@@ -1435,11 +1480,11 @@ class PharmacyWorkbenchController extends Controller
             // ── Plan §7.5.1 Readiness Chip ───────────────────────────────────────────
             // Four states: ready | billing_pending | hmo_blocked | stock_short
             $result['readiness_chip'] = match (true) {
-                $result['error_type'] === 'not_billed'               => 'billing_pending',
+                $result['error_type'] === 'not_billed' => 'billing_pending',
                 in_array($result['error_type'], ['hmo_block', 'bundled_procedure_block']) => 'hmo_blocked',
-                $result['error_type'] === 'insufficient_stock'       => 'stock_short',
-                $result['valid']                                     => 'ready',
-                default                                              => 'blocked',
+                $result['error_type'] === 'insufficient_stock' => 'stock_short',
+                $result['valid'] => 'ready',
+                default => 'blocked',
             };
             // ─────────────────────────────────────────────────────────────────────
 
@@ -1465,14 +1510,14 @@ class PharmacyWorkbenchController extends Controller
 
         return response()->json([
             'success' => true,
-            'all_valid' => $allValid && ! $storeGovernanceBlocked,
+            'all_valid' => $allValid && !$storeGovernanceBlocked,
             'total_items' => count($request->product_request_ids),
             'total_issues' => $totalIssues,
             'store_id' => $storeId,
             'store_name' => $store->store_name ?? '',
             'store_governance_blocked' => $storeGovernanceBlocked,
             'store_governance_message' => $storeGovernanceMessage,
-            'validation_results' => $validationResults
+            'validation_results' => $validationResults,
         ]);
     }
 
@@ -1491,7 +1536,7 @@ class PharmacyWorkbenchController extends Controller
         if (!$item->is_free_form) {
             return response()->json([
                 'success' => false,
-                'message' => 'Only free-form medications can be dispensed via this route.'
+                'message' => 'Only free-form medications can be dispensed via this route.',
             ], 403);
         }
 
@@ -1503,7 +1548,7 @@ class PharmacyWorkbenchController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => 'Medication marked as dispensed.'
+            'message' => 'Medication marked as dispensed.',
         ]);
     }
 
@@ -1522,7 +1567,7 @@ class PharmacyWorkbenchController extends Controller
         $request->validate([
             'product_request_ids' => 'required|array',
             'product_request_ids.*' => 'exists:product_requests,id',
-            'store_id' => 'required|exists:stores,id'
+            'store_id' => 'required|exists:stores,id',
         ]);
 
         $storeId = $request->store_id;
@@ -1552,8 +1597,9 @@ class PharmacyWorkbenchController extends Controller
             if (!$productRequest) {
                 $validationErrors[] = [
                     'id' => $prId,
-                    'error' => 'Product request not found'
+                    'error' => 'Product request not found',
                 ];
+
                 continue;
             }
 
@@ -1564,8 +1610,9 @@ class PharmacyWorkbenchController extends Controller
                 $validationErrors[] = [
                     'id' => $prId,
                     'product' => $productRequest->product->name ?? 'Unknown',
-                    'error' => "Cannot dispense - item is '{$statusLabel}' (must be 'Billed')"
+                    'error' => "Cannot dispense - item is '{$statusLabel}' (must be 'Billed')",
                 ];
+
                 continue;
             }
 
@@ -1578,8 +1625,9 @@ class PharmacyWorkbenchController extends Controller
                     $validationErrors[] = [
                         'id' => $prId,
                         'product' => $productRequest->product->name ?? 'Unknown',
-                        'error' => $deliveryCheck['reason'] . ' (Bundled with: ' . $bundledCheck['procedure_name'] . ')'
+                        'error' => $deliveryCheck['reason'] . ' (Bundled with: ' . $bundledCheck['procedure_name'] . ')',
                     ];
+
                     continue;
                 }
             } elseif ($productRequest->productOrServiceRequest) {
@@ -1589,8 +1637,9 @@ class PharmacyWorkbenchController extends Controller
                     $validationErrors[] = [
                         'id' => $prId,
                         'product' => $productRequest->product->name ?? 'Unknown',
-                        'error' => $deliveryCheck['reason']
+                        'error' => $deliveryCheck['reason'],
                     ];
+
                     continue;
                 }
             }
@@ -1610,8 +1659,9 @@ class PharmacyWorkbenchController extends Controller
                     'id' => $prId,
                     'product' => $productRequest->product->name ?? 'Unknown',
                     'error' => "Insufficient stock in '{$store->name}': need {$qty}, available {$availableQty}",
-                    'shortage' => $qty - $availableQty
+                    'shortage' => $qty - $availableQty,
                 ];
+
                 continue;
             }
 
@@ -1619,7 +1669,7 @@ class PharmacyWorkbenchController extends Controller
             $itemsToDispense[] = [
                 'productRequest' => $productRequest,
                 'storeStock' => $storeStock,
-                'qty' => $qty
+                'qty' => $qty,
             ];
         }
 
@@ -1629,7 +1679,7 @@ class PharmacyWorkbenchController extends Controller
                 'success' => false,
                 'message' => 'Cannot dispense: ' . count($validationErrors) . ' item(s) failed validation. Fix all issues before proceeding.',
                 'validation_errors' => $validationErrors,
-                'dispensed_count' => 0
+                'dispensed_count' => 0,
             ], 422);
         }
 
@@ -1684,13 +1734,13 @@ class PharmacyWorkbenchController extends Controller
                     'status' => 3,
                     'dispensed_by' => Auth::id(),
                     'dispense_date' => now(),
-                    'dispensed_from_store_id' => $storeId
+                    'dispensed_from_store_id' => $storeId,
                 ]);
 
                 // Also update the ProductOrServiceRequest with store info
                 if ($productRequest->productOrServiceRequest) {
                     $productRequest->productOrServiceRequest->update([
-                        'dispensed_from_store_id' => $storeId
+                        'dispensed_from_store_id' => $storeId,
                     ]);
                 }
 
@@ -1703,15 +1753,16 @@ class PharmacyWorkbenchController extends Controller
                 'success' => true,
                 'message' => "Successfully dispensed {$dispensedCount} medication(s) from '{$store->name}'",
                 'dispensed_count' => $dispensedCount,
-                'store_name' => $store->name
+                'store_name' => $store->name,
             ]);
 
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error('Pharmacy dispense error: ' . $e->getMessage());
+
             return response()->json([
                 'success' => false,
-                'message' => 'Dispense error: ' . $e->getMessage()
+                'message' => 'Dispense error: ' . $e->getMessage(),
             ], 500);
         }
     }
@@ -1738,14 +1789,14 @@ class PharmacyWorkbenchController extends Controller
 
         // Apply payment type filter
         if ($request->has('payment_type') && $request->payment_type) {
-            $query->whereHas('productOrServiceRequest.payment', function($q) use ($request) {
+            $query->whereHas('productOrServiceRequest.payment', function ($q) use ($request) {
                 $q->where('payment_type', $request->payment_type);
             });
         }
 
         // Apply bank filter
         if ($request->has('bank_id') && $request->bank_id) {
-            $query->whereHas('productOrServiceRequest.payment', function($q) use ($request) {
+            $query->whereHas('productOrServiceRequest.payment', function ($q) use ($request) {
                 $q->where('bank_id', $request->bank_id);
             });
         }
@@ -1779,10 +1830,10 @@ class PharmacyWorkbenchController extends Controller
         $totalDiscount = $items->sum('total_discount');
 
         // Group by payment type
-        $byType = $items->groupBy('payment_type')->map(function($group, $type) {
+        $byType = $items->groupBy('payment_type')->map(function ($group, $type) {
             return [
                 'count' => $group->count(),
-                'amount' => $group->sum('total')
+                'amount' => $group->sum('total'),
             ];
         });
 
@@ -1791,7 +1842,7 @@ class PharmacyWorkbenchController extends Controller
             'total_amount' => $totalAmount,
             'total_discount' => $totalDiscount,
             'net_amount' => $totalAmount - $totalDiscount,
-            'by_type' => $byType
+            'by_type' => $byType,
         ];
 
         return response()->json([
@@ -1811,7 +1862,7 @@ class PharmacyWorkbenchController extends Controller
     {
         $request->validate([
             'product_request_ids' => 'required|array',
-            'product_request_ids.*' => 'exists:product_requests,id'
+            'product_request_ids.*' => 'exists:product_requests,id',
         ]);
 
         $prescriptions = ProductRequest::with([
@@ -1820,7 +1871,7 @@ class PharmacyWorkbenchController extends Controller
             'patient.hmo',
             'doctor',
             'dispenser',
-            'encounter'
+            'encounter',
         ])
         ->whereIn('id', $request->product_request_ids)
         ->orderBy('created_at', 'asc')
@@ -1871,7 +1922,7 @@ class PharmacyWorkbenchController extends Controller
 
         $products = Product::with(['category', 'price', 'stock', 'packagings'])
             ->drugsOnly()
-            ->where(function($q) use ($term) {
+            ->where(function ($q) use ($term) {
                 $q->where('product_name', 'like', "%{$term}%")
                   ->orWhere('product_code', 'like', "%{$term}%");
             })
@@ -1879,7 +1930,7 @@ class PharmacyWorkbenchController extends Controller
             ->orderBy('product_name')
             ->limit(20)
             ->get()
-            ->map(function($product) use ($patient) {
+            ->map(function ($product) use ($patient) {
                 $basePrice = optional($product->price)->current_sale_price ?? 0;
                 $stockQty = optional($product->stock)->current_quantity ?? 0;
 
@@ -1912,12 +1963,13 @@ class PharmacyWorkbenchController extends Controller
                     ->orderByDesc('total_qty')
                     ->limit(5)
                     ->get()
-                    ->map(function($batch) {
+                    ->map(function ($batch) {
                         $store = \App\Models\Store::find($batch->store_id);
+
                         return [
                             'store_id' => $batch->store_id,
                             'store_name' => $store ? $store->store_name : 'Unknown Store',
-                            'quantity' => (int) $batch->total_qty
+                            'quantity' => (int) $batch->total_qty,
                         ];
                     });
 
@@ -1939,7 +1991,7 @@ class PharmacyWorkbenchController extends Controller
                     'payable_amount' => $payableAmount,
                     'claims_amount' => $claimsAmount,
                     'coverage_mode' => $coverageMode,
-                    'packagings' => $product->packagings->sortBy('level')->map(function($pkg) {
+                    'packagings' => $product->packagings->sortBy('level')->map(function ($pkg) {
                         return [
                             'id' => $pkg->id,
                             'name' => $pkg->name,
@@ -1990,7 +2042,7 @@ class PharmacyWorkbenchController extends Controller
                 'bundleItems.product.stock',
                 'bundleItems.product.packagings',
                 'bundleItems.service',
-                'price'
+                'price',
             ])
                 ->where('is_combo', true)
                 ->whereIn('id', $allComboIds)
@@ -2008,15 +2060,15 @@ class PharmacyWorkbenchController extends Controller
                 $basePrice = optional($combo->price)->current_sale_price
                     ?? optional($combo->price)->sale_price ?? 0;
                 $payableAmount = $basePrice;
-                $claimsAmount  = 0;
-                $coverageMode  = null;
+                $claimsAmount = 0;
+                $coverageMode = null;
 
                 if ($patient && $patient->hmo_id) {
                     $t = $comboTariffMap[$combo->id] ?? null;
                     if ($t && isset($t['payable_amount'])) {
                         $payableAmount = $t['payable_amount'];
-                        $claimsAmount  = $t['claims_amount'] ?? 0;
-                        $coverageMode  = $t['coverage_mode'] ?? null;
+                        $claimsAmount = $t['claims_amount'] ?? 0;
+                        $coverageMode = $t['coverage_mode'] ?? null;
                     }
                 }
 
@@ -2072,6 +2124,7 @@ class PharmacyWorkbenchController extends Controller
                         ];
                     }
                     $svc = $item->service;
+
                     return [
                         'id' => $item->item_id,
                         'name' => $svc ? $svc->service_name : '(unknown)',
@@ -2081,23 +2134,23 @@ class PharmacyWorkbenchController extends Controller
                 })->values()->toArray();
 
                 return [
-                    'id'                 => $combo->id,
-                    'product_name'       => $combo->service_name,
-                    'product_code'       => $combo->service_code ?? null,
-                    'product_type'       => 'combo',
-                    'base_unit_name'     => 'Package',
-                    'allow_decimal_qty'  => false,
-                    'category_name'      => 'Combo',
-                    'price'              => $basePrice,
-                    'stock_qty'          => 99,
-                    'stock_formatted'    => 'N/A',
-                    'store_stocks'       => [],
-                    'payable_amount'     => $payableAmount,
-                    'claims_amount'      => $claimsAmount,
-                    'coverage_mode'      => $coverageMode,
-                    'packagings'         => [],
-                    'is_combo'           => true,
-                    'bundle_items'       => $bundleItems,
+                    'id' => $combo->id,
+                    'product_name' => $combo->service_name,
+                    'product_code' => $combo->service_code ?? null,
+                    'product_type' => 'combo',
+                    'base_unit_name' => 'Package',
+                    'allow_decimal_qty' => false,
+                    'category_name' => 'Combo',
+                    'price' => $basePrice,
+                    'stock_qty' => 99,
+                    'stock_formatted' => 'N/A',
+                    'store_stocks' => [],
+                    'payable_amount' => $payableAmount,
+                    'claims_amount' => $claimsAmount,
+                    'coverage_mode' => $coverageMode,
+                    'packagings' => [],
+                    'is_combo' => true,
+                    'bundle_items' => $bundleItems,
                 ];
             });
         }
@@ -2129,7 +2182,7 @@ class PharmacyWorkbenchController extends Controller
         $patient = Patient::findOrFail($request->patient_id);
 
         // Validate regular products exist
-        $regularProductIds = array_filter(array_column($request->products, 'product_id'), function($id) {
+        $regularProductIds = array_filter(array_column($request->products, 'product_id'), function ($id) {
             return strpos($id, 'FF_') !== 0;
         });
         if (count($regularProductIds) > 0) {
@@ -2142,6 +2195,7 @@ class PharmacyWorkbenchController extends Controller
         $patient = Patient::findOrFail($request->patient_id);
 
         DB::beginTransaction();
+
         try {
             $createdRequests = [];
 
@@ -2225,7 +2279,7 @@ class PharmacyWorkbenchController extends Controller
             'addedPrescBillRows.*' => 'exists:products,id',
             'consult_presc_dose' => 'nullable|array',
             'patient_user_id' => 'required|exists:users,id',
-            'patient_id' => 'required|exists:patients,id'
+            'patient_id' => 'required|exists:patients,id',
         ]);
 
         try {
@@ -2242,12 +2296,14 @@ class PharmacyWorkbenchController extends Controller
 
                     if (!$productRequest) {
                         $errors[] = "PR#{$prId}: Not found";
+
                         continue;
                     }
 
                     // Only unbilled items can be billed
                     if ($productRequest->status != 1) {
                         $errors[] = "PR#{$prId}: Already billed or dispensed";
+
                         continue;
                     }
 
@@ -2282,7 +2338,7 @@ class PharmacyWorkbenchController extends Controller
                             'product_request_id' => $productRequest->id,
                             'billReq_qty_after' => $billReq->qty,
                             'payable_amount' => $billReq->payable_amount,
-                            'claims_amount' => $billReq->claims_amount
+                            'claims_amount' => $billReq->claims_amount,
                         ]);
 
                         $billReq->save();
@@ -2290,7 +2346,7 @@ class PharmacyWorkbenchController extends Controller
                         \Log::info('PharmacyWorkbench: After save', [
                             'product_request_id' => $productRequest->id,
                             'bill_request_id' => $billReq->id,
-                            'saved_qty' => $billReq->qty
+                            'saved_qty' => $billReq->qty,
                         ]);
                     }
 
@@ -2300,7 +2356,7 @@ class PharmacyWorkbenchController extends Controller
                         'status' => 2,
                         'billed_by' => Auth::id(),
                         'billed_date' => now(),
-                        'product_request_id' => $billReq->id
+                        'product_request_id' => $billReq->id,
                     ]);
 
                     $billedCount++;
@@ -2318,6 +2374,7 @@ class PharmacyWorkbenchController extends Controller
                     $product = Product::with(['price', 'stock'])->find($productId);
                     if (!$product) {
                         $errors[] = "Product #{$productId}: Not found";
+
                         continue;
                     }
 
@@ -2362,12 +2419,13 @@ class PharmacyWorkbenchController extends Controller
                 'success' => true,
                 'message' => $message,
                 'billed_count' => $billedCount,
-                'errors' => $errors
+                'errors' => $errors,
             ]);
 
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error('Bill prescriptions error: ' . $e->getMessage() . ' at line ' . $e->getLine());
+
             return response()->json(['message' => 'Failed to bill prescriptions: ' . $e->getMessage()], 500);
         }
     }
@@ -2401,6 +2459,7 @@ class PharmacyWorkbenchController extends Controller
                             'final_payable' => $billReq->payable_amount,
                             'final_claims' => $billReq->claims_amount,
                         ]);
+
                         return;
                     }
                 } catch (\Exception $e) {
@@ -2419,6 +2478,7 @@ class PharmacyWorkbenchController extends Controller
                 'qty' => $qty,
                 'final_payable' => $overrideTotal,
             ]);
+
             return;
         }
 
@@ -2431,6 +2491,7 @@ class PharmacyWorkbenchController extends Controller
                     $billReq->claims_amount = $hmoData['claims_amount'] * $qty;
                     $billReq->coverage_mode = $hmoData['coverage_mode'];
                     $billReq->validation_status = $hmoData['validation_status'] ?? 'pending';
+
                     return;
                 }
             }
@@ -2438,7 +2499,7 @@ class PharmacyWorkbenchController extends Controller
             Log::warning('HMO tariff lookup failed', [
                 'patient_id' => $patient->id,
                 'product_id' => $productId,
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ]);
         }
 
@@ -2469,7 +2530,7 @@ class PharmacyWorkbenchController extends Controller
     {
         $request->validate([
             'prescription_ids' => 'required|array',
-            'prescription_ids.*' => 'exists:product_requests,id'
+            'prescription_ids.*' => 'exists:product_requests,id',
         ]);
 
         try {
@@ -2484,6 +2545,7 @@ class PharmacyWorkbenchController extends Controller
                 // Can't dismiss already dispensed items
                 if ($productRequest->status == 3) {
                     $errors[] = "PR#{$prId}: Already dispensed - cannot dismiss";
+
                     continue;
                 }
 
@@ -2504,12 +2566,13 @@ class PharmacyWorkbenchController extends Controller
                 'success' => true,
                 'message' => $message,
                 'dismissed_count' => $dismissedCount,
-                'errors' => $errors
+                'errors' => $errors,
             ]);
 
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error('Dismiss prescriptions error: ' . $e->getMessage());
+
             return response()->json(['message' => 'Failed to dismiss prescriptions: ' . $e->getMessage()], 500);
         }
     }
@@ -2523,18 +2586,18 @@ class PharmacyWorkbenchController extends Controller
      */
     public function getPharmacists()
     {
-        $pharmacists = User::where(function($q) {
-                $q->whereHas('roles', function ($query) {
-                    $query->whereIn('name', ['pharmacist', 'pharmacy', 'pharmacy-staff']);
-                })
-                ->orWhere('is_admin', 23); // 23 = Pharmacist in user_categories
+        $pharmacists = User::where(function ($q) {
+            $q->whereHas('roles', function ($query) {
+                $query->whereIn('name', ['pharmacist', 'pharmacy', 'pharmacy-staff']);
             })
+            ->orWhere('is_admin', 23); // 23 = Pharmacist in user_categories
+        })
             ->select('id', 'surname', 'firstname')
             ->get()
-            ->map(function($user) {
+            ->map(function ($user) {
                 return [
                     'id' => $user->id,
-                    'name' => trim($user->surname . ' ' . $user->firstname)
+                    'name' => trim($user->surname . ' ' . $user->firstname),
                 ];
             })
             ->sortBy('name')
@@ -2570,18 +2633,18 @@ class PharmacyWorkbenchController extends Controller
      */
     public function getDoctorsForFilter()
     {
-        $doctors = User::where(function($q) {
-                $q->whereHas('roles', function ($query) {
-                    $query->whereIn('name', ['doctor', 'Doctor', 'physician', 'consultant']);
-                })
-                ->orWhere('is_admin', 21); // 21 = Doctor in user_categories
+        $doctors = User::where(function ($q) {
+            $q->whereHas('roles', function ($query) {
+                $query->whereIn('name', ['doctor', 'Doctor', 'physician', 'consultant']);
             })
+            ->orWhere('is_admin', 21); // 21 = Doctor in user_categories
+        })
             ->select('id', 'surname', 'firstname')
             ->get()
-            ->map(function($doctor) {
+            ->map(function ($doctor) {
                 return [
                     'id' => $doctor->id,
-                    'name' => trim($doctor->surname . ' ' . $doctor->firstname)
+                    'name' => trim($doctor->surname . ' ' . $doctor->firstname),
                 ];
             })
             ->sortBy('name')
@@ -2624,11 +2687,11 @@ class PharmacyWorkbenchController extends Controller
             ->leftJoin('products as p', 'pr.product_id', '=', 'p.id')
             ->leftJoin('prices as pp', 'p.id', '=', 'pp.product_id')
             ->where('pr.status', 3)
-            ->when($request->date_from, fn($q) => $q->whereDate('pr.updated_at', '>=', $request->date_from))
-            ->when($request->date_to, fn($q) => $q->whereDate('pr.updated_at', '<=', $request->date_to))
-            ->when($request->store_id, fn($q) => $q->where('pr.dispensed_from_store_id', $request->store_id))
-            ->when($request->hmo_id, fn($q) => $q->where('pay.hmo_id', $request->hmo_id))
-            ->when($request->pharmacist_id, fn($q) => $q->where('pr.dispensed_by', $request->pharmacist_id))
+            ->when($request->date_from, fn ($q) => $q->whereDate('pr.updated_at', '>=', $request->date_from))
+            ->when($request->date_to, fn ($q) => $q->whereDate('pr.updated_at', '<=', $request->date_to))
+            ->when($request->store_id, fn ($q) => $q->where('pr.dispensed_from_store_id', $request->store_id))
+            ->when($request->hmo_id, fn ($q) => $q->where('pay.hmo_id', $request->hmo_id))
+            ->when($request->pharmacist_id, fn ($q) => $q->where('pr.dispensed_by', $request->pharmacist_id))
             ->selectRaw('
                 COALESCE(SUM(pr.qty * COALESCE(pp.current_sale_price, 0)), 0) as total_revenue,
                 COALESCE(SUM(CASE WHEN pay.payment_type IN ("CASH", "cash") THEN pr.qty * COALESCE(pp.current_sale_price, 0) ELSE 0 END), 0) as cash_sales,
@@ -2641,8 +2704,8 @@ class PharmacyWorkbenchController extends Controller
 
         // Pending count
         $pendingCount = ProductRequest::whereBetween('status', [1, 2])
-            ->when($request->date_from, fn($q) => $q->whereDate('created_at', '>=', $request->date_from))
-            ->when($request->date_to, fn($q) => $q->whereDate('created_at', '<=', $request->date_to))
+            ->when($request->date_from, fn ($q) => $q->whereDate('created_at', '>=', $request->date_from))
+            ->when($request->date_to, fn ($q) => $q->whereDate('created_at', '<=', $request->date_to))
             ->count();
 
         // Trend data (last 7 days or filter range)
@@ -2659,7 +2722,7 @@ class PharmacyWorkbenchController extends Controller
             'unique_patients' => $uniquePatients,
             'pending_count' => $pendingCount,
             'trend_data' => $trendData,
-            'revenue_breakdown' => $revenueBreakdown
+            'revenue_breakdown' => $revenueBreakdown,
         ]);
     }
 
@@ -2689,7 +2752,7 @@ class PharmacyWorkbenchController extends Controller
                 DB::raw('(pr.qty * COALESCE(pp.current_sale_price, 0)) as amount'),
                 'pay.payment_type as payment_type',
                 's.store_name',
-                DB::raw("CONCAT(u.surname, ' ', u.firstname) as pharmacist_name")
+                DB::raw("CONCAT(u.surname, ' ', u.firstname) as pharmacist_name"),
             ]);
 
         // Apply filters
@@ -2779,12 +2842,12 @@ class PharmacyWorkbenchController extends Controller
             'transfer' => $data->sum('transfer'),
             'hmo' => $data->sum('hmo'),
             'total' => $data->sum('total'),
-            'avg_transaction' => $data->count() > 0 ? $data->sum('total') / max($data->sum('transactions'), 1) : 0
+            'avg_transaction' => $data->count() > 0 ? $data->sum('total') / max($data->sum('transactions'), 1) : 0,
         ];
 
         return response()->json([
             'data' => $data,
-            'totals' => $totals
+            'totals' => $totals,
         ]);
     }
 
@@ -2806,7 +2869,7 @@ class PharmacyWorkbenchController extends Controller
                 'p.reorder_alert as reorder_level',
                 DB::raw('COALESCE(st.current_quantity, 0) as global_stock'),
                 DB::raw('COALESCE(pp.current_sale_price, 0) as unit_price'),
-                DB::raw('COALESCE(st.current_quantity, 0) * COALESCE(pp.current_sale_price, 0) as stock_value')
+                DB::raw('COALESCE(st.current_quantity, 0) * COALESCE(pp.current_sale_price, 0) as stock_value'),
             ]);
 
         if ($request->category_id) {
@@ -2829,14 +2892,15 @@ class PharmacyWorkbenchController extends Controller
                 ->get()
                 ->map(function ($s) use ($product) {
                     $s->reorder_level = $product->reorder_level ?? 0;
+
                     return $s;
                 });
 
             // Get dispensed quantity in period
             $dispensedQty = ProductRequest::where('product_id', $product->id)
                 ->where('status', 3)
-                ->when($request->date_from, fn($q) => $q->whereDate('updated_at', '>=', $request->date_from))
-                ->when($request->date_to, fn($q) => $q->whereDate('updated_at', '<=', $request->date_to))
+                ->when($request->date_from, fn ($q) => $q->whereDate('updated_at', '>=', $request->date_from))
+                ->when($request->date_to, fn ($q) => $q->whereDate('updated_at', '<=', $request->date_to))
                 ->sum('qty');
 
             $product->store_breakdown = $storeBreakdown;
@@ -2905,12 +2969,12 @@ class PharmacyWorkbenchController extends Controller
             'cash_amount' => $data->sum('cash_amount'),
             'hmo_amount' => $data->sum('hmo_amount'),
             'avg_tat' => $data->count() > 0 ? round($data->avg('avg_tat'), 1) : null,
-            'unique_patients' => $data->sum('unique_patients')
+            'unique_patients' => $data->sum('unique_patients'),
         ];
 
         return response()->json([
             'data' => $data,
-            'totals' => $totals
+            'totals' => $totals,
         ]);
     }
 
@@ -2964,12 +3028,12 @@ class PharmacyWorkbenchController extends Controller
             'pending_count' => $data->sum('pending_count'),
             'pending_amount' => $data->sum('pending_amount'),
             'rejected_count' => $data->sum('rejected_count'),
-            'rejected_amount' => $data->sum('rejected_amount')
+            'rejected_amount' => $data->sum('rejected_amount'),
         ];
 
         return response()->json([
             'data' => $data,
-            'totals' => $totals
+            'totals' => $totals,
         ]);
     }
 
@@ -3058,7 +3122,7 @@ class PharmacyWorkbenchController extends Controller
         return response()->json([
             'message' => 'Export functionality coming soon',
             'tab' => $tab,
-            'format' => $format
+            'format' => $format,
         ]);
     }
 
@@ -3145,7 +3209,7 @@ class PharmacyWorkbenchController extends Controller
             'card' => $breakdown->card ?? 0,
             'transfer' => $breakdown->transfer ?? 0,
             'hmo' => $breakdown->hmo ?? 0,
-            'account' => $breakdown->account ?? 0
+            'account' => $breakdown->account ?? 0,
         ];
     }
 
@@ -3246,8 +3310,9 @@ class PharmacyWorkbenchController extends Controller
             if (!$productRequest) {
                 $validationErrors[] = [
                     'id' => $prId,
-                    'error' => 'Product request not found'
+                    'error' => 'Product request not found',
                 ];
+
                 continue;
             }
 
@@ -3258,8 +3323,9 @@ class PharmacyWorkbenchController extends Controller
                 $validationErrors[] = [
                     'id' => $prId,
                     'product' => $productRequest->item_name,
-                    'error' => "Cannot dispense - item is '{$statusLabel}' (must be 'Billed')"
+                    'error' => "Cannot dispense - item is '{$statusLabel}' (must be 'Billed')",
                 ];
+
                 continue;
             }
 
@@ -3271,8 +3337,9 @@ class PharmacyWorkbenchController extends Controller
                     $validationErrors[] = [
                         'id' => $prId,
                         'product' => $productRequest->item_name,
-                        'error' => $deliveryCheck['reason'] . ' (Bundled with: ' . $bundledCheck['procedure_name'] . ')'
+                        'error' => $deliveryCheck['reason'] . ' (Bundled with: ' . $bundledCheck['procedure_name'] . ')',
                     ];
+
                     continue;
                 }
             } elseif ($productRequest->productOrServiceRequest) {
@@ -3281,8 +3348,9 @@ class PharmacyWorkbenchController extends Controller
                     $validationErrors[] = [
                         'id' => $prId,
                         'product' => $productRequest->item_name,
-                        'error' => $deliveryCheck['reason']
+                        'error' => $deliveryCheck['reason'],
                     ];
+
                     continue;
                 }
             }
@@ -3297,8 +3365,9 @@ class PharmacyWorkbenchController extends Controller
                     'id' => $prId,
                     'product' => $productRequest->item_name,
                     'error' => "Insufficient stock in '{$store->store_name}': need {$qty}, available {$availableQty}",
-                    'shortage' => $qty - $availableQty
+                    'shortage' => $qty - $availableQty,
                 ];
+
                 continue;
             }
 
@@ -3312,16 +3381,18 @@ class PharmacyWorkbenchController extends Controller
                     $validationErrors[] = [
                         'id' => $prId,
                         'product' => $productRequest->item_name,
-                        'error' => 'Invalid batch selection'
+                        'error' => 'Invalid batch selection',
                     ];
+
                     continue;
                 }
                 if ($batch->current_qty < $qty) {
                     $validationErrors[] = [
                         'id' => $prId,
                         'product' => $productRequest->item_name,
-                        'error' => "Selected batch has insufficient stock: need {$qty}, available {$batch->current_qty}"
+                        'error' => "Selected batch has insufficient stock: need {$qty}, available {$batch->current_qty}",
                     ];
+
                     continue;
                 }
             }
@@ -3339,7 +3410,7 @@ class PharmacyWorkbenchController extends Controller
                 'success' => false,
                 'message' => 'Cannot dispense: ' . count($validationErrors) . ' item(s) failed validation.',
                 'validation_errors' => $validationErrors,
-                'dispensed_count' => 0
+                'dispensed_count' => 0,
             ], 422);
         }
 
@@ -3391,7 +3462,7 @@ class PharmacyWorkbenchController extends Controller
                 // Update ProductOrServiceRequest if exists
                 if ($productRequest->productOrServiceRequest) {
                     $productRequest->productOrServiceRequest->update([
-                        'dispensed_from_store_id' => $storeId
+                        'dispensed_from_store_id' => $storeId,
                     ]);
                 }
 
@@ -3404,15 +3475,16 @@ class PharmacyWorkbenchController extends Controller
                 'success' => true,
                 'message' => "Successfully dispensed {$dispensedCount} medication(s) from '{$store->store_name}' using batch tracking",
                 'dispensed_count' => $dispensedCount,
-                'store_name' => $store->store_name
+                'store_name' => $store->store_name,
             ]);
 
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error('Pharmacy batch dispense error: ' . $e->getMessage());
+
             return response()->json([
                 'success' => false,
-                'message' => 'Dispense error: ' . $e->getMessage()
+                'message' => 'Dispense error: ' . $e->getMessage(),
             ], 500);
         }
     }
@@ -3431,7 +3503,7 @@ class PharmacyWorkbenchController extends Controller
         if (!$storeId) {
             return response()->json([
                 'success' => false,
-                'message' => 'No store selected'
+                'message' => 'No store selected',
             ], 400);
         }
 
@@ -3439,7 +3511,7 @@ class PharmacyWorkbenchController extends Controller
 
         return response()->json([
             'success' => true,
-            'batches' => $expiringBatches->map(fn($b) => [
+            'batches' => $expiringBatches->map(fn ($b) => [
                 'batch_id' => $b['batch']->id,
                 'batch_number' => $b['batch']->batch_number,
                 'product_name' => $b['batch']->product->product_name ?? 'Unknown',
@@ -3469,7 +3541,7 @@ class PharmacyWorkbenchController extends Controller
         if (!$storeId) {
             return response()->json([
                 'success' => false,
-                'message' => 'No store selected'
+                'message' => 'No store selected',
             ], 400);
         }
 
@@ -3478,7 +3550,7 @@ class PharmacyWorkbenchController extends Controller
 
         return response()->json([
             'success' => true,
-            'items' => $lowStockItems->map(fn($ss) => [
+            'items' => $lowStockItems->map(fn ($ss) => [
                 'product_id' => $ss->product_id,
                 'product_name' => $ss->product->product_name ?? 'Unknown',
                 'product_code' => $ss->product->product_code ?? '-',
@@ -3514,7 +3586,7 @@ class PharmacyWorkbenchController extends Controller
         if ($productRequest->status != 1) {
             return response()->json([
                 'success' => false,
-                'message' => 'Price can only be adjusted on unbilled items (before billing)'
+                'message' => 'Price can only be adjusted on unbilled items (before billing)',
             ], 422);
         }
 
@@ -3528,7 +3600,7 @@ class PharmacyWorkbenchController extends Controller
         if (abs($effectivePrice - $newPrice) < 0.01) {
             return response()->json([
                 'success' => false,
-                'message' => 'New price is the same as the current price'
+                'message' => 'New price is the same as the current price',
             ], 422);
         }
 
@@ -3579,7 +3651,7 @@ class PharmacyWorkbenchController extends Controller
 
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to adjust price: ' . $e->getMessage()
+                'message' => 'Failed to adjust price: ' . $e->getMessage(),
             ], 500);
         }
     }
@@ -3607,7 +3679,7 @@ class PharmacyWorkbenchController extends Controller
         if ($productRequest->status >= 3) {
             return response()->json([
                 'success' => false,
-                'message' => 'Cannot adapt prescription that has already been dispensed'
+                'message' => 'Cannot adapt prescription that has already been dispensed',
             ], 422);
         }
 
@@ -3623,19 +3695,19 @@ class PharmacyWorkbenchController extends Controller
             if ($hasPayable && !$hasClaims && $isPaid) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Cannot adapt prescription - payment has already been received'
+                    'message' => 'Cannot adapt prescription - payment has already been received',
                 ], 422);
             }
             if (!$hasPayable && $hasClaims && $isValidated) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Cannot adapt prescription - HMO claim has already been validated'
+                    'message' => 'Cannot adapt prescription - HMO claim has already been validated',
                 ], 422);
             }
             if ($hasPayable && $hasClaims && ($isPaid || $isValidated)) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Cannot adapt prescription - billing has been partially or fully settled'
+                    'message' => 'Cannot adapt prescription - billing has been partially or fully settled',
                 ], 422);
             }
         }
@@ -3727,7 +3799,7 @@ class PharmacyWorkbenchController extends Controller
 
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to adapt prescription: ' . $e->getMessage()
+                'message' => 'Failed to adapt prescription: ' . $e->getMessage(),
             ], 500);
         }
     }
@@ -3759,7 +3831,7 @@ class PharmacyWorkbenchController extends Controller
         if ($productRequest->status >= 3) {
             return response()->json([
                 'success' => false,
-                'message' => 'Cannot adjust quantity for items that have already been dispensed'
+                'message' => 'Cannot adjust quantity for items that have already been dispensed',
             ], 422);
         }
 
@@ -3776,19 +3848,19 @@ class PharmacyWorkbenchController extends Controller
             if ($hasPayable && !$hasClaims && $isPaid) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Cannot adjust quantity - payment has already been received'
+                    'message' => 'Cannot adjust quantity - payment has already been received',
                 ], 422);
             }
             if (!$hasPayable && $hasClaims && $isValidated) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Cannot adjust quantity - HMO claim has already been validated'
+                    'message' => 'Cannot adjust quantity - HMO claim has already been validated',
                 ], 422);
             }
             if ($hasPayable && $hasClaims && ($isPaid || $isValidated)) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Cannot adjust quantity - billing has been partially or fully settled'
+                    'message' => 'Cannot adjust quantity - billing has been partially or fully settled',
                 ], 422);
             }
         }
@@ -3799,7 +3871,7 @@ class PharmacyWorkbenchController extends Controller
         if ($originalQty == $newQty) {
             return response()->json([
                 'success' => false,
-                'message' => 'New quantity is the same as current quantity'
+                'message' => 'New quantity is the same as current quantity',
             ], 422);
         }
 
@@ -3885,16 +3957,18 @@ class PharmacyWorkbenchController extends Controller
 
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to adjust quantity: ' . $e->getMessage()
+                'message' => 'Failed to adjust quantity: ' . $e->getMessage(),
             ], 500);
         }
     }
+
     /**
      * Get executive summary for pharmacy reports (JSON response)
      */
     public function getExecutiveSummary(Request $request)
     {
         $data = $this->fetchExecutiveSummaryData($request);
+
         return response()->json($data);
     }
 
@@ -3907,11 +3981,11 @@ class PharmacyWorkbenchController extends Controller
         $data['appsettings'] = appsettings();
         $data['pharmacist'] = userfullname(Auth::id());
         $data['print_date'] = Carbon::now()->format('d M Y H:i');
-        
+
         $data['filters'] = [
             'date_from' => $request->date_from ? Carbon::parse($request->date_from)->format('d M Y') : 'Beginning',
             'date_to' => $request->date_to ? Carbon::parse($request->date_to)->format('d M Y') : 'Today',
-            'store' => $request->store_id ? (\App\Models\Store::find($request->store_id)->store_name ?? 'All Hubs & Satellites') : 'All Hubs & Satellites'
+            'store' => $request->store_id ? (\App\Models\Store::find($request->store_id)->store_name ?? 'All Hubs & Satellites') : 'All Hubs & Satellites',
         ];
 
         return view('admin.pharmacy.executive_summary_print', $data);
@@ -3951,10 +4025,10 @@ class PharmacyWorkbenchController extends Controller
         // 1. Stock Valuation
         $stockQuery = \App\Models\StockBatch::with('product.price')
             ->where('current_qty', '>', 0)
-            ->whereHas('store', function($q) {
+            ->whereHas('store', function ($q) {
                 $q->whereIn('distribution_role', [\App\Models\Store::ROLE_PHARMACY_HUB, \App\Models\Store::ROLE_PHARMACY_SATELLITE]);
             });
-        
+
         if ($storeId) {
             $stockQuery->where('store_id', $storeId);
         }
@@ -3973,27 +4047,39 @@ class PharmacyWorkbenchController extends Controller
 
         // Base query for dispensed items
         $posrQuery = \App\Models\ProductOrServiceRequest::whereNotNull('dispensed_from_store_id')
-            ->whereHas('dispensedFromStore', function($q) {
+            ->whereHas('dispensedFromStore', function ($q) {
                 $q->whereIn('distribution_role', [\App\Models\Store::ROLE_PHARMACY_HUB, \App\Models\Store::ROLE_PHARMACY_SATELLITE]);
             });
 
-        if ($dateFrom) $posrQuery->where('created_at', '>=', $dateFrom);
-        if ($dateTo) $posrQuery->where('created_at', '<=', $dateTo);
-        if ($storeId) $posrQuery->where('dispensed_from_store_id', $storeId);
+        if ($dateFrom) {
+            $posrQuery->where('created_at', '>=', $dateFrom);
+        }
+        if ($dateTo) {
+            $posrQuery->where('created_at', '<=', $dateTo);
+        }
+        if ($storeId) {
+            $posrQuery->where('dispensed_from_store_id', $storeId);
+        }
 
         // 1.5 Expenditure (Purchases)
         $reqQuery = \App\Models\StoreRequisitionItem::with(['sourceBatch', 'product.price'])
             ->where('status', 'fulfilled')
-            ->whereHas('requisition', function($q) use ($dateFrom, $dateTo, $storeId) {
+            ->whereHas('requisition', function ($q) use ($dateFrom, $dateTo, $storeId) {
                 $q->where('status', 'fulfilled');
-                if ($dateFrom) $q->where('fulfilled_at', '>=', $dateFrom);
-                if ($dateTo) $q->where('fulfilled_at', '<=', $dateTo);
-                $q->whereHas('toStore', function($q2) {
+                if ($dateFrom) {
+                    $q->where('fulfilled_at', '>=', $dateFrom);
+                }
+                if ($dateTo) {
+                    $q->where('fulfilled_at', '<=', $dateTo);
+                }
+                $q->whereHas('toStore', function ($q2) {
                     $q2->whereIn('distribution_role', [\App\Models\Store::ROLE_PHARMACY_HUB, \App\Models\Store::ROLE_PHARMACY_SATELLITE]);
                 });
-                if ($storeId) $q->where('to_store_id', $storeId);
+                if ($storeId) {
+                    $q->where('to_store_id', $storeId);
+                }
             });
-            
+
         $totalExpenditure = 0;
         $reqQuery->chunk(500, function ($requisitions) use (&$totalExpenditure) {
             foreach ($requisitions as $reqItem) {
@@ -4016,13 +4102,13 @@ class PharmacyWorkbenchController extends Controller
         $collectionsByStore = [];
         $incomeByScheme = [];
         $totalGoodsUsed = 0;
-        
+
         $visitTypeCounts = ['Admitted' => 0, 'Out-Patient' => 0, 'Walk-in' => 0];
         $patientClassBreakdown = [];
         $genderBreakdown = [];
         $ageBreakdown = [];
 
-        $addHmoData = function(&$breakdown, $key, $record) {
+        $addHmoData = function (&$breakdown, $key, $record) {
             if (!isset($breakdown[$key])) {
                 $breakdown[$key] = ['count' => 0, 'schemes' => []];
             }
@@ -4055,10 +4141,17 @@ class PharmacyWorkbenchController extends Controller
 
         $posrQuery->with(['dispensedFromStore', 'patient.hmo.scheme', 'hmo.scheme', 'encounter.queue.clinic'])
             ->chunk(500, function ($posrRecords) use (
-                &$collectionsByStore, &$incomeByScheme, &$totalGoodsUsed,
-                &$visitTypeCounts, &$patientClassBreakdown, &$genderBreakdown,
-                &$ageBreakdown, &$processedPatients, &$patientsByScheme,
-                $ageBrackets, $addHmoData
+                &$collectionsByStore,
+                &$incomeByScheme,
+                &$totalGoodsUsed,
+                &$visitTypeCounts,
+                &$patientClassBreakdown,
+                &$genderBreakdown,
+                &$ageBreakdown,
+                &$processedPatients,
+                &$patientsByScheme,
+                $ageBrackets,
+                $addHmoData
             ) {
                 foreach ($posrRecords as $record) {
                     // Part A: Financials
@@ -4066,9 +4159,9 @@ class PharmacyWorkbenchController extends Controller
                     $cashAmount = (float)$record->payable_amount;
                     $claimsAmount = (float)$record->claims_amount;
                     $amount = $cashAmount + $claimsAmount;
-                    
+
                     $totalGoodsUsed += $amount;
-                    
+
                     $patient = $record->patient;
                     $hmoId = $record->hmo_id ?: ($patient->hmo_id ?? null);
                     $hmo = $record->hmo ?: ($patient->hmo ?? null);
@@ -4114,14 +4207,18 @@ class PharmacyWorkbenchController extends Controller
 
                     // Part B: Demographics
                     $patient = $record->patient;
-                    if (!$patient) continue;
-                    
+                    if (!$patient) {
+                        continue;
+                    }
+
                     // Only count patient demographics once per report run
-                    if (isset($processedPatients[$patient->id])) continue;
+                    if (isset($processedPatients[$patient->id])) {
+                        continue;
+                    }
                     $processedPatients[$patient->id] = true;
-                    
+
                     $isAdmitted = $record->admission_request_id || ($record->encounter && $record->encounter->admission_request_id);
-                    
+
                     if ($isAdmitted) {
                         $visitTypeCounts['Admitted']++;
                     } elseif ($record->encounter_id) {
@@ -4134,7 +4231,7 @@ class PharmacyWorkbenchController extends Controller
                         $patientsByScheme[$schemeName] = 0;
                     }
                     $patientsByScheme[$schemeName]++;
-                    
+
                     if ($isAdmitted) {
                         $addHmoData($patientClassBreakdown, 'Admitted', $record);
                     } elseif ($record->encounter_id) {
@@ -4152,6 +4249,7 @@ class PharmacyWorkbenchController extends Controller
                         foreach ($ageBrackets as $bracket) {
                             if ($age >= $bracket['min'] && $age <= $bracket['max']) {
                                 $ageLabel = $bracket['label'];
+
                                 break;
                             }
                         }
@@ -4176,7 +4274,7 @@ class PharmacyWorkbenchController extends Controller
             'patient_classifications' => $patientClassBreakdown,
             'gender_distribution' => $genderBreakdown,
             'age_distribution' => $ageBreakdown,
-            'age_brackets_used' => $ageBrackets
+            'age_brackets_used' => $ageBrackets,
         ];
     }
 }

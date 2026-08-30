@@ -2,8 +2,8 @@
 
 namespace App\Models\Accounting;
 
-use App\Models\User;
 use App\Models\Bank;
+use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -18,7 +18,8 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  */
 class FixedAssetDisposal extends Model
 {
-    use HasFactory, SoftDeletes;
+    use HasFactory;
+    use SoftDeletes;
 
     protected $table = 'fixed_asset_disposals';
 
@@ -105,6 +106,7 @@ class FixedAssetDisposal extends Model
     public function calculateGainLoss(): float
     {
         $netProceeds = $this->disposal_proceeds - $this->disposal_costs;
+
         return round($netProceeds - $this->book_value_at_disposal, 2);
     }
 
@@ -223,6 +225,7 @@ class FixedAssetDisposal extends Model
         } elseif ($this->gain_loss_on_disposal < 0) {
             return 'Loss on Disposal';
         }
+
         return 'No Gain/Loss';
     }
 }

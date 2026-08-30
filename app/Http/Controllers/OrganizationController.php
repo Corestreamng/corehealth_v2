@@ -2,10 +2,10 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
 use App\Models\Organization;
-use Yajra\DataTables\Facades\DataTables;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
+use Yajra\DataTables\Facades\DataTables;
 
 class OrganizationController extends Controller
 {
@@ -31,6 +31,7 @@ class OrganizationController extends Controller
                 if ($row->status == 1) {
                     return '<span class="badge bg-success">Active</span>';
                 }
+
                 return '<span class="badge bg-danger">Inactive</span>';
             })
             ->addColumn('balance_formatted', function ($row) {
@@ -83,13 +84,14 @@ class OrganizationController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => 'Organization created successfully'
+                'message' => 'Organization created successfully',
             ]);
         } catch (\Exception $e) {
             Log::error('Failed to create organization: ' . $e->getMessage());
+
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to create organization'
+                'message' => 'Failed to create organization',
             ], 500);
         }
     }
@@ -103,6 +105,7 @@ class OrganizationController extends Controller
     public function show($id)
     {
         $organization = Organization::findOrFail($id);
+
         return view('admin.organizations.show', compact('organization'));
     }
 
@@ -137,13 +140,14 @@ class OrganizationController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => 'Organization updated successfully'
+                'message' => 'Organization updated successfully',
             ]);
         } catch (\Exception $e) {
             Log::error('Failed to update organization: ' . $e->getMessage());
+
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to update organization'
+                'message' => 'Failed to update organization',
             ], 500);
         }
     }
@@ -158,12 +162,12 @@ class OrganizationController extends Controller
     {
         try {
             $organization = Organization::findOrFail($id);
-            
+
             // Prevent deletion if they have bills
             if ($organization->bills()->count() > 0) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Cannot delete organization with associated bills. Please deactivate instead.'
+                    'message' => 'Cannot delete organization with associated bills. Please deactivate instead.',
                 ], 400);
             }
 
@@ -171,13 +175,14 @@ class OrganizationController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => 'Organization deleted successfully'
+                'message' => 'Organization deleted successfully',
             ]);
         } catch (\Exception $e) {
             Log::error('Failed to delete organization: ' . $e->getMessage());
+
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to delete organization'
+                'message' => 'Failed to delete organization',
             ], 500);
         }
     }
@@ -188,7 +193,7 @@ class OrganizationController extends Controller
     public function bills($id)
     {
         $organization = Organization::findOrFail($id);
-        
+
         $bills = \App\Models\OrganizationBill::with(['patient', 'checkoutPayment'])
             ->where('organization_id', $id)
             ->where('outstanding_amount', '>', 0)
@@ -242,9 +247,9 @@ class OrganizationController extends Controller
 
         try {
             // Create the clearing payment transaction in database
-            \Illuminate\Support\Facades\DB::transaction(function() use ($bills, $organization, $paymentMethod, $bankId, $amountPaid, $discountAmount, $request) {
+            \Illuminate\Support\Facades\DB::transaction(function () use ($bills, $organization, $paymentMethod, $bankId, $amountPaid, $discountAmount, $request) {
                 $ref = 'ORG-SETTL-' . strtoupper(uniqid());
-                
+
                 $payment = \App\Models\Payment::create([
                     'payment_type' => 'ORGANIZATION_BILL_SETTLEMENT',
                     'payment_method' => $paymentMethod,
@@ -268,7 +273,7 @@ class OrganizationController extends Controller
                     }
 
                     $outstanding = floatval($bill->outstanding_amount);
-                    
+
                     // Max we can allocate to this bill is its outstanding amount
                     $allocatedDiscount = min($remainingDiscount, $outstanding);
                     $remainingForPayment = $outstanding - $allocatedDiscount;
@@ -292,11 +297,11 @@ class OrganizationController extends Controller
 
                     \Illuminate\Support\Facades\DB::table('org_bill_pay_allocs')->insert([
                         'organization_bill_id' => $bill->id,
-                        'payment_id'           => $payment->id,
-                        'amount_allocated'     => $allocatedPayment,
-                        'discount_allocated'   => $allocatedDiscount,
-                        'created_at'           => now(),
-                        'updated_at'           => now(),
+                        'payment_id' => $payment->id,
+                        'amount_allocated' => $allocatedPayment,
+                        'discount_allocated' => $allocatedDiscount,
+                        'created_at' => now(),
+                        'updated_at' => now(),
                     ]);
 
                     $remainingDiscount -= $allocatedDiscount;
@@ -311,6 +316,7 @@ class OrganizationController extends Controller
             return redirect()->back()->with('success', 'Organization bills settled successfully.');
         } catch (\Exception $e) {
             Log::error('Failed to settle organization bills: ' . $e->getMessage());
+
             return redirect()->back()->with('error', 'Failed to settle bills: ' . $e->getMessage());
         }
     }

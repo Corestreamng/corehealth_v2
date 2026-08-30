@@ -6,7 +6,6 @@ use App\Models\Expense;
 use App\Models\Store;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\DB;
 use Yajra\DataTables\Facades\DataTables;
 
 /**
@@ -75,6 +74,7 @@ class ExpenseController extends Controller
                         'other' => 'dark',
                     ];
                     $color = $colors[$expense->category] ?? 'secondary';
+
                     return '<span class="badge badge-' . $color . '">' . ucfirst(str_replace('_', ' ', $expense->category)) . '</span>';
                 })
                 ->addColumn('status_badge', function ($expense) {
@@ -85,6 +85,7 @@ class ExpenseController extends Controller
                         'voided' => 'secondary',
                     ];
                     $color = $colors[$expense->status] ?? 'secondary';
+
                     return '<span class="badge badge-' . $color . '">' . ucfirst($expense->status) . '</span>';
                 })
                 ->addColumn('created_by_name', function ($expense) {
@@ -96,8 +97,10 @@ class ExpenseController extends Controller
                         if ($type === 'PurchaseOrder') {
                             return $expense->reference->po_number ?? 'PO';
                         }
+
                         return $type;
                     }
+
                     return '-';
                 })
                 ->addColumn('actions', function ($expense) {
@@ -231,7 +234,7 @@ class ExpenseController extends Controller
         if (request()->wantsJson() || request()->ajax()) {
             return response()->json([
                 'success' => true,
-                'expense' => $expense
+                'expense' => $expense,
             ]);
         }
 
@@ -306,7 +309,7 @@ class ExpenseController extends Controller
         if ($expense->status !== 'pending') {
             return response()->json([
                 'success' => false,
-                'message' => 'Only pending expenses can be approved'
+                'message' => 'Only pending expenses can be approved',
             ], 422);
         }
 
@@ -317,7 +320,7 @@ class ExpenseController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => 'Expense approved successfully'
+            'message' => 'Expense approved successfully',
         ]);
     }
 
@@ -329,7 +332,7 @@ class ExpenseController extends Controller
         if ($expense->status !== 'pending') {
             return response()->json([
                 'success' => false,
-                'message' => 'Only pending expenses can be rejected'
+                'message' => 'Only pending expenses can be rejected',
             ], 422);
         }
 
@@ -341,7 +344,7 @@ class ExpenseController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => 'Expense rejected'
+            'message' => 'Expense rejected',
         ]);
     }
 
@@ -357,7 +360,7 @@ class ExpenseController extends Controller
         if ($expense->status !== 'approved') {
             return response()->json([
                 'success' => false,
-                'message' => 'Only approved expenses can be voided'
+                'message' => 'Only approved expenses can be voided',
             ], 422);
         }
 
@@ -377,12 +380,12 @@ class ExpenseController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => 'Expense voided successfully'
+                'message' => 'Expense voided successfully',
             ]);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to void expense: ' . $e->getMessage()
+                'message' => 'Failed to void expense: ' . $e->getMessage(),
             ], 422);
         }
     }

@@ -27,7 +27,8 @@ use OwenIt\Auditing\Contracts\Auditable;
  */
 class StockBatch extends Model implements Auditable
 {
-    use HasFactory, SoftDeletes;
+    use HasFactory;
+    use SoftDeletes;
     use \OwenIt\Auditing\Auditable;
 
     protected $fillable = [
@@ -62,10 +63,10 @@ class StockBatch extends Model implements Auditable
     /**
      * Source type constants
      */
-    const SOURCE_PURCHASE_ORDER = 'purchase_order';
-    const SOURCE_MANUAL = 'manual';
-    const SOURCE_TRANSFER_IN = 'transfer_in';
-    const SOURCE_OPENING_STOCK = 'opening_stock';
+    public const SOURCE_PURCHASE_ORDER = 'purchase_order';
+    public const SOURCE_MANUAL = 'manual';
+    public const SOURCE_TRANSFER_IN = 'transfer_in';
+    public const SOURCE_OPENING_STOCK = 'opening_stock';
 
     /**
      * Boot method for model events
@@ -278,6 +279,7 @@ class StockBatch extends Model implements Auditable
         if (!$this->expiry_date) {
             return null;
         }
+
         return now()->diffInDays($this->expiry_date, false);
     }
 

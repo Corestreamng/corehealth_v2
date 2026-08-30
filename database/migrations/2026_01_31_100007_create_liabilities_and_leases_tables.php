@@ -15,8 +15,7 @@ use Illuminate\Support\Facades\Schema;
  * - Lease management (IFRS 16 compliance)
  * - Lease payment schedules
  */
-return new class extends Migration
-{
+return new class () extends Migration {
     public function up()
     {
         // Liability Schedules (Loans, Mortgages, etc.)

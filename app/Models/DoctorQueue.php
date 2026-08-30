@@ -33,14 +33,14 @@ class DoctorQueue extends Model implements Auditable
     ];
 
     protected $casts = [
-        'status'                      => 'integer',
-        'vitals_taken'                => 'boolean',
-        'is_paused'                   => 'boolean',
+        'status' => 'integer',
+        'vitals_taken' => 'boolean',
+        'is_paused' => 'boolean',
         'consultation_paused_seconds' => 'integer',
-        'consultation_started_at'     => 'datetime',
-        'consultation_ended_at'       => 'datetime',
-        'last_paused_at'              => 'datetime',
-        'last_resumed_at'             => 'datetime',
+        'consultation_started_at' => 'datetime',
+        'consultation_ended_at' => 'datetime',
+        'last_paused_at' => 'datetime',
+        'last_resumed_at' => 'datetime',
     ];
 
     // ──────────────────────────────────────
@@ -159,9 +159,9 @@ class DoctorQueue extends Model implements Auditable
     public function getConsultationDurationFormattedAttribute(): string
     {
         $seconds = $this->consultation_duration_seconds;
-        $hours   = intdiv($seconds, 3600);
+        $hours = intdiv($seconds, 3600);
         $minutes = intdiv($seconds % 3600, 60);
-        $secs    = $seconds % 60;
+        $secs = $seconds % 60;
 
         return sprintf('%02d:%02d:%02d', $hours, $minutes, $secs);
     }

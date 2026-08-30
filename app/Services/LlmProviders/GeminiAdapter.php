@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Log;
 class GeminiAdapter implements LlmProviderInterface
 {
     protected string $apiKey;
+
     protected string $baseUrl;
 
     public function __construct(string $apiKey, string $baseUrl = 'https://generativelanguage.googleapis.com')
@@ -42,10 +43,12 @@ class GeminiAdapter implements LlmProviderInterface
         if ($response->failed()) {
             $error = $response->json('error.message', $response->body());
             Log::error('Gemini API error', ['status' => $response->status(), 'error' => $error]);
+
             throw new \Exception("Gemini API error: {$error}");
         }
 
         $data = $response->json();
+
         return $data['candidates'][0]['content']['parts'][0]['text'] ?? '';
     }
 
@@ -60,17 +63,20 @@ class GeminiAdapter implements LlmProviderInterface
             }
 
             $models = $response->json('models', []);
+
             return collect($models)->filter(function ($m) {
                 // Only include generative models
                 $methods = $m['supportedGenerationMethods'] ?? [];
+
                 return in_array('generateContent', $methods);
-            })->map(fn($m) => [
+            })->map(fn ($m) => [
                 'id' => str_replace('models/', '', $m['name']),
                 'name' => $m['displayName'] ?? $m['name'],
                 'context_window' => $m['inputTokenLimit'] ?? null,
             ])->values()->toArray();
         } catch (\Exception $e) {
             Log::warning('Gemini listModels exception', ['error' => $e->getMessage()]);
+
             return $this->getFallbackModels();
         }
     }
@@ -79,6 +85,7 @@ class GeminiAdapter implements LlmProviderInterface
     {
         try {
             $models = $this->listModels();
+
             return [
                 'valid' => count($models) > 0,
                 'message' => count($models) > 0 ? 'Connected successfully' : 'No models found',

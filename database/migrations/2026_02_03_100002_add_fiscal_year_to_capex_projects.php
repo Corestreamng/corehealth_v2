@@ -11,8 +11,7 @@ use Illuminate\Support\Facades\Schema;
  * but the migration created 'capex_projects' without this field.
  * This migration adds fiscal_year and creates a view for compatibility.
  */
-return new class extends Migration
-{
+return new class () extends Migration {
     public function up(): void
     {
         // Add fiscal_year to capex_projects

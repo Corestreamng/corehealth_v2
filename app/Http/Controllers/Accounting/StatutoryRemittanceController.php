@@ -114,9 +114,10 @@ class StatutoryRemittanceController extends Controller
                 return response()->json([
                     'success' => false,
                     'message' => 'Validation failed',
-                    'errors' => $validator->errors()
+                    'errors' => $validator->errors(),
                 ], 422);
             }
+
             return back()->withErrors($validator)->withInput();
         }
 
@@ -140,7 +141,7 @@ class StatutoryRemittanceController extends Controller
                 return response()->json([
                     'success' => true,
                     'message' => 'Statutory remittance created successfully',
-                    'data' => $remittance
+                    'data' => $remittance,
                 ]);
             }
 
@@ -154,7 +155,7 @@ class StatutoryRemittanceController extends Controller
             if ($request->ajax()) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Failed to create remittance'
+                    'message' => 'Failed to create remittance',
                 ], 500);
             }
 
@@ -174,7 +175,7 @@ class StatutoryRemittanceController extends Controller
             'preparedBy',
             'approvedBy',
             'paidBy',
-            'voidedBy'
+            'voidedBy',
         ]);
 
         // Banks for the payment modal
@@ -220,9 +221,10 @@ class StatutoryRemittanceController extends Controller
             if ($request->ajax()) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'This remittance cannot be edited'
+                    'message' => 'This remittance cannot be edited',
                 ], 422);
             }
+
             return back()->with('error', 'This remittance cannot be edited.');
         }
 
@@ -243,9 +245,10 @@ class StatutoryRemittanceController extends Controller
                 return response()->json([
                     'success' => false,
                     'message' => 'Validation failed',
-                    'errors' => $validator->errors()
+                    'errors' => $validator->errors(),
                 ], 422);
             }
+
             return back()->withErrors($validator)->withInput();
         }
 
@@ -265,7 +268,7 @@ class StatutoryRemittanceController extends Controller
             if ($request->ajax()) {
                 return response()->json([
                     'success' => true,
-                    'message' => 'Statutory remittance updated successfully'
+                    'message' => 'Statutory remittance updated successfully',
                 ]);
             }
 
@@ -279,7 +282,7 @@ class StatutoryRemittanceController extends Controller
             if ($request->ajax()) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Failed to update remittance'
+                    'message' => 'Failed to update remittance',
                 ], 500);
             }
 
@@ -295,7 +298,7 @@ class StatutoryRemittanceController extends Controller
         if ($statutoryRemittance->status !== StatutoryRemittance::STATUS_DRAFT) {
             return response()->json([
                 'success' => false,
-                'message' => 'Only draft remittances can be submitted'
+                'message' => 'Only draft remittances can be submitted',
             ], 422);
         }
 
@@ -303,7 +306,7 @@ class StatutoryRemittanceController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => 'Remittance submitted for approval'
+            'message' => 'Remittance submitted for approval',
         ]);
     }
 
@@ -315,7 +318,7 @@ class StatutoryRemittanceController extends Controller
         if (!$statutoryRemittance->canApprove()) {
             return response()->json([
                 'success' => false,
-                'message' => 'This remittance cannot be approved'
+                'message' => 'This remittance cannot be approved',
             ], 422);
         }
 
@@ -327,7 +330,7 @@ class StatutoryRemittanceController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => 'Remittance approved successfully'
+            'message' => 'Remittance approved successfully',
         ]);
     }
 
@@ -340,7 +343,7 @@ class StatutoryRemittanceController extends Controller
         if (!$statutoryRemittance->canPay()) {
             return response()->json([
                 'success' => false,
-                'message' => 'This remittance cannot be marked as paid'
+                'message' => 'This remittance cannot be marked as paid',
             ], 422);
         }
 
@@ -356,7 +359,7 @@ class StatutoryRemittanceController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Validation failed',
-                'errors' => $validator->errors()
+                'errors' => $validator->errors(),
             ], 422);
         }
 
@@ -378,7 +381,7 @@ class StatutoryRemittanceController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => 'Remittance marked as paid. Journal entry created.'
+                'message' => 'Remittance marked as paid. Journal entry created.',
             ]);
 
         } catch (\Exception $e) {
@@ -387,7 +390,7 @@ class StatutoryRemittanceController extends Controller
 
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to process payment'
+                'message' => 'Failed to process payment',
             ], 500);
         }
     }
@@ -400,7 +403,7 @@ class StatutoryRemittanceController extends Controller
         if (!$statutoryRemittance->canVoid()) {
             return response()->json([
                 'success' => false,
-                'message' => 'This remittance cannot be voided'
+                'message' => 'This remittance cannot be voided',
             ], 422);
         }
 
@@ -412,7 +415,7 @@ class StatutoryRemittanceController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Please provide a reason for voiding',
-                'errors' => $validator->errors()
+                'errors' => $validator->errors(),
             ], 422);
         }
 
@@ -430,7 +433,7 @@ class StatutoryRemittanceController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => 'Remittance voided successfully'
+                'message' => 'Remittance voided successfully',
             ]);
 
         } catch (\Exception $e) {
@@ -439,7 +442,7 @@ class StatutoryRemittanceController extends Controller
 
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to void remittance'
+                'message' => 'Failed to void remittance',
             ], 500);
         }
     }
@@ -472,7 +475,7 @@ class StatutoryRemittanceController extends Controller
 
         return response()->json([
             'success' => true,
-            'data' => $payHeads
+            'data' => $payHeads,
         ]);
     }
 
@@ -484,7 +487,7 @@ class StatutoryRemittanceController extends Controller
         if ($statutoryRemittance->status !== StatutoryRemittance::STATUS_DRAFT) {
             return response()->json([
                 'success' => false,
-                'message' => 'Only draft remittances can be deleted'
+                'message' => 'Only draft remittances can be deleted',
             ], 422);
         }
 
@@ -492,7 +495,7 @@ class StatutoryRemittanceController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => 'Remittance deleted successfully'
+            'message' => 'Remittance deleted successfully',
         ]);
     }
 }

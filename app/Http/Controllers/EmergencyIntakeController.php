@@ -2,12 +2,12 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\QueueStatus;
 use App\Helpers\HmoHelper;
 use App\Models\AdmissionRequest;
 use App\Models\Bed;
 use App\Models\Clinic;
 use App\Models\DoctorQueue;
-use App\Enums\QueueStatus;
 use App\Models\ImagingServiceRequest;
 use App\Models\LabServiceRequest;
 use App\Models\Patient;
@@ -28,7 +28,7 @@ class EmergencyIntakeController extends Controller
     /**
      * ESI Triage Levels
      */
-    const ESI_LEVELS = [
+    public const ESI_LEVELS = [
         1 => 'Resuscitation - Immediate life-saving intervention',
         2 => 'Emergent - High risk, confused/lethargic, severe pain',
         3 => 'Urgent - Multiple resources needed',
@@ -240,7 +240,7 @@ class EmergencyIntakeController extends Controller
                         'cause_of_death_primary' => $br['cause'] ?? 'Unknown',
                         'certified_by_doctor_id' => Auth::id(), // Recorded by intake staff
                         'last_office_done' => false,
-                        'disposition' => 'pending'
+                        'disposition' => 'pending',
                     ]
                 );
             }
@@ -275,12 +275,24 @@ class EmergencyIntakeController extends Controller
 
                 // Vitals summary
                 $vitals = [];
-                if ($request->vital_hr) $vitals[] = "HR: {$request->vital_hr} bpm";
-                if ($request->vital_bp_sys && $request->vital_bp_dia) $vitals[] = "BP: {$request->vital_bp_sys}/{$request->vital_bp_dia} mmHg";
-                if ($request->vital_spo2) $vitals[] = "SpO2: {$request->vital_spo2}%";
-                if ($request->vital_temp) $vitals[] = "Temp: {$request->vital_temp}°C";
-                if ($request->vital_rr) $vitals[] = "RR: {$request->vital_rr}/min";
-                if ($request->vital_bs) $vitals[] = "BS: {$request->vital_bs} mg/dL";
+                if ($request->vital_hr) {
+                    $vitals[] = "HR: {$request->vital_hr} bpm";
+                }
+                if ($request->vital_bp_sys && $request->vital_bp_dia) {
+                    $vitals[] = "BP: {$request->vital_bp_sys}/{$request->vital_bp_dia} mmHg";
+                }
+                if ($request->vital_spo2) {
+                    $vitals[] = "SpO2: {$request->vital_spo2}%";
+                }
+                if ($request->vital_temp) {
+                    $vitals[] = "Temp: {$request->vital_temp}°C";
+                }
+                if ($request->vital_rr) {
+                    $vitals[] = "RR: {$request->vital_rr}/min";
+                }
+                if ($request->vital_bs) {
+                    $vitals[] = "BS: {$request->vital_bs} mg/dL";
+                }
                 if (!empty($vitals)) {
                     $triageData .= "Vitals: " . implode(' | ', $vitals) . "\n";
                 }
@@ -355,18 +367,22 @@ class EmergencyIntakeController extends Controller
             switch ($request->disposition) {
                 case 'admit_emergency':
                     $result = $this->handleAdmitEmergency($patient, $request, $triageData);
+
                     break;
 
                 case 'queue_consultation':
                     $result = $this->handleQueueConsultation($patient, $request, $triageData);
+
                     break;
 
                 case 'direct_service':
                     $result = $this->handleDirectService($patient, $request, $triageData);
+
                     break;
 
                 case 'morgue_mortal':
                     $result = $this->handleMorgueMortal($patient, $request);
+
                     break;
             }
 
@@ -740,17 +756,17 @@ class EmergencyIntakeController extends Controller
             ->get()
             ->map(function ($patient) {
                 return [
-                    'id'         => $patient->id,
-                    'user_id'    => $patient->user_id,
-                    'name'       => userfullname($patient->user_id),
-                    'file_no'    => $patient->file_no ?? 'N/A',
-                    'phone'      => $patient->phone_no ?? 'N/A',
-                    'gender'     => $patient->gender,
-                    'hmo'        => $patient->hmo->name ?? 'Private',
-                    'hmo_id'     => $patient->hmo_id ?? null,
+                    'id' => $patient->id,
+                    'user_id' => $patient->user_id,
+                    'name' => userfullname($patient->user_id),
+                    'file_no' => $patient->file_no ?? 'N/A',
+                    'phone' => $patient->phone_no ?? 'N/A',
+                    'gender' => $patient->gender,
+                    'hmo' => $patient->hmo->name ?? 'Private',
+                    'hmo_id' => $patient->hmo_id ?? null,
                     'hmo_scheme' => $patient->hmo->scheme->name ?? 'Self/Private',
-                    'hmo_no'     => $patient->hmo_no ?? '',
-                    'allergies'  => $patient->allergies,
+                    'hmo_no' => $patient->hmo_no ?? '',
+                    'allergies' => $patient->allergies,
                 ];
             });
 
@@ -887,6 +903,7 @@ class EmergencyIntakeController extends Controller
     public function getClinics()
     {
         $clinics = Clinic::orderBy('name')->get(['id', 'name']);
+
         return response()->json($clinics);
     }
 }

@@ -15,8 +15,7 @@ use Illuminate\Support\Facades\Schema;
  * 2. petty_cash_transactions - Individual disbursements and replenishments
  * 3. petty_cash_reconciliations - Periodic cash counts and variance tracking
  */
-return new class extends Migration
-{
+return new class () extends Migration {
     public function up(): void
     {
         // 1. Petty Cash Funds

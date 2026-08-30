@@ -2,12 +2,12 @@
 
 namespace App\Observers\Accounting;
 
-use App\Models\Accounting\LiabilityPaymentSchedule;
-use App\Models\Accounting\LiabilitySchedule;
-use App\Models\Accounting\JournalEntry;
-use App\Models\Accounting\JournalEntryLine;
 use App\Models\Accounting\Account;
 use App\Models\Accounting\AccountingPeriod;
+use App\Models\Accounting\JournalEntry;
+use App\Models\Accounting\JournalEntryLine;
+use App\Models\Accounting\LiabilityPaymentSchedule;
+use App\Models\Accounting\LiabilitySchedule;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
@@ -50,6 +50,7 @@ class LiabilityPaymentObserver
                 'payment_id' => $payment->id,
                 'journal_entry_id' => $payment->journal_entry_id,
             ]);
+
             return;
         }
 
@@ -71,6 +72,7 @@ class LiabilityPaymentObserver
                     'liability_id' => $payment->liability_id,
                 ]);
                 DB::rollBack();
+
                 return;
             }
 
@@ -82,6 +84,7 @@ class LiabilityPaymentObserver
                     'account_id' => $liability->account_id,
                 ]);
                 DB::rollBack();
+
                 return;
             }
 
@@ -99,6 +102,7 @@ class LiabilityPaymentObserver
                     'payment_id' => $payment->id,
                 ]);
                 DB::rollBack();
+
                 return;
             }
 
@@ -118,6 +122,7 @@ class LiabilityPaymentObserver
                     'payment_id' => $payment->id,
                 ]);
                 DB::rollBack();
+
                 return;
             }
 

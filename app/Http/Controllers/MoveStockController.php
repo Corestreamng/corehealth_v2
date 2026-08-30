@@ -2,11 +2,10 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
-use App\Models\StoreStock;
 use App\Models\Store;
+use App\Models\StoreStock;
 use App\Services\StockService;
-
+use Illuminate\Http\Request;
 
 class MoveStockController extends Controller
 {
@@ -61,7 +60,7 @@ class MoveStockController extends Controller
 
             // Convert to base units if packaging provided (if we decide to send packaging info from this legacy view)
             $qty = (float) $request->quantity;
-            
+
             // Perform the transfer using StockService (handles FIFO batches automatically)
             $this->stockService->transferStock(
                 $request->product_id,
@@ -73,10 +72,12 @@ class MoveStockController extends Controller
             );
 
             $msg = 'Items were transferred successfully.';
+
             return redirect(route('inventory.store-workbench.index'))->withMessage($msg)->withMessageType('success');
 
         } catch (\Exception $e) {
             \Log::error('MoveStock failed: ' . $e->getMessage());
+
             return redirect()->back()->withInput()->withMessage("An error occurred: " . $e->getMessage())->withMessageType('danger');
         }
     }
@@ -91,12 +92,11 @@ class MoveStockController extends Controller
     {
         $now = \Carbon\Carbon::now();
 
-
         $pc = StoreStock::where('id', '=', $id)->with('store', 'product')->first();
 
         $product_curr_store = $pc->store->id;
 
-        $stores    = Store::whereStatus(1)->where('id','!=', $product_curr_store)->orderBy('store_name', 'asc')->pluck('store_name', 'id');
+        $stores = Store::whereStatus(1)->where('id', '!=', $product_curr_store)->orderBy('store_name', 'asc')->pluck('store_name', 'id');
         // dd($stores);
 
         return view('admin.move_stock.move_stock', compact('stores', 'pc', 'id', 'now'));

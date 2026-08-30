@@ -22,8 +22,8 @@ class Kernel extends ConsoleKernel
         $schedule->command('hmo:sync-executives-group')->hourly();
 
         // NOTE: Automated daily database backup logic has been moved to AppServiceProvider.
-        // Shared hosting environments typically do not have cron jobs configured, 
-        // meaning this scheduler would never trigger. 
+        // Shared hosting environments typically do not have cron jobs configured,
+        // meaning this scheduler would never trigger.
         // We now use a pseudo-cron approach tied to the request lifecycle instead.
         // $schedule->command('backup:database')->dailyAt('02:00')
         //          ->appendOutputTo(storage_path('logs/backup.log'));
@@ -36,7 +36,7 @@ class Kernel extends ConsoleKernel
      */
     protected function commands()
     {
-        $this->load(__DIR__.'/Commands');
+        $this->load(__DIR__ . '/Commands');
 
         require base_path('routes/console.php');
     }

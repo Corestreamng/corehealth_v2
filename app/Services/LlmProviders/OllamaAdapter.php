@@ -34,6 +34,7 @@ class OllamaAdapter implements LlmProviderInterface
 
         if ($response->failed()) {
             Log::error('Ollama API error', ['status' => $response->status()]);
+
             throw new \Exception("Ollama API error: " . $response->body());
         }
 
@@ -44,9 +45,11 @@ class OllamaAdapter implements LlmProviderInterface
     {
         try {
             $response = Http::timeout(10)->get("{$this->baseUrl}/api/tags");
-            if ($response->failed()) return [];
+            if ($response->failed()) {
+                return [];
+            }
 
-            return collect($response->json('models', []))->map(fn($m) => [
+            return collect($response->json('models', []))->map(fn ($m) => [
                 'id' => $m['name'] ?? 'unknown',
                 'name' => $m['name'] ?? 'Unknown',
                 'context_window' => null,
@@ -62,15 +65,23 @@ class OllamaAdapter implements LlmProviderInterface
             $response = Http::timeout(5)->get("{$this->baseUrl}/api/tags");
             if ($response->successful()) {
                 $count = count($response->json('models', []));
+
                 return ['valid' => true, 'message' => "Connected. {$count} model(s).", 'models_count' => $count];
             }
+
             return ['valid' => false, 'message' => 'Ollama not responding', 'models_count' => 0];
         } catch (\Exception $e) {
             return ['valid' => false, 'message' => 'Cannot connect to Ollama at ' . $this->baseUrl, 'models_count' => 0];
         }
     }
 
-    public function getDisplayName(): string { return 'Ollama (Local)'; }
+    public function getDisplayName(): string
+    {
+        return 'Ollama (Local)';
+    }
 
-    public function estimateTokens(string $text): int { return (int) ceil(mb_strlen($text) / 4); }
+    public function estimateTokens(string $text): int
+    {
+        return (int) ceil(mb_strlen($text) / 4);
+    }
 }

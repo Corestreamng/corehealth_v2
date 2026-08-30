@@ -3,12 +3,11 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Models\SlowQuery;
 use App\Models\ApplicationStatu;
+use App\Models\SlowQuery;
 use App\Services\SlowQueryService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Carbon\Carbon;
 
 class SlowQueryController extends Controller
 {
@@ -52,27 +51,30 @@ class SlowQueryController extends Controller
 
             return \Yajra\DataTables\DataTables::of($query)
                 ->addIndexColumn()
-                ->editColumn('timestamp', function($q) {
+                ->editColumn('timestamp', function ($q) {
                     return $q->timestamp->format('Y-m-d H:i:s');
                 })
-                ->editColumn('query_time', function($q) {
+                ->editColumn('query_time', function ($q) {
                     $color = $q->query_time > 10 ? 'text-danger font-weight-bold' : ($q->query_time > 5 ? 'text-warning' : '');
-                    return '<span class="'.$color.'">'.$q->query_time.'s</span>';
+
+                    return '<span class="' . $color . '">' . $q->query_time . 's</span>';
                 })
-                ->editColumn('rows_examined', function($q) {
+                ->editColumn('rows_examined', function ($q) {
                     $badge = $q->rows_examined > 100000 ? 'badge-warning' : 'badge-light';
-                    return '<span class="badge '.$badge.'">'.number_format($q->rows_examined).'</span>';
+
+                    return '<span class="badge ' . $badge . '">' . number_format($q->rows_examined) . '</span>';
                 })
-                ->addColumn('source_info', function($q) {
+                ->addColumn('source_info', function ($q) {
                     $source = $q->source ?? 'Unknown';
                     $shortSource = strlen($source) > 40 ? substr($source, 0, 37) . '...' : $source;
-                    return '<code title="'.$source.'" class="text-info">'.$shortSource.'</code>';
+
+                    return '<code title="' . $source . '" class="text-info">' . $shortSource . '</code>';
                 })
-                ->editColumn('query', function($q) {
-                    return '<code class="text-truncate d-inline-block" style="max-width: 250px;" title="'.e($q->query).'">'.e(substr($q->query, 0, 80)).'...</code>';
+                ->editColumn('query', function ($q) {
+                    return '<code class="text-truncate d-inline-block" style="max-width: 250px;" title="' . e($q->query) . '">' . e(substr($q->query, 0, 80)) . '...</code>';
                 })
-                ->addColumn('actions', function($q) {
-                    return '<button class="btn btn-sm btn-outline-primary" onclick="showQuery('.e(json_encode($q)).')"><i class="mdi mdi-eye"></i></button>';
+                ->addColumn('actions', function ($q) {
+                    return '<button class="btn btn-sm btn-outline-primary" onclick="showQuery(' . e(json_encode($q)) . ')"><i class="mdi mdi-eye"></i></button>';
                 })
                 ->rawColumns(['query_time', 'rows_examined', 'source_info', 'query', 'actions'])
                 ->make(true);

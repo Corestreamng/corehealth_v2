@@ -2,18 +2,18 @@
 
 namespace App\Http\Controllers\OpsAudit;
 
-use Illuminate\Http\Request;
-use Carbon\Carbon;
 use App\Models\AdmissionRequest;
 use App\Models\NursingNote;
 use App\Models\ProductOrServiceRequest;
+use Carbon\Carbon;
+use Illuminate\Http\Request;
 
 class OpsAuditNursingController extends OpsAuditBaseController
 {
     public function index(Request $request)
     {
         $wards = \App\Models\Ward::orderBy('name')->pluck('name', 'id');
-        $hmos = \App\Models\Hmo::with('scheme')->orderBy('name')->get()->groupBy(fn($hmo) => $hmo->scheme ? $hmo->scheme->name : 'Other Schemes');
+        $hmos = \App\Models\Hmo::with('scheme')->orderBy('name')->get()->groupBy(fn ($hmo) => $hmo->scheme ? $hmo->scheme->name : 'Other Schemes');
         $hmoSchemes = \App\Models\HmoScheme::orderBy('name')->pluck('name', 'id');
         $stores = $this->getPermittedStoresForFilter(['roles' => ['ward', 'department']]);
 
@@ -30,6 +30,7 @@ class OpsAuditNursingController extends OpsAuditBaseController
                 'requisitions' => \App\Models\StoreRequisition::class,
             ];
             $request->merge(['zone_key' => 'ops_audit.nursing.' . $tab]);
+
             return $this->handleBulkStamp($request, $tab, $modelMap);
         }
 
@@ -59,7 +60,7 @@ class OpsAuditNursingController extends OpsAuditBaseController
             'ward',
             'bed',
             'productOrServiceRequest.payment.user',
-            'bills.payment'
+            'bills.payment',
 ]);
 
         $this->applyDateFilter($query, $request);
@@ -67,25 +68,35 @@ class OpsAuditNursingController extends OpsAuditBaseController
         $this->applyPaymentFilters($query, $request, 'productOrServiceRequest');
         $this->applyItemFilters($query, $request, 'productOrServiceRequest');
 
-        if ($request->filled('ward_id')) $query->where('ward_id', $request->ward_id);
-        if ($request->filled('status')) $query->where('admission_status', $request->status);
-        if ($request->filled('hmo_id')) $query->whereHas('patient.hmo', fn($q) => $q->where('id', $request->hmo_id));
-        if ($request->filled('hmo_scheme_id')) $query->whereHas('patient.hmo', fn($q) => $q->where('hmo_scheme_id', $request->hmo_scheme_id));
-        if ($request->filled('gender')) $query->whereHas('patient.user', fn($q) => $q->where('gender', $request->gender));
+        if ($request->filled('ward_id')) {
+            $query->where('ward_id', $request->ward_id);
+        }
+        if ($request->filled('status')) {
+            $query->where('admission_status', $request->status);
+        }
+        if ($request->filled('hmo_id')) {
+            $query->whereHas('patient.hmo', fn ($q) => $q->where('id', $request->hmo_id));
+        }
+        if ($request->filled('hmo_scheme_id')) {
+            $query->whereHas('patient.hmo', fn ($q) => $q->where('hmo_scheme_id', $request->hmo_scheme_id));
+        }
+        if ($request->filled('gender')) {
+            $query->whereHas('patient.user', fn ($q) => $q->where('gender', $request->gender));
+        }
 
         $kpiQuery = clone $query;
 
-        return $this->buildDataTableResponse($query, $request, fn($q) => $q, function ($row) {
+        return $this->buildDataTableResponse($query, $request, fn ($q) => $q, function ($row) {
             $patient = $row->patient;
             $user = $patient?->user;
             $hmo = $patient?->hmo;
-            
+
             $statusColors = [
                 'pending_checklist' => 'warning text-dark',
                 'admitted' => 'primary',
-                'discharged' => 'success'
+                'discharged' => 'success',
             ];
-            $statusBadge = '<span class="badge bg-'.($statusColors[$row->admission_status] ?? 'secondary').'">'.ucfirst(str_replace('_', ' ', $row->admission_status ?? '')).'</span>';
+            $statusBadge = '<span class="badge bg-' . ($statusColors[$row->admission_status] ?? 'secondary') . '">' . ucfirst(str_replace('_', ' ', $row->admission_status ?? '')) . '</span>';
             $los = $row->admitted_at ? Carbon::parse($row->admitted_at)->diffInDays($row->discharged_at ? Carbon::parse($row->discharged_at) : now()) : '-';
 
             // Aggregate bills for this admission request
@@ -94,17 +105,17 @@ class OpsAuditNursingController extends OpsAuditBaseController
             $totalAmount = $bills->sum('amount');
             $totalPayable = $bills->sum('payable_amount');
             $totalClaims = $bills->sum('claims_amount');
-            
+
             $paymentMethod = '-';
             $cashier = '-';
             $payStatus = '<span class="badge bg-secondary">N/A</span>';
-            
+
             if ($bills->count() > 0) {
-                $paidBills = $bills->filter(fn($b) => $b->payment_id != null);
+                $paidBills = $bills->filter(fn ($b) => $b->payment_id != null);
                 if ($paidBills->count() == $bills->count()) {
                     $payStatus = '<span class="badge bg-success">Paid</span>';
                     $payment = $paidBills->first()->payment;
-                    $paymentMethod = $payment?->payment_method ? '<span class="badge bg-light text-dark border">'.$payment->payment_method.'</span>' : '-';
+                    $paymentMethod = $payment?->payment_method ? '<span class="badge bg-light text-dark border">' . $payment->payment_method . '</span>' : '-';
                     $cashier = $payment?->staff_user?->firstname ? ($payment->staff_user->firstname . ' ' . ($payment->staff_user->surname ?? '')) : '-';
                 } elseif ($paidBills->count() > 0) {
                     $payStatus = '<span class="badge bg-info">Partially Paid</span>';
@@ -149,11 +160,13 @@ class OpsAuditNursingController extends OpsAuditBaseController
         $this->applyDateFilter($query, $request);
         $this->applyShiftFilter($query, $request);
 
-        if ($request->filled('completed')) $query->where('completed', $request->completed);
+        if ($request->filled('completed')) {
+            $query->where('completed', $request->completed);
+        }
 
         $kpiQuery = clone $query;
 
-        return $this->buildDataTableResponse($query, $request, fn($q) => $q, function ($row) {
+        return $this->buildDataTableResponse($query, $request, fn ($q) => $q, function ($row) {
             $patient = $row->patient;
             $user = $patient?->user;
             $hmo = $patient?->hmo;
@@ -190,30 +203,36 @@ class OpsAuditNursingController extends OpsAuditBaseController
             'staff',
             'payment.user',
             'product.category',
-            'service'
-])->where(function($q) {
-            $q->whereNotNull('admission_request_id')
-              ->orWhereHas('staff', function($q2) {
-                  $q2->whereHas('roles', fn($r) => $r->where('name', 'NURSE'));
-              });
-        });
+            'service',
+])->where(function ($q) {
+    $q->whereNotNull('admission_request_id')
+      ->orWhereHas('staff', function ($q2) {
+          $q2->whereHas('roles', fn ($r) => $r->where('name', 'NURSE'));
+      });
+});
 
         $this->applyDateFilter($query, $request);
         $this->applyShiftFilter($query, $request);
 
-        if ($request->filled('hmo_id')) $query->whereHas('patient.hmo', fn($q) => $q->where('id', $request->hmo_id));
+        if ($request->filled('hmo_id')) {
+            $query->whereHas('patient.hmo', fn ($q) => $q->where('id', $request->hmo_id));
+        }
 
         $kpiQuery = clone $query;
 
-        return $this->buildDataTableResponse($query, $request, fn($q) => $q, function ($row) {
+        return $this->buildDataTableResponse($query, $request, fn ($q) => $q, function ($row) {
             $patient = $row->patient;
             $user = $patient?->user;
             $hmo = $patient?->hmo;
             $payment = $row->payment;
 
             $itemName = '-';
-            if ($row->type === 'product' && $row->product) $itemName = $row->product->product_name;
-            if ($row->type === 'service' && $row->service) $itemName = $row->service->service_name;
+            if ($row->type === 'product' && $row->product) {
+                $itemName = $row->product->product_name;
+            }
+            if ($row->type === 'service' && $row->service) {
+                $itemName = $row->service->service_name;
+            }
 
             return [
                 'date' => $row->created_at ? Carbon::parse($row->created_at)->format('d M Y') : '-',

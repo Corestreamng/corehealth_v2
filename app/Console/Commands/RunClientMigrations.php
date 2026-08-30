@@ -3,19 +3,20 @@
 namespace App\Console\Commands;
 
 use Illuminate\Console\Command;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Config;
+use Illuminate\Support\Facades\DB;
 
 class RunClientMigrations extends Command
 {
     protected $signature = 'client:upgrade {database}';
+
     protected $description = 'Upgrade a specific client database';
 
     public function handle()
     {
         $database = $this->argument('database');
-        
+
         $this->info("Starting DB Upgrade Script for {$database}...");
 
         // 1. Switch Database Connection
@@ -26,6 +27,7 @@ class RunClientMigrations extends Command
         $dbName = DB::connection('mysql')->getDatabaseName();
         if ($dbName !== $database) {
             $this->error("Failed to switch database connection. Current DB: {$dbName}");
+
             return 1;
         }
         $this->info("Successfully connected to: {$dbName}");
@@ -35,9 +37,10 @@ class RunClientMigrations extends Command
         $exitCode = Artisan::call('migrate', [
             '--force' => true,
         ], $this->output);
-        
+
         if ($exitCode !== 0) {
             $this->error("Migrations failed.");
+
             return $exitCode;
         }
 
@@ -51,19 +54,19 @@ class RunClientMigrations extends Command
             \Database\Seeders\MaternityRoleSeeder::class,
             \Database\Seeders\SurgeryRoleSeeder::class,
             \Database\Seeders\AuditRoleSeeder::class,
-            
+
             // Store Governance
             \Database\Seeders\StoreGovernanceSeeder::class,
             \Database\Seeders\StoreGovernancePermissionsSeeder::class,
-            
+
             // HR Reference Data
             \Database\Seeders\HrReferenceDataSeeder::class,
-            
+
             // Accounting
             \Database\Seeders\ChartOfAccountsSeeder::class,
             \Database\Seeders\SalariesPayableAccountSeeder::class,
             \Database\Seeders\FixedAssetCategorySeeder::class,
-            
+
             // Services & Templates
             \Database\Seeders\ProcedureCategorySeeder::class,
             \Database\Seeders\ProcedureServiceCategorySeeder::class,
@@ -106,6 +109,7 @@ class RunClientMigrations extends Command
         }
 
         $this->info("Upgrade completed successfully!");
+
         return 0;
     }
 }

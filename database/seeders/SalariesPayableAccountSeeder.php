@@ -36,9 +36,10 @@ class SalariesPayableAccountSeeder extends Seeder
                 $this->command->info('Account 2050 (Salaries Payable) already exists - skipped');
                 Log::info('SalariesPayableAccountSeeder: Account 2050 already exists', [
                     'account_id' => $existing->id,
-                    'name' => $existing->name
+                    'name' => $existing->name,
                 ]);
                 DB::rollBack();
+
                 return;
             }
 
@@ -59,6 +60,7 @@ class SalariesPayableAccountSeeder extends Seeder
                 $this->command->error('Could not find Current Liabilities account group');
                 Log::error('SalariesPayableAccountSeeder: Failed to find Current Liabilities group');
                 DB::rollBack();
+
                 return;
             }
 
@@ -80,7 +82,7 @@ class SalariesPayableAccountSeeder extends Seeder
                 'account_id' => $account->id,
                 'code' => $account->code,
                 'name' => $account->name,
-                'group_id' => $groupId
+                'group_id' => $groupId,
             ]);
 
         } catch (\Exception $e) {
@@ -88,8 +90,9 @@ class SalariesPayableAccountSeeder extends Seeder
             $this->command->error('Failed to create Salaries Payable account: ' . $e->getMessage());
             Log::error('SalariesPayableAccountSeeder: Failed', [
                 'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
+                'trace' => $e->getTraceAsString(),
             ]);
+
             throw $e;
         }
     }

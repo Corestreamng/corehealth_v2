@@ -13,8 +13,7 @@ use Illuminate\Support\Facades\Schema;
  * Each period can be opened, closed, or in closing state.
  * Only one period should be open at a time for normal operations.
  */
-return new class extends Migration
-{
+return new class () extends Migration {
     /**
      * Run the migrations.
      */

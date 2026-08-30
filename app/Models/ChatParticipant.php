@@ -4,14 +4,14 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-
-
 use OwenIt\Auditing\Contracts\Auditable;
+
 class ChatParticipant extends Model implements Auditable
 {
     use HasFactory;
     use \OwenIt\Auditing\Auditable;
-protected $fillable = ['conversation_id', 'user_id', 'last_read_at'];
+
+    protected $fillable = ['conversation_id', 'user_id', 'last_read_at'];
 
     protected $casts = [
         'last_read_at' => 'datetime',

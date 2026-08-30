@@ -63,9 +63,10 @@ class PayHeadController extends Controller
                 return response()->json([
                     'success' => false,
                     'message' => 'Validation failed',
-                    'errors' => $validator->errors()
+                    'errors' => $validator->errors(),
                 ], 422);
             }
+
             return back()->withErrors($validator)->withInput();
         }
 
@@ -87,7 +88,7 @@ class PayHeadController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => 'Pay head created successfully',
-                'data' => $payHead
+                'data' => $payHead,
             ]);
         }
 
@@ -130,9 +131,10 @@ class PayHeadController extends Controller
                 return response()->json([
                     'success' => false,
                     'message' => 'Validation failed',
-                    'errors' => $validator->errors()
+                    'errors' => $validator->errors(),
                 ], 422);
             }
+
             return back()->withErrors($validator)->withInput();
         }
 
@@ -153,7 +155,7 @@ class PayHeadController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => 'Pay head updated successfully',
-                'data' => $payHead
+                'data' => $payHead,
             ]);
         }
 
@@ -168,9 +170,10 @@ class PayHeadController extends Controller
             if ($request->ajax()) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Cannot delete pay head that is in use. Consider deactivating it instead.'
+                    'message' => 'Cannot delete pay head that is in use. Consider deactivating it instead.',
                 ], 422);
             }
+
             return back()->with('error', 'Cannot delete pay head that is in use. Consider deactivating it instead.');
         }
 
@@ -179,7 +182,7 @@ class PayHeadController extends Controller
         if ($request->ajax()) {
             return response()->json([
                 'success' => true,
-                'message' => 'Pay head deleted successfully'
+                'message' => 'Pay head deleted successfully',
             ]);
         }
 

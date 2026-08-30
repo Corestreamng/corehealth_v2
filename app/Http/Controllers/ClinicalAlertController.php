@@ -16,17 +16,17 @@ class ClinicalAlertController extends Controller
     public function index($patientId)
     {
         $patient = Patient::findOrFail($patientId);
-        
+
         $alerts = ClinicalAlert::with('creator.user')
             ->where('patient_id', $patientId)
             ->where('is_active', true)
             ->orderByRaw("FIELD(severity, 'high', 'medium', 'low')")
             ->orderBy('created_at', 'desc')
             ->get();
-            
+
         return response()->json([
             'status' => 'success',
-            'data' => $alerts
+            'data' => $alerts,
         ]);
     }
 
@@ -55,7 +55,7 @@ class ClinicalAlertController extends Controller
         return response()->json([
             'status' => 'success',
             'message' => 'Clinical alert created successfully.',
-            'data' => $alert->load('creator.user')
+            'data' => $alert->load('creator.user'),
         ]);
     }
 
@@ -72,7 +72,7 @@ class ClinicalAlertController extends Controller
         ]);
 
         $alert = ClinicalAlert::where('patient_id', $patientId)->findOrFail($alertId);
-        
+
         $user = Auth::user();
         $isCreator = $user->staff && $user->staff->id == $alert->created_by;
         $isAdmin = $user->hasRole(['SUPERADMIN', 'ADMIN']);
@@ -80,7 +80,7 @@ class ClinicalAlertController extends Controller
         if (!$isCreator && !$isAdmin) {
             return response()->json([
                 'status' => 'error',
-                'message' => 'You do not have permission to edit this alert.'
+                'message' => 'You do not have permission to edit this alert.',
             ], 403);
         }
 
@@ -94,7 +94,7 @@ class ClinicalAlertController extends Controller
         return response()->json([
             'status' => 'success',
             'message' => 'Clinical alert updated successfully.',
-            'data' => $alert->load('creator.user')
+            'data' => $alert->load('creator.user'),
         ]);
     }
 
@@ -104,7 +104,7 @@ class ClinicalAlertController extends Controller
     public function destroy($patientId, $alertId)
     {
         $alert = ClinicalAlert::where('patient_id', $patientId)->findOrFail($alertId);
-        
+
         $user = Auth::user();
         $isCreator = $user->staff && $user->staff->id == $alert->created_by;
         $isAdmin = $user->hasRole(['SUPERADMIN', 'ADMIN']);
@@ -112,7 +112,7 @@ class ClinicalAlertController extends Controller
         if (!$isCreator && !$isAdmin) {
             return response()->json([
                 'status' => 'error',
-                'message' => 'You do not have permission to delete this alert.'
+                'message' => 'You do not have permission to delete this alert.',
             ], 403);
         }
 
@@ -120,7 +120,7 @@ class ClinicalAlertController extends Controller
 
         return response()->json([
             'status' => 'success',
-            'message' => 'Clinical alert deactivated successfully.'
+            'message' => 'Clinical alert deactivated successfully.',
         ]);
     }
 }

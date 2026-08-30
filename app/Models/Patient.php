@@ -4,9 +4,8 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-
-
 use OwenIt\Auditing\Contracts\Auditable;
+
 class Patient extends Model implements Auditable
 {
     use HasFactory;
@@ -144,7 +143,7 @@ class Patient extends Model implements Auditable
     public function getFamilyPatientIdsAttribute()
     {
         $query = Patient::query();
-        
+
         $query->where(function ($q) {
             if ($this->principal_id) {
                 $q->where('principal_id', $this->principal_id)
@@ -165,7 +164,7 @@ class Patient extends Model implements Auditable
     public function getFamilyUserIdsAttribute()
     {
         $query = Patient::query();
-        
+
         $query->where(function ($q) {
             if ($this->principal_id) {
                 $q->where('principal_id', $this->principal_id)

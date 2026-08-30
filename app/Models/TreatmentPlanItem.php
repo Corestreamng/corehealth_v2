@@ -55,6 +55,7 @@ class TreatmentPlanItem extends Model
             // Return a null-safe belongsTo that won't crash
             return $this->belongsTo(\App\Models\Service::class, 'reference_id');
         }
+
         // lab, imaging, procedure → service
         return $this->belongsTo(\App\Models\Service::class, 'reference_id');
     }
@@ -79,6 +80,7 @@ class TreatmentPlanItem extends Model
         if ($this->item_type === 'encounter_note') {
             return $this->note ?? 'Encounter Note';
         }
+
         return optional(\App\Models\Service::find($this->reference_id))->service_name ?? 'Unknown Service';
     }
 }

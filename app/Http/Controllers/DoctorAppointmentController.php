@@ -23,6 +23,7 @@ use Yajra\DataTables\DataTables;
 class DoctorAppointmentController extends Controller
 {
     protected QueueStatusService $queueStatusService;
+
     protected AppointmentSlotService $slotService;
 
     public function __construct(QueueStatusService $queueStatusService, AppointmentSlotService $slotService)
@@ -94,15 +95,17 @@ class DoctorAppointmentController extends Controller
             ->addColumn('time_slot', function ($appt) {
                 $start = Carbon::parse($appt->start_time)->format('h:i A');
                 $end = Carbon::parse($appt->end_time)->format('h:i A');
+
                 return $start . ' - ' . $end;
             })
             ->addColumn('type_badge', function ($appt) {
                 $types = [
-                    'scheduled'   => '<span class="badge bg-purple">Scheduled</span>',
-                    'follow_up'   => '<span class="badge bg-info">Follow-Up</span>',
-                    'referral'    => '<span class="badge bg-warning text-dark">Referral</span>',
-                    'walk_in'     => '<span class="badge bg-secondary">Walk-In</span>',
+                    'scheduled' => '<span class="badge bg-purple">Scheduled</span>',
+                    'follow_up' => '<span class="badge bg-info">Follow-Up</span>',
+                    'referral' => '<span class="badge bg-warning text-dark">Referral</span>',
+                    'walk_in' => '<span class="badge bg-secondary">Walk-In</span>',
                 ];
+
                 return $types[$appt->appointment_type] ?? '<span class="badge bg-secondary">' . ucfirst($appt->appointment_type ?? 'N/A') . '</span>';
             })
             ->addColumn('status_badge', function ($appt) {
@@ -137,8 +140,10 @@ class DoctorAppointmentController extends Controller
                     if ($canDeliver) {
                         return '<span class="text-success" style="' . $style . '" title="' . e($deliveryHint) . '"><i class="mdi mdi-check-circle"></i> Ready</span>' . $hintLine;
                     }
+
                     return '<span class="text-danger" style="' . $style . '" title="' . e($deliveryHint) . '"><i class="mdi mdi-alert-circle"></i> ' . e($deliveryReason) . '</span>' . $hintLine;
                 }
+
                 // Terminal states
                 return '<span class="text-muted" style="' . $style . '">—</span>';
             })
@@ -171,6 +176,7 @@ class DoctorAppointmentController extends Controller
                 $buttons .= '<button class="btn btn-sm btn-outline-secondary btn-view-chain" data-id="' . $appt->id . '" title="View History"><i class="mdi mdi-link-variant"></i> History</button>';
 
                 $buttons .= '</div>';
+
                 return $buttons;
             })
             ->rawColumns(['type_badge', 'status_badge', 'delivery_info', 'actions'])
@@ -185,13 +191,13 @@ class DoctorAppointmentController extends Controller
         $today = Carbon::today();
 
         $counts = [
-            'scheduled'       => DoctorAppointment::whereDate('appointment_date', $today)->where('status', QueueStatus::SCHEDULED)->count(),
-            'checked_in'      => DoctorAppointment::whereDate('appointment_date', $today)->whereIn('status', [QueueStatus::WAITING, QueueStatus::VITALS_PENDING, QueueStatus::READY])->count(),
+            'scheduled' => DoctorAppointment::whereDate('appointment_date', $today)->where('status', QueueStatus::SCHEDULED)->count(),
+            'checked_in' => DoctorAppointment::whereDate('appointment_date', $today)->whereIn('status', [QueueStatus::WAITING, QueueStatus::VITALS_PENDING, QueueStatus::READY])->count(),
             'in_consultation' => DoctorAppointment::whereDate('appointment_date', $today)->where('status', QueueStatus::IN_CONSULTATION)->count(),
-            'completed'       => DoctorAppointment::whereDate('appointment_date', $today)->where('status', QueueStatus::COMPLETED)->count(),
-            'no_show'         => DoctorAppointment::whereDate('appointment_date', $today)->where('status', QueueStatus::NO_SHOW)->count(),
-            'cancelled'       => DoctorAppointment::whereDate('appointment_date', $today)->where('status', QueueStatus::CANCELLED)->count(),
-            'total'           => DoctorAppointment::whereDate('appointment_date', $today)->count(),
+            'completed' => DoctorAppointment::whereDate('appointment_date', $today)->where('status', QueueStatus::COMPLETED)->count(),
+            'no_show' => DoctorAppointment::whereDate('appointment_date', $today)->where('status', QueueStatus::NO_SHOW)->count(),
+            'cancelled' => DoctorAppointment::whereDate('appointment_date', $today)->where('status', QueueStatus::CANCELLED)->count(),
+            'total' => DoctorAppointment::whereDate('appointment_date', $today)->count(),
         ];
 
         return response()->json($counts);
@@ -240,7 +246,7 @@ class DoctorAppointmentController extends Controller
         $this->queueStatusService->autoConcludeOverdue();
 
         $startDate = $request->filled('start') ? Carbon::parse($request->start)->toDateString() : Carbon::today()->toDateString();
-        $endDate   = $request->filled('end')   ? Carbon::parse($request->end)->toDateString()   : Carbon::today()->toDateString();
+        $endDate = $request->filled('end') ? Carbon::parse($request->end)->toDateString() : Carbon::today()->toDateString();
 
         $query = DoctorAppointment::with(['patient.user', 'clinic', 'doctor.user'])
             ->orderBy('appointment_date')
@@ -289,36 +295,36 @@ class DoctorAppointmentController extends Controller
             $nextStep = $this->nextStepHint($appt->status, $canDeliver, $deliveryReason, 'appointment');
 
             return [
-                'id'              => 'appt-' . $appt->id,
-                'title'           => $patientName,
-                'start'           => $dateStr . 'T' . $appt->start_time,
-                'end'             => $dateStr . 'T' . ($appt->end_time ?? $appt->start_time),
-                'color'           => $color,
-                'textColor'       => '#fff',
-                'borderColor'     => $color,
-                'className'       => 'appt-event appt-status-' . $appt->status,
+                'id' => 'appt-' . $appt->id,
+                'title' => $patientName,
+                'start' => $dateStr . 'T' . $appt->start_time,
+                'end' => $dateStr . 'T' . ($appt->end_time ?? $appt->start_time),
+                'color' => $color,
+                'textColor' => '#fff',
+                'borderColor' => $color,
+                'className' => 'appt-event appt-status-' . $appt->status,
                 // Extra data for popover/context menu
-                'event_type'      => 'appointment',
-                'record_id'       => $appt->id,
-                'appointment_id'  => $appt->id,
-                'patient_name'    => $patientName,
-                'file_no'         => $fileNo,
-                'phone'           => $phone,
-                'doctor'          => $doctor,
-                'clinic'          => $clinic,
-                'status'          => $appt->status,
-                'status_label'    => $statusLabel,
+                'event_type' => 'appointment',
+                'record_id' => $appt->id,
+                'appointment_id' => $appt->id,
+                'patient_name' => $patientName,
+                'file_no' => $fileNo,
+                'phone' => $phone,
+                'doctor' => $doctor,
+                'clinic' => $clinic,
+                'status' => $appt->status,
+                'status_label' => $statusLabel,
                 'appointment_type' => $appt->appointment_type ?? 'scheduled',
-                'priority'        => $appt->priority ?? 'routine',
-                'clinic_id'       => $appt->clinic_id,
-                'doctor_id'       => $appt->staff_id,
+                'priority' => $appt->priority ?? 'routine',
+                'clinic_id' => $appt->clinic_id,
+                'doctor_id' => $appt->staff_id,
                 'reschedule_count' => $appt->reschedule_count ?? 0,
-                'is_follow_up'    => $appt->appointment_type === 'follow_up',
-                'queue_id'        => $appt->doctor_queue_id,
-                'can_deliver'     => $canDeliver,
+                'is_follow_up' => $appt->appointment_type === 'follow_up',
+                'queue_id' => $appt->doctor_queue_id,
+                'can_deliver' => $canDeliver,
                 'delivery_reason' => $deliveryReason,
-                'delivery_hint'   => $deliveryHint,
-                'next_step'       => $nextStep,
+                'delivery_hint' => $deliveryHint,
+                'next_step' => $nextStep,
             ];
         });
         $events = collect($events->all());  // force base Support\Collection — Eloquent\Collection::merge() calls getKey()
@@ -346,13 +352,13 @@ class DoctorAppointmentController extends Controller
 
             $queueEvents = $queueQuery->orderBy('created_at')->get()->map(function ($queue) use ($statusColors) {
                 $patientName = $queue->patient ? userfullname($queue->patient->user_id) : 'N/A';
-                $fileNo  = $queue->patient->file_no ?? '';
-                $phone   = $queue->patient->phone_no ?? '';
-                $doctor  = $queue->staff_id ? userfullname(Staff::find($queue->staff_id)->user_id ?? 0) : 'Unassigned';
-                $clinic  = Clinic::find($queue->clinic_id)->name ?? '';
-                $color   = $statusColors[$queue->status] ?? '#6c757d';
+                $fileNo = $queue->patient->file_no ?? '';
+                $phone = $queue->patient->phone_no ?? '';
+                $doctor = $queue->staff_id ? userfullname(Staff::find($queue->staff_id)->user_id ?? 0) : 'Unassigned';
+                $clinic = Clinic::find($queue->clinic_id)->name ?? '';
+                $color = $statusColors[$queue->status] ?? '#6c757d';
 
-                $slotMin   = (int) (appsettings('default_slot_duration') ?? 15);
+                $slotMin = (int) (appsettings('default_slot_duration') ?? 15);
                 $startTime = Carbon::parse($queue->created_at);
                 // Clamp to calendar visible range (07:00–20:00) so events aren't invisible
                 if ($startTime->hour >= 20) {
@@ -377,35 +383,35 @@ class DoctorAppointmentController extends Controller
                 $nextStep = $this->nextStepHint($queue->status, $canDeliver, $deliveryReason, 'queue');
 
                 return [
-                    'id'              => 'queue-' . $queue->id,
-                    'title'           => $patientName,
-                    'start'           => $startTime->toIso8601String(),
-                    'end'             => $endTime->toIso8601String(),
-                    'color'           => $color,
-                    'textColor'       => '#fff',
-                    'borderColor'     => ($queue->priority === 'emergency') ? '#dc3545' : $color,
-                    'className'       => 'appt-event appt-status-' . $queue->status . ' queue-event',
-                    'event_type'      => 'queue',
-                    'record_id'       => $queue->id,
-                    'appointment_id'  => null,
-                    'patient_name'    => $patientName,
-                    'file_no'         => $fileNo,
-                    'phone'           => $phone,
-                    'doctor'          => $doctor,
-                    'clinic'          => $clinic,
-                    'status'          => $queue->status,
-                    'status_label'    => QueueStatus::label($queue->status),
+                    'id' => 'queue-' . $queue->id,
+                    'title' => $patientName,
+                    'start' => $startTime->toIso8601String(),
+                    'end' => $endTime->toIso8601String(),
+                    'color' => $color,
+                    'textColor' => '#fff',
+                    'borderColor' => ($queue->priority === 'emergency') ? '#dc3545' : $color,
+                    'className' => 'appt-event appt-status-' . $queue->status . ' queue-event',
+                    'event_type' => 'queue',
+                    'record_id' => $queue->id,
+                    'appointment_id' => null,
+                    'patient_name' => $patientName,
+                    'file_no' => $fileNo,
+                    'phone' => $phone,
+                    'doctor' => $doctor,
+                    'clinic' => $clinic,
+                    'status' => $queue->status,
+                    'status_label' => QueueStatus::label($queue->status),
                     'appointment_type' => 'walk_in',
-                    'priority'        => $queue->priority ?? 'routine',
-                    'clinic_id'       => $queue->clinic_id,
-                    'doctor_id'       => $queue->staff_id,
+                    'priority' => $queue->priority ?? 'routine',
+                    'clinic_id' => $queue->clinic_id,
+                    'doctor_id' => $queue->staff_id,
                     'reschedule_count' => 0,
-                    'is_follow_up'    => false,
-                    'queue_id'        => $queue->id,
-                    'can_deliver'     => $canDeliver,
+                    'is_follow_up' => false,
+                    'queue_id' => $queue->id,
+                    'can_deliver' => $canDeliver,
                     'delivery_reason' => $deliveryReason,
-                    'delivery_hint'   => $deliveryHint,
-                    'next_step'       => $nextStep,
+                    'delivery_hint' => $deliveryHint,
+                    'next_step' => $nextStep,
                 ];
             });
             $queueEvents = collect($queueEvents->all());
@@ -424,15 +430,15 @@ class DoctorAppointmentController extends Controller
     public function createAppointment(Request $request)
     {
         $request->validate([
-            'patient_id'       => 'required|exists:patients,id',
-            'clinic_id'        => 'required|exists:clinics,id',
-            'doctor_id'        => 'nullable|exists:staff,id',
+            'patient_id' => 'required|exists:patients,id',
+            'clinic_id' => 'required|exists:clinics,id',
+            'doctor_id' => 'nullable|exists:staff,id',
             'appointment_date' => 'required|date|after_or_equal:today',
-            'start_time'       => 'required|date_format:H:i',
-            'end_time'         => 'nullable|date_format:H:i|after:start_time',
+            'start_time' => 'required|date_format:H:i',
+            'end_time' => 'nullable|date_format:H:i|after:start_time',
             'appointment_type' => 'nullable|in:scheduled,follow_up,referral',
-            'priority'         => 'nullable|in:routine,urgent,emergency',
-            'notes'            => 'nullable|string|max:1000',
+            'priority' => 'nullable|in:routine,urgent,emergency',
+            'notes' => 'nullable|string|max:1000',
         ]);
 
         try {
@@ -473,9 +479,10 @@ class DoctorAppointmentController extends Controller
 
             if ($conflicts['has_conflict']) {
                 $messages = collect($conflicts['conflicts'])->pluck('message')->implode(' | ');
+
                 return response()->json([
-                    'success'   => false,
-                    'message'   => 'Double-booking conflict detected: ' . $messages,
+                    'success' => false,
+                    'message' => 'Double-booking conflict detected: ' . $messages,
                     'conflicts' => $conflicts['conflicts'],
                 ], 422);
             }
@@ -483,23 +490,24 @@ class DoctorAppointmentController extends Controller
             $bookedByStaff = Staff::where('user_id', Auth::id())->first();
             if (!$bookedByStaff) {
                 DB::rollBack();
+
                 return response()->json(['success' => false, 'message' => 'Staff profile not found for current user.'], 422);
             }
 
             $appointment = DoctorAppointment::create([
-                'patient_id'       => $request->patient_id,
-                'clinic_id'        => $request->clinic_id,
-                'staff_id'         => $request->doctor_id,
+                'patient_id' => $request->patient_id,
+                'clinic_id' => $request->clinic_id,
+                'staff_id' => $request->doctor_id,
                 'appointment_date' => $request->appointment_date,
-                'start_time'       => $request->start_time,
-                'end_time'         => $endTime->format('H:i'),
+                'start_time' => $request->start_time,
+                'end_time' => $endTime->format('H:i'),
                 'duration_minutes' => $startTime->diffInMinutes($endTime),
                 'appointment_type' => $request->appointment_type ?? 'scheduled',
-                'status'           => QueueStatus::SCHEDULED,
-                'priority'         => $request->priority ?? 'routine',
-                'booked_by'        => $bookedByStaff->id,
-                'notes'            => $request->notes,
-                'source'           => 'reception',
+                'status' => QueueStatus::SCHEDULED,
+                'priority' => $request->priority ?? 'routine',
+                'booked_by' => $bookedByStaff->id,
+                'notes' => $request->notes,
+                'source' => 'reception',
             ]);
 
             DB::commit();
@@ -512,6 +520,7 @@ class DoctorAppointmentController extends Controller
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error('Error creating appointment', ['error' => $e->getMessage()]);
+
             return response()->json(['success' => false, 'message' => 'Failed to schedule appointment: ' . $e->getMessage()], 500);
         }
     }
@@ -523,11 +532,11 @@ class DoctorAppointmentController extends Controller
     {
         $request->validate([
             'appointment_date' => 'nullable|date|after_or_equal:today',
-            'start_time'       => 'nullable|date_format:H:i',
-            'end_time'         => 'nullable|date_format:H:i|after:start_time',
-            'doctor_id'        => 'nullable|exists:staff,id',
-            'priority'         => 'nullable|in:routine,urgent,emergency',
-            'notes'            => 'nullable|string|max:1000',
+            'start_time' => 'nullable|date_format:H:i',
+            'end_time' => 'nullable|date_format:H:i|after:start_time',
+            'doctor_id' => 'nullable|exists:staff,id',
+            'priority' => 'nullable|in:routine,urgent,emergency',
+            'notes' => 'nullable|string|max:1000',
         ]);
 
         if (!in_array($appointment->status, [QueueStatus::SCHEDULED])) {
@@ -548,6 +557,7 @@ class DoctorAppointmentController extends Controller
             ]);
         } catch (\Exception $e) {
             Log::error('Error updating appointment', ['error' => $e->getMessage()]);
+
             return response()->json(['success' => false, 'message' => 'Failed to update appointment.'], 500);
         }
     }
@@ -594,7 +604,7 @@ class DoctorAppointmentController extends Controller
                     } catch (\Exception $e) {
                         Log::warning('HMO tariff not found during check-in', [
                             'patient_id' => $patient->id,
-                            'error' => $e->getMessage()
+                            'error' => $e->getMessage(),
                         ]);
                     }
                 }
@@ -607,24 +617,25 @@ class DoctorAppointmentController extends Controller
             $receptionistStaff = Staff::where('user_id', Auth::id())->first();
             if (!$receptionistStaff) {
                 DB::rollBack();
+
                 return response()->json(['error' => 'Staff profile not found for current user.'], 422);
             }
 
             $queue = DoctorQueue::create([
-                'patient_id'       => $appointment->patient_id,
-                'clinic_id'        => $appointment->clinic_id,
-                'staff_id'         => $appointment->staff_id,
-                'receptionist_id'  => $receptionistStaff->id,
+                'patient_id' => $appointment->patient_id,
+                'clinic_id' => $appointment->clinic_id,
+                'staff_id' => $appointment->staff_id,
+                'receptionist_id' => $receptionistStaff->id,
                 'request_entry_id' => $serviceRequest->id,
-                'appointment_id'   => $appointment->id,
-                'status'           => QueueStatus::WAITING,
-                'priority'         => $appointment->priority ?? 'routine',
-                'source'           => 'appointment',
+                'appointment_id' => $appointment->id,
+                'status' => QueueStatus::WAITING,
+                'priority' => $appointment->priority ?? 'routine',
+                'source' => 'appointment',
             ]);
 
             // Update appointment
             $appointment->update([
-                'status'        => QueueStatus::WAITING,
+                'status' => QueueStatus::WAITING,
                 'checked_in_at' => now(),
                 'doctor_queue_id' => $queue->id,
             ]);
@@ -639,6 +650,7 @@ class DoctorAppointmentController extends Controller
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error('Error checking in appointment', ['error' => $e->getMessage(), 'appointment_id' => $appointment->id]);
+
             return response()->json(['success' => false, 'message' => 'Check-in failed: ' . $e->getMessage()], 500);
         }
     }
@@ -662,9 +674,9 @@ class DoctorAppointmentController extends Controller
             DB::beginTransaction();
 
             $appointment->update([
-                'status'              => QueueStatus::CANCELLED,
+                'status' => QueueStatus::CANCELLED,
                 'cancellation_reason' => $request->reason ?? 'Cancelled by staff',
-                'cancelled_at'        => now(),
+                'cancelled_at' => now(),
             ]);
 
             // Cancel linked queue entry if exists
@@ -679,6 +691,7 @@ class DoctorAppointmentController extends Controller
             return response()->json(['success' => true, 'message' => 'Appointment cancelled.']);
         } catch (\Exception $e) {
             DB::rollBack();
+
             return response()->json(['success' => false, 'message' => 'Failed to cancel: ' . $e->getMessage()], 500);
         }
     }
@@ -693,7 +706,7 @@ class DoctorAppointmentController extends Controller
         }
 
         $appointment->update([
-            'status'           => QueueStatus::NO_SHOW,
+            'status' => QueueStatus::NO_SHOW,
             'no_show_marked_at' => now(),
         ]);
 
@@ -709,10 +722,10 @@ class DoctorAppointmentController extends Controller
     {
         $request->validate([
             'appointment_date' => 'required|date|after_or_equal:today',
-            'start_time'       => 'required|date_format:H:i',
-            'end_time'         => 'nullable|date_format:H:i|after:start_time',
-            'doctor_id'        => 'nullable|exists:staff,id',
-            'reason'           => 'nullable|string|max:500',
+            'start_time' => 'required|date_format:H:i',
+            'end_time' => 'nullable|date_format:H:i|after:start_time',
+            'doctor_id' => 'nullable|exists:staff,id',
+            'reason' => 'nullable|string|max:500',
         ]);
 
         if (!in_array($appointment->status, [QueueStatus::SCHEDULED, QueueStatus::CANCELLED, QueueStatus::NO_SHOW])) {
@@ -748,9 +761,10 @@ class DoctorAppointmentController extends Controller
 
             if ($conflicts['has_conflict']) {
                 $messages = collect($conflicts['conflicts'])->pluck('message')->implode(' | ');
+
                 return response()->json([
-                    'success'   => false,
-                    'message'   => 'Double-booking conflict detected: ' . $messages,
+                    'success' => false,
+                    'message' => 'Double-booking conflict detected: ' . $messages,
                     'conflicts' => $conflicts['conflicts'],
                 ], 422);
             }
@@ -758,36 +772,37 @@ class DoctorAppointmentController extends Controller
             $rescheduleBookedBy = Staff::where('user_id', Auth::id())->first();
             if (!$rescheduleBookedBy) {
                 DB::rollBack();
+
                 return response()->json(['success' => false, 'message' => 'Staff profile not found for current user.'], 422);
             }
 
             // Create new appointment from old
             $newAppointment = DoctorAppointment::create([
-                'patient_id'          => $appointment->patient_id,
-                'clinic_id'           => $appointment->clinic_id,
-                'staff_id'            => $request->doctor_id ?? $appointment->staff_id,
-                'appointment_date'    => $request->appointment_date,
-                'start_time'          => $request->start_time,
-                'end_time'            => $endTime->format('H:i'),
-                'duration_minutes'    => $startTime->diffInMinutes($endTime),
-                'appointment_type'    => $appointment->appointment_type,
-                'status'              => QueueStatus::SCHEDULED,
-                'priority'            => $appointment->priority,
-                'booked_by'           => $rescheduleBookedBy->id,
-                'source'              => $appointment->source,
-                'notes'               => $appointment->notes,
+                'patient_id' => $appointment->patient_id,
+                'clinic_id' => $appointment->clinic_id,
+                'staff_id' => $request->doctor_id ?? $appointment->staff_id,
+                'appointment_date' => $request->appointment_date,
+                'start_time' => $request->start_time,
+                'end_time' => $endTime->format('H:i'),
+                'duration_minutes' => $startTime->diffInMinutes($endTime),
+                'appointment_type' => $appointment->appointment_type,
+                'status' => QueueStatus::SCHEDULED,
+                'priority' => $appointment->priority,
+                'booked_by' => $rescheduleBookedBy->id,
+                'source' => $appointment->source,
+                'notes' => $appointment->notes,
                 'rescheduled_from_id' => $appointment->id,
-                'reschedule_count'    => $appointment->reschedule_count + 1,
+                'reschedule_count' => $appointment->reschedule_count + 1,
                 'is_prepaid_followup' => $appointment->is_prepaid_followup,
-                'service_request_id'  => $appointment->is_prepaid_followup ? $appointment->service_request_id : null,
+                'service_request_id' => $appointment->is_prepaid_followup ? $appointment->service_request_id : null,
                 'parent_appointment_id' => $appointment->parent_appointment_id,
             ]);
 
             // Cancel original
             $appointment->update([
-                'status'              => QueueStatus::CANCELLED,
+                'status' => QueueStatus::CANCELLED,
                 'cancellation_reason' => 'Rescheduled to ' . $request->appointment_date . '. ' . ($request->reason ?? ''),
-                'cancelled_at'        => now(),
+                'cancelled_at' => now(),
             ]);
 
             DB::commit();
@@ -800,6 +815,7 @@ class DoctorAppointmentController extends Controller
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error('Error rescheduling appointment', ['error' => $e->getMessage()]);
+
             return response()->json(['success' => false, 'message' => 'Reschedule failed: ' . $e->getMessage()], 500);
         }
     }
@@ -813,12 +829,12 @@ class DoctorAppointmentController extends Controller
     {
         $request->validate([
             'appointment_date' => 'required|date|after_or_equal:today',
-            'start_time'       => 'nullable|date_format:H:i',
-            'end_time'         => 'nullable|date_format:H:i|after:start_time',
-            'clinic_id'        => 'nullable|exists:clinics,id',
-            'doctor_id'        => 'nullable|exists:staff,id',
-            'is_prepaid'       => 'nullable|boolean',
-            'reason'           => 'nullable|string|max:500',
+            'start_time' => 'nullable|date_format:H:i',
+            'end_time' => 'nullable|date_format:H:i|after:start_time',
+            'clinic_id' => 'nullable|exists:clinics,id',
+            'doctor_id' => 'nullable|exists:staff,id',
+            'is_prepaid' => 'nullable|boolean',
+            'reason' => 'nullable|string|max:500',
         ]);
 
         try {
@@ -843,22 +859,22 @@ class DoctorAppointmentController extends Controller
             $isPrepaid = $request->boolean('is_prepaid', false);
 
             $appointment = DoctorAppointment::create([
-                'patient_id'            => $encounter->patient_id,
-                'clinic_id'             => $request->clinic_id ?? $doctor->clinic_id,
-                'staff_id'              => $request->doctor_id ?? $doctor->id,
-                'appointment_date'      => $request->appointment_date,
-                'start_time'            => $startTime->format('H:i'),
-                'end_time'              => $endTime->format('H:i'),
-                'duration_minutes'      => $startTime->diffInMinutes($endTime),
-                'appointment_type'      => 'follow_up',
-                'status'                => QueueStatus::SCHEDULED,
-                'priority'              => 'routine',
-                'booked_by'             => $doctor->id,
-                'source'                => 'follow_up',
-                'notes'                 => $request->reason,
+                'patient_id' => $encounter->patient_id,
+                'clinic_id' => $request->clinic_id ?? $doctor->clinic_id,
+                'staff_id' => $request->doctor_id ?? $doctor->id,
+                'appointment_date' => $request->appointment_date,
+                'start_time' => $startTime->format('H:i'),
+                'end_time' => $endTime->format('H:i'),
+                'duration_minutes' => $startTime->diffInMinutes($endTime),
+                'appointment_type' => 'follow_up',
+                'status' => QueueStatus::SCHEDULED,
+                'priority' => 'routine',
+                'booked_by' => $doctor->id,
+                'source' => 'follow_up',
+                'notes' => $request->reason,
                 'parent_appointment_id' => $parentAppointment?->id,
-                'is_prepaid_followup'   => $isPrepaid,
-                'service_request_id'    => $isPrepaid && $parentAppointment ? $parentAppointment->service_request_id : null,
+                'is_prepaid_followup' => $isPrepaid,
+                'service_request_id' => $isPrepaid && $parentAppointment ? $parentAppointment->service_request_id : null,
             ]);
 
             DB::commit();
@@ -871,6 +887,7 @@ class DoctorAppointmentController extends Controller
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error('Error scheduling follow-up', ['error' => $e->getMessage()]);
+
             return response()->json(['success' => false, 'message' => 'Failed to schedule follow-up: ' . $e->getMessage()], 500);
         }
     }
@@ -884,7 +901,7 @@ class DoctorAppointmentController extends Controller
     {
         $request->validate([
             'doctor_id' => 'required|exists:staff,id',
-            'reason'    => 'nullable|string|max:500',
+            'reason' => 'nullable|string|max:500',
         ]);
 
         if ($appointment->status !== QueueStatus::SCHEDULED) {
@@ -895,10 +912,10 @@ class DoctorAppointmentController extends Controller
             $originalDoctorId = $appointment->staff_id;
 
             $appointment->update([
-                'staff_id'            => $request->doctor_id,
-                'original_staff_id'   => $appointment->original_staff_id ?? $originalDoctorId,
+                'staff_id' => $request->doctor_id,
+                'original_staff_id' => $appointment->original_staff_id ?? $originalDoctorId,
                 'reassignment_reason' => $request->reason,
-                'reassigned_at'       => now(),
+                'reassigned_at' => now(),
             ]);
 
             return response()->json([
@@ -908,6 +925,7 @@ class DoctorAppointmentController extends Controller
             ]);
         } catch (\Exception $e) {
             Log::error('Error reassigning doctor', ['error' => $e->getMessage()]);
+
             return response()->json(['success' => false, 'message' => 'Reassignment failed: ' . $e->getMessage()], 500);
         }
     }
@@ -921,7 +939,7 @@ class DoctorAppointmentController extends Controller
     {
         $request->validate([
             'clinic_id' => 'required|exists:clinics,id',
-            'date'      => 'required|date',
+            'date' => 'required|date',
             'doctor_id' => 'nullable|exists:staff,id',
         ]);
 
@@ -934,8 +952,8 @@ class DoctorAppointmentController extends Controller
 
         return response()->json([
             'success' => true,
-            'slots'   => $slots,
-            'date'    => $date->toDateString(),
+            'slots' => $slots,
+            'date' => $date->toDateString(),
         ]);
     }
 
@@ -950,14 +968,14 @@ class DoctorAppointmentController extends Controller
         // Include doctors whose primary clinic matches OR who have the clinic
         // in their can_see_clinic_queues list
         $doctors = Staff::where(function ($q) use ($appointment) {
-                $q->where('clinic_id', $appointment->clinic_id)
-                  ->orWhereJsonContains('can_see_clinic_queues', (int) $appointment->clinic_id);
-            })
+            $q->where('clinic_id', $appointment->clinic_id)
+              ->orWhereJsonContains('can_see_clinic_queues', (int) $appointment->clinic_id);
+        })
             ->whereHas('user')
             ->get()
             ->map(function ($doctor) {
                 return [
-                    'id'   => $doctor->id,
+                    'id' => $doctor->id,
                     'name' => userfullname($doctor->user_id),
                 ];
             })
@@ -965,8 +983,8 @@ class DoctorAppointmentController extends Controller
 
         // Fallback: if clinic has no staff, broaden to any staff with a user
         if ($doctors->isEmpty()) {
-            $doctors = Staff::whereHas('user')->get()->map(fn($d) => [
-                'id'   => $d->id,
+            $doctors = Staff::whereHas('user')->get()->map(fn ($d) => [
+                'id' => $d->id,
                 'name' => userfullname($d->user_id),
             ])->values();
         }
@@ -986,9 +1004,13 @@ class DoctorAppointmentController extends Controller
         $visited = [$appointment->id]; // prevent infinite loops
         while ($root->parent_appointment_id || $root->rescheduled_from_id) {
             $parentId = $root->parent_appointment_id ?? $root->rescheduled_from_id;
-            if (in_array($parentId, $visited)) break;
+            if (in_array($parentId, $visited)) {
+                break;
+            }
             $parent = DoctorAppointment::find($parentId);
-            if (!$parent) break;
+            if (!$parent) {
+                break;
+            }
             $visited[] = $parentId;
             $root = $parent;
         }
@@ -1006,24 +1028,24 @@ class DoctorAppointmentController extends Controller
     private function flattenChain(DoctorAppointment $appointment, array &$flat, int $depth = 0): void
     {
         $flat[] = [
-            'id'                  => $appointment->id,
-            'appointment_date'    => $appointment->appointment_date ? (
+            'id' => $appointment->id,
+            'appointment_date' => $appointment->appointment_date ? (
                 $appointment->appointment_date instanceof \Carbon\Carbon
                     ? $appointment->appointment_date->format('Y-m-d')
                     : $appointment->appointment_date
             ) : null,
-            'start_time'          => $appointment->start_time,
-            'end_time'            => $appointment->end_time,
-            'status'              => $appointment->status,
-            'status_label'        => QueueStatus::label($appointment->status),
-            'status_badge'        => QueueStatus::badge($appointment->status),
-            'appointment_type'    => $appointment->appointment_type,
-            'doctor_name'         => $appointment->doctor ? userfullname($appointment->doctor->user_id) : 'Any',
-            'clinic'              => $appointment->clinic->name ?? 'N/A',
+            'start_time' => $appointment->start_time,
+            'end_time' => $appointment->end_time,
+            'status' => $appointment->status,
+            'status_label' => QueueStatus::label($appointment->status),
+            'status_badge' => QueueStatus::badge($appointment->status),
+            'appointment_type' => $appointment->appointment_type,
+            'doctor_name' => $appointment->doctor ? userfullname($appointment->doctor->user_id) : 'Any',
+            'clinic' => $appointment->clinic->name ?? 'N/A',
             'rescheduled_from_id' => $appointment->rescheduled_from_id,
             'reassignment_reason' => $appointment->reassignment_reason ?? null,
             'cancellation_reason' => $appointment->cancellation_reason ?? null,
-            'depth'               => $depth,
+            'depth' => $depth,
         ];
 
         // Follow-ups
@@ -1080,10 +1102,11 @@ class DoctorAppointmentController extends Controller
             })
             ->editColumn('priority', function ($appt) {
                 $badges = [
-                    'routine'   => '<span class="badge bg-secondary">Routine</span>',
-                    'urgent'    => '<span class="badge bg-warning text-dark">Urgent</span>',
+                    'routine' => '<span class="badge bg-secondary">Routine</span>',
+                    'urgent' => '<span class="badge bg-warning text-dark">Urgent</span>',
                     'emergency' => '<span class="badge bg-danger">Emergency</span>',
                 ];
+
                 return $badges[$appt->priority] ?? '<span class="badge bg-secondary">' . ucfirst($appt->priority ?? 'routine') . '</span>';
             })
             ->addColumn('status', function ($appt) {
@@ -1114,15 +1137,15 @@ class DoctorAppointmentController extends Controller
 
         $today = Carbon::today();
         $baseApptQuery = DoctorAppointment::where(function ($q) use ($doc) {
-                $q->where('staff_id', $doc->id)
-                  ->orWhere('clinic_id', $doc->clinic_id);
-            })
+            $q->where('staff_id', $doc->id)
+              ->orWhere('clinic_id', $doc->clinic_id);
+        })
             ->where('appointment_date', '>=', $today)
             ->where('status', QueueStatus::SCHEDULED);
 
         return response()->json([
-            'scheduled_today'  => (clone $baseApptQuery)->whereDate('appointment_date', $today)->count(),
-            'scheduled_total'  => (clone $baseApptQuery)->count(),
+            'scheduled_today' => (clone $baseApptQuery)->whereDate('appointment_date', $today)->count(),
+            'scheduled_total' => (clone $baseApptQuery)->count(),
             'scheduled_future' => (clone $baseApptQuery)->where('appointment_date', '>', $today)->count(),
         ]);
     }
@@ -1158,7 +1181,7 @@ class DoctorAppointmentController extends Controller
 
         return response()->json([
             'success' => true,
-            'timer'   => $this->getTimerData($queue->fresh()),
+            'timer' => $this->getTimerData($queue->fresh()),
         ]);
     }
 
@@ -1178,7 +1201,7 @@ class DoctorAppointmentController extends Controller
 
         return response()->json([
             'success' => true,
-            'timer'   => $this->getTimerData($queue->fresh()),
+            'timer' => $this->getTimerData($queue->fresh()),
         ]);
     }
 
@@ -1189,7 +1212,7 @@ class DoctorAppointmentController extends Controller
     {
         return response()->json([
             'success' => true,
-            'timer'   => $this->getTimerData($queue),
+            'timer' => $this->getTimerData($queue),
         ]);
     }
 
@@ -1214,12 +1237,12 @@ class DoctorAppointmentController extends Controller
         $elapsedSeconds = max(0, $elapsedSeconds);
 
         return [
-            'started_at'       => $started ? Carbon::parse($started)->toISOString() : null,
-            'is_paused'        => (bool) $queue->is_paused,
-            'elapsed_seconds'  => $elapsedSeconds,
-            'elapsed_display'  => gmdate('H:i:s', $elapsedSeconds),
-            'status'           => $queue->status,
-            'status_label'     => QueueStatus::label($queue->status),
+            'started_at' => $started ? Carbon::parse($started)->toISOString() : null,
+            'is_paused' => (bool) $queue->is_paused,
+            'elapsed_seconds' => $elapsedSeconds,
+            'elapsed_display' => gmdate('H:i:s', $elapsedSeconds),
+            'status' => $queue->status,
+            'status_label' => QueueStatus::label($queue->status),
         ];
     }
 
@@ -1237,7 +1260,7 @@ class DoctorAppointmentController extends Controller
         }
 
         $startDate = $request->filled('start') ? Carbon::parse($request->start)->toDateString() : Carbon::today()->toDateString();
-        $endDate   = $request->filled('end')   ? Carbon::parse($request->end)->toDateString()   : Carbon::today()->toDateString();
+        $endDate = $request->filled('end') ? Carbon::parse($request->end)->toDateString() : Carbon::today()->toDateString();
 
         $statusColors = QueueStatus::COLORS;
         $events = collect();
@@ -1255,10 +1278,10 @@ class DoctorAppointmentController extends Controller
 
         foreach ($appts as $appt) {
             $patientName = $appt->patient ? userfullname($appt->patient->user_id) : 'N/A';
-            $fileNo  = $appt->patient->file_no ?? '';
-            $phone   = $appt->patient->phone_no ?? '';
-            $clinic  = $appt->clinic->name ?? '';
-            $color   = $statusColors[$appt->status] ?? '#6c757d';
+            $fileNo = $appt->patient->file_no ?? '';
+            $phone = $appt->patient->phone_no ?? '';
+            $clinic = $appt->clinic->name ?? '';
+            $color = $statusColors[$appt->status] ?? '#6c757d';
             $hmoName = '';
             if ($appt->patient && $appt->patient->hmo_id) {
                 $hmoName = \App\Models\Hmo::find($appt->patient->hmo_id)->name ?? '';
@@ -1282,47 +1305,47 @@ class DoctorAppointmentController extends Controller
 
                     if ($canDeliver) {
                         $encounterUrl = route('encounters.create', [
-                            'patient_id'   => $linkedQueue->patient_id,
+                            'patient_id' => $linkedQueue->patient_id,
                             'req_entry_id' => $linkedQueue->request_entry_id,
-                            'queue_id'     => $linkedQueue->id,
+                            'queue_id' => $linkedQueue->id,
                         ]);
                     }
                 }
             }
 
             $events->push([
-                'id'              => 'appt-' . $appt->id,
-                'title'           => $patientName,
-                'start'           => $dateStr . 'T' . $appt->start_time,
-                'end'             => $dateStr . 'T' . ($appt->end_time ?? $appt->start_time),
-                'color'           => $color,
-                'textColor'       => '#fff',
-                'borderColor'     => $color,
-                'className'       => 'unified-event status-' . $appt->status,
+                'id' => 'appt-' . $appt->id,
+                'title' => $patientName,
+                'start' => $dateStr . 'T' . $appt->start_time,
+                'end' => $dateStr . 'T' . ($appt->end_time ?? $appt->start_time),
+                'color' => $color,
+                'textColor' => '#fff',
+                'borderColor' => $color,
+                'className' => 'unified-event status-' . $appt->status,
                 // Payload
-                'event_type'      => 'appointment',
-                'record_id'       => $appt->id,
-                'patient_id'      => $appt->patient_id,
-                'patient_name'    => $patientName,
-                'file_no'         => $fileNo,
-                'phone'           => $phone,
-                'hmo'             => $hmoName,
-                'clinic'          => $clinic,
-                'clinic_id'       => $appt->clinic_id,
-                'doctor_id'       => $appt->staff_id,
-                'status'          => $appt->status,
-                'status_label'    => QueueStatus::label($appt->status),
-                'priority'        => $appt->priority ?? 'routine',
-                'source'          => $appt->appointment_type ?? 'scheduled',
+                'event_type' => 'appointment',
+                'record_id' => $appt->id,
+                'patient_id' => $appt->patient_id,
+                'patient_name' => $patientName,
+                'file_no' => $fileNo,
+                'phone' => $phone,
+                'hmo' => $hmoName,
+                'clinic' => $clinic,
+                'clinic_id' => $appt->clinic_id,
+                'doctor_id' => $appt->staff_id,
+                'status' => $appt->status,
+                'status_label' => QueueStatus::label($appt->status),
+                'priority' => $appt->priority ?? 'routine',
+                'source' => $appt->appointment_type ?? 'scheduled',
                 'appointment_type' => $appt->appointment_type ?? 'scheduled',
-                'reason'          => $appt->reason ?? $appt->notes ?? '',
-                'queue_id'        => $appt->doctor_queue_id,
+                'reason' => $appt->reason ?? $appt->notes ?? '',
+                'queue_id' => $appt->doctor_queue_id,
                 'reschedule_count' => $appt->reschedule_count ?? 0,
-                'encounter_url'   => $encounterUrl,
-                'can_deliver'     => $canDeliver,
+                'encounter_url' => $encounterUrl,
+                'can_deliver' => $canDeliver,
                 'delivery_reason' => $deliveryReason,
-                'delivery_hint'   => $deliveryHint,
-                'next_step'       => $this->nextStepHint($appt->status, $canDeliver, $deliveryReason, 'appointment'),
+                'delivery_hint' => $deliveryHint,
+                'next_step' => $this->nextStepHint($appt->status, $canDeliver, $deliveryReason, 'appointment'),
             ]);
         }
 
@@ -1345,11 +1368,11 @@ class DoctorAppointmentController extends Controller
 
         foreach ($queues as $queue) {
             $patientName = $queue->patient ? userfullname($queue->patient->user_id) : 'N/A';
-            $fileNo  = $queue->patient->file_no ?? '';
-            $phone   = $queue->patient->phone_no ?? '';
+            $fileNo = $queue->patient->file_no ?? '';
+            $phone = $queue->patient->phone_no ?? '';
             $hmoName = ($queue->patient && $queue->patient->hmo) ? $queue->patient->hmo->name : '';
-            $clinic  = \App\Models\Clinic::find($queue->clinic_id)->name ?? '';
-            $color   = $statusColors[$queue->status] ?? '#6c757d';
+            $clinic = \App\Models\Clinic::find($queue->clinic_id)->name ?? '';
+            $color = $statusColors[$queue->status] ?? '#6c757d';
 
             $startTime = Carbon::parse($queue->created_at);
             // Clamp to calendar visible range (07:00–20:00) so events aren't invisible
@@ -1376,50 +1399,50 @@ class DoctorAppointmentController extends Controller
 
                 if ($canDeliver) {
                     $encounterUrl = route('encounters.create', [
-                        'patient_id'  => $queue->patient_id,
+                        'patient_id' => $queue->patient_id,
                         'req_entry_id' => $queue->request_entry_id,
-                        'queue_id'    => $queue->id,
+                        'queue_id' => $queue->id,
                     ]);
                 }
             }
 
             $events->push([
-                'id'              => 'queue-' . $queue->id,
-                'title'           => $patientName,
-                'start'           => $startTime->toIso8601String(),
-                'end'             => $endTime->toIso8601String(),
-                'color'           => $color,
-                'textColor'       => '#fff',
-                'borderColor'     => ($queue->source === 'emergency' || $queue->priority === 'emergency') ? '#dc3545' : $color,
-                'className'       => 'unified-event status-' . $queue->status . ($queue->priority === 'emergency' ? ' event-emergency' : ''),
+                'id' => 'queue-' . $queue->id,
+                'title' => $patientName,
+                'start' => $startTime->toIso8601String(),
+                'end' => $endTime->toIso8601String(),
+                'color' => $color,
+                'textColor' => '#fff',
+                'borderColor' => ($queue->source === 'emergency' || $queue->priority === 'emergency') ? '#dc3545' : $color,
+                'className' => 'unified-event status-' . $queue->status . ($queue->priority === 'emergency' ? ' event-emergency' : ''),
                 // Payload
-                'event_type'      => 'queue',
-                'record_id'       => $queue->id,
-                'patient_id'      => $queue->patient_id,
-                'patient_name'    => $patientName,
-                'file_no'         => $fileNo,
-                'phone'           => $phone,
-                'hmo'             => $hmoName,
-                'clinic'          => $clinic,
-                'clinic_id'       => $queue->clinic_id,
-                'doctor_id'       => $queue->staff_id,
-                'status'          => $queue->status,
-                'status_label'    => QueueStatus::label($queue->status),
-                'priority'        => $queue->priority ?? 'routine',
-                'source'          => $queue->source ?? 'walk_in',
+                'event_type' => 'queue',
+                'record_id' => $queue->id,
+                'patient_id' => $queue->patient_id,
+                'patient_name' => $patientName,
+                'file_no' => $fileNo,
+                'phone' => $phone,
+                'hmo' => $hmoName,
+                'clinic' => $clinic,
+                'clinic_id' => $queue->clinic_id,
+                'doctor_id' => $queue->staff_id,
+                'status' => $queue->status,
+                'status_label' => QueueStatus::label($queue->status),
+                'priority' => $queue->priority ?? 'routine',
+                'source' => $queue->source ?? 'walk_in',
                 'appointment_type' => $queue->source ?? 'walk_in',
-                'reason'          => $queue->triage_note ?? '',
-                'queue_id'        => $queue->id,
-                'encounter_url'   => $encounterUrl,
-                'can_deliver'     => $canDeliver,
+                'reason' => $queue->triage_note ?? '',
+                'queue_id' => $queue->id,
+                'encounter_url' => $encounterUrl,
+                'can_deliver' => $canDeliver,
                 'delivery_reason' => $deliveryReason,
-                'delivery_hint'   => $deliveryHint,
-                'next_step'       => $this->nextStepHint($queue->status, $canDeliver, $deliveryReason, 'queue'),
-                'timer'           => ($queue->status == QueueStatus::IN_CONSULTATION && $queue->consultation_started_at) ? [
-                    'started_at'       => Carbon::parse($queue->consultation_started_at)->toIso8601String(),
-                    'paused_seconds'   => $queue->consultation_paused_seconds ?? 0,
-                    'is_paused'        => (bool) $queue->is_paused,
-                    'last_paused_at'   => $queue->last_paused_at ? Carbon::parse($queue->last_paused_at)->toIso8601String() : null,
+                'delivery_hint' => $deliveryHint,
+                'next_step' => $this->nextStepHint($queue->status, $canDeliver, $deliveryReason, 'queue'),
+                'timer' => ($queue->status == QueueStatus::IN_CONSULTATION && $queue->consultation_started_at) ? [
+                    'started_at' => Carbon::parse($queue->consultation_started_at)->toIso8601String(),
+                    'paused_seconds' => $queue->consultation_paused_seconds ?? 0,
+                    'is_paused' => (bool) $queue->is_paused,
+                    'last_paused_at' => $queue->last_paused_at ? Carbon::parse($queue->last_paused_at)->toIso8601String() : null,
                 ] : null,
             ]);
         }
@@ -1427,7 +1450,7 @@ class DoctorAppointmentController extends Controller
         // Apply status filter if provided
         if ($request->filled('status') && $request->status !== '') {
             $filterStatus = (int) $request->status;
-            $events = $events->filter(fn($e) => $e['status'] === $filterStatus);
+            $events = $events->filter(fn ($e) => $e['status'] === $filterStatus);
         }
 
         return response()->json($events->values());
@@ -1449,7 +1472,7 @@ class DoctorAppointmentController extends Controller
         }
 
         $startDate = $request->input('start_date', Carbon::today()->toDateString());
-        $endDate   = $request->input('end_date', Carbon::today()->toDateString());
+        $endDate = $request->input('end_date', Carbon::today()->toDateString());
         $statusFilter = $request->input('status_filter', '');
         $sourceFilter = $request->input('source_filter', 'all');
         $priorityFilter = $request->input('priority_filter', 'all');
@@ -1513,7 +1536,7 @@ class DoctorAppointmentController extends Controller
                 'c.name as clinic_name',
                 DB::raw("{$bookedByNameSql} as booked_by_name"),
                 DB::raw("CONCAT(da.appointment_date, ' ', da.start_time) as sort_time"),
-                DB::raw("CASE IFNULL(da.priority,'routine') WHEN 'emergency' THEN 1 WHEN 'urgent' THEN 2 WHEN 'routine' THEN 3 ELSE 4 END as priority_level")
+                DB::raw("CASE IFNULL(da.priority,'routine') WHEN 'emergency' THEN 1 WHEN 'urgent' THEN 2 WHEN 'routine' THEN 3 ELSE 4 END as priority_level"),
             ]);
 
         // Query B: Queues
@@ -1567,7 +1590,7 @@ class DoctorAppointmentController extends Controller
             'c.name as clinic_name',
             DB::raw("{$bookedByNameSql} as booked_by_name"),
             DB::raw("dq.created_at as sort_time"),
-            DB::raw("CASE IFNULL(dq.priority,'routine') WHEN 'emergency' THEN 1 WHEN 'urgent' THEN 2 WHEN 'routine' THEN 3 ELSE 4 END as priority_level")
+            DB::raw("CASE IFNULL(dq.priority,'routine') WHEN 'emergency' THEN 1 WHEN 'urgent' THEN 2 WHEN 'routine' THEN 3 ELSE 4 END as priority_level"),
         ]);
 
         $unionQuery = $qA->unionAll($qB);
@@ -1590,19 +1613,24 @@ class DoctorAppointmentController extends Controller
         switch ($sortFilter) {
             case 'oldest':
                 $query->orderBy('sort_time', 'asc');
+
                 break;
             case 'patient_az':
                 $query->orderBy('patient_name', 'asc');
+
                 break;
             case 'patient_za':
                 $query->orderBy('patient_name', 'desc');
+
                 break;
             case 'priority':
                 $query->orderBy('priority_level', 'asc')->orderBy('sort_time', 'desc');
+
                 break;
             case 'newest':
             default:
                 $query->orderBy('sort_time', 'desc');
+
                 break;
         }
 
@@ -1623,7 +1651,7 @@ class DoctorAppointmentController extends Controller
             })
             ->addIndexColumn()
             ->addColumn('card_html', function ($row) {
-                
+
                 // Pre-process variables that were generated in the foreach before
                 $row = (array) $row;
                 $row['patient_name'] = ucwords(trim($row['patient_name'])) ?: 'N/A';
@@ -1636,7 +1664,7 @@ class DoctorAppointmentController extends Controller
                 $row['age'] = $row['dob'] ? Carbon::parse($row['dob'])->age : '?';
                 $row['gender'] = $row['gender'] == 'Male' ? 'M' : ($row['gender'] == 'Female' ? 'F' : 'U');
                 $row['booked_by'] = $row['booked_by_name'] ?: 'Unknown';
-                
+
                 // Fetch HMO delivery checks if needed
                 $canDeliver = true;
                 $deliveryReason = 'Ready';
@@ -1654,9 +1682,9 @@ class DoctorAppointmentController extends Controller
 
                     if ($canDeliver) {
                         $encounterUrl = route('encounters.create', [
-                            'patient_id'  => $row['patient_id'],
+                            'patient_id' => $row['patient_id'],
                             'req_entry_id' => $row['request_entry_id'],
-                            'queue_id'    => $row['record_id'],
+                            'queue_id' => $row['record_id'],
                         ]);
                     }
                 }
@@ -1665,7 +1693,7 @@ class DoctorAppointmentController extends Controller
                 $row['delivery_hint'] = $deliveryHint;
                 $row['encounter_url'] = $encounterUrl;
                 $row['next_step'] = $this->nextStepHint($row['status'], $canDeliver, $deliveryReason, $row['event_type']);
-                
+
                 // Status badge
                 $statusBadge = QueueStatus::badge($row['status']);
                 if ($row['event_type'] === 'queue' && $row['status'] == QueueStatus::IN_CONSULTATION && $row['consultation_started_at']) {
@@ -1708,12 +1736,12 @@ class DoctorAppointmentController extends Controller
 
                 // ── Source Badge ──
                 $sourceIcons = [
-                    'scheduled'   => '<span class="badge bg-purple-subtle text-purple source-badge"><i class="mdi mdi-calendar-check"></i> Scheduled</span>',
-                    'follow_up'   => '<span class="badge bg-info-subtle text-info source-badge"><i class="mdi mdi-calendar-refresh"></i> Follow-up</span>',
-                    'referral'    => '<span class="badge bg-warning-subtle text-warning source-badge"><i class="mdi mdi-share-variant"></i> Referral</span>',
+                    'scheduled' => '<span class="badge bg-purple-subtle text-purple source-badge"><i class="mdi mdi-calendar-check"></i> Scheduled</span>',
+                    'follow_up' => '<span class="badge bg-info-subtle text-info source-badge"><i class="mdi mdi-calendar-refresh"></i> Follow-up</span>',
+                    'referral' => '<span class="badge bg-warning-subtle text-warning source-badge"><i class="mdi mdi-share-variant"></i> Referral</span>',
                     'appointment' => '<span class="badge bg-purple-subtle text-purple source-badge"><i class="mdi mdi-calendar-check"></i> Appointment</span>',
-                    'emergency'   => '<span class="badge bg-danger-subtle text-danger source-badge"><i class="mdi mdi-ambulance"></i> Emergency</span>',
-                    'walk_in'     => '<span class="badge bg-secondary-subtle text-secondary source-badge"><i class="mdi mdi-walk"></i> Walk-in</span>',
+                    'emergency' => '<span class="badge bg-danger-subtle text-danger source-badge"><i class="mdi mdi-ambulance"></i> Emergency</span>',
+                    'walk_in' => '<span class="badge bg-secondary-subtle text-secondary source-badge"><i class="mdi mdi-walk"></i> Walk-in</span>',
                 ];
                 $sourceBadge = $sourceIcons[$row['source']] ?? $sourceIcons['walk_in'];
                 if (!empty($row['is_follow_up'])) {
@@ -1769,7 +1797,7 @@ class DoctorAppointmentController extends Controller
                 $profileUrl = route('patient.show', $row['patient_id']);
 
                 // ── Build Card HTML ──
-                $html  = '<div class="queue-card">';
+                $html = '<div class="queue-card">';
 
                 // Row 1: Avatar + Patient Info + Status badges
                 $html .= '<div class="queue-card-header">';
@@ -1835,6 +1863,7 @@ class DoctorAppointmentController extends Controller
                 }
 
                 $html .= '</div>';
+
                 return $html;
             })
             ->rawColumns(['card_html'])
@@ -1870,7 +1899,7 @@ class DoctorAppointmentController extends Controller
                   ->orWhere('staff_id', $doc->id);
             })->whereBetween('created_at', [
                 Carbon::parse($startDate)->startOfDay(),
-                Carbon::parse($endDate)->endOfDay()
+                Carbon::parse($endDate)->endOfDay(),
             ]);
         };
 
@@ -1882,19 +1911,19 @@ class DoctorAppointmentController extends Controller
             })
             ->whereBetween('appointment_date', [
                 Carbon::parse($startDate)->startOfDay(),
-                Carbon::parse($endDate)->endOfDay()
+                Carbon::parse($endDate)->endOfDay(),
             ])
             ->where('status', QueueStatus::SCHEDULED);
         };
 
         $counts = [
-            'new'              => $baseQuery()->where('status', QueueStatus::WAITING)->count(),
-            'vitals_pending'   => $baseQuery()->where('status', QueueStatus::VITALS_PENDING)->count(),
-            'ready'            => $baseQuery()->where('status', QueueStatus::READY)->count(),
-            'in_consultation'  => $baseQuery()->where('status', QueueStatus::IN_CONSULTATION)->count(),
-            'completed'        => $baseQuery()->where('status', QueueStatus::COMPLETED)->count(),
-            'scheduled'        => $apptBase()->count(), // all upcoming (today + future)
-            'scheduled_today'  => $apptBase()->whereDate('appointment_date', $today)->count(),
+            'new' => $baseQuery()->where('status', QueueStatus::WAITING)->count(),
+            'vitals_pending' => $baseQuery()->where('status', QueueStatus::VITALS_PENDING)->count(),
+            'ready' => $baseQuery()->where('status', QueueStatus::READY)->count(),
+            'in_consultation' => $baseQuery()->where('status', QueueStatus::IN_CONSULTATION)->count(),
+            'completed' => $baseQuery()->where('status', QueueStatus::COMPLETED)->count(),
+            'scheduled' => $apptBase()->count(), // all upcoming (today + future)
+            'scheduled_today' => $apptBase()->whereDate('appointment_date', $today)->count(),
             'scheduled_future' => $apptBase()->where('appointment_date', '>', $today)->count(),
         ];
 

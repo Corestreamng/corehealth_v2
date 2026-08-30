@@ -30,37 +30,37 @@ class StoreGovernancePermissionsSeeder extends Seeder
         $permissions = [
             // ===== GOVERNANCE CONFIG (Plan §11) =====
             // Checked on admin Store Governance config routes (Plan §9.1)
-            'store-governance.view'   => 'View store governance config (roles, lane matrix, ownership)',
+            'store-governance.view' => 'View store governance config (roles, lane matrix, ownership)',
             'store-governance.manage' => 'Edit store roles, lane matrix, ownership and manager assignments',
 
             // ===== POLICY OVERRIDES (Plan §11) =====
             // Checked before StoreRequisitionController::store() L180 (Plan §5.2, §A10)
-            'store-policy.override-lane'    => 'Create a requisition on a denied lane (with mandatory reason)',
+            'store-policy.override-lane' => 'Create a requisition on a denied lane (with mandatory reason)',
             // Checked before fulfill/dispense batch selection (Plan §7.3, §7.5.1)
-            'store-policy.override-fifo'    => 'Select a non-FIFO batch; deviation is logged as ShiftAction',
+            'store-policy.override-fifo' => 'Select a non-FIFO batch; deviation is logged as ShiftAction',
             // Checked before PurchaseOrderController::receive() L336 (Plan §7.4)
-            'store-policy.over-receive'     => 'Receive more than the ordered quantity (within tolerance%)',
+            'store-policy.over-receive' => 'Receive more than the ordered quantity (within tolerance%)',
 
             // ===== CONTEXT MANAGEMENT (Plan §11) =====
             // Allows manual store override in StoreContextResolver (Plan §10 step 1)
-            'store-context.change-manual'         => 'Override auto-resolved store with a manual selection',
+            'store-context.change-manual' => 'Override auto-resolved store with a manual selection',
             // Allows resolving stores from a different department (Plan §10 step 3)
-            'store-context.use-cross-department'  => 'Resolve stores from a department other than own',
+            'store-context.use-cross-department' => 'Resolve stores from a department other than own',
 
             // ===== CLINICAL STOCK ACTIONS (Plan §11, §7.5) =====
             // Scoped to store ID — checked before dispenseMedication() L933 (Plan §7.5.1)
-            'dispense-from-store'       => 'Dispense medication to patients from a specific pharmacy store',
+            'dispense-from-store' => 'Dispense medication to patients from a specific pharmacy store',
             // Scoped to store ID — checked before administerInjection() L775,
             // administerImmunization() L1185, administerFromScheduleNew() L3134 (Plan §7.5.2, §7.5.3)
-            'administer-from-store'     => 'Administer ward-stock drugs/vaccines from a specific store',
+            'administer-from-store' => 'Administer ward-stock drugs/vaccines from a specific store',
             // Scoped to store ID — checked before addConsumableBill() L1745 (Plan §7.5.4)
             'bill-consumable-from-store' => 'Bill consumables from a specific store',
 
             // ===== REQUISITION GATES (Plan §11, §5.2) =====
             // Auto-approved when lane policy allows; injected at StoreRequisitionController::store() L180
-            'requisition-lane-allowed'             => 'Create a requisition on an approved lane',
+            'requisition-lane-allowed' => 'Create a requisition on an approved lane',
             // Scoped to store ID — injected at StoreRequisitionController::approve() L242
-            'can-approve-requisition-for-store'    => 'Approve requisitions where user manages the source store',
+            'can-approve-requisition-for-store' => 'Approve requisitions where user manages the source store',
 
             // ===== CANDIDATE STORE ACCESS (Option A — all-stores bypass) =====
             // Bypasses rule-driven candidateStores() and returns every active store.
@@ -134,8 +134,9 @@ class StoreGovernancePermissionsSeeder extends Seeder
     {
         $role = Role::where('name', $roleName)->first();
 
-        if (! $role) {
+        if (!$role) {
             $this->command->warn("Role '{$roleName}' not found in DB — skipping governance permission assignment.");
+
             return;
         }
 

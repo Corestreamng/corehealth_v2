@@ -2,38 +2,36 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Validator;
-use Illuminate\Support\Str;
-use App\Models\User;
+use App\Models\Clinic;
+use App\Models\Hmo;
 use App\Models\Patient;
-use App\Models\Staff;
+use App\Models\Price;
 use App\Models\Product;
 use App\Models\ProductCategory;
 use App\Models\ProductPackaging;
-use App\Models\Price;
-use App\Models\Stock;
-use App\Models\StockBatch;
-use App\Models\StoreStock;
-use App\Models\Store;
 use App\Models\Service;
 use App\Models\ServiceCategory;
 use App\Models\ServicePrice;
 use App\Models\Specialization;
-use App\Models\Clinic;
-use App\Models\Hmo;
-use Spatie\Permission\Models\Role;
-use PhpOffice\PhpSpreadsheet\Spreadsheet;
-use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
-use PhpOffice\PhpSpreadsheet\IOFactory;
+use App\Models\Staff;
+use App\Models\Stock;
+use App\Models\StockBatch;
+use App\Models\Store;
+use App\Models\StoreStock;
+use App\Models\User;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 use PhpOffice\PhpSpreadsheet\Cell\DataValidation;
-use PhpOffice\PhpSpreadsheet\Style\Fill;
-use PhpOffice\PhpSpreadsheet\Style\Border;
+use PhpOffice\PhpSpreadsheet\IOFactory;
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Style\Alignment;
-use PhpOffice\PhpSpreadsheet\Style\Protection;
+use PhpOffice\PhpSpreadsheet\Style\Border;
+use PhpOffice\PhpSpreadsheet\Style\Fill;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
+use Spatie\Permission\Models\Role;
 
 /**
  * ImportExportController
@@ -78,7 +76,13 @@ class ImportExportController extends Controller
         $roles = Role::orderBy('name')->get();
 
         return view('admin.import-export.index', compact(
-            'stats', 'categories', 'stores', 'specializations', 'clinics', 'hmos', 'roles'
+            'stats',
+            'categories',
+            'stores',
+            'specializations',
+            'clinics',
+            'hmos',
+            'roles'
         ));
     }
 
@@ -306,6 +310,7 @@ class ImportExportController extends Controller
         $spreadsheet->setActiveSheetIndex(0);
 
         $safeName = preg_replace('/[^a-zA-Z0-9_\-]/', '_', $store->store_name);
+
         return $this->downloadXlsx($spreadsheet, "products_stock_{$safeName}.xlsx");
     }
 
@@ -461,7 +466,7 @@ class ImportExportController extends Controller
             'Heritage Bank', 'Keystone Bank', 'Polaris Bank', 'Providus Bank',
             'Stanbic IBTC Bank', 'Standard Chartered Bank', 'Sterling Bank',
             'Suntrust Bank', 'Union Bank of Nigeria', 'United Bank for Africa',
-            'Unity Bank', 'Wema Bank', 'Zenith Bank'
+            'Unity Bank', 'Wema Bank', 'Zenith Bank',
         ];
 
         // Create a hidden sheet for dropdown values
@@ -601,7 +606,7 @@ class ImportExportController extends Controller
                 '5000', '0', '0',
                 'Zenith Bank', '1234567890', 'Bola Mary Adekunle',
                 'John Adekunle', '08098765432', 'spouse',
-                'TIN-12345678', 'PEN-87654321'
+                'TIN-12345678', 'PEN-87654321',
             ],
             [
                 'Okonkwo', 'Chidi', '', 'chidi.okonkwo@hospital.com', '08023456789',
@@ -611,7 +616,7 @@ class ImportExportController extends Controller
                 '0', '0', '0',
                 'First Bank of Nigeria', '0987654321', 'Chidi Okonkwo',
                 'Ada Okonkwo', '08011223344', 'sibling',
-                '', ''
+                '', '',
             ],
         ];
 
@@ -768,7 +773,7 @@ class ImportExportController extends Controller
     // Optimized with batch processing, upsert, and detailed reporting
     // ========================================
 
-    const BATCH_SIZE = 500;
+    public const BATCH_SIZE = 500;
 
     /**
      * Import products from CSV or XLSX
@@ -813,6 +818,7 @@ class ImportExportController extends Controller
 
             foreach ($batches as $batchIndex => $batch) {
                 DB::beginTransaction();
+
                 try {
                     foreach ($batch as $index => $row) {
                         $rowNum = ($batchIndex * self::BATCH_SIZE) + $index + 2;
@@ -821,6 +827,7 @@ class ImportExportController extends Controller
                         if (empty($row['product_name']) || empty($row['product_code'])) {
                             $report['errors'][] = "Row {$rowNum}: Missing product_name or product_code";
                             $report['skipped']++;
+
                             continue;
                         }
 
@@ -834,7 +841,7 @@ class ImportExportController extends Controller
                             if (!isset($categories[$categoryName])) {
                                 $category = ProductCategory::create([
                                     'category_name' => $categoryName,
-                                    'description' => 'Auto-created during import'
+                                    'description' => 'Auto-created during import',
                                 ]);
                                 $categories[$categoryName] = $category->id;
                             }
@@ -879,6 +886,7 @@ class ImportExportController extends Controller
 
                                     if (!$matchedByName && strcasecmp($name, $defaultBulkName) === 0) {
                                         $matchedByName = true;
+
                                         return $defaultBulkName . ':' . $defaultBulkQty;
                                     }
 
@@ -1101,6 +1109,7 @@ class ImportExportController extends Controller
             if ($request->ajax()) {
                 return response()->json($importReport);
             }
+
             return back()->with('import_report', $importReport);
 
         } catch (\Exception $e) {
@@ -1108,6 +1117,7 @@ class ImportExportController extends Controller
             if ($request->ajax()) {
                 return response()->json(['error' => 'Import failed: ' . $e->getMessage()], 500);
             }
+
             return back()->with('error', 'Import failed: ' . $e->getMessage());
         }
     }
@@ -1127,13 +1137,17 @@ class ImportExportController extends Controller
 
         foreach ($levels as $index => $level) {
             $level = trim($level);
-            if (empty($level)) continue;
+            if (empty($level)) {
+                continue;
+            }
 
             $parts = explode(':', $level, 2);
             $name = trim($parts[0] ?? '');
             $baseUnitQty = floatval($parts[1] ?? 1);
 
-            if (empty($name) || $baseUnitQty <= 0) continue;
+            if (empty($name) || $baseUnitQty <= 0) {
+                continue;
+            }
 
             $unitsInParent = $previousBaseQty > 0 ? $baseUnitQty / $previousBaseQty : $baseUnitQty;
 
@@ -1203,6 +1217,7 @@ class ImportExportController extends Controller
 
             foreach ($batches as $batchIndex => $batch) {
                 DB::beginTransaction();
+
                 try {
                     foreach ($batch as $index => $row) {
                         $rowNum = ($batchIndex * self::BATCH_SIZE) + $index + 2;
@@ -1210,6 +1225,7 @@ class ImportExportController extends Controller
                         if (empty($row['service_name']) || empty($row['service_code'])) {
                             $report['errors'][] = "Row {$rowNum}: Missing service_name or service_code";
                             $report['skipped']++;
+
                             continue;
                         }
 
@@ -1223,7 +1239,7 @@ class ImportExportController extends Controller
                             if (!isset($categories[$categoryName])) {
                                 $category = ServiceCategory::create([
                                     'category_name' => $categoryName,
-                                    'description' => 'Auto-created during import'
+                                    'description' => 'Auto-created during import',
                                 ]);
                                 $categories[$categoryName] = $category->id;
                             }
@@ -1333,6 +1349,7 @@ class ImportExportController extends Controller
 
         } catch (\Exception $e) {
             Log::error('Service import failed: ' . $e->getMessage());
+
             return back()->with('error', 'Import failed: ' . $e->getMessage());
         }
     }
@@ -1445,6 +1462,7 @@ class ImportExportController extends Controller
         if (count($parts) >= 2) {
             return $parts[0] . ' ' . $parts[1];
         }
+
         return $parts[0] ?? $serviceName;
     }
 
@@ -1462,6 +1480,7 @@ class ImportExportController extends Controller
             // Return everything after the first 2 words
             return implode(' ', array_slice($parts, 2));
         }
+
         return null;
     }
 
@@ -1510,6 +1529,7 @@ class ImportExportController extends Controller
 
             foreach ($batches as $batchIndex => $batch) {
                 DB::beginTransaction();
+
                 try {
                     foreach ($batch as $index => $row) {
                         $rowNum = ($batchIndex * self::BATCH_SIZE) + $index + 2;
@@ -1532,6 +1552,7 @@ class ImportExportController extends Controller
                         if (empty($rawSurname) && empty($rawFirstname)) {
                             $report['errors'][] = "Row {$rowNum}: Missing name (provide surname + firstname columns, or put full name in surname column)";
                             $report['skipped']++;
+
                             continue;
                         }
 
@@ -1555,6 +1576,7 @@ class ImportExportController extends Controller
                         if (empty($gender) || !in_array($gender, ['Male', 'Female', 'Others'])) {
                             $report['errors'][] = "Row {$rowNum}: Invalid or missing gender (must be Male, Female, or Others)";
                             $report['skipped']++;
+
                             continue;
                         }
 
@@ -1563,6 +1585,7 @@ class ImportExportController extends Controller
                         if (!isset($roles[$roleName])) {
                             $report['errors'][] = "Row {$rowNum}: Role '{$roleName}' not found";
                             $report['skipped']++;
+
                             continue;
                         }
 
@@ -1698,6 +1721,7 @@ class ImportExportController extends Controller
 
         } catch (\Exception $e) {
             Log::error('Staff import failed: ' . $e->getMessage());
+
             return back()->with('error', 'Import failed: ' . $e->getMessage());
         }
     }
@@ -1746,6 +1770,7 @@ class ImportExportController extends Controller
 
             foreach ($batches as $batchIndex => $batch) {
                 DB::beginTransaction();
+
                 try {
                     foreach ($batch as $index => $row) {
                         $rowNum = ($batchIndex * self::BATCH_SIZE) + $index + 2;
@@ -1759,6 +1784,7 @@ class ImportExportController extends Controller
                             if (empty($row['surname']) && empty($row['firstname'])) {
                                 $report['errors'][] = "Row {$rowNum}: No file_no and no name data provided";
                                 $report['skipped']++;
+
                                 continue;
                             }
                             $fileNo = $this->generatePatientFileNo();
@@ -1918,6 +1944,7 @@ class ImportExportController extends Controller
 
         } catch (\Exception $e) {
             Log::error('Patient import failed: ' . $e->getMessage());
+
             return back()->with('error', 'Import failed: ' . $e->getMessage());
         }
     }
@@ -1947,7 +1974,7 @@ class ImportExportController extends Controller
             'base_unit_name', 'allow_decimal_qty', 'cost_price', 'sale_price',
             'reorder_level', 'current_quantity', 'is_active',
             'packaging_levels', 'default_bulk_pack_name', 'default_bulk_pack_qty',
-            'created_at'
+            'created_at',
         ];
 
         $data = [];
@@ -2000,7 +2027,7 @@ class ImportExportController extends Controller
 
         $headers = [
             'id', 'service_name', 'service_code', 'category_name', 'cost_price',
-            'price', 'is_active', 'created_at'
+            'price', 'is_active', 'created_at',
         ];
 
         $data = [];
@@ -2045,12 +2072,14 @@ class ImportExportController extends Controller
             'consultation_fee', 'is_unit_head', 'is_dept_head',
             'bank_name', 'bank_account_number', 'bank_account_name',
             'emergency_contact_name', 'emergency_contact_phone', 'emergency_contact_relationship',
-            'tax_id', 'pension_id', 'created_at'
+            'tax_id', 'pension_id', 'created_at',
         ];
 
         $data = [];
         foreach ($staffMembers as $staff) {
-            if (!$staff->user) continue;
+            if (!$staff->user) {
+                continue;
+            }
 
             $data[] = [
                 $staff->id,
@@ -2108,12 +2137,14 @@ class ImportExportController extends Controller
             'id', 'file_no', 'surname', 'firstname', 'othername', 'email', 'phone_no',
             'gender', 'dob', 'blood_group', 'genotype', 'address', 'nationality',
             'ethnicity', 'hmo_name', 'hmo_no', 'next_of_kin_name', 'next_of_kin_phone',
-            'allergies', 'created_at'
+            'allergies', 'created_at',
         ];
 
         $data = [];
         foreach ($patients as $patient) {
-            if (!$patient->user) continue;
+            if (!$patient->user) {
+                continue;
+            }
 
             $data[] = [
                 $patient->id,
@@ -2165,7 +2196,7 @@ class ImportExportController extends Controller
         ];
 
         $parts = preg_split('/\s+/', trim($fullName));
-        $parts = array_values(array_filter($parts, fn($p) => $p !== ''));
+        $parts = array_values(array_filter($parts, fn ($p) => $p !== ''));
 
         // Strip leading title(s)
         while (count($parts) > 1 && in_array(strtolower(rtrim($parts[0], '.,;')), $titles)) {
@@ -2409,7 +2440,7 @@ class ImportExportController extends Controller
         if (!in_array($type, $validTypes)) {
             return response()->json([
                 'success' => false,
-                'error' => 'Invalid import type: ' . $type
+                'error' => 'Invalid import type: ' . $type,
             ], 400);
         }
 
@@ -2455,16 +2486,20 @@ class ImportExportController extends Controller
                 case 'products':
                     $defaultStoreId = $options['default_store_id'] ?? null;
                     \App\Jobs\ImportProductsJob::dispatch($importId, $filePath, $defaultStoreId, $userId, $duplicateAction);
+
                     break;
                 case 'services':
                     \App\Jobs\ImportServicesJob::dispatch($importId, $filePath, $userId, $duplicateAction);
+
                     break;
                 case 'staff':
                     $defaultPassword = $options['default_password'] ?? 'password123';
                     \App\Jobs\ImportStaffJob::dispatch($importId, $filePath, $defaultPassword, $userId, $duplicateAction);
+
                     break;
                 case 'patients':
                     \App\Jobs\ImportPatientsJob::dispatch($importId, $filePath, $userId, $duplicateAction);
+
                     break;
             }
 
@@ -2472,14 +2507,15 @@ class ImportExportController extends Controller
                 'success' => true,
                 'import_id' => $importId,
                 'total_rows' => $estimatedRows,
-                'message' => ucfirst($type) . ' import queued successfully. Processing in background...'
+                'message' => ucfirst($type) . ' import queued successfully. Processing in background...',
             ]);
 
         } catch (\Exception $e) {
             Log::error("Async {$type} import upload failed: " . $e->getMessage());
+
             return response()->json([
                 'success' => false,
-                'error' => 'Failed to process file: ' . $e->getMessage()
+                'error' => 'Failed to process file: ' . $e->getMessage(),
             ], 500);
         }
     }
@@ -2512,10 +2548,12 @@ class ImportExportController extends Controller
                     $lineCount++;
                 }
                 fclose($handle);
+
                 return max(0, $lineCount - 1); // Subtract header row
             }
         } catch (\Exception $e) {
             Log::warning("Could not estimate row count: " . $e->getMessage());
+
             return 0; // Unknown
         }
     }
@@ -2533,13 +2571,13 @@ class ImportExportController extends Controller
         if (!$progress) {
             return response()->json([
                 'success' => false,
-                'error' => 'Import not found or expired.'
+                'error' => 'Import not found or expired.',
             ], 404);
         }
 
         return response()->json([
             'success' => true,
-            'progress' => $progress
+            'progress' => $progress,
         ]);
     }
 
@@ -2556,14 +2594,14 @@ class ImportExportController extends Controller
         if (!$progress) {
             return response()->json([
                 'success' => false,
-                'error' => 'Import not found or expired.'
+                'error' => 'Import not found or expired.',
             ], 404);
         }
 
         if ($progress['status'] === 'completed' || $progress['status'] === 'failed') {
             return response()->json([
                 'success' => false,
-                'error' => 'Cannot cancel an import that has already finished.'
+                'error' => 'Cannot cancel an import that has already finished.',
             ], 400);
         }
 
@@ -2571,7 +2609,7 @@ class ImportExportController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => 'Import cancellation requested.'
+            'message' => 'Import cancellation requested.',
         ]);
     }
 }

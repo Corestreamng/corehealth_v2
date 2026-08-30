@@ -29,7 +29,9 @@ use OwenIt\Auditing\Contracts\Auditable;
  */
 class StatutoryRemittance extends Model implements Auditable
 {
-    use HasFactory, SoftDeletes, \OwenIt\Auditing\Auditable;
+    use HasFactory;
+    use SoftDeletes;
+    use \OwenIt\Auditing\Auditable;
 
     protected $table = 'statutory_remittances';
 
@@ -156,6 +158,7 @@ class StatutoryRemittance extends Model implements Auditable
         if ($this->period_from && $this->period_to) {
             return $this->period_from->format('M Y') . ' - ' . $this->period_to->format('M Y');
         }
+
         return $this->period_from?->format('M Y') ?? 'N/A';
     }
 

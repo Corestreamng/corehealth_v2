@@ -8,9 +8,9 @@ use App\Models\HR\StaffSuspension;
 use App\Models\Staff;
 use App\Services\DisciplinaryService;
 use App\Services\HrAttachmentService;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
-use Carbon\Carbon;
 
 /**
  * HRMS Implementation Plan - Section 7.2
@@ -19,6 +19,7 @@ use Carbon\Carbon;
 class StaffSuspensionController extends Controller
 {
     protected DisciplinaryService $disciplinaryService;
+
     protected HrAttachmentService $attachmentService;
 
     public function __construct(DisciplinaryService $disciplinaryService, HrAttachmentService $attachmentService)
@@ -60,12 +61,14 @@ class StaffSuspensionController extends Controller
                 ->addIndexColumn()
                 ->addColumn('staff_name', function ($s) {
                     $user = $s->staff->user ?? null;
+
                     return $user ? $user->surname . ' ' . $user->firstname . ' ' . $user->othername : 'N/A';
                 })
                 ->addColumn('days', function ($s) {
                     if ($s->start_date && $s->end_date) {
                         return Carbon::parse($s->start_date)->diffInDays(Carbon::parse($s->end_date));
                     }
+
                     return '-';
                 })
                 ->addColumn('is_paid', function ($s) {
@@ -81,9 +84,10 @@ class StaffSuspensionController extends Controller
                     $colors = [
                         'active' => 'danger',
                         'lifted' => 'success',
-                        'expired' => 'secondary'
+                        'expired' => 'secondary',
                     ];
                     $color = $colors[$s->status] ?? 'secondary';
+
                     return '<span class="badge badge-' . $color . '">' . ucfirst($s->status) . '</span>';
                 })
                 ->addColumn('action', function ($s) {
@@ -92,6 +96,7 @@ class StaffSuspensionController extends Controller
                     if ($s->status === 'active') {
                         $liftBtn = '<button type="button" class="btn btn-sm btn-success lift-btn" data-id="' . $s->id . '" data-name="' . ($s->staff->user->surname ?? '') . ' ' . ($s->staff->user->firstname ?? '') . ' ' . ($s->staff->user->othername ?? '') . '" title="Lift"><i class="mdi mdi-lock-open"></i></button>';
                     }
+
                     return $viewBtn . $liftBtn;
                 })
                 ->rawColumns(['status_badge', 'action'])
@@ -131,6 +136,7 @@ class StaffSuspensionController extends Controller
             if ($request->ajax()) {
                 return response()->json(['success' => false, 'errors' => $validator->errors()], 422);
             }
+
             return back()->withErrors($validator)->withInput();
         }
 
@@ -160,7 +166,7 @@ class StaffSuspensionController extends Controller
                 return response()->json([
                     'success' => true,
                     'message' => 'Staff member has been suspended. They will not be able to log in until the suspension is lifted.',
-                    'suspension' => $suspension->load(['staff.user', 'issuedBy'])
+                    'suspension' => $suspension->load(['staff.user', 'issuedBy']),
                 ]);
             }
 
@@ -170,6 +176,7 @@ class StaffSuspensionController extends Controller
             if ($request->ajax()) {
                 return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
             }
+
             return back()->withErrors(['error' => $e->getMessage()])->withInput();
         }
     }
@@ -181,12 +188,13 @@ class StaffSuspensionController extends Controller
             'issuedBy',
             'liftedBy',
             'disciplinaryQuery',
-            'attachments.uploadedBy'
+            'attachments.uploadedBy',
         ]);
 
         // Return JSON for AJAX requests
         if ($request->ajax()) {
             $user = $suspension->staff->user ?? null;
+
             return response()->json([
                 'success' => true,
                 'id' => $suspension->id,
@@ -212,7 +220,7 @@ class StaffSuspensionController extends Controller
                 'disciplinary_query' => $suspension->disciplinaryQuery ? [
                     'id' => $suspension->disciplinaryQuery->id,
                     'query_number' => $suspension->disciplinaryQuery->query_number,
-                    'subject' => $suspension->disciplinaryQuery->subject
+                    'subject' => $suspension->disciplinaryQuery->subject,
                 ] : null,
             ]);
         }
@@ -230,6 +238,7 @@ class StaffSuspensionController extends Controller
             if ($request->ajax()) {
                 return response()->json(['success' => false, 'errors' => $validator->errors()], 422);
             }
+
             return back()->withErrors($validator);
         }
 
@@ -244,7 +253,7 @@ class StaffSuspensionController extends Controller
             if ($request->ajax()) {
                 return response()->json([
                     'success' => true,
-                    'message' => 'Suspension has been lifted. Staff member can now log in.'
+                    'message' => 'Suspension has been lifted. Staff member can now log in.',
                 ]);
             }
 
@@ -254,6 +263,7 @@ class StaffSuspensionController extends Controller
             if ($request->ajax()) {
                 return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
             }
+
             return back()->with('error', $e->getMessage());
         }
     }

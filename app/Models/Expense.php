@@ -25,7 +25,8 @@ use OwenIt\Auditing\Contracts\Auditable;
  */
 class Expense extends Model implements Auditable
 {
-    use HasFactory, SoftDeletes;
+    use HasFactory;
+    use SoftDeletes;
     use \App\Traits\IsAuditable;
     use \OwenIt\Auditing\Auditable;
 
@@ -66,20 +67,20 @@ class Expense extends Model implements Auditable
     /**
      * Category constants
      */
-    const CATEGORY_PURCHASE_ORDER = 'purchase_order';
-    const CATEGORY_STORE_EXPENSE = 'store_expense';
-    const CATEGORY_MAINTENANCE = 'maintenance';
-    const CATEGORY_UTILITIES = 'utilities';
-    const CATEGORY_SALARIES = 'salaries';
-    const CATEGORY_OTHER = 'other';
+    public const CATEGORY_PURCHASE_ORDER = 'purchase_order';
+    public const CATEGORY_STORE_EXPENSE = 'store_expense';
+    public const CATEGORY_MAINTENANCE = 'maintenance';
+    public const CATEGORY_UTILITIES = 'utilities';
+    public const CATEGORY_SALARIES = 'salaries';
+    public const CATEGORY_OTHER = 'other';
 
     /**
      * Status constants
      */
-    const STATUS_PENDING = 'pending';
-    const STATUS_APPROVED = 'approved';
-    const STATUS_REJECTED = 'rejected';
-    const STATUS_VOID = 'void';
+    public const STATUS_PENDING = 'pending';
+    public const STATUS_APPROVED = 'approved';
+    public const STATUS_REJECTED = 'rejected';
+    public const STATUS_VOID = 'void';
 
     /**
      * Get all categories

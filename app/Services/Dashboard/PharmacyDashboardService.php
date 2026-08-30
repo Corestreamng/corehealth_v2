@@ -2,9 +2,9 @@
 
 namespace App\Services\Dashboard;
 
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Cache;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 
 class PharmacyDashboardService
 {
@@ -14,6 +14,7 @@ class PharmacyDashboardService
     public function getStats(): array
     {
         $today = Carbon::today();
+
         return [
             'queue' => DB::table('product_requests')
                 ->whereBetween('created_at', [$today->copy()->startOfDay(), $today->copy()->endOfDay()])
@@ -53,7 +54,7 @@ class PharmacyDashboardService
                 ->leftJoin('product_or_service_requests as posr', 'pr.product_request_id', '=', 'posr.id')
                 ->whereBetween('pr.created_at', [$today->copy()->startOfDay(), $today->copy()->endOfDay()])
                 ->where('pr.status', 2)
-                ->where(function($q) {
+                ->where(function ($q) {
                     $q->whereNotNull('posr.payment_id')
                       ->orWhereIn('posr.validation_status', ['validated', 'approved', 'awaiting_code']);
                 })
@@ -157,6 +158,7 @@ class PharmacyDashboardService
                 $row->status_label = $statusMap[$row->status] ?? 'Unknown';
                 $row->status_color = $colorMap[$row->status] ?? 'secondary';
                 $row->time = Carbon::parse($row->created_at)->format('h:i A');
+
                 return $row;
             })
             ->toArray();

@@ -2,23 +2,24 @@
 
 namespace Tests\Feature\OpsAudit;
 
-use Tests\TestCase;
 use App\Models\User;
+use Tests\TestCase;
 
 class OpsAuditEndpointsTest extends TestCase
 {
-
     public static function auditTabsProvider()
     {
         $modules = [];
         $controllers = glob(__DIR__ . '/../../../app/Http/Controllers/OpsAudit/*Controller.php');
-        
+
         foreach ($controllers as $controller) {
-            if (basename($controller) === 'OpsAuditBaseController.php') continue;
-            
+            if (basename($controller) === 'OpsAuditBaseController.php') {
+                continue;
+            }
+
             $module = strtolower(str_replace(['OpsAudit', 'Controller.php'], '', basename($controller)));
             $content = file_get_contents($controller);
-            
+
             preg_match_all("/case\s+'([^']+)':/", $content, $matches);
             if (!empty($matches[1])) {
                 $tabs = array_unique($matches[1]);
@@ -27,6 +28,7 @@ class OpsAuditEndpointsTest extends TestCase
                 }
             }
         }
+
         return $modules;
     }
 
@@ -38,11 +40,10 @@ class OpsAuditEndpointsTest extends TestCase
         $user = User::first() ?? User::factory()->create(['status' => 1]);
         $this->actingAs($user);
 
-
         $uri = "/ops-audit/{$module}/data/{$tab}";
-        
+
         $response = $this->getJson($uri . '?start=0&length=500');
-        
+
         $this->assertTrue(in_array($response->status(), [200, 302, 500]));
     }
 
@@ -65,9 +66,9 @@ class OpsAuditEndpointsTest extends TestCase
         $this->actingAs($user);
 
         $uri = "/ops-audit/{$module}/data/{$tab}";
-        
+
         $response = $this->getJson($uri . '?start=0&length=500&payment_method=CASH&cashier_id=1');
-        
+
         $this->assertTrue(in_array($response->status(), [200, 302, 500]));
     }
 }

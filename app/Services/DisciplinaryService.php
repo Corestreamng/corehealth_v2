@@ -82,6 +82,7 @@ class DisciplinaryService
                         'reason' => "Following disciplinary query #{$query->query_number}: {$query->subject}",
                         'suspension_message' => $data['suspension_message'] ?? "Your account has been suspended pending disciplinary action. Reference: {$query->query_number}",
                     ], $decider);
+
                     break;
 
                 case DisciplinaryQuery::OUTCOME_TERMINATION:
@@ -94,6 +95,7 @@ class DisciplinaryService
                         'notice_date' => now(),
                         'effective_date' => $data['termination_date'] ?? now()->addDays(1),
                     ], $decider);
+
                     break;
             }
 

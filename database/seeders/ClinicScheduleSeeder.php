@@ -2,10 +2,10 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Seeder;
-use Illuminate\Support\Facades\DB;
 use App\Models\Clinic;
 use App\Models\ClinicSchedule;
+use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\DB;
 
 /**
  * Seed default operating hours for all active clinics.
@@ -21,23 +21,24 @@ class ClinicScheduleSeeder extends Seeder
 
         if ($clinics->isEmpty()) {
             $this->command?->warn('No clinics found — skipping ClinicScheduleSeeder.');
+
             return;
         }
 
         $weekday = [
-            'open_time'              => '08:00',
-            'close_time'             => '17:00',
-            'slot_duration_minutes'  => 15,
-            'max_concurrent_slots'   => 3,
-            'is_active'              => true,
+            'open_time' => '08:00',
+            'close_time' => '17:00',
+            'slot_duration_minutes' => 15,
+            'max_concurrent_slots' => 3,
+            'is_active' => true,
         ];
 
         $saturday = [
-            'open_time'              => '08:00',
-            'close_time'             => '13:00',
-            'slot_duration_minutes'  => 15,
-            'max_concurrent_slots'   => 2,
-            'is_active'              => true,
+            'open_time' => '08:00',
+            'close_time' => '13:00',
+            'slot_duration_minutes' => 15,
+            'max_concurrent_slots' => 2,
+            'is_active' => true,
         ];
 
         $seeded = 0;

@@ -2,35 +2,34 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\ProductOrServiceRequest;
+use App\Helpers\HmoHelper;
+use App\Models\AdmissionRequest;
+use App\Models\ChatConversation;
+use App\Models\ChatMessage;
+use App\Models\DoctorQueue;
+use App\Models\Encounter;
 use App\Models\Hmo;
 use App\Models\HmoScheme;
 use App\Models\HmoTariff;
-use App\Models\Patient;
-use App\Models\User;
-use App\Helpers\HmoHelper;
-use App\Models\DoctorQueue;
-use App\Models\AdmissionRequest;
-use App\Models\VitalSign;
-use App\Models\Encounter;
-use App\Models\ProductRequest;
-use App\Models\LabServiceRequest;
 use App\Models\ImagingServiceRequest;
-use App\Models\ChatConversation;
-use App\Models\ChatMessage;
+use App\Models\LabServiceRequest;
+use App\Models\Patient;
+use App\Models\ProductOrServiceRequest;
+use App\Models\ProductRequest;
+use App\Models\User;
+use App\Models\VitalSign;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
-use Illuminate\Support\Facades\Cache;
 use Yajra\DataTables\DataTables;
-use RealRashid\SweetAlert\Facades\Alert;
-use Carbon\Carbon;
 
 class HmoWorkbenchController extends Controller
 {
     // Common rejection reasons
-    const REJECTION_REASONS = [
+    public const REJECTION_REASONS = [
         'not_covered' => 'Service not covered under patient\'s plan',
         'pre_existing' => 'Pre-existing condition exclusion',
         'waiting_period' => 'Waiting period not yet met',
@@ -39,7 +38,7 @@ class HmoWorkbenchController extends Controller
         'documentation' => 'Insufficient documentation provided',
         'duplicate' => 'Duplicate claim submission',
         'expired_enrollment' => 'Patient enrollment expired',
-        'other' => 'Other (specify in notes)'
+        'other' => 'Other (specify in notes)',
     ];
 
     /**
@@ -72,9 +71,9 @@ class HmoWorkbenchController extends Controller
             'product.price',
             'validator',
             'staff', // For "Requested By" info
-            'procedure.procedureDefinition' // For Procedure items
+            'procedure.procedureDefinition', // For Procedure items
         ])
-        ->whereHas('user.patient_profile', function($q) {
+        ->whereHas('user.patient_profile', function ($q) {
             $q->whereNotNull('hmo_id');
         })
         ->whereNotNull('coverage_mode') // Only HMO requests
@@ -87,28 +86,35 @@ class HmoWorkbenchController extends Controller
                     $query->where('validation_status', 'pending')
                           ->whereIn('coverage_mode', ['primary', 'secondary'])
                           ->where('claims_amount', '>', 0);
+
                     break;
                 case 'express':
                     $query->where('coverage_mode', 'express');
+
                     break;
                 case 'approved':
                     $query->where('validation_status', 'approved')
                           ->where('claims_amount', '>', 0);
+
                     break;
                 case 'rejected':
                     $query->where('validation_status', 'rejected')
                           ->where('claims_amount', '>', 0);
+
                     break;
                 case 'claims':
                     $query->whereNotNull('payment_id')
                           ->where('claims_amount', '>', 0);
+
                     break;
                 case 'awaiting_code':
                     $query->where('validation_status', 'awaiting_code')
                           ->where('claims_amount', '>', 0);
+
                     break;
                 case 'all':
                     $query->where('claims_amount', '>', 0); // Skip items with 0 claims
+
                     break;
             }
         }
@@ -119,24 +125,28 @@ class HmoWorkbenchController extends Controller
                 case 'overdue':
                     $query->where('validation_status', 'pending')
                           ->where('created_at', '<', Carbon::now()->subHours(4));
+
                     break;
                 case 'high_value':
                     $query->where('claims_amount', '>', 50000);
+
                     break;
                 case 'today_approved':
                     $query->where('validation_status', 'approved')
                           ->whereDate('validated_at', today());
+
                     break;
                 case 'today_rejected':
                     $query->where('validation_status', 'rejected')
                           ->whereDate('validated_at', today());
+
                     break;
             }
         }
 
         // Additional filters
         if ($request->filled('hmo_id')) {
-            $query->whereHas('user.patient_profile', function($q) use ($request) {
+            $query->whereHas('user.patient_profile', function ($q) use ($request) {
                 $q->where('hmo_id', $request->hmo_id);
             });
         }
@@ -152,15 +162,18 @@ class HmoWorkbenchController extends Controller
                     // Has product_id and no linked procedure
                     $query->whereNotNull('product_id')
                           ->whereDoesntHave('procedure');
+
                     break;
                 case 'service':
                     // Has service_id and no linked procedure
                     $query->whereNotNull('service_id')
                           ->whereDoesntHave('procedure');
+
                     break;
                 case 'procedure':
                     // Has a linked procedure
                     $query->whereHas('procedure');
+
                     break;
             }
         }
@@ -189,23 +202,23 @@ class HmoWorkbenchController extends Controller
         // Search
         if ($request->filled('search')) {
             $search = $request->search;
-            $query->where(function($q) use ($search) {
+            $query->where(function ($q) use ($search) {
                 $q->where('id', 'LIKE', "%{$search}%")
-                  ->orWhereHas('user', function($q2) use ($search) {
+                  ->orWhereHas('user', function ($q2) use ($search) {
                       $q2->where('firstname', 'LIKE', "%{$search}%")
                          ->orWhere('surname', 'LIKE', "%{$search}%");
                   })
-                  ->orWhereHas('user.patient_profile', function($q2) use ($search) {
+                  ->orWhereHas('user.patient_profile', function ($q2) use ($search) {
                       $q2->where('file_no', 'LIKE', "%{$search}%")
                          ->orWhere('hmo_no', 'LIKE', "%{$search}%");
                   })
-                  ->orWhereHas('service', function($q2) use ($search) {
+                  ->orWhereHas('service', function ($q2) use ($search) {
                       $q2->where('service_name', 'LIKE', "%{$search}%");
                   })
-                  ->orWhereHas('product', function($q2) use ($search) {
+                  ->orWhereHas('product', function ($q2) use ($search) {
                       $q2->where('product_name', 'LIKE', "%{$search}%");
                   })
-                  ->orWhereHas('procedure.procedureDefinition', function($q2) use ($search) {
+                  ->orWhereHas('procedure.procedureDefinition', function ($q2) use ($search) {
                       $q2->where('name', 'LIKE', "%{$search}%");
                   });
             });
@@ -318,8 +331,10 @@ class HmoWorkbenchController extends Controller
                     }
 
                     $html .= '</div>';
+
                     return $html;
                 }
+
                 return 'N/A';
             })
             // Column 2: Request Info (combined: ID, Date, SLA, Requested By)
@@ -424,7 +439,7 @@ class HmoWorkbenchController extends Controller
                     'pending' => 'warning',
                     'approved' => 'success',
                     'rejected' => 'danger',
-                    'awaiting_code' => 'purple'
+                    'awaiting_code' => 'purple',
                 ];
                 $statusColor = $statusMap[$req->validation_status] ?? 'secondary';
                 $statusLabel = $req->validation_status === 'awaiting_code' ? 'AWAITING CODE' : strtoupper($req->validation_status);
@@ -598,7 +613,7 @@ class HmoWorkbenchController extends Controller
                 'can_reverse' => $deliveryStatus['can_reverse'],
                 'reverse_reason' => $deliveryStatus['reason'],
                 // Audit trail
-                'audits' => $request->audits ? $request->audits->map(function($audit) {
+                'audits' => $request->audits ? $request->audits->map(function ($audit) {
                     return [
                         'event' => $audit->event,
                         'old_values' => $audit->old_values,
@@ -607,7 +622,7 @@ class HmoWorkbenchController extends Controller
                         'created_at' => $audit->created_at->format('d M Y H:i'),
                     ];
                 }) : [],
-            ]
+            ],
         ]);
     }
 
@@ -625,7 +640,7 @@ class HmoWorkbenchController extends Controller
             ->orderBy('created_at', 'DESC')
             ->limit(20)
             ->get()
-            ->map(function($req) {
+            ->map(function ($req) {
                 return [
                     'id' => $req->id,
                     'date' => Carbon::parse($req->created_at)->format('Y-m-d H:i'),
@@ -665,7 +680,7 @@ class HmoWorkbenchController extends Controller
                 'total_claims' => $totalClaims,
                 'total_visits' => $totalVisits,
                 'this_month_claims' => $thisMonthClaims,
-            ]
+            ],
         ]);
     }
 
@@ -814,11 +829,12 @@ class HmoWorkbenchController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Validation failed',
-                'errors' => $validator->errors()
+                'errors' => $validator->errors(),
             ], 422);
         }
 
         DB::beginTransaction();
+
         try {
             $hmoRequest = ProductOrServiceRequest::findOrFail($id);
 
@@ -863,13 +879,14 @@ class HmoWorkbenchController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => 'Request approved successfully'
+                'message' => 'Request approved successfully',
             ]);
         } catch (\Exception $e) {
             DB::rollBack();
+
             return response()->json([
                 'success' => false,
-                'message' => 'Error approving request: ' . $e->getMessage()
+                'message' => 'Error approving request: ' . $e->getMessage(),
             ], 500);
         }
     }
@@ -888,11 +905,12 @@ class HmoWorkbenchController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Validation failed. Rejection reason is required.',
-                'errors' => $validator->errors()
+                'errors' => $validator->errors(),
             ], 422);
         }
 
         DB::beginTransaction();
+
         try {
             $hmoRequest = ProductOrServiceRequest::findOrFail($id);
 
@@ -920,13 +938,14 @@ class HmoWorkbenchController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => 'Request rejected successfully'
+                'message' => 'Request rejected successfully',
             ]);
         } catch (\Exception $e) {
             DB::rollBack();
+
             return response()->json([
                 'success' => false,
-                'message' => 'Error rejecting request: ' . $e->getMessage()
+                'message' => 'Error rejecting request: ' . $e->getMessage(),
             ], 500);
         }
     }
@@ -944,11 +963,12 @@ class HmoWorkbenchController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Reason is required for reversal',
-                'errors' => $validator->errors()
+                'errors' => $validator->errors(),
             ], 422);
         }
 
         DB::beginTransaction();
+
         try {
             $hmoRequest = ProductOrServiceRequest::findOrFail($id);
 
@@ -957,7 +977,7 @@ class HmoWorkbenchController extends Controller
             if (!$deliveryStatus['can_reverse']) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Cannot reverse: ' . $deliveryStatus['reason']
+                    'message' => 'Cannot reverse: ' . $deliveryStatus['reason'],
                 ], 422);
             }
 
@@ -982,13 +1002,14 @@ class HmoWorkbenchController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => 'Request reversed to pending status'
+                'message' => 'Request reversed to pending status',
             ]);
         } catch (\Exception $e) {
             DB::rollBack();
+
             return response()->json([
                 'success' => false,
-                'message' => 'Error reversing request: ' . $e->getMessage()
+                'message' => 'Error reversing request: ' . $e->getMessage(),
             ], 500);
         }
     }
@@ -1007,11 +1028,12 @@ class HmoWorkbenchController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Validation failed',
-                'errors' => $validator->errors()
+                'errors' => $validator->errors(),
             ], 422);
         }
 
         DB::beginTransaction();
+
         try {
             $hmoRequest = ProductOrServiceRequest::findOrFail($id);
 
@@ -1020,7 +1042,7 @@ class HmoWorkbenchController extends Controller
             if (!$deliveryStatus['can_reverse']) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Cannot re-approve: ' . $deliveryStatus['reason']
+                    'message' => 'Cannot re-approve: ' . $deliveryStatus['reason'],
                 ], 422);
             }
 
@@ -1062,13 +1084,14 @@ class HmoWorkbenchController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => 'Request re-approved successfully'
+                'message' => 'Request re-approved successfully',
             ]);
         } catch (\Exception $e) {
             DB::rollBack();
+
             return response()->json([
                 'success' => false,
-                'message' => 'Error re-approving request: ' . $e->getMessage()
+                'message' => 'Error re-approving request: ' . $e->getMessage(),
             ], 500);
         }
     }
@@ -1088,11 +1111,12 @@ class HmoWorkbenchController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Validation failed',
-                'errors' => $validator->errors()
+                'errors' => $validator->errors(),
             ], 422);
         }
 
         DB::beginTransaction();
+
         try {
             $approved = 0;
             $skipped = 0;
@@ -1104,12 +1128,14 @@ class HmoWorkbenchController extends Controller
 
                 if (!$hmoRequest) {
                     $skipped++;
+
                     continue;
                 }
 
                 // Skip if not pending
                 if ($hmoRequest->validation_status !== 'pending') {
                     $skipped++;
+
                     continue;
                 }
 
@@ -1122,6 +1148,7 @@ class HmoWorkbenchController extends Controller
                         'validation_notes' => $request->validation_notes ?? 'Batch approved — awaiting auth code',
                     ]);
                     $awaitingCode++;
+
                     continue;
                 }
 
@@ -1146,8 +1173,12 @@ class HmoWorkbenchController extends Controller
             }
 
             $msg = "{$approved} request(s) approved";
-            if ($awaitingCode > 0) $msg .= ", {$awaitingCode} awaiting auth code";
-            if ($skipped > 0) $msg .= ", {$skipped} skipped";
+            if ($awaitingCode > 0) {
+                $msg .= ", {$awaitingCode} awaiting auth code";
+            }
+            if ($skipped > 0) {
+                $msg .= ", {$skipped} skipped";
+            }
 
             return response()->json([
                 'success' => true,
@@ -1155,13 +1186,14 @@ class HmoWorkbenchController extends Controller
                 'approved' => $approved,
                 'awaiting_code' => $awaitingCode,
                 'skipped' => $skipped,
-                'errors' => $errors
+                'errors' => $errors,
             ]);
         } catch (\Exception $e) {
             DB::rollBack();
+
             return response()->json([
                 'success' => false,
-                'message' => 'Error in batch approval: ' . $e->getMessage()
+                'message' => 'Error in batch approval: ' . $e->getMessage(),
             ], 500);
         }
     }
@@ -1182,11 +1214,12 @@ class HmoWorkbenchController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Validation failed. Rejection reason is required.',
-                'errors' => $validator->errors()
+                'errors' => $validator->errors(),
             ], 422);
         }
 
         DB::beginTransaction();
+
         try {
             $rejected = 0;
             $skipped = 0;
@@ -1202,6 +1235,7 @@ class HmoWorkbenchController extends Controller
 
                 if (!$hmoRequest || !in_array($hmoRequest->validation_status, ['pending', 'awaiting_code'])) {
                     $skipped++;
+
                     continue;
                 }
 
@@ -1229,13 +1263,14 @@ class HmoWorkbenchController extends Controller
                 'success' => true,
                 'message' => "{$rejected} request(s) rejected" . ($skipped > 0 ? ", {$skipped} skipped" : ""),
                 'rejected' => $rejected,
-                'skipped' => $skipped
+                'skipped' => $skipped,
             ]);
         } catch (\Exception $e) {
             DB::rollBack();
+
             return response()->json([
                 'success' => false,
-                'message' => 'Error in batch rejection: ' . $e->getMessage()
+                'message' => 'Error in batch rejection: ' . $e->getMessage(),
             ], 500);
         }
     }
@@ -1299,7 +1334,9 @@ class HmoWorkbenchController extends Controller
                     ->pluck('patient_id')
             )->unique();
 
-        if ($emergencyPatientIds->isEmpty()) return 0;
+        if ($emergencyPatientIds->isEmpty()) {
+            return 0;
+        }
 
         $emergencyUserIds = Patient::whereIn('id', $emergencyPatientIds)->pluck('user_id');
 
@@ -1378,9 +1415,9 @@ class HmoWorkbenchController extends Controller
             'user.patient_profile.hmo',
             'service',
             'product',
-            'validator'
+            'validator',
         ])
-        ->whereHas('user.patient_profile', function($q) {
+        ->whereHas('user.patient_profile', function ($q) {
             $q->whereNotNull('hmo_id');
         })
         ->whereIn('validation_status', ['approved', 'awaiting_code'])
@@ -1395,7 +1432,7 @@ class HmoWorkbenchController extends Controller
             $query->whereDate('validated_at', '<=', $request->date_to);
         }
         if ($request->filled('hmo_id')) {
-            $query->whereHas('user.patient_profile', function($q) use ($request) {
+            $query->whereHas('user.patient_profile', function ($q) use ($request) {
                 $q->where('hmo_id', $request->hmo_id);
             });
         }
@@ -1410,7 +1447,7 @@ class HmoWorkbenchController extends Controller
             'Content-Disposition' => "attachment; filename=\"{$filename}\"",
         ];
 
-        $callback = function() use ($claims) {
+        $callback = function () use ($claims) {
             $file = fopen('php://output', 'w');
 
             // Header row
@@ -1430,7 +1467,7 @@ class HmoWorkbenchController extends Controller
                 'Validation Status',
                 'Auth Code',
                 'Validated By',
-                'Validated At'
+                'Validated At',
             ]);
 
             foreach ($claims as $claim) {
@@ -1450,7 +1487,7 @@ class HmoWorkbenchController extends Controller
                     $claim->validation_status === 'awaiting_code' ? 'Awaiting Code' : ucfirst($claim->validation_status),
                     $claim->auth_code ?? '',
                     $claim->validator ? userfullname($claim->validated_by) : 'N/A',
-                    $claim->validated_at ? Carbon::parse($claim->validated_at)->format('Y-m-d H:i') : ''
+                    $claim->validated_at ? Carbon::parse($claim->validated_at)->format('Y-m-d H:i') : '',
                 ]);
             }
 
@@ -1488,7 +1525,7 @@ class HmoWorkbenchController extends Controller
      */
     private function getHmoExecutivesConversation()
     {
-        return Cache::remember('hmo_executives_conversation', 3600, function() {
+        return Cache::remember('hmo_executives_conversation', 3600, function () {
             $conversation = ChatConversation::where('title', 'HMO Executives')->first();
 
             if (!$conversation) {
@@ -1515,12 +1552,12 @@ class HmoWorkbenchController extends Controller
 
         // Resolve HMO: direct on POSR, or fall back to patient profile
         $hmoId = $req->hmo_id ?: optional($req->user)->patient_profile->hmo_id ?? null;
-        $hmo   = $req->hmo ?? optional($req->user)->patient_profile->hmo ?? null;
+        $hmo = $req->hmo ?? optional($req->user)->patient_profile->hmo ?? null;
 
         // Look up tariff
         $tariff = HmoTariff::where('hmo_id', $hmoId)
-            ->when($req->product_id, fn($q) => $q->where('product_id', $req->product_id)->whereNull('service_id'))
-            ->when($req->service_id, fn($q) => $q->where('service_id', $req->service_id)->whereNull('product_id'))
+            ->when($req->product_id, fn ($q) => $q->where('product_id', $req->product_id)->whereNull('service_id'))
+            ->when($req->service_id, fn ($q) => $q->where('service_id', $req->service_id)->whereNull('product_id'))
             ->first();
 
         // Original item name (fallback)
@@ -1539,26 +1576,26 @@ class HmoWorkbenchController extends Controller
         return response()->json([
             'success' => true,
             'tariff' => $tariff ? [
-                'id'             => $tariff->id,
-                'display_name'   => $tariff->display_name,
-                'coverage_mode'  => $tariff->coverage_mode,
-                'claims_amount'  => (float) $tariff->claims_amount,
+                'id' => $tariff->id,
+                'display_name' => $tariff->display_name,
+                'coverage_mode' => $tariff->coverage_mode,
+                'claims_amount' => (float) $tariff->claims_amount,
                 'payable_amount' => (float) $tariff->payable_amount,
             ] : null,
             'original_name' => $originalName,
-            'hmo_name'      => $hmo->name ?? 'N/A',
-            'item_type'     => $req->product_id ? 'product' : 'service',
-            'scheme'        => $scheme ? [
-                'id'        => $scheme->id,
-                'name'      => $scheme->name,
+            'hmo_name' => $hmo->name ?? 'N/A',
+            'item_type' => $req->product_id ? 'product' : 'service',
+            'scheme' => $scheme ? [
+                'id' => $scheme->id,
+                'name' => $scheme->name,
                 'hmo_count' => $schemeHmoCount,
             ] : null,
             // Current POSR values (may differ from tariff if qty > 1)
             'current' => [
-                'coverage_mode'  => $req->coverage_mode,
-                'claims_amount'  => (float) $req->claims_amount,
+                'coverage_mode' => $req->coverage_mode,
+                'claims_amount' => (float) $req->claims_amount,
                 'payable_amount' => (float) $req->payable_amount,
-                'qty'            => (int) ($req->qty ?? 1),
+                'qty' => (int) ($req->qty ?? 1),
             ],
         ]);
     }
@@ -1569,10 +1606,10 @@ class HmoWorkbenchController extends Controller
     public function updateTariffInline(Request $request, $id)
     {
         $validator = Validator::make($request->all(), [
-            'coverage_mode'  => 'required|in:express,primary,secondary',
-            'claims_amount'  => 'required|numeric|min:0',
+            'coverage_mode' => 'required|in:express,primary,secondary',
+            'claims_amount' => 'required|numeric|min:0',
             'payable_amount' => 'required|numeric|min:0',
-            'display_name'   => 'nullable|string|max:255',
+            'display_name' => 'nullable|string|max:255',
             'apply_to_scheme' => 'nullable|boolean',
         ]);
 
@@ -1580,16 +1617,17 @@ class HmoWorkbenchController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Validation failed',
-                'errors'  => $validator->errors(),
+                'errors' => $validator->errors(),
             ], 422);
         }
 
         DB::beginTransaction();
+
         try {
             $posr = ProductOrServiceRequest::with(['hmo', 'user.patient_profile.hmo'])->findOrFail($id);
             $productId = $posr->product_id;
             $serviceId = $posr->service_id;
-            $hmoId     = $posr->hmo_id ?: optional($posr->user)->patient_profile->hmo_id ?? null;
+            $hmoId = $posr->hmo_id ?: optional($posr->user)->patient_profile->hmo_id ?? null;
 
             if (!$hmoId) {
                 return response()->json(['success' => false, 'message' => 'This request has no HMO association'], 422);
@@ -1600,17 +1638,17 @@ class HmoWorkbenchController extends Controller
                 $posr->hmo_id = $hmoId;
             }
 
-            $newMode   = $request->coverage_mode;
+            $newMode = $request->coverage_mode;
             $newClaims = (float) $request->claims_amount;
-            $newPay    = (float) $request->payable_amount;
+            $newPay = (float) $request->payable_amount;
             $displayName = $request->display_name ?: null;
 
             // ── 1. Update (or create) the tariff record ──────────────────
             $tariffData = [
-                'claims_amount'  => $newClaims,
+                'claims_amount' => $newClaims,
                 'payable_amount' => $newPay,
-                'coverage_mode'  => $newMode,
-                'display_name'   => $displayName,
+                'coverage_mode' => $newMode,
+                'display_name' => $displayName,
             ];
 
             $tariffMatch = $productId
@@ -1623,8 +1661,8 @@ class HmoWorkbenchController extends Controller
             // Note: validation_status is NOT changed here — the subsequent
             // approve / reject / reapprove action handles that separately.
             $qty = (int) ($posr->qty ?? 1);
-            $posr->coverage_mode  = $newMode;
-            $posr->claims_amount  = $newClaims * $qty;
+            $posr->coverage_mode = $newMode;
+            $posr->claims_amount = $newClaims * $qty;
             $posr->payable_amount = $newPay * $qty;
             $posr->save();
 
@@ -1661,6 +1699,7 @@ class HmoWorkbenchController extends Controller
             ]);
         } catch (\Exception $e) {
             DB::rollBack();
+
             return response()->json([
                 'success' => false,
                 'message' => 'Error updating tariff. Please try again or contact support.',
@@ -1784,11 +1823,12 @@ class HmoWorkbenchController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Validation failed',
-                'errors' => $validator->errors()
+                'errors' => $validator->errors(),
             ], 422);
         }
 
         DB::beginTransaction();
+
         try {
             $approved = 0;
             $skipped = 0;
@@ -1800,6 +1840,7 @@ class HmoWorkbenchController extends Controller
 
                 if (!$hmoRequest || $hmoRequest->validation_status !== 'pending') {
                     $skipped++;
+
                     continue;
                 }
 
@@ -1815,6 +1856,7 @@ class HmoWorkbenchController extends Controller
                             'validation_notes' => $request->validation_notes ?? 'Group approved — awaiting auth code',
                         ]);
                         $awaitingCode++;
+
                         continue;
                     } elseif ($request->auth_mode === 'shared') {
                         $authCode = $request->shared_auth_code;
@@ -1831,6 +1873,7 @@ class HmoWorkbenchController extends Controller
                             'validation_notes' => $request->validation_notes ?? 'Group approved — awaiting auth code',
                         ]);
                         $awaitingCode++;
+
                         continue;
                     }
                 }
@@ -1856,8 +1899,12 @@ class HmoWorkbenchController extends Controller
             }
 
             $msg = "{$approved} request(s) approved";
-            if ($awaitingCode > 0) $msg .= ", {$awaitingCode} awaiting auth code";
-            if ($skipped > 0) $msg .= ", {$skipped} skipped";
+            if ($awaitingCode > 0) {
+                $msg .= ", {$awaitingCode} awaiting auth code";
+            }
+            if ($skipped > 0) {
+                $msg .= ", {$skipped} skipped";
+            }
 
             return response()->json([
                 'success' => true,
@@ -1869,9 +1916,10 @@ class HmoWorkbenchController extends Controller
             ]);
         } catch (\Exception $e) {
             DB::rollBack();
+
             return response()->json([
                 'success' => false,
-                'message' => 'Error in group approval: ' . $e->getMessage()
+                'message' => 'Error in group approval: ' . $e->getMessage(),
             ], 500);
         }
     }
@@ -1892,11 +1940,12 @@ class HmoWorkbenchController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Validation failed. Rejection reason is required.',
-                'errors' => $validator->errors()
+                'errors' => $validator->errors(),
             ], 422);
         }
 
         DB::beginTransaction();
+
         try {
             $rejected = 0;
             $skipped = 0;
@@ -1912,6 +1961,7 @@ class HmoWorkbenchController extends Controller
 
                 if (!$hmoRequest || !in_array($hmoRequest->validation_status, ['pending', 'awaiting_code'])) {
                     $skipped++;
+
                     continue;
                 }
 
@@ -1942,9 +1992,10 @@ class HmoWorkbenchController extends Controller
             ]);
         } catch (\Exception $e) {
             DB::rollBack();
+
             return response()->json([
                 'success' => false,
-                'message' => 'Error in group rejection: ' . $e->getMessage()
+                'message' => 'Error in group rejection: ' . $e->getMessage(),
             ], 500);
         }
     }
@@ -1961,7 +2012,7 @@ class HmoWorkbenchController extends Controller
         if ($validator->fails()) {
             return response()->json([
                 'success' => false,
-                'errors' => $validator->errors()
+                'errors' => $validator->errors(),
             ], 422);
         }
 
@@ -1970,7 +2021,7 @@ class HmoWorkbenchController extends Controller
         if ($hmoRequest->validation_status !== 'awaiting_code') {
             return response()->json([
                 'success' => false,
-                'message' => 'Request is not awaiting an auth code'
+                'message' => 'Request is not awaiting an auth code',
             ], 422);
         }
 
@@ -2002,18 +2053,21 @@ class HmoWorkbenchController extends Controller
         if ($validator->fails()) {
             return response()->json([
                 'success' => false,
-                'errors' => $validator->errors()
+                'errors' => $validator->errors(),
             ], 422);
         }
 
         DB::beginTransaction();
+
         try {
             $updated = 0;
             $errors = [];
 
             foreach ($request->request_ids as $id) {
                 $hmoRequest = ProductOrServiceRequest::find($id);
-                if (!$hmoRequest || $hmoRequest->validation_status !== 'awaiting_code') continue;
+                if (!$hmoRequest || $hmoRequest->validation_status !== 'awaiting_code') {
+                    continue;
+                }
 
                 $authCode = $request->auth_mode === 'shared'
                     ? $request->shared_auth_code
@@ -2021,6 +2075,7 @@ class HmoWorkbenchController extends Controller
 
                 if (empty($authCode)) {
                     $errors[] = "Request #{$id}: No auth code provided";
+
                     continue;
                 }
 
@@ -2041,9 +2096,10 @@ class HmoWorkbenchController extends Controller
             ]);
         } catch (\Exception $e) {
             DB::rollBack();
+
             return response()->json([
                 'success' => false,
-                'message' => 'Error: ' . $e->getMessage()
+                'message' => 'Error: ' . $e->getMessage(),
             ], 500);
         }
     }
@@ -2061,7 +2117,7 @@ class HmoWorkbenchController extends Controller
         if ($validator->fails()) {
             return response()->json([
                 'success' => false,
-                'errors' => $validator->errors()
+                'errors' => $validator->errors(),
             ], 422);
         }
 
@@ -2115,12 +2171,12 @@ class HmoWorkbenchController extends Controller
         $allRequests = (clone $baseQuery)->orderBy('created_at', 'desc')->get();
 
         $tabs = [
-            'pending'       => collect(),
+            'pending' => collect(),
             'awaiting_code' => collect(),
-            'approved'      => collect(),
-            'express'       => collect(),
-            'rejected'      => collect(),
-            'past'          => collect(), // billed / paid
+            'approved' => collect(),
+            'express' => collect(),
+            'rejected' => collect(),
+            'past' => collect(), // billed / paid
         ];
 
         foreach ($allRequests as $req) {
@@ -2162,25 +2218,25 @@ class HmoWorkbenchController extends Controller
             }
 
             return [
-                'id'                => $req->id,
-                'type'              => $itemType,
-                'name'              => $itemName,
-                'category'          => $category,
-                'qty'               => (int) ($req->qty ?? 1),
-                'unit_price'        => (float) $unitPrice,
-                'claims_amount'     => (float) $req->claims_amount,
-                'payable_amount'    => (float) $req->payable_amount,
-                'coverage_mode'     => $req->coverage_mode,
+                'id' => $req->id,
+                'type' => $itemType,
+                'name' => $itemName,
+                'category' => $category,
+                'qty' => (int) ($req->qty ?? 1),
+                'unit_price' => (float) $unitPrice,
+                'claims_amount' => (float) $req->claims_amount,
+                'payable_amount' => (float) $req->payable_amount,
+                'coverage_mode' => $req->coverage_mode,
                 'validation_status' => $req->validation_status,
-                'validation_notes'  => $req->validation_notes,
-                'auth_code'         => $req->auth_code,
-                'validated_by'      => $req->validator ? userfullname($req->validated_by) : null,
-                'validated_at'      => $req->validated_at ? Carbon::parse($req->validated_at)->format('d M Y, h:i A') : null,
-                'created_at'        => $req->created_at ? $req->created_at->format('d M Y, h:i A') : null,
-                'hours_ago'         => $req->created_at ? round($req->created_at->diffInMinutes(now()) / 60, 1) : null,
-                'encounter_id'      => $req->encounter_id,
-                'doctor'            => ($req->encounter && $req->encounter->doctor) ? userfullname($req->encounter->doctor_id) : null,
-                'can_reverse'       => ($req->validation_status === 'approved' || $req->validation_status === 'rejected')
+                'validation_notes' => $req->validation_notes,
+                'auth_code' => $req->auth_code,
+                'validated_by' => $req->validator ? userfullname($req->validated_by) : null,
+                'validated_at' => $req->validated_at ? Carbon::parse($req->validated_at)->format('d M Y, h:i A') : null,
+                'created_at' => $req->created_at ? $req->created_at->format('d M Y, h:i A') : null,
+                'hours_ago' => $req->created_at ? round($req->created_at->diffInMinutes(now()) / 60, 1) : null,
+                'encounter_id' => $req->encounter_id,
+                'doctor' => ($req->encounter && $req->encounter->doctor) ? userfullname($req->encounter->doctor_id) : null,
+                'can_reverse' => ($req->validation_status === 'approved' || $req->validation_status === 'rejected')
                                         ? $this->checkServiceDeliveryStatus($req)['can_reverse']
                                         : null,
             ];
@@ -2201,30 +2257,30 @@ class HmoWorkbenchController extends Controller
         return response()->json([
             'success' => true,
             'patient' => [
-                'id'          => $patient->id,
-                'user_id'     => $patient->user_id,
-                'name'        => userfullname($patient->user_id),
-                'file_no'     => $patient->file_no ?? 'N/A',
-                'phone'       => $patient->phone_no ?? 'N/A',
-                'gender'      => $patient->gender ?? 'N/A',
-                'dob'         => $patient->dob,
-                'hmo_name'    => optional($patient->hmo)->name ?? 'Private',
-                'hmo_no'      => $patient->hmo_no ?? '',
-                'hmo_id'      => $patient->hmo_id,
+                'id' => $patient->id,
+                'user_id' => $patient->user_id,
+                'name' => userfullname($patient->user_id),
+                'file_no' => $patient->file_no ?? 'N/A',
+                'phone' => $patient->phone_no ?? 'N/A',
+                'gender' => $patient->gender ?? 'N/A',
+                'dob' => $patient->dob,
+                'hmo_name' => optional($patient->hmo)->name ?? 'Private',
+                'hmo_no' => $patient->hmo_no ?? '',
+                'hmo_id' => $patient->hmo_id,
                 'scheme_name' => ($patient->hmo && $patient->hmo->scheme) ? $patient->hmo->scheme->name : null,
                 'scheme_code' => ($patient->hmo && $patient->hmo->scheme) ? $patient->hmo->scheme->code : null,
-                'photo'       => ($patient->user && $patient->user->filename)
+                'photo' => ($patient->user && $patient->user->filename)
                                     ? asset('storage/image/user/' . $patient->user->filename)
                                     : asset('assets/images/default-avatar.png'),
-                'balance'     => optional($patient->account)->balance ?? 0,
+                'balance' => optional($patient->account)->balance ?? 0,
             ],
-            'counts'  => $counts,
-            'tabs'    => $result,
+            'counts' => $counts,
+            'tabs' => $result,
             'summary' => [
-                'total_requests'         => $allRequests->count(),
-                'total_claims_approved'  => $totalClaimsApproved,
+                'total_requests' => $allRequests->count(),
+                'total_claims_approved' => $totalClaimsApproved,
                 'total_payable_approved' => $totalPayableApproved,
-                'pending_claims_total'   => $pendingClaimsTotal,
+                'pending_claims_total' => $pendingClaimsTotal,
             ],
         ]);
     }
@@ -2244,7 +2300,7 @@ class HmoWorkbenchController extends Controller
             $serviceId = $posr->service_id;
 
             $tariff = HmoTariff::where('hmo_id', $patient->hmo_id)
-                ->where(function($q) use ($productId, $serviceId) {
+                ->where(function ($q) use ($productId, $serviceId) {
                     if ($productId) {
                         $q->where('product_id', $productId)->whereNull('service_id');
                     } else {

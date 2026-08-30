@@ -78,7 +78,7 @@ class AddFieldsToStoreStocksTable extends Migration
                 'max_stock_level',
                 'is_active',
                 'last_restocked_at',
-                'last_sold_at'
+                'last_sold_at',
             ]);
         });
     }

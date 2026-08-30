@@ -80,7 +80,7 @@ class AddBatchFieldsToProductRequestsTable extends Migration
                 'adaptation_note',
                 'is_adapted',
                 'adapted_by',
-                'adapted_at'
+                'adapted_at',
             ]);
         });
     }

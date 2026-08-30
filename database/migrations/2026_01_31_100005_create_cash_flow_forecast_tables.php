@@ -12,8 +12,7 @@ use Illuminate\Support\Facades\Schema;
  *
  * Creates tables for cash flow forecasting and 13-week projections.
  */
-return new class extends Migration
-{
+return new class () extends Migration {
     public function up()
     {
         // Main cash flow forecasts table

@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use App\Events\MessageSent;
 use App\Models\ChatAttachment;
 use App\Models\ChatConversation;
 use App\Models\ChatMessage;
@@ -10,7 +9,6 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Storage;
 
 class ChatController extends Controller
 {
@@ -32,12 +30,12 @@ class ChatController extends Controller
 
         // Handle archived filter
         if ($filter === 'archived') {
-            $query->whereHas('archivedBy', function($q) use ($userId) {
+            $query->whereHas('archivedBy', function ($q) use ($userId) {
                 $q->where('user_id', $userId);
             });
         } else {
             // Exclude archived for other filters
-            $query->whereDoesntHave('archivedBy', function($q) use ($userId) {
+            $query->whereDoesntHave('archivedBy', function ($q) use ($userId) {
                 $q->where('user_id', $userId);
             });
         }
@@ -49,19 +47,19 @@ class ChatController extends Controller
 
         // Search Logic
         if ($searchQuery) {
-            $query->where(function($q) use ($searchQuery, $userId) {
+            $query->where(function ($q) use ($searchQuery, $userId) {
                 // Search by Title (Group chats)
                 $q->where('title', 'like', "%{$searchQuery}%")
                   // Search by Participant Name
-                  ->orWhereHas('participants.user', function($u) use ($searchQuery, $userId) {
+                  ->orWhereHas('participants.user', function ($u) use ($searchQuery, $userId) {
                       $u->where('id', '!=', $userId)
-                        ->where(function($nameQ) use ($searchQuery) {
+                        ->where(function ($nameQ) use ($searchQuery) {
                             $nameQ->where('firstname', 'like', "%{$searchQuery}%")
                                   ->orWhere('surname', 'like', "%{$searchQuery}%");
                         });
                   })
                   // Search by Message Content
-                  ->orWhereHas('messages', function($m) use ($searchQuery) {
+                  ->orWhereHas('messages', function ($m) use ($searchQuery) {
                       $m->where('body', 'like', "%{$searchQuery}%");
                   });
             });
@@ -106,7 +104,7 @@ class ChatController extends Controller
             }
 
             // Add participants list for UI
-            $conversation->participants_list = $conversation->participants->map(function($p) {
+            $conversation->participants_list = $conversation->participants->map(function ($p) {
                 $colors = ['#007bff', '#6610f2', '#6f42c1', '#e83e8c', '#dc3545', '#fd7e14', '#ffc107', '#28a745', '#20c997', '#17a2b8'];
 
                 // Handle case where user might be null (deleted user)
@@ -119,7 +117,7 @@ class ChatController extends Controller
                         'avatar_initials' => '??',
                         'avatar_color' => $colors[0],
                         'category' => '',
-                        'department' => ''
+                        'department' => '',
                     ];
                 }
 
@@ -133,11 +131,12 @@ class ChatController extends Controller
                     'avatar_initials' => strtoupper(substr($p->user->firstname ?? '', 0, 1) . substr($p->user->surname ?? '', 0, 1)),
                     'avatar_color' => $colors[($p->user->id ?? 0) % count($colors)],
                     'category' => $p->user->category->name ?? '',
-                    'department' => $p->user->staff_profile->clinic->name ?? ''
+                    'department' => $p->user->staff_profile->clinic->name ?? '',
                 ];
             });
 
             $conversation->unread_count = 0; // Implement unread count logic if needed
+
             return $conversation;
         });
 
@@ -175,7 +174,7 @@ class ChatController extends Controller
         }
 
         // Transform messages to include sender info
-        $messages = $messages->map(function($message) {
+        $messages = $messages->map(function ($message) {
             $user = $message->user;
             if ($user) {
                 $message->sender_name = ($user->firstname ?? '') . ' ' . ($user->surname ?? '');
@@ -216,11 +215,11 @@ class ChatController extends Controller
         // This requires tracking 'last_read_at' vs message timestamps
 
         $userId = Auth::id();
-        $unreadCount = ChatMessage::whereHas('conversation.participants', function($q) use ($userId) {
+        $unreadCount = ChatMessage::whereHas('conversation.participants', function ($q) use ($userId) {
             $q->where('user_id', $userId);
         })
         ->where('user_id', '!=', $userId)
-        ->whereDoesntHave('conversation.participants', function($q) use ($userId) {
+        ->whereDoesntHave('conversation.participants', function ($q) use ($userId) {
             $q->where('user_id', $userId)
               ->whereColumn('last_read_at', '>=', 'chat_messages.created_at');
         })
@@ -248,6 +247,7 @@ class ChatController extends Controller
         }
 
         DB::beginTransaction();
+
         try {
             $message = ChatMessage::create([
                 'conversation_id' => $request->conversation_id,
@@ -282,6 +282,7 @@ class ChatController extends Controller
 
         } catch (\Exception $e) {
             DB::rollBack();
+
             return response()->json(['error' => $e->getMessage()], 500);
         }
     }
@@ -357,10 +358,10 @@ class ChatController extends Controller
         if (count($userIds) == 2) {
             $otherUserId = $validated['user_ids'][0];
             $existing = ChatConversation::where('is_group', false)
-                ->whereHas('participants', function($q) use ($otherUserId) {
+                ->whereHas('participants', function ($q) use ($otherUserId) {
                     $q->where('user_id', $otherUserId);
                 })
-                ->whereHas('participants', function($q) {
+                ->whereHas('participants', function ($q) {
                     $q->where('user_id', Auth::id());
                 })
                 ->first();
@@ -371,6 +372,7 @@ class ChatController extends Controller
         }
 
         DB::beginTransaction();
+
         try {
             $conversation = ChatConversation::create([
                 'title' => $validated['title'] ?? null,
@@ -391,6 +393,7 @@ class ChatController extends Controller
         } catch (\Exception $e) {
             DB::rollBack();
             \Log::error('Conversation creation failed: ' . $e->getMessage());
+
             return response()->json(['error' => 'Failed to create conversation'], 500);
         }
     }
@@ -401,9 +404,9 @@ class ChatController extends Controller
 
         // Use Staff model as requested
         $staffMembers = \App\Models\Staff::with(['user.category', 'clinic', 'specialization'])
-            ->whereHas('user', function($q) use ($query) {
+            ->whereHas('user', function ($q) use ($query) {
                 $q->where('id', '!=', Auth::id())
-                  ->where(function($subQ) use ($query) {
+                  ->where(function ($subQ) use ($query) {
                       $subQ->where('firstname', 'like', "%{$query}%")
                            ->orWhere('surname', 'like', "%{$query}%")
                            ->orWhere('email', 'like', "%{$query}%");
@@ -448,12 +451,12 @@ class ChatController extends Controller
             ->orderBy('created_at', 'desc')
             ->limit(50)
             ->get()
-            ->map(function($msg) {
+            ->map(function ($msg) {
                 return [
                     'id' => $msg->id,
                     'body' => $msg->body,
                     'created_at' => $msg->created_at,
-                    'user_id' => $msg->user_id
+                    'user_id' => $msg->user_id,
                 ];
             });
 

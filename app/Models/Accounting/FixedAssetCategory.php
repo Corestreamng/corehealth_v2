@@ -16,7 +16,8 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  */
 class FixedAssetCategory extends Model
 {
-    use HasFactory, SoftDeletes;
+    use HasFactory;
+    use SoftDeletes;
 
     protected $table = 'fixed_asset_categories';
 

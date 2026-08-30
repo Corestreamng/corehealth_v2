@@ -18,7 +18,8 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  */
 class InterAccountTransfer extends Model
 {
-    use HasFactory, SoftDeletes;
+    use HasFactory;
+    use SoftDeletes;
 
     protected $table = 'inter_account_transfers';
 
@@ -320,6 +321,7 @@ class InterAccountTransfer extends Model
         }
 
         $startDate = $this->initiated_at ?? $this->transfer_date;
+
         return now()->diffInDays($startDate);
     }
 

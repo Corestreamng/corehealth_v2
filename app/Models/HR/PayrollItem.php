@@ -29,7 +29,7 @@ class PayrollItem extends Model implements Auditable
         'full_net_salary',
         'bank_name',
         'bank_account_number',
-        'bank_account_name'
+        'bank_account_name',
     ];
 
     protected $casts = [
@@ -108,6 +108,7 @@ class PayrollItem extends Model implements Auditable
         }
 
         $masked = '****' . substr($this->bank_account_number, -4);
+
         return "{$this->bank_name} - {$masked}";
     }
 }

@@ -3,8 +3,7 @@
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Support\Facades\DB;
 
-return new class extends Migration
-{
+return new class () extends Migration {
     /**
      * Create medical_reports table for doctor-generated medical reports.
      * Supports WYSIWYG-authored content, finalization, and print output.

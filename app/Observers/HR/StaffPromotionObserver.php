@@ -12,7 +12,9 @@ class StaffPromotionObserver
     public function saved(StaffPromotion $promotion): void
     {
         $staff = $promotion->staff;
-        if (!$staff) return;
+        if (!$staff) {
+            return;
+        }
 
         $staff->last_promotion_date = $promotion->promotion_date;
 
@@ -42,7 +44,9 @@ class StaffPromotionObserver
     public function deleted(StaffPromotion $promotion): void
     {
         $staff = $promotion->staff;
-        if (!$staff) return;
+        if (!$staff) {
+            return;
+        }
 
         // Recalculate from remaining promotions
         $latest = $staff->promotions()->withoutTrashed()->latest('promotion_date')->first();

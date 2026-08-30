@@ -4,8 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-return new class extends Migration
-{
+return new class () extends Migration {
     /**
      * Run the migrations.
      *
@@ -22,7 +21,7 @@ return new class extends Migration
             'staff_bills',
             'organization_bills',
             'admission_requests',
-            'nursing_shifts'
+            'nursing_shifts',
         ];
 
         foreach ($tables as $table) {
@@ -59,7 +58,7 @@ return new class extends Migration
             'staff_bills',
             'organization_bills',
             'admission_requests',
-            'nursing_shifts'
+            'nursing_shifts',
         ];
 
         foreach ($tables as $table) {
@@ -71,7 +70,7 @@ return new class extends Migration
                     'query_notes',
                     'query_resolved_by',
                     'query_resolved_at',
-                    'query_resolution_notes'
+                    'query_resolution_notes',
                 ]);
             });
         }

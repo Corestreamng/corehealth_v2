@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Hmo;
 use App\Models\HmoTariff;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -17,14 +16,15 @@ class TariffController extends Controller
     {
         $request->validate([
             'item_type' => 'required|in:product,service',
-            'item_id'   => 'required|integer|min:1',
+            'item_id' => 'required|integer|min:1',
         ]);
 
         $itemType = $request->input('item_type');
-        $itemId   = (int) $request->input('item_id');
-        $bulk     = $request->input('bulk');
+        $itemId = (int) $request->input('item_id');
+        $bulk = $request->input('bulk');
 
         DB::beginTransaction();
+
         try {
             if ($bulk) {
                 $rows = json_decode($bulk, true);
@@ -43,10 +43,14 @@ class TariffController extends Controller
                         (float) ($row['claims_amount'] ?? 0),
                         $row['coverage_mode'] ?? null
                     );
-                    if ($result === 'created') $created++;
-                    else $updated++;
+                    if ($result === 'created') {
+                        $created++;
+                    } else {
+                        $updated++;
+                    }
                 }
                 DB::commit();
+
                 return response()->json([
                     'message' => "{$updated} updated, {$created} created.",
                     'updated' => $updated,
@@ -54,9 +58,9 @@ class TariffController extends Controller
                 ]);
             } else {
                 $request->validate([
-                    'hmo_id'          => 'required|integer|min:1',
-                    'payable_amount'  => 'required|numeric|min:0',
-                    'claims_amount'   => 'required|numeric|min:0',
+                    'hmo_id' => 'required|integer|min:1',
+                    'payable_amount' => 'required|numeric|min:0',
+                    'claims_amount' => 'required|numeric|min:0',
                 ]);
 
                 $result = $this->upsertTariff(
@@ -69,14 +73,16 @@ class TariffController extends Controller
                 );
 
                 DB::commit();
+
                 return response()->json([
                     'message' => "Tariff {$result} successfully.",
-                    'result'  => $result,
+                    'result' => $result,
                 ]);
             }
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error("TariffController@update: " . $e->getMessage());
+
             return response()->json(['message' => 'Update failed: ' . $e->getMessage()], 500);
         }
     }
@@ -100,22 +106,24 @@ class TariffController extends Controller
         if ($tariff) {
             $data = [
                 'payable_amount' => $payable,
-                'claims_amount'  => $claims,
+                'claims_amount' => $claims,
             ];
             if ($coverageMode) {
                 $data['coverage_mode'] = $coverageMode;
             }
             $tariff->update($data);
+
             return 'updated';
         } else {
             HmoTariff::create([
-                'hmo_id'         => $hmoId,
-                'product_id'     => $itemType === 'product' ? $itemId : null,
-                'service_id'     => $itemType === 'service' ? $itemId : null,
+                'hmo_id' => $hmoId,
+                'product_id' => $itemType === 'product' ? $itemId : null,
+                'service_id' => $itemType === 'service' ? $itemId : null,
                 'payable_amount' => $payable,
-                'claims_amount'  => $claims,
-                'coverage_mode'  => $coverageMode ?: 'primary',
+                'claims_amount' => $claims,
+                'coverage_mode' => $coverageMode ?: 'primary',
             ]);
+
             return 'created';
         }
     }

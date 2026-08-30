@@ -14,6 +14,7 @@ class BankController extends Controller
     public function index()
     {
         $banks = Bank::all();
+
         return view('admin.banks.index', compact('banks'));
     }
 
@@ -77,7 +78,7 @@ class BankController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Bank created successfully',
-            'bank' => $bank
+            'bank' => $bank,
         ]);
     }
 
@@ -102,7 +103,7 @@ class BankController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Bank updated successfully',
-            'bank' => $bank
+            'bank' => $bank,
         ]);
     }
 
@@ -119,7 +120,7 @@ class BankController extends Controller
         return response()->json([
             'success' => true,
             'message' => "Bank {$status} successfully",
-            'is_active' => $bank->is_active
+            'is_active' => $bank->is_active,
         ]);
     }
 
@@ -132,7 +133,7 @@ class BankController extends Controller
 
         return response()->json([
             'success' => true,
-            'banks' => $banks
+            'banks' => $banks,
         ]);
     }
 }

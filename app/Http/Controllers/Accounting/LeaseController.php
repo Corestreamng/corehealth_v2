@@ -6,13 +6,13 @@ use App\Http\Controllers\Controller;
 use App\Models\Accounting\Lease;
 use App\Models\Accounting\LeasePaymentSchedule;
 use App\Services\Accounting\ExcelExportService;
+use Barryvdh\DomPDF\Facade\Pdf;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use Carbon\Carbon;
 use Yajra\DataTables\Facades\DataTables;
-use Barryvdh\DomPDF\Facade\Pdf;
 
 /**
  * Lease Controller (IFRS 16 Compliant)
@@ -60,6 +60,7 @@ class LeaseController extends Controller
         // Monthly depreciation (ROU / remaining term)
         $monthlyDepreciation = $activeLeases->sum(function ($lease) {
             $remainingMonths = max(1, Carbon::parse($lease->commencement_date)->diffInMonths(Carbon::parse($lease->end_date)));
+
             return $lease->initial_rou_asset_value / $remainingMonths;
         });
 
@@ -89,7 +90,7 @@ class LeaseController extends Controller
 
         // By lease type
         $byType = $activeLeases->groupBy('lease_type')
-            ->map(fn($items) => [
+            ->map(fn ($items) => [
                 'count' => $items->count(),
                 'liability' => $items->sum('current_lease_liability'),
                 'rou_asset' => $items->sum('current_rou_asset_value'),
@@ -147,11 +148,11 @@ class LeaseController extends Controller
         }
 
         return DataTables::of($query)
-            ->addColumn('commencement_formatted', fn($l) => Carbon::parse($l->commencement_date)->format('M d, Y'))
-            ->addColumn('end_date_formatted', fn($l) => Carbon::parse($l->end_date)->format('M d, Y'))
-            ->addColumn('monthly_payment_formatted', fn($l) => '₦' . number_format($l->monthly_payment, 2))
-            ->addColumn('rou_asset_formatted', fn($l) => '₦' . number_format($l->current_rou_asset_value, 2))
-            ->addColumn('liability_formatted', fn($l) => '₦' . number_format($l->current_lease_liability, 2))
+            ->addColumn('commencement_formatted', fn ($l) => Carbon::parse($l->commencement_date)->format('M d, Y'))
+            ->addColumn('end_date_formatted', fn ($l) => Carbon::parse($l->end_date)->format('M d, Y'))
+            ->addColumn('monthly_payment_formatted', fn ($l) => '₦' . number_format($l->monthly_payment, 2))
+            ->addColumn('rou_asset_formatted', fn ($l) => '₦' . number_format($l->current_rou_asset_value, 2))
+            ->addColumn('liability_formatted', fn ($l) => '₦' . number_format($l->current_lease_liability, 2))
             ->addColumn('type_badge', function ($l) {
                 $badges = [
                     'operating' => 'badge-secondary',
@@ -160,6 +161,7 @@ class LeaseController extends Controller
                     'low_value' => 'badge-light',
                 ];
                 $badge = $badges[$l->lease_type] ?? 'badge-secondary';
+
                 return '<span class="badge ' . $badge . '">' . ucfirst(str_replace('_', ' ', $l->lease_type)) . '</span>';
             })
             ->addColumn('status_badge', function ($l) {
@@ -171,10 +173,12 @@ class LeaseController extends Controller
                     'purchased' => 'badge-info',
                 ];
                 $badge = $badges[$l->status] ?? 'badge-secondary';
+
                 return '<span class="badge ' . $badge . '">' . ucfirst($l->status) . '</span>';
             })
             ->addColumn('remaining_term', function ($l) {
                 $remaining = Carbon::now()->diffInMonths(Carbon::parse($l->end_date), false);
+
                 return max(0, $remaining) . ' months';
             })
             ->addColumn('actions', function ($l) {
@@ -185,6 +189,7 @@ class LeaseController extends Controller
                     $actions .= '<a href="' . route('accounting.leases.payment', $l->id) . '" class="btn btn-outline-success" title="Record Payment"><i class="mdi mdi-cash"></i></a>';
                 }
                 $actions .= '</div>';
+
                 return $actions;
             })
             ->rawColumns(['type_badge', 'status_badge', 'actions'])
@@ -603,7 +608,7 @@ class LeaseController extends Controller
     {
         Log::info('LeaseController::recordPayment - Starting', [
             'lease_id' => $id,
-            'request_data' => $request->all()
+            'request_data' => $request->all(),
         ]);
 
         $request->validate([
@@ -617,7 +622,7 @@ class LeaseController extends Controller
             'schedule_id' => $request->schedule_id,
             'payment_date' => $request->payment_date,
             'actual_payment' => $request->actual_payment,
-            'bank_account_id' => $request->bank_account_id
+            'bank_account_id' => $request->bank_account_id,
         ]);
 
         try {
@@ -630,13 +635,13 @@ class LeaseController extends Controller
                 'current_status' => $schedule->status,
                 'current_payment_date' => $schedule->payment_date,
                 'due_date' => $schedule->due_date,
-                'payment_amount' => $schedule->payment_amount
+                'payment_amount' => $schedule->payment_amount,
             ]);
 
             // Store bank_account_id in session/metadata for the observer
             session(['lease_payment_bank_account_id' => $request->bank_account_id]);
             Log::info('LeaseController::recordPayment - Stored bank_account_id in session', [
-                'bank_account_id' => $request->bank_account_id
+                'bank_account_id' => $request->bank_account_id,
             ]);
 
             // Prepare update data
@@ -649,7 +654,7 @@ class LeaseController extends Controller
             ];
 
             Log::info('LeaseController::recordPayment - Attempting update', [
-                'update_data' => $updateData
+                'update_data' => $updateData,
             ]);
 
             // Update payment schedule - this will trigger the observer
@@ -661,8 +666,8 @@ class LeaseController extends Controller
                     'id' => $schedule->id,
                     'status' => $schedule->status,
                     'payment_date' => $schedule->payment_date,
-                    'actual_payment' => $schedule->actual_payment
-                ]
+                    'actual_payment' => $schedule->actual_payment,
+                ],
             ]);
 
             // Verify the update persisted
@@ -670,14 +675,14 @@ class LeaseController extends Controller
             Log::info('LeaseController::recordPayment - Verification query', [
                 'verified_status' => $verifySchedule->status ?? 'NOT FOUND',
                 'verified_payment_date' => $verifySchedule->payment_date ?? 'NOT FOUND',
-                'verified_actual_payment' => $verifySchedule->actual_payment ?? 'NOT FOUND'
+                'verified_actual_payment' => $verifySchedule->actual_payment ?? 'NOT FOUND',
             ]);
 
             // Clear session
             session()->forget('lease_payment_bank_account_id');
 
             Log::info('LeaseController::recordPayment - Success, redirecting', [
-                'lease_id' => $id
+                'lease_id' => $id,
             ]);
 
             return redirect()->route('accounting.leases.show', $id)
@@ -687,7 +692,7 @@ class LeaseController extends Controller
             Log::error('LeaseController::recordPayment - Exception', [
                 'lease_id' => $id,
                 'message' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
+                'trace' => $e->getTraceAsString(),
             ]);
 
             return back()->withInput()
@@ -826,6 +831,7 @@ class LeaseController extends Controller
 
         } catch (\Exception $e) {
             DB::rollBack();
+
             return back()->withInput()
                 ->with('error', 'Failed to modify lease: ' . $e->getMessage());
         }
@@ -872,6 +878,7 @@ class LeaseController extends Controller
 
         } catch (\Exception $e) {
             DB::rollBack();
+
             return back()
                 ->with('error', 'Failed to terminate lease: ' . $e->getMessage());
         }
@@ -941,7 +948,7 @@ class LeaseController extends Controller
 
         // By lease type
         $byType = $activeLeases->groupBy('lease_type')
-            ->map(fn($items) => [
+            ->map(fn ($items) => [
                 'count' => $items->count(),
                 'rou_asset' => $items->sum('current_rou_asset_value'),
                 'liability' => $items->sum('current_lease_liability'),
@@ -965,8 +972,8 @@ class LeaseController extends Controller
             ->leftJoin('departments', 'leases.department_id', '=', 'departments.id')
             ->leftJoin('suppliers', 'leases.lessor_id', '=', 'suppliers.id')
             ->whereNull('leases.deleted_at')
-            ->when($request->status, fn($q, $status) => $q->where('leases.status', $status))
-            ->when($request->type, fn($q, $type) => $q->where('leases.lease_type', $type))
+            ->when($request->status, fn ($q, $status) => $q->where('leases.status', $status))
+            ->when($request->type, fn ($q, $type) => $q->where('leases.lease_type', $type))
             ->select(['leases.*', 'departments.name as department_name', 'suppliers.company_name as supplier_name'])
             ->orderBy('leases.lease_number')
             ->get();
@@ -974,6 +981,7 @@ class LeaseController extends Controller
         $stats = $this->getDashboardStats();
 
         $pdf = Pdf::loadView('accounting.leases.pdf.index', compact('leases', 'stats'));
+
         return $pdf->download('lease-portfolio-' . now()->format('Y-m-d') . '.pdf');
     }
 
@@ -986,8 +994,8 @@ class LeaseController extends Controller
             ->leftJoin('departments', 'leases.department_id', '=', 'departments.id')
             ->leftJoin('suppliers', 'leases.lessor_id', '=', 'suppliers.id')
             ->whereNull('leases.deleted_at')
-            ->when($request->status, fn($q, $status) => $q->where('leases.status', $status))
-            ->when($request->type, fn($q, $type) => $q->where('leases.lease_type', $type))
+            ->when($request->status, fn ($q, $status) => $q->where('leases.status', $status))
+            ->when($request->type, fn ($q, $type) => $q->where('leases.lease_type', $type))
             ->select(['leases.*', 'departments.name as department_name', 'suppliers.company_name as supplier_name'])
             ->orderBy('leases.lease_number')
             ->get();
@@ -995,6 +1003,7 @@ class LeaseController extends Controller
         $stats = $this->getDashboardStats();
 
         $excelService = app(ExcelExportService::class);
+
         return $excelService->leasePortfolio($leases, $stats);
     }
 
@@ -1070,6 +1079,7 @@ class LeaseController extends Controller
             ->get();
 
         $pdf = Pdf::loadView('accounting.leases.pdf.show', compact('lease', 'schedule', 'paymentSummary', 'journalEntries'));
+
         return $pdf->download('lease-detail-' . $lease->lease_number . '-' . now()->format('Y-m-d') . '.pdf');
     }
 
@@ -1141,6 +1151,7 @@ class LeaseController extends Controller
             ->get();
 
         $excelService = app(ExcelExportService::class);
+
         return $excelService->leaseDetail($lease, $schedule, $paymentSummary, $journalEntries);
     }
 
@@ -1166,6 +1177,7 @@ class LeaseController extends Controller
             ->get();
 
         $pdf = Pdf::loadView('accounting.leases.pdf.schedule', compact('lease', 'schedule'));
+
         return $pdf->download('lease-schedule-' . $lease->lease_number . '-' . now()->format('Y-m-d') . '.pdf');
     }
 
@@ -1191,6 +1203,7 @@ class LeaseController extends Controller
             ->get();
 
         $excelService = app(ExcelExportService::class);
+
         return $excelService->leaseSchedule($lease, $schedule);
     }
 }

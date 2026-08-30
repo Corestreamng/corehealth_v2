@@ -5,7 +5,6 @@ namespace App\Http\Controllers;
 use App\Models\ApplicationStatu;
 use App\Models\ServiceCategory;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Cache;
 
 class HospitalConfigController extends Controller
@@ -19,7 +18,7 @@ class HospitalConfigController extends Controller
                 'site_name' => env('APP_NAME', 'Hospital'),
                 'version' => '1.0.0',
                 'active' => true,
-                'debug_mode' => false
+                'debug_mode' => false,
             ]);
         }
 
@@ -29,13 +28,13 @@ class HospitalConfigController extends Controller
         // Fetch dynamic models for LLM config
         $llmConfig = is_string($config->llm_config) ? json_decode($config->llm_config, true) : (is_array($config->llm_config) ? $config->llm_config : []);
         $providers = $llmConfig['providers'] ?? [];
-        
+
         $providerModels = [];
         $gateway = app(\App\Services\LlmGatewayService::class);
         foreach (['gemini', 'anthropic', 'openai', 'ollama', 'huggingface'] as $prov) {
             if (!empty($providers[$prov]['api_key']) || $prov === 'ollama') {
                 try {
-                    $providerModels[$prov] = Cache::remember("llm_models_{$prov}", 3600, function() use ($gateway, $prov) {
+                    $providerModels[$prov] = Cache::remember("llm_models_{$prov}", 3600, function () use ($gateway, $prov) {
                         return $gateway->listModels($prov);
                     });
                 } catch (\Exception $e) {
@@ -75,8 +74,8 @@ class HospitalConfigController extends Controller
             'consultation_category_id' => 'nullable|integer|min:1',
             'nursing_service_category' => 'nullable|integer|min:1',
             'misc_service_category_id' => 'nullable|integer',
-            'imaging_category_id'      => 'nullable|integer',
-            'morgue_category_id'       => 'nullable|integer',
+            'imaging_category_id' => 'nullable|integer',
+            'morgue_category_id' => 'nullable|integer',
             'registration_category_id' => 'nullable|exists:service_categories,id',
             'procedure_category_id' => 'nullable|integer|exists:service_categories,id',
 
@@ -217,7 +216,7 @@ class HospitalConfigController extends Controller
         // Handle LLM Config Checkboxes and processing
         if ($request->has('llm_config')) {
             $llmConfig = $request->input('llm_config');
-            
+
             $existingLlmConfig = is_string($config->llm_config) ? json_decode($config->llm_config, true) : (is_array($config->llm_config) ? $config->llm_config : []);
 
             $llmConfig['enabled'] = isset($llmConfig['enabled']);
@@ -227,7 +226,7 @@ class HospitalConfigController extends Controller
             $llmConfig['wand_enabled'] = isset($llmConfig['wand_enabled']);
             $llmConfig['dictation_enabled'] = isset($llmConfig['dictation_enabled']);
             $llmConfig['summary_button_enabled'] = isset($llmConfig['summary_button_enabled']);
-            
+
             // Ensure numbers are cast correctly if needed
             $llmConfig['summary_scope_months'] = (int) ($llmConfig['summary_scope_months'] ?? 3);
             $llmConfig['summary_scope_max_entries'] = (int) ($llmConfig['summary_scope_max_entries'] ?? 50);
@@ -257,7 +256,7 @@ class HospitalConfigController extends Controller
             } else {
                 $llmConfig['system_prompts'] = $existingLlmConfig['system_prompts'] ?? [];
             }
-            
+
             // Process RAG settings if provided
             if (isset($llmConfig['rag_settings']) && is_array($llmConfig['rag_settings'])) {
                 $llmConfig['rag_settings']['chunk_size'] = (int) ($llmConfig['rag_settings']['chunk_size'] ?? 512);

@@ -3,16 +3,14 @@
 namespace App\Http\Controllers\Accounting;
 
 use App\Http\Controllers\Controller;
+use App\Models\Accounting\Account;
 use App\Models\Accounting\PatientDeposit;
 use App\Models\Accounting\PatientDepositApplication;
-use App\Models\Accounting\JournalEntry;
-use App\Models\Accounting\JournalEntryLine;
-use App\Models\Accounting\Account;
-use App\Models\PatientAccount;
-use App\Models\Patient;
-use App\Models\Payment;
-use App\Models\Bank;
 use App\Models\AdmissionRequest;
+use App\Models\Bank;
+use App\Models\Patient;
+use App\Models\PatientAccount;
+use App\Models\Payment;
 use App\Services\Accounting\AccountingService;
 use App\Services\Accounting\ExcelExportService;
 use Barryvdh\DomPDF\Facade\Pdf;
@@ -22,7 +20,6 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\View;
 use Yajra\DataTables\Facades\DataTables;
-use Carbon\Carbon;
 
 /**
  * Patient Deposit Controller
@@ -183,12 +180,15 @@ class PatientDepositController extends Controller
         return DataTables::of($query)
             ->addColumn('patient_name', function ($deposit) {
                 $patient = $deposit->patient;
-                if (!$patient) return 'N/A';
+                if (!$patient) {
+                    return 'N/A';
+                }
+
                 return $patient->user?->name ?? $patient->full_name ?? 'Unknown';
             })
-            ->addColumn('file_no', fn($d) => $d->patient?->file_no ?? 'N/A')
-            ->addColumn('balance', fn($d) => $d->balance)
-            ->addColumn('utilization_percent', fn($d) => $d->utilization_percentage)
+            ->addColumn('file_no', fn ($d) => $d->patient?->file_no ?? 'N/A')
+            ->addColumn('balance', fn ($d) => $d->balance)
+            ->addColumn('utilization_percent', fn ($d) => $d->utilization_percentage)
             ->addColumn('status_badge', function ($d) {
                 $colors = [
                     'active' => 'success',
@@ -196,6 +196,7 @@ class PatientDepositController extends Controller
                     'refunded' => 'warning',
                     'cancelled' => 'danger',
                 ];
+
                 return '<span class="badge badge-' . ($colors[$d->status] ?? 'secondary') . '">'
                     . ucfirst(str_replace('_', ' ', $d->status)) . '</span>';
             })
@@ -207,6 +208,7 @@ class PatientDepositController extends Controller
                     $actions .= '<button type="button" class="btn btn-danger btn-refund" data-id="' . $d->id . '" data-balance="' . $d->balance . '" title="Refund"><i class="mdi mdi-cash-refund"></i></button>';
                 }
                 $actions .= '</div>';
+
                 return $actions;
             })
             ->rawColumns(['status_badge', 'actions'])
@@ -559,6 +561,7 @@ class PatientDepositController extends Controller
                 'deposit_id' => $patientDeposit->id,
                 'error' => $e->getMessage(),
             ]);
+
             return response()->json(['message' => 'Failed to apply deposit'], 500);
         }
     }
@@ -623,6 +626,7 @@ class PatientDepositController extends Controller
                 'deposit_id' => $patientDeposit->id,
                 'error' => $e->getMessage(),
             ]);
+
             return response()->json(['message' => 'Failed to process refund'], 500);
         }
     }
@@ -670,7 +674,7 @@ class PatientDepositController extends Controller
                 'total_utilized' => $totalUtilized,
                 'total_refunded' => $totalRefunded,
             ],
-            'active_deposits' => $activeDeposits->map(fn($d) => [
+            'active_deposits' => $activeDeposits->map(fn ($d) => [
                 'id' => $d->id,
                 'deposit_number' => $d->deposit_number,
                 'type' => $d->deposit_type_label,
@@ -702,7 +706,7 @@ class PatientDepositController extends Controller
             ->orWhere('phone_no', 'like', "%{$term}%")
             ->limit(20)
             ->get()
-            ->map(function($p) {
+            ->map(function ($p) {
                 return [
                     'id' => $p->id,
                     'text' => userfullname($p->user_id) . " ({$p->file_no})" . ($p->hmo ? " - {$p->hmo->name}" : ''),
@@ -729,6 +733,7 @@ class PatientDepositController extends Controller
 
         if (!$liabilityAccount || !$revenueAccount) {
             Log::warning('PatientDepositController: Accounts not found for application JE');
+
             return;
         }
 
@@ -772,6 +777,7 @@ class PatientDepositController extends Controller
 
         if (!$liabilityAccount || !$cashAccount) {
             Log::warning('PatientDepositController: Accounts not found for partial refund JE');
+
             return;
         }
 
@@ -808,10 +814,10 @@ class PatientDepositController extends Controller
     public function export(Request $request)
     {
         $query = PatientDeposit::with(['patient', 'paymentMethod'])
-            ->when($request->filled('status'), fn($q) => $q->where('status', $request->status))
-            ->when($request->filled('type'), fn($q) => $q->where('deposit_type', $request->type))
-            ->when($request->filled('date_from'), fn($q) => $q->whereDate('deposit_date', '>=', $request->date_from))
-            ->when($request->filled('date_to'), fn($q) => $q->whereDate('deposit_date', '<=', $request->date_to));
+            ->when($request->filled('status'), fn ($q) => $q->where('status', $request->status))
+            ->when($request->filled('type'), fn ($q) => $q->where('deposit_type', $request->type))
+            ->when($request->filled('date_from'), fn ($q) => $q->whereDate('deposit_date', '>=', $request->date_from))
+            ->when($request->filled('date_to'), fn ($q) => $q->whereDate('deposit_date', '<=', $request->date_to));
 
         $deposits = $query->orderBy('deposit_date', 'desc')->get();
 
@@ -827,11 +833,13 @@ class PatientDepositController extends Controller
         // Check export format
         if ($request->format === 'pdf') {
             $pdf = Pdf::loadView('accounting.patient-deposits.export-pdf', compact('deposits', 'stats'));
+
             return $pdf->download('patient-deposits-' . now()->format('Y-m-d') . '.pdf');
         }
 
         // Default to Excel
         $excelService = app(ExcelExportService::class);
+
         return $excelService->patientDeposits($deposits, $stats);
     }
 }

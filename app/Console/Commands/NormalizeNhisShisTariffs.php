@@ -2,14 +2,12 @@
 
 namespace App\Console\Commands;
 
-use Illuminate\Console\Command;
 use App\Models\Hmo;
 use App\Models\HmoScheme;
 use App\Models\HmoTariff;
 use App\Models\Product;
 use App\Models\Service;
-use App\Models\ServiceCategory;
-use Illuminate\Support\Facades\DB;
+use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Log;
 
 class NormalizeNhisShisTariffs extends Command
@@ -53,6 +51,7 @@ class NormalizeNhisShisTariffs extends Command
 
         if ($schemes->isEmpty()) {
             $this->error('No NHIS/NHIA or SHIS/PLASCHEMA schemes found. Run the HmoSchemeSeeder first.');
+
             return 1;
         }
 
@@ -65,6 +64,7 @@ class NormalizeNhisShisTariffs extends Command
 
         if ($hmos->isEmpty()) {
             $this->warn('No active HMOs found under NHIS/SHIS schemes.');
+
             return 0;
         }
 
@@ -83,6 +83,7 @@ class NormalizeNhisShisTariffs extends Command
         $otherConsultationIds = $services->filter(function ($svc) use ($generalConsultationIds) {
             $isConsultation = stripos($svc->service_name, 'consultation') !== false;
             $isGeneral = in_array($svc->id, $generalConsultationIds);
+
             return $isConsultation && !$isGeneral;
         })->pluck('id')->toArray();
 
@@ -114,7 +115,7 @@ class NormalizeNhisShisTariffs extends Command
 
                 $price = $product->price ? (float) $product->price->current_sale_price : 0;
                 $payable = round($price * 0.10, 2);
-                $claims  = round($price * 0.90, 2);
+                $claims = round($price * 0.90, 2);
 
                 $this->upsertTariff(
                     $hmo->id,
@@ -240,8 +241,8 @@ class NormalizeNhisShisTariffs extends Command
             if (!$dryRun) {
                 $existing->update([
                     'payable_amount' => $payableAmount,
-                    'claims_amount'  => $claimsAmount,
-                    'coverage_mode'  => $coverageMode,
+                    'claims_amount' => $claimsAmount,
+                    'coverage_mode' => $coverageMode,
                 ]);
             }
             $stats[$category . '_updated']++;
@@ -249,12 +250,12 @@ class NormalizeNhisShisTariffs extends Command
             // Create new tariff
             if (!$dryRun) {
                 HmoTariff::create([
-                    'hmo_id'         => $hmoId,
-                    'product_id'     => $productId,
-                    'service_id'     => $serviceId,
+                    'hmo_id' => $hmoId,
+                    'product_id' => $productId,
+                    'service_id' => $serviceId,
                     'payable_amount' => $payableAmount,
-                    'claims_amount'  => $claimsAmount,
-                    'coverage_mode'  => $coverageMode,
+                    'claims_amount' => $claimsAmount,
+                    'coverage_mode' => $coverageMode,
                 ]);
             }
             $stats[$category . '_created']++;

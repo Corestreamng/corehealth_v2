@@ -39,7 +39,7 @@ class CreateLeaveRequestsTable extends Migration
                 'approved',             // HR approved (final)
                 'rejected',             // Rejected at any stage
                 'cancelled',            // Cancelled by staff
-                'recalled'              // Recalled after approval
+                'recalled',              // Recalled after approval
             ])->default('pending');
 
             // First Level Approval (Unit Head / Dept Head)

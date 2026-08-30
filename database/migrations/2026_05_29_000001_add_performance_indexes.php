@@ -15,8 +15,7 @@ use Illuminate\Support\Facades\Schema;
  * NOTE: On very large tables this may take a few seconds per table.
  * InnoDB performs online DDL so the tables remain readable during indexing.
  */
-return new class extends Migration
-{
+return new class () extends Migration {
     public function up(): void
     {
         // ── doctor_queues ─────────────────────────────────────────────

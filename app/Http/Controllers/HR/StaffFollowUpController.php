@@ -33,36 +33,49 @@ class StaffFollowUpController extends Controller
             $rows = $query->get();
             $csv = "Staff,Subject,Priority,Due Date,Status,Created By,Resolved By,Resolved At\n";
             foreach ($rows as $r) {
-                $csv .= '"'.($r->staff?->user?->surname.' '.$r->staff?->user?->firstname.' '.$r->staff?->user?->othername).'","'.($r->subject ?? '').'","'.ucfirst($r->priority).'","'.($r->due_date?->format('Y-m-d') ?? '').'","'.ucfirst(str_replace('_',' ',$r->status)).'","'.($r->createdByUser?->name ?? '').'","'.($r->resolvedByUser?->name ?? '').'","'.($r->resolved_at?->format('Y-m-d H:i') ?? '')."\"\n";
+                $csv .= '"' . ($r->staff?->user?->surname . ' ' . $r->staff?->user?->firstname . ' ' . $r->staff?->user?->othername) . '","' . ($r->subject ?? '') . '","' . ucfirst($r->priority) . '","' . ($r->due_date?->format('Y-m-d') ?? '') . '","' . ucfirst(str_replace('_', ' ', $r->status)) . '","' . ($r->createdByUser?->name ?? '') . '","' . ($r->resolvedByUser?->name ?? '') . '","' . ($r->resolved_at?->format('Y-m-d H:i') ?? '') . "\"\n";
             }
-            return response($csv)->header('Content-Type', 'text/csv')->header('Content-Disposition', 'attachment; filename=follow_ups_'.date('Ymd').'.csv');
+
+            return response($csv)->header('Content-Type', 'text/csv')->header('Content-Disposition', 'attachment; filename=follow_ups_' . date('Ymd') . '.csv');
         }
 
         if ($request->ajax()) {
             return DataTables::of($query)
                 ->addIndexColumn()
-                ->addColumn('staff_name', fn($f) => '<a href="' . route('hr.tracking.profile', $f->staff_id) . '" class="font-weight-bold text-dark" title="View Tracking Profile">' . e($f->staff?->user?->surname . ' ' . $f->staff?->user?->firstname . ' ' . $f->staff?->user?->othername) . '</a>')
+                ->addColumn('staff_name', fn ($f) => '<a href="' . route('hr.tracking.profile', $f->staff_id) . '" class="font-weight-bold text-dark" title="View Tracking Profile">' . e($f->staff?->user?->surname . ' ' . $f->staff?->user?->firstname . ' ' . $f->staff?->user?->othername) . '</a>')
                 ->addColumn('subject_col', function ($f) {
                     $html = e($f->subject);
-                    if ($f->details) $html .= '<br><small class="text-muted">' . e(\Str::limit($f->details, 60)) . '</small>';
+                    if ($f->details) {
+                        $html .= '<br><small class="text-muted">' . e(\Str::limit($f->details, 60)) . '</small>';
+                    }
+
                     return $html;
                 })
                 ->addColumn('priority_col', function ($f) {
                     $colors = ['low' => 'secondary', 'medium' => 'warning', 'high' => 'danger'];
+
                     return '<span class="badge badge-' . ($colors[$f->priority] ?? 'secondary') . '">' . ucfirst($f->priority) . '</span>';
                 })
                 ->addColumn('due_date_col', function ($f) {
-                    if (!$f->due_date) return '—';
-                    if ($f->due_date->isPast() && $f->status !== 'resolved') return '<span class="text-danger font-weight-bold">' . $f->due_date->format('d M Y') . ' <i class="mdi mdi-alert"></i></span>';
+                    if (!$f->due_date) {
+                        return '—';
+                    }
+                    if ($f->due_date->isPast() && $f->status !== 'resolved') {
+                        return '<span class="text-danger font-weight-bold">' . $f->due_date->format('d M Y') . ' <i class="mdi mdi-alert"></i></span>';
+                    }
+
                     return $f->due_date->format('d M Y');
                 })
                 ->addColumn('status_col', function ($f) {
                     $colors = ['open' => 'warning', 'in_progress' => 'info', 'resolved' => 'success'];
                     $html = '<span class="badge badge-' . ($colors[$f->status] ?? 'secondary') . '">' . str_replace('_', ' ', ucfirst($f->status)) . '</span>';
-                    if ($f->resolved_at) $html .= '<br><small class="text-muted">' . $f->resolved_at->format('d M Y') . '</small>';
+                    if ($f->resolved_at) {
+                        $html .= '<br><small class="text-muted">' . $f->resolved_at->format('d M Y') . '</small>';
+                    }
+
                     return $html;
                 })
-                ->addColumn('created_by_col', fn($f) => e($f->createdByUser?->surname ?? '—'))
+                ->addColumn('created_by_col', fn ($f) => e($f->createdByUser?->surname ?? '—'))
                 ->addColumn('action', function ($f) {
                     $html = '';
                     if ($f->status === 'open') {
@@ -72,6 +85,7 @@ class StaffFollowUpController extends Controller
                         $html .= '<button class="btn btn-sm btn-outline-success resolve-btn" data-url="' . route('hr.follow-ups.resolve', $f) . '" title="Resolve"><i class="mdi mdi-check-circle"></i></button> ';
                     }
                     $html .= '<button class="btn btn-sm btn-outline-danger delete-btn" data-url="' . route('hr.follow-ups.destroy', $f) . '" title="Delete"><i class="mdi mdi-delete"></i></button>';
+
                     return $html;
                 })
                 ->rawColumns(['staff_name', 'subject_col', 'priority_col', 'due_date_col', 'status_col', 'action'])
@@ -85,7 +99,7 @@ class StaffFollowUpController extends Controller
             $scopedStaff = \App\Models\Staff::with(['user', 'department', 'cadre', 'gradeLevel'])->find($request->staff_id);
         }
 
-        $statsQuery = $scopedStaff ? StaffFollowUp::where('staff_id', $scopedStaff->id) : new StaffFollowUp;
+        $statsQuery = $scopedStaff ? StaffFollowUp::where('staff_id', $scopedStaff->id) : new StaffFollowUp();
         $stats = [
             'total' => (clone $statsQuery)->count(),
             'open' => (clone $statsQuery)->where('status', 'open')->count(),
@@ -116,6 +130,7 @@ class StaffFollowUpController extends Controller
         }
 
         Alert::success('Success', 'Follow-up created.');
+
         return redirect()->back();
     }
 
@@ -134,6 +149,7 @@ class StaffFollowUpController extends Controller
         }
 
         Alert::success('Success', 'Follow-up marked as in progress.');
+
         return redirect()->back();
     }
 
@@ -150,6 +166,7 @@ class StaffFollowUpController extends Controller
         }
 
         Alert::success('Success', 'Follow-up resolved.');
+
         return redirect()->back();
     }
 
@@ -162,6 +179,7 @@ class StaffFollowUpController extends Controller
         }
 
         Alert::success('Success', 'Follow-up removed.');
+
         return redirect()->back();
     }
 }

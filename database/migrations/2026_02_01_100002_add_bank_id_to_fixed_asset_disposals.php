@@ -13,8 +13,7 @@ use Illuminate\Support\Facades\Schema;
  * via cash or through a specific bank account, ensuring correct
  * GL account selection (Cash in Hand 1010 vs specific bank account).
  */
-return new class extends Migration
-{
+return new class () extends Migration {
     public function up(): void
     {
         Schema::table('fixed_asset_disposals', function (Blueprint $table) {

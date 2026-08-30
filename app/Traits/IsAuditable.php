@@ -3,9 +3,6 @@
 namespace App\Traits;
 
 use App\Models\AuditMark;
-use Illuminate\Database\Eloquent\Relations\MorphMany;
-use Illuminate\Database\Eloquent\Relations\MorphOne;
-use Illuminate\Database\Eloquent\Relations\LatestOfMany;
 
 trait IsAuditable
 {

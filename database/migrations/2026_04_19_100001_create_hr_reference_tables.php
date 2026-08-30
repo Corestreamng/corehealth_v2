@@ -8,8 +8,7 @@ use Illuminate\Support\Facades\Schema;
  * HR Enhancement - Reference Tables
  * Creates units, cadres, and grade_levels tables for organizational structure
  */
-return new class extends Migration
-{
+return new class () extends Migration {
     public function up(): void
     {
         // Units table - organizational units within departments

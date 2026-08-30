@@ -2,21 +2,20 @@
 
 namespace App\Models;
 
+use App\Traits\IsAuditable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use App\Traits\IsAuditable;
 use Illuminate\Database\Eloquent\SoftDeletes;
-use App\Models\StockBatch;
-
 use OwenIt\Auditing\Contracts\Auditable;
-
 
 class ProductRequest extends Model implements Auditable
 {
     use IsAuditable;
 
-    use HasFactory, SoftDeletes;
+    use HasFactory;
+    use SoftDeletes;
     use \OwenIt\Auditing\Auditable;
+
     protected $fillable = [
         'product_request_id',
         'billed_by',

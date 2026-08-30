@@ -25,13 +25,14 @@ class StoreObserver
      */
     public function updating(Store $store): void
     {
-        if (! $store->is_immutable) {
+        if (!$store->is_immutable) {
             return;
         }
 
         // Block deactivation
-        if ($store->isDirty('status') && ! $store->status) {
+        if ($store->isDirty('status') && !$store->status) {
             $store->status = true; // revert
+
             throw new \RuntimeException(
                 "Store [{$store->store_name}] is immutable and cannot be deactivated."
             );
@@ -41,6 +42,7 @@ class StoreObserver
         if ($store->isDirty('distribution_role')) {
             $original = $store->getOriginal('distribution_role');
             $store->distribution_role = $original; // revert
+
             throw new \RuntimeException(
                 "Store [{$store->store_name}] is immutable — its distribution role cannot be changed."
             );

@@ -3,18 +3,18 @@
 namespace App\Http\Controllers\HR;
 
 use App\Http\Controllers\Controller;
+use App\Models\Department;
 use App\Models\HR\LeaveRequest;
 use App\Models\HR\LeaveType;
 use App\Models\Staff;
-use App\Models\Department;
 use App\Models\UserCategory;
-use Illuminate\Http\Request;
 use Carbon\Carbon;
+use Illuminate\Http\Request;
 
 /**
  * HRMS Implementation Plan - Section 7.2
  * Leave Calendar Controller - Global HR Calendar View
- * 
+ *
  * Features:
  * - Full calendar view of all approved/pending leaves
  * - Color-coded by leave type or status
@@ -33,10 +33,10 @@ class LeaveCalendarController extends Controller
         $leaveTypes = LeaveType::active()->orderBy('name')->get();
         $departments = Department::orderBy('name')->get();
         $userCategories = UserCategory::orderBy('name')->get();
-        
+
         // Quick stats
         $stats = $this->getCalendarStats();
-        
+
         return view('admin.hr.leave-calendar.index', compact(
             'leaveTypes',
             'departments',
@@ -52,37 +52,37 @@ class LeaveCalendarController extends Controller
     {
         $start = $request->input('start');
         $end = $request->input('end');
-        
+
         $query = LeaveRequest::with(['staff.user', 'staff.department', 'staff.specialization', 'leaveType'])
             ->whereIn('status', [
                 LeaveRequest::STATUS_APPROVED,
                 LeaveRequest::STATUS_SUPERVISOR_APPROVED,
                 LeaveRequest::STATUS_PENDING,
             ]);
-        
+
         // Date range filter
         if ($start && $end) {
-            $query->where(function($q) use ($start, $end) {
+            $query->where(function ($q) use ($start, $end) {
                 $q->whereBetween('start_date', [$start, $end])
                   ->orWhereBetween('end_date', [$start, $end])
-                  ->orWhere(function($q2) use ($start, $end) {
+                  ->orWhere(function ($q2) use ($start, $end) {
                       $q2->where('start_date', '<=', $start)
                          ->where('end_date', '>=', $end);
                   });
             });
         }
-        
+
         // Filters
         if ($request->filled('leave_type_id')) {
             $query->where('leave_type_id', $request->leave_type_id);
         }
         if ($request->filled('department_id')) {
-            $query->whereHas('staff', function($q) use ($request) {
+            $query->whereHas('staff', function ($q) use ($request) {
                 $q->where('department_id', $request->department_id);
             });
         }
         if ($request->filled('user_category_id')) {
-            $query->whereHas('staff', function($q) use ($request) {
+            $query->whereHas('staff', function ($q) use ($request) {
                 $q->where('user_category_id', $request->user_category_id);
             });
         }
@@ -92,25 +92,25 @@ class LeaveCalendarController extends Controller
         if ($request->filled('status')) {
             $query->where('status', $request->status);
         }
-        
+
         $leaveRequests = $query->get();
-        
+
         $statusColors = [
             'pending' => '#ffc107',
             'supervisor_approved' => '#17a2b8',
             'approved' => '#28a745',
         ];
-        
-        $events = $leaveRequests->map(function($leave) use ($statusColors) {
+
+        $events = $leaveRequests->map(function ($leave) use ($statusColors) {
             $leaveTypeName = $leave->leaveType->name ?? 'Leave';
             $baseColor = $leave->leaveType->color ?? '#667eea';
-            
+
             // Adjust color/opacity based on status
-            $color = $leave->status === 'pending' ? $statusColors['pending'] : 
+            $color = $leave->status === 'pending' ? $statusColors['pending'] :
                     ($leave->status === 'supervisor_approved' ? $statusColors['supervisor_approved'] : $baseColor);
-            
+
             $borderColor = $statusColors[$leave->status] ?? $baseColor;
-            
+
             return [
                 'id' => $leave->id,
                 'title' => ($leave->staff->user->name ?? 'Unknown') . ' - ' . $leaveTypeName,
@@ -143,7 +143,7 @@ class LeaveCalendarController extends Controller
                 ],
             ];
         });
-        
+
         return response()->json($events);
     }
 
@@ -161,17 +161,17 @@ class LeaveCalendarController extends Controller
     public function onLeaveToday(Request $request)
     {
         $date = $request->input('date', now()->toDateString());
-        
+
         $onLeave = LeaveRequest::with(['staff.user', 'staff.department', 'leaveType'])
             ->where('status', LeaveRequest::STATUS_APPROVED)
             ->where('start_date', '<=', $date)
             ->where('end_date', '>=', $date)
             ->get();
-        
+
         return response()->json([
             'date' => $date,
             'count' => $onLeave->count(),
-            'staff' => $onLeave->map(function($leave) {
+            'staff' => $onLeave->map(function ($leave) {
                 return [
                     'id' => $leave->staff_id,
                     'name' => $leave->staff->user->name ?? 'Unknown',
@@ -193,34 +193,34 @@ class LeaveCalendarController extends Controller
         $end = $request->input('end', now()->endOfMonth()->toDateString());
         $departmentId = $request->input('department_id');
         $threshold = $request->input('threshold', 2); // Alert if more than X people off
-        
+
         $conflicts = [];
         $current = Carbon::parse($start);
         $endDate = Carbon::parse($end);
-        
+
         while ($current <= $endDate) {
             $dateStr = $current->toDateString();
-            
+
             $query = LeaveRequest::with(['staff.user', 'staff.department'])
                 ->where('status', LeaveRequest::STATUS_APPROVED)
                 ->where('start_date', '<=', $dateStr)
                 ->where('end_date', '>=', $dateStr);
-            
+
             if ($departmentId) {
-                $query->whereHas('staff', function($q) use ($departmentId) {
+                $query->whereHas('staff', function ($q) use ($departmentId) {
                     $q->where('department_id', $departmentId);
                 });
             }
-            
+
             $count = $query->count();
-            
+
             if ($count >= $threshold) {
                 $leaves = $query->get();
                 $conflicts[] = [
                     'date' => $dateStr,
                     'formatted_date' => $current->format('D, M d'),
                     'count' => $count,
-                    'staff' => $leaves->map(function($leave) {
+                    'staff' => $leaves->map(function ($leave) {
                         return [
                             'name' => $leave->staff->user->name ?? 'Unknown',
                             'department' => $leave->staff->department->name ?? 'N/A',
@@ -228,10 +228,10 @@ class LeaveCalendarController extends Controller
                     }),
                 ];
             }
-            
+
             $current->addDay();
         }
-        
+
         return response()->json([
             'threshold' => $threshold,
             'conflicts' => $conflicts,
@@ -245,20 +245,20 @@ class LeaveCalendarController extends Controller
     {
         $year = $request->input('year', now()->year);
         $month = $request->input('month');
-        
+
         $query = LeaveRequest::with(['staff.department'])
             ->where('status', LeaveRequest::STATUS_APPROVED)
             ->whereYear('start_date', $year);
-        
+
         if ($month) {
             $query->whereMonth('start_date', $month);
         }
-        
+
         $leaves = $query->get();
-        
-        $summary = $leaves->groupBy(function($leave) {
+
+        $summary = $leaves->groupBy(function ($leave) {
             return $leave->staff->department->name ?? 'Unknown';
-        })->map(function($group, $deptName) {
+        })->map(function ($group, $deptName) {
             return [
                 'department' => $deptName,
                 'total_requests' => $group->count(),
@@ -266,7 +266,7 @@ class LeaveCalendarController extends Controller
                 'unique_staff' => $group->pluck('staff_id')->unique()->count(),
             ];
         })->values();
-        
+
         return response()->json($summary);
     }
 
@@ -276,17 +276,17 @@ class LeaveCalendarController extends Controller
     public function heatmap(Request $request)
     {
         $year = $request->input('year', now()->year);
-        
+
         $leaves = LeaveRequest::where('status', LeaveRequest::STATUS_APPROVED)
             ->whereYear('start_date', $year)
             ->get();
-        
+
         $heatmap = [];
-        
+
         foreach ($leaves as $leave) {
             $current = Carbon::parse($leave->start_date);
             $end = Carbon::parse($leave->end_date);
-            
+
             while ($current <= $end) {
                 $dateStr = $current->toDateString();
                 if (!isset($heatmap[$dateStr])) {
@@ -296,7 +296,7 @@ class LeaveCalendarController extends Controller
                 $current->addDay();
             }
         }
-        
+
         return response()->json($heatmap);
     }
 
@@ -306,7 +306,7 @@ class LeaveCalendarController extends Controller
     private function getCalendarStats(?string $date = null)
     {
         $date = $date ? Carbon::parse($date) : now();
-        
+
         return [
             'on_leave_today' => LeaveRequest::where('status', LeaveRequest::STATUS_APPROVED)
                 ->where('start_date', '<=', $date->toDateString())

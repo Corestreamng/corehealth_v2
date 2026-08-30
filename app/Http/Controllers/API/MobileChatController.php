@@ -15,7 +15,6 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Storage;
 
 class MobileChatController extends Controller
 {
@@ -147,9 +146,9 @@ class MobileChatController extends Controller
     {
         $request->validate([
             'conversation_id' => 'required|exists:chat_conversations,id',
-            'body'            => 'nullable|string|max:5000',
-            'attachments'     => 'nullable|array|max:5',
-            'attachments.*'   => 'file|max:10240',
+            'body' => 'nullable|string|max:5000',
+            'attachments' => 'nullable|array|max:5',
+            'attachments.*' => 'file|max:10240',
         ]);
 
         $conv = ChatConversation::findOrFail($request->conversation_id);
@@ -162,12 +161,13 @@ class MobileChatController extends Controller
         }
 
         DB::beginTransaction();
+
         try {
             $message = ChatMessage::create([
                 'conversation_id' => $request->conversation_id,
-                'user_id'         => Auth::id(),
-                'body'            => $request->body,
-                'type'            => $request->hasFile('attachments') ? 'file' : 'text',
+                'user_id' => Auth::id(),
+                'body' => $request->body,
+                'type' => $request->hasFile('attachments') ? 'file' : 'text',
             ]);
 
             if ($request->hasFile('attachments')) {
@@ -175,10 +175,10 @@ class MobileChatController extends Controller
                     $path = $file->store('chat_attachments', 'public');
                     ChatAttachment::create([
                         'message_id' => $message->id,
-                        'file_path'  => $path,
-                        'file_name'  => $file->getClientOriginalName(),
-                        'file_type'  => $file->getClientMimeType(),
-                        'file_size'  => $file->getSize(),
+                        'file_path' => $path,
+                        'file_name' => $file->getClientOriginalName(),
+                        'file_type' => $file->getClientMimeType(),
+                        'file_size' => $file->getSize(),
                     ]);
                 }
             }
@@ -190,10 +190,12 @@ class MobileChatController extends Controller
             DB::commit();
 
             $message->load(['user', 'attachments']);
+
             return response()->json($this->transformMessage($message));
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error('MobileChat sendMessage error: ' . $e->getMessage());
+
             return response()->json(['error' => 'Failed to send message'], 500);
         }
     }
@@ -205,7 +207,7 @@ class MobileChatController extends Controller
     public function createConversation(Request $request)
     {
         $request->validate([
-            'user_ids'   => 'required|array|min:1',
+            'user_ids' => 'required|array|min:1',
             'user_ids.*' => 'exists:users,id',
         ]);
 
@@ -228,19 +230,21 @@ class MobileChatController extends Controller
 
         // Check for existing 1-on-1
         if (count($userIds) == 2) {
-            $otherId = collect($userIds)->first(fn($id) => $id != Auth::id());
+            $otherId = collect($userIds)->first(fn ($id) => $id != Auth::id());
             $existing = ChatConversation::where('is_group', false)
-                ->whereHas('participants', fn($q) => $q->where('user_id', $otherId))
-                ->whereHas('participants', fn($q) => $q->where('user_id', Auth::id()))
+                ->whereHas('participants', fn ($q) => $q->where('user_id', $otherId))
+                ->whereHas('participants', fn ($q) => $q->where('user_id', Auth::id()))
                 ->first();
 
             if ($existing) {
                 $existing->load(['participants.user', 'latestMessage.user']);
+
                 return response()->json($this->transformConversation($existing, Auth::id()));
             }
         }
 
         DB::beginTransaction();
+
         try {
             $conv = ChatConversation::create([
                 'is_group' => count($userIds) > 2,
@@ -253,10 +257,12 @@ class MobileChatController extends Controller
             DB::commit();
 
             $conv->load(['participants.user', 'latestMessage']);
+
             return response()->json($this->transformConversation($conv, Auth::id()));
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error('MobileChat createConversation error: ' . $e->getMessage());
+
             return response()->json(['error' => 'Failed to create conversation'], 500);
         }
     }
@@ -346,7 +352,7 @@ class MobileChatController extends Controller
         $message->update([
             'deleted_at' => now(),
             'deleted_by' => Auth::id(),
-            'body'       => null,
+            'body' => null,
         ]);
 
         return response()->json(['status' => true]);
@@ -439,14 +445,15 @@ class MobileChatController extends Controller
         $results = $staff->map(function ($s) {
             $user = $s->user;
             $hasImage = !empty($user->filename) && file_exists(public_path('storage/image/user/' . $user->filename));
+
             return [
-                'id'             => $user->id,
-                'name'           => trim(($user->firstname ?? '') . ' ' . ($user->surname ?? '')),
-                'category'       => $user->category->name ?? 'Staff',
+                'id' => $user->id,
+                'name' => trim(($user->firstname ?? '') . ' ' . ($user->surname ?? '')),
+                'category' => $user->category->name ?? 'Staff',
                 'specialization' => $s->specialization->name ?? '',
-                'department'     => $s->clinic->name ?? '',
-                'avatar_url'     => $hasImage ? url('storage/image/user/' . $user->filename) : null,
-                'initials'       => strtoupper(substr($user->firstname ?? '', 0, 1) . substr($user->surname ?? '', 0, 1)),
+                'department' => $s->clinic->name ?? '',
+                'avatar_url' => $hasImage ? url('storage/image/user/' . $user->filename) : null,
+                'initials' => strtoupper(substr($user->firstname ?? '', 0, 1) . substr($user->surname ?? '', 0, 1)),
             ];
         });
 
@@ -492,15 +499,15 @@ class MobileChatController extends Controller
                 $stats = $encounterStats->get($doc->id);
 
                 return [
-                    'user_id'         => $doc->id,
-                    'name'            => trim(($doc->firstname ?? '') . ' ' . ($doc->surname ?? '')),
-                    'category'        => $doc->category->name ?? 'Doctor',
-                    'specialization'  => $staff->specialization->name ?? '',
-                    'department'      => $staff->clinic->name ?? '',
-                    'avatar_url'      => $hasImage ? url('storage/image/user/' . $doc->filename) : null,
-                    'initials'        => strtoupper(substr($doc->firstname ?? '', 0, 1) . substr($doc->surname ?? '', 0, 1)),
+                    'user_id' => $doc->id,
+                    'name' => trim(($doc->firstname ?? '') . ' ' . ($doc->surname ?? '')),
+                    'category' => $doc->category->name ?? 'Doctor',
+                    'specialization' => $staff->specialization->name ?? '',
+                    'department' => $staff->clinic->name ?? '',
+                    'avatar_url' => $hasImage ? url('storage/image/user/' . $doc->filename) : null,
+                    'initials' => strtoupper(substr($doc->firstname ?? '', 0, 1) . substr($doc->surname ?? '', 0, 1)),
                     'encounter_count' => $stats ? $stats->encounter_count : 0,
-                    'last_visit'      => $stats && $stats->last_visit ? $stats->last_visit : null,
+                    'last_visit' => $stats && $stats->last_visit ? $stats->last_visit : null,
                 ];
             });
 
@@ -514,6 +521,7 @@ class MobileChatController extends Controller
     private function isPatientUser(): bool
     {
         $user = Auth::user();
+
         return $user && Patient::where('user_id', $user->id)->exists();
     }
 
@@ -570,20 +578,20 @@ class MobileChatController extends Controller
         $latest = $conv->latestMessage;
 
         return [
-            'id'           => $conv->id,
-            'is_group'     => (bool) $conv->is_group,
+            'id' => $conv->id,
+            'is_group' => (bool) $conv->is_group,
             'display_name' => $displayName,
-            'avatar_url'   => $avatarUrl,
-            'initials'     => $initials,
+            'avatar_url' => $avatarUrl,
+            'initials' => $initials,
             'avatar_color' => $avatarColor,
             'unread_count' => $unread,
             'latest_message' => $latest ? [
-                'id'         => $latest->id,
-                'body'       => $latest->isDeleted() ? 'This message was deleted' : $latest->body,
-                'sender_name'=> $latest->user ? trim($latest->user->firstname . ' ' . $latest->user->surname) : 'Unknown',
-                'is_mine'    => $latest->user_id === $userId,
+                'id' => $latest->id,
+                'body' => $latest->isDeleted() ? 'This message was deleted' : $latest->body,
+                'sender_name' => $latest->user ? trim($latest->user->firstname . ' ' . $latest->user->surname) : 'Unknown',
+                'is_mine' => $latest->user_id === $userId,
                 'created_at' => $latest->created_at->toIso8601String(),
-                'type'       => $latest->type,
+                'type' => $latest->type,
             ] : null,
             'participants' => $conv->participants->map(function ($p) use ($colors) {
                 $u = $p->user;
@@ -591,11 +599,12 @@ class MobileChatController extends Controller
                     return ['id' => $p->user_id, 'name' => 'Deleted User', 'avatar_url' => null, 'initials' => '??'];
                 }
                 $hasImg = !empty($u->filename) && file_exists(public_path('storage/image/user/' . $u->filename));
+
                 return [
-                    'id'         => $u->id,
-                    'name'       => trim(($u->firstname ?? '') . ' ' . ($u->surname ?? '')),
+                    'id' => $u->id,
+                    'name' => trim(($u->firstname ?? '') . ' ' . ($u->surname ?? '')),
                     'avatar_url' => $hasImg ? url('storage/image/user/' . $u->filename) : null,
-                    'initials'   => strtoupper(substr($u->firstname ?? '', 0, 1) . substr($u->surname ?? '', 0, 1)),
+                    'initials' => strtoupper(substr($u->firstname ?? '', 0, 1) . substr($u->surname ?? '', 0, 1)),
                 ];
             })->values(),
         ];
@@ -607,21 +616,21 @@ class MobileChatController extends Controller
         $hasImage = $user && !empty($user->filename) && file_exists(public_path('storage/image/user/' . $user->filename));
 
         return [
-            'id'              => $msg->id,
+            'id' => $msg->id,
             'conversation_id' => $msg->conversation_id,
-            'user_id'         => $msg->user_id,
-            'body'            => $msg->isDeleted() ? null : $msg->body,
-            'type'            => $msg->type,
-            'is_deleted'      => $msg->isDeleted(),
-            'sender_name'     => $user ? trim(($user->firstname ?? '') . ' ' . ($user->surname ?? '')) : 'Unknown',
-            'sender_avatar'   => $hasImage ? url('storage/image/user/' . $user->filename) : null,
+            'user_id' => $msg->user_id,
+            'body' => $msg->isDeleted() ? null : $msg->body,
+            'type' => $msg->type,
+            'is_deleted' => $msg->isDeleted(),
+            'sender_name' => $user ? trim(($user->firstname ?? '') . ' ' . ($user->surname ?? '')) : 'Unknown',
+            'sender_avatar' => $hasImage ? url('storage/image/user/' . $user->filename) : null,
             'sender_initials' => $user ? strtoupper(substr($user->firstname ?? '', 0, 1) . substr($user->surname ?? '', 0, 1)) : '??',
-            'attachments'     => $msg->attachments->map(fn($a) => [
-                'id'        => $a->id,
+            'attachments' => $msg->attachments->map(fn ($a) => [
+                'id' => $a->id,
                 'file_name' => $a->file_name,
                 'file_type' => $a->file_type,
                 'file_size' => $a->file_size,
-                'url'       => url('storage/' . $a->file_path),
+                'url' => url('storage/' . $a->file_path),
             ])->values(),
             'created_at' => $msg->created_at->toIso8601String(),
         ];

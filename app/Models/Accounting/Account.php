@@ -20,7 +20,9 @@ use OwenIt\Auditing\Contracts\Auditable;
  */
 class Account extends Model implements Auditable
 {
-    use HasFactory, SoftDeletes, \OwenIt\Auditing\Auditable;
+    use HasFactory;
+    use SoftDeletes;
+    use \OwenIt\Auditing\Auditable;
 
     protected $fillable = [
         'account_group_id',
@@ -300,6 +302,7 @@ class Account extends Model implements Auditable
     {
         $classCode = $this->accountGroup->accountClass->code ?? '';
         $groupCode = $this->accountGroup->code ?? '';
+
         return $classCode . $groupCode . $this->code;
     }
 

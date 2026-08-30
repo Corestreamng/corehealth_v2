@@ -10,7 +10,8 @@ use OwenIt\Auditing\Contracts\Auditable;
 
 class DoctorAppointment extends Model implements Auditable
 {
-    use HasFactory, SoftDeletes;
+    use HasFactory;
+    use SoftDeletes;
     use \OwenIt\Auditing\Auditable;
 
     protected $fillable = [
@@ -45,15 +46,15 @@ class DoctorAppointment extends Model implements Auditable
     ];
 
     protected $casts = [
-        'appointment_date'   => 'date',
-        'status'             => 'integer',
-        'duration_minutes'   => 'integer',
+        'appointment_date' => 'date',
+        'status' => 'integer',
+        'duration_minutes' => 'integer',
         'is_prepaid_followup' => 'boolean',
-        'reschedule_count'   => 'integer',
-        'reassigned_at'      => 'datetime',
-        'checked_in_at'      => 'datetime',
-        'cancelled_at'       => 'datetime',
-        'no_show_marked_at'  => 'datetime',
+        'reschedule_count' => 'integer',
+        'reassigned_at' => 'datetime',
+        'checked_in_at' => 'datetime',
+        'cancelled_at' => 'datetime',
+        'no_show_marked_at' => 'datetime',
     ];
 
     // ──────────────────────────────────────

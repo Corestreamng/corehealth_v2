@@ -2,11 +2,9 @@
 
 namespace App\Console\Commands;
 
-use Illuminate\Console\Command;
-use App\Models\ProductOrServiceRequest;
 use App\Models\BillingQueue;
+use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
-use App\Services\BillingQueueService;
 
 class SyncBillingQueue extends Command
 {
@@ -35,7 +33,7 @@ class SyncBillingQueue extends Command
 
         $this->info('Populating billing_queues via mass insert...');
         BillingQueue::truncate();
-        
+
         $sql = "
             INSERT INTO billing_queues (user_id, patient_id, unpaid_items_count, hmo_items_count, is_emergency, latest_item_at, created_at, updated_at)
             SELECT 
@@ -54,12 +52,12 @@ class SyncBillingQueue extends Command
               AND NOT ((p.payable_amount IS NULL OR p.payable_amount = 0) AND (p.claims_amount > 0 AND p.validation_status = 'approved'))
             GROUP BY p.user_id
         ";
-        
+
         DB::statement($sql);
 
         // Optional: Update emergency status for the new queues (can be slightly slower but manageable)
         $this->info('Updating emergency status flags...');
-        
+
         // Find emergency patient IDs
         $emergencyPatientIds = DB::table('doctor_queues')
             ->where('priority', 'emergency')
@@ -74,12 +72,13 @@ class SyncBillingQueue extends Command
             ->unique()
             ->filter()
             ->toArray();
-            
+
         if (!empty($emergencyPatientIds)) {
             BillingQueue::whereIn('patient_id', $emergencyPatientIds)->update(['is_emergency' => true]);
         }
-        
+
         $this->info("\nBilling queue synchronized successfully. Total entries: " . BillingQueue::count());
+
         return 0;
     }
 }

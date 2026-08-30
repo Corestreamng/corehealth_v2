@@ -2,9 +2,9 @@
 
 namespace App\Services\Dashboard;
 
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Cache;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 
 class NursingDashboardService
 {
@@ -14,6 +14,7 @@ class NursingDashboardService
     public function getStats(): array
     {
         $today = Carbon::today();
+
         return [
             'vitals_queue' => DB::table('vital_signs')->whereBetween('created_at', [$today->copy()->startOfDay(), $today->copy()->endOfDay()])->where('status', 0)->count(),
             'bed_requests' => DB::table('admission_requests')->where('discharged', 0)->whereNull('bed_id')->count(),
@@ -151,6 +152,7 @@ class NursingDashboardService
             ->get()
             ->map(function ($row) {
                 $row->time = Carbon::parse($row->created_at)->format('h:i A');
+
                 return $row;
             })
             ->toArray();

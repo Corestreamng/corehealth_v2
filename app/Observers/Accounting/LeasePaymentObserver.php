@@ -2,12 +2,12 @@
 
 namespace App\Observers\Accounting;
 
-use App\Models\Accounting\Lease;
-use App\Models\Accounting\LeasePaymentSchedule;
-use App\Models\Accounting\JournalEntry;
-use App\Models\Accounting\JournalEntryLine;
 use App\Models\Accounting\Account;
 use App\Models\Accounting\AccountingPeriod;
+use App\Models\Accounting\JournalEntry;
+use App\Models\Accounting\JournalEntryLine;
+use App\Models\Accounting\Lease;
+use App\Models\Accounting\LeasePaymentSchedule;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
@@ -71,8 +71,9 @@ class LeasePaymentObserver
             Log::info('LeasePaymentObserver::updated - Skipping (payment_date not changed or null)', [
                 'payment_id' => $payment->id,
                 'wasChanged' => $payment->wasChanged('payment_date'),
-                'payment_date' => $payment->payment_date
+                'payment_date' => $payment->payment_date,
             ]);
+
             return;
         }
 
@@ -80,14 +81,15 @@ class LeasePaymentObserver
         if ($payment->journal_entry_id) {
             Log::info('LeasePaymentObserver: Already has JE', [
                 'payment_id' => $payment->id,
-                'journal_entry_id' => $payment->journal_entry_id
+                'journal_entry_id' => $payment->journal_entry_id,
             ]);
+
             return;
         }
 
         Log::info('LeasePaymentObserver: Recording payment', [
             'payment_id' => $payment->id,
-            'lease_id' => $payment->lease_id
+            'lease_id' => $payment->lease_id,
         ]);
 
         try {
@@ -101,6 +103,7 @@ class LeasePaymentObserver
                     'lease_id' => $payment->lease_id,
                 ]);
                 DB::rollBack();
+
                 return;
             }
 
@@ -121,6 +124,7 @@ class LeasePaymentObserver
             if (!$bankAccount) {
                 Log::error('LeasePaymentObserver: No bank/cash account found');
                 DB::rollBack();
+
                 return;
             }
 
@@ -334,6 +338,7 @@ class LeasePaymentObserver
             Log::info('LeasePaymentObserver::processPayment: No payment date', [
                 'payment_id' => $payment->id,
             ]);
+
             return;
         }
 
@@ -341,14 +346,15 @@ class LeasePaymentObserver
         if ($payment->journal_entry_id) {
             Log::info('LeasePaymentObserver::processPayment: Already has JE', [
                 'payment_id' => $payment->id,
-                'journal_entry_id' => $payment->journal_entry_id
+                'journal_entry_id' => $payment->journal_entry_id,
             ]);
+
             return;
         }
 
         Log::info('LeasePaymentObserver::processPayment: Processing', [
             'payment_id' => $payment->id,
-            'lease_id' => $payment->lease_id
+            'lease_id' => $payment->lease_id,
         ]);
 
         try {
@@ -362,6 +368,7 @@ class LeasePaymentObserver
                     'lease_id' => $payment->lease_id,
                 ]);
                 DB::rollBack();
+
                 return;
             }
 
@@ -382,6 +389,7 @@ class LeasePaymentObserver
             if (!$bankAccount) {
                 Log::error('LeasePaymentObserver::processPayment: No bank/cash account found');
                 DB::rollBack();
+
                 return;
             }
 
@@ -408,6 +416,7 @@ class LeasePaymentObserver
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString(),
             ]);
+
             throw $e;
         }
     }

@@ -2,12 +2,10 @@
 
 namespace App\Services\Dashboard;
 
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Cache;
-use Carbon\Carbon;
-use App\Models\HR\LeaveRequest;
 use App\Models\HR\LeaveBalance;
-use App\Models\User;
+use App\Models\HR\LeaveRequest;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 
 class EssDashboardService
 {
@@ -42,7 +40,7 @@ class EssDashboardService
             $approvedLeave = LeaveRequest::where('staff_id', $staffId)->where('status', 'approved')
                 ->where('start_date', '>=', now())
                 ->count();
-            
+
             $totalBalance = LeaveBalance::where('staff_id', $staffId)->sum(DB::raw('entitled_days - used_days'));
 
             return [
@@ -128,7 +126,7 @@ class EssDashboardService
             ->whereDate('start_date', '<=', now())
             ->whereDate('end_date', '>=', now())
             ->first();
-        
+
         if ($onLeave) {
             $insights[] = [
                 'type' => 'info', 'severity' => 'success', 'icon' => 'mdi-palm-tree',

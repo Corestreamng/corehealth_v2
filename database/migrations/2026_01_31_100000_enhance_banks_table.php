@@ -16,8 +16,7 @@ use Illuminate\Support\Facades\Schema;
  * - Bank details
  * - Overdraft limits
  */
-return new class extends Migration
-{
+return new class () extends Migration {
     public function up(): void
     {
         Schema::table('banks', function (Blueprint $table) {

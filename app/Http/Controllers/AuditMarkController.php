@@ -2,8 +2,8 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
 use App\Models\AuditMark;
+use Illuminate\Http\Request;
 
 class AuditMarkController extends Controller
 {
@@ -13,6 +13,7 @@ class AuditMarkController extends Controller
         if (str_starts_with($clean, 'App\\Models\\')) {
             return $clean;
         }
+
         return 'App\\Models\\' . $clean;
     }
 
@@ -24,7 +25,7 @@ class AuditMarkController extends Controller
         $request->validate([
             'model_type' => 'required|string',
             'model_id' => 'required|integer',
-            'zone_key' => 'required|string'
+            'zone_key' => 'required|string',
         ]);
 
         $modelClass = $this->resolveModelClass($request->model_type);
@@ -34,7 +35,7 @@ class AuditMarkController extends Controller
         }
 
         $record = $modelClass::find($request->model_id);
-        
+
         if (!$record) {
             return response()->json(['success' => false, 'message' => 'Record not found.'], 404);
         }
@@ -70,7 +71,7 @@ class AuditMarkController extends Controller
             'model_type' => 'required|string',
             'model_id' => 'required|integer',
             'zone_key' => 'required|string',
-            'query_notes' => 'required|string'
+            'query_notes' => 'required|string',
         ]);
 
         $modelClass = $this->resolveModelClass($request->model_type);
@@ -114,18 +115,18 @@ class AuditMarkController extends Controller
         $request->validate([
             'model_type' => 'required|string',
             'model_id' => 'required|integer',
-            'resolution_notes' => 'required|string'
+            'resolution_notes' => 'required|string',
         ]);
 
         $modelClass = $this->resolveModelClass($request->model_type);
         $baseClass = class_basename($modelClass);
         $autoStamp = $request->boolean('auto_stamp');
 
-        $queryMarks = AuditMark::where(function($q) use ($modelClass, $baseClass) {
-                $q->where('auditable_type', $modelClass)
-                  ->orWhere('auditable_type', $baseClass)
-                  ->orWhere('auditable_type', 'App\\Models\\' . $baseClass);
-            })
+        $queryMarks = AuditMark::where(function ($q) use ($modelClass, $baseClass) {
+            $q->where('auditable_type', $modelClass)
+              ->orWhere('auditable_type', $baseClass)
+              ->orWhere('auditable_type', 'App\\Models\\' . $baseClass);
+        })
             ->where('auditable_id', $request->model_id)
             ->where('status', 'queried')
             ->get();
@@ -186,8 +187,8 @@ class AuditMarkController extends Controller
                 $stampMark->save();
             }
 
-            $message = $autoStamp 
-                ? 'Audit query resolved and item automatically stamped as audited.' 
+            $message = $autoStamp
+                ? 'Audit query resolved and item automatically stamped as audited.'
                 : 'Audit query resolved successfully.';
 
             return response()->json(['success' => true, 'message' => $message]);
@@ -195,7 +196,7 @@ class AuditMarkController extends Controller
 
         return response()->json(['success' => false, 'message' => 'No active query found to resolve.'], 404);
     }
-    
+
     /**
      * Bulk stamp multiple IDs efficiently.
      */
@@ -204,15 +205,15 @@ class AuditMarkController extends Controller
         $request->validate([
             'model_type' => 'required|string',
             'ids' => 'required|array',
-            'zone_key' => 'required|string'
+            'zone_key' => 'required|string',
         ]);
-        
+
         $modelClass = $this->resolveModelClass($request->model_type);
         $ids = $request->ids;
         $zoneKey = $request->zone_key;
         $auditorId = auth()->id();
         $now = now();
-        
+
         // Find IDs that are currently queried (and unresolved)
         $queriedIds = AuditMark::where('auditable_type', $modelClass)
             ->whereIn('auditable_id', $ids)
@@ -220,14 +221,14 @@ class AuditMarkController extends Controller
             ->whereNull('query_resolved_at')
             ->pluck('auditable_id')
             ->toArray();
-            
+
         // Filter out queried IDs
         $validIds = array_diff($ids, $queriedIds);
-        
+
         if (empty($validIds)) {
-             return response()->json(['success' => true, 'message' => 'No valid items to stamp (they may all be queried).', 'stamped_count' => 0]);
+            return response()->json(['success' => true, 'message' => 'No valid items to stamp (they may all be queried).', 'stamped_count' => 0]);
         }
-        
+
         // Chunk inserts to handle large arrays safely
         $chunks = array_chunk($validIds, 1000);
         foreach ($chunks as $chunk) {
@@ -240,17 +241,17 @@ class AuditMarkController extends Controller
                     'auditor_id' => $auditorId,
                     'status' => 'audited',
                     'created_at' => $now,
-                    'updated_at' => $now
+                    'updated_at' => $now,
                 ];
             }
             AuditMark::insert($insertData);
         }
-        
+
         return response()->json([
-            'success' => true, 
+            'success' => true,
             'message' => count($validIds) . ' items marked as audited successfully.',
             'stamped_count' => count($validIds),
-            'skipped_count' => count($queriedIds)
+            'skipped_count' => count($queriedIds),
         ]);
     }
 
@@ -261,14 +262,14 @@ class AuditMarkController extends Controller
     {
         $request->validate([
             'model_type' => 'required|string',
-            'model_id' => 'required|integer'
+            'model_id' => 'required|integer',
         ]);
 
         $modelClass = $this->resolveModelClass($request->model_type);
         $baseClass = class_basename($modelClass);
 
         $marks = AuditMark::with('auditor')
-            ->where(function($q) use ($modelClass, $baseClass) {
+            ->where(function ($q) use ($modelClass, $baseClass) {
                 $q->where('auditable_type', $modelClass)
                   ->orWhere('auditable_type', $baseClass)
                   ->orWhere('auditable_type', 'App\\Models\\' . $baseClass);
@@ -282,7 +283,7 @@ class AuditMarkController extends Controller
             if ($mark->auditor) {
                 $auditorName = trim(($mark->auditor->firstname ?? $mark->auditor->name ?? '') . ' ' . ($mark->auditor->surname ?? ''));
             }
-            
+
             return [
                 'id' => $mark->id,
                 'status' => $mark->status, // audited, queried, resolved
@@ -290,13 +291,13 @@ class AuditMarkController extends Controller
                 'zone_key' => $mark->zone_key,
                 'notes' => $mark->status === 'queried' ? $mark->query_notes : ($mark->status === 'resolved' ? $mark->query_resolution_notes : null),
                 'created_at' => $mark->created_at ? $mark->created_at->format('d M Y, h:i A') : 'Unknown Date',
-                'created_at_human' => $mark->created_at ? $mark->created_at->diffForHumans() : ''
+                'created_at_human' => $mark->created_at ? $mark->created_at->diffForHumans() : '',
             ];
         });
 
         return response()->json([
             'success' => true,
-            'timeline' => $timeline
+            'timeline' => $timeline,
         ]);
     }
 }

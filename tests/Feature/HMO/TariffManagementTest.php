@@ -53,5 +53,4 @@ class TariffManagementTest extends TestCase
         $user = User::factory()->create(['status' => 1]);
         $this->assertNotNull($user->id);
     }
-
 }

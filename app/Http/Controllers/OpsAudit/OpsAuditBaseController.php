@@ -3,9 +3,9 @@
 namespace App\Http\Controllers\OpsAudit;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
-use Carbon\Carbon;
 use App\Models\AuditMark;
+use Carbon\Carbon;
+use Illuminate\Http\Request;
 
 abstract class OpsAuditBaseController extends Controller
 {
@@ -34,11 +34,13 @@ abstract class OpsAuditBaseController extends Controller
      */
     protected function renderPatient($user, $patient, $hmo)
     {
-        if (!$patient) return '-';
+        if (!$patient) {
+            return '-';
+        }
 
         $patientId = $patient->file_no ?? $patient->old_patient_id ?? 'Unknown';
         $name = $user ? trim($user->firstname . ' ' . ($user->othername ?? '') . ' ' . $user->surname) : 'Unknown Patient';
-        
+
         $hmoHtml = '';
         if ($hmo) {
             $scheme = $hmo->scheme ? $hmo->scheme->name : '';
@@ -72,8 +74,10 @@ abstract class OpsAuditBaseController extends Controller
             $staffBill = $r->staffBills->first() ?? $r->staffBill;
             if ($staffBill && $staffBill->staffUser) {
                 $name = trim($staffBill->staffUser->firstname . ' ' . ($staffBill->staffUser->surname ?? ''));
+
                 return '<div class="font-weight-bold text-dark"><i class="mdi mdi-account-tie text-primary"></i> ' . e($name) . '</div><small class="badge bg-primary text-white mt-1">Staff Bill</small>';
             }
+
             return '<div class="font-weight-bold text-dark"><i class="mdi mdi-account-tie text-primary"></i> Staff Member</div><small class="badge bg-primary text-white mt-1">Staff Bill</small>';
         }
 
@@ -83,13 +87,16 @@ abstract class OpsAuditBaseController extends Controller
                 $posr = $r->product_or_service_request instanceof \Illuminate\Support\Collection ? $r->product_or_service_request->first() : $r->product_or_service_request;
                 if ($posr && $posr->organization) {
                     $name = $posr->organization->name ?? $posr->organization->company_name;
+
                     return '<div class="font-weight-bold text-dark"><i class="mdi mdi-domain text-info"></i> ' . e($name) . '</div><small class="badge bg-info text-white mt-1">Corporate Retainership</small>';
                 }
             }
             if ($orgBill && $orgBill->organization) {
                 $name = $orgBill->organization->name ?? $orgBill->organization->company_name;
+
                 return '<div class="font-weight-bold text-dark"><i class="mdi mdi-domain text-info"></i> ' . e($name) . '</div><small class="badge bg-info text-white mt-1">Corporate Retainership</small>';
             }
+
             return '<div class="font-weight-bold text-dark"><i class="mdi mdi-domain text-info"></i> Organization</div><small class="badge bg-info text-white mt-1">Corporate Retainership</small>';
         }
 
@@ -114,6 +121,7 @@ abstract class OpsAuditBaseController extends Controller
         if (in_array($payment->payment_method, ['POS', 'TRANSFER', 'BANK_TRANSFER', 'CHEQUE', 'MOBILE'])) {
             return '<div class="font-weight-bold text-primary" style="font-size:0.8rem;"><i class="mdi mdi-bank"></i> ' . e($payment->bank?->name ?? 'No Bank') . '</div>';
         }
+
         return '-';
     }
 
@@ -122,7 +130,10 @@ abstract class OpsAuditBaseController extends Controller
      */
     protected function renderHmo($hmo)
     {
-        if (!$hmo) return '<span class="text-muted" style="font-size:0.75rem;">Cash</span>';
+        if (!$hmo) {
+            return '<span class="text-muted" style="font-size:0.75rem;">Cash</span>';
+        }
+
         return '<small class="font-weight-bold text-info">' . e($hmo->name ?? '-') . '</small>' .
             ($hmo->scheme ? '<br><small class="text-muted" style="font-size:0.7rem;">' . e($hmo->scheme->name) . '</small>' : '');
     }
@@ -132,7 +143,9 @@ abstract class OpsAuditBaseController extends Controller
      */
     protected function renderAuditAction($record, $modelType)
     {
-        if (!$record) return '';
+        if (!$record) {
+            return '';
+        }
 
         $fullModelClass = str_starts_with($modelType, 'App\\Models\\') ? $modelType : 'App\\Models\\' . $modelType;
         $shortModelClass = class_basename($fullModelClass);
@@ -143,13 +156,13 @@ abstract class OpsAuditBaseController extends Controller
             $activeQuery = (object)[
                 'auditor' => (object)['name' => 'Auditor'],
                 'query_notes' => $record->query_notes ?? 'Flagged',
-                'created_at' => isset($record->queried_at) ? \Carbon\Carbon::parse($record->queried_at) : now()
+                'created_at' => isset($record->queried_at) ? \Carbon\Carbon::parse($record->queried_at) : now(),
             ];
-        } else if (method_exists($record, 'auditMarks') && $record->relationLoaded('auditMarks')) {
+        } elseif (method_exists($record, 'auditMarks') && $record->relationLoaded('auditMarks')) {
             $activeQuery = $record->auditMarks->where('status', 'queried')->sortByDesc('created_at')->first();
         } else {
             $activeQuery = AuditMark::with('auditor')
-                ->where(fn($q) => $q->where('auditable_type', $fullModelClass)->orWhere('auditable_type', $shortModelClass))
+                ->where(fn ($q) => $q->where('auditable_type', $fullModelClass)->orWhere('auditable_type', $shortModelClass))
                 ->where('auditable_id', $record->id)
                 ->where('status', 'queried')
                 ->latest()->first();
@@ -159,11 +172,11 @@ abstract class OpsAuditBaseController extends Controller
         $latestAudit = null;
         if (isset($record->is_audited) && $record->is_audited) {
             $latestAudit = (object)['auditor' => (object)['name' => 'Auditor'], 'created_at' => isset($record->audited_at) ? Carbon::parse($record->audited_at) : now()];
-        } else if (method_exists($record, 'auditMarks') && $record->relationLoaded('auditMarks')) {
+        } elseif (method_exists($record, 'auditMarks') && $record->relationLoaded('auditMarks')) {
             $latestAudit = $record->auditMarks->where('status', 'audited')->sortByDesc('created_at')->first();
         } else {
             $latestAudit = AuditMark::with('auditor')
-                ->where(fn($q) => $q->where('auditable_type', $fullModelClass)->orWhere('auditable_type', $shortModelClass))
+                ->where(fn ($q) => $q->where('auditable_type', $fullModelClass)->orWhere('auditable_type', $shortModelClass))
                 ->where('auditable_id', $record->id)
                 ->where('status', 'audited')
                 ->latest()->first();
@@ -176,7 +189,7 @@ abstract class OpsAuditBaseController extends Controller
             'App\\Models\\StoreRequisition' => 'requisition',
             'App\\Models\\StoreRequisitionItem' => 'requisition',
         ];
-        
+
         $detailsType = $typeMap[$fullModelClass] ?? null;
         if ($detailsType) {
             $detailsId = $record->id;
@@ -247,7 +260,7 @@ abstract class OpsAuditBaseController extends Controller
             });
         }
 
-        return $query->get()->mapWithKeys(fn($s) => [$s->id => trim($s->store_name . ' (' . $s->distributionRoleLabel() . ')')]);
+        return $query->get()->mapWithKeys(fn ($s) => [$s->id => trim($s->store_name . ' (' . $s->distributionRoleLabel() . ')')]);
     }
 
     protected function buildDataTableResponse($query, Request $request, callable $customizer, callable $rowMapper, callable $kpiBuilder, $kpiQuery = null)
@@ -274,7 +287,7 @@ abstract class OpsAuditBaseController extends Controller
                     'date_from' => $request->filled('start_date') ? Carbon::parse($request->start_date)->format('d M Y') : now()->subDays(30)->format('d M Y'),
                     'date_to' => $request->filled('end_date') ? Carbon::parse($request->end_date)->format('d M Y') : now()->format('d M Y'),
                 ],
-                'tab_name' => ucwords(str_replace('_', ' ', $request->input('tab', 'Report')))
+                'tab_name' => ucwords(str_replace('_', ' ', $request->input('tab', 'Report'))),
             ];
 
             return view('admin.ops_audit.print', $viewData);
@@ -293,7 +306,7 @@ abstract class OpsAuditBaseController extends Controller
                     $q->whereHas('patient.user', function ($q2) use ($search) {
                         $q2->where('firstname', 'like', "%$search%")
                             ->orWhere('surname', 'like', "%$search%");
-                    })->orWhereHas('patient', fn($q2) => $q2->where('file_no', 'like', "%$search%"));
+                    })->orWhereHas('patient', fn ($q2) => $q2->where('file_no', 'like', "%$search%"));
                 }
             });
         }
@@ -348,8 +361,8 @@ abstract class OpsAuditBaseController extends Controller
                 $query->with('auditMarks');
             }
             $all = $query->get();
-            $queried = $all->filter(fn($r) => (isset($r->is_queried) && $r->is_queried && empty($r->query_resolved_at)) || ($r->relationLoaded('auditMarks') ? $r->auditMarks->where('status', 'queried')->count() > 0 : AuditMark::where('auditable_type', $modelClass)->where('auditable_id', $r->id)->where('status', 'queried')->exists()))->count();
-            $alreadyAudited = $all->filter(fn($r) => (isset($r->is_audited) && $r->is_audited) || ($r->relationLoaded('auditMarks') ? $r->auditMarks->where('status', 'audited')->count() > 0 : AuditMark::where('auditable_type', $modelClass)->where('auditable_id', $r->id)->where('status', 'audited')->exists()))->count();
+            $queried = $all->filter(fn ($r) => (isset($r->is_queried) && $r->is_queried && empty($r->query_resolved_at)) || ($r->relationLoaded('auditMarks') ? $r->auditMarks->where('status', 'queried')->count() > 0 : AuditMark::where('auditable_type', $modelClass)->where('auditable_id', $r->id)->where('status', 'queried')->exists()))->count();
+            $alreadyAudited = $all->filter(fn ($r) => (isset($r->is_audited) && $r->is_audited) || ($r->relationLoaded('auditMarks') ? $r->auditMarks->where('status', 'audited')->count() > 0 : AuditMark::where('auditable_type', $modelClass)->where('auditable_id', $r->id)->where('status', 'audited')->exists()))->count();
             $valid = $all->count() - $queried - $alreadyAudited;
 
             $totalAmount = 0;
@@ -400,6 +413,7 @@ abstract class OpsAuditBaseController extends Controller
 
                 if ($isQueried || $isAudited) {
                     $skipped++;
+
                     continue;
                 }
 
@@ -473,13 +487,14 @@ abstract class OpsAuditBaseController extends Controller
                     </div>
                 ";
             }
+
             return '<span class="text-muted">-</span>';
         }
 
         $payment = $posr->payment;
         $payable = number_format((float) $posr->payable_amount, 2);
         $claims = number_format((float) $posr->claims_amount, 2);
-        
+
         if (!$payment) {
             $paymentMethod = '<span class="text-danger fw-bold"><i class="mdi mdi-alert-circle-outline me-1"></i>No Payment</span>';
             $cashier = '-';
@@ -495,7 +510,7 @@ abstract class OpsAuditBaseController extends Controller
             $hmo = \App\Models\Hmo::with('scheme')->find($posr->hmo_id);
             $hmoName = $hmo ? $hmo->name : 'Unknown HMO';
             $schemeName = ($hmo && $hmo->scheme) ? $hmo->scheme->name : '';
-            
+
             $validationBadge = '<span class="text-secondary fw-bold"><i class="mdi mdi-clock-outline me-1"></i>Claims Pending</span>';
             if ($posr->validation_status === 'approved') {
                 $validationBadge = '<span class="text-success fw-bold"><i class="mdi mdi-check-circle me-1"></i>Claims Approved</span>';
@@ -545,31 +560,46 @@ abstract class OpsAuditBaseController extends Controller
         ";
     }
 
-    
     protected function renderPosrItem($posr, $payment_id = null)
     {
-        if (!$posr) return '-';
+        if (!$posr) {
+            return '-';
+        }
 
         if ($posr instanceof \Illuminate\Support\Collection || is_array($posr)) {
             $count = count($posr);
-            if ($count === 0) return '-';
-            
+            if ($count === 0) {
+                return '-';
+            }
+
             if ($count > 1 && $payment_id) {
-                return '<button type="button" class="btn btn-sm btn-outline-primary rounded-pill px-3 py-1" onclick="openOpsAuditDetail(\'payment_items\', '.$payment_id.')"><i class="mdi mdi-format-list-bulleted me-1"></i>View '.$count.' Items</button>';
+                return '<button type="button" class="btn btn-sm btn-outline-primary rounded-pill px-3 py-1" onclick="openOpsAuditDetail(\'payment_items\', ' . $payment_id . ')"><i class="mdi mdi-format-list-bulleted me-1"></i>View ' . $count . ' Items</button>';
             }
 
             $names = [];
             foreach ($posr as $p) {
-                if ($p->product) $names[] = $p->product->product_name;
-                elseif ($p->service) $names[] = $p->service->service_name;
-                elseif ($p->procedure) $names[] = $p->procedure->is_free_form ? $p->procedure->free_form_name : ($p->procedure->service?->service_name ?? '-');
+                if ($p->product) {
+                    $names[] = $p->product->product_name;
+                } elseif ($p->service) {
+                    $names[] = $p->service->service_name;
+                } elseif ($p->procedure) {
+                    $names[] = $p->procedure->is_free_form ? $p->procedure->free_form_name : ($p->procedure->service?->service_name ?? '-');
+                }
             }
+
             return empty($names) ? '-' : implode(', ', $names);
         }
 
-        if ($posr->product) return $posr->product->product_name;
-        if ($posr->service) return $posr->service->service_name;
-        if ($posr->procedure) return $posr->procedure->is_free_form ? $posr->procedure->free_form_name : ($posr->procedure->service?->service_name ?? '-');
+        if ($posr->product) {
+            return $posr->product->product_name;
+        }
+        if ($posr->service) {
+            return $posr->service->service_name;
+        }
+        if ($posr->procedure) {
+            return $posr->procedure->is_free_form ? $posr->procedure->free_form_name : ($posr->procedure->service?->service_name ?? '-');
+        }
+
         return '-';
     }
 
@@ -579,7 +609,7 @@ abstract class OpsAuditBaseController extends Controller
         $channel = '';
         $textClass = 'text-secondary';
         $icon = 'mdi-account-cash';
-        
+
         $methodLower = strtolower($methodDisplay);
         if (str_contains($methodLower, 'transfer') || str_contains($methodLower, 'pos') || str_contains($methodLower, 'bank')) {
             if ($payment->bank) {
@@ -620,6 +650,7 @@ abstract class OpsAuditBaseController extends Controller
         if ($channel) {
             return $methodDisplay . " <span class='d-block mt-1'><span class='{$textClass}' style='font-size:0.65rem;'><i class='mdi {$icon} me-1'></i>{$channel}</span></span>";
         }
+
         return $methodDisplay;
     }
 
@@ -631,16 +662,19 @@ abstract class OpsAuditBaseController extends Controller
         if (isset($record->product) && $record->product) {
             $name = $record->product->name ?? $record->product->product_name;
             $cat = $record->product->category ? $record->product->category->category_name : 'Uncategorized Product';
+
             return "<div class='font-weight-bold text-dark'>" . e($name) . "</div><small class='badge bg-secondary text-white mt-1'>" . e($cat) . "</small>";
         }
         if (isset($record->service) && $record->service) {
             $name = $record->service->name ?? $record->service->service_name;
             $cat = $record->service->category ? $record->service->category->category_name : 'Uncategorized Service';
+
             return "<div class='font-weight-bold text-dark'>" . e($name) . "</div><small class='badge bg-secondary text-white mt-1'>" . e($cat) . "</small>";
         }
         if (isset($record->item_name)) {
             return "<div class='font-weight-bold text-dark'>" . e($record->item_name) . "</div>";
         }
+
         return '-';
     }
 
@@ -661,7 +695,7 @@ abstract class OpsAuditBaseController extends Controller
                     $q->where('product_id', $request->product_id);
                 }
                 if ($request->filled('product_category_id')) {
-                    $q->whereHas('product', fn($prodQuery) => $prodQuery->where('category_id', $request->product_category_id));
+                    $q->whereHas('product', fn ($prodQuery) => $prodQuery->where('category_id', $request->product_category_id));
                 }
             }
             if (in_array('service', $allowedTypes)) {
@@ -669,7 +703,7 @@ abstract class OpsAuditBaseController extends Controller
                     $q->where('service_id', $request->service_id);
                 }
                 if ($request->filled('service_category_id')) {
-                    $q->whereHas('service', fn($srvQuery) => $srvQuery->where('category_id', $request->service_category_id));
+                    $q->whereHas('service', fn ($srvQuery) => $srvQuery->where('category_id', $request->service_category_id));
                 }
             }
         };
@@ -689,7 +723,7 @@ abstract class OpsAuditBaseController extends Controller
     protected function applyPaymentFilters($query, Request $request, $posrRelationPath = '')
     {
         $hasFilters = $request->filled('payment_method') || $request->filled('cashier_id') || $request->filled('bank_id') || $request->filled('entity');
-        
+
         if (!$hasFilters) {
             return $query;
         }
@@ -724,16 +758,16 @@ abstract class OpsAuditBaseController extends Controller
 
                 if ($posrRelationPath === 'self_payment') {
                     if ($type === 'ORG') {
-                        $query->where(function($sub) use ($id) {
-                            $sub->whereHas('organizationBills', fn($sq) => $sq->where('organization_id', $id))
-                                ->orWhereHas('product_or_service_request', fn($sq) => $sq->where('organization_id', $id));
+                        $query->where(function ($sub) use ($id) {
+                            $sub->whereHas('organizationBills', fn ($sq) => $sq->where('organization_id', $id))
+                                ->orWhereHas('product_or_service_request', fn ($sq) => $sq->where('organization_id', $id));
                         });
                     } elseif ($type === 'STAFF') {
-                        $query->whereHas('staffBills', fn($sq) => $sq->where('staff_user_id', $id));
+                        $query->whereHas('staffBills', fn ($sq) => $sq->where('staff_user_id', $id));
                     } elseif ($type === 'PATIENT') {
-                        $query->where(function($sub) use ($id) {
+                        $query->where(function ($sub) use ($id) {
                             $sub->where('patient_id', $id)
-                                ->orWhereHas('product_or_service_request', fn($sq) => $sq->where('patient_id', $id));
+                                ->orWhereHas('product_or_service_request', fn ($sq) => $sq->where('patient_id', $id));
                         });
                     }
                 } else {
@@ -741,12 +775,12 @@ abstract class OpsAuditBaseController extends Controller
                         $query->where('patient_id', $id);
                     } elseif ($type === 'ORG' && !empty($posrRelationPath)) {
                         $query->whereHas($posrRelationPath . '.payment', function ($q) use ($id) {
-                            $q->whereHas('organizationBills', fn($sq) => $sq->where('organization_id', $id))
-                              ->orWhereHas('product_or_service_request', fn($sq) => $sq->where('organization_id', $id));
+                            $q->whereHas('organizationBills', fn ($sq) => $sq->where('organization_id', $id))
+                              ->orWhereHas('product_or_service_request', fn ($sq) => $sq->where('organization_id', $id));
                         });
                     } elseif ($type === 'STAFF' && !empty($posrRelationPath)) {
                         $query->whereHas($posrRelationPath . '.payment', function ($q) use ($id) {
-                            $q->whereHas('staffBills', fn($sq) => $sq->where('staff_user_id', $id));
+                            $q->whereHas('staffBills', fn ($sq) => $sq->where('staff_user_id', $id));
                         });
                     }
                 }
@@ -762,7 +796,9 @@ abstract class OpsAuditBaseController extends Controller
     public function searchEntities(Request $request)
     {
         $q = $request->input('q');
-        if (!$q) return response()->json(['results' => []]);
+        if (!$q) {
+            return response()->json(['results' => []]);
+        }
 
         $results = [];
 
@@ -778,10 +814,10 @@ abstract class OpsAuditBaseController extends Controller
         }
 
         // 2. Staff (Users)
-        $staff = \App\Models\User::with('staff')->where(function($query) use ($q) {
+        $staff = \App\Models\User::with('staff')->where(function ($query) use ($q) {
             $query->where('firstname', 'like', "%{$q}%")
                   ->orWhere('surname', 'like', "%{$q}%")
-                  ->orWhereHas('staff', function($sq) use ($q) {
+                  ->orWhereHas('staff', function ($sq) use ($q) {
                       $sq->where('employee_id', 'like', "%{$q}%");
                   });
         })->where('is_admin', '!=', 19)->limit(10)->get();
@@ -795,13 +831,13 @@ abstract class OpsAuditBaseController extends Controller
         }
 
         // 3. Patients
-        $patients = \App\Models\Patient::with('user')->where(function($qBuilder) use ($q) {
-            $qBuilder->whereHas('user', function($query) use ($q) {
+        $patients = \App\Models\Patient::with('user')->where(function ($qBuilder) use ($q) {
+            $qBuilder->whereHas('user', function ($query) use ($q) {
                 $query->where('firstname', 'like', "%{$q}%")
                       ->orWhere('surname', 'like', "%{$q}%");
             })->orWhere('file_no', 'like', "%{$q}%");
         })->limit(10)->get();
-          
+
         if ($patients->isNotEmpty()) {
             $patOptions = [];
             foreach ($patients as $p) {
@@ -826,15 +862,23 @@ abstract class OpsAuditBaseController extends Controller
             'approver',
             'fulfiller',
             'items.product.price',
-            'items.sourceBatch'
+            'items.sourceBatch',
         ]);
 
         $this->applyDateFilter($query, $request);
 
-        if ($request->filled('from_store_id')) $query->where('from_store_id', $request->from_store_id);
-        if ($request->filled('to_store_id')) $query->where('to_store_id', $request->to_store_id);
-        if ($request->filled('status')) $query->where('status', $request->status);
-        if ($request->filled('requested_by')) $query->where('requested_by', $request->requested_by);
+        if ($request->filled('from_store_id')) {
+            $query->where('from_store_id', $request->from_store_id);
+        }
+        if ($request->filled('to_store_id')) {
+            $query->where('to_store_id', $request->to_store_id);
+        }
+        if ($request->filled('status')) {
+            $query->where('status', $request->status);
+        }
+        if ($request->filled('requested_by')) {
+            $query->where('requested_by', $request->requested_by);
+        }
 
         if ($storeRoleConfig) {
             $query->where(function ($q) use ($storeRoleConfig) {
@@ -866,16 +910,16 @@ abstract class OpsAuditBaseController extends Controller
 
         $kpiQuery = clone $query;
 
-        return $this->buildDataTableResponse($query, $request, fn($q) => $q, function ($row) {
+        return $this->buildDataTableResponse($query, $request, fn ($q) => $q, function ($row) {
             $statusColors = ['pending' => 'warning text-dark', 'approved' => 'info', 'fulfilled' => 'success', 'rejected' => 'danger', 'partial' => 'warning'];
             $sColor = $statusColors[$row->status] ?? 'secondary';
 
-            $getCost = fn($i) => ($i->sourceBatch && (float)$i->sourceBatch->cost_price > 0) ? (float)$i->sourceBatch->cost_price : (float)($i->product->price->pr_buy_price ?? 0);
+            $getCost = fn ($i) => ($i->sourceBatch && (float)$i->sourceBatch->cost_price > 0) ? (float)$i->sourceBatch->cost_price : (float)($i->product->price->pr_buy_price ?? 0);
 
-            $reqValue = $row->items ? $row->items->sum(fn($i) => $i->status !== 'rejected' ? (($i->requested_qty ?? 0) * $getCost($i)) : 0) : 0;
-            $apprValue = $row->items ? $row->items->sum(fn($i) => $i->status !== 'rejected' ? (($i->approved_qty ?? 0) * $getCost($i)) : 0) : 0;
-            $fulValue = $row->items ? $row->items->sum(fn($i) => $i->status !== 'rejected' ? (($i->fulfilled_qty ?? 0) * $getCost($i)) : 0) : 0;
-            $rejValue = $row->items ? $row->items->sum(fn($i) => $i->status === 'rejected' ? (($i->requested_qty ?? 0) * $getCost($i)) : 0) : 0;
+            $reqValue = $row->items ? $row->items->sum(fn ($i) => $i->status !== 'rejected' ? (($i->requested_qty ?? 0) * $getCost($i)) : 0) : 0;
+            $apprValue = $row->items ? $row->items->sum(fn ($i) => $i->status !== 'rejected' ? (($i->approved_qty ?? 0) * $getCost($i)) : 0) : 0;
+            $fulValue = $row->items ? $row->items->sum(fn ($i) => $i->status !== 'rejected' ? (($i->fulfilled_qty ?? 0) * $getCost($i)) : 0) : 0;
+            $rejValue = $row->items ? $row->items->sum(fn ($i) => $i->status === 'rejected' ? (($i->requested_qty ?? 0) * $getCost($i)) : 0) : 0;
 
             return [
                 'date' => $row->created_at ? \Carbon\Carbon::parse($row->created_at)->format('d M Y') : '-',
@@ -896,20 +940,21 @@ abstract class OpsAuditBaseController extends Controller
             ];
         }, function ($kpiQuery) {
             $all = $kpiQuery->get();
-            $getCost = fn($i) => ($i->sourceBatch && (float)$i->sourceBatch->cost_price > 0) ? (float)$i->sourceBatch->cost_price : (float)($i->product->price->pr_buy_price ?? 0);
-            
-            $totalReqCost = $all->sum(function($req) use ($getCost) {
-                return $req->items ? $req->items->sum(fn($i) => $i->status !== 'rejected' ? (($i->requested_qty ?? 0) * $getCost($i)) : 0) : 0;
+            $getCost = fn ($i) => ($i->sourceBatch && (float)$i->sourceBatch->cost_price > 0) ? (float)$i->sourceBatch->cost_price : (float)($i->product->price->pr_buy_price ?? 0);
+
+            $totalReqCost = $all->sum(function ($req) use ($getCost) {
+                return $req->items ? $req->items->sum(fn ($i) => $i->status !== 'rejected' ? (($i->requested_qty ?? 0) * $getCost($i)) : 0) : 0;
             });
-            $totalApprCost = $all->sum(function($req) use ($getCost) {
-                return $req->items ? $req->items->sum(fn($i) => $i->status !== 'rejected' ? (($i->approved_qty ?? 0) * $getCost($i)) : 0) : 0;
+            $totalApprCost = $all->sum(function ($req) use ($getCost) {
+                return $req->items ? $req->items->sum(fn ($i) => $i->status !== 'rejected' ? (($i->approved_qty ?? 0) * $getCost($i)) : 0) : 0;
             });
-            $totalFulCost = $all->sum(function($req) use ($getCost) {
-                return $req->items ? $req->items->sum(fn($i) => $i->status !== 'rejected' ? (($i->fulfilled_qty ?? 0) * $getCost($i)) : 0) : 0;
+            $totalFulCost = $all->sum(function ($req) use ($getCost) {
+                return $req->items ? $req->items->sum(fn ($i) => $i->status !== 'rejected' ? (($i->fulfilled_qty ?? 0) * $getCost($i)) : 0) : 0;
             });
-            $totalRejCost = $all->sum(function($req) use ($getCost) {
-                return $req->items ? $req->items->sum(fn($i) => $i->status === 'rejected' ? (($i->requested_qty ?? 0) * $getCost($i)) : 0) : 0;
+            $totalRejCost = $all->sum(function ($req) use ($getCost) {
+                return $req->items ? $req->items->sum(fn ($i) => $i->status === 'rejected' ? (($i->requested_qty ?? 0) * $getCost($i)) : 0) : 0;
             });
+
             return [
                 ['label' => 'Total Requisitions', 'value' => number_format($all->count()), 'color' => '#0d6efd'],
                 ['label' => 'Req Value (Cost)', 'value' => '₦' . number_format($totalReqCost, 2), 'color' => '#17a2b8'],
@@ -932,7 +977,7 @@ abstract class OpsAuditBaseController extends Controller
 
         return response()->json([
             'html' => '<div class="alert alert-warning m-3">Details view for type "' . e($type) . '" is not implemented yet.</div>',
-            'title' => '<i class="mdi mdi-alert me-2 text-warning"></i> Unsupported Type'
+            'title' => '<i class="mdi mdi-alert me-2 text-warning"></i> Unsupported Type',
         ]);
     }
 
@@ -940,11 +985,11 @@ abstract class OpsAuditBaseController extends Controller
     {
         $controller = new \App\Http\Controllers\AdmissionModuleController();
         $response = $controller->getAdmissionDetail($id);
-        
+
         if ($response->status() !== 200) {
             return response()->json([
                 'html' => '<div class="alert alert-danger m-3">Error fetching admission details.</div>',
-                'title' => 'Error'
+                'title' => 'Error',
             ]);
         }
 
@@ -952,7 +997,7 @@ abstract class OpsAuditBaseController extends Controller
 
         return response()->json([
             'html' => view('admin.ops_audit.details.admission', ['data' => $data])->render(),
-            'title' => '<i class="mdi mdi-bed me-2 text-primary"></i> Admission Details — ' . ($data['patient_name'] ?? 'Unknown')
+            'title' => '<i class="mdi mdi-bed me-2 text-primary"></i> Admission Details — ' . ($data['patient_name'] ?? 'Unknown'),
         ]);
     }
 
@@ -980,39 +1025,39 @@ abstract class OpsAuditBaseController extends Controller
         if (!$payment) {
             return response()->json([
                 'html' => '<div class="alert alert-danger m-3">Payment not found.</div>',
-                'title' => 'Error'
+                'title' => 'Error',
             ]);
         }
 
         return response()->json([
             'html' => view('admin.ops_audit.details.payment_items', ['payment' => $payment])->render(),
-            'title' => '<i class="mdi mdi-format-list-bulleted me-2 text-primary"></i> Payment Items (' . e($payment->reference_no ?? 'N/A') . ')'
+            'title' => '<i class="mdi mdi-format-list-bulleted me-2 text-primary"></i> Payment Items (' . e($payment->reference_no ?? 'N/A') . ')',
         ]);
     }
 
     private function getRequisitionDetails($id)
     {
         $requisition = \App\Models\StoreRequisition::with([
-            'items.product.packagings', 
+            'items.product.packagings',
             'items.product.price',
             'items.sourceBatch',
-            'fromStore', 
-            'toStore', 
-            'requester', 
-            'approver', 
-            'fulfiller'
+            'fromStore',
+            'toStore',
+            'requester',
+            'approver',
+            'fulfiller',
         ])->find($id);
 
         if (!$requisition) {
             return response()->json([
                 'html' => '<div class="alert alert-danger m-3">Requisition not found.</div>',
-                'title' => 'Error'
+                'title' => 'Error',
             ]);
         }
 
         return response()->json([
             'html' => view('admin.ops_audit.details.requisition', compact('requisition'))->render(),
-            'title' => '<i class="mdi mdi-swap-horizontal me-2 text-primary"></i> Requisition Details — ' . $requisition->requisition_number
+            'title' => '<i class="mdi mdi-swap-horizontal me-2 text-primary"></i> Requisition Details — ' . $requisition->requisition_number,
         ]);
     }
 }

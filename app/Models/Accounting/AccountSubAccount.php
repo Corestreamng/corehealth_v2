@@ -41,12 +41,12 @@ class AccountSubAccount extends Model
     ];
 
     // Common entity types
-    const ENTITY_PATIENT = 'App\\Models\\Patient';
-    const ENTITY_SUPPLIER = 'App\\Models\\Supplier';
-    const ENTITY_PRODUCT = 'App\\Models\\Product';
-    const ENTITY_SERVICE = 'App\\Models\\Service';
-    const ENTITY_EMPLOYEE = 'App\\Models\\Employee';
-    const ENTITY_HMO = 'App\\Models\\Hmo';
+    public const ENTITY_PATIENT = 'App\\Models\\Patient';
+    public const ENTITY_SUPPLIER = 'App\\Models\\Supplier';
+    public const ENTITY_PRODUCT = 'App\\Models\\Product';
+    public const ENTITY_SERVICE = 'App\\Models\\Service';
+    public const ENTITY_EMPLOYEE = 'App\\Models\\Employee';
+    public const ENTITY_HMO = 'App\\Models\\Hmo';
 
     /**
      * Get the parent account.
@@ -152,6 +152,7 @@ class AccountSubAccount extends Model
     public function getDisplayNameAttribute(): string
     {
         $entityName = $this->entity ? ($this->entity->name ?? $this->entity->full_name ?? '') : '';
+
         return $this->code . ' - ' . ($entityName ?: $this->name);
     }
 

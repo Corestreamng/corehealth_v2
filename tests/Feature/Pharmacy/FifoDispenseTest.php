@@ -9,7 +9,6 @@ use App\Models\StoreStock;
 use App\Models\User;
 use Tests\TestCase;
 
-
 class FifoDispenseTest extends TestCase
 {
     /** @test */
@@ -117,4 +116,3 @@ class FifoDispenseTest extends TestCase
         $this->assertNotNull($user->id);
     }
 }
-

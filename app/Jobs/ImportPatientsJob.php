@@ -2,9 +2,9 @@
 
 namespace App\Jobs;
 
-use App\Models\User;
-use App\Models\Patient;
 use App\Models\Hmo;
+use App\Models\Patient;
+use App\Models\User;
 use App\Services\ImportProgressService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -20,16 +20,23 @@ use Spatie\Permission\Models\Role;
 
 class ImportPatientsJob implements ShouldQueue
 {
-    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
+    use Dispatchable;
+    use InteractsWithQueue;
+    use Queueable;
+    use SerializesModels;
 
-    const BATCH_SIZE = 400;
+    public const BATCH_SIZE = 400;
 
     protected string $importId;
+
     protected string $filePath;
+
     protected int $userId;
+
     protected string $duplicateAction;
 
     public $timeout = 7200;
+
     public $tries = 1;
 
     public function __construct(string $importId, string $filePath, int $userId, string $duplicateAction = 'update')
@@ -70,6 +77,7 @@ class ImportPatientsJob implements ShouldQueue
                 if (count($batch) >= self::BATCH_SIZE) {
                     if (ImportProgressService::isCancelled($this->importId)) {
                         $errors[] = 'Import was cancelled by user';
+
                         break;
                     }
 
@@ -88,8 +96,13 @@ class ImportPatientsJob implements ShouldQueue
                     $existingEmails = array_merge($existingEmails, $result['new_emails']);
 
                     ImportProgressService::updateProgress(
-                        $this->importId, $processed, $created, $updated, $skipped,
-                        array_slice($errors, 0, 100), $batchIndex + 1
+                        $this->importId,
+                        $processed,
+                        $created,
+                        $updated,
+                        $skipped,
+                        array_slice($errors, 0, 100),
+                        $batchIndex + 1
                     );
 
                     $batch = [];
@@ -114,8 +127,13 @@ class ImportPatientsJob implements ShouldQueue
                 }
 
                 ImportProgressService::updateProgress(
-                    $this->importId, $processed, $created, $updated, $skipped,
-                    array_slice($errors, 0, 100), $batchIndex + 1
+                    $this->importId,
+                    $processed,
+                    $created,
+                    $updated,
+                    $skipped,
+                    array_slice($errors, 0, 100),
+                    $batchIndex + 1
                 );
             }
 
@@ -168,9 +186,10 @@ class ImportPatientsJob implements ShouldQueue
             }
 
             if ($rowIndex === 1) {
-                $headers = array_map(function($h) {
+                $headers = array_map(function ($h) {
                     return strtolower(trim(str_replace(['"', "'"], '', $h ?? '')));
                 }, $rowData);
+
                 continue;
             }
 
@@ -202,9 +221,10 @@ class ImportPatientsJob implements ShouldQueue
             $rowIndex++;
 
             if ($rowIndex === 1) {
-                $headers = array_map(function($h) {
+                $headers = array_map(function ($h) {
                     return strtolower(trim(str_replace(['"', "'"], '', $h ?? '')));
                 }, $row);
+
                 continue;
             }
 
@@ -235,6 +255,7 @@ class ImportPatientsJob implements ShouldQueue
         $newEmails = [];
 
         DB::beginTransaction();
+
         try {
             foreach ($batch as $item) {
                 $row = $item['row'];
@@ -261,6 +282,7 @@ class ImportPatientsJob implements ShouldQueue
                 if (empty($surname) || empty($firstname)) {
                     $errors[] = "Row {$rowNum}: Missing surname or firstname";
                     $skipped++;
+
                     continue;
                 }
 
@@ -297,7 +319,7 @@ class ImportPatientsJob implements ShouldQueue
                 }
 
                 // Helper to convert empty strings to null
-                $nullIfEmpty = function($value) {
+                $nullIfEmpty = function ($value) {
                     return (is_string($value) && trim($value) === '') ? null : $value;
                 };
 
@@ -312,6 +334,7 @@ class ImportPatientsJob implements ShouldQueue
                     if ($duplicateAction === 'skip') {
                         // Skip existing records
                         $skipped++;
+
                         continue;
                     }
 

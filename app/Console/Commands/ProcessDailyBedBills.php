@@ -2,11 +2,11 @@
 
 namespace App\Console\Commands;
 
-use Illuminate\Console\Command;
+use App\Helpers\HmoHelper;
 use App\Models\AdmissionRequest;
 use App\Models\ProductOrServiceRequest;
-use App\Helpers\HmoHelper;
 use Carbon\Carbon;
+use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
@@ -47,6 +47,7 @@ class ProcessDailyBedBills extends Command
 
             if ($admissions->isEmpty()) {
                 $this->info('No occupied beds found.');
+
                 return Command::SUCCESS;
             }
 
@@ -61,8 +62,8 @@ class ProcessDailyBedBills extends Command
                     $existingBill = ProductOrServiceRequest::where('user_id', $admission->patient->user->id)
                         ->where('service_id', $admission->service_id)
                         ->whereDate('created_at', $today)
-                        ->whereHas('service', function($q) {
-                            $q->where('category_id', function($sq) {
+                        ->whereHas('service', function ($q) {
+                            $q->where('category_id', function ($sq) {
                                 $sq->selectRaw('id')
                                     ->from('service_categories')
                                     ->where('category_name', 'LIKE', '%bed%')
@@ -75,6 +76,7 @@ class ProcessDailyBedBills extends Command
                     if ($existingBill) {
                         $this->line("Skipped: Bill already exists for patient {$admission->patient->user->surname} (ID: {$admission->patient_id})");
                         $billsSkipped++;
+
                         continue;
                     }
 
@@ -133,6 +135,7 @@ class ProcessDailyBedBills extends Command
         } catch (\Exception $e) {
             Log::error("Fatal error in ProcessDailyBedBills: " . $e->getMessage());
             $this->error("Fatal error: " . $e->getMessage());
+
             return Command::FAILURE;
         }
     }

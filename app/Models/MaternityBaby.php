@@ -9,7 +9,8 @@ use OwenIt\Auditing\Contracts\Auditable;
 
 class MaternityBaby extends Model implements Auditable
 {
-    use HasFactory, SoftDeletes;
+    use HasFactory;
+    use SoftDeletes;
     use \OwenIt\Auditing\Auditable;
 
     protected $fillable = [
@@ -79,7 +80,10 @@ class MaternityBaby extends Model implements Auditable
 
     public function getAgeInMonths()
     {
-        if (!$this->patient || !$this->patient->dob) return null;
+        if (!$this->patient || !$this->patient->dob) {
+            return null;
+        }
+
         return $this->patient->dob->diffInMonths(now());
     }
 }

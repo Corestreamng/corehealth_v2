@@ -5,7 +5,6 @@ namespace Database\Seeders;
 use App\Models\Accounting\Account;
 use App\Models\Accounting\FixedAssetCategory;
 use Illuminate\Database\Seeder;
-use Illuminate\Support\Facades\DB;
 
 class FixedAssetCategorySeeder extends Seeder
 {
@@ -45,6 +44,7 @@ class FixedAssetCategorySeeder extends Seeder
 
         if (!$defaultAssetAccount || !$defaultDepreciationAccount || !$defaultExpenseAccount) {
             $this->command->warn('Warning: Could not find suitable accounts. Please update category accounts manually.');
+
             return;
         }
 

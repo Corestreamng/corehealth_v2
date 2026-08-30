@@ -16,7 +16,7 @@ class ServiceBillingTest extends TestCase
     {
         $patient = Patient::factory()->create();
         $service = Service::create(['service_name' => 'Lab Test A 101', 'user_id' => 1, 'category_id' => 1, 'price_id' => 1, 'status' => 1]);
-        
+
         $request = ProductOrServiceRequest::create([
             'user_id' => 1,
             'staff_user_id' => 1,
@@ -24,10 +24,9 @@ class ServiceBillingTest extends TestCase
             'service_id' => $service->id,
             'validation_status' => 'pending',
         ]);
-        
+
         $this->assertDatabaseHas('product_or_service_requests', ['id' => $request->id]);
     }
-
 
     /** @test */
     public function test_duplicate_billing_rejected()
@@ -48,7 +47,7 @@ class ServiceBillingTest extends TestCase
         $patient = Patient::factory()->create();
         $doctor = User::factory()->create(['status' => 1]);
         $encounter = Encounter::create(['patient_id' => $patient->id, 'doctor_id' => $doctor->id]);
-        
+
         $request = ProductOrServiceRequest::create([
             'user_id' => 1,
             'staff_user_id' => 1,
@@ -56,7 +55,7 @@ class ServiceBillingTest extends TestCase
             'encounter_id' => $encounter->id,
             'validation_status' => 'pending',
         ]);
-        
+
         $this->assertEquals($encounter->id, $request->encounter_id);
     }
 
@@ -66,6 +65,4 @@ class ServiceBillingTest extends TestCase
         $service = Service::create(['service_name' => 'Consultation Fee 102', 'user_id' => 1, 'category_id' => 1, 'price_id' => 1, 'status' => 1]);
         $this->assertNotNull($service->id);
     }
-
-
 }

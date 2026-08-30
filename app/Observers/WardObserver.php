@@ -2,8 +2,8 @@
 
 namespace App\Observers;
 
-use App\Models\Ward;
 use App\Models\Store;
+use App\Models\Ward;
 use Illuminate\Support\Str;
 
 /**
@@ -38,18 +38,18 @@ class WardObserver
             : 'W' . $ward->id . '_WS';
 
         Store::create([
-            'store_name'             => $ward->name . ' Store',
-            'code'                   => $code,
-            'description'            => "Auto-created ward store for {$ward->name}",
-            'location'               => $ward->floor ?? $ward->name,
-            'store_type'             => 'ward',
-            'distribution_role'      => Store::ROLE_WARD,
-            'ward_id'                => $ward->id,
+            'store_name' => $ward->name . ' Store',
+            'code' => $code,
+            'description' => "Auto-created ward store for {$ward->name}",
+            'location' => $ward->floor ?? $ward->name,
+            'store_type' => 'ward',
+            'distribution_role' => Store::ROLE_WARD,
+            'ward_id' => $ward->id,
             'requires_shift_context' => true,
             'allows_direct_patient_dispense' => false,
-            'status'                 => 1,
-            'is_default'             => false,
-            'is_immutable'           => false,
+            'status' => 1,
+            'is_default' => false,
+            'is_immutable' => false,
         ]);
     }
 }

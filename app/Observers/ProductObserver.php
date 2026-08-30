@@ -2,9 +2,9 @@
 
 namespace App\Observers;
 
-use App\Models\Product;
 use App\Models\Hmo;
 use App\Models\HmoTariff;
+use App\Models\Product;
 use Illuminate\Support\Facades\Log;
 
 class ProductObserver

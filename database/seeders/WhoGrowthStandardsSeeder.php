@@ -40,12 +40,12 @@ class WhoGrowthStandardsSeeder extends Seeder
         foreach ($this->getAllData() as $entry) {
             [$indicator, $sex, $month, $L, $M, $S] = $entry;
             $rows[] = [
-                'indicator'  => $indicator,
-                'sex'        => $sex,
+                'indicator' => $indicator,
+                'sex' => $sex,
                 'age_months' => $month,
-                'l_value'    => $L,
-                'm_value'    => $M,
-                's_value'    => $S,
+                'l_value' => $L,
+                'm_value' => $M,
+                's_value' => $S,
                 'created_at' => $now,
                 'updated_at' => $now,
             ];

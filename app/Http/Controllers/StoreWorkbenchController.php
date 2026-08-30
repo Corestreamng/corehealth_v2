@@ -2,19 +2,18 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Store;
-use App\Models\StockBatch;
-use App\Models\StoreStock;
+use App\Helpers\BatchHelper;
 use App\Models\Product;
 use App\Models\PurchaseOrder;
+use App\Models\StockBatch;
+use App\Models\Store;
+use App\Models\StoreContextRule;
 use App\Models\StoreRequisition;
-use App\Services\StockService;
+use App\Models\StoreStock;
 use App\Services\PurchaseOrderService;
 use App\Services\RequisitionService;
+use App\Services\StockService;
 use App\Services\StoreContextResolver;
-use App\Models\StoreContextRule;
-use App\Helpers\BatchHelper;
-use Illuminate\Support\Facades\Gate;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Yajra\DataTables\Facades\DataTables;
@@ -46,8 +45,11 @@ use Yajra\DataTables\Facades\DataTables;
 class StoreWorkbenchController extends Controller
 {
     protected StockService $stockService;
+
     protected PurchaseOrderService $purchaseOrderService;
+
     protected RequisitionService $requisitionService;
+
     protected StoreContextResolver $contextResolver;
 
     public function __construct(
@@ -83,7 +85,7 @@ class StoreWorkbenchController extends Controller
         } else {
             $store = $this->contextResolver->resolve(auth()->user());
             $resolvedAutomatically = (bool) $store;
-            if (! $store) {
+            if (!$store) {
                 $contextFallbackAction = StoreContextRule::fallbackAction();
             }
             $storeId = $store?->id;
@@ -192,17 +194,17 @@ class StoreWorkbenchController extends Controller
             }
 
             return DataTables::of($query)
-                ->addColumn('product_name', fn($ss) => $ss->product?->product_name ?? '-')
-                ->addColumn('product_code', fn($ss) => $ss->product?->product_code ?? '-')
-                ->addColumn('category', fn($ss) => $ss->product?->category?->category_name ?? '-')
-                ->addColumn('store_name', fn($ss) => $ss->store->store_name ?? '-')
-                ->addColumn('qty_display', fn($ss) => $this->formatQuantityDisplay($ss))
-                ->addColumn('batches_count', fn($ss) => StockBatch::where('product_id', $ss->product_id)
+                ->addColumn('product_name', fn ($ss) => $ss->product?->product_name ?? '-')
+                ->addColumn('product_code', fn ($ss) => $ss->product?->product_code ?? '-')
+                ->addColumn('category', fn ($ss) => $ss->product?->category?->category_name ?? '-')
+                ->addColumn('store_name', fn ($ss) => $ss->store->store_name ?? '-')
+                ->addColumn('qty_display', fn ($ss) => $this->formatQuantityDisplay($ss))
+                ->addColumn('batches_count', fn ($ss) => StockBatch::where('product_id', $ss->product_id)
                     ->where('store_id', $ss->store_id)
                     ->active()
                     ->hasStock()
                     ->count())
-                ->addColumn('actions', fn($ss) => $this->getStockActionButtons($ss))
+                ->addColumn('actions', fn ($ss) => $this->getStockActionButtons($ss))
                 ->rawColumns(['qty_display', 'actions'])
                 ->make(true);
         }
@@ -305,14 +307,14 @@ class StoreWorkbenchController extends Controller
 
         // Get store filter if specified, otherwise resolve default store
         $storeId = $request->get('store_id');
-        if (! $storeId) {
+        if (!$storeId) {
             $resolved = $this->contextResolver->resolve($user);
             $storeId = $resolved?->id ?? $stores->first()?->id;
         }
         $selectedStore = $storeId ? Store::find($storeId) : null;
 
         // Ensure the requested store is within the user's accessible stores
-        if ($selectedStore && ! $stores->contains('id', $selectedStore->id)) {
+        if ($selectedStore && !$stores->contains('id', $selectedStore->id)) {
             abort(403, 'You do not have access to this store.');
         }
 
@@ -332,6 +334,7 @@ class StoreWorkbenchController extends Controller
         // Add expiry info to each batch
         $batches = $batches->map(function ($batch) {
             $batch->expiry_status = $this->getExpiryStatus($batch);
+
             return $batch;
         });
 
@@ -458,14 +461,14 @@ class StoreWorkbenchController extends Controller
 
         // Resolve default store: explicit request param → context resolver → first accessible store
         $storeId = $request->get('store_id');
-        if (! $storeId) {
+        if (!$storeId) {
             $resolved = $this->contextResolver->resolve($user);
             $storeId = $resolved?->id ?? $stores->first()?->id;
         }
         $store = $storeId ? Store::find($storeId) : null;
 
         // Ensure the requested store is within the user's accessible stores
-        if ($store && ! $stores->contains('id', $store->id)) {
+        if ($store && !$stores->contains('id', $store->id)) {
             abort(403, 'You do not have access to this store.');
         }
 
@@ -490,7 +493,7 @@ class StoreWorkbenchController extends Controller
 
         // Governance: verify the submitted store is accessible by this user
         $accessibleStoreIds = Store::active()->forUser(auth()->user())->pluck('id');
-        if (! $accessibleStoreIds->contains((int) $request->store_id)) {
+        if (!$accessibleStoreIds->contains((int) $request->store_id)) {
             if ($request->ajax() || $request->wantsJson()) {
                 return response()->json(['success' => false, 'message' => 'You are not authorised to add stock to this store.'], 403);
             }
@@ -551,7 +554,7 @@ class StoreWorkbenchController extends Controller
         } catch (\Exception $e) {
             Log::error('Manual batch creation failed: ' . $e->getMessage(), [
                 'request' => $request->all(),
-                'trace' => $e->getTraceAsString()
+                'trace' => $e->getTraceAsString(),
             ]);
 
             if ($request->ajax() || $request->wantsJson()) {
@@ -581,8 +584,8 @@ class StoreWorkbenchController extends Controller
         $stores = $accessibleStores;
 
         // Governance: if a specific store was requested, verify the user has access
-        if ($storeId && ! auth()->user()->hasAnyRole(['ADMIN', 'SUPERADMIN', 'super-admin'])) {
-            if (! $accessibleStores->contains('id', (int) $storeId)) {
+        if ($storeId && !auth()->user()->hasAnyRole(['ADMIN', 'SUPERADMIN', 'super-admin'])) {
+            if (!$accessibleStores->contains('id', (int) $storeId)) {
                 abort(403, 'You are not authorised to view the expiry report for this store.');
             }
         }
@@ -601,8 +604,8 @@ class StoreWorkbenchController extends Controller
         $stores = Store::active()->forUser(auth()->user())->orderBy('store_name')->get();
 
         // Governance: if a specific store was requested, verify the user has access
-        if ($storeId && ! auth()->user()->hasAnyRole(['ADMIN', 'SUPERADMIN', 'super-admin'])) {
-            if (! $stores->contains('id', (int) $storeId)) {
+        if ($storeId && !auth()->user()->hasAnyRole(['ADMIN', 'SUPERADMIN', 'super-admin'])) {
+            if (!$stores->contains('id', (int) $storeId)) {
                 abort(403, 'You are not authorised to view the stock value report for this store.');
             }
         }
@@ -753,24 +756,24 @@ class StoreWorkbenchController extends Controller
      */
     public function tallyCard(Request $request)
     {
-        $user    = auth()->user();
-        $stores  = Store::active()->forUser($user)->orderBy('store_name')->get();
+        $user = auth()->user();
+        $stores = Store::active()->forUser($user)->orderBy('store_name')->get();
         $allStores = Store::active()->orderBy('store_name')->get();
 
         // Resolve store
         $storeId = $request->get('store_id');
-        if (! $storeId) {
+        if (!$storeId) {
             $resolved = $this->contextResolver->resolve($user);
-            $storeId  = $resolved?->id ?? $stores->first()?->id;
+            $storeId = $resolved?->id ?? $stores->first()?->id;
         }
         $selectedStore = $storeId ? Store::find($storeId) : null;
 
         // Access guard
-        if ($selectedStore && ! $stores->contains('id', $selectedStore->id)) {
+        if ($selectedStore && !$stores->contains('id', $selectedStore->id)) {
             abort(403, 'You do not have access to this store.');
         }
 
-        $axis           = $request->get('axis', 'product');
+        $axis = $request->get('axis', 'product');
         $selectedProduct = null;
         if ($axis === 'product' && $request->filled('product_id')) {
             $selectedProduct = Product::find($request->product_id);
@@ -785,7 +788,7 @@ class StoreWorkbenchController extends Controller
         // Pending panels — always scoped to selected store
         $pendingIncomingReqs = collect();
         $pendingOutgoingReqs = collect();
-        $pendingPOs          = collect();
+        $pendingPOs = collect();
 
         if ($selectedStore) {
             $pendingIncomingReqs = \App\Models\StoreRequisition::where('from_store_id', $storeId)
@@ -838,23 +841,23 @@ class StoreWorkbenchController extends Controller
     public function tallyCardData(Request $request)
     {
         $request->validate([
-            'axis'       => 'required|in:product,store',
-            'store_id'   => 'required|exists:stores,id',
+            'axis' => 'required|in:product,store',
+            'store_id' => 'required|exists:stores,id',
             'product_id' => 'required_if:axis,product|nullable|exists:products,id',
-            'date_from'  => 'nullable|date',
-            'date_to'    => 'nullable|date',
+            'date_from' => 'nullable|date',
+            'date_to' => 'nullable|date',
         ]);
 
         // Governance: user must have access to the requested store
         $accessibleStoreIds = Store::active()->forUser(auth()->user())->pluck('id');
-        if (! $accessibleStoreIds->contains((int) $request->store_id)) {
+        if (!$accessibleStoreIds->contains((int) $request->store_id)) {
             return response()->json(['success' => false, 'message' => 'Access denied to this store.'], 403);
         }
 
-        $storeId   = (int) $request->store_id;
-        $axis      = $request->axis;
-        $dateFrom  = $request->date_from;
-        $dateTo    = $request->date_to;
+        $storeId = (int) $request->store_id;
+        $axis = $request->axis;
+        $dateFrom = $request->date_from;
+        $dateTo = $request->date_to;
 
         // Note: we intentionally do NOT filter is_active=true — we want full audit history
         // including transactions on batches that were fully depleted (deactivated).
@@ -865,46 +868,46 @@ class StoreWorkbenchController extends Controller
             }
         })
             ->with(['stockBatch.product.packagings', 'stockBatch.store', 'performer'])
-            ->when($dateFrom, fn($q) => $q->whereDate('created_at', '>=', $dateFrom))
-            ->when($dateTo,   fn($q) => $q->whereDate('created_at', '<=', $dateTo))
+            ->when($dateFrom, fn ($q) => $q->whereDate('created_at', '>=', $dateFrom))
+            ->when($dateTo, fn ($q) => $q->whereDate('created_at', '<=', $dateTo))
             ->orderBy('created_at')
             ->orderBy('id');
 
         $transactions = $query->get();
 
         // Type classification helpers
-        $inboundTypes  = ['in', 'transfer_in', 'return', 'req_return'];
+        $inboundTypes = ['in', 'transfer_in', 'return', 'req_return'];
         $outboundTypes = ['out', 'transfer_out', 'expired', 'damaged', 'po_return'];
 
         // Human-readable labels and optional deep-link URLs per reference_type
         $refLabelMap = [
-            'PurchaseOrder'           => ['prefix' => 'PO #',        'url_route' => 'inventory.purchase-orders.show'],
-            'StoreRequisition'        => ['prefix' => 'Requisition #', 'url_route' => 'inventory.requisitions.show'],
-            'ProductRequest'          => ['prefix' => 'Pharmacy Dispense #', 'url_route' => null],
+            'PurchaseOrder' => ['prefix' => 'PO #',        'url_route' => 'inventory.purchase-orders.show'],
+            'StoreRequisition' => ['prefix' => 'Requisition #', 'url_route' => 'inventory.requisitions.show'],
+            'ProductRequest' => ['prefix' => 'Pharmacy Dispense #', 'url_route' => null],
             'ProductOrServiceRequest' => ['prefix' => 'Clinical Bill #',     'url_route' => null],
             'InjectionAdministration' => ['prefix' => 'Injection #',         'url_route' => null],
             'MedicationAdministration' => ['prefix' => 'Med Admin',           'url_route' => null],
-            'PharmacyReturn'          => ['prefix' => 'Drug Return #',       'url_route' => null],
-            'PharmacyDamage'          => ['prefix' => 'Damage #',            'url_route' => null],
-            'StoreDamage'             => ['prefix' => 'Store Damage #',      'url_route' => null],
-            'StoreRequisitionReturn'  => ['prefix' => 'Req Return #',        'url_route' => null],
-            'PurchaseOrderReturn'     => ['prefix' => 'PO Return #',         'url_route' => null],
+            'PharmacyReturn' => ['prefix' => 'Drug Return #',       'url_route' => null],
+            'PharmacyDamage' => ['prefix' => 'Damage #',            'url_route' => null],
+            'StoreDamage' => ['prefix' => 'Store Damage #',      'url_route' => null],
+            'StoreRequisitionReturn' => ['prefix' => 'Req Return #',        'url_route' => null],
+            'PurchaseOrderReturn' => ['prefix' => 'PO Return #',         'url_route' => null],
             // Legacy migration rows created during initial data import
-            'Migration'               => ['prefix' => 'Legacy Import',       'url_route' => null],
+            'Migration' => ['prefix' => 'Legacy Import',       'url_route' => null],
         ];
 
         // Human-readable type labels (covers all 8 types + transfer_in for completeness)
         $typeLabelMap = [
-            'in'           => 'Stock In',
-            'out'          => 'Dispensed',
-            'transfer_in'  => 'Transfer In',
+            'in' => 'Stock In',
+            'out' => 'Dispensed',
+            'transfer_in' => 'Transfer In',
             'transfer_out' => 'Transfer Out',
-            'return'       => 'Return',
-            'expired'      => 'Expired',
-            'damaged'      => 'Damaged',
-            'adjustment'   => 'Adjustment',
-            'po_return'    => 'PO Return',
-            'req_return'   => 'Req Return',
+            'return' => 'Return',
+            'expired' => 'Expired',
+            'damaged' => 'Damaged',
+            'adjustment' => 'Adjustment',
+            'po_return' => 'PO Return',
+            'req_return' => 'Req Return',
         ];
 
         // Per-product running balance accumulator (used in both axes)
@@ -925,7 +928,7 @@ class StoreWorkbenchController extends Controller
                 $pid = $tx->stockBatch->product_id;
                 $txQty = (int) $tx->qty;
 
-                $isIn  = in_array($tx->type, $inboundTypes);
+                $isIn = in_array($tx->type, $inboundTypes);
                 $isOut = in_array($tx->type, $outboundTypes);
 
                 if ($isIn) {
@@ -946,7 +949,7 @@ class StoreWorkbenchController extends Controller
         // For product axis: single entry; for store axis: one per product seen in history.
         $openingBalances = $balances; // keyed by product_id → qty at period start
 
-        $totalIn  = 0;
+        $totalIn = 0;
         $totalOut = 0;
 
         $rows = $transactions->map(function ($tx) use (
@@ -958,12 +961,12 @@ class StoreWorkbenchController extends Controller
             &$totalIn,
             &$totalOut
         ) {
-            $productId   = $tx->stockBatch->product_id;
-            $product     = $tx->stockBatch->product;
+            $productId = $tx->stockBatch->product_id;
+            $product = $tx->stockBatch->product;
             $productName = $product?->product_name ?? '—';
             $productCode = $product?->product_code ?? '';
             $batchNumber = $tx->stockBatch->batch_number ?? '—';
-            $expiryDate  = $tx->stockBatch->expiry_date ? $tx->stockBatch->expiry_date->format('Y-m-d') : '—';
+            $expiryDate = $tx->stockBatch->expiry_date ? $tx->stockBatch->expiry_date->format('Y-m-d') : '—';
 
             // Cost price fallback: batch cost -> product sale price -> 0
             $costPrice = (float) ($tx->stockBatch->cost_price ?? 0);
@@ -971,10 +974,10 @@ class StoreWorkbenchController extends Controller
                 $costPrice = (float) ($product->price->cur_sale_price ?? 0);
             }
 
-            $type  = $tx->type;
+            $type = $tx->type;
             $txQty = abs((int) $tx->qty);
 
-            $isIn  = in_array($type, $inboundTypes);
+            $isIn = in_array($type, $inboundTypes);
             $isOut = in_array($type, $outboundTypes);
 
             $balBefore = $balances[$productId] ?? 0;
@@ -982,12 +985,12 @@ class StoreWorkbenchController extends Controller
             if ($isIn) {
                 $balances[$productId] = $balBefore + $txQty;
                 $totalIn += $txQty;
-                $inQty  = $txQty;
+                $inQty = $txQty;
                 $outQty = 0;
             } elseif ($isOut) {
                 $balances[$productId] = $balBefore - $txQty;
                 $totalOut += $txQty;
-                $inQty  = 0;
+                $inQty = 0;
                 $outQty = $txQty;
             } else {
                 // Adjustment
@@ -995,12 +998,12 @@ class StoreWorkbenchController extends Controller
                 if ($isPositiveAdj) {
                     $balances[$productId] = $balBefore + $txQty;
                     $totalIn += $txQty;
-                    $inQty  = $txQty;
+                    $inQty = $txQty;
                     $outQty = 0;
                 } else {
                     $balances[$productId] = $balBefore - $txQty;
                     $totalOut += $txQty;
-                    $inQty  = 0;
+                    $inQty = 0;
                     $outQty = $txQty;
                 }
             }
@@ -1008,21 +1011,23 @@ class StoreWorkbenchController extends Controller
             $balAfter = $balances[$productId];
 
             // Resolve reference label and optional URL
-            $refType  = $tx->reference_type;
-            $refId    = $tx->reference_id;
+            $refType = $tx->reference_type;
+            $refId = $tx->reference_id;
             $refLabel = '—';
-            $refUrl   = null;
+            $refUrl = null;
 
             if ($refType) {
                 $shortType = class_basename($refType);
-                $map       = $refLabelMap[$shortType] ?? null;
+                $map = $refLabelMap[$shortType] ?? null;
 
                 if ($map) {
                     $refLabel = $refId ? ($map['prefix'] . $refId) : rtrim($map['prefix'], ' #');
                     if ($map['url_route'] && $refId) {
                         try {
                             $refUrl = route($map['url_route'], $refId);
-                        } catch (\Exception $e) { $refUrl = null; }
+                        } catch (\Exception $e) {
+                            $refUrl = null;
+                        }
                     }
                 } else {
                     $refLabel = $refId ? ($shortType . ' #' . $refId) : $shortType;
@@ -1053,28 +1058,28 @@ class StoreWorkbenchController extends Controller
             }
 
             return [
-                'id'              => $tx->id,
-                'datetime'        => $tx->created_at->format('d M Y H:i'),
-                'product_id'      => $productId,
-                'product_name'    => $productName,
-                'type_label'      => $typeLabel,
-                'badge_type'      => $badgeType,
-                'direction'       => $direction,
-                'batch_number'    => $batchNumber,
-                'expiry_date'     => $expiryDate,
-                'cost_price'      => $costPrice,
-                'bal_before'      => $balBefore,
-                'in_qty'          => $inQty,
-                'out_qty'         => $outQty,
-                'bal_after'       => $balAfter,
-                'ref_label'       => $refLabel,
-                'ref_url'         => $refUrl,
-                'performer'       => $tx->performer->name ?? 'System',
-                'notes'           => $tx->notes,
-                'packaging'       => ($product->packagings ?? collect())->map(fn($p) => [
-                    'id' => $p->id, 'name' => $p->name, 'base_unit_qty' => $p->base_unit_qty
+                'id' => $tx->id,
+                'datetime' => $tx->created_at->format('d M Y H:i'),
+                'product_id' => $productId,
+                'product_name' => $productName,
+                'type_label' => $typeLabel,
+                'badge_type' => $badgeType,
+                'direction' => $direction,
+                'batch_number' => $batchNumber,
+                'expiry_date' => $expiryDate,
+                'cost_price' => $costPrice,
+                'bal_before' => $balBefore,
+                'in_qty' => $inQty,
+                'out_qty' => $outQty,
+                'bal_after' => $balAfter,
+                'ref_label' => $refLabel,
+                'ref_url' => $refUrl,
+                'performer' => $tx->performer->name ?? 'System',
+                'notes' => $tx->notes,
+                'packaging' => ($product->packagings ?? collect())->map(fn ($p) => [
+                    'id' => $p->id, 'name' => $p->name, 'base_unit_qty' => $p->base_unit_qty,
                 ]),
-                'base_unit'       => $product->base_unit_name ?? 'Piece',
+                'base_unit' => $product->base_unit_name ?? 'Piece',
             ];
         });
 
@@ -1086,20 +1091,21 @@ class StoreWorkbenchController extends Controller
         $byProductAccum = [];
         foreach ($rows as $row) {
             $pid = $row['product_id'];
-            if (! isset($byProductAccum[$pid])) {
+            if (!isset($byProductAccum[$pid])) {
                 $byProductAccum[$pid] = ['product_name' => $row['product_name'], 'total_in' => 0, 'total_out' => 0];
             }
-            $byProductAccum[$pid]['total_in']  += $row['in_qty'];
+            $byProductAccum[$pid]['total_in'] += $row['in_qty'];
             $byProductAccum[$pid]['total_out'] += $row['out_qty'];
         }
 
         $byProduct = collect($balances)->map(function ($bal, $productId) use ($byProductAccum) {
             $accum = $byProductAccum[$productId] ?? ['product_name' => 'Unknown', 'total_in' => 0, 'total_out' => 0];
+
             return [
-                'product_id'      => $productId,
-                'product_name'    => $accum['product_name'],
-                'total_in'        => $accum['total_in'],
-                'total_out'       => $accum['total_out'],
+                'product_id' => $productId,
+                'product_name' => $accum['product_name'],
+                'total_in' => $accum['total_in'],
+                'total_out' => $accum['total_out'],
                 'closing_balance' => $bal,
             ];
         })->values();
@@ -1115,18 +1121,18 @@ class StoreWorkbenchController extends Controller
 
         return response()->json([
             'success' => true,
-            'axis'    => $axis,
+            'axis' => $axis,
             'transactions' => $rows->values(),
             'summary' => [
-                'total_in'          => $totalIn,
-                'total_out'         => $totalOut,
-                'net_movement'      => $totalIn - $totalOut,
-                'opening_balance'   => $axis === 'product' ? ($openingBalances[(int)$request->product_id] ?? 0) : null,
-                'opening_balances'  => $openingBalances, // keyed by product_id → qty at period start
-                'closing_balance'   => $singleBalance,
+                'total_in' => $totalIn,
+                'total_out' => $totalOut,
+                'net_movement' => $totalIn - $totalOut,
+                'opening_balance' => $axis === 'product' ? ($openingBalances[(int)$request->product_id] ?? 0) : null,
+                'opening_balances' => $openingBalances, // keyed by product_id → qty at period start
+                'closing_balance' => $singleBalance,
                 'current_store_stock' => $currentStoreStock,
-                'products_touched'  => count($balances),
-                'by_product'        => $byProduct,
+                'products_touched' => count($balances),
+                'by_product' => $byProduct,
             ],
         ]);
     }
@@ -1146,7 +1152,7 @@ class StoreWorkbenchController extends Controller
 
         // Governance: user must have access to the requested store
         $accessibleStoreIds = Store::active()->forUser(auth()->user())->pluck('id');
-        if (! $accessibleStoreIds->contains($storeId)) {
+        if (!$accessibleStoreIds->contains($storeId)) {
             return response()->json(['success' => false, 'message' => 'Access denied to this store.'], 403);
         }
 
@@ -1175,9 +1181,9 @@ class StoreWorkbenchController extends Controller
             ->get();
 
         $pendingReqReturns = \App\Models\StoreRequisitionReturn::where(function ($q) use ($storeId) {
-                $q->where('source_store_id', $storeId)
-                  ->orWhere('destination_store_id', $storeId);
-            })
+            $q->where('source_store_id', $storeId)
+              ->orWhere('destination_store_id', $storeId);
+        })
             ->where('status', 'pending')
             ->with(['product', 'sourceStore', 'destinationStore'])
             ->orderBy('created_at', 'desc')
@@ -1192,19 +1198,19 @@ class StoreWorkbenchController extends Controller
         return response()->json([
             'success' => true,
             'counts' => [
-                'incoming'    => $pendingIncomingReqs->count(),
-                'outgoing'    => $pendingOutgoingReqs->count(),
-                'pos'         => $pendingPOs->count(),
-                'damages'     => $pendingDamages->count(),
+                'incoming' => $pendingIncomingReqs->count(),
+                'outgoing' => $pendingOutgoingReqs->count(),
+                'pos' => $pendingPOs->count(),
+                'damages' => $pendingDamages->count(),
                 'req_returns' => $pendingReqReturns->count(),
-                'po_returns'  => $pendingPoReturns->count(),
+                'po_returns' => $pendingPoReturns->count(),
             ],
-            'incoming'    => $pendingIncomingReqs,
-            'outgoing'    => $pendingOutgoingReqs,
-            'pos'         => $pendingPOs,
-            'damages'     => $pendingDamages,
+            'incoming' => $pendingIncomingReqs,
+            'outgoing' => $pendingOutgoingReqs,
+            'pos' => $pendingPOs,
+            'damages' => $pendingDamages,
             'req_returns' => $pendingReqReturns,
-            'po_returns'  => $pendingPoReturns,
+            'po_returns' => $pendingPoReturns,
         ]);
     }
 
@@ -1256,17 +1262,17 @@ class StoreWorkbenchController extends Controller
 
         $batches = $query->get()->map(function ($batch) {
             return [
-                'id'           => $batch->id,
+                'id' => $batch->id,
                 'batch_number' => $batch->batch_number ?? 'N/A',
-                'product_id'   => $batch->product_id,
+                'product_id' => $batch->product_id,
                 'product_name' => $batch->product?->product_name ?? 'Unknown',
                 'product_code' => $batch->product?->product_code ?? null,
                 'base_unit_name' => $batch->product?->base_unit_name ?? 'Piece',
-                'current_qty'  => $batch->current_qty,
-                'expiry_date'  => $batch->expiry_date?->format('Y-m-d'),
+                'current_qty' => $batch->current_qty,
+                'expiry_date' => $batch->expiry_date?->format('Y-m-d'),
                 'expiry_label' => $batch->expiry_date?->format('M d, Y') ?? 'No expiry',
-                'cost_price'   => (float) ($batch->cost_price ?? 0),
-                'is_expired'   => $batch->is_expired ?? false,
+                'cost_price' => (float) ($batch->cost_price ?? 0),
+                'is_expired' => $batch->is_expired ?? false,
                 'is_expiring_soon' => $batch->expiry_date && $batch->expiry_date->diffInDays(now()) <= 30,
             ];
         });

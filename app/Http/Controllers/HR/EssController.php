@@ -9,14 +9,14 @@ use App\Models\HR\LeaveType;
 use App\Models\HR\PayrollItem;
 use App\Models\HR\StaffSuspension;
 use App\Models\Staff;
+use App\Services\HrAttachmentService;
 use App\Services\LeaveService;
 use App\Services\PayrollService;
-use App\Services\HrAttachmentService;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
-use Barryvdh\DomPDF\Facade\Pdf;
 
 /**
  * HRMS Implementation Plan - Section 7.2
@@ -25,7 +25,9 @@ use Barryvdh\DomPDF\Facade\Pdf;
 class EssController extends Controller
 {
     protected LeaveService $leaveService;
+
     protected PayrollService $payrollService;
+
     protected HrAttachmentService $attachmentService;
 
     public function __construct(
@@ -47,6 +49,7 @@ class EssController extends Controller
         if (!$staff) {
             abort(403, 'You do not have a staff profile linked to your account.');
         }
+
         return $staff;
     }
 
@@ -83,7 +86,7 @@ class EssController extends Controller
 
         // Recent payslips
         $recentPayslips = PayrollItem::where('staff_id', $staff->id)
-            ->whereHas('payrollBatch', fn($q) => $q->whereIn('status', ['approved', 'paid']))
+            ->whereHas('payrollBatch', fn ($q) => $q->whereIn('status', ['approved', 'paid']))
             ->with('payrollBatch')
             ->latest()
             ->limit(3)
@@ -194,7 +197,7 @@ class EssController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Validation failed',
-                'errors' => $validator->errors()
+                'errors' => $validator->errors(),
             ], 422);
         }
 
@@ -210,7 +213,7 @@ class EssController extends Controller
             if ($request->is_half_day && !$leaveType->allow_half_day) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Half-day requests are not allowed for this leave type.'
+                    'message' => 'Half-day requests are not allowed for this leave type.',
                 ], 422);
             }
 
@@ -220,7 +223,7 @@ class EssController extends Controller
                 if ($noticeGiven < $leaveType->min_days_notice) {
                     return response()->json([
                         'success' => false,
-                        'message' => "This leave type requires at least {$leaveType->min_days_notice} days advance notice."
+                        'message' => "This leave type requires at least {$leaveType->min_days_notice} days advance notice.",
                     ], 422);
                 }
             }
@@ -229,7 +232,7 @@ class EssController extends Controller
             if ($leaveType->requires_attachment && !$request->hasFile('document')) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Supporting document is required for this leave type.'
+                    'message' => 'Supporting document is required for this leave type.',
                 ], 422);
             }
 
@@ -243,7 +246,7 @@ class EssController extends Controller
             if ($leaveType->max_consecutive_days && $totalDays > $leaveType->max_consecutive_days) {
                 return response()->json([
                     'success' => false,
-                    'message' => "This leave type allows maximum {$leaveType->max_consecutive_days} consecutive days."
+                    'message' => "This leave type allows maximum {$leaveType->max_consecutive_days} consecutive days.",
                 ], 422);
             }
 
@@ -268,7 +271,7 @@ class EssController extends Controller
                     [
                         'document_type' => 'leave_supporting_document',
                         'uploaded_by' => $user->id,
-                        'description' => 'Supporting document for leave request'
+                        'description' => 'Supporting document for leave request',
                     ]
                 );
             }
@@ -276,13 +279,13 @@ class EssController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => 'Leave request submitted successfully. Awaiting approval.',
-                'data' => $leaveRequest
+                'data' => $leaveRequest,
             ]);
 
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => $e->getMessage()
+                'message' => $e->getMessage(),
             ], 422);
         }
     }
@@ -300,6 +303,7 @@ class EssController extends Controller
 
         try {
             $this->leaveService->cancelRequest($leaveRequest);
+
             return back()->with('success', 'Leave request cancelled.');
         } catch (\Exception $e) {
             return back()->with('error', $e->getMessage());
@@ -314,11 +318,11 @@ class EssController extends Controller
         $staff = $this->getStaff();
 
         $query = PayrollItem::where('staff_id', $staff->id)
-            ->whereHas('payrollBatch', fn($q) => $q->whereIn('status', ['approved', 'paid']))
+            ->whereHas('payrollBatch', fn ($q) => $q->whereIn('status', ['approved', 'paid']))
             ->with('payrollBatch');
 
         if ($request->filled('year')) {
-            $query->whereHas('payrollBatch', fn($q) => $q->whereYear('pay_period_start', $request->year));
+            $query->whereHas('payrollBatch', fn ($q) => $q->whereYear('pay_period_start', $request->year));
         }
 
         $payslips = $query->latest()->paginate(12);
@@ -326,14 +330,16 @@ class EssController extends Controller
 
         // Get latest payslip
         $latestPayslip = PayrollItem::where('staff_id', $staff->id)
-            ->whereHas('payrollBatch', fn($q) => $q->whereIn('status', ['approved', 'paid']))
+            ->whereHas('payrollBatch', fn ($q) => $q->whereIn('status', ['approved', 'paid']))
             ->with('payrollBatch')
             ->latest()
             ->first();
 
         // Calculate YTD values
         $ytdPayslips = PayrollItem::where('staff_id', $staff->id)
-            ->whereHas('payrollBatch', fn($q) => $q
+            ->whereHas(
+                'payrollBatch',
+                fn ($q) => $q
                 ->whereIn('status', ['approved', 'paid'])
                 ->whereYear('pay_period_start', now()->year)
             )
@@ -410,7 +416,7 @@ class EssController extends Controller
         $openQueries = DisciplinaryQuery::where('staff_id', $staff->id)
             ->whereIn('status', [
                 DisciplinaryQuery::STATUS_ISSUED,
-                DisciplinaryQuery::STATUS_RESPONSE_RECEIVED
+                DisciplinaryQuery::STATUS_RESPONSE_RECEIVED,
             ])
             ->count();
 
@@ -477,6 +483,7 @@ class EssController extends Controller
                     'moderate' => 'info',
                     default => 'secondary'
                 };
+
                 return '<span class="badge badge-' . $class . '" style="border-radius: 6px;">' . ucfirst(str_replace('_', ' ', $row->severity)) . '</span>';
             })
             ->addColumn('status', function ($row) {
@@ -487,6 +494,7 @@ class EssController extends Controller
                     DisciplinaryQuery::STATUS_CLOSED => 'success',
                     default => 'secondary'
                 };
+
                 return '<span class="badge badge-' . $class . '" style="border-radius: 6px;">' . ucfirst(str_replace('_', ' ', $row->status)) . '</span>';
             })
             ->addColumn('outcome', function ($row) {
@@ -500,6 +508,7 @@ class EssController extends Controller
                     'no_action', 'dismissed' => 'success',
                     default => 'secondary'
                 };
+
                 return '<span class="badge badge-' . $class . '" style="border-radius: 6px;">' . ucfirst(str_replace('_', ' ', $row->outcome)) . '</span>';
             })
             ->addColumn('response_deadline', function ($row) {
@@ -508,6 +517,7 @@ class EssController extends Controller
                 }
                 $isPast = $row->response_deadline->isPast();
                 $class = $isPast && $row->status === DisciplinaryQuery::STATUS_ISSUED ? 'text-danger font-weight-bold' : '';
+
                 return '<span class="' . $class . '">' . $row->response_deadline->format('M d, Y') . '</span>';
             })
             ->addColumn('actions', function ($row) {
@@ -515,6 +525,7 @@ class EssController extends Controller
                 if ($row->status === DisciplinaryQuery::STATUS_ISSUED) {
                     $buttons .= ' <button class="btn btn-sm btn-warning respond-query" data-id="' . $row->id . '" style="border-radius: 6px;"><i class="mdi mdi-reply"></i></button>';
                 }
+
                 return $buttons;
             })
             ->rawColumns(['subject', 'severity', 'status', 'outcome', 'response_deadline', 'actions'])
@@ -602,6 +613,7 @@ class EssController extends Controller
             if ($request->ajax()) {
                 return response()->json(['success' => false, 'message' => 'You can only respond to queries that are pending response.'], 400);
             }
+
             return back()->with('error', 'You can only respond to queries that are pending response.');
         }
 
@@ -614,6 +626,7 @@ class EssController extends Controller
             if ($request->ajax()) {
                 return response()->json(['success' => false, 'errors' => $validator->errors()], 422);
             }
+
             return back()->withErrors($validator)->withInput();
         }
 
@@ -636,7 +649,7 @@ class EssController extends Controller
             if ($request->ajax()) {
                 return response()->json([
                     'success' => true,
-                    'message' => 'Your response has been submitted successfully.'
+                    'message' => 'Your response has been submitted successfully.',
                 ]);
             }
 
@@ -646,6 +659,7 @@ class EssController extends Controller
             if ($request->ajax()) {
                 return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
             }
+
             return back()->with('error', $e->getMessage());
         }
     }
@@ -669,7 +683,7 @@ class EssController extends Controller
 
         // Count total payslips
         $totalPayslips = PayrollItem::where('staff_id', $staff->id)
-            ->whereHas('payrollBatch', fn($q) => $q->whereIn('status', ['approved', 'paid']))
+            ->whereHas('payrollBatch', fn ($q) => $q->whereIn('status', ['approved', 'paid']))
             ->count();
 
         // Get specializations and clinics for edit dropdowns
@@ -689,7 +703,7 @@ class EssController extends Controller
                 // Dept heads in the same category
                 ->orWhere(function ($sub) use ($user) {
                     $sub->where('is_dept_head', true)
-                        ->whereHas('user', fn($uq) => $uq->where('is_admin', $user->is_admin));
+                        ->whereHas('user', fn ($uq) => $uq->where('is_admin', $user->is_admin));
                 });
             })
             ->get();
@@ -735,7 +749,7 @@ class EssController extends Controller
         }
 
         // Update User model fields - only update if values are provided
-        $userFields = array_filter($request->only(['surname', 'firstname', 'othername']), function($value) {
+        $userFields = array_filter($request->only(['surname', 'firstname', 'othername']), function ($value) {
             return $value !== null && $value !== '';
         });
         if (!empty($userFields)) {
@@ -904,7 +918,7 @@ class EssController extends Controller
             'leaveType',
             'reliefStaff.user',
             'reviewedBy',
-            'attachments'
+            'attachments',
         ]);
 
         // Get staff's leave balance for this leave type
@@ -1017,6 +1031,7 @@ class EssController extends Controller
         // Add departments and user categories for filters in the grid calendar
         $departments = \App\Models\Department::all();
         $userCategories = \App\Models\UserCategory::all();
+
         return view('admin.hr.ess.my-calendar', compact('staff', 'leaveTypes', 'balances', 'stats', 'departments', 'userCategories'));
     }
 
@@ -1031,7 +1046,7 @@ class EssController extends Controller
             ->whereIn('status', [
                 LeaveRequest::STATUS_PENDING,
                 LeaveRequest::STATUS_SUPERVISOR_APPROVED,
-                LeaveRequest::STATUS_APPROVED
+                LeaveRequest::STATUS_APPROVED,
             ])
             ->with('leaveType');
 
@@ -1169,7 +1184,7 @@ class EssController extends Controller
             ->whereIn('status', [
                 LeaveRequest::STATUS_PENDING,
                 LeaveRequest::STATUS_SUPERVISOR_APPROVED,
-                LeaveRequest::STATUS_APPROVED
+                LeaveRequest::STATUS_APPROVED,
             ])
             ->with(['leaveType', 'staff.user', 'staff.department']);
 
@@ -1265,7 +1280,7 @@ class EssController extends Controller
                 }
                 if ($staff->is_dept_head) {
                     // Department heads see same user category (is_admin column in users table)
-                    $q->orWhereHas('user', fn($uq) => $uq->where('is_admin', $user->is_admin));
+                    $q->orWhereHas('user', fn ($uq) => $uq->where('is_admin', $user->is_admin));
                 }
             })
             ->active()
@@ -1306,6 +1321,7 @@ class EssController extends Controller
 
         $staffOnLeave = $onLeave->map(function ($leave) {
             $user = $leave->staff->user ?? null;
+
             return [
                 'id' => $leave->staff_id,
                 'name' => $user ? ($user->surname . ' ' . $user->firstname . ' ' . $user->othername) : 'Unknown',

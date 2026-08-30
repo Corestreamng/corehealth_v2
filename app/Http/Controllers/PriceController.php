@@ -2,18 +2,17 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Price;
-use App\Models\Product;
+use App\Models\ApplicationStatu;
 use App\Models\Hmo;
 use App\Models\HmoScheme;
 use App\Models\HmoTariff;
-use Yajra\DataTables\DataTables;
-use RealRashid\SweetAlert\Facades\Alert;
+use App\Models\Price;
+use App\Models\Product;
 use Illuminate\Http\Request;
-use App\Models\ApplicationStatu;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Yajra\DataTables\DataTables;
 
 class PriceController extends Controller
 {
@@ -35,19 +34,21 @@ class PriceController extends Controller
     {
         try {
             $product_id = request()->get('product_id');
-            $product     = Product::whereId($product_id)->whereStatus(1)->wherePrice_assign(0)->orderBy('product_name', 'asc')->first();
+            $product = Product::whereId($product_id)->whereStatus(1)->wherePrice_assign(0)->orderBy('product_name', 'asc')->first();
             // Check legacy flag first; if unset, also check actual stock batches
             $hasStock = $product->stock_assign == 1
                 || \App\Models\StockBatch::where('product_id', $product_id)->active()->where('current_qty', '>', 0)->exists();
-            if(!$hasStock){
+            if (!$hasStock) {
                 $msg = "Please assign stock to the item [$product->product_name] before attempting to set price";
+
                 return redirect(route('products.index'))->withMessage($msg)->withMessageType('danger');
-            }else{
+            } else {
                 // Backfill the legacy flag so this check doesn't repeat
                 if ($product->stock_assign == 0) {
                     $product->update(['stock_assign' => 1]);
                 }
                 $application = ApplicationStatu::whereId(1)->first();
+
                 return view('admin.prices.create', compact('product', 'application'));
             }
         } catch (\Exception $e) {
@@ -63,6 +64,7 @@ class PriceController extends Controller
     public function create()
     {
         $data = Price::where('status', '=', 1)->with('product')->get();
+
         //if (Auth::user('id', '>',2)) {
         return view('admin.prices.pricelist');
         // }else{return view('admin.prices.customer_price_list', compact('data'));
@@ -84,54 +86,57 @@ class PriceController extends Controller
         try {
             $rules = [
                 'products' => 'required|max:100',
-                'price'    => 'required|max:11'
+                'price' => 'required|max:11',
             ];
 
             $v = validator()->make($request->all(), $rules);
 
             if ($v->fails()) {
                 $msg = 'Please cheak Your Inputs .';
+
                 //flash($msg, 'danger');
                 return redirect()->back()->withInput()->with('errors', $v->messages()->all())->withInput();
             } else {
                 $cheak_half = Product::find($request->products);
                 //dd($cheak_half);
-                $myprice                 = new Price();
-                $myprice->product_id         = $request->products;
-                $myprice->initial_sale_date   = $now;
-                $myprice->current_sale_date   = $now;
-                $myprice->initial_sale_price   = $request->price;
-                $myprice->current_sale_price  = $request->price;
-                $myprice->pr_buy_price        = $request->buy_price;
+                $myprice = new Price();
+                $myprice->product_id = $request->products;
+                $myprice->initial_sale_date = $now;
+                $myprice->current_sale_date = $now;
+                $myprice->initial_sale_price = $request->price;
+                $myprice->current_sale_price = $request->price;
+                $myprice->pr_buy_price = $request->buy_price;
                 if ($request->max_discount == "") {
-                    $myprice->max_discount        = 0;
+                    $myprice->max_discount = 0;
                 } else {
-                    $myprice->max_discount        = $request->max_discount;
+                    $myprice->max_discount = $request->max_discount;
                 }
 
                 if ($cheak_half->has_have == 1) {
-                    $myprice->half_price         = $request->price / 2;
+                    $myprice->half_price = $request->price / 2;
                 } elseif ($cheak_half->has_have == 0) {
                     $myprice->half_price = 0;
                 }
                 if ($cheak_half->has_piece == 1) {
-                    $myprice->pieces_price        = $request->pieces_price;
+                    $myprice->pieces_price = $request->pieces_price;
                     $myprice->pieces_max_discount = $request->pieces_max_discount;
                 } elseif ($cheak_half->has_piece == 0) {
-                    $myprice->pieces_price        = 0;
+                    $myprice->pieces_price = 0;
                     $myprice->pieces_max_discount = 0;
                 }
 
-                $myprice->status            = 1;
+                $myprice->status = 1;
                 if ($myprice->save()) {
                     $assing_stock = Product::find($request->products);
                     $assing_stock->price_assign = 1;
                     $assing_stock->update();
                     $msg = 'price for ' . $cheak_half->product_name . ' was saved successfully.';
+
                     // flash($msg, 'success');
                     return redirect(route('products.index'))->withMessage($msg)->withMessageType('success')->with($msg);
                 } else {
                     $msg = 'Something is went wrong. Please try again later, information not save.';
+
                     //flash($msg, 'danger');
                     return redirect()->back()->withInput()->withMessage($msg)->withMessageType('danger');
                 }
@@ -154,8 +159,9 @@ class PriceController extends Controller
 
             if (Auth::user()) {
 
-                $products     = Product::whereId($id)->first();
+                $products = Product::whereId($id)->first();
                 $application = ApplicationStatu::whereId(1)->first();
+
                 return view('admin.prices.newprice', compact('products', 'application'));
             } else {
                 return view('home.index');
@@ -196,7 +202,9 @@ class PriceController extends Controller
                 $schemeSummary = [];
                 foreach ($schemes as $scheme) {
                     $activeHmos = $scheme->hmos;
-                    if ($activeHmos->isEmpty()) continue;
+                    if ($activeHmos->isEmpty()) {
+                        continue;
+                    }
 
                     $payableValues = [];
                     $claimsValues = [];
@@ -259,7 +267,11 @@ class PriceController extends Controller
                 $totalHmoCount = Hmo::where('status', 1)->count();
 
                 return view('admin.prices.edit', compact(
-                    'data', 'application', 'schemeSummary', 'standaloneData', 'totalHmoCount'
+                    'data',
+                    'application',
+                    'schemeSummary',
+                    'standaloneData',
+                    'totalHmoCount'
                 ));
             }
         } catch (\Exception $e) {
@@ -287,24 +299,25 @@ class PriceController extends Controller
 
             if ($v->fails()) {
                 $msg = 'Please check your inputs.';
+
                 return redirect()->back()->withInput()->with('errors', $v->messages()->all())->withInput();
             } else {
                 $cheak_half = Product::find($request->products);
                 $myprice = Price::where('id', '=', $id)->first();
 
-                $myprice->initial_sale_date    = $now;
-                $myprice->current_sale_date    = $now;
-                $myprice->initial_sale_price   = $request->price;
-                $myprice->current_sale_price   = $request->price;
-                $myprice->pr_buy_price         = $request->new_buy_price;
+                $myprice->initial_sale_date = $now;
+                $myprice->current_sale_date = $now;
+                $myprice->initial_sale_price = $request->price;
+                $myprice->current_sale_price = $request->price;
+                $myprice->pr_buy_price = $request->new_buy_price;
                 if ($request->max_discount == '') {
                     $myprice->max_discount = 0;
                 } else {
                     $myprice->max_discount = $request->max_discount;
                 }
 
-                $myprice->half_price          = 0;
-                $myprice->pieces_price        = 0;
+                $myprice->half_price = 0;
+                $myprice->pieces_price = 0;
                 $myprice->pieces_max_discount = 0;
 
                 $myprice->status = 1;
@@ -313,13 +326,13 @@ class PriceController extends Controller
                     // ── Tariff propagation (only if user opted in) ──
                     $tariffMsg = '';
                     $syncPayable = $request->has('sync_payable');
-                    $syncClaims  = $request->has('sync_claims');
+                    $syncClaims = $request->has('sync_claims');
 
                     if ($syncPayable || $syncClaims) {
                         $tariffMsg = $this->propagateTariffs(
                             $myprice->product_id,
                             $syncPayable ? (float) $request->new_payable_amount : null,
-                            $syncClaims  ? (float) $request->new_claims_amount : null,
+                            $syncClaims ? (float) $request->new_claims_amount : null,
                             $request->input('tariff_scope', 'none'),
                             $request->input('selected_scheme_ids', []),
                             $request->input('selected_hmo_ids', []),
@@ -335,11 +348,13 @@ class PriceController extends Controller
                     return redirect(route('products.index'))->withMessage($msg)->withMessageType('success');
                 } else {
                     $msg = 'Something went wrong. Please try again later.';
+
                     return redirect()->back()->withInput()->withMessage($msg)->withMessageType('danger');
                 }
             }
         } catch (\Exception $e) {
             Log::error('PriceController@update: ' . $e->getMessage());
+
             return redirect()->back()->withInput()->withMessage('An error occurred: ' . $e->getMessage());
         }
     }
@@ -360,15 +375,18 @@ class PriceController extends Controller
         switch ($scope) {
             case 'all':
                 $targetHmoIds = Hmo::where('status', 1)->pluck('id')->toArray();
+
                 break;
             case 'scheme':
                 $cleanSchemeIds = array_map('intval', array_filter($schemeIds));
                 $targetHmoIds = Hmo::where('status', 1)
                     ->whereIn('hmo_scheme_id', $cleanSchemeIds)
                     ->pluck('id')->toArray();
+
                 break;
             case 'manual':
                 $targetHmoIds = array_map('intval', array_filter($hmoIds));
+
                 break;
             default:
                 return '';
@@ -383,6 +401,7 @@ class PriceController extends Controller
         $created = 0;
 
         DB::beginTransaction();
+
         try {
             foreach ($targetHmoIds as $hmoId) {
                 $tariff = HmoTariff::where('hmo_id', $hmoId)
@@ -402,6 +421,7 @@ class PriceController extends Controller
                                 $updated++;
                                 $skipped--; // Not fully skipped
                             }
+
                             continue;
                         }
                         $changes['payable_amount'] = $newPayable;
@@ -418,12 +438,12 @@ class PriceController extends Controller
                 } else {
                     // Create tariff if it doesn't exist
                     HmoTariff::create([
-                        'hmo_id'         => $hmoId,
-                        'product_id'     => $productId,
-                        'service_id'     => null,
-                        'claims_amount'  => $newClaims ?? 0,
+                        'hmo_id' => $hmoId,
+                        'product_id' => $productId,
+                        'service_id' => null,
+                        'claims_amount' => $newClaims ?? 0,
                         'payable_amount' => $newPayable ?? 0,
-                        'coverage_mode'  => 'primary',
+                        'coverage_mode' => 'primary',
                     ]);
                     $created++;
                 }
@@ -432,16 +452,24 @@ class PriceController extends Controller
             DB::commit();
 
             $parts = [];
-            if ($updated > 0) $parts[] = "{$updated} tariff(s) updated";
-            if ($created > 0) $parts[] = "{$created} tariff(s) created";
-            if ($skipped > 0) $parts[] = "{$skipped} skipped (manual pricing)";
+            if ($updated > 0) {
+                $parts[] = "{$updated} tariff(s) updated";
+            }
+            if ($created > 0) {
+                $parts[] = "{$created} tariff(s) created";
+            }
+            if ($skipped > 0) {
+                $parts[] = "{$skipped} skipped (manual pricing)";
+            }
 
             $result = implode(', ', $parts) . '.';
             Log::info("PriceController tariff propagation for product {$productId}: {$result}");
+
             return $result;
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error("PriceController tariff propagation failed for product {$productId}: " . $e->getMessage());
+
             return 'Tariff update failed: ' . $e->getMessage();
         }
     }
@@ -462,13 +490,15 @@ class PriceController extends Controller
             $price = Price::where('product_id', $id)->first();
             $salePrice = $price ? (float) $price->current_sale_price : 0;
 
-            $schemes = HmoScheme::with(['hmos' => fn($q) => $q->where('status', 1)])->get();
+            $schemes = HmoScheme::with(['hmos' => fn ($q) => $q->where('status', 1)])->get();
             $tariffs = HmoTariff::where('product_id', $id)->whereNull('service_id')->get()->keyBy('hmo_id');
 
             $schemeSummary = [];
             foreach ($schemes as $scheme) {
                 $activeHmos = $scheme->hmos;
-                if ($activeHmos->isEmpty()) continue;
+                if ($activeHmos->isEmpty()) {
+                    continue;
+                }
 
                 $payableValues = [];
                 $claimsValues = [];
@@ -523,7 +553,7 @@ class PriceController extends Controller
                 'schemeSummary' => $schemeSummary,
                 'standaloneData' => $standaloneData,
                 'totalCount' => Hmo::where('status', 1)->count(),
-                'backUrl' => route('hmo-tariffs.index')
+                'backUrl' => route('hmo-tariffs.index'),
             ];
 
             if (request()->ajax()) {
@@ -532,7 +562,7 @@ class PriceController extends Controller
 
             return view('admin.tariffs.standalone', [
                 'partial' => 'admin.partials.hmo-tariff-view-partial',
-                'data' => $data
+                'data' => $data,
             ]);
         } catch (\Exception $e) {
             return redirect()->back()->withMessage('Error: ' . $e->getMessage());
@@ -543,6 +573,7 @@ class PriceController extends Controller
     {
         //
     }
+
     public function destroy($id)
     {
         //

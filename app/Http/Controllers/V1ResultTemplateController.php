@@ -85,11 +85,12 @@ class V1ResultTemplateController extends Controller
             ->addIndexColumn()
             ->addColumn('type_badge', function ($row) {
                 $map = [
-                    'lab'     => ['bg-primary', 'flask', 'Lab'],
+                    'lab' => ['bg-primary', 'flask', 'Lab'],
                     'imaging' => ['bg-warning text-dark', 'x-ray', 'Imaging'],
-                    'both'    => ['bg-success', 'check-all', 'Both'],
+                    'both' => ['bg-success', 'check-all', 'Both'],
                 ];
                 [$cls, $icon, $label] = $map[$row->template_type] ?? ['bg-secondary', 'help', $row->template_type];
+
                 return "<span class='badge {$cls}'><i class='mdi mdi-{$icon}'></i> {$label}</span>";
             })
             ->addColumn('status_badge', function ($row) {
@@ -101,11 +102,12 @@ class V1ResultTemplateController extends Controller
                 return $row->creator ? $row->creator->name : '—';
             })
             ->addColumn('actions', function ($row) {
-                $edit   = "<button class='btn btn-sm btn-warning me-1' title='Edit' onclick='editTemplate({$row->id})'><i class='mdi mdi-pencil'></i></button>";
+                $edit = "<button class='btn btn-sm btn-warning me-1' title='Edit' onclick='editTemplate({$row->id})'><i class='mdi mdi-pencil'></i></button>";
                 $toggle = $row->is_active
                     ? "<button class='btn btn-sm btn-secondary me-1' title='Deactivate' onclick='toggleTemplate({$row->id})'><i class='mdi mdi-eye-off'></i></button>"
                     : "<button class='btn btn-sm btn-success me-1' title='Activate' onclick='toggleTemplate({$row->id})'><i class='mdi mdi-eye'></i></button>";
-                $del    = "<button class='btn btn-sm btn-danger' title='Delete' onclick='deleteTemplate({$row->id})'><i class='fa fa-trash'></i></button>";
+                $del = "<button class='btn btn-sm btn-danger' title='Delete' onclick='deleteTemplate({$row->id})'><i class='fa fa-trash'></i></button>";
+
                 return $edit . $toggle . $del;
             })
             ->rawColumns(['type_badge', 'status_badge', 'actions'])
@@ -119,29 +121,30 @@ class V1ResultTemplateController extends Controller
     {
         try {
             $validated = $request->validate([
-                'name'          => 'required|string|max:255',
-                'description'   => 'nullable|string|max:500',
-                'content'       => 'required|string',
-                'category'      => 'nullable|string|max:100',
+                'name' => 'required|string|max:255',
+                'description' => 'nullable|string|max:500',
+                'content' => 'required|string',
+                'category' => 'nullable|string|max:100',
                 'template_type' => 'required|in:lab,imaging,both',
-                'sort_order'    => 'nullable|integer|min:0',
-                'is_active'     => 'nullable|boolean',
+                'sort_order' => 'nullable|integer|min:0',
+                'is_active' => 'nullable|boolean',
             ]);
 
             $validated['created_by'] = Auth::id();
-            $validated['category']   = $validated['category'] ?? 'General';
+            $validated['category'] = $validated['category'] ?? 'General';
             $validated['sort_order'] = $validated['sort_order'] ?? 0;
-            $validated['is_active']  = $validated['is_active'] ?? true;
+            $validated['is_active'] = $validated['is_active'] ?? true;
 
             $template = V1ResultTemplate::create($validated);
 
             return response()->json([
-                'success'  => true,
-                'message'  => 'Template created successfully.',
+                'success' => true,
+                'message' => 'Template created successfully.',
                 'template' => $template,
             ]);
         } catch (\Exception $e) {
             Log::error('V1ResultTemplate creation failed: ' . $e->getMessage());
+
             return response()->json(['success' => false, 'message' => 'Failed to create template: ' . $e->getMessage()], 500);
         }
     }
@@ -152,7 +155,7 @@ class V1ResultTemplateController extends Controller
     public function show(V1ResultTemplate $v1_result_template)
     {
         return response()->json([
-            'success'  => true,
+            'success' => true,
             'template' => $v1_result_template,
         ]);
     }
@@ -164,24 +167,25 @@ class V1ResultTemplateController extends Controller
     {
         try {
             $validated = $request->validate([
-                'name'          => 'required|string|max:255',
-                'description'   => 'nullable|string|max:500',
-                'content'       => 'required|string',
-                'category'      => 'nullable|string|max:100',
+                'name' => 'required|string|max:255',
+                'description' => 'nullable|string|max:500',
+                'content' => 'required|string',
+                'category' => 'nullable|string|max:100',
                 'template_type' => 'required|in:lab,imaging,both',
-                'sort_order'    => 'nullable|integer|min:0',
-                'is_active'     => 'nullable|boolean',
+                'sort_order' => 'nullable|integer|min:0',
+                'is_active' => 'nullable|boolean',
             ]);
 
             $v1_result_template->update($validated);
 
             return response()->json([
-                'success'  => true,
-                'message'  => 'Template updated successfully.',
+                'success' => true,
+                'message' => 'Template updated successfully.',
                 'template' => $v1_result_template,
             ]);
         } catch (\Exception $e) {
             Log::error('V1ResultTemplate update failed: ' . $e->getMessage());
+
             return response()->json(['success' => false, 'message' => 'Failed to update template: ' . $e->getMessage()], 500);
         }
     }
@@ -211,6 +215,7 @@ class V1ResultTemplateController extends Controller
     {
         try {
             $v1_result_template->delete();
+
             return response()->json(['success' => true, 'message' => 'Template deleted successfully.']);
         } catch (\Exception $e) {
             return response()->json(['success' => false, 'message' => 'Failed to delete template: ' . $e->getMessage()], 500);

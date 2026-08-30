@@ -22,10 +22,10 @@ class ClinicSchedule extends Model implements Auditable
     ];
 
     protected $casts = [
-        'day_of_week'          => 'integer',
+        'day_of_week' => 'integer',
         'slot_duration_minutes' => 'integer',
         'max_concurrent_slots' => 'integer',
-        'is_active'            => 'boolean',
+        'is_active' => 'boolean',
     ];
 
     /**

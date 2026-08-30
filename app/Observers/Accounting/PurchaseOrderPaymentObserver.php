@@ -2,9 +2,8 @@
 
 namespace App\Observers\Accounting;
 
-use App\Models\PurchaseOrderPayment;
 use App\Models\Accounting\Account;
-use App\Models\Accounting\AccountSubAccount;
+use App\Models\PurchaseOrderPayment;
 use App\Services\Accounting\AccountingService;
 use App\Services\Accounting\SubAccountService;
 use Illuminate\Support\Facades\App;
@@ -46,7 +45,7 @@ class PurchaseOrderPaymentObserver
             Log::error('PurchaseOrderPaymentObserver: Failed to create journal entry', [
                 'payment_id' => $payment->id,
                 'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
+                'trace' => $e->getTraceAsString(),
             ]);
         }
     }
@@ -67,6 +66,7 @@ class PurchaseOrderPaymentObserver
                 'ap_account_found' => !is_null($apAccount),
                 'cash_bank_found' => !is_null($cashBankAccount),
             ]);
+
             return;
         }
 
@@ -76,6 +76,7 @@ class PurchaseOrderPaymentObserver
                 'payment_id' => $payment->id,
                 'po_id' => $payment->purchase_order_id,
             ]);
+
             return;
         }
 
@@ -105,7 +106,7 @@ class PurchaseOrderPaymentObserver
                 // METADATA
                 'supplier_id' => $po->supplier_id,
                 'category' => 'po_payment',
-            ]
+            ],
         ];
 
         $entry = $accountingService->createAndPostAutomatedEntry(

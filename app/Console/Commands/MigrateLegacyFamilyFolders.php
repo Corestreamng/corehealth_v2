@@ -2,8 +2,8 @@
 
 namespace App\Console\Commands;
 
-use Illuminate\Console\Command;
 use App\Models\Patient;
+use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
 
 class MigrateLegacyFamilyFolders extends Command
@@ -52,12 +52,15 @@ class MigrateLegacyFamilyFolders extends Command
         $this->info('Found ' . $fileNos->count() . ' family groups to migrate.');
 
         DB::beginTransaction();
+
         try {
             foreach ($fileNos as $fileNo) {
                 // Get all patients with this file_no, ordered by creation (oldest is likely the principal)
                 $patients = Patient::where('file_no', $fileNo)->orderBy('id', 'asc')->get();
 
-                if ($patients->isEmpty()) continue;
+                if ($patients->isEmpty()) {
+                    continue;
+                }
 
                 $principal = $patients->first();
                 $principal->is_family_principal = true;
@@ -75,10 +78,12 @@ class MigrateLegacyFamilyFolders extends Command
             }
             DB::commit();
             $this->info('Migration completed successfully.');
+
             return 0;
         } catch (\Exception $e) {
             DB::rollBack();
             $this->error('Migration failed: ' . $e->getMessage());
+
             return 1;
         }
     }

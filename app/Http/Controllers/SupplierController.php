@@ -2,14 +2,12 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Supplier;
 use App\Models\StockBatch;
-use App\Models\PurchaseOrder;
+use App\Models\Supplier;
 use Illuminate\Http\Request;
-use Yajra\DataTables\DataTables;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\DB;
 use RealRashid\SweetAlert\Facades\Alert;
+use Yajra\DataTables\DataTables;
 
 class SupplierController extends Controller
 {
@@ -37,11 +35,12 @@ class SupplierController extends Controller
                     ? '<span class="badge badge-success">Active</span>'
                     : '<span class="badge badge-secondary">Inactive</span>';
             })
-            ->addColumn('batches_count', fn($s) => $s->stock_batches_count)
-            ->addColumn('po_count', fn($s) => $s->purchase_orders_count)
+            ->addColumn('batches_count', fn ($s) => $s->stock_batches_count)
+            ->addColumn('po_count', fn ($s) => $s->purchase_orders_count)
             ->addColumn('outstanding', function ($supplier) {
                 $balance = $supplier->outstanding_balance;
                 $class = $balance > 0 ? 'text-danger' : ($balance < 0 ? 'text-success' : '');
+
                 return '<span class="' . $class . '">₦' . number_format(abs($balance), 2) . '</span>';
             })
             ->addColumn('last_activity', function ($supplier) {
@@ -53,6 +52,7 @@ class SupplierController extends Controller
                 $btns .= '<a href="' . route('suppliers.edit', $supplier->id) . '" class="btn btn-primary" title="Edit"><i class="fa fa-edit"></i></a>';
                 $btns .= '<button onclick="deleteSupplier(' . $supplier->id . ')" class="btn btn-danger" title="Delete"><i class="fa fa-trash"></i></button>';
                 $btns .= '</div>';
+
                 return $btns;
             })
             ->rawColumns(['status_badge', 'outstanding', 'actions'])
@@ -95,6 +95,7 @@ class SupplierController extends Controller
         $supplier = Supplier::create($validated);
 
         Alert::success('Success', 'Supplier created successfully');
+
         return redirect()->route('suppliers.index');
     }
 
@@ -109,7 +110,7 @@ class SupplierController extends Controller
         $stats = [
             'total_batches' => $supplier->stockBatches->count(),
             'active_batches' => $supplier->stockBatches->where('current_qty', '>', 0)->where('is_active', true)->count(),
-            'total_supplied_value' => $supplier->stockBatches->sum(fn($b) => $b->initial_qty * $b->cost_price),
+            'total_supplied_value' => $supplier->stockBatches->sum(fn ($b) => $b->initial_qty * $b->cost_price),
             'total_po_count' => $supplier->purchaseOrders->count(),
             'pending_po_count' => $supplier->purchaseOrders->whereIn('status', ['draft', 'pending', 'approved'])->count(),
         ];
@@ -165,6 +166,7 @@ class SupplierController extends Controller
         $supplier->update($validated);
 
         Alert::success('Success', 'Supplier updated successfully');
+
         return redirect()->route('suppliers.index');
     }
 
@@ -177,7 +179,7 @@ class SupplierController extends Controller
         if ($supplier->stockBatches()->exists()) {
             return response()->json([
                 'success' => false,
-                'message' => 'Cannot delete supplier with existing stock batches. Deactivate instead.'
+                'message' => 'Cannot delete supplier with existing stock batches. Deactivate instead.',
             ], 422);
         }
 
@@ -185,7 +187,7 @@ class SupplierController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => 'Supplier deleted successfully'
+            'message' => 'Supplier deleted successfully',
         ]);
     }
 
@@ -201,7 +203,7 @@ class SupplierController extends Controller
             ->select('id', 'company_name', 'contact_person', 'phone')
             ->limit(20)
             ->get()
-            ->map(fn($s) => [
+            ->map(fn ($s) => [
                 'id' => $s->id,
                 'text' => $s->company_name . ($s->contact_person ? " ({$s->contact_person})" : ''),
                 'phone' => $s->phone,
@@ -238,12 +240,13 @@ class SupplierController extends Controller
             ->get()
             ->map(function ($supplier) {
                 $batches = $supplier->stockBatches;
+
                 return [
                     'id' => $supplier->id,
                     'company_name' => $supplier->company_name,
                     'total_batches' => $batches->count(),
                     'total_items' => $batches->sum('initial_qty'),
-                    'total_value' => $batches->sum(fn($b) => $b->initial_qty * $b->cost_price),
+                    'total_value' => $batches->sum(fn ($b) => $b->initial_qty * $b->cost_price),
                     'avg_cost' => $batches->count() > 0 ? $batches->avg('cost_price') : 0,
                     'products_supplied' => $batches->pluck('product_id')->unique()->count(),
                 ];
@@ -285,7 +288,7 @@ class SupplierController extends Controller
         $summary = [
             'total_batches' => $batches->count(),
             'total_items' => $batches->sum('initial_qty'),
-            'total_value' => $batches->sum(fn($b) => $b->initial_qty * $b->cost_price),
+            'total_value' => $batches->sum(fn ($b) => $b->initial_qty * $b->cost_price),
             'suppliers_count' => $batches->pluck('supplier_id')->unique()->count(),
         ];
 
@@ -293,10 +296,10 @@ class SupplierController extends Controller
 
         if ($request->ajax()) {
             return DataTables::of($batches)
-                ->addColumn('product_name', fn($b) => $b->product->product_name ?? '-')
-                ->addColumn('store_name', fn($b) => $b->store->store_name ?? '-')
-                ->addColumn('supplier_name', fn($b) => $b->supplier->company_name ?? '-')
-                ->addColumn('total_value', fn($b) => '₦' . number_format($b->initial_qty * $b->cost_price, 2))
+                ->addColumn('product_name', fn ($b) => $b->product->product_name ?? '-')
+                ->addColumn('store_name', fn ($b) => $b->store->store_name ?? '-')
+                ->addColumn('supplier_name', fn ($b) => $b->supplier->company_name ?? '-')
+                ->addColumn('total_value', fn ($b) => '₦' . number_format($b->initial_qty * $b->cost_price, 2))
                 ->make(true);
         }
 
@@ -326,7 +329,7 @@ class SupplierController extends Controller
             fputcsv($file, [
                 'ID', 'Company Name', 'Contact Person', 'Email', 'Phone',
                 'Address', 'Tax Number', 'Bank', 'Account Number',
-                'Payment Terms', 'Credit Limit', 'Total Batches', 'Status', 'Created At'
+                'Payment Terms', 'Credit Limit', 'Total Batches', 'Status', 'Created At',
             ]);
 
             foreach ($suppliers as $supplier) {

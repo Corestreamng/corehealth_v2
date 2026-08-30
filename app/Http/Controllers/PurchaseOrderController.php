@@ -2,16 +2,15 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Bank;
+use App\Models\Product;
 use App\Models\PurchaseOrder;
 use App\Models\PurchaseOrderItem;
 use App\Models\PurchaseOrderPayment;
-use App\Models\Product;
-use App\Models\Supplier;
 use App\Models\Store;
-use App\Models\Bank;
+use App\Models\Supplier;
 use App\Services\PurchaseOrderService;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 use Yajra\DataTables\Facades\DataTables;
 
 /**
@@ -51,7 +50,7 @@ class PurchaseOrderController extends Controller
                 ->orderBy('created_at', 'desc');
 
             // Governance: non-admins only see POs for their accessible stores
-            if (! auth()->user()->hasAnyRole(['ADMIN', 'SUPERADMIN', 'super-admin'])) {
+            if (!auth()->user()->hasAnyRole(['ADMIN', 'SUPERADMIN', 'super-admin'])) {
                 $accessibleStoreIds = Store::active()->forUser(auth()->user())->pluck('id');
                 $query->whereIn('target_store_id', $accessibleStoreIds);
             }
@@ -68,19 +67,20 @@ class PurchaseOrderController extends Controller
             }
 
             return DataTables::of($query)
-                ->addColumn('supplier_name', fn($po) => $po->supplier->company_name ?? '-')
-                ->addColumn('store_name', fn($po) => $po->targetStore->store_name ?? '-')
-                ->addColumn('creator_name', fn($po) => $po->creator->name ?? '-')
-                ->addColumn('items_count', fn($po) => $po->items->count() . ' items')
-                ->addColumn('status_badge', function($po) {
+                ->addColumn('supplier_name', fn ($po) => $po->supplier->company_name ?? '-')
+                ->addColumn('store_name', fn ($po) => $po->targetStore->store_name ?? '-')
+                ->addColumn('creator_name', fn ($po) => $po->creator->name ?? '-')
+                ->addColumn('items_count', fn ($po) => $po->items->count() . ' items')
+                ->addColumn('status_badge', function ($po) {
                     $statusText = ucfirst(str_replace('_', ' ', $po->status));
+
                     return sprintf(
                         '<span class="badge %s">%s</span>',
                         $po->getStatusBadgeClass(),
                         $statusText
                     );
                 })
-                ->addColumn('payment_badge', function($po) {
+                ->addColumn('payment_badge', function ($po) {
                     if (in_array($po->status, [PurchaseOrder::STATUS_PARTIAL, PurchaseOrder::STATUS_RECEIVED])) {
                         return sprintf(
                             '<span class="badge %s">%s</span>',
@@ -88,11 +88,12 @@ class PurchaseOrderController extends Controller
                             ucfirst($po->payment_status ?? 'unpaid')
                         );
                     }
+
                     return '<span class="badge badge-secondary">N/A</span>';
                 })
-                ->addColumn('formatted_total', fn($po) => '₦' . number_format($po->total_amount, 2))
-                ->addColumn('formatted_date', fn($po) => $po->created_at->format('d M Y'))
-                ->addColumn('actions', fn($po) => $this->getActionButtons($po))
+                ->addColumn('formatted_total', fn ($po) => '₦' . number_format($po->total_amount, 2))
+                ->addColumn('formatted_date', fn ($po) => $po->created_at->format('d M Y'))
+                ->addColumn('actions', fn ($po) => $this->getActionButtons($po))
                 ->rawColumns(['status_badge', 'payment_badge', 'actions'])
                 ->make(true);
         }
@@ -132,7 +133,7 @@ class PurchaseOrderController extends Controller
 
         // Governance: verify the target store is accessible by this user
         $accessibleStoreIds = Store::active()->forUser(auth()->user())->pluck('id');
-        if (! $accessibleStoreIds->contains((int) $request->target_store_id)) {
+        if (!$accessibleStoreIds->contains((int) $request->target_store_id)) {
             return response()->json(['success' => false, 'message' => 'You are not authorised to create a purchase order for this store.'], 403);
         }
 
@@ -197,7 +198,7 @@ class PurchaseOrderController extends Controller
             'items.receivedPackaging',
             'expense',
             'payments.creator',
-            'payments.bank'
+            'payments.bank',
         ]);
 
         return view('admin.inventory.purchase-orders.show', compact('purchaseOrder'));
@@ -243,7 +244,7 @@ class PurchaseOrderController extends Controller
 
         // Governance: verify the target store is accessible by this user
         $accessibleStoreIds = Store::active()->forUser(auth()->user())->pluck('id');
-        if (! $accessibleStoreIds->contains((int) $request->target_store_id)) {
+        if (!$accessibleStoreIds->contains((int) $request->target_store_id)) {
             return response()->json(['success' => false, 'message' => 'You are not authorised to assign this purchase order to that store.'], 403);
         }
 
@@ -489,7 +490,7 @@ class PurchaseOrderController extends Controller
 
         $products = $query->offset($offset)->limit($limit)
             ->get()
-            ->map(function($p) use ($storeId) {
+            ->map(function ($p) use ($storeId) {
                 // Get stock for specific store if provided
                 $stock = 0;
                 if ($storeId) {
@@ -511,7 +512,7 @@ class PurchaseOrderController extends Controller
                     'category_id' => $p->category_id,
                     'category_name' => $p->category->category_name ?? null,
                     'stock' => $stock,
-                    'packagings' => $p->packagings->sortBy('level')->map(function($pkg) {
+                    'packagings' => $p->packagings->sortBy('level')->map(function ($pkg) {
                         return [
                             'id' => $pkg->id,
                             'name' => $pkg->name,
@@ -604,36 +605,38 @@ class PurchaseOrderController extends Controller
                 ->with(['supplier', 'targetStore', 'payments', 'items.product']);
 
             return DataTables::of($query)
-                ->addColumn('supplier_name', fn($po) => $po->supplier->company_name ?? '-')
-                ->addColumn('store_name', fn($po) => $po->targetStore->store_name ?? '-')
-                ->addColumn('formatted_total', fn($po) => '₦' . number_format($po->total_amount, 2))
-                ->addColumn('formatted_paid', fn($po) => '₦' . number_format($po->amount_paid, 2))
-                ->addColumn('formatted_balance', fn($po) => '₦' . number_format($po->balance_due, 2))
-                ->addColumn('item_count', fn($po) => $po->items->count() . ' item(s)')
-                ->addColumn('product_types', function($po) {
+                ->addColumn('supplier_name', fn ($po) => $po->supplier->company_name ?? '-')
+                ->addColumn('store_name', fn ($po) => $po->targetStore->store_name ?? '-')
+                ->addColumn('formatted_total', fn ($po) => '₦' . number_format($po->total_amount, 2))
+                ->addColumn('formatted_paid', fn ($po) => '₦' . number_format($po->amount_paid, 2))
+                ->addColumn('formatted_balance', fn ($po) => '₦' . number_format($po->balance_due, 2))
+                ->addColumn('item_count', fn ($po) => $po->items->count() . ' item(s)')
+                ->addColumn('product_types', function ($po) {
                     $types = $po->items->pluck('product.product_type')->filter()->unique();
-                    $badges = $types->map(function($type) {
+                    $badges = $types->map(function ($type) {
                         $styles = [
                             'drug' => 'background:#d4edda;color:#155724',
                             'consumable' => 'background:#fff3cd;color:#856404',
                             'utility' => 'background:#d1ecf1;color:#0c5460',
                         ];
+
                         return sprintf('<span class="badge badge-sm" style="%s">%s</span>', $styles[$type] ?? '', ucfirst($type));
                     });
+
                     return $badges->implode(' ');
                 })
-                ->addColumn('payment_status_badge', fn($po) => sprintf(
+                ->addColumn('payment_status_badge', fn ($po) => sprintf(
                     '<span class="badge %s">%s</span>',
                     $po->getPaymentStatusBadgeClass(),
                     ucfirst($po->payment_status)
                 ))
-                ->addColumn('status_badge', fn($po) => sprintf(
+                ->addColumn('status_badge', fn ($po) => sprintf(
                     '<span class="badge %s">%s</span>',
                     $po->getStatusBadgeClass(),
                     ucfirst($po->status)
                 ))
-                ->addColumn('formatted_date', fn($po) => $po->created_at->format('d M Y'))
-                ->addColumn('actions', function($po) {
+                ->addColumn('formatted_date', fn ($po) => $po->created_at->format('d M Y'))
+                ->addColumn('actions', function ($po) {
                     return sprintf(
                         '<div class="btn-group" role="group">
                             <a href="%s" class="btn btn-sm btn-outline-info" title="View Details">

@@ -2,15 +2,13 @@
 
 namespace App\Services\Accounting;
 
-use App\Models\Bank;
 use App\Models\Accounting\Account;
 use App\Models\Accounting\BankReconciliation;
 use App\Models\Accounting\BankReconciliationItem;
 use App\Models\Accounting\JournalEntry;
 use App\Models\Accounting\JournalEntryLine;
+use App\Models\Bank;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
 
 /**
  * Bank Reconciliation Service
@@ -329,7 +327,7 @@ class ReconciliationService
                     'credit_amount' => $item->amount,
                     'description' => $item->description,
                     'category' => 'reconciliation_adjustment',
-                ]
+                ],
             ];
         } else {
             // Credit bank, debit contra
@@ -347,7 +345,7 @@ class ReconciliationService
                     'credit_amount' => $item->amount,
                     'description' => $item->description,
                     'category' => 'reconciliation_adjustment',
-                ]
+                ],
             ];
         }
 

@@ -2,9 +2,9 @@
 
 namespace App\Observers\Accounting;
 
-use App\Models\Bank;
 use App\Models\Accounting\Account;
 use App\Models\Accounting\AccountGroup;
+use App\Models\Bank;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
@@ -31,8 +31,9 @@ class BankObserver
         if ($bank->account_id) {
             Log::info('BankObserver: Bank already has account_id', [
                 'bank_id' => $bank->id,
-                'account_id' => $bank->account_id
+                'account_id' => $bank->account_id,
             ]);
+
             return;
         }
 
@@ -57,9 +58,10 @@ class BankObserver
             if (!$bankGroup) {
                 Log::warning('BankObserver: No suitable account group found for bank', [
                     'bank_id' => $bank->id,
-                    'bank_name' => $bank->name
+                    'bank_name' => $bank->name,
                 ]);
                 DB::rollBack();
+
                 return;
             }
 
@@ -96,7 +98,7 @@ class BankObserver
                 'bank_name' => $bank->name,
                 'account_id' => $account->id,
                 'account_code' => $account->code,
-                'account_name' => $account->name
+                'account_name' => $account->name,
             ]);
 
             DB::commit();
@@ -105,7 +107,7 @@ class BankObserver
             Log::error('BankObserver: Failed to create GL account for bank', [
                 'bank_id' => $bank->id,
                 'bank_name' => $bank->name,
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ]);
         }
     }
@@ -128,13 +130,13 @@ class BankObserver
                     Log::info('BankObserver: Updated GL account name', [
                         'bank_id' => $bank->id,
                         'account_id' => $account->id,
-                        'new_name' => $account->name
+                        'new_name' => $account->name,
                     ]);
                 }
             } catch (\Exception $e) {
                 Log::error('BankObserver: Failed to update GL account name', [
                     'bank_id' => $bank->id,
-                    'error' => $e->getMessage()
+                    'error' => $e->getMessage(),
                 ]);
             }
         }
@@ -151,13 +153,13 @@ class BankObserver
 
                     Log::info('BankObserver: Linked GL account to bank', [
                         'bank_id' => $bank->id,
-                        'account_id' => $account->id
+                        'account_id' => $account->id,
                     ]);
                 }
             } catch (\Exception $e) {
                 Log::error('BankObserver: Failed to link GL account to bank', [
                     'bank_id' => $bank->id,
-                    'error' => $e->getMessage()
+                    'error' => $e->getMessage(),
                 ]);
             }
         }

@@ -34,28 +34,38 @@ class StaffMedicalExamController extends Controller
             $rows = $query->get();
             $csv = "Staff,Exam Type,Exam Date,Result,Conducted By,Next Due,Notes\n";
             foreach ($rows as $r) {
-                $csv .= '"'.($r->staff?->user?->surname.' '.$r->staff?->user?->firstname.' '.$r->staff?->user?->othername).'","'.ucfirst(str_replace('_',' ',$r->exam_type)).'","'.($r->exam_date?->format('Y-m-d') ?? '').'","'.ucfirst($r->result).'","'.($r->conducted_by ?? '').'","'.($r->next_exam_due?->format('Y-m-d') ?? '').'","'.str_replace('"','""',$r->notes ?? '')."\"\n";
+                $csv .= '"' . ($r->staff?->user?->surname . ' ' . $r->staff?->user?->firstname . ' ' . $r->staff?->user?->othername) . '","' . ucfirst(str_replace('_', ' ', $r->exam_type)) . '","' . ($r->exam_date?->format('Y-m-d') ?? '') . '","' . ucfirst($r->result) . '","' . ($r->conducted_by ?? '') . '","' . ($r->next_exam_due?->format('Y-m-d') ?? '') . '","' . str_replace('"', '""', $r->notes ?? '') . "\"\n";
             }
-            return response($csv)->header('Content-Type', 'text/csv')->header('Content-Disposition', 'attachment; filename=medical_exams_'.date('Ymd').'.csv');
+
+            return response($csv)->header('Content-Type', 'text/csv')->header('Content-Disposition', 'attachment; filename=medical_exams_' . date('Ymd') . '.csv');
         }
 
         if ($request->ajax()) {
             return DataTables::of($query)
                 ->addIndexColumn()
-                ->addColumn('staff_name', fn($e) => '<a href="' . route('hr.tracking.profile', $e->staff_id) . '" class="font-weight-bold text-dark" title="View Tracking Profile">' . e($e->staff?->user?->surname . ' ' . $e->staff?->user?->firstname . ' ' . $e->staff?->user?->othername) . '</a>')
+                ->addColumn('staff_name', fn ($e) => '<a href="' . route('hr.tracking.profile', $e->staff_id) . '" class="font-weight-bold text-dark" title="View Tracking Profile">' . e($e->staff?->user?->surname . ' ' . $e->staff?->user?->firstname . ' ' . $e->staff?->user?->othername) . '</a>')
                 ->addColumn('exam_col', function ($e) {
                     $typeLabels = ['pre_employment' => 'Pre-Empl', 'periodic' => 'Periodic', 'exit' => 'Exit'];
+
                     return '<span class="badge badge-info">' . ($typeLabels[$e->exam_type] ?? ucfirst($e->exam_type)) . '</span><br><small class="text-muted">' . ($e->exam_date?->format('d M Y') ?? '') . '</small>';
                 })
                 ->addColumn('result_col', function ($e) {
                     $colors = ['fit' => 'success', 'unfit' => 'danger', 'conditional' => 'warning'];
                     $html = '<span class="badge badge-' . ($colors[$e->result] ?? 'secondary') . '">' . ucfirst($e->result) . '</span>';
-                    if ($e->conducted_by) $html .= '<br><small class="text-muted">' . e($e->conducted_by) . '</small>';
+                    if ($e->conducted_by) {
+                        $html .= '<br><small class="text-muted">' . e($e->conducted_by) . '</small>';
+                    }
+
                     return $html;
                 })
                 ->addColumn('next_due_col', function ($e) {
-                    if (!$e->next_exam_due) return '—';
-                    if ($e->next_exam_due->isPast()) return '<span class="text-danger font-weight-bold">' . $e->next_exam_due->format('d M Y') . ' <i class="mdi mdi-alert"></i></span>';
+                    if (!$e->next_exam_due) {
+                        return '—';
+                    }
+                    if ($e->next_exam_due->isPast()) {
+                        return '<span class="text-danger font-weight-bold">' . $e->next_exam_due->format('d M Y') . ' <i class="mdi mdi-alert"></i></span>';
+                    }
+
                     return $e->next_exam_due->format('d M Y');
                 })
                 ->addColumn('action', function ($e) {
@@ -64,6 +74,7 @@ class StaffMedicalExamController extends Controller
                         $html .= '<a href="' . Storage::url($e->document_path) . '" target="_blank" class="btn btn-sm btn-outline-info" title="View Report"><i class="mdi mdi-file-document"></i></a> ';
                     }
                     $html .= '<button class="btn btn-sm btn-outline-danger delete-btn" data-url="' . route('hr.medical-exams.destroy', $e) . '" title="Delete"><i class="mdi mdi-delete"></i></button>';
+
                     return $html;
                 })
                 ->rawColumns(['staff_name', 'exam_col', 'result_col', 'next_due_col', 'action'])
@@ -77,7 +88,7 @@ class StaffMedicalExamController extends Controller
             $scopedStaff = Staff::with(['user', 'department', 'cadre', 'gradeLevel'])->find($request->staff_id);
         }
 
-        $statsQuery = $scopedStaff ? StaffMedicalExam::where('staff_id', $scopedStaff->id) : new StaffMedicalExam;
+        $statsQuery = $scopedStaff ? StaffMedicalExam::where('staff_id', $scopedStaff->id) : new StaffMedicalExam();
         $stats = [
             'total' => (clone $statsQuery)->count(),
             'fit' => (clone $statsQuery)->where('result', 'fit')->count(),
@@ -116,6 +127,7 @@ class StaffMedicalExamController extends Controller
         }
 
         Alert::success('Success', 'Medical exam recorded.');
+
         return redirect()->back();
     }
 
@@ -134,6 +146,7 @@ class StaffMedicalExamController extends Controller
         }
 
         Alert::success('Success', 'Medical exam updated.');
+
         return redirect()->back();
     }
 
@@ -149,6 +162,7 @@ class StaffMedicalExamController extends Controller
         }
 
         Alert::success('Success', 'Medical exam record removed.');
+
         return redirect()->back();
     }
 }

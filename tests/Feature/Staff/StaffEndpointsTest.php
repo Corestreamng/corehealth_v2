@@ -26,7 +26,6 @@ class StaffEndpointsTest extends TestCase
         $this->assertNotNull($response->status());
     }
 
-
     /** @test */
     public function test_unique_email_generated_for_duplicate_names()
     {

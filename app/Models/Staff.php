@@ -125,44 +125,44 @@ class Staff extends Model implements Auditable
      * @var array
      */
     protected $casts = [
-        'is_unit_head'            => 'boolean',
-        'is_dept_head'            => 'boolean',
-        'date_of_birth'           => 'date',
-        'date_hired'              => 'date',
-        'date_confirmed'          => 'date',
-        'confirmation_due_date'   => 'date',
-        'license_expiry_date'     => 'date',
-        'retirement_date'         => 'date',
-        'max_service_date'        => 'date',
-        'last_promotion_date'     => 'date',
+        'is_unit_head' => 'boolean',
+        'is_dept_head' => 'boolean',
+        'date_of_birth' => 'date',
+        'date_hired' => 'date',
+        'date_confirmed' => 'date',
+        'confirmation_due_date' => 'date',
+        'license_expiry_date' => 'date',
+        'retirement_date' => 'date',
+        'max_service_date' => 'date',
+        'last_promotion_date' => 'date',
         'next_promotion_due_date' => 'date',
-        'last_medical_exam_date'  => 'date',
-        'next_medical_exam_due'   => 'date',
-        'salary_increment_date'   => 'date',
-        'suspended_at'            => 'datetime',
-        'suspension_end_date'     => 'date',
-        'can_see_clinic_queues'   => 'array',
-        'number_of_children'      => 'integer',
+        'last_medical_exam_date' => 'date',
+        'next_medical_exam_due' => 'date',
+        'salary_increment_date' => 'date',
+        'suspended_at' => 'datetime',
+        'suspension_end_date' => 'date',
+        'can_see_clinic_queues' => 'array',
+        'number_of_children' => 'integer',
     ];
 
     // Employment Types
-    const EMPLOYMENT_FULL_TIME = 'full_time';
-    const EMPLOYMENT_PART_TIME = 'part_time';
-    const EMPLOYMENT_CONTRACT = 'contract';
-    const EMPLOYMENT_INTERN = 'intern';
+    public const EMPLOYMENT_FULL_TIME = 'full_time';
+    public const EMPLOYMENT_PART_TIME = 'part_time';
+    public const EMPLOYMENT_CONTRACT = 'contract';
+    public const EMPLOYMENT_INTERN = 'intern';
 
     // Employment Statuses
-    const STATUS_ACTIVE = 'active';
-    const STATUS_SUSPENDED = 'suspended';
-    const STATUS_RESIGNED = 'resigned';
-    const STATUS_TERMINATED = 'terminated';
+    public const STATUS_ACTIVE = 'active';
+    public const STATUS_SUSPENDED = 'suspended';
+    public const STATUS_RESIGNED = 'resigned';
+    public const STATUS_TERMINATED = 'terminated';
 
     // Marital Statuses
-    const MARITAL_SINGLE = 'single';
-    const MARITAL_MARRIED = 'married';
-    const MARITAL_DIVORCED = 'divorced';
-    const MARITAL_WIDOWED = 'widowed';
-    const MARITAL_SEPARATED = 'separated';
+    public const MARITAL_SINGLE = 'single';
+    public const MARITAL_MARRIED = 'married';
+    public const MARITAL_DIVORCED = 'divorced';
+    public const MARITAL_WIDOWED = 'widowed';
+    public const MARITAL_SEPARATED = 'separated';
 
     // ====================
     // ORIGINAL RELATIONSHIPS
@@ -193,6 +193,7 @@ class Staff extends Model implements Auditable
             $this->clinic_id ? [$this->clinic_id] : [],
             $this->can_see_clinic_queues ?? []
         );
+
         return array_values(array_unique(array_filter($ids)));
     }
 
@@ -507,6 +508,7 @@ class Staff extends Model implements Auditable
     public function getSuspensionMessageAttribute(): ?string
     {
         $activeSuspension = $this->activeSuspension;
+
         return $activeSuspension?->suspension_message;
     }
 
@@ -516,6 +518,7 @@ class Staff extends Model implements Auditable
     public function getLeaveBalance(int $leaveTypeId, ?int $year = null): ?LeaveBalance
     {
         $year = $year ?? now()->year;
+
         return $this->leaveBalances()
             ->where('leave_type_id', $leaveTypeId)
             ->where('year', $year)
@@ -592,7 +595,10 @@ class Staff extends Model implements Auditable
      */
     public function getYearsOfServiceAttribute(): ?float
     {
-        if (!$this->date_hired) return null;
+        if (!$this->date_hired) {
+            return null;
+        }
+
         return round($this->date_hired->diffInYears(now()), 1);
     }
 
@@ -601,7 +607,10 @@ class Staff extends Model implements Auditable
      */
     public function getAgeAttribute(): ?int
     {
-        if (!$this->date_of_birth) return null;
+        if (!$this->date_of_birth) {
+            return null;
+        }
+
         return $this->date_of_birth->age;
     }
 
@@ -610,8 +619,11 @@ class Staff extends Model implements Auditable
      */
     public function getExpectedExitByAgeAttribute(): ?\Carbon\Carbon
     {
-        if (!$this->date_of_birth) return null;
+        if (!$this->date_of_birth) {
+            return null;
+        }
         $retirementAge = $this->gradeLevel?->retirement_age ?? 60;
+
         return $this->date_of_birth->copy()->addYears($retirementAge);
     }
 
@@ -620,8 +632,11 @@ class Staff extends Model implements Auditable
      */
     public function getExpectedExitByServiceAttribute(): ?\Carbon\Carbon
     {
-        if (!$this->date_hired) return null;
+        if (!$this->date_hired) {
+            return null;
+        }
         $maxYears = $this->gradeLevel?->max_years_of_service ?? 35;
+
         return $this->date_hired->copy()->addYears($maxYears);
     }
 
@@ -631,7 +646,10 @@ class Staff extends Model implements Auditable
     public function getGrossAnnualSalaryAttribute(): ?float
     {
         $profile = $this->currentSalaryProfile;
-        if (!$profile) return null;
+        if (!$profile) {
+            return null;
+        }
+
         return (float) $profile->gross_salary * 12;
     }
 
@@ -683,8 +701,11 @@ class Staff extends Model implements Auditable
      */
     public function computeRetirementDate(): ?\Carbon\Carbon
     {
-        if (!$this->date_of_birth) return null;
+        if (!$this->date_of_birth) {
+            return null;
+        }
         $retirementAge = $this->gradeLevel?->retirement_age ?? 60;
+
         return $this->date_of_birth->copy()->addYears($retirementAge);
     }
 
@@ -693,8 +714,11 @@ class Staff extends Model implements Auditable
      */
     public function computeMaxServiceDate(): ?\Carbon\Carbon
     {
-        if (!$this->date_hired) return null;
+        if (!$this->date_hired) {
+            return null;
+        }
         $maxYears = $this->gradeLevel?->max_years_of_service ?? 35;
+
         return $this->date_hired->copy()->addYears($maxYears);
     }
 

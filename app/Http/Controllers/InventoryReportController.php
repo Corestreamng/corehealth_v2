@@ -2,8 +2,8 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
 use App\Services\InventoryReportService;
+use Illuminate\Http\Request;
 
 class InventoryReportController extends Controller
 {
@@ -67,8 +67,8 @@ class InventoryReportController extends Controller
             'filters' => [
                 'date_from' => \Carbon\Carbon::parse($request->start_date)->format('d M Y'),
                 'date_to' => \Carbon\Carbon::parse($request->end_date)->format('d M Y'),
-                'store' => $request->store_id ? (\App\Models\Store::find($storeIds[0])->store_name ?? 'Specific Stores') : 'All Stores'
-            ]
+                'store' => $request->store_id ? (\App\Models\Store::find($storeIds[0])->store_name ?? 'Specific Stores') : 'All Stores',
+            ],
         ];
 
         return view('admin.inventory.print.summary-report-print', $viewData);

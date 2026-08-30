@@ -14,8 +14,7 @@ use Illuminate\Support\Facades\Schema;
  * 1. bank_reconciliations - Header with statement and GL balances
  * 2. bank_reconciliation_items - Individual transactions to match
  */
-return new class extends Migration
-{
+return new class () extends Migration {
     public function up(): void
     {
         // 1. Bank Reconciliations (Header)
@@ -65,7 +64,7 @@ return new class extends Migration
                 'in_progress',
                 'pending_review',
                 'approved',
-                'finalized'
+                'finalized',
             ])->default('draft');
 
             // Adjusting entries created
@@ -113,7 +112,7 @@ return new class extends Migration
                 'interest',
                 'other_credit',
                 'other_debit',
-                'adjustment'
+                'adjustment',
             ]);
 
             // Transaction details

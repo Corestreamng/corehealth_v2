@@ -2,12 +2,11 @@
 
 namespace App\Observers\Accounting;
 
-use App\Models\ProductOrServiceRequest;
-use App\Models\Payment;
-use App\Models\Patient;
 use App\Models\Accounting\Account;
-use App\Models\Accounting\AccountSubAccount;
 use App\Models\Accounting\JournalEntry;
+use App\Models\Patient;
+use App\Models\Payment;
+use App\Models\ProductOrServiceRequest;
 use App\Services\Accounting\AccountingService;
 use App\Services\Accounting\SubAccountService;
 use Illuminate\Support\Facades\App;
@@ -80,7 +79,7 @@ class ProductOrServiceRequestObserver
                 Log::error('ProductOrServiceRequestObserver: Failed to create HMO revenue journal entry', [
                     'request_id' => $request->id,
                     'error' => $e->getMessage(),
-                    'trace' => $e->getTraceAsString()
+                    'trace' => $e->getTraceAsString(),
                 ]);
             }
 
@@ -96,7 +95,7 @@ class ProductOrServiceRequestObserver
                 Log::error('ProductOrServiceRequestObserver: Failed to reverse HMO revenue journal entry', [
                     'request_id' => $request->id,
                     'error' => $e->getMessage(),
-                    'trace' => $e->getTraceAsString()
+                    'trace' => $e->getTraceAsString(),
                 ]);
             }
         }
@@ -135,11 +134,21 @@ class ProductOrServiceRequestObserver
     protected function autoSettleIfFullyCovered(ProductOrServiceRequest $request): void
     {
         // Guard: must be approved HMO with zero patient payable
-        if ($request->validation_status !== 'approved') return;
-        if (!$request->claims_amount || $request->claims_amount <= 0) return;
-        if ($request->payable_amount !== null && $request->payable_amount > 0) return;
-        if ($request->payment_id !== null) return;
-        if ($request->invoice_id !== null) return;
+        if ($request->validation_status !== 'approved') {
+            return;
+        }
+        if (!$request->claims_amount || $request->claims_amount <= 0) {
+            return;
+        }
+        if ($request->payable_amount !== null && $request->payable_amount > 0) {
+            return;
+        }
+        if ($request->payment_id !== null) {
+            return;
+        }
+        if ($request->invoice_id !== null) {
+            return;
+        }
 
         try {
             // Resolve patient_id for the payment record
@@ -149,14 +158,14 @@ class ProductOrServiceRequestObserver
             }
 
             $payment = Payment::create([
-                'payment_type'   => 'HMO_FULL_COVER',
+                'payment_type' => 'HMO_FULL_COVER',
                 'payment_method' => 'HMO_FULL_COVER',
-                'total'          => 0,
+                'total' => 0,
                 'total_discount' => 0,
-                'patient_id'     => $patientId,
-                'hmo_id'         => $request->hmo_id,
-                'user_id'        => 1, // System user
-                'reference_no'   => 'HMO-AUTO-' . $request->id,
+                'patient_id' => $patientId,
+                'hmo_id' => $request->hmo_id,
+                'user_id' => 1, // System user
+                'reference_no' => 'HMO-AUTO-' . $request->id,
             ]);
 
             // Update without triggering observer again
@@ -165,16 +174,16 @@ class ProductOrServiceRequestObserver
             });
 
             Log::info('ProductOrServiceRequestObserver: Auto-settled fully HMO-covered item', [
-                'request_id'    => $request->id,
-                'payment_id'    => $payment->id,
+                'request_id' => $request->id,
+                'payment_id' => $payment->id,
                 'claims_amount' => $request->claims_amount,
                 'coverage_mode' => $request->coverage_mode,
-                'hmo_id'        => $request->hmo_id,
+                'hmo_id' => $request->hmo_id,
             ]);
         } catch (\Exception $e) {
             Log::error('ProductOrServiceRequestObserver: Failed to auto-settle HMO item', [
                 'request_id' => $request->id,
-                'error'      => $e->getMessage(),
+                'error' => $e->getMessage(),
             ]);
         }
     }
@@ -197,8 +206,9 @@ class ProductOrServiceRequestObserver
 
         if ($journalEntries->isEmpty()) {
             Log::info('ProductOrServiceRequestObserver: No journal entries to reverse for rejected claim', [
-                'request_id' => $request->id
+                'request_id' => $request->id,
             ]);
+
             return;
         }
 
@@ -210,8 +220,9 @@ class ProductOrServiceRequestObserver
                 Log::info('ProductOrServiceRequestObserver: Journal entry cannot be reversed', [
                     'request_id' => $request->id,
                     'journal_entry_id' => $journalEntry->id,
-                    'status' => $journalEntry->status
+                    'status' => $journalEntry->status,
                 ]);
+
                 continue;
             }
 
@@ -227,7 +238,7 @@ class ProductOrServiceRequestObserver
                 'original_je_id' => $journalEntry->id,
                 'reversal_je_id' => $reversalEntry->id,
                 'amount' => $request->claims_amount,
-                'hmo_id' => $request->hmo_id
+                'hmo_id' => $request->hmo_id,
             ]);
         }
     }
@@ -240,8 +251,9 @@ class ProductOrServiceRequestObserver
         // Only create entry if there's a claims_amount
         if (!$request->claims_amount || $request->claims_amount <= 0) {
             Log::info('ProductOrServiceRequestObserver: Skipped - no claims amount', [
-                'request_id' => $request->id
+                'request_id' => $request->id,
             ]);
+
             return;
         }
 
@@ -256,6 +268,7 @@ class ProductOrServiceRequestObserver
                 'ar_hmo_found' => !is_null($arHmo),
                 'revenue_found' => !is_null($revenueAccount),
             ]);
+
             return;
         }
 
@@ -302,7 +315,7 @@ class ProductOrServiceRequestObserver
                 'hmo_id' => $request->hmo_id,
                 'patient_id' => $request->patient_id,
                 'category' => $category,
-            ]
+            ],
         ];
 
         $accountingService->createAndPostAutomatedEntry(
@@ -395,6 +408,7 @@ class ProductOrServiceRequestObserver
         if ($request->service) {
             return "Service: " . ($request->service->service_name ?? $request->service->name ?? 'Unknown');
         }
+
         return "Service rendered";
     }
 }

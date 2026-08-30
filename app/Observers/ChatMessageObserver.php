@@ -1,4 +1,5 @@
 <?php
+
 /**
  * ChatMessageObserver - Cleanup logic for group chat messages.
  */

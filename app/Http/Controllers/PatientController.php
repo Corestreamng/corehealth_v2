@@ -2,44 +2,39 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\NursingNote;
-use App\Models\HmoScheme;
-use App\Models\Patient;
-use App\Models\NursingNoteType;
-use App\Models\User;
-use App\Models\Hmo;
-use App\Models\Clinic;
-use App\Models\Service;
-use App\Models\Product;
-use App\Models\UserCategory;
-use Illuminate\Http\Request;
-use Illuminate\Http\Response;
-use Illuminate\Support\Facades\Auth;
-use Yajra\DataTables\DataTables;
-use App\Http\Controllers\Controller;
 use App\Models\AdmissionRequest;
 use App\Models\Bed;
+use App\Models\Clinic;
 use App\Models\Encounter;
+use App\Models\Hmo;
+use App\Models\HmoScheme;
 use App\Models\LabServiceRequest;
 use App\Models\MiscBill;
+use App\Models\NursingNote;
+use App\Models\NursingNoteType;
+use App\Models\Patient;
 use App\Models\PatientAccount;
+use App\Models\Product;
 use App\Models\ProductOrServiceRequest;
 use App\Models\ProductRequest;
 use App\Models\ReasonForEncounter;
-use Illuminate\Support\Facades\File;
-use Intervention\Image\Facades\Image;
-use Illuminate\Support\Facades\Storage;
-use RealRashid\SweetAlert\Facades\Alert;
-use Illuminate\Support\Facades\Validator;
+use App\Models\Service;
+use App\Models\User;
+use App\Models\UserCategory;
+use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
-use Spatie\Permission\Models\Role;
-use Spatie\Permission\Models\Permission;
-use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
-
-
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Validator;
+use Intervention\Image\Facades\Image;
+use Spatie\Permission\Models\Permission;
+use Spatie\Permission\Models\Role;
+use Yajra\DataTables\DataTables;
 
 class PatientController extends Controller
 {
@@ -55,18 +50,19 @@ class PatientController extends Controller
             ->with('scheme')
             ->orderBy('name')
             ->get()
-            ->groupBy(fn($h) => $h->scheme ? $h->scheme->name : 'Uncategorized');
+            ->groupBy(fn ($h) => $h->scheme ? $h->scheme->name : 'Uncategorized');
 
         // Flat list for scheme filter dropdown
         $schemes = HmoScheme::orderBy('name')->get(['id', 'name']);
 
         $stats = [
-            'total'   => Patient::count(),
-            'hmo'     => Patient::whereNotNull('hmo_id')->count(),
-            'today'   => Patient::whereDate('created_at', today())->count(),
-            'month'   => Patient::whereMonth('created_at', now()->month)
+            'total' => Patient::count(),
+            'hmo' => Patient::whereNotNull('hmo_id')->count(),
+            'today' => Patient::whereDate('created_at', today())->count(),
+            'month' => Patient::whereMonth('created_at', now()->month)
                                 ->whereYear('created_at', now()->year)->count(),
         ];
+
         return view('admin.patients.index', compact('hmosByScheme', 'schemes', 'stats'));
     }
 
@@ -84,7 +80,7 @@ class PatientController extends Controller
                 $query->where('hmo_id', $request->hmo_id);
             }
             if ($request->filled('scheme_id')) {
-                $query->whereHas('hmo', fn($q) => $q->where('hmo_scheme_id', $request->scheme_id));
+                $query->whereHas('hmo', fn ($q) => $q->where('hmo_scheme_id', $request->scheme_id));
             }
             if ($request->filled('gender')) {
                 $query->where('gender', $request->gender);
@@ -101,8 +97,8 @@ class PatientController extends Controller
                 ->editColumn('fullname', function ($pc) {
                     return ($pc->user) ? (userfullname($pc->user->id)) : ($pc->user_id);
                 })
-                ->filterColumn('fullname', function($query, $keyword) {
-                    $query->whereHas('user', function($q) use($keyword) {
+                ->filterColumn('fullname', function ($query, $keyword) {
+                    $query->whereHas('user', function ($q) use ($keyword) {
                         $q->where('firstname', 'like', "%{$keyword}%")
                           ->orWhere('surname', 'like', "%{$keyword}%")
                           ->orWhere('othername', 'like', "%{$keyword}%");
@@ -111,8 +107,8 @@ class PatientController extends Controller
                 ->addColumn('email', function ($patient) {
                     return $patient->user ? ($patient->user->email ?? 'N/A') : 'N/A';
                 })
-                ->filterColumn('email', function($query, $keyword) {
-                    $query->whereHas('user', function($q) use($keyword) {
+                ->filterColumn('email', function ($query, $keyword) {
+                    $query->whereHas('user', function ($q) use ($keyword) {
                         $q->where('email', 'like', "%{$keyword}%");
                     });
                 })
@@ -122,44 +118,50 @@ class PatientController extends Controller
                 ->editColumn('hmo_id', function ($patient) {
                     return $patient->hmo ? $patient->hmo->name : 'N/A';
                 })
-                ->filterColumn('hmo_id', function($query, $keyword) {
-                    $query->whereHas('hmo', function($q) use($keyword) {
+                ->filterColumn('hmo_id', function ($query, $keyword) {
+                    $query->whereHas('hmo', function ($q) use ($keyword) {
                         $q->where('name', 'like', "%{$keyword}%");
                     });
                 })
                 ->addColumn('scheme', function ($patient) {
                     return $patient->hmo && $patient->hmo->scheme ? $patient->hmo->scheme->name : 'N/A';
                 })
-                ->filterColumn('scheme', function($query, $keyword) {
-                    $query->whereHas('hmo.scheme', function($q) use($keyword) {
+                ->filterColumn('scheme', function ($query, $keyword) {
+                    $query->whereHas('hmo.scheme', function ($q) use ($keyword) {
                         $q->where('name', 'like', "%{$keyword}%");
                     });
                 })
                 ->addColumn('age', function ($patient) {
-                    if (!$patient->dob) return 'N/A';
+                    if (!$patient->dob) {
+                        return 'N/A';
+                    }
+
                     return \Carbon\Carbon::parse($patient->dob)->age . ' yrs';
                 })
-                ->filterColumn('age', function($query, $keyword) {
+                ->filterColumn('age', function ($query, $keyword) {
                     if (is_numeric(trim($keyword))) {
                         $query->whereRaw('TIMESTAMPDIFF(YEAR, dob, CURDATE()) = ?', [trim($keyword)]);
                     }
                 })
                 ->addColumn('nok', function ($patient) {
-                    $name  = $patient->next_of_kin_name  ?? null;
+                    $name = $patient->next_of_kin_name ?? null;
                     $phone = $patient->next_of_kin_phone ?? null;
-                    if (!$name && !$phone) return 'N/A';
+                    if (!$name && !$phone) {
+                        return 'N/A';
+                    }
+
                     return trim(($name ?? '') . ($phone ? ' · ' . $phone : ''));
                 })
-                ->filterColumn('nok', function($query, $keyword) {
-                    $query->where(function($q) use($keyword) {
+                ->filterColumn('nok', function ($query, $keyword) {
+                    $query->where(function ($q) use ($keyword) {
                         $q->where('next_of_kin_name', 'like', "%{$keyword}%")
                           ->orWhere('next_of_kin_phone', 'like', "%{$keyword}%");
                     });
                 })
                 ->addColumn('actions', function ($patient) {
                     $id = $patient->id;
-                    $profileUrl   = route('patient.show', $id);
-                    $editUrl      = route('patient.edit', $id);
+                    $profileUrl = route('patient.show', $id);
+                    $editUrl = route('patient.edit', $id);
                     $wb = [
                         ['route' => 'reception.workbench',     'icon' => 'fa fa-desktop',   'label' => 'Reception'],
                         ['route' => 'billing.workbench',       'icon' => 'fa fa-money',     'label' => 'Billing'],
@@ -175,8 +177,10 @@ class PatientController extends Controller
                         try {
                             $url = route($w['route']) . '?patient_id=' . $id;
                             $items .= '<li><a class="dropdown-item" href="' . $url . '"><i class="' . $w['icon'] . ' me-2"></i>' . $w['label'] . '</a></li>';
-                        } catch (\Exception $e) { /* Route may not exist — skip */ }
+                        } catch (\Exception $e) { /* Route may not exist — skip */
+                        }
                     }
+
                     return '<div class="d-flex flex-column gap-1" style="min-width:140px">'
                         . '<a href="' . $profileUrl . '" class="btn btn-primary btn-sm w-100"><i class="mdi mdi-account-details me-1"></i>Profile</a>'
                         . '<a href="' . $editUrl . '" class="btn btn-info btn-sm w-100"><i class="fa fa-pencil me-1"></i>Edit</a>'
@@ -189,6 +193,7 @@ class PatientController extends Controller
                 ->make(true);
         } catch (\Exception $e) {
             Log::error($e->getMessage(), ['exception' => $e]);
+
             return redirect()->back()->withInput()->with('error', $e->getMessage());
         }
     }
@@ -196,11 +201,11 @@ class PatientController extends Controller
     public function PatientServicesRendered(Request $request, $patient_id)
     {
         $patient = Patient::where('id', $patient_id)->first();
-        
+
         if (empty($request->start_from) || empty($request->stop_at)) {
             $request->merge([
                 'start_from' => date('Y-m-01'),
-                'stop_at'    => date('Y-m-t')
+                'stop_at' => date('Y-m-t'),
             ]);
         }
 
@@ -226,7 +231,6 @@ class PatientController extends Controller
                     $b->days = $days; // Add 'days' key to the Eloquent model
                 }
 
-
                 $misc = MiscBill::where('status', '>', 1)->where('patient_id', $patient_id)->where('created_at', '<=', $end)->where('created_at', '>=', $start)->get();
 
                 return view('admin.encounters.services_rendered')->with([
@@ -241,6 +245,7 @@ class PatientController extends Controller
                 ]);
             } catch (\Exception $e) {
                 Log::error($e->getMessage(), ['exception' => $e]);
+
                 return redirect()->back()->withInput()->with('error', $e->getMessage());
             }
         } else {
@@ -276,9 +281,9 @@ class PatientController extends Controller
 
             // If multiple search terms, search for each term across all fields
             if (count($searchTerms) > 1) {
-                $query->where(function($mainQuery) use ($searchTerms) {
+                $query->where(function ($mainQuery) use ($searchTerms) {
                     foreach ($searchTerms as $term) {
-                        $mainQuery->where(function($subQuery) use ($term) {
+                        $mainQuery->where(function ($subQuery) use ($term) {
                             $subQuery->where('users.surname', 'like', '%' . $term . '%')
                                 ->orWhere('users.firstname', 'like', '%' . $term . '%')
                                 ->orWhere('users.othername', 'like', '%' . $term . '%')
@@ -289,7 +294,7 @@ class PatientController extends Controller
                 });
             } else {
                 // Single search term - search across all fields
-                $query->where(function($subQuery) use ($q) {
+                $query->where(function ($subQuery) use ($q) {
                     $subQuery->where('users.surname', 'like', '%' . $q . '%')
                         ->orWhere('users.firstname', 'like', '%' . $q . '%')
                         ->orWhere('users.othername', 'like', '%' . $q . '%')
@@ -319,10 +324,12 @@ class PatientController extends Controller
                 ->addIndexColumn()
                 ->addColumn('user_id', function ($list) {
                     $fullname = trim(($list->surname ?? '') . " " . ($list->firstname ?? '') . " " . ($list->othername ?? ''));
+
                     return $fullname;
                 })
                 ->addColumn('hmo', function ($list) {
                     $hmo_name = Hmo::where('id', $list->hmo_id)->first()->name ?? 'N/A';
+
                     return $hmo_name;
                 })
                 ->addColumn('acc_bal', function ($list) {
@@ -350,6 +357,7 @@ class PatientController extends Controller
                 ->make(true);
         } catch (\Exception $e) {
             Log::error($e->getMessage(), ['exception' => $e]);
+
             return response()->json(['error' => 'An error occurred while searching patients.'], 500);
         }
     }
@@ -367,9 +375,11 @@ class PatientController extends Controller
             $products = Product::with(['category', 'price'])->where('status', 1)->get();
             $services = Service::with(['category', 'price'])->where('status', 1)->where('price_assign', 1)->where('category_id', appsettings('consultation_category_id'))->get();
             $clinics = Clinic::where('status', 1)->get();
+
             return view('admin.receptionist.send_queue', compact('family', 'products', 'services', 'clinics'));
         } catch (\Exception $e) {
             Log::error($e->getMessage(), ['exception' => $e]);
+
             return redirect()->back()->withInput()->with('error', $e->getMessage());
         }
     }
@@ -408,6 +418,7 @@ class PatientController extends Controller
             ]);
         } catch (\Exception $e) {
             Log::error($e->getMessage(), ['exception' => $e]);
+
             return redirect()->back()->withInput()->with('error', $e->getMessage());
         }
     }
@@ -423,10 +434,10 @@ class PatientController extends Controller
         try {
             // dd($request->all());
             $rules = [
-                'surname'   => 'required|min:3|max:150',
+                'surname' => 'required|min:3|max:150',
                 'firstname' => 'required|min:3|max:150',
                 'othername' => 'nullable|min:3|max:150',
-                'email'     => 'nullable|email|min:3|max:150|unique:users,email',
+                'email' => 'nullable|email|min:3|max:150|unique:users,email',
             ];
 
             if ($request->hasFile('filename')) {
@@ -462,11 +473,9 @@ class PatientController extends Controller
                 })
                 ->first();
 
-
             if ($existingUser) {
                 return redirect()->back()->withMessage('A user with this email or name/file no already exists.')->withMessageType('danger');
             }
-
 
             $v = Validator::make($request->all(), $rules);
 
@@ -512,7 +521,6 @@ class PatientController extends Controller
                     }
                 }
 
-
                 if ($request->hasFile('old_records')) {
                     $path_o = storage_path('/app/public/image/user/old_records/');
                     $file_o = $request->file('old_records');
@@ -534,29 +542,29 @@ class PatientController extends Controller
                     }
                 }
                 Db::beginTransaction();
-                $user              = new User;
+                $user = new User();
                 // dd($filename);
                 if ($request->filename) {
-                    $user->filename    = $filename;
+                    $user->filename = $filename;
                 } else {
-                    $user->filename    = "avatar.png";
+                    $user->filename = "avatar.png";
                 }
 
                 if ($request->old_records) {
-                    $user->old_records    = ($filename_o) ? $filename_o : null;
+                    $user->old_records = ($filename_o) ? $filename_o : null;
                 } else {
-                    $user->old_records    = null;
+                    $user->old_records = null;
                 }
 
-                $user->is_admin    = 19;
-                $user->surname     = $request->surname;
-                $user->firstname   = $request->firstname;
-                $user->othername   = ($request->othername) ? $request->othername : " ";
-                $user->email       = $request->email;
-                $user->password    = Hash::make($request->password);
+                $user->is_admin = 19;
+                $user->surname = $request->surname;
+                $user->firstname = $request->firstname;
+                $user->othername = ($request->othername) ? $request->othername : " ";
+                $user->email = $request->email;
+                $user->password = Hash::make($request->password);
 
-                $user->assignRole      = ($request->assignRole) ? 1 : 0;
-                $user->assignPermission      = ($request->assignPermission) ? 1 : 0;
+                $user->assignRole = ($request->assignRole) ? 1 : 0;
+                $user->assignPermission = ($request->assignPermission) ? 1 : 0;
 
                 $user->save();
 
@@ -587,29 +595,28 @@ class PatientController extends Controller
                                     "attributes" => [
                                         [
                                             "attribute" => appsettings('dhis_tracked_entity_attr_fname'),
-                                            "value" => $request->firstname
+                                            "value" => $request->firstname,
                                         ],
                                         [
                                             "attribute" => appsettings('dhis_tracked_entity_attr_lname'),
-                                            "value" => $request->surname
+                                            "value" => $request->surname,
                                         ],
                                         [
                                             "attribute" => appsettings('dhis_tracked_entity_attr_gender'),
-                                            "value" => $request->gender
+                                            "value" => $request->gender,
                                         ],
                                         [
                                             "attribute" => appsettings('dhis_tracked_entity_attr_dob'),
-                                            "value" => date('Y-m-d', strtotime($request->dob))
+                                            "value" => date('Y-m-d', strtotime($request->dob)),
                                         ],
                                         [
                                             "attribute" => appsettings('dhis_tracked_entity_attr_city'),
-                                            "value" => $last_word ?? ''
-                                        ]
-                                    ]
-                                ]
-                            ]
+                                            "value" => $last_word ?? '',
+                                        ],
+                                    ],
+                                ],
+                            ],
                         ]);
-
 
                     $trackedEntityInstanceId = $trackedEntityResponse->json()['bundleReport']['typeReportMap']['TRACKED_ENTITY']['objectReports'][0]['uid'];
 
@@ -623,24 +630,24 @@ class PatientController extends Controller
                                     "attributes" => [
                                         [
                                             "attribute" => appsettings('dhis_tracked_entity_attr_fname'),
-                                            "value" => $request->firstname
+                                            "value" => $request->firstname,
                                         ],
                                         [
                                             "attribute" => appsettings('dhis_tracked_entity_attr_lname'),
-                                            "value" => $request->surname
+                                            "value" => $request->surname,
                                         ],
                                         [
                                             "attribute" => appsettings('dhis_tracked_entity_attr_gender'),
-                                            "value" => $request->gender
+                                            "value" => $request->gender,
                                         ],
                                         [
                                             "attribute" => appsettings('dhis_tracked_entity_attr_dob'),
-                                            "value" => date('Y-m-d', strtotime($request->dob))
+                                            "value" => date('Y-m-d', strtotime($request->dob)),
                                         ],
                                         [
                                             "attribute" => appsettings('dhis_tracked_entity_attr_city'),
-                                            "value" => $last_word ?? ''
-                                        ]
+                                            "value" => $last_word ?? '',
+                                        ],
                                     ],
                                     "enrolledAt" => $currentTime,
                                     "occurredAt" => $currentTime,
@@ -648,9 +655,9 @@ class PatientController extends Controller
                                     "program" => appsettings('dhis_tracked_entity_program'),
                                     "status" => "COMPLETED",
                                     "trackedEntityType" => appsettings('dhis_tracked_entity_type'),
-                                    "trackedEntity" => $trackedEntityInstanceId
-                                ]
-                            ]
+                                    "trackedEntity" => $trackedEntityInstanceId,
+                                ],
+                            ],
                         ]);
 
                     $enrollmentId = $enrollmentResponse->json()['bundleReport']['typeReportMap']['ENROLLMENT']['objectReports'][0]['uid'];
@@ -659,7 +666,7 @@ class PatientController extends Controller
                     $enrollmentId = '';
                 }
 
-                $patient = new patient;
+                $patient = new patient();
 
                 $patient->user_id = $user->id;
                 $patient->file_no = $request->file_no ?? null;
@@ -700,7 +707,7 @@ class PatientController extends Controller
 
                 $patient->save();
 
-                $patient_account = new PatientAccount;
+                $patient_account = new PatientAccount();
                 $patient_account->patient_id = $patient->id;
                 $patient_account->save();
 
@@ -727,19 +734,21 @@ class PatientController extends Controller
                     )->withHeaders([
                         'Content-Type' => 'application/json',
                     ])->post(appsettings('COREHMS_SUPERADMIN_URL') . '/event-notification.php?notification_type=patient', [
-                        'nothing' => true
+                        'nothing' => true,
                     ]);
 
                     Log::info("sent api request For Patient, ", [$response->body()]);
                 }
                 $msg = 'Patient  [' . $user->firstname . ' ' . $user->surname . '] was successfully created.';
                 Db::commit();
+
                 return redirect()->back()->withMessage($msg)->withMessageType('success');
                 // return redirect()->route('staff.create');
             }
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error($e->getMessage(), ['exception' => $e]);
+
             return redirect()->back()->withMessage($e->getMessage())->withMessageType('danger');
         }
     }
@@ -848,6 +857,7 @@ class PatientController extends Controller
             ));
         } catch (\Exception $e) {
             Log::error($e->getMessage(), ['exception' => $e]);
+
             return redirect()->back()->withInput()->with('error', $e->getMessage());
         }
     }
@@ -863,9 +873,11 @@ class PatientController extends Controller
         try {
             $hmos = Hmo::with('scheme')->where('status', 1)->get()->groupBy('scheme.name');
             $family_principals = Patient::with(['user'])->where('is_family_principal', 1)->where('id', '!=', $patient->id)->get();
+
             return view('admin.patients.edit', compact('patient', 'hmos', 'family_principals'));
         } catch (\Exception $e) {
             Log::error($e->getMessage(), ['exception' => $e]);
+
             return redirect()->back()->withInput()->with('error', $e->getMessage());
         }
     }
@@ -882,10 +894,10 @@ class PatientController extends Controller
         try {
             // dd($request->all());
             $rules = [
-                'surname'   => 'required|min:3|max:150',
+                'surname' => 'required|min:3|max:150',
                 'firstname' => 'required|min:3|max:150',
                 'othername' => 'nullable|min:3|max:150',
-                'email'     => 'nullable|email|min:3|max:150|unique:users,email,' . $patient->user_id,
+                'email' => 'nullable|email|min:3|max:150|unique:users,email,' . $patient->user_id,
             ];
 
             if ($request->hasFile('filename')) {
@@ -949,7 +961,7 @@ class PatientController extends Controller
 
                         Image::make($file)
                             ->resize(106, 106)
-                            ->save($thumbnail_path .  $filename);
+                            ->save($thumbnail_path . $filename);
                     } else {
                         Image::make($file)
                             ->resize(106, 106)
@@ -980,22 +992,21 @@ class PatientController extends Controller
                     }
 
                     if ($request->old_records) {
-                        $user->old_records    = $filename_o ?? null;
+                        $user->old_records = $filename_o ?? null;
                     } else {
-                        $user->old_records    = null;
+                        $user->old_records = null;
                     }
                 }
 
+                $user->is_admin = 19;
+                $user->surname = $request->surname;
+                $user->firstname = $request->firstname;
+                $user->othername = ($request->othername) ? $request->othername : " ";
+                $user->email = $request->email;
+                $user->password = Hash::make($request->password);
 
-                $user->is_admin    = 19;
-                $user->surname     = $request->surname;
-                $user->firstname   = $request->firstname;
-                $user->othername   = ($request->othername) ? $request->othername : " ";
-                $user->email       = $request->email;
-                $user->password    = Hash::make($request->password);
-
-                $user->assignRole      = ($request->assignRole) ? 1 : 0;
-                $user->assignPermission      = ($request->assignPermission) ? 1 : 0;
+                $user->assignRole = ($request->assignRole) ? 1 : 0;
+                $user->assignPermission = ($request->assignPermission) ? 1 : 0;
 
                 $user->update();
 
@@ -1031,12 +1042,14 @@ class PatientController extends Controller
                 // Send User an email with set password link
                 $msg = 'User [' . $user->firstname . ' ' . $user->surname . '] was successfully updated.';
                 DB::commit();
+
                 return redirect()->route('patient.index')->withMessage($msg)->withMessageType('success');
                 // return redirect()->route('staff.create');
             }
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error($e->getMessage(), ['exception' => $e]);
+
             return redirect()->back()->withInput()->with('error', $e->getMessage());
         }
     }
@@ -1050,21 +1063,21 @@ class PatientController extends Controller
     public function updateAllergies(Request $request, Patient $patient)
     {
         $request->validate([
-            'allergies' => 'required|string'
+            'allergies' => 'required|string',
         ]);
 
         // Clean and parse the allergies to store as JSON array
         $allergiesStr = $request->allergies;
         $allergiesArray = array_map('trim', explode(',', $allergiesStr));
         $allergiesArray = array_filter($allergiesArray); // Remove empty values
-        
+
         $patient->allergies = $allergiesArray;
         $patient->save();
 
         return response()->json([
             'status' => 'success',
             'message' => 'Allergies updated successfully',
-            'data' => $patient->allergies
+            'data' => $patient->allergies,
         ]);
     }
 

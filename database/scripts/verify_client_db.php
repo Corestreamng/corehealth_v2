@@ -1,13 +1,13 @@
 <?php
 
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Config;
 use App\Models\DoctorAppointment;
-use App\Models\Patient;
-use App\Models\StockBatch;
-use App\Models\Product;
-use App\Models\Store;
 use App\Models\Hmo;
+use App\Models\Patient;
+use App\Models\Product;
+use App\Models\StockBatch;
+use App\Models\Store;
+use Illuminate\Support\Facades\Config;
+use Illuminate\Support\Facades\DB;
 
 echo "Starting DB Verification Script for _corehealth_db_v2_hopehill...\n";
 
@@ -43,7 +43,7 @@ try {
             'start_time' => '10:00:00',
             'end_time' => '10:30:00',
             'status' => 6,
-            'appointment_type' => 'scheduled'
+            'appointment_type' => 'scheduled',
         ]);
         echo "Created DoctorAppointment ID: {$appointment->id}\n";
     } else {
@@ -67,7 +67,7 @@ try {
             'received_date' => now()->toDateString(),
             'supplier_id' => null,
             'created_by' => $user->id,
-            'is_active' => 1
+            'is_active' => 1,
         ]);
         echo "Created StockBatch ID: {$stockBatch->id}\n";
     } else {

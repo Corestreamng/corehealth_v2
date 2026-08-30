@@ -5,11 +5,10 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use OwenIt\Auditing\Contracts\Auditable;
-use Carbon\Carbon;
 
 /**
  * ShiftHandover Model
- * 
+ *
  * Represents a handover document created at end of shift.
  * Must be acknowledged by incoming nurse before starting their shift.
  */
@@ -96,6 +95,7 @@ class ShiftHandover extends Model implements Auditable
         if ($wardId) {
             return $query->where('ward_id', $wardId);
         }
+
         return $query;
     }
 
@@ -123,6 +123,7 @@ class ShiftHandover extends Model implements Auditable
         if (!$this->shift_started_at || !$this->shift_ended_at) {
             return null;
         }
+
         return $this->shift_started_at->diffForHumans($this->shift_ended_at, true);
     }
 
@@ -138,7 +139,10 @@ class ShiftHandover extends Model implements Auditable
 
     public function getTotalActionsAttribute(): int
     {
-        if (!$this->action_summary) return 0;
+        if (!$this->action_summary) {
+            return 0;
+        }
+
         return $this->action_summary['total'] ?? 0;
     }
 
@@ -147,6 +151,7 @@ class ShiftHandover extends Model implements Auditable
         if ($this->is_acknowledged) {
             return '<span class="badge badge-success"><i class="fa fa-check"></i> Acknowledged</span>';
         }
+
         return '<span class="badge badge-warning"><i class="fa fa-clock"></i> Pending</span>';
     }
 
@@ -164,6 +169,7 @@ class ShiftHandover extends Model implements Auditable
         ];
         $color = $colors[$this->shift_type] ?? 'secondary';
         $icon = $icons[$this->shift_type] ?? 'mdi-clock';
+
         return '<span class="badge badge-' . $color . '"><i class="mdi ' . $icon . '"></i> ' . $this->shift_type_label . '</span>';
     }
 
@@ -217,7 +223,9 @@ class ShiftHandover extends Model implements Auditable
     public function formatActionSummary(): array
     {
         $actionSummary = $this->action_summary;
-        if (!$actionSummary || !is_array($actionSummary)) return [];
+        if (!$actionSummary || !is_array($actionSummary)) {
+            return [];
+        }
 
         $formatted = [];
 
@@ -251,7 +259,9 @@ class ShiftHandover extends Model implements Auditable
             ];
 
             foreach ($actionSummary as $key => $count) {
-                if ($key === 'total' || $key === 'patients_seen' || $count == 0) continue;
+                if ($key === 'total' || $key === 'patients_seen' || $count == 0) {
+                    continue;
+                }
                 if (isset($labels[$key])) {
                     $formatted[] = array_merge($labels[$key], ['count' => $count]);
                 }
@@ -266,7 +276,9 @@ class ShiftHandover extends Model implements Auditable
      */
     public function getPatientHighlightsFormatted(): array
     {
-        if (!$this->patient_highlights) return [];
+        if (!$this->patient_highlights) {
+            return [];
+        }
 
         $formatted = [];
         foreach ($this->patient_highlights as $patient) {

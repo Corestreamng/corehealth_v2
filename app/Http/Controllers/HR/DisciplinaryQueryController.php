@@ -18,6 +18,7 @@ use Illuminate\Support\Facades\Validator;
 class DisciplinaryQueryController extends Controller
 {
     protected DisciplinaryService $disciplinaryService;
+
     protected HrAttachmentService $attachmentService;
 
     public function __construct(DisciplinaryService $disciplinaryService, HrAttachmentService $attachmentService)
@@ -57,6 +58,7 @@ class DisciplinaryQueryController extends Controller
                 ->addIndexColumn()
                 ->addColumn('staff_name', function ($q) {
                     $user = $q->staff->user ?? null;
+
                     return $user ? $user->surname . ' ' . $user->firstname . ' ' . $user->othername : 'N/A';
                 })
                 ->addColumn('severity_badge', function ($q) {
@@ -64,9 +66,10 @@ class DisciplinaryQueryController extends Controller
                         'minor' => 'info',
                         'moderate' => 'warning',
                         'major' => 'danger',
-                        'critical' => 'dark'
+                        'critical' => 'dark',
                     ];
                     $color = $colors[$q->severity] ?? 'secondary';
+
                     return '<span class="badge badge-' . $color . '">' . ucfirst($q->severity) . '</span>';
                 })
                 ->addColumn('status_badge', function ($q) {
@@ -74,24 +77,28 @@ class DisciplinaryQueryController extends Controller
                         DisciplinaryQuery::STATUS_ISSUED => 'warning',
                         DisciplinaryQuery::STATUS_RESPONSE_RECEIVED => 'info',
                         DisciplinaryQuery::STATUS_UNDER_REVIEW => 'primary',
-                        DisciplinaryQuery::STATUS_CLOSED => 'secondary'
+                        DisciplinaryQuery::STATUS_CLOSED => 'secondary',
                     ];
                     $color = $colors[$q->status] ?? 'secondary';
                     $label = str_replace('_', ' ', ucfirst($q->status));
+
                     return '<span class="badge badge-' . $color . '">' . $label . '</span>';
                 })
                 ->addColumn('outcome_badge', function ($q) {
-                    if (!$q->outcome) return '<span class="text-muted">-</span>';
+                    if (!$q->outcome) {
+                        return '<span class="text-muted">-</span>';
+                    }
                     $colors = [
                         'warning' => 'warning',
                         'final_warning' => 'orange',
                         'suspension' => 'danger',
                         'termination' => 'dark',
                         'exonerated' => 'success',
-                        'no_action' => 'secondary'
+                        'no_action' => 'secondary',
                     ];
                     $color = $colors[$q->outcome] ?? 'secondary';
                     $label = str_replace('_', ' ', ucfirst($q->outcome));
+
                     return '<span class="badge badge-' . $color . '">' . $label . '</span>';
                 })
                 ->editColumn('created_at', function ($q) {
@@ -101,6 +108,7 @@ class DisciplinaryQueryController extends Controller
                     $viewBtn = '<button type="button" class="btn btn-sm btn-info view-btn mr-1" data-id="' . $q->id . '" title="View"><i class="mdi mdi-eye"></i></button>';
                     $editBtn = '<button type="button" class="btn btn-sm btn-primary edit-btn mr-1" data-id="' . $q->id . '" title="Edit"><i class="mdi mdi-pencil"></i></button>';
                     $deleteBtn = '<button type="button" class="btn btn-sm btn-danger delete-btn" data-id="' . $q->id . '" title="Delete"><i class="mdi mdi-delete"></i></button>';
+
                     return $viewBtn . $editBtn . $deleteBtn;
                 })
                 ->rawColumns(['severity_badge', 'status_badge', 'outcome_badge', 'action'])
@@ -140,6 +148,7 @@ class DisciplinaryQueryController extends Controller
             if ($request->ajax()) {
                 return response()->json(['success' => false, 'errors' => $validator->errors()], 422);
             }
+
             return back()->withErrors($validator)->withInput();
         }
 
@@ -159,7 +168,7 @@ class DisciplinaryQueryController extends Controller
                 return response()->json([
                     'success' => true,
                     'message' => 'Disciplinary query issued successfully.',
-                    'query' => $query->load(['staff.user', 'issuedBy'])
+                    'query' => $query->load(['staff.user', 'issuedBy']),
                 ]);
             }
 
@@ -169,6 +178,7 @@ class DisciplinaryQueryController extends Controller
             if ($request->ajax()) {
                 return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
             }
+
             return back()->withErrors(['error' => $e->getMessage()])->withInput();
         }
     }
@@ -181,7 +191,7 @@ class DisciplinaryQueryController extends Controller
             'decidedBy',
             'suspension',
             'termination',
-            'attachments.uploadedBy'
+            'attachments.uploadedBy',
         ]);
 
         $outcomes = DisciplinaryQuery::getOutcomes();
@@ -191,7 +201,7 @@ class DisciplinaryQueryController extends Controller
             return response()->json([
                 'success' => true,
                 'query' => $disciplinaryQuery,
-                'outcomes' => $outcomes
+                'outcomes' => $outcomes,
             ]);
         }
 
@@ -204,6 +214,7 @@ class DisciplinaryQueryController extends Controller
             if ($request->ajax()) {
                 return response()->json(['success' => false, 'message' => 'Closed queries cannot be edited.'], 403);
             }
+
             return back()->with('error', 'Closed queries cannot be edited.');
         }
 
@@ -214,7 +225,7 @@ class DisciplinaryQueryController extends Controller
             return response()->json([
                 'success' => true,
                 'query' => $disciplinaryQuery->load(['staff.user']),
-                'severities' => $severities
+                'severities' => $severities,
             ]);
         }
 
@@ -227,6 +238,7 @@ class DisciplinaryQueryController extends Controller
             if ($request->ajax()) {
                 return response()->json(['success' => false, 'message' => 'Closed queries cannot be edited.'], 403);
             }
+
             return back()->with('error', 'Closed queries cannot be edited.');
         }
 
@@ -243,19 +255,20 @@ class DisciplinaryQueryController extends Controller
             if ($request->ajax()) {
                 return response()->json(['success' => false, 'errors' => $validator->errors()], 422);
             }
+
             return back()->withErrors($validator)->withInput();
         }
 
         $disciplinaryQuery->update($request->only([
             'subject', 'description', 'severity', 'incident_date',
-            'expected_response', 'response_deadline'
+            'expected_response', 'response_deadline',
         ]));
 
         if ($request->ajax()) {
             return response()->json([
                 'success' => true,
                 'message' => 'Disciplinary query updated.',
-                'query' => $disciplinaryQuery->load(['staff.user', 'issuedBy'])
+                'query' => $disciplinaryQuery->load(['staff.user', 'issuedBy']),
             ]);
         }
 
@@ -269,6 +282,7 @@ class DisciplinaryQueryController extends Controller
             if ($request->ajax()) {
                 return response()->json(['success' => false, 'message' => 'Only newly issued queries can be deleted.'], 403);
             }
+
             return back()->with('error', 'Only newly issued queries can be deleted.');
         }
 
@@ -277,7 +291,7 @@ class DisciplinaryQueryController extends Controller
         if ($request->ajax()) {
             return response()->json([
                 'success' => true,
-                'message' => 'Disciplinary query deleted.'
+                'message' => 'Disciplinary query deleted.',
             ]);
         }
 
@@ -323,6 +337,7 @@ class DisciplinaryQueryController extends Controller
             if ($request->ajax()) {
                 return response()->json(['success' => false, 'message' => 'This query is not ready for a decision.'], 400);
             }
+
             return back()->with('error', 'This query is not ready for a decision.');
         }
 
@@ -354,6 +369,7 @@ class DisciplinaryQueryController extends Controller
             if ($request->ajax()) {
                 return response()->json(['success' => false, 'errors' => $validator->errors()], 422);
             }
+
             return back()->withErrors($validator)->withInput();
         }
 
@@ -421,7 +437,7 @@ class DisciplinaryQueryController extends Controller
             if ($request->ajax()) {
                 return response()->json([
                     'success' => true,
-                    'message' => $message
+                    'message' => $message,
                 ]);
             }
 
@@ -431,6 +447,7 @@ class DisciplinaryQueryController extends Controller
             if ($request->ajax()) {
                 return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
             }
+
             return back()->with('error', $e->getMessage());
         }
     }

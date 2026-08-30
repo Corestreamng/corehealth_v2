@@ -33,10 +33,10 @@ class CapexProjectExpense extends Model
     ];
 
     // Status constants
-    const STATUS_PENDING = 'pending';
-    const STATUS_APPROVED = 'approved';
-    const STATUS_PAID = 'paid';
-    const STATUS_VOID = 'void';
+    public const STATUS_PENDING = 'pending';
+    public const STATUS_APPROVED = 'approved';
+    public const STATUS_PAID = 'paid';
+    public const STATUS_VOID = 'void';
 
     // Relationships
     public function project()

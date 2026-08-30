@@ -2,32 +2,25 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Service;
-use App\Http\Requests\StoreServiceRequest;
-use App\Http\Requests\UpdateServiceRequest;
-
-use App\Models\Sale;
-use App\Models\ApplicationStatu;
-use App\Models\Stock;
-use App\Models\ServiceCategory;
-use App\Models\ProcedureDefinition;
 use App\Models\ProcedureCategory;
+use App\Models\ProcedureDefinition;
 use App\Models\Product;
+use App\Models\Service;
+use App\Models\ServiceCategory;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
-use Yajra\DataTables\DataTables;
-use RealRashid\SweetAlert\Facades\Alert;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Yajra\DataTables\DataTables;
 
 class ServiceController extends Controller
 {
     public function listServices(Request $request)
     {
         $showDeactivated = $request->has('show_deactivated') && $request->show_deactivated == 'true';
-        
+
         $query = Service::withoutGlobalScopes();
-        
+
         if (!$showDeactivated) {
             $query->where('status', 1);
         }
@@ -74,6 +67,7 @@ class ServiceController extends Controller
                 if ($pc->status == 0) {
                     $statusBadge = '<br><span class="badge badge-danger">Deactivated</span>';
                 }
+
                 return ($price ? '₦' . number_format($price, 2) : '<span class="text-muted">—</span>') . $statusBadge;
             })
             ->addColumn('actions', function ($pc) {
@@ -123,9 +117,9 @@ class ServiceController extends Controller
         $isProcedure = $request->category_id == $procedureCategoryId;
 
         $rules = [
-            'category_id'          => 'required',
-            'service_name'          => 'required',
-            'service_code'          => 'required',
+            'category_id' => 'required',
+            'service_name' => 'required',
+            'service_code' => 'required',
         ];
 
         if ($isProcedure) {
@@ -143,14 +137,14 @@ class ServiceController extends Controller
             }
 
             DB::beginTransaction();
-            $myservice                      = new Service();
-            $myservice->user_id             = Auth::user()->id;
-            $myservice->category_id         = $request->category_id;
-            $myservice->service_name        = trim($request->service_name);
-            $myservice->service_code        = $request->service_code;
+            $myservice = new Service();
+            $myservice->user_id = Auth::user()->id;
+            $myservice->category_id = $request->category_id;
+            $myservice->service_name = trim($request->service_name);
+            $myservice->service_code = $request->service_code;
             $myservice->consult_cycle_duration = $request->consult_cycle_duration;
-            $myservice->is_combo            = $request->has('is_combo');
-            $myservice->status              = 1;
+            $myservice->is_combo = $request->has('is_combo');
+            $myservice->status = 1;
             $myservice->save();
 
             if ($isProcedure) {
@@ -169,19 +163,21 @@ class ServiceController extends Controller
             if ($myservice->is_combo && $request->has('bundle_items')) {
                 foreach ($request->bundle_items as $item) {
                     $myservice->bundleItems()->create([
-                        'item_id'   => $item['item_id'],
+                        'item_id' => $item['item_id'],
                         'item_type' => $item['item_type'],
-                        'qty'       => $item['qty'] ?? 1,
-                        'note'      => $item['note'] ?? null,
-                        'dose'      => $item['dose'] ?? null,
+                        'qty' => $item['qty'] ?? 1,
+                        'note' => $item['note'] ?? null,
+                        'dose' => $item['dose'] ?? null,
                     ]);
                 }
             }
 
             DB::commit();
+
             return redirect(route('services.index', ['category' => $myservice->category_id]))->withMessage('Saved successfully')->withMessageType('success');
         } catch (\Exception $e) {
             DB::rollBack();
+
             return redirect()->back()->withInput()->withMessage("An error occurred " . $e->getMessage());
         }
     }
@@ -193,9 +189,9 @@ class ServiceController extends Controller
             $isProcedure = $request->category_id == $procedureCategoryId;
 
             $rules = [
-                'category_id'          => 'required',
-                'service_name'          => 'required',
-                'service_code'          => 'required',
+                'category_id' => 'required',
+                'service_name' => 'required',
+                'service_code' => 'required',
             ];
 
             if ($isProcedure) {
@@ -212,13 +208,13 @@ class ServiceController extends Controller
             }
 
             DB::beginTransaction();
-            $myservice                 = Service::withoutGlobalScopes()->whereId($id)->first();
-            $oldCategoryId             = $myservice->category_id;
-            $myservice->category_id    = $request->category_id;
-            $myservice->service_name   = $request->service_name;
-            $myservice->service_code   = $request->service_code;
+            $myservice = Service::withoutGlobalScopes()->whereId($id)->first();
+            $oldCategoryId = $myservice->category_id;
+            $myservice->category_id = $request->category_id;
+            $myservice->service_name = $request->service_name;
+            $myservice->service_code = $request->service_code;
             $myservice->consult_cycle_duration = $request->consult_cycle_duration;
-            $myservice->is_combo       = $request->has('is_combo');
+            $myservice->is_combo = $request->has('is_combo');
             $myservice->update();
 
             if ($isProcedure) {
@@ -244,11 +240,11 @@ class ServiceController extends Controller
                 $myservice->bundleItems()->delete();
                 foreach ($request->bundle_items as $item) {
                     $myservice->bundleItems()->create([
-                        'item_id'   => $item['item_id'],
+                        'item_id' => $item['item_id'],
                         'item_type' => $item['item_type'],
-                        'qty'       => $item['qty'] ?? 1,
-                        'note'      => $item['note'] ?? null,
-                        'dose'      => $item['dose'] ?? null,
+                        'qty' => $item['qty'] ?? 1,
+                        'note' => $item['note'] ?? null,
+                        'dose' => $item['dose'] ?? null,
                     ]);
                 }
             } else {
@@ -256,9 +252,11 @@ class ServiceController extends Controller
             }
 
             DB::commit();
+
             return redirect(route('services.index', ['category' => $myservice->category_id]))->withMessage('Updated successfully')->withMessageType('success');
         } catch (\Exception $e) {
             DB::rollBack();
+
             return redirect()->back()->withInput()->withMessage("An error occurred " . $e->getMessage());
         }
     }
@@ -268,6 +266,7 @@ class ServiceController extends Controller
         $filterCategory = $request->input('category');
         $categories = ServiceCategory::where('status', 1)->orderBy('category_name')->pluck('category_name', 'id')->all();
         $categoryName = $filterCategory ? ($categories[$filterCategory] ?? null) : null;
+
         return view('admin.service.index', compact('filterCategory', 'categories', 'categoryName'));
     }
 
@@ -278,6 +277,7 @@ class ServiceController extends Controller
         $procedureCategories = ProcedureCategory::where('status', 1)->orderBy('name')->get();
         $procedureCategoryId = appsettings('procedure_category_id');
         $consultationCategoryId = appsettings('consultation_category_id');
+
         return view('admin.service.create', compact('category', 'procedureCategories', 'procedureCategoryId', 'consultationCategoryId', 'selectedCategory'));
     }
 
@@ -290,6 +290,7 @@ class ServiceController extends Controller
         $consultationCategoryId = appsettings('consultation_category_id');
         $procedure = $product->procedureDefinition;
         $selectedCategory = $product->category_id;
+
         return view('admin.service.edit', compact('product', 'category', 'procedureCategories', 'procedureCategoryId', 'consultationCategoryId', 'procedure', 'selectedCategory'));
     }
 
@@ -298,6 +299,7 @@ class ServiceController extends Controller
         $pp = Service::withoutGlobalScopes()->with(['bundleItems.service', 'bundleItems.product'])->findOrFail($id);
         $pc = \App\Models\Sale::where('service_id', $id)->sum('total_amount');
         $qt = \App\Models\Sale::where('service_id', $id)->sum('quantity_buy');
+
         return view('admin.service.product', compact('id', 'pp', 'pc', 'qt'));
     }
 
@@ -306,6 +308,7 @@ class ServiceController extends Controller
         $service = Service::withoutGlobalScopes()->with(['bundleItems.service', 'bundleItems.product'])->findOrFail($id);
         $service->status = $service->status == 1 ? 0 : 1;
         $service->save();
+
         return response()->json(['success' => true, 'new_status' => $service->status]);
     }
 
@@ -392,8 +395,8 @@ class ServiceController extends Controller
                     foreach ($tariffs as $tariff) {
                         $hmoMap[$tariff->service_id] = [
                             'payable_amount' => $tariff->payable_amount,
-                            'claims_amount'  => $tariff->claims_amount,
-                            'coverage_mode'  => $tariff->coverage_mode,
+                            'claims_amount' => $tariff->claims_amount,
+                            'coverage_mode' => $tariff->coverage_mode,
                         ];
                     }
                 }
@@ -427,31 +430,31 @@ class ServiceController extends Controller
         $hmoData = $hmoMap[$service->id] ?? null;
 
         $result = [
-            'id'               => $service->id,
-            'service_name'     => $service->service_name,
-            'service_code'     => $service->service_code ?? '',
-            'category'         => $service->category ? $service->category->category_name : 'N/A',
-            'price'            => $service->price,
-            'base_price'       => $basePrice,
-            'payable_amount'   => $hmoData['payable_amount'] ?? $basePrice,
-            'claims_amount'    => $hmoData['claims_amount'] ?? 0,
-            'coverage_mode'    => $hmoData['coverage_mode'] ?? null,
-            'is_combo'         => $isCombo || $service->is_combo,
+            'id' => $service->id,
+            'service_name' => $service->service_name,
+            'service_code' => $service->service_code ?? '',
+            'category' => $service->category ? $service->category->category_name : 'N/A',
+            'price' => $service->price,
+            'base_price' => $basePrice,
+            'payable_amount' => $hmoData['payable_amount'] ?? $basePrice,
+            'claims_amount' => $hmoData['claims_amount'] ?? 0,
+            'coverage_mode' => $hmoData['coverage_mode'] ?? null,
+            'is_combo' => $isCombo || $service->is_combo,
         ];
 
         // If this is a combo, include bundle item summary
         if ($result['is_combo'] && $service->bundleItems && $service->bundleItems->count() > 0) {
             $result['bundle_items'] = $service->bundleItems->map(function ($item) {
                 return [
-                    'id'        => $item->id,
-                    'type'      => $item->item_type, // 'service' | 'product'
-                    'item_id'   => $item->item_id,
-                    'name'      => $item->item_type === 'service'
+                    'id' => $item->id,
+                    'type' => $item->item_type, // 'service' | 'product'
+                    'item_id' => $item->item_id,
+                    'name' => $item->item_type === 'service'
                         ? ($item->service->service_name ?? 'Unknown')
                         : ($item->product->product_name ?? 'Unknown'),
-                    'qty'       => $item->qty,
-                    'dose'      => $item->dose,
-                    'note'      => $item->note,
+                    'qty' => $item->qty,
+                    'dose' => $item->dose,
+                    'note' => $item->note,
                 ];
             })->toArray();
         }
@@ -462,6 +465,7 @@ class ServiceController extends Controller
     public function buildTemplate($id)
     {
         $service = Service::with('category')->findOrFail($id);
+
         return view('admin.service.template-builder', ['service' => $service, 'template' => $service->result_template_v2]);
     }
 
@@ -470,6 +474,7 @@ class ServiceController extends Controller
         $service = Service::findOrFail($id);
         $service->result_template_v2 = $request->template;
         $service->save();
+
         return response()->json(['success' => true]);
     }
 

@@ -2,25 +2,24 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Procedure;
-use App\Models\ProcedureItem;
-use App\Models\ProcedureTeamMember;
-use App\Models\ProcedureNote;
-use App\Models\ProcedureAttachment;
-use App\Models\LabServiceRequest;
-use App\Models\ImagingServiceRequest;
-use App\Models\ProductRequest;
-use App\Models\ProductOrServiceRequest;
-use App\Models\PatientAccount;
 use App\Helpers\HmoHelper;
+use App\Models\ImagingServiceRequest;
+use App\Models\LabServiceRequest;
+use App\Models\PatientAccount;
+use App\Models\Procedure;
+use App\Models\ProcedureAttachment;
+use App\Models\ProcedureItem;
+use App\Models\ProcedureNote;
+use App\Models\ProcedureTeamMember;
+use App\Models\ProductOrServiceRequest;
+use App\Models\ProductRequest;
 use App\Services\StoreContextResolver;
-use App\Models\StoreContextRule;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
-use Barryvdh\DomPDF\Facade\Pdf;
 
 /**
  * PatientProcedureController
@@ -59,8 +58,8 @@ class PatientProcedureController extends Controller
             'attachments.uploadedBy',
         ]);
 
-        $resolver         = app(StoreContextResolver::class);
-        $resolvedStore    = $resolver->resolve(auth()->user());
+        $resolver = app(StoreContextResolver::class);
+        $resolvedStore = $resolver->resolve(auth()->user());
         $accessibleStores = $resolver->candidateStores(auth()->user());
 
         return view("admin.patient-procedures.show", compact("procedure", "resolvedStore", "accessibleStores"));
@@ -121,12 +120,12 @@ class PatientProcedureController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => 'Procedure updated successfully',
-                'procedure' => $procedure->fresh()->load(['service', 'productOrServiceRequest'])
+                'procedure' => $procedure->fresh()->load(['service', 'productOrServiceRequest']),
             ]);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Error updating procedure: ' . $e->getMessage()
+                'message' => 'Error updating procedure: ' . $e->getMessage(),
             ], 500);
         }
     }
@@ -145,29 +144,29 @@ class PatientProcedureController extends Controller
         try {
             $procedure->outcome = $request->outcome;
             $procedure->outcome_notes = $request->outcome_notes;
-            
+
             // Documenting an outcome is considered completing the procedure
             if ($procedure->procedure_status !== \App\Models\Procedure::STATUS_CANCELLED) {
                 $procedure->procedure_status = \App\Models\Procedure::STATUS_COMPLETED;
                 $procedure->actual_end_time = now();
-                
+
                 if (!$procedure->actual_start_time) {
                     $procedure->actual_start_time = now();
                 }
             }
-            
+
             $procedure->save();
 
             return response()->json([
                 'success' => true,
                 'message' => 'Outcome saved successfully',
                 'outcome' => $procedure->outcome,
-                'outcome_notes' => $procedure->outcome_notes
+                'outcome_notes' => $procedure->outcome_notes,
             ]);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Error saving outcome: ' . $e->getMessage()
+                'message' => 'Error saving outcome: ' . $e->getMessage(),
             ], 500);
         }
     }
@@ -182,7 +181,7 @@ class PatientProcedureController extends Controller
             if ($procedure->procedure_status === Procedure::STATUS_CANCELLED) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Cannot complete a cancelled procedure'
+                    'message' => 'Cannot complete a cancelled procedure',
                 ], 422);
             }
 
@@ -197,12 +196,12 @@ class PatientProcedureController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => 'Procedure marked as completed'
+                'message' => 'Procedure marked as completed',
             ]);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Error completing procedure: ' . $e->getMessage()
+                'message' => 'Error completing procedure: ' . $e->getMessage(),
             ], 500);
         }
     }
@@ -221,7 +220,7 @@ class PatientProcedureController extends Controller
             'labServiceRequest.service',
             'imagingServiceRequest.service',
             'productRequest.product',
-            'productOrServiceRequest.payment'
+            'productOrServiceRequest.payment',
         ])->get();
 
         return response()->json($items->map(function ($item) {
@@ -245,21 +244,21 @@ class PatientProcedureController extends Controller
             return DB::transaction(function () use ($request, $procedure) {
                 $isFreeForm = strpos($request->service_id, 'FF_') === 0;
                 $service = null;
-                
+
                 if (!$isFreeForm) {
                     $service = \App\Models\Service::with('price')->find($request->service_id);
                 }
 
                 // Create the lab service request
                 $labRequest = new LabServiceRequest();
-                
+
                 if ($isFreeForm) {
                     $labRequest->is_free_form = true;
                     $labRequest->free_form_name = str_replace(' [Free-form]', '', substr($request->service_id, 3));
                 } else {
                     $labRequest->service_id = $service->id;
                 }
-                
+
                 $labRequest->patient_id = $procedure->patient_id;
                 $labRequest->encounter_id = $procedure->encounter_id;
                 $labRequest->doctor_id = Auth::id();
@@ -288,14 +287,14 @@ class PatientProcedureController extends Controller
                     'message' => 'Lab request added successfully',
                     'item' => $this->formatItemResponse($procedureItem->fresh()->load([
                         'labServiceRequest.service.price',
-                        'productOrServiceRequest'
-                    ]))
+                        'productOrServiceRequest',
+                    ])),
                 ]);
             });
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Error adding lab request: ' . $e->getMessage()
+                'message' => 'Error adding lab request: ' . $e->getMessage(),
             ], 500);
         }
     }
@@ -316,21 +315,21 @@ class PatientProcedureController extends Controller
             return DB::transaction(function () use ($request, $procedure) {
                 $isFreeForm = strpos($request->service_id, 'FF_') === 0;
                 $service = null;
-                
+
                 if (!$isFreeForm) {
                     $service = \App\Models\Service::with('price')->find($request->service_id);
                 }
 
                 // Create the imaging service request
                 $imagingRequest = new ImagingServiceRequest();
-                
+
                 if ($isFreeForm) {
                     $imagingRequest->is_free_form = true;
                     $imagingRequest->free_form_name = str_replace(' [Free-form]', '', substr($request->service_id, 3));
                 } else {
                     $imagingRequest->service_id = $service->id;
                 }
-                
+
                 $imagingRequest->patient_id = $procedure->patient_id;
                 $imagingRequest->encounter_id = $procedure->encounter_id;
                 $imagingRequest->doctor_id = Auth::id();
@@ -359,17 +358,18 @@ class PatientProcedureController extends Controller
                     'message' => 'Imaging request added successfully',
                     'item' => $this->formatItemResponse($procedureItem->fresh()->load([
                         'imagingServiceRequest.service.price',
-                        'productOrServiceRequest'
-                    ]))
+                        'productOrServiceRequest',
+                    ])),
                 ]);
             });
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Error adding imaging request: ' . $e->getMessage()
+                'message' => 'Error adding imaging request: ' . $e->getMessage(),
             ], 500);
         }
     }
+
     /**
      * Add a service bill to the procedure
      * Spec Reference: Part 3.2.1, 3.2.2, 3.4
@@ -429,14 +429,14 @@ class PatientProcedureController extends Controller
                     "success" => true,
                     "message" => "Service added successfully",
                     "item" => $this->formatItemResponse($procedureItem->fresh()->load([
-                        "productOrServiceRequest.service.price"
-                    ]))
+                        "productOrServiceRequest.service.price",
+                    ])),
                 ]);
             });
         } catch (\Exception $e) {
             return response()->json([
                 "success" => false,
-                "message" => "Error adding service: " . $e->getMessage()
+                "message" => "Error adding service: " . $e->getMessage(),
             ], 500);
         }
     }
@@ -458,21 +458,21 @@ class PatientProcedureController extends Controller
             return DB::transaction(function () use ($request, $procedure) {
                 $isFreeForm = strpos($request->product_id, 'FF_') === 0;
                 $product = null;
-                
+
                 if (!$isFreeForm) {
                     $product = \App\Models\Product::with('price')->find($request->product_id);
                 }
 
                 // Create the product request
                 $productRequest = new ProductRequest();
-                
+
                 if ($isFreeForm) {
                     $productRequest->is_free_form = true;
                     $productRequest->free_form_name = str_replace(' [Free-form]', '', substr($request->product_id, 3));
                 } else {
                     $productRequest->product_id = $product->id;
                 }
-                
+
                 $productRequest->patient_id = $procedure->patient_id;
                 $productRequest->encounter_id = $procedure->encounter_id;
                 $productRequest->doctor_id = Auth::id();
@@ -502,14 +502,14 @@ class PatientProcedureController extends Controller
                     'message' => 'Medication added successfully',
                     'item' => $this->formatItemResponse($procedureItem->fresh()->load([
                         'productRequest.product.price',
-                        'productOrServiceRequest'
-                    ]))
+                        'productOrServiceRequest',
+                    ])),
                 ]);
             });
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Error adding medication: ' . $e->getMessage()
+                'message' => 'Error adding medication: ' . $e->getMessage(),
             ], 500);
         }
     }
@@ -525,7 +525,7 @@ class PatientProcedureController extends Controller
             if ($item->procedure_id !== $procedure->id) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Item does not belong to this procedure'
+                    'message' => 'Item does not belong to this procedure',
                 ], 403);
             }
 
@@ -554,12 +554,12 @@ class PatientProcedureController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => 'Item removed successfully'
+                'message' => 'Item removed successfully',
             ]);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Error removing item: ' . $e->getMessage()
+                'message' => 'Error removing item: ' . $e->getMessage(),
             ], 500);
         }
     }
@@ -589,7 +589,7 @@ class PatientProcedureController extends Controller
                     'is_lead' => $member->is_lead,
                     'notes' => $member->notes,
                 ];
-            })
+            }),
         ]);
     }
 
@@ -618,7 +618,7 @@ class PatientProcedureController extends Controller
             if ($existing) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'This user is already a team member'
+                    'message' => 'This user is already a team member',
                 ], 422);
             }
 
@@ -643,12 +643,12 @@ class PatientProcedureController extends Controller
                     'display_role' => $member->role === 'other' ? $member->custom_role : ucfirst(str_replace('_', ' ', $member->role)),
                     'is_lead' => $member->is_lead,
                     'notes' => $member->notes,
-                ]
+                ],
             ]);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Error adding team member: ' . $e->getMessage()
+                'message' => 'Error adding team member: ' . $e->getMessage(),
             ], 500);
         }
     }
@@ -661,7 +661,7 @@ class PatientProcedureController extends Controller
         if ($member->procedure_id !== $procedure->id) {
             return response()->json([
                 'success' => false,
-                'message' => 'Member does not belong to this procedure'
+                'message' => 'Member does not belong to this procedure',
             ], 403);
         }
 
@@ -690,12 +690,12 @@ class PatientProcedureController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => 'Team member updated successfully'
+                'message' => 'Team member updated successfully',
             ]);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Error updating team member: ' . $e->getMessage()
+                'message' => 'Error updating team member: ' . $e->getMessage(),
             ], 500);
         }
     }
@@ -708,7 +708,7 @@ class PatientProcedureController extends Controller
         if ($member->procedure_id !== $procedure->id) {
             return response()->json([
                 'success' => false,
-                'message' => 'Member does not belong to this procedure'
+                'message' => 'Member does not belong to this procedure',
             ], 403);
         }
 
@@ -717,12 +717,12 @@ class PatientProcedureController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => 'Team member removed successfully'
+                'message' => 'Team member removed successfully',
             ]);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Error removing team member: ' . $e->getMessage()
+                'message' => 'Error removing team member: ' . $e->getMessage(),
             ], 500);
         }
     }
@@ -752,7 +752,7 @@ class PatientProcedureController extends Controller
                     'created_at' => $note->created_at->format('d M Y H:i'),
                     'updated_at' => $note->updated_at->format('d M Y H:i'),
                 ];
-            })
+            }),
         ]);
     }
 
@@ -787,12 +787,12 @@ class PatientProcedureController extends Controller
                     'content' => $note->content,
                     'created_by' => optional($note->createdBy)->name,
                     'created_at' => $note->created_at->format('d M Y H:i'),
-                ]
+                ],
             ]);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Error adding note: ' . $e->getMessage()
+                'message' => 'Error adding note: ' . $e->getMessage(),
             ], 500);
         }
     }
@@ -805,7 +805,7 @@ class PatientProcedureController extends Controller
         if ($note->procedure_id !== $procedure->id) {
             return response()->json([
                 'success' => false,
-                'message' => 'Note does not belong to this procedure'
+                'message' => 'Note does not belong to this procedure',
             ], 403);
         }
 
@@ -816,7 +816,7 @@ class PatientProcedureController extends Controller
                 'note_type' => $note->note_type,
                 'title' => $note->title,
                 'content' => $note->content,
-            ]
+            ],
         ]);
     }
 
@@ -828,7 +828,7 @@ class PatientProcedureController extends Controller
         if ($note->procedure_id !== $procedure->id) {
             return response()->json([
                 'success' => false,
-                'message' => 'Note does not belong to this procedure'
+                'message' => 'Note does not belong to this procedure',
             ], 403);
         }
 
@@ -836,7 +836,7 @@ class PatientProcedureController extends Controller
         if ($note->created_by !== Auth::id()) {
             return response()->json([
                 'success' => false,
-                'message' => 'You can only edit notes you created'
+                'message' => 'You can only edit notes you created',
             ], 403);
         }
 
@@ -858,12 +858,12 @@ class PatientProcedureController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => 'Note updated successfully'
+                'message' => 'Note updated successfully',
             ]);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Error updating note: ' . $e->getMessage()
+                'message' => 'Error updating note: ' . $e->getMessage(),
             ], 500);
         }
     }
@@ -876,7 +876,7 @@ class PatientProcedureController extends Controller
         if ($note->procedure_id !== $procedure->id) {
             return response()->json([
                 'success' => false,
-                'message' => 'Note does not belong to this procedure'
+                'message' => 'Note does not belong to this procedure',
             ], 403);
         }
 
@@ -884,7 +884,7 @@ class PatientProcedureController extends Controller
         if ($note->created_by !== Auth::id()) {
             return response()->json([
                 'success' => false,
-                'message' => 'You can only delete notes you created'
+                'message' => 'You can only delete notes you created',
             ], 403);
         }
 
@@ -893,12 +893,12 @@ class PatientProcedureController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => 'Note deleted successfully'
+                'message' => 'Note deleted successfully',
             ]);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Error deleting note: ' . $e->getMessage()
+                'message' => 'Error deleting note: ' . $e->getMessage(),
             ], 500);
         }
     }
@@ -979,13 +979,13 @@ class PatientProcedureController extends Controller
                     'success' => true,
                     'message' => $refundAmount > 0
                         ? "Procedure cancelled. ₦" . number_format($refundAmount, 2) . " refunded to patient account."
-                        : "Procedure cancelled successfully."
+                        : "Procedure cancelled successfully.",
                 ]);
             });
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Error cancelling procedure: ' . $e->getMessage()
+                'message' => 'Error cancelling procedure: ' . $e->getMessage(),
             ], 500);
         }
     }
@@ -1009,7 +1009,7 @@ class PatientProcedureController extends Controller
 
         $requests = LabServiceRequest::with([
             'service', 'encounter', 'patient', 'patient.user',
-            'productOrServiceRequest', 'doctor', 'biller', 'results_person'
+            'productOrServiceRequest', 'doctor', 'biller', 'results_person',
         ])
             ->whereIn('id', $labRequestIds)
             ->orderBy('created_at', 'DESC')
@@ -1037,7 +1037,7 @@ class PatientProcedureController extends Controller
 
         $requests = ImagingServiceRequest::with([
             'service', 'encounter', 'patient', 'patient.user',
-            'productOrServiceRequest', 'doctor', 'biller', 'results_person'
+            'productOrServiceRequest', 'doctor', 'biller', 'results_person',
         ])
             ->whereIn('id', $imagingRequestIds)
             ->orderBy('created_at', 'DESC')
@@ -1065,7 +1065,7 @@ class PatientProcedureController extends Controller
 
         $requests = ProductRequest::with([
             'product.price', 'product.category', 'encounter', 'patient',
-            'productOrServiceRequest.payment', 'doctor', 'biller', 'dispenser'
+            'productOrServiceRequest.payment', 'doctor', 'biller', 'dispenser',
         ])
             ->whereIn('id', $productRequestIds)
             ->orderBy('created_at', 'DESC')
@@ -1176,6 +1176,7 @@ class PatientProcedureController extends Controller
         $str .= '</div>';
 
         $str .= '</div></div>';
+
         return $str;
     }
 
@@ -1271,6 +1272,7 @@ class PatientProcedureController extends Controller
         $str .= '</div>';
 
         $str .= '</div></div>';
+
         return $str;
     }
 
@@ -1366,6 +1368,7 @@ class PatientProcedureController extends Controller
         }
 
         $str .= '</div></div>';
+
         return $str;
     }
 
@@ -1568,8 +1571,8 @@ class PatientProcedureController extends Controller
     private function formatProcedureCard($procedure)
     {
         $serviceName = $procedure->name;
-        $category = $procedure->is_free_form 
-            ? 'Free-Form Procedure' 
+        $category = $procedure->is_free_form
+            ? 'Free-Form Procedure'
             : (optional(optional($procedure->procedureDefinition)->procedureCategory)->category_name ?? '');
         $status = $procedure->procedure_status ?? 'requested';
         $priority = $procedure->priority ?? 'routine';
@@ -1697,12 +1700,12 @@ HTML;
     {
         $request->validate([
             'consent_status' => 'required|in:pending,obtained,waived,not_required',
-            'consent_notes'  => 'nullable|string|max:500|required_if:consent_status,waived',
+            'consent_notes' => 'nullable|string|max:500|required_if:consent_status,waived',
         ]);
 
         try {
-            $procedure->consent_status    = $request->consent_status;
-            $procedure->consent_notes     = $request->consent_notes;
+            $procedure->consent_status = $request->consent_status;
+            $procedure->consent_notes = $request->consent_notes;
             $procedure->consent_marked_by = Auth::id();
             $procedure->consent_marked_at = now();
             $procedure->save();
@@ -1710,12 +1713,12 @@ HTML;
             $procedure->load('consentMarkedBy');
 
             return response()->json([
-                'success'          => true,
-                'message'          => 'Consent status updated successfully.',
-                'consent_status'   => $procedure->consent_status,
-                'consent_notes'    => $procedure->consent_notes,
-                'consent_marked_by'=> optional($procedure->consentMarkedBy)->name ?? 'Unknown',
-                'consent_marked_at'=> $procedure->consent_marked_at
+                'success' => true,
+                'message' => 'Consent status updated successfully.',
+                'consent_status' => $procedure->consent_status,
+                'consent_notes' => $procedure->consent_notes,
+                'consent_marked_by' => optional($procedure->consentMarkedBy)->name ?? 'Unknown',
+                'consent_marked_at' => $procedure->consent_marked_at
                     ? $procedure->consent_marked_at->format('d M Y H:i')
                     : null,
             ]);
@@ -1733,11 +1736,11 @@ HTML;
     public function signConsent(Request $request, Procedure $procedure)
     {
         $request->validate([
-            'signee_name'  => 'required|string|max:150',
+            'signee_name' => 'required|string|max:150',
             'relationship' => 'required|string|max:100',
-            'notes'        => 'nullable|string|max:1000',
+            'notes' => 'nullable|string|max:1000',
             'consent_text' => 'nullable|string',
-            'signature'    => 'required|string', // Base64 png data URL
+            'signature' => 'required|string', // Base64 png data URL
         ]);
 
         try {
@@ -1762,7 +1765,7 @@ HTML;
 
             if (empty($consentText)) {
                 $rawTemplate = $sett->consent_template ?? '';
-                
+
                 // Parse placeholders fallback
                 $chiefSurgeon = $procedure->teamMembers->where('role', 'chief_surgeon')->first();
                 $doctorName = $chiefSurgeon && $chiefSurgeon->user ? $chiefSurgeon->user->name : (optional($procedure->requestedByUser)->name ?? Auth::user()->name);
@@ -1780,14 +1783,14 @@ HTML;
 
             // Generate branded PDF
             $pdf = Pdf::loadView('admin.patient-procedures.consent_pdf', [
-                'procedure'    => $procedure,
-                'consentText'  => $consentText,
-                'signeeName'   => $request->signee_name,
+                'procedure' => $procedure,
+                'consentText' => $consentText,
+                'signeeName' => $request->signee_name,
                 'relationship' => $request->relationship,
-                'notes'        => $request->notes,
-                'signature'    => $request->signature,
-                'date'         => now()->format('d M Y H:i'),
-                'sett'         => $sett,
+                'notes' => $request->notes,
+                'signature' => $request->signature,
+                'date' => now()->format('d M Y H:i'),
+                'sett' => $sett,
             ]);
 
             $pdfContent = $pdf->output();
@@ -1800,7 +1803,7 @@ HTML;
             // Create ProcedureAttachment log
             $rawPatientName = $procedure->patient ? userfullname($procedure->patient->user_id) : 'Unknown Patient';
             $fileNo = $procedure->patient->file_no ?? 'N/A';
-            
+
             $cleanPatientName = preg_replace('/[^A-Za-z0-9_\-]/', '_', $rawPatientName);
             $cleanFileNo = preg_replace('/[^A-Za-z0-9_\-]/', '_', $fileNo);
             $cleanProcedureName = preg_replace('/[^A-Za-z0-9_\-]/', '_', $procedureName);
@@ -1808,18 +1811,18 @@ HTML;
             $filename = "Informed_Consent_{$cleanPatientName}_{$cleanFileNo}_{$cleanProcedureName}.pdf";
 
             $attachment = ProcedureAttachment::create([
-                'procedure_id'  => $procedure->id,
-                'uploaded_by'   => Auth::id(),
-                'file_path'     => $filePath,
+                'procedure_id' => $procedure->id,
+                'uploaded_by' => Auth::id(),
+                'file_path' => $filePath,
                 'original_name' => $filename,
-                'file_size'     => strlen($pdfContent),
-                'mime_type'     => 'application/pdf',
-                'label'         => 'Signed Informed Consent Form',
+                'file_size' => strlen($pdfContent),
+                'mime_type' => 'application/pdf',
+                'label' => 'Signed Informed Consent Form',
             ]);
 
             // Update procedure consent status
-            $procedure->consent_status    = 'obtained';
-            $procedure->consent_notes     = "Digitally signed by " . $request->signee_name . " (" . $request->relationship . ")";
+            $procedure->consent_status = 'obtained';
+            $procedure->consent_notes = "Digitally signed by " . $request->signee_name . " (" . $request->relationship . ")";
             $procedure->consent_marked_by = Auth::id();
             $procedure->consent_marked_at = now();
             $procedure->save();
@@ -1848,43 +1851,43 @@ HTML;
     public function uploadAttachment(Request $request, Procedure $procedure)
     {
         $request->validate([
-            'file'  => 'required|file|mimes:pdf,jpg,jpeg,png,docx|max:10240',
+            'file' => 'required|file|mimes:pdf,jpg,jpeg,png,docx|max:10240',
             'label' => 'nullable|string|max:100',
         ]);
 
         try {
-            $file      = $request->file('file');
+            $file = $request->file('file');
             $extension = $file->getClientOriginalExtension();
-            $uuid      = Str::uuid()->toString();
-            $path      = "procedure-attachments/{$procedure->id}/{$uuid}.{$extension}";
+            $uuid = Str::uuid()->toString();
+            $path = "procedure-attachments/{$procedure->id}/{$uuid}.{$extension}";
 
             Storage::disk('local')->put($path, file_get_contents($file->getRealPath()));
 
             $attachment = ProcedureAttachment::create([
-                'procedure_id'  => $procedure->id,
-                'uploaded_by'   => Auth::id(),
-                'file_path'     => $path,
+                'procedure_id' => $procedure->id,
+                'uploaded_by' => Auth::id(),
+                'file_path' => $path,
                 'original_name' => $file->getClientOriginalName(),
-                'file_size'     => $file->getSize(),
-                'mime_type'     => $file->getMimeType(),
-                'label'         => $request->label,
+                'file_size' => $file->getSize(),
+                'mime_type' => $file->getMimeType(),
+                'label' => $request->label,
             ]);
 
             $attachment->load('uploadedBy');
 
             return response()->json([
-                'success'       => true,
-                'message'       => 'File uploaded successfully.',
-                'attachment'    => [
-                    'id'            => $attachment->id,
+                'success' => true,
+                'message' => 'File uploaded successfully.',
+                'attachment' => [
+                    'id' => $attachment->id,
                     'original_name' => $attachment->original_name,
-                    'label'         => $attachment->label,
-                    'formatted_size'=> $attachment->formattedSize(),
-                    'mime_type'     => $attachment->mime_type,
-                    'uploaded_by'   => optional($attachment->uploadedBy)->name ?? 'Unknown',
-                    'created_at'    => $attachment->created_at->format('d M Y H:i'),
-                    'download_url'  => route('patient-procedures.attachments.download', [
-                        'procedure'  => $procedure->id,
+                    'label' => $attachment->label,
+                    'formatted_size' => $attachment->formattedSize(),
+                    'mime_type' => $attachment->mime_type,
+                    'uploaded_by' => optional($attachment->uploadedBy)->name ?? 'Unknown',
+                    'created_at' => $attachment->created_at->format('d M Y H:i'),
+                    'download_url' => route('patient-procedures.attachments.download', [
+                        'procedure' => $procedure->id,
                         'attachment' => $attachment->id,
                     ]),
                 ],

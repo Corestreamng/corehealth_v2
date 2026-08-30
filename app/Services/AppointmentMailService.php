@@ -61,9 +61,9 @@ class AppointmentMailService
             }
         } catch (\Exception $e) {
             Log::error('AppointmentMailService: Failed to send notification', [
-                'event'          => $event,
+                'event' => $event,
                 'appointment_id' => $appointment->id ?? null,
-                'error'          => $e->getMessage(),
+                'error' => $e->getMessage(),
             ]);
         }
     }
@@ -77,42 +77,42 @@ class AppointmentMailService
 
         return [
             // Hospital branding
-            'hospital_name'    => $settings->site_name ?? 'Hospital',
-            'hospital_logo'    => $settings->logo ?? null,
+            'hospital_name' => $settings->site_name ?? 'Hospital',
+            'hospital_logo' => $settings->logo ?? null,
             'hospital_address' => $settings->contact_address ?? '',
-            'hospital_phones'  => $settings->contact_phones ?? '',
-            'hospital_emails'  => $settings->contact_emails ?? '',
-            'hospital_color'   => $settings->hos_color ?? '#011b33',
-            'footer_text'      => $settings->footer_text ?? '',
+            'hospital_phones' => $settings->contact_phones ?? '',
+            'hospital_emails' => $settings->contact_emails ?? '',
+            'hospital_color' => $settings->hos_color ?? '#011b33',
+            'footer_text' => $settings->footer_text ?? '',
 
             // Appointment details
-            'event'            => $event,
-            'patient_name'     => $appointment->patient && $appointment->patient->user
+            'event' => $event,
+            'patient_name' => $appointment->patient && $appointment->patient->user
                                     ? $appointment->patient->user->name
                                     : 'Patient',
-            'doctor_name'      => $appointment->doctor && $appointment->doctor->user
+            'doctor_name' => $appointment->doctor && $appointment->doctor->user
                                     ? $appointment->doctor->user->name
                                     : 'Doctor',
-            'clinic_name'      => $appointment->clinic->name ?? 'Clinic',
+            'clinic_name' => $appointment->clinic->name ?? 'Clinic',
             'appointment_date' => $appointment->appointment_date
                                     ? $appointment->appointment_date->format('l, F j, Y')
                                     : 'N/A',
-            'start_time'       => $appointment->start_time
+            'start_time' => $appointment->start_time
                                     ? \Carbon\Carbon::parse($appointment->start_time)->format('g:i A')
                                     : 'N/A',
-            'end_time'         => $appointment->end_time
+            'end_time' => $appointment->end_time
                                     ? \Carbon\Carbon::parse($appointment->end_time)->format('g:i A')
                                     : '',
             'appointment_type' => ucfirst(str_replace('_', ' ', $appointment->appointment_type ?? 'scheduled')),
-            'priority'         => ucfirst($appointment->priority ?? 'routine'),
-            'notes'            => $appointment->notes ?? '',
+            'priority' => ucfirst($appointment->priority ?? 'routine'),
+            'notes' => $appointment->notes ?? '',
 
             // Extra context
             'cancellation_reason' => $extra['reason'] ?? $appointment->cancellation_reason ?? '',
-            'old_date'            => $extra['old_date'] ?? '',
-            'old_time'            => $extra['old_time'] ?? '',
+            'old_date' => $extra['old_date'] ?? '',
+            'old_time' => $extra['old_time'] ?? '',
             'reassignment_reason' => $extra['reassignment_reason'] ?? $appointment->reassignment_reason ?? '',
-            'old_doctor'          => $extra['old_doctor'] ?? '',
+            'old_doctor' => $extra['old_doctor'] ?? '',
         ];
     }
 
@@ -124,13 +124,13 @@ class AppointmentMailService
         $hospital = $data['hospital_name'];
 
         return match ($event) {
-            'created'    => "{$hospital} — New Appointment Scheduled",
+            'created' => "{$hospital} — New Appointment Scheduled",
             'rescheduled' => "{$hospital} — Appointment Rescheduled",
-            'cancelled'  => "{$hospital} — Appointment Cancelled",
+            'cancelled' => "{$hospital} — Appointment Cancelled",
             'checked_in' => "{$hospital} — Patient Checked In",
-            'no_show'    => "{$hospital} — Appointment No-Show",
+            'no_show' => "{$hospital} — Appointment No-Show",
             'reassigned' => "{$hospital} — Appointment Reassigned",
-            default      => "{$hospital} — Appointment Update",
+            default => "{$hospital} — Appointment Update",
         };
     }
 
@@ -145,7 +145,7 @@ class AppointmentMailService
     protected function sendMail(string $to, string $subject, string $htmlBody, $settings): void
     {
         $fromAddress = $settings->smtp_from_address ?: ($settings->contact_emails ?: 'noreply@hospital.com');
-        $fromName    = $settings->smtp_from_name ?: ($settings->site_name ?? 'Hospital');
+        $fromName = $settings->smtp_from_name ?: ($settings->site_name ?? 'Hospital');
 
         // If SMTP is configured, use it
         if ($settings->smtp_host && $settings->smtp_port) {
@@ -167,13 +167,13 @@ class AppointmentMailService
             // Dynamically configure Laravel's SMTP mailer at runtime
             config([
                 'mail.mailers.appointment_smtp' => [
-                    'transport'  => 'smtp',
-                    'host'       => $settings->smtp_host,
-                    'port'       => (int) $settings->smtp_port,
+                    'transport' => 'smtp',
+                    'host' => $settings->smtp_host,
+                    'port' => (int) $settings->smtp_port,
                     'encryption' => $settings->smtp_encryption ?: null,
-                    'username'   => $settings->smtp_username,
-                    'password'   => $settings->smtp_password,
-                    'timeout'    => 15,
+                    'username' => $settings->smtp_username,
+                    'password' => $settings->smtp_password,
+                    'timeout' => 15,
                 ],
             ]);
 
@@ -183,7 +183,7 @@ class AppointmentMailService
             Log::info("AppointmentMailService: SMTP email sent to {$to}", ['subject' => $subject]);
         } catch (\Exception $e) {
             Log::warning("AppointmentMailService: SMTP failed, falling back to PHP mail()", [
-                'to'    => $to,
+                'to' => $to,
                 'error' => $e->getMessage(),
             ]);
             // Fallback to PHP mail
@@ -198,7 +198,7 @@ class AppointmentMailService
     {
         try {
             $boundary = md5(time());
-            $headers  = "From: {$fromName} <{$fromAddress}>\r\n";
+            $headers = "From: {$fromName} <{$fromAddress}>\r\n";
             $headers .= "Reply-To: {$fromAddress}\r\n";
             $headers .= "MIME-Version: 1.0\r\n";
             $headers .= "Content-Type: text/html; charset=UTF-8\r\n";
@@ -222,6 +222,7 @@ class AppointmentMailService
     protected function getDoctorEmail(int $staffId): ?string
     {
         $staff = Staff::with('user')->find($staffId);
+
         return $staff && $staff->user ? $staff->user->email : null;
     }
 
@@ -231,6 +232,7 @@ class AppointmentMailService
     protected function getPatientEmail(int $patientId): ?string
     {
         $patient = Patient::with('user')->find($patientId);
+
         return $patient && $patient->user ? $patient->user->email : null;
     }
 }

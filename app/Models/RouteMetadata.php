@@ -4,7 +4,6 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Support\Facades\Auth;
 
 /**
  * Route Metadata Model
@@ -105,6 +104,7 @@ class RouteMetadata extends Model
         if (!$user) {
             return $routes->filter(function ($route) {
                 $permissions = $route->permissions ?? [];
+
                 return empty($permissions);
             });
         }
@@ -140,6 +140,7 @@ class RouteMetadata extends Model
             foreach ($roles as $role) {
                 if ($user->hasRole($role)) {
                     $hasRole = true;
+
                     break;
                 }
             }
@@ -156,6 +157,7 @@ class RouteMetadata extends Model
                     return true;
                 }
             }
+
             return false;
         }
 

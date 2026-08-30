@@ -2,8 +2,8 @@
 
 namespace App\Observers\Accounting;
 
-use App\Models\Accounting\CashFlowForecastPeriod;
 use App\Models\Accounting\CashFlowForecastItem;
+use App\Models\Accounting\CashFlowForecastPeriod;
 use App\Models\Accounting\CashFlowPattern;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Log;
@@ -53,8 +53,9 @@ class CashFlowForecastPeriodObserver
             $forecast = $period->forecast;
             if (!$forecast) {
                 Log::warning('CashFlowForecastPeriodObserver: Could not load forecast for period', [
-                    'period_id' => $period->id
+                    'period_id' => $period->id,
                 ]);
+
                 return;
             }
 
@@ -86,14 +87,14 @@ class CashFlowForecastPeriodObserver
                 Log::info('CashFlowForecastPeriodObserver: Applied patterns to new period', [
                     'period_id' => $period->id,
                     'forecast_id' => $forecast->id,
-                    'items_created' => $itemsCreated
+                    'items_created' => $itemsCreated,
                 ]);
             }
 
         } catch (\Exception $e) {
             Log::error('CashFlowForecastPeriodObserver: Failed to apply patterns', [
                 'period_id' => $period->id,
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ]);
         }
     }
@@ -130,8 +131,10 @@ class CashFlowForecastPeriodObserver
                     $dayOfPeriod = $pattern->day_of_period ?? 1;
                     // Check if this period contains the day_of_period
                     $periodEnd = Carbon::parse($period->period_end_date);
+
                     return $periodStart->day <= $dayOfPeriod && $periodEnd->day >= $dayOfPeriod;
                 }
+
                 return false;
 
             case CashFlowPattern::FREQUENCY_QUARTERLY:
@@ -146,6 +149,7 @@ class CashFlowForecastPeriodObserver
                 if ($forecastType === 'weekly') {
                     return in_array($periodStart->month, [1, 4, 7, 10]) && $periodStart->day <= 7;
                 }
+
                 return false;
 
             case CashFlowPattern::FREQUENCY_ANNUALLY:
@@ -160,6 +164,7 @@ class CashFlowForecastPeriodObserver
                 if ($forecastType === 'weekly') {
                     return $periodStart->month === 1 && $periodStart->day <= 7;
                 }
+
                 return false;
 
             default:
@@ -232,18 +237,18 @@ class CashFlowForecastPeriodObserver
         $period->refresh();
 
         $inflowTotal = $period->items
-            ->filter(fn($item) => str_contains($item->cash_flow_category, 'inflow'))
+            ->filter(fn ($item) => str_contains($item->cash_flow_category, 'inflow'))
             ->sum('forecasted_amount');
 
         $outflowTotal = $period->items
-            ->filter(fn($item) => str_contains($item->cash_flow_category, 'outflow'))
+            ->filter(fn ($item) => str_contains($item->cash_flow_category, 'outflow'))
             ->sum('forecasted_amount');
 
         $netCashFlow = $inflowTotal - $outflowTotal;
 
         $period->update([
             'net_cash_flow' => $netCashFlow,
-            'closing_balance' => ($period->opening_balance ?? 0) + $netCashFlow
+            'closing_balance' => ($period->opening_balance ?? 0) + $netCashFlow,
         ]);
     }
 }

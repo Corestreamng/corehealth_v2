@@ -2,9 +2,9 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\ResultView;
-use App\Models\LabServiceRequest;
 use App\Models\ImagingServiceRequest;
+use App\Models\LabServiceRequest;
+use App\Models\ResultView;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
@@ -21,7 +21,7 @@ class ResultViewController extends Controller
      * Map short type names to model classes.
      */
     private const TYPE_MAP = [
-        'lab'     => LabServiceRequest::class,
+        'lab' => LabServiceRequest::class,
         'imaging' => ImagingServiceRequest::class,
     ];
 
@@ -35,8 +35,8 @@ class ResultViewController extends Controller
         try {
             $request->validate([
                 'viewable_type' => 'required|in:lab,imaging',
-                'viewable_id'   => 'required|integer',
-                'view_type'     => 'required|in:modal,print',
+                'viewable_id' => 'required|integer',
+                'view_type' => 'required|in:modal,print',
             ]);
 
             $modelClass = self::TYPE_MAP[$request->viewable_type];
@@ -50,10 +50,10 @@ class ResultViewController extends Controller
             // Record the view
             ResultView::create([
                 'viewable_type' => $modelClass,
-                'viewable_id'   => $request->viewable_id,
-                'user_id'       => Auth::id(),
-                'view_type'     => $request->view_type,
-                'ip_address'    => $request->ip(),
+                'viewable_id' => $request->viewable_id,
+                'user_id' => Auth::id(),
+                'view_type' => $request->view_type,
+                'ip_address' => $request->ip(),
             ]);
 
             $viewCount = ResultView::where('viewable_type', $modelClass)
@@ -62,11 +62,12 @@ class ResultViewController extends Controller
                 ->count('user_id');
 
             return response()->json([
-                'success'    => true,
+                'success' => true,
                 'view_count' => $viewCount,
             ]);
         } catch (\Exception $e) {
             Log::error('ResultView store error: ' . $e->getMessage(), ['exception' => $e]);
+
             return response()->json(['success' => false, 'message' => 'Error recording view'], 500);
         }
     }
@@ -92,10 +93,11 @@ class ResultViewController extends Controller
                 ->get()
                 ->map(function ($view) {
                     $user = $view->user;
+
                     return [
-                        'user_name'  => $user ? trim(($user->surname ?? '') . ' ' . ($user->firstname ?? '')) : 'Unknown',
-                        'view_type'  => $view->view_type,
-                        'viewed_at'  => $view->created_at->format('h:i a D M j, Y'),
+                        'user_name' => $user ? trim(($user->surname ?? '') . ' ' . ($user->firstname ?? '')) : 'Unknown',
+                        'view_type' => $view->view_type,
+                        'viewed_at' => $view->created_at->format('h:i a D M j, Y'),
                     ];
                 });
 
@@ -107,11 +109,12 @@ class ResultViewController extends Controller
 
             return response()->json([
                 'success' => true,
-                'views'   => $views,
-                'count'   => $uniqueViewers,
+                'views' => $views,
+                'count' => $uniqueViewers,
             ]);
         } catch (\Exception $e) {
             Log::error('ResultView show error: ' . $e->getMessage(), ['exception' => $e]);
+
             return response()->json(['success' => false, 'message' => 'Error fetching views'], 500);
         }
     }
@@ -147,15 +150,16 @@ class ResultViewController extends Controller
                 ->count();
 
             return response()->json([
-                'success'          => true,
-                'lab_unviewed'     => $labUnviewed,
+                'success' => true,
+                'lab_unviewed' => $labUnviewed,
                 'imaging_unviewed' => $imagingUnviewed,
             ]);
         } catch (\Exception $e) {
             Log::error('ResultView unviewedCounts error: ' . $e->getMessage(), ['exception' => $e]);
+
             return response()->json([
-                'success'          => false,
-                'lab_unviewed'     => 0,
+                'success' => false,
+                'lab_unviewed' => 0,
                 'imaging_unviewed' => 0,
             ]);
         }

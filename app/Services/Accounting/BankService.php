@@ -2,10 +2,10 @@
 
 namespace App\Services\Accounting;
 
-use App\Models\Bank;
 use App\Models\Accounting\Account;
 use App\Models\Accounting\JournalEntry;
 use App\Models\Accounting\JournalEntryLine;
+use App\Models\Bank;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 

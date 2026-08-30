@@ -19,7 +19,8 @@ use OwenIt\Auditing\Contracts\Auditable;
  */
 class JournalEntryEdit extends Model implements Auditable
 {
-    use HasFactory, \OwenIt\Auditing\Auditable;
+    use HasFactory;
+    use \OwenIt\Auditing\Auditable;
 
     protected $fillable = [
         'journal_entry_id',
@@ -45,9 +46,9 @@ class JournalEntryEdit extends Model implements Auditable
     ];
 
     // Status constants
-    const STATUS_PENDING = 'pending';
-    const STATUS_APPROVED = 'approved';
-    const STATUS_REJECTED = 'rejected';
+    public const STATUS_PENDING = 'pending';
+    public const STATUS_APPROVED = 'approved';
+    public const STATUS_REJECTED = 'rejected';
 
     /**
      * Get the journal entry being edited.
@@ -91,6 +92,7 @@ class JournalEntryEdit extends Model implements Auditable
         } elseif ($this->status === self::STATUS_REJECTED) {
             return $this->rejecter;
         }
+
         return null;
     }
 
@@ -104,6 +106,7 @@ class JournalEntryEdit extends Model implements Auditable
         } elseif ($this->status === self::STATUS_REJECTED) {
             return $this->rejected_by;
         }
+
         return null;
     }
 
@@ -183,6 +186,7 @@ class JournalEntryEdit extends Model implements Auditable
         }
 
         $this->status = self::STATUS_APPLIED;
+
         return $this->save();
     }
 

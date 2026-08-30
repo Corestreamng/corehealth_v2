@@ -25,8 +25,8 @@ class TrackingCalendarController extends Controller
         // Medical exam due dates
         $exams = StaffMedicalExam::with('staff.user')
             ->whereNotNull('next_exam_due')
-            ->when($start, fn($q) => $q->where('next_exam_due', '>=', $start))
-            ->when($end, fn($q) => $q->where('next_exam_due', '<=', $end))
+            ->when($start, fn ($q) => $q->where('next_exam_due', '>=', $start))
+            ->when($end, fn ($q) => $q->where('next_exam_due', '<=', $end))
             ->get();
 
         foreach ($exams as $exam) {
@@ -52,7 +52,7 @@ class TrackingCalendarController extends Controller
         $trainings = StaffTraining::with('staff.user')
             ->whereNotNull('start_date')
             ->whereIn('status', ['planned', 'in_progress'])
-            ->when($start, fn($q) => $q->where(function ($q2) use ($start, $end) {
+            ->when($start, fn ($q) => $q->where(function ($q2) use ($start, $end) {
                 $q2->whereBetween('start_date', [$start, $end])
                    ->orWhereBetween('end_date', [$start, $end]);
             }))
@@ -80,13 +80,13 @@ class TrackingCalendarController extends Controller
 
         // Staff-level date events (promotion due, license expiry, confirmation due)
         $staffQuery = Staff::with('user')
-            ->whereHas('user', fn($q) => $q->where('status', '>', 0))
+            ->whereHas('user', fn ($q) => $q->where('status', '>', 0))
             ->where('employment_status', 'active');
 
         // Promotion due dates
         $promoDue = (clone $staffQuery)->whereNotNull('next_promotion_due_date')
-            ->when($start, fn($q) => $q->where('next_promotion_due_date', '>=', $start))
-            ->when($end, fn($q) => $q->where('next_promotion_due_date', '<=', $end))
+            ->when($start, fn ($q) => $q->where('next_promotion_due_date', '>=', $start))
+            ->when($end, fn ($q) => $q->where('next_promotion_due_date', '<=', $end))
             ->get();
 
         foreach ($promoDue as $s) {
@@ -109,8 +109,8 @@ class TrackingCalendarController extends Controller
 
         // License expiry dates
         $licExpiry = (clone $staffQuery)->whereNotNull('license_expiry_date')
-            ->when($start, fn($q) => $q->where('license_expiry_date', '>=', $start))
-            ->when($end, fn($q) => $q->where('license_expiry_date', '<=', $end))
+            ->when($start, fn ($q) => $q->where('license_expiry_date', '>=', $start))
+            ->when($end, fn ($q) => $q->where('license_expiry_date', '<=', $end))
             ->get();
 
         foreach ($licExpiry as $s) {
@@ -135,8 +135,8 @@ class TrackingCalendarController extends Controller
         // Confirmation due dates (unconfirmed staff only)
         $confirmDue = (clone $staffQuery)->whereNotNull('confirmation_due_date')
             ->whereNull('date_confirmed')
-            ->when($start, fn($q) => $q->where('confirmation_due_date', '>=', $start))
-            ->when($end, fn($q) => $q->where('confirmation_due_date', '<=', $end))
+            ->when($start, fn ($q) => $q->where('confirmation_due_date', '>=', $start))
+            ->when($end, fn ($q) => $q->where('confirmation_due_date', '<=', $end))
             ->get();
 
         foreach ($confirmDue as $s) {
@@ -159,8 +159,8 @@ class TrackingCalendarController extends Controller
 
         // Retirement date events (staff with retirement_date within range)
         $retiring = (clone $staffQuery)->whereNotNull('retirement_date')
-            ->when($start, fn($q) => $q->where('retirement_date', '>=', $start))
-            ->when($end, fn($q) => $q->where('retirement_date', '<=', $end))
+            ->when($start, fn ($q) => $q->where('retirement_date', '>=', $start))
+            ->when($end, fn ($q) => $q->where('retirement_date', '<=', $end))
             ->get();
 
         foreach ($retiring as $s) {

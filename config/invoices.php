@@ -13,13 +13,13 @@ return [
     ],
 
     'serial_number' => [
-        'series'   => 'AA',
+        'series' => 'AA',
         'sequence' => 1,
         /*
          * Sequence will be padded accordingly, for ex. 00001
          */
         'sequence_padding' => 5,
-        'delimiter'        => '.',
+        'delimiter' => '.',
         /*
          * Supported tags {SERIES}, {DELIMITER}, {SEQUENCE}
          * Example: AA.00001
@@ -36,7 +36,7 @@ return [
          * Example: Amount in words: Eight hundred fifty thousand sixty-eight EUR and fifteen ct.
          */
         'fraction' => 'kobo.',
-        'symbol'   => 'N',
+        'symbol' => 'N',
         /*
          * Example: 19.00
          */
@@ -59,11 +59,11 @@ return [
 
     'paper' => [
         // A4 = 210 mm x 297 mm = 595 pt x 842 pt
-        'size'        => '50mm',
+        'size' => '50mm',
         'orientation' => 'portrait',
-        'dynamic_height' => true
+        'dynamic_height' => true,
     ],
-    
+
     'default_paper_size' => [
         'width' => 50,
         'height' => 100,
@@ -84,11 +84,11 @@ return [
          * Default attributes for Seller::class
          */
         'attributes' => [
-            'name'          => 'Towne, Smith and Ebert',
-            'address'       => '89982 Pfeffer Falls Damianstad, CO 66972-8160',
-            'code'          => '41-1985581',
-            'vat'           => '123456789',
-            'phone'         => '760-355-3930',
+            'name' => 'Towne, Smith and Ebert',
+            'address' => '89982 Pfeffer Falls Damianstad, CO 66972-8160',
+            'code' => '41-1985581',
+            'vat' => '123456789',
+            'phone' => '760-355-3930',
             'custom_fields' => [
                 /*
                  * Custom attributes for Seller::class

@@ -2,10 +2,9 @@
 
 namespace App\Observers\Accounting;
 
-use App\Models\PurchaseOrder;
 use App\Models\Accounting\Account;
-use App\Models\Accounting\AccountSubAccount;
 use App\Models\Accounting\JournalEntry;
+use App\Models\PurchaseOrder;
 use App\Services\Accounting\AccountingService;
 use App\Services\Accounting\SubAccountService;
 use Illuminate\Support\Facades\App;
@@ -50,7 +49,7 @@ class PurchaseOrderObserver
                 Log::error('PurchaseOrderObserver: Failed to create journal entry', [
                     'po_id' => $po->id,
                     'error' => $e->getMessage(),
-                    'trace' => $e->getTraceAsString()
+                    'trace' => $e->getTraceAsString(),
                 ]);
             }
         }
@@ -63,7 +62,7 @@ class PurchaseOrderObserver
                 Log::error('PurchaseOrderObserver: Failed to create partial JE', [
                     'po_id' => $po->id,
                     'error' => $e->getMessage(),
-                    'trace' => $e->getTraceAsString()
+                    'trace' => $e->getTraceAsString(),
                 ]);
             }
         }
@@ -76,7 +75,7 @@ class PurchaseOrderObserver
                 Log::error('PurchaseOrderObserver: Failed to reverse journal entry', [
                     'po_id' => $po->id,
                     'error' => $e->getMessage(),
-                    'trace' => $e->getTraceAsString()
+                    'trace' => $e->getTraceAsString(),
                 ]);
             }
         }
@@ -95,8 +94,9 @@ class PurchaseOrderObserver
 
         if (!$inventoryAccount || !$apAccount) {
             Log::warning('PurchaseOrderObserver: Skipped - accounts not configured', [
-                'po_id' => $po->id
+                'po_id' => $po->id,
             ]);
+
             return;
         }
 
@@ -127,7 +127,7 @@ class PurchaseOrderObserver
                 // METADATA
                 'supplier_id' => $po->supplier_id,
                 'category' => 'purchase_order',
-            ]
+            ],
         ];
 
         $entry = $accountingService->createAndPostAutomatedEntry(
@@ -157,7 +157,7 @@ class PurchaseOrderObserver
     {
         $parts = [
             "Purchase Order Received: " . ($po->po_number ?? 'N/A'),
-            "Total Amount: " . number_format($po->total_amount, 2)
+            "Total Amount: " . number_format($po->total_amount, 2),
         ];
 
         if ($po->supplier) {
@@ -250,6 +250,7 @@ class PurchaseOrderObserver
                 'received_amount' => $receivedAmount,
                 'previously_recorded' => $previouslyRecorded,
             ]);
+
             return;
         }
 
@@ -258,6 +259,7 @@ class PurchaseOrderObserver
 
         if (!$inventoryAccount || !$apAccount) {
             Log::warning('PurchaseOrderObserver: Partial JE skipped - accounts not configured');
+
             return;
         }
 
@@ -283,7 +285,7 @@ class PurchaseOrderObserver
                 'description' => "Partial AP: " . ($po->supplier->name ?? 'Supplier') . " (PO: " . ($po->po_number ?? 'N/A') . ")",
                 'supplier_id' => $po->supplier_id,
                 'category' => 'purchase_order_partial',
-            ]
+            ],
         ];
 
         $entry = $accountingService->createAndPostAutomatedEntry(
@@ -318,6 +320,7 @@ class PurchaseOrderObserver
             Log::info('PurchaseOrderObserver: No journal entries to reverse', [
                 'po_id' => $po->id,
             ]);
+
             return;
         }
 
@@ -330,6 +333,7 @@ class PurchaseOrderObserver
                     'journal_entry_id' => $journalEntry->id,
                     'je_status' => $journalEntry->status,
                 ]);
+
                 continue;
             }
 

@@ -26,8 +26,7 @@ use Illuminate\Support\Facades\Schema;
  * @see App\Models\Ward (to be created)
  * @see App\Models\Bed (ward_id relationship)
  */
-return new class extends Migration
-{
+return new class () extends Migration {
     /**
      * Run the migrations.
      */
@@ -51,7 +50,7 @@ return new class extends Migration
                 'isolation',
                 'recovery',
                 'private',
-                'other'
+                'other',
             ])->default('general')->comment('Ward type for categorization');
 
             // Capacity planning

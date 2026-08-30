@@ -39,7 +39,7 @@ class StaffRegistryController extends Controller
             'clinic:id,name',
             'currentSalaryProfile:id,staff_id,gross_salary',
         ])
-        ->whereHas('user', fn($q) => $q->where('status', '>', 0));
+        ->whereHas('user', fn ($q) => $q->where('status', '>', 0));
 
         // Filters
         if ($request->filled('department_id')) {
@@ -68,44 +68,53 @@ class StaffRegistryController extends Controller
             switch ($request->alert_type) {
                 case 'promotion_due':
                     $query->whereNotNull('next_promotion_due_date')->where('next_promotion_due_date', '<=', $now);
+
                     break;
                 case 'confirmation_due':
                     $query->whereNotNull('confirmation_due_date')->whereNull('date_confirmed')->where('confirmation_due_date', '<=', $now);
+
                     break;
                 case 'license_expiring':
                     $query->whereNotNull('license_expiry_date')->where('license_expiry_date', '<=', $now->copy()->addMonths(3));
+
                     break;
                 case 'medical_exam_due':
                     $query->whereNotNull('next_medical_exam_due')->where('next_medical_exam_due', '<=', $now);
+
                     break;
                 case 'retiring_soon':
                     $query->whereNotNull('retirement_date')->where('retirement_date', '<=', $now->copy()->addYear());
+
                     break;
             }
         }
 
         return DataTables::of($query)
             ->addColumn('sn', '')
-            ->addColumn('full_name', function($s) {
+            ->addColumn('full_name', function ($s) {
                 $name = $s->user ? e($s->user->surname . ', ' . $s->user->firstname . ' ' . ($s->user->othername ?? '')) : '';
                 $empId = e($s->employee_id ?? '');
                 $initial = $s->user ? strtoupper(substr($s->user->firstname ?? 'U', 0, 1)) : 'U';
+
                 return '<div class="d-flex align-items-center">
-                    <div class="mr-2" style="width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,#667eea,#764ba2);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:600;font-size:0.8rem;flex-shrink:0;">'.$initial.'</div>
-                    <div><span class="font-weight-medium">'.$name.'</span><br><small class="text-muted">'.$empId.'</small></div>
+                    <div class="mr-2" style="width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,#667eea,#764ba2);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:600;font-size:0.8rem;flex-shrink:0;">' . $initial . '</div>
+                    <div><span class="font-weight-medium">' . $name . '</span><br><small class="text-muted">' . $empId . '</small></div>
                 </div>';
             })
-            ->addColumn('department_name', fn($s) => $s->department->name ?? '')
-            ->addColumn('unit_name', fn($s) => $s->unit->name ?? '')
-            ->addColumn('cadre_name', fn($s) => $s->cadre->name ?? '')
-            ->addColumn('grade_level_name', fn($s) => $s->gradeLevel->name ?? '')
-            ->addColumn('entry_grade_name', fn($s) => $s->entryGradeLevel->name ?? '')
-            ->addColumn('specialization_name', fn($s) => $s->specialization->name ?? '')
-            ->addColumn('category_name', fn($s) => $s->user->category->name ?? '')
-            ->addColumn('gender', fn($s) => $s->gender ? ucfirst($s->gender) : '')
-            ->addColumn('job_title', fn($s) => e($s->job_title ?? ''))
+            ->addColumn('department_name', fn ($s) => $s->department->name ?? '')
+            ->addColumn('unit_name', fn ($s) => $s->unit->name ?? '')
+            ->addColumn('cadre_name', fn ($s) => $s->cadre->name ?? '')
+            ->addColumn('grade_level_name', fn ($s) => $s->gradeLevel->name ?? '')
+            ->addColumn('entry_grade_name', fn ($s) => $s->entryGradeLevel->name ?? '')
+            ->addColumn('specialization_name', fn ($s) => $s->specialization->name ?? '')
+            ->addColumn('category_name', fn ($s) => $s->user->category->name ?? '')
+            ->addColumn('gender', fn ($s) => $s->gender ? ucfirst($s->gender) : '')
+            ->addColumn('job_title', fn ($s) => e($s->job_title ?? ''))
             ->addColumn('date_hired', function ($s) {
-                if (!$s->date_hired) return '';
+                if (!$s->date_hired) {
+                    return '';
+                }
+
                 return $s->date_hired->format('d M Y');
             })
             ->addColumn('years_of_service', function ($s) {
@@ -113,19 +122,27 @@ class StaffRegistryController extends Controller
             })
             ->addColumn('salary', function ($s) {
                 $gross = $s->currentSalaryProfile?->gross_salary;
+
                 return $gross ? '₦' . number_format($gross, 0) : '';
             })
-            ->addColumn('employment_type', fn($s) => $s->employment_type ? ucfirst(str_replace('_', ' ', $s->employment_type)) : '')
-            ->addColumn('phone', fn($s) => e($s->phone_number ?? ''))
-            ->addColumn('email', fn($s) => e($s->user->email ?? ''))
+            ->addColumn('employment_type', fn ($s) => $s->employment_type ? ucfirst(str_replace('_', ' ', $s->employment_type)) : '')
+            ->addColumn('phone', fn ($s) => e($s->phone_number ?? ''))
+            ->addColumn('email', fn ($s) => e($s->user->email ?? ''))
             ->addColumn('license_status', function ($s) {
-                if (!$s->license_expiry_date) return '';
+                if (!$s->license_expiry_date) {
+                    return '';
+                }
                 $exp = Carbon::parse($s->license_expiry_date);
-                if ($exp->isPast()) return '<span class="text-danger"><i class="mdi mdi-alert-circle"></i> Expired</span>';
-                if ($exp->lte(Carbon::now()->addMonths(3))) return '<span class="text-warning"><i class="mdi mdi-alert"></i> ' . $exp->format('d/m/Y') . '</span>';
+                if ($exp->isPast()) {
+                    return '<span class="text-danger"><i class="mdi mdi-alert-circle"></i> Expired</span>';
+                }
+                if ($exp->lte(Carbon::now()->addMonths(3))) {
+                    return '<span class="text-warning"><i class="mdi mdi-alert"></i> ' . $exp->format('d/m/Y') . '</span>';
+                }
+
                 return '<span class="text-success"><i class="mdi mdi-check-circle"></i> ' . $exp->format('d/m/Y') . '</span>';
             })
-            ->addColumn('staff_id', fn($s) => $s->id)
+            ->addColumn('staff_id', fn ($s) => $s->id)
             ->addColumn('alerts', function ($s) {
                 $alerts = [];
                 $now = Carbon::now();
@@ -165,18 +182,18 @@ class StaffRegistryController extends Controller
                         <i class="mdi mdi-dots-vertical"></i>
                     </button>
                     <div class="dropdown-menu dropdown-menu-right" style="border-radius:8px;box-shadow:0 4px 15px rgba(0,0,0,.12);min-width:12rem;">
-                        <a class="dropdown-item" href="'.$editUrl.'"><i class="mdi mdi-account-edit mr-2 text-primary"></i>Edit Profile</a>
-                        <a class="dropdown-item font-weight-bold" href="'.$profileUrl.'"><i class="mdi mdi-account-search mr-2 text-dark"></i>Tracking Profile</a>
+                        <a class="dropdown-item" href="' . $editUrl . '"><i class="mdi mdi-account-edit mr-2 text-primary"></i>Edit Profile</a>
+                        <a class="dropdown-item font-weight-bold" href="' . $profileUrl . '"><i class="mdi mdi-account-search mr-2 text-dark"></i>Tracking Profile</a>
                         <div class="dropdown-divider"></div>
-                        <a class="dropdown-item" href="'.$leaveUrl.'"><i class="mdi mdi-calendar-clock mr-2 text-success"></i>Leave History</a>
-                        <a class="dropdown-item" href="'.$discUrl.'"><i class="mdi mdi-gavel mr-2 text-warning"></i>Disciplinary</a>
-                        <a class="dropdown-item" href="'.$salaryUrl.'"><i class="mdi mdi-cash-multiple mr-2 text-info"></i>Salary Profile</a>
+                        <a class="dropdown-item" href="' . $leaveUrl . '"><i class="mdi mdi-calendar-clock mr-2 text-success"></i>Leave History</a>
+                        <a class="dropdown-item" href="' . $discUrl . '"><i class="mdi mdi-gavel mr-2 text-warning"></i>Disciplinary</a>
+                        <a class="dropdown-item" href="' . $salaryUrl . '"><i class="mdi mdi-cash-multiple mr-2 text-info"></i>Salary Profile</a>
                         <div class="dropdown-divider"></div>
-                        <a class="dropdown-item" href="'.$promoUrl.'"><i class="mdi mdi-arrow-up-bold-circle mr-2 text-purple"></i>Promotions</a>
-                        <a class="dropdown-item" href="'.$qualUrl.'"><i class="mdi mdi-school mr-2 text-teal"></i>Qualifications</a>
-                        <a class="dropdown-item" href="'.$trainUrl.'"><i class="mdi mdi-certificate mr-2 text-secondary"></i>Trainings</a>
-                        <a class="dropdown-item" href="'.$medUrl.'"><i class="mdi mdi-stethoscope mr-2 text-danger"></i>Medical Exams</a>
-                        <a class="dropdown-item" href="'.$followUrl.'"><i class="mdi mdi-clipboard-check-outline mr-2 text-orange"></i>Follow-ups</a>
+                        <a class="dropdown-item" href="' . $promoUrl . '"><i class="mdi mdi-arrow-up-bold-circle mr-2 text-purple"></i>Promotions</a>
+                        <a class="dropdown-item" href="' . $qualUrl . '"><i class="mdi mdi-school mr-2 text-teal"></i>Qualifications</a>
+                        <a class="dropdown-item" href="' . $trainUrl . '"><i class="mdi mdi-certificate mr-2 text-secondary"></i>Trainings</a>
+                        <a class="dropdown-item" href="' . $medUrl . '"><i class="mdi mdi-stethoscope mr-2 text-danger"></i>Medical Exams</a>
+                        <a class="dropdown-item" href="' . $followUrl . '"><i class="mdi mdi-clipboard-check-outline mr-2 text-orange"></i>Follow-ups</a>
                     </div>
                 </div>';
             })
@@ -187,7 +204,7 @@ class StaffRegistryController extends Controller
     public function alerts()
     {
         $now = Carbon::now();
-        $activeScope = fn($q) => $q->where('employment_status', 'active');
+        $activeScope = fn ($q) => $q->where('employment_status', 'active');
 
         $promotionDue = Staff::whereNotNull('next_promotion_due_date')
             ->where('next_promotion_due_date', '<=', $now)
@@ -249,7 +266,7 @@ class StaffRegistryController extends Controller
             ->orderByDesc('cnt')
             ->limit(8)
             ->get()
-            ->map(fn($d) => ['name' => $d->name, 'count' => $d->cnt])
+            ->map(fn ($d) => ['name' => $d->name, 'count' => $d->cnt])
             ->toArray();
 
         // Employment type breakdown
@@ -282,7 +299,7 @@ class StaffRegistryController extends Controller
             'specialization', 'qualifications', 'promotions', 'trainings',
             'medicalExams', 'followUps', 'nextOfKin', 'currentSalaryProfile',
         ])
-        ->whereHas('user', fn($q) => $q->where('status', '>', 0))
+        ->whereHas('user', fn ($q) => $q->where('status', '>', 0))
         ->get();
 
         $filename = 'staff_registry_' . date('Y-m-d') . '.csv';
@@ -333,9 +350,9 @@ class StaffRegistryController extends Controller
                 // Additional qualifications (type != entry)
                 $additionalQuals = $s->qualifications->where('type', '!=', 'entry');
                 $additionalQualStr = $additionalQuals->pluck('qualification_name')->implode('; ');
-                $additionalDateStr = $additionalQuals->map(fn($q) => $q->date_obtained?->format('Y') ?? $q->year_of_graduation ?? '')->implode('; ');
+                $additionalDateStr = $additionalQuals->map(fn ($q) => $q->date_obtained?->format('Y') ?? $q->year_of_graduation ?? '')->implode('; ');
                 $resultSeen = $additionalQuals->count() > 0
-                    ? ($additionalQuals->every(fn($q) => $q->result_seen) ? 'Yes' : 'Partial')
+                    ? ($additionalQuals->every(fn ($q) => $q->result_seen) ? 'Yes' : 'Partial')
                     : '';
 
                 // Trainings by type
@@ -348,7 +365,7 @@ class StaffRegistryController extends Controller
                 }
 
                 // Next of kin
-                $nok = $s->nextOfKin->first(fn($n) => $n->is_primary) ?? $s->nextOfKin->first();
+                $nok = $s->nextOfKin->first(fn ($n) => $n->is_primary) ?? $s->nextOfKin->first();
                 $nokName = $nok?->full_name ?? '';
                 $nokRelationship = $nok?->relationship ?? '';
                 $nokPhone = $nok?->phone ?? '';
@@ -441,14 +458,29 @@ class StaffRegistryController extends Controller
 
         // Key dates
         $keyDates = [];
-        if ($staff->date_hired) $keyDates['Date of Hire'] = $staff->date_hired->format('d M Y') . ' (' . round($staff->date_hired->diffInYears($now), 1) . ' yrs)';
-        if ($staff->date_confirmed) $keyDates['Confirmed'] = $staff->date_confirmed->format('d M Y');
-        elseif ($staff->confirmation_due_date) $keyDates['Confirmation Due'] = $staff->confirmation_due_date->format('d M Y') . ($staff->confirmation_due_date->isPast() ? ' ⚠ Overdue' : '');
-        if ($staff->last_promotion_date) $keyDates['Last Promotion'] = $staff->last_promotion_date->format('d M Y');
-        if ($staff->next_promotion_due_date) $keyDates['Next Promotion Due'] = $staff->next_promotion_due_date->format('d M Y') . ($staff->next_promotion_due_date->isPast() ? ' ⚠ Overdue' : '');
-        if ($staff->retirement_date) $keyDates['Retirement'] = $staff->retirement_date->format('d M Y');
-        if ($staff->max_service_date) $keyDates['Max Service Exit'] = $staff->max_service_date->format('d M Y');
-        if ($staff->license_expiry_date) $keyDates['License Expiry'] = $staff->license_expiry_date->format('d M Y') . ($staff->license_expiry_date->isPast() ? ' ⚠ Expired' : '');
+        if ($staff->date_hired) {
+            $keyDates['Date of Hire'] = $staff->date_hired->format('d M Y') . ' (' . round($staff->date_hired->diffInYears($now), 1) . ' yrs)';
+        }
+        if ($staff->date_confirmed) {
+            $keyDates['Confirmed'] = $staff->date_confirmed->format('d M Y');
+        } elseif ($staff->confirmation_due_date) {
+            $keyDates['Confirmation Due'] = $staff->confirmation_due_date->format('d M Y') . ($staff->confirmation_due_date->isPast() ? ' ⚠ Overdue' : '');
+        }
+        if ($staff->last_promotion_date) {
+            $keyDates['Last Promotion'] = $staff->last_promotion_date->format('d M Y');
+        }
+        if ($staff->next_promotion_due_date) {
+            $keyDates['Next Promotion Due'] = $staff->next_promotion_due_date->format('d M Y') . ($staff->next_promotion_due_date->isPast() ? ' ⚠ Overdue' : '');
+        }
+        if ($staff->retirement_date) {
+            $keyDates['Retirement'] = $staff->retirement_date->format('d M Y');
+        }
+        if ($staff->max_service_date) {
+            $keyDates['Max Service Exit'] = $staff->max_service_date->format('d M Y');
+        }
+        if ($staff->license_expiry_date) {
+            $keyDates['License Expiry'] = $staff->license_expiry_date->format('d M Y') . ($staff->license_expiry_date->isPast() ? ' ⚠ Expired' : '');
+        }
 
         // Qualifications summary
         $entryQual = $staff->qualifications->where('type', 'entry')->first();

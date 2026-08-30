@@ -22,16 +22,16 @@ class ProcedureNote extends Model implements Auditable
     /**
      * Note types
      */
-    const TYPE_PRE_OP = 'pre_op';
-    const TYPE_INTRA_OP = 'intra_op';
-    const TYPE_POST_OP = 'post_op';
-    const TYPE_ANESTHESIA = 'anesthesia';
-    const TYPE_NURSING = 'nursing';
+    public const TYPE_PRE_OP = 'pre_op';
+    public const TYPE_INTRA_OP = 'intra_op';
+    public const TYPE_POST_OP = 'post_op';
+    public const TYPE_ANESTHESIA = 'anesthesia';
+    public const TYPE_NURSING = 'nursing';
 
     /**
      * Note type labels for display
      */
-    const NOTE_TYPES = [
+    public const NOTE_TYPES = [
         'pre_op' => 'Pre-Operative',
         'intra_op' => 'Intra-Operative',
         'post_op' => 'Post-Operative',

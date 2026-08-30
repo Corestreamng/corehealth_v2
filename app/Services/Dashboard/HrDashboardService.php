@@ -2,12 +2,10 @@
 
 namespace App\Services\Dashboard;
 
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Cache;
-use Carbon\Carbon;
 use App\Models\HR\LeaveRequest;
 use App\Models\Staff;
-use App\Models\User;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 
 class HrDashboardService
 {
@@ -40,9 +38,9 @@ class HrDashboardService
                 ->whereDate('start_date', '<=', now())
                 ->whereDate('end_date', '>=', now())
                 ->count();
-            
+
             $totalStaff = Staff::where('status', 1)->count();
-            
+
             $newHiresThisMonth = Staff::whereMonth('date_hired', now()->month)
                 ->whereYear('date_hired', now()->year)
                 ->count();

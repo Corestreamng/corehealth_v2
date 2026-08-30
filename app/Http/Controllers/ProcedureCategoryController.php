@@ -5,7 +5,6 @@ namespace App\Http\Controllers;
 use App\Models\ProcedureCategory;
 use Illuminate\Http\Request;
 use Yajra\DataTables\DataTables;
-use Illuminate\Support\Facades\Auth;
 
 class ProcedureCategoryController extends Controller
 {
@@ -36,6 +35,7 @@ class ProcedureCategoryController extends Controller
             })
             ->addColumn('procedures_count', function ($row) {
                 $count = $row->procedures()->count();
+
                 return '<span class="badge badge-info">' . $count . '</span>';
             })
             ->addColumn('actions', function ($row) {
@@ -95,6 +95,7 @@ class ProcedureCategoryController extends Controller
     public function edit($id)
     {
         $category = ProcedureCategory::findOrFail($id);
+
         return view('admin.procedure-categories.edit', compact('category'));
     }
 
