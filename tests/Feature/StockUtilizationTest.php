@@ -8,13 +8,8 @@ use App\Models\ProductCategory;
 use App\Models\StockBatch;
 use App\Models\Store;
 use App\Models\StoreStock;
-use App\Models\User;
-use Illuminate\Foundation\Testing\RefreshDatabase;
-use Tests\TestCase;
-
 class StockUtilizationTest extends TestCase
 {
-    use RefreshDatabase;
 
     protected $user;
 

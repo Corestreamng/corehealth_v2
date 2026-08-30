@@ -5,13 +5,8 @@ namespace Tests\Feature;
 use App\Models\Clinic;
 use App\Models\Staff;
 use App\Models\User;
-use App\Models\UserCategory;
-use Illuminate\Foundation\Testing\RefreshDatabase;
-use Tests\TestCase;
-
 class StaffCreationTest extends TestCase
 {
-    use RefreshDatabase;
 
     protected $admin;
 
