@@ -51,6 +51,7 @@ class LeaveTypeController extends Controller
                         <i class="mdi mdi-delete text-danger"></i>
                     </button>';
                     $buttons .= '</div>';
+
                     return $buttons;
                 })
                 ->rawColumns(['action'])
@@ -91,6 +92,7 @@ class LeaveTypeController extends Controller
             if ($request->ajax()) {
                 return response()->json(['errors' => $validator->errors()], 422);
             }
+
             return back()->withErrors($validator)->withInput();
         }
 
@@ -162,6 +164,7 @@ class LeaveTypeController extends Controller
             if ($request->ajax()) {
                 return response()->json(['errors' => $validator->errors()], 422);
             }
+
             return back()->withErrors($validator)->withInput();
         }
 
@@ -200,6 +203,7 @@ class LeaveTypeController extends Controller
             if ($request->ajax()) {
                 return response()->json(['error' => 'Cannot delete leave type that has been used. Consider deactivating it instead.'], 422);
             }
+
             return back()->with('error', 'Cannot delete leave type that has been used. Consider deactivating it instead.');
         }
 

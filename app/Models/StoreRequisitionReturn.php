@@ -9,7 +9,8 @@ use OwenIt\Auditing\Contracts\Auditable;
 
 class StoreRequisitionReturn extends Model implements Auditable
 {
-    use HasFactory, SoftDeletes;
+    use HasFactory;
+    use SoftDeletes;
     use \OwenIt\Auditing\Auditable;
 
     protected $fillable = [
@@ -33,20 +34,20 @@ class StoreRequisitionReturn extends Model implements Auditable
     ];
 
     protected $casts = [
-        'qty_returned'      => 'integer',
-        'restock'           => 'boolean',
-        'stock_adjusted'    => 'boolean',
-        'approved_at'       => 'datetime',
+        'qty_returned' => 'integer',
+        'restock' => 'boolean',
+        'stock_adjusted' => 'boolean',
+        'approved_at' => 'datetime',
         'stock_adjusted_at' => 'datetime',
     ];
 
-    const STATUS_PENDING  = 'pending';
-    const STATUS_APPROVED = 'approved';
-    const STATUS_REJECTED = 'rejected';
+    public const STATUS_PENDING = 'pending';
+    public const STATUS_APPROVED = 'approved';
+    public const STATUS_REJECTED = 'rejected';
 
-    const CONDITION_GOOD    = 'good';
-    const CONDITION_DAMAGED = 'damaged';
-    const CONDITION_PARTIAL = 'partial';
+    public const CONDITION_GOOD = 'good';
+    public const CONDITION_DAMAGED = 'damaged';
+    public const CONDITION_PARTIAL = 'partial';
 
     // ===== RELATIONSHIPS =====
 

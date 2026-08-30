@@ -24,50 +24,51 @@ class SpecialistReferralController extends Controller
     public function createReferral(Request $request, Encounter $encounter)
     {
         $request->validate([
-            'referral_type'               => 'required|in:internal,external',
-            'target_clinic_id'            => 'required_if:referral_type,internal|nullable|exists:clinics,id',
-            'target_doctor_id'            => 'nullable|exists:staff,id',
-            'target_specialization_id'    => 'nullable|integer',
-            'external_facility_name'      => 'required_if:referral_type,external|nullable|string|max:255',
-            'external_doctor_name'        => 'nullable|string|max:255',
-            'external_facility_address'   => 'nullable|string|max:500',
-            'external_facility_phone'     => 'nullable|string|max:50',
-            'reason'                      => 'required|string|max:1000',
-            'clinical_summary'            => 'nullable|string|max:2000',
-            'provisional_diagnosis'       => 'nullable|string|max:500',
-            'urgency'                     => 'nullable|in:routine,urgent,emergency',
+            'referral_type' => 'required|in:internal,external',
+            'target_clinic_id' => 'required_if:referral_type,internal|nullable|exists:clinics,id',
+            'target_doctor_id' => 'nullable|exists:staff,id',
+            'target_specialization_id' => 'nullable|integer',
+            'external_facility_name' => 'required_if:referral_type,external|nullable|string|max:255',
+            'external_doctor_name' => 'nullable|string|max:255',
+            'external_facility_address' => 'nullable|string|max:500',
+            'external_facility_phone' => 'nullable|string|max:50',
+            'reason' => 'required|string|max:1000',
+            'clinical_summary' => 'nullable|string|max:2000',
+            'provisional_diagnosis' => 'nullable|string|max:500',
+            'urgency' => 'nullable|in:routine,urgent,emergency',
         ]);
 
         try {
             $doctor = Staff::where('user_id', Auth::id())->first();
 
             $referral = SpecialistReferral::create([
-                'patient_id'                   => $encounter->patient_id,
-                'encounter_id'                 => $encounter->id,
-                'referring_doctor_id'          => $doctor?->id,
-                'referring_clinic_id'          => $doctor?->clinic_id,
-                'referral_type'                => $request->referral_type,
-                'target_clinic_id'             => $request->target_clinic_id,
-                'target_doctor_id'             => $request->target_doctor_id,
-                'target_specialization_id'     => $request->target_specialization_id,
-                'external_facility_name'       => $request->external_facility_name,
-                'external_doctor_name'         => $request->external_doctor_name,
-                'external_facility_address'    => $request->external_facility_address,
-                'external_facility_phone'      => $request->external_facility_phone,
-                'reason'                       => $request->reason,
-                'clinical_summary'             => $request->clinical_summary,
-                'provisional_diagnosis'        => $request->provisional_diagnosis,
-                'urgency'                      => $request->urgency ?? SpecialistReferral::URGENCY_ROUTINE,
-                'status'                       => SpecialistReferral::STATUS_PENDING,
+                'patient_id' => $encounter->patient_id,
+                'encounter_id' => $encounter->id,
+                'referring_doctor_id' => $doctor?->id,
+                'referring_clinic_id' => $doctor?->clinic_id,
+                'referral_type' => $request->referral_type,
+                'target_clinic_id' => $request->target_clinic_id,
+                'target_doctor_id' => $request->target_doctor_id,
+                'target_specialization_id' => $request->target_specialization_id,
+                'external_facility_name' => $request->external_facility_name,
+                'external_doctor_name' => $request->external_doctor_name,
+                'external_facility_address' => $request->external_facility_address,
+                'external_facility_phone' => $request->external_facility_phone,
+                'reason' => $request->reason,
+                'clinical_summary' => $request->clinical_summary,
+                'provisional_diagnosis' => $request->provisional_diagnosis,
+                'urgency' => $request->urgency ?? SpecialistReferral::URGENCY_ROUTINE,
+                'status' => SpecialistReferral::STATUS_PENDING,
             ]);
 
             return response()->json([
-                'success'  => true,
-                'message'  => 'Referral submitted successfully.',
+                'success' => true,
+                'message' => 'Referral submitted successfully.',
                 'referral' => $referral->load('targetClinic', 'targetDoctor'),
             ]);
         } catch (\Exception $e) {
             Log::error('Error creating referral', ['error' => $e->getMessage()]);
+
             return response()->json(['success' => false, 'message' => 'Failed to create referral: ' . $e->getMessage()], 500);
         }
     }
@@ -87,30 +88,31 @@ class SpecialistReferralController extends Controller
             ->get()
             ->map(function ($ref) use ($staff) {
                 $isMine = $staff && $ref->referring_doctor_id == $staff->id;
+
                 return [
-                    'id'                    => $ref->id,
-                    'type'                  => $ref->referral_type,
-                    'status'                => $ref->status,
-                    'urgency'               => $ref->urgency,
-                    'reason'                => $ref->reason,
-                    'clinical_summary'      => $ref->clinical_summary,
+                    'id' => $ref->id,
+                    'type' => $ref->referral_type,
+                    'status' => $ref->status,
+                    'urgency' => $ref->urgency,
+                    'reason' => $ref->reason,
+                    'clinical_summary' => $ref->clinical_summary,
                     'provisional_diagnosis' => $ref->provisional_diagnosis,
-                    'target_clinic'         => $ref->targetClinic->name ?? null,
-                    'target_clinic_id'      => $ref->target_clinic_id,
-                    'target_doctor'         => $ref->targetDoctor ? userfullname($ref->targetDoctor->user_id) : null,
-                    'target_doctor_id'      => $ref->target_doctor_id,
-                    'external_facility'     => $ref->external_facility_name,
-                    'external_doctor'       => $ref->external_doctor_name,
+                    'target_clinic' => $ref->targetClinic->name ?? null,
+                    'target_clinic_id' => $ref->target_clinic_id,
+                    'target_doctor' => $ref->targetDoctor ? userfullname($ref->targetDoctor->user_id) : null,
+                    'target_doctor_id' => $ref->target_doctor_id,
+                    'external_facility' => $ref->external_facility_name,
+                    'external_doctor' => $ref->external_doctor_name,
                     'external_facility_address' => $ref->external_facility_address,
-                    'external_facility_phone'   => $ref->external_facility_phone,
-                    'referring_doctor'      => $ref->referringDoctor ? userfullname($ref->referringDoctor->user_id) : null,
-                    'referring_doctor_id'   => $ref->referring_doctor_id,
-                    'is_mine'               => $isMine,
-                    'can_edit'              => $isMine && $ref->status === SpecialistReferral::STATUS_PENDING,
-                    'appointment_id'        => $ref->appointment_id,
-                    'created_at'            => $ref->created_at->format('M d, Y h:i A'),
-                    'actioned_at'           => $ref->actioned_at?->format('M d, Y h:i A'),
-                    'action_notes'          => $ref->action_notes,
+                    'external_facility_phone' => $ref->external_facility_phone,
+                    'referring_doctor' => $ref->referringDoctor ? userfullname($ref->referringDoctor->user_id) : null,
+                    'referring_doctor_id' => $ref->referring_doctor_id,
+                    'is_mine' => $isMine,
+                    'can_edit' => $isMine && $ref->status === SpecialistReferral::STATUS_PENDING,
+                    'appointment_id' => $ref->appointment_id,
+                    'created_at' => $ref->created_at->format('M d, Y h:i A'),
+                    'actioned_at' => $ref->actioned_at?->format('M d, Y h:i A'),
+                    'action_notes' => $ref->action_notes,
                 ];
             });
 
@@ -134,33 +136,34 @@ class SpecialistReferralController extends Controller
             ->map(function ($ref) use ($staff, $encounter) {
                 $isMine = $staff && $ref->referring_doctor_id == $staff->id;
                 $isCurrentEncounter = $ref->encounter_id == $encounter->id;
+
                 return [
-                    'id'                    => $ref->id,
-                    'type'                  => $ref->referral_type,
-                    'status'                => $ref->status,
-                    'urgency'               => $ref->urgency,
-                    'reason'                => $ref->reason,
-                    'clinical_summary'      => $ref->clinical_summary,
+                    'id' => $ref->id,
+                    'type' => $ref->referral_type,
+                    'status' => $ref->status,
+                    'urgency' => $ref->urgency,
+                    'reason' => $ref->reason,
+                    'clinical_summary' => $ref->clinical_summary,
                     'provisional_diagnosis' => $ref->provisional_diagnosis,
-                    'target_clinic'         => $ref->targetClinic->name ?? null,
-                    'target_clinic_id'      => $ref->target_clinic_id,
-                    'target_doctor'         => $ref->targetDoctor ? userfullname($ref->targetDoctor->user_id) : null,
-                    'target_doctor_id'      => $ref->target_doctor_id,
-                    'external_facility'     => $ref->external_facility_name,
-                    'external_doctor'       => $ref->external_doctor_name,
+                    'target_clinic' => $ref->targetClinic->name ?? null,
+                    'target_clinic_id' => $ref->target_clinic_id,
+                    'target_doctor' => $ref->targetDoctor ? userfullname($ref->targetDoctor->user_id) : null,
+                    'target_doctor_id' => $ref->target_doctor_id,
+                    'external_facility' => $ref->external_facility_name,
+                    'external_doctor' => $ref->external_doctor_name,
                     'external_facility_address' => $ref->external_facility_address,
-                    'external_facility_phone'   => $ref->external_facility_phone,
-                    'referring_doctor'      => $ref->referringDoctor ? userfullname($ref->referringDoctor->user_id) : null,
-                    'referring_doctor_id'   => $ref->referring_doctor_id,
-                    'referring_clinic'      => $ref->referringClinic->name ?? null,
-                    'encounter_id'          => $ref->encounter_id,
-                    'is_current_encounter'  => $isCurrentEncounter,
-                    'is_mine'               => $isMine,
-                    'can_edit'              => $isMine && $ref->status === SpecialistReferral::STATUS_PENDING,
-                    'appointment_id'        => $ref->appointment_id,
-                    'action_notes'          => $ref->action_notes,
-                    'created_at'            => $ref->created_at->format('M d, Y h:i A'),
-                    'actioned_at'           => $ref->actioned_at?->format('M d, Y h:i A'),
+                    'external_facility_phone' => $ref->external_facility_phone,
+                    'referring_doctor' => $ref->referringDoctor ? userfullname($ref->referringDoctor->user_id) : null,
+                    'referring_doctor_id' => $ref->referring_doctor_id,
+                    'referring_clinic' => $ref->referringClinic->name ?? null,
+                    'encounter_id' => $ref->encounter_id,
+                    'is_current_encounter' => $isCurrentEncounter,
+                    'is_mine' => $isMine,
+                    'can_edit' => $isMine && $ref->status === SpecialistReferral::STATUS_PENDING,
+                    'appointment_id' => $ref->appointment_id,
+                    'action_notes' => $ref->action_notes,
+                    'created_at' => $ref->created_at->format('M d, Y h:i A'),
+                    'actioned_at' => $ref->actioned_at?->format('M d, Y h:i A'),
                 ];
             });
 
@@ -185,32 +188,32 @@ class SpecialistReferralController extends Controller
         }
 
         $request->validate([
-            'referral_type'               => 'required|in:internal,external',
-            'target_clinic_id'            => 'required_if:referral_type,internal|nullable|exists:clinics,id',
-            'target_doctor_id'            => 'nullable|exists:staff,id',
-            'external_facility_name'      => 'required_if:referral_type,external|nullable|string|max:255',
-            'external_doctor_name'        => 'nullable|string|max:255',
-            'external_facility_address'   => 'nullable|string|max:500',
-            'external_facility_phone'     => 'nullable|string|max:50',
-            'reason'                      => 'required|string|max:1000',
-            'clinical_summary'            => 'nullable|string|max:2000',
-            'provisional_diagnosis'       => 'nullable|string|max:500',
-            'urgency'                     => 'nullable|in:routine,urgent,emergency',
+            'referral_type' => 'required|in:internal,external',
+            'target_clinic_id' => 'required_if:referral_type,internal|nullable|exists:clinics,id',
+            'target_doctor_id' => 'nullable|exists:staff,id',
+            'external_facility_name' => 'required_if:referral_type,external|nullable|string|max:255',
+            'external_doctor_name' => 'nullable|string|max:255',
+            'external_facility_address' => 'nullable|string|max:500',
+            'external_facility_phone' => 'nullable|string|max:50',
+            'reason' => 'required|string|max:1000',
+            'clinical_summary' => 'nullable|string|max:2000',
+            'provisional_diagnosis' => 'nullable|string|max:500',
+            'urgency' => 'nullable|in:routine,urgent,emergency',
         ]);
 
         try {
             $referral->update([
-                'referral_type'                => $request->referral_type,
-                'target_clinic_id'             => $request->referral_type === 'internal' ? $request->target_clinic_id : null,
-                'target_doctor_id'             => $request->referral_type === 'internal' ? $request->target_doctor_id : null,
-                'external_facility_name'       => $request->referral_type === 'external' ? $request->external_facility_name : null,
-                'external_doctor_name'         => $request->referral_type === 'external' ? $request->external_doctor_name : null,
-                'external_facility_address'    => $request->referral_type === 'external' ? $request->external_facility_address : null,
-                'external_facility_phone'      => $request->referral_type === 'external' ? $request->external_facility_phone : null,
-                'reason'                       => $request->reason,
-                'clinical_summary'             => $request->clinical_summary,
-                'provisional_diagnosis'        => $request->provisional_diagnosis,
-                'urgency'                      => $request->urgency ?? SpecialistReferral::URGENCY_ROUTINE,
+                'referral_type' => $request->referral_type,
+                'target_clinic_id' => $request->referral_type === 'internal' ? $request->target_clinic_id : null,
+                'target_doctor_id' => $request->referral_type === 'internal' ? $request->target_doctor_id : null,
+                'external_facility_name' => $request->referral_type === 'external' ? $request->external_facility_name : null,
+                'external_doctor_name' => $request->referral_type === 'external' ? $request->external_doctor_name : null,
+                'external_facility_address' => $request->referral_type === 'external' ? $request->external_facility_address : null,
+                'external_facility_phone' => $request->referral_type === 'external' ? $request->external_facility_phone : null,
+                'reason' => $request->reason,
+                'clinical_summary' => $request->clinical_summary,
+                'provisional_diagnosis' => $request->provisional_diagnosis,
+                'urgency' => $request->urgency ?? SpecialistReferral::URGENCY_ROUTINE,
             ]);
 
             return response()->json([
@@ -219,6 +222,7 @@ class SpecialistReferralController extends Controller
             ]);
         } catch (\Exception $e) {
             Log::error('Error updating referral', ['error' => $e->getMessage()]);
+
             return response()->json(['success' => false, 'message' => 'Failed to update referral: ' . $e->getMessage()], 500);
         }
     }
@@ -249,6 +253,7 @@ class SpecialistReferralController extends Controller
             ]);
         } catch (\Exception $e) {
             Log::error('Error deleting referral', ['error' => $e->getMessage()]);
+
             return response()->json(['success' => false, 'message' => 'Failed to delete referral: ' . $e->getMessage()], 500);
         }
     }
@@ -284,26 +289,27 @@ class SpecialistReferralController extends Controller
                 ->get()
                 ->map(function ($ref) {
                     return [
-                        'id'                    => $ref->id,
-                        'type'                  => $ref->referral_type,
-                        'urgency'               => $ref->urgency,
-                        'reason'                => $ref->reason,
+                        'id' => $ref->id,
+                        'type' => $ref->referral_type,
+                        'urgency' => $ref->urgency,
+                        'reason' => $ref->reason,
                         'provisional_diagnosis' => $ref->provisional_diagnosis,
-                        'clinical_summary'      => $ref->clinical_summary,
-                        'patient_id'            => $ref->patient_id,
-                        'patient_name'          => $ref->patient ? userfullname($ref->patient->user_id) : 'Unknown',
-                        'patient_file_no'       => $ref->patient->file_no ?? 'N/A',
-                        'referring_doctor'      => $ref->referringDoctor ? userfullname($ref->referringDoctor->user_id) : 'Unknown',
-                        'referring_clinic'      => $ref->referringClinic->name ?? null,
-                        'target_clinic'         => $ref->targetClinic->name ?? null,
-                        'encounter_id'          => $ref->encounter_id,
-                        'created_at'            => $ref->created_at->format('M d, Y H:i'),
+                        'clinical_summary' => $ref->clinical_summary,
+                        'patient_id' => $ref->patient_id,
+                        'patient_name' => $ref->patient ? userfullname($ref->patient->user_id) : 'Unknown',
+                        'patient_file_no' => $ref->patient->file_no ?? 'N/A',
+                        'referring_doctor' => $ref->referringDoctor ? userfullname($ref->referringDoctor->user_id) : 'Unknown',
+                        'referring_clinic' => $ref->referringClinic->name ?? null,
+                        'target_clinic' => $ref->targetClinic->name ?? null,
+                        'encounter_id' => $ref->encounter_id,
+                        'created_at' => $ref->created_at->format('M d, Y H:i'),
                     ];
                 });
 
             return response()->json(['success' => true, 'referrals' => $referrals]);
         } catch (\Exception $e) {
             Log::error('Error fetching incoming referrals', ['error' => $e->getMessage()]);
+
             return response()->json(['success' => false, 'message' => 'Failed to load incoming referrals'], 500);
         }
     }
@@ -368,12 +374,12 @@ class SpecialistReferralController extends Controller
 
         // Apply sort filter
         $sortFilter = $request->input('sort_filter', 'newest');
-        
+
         if (in_array($sortFilter, ['patient_az', 'patient_za'])) {
             $query->join('patients', 'specialist_referrals.patient_id', '=', 'patients.id')
                   ->join('users', 'patients.user_id', '=', 'users.id')
                   ->select('specialist_referrals.*');
-                  
+
             if ($sortFilter === 'patient_az') {
                 $query->orderBy('users.surname', 'ASC')->orderBy('users.firstname', 'ASC');
             } else {
@@ -440,12 +446,12 @@ class SpecialistReferralController extends Controller
 
         // Apply sort filter
         $sortFilter = $request->input('sort_filter', 'newest');
-        
+
         if (in_array($sortFilter, ['patient_az', 'patient_za'])) {
             $query->join('patients', 'specialist_referrals.patient_id', '=', 'patients.id')
                   ->join('users', 'patients.user_id', '=', 'users.id')
                   ->select('specialist_referrals.*');
-                  
+
             if ($sortFilter === 'patient_az') {
                 $query->orderBy('users.surname', 'ASC')->orderBy('users.firstname', 'ASC');
             } else {
@@ -474,7 +480,7 @@ class SpecialistReferralController extends Controller
                 $user = $ref->patient ? $ref->patient->user : null;
                 $patientName = $user ? ucwords(trim($user->surname . ' ' . $user->firstname . ' ' . ($user->othername ?? ''))) : 'N/A';
                 $fileNo = $ref->patient->file_no ?? 'N/A';
-                
+
                 $from = $ref->referringDoctor ? userfullname($ref->referringDoctor->user_id) : 'N/A';
                 if ($ref->referringClinic) {
                     $from .= ' (' . e($ref->referringClinic->name) . ')';
@@ -509,36 +515,44 @@ class SpecialistReferralController extends Controller
                 // Badges
                 $urgencyBadges = [
                     'emergency' => '<span class="badge bg-danger"><i class="mdi mdi-alert-circle"></i> Emergency</span>',
-                    'urgent'    => '<span class="badge bg-warning text-dark"><i class="mdi mdi-alert"></i> Urgent</span>',
-                    'routine'   => '<span class="badge bg-secondary">Routine</span>',
+                    'urgent' => '<span class="badge bg-warning text-dark"><i class="mdi mdi-alert"></i> Urgent</span>',
+                    'routine' => '<span class="badge bg-secondary">Routine</span>',
                 ];
                 $urgencyBadge = $urgencyBadges[$ref->urgency] ?? $urgencyBadges['routine'];
-                
+
                 $typeBadge = $ref->referral_type === 'internal'
                     ? '<span class="badge bg-info">Internal</span>'
                     : '<span class="badge bg-dark">External</span>';
 
                 $statusBadges = [
-                    'pending'      => '<span class="badge bg-warning text-dark">Pending</span>',
-                    'booked'       => '<span class="badge bg-primary">Booked</span>',
-                    'completed'    => '<span class="badge bg-success">Completed</span>',
-                    'cancelled'    => '<span class="badge bg-danger">Cancelled</span>',
-                    'declined'     => '<span class="badge bg-dark">Declined</span>',
+                    'pending' => '<span class="badge bg-warning text-dark">Pending</span>',
+                    'booked' => '<span class="badge bg-primary">Booked</span>',
+                    'completed' => '<span class="badge bg-success">Completed</span>',
+                    'cancelled' => '<span class="badge bg-danger">Cancelled</span>',
+                    'declined' => '<span class="badge bg-dark">Declined</span>',
                     'referred_out' => '<span class="badge bg-purple text-white">Referred Out</span>',
                 ];
                 $statusBadge = $statusBadges[$ref->status] ?? '<span class="badge bg-secondary">' . ucfirst($ref->status) . '</span>';
-                
+
                 $statusColor = '#6c757d';
-                if ($ref->status === 'pending') $statusColor = '#f59e0b';
-                if ($ref->status === 'completed') $statusColor = '#10b981';
-                if ($ref->status === 'booked') $statusColor = '#3b82f6';
-                if ($ref->status === 'cancelled' || $ref->status === 'declined') $statusColor = '#ef4444';
+                if ($ref->status === 'pending') {
+                    $statusColor = '#f59e0b';
+                }
+                if ($ref->status === 'completed') {
+                    $statusColor = '#10b981';
+                }
+                if ($ref->status === 'booked') {
+                    $statusColor = '#3b82f6';
+                }
+                if ($ref->status === 'cancelled' || $ref->status === 'declined') {
+                    $statusColor = '#ef4444';
+                }
 
                 $profileUrl = $ref->patient ? route('patient.show', $ref->patient->id) : '#';
 
                 // Build Card HTML
-                $html  = '<div class="queue-card">';
-                
+                $html = '<div class="queue-card">';
+
                 // Row 1
                 $html .= '<div class="queue-card-header">';
                 $html .= '  <div class="queue-card-avatar">' . $initials;
@@ -552,7 +566,7 @@ class SpecialistReferralController extends Controller
                 $html .= '    ' . $urgencyBadge . ' ' . $typeBadge . ' ' . $statusBadge;
                 $html .= '  </div>';
                 $html .= '</div>';
-                
+
                 // Row 2
                 $html .= '<div class="queue-card-details">';
                 $html .= '  <div class="queue-card-detail-item"><i class="mdi mdi-clock-outline"></i> ' . e($timeDisplay) . '</div>';
@@ -578,7 +592,7 @@ class SpecialistReferralController extends Controller
                     }
                     $buttons .= '<button class="btn btn-warning btn-sm btn-decline-ref" data-id="' . $ref->id . '" title="Decline"><i class="mdi mdi-close-circle"></i> Decline</button>';
                 }
-                
+
                 if ($ref->referral_type === 'external') {
                     $buttons .= '<button class="btn btn-outline-dark btn-sm btn-view-ref-detail" data-id="' . $ref->id . '" title="Print"><i class="mdi mdi-printer"></i> Print</button>';
                 }
@@ -587,6 +601,7 @@ class SpecialistReferralController extends Controller
                 $html .= $buttons;
 
                 $html .= '</div>';
+
                 return $html;
             })
             ->rawColumns(['card_html'])
@@ -645,16 +660,19 @@ class SpecialistReferralController extends Controller
                     if ($ref->targetDoctor) {
                         $target .= ' — ' . userfullname($ref->targetDoctor->user_id);
                     }
+
                     return $target;
                 }
+
                 return $ref->external_facility_name ?? 'External';
             })
             ->addColumn('urgency_badge', function ($ref) {
                 $badges = [
                     'emergency' => '<span class="badge bg-danger">Emergency</span>',
-                    'urgent'    => '<span class="badge bg-warning text-dark">Urgent</span>',
-                    'routine'   => '<span class="badge bg-secondary">Routine</span>',
+                    'urgent' => '<span class="badge bg-warning text-dark">Urgent</span>',
+                    'routine' => '<span class="badge bg-secondary">Routine</span>',
                 ];
+
                 return $badges[$ref->urgency] ?? $badges['routine'];
             })
             ->addColumn('type_badge', function ($ref) {
@@ -664,13 +682,14 @@ class SpecialistReferralController extends Controller
             })
             ->addColumn('status_badge', function ($ref) {
                 $statusBadges = [
-                    'pending'      => '<span class="badge bg-warning text-dark">Pending</span>',
-                    'booked'       => '<span class="badge bg-primary">Booked</span>',
-                    'completed'    => '<span class="badge bg-success">Completed</span>',
-                    'cancelled'    => '<span class="badge bg-danger">Cancelled</span>',
-                    'declined'     => '<span class="badge bg-dark">Declined</span>',
+                    'pending' => '<span class="badge bg-warning text-dark">Pending</span>',
+                    'booked' => '<span class="badge bg-primary">Booked</span>',
+                    'completed' => '<span class="badge bg-success">Completed</span>',
+                    'cancelled' => '<span class="badge bg-danger">Cancelled</span>',
+                    'declined' => '<span class="badge bg-dark">Declined</span>',
                     'referred_out' => '<span class="badge bg-purple text-white">Referred Out</span>',
                 ];
+
                 return $statusBadges[$ref->status] ?? '<span class="badge bg-secondary">' . ucfirst($ref->status) . '</span>';
             })
             ->addColumn('reason_short', function ($ref) {
@@ -703,6 +722,7 @@ class SpecialistReferralController extends Controller
                 }
 
                 $buttons .= '</div>';
+
                 return $buttons;
             })
             ->rawColumns(['urgency_badge', 'type_badge', 'status_badge', 'actions'])
@@ -715,6 +735,7 @@ class SpecialistReferralController extends Controller
     public function getPendingReferralCount()
     {
         $count = SpecialistReferral::where('status', SpecialistReferral::STATUS_PENDING)->count();
+
         return response()->json(['count' => $count]);
     }
 
@@ -740,38 +761,38 @@ class SpecialistReferralController extends Controller
         return response()->json([
             'success' => true,
             'referral' => [
-                'id'                      => $referral->id,
-                'referral_type'           => $referral->referral_type,
-                'status'                  => $referral->status,
-                'urgency'                 => $referral->urgency,
-                'reason'                  => $referral->reason,
-                'clinical_summary'        => $referral->clinical_summary,
-                'provisional_diagnosis'   => $referral->provisional_diagnosis,
-                'patient_name'            => $referral->patient ? userfullname($referral->patient->user_id) : 'N/A',
-                'patient_file_no'         => $referral->patient->file_no ?? 'N/A',
-                'patient_dob'             => $referral->patient->user->dob ?? null,
-                'patient_gender'          => $referral->patient->user->sex ?? null,
-                'patient_phone'           => $referral->patient->user->phone ?? null,
-                'patient_hmo'             => $referral->patient->hmo->name ?? 'N/A',
-                'referring_doctor'        => $referral->referringDoctor ? userfullname($referral->referringDoctor->user_id) : 'N/A',
-                'referring_clinic'        => $referral->referringClinic->name ?? 'N/A',
-                'target_clinic'           => $referral->targetClinic->name ?? null,
-                'target_doctor'           => $referral->targetDoctor ? userfullname($referral->targetDoctor->user_id) : null,
-                'external_facility_name'  => $referral->external_facility_name,
-                'external_doctor_name'    => $referral->external_doctor_name,
+                'id' => $referral->id,
+                'referral_type' => $referral->referral_type,
+                'status' => $referral->status,
+                'urgency' => $referral->urgency,
+                'reason' => $referral->reason,
+                'clinical_summary' => $referral->clinical_summary,
+                'provisional_diagnosis' => $referral->provisional_diagnosis,
+                'patient_name' => $referral->patient ? userfullname($referral->patient->user_id) : 'N/A',
+                'patient_file_no' => $referral->patient->file_no ?? 'N/A',
+                'patient_dob' => $referral->patient->user->dob ?? null,
+                'patient_gender' => $referral->patient->user->sex ?? null,
+                'patient_phone' => $referral->patient->user->phone ?? null,
+                'patient_hmo' => $referral->patient->hmo->name ?? 'N/A',
+                'referring_doctor' => $referral->referringDoctor ? userfullname($referral->referringDoctor->user_id) : 'N/A',
+                'referring_clinic' => $referral->referringClinic->name ?? 'N/A',
+                'target_clinic' => $referral->targetClinic->name ?? null,
+                'target_doctor' => $referral->targetDoctor ? userfullname($referral->targetDoctor->user_id) : null,
+                'external_facility_name' => $referral->external_facility_name,
+                'external_doctor_name' => $referral->external_doctor_name,
                 'external_facility_address' => $referral->external_facility_address,
                 'external_facility_phone' => $referral->external_facility_phone,
-                'action_notes'            => $referral->action_notes,
-                'is_targeted_at_me'       => $isTargetedAtMe,
-                'created_at'              => $referral->created_at->format('M d, Y h:i A'),
-                'actioned_at'             => $referral->actioned_at?->format('M d, Y h:i A'),
+                'action_notes' => $referral->action_notes,
+                'is_targeted_at_me' => $isTargetedAtMe,
+                'created_at' => $referral->created_at->format('M d, Y h:i A'),
+                'actioned_at' => $referral->actioned_at?->format('M d, Y h:i A'),
             ],
             'hospital' => [
-                'name'    => $settings->site_name ?? 'Hospital',
+                'name' => $settings->site_name ?? 'Hospital',
                 'address' => $settings->contact_address ?? '',
-                'phones'  => $settings->contact_phones ?? '',
-                'email'   => $settings->contact_email ?? '',
-                'logo'    => $settings->logo ? 'data:image/jpeg;base64,' . $settings->logo : null,
+                'phones' => $settings->contact_phones ?? '',
+                'email' => $settings->contact_email ?? '',
+                'logo' => $settings->logo ? 'data:image/jpeg;base64,' . $settings->logo : null,
             ],
         ]);
     }
@@ -785,10 +806,10 @@ class SpecialistReferralController extends Controller
     {
         $request->validate([
             'appointment_date' => 'required|date|after_or_equal:today',
-            'start_time'       => 'required|date_format:H:i',
-            'end_time'         => 'nullable|date_format:H:i|after:start_time',
-            'doctor_id'        => 'nullable|exists:staff,id',
-            'clinic_id'        => 'nullable|exists:clinics,id',
+            'start_time' => 'required|date_format:H:i',
+            'end_time' => 'nullable|date_format:H:i|after:start_time',
+            'doctor_id' => 'nullable|exists:staff,id',
+            'clinic_id' => 'nullable|exists:clinics,id',
         ]);
 
         if ($referral->status !== SpecialistReferral::STATUS_PENDING) {
@@ -810,40 +831,41 @@ class SpecialistReferralController extends Controller
             $bookedByStaff = Staff::where('user_id', Auth::id())->first();
 
             $appointment = DoctorAppointment::create([
-                'patient_id'       => $referral->patient_id,
-                'clinic_id'        => $request->clinic_id ?? $referral->target_clinic_id,
-                'staff_id'         => $request->doctor_id ?? $referral->target_doctor_id,
+                'patient_id' => $referral->patient_id,
+                'clinic_id' => $request->clinic_id ?? $referral->target_clinic_id,
+                'staff_id' => $request->doctor_id ?? $referral->target_doctor_id,
                 'appointment_date' => $request->appointment_date,
-                'start_time'       => $request->start_time,
-                'end_time'         => $endTime->format('H:i'),
+                'start_time' => $request->start_time,
+                'end_time' => $endTime->format('H:i'),
                 'duration_minutes' => $startTime->diffInMinutes($endTime),
                 'appointment_type' => 'referral',
-                'status'           => QueueStatus::SCHEDULED,
-                'priority'         => $referral->urgency ?? 'routine',
-                'booked_by'        => $bookedByStaff ? $bookedByStaff->id : null,
-                'source'           => 'referral',
-                'referral_id'      => $referral->id,
-                'notes'            => 'Referral from ' . ($referral->referringDoctor ? userfullname($referral->referringDoctor->user_id) : 'Unknown') . ': ' . $referral->reason,
+                'status' => QueueStatus::SCHEDULED,
+                'priority' => $referral->urgency ?? 'routine',
+                'booked_by' => $bookedByStaff ? $bookedByStaff->id : null,
+                'source' => 'referral',
+                'referral_id' => $referral->id,
+                'notes' => 'Referral from ' . ($referral->referringDoctor ? userfullname($referral->referringDoctor->user_id) : 'Unknown') . ': ' . $referral->reason,
             ]);
 
             $referral->update([
-                'status'        => SpecialistReferral::STATUS_BOOKED,
+                'status' => SpecialistReferral::STATUS_BOOKED,
                 'appointment_id' => $appointment->id,
-                'actioned_by'   => $bookedByStaff ? $bookedByStaff->id : null,
-                'actioned_at'   => now(),
-                'action_notes'  => 'Appointment booked for ' . $request->appointment_date,
+                'actioned_by' => $bookedByStaff ? $bookedByStaff->id : null,
+                'actioned_at' => now(),
+                'action_notes' => 'Appointment booked for ' . $request->appointment_date,
             ]);
 
             DB::commit();
 
             return response()->json([
-                'success'     => true,
-                'message'     => 'Referral appointment booked successfully.',
+                'success' => true,
+                'message' => 'Referral appointment booked successfully.',
                 'appointment' => $appointment->load('patient.user', 'clinic'),
             ]);
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error('Error booking referral appointment', ['error' => $e->getMessage()]);
+
             return response()->json(['success' => false, 'message' => 'Failed to book: ' . $e->getMessage()], 500);
         }
     }
@@ -866,9 +888,9 @@ class SpecialistReferralController extends Controller
         $actionStaff = Staff::where('user_id', Auth::id())->first();
 
         $referral->update([
-            'status'       => SpecialistReferral::STATUS_REFERRED_OUT,
-            'actioned_by'  => $actionStaff ? $actionStaff->id : null,
-            'actioned_at'  => now(),
+            'status' => SpecialistReferral::STATUS_REFERRED_OUT,
+            'actioned_by' => $actionStaff ? $actionStaff->id : null,
+            'actioned_at' => now(),
             'action_notes' => $request->action_notes ?? 'Referred to external facility',
         ]);
 
@@ -893,9 +915,9 @@ class SpecialistReferralController extends Controller
         $cancelStaff = Staff::where('user_id', Auth::id())->first();
 
         $referral->update([
-            'status'       => SpecialistReferral::STATUS_CANCELLED,
-            'actioned_by'  => $cancelStaff ? $cancelStaff->id : null,
-            'actioned_at'  => now(),
+            'status' => SpecialistReferral::STATUS_CANCELLED,
+            'actioned_by' => $cancelStaff ? $cancelStaff->id : null,
+            'actioned_at' => now(),
             'action_notes' => $request->reason ?? 'Cancelled',
         ]);
 
@@ -918,9 +940,9 @@ class SpecialistReferralController extends Controller
         $declineStaff = Staff::where('user_id', Auth::id())->first();
 
         $referral->update([
-            'status'       => SpecialistReferral::STATUS_DECLINED,
-            'actioned_by'  => $declineStaff ? $declineStaff->id : null,
-            'actioned_at'  => now(),
+            'status' => SpecialistReferral::STATUS_DECLINED,
+            'actioned_by' => $declineStaff ? $declineStaff->id : null,
+            'actioned_at' => now(),
             'action_notes' => 'Declined: ' . $request->reason,
         ]);
 
@@ -942,9 +964,9 @@ class SpecialistReferralController extends Controller
         $staff = Staff::where('user_id', Auth::id())->first();
 
         $referral->update([
-            'status'       => SpecialistReferral::STATUS_BOOKED,
-            'actioned_by'  => $staff ? $staff->id : null,
-            'actioned_at'  => now(),
+            'status' => SpecialistReferral::STATUS_BOOKED,
+            'actioned_by' => $staff ? $staff->id : null,
+            'actioned_at' => now(),
             'action_notes' => 'Accepted by ' . ($staff ? userfullname($staff->user_id) : 'Doctor'),
         ]);
 
@@ -954,8 +976,8 @@ class SpecialistReferralController extends Controller
         ]);
 
         return response()->json([
-            'success'       => true,
-            'message'       => 'Referral accepted successfully.',
+            'success' => true,
+            'message' => 'Referral accepted successfully.',
             'encounter_url' => $encounterUrl,
         ]);
     }
@@ -977,22 +999,22 @@ class SpecialistReferralController extends Controller
             ->get()
             ->map(function ($ref) {
                 return [
-                    'id'                 => $ref->id,
-                    'type'               => $ref->referral_type,
-                    'status'             => $ref->status,
-                    'urgency'            => $ref->urgency,
-                    'reason'             => $ref->reason,
-                    'clinical_summary'   => $ref->clinical_summary,
-                    'diagnosis'          => $ref->provisional_diagnosis,
-                    'referring_doctor'   => $ref->referringDoctor ? userfullname($ref->referringDoctor->user_id) : null,
-                    'referring_clinic'   => $ref->referringClinic->name ?? null,
-                    'target_clinic'      => $ref->targetClinic->name ?? null,
-                    'target_doctor'      => $ref->targetDoctor ? userfullname($ref->targetDoctor->user_id) : null,
-                    'external_facility'  => $ref->external_facility_name,
-                    'appointment_date'   => $ref->appointment ? $ref->appointment->appointment_date : null,
-                    'action_notes'       => $ref->action_notes,
-                    'created_at'         => $ref->created_at->format('M d, Y'),
-                    'actioned_at'        => $ref->actioned_at?->format('M d, Y'),
+                    'id' => $ref->id,
+                    'type' => $ref->referral_type,
+                    'status' => $ref->status,
+                    'urgency' => $ref->urgency,
+                    'reason' => $ref->reason,
+                    'clinical_summary' => $ref->clinical_summary,
+                    'diagnosis' => $ref->provisional_diagnosis,
+                    'referring_doctor' => $ref->referringDoctor ? userfullname($ref->referringDoctor->user_id) : null,
+                    'referring_clinic' => $ref->referringClinic->name ?? null,
+                    'target_clinic' => $ref->targetClinic->name ?? null,
+                    'target_doctor' => $ref->targetDoctor ? userfullname($ref->targetDoctor->user_id) : null,
+                    'external_facility' => $ref->external_facility_name,
+                    'appointment_date' => $ref->appointment ? $ref->appointment->appointment_date : null,
+                    'action_notes' => $ref->action_notes,
+                    'created_at' => $ref->created_at->format('M d, Y'),
+                    'actioned_at' => $ref->actioned_at?->format('M d, Y'),
                 ];
             });
 

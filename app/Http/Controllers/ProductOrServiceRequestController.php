@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Helpers\HmoHelper;
 use App\Models\DoctorQueue;
 use App\Models\Hmo;
 use App\Models\Patient;
@@ -13,7 +14,6 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use App\Helpers\HmoHelper;
 use Yajra\DataTables\DataTables;
 
 class ProductOrServiceRequestController extends Controller
@@ -71,21 +71,25 @@ class ProductOrServiceRequestController extends Controller
                     $claimBadge = ($r->pending_claims ?? 0) > 0
                         ? " <span class='badge bg-warning text-dark'>HMO claims pending</span>"
                         : '';
+
                     return "<button type='button' class='btn btn-info btn-sm btn-pay' data-user='{$r->user_id}'><i class='fa fa-credit-card'></i> Pay</button>{$claimBadge}";
                 })
-                ->addColumn('pending', fn($r) => $r->pending_items)
-                ->addColumn('claims', fn($r) => $r->pending_claims ?? 0)
-                ->addColumn('patient', fn($r) => userfullname($r->user_id))
+                ->addColumn('pending', fn ($r) => $r->pending_items)
+                ->addColumn('claims', fn ($r) => $r->pending_claims ?? 0)
+                ->addColumn('patient', fn ($r) => userfullname($r->user_id))
                 ->addColumn('file_no', function ($r) use ($patients) {
                     $p = $patients->get($r->user_id);
+
                     return $p->file_no ?? 'N/A';
                 })
                 ->addColumn('hmo', function ($r) use ($patients) {
                     $p = $patients->get($r->user_id);
+
                     return optional($p?->hmo)->name ?? 'N/A';
                 })
                 ->addColumn('hmo_no', function ($r) use ($patients) {
                     $p = $patients->get($r->user_id);
+
                     return $p->hmo_no ?? 'N/A';
                 })
                 ->rawColumns(['show'])
@@ -100,12 +104,14 @@ class ProductOrServiceRequestController extends Controller
                 ->addIndexColumn()
                 ->addColumn('show', function ($r) {
                     $url = route('servicess', $r->user_id);
+
                     return "<a href='$url' class='btn btn-info btn-sm'><i class='fa fa-eye'></i> View</a>";
                 })
                 ->editColumn('service_id', function ($r) {
                     if (null != $r->service_id) {
                         $str = "<b>Service: </b>" . $r->service->service_name;
                         $str .= "<br><b>Price: </b>" . $r->service->price->sale_price;
+
                         return $str;
                     } else {
                         return "N/A";
@@ -115,6 +121,7 @@ class ProductOrServiceRequestController extends Controller
                     if (null != $r->product_id) {
                         $str = "<b>Product: </b>" . $r->product->product_name;
                         $str .= "<br><b>Price: </b>" . $r->product->price->current_sale_price;
+
                         return $str;
                     } else {
                         return "N/A";
@@ -130,7 +137,9 @@ class ProductOrServiceRequestController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function create() {}
+    public function create()
+    {
+    }
 
     /**
      * Store a newly created resource in storage.
@@ -191,6 +200,7 @@ class ProductOrServiceRequestController extends Controller
                                     }
                                 } catch (\Exception $e) {
                                     DB::rollBack();
+
                                     return redirect()->back()
                                         ->withErrors(['error' => 'HMO Tariff Error: ' . $e->getMessage()])
                                         ->withInput();
@@ -278,26 +288,34 @@ class ProductOrServiceRequestController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function show(ProductOrServiceRequest $productOrServiceRequest) {}
+    public function show(ProductOrServiceRequest $productOrServiceRequest)
+    {
+    }
 
     /**
      * Show the form for editing the specified resource.
      *
      * @return \Illuminate\Http\Response
      */
-    public function edit(ProductOrServiceRequest $productOrServiceRequest) {}
+    public function edit(ProductOrServiceRequest $productOrServiceRequest)
+    {
+    }
 
     /**
      * Update the specified resource in storage.
      *
      * @return \Illuminate\Http\Response
      */
-    public function update(Request $request, ProductOrServiceRequest $productOrServiceRequest) {}
+    public function update(Request $request, ProductOrServiceRequest $productOrServiceRequest)
+    {
+    }
 
     /**
      * Remove the specified resource from storage.
      *
      * @return \Illuminate\Http\Response
      */
-    public function destroy(ProductOrServiceRequest $productOrServiceRequest) {}
+    public function destroy(ProductOrServiceRequest $productOrServiceRequest)
+    {
+    }
 }

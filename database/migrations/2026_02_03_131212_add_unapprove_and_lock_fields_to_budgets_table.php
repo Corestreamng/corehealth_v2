@@ -51,7 +51,7 @@ class AddUnapproveAndLockFieldsToBudgetsTable extends Migration
                 'unapproval_reason',
                 'locked_by',
                 'locked_at',
-                'rejection_reason'
+                'rejection_reason',
             ]);
         });
     }

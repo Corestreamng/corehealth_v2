@@ -20,7 +20,7 @@ class AddIsAuditedToAuditTables extends Migration
             'staff_bills',
             'organization_bills',
             'admission_requests', // Admissions
-            'nursing_shifts'
+            'nursing_shifts',
         ];
 
         foreach ($tables as $table) {
@@ -52,7 +52,7 @@ class AddIsAuditedToAuditTables extends Migration
             'staff_bills',
             'organization_bills',
             'admission_requests',
-            'nursing_shifts'
+            'nursing_shifts',
         ];
 
         foreach ($tables as $table) {

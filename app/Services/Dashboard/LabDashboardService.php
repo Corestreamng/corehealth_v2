@@ -2,9 +2,9 @@
 
 namespace App\Services\Dashboard;
 
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Cache;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 
 class LabDashboardService
 {
@@ -94,9 +94,10 @@ class LabDashboardService
             ->orderByDesc('value')
             ->limit(5)
             ->get()
-            ->map(function($row, $index) {
+            ->map(function ($row, $index) {
                 $colors = ['#0891b2', '#0e7490', '#155e75', '#164e63', '#06b6d4'];
                 $row->color = $colors[$index % count($colors)];
+
                 return (array)$row;
             })
             ->toArray();
@@ -150,6 +151,7 @@ class LabDashboardService
                 $row->status_label = $statusMap[$row->status] ?? 'Unknown';
                 $row->status_color = $colorMap[$row->status] ?? 'secondary';
                 $row->time = Carbon::parse($row->created_at)->format('h:i A');
+
                 return $row;
             })
             ->toArray();

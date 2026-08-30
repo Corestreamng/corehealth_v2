@@ -33,6 +33,7 @@ class SalaryProfileController extends Controller
                 ->addIndexColumn()
                 ->addColumn('staff_name', function ($profile) {
                     $user = $profile->staff->user ?? null;
+
                     return $user ? $user->surname . ' ' . $user->firstname . ' ' . $user->othername : 'N/A';
                 })
                 ->addColumn('employee_id', function ($profile) {
@@ -57,6 +58,7 @@ class SalaryProfileController extends Controller
                     $viewBtn = '<button type="button" class="btn btn-sm btn-info view-btn mr-1" data-id="' . $profile->id . '" title="View"><i class="mdi mdi-eye"></i></button>';
                     $editBtn = '<button type="button" class="btn btn-sm btn-primary edit-btn mr-1" data-id="' . $profile->id . '" title="Edit"><i class="mdi mdi-pencil"></i></button>';
                     $deleteBtn = '<button type="button" class="btn btn-sm btn-danger delete-btn" data-id="' . $profile->id . '" title="Delete"><i class="mdi mdi-delete"></i></button>';
+
                     return $viewBtn . $editBtn . $deleteBtn;
                 })
                 ->rawColumns(['action'])
@@ -140,16 +142,17 @@ class SalaryProfileController extends Controller
                 return response()->json([
                     'success' => false,
                     'message' => 'Validation failed',
-                    'errors' => $validator->errors()
+                    'errors' => $validator->errors(),
                 ], 422);
             }
+
             return back()->withErrors($validator)->withInput();
         }
 
         // Check for duplicate pay heads
         if ($request->filled('items')) {
             $payHeadIds = collect($request->items)
-                ->filter(fn($item) => !empty($item['pay_head_id']))
+                ->filter(fn ($item) => !empty($item['pay_head_id']))
                 ->pluck('pay_head_id')
                 ->toArray();
 
@@ -163,9 +166,10 @@ class SalaryProfileController extends Controller
                     return response()->json([
                         'success' => false,
                         'message' => $errorMessage,
-                        'errors' => ['items' => [$errorMessage]]
+                        'errors' => ['items' => [$errorMessage]],
                     ], 422);
                 }
+
                 return back()->withErrors(['items' => $errorMessage])->withInput();
             }
         }
@@ -193,8 +197,12 @@ class SalaryProfileController extends Controller
                         if (!empty($item['pay_head_id']) && isset($item['value'])) {
                             // Normalize calculation_base values
                             $calcBase = $item['calculation_base'] ?? null;
-                            if ($calcBase === 'basic') $calcBase = 'basic_salary';
-                            if ($calcBase === 'gross') $calcBase = 'gross_salary';
+                            if ($calcBase === 'basic') {
+                                $calcBase = 'basic_salary';
+                            }
+                            if ($calcBase === 'gross') {
+                                $calcBase = 'gross_salary';
+                            }
 
                             StaffSalaryProfileItem::create([
                                 'salary_profile_id' => $profile->id,
@@ -221,7 +229,7 @@ class SalaryProfileController extends Controller
                 return response()->json([
                     'success' => true,
                     'message' => 'Salary profile created successfully',
-                    'data' => $profile
+                    'data' => $profile,
                 ]);
             }
 
@@ -231,9 +239,10 @@ class SalaryProfileController extends Controller
             if ($request->ajax()) {
                 return response()->json([
                     'success' => false,
-                    'message' => $e->getMessage()
+                    'message' => $e->getMessage(),
                 ], 500);
             }
+
             return back()->withErrors(['error' => $e->getMessage()])->withInput();
         }
     }
@@ -244,6 +253,7 @@ class SalaryProfileController extends Controller
 
         if ($request->ajax()) {
             $user = $salaryProfile->staff->user ?? null;
+
             return response()->json([
                 'id' => $salaryProfile->id,
                 'staff_id' => $salaryProfile->staff_id,
@@ -325,16 +335,17 @@ class SalaryProfileController extends Controller
                 return response()->json([
                     'success' => false,
                     'message' => 'Validation failed',
-                    'errors' => $validator->errors()
+                    'errors' => $validator->errors(),
                 ], 422);
             }
+
             return back()->withErrors($validator)->withInput();
         }
 
         // Check for duplicate pay heads
         if ($request->filled('items')) {
             $payHeadIds = collect($request->items)
-                ->filter(fn($item) => !empty($item['pay_head_id']))
+                ->filter(fn ($item) => !empty($item['pay_head_id']))
                 ->pluck('pay_head_id')
                 ->toArray();
 
@@ -348,9 +359,10 @@ class SalaryProfileController extends Controller
                     return response()->json([
                         'success' => false,
                         'message' => $errorMessage,
-                        'errors' => ['items' => [$errorMessage]]
+                        'errors' => ['items' => [$errorMessage]],
                     ], 422);
                 }
+
                 return back()->withErrors(['items' => $errorMessage])->withInput();
             }
         }
@@ -371,8 +383,12 @@ class SalaryProfileController extends Controller
                         if (!empty($item['pay_head_id']) && isset($item['value'])) {
                             // Normalize calculation_base values
                             $calcBase = $item['calculation_base'] ?? null;
-                            if ($calcBase === 'basic') $calcBase = 'basic_salary';
-                            if ($calcBase === 'gross') $calcBase = 'gross_salary';
+                            if ($calcBase === 'basic') {
+                                $calcBase = 'basic_salary';
+                            }
+                            if ($calcBase === 'gross') {
+                                $calcBase = 'gross_salary';
+                            }
 
                             StaffSalaryProfileItem::create([
                                 'salary_profile_id' => $salaryProfile->id,
@@ -397,7 +413,7 @@ class SalaryProfileController extends Controller
                 return response()->json([
                     'success' => true,
                     'message' => 'Salary profile updated successfully',
-                    'data' => $salaryProfile
+                    'data' => $salaryProfile,
                 ]);
             }
 
@@ -407,9 +423,10 @@ class SalaryProfileController extends Controller
             if ($request->ajax()) {
                 return response()->json([
                     'success' => false,
-                    'message' => $e->getMessage()
+                    'message' => $e->getMessage(),
                 ], 500);
             }
+
             return back()->withErrors(['error' => $e->getMessage()])->withInput();
         }
     }
@@ -421,9 +438,10 @@ class SalaryProfileController extends Controller
             if ($request->ajax()) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Cannot delete salary profile that has been used in payroll processing.'
+                    'message' => 'Cannot delete salary profile that has been used in payroll processing.',
                 ], 422);
             }
+
             return back()->with('error', 'Cannot delete salary profile that has been used in payroll processing.');
         }
 
@@ -433,7 +451,7 @@ class SalaryProfileController extends Controller
         if ($request->ajax()) {
             return response()->json([
                 'success' => true,
-                'message' => 'Salary profile deleted successfully.'
+                'message' => 'Salary profile deleted successfully.',
             ]);
         }
 

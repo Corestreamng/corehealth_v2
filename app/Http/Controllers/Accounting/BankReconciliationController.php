@@ -3,19 +3,17 @@
 namespace App\Http\Controllers\Accounting;
 
 use App\Http\Controllers\Controller;
+use App\Models\Accounting\AccountingPeriod;
 use App\Models\Accounting\BankReconciliation;
 use App\Models\Accounting\BankReconciliationItem;
 use App\Models\Accounting\BankStatementImport;
-use App\Models\Accounting\JournalEntry;
 use App\Models\Accounting\JournalEntryLine;
-use App\Models\Accounting\AccountingPeriod;
 use App\Models\Bank;
 use App\Services\Accounting\StatementParserService;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Storage;
-use Carbon\Carbon;
 use Yajra\DataTables\Facades\DataTables;
 
 /**
@@ -72,14 +70,15 @@ class BankReconciliationController extends Controller
         }
 
         return DataTables::of($query)
-            ->addColumn('statement_date_formatted', fn($r) => $r->statement_date->format('M d, Y'))
-            ->addColumn('bank_name', fn($r) => $r->bank?->bank_name ?? '-')
-            ->addColumn('period', fn($r) => $r->statement_period_from->format('M d') . ' - ' . $r->statement_period_to->format('M d, Y'))
-            ->addColumn('opening_balance_formatted', fn($r) => '₦' . number_format($r->statement_opening_balance, 2))
-            ->addColumn('statement_balance_formatted', fn($r) => '₦' . number_format($r->statement_closing_balance, 2))
-            ->addColumn('gl_balance_formatted', fn($r) => '₦' . number_format($r->gl_closing_balance, 2))
+            ->addColumn('statement_date_formatted', fn ($r) => $r->statement_date->format('M d, Y'))
+            ->addColumn('bank_name', fn ($r) => $r->bank?->bank_name ?? '-')
+            ->addColumn('period', fn ($r) => $r->statement_period_from->format('M d') . ' - ' . $r->statement_period_to->format('M d, Y'))
+            ->addColumn('opening_balance_formatted', fn ($r) => '₦' . number_format($r->statement_opening_balance, 2))
+            ->addColumn('statement_balance_formatted', fn ($r) => '₦' . number_format($r->statement_closing_balance, 2))
+            ->addColumn('gl_balance_formatted', fn ($r) => '₦' . number_format($r->gl_closing_balance, 2))
             ->addColumn('variance_formatted', function ($r) {
                 $class = abs($r->variance) < 0.01 ? 'text-success' : 'text-danger';
+
                 return '<span class="' . $class . '">₦' . number_format($r->variance, 2) . '</span>';
             })
             ->addColumn('status_badge', function ($r) {
@@ -92,9 +91,10 @@ class BankReconciliationController extends Controller
                 ];
                 $color = $colors[$r->status] ?? 'secondary';
                 $label = str_replace('_', ' ', ucwords($r->status, '_'));
+
                 return '<span class="badge badge-' . $color . '">' . $label . '</span>';
             })
-            ->addColumn('prepared_by_name', fn($r) => $r->preparedBy?->name ?? '-')
+            ->addColumn('prepared_by_name', fn ($r) => $r->preparedBy?->name ?? '-')
             ->addColumn('actions', function ($r) {
                 $actions = '<div class="btn-group btn-group-sm">';
                 $actions .= '<a href="' . route('accounting.bank-reconciliation.show', $r->id) . '" class="btn btn-outline-info" title="View"><i class="mdi mdi-eye"></i></a>';
@@ -108,6 +108,7 @@ class BankReconciliationController extends Controller
                 }
 
                 $actions .= '</div>';
+
                 return $actions;
             })
             ->rawColumns(['variance_formatted', 'status_badge', 'actions'])
@@ -122,11 +123,12 @@ class BankReconciliationController extends Controller
         \Log::info('BankReconciliation create() called', [
             'bank_id' => $bank->id,
             'bank_name' => $bank->name,
-            'account_id' => $bank->account_id
+            'account_id' => $bank->account_id,
         ]);
 
         if (!$bank->account_id) {
             \Log::warning('Bank has no account_id, redirecting back', ['bank_id' => $bank->id]);
+
             return redirect()->route('accounting.bank-reconciliation.index')
                 ->with('error', 'The selected bank does not have a GL account linked. Please assign an account to this bank before reconciliation.');
         }
@@ -147,7 +149,7 @@ class BankReconciliationController extends Controller
             'route_bank_id' => $bank->id,
             'route_bank_name' => $bank->name,
             'form_bank_id' => $request->input('bank_id'),
-            'all_input' => $request->all()
+            'all_input' => $request->all(),
         ]);
 
         $validated = $request->validate([
@@ -171,7 +173,9 @@ class BankReconciliationController extends Controller
             // Generate reconciliation number
             $reconciliationNumber = 'RECON-' . date('Ymd') . '-' . str_pad(
                 BankReconciliation::whereDate('created_at', today())->count() + 1,
-                4, '0', STR_PAD_LEFT
+                4,
+                '0',
+                STR_PAD_LEFT
             );
 
             // Get GL balance for the bank account
@@ -212,6 +216,7 @@ class BankReconciliationController extends Controller
                 ->with('success', 'Reconciliation created. Please match transactions.');
         } catch (\Exception $e) {
             DB::rollBack();
+
             return back()
                 ->withInput()
                 ->with('error', 'Failed to create reconciliation: ' . $e->getMessage());
@@ -346,6 +351,7 @@ class BankReconciliationController extends Controller
             return back()->with('success', count($rows) . ' statement transactions imported.');
         } catch (\Exception $e) {
             DB::rollBack();
+
             return back()->with('error', 'Import failed: ' . $e->getMessage());
         }
     }
@@ -774,7 +780,7 @@ class BankReconciliationController extends Controller
                 $q->where('status', 'posted')
                     ->whereBetween('entry_date', [
                         $reconciliation->statement_period_from,
-                        $reconciliation->statement_period_to
+                        $reconciliation->statement_period_to,
                     ]);
             })
             ->with('journalEntry')
@@ -805,11 +811,21 @@ class BankReconciliationController extends Controller
     {
         $description = strtolower($line->description . ' ' . $line->journalEntry->description);
 
-        if (str_contains($description, 'deposit')) return BankReconciliationItem::TYPE_DEPOSIT;
-        if (str_contains($description, 'check') || str_contains($description, 'cheque')) return BankReconciliationItem::TYPE_CHECK;
-        if (str_contains($description, 'transfer')) return BankReconciliationItem::TYPE_TRANSFER;
-        if (str_contains($description, 'charge') || str_contains($description, 'fee')) return BankReconciliationItem::TYPE_BANK_CHARGE;
-        if (str_contains($description, 'interest')) return BankReconciliationItem::TYPE_INTEREST;
+        if (str_contains($description, 'deposit')) {
+            return BankReconciliationItem::TYPE_DEPOSIT;
+        }
+        if (str_contains($description, 'check') || str_contains($description, 'cheque')) {
+            return BankReconciliationItem::TYPE_CHECK;
+        }
+        if (str_contains($description, 'transfer')) {
+            return BankReconciliationItem::TYPE_TRANSFER;
+        }
+        if (str_contains($description, 'charge') || str_contains($description, 'fee')) {
+            return BankReconciliationItem::TYPE_BANK_CHARGE;
+        }
+        if (str_contains($description, 'interest')) {
+            return BankReconciliationItem::TYPE_INTEREST;
+        }
 
         return $line->debit > 0 ? BankReconciliationItem::TYPE_OTHER_DEBIT : BankReconciliationItem::TYPE_OTHER_CREDIT;
     }
@@ -821,11 +837,21 @@ class BankReconciliationController extends Controller
     {
         $description = strtolower($row['description'] ?? '');
 
-        if (str_contains($description, 'deposit')) return BankReconciliationItem::TYPE_DEPOSIT;
-        if (str_contains($description, 'check') || str_contains($description, 'cheque')) return BankReconciliationItem::TYPE_CHECK;
-        if (str_contains($description, 'transfer')) return BankReconciliationItem::TYPE_TRANSFER;
-        if (str_contains($description, 'charge') || str_contains($description, 'fee')) return BankReconciliationItem::TYPE_BANK_CHARGE;
-        if (str_contains($description, 'interest')) return BankReconciliationItem::TYPE_INTEREST;
+        if (str_contains($description, 'deposit')) {
+            return BankReconciliationItem::TYPE_DEPOSIT;
+        }
+        if (str_contains($description, 'check') || str_contains($description, 'cheque')) {
+            return BankReconciliationItem::TYPE_CHECK;
+        }
+        if (str_contains($description, 'transfer')) {
+            return BankReconciliationItem::TYPE_TRANSFER;
+        }
+        if (str_contains($description, 'charge') || str_contains($description, 'fee')) {
+            return BankReconciliationItem::TYPE_BANK_CHARGE;
+        }
+        if (str_contains($description, 'interest')) {
+            return BankReconciliationItem::TYPE_INTEREST;
+        }
 
         return $row['amount'] >= 0 ? BankReconciliationItem::TYPE_OTHER_CREDIT : BankReconciliationItem::TYPE_OTHER_DEBIT;
     }
@@ -908,6 +934,7 @@ class BankReconciliationController extends Controller
         if ($request->ajax()) {
             return response()->json(['success' => true, 'message' => $message]);
         }
+
         return back()->with('success', $message);
     }
 
@@ -919,6 +946,7 @@ class BankReconciliationController extends Controller
         if ($request->ajax()) {
             return response()->json(['success' => false, 'message' => $message], $code);
         }
+
         return back()->with('error', $message);
     }
 }

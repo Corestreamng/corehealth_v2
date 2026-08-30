@@ -2,95 +2,93 @@
 
 namespace App\Providers;
 
-use Illuminate\Support\ServiceProvider;
-use App\Models\Product;
-use App\Models\Service;
-use App\Models\ServicePrice;
-use App\Models\Price;
-use App\Models\Hmo;
-use App\Models\Bank;
-use App\Models\AdmissionRequest;
-use App\Models\ProductOrServiceRequest;
-use App\Models\ChatConversation;
-use App\Models\ChatParticipant;
-use App\Models\User;
-use App\Models\Payment;
-use App\Models\Expense;
-use App\Models\PurchaseOrder;
-use App\Models\PurchaseOrderPayment;
-use App\Models\HmoRemittance;
-use App\Models\InterAccountTransfer;
-use App\Models\HR\PayrollBatch;
-use App\Models\Accounting\JournalEntry;
+use App\Database\CommenterMySqlGrammar;
+use App\Helpers\HmoHelper;
+use App\Models\Accounting\CashFlowForecastPeriod;
 use App\Models\Accounting\CreditNote;
-use App\Models\Accounting\JournalEntryEdit;
-use App\Models\Accounting\PettyCashTransaction;
-use App\Models\Accounting\PettyCashReconciliation;
-use App\Models\Accounting\PatientDeposit;
 use App\Models\Accounting\FixedAsset;
 use App\Models\Accounting\FixedAssetDepreciation;
 use App\Models\Accounting\FixedAssetDisposal;
-use App\Models\Accounting\StatutoryRemittance;
-use App\Models\Accounting\CashFlowForecastPeriod;
-use App\Models\Accounting\LiabilitySchedule;
+use App\Models\Accounting\JournalEntry;
+use App\Models\Accounting\JournalEntryEdit;
 use App\Models\Accounting\LiabilityPaymentSchedule;
-use App\Models\PharmacyReturn;
+use App\Models\Accounting\LiabilitySchedule;
+use App\Models\Accounting\PatientDeposit;
+use App\Models\Accounting\PettyCashReconciliation;
+use App\Models\Accounting\PettyCashTransaction;
+use App\Models\Accounting\StatutoryRemittance;
+use App\Models\AdmissionRequest;
+use App\Models\Bank;
+use App\Models\Bed;
+use App\Models\CapexProjectExpense;
+use App\Models\DoctorAppointment;
+use App\Models\Expense;
+use App\Models\Hmo;
+use App\Models\HmoRemittance;
+use App\Models\HR\PayrollBatch;
+use App\Models\InterAccountTransfer;
+use App\Models\Payment;
 use App\Models\PharmacyDamage;
+use App\Models\PharmacyReturn;
+use App\Models\Price;
+use App\Models\Product;
+use App\Models\ProductOrServiceRequest;
+use App\Models\PurchaseOrder;
+use App\Models\PurchaseOrderPayment;
+use App\Models\PurchaseOrderReturn;
+use App\Models\Service;
+use App\Models\ServicePrice;
+use App\Models\StockBatch;
 use App\Models\StoreDamage;
 use App\Models\StoreRequisitionReturn;
-use App\Models\PurchaseOrderReturn;
-use App\Models\Bed;
-use App\Models\StockBatch;
-use App\Models\CapexProjectExpense;
-use App\Observers\ProductObserver;
-use App\Observers\BedObserver;
-use App\Observers\StockBatchObserver;
-use App\Observers\ServiceObserver;
-use App\Observers\ServicePriceObserver;
-use App\Observers\PriceObserver;
-use App\Observers\HmoObserver;
-use App\Observers\Accounting\JournalEntryObserver;
+use App\Models\User;
+use App\Observers\Accounting\BankObserver;
+use App\Observers\Accounting\CapexExpenseObserver;
+use App\Observers\Accounting\CashFlowForecastPeriodObserver;
 use App\Observers\Accounting\CreditNoteObserver;
-use App\Observers\Accounting\JournalEntryEditObserver;
-use App\Observers\Accounting\PaymentObserver;
+use App\Observers\Accounting\DepreciationObserver;
 use App\Observers\Accounting\ExpenseObserver;
-use App\Observers\Accounting\PurchaseOrderObserver;
-use App\Observers\Accounting\PayrollBatchObserver;
-use App\Observers\Accounting\ProductOrServiceRequestObserver;
+use App\Observers\Accounting\FixedAssetDisposalObserver;
+use App\Observers\Accounting\FixedAssetObserver;
 use App\Observers\Accounting\HmoRemittanceObserver;
-use App\Observers\Accounting\PurchaseOrderPaymentObserver;
+use App\Observers\Accounting\JournalEntryEditObserver;
+use App\Observers\Accounting\JournalEntryObserver;
+use App\Observers\Accounting\LiabilityPaymentObserver;
+use App\Observers\Accounting\LiabilityScheduleObserver;
+use App\Observers\Accounting\PatientDepositObserver;
+use App\Observers\Accounting\PaymentObserver;
+use App\Observers\Accounting\PayrollBatchObserver;
 use App\Observers\Accounting\PettyCashObserver;
 use App\Observers\Accounting\PettyCashReconciliationObserver;
-use App\Observers\Accounting\TransferObserver;
-use App\Observers\Accounting\PatientDepositObserver;
-use App\Observers\Accounting\FixedAssetObserver;
-use App\Observers\Accounting\DepreciationObserver;
-use App\Observers\Accounting\FixedAssetDisposalObserver;
-use App\Observers\Accounting\BankObserver;
-use App\Observers\Accounting\StatutoryRemittanceObserver;
-use App\Observers\Accounting\CashFlowForecastPeriodObserver;
-use App\Observers\Accounting\CapexExpenseObserver;
-use App\Observers\Accounting\LiabilityScheduleObserver;
-use App\Observers\Accounting\LiabilityPaymentObserver;
-use App\Observers\Accounting\PharmacyReturnObserver;
 use App\Observers\Accounting\PharmacyDamageObserver;
+use App\Observers\Accounting\PharmacyReturnObserver;
+use App\Observers\Accounting\ProductOrServiceRequestObserver;
+use App\Observers\Accounting\PurchaseOrderObserver;
+use App\Observers\Accounting\PurchaseOrderPaymentObserver;
+use App\Observers\Accounting\PurchaseOrderReturnObserver;
+use App\Observers\Accounting\StatutoryRemittanceObserver;
 use App\Observers\Accounting\StoreDamageObserver;
 use App\Observers\Accounting\StoreRequisitionReturnObserver;
-use App\Observers\Accounting\PurchaseOrderReturnObserver;
-use App\Models\DoctorAppointment;
+use App\Observers\Accounting\TransferObserver;
+use App\Observers\BedObserver;
 use App\Observers\DoctorAppointmentObserver;
-use App\Helpers\HmoHelper;
+use App\Observers\HmoObserver;
+use App\Observers\PriceObserver;
+use App\Observers\ProductObserver;
+use App\Observers\ServiceObserver;
+use App\Observers\ServicePriceObserver;
+use App\Observers\StockBatchObserver;
 use App\Services\DepartmentNotificationService;
+use App\Support\QueryContext;
 use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Relations\Relation;
+use Illuminate\Support\Facades\App;
+use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Support\Facades\Queue;
-use Illuminate\Support\Facades\App;
-use Illuminate\Support\Facades\Artisan;
-use App\Support\QueryContext;
-use App\Database\CommenterMySqlGrammar;
+use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -257,7 +255,7 @@ class AppServiceProvider extends ServiceProvider
         try {
             $today = Carbon::now();
             $lastCheck = appsettings('last_slow_query_check');
-            
+
             // Run every 5 minutes
             if ($lastCheck && Carbon::parse($lastCheck)->addMinutes(5)->isFuture()) {
                 return;
@@ -269,6 +267,7 @@ class AppServiceProvider extends ServiceProvider
 
             if (!flock($lockHandle, LOCK_EX | LOCK_NB)) {
                 fclose($lockHandle);
+
                 return;
             }
 
@@ -326,6 +325,7 @@ class AppServiceProvider extends ServiceProvider
             if (!flock($lockHandle, LOCK_EX | LOCK_NB)) {
                 // Another process is already running billing
                 fclose($lockHandle);
+
                 return;
             }
 
@@ -499,13 +499,13 @@ class AppServiceProvider extends ServiceProvider
     /**
      * Process daily database backup.
      * Uses DATABASE-BACKED tracking to run once per day reliably on shared hosting.
-     * 
+     *
      * How it works (for future reference):
      * - Runs on every web request but skips immediately if a backup was already created today.
      * - Uses the application_status table to track the last backup date (persisted across restarts).
      * - Employs a file lock (database_backup.lock) to prevent multiple concurrent requests from
      *   triggering the backup simultaneously.
-     * - This approach bypasses the need for a system-level cron job, which is typically unavailable 
+     * - This approach bypasses the need for a system-level cron job, which is typically unavailable
      *   in shared hosting environments.
      */
     protected function processDailyBackups()
@@ -526,6 +526,7 @@ class AppServiceProvider extends ServiceProvider
             if (!flock($lockHandle, LOCK_EX | LOCK_NB)) {
                 // Another process is already running the backup
                 fclose($lockHandle);
+
                 return;
             }
 

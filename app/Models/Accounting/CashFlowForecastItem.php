@@ -14,7 +14,8 @@ use OwenIt\Auditing\Contracts\Auditable;
  */
 class CashFlowForecastItem extends Model implements Auditable
 {
-    use HasFactory, \OwenIt\Auditing\Auditable;
+    use HasFactory;
+    use \OwenIt\Auditing\Auditable;
 
     protected $fillable = [
         'forecast_period_id',
@@ -34,20 +35,20 @@ class CashFlowForecastItem extends Model implements Auditable
     ];
 
     // Cash flow category constants
-    const CATEGORY_OPERATING_INFLOW = 'operating_inflow';
-    const CATEGORY_OPERATING_OUTFLOW = 'operating_outflow';
-    const CATEGORY_INVESTING_INFLOW = 'investing_inflow';
-    const CATEGORY_INVESTING_OUTFLOW = 'investing_outflow';
-    const CATEGORY_FINANCING_INFLOW = 'financing_inflow';
-    const CATEGORY_FINANCING_OUTFLOW = 'financing_outflow';
+    public const CATEGORY_OPERATING_INFLOW = 'operating_inflow';
+    public const CATEGORY_OPERATING_OUTFLOW = 'operating_outflow';
+    public const CATEGORY_INVESTING_INFLOW = 'investing_inflow';
+    public const CATEGORY_INVESTING_OUTFLOW = 'investing_outflow';
+    public const CATEGORY_FINANCING_INFLOW = 'financing_inflow';
+    public const CATEGORY_FINANCING_OUTFLOW = 'financing_outflow';
 
     // Source type constants
-    const SOURCE_MANUAL = 'manual';
-    const SOURCE_RECURRING = 'recurring';
-    const SOURCE_PATTERN = 'pattern';       // Auto-applied from recurring patterns
-    const SOURCE_SCHEDULED = 'scheduled';
-    const SOURCE_HISTORICAL = 'historical';
-    const SOURCE_COMMITMENT = 'commitment';
+    public const SOURCE_MANUAL = 'manual';
+    public const SOURCE_RECURRING = 'recurring';
+    public const SOURCE_PATTERN = 'pattern';       // Auto-applied from recurring patterns
+    public const SOURCE_SCHEDULED = 'scheduled';
+    public const SOURCE_HISTORICAL = 'historical';
+    public const SOURCE_COMMITMENT = 'commitment';
 
     /**
      * Get the period this item belongs to.

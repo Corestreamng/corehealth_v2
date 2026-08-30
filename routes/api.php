@@ -1,23 +1,22 @@
 <?php
 
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\API\DataEndpoint;
 use App\Http\Controllers\API\MobileAuthController;
-use App\Http\Controllers\API\MobileEncounterController;
 use App\Http\Controllers\API\MobileChatController;
+use App\Http\Controllers\API\MobileEncounterController;
 use App\Http\Controllers\API\MobilePatientController;
 use App\Http\Controllers\EncounterController;
-use App\Http\Controllers\SpecialistReferralController;
-use App\Http\Controllers\ServiceController;
-use App\Http\Controllers\ProductController;
-use App\Http\Controllers\VitalSignController;
-use App\Http\Controllers\ClinicNoteTemplateController;
 use App\Http\Controllers\MedicationChartController;
 use App\Http\Controllers\NursingWorkbenchController;
-use App\Models\Service;
-use App\Models\Product;
+use App\Http\Controllers\ProductController;
+use App\Http\Controllers\ServiceController;
+use App\Http\Controllers\SpecialistReferralController;
+use App\Http\Controllers\VitalSignController;
 use App\Models\ProcedureCategory;
+use App\Models\Product;
+use App\Models\Service;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Route;
 
 /*
 |--------------------------------------------------------------------------
@@ -41,6 +40,7 @@ Route::middleware(['web', 'auth'])->group(function () {
             ->where('status', 1)
             ->orderBy('service_name')
             ->get();
+
         return response()->json(['data' => $services]);
     });
 
@@ -52,6 +52,7 @@ Route::middleware(['web', 'auth'])->group(function () {
             ->where('status', 1)
             ->orderBy('service_name')
             ->get();
+
         return response()->json(['data' => $services]);
     });
 
@@ -67,6 +68,7 @@ Route::middleware(['web', 'auth'])->group(function () {
         }
 
         $products = $query->orderBy('product_name')->limit(100)->get();
+
         return response()->json(['data' => $products]);
     });
 
@@ -75,6 +77,7 @@ Route::middleware(['web', 'auth'])->group(function () {
         $categories = ProcedureCategory::where('status', 1)
             ->orderBy('name')
             ->get();
+
         return response()->json(['data' => $categories]);
     });
 
@@ -140,8 +143,8 @@ Route::get('get-facility-monthly-hospitalization/{year}', [DataEndpoint::class, 
 
 // Public — no auth required (called before login)
 Route::prefix('mobile')->middleware('throttle:10,1')->group(function () {
-    Route::get('instance-info',  [MobileAuthController::class, 'instanceInfo']);
-    Route::post('staff/login',   [MobileAuthController::class, 'staffLogin']);
+    Route::get('instance-info', [MobileAuthController::class, 'instanceInfo']);
+    Route::post('staff/login', [MobileAuthController::class, 'staffLogin']);
     Route::post('patient/login', [MobileAuthController::class, 'patientLogin']);
 });
 
@@ -321,16 +324,16 @@ Route::prefix('mobile/patient')->middleware('auth:sanctum')->group(function () {
 |--------------------------------------------------------------------------
 */
 Route::prefix('mobile/doctor/chat')->middleware('auth:sanctum')->group(function () {
-    Route::get('conversations',              [MobileChatController::class, 'getConversations']);
-    Route::get('messages/{conversationId}',  [MobileChatController::class, 'getMessages']);
-    Route::post('send',                      [MobileChatController::class, 'sendMessage']);
-    Route::post('create',                    [MobileChatController::class, 'createConversation']);
-    Route::post('mark-read/{conversationId}',[MobileChatController::class, 'markAsRead']);
-    Route::get('unread-count',               [MobileChatController::class, 'unreadCount']);
-    Route::delete('messages/{messageId}',    [MobileChatController::class, 'deleteMessage']);
-    Route::post('archive/{conversationId}',  [MobileChatController::class, 'archiveConversation']);
-    Route::post('unarchive/{conversationId}',[MobileChatController::class, 'unarchiveConversation']);
-    Route::get('search-users',               [MobileChatController::class, 'searchUsers']);
+    Route::get('conversations', [MobileChatController::class, 'getConversations']);
+    Route::get('messages/{conversationId}', [MobileChatController::class, 'getMessages']);
+    Route::post('send', [MobileChatController::class, 'sendMessage']);
+    Route::post('create', [MobileChatController::class, 'createConversation']);
+    Route::post('mark-read/{conversationId}', [MobileChatController::class, 'markAsRead']);
+    Route::get('unread-count', [MobileChatController::class, 'unreadCount']);
+    Route::delete('messages/{messageId}', [MobileChatController::class, 'deleteMessage']);
+    Route::post('archive/{conversationId}', [MobileChatController::class, 'archiveConversation']);
+    Route::post('unarchive/{conversationId}', [MobileChatController::class, 'unarchiveConversation']);
+    Route::get('search-users', [MobileChatController::class, 'searchUsers']);
 });
 
 /*
@@ -339,13 +342,12 @@ Route::prefix('mobile/doctor/chat')->middleware('auth:sanctum')->group(function 
 |--------------------------------------------------------------------------
 */
 Route::prefix('mobile/patient/chat')->middleware('auth:sanctum')->group(function () {
-    Route::get('my-doctors',                 [MobileChatController::class, 'myDoctors']);
-    Route::get('conversations',              [MobileChatController::class, 'getConversations']);
-    Route::get('messages/{conversationId}',  [MobileChatController::class, 'getMessages']);
-    Route::post('send',                      [MobileChatController::class, 'sendMessage']);
-    Route::post('create',                    [MobileChatController::class, 'createConversation']);
-    Route::post('mark-read/{conversationId}',[MobileChatController::class, 'markAsRead']);
-    Route::get('unread-count',               [MobileChatController::class, 'unreadCount']);
-    Route::delete('messages/{messageId}',    [MobileChatController::class, 'deleteMessage']);
+    Route::get('my-doctors', [MobileChatController::class, 'myDoctors']);
+    Route::get('conversations', [MobileChatController::class, 'getConversations']);
+    Route::get('messages/{conversationId}', [MobileChatController::class, 'getMessages']);
+    Route::post('send', [MobileChatController::class, 'sendMessage']);
+    Route::post('create', [MobileChatController::class, 'createConversation']);
+    Route::post('mark-read/{conversationId}', [MobileChatController::class, 'markAsRead']);
+    Route::get('unread-count', [MobileChatController::class, 'unreadCount']);
+    Route::delete('messages/{messageId}', [MobileChatController::class, 'deleteMessage']);
 });
-

@@ -27,7 +27,7 @@ class ProcedureTeamMember extends Model implements Auditable
     /**
      * Available surgical team roles
      */
-    const ROLES = [
+    public const ROLES = [
         'chief_surgeon' => 'Chief Surgeon',
         'assistant_surgeon' => 'Assistant Surgeon',
         'anesthesiologist' => 'Anesthesiologist',
@@ -66,6 +66,7 @@ class ProcedureTeamMember extends Model implements Auditable
         if ($this->role === 'other' && $this->custom_role) {
             return $this->custom_role;
         }
+
         return self::ROLES[$this->role] ?? ucfirst(str_replace('_', ' ', $this->role));
     }
 

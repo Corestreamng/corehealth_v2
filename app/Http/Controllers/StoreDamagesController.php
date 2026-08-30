@@ -2,16 +2,16 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
-use App\Models\StoreDamage;
 use App\Models\Product;
-use App\Models\StoreStock;
 use App\Models\StockBatch;
 use App\Models\Store;
-use Yajra\DataTables\Facades\DataTables;
-use Illuminate\Support\Facades\DB;
+use App\Models\StoreDamage;
+use App\Models\StoreStock;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Yajra\DataTables\Facades\DataTables;
 
 class StoreDamagesController extends Controller
 {
@@ -21,22 +21,22 @@ class StoreDamagesController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'product_id'     => 'required|exists:products,id',
-            'store_id'       => 'required|exists:stores,id',
-            'batch_id'       => 'nullable|exists:stock_batches,id',
-            'qty_damaged'    => 'required|numeric|min:0.01',
-            'unit_cost'      => 'required|numeric|min:0',
-            'damage_type'    => 'required|in:expired,broken,contaminated,spoiled,theft,other',
-            'damage_reason'  => 'required|string|min:10',
-            'discovered_date'=> 'required|date|before_or_equal:today',
+            'product_id' => 'required|exists:products,id',
+            'store_id' => 'required|exists:stores,id',
+            'batch_id' => 'nullable|exists:stock_batches,id',
+            'qty_damaged' => 'required|numeric|min:0.01',
+            'unit_cost' => 'required|numeric|min:0',
+            'damage_type' => 'required|in:expired,broken,contaminated,spoiled,theft,other',
+            'damage_reason' => 'required|string|min:10',
+            'discovered_date' => 'required|date|before_or_equal:today',
         ]);
 
         try {
             DB::beginTransaction();
 
             $validated['total_value'] = $validated['qty_damaged'] * $validated['unit_cost'];
-            $validated['created_by']  = Auth::id();
-            $validated['status']      = 'pending';
+            $validated['created_by'] = Auth::id();
+            $validated['status'] = 'pending';
 
             if (isset($validated['batch_id'])) {
                 $batch = StockBatch::findOrFail($validated['batch_id']);
@@ -77,8 +77,8 @@ class StoreDamagesController extends Controller
             DB::commit();
 
             return response()->json([
-                'success'   => true,
-                'message'   => 'Damage report created. Awaiting approval.',
+                'success' => true,
+                'message' => 'Damage report created. Awaiting approval.',
                 'damage_id' => $damage->id,
             ]);
 
@@ -110,38 +110,38 @@ class StoreDamagesController extends Controller
         if ($request->ajax()) {
             return response()->json([
                 'success' => true,
-                'damage'  => [
-                    'id'             => $damage->id,
-                    'product_name'   => $damage->product->product_name ?? 'N/A',
-                    'product_id'     => $damage->product_id,
-                    'store_name'     => $damage->store->store_name ?? 'N/A',
-                    'store_id'       => $damage->store_id,
-                    'batch_number'   => $damage->batch->batch_number ?? 'N/A',
-                    'batch_id'       => $damage->batch_id,
-                    'qty_damaged'    => $damage->qty_damaged,
-                    'unit_cost'      => $damage->unit_cost,
-                    'total_value'    => $damage->total_value,
-                    'damage_type'    => $damage->damage_type,
-                    'damage_reason'  => $damage->damage_reason,
-                    'discovered_date'=> $damage->discovered_date ? $damage->discovered_date->format('M d, Y') : 'N/A',
-                    'status'         => $damage->status,
+                'damage' => [
+                    'id' => $damage->id,
+                    'product_name' => $damage->product->product_name ?? 'N/A',
+                    'product_id' => $damage->product_id,
+                    'store_name' => $damage->store->store_name ?? 'N/A',
+                    'store_id' => $damage->store_id,
+                    'batch_number' => $damage->batch->batch_number ?? 'N/A',
+                    'batch_id' => $damage->batch_id,
+                    'qty_damaged' => $damage->qty_damaged,
+                    'unit_cost' => $damage->unit_cost,
+                    'total_value' => $damage->total_value,
+                    'damage_type' => $damage->damage_type,
+                    'damage_reason' => $damage->damage_reason,
+                    'discovered_date' => $damage->discovered_date ? $damage->discovered_date->format('M d, Y') : 'N/A',
+                    'status' => $damage->status,
                     'stock_deducted' => $damage->stock_deducted,
-                    'created_by'     => $damage->creator->name ?? 'N/A',
-                    'approved_by'    => $damage->approver->name ?? null,
+                    'created_by' => $damage->creator->name ?? 'N/A',
+                    'approved_by' => $damage->approver->name ?? null,
                     'approval_notes' => $damage->approval_notes,
-                    'created_at'     => $damage->created_at->format('M d, Y h:i A'),
-                    'approved_at'    => $damage->approved_at ? $damage->approved_at->format('M d, Y h:i A') : null,
-                    'journal_entry'  => $damage->journalEntry ? [
-                        'id'          => $damage->journalEntry->id,
-                        'entry_number'=> $damage->journalEntry->entry_number ?? 'JE-' . $damage->journalEntry->id,
+                    'created_at' => $damage->created_at->format('M d, Y h:i A'),
+                    'approved_at' => $damage->approved_at ? $damage->approved_at->format('M d, Y h:i A') : null,
+                    'journal_entry' => $damage->journalEntry ? [
+                        'id' => $damage->journalEntry->id,
+                        'entry_number' => $damage->journalEntry->entry_number ?? 'JE-' . $damage->journalEntry->id,
                         'description' => $damage->journalEntry->description,
-                        'status'      => $damage->journalEntry->status,
-                        'lines'       => $damage->journalEntry->lines->map(fn ($l) => [
+                        'status' => $damage->journalEntry->status,
+                        'lines' => $damage->journalEntry->lines->map(fn ($l) => [
                             'account_name' => $l->account->name ?? 'N/A',
                             'account_code' => $l->account->code ?? '',
-                            'debit'        => $l->debit_amount,
-                            'credit'       => $l->credit_amount,
-                            'description'  => $l->description,
+                            'debit' => $l->debit_amount,
+                            'credit' => $l->credit_amount,
+                            'description' => $l->description,
                         ]),
                     ] : null,
                 ],
@@ -194,7 +194,7 @@ class StoreDamagesController extends Controller
                 }
             }
 
-            $damage->status      = 'approved';
+            $damage->status = 'approved';
             $damage->approved_by = Auth::id();
             $damage->approved_at = now();
             $damage->approval_notes = $validated['approval_notes'] ?? null;
@@ -211,8 +211,8 @@ class StoreDamagesController extends Controller
             }
 
             return response()->json([
-                'success'          => true,
-                'message'          => $message,
+                'success' => true,
+                'message' => $message,
                 'journal_entry_id' => $damage->journal_entry_id,
             ]);
 
@@ -248,7 +248,7 @@ class StoreDamagesController extends Controller
                 ], 422);
             }
 
-            $damage->status      = 'rejected';
+            $damage->status = 'rejected';
             $damage->approved_by = Auth::id();
             $damage->approved_at = now();
             $damage->approval_notes = $validated['rejection_reason'];
@@ -260,6 +260,7 @@ class StoreDamagesController extends Controller
 
         } catch (\Exception $e) {
             DB::rollBack();
+
             return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
         }
     }
@@ -305,10 +306,11 @@ class StoreDamagesController extends Controller
             ->addColumn('store', fn ($d) => $d->store->store_name ?? 'N/A')
             ->editColumn('status', function ($d) {
                 $badges = [
-                    'pending'  => '<span class="status-badge status-pending">Pending</span>',
+                    'pending' => '<span class="status-badge status-pending">Pending</span>',
                     'approved' => '<span class="status-badge status-approved">Approved</span>',
                     'rejected' => '<span class="status-badge status-rejected">Rejected</span>',
                 ];
+
                 return $badges[$d->status] ?? $d->status;
             })
             ->addColumn('recorded_by', fn ($d) => $d->recorder ? ($d->recorder->firstname . ' ' . $d->recorder->surname) : 'N/A')
@@ -319,6 +321,7 @@ class StoreDamagesController extends Controller
                     $btns .= '<button class="btn btn-sm btn-danger" onclick="rejectDamage(' . $d->id . ')"><i class="mdi mdi-close"></i></button>';
                 }
                 $btns .= '</div>';
+
                 return $btns;
             })
             ->rawColumns(['status', 'actions'])
@@ -338,12 +341,12 @@ class StoreDamagesController extends Controller
         $search = $request->get('search', '');
 
         $products = Product::select(
-                'products.id',
-                'products.product_name',
-                'products.product_code',
-                'store_stocks.current_quantity',
-                'prices.pr_buy_price as unit_cost'
-            )
+            'products.id',
+            'products.product_name',
+            'products.product_code',
+            'store_stocks.current_quantity',
+            'prices.pr_buy_price as unit_cost'
+        )
             ->join('store_stocks', 'products.id', '=', 'store_stocks.product_id')
             ->leftJoin('prices', 'products.id', '=', 'prices.product_id')
             ->where('store_stocks.store_id', $storeId)
@@ -357,11 +360,11 @@ class StoreDamagesController extends Controller
             ->get();
 
         return response()->json(['products' => $products->map(fn ($p) => [
-            'id'               => $p->id,
-            'text'             => $p->product_name . ($p->product_code ? ' (' . $p->product_code . ')' : '') . ' — Stock: ' . $p->current_quantity,
-            'product_name'     => $p->product_name,
+            'id' => $p->id,
+            'text' => $p->product_name . ($p->product_code ? ' (' . $p->product_code . ')' : '') . ' — Stock: ' . $p->current_quantity,
+            'product_name' => $p->product_name,
             'current_quantity' => $p->current_quantity,
-            'unit_cost'        => $p->unit_cost,
+            'unit_cost' => $p->unit_cost,
         ])->values()]);
     }
 
@@ -371,7 +374,7 @@ class StoreDamagesController extends Controller
     public function getBatches(Request $request)
     {
         $productId = $request->get('product_id');
-        $storeId   = $request->get('store_id');
+        $storeId = $request->get('store_id');
 
         if (!$productId || !$storeId) {
             return response()->json([]);
@@ -384,14 +387,14 @@ class StoreDamagesController extends Controller
             ->get(['id', 'product_id', 'batch_number', 'expiry_date', 'current_qty', 'cost_price']);
 
         return response()->json(['batches' => $batches->map(fn ($b) => [
-            'id'           => $b->id,
-            'product_id'   => $b->product_id,
+            'id' => $b->id,
+            'product_id' => $b->product_id,
             'product_name' => $b->product->product_name ?? 'Unknown',
-            'text'         => $b->batch_number . ' (Exp: ' . ($b->expiry_date ?? 'N/A') . ') — Available: ' . $b->current_qty,
+            'text' => $b->batch_number . ' (Exp: ' . ($b->expiry_date ?? 'N/A') . ') — Available: ' . $b->current_qty,
             'batch_number' => $b->batch_number,
-            'expiry_date'  => $b->expiry_date ? $b->expiry_date->format('Y-m-d') : null,
-            'current_qty'  => $b->current_qty,
-            'unit_cost'    => $b->cost_price,
+            'expiry_date' => $b->expiry_date ? $b->expiry_date->format('Y-m-d') : null,
+            'current_qty' => $b->current_qty,
+            'unit_cost' => $b->cost_price,
             'base_unit_name' => $b->product->base_unit_name ?? 'Piece',
         ])->values()]);
     }
@@ -402,7 +405,7 @@ class StoreDamagesController extends Controller
     public function getRecentBatches(Request $request)
     {
         $storeId = $request->get('store_id');
-        $status  = $request->get('status', 'recent'); // recent, near-expiry, low-stock, all
+        $status = $request->get('status', 'recent'); // recent, near-expiry, low-stock, all
 
         if (!$storeId) {
             return response()->json(['batches' => []]);
@@ -428,13 +431,13 @@ class StoreDamagesController extends Controller
         $batches = $query->limit(15)->get();
 
         return response()->json(['batches' => $batches->map(fn ($b) => [
-            'id'           => $b->id,
-            'product_id'   => $b->product_id,
+            'id' => $b->id,
+            'product_id' => $b->product_id,
             'product_name' => $b->product->product_name ?? 'Unknown',
             'batch_number' => $b->batch_number,
-            'expiry_date'  => $b->expiry_date ? $b->expiry_date->format('Y-m-d') : null,
-            'current_qty'  => $b->current_qty,
-            'unit_cost'    => $b->cost_price,
+            'expiry_date' => $b->expiry_date ? $b->expiry_date->format('Y-m-d') : null,
+            'current_qty' => $b->current_qty,
+            'unit_cost' => $b->cost_price,
             'base_unit_name' => $b->product->base_unit_name ?? 'Piece',
         ])->values()]);
     }

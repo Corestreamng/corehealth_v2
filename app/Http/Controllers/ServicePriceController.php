@@ -2,18 +2,16 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\servicePrice;
-use Illuminate\Http\Request;
-use App\Models\Service;
+use App\Models\ApplicationStatu;
 use App\Models\Hmo;
 use App\Models\HmoScheme;
 use App\Models\HmoTariff;
-use Yajra\DataTables\DataTables;
-use RealRashid\SweetAlert\Facades\Alert;
-use App\Models\ApplicationStatu;
-use Illuminate\Support\Facades\Auth;
+use App\Models\Service;
+use App\Models\servicePrice;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Yajra\DataTables\DataTables;
 
 class ServicePriceController extends Controller
 {
@@ -35,8 +33,9 @@ class ServicePriceController extends Controller
     {
         try {
             $service_id = request()->get('service_id');
-            $service     = Service::find($service_id);
+            $service = Service::find($service_id);
             $application = ApplicationStatu::whereId(1)->first();
+
             return view('admin.service_prices.create', compact('service', 'application'));
         } catch (\Exception $e) {
             return redirect()->back()->withInput()->withMessage("An error occurred " . $e->getMessage());
@@ -62,36 +61,40 @@ class ServicePriceController extends Controller
     public function store(Request $request)
     {
         $now = \Carbon\Carbon::now();
+
         try {
             $rules = [
                 'service_id' => 'required|max:100',
-                'price'    => 'required|max:11',
-                'buy_price' => 'required'
+                'price' => 'required|max:11',
+                'buy_price' => 'required',
             ];
 
             $v = validator()->make($request->all(), $rules);
 
             if ($v->fails()) {
                 $msg = 'Please cheak Your Inputs .';
+
                 //flash($msg, 'danger');
                 return redirect()->back()->withInput()->with('errors', $v->messages()->all())->withInput();
             } else {
-                $myprice                 = new ServicePrice();
-                $myprice->service_id     = $request->service_id;
-                $myprice->cost_price     = $request->buy_price;
-                $myprice->sale_price     = $request->price;
-                $myprice->max_discount   = $request->max_discount ?? 0;
-                $myprice->status         = 1;
+                $myprice = new ServicePrice();
+                $myprice->service_id = $request->service_id;
+                $myprice->cost_price = $request->buy_price;
+                $myprice->sale_price = $request->price;
+                $myprice->max_discount = $request->max_discount ?? 0;
+                $myprice->status = 1;
 
                 if ($myprice->save()) {
                     $assing_price = Service::find($request->service_id);
                     $assing_price->price_assign = 1;
                     $assing_price->update();
                     $msg = 'price for ' . $assing_price->service_name . ' was saved successfully.';
+
                     // flash($msg, 'success');
                     return redirect(route('services.index'))->withMessage($msg)->withMessageType('success')->with($msg);
                 } else {
                     $msg = 'Something is went wrong. Please try again later, information not save.';
+
                     //flash($msg, 'danger');
                     return redirect()->back()->withInput()->withMessage($msg)->withMessageType('danger');
                 }
@@ -111,7 +114,8 @@ class ServicePriceController extends Controller
     public function show($id)
     {
         try {
-            $service     = Service::whereId($id)->first();
+            $service = Service::whereId($id)->first();
+
             return view('admin.service_prices.newprice', compact('service'));
         } catch (\Exception $e) {
             return redirect()->back()->withInput()->withMessage("An error occurred " . $e->getMessage());
@@ -147,7 +151,9 @@ class ServicePriceController extends Controller
             $schemeSummary = [];
             foreach ($schemes as $scheme) {
                 $activeHmos = $scheme->hmos;
-                if ($activeHmos->isEmpty()) continue;
+                if ($activeHmos->isEmpty()) {
+                    continue;
+                }
 
                 $payableValues = [];
                 $claimsValues = [];
@@ -210,7 +216,10 @@ class ServicePriceController extends Controller
             $totalHmoCount = Hmo::where('status', 1)->count();
 
             return view('admin.service_prices.edit', compact(
-                'data', 'schemeSummary', 'standaloneData', 'totalHmoCount'
+                'data',
+                'schemeSummary',
+                'standaloneData',
+                'totalHmoCount'
             ));
         } catch (\Exception $e) {
             return redirect()->back()->withInput()->withMessage("An error occurred " . $e->getMessage());
@@ -229,32 +238,33 @@ class ServicePriceController extends Controller
         try {
             $rules = [
                 'cost_price' => 'required|max:11',
-                'price'    => 'required|max:11'
+                'price' => 'required|max:11',
             ];
 
             $v = validator()->make($request->all(), $rules);
 
             if ($v->fails()) {
                 $msg = 'Please cheak Your Inputs .';
+
                 return redirect()->back()->withInput()->with('errors', $v->messages()->all())->withInput();
             } else {
-                $myprice               =  ServicePrice::find($id);
-                $myprice->cost_price   = $request->cost_price;
-                $myprice->sale_price   = $request->price;
+                $myprice = ServicePrice::find($id);
+                $myprice->cost_price = $request->cost_price;
+                $myprice->sale_price = $request->price;
                 $myprice->max_discount = $request->max_discount ?? 0;
-                $myprice->status       = 1;
+                $myprice->status = 1;
 
                 if ($myprice->update()) {
                     // ── Tariff propagation (only if user opted in) ──
                     $tariffMsg = '';
                     $syncPayable = $request->has('sync_payable');
-                    $syncClaims  = $request->has('sync_claims');
+                    $syncClaims = $request->has('sync_claims');
 
                     if ($syncPayable || $syncClaims) {
                         $tariffMsg = $this->propagateServiceTariffs(
                             $myprice->service_id,
                             $syncPayable ? (float) $request->new_payable_amount : null,
-                            $syncClaims  ? (float) $request->new_claims_amount : null,
+                            $syncClaims ? (float) $request->new_claims_amount : null,
                             $request->input('tariff_scope', 'none'),
                             $request->input('selected_scheme_ids', []),
                             $request->input('selected_hmo_ids', []),
@@ -262,7 +272,7 @@ class ServicePriceController extends Controller
                         );
                     }
 
-                    $msg = "Price for [".$myprice->service->service_name."] was updated successfully";
+                    $msg = "Price for [" . $myprice->service->service_name . "] was updated successfully";
                     if ($tariffMsg) {
                         $msg .= ' ' . $tariffMsg;
                     }
@@ -270,11 +280,13 @@ class ServicePriceController extends Controller
                     return redirect(route('services.index'))->withMessage($msg)->withMessageType('success')->with($msg);
                 } else {
                     $msg = 'Something is went wrong. Please try again later, information not save.';
+
                     return redirect()->back()->withInput()->withInput();
                 }
             }
         } catch (\Exception $e) {
             Log::error('ServicePriceController@update: ' . $e->getMessage());
+
             return redirect()->back()->withInput()->withMessage("An error occurred " . $e->getMessage());
         }
     }
@@ -295,15 +307,18 @@ class ServicePriceController extends Controller
         switch ($scope) {
             case 'all':
                 $targetHmoIds = Hmo::where('status', 1)->pluck('id')->toArray();
+
                 break;
             case 'scheme':
                 $cleanSchemeIds = array_map('intval', array_filter($schemeIds));
                 $targetHmoIds = Hmo::where('status', 1)
                     ->whereIn('hmo_scheme_id', $cleanSchemeIds)
                     ->pluck('id')->toArray();
+
                 break;
             case 'manual':
                 $targetHmoIds = array_map('intval', array_filter($hmoIds));
+
                 break;
             default:
                 return '';
@@ -318,6 +333,7 @@ class ServicePriceController extends Controller
         $created = 0;
 
         DB::beginTransaction();
+
         try {
             foreach ($targetHmoIds as $hmoId) {
                 $tariff = HmoTariff::where('hmo_id', $hmoId)
@@ -336,6 +352,7 @@ class ServicePriceController extends Controller
                                 $updated++;
                                 $skipped--;
                             }
+
                             continue;
                         }
                         $changes['payable_amount'] = $newPayable;
@@ -351,12 +368,12 @@ class ServicePriceController extends Controller
                     }
                 } else {
                     HmoTariff::create([
-                        'hmo_id'         => $hmoId,
-                        'product_id'     => null,
-                        'service_id'     => $serviceId,
-                        'claims_amount'  => $newClaims ?? 0,
+                        'hmo_id' => $hmoId,
+                        'product_id' => null,
+                        'service_id' => $serviceId,
+                        'claims_amount' => $newClaims ?? 0,
                         'payable_amount' => $newPayable ?? 0,
-                        'coverage_mode'  => 'primary',
+                        'coverage_mode' => 'primary',
                     ]);
                     $created++;
                 }
@@ -365,16 +382,24 @@ class ServicePriceController extends Controller
             DB::commit();
 
             $parts = [];
-            if ($updated > 0) $parts[] = "{$updated} tariff(s) updated";
-            if ($created > 0) $parts[] = "{$created} tariff(s) created";
-            if ($skipped > 0) $parts[] = "{$skipped} skipped (manual pricing)";
+            if ($updated > 0) {
+                $parts[] = "{$updated} tariff(s) updated";
+            }
+            if ($created > 0) {
+                $parts[] = "{$created} tariff(s) created";
+            }
+            if ($skipped > 0) {
+                $parts[] = "{$skipped} skipped (manual pricing)";
+            }
 
             $result = implode(', ', $parts) . '.';
             Log::info("ServicePriceController tariff propagation for service {$serviceId}: {$result}");
+
             return $result;
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error("ServicePriceController tariff propagation failed for service {$serviceId}: " . $e->getMessage());
+
             return 'Tariff update failed: ' . $e->getMessage();
         }
     }
@@ -395,13 +420,15 @@ class ServicePriceController extends Controller
             $price = \App\Models\ServicePrice::where('service_id', $id)->first();
             $salePrice = $price ? (float) $price->sale_price : 0;
 
-            $schemes = HmoScheme::with(['hmos' => fn($q) => $q->where('status', 1)])->get();
+            $schemes = HmoScheme::with(['hmos' => fn ($q) => $q->where('status', 1)])->get();
             $tariffs = HmoTariff::where('service_id', $id)->whereNull('product_id')->get()->keyBy('hmo_id');
 
             $schemeSummary = [];
             foreach ($schemes as $scheme) {
                 $activeHmos = $scheme->hmos;
-                if ($activeHmos->isEmpty()) continue;
+                if ($activeHmos->isEmpty()) {
+                    continue;
+                }
 
                 $payableValues = [];
                 $claimsValues = [];
@@ -465,7 +492,7 @@ class ServicePriceController extends Controller
 
             return view('admin.tariffs.standalone', [
                 'partial' => 'admin.partials.hmo-tariff-view-partial',
-                'data' => $data
+                'data' => $data,
             ]);
         } catch (\Exception $e) {
             return redirect()->back()->withMessage('Error: ' . $e->getMessage());
@@ -476,6 +503,7 @@ class ServicePriceController extends Controller
     {
         //
     }
+
     public function destroy($id)
     {
         //

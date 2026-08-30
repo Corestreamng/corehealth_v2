@@ -2,10 +2,10 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Seeder;
+use App\Models\Department;
 use App\Models\Store;
 use App\Models\Ward;
-use App\Models\Department;
+use Illuminate\Database\Seeder;
 use Illuminate\Support\Str;
 
 class CanonicalStoresSeeder extends Seeder
@@ -98,11 +98,15 @@ class CanonicalStoresSeeder extends Seeder
         foreach (Ward::where('is_active', 1)->get() as $ward) {
             if (Store::where('ward_id', $ward->id)->exists()) {
                 $this->command->line("  – Ward store exists for [{$ward->name}], skip.");
+
                 continue;
             }
             $code = $ward->code ? Str::upper($ward->code) . '_WS' : 'W' . $ward->id . '_WS';
-            $base = $code; $n = 0;
-            while (Store::where('code', $code)->exists()) { $code = $base . (++$n); }
+            $base = $code;
+            $n = 0;
+            while (Store::where('code', $code)->exists()) {
+                $code = $base . (++$n);
+            }
             Store::withoutEvents(function () use ($ward, $code) {
                 Store::create([
                     'store_name' => $ward->name . ' Store', 'code' => $code,
@@ -121,11 +125,15 @@ class CanonicalStoresSeeder extends Seeder
         foreach (Department::where('is_active', 1)->get() as $dept) {
             if (Store::where('department_id', $dept->id)->where('distribution_role', Store::ROLE_DEPARTMENT)->exists()) {
                 $this->command->line("  – Dept store exists for [{$dept->name}], skip.");
+
                 continue;
             }
             $code = $dept->code ? Str::upper($dept->code) . '_DS' : 'D' . $dept->id . '_DS';
-            $base = $code; $n = 0;
-            while (Store::where('code', $code)->exists()) { $code = $base . (++$n); }
+            $base = $code;
+            $n = 0;
+            while (Store::where('code', $code)->exists()) {
+                $code = $base . (++$n);
+            }
             Store::withoutEvents(function () use ($dept, $code) {
                 Store::create([
                     'store_name' => $dept->name . ' Store', 'code' => $code,

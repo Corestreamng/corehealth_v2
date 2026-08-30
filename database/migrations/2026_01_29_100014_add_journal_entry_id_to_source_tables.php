@@ -15,8 +15,7 @@ use Illuminate\Support\Facades\Schema;
  * This creates the reverse link: while journal entries know their source
  * via reference_type/reference_id, source records now know their journal entry.
  */
-return new class extends Migration
-{
+return new class () extends Migration {
     /**
      * Run the migrations.
      */

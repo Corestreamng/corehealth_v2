@@ -14,8 +14,7 @@ use Illuminate\Support\Facades\Schema;
  * 1. patient_deposits - Deposit receipts (advance payments)
  * 2. patient_deposit_applications - How deposits are applied to bills
  */
-return new class extends Migration
-{
+return new class () extends Migration {
     public function up(): void
     {
         // 1. Patient Deposits (Advance Payments)
@@ -47,7 +46,7 @@ return new class extends Migration
                 'surgery',        // Surgery deposit
                 'investigation',  // Investigation deposit
                 'general',        // General advance
-                'other'
+                'other',
             ])->default('general');
 
             // Payment details
@@ -66,7 +65,7 @@ return new class extends Migration
                 'fully_applied',  // All used for bills
                 'refunded',       // Money returned
                 'expired',        // Forfeited after period
-                'cancelled'
+                'cancelled',
             ])->default('active');
 
             // Refund tracking

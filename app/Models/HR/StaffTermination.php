@@ -31,7 +31,7 @@ class StaffTermination extends Model implements Auditable
         'exit_interview_notes',
         'clearance_completed',
         'final_payment_processed',
-        'processed_by'
+        'processed_by',
     ];
 
     protected $casts = [
@@ -43,21 +43,21 @@ class StaffTermination extends Model implements Auditable
         'final_payment_processed' => 'boolean',
     ];
 
-    const TYPE_VOLUNTARY = 'voluntary';
-    const TYPE_INVOLUNTARY = 'involuntary';
-    const TYPE_RETIREMENT = 'retirement';
-    const TYPE_DEATH = 'death';
-    const TYPE_CONTRACT_END = 'contract_end';
+    public const TYPE_VOLUNTARY = 'voluntary';
+    public const TYPE_INVOLUNTARY = 'involuntary';
+    public const TYPE_RETIREMENT = 'retirement';
+    public const TYPE_DEATH = 'death';
+    public const TYPE_CONTRACT_END = 'contract_end';
 
-    const REASON_RESIGNATION = 'resignation';
-    const REASON_MISCONDUCT = 'misconduct';
-    const REASON_POOR_PERFORMANCE = 'poor_performance';
-    const REASON_REDUNDANCY = 'redundancy';
-    const REASON_RETIREMENT = 'retirement';
-    const REASON_MEDICAL = 'medical';
-    const REASON_DEATH = 'death';
-    const REASON_CONTRACT_EXPIRY = 'contract_expiry';
-    const REASON_OTHER = 'other';
+    public const REASON_RESIGNATION = 'resignation';
+    public const REASON_MISCONDUCT = 'misconduct';
+    public const REASON_POOR_PERFORMANCE = 'poor_performance';
+    public const REASON_REDUNDANCY = 'redundancy';
+    public const REASON_RETIREMENT = 'retirement';
+    public const REASON_MEDICAL = 'medical';
+    public const REASON_DEATH = 'death';
+    public const REASON_CONTRACT_EXPIRY = 'contract_expiry';
+    public const REASON_OTHER = 'other';
 
     /**
      * Boot method
@@ -96,6 +96,7 @@ class StaffTermination extends Model implements Auditable
             ->first();
 
         $sequence = $last ? (int) substr($last->termination_number, -6) + 1 : 1;
+
         return $prefix . $year . str_pad($sequence, 6, '0', STR_PAD_LEFT);
     }
 

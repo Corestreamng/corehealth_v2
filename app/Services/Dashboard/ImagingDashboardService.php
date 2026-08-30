@@ -2,9 +2,9 @@
 
 namespace App\Services\Dashboard;
 
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Cache;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 
 class ImagingDashboardService
 {
@@ -14,7 +14,7 @@ class ImagingDashboardService
     public function getQueueCounts(): array
     {
         $today = Carbon::today();
-        
+
         return Cache::remember('dashboard.imaging.queues', 30, function () use ($today) {
             // Imaging queues
             $billing = DB::table('imaging_service_requests')
@@ -56,6 +56,7 @@ class ImagingDashboardService
     public function getStats(): array
     {
         $today = Carbon::today();
+
         return [
             'pending' => DB::table('imaging_service_requests')->whereIn('status', [0, 1, 2, 3])->whereBetween('created_at', [$today->copy()->startOfDay(), $today->copy()->endOfDay()])->count(),
             'completed' => DB::table('imaging_service_requests')->where('status', 4)->whereBetween('updated_at', [$today->copy()->startOfDay(), $today->copy()->endOfDay()])->count(),
@@ -83,6 +84,7 @@ class ImagingDashboardService
             ->map(function ($row, $index) {
                 $colors = ['#6366f1', '#8b5cf6', '#a855f7', '#d946ef', '#ec4899'];
                 $row->color = $colors[$index % count($colors)];
+
                 return (array) $row;
             })
             ->toArray();
@@ -130,6 +132,7 @@ class ImagingDashboardService
                 $row->status_label = $statusMap[$row->status] ?? 'Unknown';
                 $row->status_color = $colorMap[$row->status] ?? 'secondary';
                 $row->time = Carbon::parse($row->created_at)->format('h:i A');
+
                 return $row;
             })
             ->toArray();

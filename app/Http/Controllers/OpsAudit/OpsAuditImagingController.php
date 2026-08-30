@@ -2,19 +2,19 @@
 
 namespace App\Http\Controllers\OpsAudit;
 
-use Illuminate\Http\Request;
-use Carbon\Carbon;
 use App\Models\ImagingServiceRequest;
-use App\Models\ProductOrServiceRequest;
 use App\Models\Payment;
+use App\Models\ProductOrServiceRequest;
+use Carbon\Carbon;
+use Illuminate\Http\Request;
 
 class OpsAuditImagingController extends OpsAuditBaseController
 {
     public function index(Request $request)
     {
-        $hmos = \App\Models\Hmo::with('scheme')->orderBy('name')->get()->groupBy(fn($hmo) => $hmo->scheme ? $hmo->scheme->name : 'Other Schemes');
+        $hmos = \App\Models\Hmo::with('scheme')->orderBy('name')->get()->groupBy(fn ($hmo) => $hmo->scheme ? $hmo->scheme->name : 'Other Schemes');
         $hmoSchemes = \App\Models\HmoScheme::orderBy('name')->pluck('name', 'id');
-        $cashiers = \App\Models\User::role(['SUPERADMIN', 'ADMIN', 'ACCOUNTS', 'BILLER'])->orderBy('firstname')->get()->mapWithKeys(fn($u) => [$u->id => trim($u->firstname . ' ' . ($u->othername ?? '') . ' ' . $u->surname)]);
+        $cashiers = \App\Models\User::role(['SUPERADMIN', 'ADMIN', 'ACCOUNTS', 'BILLER'])->orderBy('firstname')->get()->mapWithKeys(fn ($u) => [$u->id => trim($u->firstname . ' ' . ($u->othername ?? '') . ' ' . $u->surname)]);
         $stores = $this->getPermittedStoresForFilter(['roles' => ['imaging']]);
 
         return view('admin.ops_audit.imaging', compact('hmos', 'hmoSchemes', 'cashiers', 'stores'));
@@ -30,6 +30,7 @@ class OpsAuditImagingController extends OpsAuditBaseController
                 'cashbook' => Payment::class,
             ];
             $request->merge(['zone_key' => 'ops_audit.imaging.' . $tab]);
+
             return $this->handleBulkStamp($request, $tab, $modelMap);
         }
 
@@ -61,7 +62,7 @@ class OpsAuditImagingController extends OpsAuditBaseController
             'resultBy',
             'approver',
             'productOrServiceRequest.payment.staff_user',
-        
+
             'productOrServiceRequest.payment.user',
 ]);
 
@@ -70,12 +71,16 @@ class OpsAuditImagingController extends OpsAuditBaseController
         $this->applyPaymentFilters($query, $request, 'productOrServiceRequest');
         $this->applyItemFilters($query, $request, 'productOrServiceRequest');
 
-        if ($request->filled('status')) $query->where('status', $request->status);
-        if ($request->filled('hmo_id')) $query->whereHas('patient.hmo', fn($q) => $q->where('id', $request->hmo_id));
+        if ($request->filled('status')) {
+            $query->where('status', $request->status);
+        }
+        if ($request->filled('hmo_id')) {
+            $query->whereHas('patient.hmo', fn ($q) => $q->where('id', $request->hmo_id));
+        }
 
         $kpiQuery = clone $query;
 
-        return $this->buildDataTableResponse($query, $request, fn($q) => $q, function ($row) {
+        return $this->buildDataTableResponse($query, $request, fn ($q) => $q, function ($row) {
             $patient = $row->patient;
             $user = $patient?->user;
             $hmo = $patient?->hmo;
@@ -91,7 +96,7 @@ class OpsAuditImagingController extends OpsAuditBaseController
                 'hmo' => $this->renderHmo($hmo),
                 'test' => $row->service?->service_name ?? ($row->is_free_form ? $row->free_form_name : '-'),
                 'doctor' => $row->doctor?->firstname ? ($row->doctor->firstname . ' ' . ($row->doctor->surname ?? '')) : '-',
-                'status' => '<span class="badge bg-'.($statusColors[$row->status] ?? 'secondary').'">'.($statusTexts[$row->status] ?? $row->status).'</span>',
+                'status' => '<span class="badge bg-' . ($statusColors[$row->status] ?? 'secondary') . '">' . ($statusTexts[$row->status] ?? $row->status) . '</span>',
                 'result_by' => $row->resultBy?->firstname ? ($row->resultBy->firstname . ' ' . ($row->resultBy->surname ?? '')) : '-',
                 'approved_by' => $row->approver?->firstname ? ($row->approver->firstname . ' ' . ($row->approver->surname ?? '')) : '-',
                 'billed_by' => $row->biller?->firstname ? ($row->biller->firstname . ' ' . ($row->biller->surname ?? '')) : '-',
@@ -118,7 +123,7 @@ class OpsAuditImagingController extends OpsAuditBaseController
             'patient.hmo.scheme',
             'staff',
             'payment.staff_user',
-            'service'
+            'service',
 ])->whereHas('imagingRequest');
 
         $this->applyDateFilter($query, $request);
@@ -126,11 +131,13 @@ class OpsAuditImagingController extends OpsAuditBaseController
         $this->applyPaymentFilters($query, $request, '');
         $this->applyItemFilters($query, $request, '');
 
-        if ($request->filled('hmo_id')) $query->whereHas('patient.hmo', fn($q) => $q->where('id', $request->hmo_id));
+        if ($request->filled('hmo_id')) {
+            $query->whereHas('patient.hmo', fn ($q) => $q->where('id', $request->hmo_id));
+        }
 
         $kpiQuery = clone $query;
 
-        return $this->buildDataTableResponse($query, $request, fn($q) => $q, function ($row) {
+        return $this->buildDataTableResponse($query, $request, fn ($q) => $q, function ($row) {
             $patient = $row->patient;
             $user = $patient?->user;
             $hmo = $patient?->hmo;
@@ -165,10 +172,10 @@ class OpsAuditImagingController extends OpsAuditBaseController
 'patient.user',
             'staff_user',
             'bank',
-            'product_or_service_request', 'product_or_service_request.product.category', 'product_or_service_request.service.category'
-])->whereHas('product_or_service_request', function($q) {
-            $q->whereHas('imagingRequest');
-        });
+            'product_or_service_request', 'product_or_service_request.product.category', 'product_or_service_request.service.category',
+])->whereHas('product_or_service_request', function ($q) {
+    $q->whereHas('imagingRequest');
+});
 
         $this->applyDateFilter($query, $request);
         $this->applyShiftFilter($query, $request);
@@ -177,17 +184,17 @@ class OpsAuditImagingController extends OpsAuditBaseController
 
         $kpiQuery = clone $query;
 
-        return $this->buildDataTableResponse($query, $request, fn($q) => $q, function ($row) {
+        return $this->buildDataTableResponse($query, $request, fn ($q) => $q, function ($row) {
             $patient = $row->patient;
             $user = $patient?->user;
-            
+
             return [
                 'date' => $row->created_at ? Carbon::parse($row->created_at)->format('d M Y H:i') : '-',
                 'reference' => $row->reference_no ?? '-',
                 'item' => $this->renderPosrItem($row->product_or_service_request, $row->id),
                 'patient' => $this->renderPatient($user, $patient, null),
                 'total' => '₦' . number_format($row->total ?? 0, 2),
-                'method' => $row->payment_method ? '<span class="badge bg-light text-dark border">'.$row->payment_method.'</span>' : '-',
+                'method' => $row->payment_method ? '<span class="badge bg-light text-dark border">' . $row->payment_method . '</span>' : '-',
                 'cashier' => $row->staff_user?->firstname ? ($row->staff_user->firstname . ' ' . ($row->staff_user->surname ?? '')) : '-',
                 'bank' => $this->renderBankDetails($row),
                 'entity' => $this->renderPaymentEntityDetails($row),

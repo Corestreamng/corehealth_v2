@@ -7,7 +7,6 @@ use App\Models\ApplicationStatu;
 use App\Models\Patient;
 use App\Models\User;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
@@ -26,19 +25,20 @@ class MobileAuthController extends Controller
             return response()->json([
                 'status' => true,
                 'data' => [
-                    'site_name'          => $settings->site_name ?? 'CoreHealth',
-                    'header_text'        => $settings->header_text ?? '',
-                    'hos_color'          => $settings->hos_color ?? '#0066cc',
-                    'logo'               => $settings->logo, // base64
-                    'favicon'            => $settings->favicon,
-                    'contact_address'    => $settings->contact_address ?? '',
-                    'contact_phones'     => $settings->contact_phones ?? '',
-                    'contact_emails'     => $settings->contact_emails ?? '',
-                    'version'            => $settings->version ?? '2.0',
+                    'site_name' => $settings->site_name ?? 'CoreHealth',
+                    'header_text' => $settings->header_text ?? '',
+                    'hos_color' => $settings->hos_color ?? '#0066cc',
+                    'logo' => $settings->logo, // base64
+                    'favicon' => $settings->favicon,
+                    'contact_address' => $settings->contact_address ?? '',
+                    'contact_phones' => $settings->contact_phones ?? '',
+                    'contact_emails' => $settings->contact_emails ?? '',
+                    'version' => $settings->version ?? '2.0',
                 ],
             ]);
         } catch (\Exception $e) {
             Log::error('Mobile instanceInfo error: ' . $e->getMessage());
+
             return response()->json([
                 'status' => false,
                 'message' => 'Unable to retrieve instance info.',
@@ -53,7 +53,7 @@ class MobileAuthController extends Controller
     public function staffLogin(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'email'    => 'required|email',
+            'email' => 'required|email',
             'password' => 'required|string',
         ]);
 
@@ -68,7 +68,7 @@ class MobileAuthController extends Controller
         try {
             $user = User::where('email', $request->email)->first();
 
-            if (! $user || ! Hash::check($request->password, $user->password)) {
+            if (!$user || !Hash::check($request->password, $user->password)) {
                 return response()->json([
                     'status' => false,
                     'message' => 'Invalid credentials.',
@@ -88,26 +88,27 @@ class MobileAuthController extends Controller
                 'data' => [
                     'token' => $token,
                     'user' => [
-                        'id'    => $user->id,
-                        'name'  => $user->name,
+                        'id' => $user->id,
+                        'name' => $user->name,
                         'email' => $user->email,
-                        'role'  => $user->is_admin,
+                        'role' => $user->is_admin,
                         'roles' => $user->getRoleNames(),
                     ],
                     'staff' => $staff ? [
-                        'id'          => $staff->id,
-                        'first_name'  => $staff->first_name,
-                        'last_name'   => $staff->last_name,
-                        'gender'      => $staff->gender,
-                        'phone'       => $staff->mobile_phone,
-                        'department'  => $staff->department,
+                        'id' => $staff->id,
+                        'first_name' => $staff->first_name,
+                        'last_name' => $staff->last_name,
+                        'gender' => $staff->gender,
+                        'phone' => $staff->mobile_phone,
+                        'department' => $staff->department,
                         'designation' => $staff->designation,
-                        'photo'       => $staff->photo,
+                        'photo' => $staff->photo,
                     ] : null,
                 ],
             ]);
         } catch (\Exception $e) {
             Log::error('Mobile staffLogin error: ' . $e->getMessage());
+
             return response()->json([
                 'status' => false,
                 'message' => 'Login failed. Please try again.',
@@ -123,7 +124,7 @@ class MobileAuthController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'patient_id' => 'required|string',
-            'phone'      => 'required|string',
+            'phone' => 'required|string',
         ]);
 
         if ($validator->fails()) {
@@ -139,7 +140,7 @@ class MobileAuthController extends Controller
                 ->where('file_no', $request->patient_id)
                 ->first();
 
-            if (! $patient) {
+            if (!$patient) {
                 return response()->json([
                     'status' => false,
                     'message' => 'Patient not found. Please check your hospital number.',
@@ -148,7 +149,7 @@ class MobileAuthController extends Controller
 
             // Verify phone number matches
             $patientPhone = preg_replace('/\D/', '', $patient->phone_no ?? '');
-            $inputPhone   = preg_replace('/\D/', '', $request->phone);
+            $inputPhone = preg_replace('/\D/', '', $request->phone);
 
             if (substr($patientPhone, -10) !== substr($inputPhone, -10)) {
                 return response()->json([
@@ -172,21 +173,21 @@ class MobileAuthController extends Controller
                 'data' => [
                     'token' => $token,
                     'patient' => [
-                        'id'          => $patient->id,
-                        'card_no'     => $patient->file_no,
-                        'first_name'  => $patient->first_name,
-                        'last_name'   => $patient->last_name,
-                        'gender'      => $patient->gender,
-                        'dob'         => $patient->date_of_birth,
-                        'phone'       => $patient->phone_no,
-                        'email'       => $patient->email,
+                        'id' => $patient->id,
+                        'card_no' => $patient->file_no,
+                        'first_name' => $patient->first_name,
+                        'last_name' => $patient->last_name,
+                        'gender' => $patient->gender,
+                        'dob' => $patient->date_of_birth,
+                        'phone' => $patient->phone_no,
+                        'email' => $patient->email,
                         'blood_group' => $patient->blood_group,
-                        'genotype'    => $patient->genotype,
-                        'address'     => $patient->address,
-                        'photo'       => $patient->photo,
+                        'genotype' => $patient->genotype,
+                        'address' => $patient->address,
+                        'photo' => $patient->photo,
                         'hmo' => $patient->hmo ? [
-                            'name'   => $patient->hmo->scheme->scheme_name ?? null,
-                            'plan'   => $patient->hmo->plan ?? null,
+                            'name' => $patient->hmo->scheme->scheme_name ?? null,
+                            'plan' => $patient->hmo->plan ?? null,
                             'status' => $patient->hmo->status ?? null,
                         ] : null,
                     ],
@@ -194,6 +195,7 @@ class MobileAuthController extends Controller
             ]);
         } catch (\Exception $e) {
             Log::error('Mobile patientLogin error: ' . $e->getMessage());
+
             return response()->json([
                 'status' => false,
                 'message' => 'Login failed. Please try again.',
@@ -208,6 +210,7 @@ class MobileAuthController extends Controller
     {
         try {
             $request->user()->currentAccessToken()->delete();
+
             return response()->json(['status' => true, 'message' => 'Logged out.']);
         } catch (\Exception $e) {
             return response()->json(['status' => false, 'message' => 'Logout failed.'], 500);

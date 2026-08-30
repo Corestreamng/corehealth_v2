@@ -2,9 +2,9 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
 use App\Models\Patient;
 use Carbon\Carbon;
+use Illuminate\Http\Request;
 
 /**
  * Unified patient search controller used by all workbenches.
@@ -52,21 +52,21 @@ class PatientSearchController extends Controller
     private function mapPatient(patient $patient, string $context): array
     {
         $base = [
-            'id'       => $patient->id,
-            'user_id'  => $patient->user_id,
-            'name'     => userfullname($patient->user_id),
-            'file_no'  => $patient->file_no ?? 'N/A',
-            'phone'    => $patient->phone_no ?? 'N/A',
-            'gender'   => $patient->gender ?? 'N/A',
-            'dob'      => $patient->dob,
-            'age'      => $this->safeAge($patient->dob),
-            'hmo'      => optional($patient->hmo)->name ?? 'Private',
-            'hmo_id'   => $patient->hmo_id,
-            'hmo_no'   => $patient->hmo_no ?? '',
-            'photo'    => $patient->user && $patient->user->filename
+            'id' => $patient->id,
+            'user_id' => $patient->user_id,
+            'name' => userfullname($patient->user_id),
+            'file_no' => $patient->file_no ?? 'N/A',
+            'phone' => $patient->phone_no ?? 'N/A',
+            'gender' => $patient->gender ?? 'N/A',
+            'dob' => $patient->dob,
+            'age' => $this->safeAge($patient->dob),
+            'hmo' => optional($patient->hmo)->name ?? 'Private',
+            'hmo_id' => $patient->hmo_id,
+            'hmo_no' => $patient->hmo_no ?? '',
+            'photo' => $patient->user && $patient->user->filename
                             ? asset('storage/image/user/' . $patient->user->filename)
                             : asset('assets/images/default-avatar.png'),
-            'balance'  => optional($patient->account)->balance ?? 0,
+            'balance' => optional($patient->account)->balance ?? 0,
         ];
 
         // Domain‑specific extras
@@ -74,21 +74,25 @@ class PatientSearchController extends Controller
             case 'lab':
                 $base['pending_count'] = \App\Models\LabServiceRequest::where('patient_id', $patient->id)
                     ->whereIn('status', [1, 2, 3])->count();
+
                 break;
 
             case 'imaging':
                 $base['pending_count'] = \App\Models\ImagingServiceRequest::where('patient_id', $patient->id)
                     ->whereIn('status', [1, 2])->count();
+
                 break;
 
             case 'billing':
                 $base['pending_count'] = \App\Models\ProductOrServiceRequest::where('user_id', $patient->user_id)
                     ->whereNull('payment_id')->whereNull('invoice_id')->count();
+
                 break;
 
             case 'pharmacy':
                 $base['pending_count'] = \App\Models\ProductRequest::where('patient_id', $patient->id)
                     ->whereIn('status', [1, 2])->count();
+
                 break;
 
             case 'nursing':
@@ -100,6 +104,7 @@ class PatientSearchController extends Controller
                         $aq->whereNull('deleted_at');
                     })->count();
                 $base['pending_count'] = $base['pending_meds'];
+
                 break;
 
             case 'hmo':
@@ -107,10 +112,12 @@ class PatientSearchController extends Controller
                     ->whereNotNull('coverage_mode')
                     ->where('validation_status', 'pending')
                     ->where('claims_amount', '>', 0)->count();
+
                 break;
 
             default: // reception — no pending count needed
                 $base['allergies'] = $patient->allergies ?? [];
+
                 break;
         }
 
@@ -127,6 +134,7 @@ class PatientSearchController extends Controller
     private function safeAge($dob)
     {
         $date = $this->safeParseDob($dob);
+
         return $date ? $date->age : 'N/A';
     }
 
@@ -142,11 +150,17 @@ class PatientSearchController extends Controller
 
         // Try d/m/Y first (common legacy format)
         if (preg_match('/^\d{1,2}\/\d{1,2}\/\d{4}$/', $dob)) {
-            try { return Carbon::createFromFormat('d/m/Y', $dob); } catch (\Exception $e) {}
+            try {
+                return Carbon::createFromFormat('d/m/Y', $dob);
+            } catch (\Exception $e) {
+            }
         }
 
         // Try standard Y-m-d
-        try { return Carbon::parse($dob); } catch (\Exception $e) {}
+        try {
+            return Carbon::parse($dob);
+        } catch (\Exception $e) {
+        }
 
         return null;
     }

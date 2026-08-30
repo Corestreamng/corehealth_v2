@@ -16,7 +16,6 @@ class ImagingWorkbenchTest extends TestCase
         $this->assertTrue(in_array($response->status(), [200, 302, 403, 404]));
     }
 
-
     /** @test */
     public function test_imaging_request_created_from_encounter()
     {
@@ -38,5 +37,4 @@ class ImagingWorkbenchTest extends TestCase
         $response = $this->actingAs($user)->get('/imaging-workbench/queue');
         $this->assertTrue(in_array($response->status(), [200, 302, 404]));
     }
-
 }

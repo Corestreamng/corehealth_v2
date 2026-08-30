@@ -5,30 +5,30 @@
  * HR Routes - All Human Resources Management Routes
  */
 
-use App\Http\Controllers\HR\LeaveTypeController;
-use App\Http\Controllers\HR\LeaveRequestController;
+use App\Http\Controllers\HR\CadreController;
+use App\Http\Controllers\HR\DisciplinaryQueryController;
+use App\Http\Controllers\HR\EssController;
+use App\Http\Controllers\HR\GradeLevelController;
+use App\Http\Controllers\HR\HrWorkbenchController;
 use App\Http\Controllers\HR\LeaveBalanceController;
 use App\Http\Controllers\HR\LeaveCalendarController;
-use App\Http\Controllers\HR\DisciplinaryQueryController;
-use App\Http\Controllers\HR\StaffSuspensionController;
-use App\Http\Controllers\HR\StaffTerminationController;
+use App\Http\Controllers\HR\LeaveRequestController;
+use App\Http\Controllers\HR\LeaveTypeController;
 use App\Http\Controllers\HR\PayHeadController;
-use App\Http\Controllers\HR\SalaryProfileController;
 use App\Http\Controllers\HR\PayrollBatchController;
-use App\Http\Controllers\HR\HrWorkbenchController;
-use App\Http\Controllers\HR\EssController;
-use App\Http\Controllers\HR\UnitController;
-use App\Http\Controllers\HR\CadreController;
-use App\Http\Controllers\HR\GradeLevelController;
+use App\Http\Controllers\HR\SalaryProfileController;
+use App\Http\Controllers\HR\StaffFollowUpController;
+use App\Http\Controllers\HR\StaffMasterImportController;
+use App\Http\Controllers\HR\StaffMedicalExamController;
 use App\Http\Controllers\HR\StaffPromotionController;
 use App\Http\Controllers\HR\StaffQualificationController;
-use App\Http\Controllers\HR\StaffTrainingController;
-use App\Http\Controllers\HR\StaffMedicalExamController;
-use App\Http\Controllers\HR\StaffFollowUpController;
-use App\Http\Controllers\HR\StaffTrackingProfileController;
-use App\Http\Controllers\HR\TrackingCalendarController;
 use App\Http\Controllers\HR\StaffRegistryController;
-use App\Http\Controllers\HR\StaffMasterImportController;
+use App\Http\Controllers\HR\StaffSuspensionController;
+use App\Http\Controllers\HR\StaffTerminationController;
+use App\Http\Controllers\HR\StaffTrackingProfileController;
+use App\Http\Controllers\HR\StaffTrainingController;
+use App\Http\Controllers\HR\TrackingCalendarController;
+use App\Http\Controllers\HR\UnitController;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware(['auth'])->prefix('hr')->name('hr.')->group(function () {

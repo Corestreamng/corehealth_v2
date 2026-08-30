@@ -2,13 +2,13 @@
 
 namespace App\Services\Dashboard;
 
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Cache;
-use Carbon\Carbon;
-use App\Models\MaternityEnrollment;
 use App\Models\AncVisit;
 use App\Models\DeliveryRecord;
+use App\Models\MaternityEnrollment;
 use App\Models\PostnatalVisit;
+use Carbon\Carbon;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 
 class MaternityDashboardService
 {
@@ -97,7 +97,7 @@ class MaternityDashboardService
             ->orderByDesc('created_at')
             ->limit(5)
             ->get();
-        
+
         // Deliveries
         $deliveries = DeliveryRecord::with(['enrollment.patient'])
             ->whereBetween('delivery_date', [$today->copy()->startOfDay(), $today->copy()->endOfDay()])
@@ -133,7 +133,7 @@ class MaternityDashboardService
             ];
         }
 
-        usort($activity, function($a, $b) {
+        usort($activity, function ($a, $b) {
             return $b['created_at'] <=> $a['created_at'];
         });
 
@@ -159,7 +159,7 @@ class MaternityDashboardService
 
         // Overdue visits (ANC visits scheduled before today but not completed)
         // Note: Assuming there's a scheduled_date or similar. Let's check AncVisit.
-        
+
         // EDD alerts
         $dueToday = MaternityEnrollment::where('status', 'active')->whereBetween('edd', [Carbon::today()->startOfDay(), Carbon::today()->endOfDay()])->count();
         if ($dueToday > 0) {

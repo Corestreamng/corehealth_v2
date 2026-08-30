@@ -14,11 +14,11 @@ class detailFactory extends Factory
     public function definition()
     {
 
-            return [
-                'service_rendered' => 'lad test',
-                'price'=>'800',
-                'patient_id'=>1
-            ];
+        return [
+            'service_rendered' => 'lad test',
+            'price' => '800',
+            'patient_id' => 1,
+        ];
 
     }
 }

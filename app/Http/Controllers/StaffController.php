@@ -10,22 +10,22 @@ use App\Models\HR\Unit;
 use App\Models\Specialization;
 use App\Models\Staff;
 use App\Models\User;
-use Illuminate\Support\Facades\DB;
 use App\Models\UserCategory;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\View\ComponentAttributeBag;
 use Intervention\Image\Facades\Image;
 use RealRashid\SweetAlert\Facades\Alert;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
 use Yajra\DataTables\DataTables;
-use Illuminate\View\ComponentAttributeBag;
 
 class StaffController extends Controller
 {
@@ -80,18 +80,18 @@ class StaffController extends Controller
 
         return DataTables::of($query)
             ->addIndexColumn()
-            ->filterColumn('staff_info', function($query, $keyword) {
-                $query->where(function($q) use ($keyword) {
+            ->filterColumn('staff_info', function ($query, $keyword) {
+                $query->where(function ($q) use ($keyword) {
                     $q->where('surname', 'like', "%{$keyword}%")
                       ->orWhere('firstname', 'like', "%{$keyword}%")
                       ->orWhere('othername', 'like', "%{$keyword}%")
                       ->orWhere('email', 'like', "%{$keyword}%");
                 });
             })
-            ->filterColumn('contact', function($query, $keyword) {
-                $query->where(function($q) use ($keyword) {
+            ->filterColumn('contact', function ($query, $keyword) {
+                $query->where(function ($q) use ($keyword) {
                     $q->where('email', 'like', "%{$keyword}%")
-                      ->orWhereHas('staff_profile', function($sq) use ($keyword) {
+                      ->orWhereHas('staff_profile', function ($sq) use ($keyword) {
                           $sq->where('phone_number', 'like', "%{$keyword}%");
                       });
                 });
@@ -101,7 +101,7 @@ class StaffController extends Controller
                     'user' => $user,
                     'width' => '40px',
                     'height' => '40px',
-                    'attributes' => new ComponentAttributeBag()
+                    'attributes' => new ComponentAttributeBag(),
                 ])->render();
 
                 $name = e($user->surname . ' ' . $user->firstname);
@@ -115,17 +115,23 @@ class StaffController extends Controller
             ->addColumn('dept_info', function ($user) {
                 $dept = $user->staff_profile?->department?->name;
                 $job = $user->staff_profile?->job_title;
-                if (!$dept && !$job) return '<span class="text-muted">-</span>';
+                if (!$dept && !$job) {
+                    return '<span class="text-muted">-</span>';
+                }
                 $html = $dept ? '<div style="font-weight:600;">' . e($dept) . '</div>' : '';
                 $html .= $job ? '<div style="font-size:0.8rem;color:#6b7280;">' . e($job) . '</div>' : '';
+
                 return $html;
             })
             ->addColumn('contact', function ($user) {
                 $phone = $user->staff_profile?->phone_number;
                 $email = $user->email;
-                if (!$phone && !$email) return '<span class="text-muted">-</span>';
+                if (!$phone && !$email) {
+                    return '<span class="text-muted">-</span>';
+                }
                 $html = $phone ? '<div><i class="mdi mdi-phone"></i> ' . e($phone) . '</div>' : '';
                 $html .= $email ? '<div style="font-size:0.8rem;"><a href="mailto:' . e($email) . '" class="text-primary"><i class="mdi mdi-email"></i> ' . e($email) . '</a></div>' : '';
+
                 return $html;
             })
             ->addColumn('category_roles', function ($user) {
@@ -137,6 +143,7 @@ class StaffController extends Controller
                     })->implode(' ');
                     $html .= '<div style="margin-top:3px;">' . $roles . '</div>';
                 }
+
                 return $html;
             })
             ->addColumn('status_info', function ($user) {
@@ -156,11 +163,13 @@ class StaffController extends Controller
                         $html .= '<br><span class="badge badge-info" title="Unit Head"><i class="mdi mdi-shield-account"></i> Unit Head</span>';
                     }
                 }
+
                 return $html;
             })
             ->addColumn('actions', function ($user) {
                 $viewUrl = route('staff.show', $user->id);
                 $editUrl = route('staff.edit', $user->id);
+
                 return '
                     <div class="btn-group" role="group">
                         <a href="' . $viewUrl . '" class="btn btn-outline-primary btn-sm" title="View"><i class="mdi mdi-eye"></i></a>
@@ -422,8 +431,6 @@ class StaffController extends Controller
             ];
         }
 
-
-
         if ($request->is_admin == 21) {
             //  Making sure specialization being validated for doctors
             $rules += [
@@ -436,9 +443,6 @@ class StaffController extends Controller
                 'clinic' => 'required',
             ];
         }
-
-
-
 
         if (!$request->email) {
             $baseEmail = strtolower(trim($request->firstname)) . '.' . strtolower(trim($request->surname)) . '@hms.com';
@@ -527,6 +531,7 @@ class StaffController extends Controller
             }
 
             DB::beginTransaction();
+
             try {
                 $user = new User();
 
@@ -564,7 +569,7 @@ class StaffController extends Controller
                 } else {
                     $user->assignPermission = 0;
                 }
-                
+
                 $user->update();
 
                 $staff = Staff::firstOrNew(['user_id' => $user->id]);
@@ -668,6 +673,7 @@ class StaffController extends Controller
                 DB::rollBack();
                 Log::error("Failed to create staff: " . $e->getMessage(), ['exception' => $e]);
                 $msg = 'Something went wrong: ' . $e->getMessage();
+
                 return redirect()->back()->withInput()->with('error', $msg)->withInput();
             }
         }
@@ -854,6 +860,7 @@ class StaffController extends Controller
                 $user->password = Hash::make($request->password);
             }
             DB::beginTransaction();
+
             try {
                 if ($request->has('roles') && count($request->roles) > 0) {
                     $user->syncRoles($request->roles);
@@ -872,7 +879,7 @@ class StaffController extends Controller
                     $user->syncPermissions([]);
                     $user->assignPermission = 0;
                 }
-                
+
                 $user->update();
                 $staff = Staff::where('user_id', $id)->first();
                 if (!$staff) {
@@ -946,6 +953,7 @@ class StaffController extends Controller
                 DB::rollBack();
                 Log::error("Failed to update staff: " . $e->getMessage(), ['exception' => $e]);
                 $msg = 'Something went wrong: ' . $e->getMessage();
+
                 return redirect()->back()->withInput()->with('error', $msg)->withInput();
             }
         }

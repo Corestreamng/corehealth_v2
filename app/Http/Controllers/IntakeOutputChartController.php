@@ -1,10 +1,10 @@
 <?php
+
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
 use App\Models\IntakeOutputPeriod;
 use App\Models\IntakeOutputRecord;
-use App\Models\Patient;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
 class IntakeOutputChartController extends Controller
@@ -29,27 +29,27 @@ class IntakeOutputChartController extends Controller
         }
 
         // Apply date filtering to fluid periods
-        $fluidPeriods = IntakeOutputPeriod::with(['records' => function($query) use ($startDate, $endDate) {
-                if ($startDate && $endDate) {
-                    $query->whereBetween('recorded_at', [$startDate, $endDate]);
-                }
-            }, 'nurse'])
+        $fluidPeriods = IntakeOutputPeriod::with(['records' => function ($query) use ($startDate, $endDate) {
+            if ($startDate && $endDate) {
+                $query->whereBetween('recorded_at', [$startDate, $endDate]);
+            }
+        }, 'nurse'])
             ->where('patient_id', $patientId)
             ->where('type', 'fluid')
-            ->when($startDate && $endDate, function($query) use ($startDate, $endDate) {
-                return $query->where(function($q) use ($startDate, $endDate) {
+            ->when($startDate && $endDate, function ($query) use ($startDate, $endDate) {
+                return $query->where(function ($q) use ($startDate, $endDate) {
                     // Include periods that:
                     // 1. Started within the date range
                     $q->whereBetween('started_at', [$startDate, $endDate])
                       // 2. OR ended within the date range
                       ->orWhereBetween('ended_at', [$startDate, $endDate])
                       // 3. OR are still active (not ended) and started before or within the range
-                      ->orWhere(function($innerQ) use ($endDate) {
+                      ->orWhere(function ($innerQ) use ($endDate) {
                           $innerQ->whereNull('ended_at')
                                  ->where('started_at', '<=', $endDate);
                       })
                       // 4. OR span the entire date range (started before and ended after)
-                      ->orWhere(function($innerQ) use ($startDate, $endDate) {
+                      ->orWhere(function ($innerQ) use ($startDate, $endDate) {
                           $innerQ->where('started_at', '<=', $startDate)
                                  ->where('ended_at', '>=', $endDate);
                       });
@@ -59,27 +59,27 @@ class IntakeOutputChartController extends Controller
             ->get();
 
         // Apply date filtering to solid periods
-        $solidPeriods = IntakeOutputPeriod::with(['records' => function($query) use ($startDate, $endDate) {
-                if ($startDate && $endDate) {
-                    $query->whereBetween('recorded_at', [$startDate, $endDate]);
-                }
-            }, 'nurse'])
+        $solidPeriods = IntakeOutputPeriod::with(['records' => function ($query) use ($startDate, $endDate) {
+            if ($startDate && $endDate) {
+                $query->whereBetween('recorded_at', [$startDate, $endDate]);
+            }
+        }, 'nurse'])
             ->where('patient_id', $patientId)
             ->where('type', 'solid')
-            ->when($startDate && $endDate, function($query) use ($startDate, $endDate) {
-                return $query->where(function($q) use ($startDate, $endDate) {
+            ->when($startDate && $endDate, function ($query) use ($startDate, $endDate) {
+                return $query->where(function ($q) use ($startDate, $endDate) {
                     // Include periods that:
                     // 1. Started within the date range
                     $q->whereBetween('started_at', [$startDate, $endDate])
                       // 2. OR ended within the date range
                       ->orWhereBetween('ended_at', [$startDate, $endDate])
                       // 3. OR are still active (not ended) and started before or within the range
-                      ->orWhere(function($innerQ) use ($endDate) {
+                      ->orWhere(function ($innerQ) use ($endDate) {
                           $innerQ->whereNull('ended_at')
                                  ->where('started_at', '<=', $endDate);
                       })
                       // 4. OR span the entire date range (started before and ended after)
-                      ->orWhere(function($innerQ) use ($startDate, $endDate) {
+                      ->orWhere(function ($innerQ) use ($startDate, $endDate) {
                           $innerQ->where('started_at', '<=', $startDate)
                                  ->where('ended_at', '>=', $endDate);
                       });
@@ -94,11 +94,11 @@ class IntakeOutputChartController extends Controller
         $currentUserId = Auth::id();
 
         // Add nurse names and calculate totals for periods and records
-        $fluidPeriods->each(function($period) use ($currentUserId, $cutoffTime) {
+        $fluidPeriods->each(function ($period) use ($currentUserId, $cutoffTime) {
             $period->nurse_name = $period->nurse_id ? userfullname($period->nurse_id) : 'Unknown';
             $period->total_intake = $period->records->where('type', 'intake')->sum('amount');
             $period->total_output = $period->records->where('type', 'output')->sum('amount');
-            $period->records->each(function($record) use ($currentUserId, $cutoffTime) {
+            $period->records->each(function ($record) use ($currentUserId, $cutoffTime) {
                 $record->nurse_name = $record->nurse_id ? userfullname($record->nurse_id) : 'Unknown';
                 // Check if the current user can delete this record
                 $isOwner = $record->nurse_id == $currentUserId;
@@ -107,11 +107,11 @@ class IntakeOutputChartController extends Controller
             });
         });
 
-        $solidPeriods->each(function($period) use ($currentUserId, $cutoffTime) {
+        $solidPeriods->each(function ($period) use ($currentUserId, $cutoffTime) {
             $period->nurse_name = $period->nurse_id ? userfullname($period->nurse_id) : 'Unknown';
             $period->total_intake = $period->records->where('type', 'intake')->sum('amount');
             $period->total_output = $period->records->where('type', 'output')->sum('amount');
-            $period->records->each(function($record) use ($currentUserId, $cutoffTime) {
+            $period->records->each(function ($record) use ($currentUserId, $cutoffTime) {
                 $record->nurse_name = $record->nurse_id ? userfullname($record->nurse_id) : 'Unknown';
                 // Check if the current user can delete this record
                 $isOwner = $record->nurse_id == $currentUserId;
@@ -125,8 +125,8 @@ class IntakeOutputChartController extends Controller
             'solidPeriods' => $solidPeriods,
             'period' => [
                 'start' => $startDate,
-                'end' => $endDate
-            ]
+                'end' => $endDate,
+            ],
         ]);
     }
 
@@ -142,6 +142,7 @@ class IntakeOutputChartController extends Controller
             'started_at' => now(),
             'nurse_id' => Auth::id(),
         ]);
+
         return response()->json(['success' => true, 'period' => $period]);
     }
 
@@ -157,6 +158,7 @@ class IntakeOutputChartController extends Controller
         $intake = $period->records()->where('type', 'intake')->sum('amount');
         $output = $period->records()->where('type', 'output')->sum('amount');
         $balance = $intake - $output;
+
         return response()->json(['success' => true, 'balance' => $balance]);
     }
 
@@ -191,7 +193,7 @@ class IntakeOutputChartController extends Controller
         if ($record->nurse_id !== Auth::id()) {
             return response()->json([
                 'success' => false,
-                'message' => 'You can only delete your own records.'
+                'message' => 'You can only delete your own records.',
             ], 403);
         }
 
@@ -205,7 +207,7 @@ class IntakeOutputChartController extends Controller
         if ($createdAt->lt($cutoffTime)) {
             return response()->json([
                 'success' => false,
-                'message' => "You can only delete records within {$editDuration} minutes of creation."
+                'message' => "You can only delete records within {$editDuration} minutes of creation.",
             ], 403);
         }
 
@@ -219,7 +221,7 @@ class IntakeOutputChartController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Record deleted successfully.',
-            'period_type' => $periodType
+            'period_type' => $periodType,
         ]);
     }
 
@@ -240,11 +242,11 @@ class IntakeOutputChartController extends Controller
             $endDate = now()->endOfDay()->format('Y-m-d');
         }
 
-        $period = IntakeOutputPeriod::with(['records' => function($query) use ($startDate, $endDate) {
-                if ($startDate && $endDate) {
-                    $query->whereBetween('recorded_at', [$startDate, $endDate]);
-                }
-            }, 'nurse'])
+        $period = IntakeOutputPeriod::with(['records' => function ($query) use ($startDate, $endDate) {
+            if ($startDate && $endDate) {
+                $query->whereBetween('recorded_at', [$startDate, $endDate]);
+            }
+        }, 'nurse'])
             ->where('patient_id', $patientId)
             ->findOrFail($periodId);
 
@@ -256,7 +258,7 @@ class IntakeOutputChartController extends Controller
             'date' => $period->started_at,
             'action' => 'create_period',
             'details' => 'Period started',
-            'user' => $period->nurse_id ? userfullname($period->nurse_id) : 'Unknown'
+            'user' => $period->nurse_id ? userfullname($period->nurse_id) : 'Unknown',
         ];
 
         // Add each record
@@ -267,7 +269,7 @@ class IntakeOutputChartController extends Controller
                 'details' => "Added " . $record->type . " record: " . $record->amount . " " .
                              ($period->type === 'fluid' ? 'ml' : 'g') .
                              ($record->description ? " - " . $record->description : ""),
-                'user' => $record->nurse_id ? userfullname($record->nurse_id) : 'Unknown'
+                'user' => $record->nurse_id ? userfullname($record->nurse_id) : 'Unknown',
             ];
         }
 
@@ -277,12 +279,12 @@ class IntakeOutputChartController extends Controller
                 'date' => $period->ended_at,
                 'action' => 'end_period',
                 'details' => 'Period ended',
-                'user' => $period->ended_by ? userfullname($period->ended_by) : 'Unknown'
+                'user' => $period->ended_by ? userfullname($period->ended_by) : 'Unknown',
             ];
         }
 
         // Sort by date
-        usort($history, function($a, $b) {
+        usort($history, function ($a, $b) {
             return strtotime($b['date']) - strtotime($a['date']);
         });
 
@@ -291,8 +293,8 @@ class IntakeOutputChartController extends Controller
             'history' => $history,
             'period' => [
                 'start' => $startDate,
-                'end' => $endDate
-            ]
+                'end' => $endDate,
+            ],
         ]);
     }
 }

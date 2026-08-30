@@ -2,20 +2,19 @@
 
 namespace App\Http\Controllers\OpsAudit;
 
-use Illuminate\Http\Request;
-use Carbon\Carbon;
 use App\Models\HmoClaim;
-use App\Models\ProductOrServiceRequest;
 use App\Models\HmoRemittance;
-use App\Models\AuditMark;
+use App\Models\ProductOrServiceRequest;
+use Carbon\Carbon;
+use Illuminate\Http\Request;
 
 class OpsAuditHmoController extends OpsAuditBaseController
 {
     public function index(Request $request)
     {
-        $hmos = \App\Models\Hmo::with('scheme')->orderBy('name')->get()->groupBy(fn($hmo) => $hmo->scheme ? $hmo->scheme->name : 'Other Schemes');
+        $hmos = \App\Models\Hmo::with('scheme')->orderBy('name')->get()->groupBy(fn ($hmo) => $hmo->scheme ? $hmo->scheme->name : 'Other Schemes');
         $hmoSchemes = \App\Models\HmoScheme::orderBy('name')->pluck('name', 'id');
-        $users = \App\Models\User::role(['SUPERADMIN', 'ADMIN', 'ACCOUNTS', 'BILLER'])->orderBy('firstname')->get()->mapWithKeys(fn($u) => [$u->id => trim($u->firstname . ' ' . ($u->othername ?? '') . ' ' . $u->surname)]);
+        $users = \App\Models\User::role(['SUPERADMIN', 'ADMIN', 'ACCOUNTS', 'BILLER'])->orderBy('firstname')->get()->mapWithKeys(fn ($u) => [$u->id => trim($u->firstname . ' ' . ($u->othername ?? '') . ' ' . $u->surname)]);
         $banks = \App\Models\Bank::orderBy('name')->pluck('name', 'id'); // Assuming Bank model exists
 
         return view('admin.ops_audit.hmo', compact('hmos', 'hmoSchemes', 'users', 'banks'));
@@ -47,22 +46,34 @@ class OpsAuditHmoController extends OpsAuditBaseController
             'hmo',
             'createdBy',
             'processedBy',
-            'payment.user' // cashier
+            'payment.user', // cashier
 ]);
 
         $this->applyDateFilter($query, $request);
         $this->applyShiftFilter($query, $request);
 
-        if ($request->filled('hmo_id')) $query->where('hmo_id', $request->hmo_id);
-        if ($request->filled('hmo_scheme_id')) $query->whereHas('patient.hmo', fn($q) => $q->where('hmo_scheme_id', $request->hmo_scheme_id));
-        if ($request->filled('status')) $query->where('status', $request->status);
-        if ($request->filled('created_by')) $query->where('created_by', $request->created_by);
-        if ($request->filled('processed_by')) $query->where('processed_by', $request->processed_by);
-        if ($request->filled('cashier_id')) $query->whereHas('payment', fn($q) => $q->where('user_id', $request->cashier_id));
+        if ($request->filled('hmo_id')) {
+            $query->where('hmo_id', $request->hmo_id);
+        }
+        if ($request->filled('hmo_scheme_id')) {
+            $query->whereHas('patient.hmo', fn ($q) => $q->where('hmo_scheme_id', $request->hmo_scheme_id));
+        }
+        if ($request->filled('status')) {
+            $query->where('status', $request->status);
+        }
+        if ($request->filled('created_by')) {
+            $query->where('created_by', $request->created_by);
+        }
+        if ($request->filled('processed_by')) {
+            $query->where('processed_by', $request->processed_by);
+        }
+        if ($request->filled('cashier_id')) {
+            $query->whereHas('payment', fn ($q) => $q->where('user_id', $request->cashier_id));
+        }
 
         $kpiQuery = clone $query;
 
-        return $this->buildDataTableResponse($query, $request, fn($q) => $q, function ($row) {
+        return $this->buildDataTableResponse($query, $request, fn ($q) => $q, function ($row) {
             $patient = $row->patient;
             $user = $patient?->user;
             $hmo = $row->hmo ?? $patient?->hmo;
@@ -88,6 +99,7 @@ class OpsAuditHmoController extends OpsAuditBaseController
             ];
         }, function ($kpiQuery) {
             $processed = (clone $kpiQuery)->where('processed_at', '!=', null);
+
             return [
                 ['label' => 'Total Claims', 'value' => number_format((clone $kpiQuery)->count()), 'color' => '#0d6efd'],
                 ['label' => 'Pending', 'value' => number_format((clone $kpiQuery)->where('status', 'pending')->count()), 'color' => '#ffc107'],
@@ -109,18 +121,30 @@ class OpsAuditHmoController extends OpsAuditBaseController
             'payment.user',
             'validatedBy',
             'product.category',
-            'service'
+            'service',
 ])->whereNotNull('hmo_id'); // Ensure it's HMO related
 
         $this->applyDateFilter($query, $request);
         $this->applyShiftFilter($query, $request);
 
-        if ($request->filled('hmo_id')) $query->where('hmo_id', $request->hmo_id);
-        if ($request->filled('hmo_scheme_id')) $query->whereHas('patient.hmo', fn($q) => $q->where('hmo_scheme_id', $request->hmo_scheme_id));
-        if ($request->filled('coverage_mode')) $query->where('coverage_mode', $request->coverage_mode);
-        if ($request->filled('validation_status')) $query->where('validation_status', $request->validation_status);
-        if ($request->filled('validated_by')) $query->where('validated_by', $request->validated_by);
-        if ($request->filled('type')) $query->where('type', $request->type);
+        if ($request->filled('hmo_id')) {
+            $query->where('hmo_id', $request->hmo_id);
+        }
+        if ($request->filled('hmo_scheme_id')) {
+            $query->whereHas('patient.hmo', fn ($q) => $q->where('hmo_scheme_id', $request->hmo_scheme_id));
+        }
+        if ($request->filled('coverage_mode')) {
+            $query->where('coverage_mode', $request->coverage_mode);
+        }
+        if ($request->filled('validation_status')) {
+            $query->where('validation_status', $request->validation_status);
+        }
+        if ($request->filled('validated_by')) {
+            $query->where('validated_by', $request->validated_by);
+        }
+        if ($request->filled('type')) {
+            $query->where('type', $request->type);
+        }
         if ($request->filled('has_auth_code')) {
             if ($request->has_auth_code == 'yes') {
                 $query->whereNotNull('auth_code');
@@ -131,7 +155,7 @@ class OpsAuditHmoController extends OpsAuditBaseController
 
         $kpiQuery = clone $query;
 
-        return $this->buildDataTableResponse($query, $request, fn($q) => $q, function ($row) {
+        return $this->buildDataTableResponse($query, $request, fn ($q) => $q, function ($row) {
             $patient = $row->patient;
             $user = $patient?->user;
             $hmo = $patient?->hmo;
@@ -181,19 +205,27 @@ class OpsAuditHmoController extends OpsAuditBaseController
         $query = HmoRemittance::with([
 'hmo',
             'bank',
-            'createdBy'
+            'createdBy',
 ]);
 
         $this->applyDateFilter($query, $request, 'payment_date');
 
-        if ($request->filled('hmo_id')) $query->where('hmo_id', $request->hmo_id);
-        if ($request->filled('bank_id')) $query->where('bank_id', $request->bank_id);
-        if ($request->filled('payment_method')) $query->where('payment_method', $request->payment_method);
-        if ($request->filled('created_by')) $query->where('created_by', $request->created_by);
+        if ($request->filled('hmo_id')) {
+            $query->where('hmo_id', $request->hmo_id);
+        }
+        if ($request->filled('bank_id')) {
+            $query->where('bank_id', $request->bank_id);
+        }
+        if ($request->filled('payment_method')) {
+            $query->where('payment_method', $request->payment_method);
+        }
+        if ($request->filled('created_by')) {
+            $query->where('created_by', $request->created_by);
+        }
 
         $kpiQuery = clone $query;
 
-        return $this->buildDataTableResponse($query, $request, fn($q) => $q, function ($row) {
+        return $this->buildDataTableResponse($query, $request, fn ($q) => $q, function ($row) {
             return [
                 'payment_date' => $row->payment_date ? Carbon::parse($row->payment_date)->format('d M Y') : '-',
                 'hmo' => $this->renderHmo($row->hmo),
@@ -222,8 +254,9 @@ class OpsAuditHmoController extends OpsAuditBaseController
             'coverage' => ProductOrServiceRequest::class,
             'remittances' => HmoRemittance::class,
         ];
-        
+
         $request->merge(['zone_key' => 'ops_audit.hmo.' . $tab]);
+
         return $this->processBulkStamp($request, $tab, $modelMap);
     }
 }

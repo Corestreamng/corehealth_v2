@@ -33,6 +33,7 @@ class BedObserver
 
         if (!$bedServiceCategoryId) {
             Log::warning('BedObserver: bed_service_category_id not configured');
+
             return;
         }
 
@@ -68,7 +69,6 @@ class BedObserver
                     'status' => 1,
                     'price_assign' => 1,
                 ]);
-
 
                 Log::info("BedObserver: Created service {$bedService->id} for bed {$bed->id}");
             }
@@ -117,6 +117,7 @@ class BedObserver
         if ($bed->unit) {
             $parts[] = $bed->unit;
         }
+
         return implode(' ', array_filter($parts));
     }
 

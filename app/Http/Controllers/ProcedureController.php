@@ -2,18 +2,15 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Procedure;
-use Illuminate\Http\Request;
 use App\Models\Clinic;
-use App\Models\DoctorQueue;
-use App\Models\Encounter;
 use App\Models\Hmo;
 use App\Models\Patient;
+use App\Models\Procedure;
 use App\Models\Staff;
 use App\Models\User;
 use Carbon\Carbon;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Yajra\DataTables\DataTables;
 
@@ -34,6 +31,7 @@ class ProcedureController extends Controller
         try {
             $queue = Procedure::where('requested_by', Auth::id())
                 ->where('status', 1)->orderBy('created_at', 'DESC')->get();
+
             // dd($pc);
             return Datatables::of($queue)
                 ->addIndexColumn()
@@ -88,8 +86,6 @@ class ProcedureController extends Controller
         }
     }
 
-
-
     public function ContProcedureList()
     {
         try {
@@ -102,6 +98,7 @@ class ProcedureController extends Controller
                 ->where('created_at', '>=', $timeThreshold)
                 ->orderBy('created_at', 'DESC')
                 ->get();
+
             // dd($pc);
             return Datatables::of($queue)
                 ->addIndexColumn()

@@ -4,9 +4,9 @@ namespace App\Models\Accounting;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use OwenIt\Auditing\Contracts\Auditable;
 
 /**
@@ -16,7 +16,9 @@ use OwenIt\Auditing\Contracts\Auditable;
  */
 class CashFlowForecast extends Model implements Auditable
 {
-    use HasFactory, SoftDeletes, \OwenIt\Auditing\Auditable;
+    use HasFactory;
+    use SoftDeletes;
+    use \OwenIt\Auditing\Auditable;
 
     protected $fillable = [
         'fiscal_year_id',
@@ -39,20 +41,20 @@ class CashFlowForecast extends Model implements Auditable
     ];
 
     // Forecast type constants
-    const TYPE_WEEKLY = 'weekly';
-    const TYPE_MONTHLY = 'monthly';
-    const TYPE_QUARTERLY = 'quarterly';
-    const TYPE_ANNUAL = 'annual';
+    public const TYPE_WEEKLY = 'weekly';
+    public const TYPE_MONTHLY = 'monthly';
+    public const TYPE_QUARTERLY = 'quarterly';
+    public const TYPE_ANNUAL = 'annual';
 
     // Scenario constants
-    const SCENARIO_BASE = 'base';
-    const SCENARIO_OPTIMISTIC = 'optimistic';
-    const SCENARIO_PESSIMISTIC = 'pessimistic';
+    public const SCENARIO_BASE = 'base';
+    public const SCENARIO_OPTIMISTIC = 'optimistic';
+    public const SCENARIO_PESSIMISTIC = 'pessimistic';
 
     // Status constants
-    const STATUS_DRAFT = 'draft';
-    const STATUS_ACTIVE = 'active';
-    const STATUS_ARCHIVED = 'archived';
+    public const STATUS_DRAFT = 'draft';
+    public const STATUS_ACTIVE = 'active';
+    public const STATUS_ARCHIVED = 'archived';
 
     /**
      * Get the fiscal year for this forecast.

@@ -16,6 +16,7 @@ class UnitController extends Controller
         $units = Unit::with(['department', 'headOfUnit'])->ordered()->get();
         $departments = Department::active()->ordered()->get();
         $users = User::whereHas('staff_profile')->orderBy('surname')->get();
+
         return view('admin.hr.units.index', compact('units', 'departments', 'users'));
     }
 
@@ -31,6 +32,7 @@ class UnitController extends Controller
 
         Unit::create($request->only(['name', 'code', 'department_id', 'head_of_unit_id', 'description', 'is_active']));
         Alert::success('Success', 'Unit created successfully.');
+
         return redirect()->route('hr.units.index');
     }
 
@@ -45,6 +47,7 @@ class UnitController extends Controller
 
         $unit->update($request->only(['name', 'code', 'department_id', 'head_of_unit_id', 'description', 'is_active']));
         Alert::success('Success', 'Unit updated successfully.');
+
         return redirect()->route('hr.units.index');
     }
 
@@ -52,10 +55,12 @@ class UnitController extends Controller
     {
         if ($unit->staff()->count() > 0) {
             Alert::error('Error', 'Cannot delete unit with assigned staff.');
+
             return redirect()->route('hr.units.index');
         }
         $unit->delete();
         Alert::success('Success', 'Unit deleted.');
+
         return redirect()->route('hr.units.index');
     }
 
@@ -68,6 +73,7 @@ class UnitController extends Controller
             ->where('department_id', $request->department_id)
             ->ordered()
             ->get(['id', 'name', 'code']);
+
         return response()->json($units);
     }
 }

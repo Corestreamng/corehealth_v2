@@ -2,11 +2,11 @@
 
 namespace App\Console\Commands;
 
-use Illuminate\Console\Command;
 use App\Models\Hmo;
+use App\Models\HmoTariff;
 use App\Models\Product;
 use App\Models\Service;
-use App\Models\HmoTariff;
+use Illuminate\Console\Command;
 
 class GenerateHmoTariffs extends Command
 {
@@ -49,6 +49,7 @@ class GenerateHmoTariffs extends Command
 
         if ($hmos->isEmpty()) {
             $this->warn('No active HMOs found.');
+
             return 0;
         }
 
@@ -72,6 +73,7 @@ class GenerateHmoTariffs extends Command
 
                 if ($exists) {
                     $skipped++;
+
                     continue;
                 }
 
@@ -99,6 +101,7 @@ class GenerateHmoTariffs extends Command
 
                 if ($exists) {
                     $skipped++;
+
                     continue;
                 }
 

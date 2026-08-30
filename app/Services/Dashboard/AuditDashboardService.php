@@ -2,9 +2,9 @@
 
 namespace App\Services\Dashboard;
 
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Cache;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 
 class AuditDashboardService
 {
@@ -14,11 +14,11 @@ class AuditDashboardService
     public function getSummaryStats(): array
     {
         $today = Carbon::today();
-        
+
         return Cache::remember('dashboard.audit.summary', 60, function () use ($today) {
             $labCategoryId = appsettings('investigation_category_id', 2);
             $imagingCategoryId = appsettings('imaging_category_id', 6);
-            
+
             return [
                 'revenue_today' => DB::table('payments')->whereBetween('created_at', [$today->copy()->startOfDay(), $today->copy()->endOfDay()])->sum('total'),
                 'active_admissions' => DB::table('admission_requests')->where('status', 1)->count(), // 1 = admitted
@@ -78,7 +78,7 @@ class AuditDashboardService
                 // Get short class name for module
                 $parts = explode('\\', $audit->auditable_type);
                 $module = end($parts);
-                
+
                 $userName = $audit->firstname ? trim($audit->firstname . ' ' . $audit->surname) : 'System';
 
                 return [
@@ -88,12 +88,12 @@ class AuditDashboardService
                     'user' => $userName,
                     'event' => ucfirst($audit->event),
                     'module' => $module,
-                    'event_color' => $this->getEventColor($audit->event)
+                    'event_color' => $this->getEventColor($audit->event),
                 ];
             })
             ->toArray();
     }
-    
+
     private function getEventColor($event)
     {
         switch (strtolower($event)) {

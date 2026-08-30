@@ -10,7 +10,6 @@ use App\Models\DoctorAppointment;
 use App\Models\DoctorQueue;
 use App\Models\Encounter;
 use App\Models\Hmo;
-use App\Models\HmoTariff;
 use App\Models\ImagingServiceRequest;
 use App\Models\LabServiceRequest;
 use App\Models\Patient;
@@ -19,10 +18,8 @@ use App\Models\Product;
 use App\Models\ProductOrServiceRequest;
 use App\Models\ProductRequest;
 use App\Models\Service;
-use App\Models\ServiceCategory;
 use App\Models\Staff;
 use App\Models\User;
-use App\Services\AppointmentSlotService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -39,13 +36,16 @@ class ReceptionWorkbenchController extends Controller
      */
     private function parsePatientDob($dob)
     {
-        if (!$dob) return null;
+        if (!$dob) {
+            return null;
+        }
 
         try {
             // Try d/m/Y format first (common in legacy data)
             if (preg_match('/^\d{1,2}\/\d{1,2}\/\d{4}$/', $dob)) {
                 return Carbon::createFromFormat('d/m/Y', $dob);
             }
+
             // Try standard Y-m-d format
             return Carbon::parse($dob);
         } catch (\Exception $e) {
@@ -95,7 +95,7 @@ class ReceptionWorkbenchController extends Controller
 
         $patients = $patients->limit(20)
             ->get()
-            ->map(function($patient) {
+            ->map(function ($patient) {
                 return [
                     'id' => $patient->id,
                     'user_id' => $patient->user_id,
@@ -131,7 +131,7 @@ class ReceptionWorkbenchController extends Controller
             ->whereIn('status', [QueueStatus::WAITING, QueueStatus::VITALS_PENDING, QueueStatus::READY])
             ->orderBy('created_at', 'desc')
             ->get()
-            ->map(function($q) {
+            ->map(function ($q) {
                 return [
                     'id' => $q->id,
                     'clinic' => $q->clinic->name ?? 'N/A',
@@ -150,7 +150,7 @@ class ReceptionWorkbenchController extends Controller
             ->orderBy('created_at', 'desc')
             ->limit(5)
             ->get()
-            ->map(function($e) {
+            ->map(function ($e) {
                 return [
                     'id' => $e->id,
                     'date' => $e->created_at->format('M d, Y'),
@@ -169,18 +169,18 @@ class ReceptionWorkbenchController extends Controller
             ->orderBy('start_time')
             ->limit(10)
             ->get()
-            ->map(function($appt) {
+            ->map(function ($appt) {
                 return [
-                    'id'                  => $appt->id,
-                    'date'                => $appt->appointment_date->format('M d, Y'),
-                    'time'                => $appt->start_time ? Carbon::parse($appt->start_time)->format('h:i A') : 'N/A',
-                    'clinic'              => $appt->clinic->name ?? 'N/A',
-                    'doctor'              => $appt->doctor ? userfullname($appt->doctor->user_id) : 'Any Available',
-                    'reason'              => $appt->reason ?? $appt->notes ?? '',
-                    'is_follow_up'        => $appt->parent_appointment_id !== null,
+                    'id' => $appt->id,
+                    'date' => $appt->appointment_date->format('M d, Y'),
+                    'time' => $appt->start_time ? Carbon::parse($appt->start_time)->format('h:i A') : 'N/A',
+                    'clinic' => $appt->clinic->name ?? 'N/A',
+                    'doctor' => $appt->doctor ? userfullname($appt->doctor->user_id) : 'Any Available',
+                    'reason' => $appt->reason ?? $appt->notes ?? '',
+                    'is_follow_up' => $appt->parent_appointment_id !== null,
                     'is_prepaid_followup' => (bool) $appt->is_prepaid_followup,
-                    'is_today'            => $appt->appointment_date->isToday(),
-                    'appointment_type'    => $appt->appointment_type ?? 'scheduled',
+                    'is_today' => $appt->appointment_date->isToday(),
+                    'appointment_type' => $appt->appointment_type ?? 'scheduled',
                 ];
             });
 
@@ -195,9 +195,15 @@ class ReceptionWorkbenchController extends Controller
                 $days = $dob->copy()->addYears($years)->addMonths($months)->diffInDays($now);
 
                 $ageParts = [];
-                if ($years > 0) $ageParts[] = $years . 'y';
-                if ($months > 0) $ageParts[] = $months . 'm';
-                if ($days > 0) $ageParts[] = $days . 'd';
+                if ($years > 0) {
+                    $ageParts[] = $years . 'y';
+                }
+                if ($months > 0) {
+                    $ageParts[] = $months . 'm';
+                }
+                if ($days > 0) {
+                    $ageParts[] = $days . 'd';
+                }
                 $ageText = !empty($ageParts) ? implode(' ', $ageParts) : '0d';
             }
         }
@@ -206,7 +212,7 @@ class ReceptionWorkbenchController extends Controller
         $familyMembers = \App\Models\Patient::with('user')
             ->whereIn('user_id', $familyUserIds)
             ->get()
-            ->map(function($f) {
+            ->map(function ($f) {
                 return [
                     'id' => $f->id,
                     'user_id' => $f->user_id,
@@ -302,7 +308,7 @@ class ReceptionWorkbenchController extends Controller
 
         return response()->json([
             'success' => true,
-            'html' => $html
+            'html' => $html,
         ]);
     }
 
@@ -325,7 +331,7 @@ class ReceptionWorkbenchController extends Controller
                 $isFamily = ($entry->patient_id != $id);
                 $req = $entry->request_entry;
                 $isPaid = $req && $req->payment_id ? true : false;
-                
+
                 return [
                     'id' => $entry->id,
                     'queue_no' => $queueNo,
@@ -346,7 +352,7 @@ class ReceptionWorkbenchController extends Controller
                     'claims_amount' => $req ? $req->claims_amount : 0,
                     'coverage_mode' => $req ? $req->coverage_mode : null,
                     'validation_status' => $req ? $req->validation_status : null, // approval code
-                    'service_request_id' => $req ? $req->id : null
+                    'service_request_id' => $req ? $req->id : null,
                 ];
             });
 
@@ -378,7 +384,7 @@ class ReceptionWorkbenchController extends Controller
                 QueueStatus::WAITING,
                 QueueStatus::VITALS_PENDING,
                 QueueStatus::IN_CONSULTATION,
-                QueueStatus::COMPLETED
+                QueueStatus::COMPLETED,
             ])->first();
 
         // HMO pending validation with DB Join (removes expensive whereHas)
@@ -452,25 +458,25 @@ class ReceptionWorkbenchController extends Controller
 
         return DataTables::of($query)
             ->addIndexColumn()
-            ->addColumn('patient_name', function($q) {
+            ->addColumn('patient_name', function ($q) {
                 return userfullname($q->patient->user_id);
             })
-            ->addColumn('patient_file_no', function($q) {
+            ->addColumn('patient_file_no', function ($q) {
                 return $q->patient->file_no ?? 'N/A';
             })
-            ->addColumn('patient_hmo', function($q) {
+            ->addColumn('patient_hmo', function ($q) {
                 return $q->patient->hmo->name ?? 'Private';
             })
-            ->addColumn('clinic_name', function($q) {
+            ->addColumn('clinic_name', function ($q) {
                 return $q->clinic->name ?? 'N/A';
             })
-            ->addColumn('doctor_name', function($q) {
+            ->addColumn('doctor_name', function ($q) {
                 return $q->doctor ? userfullname($q->doctor->user_id) : 'Any';
             })
-            ->addColumn('service_name', function($q) {
+            ->addColumn('service_name', function ($q) {
                 return $q->request_entry->service->service_name ?? 'Consultation';
             })
-            ->addColumn('status_badge', function($q) {
+            ->addColumn('status_badge', function ($q) {
                 $badge = QueueStatus::badge($q->status);
                 if ($q->priority === 'emergency') {
                     $badge = '<span class="badge bg-danger"><i class="fa fa-bolt"></i> EMERGENCY</span> ' . $badge;
@@ -481,12 +487,13 @@ class ReceptionWorkbenchController extends Controller
                 if ($q->appointment_id) {
                     $badge .= ' <span class="badge bg-purple"><i class="mdi mdi-calendar-clock"></i> Appt</span>';
                 }
+
                 return $badge;
             })
-            ->addColumn('time', function($q) {
+            ->addColumn('time', function ($q) {
                 return $q->created_at->format('h:i A');
             })
-            ->addColumn('actions', function($q) {
+            ->addColumn('actions', function ($q) {
                 return '<button class="btn btn-sm btn-primary btn-select-from-queue" data-patient-id="' . $q->patient_id . '">
                     <i class="mdi mdi-account"></i> Select
                 </button>';
@@ -506,34 +513,35 @@ class ReceptionWorkbenchController extends Controller
 
         return DataTables::of($query)
             ->addIndexColumn()
-            ->addColumn('patient_name', function($q) {
+            ->addColumn('patient_name', function ($q) {
                 return $q->patient ? userfullname($q->patient->user_id) : 'N/A';
             })
-            ->addColumn('patient_file_no', function($q) {
+            ->addColumn('patient_file_no', function ($q) {
                 return $q->patient->file_no ?? 'N/A';
             })
-            ->addColumn('patient_hmo', function($q) {
+            ->addColumn('patient_hmo', function ($q) {
                 return $q->patient->hmo->name ?? 'Private';
             })
-            ->addColumn('clinic_name', function($q) {
+            ->addColumn('clinic_name', function ($q) {
                 return $q->bed && $q->bed->wardRelation ? $q->bed->wardRelation->name : 'Unassigned';
             })
-            ->addColumn('doctor_name', function($q) {
+            ->addColumn('doctor_name', function ($q) {
                 return $q->doctor_id ? userfullname($q->doctor_id) : 'N/A';
             })
-            ->addColumn('service_name', function($q) {
+            ->addColumn('service_name', function ($q) {
                 return $q->bed ? $q->bed->name : 'No Bed';
             })
-            ->addColumn('status_badge', function($q) {
+            ->addColumn('status_badge', function ($q) {
                 if ($q->bed_id) {
                     return '<span class="badge bg-danger">Admitted</span>';
                 }
+
                 return '<span class="badge bg-warning">Pending Bed</span>';
             })
-            ->addColumn('time', function($q) {
+            ->addColumn('time', function ($q) {
                 return $q->created_at->format('M d, H:i');
             })
-            ->addColumn('actions', function($q) {
+            ->addColumn('actions', function ($q) {
                 return '<button class="btn btn-sm btn-primary btn-select-from-queue" data-patient-id="' . $q->patient_id . '">
                     <i class="mdi mdi-account"></i> Select
                 </button>';
@@ -548,6 +556,7 @@ class ReceptionWorkbenchController extends Controller
     public function getClinics()
     {
         $clinics = Clinic::orderBy('name')->get();
+
         return response()->json($clinics);
     }
 
@@ -567,10 +576,10 @@ class ReceptionWorkbenchController extends Controller
             ->get()
             ->map(function ($staff) use ($clinicId) {
                 return [
-                    'id'         => $staff->id,
-                    'user_id'    => $staff->user_id,
-                    'name'       => userfullname($staff->user_id),
-                    'primary'    => (int) $staff->clinic_id === (int) $clinicId,
+                    'id' => $staff->id,
+                    'user_id' => $staff->user_id,
+                    'name' => userfullname($staff->user_id),
+                    'primary' => (int) $staff->clinic_id === (int) $clinicId,
                 ];
             })
             ->sortByDesc('primary')
@@ -586,7 +595,7 @@ class ReceptionWorkbenchController extends Controller
     {
         // Get services in consultation-related categories
         $services = Service::with('price')
-            ->whereHas('category', function($q) {
+            ->whereHas('category', function ($q) {
                 $q->where('category_name', 'like', '%consult%')
                   ->orWhere('category_name', 'like', '%clinic%');
             })
@@ -594,7 +603,7 @@ class ReceptionWorkbenchController extends Controller
             ->where('status', 1)
             ->orderBy('service_name')
             ->get()
-            ->map(function($s) {
+            ->map(function ($s) {
                 return [
                     'id' => $s->id,
                     'name' => $s->service_name,
@@ -615,7 +624,7 @@ class ReceptionWorkbenchController extends Controller
         $search = $request->get('q', '');
 
         $query = Service::with(['price', 'category'])
-            ->whereHas('category', function($q) {
+            ->whereHas('category', function ($q) {
                 $q->where('category_name', 'like', '%lab%')
                   ->orWhere('category_name', 'like', '%investigation%')
                   ->orWhere('category_name', 'like', '%test%');
@@ -623,7 +632,7 @@ class ReceptionWorkbenchController extends Controller
             ->where('status', 1);
 
         if ($search) {
-            $query->where(function($q) use ($search) {
+            $query->where(function ($q) use ($search) {
                 $q->where('service_name', 'like', "%{$search}%")
                   ->orWhere('service_code', 'like', "%{$search}%");
             });
@@ -632,7 +641,7 @@ class ReceptionWorkbenchController extends Controller
         $services = $query->orderBy('service_name')
             ->limit(50)
             ->get()
-            ->map(function($s) {
+            ->map(function ($s) {
                 return [
                     'id' => $s->id,
                     'name' => $s->service_name,
@@ -653,7 +662,7 @@ class ReceptionWorkbenchController extends Controller
         $search = $request->get('q', '');
 
         $query = Service::with(['price', 'category'])
-            ->whereHas('category', function($q) {
+            ->whereHas('category', function ($q) {
                 $q->where('category_name', 'like', '%imaging%')
                   ->orWhere('category_name', 'like', '%radiology%')
                   ->orWhere('category_name', 'like', '%x-ray%')
@@ -663,7 +672,7 @@ class ReceptionWorkbenchController extends Controller
             ->where('status', 1);
 
         if ($search) {
-            $query->where(function($q) use ($search) {
+            $query->where(function ($q) use ($search) {
                 $q->where('service_name', 'like', "%{$search}%")
                   ->orWhere('service_code', 'like', "%{$search}%");
             });
@@ -672,7 +681,7 @@ class ReceptionWorkbenchController extends Controller
         $services = $query->orderBy('service_name')
             ->limit(50)
             ->get()
-            ->map(function($s) {
+            ->map(function ($s) {
                 return [
                     'id' => $s->id,
                     'name' => $s->service_name,
@@ -697,7 +706,7 @@ class ReceptionWorkbenchController extends Controller
             ->where('status', 1);
 
         if ($search) {
-            $query->where(function($q) use ($search) {
+            $query->where(function ($q) use ($search) {
                 $q->where('product_name', 'like', "%{$search}%")
                   ->orWhere('product_code', 'like', "%{$search}%");
             });
@@ -706,7 +715,7 @@ class ReceptionWorkbenchController extends Controller
         $products = $query->orderBy('product_name')
             ->limit(50)
             ->get()
-            ->map(function($p) {
+            ->map(function ($p) {
                 return [
                     'id' => $p->id,
                     'name' => $p->product_name,
@@ -817,7 +826,7 @@ class ReceptionWorkbenchController extends Controller
                 'clinic_id' => 'required|exists:clinics,id',
                 'doctor_id' => 'nullable|exists:staff,id',
             ]);
-            
+
             $bookings = [
                 [
                     'patient_id' => $request->patient_id,
@@ -830,7 +839,7 @@ class ReceptionWorkbenchController extends Controller
                     'end_time' => $request->end_time,
                     'appointment_type' => $request->appointment_type,
                     'appointment_notes' => $request->appointment_notes,
-                ]
+                ],
             ];
         }
 
@@ -848,8 +857,10 @@ class ReceptionWorkbenchController extends Controller
             foreach ($bookings as $booking) {
                 $patient = Patient::find($booking['patient_id'] ?? null);
                 $service = Service::with('price')->find($booking['service_id'] ?? null);
-                
-                if (!$patient || !$service) continue;
+
+                if (!$patient || !$service) {
+                    continue;
+                }
 
                 $forceRebill = $booking['force_rebill'] ?? 0;
                 $skipBilling = false;
@@ -861,8 +872,8 @@ class ReceptionWorkbenchController extends Controller
 
                     // Find most recent consultation queue for this patient within the duration threshold
                     $recentConsult = DoctorQueue::where('patient_id', $patient->id)
-                        ->whereHas('request_entry', function($q) use ($consultationCategoryId) {
-                            $q->whereHas('service', function($q2) use ($consultationCategoryId) {
+                        ->whereHas('request_entry', function ($q) use ($consultationCategoryId) {
+                            $q->whereHas('service', function ($q2) use ($consultationCategoryId) {
                                 $q2->where('category_id', $consultationCategoryId);
                             });
                         })
@@ -897,7 +908,7 @@ class ReceptionWorkbenchController extends Controller
                             Log::warning('HMO tariff not found for service', [
                                 'patient_id' => $patient->id,
                                 'service_id' => $booking['service_id'],
-                                'error' => $e->getMessage()
+                                'error' => $e->getMessage(),
                             ]);
                         }
                     } else {
@@ -924,19 +935,19 @@ class ReceptionWorkbenchController extends Controller
                 if (!empty($booking['appointment_date'])) {
                     // ── Scheduled appointment ────────────────────────────────
                     $appointment = DoctorAppointment::create([
-                        'patient_id'       => $patient->id,
-                        'clinic_id'        => $booking['clinic_id'],
-                        'staff_id'         => $booking['doctor_id'] ?? null,
+                        'patient_id' => $patient->id,
+                        'clinic_id' => $booking['clinic_id'],
+                        'staff_id' => $booking['doctor_id'] ?? null,
                         'appointment_date' => $booking['appointment_date'],
-                        'start_time'       => $booking['start_time'] ?? '09:00',
-                        'end_time'         => $booking['end_time'] ?? '09:30',
+                        'start_time' => $booking['start_time'] ?? '09:00',
+                        'end_time' => $booking['end_time'] ?? '09:30',
                         'duration_minutes' => (int) (Carbon::parse($booking['start_time'] ?? '09:00')->diffInMinutes(Carbon::parse($booking['end_time'] ?? '09:30'))),
                         'appointment_type' => $booking['appointment_type'] ?? 'scheduled',
-                        'status'           => QueueStatus::SCHEDULED,
-                        'booked_by'        => $receptionistStaff->id,
-                        'source'           => 'reception',
+                        'status' => QueueStatus::SCHEDULED,
+                        'booked_by' => $receptionistStaff->id,
+                        'source' => 'reception',
                         'service_request_id' => $serviceRequestId,
-                        'notes'            => $booking['appointment_notes'] ?? null,
+                        'notes' => $booking['appointment_notes'] ?? null,
                     ]);
                     $queue->appointment_id = $appointment->id;
                     $queue->status = QueueStatus::SCHEDULED;
@@ -949,23 +960,23 @@ class ReceptionWorkbenchController extends Controller
                     $now = Carbon::now();
                     $startMinute = (int) floor($now->minute / $slotDuration) * $slotDuration;
                     $start = $now->copy()->setTime($now->hour, $startMinute, 0);
-                    $end   = $start->copy()->addMinutes($slotDuration);
+                    $end = $start->copy()->addMinutes($slotDuration);
 
                     $appointment = DoctorAppointment::create([
-                        'patient_id'         => $patient->id,
-                        'clinic_id'          => $booking['clinic_id'],
-                        'staff_id'           => $booking['doctor_id'] ?? null,
-                        'appointment_date'   => Carbon::today(),
-                        'start_time'         => $start->format('H:i'),
-                        'end_time'           => $end->format('H:i'),
-                        'duration_minutes'   => $slotDuration,
-                        'appointment_type'   => 'walk_in',
-                        'status'             => QueueStatus::WAITING,
-                        'booked_by'          => $receptionistStaff->id,
-                        'source'             => 'reception',
+                        'patient_id' => $patient->id,
+                        'clinic_id' => $booking['clinic_id'],
+                        'staff_id' => $booking['doctor_id'] ?? null,
+                        'appointment_date' => Carbon::today(),
+                        'start_time' => $start->format('H:i'),
+                        'end_time' => $end->format('H:i'),
+                        'duration_minutes' => $slotDuration,
+                        'appointment_type' => 'walk_in',
+                        'status' => QueueStatus::WAITING,
+                        'booked_by' => $receptionistStaff->id,
+                        'source' => 'reception',
                         'service_request_id' => $serviceRequestId,
-                        'doctor_queue_id'    => $queue->id,
-                        'checked_in_at'      => $now,
+                        'doctor_queue_id' => $queue->id,
+                        'checked_in_at' => $now,
                     ]);
 
                     $queue->appointment_id = $appointment->id;
@@ -983,7 +994,7 @@ class ReceptionWorkbenchController extends Controller
                     'appointment_id' => $queue->appointment_id,
                     'service_request_id' => $serviceRequestId,
                     'is_new_bill' => !$skipBilling,
-                    'payable_amount' => $payableAmount
+                    'payable_amount' => $payableAmount,
                 ];
             }
 
@@ -994,7 +1005,7 @@ class ReceptionWorkbenchController extends Controller
                 'message' => count($responses) > 1 ? count($responses) . ' appointments created successfully' : 'Patient added to queue successfully',
                 'queue_id' => $responses[0]['queue_id'] ?? null,
                 'appointment_id' => $responses[0]['appointment_id'] ?? null,
-                'batch_responses' => $responses
+                'batch_responses' => $responses,
             ]);
 
         } catch (\Exception $e) {
@@ -1149,6 +1160,7 @@ class ReceptionWorkbenchController extends Controller
         }
 
         $serviceRequest->save();
+
         return $serviceRequest;
     }
 
@@ -1163,19 +1175,19 @@ class ReceptionWorkbenchController extends Controller
 
         return DataTables::of($query)
             ->addIndexColumn()
-            ->addColumn('date', function($e) {
+            ->addColumn('date', function ($e) {
                 return $e->created_at->format('M d, Y h:i A');
             })
-            ->addColumn('doctor_name', function($e) {
+            ->addColumn('doctor_name', function ($e) {
                 return $e->doctor ? userfullname($e->doctor->id) : 'N/A';
             })
-            ->addColumn('service_name', function($e) {
+            ->addColumn('service_name', function ($e) {
                 return $e->service->service_name ?? 'Consultation';
             })
-            ->addColumn('reason', function($e) {
+            ->addColumn('reason', function ($e) {
                 return $e->reasons_for_encounter ?? '-';
             })
-            ->addColumn('actions', function($e) {
+            ->addColumn('actions', function ($e) {
                 return '<a href="' . route('patient.show', $e->patient_id) . '?section=doctorNotesCardBody"
                     class="btn btn-sm btn-info" target="_blank">
                     <i class="mdi mdi-eye"></i> View Details
@@ -1238,7 +1250,7 @@ class ReceptionWorkbenchController extends Controller
             $patient->next_of_kin_address = $request->next_of_kin_address;
             $patient->hmo_id = $request->hmo_id ?? 1; // Default to Private
             $patient->hmo_no = $request->hmo_no;
-            
+
             $patient->is_family_principal = $request->has('is_family_principal') && filter_var($request->is_family_principal, FILTER_VALIDATE_BOOLEAN) ? 1 : 0;
             $patient->principal_id = $request->principal_id ?? null;
             if ($patient->is_family_principal) {
@@ -1368,7 +1380,7 @@ class ReceptionWorkbenchController extends Controller
         $hmos = Hmo::with('scheme')
             ->orderBy('name')
             ->get()
-            ->map(function($hmo) {
+            ->map(function ($hmo) {
                 return [
                     'id' => $hmo->id,
                     'name' => $hmo->name,
@@ -1422,12 +1434,13 @@ class ReceptionWorkbenchController extends Controller
 
         if ($recentPatients->isEmpty()) {
             $defaultNo = $prefix ? $prefix . '001' : '1';
+
             return response()->json([
                 'file_no' => $defaultNo,
                 'last_file_no' => null,
                 'recent_file_nos' => [],
                 'format_pattern' => $prefix ? $prefix . 'NNN' : null,
-                'format_example' => null
+                'format_example' => null,
             ]);
         }
 
@@ -1442,7 +1455,7 @@ class ReceptionWorkbenchController extends Controller
             'last_file_no' => $lastFileNo,
             'recent_file_nos' => $recentFileNumbers,
             'format_pattern' => $formatInfo['pattern'],
-            'format_example' => $formatInfo['example']
+            'format_example' => $formatInfo['example'],
         ]);
     }
 
@@ -1466,14 +1479,14 @@ class ReceptionWorkbenchController extends Controller
             return [
                 'id' => $patient->id,
                 'name' => $patient->user ? userfullname($patient->user->id) : 'Unknown',
-                'file_no' => $patient->file_no
+                'file_no' => $patient->file_no,
             ];
         });
 
         return response()->json([
             'exists' => $existingPatients->isNotEmpty(),
             'count' => $existingPatients->count(),
-            'patients' => $patients
+            'patients' => $patients,
         ]);
     }
 
@@ -1541,7 +1554,9 @@ class ReceptionWorkbenchController extends Controller
         // Score each match for relevance
         $matches = $patients->map(function ($patient) use ($surname, $firstname, $phone, $dob) {
             $user = $patient->user;
-            if (!$user) return null;
+            if (!$user) {
+                return null;
+            }
 
             $reasons = [];
             $score = 0;
@@ -1584,7 +1599,9 @@ class ReceptionWorkbenchController extends Controller
                 }
             }
 
-            if (empty($reasons)) return null;
+            if (empty($reasons)) {
+                return null;
+            }
 
             return [
                 'id' => $patient->id,
@@ -1642,7 +1659,7 @@ class ReceptionWorkbenchController extends Controller
 
         return [
             'pattern' => $pattern,
-            'example' => $example
+            'example' => $example,
         ];
     }
 
@@ -1726,7 +1743,7 @@ class ReceptionWorkbenchController extends Controller
             $patient->next_of_kin_address = $request->next_of_kin_address;
             $patient->hmo_id = $request->hmo_id ?? 1;
             $patient->hmo_no = $request->hmo_no;
-            
+
             $patient->is_family_principal = $request->has('is_family_principal') && filter_var($request->is_family_principal, FILTER_VALIDATE_BOOLEAN) ? 1 : 0;
             $patient->principal_id = $request->principal_id ?? null;
             if ($patient->is_family_principal) {
@@ -1961,8 +1978,10 @@ class ReceptionWorkbenchController extends Controller
             ->addColumn('age', function ($patient) {
                 if ($patient->dob) {
                     $dob = $this->parsePatientDob($patient->dob);
+
                     return $dob ? $dob->age . 'y' : '-';
                 }
+
                 return '-';
             })
             ->addColumn('phone', function ($patient) {
@@ -2036,16 +2055,20 @@ class ReceptionWorkbenchController extends Controller
                     3 => '<span class="badge bg-primary">In Consultation</span>',
                     4 => '<span class="badge bg-success">Completed</span>',
                 ];
+
                 return $statuses[$q->status] ?? '<span class="badge bg-secondary">Unknown</span>';
             })
             ->addColumn('wait_time', function ($q) {
                 if ($q->start_time) {
                     $wait = Carbon::parse($q->created_at)->diffInMinutes(Carbon::parse($q->start_time));
+
                     return $wait . 'm';
                 } elseif ($q->status < 4) {
                     $wait = Carbon::parse($q->created_at)->diffInMinutes(Carbon::now());
+
                     return $wait . 'm (ongoing)';
                 }
+
                 return '-';
             })
             ->addColumn('actions', function ($q) {
@@ -2102,6 +2125,7 @@ class ReceptionWorkbenchController extends Controller
                     ->whereDate('created_at', $e->created_at->toDateString())
                     ->with('clinic')
                     ->first();
+
                 return $queue && $queue->clinic ? $queue->clinic->name : '-';
             })
             ->addColumn('doctor', function ($e) {
@@ -2109,6 +2133,7 @@ class ReceptionWorkbenchController extends Controller
             })
             ->addColumn('reason', function ($e) {
                 $reason = $e->reasons_for_encounter ?? '-';
+
                 return strlen($reason) > 30 ? substr($reason, 0, 30) . '...' : $reason;
             })
             ->addColumn('hmo', function ($e) {
@@ -2118,6 +2143,7 @@ class ReceptionWorkbenchController extends Controller
                 $previousVisits = Encounter::where('patient_id', $e->patient_id)
                     ->where('created_at', '<', $e->created_at)
                     ->count();
+
                 return $previousVisits > 0
                     ? '<span class="badge bg-info">Return</span>'
                     : '<span class="badge bg-success">New</span>';
@@ -2201,6 +2227,7 @@ class ReceptionWorkbenchController extends Controller
             ->get()
             ->map(function ($req) {
                 $posr = $req->productOrServiceRequest;
+
                 return [
                     'id' => $req->id,
                     'type' => 'lab',
@@ -2225,6 +2252,7 @@ class ReceptionWorkbenchController extends Controller
             ->get()
             ->map(function ($req) {
                 $posr = $req->productOrServiceRequest;
+
                 return [
                     'id' => $req->id,
                     'type' => 'imaging',
@@ -2251,6 +2279,7 @@ class ReceptionWorkbenchController extends Controller
                 $posr = $req->productOrServiceRequest;
                 $qty = $posr->qty ?? 1;
                 $unitPrice = optional(optional($req->product)->price)->current_sale_price ?? 0;
+
                 return [
                     'id' => $req->id,
                     'type' => 'product',
@@ -2304,13 +2333,18 @@ class ReceptionWorkbenchController extends Controller
             $labQuery = LabServiceRequest::with(['service.price', 'productOrServiceRequest.payment', 'doctor'])
                 ->where('patient_id', $patientId);
 
-            if ($dateFrom) $labQuery->where('created_at', '>=', $dateFrom);
-            if ($dateTo) $labQuery->where('created_at', '<=', $dateTo);
+            if ($dateFrom) {
+                $labQuery->where('created_at', '>=', $dateFrom);
+            }
+            if ($dateTo) {
+                $labQuery->where('created_at', '<=', $dateTo);
+            }
 
             $labRequests = $labQuery->orderBy('created_at', 'desc')->get()
                 ->map(function ($req) {
                     $posr = $req->productOrServiceRequest;
                     $basePrice = optional(optional($req->service)->price)->sale_price ?? 0;
+
                     return [
                         'id' => $req->id,
                         'request_no' => 'LAB-' . str_pad($req->id, 6, '0', STR_PAD_LEFT),
@@ -2340,13 +2374,18 @@ class ReceptionWorkbenchController extends Controller
             $imagingQuery = ImagingServiceRequest::with(['service.price', 'productOrServiceRequest.payment', 'doctor'])
                 ->where('patient_id', $patientId);
 
-            if ($dateFrom) $imagingQuery->where('created_at', '>=', $dateFrom);
-            if ($dateTo) $imagingQuery->where('created_at', '<=', $dateTo);
+            if ($dateFrom) {
+                $imagingQuery->where('created_at', '>=', $dateFrom);
+            }
+            if ($dateTo) {
+                $imagingQuery->where('created_at', '<=', $dateTo);
+            }
 
             $imagingRequests = $imagingQuery->orderBy('created_at', 'desc')->get()
                 ->map(function ($req) {
                     $posr = $req->productOrServiceRequest;
                     $basePrice = optional(optional($req->service)->price)->sale_price ?? 0;
+
                     return [
                         'id' => $req->id,
                         'request_no' => 'IMG-' . str_pad($req->id, 6, '0', STR_PAD_LEFT),
@@ -2376,8 +2415,12 @@ class ReceptionWorkbenchController extends Controller
             $productQuery = ProductRequest::with(['product.price', 'productOrServiceRequest.payment', 'doctor'])
                 ->where('patient_id', $patientId);
 
-            if ($dateFrom) $productQuery->where('created_at', '>=', $dateFrom);
-            if ($dateTo) $productQuery->where('created_at', '<=', $dateTo);
+            if ($dateFrom) {
+                $productQuery->where('created_at', '>=', $dateFrom);
+            }
+            if ($dateTo) {
+                $productQuery->where('created_at', '<=', $dateTo);
+            }
 
             $productRequests = $productQuery->orderBy('created_at', 'desc')->get()
                 ->map(function ($req) {
@@ -2385,6 +2428,7 @@ class ReceptionWorkbenchController extends Controller
                     $qty = $posr->qty ?? 1;
                     $unitPrice = optional(optional($req->product)->price)->current_sale_price ?? 0;
                     $basePrice = $unitPrice * $qty;
+
                     return [
                         'id' => $req->id,
                         'request_no' => 'PRD-' . str_pad($req->id, 6, '0', STR_PAD_LEFT),
@@ -2415,33 +2459,39 @@ class ReceptionWorkbenchController extends Controller
                 ->where('user_id', $patient->user_id)
                 ->where('is_bundle_item', false)
                 ->whereDoesntHave('productRequest')
-                ->whereNotIn('id', function($q) {
+                ->whereNotIn('id', function ($q) {
                     $q->select('service_request_id')->from('lab_service_requests')->whereNotNull('service_request_id');
                 })
-                ->whereNotIn('id', function($q) {
+                ->whereNotIn('id', function ($q) {
                     $q->select('service_request_id')->from('imaging_service_requests')->whereNotNull('service_request_id');
                 });
 
-            if ($dateFrom) $posrQuery->where('created_at', '>=', $dateFrom);
-            if ($dateTo) $posrQuery->where('created_at', '<=', $dateTo);
+            if ($dateFrom) {
+                $posrQuery->where('created_at', '>=', $dateFrom);
+            }
+            if ($dateTo) {
+                $posrQuery->where('created_at', '<=', $dateTo);
+            }
 
             $posrRequests = $posrQuery->orderBy('created_at', 'desc')->get()
                 ->map(function ($posr) use ($typeFilter) {
                     $isProduct = !is_null($posr->product_id);
                     $type = $isProduct ? 'product' : 'service';
-                    
-                    if ($typeFilter && $typeFilter !== $type) return null;
+
+                    if ($typeFilter && $typeFilter !== $type) {
+                        return null;
+                    }
 
                     $qty = $posr->qty ?? 1;
-                    $unitPrice = $isProduct 
+                    $unitPrice = $isProduct
                         ? (optional(optional($posr->product)->price)->current_sale_price ?? 0)
                         : (optional(optional($posr->service)->price)->sale_price ?? 0);
                     $basePrice = $unitPrice * $qty;
-                    
-                    $name = $isProduct 
+
+                    $name = $isProduct
                         ? (optional($posr->product)->product_name ?? 'Unknown Product')
                         : (optional($posr->service)->service_name ?? 'Unknown Service');
-                    
+
                     $prefix = $isProduct ? 'PRD-' : 'SVC-';
 
                     $deliveryStatus = 'Pending Billing';
@@ -2450,7 +2500,7 @@ class ReceptionWorkbenchController extends Controller
                         if ($posr->sale) {
                             $deliveryStatus = 'Dispensed';
                             $deliveryStatusCode = 'completed';
-                        } else if ($posr->payment_id) {
+                        } elseif ($posr->payment_id) {
                             $deliveryStatus = 'Awaiting Dispensing';
                             $deliveryStatusCode = 'in_progress';
                         }
@@ -2522,6 +2572,7 @@ class ReceptionWorkbenchController extends Controller
                     'billed' => '<span class="billing-badge billing-billed">Billed</span>',
                     'paid' => '<span class="billing-badge billing-paid">Paid</span>',
                 ];
+
                 return $statusMap[$row['billing_status_code']] ?? '<span class="billing-badge">Unknown</span>';
             })
             ->addColumn('delivery_badge', function ($row) {
@@ -2530,6 +2581,7 @@ class ReceptionWorkbenchController extends Controller
                     'in_progress' => '<span class="delivery-badge delivery-progress">In Progress</span>',
                     'completed' => '<span class="delivery-badge delivery-completed">Completed</span>',
                 ];
+
                 return $statusMap[$row['delivery_status_code']] ?? '<span class="delivery-badge">Unknown</span>';
             })
             ->addColumn('type_badge', function ($row) {
@@ -2538,6 +2590,7 @@ class ReceptionWorkbenchController extends Controller
                     'imaging' => 'badge-warning',
                     'product' => 'badge-success',
                 ];
+
                 return '<span class="badge ' . ($typeColors[$row['type']] ?? 'badge-secondary') . '">' . $row['type_label'] . '</span>';
             })
             ->addColumn('actions', function ($row) {
@@ -2586,8 +2639,12 @@ class ReceptionWorkbenchController extends Controller
         // Lab Requests
         $labQuery = LabServiceRequest::with(['productOrServiceRequest'])
             ->where('patient_id', $patientId);
-        if ($dateFrom) $labQuery->where('created_at', '>=', $dateFrom);
-        if ($dateTo) $labQuery->where('created_at', '<=', $dateTo);
+        if ($dateFrom) {
+            $labQuery->where('created_at', '>=', $dateFrom);
+        }
+        if ($dateTo) {
+            $labQuery->where('created_at', '<=', $dateTo);
+        }
         $labRequests = $labQuery->get();
 
         $stats['total_requests'] += $labRequests->count();
@@ -2602,8 +2659,12 @@ class ReceptionWorkbenchController extends Controller
         // Imaging Requests
         $imagingQuery = ImagingServiceRequest::with(['productOrServiceRequest'])
             ->where('patient_id', $patientId);
-        if ($dateFrom) $imagingQuery->where('created_at', '>=', $dateFrom);
-        if ($dateTo) $imagingQuery->where('created_at', '<=', $dateTo);
+        if ($dateFrom) {
+            $imagingQuery->where('created_at', '>=', $dateFrom);
+        }
+        if ($dateTo) {
+            $imagingQuery->where('created_at', '<=', $dateTo);
+        }
         $imagingRequests = $imagingQuery->get();
 
         $stats['total_requests'] += $imagingRequests->count();
@@ -2618,8 +2679,12 @@ class ReceptionWorkbenchController extends Controller
         // Product Requests
         $productQuery = ProductRequest::with(['productOrServiceRequest'])
             ->where('patient_id', $patientId);
-        if ($dateFrom) $productQuery->where('created_at', '>=', $dateFrom);
-        if ($dateTo) $productQuery->where('created_at', '<=', $dateTo);
+        if ($dateFrom) {
+            $productQuery->where('created_at', '>=', $dateFrom);
+        }
+        if ($dateTo) {
+            $productQuery->where('created_at', '<=', $dateTo);
+        }
         $productRequests = $productQuery->get();
 
         $stats['total_requests'] += $productRequests->count();
@@ -2630,21 +2695,25 @@ class ReceptionWorkbenchController extends Controller
                 $stats['patient_payable'] += $req->productOrServiceRequest->payable_amount ?? 0;
             }
         }
-        
+
         // Pure Services & Products (POSR only)
         $posrQuery = ProductOrServiceRequest::where('user_id', $patient->user_id)
             ->where('is_bundle_item', false)
             ->whereDoesntHave('productRequest')
-            ->whereNotIn('id', function($q) {
+            ->whereNotIn('id', function ($q) {
                 $q->select('service_request_id')->from('lab_service_requests')->whereNotNull('service_request_id');
             })
-            ->whereNotIn('id', function($q) {
+            ->whereNotIn('id', function ($q) {
                 $q->select('service_request_id')->from('imaging_service_requests')->whereNotNull('service_request_id');
             });
-            
-        if ($dateFrom) $posrQuery->where('created_at', '>=', $dateFrom);
-        if ($dateTo) $posrQuery->where('created_at', '<=', $dateTo);
-        
+
+        if ($dateFrom) {
+            $posrQuery->where('created_at', '>=', $dateFrom);
+        }
+        if ($dateTo) {
+            $posrQuery->where('created_at', '<=', $dateTo);
+        }
+
         $posrRequests = $posrQuery->get();
         $stats['total_requests'] += $posrRequests->count();
         $stats['completed'] += $posrRequests->whereNotNull('payment_id')->count();
@@ -2676,6 +2745,7 @@ class ReceptionWorkbenchController extends Controller
             if ($posr->payment_id) {
                 return 'Paid';
             }
+
             return 'Billed';
         }
 
@@ -2692,6 +2762,7 @@ class ReceptionWorkbenchController extends Controller
             if ($posr->payment_id) {
                 return 'paid';
             }
+
             return 'billed';
         }
 
@@ -2706,15 +2777,30 @@ class ReceptionWorkbenchController extends Controller
         // Lab: 1=billing, 2=awaiting sample, 3=awaiting results, 4=completed
         // Imaging: 1=billing, 2=awaiting results, 3=completed
         if ($type === 'lab') {
-            if ($status == 1) return 'Pending Billing';
-            if ($status == 2) return 'Awaiting Sample';
-            if ($status == 3) return 'Awaiting Results';
-            if ($status == 4) return 'Completed';
+            if ($status == 1) {
+                return 'Pending Billing';
+            }
+            if ($status == 2) {
+                return 'Awaiting Sample';
+            }
+            if ($status == 3) {
+                return 'Awaiting Results';
+            }
+            if ($status == 4) {
+                return 'Completed';
+            }
         } else {
-            if ($status == 1) return 'Pending Billing';
-            if ($status == 2) return 'Awaiting Results';
-            if ($status == 3) return 'Completed';
+            if ($status == 1) {
+                return 'Pending Billing';
+            }
+            if ($status == 2) {
+                return 'Awaiting Results';
+            }
+            if ($status == 3) {
+                return 'Completed';
+            }
         }
+
         return 'Unknown';
     }
 
@@ -2726,15 +2812,30 @@ class ReceptionWorkbenchController extends Controller
         // Lab: 1=pending, 2=awaiting sample, 3=awaiting results, 4=completed
         // Imaging: 1=pending, 2=awaiting results, 3=completed
         if ($type === 'lab') {
-            if ($status == 1) return 'pending';
-            if ($status == 2) return 'in_progress'; // Awaiting sample
-            if ($status == 3) return 'in_progress'; // Awaiting results
-            if ($status == 4) return 'completed';
+            if ($status == 1) {
+                return 'pending';
+            }
+            if ($status == 2) {
+                return 'in_progress';
+            } // Awaiting sample
+            if ($status == 3) {
+                return 'in_progress';
+            } // Awaiting results
+            if ($status == 4) {
+                return 'completed';
+            }
         } else {
-            if ($status == 1) return 'pending';
-            if ($status == 2) return 'in_progress';
-            if ($status == 3) return 'completed';
+            if ($status == 1) {
+                return 'pending';
+            }
+            if ($status == 2) {
+                return 'in_progress';
+            }
+            if ($status == 3) {
+                return 'completed';
+            }
         }
+
         return 'pending';
     }
 
@@ -2749,6 +2850,7 @@ class ReceptionWorkbenchController extends Controller
             if ($posr->payment_id) {
                 return 'Paid';
             }
+
             return 'Billed';
         }
 
@@ -2765,6 +2867,7 @@ class ReceptionWorkbenchController extends Controller
             if ($posr->payment_id) {
                 return 'paid';
             }
+
             return 'billed';
         }
 
@@ -2777,9 +2880,16 @@ class ReceptionWorkbenchController extends Controller
      */
     private function getProductDeliveryStatus($status)
     {
-        if ($status == 1) return 'Pending Billing';
-        if ($status == 2) return 'Awaiting Dispensing';
-        if ($status == 3) return 'Dispensed';
+        if ($status == 1) {
+            return 'Pending Billing';
+        }
+        if ($status == 2) {
+            return 'Awaiting Dispensing';
+        }
+        if ($status == 3) {
+            return 'Dispensed';
+        }
+
         return 'Unknown';
     }
 
@@ -2788,9 +2898,16 @@ class ReceptionWorkbenchController extends Controller
      */
     private function getProductDeliveryStatusCode($status)
     {
-        if ($status == 1) return 'pending';
-        if ($status == 2) return 'in_progress';
-        if ($status == 3) return 'completed';
+        if ($status == 1) {
+            return 'pending';
+        }
+        if ($status == 2) {
+            return 'in_progress';
+        }
+        if ($status == 3) {
+            return 'completed';
+        }
+
         return 'pending';
     }
 
@@ -2812,7 +2929,7 @@ class ReceptionWorkbenchController extends Controller
                         'doctor',
                         'biller',
                         'resultBy',
-                        'encounter'
+                        'encounter',
                     ])->findOrFail($id);
 
                     $posr = $request->productOrServiceRequest;
@@ -2851,6 +2968,7 @@ class ReceptionWorkbenchController extends Controller
                         'payment_reference' => $posr && $posr->payment ? $posr->payment->payment_ref : null,
                         'payment_date' => $posr && $posr->payment ? Carbon::parse($posr->payment->created_at)->format('d M Y, H:i') : null,
                     ];
+
                     break;
 
                 case 'imaging':
@@ -2862,7 +2980,7 @@ class ReceptionWorkbenchController extends Controller
                         'doctor',
                         'biller',
                         'resultBy',
-                        'encounter'
+                        'encounter',
                     ])->findOrFail($id);
 
                     $posr = $request->productOrServiceRequest;
@@ -2900,6 +3018,7 @@ class ReceptionWorkbenchController extends Controller
                         'payment_reference' => $posr && $posr->payment ? $posr->payment->payment_ref : null,
                         'payment_date' => $posr && $posr->payment ? Carbon::parse($posr->payment->created_at)->format('d M Y, H:i') : null,
                     ];
+
                     break;
 
                 case 'product':
@@ -2912,7 +3031,7 @@ class ReceptionWorkbenchController extends Controller
                         'doctor',
                         'biller',
                         'dispenser',
-                        'encounter'
+                        'encounter',
                     ])->findOrFail($id);
 
                     $posr = $request->productOrServiceRequest;
@@ -2950,6 +3069,7 @@ class ReceptionWorkbenchController extends Controller
                         'payment_reference' => $posr && $posr->payment ? $posr->payment->payment_ref : null,
                         'payment_date' => $posr && $posr->payment ? Carbon::parse($posr->payment->created_at)->format('d M Y, H:i') : null,
                     ];
+
                     break;
 
                 case 'service':
@@ -2959,7 +3079,7 @@ class ReceptionWorkbenchController extends Controller
                         'payment',
                         'patient.user',
                         'patient.hmo',
-                        'staff'
+                        'staff',
                     ])->findOrFail($id);
 
                     $qty = $posr->qty ?? 1;
@@ -2990,6 +3110,7 @@ class ReceptionWorkbenchController extends Controller
                         'payment_reference' => $posr->payment ? $posr->payment->payment_ref : null,
                         'payment_date' => $posr->payment ? \Carbon\Carbon::parse($posr->payment->created_at)->format('d M Y, H:i') : null,
                     ];
+
                     break;
 
                 default:
@@ -3003,6 +3124,7 @@ class ReceptionWorkbenchController extends Controller
 
         } catch (\Exception $e) {
             Log::error('Error fetching request details: ' . $e->getMessage());
+
             return response()->json(['success' => false, 'message' => 'Request not found'], 404);
         }
     }
@@ -3028,14 +3150,17 @@ class ReceptionWorkbenchController extends Controller
                 case 'lab':
                     $serviceRequest = LabServiceRequest::with('productOrServiceRequest')->findOrFail($id);
                     $posr = $serviceRequest->productOrServiceRequest;
+
                     break;
                 case 'imaging':
                     $serviceRequest = ImagingServiceRequest::with('productOrServiceRequest')->findOrFail($id);
                     $posr = $serviceRequest->productOrServiceRequest;
+
                     break;
                 case 'product':
                     $serviceRequest = ProductRequest::with('productOrServiceRequest')->findOrFail($id);
                     $posr = $serviceRequest->productOrServiceRequest;
+
                     break;
                 case 'service':
                     $posr = ProductOrServiceRequest::findOrFail($id);
@@ -3044,6 +3169,7 @@ class ReceptionWorkbenchController extends Controller
                     if ($queue && !in_array($queue->status, [\App\Enums\QueueStatus::WAITING, \App\Enums\QueueStatus::SCHEDULED])) {
                         return response()->json(['success' => false, 'message' => 'Cannot discard — consultation is already in progress or completed'], 400);
                     }
+
                     break;
                 case 'queue':
                     $queue = \App\Models\DoctorQueue::findOrFail($id);
@@ -3052,13 +3178,14 @@ class ReceptionWorkbenchController extends Controller
                     }
                     if ($queue->request_entry_id) {
                         $posr = ProductOrServiceRequest::find($queue->request_entry_id);
-                        
-                        // If it's a queue entry but the POSR is already paid, it means this was a free 
+
+                        // If it's a queue entry but the POSR is already paid, it means this was a free
                         // follow-up (cycle duration). We should ONLY delete the queue, NOT the POSR.
                         if ($posr && $posr->payment_id) {
                             $posr = null; // Unlink POSR so we don't try to delete or check payment on it
                         }
                     }
+
                     break;
                 default:
                     return response()->json(['success' => false, 'message' => 'Invalid request type'], 400);
@@ -3067,7 +3194,7 @@ class ReceptionWorkbenchController extends Controller
             if ($posr && $posr->payment_id) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Cannot discard a paid request. Please process a refund instead.'
+                    'message' => 'Cannot discard a paid request. Please process a refund instead.',
                 ], 400);
             }
 
@@ -3077,7 +3204,7 @@ class ReceptionWorkbenchController extends Controller
             if (!$canDiscard) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'You can only discard requests that you created.'
+                    'message' => 'You can only discard requests that you created.',
                 ], 403);
             }
 
@@ -3106,15 +3233,16 @@ class ReceptionWorkbenchController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => 'Request discarded successfully'
+                'message' => 'Request discarded successfully',
             ]);
 
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error('Error discarding request: ' . $e->getMessage());
+
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to discard request: ' . $e->getMessage()
+                'message' => 'Failed to discard request: ' . $e->getMessage(),
             ], 500);
         }
     }
@@ -3199,8 +3327,8 @@ class ReceptionWorkbenchController extends Controller
     public function getHmoPendingCount()
     {
         $count = ProductOrServiceRequest::whereHas('user.patient_profile', function ($q) {
-                $q->whereNotNull('hmo_id');
-            })
+            $q->whereNotNull('hmo_id');
+        })
             ->whereNotNull('coverage_mode')
             ->where('validation_status', 'pending')
             ->whereIn('coverage_mode', ['primary', 'secondary'])
@@ -3222,6 +3350,7 @@ class ReceptionWorkbenchController extends Controller
         ]);
 
         DB::beginTransaction();
+
         try {
             $hmoRequest = ProductOrServiceRequest::findOrFail($id);
 
@@ -3259,6 +3388,7 @@ class ReceptionWorkbenchController extends Controller
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error('Reception HMO validation error: ' . $e->getMessage());
+
             return response()->json(['success' => false, 'message' => 'Validation failed: ' . $e->getMessage()], 500);
         }
     }
@@ -3281,6 +3411,7 @@ class ReceptionWorkbenchController extends Controller
         $skipped = 0;
 
         DB::beginTransaction();
+
         try {
             $requests = ProductOrServiceRequest::whereIn('id', $ids)
                 ->where('validation_status', 'pending')
@@ -3322,6 +3453,7 @@ class ReceptionWorkbenchController extends Controller
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error('Batch HMO validation error: ' . $e->getMessage());
+
             return response()->json(['success' => false, 'message' => 'Batch validation failed: ' . $e->getMessage()], 500);
         }
     }

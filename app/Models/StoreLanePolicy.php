@@ -70,16 +70,16 @@ class StoreLanePolicy extends Model implements Auditable
         static $cache = [];
         $key = "{$sourceRole}→{$destinationRole}";
 
-        if (! isset($cache[$key])) {
+        if (!isset($cache[$key])) {
             $cache[$key] = self::where('source_role', $sourceRole)
                                ->where('destination_role', $destinationRole)
                                ->first()
                         ?? new self([
-                               'source_role'              => $sourceRole,
-                               'destination_role'         => $destinationRole,
-                               'allowed'                  => false,
-                               'requires_approval_level'  => 'none',
-                               'notes'                    => 'No policy row — denied by default.',
+                               'source_role' => $sourceRole,
+                               'destination_role' => $destinationRole,
+                               'allowed' => false,
+                               'requires_approval_level' => 'none',
+                               'notes' => 'No policy row — denied by default.',
                            ]);
         }
 
@@ -91,10 +91,10 @@ class StoreLanePolicy extends Model implements Auditable
      */
     public function denyReason(): string
     {
-        $src  = ucwords(str_replace('_', ' ', $this->source_role));
+        $src = ucwords(str_replace('_', ' ', $this->source_role));
         $dest = ucwords(str_replace('_', ' ', $this->destination_role));
 
-        if (! $this->exists) {
+        if (!$this->exists) {
             return "Route blocked: {$src} → {$dest} has no policy configured. Contact your administrator.";
         }
 

@@ -2,21 +2,21 @@
 
 namespace App\Http\Controllers\OpsAudit;
 
-use Illuminate\Http\Request;
-use Carbon\Carbon;
-use App\Models\MaternityEnrollment;
 use App\Models\AncVisit;
 use App\Models\DeliveryRecord;
-use App\Models\MaternityBaby;
-use App\Models\PostnatalVisit;
 use App\Models\ImmunizationRecord;
+use App\Models\MaternityBaby;
+use App\Models\MaternityEnrollment;
+use App\Models\PostnatalVisit;
 use App\Models\ProductOrServiceRequest;
+use Carbon\Carbon;
+use Illuminate\Http\Request;
 
 class OpsAuditMaternityController extends OpsAuditBaseController
 {
     public function index(Request $request)
     {
-        $hmos = \App\Models\Hmo::with('scheme')->orderBy('name')->get()->groupBy(fn($hmo) => $hmo->scheme ? $hmo->scheme->name : 'Other Schemes');
+        $hmos = \App\Models\Hmo::with('scheme')->orderBy('name')->get()->groupBy(fn ($hmo) => $hmo->scheme ? $hmo->scheme->name : 'Other Schemes');
         $hmoSchemes = \App\Models\HmoScheme::orderBy('name')->pluck('name', 'id');
 
         return view('admin.ops_audit.maternity', compact('hmos', 'hmoSchemes'));
@@ -35,6 +35,7 @@ class OpsAuditMaternityController extends OpsAuditBaseController
                 'bills' => ProductOrServiceRequest::class,
             ];
             $request->merge(['zone_key' => 'ops_audit.maternity.' . $tab]);
+
             return $this->handleBulkStamp($request, $tab, $modelMap);
         }
 
@@ -66,7 +67,7 @@ class OpsAuditMaternityController extends OpsAuditBaseController
         $query = MaternityEnrollment::with([
 'patient.user',
             'patient.hmo.scheme',
-        
+
             'serviceRequest.payment.user',
 ]);
 
@@ -75,19 +76,23 @@ class OpsAuditMaternityController extends OpsAuditBaseController
         $this->applyPaymentFilters($query, $request, 'serviceRequest');
         $this->applyItemFilters($query, $request, 'serviceRequest');
 
-        if ($request->filled('status')) $query->where('status', $request->status);
-        if ($request->filled('hmo_id')) $query->whereHas('patient.hmo', fn($q) => $q->where('id', $request->hmo_id));
+        if ($request->filled('status')) {
+            $query->where('status', $request->status);
+        }
+        if ($request->filled('hmo_id')) {
+            $query->whereHas('patient.hmo', fn ($q) => $q->where('id', $request->hmo_id));
+        }
 
         $kpiQuery = clone $query;
 
-        return $this->buildDataTableResponse($query, $request, function($q) {
+        return $this->buildDataTableResponse($query, $request, function ($q) {
             return $q->withCount(['ancVisits', 'postnatalVisits', 'babies']);
         }, function ($row) {
             $patient = $row->patient;
             $user = $patient?->user;
             $hmo = $patient?->hmo;
 
-            $statusBadge = '<span class="badge bg-'.($row->status === 'completed' ? 'success' : 'primary').'">'.ucfirst($row->status ?? 'Active').'</span>';
+            $statusBadge = '<span class="badge bg-' . ($row->status === 'completed' ? 'success' : 'primary') . '">' . ucfirst($row->status ?? 'Active') . '</span>';
 
             return [
                 'date' => $row->created_at ? Carbon::parse($row->created_at)->format('d M Y') : '-',
@@ -97,9 +102,9 @@ class OpsAuditMaternityController extends OpsAuditBaseController
                 'edd' => $row->edd ? Carbon::parse($row->edd)->format('d M Y') : '-',
                 'gravida_parity' => 'G' . ($row->gravida ?? '-') . ' P' . ($row->parity ?? '-'),
                 'status' => $statusBadge,
-                'anc_count' => $row->anc_visits_count > 0 ? '<span class="badge bg-info">'.$row->anc_visits_count.'</span>' : '-',
-                'postnatal_count' => $row->postnatal_visits_count > 0 ? '<span class="badge bg-secondary">'.$row->postnatal_visits_count.'</span>' : '-',
-                'babies_count' => $row->babies_count > 0 ? '<span class="badge bg-danger">'.$row->babies_count.'</span>' : '-',
+                'anc_count' => $row->anc_visits_count > 0 ? '<span class="badge bg-info">' . $row->anc_visits_count . '</span>' : '-',
+                'postnatal_count' => $row->postnatal_visits_count > 0 ? '<span class="badge bg-secondary">' . $row->postnatal_visits_count . '</span>' : '-',
+                'babies_count' => $row->babies_count > 0 ? '<span class="badge bg-danger">' . $row->babies_count . '</span>' : '-',
                 'payment_info' => $this->renderPaymentInfo($row),
                 'audit' => $this->renderAuditAction($row, 'MaternityEnrollment'),
             ];
@@ -120,9 +125,7 @@ class OpsAuditMaternityController extends OpsAuditBaseController
         $query = AncVisit::with([
 'patient.user',
             'patient.hmo.scheme',
-        
-            
-        
+
             'encounter.productOrServiceRequest.payment.user',
 ]);
 
@@ -131,11 +134,13 @@ class OpsAuditMaternityController extends OpsAuditBaseController
         $this->applyPaymentFilters($query, $request, 'encounter.productOrServiceRequest');
         $this->applyItemFilters($query, $request, 'encounter.productOrServiceRequest');
 
-        if ($request->filled('hmo_id')) $query->whereHas('patient.hmo', fn($q) => $q->where('id', $request->hmo_id));
+        if ($request->filled('hmo_id')) {
+            $query->whereHas('patient.hmo', fn ($q) => $q->where('id', $request->hmo_id));
+        }
 
         $kpiQuery = clone $query;
 
-        return $this->buildDataTableResponse($query, $request, fn($q) => $q, function ($row) {
+        return $this->buildDataTableResponse($query, $request, fn ($q) => $q, function ($row) {
             $patient = $row->patient;
             $user = $patient?->user;
             $hmo = $patient?->hmo;
@@ -168,7 +173,7 @@ class OpsAuditMaternityController extends OpsAuditBaseController
         $query = DeliveryRecord::with([
 'patient.user',
             'patient.hmo.scheme',
-        
+
             'encounter.productOrServiceRequest.payment.user',
 ]);
 
@@ -177,11 +182,13 @@ class OpsAuditMaternityController extends OpsAuditBaseController
         $this->applyPaymentFilters($query, $request, 'encounter.productOrServiceRequest');
         $this->applyItemFilters($query, $request, 'encounter.productOrServiceRequest');
 
-        if ($request->filled('hmo_id')) $query->whereHas('patient.hmo', fn($q) => $q->where('id', $request->hmo_id));
+        if ($request->filled('hmo_id')) {
+            $query->whereHas('patient.hmo', fn ($q) => $q->where('id', $request->hmo_id));
+        }
 
         $kpiQuery = clone $query;
 
-        return $this->buildDataTableResponse($query, $request, fn($q) => $q, function ($row) {
+        return $this->buildDataTableResponse($query, $request, fn ($q) => $q, function ($row) {
             $patient = $row->patient;
             $user = $patient?->user;
             $hmo = $patient?->hmo;
@@ -221,11 +228,13 @@ class OpsAuditMaternityController extends OpsAuditBaseController
         $this->applyPaymentFilters($query, $request, 'enrollment.serviceRequest');
         $this->applyItemFilters($query, $request, 'enrollment.serviceRequest');
 
-        if ($request->filled('hmo_id')) $query->whereHas('patient.hmo', fn($q) => $q->where('id', $request->hmo_id));
+        if ($request->filled('hmo_id')) {
+            $query->whereHas('patient.hmo', fn ($q) => $q->where('id', $request->hmo_id));
+        }
 
         $kpiQuery = clone $query;
 
-        return $this->buildDataTableResponse($query, $request, fn($q) => $q, function ($row) {
+        return $this->buildDataTableResponse($query, $request, fn ($q) => $q, function ($row) {
             $mother = $row->patient;
             $user = $mother?->user;
             $hmo = $mother?->hmo;
@@ -236,7 +245,7 @@ class OpsAuditMaternityController extends OpsAuditBaseController
                 'sex' => ucfirst($row->sex ?? '-'),
                 'weight' => $row->birth_weight_kg ? $row->birth_weight_kg . ' kg' : '-',
                 'apgar' => $row->apgar_1_min ? $row->apgar_1_min . '/' . ($row->apgar_5_min ?? '-') : '-',
-                'status' => '<span class="badge bg-'.($row->status === 'alive' ? 'success' : 'danger').'">'.ucfirst($row->status ?? '-').'</span>',
+                'status' => '<span class="badge bg-' . ($row->status === 'alive' ? 'success' : 'danger') . '">' . ucfirst($row->status ?? '-') . '</span>',
                 'payment_info' => $this->renderPaymentInfo($row),
                 'audit' => $this->renderAuditAction($row, 'MaternityBaby'),
             ];
@@ -257,7 +266,7 @@ class OpsAuditMaternityController extends OpsAuditBaseController
         $query = PostnatalVisit::with([
 'patient.user',
             'patient.hmo.scheme',
-        
+
             'encounter.productOrServiceRequest.payment.user',
 ]);
 
@@ -266,11 +275,13 @@ class OpsAuditMaternityController extends OpsAuditBaseController
         $this->applyPaymentFilters($query, $request, 'encounter.productOrServiceRequest');
         $this->applyItemFilters($query, $request, 'encounter.productOrServiceRequest');
 
-        if ($request->filled('hmo_id')) $query->whereHas('patient.hmo', fn($q) => $q->where('id', $request->hmo_id));
+        if ($request->filled('hmo_id')) {
+            $query->whereHas('patient.hmo', fn ($q) => $q->where('id', $request->hmo_id));
+        }
 
         $kpiQuery = clone $query;
 
-        return $this->buildDataTableResponse($query, $request, fn($q) => $q, function ($row) {
+        return $this->buildDataTableResponse($query, $request, fn ($q) => $q, function ($row) {
             $patient = $row->patient;
             $user = $patient?->user;
             $hmo = $patient?->hmo;
@@ -302,7 +313,7 @@ class OpsAuditMaternityController extends OpsAuditBaseController
 'patient.user',
             'patient.hmo.scheme',
             'product.category',
-        
+
             'productOrServiceRequest.payment.user',
 ]);
 
@@ -311,11 +322,13 @@ class OpsAuditMaternityController extends OpsAuditBaseController
         $this->applyPaymentFilters($query, $request, 'productOrServiceRequest');
         $this->applyItemFilters($query, $request, 'productOrServiceRequest');
 
-        if ($request->filled('hmo_id')) $query->whereHas('patient.hmo', fn($q) => $q->where('id', $request->hmo_id));
+        if ($request->filled('hmo_id')) {
+            $query->whereHas('patient.hmo', fn ($q) => $q->where('id', $request->hmo_id));
+        }
 
         $kpiQuery = clone $query;
 
-        return $this->buildDataTableResponse($query, $request, fn($q) => $q, function ($row) {
+        return $this->buildDataTableResponse($query, $request, fn ($q) => $q, function ($row) {
             $patient = $row->patient;
             $user = $patient?->user;
             $hmo = $patient?->hmo;
@@ -349,18 +362,20 @@ class OpsAuditMaternityController extends OpsAuditBaseController
             'patient.hmo.scheme',
             'staff',
             'payment.staff_user',
-])->whereHas('patient', function($q) {
-            $q->whereHas('maternityEnrollments');
-        });
+])->whereHas('patient', function ($q) {
+    $q->whereHas('maternityEnrollments');
+});
 
         $this->applyDateFilter($query, $request);
         $this->applyShiftFilter($query, $request);
 
-        if ($request->filled('hmo_id')) $query->whereHas('patient.hmo', fn($q) => $q->where('id', $request->hmo_id));
+        if ($request->filled('hmo_id')) {
+            $query->whereHas('patient.hmo', fn ($q) => $q->where('id', $request->hmo_id));
+        }
 
         $kpiQuery = clone $query;
 
-        return $this->buildDataTableResponse($query, $request, fn($q) => $q, function ($row) {
+        return $this->buildDataTableResponse($query, $request, fn ($q) => $q, function ($row) {
             $patient = $row->patient;
             $user = $patient?->user;
             $hmo = $patient?->hmo;

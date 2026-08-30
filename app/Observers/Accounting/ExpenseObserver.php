@@ -2,10 +2,9 @@
 
 namespace App\Observers\Accounting;
 
-use App\Models\Expense;
 use App\Models\Accounting\Account;
-use App\Models\Accounting\AccountSubAccount;
 use App\Models\Accounting\JournalEntry;
+use App\Models\Expense;
 use App\Services\Accounting\AccountingService;
 use App\Services\Accounting\SubAccountService;
 use Illuminate\Support\Facades\App;
@@ -49,7 +48,7 @@ class ExpenseObserver
                 Log::error('ExpenseObserver: Failed to create journal entry', [
                     'expense_id' => $expense->id,
                     'error' => $e->getMessage(),
-                    'trace' => $e->getTraceAsString()
+                    'trace' => $e->getTraceAsString(),
                 ]);
             }
         }
@@ -62,7 +61,7 @@ class ExpenseObserver
                 Log::error('ExpenseObserver: Failed to reverse journal entry', [
                     'expense_id' => $expense->id,
                     'error' => $e->getMessage(),
-                    'trace' => $e->getTraceAsString()
+                    'trace' => $e->getTraceAsString(),
                 ]);
             }
         }
@@ -85,8 +84,9 @@ class ExpenseObserver
             Log::warning('ExpenseObserver: Skipped - accounts not configured', [
                 'expense_id' => $expense->id,
                 'debit_code' => $debitAccountCode,
-                'credit_code' => $creditAccountCode
+                'credit_code' => $creditAccountCode,
             ]);
+
             return;
         }
 
@@ -120,7 +120,7 @@ class ExpenseObserver
                 // METADATA
                 'supplier_id' => $expense->supplier_id,
                 'category' => $categoryString,
-            ]
+            ],
         ];
 
         $entry = $accountingService->createAndPostAutomatedEntry(
@@ -181,6 +181,7 @@ class ExpenseObserver
                         'bank_name' => $bank->name,
                         'account_code' => $account->code,
                     ]);
+
                     return $account->code;
                 }
             }
@@ -204,7 +205,7 @@ class ExpenseObserver
             "Expense: " . ($expense->title ?? 'Untitled'),
             "Category: " . ($expense->category ?? 'Other'),
             "Ref: " . ($expense->expense_number ?? 'N/A'),
-            "Amount: " . number_format($expense->amount, 2)
+            "Amount: " . number_format($expense->amount, 2),
         ];
 
         if ($expense->supplier) {
@@ -266,6 +267,7 @@ class ExpenseObserver
             Log::info('ExpenseObserver: No journal entry to reverse', [
                 'expense_id' => $expense->id,
             ]);
+
             return;
         }
 
@@ -276,6 +278,7 @@ class ExpenseObserver
                 'expense_id' => $expense->id,
                 'journal_entry_id' => $expense->journal_entry_id,
             ]);
+
             return;
         }
 
@@ -285,6 +288,7 @@ class ExpenseObserver
                 'journal_entry_id' => $expense->journal_entry_id,
                 'je_status' => $journalEntry->status,
             ]);
+
             return;
         }
 

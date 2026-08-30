@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Log;
 class AnthropicAdapter implements LlmProviderInterface
 {
     protected string $apiKey;
+
     protected string $baseUrl;
 
     public function __construct(string $apiKey, string $baseUrl = 'https://api.anthropic.com')
@@ -40,10 +41,12 @@ class AnthropicAdapter implements LlmProviderInterface
         if ($response->failed()) {
             $error = $response->json('error.message', $response->body());
             Log::error('Anthropic API error', ['status' => $response->status(), 'error' => $error]);
+
             throw new \Exception("Anthropic API error: {$error}");
         }
 
         $data = $response->json();
+
         return $data['content'][0]['text'] ?? '';
     }
 
@@ -59,17 +62,20 @@ class AnthropicAdapter implements LlmProviderInterface
 
             if ($response->failed()) {
                 Log::warning('Anthropic listModels failed', ['status' => $response->status()]);
+
                 return $this->getFallbackModels();
             }
 
             $models = $response->json('data', []);
-            return collect($models)->map(fn($m) => [
+
+            return collect($models)->map(fn ($m) => [
                 'id' => $m['id'],
                 'name' => $m['display_name'] ?? $m['id'],
                 'context_window' => null,
             ])->toArray();
         } catch (\Exception $e) {
             Log::warning('Anthropic listModels exception', ['error' => $e->getMessage()]);
+
             return $this->getFallbackModels();
         }
     }
@@ -78,6 +84,7 @@ class AnthropicAdapter implements LlmProviderInterface
     {
         try {
             $models = $this->listModels();
+
             return [
                 'valid' => count($models) > 0,
                 'message' => count($models) > 0 ? 'Connected successfully' : 'Connected but no models found',

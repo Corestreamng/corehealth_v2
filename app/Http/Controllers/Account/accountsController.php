@@ -3,8 +3,7 @@
 namespace App\Http\Controllers\Account;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
-use App\Models\{service, detail, ProductOrServiceRequest};
+use App\Models\{ProductOrServiceRequest};
 use Yajra\DataTables\DataTables;
 
 class accountsController extends Controller
@@ -12,12 +11,14 @@ class accountsController extends Controller
     public function index($identifier)
     {
         $id = $identifier;
+
         return view('admin.Accounts.services', compact('id'));
     }
+
     public function products($id)
     {
         $products = ProductOrServiceRequest::with(['product.price', 'product.category', 'staff', 'user'])
-            ->where('service_id', NULL)
+            ->where('service_id', null)
             ->where('user_id', $id)
             ->whereNull('payment_id')
             ->whereNull('invoice_id')
@@ -61,12 +62,13 @@ class accountsController extends Controller
             ->rawColumns(['checkBox', 'qty', 'product.category.category_name'])
             ->make(true);
     }
+
     public function services($id)
     {
 
         $identify = $id;
         $services = ProductOrServiceRequest::with(['service.price', 'service.category', 'staff', 'user'])
-            ->where('product_id', NULL)
+            ->where('product_id', null)
             ->where('user_id', $identify)
             ->whereNull('payment_id')
             ->whereNull('invoice_id')
@@ -110,23 +112,23 @@ class accountsController extends Controller
             ->rawColumns(['checkBox', 'qty', 'service.category.category_name'])
             ->make(true);
     }
+
     public function serviceView($id)
     {
         return view('admin.Accounts.settledServices', compact('id'));
     }
+
     public function productView($id)
     {
 
         return view('admin.Accounts.settledProducts', compact('id'));
     }
 
-
-
     public function settledServices($id)
     {
         $identify = $id;
 
-        $services = ProductOrServiceRequest::with('service.price')->where('product_id', NULL)->where('user_id', $identify)->where('invoice_id', !NULL)->get();
+        $services = ProductOrServiceRequest::with('service.price')->where('product_id', null)->where('user_id', $identify)->where('invoice_id', !null)->get();
 
         return DataTables::of($services)
             ->addIndexColumn()
@@ -137,9 +139,12 @@ class accountsController extends Controller
             ->rawColumns(['checkBox'])
             ->make(true);
     }
+
     public function settledProducts($id)
     {
-        $products = ProductOrServiceRequest::with('product.price')->where('service_id', NULL)->where('user_id', $id)->where('invoice_id', !NULL)->get();;
+        $products = ProductOrServiceRequest::with('product.price')->where('service_id', null)->where('user_id', $id)->where('invoice_id', !null)->get();
+        ;
+
         return DataTables::of($products)
             ->addIndexColumn()
             ->addColumn('checkBox', function ($product) {
@@ -149,11 +154,12 @@ class accountsController extends Controller
             ->rawColumns(['checkBox'])
             ->make(true);
     }
+
     public function mergedList($id)
     {
         // Services
         $services = ProductOrServiceRequest::with(['service.price', 'service.category', 'staff', 'user'])
-            ->where('product_id', NULL)
+            ->where('product_id', null)
             ->where('user_id', $id)
             ->whereNull('payment_id')
             ->whereNull('invoice_id')
@@ -190,7 +196,7 @@ class accountsController extends Controller
 
         // Products
         $products = ProductOrServiceRequest::with(['product.price', 'product.category', 'staff', 'user'])
-            ->where('service_id', NULL)
+            ->where('service_id', null)
             ->where('user_id', $id)
             ->whereNull('payment_id')
             ->whereNull('invoice_id')

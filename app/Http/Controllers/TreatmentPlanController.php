@@ -2,11 +2,11 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\TreatmentPlan;
-use App\Models\TreatmentPlanItem;
+use App\Http\Traits\ClinicalOrdersTrait;
 use App\Models\Product;
 use App\Models\Service;
-use App\Http\Traits\ClinicalOrdersTrait;
+use App\Models\TreatmentPlan;
+use App\Models\TreatmentPlanItem;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -43,6 +43,7 @@ class TreatmentPlanController extends Controller
             $plan->items->each(function ($item) {
                 $item->display_name = $item->display_name; // triggers accessor
             });
+
             return $plan;
         });
 
@@ -58,36 +59,36 @@ class TreatmentPlanController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'name'                  => 'required|string|max:255',
-            'description'           => 'nullable|string',
-            'specialty'             => 'nullable|string|max:100',
-            'is_global'             => 'nullable|boolean',
-            'items'                 => 'required|array|min:1',
-            'items.*.item_type'     => 'required|in:lab,imaging,medication,procedure',
-            'items.*.reference_id'  => 'required|integer',
-            'items.*.dose'          => 'nullable|string|max:500',
-            'items.*.note'          => 'nullable|string',
-            'items.*.priority'      => 'nullable|string|max:20',
-            'items.*.sort_order'    => 'nullable|integer',
+            'name' => 'required|string|max:255',
+            'description' => 'nullable|string',
+            'specialty' => 'nullable|string|max:100',
+            'is_global' => 'nullable|boolean',
+            'items' => 'required|array|min:1',
+            'items.*.item_type' => 'required|in:lab,imaging,medication,procedure',
+            'items.*.reference_id' => 'required|integer',
+            'items.*.dose' => 'nullable|string|max:500',
+            'items.*.note' => 'nullable|string',
+            'items.*.priority' => 'nullable|string|max:20',
+            'items.*.sort_order' => 'nullable|integer',
         ]);
 
         $plan = TreatmentPlan::create([
-            'name'        => $request->input('name'),
+            'name' => $request->input('name'),
             'description' => $request->input('description'),
-            'specialty'   => $request->input('specialty'),
-            'created_by'  => Auth::id(),
-            'is_global'   => $request->input('is_global', false),
+            'specialty' => $request->input('specialty'),
+            'created_by' => Auth::id(),
+            'is_global' => $request->input('is_global', false),
         ]);
 
         foreach ($request->input('items') as $i => $itemData) {
             TreatmentPlanItem::create([
                 'treatment_plan_id' => $plan->id,
-                'item_type'         => $itemData['item_type'],
-                'reference_id'      => $itemData['reference_id'],
-                'dose'              => $itemData['dose'] ?? null,
-                'note'              => $itemData['note'] ?? null,
-                'priority'          => $itemData['priority'] ?? null,
-                'sort_order'        => $itemData['sort_order'] ?? $i,
+                'item_type' => $itemData['item_type'],
+                'reference_id' => $itemData['reference_id'],
+                'dose' => $itemData['dose'] ?? null,
+                'note' => $itemData['note'] ?? null,
+                'priority' => $itemData['priority'] ?? null,
+                'sort_order' => $itemData['sort_order'] ?? $i,
             ]);
         }
 
@@ -95,7 +96,7 @@ class TreatmentPlanController extends Controller
 
         return response()->json([
             'success' => true,
-            'plan'    => $plan,
+            'plan' => $plan,
             'message' => "Treatment plan '{$plan->name}' created with " . $plan->items->count() . ' items',
         ], 201);
     }
@@ -120,19 +121,20 @@ class TreatmentPlanController extends Controller
                 $enriched['display_name'] = $svc->service_name ?? 'Unknown';
                 $enriched['price'] = optional(optional($svc)->price)->sale_price ?? 0;
             }
+
             return $enriched;
         });
 
         return response()->json([
             'success' => true,
-            'plan'    => [
-                'id'          => $treatmentPlan->id,
-                'name'        => $treatmentPlan->name,
+            'plan' => [
+                'id' => $treatmentPlan->id,
+                'name' => $treatmentPlan->name,
                 'description' => $treatmentPlan->description,
-                'specialty'   => $treatmentPlan->specialty,
-                'is_global'   => $treatmentPlan->is_global,
-                'created_by'  => $treatmentPlan->creator->name ?? 'N/A',
-                'items'       => $enrichedItems,
+                'specialty' => $treatmentPlan->specialty,
+                'is_global' => $treatmentPlan->is_global,
+                'created_by' => $treatmentPlan->creator->name ?? 'N/A',
+                'items' => $enrichedItems,
             ],
         ]);
     }
@@ -149,31 +151,31 @@ class TreatmentPlanController extends Controller
         }
 
         $request->validate([
-            'name'                  => 'sometimes|required|string|max:255',
-            'description'           => 'nullable|string',
-            'diagnosis_data'        => 'nullable|string',
-            'diagnosis_status'      => 'nullable|string|max:50',
-            'diagnosis_course'      => 'nullable|string|max:50',
-            'problem_text'          => 'nullable|string|max:500',
-            'icd_code'              => 'nullable|string|max:20',
-            'goal'                  => 'nullable|string',
-            'priority'              => 'nullable|in:low,medium,high,urgent',
-            'specialty'             => 'nullable|string|max:100',
-            'is_global'             => 'nullable|boolean',
-            'visibility'            => 'nullable|array',
-            'items'                 => 'sometimes|required|array|min:1',
-            'items.*.item_type'     => 'required_with:items|in:lab,imaging,medication,procedure',
-            'items.*.reference_id'  => 'required_with:items|integer',
-            'items.*.dose'          => 'nullable|string|max:500',
-            'items.*.note'          => 'nullable|string',
-            'items.*.priority'      => 'nullable|string|max:20',
-            'items.*.sort_order'    => 'nullable|integer',
+            'name' => 'sometimes|required|string|max:255',
+            'description' => 'nullable|string',
+            'diagnosis_data' => 'nullable|string',
+            'diagnosis_status' => 'nullable|string|max:50',
+            'diagnosis_course' => 'nullable|string|max:50',
+            'problem_text' => 'nullable|string|max:500',
+            'icd_code' => 'nullable|string|max:20',
+            'goal' => 'nullable|string',
+            'priority' => 'nullable|in:low,medium,high,urgent',
+            'specialty' => 'nullable|string|max:100',
+            'is_global' => 'nullable|boolean',
+            'visibility' => 'nullable|array',
+            'items' => 'sometimes|required|array|min:1',
+            'items.*.item_type' => 'required_with:items|in:lab,imaging,medication,procedure',
+            'items.*.reference_id' => 'required_with:items|integer',
+            'items.*.dose' => 'nullable|string|max:500',
+            'items.*.note' => 'nullable|string',
+            'items.*.priority' => 'nullable|string|max:20',
+            'items.*.sort_order' => 'nullable|integer',
         ]);
 
         $updateData = $request->only([
-            'name', 'description', 'specialty', 'is_global', 
-            'diagnosis_status', 'diagnosis_course', 'problem_text', 
-            'icd_code', 'goal', 'priority', 'visibility'
+            'name', 'description', 'specialty', 'is_global',
+            'diagnosis_status', 'diagnosis_course', 'problem_text',
+            'icd_code', 'goal', 'priority', 'visibility',
         ]);
 
         if ($request->has('diagnosis_data')) {
@@ -190,12 +192,12 @@ class TreatmentPlanController extends Controller
             foreach ($request->input('items') as $i => $itemData) {
                 TreatmentPlanItem::create([
                     'treatment_plan_id' => $treatmentPlan->id,
-                    'item_type'         => $itemData['item_type'],
-                    'reference_id'      => $itemData['reference_id'],
-                    'dose'              => $itemData['dose'] ?? null,
-                    'note'              => $itemData['note'] ?? null,
-                    'priority'          => $itemData['priority'] ?? null,
-                    'sort_order'        => $itemData['sort_order'] ?? $i,
+                    'item_type' => $itemData['item_type'],
+                    'reference_id' => $itemData['reference_id'],
+                    'dose' => $itemData['dose'] ?? null,
+                    'note' => $itemData['note'] ?? null,
+                    'priority' => $itemData['priority'] ?? null,
+                    'sort_order' => $itemData['sort_order'] ?? $i,
                 ]);
             }
         }
@@ -204,7 +206,7 @@ class TreatmentPlanController extends Controller
 
         return response()->json([
             'success' => true,
-            'plan'    => $treatmentPlan,
+            'plan' => $treatmentPlan,
             'message' => 'Treatment plan updated successfully',
         ]);
     }
@@ -217,18 +219,18 @@ class TreatmentPlanController extends Controller
     {
         $request->validate([
             'retirement_reason' => 'required|string|max:100',
-            'retirement_notes'  => 'nullable|string|max:1000',
+            'retirement_notes' => 'nullable|string|max:1000',
         ]);
 
         $reason = $request->input('retirement_reason');
         $newStatus = ($reason === 'goal_achieved') ? 'completed' : 'retired';
 
         $treatmentPlan->update([
-            'status'            => $newStatus,
-            'retired_at'        => now(),
-            'retired_by'        => auth()->id(),
+            'status' => $newStatus,
+            'retired_at' => now(),
+            'retired_by' => auth()->id(),
             'retirement_reason' => $reason,
-            'retirement_notes'  => $request->input('retirement_notes'),
+            'retirement_notes' => $request->input('retirement_notes'),
         ]);
 
         // Invalidate Patient Context cache for LLM
@@ -238,7 +240,7 @@ class TreatmentPlanController extends Controller
 
         return response()->json([
             'success' => true,
-            'plan'    => $treatmentPlan->fresh(['creator', 'retirer']),
+            'plan' => $treatmentPlan->fresh(['creator', 'retirer']),
             'message' => 'Treatment plan has been ' . ($newStatus === 'completed' ? 'completed' : 'retired') . ' successfully.',
         ]);
     }
@@ -251,21 +253,21 @@ class TreatmentPlanController extends Controller
     {
         $request->validate([
             'item_type' => 'required|string|in:labs,imaging,medications,procedures,non_pharm,referrals,admissions,notes',
-            'item_id'   => 'required|integer',
+            'item_id' => 'required|integer',
         ]);
 
         $type = $request->input('item_type');
         $id = (int) $request->input('item_id');
 
         $modelClass = match ($type) {
-            'labs'        => \App\Models\LabServiceRequest::class,
-            'imaging'     => \App\Models\ImagingServiceRequest::class,
+            'labs' => \App\Models\LabServiceRequest::class,
+            'imaging' => \App\Models\ImagingServiceRequest::class,
             'medications' => \App\Models\ProductRequest::class,
-            'procedures'  => \App\Models\Procedure::class,
-            'non_pharm'   => \App\Models\NonPharmOrder::class,
-            'referrals'   => \App\Models\SpecialistReferral::class,
-            'admissions'  => \App\Models\AdmissionRequest::class,
-            'notes'       => \App\Models\Encounter::class,
+            'procedures' => \App\Models\Procedure::class,
+            'non_pharm' => \App\Models\NonPharmOrder::class,
+            'referrals' => \App\Models\SpecialistReferral::class,
+            'admissions' => \App\Models\AdmissionRequest::class,
+            'notes' => \App\Models\Encounter::class,
         };
 
         $item = $modelClass::where('treatment_plan_id', $treatmentPlan->id)->find($id);
@@ -275,15 +277,15 @@ class TreatmentPlanController extends Controller
         }
 
         $item->update([
-            'treatment_plan_id'   => null,
+            'treatment_plan_id' => null,
             'treatment_plan_name' => null,
         ]);
 
         $progress = $treatmentPlan->computeProgress();
 
         return response()->json([
-            'success'          => true,
-            'message'          => 'Order unlinked from treatment plan successfully',
+            'success' => true,
+            'message' => 'Order unlinked from treatment plan successfully',
             'progress_percent' => $progress,
         ]);
     }
@@ -312,8 +314,8 @@ class TreatmentPlanController extends Controller
     public function applyToEncounter(Request $request, \App\Models\Encounter $encounter)
     {
         $request->validate([
-            'treatment_plan_id'   => 'required|integer|exists:treatment_plans,id',
-            'selected_item_ids'   => 'nullable|array',
+            'treatment_plan_id' => 'required|integer|exists:treatment_plans,id',
+            'selected_item_ids' => 'nullable|array',
             'selected_item_ids.*' => 'integer',
         ]);
 
@@ -327,12 +329,12 @@ class TreatmentPlanController extends Controller
                 $request->input('selected_item_ids', [])
             );
 
-            $totalCount = $results->reduce(fn($carry, $items) => $carry + count($items), 0);
+            $totalCount = $results->reduce(fn ($carry, $items) => $carry + count($items), 0);
 
             return response()->json([
                 'success' => true,
-                'results' => $results->map(fn($items) => collect($items)->map(fn($r) => ['id' => $r->id])),
-                'count'   => $totalCount,
+                'results' => $results->map(fn ($items) => collect($items)->map(fn ($r) => ['id' => $r->id])),
+                'count' => $totalCount,
                 'message' => "{$totalCount} item(s) added from '{$plan->name}'",
             ]);
         } catch (\Exception $e) {
@@ -349,9 +351,9 @@ class TreatmentPlanController extends Controller
     public function applyForNurse(Request $request)
     {
         $request->validate([
-            'patient_id'          => 'required|integer',
-            'treatment_plan_id'   => 'required|integer|exists:treatment_plans,id',
-            'selected_item_ids'   => 'nullable|array',
+            'patient_id' => 'required|integer',
+            'treatment_plan_id' => 'required|integer|exists:treatment_plans,id',
+            'selected_item_ids' => 'nullable|array',
             'selected_item_ids.*' => 'integer',
         ]);
 
@@ -365,12 +367,12 @@ class TreatmentPlanController extends Controller
                 $request->input('selected_item_ids', [])
             );
 
-            $totalCount = $results->reduce(fn($carry, $items) => $carry + count($items), 0);
+            $totalCount = $results->reduce(fn ($carry, $items) => $carry + count($items), 0);
 
             return response()->json([
                 'success' => true,
-                'results' => $results->map(fn($items) => collect($items)->map(fn($r) => ['id' => $r->id])),
-                'count'   => $totalCount,
+                'results' => $results->map(fn ($items) => collect($items)->map(fn ($r) => ['id' => $r->id])),
+                'count' => $totalCount,
                 'message' => "{$totalCount} item(s) added from '{$plan->name}'",
             ]);
         } catch (\Exception $e) {
@@ -433,13 +435,13 @@ class TreatmentPlanController extends Controller
         $plans->each(function ($plan) {
             $plan->computeProgress();
             $linked = $plan->linkedItems();
-            $plan->linked_counts = $linked->map(fn($items) => $items->count());
+            $plan->linked_counts = $linked->map(fn ($items) => $items->count());
             $plan->total_linked = $linked->flatten()->count();
         });
 
         return response()->json([
             'success' => true,
-            'plans'   => $plans,
+            'plans' => $plans,
         ]);
     }
 
@@ -450,30 +452,30 @@ class TreatmentPlanController extends Controller
     public function storeForPatient(Request $request, \App\Models\Patient $patient)
     {
         $request->validate([
-            'name'             => 'required|string|max:255',
-            'description'      => 'nullable|string',
-            'diagnosis_data'   => 'nullable|string',
+            'name' => 'required|string|max:255',
+            'description' => 'nullable|string',
+            'diagnosis_data' => 'nullable|string',
             'diagnosis_status' => 'nullable|string|max:50',
             'diagnosis_course' => 'nullable|string|max:50',
-            'problem_text'     => 'nullable|string|max:500',
-            'icd_code'         => 'nullable|string|max:20',
-            'goal'             => 'nullable|string',
-            'priority'         => 'nullable|in:low,medium,high,urgent',
-            'visibility'       => 'nullable|array',
-            'encounter_id'     => 'nullable|integer',
-            'clinic_id'        => 'nullable|integer',
-            'items'            => 'nullable|array',
-            'items.*.item_type'    => 'required_with:items|in:lab,imaging,medication,procedure,non_pharm,referral,admission,encounter_note',
+            'problem_text' => 'nullable|string|max:500',
+            'icd_code' => 'nullable|string|max:20',
+            'goal' => 'nullable|string',
+            'priority' => 'nullable|in:low,medium,high,urgent',
+            'visibility' => 'nullable|array',
+            'encounter_id' => 'nullable|integer',
+            'clinic_id' => 'nullable|integer',
+            'items' => 'nullable|array',
+            'items.*.item_type' => 'required_with:items|in:lab,imaging,medication,procedure,non_pharm,referral,admission,encounter_note',
             'items.*.reference_id' => 'nullable|integer',
-            'items.*.dose'         => 'nullable|string|max:500',
-            'items.*.note'         => 'nullable|string',
-            'items.*.priority'     => 'nullable|string|max:20',
-            'items.*.sort_order'   => 'nullable|integer',
+            'items.*.dose' => 'nullable|string|max:500',
+            'items.*.note' => 'nullable|string',
+            'items.*.priority' => 'nullable|string|max:20',
+            'items.*.sort_order' => 'nullable|integer',
         ]);
 
         $clinicId = $request->input('clinic_id');
         $encounterId = $request->input('encounter_id');
-        
+
         if (!$clinicId && $encounterId) {
             $encounter = \App\Models\Encounter::with('queue')->find($encounterId);
             if ($encounter && $encounter->queue) {
@@ -482,20 +484,20 @@ class TreatmentPlanController extends Controller
         }
 
         $plan = TreatmentPlan::create([
-            'name'             => $request->input('name'),
-            'description'      => $request->input('description'),
-            'diagnosis_data'   => $request->has('diagnosis_data') ? json_decode($request->input('diagnosis_data'), true) : null,
+            'name' => $request->input('name'),
+            'description' => $request->input('description'),
+            'diagnosis_data' => $request->has('diagnosis_data') ? json_decode($request->input('diagnosis_data'), true) : null,
             'diagnosis_status' => $request->input('diagnosis_status'),
             'diagnosis_course' => $request->input('diagnosis_course'),
-            'problem_text'     => $request->input('problem_text'),
-            'icd_code'         => $request->input('icd_code'),
-            'goal'             => $request->input('goal'),
-            'priority'         => $request->input('priority', 'medium'),
-            'visibility'       => $request->input('visibility', []),
-            'patient_id'       => $patient->id,
-            'encounter_id'     => $encounterId,
-            'clinic_id'        => $clinicId,
-            'created_by'       => Auth::id(),
+            'problem_text' => $request->input('problem_text'),
+            'icd_code' => $request->input('icd_code'),
+            'goal' => $request->input('goal'),
+            'priority' => $request->input('priority', 'medium'),
+            'visibility' => $request->input('visibility', []),
+            'patient_id' => $patient->id,
+            'encounter_id' => $encounterId,
+            'clinic_id' => $clinicId,
+            'created_by' => Auth::id(),
         ]);
 
         // Create items if provided
@@ -503,12 +505,12 @@ class TreatmentPlanController extends Controller
             foreach ($request->input('items') as $i => $itemData) {
                 TreatmentPlanItem::create([
                     'treatment_plan_id' => $plan->id,
-                    'item_type'         => $itemData['item_type'],
-                    'reference_id'      => $itemData['reference_id'] ?? null,
-                    'dose'              => $itemData['dose'] ?? null,
-                    'note'              => $itemData['note'] ?? null,
-                    'priority'          => $itemData['priority'] ?? null,
-                    'sort_order'        => $itemData['sort_order'] ?? $i,
+                    'item_type' => $itemData['item_type'],
+                    'reference_id' => $itemData['reference_id'] ?? null,
+                    'dose' => $itemData['dose'] ?? null,
+                    'note' => $itemData['note'] ?? null,
+                    'priority' => $itemData['priority'] ?? null,
+                    'sort_order' => $itemData['sort_order'] ?? $i,
                 ]);
             }
         }
@@ -517,7 +519,7 @@ class TreatmentPlanController extends Controller
 
         return response()->json([
             'success' => true,
-            'plan'    => $plan,
+            'plan' => $plan,
             'message' => "Treatment plan '{$plan->name}' created for patient",
         ], 201);
     }
@@ -539,9 +541,9 @@ class TreatmentPlanController extends Controller
         }
 
         return response()->json([
-            'success'          => true,
+            'success' => true,
             'progress_percent' => $percent,
-            'message'          => "Progress updated to {$percent}%",
+            'message' => "Progress updated to {$percent}%",
         ]);
     }
 
@@ -575,6 +577,7 @@ class TreatmentPlanController extends Controller
                     return 25;
                 }
 
+                // no break
             case 'medications':
                 $st = (int) ($item->status ?? 0);
                 $isFreeForm = !empty($item->is_free_form);
@@ -591,6 +594,7 @@ class TreatmentPlanController extends Controller
                     return 25;
                 }
 
+                // no break
             case 'procedures':
                 $pStatus = strtolower($item->procedure_status ?? '');
                 $st = (int) ($item->status ?? 0);
@@ -608,6 +612,7 @@ class TreatmentPlanController extends Controller
                     return 25;
                 }
 
+                // no break
             case 'non_pharm':
                 $st = strtolower($item->status ?? '');
                 if ($st === 'completed' || !empty($item->completed_by) || !empty($item->completed_at)) {
@@ -620,6 +625,7 @@ class TreatmentPlanController extends Controller
                     return 25;
                 }
 
+                // no break
             case 'referrals':
                 $st = strtolower($item->status ?? '');
                 if ($st === 'completed') {
@@ -632,6 +638,7 @@ class TreatmentPlanController extends Controller
                     return 25;
                 }
 
+                // no break
             case 'admissions':
                 $aStatus = strtolower($item->admission_status ?? '');
                 if ((bool)$item->discharged || $aStatus === 'discharged' || !empty($item->discharged_by) || !empty($item->discharge_date)) {
@@ -646,6 +653,7 @@ class TreatmentPlanController extends Controller
                     return 25;
                 }
 
+                // no break
             case 'notes':
                 if ((bool)$item->completed || !empty($item->doctor_signoff_at)) {
                     return 100;
@@ -653,6 +661,7 @@ class TreatmentPlanController extends Controller
                     return 50;
                 }
 
+                // no break
             default:
                 return 25;
         }
@@ -679,13 +688,13 @@ class TreatmentPlanController extends Controller
                 $arr = $item->toArray();
                 $arr['_order_name'] = match ($type) {
                     'labs', 'imaging' => $item->service ? $item->service->service_name : ($item->service_name ?? $item->free_form_name ?? 'Unknown Service'),
-                    'medications'     => $item->product ? $item->product->product_name : ($item->item_name ?? $item->free_form_name ?? 'Unknown Medication'),
-                    'procedures'      => $item->free_form_name ?? ($item->service ? $item->service->service_name : ($item->procedureDefinition ? $item->procedureDefinition->name : 'Procedure Request')),
-                    'non_pharm'       => $item->instructions ?? $item->category ?? 'Care Order',
-                    'referrals'       => $item->reason ?? 'Specialist Referral',
-                    'admissions'      => $item->admission_reason ?? 'Hospital Admission',
-                    'notes'           => 'Clinical Encounter Note',
-                    default           => 'Order Item',
+                    'medications' => $item->product ? $item->product->product_name : ($item->item_name ?? $item->free_form_name ?? 'Unknown Medication'),
+                    'procedures' => $item->free_form_name ?? ($item->service ? $item->service->service_name : ($item->procedureDefinition ? $item->procedureDefinition->name : 'Procedure Request')),
+                    'non_pharm' => $item->instructions ?? $item->category ?? 'Care Order',
+                    'referrals' => $item->reason ?? 'Specialist Referral',
+                    'admissions' => $item->admission_reason ?? 'Hospital Admission',
+                    'notes' => 'Clinical Encounter Note',
+                    default => 'Order Item',
                 };
                 $arr['_status_label'] = match ($type) {
                     'labs', 'imaging' => match ((int) $item->status) {
@@ -694,15 +703,16 @@ class TreatmentPlanController extends Controller
                         default => 'Pending',
                     },
                     'medications' => $item->dispensed_by ? 'Dispensed' : ($item->billed_by ? 'Billed' : 'Pending'),
-                    'procedures'  => ucfirst(str_replace('_', ' ', $item->procedure_status ?? 'requested')),
-                    'non_pharm'   => ucfirst($item->status ?? 'active'),
-                    'referrals'   => ucfirst($item->status ?? 'pending'),
-                    'admissions'  => $item->discharged ? 'Discharged' : ucfirst(str_replace('_', ' ', $item->admission_status ?? 'pending')),
-                    'notes'       => $item->completed ? 'Completed' : 'In Progress',
-                    default       => 'Unknown',
+                    'procedures' => ucfirst(str_replace('_', ' ', $item->procedure_status ?? 'requested')),
+                    'non_pharm' => ucfirst($item->status ?? 'active'),
+                    'referrals' => ucfirst($item->status ?? 'pending'),
+                    'admissions' => $item->discharged ? 'Discharged' : ucfirst(str_replace('_', ' ', $item->admission_status ?? 'pending')),
+                    'notes' => $item->completed ? 'Completed' : 'In Progress',
+                    default => 'Unknown',
                 };
                 $arr['_item_progress_percent'] = $self->getItemProgressScore($item, $type);
                 $arr['_type'] = $type;
+
                 return $arr;
             });
         });
@@ -711,11 +721,11 @@ class TreatmentPlanController extends Controller
         $progress = $treatmentPlan->computeProgress();
 
         return response()->json([
-            'success'          => true,
-            'plan'             => $treatmentPlan,
-            'linked_items'     => $enriched,
+            'success' => true,
+            'plan' => $treatmentPlan,
+            'linked_items' => $enriched,
             'progress_percent' => $progress,
-            'total_items'      => $enriched->flatten(1)->count(),
+            'total_items' => $enriched->flatten(1)->count(),
         ]);
     }
 
@@ -731,7 +741,7 @@ class TreatmentPlanController extends Controller
 
         $encounter = \App\Models\Encounter::findOrFail($request->input('encounter_id'));
         $encounter->update([
-            'treatment_plan_id'   => $treatmentPlan->id,
+            'treatment_plan_id' => $treatmentPlan->id,
             'treatment_plan_name' => $treatmentPlan->name,
         ]);
 

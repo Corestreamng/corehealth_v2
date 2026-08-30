@@ -21,8 +21,7 @@ use Illuminate\Support\Facades\Schema;
  * - DR: Income accounts (reversing the original revenue)
  * - CR: Bank/Cash or Patient Deposits (based on refund method)
  */
-return new class extends Migration
-{
+return new class () extends Migration {
     /**
      * Run the migrations.
      */

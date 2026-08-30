@@ -28,7 +28,7 @@ class NonPharmOrderController extends Controller
 
         return response()->json([
             'success' => true,
-            'orders' => $orders
+            'orders' => $orders,
         ]);
     }
 
@@ -51,7 +51,7 @@ class NonPharmOrderController extends Controller
         if ($validator->fails()) {
             return response()->json([
                 'success' => false,
-                'message' => 'Validation error: ' . implode(', ', $validator->errors()->all())
+                'message' => 'Validation error: ' . implode(', ', $validator->errors()->all()),
             ], 422);
         }
 
@@ -73,7 +73,7 @@ class NonPharmOrderController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Care order added successfully',
-            'order' => $order
+            'order' => $order,
         ]);
     }
 
@@ -87,7 +87,7 @@ class NonPharmOrderController extends Controller
         if (!$order) {
             return response()->json([
                 'success' => false,
-                'message' => 'Care order not found'
+                'message' => 'Care order not found',
             ], 404);
         }
 
@@ -101,7 +101,7 @@ class NonPharmOrderController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Care order marked as completed',
-            'order' => $order->load(['completedByUser'])
+            'order' => $order->load(['completedByUser']),
         ]);
     }
 
@@ -115,7 +115,7 @@ class NonPharmOrderController extends Controller
         if (!$order) {
             return response()->json([
                 'success' => false,
-                'message' => 'Care order not found'
+                'message' => 'Care order not found',
             ], 404);
         }
 
@@ -134,7 +134,7 @@ class NonPharmOrderController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => $msg
+            'message' => $msg,
         ]);
     }
 }

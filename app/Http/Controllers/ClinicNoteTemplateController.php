@@ -2,8 +2,8 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\ClinicNoteTemplate;
 use App\Models\Clinic;
+use App\Models\ClinicNoteTemplate;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
@@ -17,6 +17,7 @@ class ClinicNoteTemplateController extends Controller
     public function index(Request $request)
     {
         $clinics = Clinic::orderBy('name')->get();
+
         return view('admin.clinic_note_templates.index', compact('clinics'));
     }
 
@@ -59,6 +60,7 @@ class ClinicNoteTemplateController extends Controller
                     ? "<button class='btn btn-sm btn-secondary me-1' onclick='toggleTemplate({$row->id}, false)'><i class='mdi mdi-eye-off'></i></button>"
                     : "<button class='btn btn-sm btn-success me-1' onclick='toggleTemplate({$row->id}, true)'><i class='mdi mdi-eye'></i></button>";
                 $deleteBtn = "<button class='btn btn-sm btn-danger' onclick='deleteTemplate({$row->id})'><i class='fa fa-trash'></i></button>";
+
                 return $editBtn . $toggleBtn . $deleteBtn;
             })
             ->rawColumns(['clinic_name', 'status', 'actions'])
@@ -95,6 +97,7 @@ class ClinicNoteTemplateController extends Controller
             ]);
         } catch (\Exception $e) {
             Log::error('Template creation failed: ' . $e->getMessage());
+
             return response()->json([
                 'success' => false,
                 'message' => 'Failed to create template: ' . $e->getMessage(),
@@ -138,6 +141,7 @@ class ClinicNoteTemplateController extends Controller
             ]);
         } catch (\Exception $e) {
             Log::error('Template update failed: ' . $e->getMessage());
+
             return response()->json([
                 'success' => false,
                 'message' => 'Failed to update template: ' . $e->getMessage(),
@@ -224,6 +228,7 @@ class ClinicNoteTemplateController extends Controller
             ]);
         } catch (\Exception $e) {
             Log::error('Failed to load templates: ' . $e->getMessage());
+
             return response()->json([
                 'success' => false,
                 'message' => 'Failed to load templates.',

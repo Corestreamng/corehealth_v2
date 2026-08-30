@@ -2,23 +2,23 @@
 
 namespace App\Http\Controllers;
 
-use App\Services\Dashboard\ReceptionDashboardService;
-use App\Services\Dashboard\BillingDashboardService;
-use App\Services\Dashboard\PharmacyDashboardService;
-use App\Services\Dashboard\NursingDashboardService;
-use App\Services\Dashboard\LabDashboardService;
-use App\Services\Dashboard\DoctorDashboardService;
-use App\Services\Dashboard\HmoDashboardService;
 use App\Services\Dashboard\AccountsDashboardService;
-use App\Services\Dashboard\StoreDashboardService;
+use App\Services\Dashboard\AuditDashboardService;
+use App\Services\Dashboard\BillingDashboardService;
+use App\Services\Dashboard\ChildHealthDashboardService;
+use App\Services\Dashboard\DoctorDashboardService;
+use App\Services\Dashboard\EssDashboardService;
+use App\Services\Dashboard\HmoDashboardService;
+use App\Services\Dashboard\HrDashboardService;
+use App\Services\Dashboard\ImagingDashboardService;
+use App\Services\Dashboard\LabDashboardService;
 use App\Services\Dashboard\MaternityDashboardService;
 use App\Services\Dashboard\MorgueDashboardService;
-use App\Services\Dashboard\EssDashboardService;
-use App\Services\Dashboard\ChildHealthDashboardService;
-use App\Services\Dashboard\HrDashboardService;
+use App\Services\Dashboard\NursingDashboardService;
+use App\Services\Dashboard\PharmacyDashboardService;
+use App\Services\Dashboard\ReceptionDashboardService;
+use App\Services\Dashboard\StoreDashboardService;
 use App\Services\Dashboard\TheatreDashboardService;
-use App\Services\Dashboard\ImagingDashboardService;
-use App\Services\Dashboard\AuditDashboardService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 
@@ -45,6 +45,7 @@ class DashboardDataController extends Controller
     {
         return Cache::remember('dash:reception:' . date('Y-m-d-H-i-') . floor(date('s') / 180), self::CACHE_TTL, function () {
             $svc = new ReceptionDashboardService();
+
             return response()->json([
                 'queues' => $svc->getQueueCounts(),
                 'activity' => $svc->getRecentActivity(),
@@ -62,6 +63,7 @@ class DashboardDataController extends Controller
     {
         return Cache::remember('dash:billing:' . date('Y-m-d-H-i-') . floor(date('s') / 180), self::CACHE_TTL, function () {
             $svc = new BillingDashboardService();
+
             return response()->json([
                 'queues' => $svc->getQueueCounts(),
                 'activity' => $svc->getRecentActivity(),
@@ -79,6 +81,7 @@ class DashboardDataController extends Controller
     {
         return Cache::remember('dash:pharmacy:' . date('Y-m-d-H-i-') . floor(date('s') / 180), self::CACHE_TTL, function () {
             $svc = new PharmacyDashboardService();
+
             return response()->json([
                 'queues' => $svc->getQueueCounts(),
                 'stats' => $svc->getStats(),
@@ -97,6 +100,7 @@ class DashboardDataController extends Controller
     {
         return Cache::remember('dash:store:' . date('Y-m-d-H-i-') . floor(date('s') / 180), self::CACHE_TTL, function () {
             $svc = new StoreDashboardService();
+
             return response()->json([
                 'queues' => $svc->getQueueCounts(),
                 'stats' => $svc->getStats(),
@@ -115,6 +119,7 @@ class DashboardDataController extends Controller
     {
         return Cache::remember('dash:morgue:' . date('Y-m-d-H-i-') . floor(date('s') / 180), self::CACHE_TTL, function () {
             $svc = new MorgueDashboardService();
+
             return response()->json([
                 'queues' => $svc->getQueueCounts(),
                 'stats' => $svc->getStats(),
@@ -133,6 +138,7 @@ class DashboardDataController extends Controller
     {
         return Cache::remember('dash:nursing:' . date('Y-m-d-H-i-') . floor(date('s') / 180), self::CACHE_TTL, function () {
             $svc = new NursingDashboardService();
+
             return response()->json([
                 'queues' => $svc->getQueueCounts(),
                 'stats' => $svc->getStats(),
@@ -150,8 +156,10 @@ class DashboardDataController extends Controller
     public function essData()
     {
         $userId = auth()->id();
+
         return Cache::remember('dash:ess:' . $userId . ':' . date('Y-m-d-H-i-') . floor(date('s') / 180), self::CACHE_TTL, function () use ($userId) {
             $svc = new EssDashboardService();
+
             return response()->json([
                 'queues' => $svc->getQueueCounts($userId),
                 'stats' => $svc->getStats($userId),
@@ -169,6 +177,7 @@ class DashboardDataController extends Controller
     {
         return Cache::remember('dash:lab:' . date('Y-m-d-H-i-') . floor(date('s') / 180), self::CACHE_TTL, function () {
             $svc = new LabDashboardService();
+
             return response()->json([
                 'queues' => $svc->getQueueCounts(),
                 'stats' => $svc->getStats(),
@@ -184,6 +193,7 @@ class DashboardDataController extends Controller
     {
         return Cache::remember('dash:imaging:' . date('Y-m-d-H-i-') . floor(date('s') / 180), self::CACHE_TTL, function () {
             $svc = new ImagingDashboardService();
+
             return response()->json([
                 'queues' => $svc->getQueueCounts(),
                 'stats' => $svc->getStats(),
@@ -201,8 +211,10 @@ class DashboardDataController extends Controller
     public function doctorData()
     {
         $userId = auth()->id();
+
         return Cache::remember('dash:doctor:' . $userId . ':' . date('Y-m-d-H-i-') . floor(date('s') / 180), self::CACHE_TTL, function () use ($userId) {
             $svc = new DoctorDashboardService();
+
             return response()->json([
                 'queues' => $svc->getQueueCounts($userId),
                 'activity' => $svc->getRecentActivity($userId),
@@ -218,6 +230,7 @@ class DashboardDataController extends Controller
     {
         return Cache::remember('dash:child_health:' . date('Y-m-d-H-i-') . floor(date('s') / 180), self::CACHE_TTL, function () {
             $svc = new ChildHealthDashboardService();
+
             return response()->json([
                 'queues' => $svc->getQueueCounts(),
                 'stats' => $svc->getStats(),
@@ -235,6 +248,7 @@ class DashboardDataController extends Controller
     {
         return Cache::remember('dash:hmo:' . date('Y-m-d-H-i-') . floor(date('s') / 180), self::CACHE_TTL, function () {
             $svc = new HmoDashboardService();
+
             return response()->json([
                 'queues' => $svc->getQueueCounts(),
                 'stats' => $svc->getStats(),
@@ -253,6 +267,7 @@ class DashboardDataController extends Controller
     {
         return Cache::remember('dash:maternity:' . date('Y-m-d-H-i-') . floor(date('s') / 180), self::CACHE_TTL, function () {
             $svc = new MaternityDashboardService();
+
             return response()->json([
                 'queues' => $svc->getQueueCounts(),
                 'stats' => $svc->getStats(),
@@ -271,6 +286,7 @@ class DashboardDataController extends Controller
     {
         return Cache::remember('dash:hr:' . date('Y-m-d-H-i-') . floor(date('s') / 180), self::CACHE_TTL, function () {
             $svc = new HrDashboardService();
+
             return response()->json([
                 'queues' => $svc->getQueueCounts(),
                 'stats' => $svc->getStats(),
@@ -288,6 +304,7 @@ class DashboardDataController extends Controller
     {
         return Cache::remember('dash:theatre:' . date('Y-m-d-H-i-') . floor(date('s') / 180), self::CACHE_TTL, function () {
             $svc = new TheatreDashboardService();
+
             return response()->json([
                 'queues' => $svc->getQueueCounts(),
                 'stats' => $svc->getStats(),
@@ -305,6 +322,7 @@ class DashboardDataController extends Controller
     {
         return Cache::remember('dash:accounts:' . date('Y-m-d-H-i-') . floor(date('s') / 180), self::CACHE_TTL, function () {
             $svc = new AccountsDashboardService();
+
             return response()->json([
                 'summary' => $svc->getFinancialSummary(),
                 'revenueTrend' => $svc->getRevenueTrend(),
@@ -319,6 +337,7 @@ class DashboardDataController extends Controller
     public function auditLog(Request $request)
     {
         $svc = new AccountsDashboardService();
+
         return response()->json([
             'log' => $svc->getAuditLog(
                 $request->input('limit', 20),
@@ -331,10 +350,11 @@ class DashboardDataController extends Controller
     {
         return Cache::remember('dash:audit:' . date('Y-m-d-H-i-') . floor(date('s') / 180), self::CACHE_TTL, function () {
             $svc = new AuditDashboardService();
+
             return response()->json([
                 'summary' => $svc->getSummaryStats(),
                 'revenueTrend' => $svc->getRevenueTrend(),
-                'recentActivity' => $svc->getRecentAuditLogs()
+                'recentActivity' => $svc->getRecentAuditLogs(),
             ]);
         });
     }

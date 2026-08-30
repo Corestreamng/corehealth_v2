@@ -28,7 +28,7 @@ class PatientProfileController extends Controller
     public function create(Request $request)
     {
         $request->validate([
-            'form_id' => 'required'
+            'form_id' => 'required',
         ]);
 
         if ($request->form_id == 'test') {
@@ -294,6 +294,7 @@ class PatientProfileController extends Controller
 
         $formdata = json_decode($formdata);
         $form = generateForm($formdata);
+
         return response(['formdata' => $form, 'form_id' => $request->form_id]);
     }
 
@@ -319,9 +320,11 @@ class PatientProfileController extends Controller
             $d->form_data = json_encode($data);
             $d->form_id = $request->form_id;
             $d->save();
+
             return back()->withMessage("Form data saved, continue consulting")->withMessageType('success');
         } catch (\Exception $e) {
             Log::error($e->getMessage(), ['exception' => $e]);
+
             return redirect()->back()->withInput()->withMessage("An error occurred while saving patient profile/form");
         }
     }
@@ -330,6 +333,7 @@ class PatientProfileController extends Controller
     {
         $his = PatientProfile::with(['patient', 'doctor'])
             ->where('patient_id', $patient_id)->orderBy('created_at', 'DESC')->get();
+
         //dd($pc);
         return DataTables::of($his)
             ->addIndexColumn()

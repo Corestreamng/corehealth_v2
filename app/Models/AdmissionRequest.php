@@ -2,11 +2,9 @@
 
 namespace App\Models;
 
+use App\Traits\IsAuditable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use App\Traits\IsAuditable;
-
-
 use OwenIt\Auditing\Contracts\Auditable;
 
 /**
@@ -243,6 +241,7 @@ class AdmissionRequest extends Model implements Auditable
         }
 
         $endDate = $this->discharge_date ?? now();
+
         return \Carbon\Carbon::parse($this->bed_assign_date)->diffInDays($endDate);
     }
 

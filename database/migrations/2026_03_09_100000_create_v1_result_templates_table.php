@@ -3,8 +3,7 @@
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Support\Facades\DB;
 
-return new class extends Migration
-{
+return new class () extends Migration {
     /**
      * Create v1_result_templates table for reusable V1 HTML result templates.
      * These templates can be inserted into the WYSIWYG editor in lab/imaging result entry.

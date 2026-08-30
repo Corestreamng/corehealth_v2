@@ -69,7 +69,7 @@ class AddProcedureColumnsToProductOrServiceRequests extends Migration
                 'created_by',
                 'order_date',
                 'amount',
-                'hmo_id'
+                'hmo_id',
             ]);
         });
     }

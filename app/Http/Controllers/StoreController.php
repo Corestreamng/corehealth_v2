@@ -4,12 +4,10 @@ namespace App\Http\Controllers;
 
 use App\Models\Store;
 use Illuminate\Http\Request;
-
 use Illuminate\Support\Facades\Auth;
-use App\Http\Controllers\Controller;
+use RealRashid\SweetAlert\Facades\Alert;
 use Validator;
 use Yajra\DataTables\DataTables;
-use RealRashid\SweetAlert\Facades\Alert;
 
 class StoreController extends Controller
 {
@@ -30,10 +28,12 @@ class StoreController extends Controller
                 if (Auth::user()->hasPermissionTo('can-manage-store') || Auth::user()->hasRole(['ADMIN', 'STORE'])) {
 
                     $url = route('stores.edit', $pc->id);
+
                     return '<a href="' . $url . '" class="btn btn-info btn-sm"><i class="fa fa-pencil"></i> Edit</a>';
                 } else {
 
                     $label = '<button disabled class="btn btn-secondary btn-sm"> <i class="fa fa-pencil"></i> Edit</button>';
+
                     return $label;
                 }
             })
@@ -42,10 +42,12 @@ class StoreController extends Controller
                 if (Auth::user()->hasPermissionTo('can-manage-store') || Auth::user()->hasRole(['ADMIN', 'STORE'])) {
 
                     $url = route('stores-stokes.show', $pc->id);
+
                     return '<a href="' . $url . '" class="btn btn-info btn-sm"><i class="fa fa-eye"></i> View Product</a>';
                 } else {
 
                     $label = '<button disabled class="btn btn-secondary btn-sm"> <i class="fa fa-eye"></i> View Product</button>';
+
                     return $label;
                 }
             })
@@ -82,31 +84,32 @@ class StoreController extends Controller
      * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\Response
      */
-
     public function store(Request $request)
     {
         // dd($request->all());
         try {
             $rules = [
                 'store_name' => 'required|min:3|max:150',
-                'location'   => 'nullable|min:3|max:150',
+                'location' => 'nullable|min:3|max:150',
             ];
 
             $v = Validator::make($request->all(), $rules);
 
             if ($v->fails()) {
                 Alert::error('Error Title', 'One or more information is needed.');
+
                 return redirect()->back()->withInput()->with('errors', $v->messages()->all())->withInput();
             } else {
 
-                $store               = new Store();
-                $store->store_name   = $request->store_name;
-                $store->location     = $request->location;
-                $store->status       = $request->has('status') ? 1 : 0;
+                $store = new Store();
+                $store->store_name = $request->store_name;
+                $store->location = $request->location;
+                $store->status = $request->has('status') ? 1 : 0;
 
                 if ($store->save()) {
                     $msg = 'New Store  ' . $request->store_name . ' was created successfully.';
                     Alert::success('Success ', $msg);
+
                     return redirect()->route('stores.index')->withMessage($msg)->withMessageType('success');
                 }
             }
@@ -139,6 +142,7 @@ class StoreController extends Controller
         try {
 
             $store = Store::whereId($id)->first();
+
             return view('admin.stores.edit', compact('store'));
         } catch (\Exception $e) {
 
@@ -159,24 +163,26 @@ class StoreController extends Controller
 
             $rules = [
                 'store_name' => 'required|min:3|max:150',
-                'location'   => 'required|min:3|max:150',
+                'location' => 'required|min:3|max:150',
             ];
 
             $v = Validator::make($request->all(), $rules);
 
             if ($v->fails()) {
                 Alert::error('Error Title', 'One or more information is needed.');
+
                 return redirect()->back()->withInput()->with('errors', $v->messages()->all())->withInput();
             } else {
 
-                $store               = Store::findOrFail($id);
-                $store->store_name   = $request->store_name;
-                $store->location     = $request->location;
-                $store->status       = $request->has('status') ? 1 : 0;
+                $store = Store::findOrFail($id);
+                $store->store_name = $request->store_name;
+                $store->location = $request->location;
+                $store->status = $request->has('status') ? 1 : 0;
 
                 if ($store->update()) {
                     $msg = 'Store  ' . $request->store_name . ' was Updated successfully.';
                     Alert::success('Success ', $msg);
+
                     return redirect()->route('stores.index')->withMessage($msg)->withMessageType('success');
                 }
             }

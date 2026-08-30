@@ -2,9 +2,9 @@
 
 namespace App\Console\Commands;
 
-use App\Models\ProductOrServiceRequest;
-use App\Models\Payment;
 use App\Models\Patient;
+use App\Models\Payment;
+use App\Models\ProductOrServiceRequest;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -45,6 +45,7 @@ class SettleHmoCoveredItems extends Command
 
         if ($items->isEmpty()) {
             $this->info('No unsettled fully HMO-covered items found. Queue is clean.');
+
             return 0;
         }
 
@@ -72,6 +73,7 @@ class SettleHmoCoveredItems extends Command
             if ($dryRun) {
                 $totalSettled += $userItems->count();
                 $totalPayments++;
+
                 continue;
             }
 
@@ -79,14 +81,14 @@ class SettleHmoCoveredItems extends Command
                 DB::beginTransaction();
 
                 $payment = Payment::create([
-                    'payment_type'   => 'HMO_FULL_COVER',
+                    'payment_type' => 'HMO_FULL_COVER',
                     'payment_method' => 'HMO_FULL_COVER',
-                    'total'          => 0,
+                    'total' => 0,
                     'total_discount' => 0,
-                    'patient_id'     => $patientId,
-                    'hmo_id'         => $hmoId,
-                    'user_id'        => 1, // System user
-                    'reference_no'   => 'HMO-CLEANUP-' . now()->format('YmdHis') . '-' . $userId,
+                    'patient_id' => $patientId,
+                    'hmo_id' => $hmoId,
+                    'user_id' => 1, // System user
+                    'reference_no' => 'HMO-CLEANUP-' . now()->format('YmdHis') . '-' . $userId,
                 ]);
 
                 // Update all items in this group without triggering observer
@@ -101,17 +103,17 @@ class SettleHmoCoveredItems extends Command
                 $totalPayments++;
 
                 Log::info('SettleHmoCoveredItems: Settled batch', [
-                    'user_id'     => $userId,
-                    'payment_id'  => $payment->id,
-                    'item_count'  => $userItems->count(),
-                    'item_ids'    => $userItems->pluck('id')->toArray(),
+                    'user_id' => $userId,
+                    'payment_id' => $payment->id,
+                    'item_count' => $userItems->count(),
+                    'item_ids' => $userItems->pluck('id')->toArray(),
                 ]);
             } catch (\Exception $e) {
                 DB::rollBack();
                 $this->error("  Failed for user_id={$userId}: {$e->getMessage()}");
                 Log::error('SettleHmoCoveredItems: Failed to settle batch', [
                     'user_id' => $userId,
-                    'error'   => $e->getMessage(),
+                    'error' => $e->getMessage(),
                 ]);
             }
         }

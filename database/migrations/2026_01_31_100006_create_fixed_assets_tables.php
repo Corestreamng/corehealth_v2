@@ -20,8 +20,7 @@ use Illuminate\Support\Facades\Schema;
  *
  * Also extends purchase_order_items to support fixed asset acquisition.
  */
-return new class extends Migration
-{
+return new class () extends Migration {
     public function up()
     {
         // Fixed Asset Categories

@@ -69,11 +69,11 @@ class PayrollBatch extends Model implements Auditable
         'paid_at' => 'datetime',
     ];
 
-    const STATUS_DRAFT = 'draft';
-    const STATUS_SUBMITTED = 'submitted';
-    const STATUS_APPROVED = 'approved';
-    const STATUS_REJECTED = 'rejected';
-    const STATUS_PAID = 'paid';
+    public const STATUS_DRAFT = 'draft';
+    public const STATUS_SUBMITTED = 'submitted';
+    public const STATUS_APPROVED = 'approved';
+    public const STATUS_REJECTED = 'rejected';
+    public const STATUS_PAID = 'paid';
 
     /**
      * Boot method
@@ -101,6 +101,7 @@ class PayrollBatch extends Model implements Auditable
             ->first();
 
         $sequence = $lastBatch ? (int) substr($lastBatch->batch_number, -4) + 1 : 1;
+
         return $prefix . $yearMonth . str_pad($sequence, 4, '0', STR_PAD_LEFT);
     }
 

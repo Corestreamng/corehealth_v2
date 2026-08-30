@@ -2,9 +2,9 @@
 
 namespace App\Database;
 
-use Illuminate\Database\Query\Grammars\MySqlGrammar;
-use Illuminate\Database\Query\Builder;
 use App\Support\QueryContext;
+use Illuminate\Database\Query\Builder;
+use Illuminate\Database\Query\Grammars\MySqlGrammar;
 
 class CommenterMySqlGrammar extends MySqlGrammar
 {
@@ -45,8 +45,8 @@ class CommenterMySqlGrammar extends MySqlGrammar
      */
     private function appendComment(): string
     {
-        return QueryContext::$currentAction 
-            ? " /* Source: " . QueryContext::$currentAction . " */" 
+        return QueryContext::$currentAction
+            ? " /* Source: " . QueryContext::$currentAction . " */"
             : "";
     }
 }

@@ -3,14 +3,13 @@
 namespace App\Http\Controllers\Account;
 
 use App\Http\Controllers\Controller;
+use App\Models\{Product, ProductOrServiceRequest, service};
 use Illuminate\Http\Request;
-use App\Models\{Product, service, ProductOrServiceRequest};
 use Illuminate\Support\Facades\Log;
 
 class productAccountController extends Controller
 {
     public function process(Request $request)
-
     {
         try {
             $inputs = $request->input('productChecked');
@@ -31,7 +30,7 @@ class productAccountController extends Controller
             }
             $sumServices = $total;
             // dd($sumServices);
-            if ($inputs == NULL) {
+            if ($inputs == null) {
                 return view('admin.Accounts.summary', compact('services', 'sumServices', 'serviceQty'));
             } else {
                 // dd($inputs);
@@ -47,12 +46,14 @@ class productAccountController extends Controller
                     $productsTotal += $products[$j]->product->price->current_sale_price * $productQty[$j];
                 }
                 $sumProducts = $productsTotal;
+
                 // dd($sumProducts);
                 // dd($sumServices);
                 return view('admin.Accounts.summary', compact('products', 'services', 'sumServices', 'sumProducts', 'productQty', 'serviceQty'));
             }
         } catch (\Exception $e) {
             Log::error($e->getMessage(), ['exception' => $e]);
+
             return redirect()->back()->withInput()->with('error', $e->getMessage());
         }
     }

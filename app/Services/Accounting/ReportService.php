@@ -5,8 +5,6 @@ namespace App\Services\Accounting;
 use App\Models\Accounting\Account;
 use App\Models\Accounting\AccountClass;
 use App\Models\Accounting\AccountGroup;
-use App\Models\Accounting\AccountingPeriod;
-use App\Models\Accounting\FiscalYear;
 use App\Models\Accounting\JournalEntry;
 use App\Models\Accounting\JournalEntryLine;
 use Carbon\Carbon;
@@ -594,7 +592,9 @@ class ReportService
 
             foreach ($hmoClaims as $claim) {
                 $claimAmount = $claim->claims_amount ?? $claim->payable_amount ?? 0;
-                if ($claimAmount <= 0) continue;
+                if ($claimAmount <= 0) {
+                    continue;
+                }
 
                 $hmoTotal += $claimAmount;
                 $ageBucket = $this->determineAgingBucket($claim->validated_at, $asOf);
@@ -726,8 +726,8 @@ class ReportService
 
             $staffName = $bill->staffUser ? trim($bill->staffUser->surname . ' ' . $bill->staffUser->firstname . ' ' . $bill->staffUser->othername) : 'Unknown Staff';
             $empCode = $bill->staffUser?->staff_profile?->employee_id ?? 'N/A';
-            $patientName = $bill->patient && $bill->patient->user 
-                ? trim($bill->patient->user->surname . ' ' . $bill->patient->user->firstname . ' ' . $bill->patient->user->othername) 
+            $patientName = $bill->patient && $bill->patient->user
+                ? trim($bill->patient->user->surname . ' ' . $bill->patient->user->firstname . ' ' . $bill->patient->user->othername)
                 : 'N/A';
 
             $details[] = [
@@ -739,7 +739,7 @@ class ReportService
                 'date' => $bill->created_at->format('Y-m-d'),
                 'days_old' => $daysOld,
                 'aging_bucket' => $bucket,
-                'type' => 'Staff Bill'
+                'type' => 'Staff Bill',
             ];
         }
 
@@ -895,7 +895,9 @@ class ReportService
 
             foreach ($supplierOrders as $po) {
                 $outstanding = ($po->total_amount ?? 0) - ($po->amount_paid ?? 0);
-                if ($outstanding <= 0) continue;
+                if ($outstanding <= 0) {
+                    continue;
+                }
 
                 $supplierTotal += $outstanding;
                 $ageBucket = $this->determineAgingBucket($po->approved_at ?? $po->created_at, $asOf);
@@ -1122,7 +1124,7 @@ class ReportService
         }
 
         // Sort by priority score (higher = more urgent)
-        usort($priorities, fn($a, $b) => $b['priority_score'] <=> $a['priority_score']);
+        usort($priorities, fn ($a, $b) => $b['priority_score'] <=> $a['priority_score']);
 
         return array_slice($priorities, 0, 20); // Top 20 priorities
     }
@@ -1178,15 +1180,26 @@ class ReportService
      */
     protected function determineAgingBucket($date, Carbon $asOf): string
     {
-        if (!$date) return 'current';
+        if (!$date) {
+            return 'current';
+        }
 
         $itemDate = Carbon::parse($date);
         $daysDiff = $itemDate->diffInDays($asOf);
 
-        if ($daysDiff <= 0) return 'current';
-        if ($daysDiff <= 30) return '1_30';
-        if ($daysDiff <= 60) return '31_60';
-        if ($daysDiff <= 90) return '61_90';
+        if ($daysDiff <= 0) {
+            return 'current';
+        }
+        if ($daysDiff <= 30) {
+            return '1_30';
+        }
+        if ($daysDiff <= 60) {
+            return '31_60';
+        }
+        if ($daysDiff <= 90) {
+            return '61_90';
+        }
+
         return 'over_90';
     }
 
@@ -1196,6 +1209,7 @@ class ReportService
     protected function isOlderBucket(string $bucket1, string $bucket2): bool
     {
         $order = ['current' => 0, '1_30' => 1, '31_60' => 2, '61_90' => 3, 'over_90' => 4];
+
         return ($order[$bucket1] ?? 0) > ($order[$bucket2] ?? 0);
     }
 
@@ -1277,6 +1291,7 @@ class ReportService
         $startOfYear = "{$year}-01-01";
 
         $plReport = $this->generateProfitAndLoss($startOfYear, $asOfDate);
+
         return $plReport['net_income'];
     }
 
@@ -1335,7 +1350,7 @@ class ReportService
                 'journal_entry_lines.category',
                 'accounts.id as account_id',
                 'accounts.name as account_name',
-                DB::raw('SUM(journal_entry_lines.debit) - SUM(journal_entry_lines.credit) as net_change')
+                DB::raw('SUM(journal_entry_lines.debit) - SUM(journal_entry_lines.credit) as net_change'),
             ])
             ->join('journal_entries', 'journal_entry_lines.journal_entry_id', '=', 'journal_entries.id')
             ->join('accounts', 'journal_entry_lines.account_id', '=', 'accounts.id')

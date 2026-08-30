@@ -7,8 +7,7 @@ use Illuminate\Support\Facades\Schema;
 /**
  * Add payment tracking columns to payroll_batches
  */
-return new class extends Migration
-{
+return new class () extends Migration {
     /**
      * Run the migrations.
      */

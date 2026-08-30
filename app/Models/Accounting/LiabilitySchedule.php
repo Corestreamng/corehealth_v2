@@ -3,10 +3,10 @@
 namespace App\Models\Accounting;
 
 use App\Models\User;
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
-use Carbon\Carbon;
 
 /**
  * Liability Schedule Model
@@ -18,7 +18,8 @@ use Carbon\Carbon;
  */
 class LiabilitySchedule extends Model
 {
-    use HasFactory, SoftDeletes;
+    use HasFactory;
+    use SoftDeletes;
 
     protected $table = 'liability_schedules';
 
@@ -150,6 +151,7 @@ class LiabilitySchedule extends Model
     public function calculateCurrentInterest(): float
     {
         $monthlyRate = ($this->interest_rate / 100) / 12;
+
         return round($this->current_balance * $monthlyRate, 2);
     }
 

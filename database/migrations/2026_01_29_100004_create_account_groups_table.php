@@ -15,8 +15,7 @@ use Illuminate\Support\Facades\Schema;
  * - Operating Revenue, Other Income (under INCOME)
  * - Cost of Sales, Operating Expenses (under EXPENSE)
  */
-return new class extends Migration
-{
+return new class () extends Migration {
     /**
      * Run the migrations.
      */

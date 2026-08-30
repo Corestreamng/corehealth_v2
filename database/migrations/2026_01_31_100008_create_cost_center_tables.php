@@ -12,8 +12,7 @@ use Illuminate\Support\Facades\Schema;
  *
  * Creates tables for cost center tracking and allocation.
  */
-return new class extends Migration
-{
+return new class () extends Migration {
     public function up()
     {
         // Cost Centers

@@ -46,13 +46,13 @@ class StoreRequisitionItem extends Model implements Auditable
     /**
      * Status constants
      */
-    const STATUS_PENDING = 'pending';
-    const STATUS_APPROVED = 'approved';
-    const STATUS_REJECTED = 'rejected';
-    const STATUS_PARTIAL = 'partial';
-    const STATUS_FULFILLED = 'fulfilled';
-    const STATUS_CANCELLED = 'cancelled';
-    const STATUS_RETURNED = 'returned';
+    public const STATUS_PENDING = 'pending';
+    public const STATUS_APPROVED = 'approved';
+    public const STATUS_REJECTED = 'rejected';
+    public const STATUS_PARTIAL = 'partial';
+    public const STATUS_FULFILLED = 'fulfilled';
+    public const STATUS_CANCELLED = 'cancelled';
+    public const STATUS_RETURNED = 'returned';
 
     // ===== RELATIONSHIPS =====
 
@@ -120,6 +120,7 @@ class StoreRequisitionItem extends Model implements Auditable
     public function getRemainingQtyAttribute(): int
     {
         $target = $this->approved_qty ?? $this->requested_qty;
+
         return max(0, $target - ($this->fulfilled_qty ?? 0));
     }
 
@@ -139,6 +140,7 @@ class StoreRequisitionItem extends Model implements Auditable
     public function isFullyFulfilled(): bool
     {
         $target = $this->approved_qty ?? $this->requested_qty;
+
         return ($this->fulfilled_qty ?? 0) >= $target;
     }
 
@@ -149,6 +151,7 @@ class StoreRequisitionItem extends Model implements Auditable
     {
         $fulfilled = $this->fulfilled_qty ?? 0;
         $target = $this->approved_qty ?? $this->requested_qty;
+
         return $fulfilled > 0 && $fulfilled < $target;
     }
 

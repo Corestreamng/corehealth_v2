@@ -9,7 +9,8 @@ use OwenIt\Auditing\Contracts\Auditable;
 
 class InjectionAdministration extends Model implements Auditable
 {
-    use HasFactory, SoftDeletes;
+    use HasFactory;
+    use SoftDeletes;
     use \OwenIt\Auditing\Auditable;
 
     protected $fillable = [

@@ -10,8 +10,7 @@ use Illuminate\Support\Facades\Schema;
  * Stores hierarchical navigation metadata for global search functionality.
  * This table is populated by the routes:scan artisan command.
  */
-return new class extends Migration
-{
+return new class () extends Migration {
     /**
      * Run the migrations.
      */

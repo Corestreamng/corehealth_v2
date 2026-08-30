@@ -6,7 +6,6 @@ use App\Models\AdmissionRequest;
 use App\Models\Patient;
 use App\Models\ProductOrServiceRequest;
 use Carbon\Carbon;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\View;
@@ -90,13 +89,13 @@ class AdmissionModuleController extends Controller
         }
 
         $query = ProductOrServiceRequest::with([
-            'service.category', 
-            'product.category', 
-            'payment.user', 
-            'payment.bank', 
-            'payment.staffBill', 
-            'payment.organizationBill', 
-            'hmo', 
+            'service.category',
+            'product.category',
+            'payment.user',
+            'payment.bank',
+            'payment.staffBill',
+            'payment.organizationBill',
+            'hmo',
             'validator',
             'labRequest.sampler',
             'labRequest.resultBy',
@@ -107,7 +106,7 @@ class AdmissionModuleController extends Controller
             'procedure.requestedByUser',
             'doctor_queue_entry.clinic',
             'doctor_queue_entry.doctor',
-            'staff'
+            'staff',
         ])
             ->where('user_id', $patient->user_id)
             ->where('created_at', '>=', $admitDate);
@@ -199,6 +198,7 @@ class AdmissionModuleController extends Controller
                 foreach ($keywords as $keyword) {
                     if (str_contains($categoryName, $keyword)) {
                         $itemCategory = $cat;
+
                         break 2;
                     }
                 }
@@ -279,11 +279,11 @@ class AdmissionModuleController extends Controller
                     $cashierName = trim($payment->user->firstname . ' ' . $payment->user->surname . ' ' . ($payment->user->othername ?? ''));
                 }
                 $paymentMethod = $payment->payment_method;
-                
+
                 if ($payment->bank) {
                     $bankName = $payment->bank->name;
                 }
-                
+
                 if ($payment->staffBill) {
                     $staffId = $payment->staffBill->staff_user_id;
                     if (!isset($staffCache[$staffId])) {
@@ -304,11 +304,19 @@ class AdmissionModuleController extends Controller
             }
 
             // Add to filter lists
-            if ($cashierName && !in_array($cashierName, $cashiers)) $cashiers[] = $cashierName;
-            if ($paymentMethod && !in_array($paymentMethod, $paymentMethods)) $paymentMethods[] = $paymentMethod;
-            if ($bankName && !in_array($bankName, $banks)) $banks[] = $bankName;
-            if ($billedToName && !in_array($billedToName, $billedTo)) $billedTo[] = $billedToName;
-            
+            if ($cashierName && !in_array($cashierName, $cashiers)) {
+                $cashiers[] = $cashierName;
+            }
+            if ($paymentMethod && !in_array($paymentMethod, $paymentMethods)) {
+                $paymentMethods[] = $paymentMethod;
+            }
+            if ($bankName && !in_array($bankName, $banks)) {
+                $banks[] = $bankName;
+            }
+            if ($billedToName && !in_array($billedToName, $billedTo)) {
+                $billedTo[] = $billedToName;
+            }
+
             $availableCategories[$itemCategory] = $categoryLabels[$itemCategory] ?? ucfirst($itemCategory);
 
             // Timeline grouped by day -> category -> items
@@ -321,7 +329,7 @@ class AdmissionModuleController extends Controller
                     'total' => 0,
                 ];
             }
-            
+
             if (!isset($timeline[$dayKey]['categories'][$itemCategory])) {
                 $timeline[$dayKey]['categories'][$itemCategory] = [
                     'name' => $categoryLabels[$itemCategory] ?? ucfirst($itemCategory),
@@ -373,7 +381,7 @@ class AdmissionModuleController extends Controller
             ];
         }
 
-        uasort($categories, fn($a, $b) => $b['total'] <=> $a['total']);
+        uasort($categories, fn ($a, $b) => $b['total'] <=> $a['total']);
         ksort($timeline);
 
         $balanceDue = $grossTotal - $totalDiscount - $totalHmo - $totalPaid;
@@ -548,7 +556,9 @@ class AdmissionModuleController extends Controller
      */
     protected function calculateAdmissionBillTotal($userId, $admitDate, $dischargeDate)
     {
-        if (!$admitDate) return 0;
+        if (!$admitDate) {
+            return 0;
+        }
 
         $query = ProductOrServiceRequest::where('user_id', $userId)
             ->where('created_at', '>=', $admitDate);

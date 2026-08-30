@@ -35,10 +35,10 @@ class AppointmentSlotService
             return collect(); // Clinic not open on this day
         }
 
-        $slotDuration     = $clinicSchedule->slot_duration_minutes;
-        $maxConcurrent    = $clinicSchedule->max_concurrent_slots;
-        $openTime         = Carbon::parse($clinicSchedule->open_time);
-        $closeTime        = Carbon::parse($clinicSchedule->close_time);
+        $slotDuration = $clinicSchedule->slot_duration_minutes;
+        $maxConcurrent = $clinicSchedule->max_concurrent_slots;
+        $openTime = Carbon::parse($clinicSchedule->open_time);
+        $closeTime = Carbon::parse($clinicSchedule->close_time);
 
         // 2. If a specific doctor is requested, check their availability
         if ($doctorId) {
@@ -53,7 +53,7 @@ class AppointmentSlotService
                 }
                 // If extra availability, use override times
                 if ($override->start_time && $override->end_time) {
-                    $openTime  = Carbon::parse($override->start_time);
+                    $openTime = Carbon::parse($override->start_time);
                     $closeTime = Carbon::parse($override->end_time);
                 }
             } else {
@@ -70,9 +70,9 @@ class AppointmentSlotService
 
                 // Narrow the window to doctor's availability
                 $doctorStart = Carbon::parse($availability->start_time);
-                $doctorEnd   = Carbon::parse($availability->end_time);
+                $doctorEnd = Carbon::parse($availability->end_time);
 
-                $openTime  = $openTime->max($doctorStart);
+                $openTime = $openTime->max($doctorStart);
                 $closeTime = $closeTime->min($doctorEnd);
             }
         }
@@ -110,10 +110,10 @@ class AppointmentSlotService
             $available = $count < $maxConcurrent;
 
             return [
-                'time'      => $time,
+                'time' => $time,
                 'available' => $available,
-                'booked'    => $count,
-                'reason'    => $available ? null : 'Fully booked',
+                'booked' => $count,
+                'reason' => $available ? null : 'Fully booked',
             ];
         });
     }
@@ -163,7 +163,7 @@ class AppointmentSlotService
         $patientConflicts = DoctorAppointment::where('patient_id', $patientId)
             ->where('appointment_date', $date)
             ->whereNotIn('status', [QueueStatus::CANCELLED, QueueStatus::NO_SHOW])
-            ->when($excludeAppointmentId, fn($q) => $q->where('id', '!=', $excludeAppointmentId))
+            ->when($excludeAppointmentId, fn ($q) => $q->where('id', '!=', $excludeAppointmentId))
             ->where(function ($q) use ($startTime, $endTime) {
                 // Overlap: existing.start < new.end AND existing.end > new.start
                 $q->where('start_time', '<', $endTime)
@@ -179,7 +179,7 @@ class AppointmentSlotService
             $clinicName = $conflict->clinic ? $conflict->clinic->name : 'another clinic';
             $doctorName = ($conflict->doctor && $conflict->doctor->user) ? $conflict->doctor->user->name : 'Unknown';
             $conflicts[] = [
-                'type'    => 'patient',
+                'type' => 'patient',
                 'message' => "Patient already has an appointment at {$clinicName} "
                            . "with Dr. {$doctorName}"
                            . " at " . Carbon::parse($conflict->start_time)->format('g:i A'),
@@ -192,7 +192,7 @@ class AppointmentSlotService
             $doctorConflicts = DoctorAppointment::where('staff_id', $doctorId)
                 ->where('appointment_date', $date)
                 ->whereNotIn('status', [QueueStatus::CANCELLED, QueueStatus::NO_SHOW])
-                ->when($excludeAppointmentId, fn($q) => $q->where('id', '!=', $excludeAppointmentId))
+                ->when($excludeAppointmentId, fn ($q) => $q->where('id', '!=', $excludeAppointmentId))
                 ->where(function ($q) use ($startTime, $endTime) {
                     $q->where('start_time', '<', $endTime)
                       ->where(function ($q2) use ($startTime) {
@@ -206,7 +206,7 @@ class AppointmentSlotService
             foreach ($doctorConflicts as $conflict) {
                 $patientName = ($conflict->patient && $conflict->patient->user) ? $conflict->patient->user->name : 'a patient';
                 $conflicts[] = [
-                    'type'    => 'doctor',
+                    'type' => 'doctor',
                     'message' => "Doctor already has an appointment with {$patientName}"
                                . " at " . Carbon::parse($conflict->start_time)->format('g:i A'),
                     'appointment_id' => $conflict->id,
@@ -216,7 +216,7 @@ class AppointmentSlotService
 
         return [
             'has_conflict' => count($conflicts) > 0,
-            'conflicts'    => $conflicts,
+            'conflicts' => $conflicts,
         ];
     }
 

@@ -11,14 +11,16 @@ class ClinicController extends Controller
     {
         if ($request->ajax()) {
             $clinics = Clinic::query();
+
             return datatables()->of($clinics)
                 ->addIndexColumn()
-                ->addColumn('vitals_count', function($clinic) {
+                ->addColumn('vitals_count', function ($clinic) {
                     return is_array($clinic->vitals_template) ? count($clinic->vitals_template) : 0;
                 })
-                ->addColumn('actions', function($clinic) {
+                ->addColumn('actions', function ($clinic) {
                     $showUrl = route('clinics.show', $clinic->id);
                     $editUrl = route('clinics.edit', $clinic->id);
+
                     return "
                         <div class='btn-group'>
                             <a href='{$showUrl}' class='btn btn-outline-info btn-xs'><i class='fa fa-eye'></i> View</a>
@@ -45,6 +47,7 @@ class ClinicController extends Controller
         ]);
 
         Clinic::create($validatedData);
+
         return redirect()->route('clinics.index')->withMessage('Clinic created successfully')->withMessageType('success');
     }
 
@@ -68,7 +71,9 @@ class ClinicController extends Controller
         if (isset($validatedData['vitals_template'])) {
             $processedTemplate = [];
             foreach ($validatedData['vitals_template'] as $field) {
-                if (empty($field['name'])) continue;
+                if (empty($field['name'])) {
+                    continue;
+                }
 
                 $processedField = [
                     'name' => $field['name'],
@@ -95,12 +100,14 @@ class ClinicController extends Controller
         }
 
         $clinic->update($validatedData);
+
         return redirect()->route('clinics.index')->withMessage('Clinic updated successfully')->withMessageType('success');
     }
 
     public function destroy(Clinic $clinic)
     {
         $clinic->delete();
+
         return back()->withMessage('Clinic deleted successfully')->withMessageType('success');
     }
 
@@ -113,6 +120,7 @@ class ClinicController extends Controller
 
         // Fetch doctors associated with the clinic
         $doctors = $clinic->doctors()->with(['user', 'specialization'])->get();
+
         return response()->json($doctors);
     }
 }

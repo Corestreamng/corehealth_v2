@@ -2,20 +2,19 @@
 
 namespace App\Http\Controllers\OpsAudit;
 
-use Illuminate\Http\Request;
-use Carbon\Carbon;
-use App\Models\Payment;
 use App\Models\OrganizationBill;
+use App\Models\Payment;
 use App\Models\StaffBill;
-use App\Models\AuditMark;
+use Carbon\Carbon;
+use Illuminate\Http\Request;
 
 class OpsAuditBillingController extends OpsAuditBaseController
 {
     public function index(Request $request)
     {
-        $hmos = \App\Models\Hmo::with('scheme')->orderBy('name')->get()->groupBy(fn($hmo) => $hmo->scheme ? $hmo->scheme->name : 'Other Schemes');
+        $hmos = \App\Models\Hmo::with('scheme')->orderBy('name')->get()->groupBy(fn ($hmo) => $hmo->scheme ? $hmo->scheme->name : 'Other Schemes');
         $hmoSchemes = \App\Models\HmoScheme::orderBy('name')->pluck('name', 'id');
-        $users = \App\Models\User::role(['SUPERADMIN', 'ADMIN', 'ACCOUNTS', 'BILLER'])->orderBy('firstname')->get()->mapWithKeys(fn($u) => [$u->id => trim($u->firstname . ' ' . ($u->othername ?? '') . ' ' . $u->surname)]);
+        $users = \App\Models\User::role(['SUPERADMIN', 'ADMIN', 'ACCOUNTS', 'BILLER'])->orderBy('firstname')->get()->mapWithKeys(fn ($u) => [$u->id => trim($u->firstname . ' ' . ($u->othername ?? '') . ' ' . $u->surname)]);
         $organizations = \App\Models\Organization::orderBy('name')->pluck('name', 'id');
         $banks = \App\Models\Bank::orderBy('name')->pluck('name', 'id');
 
@@ -49,7 +48,7 @@ class OpsAuditBillingController extends OpsAuditBaseController
             'bank',
             'organizationBill.organization',
             'staffBill.staffUser',
-            'patientAccount' // if it exists
+            'patientAccount', // if it exists
 ]);
 
         $this->applyDateFilter($query, $request);
@@ -58,20 +57,26 @@ class OpsAuditBillingController extends OpsAuditBaseController
         $this->applyPaymentFilters($query, $request, 'self_payment');
         $this->applyItemFilters($query, $request, 'product_or_service_request');
 
-        if ($request->filled('payment_type')) $query->where('payment_type', $request->payment_type);
-        if ($request->filled('hmo_id')) $query->where('hmo_id', $request->hmo_id);
-        if ($request->filled('is_audited')) $query->where('is_audited', $request->is_audited);
+        if ($request->filled('payment_type')) {
+            $query->where('payment_type', $request->payment_type);
+        }
+        if ($request->filled('hmo_id')) {
+            $query->where('hmo_id', $request->hmo_id);
+        }
+        if ($request->filled('is_audited')) {
+            $query->where('is_audited', $request->is_audited);
+        }
 
         $kpiQuery = clone $query;
 
-        return $this->buildDataTableResponse($query, $request, fn($q) => $q, function ($row) {
+        return $this->buildDataTableResponse($query, $request, fn ($q) => $q, function ($row) {
             $patient = $row->patient;
             $user = $patient?->user;
             $hmo = $patient?->hmo;
             $cashier = $row->user;
 
             $entity = $this->renderPaymentEntityDetails($row);
-            
+
             $balance = '-';
             if ($row->payment_method === 'BILL_TO_STAFF' && $row->staffBill) {
                 $balance = '₦' . number_format($row->staffBill->outstanding_amount ?? 0, 2);
@@ -120,23 +125,29 @@ class OpsAuditBillingController extends OpsAuditBaseController
             'patient.hmo.scheme',
             'organization',
             'payment.user',
-            'settlementPayment'
+            'settlementPayment',
 ]);
 
         $this->applyDateFilter($query, $request);
 
-        if ($request->filled('organization_id')) $query->where('organization_id', $request->organization_id);
-        if ($request->filled('status')) $query->where('status', $request->status);
-        if ($request->filled('is_audited')) $query->where('is_audited', $request->is_audited);
+        if ($request->filled('organization_id')) {
+            $query->where('organization_id', $request->organization_id);
+        }
+        if ($request->filled('status')) {
+            $query->where('status', $request->status);
+        }
+        if ($request->filled('is_audited')) {
+            $query->where('is_audited', $request->is_audited);
+        }
 
         $kpiQuery = clone $query;
 
-        return $this->buildDataTableResponse($query, $request, fn($q) => $q, function ($row) {
+        return $this->buildDataTableResponse($query, $request, fn ($q) => $q, function ($row) {
             $patient = $row->patient;
             $user = $patient?->user;
             $hmo = $patient?->hmo;
             $cashier = $row->payment?->user;
-            
+
             $statusColors = ['pending' => 'warning text-dark', 'pending_audit' => 'secondary', 'paid' => 'success', 'rejected' => 'danger'];
             $sColor = $statusColors[$row->status] ?? 'secondary';
 
@@ -175,19 +186,27 @@ class OpsAuditBillingController extends OpsAuditBaseController
             'patient.hmo.scheme',
             'staffUser',
             'checkoutPayment.user',
-            'settlementPayment'
+            'settlementPayment',
 ]);
 
         $this->applyDateFilter($query, $request);
 
-        if ($request->filled('staff_user_id')) $query->where('staff_user_id', $request->staff_user_id);
-        if ($request->filled('status')) $query->where('status', $request->status);
-        if ($request->filled('cashier_id')) $query->whereHas('checkoutPayment', fn($q) => $q->where('user_id', $request->cashier_id));
-        if ($request->filled('is_audited')) $query->where('is_audited', $request->is_audited);
+        if ($request->filled('staff_user_id')) {
+            $query->where('staff_user_id', $request->staff_user_id);
+        }
+        if ($request->filled('status')) {
+            $query->where('status', $request->status);
+        }
+        if ($request->filled('cashier_id')) {
+            $query->whereHas('checkoutPayment', fn ($q) => $q->where('user_id', $request->cashier_id));
+        }
+        if ($request->filled('is_audited')) {
+            $query->where('is_audited', $request->is_audited);
+        }
 
         $kpiQuery = clone $query;
 
-        return $this->buildDataTableResponse($query, $request, fn($q) => $q, function ($row) {
+        return $this->buildDataTableResponse($query, $request, fn ($q) => $q, function ($row) {
             $patient = $row->patient;
             $user = $patient?->user;
             $hmo = $patient?->hmo;
@@ -230,8 +249,9 @@ class OpsAuditBillingController extends OpsAuditBaseController
             'organization_bills' => OrganizationBill::class,
             'staff_bills' => StaffBill::class,
         ];
-        
+
         $request->merge(['zone_key' => 'ops_audit.billing.' . $tab]);
+
         return $this->processBulkStamp($request, $tab, $modelMap);
     }
 }

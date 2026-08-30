@@ -34,15 +34,19 @@ class TariffOverride extends Model
         switch ($this->target_type) {
             case 'product':
                 $product = Product::find($this->target_id);
+
                 return $product ? $product->product_name : 'Unknown Product';
             case 'service':
                 $service = Service::find($this->target_id);
+
                 return $service ? $service->service_name : 'Unknown Service';
             case 'product_category':
                 $category = ProductCategory::find($this->target_id);
+
                 return $category ? $category->category_name : 'Unknown Product Category';
             case 'service_category':
                 $category = ServiceCategory::find($this->target_id);
+
                 return $category ? $category->category_name : 'Unknown Service Category';
             case 'all_products':
                 return 'All Products';

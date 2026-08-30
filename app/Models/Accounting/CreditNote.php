@@ -2,14 +2,11 @@
 
 namespace App\Models\Accounting;
 
-use App\Models\Encounter;
 use App\Models\Patient;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use OwenIt\Auditing\Contracts\Auditable;
 
@@ -23,7 +20,9 @@ use OwenIt\Auditing\Contracts\Auditable;
  */
 class CreditNote extends Model implements Auditable
 {
-    use HasFactory, SoftDeletes, \OwenIt\Auditing\Auditable;
+    use HasFactory;
+    use SoftDeletes;
+    use \OwenIt\Auditing\Auditable;
 
     protected $fillable = [
         'credit_note_number',
@@ -56,19 +55,19 @@ class CreditNote extends Model implements Auditable
     ];
 
     // Status constants (matching database enum)
-    const STATUS_DRAFT = 'draft';
-    const STATUS_PENDING_APPROVAL = 'pending_approval';
-    const STATUS_PENDING = 'pending_approval'; // Alias for compatibility
-    const STATUS_APPROVED = 'approved';
-    const STATUS_PROCESSED = 'processed';
-    const STATUS_APPLIED = 'processed'; // Alias for compatibility
-    const STATUS_VOID = 'void';
-    const STATUS_VOIDED = 'void'; // Alias for compatibility
+    public const STATUS_DRAFT = 'draft';
+    public const STATUS_PENDING_APPROVAL = 'pending_approval';
+    public const STATUS_PENDING = 'pending_approval'; // Alias for compatibility
+    public const STATUS_APPROVED = 'approved';
+    public const STATUS_PROCESSED = 'processed';
+    public const STATUS_APPLIED = 'processed'; // Alias for compatibility
+    public const STATUS_VOID = 'void';
+    public const STATUS_VOIDED = 'void'; // Alias for compatibility
 
     // Refund methods (matching database enum)
-    const REFUND_CASH = 'cash';
-    const REFUND_BANK = 'bank';
-    const REFUND_ACCOUNT_CREDIT = 'account_credit';
+    public const REFUND_CASH = 'cash';
+    public const REFUND_BANK = 'bank';
+    public const REFUND_ACCOUNT_CREDIT = 'account_credit';
 
     /**
      * Get the patient.
@@ -362,6 +361,7 @@ class CreditNote extends Model implements Auditable
         if ($method) {
             $this->refund_method = $method;
         }
+
         return $this->process($userId);
     }
 
@@ -437,6 +437,7 @@ class CreditNote extends Model implements Auditable
         if ($toDate) {
             $query->where('created_at', '<=', $toDate);
         }
+
         return $query;
     }
 

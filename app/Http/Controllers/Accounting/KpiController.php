@@ -4,12 +4,12 @@ namespace App\Http\Controllers\Accounting;
 
 use App\Http\Controllers\Controller;
 use App\Services\Accounting\ExcelExportService;
+use Barryvdh\DomPDF\Facade\Pdf;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
-use Carbon\Carbon;
 use Yajra\DataTables\Facades\DataTables;
-use Barryvdh\DomPDF\Facade\Pdf;
 
 /**
  * KPI Controller
@@ -65,7 +65,7 @@ class KpiController extends Controller
         }
 
         // Group by category
-        $groupedKpis = collect($kpiData)->groupBy(fn($item) => $item['kpi']->category);
+        $groupedKpis = collect($kpiData)->groupBy(fn ($item) => $item['kpi']->category);
 
         // Get active alerts count
         $activeAlertsCount = DB::table('financial_kpi_alerts')
@@ -155,6 +155,7 @@ class KpiController extends Controller
                     'leverage' => 'badge-secondary',
                 ];
                 $badge = $badges[$k->category] ?? 'badge-secondary';
+
                 return '<span class="badge ' . $badge . '">' . ucfirst($k->category) . '</span>';
             })
             ->addColumn('unit_display', function ($k) {
@@ -164,6 +165,7 @@ class KpiController extends Controller
                     'currency' => '₦',
                     'days' => 'days',
                 ];
+
                 return $units[$k->unit] ?? $k->unit;
             })
             ->addColumn('status_badge', function ($k) {
@@ -202,6 +204,7 @@ class KpiController extends Controller
                 $actions .= '<a href="' . route('accounting.kpi.edit', $k->id) . '" class="btn btn-outline-primary" title="Edit"><i class="mdi mdi-pencil"></i></a>';
                 $actions .= '<button type="button" class="btn btn-outline-success calculate-kpi" data-id="' . $k->id . '" title="Calculate"><i class="mdi mdi-calculator"></i></button>';
                 $actions .= '</div>';
+
                 return $actions;
             })
             ->rawColumns(['category_badge', 'status_badge', 'dashboard_badge', 'latest_value', 'actions'])
@@ -412,6 +415,7 @@ class KpiController extends Controller
 
         } catch (\Exception $e) {
             DB::rollBack();
+
             return back()
                 ->with('error', 'Failed to calculate KPIs: ' . $e->getMessage());
         }
@@ -452,6 +456,7 @@ class KpiController extends Controller
 
         } catch (\Exception $e) {
             DB::rollBack();
+
             return response()->json(['success' => false, 'message' => $e->getMessage()]);
         }
     }
@@ -667,6 +672,7 @@ class KpiController extends Controller
             'values' => $history->pluck('value')->toArray(),
             'statusColors' => $history->map(function ($record) {
                 $colors = ['normal' => '#28a745', 'warning' => '#ffc107', 'critical' => '#dc3545'];
+
                 return $colors[$record->status] ?? '#6c757d';
             })->toArray(),
         ];
@@ -759,7 +765,7 @@ class KpiController extends Controller
     {
         $kpis = DB::table('financial_kpis')
             ->where('is_active', true)
-            ->when($request->category, fn($q, $cat) => $q->where('category', $cat))
+            ->when($request->category, fn ($q, $cat) => $q->where('category', $cat))
             ->orderBy('category')
             ->orderBy('display_order')
             ->get();
@@ -778,16 +784,18 @@ class KpiController extends Controller
             ];
         }
 
-        $groupedKpis = collect($kpiData)->groupBy(fn($item) => $item['kpi']->category);
+        $groupedKpis = collect($kpiData)->groupBy(fn ($item) => $item['kpi']->category);
 
         // Check if Excel export requested
         if ($request->format === 'excel') {
             $excelService = app(ExcelExportService::class);
+
             return $excelService->kpis($groupedKpis->toArray());
         }
 
         // Default to PDF
         $pdf = Pdf::loadView('accounting.kpi.export-pdf', compact('groupedKpis'));
+
         return $pdf->download('kpi-report-' . now()->format('Y-m-d') . '.pdf');
     }
 }

@@ -14,8 +14,7 @@ use Illuminate\Support\Facades\Schema;
  *
  * Also adds payment_method for flexibility (cash/bank).
  */
-return new class extends Migration
-{
+return new class () extends Migration {
     public function up(): void
     {
         Schema::table('petty_cash_transactions', function (Blueprint $table) {

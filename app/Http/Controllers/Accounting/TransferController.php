@@ -3,19 +3,17 @@
 namespace App\Http\Controllers\Accounting;
 
 use App\Http\Controllers\Controller;
-use App\Models\InterAccountTransfer;
-use App\Models\Bank;
 use App\Models\Accounting\Account;
-use App\Models\Accounting\JournalEntry;
-use App\Models\Accounting\JournalEntryLine;
+use App\Models\Bank;
+use App\Models\InterAccountTransfer;
 use App\Services\Accounting\AccountingService;
 use App\Services\Accounting\ExcelExportService;
+use Barryvdh\DomPDF\Facade\Pdf;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
-use Carbon\Carbon;
 use Yajra\DataTables\Facades\DataTables;
-use Barryvdh\DomPDF\Facade\Pdf;
 
 /**
  * Inter-Account Transfer Controller
@@ -30,6 +28,7 @@ use Barryvdh\DomPDF\Facade\Pdf;
 class TransferController extends Controller
 {
     protected AccountingService $accountingService;
+
     protected ExcelExportService $excelService;
 
     public function __construct(AccountingService $accountingService, ExcelExportService $excelService)
@@ -53,6 +52,7 @@ class TransferController extends Controller
             ->get(['id', 'surname', 'firstname', 'othername'])
             ->map(function ($user) {
                 $user->full_name = trim("{$user->surname} {$user->firstname} {$user->othername}");
+
                 return $user;
             });
 
@@ -105,13 +105,14 @@ class TransferController extends Controller
         }
 
         return DataTables::of($query)
-            ->addColumn('transfer_date_formatted', fn($t) => $t->transfer_date->format('M d, Y'))
-            ->addColumn('amount_formatted', fn($t) => '₦' . number_format($t->amount, 2))
-            ->addColumn('from_bank_name', fn($t) => $t->fromBank?->bank_name ?? '-')
-            ->addColumn('to_bank_name', fn($t) => $t->toBank?->bank_name ?? '-')
+            ->addColumn('transfer_date_formatted', fn ($t) => $t->transfer_date->format('M d, Y'))
+            ->addColumn('amount_formatted', fn ($t) => '₦' . number_format($t->amount, 2))
+            ->addColumn('from_bank_name', fn ($t) => $t->fromBank?->bank_name ?? '-')
+            ->addColumn('to_bank_name', fn ($t) => $t->toBank?->bank_name ?? '-')
             ->addColumn('bank_flow', function ($t) {
                 $from = $t->fromBank?->bank_name ?? 'N/A';
                 $to = $t->toBank?->bank_name ?? 'N/A';
+
                 return '<span class="text-danger">' . $from . '</span> <i class="mdi mdi-arrow-right text-muted"></i> <span class="text-success">' . $to . '</span>';
             })
             ->addColumn('method_badge', function ($t) {
@@ -133,6 +134,7 @@ class TransferController extends Controller
                 ];
                 $color = $colors[$t->transfer_method] ?? 'secondary';
                 $icon = $icons[$t->transfer_method] ?? 'mdi-bank-transfer';
+
                 return '<span class="badge badge-' . $color . '"><i class="mdi ' . $icon . ' mr-1"></i>' . strtoupper($t->transfer_method) . '</span>';
             })
             ->addColumn('status_badge', function ($t) {
@@ -159,9 +161,10 @@ class TransferController extends Controller
                 $color = $colors[$t->status] ?? 'secondary';
                 $icon = $icons[$t->status] ?? 'mdi-help-circle';
                 $label = str_replace('_', ' ', ucwords($t->status, '_'));
+
                 return '<span class="badge badge-' . $color . '"><i class="mdi ' . $icon . ' mr-1"></i>' . $label . '</span>';
             })
-            ->addColumn('initiator_name', fn($t) => $t->initiator ? trim("{$t->initiator->surname} {$t->initiator->firstname}") : '-')
+            ->addColumn('initiator_name', fn ($t) => $t->initiator ? trim("{$t->initiator->surname} {$t->initiator->firstname}") : '-')
             ->addColumn('actions', function ($t) {
                 $actions = '<div class="btn-group btn-group-sm">';
                 $actions .= '<a href="' . route('accounting.transfers.show', $t->id) . '" class="btn btn-outline-info" title="View"><i class="mdi mdi-eye"></i></a>';
@@ -181,6 +184,7 @@ class TransferController extends Controller
                 }
 
                 $actions .= '</div>';
+
                 return $actions;
             })
             ->rawColumns(['bank_flow', 'method_badge', 'status_badge', 'actions'])
@@ -233,7 +237,9 @@ class TransferController extends Controller
             // Generate transfer number
             $transferNumber = 'TRF-' . date('Ymd') . '-' . str_pad(
                 InterAccountTransfer::whereDate('created_at', today())->count() + 1,
-                4, '0', STR_PAD_LEFT
+                4,
+                '0',
+                STR_PAD_LEFT
             );
 
             $transfer = InterAccountTransfer::create([
@@ -263,6 +269,7 @@ class TransferController extends Controller
                 ->with('success', 'Transfer request created successfully. Awaiting approval.');
         } catch (\Exception $e) {
             DB::rollBack();
+
             return back()
                 ->withInput()
                 ->with('error', 'Failed to create transfer: ' . $e->getMessage());
@@ -334,7 +341,7 @@ class TransferController extends Controller
         if (!in_array($transfer->status, [
             InterAccountTransfer::STATUS_APPROVED,
             InterAccountTransfer::STATUS_INITIATED,
-            InterAccountTransfer::STATUS_IN_TRANSIT
+            InterAccountTransfer::STATUS_IN_TRANSIT,
         ])) {
             return $this->errorResponse('Transfer cannot be cleared in current status.', $request);
         }
@@ -356,7 +363,7 @@ class TransferController extends Controller
     {
         if (!in_array($transfer->status, [
             InterAccountTransfer::STATUS_DRAFT,
-            InterAccountTransfer::STATUS_PENDING_APPROVAL
+            InterAccountTransfer::STATUS_PENDING_APPROVAL,
         ])) {
             return $this->errorResponse('Transfer cannot be cancelled in current status.', $request);
         }
@@ -384,7 +391,7 @@ class TransferController extends Controller
         if (!in_array($transfer->status, [
             InterAccountTransfer::STATUS_APPROVED,
             InterAccountTransfer::STATUS_INITIATED,
-            InterAccountTransfer::STATUS_IN_TRANSIT
+            InterAccountTransfer::STATUS_IN_TRANSIT,
         ])) {
             return $this->errorResponse('Transfer cannot be marked as failed in current status.', $request);
         }
@@ -494,15 +501,15 @@ class TransferController extends Controller
     protected function getFilteredTransfers(Request $request)
     {
         return InterAccountTransfer::with(['fromBank', 'toBank', 'initiator', 'approver', 'journalEntry'])
-            ->when($request->filled('status'), fn($q) => $q->where('status', $request->status))
-            ->when($request->filled('from_bank_id'), fn($q) => $q->where('from_bank_id', $request->from_bank_id))
-            ->when($request->filled('to_bank_id'), fn($q) => $q->where('to_bank_id', $request->to_bank_id))
-            ->when($request->filled('transfer_method'), fn($q) => $q->where('transfer_method', $request->transfer_method))
-            ->when($request->filled('initiated_by'), fn($q) => $q->where('initiated_by', $request->initiated_by))
-            ->when($request->filled('amount_min'), fn($q) => $q->where('amount', '>=', $request->amount_min))
-            ->when($request->filled('amount_max'), fn($q) => $q->where('amount', '<=', $request->amount_max))
-            ->when($request->filled('date_from'), fn($q) => $q->whereDate('transfer_date', '>=', $request->date_from))
-            ->when($request->filled('date_to'), fn($q) => $q->whereDate('transfer_date', '<=', $request->date_to))
+            ->when($request->filled('status'), fn ($q) => $q->where('status', $request->status))
+            ->when($request->filled('from_bank_id'), fn ($q) => $q->where('from_bank_id', $request->from_bank_id))
+            ->when($request->filled('to_bank_id'), fn ($q) => $q->where('to_bank_id', $request->to_bank_id))
+            ->when($request->filled('transfer_method'), fn ($q) => $q->where('transfer_method', $request->transfer_method))
+            ->when($request->filled('initiated_by'), fn ($q) => $q->where('initiated_by', $request->initiated_by))
+            ->when($request->filled('amount_min'), fn ($q) => $q->where('amount', '>=', $request->amount_min))
+            ->when($request->filled('amount_max'), fn ($q) => $q->where('amount', '<=', $request->amount_max))
+            ->when($request->filled('date_from'), fn ($q) => $q->whereDate('transfer_date', '>=', $request->date_from))
+            ->when($request->filled('date_to'), fn ($q) => $q->whereDate('transfer_date', '<=', $request->date_to))
             ->orderBy('transfer_date', 'desc')
             ->get();
     }
@@ -609,6 +616,7 @@ class TransferController extends Controller
         if ($request->ajax()) {
             return response()->json(['success' => true, 'message' => $message]);
         }
+
         return back()->with('success', $message);
     }
 
@@ -620,6 +628,7 @@ class TransferController extends Controller
         if ($request->ajax()) {
             return response()->json(['success' => false, 'message' => $message], $code);
         }
+
         return back()->with('error', $message);
     }
 }

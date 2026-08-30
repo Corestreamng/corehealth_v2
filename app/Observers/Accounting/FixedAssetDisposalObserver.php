@@ -2,12 +2,12 @@
 
 namespace App\Observers\Accounting;
 
-use App\Models\Accounting\FixedAssetDisposal;
-use App\Models\Accounting\FixedAsset;
-use App\Models\Accounting\JournalEntry;
-use App\Models\Accounting\JournalEntryLine;
 use App\Models\Accounting\Account;
 use App\Models\Accounting\AccountingPeriod;
+use App\Models\Accounting\FixedAsset;
+use App\Models\Accounting\FixedAssetDisposal;
+use App\Models\Accounting\JournalEntry;
+use App\Models\Accounting\JournalEntryLine;
 use App\Models\Bank;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -83,6 +83,7 @@ class FixedAssetDisposalObserver
             if (!$category) {
                 Log::error('FixedAssetDisposalObserver: Category not found');
                 DB::rollBack();
+
                 return;
             }
 
@@ -104,6 +105,7 @@ class FixedAssetDisposalObserver
                     'proceeds_account_found' => !is_null($proceedsAccount),
                 ]);
                 DB::rollBack();
+
                 return;
             }
 
@@ -274,6 +276,7 @@ class FixedAssetDisposalObserver
     {
         if ($disposal->bank_id) {
             $bank = Bank::find($disposal->bank_id);
+
             return $bank ? $bank->name : 'Bank';
         }
 

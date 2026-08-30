@@ -2,10 +2,9 @@
 
 namespace App\Observers\Accounting;
 
-use App\Models\HR\PayrollBatch;
-use App\Models\HR\PayHead;
 use App\Models\Accounting\Account;
-use App\Models\Accounting\JournalEntry;
+use App\Models\HR\PayHead;
+use App\Models\HR\PayrollBatch;
 use App\Services\Accounting\AccountingService;
 use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\DB;
@@ -59,7 +58,7 @@ class PayrollBatchObserver
                 'batch_id' => $batch->id,
                 'status' => $batch->status,
                 'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
+                'trace' => $e->getTraceAsString(),
             ]);
         }
     }
@@ -83,6 +82,7 @@ class PayrollBatchObserver
                 'salary_expense_found' => !is_null($salaryExpense),
                 'salary_payable_found' => !is_null($salaryPayable),
             ]);
+
             return;
         }
 
@@ -222,6 +222,7 @@ class PayrollBatchObserver
                 'salary_payable_found' => !is_null($salaryPayable),
                 'bank_account_found' => !is_null($bankAccount),
             ]);
+
             return;
         }
 
@@ -243,7 +244,7 @@ class PayrollBatchObserver
                 // METADATA
                 'department_id' => $batch->department_id ?? null,
                 'category' => 'payroll_payment',
-            ]
+            ],
         ];
 
         // Use unique reference to avoid duplicate entry error (append -payment suffix)

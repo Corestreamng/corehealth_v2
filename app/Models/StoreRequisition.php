@@ -27,7 +27,8 @@ use OwenIt\Auditing\Contracts\Auditable;
  */
 class StoreRequisition extends Model implements Auditable
 {
-    use HasFactory, SoftDeletes;
+    use HasFactory;
+    use SoftDeletes;
     use \OwenIt\Auditing\Auditable;
 
     protected $fillable = [
@@ -54,20 +55,20 @@ class StoreRequisition extends Model implements Auditable
         'approved_at' => 'datetime',
         'rejected_at' => 'datetime',
         'fulfilled_at' => 'datetime',
-        'edited_at'   => 'datetime',
-        'edit_count'  => 'integer',
+        'edited_at' => 'datetime',
+        'edit_count' => 'integer',
     ];
 
     /**
      * Status constants
      */
-    const STATUS_PENDING = 'pending';
-    const STATUS_APPROVED = 'approved';
-    const STATUS_REJECTED = 'rejected';
-    const STATUS_PARTIAL = 'partial';
-    const STATUS_FULFILLED = 'fulfilled';
-    const STATUS_CANCELLED = 'cancelled';
-    const STATUS_RETURNED = 'returned';
+    public const STATUS_PENDING = 'pending';
+    public const STATUS_APPROVED = 'approved';
+    public const STATUS_REJECTED = 'rejected';
+    public const STATUS_PARTIAL = 'partial';
+    public const STATUS_FULFILLED = 'fulfilled';
+    public const STATUS_CANCELLED = 'cancelled';
+    public const STATUS_RETURNED = 'returned';
 
     /**
      * Get all available statuses
@@ -75,13 +76,13 @@ class StoreRequisition extends Model implements Auditable
     public static function getStatuses(): array
     {
         return [
-            self::STATUS_PENDING   => 'Pending',
-            self::STATUS_APPROVED  => 'Approved',
-            self::STATUS_REJECTED  => 'Rejected',
-            self::STATUS_PARTIAL   => 'Partially Fulfilled',
+            self::STATUS_PENDING => 'Pending',
+            self::STATUS_APPROVED => 'Approved',
+            self::STATUS_REJECTED => 'Rejected',
+            self::STATUS_PARTIAL => 'Partially Fulfilled',
             self::STATUS_FULFILLED => 'Fulfilled',
             self::STATUS_CANCELLED => 'Cancelled',
-            self::STATUS_RETURNED  => 'Fully Returned',
+            self::STATUS_RETURNED => 'Fully Returned',
         ];
     }
 
@@ -286,7 +287,9 @@ class StoreRequisition extends Model implements Auditable
     public function canEditHeader(): bool
     {
         // Cannot edit if fully returned
-        if ($this->isFullyReturned()) return false;
+        if ($this->isFullyReturned()) {
+            return false;
+        }
 
         return in_array($this->status, [
             self::STATUS_PENDING,
@@ -300,7 +303,10 @@ class StoreRequisition extends Model implements Auditable
      */
     public function canEditItems(): bool
     {
-        if ($this->isFullyReturned()) return false;
+        if ($this->isFullyReturned()) {
+            return false;
+        }
+
         return $this->status === self::STATUS_PENDING;
     }
 
@@ -315,12 +321,14 @@ class StoreRequisition extends Model implements Auditable
         }
         if (in_array($this->status, [self::STATUS_APPROVED, self::STATUS_PARTIAL])) {
             $fulfilledQty = $item->fulfilled_qty ?? 0;
-            $targetQty    = $item->approved_qty ?? $item->requested_qty;
+            $targetQty = $item->approved_qty ?? $item->requested_qty;
+
             return in_array($item->status, [
                 StoreRequisitionItem::STATUS_APPROVED,
                 StoreRequisitionItem::STATUS_PARTIAL,
             ]) && $fulfilledQty < $targetQty;
         }
+
         return false;
     }
 
@@ -339,8 +347,11 @@ class StoreRequisition extends Model implements Auditable
     public function isFullyReturned(): bool
     {
         $items = $this->relationLoaded('items') ? $this->items : $this->items()->get();
-        if ($items->isEmpty()) return false;
-        return $items->every(fn($item) => $item->status === StoreRequisitionItem::STATUS_RETURNED);
+        if ($items->isEmpty()) {
+            return false;
+        }
+
+        return $items->every(fn ($item) => $item->status === StoreRequisitionItem::STATUS_RETURNED);
     }
 
     /**
@@ -387,14 +398,14 @@ class StoreRequisition extends Model implements Auditable
     public function getStatusBadgeClass(): string
     {
         return match($this->status) {
-            self::STATUS_PENDING   => 'badge-warning',
-            self::STATUS_APPROVED  => 'badge-primary',
-            self::STATUS_REJECTED  => 'badge-danger',
-            self::STATUS_PARTIAL   => 'badge-info',
+            self::STATUS_PENDING => 'badge-warning',
+            self::STATUS_APPROVED => 'badge-primary',
+            self::STATUS_REJECTED => 'badge-danger',
+            self::STATUS_PARTIAL => 'badge-info',
             self::STATUS_FULFILLED => 'badge-success',
             self::STATUS_CANCELLED => 'badge-secondary',
-            self::STATUS_RETURNED  => 'badge-dark',
-            default                => 'badge-secondary',
+            self::STATUS_RETURNED => 'badge-dark',
+            default => 'badge-secondary',
         };
     }
 }

@@ -1,15 +1,14 @@
 <?php
 
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Config;
-use App\Models\Accounting\FiscalYear;
 use App\Models\Accounting\AccountingPeriod;
+use App\Models\Accounting\FiscalYear;
 use App\Models\Accounting\JournalEntry;
 use App\Models\Payment;
 use App\Models\ProductOrServiceRequest;
 use Carbon\Carbon;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\App;
+use Illuminate\Support\Facades\Config;
+use Illuminate\Support\Facades\DB;
 
 echo "Starting Accounting Backfill Script for _corehealth_db_v2_hopehill...\n";
 
@@ -55,7 +54,7 @@ for ($year = $startYear; $year <= $currentYear; $year++) {
             'start_date' => $startDate,
             'end_date' => $endDate,
             'status' => 'open', // Leave open to backfill
-            'retained_earnings_account_id' => $retainedEarningsAccId
+            'retained_earnings_account_id' => $retainedEarningsAccId,
         ]
     );
 
@@ -68,13 +67,13 @@ for ($year = $startYear; $year <= $currentYear; $year++) {
         AccountingPeriod::firstOrCreate(
             [
                 'fiscal_year_id' => $fiscalYear->id,
-                'period_number' => $month
+                'period_number' => $month,
             ],
             [
                 'period_name' => $periodStart->format('F Y'),
                 'start_date' => $periodStart,
                 'end_date' => $periodEnd,
-                'status' => 'open'
+                'status' => 'open',
             ]
         );
     }

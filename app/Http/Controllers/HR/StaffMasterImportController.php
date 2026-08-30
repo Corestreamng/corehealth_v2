@@ -3,16 +3,16 @@
 namespace App\Http\Controllers\HR;
 
 use App\Http\Controllers\Controller;
-use App\Models\Staff;
-use App\Models\HR\StaffQualification;
-use App\Models\HR\StaffTraining;
-use App\Models\HR\StaffMedicalExam;
-use App\Models\HR\StaffFollowUp;
-use App\Models\HR\StaffNextOfKin;
 use App\Models\Department;
-use App\Models\Unit;
 use App\Models\HR\Cadre;
 use App\Models\HR\GradeLevel;
+use App\Models\HR\StaffFollowUp;
+use App\Models\HR\StaffMedicalExam;
+use App\Models\HR\StaffNextOfKin;
+use App\Models\HR\StaffQualification;
+use App\Models\HR\StaffTraining;
+use App\Models\Staff;
+use App\Models\Unit;
 use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -49,6 +49,7 @@ class StaffMasterImportController extends Controller
         ];
 
         $csv = implode(',', $headers) . "\n";
+
         return response($csv)
             ->header('Content-Type', 'text/csv')
             ->header('Content-Disposition', 'attachment; filename=staff_master_import_template.csv');
@@ -72,12 +73,13 @@ class StaffMasterImportController extends Controller
         $mode = $request->input('mode', 'both');
 
         // Pre-load lookup tables
-        $departments = Department::pluck('id', 'name')->mapWithKeys(fn($v, $k) => [strtolower($k) => $v]);
-        $units = Unit::pluck('id', 'name')->mapWithKeys(fn($v, $k) => [strtolower($k) => $v]);
-        $cadres = Cadre::pluck('id', 'name')->mapWithKeys(fn($v, $k) => [strtolower($k) => $v]);
-        $gradeLevels = GradeLevel::pluck('id', 'name')->mapWithKeys(fn($v, $k) => [strtolower($k) => $v]);
+        $departments = Department::pluck('id', 'name')->mapWithKeys(fn ($v, $k) => [strtolower($k) => $v]);
+        $units = Unit::pluck('id', 'name')->mapWithKeys(fn ($v, $k) => [strtolower($k) => $v]);
+        $cadres = Cadre::pluck('id', 'name')->mapWithKeys(fn ($v, $k) => [strtolower($k) => $v]);
+        $gradeLevels = GradeLevel::pluck('id', 'name')->mapWithKeys(fn ($v, $k) => [strtolower($k) => $v]);
 
         DB::beginTransaction();
+
         try {
             foreach ($rows as $i => $row) {
                 $rowNum = $i + 2;
@@ -91,6 +93,7 @@ class StaffMasterImportController extends Controller
                 if (empty($data['name'])) {
                     $errors[] = "Row {$rowNum}: NAME is required.";
                     $stats['skipped']++;
+
                     continue;
                 }
 
@@ -109,12 +112,14 @@ class StaffMasterImportController extends Controller
 
                 if ($staff && $mode === 'create') {
                     $stats['skipped']++;
+
                     continue;
                 }
 
                 if (!$staff && $mode === 'update') {
                     $errors[] = "Row {$rowNum}: Staff '{$data['name']}' not found for update.";
                     $stats['skipped']++;
+
                     continue;
                 }
 
@@ -162,7 +167,7 @@ class StaffMasterImportController extends Controller
                     'number_of_children' => is_numeric($data['number_of_children'] ?? '') ? (int) $data['number_of_children'] : null,
                     'other_talents' => $data['other_talents'] ?: null,
                     'salary_increment_date' => $this->parseDate($data['salary_increment']),
-                ], fn($v) => $v !== null);
+                ], fn ($v) => $v !== null);
 
                 if ($staff) {
                     // Update existing
@@ -172,7 +177,7 @@ class StaffMasterImportController extends Controller
                             'surname' => $surname ?: null,
                             'firstname' => $firstname ?: null,
                             'othername' => $othername ?: null,
-                        ], fn($v) => $v !== null));
+                        ], fn ($v) => $v !== null));
                     }
                     $stats['updated']++;
                 } else {
@@ -206,6 +211,7 @@ class StaffMasterImportController extends Controller
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error('Master import failed: ' . $e->getMessage());
+
             return response()->json([
                 'message' => 'Import failed: ' . $e->getMessage(),
             ], 500);
@@ -285,6 +291,7 @@ class StaffMasterImportController extends Controller
                 foreach ($alts as $alt) {
                     if ($normalized === $alt) {
                         $map[$key] = $col;
+
                         break 2;
                     }
                 }
@@ -300,17 +307,22 @@ class StaffMasterImportController extends Controller
         foreach ($headerMap as $key => $col) {
             $data[$key] = trim($row[$col] ?? '');
         }
+
         return $data;
     }
 
     private function parseDate(?string $value): ?string
     {
-        if (empty($value)) return null;
+        if (empty($value)) {
+            return null;
+        }
+
         try {
             // Handle Excel numeric dates
             if (is_numeric($value)) {
                 return Carbon::instance(\PhpOffice\PhpSpreadsheet\Shared\Date::excelToDateTimeObject((int) $value))->format('Y-m-d');
             }
+
             return Carbon::parse($value)->format('Y-m-d');
         } catch (\Exception $e) {
             return null;
@@ -320,8 +332,13 @@ class StaffMasterImportController extends Controller
     private function normalizeGender(string $val): ?string
     {
         $val = strtolower(trim($val));
-        if (in_array($val, ['m', 'male'])) return 'male';
-        if (in_array($val, ['f', 'female'])) return 'female';
+        if (in_array($val, ['m', 'male'])) {
+            return 'male';
+        }
+        if (in_array($val, ['f', 'female'])) {
+            return 'female';
+        }
+
         return $val ?: null;
     }
 
@@ -329,6 +346,7 @@ class StaffMasterImportController extends Controller
     {
         $val = strtolower(trim($val));
         $statusMap = ['active' => 'active', 'suspended' => 'suspended', 'terminated' => 'terminated', 'retired' => 'retired', 'resigned' => 'resigned'];
+
         return $statusMap[$val] ?? 'active';
     }
 
@@ -353,7 +371,9 @@ class StaffMasterImportController extends Controller
             $resultSeen = strtolower($data['result_seen'] ?? '') === 'yes';
 
             foreach ($quals as $idx => $qualName) {
-                if (empty($qualName)) continue;
+                if (empty($qualName)) {
+                    continue;
+                }
                 StaffQualification::updateOrCreate(
                     ['staff_id' => $staff->id, 'type' => 'additional', 'qualification_name' => $qualName],
                     [
@@ -375,10 +395,14 @@ class StaffMasterImportController extends Controller
         ];
 
         foreach ($trainingFields as $field => $type) {
-            if (empty($data[$field])) continue;
+            if (empty($data[$field])) {
+                continue;
+            }
             $titles = array_map('trim', explode(';', $data[$field]));
             foreach ($titles as $title) {
-                if (empty($title)) continue;
+                if (empty($title)) {
+                    continue;
+                }
                 $status = $type === 'attended' ? 'completed' : 'planned';
                 StaffTraining::updateOrCreate(
                     ['staff_id' => $staff->id, 'type' => $type, 'title' => $title],
@@ -390,7 +414,9 @@ class StaffMasterImportController extends Controller
 
     private function importNextOfKin(Staff $staff, array $data): void
     {
-        if (empty($data['next_of_kin'])) return;
+        if (empty($data['next_of_kin'])) {
+            return;
+        }
 
         StaffNextOfKin::updateOrCreate(
             ['staff_id' => $staff->id, 'is_primary' => true],
@@ -404,7 +430,9 @@ class StaffMasterImportController extends Controller
 
     private function importMedicalExam(Staff $staff, array $data, int $rowNum, array &$errors): void
     {
-        if (empty($data['medical_examination'])) return;
+        if (empty($data['medical_examination'])) {
+            return;
+        }
 
         // Try to parse "Fit (01/01/2024)" or just "Fit" or free text
         $examText = $data['medical_examination'];
@@ -432,7 +460,9 @@ class StaffMasterImportController extends Controller
 
     private function importFollowUp(Staff $staff, array $data): void
     {
-        if (empty($data['follow_up'])) return;
+        if (empty($data['follow_up'])) {
+            return;
+        }
 
         StaffFollowUp::updateOrCreate(
             ['staff_id' => $staff->id, 'subject' => 'Imported: ' . substr($data['follow_up'], 0, 100)],

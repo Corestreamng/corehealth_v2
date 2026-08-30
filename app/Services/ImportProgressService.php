@@ -10,8 +10,8 @@ use Illuminate\Support\Str;
  */
 class ImportProgressService
 {
-    const CACHE_PREFIX = 'import_progress_';
-    const CACHE_TTL = 3600; // 1 hour
+    public const CACHE_PREFIX = 'import_progress_';
+    public const CACHE_TTL = 3600; // 1 hour
 
     /**
      * Generate a unique import ID
@@ -142,6 +142,7 @@ class ImportProgressService
         $data['completed_at'] = now()->toIso8601String();
 
         Cache::put(self::CACHE_PREFIX . $importId, $data, self::CACHE_TTL);
+
         return true;
     }
 
@@ -151,6 +152,7 @@ class ImportProgressService
     public static function isCancelled(string $importId): bool
     {
         $data = Cache::get(self::CACHE_PREFIX . $importId);
+
         return $data && $data['status'] === 'cancelled';
     }
 

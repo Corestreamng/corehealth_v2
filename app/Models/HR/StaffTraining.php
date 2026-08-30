@@ -32,14 +32,14 @@ class StaffTraining extends Model implements Auditable
         'end_date' => 'date',
     ];
 
-    const TYPE_ATTENDED = 'attended';
-    const TYPE_IDENTIFIED = 'identified';
-    const TYPE_CAREER_PLAN = 'career_plan';
+    public const TYPE_ATTENDED = 'attended';
+    public const TYPE_IDENTIFIED = 'identified';
+    public const TYPE_CAREER_PLAN = 'career_plan';
 
-    const STATUS_PLANNED = 'planned';
-    const STATUS_IN_PROGRESS = 'in_progress';
-    const STATUS_COMPLETED = 'completed';
-    const STATUS_CANCELLED = 'cancelled';
+    public const STATUS_PLANNED = 'planned';
+    public const STATUS_IN_PROGRESS = 'in_progress';
+    public const STATUS_COMPLETED = 'completed';
+    public const STATUS_CANCELLED = 'cancelled';
 
     public function staff()
     {

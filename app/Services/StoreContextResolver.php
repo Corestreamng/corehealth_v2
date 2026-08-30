@@ -2,9 +2,9 @@
 
 namespace App\Services;
 
+use App\Models\NursingShift;
 use App\Models\Store;
 use App\Models\StoreContextRule;
-use App\Models\NursingShift;
 use App\Models\User;
 use Illuminate\Support\Facades\Session;
 
@@ -53,7 +53,9 @@ class StoreContextResolver
 
         // Step 1 — Session explicit override (Plan §10 Step 1)
         $store = $this->resolveFromSession($user);
-        if ($store) return $store;
+        if ($store) {
+            return $store;
+        }
 
         // Step 2 — Active nursing shift → ward store (Plan §10 Step 2)
         $activeShift = NursingShift::where('user_id', $user->id)
@@ -62,19 +64,27 @@ class StoreContextResolver
             ->first();
 
         $store = $this->resolveFromShift($activeShift);
-        if ($store) return $store;
+        if ($store) {
+            return $store;
+        }
 
         // Step 3 — User department → department store (Plan §10 Step 3)
         $store = $this->resolveFromDepartment($user);
-        if ($store) return $store;
+        if ($store) {
+            return $store;
+        }
 
         // Step 4 — User default_store_id column (Plan §10 Step 4)
         $store = $this->resolveFromUserDefault($user);
-        if ($store) return $store;
+        if ($store) {
+            return $store;
+        }
 
         // Step 5 — StoreContextRule role default (Plan §10 Step 5)
         $store = $this->resolveFromRoleRule($user);
-        if ($store) return $store;
+        if ($store) {
+            return $store;
+        }
 
         // Step 6 — Role-based hard-coded fallbacks for clinical roles that have
         // no role_default rule configured yet (common on fresh installs).
@@ -97,6 +107,7 @@ class StoreContextResolver
                 ->first();
             if ($store) {
                 $this->resolutionTrace[] = "Step 6 (pharmacist fallback): resolved to [{$store->store_name}] — pharmacy hub default.";
+
                 return $store;
             }
         }
@@ -109,6 +120,7 @@ class StoreContextResolver
                 ->first();
             if ($store) {
                 $this->resolutionTrace[] = "Step 6 (store-keeper fallback): resolved to [{$store->store_name}] — central store default.";
+
                 return $store;
             }
         }
@@ -125,6 +137,7 @@ class StoreContextResolver
                 ->first();
             if ($store) {
                 $this->resolutionTrace[] = "Step 6 (clinical fallback): resolved to [{$store->store_name}] — default ward store.";
+
                 return $store;
             }
         }
@@ -135,11 +148,13 @@ class StoreContextResolver
                 ?? Store::active()->orderBy('id')->first();
             if ($store) {
                 $this->resolutionTrace[] = "Step 6 (admin fallback): resolved to [{$store->store_name}] — admin default store.";
+
                 return $store;
             }
         }
 
         $this->resolutionTrace[] = 'Step 6: no fallback matched → returning null, fallback-action applies.';
+
         return null;
     }
 
@@ -160,19 +175,27 @@ class StoreContextResolver
 
         // Step 2 — Mock shift
         $store = $this->resolveFromShift($mockShift);
-        if ($store) return $store;
+        if ($store) {
+            return $store;
+        }
 
         // Step 3 — Department
         $store = $this->resolveFromDepartment($user);
-        if ($store) return $store;
+        if ($store) {
+            return $store;
+        }
 
         // Step 4 — User default
         $store = $this->resolveFromUserDefault($user);
-        if ($store) return $store;
+        if ($store) {
+            return $store;
+        }
 
         // Step 5 — Role rule
         $store = $this->resolveFromRoleRule($user);
-        if ($store) return $store;
+        if ($store) {
+            return $store;
+        }
         // Step 6 — Clinical Fallback (NURSE / MATERNITY) (Plan §B.5)
         if ($user->hasAnyRole(['NURSE', 'MATERNITY'])) {
             $store = Store::active()
@@ -186,12 +209,14 @@ class StoreContextResolver
 
             if ($store) {
                 $this->resolutionTrace[] = "Step 6 (clinical fallback): resolved to [{$store->store_name}] — default ward store.";
+
                 return $store;
             }
         }
 
         // Final fallback action (Plan §10 Step 5)
         $this->resolutionTrace[] = 'Final: could not resolve any store context.';
+
         return null;
     }
 
@@ -237,14 +262,16 @@ class StoreContextResolver
     {
         $storeId = Session::get(self::SESSION_KEY);
 
-        if (! $storeId) {
+        if (!$storeId) {
             $this->resolutionTrace[] = 'Step 1 (session): no explicit session store.';
+
             return null;
         }
 
         // Requires the permission to change context manually (Plan §11)
-        if (! $user->hasPermissionTo('store-context.change-manual')) {
+        if (!$user->hasPermissionTo('store-context.change-manual')) {
             $this->resolutionTrace[] = 'Step 1 (session): session override present but user lacks store-context.change-manual permission; skipped.';
+
             return null;
         }
 
@@ -263,13 +290,15 @@ class StoreContextResolver
     /** Step 2 — Active NursingShift ward store (Plan §10 Step 2) */
     private function resolveFromShift(?NursingShift $shift): ?Store
     {
-        if (! $shift || $shift->status !== 'active') {
+        if (!$shift || $shift->status !== 'active') {
             $this->resolutionTrace[] = 'Step 2 (shift): no active shift.';
+
             return null;
         }
 
-        if (! $shift->ward_id) {
+        if (!$shift->ward_id) {
             $this->resolutionTrace[] = 'Step 2 (shift): active shift found but it is a FLOATING shift (no ward_id).';
+
             return null;
         }
 
@@ -299,8 +328,9 @@ class StoreContextResolver
         // department_id lives on the staff record, not directly on users
         $departmentId = $user->staff_profile?->department_id;
 
-        if (! $departmentId) {
+        if (!$departmentId) {
             $this->resolutionTrace[] = 'Step 3 (department): user has no department (no staff record or department_id not set).';
+
             return null;
         }
 
@@ -309,6 +339,7 @@ class StoreContextResolver
 
         if ($store) {
             $this->resolutionTrace[] = "Step 3 (department): resolved to [{$store->store_name}] via StoreContextRule department_override for dept_id={$departmentId}.";
+
             return $store;
         }
 
@@ -334,8 +365,9 @@ class StoreContextResolver
         // Guard with isset / column existence rather than relying on $fillable.
         $defaultStoreId = data_get($user, 'default_store_id');
 
-        if (! $defaultStoreId) {
+        if (!$defaultStoreId) {
             $this->resolutionTrace[] = 'Step 4 (user default): no default_store_id on user.';
+
             return null;
         }
 
@@ -356,8 +388,9 @@ class StoreContextResolver
         // Use the first Spatie role name as the primary role
         $primaryRole = $user->roles->first()?->name;
 
-        if (! $primaryRole) {
+        if (!$primaryRole) {
             $this->resolutionTrace[] = 'Step 5 (role rule): user has no Spatie role.';
+
             return null;
         }
 
@@ -404,6 +437,7 @@ class StoreContextResolver
             } elseif ($typeFilter === 'ward') {
                 $q->where('distribution_role', Store::ROLE_WARD);
             }
+
             return $q->get(['id', 'store_name', 'distribution_role', 'ward_id', 'department_id']);
         }
 
@@ -422,7 +456,9 @@ class StoreContextResolver
         } elseif ($activeShift?->ward_id) {
             // Case 1: Active shift in a specific ward -> Restricted to that ward store
             $wardStore = Store::where('ward_id', $activeShift->ward_id)->active()->first();
-            if ($wardStore) $ids->push($wardStore->id);
+            if ($wardStore) {
+                $ids->push($wardStore->id);
+            }
         } else {
             // Case 2: No active ward-specific shift (Floating or No Shift)
             // Clinical roles (NURSE, MATERNITY) get access to ALL ward stores
@@ -441,31 +477,40 @@ class StoreContextResolver
                 ->where('distribution_role', Store::ROLE_DEPARTMENT)
                 ->active()
                 ->first();
-            if ($deptStore) $ids->push($deptStore->id);
+            if ($deptStore) {
+                $ids->push($deptStore->id);
+            }
         }
 
         // C) StoreContextRule::storeForRole
         $primaryRole = $user->roles->first()?->name;
         if ($primaryRole) {
             $ruleStore = StoreContextRule::storeForRole($primaryRole);
-            if ($ruleStore) $ids->push($ruleStore->id);
+            if ($ruleStore) {
+                $ids->push($ruleStore->id);
+            }
         }
 
         // D) StoreContextRule::storeForDepartment
         if ($departmentId) {
             $ruleDeptStore = StoreContextRule::storeForDepartment($departmentId);
-            if ($ruleDeptStore) $ids->push($ruleDeptStore->id);
+            if ($ruleDeptStore) {
+                $ids->push($ruleDeptStore->id);
+            }
         }
 
         // E) Option B: DB-driven type_bucket rules — each role can have rules
         //    that expand the candidate set to all stores of a given type.
         $allGranted = false;
         foreach ($user->roles->pluck('name') as $roleName) {
-            if ($allGranted) break;
+            if ($allGranted) {
+                break;
+            }
             foreach (StoreContextRule::typeBucketRulesForRole($roleName) as $br) {
                 if ($br->type_filter === 'all') {
                     $ids = $ids->merge(Store::active()->pluck('id'));
                     $allGranted = true;
+
                     break;
                 } elseif ($br->type_filter === 'pharmacy') {
                     $ids = $ids->merge(
@@ -481,7 +526,7 @@ class StoreContextResolver
 
         // F) Legacy $typeFilter parameter — workbench controllers pass 'pharmacy' or 'ward'
         //    to supplement the candidate set with all stores of that type bucket.
-        if ($typeFilter && ! $allGranted) {
+        if ($typeFilter && !$allGranted) {
             $legacyQ = Store::active();
             if ($typeFilter === 'pharmacy') {
                 $legacyQ->whereIn('distribution_role', [Store::ROLE_PHARMACY_HUB, Store::ROLE_PHARMACY_SATELLITE]);

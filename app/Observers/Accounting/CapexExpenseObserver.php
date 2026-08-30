@@ -2,10 +2,10 @@
 
 namespace App\Observers\Accounting;
 
-use App\Models\CapexProjectExpense;
-use App\Models\CapexProject;
 use App\Models\Accounting\Account;
 use App\Models\Bank;
+use App\Models\CapexProject;
+use App\Models\CapexProjectExpense;
 use App\Services\Accounting\AccountingService;
 use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Log;
@@ -49,7 +49,7 @@ class CapexExpenseObserver
                 'expense_id' => $expense->id,
                 'project_id' => $expense->project_id,
                 'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
+                'trace' => $e->getTraceAsString(),
             ]);
         }
     }
@@ -98,6 +98,7 @@ class CapexExpenseObserver
             Log::warning('CapexExpenseObserver: Skipped - project not found', [
                 'expense_id' => $expense->id,
             ]);
+
             return;
         }
 
@@ -113,6 +114,7 @@ class CapexExpenseObserver
                 'debit_code' => $debitAccountCode,
                 'credit_code' => $creditAccountCode,
             ]);
+
             return;
         }
 
@@ -132,7 +134,7 @@ class CapexExpenseObserver
                 'credit_amount' => $expense->amount,
                 'description' => $this->buildCreditDescription($expense),
                 'category' => 'capex',
-            ]
+            ],
         ];
 
         $entry = $accountingService->createAndPostAutomatedEntry(
@@ -211,6 +213,7 @@ class CapexExpenseObserver
                         'bank_name' => $bank->name,
                         'account_code' => $account->code,
                     ]);
+
                     return $account->code;
                 }
             }

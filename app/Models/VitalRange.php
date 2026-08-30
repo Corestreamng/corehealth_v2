@@ -25,7 +25,7 @@ class VitalRange extends Model
 
     /**
      * Resolve the best matching range for a patient and vital sign.
-     * 
+     *
      * @param string $vitalKey e.g. 'temp', 'heart_rate', 'resp_rate', 'spo2', 'bp_sys', 'bp_dia'
      * @param int $ageDays
      * @param string|null $gender
@@ -36,7 +36,7 @@ class VitalRange extends Model
         return self::where('vital_key', $vitalKey)
             ->where('age_min_days', '<=', $ageDays)
             ->where('age_max_days', '>=', $ageDays)
-            ->where(function($q) use ($gender) {
+            ->where(function ($q) use ($gender) {
                 $q->whereNull('gender')
                   ->orWhere('gender', $gender);
             })

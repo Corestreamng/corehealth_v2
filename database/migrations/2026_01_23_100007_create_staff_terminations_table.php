@@ -26,7 +26,7 @@ class CreateStaffTerminationsTable extends Migration
             $table->enum('type', ['voluntary', 'involuntary', 'retirement', 'death', 'contract_end'])->default('voluntary');
             $table->enum('reason_category', [
                 'resignation', 'misconduct', 'poor_performance', 'redundancy',
-                'retirement', 'medical', 'death', 'contract_expiry', 'other'
+                'retirement', 'medical', 'death', 'contract_expiry', 'other',
             ]);
             $table->text('reason_details');
             $table->date('notice_date');

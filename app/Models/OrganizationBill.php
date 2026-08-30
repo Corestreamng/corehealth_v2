@@ -2,10 +2,9 @@
 
 namespace App\Models;
 
+use App\Traits\IsAuditable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use App\Traits\IsAuditable;
-
 
 class OrganizationBill extends Model
 {

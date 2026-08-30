@@ -2,9 +2,9 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Seeder;
 use App\Models\Clinic;
 use App\Models\ClinicNoteTemplate;
+use Illuminate\Database\Seeder;
 
 class ClinicNoteTemplateSeeder extends Seeder
 {
@@ -41,14 +41,14 @@ class ClinicNoteTemplateSeeder extends Seeder
         foreach ($this->globalTemplates() as $t) {
             if (!ClinicNoteTemplate::whereNull('clinic_id')->where('name', $t['name'])->exists()) {
                 ClinicNoteTemplate::create([
-                    'clinic_id'   => null,
-                    'name'        => $t['name'],
+                    'clinic_id' => null,
+                    'name' => $t['name'],
                     'description' => $t['description'],
-                    'content'     => $t['content'],
-                    'category'    => $t['category'],
-                    'sort_order'  => $t['sort_order'],
-                    'is_active'   => true,
-                    'created_by'  => 1,
+                    'content' => $t['content'],
+                    'category' => $t['category'],
+                    'sort_order' => $t['sort_order'],
+                    'is_active' => true,
+                    'created_by' => 1,
                 ]);
                 $count++;
                 $this->command->line("  + {$t['category']}: {$t['name']}");
@@ -69,20 +69,21 @@ class ClinicNoteTemplateSeeder extends Seeder
             $clinic = Clinic::where('name', $clinicName)->first();
             if (!$clinic) {
                 $this->command->warn("  Clinic not found: {$clinicName} — skipping");
+
                 continue;
             }
 
             foreach ($templates as $idx => $t) {
                 if (!ClinicNoteTemplate::where('clinic_id', $clinic->id)->where('name', $t['name'])->exists()) {
                     ClinicNoteTemplate::create([
-                        'clinic_id'   => $clinic->id,
-                        'name'        => $t['name'],
+                        'clinic_id' => $clinic->id,
+                        'name' => $t['name'],
                         'description' => $t['description'],
-                        'content'     => $t['content'],
-                        'category'    => $t['category'],
-                        'sort_order'  => $idx + 10,
-                        'is_active'   => true,
-                        'created_by'  => 1,
+                        'content' => $t['content'],
+                        'category' => $t['category'],
+                        'sort_order' => $idx + 10,
+                        'is_active' => true,
+                        'created_by' => 1,
                     ]);
                     $count++;
                     $this->command->line("  + [{$clinicName}] {$t['category']}: {$t['name']}");
@@ -133,11 +134,11 @@ class ClinicNoteTemplateSeeder extends Seeder
     {
         return [
             [
-                'name'        => 'Initial Consultation (SOAP)',
-                'category'    => 'First Visit',
+                'name' => 'Initial Consultation (SOAP)',
+                'category' => 'First Visit',
                 'description' => 'Standard SOAP-format clerking for a new patient\'s first visit',
-                'sort_order'  => 1,
-                'content'     => '<h3>INITIAL CONSULTATION</h3>
+                'sort_order' => 1,
+                'content' => '<h3>INITIAL CONSULTATION</h3>
 
 <h4>S — Subjective</h4>
 <p><strong>Chief Complaint:</strong><br>[State the patient\'s main complaint in their own words with duration]</p>
@@ -175,11 +176,11 @@ class ClinicNoteTemplateSeeder extends Seeder
             ],
 
             [
-                'name'        => 'Ward Round Note',
-                'category'    => 'Ward Round',
+                'name' => 'Ward Round Note',
+                'category' => 'Ward Round',
                 'description' => 'Daily ward round documentation following ISBAR format',
-                'sort_order'  => 2,
-                'content'     => '<h3>WARD ROUND NOTE</h3>
+                'sort_order' => 2,
+                'content' => '<h3>WARD ROUND NOTE</h3>
 <p><strong>Day of Admission:</strong> [Day #] &nbsp; | &nbsp; <strong>Bed:</strong> [Ward/Bed]</p>
 
 <h4>I — Identification</h4>
@@ -222,11 +223,11 @@ class ClinicNoteTemplateSeeder extends Seeder
             ],
 
             [
-                'name'        => 'Follow-Up Visit',
-                'category'    => 'Follow-Up',
+                'name' => 'Follow-Up Visit',
+                'category' => 'Follow-Up',
                 'description' => 'Structured follow-up consultation template',
-                'sort_order'  => 3,
-                'content'     => '<h3>FOLLOW-UP CONSULTATION</h3>
+                'sort_order' => 3,
+                'content' => '<h3>FOLLOW-UP CONSULTATION</h3>
 
 <p><strong>Previous Diagnosis:</strong><br>[Diagnosis from last visit]</p>
 <p><strong>Last Visit Date:</strong> [Date] &nbsp; | &nbsp; <strong>Interval:</strong> [weeks/months since last visit]</p>
@@ -255,11 +256,11 @@ class ClinicNoteTemplateSeeder extends Seeder
             ],
 
             [
-                'name'        => 'Discharge Summary',
-                'category'    => 'Discharge',
+                'name' => 'Discharge Summary',
+                'category' => 'Discharge',
                 'description' => 'Comprehensive hospital discharge summary',
-                'sort_order'  => 4,
-                'content'     => '<h3>DISCHARGE SUMMARY</h3>
+                'sort_order' => 4,
+                'content' => '<h3>DISCHARGE SUMMARY</h3>
 
 <table class="table" border="1">
 <tr><td><strong>Date of Admission</strong></td><td>[Date]</td></tr>
@@ -315,11 +316,11 @@ class ClinicNoteTemplateSeeder extends Seeder
             ],
 
             [
-                'name'        => 'Procedure Note',
-                'category'    => 'Procedure',
+                'name' => 'Procedure Note',
+                'category' => 'Procedure',
                 'description' => 'Standard operative/procedural documentation',
-                'sort_order'  => 5,
-                'content'     => '<h3>PROCEDURE NOTE</h3>
+                'sort_order' => 5,
+                'content' => '<h3>PROCEDURE NOTE</h3>
 
 <table class="table" border="1">
 <tr><td><strong>Procedure</strong></td><td>[Name of procedure]</td></tr>
@@ -358,11 +359,11 @@ class ClinicNoteTemplateSeeder extends Seeder
             ],
 
             [
-                'name'        => 'Referral Letter',
-                'category'    => 'Referral',
+                'name' => 'Referral Letter',
+                'category' => 'Referral',
                 'description' => 'Inter-specialty or external referral letter',
-                'sort_order'  => 6,
-                'content'     => '<h3>REFERRAL LETTER</h3>
+                'sort_order' => 6,
+                'content' => '<h3>REFERRAL LETTER</h3>
 
 <p><strong>To:</strong> Dr. ______________ — [Specialty/Hospital]</p>
 
@@ -388,11 +389,11 @@ class ClinicNoteTemplateSeeder extends Seeder
             ],
 
             [
-                'name'        => 'Emergency Assessment (ABCDE)',
-                'category'    => 'Emergency',
+                'name' => 'Emergency Assessment (ABCDE)',
+                'category' => 'Emergency',
                 'description' => 'Systematic ABCDE emergency assessment framework',
-                'sort_order'  => 7,
-                'content'     => '<h3>EMERGENCY ASSESSMENT</h3>
+                'sort_order' => 7,
+                'content' => '<h3>EMERGENCY ASSESSMENT</h3>
 
 <p><strong>Triage Category:</strong> [ ] Red [ ] Orange [ ] Yellow [ ] Green</p>
 
@@ -436,11 +437,11 @@ class ClinicNoteTemplateSeeder extends Seeder
             ],
 
             [
-                'name'        => 'Death Summary Note',
-                'category'    => 'Death',
+                'name' => 'Death Summary Note',
+                'category' => 'Death',
                 'description' => 'Documentation for patient death in hospital',
-                'sort_order'  => 8,
-                'content'     => '<h3>DEATH SUMMARY</h3>
+                'sort_order' => 8,
+                'content' => '<h3>DEATH SUMMARY</h3>
 
 <table class="table" border="1">
 <tr><td><strong>Date of Admission</strong></td><td>[Date]</td></tr>
@@ -481,10 +482,10 @@ class ClinicNoteTemplateSeeder extends Seeder
         return [
             'Pediatrics' => [
                 [
-                    'name'     => 'Pediatric Clerking',
+                    'name' => 'Pediatric Clerking',
                     'category' => 'First Visit',
                     'description' => 'Age-appropriate pediatric initial assessment with growth milestones',
-                    'content'  => '<h3>PEDIATRIC INITIAL ASSESSMENT</h3>
+                    'content' => '<h3>PEDIATRIC INITIAL ASSESSMENT</h3>
 <p><strong>Informant:</strong> [Parent/Guardian name and relationship]</p>
 
 <h4>Presenting Complaint</h4>
@@ -535,10 +536,10 @@ class ClinicNoteTemplateSeeder extends Seeder
 <p><strong>Plan:</strong></p>',
                 ],
                 [
-                    'name'     => 'Pediatric Ward Round',
+                    'name' => 'Pediatric Ward Round',
                     'category' => 'Ward Round',
                     'description' => 'Pediatric inpatient daily review with feeding/growth focus',
-                    'content'  => '<h3>PEDIATRIC WARD ROUND</h3>
+                    'content' => '<h3>PEDIATRIC WARD ROUND</h3>
 <p><strong>Day:</strong> [#] of admission</p>
 
 <p><strong>Diagnosis:</strong> [Current diagnosis]</p>
@@ -565,10 +566,10 @@ class ClinicNoteTemplateSeeder extends Seeder
 
             'Gynecology/Obstetrics' => [
                 [
-                    'name'     => 'Antenatal Visit (Booking)',
+                    'name' => 'Antenatal Visit (Booking)',
                     'category' => 'Antenatal',
                     'description' => 'First antenatal booking visit with comprehensive history',
-                    'content'  => '<h3>ANTENATAL BOOKING VISIT</h3>
+                    'content' => '<h3>ANTENATAL BOOKING VISIT</h3>
 
 <h4>Obstetric History</h4>
 <p><strong>Gravida:</strong> ___ &nbsp; <strong>Para:</strong> ___ &nbsp; <strong>Abortions:</strong> ___ &nbsp; <strong>Living:</strong> ___</p>
@@ -611,10 +612,10 @@ class ClinicNoteTemplateSeeder extends Seeder
 <p><strong>Next visit:</strong> [Date] &nbsp; | &nbsp; <strong>Delivery plan:</strong> [Hospital / facility]</p>',
                 ],
                 [
-                    'name'     => 'Gynecology Consultation',
+                    'name' => 'Gynecology Consultation',
                     'category' => 'First Visit',
                     'description' => 'Gynecological consultation template with menstrual and reproductive history',
-                    'content'  => '<h3>GYNECOLOGY CONSULTATION</h3>
+                    'content' => '<h3>GYNECOLOGY CONSULTATION</h3>
 
 <h4>Chief Complaint</h4>
 <p>[Main complaint and duration]</p>
@@ -655,10 +656,10 @@ class ClinicNoteTemplateSeeder extends Seeder
 
             'Cardiology' => [
                 [
-                    'name'     => 'Cardiology Consultation',
+                    'name' => 'Cardiology Consultation',
                     'category' => 'First Visit',
                     'description' => 'Cardiovascular-focused initial assessment',
-                    'content'  => '<h3>CARDIOLOGY CONSULTATION</h3>
+                    'content' => '<h3>CARDIOLOGY CONSULTATION</h3>
 
 <h4>Presenting Complaint</h4>
 <p>[Chest pain / Dyspnea / Palpitations / Syncope / Edema]</p>
@@ -698,10 +699,10 @@ class ClinicNoteTemplateSeeder extends Seeder
 
             'Orthopedic' => [
                 [
-                    'name'     => 'Orthopedic Consultation',
+                    'name' => 'Orthopedic Consultation',
                     'category' => 'First Visit',
                     'description' => 'Musculoskeletal assessment with injury/joint focus',
-                    'content'  => '<h3>ORTHOPEDIC CONSULTATION</h3>
+                    'content' => '<h3>ORTHOPEDIC CONSULTATION</h3>
 
 <h4>Presenting Complaint</h4>
 <p>[Pain / Swelling / Deformity / Reduced mobility — Site, Duration]</p>
@@ -754,10 +755,10 @@ class ClinicNoteTemplateSeeder extends Seeder
 
             'Ophthalmology' => [
                 [
-                    'name'     => 'Ophthalmology Consultation',
+                    'name' => 'Ophthalmology Consultation',
                     'category' => 'First Visit',
                     'description' => 'Comprehensive eye examination template',
-                    'content'  => '<h3>OPHTHALMOLOGY CONSULTATION</h3>
+                    'content' => '<h3>OPHTHALMOLOGY CONSULTATION</h3>
 
 <h4>Presenting Complaint</h4>
 <p>[Reduced vision / Pain / Redness / Discharge / Floaters / Flashes / Trauma]</p>
@@ -799,10 +800,10 @@ class ClinicNoteTemplateSeeder extends Seeder
 
             'Dental' => [
                 [
-                    'name'     => 'Dental Examination',
+                    'name' => 'Dental Examination',
                     'category' => 'First Visit',
                     'description' => 'Comprehensive dental examination and charting',
-                    'content'  => '<h3>DENTAL EXAMINATION</h3>
+                    'content' => '<h3>DENTAL EXAMINATION</h3>
 
 <h4>Chief Complaint</h4>
 <p>[Pain / Swelling / Bleeding gums / Broken tooth / Cosmetic concern]</p>
@@ -844,10 +845,10 @@ Lower:  48 47 46 45 44 43 42 41 | 31 32 33 34 35 36 37 38
 
             'Psychiatry' => [
                 [
-                    'name'     => 'Psychiatric Assessment',
+                    'name' => 'Psychiatric Assessment',
                     'category' => 'First Visit',
                     'description' => 'Comprehensive psychiatric evaluation with mental state exam',
-                    'content'  => '<h3>PSYCHIATRIC ASSESSMENT</h3>
+                    'content' => '<h3>PSYCHIATRIC ASSESSMENT</h3>
 <p><strong>Informant(s):</strong> [Patient + relative/carer if applicable]</p>
 
 <h4>Presenting Complaint</h4>
@@ -912,10 +913,10 @@ Lower:  48 47 46 45 44 43 42 41 | 31 32 33 34 35 36 37 38
 
             'Endocrinology' => [
                 [
-                    'name'     => 'Diabetes Review',
+                    'name' => 'Diabetes Review',
                     'category' => 'Follow-Up',
                     'description' => 'Structured diabetes management review',
-                    'content'  => '<h3>DIABETES REVIEW</h3>
+                    'content' => '<h3>DIABETES REVIEW</h3>
 
 <h4>Diabetes Profile</h4>
 <table class="table" border="1">
@@ -962,10 +963,10 @@ Lower:  48 47 46 45 44 43 42 41 | 31 32 33 34 35 36 37 38
 
             'General Surgery' => [
                 [
-                    'name'     => 'Surgical Clerking',
+                    'name' => 'Surgical Clerking',
                     'category' => 'First Visit',
                     'description' => 'Pre-operative surgical assessment and clerking note',
-                    'content'  => '<h3>SURGICAL CLERKING NOTE</h3>
+                    'content' => '<h3>SURGICAL CLERKING NOTE</h3>
 
 <h4>Presenting Complaint</h4>
 <p>[Main surgical complaint with duration]</p>
@@ -1013,10 +1014,10 @@ Lower:  48 47 46 45 44 43 42 41 | 31 32 33 34 35 36 37 38
 
             'Ear, Nose & Throat' => [
                 [
-                    'name'     => 'ENT Consultation',
+                    'name' => 'ENT Consultation',
                     'category' => 'First Visit',
                     'description' => 'Ear, nose and throat examination template',
-                    'content'  => '<h3>ENT CONSULTATION</h3>
+                    'content' => '<h3>ENT CONSULTATION</h3>
 
 <h4>Presenting Complaint</h4>
 <p>[Hearing loss / Ear pain / Discharge / Tinnitus / Vertigo / Nasal obstruction / Epistaxis / Sore throat / Hoarseness / Neck mass]</p>
@@ -1053,10 +1054,10 @@ Lower:  48 47 46 45 44 43 42 41 | 31 32 33 34 35 36 37 38
 
             'Urology' => [
                 [
-                    'name'     => 'Urology Consultation',
+                    'name' => 'Urology Consultation',
                     'category' => 'First Visit',
                     'description' => 'Genitourinary assessment template',
-                    'content'  => '<h3>UROLOGY CONSULTATION</h3>
+                    'content' => '<h3>UROLOGY CONSULTATION</h3>
 
 <h4>Presenting Complaint</h4>
 <p>[LUTS / Hematuria / Renal colic / Retention / Incontinence / Mass]</p>
@@ -1091,10 +1092,10 @@ Lower:  48 47 46 45 44 43 42 41 | 31 32 33 34 35 36 37 38
 
             'Physiotherapy' => [
                 [
-                    'name'     => 'Physiotherapy Assessment',
+                    'name' => 'Physiotherapy Assessment',
                     'category' => 'First Visit',
                     'description' => 'Functional physiotherapy initial assessment',
-                    'content'  => '<h3>PHYSIOTHERAPY ASSESSMENT</h3>
+                    'content' => '<h3>PHYSIOTHERAPY ASSESSMENT</h3>
 <p><strong>Referred by:</strong> Dr. ____________ &nbsp; | &nbsp; <strong>Diagnosis:</strong> _______________</p>
 
 <h4>Presenting Complaint</h4>
@@ -1142,10 +1143,10 @@ Lower:  48 47 46 45 44 43 42 41 | 31 32 33 34 35 36 37 38
 
             'Neurology' => [
                 [
-                    'name'     => 'Neurology Consultation',
+                    'name' => 'Neurology Consultation',
                     'category' => 'First Visit',
                     'description' => 'Comprehensive neurological assessment',
-                    'content'  => '<h3>NEUROLOGY CONSULTATION</h3>
+                    'content' => '<h3>NEUROLOGY CONSULTATION</h3>
 
 <h4>Presenting Complaint</h4>
 <p>[Headache / Seizures / Weakness / Numbness / Tremor / Gait disturbance / Memory loss / Visual change]</p>
@@ -1190,10 +1191,10 @@ Lower:  48 47 46 45 44 43 42 41 | 31 32 33 34 35 36 37 38
 
             'Dermatology' => [
                 [
-                    'name'     => 'Dermatology Consultation',
+                    'name' => 'Dermatology Consultation',
                     'category' => 'First Visit',
                     'description' => 'Skin lesion assessment with morphology description',
-                    'content'  => '<h3>DERMATOLOGY CONSULTATION</h3>
+                    'content' => '<h3>DERMATOLOGY CONSULTATION</h3>
 
 <h4>Presenting Complaint</h4>
 <p>[Rash / Itching / Lesion / Hair loss / Nail change — Duration, progression]</p>
@@ -1227,10 +1228,10 @@ Lower:  48 47 46 45 44 43 42 41 | 31 32 33 34 35 36 37 38
 
             'Pulmonology' => [
                 [
-                    'name'     => 'Pulmonology Consultation',
+                    'name' => 'Pulmonology Consultation',
                     'category' => 'First Visit',
                     'description' => 'Respiratory-focused assessment',
-                    'content'  => '<h3>PULMONOLOGY CONSULTATION</h3>
+                    'content' => '<h3>PULMONOLOGY CONSULTATION</h3>
 
 <h4>Presenting Complaint</h4>
 <p>[Cough / Dyspnea / Hemoptysis / Wheezing / Chest pain (pleuritic)]</p>
@@ -1276,10 +1277,10 @@ Lower:  48 47 46 45 44 43 42 41 | 31 32 33 34 35 36 37 38
 
             'Oncology' => [
                 [
-                    'name'     => 'Oncology Consultation',
+                    'name' => 'Oncology Consultation',
                     'category' => 'First Visit',
                     'description' => 'Cancer staging and treatment planning template',
-                    'content'  => '<h3>ONCOLOGY CONSULTATION</h3>
+                    'content' => '<h3>ONCOLOGY CONSULTATION</h3>
 
 <h4>Cancer Diagnosis</h4>
 <table class="table" border="1">
@@ -1325,10 +1326,10 @@ Lower:  48 47 46 45 44 43 42 41 | 31 32 33 34 35 36 37 38
 
             'Palliative Care' => [
                 [
-                    'name'     => 'Palliative Care Assessment',
+                    'name' => 'Palliative Care Assessment',
                     'category' => 'First Visit',
                     'description' => 'Holistic palliative care assessment',
-                    'content'  => '<h3>PALLIATIVE CARE ASSESSMENT</h3>
+                    'content' => '<h3>PALLIATIVE CARE ASSESSMENT</h3>
 
 <h4>Primary Diagnosis</h4>
 <p>[Disease, stage, prognosis estimate]</p>
@@ -1373,10 +1374,10 @@ Lower:  48 47 46 45 44 43 42 41 | 31 32 33 34 35 36 37 38
 
             'Emergency Medicine' => [
                 [
-                    'name'     => 'Trauma Primary Survey',
+                    'name' => 'Trauma Primary Survey',
                     'category' => 'Emergency',
                     'description' => 'ATLS trauma primary and secondary survey',
-                    'content'  => '<h3>TRAUMA ASSESSMENT</h3>
+                    'content' => '<h3>TRAUMA ASSESSMENT</h3>
 
 <h4>Pre-Hospital</h4>
 <p><strong>Mechanism:</strong> [RTA / Fall (height: ___) / Assault / Penetrating / Blast / Burns]</p>
@@ -1421,10 +1422,10 @@ Lower:  48 47 46 45 44 43 42 41 | 31 32 33 34 35 36 37 38
 
             'Nephrology' => [
                 [
-                    'name'     => 'Nephrology Consultation',
+                    'name' => 'Nephrology Consultation',
                     'category' => 'First Visit',
                     'description' => 'Renal assessment with CKD staging',
-                    'content'  => '<h3>NEPHROLOGY CONSULTATION</h3>
+                    'content' => '<h3>NEPHROLOGY CONSULTATION</h3>
 
 <h4>Presenting Complaint</h4>
 <p>[Elevated creatinine / Proteinuria / Hematuria / Edema / Electrolyte abnormality / Dialysis review]</p>
@@ -1471,10 +1472,10 @@ Lower:  48 47 46 45 44 43 42 41 | 31 32 33 34 35 36 37 38
 
             'General' => [
                 [
-                    'name'     => 'General Consultation',
+                    'name' => 'General Consultation',
                     'category' => 'First Visit',
                     'description' => 'Standard general outpatient consultation',
-                    'content'  => '<h3>GENERAL CONSULTATION</h3>
+                    'content' => '<h3>GENERAL CONSULTATION</h3>
 
 <h4>Chief Complaint</h4>
 <p>[Main complaint in patient\'s own words, duration]</p>
@@ -1513,10 +1514,10 @@ Lower:  48 47 46 45 44 43 42 41 | 31 32 33 34 35 36 37 38
 
             'Family Physician' => [
                 [
-                    'name'     => 'Family Medicine Consultation',
+                    'name' => 'Family Medicine Consultation',
                     'category' => 'First Visit',
                     'description' => 'Comprehensive family medicine visit with preventive care focus',
-                    'content'  => '<h3>FAMILY MEDICINE CONSULTATION</h3>
+                    'content' => '<h3>FAMILY MEDICINE CONSULTATION</h3>
 
 <h4>Chief Complaint</h4>
 <p>[Main reason for visit]</p>
@@ -1566,10 +1567,10 @@ Lower:  48 47 46 45 44 43 42 41 | 31 32 33 34 35 36 37 38
 
             'Internal Medicine' => [
                 [
-                    'name'     => 'Internal Medicine Consultation',
+                    'name' => 'Internal Medicine Consultation',
                     'category' => 'First Visit',
                     'description' => 'Comprehensive internal medicine clerking',
-                    'content'  => '<h3>INTERNAL MEDICINE CONSULTATION</h3>
+                    'content' => '<h3>INTERNAL MEDICINE CONSULTATION</h3>
 
 <h4>Chief Complaint</h4>
 <p>[Primary complaint with duration]</p>
@@ -1625,10 +1626,10 @@ Lower:  48 47 46 45 44 43 42 41 | 31 32 33 34 35 36 37 38
 
             'Gastroenterology' => [
                 [
-                    'name'     => 'Gastroenterology Consultation',
+                    'name' => 'Gastroenterology Consultation',
                     'category' => 'First Visit',
                     'description' => 'GI-focused assessment with abdominal examination',
-                    'content'  => '<h3>GASTROENTEROLOGY CONSULTATION</h3>
+                    'content' => '<h3>GASTROENTEROLOGY CONSULTATION</h3>
 
 <h4>Presenting Complaint</h4>
 <p>[Abdominal pain / Dyspepsia / Dysphagia / Nausea/Vomiting / Diarrhea / Constipation / GI bleeding / Jaundice / Weight loss]</p>
@@ -1675,10 +1676,10 @@ Lower:  48 47 46 45 44 43 42 41 | 31 32 33 34 35 36 37 38
 
             'Hematology' => [
                 [
-                    'name'     => 'Hematology Consultation',
+                    'name' => 'Hematology Consultation',
                     'category' => 'First Visit',
                     'description' => 'Hematological assessment with blood count review',
-                    'content'  => '<h3>HEMATOLOGY CONSULTATION</h3>
+                    'content' => '<h3>HEMATOLOGY CONSULTATION</h3>
 
 <h4>Presenting Complaint / Referral Reason</h4>
 <p>[Anemia / Bleeding / Thrombocytopenia / Leukocytosis / Lymphadenopathy / Abnormal blood film / Coagulopathy]</p>
@@ -1733,10 +1734,10 @@ Lower:  48 47 46 45 44 43 42 41 | 31 32 33 34 35 36 37 38
 
             'Rheumatology' => [
                 [
-                    'name'     => 'Rheumatology Consultation',
+                    'name' => 'Rheumatology Consultation',
                     'category' => 'First Visit',
                     'description' => 'Musculoskeletal and autoimmune assessment',
-                    'content'  => '<h3>RHEUMATOLOGY CONSULTATION</h3>
+                    'content' => '<h3>RHEUMATOLOGY CONSULTATION</h3>
 
 <h4>Presenting Complaint</h4>
 <p>[Joint pain / Swelling / Stiffness / Rash / Fatigue / Muscle weakness / Raynaud\'s]</p>
@@ -1791,10 +1792,10 @@ Lower:  48 47 46 45 44 43 42 41 | 31 32 33 34 35 36 37 38
 
             'Infectious Disease' => [
                 [
-                    'name'     => 'Infectious Disease Consultation',
+                    'name' => 'Infectious Disease Consultation',
                     'category' => 'First Visit',
                     'description' => 'Infection-focused assessment with antimicrobial review',
-                    'content'  => '<h3>INFECTIOUS DISEASE CONSULTATION</h3>
+                    'content' => '<h3>INFECTIOUS DISEASE CONSULTATION</h3>
 
 <h4>Reason for Consultation</h4>
 <p>[Pyrexia of unknown origin / Sepsis / Specific infection / Antimicrobial advice / Returning traveler / HIV management]</p>
@@ -1841,10 +1842,10 @@ Lower:  48 47 46 45 44 43 42 41 | 31 32 33 34 35 36 37 38
 
             'Anesthesiology' => [
                 [
-                    'name'     => 'Pre-Anesthetic Assessment',
+                    'name' => 'Pre-Anesthetic Assessment',
                     'category' => 'Pre-Op',
                     'description' => 'Pre-operative anesthetic evaluation and airway assessment',
-                    'content'  => '<h3>PRE-ANESTHETIC ASSESSMENT</h3>
+                    'content' => '<h3>PRE-ANESTHETIC ASSESSMENT</h3>
 
 <h4>Proposed Surgery</h4>
 <p><strong>Procedure:</strong> [Name]</p>
@@ -1901,10 +1902,10 @@ Lower:  48 47 46 45 44 43 42 41 | 31 32 33 34 35 36 37 38
 
             'Radiology' => [
                 [
-                    'name'     => 'Radiology Report',
+                    'name' => 'Radiology Report',
                     'category' => 'Report',
                     'description' => 'Structured radiology reporting template',
-                    'content'  => '<h3>RADIOLOGY REPORT</h3>
+                    'content' => '<h3>RADIOLOGY REPORT</h3>
 
 <h4>Study Information</h4>
 <table class="table" border="1">
@@ -1938,10 +1939,10 @@ Lower:  48 47 46 45 44 43 42 41 | 31 32 33 34 35 36 37 38
 
             'Neonatology' => [
                 [
-                    'name'     => 'Neonatal Admission',
+                    'name' => 'Neonatal Admission',
                     'category' => 'First Visit',
                     'description' => 'NICU/SCBU neonatal admission assessment',
-                    'content'  => '<h3>NEONATAL ADMISSION ASSESSMENT</h3>
+                    'content' => '<h3>NEONATAL ADMISSION ASSESSMENT</h3>
 
 <h4>Birth Details</h4>
 <table class="table" border="1">
@@ -2000,10 +2001,10 @@ Lower:  48 47 46 45 44 43 42 41 | 31 32 33 34 35 36 37 38
 
             'Plastic Surgery' => [
                 [
-                    'name'     => 'Plastic Surgery Consultation',
+                    'name' => 'Plastic Surgery Consultation',
                     'category' => 'First Visit',
                     'description' => 'Plastic and reconstructive surgery assessment',
-                    'content'  => '<h3>PLASTIC SURGERY CONSULTATION</h3>
+                    'content' => '<h3>PLASTIC SURGERY CONSULTATION</h3>
 
 <h4>Presenting Complaint</h4>
 <p>[Wound / Burn / Scar / Soft tissue defect / Congenital anomaly / Cosmetic concern / Hand injury]</p>
@@ -2050,10 +2051,10 @@ Lower:  48 47 46 45 44 43 42 41 | 31 32 33 34 35 36 37 38
 
             'Nutrition / Dietetics' => [
                 [
-                    'name'     => 'Nutrition Assessment',
+                    'name' => 'Nutrition Assessment',
                     'category' => 'First Visit',
                     'description' => 'Comprehensive nutritional assessment and dietary plan',
-                    'content'  => '<h3>NUTRITION ASSESSMENT</h3>
+                    'content' => '<h3>NUTRITION ASSESSMENT</h3>
 
 <h4>Referral Reason</h4>
 <p>[Malnutrition / Obesity / Diabetes dietary management / Renal diet / Enteral feeding / Pre-surgical optimization / Other]</p>

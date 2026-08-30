@@ -24,7 +24,6 @@ class ProductCatalogueTest extends TestCase
         $this->assertDatabaseHas('products', ['id' => $product->id]);
     }
 
-
     /** @test */
     public function test_service_can_be_created_and_listed()
     {
@@ -38,8 +37,6 @@ class ProductCatalogueTest extends TestCase
         ]);
         $this->assertDatabaseHas('services', ['id' => $service->id]);
     }
-
-
 
     /** @test */
     public function test_product_listing_returns_paginated_data()

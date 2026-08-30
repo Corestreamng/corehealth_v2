@@ -2,25 +2,26 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
-use App\Models\Patient;
-use App\Models\ImagingServiceRequest;
-use App\Models\ProductOrServiceRequest;
-use App\Models\VitalSign;
+use App\Helpers\HmoHelper;
+use App\Http\Traits\ClinicalOrdersTrait;
 use App\Models\Encounter;
+use App\Models\ImagingServiceRequest;
+use App\Models\Patient;
+use App\Models\ProductOrServiceRequest;
 use App\Models\ProductRequest;
 use App\Models\Service;
+use App\Models\VitalSign;
 use Carbon\Carbon;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
-use App\Helpers\HmoHelper;
 use Illuminate\Support\Facades\Log;
 use Yajra\DataTables\DataTables;
-use App\Http\Traits\ClinicalOrdersTrait;
 
 class ImagingWorkbenchController extends Controller
 {
     use ClinicalOrdersTrait;
+
     /**
      * Display the imaging workbench main page
      */
@@ -204,9 +205,15 @@ class ImagingWorkbenchController extends Controller
             $days = $dob->copy()->addYears($years)->addMonths($months)->diffInDays($now);
 
             $ageParts = [];
-            if ($years > 0) $ageParts[] = $years . 'y';
-            if ($months > 0) $ageParts[] = $months . 'm';
-            if ($days > 0) $ageParts[] = $days . 'd';
+            if ($years > 0) {
+                $ageParts[] = $years . 'y';
+            }
+            if ($months > 0) {
+                $ageParts[] = $months . 'm';
+            }
+            if ($days > 0) {
+                $ageParts[] = $days . 'd';
+            }
             $ageText = !empty($ageParts) ? implode(' ', $ageParts) : '0d';
         }
 
@@ -310,7 +317,7 @@ class ImagingWorkbenchController extends Controller
                 'doctor',
                 'biller',
                 'resultBy',
-                'productOrServiceRequest'
+                'productOrServiceRequest',
             ]);
 
             // Filter by status if provided
@@ -321,12 +328,12 @@ class ImagingWorkbenchController extends Controller
                 $query->whereIn('status', [1, 2])->where('is_free_form', 1);
             } elseif ($request->has('status') && $request->status !== 'all') {
                 $statuses = explode(',', $request->status);
-                $query->whereIn('status', $statuses)->where(function($q) {
+                $query->whereIn('status', $statuses)->where(function ($q) {
                     $q->whereNull('is_free_form')->orWhere('is_free_form', 0);
                 });
             } else {
                 // Default to pending statuses (1 = billing, 2 = results)
-                $query->whereIn('status', [1, 2])->where(function($q) {
+                $query->whereIn('status', [1, 2])->where(function ($q) {
                     $q->whereNull('is_free_form')->orWhere('is_free_form', 0);
                 });
             }
@@ -347,7 +354,7 @@ class ImagingWorkbenchController extends Controller
                     if (!$request->patient || !$request->patient->user) {
                         return [
                             'error' => true,
-                            'message' => 'Invalid patient data'
+                            'message' => 'Invalid patient data',
                         ];
                     }
 
@@ -410,14 +417,14 @@ class ImagingWorkbenchController extends Controller
                         'is_free_form' => $request->is_free_form,
                     ];
                 })
-                ->filterColumn('card_data', function($query, $keyword) {
-                    $query->where(function($q) use ($keyword) {
-                        $q->whereHas('patient.user', function($qu) use ($keyword) {
+                ->filterColumn('card_data', function ($query, $keyword) {
+                    $query->where(function ($q) use ($keyword) {
+                        $q->whereHas('patient.user', function ($qu) use ($keyword) {
                             $qu->where('surname', 'like', "%{$keyword}%")
                                ->orWhere('firstname', 'like', "%{$keyword}%");
-                        })->orWhereHas('patient', function($qp) use ($keyword) {
+                        })->orWhereHas('patient', function ($qp) use ($keyword) {
                             $qp->where('file_no', 'like', "%{$keyword}%");
-                        })->orWhereHas('service', function($qs) use ($keyword) {
+                        })->orWhereHas('service', function ($qs) use ($keyword) {
                             $qs->where('service_name', 'like', "%{$keyword}%");
                         });
                     });
@@ -427,7 +434,7 @@ class ImagingWorkbenchController extends Controller
         } catch (\Exception $e) {
             return response()->json([
                 'error' => 'An error occurred while fetching queue data.',
-                'message' => config('app.debug') ? $e->getMessage() : 'Internal Server Error'
+                'message' => config('app.debug') ? $e->getMessage() : 'Internal Server Error',
             ], 500);
         }
     }
@@ -440,6 +447,7 @@ class ImagingWorkbenchController extends Controller
         if (!$datetime) {
             return null;
         }
+
         return \Carbon\Carbon::parse($datetime)->format('h:i a D M j, Y');
     }
 
@@ -513,7 +521,7 @@ class ImagingWorkbenchController extends Controller
             $request->validate([
                 'request_ids' => 'required|array',
                 'request_ids.*' => 'exists:imaging_service_requests,id',
-                'patient_id' => 'required|exists:patients,id'
+                'patient_id' => 'required|exists:patients,id',
             ]);
 
             DB::beginTransaction();
@@ -557,11 +565,11 @@ class ImagingWorkbenchController extends Controller
                         $billReq->payable_amount = $service->price->sale_price ?? 0;
                         $billReq->claims_amount = 0;
                         $billReq->coverage_mode = null;
-                        
+
                         \Illuminate\Support\Facades\Log::warning('HMO tariff not found for service in imaging auto-billing, falling back to standard price', [
                             'patient_id' => $imagingRequest->patient_id,
                             'service_id' => $imagingRequest->service_id,
-                            'error' => $e->getMessage()
+                            'error' => $e->getMessage(),
                         ]);
                     }
 
@@ -586,13 +594,14 @@ class ImagingWorkbenchController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => count($request->request_ids) . ' request(s) billed successfully'
+                'message' => count($request->request_ids) . ' request(s) billed successfully',
             ]);
         } catch (\Exception $e) {
             DB::rollBack();
+
             return response()->json([
                 'success' => false,
-                'message' => 'Error recording billing: ' . $e->getMessage()
+                'message' => 'Error recording billing: ' . $e->getMessage(),
             ], 500);
         }
     }
@@ -634,7 +643,7 @@ class ImagingWorkbenchController extends Controller
             $request->validate([
                 'request_ids' => 'required|array',
                 'request_ids.*' => 'exists:imaging_service_requests,id',
-                'patient_id' => 'required|exists:patients,id'
+                'patient_id' => 'required|exists:patients,id',
             ]);
 
             DB::beginTransaction();
@@ -644,7 +653,7 @@ class ImagingWorkbenchController extends Controller
 
                 // Update imaging request status to dismissed (0)
                 $imagingRequest->update([
-                    'status' => 0
+                    'status' => 0,
                 ]);
 
                 // Log audit
@@ -655,13 +664,14 @@ class ImagingWorkbenchController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => count($request->request_ids) . ' request(s) dismissed successfully'
+                'message' => count($request->request_ids) . ' request(s) dismissed successfully',
             ]);
         } catch (\Exception $e) {
             DB::rollBack();
+
             return response()->json([
                 'success' => false,
-                'message' => 'Error dismissing requests: ' . $e->getMessage()
+                'message' => 'Error dismissing requests: ' . $e->getMessage(),
             ], 500);
         }
     }
@@ -684,14 +694,14 @@ class ImagingWorkbenchController extends Controller
                     'gender' => $request->patient->gender ?? 'N/A',
                     'user' => [
                         'firstname' => $request->patient->user->firstname ?? 'N/A',
-                        'surname' => $request->patient->user->surname ?? 'N/A'
-                    ]
+                        'surname' => $request->patient->user->surname ?? 'N/A',
+                    ],
                 ],
                 'service' => [
                     'name' => $request->service_name,
                     'template_version' => !empty($request->service->result_template_v2) ? 2 : 1,
                     'template_body' => $request->service->template ?? '',
-                    'template_structure' => $request->service->result_template_v2 ?? null
+                    'template_structure' => $request->service->result_template_v2 ?? null,
                 ],
                 'status' => $request->status,
                 'result' => $request->result,
@@ -701,17 +711,17 @@ class ImagingWorkbenchController extends Controller
                 'attachments' => $request->attachments,
                 'results_person' => [
                     'firstname' => $request->resultBy->firstname ?? 'N/A',
-                    'surname' => $request->resultBy->surname ?? 'N/A'
+                    'surname' => $request->resultBy->surname ?? 'N/A',
                 ],
                 'doctor' => [
                     'firstname' => $request->doctor->firstname ?? 'N/A',
-                    'surname' => $request->doctor->surname ?? 'N/A'
-                ]
+                    'surname' => $request->doctor->surname ?? 'N/A',
+                ],
             ]);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Error loading imaging request: ' . $e->getMessage()
+                'message' => 'Error loading imaging request: ' . $e->getMessage(),
             ], 500);
         }
     }
@@ -736,7 +746,7 @@ class ImagingWorkbenchController extends Controller
                         $attachments[] = [
                             'id' => $att['id'] ?? uniqid(),
                             'filename' => $att['filename'] ?? ($att['name'] ?? 'Unknown'),
-                            'url' => $att['url'] ?? (isset($att['path']) ? asset('storage/' . $att['path']) : '')
+                            'url' => $att['url'] ?? (isset($att['path']) ? asset('storage/' . $att['path']) : ''),
                         ];
                     }
                 }
@@ -746,7 +756,7 @@ class ImagingWorkbenchController extends Controller
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Error loading attachments: ' . $e->getMessage()
+                'message' => 'Error loading attachments: ' . $e->getMessage(),
             ], 500);
         }
     }
@@ -762,7 +772,7 @@ class ImagingWorkbenchController extends Controller
                 'invest_res_entry_id' => 'required',
                 'invest_res_template_version' => 'required|in:1,2',
                 'invest_res_template_data' => 'nullable|string',
-                'result_attachments.*' => 'nullable|file|max:10240|mimes:pdf,jpg,jpeg,png,doc,docx'
+                'result_attachments.*' => 'nullable|file|max:10240|mimes:pdf,jpg,jpeg,png,doc,docx',
             ]);
 
             $imagingRequest = ImagingServiceRequest::findOrFail($request->invest_res_entry_id);
@@ -772,12 +782,12 @@ class ImagingWorkbenchController extends Controller
             $isImagingStaff = $user->hasAnyRole(['SUPERADMIN', 'ADMIN', 'RADIOLOGIST']);
             if (!$isImagingStaff) {
                 $isRequestingDoctor = $user->hasRole('DOCTOR') && $user->id == $imagingRequest->doctor_id;
-                $isRequestingNurse  = $user->hasRole('NURSE') && $user->id == $imagingRequest->doctor_id;
+                $isRequestingNurse = $user->hasRole('NURSE') && $user->id == $imagingRequest->doctor_id;
                 if (!($isRequestingDoctor && appsettings('doctor_can_enter_imaging_result'))
                     && !($isRequestingNurse && appsettings('nurse_can_enter_imaging_result'))) {
                     return response()->json([
                         'success' => false,
-                        'message' => 'You do not have permission to enter imaging results.'
+                        'message' => 'You do not have permission to enter imaging results.',
                     ], 403);
                 }
             }
@@ -789,7 +799,7 @@ class ImagingWorkbenchController extends Controller
                     return response()->json([
                         'success' => false,
                         'message' => $deliveryCheck['reason'],
-                        'hint' => $deliveryCheck['hint']
+                        'hint' => $deliveryCheck['hint'],
                     ], 403);
                 }
             }
@@ -806,7 +816,7 @@ class ImagingWorkbenchController extends Controller
                 if (Carbon::now()->greaterThan($editDeadline)) {
                     return response()->json([
                         'success' => false,
-                        'message' => "Edit window has expired. Results can only be edited within {$editDuration} minutes of submission."
+                        'message' => "Edit window has expired. Results can only be edited within {$editDuration} minutes of submission.",
                     ], 403);
                 }
             }
@@ -836,7 +846,7 @@ class ImagingWorkbenchController extends Controller
 
                                 $enhancedData[$param['id']] = [
                                     'value' => $value,
-                                    'status' => $status
+                                    'status' => $status,
                                 ];
 
                                 $htmlResult .= '<tr>';
@@ -895,7 +905,7 @@ class ImagingWorkbenchController extends Controller
                         'name' => $file->getClientOriginalName(),
                         'path' => 'imaging_results/' . $fileName,
                         'size' => $file->getSize(),
-                        'type' => $file->getClientOriginalExtension()
+                        'type' => $file->getClientOriginalExtension(),
                     ];
                 }
             }
@@ -905,7 +915,7 @@ class ImagingWorkbenchController extends Controller
             DB::beginTransaction();
 
             $requiresApproval = appsettings('imaging_results_require_approval');
-            
+
             // Check if current user can self-approve their own request
             $canSelfApprove = false;
             $currentUser = Auth::user();
@@ -936,7 +946,7 @@ class ImagingWorkbenchController extends Controller
                     'result' => $resultHtml,
                     'result_data' => $resultData,
                     'attachments' => !empty($allAttachments) ? json_encode($allAttachments) : null,
-                    'status' => 4 // Completed
+                    'status' => 4, // Completed
                 ];
 
                 if (!$isEdit) {
@@ -964,13 +974,14 @@ class ImagingWorkbenchController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => $isEdit ? 'Results updated successfully' : ($requiresApproval && !$isEdit ? 'Results saved — pending approval' : 'Results saved successfully')
+                'message' => $isEdit ? 'Results updated successfully' : ($requiresApproval && !$isEdit ? 'Results saved — pending approval' : 'Results saved successfully'),
             ]);
         } catch (\Exception $e) {
             DB::rollBack();
+
             return response()->json([
                 'success' => false,
-                'message' => 'Error saving results: ' . $e->getMessage()
+                'message' => 'Error saving results: ' . $e->getMessage(),
             ], 500);
         }
     }
@@ -1002,6 +1013,7 @@ class ImagingWorkbenchController extends Controller
             if (isset($refRange['reference_value'])) {
                 $boolValue = $value === true || $value === 'true';
                 $refValue = $refRange['reference_value'] === true;
+
                 return $boolValue === $refValue ? 'Normal' : 'Abnormal';
             }
         } elseif ($type === 'enum') {
@@ -1074,7 +1086,7 @@ class ImagingWorkbenchController extends Controller
             'High' => '<span class="badge badge-danger">High</span>',
             'Low' => '<span class="badge badge-warning">Low</span>',
             'Abnormal' => '<span class="badge badge-warning">Abnormal</span>',
-            'N/A' => '<span class="badge badge-secondary">N/A</span>'
+            'N/A' => '<span class="badge badge-secondary">N/A</span>',
         ];
 
         return $badges[$status] ?? $status;
@@ -1093,12 +1105,12 @@ class ImagingWorkbenchController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => 'Request deleted successfully'
+                'message' => 'Request deleted successfully',
             ]);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Error deleting request: ' . $e->getMessage()
+                'message' => 'Error deleting request: ' . $e->getMessage(),
             ], 500);
         }
     }
@@ -1116,12 +1128,12 @@ class ImagingWorkbenchController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => 'Request restored successfully'
+                'message' => 'Request restored successfully',
             ]);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Error restoring request: ' . $e->getMessage()
+                'message' => 'Error restoring request: ' . $e->getMessage(),
             ], 500);
         }
     }
@@ -1139,12 +1151,12 @@ class ImagingWorkbenchController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => 'Request dismissed successfully'
+                'message' => 'Request dismissed successfully',
             ]);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Error dismissing request: ' . $e->getMessage()
+                'message' => 'Error dismissing request: ' . $e->getMessage(),
             ], 500);
         }
     }
@@ -1162,12 +1174,12 @@ class ImagingWorkbenchController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => 'Request undismissed successfully'
+                'message' => 'Request undismissed successfully',
             ]);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Error undismissing request: ' . $e->getMessage()
+                'message' => 'Error undismissing request: ' . $e->getMessage(),
             ], 500);
         }
     }
@@ -1203,7 +1215,7 @@ class ImagingWorkbenchController extends Controller
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Error loading deleted requests: ' . $e->getMessage()
+                'message' => 'Error loading deleted requests: ' . $e->getMessage(),
             ], 500);
         }
     }
@@ -1239,7 +1251,7 @@ class ImagingWorkbenchController extends Controller
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Error loading dismissed requests: ' . $e->getMessage()
+                'message' => 'Error loading dismissed requests: ' . $e->getMessage(),
             ], 500);
         }
     }
@@ -1370,8 +1382,8 @@ class ImagingWorkbenchController extends Controller
                     foreach ($tariffs as $sid => $tariff) {
                         $hmoMap[$sid] = [
                             'payable' => $tariff->payable_amount,
-                            'claims'  => $tariff->claims_amount,
-                            'mode'    => $tariff->coverage_mode,
+                            'claims' => $tariff->claims_amount,
+                            'mode' => $tariff->coverage_mode,
                         ];
                     }
                 }
@@ -1385,46 +1397,46 @@ class ImagingWorkbenchController extends Controller
         foreach ($directServices as $service) {
             $basePrice = $service->price ? $service->price->sale_price : 0;
             $hmoData = $hmoMap[$service->id] ?? null;
-            
+
             $result = [
-                'id'       => $service->id,
-                'name'     => $service->service_name,
-                'price'    => $basePrice,
+                'id' => $service->id,
+                'name' => $service->service_name,
+                'price' => $basePrice,
                 'category' => $service->category ? $service->category->category_name : 'N/A',
-                'hmo'      => $hmoData ? [
+                'hmo' => $hmoData ? [
                     'payable' => $hmoData['payable'],
-                    'claims'  => $hmoData['claims'],
-                    'mode'    => $hmoData['mode'],
+                    'claims' => $hmoData['claims'],
+                    'mode' => $hmoData['mode'],
                 ] : null,
                 'is_combo' => false,
             ];
             $results[] = $result;
         }
-        
+
         // Add related combos
         foreach ($relatedCombos as $service) {
             $basePrice = $service->price ? $service->price->sale_price : 0;
             $hmoData = $hmoMap[$service->id] ?? null;
-            
+
             $result = [
-                'id'       => $service->id,
-                'name'     => $service->service_name,
-                'price'    => $basePrice,
+                'id' => $service->id,
+                'name' => $service->service_name,
+                'price' => $basePrice,
                 'category' => $service->category ? $service->category->category_name : 'N/A',
-                'hmo'      => $hmoData ? [
+                'hmo' => $hmoData ? [
                     'payable' => $hmoData['payable'],
-                    'claims'  => $hmoData['claims'],
-                    'mode'    => $hmoData['mode'],
+                    'claims' => $hmoData['claims'],
+                    'mode' => $hmoData['mode'],
                 ] : null,
                 'is_combo' => true,
                 'bundle_items' => $service->bundleItems->map(function ($item) {
                     return [
-                        'id'    => $item->id,
-                        'type'  => $item->item_type,
-                        'name'  => $item->item_type === 'service' 
+                        'id' => $item->id,
+                        'type' => $item->item_type,
+                        'name' => $item->item_type === 'service'
                             ? ($item->service->service_name ?? 'Unknown')
                             : ($item->product->product_name ?? 'Unknown'),
-                        'qty'   => $item->qty,
+                        'qty' => $item->qty,
                     ];
                 })->toArray(),
             ];
@@ -1452,10 +1464,10 @@ class ImagingWorkbenchController extends Controller
             ]);
 
             // Validate regular services exist
-            $regularServiceIds = array_filter($request->service_ids, function($id) {
+            $regularServiceIds = array_filter($request->service_ids, function ($id) {
                 return strpos($id, 'FF_') !== 0;
             });
-            
+
             if (count($regularServiceIds) > 0) {
                 $existingCount = \App\Models\Service::whereIn('id', $regularServiceIds)->count();
                 if ($existingCount !== count($regularServiceIds)) {
@@ -1471,7 +1483,7 @@ class ImagingWorkbenchController extends Controller
             foreach ($request->service_ids as $index => $serviceId) {
                 $imagingRequest = new ImagingServiceRequest();
                 $imagingRequest->patient_id = $patient->id;
-                
+
                 if (strpos($serviceId, 'FF_') === 0) {
                     $imagingRequest->service_id = null;
                     $imagingRequest->is_free_form = true;
@@ -1479,7 +1491,7 @@ class ImagingWorkbenchController extends Controller
                 } else {
                     $imagingRequest->service_id = $serviceId;
                 }
-                
+
                 $imagingRequest->doctor_id = Auth::id();
                 // Use individual note if available, otherwise use clinical_notes
                 $individualNote = isset($notes[$index]) && !empty($notes[$index]) ? $notes[$index] : '';
@@ -1495,13 +1507,14 @@ class ImagingWorkbenchController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => count($request->service_ids) . ' imaging request(s) created successfully'
+                'message' => count($request->service_ids) . ' imaging request(s) created successfully',
             ]);
         } catch (\Exception $e) {
             DB::rollBack();
+
             return response()->json([
                 'success' => false,
-                'message' => 'Error creating request: ' . $e->getMessage()
+                'message' => 'Error creating request: ' . $e->getMessage(),
             ], 500);
         }
     }
@@ -1527,7 +1540,7 @@ class ImagingWorkbenchController extends Controller
             if ($request->has('start_date') && $request->has('end_date')) {
                 $query->whereBetween('imaging_audit_log.created_at', [
                     $request->start_date . ' 00:00:00',
-                    $request->end_date . ' 23:59:59'
+                    $request->end_date . ' 23:59:59',
                 ]);
             }
 
@@ -1552,7 +1565,7 @@ class ImagingWorkbenchController extends Controller
                 'description' => $description,
                 'user_id' => Auth::id(),
                 'created_at' => now(),
-                'updated_at' => now()
+                'updated_at' => now(),
             ]);
         } catch (\Exception $e) {
             // Silently fail if audit log table doesn't exist
@@ -1637,6 +1650,7 @@ class ImagingWorkbenchController extends Controller
             }
 
             $count = ImagingServiceRequest::where('status', 5)->count();
+
             return response()->json(['count' => $count]);
         } catch (\Exception $e) {
             return response()->json(['count' => 0]);
@@ -1677,7 +1691,7 @@ class ImagingWorkbenchController extends Controller
                     'rejection_reason' => $item->rejection_reason,
                     'rejected_by_name' => $item->rejector ? ($item->rejector->surname . ' ' . $item->rejector->firstname) : null,
                     'rejected_at' => $item->rejected_at ? date('d M Y H:i', strtotime($item->rejected_at)) : null,
-                ]
+                ],
             ]);
         } catch (\Exception $e) {
             return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
@@ -1719,6 +1733,7 @@ class ImagingWorkbenchController extends Controller
             return response()->json(['success' => true, 'message' => 'Result approved successfully.']);
         } catch (\Exception $e) {
             DB::rollBack();
+
             return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
         }
     }
@@ -1761,15 +1776,15 @@ class ImagingWorkbenchController extends Controller
             DB::beginTransaction();
 
             $imagingRequest->update([
-                'result'               => $imagingRequest->pending_result,
-                'result_data'          => $imagingRequest->pending_result_data,
-                'attachments'          => $imagingRequest->pending_attachments,
-                'pending_result'       => null,
-                'pending_result_data'  => null,
-                'pending_attachments'  => null,
-                'approved_by'          => Auth::id(),
-                'approved_at'          => now(),
-                'status'               => 4,
+                'result' => $imagingRequest->pending_result,
+                'result_data' => $imagingRequest->pending_result_data,
+                'attachments' => $imagingRequest->pending_attachments,
+                'pending_result' => null,
+                'pending_result_data' => null,
+                'pending_attachments' => null,
+                'approved_by' => Auth::id(),
+                'approved_at' => now(),
+                'status' => 4,
             ]);
 
             $this->logAudit($id, 'result_self_approved', 'Result self-approved by ' . Auth::user()->surname . ' ' . Auth::user()->firstname);
@@ -1779,6 +1794,7 @@ class ImagingWorkbenchController extends Controller
             return response()->json(['success' => true, 'message' => 'Result approved successfully.']);
         } catch (\Exception $e) {
             DB::rollBack();
+
             return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
         }
     }
@@ -1815,6 +1831,7 @@ class ImagingWorkbenchController extends Controller
             return response()->json(['success' => true, 'message' => 'Result rejected. The technician will be notified.']);
         } catch (\Exception $e) {
             DB::rollBack();
+
             return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
         }
     }
@@ -1864,6 +1881,7 @@ class ImagingWorkbenchController extends Controller
             return response()->json(['success' => true, 'message' => 'Approval has been reversed. The result is now pending approval again.']);
         } catch (\Exception $e) {
             DB::rollBack();
+
             return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
         }
     }
@@ -1872,12 +1890,12 @@ class ImagingWorkbenchController extends Controller
      * Apply a service combo (bundle) for imaging workbench.
      * POST /imaging-workbench/clinical-requests/apply-combo
      * Creates parent request (billed once) + child requests (bundled, not billed separately)
-     * 
+     *
      * Payload:
      *   - service_id (int, required): The combo/bundle parent service ID
      *   - patient_id (int, required): Patient ID
      *   - note (string, optional): Clinical note for the bundle
-     * 
+     *
      * Response: { success: true, message: "...", parent_request_id: ..., parent_request_type: "..." }
      */
     public function imagingApplyCombo(Request $request)
@@ -1886,7 +1904,7 @@ class ImagingWorkbenchController extends Controller
             $request->validate([
                 'service_id' => 'required|integer|exists:services,id',
                 'patient_id' => 'required|integer|exists:patients,id',
-                'note' => 'nullable|string'
+                'note' => 'nullable|string',
             ]);
 
             $comboService = Service::with('bundleItems')->find($request->service_id);
@@ -1913,7 +1931,7 @@ class ImagingWorkbenchController extends Controller
         try {
             $request->validate([
                 'parent_request_id' => 'required|integer|exists:product_or_service_requests,id',
-                'patient_id' => 'required|integer|exists:patients,id'
+                'patient_id' => 'required|integer|exists:patients,id',
             ]);
 
             $parentRequest = ProductOrServiceRequest::findOrFail($request->parent_request_id);
@@ -1922,7 +1940,7 @@ class ImagingWorkbenchController extends Controller
             if ($parentRequest->user_id !== Patient::find($request->patient_id)->user_id || $parentRequest->parent_id !== null) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Invalid bundle or permission denied'
+                    'message' => 'Invalid bundle or permission denied',
                 ], 403);
             }
 
@@ -1931,12 +1949,12 @@ class ImagingWorkbenchController extends Controller
             if ($result['success']) {
                 return response()->json([
                     'success' => true,
-                    'message' => $result['message']
+                    'message' => $result['message'],
                 ]);
             } else {
                 return response()->json([
                     'success' => false,
-                    'message' => $result['message']
+                    'message' => $result['message'],
                 ], 400);
             }
         } catch (\Exception $e) {

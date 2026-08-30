@@ -2,14 +2,11 @@
 
 namespace App\Http\Controllers\OpsAudit;
 
-use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
-use Carbon\Carbon;
-use Illuminate\Support\Facades\DB;
-use App\Models\DoctorQueue;
 use App\Models\DoctorAppointment;
+use App\Models\DoctorQueue;
 use App\Models\SpecialistReferral;
-use App\Models\AuditMark;
+use Carbon\Carbon;
+use Illuminate\Http\Request;
 
 class OpsAuditReceptionController extends OpsAuditBaseController
 {
@@ -19,7 +16,7 @@ class OpsAuditReceptionController extends OpsAuditBaseController
     public function index(Request $request)
     {
         $clinics = \App\Models\Clinic::orderBy('name')->pluck('name', 'id');
-        $hmos = \App\Models\Hmo::with('scheme')->orderBy('name')->get()->groupBy(fn($hmo) => $hmo->scheme ? $hmo->scheme->name : 'Other Schemes');
+        $hmos = \App\Models\Hmo::with('scheme')->orderBy('name')->get()->groupBy(fn ($hmo) => $hmo->scheme ? $hmo->scheme->name : 'Other Schemes');
         $hmoSchemes = \App\Models\HmoScheme::orderBy('name')->pluck('name', 'id');
 
         return view('admin.ops_audit.reception', compact('clinics', 'hmos', 'hmoSchemes'));
@@ -86,13 +83,13 @@ class OpsAuditReceptionController extends OpsAuditBaseController
             $query->where('receptionist_id', $request->receptionist_id);
         }
         if ($request->filled('gender')) {
-            $query->whereHas('patient.user', fn($q) => $q->where('gender', $request->gender));
+            $query->whereHas('patient.user', fn ($q) => $q->where('gender', $request->gender));
         }
         if ($request->filled('hmo_id')) {
-            $query->whereHas('patient.hmo', fn($q) => $q->where('id', $request->hmo_id));
+            $query->whereHas('patient.hmo', fn ($q) => $q->where('id', $request->hmo_id));
         }
         if ($request->filled('hmo_scheme_id')) {
-            $query->whereHas('patient.hmo', fn($q) => $q->where('hmo_scheme_id', $request->hmo_scheme_id));
+            $query->whereHas('patient.hmo', fn ($q) => $q->where('hmo_scheme_id', $request->hmo_scheme_id));
         }
 
         // Clone for KPIs before pagination
@@ -166,18 +163,34 @@ class OpsAuditReceptionController extends OpsAuditBaseController
         $this->applyPaymentFilters($query, $request, 'serviceRequest');
         $this->applyItemFilters($query, $request, 'serviceRequest');
 
-        if ($request->filled('appointment_type')) $query->where('appointment_type', $request->appointment_type);
-        if ($request->filled('status')) $query->where('status', $request->status);
-        if ($request->filled('source')) $query->where('source', $request->source);
-        if ($request->filled('clinic_id')) $query->where('clinic_id', $request->clinic_id);
-        if ($request->filled('doctor_id')) $query->where('staff_id', $request->doctor_id);
-        if ($request->filled('hmo_id')) $query->whereHas('patient.hmo', fn($q) => $q->where('id', $request->hmo_id));
-        if ($request->filled('hmo_scheme_id')) $query->whereHas('patient.hmo', fn($q) => $q->where('hmo_scheme_id', $request->hmo_scheme_id));
-        if ($request->filled('gender')) $query->whereHas('patient.user', fn($q) => $q->where('gender', $request->gender));
+        if ($request->filled('appointment_type')) {
+            $query->where('appointment_type', $request->appointment_type);
+        }
+        if ($request->filled('status')) {
+            $query->where('status', $request->status);
+        }
+        if ($request->filled('source')) {
+            $query->where('source', $request->source);
+        }
+        if ($request->filled('clinic_id')) {
+            $query->where('clinic_id', $request->clinic_id);
+        }
+        if ($request->filled('doctor_id')) {
+            $query->where('staff_id', $request->doctor_id);
+        }
+        if ($request->filled('hmo_id')) {
+            $query->whereHas('patient.hmo', fn ($q) => $q->where('id', $request->hmo_id));
+        }
+        if ($request->filled('hmo_scheme_id')) {
+            $query->whereHas('patient.hmo', fn ($q) => $q->where('hmo_scheme_id', $request->hmo_scheme_id));
+        }
+        if ($request->filled('gender')) {
+            $query->whereHas('patient.user', fn ($q) => $q->where('gender', $request->gender));
+        }
 
         $kpiQuery = clone $query;
 
-        return $this->buildDataTableResponse($query, $request, fn($q) => $q, function ($row) {
+        return $this->buildDataTableResponse($query, $request, fn ($q) => $q, function ($row) {
             $patient = $row->patient;
             $user = $patient?->user;
             $hmo = $patient?->hmo;
@@ -229,18 +242,34 @@ class OpsAuditReceptionController extends OpsAuditBaseController
         $this->applyDateFilter($query, $request);
         $this->applyShiftFilter($query, $request);
 
-        if ($request->filled('referral_type')) $query->where('referral_type', $request->referral_type);
-        if ($request->filled('status')) $query->where('status', $request->status);
-        if ($request->filled('urgency')) $query->where('urgency', $request->urgency);
-        if ($request->filled('referring_doctor_id')) $query->where('referring_doctor_id', $request->referring_doctor_id);
-        if ($request->filled('referring_clinic_id')) $query->where('referring_clinic_id', $request->referring_clinic_id);
-        if ($request->filled('target_clinic_id')) $query->where('target_clinic_id', $request->target_clinic_id);
-        if ($request->filled('hmo_id')) $query->whereHas('patient.hmo', fn($q) => $q->where('id', $request->hmo_id));
-        if ($request->filled('gender')) $query->whereHas('patient.user', fn($q) => $q->where('gender', $request->gender));
+        if ($request->filled('referral_type')) {
+            $query->where('referral_type', $request->referral_type);
+        }
+        if ($request->filled('status')) {
+            $query->where('status', $request->status);
+        }
+        if ($request->filled('urgency')) {
+            $query->where('urgency', $request->urgency);
+        }
+        if ($request->filled('referring_doctor_id')) {
+            $query->where('referring_doctor_id', $request->referring_doctor_id);
+        }
+        if ($request->filled('referring_clinic_id')) {
+            $query->where('referring_clinic_id', $request->referring_clinic_id);
+        }
+        if ($request->filled('target_clinic_id')) {
+            $query->where('target_clinic_id', $request->target_clinic_id);
+        }
+        if ($request->filled('hmo_id')) {
+            $query->whereHas('patient.hmo', fn ($q) => $q->where('id', $request->hmo_id));
+        }
+        if ($request->filled('gender')) {
+            $query->whereHas('patient.user', fn ($q) => $q->where('gender', $request->gender));
+        }
 
         $kpiQuery = clone $query;
 
-        return $this->buildDataTableResponse($query, $request, fn($q) => $q, function ($row) {
+        return $this->buildDataTableResponse($query, $request, fn ($q) => $q, function ($row) {
             $patient = $row->patient;
             $user = $patient?->user;
             $hmo = $patient?->hmo;
@@ -285,8 +314,9 @@ class OpsAuditReceptionController extends OpsAuditBaseController
             'appointments' => DoctorAppointment::class,
             'referrals' => SpecialistReferral::class,
         ];
-        
+
         $request->merge(['zone_key' => 'ops_audit.reception.' . $tab]);
+
         return $this->processBulkStamp($request, $tab, $modelMap);
     }
 }

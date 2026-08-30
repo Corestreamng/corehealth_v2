@@ -2,17 +2,14 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
 use App\Models\NursingNote;
-use App\Models\Patient;
 use App\Models\NursingNoteType;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
-use Yajra\DataTables\DataTables;
+use App\Models\Patient;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 use RealRashid\SweetAlert\Facades\Alert;
-use Illuminate\Support\Facades\Validator;
-use Illuminate\Support\Facades\Auth;
+use Yajra\DataTables\DataTables;
 
 class NursingNoteController extends Controller
 {
@@ -102,12 +99,12 @@ class NursingNoteController extends Controller
     {
         // dd($request->patient_id);
         $rules = [
-            'patient_id'  => 'required',
-            'note_type'  => 'required',
+            'patient_id' => 'required',
+            'note_type' => 'required',
             'the_text' => 'required',
         ];
-        try {
 
+        try {
 
             $v = validator()->make($request->all(), $rules);
 
@@ -143,7 +140,8 @@ class NursingNoteController extends Controller
                     if ($treatment_sheet) {
                         $is_new = false;
                         if ($treatment_sheet->update(['note' => ($request->the_text), 'updated_by' => Auth::id()])) {
-                            return back()->withMessage("Nursing Note Updated")->withMessageType('success');;
+                            return back()->withMessage("Nursing Note Updated")->withMessageType('success');
+                            ;
                         }
                     }
                 } elseif ($type == 3) {
@@ -156,7 +154,8 @@ class NursingNoteController extends Controller
                     if ($io_chart) {
                         $is_new = false;
                         if ($io_chart->update(['note' => ($request->the_text), 'updated_by' => Auth::id()])) {
-                            return back()->withMessage("Nursing Note Updated")->withMessageType('success');;
+                            return back()->withMessage("Nursing Note Updated")->withMessageType('success');
+                            ;
                         }
                     }
                 } elseif ($type == 5) {
@@ -169,7 +168,8 @@ class NursingNoteController extends Controller
                     if ($others_record) {
                         $is_new = false;
                         if ($others_record->update(['note' => ($request->the_text), 'updated_by' => Auth::id()])) {
-                            return back()->withMessage("Nursing Note Updated")->withMessageType('success');;
+                            return back()->withMessage("Nursing Note Updated")->withMessageType('success');
+                            ;
                         }
                     }
                 } else {
@@ -182,13 +182,14 @@ class NursingNoteController extends Controller
                     if ($labour_record) {
                         $is_new = false;
                         if ($labour_record->update(['note' => ($request->the_text), 'updated_by' => Auth::id()])) {
-                            return back()->withMessage("Nursing Note Updated")->withMessageType('success');;
+                            return back()->withMessage("Nursing Note Updated")->withMessageType('success');
+                            ;
                         }
                     }
                 }
 
                 if ($is_new == 1) {
-                    $note = new NursingNote;
+                    $note = new NursingNote();
 
                     $note->patient_id = $request->patient_id;
                     $note->nursing_note_type_id = $request->note_type;
@@ -211,7 +212,6 @@ class NursingNoteController extends Controller
         $patient_id = $request->input('patient_id');
         $type = $request->note_type;
 
-
         if ($type == 1) {
             $observation_note = NursingNote::with(['patient', 'createdBy', 'type'])
                 ->where('patient_id', $patient_id)
@@ -233,7 +233,8 @@ class NursingNoteController extends Controller
 
             if ($treatment_sheet) {
                 if ($treatment_sheet->update(['completed' => true, 'note' => $this->remove_editable($treatment_sheet->note), 'updated_by' => Auth::id()])) {
-                    return back()->withMessage("Nursing Note Updated")->withMessageType('success');;
+                    return back()->withMessage("Nursing Note Updated")->withMessageType('success');
+                    ;
                 }
             }
         } elseif ($type == 3) {
@@ -245,7 +246,8 @@ class NursingNoteController extends Controller
 
             if ($io_chart) {
                 if ($io_chart->update(['completed' => true, 'note' => $this->remove_editable($io_chart->note), 'updated_by' => Auth::id()])) {
-                    return back()->withMessage("Nursing Note Updated")->withMessageType('success');;
+                    return back()->withMessage("Nursing Note Updated")->withMessageType('success');
+                    ;
                 }
             }
         } elseif ($type == 5) {
@@ -257,7 +259,8 @@ class NursingNoteController extends Controller
 
             if ($others_record) {
                 if ($others_record->update(['completed' => true, 'note' => $this->remove_editable($others_record->note), 'updated_by' => Auth::id()])) {
-                    return back()->withMessage("Nursing Note Updated")->withMessageType('success');;
+                    return back()->withMessage("Nursing Note Updated")->withMessageType('success');
+                    ;
                 }
             }
         } else {
@@ -269,7 +272,8 @@ class NursingNoteController extends Controller
 
             if ($labour_record) {
                 if ($labour_record->update(['completed' => true, 'note' => $this->remove_editable($labour_record->note), 'updated_by' => Auth::id()])) {
-                    return back()->withMessage("Nursing Note Updated")->withMessageType('success');;
+                    return back()->withMessage("Nursing Note Updated")->withMessageType('success');
+                    ;
                 }
             }
         }
@@ -285,6 +289,7 @@ class NursingNoteController extends Controller
         $the_string = str_replace('contenteditable= "true"', 'contenteditable="false"', $the_string);
         //remove all black borders
         $the_string = str_replace(' black', ' gray', $the_string);
+
         return $the_string;
     }
 
@@ -295,6 +300,7 @@ class NursingNoteController extends Controller
             // ->where('completed', false)
             ->where('nursing_note_type_id', $note_type)
             ->get();
+
         //dd($pc);
         return Datatables::of($his)
             ->addIndexColumn()
@@ -303,6 +309,7 @@ class NursingNoteController extends Controller
                     <button type='button' class='btn btn-primary' onclick='setNoteInModal(this)' data-service-name = '" . $h->type->name . "' data-template = '" . $h->note . "' data-id='$h->id'>
                         View Sheet
                     </button>";
+
                 return $str;
             })
 
@@ -314,6 +321,7 @@ class NursingNoteController extends Controller
                 } else {
                     $str .= "<span class = 'badge badge-danger'>Still Open</span>";
                 }
+
                 return $str;
             })
             ->editColumn('nursing_note_type_id', function ($his) {
@@ -322,7 +330,6 @@ class NursingNoteController extends Controller
             ->rawColumns(['created_by', 'select'])
             ->make(true);
     }
-
 
     /**
      * Display the specified resource.

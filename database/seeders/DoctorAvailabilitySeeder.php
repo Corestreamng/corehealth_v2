@@ -2,11 +2,11 @@
 
 namespace Database\Seeders;
 
+use App\Models\Clinic;
+use App\Models\DoctorAvailability;
+use App\Models\Staff;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
-use App\Models\Staff;
-use App\Models\DoctorAvailability;
-use App\Models\Clinic;
 
 /**
  * Seed default availability for all doctors (staff with a clinic).
@@ -22,11 +22,12 @@ class DoctorAvailabilitySeeder extends Seeder
         $blankClinicIds = Clinic::whereRaw("LOWER(TRIM(name)) = 'blank'")->pluck('id')->toArray();
 
         $doctors = Staff::whereNotNull('clinic_id')
-            ->when(!empty($blankClinicIds), fn($q) => $q->whereNotIn('clinic_id', $blankClinicIds))
+            ->when(!empty($blankClinicIds), fn ($q) => $q->whereNotIn('clinic_id', $blankClinicIds))
             ->get();
 
         if ($doctors->isEmpty()) {
             $this->command?->warn('No doctors with clinic assignments found — skipping.');
+
             return;
         }
 
@@ -37,14 +38,14 @@ class DoctorAvailabilitySeeder extends Seeder
             for ($day = 1; $day <= 5; $day++) {
                 DoctorAvailability::firstOrCreate(
                     [
-                        'staff_id'    => $doc->id,
-                        'clinic_id'   => $doc->clinic_id,
+                        'staff_id' => $doc->id,
+                        'clinic_id' => $doc->clinic_id,
                         'day_of_week' => $day,
                     ],
                     [
                         'start_time' => '08:00',
-                        'end_time'   => '17:00',
-                        'is_active'  => true,
+                        'end_time' => '17:00',
+                        'is_active' => true,
                     ]
                 );
             }
@@ -52,14 +53,14 @@ class DoctorAvailabilitySeeder extends Seeder
             // Saturday 08:00–13:00
             DoctorAvailability::firstOrCreate(
                 [
-                    'staff_id'    => $doc->id,
-                    'clinic_id'   => $doc->clinic_id,
+                    'staff_id' => $doc->id,
+                    'clinic_id' => $doc->clinic_id,
                     'day_of_week' => 6,
                 ],
                 [
                     'start_time' => '08:00',
-                    'end_time'   => '13:00',
-                    'is_active'  => true,
+                    'end_time' => '13:00',
+                    'is_active' => true,
                 ]
             );
 

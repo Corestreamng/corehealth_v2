@@ -2,15 +2,15 @@
 
 namespace App\Observers\Accounting;
 
-use App\Models\Accounting\LiabilitySchedule;
-use App\Models\Accounting\LiabilityPaymentSchedule;
-use App\Models\Accounting\JournalEntry;
-use App\Models\Accounting\JournalEntryLine;
 use App\Models\Accounting\Account;
 use App\Models\Accounting\AccountingPeriod;
+use App\Models\Accounting\JournalEntry;
+use App\Models\Accounting\JournalEntryLine;
+use App\Models\Accounting\LiabilityPaymentSchedule;
+use App\Models\Accounting\LiabilitySchedule;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use Carbon\Carbon;
 
 /**
  * Liability Schedule Observer
@@ -43,6 +43,7 @@ class LiabilityScheduleObserver
 
         if ($liability->journal_entry_id) {
             Log::info('LiabilityScheduleObserver: Already has JE', ['journal_entry_id' => $liability->journal_entry_id]);
+
             return;
         }
 
@@ -50,8 +51,9 @@ class LiabilityScheduleObserver
         if ($liability->status !== LiabilitySchedule::STATUS_ACTIVE) {
             Log::info('LiabilityScheduleObserver: Skipping JE for non-active liability', [
                 'liability_id' => $liability->id,
-                'status' => $liability->status
+                'status' => $liability->status,
             ]);
+
             return;
         }
 
@@ -66,6 +68,7 @@ class LiabilityScheduleObserver
                     'account_id' => $liability->account_id,
                 ]);
                 DB::rollBack();
+
                 return;
             }
 
@@ -91,6 +94,7 @@ class LiabilityScheduleObserver
                     'liability_id' => $liability->id,
                 ]);
                 DB::rollBack();
+
                 return;
             }
 

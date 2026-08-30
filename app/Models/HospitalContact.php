@@ -10,7 +10,7 @@ class HospitalContact extends Model
     use HasFactory;
 
     protected $fillable = [
-        'name', 'phone', 'email', 'description', 'created_by'
+        'name', 'phone', 'email', 'description', 'created_by',
     ];
 
     public function creator()

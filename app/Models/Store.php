@@ -4,9 +4,8 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-
-
 use OwenIt\Auditing\Contracts\Auditable;
+
 class Store extends Model implements Auditable
 {
     use HasFactory;
@@ -14,14 +13,14 @@ class Store extends Model implements Auditable
 
     // Plan §4 — distribution_role values:
     //   central | pharmacy_hub | pharmacy_satellite | department | ward | other
-    public const ROLE_CENTRAL               = 'central';
-    public const ROLE_PHARMACY_HUB          = 'pharmacy_hub';
-    public const ROLE_PHARMACY_SATELLITE    = 'pharmacy_satellite';
-    public const ROLE_DEPARTMENT            = 'department';
-    public const ROLE_WARD                  = 'ward';
-    public const ROLE_LAB                   = 'lab';
-    public const ROLE_IMAGING               = 'imaging';
-    public const ROLE_OTHER                 = 'other';
+    public const ROLE_CENTRAL = 'central';
+    public const ROLE_PHARMACY_HUB = 'pharmacy_hub';
+    public const ROLE_PHARMACY_SATELLITE = 'pharmacy_satellite';
+    public const ROLE_DEPARTMENT = 'department';
+    public const ROLE_WARD = 'ward';
+    public const ROLE_LAB = 'lab';
+    public const ROLE_IMAGING = 'imaging';
+    public const ROLE_OTHER = 'other';
 
     public const DISTRIBUTION_ROLES = [
         self::ROLE_CENTRAL,
@@ -36,14 +35,14 @@ class Store extends Model implements Auditable
 
     /** Human-readable labels keyed by distribution_role value (Plan §4, used in governance views) */
     public const ROLE_LABELS = [
-        self::ROLE_CENTRAL            => 'Central Store',
-        self::ROLE_PHARMACY_HUB       => 'Pharmacy Hub',
+        self::ROLE_CENTRAL => 'Central Store',
+        self::ROLE_PHARMACY_HUB => 'Pharmacy Hub',
         self::ROLE_PHARMACY_SATELLITE => 'Pharmacy Satellite',
-        self::ROLE_DEPARTMENT         => 'Department Store',
-        self::ROLE_WARD               => 'Ward Store',
-        self::ROLE_LAB                => 'Laboratory Store',
-        self::ROLE_IMAGING            => 'Imaging / Radiology Store',
-        self::ROLE_OTHER              => 'Other',
+        self::ROLE_DEPARTMENT => 'Department Store',
+        self::ROLE_WARD => 'Ward Store',
+        self::ROLE_LAB => 'Laboratory Store',
+        self::ROLE_IMAGING => 'Imaging / Radiology Store',
+        self::ROLE_OTHER => 'Other',
     ];
 
     // Roles that are allowed to dispense directly to patients (Plan §7.5.1 Gate check)
@@ -72,11 +71,11 @@ class Store extends Model implements Auditable
     ];
 
     protected $casts = [
-        'is_default'                      => 'boolean',
-        'is_immutable'                    => 'boolean',
-        'status'                          => 'boolean',
-        'allows_direct_patient_dispense'  => 'boolean',
-        'requires_shift_context'          => 'boolean',
+        'is_default' => 'boolean',
+        'is_immutable' => 'boolean',
+        'status' => 'boolean',
+        'allows_direct_patient_dispense' => 'boolean',
+        'requires_shift_context' => 'boolean',
     ];
 
     // ===== EXISTING RELATIONSHIPS =====
@@ -84,8 +83,9 @@ class Store extends Model implements Auditable
     /**
      * Get store stocks (legacy)
      */
-    public function stock() {
-        return $this->hasMany(StoreStock::class,'store_id','id');
+    public function stock()
+    {
+        return $this->hasMany(StoreStock::class, 'store_id', 'id');
     }
 
     // ===== GOVERNANCE RELATIONSHIPS (Plan §4, §5, §10) =====
@@ -369,14 +369,14 @@ class Store extends Model implements Auditable
     public function distributionRoleLabel(): string
     {
         return match ($this->distribution_role) {
-            self::ROLE_CENTRAL              => 'Central Store',
-            self::ROLE_PHARMACY_HUB         => 'Pharmacy Hub',
-            self::ROLE_PHARMACY_SATELLITE   => 'Pharmacy Satellite',
-            self::ROLE_DEPARTMENT           => 'Department Store',
-            self::ROLE_WARD                 => 'Ward Store',
-            self::ROLE_LAB                  => 'Laboratory Store',
-            self::ROLE_IMAGING              => 'Imaging / Radiology Store',
-            default                         => 'Store',
+            self::ROLE_CENTRAL => 'Central Store',
+            self::ROLE_PHARMACY_HUB => 'Pharmacy Hub',
+            self::ROLE_PHARMACY_SATELLITE => 'Pharmacy Satellite',
+            self::ROLE_DEPARTMENT => 'Department Store',
+            self::ROLE_WARD => 'Ward Store',
+            self::ROLE_LAB => 'Laboratory Store',
+            self::ROLE_IMAGING => 'Imaging / Radiology Store',
+            default => 'Store',
         };
     }
 

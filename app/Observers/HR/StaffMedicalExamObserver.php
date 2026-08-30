@@ -12,7 +12,9 @@ class StaffMedicalExamObserver
     public function saved(StaffMedicalExam $exam): void
     {
         $staff = $exam->staff;
-        if (!$staff) return;
+        if (!$staff) {
+            return;
+        }
 
         $staff->last_medical_exam_date = $exam->exam_date;
         if ($exam->next_exam_due) {
@@ -24,7 +26,9 @@ class StaffMedicalExamObserver
     public function deleted(StaffMedicalExam $exam): void
     {
         $staff = $exam->staff;
-        if (!$staff) return;
+        if (!$staff) {
+            return;
+        }
 
         $latest = $staff->medicalExams()->withoutTrashed()->latest('exam_date')->first();
         if ($latest) {

@@ -3,18 +3,16 @@
 namespace App\Http\Controllers;
 
 use App\Helpers\HmoHelper;
-
-use Illuminate\Http\Request;
 use App\Models\ImagingServiceRequest;
-use App\Models\Encounter;
 use App\Models\Patient;
-use App\Models\Service;
-use Yajra\DataTables\DataTables;
-use Illuminate\Support\Facades\Auth;
 use App\Models\ProductOrServiceRequest;
+use App\Models\Service;
 use Carbon\Carbon;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Yajra\DataTables\DataTables;
 
 class ImagingServiceRequestController extends Controller
 {
@@ -43,7 +41,7 @@ class ImagingServiceRequestController extends Controller
                 'imaging_res_entry_id' => 'required',
                 'imaging_res_template_version' => 'required|in:1,2',
                 'imaging_res_template_data' => 'nullable|string',
-                'result_attachments.*' => 'nullable|file|max:10240|mimes:pdf,jpg,jpeg,png,doc,docx'
+                'result_attachments.*' => 'nullable|file|max:10240|mimes:pdf,jpg,jpeg,png,doc,docx',
             ]);
 
             $imagingRequest = ImagingServiceRequest::findOrFail($request->imaging_res_entry_id);
@@ -54,7 +52,7 @@ class ImagingServiceRequestController extends Controller
                 if (!$deliveryCheck['can_deliver']) {
                     return redirect()->back()->with([
                         'message' => $deliveryCheck['reason'] . ': ' . $deliveryCheck['hint'],
-                        'message_type' => 'error'
+                        'message_type' => 'error',
                     ]);
                 }
             }
@@ -71,7 +69,7 @@ class ImagingServiceRequestController extends Controller
                 if (Carbon::now()->greaterThan($editDeadline)) {
                     return redirect()->back()->with([
                         'message' => "Edit window has expired. Results can only be edited within {$editDuration} minutes of submission.",
-                        'message_type' => 'error'
+                        'message_type' => 'error',
                     ]);
                 }
             }
@@ -104,7 +102,7 @@ class ImagingServiceRequestController extends Controller
 
                                 $enhancedData[$param['id']] = [
                                     'value' => $value,
-                                    'status' => $status
+                                    'status' => $status,
                                 ];
 
                                 // Generate HTML row
@@ -168,7 +166,7 @@ class ImagingServiceRequestController extends Controller
                         'name' => $file->getClientOriginalName(),
                         'path' => 'imaging_results/' . $fileName,
                         'size' => $file->getSize(),
-                        'type' => $file->getClientOriginalExtension()
+                        'type' => $file->getClientOriginalExtension(),
                     ];
                 }
             }
@@ -181,7 +179,7 @@ class ImagingServiceRequestController extends Controller
                 'result' => $resultHtml,
                 'result_data' => $resultData,
                 'attachments' => !empty($allAttachments) ? json_encode($allAttachments) : null,
-                'status' => 4
+                'status' => 4,
             ];
 
             if (!$isEdit) {
@@ -193,9 +191,11 @@ class ImagingServiceRequestController extends Controller
             DB::commit();
 
             $message = $isEdit ? "Results Updated Successfully" : "Results Saved Successfully";
+
             return redirect()->back()->with(['message' => $message, 'message_type' => 'success']);
         } catch (\Exception $e) {
             DB::rollBack();
+
             return redirect()->back()->withInput()->withMessage("An error occurred " . $e->getMessage() . ' line' . $e->getLine());
         }
     }
@@ -227,6 +227,7 @@ class ImagingServiceRequestController extends Controller
             if (isset($refRange['reference_value'])) {
                 $boolValue = $value === true || $value === 'true';
                 $refValue = $refRange['reference_value'] === true;
+
                 return $boolValue === $refValue ? 'Normal' : 'Abnormal';
             }
         } elseif ($type === 'enum') {
@@ -299,7 +300,7 @@ class ImagingServiceRequestController extends Controller
             'High' => '<span class="badge badge-danger">High</span>',
             'Low' => '<span class="badge badge-warning">Low</span>',
             'Abnormal' => '<span class="badge badge-warning">Abnormal</span>',
-            'N/A' => '<span class="badge badge-secondary">N/A</span>'
+            'N/A' => '<span class="badge badge-secondary">N/A</span>',
         ];
 
         return $badges[$status] ?? $status;
@@ -316,17 +317,18 @@ class ImagingServiceRequestController extends Controller
                 'addedImagingBillRows' => 'nullable|array|required_with:consult_imaging_note',
                 'selectedImagingBillRows' => 'array',
                 'patient_user_id' => 'required',
-                'patient_id' => 'required'
+                'patient_id' => 'required',
             ]);
 
             if (isset($request->dismiss_imaging_bill) && isset($request->selectedImagingBillRows)) {
                 DB::beginTransaction();
                 for ($i = 0; $i < count($request->selectedImagingBillRows); $i++) {
                     ImagingServiceRequest::where('id', $request->selectedImagingBillRows[$i])->update([
-                        'status' => 0
+                        'status' => 0,
                     ]);
                 }
                 DB::commit();
+
                 return redirect()->back()->with(['message' => "Service Requests Dismissed Successfully", 'message_type' => 'success']);
             } else {
                 DB::beginTransaction();
@@ -334,7 +336,7 @@ class ImagingServiceRequestController extends Controller
                     for ($i = 0; $i < count($request->selectedImagingBillRows); $i++) {
                         $imaging_req = ImagingServiceRequest::where('id', $request->selectedImagingBillRows[$i])->first();
                         $prod_id = $imaging_req->service->id;
-                        $bill_req = new ProductOrServiceRequest;
+                        $bill_req = new ProductOrServiceRequest();
                         $bill_req->user_id = $request->patient_user_id;
                         $bill_req->staff_user_id = Auth::id();
                         $bill_req->service_id = $prod_id;
@@ -353,6 +355,7 @@ class ImagingServiceRequestController extends Controller
                             }
                         } catch (\Exception $e) {
                             DB::rollBack();
+
                             return redirect()->back()->withErrors(['error' => 'HMO Tariff Error: ' . $e->getMessage()])->withInput();
                         }
 
@@ -368,7 +371,7 @@ class ImagingServiceRequestController extends Controller
                 }
                 if (isset($request->addedImagingBillRows)) {
                     for ($i = 0; $i < count($request->addedImagingBillRows); $i++) {
-                        $bill_req = new ProductOrServiceRequest;
+                        $bill_req = new ProductOrServiceRequest();
                         $bill_req->user_id = $request->patient_user_id;
                         $bill_req->staff_user_id = Auth::id();
                         $bill_req->service_id = $request->addedImagingBillRows[$i];
@@ -387,6 +390,7 @@ class ImagingServiceRequestController extends Controller
                             }
                         } catch (\Exception $e) {
                             DB::rollBack();
+
                             return redirect()->back()->withErrors(['error' => 'HMO Tariff Error: ' . $e->getMessage()])->withInput();
                         }
 
@@ -405,10 +409,12 @@ class ImagingServiceRequestController extends Controller
                     }
                 }
                 DB::commit();
+
                 return redirect()->back()->with(['message' => "Service Requests Billed Successfully", 'message_type' => 'success']);
             }
         } catch (\Exception $e) {
             DB::rollBack();
+
             return redirect()->back()->withInput()->withMessage("An error occurred " . $e->getMessage() . 'line' . $e->getLine());
         }
     }
@@ -425,16 +431,18 @@ class ImagingServiceRequestController extends Controller
                     <button type='button' class='btn btn-primary' onclick='setImagingResTempInModal(this)' data-service-name = '" . $h?->service->service_name . "' data-template = '" . htmlspecialchars($h?->service->template) . "' data-id='$h?->id'>
                         Enter Result
                     </button>";
+
                 return $str;
             })
             ->editColumn('created_at', function ($h) {
                 $str = "<small>";
-                $str .= "<b >Requested by: </b>" . ((isset($h?->doctor_id)  && $h?->doctor_id != null) ? (userfullname($h?->doctor_id) . ' (' . date('h:i a D M j, Y', strtotime($h?->created_at)) . ')') : "<span class='badge badge-secondary'>N/A</span>");
+                $str .= "<b >Requested by: </b>" . ((isset($h?->doctor_id) && $h?->doctor_id != null) ? (userfullname($h?->doctor_id) . ' (' . date('h:i a D M j, Y', strtotime($h?->created_at)) . ')') : "<span class='badge badge-secondary'>N/A</span>");
                 $str .= "<br><br><b >Last Updated On:</b> " . date('h:i a D M j, Y', strtotime($h?->updated_at));
                 $str .= "<br><br><b >Billed by:</b> " . ((isset($h?->billed_by) && $h?->billed_by != null) ? (userfullname($h?->billed_by) . ' (' . date('h:i a D M j, Y', strtotime($h?->billed_date)) . ')') : "<span class='badge badge-secondary'>Not billed</span>");
                 $str .= "<br><br><b >Results by:</b> " . ((isset($h?->result_by) && $h?->result_by != null) ? (userfullname($h?->result_by) . ' (' . date('h:i a D M j, Y', strtotime($h?->result_date)) . ')') : "<span class='badge badge-secondary'>Awaiting Results</span>");
                 $str .= "<br><br><b >Request Note:</b> " . ((isset($h?->note) && $h?->note != null) ? ($h?->note) : "<span class='badge badge-secondary'>N/A</span><br>");
                 $str .= "</small>";
+
                 return $str;
             })
             ->editColumn('result', function ($his) {
@@ -453,6 +461,7 @@ class ImagingServiceRequestController extends Controller
                         }
                     }
                 }
+
                 return $str;
             })
             ->rawColumns(['created_at', 'result', 'select'])
@@ -474,7 +483,7 @@ class ImagingServiceRequestController extends Controller
                 'patient.hmo',
                 'productOrServiceRequest',
                 'doctor',
-                'biller'
+                'biller',
             ])
                 ->whereIn('status', [1, 2]);
 
@@ -494,6 +503,7 @@ class ImagingServiceRequestController extends Controller
                     }
 
                     $url = route('patient.show', [$request->patient->id, 'section' => 'imagingCardBody']);
+
                     return "<a class='btn btn-primary' href='{$url}'>view</a>";
                 })
                 ->editColumn('patient_id', function ($request) {
@@ -536,6 +546,7 @@ class ImagingServiceRequestController extends Controller
                             "<span class='badge badge-secondary'>N/A</span>");
 
                     $str .= "</small>";
+
                     return $str;
                 })
                 ->editColumn('result', function ($request) {
@@ -556,6 +567,7 @@ class ImagingServiceRequestController extends Controller
                             }
                         }
                     }
+
                     return $str;
                 })
                 ->rawColumns(['created_at', 'result', 'select', 'patient_id'])
@@ -564,12 +576,12 @@ class ImagingServiceRequestController extends Controller
             Log::error('Imaging Service Request Error: ' . $e->getMessage(), [
                 'file' => $e->getFile(),
                 'line' => $e->getLine(),
-                'trace' => $e->getTraceAsString()
+                'trace' => $e->getTraceAsString(),
             ]);
 
             return response()->json([
                 'error' => 'An error occurred while processing the request.',
-                'message' => config('app.debug') ? $e->getMessage() : 'Internal Server Error'
+                'message' => config('app.debug') ? $e->getMessage() : 'Internal Server Error',
             ], 500);
         }
     }
@@ -583,7 +595,7 @@ class ImagingServiceRequestController extends Controller
             'patient',
             'productOrServiceRequest',
             'doctor',
-            'biller'
+            'biller',
         ])->where('status', '=', 4);
 
         // Apply date filters if provided
@@ -602,6 +614,7 @@ class ImagingServiceRequestController extends Controller
                 <a class='btn btn-primary' href='$url'>
                     view
                 </a>";
+
                 return $str;
             })
             ->editColumn('patient_id', function ($h) {
@@ -611,16 +624,18 @@ class ImagingServiceRequestController extends Controller
                 $str .= "<br><br><b >Insurance/HMO :</b> : " . (($h?->patient->hmo) ? $h?->patient->hmo->name : "N/A");
                 $str .= "<br><br><b >HMO Number :</b> : " . (($h?->patient->hmo_no) ? $h?->patient->hmo_no : "N/A");
                 $str .= "</small>";
+
                 return $str;
             })
             ->editColumn('created_at', function ($h) {
                 $str = "<small>";
-                $str .= "<b >Requested by: </b>" . ((isset($h?->doctor_id)  && $h?->doctor_id != null) ? (userfullname($h?->doctor_id) . ' (' . date('h:i a D M j, Y', strtotime($h?->created_at)) . ')') : "<span class='badge badge-secondary'>N/A</span>");
+                $str .= "<b >Requested by: </b>" . ((isset($h?->doctor_id) && $h?->doctor_id != null) ? (userfullname($h?->doctor_id) . ' (' . date('h:i a D M j, Y', strtotime($h?->created_at)) . ')') : "<span class='badge badge-secondary'>N/A</span>");
                 $str .= "<br><br><b >Last Updated On:</b> " . date('h:i a D M j, Y', strtotime($h?->updated_at));
                 $str .= "<br><br><b >Billed by:</b> " . ((isset($h?->billed_by) && $h?->billed_by != null) ? (userfullname($h?->billed_by) . ' (' . date('h:i a D M j, Y', strtotime($h?->billed_date)) . ')') : "<span class='badge badge-secondary'>Not billed</span>");
                 $str .= "<br><br><b >Results by:</b> " . ((isset($h?->result_by) && $h?->result_by != null) ? (userfullname($h?->result_by) . ' (' . date('h:i a D M j, Y', strtotime($h?->result_date)) . ')') : "<span class='badge badge-secondary'>Awaiting Results</span>");
                 $str .= "<br><br><b >Request Note:</b> " . ((isset($h?->note) && $h?->note != null) ? ($h?->note) : "<span class='badge badge-secondary'>N/A</span><br>");
                 $str .= "</small>";
+
                 return $str;
             })
             ->editColumn('result', function ($his) {
@@ -642,6 +657,7 @@ class ImagingServiceRequestController extends Controller
 
                 $view_url = route('imaging-requests.show', $his?->id);
                 $str .= "<br><a href='$view_url' class = 'btn btn-primary btn-sm' target='_blank'><i class='fa fa-print'></i> Print</a>";
+
                 return $str;
             })
             ->rawColumns(['created_at', 'result', 'select', 'patient_id'])
@@ -657,6 +673,7 @@ class ImagingServiceRequestController extends Controller
             ->addIndexColumn()
             ->addColumn('select', function ($h) {
                 $str = "<input type='checkbox' name='selectedImagingBillRows[]' onclick='checkImagingBillRow(this)' data-price = '" . $h->service->price->sale_price . "' value='$h->id' class='form-control'> ";
+
                 return $str;
             })
             ->editColumn('created_at', function ($h) {
@@ -665,11 +682,13 @@ class ImagingServiceRequestController extends Controller
                 $str .= '<br><br><b >Last Updated On:</b> ' . date('h:i a D M j, Y', strtotime($h->updated_at));
                 $str .= '<br><br><b >Request Note:</b> ' . ((isset($h->note) && $h->note != null) ? ($h->note) : "<span class='badge badge-secondary'>N/A</span><br>");
                 $str .= '</small>';
+
                 return $str;
             })
             ->editColumn('result', function ($his) {
                 $str = "<span class = 'badge badge-success'>" . (($his->service) ? $his->service->service_name : 'N/A') . '</span><hr>';
                 $str .= $his->result ?? 'N/A';
+
                 return $str;
             })
             ->rawColumns(['created_at', 'result', 'select'])
@@ -705,6 +724,7 @@ class ImagingServiceRequestController extends Controller
             'jpeg' => '<i class="mdi mdi-file-image"></i>',
             'png' => '<i class="mdi mdi-file-image"></i>',
         ];
+
         return $icons[$extension] ?? '<i class="mdi mdi-file"></i>';
     }
 
@@ -718,17 +738,17 @@ class ImagingServiceRequestController extends Controller
     {
         $req = ImagingServiceRequest::with([
             'patient.user', 'patient.hmo', 'service', 'doctor',
-            'resultBy', 'approver', 'encounter', 'productOrServiceRequest'
+            'resultBy', 'approver', 'encounter', 'productOrServiceRequest',
         ])->findOrFail($id);
 
         // Record a server-side print view
         if (Auth::check() && $req->result) {
             \App\Models\ResultView::create([
                 'viewable_type' => ImagingServiceRequest::class,
-                'viewable_id'   => $req->id,
-                'user_id'       => Auth::id(),
-                'view_type'     => 'print',
-                'ip_address'    => request()->ip(),
+                'viewable_id' => $req->id,
+                'user_id' => Auth::id(),
+                'view_type' => 'print',
+                'ip_address' => request()->ip(),
             ]);
         }
 

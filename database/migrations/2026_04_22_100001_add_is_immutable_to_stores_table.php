@@ -13,12 +13,11 @@ use Illuminate\Support\Facades\Schema;
  *
  * Plan §4 — Store governance; canonical store protection.
  */
-return new class extends Migration
-{
+return new class () extends Migration {
     public function up(): void
     {
         Schema::table('stores', function (Blueprint $table) {
-            if (! Schema::hasColumn('stores', 'is_immutable')) {
+            if (!Schema::hasColumn('stores', 'is_immutable')) {
                 $table->boolean('is_immutable')->default(false)->after('is_default')
                     ->comment('When true, store cannot be deleted or deactivated via the UI/observer');
             }

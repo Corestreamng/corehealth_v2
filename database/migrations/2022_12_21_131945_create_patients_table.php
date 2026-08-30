@@ -20,10 +20,10 @@ class CreatePatientsTable extends Migration
             $table->unsignedBigInteger('insurance_scheme')->nullable();
             $table->unsignedBigInteger('hmo_id')->nullable();
             $table->unsignedBigInteger('hmo_no')->nullable();
-            $table->enum('gender',['Male','Female','Others'])->nullable();
+            $table->enum('gender', ['Male','Female','Others'])->nullable();
             $table->timestamp('dob')->nullable();
-            $table->enum('blood_group',['A+','A-','B+','B-','AB+','AB-','O+','O-','Others'])->nullable();
-            $table->enum('genotype',['AA','AS','AC','SS','SC','Others'])->nullable();
+            $table->enum('blood_group', ['A+','A-','B+','B-','AB+','AB-','O+','O-','Others'])->nullable();
+            $table->enum('genotype', ['AA','AS','AC','SS','SC','Others'])->nullable();
             $table->integer('disability')->default(0);
             $table->string('address')->nullable();
             $table->string('nationality')->nullable();

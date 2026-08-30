@@ -2,13 +2,10 @@
 
 namespace App\Models;
 
+use App\Traits\IsAuditable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-
-
 use OwenIt\Auditing\Contracts\Auditable;
-
-use App\Traits\IsAuditable;
 
 class ProductOrServiceRequest extends Model implements Auditable
 {
@@ -16,6 +13,7 @@ class ProductOrServiceRequest extends Model implements Auditable
 
     use HasFactory;
     use \OwenIt\Auditing\Auditable;
+
     protected $fillable = [
         'type',
         'invoice_id',
@@ -66,6 +64,7 @@ class ProductOrServiceRequest extends Model implements Auditable
     {
         return $this->belongsTo(Product::class, 'product_id', 'id');
     }
+
     public function service()
     {
         return $this->belongsTo(Service::class, 'service_id', 'id');

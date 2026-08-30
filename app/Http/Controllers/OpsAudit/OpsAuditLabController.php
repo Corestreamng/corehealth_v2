@@ -2,19 +2,19 @@
 
 namespace App\Http\Controllers\OpsAudit;
 
-use Illuminate\Http\Request;
-use Carbon\Carbon;
 use App\Models\LabServiceRequest;
-use App\Models\ProductOrServiceRequest;
 use App\Models\Payment;
+use App\Models\ProductOrServiceRequest;
+use Carbon\Carbon;
+use Illuminate\Http\Request;
 
 class OpsAuditLabController extends OpsAuditBaseController
 {
     public function index(Request $request)
     {
-        $hmos = \App\Models\Hmo::with('scheme')->orderBy('name')->get()->groupBy(fn($hmo) => $hmo->scheme ? $hmo->scheme->name : 'Other Schemes');
+        $hmos = \App\Models\Hmo::with('scheme')->orderBy('name')->get()->groupBy(fn ($hmo) => $hmo->scheme ? $hmo->scheme->name : 'Other Schemes');
         $hmoSchemes = \App\Models\HmoScheme::orderBy('name')->pluck('name', 'id');
-        $cashiers = \App\Models\User::role(['SUPERADMIN', 'ADMIN', 'ACCOUNTS', 'BILLER'])->orderBy('firstname')->get()->mapWithKeys(fn($u) => [$u->id => trim($u->firstname . ' ' . ($u->othername ?? '') . ' ' . $u->surname)]);
+        $cashiers = \App\Models\User::role(['SUPERADMIN', 'ADMIN', 'ACCOUNTS', 'BILLER'])->orderBy('firstname')->get()->mapWithKeys(fn ($u) => [$u->id => trim($u->firstname . ' ' . ($u->othername ?? '') . ' ' . $u->surname)]);
         $stores = $this->getPermittedStoresForFilter(['roles' => ['lab']]);
 
         return view('admin.ops_audit.lab', compact('hmos', 'hmoSchemes', 'cashiers', 'stores'));
@@ -30,6 +30,7 @@ class OpsAuditLabController extends OpsAuditBaseController
                 'cashbook' => Payment::class,
             ];
             $request->merge(['zone_key' => 'ops_audit.lab.' . $tab]);
+
             return $this->handleBulkStamp($request, $tab, $modelMap);
         }
 
@@ -70,12 +71,16 @@ class OpsAuditLabController extends OpsAuditBaseController
         $this->applyPaymentFilters($query, $request, 'productOrServiceRequest');
         $this->applyItemFilters($query, $request, 'productOrServiceRequest');
 
-        if ($request->filled('status')) $query->where('status', $request->status);
-        if ($request->filled('hmo_id')) $query->whereHas('patient.hmo', fn($q) => $q->where('id', $request->hmo_id));
+        if ($request->filled('status')) {
+            $query->where('status', $request->status);
+        }
+        if ($request->filled('hmo_id')) {
+            $query->whereHas('patient.hmo', fn ($q) => $q->where('id', $request->hmo_id));
+        }
 
         $kpiQuery = clone $query;
 
-        return $this->buildDataTableResponse($query, $request, fn($q) => $q, function ($row) {
+        return $this->buildDataTableResponse($query, $request, fn ($q) => $q, function ($row) {
             $patient = $row->patient;
             $user = $patient?->user;
             $hmo = $patient?->hmo;
@@ -84,8 +89,8 @@ class OpsAuditLabController extends OpsAuditBaseController
 
             $statusColors = [1 => 'warning text-dark', 2 => 'info', 3 => 'primary', 4 => 'success'];
             $statusTexts = [1 => 'Ordered', 2 => 'Sample Collected', 3 => 'Result Entered', 4 => 'Approved'];
-            
-            $statusHtml = '<span class="badge bg-'.($statusColors[$row->status] ?? 'secondary').'">'.($statusTexts[$row->status] ?? $row->status).'</span>';
+
+            $statusHtml = '<span class="badge bg-' . ($statusColors[$row->status] ?? 'secondary') . '">' . ($statusTexts[$row->status] ?? $row->status) . '</span>';
             if ($row->sampler && $row->status >= 2) {
                 $statusHtml .= '<div class="mt-1 text-muted fw-bold" style="font-size:0.7rem;"><i class="mdi mdi-flask me-1"></i>Sample: ' . trim($row->sampler->firstname . ' ' . $row->sampler->surname) . '</div>';
             }
@@ -123,7 +128,7 @@ class OpsAuditLabController extends OpsAuditBaseController
             'patient.hmo.scheme',
             'staff',
             'payment.staff_user',
-            'service'
+            'service',
 ])->whereHas('labRequest');
 
         $this->applyDateFilter($query, $request);
@@ -131,11 +136,13 @@ class OpsAuditLabController extends OpsAuditBaseController
         $this->applyPaymentFilters($query, $request, '');
         $this->applyItemFilters($query, $request, '');
 
-        if ($request->filled('hmo_id')) $query->whereHas('patient.hmo', fn($q) => $q->where('id', $request->hmo_id));
+        if ($request->filled('hmo_id')) {
+            $query->whereHas('patient.hmo', fn ($q) => $q->where('id', $request->hmo_id));
+        }
 
         $kpiQuery = clone $query;
 
-        return $this->buildDataTableResponse($query, $request, fn($q) => $q, function ($row) {
+        return $this->buildDataTableResponse($query, $request, fn ($q) => $q, function ($row) {
             $patient = $row->patient;
             $user = $patient?->user;
             $hmo = $patient?->hmo;
@@ -170,10 +177,10 @@ class OpsAuditLabController extends OpsAuditBaseController
 'patient.user',
             'staff_user',
             'bank',
-            'product_or_service_request', 'product_or_service_request.product.category', 'product_or_service_request.service.category'
-])->whereHas('product_or_service_request', function($q) {
-            $q->whereHas('labRequest');
-        });
+            'product_or_service_request', 'product_or_service_request.product.category', 'product_or_service_request.service.category',
+])->whereHas('product_or_service_request', function ($q) {
+    $q->whereHas('labRequest');
+});
 
         $this->applyDateFilter($query, $request);
         $this->applyShiftFilter($query, $request);
@@ -182,17 +189,17 @@ class OpsAuditLabController extends OpsAuditBaseController
 
         $kpiQuery = clone $query;
 
-        return $this->buildDataTableResponse($query, $request, fn($q) => $q, function ($row) {
+        return $this->buildDataTableResponse($query, $request, fn ($q) => $q, function ($row) {
             $patient = $row->patient;
             $user = $patient?->user;
-            
+
             return [
                 'date' => $row->created_at ? Carbon::parse($row->created_at)->format('d M Y H:i') : '-',
                 'reference' => $row->reference_no ?? '-',
                 'item' => $this->renderPosrItem($row->product_or_service_request, $row->id),
                 'patient' => $this->renderPatient($user, $patient, null),
                 'total' => '₦' . number_format($row->total ?? 0, 2),
-                'method' => $row->payment_method ? '<span class="badge bg-light text-dark border">'.$row->payment_method.'</span>' : '-',
+                'method' => $row->payment_method ? '<span class="badge bg-light text-dark border">' . $row->payment_method . '</span>' : '-',
                 'cashier' => $row->staff_user?->firstname ? ($row->staff_user->firstname . ' ' . ($row->staff_user->surname ?? '')) : '-',
                 'bank' => $this->renderBankDetails($row),
                 'entity' => $this->renderPaymentEntityDetails($row),

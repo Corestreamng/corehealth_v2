@@ -5,17 +5,11 @@ namespace Tests\Feature;
 use App\Models\Patient;
 use App\Models\Product;
 use App\Models\ProductCategory;
-use App\Models\ProductOrServiceRequest;
-use App\Models\ProductRequest;
+use App\Models\StockBatch;
 use App\Models\Store;
 use App\Models\StoreStock;
-use App\Models\StockBatch;
-use App\Models\StockBatchTransaction;
-use App\Models\StockUtilization;
 use App\Models\User;
-use Carbon\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Str;
 use Tests\TestCase;
 
 class StockUtilizationTest extends TestCase
@@ -23,8 +17,11 @@ class StockUtilizationTest extends TestCase
     use RefreshDatabase;
 
     protected $user;
+
     protected $store;
+
     protected $category;
+
     protected $product;
 
     protected function setUp(): void
@@ -47,16 +44,16 @@ class StockUtilizationTest extends TestCase
             'email' => 'admin@corehealth.com',
             'password' => bcrypt('password'),
             'is_admin' => 1,
-            'status' => 1
+            'status' => 1,
         ]);
 
         $this->store = Store::create([
             'store_name' => 'Main Pharmacy Store',
-            'status' => 1
+            'status' => 1,
         ]);
 
         $this->category = ProductCategory::create([
-            'category_name' => 'Consumables'
+            'category_name' => 'Consumables',
         ]);
 
         $this->product = Product::create([
@@ -64,7 +61,7 @@ class StockUtilizationTest extends TestCase
             'category_id' => $this->category->id,
             'product_name' => 'A4 Paper Pack',
             'product_code' => 'A4-PAP',
-            'status' => 1
+            'status' => 1,
         ]);
 
         // Create a price record for the product
@@ -88,17 +85,17 @@ class StockUtilizationTest extends TestCase
             'initial_quantity' => 10,
             'current_quantity' => 10,
             'reorder_level' => 2,
-            'is_active' => true
+            'is_active' => true,
         ]);
 
         $response = $this->getJson(route('inventory.requisitions.my-stock.products', [
-            'store_id' => $this->store->id
+            'store_id' => $this->store->id,
         ]));
 
         $response->assertStatus(200)
             ->assertJsonFragment([
                 'product_id' => $this->product->id,
-                'current_quantity' => 10
+                'current_quantity' => 10,
             ]);
     }
 
@@ -117,18 +114,18 @@ class StockUtilizationTest extends TestCase
             'current_qty' => 50,
             'cost_price' => 12.00,
             'expiry_date' => now()->addYear()->toDateString(),
-            'created_by' => $this->user->id
+            'created_by' => $this->user->id,
         ]);
 
         $response = $this->getJson(route('inventory.requisitions.my-stock.batches', [
             'store_id' => $this->store->id,
-            'product_id' => $this->product->id
+            'product_id' => $this->product->id,
         ]));
 
         $response->assertStatus(200)
             ->assertJsonFragment([
                 'batch_number' => 'B-001',
-                'current_qty' => 50
+                'current_qty' => 50,
             ]);
     }
 
@@ -147,7 +144,7 @@ class StockUtilizationTest extends TestCase
             'current_qty' => 10,
             'cost_price' => 10.00,
             'expiry_date' => now()->addDays(30)->toDateString(),
-            'created_by' => $this->user->id
+            'created_by' => $this->user->id,
         ]);
 
         $batchShort = StockBatch::create([
@@ -159,7 +156,7 @@ class StockUtilizationTest extends TestCase
             'current_qty' => 5,
             'cost_price' => 10.00,
             'expiry_date' => now()->addDays(5)->toDateString(),
-            'created_by' => $this->user->id
+            'created_by' => $this->user->id,
         ]);
 
         StoreStock::create([
@@ -167,7 +164,7 @@ class StockUtilizationTest extends TestCase
             'product_id' => $this->product->id,
             'initial_quantity' => 15,
             'current_quantity' => 15,
-            'is_active' => true
+            'is_active' => true,
         ]);
 
         $payload = [
@@ -179,7 +176,7 @@ class StockUtilizationTest extends TestCase
             'utilization_type' => 'internal',
             'strategy' => 'fefo',
             'start_date' => now()->subWeeks(3)->toDateTimeString(),
-            'end_date' => now()->toDateTimeString()
+            'end_date' => now()->toDateTimeString(),
         ];
 
         $response = $this->postJson(route('inventory.requisitions.my-stock.utilize'), $payload);
@@ -196,7 +193,7 @@ class StockUtilizationTest extends TestCase
             'store_id' => $this->store->id,
             'qty' => 8,
             'utilization_type' => 'internal',
-            'reason' => 'Department Stationary'
+            'reason' => 'Department Stationary',
         ]);
     }
 
@@ -210,11 +207,11 @@ class StockUtilizationTest extends TestCase
             'surname' => 'Doe',
             'firstname' => 'John',
             'email' => 'john.doe@example.com',
-            'password' => bcrypt('password')
+            'password' => bcrypt('password'),
         ]);
         $patient = Patient::create([
             'user_id' => $patientUser->id,
-            'file_no' => 'FN-JOHN-001'
+            'file_no' => 'FN-JOHN-001',
         ]);
 
         // Setup stock
@@ -227,7 +224,7 @@ class StockUtilizationTest extends TestCase
             'current_qty' => 10,
             'cost_price' => 10.00,
             'expiry_date' => now()->addDays(30)->toDateString(),
-            'created_by' => $this->user->id
+            'created_by' => $this->user->id,
         ]);
 
         StoreStock::create([
@@ -235,7 +232,7 @@ class StockUtilizationTest extends TestCase
             'product_id' => $this->product->id,
             'initial_quantity' => 10,
             'current_quantity' => 10,
-            'is_active' => true
+            'is_active' => true,
         ]);
 
         $payload = [
@@ -247,7 +244,7 @@ class StockUtilizationTest extends TestCase
             'utilization_type' => 'patient',
             'patient_id' => $patient->id,
             'is_billed' => true,
-            'strategy' => 'fifo'
+            'strategy' => 'fifo',
         ];
 
         $response = $this->postJson(route('inventory.requisitions.my-stock.utilize'), $payload);
@@ -265,7 +262,7 @@ class StockUtilizationTest extends TestCase
             'qty' => 2,
             'payable_amount' => 100.00, // 50.00 * 2
             'claims_amount' => 0.00,
-            'coverage_mode' => 'none'
+            'coverage_mode' => 'none',
         ]);
 
         // Verify prescription record created
@@ -273,7 +270,7 @@ class StockUtilizationTest extends TestCase
             'patient_id' => $patient->id,
             'product_id' => $this->product->id,
             'qty' => 2,
-            'status' => 3
+            'status' => 3,
         ]);
     }
 }

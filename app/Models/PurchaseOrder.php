@@ -24,7 +24,8 @@ use OwenIt\Auditing\Contracts\Auditable;
  */
 class PurchaseOrder extends Model implements Auditable
 {
-    use HasFactory, SoftDeletes;
+    use HasFactory;
+    use SoftDeletes;
     use \OwenIt\Auditing\Auditable;
 
     protected $fillable = [
@@ -54,19 +55,19 @@ class PurchaseOrder extends Model implements Auditable
     /**
      * Status constants
      */
-    const STATUS_DRAFT = 'draft';
-    const STATUS_SUBMITTED = 'submitted';
-    const STATUS_APPROVED = 'approved';
-    const STATUS_PARTIAL = 'partial';
-    const STATUS_RECEIVED = 'received';
-    const STATUS_CANCELLED = 'cancelled';
+    public const STATUS_DRAFT = 'draft';
+    public const STATUS_SUBMITTED = 'submitted';
+    public const STATUS_APPROVED = 'approved';
+    public const STATUS_PARTIAL = 'partial';
+    public const STATUS_RECEIVED = 'received';
+    public const STATUS_CANCELLED = 'cancelled';
 
     /**
      * Payment status constants
      */
-    const PAYMENT_UNPAID = 'unpaid';
-    const PAYMENT_PARTIAL = 'partial';
-    const PAYMENT_PAID = 'paid';
+    public const PAYMENT_UNPAID = 'unpaid';
+    public const PAYMENT_PARTIAL = 'partial';
+    public const PAYMENT_PAID = 'paid';
 
     /**
      * Get all available statuses

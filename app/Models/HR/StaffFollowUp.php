@@ -30,13 +30,13 @@ class StaffFollowUp extends Model implements Auditable
         'resolved_at' => 'datetime',
     ];
 
-    const STATUS_OPEN = 'open';
-    const STATUS_IN_PROGRESS = 'in_progress';
-    const STATUS_RESOLVED = 'resolved';
+    public const STATUS_OPEN = 'open';
+    public const STATUS_IN_PROGRESS = 'in_progress';
+    public const STATUS_RESOLVED = 'resolved';
 
-    const PRIORITY_LOW = 'low';
-    const PRIORITY_MEDIUM = 'medium';
-    const PRIORITY_HIGH = 'high';
+    public const PRIORITY_LOW = 'low';
+    public const PRIORITY_MEDIUM = 'medium';
+    public const PRIORITY_HIGH = 'high';
 
     public function staff()
     {

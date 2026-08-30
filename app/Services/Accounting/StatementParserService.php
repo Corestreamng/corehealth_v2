@@ -7,7 +7,6 @@ use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use PhpOffice\PhpSpreadsheet\IOFactory;
-use PhpOffice\PhpSpreadsheet\Spreadsheet;
 
 /**
  * Statement Parser Service
@@ -73,7 +72,7 @@ class StatementParserService
             } catch (\Exception $e) {
                 Log::error('Statement parsing failed', [
                     'import_id' => $import->id,
-                    'error' => $e->getMessage()
+                    'error' => $e->getMessage(),
                 ]);
 
                 $import->status = BankStatementImport::STATUS_FAILED;
@@ -209,6 +208,7 @@ class StatementParserService
                 if (is_numeric($value) && abs($value) > 0) {
                     $totalTransactions++;
                     $importedTransactions++;
+
                     break;
                 }
             }
@@ -255,6 +255,7 @@ class StatementParserService
                     if (is_numeric($value) && abs($value) > 0) {
                         $totalTransactions++;
                         $importedTransactions++;
+
                         break;
                     }
                 }
@@ -346,9 +347,11 @@ class StatementParserService
             }
 
             $html .= '</tbody></table>';
+
             return $html;
         } catch (\Exception $e) {
             Log::error('Excel to HTML conversion failed', ['error' => $e->getMessage()]);
+
             return '<div class="alert alert-danger">Failed to render Excel file: ' . htmlspecialchars($e->getMessage()) . '</div>';
         }
     }
@@ -402,9 +405,11 @@ class StatementParserService
             }
 
             $html .= '</tbody></table>';
+
             return $html;
         } catch (\Exception $e) {
             Log::error('CSV to HTML conversion failed', ['error' => $e->getMessage()]);
+
             return '<div class="alert alert-danger">Failed to render CSV file: ' . htmlspecialchars($e->getMessage()) . '</div>';
         }
     }
@@ -424,6 +429,7 @@ class StatementParserService
             if (floor($floatValue) == $floatValue) {
                 return number_format($floatValue, 0, '.', ',');
             }
+
             return number_format($floatValue, 2, '.', ',');
         }
 
@@ -442,6 +448,7 @@ class StatementParserService
         // Build URL from request to ensure correct host/port
         // This handles cases like localhost:8000 properly
         $baseUrl = request()->getSchemeAndHttpHost();
+
         return $baseUrl . '/storage/' . $import->file_path;
     }
 
@@ -481,8 +488,9 @@ class StatementParserService
         } catch (\Exception $e) {
             Log::error('Failed to delete statement import', [
                 'import_id' => $import->id,
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ]);
+
             return false;
         }
     }
@@ -498,9 +506,11 @@ class StatementParserService
         switch ($import->file_format) {
             case BankStatementImport::FORMAT_EXCEL:
                 $data = $this->parseExcel($fullPath);
+
                 break;
             case BankStatementImport::FORMAT_CSV:
                 $data = $this->parseCSV($fullPath);
+
                 break;
             default:
                 return [];

@@ -33,28 +33,36 @@ class StaffTrainingController extends Controller
             $rows = $query->get();
             $csv = "Staff,Type,Title,Institution,Start Date,End Date,Status\n";
             foreach ($rows as $r) {
-                $csv .= '"'.($r->staff?->user?->surname.' '.$r->staff?->user?->firstname.' '.$r->staff?->user?->othername).'","'.ucfirst(str_replace('_',' ',$r->type)).'","'.($r->title ?? '').'","'.($r->institution ?? '').'","'.($r->start_date?->format('Y-m-d') ?? '').'","'.($r->end_date?->format('Y-m-d') ?? '').'","'.ucfirst(str_replace('_',' ',$r->status))."\"\n";
+                $csv .= '"' . ($r->staff?->user?->surname . ' ' . $r->staff?->user?->firstname . ' ' . $r->staff?->user?->othername) . '","' . ucfirst(str_replace('_', ' ', $r->type)) . '","' . ($r->title ?? '') . '","' . ($r->institution ?? '') . '","' . ($r->start_date?->format('Y-m-d') ?? '') . '","' . ($r->end_date?->format('Y-m-d') ?? '') . '","' . ucfirst(str_replace('_', ' ', $r->status)) . "\"\n";
             }
-            return response($csv)->header('Content-Type', 'text/csv')->header('Content-Disposition', 'attachment; filename=trainings_'.date('Ymd').'.csv');
+
+            return response($csv)->header('Content-Type', 'text/csv')->header('Content-Disposition', 'attachment; filename=trainings_' . date('Ymd') . '.csv');
         }
 
         if ($request->ajax()) {
             return DataTables::of($query)
                 ->addIndexColumn()
-                ->addColumn('staff_name', fn($t) => '<a href="' . route('hr.tracking.profile', $t->staff_id) . '" class="font-weight-bold text-dark" title="View Tracking Profile">' . e($t->staff?->user?->surname . ' ' . $t->staff?->user?->firstname . ' ' . $t->staff?->user?->othername) . '</a>')
+                ->addColumn('staff_name', fn ($t) => '<a href="' . route('hr.tracking.profile', $t->staff_id) . '" class="font-weight-bold text-dark" title="View Tracking Profile">' . e($t->staff?->user?->surname . ' ' . $t->staff?->user?->firstname . ' ' . $t->staff?->user?->othername) . '</a>')
                 ->addColumn('training_col', function ($t) {
                     $typeColors = ['attended' => 'success', 'identified' => 'warning', 'career_plan' => 'info'];
+
                     return e($t->title) . '<br><span class="badge badge-' . ($typeColors[$t->type] ?? 'secondary') . '">' . str_replace('_', ' ', ucfirst($t->type)) . '</span>';
                 })
                 ->addColumn('institution_col', function ($t) {
                     $html = e($t->institution ?? '—');
                     $dates = $t->start_date?->format('d M Y') ?? '';
-                    if ($t->end_date) $dates .= ' – ' . $t->end_date->format('d M Y');
-                    if ($dates) $html .= '<br><small class="text-muted">' . $dates . '</small>';
+                    if ($t->end_date) {
+                        $dates .= ' – ' . $t->end_date->format('d M Y');
+                    }
+                    if ($dates) {
+                        $html .= '<br><small class="text-muted">' . $dates . '</small>';
+                    }
+
                     return $html;
                 })
                 ->addColumn('status_col', function ($t) {
                     $statusColors = ['planned' => 'secondary', 'in_progress' => 'warning', 'completed' => 'success', 'cancelled' => 'danger'];
+
                     return '<span class="badge badge-' . ($statusColors[$t->status] ?? 'secondary') . '">' . str_replace('_', ' ', ucfirst($t->status)) . '</span>';
                 })
                 ->addColumn('action', function ($t) {
@@ -73,6 +81,7 @@ class StaffTrainingController extends Controller
                         $html .= '<a href="' . Storage::url($t->certificate_path) . '" target="_blank" class="btn btn-sm btn-outline-info" title="Certificate"><i class="mdi mdi-file-certificate"></i></a> ';
                     }
                     $html .= '<button class="btn btn-sm btn-outline-danger delete-btn" data-url="' . route('hr.trainings.destroy', $t) . '" title="Delete"><i class="mdi mdi-delete"></i></button>';
+
                     return $html;
                 })
                 ->rawColumns(['staff_name', 'training_col', 'institution_col', 'status_col', 'action'])
@@ -86,7 +95,7 @@ class StaffTrainingController extends Controller
             $scopedStaff = Staff::with(['user', 'department', 'cadre', 'gradeLevel'])->find($request->staff_id);
         }
 
-        $statsQuery = $scopedStaff ? StaffTraining::where('staff_id', $scopedStaff->id) : new StaffTraining;
+        $statsQuery = $scopedStaff ? StaffTraining::where('staff_id', $scopedStaff->id) : new StaffTraining();
         $stats = [
             'total' => (clone $statsQuery)->count(),
             'completed' => (clone $statsQuery)->where('status', 'completed')->count(),
@@ -125,6 +134,7 @@ class StaffTrainingController extends Controller
         }
 
         Alert::success('Success', 'Training record added.');
+
         return redirect()->back();
     }
 
@@ -152,6 +162,7 @@ class StaffTrainingController extends Controller
         }
 
         Alert::success('Success', 'Training updated.');
+
         return redirect()->back();
     }
 
@@ -167,6 +178,7 @@ class StaffTrainingController extends Controller
         }
 
         Alert::success('Success', 'Training record removed.');
+
         return redirect()->back();
     }
 
@@ -174,6 +186,7 @@ class StaffTrainingController extends Controller
     {
         $headers = "staff_id,type,title,institution,start_date,end_date,status,notes\n";
         $headers .= "1,attended,Fire Safety Training,Red Cross,2024-01-15,2024-01-17,completed,Annual training\n";
+
         return response($headers)
             ->header('Content-Type', 'text/csv')
             ->header('Content-Disposition', 'attachment; filename=trainings_import_template.csv');
@@ -189,7 +202,7 @@ class StaffTrainingController extends Controller
         $rows = $spreadsheet->getActiveSheet()->toArray(null, true, true, true);
 
         $header = array_shift($rows);
-        $headerMap = array_flip(array_map(fn($h) => strtolower(trim($h ?? '')), $header));
+        $headerMap = array_flip(array_map(fn ($h) => strtolower(trim($h ?? '')), $header));
 
         $staffIds = Staff::pluck('id')->toArray();
         $validTypes = ['attended', 'identified', 'career_plan'];
@@ -209,11 +222,13 @@ class StaffTrainingController extends Controller
                 if (!empty(array_filter($data))) {
                     $errors[] = "Row {$rowNum}: staff_id and title are required.";
                 }
+
                 continue;
             }
 
             if (!in_array((int) $data['staff_id'], $staffIds)) {
                 $errors[] = "Row {$rowNum}: Staff ID {$data['staff_id']} not found.";
+
                 continue;
             }
 
@@ -231,6 +246,7 @@ class StaffTrainingController extends Controller
         $msg = "{$imported} training(s) imported successfully.";
         if (!empty($errors)) {
             $msg .= ' ' . count($errors) . ' row(s) skipped.';
+
             return response()->json(['message' => $msg, 'errors_detail' => array_slice($errors, 0, 10)], 200);
         }
 

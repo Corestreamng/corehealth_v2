@@ -22,7 +22,7 @@ class CreateProcedureNotesTable extends Migration
                 'intra_op',
                 'post_op',
                 'anesthesia',
-                'nursing'
+                'nursing',
             ]);
 
             $table->string('title')->nullable();

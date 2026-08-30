@@ -58,7 +58,7 @@ class AddDrugSourceColumnsToAdministrationsTables extends Migration
                 'external_qty',
                 'external_batch_number',
                 'external_expiry_date',
-                'external_source_note'
+                'external_source_note',
             ]);
         });
 
@@ -71,7 +71,7 @@ class AddDrugSourceColumnsToAdministrationsTables extends Migration
                 'external_qty',
                 'external_batch_number',
                 'external_expiry_date',
-                'external_source_note'
+                'external_source_note',
             ]);
         });
     }

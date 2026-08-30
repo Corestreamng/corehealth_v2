@@ -5,14 +5,13 @@ namespace App\Http\Controllers\Accounting;
 use App\Http\Controllers\Controller;
 use App\Models\Accounting\Account;
 use App\Models\Accounting\AccountClass;
-use App\Models\Accounting\AccountGroup;
+use App\Models\Accounting\FiscalPeriod;
+use App\Models\Accounting\FiscalYear;
 use App\Models\Accounting\JournalEntry;
 use App\Models\Accounting\JournalEntryLine;
-use App\Models\Accounting\FiscalYear;
-use App\Models\Accounting\FiscalPeriod;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Yajra\DataTables\Facades\DataTables;
 
 /**
@@ -45,7 +44,7 @@ class OpeningBalanceController extends Controller
         $classes = AccountClass::with([
             'accountGroups.accounts' => function ($query) use ($selectedYear) {
                 $query->orderBy('code');
-            }
+            },
         ])
         ->orderBy('code')
         ->get();
@@ -120,7 +119,7 @@ class OpeningBalanceController extends Controller
                     if ($request->has_balance === '1') {
                         $query->where('opening_balance', '!=', 0);
                     } else {
-                        $query->where(function($q) {
+                        $query->where(function ($q) {
                             $q->whereNull('opening_balance')
                               ->orWhere('opening_balance', 0);
                         });
@@ -144,7 +143,10 @@ class OpeningBalanceController extends Controller
             })
             ->addColumn('normal_balance', function ($row) {
                 $class = $row->accountGroup?->accountClass;
-                if (!$class) return '-';
+                if (!$class) {
+                    return '-';
+                }
+
                 return $class->normal_balance === 'debit'
                     ? '<span class="badge badge-info">Debit</span>'
                     : '<span class="badge badge-warning">Credit</span>';
@@ -154,6 +156,7 @@ class OpeningBalanceController extends Controller
                 if ($balance == 0) {
                     return '<span class="text-muted">0.00</span>';
                 }
+
                 return number_format($balance, 2);
             })
             ->addColumn('actions', function ($row) {
@@ -185,7 +188,7 @@ class OpeningBalanceController extends Controller
             ->where('is_active', true)
             ->orderBy('code')
             ->get()
-            ->groupBy(function($account) {
+            ->groupBy(function ($account) {
                 return $account->accountGroup?->accountClass?->name ?? 'Other';
             });
 
@@ -222,7 +225,7 @@ class OpeningBalanceController extends Controller
             if (!$firstPeriod) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'No fiscal period found for this fiscal year'
+                    'message' => 'No fiscal period found for this fiscal year',
                 ], 422);
             }
 
@@ -247,7 +250,9 @@ class OpeningBalanceController extends Controller
             $lineNumber = 1;
 
             foreach ($request->balances as $balance) {
-                if ($balance['amount'] == 0) continue;
+                if ($balance['amount'] == 0) {
+                    continue;
+                }
 
                 $account = Account::with('accountGroup.accountClass')->find($balance['account_id']);
                 $normalBalance = $account->accountGroup?->accountClass?->normal_balance ?? 'debit';
@@ -295,7 +300,7 @@ class OpeningBalanceController extends Controller
 
                 if (!$adjustmentAccount) {
                     $adjustmentAccount = Account::where('is_active', true)
-                        ->whereHas('accountGroup.accountClass', function($q) {
+                        ->whereHas('accountGroup.accountClass', function ($q) {
                             $q->where('code', '3'); // Equity
                         })
                         ->first();
@@ -319,7 +324,7 @@ class OpeningBalanceController extends Controller
                 return response()->json([
                     'success' => true,
                     'message' => 'Opening balances saved successfully',
-                    'journal_entry_id' => $journalEntry->id
+                    'journal_entry_id' => $journalEntry->id,
                 ]);
             }
 
@@ -332,7 +337,7 @@ class OpeningBalanceController extends Controller
             if ($request->ajax()) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Error saving opening balances: ' . $e->getMessage()
+                    'message' => 'Error saving opening balances: ' . $e->getMessage(),
                 ], 500);
             }
 
@@ -362,13 +367,13 @@ class OpeningBalanceController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => 'Opening balance updated for ' . $account->name,
-                'new_balance' => number_format($request->amount, 2)
+                'new_balance' => number_format($request->amount, 2),
             ]);
 
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Error updating opening balance: ' . $e->getMessage()
+                'message' => 'Error updating opening balance: ' . $e->getMessage(),
             ], 500);
         }
     }
@@ -385,7 +390,7 @@ class OpeningBalanceController extends Controller
             ->where('is_active', true);
 
         if ($classId) {
-            $query->whereHas('accountGroup', function($q) use ($classId) {
+            $query->whereHas('accountGroup', function ($q) use ($classId) {
                 $q->where('account_class_id', $classId);
             });
         }
@@ -398,7 +403,7 @@ class OpeningBalanceController extends Controller
 
         return response()->json([
             'success' => true,
-            'accounts' => $accounts->map(function($account) {
+            'accounts' => $accounts->map(function ($account) {
                 return [
                     'id' => $account->id,
                     'account_code' => $account->account_code,
@@ -407,7 +412,7 @@ class OpeningBalanceController extends Controller
                     'opening_balance' => $account->opening_balance ?? 0,
                     'normal_balance' => $account->accountGroup?->accountClass?->normal_balance ?? 'debit',
                 ];
-            })
+            }),
         ]);
     }
 }

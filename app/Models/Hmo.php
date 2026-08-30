@@ -4,27 +4,28 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-
-
 use OwenIt\Auditing\Contracts\Auditable;
+
 class Hmo extends Model implements Auditable
 {
     use HasFactory;
     use \OwenIt\Auditing\Auditable;
-protected $fillable = [
-        'name',
-        'desc',
-        'status',
-        'discount',
-        'hmo_scheme_id'
-    ];
+
+    protected $fillable = [
+            'name',
+            'desc',
+            'status',
+            'discount',
+            'hmo_scheme_id',
+        ];
 
     public function scheme()
     {
         return $this->belongsTo(HmoScheme::class, 'hmo_scheme_id');
     }
 
-    public function patients(){
-        return $this->hasMany(Patient::class,'hmo_id','id');
+    public function patients()
+    {
+        return $this->hasMany(Patient::class, 'hmo_id', 'id');
     }
 }

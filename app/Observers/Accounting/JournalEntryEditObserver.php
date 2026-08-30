@@ -45,10 +45,12 @@ class JournalEntryEditObserver
         switch ($edit->status) {
             case JournalEntryEdit::STATUS_APPROVED:
                 $notificationService->notifyEditRequestApproved($edit);
+
                 break;
 
             case JournalEntryEdit::STATUS_REJECTED:
                 $notificationService->notifyEditRequestRejected($edit);
+
                 break;
         }
     }

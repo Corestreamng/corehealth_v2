@@ -27,16 +27,16 @@ class HrAttachment extends Model implements Auditable
         'file_size',
         'document_type',
         'description',
-        'uploaded_by'
+        'uploaded_by',
     ];
 
-    const TYPE_MEDICAL_REPORT = 'medical_report';
-    const TYPE_QUERY_RESPONSE = 'query_response';
-    const TYPE_TERMINATION_LETTER = 'termination_letter';
-    const TYPE_SUSPENSION_LETTER = 'suspension_letter';
-    const TYPE_LEAVE_DOCUMENT = 'leave_document';
-    const TYPE_PAYROLL_SUMMARY = 'payroll_summary';
-    const TYPE_OTHER = 'other';
+    public const TYPE_MEDICAL_REPORT = 'medical_report';
+    public const TYPE_QUERY_RESPONSE = 'query_response';
+    public const TYPE_TERMINATION_LETTER = 'termination_letter';
+    public const TYPE_SUSPENSION_LETTER = 'suspension_letter';
+    public const TYPE_LEAVE_DOCUMENT = 'leave_document';
+    public const TYPE_PAYROLL_SUMMARY = 'payroll_summary';
+    public const TYPE_OTHER = 'other';
 
     /**
      * Get the owning attachable model

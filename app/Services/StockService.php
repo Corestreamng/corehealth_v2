@@ -3,13 +3,13 @@
 namespace App\Services;
 
 use App\Models\Product;
-use App\Models\Store;
-use App\Models\StoreDamage;
 use App\Models\StockBatch;
 use App\Models\StockBatchTransaction;
+use App\Models\Store;
+use App\Models\StoreDamage;
 use App\Models\StoreStock;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
 
 /**
  * Service: StockService
@@ -94,7 +94,9 @@ class StockService
 
         return DB::transaction(function () use ($batches, $remainingQty, $referenceType, $referenceId, $notes, &$dispensed) {
             foreach ($batches as $batch) {
-                if ($remainingQty <= 0) break;
+                if ($remainingQty <= 0) {
+                    break;
+                }
 
                 $deductQty = min($batch->current_qty, $remainingQty);
 
@@ -228,7 +230,9 @@ class StockService
 
                 $remainingQty = $qty;
                 foreach ($batches as $batch) {
-                    if ($remainingQty <= 0) break;
+                    if ($remainingQty <= 0) {
+                        break;
+                    }
 
                     $deductQty = min($batch->current_qty, $remainingQty);
                     $batch->deductStock(
@@ -363,7 +367,9 @@ class StockService
                 $totalQtyProcessed = 0;
 
                 foreach ($batches as $batch) {
-                    if ($remainingQty <= 0) break;
+                    if ($remainingQty <= 0) {
+                        break;
+                    }
 
                     $deductQty = min($batch->current_qty, $remainingQty);
 

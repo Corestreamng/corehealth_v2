@@ -4,21 +4,20 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-
-
 use OwenIt\Auditing\Contracts\Auditable;
+
 class ReasonForEncounter extends Model implements Auditable
 {
     use HasFactory;
     use \OwenIt\Auditing\Auditable;
-    
+
     protected $table = 'reason_for_encounters';
 
     protected $fillable = [
         'code',
         'name',
         'category',
-        'sub_category'
+        'sub_category',
     ];
 
     /**
@@ -51,7 +50,7 @@ class ReasonForEncounter extends Model implements Auditable
             'code' => $code,
             'name' => $name,
             'category' => 'custom',
-            'sub_category' => 'custom'
+            'sub_category' => 'custom',
         ]);
     }
 }

@@ -4,9 +4,8 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-
-
 use OwenIt\Auditing\Contracts\Auditable;
+
 class Product extends Model implements Auditable
 {
     use HasFactory;
@@ -50,7 +49,6 @@ class Product extends Model implements Auditable
     //     return $this->hasMany('App\StokeOther');
     // }
 
-
     public function stock()
     {
         return $this->hasOne(Stock::class);
@@ -83,11 +81,12 @@ class Product extends Model implements Auditable
 
     public function category()
     {
-        return $this->belongsTo(ProductCategory::class, 'category_id','id');
+        return $this->belongsTo(ProductCategory::class, 'category_id', 'id');
     }
 
-    public function requests(){
-        return $this->hasMany(ProductOrServiceRequest::class,'product_id','id');
+    public function requests()
+    {
+        return $this->hasMany(ProductOrServiceRequest::class, 'product_id', 'id');
     }
 
     // ===== NEW INVENTORY MANAGEMENT RELATIONSHIPS =====
@@ -241,13 +240,13 @@ class Product extends Model implements Auditable
         // Use eager loaded packagings if available to prevent N+1
         $packagings = $this->relationLoaded('packagings') ? $this->packagings : $this->packagings()->get();
         $defaultPurchasePack = $packagings->where('is_default_purchase', true)->first();
-        
+
         if (!$defaultPurchasePack || $defaultPurchasePack->base_unit_qty <= 0) {
             return '';
         }
 
         $baseUnitQty = (float) $defaultPurchasePack->base_unit_qty;
-        
+
         if ($baseUnitQty <= 1 && strtolower($defaultPurchasePack->name) === strtolower($this->base_unit_name)) {
             // Bulk unit is indistinguishable from base unit
             return '';
@@ -258,9 +257,9 @@ class Product extends Model implements Auditable
 
         $name = $defaultPurchasePack->name;
         $namePlural = str_ends_with($name, 's') ? $name : $name . 's';
-        
+
         $packStr = "{$packQty} " . ($packQty == 1 ? $name : $namePlural);
-        
+
         if ($remainder > 0) {
             $baseUnitStr = $this->formatQty($remainder);
             if ($packQty > 0) {

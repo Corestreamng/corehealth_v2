@@ -30,13 +30,13 @@ class StaffMedicalExam extends Model implements Auditable
         'next_exam_due' => 'date',
     ];
 
-    const TYPE_PRE_EMPLOYMENT = 'pre_employment';
-    const TYPE_PERIODIC = 'periodic';
-    const TYPE_EXIT = 'exit';
+    public const TYPE_PRE_EMPLOYMENT = 'pre_employment';
+    public const TYPE_PERIODIC = 'periodic';
+    public const TYPE_EXIT = 'exit';
 
-    const RESULT_FIT = 'fit';
-    const RESULT_UNFIT = 'unfit';
-    const RESULT_CONDITIONAL = 'conditional';
+    public const RESULT_FIT = 'fit';
+    public const RESULT_UNFIT = 'unfit';
+    public const RESULT_CONDITIONAL = 'conditional';
 
     public function staff()
     {

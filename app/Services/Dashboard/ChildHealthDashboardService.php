@@ -2,12 +2,10 @@
 
 namespace App\Services\Dashboard;
 
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Cache;
-use Carbon\Carbon;
-use App\Models\ImmunizationRecord;
-use App\Models\PatientImmunizationSchedule;
 use App\Models\ChildGrowthRecord;
+use App\Models\PatientImmunizationSchedule;
+use Carbon\Carbon;
+use Illuminate\Support\Facades\Cache;
 
 class ChildHealthDashboardService
 {
@@ -17,6 +15,7 @@ class ChildHealthDashboardService
     public function getStats(): array
     {
         $today = Carbon::today();
+
         return [
             'today' => PatientImmunizationSchedule::whereIn('status', ['pending', 'due'])
                 ->whereBetween('scheduled_date', [$today->copy()->startOfDay(), $today->copy()->endOfDay()])
@@ -41,9 +40,9 @@ class ChildHealthDashboardService
             $immunizationsDue = PatientImmunizationSchedule::whereIn('status', ['pending', 'due'])
                 ->whereBetween('due_date', [$today->copy()->startOfDay(), $today->copy()->endOfDay()])
                 ->count();
-            
+
             $growthVisits = ChildGrowthRecord::whereBetween('created_at', [$today->copy()->startOfDay(), $today->copy()->endOfDay()])->count();
-            
+
             $overdueImmunizations = PatientImmunizationSchedule::where('status', 'overdue')
                 ->count();
 
@@ -75,7 +74,7 @@ class ChildHealthDashboardService
                         'pending', 'due' => '#f59e0b',
                         'overdue' => '#ef4444',
                         default => '#64748b'
-                    }
+                    },
                 ];
             })
             ->toArray();
@@ -125,7 +124,7 @@ class ChildHealthDashboardService
 
         $overdue = PatientImmunizationSchedule::where('status', 'overdue')
             ->count();
-        
+
         if ($overdue > 0) {
             $insights[] = [
                 'type' => 'alert', 'severity' => 'danger', 'icon' => 'mdi-needle',

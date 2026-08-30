@@ -2,9 +2,7 @@
 
 namespace Tests\Feature\Pharmacy;
 
-use App\Models\Patient;
 use App\Models\ProductOrServiceRequest;
-use App\Models\User;
 use Tests\TestCase;
 
 class DispenseBillingTest extends TestCase
@@ -52,6 +50,4 @@ class DispenseBillingTest extends TestCase
         ]);
         $this->assertNotEquals('approved', $request->validation_status);
     }
-
 }
-

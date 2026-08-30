@@ -1,25 +1,25 @@
 <?php
 
-use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Accounting\AccountingController;
-use App\Http\Controllers\Accounting\JournalEntryController;
-use App\Http\Controllers\Accounting\ChartOfAccountsController;
-use App\Http\Controllers\Accounting\ReportController;
-use App\Http\Controllers\Accounting\CreditNoteController;
-use App\Http\Controllers\Accounting\OpeningBalanceController;
-// New Accounting Modules
-use App\Http\Controllers\Accounting\PettyCashController;
-use App\Http\Controllers\Accounting\TransferController;
 use App\Http\Controllers\Accounting\BankReconciliationController;
-use App\Http\Controllers\Accounting\PatientDepositController;
-use App\Http\Controllers\Accounting\CashFlowForecastController;
-use App\Http\Controllers\Accounting\FixedAssetController;
-use App\Http\Controllers\Accounting\LiabilityController;
-use App\Http\Controllers\Accounting\LeaseController;
-use App\Http\Controllers\Accounting\CostCenterController;
-use App\Http\Controllers\Accounting\CapexController;
 use App\Http\Controllers\Accounting\BudgetController;
+use App\Http\Controllers\Accounting\CapexController;
+use App\Http\Controllers\Accounting\CashFlowForecastController;
+use App\Http\Controllers\Accounting\ChartOfAccountsController;
+use App\Http\Controllers\Accounting\CostCenterController;
+// New Accounting Modules
+use App\Http\Controllers\Accounting\CreditNoteController;
+use App\Http\Controllers\Accounting\FixedAssetController;
+use App\Http\Controllers\Accounting\JournalEntryController;
 use App\Http\Controllers\Accounting\KpiController;
+use App\Http\Controllers\Accounting\LeaseController;
+use App\Http\Controllers\Accounting\LiabilityController;
+use App\Http\Controllers\Accounting\OpeningBalanceController;
+use App\Http\Controllers\Accounting\PatientDepositController;
+use App\Http\Controllers\Accounting\PettyCashController;
+use App\Http\Controllers\Accounting\ReportController;
+use App\Http\Controllers\Accounting\TransferController;
+use Illuminate\Support\Facades\Route;
 
 /*
 |--------------------------------------------------------------------------

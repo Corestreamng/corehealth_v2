@@ -23,7 +23,7 @@ class DoctorAvailabilityOverride extends Model implements Auditable
 
     protected $casts = [
         'override_date' => 'date',
-        'is_available'  => 'boolean',
+        'is_available' => 'boolean',
     ];
 
     // ──────────────────────────────────────

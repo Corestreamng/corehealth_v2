@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Enums\QueueStatus;
+use App\Helpers\HmoHelper;
+use App\Http\Traits\ClinicalOrdersTrait;
 use App\Models\AdmissionRequest;
 use App\Models\Clinic;
 use App\Models\DoctorQueue;
@@ -13,6 +15,7 @@ use App\Models\LabServiceRequest;
 use App\Models\NursingNote;
 use App\Models\NursingNoteType;
 use App\Models\Patient;
+use App\Models\Procedure;
 use App\Models\ProductOrServiceRequest;
 use App\Models\ProductRequest;
 use App\Models\ReasonForEncounter;
@@ -21,7 +24,6 @@ use App\Models\Staff;
 use App\Models\User;
 use App\Services\QueueStatusService;
 use Carbon\Carbon;
-use App\Helpers\HmoHelper;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -29,12 +31,11 @@ use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Yajra\DataTables\DataTables;
-use App\Http\Traits\ClinicalOrdersTrait;
-use App\Models\Procedure;
 
 class EncounterController extends Controller
 {
     use ClinicalOrdersTrait;
+
     /**
      * Display a listing of the resource.
      *
@@ -43,8 +44,8 @@ class EncounterController extends Controller
     public function index()
     {
         // Clinics & doctors for referral filter dropdowns
-        $filterClinics  = Clinic::orderBy('name')->get(['id', 'name']);
-        $filterDoctors  = Staff::whereHas('user')
+        $filterClinics = Clinic::orderBy('name')->get(['id', 'name']);
+        $filterDoctors = Staff::whereHas('user')
             ->orderBy('id')
             ->get(['id', 'user_id']);
 
@@ -94,18 +95,20 @@ class EncounterController extends Controller
                     if ($queue->priority === 'emergency') {
                         return '<span class="text-danger fw-bold"><i class="fa fa-exclamation-triangle"></i> ' . e($name) . '</span>';
                     }
+
                     return e($name);
                 })
                 ->addColumn('priority', function ($queue) {
                     $badges = [
                         'emergency' => '<span class="badge bg-danger"><i class="fa fa-bolt"></i> Emergency</span>',
-                        'urgent'    => '<span class="badge bg-warning text-dark">Urgent</span>',
-                        'routine'   => '<span class="badge bg-secondary">Routine</span>',
+                        'urgent' => '<span class="badge bg-warning text-dark">Urgent</span>',
+                        'routine' => '<span class="badge bg-secondary">Routine</span>',
                     ];
                     $badge = $badges[$queue->priority] ?? $badges['routine'];
                     if ($queue->triage_note) {
                         $badge .= ' <a href="#" class="text-info triage-note-btn" data-bs-toggle="popover" data-bs-trigger="hover focus" title="Triage Note" data-bs-content="' . e(Str::limit($queue->triage_note, 300)) . '"><i class="fa fa-notes-medical"></i></a>';
                     }
+
                     return $badge;
                 })
                 ->editColumn('created_at', function ($note) {
@@ -113,6 +116,7 @@ class EncounterController extends Controller
                 })
                 ->editColumn('hmo_id', function ($queue) {
                     $hmo = $queue->patient ? $queue->patient->hmo : null;
+
                     return $hmo->name ?? 'N/A';
                 })
                 ->editColumn('clinic_id', function ($queue) {
@@ -120,6 +124,7 @@ class EncounterController extends Controller
                 })
                 ->editColumn('staff_id', function ($queue) use ($doc) {
                     $docUser = $doc->user;
+
                     return $docUser ? trim(($docUser->surname ?? '') . ' ' . ($docUser->firstname ?? '') . ' ' . ($docUser->othername ?? '')) : 'N/A';
                 })
                 ->addColumn('file_no', function ($queue) {
@@ -136,6 +141,7 @@ class EncounterController extends Controller
 
                     if (!$deliveryCheck['can_deliver']) {
                         $title = e($deliveryCheck['hint'] ?? $deliveryCheck['reason']);
+
                         return '<button class="btn btn-secondary btn-sm" disabled title="' . $title . '"><i class="fa fa-ban"></i> Encounter</button>';
                     }
 
@@ -144,8 +150,9 @@ class EncounterController extends Controller
                 ->addColumn('source', function ($queue) {
                     $icons = [
                         'appointment' => '<span class="badge bg-purple-subtle text-purple source-badge"><i class="mdi mdi-calendar-check"></i> Scheduled</span>',
-                        'emergency'   => '<span class="badge bg-danger-subtle text-danger source-badge"><i class="mdi mdi-ambulance"></i> Emergency</span>',
+                        'emergency' => '<span class="badge bg-danger-subtle text-danger source-badge"><i class="mdi mdi-ambulance"></i> Emergency</span>',
                     ];
+
                     return $icons[$queue->source ?? ''] ?? '<span class="badge bg-secondary-subtle text-secondary source-badge"><i class="mdi mdi-walk"></i> Walk-in</span>';
                 })
                 ->addColumn('status_badge', function ($queue) {
@@ -156,6 +163,7 @@ class EncounterController extends Controller
                         $pausedAtIso = $queue->last_paused_at ? \Carbon\Carbon::parse($queue->last_paused_at)->toIso8601String() : '';
                         $badge .= ' <span class="badge bg-success-subtle text-success mini-timer" data-started="' . $startedIso . '" data-paused-seconds="' . ($queue->consultation_paused_seconds ?? 0) . '" data-is-paused="' . ($queue->is_paused ? '1' : '0') . '" data-last-paused-at="' . $pausedAtIso . '"><i class="mdi mdi-timer"></i> <span class="timer-value">00:00:00</span></span>';
                     }
+
                     return $badge;
                 })
                 ->rawColumns(['fullname', 'view', 'priority', 'source', 'status_badge'])
@@ -174,15 +182,15 @@ class EncounterController extends Controller
         $q = DoctorQueue::with('request_entry.service')
             ->where('status', QueueStatus::VITALS_PENDING)
             ->get();
-            
+
         foreach ($q as $r) {
             $cycleDuration = $defaultCycleDuration;
             if ($r->request_entry && $r->request_entry->service && $r->request_entry->service->consult_cycle_duration) {
                 $cycleDuration = (int) $r->request_entry->service->consult_cycle_duration;
             }
-            
+
             $timeThreshold = Carbon::now()->subHours($cycleDuration);
-            
+
             if ($r->created_at < $timeThreshold) {
                 $r->update([
                     'status' => QueueStatus::READY,
@@ -241,7 +249,7 @@ class EncounterController extends Controller
                 $queueQuery->join('patients', 'doctor_queues.patient_id', '=', 'patients.id')
                            ->join('users', 'patients.user_id', '=', 'users.id')
                            ->select('doctor_queues.*');
-                
+
                 if ($sortFilter === 'patient_az') {
                     $queueQuery->orderBy('users.surname', 'ASC')->orderBy('users.firstname', 'ASC');
                 } else {
@@ -288,7 +296,7 @@ class EncounterController extends Controller
                     $isStrict = appsettings('strict_encounter_navigation') == 1;
                     $isCycleActive = false;
                     $consultationDuration = appsettings('consultation_cycle_duration') ?: 24;
-                    
+
                     if ($queue->request_entry && $queue->request_entry->service && $queue->request_entry->service->consult_cycle_duration) {
                         $consultationDuration = $queue->request_entry->service->consult_cycle_duration;
                     }
@@ -306,7 +314,7 @@ class EncounterController extends Controller
                     if ($isStrict && !$isCycleActive && !$admission) {
                         $expiredAt = $queue->created_at->copy()->addHours($consultationDuration)->format('M d, g:i A');
                         $profileUrl = route('patient.show', $queue->patient_id) . '?strict_redirect=1&expired_at=' . urlencode($expiredAt);
-                        
+
                         if ($isExempt) {
                             $encounterUrl = url('encounters/create') . '?patient_id=' . $queue->patient_id;
                             if ($queue->request_entry_id) {
@@ -331,12 +339,12 @@ class EncounterController extends Controller
                         }
                         $btnHtml = '<a href="' . $url . '" class="btn btn-secondary btn-sm queue-card-action-btn"><i class="fa fa-history"></i> View Encounter Record</a>';
                     }
-                    
+
                     $profileUrl = route('patient.show', $queue->patient_id);
 
                     // Build Card HTML
-                    $html  = '<div class="queue-card">';
-                    
+                    $html = '<div class="queue-card">';
+
                     // Row 1
                     $html .= '<div class="queue-card-header">';
                     $html .= '  <div class="queue-card-avatar">' . $initials;
@@ -350,14 +358,13 @@ class EncounterController extends Controller
                     $html .= '    <span class="badge bg-secondary" title="Completed encounter">Completed</span>';
                     $html .= '  </div>';
                     $html .= '</div>';
-                    
+
                     // Row 2
                     $html .= '<div class="queue-card-details">';
                     $html .= '  <div class="queue-card-detail-item"><i class="mdi mdi-clock-outline"></i> ' . e($timeDisplay) . '</div>';
                     $html .= '  <div class="queue-card-detail-item"><i class="mdi mdi-hospital-building"></i> ' . e($clinicName) . '</div>';
                     $html .= '  <div class="queue-card-detail-item"><i class="mdi mdi-account-tie"></i> Dr. ' . e($doctorName) . '</div>';
                     $html .= '</div>';
-
 
                     // Row 4
                     $html .= '<div class="queue-card-actions">';
@@ -372,6 +379,7 @@ class EncounterController extends Controller
                 ->make(true);
         } catch (\Exception $e) {
             Log::error($e->getMessage(), ['exception' => $e]);
+
             return redirect()->back()->withInput()->with('error', $e->getMessage());
         }
     }
@@ -410,6 +418,7 @@ class EncounterController extends Controller
                 ->addIndexColumn()
                 ->editColumn('fullname', function ($queue) {
                     $patient = Patient::find($queue->patient_id);
+
                     return userfullname($patient->user_id);
                 })
                 ->editColumn('created_at', function ($note) {
@@ -417,10 +426,12 @@ class EncounterController extends Controller
                 })
                 ->editColumn('hmo_id', function ($queue) {
                     $patient = Patient::find($queue->patient_id);
+
                     return Hmo::find($patient->hmo_id)->name ?? 'N/A';
                 })
                 ->editColumn('clinic_id', function ($queue) {
                     $clinic = Clinic::find($queue->clinic_id);
+
                     return $clinic->name ?? 'N/A';
                 })
                 ->editColumn('staff_id', function ($queue) use ($doc) {
@@ -428,6 +439,7 @@ class EncounterController extends Controller
                 })
                 ->addColumn('file_no', function ($queue) {
                     $patient = Patient::find($queue->patient_id);
+
                     return $patient->file_no;
                 })
                 ->addColumn('view', function ($queue) use ($doc) {
@@ -438,7 +450,7 @@ class EncounterController extends Controller
                     $isStrict = appsettings('strict_encounter_navigation') == 1;
                     $isCycleActive = false;
                     $consultationDuration = appsettings('consultation_cycle_duration') ?: 24;
-                    
+
                     if ($reqEntry && $reqEntry->service && $reqEntry->service->consult_cycle_duration) {
                         $consultationDuration = $reqEntry->service->consult_cycle_duration;
                     }
@@ -453,11 +465,11 @@ class EncounterController extends Controller
 
                     $admission = \App\Models\AdmissionRequest::where('patient_id', $queue->patient_id)->where('discharged', 0)->first();
                     $isExempt = \Illuminate\Support\Facades\Auth::user()->hasAnyRole(['SUPERADMIN', 'ADMIN']) || ($doc && ($doc->is_unit_head || $doc->is_dept_head));
-                    
+
                     if ($isStrict && !$isCycleActive && !$admission) {
                         $expiredAt = $queue->created_at->copy()->addHours($consultationDuration)->format('M d, g:i A');
                         $profileUrl = route('patient.show', $queue->patient_id) . '?strict_redirect=1&expired_at=' . urlencode($expiredAt);
-                        
+
                         if ($isExempt) {
                             $params = ['patient_id' => $queue->patient_id];
                             if ($queue->request_entry_id) {
@@ -467,10 +479,12 @@ class EncounterController extends Controller
                             $btnHtml = '<a href="' . $encounterUrl . '" class="btn btn-primary btn-sm"><i class="fa fa-stethoscope"></i> Encounter (Override)</a><br>';
                             $btnHtml .= '<a href="' . $profileUrl . '" class="btn btn-info btn-sm mt-1"><i class="fa fa-user"></i> Profile</a>';
                             $btnHtml .= '<div class="small text-warning mt-1 text-center" style="font-size: 0.7rem; line-height:1.2;">Cycle Expired: ' . $expiredAt . '.<br>Admin override access granted.</div>';
+
                             return $btnHtml;
                         } else {
                             $btnHtml = '<a href="' . $profileUrl . '" class="btn btn-info btn-sm"><i class="fa fa-user"></i> Patient Profile</a>';
                             $btnHtml .= '<div class="small text-danger mt-1 text-center" style="font-size: 0.7rem; line-height:1.2;">Cycle Expired: ' . $expiredAt . '.<br>Read-Only. Active booking required.</div>';
+
                             return $btnHtml;
                         }
                     }
@@ -484,11 +498,12 @@ class EncounterController extends Controller
                     } else {
                         $params['queue_id'] = $queue->id;
                     }
-                    
+
                     $url = route('encounters.create', $params);
 
                     if (!$deliveryCheck['can_deliver']) {
                         $title = e($deliveryCheck['hint'] ?? $deliveryCheck['reason']);
+
                         return '<button class="btn btn-secondary btn-sm" disabled title="' . $title . '"><i class="fa fa-ban"></i> Encounter</button>';
                     }
 
@@ -497,16 +512,18 @@ class EncounterController extends Controller
                 ->addColumn('priority', function ($queue) {
                     $badges = [
                         'emergency' => '<span class="badge bg-danger"><i class="fa fa-bolt"></i> Emergency</span>',
-                        'urgent'    => '<span class="badge bg-warning text-dark">Urgent</span>',
-                        'routine'   => '<span class="badge bg-secondary">Routine</span>',
+                        'urgent' => '<span class="badge bg-warning text-dark">Urgent</span>',
+                        'routine' => '<span class="badge bg-secondary">Routine</span>',
                     ];
+
                     return $badges[$queue->priority] ?? $badges['routine'];
                 })
                 ->addColumn('source', function ($queue) {
                     $icons = [
                         'appointment' => '<span class="badge bg-purple-subtle text-purple source-badge"><i class="mdi mdi-calendar-check"></i> Scheduled</span>',
-                        'emergency'   => '<span class="badge bg-danger-subtle text-danger source-badge"><i class="mdi mdi-ambulance"></i> Emergency</span>',
+                        'emergency' => '<span class="badge bg-danger-subtle text-danger source-badge"><i class="mdi mdi-ambulance"></i> Emergency</span>',
                     ];
+
                     return $icons[$queue->source ?? ''] ?? '<span class="badge bg-secondary-subtle text-secondary source-badge"><i class="mdi mdi-walk"></i> Walk-in</span>';
                 })
                 ->addColumn('status_badge', function ($queue) {
@@ -516,12 +533,14 @@ class EncounterController extends Controller
                         $pausedAtIso = $queue->last_paused_at ? \Carbon\Carbon::parse($queue->last_paused_at)->toIso8601String() : '';
                         $badge .= ' <span class="badge bg-success-subtle text-success mini-timer" data-started="' . $startedIso . '" data-paused-seconds="' . ($queue->consultation_paused_seconds ?? 0) . '" data-is-paused="' . ($queue->is_paused ? '1' : '0') . '" data-last-paused-at="' . $pausedAtIso . '"><i class="mdi mdi-timer"></i> <span class="timer-value">00:00:00</span></span>';
                     }
+
                     return $badge;
                 })
                 ->rawColumns(['fullname', 'view', 'priority', 'source', 'status_badge'])
                 ->make(true);
         } catch (\Exception $e) {
             Log::error($e->getMessage(), ['exception' => $e]);
+
             return redirect()->back()->withInput()->with('error', $e->getMessage());
         }
     }
@@ -539,7 +558,7 @@ class EncounterController extends Controller
                 ->when($request->filled(['start_date', 'end_date']), function ($query) use ($request) {
                     return $query->whereBetween('created_at', [
                         $request->start_date . ' 00:00:00',
-                        $request->end_date . ' 23:59:59'
+                        $request->end_date . ' 23:59:59',
                     ]);
                 })
                 ->orderBy('created_at', 'DESC');
@@ -550,12 +569,13 @@ class EncounterController extends Controller
                     if ($queue->patient && $queue->patient->user) {
                         return trim($queue->patient->user->surname . ' ' . $queue->patient->user->firstname . ' ' . $queue->patient->user->othername);
                     }
+
                     return 'N/A';
                 })
-                ->filterColumn('fullname', function($query, $keyword) {
-                    $query->whereHas('patient', function($q) use($keyword) {
+                ->filterColumn('fullname', function ($query, $keyword) {
+                    $query->whereHas('patient', function ($q) use ($keyword) {
                         $q->where('file_no', 'like', "%{$keyword}%")
-                          ->orWhereHas('user', function($q2) use($keyword) {
+                          ->orWhereHas('user', function ($q2) use ($keyword) {
                               $q2->where('firstname', 'like', "%{$keyword}%")
                                  ->orWhere('surname', 'like', "%{$keyword}%")
                                  ->orWhere('othername', 'like', "%{$keyword}%");
@@ -569,10 +589,11 @@ class EncounterController extends Controller
                     if ($queue->patient && $queue->patient->hmo) {
                         return $queue->patient->hmo->name;
                     }
+
                     return 'N/A';
                 })
-                ->filterColumn('hmo_id', function($query, $keyword) {
-                    $query->whereHas('patient.hmo', function($q) use($keyword) {
+                ->filterColumn('hmo_id', function ($query, $keyword) {
+                    $query->whereHas('patient.hmo', function ($q) use ($keyword) {
                         $q->where('name', 'like', "%{$keyword}%");
                     });
                 })
@@ -580,10 +601,11 @@ class EncounterController extends Controller
                     if ($queue->queue && $queue->queue->clinic) {
                         return $queue->queue->clinic->name;
                     }
+
                     return 'N/A';
                 })
-                ->filterColumn('clinic_id', function($query, $keyword) {
-                    $query->whereHas('queue.clinic', function($q) use($keyword) {
+                ->filterColumn('clinic_id', function ($query, $keyword) {
+                    $query->whereHas('queue.clinic', function ($q) use ($keyword) {
                         $q->where('name', 'like', "%{$keyword}%");
                     });
                 })
@@ -591,10 +613,11 @@ class EncounterController extends Controller
                     if ($queue->doctor) {
                         return trim($queue->doctor->surname . ' ' . $queue->doctor->firstname . ' ' . $queue->doctor->othername);
                     }
+
                     return 'N/A';
                 })
-                ->filterColumn('doctor_id', function($query, $keyword) {
-                    $query->whereHas('doctor', function($q) use($keyword) {
+                ->filterColumn('doctor_id', function ($query, $keyword) {
+                    $query->whereHas('doctor', function ($q) use ($keyword) {
                         $q->where('firstname', 'like', "%{$keyword}%")
                           ->orWhere('surname', 'like', "%{$keyword}%")
                           ->orWhere('othername', 'like', "%{$keyword}%");
@@ -608,6 +631,7 @@ class EncounterController extends Controller
                 })
                 ->addColumn('view', function ($queue) {
                     $showUrl = route('encounters.show', $queue->id);
+
                     return '<a href="' . e($showUrl) . '" class="btn btn-primary btn-sm"><i class="mdi mdi-eye-outline"></i> View</a>';
                 })
                 ->rawColumns(['view'])
@@ -616,11 +640,11 @@ class EncounterController extends Controller
             Log::error('Error in AllprevEncounterList: ' . $e->getMessage(), [
                 'exception' => $e,
                 'start_date' => $request->start_date,
-                'end_date' => $request->end_date
+                'end_date' => $request->end_date,
             ]);
 
             return response()->json([
-                'error' => 'An error occurred while fetching the data. Please try again.'
+                'error' => 'An error occurred while fetching the data. Please try again.',
             ], 500);
         }
     }
@@ -709,19 +733,19 @@ class EncounterController extends Controller
                 if ($his->productOrServiceRequest && $his->productOrServiceRequest->is_bundle_item && $his->productOrServiceRequest->parent_id) {
                     $parentReq = $his->productOrServiceRequest->parent;
                     if ($parentReq) {
-                        $bundleName    = optional($parentReq->service)->service_name ?? 'Combo';
+                        $bundleName = optional($parentReq->service)->service_name ?? 'Combo';
                         $bundlePayable = $parentReq->payable_amount ?? 0;
-                        $bundleClaims  = $parentReq->claims_amount ?? 0;
-                        $parentId      = $parentReq->id;
-                        $isPaid        = $parentReq->payment_id !== null;
-                        $isCreator     = $parentReq->staff_user_id == Auth::id();
-                        $childrenArr   = $parentReq->children->map(function ($c) {
+                        $bundleClaims = $parentReq->claims_amount ?? 0;
+                        $parentId = $parentReq->id;
+                        $isPaid = $parentReq->payment_id !== null;
+                        $isCreator = $parentReq->staff_user_id == Auth::id();
+                        $childrenArr = $parentReq->children->map(function ($c) {
                             return ['name' => optional($c->service)->service_name ?? optional($c->product)->product_name ?? 'Item', 'qty' => $c->qty ?? 1, 'price' => $c->payable_amount ?? $c->amount ?? 0];
                         })->values()->toArray();
-                        $bundleDataJson  = htmlspecialchars(json_encode(['name' => $bundleName, 'payable_amount' => $bundlePayable, 'claims_amount' => $bundleClaims, 'items' => $childrenArr]), ENT_QUOTES);
+                        $bundleDataJson = htmlspecialchars(json_encode(['name' => $bundleName, 'payable_amount' => $bundlePayable, 'claims_amount' => $bundleClaims, 'items' => $childrenArr]), ENT_QUOTES);
                         $removeItemsJson = htmlspecialchars(json_encode($childrenArr), ENT_QUOTES);
-                        $removeUrl       = url('/service-combo/remove-bundle');
-                        $bundleNameEsc   = htmlspecialchars($bundleName, ENT_QUOTES);
+                        $removeUrl = url('/service-combo/remove-bundle');
+                        $bundleNameEsc = htmlspecialchars($bundleName, ENT_QUOTES);
                         $str .= "<div class='bundle-info-block mb-2 p-2 bg-light rounded'>";
                         $str .= "<small class='text-muted d-block mb-1'><i class='mdi mdi-link-variant'></i> <strong>Combo: {$bundleNameEsc}</strong> &mdash; &#8358;" . number_format($bundlePayable, 2) . " patient / &#8358;" . number_format($bundleClaims, 2) . " claims</small>";
                         $str .= "<div class='d-flex gap-1 flex-wrap'>";
@@ -882,13 +906,13 @@ class EncounterController extends Controller
                 // "Perform Investigation" button — combo item (status == 2, is_bundle_item), not yet claimed
                 $canClaimComboPerform = false;
                 if (
-                     !$his->is_free_form
-                     && empty($his->result)
-                     && $his->status == 2
-                     && !$his->self_perform_intent
-                     && Auth::id() == $his->doctor_id
-                     && $his->productOrServiceRequest
-                     && $his->productOrServiceRequest->is_bundle_item
+                    !$his->is_free_form
+                    && empty($his->result)
+                    && $his->status == 2
+                    && !$his->self_perform_intent
+                    && Auth::id() == $his->doctor_id
+                    && $his->productOrServiceRequest
+                    && $his->productOrServiceRequest->is_bundle_item
                 ) {
                     $user = Auth::user();
                     if (($user->hasRole('DOCTOR') && appsettings('doctor_can_enter_lab_result'))
@@ -899,16 +923,17 @@ class EncounterController extends Controller
                 }
                 if ($canPerformInvestigation) {
                     $piServiceName = htmlspecialchars(optional($his->service)->service_name ?? 'N/A', ENT_QUOTES);
-                    $piPrice       = optional(optional($his->service)->price)->sale_price ?? 0;
-                    $piCovMode     = '';
-                    $piPayable     = $piPrice;
-                    $piClaims      = 0;
+                    $piPrice = optional(optional($his->service)->price)->sale_price ?? 0;
+                    $piCovMode = '';
+                    $piPayable = $piPrice;
+                    $piClaims = 0;
+
                     try {
                         $hmoEst = \App\Helpers\HmoHelper::applyHmoTariff($his->patient_id, null, $his->service_id);
                         if ($hmoEst) {
                             $piCovMode = $hmoEst['coverage_mode'] ?? '';
                             $piPayable = $hmoEst['payable_amount'] ?? $piPrice;
-                            $piClaims  = $hmoEst['claims_amount'] ?? 0;
+                            $piClaims = $hmoEst['claims_amount'] ?? 0;
                         }
                     } catch (\Exception $e) {
                         // Silently fall back to full price
@@ -984,8 +1009,8 @@ class EncounterController extends Controller
                 $roName = htmlspecialchars(($his->service) ? $his->service->service_name : 'N/A', ENT_QUOTES);
                 $roSvcId = $his->service_id;
                 $roPrice = optional(optional($his->service)->price)->sale_price ?? 0;
-                $roCov   = optional($his->productOrServiceRequest)->coverage_mode ?? '';
-                $roPay   = optional($his->productOrServiceRequest)->payable_amount ?? $roPrice;
+                $roCov = optional($his->productOrServiceRequest)->coverage_mode ?? '';
+                $roPay = optional($his->productOrServiceRequest)->payable_amount ?? $roPrice;
                 $roClaim = optional($his->productOrServiceRequest)->claims_amount ?? 0;
                 if (!$his->is_free_form) {
                     $str .= "<button type='button' class='btn btn-outline-primary btn-sm re-order-btn ms-1'
@@ -1127,19 +1152,19 @@ class EncounterController extends Controller
                 if ($his->productOrServiceRequest && $his->productOrServiceRequest->is_bundle_item && $his->productOrServiceRequest->parent_id) {
                     $parentReq = $his->productOrServiceRequest->parent;
                     if ($parentReq) {
-                        $bundleName    = optional($parentReq->service)->service_name ?? 'Combo';
+                        $bundleName = optional($parentReq->service)->service_name ?? 'Combo';
                         $bundlePayable = $parentReq->payable_amount ?? 0;
-                        $bundleClaims  = $parentReq->claims_amount ?? 0;
-                        $parentId      = $parentReq->id;
-                        $isPaid        = $parentReq->payment_id !== null;
-                        $isCreator     = $parentReq->staff_user_id == Auth::id();
-                        $childrenArr   = $parentReq->children->map(function ($c) {
+                        $bundleClaims = $parentReq->claims_amount ?? 0;
+                        $parentId = $parentReq->id;
+                        $isPaid = $parentReq->payment_id !== null;
+                        $isCreator = $parentReq->staff_user_id == Auth::id();
+                        $childrenArr = $parentReq->children->map(function ($c) {
                             return ['name' => optional($c->service)->service_name ?? optional($c->product)->product_name ?? 'Item', 'qty' => $c->qty ?? 1, 'price' => $c->payable_amount ?? $c->amount ?? 0];
                         })->values()->toArray();
-                        $bundleDataJson  = htmlspecialchars(json_encode(['name' => $bundleName, 'payable_amount' => $bundlePayable, 'claims_amount' => $bundleClaims, 'items' => $childrenArr]), ENT_QUOTES);
+                        $bundleDataJson = htmlspecialchars(json_encode(['name' => $bundleName, 'payable_amount' => $bundlePayable, 'claims_amount' => $bundleClaims, 'items' => $childrenArr]), ENT_QUOTES);
                         $removeItemsJson = htmlspecialchars(json_encode($childrenArr), ENT_QUOTES);
-                        $removeUrl       = url('/service-combo/remove-bundle');
-                        $bundleNameEsc   = htmlspecialchars($bundleName, ENT_QUOTES);
+                        $removeUrl = url('/service-combo/remove-bundle');
+                        $bundleNameEsc = htmlspecialchars($bundleName, ENT_QUOTES);
                         $str .= "<div class='bundle-info-block mb-2 p-2 bg-light rounded'>";
                         $str .= "<small class='text-muted d-block mb-1'><i class='mdi mdi-link-variant'></i> <strong>Combo: {$bundleNameEsc}</strong> &mdash; &#8358;" . number_format($bundlePayable, 2) . " patient / &#8358;" . number_format($bundleClaims, 2) . " claims</small>";
                         $str .= "<div class='d-flex gap-1 flex-wrap'>";
@@ -1307,16 +1332,17 @@ class EncounterController extends Controller
                 }
                 if ($canPerformImagingInvestigation) {
                     $piServiceName = htmlspecialchars(optional($his->service)->service_name ?? 'N/A', ENT_QUOTES);
-                    $piPrice       = optional(optional($his->service)->price)->sale_price ?? 0;
-                    $piCovMode     = '';
-                    $piPayable     = $piPrice;
-                    $piClaims      = 0;
+                    $piPrice = optional(optional($his->service)->price)->sale_price ?? 0;
+                    $piCovMode = '';
+                    $piPayable = $piPrice;
+                    $piClaims = 0;
+
                     try {
                         $hmoEst = \App\Helpers\HmoHelper::applyHmoTariff($his->patient_id, null, $his->service_id);
                         if ($hmoEst) {
                             $piCovMode = $hmoEst['coverage_mode'] ?? '';
                             $piPayable = $hmoEst['payable_amount'] ?? $piPrice;
-                            $piClaims  = $hmoEst['claims_amount'] ?? 0;
+                            $piClaims = $hmoEst['claims_amount'] ?? 0;
                         }
                     } catch (\Exception $e) {
                         // Silently fall back to full price
@@ -1392,8 +1418,8 @@ class EncounterController extends Controller
                 $roName = htmlspecialchars(($his->service) ? $his->service->service_name : 'N/A', ENT_QUOTES);
                 $roSvcId = $his->service_id;
                 $roPrice = optional(optional($his->service)->price)->sale_price ?? 0;
-                $roCov   = optional($his->productOrServiceRequest)->coverage_mode ?? '';
-                $roPay   = optional($his->productOrServiceRequest)->payable_amount ?? $roPrice;
+                $roCov = optional($his->productOrServiceRequest)->coverage_mode ?? '';
+                $roPay = optional($his->productOrServiceRequest)->payable_amount ?? $roPrice;
                 $roClaim = optional($his->productOrServiceRequest)->claims_amount ?? 0;
                 if (!$his->is_free_form) {
                     $str .= "<button type='button' class='btn btn-outline-primary btn-sm re-order-btn ms-1'
@@ -1428,6 +1454,7 @@ class EncounterController extends Controller
             ->addIndexColumn()
             ->addColumn('select', function ($h) {
                 $str = "<input type='checkbox' name='selectedImagingBillRows[]' onclick='checkImagingBillRow(this)' data-price = '" . (($h->service) ? $h->service->price->sale_price : 'N/A') . "' value='$h->id' class='form-control'> ";
+
                 return $str;
             })
             ->editColumn('created_at', function ($h) {
@@ -1436,11 +1463,13 @@ class EncounterController extends Controller
                 $str .= '<br><br><b >Last Updated On:</b> ' . date('h:i a D M j, Y', strtotime($h->updated_at));
                 $str .= '<br><br><b >Request Note:</b> ' . ((isset($h->note) && $h->note != null) ? ($h->note) : "<span class='badge badge-secondary'>N/A</span><br>");
                 $str .= '</small>';
+
                 return $str;
             })
             ->editColumn('result', function ($his) {
                 $str = "<span class = 'badge badge-success'>" . (($his->service) ? $his->service->service_name : 'N/A') . '</span><hr>';
                 $str .= $his->result ?? 'N/A';
+
                 return $str;
             })
             ->rawColumns(['created_at', 'result', 'select'])
@@ -1486,7 +1515,7 @@ class EncounterController extends Controller
     {
         $items = ProductRequest::with([
             'product.price', 'product.category', 'encounter', 'patient', 'productOrServiceRequest', 'doctor', 'biller',
-            'adaptedFromProduct', 'adapter', 'qtyAdjuster'
+            'adaptedFromProduct', 'adapter', 'qtyAdjuster',
         ])
             ->where('status', 1)->where('patient_id', $patient_id)->orderBy('created_at', 'DESC')->get();
 
@@ -1502,12 +1531,14 @@ class EncounterController extends Controller
         $tariffTotals = [];
         foreach ($items as $item) {
             $t = $tariffMap[$item->product_id] ?? null;
-            if (!$t) continue;
+            if (!$t) {
+                continue;
+            }
             $qty = $item->qty ?? 1;
             $tariffTotals[$item->id] = [
                 'payable_amount' => round($t['payable_amount'] * $qty, 2),
-                'claims_amount'  => round($t['claims_amount'] * $qty, 2),
-                'coverage_mode'  => $t['coverage_mode'] ?? 'none',
+                'claims_amount' => round($t['claims_amount'] * $qty, 2),
+                'coverage_mode' => $t['coverage_mode'] ?? 'none',
             ];
         }
 
@@ -1539,14 +1570,18 @@ class EncounterController extends Controller
                     return $tariffTotals[$item->id]['payable_amount'];
                 }
                 $posr = $item->productOrServiceRequest;
-                if ($posr) return $posr->payable_amount ?? 0;
+                if ($posr) {
+                    return $posr->payable_amount ?? 0;
+                }
                 $cashPrice = optional(optional($item->product)->price)->current_sale_price ?? 0;
+
                 return $cashPrice * ($item->qty ?? 1);
             })
             ->addColumn('claims_amount', function ($item) use ($tariffTotals, $patient) {
                 if ($patient && $patient->hmo_id && isset($tariffTotals[$item->id])) {
                     return $tariffTotals[$item->id]['claims_amount'];
                 }
+
                 return optional($item->productOrServiceRequest)->claims_amount ?? 0;
             })
             ->addColumn('coverage_mode', function ($item) use ($tariffTotals, $patient) {
@@ -1554,7 +1589,10 @@ class EncounterController extends Controller
                     return $tariffTotals[$item->id]['coverage_mode'] ?? 'primary';
                 }
                 $posr = $item->productOrServiceRequest;
-                if ($posr && !empty($posr->coverage_mode)) return $posr->coverage_mode;
+                if ($posr && !empty($posr->coverage_mode)) {
+                    return $posr->coverage_mode;
+                }
+
                 return 'cash';
             })
             ->addColumn('requested_by', function ($item) {
@@ -1570,7 +1608,10 @@ class EncounterController extends Controller
                 return $item->billed_date ? date('M j, Y h:i A', strtotime($item->billed_date)) : '';
             })
             ->addColumn('global_stock', function ($item) {
-                if (!$item->product_id) return 0;
+                if (!$item->product_id) {
+                    return 0;
+                }
+
                 // Get stock from StockBatch (source of truth) - filtered by Hub & Satellite stores only
                 return (int) \App\Models\StockBatch::where('product_id', $item->product_id)
                     ->where('current_qty', '>', 0)
@@ -1580,7 +1621,9 @@ class EncounterController extends Controller
                     ->sum('current_qty');
             })
             ->addColumn('store_stocks', function ($item) {
-                if (!$item->product_id) return [];
+                if (!$item->product_id) {
+                    return [];
+                }
                 // Get stock grouped by store from StockBatch - filtered by Hub & Satellite stores only
                 $storeStockData = \App\Models\StockBatch::where('product_id', $item->product_id)
                     ->where('current_qty', '>', 0)
@@ -1598,20 +1641,26 @@ class EncounterController extends Controller
                     $storeStocks[] = [
                         'store_id' => $batch->store_id,
                         'store_name' => $store ? $store->store_name : 'Unknown Store',
-                        'quantity' => (int) $batch->total_qty
+                        'quantity' => (int) $batch->total_qty,
                     ];
                 }
+
                 return $storeStocks;
             })
             ->addColumn('tariff_preview', function ($item) use ($tariffMap, $patient) {
-                if (!$patient || !$patient->hmo_id) return null;
+                if (!$patient || !$patient->hmo_id) {
+                    return null;
+                }
                 $t = $tariffMap[$item->product_id] ?? null;
-                if (!$t) return ['no_tariff' => true];
+                if (!$t) {
+                    return ['no_tariff' => true];
+                }
                 $qty = $item->qty ?? 1;
+
                 return [
                     'payable_amount' => round($t['payable_amount'] * $qty, 2),
-                    'claims_amount'  => round($t['claims_amount'] * $qty, 2),
-                    'coverage_mode'  => $t['coverage_mode'],
+                    'claims_amount' => round($t['claims_amount'] * $qty, 2),
+                    'coverage_mode' => $t['coverage_mode'],
                 ];
             })
             ->addColumn('adapted_from_product_name', function ($item) {
@@ -1648,7 +1697,7 @@ class EncounterController extends Controller
     {
         $items = ProductRequest::with([
             'product.price', 'product.category', 'encounter', 'patient', 'productOrServiceRequest.payment', 'doctor', 'biller',
-            'adaptedFromProduct', 'adapter', 'qtyAdjuster'
+            'adaptedFromProduct', 'adapter', 'qtyAdjuster',
         ])
             ->where('status', 2)->where('patient_id', $patient_id)->orderBy('created_at', 'DESC')->get();
 
@@ -1677,6 +1726,7 @@ class EncounterController extends Controller
             })
             ->addColumn('payable_amount', function ($item) {
                 $posr = $item->productOrServiceRequest;
+
                 return $posr ? ($posr->payable_amount ?? 0) : (optional(optional($item->product)->price)->current_sale_price ?? 0);
             })
             ->addColumn('claims_amount', function ($item) {
@@ -1693,9 +1743,12 @@ class EncounterController extends Controller
             })
             ->addColumn('can_dispense', function ($item) {
                 $posr = $item->productOrServiceRequest;
-                if (!$posr) return true; // No POSR means self-pay, can dispense
+                if (!$posr) {
+                    return true;
+                } // No POSR means self-pay, can dispense
                 $isPaid = optional($posr->payment)->payment_status === 'paid';
                 $isValidated = $posr->validation_status === 'validated';
+
                 return $isPaid || $isValidated;
             })
             ->addColumn('requested_by', function ($item) {
@@ -1711,7 +1764,10 @@ class EncounterController extends Controller
                 return $item->billed_date ? date('M j, Y h:i A', strtotime($item->billed_date)) : '';
             })
             ->addColumn('global_stock', function ($item) {
-                if (!$item->product_id) return 0;
+                if (!$item->product_id) {
+                    return 0;
+                }
+
                 // Get stock from StockBatch (source of truth) - filtered by Hub & Satellite stores only
                 return (int) \App\Models\StockBatch::where('product_id', $item->product_id)
                     ->where('current_qty', '>', 0)
@@ -1721,7 +1777,9 @@ class EncounterController extends Controller
                     ->sum('current_qty');
             })
             ->addColumn('store_stocks', function ($item) {
-                if (!$item->product_id) return [];
+                if (!$item->product_id) {
+                    return [];
+                }
                 // Get stock grouped by store from StockBatch - filtered by Hub & Satellite stores only
                 $storeStockData = \App\Models\StockBatch::where('product_id', $item->product_id)
                     ->where('current_qty', '>', 0)
@@ -1739,9 +1797,10 @@ class EncounterController extends Controller
                     $storeStocks[] = [
                         'store_id' => $batch->store_id,
                         'store_name' => $store ? $store->store_name : 'Unknown Store',
-                        'quantity' => (int) $batch->total_qty
+                        'quantity' => (int) $batch->total_qty,
                     ];
                 }
+
                 return $storeStocks;
             })
             ->addColumn('adapted_from_product_name', function ($item) {
@@ -1782,7 +1841,7 @@ class EncounterController extends Controller
     {
         $items = ProductRequest::with([
             'product.price', 'product.category', 'encounter', 'patient', 'productOrServiceRequest.payment', 'doctor', 'biller',
-            'adaptedFromProduct', 'adapter', 'qtyAdjuster'
+            'adaptedFromProduct', 'adapter', 'qtyAdjuster',
         ])
             ->where('status', 2)
             ->where('patient_id', $patient_id)
@@ -1828,6 +1887,7 @@ class EncounterController extends Controller
             })
             ->addColumn('payable_amount', function ($item) {
                 $posr = $item->productOrServiceRequest;
+
                 return $posr ? ($posr->payable_amount ?? 0) : (optional(optional($item->product)->price)->current_sale_price ?? 0);
             })
             ->addColumn('claims_amount', function ($item) {
@@ -1842,11 +1902,14 @@ class EncounterController extends Controller
             })
             ->addColumn('is_validated', function ($item) {
                 $status = optional($item->productOrServiceRequest)->validation_status;
+
                 return in_array($status, ['validated', 'approved']);
             })
             ->addColumn('pending_reason', function ($item) {
                 $posr = $item->productOrServiceRequest;
-                if (!$posr) return '';
+                if (!$posr) {
+                    return '';
+                }
                 $reasons = [];
                 $isPaid = $posr->payment_id !== null;
                 $isValidated = in_array($posr->validation_status, ['validated', 'approved']);
@@ -1856,6 +1919,7 @@ class EncounterController extends Controller
                 if ($posr->claims_amount > 0 && !$isValidated) {
                     $reasons[] = 'Awaiting HMO Validation';
                 }
+
                 return implode(', ', $reasons);
             })
             ->addColumn('requested_by', function ($item) {
@@ -1871,7 +1935,10 @@ class EncounterController extends Controller
                 return $item->billed_date ? date('M j, Y h:i A', strtotime($item->billed_date)) : '';
             })
             ->addColumn('global_stock', function ($item) {
-                if (!$item->product_id) return 0;
+                if (!$item->product_id) {
+                    return 0;
+                }
+
                 // Get stock from StockBatch (source of truth) - filtered by Hub & Satellite stores only
                 return (int) \App\Models\StockBatch::where('product_id', $item->product_id)
                     ->where('current_qty', '>', 0)
@@ -1881,7 +1948,9 @@ class EncounterController extends Controller
                     ->sum('current_qty');
             })
             ->addColumn('store_stocks', function ($item) {
-                if (!$item->product_id) return [];
+                if (!$item->product_id) {
+                    return [];
+                }
                 // Get stock grouped by store from StockBatch - filtered by Hub & Satellite stores only
                 $storeStockData = \App\Models\StockBatch::where('product_id', $item->product_id)
                     ->where('current_qty', '>', 0)
@@ -1899,9 +1968,10 @@ class EncounterController extends Controller
                     $storeStocks[] = [
                         'store_id' => $batch->store_id,
                         'store_name' => $store ? $store->store_name : 'Unknown Store',
-                        'quantity' => (int) $batch->total_qty
+                        'quantity' => (int) $batch->total_qty,
                     ];
                 }
+
                 return $storeStocks;
             })
             ->addColumn('adapted_from_product_name', function ($item) {
@@ -1942,7 +2012,7 @@ class EncounterController extends Controller
     {
         $items = ProductRequest::with([
             'product.price', 'product.category', 'encounter', 'patient', 'productOrServiceRequest.payment', 'doctor', 'biller', 'procedureItem.procedure.service',
-            'adaptedFromProduct', 'adapter', 'qtyAdjuster'
+            'adaptedFromProduct', 'adapter', 'qtyAdjuster',
         ])
             ->where('status', 2)
             ->where('patient_id', $patient_id)
@@ -2006,6 +2076,7 @@ class EncounterController extends Controller
             })
             ->addColumn('payable_amount', function ($item) {
                 $posr = $item->productOrServiceRequest;
+
                 return $posr ? ($posr->payable_amount ?? 0) : (optional(optional($item->product)->price)->current_sale_price ?? 0);
             })
             ->addColumn('claims_amount', function ($item) {
@@ -2020,6 +2091,7 @@ class EncounterController extends Controller
             })
             ->addColumn('is_validated', function ($item) {
                 $status = optional($item->productOrServiceRequest)->validation_status;
+
                 return in_array($status, ['validated', 'approved']);
             })
             ->addColumn('is_bundled', function ($item) {
@@ -2029,6 +2101,7 @@ class EncounterController extends Controller
                 if ($item->procedureItem) {
                     return optional(optional($item->procedureItem->procedure)->service)->service_name ?? 'Procedure';
                 }
+
                 return null;
             })
             ->addColumn('requested_by', function ($item) {
@@ -2044,7 +2117,10 @@ class EncounterController extends Controller
                 return $item->billed_date ? date('M j, Y h:i A', strtotime($item->billed_date)) : '';
             })
             ->addColumn('global_stock', function ($item) {
-                if (!$item->product_id) return 0;
+                if (!$item->product_id) {
+                    return 0;
+                }
+
                 // Get stock from StockBatch (source of truth) - filtered by Hub & Satellite stores only
                 return (int) \App\Models\StockBatch::where('product_id', $item->product_id)
                     ->where('current_qty', '>', 0)
@@ -2054,7 +2130,9 @@ class EncounterController extends Controller
                     ->sum('current_qty');
             })
             ->addColumn('store_stocks', function ($item) {
-                if (!$item->product_id) return [];
+                if (!$item->product_id) {
+                    return [];
+                }
                 // Get stock grouped by store from StockBatch - filtered by Hub & Satellite stores only
                 $storeStockData = \App\Models\StockBatch::where('product_id', $item->product_id)
                     ->where('current_qty', '>', 0)
@@ -2072,9 +2150,10 @@ class EncounterController extends Controller
                     $storeStocks[] = [
                         'store_id' => $batch->store_id,
                         'store_name' => $store ? $store->store_name : 'Unknown Store',
-                        'quantity' => (int) $batch->total_qty
+                        'quantity' => (int) $batch->total_qty,
                     ];
                 }
+
                 return $storeStocks;
             })
             ->addColumn('adapted_from_product_name', function ($item) {
@@ -2138,8 +2217,10 @@ class EncounterController extends Controller
                 if ($request->has('procedure_id')) {
                     $procedureItem = \App\Models\ProcedureItem::where('procedure_id', $request->procedure_id)
                         ->where('product_request_id', $item->id)->first();
+
                     return $procedureItem ? $procedureItem->is_bundled : false;
                 }
+
                 return false;
             })
             ->addColumn('product_id', function ($item) {
@@ -2165,6 +2246,7 @@ class EncounterController extends Controller
             })
             ->addColumn('payable_amount', function ($item) {
                 $posr = $item->productOrServiceRequest;
+
                 return $posr ? ($posr->payable_amount ?? 0) : (optional(optional($item->product)->price)->current_sale_price ?? 0);
             })
             ->addColumn('claims_amount', function ($item) {
@@ -2178,6 +2260,7 @@ class EncounterController extends Controller
             })
             ->addColumn('is_validated', function ($item) {
                 $status = optional($item->productOrServiceRequest)->validation_status;
+
                 return in_array($status, ['validated', 'approved']);
             })
             ->addColumn('requested_by', function ($item) {
@@ -2199,7 +2282,10 @@ class EncounterController extends Controller
                 return $item->dispense_date ? date('M j, Y h:i A', strtotime($item->dispense_date)) : '';
             })
             ->addColumn('global_stock', function ($item) {
-                if (!$item->product_id) return 0;
+                if (!$item->product_id) {
+                    return 0;
+                }
+
                 // Get stock from StockBatch (source of truth) - filtered by Hub & Satellite stores only
                 return (int) \App\Models\StockBatch::where('product_id', $item->product_id)
                     ->where('current_qty', '>', 0)
@@ -2209,7 +2295,9 @@ class EncounterController extends Controller
                     ->sum('current_qty');
             })
             ->addColumn('store_stocks', function ($item) {
-                if (!$item->product_id) return [];
+                if (!$item->product_id) {
+                    return [];
+                }
                 // Get stock grouped by store from StockBatch - filtered by Hub & Satellite stores only
                 $storeStockData = \App\Models\StockBatch::where('product_id', $item->product_id)
                     ->where('current_qty', '>', 0)
@@ -2227,9 +2315,10 @@ class EncounterController extends Controller
                     $storeStocks[] = [
                         'store_id' => $batch->store_id,
                         'store_name' => $store ? $store->store_name : 'Unknown Store',
-                        'quantity' => (int) $batch->total_qty
+                        'quantity' => (int) $batch->total_qty,
                     ];
                 }
+
                 return $storeStocks;
             })
             ->addColumn('info', function ($item) {
@@ -2318,7 +2407,7 @@ class EncounterController extends Controller
                     $adaptationNote = htmlspecialchars($item->adaptation_note ?? '', ENT_QUOTES);
                     $adaptedBy = $item->adapted_by ? userfullname($item->adapted_by) : 'N/A';
                     $adaptedAt = $item->adapted_at ? date('M j, Y h:i A', strtotime($item->adapted_at)) : 'N/A';
-                    
+
                     $adaptationHtml = "
                         <div class='mt-1 p-2 bg-light rounded border-start border-warning'>
                             <small class='text-warning d-block'><strong><i class='mdi mdi-swap-horizontal'></i> Adapted Prescription</strong></small>
@@ -2349,15 +2438,15 @@ class EncounterController extends Controller
                 }
 
                 // Custom quantity layout based on dispense status
-                $qtyDisplay = $status == 3 
+                $qtyDisplay = $status == 3
                     ? "<span class='ms-2 text-success'><i class='mdi mdi-check-circle-outline'></i> Qty Dispensed: <strong>{$qty}</strong></span>"
                     : "<span class='ms-2'><i class='mdi mdi-numeric'></i> Qty: {$qty}</span>";
 
                 // Re-prescribe button data (Plan §5.2)
-                $roName  = htmlspecialchars($productName, ENT_QUOTES);
-                $roDose  = htmlspecialchars($dose, ENT_QUOTES);
-                $roCov   = optional($item->productOrServiceRequest)->coverage_mode ?? '';
-                $roPay   = optional($item->productOrServiceRequest)->payable_amount ?? $price;
+                $roName = htmlspecialchars($productName, ENT_QUOTES);
+                $roDose = htmlspecialchars($dose, ENT_QUOTES);
+                $roCov = optional($item->productOrServiceRequest)->coverage_mode ?? '';
+                $roPay = optional($item->productOrServiceRequest)->payable_amount ?? $price;
                 $roClaim = optional($item->productOrServiceRequest)->claims_amount ?? 0;
 
                 // Delete button — only if requester, within edit window, not yet billed/dispensed
@@ -2392,11 +2481,11 @@ class EncounterController extends Controller
                 if ($posr && $posr->is_bundle_item && $posr->parent_id) {
                     $parentReq = $posr->parent;
                     if ($parentReq) {
-                        $bName    = optional($parentReq->service)->service_name ?? 'Combo';
-                        $bPay     = $parentReq->payable_amount ?? 0;
-                        $bClaims  = $parentReq->claims_amount ?? 0;
-                        $bId      = $parentReq->id;
-                        $bPaid    = $parentReq->payment_id !== null;
+                        $bName = optional($parentReq->service)->service_name ?? 'Combo';
+                        $bPay = $parentReq->payable_amount ?? 0;
+                        $bClaims = $parentReq->claims_amount ?? 0;
+                        $bId = $parentReq->id;
+                        $bPaid = $parentReq->payment_id !== null;
                         $bCreator = $parentReq->staff_user_id == Auth::id();
                         $bChildren = $parentReq->children->map(function ($c) {
                             return ['name' => optional($c->service)->service_name ?? optional($c->product)->product_name ?? 'Item', 'qty' => $c->qty ?? 1, 'price' => $c->payable_amount ?? $c->amount ?? 0];
@@ -2404,7 +2493,7 @@ class EncounterController extends Controller
                         $bDataJson = htmlspecialchars(json_encode(['name' => $bName, 'payable_amount' => $bPay, 'claims_amount' => $bClaims, 'items' => $bChildren]), ENT_QUOTES);
                         $bItemsJson = htmlspecialchars(json_encode($bChildren), ENT_QUOTES);
                         $bRemoveUrl = url('/service-combo/remove-bundle');
-                        $bNameEsc   = htmlspecialchars($bName, ENT_QUOTES);
+                        $bNameEsc = htmlspecialchars($bName, ENT_QUOTES);
                         $bundleHtml .= "<div class='bundle-info-block mt-1 mb-1 p-2 bg-light rounded'>";
                         $bundleHtml .= "<small class='text-muted d-block mb-1'><i class='mdi mdi-link-variant'></i> <strong>Combo: {$bNameEsc}</strong> &mdash; &#8358;" . number_format($bPay, 2) . " patient / &#8358;" . number_format($bClaims, 2) . " claims</small>";
                         $bundleHtml .= "<div class='d-flex gap-1 flex-wrap'>";
@@ -2464,6 +2553,7 @@ class EncounterController extends Controller
                         </div>
                     </div>
                 ";
+
                 return $html;
             })
             ->rawColumns(['info'])
@@ -2651,7 +2741,7 @@ class EncounterController extends Controller
             if (Auth::id() != $encounter->doctor_id) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'You are not authorized to delete this encounter note.'
+                    'message' => 'You are not authorized to delete this encounter note.',
                 ], 403);
             }
 
@@ -2663,13 +2753,13 @@ class EncounterController extends Controller
             if (Carbon::now()->greaterThan($editDeadline)) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'The edit window for this encounter has expired.'
+                    'message' => 'The edit window for this encounter has expired.',
                 ], 403);
             }
 
             // Validate deletion reason
             $request->validate([
-                'reason' => 'required|string|max:500'
+                'reason' => 'required|string|max:500',
             ]);
 
             // Perform soft delete
@@ -2680,13 +2770,14 @@ class EncounterController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => 'Encounter note deleted successfully.'
+                'message' => 'Encounter note deleted successfully.',
             ]);
         } catch (\Exception $e) {
             Log::error('Encounter deletion failed: ' . $e->getMessage(), ['exception' => $e]);
+
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to delete encounter: ' . $e->getMessage()
+                'message' => 'Failed to delete encounter: ' . $e->getMessage(),
             ], 500);
         }
     }
@@ -2701,7 +2792,7 @@ class EncounterController extends Controller
             if (Auth::id() != $encounter->doctor_id) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'You are not authorized to edit this encounter note.'
+                    'message' => 'You are not authorized to edit this encounter note.',
                 ], 403);
             }
 
@@ -2713,7 +2804,7 @@ class EncounterController extends Controller
             if (Carbon::now()->greaterThan($editDeadline)) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'The edit window for this encounter has expired.'
+                    'message' => 'The edit window for this encounter has expired.',
                 ], 403);
             }
 
@@ -2774,7 +2865,9 @@ class EncounterController extends Controller
 
                     foreach ($reasonsToCheck as $reason) {
                         $reason = trim($reason);
-                        if (empty($reason)) continue;
+                        if (empty($reason)) {
+                            continue;
+                        }
 
                         $existingReason = ReasonForEncounter::where(function ($query) use ($reason) {
                             $query->where('code', 'LIKE', $reason . '%')
@@ -2798,13 +2891,14 @@ class EncounterController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => 'Encounter note updated successfully.'
+                'message' => 'Encounter note updated successfully.',
             ]);
         } catch (\Exception $e) {
             Log::error('Encounter update failed: ' . $e->getMessage(), ['exception' => $e]);
+
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to update encounter: ' . $e->getMessage()
+                'message' => 'Failed to update encounter: ' . $e->getMessage(),
             ], 500);
         }
     }
@@ -2831,7 +2925,7 @@ class EncounterController extends Controller
             // Single query — derive categories/subcategories in memory
             $reasons_for_encounter_list = ReasonForEncounter::all();
             $reasons_for_encounter_cat_list = $reasons_for_encounter_list->unique('category')->values();
-            $reasons_for_encounter_sub_cat_list = $reasons_for_encounter_list->unique(fn($r) => $r->sub_category . '|' . $r->category)->values();
+            $reasons_for_encounter_sub_cat_list = $reasons_for_encounter_list->unique(fn ($r) => $r->sub_category . '|' . $r->category)->values();
 
             // dd($reasons_for_encounter_cat_list);
 
@@ -2843,12 +2937,12 @@ class EncounterController extends Controller
             if ($doctorQueue) {
                 // Try to find encounter specifically for this queue first
                 $encounter = (clone $encounterQuery)->where('queue_id', $doctorQueue->id)->first();
-                
+
                 // If not found, try to find an encounter with the same service request
                 if (!$encounter && $req_entry) {
                     $encounter = (clone $encounterQuery)->where('service_request_id', $req_entry->id)->first();
                 }
-                
+
                 // Fallback: get any active encounter for this patient/doctor that doesn't have a queue_id or has the same queue_id
                 if (!$encounter) {
                     $encounter = (clone $encounterQuery)->whereNull('queue_id')->first();
@@ -2905,7 +2999,7 @@ class EncounterController extends Controller
                 // Pre-load data for inline blade queries (avoid N+1 in view)
                 $allClinics = Clinic::orderBy('name')->get();
                 $doctorStaffList = Staff::whereHas('user', function ($q) {
-                    $q->whereHas('roles', fn($r) => $r->where('name', 'DOCTOR'));
+                    $q->whereHas('roles', fn ($r) => $r->where('name', 'DOCTOR'));
                 })->with('user:id,surname,firstname,othername')->orderBy('id')->get();
                 $patientWeight = \App\Models\VitalSign::where('patient_id', $patient->id)
                     ->whereNotNull('weight')->where('weight', '>', 0)
@@ -2938,20 +3032,20 @@ class EncounterController extends Controller
                         ->get()
                         ->keyBy('nursing_note_type_id');
 
-                    $observation_note   = $nursingNotes->get(1);
-                    $treatment_sheet    = $nursingNotes->get(2);
-                    $io_chart           = $nursingNotes->get(3);
-                    $labour_record      = $nursingNotes->get(4);
-                    $others_record      = $nursingNotes->get(5);
+                    $observation_note = $nursingNotes->get(1);
+                    $treatment_sheet = $nursingNotes->get(2);
+                    $io_chart = $nursingNotes->get(3);
+                    $labour_record = $nursingNotes->get(4);
+                    $others_record = $nursingNotes->get(5);
 
                     // Single query for all nursing note templates
                     $noteTemplates = NursingNoteType::whereIn('id', [1, 2, 3, 4, 5])->get()->keyBy('id');
 
                     $observation_note_template = $noteTemplates->get(1);
-                    $treatment_sheet_template  = $noteTemplates->get(2);
-                    $io_chart_template         = $noteTemplates->get(3);
-                    $labour_record_template    = $noteTemplates->get(4);
-                    $others_record_template    = $noteTemplates->get(5);
+                    $treatment_sheet_template = $noteTemplates->get(2);
+                    $io_chart_template = $noteTemplates->get(3);
+                    $labour_record_template = $noteTemplates->get(4);
+                    $others_record_template = $noteTemplates->get(5);
 
                     return view('admin.doctors.new_encounter')->with([
                         'patient' => $patient,
@@ -3267,12 +3361,13 @@ class EncounterController extends Controller
                         'Content-Type' => 'application/json',
                     ])->post(appsettings('COREHMS_SUPERADMIN_URL') . '/event-notification.php?notification_type=consultation', [
                         'category' => $queue->clinic->name,
-                        'health_case' => $request->reasons_for_encounter[0] ?? null
+                        'health_case' => $request->reasons_for_encounter[0] ?? null,
                     ]);
 
                     Log::info("sent api request For encounter, ", [$response->body()]);
                 }
             }
+
             return redirect()->route('encounters.index')->with(['message' => 'Encounter Notes Saved Successfully', 'message_type' => 'success']);
         } catch (\Exception $e) {
             DB::rollBack();
@@ -3322,21 +3417,27 @@ class EncounterController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function edit(Encounter $encounter) {}
+    public function edit(Encounter $encounter)
+    {
+    }
 
     /**
      * Update the specified resource in storage.
      *
      * @return \Illuminate\Http\Response
      */
-    public function update(Request $request, Encounter $encounter) {}
+    public function update(Request $request, Encounter $encounter)
+    {
+    }
 
     /**
      * Remove the specified resource from storage.
      *
      * @return \Illuminate\Http\Response
      */
-    public function destroy(Encounter $encounter) {}
+    public function destroy(Encounter $encounter)
+    {
+    }
 
     /**
      * Get file icon based on file type
@@ -3406,7 +3507,9 @@ class EncounterController extends Controller
                 $reasonsArray = $request->reasons_for_encounter;
                 foreach ($reasonsArray as $reason) {
                     $reason = trim($reason);
-                    if (empty($reason)) continue;
+                    if (empty($reason)) {
+                        continue;
+                    }
 
                     // Check if custom reason (starts with 'custom:')
                     if (strpos($reason, 'custom:') === 0) {
@@ -3426,18 +3529,18 @@ class EncounterController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => 'Diagnosis and notes saved successfully'
+                'message' => 'Diagnosis and notes saved successfully',
             ]);
         } catch (\Illuminate\Validation\ValidationException $e) {
             return response()->json([
                 'success' => false,
                 'message' => 'Validation failed: ' . implode(', ', $e->validator->errors()->all()),
-                'errors' => $e->errors()
+                'errors' => $e->errors(),
             ], 422);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Error saving diagnosis: ' . $e->getMessage()
+                'message' => 'Error saving diagnosis: ' . $e->getMessage(),
             ], 500);
         }
     }
@@ -3458,7 +3561,7 @@ class EncounterController extends Controller
             if (count($request->consult_invest_id) !== count($request->consult_invest_note)) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Please fill out notes for all selected services'
+                    'message' => 'Please fill out notes for all selected services',
                 ], 422);
             }
 
@@ -3486,12 +3589,12 @@ class EncounterController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => count($request->consult_invest_id) . ' lab service(s) saved successfully',
-                'count' => count($request->consult_invest_id)
+                'count' => count($request->consult_invest_id),
             ]);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Error saving lab requests: ' . $e->getMessage()
+                'message' => 'Error saving lab requests: ' . $e->getMessage(),
             ], 500);
         }
     }
@@ -3512,7 +3615,7 @@ class EncounterController extends Controller
             if (count($request->consult_imaging_id) !== count($request->consult_imaging_note)) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Please fill out notes for all selected imaging services'
+                    'message' => 'Please fill out notes for all selected imaging services',
                 ], 422);
             }
 
@@ -3540,12 +3643,12 @@ class EncounterController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => count($request->consult_imaging_id) . ' imaging service(s) saved successfully',
-                'count' => count($request->consult_imaging_id)
+                'count' => count($request->consult_imaging_id),
             ]);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Error saving imaging requests: ' . $e->getMessage()
+                'message' => 'Error saving imaging requests: ' . $e->getMessage(),
             ], 500);
         }
     }
@@ -3565,10 +3668,10 @@ class EncounterController extends Controller
 
             // Validate all selected products are drugs (prescriptions should only contain drugs)
             // Skip free form items from this check
-            $regularProductIds = array_filter($request->consult_presc_id, function($id) {
+            $regularProductIds = array_filter($request->consult_presc_id, function ($id) {
                 return strpos($id, 'FF_') !== 0;
             });
-            
+
             if (count($regularProductIds) > 0) {
                 $nonDrugs = \App\Models\Product::whereIn('id', $regularProductIds)
                     ->where('product_type', '!=', 'drug')
@@ -3576,7 +3679,7 @@ class EncounterController extends Controller
                 if ($nonDrugs->isNotEmpty()) {
                     return response()->json([
                         'success' => false,
-                        'message' => 'Only drug-type products can be prescribed. Non-drug items: ' . $nonDrugs->implode(', ')
+                        'message' => 'Only drug-type products can be prescribed. Non-drug items: ' . $nonDrugs->implode(', '),
                     ], 422);
                 }
             }
@@ -3584,7 +3687,7 @@ class EncounterController extends Controller
             if (count($request->consult_presc_id) !== count($request->consult_presc_dose)) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Mismatch between products and dosages'
+                    'message' => 'Mismatch between products and dosages',
                 ], 422);
             }
 
@@ -3626,18 +3729,18 @@ class EncounterController extends Controller
                 'success' => true,
                 'message' => $message,
                 'count' => count($request->consult_presc_id),
-                'empty_doses' => $emptyDoses
+                'empty_doses' => $emptyDoses,
             ]);
         } catch (\Illuminate\Validation\ValidationException $e) {
             return response()->json([
                 'success' => false,
                 'message' => 'Validation failed: ' . implode(', ', $e->validator->errors()->all()),
-                'errors' => $e->errors()
+                'errors' => $e->errors(),
             ], 422);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Error saving prescriptions: ' . $e->getMessage()
+                'message' => 'Error saving prescriptions: ' . $e->getMessage(),
             ], 500);
         }
     }
@@ -3686,7 +3789,7 @@ class EncounterController extends Controller
                         'cause_of_death_primary' => $dr['cause'] ?? 'Unknown',
                         'certified_by_doctor_id' => $dr['certified_by'] ?? Auth::id(),
                         'last_office_done' => false,
-                        'disposition' => 'pending'
+                        'disposition' => 'pending',
                     ]
                 );
             }
@@ -3728,13 +3831,14 @@ class EncounterController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => 'Encounter completed successfully',
-                'redirect' => route('encounters.index')
+                'redirect' => route('encounters.index'),
             ]);
         } catch (\Exception $e) {
             DB::rollBack();
+
             return response()->json([
                 'success' => false,
-                'message' => 'Error finalizing encounter: ' . $e->getMessage()
+                'message' => 'Error finalizing encounter: ' . $e->getMessage(),
             ], 500);
         }
     }
@@ -3779,7 +3883,7 @@ class EncounterController extends Controller
                         'code' => $lab->service->service_code ?? '',
                         'note' => $lab->note,
                         'status' => $lab->status ?? 1,
-                        'created_at' => $lab->created_at->format('M d, Y H:i')
+                        'created_at' => $lab->created_at->format('M d, Y H:i'),
                     ];
                 });
 
@@ -3794,7 +3898,7 @@ class EncounterController extends Controller
                         'code' => $img->service->service_code ?? '',
                         'note' => $img->note,
                         'status' => $img->status ?? 1,
-                        'created_at' => $img->created_at->format('M d, Y H:i')
+                        'created_at' => $img->created_at->format('M d, Y H:i'),
                     ];
                 });
 
@@ -3808,7 +3912,7 @@ class EncounterController extends Controller
                         'name' => $presc->product->product_name ?? 'N/A',
                         'dose' => $presc->dose,
                         'status' => $presc->status ?? 1,
-                        'created_at' => $presc->created_at->format('M d, Y H:i')
+                        'created_at' => $presc->created_at->format('M d, Y H:i'),
                     ];
                 });
 
@@ -3823,7 +3927,7 @@ class EncounterController extends Controller
                         'code' => $proc->service->service_code ?? '',
                         'priority' => $proc->priority,
                         'status' => $proc->procedure_status,
-                        'created_at' => $proc->created_at->format('M d, Y H:i')
+                        'created_at' => $proc->created_at->format('M d, Y H:i'),
                     ];
                 });
 
@@ -3840,13 +3944,14 @@ class EncounterController extends Controller
                     } else {
                         $target = "External Referral to {$ref->external_facility_name}" . ($ref->external_doctor_name ? " (Dr. {$ref->external_doctor_name})" : "");
                     }
+
                     return [
                         'id' => $ref->id,
                         'type' => $ref->referral_type,
                         'target' => $target,
                         'reason' => $ref->reason,
                         'urgency' => $ref->urgency,
-                        'created_at' => $ref->created_at->format('M d, Y H:i')
+                        'created_at' => $ref->created_at->format('M d, Y H:i'),
                     ];
                 });
 
@@ -3862,7 +3967,7 @@ class EncounterController extends Controller
                         'frequency' => $order->frequency,
                         'duration' => $order->duration,
                         'status' => $order->status,
-                        'created_at' => $order->created_at->format('M d, Y H:i')
+                        'created_at' => $order->created_at->format('M d, Y H:i'),
                     ];
                 });
 
@@ -3881,13 +3986,13 @@ class EncounterController extends Controller
                         'completed' => $encounter->completed,
                         'created_at' => $encounter->created_at->format('M d, Y H:i'),
                         'updated_at' => $encounter->updated_at->format('M d, Y H:i'),
-                    ]
-                ]
+                    ],
+                ],
             ]);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Error fetching encounter summary: ' . $e->getMessage()
+                'message' => 'Error fetching encounter summary: ' . $e->getMessage(),
             ], 500);
         }
     }
@@ -3902,7 +4007,7 @@ class EncounterController extends Controller
             if ($lab->encounter_id != $encounter->id) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'This lab request does not belong to this encounter'
+                    'message' => 'This lab request does not belong to this encounter',
                 ], 403);
             }
 
@@ -3910,7 +4015,7 @@ class EncounterController extends Controller
             if ($lab->doctor_id != Auth::id()) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'You can only delete your own requests'
+                    'message' => 'You can only delete your own requests',
                 ], 403);
             }
 
@@ -3919,7 +4024,7 @@ class EncounterController extends Controller
                 return response()->json([
                     'success' => false,
                     'message' => 'Cannot delete: Lab results have already been entered',
-                    'reason' => 'results_entered'
+                    'reason' => 'results_entered',
                 ], 403);
             }
 
@@ -3928,13 +4033,13 @@ class EncounterController extends Controller
                 return response()->json([
                     'success' => false,
                     'message' => 'Cannot delete: This request has already been billed',
-                    'reason' => 'already_billed'
+                    'reason' => 'already_billed',
                 ], 403);
             }
 
             // Validate deletion reason
             $request->validate([
-                'reason' => 'required|string|max:500'
+                'reason' => 'required|string|max:500',
             ]);
 
             // Soft delete the request
@@ -3945,12 +4050,12 @@ class EncounterController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => 'Lab request deleted successfully'
+                'message' => 'Lab request deleted successfully',
             ]);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Error deleting lab request: ' . $e->getMessage()
+                'message' => 'Error deleting lab request: ' . $e->getMessage(),
             ], 500);
         }
     }
@@ -3965,7 +4070,7 @@ class EncounterController extends Controller
             if ($imaging->encounter_id != $encounter->id) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'This imaging request does not belong to this encounter'
+                    'message' => 'This imaging request does not belong to this encounter',
                 ], 403);
             }
 
@@ -3973,7 +4078,7 @@ class EncounterController extends Controller
             if ($imaging->doctor_id != Auth::id()) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'You can only delete your own requests'
+                    'message' => 'You can only delete your own requests',
                 ], 403);
             }
 
@@ -3982,7 +4087,7 @@ class EncounterController extends Controller
                 return response()->json([
                     'success' => false,
                     'message' => 'Cannot delete: Imaging results have already been entered',
-                    'reason' => 'results_entered'
+                    'reason' => 'results_entered',
                 ], 403);
             }
 
@@ -3991,13 +4096,13 @@ class EncounterController extends Controller
                 return response()->json([
                     'success' => false,
                     'message' => 'Cannot delete: This request has already been billed',
-                    'reason' => 'already_billed'
+                    'reason' => 'already_billed',
                 ], 403);
             }
 
             // Validate deletion reason
             $request->validate([
-                'reason' => 'required|string|max:500'
+                'reason' => 'required|string|max:500',
             ]);
 
             // Soft delete the request
@@ -4008,12 +4113,12 @@ class EncounterController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => 'Imaging request deleted successfully'
+                'message' => 'Imaging request deleted successfully',
             ]);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Error deleting imaging request: ' . $e->getMessage()
+                'message' => 'Error deleting imaging request: ' . $e->getMessage(),
             ], 500);
         }
     }
@@ -4028,7 +4133,7 @@ class EncounterController extends Controller
             if ($prescription->encounter_id != $encounter->id) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'This prescription does not belong to this encounter'
+                    'message' => 'This prescription does not belong to this encounter',
                 ], 403);
             }
 
@@ -4036,7 +4141,7 @@ class EncounterController extends Controller
             if ($prescription->doctor_id != Auth::id()) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'You can only delete your own prescriptions'
+                    'message' => 'You can only delete your own prescriptions',
                 ], 403);
             }
 
@@ -4045,7 +4150,7 @@ class EncounterController extends Controller
                 return response()->json([
                     'success' => false,
                     'message' => 'Cannot delete: This prescription has already been dispensed',
-                    'reason' => 'already_dispensed'
+                    'reason' => 'already_dispensed',
                 ], 403);
             }
 
@@ -4054,13 +4159,13 @@ class EncounterController extends Controller
                 return response()->json([
                     'success' => false,
                     'message' => 'Cannot delete: This prescription has already been billed',
-                    'reason' => 'already_billed'
+                    'reason' => 'already_billed',
                 ], 403);
             }
 
             // Validate deletion reason
             $request->validate([
-                'reason' => 'required|string|max:500'
+                'reason' => 'required|string|max:500',
             ]);
 
             // Soft delete the prescription
@@ -4071,12 +4176,12 @@ class EncounterController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => 'Prescription deleted successfully'
+                'message' => 'Prescription deleted successfully',
             ]);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Error deleting prescription: ' . $e->getMessage()
+                'message' => 'Error deleting prescription: ' . $e->getMessage(),
             ], 500);
         }
     }
@@ -4087,7 +4192,7 @@ class EncounterController extends Controller
     public function liveSearchReasons(Request $request)
     {
         $request->validate([
-            'q' => 'required|string|min:2'
+            'q' => 'required|string|min:2',
         ]);
 
         $searchTerm = $request->q;
@@ -4110,7 +4215,7 @@ class EncounterController extends Controller
                     'category' => $reason->category,
                     'sub_category' => $reason->sub_category,
                     'display' => $reason->code . ' - ' . $reason->name,
-                    'value' => $reason->code . '-' . $reason->name // For compatibility
+                    'value' => $reason->code . '-' . $reason->name, // For compatibility
                 ];
             });
 
@@ -4169,6 +4274,7 @@ class EncounterController extends Controller
 
                 // Check HMO coverage
                 $coverage = null;
+
                 try {
                     $coverage = \App\Helpers\HmoHelper::applyHmoTariff($encounter->patient_id, null, $service->id);
                 } catch (\Exception $e) {
@@ -4211,17 +4317,17 @@ class EncounterController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => $savedCount . ' procedure(s) requested successfully',
-                'count' => $savedCount
+                'count' => $savedCount,
             ]);
         } catch (\Illuminate\Validation\ValidationException $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Validation error: ' . implode(', ', $e->validator->errors()->all())
+                'message' => 'Validation error: ' . implode(', ', $e->validator->errors()->all()),
             ], 422);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Error saving procedures: ' . $e->getMessage()
+                'message' => 'Error saving procedures: ' . $e->getMessage(),
             ], 500);
         }
     }
@@ -4288,7 +4394,7 @@ class EncounterController extends Controller
 
                 // 2. Timeline & Details
                 $str .= '<div class="small">';
-                
+
                 // Requested by
                 if ($proc->requestedByUser) {
                     $reqDate = $proc->requested_on ? $proc->requested_on->format('d M Y H:i') : 'N/A';
@@ -4330,7 +4436,7 @@ class EncounterController extends Controller
 
                 // Action buttons
                 $str .= '<div class="btn-group btn-group-sm mt-2" role="group">';
-                
+
                 $detailsUrl = route('patient-procedures.show', $proc->id);
                 $str .= "<a href='{$detailsUrl}' target='_blank' class='btn btn-sm btn-primary' title='View Details'><i class='fa fa-external-link-alt'></i> Details</a>";
 
@@ -4352,8 +4458,9 @@ class EncounterController extends Controller
                 }
 
                 $str .= '</div>'; // End btn-group
-                
+
                 $str .= '</div></div>';
+
                 return $str;
             })
             ->rawColumns(['info'])
@@ -4375,7 +4482,7 @@ class EncounterController extends Controller
             'cancelledByUser',
             'teamMembers.user',
             'notes.createdBy',
-            'productOrServiceRequest'
+            'productOrServiceRequest',
         ]);
 
         return response()->json($procedure);
@@ -4391,7 +4498,7 @@ class EncounterController extends Controller
             if ($procedure->encounter_id !== $encounter->id) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Procedure does not belong to this encounter'
+                    'message' => 'Procedure does not belong to this encounter',
                 ], 403);
             }
 
@@ -4400,13 +4507,13 @@ class EncounterController extends Controller
                 return response()->json([
                     'success' => false,
                     'message' => 'Cannot delete a procedure that is already in progress or completed',
-                    'reason' => 'Procedure status: ' . $procedure->procedure_status
+                    'reason' => 'Procedure status: ' . $procedure->procedure_status,
                 ], 403);
             }
 
             // Validate deletion reason
             $request->validate([
-                'reason' => 'required|string|max:500'
+                'reason' => 'required|string|max:500',
             ]);
 
             // Delete associated billing entry if exists
@@ -4427,12 +4534,12 @@ class EncounterController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => 'Procedure request deleted successfully'
+                'message' => 'Procedure request deleted successfully',
             ]);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Error deleting procedure: ' . $e->getMessage()
+                'message' => 'Error deleting procedure: ' . $e->getMessage(),
             ], 500);
         }
     }
@@ -4465,7 +4572,7 @@ class EncounterController extends Controller
                 'outcome',
                 'outcome_notes',
                 'pre_notes',
-                'post_notes'
+                'post_notes',
             ];
 
             foreach ($fillable as $field) {
@@ -4500,17 +4607,17 @@ class EncounterController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => 'Procedure updated successfully',
-                'procedure' => $procedure->load(['service', 'teamMembers.user', 'notes.createdBy'])
+                'procedure' => $procedure->load(['service', 'teamMembers.user', 'notes.createdBy']),
             ]);
         } catch (\Illuminate\Validation\ValidationException $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Validation error: ' . implode(', ', $e->validator->errors()->all())
+                'message' => 'Validation error: ' . implode(', ', $e->validator->errors()->all()),
             ], 422);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Error updating procedure: ' . $e->getMessage()
+                'message' => 'Error updating procedure: ' . $e->getMessage(),
             ], 500);
         }
     }
@@ -4525,7 +4632,7 @@ class EncounterController extends Controller
         return response()->json([
             'success' => true,
             'team' => $teamMembers,
-            'roles' => \App\Models\ProcedureTeamMember::ROLES
+            'roles' => \App\Models\ProcedureTeamMember::ROLES,
         ]);
     }
 
@@ -4555,7 +4662,7 @@ class EncounterController extends Controller
             if ($existing) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'This team member already has this role assigned'
+                    'message' => 'This team member already has this role assigned',
                 ], 422);
             }
 
@@ -4571,17 +4678,17 @@ class EncounterController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => 'Team member added successfully',
-                'member' => $teamMember->load('user')
+                'member' => $teamMember->load('user'),
             ]);
         } catch (\Illuminate\Validation\ValidationException $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Validation error: ' . implode(', ', $e->validator->errors()->all())
+                'message' => 'Validation error: ' . implode(', ', $e->validator->errors()->all()),
             ], 422);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Error adding team member: ' . $e->getMessage()
+                'message' => 'Error adding team member: ' . $e->getMessage(),
             ], 500);
         }
     }
@@ -4596,7 +4703,7 @@ class EncounterController extends Controller
             if ($member->procedure_id !== $procedure->id) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Team member does not belong to this procedure'
+                    'message' => 'Team member does not belong to this procedure',
                 ], 403);
             }
 
@@ -4623,12 +4730,12 @@ class EncounterController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => 'Team member updated successfully',
-                'member' => $member->load('user')
+                'member' => $member->load('user'),
             ]);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Error updating team member: ' . $e->getMessage()
+                'message' => 'Error updating team member: ' . $e->getMessage(),
             ], 500);
         }
     }
@@ -4643,7 +4750,7 @@ class EncounterController extends Controller
             if ($member->procedure_id !== $procedure->id) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Team member does not belong to this procedure'
+                    'message' => 'Team member does not belong to this procedure',
                 ], 403);
             }
 
@@ -4651,12 +4758,12 @@ class EncounterController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => 'Team member removed successfully'
+                'message' => 'Team member removed successfully',
             ]);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Error removing team member: ' . $e->getMessage()
+                'message' => 'Error removing team member: ' . $e->getMessage(),
             ], 500);
         }
     }
@@ -4671,7 +4778,7 @@ class EncounterController extends Controller
         return response()->json([
             'success' => true,
             'notes' => $notes,
-            'types' => \App\Models\ProcedureNote::NOTE_TYPES
+            'types' => \App\Models\ProcedureNote::NOTE_TYPES,
         ]);
     }
 
@@ -4698,17 +4805,17 @@ class EncounterController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => 'Note added successfully',
-                'note' => $note->load('createdBy')
+                'note' => $note->load('createdBy'),
             ]);
         } catch (\Illuminate\Validation\ValidationException $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Validation error: ' . implode(', ', $e->validator->errors()->all())
+                'message' => 'Validation error: ' . implode(', ', $e->validator->errors()->all()),
             ], 422);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Error adding note: ' . $e->getMessage()
+                'message' => 'Error adding note: ' . $e->getMessage(),
             ], 500);
         }
     }
@@ -4723,7 +4830,7 @@ class EncounterController extends Controller
             if ($note->procedure_id !== $procedure->id) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Note does not belong to this procedure'
+                    'message' => 'Note does not belong to this procedure',
                 ], 403);
             }
 
@@ -4748,12 +4855,12 @@ class EncounterController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => 'Note updated successfully',
-                'note' => $note->load('createdBy')
+                'note' => $note->load('createdBy'),
             ]);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Error updating note: ' . $e->getMessage()
+                'message' => 'Error updating note: ' . $e->getMessage(),
             ], 500);
         }
     }
@@ -4768,7 +4875,7 @@ class EncounterController extends Controller
             if ($note->procedure_id !== $procedure->id) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Note does not belong to this procedure'
+                    'message' => 'Note does not belong to this procedure',
                 ], 403);
             }
 
@@ -4776,12 +4883,12 @@ class EncounterController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => 'Note deleted successfully'
+                'message' => 'Note deleted successfully',
             ]);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Error deleting note: ' . $e->getMessage()
+                'message' => 'Error deleting note: ' . $e->getMessage(),
             ], 500);
         }
     }
@@ -4796,7 +4903,7 @@ class EncounterController extends Controller
             if ($procedure->procedure_status === \App\Models\Procedure::STATUS_COMPLETED) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Cannot cancel a completed procedure'
+                    'message' => 'Cannot cancel a completed procedure',
                 ], 403);
             }
 
@@ -4804,13 +4911,13 @@ class EncounterController extends Controller
             if ($procedure->procedure_status === \App\Models\Procedure::STATUS_CANCELLED) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Procedure is already cancelled'
+                    'message' => 'Procedure is already cancelled',
                 ], 403);
             }
 
             $request->validate([
                 'cancellation_reason' => 'required|string|max:1000',
-                'refund_eligible' => 'sometimes'
+                'refund_eligible' => 'sometimes',
             ]);
 
             // Convert string boolean to actual boolean
@@ -4844,17 +4951,17 @@ class EncounterController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => 'Procedure cancelled successfully.' . $refundMessage
+                'message' => 'Procedure cancelled successfully.' . $refundMessage,
             ]);
         } catch (\Illuminate\Validation\ValidationException $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Validation error: ' . implode(', ', $e->validator->errors()->all())
+                'message' => 'Validation error: ' . implode(', ', $e->validator->errors()->all()),
             ], 422);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Error cancelling procedure: ' . $e->getMessage()
+                'message' => 'Error cancelling procedure: ' . $e->getMessage(),
             ], 500);
         }
     }
@@ -4872,7 +4979,7 @@ class EncounterController extends Controller
             'teamMembers.user',
             'notes.createdBy',
             'requestedByUser',
-            'billedByUser'
+            'billedByUser',
         ]);
 
         return view('admin.doctors.procedures.print', compact('procedure'));
@@ -4913,13 +5020,14 @@ class EncounterController extends Controller
             return response()->json([
                 "success" => true,
                 "message" => "Combo applied successfully",
-                "data" => $result
+                "data" => $result,
             ]);
         } catch (\Exception $e) {
             Log::error("Error applying combo: " . $e->getMessage());
+
             return response()->json([
                 "success" => false,
-                "message" => "Error applying combo: " . $e->getMessage()
+                "message" => "Error applying combo: " . $e->getMessage(),
             ], 500);
         }
     }
@@ -4928,7 +5036,7 @@ class EncounterController extends Controller
     {
         try {
             $request->validate([
-                'parent_request_id' => 'required|integer|exists:product_or_service_requests,id'
+                'parent_request_id' => 'required|integer|exists:product_or_service_requests,id',
             ]);
 
             $parentRequest = ProductOrServiceRequest::findOrFail($request->parent_request_id);
@@ -4937,7 +5045,7 @@ class EncounterController extends Controller
             if ($parentRequest->encounter_id !== $encounter->id || !$parentRequest->is_bundle_item) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Invalid combo or permission denied'
+                    'message' => 'Invalid combo or permission denied',
                 ], 403);
             }
 
@@ -4946,19 +5054,20 @@ class EncounterController extends Controller
             if ($result['success']) {
                 return response()->json([
                     'success' => true,
-                    'message' => $result['message']
+                    'message' => $result['message'],
                 ]);
             } else {
                 return response()->json([
                     'success' => false,
-                    'message' => $result['message']
+                    'message' => $result['message'],
                 ], 400);
             }
         } catch (\Exception $e) {
             Log::error("Error removing combo: " . $e->getMessage());
+
             return response()->json([
                 'success' => false,
-                'message' => 'Error removing combo: ' . $e->getMessage()
+                'message' => 'Error removing combo: ' . $e->getMessage(),
             ], 500);
         }
     }
@@ -4971,7 +5080,7 @@ class EncounterController extends Controller
     {
         try {
             $request->validate([
-                'parent_request_id' => 'required|integer|exists:product_or_service_requests,id'
+                'parent_request_id' => 'required|integer|exists:product_or_service_requests,id',
             ]);
 
             $parentRequest = ProductOrServiceRequest::findOrFail($request->parent_request_id);
@@ -4980,7 +5089,7 @@ class EncounterController extends Controller
             if ($parentRequest->staff_user_id !== Auth::id()) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Permission denied: only the person who applied this combo may remove it.'
+                    'message' => 'Permission denied: only the person who applied this combo may remove it.',
                 ], 403);
             }
 
@@ -4988,13 +5097,14 @@ class EncounterController extends Controller
 
             return response()->json([
                 'success' => $result['success'],
-                'message' => $result['message']
+                'message' => $result['message'],
             ], $result['success'] ? 200 : 400);
         } catch (\Exception $e) {
             Log::error("Error removing combo (generic): " . $e->getMessage());
+
             return response()->json([
                 'success' => false,
-                'message' => 'Error removing combo: ' . $e->getMessage()
+                'message' => 'Error removing combo: ' . $e->getMessage(),
             ], 500);
         }
     }
@@ -5015,14 +5125,16 @@ class EncounterController extends Controller
                 $encounter->id,
                 $extra
             );
+
             return response()->json([
                 'success' => true,
                 'id' => $lab->id,
                 'item' => ['id' => $lab->id, 'service_id' => $lab->service_id, 'note' => $lab->note, 'created_at' => $lab->created_at],
-                'message' => 'Lab added'
+                'message' => 'Lab added',
             ]);
         } catch (\Exception $e) {
             Log::error('addSingleLabRequest: ' . $e->getMessage());
+
             return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
         }
     }
@@ -5047,14 +5159,16 @@ class EncounterController extends Controller
                 $encounter->id,
                 $extra
             );
+
             return response()->json([
                 'success' => true,
                 'id' => $imaging->id,
                 'item' => ['id' => $imaging->id, 'service_id' => $imaging->service_id, 'note' => $imaging->note, 'created_at' => $imaging->created_at],
-                'message' => 'Imaging added'
+                'message' => 'Imaging added',
             ]);
         } catch (\Exception $e) {
             Log::error('addSingleImagingRequest: ' . $e->getMessage());
+
             return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
         }
     }
@@ -5079,14 +5193,16 @@ class EncounterController extends Controller
                 $encounter->id,
                 $extra
             );
+
             return response()->json([
                 'success' => true,
                 'id' => $presc->id,
                 'item' => ['id' => $presc->id, 'product_id' => $presc->product_id, 'dose' => $presc->dose, 'created_at' => $presc->created_at],
-                'message' => 'Prescription added'
+                'message' => 'Prescription added',
             ]);
         } catch (\Exception $e) {
             Log::error('addSinglePrescriptionRequest: ' . $e->getMessage());
+
             return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
         }
     }
@@ -5102,9 +5218,11 @@ class EncounterController extends Controller
                 return response()->json(['success' => false, 'message' => 'Prescription does not belong to this encounter'], 403);
             }
             $presc = $this->updateSinglePrescriptionDose($prescription->id, $request->input('dose', ''));
+
             return response()->json(['success' => true, 'id' => $presc->id, 'message' => 'Dose updated']);
         } catch (\Exception $e) {
             Log::error('updatePrescriptionDoseRequest: ' . $e->getMessage());
+
             return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
         }
     }
@@ -5129,14 +5247,16 @@ class EncounterController extends Controller
                 $encounter->admission_request_id,
                 $extra
             );
+
             return response()->json([
                 'success' => true,
                 'id' => $procedure->id,
                 'item' => ['id' => $procedure->id, 'service_id' => $procedure->service_id, 'priority' => $procedure->priority, 'created_at' => $procedure->created_at],
-                'message' => 'Procedure added'
+                'message' => 'Procedure added',
             ]);
         } catch (\Exception $e) {
             Log::error('addSingleProcedureRequest: ' . $e->getMessage());
+
             return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
         }
     }
@@ -5152,6 +5272,7 @@ class EncounterController extends Controller
                 return response()->json(['success' => false, 'message' => 'Lab does not belong to this encounter'], 403);
             }
             $lab = $this->updateSingleLabNote($lab->id, $request->input('note', ''));
+
             return response()->json(['success' => true, 'id' => $lab->id, 'message' => 'Note updated']);
         } catch (\Exception $e) {
             return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
@@ -5169,6 +5290,7 @@ class EncounterController extends Controller
                 return response()->json(['success' => false, 'message' => 'Imaging does not belong to this encounter'], 403);
             }
             $imaging = $this->updateSingleImagingNote($imaging->id, $request->input('note', ''));
+
             return response()->json(['success' => true, 'id' => $imaging->id, 'message' => 'Note updated']);
         } catch (\Exception $e) {
             return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
@@ -5184,7 +5306,7 @@ class EncounterController extends Controller
     {
         $request->validate([
             'source_type' => 'required|in:labs,imaging,prescriptions,procedures',
-            'source_ids'  => 'required|array|min:1',
+            'source_ids' => 'required|array|min:1',
             'source_ids.*' => 'integer',
             'adjust_doses' => 'nullable|array',
         ]);
@@ -5200,9 +5322,9 @@ class EncounterController extends Controller
 
             return response()->json([
                 'success' => true,
-                'items'   => $created->map(fn($item) => ['id' => $item->id]),
-                'count'   => $created->count(),
-                'message' => $created->count() . ' item(s) re-prescribed'
+                'items' => $created->map(fn ($item) => ['id' => $item->id]),
+                'count' => $created->count(),
+                'message' => $created->count() . ' item(s) re-prescribed',
             ]);
         } catch (\Exception $e) {
             return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
@@ -5221,6 +5343,7 @@ class EncounterController extends Controller
             5,
             $encounter->id  // exclude current
         );
+
         return response()->json(['success' => true, 'encounters' => $encounters]);
     }
 
@@ -5232,6 +5355,7 @@ class EncounterController extends Controller
     public function encounterItems(Encounter $encounter, int $sourceEncounter)
     {
         $items = $this->getEncounterItems($sourceEncounter);
+
         return response()->json(['success' => true, 'items' => $items]);
     }
 
@@ -5247,7 +5371,7 @@ class EncounterController extends Controller
         try {
             $patientId = $encounter->patient_id;
             $dateFrom = $request->filled('date_from') ? Carbon::parse($request->date_from)->startOfDay() : null;
-            $dateTo   = $request->filled('date_to')   ? Carbon::parse($request->date_to)->endOfDay()     : null;
+            $dateTo = $request->filled('date_to') ? Carbon::parse($request->date_to)->endOfDay() : null;
             $encounterFilter = $request->input('encounter_filter');
 
             // Check maternity enrollment
@@ -5263,7 +5387,9 @@ class EncounterController extends Controller
 
             // Helper to match a record timestamp to an encounter id
             $matchEncounter = function ($timestamp) use ($allEncountersForMatch) {
-                if (!$timestamp) return null;
+                if (!$timestamp) {
+                    return null;
+                }
                 $time = Carbon::parse($timestamp);
                 foreach ($allEncountersForMatch as $enc) {
                     $start = $enc->started_at;
@@ -5274,6 +5400,7 @@ class EncounterController extends Controller
                         }
                     }
                 }
+
                 return null;
             };
 
@@ -5283,10 +5410,14 @@ class EncounterController extends Controller
             // Helper: add date entries from a query with robust encounter filtering
             $addDates = function ($model, $dateColumn, $category, $ignoreEncounterFilter = false) use ($patientId, $dateFrom, $dateTo, $encounterFilter, $matchEncounter, &$dateMap) {
                 $query = $model::where('patient_id', $patientId);
-                if ($dateFrom) $query->where($dateColumn, '>=', $dateFrom);
-                if ($dateTo)   $query->where($dateColumn, '<=', $dateTo);
-                
-                $hasEncounterIdCol = in_array('encounter_id', (new $model)->getFillable() ?? []);
+                if ($dateFrom) {
+                    $query->where($dateColumn, '>=', $dateFrom);
+                }
+                if ($dateTo) {
+                    $query->where($dateColumn, '<=', $dateTo);
+                }
+
+                $hasEncounterIdCol = in_array('encounter_id', (new $model())->getFillable() ?? []);
                 if ($encounterFilter && $hasEncounterIdCol && !$ignoreEncounterFilter) {
                     $query->where('encounter_id', $encounterFilter);
                 }
@@ -5295,9 +5426,11 @@ class EncounterController extends Controller
 
                 foreach ($items as $item) {
                     $dateVal = $item->$dateColumn;
-                    if (!$dateVal) continue;
+                    if (!$dateVal) {
+                        continue;
+                    }
                     $d = Carbon::parse($dateVal)->format('Y-m-d');
-                    
+
                     if ($encounterFilter && !$hasEncounterIdCol && !$ignoreEncounterFilter) {
                         $matchedId = $matchEncounter($dateVal);
                         if (intval($matchedId) !== intval($encounterFilter)) {
@@ -5315,15 +5448,21 @@ class EncounterController extends Controller
             // 2. Clinical Notes (from encounters table)
             $encQuery = Encounter::where('patient_id', $patientId);
             $anchorCol = 'COALESCE(started_at, created_at)';
-            if ($dateFrom) $encQuery->whereRaw("$anchorCol >= ?", [$dateFrom]);
-            if ($dateTo)   $encQuery->whereRaw("$anchorCol <= ?", [$dateTo]);
+            if ($dateFrom) {
+                $encQuery->whereRaw("$anchorCol >= ?", [$dateFrom]);
+            }
+            if ($dateTo) {
+                $encQuery->whereRaw("$anchorCol <= ?", [$dateTo]);
+            }
             if ($encounterFilter) {
                 $encQuery->where('id', $encounterFilter);
             }
             $encRows = $encQuery->selectRaw("id, DATE($anchorCol) as anchor_date, DATE(updated_at) as note_date, notes")
                 ->get();
             foreach ($encRows as $row) {
-                if (!$row->anchor_date) continue;
+                if (!$row->anchor_date) {
+                    continue;
+                }
                 $dateMap[$row->anchor_date]['clinical_notes'] = ($dateMap[$row->anchor_date]['clinical_notes'] ?? 0) + 1;
                 if (!empty($row->notes) && $row->note_date && $row->note_date !== $row->anchor_date) {
                     $dateMap[$row->note_date]['clinical_notes'] = ($dateMap[$row->note_date]['clinical_notes'] ?? 0) + 1;
@@ -5345,29 +5484,41 @@ class EncounterController extends Controller
 
             // 7. Labs
             $labQuery = LabServiceRequest::where('patient_id', $patientId)->where('status', '>', 0);
-            if ($dateFrom) $labQuery->where('created_at', '>=', $dateFrom);
-            if ($dateTo)   $labQuery->where('created_at', '<=', $dateTo);
+            if ($dateFrom) {
+                $labQuery->where('created_at', '>=', $dateFrom);
+            }
+            if ($dateTo) {
+                $labQuery->where('created_at', '<=', $dateTo);
+            }
             if ($encounterFilter) {
                 $labQuery->where('encounter_id', $encounterFilter);
             }
             $labCounts = $labQuery->selectRaw("DATE(created_at) as d, COUNT(*) as c")
                 ->groupBy('d')->pluck('c', 'd');
             foreach ($labCounts as $date => $count) {
-                if (!$date) continue;
+                if (!$date) {
+                    continue;
+                }
                 $dateMap[$date]['labs'] = ($dateMap[$date]['labs'] ?? 0) + $count;
             }
 
             // 8. Imaging
             $imgQuery = ImagingServiceRequest::where('patient_id', $patientId)->where('status', '>', 0);
-            if ($dateFrom) $imgQuery->where('created_at', '>=', $dateFrom);
-            if ($dateTo)   $imgQuery->where('created_at', '<=', $dateTo);
+            if ($dateFrom) {
+                $imgQuery->where('created_at', '>=', $dateFrom);
+            }
+            if ($dateTo) {
+                $imgQuery->where('created_at', '<=', $dateTo);
+            }
             if ($encounterFilter) {
                 $imgQuery->where('encounter_id', $encounterFilter);
             }
             $imgCounts = $imgQuery->selectRaw("DATE(created_at) as d, COUNT(*) as c")
                 ->groupBy('d')->pluck('c', 'd');
             foreach ($imgCounts as $date => $count) {
-                if (!$date) continue;
+                if (!$date) {
+                    continue;
+                }
                 $dateMap[$date]['imaging'] = ($dateMap[$date]['imaging'] ?? 0) + $count;
             }
 
@@ -5401,12 +5552,18 @@ class EncounterController extends Controller
             $encountersByDate = [];
             $encAllQuery = Encounter::where('patient_id', $patientId)
                 ->with(['doctor', 'service']);
-            if ($dateFrom) $encAllQuery->whereRaw("COALESCE(started_at, created_at) >= ?", [$dateFrom]);
-            if ($dateTo)   $encAllQuery->whereRaw("COALESCE(started_at, created_at) <= ?", [$dateTo]);
+            if ($dateFrom) {
+                $encAllQuery->whereRaw("COALESCE(started_at, created_at) >= ?", [$dateFrom]);
+            }
+            if ($dateTo) {
+                $encAllQuery->whereRaw("COALESCE(started_at, created_at) <= ?", [$dateTo]);
+            }
             $allEncounters = $encAllQuery->orderByRaw('COALESCE(started_at, created_at) DESC')->get();
             foreach ($allEncounters as $enc) {
                 $anchor = $enc->started_at ?? $enc->created_at;
-                if (!$anchor) continue;
+                if (!$anchor) {
+                    continue;
+                }
                 $d = Carbon::parse($anchor)->format('Y-m-d');
                 $encountersByDate[$d][] = [
                     'id' => $enc->id,
@@ -5439,6 +5596,7 @@ class EncounterController extends Controller
 
             $consultations = $allEncounters->map(function ($enc) {
                 $anchor = $enc->started_at ?? $enc->created_at;
+
                 return [
                     'id' => $enc->id,
                     'clinic_name' => $enc->service ? $enc->service->service_name : 'Consultation',
@@ -5460,6 +5618,7 @@ class EncounterController extends Controller
             ]);
         } catch (\Exception $e) {
             Log::error('Error fetching clinical story timeline: ' . $e->getMessage());
+
             return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
         }
     }
@@ -5473,7 +5632,7 @@ class EncounterController extends Controller
         try {
             $patientId = is_object($patient) ? $patient->id : intval($patient);
             $dateFrom = $request->filled('date_from') ? Carbon::parse($request->date_from)->startOfDay() : null;
-            $dateTo   = $request->filled('date_to')   ? Carbon::parse($request->date_to)->endOfDay()     : null;
+            $dateTo = $request->filled('date_to') ? Carbon::parse($request->date_to)->endOfDay() : null;
             $encounterFilter = $request->input('encounter_filter');
 
             // Check maternity enrollment
@@ -5489,7 +5648,9 @@ class EncounterController extends Controller
 
             // Helper to match a record timestamp to an encounter id
             $matchEncounter = function ($timestamp) use ($allEncountersForMatch) {
-                if (!$timestamp) return null;
+                if (!$timestamp) {
+                    return null;
+                }
                 $time = Carbon::parse($timestamp);
                 foreach ($allEncountersForMatch as $enc) {
                     $start = $enc->started_at;
@@ -5500,6 +5661,7 @@ class EncounterController extends Controller
                         }
                     }
                 }
+
                 return null;
             };
 
@@ -5509,10 +5671,14 @@ class EncounterController extends Controller
             // Helper: add date entries from a query with robust encounter filtering
             $addDates = function ($model, $dateColumn, $category, $ignoreEncounterFilter = false) use ($patientId, $dateFrom, $dateTo, $encounterFilter, $matchEncounter, &$dateMap) {
                 $query = $model::where('patient_id', $patientId);
-                if ($dateFrom) $query->where($dateColumn, '>=', $dateFrom);
-                if ($dateTo)   $query->where($dateColumn, '<=', $dateTo);
-                
-                $hasEncounterIdCol = in_array('encounter_id', (new $model)->getFillable() ?? []);
+                if ($dateFrom) {
+                    $query->where($dateColumn, '>=', $dateFrom);
+                }
+                if ($dateTo) {
+                    $query->where($dateColumn, '<=', $dateTo);
+                }
+
+                $hasEncounterIdCol = in_array('encounter_id', (new $model())->getFillable() ?? []);
                 if ($encounterFilter && $hasEncounterIdCol && !$ignoreEncounterFilter) {
                     $query->where('encounter_id', $encounterFilter);
                 }
@@ -5521,9 +5687,11 @@ class EncounterController extends Controller
 
                 foreach ($items as $item) {
                     $dateVal = $item->$dateColumn;
-                    if (!$dateVal) continue;
+                    if (!$dateVal) {
+                        continue;
+                    }
                     $d = Carbon::parse($dateVal)->format('Y-m-d');
-                    
+
                     if ($encounterFilter && !$hasEncounterIdCol && !$ignoreEncounterFilter) {
                         $matchedId = $matchEncounter($dateVal);
                         if (intval($matchedId) !== intval($encounterFilter)) {
@@ -5541,15 +5709,21 @@ class EncounterController extends Controller
             // 2. Clinical Notes (from encounters table)
             $encQuery = Encounter::where('patient_id', $patientId);
             $anchorCol = 'COALESCE(started_at, created_at)';
-            if ($dateFrom) $encQuery->whereRaw("$anchorCol >= ?", [$dateFrom]);
-            if ($dateTo)   $encQuery->whereRaw("$anchorCol <= ?", [$dateTo]);
+            if ($dateFrom) {
+                $encQuery->whereRaw("$anchorCol >= ?", [$dateFrom]);
+            }
+            if ($dateTo) {
+                $encQuery->whereRaw("$anchorCol <= ?", [$dateTo]);
+            }
             if ($encounterFilter) {
                 $encQuery->where('id', $encounterFilter);
             }
             $encRows = $encQuery->selectRaw("id, DATE($anchorCol) as anchor_date, DATE(updated_at) as note_date, notes")
                 ->get();
             foreach ($encRows as $row) {
-                if (!$row->anchor_date) continue;
+                if (!$row->anchor_date) {
+                    continue;
+                }
                 $dateMap[$row->anchor_date]['clinical_notes'] = ($dateMap[$row->anchor_date]['clinical_notes'] ?? 0) + 1;
                 if (!empty($row->notes) && $row->note_date && $row->note_date !== $row->anchor_date) {
                     $dateMap[$row->note_date]['clinical_notes'] = ($dateMap[$row->note_date]['clinical_notes'] ?? 0) + 1;
@@ -5571,29 +5745,41 @@ class EncounterController extends Controller
 
             // 7. Labs
             $labQuery = LabServiceRequest::where('patient_id', $patientId)->where('status', '>', 0);
-            if ($dateFrom) $labQuery->where('created_at', '>=', $dateFrom);
-            if ($dateTo)   $labQuery->where('created_at', '<=', $dateTo);
+            if ($dateFrom) {
+                $labQuery->where('created_at', '>=', $dateFrom);
+            }
+            if ($dateTo) {
+                $labQuery->where('created_at', '<=', $dateTo);
+            }
             if ($encounterFilter) {
                 $labQuery->where('encounter_id', $encounterFilter);
             }
             $labCounts = $labQuery->selectRaw("DATE(created_at) as d, COUNT(*) as c")
                 ->groupBy('d')->pluck('c', 'd');
             foreach ($labCounts as $date => $count) {
-                if (!$date) continue;
+                if (!$date) {
+                    continue;
+                }
                 $dateMap[$date]['labs'] = ($dateMap[$date]['labs'] ?? 0) + $count;
             }
 
             // 8. Imaging
             $imgQuery = ImagingServiceRequest::where('patient_id', $patientId)->where('status', '>', 0);
-            if ($dateFrom) $imgQuery->where('created_at', '>=', $dateFrom);
-            if ($dateTo)   $imgQuery->where('created_at', '<=', $dateTo);
+            if ($dateFrom) {
+                $imgQuery->where('created_at', '>=', $dateFrom);
+            }
+            if ($dateTo) {
+                $imgQuery->where('created_at', '<=', $dateTo);
+            }
             if ($encounterFilter) {
                 $imgQuery->where('encounter_id', $encounterFilter);
             }
             $imgCounts = $imgQuery->selectRaw("DATE(created_at) as d, COUNT(*) as c")
                 ->groupBy('d')->pluck('c', 'd');
             foreach ($imgCounts as $date => $count) {
-                if (!$date) continue;
+                if (!$date) {
+                    continue;
+                }
                 $dateMap[$date]['imaging'] = ($dateMap[$date]['imaging'] ?? 0) + $count;
             }
 
@@ -5627,12 +5813,18 @@ class EncounterController extends Controller
             $encountersByDate = [];
             $encAllQuery = Encounter::where('patient_id', $patientId)
                 ->with(['doctor', 'service']);
-            if ($dateFrom) $encAllQuery->whereRaw("COALESCE(started_at, created_at) >= ?", [$dateFrom]);
-            if ($dateTo)   $encAllQuery->whereRaw("COALESCE(started_at, created_at) <= ?", [$dateTo]);
+            if ($dateFrom) {
+                $encAllQuery->whereRaw("COALESCE(started_at, created_at) >= ?", [$dateFrom]);
+            }
+            if ($dateTo) {
+                $encAllQuery->whereRaw("COALESCE(started_at, created_at) <= ?", [$dateTo]);
+            }
             $allEncounters = $encAllQuery->orderByRaw('COALESCE(started_at, created_at) DESC')->get();
             foreach ($allEncounters as $enc) {
                 $anchor = $enc->started_at ?? $enc->created_at;
-                if (!$anchor) continue;
+                if (!$anchor) {
+                    continue;
+                }
                 $d = Carbon::parse($anchor)->format('Y-m-d');
                 $encountersByDate[$d][] = [
                     'id' => $enc->id,
@@ -5665,6 +5857,7 @@ class EncounterController extends Controller
 
             $consultations = $allEncounters->map(function ($enc) {
                 $anchor = $enc->started_at ?? $enc->created_at;
+
                 return [
                     'id' => $enc->id,
                     'clinic_name' => $enc->service ? $enc->service->service_name : 'Consultation',
@@ -5686,6 +5879,7 @@ class EncounterController extends Controller
             ]);
         } catch (\Exception $e) {
             Log::error('Error fetching clinical story timeline for patient: ' . $e->getMessage());
+
             return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
         }
     }
@@ -5727,7 +5921,9 @@ class EncounterController extends Controller
 
             // Helper to match a record timestamp to an encounter id
             $matchEncounter = function ($timestamp) use ($allEncounters) {
-                if (!$timestamp) return null;
+                if (!$timestamp) {
+                    return null;
+                }
                 $time = Carbon::parse($timestamp);
                 foreach ($allEncounters as $enc) {
                     $start = $enc->started_at;
@@ -5738,6 +5934,7 @@ class EncounterController extends Controller
                         }
                     }
                 }
+
                 return null;
             };
 
@@ -5748,10 +5945,14 @@ class EncounterController extends Controller
                 case 'vitals':
                     $query = \App\Models\VitalSign::where('patient_id', $patientId)
                         ->with('takenBy');
-                    if ($dateFrom) $query->where('time_taken', '>=', Carbon::parse($dateFrom)->startOfDay());
-                    if ($dateTo) $query->where('time_taken', '<=', Carbon::parse($dateTo)->endOfDay());
+                    if ($dateFrom) {
+                        $query->where('time_taken', '>=', Carbon::parse($dateFrom)->startOfDay());
+                    }
+                    if ($dateTo) {
+                        $query->where('time_taken', '<=', Carbon::parse($dateTo)->endOfDay());
+                    }
                     $items = $query->orderBy('time_taken', 'desc')->get();
-                    
+
                     $data = $items->map(function ($item) use ($matchEncounter) {
                         $encId = $matchEncounter($item->time_taken);
                         $takenBy = $item->takenBy ? userfullname($item->takenBy->id) : 'N/A';
@@ -5781,7 +5982,9 @@ class EncounterController extends Controller
                             }
                         }
                         $html .= '</div>';
-                        if ($item->other_notes) $html .= '<div class="alert alert-light mb-1 p-2"><small><i class="mdi mdi-note-text"></i> ' . e($item->other_notes) . '</small></div>';
+                        if ($item->other_notes) {
+                            $html .= '<div class="alert alert-light mb-1 p-2"><small><i class="mdi mdi-note-text"></i> ' . e($item->other_notes) . '</small></div>';
+                        }
                         $html .= '<div class="text-end small text-muted border-top pt-2 mt-2"><i class="mdi mdi-account"></i> ' . $takenBy . '</div>';
                         $html .= '</div></div>';
 
@@ -5791,9 +5994,10 @@ class EncounterController extends Controller
                             'taken_by_name' => $takenBy,
                             'date' => $item->time_taken->format('M d, Y H:i'),
                             'timestamp' => $item->time_taken->toIso8601String(),
-                            'info_html' => $html
+                            'info_html' => $html,
                         ];
                     });
+
                     break;
 
                 case 'clinical_notes':
@@ -5813,8 +6017,12 @@ class EncounterController extends Controller
                               });
                         });
                     } else {
-                        if ($dateFrom) $query->whereRaw("COALESCE(started_at, created_at) >= ?", [Carbon::parse($dateFrom)->startOfDay()]);
-                        if ($dateTo)   $query->whereRaw("COALESCE(started_at, created_at) <= ?", [Carbon::parse($dateTo)->endOfDay()]);
+                        if ($dateFrom) {
+                            $query->whereRaw("COALESCE(started_at, created_at) >= ?", [Carbon::parse($dateFrom)->startOfDay()]);
+                        }
+                        if ($dateTo) {
+                            $query->whereRaw("COALESCE(started_at, created_at) <= ?", [Carbon::parse($dateTo)->endOfDay()]);
+                        }
                     }
 
                     $items = $query->orderByRaw('COALESCE(started_at, created_at) DESC')->get();
@@ -5907,15 +6115,20 @@ class EncounterController extends Controller
                             'doctor_name' => $doctorName,
                             'date' => $anchor ? Carbon::parse($anchor)->format('M d, Y H:i') : null,
                             'timestamp' => $anchor ? Carbon::parse($anchor)->toIso8601String() : null,
-                            'info_html' => $html
+                            'info_html' => $html,
                         ];
                     });
+
                     break;
 
                 case 'nursing_notes':
                     $query = \App\Models\NursingNote::where('patient_id', $patientId)->with(['createdBy', 'type']);
-                    if ($dateFrom) $query->where('created_at', '>=', Carbon::parse($dateFrom)->startOfDay());
-                    if ($dateTo) $query->where('created_at', '<=', Carbon::parse($dateTo)->endOfDay());
+                    if ($dateFrom) {
+                        $query->where('created_at', '>=', Carbon::parse($dateFrom)->startOfDay());
+                    }
+                    if ($dateTo) {
+                        $query->where('created_at', '<=', Carbon::parse($dateTo)->endOfDay());
+                    }
                     $items = $query->orderBy('created_at', 'desc')->get();
 
                     $data = $items->map(function ($item) use ($matchEncounter) {
@@ -5937,15 +6150,20 @@ class EncounterController extends Controller
                             'created_by' => $nurse,
                             'date' => $item->created_at->format('M d, Y H:i'),
                             'timestamp' => $item->created_at->toIso8601String(),
-                            'info_html' => $html
+                            'info_html' => $html,
                         ];
                     });
+
                     break;
 
                 case 'med_admin':
                     $query = \App\Models\MedicationAdministration::where('patient_id', $patientId)->with(['product', 'administeredBy']);
-                    if ($dateFrom) $query->where('administered_at', '>=', Carbon::parse($dateFrom)->startOfDay());
-                    if ($dateTo) $query->where('administered_at', '<=', Carbon::parse($dateTo)->endOfDay());
+                    if ($dateFrom) {
+                        $query->where('administered_at', '>=', Carbon::parse($dateFrom)->startOfDay());
+                    }
+                    if ($dateTo) {
+                        $query->where('administered_at', '<=', Carbon::parse($dateTo)->endOfDay());
+                    }
                     $items = $query->orderBy('administered_at', 'desc')->get();
 
                     $data = $items->map(function ($item) use ($matchEncounter) {
@@ -5960,11 +6178,19 @@ class EncounterController extends Controller
                         $html .= '<span class="badge bg-info">' . ($dt ? $dt->format('h:i a D M j, Y') : '') . '</span>';
                         $html .= '</div>';
                         $html .= '<div class="row g-1 mb-2">';
-                        if ($item->dose) $html .= '<div class="col-auto"><small><b>Dose:</b> ' . e($item->dose) . '</small></div>';
-                        if ($item->qty) $html .= '<div class="col-auto"><small><b>Qty:</b> ' . e($item->qty) . '</small></div>';
-                        if ($item->route) $html .= '<div class="col-auto"><small><b>Route:</b> ' . e($item->route) . '</small></div>';
+                        if ($item->dose) {
+                            $html .= '<div class="col-auto"><small><b>Dose:</b> ' . e($item->dose) . '</small></div>';
+                        }
+                        if ($item->qty) {
+                            $html .= '<div class="col-auto"><small><b>Qty:</b> ' . e($item->qty) . '</small></div>';
+                        }
+                        if ($item->route) {
+                            $html .= '<div class="col-auto"><small><b>Route:</b> ' . e($item->route) . '</small></div>';
+                        }
                         $html .= '</div>';
-                        if ($item->comment) $html .= '<div class="alert alert-light mb-1 p-2"><small>' . e($item->comment) . '</small></div>';
+                        if ($item->comment) {
+                            $html .= '<div class="alert alert-light mb-1 p-2"><small>' . e($item->comment) . '</small></div>';
+                        }
                         $html .= '<div class="text-end small text-muted border-top pt-2"><i class="mdi mdi-account"></i> Administered by: ' . $admin . '</div>';
                         $html .= '</div></div>';
 
@@ -5974,15 +6200,20 @@ class EncounterController extends Controller
                             'administered_by' => $admin,
                             'date' => $dt ? $dt->format('M d, Y H:i') : null,
                             'timestamp' => $dt ? $dt->toIso8601String() : null,
-                            'info_html' => $html
+                            'info_html' => $html,
                         ];
                     });
+
                     break;
 
                 case 'intake_output':
                     $query = \App\Models\IntakeOutputPeriod::where('patient_id', $patientId)->with(['records', 'nurse']);
-                    if ($dateFrom) $query->where('started_at', '>=', Carbon::parse($dateFrom)->startOfDay());
-                    if ($dateTo) $query->where('started_at', '<=', Carbon::parse($dateTo)->endOfDay());
+                    if ($dateFrom) {
+                        $query->where('started_at', '>=', Carbon::parse($dateFrom)->startOfDay());
+                    }
+                    if ($dateTo) {
+                        $query->where('started_at', '<=', Carbon::parse($dateTo)->endOfDay());
+                    }
                     $items = $query->orderBy('started_at', 'desc')->get();
 
                     $data = $items->map(function ($item) use ($matchEncounter) {
@@ -6020,20 +6251,29 @@ class EncounterController extends Controller
                             'nurse_name' => $nurse,
                             'date' => $startDt ? $startDt->format('M d, Y H:i') : null,
                             'timestamp' => $startDt ? $startDt->toIso8601String() : null,
-                            'info_html' => $html
+                            'info_html' => $html,
                         ];
                     });
+
                     break;
 
                 case 'injections':
                     $injQuery = \App\Models\InjectionAdministration::where('patient_id', $patientId)->with(['product', 'administeredBy']);
-                    if ($dateFrom) $injQuery->where('administered_at', '>=', Carbon::parse($dateFrom)->startOfDay());
-                    if ($dateTo) $injQuery->where('administered_at', '<=', Carbon::parse($dateTo)->endOfDay());
+                    if ($dateFrom) {
+                        $injQuery->where('administered_at', '>=', Carbon::parse($dateFrom)->startOfDay());
+                    }
+                    if ($dateTo) {
+                        $injQuery->where('administered_at', '<=', Carbon::parse($dateTo)->endOfDay());
+                    }
                     $injections = $injQuery->orderBy('administered_at', 'desc')->get();
 
                     $immQuery = \App\Models\ImmunizationRecord::where('patient_id', $patientId)->with(['product', 'administeredBy']);
-                    if ($dateFrom) $immQuery->where('administered_at', '>=', Carbon::parse($dateFrom)->startOfDay());
-                    if ($dateTo) $immQuery->where('administered_at', '<=', Carbon::parse($dateTo)->endOfDay());
+                    if ($dateFrom) {
+                        $immQuery->where('administered_at', '>=', Carbon::parse($dateFrom)->startOfDay());
+                    }
+                    if ($dateTo) {
+                        $immQuery->where('administered_at', '<=', Carbon::parse($dateTo)->endOfDay());
+                    }
                     $immunizations = $immQuery->orderBy('administered_at', 'desc')->get();
 
                     $buildInjHtml = function ($pName, $type, $dose, $route, $site, $batch, $notes, $admin, $dt) {
@@ -6046,14 +6286,25 @@ class EncounterController extends Controller
                         $h .= ' <span class="badge bg-info">' . ($dt ? $dt->format('h:i a M j, Y') : '') . '</span></div>';
                         $h .= '</div>';
                         $h .= '<div class="row g-1 mb-2">';
-                        if ($dose) $h .= '<div class="col-auto"><small><b>Dose:</b> ' . e($dose) . '</small></div>';
-                        if ($route) $h .= '<div class="col-auto"><small><b>Route:</b> ' . e($route) . '</small></div>';
-                        if ($site) $h .= '<div class="col-auto"><small><b>Site:</b> ' . e($site) . '</small></div>';
-                        if ($batch) $h .= '<div class="col-auto"><small><b>Batch:</b> ' . e($batch) . '</small></div>';
+                        if ($dose) {
+                            $h .= '<div class="col-auto"><small><b>Dose:</b> ' . e($dose) . '</small></div>';
+                        }
+                        if ($route) {
+                            $h .= '<div class="col-auto"><small><b>Route:</b> ' . e($route) . '</small></div>';
+                        }
+                        if ($site) {
+                            $h .= '<div class="col-auto"><small><b>Site:</b> ' . e($site) . '</small></div>';
+                        }
+                        if ($batch) {
+                            $h .= '<div class="col-auto"><small><b>Batch:</b> ' . e($batch) . '</small></div>';
+                        }
                         $h .= '</div>';
-                        if ($notes) $h .= '<div class="alert alert-light mb-1 p-2"><small>' . e($notes) . '</small></div>';
+                        if ($notes) {
+                            $h .= '<div class="alert alert-light mb-1 p-2"><small>' . e($notes) . '</small></div>';
+                        }
                         $h .= '<div class="text-end small text-muted border-top pt-2"><i class="mdi mdi-account"></i> ' . $admin . '</div>';
                         $h .= '</div></div>';
+
                         return $h;
                     };
 
@@ -6061,13 +6312,14 @@ class EncounterController extends Controller
                         $pName = $item->product ? $item->product->product_name : ($item->external_drug_name ?? 'Unknown Injectable');
                         $admin = $item->administeredBy ? userfullname($item->administeredBy->id) : 'N/A';
                         $dt = $item->administered_at ? Carbon::parse($item->administered_at) : null;
+
                         return [
                             'id' => 'inj_' . $item->id,
                             'encounter_id' => $matchEncounter($item->administered_at),
                             'administered_by' => $admin,
                             'date' => $dt ? $dt->format('M d, Y H:i') : null,
                             'timestamp' => $dt ? $dt->toIso8601String() : null,
-                            'info_html' => $buildInjHtml($pName, 'Injection', $item->dose, $item->route, $item->site, $item->batch_number, $item->notes, $admin, $dt)
+                            'info_html' => $buildInjHtml($pName, 'Injection', $item->dose, $item->route, $item->site, $item->batch_number, $item->notes, $admin, $dt),
                         ];
                     });
 
@@ -6076,24 +6328,30 @@ class EncounterController extends Controller
                         $doseStr = $item->dose_number ? "Dose #{$item->dose_number} ({$item->dose})" : $item->dose;
                         $admin = $item->administeredBy ? userfullname($item->administeredBy->id) : 'N/A';
                         $dt = $item->administered_at ? Carbon::parse($item->administered_at) : null;
+
                         return [
                             'id' => 'imm_' . $item->id,
                             'encounter_id' => $matchEncounter($item->administered_at),
                             'administered_by' => $admin,
                             'date' => $dt ? $dt->format('M d, Y H:i') : null,
                             'timestamp' => $dt ? $dt->toIso8601String() : null,
-                            'info_html' => $buildInjHtml($pName, 'Immunization', $doseStr, $item->route, $item->site, $item->batch_number, $item->notes, $admin, $dt)
+                            'info_html' => $buildInjHtml($pName, 'Immunization', $doseStr, $item->route, $item->site, $item->batch_number, $item->notes, $admin, $dt),
                         ];
                     });
 
                     $data = $mappedInjections->concat($mappedImmunizations)->sortByDesc('timestamp')->values()->all();
+
                     break;
 
                 case 'labs':
                     $query = LabServiceRequest::where('patient_id', $patientId)
                         ->with(['service', 'doctor', 'results_person', 'resultViews']);
-                    if ($dateFrom) $query->where('created_at', '>=', Carbon::parse($dateFrom)->startOfDay());
-                    if ($dateTo) $query->where('created_at', '<=', Carbon::parse($dateTo)->endOfDay());
+                    if ($dateFrom) {
+                        $query->where('created_at', '>=', Carbon::parse($dateFrom)->startOfDay());
+                    }
+                    if ($dateTo) {
+                        $query->where('created_at', '<=', Carbon::parse($dateTo)->endOfDay());
+                    }
                     $items = $query->orderBy('created_at', 'desc')->get();
 
                     $statusLabels = [0 => ['Dismissed','bg-danger'], 1 => ['Unbilled','bg-warning text-dark'], 2 => ['Billed/Pending','bg-info'], 3 => ['Sample Taken','bg-primary'], 4 => ['Completed','bg-success'], 5 => ['Pending Approval','bg-warning'], 6 => ['Rejected','bg-danger']];
@@ -6108,7 +6366,9 @@ class EncounterController extends Controller
                         $html .= '<div class="card-body p-3">';
                         $html .= '<div class="d-flex justify-content-between align-items-start mb-2">';
                         $html .= '<div><h6 class="mb-0"><i class="fa fa-flask text-primary"></i> ' . $sName . '</h6>';
-                        if ($sCode) $html .= '<small class="text-muted">' . $sCode . '</small>';
+                        if ($sCode) {
+                            $html .= '<small class="text-muted">' . $sCode . '</small>';
+                        }
                         $html .= '</div>';
                         $html .= '<span class="badge ' . $sl[1] . '">' . $sl[0] . '</span>';
                         $html .= '</div>';
@@ -6116,13 +6376,23 @@ class EncounterController extends Controller
                         // Timeline
                         $html .= '<div class="mb-2"><small>';
                         $html .= '<div class="mb-1"><i class="mdi mdi-account-arrow-right text-primary"></i> <b>Requested by:</b> ' . $doctorName . ' <span class="text-muted">(' . date('h:i a D M j, Y', strtotime($item->created_at)) . ')</span></div>';
-                        if ($item->billed_by) $html .= '<div class="mb-1"><i class="mdi mdi-cash-multiple text-success"></i> <b>Billed by:</b> ' . userfullname($item->billed_by) . ' <span class="text-muted">(' . date('h:i a D M j, Y', strtotime($item->billed_date)) . ')</span></div>';
-                        if ($item->sample_taken_by) $html .= '<div class="mb-1"><i class="mdi mdi-test-tube text-warning"></i> <b>Sample by:</b> ' . userfullname($item->sample_taken_by) . ' <span class="text-muted">(' . date('h:i a D M j, Y', strtotime($item->sample_date)) . ')</span></div>';
-                        if ($item->result_by) $html .= '<div class="mb-1"><i class="mdi mdi-clipboard-check text-info"></i> <b>Results by:</b> ' . userfullname($item->result_by) . ' <span class="text-muted">(' . date('h:i a D M j, Y', strtotime($item->result_date)) . ')</span></div>';
+                        if ($item->billed_by) {
+                            $html .= '<div class="mb-1"><i class="mdi mdi-cash-multiple text-success"></i> <b>Billed by:</b> ' . userfullname($item->billed_by) . ' <span class="text-muted">(' . date('h:i a D M j, Y', strtotime($item->billed_date)) . ')</span></div>';
+                        }
+                        if ($item->sample_taken_by) {
+                            $html .= '<div class="mb-1"><i class="mdi mdi-test-tube text-warning"></i> <b>Sample by:</b> ' . userfullname($item->sample_taken_by) . ' <span class="text-muted">(' . date('h:i a D M j, Y', strtotime($item->sample_date)) . ')</span></div>';
+                        }
+                        if ($item->result_by) {
+                            $html .= '<div class="mb-1"><i class="mdi mdi-clipboard-check text-info"></i> <b>Results by:</b> ' . userfullname($item->result_by) . ' <span class="text-muted">(' . date('h:i a D M j, Y', strtotime($item->result_date)) . ')</span></div>';
+                        }
                         $html .= '</small></div>';
 
-                        if ($item->note) $html .= '<div class="mb-2"><small><i class="mdi mdi-note-text"></i> <b>Note:</b> ' . e($item->note) . '</small></div>';
-                        if ($item->result) $html .= '<div class="alert alert-light mb-1 p-2"><small>' . $item->result . '</small></div>';
+                        if ($item->note) {
+                            $html .= '<div class="mb-2"><small><i class="mdi mdi-note-text"></i> <b>Note:</b> ' . e($item->note) . '</small></div>';
+                        }
+                        if ($item->result) {
+                            $html .= '<div class="alert alert-light mb-1 p-2"><small>' . $item->result . '</small></div>';
+                        }
 
                         $html .= '</div></div>';
 
@@ -6134,16 +6404,21 @@ class EncounterController extends Controller
                             'doctor_name' => $doctorName,
                             'date' => $item->created_at->format('M d, Y H:i'),
                             'timestamp' => $item->created_at->toIso8601String(),
-                            'info_html' => $html
+                            'info_html' => $html,
                         ];
                     });
+
                     break;
 
                 case 'imaging':
                     $query = ImagingServiceRequest::where('patient_id', $patientId)
                         ->with(['service', 'doctor', 'results_person', 'resultViews']);
-                    if ($dateFrom) $query->where('created_at', '>=', Carbon::parse($dateFrom)->startOfDay());
-                    if ($dateTo) $query->where('created_at', '<=', Carbon::parse($dateTo)->endOfDay());
+                    if ($dateFrom) {
+                        $query->where('created_at', '>=', Carbon::parse($dateFrom)->startOfDay());
+                    }
+                    if ($dateTo) {
+                        $query->where('created_at', '<=', Carbon::parse($dateTo)->endOfDay());
+                    }
                     $items = $query->orderBy('created_at', 'desc')->get();
 
                     $imgStatusLabels = [0 => ['Dismissed','bg-danger'], 1 => ['Unbilled','bg-warning text-dark'], 2 => ['Billed/Pending','bg-info'], 3 => ['In Progress','bg-primary'], 4 => ['Completed','bg-success'], 5 => ['Pending Approval','bg-warning'], 6 => ['Rejected','bg-danger']];
@@ -6158,19 +6433,29 @@ class EncounterController extends Controller
                         $html .= '<div class="card-body p-3">';
                         $html .= '<div class="d-flex justify-content-between align-items-start mb-2">';
                         $html .= '<div><h6 class="mb-0"><i class="fa fa-x-ray text-purple"></i> ' . $sName . '</h6>';
-                        if ($sCode) $html .= '<small class="text-muted">' . $sCode . '</small>';
+                        if ($sCode) {
+                            $html .= '<small class="text-muted">' . $sCode . '</small>';
+                        }
                         $html .= '</div>';
                         $html .= '<span class="badge ' . $sl[1] . '">' . $sl[0] . '</span>';
                         $html .= '</div>';
 
                         $html .= '<div class="mb-2"><small>';
                         $html .= '<div class="mb-1"><i class="mdi mdi-account-arrow-right text-primary"></i> <b>Requested by:</b> ' . $doctorName . ' <span class="text-muted">(' . date('h:i a D M j, Y', strtotime($item->created_at)) . ')</span></div>';
-                        if ($item->billed_by) $html .= '<div class="mb-1"><i class="mdi mdi-cash-multiple text-success"></i> <b>Billed by:</b> ' . userfullname($item->billed_by) . ' <span class="text-muted">(' . date('h:i a D M j, Y', strtotime($item->billed_date)) . ')</span></div>';
-                        if ($item->result_by) $html .= '<div class="mb-1"><i class="mdi mdi-clipboard-check text-info"></i> <b>Results by:</b> ' . userfullname($item->result_by) . ' <span class="text-muted">(' . date('h:i a D M j, Y', strtotime($item->result_date)) . ')</span></div>';
+                        if ($item->billed_by) {
+                            $html .= '<div class="mb-1"><i class="mdi mdi-cash-multiple text-success"></i> <b>Billed by:</b> ' . userfullname($item->billed_by) . ' <span class="text-muted">(' . date('h:i a D M j, Y', strtotime($item->billed_date)) . ')</span></div>';
+                        }
+                        if ($item->result_by) {
+                            $html .= '<div class="mb-1"><i class="mdi mdi-clipboard-check text-info"></i> <b>Results by:</b> ' . userfullname($item->result_by) . ' <span class="text-muted">(' . date('h:i a D M j, Y', strtotime($item->result_date)) . ')</span></div>';
+                        }
                         $html .= '</small></div>';
 
-                        if ($item->note) $html .= '<div class="mb-2"><small><i class="mdi mdi-note-text"></i> <b>Note:</b> ' . e($item->note) . '</small></div>';
-                        if ($item->result) $html .= '<div class="alert alert-light mb-1 p-2"><small>' . $item->result . '</small></div>';
+                        if ($item->note) {
+                            $html .= '<div class="mb-2"><small><i class="mdi mdi-note-text"></i> <b>Note:</b> ' . e($item->note) . '</small></div>';
+                        }
+                        if ($item->result) {
+                            $html .= '<div class="alert alert-light mb-1 p-2"><small>' . $item->result . '</small></div>';
+                        }
 
                         $html .= '</div></div>';
 
@@ -6182,16 +6467,21 @@ class EncounterController extends Controller
                             'doctor_name' => $doctorName,
                             'date' => $item->created_at->format('M d, Y H:i'),
                             'timestamp' => $item->created_at->toIso8601String(),
-                            'info_html' => $html
+                            'info_html' => $html,
                         ];
                     });
+
                     break;
 
                 case 'prescriptions':
                     $query = ProductRequest::where('patient_id', $patientId)
                         ->with(['product', 'doctor']);
-                    if ($dateFrom) $query->where('created_at', '>=', Carbon::parse($dateFrom)->startOfDay());
-                    if ($dateTo) $query->where('created_at', '<=', Carbon::parse($dateTo)->endOfDay());
+                    if ($dateFrom) {
+                        $query->where('created_at', '>=', Carbon::parse($dateFrom)->startOfDay());
+                    }
+                    if ($dateTo) {
+                        $query->where('created_at', '<=', Carbon::parse($dateTo)->endOfDay());
+                    }
                     $items = $query->orderBy('created_at', 'desc')->get();
 
                     $prescStatusLabels = [0 => ['Dismissed','bg-danger'], 1 => ['Unbilled','bg-warning text-dark'], 2 => ['Billed','bg-info'], 3 => ['Dispensed','bg-success']];
@@ -6208,7 +6498,9 @@ class EncounterController extends Controller
                         $html .= '<div class="card-body p-3">';
                         $html .= '<div class="d-flex justify-content-between align-items-start mb-2">';
                         $html .= '<div><strong>' . $pName . '</strong>';
-                        if ($pCode) $html .= ' <small class="text-muted">' . $pCode . '</small>';
+                        if ($pCode) {
+                            $html .= ' <small class="text-muted">' . $pCode . '</small>';
+                        }
                         $html .= '</div>';
                         $html .= '<span class="badge ' . $sl[1] . '">' . $sl[0] . '</span>';
                         $html .= '</div>';
@@ -6217,8 +6509,12 @@ class EncounterController extends Controller
                         $html .= '<span class="ms-2"><i class="mdi mdi-numeric"></i> Qty: ' . ($qty ?: '-') . '</span>';
                         $html .= '</div>';
                         $html .= '<div class="mt-1 text-muted small"><i class="mdi mdi-account"></i> Requested by: ' . $doctorName . ' on ' . date('h:i a D M j, Y', strtotime($item->created_at)) . '</div>';
-                        if ($item->billed_by) $html .= '<div class="text-muted small"><i class="mdi mdi-receipt"></i> Billed by: ' . userfullname($item->billed_by) . ' on ' . date('h:i a D M j, Y', strtotime($item->billed_date)) . '</div>';
-                        if ($item->dispensed_by) $html .= '<div class="text-muted small"><i class="mdi mdi-truck-delivery"></i> Dispensed by: ' . userfullname($item->dispensed_by) . ' on ' . date('h:i a D M j, Y', strtotime($item->dispensed_date)) . '</div>';
+                        if ($item->billed_by) {
+                            $html .= '<div class="text-muted small"><i class="mdi mdi-receipt"></i> Billed by: ' . userfullname($item->billed_by) . ' on ' . date('h:i a D M j, Y', strtotime($item->billed_date)) . '</div>';
+                        }
+                        if ($item->dispensed_by) {
+                            $html .= '<div class="text-muted small"><i class="mdi mdi-truck-delivery"></i> Dispensed by: ' . userfullname($item->dispensed_by) . ' on ' . date('h:i a D M j, Y', strtotime($item->dispensed_date)) . '</div>';
+                        }
                         $html .= '</div></div>';
 
                         return [
@@ -6231,15 +6527,20 @@ class EncounterController extends Controller
                             'doctor_name' => $doctorName,
                             'date' => $item->created_at->format('M d, Y H:i'),
                             'timestamp' => $item->created_at->toIso8601String(),
-                            'info_html' => $html
+                            'info_html' => $html,
                         ];
                     });
+
                     break;
 
                 case 'care_plans':
                     $query = \App\Models\NonPharmOrder::where('patient_id', $patientId);
-                    if ($dateFrom) $query->where('created_at', '>=', Carbon::parse($dateFrom)->startOfDay());
-                    if ($dateTo) $query->where('created_at', '<=', Carbon::parse($dateTo)->endOfDay());
+                    if ($dateFrom) {
+                        $query->where('created_at', '>=', Carbon::parse($dateFrom)->startOfDay());
+                    }
+                    if ($dateTo) {
+                        $query->where('created_at', '<=', Carbon::parse($dateTo)->endOfDay());
+                    }
                     $items = $query->orderBy('created_at', 'desc')->get();
 
                     $data = $items->map(function ($item) use ($matchEncounter) {
@@ -6247,21 +6548,35 @@ class EncounterController extends Controller
                         $html = '<div class="card-modern mb-2" style="border-left: 4px solid #20c997;"><div class="card-body p-3">';
                         $html .= '<div class="d-flex justify-content-between align-items-center mb-2"><strong><i class="mdi mdi-clipboard-list"></i> ' . e($item->category ?: 'Order') . '</strong>';
                         $html .= '<span class="badge ' . $sBadge . '">' . e($item->status ?: 'Active') . '</span></div>';
-                        if ($item->instructions) $html .= '<div class="p-2 bg-light rounded mb-2"><small>' . e($item->instructions) . '</small></div>';
+                        if ($item->instructions) {
+                            $html .= '<div class="p-2 bg-light rounded mb-2"><small>' . e($item->instructions) . '</small></div>';
+                        }
                         $html .= '<div class="row g-1 mb-1">';
-                        if ($item->target_executor) $html .= '<div class="col-auto"><small><b>For:</b> ' . e($item->target_executor) . '</small></div>';
-                        if ($item->frequency) $html .= '<div class="col-auto"><small><b>Freq:</b> ' . e($item->frequency) . '</small></div>';
-                        if ($item->duration) $html .= '<div class="col-auto"><small><b>Duration:</b> ' . e($item->duration) . '</small></div>';
+                        if ($item->target_executor) {
+                            $html .= '<div class="col-auto"><small><b>For:</b> ' . e($item->target_executor) . '</small></div>';
+                        }
+                        if ($item->frequency) {
+                            $html .= '<div class="col-auto"><small><b>Freq:</b> ' . e($item->frequency) . '</small></div>';
+                        }
+                        if ($item->duration) {
+                            $html .= '<div class="col-auto"><small><b>Duration:</b> ' . e($item->duration) . '</small></div>';
+                        }
                         $html .= '</div><div class="text-muted small mt-1"><i class="mdi mdi-clock"></i> ' . $item->created_at->format('h:i a D M j, Y') . '</div>';
                         $html .= '</div></div>';
+
                         return ['id' => $item->id, 'encounter_id' => $item->encounter_id ?? $matchEncounter($item->created_at), 'date' => $item->created_at->format('M d, Y H:i'), 'timestamp' => $item->created_at->toIso8601String(), 'info_html' => $html];
                     });
+
                     break;
 
                 case 'procedures':
                     $query = \App\Models\Procedure::where('patient_id', $patientId)->with(['service', 'requestedByUser']);
-                    if ($dateFrom) $query->where('created_at', '>=', Carbon::parse($dateFrom)->startOfDay());
-                    if ($dateTo) $query->where('created_at', '<=', Carbon::parse($dateTo)->endOfDay());
+                    if ($dateFrom) {
+                        $query->where('created_at', '>=', Carbon::parse($dateFrom)->startOfDay());
+                    }
+                    if ($dateTo) {
+                        $query->where('created_at', '<=', Carbon::parse($dateTo)->endOfDay());
+                    }
                     $items = $query->orderBy('created_at', 'desc')->get();
 
                     $data = $items->map(function ($item) use ($matchEncounter) {
@@ -6272,19 +6587,31 @@ class EncounterController extends Controller
                         $html = '<div class="card-modern mb-2" style="border-left: 4px solid #6f42c1;"><div class="card-body p-3">';
                         $html .= '<div class="d-flex justify-content-between align-items-start mb-2"><div><h6 class="mb-0"><i class="mdi mdi-medical-bag"></i> ' . e($sName) . '</h6></div>';
                         $html .= '<span class="badge ' . $sBadge . '">' . e($pStat) . '</span></div>';
-                        if ($item->priority) $html .= '<div class="mb-1"><small><b>Priority:</b> <span class="badge bg-secondary">' . e($item->priority) . '</span></small></div>';
-                        if ($item->pre_notes) $html .= '<div class="mb-2"><small class="fw-bold">Pre-Op:</small><div class="p-2 bg-light rounded small">' . $item->pre_notes . '</div></div>';
-                        if ($item->post_notes) $html .= '<div class="mb-2"><small class="fw-bold">Post-Op:</small><div class="p-2 bg-light rounded small">' . $item->post_notes . '</div></div>';
+                        if ($item->priority) {
+                            $html .= '<div class="mb-1"><small><b>Priority:</b> <span class="badge bg-secondary">' . e($item->priority) . '</span></small></div>';
+                        }
+                        if ($item->pre_notes) {
+                            $html .= '<div class="mb-2"><small class="fw-bold">Pre-Op:</small><div class="p-2 bg-light rounded small">' . $item->pre_notes . '</div></div>';
+                        }
+                        if ($item->post_notes) {
+                            $html .= '<div class="mb-2"><small class="fw-bold">Post-Op:</small><div class="p-2 bg-light rounded small">' . $item->post_notes . '</div></div>';
+                        }
                         $html .= '<div class="text-end small text-muted border-top pt-2"><i class="mdi mdi-account"></i> ' . $doctor . ' · ' . $item->created_at->format('h:i a M j, Y') . '</div>';
                         $html .= '</div></div>';
+
                         return ['id' => $item->id, 'encounter_id' => $item->encounter_id ?? $matchEncounter($item->created_at), 'doctor_name' => $doctor, 'date' => $item->created_at->format('M d, Y H:i'), 'timestamp' => $item->created_at->toIso8601String(), 'info_html' => $html];
                     });
+
                     break;
 
                 case 'admissions':
                     $query = AdmissionRequest::where('patient_id', $patientId)->with(['service', 'doctor', 'bed', 'bed.wardRelation']);
-                    if ($dateFrom) $query->where('created_at', '>=', Carbon::parse($dateFrom)->startOfDay());
-                    if ($dateTo) $query->where('created_at', '<=', Carbon::parse($dateTo)->endOfDay());
+                    if ($dateFrom) {
+                        $query->where('created_at', '>=', Carbon::parse($dateFrom)->startOfDay());
+                    }
+                    if ($dateTo) {
+                        $query->where('created_at', '<=', Carbon::parse($dateTo)->endOfDay());
+                    }
                     $items = $query->orderBy('created_at', 'desc')->get();
 
                     $data = $items->map(function ($item) use ($matchEncounter) {
@@ -6297,21 +6624,35 @@ class EncounterController extends Controller
                         $html .= '<div><h6 class="mb-0"><i class="mdi mdi-bed"></i> ' . e($item->admission_reason ?: 'Admission') . '</h6>';
                         $html .= '<small class="text-muted">' . e($wardName) . ' · Bed: ' . e($bedName) . '</small></div>';
                         $html .= '<span class="badge bg-info">' . e($sLabel) . '</span></div>';
-                        if ($item->chief_complaint) $html .= '<div class="mb-2"><small><b>Chief Complaint:</b> ' . e($item->chief_complaint) . '</small></div>';
-                        if ($item->days_admitted) $html .= '<div class="mb-1"><small><b>Duration:</b> ' . $item->days_admitted . ' days</small></div>';
-                        if ($item->discharge_reason) $html .= '<div class="mb-1"><small><b>Discharge:</b> ' . e($item->discharge_reason) . '</small></div>';
-                        if ($item->discharge_note) $html .= '<div class="alert alert-light mb-1 p-2"><small>' . $item->discharge_note . '</small></div>';
+                        if ($item->chief_complaint) {
+                            $html .= '<div class="mb-2"><small><b>Chief Complaint:</b> ' . e($item->chief_complaint) . '</small></div>';
+                        }
+                        if ($item->days_admitted) {
+                            $html .= '<div class="mb-1"><small><b>Duration:</b> ' . $item->days_admitted . ' days</small></div>';
+                        }
+                        if ($item->discharge_reason) {
+                            $html .= '<div class="mb-1"><small><b>Discharge:</b> ' . e($item->discharge_reason) . '</small></div>';
+                        }
+                        if ($item->discharge_note) {
+                            $html .= '<div class="alert alert-light mb-1 p-2"><small>' . $item->discharge_note . '</small></div>';
+                        }
                         $html .= '<div class="text-end small text-muted border-top pt-2"><i class="mdi mdi-account"></i> ' . $doctor . ' · ' . $item->created_at->format('h:i a M j, Y') . '</div>';
                         $html .= '</div></div>';
+
                         return ['id' => $item->id, 'encounter_id' => $item->encounter_id ?? $matchEncounter($item->created_at), 'doctor_name' => $doctor, 'date' => $item->created_at->format('M d, Y H:i'), 'timestamp' => $item->created_at->toIso8601String(), 'info_html' => $html];
                     });
+
                     break;
 
                 case 'referrals':
                     $query = \App\Models\SpecialistReferral::where('patient_id', $patientId)
                         ->with(['targetClinic', 'targetDoctor.user', 'referringDoctor.user']);
-                    if ($dateFrom) $query->where('created_at', '>=', Carbon::parse($dateFrom)->startOfDay());
-                    if ($dateTo) $query->where('created_at', '<=', Carbon::parse($dateTo)->endOfDay());
+                    if ($dateFrom) {
+                        $query->where('created_at', '>=', Carbon::parse($dateFrom)->startOfDay());
+                    }
+                    if ($dateTo) {
+                        $query->where('created_at', '<=', Carbon::parse($dateTo)->endOfDay());
+                    }
                     $items = $query->orderBy('created_at', 'desc')->get();
 
                     $data = $items->map(function ($item) use ($matchEncounter) {
@@ -6325,19 +6666,29 @@ class EncounterController extends Controller
                         $html .= '<div class="d-flex justify-content-between align-items-start mb-2">';
                         $html .= '<div><strong><i class="mdi mdi-account-arrow-right"></i> ' . e($target) . '</strong></div>';
                         $html .= '<div><span class="badge ' . ($isInt ? 'bg-primary' : 'bg-warning text-dark') . '">' . ucfirst($item->referral_type ?? '') . '</span>';
-                        if ($item->urgency) $html .= ' <span class="badge bg-danger">' . e($item->urgency) . '</span>';
+                        if ($item->urgency) {
+                            $html .= ' <span class="badge bg-danger">' . e($item->urgency) . '</span>';
+                        }
                         $html .= '</div></div>';
-                        if ($item->reason) $html .= '<div class="p-2 bg-light rounded mb-2"><small>' . e($item->reason) . '</small></div>';
+                        if ($item->reason) {
+                            $html .= '<div class="p-2 bg-light rounded mb-2"><small>' . e($item->reason) . '</small></div>';
+                        }
                         $html .= '<div class="text-end small text-muted border-top pt-2"><i class="mdi mdi-account"></i> Referred by: ' . $referrer . ' · ' . $item->created_at->format('h:i a M j, Y') . '</div>';
                         $html .= '</div></div>';
+
                         return ['id' => $item->id, 'encounter_id' => $item->encounter_id ?? $matchEncounter($item->created_at), 'doctor_name' => $referrer, 'date' => $item->created_at->format('M d, Y H:i'), 'timestamp' => $item->created_at->toIso8601String(), 'info_html' => $html];
                     });
+
                     break;
 
                 case 'anc_visits':
                     $query = \App\Models\AncVisit::where('patient_id', $patientId)->with('seenBy');
-                    if ($dateFrom) $query->where('visit_date', '>=', Carbon::parse($dateFrom)->startOfDay());
-                    if ($dateTo) $query->where('visit_date', '<=', Carbon::parse($dateTo)->endOfDay());
+                    if ($dateFrom) {
+                        $query->where('visit_date', '>=', Carbon::parse($dateFrom)->startOfDay());
+                    }
+                    if ($dateTo) {
+                        $query->where('visit_date', '<=', Carbon::parse($dateTo)->endOfDay());
+                    }
                     $items = $query->orderBy('visit_date', 'desc')->get();
 
                     $data = $items->map(function ($item) use ($matchEncounter) {
@@ -6347,26 +6698,44 @@ class EncounterController extends Controller
                         $html .= '<div class="d-flex justify-content-between align-items-center mb-2">';
                         $html .= '<h6 class="mb-0"><i class="mdi mdi-baby-carriage"></i> ANC Visit #' . ($item->visit_number ?? '?') . '</h6>';
                         $html .= '<div>';
-                        if ($item->visit_type) $html .= '<span class="badge bg-pink me-1">' . e($item->visit_type) . '</span>';
+                        if ($item->visit_type) {
+                            $html .= '<span class="badge bg-pink me-1">' . e($item->visit_type) . '</span>';
+                        }
                         $html .= '<span class="badge bg-info">' . ($dt ? $dt->format('M j, Y') : '') . '</span></div></div>';
                         $ga = $item->getGestationalAge();
-                        if ($ga) $html .= '<div class="mb-2"><span class="badge bg-light text-dark border"><i class="mdi mdi-calendar-clock"></i> GA: ' . e($ga) . '</span></div>';
+                        if ($ga) {
+                            $html .= '<div class="mb-2"><span class="badge bg-light text-dark border"><i class="mdi mdi-calendar-clock"></i> GA: ' . e($ga) . '</span></div>';
+                        }
                         $html .= '<div class="row g-2 mb-2">';
                         $fields = [['Weight', $item->weight_kg, 'kg'], ['BP', $item->getBloodPressure(), ''], ['Fundal Ht', $item->fundal_height_cm, 'cm'], ['FHR', $item->fetal_heart_rate, 'bpm'], ['Presentation', $item->presentation, ''], ['Foetal Mvt', $item->foetal_movement, ''], ['Oedema', $item->oedema, ''], ['Urine Protein', $item->urine_protein, ''], ['Urine Glucose', $item->urine_glucose, ''], ['Hb', $item->haemoglobin, 'g/dL']];
-                        foreach ($fields as $f) { if ($f[1] !== null && $f[1] !== '') $html .= '<div class="col-4"><small><b>' . $f[0] . ':</b> ' . e($f[1]) . ' ' . $f[2] . '</small></div>'; }
+                        foreach ($fields as $f) {
+                            if ($f[1] !== null && $f[1] !== '') {
+                                $html .= '<div class="col-4"><small><b>' . $f[0] . ':</b> ' . e($f[1]) . ' ' . $f[2] . '</small></div>';
+                            }
+                        }
                         $html .= '</div>';
-                        if ($item->clinical_notes) $html .= '<div class="alert alert-light mb-1 p-2"><small>' . e($item->clinical_notes) . '</small></div>';
-                        if ($item->next_appointment) $html .= '<div class="small text-muted mb-1"><i class="mdi mdi-calendar-check"></i> Next: ' . $item->next_appointment->format('M d, Y') . '</div>';
+                        if ($item->clinical_notes) {
+                            $html .= '<div class="alert alert-light mb-1 p-2"><small>' . e($item->clinical_notes) . '</small></div>';
+                        }
+                        if ($item->next_appointment) {
+                            $html .= '<div class="small text-muted mb-1"><i class="mdi mdi-calendar-check"></i> Next: ' . $item->next_appointment->format('M d, Y') . '</div>';
+                        }
                         $html .= '<div class="text-end small text-muted border-top pt-2"><i class="mdi mdi-account"></i> ' . $doctor . '</div>';
                         $html .= '</div></div>';
+
                         return ['id' => $item->id, 'encounter_id' => $item->encounter_id ?? $matchEncounter($item->visit_date), 'doctor_name' => $doctor, 'date' => $dt ? $dt->format('M d, Y') : null, 'timestamp' => $dt ? $dt->toIso8601String() : null, 'info_html' => $html];
                     });
+
                     break;
 
                 case 'delivery':
                     $query = \App\Models\DeliveryRecord::where('patient_id', $patientId)->with(['deliveredBy', 'babies']);
-                    if ($dateFrom) $query->where('delivery_date', '>=', Carbon::parse($dateFrom)->startOfDay());
-                    if ($dateTo) $query->where('delivery_date', '<=', Carbon::parse($dateTo)->endOfDay());
+                    if ($dateFrom) {
+                        $query->where('delivery_date', '>=', Carbon::parse($dateFrom)->startOfDay());
+                    }
+                    if ($dateTo) {
+                        $query->where('delivery_date', '<=', Carbon::parse($dateTo)->endOfDay());
+                    }
                     $items = $query->orderBy('delivery_date', 'desc')->get();
 
                     $data = $items->map(function ($item) use ($matchEncounter) {
@@ -6378,9 +6747,15 @@ class EncounterController extends Controller
                         $html .= '<span class="badge bg-danger">' . ($dt ? $dt->format('M j, Y') : '') . ($item->delivery_time ? ' ' . Carbon::parse($item->delivery_time)->format('h:i A') : '') . '</span></div>';
                         $html .= '<div class="row g-2 mb-2">';
                         $dFields = [['Type', $item->type_of_delivery], ['Place', $item->place_of_delivery], ['Labour', $item->duration_of_labour_hours ? $item->duration_of_labour_hours . 'h' : null], ['Blood Loss', $item->blood_loss_ml ? $item->blood_loss_ml . 'ml' : null], ['Placenta', $item->placenta_complete ? 'Complete' : 'Incomplete'], ['Episiotomy', $item->episiotomy]];
-                        foreach ($dFields as $f) { if ($f[1]) $html .= '<div class="col-4"><small><b>' . $f[0] . ':</b> ' . e($f[1]) . '</small></div>'; }
+                        foreach ($dFields as $f) {
+                            if ($f[1]) {
+                                $html .= '<div class="col-4"><small><b>' . $f[0] . ':</b> ' . e($f[1]) . '</small></div>';
+                            }
+                        }
                         $html .= '</div>';
-                        if ($item->complications) $html .= '<div class="mb-2"><small><b>Complications:</b> <span class="text-danger">' . e($item->complications) . '</span></small></div>';
+                        if ($item->complications) {
+                            $html .= '<div class="mb-2"><small><b>Complications:</b> <span class="text-danger">' . e($item->complications) . '</span></small></div>';
+                        }
                         if ($item->babies->count() > 0) {
                             $html .= '<table class="table table-sm table-bordered mb-1" style="font-size:0.8rem;"><thead><tr><th>#</th><th>Sex</th><th>Weight</th><th>APGAR</th><th>Feeding</th></tr></thead><tbody>';
                             foreach ($item->babies as $b) {
@@ -6388,17 +6763,25 @@ class EncounterController extends Controller
                             }
                             $html .= '</tbody></table>';
                         }
-                        if ($item->notes) $html .= '<div class="alert alert-light mb-1 p-2"><small>' . e($item->notes) . '</small></div>';
+                        if ($item->notes) {
+                            $html .= '<div class="alert alert-light mb-1 p-2"><small>' . e($item->notes) . '</small></div>';
+                        }
                         $html .= '<div class="text-end small text-muted border-top pt-2"><i class="mdi mdi-account"></i> Delivered by: ' . $doctor . '</div>';
                         $html .= '</div></div>';
+
                         return ['id' => $item->id, 'encounter_id' => $item->encounter_id ?? $matchEncounter($item->delivery_date), 'doctor_name' => $doctor, 'date' => $dt ? $dt->format('M d, Y') : null, 'timestamp' => $dt ? $dt->toIso8601String() : null, 'info_html' => $html];
                     });
+
                     break;
 
                 case 'postnatal':
                     $query = \App\Models\PostnatalVisit::where('patient_id', $patientId)->with('seenBy');
-                    if ($dateFrom) $query->where('visit_date', '>=', Carbon::parse($dateFrom)->startOfDay());
-                    if ($dateTo) $query->where('visit_date', '<=', Carbon::parse($dateTo)->endOfDay());
+                    if ($dateFrom) {
+                        $query->where('visit_date', '>=', Carbon::parse($dateFrom)->startOfDay());
+                    }
+                    if ($dateTo) {
+                        $query->where('visit_date', '<=', Carbon::parse($dateTo)->endOfDay());
+                    }
                     $items = $query->orderBy('visit_date', 'desc')->get();
 
                     $data = $items->map(function ($item) use ($matchEncounter) {
@@ -6408,24 +6791,40 @@ class EncounterController extends Controller
                         $html .= '<div class="d-flex justify-content-between align-items-center mb-2">';
                         $html .= '<h6 class="mb-0"><i class="mdi mdi-mother-heart"></i> Postnatal Visit</h6>';
                         $html .= '<div>';
-                        if ($item->visit_type) $html .= '<span class="badge bg-pink me-1">' . e($item->visit_type) . '</span>';
-                        if ($item->days_postpartum) $html .= '<span class="badge bg-light text-dark border me-1">Day ' . e($item->days_postpartum) . '</span>';
+                        if ($item->visit_type) {
+                            $html .= '<span class="badge bg-pink me-1">' . e($item->visit_type) . '</span>';
+                        }
+                        if ($item->days_postpartum) {
+                            $html .= '<span class="badge bg-light text-dark border me-1">Day ' . e($item->days_postpartum) . '</span>';
+                        }
                         $html .= '<span class="badge bg-info">' . ($dt ? $dt->format('M j, Y') : '') . '</span></div></div>';
                         // Mother assessment
                         $html .= '<div class="mb-2"><small class="fw-bold text-muted">Mother</small></div><div class="row g-2 mb-2">';
                         $mFields = [['Condition', $item->general_condition], ['BP', $item->blood_pressure], ['Temp', $item->temperature_c ? $item->temperature_c . '°C' : null], ['Uterus', $item->uterus_assessment], ['Lochia', $item->lochia], ['Emotional', $item->emotional_wellbeing]];
-                        foreach ($mFields as $f) { if ($f[1]) $html .= '<div class="col-4"><small><b>' . $f[0] . ':</b> ' . e($f[1]) . '</small></div>'; }
+                        foreach ($mFields as $f) {
+                            if ($f[1]) {
+                                $html .= '<div class="col-4"><small><b>' . $f[0] . ':</b> ' . e($f[1]) . '</small></div>';
+                            }
+                        }
                         $html .= '</div>';
                         // Baby assessment
                         $html .= '<div class="mb-2"><small class="fw-bold text-muted">Baby</small></div><div class="row g-2 mb-2">';
                         $bFields = [['Weight', $item->baby_weight_kg ? $item->baby_weight_kg . ' kg' : null], ['Feeding', $item->baby_feeding], ['Cord', $item->cord_status]];
-                        foreach ($bFields as $f) { if ($f[1]) $html .= '<div class="col-4"><small><b>' . $f[0] . ':</b> ' . e($f[1]) . '</small></div>'; }
+                        foreach ($bFields as $f) {
+                            if ($f[1]) {
+                                $html .= '<div class="col-4"><small><b>' . $f[0] . ':</b> ' . e($f[1]) . '</small></div>';
+                            }
+                        }
                         $html .= '</div>';
-                        if ($item->clinical_notes) $html .= '<div class="alert alert-light mb-1 p-2"><small>' . e($item->clinical_notes) . '</small></div>';
+                        if ($item->clinical_notes) {
+                            $html .= '<div class="alert alert-light mb-1 p-2"><small>' . e($item->clinical_notes) . '</small></div>';
+                        }
                         $html .= '<div class="text-end small text-muted border-top pt-2"><i class="mdi mdi-account"></i> ' . $doctor . '</div>';
                         $html .= '</div></div>';
+
                         return ['id' => $item->id, 'encounter_id' => $item->encounter_id ?? $matchEncounter($item->visit_date), 'doctor_name' => $doctor, 'date' => $dt ? $dt->format('M d, Y') : null, 'timestamp' => $dt ? $dt->toIso8601String() : null, 'info_html' => $html];
                     });
+
                     break;
 
                 case 'treatment_plans':
@@ -6435,8 +6834,8 @@ class EncounterController extends Controller
                     if ($dateFrom || $dateTo) {
                         $start = $dateFrom ? Carbon::parse($dateFrom)->startOfDay() : null;
                         $end = $dateTo ? Carbon::parse($dateTo)->endOfDay() : null;
-                        
-                        $query->where(function($q) use ($start, $end) {
+
+                        $query->where(function ($q) use ($start, $end) {
                             if ($start && $end) {
                                 $q->whereBetween('created_at', [$start, $end])
                                   ->orWhereBetween('retired_at', [$start, $end]);
@@ -6486,7 +6885,9 @@ class EncounterController extends Controller
                                     $c1 = htmlspecialchars($dx['comment_1'] ?? '');
                                     $c2 = htmlspecialchars($dx['comment_2'] ?? '');
                                     $comment = trim($c1 . ' ' . $c2);
-                                    if (!$comment) $comment = '<span class="text-muted">-</span>';
+                                    if (!$comment) {
+                                        $comment = '<span class="text-muted">-</span>';
+                                    }
                                     $html .= "<tr><td><code>{$code}</code></td><td>{$name}</td><td>{$comment}</td></tr>";
                                 }
                                 $html .= '</tbody></table></div>';
@@ -6515,9 +6916,10 @@ class EncounterController extends Controller
                             'doctor_name' => $creatorName,
                             'date' => $eventDate ? $eventDate->format('M d, Y') : null,
                             'timestamp' => $eventDate ? $eventDate->toIso8601String() : null,
-                            'info_html' => $html
+                            'info_html' => $html,
                         ];
                     });
+
                     break;
             }
 
@@ -6527,6 +6929,7 @@ class EncounterController extends Controller
                     if ($encounterFilter === 'unassociated') {
                         return is_null($item['encounter_id']);
                     }
+
                     return intval($item['encounter_id']) === intval($encounterFilter);
                 })->values();
             } else {
@@ -6536,10 +6939,11 @@ class EncounterController extends Controller
             return response()->json([
                 'success' => true,
                 'category' => $category,
-                'data' => $data
+                'data' => $data,
             ]);
         } catch (\Exception $e) {
             Log::error('Error fetching clinical story category: ' . ($category ?? 'none') . ' - ' . $e->getMessage());
+
             return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
         }
     }
@@ -6558,6 +6962,7 @@ class EncounterController extends Controller
     public function getPatientClinicalStoryFallback(Request $request, $patient)
     {
         $patientId = is_object($patient) ? $patient->id : intval($patient);
+
         return $this->getPatientClinicalStoryCommon($request, $patientId);
     }
 }

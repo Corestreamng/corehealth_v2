@@ -66,6 +66,7 @@ class GradeLevel extends Model implements Auditable
         if ($this->min_salary && $this->max_salary) {
             return number_format($this->min_salary, 2) . ' - ' . number_format($this->max_salary, 2);
         }
+
         return null;
     }
 }

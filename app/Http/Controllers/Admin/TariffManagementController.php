@@ -3,25 +3,25 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Models\HmoTariff;
-use App\Models\TariffOverride;
 use App\Models\Hmo;
 use App\Models\HmoScheme;
+use App\Models\HmoTariff;
+use App\Models\Price;
 use App\Models\Product;
+use App\Models\ProductCategory;
 use App\Models\Service;
 use App\Models\ServiceCategory;
-use App\Models\ProductCategory;
-use App\Models\Price;
+use App\Models\TariffOverride;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\DB;
-use Yajra\DataTables\DataTables;
-use RealRashid\SweetAlert\Facades\Alert;
-use PhpOffice\PhpSpreadsheet\Spreadsheet;
-use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
+use Illuminate\Support\Facades\Validator;
 use PhpOffice\PhpSpreadsheet\IOFactory;
-use PhpOffice\PhpSpreadsheet\Style\Fill;
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Style\Alignment;
+use PhpOffice\PhpSpreadsheet\Style\Fill;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
+use RealRashid\SweetAlert\Facades\Alert;
+use Yajra\DataTables\DataTables;
 
 class TariffManagementController extends Controller
 {
@@ -54,7 +54,7 @@ class TariffManagementController extends Controller
                 $itemName = '';
                 $salePrice = 0;
                 $tariffsQuery = HmoTariff::query();
-                
+
                 if ($type === 'product') {
                     $product = Product::withoutGlobalScopes()->findOrFail($id);
                     $itemName = $product->product_name;
@@ -69,13 +69,15 @@ class TariffManagementController extends Controller
                     $tariffsQuery->where('service_id', $id)->whereNull('product_id');
                 }
 
-                $schemes = HmoScheme::with(['hmos' => fn($q) => $q->where('status', 1)])->get();
+                $schemes = HmoScheme::with(['hmos' => fn ($q) => $q->where('status', 1)])->get();
                 $tariffs = $tariffsQuery->get()->keyBy('hmo_id');
 
                 $schemeSummary = [];
                 foreach ($schemes as $scheme) {
                     $activeHmos = $scheme->hmos;
-                    if ($activeHmos->isEmpty()) continue;
+                    if ($activeHmos->isEmpty()) {
+                        continue;
+                    }
 
                     $payableValues = [];
                     $claimsValues = [];
@@ -139,14 +141,14 @@ class TariffManagementController extends Controller
 
                 return view('admin.tariffs.standalone', [
                     'partial' => 'admin.partials.hmo-tariff-view-partial',
-                    'data' => $data
+                    'data' => $data,
                 ]);
 
             } elseif ($type === 'hmo' || $type === 'scheme') {
                 // --- AXIS 2: One HMO/Scheme -> All Products/Services ---
                 $targetName = '';
                 $hmoIds = [];
-                
+
                 if ($type === 'hmo') {
                     $hmo = Hmo::findOrFail($id);
                     $targetName = $hmo->name;
@@ -207,7 +209,7 @@ class TariffManagementController extends Controller
 
                 return view('admin.tariffs.standalone', [
                     'partial' => 'admin.partials.hmo-catalog-view',
-                    'data' => $catalogData
+                    'data' => $catalogData,
                 ]);
             }
         } catch (\Exception $e) {
@@ -247,7 +249,7 @@ class TariffManagementController extends Controller
         // Build base query with selected columns only
         $query = HmoTariff::select([
             'id', 'hmo_id', 'product_id', 'service_id',
-            'claims_amount', 'payable_amount', 'coverage_mode', 'created_at'
+            'claims_amount', 'payable_amount', 'coverage_mode', 'created_at',
         ])->with('hmo'); // Only load HMO relationship
 
         // Apply filters
@@ -276,11 +278,14 @@ class TariffManagementController extends Controller
             ->addColumn('item_name', function ($tariff) {
                 if ($tariff->product_id) {
                     $product = Product::withoutGlobalScopes()->find($tariff->product_id);
+
                     return $product ? $product->product_name : 'N/A';
                 } elseif ($tariff->service_id) {
                     $service = Service::withoutGlobalScopes()->find($tariff->service_id);
+
                     return $service ? $service->service_name : 'N/A';
                 }
+
                 return 'N/A';
             })
             ->addColumn('item_type', function ($tariff) {
@@ -289,6 +294,7 @@ class TariffManagementController extends Controller
                 } elseif ($tariff->service_id) {
                     return '<span class="badge badge-info">Service</span>';
                 }
+
                 return '<span class="badge badge-secondary">N/A</span>';
             })
             ->addColumn('original_price', function ($tariff) {
@@ -297,19 +303,23 @@ class TariffManagementController extends Controller
                     $price = DB::table('prices')
                         ->where('product_id', $tariff->product_id)
                         ->value('current_sale_price');
+
                     return $price ? '₦' . number_format($price, 2) : 'N/A';
                 } elseif ($tariff->service_id) {
                     // Load service price from service_prices table
                     $price = DB::table('service_prices')
                         ->where('service_id', $tariff->service_id)
                         ->value('sale_price');
+
                     return $price ? '₦' . number_format($price, 2) : 'N/A';
                 }
+
                 return 'N/A';
             })
             ->addColumn('coverage_badge', function ($tariff) {
                 $badgeColor = $tariff->coverage_mode === 'express' ? 'success' :
                              ($tariff->coverage_mode === 'primary' ? 'warning' : 'danger');
+
                 return '<span class="badge badge-' . $badgeColor . '">' . strtoupper($tariff->coverage_mode) . '</span>';
             })
             ->addColumn('claims_amount_formatted', function ($tariff) {
@@ -351,7 +361,7 @@ class TariffManagementController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Validation failed',
-                'errors' => $validator->errors()
+                'errors' => $validator->errors(),
             ], 422);
         }
 
@@ -369,7 +379,7 @@ class TariffManagementController extends Controller
         if ($exists) {
             return response()->json([
                 'success' => false,
-                'message' => 'Tariff already exists for this HMO and item combination.'
+                'message' => 'Tariff already exists for this HMO and item combination.',
             ], 422);
         }
 
@@ -385,7 +395,7 @@ class TariffManagementController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Tariff created successfully.',
-            'data' => $tariff
+            'data' => $tariff,
         ]);
     }
 
@@ -406,7 +416,7 @@ class TariffManagementController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Validation failed',
-                'errors' => $validator->errors()
+                'errors' => $validator->errors(),
             ], 422);
         }
 
@@ -419,7 +429,7 @@ class TariffManagementController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Tariff updated successfully.',
-            'data' => $tariff
+            'data' => $tariff,
         ]);
     }
 
@@ -433,7 +443,7 @@ class TariffManagementController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => 'Tariff deleted successfully.'
+            'message' => 'Tariff deleted successfully.',
         ]);
     }
 
@@ -480,7 +490,7 @@ class TariffManagementController extends Controller
             'Payable Amount',
             'Coverage Mode',
             'Created At',
-            'Updated At'
+            'Updated At',
         ]);
 
         // CSV data
@@ -526,6 +536,7 @@ class TariffManagementController extends Controller
 
         if ($validator->fails()) {
             Alert::error('Error', 'Please upload a valid CSV file (max 10MB).');
+
             return redirect()->back();
         }
 
@@ -547,6 +558,7 @@ class TariffManagementController extends Controller
 
                 if (count($data) < 8) {
                     $skipped++;
+
                     continue;
                 }
 
@@ -562,6 +574,7 @@ class TariffManagementController extends Controller
                 if (!$hmo) {
                     $errors[] = "HMO '$hmoName' not found";
                     $skipped++;
+
                     continue;
                 }
 
@@ -574,6 +587,7 @@ class TariffManagementController extends Controller
                     if (!$product) {
                         $errors[] = "Product '$itemName' not found";
                         $skipped++;
+
                         continue;
                     }
                     $productId = $product->id;
@@ -582,12 +596,14 @@ class TariffManagementController extends Controller
                     if (!$service) {
                         $errors[] = "Service '$itemName' not found";
                         $skipped++;
+
                         continue;
                     }
                     $serviceId = $service->id;
                 } else {
                     $errors[] = "Invalid item type: '$itemType'";
                     $skipped++;
+
                     continue;
                 }
 
@@ -595,6 +611,7 @@ class TariffManagementController extends Controller
                 if (!in_array($coverageMode, ['express', 'primary', 'secondary'])) {
                     $errors[] = "Invalid coverage mode: '$coverageMode'";
                     $skipped++;
+
                     continue;
                 }
 
@@ -638,6 +655,7 @@ class TariffManagementController extends Controller
         }
 
         Alert::success('Import Complete', $message);
+
         return redirect()->back();
     }
 
@@ -650,7 +668,7 @@ class TariffManagementController extends Controller
 
         return response()->json([
             'success' => true,
-            'data' => $tariff
+            'data' => $tariff,
         ]);
     }
 
@@ -672,14 +690,14 @@ class TariffManagementController extends Controller
      */
     public function exportExcel(Request $request)
     {
-        $scope      = $request->input('scope', 'hmo'); // hmo | scheme
-        $hmoId      = $request->input('hmo_id');
-        $schemeId   = $request->input('scheme_id');
-        $type       = $request->input('type', '');       // product | service | ''
-        $coverage   = $request->input('coverage_mode', '');
-        $prodCatId  = $request->input('product_category_id', '');
-        $svcCatId   = $request->input('service_category_id', '');
-        $layout     = $request->input('layout', 'standard');
+        $scope = $request->input('scope', 'hmo'); // hmo | scheme
+        $hmoId = $request->input('hmo_id');
+        $schemeId = $request->input('scheme_id');
+        $type = $request->input('type', '');       // product | service | ''
+        $coverage = $request->input('coverage_mode', '');
+        $prodCatId = $request->input('product_category_id', '');
+        $svcCatId = $request->input('service_category_id', '');
+        $layout = $request->input('layout', 'standard');
 
         if ($layout !== 'standard') {
             return $this->exportConsolidated($request);
@@ -720,11 +738,11 @@ class TariffManagementController extends Controller
         }
 
         if ($prodCatId && $type !== 'service') {
-            $query->whereHas('product', fn($q) => $q->where('category_id', $prodCatId));
+            $query->whereHas('product', fn ($q) => $q->where('category_id', $prodCatId));
         }
 
         if ($svcCatId && $type !== 'product') {
-            $query->whereHas('service', fn($q) => $q->where('category_id', $svcCatId));
+            $query->whereHas('service', fn ($q) => $q->where('category_id', $svcCatId));
         }
 
         $tariffs = $query->get();
@@ -757,13 +775,22 @@ class TariffManagementController extends Controller
         if ($scope === 'all') {
             // Export EVERY tariff record in the system across all HMOs, but respecting filters
             $fullQuery = HmoTariff::with(['hmo', 'product.price', 'product.category', 'service.price', 'service.category']);
-            
-            if ($type === 'product') $fullQuery->whereNotNull('product_id')->whereNull('service_id');
-            elseif ($type === 'service') $fullQuery->whereNotNull('service_id')->whereNull('product_id');
 
-            if ($prodCatId && $type !== 'service') $fullQuery->whereHas('product', fn($q) => $q->where('category_id', $prodCatId));
-            if ($svcCatId && $type !== 'product') $fullQuery->whereHas('service', fn($q) => $q->where('category_id', $svcCatId));
-            if ($coverage) $fullQuery->where('coverage_mode', $coverage);
+            if ($type === 'product') {
+                $fullQuery->whereNotNull('product_id')->whereNull('service_id');
+            } elseif ($type === 'service') {
+                $fullQuery->whereNotNull('service_id')->whereNull('product_id');
+            }
+
+            if ($prodCatId && $type !== 'service') {
+                $fullQuery->whereHas('product', fn ($q) => $q->where('category_id', $prodCatId));
+            }
+            if ($svcCatId && $type !== 'product') {
+                $fullQuery->whereHas('service', fn ($q) => $q->where('category_id', $svcCatId));
+            }
+            if ($coverage) {
+                $fullQuery->where('coverage_mode', $coverage);
+            }
 
             $tariffs = $fullQuery->get();
         } else {
@@ -775,7 +802,7 @@ class TariffManagementController extends Controller
         $row = 3;
         foreach ($tariffs as $tariff) {
             $hmoName = $tariff->hmo ? $tariff->hmo->name : 'Unknown';
-            
+
             if ($tariff->product_id && $tariff->product) {
                 $code = $tariff->product->product_code ?? '';
                 $name = $tariff->product->product_name;
@@ -833,9 +860,9 @@ class TariffManagementController extends Controller
     public function importPreview(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'file'      => 'required|file|mimes:xlsx,xls,csv,txt|max:10240',
-            'scope'     => 'required|in:hmo,scheme,all',
-            'hmo_id'    => 'required_if:scope,hmo|nullable|exists:hmos,id',
+            'file' => 'required|file|mimes:xlsx,xls,csv,txt|max:10240',
+            'scope' => 'required|in:hmo,scheme,all',
+            'hmo_id' => 'required_if:scope,hmo|nullable|exists:hmos,id',
             'scheme_id' => 'required_if:scope,scheme|nullable|exists:hmo_schemes,id',
         ]);
 
@@ -843,7 +870,7 @@ class TariffManagementController extends Controller
             return response()->json(['success' => false, 'errors' => $validator->errors()], 422);
         }
 
-        $file  = $request->file('file');
+        $file = $request->file('file');
         $scope = $request->input('scope');
 
         // Determine target HMO(s)
@@ -869,6 +896,7 @@ class TariffManagementController extends Controller
             $c1 = strtolower(trim($row[1] ?? ''));
             if ($c0 === 'item code' || $c1 === 'item code' || $c0 === 'hmo provider') {
                 $headerRowIndex = $i;
+
                 break;
             }
         }
@@ -887,37 +915,46 @@ class TariffManagementController extends Controller
         $colOffset = (strtolower(trim($headers[0] ?? '')) === 'hmo provider') ? 1 : 0;
 
         foreach ($dataRows as $idx => $row) {
-            if (empty(trim($row[$colOffset + 1] ?? ''))) continue; // skip empty name rows
+            if (empty(trim($row[$colOffset + 1] ?? ''))) {
+                continue;
+            } // skip empty name rows
 
-            $code      = trim($row[$colOffset + 0] ?? '');
-            $name      = trim($row[$colOffset + 1] ?? '');
-            $itemType  = strtolower(trim($row[$colOffset + 2] ?? ''));
+            $code = trim($row[$colOffset + 0] ?? '');
+            $name = trim($row[$colOffset + 1] ?? '');
+            $itemType = strtolower(trim($row[$colOffset + 2] ?? ''));
             $rowHmoName = ($colOffset === 1) ? trim($row[0] ?? '') : '';
 
             // Find item
             $item = null;
             if ($itemType === 'product' || $itemType === 'pharmacy') {
                 $item = $code ? Product::where('product_code', $code)->first() : null;
-                if (!$item) $item = Product::where('product_name', $name)->first();
+                if (!$item) {
+                    $item = Product::where('product_name', $name)->first();
+                }
             } else {
                 $item = $code ? Service::where('service_code', $code)->first() : null;
-                if (!$item) $item = Service::where('service_name', $name)->first();
+                if (!$item) {
+                    $item = Service::where('service_name', $name)->first();
+                }
             }
 
             // For preview, we use the first triplet we find if consolidated, or the standard cols
             if ($colOffset === 1) {
                 // Standard 9-column
-                $claims    = floatval($row[6] ?? 0);
-                $payable   = floatval($row[7] ?? 0);
-                $mode      = strtolower(trim($row[8] ?? 'primary'));
+                $claims = floatval($row[6] ?? 0);
+                $payable = floatval($row[7] ?? 0);
+                $mode = strtolower(trim($row[8] ?? 'primary'));
             } else {
                 // Consolidated (find first triplet)
-                $claims = 0; $payable = 0; $mode = 'primary';
+                $claims = 0;
+                $payable = 0;
+                $mode = 'primary';
                 for ($i = 5; $i < count($row); $i++) {
                     if (strpos($headers[$i] ?? '', ' Claims') !== false) {
                         $claims = floatval($row[$i] ?? 0);
-                        $payable = floatval($row[$i+1] ?? 0);
-                        $mode = strtolower(trim($row[$i+2] ?? 'primary'));
+                        $payable = floatval($row[$i + 1] ?? 0);
+                        $mode = strtolower(trim($row[$i + 2] ?? 'primary'));
+
                         break;
                     }
                 }
@@ -928,7 +965,7 @@ class TariffManagementController extends Controller
                 $rowHmoName = trim($row[0] ?? '');
                 $targetHmo = Hmo::where('name', $rowHmoName)->first();
                 $targetHmoId = $targetHmo ? $targetHmo->id : null;
-                
+
                 if (!$item || ($request->scope === 'all' && !$targetHmoId)) {
                     $preview[] = [
                         'name' => $name, 'code' => $code, 'type' => $itemType,
@@ -936,17 +973,25 @@ class TariffManagementController extends Controller
                         'status' => 'skipped', 'reason' => (!$item ? 'Item not found' : 'HMO not found'),
                     ];
                     $totalSkipped++;
+
                     continue;
                 }
 
                 $existing = HmoTariff::where('hmo_id', $targetHmoId)
                     ->where(function ($q) use ($item, $itemType) {
-                        if ($itemType === 'product' || $itemType === 'pharmacy') $q->where('product_id', $item->id)->whereNull('service_id');
-                        else $q->where('service_id', $item->id)->whereNull('product_id');
+                        if ($itemType === 'product' || $itemType === 'pharmacy') {
+                            $q->where('product_id', $item->id)->whereNull('service_id');
+                        } else {
+                            $q->where('service_id', $item->id)->whereNull('product_id');
+                        }
                     })->first();
 
                 $status = $existing ? 'update' : 'new';
-                if ($existing) $totalUpdates++; else $totalNew++;
+                if ($existing) {
+                    $totalUpdates++;
+                } else {
+                    $totalNew++;
+                }
 
                 $preview[] = [
                     'name' => $name, 'code' => $code, 'type' => $itemType,
@@ -962,6 +1007,7 @@ class TariffManagementController extends Controller
                         'status' => 'skipped', 'reason' => 'Item not found',
                     ];
                     $totalSkipped++;
+
                     continue;
                 }
 
@@ -969,33 +1015,49 @@ class TariffManagementController extends Controller
                 $firstTriplet = null;
 
                 for ($i = 5; $i < count($row); $i += 3) {
-                    if (empty($headers[$i]) || strpos($headers[$i], ' Claims') === false) continue;
-                    
-                    $claims  = floatval($row[$i] ?? 0);
-                    $payable = floatval($row[$i+1] ?? 0);
-                    $mode    = strtolower(trim($row[$i+2] ?? 'primary'));
+                    if (empty($headers[$i]) || strpos($headers[$i], ' Claims') === false) {
+                        continue;
+                    }
 
-                    if ($claims == 0 && $payable == 0) continue; // No data
+                    $claims = floatval($row[$i] ?? 0);
+                    $payable = floatval($row[$i + 1] ?? 0);
+                    $mode = strtolower(trim($row[$i + 2] ?? 'primary'));
+
+                    if ($claims == 0 && $payable == 0) {
+                        continue;
+                    } // No data
 
                     $entityName = str_replace(' Claims', '', $headers[$i]);
                     $targetHmoIds = [];
                     $hmo = Hmo::where('name', $entityName)->first();
-                    if ($hmo) $targetHmoIds = [$hmo->id];
-                    else {
+                    if ($hmo) {
+                        $targetHmoIds = [$hmo->id];
+                    } else {
                         $scheme = HmoScheme::where('name', $entityName)->first();
-                        if ($scheme) $targetHmoIds = $scheme->hmos()->where('status', 1)->pluck('id')->toArray();
+                        if ($scheme) {
+                            $targetHmoIds = $scheme->hmos()->where('status', 1)->pluck('id')->toArray();
+                        }
                     }
 
-                    if (!$firstTriplet) $firstTriplet = ['claims' => $claims, 'payable' => $payable, 'mode' => $mode];
+                    if (!$firstTriplet) {
+                        $firstTriplet = ['claims' => $claims, 'payable' => $payable, 'mode' => $mode];
+                    }
 
                     foreach ($targetHmoIds as $hmoId) {
                         $existing = HmoTariff::where('hmo_id', $hmoId)
                             ->where(function ($q) use ($item, $itemType) {
-                                if ($itemType === 'product' || $itemType === 'pharmacy') $q->where('product_id', $item->id)->whereNull('service_id');
-                                else $q->where('service_id', $item->id)->whereNull('product_id');
+                                if ($itemType === 'product' || $itemType === 'pharmacy') {
+                                    $q->where('product_id', $item->id)->whereNull('service_id');
+                                } else {
+                                    $q->where('service_id', $item->id)->whereNull('product_id');
+                                }
                             })->first();
 
-                        if ($existing) $totalUpdates++; else $totalNew++;
+                        if ($existing) {
+                            $totalUpdates++;
+                        } else {
+                            $totalNew++;
+                        }
                         $rowHasUpdate = true;
                     }
                 }
@@ -1006,12 +1068,14 @@ class TariffManagementController extends Controller
                         'new_claims' => $firstTriplet['claims'], 'new_payable' => $firstTriplet['payable'], 'new_mode' => $firstTriplet['mode'],
                         'status' => 'multi-update', 'reason' => 'Multiple entities affected',
                     ];
-                } else if (!$rowHasUpdate) {
+                } elseif (!$rowHasUpdate) {
                     $totalSkipped++;
                 }
             }
 
-            if (count($preview) >= 100) break; // Limit preview for performance
+            if (count($preview) >= 100) {
+                break;
+            } // Limit preview for performance
         }
 
         return response()->json([
@@ -1031,9 +1095,9 @@ class TariffManagementController extends Controller
     public function importExcel(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'file'      => 'required|file|mimes:xlsx,xls,csv,txt|max:10240',
-            'scope'     => 'required|in:hmo,scheme,all',
-            'hmo_id'    => 'required_if:scope,hmo|nullable|exists:hmos,id',
+            'file' => 'required|file|mimes:xlsx,xls,csv,txt|max:10240',
+            'scope' => 'required|in:hmo,scheme,all',
+            'hmo_id' => 'required_if:scope,hmo|nullable|exists:hmos,id',
             'scheme_id' => 'required_if:scope,scheme|nullable|exists:hmo_schemes,id',
         ]);
 
@@ -1041,7 +1105,7 @@ class TariffManagementController extends Controller
             return response()->json(['success' => false, 'errors' => $validator->errors()], 422);
         }
 
-        $scope  = $request->input('scope');
+        $scope = $request->input('scope');
 
         // Determine target HMO(s)
         if ($scope === 'scheme') {
@@ -1065,6 +1129,7 @@ class TariffManagementController extends Controller
             $c1 = strtolower(trim($row[1] ?? ''));
             if ($c0 === 'item code' || $c1 === 'item code' || $c0 === 'hmo provider') {
                 $headerRowIndex = $i;
+
                 break;
             }
         }
@@ -1088,45 +1153,66 @@ class TariffManagementController extends Controller
                     'name' => $entityName,
                     'claimsIdx' => $i,
                     'payableIdx' => $i + 1,
-                    'modeIdx' => $i + 2
+                    'modeIdx' => $i + 2,
                 ];
             }
         }
 
         $dataRows = array_slice($rows, $headerRowIndex + 1);
-        $created = 0; $updated = 0; $skipped = 0; $errors = [];
+        $created = 0;
+        $updated = 0;
+        $skipped = 0;
+        $errors = [];
 
         DB::beginTransaction();
+
         try {
             foreach ($dataRows as $idx => $row) {
-                if (empty(trim($row[$colOffset + 1] ?? ''))) continue;
+                if (empty(trim($row[$colOffset + 1] ?? ''))) {
+                    continue;
+                }
 
-                $code     = trim($row[$colOffset + 0] ?? '');
-                $name     = trim($row[$colOffset + 1] ?? '');
+                $code = trim($row[$colOffset + 0] ?? '');
+                $name = trim($row[$colOffset + 1] ?? '');
                 $itemType = strtolower(trim($row[$colOffset + 2] ?? ''));
 
                 // Find Item
-                $productId = null; $serviceId = null;
+                $productId = null;
+                $serviceId = null;
                 if ($itemType === 'product' || $itemType === 'pharmacy') {
                     $item = $code ? Product::where('product_code', $code)->first() : null;
-                    if (!$item) $item = Product::where('product_name', $name)->first();
-                    if (!$item) { $skipped++; continue; }
+                    if (!$item) {
+                        $item = Product::where('product_name', $name)->first();
+                    }
+                    if (!$item) {
+                        $skipped++;
+
+                        continue;
+                    }
                     $productId = $item->id;
                 } else {
                     $item = $code ? Service::where('service_code', $code)->first() : null;
-                    if (!$item) $item = Service::where('service_name', $name)->first();
-                    if (!$item) { $skipped++; continue; }
+                    if (!$item) {
+                        $item = Service::where('service_name', $name)->first();
+                    }
+                    if (!$item) {
+                        $skipped++;
+
+                        continue;
+                    }
                     $serviceId = $item->id;
                 }
 
                 if ($isConsolidated) {
                     // Process multiple entity columns
                     foreach ($entityGroups as $group) {
-                        $claims  = floatval($row[$group['claimsIdx']] ?? 0);
+                        $claims = floatval($row[$group['claimsIdx']] ?? 0);
                         $payable = floatval($row[$group['payableIdx']] ?? 0);
-                        $mode    = strtolower(trim($row[$group['modeIdx']] ?? 'primary'));
-                        
-                        if ($claims == 0 && $payable == 0) continue; // Skip if no data in this triplet
+                        $mode = strtolower(trim($row[$group['modeIdx']] ?? 'primary'));
+
+                        if ($claims == 0 && $payable == 0) {
+                            continue;
+                        } // Skip if no data in this triplet
 
                         // Find target HMOs for this entity (Case-insensitive & trimmed)
                         $targetHmoIds = [];
@@ -1136,38 +1222,51 @@ class TariffManagementController extends Controller
                             $targetHmoIds = [$hmo->id];
                         } else {
                             $scheme = HmoScheme::where('name', 'LIKE', $eName)->first();
-                            if ($scheme) $targetHmoIds = $scheme->hmos()->where('status', 1)->pluck('id')->toArray();
+                            if ($scheme) {
+                                $targetHmoIds = $scheme->hmos()->where('status', 1)->pluck('id')->toArray();
+                            }
                         }
 
                         foreach ($targetHmoIds as $hmoId) {
                             $res = $this->upsertTariffRow($hmoId, $productId, $serviceId, $payable, $claims, $mode);
-                            if ($res === 'updated') $updated++; else $created++;
+                            if ($res === 'updated') {
+                                $updated++;
+                            } else {
+                                $created++;
+                            }
                         }
                     }
                 } else {
                     // Standard 9-column format
                     $rowHmoName = trim($row[0] ?? '');
-                    $claims     = floatval($row[6] ?? 0);
-                    $payable    = floatval($row[7] ?? 0);
-                    $mode       = strtolower(trim($row[8] ?? 'primary'));
+                    $claims = floatval($row[6] ?? 0);
+                    $payable = floatval($row[7] ?? 0);
+                    $mode = strtolower(trim($row[8] ?? 'primary'));
 
                     $targetHmoIds = [];
                     if ($request->hmo_id) {
                         $targetHmoIds = [$request->hmo_id];
                     } else {
                         $hmo = Hmo::where('name', $rowHmoName)->first();
-                        if ($hmo) $targetHmoIds = [$hmo->id];
+                        if ($hmo) {
+                            $targetHmoIds = [$hmo->id];
+                        }
                     }
 
                     foreach ($targetHmoIds as $hmoId) {
                         $res = $this->upsertTariffRow($hmoId, $productId, $serviceId, $payable, $claims, $mode);
-                        if ($res === 'updated') $updated++; else $created++;
+                        if ($res === 'updated') {
+                            $updated++;
+                        } else {
+                            $created++;
+                        }
                     }
                 }
             }
             DB::commit();
         } catch (\Exception $e) {
             DB::rollBack();
+
             return response()->json(['success' => false, 'message' => 'Import failed: ' . $e->getMessage()], 500);
         }
 
@@ -1183,7 +1282,7 @@ class TariffManagementController extends Controller
     public function normalizeScheme(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'scheme_id'        => 'required|exists:hmo_schemes,id',
+            'scheme_id' => 'required|exists:hmo_schemes,id',
             'drug_patient_pct' => 'required|numeric|min:0|max:100',
             'service_claims_pct' => 'required|numeric|min:0|max:100',
             'general_consult_express' => 'nullable|boolean',
@@ -1194,13 +1293,13 @@ class TariffManagementController extends Controller
             return response()->json(['success' => false, 'errors' => $validator->errors()], 422);
         }
 
-        $schemeId          = $request->scheme_id;
-        $drugPatientPct    = $request->drug_patient_pct / 100;
-        $drugClaimsPct     = 1 - $drugPatientPct;
-        $serviceClaimsPct  = $request->service_claims_pct / 100;
+        $schemeId = $request->scheme_id;
+        $drugPatientPct = $request->drug_patient_pct / 100;
+        $drugClaimsPct = 1 - $drugPatientPct;
+        $serviceClaimsPct = $request->service_claims_pct / 100;
         $servicePatientPct = 1 - $serviceClaimsPct;
-        $generalExpress    = (bool) $request->general_consult_express;
-        $otherSecondary    = (bool) $request->other_consult_secondary;
+        $generalExpress = (bool) $request->general_consult_express;
+        $otherSecondary = (bool) $request->other_consult_secondary;
 
         $hmoIds = Hmo::where('hmo_scheme_id', $schemeId)->where('status', 1)->pluck('id');
         if ($hmoIds->isEmpty()) {
@@ -1224,13 +1323,14 @@ class TariffManagementController extends Controller
         $updated = 0;
 
         DB::beginTransaction();
+
         try {
             foreach ($hmoIds as $hmoId) {
                 // Products (drugs)
                 foreach ($products as $product) {
-                    $price   = $product->price ? (float) $product->price->current_sale_price : 0;
+                    $price = $product->price ? (float) $product->price->current_sale_price : 0;
                     $payable = round($price * $drugPatientPct, 2);
-                    $claims  = round($price * $drugClaimsPct, 2);
+                    $claims = round($price * $drugClaimsPct, 2);
 
                     $result = $this->upsertTariffRow($hmoId, $product->id, null, $payable, $claims, 'primary');
                     $result === 'created' ? $created++ : $updated++;
@@ -1238,9 +1338,9 @@ class TariffManagementController extends Controller
 
                 // Services
                 foreach ($services as $service) {
-                    $price   = $service->price ? (float) $service->price->sale_price : 0;
+                    $price = $service->price ? (float) $service->price->sale_price : 0;
                     $payable = round($price * $servicePatientPct, 2);
-                    $claims  = round($price * $serviceClaimsPct, 2);
+                    $claims = round($price * $serviceClaimsPct, 2);
 
                     // Determine coverage mode
                     if ($generalExpress && in_array($service->id, $generalConsultIds)) {
@@ -1261,10 +1361,12 @@ class TariffManagementController extends Controller
             DB::commit();
         } catch (\Exception $e) {
             DB::rollBack();
+
             return response()->json(['success' => false, 'message' => 'Normalization failed: ' . $e->getMessage()], 500);
         }
 
         $scheme = HmoScheme::find($schemeId);
+
         return response()->json([
             'success' => true,
             'message' => "Normalized {$scheme->name}: {$created} created, {$updated} updated across {$hmoIds->count()} HMO(s).",
@@ -1288,35 +1390,38 @@ class TariffManagementController extends Controller
         if ($existing) {
             $existing->update([
                 'payable_amount' => $payable,
-                'claims_amount'  => $claims,
-                'coverage_mode'  => $mode,
+                'claims_amount' => $claims,
+                'coverage_mode' => $mode,
             ]);
+
             return 'updated';
         }
 
         HmoTariff::create([
-            'hmo_id'         => $hmoId,
-            'product_id'     => $productId,
-            'service_id'     => $serviceId,
+            'hmo_id' => $hmoId,
+            'product_id' => $productId,
+            'service_id' => $serviceId,
             'payable_amount' => $payable,
-            'claims_amount'  => $claims,
-            'coverage_mode'  => $mode,
+            'claims_amount' => $claims,
+            'coverage_mode' => $mode,
         ]);
+
         return 'created';
     }
+
     /**
      * Export Consolidated — One row per item, entities as columns.
      */
     private function exportConsolidated(Request $request)
     {
-        $layout    = $request->input('layout'); // consolidated_hmo | consolidated_scheme
-        $type      = $request->input('type', '');
+        $layout = $request->input('layout'); // consolidated_hmo | consolidated_scheme
+        $type = $request->input('type', '');
         $prodCatId = $request->input('product_category_id', '');
-        $svcCatId  = $request->input('service_category_id', '');
+        $svcCatId = $request->input('service_category_id', '');
 
         // 1. Determine Entities (Columns)
         if ($layout === 'consolidated_scheme') {
-            $entities = HmoScheme::whereHas('hmos', fn($q) => $q->where('status', 1))
+            $entities = HmoScheme::whereHas('hmos', fn ($q) => $q->where('status', 1))
                 ->orderBy('name')
                 ->get();
             $entityType = 'Scheme';
@@ -1331,13 +1436,17 @@ class TariffManagementController extends Controller
 
         if ($type !== 'service') {
             $pQuery = Product::with('price', 'category')->where('status', 1);
-            if ($prodCatId) $pQuery->where('category_id', $prodCatId);
+            if ($prodCatId) {
+                $pQuery->where('category_id', $prodCatId);
+            }
             $products = $pQuery->orderBy('product_name')->get();
         }
 
         if ($type !== 'product') {
             $sQuery = Service::with('price', 'category')->where('status', 1);
-            if ($svcCatId) $sQuery->where('category_id', $svcCatId);
+            if ($svcCatId) {
+                $sQuery->where('category_id', $svcCatId);
+            }
             $services = $sQuery->orderBy('service_name')->get();
         }
 
@@ -1364,7 +1473,7 @@ class TariffManagementController extends Controller
             $sheet->setCellValue($col . '2', "{$name} Payable");
             $col++;
             $sheet->setCellValue($col . '2', "{$name} Mode");
-            
+
             // Style entity group
             $endCol = $col;
             $sheet->getStyle("{$startCol}2:{$endCol}2")->getFont()->setBold(true);
@@ -1377,14 +1486,15 @@ class TariffManagementController extends Controller
         $items = collect($products)->concat($services);
 
         // Pre-fetch all tariffs for efficiency
-        $allTariffs = HmoTariff::all()->groupBy(fn($t) => 
-            ($t->product_id ? 'p'.$t->product_id : 's'.$t->service_id) . '_' . $t->hmo_id
+        $allTariffs = HmoTariff::all()->groupBy(
+            fn ($t) =>
+            ($t->product_id ? 'p' . $t->product_id : 's' . $t->service_id) . '_' . $t->hmo_id
         );
 
         foreach ($items as $item) {
             $isProd = $item instanceof Product;
-            $itemId = $isProd ? 'p'.$item->id : 's'.$item->id;
-            
+            $itemId = $isProd ? 'p' . $item->id : 's' . $item->id;
+
             $sheet->setCellValue("A{$rowIdx}", $isProd ? ($item->product_code ?? '') : ($item->service_code ?? ''));
             $sheet->setCellValue("B{$rowIdx}", $isProd ? $item->product_name : $item->service_name);
             $sheet->setCellValue("C{$rowIdx}", $isProd ? 'Product' : 'Service');
@@ -1409,7 +1519,9 @@ class TariffManagementController extends Controller
                     $sheet->setCellValue($col . $rowIdx, $tariff->coverage_mode);
                     $col++;
                 } else {
-                    $col++; $col++; $col++; // skip 3 columns
+                    $col++;
+                    $col++;
+                    $col++; // skip 3 columns
                 }
             }
             $rowIdx++;
@@ -1422,11 +1534,13 @@ class TariffManagementController extends Controller
         $writer->save('php://output');
         exit;
     }
+
     public function getOverrides(Request $request)
     {
         $overrides = TariffOverride::with(['hmo', 'scheme'])->orderBy('id', 'desc')->get();
-        $formatted = $overrides->map(function($o) {
+        $formatted = $overrides->map(function ($o) {
             $context = $o->hmo_id ? 'HMO: ' . $o->hmo->name : 'Scheme: ' . $o->scheme->name;
+
             return [
                 'id' => $o->id,
                 'context' => $context,
@@ -1437,6 +1551,7 @@ class TariffManagementController extends Controller
                 'is_active' => $o->is_active ? 'Active' : 'Inactive',
             ];
         });
+
         return response()->json(['data' => $formatted]);
     }
 
@@ -1464,9 +1579,10 @@ class TariffManagementController extends Controller
                 [
                     'override_type' => $request->override_type,
                     'amount' => $request->amount,
-                    'is_active' => 1
+                    'is_active' => 1,
                 ]
             );
+
             return response()->json(['success' => true, 'message' => 'Override saved successfully']);
         } catch (\Exception $e) {
             return response()->json(['success' => false, 'message' => 'Failed to save override: ' . $e->getMessage()], 500);
@@ -1477,6 +1593,7 @@ class TariffManagementController extends Controller
     {
         try {
             TariffOverride::findOrFail($id)->delete();
+
             return response()->json(['success' => true, 'message' => 'Override deleted successfully']);
         } catch (\Exception $e) {
             return response()->json(['success' => false, 'message' => 'Failed to delete override: ' . $e->getMessage()], 500);
@@ -1509,7 +1626,9 @@ class TariffManagementController extends Controller
 
         if ($type === 'product') {
             $product = \App\Models\Product::with('price')->find($id);
-            if (!$product) return response()->json(['success' => false, 'message' => 'Product not found'], 404);
+            if (!$product) {
+                return response()->json(['success' => false, 'message' => 'Product not found'], 404);
+            }
             $name = $product->product_name;
 
             $batch = \App\Models\StockBatch::active()->where('product_id', $id)->latest()->first();
@@ -1520,7 +1639,9 @@ class TariffManagementController extends Controller
             }
         } elseif ($type === 'service') {
             $service = \App\Models\Service::with('price')->find($id);
-            if (!$service) return response()->json(['success' => false, 'message' => 'Service not found'], 404);
+            if (!$service) {
+                return response()->json(['success' => false, 'message' => 'Service not found'], 404);
+            }
             $name = $service->service_name;
             $basePrice = $service->price->sale_price ?? 0;
         } else {
@@ -1531,8 +1652,8 @@ class TariffManagementController extends Controller
             'success' => true,
             'data' => [
                 'name' => $name,
-                'base_price' => round($basePrice, 2)
-            ]
+                'base_price' => round($basePrice, 2),
+            ],
         ]);
     }
 }

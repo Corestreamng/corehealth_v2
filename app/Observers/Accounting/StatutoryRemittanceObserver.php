@@ -3,7 +3,6 @@
 namespace App\Observers\Accounting;
 
 use App\Models\Accounting\Account;
-use App\Models\Accounting\JournalEntry;
 use App\Models\Accounting\StatutoryRemittance;
 use App\Services\Accounting\AccountingService;
 use Illuminate\Support\Facades\App;
@@ -36,7 +35,7 @@ class StatutoryRemittanceObserver
                 Log::error('StatutoryRemittanceObserver: Failed to create payment journal entry', [
                     'remittance_id' => $remittance->id,
                     'error' => $e->getMessage(),
-                    'trace' => $e->getTraceAsString()
+                    'trace' => $e->getTraceAsString(),
                 ]);
             }
         }
@@ -49,7 +48,7 @@ class StatutoryRemittanceObserver
                 Log::error('StatutoryRemittanceObserver: Failed to reverse payment journal entry', [
                     'remittance_id' => $remittance->id,
                     'error' => $e->getMessage(),
-                    'trace' => $e->getTraceAsString()
+                    'trace' => $e->getTraceAsString(),
                 ]);
             }
         }
@@ -70,8 +69,9 @@ class StatutoryRemittanceObserver
             Log::warning('StatutoryRemittanceObserver: PayHead has no liability account linked', [
                 'remittance_id' => $remittance->id,
                 'pay_head_id' => $remittance->pay_head_id,
-                'pay_head_name' => $remittance->payHead?->name
+                'pay_head_name' => $remittance->payHead?->name,
             ]);
+
             return;
         }
 
@@ -85,8 +85,9 @@ class StatutoryRemittanceObserver
             if (!$bankAccount) {
                 Log::error('StatutoryRemittanceObserver: Neither bank account nor cash account found', [
                     'remittance_id' => $remittance->id,
-                    'bank_id' => $remittance->bank_id
+                    'bank_id' => $remittance->bank_id,
                 ]);
+
                 return;
             }
         }
@@ -117,7 +118,7 @@ class StatutoryRemittanceObserver
                 'debit_amount' => 0,
                 'credit_amount' => $remittance->amount,
                 'description' => "Payment to {$remittance->payee_name}",
-            ]
+            ],
         ];
 
         // Create and post the journal entry
@@ -135,7 +136,7 @@ class StatutoryRemittanceObserver
             'remittance_id' => $remittance->id,
             'journal_entry_id' => $journalEntry->id,
             'amount' => $remittance->amount,
-            'pay_head' => $remittance->payHead->name
+            'pay_head' => $remittance->payHead->name,
         ]);
     }
 
@@ -146,8 +147,9 @@ class StatutoryRemittanceObserver
     {
         if (!$remittance->journal_entry_id) {
             Log::info('StatutoryRemittanceObserver: No journal entry to reverse', [
-                'remittance_id' => $remittance->id
+                'remittance_id' => $remittance->id,
             ]);
+
             return;
         }
 
@@ -156,8 +158,9 @@ class StatutoryRemittanceObserver
         if (!$journalEntry || !$journalEntry->canReverse()) {
             Log::info('StatutoryRemittanceObserver: Journal entry cannot be reversed', [
                 'remittance_id' => $remittance->id,
-                'journal_entry_id' => $remittance->journal_entry_id
+                'journal_entry_id' => $remittance->journal_entry_id,
             ]);
+
             return;
         }
 
@@ -178,7 +181,7 @@ class StatutoryRemittanceObserver
         Log::info('StatutoryRemittanceObserver: Journal entry reversed for voided remittance', [
             'remittance_id' => $remittance->id,
             'original_je_id' => $journalEntry->id,
-            'reversal_je_id' => $reversalEntry->id
+            'reversal_je_id' => $reversalEntry->id,
         ]);
     }
 }

@@ -9,7 +9,8 @@ use OwenIt\Auditing\Contracts\Auditable;
 
 class ChildGrowthRecord extends Model implements Auditable
 {
-    use HasFactory, SoftDeletes;
+    use HasFactory;
+    use SoftDeletes;
     use \OwenIt\Auditing\Auditable;
 
     protected $fillable = [
@@ -58,7 +59,7 @@ class ChildGrowthRecord extends Model implements Auditable
     public function isUnderweight()
     {
         return in_array($this->nutritional_status, [
-            'mild_underweight', 'moderate_underweight', 'severe_underweight'
+            'mild_underweight', 'moderate_underweight', 'severe_underweight',
         ]);
     }
 

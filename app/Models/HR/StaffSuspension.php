@@ -30,7 +30,7 @@ class StaffSuspension extends Model implements Auditable
         'lifted_by',
         'lifted_at',
         'lift_reason',
-        'issued_by'
+        'issued_by',
     ];
 
     protected $casts = [
@@ -39,12 +39,12 @@ class StaffSuspension extends Model implements Auditable
         'lifted_at' => 'datetime',
     ];
 
-    const TYPE_PAID = 'paid';
-    const TYPE_UNPAID = 'unpaid';
+    public const TYPE_PAID = 'paid';
+    public const TYPE_UNPAID = 'unpaid';
 
-    const STATUS_ACTIVE = 'active';
-    const STATUS_LIFTED = 'lifted';
-    const STATUS_EXPIRED = 'expired';
+    public const STATUS_ACTIVE = 'active';
+    public const STATUS_LIFTED = 'lifted';
+    public const STATUS_EXPIRED = 'expired';
 
     /**
      * Boot method
@@ -83,6 +83,7 @@ class StaffSuspension extends Model implements Auditable
             ->first();
 
         $sequence = $last ? (int) substr($last->suspension_number, -6) + 1 : 1;
+
         return $prefix . $year . str_pad($sequence, 6, '0', STR_PAD_LEFT);
     }
 

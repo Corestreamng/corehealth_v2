@@ -2,9 +2,9 @@
 
 namespace App\Models;
 
+use App\Traits\IsAuditable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use App\Traits\IsAuditable;
 use OwenIt\Auditing\Contracts\Auditable;
 
 /**
@@ -55,16 +55,16 @@ class StockBatchTransaction extends Model implements Auditable
     /**
      * Transaction type constants
      */
-    const TYPE_IN = 'in';
-    const TYPE_OUT = 'out';
-    const TYPE_ADJUSTMENT = 'adjustment';
-    const TYPE_TRANSFER_OUT = 'transfer_out';
-    const TYPE_TRANSFER_IN = 'transfer_in';
-    const TYPE_RETURN = 'return';
-    const TYPE_EXPIRED = 'expired';
-    const TYPE_DAMAGED = 'damaged';
-    const TYPE_PO_RETURN = 'po_return';    // Supplier return — stock deducted, AP/expense reversed
-    const TYPE_REQ_RETURN = 'req_return';  // Requisition return — stock moves back to origin store
+    public const TYPE_IN = 'in';
+    public const TYPE_OUT = 'out';
+    public const TYPE_ADJUSTMENT = 'adjustment';
+    public const TYPE_TRANSFER_OUT = 'transfer_out';
+    public const TYPE_TRANSFER_IN = 'transfer_in';
+    public const TYPE_RETURN = 'return';
+    public const TYPE_EXPIRED = 'expired';
+    public const TYPE_DAMAGED = 'damaged';
+    public const TYPE_PO_RETURN = 'po_return';    // Supplier return — stock deducted, AP/expense reversed
+    public const TYPE_REQ_RETURN = 'req_return';  // Requisition return — stock moves back to origin store
 
     /**
      * Get all transaction types
@@ -72,16 +72,16 @@ class StockBatchTransaction extends Model implements Auditable
     public static function getTypes(): array
     {
         return [
-            self::TYPE_IN          => 'Stock In',
-            self::TYPE_OUT         => 'Stock Out',
-            self::TYPE_ADJUSTMENT  => 'Adjustment',
+            self::TYPE_IN => 'Stock In',
+            self::TYPE_OUT => 'Stock Out',
+            self::TYPE_ADJUSTMENT => 'Adjustment',
             self::TYPE_TRANSFER_OUT => 'Transfer Out',
-            self::TYPE_TRANSFER_IN  => 'Transfer In',
-            self::TYPE_RETURN      => 'Return',
-            self::TYPE_EXPIRED     => 'Expired',
-            self::TYPE_DAMAGED     => 'Damaged',
-            self::TYPE_PO_RETURN   => 'PO Return',
-            self::TYPE_REQ_RETURN  => 'Requisition Return',
+            self::TYPE_TRANSFER_IN => 'Transfer In',
+            self::TYPE_RETURN => 'Return',
+            self::TYPE_EXPIRED => 'Expired',
+            self::TYPE_DAMAGED => 'Damaged',
+            self::TYPE_PO_RETURN => 'PO Return',
+            self::TYPE_REQ_RETURN => 'Requisition Return',
         ];
     }
 

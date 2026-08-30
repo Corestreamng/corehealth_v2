@@ -2,8 +2,8 @@
 
 namespace App\Services;
 
-use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\DB;
 
 class AuditReportService
 {
@@ -24,6 +24,7 @@ class AuditReportService
         if (isset($filters['max_amount']) && $filters['max_amount'] !== '') {
             $query->where('payments.total', '<=', $filters['max_amount']);
         }
+
         return $query;
     }
 
@@ -44,6 +45,7 @@ class AuditReportService
         if (isset($filters['max_amount']) && $filters['max_amount'] !== '') {
             $query->where('patient_deposits.amount', '<=', $filters['max_amount']);
         }
+
         return $query;
     }
 
@@ -210,7 +212,7 @@ class AuditReportService
             $reqStats = $requestsQuery->select([
                     DB::raw("CASE WHEN posr.product_id IS NOT NULL THEN 'Product' ELSE 'Service' END as item_type"),
                     DB::raw("COUNT(*) as txn_count"),
-                    DB::raw("SUM(COALESCE(posr.payable_amount, posr.amount)) as total_revenue")
+                    DB::raw("SUM(COALESCE(posr.payable_amount, posr.amount)) as total_revenue"),
                 ])
                 ->groupBy('item_type')
                 ->get();
@@ -219,7 +221,7 @@ class AuditReportService
                 $stats[$r->item_type] = [
                     'type' => $r->item_type,
                     'count' => $r->txn_count,
-                    'revenue' => (float)$r->total_revenue
+                    'revenue' => (float)$r->total_revenue,
                 ];
             }
         }
@@ -229,7 +231,7 @@ class AuditReportService
         if ($depositsQuery) {
             $depStats = $depositsQuery->select([
                     DB::raw("COUNT(*) as txn_count"),
-                    DB::raw("SUM(patient_deposits.amount) as total_revenue")
+                    DB::raw("SUM(patient_deposits.amount) as total_revenue"),
                 ])
                 ->first();
 
@@ -237,7 +239,7 @@ class AuditReportService
                 $stats['Wallet Deposit'] = [
                     'type' => 'Wallet Deposit',
                     'count' => $depStats->txn_count,
-                    'revenue' => (float)$depStats->total_revenue
+                    'revenue' => (float)$depStats->total_revenue,
                 ];
             }
         }
@@ -247,7 +249,7 @@ class AuditReportService
         if ($settlementsQuery) {
             $settleStats = $settlementsQuery->select([
                     DB::raw("COUNT(*) as txn_count"),
-                    DB::raw("SUM(payments.total) as total_revenue")
+                    DB::raw("SUM(payments.total) as total_revenue"),
                 ])
                 ->first();
 
@@ -255,7 +257,7 @@ class AuditReportService
                 $stats['Staff Settlement'] = [
                     'type' => 'Staff Settlement',
                     'count' => $settleStats->txn_count,
-                    'revenue' => (float)$settleStats->total_revenue
+                    'revenue' => (float)$settleStats->total_revenue,
                 ];
             }
         }
@@ -278,7 +280,7 @@ class AuditReportService
             $prodStats = $prodQuery->select([
                     'pc.category_name',
                     DB::raw("COUNT(*) as txn_count"),
-                    DB::raw("SUM(COALESCE(posr.payable_amount, posr.amount)) as total_revenue")
+                    DB::raw("SUM(COALESCE(posr.payable_amount, posr.amount)) as total_revenue"),
                 ])
                 ->groupBy('pc.id', 'pc.category_name')
                 ->get();
@@ -289,7 +291,7 @@ class AuditReportService
                     'type' => 'Product',
                     'category' => $name,
                     'count' => $p->txn_count,
-                    'revenue' => (float)$p->total_revenue
+                    'revenue' => (float)$p->total_revenue,
                 ];
             }
 
@@ -298,7 +300,7 @@ class AuditReportService
             $servStats = $servQuery->select([
                     'sc.category_name',
                     DB::raw("COUNT(*) as txn_count"),
-                    DB::raw("SUM(COALESCE(posr.payable_amount, posr.amount)) as total_revenue")
+                    DB::raw("SUM(COALESCE(posr.payable_amount, posr.amount)) as total_revenue"),
                 ])
                 ->groupBy('sc.id', 'sc.category_name')
                 ->get();
@@ -309,7 +311,7 @@ class AuditReportService
                     'type' => 'Service',
                     'category' => $name,
                     'count' => $s->txn_count,
-                    'revenue' => (float)$s->total_revenue
+                    'revenue' => (float)$s->total_revenue,
                 ];
             }
         }
@@ -319,7 +321,7 @@ class AuditReportService
         if ($depositsQuery) {
             $depStats = $depositsQuery->select([
                     DB::raw("COUNT(*) as txn_count"),
-                    DB::raw("SUM(patient_deposits.amount) as total_revenue")
+                    DB::raw("SUM(patient_deposits.amount) as total_revenue"),
                 ])
                 ->first();
 
@@ -328,7 +330,7 @@ class AuditReportService
                     'type' => 'Wallet Deposit',
                     'category' => 'Wallet Top-up',
                     'count' => $depStats->txn_count,
-                    'revenue' => (float)$depStats->total_revenue
+                    'revenue' => (float)$depStats->total_revenue,
                 ];
             }
         }
@@ -338,7 +340,7 @@ class AuditReportService
         if ($settlementsQuery) {
             $settleStats = $settlementsQuery->select([
                     DB::raw("COUNT(*) as txn_count"),
-                    DB::raw("SUM(payments.total) as total_revenue")
+                    DB::raw("SUM(payments.total) as total_revenue"),
                 ])
                 ->first();
 
@@ -347,7 +349,7 @@ class AuditReportService
                     'type' => 'Staff Settlement',
                     'category' => 'Staff Bill Settlement',
                     'count' => $settleStats->txn_count,
-                    'revenue' => (float)$settleStats->total_revenue
+                    'revenue' => (float)$settleStats->total_revenue,
                 ];
             }
         }
@@ -374,7 +376,7 @@ class AuditReportService
             $prodStats = $prodQuery->select([
                     'pr.product_name',
                     DB::raw("COUNT(*) as txn_count"),
-                    DB::raw("SUM(COALESCE(posr.payable_amount, posr.amount)) as total_revenue")
+                    DB::raw("SUM(COALESCE(posr.payable_amount, posr.amount)) as total_revenue"),
                 ])
                 ->groupBy('pr.id', 'pr.product_name')
                 ->orderBy(DB::raw("SUM(COALESCE(posr.payable_amount, posr.amount))"), 'desc')
@@ -386,7 +388,7 @@ class AuditReportService
                     'type' => 'Product',
                     'name' => $p->product_name ?: 'Unknown Product',
                     'count' => $p->txn_count,
-                    'revenue' => (float)$p->total_revenue
+                    'revenue' => (float)$p->total_revenue,
                 ];
             }
 
@@ -395,7 +397,7 @@ class AuditReportService
             $servStats = $servQuery->select([
                     'sv.service_name',
                     DB::raw("COUNT(*) as txn_count"),
-                    DB::raw("SUM(COALESCE(posr.payable_amount, posr.amount)) as total_revenue")
+                    DB::raw("SUM(COALESCE(posr.payable_amount, posr.amount)) as total_revenue"),
                 ])
                 ->groupBy('sv.id', 'sv.service_name')
                 ->orderBy(DB::raw("SUM(COALESCE(posr.payable_amount, posr.amount))"), 'desc')
@@ -407,7 +409,7 @@ class AuditReportService
                     'type' => 'Service',
                     'name' => $s->service_name ?: 'Unknown Service',
                     'count' => $s->txn_count,
-                    'revenue' => (float)$s->total_revenue
+                    'revenue' => (float)$s->total_revenue,
                 ];
             }
         }

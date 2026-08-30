@@ -52,10 +52,10 @@ class PurchaseOrderItem extends Model implements Auditable
     /**
      * Status constants
      */
-    const STATUS_PENDING = 'pending';
-    const STATUS_PARTIAL = 'partial';
-    const STATUS_RECEIVED = 'received';
-    const STATUS_CANCELLED = 'cancelled';
+    public const STATUS_PENDING = 'pending';
+    public const STATUS_PARTIAL = 'partial';
+    public const STATUS_RECEIVED = 'received';
+    public const STATUS_CANCELLED = 'cancelled';
 
     // ===== RELATIONSHIPS =====
 
@@ -115,6 +115,7 @@ class PurchaseOrderItem extends Model implements Auditable
     public function getActualLineTotalAttribute(): float
     {
         $cost = $this->actual_unit_cost ?? $this->unit_cost;
+
         return $this->received_qty * $cost;
     }
 

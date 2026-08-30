@@ -5,7 +5,6 @@ namespace Tests\Feature\Billing;
 use App\Models\Patient;
 use App\Models\Product;
 use App\Models\ProductOrServiceRequest;
-use App\Models\User;
 use Tests\TestCase;
 
 class PrescriptionBillingTest extends TestCase
@@ -51,7 +50,6 @@ class PrescriptionBillingTest extends TestCase
         $this->assertNotNull($request->id);
     }
 
-
     /** @test */
     public function test_billing_total_calculated_from_price_model()
     {
@@ -62,4 +60,3 @@ class PrescriptionBillingTest extends TestCase
         $this->assertEquals(1500, $total);
     }
 }
-

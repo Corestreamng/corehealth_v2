@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Log;
 class OpenAiAdapter implements LlmProviderInterface
 {
     protected string $apiKey;
+
     protected string $baseUrl;
 
     public function __construct(string $apiKey, string $baseUrl = 'https://api.openai.com/v1')
@@ -39,10 +40,12 @@ class OpenAiAdapter implements LlmProviderInterface
         if ($response->failed()) {
             $error = $response->json('error.message', $response->body());
             Log::error('OpenAI API error', ['status' => $response->status(), 'error' => $error]);
+
             throw new \Exception("OpenAI API error: {$error}");
         }
 
         $data = $response->json();
+
         return $data['choices'][0]['message']['content'] ?? '';
     }
 
@@ -61,8 +64,9 @@ class OpenAiAdapter implements LlmProviderInterface
             // Filter to chat models only
             $chatModels = collect($models)->filter(function ($m) {
                 $id = $m['id'] ?? '';
+
                 return str_starts_with($id, 'gpt-') || str_contains($id, 'o1') || str_contains($id, 'o3');
-            })->map(fn($m) => [
+            })->map(fn ($m) => [
                 'id' => $m['id'],
                 'name' => $m['id'],
                 'context_window' => null,
@@ -71,6 +75,7 @@ class OpenAiAdapter implements LlmProviderInterface
             return count($chatModels) > 0 ? $chatModels : $this->getFallbackModels();
         } catch (\Exception $e) {
             Log::warning('OpenAI listModels exception', ['error' => $e->getMessage()]);
+
             return $this->getFallbackModels();
         }
     }
@@ -79,6 +84,7 @@ class OpenAiAdapter implements LlmProviderInterface
     {
         try {
             $models = $this->listModels();
+
             return [
                 'valid' => count($models) > 0,
                 'message' => count($models) > 0 ? 'Connected successfully' : 'No models found',

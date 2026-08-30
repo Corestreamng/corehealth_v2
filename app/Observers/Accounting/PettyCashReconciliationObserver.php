@@ -42,8 +42,9 @@ class PettyCashReconciliationObserver
             if ($reconciliation->adjustment_entry_id) {
                 Log::info('PettyCashReconciliationObserver: Reconciliation already has adjustment JE', [
                     'reconciliation_id' => $reconciliation->id,
-                    'adjustment_entry_id' => $reconciliation->adjustment_entry_id
+                    'adjustment_entry_id' => $reconciliation->adjustment_entry_id,
                 ]);
+
                 return;
             }
 
@@ -51,7 +52,7 @@ class PettyCashReconciliationObserver
                 'reconciliation_id' => $reconciliation->id,
                 'reconciliation_number' => $reconciliation->reconciliation_number,
                 'variance' => $reconciliation->variance,
-                'status' => $reconciliation->status
+                'status' => $reconciliation->status,
             ]);
 
             try {
@@ -60,7 +61,7 @@ class PettyCashReconciliationObserver
                 Log::error('PettyCashReconciliationObserver: Failed to create adjustment entry', [
                     'reconciliation_id' => $reconciliation->id,
                     'error' => $e->getMessage(),
-                    'trace' => $e->getTraceAsString()
+                    'trace' => $e->getTraceAsString(),
                 ]);
             }
         }
@@ -77,8 +78,9 @@ class PettyCashReconciliationObserver
         $fund = $reconciliation->fund;
         if (!$fund || !$fund->account_id) {
             Log::warning('PettyCashReconciliationObserver: Fund or account not configured', [
-                'reconciliation_id' => $reconciliation->id
+                'reconciliation_id' => $reconciliation->id,
             ]);
+
             return;
         }
 
@@ -89,8 +91,9 @@ class PettyCashReconciliationObserver
 
         if (!$cashOverShortAccount) {
             Log::error('PettyCashReconciliationObserver: Cash Over/Short account not found', [
-                'expected_code' => PettyCashReconciliation::CASH_OVER_SHORT_ACCOUNT_CODE
+                'expected_code' => PettyCashReconciliation::CASH_OVER_SHORT_ACCOUNT_CODE,
             ]);
+
             return;
         }
 
@@ -125,7 +128,7 @@ class PettyCashReconciliationObserver
                     'credit_amount' => $absVariance,
                     'description' => 'Petty Cash Adjustment - Shortage',
                     'category' => 'petty_cash_adjustment',
-                ]
+                ],
             ];
         } else {
             // OVERAGE: Extra cash found
@@ -150,7 +153,7 @@ class PettyCashReconciliationObserver
                     'credit_amount' => $absVariance,
                     'description' => 'Cash Overage - ' . ($reconciliation->notes ?? 'Reconciliation adjustment'),
                     'category' => 'petty_cash_adjustment',
-                ]
+                ],
             ];
         }
 

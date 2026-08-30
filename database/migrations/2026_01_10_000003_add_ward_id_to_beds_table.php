@@ -2,8 +2,8 @@
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 /**
  * Migration: Add ward_id to Beds Table
@@ -25,8 +25,7 @@ use Illuminate\Support\Facades\DB;
  * @see App\Models\Bed
  * @see App\Models\Ward
  */
-return new class extends Migration
-{
+return new class () extends Migration {
     /**
      * Run the migrations.
      */
@@ -44,7 +43,7 @@ return new class extends Migration
                 'occupied',
                 'reserved',
                 'maintenance',
-                'out_of_service'
+                'out_of_service',
             ])->default('available')->after('status')
                 ->comment('Detailed bed availability status');
 

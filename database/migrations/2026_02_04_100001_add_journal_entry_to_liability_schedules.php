@@ -10,8 +10,7 @@ use Illuminate\Support\Facades\Schema;
  * This allows tracking the initial booking JE when a liability is created.
  * Journal Entry: DEBIT Bank, CREDIT Liability Account
  */
-return new class extends Migration
-{
+return new class () extends Migration {
     public function up()
     {
         Schema::table('liability_schedules', function (Blueprint $table) {

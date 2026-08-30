@@ -3,32 +3,34 @@
 use App\Http\Controllers\Account\accountsController;
 use App\Http\Controllers\Account\paymentController;
 use App\Http\Controllers\Account\productAccountController;
+use App\Http\Controllers\Admin\TariffManagementController;
 use App\Http\Controllers\AdmissionRequestController;
+use App\Http\Controllers\AuditWorkbenchController;
 use App\Http\Controllers\BankController;
 use App\Http\Controllers\BedController;
 use App\Http\Controllers\ChatController;
 use App\Http\Controllers\ChecklistTemplateController;
+use App\Http\Controllers\ClinicalContextController;
 use App\Http\Controllers\ClinicController;
 use App\Http\Controllers\DepartmentController;
 use App\Http\Controllers\Doctor\DoctorConsultationsController;
 use App\Http\Controllers\Doctor\DoctorDashboardController;
 use App\Http\Controllers\EncounterController;
 use App\Http\Controllers\HmoController;
-use App\Http\Controllers\HmoWorkbenchController;
-use App\Http\Controllers\ClinicalContextController;
 use App\Http\Controllers\HmoReportsController;
-use App\Http\Controllers\Admin\TariffManagementController;
-use App\Http\Controllers\AuditWorkbenchController;
+use App\Http\Controllers\HmoWorkbenchController;
 use App\Http\Controllers\HospitalConfigController;
-use App\Http\Controllers\TreatmentPlanController;
-use App\Http\Controllers\LabServiceRequestController;
 use App\Http\Controllers\ImagingServiceRequestController;
+use App\Http\Controllers\LabServiceRequestController;
+use App\Http\Controllers\MessagesController;
 use App\Http\Controllers\MiscBillController;
+use App\Http\Controllers\MorgueController;
 use App\Http\Controllers\MoveStockController;
 use App\Http\Controllers\NursingNoteController;
 use App\Http\Controllers\NursingNoteTypeController;
 use App\Http\Controllers\PatientAccountController;
 use App\Http\Controllers\PatientController;
+use App\Http\Controllers\PatientProfileController;
 use App\Http\Controllers\PermissionController;
 use App\Http\Controllers\PriceController;
 use App\Http\Controllers\ProductCategoryController;
@@ -39,20 +41,16 @@ use App\Http\Controllers\RoleController;
 use App\Http\Controllers\ServiceCategoryController;
 use App\Http\Controllers\ServiceController;
 use App\Http\Controllers\ServicePriceController;
-use App\Http\Controllers\TariffController;
-use App\Http\Controllers\ProcedureCategoryController;
+use App\Http\Controllers\SpecializationController;
 use App\Http\Controllers\StaffController;
 use App\Http\Controllers\StockController;
 use App\Http\Controllers\StoreController;
 use App\Http\Controllers\StoreStockController;
-use App\Http\Controllers\MorgueController;
+use App\Http\Controllers\TariffController;
+use App\Http\Controllers\TreatmentPlanController;
 use App\Http\Controllers\VitalSignController;
-use App\Http\Controllers\MessagesController;
-use App\Http\Controllers\PatientProfileController;
-use App\Http\Controllers\SpecializationController;
 use App\Http\Controllers\WardController;
 use App\Models\Clinic;
-use App\Models\PatientProfile;
 use App\Models\Staff;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
@@ -81,9 +79,10 @@ Route::get('/csrf-token', function () {
 Route::get('/test-dept-notifications', function () {
     $service = app(\App\Services\DepartmentNotificationService::class);
     $results = $service->sendTestMessages();
+
     return response()->json([
         'message' => 'Test messages sent',
-        'results' => $results
+        'results' => $results,
     ]);
 })->middleware('auth');
 
@@ -436,7 +435,7 @@ Route::group(['middleware' => ['auth']], function () {
                 ->map(function ($u) {
                     return [
                         "id" => $u->id,
-                        "name" => $u->surname . " " . $u->firstname . ($u->othername ? " " . $u->othername : "")
+                        "name" => $u->surname . " " . $u->firstname . ($u->othername ? " " . $u->othername : ""),
                     ];
                 });
 
@@ -791,9 +790,10 @@ Route::group(['middleware' => ['auth']], function () {
                         'id' => $combo->id,
                         'service_name' => $combo->service_name,
                         'price' => optional($combo->price)->sale_price ?? 0,
-                        'items_summary' => $items
+                        'items_summary' => $items,
                     ];
                 });
+
             return response()->json($combos);
         })->name('api.service-combos.search');
 

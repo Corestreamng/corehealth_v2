@@ -2,19 +2,20 @@
 
 namespace App\Models\Accounting;
 
+use App\Models\Department;
+use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use OwenIt\Auditing\Contracts\Auditable;
-use App\Models\User;
-use App\Models\Department;
-use App\Models\Accounting\CostCenter;
 
 class Budget extends Model implements Auditable
 {
-    use HasFactory, SoftDeletes, \OwenIt\Auditing\Auditable;
+    use HasFactory;
+    use SoftDeletes;
+    use \OwenIt\Auditing\Auditable;
 
     protected $fillable = [
         'budget_name',
@@ -48,15 +49,15 @@ class Budget extends Model implements Auditable
     ];
 
     // Status constants
-    const STATUS_DRAFT = 'draft';
-    const STATUS_PENDING_APPROVAL = 'pending_approval';
-    const STATUS_APPROVED = 'approved';
-    const STATUS_LOCKED = 'locked';
+    public const STATUS_DRAFT = 'draft';
+    public const STATUS_PENDING_APPROVAL = 'pending_approval';
+    public const STATUS_APPROVED = 'approved';
+    public const STATUS_LOCKED = 'locked';
 
     // Type constants
-    const TYPE_OPERATING = 'operating';
-    const TYPE_CAPITAL = 'capital';
-    const TYPE_REVENUE = 'revenue';
+    public const TYPE_OPERATING = 'operating';
+    public const TYPE_CAPITAL = 'capital';
+    public const TYPE_REVENUE = 'revenue';
 
     /**
      * Get the fiscal year for this budget.
@@ -178,6 +179,7 @@ class Budget extends Model implements Auditable
         if ($this->total_budgeted == 0) {
             return 0;
         }
+
         return ($this->total_variance / $this->total_budgeted) * 100;
     }
 }

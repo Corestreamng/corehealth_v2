@@ -2,9 +2,9 @@
 
 namespace App\Services;
 
+use Carbon\Carbon;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
-use Carbon\Carbon;
 
 class BackupService
 {
@@ -30,7 +30,9 @@ class BackupService
         ];
 
         foreach ($paths as $path) {
-            if (empty($path)) continue;
+            if (empty($path)) {
+                continue;
+            }
 
             // Check if file exists (absolute paths)
             if ($path !== 'mysqldump' && file_exists($path) && is_executable($path)) {
@@ -64,7 +66,9 @@ class BackupService
         ];
 
         foreach ($paths as $path) {
-            if (empty($path)) continue;
+            if (empty($path)) {
+                continue;
+            }
 
             if ($path !== 'mysql' && file_exists($path) && is_executable($path)) {
                 return $path;
@@ -113,6 +117,7 @@ class BackupService
         if (!$mysqldump) {
             $msg = 'mysqldump binary not found. Tried multiple paths. Set MYSQLDUMP_PATH in .env.';
             Log::channel('backup')->error($msg);
+
             return ['success' => false, 'filename' => null, 'message' => $msg, 'size' => null];
         }
 
@@ -156,6 +161,7 @@ class BackupService
             }
             $msg = "mysqldump failed (exit code: {$exitCode}): {$errorMsg}";
             Log::channel('backup')->error($msg);
+
             return ['success' => false, 'filename' => null, 'message' => $msg, 'size' => null];
         }
 
@@ -185,18 +191,18 @@ class BackupService
             $age = Carbon::createFromTimestamp($mtime)->diffForHumans();
 
             $backups[] = [
-                'filename'   => $basename,
-                'size'       => $size,
+                'filename' => $basename,
+                'size' => $size,
                 'size_human' => $this->humanFileSize($size),
                 'created_at' => Carbon::createFromTimestamp($mtime)->format('Y-m-d H:i:s'),
-                'age'        => $age,
-                'timestamp'  => $mtime,
+                'age' => $age,
+                'timestamp' => $mtime,
                 'compressed' => str_ends_with($basename, '.gz'),
             ];
         }
 
         // Sort newest first
-        usort($backups, fn($a, $b) => $b['timestamp'] - $a['timestamp']);
+        usort($backups, fn ($a, $b) => $b['timestamp'] - $a['timestamp']);
 
         return $backups;
     }
@@ -258,7 +264,7 @@ class BackupService
             return [
                 'success' => false,
                 'message' => 'mysql binary not found. Set MYSQL_PATH in .env.',
-                'pre_restore_backup' => $preRestore
+                'pre_restore_backup' => $preRestore,
             ];
         }
 
@@ -302,6 +308,7 @@ class BackupService
             $errorMsg = implode("\n", $output);
             $msg = "Restore failed (exit code: {$exitCode}): {$errorMsg}";
             Log::channel('backup')->error($msg);
+
             return ['success' => false, 'message' => $msg, 'pre_restore_backup' => $preRestore];
         }
 
@@ -324,7 +331,9 @@ class BackupService
         $filepath = $this->getBackupPath() . '/' . $filename;
 
         $mysqldump = $this->findMysqldump();
-        if (!$mysqldump) return null;
+        if (!$mysqldump) {
+            return null;
+        }
 
         $dbHost = config('database.connections.mysql.host', '127.0.0.1');
         $dbPort = config('database.connections.mysql.port', '3306');
@@ -348,12 +357,16 @@ class BackupService
         exec($cmd, $output, $exitCode);
 
         if ($exitCode !== 0 || !file_exists($filepath) || filesize($filepath) === 0) {
-            if (file_exists($filepath)) unlink($filepath);
+            if (file_exists($filepath)) {
+                unlink($filepath);
+            }
             Log::channel('backup')->warning("Pre-restore backup failed");
+
             return null;
         }
 
         Log::channel('backup')->info("Pre-restore backup created: {$filename}");
+
         return $filename;
     }
 
@@ -417,21 +430,22 @@ class BackupService
             foreach ($skipMounts as $s) {
                 if (str_starts_with($mp, $s)) {
                     $skip = true;
+
                     break;
                 }
             }
 
             if (!$skip) {
                 $drives[] = [
-                    'name'          => $device['name'] ?? '',
-                    'label'         => $device['label'] ?? $device['name'] ?? 'Unlabeled',
-                    'mountpoint'    => $mp,
-                    'filesystem'    => $device['fstype'] ?? 'unknown',
-                    'size'          => $device['size'] ?? 'unknown',
-                    'is_usb'        => $isUsb,
-                    'total_space'   => null,
-                    'used_space'    => null,
-                    'free_space'    => null,
+                    'name' => $device['name'] ?? '',
+                    'label' => $device['label'] ?? $device['name'] ?? 'Unlabeled',
+                    'mountpoint' => $mp,
+                    'filesystem' => $device['fstype'] ?? 'unknown',
+                    'size' => $device['size'] ?? 'unknown',
+                    'is_usb' => $isUsb,
+                    'total_space' => null,
+                    'used_space' => null,
+                    'free_space' => null,
                     'usage_percent' => null,
                 ];
             }
@@ -456,7 +470,9 @@ class BackupService
     protected function parseDfOutput(?string $output): array
     {
         $map = [];
-        if (empty($output)) return $map;
+        if (empty($output)) {
+            return $map;
+        }
 
         $lines = explode("\n", trim($output));
         // Skip header line
@@ -466,8 +482,8 @@ class BackupService
             $parts = preg_split('/\s+/', trim($line));
             if (count($parts) >= 5) {
                 $map[$parts[0]] = [
-                    'size'  => $parts[1],
-                    'used'  => $parts[2],
+                    'size' => $parts[1],
+                    'used' => $parts[2],
                     'avail' => $parts[3],
                     'pcent' => $parts[4],
                 ];
@@ -500,7 +516,9 @@ class BackupService
             $mp = $drive['mountpoint'];
 
             // Skip root filesystem — we already store there via storage/app
-            if ($mp === '/') continue;
+            if ($mp === '/') {
+                continue;
+            }
 
             $backupDir = rtrim($mp, '/') . '/.backups/corehealth';
 
@@ -508,12 +526,13 @@ class BackupService
                 if (!is_dir($backupDir)) {
                     if (!@mkdir($backupDir, 0755, true)) {
                         $results[] = [
-                            'drive'   => $drive['label'],
-                            'mount'   => $mp,
+                            'drive' => $drive['label'],
+                            'mount' => $mp,
                             'success' => false,
                             'message' => 'Could not create backup directory (permission denied)',
                         ];
                         $failed++;
+
                         continue;
                     }
                 }
@@ -521,8 +540,8 @@ class BackupService
                 $destFile = $backupDir . '/' . $filename;
                 if (@copy($sourceFile, $destFile)) {
                     $results[] = [
-                        'drive'   => $drive['label'],
-                        'mount'   => $mp,
+                        'drive' => $drive['label'],
+                        'mount' => $mp,
                         'success' => true,
                         'message' => 'Backup replicated successfully',
                     ];
@@ -532,8 +551,8 @@ class BackupService
                     $this->pruneExternalDriveBackups($backupDir);
                 } else {
                     $results[] = [
-                        'drive'   => $drive['label'],
-                        'mount'   => $mp,
+                        'drive' => $drive['label'],
+                        'mount' => $mp,
                         'success' => false,
                         'message' => 'Copy failed (permission denied or disk full)',
                     ];
@@ -541,8 +560,8 @@ class BackupService
                 }
             } catch (\Exception $e) {
                 $results[] = [
-                    'drive'   => $drive['label'],
-                    'mount'   => $mp,
+                    'drive' => $drive['label'],
+                    'mount' => $mp,
                     'success' => false,
                     'message' => $e->getMessage(),
                 ];
@@ -581,30 +600,34 @@ class BackupService
 
         foreach ($drives as $drive) {
             $mp = $drive['mountpoint'];
-            if ($mp === '/') continue;
+            if ($mp === '/') {
+                continue;
+            }
 
             $backupDir = rtrim($mp, '/') . '/.backups/corehealth';
-            if (!is_dir($backupDir)) continue;
+            if (!is_dir($backupDir)) {
+                continue;
+            }
 
             $files = glob($backupDir . '/*.sql*');
             foreach ($files as $file) {
                 $mtime = filemtime($file);
                 $backups[] = [
-                    'filename'     => basename($file),
-                    'drive_label'  => $drive['label'],
-                    'drive_mount'  => $mp,
-                    'full_path'    => $file,
-                    'size'         => filesize($file),
-                    'size_human'   => $this->humanFileSize(filesize($file)),
-                    'created_at'   => Carbon::createFromTimestamp($mtime)->format('Y-m-d H:i:s'),
-                    'age'          => Carbon::createFromTimestamp($mtime)->diffForHumans(),
-                    'is_usb'       => $drive['is_usb'],
-                    'compressed'   => str_ends_with(basename($file), '.gz'),
+                    'filename' => basename($file),
+                    'drive_label' => $drive['label'],
+                    'drive_mount' => $mp,
+                    'full_path' => $file,
+                    'size' => filesize($file),
+                    'size_human' => $this->humanFileSize(filesize($file)),
+                    'created_at' => Carbon::createFromTimestamp($mtime)->format('Y-m-d H:i:s'),
+                    'age' => Carbon::createFromTimestamp($mtime)->diffForHumans(),
+                    'is_usb' => $drive['is_usb'],
+                    'compressed' => str_ends_with(basename($file), '.gz'),
                 ];
             }
         }
 
-        usort($backups, fn($a, $b) => strtotime($b['created_at']) - strtotime($a['created_at']));
+        usort($backups, fn ($a, $b) => strtotime($b['created_at']) - strtotime($a['created_at']));
 
         return $backups;
     }
@@ -675,6 +698,7 @@ class BackupService
     {
         $size = ['B', 'KB', 'MB', 'GB', 'TB'];
         $factor = floor((strlen($bytes) - 1) / 3);
+
         return sprintf("%.{$decimals}f", $bytes / pow(1024, $factor)) . ' ' . ($size[$factor] ?? 'B');
     }
 }

@@ -26,8 +26,7 @@ use Illuminate\Support\Facades\Schema;
  * - posted: Posted to ledger (affects account balances)
  * - reversed: Has been reversed by another entry
  */
-return new class extends Migration
-{
+return new class () extends Migration {
     /**
      * Run the migrations.
      */

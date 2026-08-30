@@ -2,9 +2,9 @@
 
 namespace App\Observers;
 
-use App\Models\ServicePrice;
 use App\Models\Hmo;
 use App\Models\HmoTariff;
+use App\Models\ServicePrice;
 use Illuminate\Support\Facades\Log;
 
 class ServicePriceObserver

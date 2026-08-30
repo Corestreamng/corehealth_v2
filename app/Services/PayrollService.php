@@ -3,10 +3,10 @@
 namespace App\Services;
 
 use App\Models\Expense;
+use App\Models\HR\PayHead;
 use App\Models\HR\PayrollBatch;
 use App\Models\HR\PayrollItem;
 use App\Models\HR\PayrollItemDetail;
-use App\Models\HR\PayHead;
 use App\Models\HR\StaffSalaryProfile;
 use App\Models\Staff;
 use App\Models\User;
@@ -31,7 +31,7 @@ class PayrollService
                   PayrollBatch::STATUS_DRAFT,
                   PayrollBatch::STATUS_SUBMITTED,
                   PayrollBatch::STATUS_APPROVED,
-                  PayrollBatch::STATUS_PAID
+                  PayrollBatch::STATUS_PAID,
               ]);
         })->with(['staff.user', 'staff.department:id,name', 'payrollBatch:id,batch_number,name,status']);
 
@@ -149,7 +149,7 @@ class PayrollService
                 // Only skip duplicates that weren't selected for replacement
                 $existingPayrollStaffIds = collect($existing)
                     ->pluck('staff_id')
-                    ->filter(fn($id) => !in_array($id, $replaceStaffIds))
+                    ->filter(fn ($id) => !in_array($id, $replaceStaffIds))
                     ->toArray();
             } elseif ($duplicateAction === 'skip') {
                 $existing = $this->checkExistingPayrollForPeriod(
@@ -185,6 +185,7 @@ class PayrollService
                 // Skip if this staff already has payroll for this period (when in existingPayrollStaffIds)
                 if (in_array($staff->id, $existingPayrollStaffIds)) {
                     $skipped++;
+
                     continue;
                 }
 
@@ -246,7 +247,7 @@ class PayrollService
         ]);
 
         // Process additions first
-        foreach ($profile->items()->whereHas('payHead', fn($q) => $q->where('type', PayHead::TYPE_ADDITION))->get() as $profileItem) {
+        foreach ($profile->items()->whereHas('payHead', fn ($q) => $q->where('type', PayHead::TYPE_ADDITION))->get() as $profileItem) {
             $amount = $profileItem->calculateAmount($basicSalary, $grossSalary);
 
             PayrollItemDetail::create([
@@ -265,7 +266,7 @@ class PayrollService
         $grossSalary = $basicSalary + $totalAdditions;
 
         // Process deductions
-        foreach ($profile->items()->whereHas('payHead', fn($q) => $q->where('type', PayHead::TYPE_DEDUCTION))->get() as $profileItem) {
+        foreach ($profile->items()->whereHas('payHead', fn ($q) => $q->where('type', PayHead::TYPE_DEDUCTION))->get() as $profileItem) {
             $amount = $profileItem->calculateAmount($basicSalary, $grossSalary);
 
             PayrollItemDetail::create([
@@ -464,11 +465,11 @@ class PayrollService
 
             // Salary breakdown
             'basic_salary' => $payrollItem->basic_salary,
-            'additions' => $payrollItem->additions()->get()->map(fn($d) => [
+            'additions' => $payrollItem->additions()->get()->map(fn ($d) => [
                 'name' => $d->pay_head_name,
                 'amount' => $d->amount,
             ]),
-            'deductions' => $payrollItem->deductions()->get()->map(fn($d) => [
+            'deductions' => $payrollItem->deductions()->get()->map(fn ($d) => [
                 'name' => $d->pay_head_name,
                 'amount' => $d->amount,
             ]),

@@ -2,10 +2,10 @@
 
 namespace App\Services\Dashboard;
 
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Cache;
-use Carbon\Carbon;
 use App\Models\Procedure;
+use Carbon\Carbon;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 
 class TheatreDashboardService
 {
@@ -15,6 +15,7 @@ class TheatreDashboardService
     public function getStats(): array
     {
         $today = Carbon::today();
+
         return [
             'scheduled' => Procedure::whereBetween('scheduled_date', [$today->copy()->startOfDay(), $today->copy()->endOfDay()])->count(),
             'ongoing' => Procedure::where('procedure_status', Procedure::STATUS_IN_PROGRESS)->count(),

@@ -2,10 +2,10 @@
 
 namespace App\Services\Dashboard;
 
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Cache;
-use Carbon\Carbon;
 use App\Models\MorgueAdmission;
+use Carbon\Carbon;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 
 class MorgueDashboardService
 {
@@ -125,7 +125,7 @@ class MorgueDashboardService
         $longStayCount = MorgueAdmission::where('status', 'stored')
             ->where('arrival_time', '<', now()->subDays(30))
             ->count();
-        
+
         if ($longStayCount > 0) {
             $insights[] = [
                 'type' => 'alert', 'severity' => 'warning', 'icon' => 'mdi-clock-alert',

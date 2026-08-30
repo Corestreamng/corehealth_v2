@@ -2,18 +2,16 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
-use App\Models\Patient;
-use App\Models\ProductOrServiceRequest;
-use App\Models\Payment;
-use App\Models\PatientAccount;
-use App\Models\HmoClaim;
-use App\Models\Hmo;
-use App\Models\DoctorQueue;
-use App\Models\AdmissionRequest;
 use App\Models\Accounting\PatientDeposit;
 use App\Models\Accounting\PatientDepositApplication;
+use App\Models\Hmo;
+use App\Models\HmoClaim;
+use App\Models\Patient;
+use App\Models\PatientAccount;
+use App\Models\Payment;
+use App\Models\ProductOrServiceRequest;
 use Carbon\Carbon;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -42,11 +40,12 @@ class BillingWorkbenchController extends Controller
                 $profile = $user->staff_profile;
                 $empId = $profile ? $profile->employee_id : '';
                 $name = trim($user->surname . ' ' . $user->firstname . ' ' . $user->othername);
+
                 return [
                     'id' => $user->id,
                     'name' => $name,
                     'employee_id' => $empId,
-                    'text' => $name . ($empId ? ' (Code: ' . $empId . ')' : '')
+                    'text' => $name . ($empId ? ' (Code: ' . $empId . ')' : ''),
                 ];
             })
             ->sortBy('name')
@@ -104,6 +103,7 @@ class BillingWorkbenchController extends Controller
             ]);
         } catch (\Exception $e) {
             Log::error('Failed to start billing shift: ' . $e->getMessage());
+
             return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
         }
     }
@@ -137,6 +137,7 @@ class BillingWorkbenchController extends Controller
             ]);
         } catch (\Exception $e) {
             Log::error('Failed to end billing shift: ' . $e->getMessage());
+
             return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
         }
     }
@@ -369,7 +370,7 @@ class BillingWorkbenchController extends Controller
                 $storedQty = $row->qty ?? 1;
                 $totalPayable = $row->payable_amount !== null ? $row->payable_amount : (($basePrice ?? 0) * $storedQty);
                 $unitPrice = $storedQty > 0 ? $totalPayable / $storedQty : $totalPayable;
-                
+
                 // Get treatment plan from associated clinical requests
                 $tp = null;
                 if ($row->productRequest && $row->productRequest->treatmentPlan) {
@@ -415,13 +416,13 @@ class BillingWorkbenchController extends Controller
                 'hmo_name' => optional($patient->hmo)->name,
                 'hmo_no' => $patient->hmo_no,
                 'photo' => $patient->user->photo ?? 'avatar.png',
-                'family_members' => \App\Models\Patient::whereIn('user_id', $patient->family_user_ids)->get()->map(function($p) {
+                'family_members' => \App\Models\Patient::whereIn('user_id', $patient->family_user_ids)->get()->map(function ($p) {
                     return [
                         'id' => $p->id,
                         'user_id' => $p->user_id,
                         'name' => userfullname($p->user_id),
                         'file_no' => $p->file_no,
-                        'is_principal' => $p->is_family_principal
+                        'is_principal' => $p->is_family_principal,
                     ];
                 }),
             ],
@@ -554,6 +555,7 @@ class BillingWorkbenchController extends Controller
             'ACC_WITHDRAW' => 'Account Withdrawal',
             'ACC_ADJUSTMENT' => 'Account Adjustment',
         ];
+
         return $labels[$paymentType] ?? ucfirst(strtolower($paymentType));
     }
 
@@ -570,7 +572,7 @@ class BillingWorkbenchController extends Controller
         if ($request->has('start_date') && $request->has('end_date')) {
             $query->whereBetween('created_at', [
                 Carbon::parse($request->start_date)->startOfDay(),
-                Carbon::parse($request->end_date)->endOfDay()
+                Carbon::parse($request->end_date)->endOfDay(),
             ]);
         }
 
@@ -704,6 +706,7 @@ class BillingWorkbenchController extends Controller
         $transactionsFormatted = $transactionsFormatted->map(function ($tx) use ($balanceMap) {
             $tx['running_balance'] = $balanceMap[$tx['id']] ?? 0;
             unset($tx['datetime']); // Remove datetime from response
+
             return $tx;
         })->values()->toArray();
 
@@ -722,7 +725,7 @@ class BillingWorkbenchController extends Controller
                 'total_withdrawals' => $totalWithdrawals,
                 'current_balance' => $account ? $account->balance : 0,
                 'transaction_count' => count($transactionsFormatted),
-            ]
+            ],
         ]);
     }
 
@@ -841,15 +844,15 @@ class BillingWorkbenchController extends Controller
                 }
 
                 $receiptDetails[] = [
-                    'type'             => $isService ? 'Service' : 'Product',
-                    'name'             => $isService ? optional($row->service)->service_name : optional($row->product)->product_name,
-                    'patient_name'     => userfullname($row->user_id),
-                    'patient_user_id'  => $row->user_id,
-                    'price'            => $unitPrice,
-                    'qty'              => $qty,
+                    'type' => $isService ? 'Service' : 'Product',
+                    'name' => $isService ? optional($row->service)->service_name : optional($row->product)->product_name,
+                    'patient_name' => userfullname($row->user_id),
+                    'patient_user_id' => $row->user_id,
+                    'price' => $unitPrice,
+                    'qty' => $qty,
                     'discount_percent' => $discountPercent,
-                    'discount_amount'  => $discountAmount,
-                    'amount_paid'      => $lineTotal,
+                    'discount_amount' => $discountAmount,
+                    'amount_paid' => $lineTotal,
                 ];
             }
 
@@ -889,12 +892,16 @@ class BillingWorkbenchController extends Controller
                 $remainingToApply = $total;
 
                 foreach ($activeDeposits as $deposit) {
-                    if ($remainingToApply <= 0) break;
+                    if ($remainingToApply <= 0) {
+                        break;
+                    }
 
                     // Calculate available balance for this deposit
                     $availableBalance = $deposit->balance; // Uses the accessor
 
-                    if ($availableBalance <= 0) continue;
+                    if ($availableBalance <= 0) {
+                        continue;
+                    }
 
                     // Determine how much to apply from this deposit
                     $applyAmount = min($availableBalance, $remainingToApply);
@@ -1029,7 +1036,7 @@ class BillingWorkbenchController extends Controller
             $isFamilyPayment = $uniquePatientUserIds->count() > 1;
             $familyPatientNames = $isFamilyPayment
                 ? \App\Models\Patient::whereIn('user_id', $uniquePatientUserIds->all())
-                    ->get()->map(fn($p) => userfullname($p->user_id) . ' (' . $p->file_no . ')')
+                    ->get()->map(fn ($p) => userfullname($p->user_id) . ' (' . $p->file_no . ')')
                     ->join(', ')
                 : null;
 
@@ -1039,38 +1046,38 @@ class BillingWorkbenchController extends Controller
             $amountInWords = ucwords($nairaWords . ' Naira' . $koboWords);
 
             $a4 = View::make('admin.Accounts.receipt_a4', [
-                'site'              => $site,
-                'patientName'       => $patientName,
-                'patientFileNo'     => $patientFileNo,
-                'isFamilyPayment'   => $isFamilyPayment,
+                'site' => $site,
+                'patientName' => $patientName,
+                'patientFileNo' => $patientFileNo,
+                'isFamilyPayment' => $isFamilyPayment,
                 'familyPatientNames' => $familyPatientNames,
-                'date'              => $date,
-                'ref'               => $ref,
-                'receiptDetails'    => $receiptDetails,
-                'totalDiscount'     => $totalDiscount,
-                'totalPaid'         => $total,
-                'amountInWords'     => $amountInWords,
-                'paymentType'       => $data['payment_type'],
-                'notes'             => '',
-                'currentUserName'   => $currentUserName,
+                'date' => $date,
+                'ref' => $ref,
+                'receiptDetails' => $receiptDetails,
+                'totalDiscount' => $totalDiscount,
+                'totalPaid' => $total,
+                'amountInWords' => $amountInWords,
+                'paymentType' => $data['payment_type'],
+                'notes' => '',
+                'currentUserName' => $currentUserName,
             ])->render();
 
             $thermal = View::make('admin.Accounts.receipt_thermal', [
-                'site'              => $site,
-                'patientName'       => $patientName,
-                'patientFileNo'     => $patientFileNo,
-                'isFamilyPayment'   => $isFamilyPayment,
+                'site' => $site,
+                'patientName' => $patientName,
+                'patientFileNo' => $patientFileNo,
+                'isFamilyPayment' => $isFamilyPayment,
                 'familyPatientNames' => $familyPatientNames,
-                'date'              => $date,
-                'ref'               => $ref,
-                'receiptDetails'    => $receiptDetails,
-                'totalDiscount'     => $totalDiscount,
-                'totalPaid'         => $total,
-                'amountInWords'     => $amountInWords,
-                'paymentType'       => $data['payment_type'],
-                'notes'             => '',
-                'currentUserName'   => $currentUserName,
-                'thermalWidth'      => getThermalPrinterWidth(),
+                'date' => $date,
+                'ref' => $ref,
+                'receiptDetails' => $receiptDetails,
+                'totalDiscount' => $totalDiscount,
+                'totalPaid' => $total,
+                'amountInWords' => $amountInWords,
+                'paymentType' => $data['payment_type'],
+                'notes' => '',
+                'currentUserName' => $currentUserName,
+                'thermalWidth' => getThermalPrinterWidth(),
             ])->render();
 
             DB::commit();
@@ -1085,6 +1092,7 @@ class BillingWorkbenchController extends Controller
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error('Billing workbench payment failed', ['error' => $e->getMessage()]);
+
             return response()->json(['message' => $e->getMessage()], 422);
         }
     }
@@ -1129,15 +1137,15 @@ class BillingWorkbenchController extends Controller
             $totalDiscount += $discountAmount;
 
             $receiptDetails[] = [
-                'type'             => $isService ? 'Service' : 'Product',
-                'name'             => $isService ? optional($row->service)->service_name : optional($row->product)->product_name,
-                'patient_name'     => userfullname($row->user_id),
-                'patient_user_id'  => $row->user_id,
-                'price'            => $unitPrice,
-                'qty'              => $qty,
+                'type' => $isService ? 'Service' : 'Product',
+                'name' => $isService ? optional($row->service)->service_name : optional($row->product)->product_name,
+                'patient_name' => userfullname($row->user_id),
+                'patient_user_id' => $row->user_id,
+                'price' => $unitPrice,
+                'qty' => $qty,
                 'discount_percent' => $discountPercent,
-                'discount_amount'  => $discountAmount,
-                'amount_paid'      => $lineTotal,
+                'discount_amount' => $discountAmount,
+                'amount_paid' => $lineTotal,
             ];
         }
 
@@ -1153,7 +1161,7 @@ class BillingWorkbenchController extends Controller
         $isFamilyPayment = $uniquePatientUserIds->count() > 1;
         $familyPatientNames = $isFamilyPayment
             ? \App\Models\Patient::whereIn('user_id', $uniquePatientUserIds->all())
-                ->get()->map(fn($p) => userfullname($p->user_id) . ' (' . $p->file_no . ')')
+                ->get()->map(fn ($p) => userfullname($p->user_id) . ' (' . $p->file_no . ')')
                 ->join(', ')
             : null;
 
@@ -1165,38 +1173,38 @@ class BillingWorkbenchController extends Controller
         $paymentType = $payments->first()->payment_type ?? 'N/A';
 
         $a4 = View::make('admin.Accounts.receipt_a4', [
-            'site'               => $site,
-            'patientName'        => $patientName,
-            'patientFileNo'      => $patientFileNo,
-            'isFamilyPayment'    => $isFamilyPayment,
+            'site' => $site,
+            'patientName' => $patientName,
+            'patientFileNo' => $patientFileNo,
+            'isFamilyPayment' => $isFamilyPayment,
             'familyPatientNames' => $familyPatientNames,
-            'date'               => $date,
-            'ref'                => $ref,
-            'receiptDetails'     => $receiptDetails,
-            'totalDiscount'      => $totalDiscount,
-            'totalPaid'          => $totalAmount,
-            'amountInWords'      => $amountInWords,
-            'paymentType'        => $paymentType,
-            'notes'              => '',
-            'currentUserName'    => $currentUserName,
+            'date' => $date,
+            'ref' => $ref,
+            'receiptDetails' => $receiptDetails,
+            'totalDiscount' => $totalDiscount,
+            'totalPaid' => $totalAmount,
+            'amountInWords' => $amountInWords,
+            'paymentType' => $paymentType,
+            'notes' => '',
+            'currentUserName' => $currentUserName,
         ])->render();
 
         $thermal = View::make('admin.Accounts.receipt_thermal', [
-            'site'               => $site,
-            'patientName'        => $patientName,
-            'patientFileNo'      => $patientFileNo,
-            'isFamilyPayment'    => $isFamilyPayment,
+            'site' => $site,
+            'patientName' => $patientName,
+            'patientFileNo' => $patientFileNo,
+            'isFamilyPayment' => $isFamilyPayment,
             'familyPatientNames' => $familyPatientNames,
-            'date'               => $date,
-            'ref'                => $ref,
-            'receiptDetails'     => $receiptDetails,
-            'totalDiscount'      => $totalDiscount,
-            'totalPaid'          => $totalAmount,
-            'amountInWords'      => $amountInWords,
-            'paymentType'        => $paymentType,
-            'notes'              => '',
-            'currentUserName'    => $currentUserName,
-            'thermalWidth'       => getThermalPrinterWidth(),
+            'date' => $date,
+            'ref' => $ref,
+            'receiptDetails' => $receiptDetails,
+            'totalDiscount' => $totalDiscount,
+            'totalPaid' => $totalAmount,
+            'amountInWords' => $amountInWords,
+            'paymentType' => $paymentType,
+            'notes' => '',
+            'currentUserName' => $currentUserName,
+            'thermalWidth' => getThermalPrinterWidth(),
         ])->render();
 
         return response()->json([
@@ -1343,7 +1351,7 @@ class BillingWorkbenchController extends Controller
 
         $query->whereBetween('created_at', [
             Carbon::parse($from)->startOfDay(),
-            Carbon::parse($to)->endOfDay()
+            Carbon::parse($to)->endOfDay(),
         ]);
 
         // Payment type filter
@@ -1366,9 +1374,9 @@ class BillingWorkbenchController extends Controller
                 return [
                     'count' => $group->count(),
                     'amount' => $group->sum('total'),
-                    'discount' => $group->sum('total_discount')
+                    'discount' => $group->sum('total_discount'),
                 ];
-            })
+            }),
         ];
 
         $transactionsFormatted = $transactions->map(function ($tx) {
@@ -1390,7 +1398,7 @@ class BillingWorkbenchController extends Controller
             'transactions' => $transactionsFormatted,
             'summary' => $summary,
             'from' => $from,
-            'to' => $to
+            'to' => $to,
         ]);
     }
 
@@ -1412,7 +1420,7 @@ class BillingWorkbenchController extends Controller
                     'id' => $existingAccount->id,
                     'balance' => $existingAccount->balance,
                     'updated_at' => $existingAccount->updated_at,
-                ]
+                ],
             ]);
         }
 
@@ -1428,10 +1436,11 @@ class BillingWorkbenchController extends Controller
                     'id' => $account->id,
                     'balance' => $account->balance,
                     'updated_at' => $account->updated_at,
-                ]
+                ],
             ]);
         } catch (\Exception $e) {
             Log::error('Failed to create patient account', ['error' => $e->getMessage()]);
+
             return response()->json(['message' => 'Failed to create account'], 500);
         }
     }
@@ -1478,6 +1487,7 @@ class BillingWorkbenchController extends Controller
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error('Failed to make deposit', ['error' => $e->getMessage()]);
+
             return response()->json(['message' => 'Failed to save transaction'], 500);
         }
     }
@@ -1525,12 +1535,14 @@ class BillingWorkbenchController extends Controller
                     $balanceChange = $amount;
                     $paymentType = 'ACC_DEPOSIT';
                     $notes = $notes ?: 'Account deposit';
+
                     break;
 
                 case 'withdraw':
                     $balanceChange = -$amount;
                     $paymentType = 'ACC_WITHDRAW';
                     $notes = $notes ?: 'Account withdrawal';
+
                     break;
 
                 case 'adjust':
@@ -1538,6 +1550,7 @@ class BillingWorkbenchController extends Controller
                     // Frontend sends positive always, so we check if description hints at debit
                     $balanceChange = $request->amount; // Keep sign as sent
                     $paymentType = 'ACC_ADJUSTMENT';
+
                     break;
             }
 
@@ -1611,6 +1624,7 @@ class BillingWorkbenchController extends Controller
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error('Failed to process account transaction', ['error' => $e->getMessage(), 'type' => $request->transaction_type]);
+
             return response()->json(['message' => 'Failed to save transaction'], 500);
         }
     }
@@ -1777,10 +1791,11 @@ class BillingWorkbenchController extends Controller
                 ->get();
 
             foreach ($directPayments as $pmt) {
-                $items = $pmt->product_or_service_request->reject(fn($i) => $i->is_bundle_item)->map(function ($item) {
+                $items = $pmt->product_or_service_request->reject(fn ($i) => $i->is_bundle_item)->map(function ($item) {
                     if ($item->service_id) {
                         return $item->service?->service_name ?? 'Service';
                     }
+
                     return $item->product?->product_name ?? 'Product';
                 })->implode(', ');
 
@@ -1854,6 +1869,7 @@ class BillingWorkbenchController extends Controller
                         if ($item->service_id) {
                             return $item->service?->service_name ?? 'Service';
                         }
+
                         return $item->product?->product_name ?? 'Product';
                     })->implode(', ');
                 }
@@ -1910,6 +1926,7 @@ class BillingWorkbenchController extends Controller
         $transactions = $transactions->map(function ($tx) use (&$runningBalance) {
             $runningBalance += $tx['credit'] - $tx['debit'];
             $tx['running_balance'] = $runningBalance;
+
             return $tx;
         });
 
@@ -2033,7 +2050,9 @@ class BillingWorkbenchController extends Controller
      */
     protected function calculateAdmissionBillTotal($userId, $admitDate, $dischargeDate)
     {
-        if (!$admitDate) return 0;
+        if (!$admitDate) {
+            return 0;
+        }
 
         $query = ProductOrServiceRequest::where('user_id', $userId)
             ->where('created_at', '>=', $admitDate);
@@ -2138,6 +2157,7 @@ class BillingWorkbenchController extends Controller
                 foreach ($keywords as $keyword) {
                     if (str_contains($categoryName, $keyword)) {
                         $itemCategory = $cat;
+
                         break 2;
                     }
                 }
@@ -2202,7 +2222,7 @@ class BillingWorkbenchController extends Controller
         }
 
         // Sort categories by total (highest first)
-        uasort($categories, fn($a, $b) => $b['total'] <=> $a['total']);
+        uasort($categories, fn ($a, $b) => $b['total'] <=> $a['total']);
 
         // Sort timeline by date
         ksort($timeline);

@@ -18,7 +18,8 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  */
 class PettyCashFund extends Model
 {
-    use HasFactory, SoftDeletes;
+    use HasFactory;
+    use SoftDeletes;
 
     protected $table = 'petty_cash_funds';
 
@@ -153,6 +154,7 @@ class PettyCashFund extends Model
     public function needsReplenishment(): bool
     {
         $threshold = $this->fund_limit * 0.25; // 25% of limit
+
         return $this->getBalanceFromJournalEntries() < $threshold;
     }
 
@@ -244,6 +246,7 @@ class PettyCashFund extends Model
         }
 
         $disbursed = $this->fund_limit - $this->getBalanceFromJournalEntries();
+
         return round(($disbursed / $this->fund_limit) * 100, 2);
     }
 }

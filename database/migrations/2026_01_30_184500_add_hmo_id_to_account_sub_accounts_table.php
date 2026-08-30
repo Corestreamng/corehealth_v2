@@ -12,8 +12,7 @@ use Illuminate\Support\Facades\Schema;
  *
  * Reference: BANK_CASH_STATEMENT_IMPLEMENTATION.md - Part 7.5.1
  */
-return new class extends Migration
-{
+return new class () extends Migration {
     /**
      * Run the migrations.
      */

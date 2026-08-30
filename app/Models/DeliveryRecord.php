@@ -9,7 +9,8 @@ use OwenIt\Auditing\Contracts\Auditable;
 
 class DeliveryRecord extends Model implements Auditable
 {
-    use HasFactory, SoftDeletes;
+    use HasFactory;
+    use SoftDeletes;
     use \OwenIt\Auditing\Auditable;
 
     protected $fillable = [

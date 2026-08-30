@@ -13,8 +13,7 @@ use Illuminate\Support\Facades\Schema;
  * Each item references a product_or_service_request from the original payment.
  * The refund amount per item cannot exceed the original paid amount.
  */
-return new class extends Migration
-{
+return new class () extends Migration {
     /**
      * Run the migrations.
      */

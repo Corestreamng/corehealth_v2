@@ -8,7 +8,6 @@ use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
-use Carbon\Carbon;
 
 /**
  * Capital Expenditure (Capex) Controller
@@ -75,10 +74,12 @@ class CapexController extends Controller
 
         // By category
         $byCategory = DB::table('capex_projects')
-            ->select('project_type as category',
+            ->select(
+                'project_type as category',
                 DB::raw('COUNT(*) as count'),
                 DB::raw('SUM(CASE WHEN status IN ("approved", "in_progress", "completed") THEN approved_budget ELSE 0 END) as committed'),
-                DB::raw('SUM(CASE WHEN status = "completed" THEN actual_cost ELSE 0 END) as spent'))
+                DB::raw('SUM(CASE WHEN status = "completed" THEN actual_cost ELSE 0 END) as spent')
+            )
             ->whereYear('proposed_date', $currentYear)
             ->groupBy('project_type')
             ->get();
@@ -87,7 +88,8 @@ class CapexController extends Controller
         $monthlyTrend = DB::table('capex_projects')
             ->select(
                 DB::raw('MONTH(actual_completion_date) as month'),
-                DB::raw('SUM(actual_cost) as spent'))
+                DB::raw('SUM(actual_cost) as spent')
+            )
             ->where('fiscal_year', $currentYear)
             ->where('status', 'completed')
             ->whereNotNull('actual_completion_date')
@@ -221,6 +223,7 @@ class CapexController extends Controller
         ]);
 
         DB::beginTransaction();
+
         try {
             $referenceNumber = $this->generateReferenceNumber();
 
@@ -273,6 +276,7 @@ class CapexController extends Controller
 
         } catch (\Exception $e) {
             DB::rollBack();
+
             return back()->withInput()->with('error', 'Failed to create Capex request: ' . $e->getMessage());
         }
     }
@@ -393,6 +397,7 @@ class CapexController extends Controller
         ]);
 
         DB::beginTransaction();
+
         try {
             DB::table('capex_projects')->where('id', $id)->update([
                 'title' => $request->title,
@@ -438,6 +443,7 @@ class CapexController extends Controller
 
         } catch (\Exception $e) {
             DB::rollBack();
+
             return back()->withInput()->with('error', 'Failed to update request: ' . $e->getMessage());
         }
     }
@@ -643,7 +649,7 @@ class CapexController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Expense recorded successfully.',
-            'journal_entry_id' => $expense->journal_entry_id
+            'journal_entry_id' => $expense->journal_entry_id,
         ]);
     }
 
@@ -659,6 +665,7 @@ class CapexController extends Controller
         }
 
         DB::beginTransaction();
+
         try {
             DB::table('capex_projects')->where('id', $id)->update([
                 'status' => 'completed',
@@ -699,6 +706,7 @@ class CapexController extends Controller
 
         } catch (\Exception $e) {
             DB::rollBack();
+
             return response()->json(['success' => false, 'message' => 'Failed to complete: ' . $e->getMessage()]);
         }
     }
@@ -749,9 +757,11 @@ class CapexController extends Controller
 
         // Get spending by category
         $byCategory = DB::table('capex_projects')
-            ->select('project_type as category',
+            ->select(
+                'project_type as category',
                 DB::raw('SUM(CASE WHEN status IN ("approved", "in_progress", "completed") THEN approved_budget ELSE 0 END) as committed'),
-                DB::raw('SUM(CASE WHEN status = "completed" THEN actual_cost ELSE 0 END) as spent'))
+                DB::raw('SUM(CASE WHEN status = "completed" THEN actual_cost ELSE 0 END) as spent')
+            )
             ->whereYear('proposed_date', $fiscalYear)
             ->groupBy('project_type')
             ->get();
@@ -831,11 +841,13 @@ class CapexController extends Controller
         // Check export format
         if ($request->format === 'pdf') {
             $pdf = Pdf::loadView('accounting.capex.export-pdf', compact('capexList', 'stats', 'fiscalYear'));
+
             return $pdf->download('capex-report-' . now()->format('Y-m-d') . '.pdf');
         }
 
         // Default to Excel
         $excelService = app(ExcelExportService::class);
+
         return $excelService->capex($capexList, $fiscalYear);
     }
 
@@ -905,6 +917,7 @@ class CapexController extends Controller
     protected function getFiscalYears()
     {
         $currentYear = date('Y');
+
         return range($currentYear - 2, $currentYear + 1);
     }
 
@@ -943,6 +956,7 @@ class CapexController extends Controller
                 ->with('success', 'Budget created successfully');
         } catch (\Exception $e) {
             \Log::error('Failed to insert budget: ' . $e->getMessage());
+
             return back()->with('error', 'Failed to create budget: ' . $e->getMessage());
         }
     }

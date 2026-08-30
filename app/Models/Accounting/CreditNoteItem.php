@@ -36,9 +36,9 @@ class CreditNoteItem extends Model
     ];
 
     // Common original item types
-    const ITEM_BILLING_ITEM = 'App\\Models\\BillingItem';
-    const ITEM_PAYMENT = 'App\\Models\\Payment';
-    const ITEM_SERVICE_CHARGE = 'App\\Models\\ServiceCharge';
+    public const ITEM_BILLING_ITEM = 'App\\Models\\BillingItem';
+    public const ITEM_PAYMENT = 'App\\Models\\Payment';
+    public const ITEM_SERVICE_CHARGE = 'App\\Models\\ServiceCharge';
 
     /**
      * Get the credit note this item belongs to.

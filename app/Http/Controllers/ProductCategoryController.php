@@ -1,16 +1,11 @@
 <?php
 
 namespace App\Http\Controllers;
-use Illuminate\Http\Request;
-use Illuminate\Http\Response;
 
 use App\Models\ProductCategory;
-use App\Models\Product;
-use App\Http\Requests\StoreProductCategoryRequest;
-use App\Http\Requests\UpdateProductCategoryRequest;
-use Yajra\DataTables\DataTables;
-use RealRashid\SweetAlert\Facades\Alert;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Yajra\DataTables\DataTables;
 
 class ProductCategoryController extends Controller
 {
@@ -24,28 +19,31 @@ class ProductCategoryController extends Controller
 
         $productCat = ProductCategory::where('status', '>', 0)->orderBy('id', 'ASC')->get();
 
-
         return Datatables::of($productCat)
             ->addIndexColumn()
             ->addColumn('category_code', function ($productCat) {
                 $category_code = '<span class="badge badge-pill badge-dark">' . $productCat->category_code . '</sapn>';
+
                 return $category_code;
             })
             ->editColumn('status', function ($productCat) {
 
                 $active = '<span class="badge badge-pill badge-success">Active</sapn>';
                 $inactive = '<span class="badge badge-pill badge-dark">Inactive</sapn>';
+
                 return (($productCat->status == 1) ? $inactive : $active);
             })
             ->addColumn('view', function ($productCat) {
 
                 if (Auth::user()->hasPermissionTo('can-manage-product-categories') || Auth::user()->hasRole(['ADMIN','STORE'])) {
 
-                    $url =  route('product-category.show', $productCat->id);
+                    $url = route('product-category.show', $productCat->id);
+
                     return '<a href="' . $url . '" class="btn btn-success btn-sm" ><i class="fa fa-street-view"></i> View</a>';
                 } else {
 
                     $label = '<span class="label label-warning">Not Allowed</span>';
+
                     return $label;
                 }
             })
@@ -53,11 +51,13 @@ class ProductCategoryController extends Controller
 
                 if (Auth::user()->hasPermissionTo('can-manage-product-categories') || Auth::user()->hasRole(['ADMIN','STORE'])) {
 
-                    $url =  route('product-category.edit', $productCat->id);
+                    $url = route('product-category.edit', $productCat->id);
+
                     return '<a href="' . $url . '" class="btn btn-info btn-sm" ><i class="fa fa-pencil"></i> Edit</a>';
                 } else {
 
                     $label = '<span class="label label-warning">Not Allow</span>';
+
                     return $label;
                 }
             })
@@ -104,9 +104,9 @@ class ProductCategoryController extends Controller
     public function store(Request $request)
     {
         $rules = [
-            'category_name'        => 'required',
-            'category_code'        => 'required',
-            'category_description' => 'required'
+            'category_name' => 'required',
+            'category_code' => 'required',
+            'category_description' => 'required',
         ];
 
         $v = validator()->make($request->all(), $rules);
@@ -116,17 +116,19 @@ class ProductCategoryController extends Controller
             return redirect()->back()->withInput()->with('errors', $v->messages()->all())->withInput();
         } else {
 
-            $category                       = new ProductCategory();
-            $category->category_name        = $request->category_name;
-            $category->category_code        = $request->category_code;
+            $category = new ProductCategory();
+            $category->category_name = $request->category_name;
+            $category->category_code = $request->category_code;
             $category->category_description = $request->category_description;
 
             if ($category->save()) {
                 $msg = 'The ProductCategory ' . $request->category_name . ' was saved successfully.';
+
                 return redirect(route('product-category.index'))->withMessage($msg)->withMessageType('success');
             } else {
 
                 $msg = 'Something is went wrong. But it seems it is not your input contact the system administrator';
+
                 return redirect()->back()->withInput()->withMessage($msg)->withMessageType('danger');
             }
         }
@@ -145,6 +147,7 @@ class ProductCategoryController extends Controller
 
         $reqCat = ProductCategory::where('id', '=', $id)
             ->with(['products'])->get();
+
         // dd($reqCat[0]->products);
         return view('admin.productCategory.show', compact('reqCat'));
     }
@@ -173,8 +176,8 @@ class ProductCategoryController extends Controller
     public function update(Request $request, $id)
     {
         $rules = [
-            'category_name'        => 'required',
-            'category_code'        => 'required',
+            'category_name' => 'required',
+            'category_code' => 'required',
             'category_description' => 'required',
         ];
 
@@ -185,17 +188,19 @@ class ProductCategoryController extends Controller
             return redirect()->back()->withInput()->with('errors', $v->messages()->all())->withInput();
         } else {
 
-            $category                       = ProductCategory::find($id);
-            $category->category_name        = $request->category_name;
-            $category->category_code        = $request->category_code;
+            $category = ProductCategory::find($id);
+            $category->category_name = $request->category_name;
+            $category->category_code = $request->category_code;
             $category->category_description = $request->category_description;
 
             if ($category->save()) {
                 $msg = 'The ProductCategory ' . $request->category_name . ' was updated successfully.';
+
                 return redirect(route('product-category.index'))->withMessage($msg)->withMessageType('success');
             } else {
 
                 $msg = 'Something is went wrong. But it seems it is not your input contact the system administrator';
+
                 return redirect()->back()->withInput()->withMessage($msg)->withMessageType('danger')->withInput();
             }
         }

@@ -3,15 +3,15 @@
 namespace App\Http\Controllers;
 
 use App\Enums\QueueStatus;
+use App\Models\DoctorQueue;
 use App\Models\VitalSign;
 use App\Services\QueueStatusService;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Yajra\DataTables\DataTables;
-use App\Models\DoctorQueue;
-use Carbon\Carbon;
 
 class VitalSignController extends Controller
 {
@@ -76,6 +76,7 @@ class VitalSignController extends Controller
             foreach ($metrics as $metric) {
                 if ($request->filled($metric)) {
                     $hasMetric = true;
+
                     break;
                 }
             }
@@ -87,6 +88,7 @@ class VitalSignController extends Controller
                 foreach ($formData as $val) {
                     if (!is_null($val) && $val !== '') {
                         $hasMetric = true;
+
                         break;
                     }
                 }
@@ -97,8 +99,8 @@ class VitalSignController extends Controller
             }
 
             DB::beginTransaction();
-            $vitalSign = new VitalSign;
-            
+            $vitalSign = new VitalSign();
+
             // Default time to now if not provided
             $timeTaken = $request->datetimeField ?? now()->toDateTimeString();
 
@@ -128,12 +130,12 @@ class VitalSignController extends Controller
 
             // Capture dynamic fields into form_data
             $standardFields = [
-                'patient_id', 'bloodPressure', 'bodyTemperature', 'datetimeField', 
-                'heartRate', 'respiratoryRate', 'bodyWeight', 'height', 'spo2', 
-                'bloodSugar', 'painScore', 'bmi', 'otherNotes', '_token', '_method'
+                'patient_id', 'bloodPressure', 'bodyTemperature', 'datetimeField',
+                'heartRate', 'respiratoryRate', 'bodyWeight', 'height', 'spo2',
+                'bloodSugar', 'painScore', 'bmi', 'otherNotes', '_token', '_method',
             ];
             $formData = array_diff_key($request->all(), array_flip($standardFields));
-            
+
             if (!empty($formData)) {
                 $vitalSign->update(['form_data' => $formData]);
             }
@@ -165,7 +167,7 @@ class VitalSignController extends Controller
             DB::commit();
 
             if ($request->wantsJson()) {
-                 return response()->json(['success' => true, 'message' => 'Vitals saved successfully']);
+                return response()->json(['success' => true, 'message' => 'Vitals saved successfully']);
             }
 
             return back()->withMessage('Vitals saved successfully')->withMessageType('success');
@@ -174,7 +176,7 @@ class VitalSignController extends Controller
             Log::error($e->getMessage(), ['exception' => $e]);
 
             if ($request->wantsJson()) {
-                 return response()->json(['success' => false, 'message' => "An error occurred " . $e->getMessage()], 500);
+                return response()->json(['success' => false, 'message' => "An error occurred " . $e->getMessage()], 500);
             }
 
             return redirect()->back()->withInput()->withMessage("An error occurred " . $e->getMessage() . 'line:' . $e->getLine());
@@ -185,16 +187,18 @@ class VitalSignController extends Controller
     {
         $his = VitalSign::with(['patient', 'takenBy', 'requstedBy'])
             ->where('status', 1)->where('patient_id', $patient_id)->orderBy('created_at', 'DESC')->get();
+
         //dd($pc);
         return Datatables::of($his)
             ->addIndexColumn()
 
             ->editColumn('created_at', function ($h) {
                 $str = "<small>";
-                $str .= "<b >Requested by: </b>" . ((isset($h->requested_by)  && $h->requested_by != null) ? (userfullname($h->requested_by) . ' (' . date('h:i a D M j, Y', strtotime($h->created_at)) . ')') : "<span class='badge badge-secondary'>N/A</span>");
+                $str .= "<b >Requested by: </b>" . ((isset($h->requested_by) && $h->requested_by != null) ? (userfullname($h->requested_by) . ' (' . date('h:i a D M j, Y', strtotime($h->created_at)) . ')') : "<span class='badge badge-secondary'>N/A</span>");
                 $str .= "<br><br><b >Last Updated On:</b> " . date('h:i a D M j, Y', strtotime($h->updated_at));
                 $str .= "<br><br><b >Taken by:</b> " . ((isset($h->taken_by) && $h->taken_by != null) ? (userfullname($h->taken_by) . ' (' . date('h:i a D M j, Y', strtotime($h->time_taken)) . ')') : "<span class='badge badge-secondary'>Not billed</span>");
                 $str .= "</small>";
+
                 return $str;
             })
             ->editColumn('result', function ($his) {
@@ -203,7 +207,7 @@ class VitalSignController extends Controller
                 $str .= "<b > Body Weight (Kg): </b>" . ($his->weight ?? 'N/A') . "<br>";
                 $str .= "<b > Respiratory Rate (BPM) :</b>" . ($his->resp_rate ?? 'N/A') . "<br>";
                 $str .= "<b > Heart Rate (BPM): </b>" . ($his->heart_rate ?? 'N/A') . "<br>";
-                
+
                 if (!empty($his->form_data)) {
                     foreach ($his->form_data as $key => $value) {
                         if (!empty($value)) {
@@ -212,16 +216,19 @@ class VitalSignController extends Controller
                         }
                     }
                 }
-                
+
                 $str .= "<hr>" . ($his->other_notes ?? 'N/A');
+
                 return $str;
             })
             ->rawColumns(['created_at', 'result'])
             ->make(true);
     }
+
     public function allPatientVitals($patient_id)
     {
         $vitals = VitalSign::where('status', 1)->where('patient_id', $patient_id)->limit(30)->get();
+
         return json_encode($vitals);
     }
 
@@ -244,7 +251,7 @@ class VitalSignController extends Controller
         if ($startDate && $endDate) {
             $query->whereBetween('created_at', [
                 Carbon::parse($startDate)->startOfDay(),
-                Carbon::parse($endDate)->endOfDay()
+                Carbon::parse($endDate)->endOfDay(),
             ]);
         }
 
@@ -258,6 +265,7 @@ class VitalSignController extends Controller
                 <a class='btn btn-primary' href='$url'>
                     view
                 </a>";
+
                 return $str;
             })
             ->editColumn('patient_id', function ($h) {
@@ -267,6 +275,7 @@ class VitalSignController extends Controller
                 $str .= "<br><br><b>Insurance/HMO</b>: " . (($h->patient->hmo) ? $h->patient->hmo->name : "N/A");
                 $str .= "<br><br><b>HMO Number</b>: " . (($h->patient->hmo_no) ? $h->patient->hmo_no : "N/A");
                 $str .= "</small>";
+
                 return $str;
             })
             ->editColumn('created_at', function ($h) {
@@ -280,17 +289,18 @@ class VitalSignController extends Controller
                 $str .= "<br><br><b>Requested by:</b> " . ($receptionistName !== 'N/A' ? ($receptionistName . ' (' . date('h:i a D M j, Y', strtotime($h->created_at)) . ')') : "<span class='badge badge-secondary'>N/A</span>");
                 $str .= "<br><br><b>Last Updated On:</b> " . date('h:i a D M j, Y', strtotime($h->updated_at));
                 $str .= "</small>";
+
                 return $str;
             })
             ->rawColumns(['created_at', 'select', 'patient_id'])
             ->make(true);
     }
 
-
     public function patientVitalsHistoryQueue()
     {
         $his = VitalSign::with(['patient', 'takenBy', 'requstedBy'])
             ->where('status', 1)->where('blood_pressure', '!=', null)->orderBy('created_at', 'DESC')->get();
+
         //dd($pc);
         return Datatables::of($his)
             ->addIndexColumn()
@@ -300,6 +310,7 @@ class VitalSignController extends Controller
                     <a class='btn btn-primary' href='$url'>
                         view
                     </a>";
+
                 return $str;
             })
             ->editColumn('patient_id', function ($h) {
@@ -309,14 +320,16 @@ class VitalSignController extends Controller
                 $str .= "<br><br><b >Insurance/HMO :</b> : " . (($h->patient->hmo) ? $h->patient->hmo->name : "N/A");
                 $str .= "<br><br><b >HMO Number :</b> : " . (($h->patient->hmo_no) ? $h->patient->hmo_no : "N/A");
                 $str .= "</small>";
+
                 return $str;
             })
             ->editColumn('created_at', function ($h) {
                 $str = "<small>";
-                $str .= "<b >Requested by: </b>" . ((isset($h->requested_by)  && $h->requested_by != '') ? (userfullname($h->requested_by) . ' (' . date('h:i a D M j, Y', strtotime($h->created_at)) . ')') : "<span class='badge badge-secondary'>N/A</span>");
+                $str .= "<b >Requested by: </b>" . ((isset($h->requested_by) && $h->requested_by != '') ? (userfullname($h->requested_by) . ' (' . date('h:i a D M j, Y', strtotime($h->created_at)) . ')') : "<span class='badge badge-secondary'>N/A</span>");
                 $str .= "<br><br><b >Last Updated On:</b> " . date('h:i a D M j, Y', strtotime($h->updated_at));
                 $str .= "<br><br><b >Taken by:</b> " . ((isset($h->taken_by) && $h->taken_by != '') ? (userfullname($h->taken_by) . ' (' . date('h:i a D M j, Y', strtotime($h->time_taken)) . ')') : "<span class='badge badge-secondary'>Not billed</span>");
                 $str .= "</small>";
+
                 return $str;
             })
             ->editColumn('result', function ($his) {
@@ -325,7 +338,7 @@ class VitalSignController extends Controller
                 $str .= "<b > Body Weight (Kg): </b>" . ($his->weight ?? 'N/A') . "<br>";
                 $str .= "<b > Respiratory Rate (BPM) :</b>" . ($his->resp_rate ?? 'N/A') . "<br>";
                 $str .= "<b > Heart Rate (BPM): </b>" . ($his->heart_rate ?? 'N/A') . "<br>";
-                
+
                 if (!empty($his->form_data)) {
                     foreach ($his->form_data as $key => $value) {
                         if (!empty($value)) {
@@ -334,8 +347,9 @@ class VitalSignController extends Controller
                         }
                     }
                 }
-                
+
                 $str .= "<hr>" . ($his->other_notes ?? 'N/A');
+
                 return $str;
             })
             ->rawColumns(['created_at', 'result', 'select', 'patient_id'])

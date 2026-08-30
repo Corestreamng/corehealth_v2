@@ -4,8 +4,6 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-
-
 use OwenIt\Auditing\Contracts\Auditable;
 
 /**
@@ -44,7 +42,7 @@ class Bed extends Model implements Auditable
         'status',
         'bed_status',    // New detailed status enum
         'service_id',
-        'occupant_id'
+        'occupant_id',
     ];
 
     /**
@@ -160,6 +158,7 @@ class Bed extends Model implements Auditable
         }
 
         $this->loadMissing('service');
+
         return $this->service && $this->service->category_id == $bedServiceCategoryId;
     }
 
@@ -174,6 +173,7 @@ class Bed extends Model implements Auditable
         if ($this->service) {
             return $this->service->service_name;
         }
+
         return "Bed {$this->name} - {$this->ward}";
     }
 

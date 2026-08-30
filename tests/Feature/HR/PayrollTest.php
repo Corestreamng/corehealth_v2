@@ -46,6 +46,4 @@ class PayrollTest extends TestCase
         $response = $this->actingAs($admin)->get('/hr/workbench');
         $this->assertTrue(in_array($response->status(), [200, 302, 403, 404]));
     }
-
-
 }

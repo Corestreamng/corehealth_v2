@@ -15,6 +15,7 @@ class DepartmentController extends Controller
     public function index()
     {
         $departments = Department::with('headOfDepartment')->ordered()->get();
+
         return view('admin.departments.index', compact('departments'));
     }
 
@@ -26,6 +27,7 @@ class DepartmentController extends Controller
         $users = User::whereHas('staff_profile')
             ->orderBy('surname')
             ->get();
+
         return view('admin.departments.create', compact('users'));
     }
 
@@ -56,6 +58,7 @@ class DepartmentController extends Controller
     public function show(Department $department)
     {
         $department->load(['headOfDepartment', 'staff.user']);
+
         return view('admin.departments.show', compact('department'));
     }
 
@@ -67,6 +70,7 @@ class DepartmentController extends Controller
         $users = User::whereHas('staff_profile')
             ->orderBy('surname')
             ->get();
+
         return view('admin.departments.edit', compact('department', 'users'));
     }
 
@@ -113,6 +117,7 @@ class DepartmentController extends Controller
     public function getAll()
     {
         $departments = Department::active()->ordered()->get(['id', 'name', 'code']);
+
         return response()->json($departments);
     }
 }

@@ -2,9 +2,8 @@
 
 namespace App\Observers\Accounting;
 
-use App\Models\HmoRemittance;
 use App\Models\Accounting\Account;
-use App\Models\Accounting\AccountSubAccount;
+use App\Models\HmoRemittance;
 use App\Services\Accounting\AccountingService;
 use App\Services\Accounting\SubAccountService;
 use Illuminate\Support\Facades\App;
@@ -47,7 +46,7 @@ class HmoRemittanceObserver
             Log::error('HmoRemittanceObserver: Failed to create journal entry', [
                 'remittance_id' => $remittance->id,
                 'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
+                'trace' => $e->getTraceAsString(),
             ]);
         }
     }
@@ -69,6 +68,7 @@ class HmoRemittanceObserver
                 'bank_account_found' => !is_null($bankAccount),
                 'ar_hmo_found' => !is_null($arHmo),
             ]);
+
             return;
         }
 
@@ -106,7 +106,7 @@ class HmoRemittanceObserver
                 // METADATA
                 'hmo_id' => $remittance->hmo_id,
                 'category' => 'hmo_remittance',
-            ]
+            ],
         ];
 
         $entry = $accountingService->createAndPostAutomatedEntry(

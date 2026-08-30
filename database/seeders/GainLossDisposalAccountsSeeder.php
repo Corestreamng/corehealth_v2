@@ -2,10 +2,9 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Seeder;
 use App\Models\Accounting\Account;
 use App\Models\Accounting\AccountGroup;
-use Illuminate\Support\Facades\DB;
+use Illuminate\Database\Seeder;
 
 class GainLossDisposalAccountsSeeder extends Seeder
 {
@@ -20,11 +19,13 @@ class GainLossDisposalAccountsSeeder extends Seeder
 
         if (!$otherIncomeGroup) {
             $this->command->error('Other Income group (42) not found!');
+
             return;
         }
 
         if (!$adminExpensesGroup) {
             $this->command->error('Administrative Expenses group (53) not found!');
+
             return;
         }
 

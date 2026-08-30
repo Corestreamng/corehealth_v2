@@ -15,17 +15,17 @@ class SettingsSeeder extends Seeder
                 'key' => 'company_logo',
                 'value' => '/images/default-logo.png',
                 'created_at' => now(),
-                'updated_at' => now()
+                'updated_at' => now(),
             ]);
         }
-        
+
         // Check if companies table exists
         if (DB::getSchemaBuilder()->hasTable('companies')) {
             DB::table('companies')->insert([
                 'name' => 'CoreHealth',
                 'logo' => '/images/default-logo.png',
                 'created_at' => now(),
-                'updated_at' => now()
+                'updated_at' => now(),
             ]);
         }
     }

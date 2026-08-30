@@ -9,11 +9,10 @@ use App\Models\Accounting\CreditNote;
 use App\Models\Accounting\FiscalYear;
 use App\Models\Accounting\JournalEntry;
 use App\Models\Accounting\JournalEntryLine;
-use App\Services\Accounting\CashFlowClassifier;
 use Carbon\Carbon;
+use Exception;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use Exception;
 
 /**
  * Accounting Service
@@ -422,6 +421,7 @@ class AccountingService
             // Use auth user, provided user, or default to user 1 (system)
             $posterId = $userId ?? auth()->id() ?? 1;
             $this->postEntry($entry, $posterId);
+
             return $entry->fresh();
         });
     }
@@ -611,6 +611,7 @@ class AccountingService
     public function getOpenPeriodForDate(string|Carbon $date): ?AccountingPeriod
     {
         $carbonDate = $date instanceof Carbon ? $date : Carbon::parse($date);
+
         return AccountingPeriod::forDate($carbonDate);
     }
 

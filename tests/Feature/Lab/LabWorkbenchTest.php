@@ -16,7 +16,6 @@ class LabWorkbenchTest extends TestCase
         $this->assertNotNull($response->status());
     }
 
-
     /** @test */
     public function test_sample_collection_updates_request_status()
     {

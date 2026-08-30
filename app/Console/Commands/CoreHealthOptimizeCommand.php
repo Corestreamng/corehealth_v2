@@ -40,7 +40,7 @@ class CoreHealthOptimizeCommand extends Command
         // 2. Cache configuration
         $this->line('Caching configuration...');
         Artisan::call('config:cache');
-        
+
         // 3. Cache routes
         $this->line('Caching routes...');
         Artisan::call('route:cache');
@@ -54,7 +54,7 @@ class CoreHealthOptimizeCommand extends Command
         Artisan::call('optimize');
 
         $this->info('CoreHealth optimization complete! Your application is now ready for high traffic.');
-        
+
         // Output hint about indexes
         $this->warn('Note: Do not forget to run "php artisan migrate" to apply the new performance indexes if you have not already.');
 

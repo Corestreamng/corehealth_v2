@@ -114,6 +114,7 @@ class DischargeChecklist extends Model implements Auditable
         }
 
         $completed = $this->items()->where('is_completed', true)->count();
+
         return (int) round(($completed / $total) * 100);
     }
 

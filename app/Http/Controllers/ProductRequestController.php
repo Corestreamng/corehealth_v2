@@ -3,26 +3,18 @@
 namespace App\Http\Controllers;
 
 use App\Helpers\HmoHelper;
-
-use App\Models\ProductRequest;
-use App\Models\AdmissionRequest;
-use App\Models\Clinic;
-use App\Models\Encounter;
-use App\Models\DoctorQueue;
-use Yajra\DataTables\DataTables;
-use App\Models\User;
-use App\Models\Staff;
 use App\Models\Hmo;
-use App\Models\LabServiceRequest;
-use Illuminate\Support\Facades\Auth;
 use App\Models\Patient;
 use App\Models\Product;
 use App\Models\ProductOrServiceRequest;
+use App\Models\ProductRequest;
 use App\Models\Store;
+use App\Services\StockService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
-use App\Services\StockService;
+use Yajra\DataTables\DataTables;
 
 class ProductRequestController extends Controller
 {
@@ -68,6 +60,7 @@ class ProductRequestController extends Controller
                     <a class='btn btn-primary' href='$url'>
                         view
                     </a>";
+
                     return $str;
                 } else {
                     return "N/A";
@@ -80,6 +73,7 @@ class ProductRequestController extends Controller
                 $str .= "<br><br><b>Insurance/HMO</b>: " . (($h->patient && $h->patient->hmo) ? $h->patient->hmo->name : "N/A");
                 $str .= "<br><br><b>HMO Number</b>: " . (($h->patient && $h->patient->hmo) ? $h->patient->hmo_no : "N/A");
                 $str .= "</small>";
+
                 return $str;
             })
             ->editColumn('created_at', function ($h) {
@@ -89,11 +83,13 @@ class ProductRequestController extends Controller
                 $str .= "<b>Billed By</b>: " . ((isset($h->billed_by) && $h->billed_by != null) ? (userfullname($h->billed_by) . ' (' . date('h:i a D M j, Y', strtotime($h->billed_date)) . ')') : "<span class='badge badge-secondary'>Not billed</span><br>");
                 $str .= "<br><b>Dispensed By</b>: " . ((isset($h->dispensed_by) && $h->dispensed_by != null) ? (userfullname($h->dispensed_by) . ' (' . date('h:i a D M j, Y', strtotime($h->dispense_date)) . ')') : "<span class='badge badge-secondary'>Not dispensed</span><br>");
                 $str .= "</small>";
+
                 return $str;
             })
             ->editColumn('dose', function ($his) {
                 $str = "<span class='badge badge-success'>[" . (($his->product->product_code) ? $his->product->product_code : '') . "]" . $his->product->product_name . "</span>";
                 $str .= "<hr> <b>Dose/Freq:</b> " . ($his->dose ?? 'N/A');
+
                 return $str;
             })
             ->rawColumns(['created_at', 'dose', 'select', 'patient_id'])
@@ -126,6 +122,7 @@ class ProductRequestController extends Controller
                 <a class='btn btn-primary' href='$url'>
                     view
                 </a>";
+
                 return $str;
             })
             ->editColumn('patient_id', function ($h) {
@@ -135,6 +132,7 @@ class ProductRequestController extends Controller
                 $str .= "<br><br><b >Insurance/HMO :</b> : " . (($h->patient->hmo) ? $h->patient->hmo->name : "N/A");
                 $str .= "<br><br><b >HMO Number :</b> : " . (($h->patient->hmo_no) ? $h->patient->hmo_no : "N/A");
                 $str .= "</small>";
+
                 return $str;
             })
             ->editColumn('created_at', function ($h) {
@@ -144,22 +142,22 @@ class ProductRequestController extends Controller
                 $str .= "<b >Billed By: </b>" . ((isset($h->billed_by) && $h->billed_by != null) ? (userfullname($h->billed_by) . ' (' . date('h:i a D M j, Y', strtotime($h->billed_date)) . ')') : "<span class='badge badge-secondary'>Not billed</span><br>");
                 $str .= "<br><b >Dispensed By: </b>" . ((isset($h->dispensed_by) && $h->dispensed_by != null) ? (userfullname($h->dispensed_by) . ' (' . date('h:i a D M j, Y', strtotime($h->dispense_date)) . ')') : "<span class='badge badge-secondary'>Not dispensed</span><br>");
                 $str .= "</small>";
+
                 return $str;
             })
             ->editColumn('dose', function ($his) {
                 $str = "<span class = 'badge badge-success'>[" . (($his->product->product_code) ? $his->product->product_code : '') . "]" . $his->product->product_name . "</span>";
                 $str .= "<hr> <b>Dose/Freq:</b> " . ($his->dose ?? 'N/A');
+
                 return $str;
             })
             ->rawColumns(['created_at', 'dose', 'select', 'patient_id'])
             ->make(true);
     }
 
-
     /**
      * dispense selected roduct requets
      */
-
     public function bill(Request $request)
     {
         try {
@@ -168,17 +166,18 @@ class ProductRequestController extends Controller
                 'addedPrescBillRows' => 'nullable|array|required_with:consult_presc_dose',
                 'selectedPrescBillRows' => 'array',
                 'patient_user_id' => 'required',
-                'patient_id' => 'required'
+                'patient_id' => 'required',
             ]);
 
             if (isset($request->dismiss_presc_bill) && isset($request->selectedPrescBillRows)) {
                 DB::beginTransaction();
                 for ($i = 0; $i < count($request->selectedPrescBillRows); $i++) {
                     ProductRequest::where('id', $request->selectedPrescBillRows[$i])->update([
-                        'status' => 0
+                        'status' => 0,
                     ]);
                 }
                 DB::commit();
+
                 return redirect()->back()->with(['message' => "Product Requests Dismissed Successfully", 'message_type' => 'success']);
             } else {
                 DB::beginTransaction();
@@ -186,7 +185,7 @@ class ProductRequestController extends Controller
                     for ($i = 0; $i < count($request->selectedPrescBillRows); $i++) {
                         $prod_req = ProductRequest::where('id', $request->selectedPrescBillRows[$i])->first();
                         $prod_id = $prod_req->product->id;
-                        $bill_req = new ProductOrServiceRequest;
+                        $bill_req = new ProductOrServiceRequest();
                         $bill_req->user_id = $request->patient_user_id;
                         $bill_req->staff_user_id = Auth::id();
                         $bill_req->product_id = $prod_id;
@@ -205,17 +204,17 @@ class ProductRequestController extends Controller
                             }
                         } catch (\Exception $e) {
                             DB::rollBack();
+
                             return redirect()->back()->withErrors(['error' => 'HMO Tariff Error: ' . $e->getMessage()])->withInput();
                         }
 
                         $bill_req->save();
 
-
                         ProductRequest::where('id', $request->selectedPrescBillRows[$i])->update([
                             'status' => 2,
                             'billed_by' => Auth::id(),
                             'billed_date' => date('Y-m-d H:i:s'),
-                            'product_request_id' => $bill_req->id
+                            'product_request_id' => $bill_req->id,
                         ]);
 
                         $product = Product::with(['stock'])->where('id', $prod_id)->first();
@@ -232,7 +231,7 @@ class ProductRequestController extends Controller
                 }
                 if (isset($request->addedPrescBillRows)) {
                     for ($i = 0; $i < count($request->addedPrescBillRows); $i++) {
-                        $bill_req = new ProductOrServiceRequest;
+                        $bill_req = new ProductOrServiceRequest();
                         $bill_req->user_id = $request->patient_user_id;
                         $bill_req->staff_user_id = Auth::id();
                         $bill_req->product_id = $request->addedPrescBillRows[$i];
@@ -251,6 +250,7 @@ class ProductRequestController extends Controller
                             }
                         } catch (\Exception $e) {
                             DB::rollBack();
+
                             return redirect()->back()->withErrors(['error' => 'HMO Tariff Error: ' . $e->getMessage()])->withInput();
                         }
 
@@ -281,10 +281,12 @@ class ProductRequestController extends Controller
                     }
                 }
                 DB::commit();
+
                 return redirect()->back()->with(['message' => "Product Requests Billed Successfully", 'message_type' => 'success']);
             }
         } catch (\Exception $e) {
             DB::rollBack();
+
             return redirect()->back()->withInput()->withMessage("An error occurred " . $e->getMessage() . 'line' . $e->getLine());
         }
     }
@@ -296,17 +298,18 @@ class ProductRequestController extends Controller
                 'selectedPrescDispenseRows' => 'array',
                 'patient_user_id' => 'required',
                 'patient_id' => 'required',
-                'store_id' => 'nullable|exists:stores,id'
+                'store_id' => 'nullable|exists:stores,id',
             ]);
 
             if (isset($request->dismiss_presc_dispense) && isset($request->selectedPrescDispenseRows)) {
                 DB::beginTransaction();
                 for ($i = 0; $i < count($request->selectedPrescDispenseRows); $i++) {
                     ProductRequest::where('id', $request->selectedPrescDispenseRows[$i])->update([
-                        'status' => 0
+                        'status' => 0,
                     ]);
                 }
                 DB::commit();
+
                 return redirect()->back()->with(['message' => "Product Requests Dismissed Successfully", 'message_type' => 'success']);
             } else {
                 DB::beginTransaction();
@@ -326,10 +329,11 @@ class ProductRequestController extends Controller
                             $deliveryCheck = HmoHelper::canDeliverService($productRequest->productOrServiceRequest);
                             if (!$deliveryCheck['can_deliver']) {
                                 DB::rollBack();
+
                                 return redirect()->back()->with([
                                     'message' => $deliveryCheck['reason'] . ' for Request ID: ' . $productRequest->id,
                                     'hint' => $deliveryCheck['hint'],
-                                    'message_type' => 'error'
+                                    'message_type' => 'error',
                                 ]);
                             }
                         }
@@ -376,10 +380,12 @@ class ProductRequestController extends Controller
                 }
 
                 DB::commit();
+
                 return redirect()->back()->with(['message' => "Product Requests Dispensed Successfully", 'message_type' => 'success']);
             }
         } catch (\Exception $e) {
             DB::rollBack();
+
             return redirect()->back()->withInput()->withMessage("An error occurred " . $e->getMessage() . 'line' . $e->getLine());
         }
     }
@@ -395,7 +401,7 @@ class ProductRequestController extends Controller
                 'addedPrescBillRows' => 'nullable|array',
                 'selectedPrescBillRows' => 'nullable|array',
                 'patient_user_id' => 'required',
-                'patient_id' => 'required'
+                'patient_id' => 'required',
             ]);
 
             DB::beginTransaction();
@@ -408,15 +414,17 @@ class ProductRequestController extends Controller
                     $prod_req = ProductRequest::with('product.price')->find($prId);
                     if (!$prod_req) {
                         $errors[] = "PR#{$prId}: Not found";
+
                         continue;
                     }
                     if ($prod_req->status != 1) {
                         $errors[] = "PR#{$prId}: Already processed";
+
                         continue;
                     }
 
                     $prod_id = $prod_req->product_id;
-                    $bill_req = new ProductOrServiceRequest;
+                    $bill_req = new ProductOrServiceRequest();
                     $bill_req->user_id = $request->patient_user_id;
                     $bill_req->staff_user_id = Auth::id();
                     $bill_req->product_id = $prod_id;
@@ -493,7 +501,7 @@ class ProductRequestController extends Controller
                         'status' => 2,
                         'billed_by' => Auth::id(),
                         'billed_date' => now(),
-                        'product_request_id' => $bill_req->id
+                        'product_request_id' => $bill_req->id,
                     ]);
 
                     // Decrement stock
@@ -518,11 +526,12 @@ class ProductRequestController extends Controller
                     $product = Product::with(['price', 'stock'])->find($productId);
                     if (!$product) {
                         $errors[] = "Product #{$productId}: Not found";
+
                         continue;
                     }
 
                     // Create ProductOrServiceRequest
-                    $bill_req = new ProductOrServiceRequest;
+                    $bill_req = new ProductOrServiceRequest();
                     $bill_req->user_id = $request->patient_user_id;
                     $bill_req->staff_user_id = Auth::id();
                     $bill_req->product_id = $productId;
@@ -587,14 +596,15 @@ class ProductRequestController extends Controller
                 'success' => true,
                 'message' => $message,
                 'billed_count' => $billedCount,
-                'errors' => $errors
+                'errors' => $errors,
             ]);
 
         } catch (\Exception $e) {
             DB::rollBack();
+
             return response()->json([
                 'success' => false,
-                'message' => 'Error billing items: ' . $e->getMessage()
+                'message' => 'Error billing items: ' . $e->getMessage(),
             ], 500);
         }
     }
@@ -610,7 +620,7 @@ class ProductRequestController extends Controller
                 'selectedPrescDispenseRows' => 'required|array|min:1',
                 'patient_user_id' => 'required',
                 'patient_id' => 'required',
-                'store_id' => 'nullable|exists:stores,id'
+                'store_id' => 'nullable|exists:stores,id',
             ]);
 
             DB::beginTransaction();
@@ -629,11 +639,13 @@ class ProductRequestController extends Controller
 
                 if (!$productRequest) {
                     $errors[] = "PR#{$prId}: Not found";
+
                     continue;
                 }
 
                 if ($productRequest->status != 2) {
                     $errors[] = "PR#{$prId}: Not billed yet";
+
                     continue;
                 }
 
@@ -642,6 +654,7 @@ class ProductRequestController extends Controller
                     $deliveryCheck = HmoHelper::canDeliverService($productRequest->productOrServiceRequest);
                     if (!$deliveryCheck['can_deliver']) {
                         $errors[] = "PR#{$prId}: " . $deliveryCheck['reason'];
+
                         continue;
                     }
                 }
@@ -704,14 +717,15 @@ class ProductRequestController extends Controller
                 'message' => $message,
                 'dispensed_count' => $dispensedCount,
                 'errors' => $errors,
-                'stock_warnings' => $stockWarnings
+                'stock_warnings' => $stockWarnings,
             ]);
 
         } catch (\Exception $e) {
             DB::rollBack();
+
             return response()->json([
                 'success' => false,
-                'message' => 'Error dispensing items: ' . $e->getMessage()
+                'message' => 'Error dispensing items: ' . $e->getMessage(),
             ], 500);
         }
     }
@@ -724,7 +738,7 @@ class ProductRequestController extends Controller
         try {
             $request->validate([
                 'prescription_ids' => 'required|array|min:1',
-                'patient_id' => 'required'
+                'patient_id' => 'required',
             ]);
 
             DB::beginTransaction();
@@ -736,11 +750,13 @@ class ProductRequestController extends Controller
 
                 if (!$productRequest) {
                     $errors[] = "PR#{$prId}: Not found";
+
                     continue;
                 }
 
                 if ($productRequest->status == 3) {
                     $errors[] = "PR#{$prId}: Already dispensed - cannot dismiss";
+
                     continue;
                 }
 
@@ -760,14 +776,15 @@ class ProductRequestController extends Controller
                 'success' => true,
                 'message' => $message,
                 'dismissed_count' => $dismissedCount,
-                'errors' => $errors
+                'errors' => $errors,
             ]);
 
         } catch (\Exception $e) {
             DB::rollBack();
+
             return response()->json([
                 'success' => false,
-                'message' => 'Error dismissing items: ' . $e->getMessage()
+                'message' => 'Error dismissing items: ' . $e->getMessage(),
             ], 500);
         }
     }

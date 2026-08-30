@@ -2,53 +2,51 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
-use App\Models\Patient;
-use App\Models\Product;
-use App\Models\Service;
-use App\Models\VitalSign;
-use App\Models\NursingNote;
-use App\Models\NursingNoteType;
+use App\Enums\QueueStatus;
+use App\Http\Traits\ClinicalOrdersTrait;
+use App\Models\AdmissionRequest;
+use App\Models\AncInvestigation;
+use App\Models\AncVisit;
+use App\Models\ChildGrowthRecord;
+use App\Models\DeathRecord;
+use App\Models\DeliveryPartograph;
+use App\Models\DeliveryRecord;
+use App\Models\DoctorQueue;
+use App\Models\Encounter;
+use App\Models\ImagingServiceRequest;
 use App\Models\ImmunizationRecord;
-use App\Models\User;
+use App\Models\LabServiceRequest;
+use App\Models\MaternityBaby;
+use App\Models\MaternityEncounterLink;
 use App\Models\MaternityEnrollment;
 use App\Models\MaternityMedicalHistory;
-use App\Models\MaternityPreviousPregnancy;
-use App\Models\AncVisit;
-use App\Models\AncInvestigation;
-use App\Models\DeliveryRecord;
-use App\Models\DeliveryPartograph;
 use App\Models\MaternityPartograph;
-use App\Models\MaternityBaby;
-use App\Models\ChildGrowthRecord;
-use App\Models\PostnatalVisit;
-use App\Models\WhoGrowthStandard;
-use App\Models\DeathRecord;
-use App\Models\TreatmentPlan;
-use App\Models\LabServiceRequest;
-use App\Models\ImagingServiceRequest;
-use App\Models\ProductRequest;
-use App\Models\Procedure;
-use App\Models\Store;
+use App\Models\MaternityPreviousPregnancy;
+use App\Models\NursingNote;
+use App\Models\NursingNoteType;
+use App\Models\Patient;
 use App\Models\PatientImmunizationSchedule;
-use App\Models\VaccineScheduleTemplate;
+use App\Models\PostnatalVisit;
+use App\Models\Procedure;
+use App\Models\ProductRequest;
+use App\Models\Service;
+use App\Models\Store;
+use App\Models\StoreContextRule;
+use App\Models\TreatmentPlan;
+use App\Models\User;
 use App\Models\VaccineScheduleItem;
-use App\Models\DoctorQueue;
-use App\Enums\QueueStatus;
+use App\Models\VaccineScheduleTemplate;
+use App\Models\VitalSign;
+use App\Models\WhoGrowthStandard;
+use App\Services\StoreContextResolver;
 use Carbon\Carbon;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Validator;
-use OwenIt\Auditing\Models\Audit;
 use Illuminate\Support\Str;
-use App\Http\Traits\ClinicalOrdersTrait;
-use App\Services\StoreContextResolver;
-use App\Models\StoreContextRule;
-use Illuminate\Support\Facades\Gate;
-use App\Models\AdmissionRequest;
-use App\Models\Encounter;
-use App\Models\MaternityEncounterLink;
+use OwenIt\Auditing\Models\Audit;
 
 class MaternityWorkbenchController extends Controller
 {
@@ -65,8 +63,8 @@ class MaternityWorkbenchController extends Controller
             abort(403, 'You do not have access to the Maternity Workbench.');
         }
         // ── Store Governance: context resolution (Plan §10, §B5) ─────────────
-        $resolver              = app(StoreContextResolver::class);
-        $resolvedStore         = $resolver->resolve($user);
+        $resolver = app(StoreContextResolver::class);
+        $resolvedStore = $resolver->resolve($user);
         $contextFallbackAction = $resolvedStore ? null : StoreContextRule::fallbackAction();
 
         // Candidate stores: all ward stores + user's dept store + rule-configured stores.
@@ -87,18 +85,25 @@ class MaternityWorkbenchController extends Controller
 
     private function safeParseDate($dateString)
     {
-        if (empty($dateString)) return null;
-        if ($dateString instanceof Carbon) return $dateString;
+        if (empty($dateString)) {
+            return null;
+        }
+        if ($dateString instanceof Carbon) {
+            return $dateString;
+        }
 
         $formats = ['Y-m-d', 'd/m/Y', 'd-m-Y', 'm/d/Y', 'Y-m-d H:i:s', 'd/m/Y H:i:s'];
         foreach ($formats as $format) {
             try {
                 $date = Carbon::createFromFormat($format, $dateString);
-                if ($date && $date->format($format) === $dateString) return $date;
+                if ($date && $date->format($format) === $dateString) {
+                    return $date;
+                }
             } catch (\Exception $e) {
                 continue;
             }
         }
+
         try {
             return Carbon::parse($dateString);
         } catch (\Exception $e) {
@@ -109,21 +114,31 @@ class MaternityWorkbenchController extends Controller
     private function calculateAge($dob)
     {
         $date = $this->safeParseDate($dob);
+
         return $date ? $date->age : 'N/A';
     }
 
     private function formatAge($dob)
     {
         $date = $this->safeParseDate($dob);
-        if (!$date) return 'N/A';
+        if (!$date) {
+            return 'N/A';
+        }
         $now = Carbon::now();
         $years = $date->diffInYears($now);
         $months = $date->copy()->addYears($years)->diffInMonths($now);
         $days = $date->copy()->addYears($years)->addMonths($months)->diffInDays($now);
         $parts = [];
-        if ($years > 0) $parts[] = $years . 'y';
-        if ($months > 0) $parts[] = $months . 'm';
-        if ($days > 0) $parts[] = $days . 'd';
+        if ($years > 0) {
+            $parts[] = $years . 'y';
+        }
+        if ($months > 0) {
+            $parts[] = $months . 'm';
+        }
+        if ($days > 0) {
+            $parts[] = $days . 'd';
+        }
+
         return !empty($parts) ? implode(' ', $parts) : '0d';
     }
 
@@ -134,7 +149,9 @@ class MaternityWorkbenchController extends Controller
     public function searchPatients(Request $request)
     {
         $term = $request->get('q', $request->get('term', ''));
-        if (strlen($term) < 2) return response()->json([]);
+        if (strlen($term) < 2) {
+            return response()->json([]);
+        }
 
         $patients = Patient::with(['user', 'hmo'])
             ->searchByTerm($term)
@@ -154,20 +171,20 @@ class MaternityWorkbenchController extends Controller
             }
 
             return [
-                'id'            => $p->id,
-                'user_id'       => $p->user_id,
-                'name'          => userfullname($p->user_id),
-                'file_no'       => $p->file_no,
-                'age'           => $this->calculateAge($p->dob),
-                'gender'        => $p->gender ?? 'N/A',
-                'phone'         => $p->phone_no ?? 'N/A',
-                'photo'         => $p->user && $p->user->filename ? asset('storage/image/user/' . $p->user->filename) : asset('assets/images/default-avatar.png'),
-                'hmo'           => $p->hmo ? $p->hmo->name : null,
+                'id' => $p->id,
+                'user_id' => $p->user_id,
+                'name' => userfullname($p->user_id),
+                'file_no' => $p->file_no,
+                'age' => $this->calculateAge($p->dob),
+                'gender' => $p->gender ?? 'N/A',
+                'phone' => $p->phone_no ?? 'N/A',
+                'photo' => $p->user && $p->user->filename ? asset('storage/image/user/' . $p->user->filename) : asset('assets/images/default-avatar.png'),
+                'hmo' => $p->hmo ? $p->hmo->name : null,
                 'has_enrollment' => $enrollment ? true : false,
                 'enrollment_id' => $enrollment ? $enrollment->id : null,
                 'enrollment_status' => $enrollment ? $enrollment->status : null,
-                'edd'           => $enrollment && $enrollment->edd ? $enrollment->edd->format('d M Y') : null,
-                'is_baby'       => $babyRecord ? true : false,
+                'edd' => $enrollment && $enrollment->edd ? $enrollment->edd->format('d M Y') : null,
+                'is_baby' => $babyRecord ? true : false,
             ];
         });
 
@@ -191,8 +208,8 @@ class MaternityWorkbenchController extends Controller
 
             if ($enrollment && $enrollment->patient) {
                 $mother = [
-                    'id'      => $enrollment->patient->id,
-                    'name'    => userfullname($enrollment->patient->user_id),
+                    'id' => $enrollment->patient->id,
+                    'name' => userfullname($enrollment->patient->user_id),
                     'file_no' => $enrollment->patient->file_no,
                 ];
             }
@@ -204,10 +221,10 @@ class MaternityWorkbenchController extends Controller
         }
 
         if ($enrollment) {
-            $babies = $enrollment->babies->map(function($b) {
+            $babies = $enrollment->babies->map(function ($b) {
                 return [
-                    'id'      => $b->patient_id,
-                    'name'    => $b->patient && $b->patient->user ? userfullname($b->patient->user_id) : 'Baby',
+                    'id' => $b->patient_id,
+                    'name' => $b->patient && $b->patient->user ? userfullname($b->patient->user_id) : 'Baby',
                     'file_no' => $b->patient ? $b->patient->file_no : 'N/A',
                 ];
             })->values()->toArray();
@@ -253,68 +270,68 @@ class MaternityWorkbenchController extends Controller
             ->first();
 
         return response()->json([
-            'id'           => $patient->id,
-            'user_id'      => $patient->user_id,
-            'name'         => userfullname($patient->user_id),
-            'file_no'      => $patient->file_no,
-            'age'          => $this->formatAge($patient->dob),
-            'dob'          => $this->safeParseDate($patient->dob) ? $this->safeParseDate($patient->dob)->format('d M Y') : 'N/A',
-            'gender'       => $patient->gender ?? 'N/A',
-            'blood_group'  => $patient->blood_group ?? 'N/A',
-            'genotype'     => $patient->genotype ?? 'N/A',
-            'phone'        => $patient->phone_no ?? 'N/A',
-            'address'      => $patient->address ?? 'N/A',
-            'photo'        => $patient->user->photo ?? 'avatar.png',
-            'hmo'          => $patient->hmo ? $patient->hmo->name : 'N/A',
-            'hmo_no'       => $patient->hmo_no ?? 'N/A',
-            'allergies'    => $patient->allergies ?? [],
-            'is_baby'      => $isBaby,
-            'mother'       => $mother,
-            'babies'       => $babies,
+            'id' => $patient->id,
+            'user_id' => $patient->user_id,
+            'name' => userfullname($patient->user_id),
+            'file_no' => $patient->file_no,
+            'age' => $this->formatAge($patient->dob),
+            'dob' => $this->safeParseDate($patient->dob) ? $this->safeParseDate($patient->dob)->format('d M Y') : 'N/A',
+            'gender' => $patient->gender ?? 'N/A',
+            'blood_group' => $patient->blood_group ?? 'N/A',
+            'genotype' => $patient->genotype ?? 'N/A',
+            'phone' => $patient->phone_no ?? 'N/A',
+            'address' => $patient->address ?? 'N/A',
+            'photo' => $patient->user->photo ?? 'avatar.png',
+            'hmo' => $patient->hmo ? $patient->hmo->name : 'N/A',
+            'hmo_no' => $patient->hmo_no ?? 'N/A',
+            'allergies' => $patient->allergies ?? [],
+            'is_baby' => $isBaby,
+            'mother' => $mother,
+            'babies' => $babies,
             'birth_weight_kg' => $isBaby ? $babyRecord->birth_weight_kg : null,
-            'apgar_1_min'   => $isBaby ? $babyRecord->apgar_1_min : null,
-            'apgar_5_min'   => $isBaby ? $babyRecord->apgar_5_min : null,
-            'apgar_10_min'  => $isBaby ? $babyRecord->apgar_10_min : null,
-            'sex'           => $isBaby ? $babyRecord->sex : null,
-            'enrollment'   => $enrollment ? [
-                'id'                => $enrollment->id,
-                'status'            => $enrollment->status,
-                'entry_point'       => $enrollment->entry_point,
-                'booking_date'      => $enrollment->booking_date ? $enrollment->booking_date->format('d M Y') : null,
-                'lmp'               => $enrollment->lmp ? $enrollment->lmp->format('d M Y') : null,
-                'edd'               => $enrollment->edd ? $enrollment->edd->format('d M Y') : null,
-                'gestational_age'   => $enrollment->getCurrentGestationalAge(),
-                'gravida'           => $enrollment->gravida,
-                'parity'            => $enrollment->parity,
-                'risk_level'        => $enrollment->risk_level,
-                'risk_factors'      => $enrollment->risk_factors,
-                'blood_group'       => $enrollment->blood_group,
-                'genotype'          => $enrollment->genotype,
+            'apgar_1_min' => $isBaby ? $babyRecord->apgar_1_min : null,
+            'apgar_5_min' => $isBaby ? $babyRecord->apgar_5_min : null,
+            'apgar_10_min' => $isBaby ? $babyRecord->apgar_10_min : null,
+            'sex' => $isBaby ? $babyRecord->sex : null,
+            'enrollment' => $enrollment ? [
+                'id' => $enrollment->id,
+                'status' => $enrollment->status,
+                'entry_point' => $enrollment->entry_point,
+                'booking_date' => $enrollment->booking_date ? $enrollment->booking_date->format('d M Y') : null,
+                'lmp' => $enrollment->lmp ? $enrollment->lmp->format('d M Y') : null,
+                'edd' => $enrollment->edd ? $enrollment->edd->format('d M Y') : null,
+                'gestational_age' => $enrollment->getCurrentGestationalAge(),
+                'gravida' => $enrollment->gravida,
+                'parity' => $enrollment->parity,
+                'risk_level' => $enrollment->risk_level,
+                'risk_factors' => $enrollment->risk_factors,
+                'blood_group' => $enrollment->blood_group,
+                'genotype' => $enrollment->genotype,
                 'booking_weight_kg' => $enrollment->booking_weight_kg,
-                'booking_bp'        => $enrollment->booking_bp,
-                'height_cm'         => $enrollment->height_cm,
-                'anc_visit_count'   => $enrollment->ancVisits->count(),
-                'has_delivery'      => $enrollment->deliveryRecord ? true : false,
-                'delivery_date'     => $enrollment->deliveryRecord ? $enrollment->deliveryRecord->delivery_date->format('d M Y') : null,
-                'baby_count'        => $enrollment->babies->count(),
+                'booking_bp' => $enrollment->booking_bp,
+                'height_cm' => $enrollment->height_cm,
+                'anc_visit_count' => $enrollment->ancVisits->count(),
+                'has_delivery' => $enrollment->deliveryRecord ? true : false,
+                'delivery_date' => $enrollment->deliveryRecord ? $enrollment->deliveryRecord->delivery_date->format('d M Y') : null,
+                'baby_count' => $enrollment->babies->count(),
                 'postnatal_visit_count' => $enrollment->postnatalVisits->count(),
-                'remaining_days'    => $enrollment->getRemainingDays(),
-                'completed_at'      => $enrollment->completed_at ? $enrollment->completed_at->format('d M Y H:i') : null,
-                'outcome_summary'   => $enrollment->outcome_summary,
+                'remaining_days' => $enrollment->getRemainingDays(),
+                'completed_at' => $enrollment->completed_at ? $enrollment->completed_at->format('d M Y H:i') : null,
+                'outcome_summary' => $enrollment->outcome_summary,
             ] : null,
-            'last_vitals'  => $lastVitals ? [
-                'bp'        => $lastVitals->blood_pressure ?? 'N/A',
-                'temp'      => $lastVitals->temp ?? 'N/A',
+            'last_vitals' => $lastVitals ? [
+                'bp' => $lastVitals->blood_pressure ?? 'N/A',
+                'temp' => $lastVitals->temp ?? 'N/A',
                 'heart_rate' => $lastVitals->heart_rate ?? 'N/A',
                 'resp_rate' => $lastVitals->resp_rate ?? 'N/A',
-                'weight'    => $lastVitals->weight ? (float)$lastVitals->weight : null,
-                'spo2'      => $lastVitals->spo2 ? (float)$lastVitals->spo2 : null,
-                'time'      => Carbon::parse($lastVitals->created_at)->format('h:i a, d M'),
+                'weight' => $lastVitals->weight ? (float)$lastVitals->weight : null,
+                'spo2' => $lastVitals->spo2 ? (float)$lastVitals->spo2 : null,
+                'time' => Carbon::parse($lastVitals->created_at)->format('h:i a, d M'),
                 'form_data' => $lastVitals->form_data,
             ] : null,
             'clinic_name' => $clinicName,
             'vitals_template' => $vitalsTemplate,
-            'dynamic_ranges'  => $dynamicRanges,
+            'dynamic_ranges' => $dynamicRanges,
             'admission_request' => $admissionRequest ? [
                 'id' => $admissionRequest->id,
                 'status' => $admissionRequest->admission_status,
@@ -331,20 +348,20 @@ class MaternityWorkbenchController extends Controller
     public function enrollPatient(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'patient_id'            => 'required|exists:patients,id',
-            'entry_point'           => 'required|in:anc,delivery,postnatal',
-            'lmp'                   => 'required|date',
-            'edd'                   => 'nullable|date',
-            'gravida'               => 'required|integer|min:1',
-            'parity'                => 'nullable|integer|min:0',
-            'alive'                 => 'nullable|integer|min:0',
-            'abortion_miscarriage'  => 'nullable|integer|min:0',
-            'blood_group'           => 'nullable|in:A+,A-,B+,B-,AB+,AB-,O+,O-',
-            'genotype'              => 'nullable|in:AA,AS,SS,AC,SC,CC,Others',
-            'height_cm'             => 'nullable|numeric|min:50|max:250',
-            'booking_weight_kg'     => 'nullable|numeric|min:20|max:300',
-            'booking_bp'            => 'nullable|string|max:20',
-            'risk_level'            => 'nullable|in:low,moderate,high,very_high',
+            'patient_id' => 'required|exists:patients,id',
+            'entry_point' => 'required|in:anc,delivery,postnatal',
+            'lmp' => 'required|date',
+            'edd' => 'nullable|date',
+            'gravida' => 'required|integer|min:1',
+            'parity' => 'nullable|integer|min:0',
+            'alive' => 'nullable|integer|min:0',
+            'abortion_miscarriage' => 'nullable|integer|min:0',
+            'blood_group' => 'nullable|in:A+,A-,B+,B-,AB+,AB-,O+,O-',
+            'genotype' => 'nullable|in:AA,AS,SS,AC,SC,CC,Others',
+            'height_cm' => 'nullable|numeric|min:50|max:250',
+            'booking_weight_kg' => 'nullable|numeric|min:20|max:300',
+            'booking_bp' => 'nullable|string|max:20',
+            'risk_level' => 'nullable|in:low,moderate,high,very_high',
         ]);
 
         if ($validator->fails()) {
@@ -384,29 +401,29 @@ class MaternityWorkbenchController extends Controller
             }
 
             $enrollment = MaternityEnrollment::create([
-                'patient_id'              => $request->patient_id,
-                'enrolled_by'             => Auth::id(),
-                'entry_point'             => $request->entry_point,
-                'status'                  => $status,
-                'enrollment_date'         => Carbon::today(),
-                'booking_date'            => Carbon::today(),
-                'lmp'                     => $lmp,
-                'edd'                     => $edd,
+                'patient_id' => $request->patient_id,
+                'enrolled_by' => Auth::id(),
+                'entry_point' => $request->entry_point,
+                'status' => $status,
+                'enrollment_date' => Carbon::today(),
+                'booking_date' => Carbon::today(),
+                'lmp' => $lmp,
+                'edd' => $edd,
                 'gestational_age_at_booking' => $lmp ? $lmp->diffInWeeks(Carbon::today()) : null,
-                'gravida'                 => $request->gravida,
-                'parity'                  => $request->parity ?? 0,
-                'alive'                   => $request->alive ?? 0,
-                'abortion_miscarriage'    => $request->abortion_miscarriage ?? 0,
-                'blood_group'             => $request->blood_group,
-                'genotype'                => $request->genotype,
-                'height_cm'               => $request->height_cm,
-                'booking_weight_kg'       => $request->booking_weight_kg,
-                'booking_bmi'             => ($request->booking_weight_kg && $request->height_cm)
+                'gravida' => $request->gravida,
+                'parity' => $request->parity ?? 0,
+                'alive' => $request->alive ?? 0,
+                'abortion_miscarriage' => $request->abortion_miscarriage ?? 0,
+                'blood_group' => $request->blood_group,
+                'genotype' => $request->genotype,
+                'height_cm' => $request->height_cm,
+                'booking_weight_kg' => $request->booking_weight_kg,
+                'booking_bmi' => ($request->booking_weight_kg && $request->height_cm)
                     ? round($request->booking_weight_kg / (($request->height_cm / 100) ** 2), 1) : null,
-                'booking_bp'              => $request->booking_bp,
-                'risk_level'              => $request->risk_level ?? 'low',
-                'risk_factors'            => $request->risk_factors,
-                'birth_plan_notes'        => $request->birth_plan_notes,
+                'booking_bp' => $request->booking_bp,
+                'risk_level' => $request->risk_level ?? 'low',
+                'risk_factors' => $request->risk_factors,
+                'birth_plan_notes' => $request->birth_plan_notes,
                 'preferred_delivery_place' => $request->preferred_delivery_place,
             ]);
 
@@ -415,10 +432,10 @@ class MaternityWorkbenchController extends Controller
                 foreach ($request->medical_history as $item) {
                     MaternityMedicalHistory::create([
                         'enrollment_id' => $enrollment->id,
-                        'category'      => $item['category'] ?? 'medical',
-                        'description'   => $item['description'] ?? '',
-                        'year'          => $item['year'] ?? null,
-                        'notes'         => $item['notes'] ?? null,
+                        'category' => $item['category'] ?? 'medical',
+                        'description' => $item['description'] ?? '',
+                        'year' => $item['year'] ?? null,
+                        'notes' => $item['notes'] ?? null,
                     ]);
                 }
             }
@@ -431,19 +448,19 @@ class MaternityWorkbenchController extends Controller
                     $babyStillbirth = filter_var($pp['baby_stillbirth'] ?? false, FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE);
 
                     MaternityPreviousPregnancy::create([
-                        'enrollment_id'    => $enrollment->id,
-                        'year'             => $pp['year'] ?? null,
+                        'enrollment_id' => $enrollment->id,
+                        'year' => $pp['year'] ?? null,
                         'place_of_delivery' => $pp['place_of_delivery'] ?? null,
-                        'duration_weeks'   => $pp['duration_weeks'] ?? null,
-                        'complications'    => $pp['complications'] ?? null,
-                        'type_of_labour'   => $pp['type_of_labour'] ?? null,
-                        'baby_alive'       => $babyAlive ? 1 : 0,
-                        'baby_dead'        => $babyDead ? 1 : 0,
-                        'baby_stillbirth'  => $babyStillbirth ? 1 : 0,
-                        'baby_sex'         => $pp['baby_sex'] ?? null,
-                        'birth_weight_kg'  => $pp['birth_weight_kg'] ?? null,
-                        'present_health'   => $pp['present_health'] ?? null,
-                        'notes'            => $pp['notes'] ?? null,
+                        'duration_weeks' => $pp['duration_weeks'] ?? null,
+                        'complications' => $pp['complications'] ?? null,
+                        'type_of_labour' => $pp['type_of_labour'] ?? null,
+                        'baby_alive' => $babyAlive ? 1 : 0,
+                        'baby_dead' => $babyDead ? 1 : 0,
+                        'baby_stillbirth' => $babyStillbirth ? 1 : 0,
+                        'baby_sex' => $pp['baby_sex'] ?? null,
+                        'birth_weight_kg' => $pp['birth_weight_kg'] ?? null,
+                        'present_health' => $pp['present_health'] ?? null,
+                        'notes' => $pp['notes'] ?? null,
                     ]);
                 }
             }
@@ -451,13 +468,14 @@ class MaternityWorkbenchController extends Controller
             DB::commit();
 
             return response()->json([
-                'success'       => true,
-                'message'       => 'Patient enrolled in maternity care successfully.',
+                'success' => true,
+                'message' => 'Patient enrolled in maternity care successfully.',
                 'enrollment_id' => $enrollment->id,
-                'enrollment'    => $enrollment->fresh(),
+                'enrollment' => $enrollment->fresh(),
             ]);
         } catch (\Exception $e) {
             DB::rollBack();
+
             return response()->json(['success' => false, 'message' => 'Error enrolling patient: ' . $e->getMessage()], 500);
         }
     }
@@ -476,10 +494,10 @@ class MaternityWorkbenchController extends Controller
         ])->findOrFail($id);
 
         return response()->json([
-            'success'    => true,
+            'success' => true,
             'enrollment' => $enrollment,
             'gestational_age' => $enrollment->getCurrentGestationalAge(),
-            'remaining_days'  => $enrollment->getRemainingDays(),
+            'remaining_days' => $enrollment->getRemainingDays(),
         ]);
     }
 
@@ -509,8 +527,12 @@ class MaternityWorkbenchController extends Controller
 
         $data = $request->only($fillable);
 
-        if (isset($data['lmp'])) $data['lmp'] = $this->safeParseDate($data['lmp']);
-        if (isset($data['edd'])) $data['edd'] = $this->safeParseDate($data['edd']);
+        if (isset($data['lmp'])) {
+            $data['lmp'] = $this->safeParseDate($data['lmp']);
+        }
+        if (isset($data['edd'])) {
+            $data['edd'] = $this->safeParseDate($data['edd']);
+        }
 
         // Recalculate BMI if weight or height changed
         $weight = $data['booking_weight_kg'] ?? $enrollment->booking_weight_kg;
@@ -526,8 +548,8 @@ class MaternityWorkbenchController extends Controller
         $enrollment->update($data);
 
         return response()->json([
-            'success'    => true,
-            'message'    => 'Enrollment updated successfully.',
+            'success' => true,
+            'message' => 'Enrollment updated successfully.',
             'enrollment' => $enrollment->fresh(),
         ]);
     }
@@ -550,7 +572,7 @@ class MaternityWorkbenchController extends Controller
 
         $validator = Validator::make($request->all(), [
             'outcome_summary' => 'required|string|min:5',
-            'confirm'         => 'required|boolean',
+            'confirm' => 'required|boolean',
         ]);
 
         if ($validator->fails()) {
@@ -572,23 +594,23 @@ class MaternityWorkbenchController extends Controller
         // If not confirmed yet, return warnings for user review
         if (!$request->confirm) {
             return response()->json([
-                'success'  => false,
-                'confirm'  => true,
+                'success' => false,
+                'confirm' => true,
                 'warnings' => $warnings,
-                'message'  => 'Please review the warnings and confirm discharge.',
+                'message' => 'Please review the warnings and confirm discharge.',
             ]);
         }
 
         try {
             $enrollment->update([
-                'status'          => 'completed',
-                'completed_at'    => Carbon::now(),
+                'status' => 'completed',
+                'completed_at' => Carbon::now(),
                 'outcome_summary' => $request->outcome_summary,
             ]);
 
             return response()->json([
-                'success'    => true,
-                'message'    => 'Patient has been discharged from maternity care.',
+                'success' => true,
+                'message' => 'Patient has been discharged from maternity care.',
                 'enrollment' => $enrollment->fresh(),
             ]);
         } catch (\Exception $e) {
@@ -609,24 +631,24 @@ class MaternityWorkbenchController extends Controller
 
         // Booking
         $timeline[] = [
-            'date'  => $enrollment->booking_date ? $enrollment->booking_date->format('d M Y') : null,
-            'type'  => 'booking',
+            'date' => $enrollment->booking_date ? $enrollment->booking_date->format('d M Y') : null,
+            'type' => 'booking',
             'title' => 'Maternity Enrollment',
             'detail' => 'Entry: ' . ucfirst($enrollment->entry_point) . ' | G' . $enrollment->gravida . 'P' . $enrollment->parity,
-            'icon'  => 'mdi-clipboard-plus',
+            'icon' => 'mdi-clipboard-plus',
             'color' => 'primary',
         ];
 
         // ANC visits
         foreach ($enrollment->ancVisits as $visit) {
             $timeline[] = [
-                'date'  => $visit->visit_date ? $visit->visit_date->format('d M Y') : null,
-                'type'  => 'anc_visit',
+                'date' => $visit->visit_date ? $visit->visit_date->format('d M Y') : null,
+                'type' => 'anc_visit',
                 'title' => 'ANC Visit #' . $visit->visit_number,
                 'detail' => 'GA: ' . $visit->getGestationalAge() . ' | BP: ' . $visit->getBloodPressure() . ' | FHR: ' . ($visit->fetal_heart_rate ?? 'N/A'),
-                'icon'  => 'mdi-stethoscope',
+                'icon' => 'mdi-stethoscope',
                 'color' => 'info',
-                'id'    => $visit->id,
+                'id' => $visit->id,
             ];
         }
 
@@ -634,26 +656,26 @@ class MaternityWorkbenchController extends Controller
         if ($enrollment->deliveryRecord) {
             $dr = $enrollment->deliveryRecord;
             $timeline[] = [
-                'date'  => $dr->delivery_date ? $dr->delivery_date->format('d M Y') : null,
-                'type'  => 'delivery',
+                'date' => $dr->delivery_date ? $dr->delivery_date->format('d M Y') : null,
+                'type' => 'delivery',
                 'title' => 'Delivery - ' . strtoupper($dr->type_of_delivery ?? 'N/A'),
                 'detail' => $dr->number_of_babies . ' baby(ies) | Blood loss: ' . ($dr->blood_loss_ml ?? 'N/A') . 'ml',
-                'icon'  => 'mdi-baby-carriage',
+                'icon' => 'mdi-baby-carriage',
                 'color' => 'success',
-                'id'    => $dr->id,
+                'id' => $dr->id,
             ];
         }
 
         // Postnatal visits
         foreach ($enrollment->postnatalVisits as $pnv) {
             $timeline[] = [
-                'date'  => $pnv->visit_date ? $pnv->visit_date->format('d M Y') : null,
-                'type'  => 'postnatal',
+                'date' => $pnv->visit_date ? $pnv->visit_date->format('d M Y') : null,
+                'type' => 'postnatal',
                 'title' => 'Postnatal Visit (' . str_replace('_', ' ', $pnv->visit_type) . ')',
                 'detail' => 'Mother: ' . ($pnv->general_condition ?? 'N/A') . ' | Baby wt: ' . ($pnv->baby_weight_kg ?? 'N/A') . 'kg',
-                'icon'  => 'mdi-mother-nurse',
+                'icon' => 'mdi-mother-nurse',
                 'color' => 'warning',
-                'id'    => $pnv->id,
+                'id' => $pnv->id,
             ];
         }
 
@@ -813,7 +835,7 @@ class MaternityWorkbenchController extends Controller
         $enrollment = MaternityEnrollment::findOrFail($id);
 
         $validator = Validator::make($request->all(), [
-            'items'            => 'required|array|min:1',
+            'items' => 'required|array|min:1',
             'items.*.category' => 'required|in:medical,surgical,obstetric,family,social',
             'items.*.description' => 'required|string',
         ]);
@@ -827,11 +849,11 @@ class MaternityWorkbenchController extends Controller
             foreach ($request->items as $item) {
                 $newEntries[] = MaternityMedicalHistory::create([
                     'enrollment_id' => $id,
-                    'category'      => $item['category'],
-                    'description'   => $item['description'],
-                    'year'          => $item['year'] ?? null,
-                    'notes'         => $item['notes'] ?? null,
-                    'created_by'    => Auth::id(),
+                    'category' => $item['category'],
+                    'description' => $item['description'],
+                    'year' => $item['year'] ?? null,
+                    'notes' => $item['notes'] ?? null,
+                    'created_by' => Auth::id(),
                 ]);
             }
 
@@ -850,9 +872,9 @@ class MaternityWorkbenchController extends Controller
         $enrollment = MaternityEnrollment::findOrFail($id);
 
         $validator = Validator::make($request->all(), [
-            'year'              => 'nullable|integer|min:1950|max:' . date('Y'),
+            'year' => 'nullable|integer|min:1950|max:' . date('Y'),
             'place_of_delivery' => 'nullable|string',
-            'duration_weeks'    => 'nullable|integer|min:1|max:45',
+            'duration_weeks' => 'nullable|integer|min:1|max:45',
         ]);
 
         if ($validator->fails()) {
@@ -865,19 +887,19 @@ class MaternityWorkbenchController extends Controller
             $babyStillbirth = filter_var($request->baby_stillbirth ?? false, FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE);
 
             $pp = MaternityPreviousPregnancy::create([
-                'enrollment_id'    => $id,
-                'year'             => $request->year,
+                'enrollment_id' => $id,
+                'year' => $request->year,
                 'place_of_delivery' => $request->place_of_delivery,
-                'duration_weeks'   => $request->duration_weeks,
-                'complications'    => $request->complications,
-                'type_of_labour'   => $request->type_of_labour,
-                'baby_alive'       => $babyAlive ? 1 : 0,
-                'baby_dead'        => $babyDead ? 1 : 0,
-                'baby_stillbirth'  => $babyStillbirth ? 1 : 0,
-                'baby_sex'         => $request->baby_sex,
-                'birth_weight_kg'  => $request->birth_weight_kg,
-                'present_health'   => $request->present_health,
-                'notes'            => $request->notes,
+                'duration_weeks' => $request->duration_weeks,
+                'complications' => $request->complications,
+                'type_of_labour' => $request->type_of_labour,
+                'baby_alive' => $babyAlive ? 1 : 0,
+                'baby_dead' => $babyDead ? 1 : 0,
+                'baby_stillbirth' => $babyStillbirth ? 1 : 0,
+                'baby_sex' => $request->baby_sex,
+                'birth_weight_kg' => $request->birth_weight_kg,
+                'present_health' => $request->present_health,
+                'notes' => $request->notes,
             ]);
 
             return response()->json([
@@ -894,6 +916,7 @@ class MaternityWorkbenchController extends Controller
     {
         $pp = MaternityPreviousPregnancy::findOrFail($id);
         $pp->delete();
+
         return response()->json(['success' => true, 'message' => 'Record deleted.']);
     }
 
@@ -905,6 +928,7 @@ class MaternityWorkbenchController extends Controller
             return response()->json(['success' => false, 'message' => 'You are not authorized to delete this visit as you are not the one who recorded it.'], 403);
         }
         $visit->delete();
+
         return response()->json(['success' => true, 'message' => 'ANC visit deleted.']);
     }
 
@@ -913,9 +937,9 @@ class MaternityWorkbenchController extends Controller
         $pp = MaternityPreviousPregnancy::findOrFail($id);
 
         $validator = Validator::make($request->all(), [
-            'year'              => 'nullable|integer|min:1950|max:' . date('Y'),
+            'year' => 'nullable|integer|min:1950|max:' . date('Y'),
             'place_of_delivery' => 'nullable|string',
-            'duration_weeks'    => 'nullable|integer|min:1|max:45',
+            'duration_weeks' => 'nullable|integer|min:1|max:45',
         ]);
 
         if ($validator->fails()) {
@@ -927,18 +951,18 @@ class MaternityWorkbenchController extends Controller
         $babyStillbirth = filter_var($request->baby_stillbirth ?? false, FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE);
 
         $pp->update([
-            'year'             => $request->year,
+            'year' => $request->year,
             'place_of_delivery' => $request->place_of_delivery,
-            'duration_weeks'   => $request->duration_weeks,
-            'complications'    => $request->complications,
-            'type_of_labour'   => $request->type_of_labour,
-            'baby_alive'       => $babyAlive ? 1 : 0,
-            'baby_dead'        => $babyDead ? 1 : 0,
-            'baby_stillbirth'  => $babyStillbirth ? 1 : 0,
-            'baby_sex'         => $request->baby_sex,
-            'birth_weight_kg'  => $request->birth_weight_kg,
-            'present_health'   => $request->present_health,
-            'notes'            => $request->notes,
+            'duration_weeks' => $request->duration_weeks,
+            'complications' => $request->complications,
+            'type_of_labour' => $request->type_of_labour,
+            'baby_alive' => $babyAlive ? 1 : 0,
+            'baby_dead' => $babyDead ? 1 : 0,
+            'baby_stillbirth' => $babyStillbirth ? 1 : 0,
+            'baby_sex' => $request->baby_sex,
+            'birth_weight_kg' => $request->birth_weight_kg,
+            'present_health' => $request->present_health,
+            'notes' => $request->notes,
         ]);
 
         return response()->json(['success' => true, 'message' => 'Previous pregnancy updated.', 'pregnancy' => $pp->fresh()]);
@@ -949,7 +973,7 @@ class MaternityWorkbenchController extends Controller
         $history = MaternityMedicalHistory::findOrFail($id);
 
         $validator = Validator::make($request->all(), [
-            'category'    => 'required|in:medical,surgical,obstetric,family,social',
+            'category' => 'required|in:medical,surgical,obstetric,family,social',
             'description' => 'required|string',
         ]);
 
@@ -963,10 +987,10 @@ class MaternityWorkbenchController extends Controller
         }
 
         $history->update([
-            'category'    => $request->category,
+            'category' => $request->category,
             'description' => $request->description,
-            'year'        => $request->year,
-            'notes'       => $request->notes,
+            'year' => $request->year,
+            'notes' => $request->notes,
         ]);
 
         return response()->json(['success' => true, 'message' => 'Medical history updated.', 'history' => $history->fresh()]);
@@ -982,6 +1006,7 @@ class MaternityWorkbenchController extends Controller
         }
 
         $history->delete();
+
         return response()->json(['success' => true, 'message' => 'Medical history entry deleted.']);
     }
 
@@ -997,32 +1022,32 @@ class MaternityWorkbenchController extends Controller
             ->get()
             ->map(function ($v) {
                 return [
-                    'id'              => $v->id,
-                    'visit_number'    => $v->visit_number,
-                    'visit_type'      => $v->visit_type,
-                    'visit_date'      => $v->visit_date ? $v->visit_date->format('d M Y') : null,
-                    'visit_date_raw'  => $v->visit_date ? $v->visit_date->format('Y-m-d') : null,
+                    'id' => $v->id,
+                    'visit_number' => $v->visit_number,
+                    'visit_type' => $v->visit_type,
+                    'visit_date' => $v->visit_date ? $v->visit_date->format('d M Y') : null,
+                    'visit_date_raw' => $v->visit_date ? $v->visit_date->format('Y-m-d') : null,
                     'gestational_age' => $v->getGestationalAge(),
                     'gestational_age_weeks' => $v->gestational_age_weeks,
-                    'gestational_age_days'  => $v->gestational_age_days,
-                    'weight_kg'       => $v->weight_kg,
-                    'blood_pressure_systolic'  => $v->blood_pressure_systolic,
+                    'gestational_age_days' => $v->gestational_age_days,
+                    'weight_kg' => $v->weight_kg,
+                    'blood_pressure_systolic' => $v->blood_pressure_systolic,
                     'blood_pressure_diastolic' => $v->blood_pressure_diastolic,
-                    'bp'              => $v->getBloodPressure(),
-                    'fundal_height'   => $v->fundal_height_cm,
+                    'bp' => $v->getBloodPressure(),
+                    'fundal_height' => $v->fundal_height_cm,
                     'fundal_height_cm' => $v->fundal_height_cm,
-                    'fhr'             => $v->fetal_heart_rate,
+                    'fhr' => $v->fetal_heart_rate,
                     'fetal_heart_rate' => $v->fetal_heart_rate,
-                    'presentation'    => $v->presentation,
-                    'oedema'          => $v->oedema,
+                    'presentation' => $v->presentation,
+                    'oedema' => $v->oedema,
                     'foetal_movement' => $v->foetal_movement,
-                    'urine_protein'   => $v->urine_protein,
-                    'urine_glucose'   => $v->urine_glucose,
-                    'haemoglobin'     => $v->haemoglobin,
+                    'urine_protein' => $v->urine_protein,
+                    'urine_glucose' => $v->urine_glucose,
+                    'haemoglobin' => $v->haemoglobin,
                     'next_appointment' => $v->next_appointment ? $v->next_appointment->format('d M Y') : null,
                     'next_appointment_raw' => $v->next_appointment ? $v->next_appointment->format('Y-m-d') : null,
-                    'seen_by'         => $v->seenBy ? userfullname($v->seenBy->id) : 'N/A',
-                    'clinical_notes'  => $v->clinical_notes,
+                    'seen_by' => $v->seenBy ? userfullname($v->seenBy->id) : 'N/A',
+                    'clinical_notes' => $v->clinical_notes,
                 ];
             });
 
@@ -1034,8 +1059,8 @@ class MaternityWorkbenchController extends Controller
         $enrollment = MaternityEnrollment::findOrFail($id);
 
         $validator = Validator::make($request->all(), [
-            'visit_date'             => 'required|date',
-            'gestational_age_weeks'  => 'required|integer|min:1|max:45',
+            'visit_date' => 'required|date',
+            'gestational_age_weeks' => 'required|integer|min:1|max:45',
         ]);
 
         if ($validator->fails()) {
@@ -1061,34 +1086,34 @@ class MaternityWorkbenchController extends Controller
             $normalizedOedema = $oedemaMap[$oedemaRaw] ?? null;
 
             $visit = AncVisit::create([
-                'enrollment_id'          => $id,
-                'patient_id'             => $enrollment->patient_id,
-                'visit_number'           => $nextVisitNumber,
-                'visit_type'             => $request->visit_type ?: ($nextVisitNumber === 1 ? 'booking' : 'routine'),
-                'visit_date'             => $this->safeParseDate($request->visit_date),
-                'gestational_age_weeks'  => $request->gestational_age_weeks,
-                'gestational_age_days'   => $request->gestational_age_days ?? 0,
-                'weight_kg'              => $request->weight_kg,
+                'enrollment_id' => $id,
+                'patient_id' => $enrollment->patient_id,
+                'visit_number' => $nextVisitNumber,
+                'visit_type' => $request->visit_type ?: ($nextVisitNumber === 1 ? 'booking' : 'routine'),
+                'visit_date' => $this->safeParseDate($request->visit_date),
+                'gestational_age_weeks' => $request->gestational_age_weeks,
+                'gestational_age_days' => $request->gestational_age_days ?? 0,
+                'weight_kg' => $request->weight_kg,
                 'blood_pressure_systolic' => $request->blood_pressure_systolic,
                 'blood_pressure_diastolic' => $request->blood_pressure_diastolic,
-                'fundal_height_cm'       => $request->fundal_height_cm,
-                'presentation'           => $request->presentation,
-                'fetal_heart_rate'       => $request->fetal_heart_rate,
-                'foetal_movement'        => $request->foetal_movement,
-                'oedema'                 => $normalizedOedema,
-                'urine_protein'          => $request->urine_protein,
-                'urine_glucose'          => $request->urine_glucose,
-                'haemoglobin'            => $request->haemoglobin,
-                'clinical_notes'         => $request->clinical_notes,
-                'next_appointment'       => $this->safeParseDate($request->next_appointment),
-                'seen_by'                => Auth::id(),
+                'fundal_height_cm' => $request->fundal_height_cm,
+                'presentation' => $request->presentation,
+                'fetal_heart_rate' => $request->fetal_heart_rate,
+                'foetal_movement' => $request->foetal_movement,
+                'oedema' => $normalizedOedema,
+                'urine_protein' => $request->urine_protein,
+                'urine_glucose' => $request->urine_glucose,
+                'haemoglobin' => $request->haemoglobin,
+                'clinical_notes' => $request->clinical_notes,
+                'next_appointment' => $this->safeParseDate($request->next_appointment),
+                'seen_by' => Auth::id(),
             ]);
 
             // Auto-detect risk based on BP
             if ($request->blood_pressure_systolic >= 140 || $request->blood_pressure_diastolic >= 90) {
                 if ($enrollment->risk_level !== 'high') {
                     $enrollment->update([
-                        'risk_level'   => 'high',
+                        'risk_level' => 'high',
                         'risk_factors' => array_merge($enrollment->risk_factors ?? [], ['Hypertension detected at ANC visit #' . $nextVisitNumber]),
                     ]);
                 }
@@ -1100,7 +1125,7 @@ class MaternityWorkbenchController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => 'ANC visit #' . $nextVisitNumber . ' recorded successfully.',
-                'visit'   => $visit,
+                'visit' => $visit,
             ]);
         } catch (\Exception $e) {
             return response()->json(['success' => false, 'message' => 'Error: ' . $e->getMessage()], 500);
@@ -1214,14 +1239,14 @@ class MaternityWorkbenchController extends Controller
                 }
 
                 return [
-                    'id'                => $inv->id,
+                    'id' => $inv->id,
                     'investigation_name' => $inv->investigation_name,
-                    'type'              => $type,
-                    'is_routine'        => $inv->is_routine,
-                    'result_summary'    => $inv->result_summary,
-                    'status'            => $status,
-                    'visit_number'      => $inv->ancVisit ? $inv->ancVisit->visit_number : null,
-                    'created_at'        => Carbon::parse($inv->created_at)->format('d M Y'),
+                    'type' => $type,
+                    'is_routine' => $inv->is_routine,
+                    'result_summary' => $inv->result_summary,
+                    'status' => $status,
+                    'visit_number' => $inv->ancVisit ? $inv->ancVisit->visit_number : null,
+                    'created_at' => Carbon::parse($inv->created_at)->format('d M Y'),
                 ];
             });
 
@@ -1234,7 +1259,7 @@ class MaternityWorkbenchController extends Controller
 
         $validator = Validator::make($request->all(), [
             'investigation_name' => 'required|string',
-            'type'               => 'required|in:lab,imaging',
+            'type' => 'required|in:lab,imaging',
             'service_id' => 'required|string',
         ]);
 
@@ -1257,12 +1282,12 @@ class MaternityWorkbenchController extends Controller
             }
 
             $investigation = AncInvestigation::create([
-                'enrollment_id'           => $id,
-                'anc_visit_id'            => $request->anc_visit_id,
-                'lab_service_request_id'  => $labId,
+                'enrollment_id' => $id,
+                'anc_visit_id' => $request->anc_visit_id,
+                'lab_service_request_id' => $labId,
                 'imaging_service_request_id' => $imagingId,
-                'investigation_name'      => $request->investigation_name,
-                'is_routine'              => $request->is_routine ?? false,
+                'investigation_name' => $request->investigation_name,
+                'is_routine' => $request->is_routine ?? false,
             ]);
 
             DB::commit();
@@ -1274,6 +1299,7 @@ class MaternityWorkbenchController extends Controller
             ]);
         } catch (\Exception $e) {
             DB::rollBack();
+
             return response()->json(['success' => false, 'message' => 'Error: ' . $e->getMessage()], 500);
         }
     }
@@ -1287,7 +1313,7 @@ class MaternityWorkbenchController extends Controller
         $enrollment = MaternityEnrollment::findOrFail($id);
 
         $validator = Validator::make($request->all(), [
-            'labs'              => 'required|array|min:1',
+            'labs' => 'required|array|min:1',
             'labs.*.service_id' => 'required|string',
         ]);
 
@@ -1310,7 +1336,7 @@ class MaternityWorkbenchController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => count($created) . ' lab(s) ordered successfully.',
-                'labs'    => $created,
+                'labs' => $created,
             ]);
         } catch (\Exception $e) {
             return response()->json(['success' => false, 'message' => 'Error: ' . $e->getMessage()], 500);
@@ -1322,7 +1348,7 @@ class MaternityWorkbenchController extends Controller
         $enrollment = MaternityEnrollment::findOrFail($id);
 
         $validator = Validator::make($request->all(), [
-            'imaging'              => 'required|array|min:1',
+            'imaging' => 'required|array|min:1',
             'imaging.*.service_id' => 'required|string',
         ]);
 
@@ -1357,7 +1383,7 @@ class MaternityWorkbenchController extends Controller
         $enrollment = MaternityEnrollment::findOrFail($id);
 
         $validator = Validator::make($request->all(), [
-            'prescriptions'              => 'required|array|min:1',
+            'prescriptions' => 'required|array|min:1',
             'prescriptions.*.product_id' => 'required|string',
         ]);
 
@@ -1392,11 +1418,11 @@ class MaternityWorkbenchController extends Controller
         $enrollment = MaternityEnrollment::findOrFail($id);
 
         $validator = Validator::make($request->all(), [
-            'procedures'                     => 'required|array|min:1',
+            'procedures' => 'required|array|min:1',
             'procedures.*.service_id' => 'required|string',
-            'procedures.*.priority'          => 'nullable|in:routine,urgent,emergency',
-            'procedures.*.scheduled_date'    => 'nullable|date',
-            'procedures.*.pre_notes'         => 'nullable|string',
+            'procedures.*.priority' => 'nullable|in:routine,urgent,emergency',
+            'procedures.*.scheduled_date' => 'nullable|date',
+            'procedures.*.pre_notes' => 'nullable|string',
         ]);
 
         if ($validator->fails()) {
@@ -1407,10 +1433,10 @@ class MaternityWorkbenchController extends Controller
             $created = [];
             foreach ($request->procedures as $procData) {
                 $procedure = $this->addSingleProcedure([
-                    'service_id'     => $procData['service_id'],
-                    'priority'       => $procData['priority'] ?? 'routine',
+                    'service_id' => $procData['service_id'],
+                    'priority' => $procData['priority'] ?? 'routine',
                     'scheduled_date' => $procData['scheduled_date'] ?? null,
-                    'pre_notes'      => $procData['pre_notes'] ?? null,
+                    'pre_notes' => $procData['pre_notes'] ?? null,
                 ], $enrollment->patient_id, null, null);
 
                 $created[] = $procedure;
@@ -1431,8 +1457,8 @@ class MaternityWorkbenchController extends Controller
         $enrollment = MaternityEnrollment::findOrFail($id);
 
         $request->validate([
-            'source_type'  => 'required|in:labs,imaging,prescriptions,procedures',
-            'source_ids'   => 'required|array|min:1',
+            'source_type' => 'required|in:labs,imaging,prescriptions,procedures',
+            'source_ids' => 'required|array|min:1',
             'source_ids.*' => 'integer',
             'adjust_doses' => 'nullable|array',
         ]);
@@ -1448,8 +1474,8 @@ class MaternityWorkbenchController extends Controller
 
             return response()->json([
                 'success' => true,
-                'items'   => $created->map(fn($item) => ['id' => $item->id]),
-                'count'   => $created->count(),
+                'items' => $created->map(fn ($item) => ['id' => $item->id]),
+                'count' => $created->count(),
                 'message' => $created->count() . ' item(s) re-prescribed',
             ]);
         } catch (\Exception $e) {
@@ -1461,6 +1487,7 @@ class MaternityWorkbenchController extends Controller
     {
         $enrollment = MaternityEnrollment::findOrFail($id);
         $encounters = $this->recentEncountersForPatient($enrollment->patient_id, 5);
+
         return response()->json(['success' => true, 'encounters' => $encounters]);
     }
 
@@ -1468,6 +1495,7 @@ class MaternityWorkbenchController extends Controller
     {
         MaternityEnrollment::findOrFail($id);
         $items = $this->getEncounterItems($encounterId);
+
         return response()->json(['success' => true, 'items' => $items]);
     }
 
@@ -1476,8 +1504,8 @@ class MaternityWorkbenchController extends Controller
         $enrollment = MaternityEnrollment::findOrFail($id);
 
         $request->validate([
-            'treatment_plan_id'   => 'required|integer|exists:treatment_plans,id',
-            'selected_item_ids'   => 'nullable|array',
+            'treatment_plan_id' => 'required|integer|exists:treatment_plans,id',
+            'selected_item_ids' => 'nullable|array',
             'selected_item_ids.*' => 'integer',
         ]);
 
@@ -1491,12 +1519,12 @@ class MaternityWorkbenchController extends Controller
                 $request->input('selected_item_ids', [])
             );
 
-            $totalCount = $results->reduce(fn($carry, $items) => $carry + count($items), 0);
+            $totalCount = $results->reduce(fn ($carry, $items) => $carry + count($items), 0);
 
             return response()->json([
                 'success' => true,
-                'results' => $results->map(fn($items) => collect($items)->map(fn($r) => ['id' => $r->id])),
-                'count'   => $totalCount,
+                'results' => $results->map(fn ($items) => collect($items)->map(fn ($r) => ['id' => $r->id])),
+                'count' => $totalCount,
                 'message' => "{$totalCount} item(s) added from '{$plan->name}'",
             ]);
         } catch (\Exception $e) {
@@ -1520,11 +1548,12 @@ class MaternityWorkbenchController extends Controller
                 $enrollment->patient_id,
                 null
             );
+
             return response()->json([
                 'success' => true,
                 'id' => $lab->id,
                 'item' => ['id' => $lab->id, 'service_id' => $lab->service_id, 'note' => $lab->note, 'created_at' => $lab->created_at],
-                'message' => 'Lab added'
+                'message' => 'Lab added',
             ]);
         } catch (\Exception $e) {
             return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
@@ -1535,6 +1564,7 @@ class MaternityWorkbenchController extends Controller
     {
         try {
             $this->removeSingleLab($lab->id, request()->input('reason'));
+
             return response()->json(['success' => true, 'message' => 'Lab removed']);
         } catch (\Exception $e) {
             return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
@@ -1552,11 +1582,12 @@ class MaternityWorkbenchController extends Controller
                 $enrollment->patient_id,
                 null
             );
+
             return response()->json([
                 'success' => true,
                 'id' => $imaging->id,
                 'item' => ['id' => $imaging->id, 'service_id' => $imaging->service_id, 'note' => $imaging->note, 'created_at' => $imaging->created_at],
-                'message' => 'Imaging added'
+                'message' => 'Imaging added',
             ]);
         } catch (\Exception $e) {
             return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
@@ -1567,6 +1598,7 @@ class MaternityWorkbenchController extends Controller
     {
         try {
             $this->removeSingleImaging($imaging->id, request()->input('reason'));
+
             return response()->json(['success' => true, 'message' => 'Imaging removed']);
         } catch (\Exception $e) {
             return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
@@ -1584,11 +1616,12 @@ class MaternityWorkbenchController extends Controller
                 $enrollment->patient_id,
                 null
             );
+
             return response()->json([
                 'success' => true,
                 'id' => $presc->id,
                 'item' => ['id' => $presc->id, 'product_id' => $presc->product_id, 'dose' => $presc->dose, 'created_at' => $presc->created_at],
-                'message' => 'Prescription added'
+                'message' => 'Prescription added',
             ]);
         } catch (\Exception $e) {
             return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
@@ -1600,6 +1633,7 @@ class MaternityWorkbenchController extends Controller
         try {
             $dose = request()->input('dose', '');
             $presc = $this->updateSinglePrescriptionDose($prescription->id, $dose);
+
             return response()->json(['success' => true, 'id' => $presc->id, 'message' => 'Dose updated']);
         } catch (\Exception $e) {
             return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
@@ -1610,6 +1644,7 @@ class MaternityWorkbenchController extends Controller
     {
         try {
             $this->removeSinglePrescription($prescription->id, request()->input('reason'));
+
             return response()->json(['success' => true, 'message' => 'Prescription removed']);
         } catch (\Exception $e) {
             return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
@@ -1630,11 +1665,12 @@ class MaternityWorkbenchController extends Controller
                 null,
                 null
             );
+
             return response()->json([
                 'success' => true,
                 'id' => $procedure->id,
                 'item' => ['id' => $procedure->id, 'service_id' => $procedure->service_id, 'priority' => $procedure->priority, 'created_at' => $procedure->created_at],
-                'message' => 'Procedure added'
+                'message' => 'Procedure added',
             ]);
         } catch (\Exception $e) {
             return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
@@ -1645,6 +1681,7 @@ class MaternityWorkbenchController extends Controller
     {
         try {
             $this->removeSingleProcedure($procedure->id, request()->input('reason'));
+
             return response()->json(['success' => true, 'message' => 'Procedure removed']);
         } catch (\Exception $e) {
             return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
@@ -1655,6 +1692,7 @@ class MaternityWorkbenchController extends Controller
     {
         try {
             $lab = $this->updateSingleLabNote($lab->id, request()->input('note', ''));
+
             return response()->json(['success' => true, 'id' => $lab->id, 'message' => 'Note updated']);
         } catch (\Exception $e) {
             return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
@@ -1665,6 +1703,7 @@ class MaternityWorkbenchController extends Controller
     {
         try {
             $imaging = $this->updateSingleImagingNote($imaging->id, request()->input('note', ''));
+
             return response()->json(['success' => true, 'id' => $imaging->id, 'message' => 'Note updated']);
         } catch (\Exception $e) {
             return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
@@ -1680,13 +1719,13 @@ class MaternityWorkbenchController extends Controller
         $enrollment = MaternityEnrollment::findOrFail($id);
 
         $validator = Validator::make($request->all(), [
-            'delivery_date'      => 'required|date',
-            'type_of_delivery'   => 'required|in:svd,assisted_vaginal,elective_cs,emergency_cs,vacuum,forceps',
-            'number_of_babies'   => 'required|integer|min:1|max:8',
-            'induction'          => 'nullable|boolean',
-            'induction_method'   => 'nullable|string|max:255',
-            'augmentation'       => 'nullable|boolean',
-            'anaesthesia_type'   => 'nullable|string|max:255',
+            'delivery_date' => 'required|date',
+            'type_of_delivery' => 'required|in:svd,assisted_vaginal,elective_cs,emergency_cs,vacuum,forceps',
+            'number_of_babies' => 'required|integer|min:1|max:8',
+            'induction' => 'nullable|boolean',
+            'induction_method' => 'nullable|string|max:255',
+            'augmentation' => 'nullable|boolean',
+            'anaesthesia_type' => 'nullable|string|max:255',
         ]);
 
         if ($validator->fails()) {
@@ -1702,27 +1741,27 @@ class MaternityWorkbenchController extends Controller
             DB::beginTransaction();
 
             $delivery = DeliveryRecord::create([
-                'enrollment_id'          => $id,
-                'patient_id'             => $enrollment->patient_id,
-                'delivery_date'          => $this->safeParseDate($request->delivery_date),
-                'delivery_time'          => $request->delivery_time ? Carbon::parse($request->delivery_time) : null,
-                'place_of_delivery'      => $request->place_of_delivery,
+                'enrollment_id' => $id,
+                'patient_id' => $enrollment->patient_id,
+                'delivery_date' => $this->safeParseDate($request->delivery_date),
+                'delivery_time' => $request->delivery_time ? Carbon::parse($request->delivery_time) : null,
+                'place_of_delivery' => $request->place_of_delivery,
                 'duration_of_labour_hours' => $request->duration_of_labour_hours,
-                'type_of_delivery'       => $request->type_of_delivery,
-                'episiotomy'             => $request->episiotomy ?? 'none',
-                'induction'              => $request->induction ?? false,
-                'induction_method'       => $request->induction_method,
-                'augmentation'           => $request->augmentation ?? false,
-                'complications'          => $request->complications,
-                'blood_loss_ml'          => $request->blood_loss_ml,
-                'placenta_complete'      => $request->placenta_complete ?? true,
-                'placenta_notes'         => $request->placenta_notes,
-                'perineal_tear_degree'   => $request->perineal_tear_degree,
-                'oxytocin_given'         => $request->oxytocin_given ?? false,
-                'number_of_babies'       => $request->number_of_babies,
-                'delivered_by'           => Auth::id(),
-                'anaesthesia_type'       => $request->anaesthesia_type,
-                'notes'                  => $request->notes,
+                'type_of_delivery' => $request->type_of_delivery,
+                'episiotomy' => $request->episiotomy ?? 'none',
+                'induction' => $request->induction ?? false,
+                'induction_method' => $request->induction_method,
+                'augmentation' => $request->augmentation ?? false,
+                'complications' => $request->complications,
+                'blood_loss_ml' => $request->blood_loss_ml,
+                'placenta_complete' => $request->placenta_complete ?? true,
+                'placenta_notes' => $request->placenta_notes,
+                'perineal_tear_degree' => $request->perineal_tear_degree,
+                'oxytocin_given' => $request->oxytocin_given ?? false,
+                'number_of_babies' => $request->number_of_babies,
+                'delivered_by' => Auth::id(),
+                'anaesthesia_type' => $request->anaesthesia_type,
+                'notes' => $request->notes,
             ]);
 
             // Update enrollment status — delivery transitions directly to postnatal
@@ -1734,12 +1773,13 @@ class MaternityWorkbenchController extends Controller
             DB::commit();
 
             return response()->json([
-                'success'  => true,
-                'message'  => 'Delivery record saved successfully.',
+                'success' => true,
+                'message' => 'Delivery record saved successfully.',
                 'delivery' => $delivery,
             ]);
         } catch (\Exception $e) {
             DB::rollBack();
+
             return response()->json(['success' => false, 'message' => 'Error: ' . $e->getMessage()], 500);
         }
     }
@@ -1749,13 +1789,13 @@ class MaternityWorkbenchController extends Controller
         $delivery = DeliveryRecord::findOrFail($id);
 
         $validator = Validator::make($request->all(), [
-            'delivery_date'      => 'sometimes|required|date',
-            'type_of_delivery'   => 'sometimes|required|in:svd,assisted_vaginal,elective_cs,emergency_cs,vacuum,forceps',
-            'number_of_babies'   => 'sometimes|required|integer|min:1|max:8',
-            'induction'          => 'nullable|boolean',
-            'induction_method'   => 'nullable|string|max:255',
-            'augmentation'       => 'nullable|boolean',
-            'anaesthesia_type'   => 'nullable|string|max:255',
+            'delivery_date' => 'sometimes|required|date',
+            'type_of_delivery' => 'sometimes|required|in:svd,assisted_vaginal,elective_cs,emergency_cs,vacuum,forceps',
+            'number_of_babies' => 'sometimes|required|integer|min:1|max:8',
+            'induction' => 'nullable|boolean',
+            'induction_method' => 'nullable|string|max:255',
+            'augmentation' => 'nullable|boolean',
+            'anaesthesia_type' => 'nullable|string|max:255',
         ]);
 
         if ($validator->fails()) {
@@ -1854,9 +1894,11 @@ class MaternityWorkbenchController extends Controller
             $delivery->delete();
 
             DB::commit();
+
             return response()->json(['success' => true, 'message' => 'Delivery record and associated data removed.']);
         } catch (\Exception $e) {
             DB::rollBack();
+
             return response()->json(['success' => false, 'message' => 'Error: ' . $e->getMessage()], 500);
         }
     }
@@ -1868,23 +1910,23 @@ class MaternityWorkbenchController extends Controller
         $delivery = DeliveryRecord::findOrFail($id);
 
         $validator = Validator::make($request->all(), [
-            'recorded_at'            => 'required|date',
-            'cervical_dilation_cm'   => 'required|numeric|min:0|max:10',
-            'descent'                => 'nullable|string|max:20',
+            'recorded_at' => 'required|date',
+            'cervical_dilation_cm' => 'required|numeric|min:0|max:10',
+            'descent' => 'nullable|string|max:20',
             'contractions_per_10min' => 'nullable|integer|min:0|max:20',
             'contraction_duration_sec' => 'nullable|integer|min:0|max:180',
-            'fetal_heart_rate'       => 'nullable|integer|min:60|max:220',
-            'amniotic_fluid'         => 'nullable|in:intact,clear,meconium_stained,bloody,absent',
-            'moulding'               => 'nullable|in:none,+,++,+++',
-            'maternal_pulse'         => 'nullable|integer|min:20|max:220',
-            'maternal_bp_systolic'   => 'nullable|integer|min:40|max:300',
-            'maternal_bp_diastolic'  => 'nullable|integer|min:20|max:220',
-            'maternal_temp_c'        => 'nullable|numeric|min:30|max:45',
-            'urine_output_ml'        => 'nullable|integer|min:0',
-            'urine_protein'          => 'nullable|in:nil,trace,+,++,+++',
-            'oxytocin_dose'          => 'nullable|string|max:100',
-            'iv_fluids'              => 'nullable|string|max:255',
-            'medications'            => 'nullable|string|max:1000',
+            'fetal_heart_rate' => 'nullable|integer|min:60|max:220',
+            'amniotic_fluid' => 'nullable|in:intact,clear,meconium_stained,bloody,absent',
+            'moulding' => 'nullable|in:none,+,++,+++',
+            'maternal_pulse' => 'nullable|integer|min:20|max:220',
+            'maternal_bp_systolic' => 'nullable|integer|min:40|max:300',
+            'maternal_bp_diastolic' => 'nullable|integer|min:20|max:220',
+            'maternal_temp_c' => 'nullable|numeric|min:30|max:45',
+            'urine_output_ml' => 'nullable|integer|min:0',
+            'urine_protein' => 'nullable|in:nil,trace,+,++,+++',
+            'oxytocin_dose' => 'nullable|string|max:100',
+            'iv_fluids' => 'nullable|string|max:255',
+            'medications' => 'nullable|string|max:1000',
         ]);
 
         if ($validator->fails()) {
@@ -1903,7 +1945,7 @@ class MaternityWorkbenchController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => 'Partograph entry recorded.',
-                'entry'   => $this->normalizePartographEntry($entry),
+                'entry' => $this->normalizePartographEntry($entry),
             ]);
         } catch (\Exception $e) {
             return response()->json(['success' => false, 'message' => 'Error: ' . $e->getMessage()], 500);
@@ -1930,23 +1972,23 @@ class MaternityWorkbenchController extends Controller
         $entry = DeliveryPartograph::findOrFail($id);
 
         $validator = Validator::make($request->all(), [
-            'recorded_at'            => 'required|date',
-            'cervical_dilation_cm'   => 'required|numeric|min:0|max:10',
-            'descent'                => 'nullable|string|max:20',
+            'recorded_at' => 'required|date',
+            'cervical_dilation_cm' => 'required|numeric|min:0|max:10',
+            'descent' => 'nullable|string|max:20',
             'contractions_per_10min' => 'nullable|integer|min:0|max:20',
             'contraction_duration_sec' => 'nullable|integer|min:0|max:180',
-            'fetal_heart_rate'       => 'nullable|integer|min:60|max:220',
-            'amniotic_fluid'         => 'nullable|in:intact,clear,meconium_stained,bloody,absent',
-            'moulding'               => 'nullable|in:none,+,++,+++',
-            'maternal_pulse'         => 'nullable|integer|min:20|max:220',
-            'maternal_bp_systolic'   => 'nullable|integer|min:40|max:300',
-            'maternal_bp_diastolic'  => 'nullable|integer|min:20|max:220',
-            'maternal_temp_c'        => 'nullable|numeric|min:30|max:45',
-            'urine_output_ml'        => 'nullable|integer|min:0',
-            'urine_protein'          => 'nullable|in:nil,trace,+,++,+++',
-            'oxytocin_dose'          => 'nullable|string|max:100',
-            'iv_fluids'              => 'nullable|string|max:255',
-            'medications'            => 'nullable|string|max:1000',
+            'fetal_heart_rate' => 'nullable|integer|min:60|max:220',
+            'amniotic_fluid' => 'nullable|in:intact,clear,meconium_stained,bloody,absent',
+            'moulding' => 'nullable|in:none,+,++,+++',
+            'maternal_pulse' => 'nullable|integer|min:20|max:220',
+            'maternal_bp_systolic' => 'nullable|integer|min:40|max:300',
+            'maternal_bp_diastolic' => 'nullable|integer|min:20|max:220',
+            'maternal_temp_c' => 'nullable|numeric|min:30|max:45',
+            'urine_output_ml' => 'nullable|integer|min:0',
+            'urine_protein' => 'nullable|in:nil,trace,+,++,+++',
+            'oxytocin_dose' => 'nullable|string|max:100',
+            'iv_fluids' => 'nullable|string|max:255',
+            'medications' => 'nullable|string|max:1000',
         ]);
 
         if ($validator->fails()) {
@@ -1965,7 +2007,7 @@ class MaternityWorkbenchController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => 'Partograph entry updated.',
-                'entry'   => $this->normalizePartographEntry($entry->fresh(['recordedBy'])),
+                'entry' => $this->normalizePartographEntry($entry->fresh(['recordedBy'])),
             ]);
         } catch (\Exception $e) {
             return response()->json(['success' => false, 'message' => 'Error: ' . $e->getMessage()], 500);
@@ -2082,7 +2124,7 @@ class MaternityWorkbenchController extends Controller
 
         // Load delivery record once to avoid N+1
         $deliveryRecord = $enrollment->deliveryRecord;
-        $hasDelivery    = $deliveryRecord !== null;
+        $hasDelivery = $deliveryRecord !== null;
 
         // Legacy entries from the old delivery_partograph table — shown read-only
         $legacyEntries = collect();
@@ -2093,19 +2135,20 @@ class MaternityWorkbenchController extends Controller
                 ->get()
                 ->map(function ($e) use ($deliveryRecord) {
                     $normalized = $this->normalizePartographEntry($e);
-                    $normalized['phase']             = 'delivery_record';
-                    $normalized['source']            = 'legacy';
+                    $normalized['phase'] = 'delivery_record';
+                    $normalized['source'] = 'legacy';
                     $normalized['delivery_record_id'] = $deliveryRecord->id;
+
                     return $normalized;
                 })
                 ->values();
         }
 
         return response()->json([
-            'success'            => true,
-            'entries'            => $entries,
-            'legacy_entries'     => $legacyEntries,
-            'has_delivery'       => $hasDelivery,
+            'success' => true,
+            'entries' => $entries,
+            'legacy_entries' => $legacyEntries,
+            'has_delivery' => $hasDelivery,
             'delivery_record_id' => $hasDelivery ? $deliveryRecord->id : null,
         ]);
     }
@@ -2115,23 +2158,23 @@ class MaternityWorkbenchController extends Controller
         $enrollment = MaternityEnrollment::findOrFail($enrollmentId);
 
         $validator = Validator::make($request->all(), [
-            'recorded_at'              => 'required|date',
-            'phase'                    => 'required|in:pre_delivery,post_delivery',
-            'cervical_dilation_cm'     => 'nullable|numeric|min:0|max:10',
-            'descent_of_head'          => 'nullable|string|max:50',
-            'contractions_per_10_min'  => 'nullable|integer|min:0|max:20',
+            'recorded_at' => 'required|date',
+            'phase' => 'required|in:pre_delivery,post_delivery',
+            'cervical_dilation_cm' => 'nullable|numeric|min:0|max:10',
+            'descent_of_head' => 'nullable|string|max:50',
+            'contractions_per_10_min' => 'nullable|integer|min:0|max:20',
             'contraction_duration_sec' => 'nullable|integer|min:0|max:180',
-            'foetal_heart_rate'        => 'nullable|string|max:50',
-            'amniotic_fluid'           => 'nullable|in:intact,clear,meconium_stained,bloody,absent',
-            'moulding'                 => 'nullable|in:none,+,++,+++',
-            'maternal_bp'              => 'nullable|string|max:20',
-            'maternal_pulse'           => 'nullable|integer|min:20|max:220',
-            'maternal_temp'            => 'nullable|numeric|min:30|max:45',
-            'urine_output_ml'          => 'nullable|integer|min:0',
-            'urine_protein'            => 'nullable|in:nil,trace,+,++,+++',
-            'oxytocin_dose'            => 'nullable|string|max:100',
-            'iv_fluids'                => 'nullable|string|max:255',
-            'medications'              => 'nullable|string|max:2000',
+            'foetal_heart_rate' => 'nullable|string|max:50',
+            'amniotic_fluid' => 'nullable|in:intact,clear,meconium_stained,bloody,absent',
+            'moulding' => 'nullable|in:none,+,++,+++',
+            'maternal_bp' => 'nullable|string|max:20',
+            'maternal_pulse' => 'nullable|integer|min:20|max:220',
+            'maternal_temp' => 'nullable|numeric|min:30|max:45',
+            'urine_output_ml' => 'nullable|integer|min:0',
+            'urine_protein' => 'nullable|in:nil,trace,+,++,+++',
+            'oxytocin_dose' => 'nullable|string|max:100',
+            'iv_fluids' => 'nullable|string|max:255',
+            'medications' => 'nullable|string|max:2000',
         ]);
 
         if ($validator->fails()) {
@@ -2146,26 +2189,26 @@ class MaternityWorkbenchController extends Controller
             }
 
             $entry = MaternityPartograph::create([
-                'enrollment_id'            => $enrollmentId,
-                'delivery_record_id'       => $deliveryRecordId,
-                'phase'                    => $request->phase,
-                'recorded_at'              => Carbon::parse($request->recorded_at),
-                'cervical_dilation_cm'     => $request->cervical_dilation_cm,
-                'descent_of_head'          => $request->descent_of_head,
-                'contractions_per_10_min'  => $request->contractions_per_10_min,
+                'enrollment_id' => $enrollmentId,
+                'delivery_record_id' => $deliveryRecordId,
+                'phase' => $request->phase,
+                'recorded_at' => Carbon::parse($request->recorded_at),
+                'cervical_dilation_cm' => $request->cervical_dilation_cm,
+                'descent_of_head' => $request->descent_of_head,
+                'contractions_per_10_min' => $request->contractions_per_10_min,
                 'contraction_duration_sec' => $request->contraction_duration_sec,
-                'foetal_heart_rate'        => $request->foetal_heart_rate,
-                'amniotic_fluid'           => $request->amniotic_fluid,
-                'moulding'                 => $request->moulding,
-                'maternal_bp'              => $request->maternal_bp,
-                'maternal_pulse'           => $request->maternal_pulse,
-                'maternal_temp'            => $request->maternal_temp,
-                'urine_output_ml'          => $request->urine_output_ml,
-                'urine_protein'            => $request->urine_protein,
-                'oxytocin_dose'            => $request->oxytocin_dose,
-                'iv_fluids'                => $request->iv_fluids,
-                'medications'              => $request->medications,
-                'recorded_by'              => Auth::id(),
+                'foetal_heart_rate' => $request->foetal_heart_rate,
+                'amniotic_fluid' => $request->amniotic_fluid,
+                'moulding' => $request->moulding,
+                'maternal_bp' => $request->maternal_bp,
+                'maternal_pulse' => $request->maternal_pulse,
+                'maternal_temp' => $request->maternal_temp,
+                'urine_output_ml' => $request->urine_output_ml,
+                'urine_protein' => $request->urine_protein,
+                'oxytocin_dose' => $request->oxytocin_dose,
+                'iv_fluids' => $request->iv_fluids,
+                'medications' => $request->medications,
+                'recorded_by' => Auth::id(),
             ]);
 
             $entry->load('recordedBy');
@@ -2173,7 +2216,7 @@ class MaternityWorkbenchController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => 'Partograph entry recorded.',
-                'entry'   => $this->normalizeMaternityPartographEntry($entry),
+                'entry' => $this->normalizeMaternityPartographEntry($entry),
             ]);
         } catch (\Exception $e) {
             return response()->json(['success' => false, 'message' => 'Error: ' . $e->getMessage()], 500);
@@ -2185,23 +2228,23 @@ class MaternityWorkbenchController extends Controller
         $entry = MaternityPartograph::where('enrollment_id', $enrollmentId)->findOrFail($entryId);
 
         $validator = Validator::make($request->all(), [
-            'recorded_at'              => 'required|date',
-            'phase'                    => 'required|in:pre_delivery,post_delivery',
-            'cervical_dilation_cm'     => 'nullable|numeric|min:0|max:10',
-            'descent_of_head'          => 'nullable|string|max:50',
-            'contractions_per_10_min'  => 'nullable|integer|min:0|max:20',
+            'recorded_at' => 'required|date',
+            'phase' => 'required|in:pre_delivery,post_delivery',
+            'cervical_dilation_cm' => 'nullable|numeric|min:0|max:10',
+            'descent_of_head' => 'nullable|string|max:50',
+            'contractions_per_10_min' => 'nullable|integer|min:0|max:20',
             'contraction_duration_sec' => 'nullable|integer|min:0|max:180',
-            'foetal_heart_rate'        => 'nullable|string|max:50',
-            'amniotic_fluid'           => 'nullable|in:intact,clear,meconium_stained,bloody,absent',
-            'moulding'                 => 'nullable|in:none,+,++,+++',
-            'maternal_bp'              => 'nullable|string|max:20',
-            'maternal_pulse'           => 'nullable|integer|min:20|max:220',
-            'maternal_temp'            => 'nullable|numeric|min:30|max:45',
-            'urine_output_ml'          => 'nullable|integer|min:0',
-            'urine_protein'            => 'nullable|in:nil,trace,+,++,+++',
-            'oxytocin_dose'            => 'nullable|string|max:100',
-            'iv_fluids'                => 'nullable|string|max:255',
-            'medications'              => 'nullable|string|max:2000',
+            'foetal_heart_rate' => 'nullable|string|max:50',
+            'amniotic_fluid' => 'nullable|in:intact,clear,meconium_stained,bloody,absent',
+            'moulding' => 'nullable|in:none,+,++,+++',
+            'maternal_bp' => 'nullable|string|max:20',
+            'maternal_pulse' => 'nullable|integer|min:20|max:220',
+            'maternal_temp' => 'nullable|numeric|min:30|max:45',
+            'urine_output_ml' => 'nullable|integer|min:0',
+            'urine_protein' => 'nullable|in:nil,trace,+,++,+++',
+            'oxytocin_dose' => 'nullable|string|max:100',
+            'iv_fluids' => 'nullable|string|max:255',
+            'medications' => 'nullable|string|max:2000',
         ]);
 
         if ($validator->fails()) {
@@ -2219,30 +2262,30 @@ class MaternityWorkbenchController extends Controller
             }
 
             $entry->update([
-                'phase'                    => $request->phase,
-                'delivery_record_id'       => $deliveryRecordId,
-                'recorded_at'              => Carbon::parse($request->recorded_at),
-                'cervical_dilation_cm'     => $request->cervical_dilation_cm,
-                'descent_of_head'          => $request->descent_of_head,
-                'contractions_per_10_min'  => $request->contractions_per_10_min,
+                'phase' => $request->phase,
+                'delivery_record_id' => $deliveryRecordId,
+                'recorded_at' => Carbon::parse($request->recorded_at),
+                'cervical_dilation_cm' => $request->cervical_dilation_cm,
+                'descent_of_head' => $request->descent_of_head,
+                'contractions_per_10_min' => $request->contractions_per_10_min,
                 'contraction_duration_sec' => $request->contraction_duration_sec,
-                'foetal_heart_rate'        => $request->foetal_heart_rate,
-                'amniotic_fluid'           => $request->amniotic_fluid,
-                'moulding'                 => $request->moulding,
-                'maternal_bp'              => $request->maternal_bp,
-                'maternal_pulse'           => $request->maternal_pulse,
-                'maternal_temp'            => $request->maternal_temp,
-                'urine_output_ml'          => $request->urine_output_ml,
-                'urine_protein'            => $request->urine_protein,
-                'oxytocin_dose'            => $request->oxytocin_dose,
-                'iv_fluids'                => $request->iv_fluids,
-                'medications'              => $request->medications,
+                'foetal_heart_rate' => $request->foetal_heart_rate,
+                'amniotic_fluid' => $request->amniotic_fluid,
+                'moulding' => $request->moulding,
+                'maternal_bp' => $request->maternal_bp,
+                'maternal_pulse' => $request->maternal_pulse,
+                'maternal_temp' => $request->maternal_temp,
+                'urine_output_ml' => $request->urine_output_ml,
+                'urine_protein' => $request->urine_protein,
+                'oxytocin_dose' => $request->oxytocin_dose,
+                'iv_fluids' => $request->iv_fluids,
+                'medications' => $request->medications,
             ]);
 
             return response()->json([
                 'success' => true,
                 'message' => 'Partograph entry updated.',
-                'entry'   => $this->normalizeMaternityPartographEntry($entry->fresh(['recordedBy'])),
+                'entry' => $this->normalizeMaternityPartographEntry($entry->fresh(['recordedBy'])),
             ]);
         } catch (\Exception $e) {
             return response()->json(['success' => false, 'message' => 'Error: ' . $e->getMessage()], 500);
@@ -2255,6 +2298,7 @@ class MaternityWorkbenchController extends Controller
 
         try {
             $entry->delete();
+
             return response()->json(['success' => true, 'message' => 'Partograph entry deleted.']);
         } catch (\Exception $e) {
             return response()->json(['success' => false, 'message' => 'Error: ' . $e->getMessage()], 500);
@@ -2267,30 +2311,30 @@ class MaternityWorkbenchController extends Controller
         $parts = $bp && str_contains((string) $bp, '/') ? explode('/', (string) $bp, 2) : [null, null];
 
         return [
-            'id'                       => $entry->id,
-            'enrollment_id'            => $entry->enrollment_id,
-            'delivery_record_id'       => $entry->delivery_record_id,
-            'phase'                    => $entry->phase,
-            'recorded_at'              => optional($entry->recorded_at)->toDateTimeString(),
-            'cervical_dilation_cm'     => $entry->cervical_dilation_cm,
-            'descent'                  => $entry->descent_of_head,
-            'contractions_per_10min'   => $entry->contractions_per_10_min,
+            'id' => $entry->id,
+            'enrollment_id' => $entry->enrollment_id,
+            'delivery_record_id' => $entry->delivery_record_id,
+            'phase' => $entry->phase,
+            'recorded_at' => optional($entry->recorded_at)->toDateTimeString(),
+            'cervical_dilation_cm' => $entry->cervical_dilation_cm,
+            'descent' => $entry->descent_of_head,
+            'contractions_per_10min' => $entry->contractions_per_10_min,
             'contraction_duration_sec' => $entry->contraction_duration_sec,
-            'fetal_heart_rate'         => $entry->foetal_heart_rate,
-            'amniotic_fluid'           => $entry->amniotic_fluid,
-            'moulding'                 => $entry->moulding,
-            'maternal_bp'              => $entry->maternal_bp,
-            'maternal_bp_systolic'     => $parts[0] ? trim($parts[0]) : null,
-            'maternal_bp_diastolic'    => $parts[1] ? trim($parts[1]) : null,
-            'maternal_pulse'           => $entry->maternal_pulse,
-            'maternal_temp_c'          => $entry->maternal_temp,
-            'urine_output_ml'          => $entry->urine_output_ml,
-            'urine_protein'            => $entry->urine_protein,
-            'oxytocin_dose'            => $entry->oxytocin_dose,
-            'iv_fluids'                => $entry->iv_fluids,
-            'medications'              => $entry->medications,
-            'recorded_by'              => $entry->recorded_by,
-            'recorded_by_name'         => optional($entry->recordedBy)->name
+            'fetal_heart_rate' => $entry->foetal_heart_rate,
+            'amniotic_fluid' => $entry->amniotic_fluid,
+            'moulding' => $entry->moulding,
+            'maternal_bp' => $entry->maternal_bp,
+            'maternal_bp_systolic' => $parts[0] ? trim($parts[0]) : null,
+            'maternal_bp_diastolic' => $parts[1] ? trim($parts[1]) : null,
+            'maternal_pulse' => $entry->maternal_pulse,
+            'maternal_temp_c' => $entry->maternal_temp,
+            'urine_output_ml' => $entry->urine_output_ml,
+            'urine_protein' => $entry->urine_protein,
+            'oxytocin_dose' => $entry->oxytocin_dose,
+            'iv_fluids' => $entry->iv_fluids,
+            'medications' => $entry->medications,
+            'recorded_by' => $entry->recorded_by,
+            'recorded_by_name' => optional($entry->recordedBy)->name
                                           ?? userfullname($entry->recorded_by),
         ];
     }
@@ -2372,10 +2416,10 @@ class MaternityWorkbenchController extends Controller
         $enrollment = MaternityEnrollment::findOrFail($id);
 
         $validator = Validator::make($request->all(), [
-            'sex'             => 'required|in:male,female,ambiguous',
+            'sex' => 'required|in:male,female,ambiguous',
             'birth_weight_kg' => 'required|numeric|min:0.3|max:8',
-            'baby_surname'    => 'required|string',
-            'baby_firstname'  => 'required|string',
+            'baby_surname' => 'required|string',
+            'baby_firstname' => 'required|string',
         ]);
 
         if ($validator->fails()) {
@@ -2387,11 +2431,11 @@ class MaternityWorkbenchController extends Controller
 
             // Create a User record for the baby
             $babyUser = User::create([
-                'surname'   => $request->baby_surname,
+                'surname' => $request->baby_surname,
                 'firstname' => $request->baby_firstname,
                 'othername' => $request->baby_othername ?? '',
-                'email'     => 'baby_' . time() . '_' . rand(100, 999) . '@placeholder.local',
-                'password'  => bcrypt(Str::random(16)),
+                'email' => 'baby_' . time() . '_' . rand(100, 999) . '@placeholder.local',
+                'password' => bcrypt(Str::random(16)),
                 'user_category_id' => 1,
             ]);
 
@@ -2405,17 +2449,17 @@ class MaternityWorkbenchController extends Controller
 
             // Create patient record for baby
             $babyPatient = Patient::create([
-                'user_id'     => $babyUser->id,
-                'file_no'     => $fileNo,
-                'gender'      => $request->sex,
-                'dob'         => $enrollment->deliveryRecord ? $enrollment->deliveryRecord->delivery_date : Carbon::today(),
+                'user_id' => $babyUser->id,
+                'file_no' => $fileNo,
+                'gender' => $request->sex,
+                'dob' => $enrollment->deliveryRecord ? $enrollment->deliveryRecord->delivery_date : Carbon::today(),
                 'blood_group' => null,
-                'genotype'    => null,
-                'hmo_id'      => $motherPatient ? $motherPatient->hmo_id : null,
-                'hmo_no'      => $motherPatient ? $motherPatient->hmo_no : null,
-                'phone_no'    => $motherPatient ? $motherPatient->phone_no : null,
-                'address'     => $motherPatient ? $motherPatient->address : null,
-                'next_of_kin_name'  => $motherPatient ? userfullname($motherPatient->user_id) : null,
+                'genotype' => null,
+                'hmo_id' => $motherPatient ? $motherPatient->hmo_id : null,
+                'hmo_no' => $motherPatient ? $motherPatient->hmo_no : null,
+                'phone_no' => $motherPatient ? $motherPatient->phone_no : null,
+                'address' => $motherPatient ? $motherPatient->address : null,
+                'next_of_kin_name' => $motherPatient ? userfullname($motherPatient->user_id) : null,
                 'next_of_kin_phone' => $motherPatient ? $motherPatient->phone_no : null,
             ]);
 
@@ -2424,33 +2468,33 @@ class MaternityWorkbenchController extends Controller
 
             // Create maternity baby record
             $baby = MaternityBaby::create([
-                'enrollment_id'        => $id,
-                'patient_id'           => $babyPatient->id,
-                'birth_order'          => $birthOrder,
-                'sex'                  => $request->sex,
-                'birth_weight_kg'      => $request->birth_weight_kg,
-                'length_cm'            => $request->length_cm,
+                'enrollment_id' => $id,
+                'patient_id' => $babyPatient->id,
+                'birth_order' => $birthOrder,
+                'sex' => $request->sex,
+                'birth_weight_kg' => $request->birth_weight_kg,
+                'length_cm' => $request->length_cm,
                 'head_circumference_cm' => $request->head_circumference_cm,
                 'chest_circumference_cm' => $request->chest_circumference_cm,
-                'apgar_1_min'          => $request->apgar_1_min,
-                'apgar_5_min'          => $request->apgar_5_min,
-                'apgar_10_min'         => $request->apgar_10_min,
-                'resuscitation'        => $request->resuscitation ?? false,
+                'apgar_1_min' => $request->apgar_1_min,
+                'apgar_5_min' => $request->apgar_5_min,
+                'apgar_10_min' => $request->apgar_10_min,
+                'resuscitation' => $request->resuscitation ?? false,
                 'resuscitation_details' => $request->resuscitation_details,
-                'birth_defects'        => $request->birth_defects,
-                'feeding_method'       => $request->feeding_method ?? 'exclusive_breastfeeding',
-                'bcg_given'            => $request->bcg_given ?? false,
-                'opv0_given'           => $request->opv0_given ?? false,
-                'hbv0_given'           => $request->hbv0_given ?? false,
-                'vitamin_k_given'      => $request->vitamin_k_given ?? false,
-                'eye_prophylaxis'      => $request->eye_prophylaxis ?? false,
-                'date_first_seen'      => Carbon::today(),
+                'birth_defects' => $request->birth_defects,
+                'feeding_method' => $request->feeding_method ?? 'exclusive_breastfeeding',
+                'bcg_given' => $request->bcg_given ?? false,
+                'opv0_given' => $request->opv0_given ?? false,
+                'hbv0_given' => $request->hbv0_given ?? false,
+                'vitamin_k_given' => $request->vitamin_k_given ?? false,
+                'eye_prophylaxis' => $request->eye_prophylaxis ?? false,
+                'date_first_seen' => Carbon::today(),
                 'reasons_for_special_care' => $request->reasons_for_special_care,
-                'status'               => $request->is_still_birth ? 'deceased' : 'alive',
-                'is_still_birth'       => $request->is_still_birth ? true : false,
-                'deceased_at'          => $request->is_still_birth ? now() : null,
-                'cause_of_death'       => $request->is_still_birth ? 'Still Birth' : null,
-                'notes'                => $request->notes,
+                'status' => $request->is_still_birth ? 'deceased' : 'alive',
+                'is_still_birth' => $request->is_still_birth ? true : false,
+                'deceased_at' => $request->is_still_birth ? now() : null,
+                'cause_of_death' => $request->is_still_birth ? 'Still Birth' : null,
+                'notes' => $request->notes,
             ]);
 
             // Create Death Record if stillbirth
@@ -2465,7 +2509,7 @@ class MaternityWorkbenchController extends Controller
                         'cause_of_death_description' => $request->notes ?? 'Recorded during baby registration',
                         'certified_by_doctor_id' => Auth::id(),
                         'last_office_done' => false,
-                        'disposition' => 'pending'
+                        'disposition' => 'pending',
                     ]
                 );
 
@@ -2482,30 +2526,31 @@ class MaternityWorkbenchController extends Controller
                 $nutritionalStatus = WhoGrowthStandard::classifyNutritionalStatus($waz);
 
                 ChildGrowthRecord::create([
-                    'baby_id'     => $baby->id,
-                    'patient_id'  => $babyPatient->id,
+                    'baby_id' => $baby->id,
+                    'patient_id' => $babyPatient->id,
                     'record_date' => Carbon::today(),
-                    'age_months'  => 0,
-                    'weight_kg'   => $request->birth_weight_kg,
-                    'length_height_cm'     => $request->length_cm,
+                    'age_months' => 0,
+                    'weight_kg' => $request->birth_weight_kg,
+                    'length_height_cm' => $request->length_cm,
                     'head_circumference_cm' => $request->head_circumference_cm,
-                    'weight_for_age_z'     => $waz,
-                    'length_for_age_z'     => $laz,
-                    'nutritional_status'   => $nutritionalStatus,
-                    'recorded_by'          => Auth::id(),
+                    'weight_for_age_z' => $waz,
+                    'length_for_age_z' => $laz,
+                    'nutritional_status' => $nutritionalStatus,
+                    'recorded_by' => Auth::id(),
                 ]);
             }
 
             DB::commit();
 
             return response()->json([
-                'success'   => true,
-                'message'   => 'Baby registered successfully. File No: ' . $fileNo,
-                'baby'      => $baby->load('patient.user'),
-                'file_no'   => $fileNo,
+                'success' => true,
+                'message' => 'Baby registered successfully. File No: ' . $fileNo,
+                'baby' => $baby->load('patient.user'),
+                'file_no' => $fileNo,
             ]);
         } catch (\Exception $e) {
             DB::rollBack();
+
             return response()->json(['success' => false, 'message' => 'Error: ' . $e->getMessage()], 500);
         }
     }
@@ -2518,9 +2563,9 @@ class MaternityWorkbenchController extends Controller
 
         return response()->json([
             'success' => true,
-            'baby'    => $baby,
-            'age'     => $baby->getAgeInMonths() . ' months',
-            'apgar'   => $baby->getApgarSummary(),
+            'baby' => $baby,
+            'age' => $baby->getAgeInMonths() . ' months',
+            'apgar' => $baby->getApgarSummary(),
         ]);
     }
 
@@ -2531,6 +2576,7 @@ class MaternityWorkbenchController extends Controller
             return response()->json(['success' => false, 'message' => 'Unauthorized deletion.'], 403);
         }
         $baby->delete();
+
         return response()->json(['success' => true, 'message' => 'Baby record removed.']);
     }
 
@@ -2583,7 +2629,7 @@ class MaternityWorkbenchController extends Controller
                 'cause_of_death_primary' => $request->cause_of_death,
                 'certified_by_doctor_id' => Auth::id(),
                 'last_office_done' => false,
-                'disposition' => 'pending'
+                'disposition' => 'pending',
             ]
         );
 
@@ -2601,7 +2647,7 @@ class MaternityWorkbenchController extends Controller
 
         $validator = Validator::make($request->all(), [
             'record_date' => 'required|date',
-            'weight_kg'   => 'required|numeric|min:0.3|max:30',
+            'weight_kg' => 'required|numeric|min:0.3|max:30',
         ]);
 
         if ($validator->fails()) {
@@ -2643,30 +2689,30 @@ class MaternityWorkbenchController extends Controller
             $nutritionalStatus = WhoGrowthStandard::classifyNutritionalStatus($waz, $baz);
 
             $record = ChildGrowthRecord::create([
-                'baby_id'              => $id,
-                'patient_id'           => $baby->patient_id,
-                'record_date'          => $recordDate,
-                'age_months'           => $roundedAge,
-                'weight_kg'            => $request->weight_kg,
-                'length_height_cm'     => $request->length_height_cm,
+                'baby_id' => $id,
+                'patient_id' => $baby->patient_id,
+                'record_date' => $recordDate,
+                'age_months' => $roundedAge,
+                'weight_kg' => $request->weight_kg,
+                'length_height_cm' => $request->length_height_cm,
                 'head_circumference_cm' => $request->head_circumference_cm,
-                'muac_cm'              => $request->muac_cm,
-                'weight_for_age_z'     => $waz,
-                'length_for_age_z'     => $laz,
-                'weight_for_length_z'  => $wlz,
-                'bmi_for_age_z'        => $baz,
-                'nutritional_status'   => $nutritionalStatus,
-                'milestones'           => $request->milestones,
-                'feeding_method'       => $request->feeding_method,
-                'dietary_notes'        => $request->dietary_notes,
-                'notes'                => $request->notes,
-                'recorded_by'          => Auth::id(),
+                'muac_cm' => $request->muac_cm,
+                'weight_for_age_z' => $waz,
+                'length_for_age_z' => $laz,
+                'weight_for_length_z' => $wlz,
+                'bmi_for_age_z' => $baz,
+                'nutritional_status' => $nutritionalStatus,
+                'milestones' => $request->milestones,
+                'feeding_method' => $request->feeding_method,
+                'dietary_notes' => $request->dietary_notes,
+                'notes' => $request->notes,
+                'recorded_by' => Auth::id(),
             ]);
 
             return response()->json([
                 'success' => true,
                 'message' => 'Growth record saved.',
-                'record'  => $record,
+                'record' => $record,
                 'z_scores' => [
                     'WAZ' => $waz,
                     'LAZ' => $laz,
@@ -2695,19 +2741,19 @@ class MaternityWorkbenchController extends Controller
                 'length_for_age_z',
                 'bmi_for_age_z',
                 'nutritional_status',
-                'record_date'
+                'record_date',
             ]);
 
         // Sex-specific WHO reference lines from seeded LMS data (all 7 SD bands)
         return response()->json([
             'success' => true,
-            'sex'     => $babySex,
-            'data'    => $records,
+            'sex' => $babySex,
+            'data' => $records,
             'who_reference' => [
-                'weight_for_age'       => WhoGrowthStandard::getChartData('wfa', $babySex),
-                'length_for_age'       => WhoGrowthStandard::getChartData('lhfa', $babySex),
-                'head_circumference'   => WhoGrowthStandard::getChartData('hcfa', $babySex),
-                'bmi_for_age'          => WhoGrowthStandard::getChartData('bfa', $babySex),
+                'weight_for_age' => WhoGrowthStandard::getChartData('wfa', $babySex),
+                'length_for_age' => WhoGrowthStandard::getChartData('lhfa', $babySex),
+                'head_circumference' => WhoGrowthStandard::getChartData('hcfa', $babySex),
+                'bmi_for_age' => WhoGrowthStandard::getChartData('bfa', $babySex),
             ],
             'chart_config' => [
                 'bands' => [
@@ -2734,32 +2780,32 @@ class MaternityWorkbenchController extends Controller
             ->get()
             ->map(function ($v) {
                 return [
-                    'id'               => $v->id,
-                    'visit_type'       => $v->visit_type,
+                    'id' => $v->id,
+                    'visit_type' => $v->visit_type,
                     'visit_type_label' => str_replace('_', ' ', ucfirst($v->visit_type)),
-                    'visit_date'       => $v->visit_date ? $v->visit_date->format('d M Y') : null,
-                    'visit_date_raw'   => $v->visit_date ? $v->visit_date->format('Y-m-d') : null,
-                    'days_postpartum'  => $v->days_postpartum,
+                    'visit_date' => $v->visit_date ? $v->visit_date->format('d M Y') : null,
+                    'visit_date_raw' => $v->visit_date ? $v->visit_date->format('Y-m-d') : null,
+                    'days_postpartum' => $v->days_postpartum,
                     'general_condition' => $v->general_condition,
-                    'blood_pressure'   => $v->blood_pressure,
-                    'temperature_c'    => $v->temperature_c,
+                    'blood_pressure' => $v->blood_pressure,
+                    'temperature_c' => $v->temperature_c,
                     'uterus_assessment' => $v->uterus_assessment,
-                    'lochia'           => $v->lochia,
+                    'lochia' => $v->lochia,
                     'wound_assessment' => $v->wound_assessment,
                     'breast_assessment' => $v->breast_assessment,
                     'breastfeeding_support' => $v->breastfeeding_support,
                     'emotional_wellbeing' => $v->emotional_wellbeing,
-                    'emotional_notes'  => $v->emotional_notes,
-                    'baby_weight_kg'   => $v->baby_weight_kg,
-                    'baby_feeding'     => $v->baby_feeding,
-                    'cord_status'      => $v->cord_status,
-                    'jaundice'         => $v->jaundice,
+                    'emotional_notes' => $v->emotional_notes,
+                    'baby_weight_kg' => $v->baby_weight_kg,
+                    'baby_feeding' => $v->baby_feeding,
+                    'cord_status' => $v->cord_status,
+                    'jaundice' => $v->jaundice,
                     'baby_general_condition' => $v->baby_general_condition,
-                    'baby_notes'       => $v->baby_notes,
+                    'baby_notes' => $v->baby_notes,
                     'family_planning_counselled' => $v->family_planning_counselled,
                     'family_planning_method' => $v->family_planning_method,
-                    'seen_by'          => $v->seenBy ? userfullname($v->seenBy->id) : 'N/A',
-                    'clinical_notes'   => $v->clinical_notes,
+                    'seen_by' => $v->seenBy ? userfullname($v->seenBy->id) : 'N/A',
+                    'clinical_notes' => $v->clinical_notes,
                     'next_appointment' => $v->next_appointment ? $v->next_appointment->format('d M Y') : null,
                     'next_appointment_raw' => $v->next_appointment ? $v->next_appointment->format('Y-m-d') : null,
                 ];
@@ -2775,6 +2821,7 @@ class MaternityWorkbenchController extends Controller
             return response()->json(['success' => false, 'message' => 'Unauthorized deletion.'], 403);
         }
         $visit->delete();
+
         return response()->json(['success' => true, 'message' => 'Postnatal visit deleted.']);
     }
 
@@ -2798,32 +2845,32 @@ class MaternityWorkbenchController extends Controller
             $daysPostpartum = $deliveryDate && $visitDate ? $deliveryDate->diffInDays($visitDate) : null;
 
             $visit = PostnatalVisit::create([
-                'enrollment_id'      => $id,
-                'patient_id'         => $enrollment->patient_id,
-                'visit_type'         => $request->visit_type,
-                'visit_date'         => $visitDate,
-                'days_postpartum'    => $daysPostpartum,
-                'general_condition'  => $request->general_condition,
-                'blood_pressure'     => $request->blood_pressure,
-                'temperature_c'      => $request->temperature_c,
-                'uterus_assessment'  => $request->uterus_assessment,
-                'lochia'             => $request->lochia,
-                'wound_assessment'   => $request->wound_assessment,
-                'breast_assessment'  => $request->breast_assessment,
+                'enrollment_id' => $id,
+                'patient_id' => $enrollment->patient_id,
+                'visit_type' => $request->visit_type,
+                'visit_date' => $visitDate,
+                'days_postpartum' => $daysPostpartum,
+                'general_condition' => $request->general_condition,
+                'blood_pressure' => $request->blood_pressure,
+                'temperature_c' => $request->temperature_c,
+                'uterus_assessment' => $request->uterus_assessment,
+                'lochia' => $request->lochia,
+                'wound_assessment' => $request->wound_assessment,
+                'breast_assessment' => $request->breast_assessment,
                 'breastfeeding_support' => $request->breastfeeding_support,
                 'emotional_wellbeing' => $request->emotional_wellbeing,
-                'emotional_notes'    => $request->emotional_notes,
-                'baby_weight_kg'     => $request->baby_weight_kg,
-                'baby_feeding'       => $request->baby_feeding,
-                'cord_status'        => $request->cord_status,
-                'jaundice'           => $request->jaundice ?? false,
+                'emotional_notes' => $request->emotional_notes,
+                'baby_weight_kg' => $request->baby_weight_kg,
+                'baby_feeding' => $request->baby_feeding,
+                'cord_status' => $request->cord_status,
+                'jaundice' => $request->jaundice ?? false,
                 'baby_general_condition' => $request->baby_general_condition,
-                'baby_notes'         => $request->baby_notes,
+                'baby_notes' => $request->baby_notes,
                 'family_planning_counselled' => $request->family_planning_counselled ?? false,
                 'family_planning_method' => $request->family_planning_method,
-                'clinical_notes'     => $request->clinical_notes,
-                'next_appointment'   => $this->safeParseDate($request->next_appointment),
-                'seen_by'            => Auth::id(),
+                'clinical_notes' => $request->clinical_notes,
+                'next_appointment' => $this->safeParseDate($request->next_appointment),
+                'seen_by' => Auth::id(),
             ]);
 
             // Sync to Encounter and Nurse Notes
@@ -2832,7 +2879,7 @@ class MaternityWorkbenchController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => 'Postnatal visit recorded.',
-                'visit'   => $visit,
+                'visit' => $visit,
             ]);
         } catch (\Exception $e) {
             return response()->json(['success' => false, 'message' => 'Error: ' . $e->getMessage()], 500);
@@ -2962,6 +3009,7 @@ class MaternityWorkbenchController extends Controller
         $enrollment = MaternityEnrollment::findOrFail($enrollmentId);
         $patientId = $enrollment->patient_id;
         $this->ensureMotherScheduleGenerated($enrollment);
+
         return $this->getPatientScheduleMaternity($patientId);
     }
 
@@ -3005,7 +3053,9 @@ class MaternityWorkbenchController extends Controller
                     'updated_by' => Auth::id(),
                 ]
             );
-            if ($schedule->wasRecentlyCreated) $created++;
+            if ($schedule->wasRecentlyCreated) {
+                $created++;
+            }
         }
 
         PatientImmunizationSchedule::updateStatusesForPatient($enrollment->patient_id);
@@ -3020,6 +3070,7 @@ class MaternityWorkbenchController extends Controller
     public function getMotherImmunizationHistory($enrollmentId)
     {
         $enrollment = MaternityEnrollment::findOrFail($enrollmentId);
+
         return $this->getImmunizationHistoryByPatient($enrollment->patient_id);
     }
 
@@ -3027,6 +3078,7 @@ class MaternityWorkbenchController extends Controller
     {
         $baby = MaternityBaby::findOrFail($babyId);
         $this->ensureBabyScheduleGenerated($baby->patient_id);
+
         return $this->getPatientScheduleMaternity($baby->patient_id);
     }
 
@@ -3047,6 +3099,7 @@ class MaternityWorkbenchController extends Controller
     public function getBabyImmunizationHistory($babyId)
     {
         $baby = MaternityBaby::findOrFail($babyId);
+
         return $this->getImmunizationHistoryByPatient($baby->patient_id);
     }
 
@@ -3076,13 +3129,16 @@ class MaternityWorkbenchController extends Controller
     private function ensureBabyScheduleGenerated($patientId): void
     {
         $hasSchedule = PatientImmunizationSchedule::where('patient_id', $patientId)->exists();
-        if ($hasSchedule) return;
+        if ($hasSchedule) {
+            return;
+        }
 
         $template = VaccineScheduleTemplate::where('name', 'Nigeria NPI Schedule')->first();
         $request = request();
         if ($template) {
             $request->merge(['template_id' => $template->id]);
         }
+
         try {
             $this->nursingProxy()->generatePatientSchedule($request, $patientId);
         } catch (\Throwable $e) {
@@ -3091,10 +3147,14 @@ class MaternityWorkbenchController extends Controller
 
     private function ensureMotherScheduleGenerated(MaternityEnrollment $enrollment): void
     {
-        if (!$enrollment->lmp) return;
+        if (!$enrollment->lmp) {
+            return;
+        }
 
         $template = VaccineScheduleTemplate::where('name', 'Nigeria ANC Maternal Schedule')->first();
-        if (!$template) return;
+        if (!$template) {
+            return;
+        }
 
         $hasMaternalSchedule = PatientImmunizationSchedule::where('patient_id', $enrollment->patient_id)
             ->whereIn('schedule_item_id', function ($query) use ($template) {
@@ -3103,7 +3163,9 @@ class MaternityWorkbenchController extends Controller
                     ->where('template_id', $template->id);
             })->exists();
 
-        if ($hasMaternalSchedule) return;
+        if ($hasMaternalSchedule) {
+            return;
+        }
 
         $items = VaccineScheduleItem::where('template_id', $template->id)->orderBy('age_days')->orderBy('sort_order')->get();
         foreach ($items as $item) {
@@ -3138,16 +3200,16 @@ class MaternityWorkbenchController extends Controller
             ->get()
             ->map(function ($note) {
                 return [
-                    'id'           => $note->id,
-                    'note'         => $note->note,
-                    'type'         => $note->type ? $note->type->name : 'General',
+                    'id' => $note->id,
+                    'note' => $note->note,
+                    'type' => $note->type ? $note->type->name : 'General',
                     'note_type_id' => $note->nursing_note_type_id,
-                    'created_by'   => $note->createdBy ? userfullname($note->createdBy->id) : 'N/A',
+                    'created_by' => $note->createdBy ? userfullname($note->createdBy->id) : 'N/A',
                     'created_by_id' => $note->created_by,
-                    'created_at'   => Carbon::parse($note->created_at)->format('h:i a, d M Y'),
-                    'time_ago'     => Carbon::parse($note->created_at)->diffForHumans(),
-                    'can_edit'     => Auth::id() == $note->created_by && Carbon::parse($note->created_at)->diffInMinutes(now()) < (function_exists('appsettings') ? (appsettings('note_edit_duration') ?? 60) : 60),
-                    'completed'    => (bool) $note->completed,
+                    'created_at' => Carbon::parse($note->created_at)->format('h:i a, d M Y'),
+                    'time_ago' => Carbon::parse($note->created_at)->diffForHumans(),
+                    'can_edit' => Auth::id() == $note->created_by && Carbon::parse($note->created_at)->diffInMinutes(now()) < (function_exists('appsettings') ? (appsettings('note_edit_duration') ?? 60) : 60),
+                    'completed' => (bool) $note->completed,
                 ];
             });
 
@@ -3163,8 +3225,8 @@ class MaternityWorkbenchController extends Controller
 
         $validator = Validator::make($request->all(), [
             'note_type_id' => 'required|exists:nursing_note_types,id',
-            'note'         => 'required|string',
-            'completed'    => 'nullable|boolean',
+            'note' => 'required|string',
+            'completed' => 'nullable|boolean',
         ]);
 
         if ($validator->fails()) {
@@ -3182,25 +3244,25 @@ class MaternityWorkbenchController extends Controller
 
             if ($existing) {
                 $existing->update([
-                    'note'       => $request->note,
+                    'note' => $request->note,
                     'updated_by' => Auth::id(),
-                    'completed'  => $completed,
+                    'completed' => $completed,
                 ]);
                 $note = $existing;
             } else {
                 $note = NursingNote::create([
-                    'patient_id'           => $patientId,
+                    'patient_id' => $patientId,
                     'nursing_note_type_id' => $request->note_type_id,
-                    'note'                 => $request->note,
-                    'created_by'           => Auth::id(),
-                    'completed'            => $completed,
+                    'note' => $request->note,
+                    'created_by' => Auth::id(),
+                    'completed' => $completed,
                 ]);
             }
 
             return response()->json([
                 'success' => true,
                 'message' => $completed ? 'Note saved successfully.' : 'Draft autosaved',
-                'note'    => $note,
+                'note' => $note,
             ]);
         } catch (\Exception $e) {
             return response()->json(['success' => false, 'message' => 'Error: ' . $e->getMessage()], 500);
@@ -3270,17 +3332,17 @@ class MaternityWorkbenchController extends Controller
             ->get()
             ->map(function ($v) {
                 return [
-                    'id'             => $v->id,
+                    'id' => $v->id,
                     'blood_pressure' => $v->blood_pressure,
-                    'temp'           => $v->temp,
-                    'heart_rate'     => $v->heart_rate,
-                    'resp_rate'      => $v->resp_rate,
-                    'weight'         => $v->weight ? (float)$v->weight : null,
-                    'spo2'           => $v->spo2 ? (float)$v->spo2 : null,
-                    'other_notes'    => $v->other_notes,
-                    'taken_by'       => $v->taken_by ? userfullname($v->taken_by) : 'N/A',
-                    'created_at'     => Carbon::parse($v->created_at)->format('h:i a, d M Y'),
-                    'form_data'      => $v->form_data,
+                    'temp' => $v->temp,
+                    'heart_rate' => $v->heart_rate,
+                    'resp_rate' => $v->resp_rate,
+                    'weight' => $v->weight ? (float)$v->weight : null,
+                    'spo2' => $v->spo2 ? (float)$v->spo2 : null,
+                    'other_notes' => $v->other_notes,
+                    'taken_by' => $v->taken_by ? userfullname($v->taken_by) : 'N/A',
+                    'created_at' => Carbon::parse($v->created_at)->format('h:i a, d M Y'),
+                    'form_data' => $v->form_data,
                 ];
             });
 
@@ -3299,21 +3361,21 @@ class MaternityWorkbenchController extends Controller
 
         try {
             $vital = VitalSign::create([
-                'patient_id'     => $patientId,
+                'patient_id' => $patientId,
                 'blood_pressure' => $request->blood_pressure,
-                'temp'           => $request->temp,
-                'heart_rate'     => $request->heart_rate,
-                'resp_rate'      => $request->resp_rate,
-                'weight'         => $request->weight,
-                'spo2'           => $request->spo2,
-                'other_notes'    => $request->other_notes,
-                'taken_by'       => Auth::id(),
+                'temp' => $request->temp,
+                'heart_rate' => $request->heart_rate,
+                'resp_rate' => $request->resp_rate,
+                'weight' => $request->weight,
+                'spo2' => $request->spo2,
+                'other_notes' => $request->other_notes,
+                'taken_by' => Auth::id(),
             ]);
 
             return response()->json([
                 'success' => true,
                 'message' => 'Vital signs recorded.',
-                'vital'   => $vital,
+                'vital' => $vital,
             ]);
         } catch (\Exception $e) {
             return response()->json(['success' => false, 'message' => 'Error: ' . $e->getMessage()], 500);
@@ -3361,22 +3423,22 @@ class MaternityWorkbenchController extends Controller
         $dischargeRequests = AdmissionRequest::whereIn('patient_id', $maternityPatientIds)
             ->pendingDischarge()
             ->count();
-            
+
         $admittedPatients = AdmissionRequest::whereIn('patient_id', $maternityPatientIds)
             ->whereNotNull('bed_id')
             ->where('discharged', 0)
             ->count();
 
         return response()->json([
-            'active_anc'          => $activeAnc,
-            'due_visits'          => $dueVisits,
-            'upcoming_edd'        => $upcomingEdd,
-            'postnatal'           => $postnatal,
+            'active_anc' => $activeAnc,
+            'due_visits' => $dueVisits,
+            'upcoming_edd' => $upcomingEdd,
+            'postnatal' => $postnatal,
             'overdue_immunization' => $overdueImmunization,
-            'high_risk'           => $highRisk,
-            'bed_requests'        => $bedRequests,
-            'discharge_requests'  => $dischargeRequests,
-            'admitted_patients'   => $admittedPatients,
+            'high_risk' => $highRisk,
+            'bed_requests' => $bedRequests,
+            'discharge_requests' => $dischargeRequests,
+            'admitted_patients' => $admittedPatients,
         ]);
     }
 
@@ -3391,15 +3453,15 @@ class MaternityWorkbenchController extends Controller
             ->get()
             ->map(function ($req) {
                 return [
-                    'id'             => $req->id,
-                    'patient_id'     => $req->patient_id,
-                    'name'           => userfullname($req->patient->user_id),
-                    'file_no'        => $req->patient->file_no,
-                    'doctor_name'    => userfullname($req->doctor_id),
-                    'ward_name'      => $req->preferredWard ? $req->preferredWard->name : 'No Preference',
-                    'priority'       => $req->priority ?? 'routine',
-                    'requested_at'   => $req->created_at->format('d M Y, h:i A'),
-                    'reason'         => $req->admission_reason ?? 'N/A',
+                    'id' => $req->id,
+                    'patient_id' => $req->patient_id,
+                    'name' => userfullname($req->patient->user_id),
+                    'file_no' => $req->patient->file_no,
+                    'doctor_name' => userfullname($req->doctor_id),
+                    'ward_name' => $req->preferredWard ? $req->preferredWard->name : 'No Preference',
+                    'priority' => $req->priority ?? 'routine',
+                    'requested_at' => $req->created_at->format('d M Y, h:i A'),
+                    'reason' => $req->admission_reason ?? 'N/A',
                 ];
             });
 
@@ -3417,14 +3479,14 @@ class MaternityWorkbenchController extends Controller
             ->get()
             ->map(function ($req) {
                 return [
-                    'id'             => $req->id,
-                    'patient_id'     => $req->patient_id,
-                    'name'           => userfullname($req->patient->user_id),
-                    'file_no'        => $req->patient->file_no,
-                    'doctor_name'    => userfullname($req->doctor_id),
-                    'ward_bed'       => ($req->bed && $req->bed->wardRelation) ? $req->bed->wardRelation->name . ' - Bed ' . $req->bed->bed_number : 'N/A',
-                    'requested_at'   => $req->updated_at->format('d M Y, h:i A'),
-                    'reason'         => $req->discharge_reason ?? 'N/A',
+                    'id' => $req->id,
+                    'patient_id' => $req->patient_id,
+                    'name' => userfullname($req->patient->user_id),
+                    'file_no' => $req->patient->file_no,
+                    'doctor_name' => userfullname($req->doctor_id),
+                    'ward_bed' => ($req->bed && $req->bed->wardRelation) ? $req->bed->wardRelation->name . ' - Bed ' . $req->bed->bed_number : 'N/A',
+                    'requested_at' => $req->updated_at->format('d M Y, h:i A'),
+                    'reason' => $req->discharge_reason ?? 'N/A',
                 ];
             });
 
@@ -3439,15 +3501,15 @@ class MaternityWorkbenchController extends Controller
             ->get()
             ->map(function ($e) {
                 return [
-                    'id'              => $e->id,
-                    'patient_id'      => $e->patient_id,
-                    'name'            => userfullname($e->patient->user_id),
-                    'file_no'         => $e->patient->file_no,
-                    'edd'             => $e->edd ? $e->edd->format('d M Y') : 'N/A',
+                    'id' => $e->id,
+                    'patient_id' => $e->patient_id,
+                    'name' => userfullname($e->patient->user_id),
+                    'file_no' => $e->patient->file_no,
+                    'edd' => $e->edd ? $e->edd->format('d M Y') : 'N/A',
                     'gestational_age' => $e->getCurrentGestationalAge(),
-                    'risk_level'      => $e->risk_level,
-                    'anc_visits'      => $e->ancVisits()->count(),
-                    'photo'           => $e->patient->user->photo ?? 'avatar.png',
+                    'risk_level' => $e->risk_level,
+                    'anc_visits' => $e->ancVisits()->count(),
+                    'photo' => $e->patient->user->photo ?? 'avatar.png',
                 ];
             });
 
@@ -3465,14 +3527,15 @@ class MaternityWorkbenchController extends Controller
             ->get()
             ->map(function ($e) {
                 $lastVisit = $e->ancVisits()->orderBy('visit_date', 'desc')->first();
+
                 return [
-                    'id'               => $e->id,
-                    'patient_id'       => $e->patient_id,
-                    'name'             => userfullname($e->patient->user_id),
-                    'file_no'          => $e->patient->file_no,
+                    'id' => $e->id,
+                    'patient_id' => $e->patient_id,
+                    'name' => userfullname($e->patient->user_id),
+                    'file_no' => $e->patient->file_no,
                     'next_appointment' => $lastVisit && $lastVisit->next_appointment ? $lastVisit->next_appointment->format('d M Y') : 'N/A',
-                    'days_overdue'     => $lastVisit && $lastVisit->next_appointment ? max(0, $lastVisit->next_appointment->diffInDays(Carbon::today())) : 0,
-                    'photo'            => $e->patient->user->photo ?? 'avatar.png',
+                    'days_overdue' => $lastVisit && $lastVisit->next_appointment ? max(0, $lastVisit->next_appointment->diffInDays(Carbon::today())) : 0,
+                    'photo' => $e->patient->user->photo ?? 'avatar.png',
                 ];
             });
 
@@ -3490,14 +3553,14 @@ class MaternityWorkbenchController extends Controller
             ->get()
             ->map(function ($e) {
                 return [
-                    'id'             => $e->id,
-                    'patient_id'     => $e->patient_id,
-                    'name'           => userfullname($e->patient->user_id),
-                    'file_no'        => $e->patient->file_no,
-                    'edd'            => $e->edd->format('d M Y'),
-                    'days_to_edd'    => Carbon::today()->diffInDays($e->edd),
-                    'risk_level'     => $e->risk_level,
-                    'photo'          => $e->patient->user->photo ?? 'avatar.png',
+                    'id' => $e->id,
+                    'patient_id' => $e->patient_id,
+                    'name' => userfullname($e->patient->user_id),
+                    'file_no' => $e->patient->file_no,
+                    'edd' => $e->edd->format('d M Y'),
+                    'days_to_edd' => Carbon::today()->diffInDays($e->edd),
+                    'risk_level' => $e->risk_level,
+                    'photo' => $e->patient->user->photo ?? 'avatar.png',
                 ];
             });
 
@@ -3512,16 +3575,17 @@ class MaternityWorkbenchController extends Controller
             ->get()
             ->map(function ($e) {
                 $deliveryDate = $e->deliveryRecord ? $e->deliveryRecord->delivery_date : null;
+
                 return [
-                    'id'              => $e->id,
-                    'patient_id'      => $e->patient_id,
-                    'name'            => userfullname($e->patient->user_id),
-                    'file_no'         => $e->patient->file_no,
-                    'delivery_date'   => $deliveryDate ? $deliveryDate->format('d M Y') : 'N/A',
+                    'id' => $e->id,
+                    'patient_id' => $e->patient_id,
+                    'name' => userfullname($e->patient->user_id),
+                    'file_no' => $e->patient->file_no,
+                    'delivery_date' => $deliveryDate ? $deliveryDate->format('d M Y') : 'N/A',
                     'days_postpartum' => $deliveryDate ? $deliveryDate->diffInDays(Carbon::today()) : null,
-                    'baby_count'      => $e->babies->count(),
-                    'status'          => $e->status,
-                    'photo'           => $e->patient->user->photo ?? 'avatar.png',
+                    'baby_count' => $e->babies->count(),
+                    'status' => $e->status,
+                    'photo' => $e->patient->user->photo ?? 'avatar.png',
                 ];
             });
 
@@ -3534,30 +3598,40 @@ class MaternityWorkbenchController extends Controller
             ->with(['patient.user', 'enrollment.patient.user'])
             ->get()
             ->filter(function ($baby) {
-                if (!$baby->patient || !$baby->patient->dob) return false;
+                if (!$baby->patient || !$baby->patient->dob) {
+                    return false;
+                }
                 $dob = Carbon::parse($baby->patient->dob);
                 $ageWeeks = $dob->diffInWeeks(Carbon::today());
-                if ($ageWeeks < 6) return false;
+                if ($ageWeeks < 6) {
+                    return false;
+                }
 
                 $vaccineCount = ImmunizationRecord::where('patient_id', $baby->patient_id)
                     ->whereNull('deleted_at')->count();
 
                 $expected = 3;
-                if ($ageWeeks >= 6) $expected += 5;
-                if ($ageWeeks >= 10) $expected += 4;
-                if ($ageWeeks >= 14) $expected += 4;
+                if ($ageWeeks >= 6) {
+                    $expected += 5;
+                }
+                if ($ageWeeks >= 10) {
+                    $expected += 4;
+                }
+                if ($ageWeeks >= 14) {
+                    $expected += 4;
+                }
 
                 return $vaccineCount < $expected;
             })
             ->map(function ($baby) {
                 return [
-                    'baby_id'     => $baby->id,
-                    'patient_id'  => $baby->patient_id,
-                    'baby_name'   => userfullname($baby->patient->user_id),
+                    'baby_id' => $baby->id,
+                    'patient_id' => $baby->patient_id,
+                    'baby_name' => userfullname($baby->patient->user_id),
                     'mother_name' => $baby->enrollment && $baby->enrollment->patient
                         ? userfullname($baby->enrollment->patient->user_id) : 'N/A',
-                    'age'         => $this->formatAge($baby->patient->dob),
-                    'file_no'     => $baby->patient->file_no,
+                    'age' => $this->formatAge($baby->patient->dob),
+                    'file_no' => $baby->patient->file_no,
                 ];
             })->values();
 
@@ -3573,15 +3647,15 @@ class MaternityWorkbenchController extends Controller
             ->get()
             ->map(function ($e) {
                 return [
-                    'id'              => $e->id,
-                    'patient_id'      => $e->patient_id,
-                    'name'            => userfullname($e->patient->user_id),
-                    'file_no'         => $e->patient->file_no,
-                    'risk_factors'    => $e->risk_factors,
-                    'status'          => $e->status,
-                    'edd'             => $e->edd ? $e->edd->format('d M Y') : 'N/A',
+                    'id' => $e->id,
+                    'patient_id' => $e->patient_id,
+                    'name' => userfullname($e->patient->user_id),
+                    'file_no' => $e->patient->file_no,
+                    'risk_factors' => $e->risk_factors,
+                    'status' => $e->status,
+                    'edd' => $e->edd ? $e->edd->format('d M Y') : 'N/A',
                     'gestational_age' => $e->getCurrentGestationalAge(),
-                    'photo'           => $e->patient->user->photo ?? 'avatar.png',
+                    'photo' => $e->patient->user->photo ?? 'avatar.png',
                 ];
             });
 
@@ -3618,10 +3692,10 @@ class MaternityWorkbenchController extends Controller
                 'total_enrollments' => (clone $enrollmentsQuery)->count(),
                 'active_enrollments' => (clone $enrollmentsQuery)->where('status', 'active')->count(),
                 'deliveries_this_month' => (clone $deliveriesQuery)->where('delivery_date', '>=', Carbon::now()->startOfMonth())->count(), // Legacy compat
-                'deliveries_filtered'  => (clone $deliveriesQuery)->count(),
-                'total_babies'      => (clone $babiesQuery)->count(),
-                'high_risk_count'   => (clone $enrollmentsQuery)->where('risk_level', 'high')->whereIn('status', ['active'])->count(),
-                'completed'         => (clone $enrollmentsQuery)->where('status', 'completed')->count(),
+                'deliveries_filtered' => (clone $deliveriesQuery)->count(),
+                'total_babies' => (clone $babiesQuery)->count(),
+                'high_risk_count' => (clone $enrollmentsQuery)->where('risk_level', 'high')->whereIn('status', ['active'])->count(),
+                'completed' => (clone $enrollmentsQuery)->where('status', 'completed')->count(),
             ],
         ]);
     }
@@ -3650,7 +3724,7 @@ class MaternityWorkbenchController extends Controller
             // Default to this year if no filter
             $monthlyDeliveries->where('delivery_date', '>=', Carbon::now()->startOfYear());
         }
-        
+
         $monthlyDeliveries = $monthlyDeliveries
             ->selectRaw("MONTH(delivery_date) as month, COUNT(*) as count")
             ->groupBy(DB::raw('MONTH(delivery_date)'))
@@ -3696,20 +3770,24 @@ class MaternityWorkbenchController extends Controller
             ->get()
             ->filter(function ($e) {
                 $lastVisit = $e->ancVisits()->orderBy('visit_date', 'desc')->first();
-                if (!$lastVisit || !$lastVisit->next_appointment) return false;
+                if (!$lastVisit || !$lastVisit->next_appointment) {
+                    return false;
+                }
+
                 return $lastVisit->next_appointment->isPast() && $lastVisit->next_appointment->diffInDays(Carbon::today()) > 7;
             })
             ->map(function ($e) {
                 $lastVisit = $e->ancVisits()->orderBy('visit_date', 'desc')->first();
+
                 return [
-                    'id'               => $e->id,
-                    'patient_id'       => $e->patient_id,
-                    'name'             => userfullname($e->patient->user_id),
-                    'file_no'          => $e->patient->file_no,
-                    'phone'            => $e->patient->phone_no,
-                    'last_visit'       => $lastVisit->visit_date->format('d M Y'),
-                    'missed_date'      => $lastVisit->next_appointment->format('d M Y'),
-                    'days_overdue'     => $lastVisit->next_appointment->diffInDays(Carbon::today()),
+                    'id' => $e->id,
+                    'patient_id' => $e->patient_id,
+                    'name' => userfullname($e->patient->user_id),
+                    'file_no' => $e->patient->file_no,
+                    'phone' => $e->patient->phone_no,
+                    'last_visit' => $lastVisit->visit_date->format('d M Y'),
+                    'missed_date' => $lastVisit->next_appointment->format('d M Y'),
+                    'days_overdue' => $lastVisit->next_appointment->diffInDays(Carbon::today()),
                 ];
             })->values();
 
@@ -3724,16 +3802,16 @@ class MaternityWorkbenchController extends Controller
             ->get()
             ->map(function ($e) {
                 return [
-                    'id'              => $e->id,
-                    'patient_id'      => $e->patient_id,
-                    'name'            => userfullname($e->patient->user_id),
-                    'file_no'         => $e->patient->file_no,
-                    'phone'           => $e->patient->phone_no,
-                    'risk_factors'    => $e->risk_factors,
-                    'edd'             => $e->edd ? $e->edd->format('d M Y') : 'N/A',
+                    'id' => $e->id,
+                    'patient_id' => $e->patient_id,
+                    'name' => userfullname($e->patient->user_id),
+                    'file_no' => $e->patient->file_no,
+                    'phone' => $e->patient->phone_no,
+                    'risk_factors' => $e->risk_factors,
+                    'edd' => $e->edd ? $e->edd->format('d M Y') : 'N/A',
                     'gestational_age' => $e->getCurrentGestationalAge(),
-                    'status'          => $e->status,
-                    'anc_visits'      => $e->ancVisits()->count(),
+                    'status' => $e->status,
+                    'anc_visits' => $e->ancVisits()->count(),
                 ];
             });
 
@@ -3750,7 +3828,9 @@ class MaternityWorkbenchController extends Controller
         $categoryId = $request->get('category_id');
         $patientId = $request->get('patient_id');
 
-        if (strlen($term) < 2) return response()->json([]);
+        if (strlen($term) < 2) {
+            return response()->json([]);
+        }
 
         $query = Service::with(['price', 'category', 'bundleItems.service', 'bundleItems.product'])
             ->where('status', 1);
@@ -3800,7 +3880,7 @@ class MaternityWorkbenchController extends Controller
                     ->merge($relatedCombos->pluck('id'))
                     ->unique()
                     ->toArray();
-                    
+
                 $tariffs = \App\Models\HmoTariff::where('hmo_id', $patient->hmo_id)
                     ->whereIn('service_id', $serviceIds)
                     ->whereNull('product_id')
@@ -3810,8 +3890,8 @@ class MaternityWorkbenchController extends Controller
                 foreach ($tariffs as $sid => $tariff) {
                     $hmoMap[$sid] = [
                         'payable' => $tariff->payable_amount,
-                        'claims'  => $tariff->claims_amount,
-                        'mode'    => $tariff->coverage_mode,
+                        'claims' => $tariff->claims_amount,
+                        'mode' => $tariff->coverage_mode,
                     ];
                 }
             }
@@ -3822,48 +3902,48 @@ class MaternityWorkbenchController extends Controller
         foreach ($directServices as $service) {
             $basePrice = $service->price ? $service->price->sale_price : $service->price_assign;
             $hmoData = $hmoMap[$service->id] ?? null;
-            
+
             $result = [
-                'id'       => $service->id,
-                'name'     => $service->service_name,
-                'code'     => $service->service_code,
-                'price'    => $basePrice,
+                'id' => $service->id,
+                'name' => $service->service_name,
+                'code' => $service->service_code,
+                'price' => $basePrice,
                 'category' => $service->category ? $service->category->category_name : 'N/A',
-                'hmo'      => $hmoData ? [
+                'hmo' => $hmoData ? [
                     'payable' => $hmoData['payable'],
-                    'claims'  => $hmoData['claims'],
-                    'mode'    => $hmoData['mode'],
+                    'claims' => $hmoData['claims'],
+                    'mode' => $hmoData['mode'],
                 ] : null,
                 'is_combo' => false,
             ];
             $results[] = $result;
         }
-        
+
         // Add related combos
         foreach ($relatedCombos as $service) {
             $basePrice = $service->price ? $service->price->sale_price : $service->price_assign;
             $hmoData = $hmoMap[$service->id] ?? null;
-            
+
             $result = [
-                'id'       => $service->id,
-                'name'     => $service->service_name,
-                'code'     => $service->service_code,
-                'price'    => $basePrice,
+                'id' => $service->id,
+                'name' => $service->service_name,
+                'code' => $service->service_code,
+                'price' => $basePrice,
                 'category' => $service->category ? $service->category->category_name : 'N/A',
-                'hmo'      => $hmoData ? [
+                'hmo' => $hmoData ? [
                     'payable' => $hmoData['payable'],
-                    'claims'  => $hmoData['claims'],
-                    'mode'    => $hmoData['mode'],
+                    'claims' => $hmoData['claims'],
+                    'mode' => $hmoData['mode'],
                 ] : null,
                 'is_combo' => true,
                 'bundle_items' => $service->bundleItems->map(function ($item) {
                     return [
-                        'id'    => $item->id,
-                        'type'  => $item->item_type,
-                        'name'  => $item->item_type === 'service' 
+                        'id' => $item->id,
+                        'type' => $item->item_type,
+                        'name' => $item->item_type === 'service'
                             ? ($item->service->service_name ?? 'Unknown')
                             : ($item->product->product_name ?? 'Unknown'),
-                        'qty'   => $item->qty,
+                        'qty' => $item->qty,
                     ];
                 })->toArray(),
             ];
@@ -3877,11 +3957,11 @@ class MaternityWorkbenchController extends Controller
      * Apply a service combo (bundle) for maternity workbench enrollment.
      * POST /maternity-workbench/enrollment/{id}/apply-combo
      * Creates parent request (billed once) + child requests (bundled, not billed separately)
-     * 
+     *
      * Payload:
      *   - service_id (int, required): The combo/bundle parent service ID
      *   - note (string, optional): Clinical note for the bundle
-     * 
+     *
      * Response: { success: true, message: "...", parent_request_id: ..., parent_request_type: "..." }
      */
     public function maternityApplyCombo(Request $request, $enrollmentId)
@@ -3890,7 +3970,7 @@ class MaternityWorkbenchController extends Controller
             $enrollment = MaternityEnrollment::findOrFail($enrollmentId);
             $request->validate([
                 'service_id' => 'required|integer',
-                'note' => 'nullable|string'
+                'note' => 'nullable|string',
             ]);
 
             $comboService = Service::with('bundleItems')->find($request->service_id);
@@ -3916,9 +3996,9 @@ class MaternityWorkbenchController extends Controller
     {
         try {
             $enrollment = MaternityEnrollment::findOrFail($enrollmentId);
-            
+
             $request->validate([
-                'parent_request_id' => 'required|integer|exists:product_or_service_requests,id'
+                'parent_request_id' => 'required|integer|exists:product_or_service_requests,id',
             ]);
 
             $parentRequest = ProductOrServiceRequest::findOrFail($request->parent_request_id);
@@ -3927,7 +4007,7 @@ class MaternityWorkbenchController extends Controller
             if ($parentRequest->user_id !== Patient::find($enrollment->patient_id)->user_id || $parentRequest->parent_id !== null) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Invalid bundle or permission denied'
+                    'message' => 'Invalid bundle or permission denied',
                 ], 403);
             }
 
@@ -3936,12 +4016,12 @@ class MaternityWorkbenchController extends Controller
             if ($result['success']) {
                 return response()->json([
                     'success' => true,
-                    'message' => $result['message']
+                    'message' => $result['message'],
                 ]);
             } else {
                 return response()->json([
                     'success' => false,
-                    'message' => $result['message']
+                    'message' => $result['message'],
                 ], 400);
             }
         } catch (\Exception $e) {
@@ -3961,16 +4041,17 @@ class MaternityWorkbenchController extends Controller
             ->get()
             ->map(function ($req) {
                 $daysAdmitted = $req->bed_assign_date ? Carbon::parse($req->bed_assign_date)->diffInDays(Carbon::now()) : 0;
+
                 return [
-                    'id'             => $req->id,
-                    'patient_id'     => $req->patient_id,
-                    'name'           => userfullname($req->patient->user_id),
-                    'file_no'        => $req->patient->file_no,
-                    'doctor_name'    => userfullname($req->doctor_id),
-                    'ward_name'      => $req->bed && $req->bed->wardRelation ? $req->bed->wardRelation->name : 'Unknown Ward',
-                    'ward_bed'       => $req->bed ? $req->bed->name : 'N/A',
-                    'days_admitted'  => $daysAdmitted,
-                    'admitted_date'  => $req->bed_assign_date ? Carbon::parse($req->bed_assign_date)->format('d M Y, h:i A') : 'N/A',
+                    'id' => $req->id,
+                    'patient_id' => $req->patient_id,
+                    'name' => userfullname($req->patient->user_id),
+                    'file_no' => $req->patient->file_no,
+                    'doctor_name' => userfullname($req->doctor_id),
+                    'ward_name' => $req->bed && $req->bed->wardRelation ? $req->bed->wardRelation->name : 'Unknown Ward',
+                    'ward_bed' => $req->bed ? $req->bed->name : 'N/A',
+                    'days_admitted' => $daysAdmitted,
+                    'admitted_date' => $req->bed_assign_date ? Carbon::parse($req->bed_assign_date)->format('d M Y, h:i A') : 'N/A',
                 ];
             });
 
@@ -4001,7 +4082,7 @@ class MaternityWorkbenchController extends Controller
         $classBreakdown = [
             'anc' => 0,
             'delivery' => 0,
-            'postnatal' => 0
+            'postnatal' => 0,
         ];
 
         foreach ($admissions as $admin) {
@@ -4029,8 +4110,8 @@ class MaternityWorkbenchController extends Controller
             'data' => [
                 'total_admissions' => $totalAdmissions,
                 'average_length_of_stay' => $averageLengthOfStay,
-                'class_breakdown' => $classBreakdown
-            ]
+                'class_breakdown' => $classBreakdown,
+            ],
         ]);
     }
 
@@ -4063,31 +4144,31 @@ class MaternityWorkbenchController extends Controller
 
             // 1. Create Encounter
             $encounter = Encounter::create([
-                'patient_id'            => $enrollment->patient_id,
-                'doctor_id'             => Auth::id(),
+                'patient_id' => $enrollment->patient_id,
+                'doctor_id' => Auth::id(),
                 'reasons_for_encounter' => $title,
-                'notes'                 => $noteHtml,
-                'started_at'            => $parsedDate,
-                'completed_at'          => $parsedDate,
-                'completed'             => true,
-                'outcome'               => 'concluded',
+                'notes' => $noteHtml,
+                'started_at' => $parsedDate,
+                'completed_at' => $parsedDate,
+                'completed' => true,
+                'outcome' => 'concluded',
             ]);
 
             // 2. Create MaternityEncounterLink
             MaternityEncounterLink::create([
                 'enrollment_id' => $enrollment->id,
-                'encounter_id'  => $encounter->id,
-                'visit_type'    => $linkVisitType,
-                'notes'         => $encounterNotes,
+                'encounter_id' => $encounter->id,
+                'visit_type' => $linkVisitType,
+                'notes' => $encounterNotes,
             ]);
 
             // 3. Create Nursing Note
             NursingNote::create([
-                'patient_id'           => $enrollment->patient_id,
+                'patient_id' => $enrollment->patient_id,
                 'nursing_note_type_id' => $noteTypeId,
-                'note'                 => $noteHtml,
-                'created_by'           => Auth::id(),
-                'completed'            => true,
+                'note' => $noteHtml,
+                'created_by' => Auth::id(),
+                'completed' => true,
             ]);
         } catch (\Exception $e) {
             \Illuminate\Support\Facades\Log::error('Failed to sync maternity record to encounter/nurse note: ' . $e->getMessage());
@@ -4102,6 +4183,7 @@ class MaternityWorkbenchController extends Controller
         if ($value === null || $value === '') {
             return $fallback;
         }
+
         return e($value) . ($suffix ? ' ' . $suffix : '');
     }
 
@@ -4121,23 +4203,23 @@ class MaternityWorkbenchController extends Controller
         $diffRows = '';
         $hasChanges = false;
 
-        $v = fn($val, $suffix = '') => $this->nv($val, $suffix);
+        $v = fn ($val, $suffix = '') => $this->nv($val, $suffix);
 
         foreach ($fieldMap as $field => $config) {
             $label = $config['label'];
             $suffix = $config['suffix'] ?? '';
             $isHtml = $config['is_html'] ?? false;
-            
+
             $oldVal = $oldModel->{$field};
             $newVal = $newModel->{$field};
 
             if ($oldVal != $newVal) {
                 $hasChanges = true;
-                
+
                 if ($isHtml) {
                     $oldDisplay = $oldVal ? '<div style="opacity:0.7; border-left:3px solid #d32f2f; padding-left:8px; margin:4px 0;">' . $oldVal . '</div>' : '<em>None</em>';
                     $newDisplay = $newVal ? '<div style="border-left:3px solid #388e3c; padding-left:8px; margin:4px 0;">' . $newVal . '</div>' : '<em>None</em>';
-                    
+
                     $diffRows .= <<<HTML
         <tr>
             <td style="padding:4px 8px; background:#e3f2fd; font-weight:bold; width:20%; border-bottom:1px solid #bbdefb; vertical-align:top;">{$label}</td>
@@ -4210,29 +4292,29 @@ HTML;
      */
     protected function syncAncToEncounterAndNurseNote(MaternityEnrollment $enrollment, AncVisit $visit)
     {
-        $v = fn($val, $suffix = '') => $this->nv($val, $suffix);
+        $v = fn ($val, $suffix = '') => $this->nv($val, $suffix);
 
         $seenByName = $visit->seen_by ? userfullname($visit->seen_by) : '—';
-        $visitDate  = $visit->visit_date ? Carbon::parse($visit->visit_date)->format('d M Y') : '—';
-        $nextAppt   = $visit->next_appointment ? Carbon::parse($visit->next_appointment)->format('d M Y') : '—';
-        $bpDisplay  = ($visit->blood_pressure_systolic && $visit->blood_pressure_diastolic)
+        $visitDate = $visit->visit_date ? Carbon::parse($visit->visit_date)->format('d M Y') : '—';
+        $nextAppt = $visit->next_appointment ? Carbon::parse($visit->next_appointment)->format('d M Y') : '—';
+        $bpDisplay = ($visit->blood_pressure_systolic && $visit->blood_pressure_diastolic)
             ? $visit->blood_pressure_systolic . '/' . $visit->blood_pressure_diastolic . ' mmHg'
             : '—';
-        $gaDisplay  = $visit->gestational_age_weeks
+        $gaDisplay = $visit->gestational_age_weeks
             ? $visit->gestational_age_weeks . 'w ' . ($visit->gestational_age_days ?? 0) . 'd'
             : '—';
 
         $title = "ANC Visit #{$visit->visit_number} (" . ucfirst($visit->visit_type ?? 'routine') . ")";
 
-        $weightKg      = $v($visit->weight_kg, 'kg');
-        $fundalHeight  = $v($visit->fundal_height_cm, 'cm');
-        $fhr           = $v($visit->fetal_heart_rate, 'bpm');
-        $presentation  = $v($visit->presentation);
-        $foetalMov     = $v($visit->foetal_movement);
-        $oedema        = $v($visit->oedema);
-        $urineProtein  = $v($visit->urine_protein);
-        $urineGlucose  = $v($visit->urine_glucose);
-        $haemoglobin   = $v($visit->haemoglobin, 'g/dL');
+        $weightKg = $v($visit->weight_kg, 'kg');
+        $fundalHeight = $v($visit->fundal_height_cm, 'cm');
+        $fhr = $v($visit->fetal_heart_rate, 'bpm');
+        $presentation = $v($visit->presentation);
+        $foetalMov = $v($visit->foetal_movement);
+        $oedema = $v($visit->oedema);
+        $urineProtein = $v($visit->urine_protein);
+        $urineGlucose = $v($visit->urine_glucose);
+        $haemoglobin = $v($visit->haemoglobin, 'g/dL');
         $clinicalNotes = $visit->clinical_notes ?: '<em>No notes recorded</em>';
 
         $noteHtml = <<<HTML
@@ -4320,32 +4402,32 @@ HTML;
      */
     protected function syncDeliveryToEncounterAndNurseNote(MaternityEnrollment $enrollment, DeliveryRecord $delivery)
     {
-        $v = fn($val, $suffix = '') => $this->nv($val, $suffix);
+        $v = fn ($val, $suffix = '') => $this->nv($val, $suffix);
 
         $deliveredByName = $delivery->delivered_by ? userfullname($delivery->delivered_by) : '—';
-        $deliveryDate    = $delivery->delivery_date ? Carbon::parse($delivery->delivery_date)->format('d M Y') : '—';
-        $deliveryTime    = $delivery->delivery_time ? Carbon::parse($delivery->delivery_time)->format('H:i') : '—';
-        $typeLabel       = $delivery->type_of_delivery
+        $deliveryDate = $delivery->delivery_date ? Carbon::parse($delivery->delivery_date)->format('d M Y') : '—';
+        $deliveryTime = $delivery->delivery_time ? Carbon::parse($delivery->delivery_time)->format('H:i') : '—';
+        $typeLabel = $delivery->type_of_delivery
             ? strtoupper(str_replace('_', ' ', $delivery->type_of_delivery))
             : '—';
-        $induction       = $delivery->induction ? 'Yes' : 'No';
-        $augmentation    = $delivery->augmentation ? 'Yes' : 'No';
-        $placentaOk      = $delivery->placenta_complete ? 'Complete' : 'Incomplete';
-        $oxytocin        = $delivery->oxytocin_given ? 'Yes' : 'No';
-        $episiotomy      = ucfirst($delivery->episiotomy ?? 'none');
-        $tearDegree      = $delivery->perineal_tear_degree ? $delivery->perineal_tear_degree : 'None';
+        $induction = $delivery->induction ? 'Yes' : 'No';
+        $augmentation = $delivery->augmentation ? 'Yes' : 'No';
+        $placentaOk = $delivery->placenta_complete ? 'Complete' : 'Incomplete';
+        $oxytocin = $delivery->oxytocin_given ? 'Yes' : 'No';
+        $episiotomy = ucfirst($delivery->episiotomy ?? 'none');
+        $tearDegree = $delivery->perineal_tear_degree ? $delivery->perineal_tear_degree : 'None';
 
         $title = "Labour & Delivery Record";
 
-        $placeOfDelivery  = $v($delivery->place_of_delivery);
-        $durationLabour   = $v($delivery->duration_of_labour_hours, 'hours');
-        $numberOfBabies   = $v($delivery->number_of_babies);
-        $inductionMethod  = $v($delivery->induction_method);
-        $anaesthesiaType  = $v($delivery->anaesthesia_type);
-        $bloodLoss        = $v($delivery->blood_loss_ml, 'ml');
-        $placentaNotes    = $v($delivery->placenta_notes);
-        $complications    = $delivery->complications ?: '<em>None documented</em>';
-        $deliveryNotes    = $delivery->notes ?: '<em>No notes recorded</em>';
+        $placeOfDelivery = $v($delivery->place_of_delivery);
+        $durationLabour = $v($delivery->duration_of_labour_hours, 'hours');
+        $numberOfBabies = $v($delivery->number_of_babies);
+        $inductionMethod = $v($delivery->induction_method);
+        $anaesthesiaType = $v($delivery->anaesthesia_type);
+        $bloodLoss = $v($delivery->blood_loss_ml, 'ml');
+        $placentaNotes = $v($delivery->placenta_notes);
+        $complications = $delivery->complications ?: '<em>None documented</em>';
+        $deliveryNotes = $delivery->notes ?: '<em>No notes recorded</em>';
 
         $noteHtml = <<<HTML
 <div style="font-family:sans-serif; font-size:13px; line-height:1.6;">
@@ -4448,36 +4530,36 @@ HTML;
      */
     protected function syncPostnatalToEncounterAndNurseNote(MaternityEnrollment $enrollment, PostnatalVisit $visit)
     {
-        $v = fn($val, $suffix = '') => $this->nv($val, $suffix);
+        $v = fn ($val, $suffix = '') => $this->nv($val, $suffix);
 
-        $seenByName     = $visit->seen_by ? userfullname($visit->seen_by) : '—';
-        $visitDate      = $visit->visit_date ? Carbon::parse($visit->visit_date)->format('d M Y') : '—';
-        $nextAppt       = $visit->next_appointment ? Carbon::parse($visit->next_appointment)->format('d M Y') : '—';
+        $seenByName = $visit->seen_by ? userfullname($visit->seen_by) : '—';
+        $visitDate = $visit->visit_date ? Carbon::parse($visit->visit_date)->format('d M Y') : '—';
+        $nextAppt = $visit->next_appointment ? Carbon::parse($visit->next_appointment)->format('d M Y') : '—';
         $visitTypeLabel = str_replace('_', ' ', ucfirst($visit->visit_type ?? 'other'));
-        $jaundice       = $visit->jaundice ? 'Yes' : 'No';
-        $fpCounselled   = $visit->family_planning_counselled ? 'Yes' : 'No';
+        $jaundice = $visit->jaundice ? 'Yes' : 'No';
+        $fpCounselled = $visit->family_planning_counselled ? 'Yes' : 'No';
         $daysPostpartum = $visit->days_postpartum ?? '—';
 
         $title = "Postnatal Visit ({$visitTypeLabel})";
 
         // Mother assessment
-        $generalCond    = $v($visit->general_condition);
-        $bp             = $v($visit->blood_pressure);
-        $temp           = $v($visit->temperature_c, '°C');
-        $uterus         = $v($visit->uterus_assessment);
-        $lochia         = $v($visit->lochia);
-        $wound          = $v($visit->wound_assessment);
-        $breast         = $v($visit->breast_assessment);
-        $bfSupport      = $v($visit->breastfeeding_support);
-        $emotional      = $v($visit->emotional_wellbeing);
+        $generalCond = $v($visit->general_condition);
+        $bp = $v($visit->blood_pressure);
+        $temp = $v($visit->temperature_c, '°C');
+        $uterus = $v($visit->uterus_assessment);
+        $lochia = $v($visit->lochia);
+        $wound = $v($visit->wound_assessment);
+        $breast = $v($visit->breast_assessment);
+        $bfSupport = $v($visit->breastfeeding_support);
+        $emotional = $v($visit->emotional_wellbeing);
         $emotionalNotes = $v($visit->emotional_notes);
 
         // Baby assessment
-        $babyWeight  = $v($visit->baby_weight_kg, 'kg');
+        $babyWeight = $v($visit->baby_weight_kg, 'kg');
         $babyFeeding = $v($visit->baby_feeding);
-        $cordStatus  = $v($visit->cord_status);
-        $babyCond    = $v($visit->baby_general_condition);
-        $babyNotes   = $v($visit->baby_notes);
+        $cordStatus = $v($visit->cord_status);
+        $babyCond = $v($visit->baby_general_condition);
+        $babyNotes = $v($visit->baby_notes);
 
         // Family planning
         $fpMethod = $v($visit->family_planning_method);

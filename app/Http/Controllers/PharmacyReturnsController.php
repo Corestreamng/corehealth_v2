@@ -2,17 +2,15 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Patient;
 use App\Models\PharmacyReturn;
 use App\Models\ProductRequest;
-use App\Models\ProductOrServiceRequest;
-use App\Models\Patient;
-use App\Models\Product;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Yajra\DataTables\Facades\DataTables;
-use Carbon\Carbon;
 
 class PharmacyReturnsController extends Controller
 {
@@ -37,7 +35,7 @@ class PharmacyReturnsController extends Controller
                     'rejected' => $rejected,
                     'completed' => $completed,
                     'total_value' => $totalValue,
-                ]
+                ],
             ]);
         }
 
@@ -77,56 +75,61 @@ class PharmacyReturnsController extends Controller
             ->filter(function ($q) use ($request) {
                 if ($request->has('search') && !empty($request->search['value'])) {
                     $term = $request->search['value'];
-                    $q->where(function($outer) use ($term) {
-                        $outer->whereHas('product', function($q2) use ($term) {
+                    $q->where(function ($outer) use ($term) {
+                        $outer->whereHas('product', function ($q2) use ($term) {
                             $q2->where('product_name', 'like', "%{$term}%");
                         })
-                        ->orWhereHas('patient.user', function($q2) use ($term) {
+                        ->orWhereHas('patient.user', function ($q2) use ($term) {
                             $q2->where('firstname', 'like', "%{$term}%")
                                ->orWhere('surname', 'like', "%{$term}%");
                         })
-                        ->orWhereHas('patient', function($q2) use ($term) {
+                        ->orWhereHas('patient', function ($q2) use ($term) {
                             $q2->where('file_no', 'like', "%{$term}%");
                         });
                     });
                 }
             })
-            ->addColumn('patient', function($item) {
+            ->addColumn('patient', function ($item) {
                 $name = htmlspecialchars($item->patient->user->name ?? 'Unknown', ENT_QUOTES);
                 $file = htmlspecialchars($item->patient->file_no ?? '', ENT_QUOTES);
+
                 return "<div><strong>{$name}</strong><br><small class='text-muted'>{$file}</small></div>";
             })
-            ->addColumn('product', function($item) {
+            ->addColumn('product', function ($item) {
                 return htmlspecialchars($item->item_name ?? 'Unknown', ENT_QUOTES);
             })
-            ->addColumn('qty', function($item) {
+            ->addColumn('qty', function ($item) {
                 return "<span class='badge badge-primary'>{$item->qty}</span>";
             })
-            ->addColumn('store', function($item) {
+            ->addColumn('store', function ($item) {
                 return htmlspecialchars($item->dispensedFromStore->store_name ?? ($item->is_free_form ? 'External / NA' : 'Unknown Store'), ENT_QUOTES);
             })
-            ->addColumn('amount', function($item) {
+            ->addColumn('amount', function ($item) {
                 $billReq = $item->productOrServiceRequest;
                 $amount = $billReq ? ($billReq->payable_amount + $billReq->claims_amount) : 0;
+
                 return "₦" . number_format($amount, 2);
             })
-            ->addColumn('date', function($item) {
+            ->addColumn('date', function ($item) {
                 $date = $item->dispense_date;
-                if (!$date) return '';
+                if (!$date) {
+                    return '';
+                }
+
                 return is_string($date) ? Carbon::parse($date)->format('M d, Y h:i A') : $date->format('M d, Y h:i A');
             })
-            ->addColumn('action', function($item) {
+            ->addColumn('action', function ($item) {
                 $billReq = $item->productOrServiceRequest;
                 $amount = $billReq ? ($billReq->payable_amount + $billReq->claims_amount) : 0;
                 $payable = $billReq ? $billReq->payable_amount : 0;
                 $claims = $billReq ? $billReq->claims_amount : 0;
-                
+
                 $prod = htmlspecialchars($item->item_name ?? 'Unknown', ENT_QUOTES);
                 $pat = htmlspecialchars($item->patient->user->name ?? 'Unknown', ENT_QUOTES);
                 $store = htmlspecialchars($item->dispensedFromStore->store_name ?? ($item->is_free_form ? 'External / NA' : 'Unknown Store'), ENT_QUOTES);
-                
+
                 $dateStr = $item->dispense_date ? (is_string($item->dispense_date) ? Carbon::parse($item->dispense_date)->format('Y-m-d H:i:s') : $item->dispense_date->format('Y-m-d H:i:s')) : '';
-                
+
                 return "<button class='btn btn-sm btn-outline-primary return-item-select w-100' 
                     data-id='{$item->id}' 
                     data-product='{$prod}' 
@@ -163,7 +166,7 @@ class PharmacyReturnsController extends Controller
         if ($existingReturn) {
             return response()->json([
                 'success' => false,
-                'message' => 'A return already exists for this dispensed item (Return #' . $existingReturn->id . ')'
+                'message' => 'A return already exists for this dispensed item (Return #' . $existingReturn->id . ')',
             ], 422);
         }
 
@@ -177,7 +180,7 @@ class PharmacyReturnsController extends Controller
             if ($request->qty_returned > $productRequest->qty) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Return quantity cannot exceed dispensed quantity'
+                    'message' => 'Return quantity cannot exceed dispensed quantity',
                 ], 422);
             }
 
@@ -185,7 +188,7 @@ class PharmacyReturnsController extends Controller
             if (!$billRequest) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Billing record not found for this item'
+                    'message' => 'Billing record not found for this item',
                 ], 404);
             }
 
@@ -263,7 +266,7 @@ class PharmacyReturnsController extends Controller
 
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to create return: ' . $e->getMessage()
+                'message' => 'Failed to create return: ' . $e->getMessage(),
             ], 500);
         }
     }
@@ -282,7 +285,7 @@ class PharmacyReturnsController extends Controller
             'batch',
             'creator',
             'approver',
-            'journalEntry.lines.account'
+            'journalEntry.lines.account',
         ])->findOrFail($id);
 
         if ($request->ajax()) {
@@ -318,7 +321,7 @@ class PharmacyReturnsController extends Controller
                         'reference' => $return->journalEntry->reference ?? 'JE-' . $return->journalEntry->id,
                         'description' => $return->journalEntry->description,
                         'status' => $return->journalEntry->status ?? null,
-                        'lines' => $return->journalEntry->lines->map(function($line) {
+                        'lines' => $return->journalEntry->lines->map(function ($line) {
                             return [
                                 'account_name' => $line->account->name ?? 'N/A',
                                 'account_code' => $line->account->code ?? '',
@@ -326,9 +329,9 @@ class PharmacyReturnsController extends Controller
                                 'credit' => $line->credit_amount,
                                 'description' => $line->description,
                             ];
-                        })
+                        }),
                     ] : null,
-                ]
+                ],
             ]);
         }
 
@@ -350,7 +353,7 @@ class PharmacyReturnsController extends Controller
             if ($return->status !== 'pending') {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Only pending returns can be approved'
+                    'message' => 'Only pending returns can be approved',
                 ], 422);
             }
 
@@ -459,7 +462,7 @@ class PharmacyReturnsController extends Controller
 
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to approve return: ' . $e->getMessage()
+                'message' => 'Failed to approve return: ' . $e->getMessage(),
             ], 500);
         }
     }
@@ -479,7 +482,7 @@ class PharmacyReturnsController extends Controller
             if ($return->status !== 'pending') {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Only pending returns can be rejected'
+                    'message' => 'Only pending returns can be rejected',
                 ], 422);
             }
 
@@ -510,7 +513,7 @@ class PharmacyReturnsController extends Controller
 
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to reject return: ' . $e->getMessage()
+                'message' => 'Failed to reject return: ' . $e->getMessage(),
             ], 500);
         }
     }
@@ -526,7 +529,7 @@ class PharmacyReturnsController extends Controller
             if ($return->status !== 'approved') {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Only approved returns can be refunded'
+                    'message' => 'Only approved returns can be refunded',
                 ], 422);
             }
 
@@ -558,7 +561,7 @@ class PharmacyReturnsController extends Controller
 
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to process refund: ' . $e->getMessage()
+                'message' => 'Failed to process refund: ' . $e->getMessage(),
             ], 500);
         }
     }
@@ -573,7 +576,7 @@ class PharmacyReturnsController extends Controller
             'product',
             'store',
             'creator',
-            'approver'
+            'approver',
         ]);
 
         // Filters
@@ -591,35 +594,37 @@ class PharmacyReturnsController extends Controller
 
         return DataTables::of($query)
             ->addIndexColumn()
-            ->addColumn('patient_name', function($return) {
+            ->addColumn('patient_name', function ($return) {
                 return $return->patient->user->name ?? 'N/A';
             })
-            ->addColumn('product_name', function($return) {
+            ->addColumn('product_name', function ($return) {
                 return $return->product->product_name ?? 'N/A';
             })
-            ->addColumn('store_name', function($return) {
+            ->addColumn('store_name', function ($return) {
                 return $return->store->store_name ?? 'N/A';
             })
-            ->addColumn('created_by_name', function($return) {
+            ->addColumn('created_by_name', function ($return) {
                 return $return->creator->name ?? 'N/A';
             })
-            ->addColumn('approved_by_name', function($return) {
+            ->addColumn('approved_by_name', function ($return) {
                 return $return->approver->name ?? 'N/A';
             })
-            ->addColumn('item_info', function($return) {
+            ->addColumn('item_info', function ($return) {
                 $patient = e($return->patient->user->name ?? 'N/A');
                 $product = e($return->product->product_name ?? 'N/A');
+
                 return '<strong>' . $product . '</strong>'
                     . '<br><small class="text-muted"><i class="mdi mdi-account"></i> ' . $patient . '</small>';
             })
-            ->addColumn('details_info', function($return) {
+            ->addColumn('details_info', function ($return) {
                 $date = $return->created_at ? $return->created_at->format('M d, Y') : '-';
                 $refund = '₦' . number_format($return->refund_amount, 2);
+
                 return '<span class="font-weight-bold">' . $return->qty_returned . '</span> returned'
                     . '<br><small class="text-success">' . $refund . '</small>'
                     . '<br><small class="text-muted">' . $date . '</small>';
             })
-            ->addColumn('status_info', function($return) {
+            ->addColumn('status_info', function ($return) {
                 $condBadges = [
                     'good' => '<span class="badge badge-success">Good</span>',
                     'damaged' => '<span class="badge badge-danger">Damaged</span>',
@@ -634,27 +639,30 @@ class PharmacyReturnsController extends Controller
                 ];
                 $cond = $condBadges[$return->return_condition] ?? $return->return_condition;
                 $status = $statusBadges[$return->status] ?? $return->status;
+
                 return $cond . ' ' . $status;
             })
-            ->addColumn('condition_badge', function($return) {
+            ->addColumn('condition_badge', function ($return) {
                 $badges = [
                     'good' => '<span class="badge badge-success">Good</span>',
                     'damaged' => '<span class="badge badge-danger">Damaged</span>',
                     'expired' => '<span class="badge badge-warning">Expired</span>',
                     'wrong_item' => '<span class="badge badge-info">Wrong Item</span>',
                 ];
+
                 return $badges[$return->return_condition] ?? $return->return_condition;
             })
-            ->addColumn('status_badge', function($return) {
+            ->addColumn('status_badge', function ($return) {
                 $badges = [
                     'pending' => '<span class="badge badge-warning">Pending</span>',
                     'approved' => '<span class="badge badge-success">Approved</span>',
                     'rejected' => '<span class="badge badge-danger">Rejected</span>',
                     'completed' => '<span class="badge badge-info">Completed</span>',
                 ];
+
                 return $badges[$return->status] ?? $return->status;
             })
-            ->addColumn('actions', function($return) {
+            ->addColumn('actions', function ($return) {
                 $html = '<div class="btn-group">';
                 $html .= '<button class="btn btn-sm btn-info btn-view-return" data-id="' . $return->id . '" title="View Details"><i class="mdi mdi-eye"></i></button>';
 
@@ -664,6 +672,7 @@ class PharmacyReturnsController extends Controller
                 }
 
                 $html .= '</div>';
+
                 return $html;
             })
             ->rawColumns(['condition_badge', 'status_badge', 'item_info', 'details_info', 'status_info', 'actions'])

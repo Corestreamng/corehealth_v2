@@ -32,7 +32,7 @@ class EncounterCreationTest extends TestCase
         $encounter = Encounter::create([
             'patient_id' => $patient->id,
             'doctor_id' => $doctor->id,
-            'notes' => 'Patient presents with mild fever.'
+            'notes' => 'Patient presents with mild fever.',
         ]);
         $this->assertEquals('Patient presents with mild fever.', $encounter->notes);
     }
@@ -66,5 +66,4 @@ class EncounterCreationTest extends TestCase
         $encounter = Encounter::create(['patient_id' => $patient->id, 'doctor_id' => $doctor->id]);
         $this->assertEquals($patient->id, $encounter->patient_id);
     }
-
 }

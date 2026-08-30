@@ -258,7 +258,7 @@ class HrPermissionsSeeder extends Seeder
         // This will be checked against the is_unit_head/is_dept_head flags at runtime
         $staffRoles = Role::whereIn('name', [
             'DOCTOR', 'NURSE', 'PHARMACIST', 'LAB SCIENTIST', 'RADIOLOGIST',
-            'RECEPTIONIST', 'BILLER', 'ACCOUNTS', 'HR MANAGER'
+            'RECEPTIONIST', 'BILLER', 'ACCOUNTS', 'HR MANAGER',
         ])->get();
 
         foreach ($staffRoles as $role) {

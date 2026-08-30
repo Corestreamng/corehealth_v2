@@ -2,12 +2,11 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
-use App\Models\Product;
-use App\Models\StoreStock;
 use App\Models\ProductCategory;
-use App\Models\Store;
 use App\Models\StockBatch;
+use App\Models\Store;
+use App\Models\StoreStock;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Yajra\DataTables\Facades\DataTables;
 
@@ -40,7 +39,7 @@ class PharmacyReportsController extends Controller
                     'total_value' => $totalValue,
                     'low_stock' => $lowStock,
                     'out_of_stock' => $outOfStock,
-                ]
+                ],
             ]);
         }
 
@@ -59,19 +58,19 @@ class PharmacyReportsController extends Controller
     public function stockReport(Request $request)
     {
         $query = StoreStock::select(
-                'store_stocks.id',
-                'store_stocks.product_id',
-                'store_stocks.store_id',
-                'store_stocks.current_quantity',
-                'store_stocks.reorder_level',
-                'prices.pr_buy_price as unit_cost',
-                'products.product_name',
-                'products.product_code',
-                'products.category_id',
-                'product_categories.category_name',
-                'stores.store_name',
-                DB::raw('(store_stocks.current_quantity * prices.pr_buy_price) as total_value')
-            )
+            'store_stocks.id',
+            'store_stocks.product_id',
+            'store_stocks.store_id',
+            'store_stocks.current_quantity',
+            'store_stocks.reorder_level',
+            'prices.pr_buy_price as unit_cost',
+            'products.product_name',
+            'products.product_code',
+            'products.category_id',
+            'product_categories.category_name',
+            'stores.store_name',
+            DB::raw('(store_stocks.current_quantity * prices.pr_buy_price) as total_value')
+        )
             ->join('products', 'store_stocks.product_id', '=', 'products.id')
             ->leftJoin('product_categories', 'products.category_id', '=', 'product_categories.id')
             ->join('stores', 'store_stocks.store_id', '=', 'stores.id')
@@ -93,12 +92,15 @@ class PharmacyReportsController extends Controller
             switch ($request->stock_level) {
                 case 'low':
                     $query->whereRaw('store_stocks.current_quantity <= store_stocks.reorder_level');
+
                     break;
                 case 'out':
                     $query->where('store_stocks.current_quantity', '<=', 0);
+
                     break;
                 case 'available':
                     $query->where('store_stocks.current_quantity', '>', 0);
+
                     break;
             }
         }
@@ -127,14 +129,14 @@ class PharmacyReportsController extends Controller
     public function stockByStore(Request $request)
     {
         $storeSummary = StoreStock::select(
-                'stores.id',
-                'stores.store_name',
-                DB::raw('COUNT(DISTINCT store_stocks.product_id) as total_products'),
-                DB::raw('SUM(store_stocks.current_quantity) as total_quantity'),
-                DB::raw('SUM(store_stocks.current_quantity * COALESCE(prices.pr_buy_price, 0)) as total_value'),
-                DB::raw('COUNT(CASE WHEN store_stocks.current_quantity <= 0 THEN 1 END) as out_of_stock_count'),
-                DB::raw('COUNT(CASE WHEN store_stocks.current_quantity <= store_stocks.reorder_level AND store_stocks.current_quantity > 0 THEN 1 END) as low_stock_count')
-            )
+            'stores.id',
+            'stores.store_name',
+            DB::raw('COUNT(DISTINCT store_stocks.product_id) as total_products'),
+            DB::raw('SUM(store_stocks.current_quantity) as total_quantity'),
+            DB::raw('SUM(store_stocks.current_quantity * COALESCE(prices.pr_buy_price, 0)) as total_value'),
+            DB::raw('COUNT(CASE WHEN store_stocks.current_quantity <= 0 THEN 1 END) as out_of_stock_count'),
+            DB::raw('COUNT(CASE WHEN store_stocks.current_quantity <= store_stocks.reorder_level AND store_stocks.current_quantity > 0 THEN 1 END) as low_stock_count')
+        )
             ->join('stores', 'store_stocks.store_id', '=', 'stores.id')
             ->leftJoin('prices', 'store_stocks.product_id', '=', 'prices.product_id')
             ->where('stores.store_type', 'pharmacy')
@@ -153,12 +155,12 @@ class PharmacyReportsController extends Controller
         $storeId = $request->get('store_id');
 
         $query = StoreStock::select(
-                'product_categories.id',
-                'product_categories.category_name',
-                DB::raw('COUNT(DISTINCT store_stocks.product_id) as total_products'),
-                DB::raw('SUM(store_stocks.current_quantity) as total_quantity'),
-                DB::raw('SUM(store_stocks.current_quantity * COALESCE(prices.pr_buy_price, 0)) as total_value')
-            )
+            'product_categories.id',
+            'product_categories.category_name',
+            DB::raw('COUNT(DISTINCT store_stocks.product_id) as total_products'),
+            DB::raw('SUM(store_stocks.current_quantity) as total_quantity'),
+            DB::raw('SUM(store_stocks.current_quantity * COALESCE(prices.pr_buy_price, 0)) as total_value')
+        )
             ->join('products', 'store_stocks.product_id', '=', 'products.id')
             ->leftJoin('product_categories', 'products.category_id', '=', 'product_categories.id')
             ->join('stores', 'store_stocks.store_id', '=', 'stores.id')
@@ -184,14 +186,14 @@ class PharmacyReportsController extends Controller
         $storeId = $request->get('store_id');
 
         $query = StoreStock::select(
-                'products.product_name',
-                'products.product_code',
-                'product_categories.category_name',
-                'stores.store_name',
-                'store_stocks.current_quantity',
-                'prices.pr_buy_price as unit_cost',
-                DB::raw('(store_stocks.current_quantity * prices.pr_buy_price) as total_value')
-            )
+            'products.product_name',
+            'products.product_code',
+            'product_categories.category_name',
+            'stores.store_name',
+            'store_stocks.current_quantity',
+            'prices.pr_buy_price as unit_cost',
+            DB::raw('(store_stocks.current_quantity * prices.pr_buy_price) as total_value')
+        )
             ->join('products', 'store_stocks.product_id', '=', 'products.id')
             ->leftJoin('product_categories', 'products.category_id', '=', 'product_categories.id')
             ->join('stores', 'store_stocks.store_id', '=', 'stores.id')
@@ -210,7 +212,7 @@ class PharmacyReportsController extends Controller
         return response()->json([
             'items' => $valuationData,
             'total_valuation' => $totalValuation,
-            'total_items' => $valuationData->count()
+            'total_items' => $valuationData->count(),
         ]);
     }
 
@@ -220,15 +222,15 @@ class PharmacyReportsController extends Controller
     public function exportStock(Request $request)
     {
         $query = StoreStock::select(
-                'stores.store_name',
-                'products.product_name',
-                'products.product_code',
-                'product_categories.category_name',
-                'store_stocks.current_quantity',
-                'store_stocks.reorder_level',
-                'prices.pr_buy_price as unit_cost',
-                DB::raw('(store_stocks.current_quantity * prices.pr_buy_price) as total_value')
-            )
+            'stores.store_name',
+            'products.product_name',
+            'products.product_code',
+            'product_categories.category_name',
+            'store_stocks.current_quantity',
+            'store_stocks.reorder_level',
+            'prices.pr_buy_price as unit_cost',
+            DB::raw('(store_stocks.current_quantity * prices.pr_buy_price) as total_value')
+        )
             ->join('products', 'store_stocks.product_id', '=', 'products.id')
             ->leftJoin('product_categories', 'products.category_id', '=', 'product_categories.id')
             ->join('stores', 'store_stocks.store_id', '=', 'stores.id')
@@ -248,12 +250,15 @@ class PharmacyReportsController extends Controller
             switch ($request->stock_level) {
                 case 'low':
                     $query->whereRaw('store_stocks.current_quantity <= store_stocks.reorder_level');
+
                     break;
                 case 'out':
                     $query->where('store_stocks.current_quantity', '<=', 0);
+
                     break;
                 case 'available':
                     $query->where('store_stocks.current_quantity', '>', 0);
+
                     break;
             }
         }
@@ -270,7 +275,7 @@ class PharmacyReportsController extends Controller
             'Content-Disposition' => 'attachment; filename="' . $filename . '"',
         ];
 
-        $callback = function() use ($data) {
+        $callback = function () use ($data) {
             $file = fopen('php://output', 'w');
 
             // Add CSV headers
@@ -282,7 +287,7 @@ class PharmacyReportsController extends Controller
                 'Current Quantity',
                 'Reorder Level',
                 'Unit Cost',
-                'Total Value'
+                'Total Value',
             ]);
 
             // Add data rows
@@ -295,7 +300,7 @@ class PharmacyReportsController extends Controller
                     $row->current_quantity,
                     $row->reorder_level,
                     number_format($row->unit_cost, 2),
-                    number_format($row->total_value, 2)
+                    number_format($row->total_value, 2),
                 ]);
             }
 
@@ -314,17 +319,17 @@ class PharmacyReportsController extends Controller
         $storeId = $request->get('store_id');
 
         $query = StockBatch::select(
-                'stock_batches.id',
-                'stock_batches.batch_number',
-                'stock_batches.expiry_date',
-                'stock_batches.current_qty as quantity_available',
-                'stock_batches.cost_price as unit_cost',
-                'products.product_name',
-                'products.product_code',
-                'stores.store_name',
-                DB::raw('(stock_batches.current_qty * stock_batches.cost_price) as total_value'),
-                DB::raw('DATEDIFF(stock_batches.expiry_date, CURDATE()) as days_to_expiry')
-            )
+            'stock_batches.id',
+            'stock_batches.batch_number',
+            'stock_batches.expiry_date',
+            'stock_batches.current_qty as quantity_available',
+            'stock_batches.cost_price as unit_cost',
+            'products.product_name',
+            'products.product_code',
+            'stores.store_name',
+            DB::raw('(stock_batches.current_qty * stock_batches.cost_price) as total_value'),
+            DB::raw('DATEDIFF(stock_batches.expiry_date, CURDATE()) as days_to_expiry')
+        )
             ->join('products', 'stock_batches.product_id', '=', 'products.id')
             ->join('stores', 'stock_batches.store_id', '=', 'stores.id')
             ->where('stores.store_type', 'pharmacy')
@@ -367,7 +372,7 @@ class PharmacyReportsController extends Controller
         // For now, return a placeholder response
         return response()->json([
             'message' => 'Movement analysis requires transaction history tracking',
-            'note' => 'This feature will be implemented when product movement tracking is available'
+            'note' => 'This feature will be implemented when product movement tracking is available',
         ]);
     }
 }

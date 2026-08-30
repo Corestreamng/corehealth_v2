@@ -2,9 +2,9 @@
 
 namespace Tests\Feature;
 
-use App\Models\Patient;
-use App\Models\LabServiceRequest;
 use App\Models\ImagingServiceRequest;
+use App\Models\LabServiceRequest;
+use App\Models\Patient;
 use App\Models\ResultView;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;

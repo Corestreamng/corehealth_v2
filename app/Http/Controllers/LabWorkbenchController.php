@@ -2,25 +2,26 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
-use App\Models\Patient;
-use App\Models\LabServiceRequest;
-use App\Models\ProductOrServiceRequest;
-use App\Models\VitalSign;
+use App\Helpers\HmoHelper;
+use App\Http\Traits\ClinicalOrdersTrait;
 use App\Models\Encounter;
+use App\Models\LabServiceRequest;
+use App\Models\Patient;
+use App\Models\ProductOrServiceRequest;
 use App\Models\ProductRequest;
 use App\Models\Service;
+use App\Models\VitalSign;
 use Carbon\Carbon;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
-use App\Helpers\HmoHelper;
 use Illuminate\Support\Facades\Log;
 use Yajra\DataTables\DataTables;
-use App\Http\Traits\ClinicalOrdersTrait;
 
 class LabWorkbenchController extends Controller
 {
     use ClinicalOrdersTrait;
+
     /**
      * Display the lab workbench main page
      */
@@ -213,9 +214,15 @@ class LabWorkbenchController extends Controller
             $days = $dob->copy()->addYears($years)->addMonths($months)->diffInDays($now);
 
             $ageParts = [];
-            if ($years > 0) $ageParts[] = $years . 'y';
-            if ($months > 0) $ageParts[] = $months . 'm';
-            if ($days > 0) $ageParts[] = $days . 'd';
+            if ($years > 0) {
+                $ageParts[] = $years . 'y';
+            }
+            if ($months > 0) {
+                $ageParts[] = $months . 'm';
+            }
+            if ($days > 0) {
+                $ageParts[] = $days . 'd';
+            }
             $ageText = !empty($ageParts) ? implode(' ', $ageParts) : '0d';
         }
 
@@ -320,7 +327,7 @@ class LabWorkbenchController extends Controller
                 'doctor',
                 'biller',
                 'resultBy',
-                'productOrServiceRequest' // Add product/service request for delivery check
+                'productOrServiceRequest', // Add product/service request for delivery check
             ]);
 
             // Filter by status if provided
@@ -331,12 +338,12 @@ class LabWorkbenchController extends Controller
                 $query->whereIn('status', [1, 2, 3])->where('is_free_form', 1);
             } elseif ($request->has('status') && $request->status !== 'all') {
                 $statuses = explode(',', $request->status);
-                $query->whereIn('status', $statuses)->where(function($q) {
+                $query->whereIn('status', $statuses)->where(function ($q) {
                     $q->whereNull('is_free_form')->orWhere('is_free_form', 0);
                 });
             } else {
                 // Default to pending statuses (1, 2, 3)
-                $query->whereIn('status', [1, 2, 3])->where(function($q) {
+                $query->whereIn('status', [1, 2, 3])->where(function ($q) {
                     $q->whereNull('is_free_form')->orWhere('is_free_form', 0);
                 });
             }
@@ -357,7 +364,7 @@ class LabWorkbenchController extends Controller
                     if (!$request->patient || !$request->patient->user) {
                         return [
                             'error' => true,
-                            'message' => 'Invalid patient data'
+                            'message' => 'Invalid patient data',
                         ];
                     }
 
@@ -423,14 +430,14 @@ class LabWorkbenchController extends Controller
                         'is_free_form' => $request->is_free_form,
                     ];
                 })
-                ->filterColumn('card_data', function($query, $keyword) {
-                    $query->where(function($q) use ($keyword) {
-                        $q->whereHas('patient.user', function($qu) use ($keyword) {
+                ->filterColumn('card_data', function ($query, $keyword) {
+                    $query->where(function ($q) use ($keyword) {
+                        $q->whereHas('patient.user', function ($qu) use ($keyword) {
                             $qu->where('surname', 'like', "%{$keyword}%")
                                ->orWhere('firstname', 'like', "%{$keyword}%");
-                        })->orWhereHas('patient', function($qp) use ($keyword) {
+                        })->orWhereHas('patient', function ($qp) use ($keyword) {
                             $qp->where('file_no', 'like', "%{$keyword}%");
-                        })->orWhereHas('service', function($qs) use ($keyword) {
+                        })->orWhereHas('service', function ($qs) use ($keyword) {
                             $qs->where('service_name', 'like', "%{$keyword}%");
                         })->orWhere('lab_number', 'like', "%{$keyword}%");
                     });
@@ -440,7 +447,7 @@ class LabWorkbenchController extends Controller
         } catch (\Exception $e) {
             return response()->json([
                 'error' => 'An error occurred while fetching queue data.',
-                'message' => config('app.debug') ? $e->getMessage() : 'Internal Server Error'
+                'message' => config('app.debug') ? $e->getMessage() : 'Internal Server Error',
             ], 500);
         }
     }
@@ -475,6 +482,7 @@ class LabWorkbenchController extends Controller
         if (!$datetime) {
             return null;
         }
+
         return \Carbon\Carbon::parse($datetime)->format('h:i a D M j, Y');
     }
 
@@ -549,7 +557,7 @@ class LabWorkbenchController extends Controller
             $request->validate([
                 'request_ids' => 'required|array',
                 'request_ids.*' => 'exists:lab_service_requests,id',
-                'patient_id' => 'required|exists:patients,id'
+                'patient_id' => 'required|exists:patients,id',
             ]);
 
             DB::beginTransaction();
@@ -593,11 +601,11 @@ class LabWorkbenchController extends Controller
                         $billReq->payable_amount = $service->price->sale_price ?? 0;
                         $billReq->claims_amount = 0;
                         $billReq->coverage_mode = null;
-                        
+
                         \Illuminate\Support\Facades\Log::warning('HMO tariff not found for service in lab auto-billing, falling back to standard price', [
                             'patient_id' => $labRequest->patient_id,
                             'service_id' => $labRequest->service_id,
-                            'error' => $e->getMessage()
+                            'error' => $e->getMessage(),
                         ]);
                     }
 
@@ -621,13 +629,14 @@ class LabWorkbenchController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => count($request->request_ids) . ' request(s) billed successfully'
+                'message' => count($request->request_ids) . ' request(s) billed successfully',
             ]);
         } catch (\Exception $e) {
             DB::rollBack();
+
             return response()->json([
                 'success' => false,
-                'message' => 'Error recording billing: ' . $e->getMessage()
+                'message' => 'Error recording billing: ' . $e->getMessage(),
             ], 500);
         }
     }
@@ -641,7 +650,7 @@ class LabWorkbenchController extends Controller
             $request->validate([
                 'service_id' => 'required|integer|exists:services,id',
                 'patient_id' => 'required|integer|exists:patients,id',
-                'note'       => 'nullable|string',
+                'note' => 'nullable|string',
             ]);
 
             $comboService = Service::with('bundleItems')->find($request->service_id);
@@ -653,8 +662,8 @@ class LabWorkbenchController extends Controller
             $result = $this->applyServiceCombo($comboService, (int) $request->patient_id, null);
 
             return response()->json([
-                'success'           => true,
-                'message'           => $comboService->service_name . ' combo applied successfully',
+                'success' => true,
+                'message' => $comboService->service_name . ' combo applied successfully',
                 'parent_billing_id' => $result['parent']->id,
             ]);
         } catch (\Exception $e) {
@@ -667,7 +676,7 @@ class LabWorkbenchController extends Controller
         try {
             $request->validate([
                 'parent_request_id' => 'required|integer|exists:product_or_service_requests,id',
-                'patient_id' => 'required|integer|exists:patients,id'
+                'patient_id' => 'required|integer|exists:patients,id',
             ]);
 
             $parentRequest = ProductOrServiceRequest::findOrFail($request->parent_request_id);
@@ -676,7 +685,7 @@ class LabWorkbenchController extends Controller
             if ($parentRequest->user_id !== Patient::find($request->patient_id)->user_id || $parentRequest->parent_id !== null) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Invalid bundle or permission denied'
+                    'message' => 'Invalid bundle or permission denied',
                 ], 403);
             }
 
@@ -685,12 +694,12 @@ class LabWorkbenchController extends Controller
             if ($result['success']) {
                 return response()->json([
                     'success' => true,
-                    'message' => $result['message']
+                    'message' => $result['message'],
                 ]);
             } else {
                 return response()->json([
                     'success' => false,
-                    'message' => $result['message']
+                    'message' => $result['message'],
                 ], 400);
             }
         } catch (\Exception $e) {
@@ -736,7 +745,7 @@ class LabWorkbenchController extends Controller
                 'request_ids' => 'required|array',
                 'request_ids.*' => 'exists:lab_service_requests,id',
                 'patient_id' => 'required|exists:patients,id',
-                'lab_number' => 'required|string|max:50'
+                'lab_number' => 'required|string|max:50',
             ]);
 
             DB::beginTransaction();
@@ -748,9 +757,10 @@ class LabWorkbenchController extends Controller
                 if ($labRequest->productOrServiceRequest) {
                     if (!HmoHelper::canPatientAccessService($labRequest->productOrServiceRequest)) {
                         DB::rollBack();
+
                         return response()->json([
                             'success' => false,
-                            'message' => 'Service requires HMO approval. Request ID: ' . $labRequest->id . '. Please contact HMO executive for validation.'
+                            'message' => 'Service requires HMO approval. Request ID: ' . $labRequest->id . '. Please contact HMO executive for validation.',
                         ], 403);
                     }
                 }
@@ -761,7 +771,7 @@ class LabWorkbenchController extends Controller
                     'sample_taken_by' => Auth::id(),
                     'sample_date' => now(),
                     'sample_taken' => true,
-                    'lab_number' => $request->lab_number
+                    'lab_number' => $request->lab_number,
                 ]);
 
                 // Log audit
@@ -772,13 +782,14 @@ class LabWorkbenchController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => count($request->request_ids) . ' sample(s) collected successfully'
+                'message' => count($request->request_ids) . ' sample(s) collected successfully',
             ]);
         } catch (\Exception $e) {
             DB::rollBack();
+
             return response()->json([
                 'success' => false,
-                'message' => 'Error recording sample collection: ' . $e->getMessage()
+                'message' => 'Error recording sample collection: ' . $e->getMessage(),
             ], 500);
         }
     }
@@ -792,7 +803,7 @@ class LabWorkbenchController extends Controller
             $request->validate([
                 'request_ids' => 'required|array',
                 'request_ids.*' => 'exists:lab_service_requests,id',
-                'patient_id' => 'required|exists:patients,id'
+                'patient_id' => 'required|exists:patients,id',
             ]);
 
             DB::beginTransaction();
@@ -802,7 +813,7 @@ class LabWorkbenchController extends Controller
 
                 // Update lab request status to dismissed (0)
                 $labRequest->update([
-                    'status' => 0
+                    'status' => 0,
                 ]);
             }
 
@@ -810,13 +821,14 @@ class LabWorkbenchController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => count($request->request_ids) . ' request(s) dismissed successfully'
+                'message' => count($request->request_ids) . ' request(s) dismissed successfully',
             ]);
         } catch (\Exception $e) {
             DB::rollBack();
+
             return response()->json([
                 'success' => false,
-                'message' => 'Error dismissing requests: ' . $e->getMessage()
+                'message' => 'Error dismissing requests: ' . $e->getMessage(),
             ], 500);
         }
     }
@@ -838,17 +850,17 @@ class LabWorkbenchController extends Controller
                     'name' => $request->service_name,
                     'template_version' => !empty($request->service->result_template_v2) ? 2 : 1,
                     'template_body' => $request->service->template ?? '',
-                    'template_structure' => $request->service->result_template_v2 ?? null
+                    'template_structure' => $request->service->result_template_v2 ?? null,
                 ],
                 'status' => $request->status,
                 'result' => $request->result,
                 'result_data' => $request->result_data,
-                'result_document' => $request->result_document ?? null
+                'result_document' => $request->result_document ?? null,
             ]);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Error loading lab request: ' . $e->getMessage()
+                'message' => 'Error loading lab request: ' . $e->getMessage(),
             ], 500);
         }
     }
@@ -875,7 +887,7 @@ class LabWorkbenchController extends Controller
                         $attachments[] = [
                             'id' => $att['id'] ?? uniqid(),
                             'filename' => $att['filename'] ?? ($att['name'] ?? 'Unknown'),
-                            'url' => $att['url'] ?? (isset($att['path']) ? asset('storage/' . $att['path']) : '')
+                            'url' => $att['url'] ?? (isset($att['path']) ? asset('storage/' . $att['path']) : ''),
                         ];
                     }
                 }
@@ -885,7 +897,7 @@ class LabWorkbenchController extends Controller
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Error loading attachments: ' . $e->getMessage()
+                'message' => 'Error loading attachments: ' . $e->getMessage(),
             ], 500);
         }
     }
@@ -901,7 +913,7 @@ class LabWorkbenchController extends Controller
                 'invest_res_entry_id' => 'required',
                 'invest_res_template_version' => 'required|in:1,2',
                 'invest_res_template_data' => 'nullable|string',
-                'result_attachments.*' => 'nullable|file|max:10240|mimes:pdf,jpg,jpeg,png,doc,docx'
+                'result_attachments.*' => 'nullable|file|max:10240|mimes:pdf,jpg,jpeg,png,doc,docx',
             ]);
 
             $labRequest = LabServiceRequest::findOrFail($request->invest_res_entry_id);
@@ -911,14 +923,14 @@ class LabWorkbenchController extends Controller
             $isLabStaff = $user->hasAnyRole(['SUPERADMIN', 'ADMIN', 'LAB SCIENTIST']);
             if (!$isLabStaff) {
                 $isRequestingDoctor = $user->hasRole('DOCTOR') && $user->id == $labRequest->doctor_id;
-                $isRequestingNurse  = $user->hasRole('NURSE') && $user->id == $labRequest->doctor_id;
+                $isRequestingNurse = $user->hasRole('NURSE') && $user->id == $labRequest->doctor_id;
                 if (
                     !($isRequestingDoctor && appsettings('doctor_can_enter_lab_result'))
                     && !($isRequestingNurse && appsettings('nurse_can_enter_lab_result'))
                 ) {
                     return response()->json([
                         'success' => false,
-                        'message' => 'You do not have permission to enter lab results.'
+                        'message' => 'You do not have permission to enter lab results.',
                     ], 403);
                 }
             }
@@ -930,7 +942,7 @@ class LabWorkbenchController extends Controller
                     return response()->json([
                         'success' => false,
                         'message' => $deliveryCheck['reason'],
-                        'hint' => $deliveryCheck['hint']
+                        'hint' => $deliveryCheck['hint'],
                     ], 403);
                 }
             }
@@ -947,7 +959,7 @@ class LabWorkbenchController extends Controller
                 if (Carbon::now()->greaterThan($editDeadline)) {
                     return response()->json([
                         'success' => false,
-                        'message' => "Edit window has expired. Results can only be edited within {$editDuration} minutes of submission."
+                        'message' => "Edit window has expired. Results can only be edited within {$editDuration} minutes of submission.",
                     ], 403);
                 }
             }
@@ -980,7 +992,7 @@ class LabWorkbenchController extends Controller
 
                                 $enhancedData[$param['id']] = [
                                     'value' => $value,
-                                    'status' => $status
+                                    'status' => $status,
                                 ];
 
                                 // Generate HTML row
@@ -1048,7 +1060,7 @@ class LabWorkbenchController extends Controller
                         'name' => $file->getClientOriginalName(),
                         'path' => 'lab_results/' . $fileName,
                         'size' => $file->getSize(),
-                        'type' => $file->getClientOriginalExtension()
+                        'type' => $file->getClientOriginalExtension(),
                     ];
                 }
             }
@@ -1090,7 +1102,7 @@ class LabWorkbenchController extends Controller
                     'result' => $resultHtml,
                     'result_data' => $resultData,
                     'attachments' => !empty($allAttachments) ? json_encode($allAttachments) : null,
-                    'status' => 4
+                    'status' => 4,
                 ];
 
                 // Only update result_date and result_by if this is not an edit
@@ -1120,15 +1132,17 @@ class LabWorkbenchController extends Controller
             DB::commit();
 
             $message = $isEdit ? "Results Updated Successfully" : ($requiresApproval && !$isEdit ? "Results saved — pending approval" : "Results Saved Successfully");
+
             return response()->json([
                 'success' => true,
-                'message' => $message
+                'message' => $message,
             ]);
         } catch (\Exception $e) {
             DB::rollBack();
+
             return response()->json([
                 'success' => false,
-                'message' => "An error occurred " . $e->getMessage()
+                'message' => "An error occurred " . $e->getMessage(),
             ], 500);
         }
     }
@@ -1160,6 +1174,7 @@ class LabWorkbenchController extends Controller
             if (isset($refRange['reference_value'])) {
                 $boolValue = $value === true || $value === 'true';
                 $refValue = $refRange['reference_value'] === true;
+
                 return $boolValue === $refValue ? 'Normal' : 'Abnormal';
             }
         } elseif ($type === 'enum') {
@@ -1232,7 +1247,7 @@ class LabWorkbenchController extends Controller
             'High' => '<span class="badge badge-danger">High</span>',
             'Low' => '<span class="badge badge-warning">Low</span>',
             'Abnormal' => '<span class="badge badge-warning">Abnormal</span>',
-            'N/A' => '<span class="badge badge-secondary">N/A</span>'
+            'N/A' => '<span class="badge badge-secondary">N/A</span>',
         ];
 
         return $badges[$status] ?? $status;
@@ -1245,7 +1260,7 @@ class LabWorkbenchController extends Controller
     {
         try {
             $request->validate([
-                'reason' => 'required|string|min:10'
+                'reason' => 'required|string|min:10',
             ]);
 
             $labRequest = LabServiceRequest::findOrFail($id);
@@ -1254,7 +1269,7 @@ class LabWorkbenchController extends Controller
             if (Auth::id() != $labRequest->doctor_id && !Auth::user()->hasAnyRole(['SUPERADMIN', 'ADMIN'])) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'You do not have permission to delete this request.'
+                    'message' => 'You do not have permission to delete this request.',
                 ], 403);
             }
 
@@ -1262,7 +1277,7 @@ class LabWorkbenchController extends Controller
             if ($labRequest->billed_by || $labRequest->result) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Cannot delete a billed request or one with results.'
+                    'message' => 'Cannot delete a billed request or one with results.',
                 ], 400);
             }
 
@@ -1273,17 +1288,17 @@ class LabWorkbenchController extends Controller
 
             // Log audit
             $this->logAudit($id, 'delete', 'Lab request deleted', null, [
-                'reason' => $request->reason
+                'reason' => $request->reason,
             ]);
 
             return response()->json([
                 'success' => true,
-                'message' => 'Lab request deleted successfully.'
+                'message' => 'Lab request deleted successfully.',
             ]);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Error deleting request: ' . $e->getMessage()
+                'message' => 'Error deleting request: ' . $e->getMessage(),
             ], 500);
         }
     }
@@ -1299,7 +1314,7 @@ class LabWorkbenchController extends Controller
             if (!$labRequest->trashed()) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'This request is not deleted.'
+                    'message' => 'This request is not deleted.',
                 ], 400);
             }
 
@@ -1313,12 +1328,12 @@ class LabWorkbenchController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => 'Lab request restored successfully.'
+                'message' => 'Lab request restored successfully.',
             ]);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Error restoring request: ' . $e->getMessage()
+                'message' => 'Error restoring request: ' . $e->getMessage(),
             ], 500);
         }
     }
@@ -1330,7 +1345,7 @@ class LabWorkbenchController extends Controller
     {
         try {
             $request->validate([
-                'reason' => 'required|string|min:10'
+                'reason' => 'required|string|min:10',
             ]);
 
             $labRequest = LabServiceRequest::findOrFail($id);
@@ -1343,17 +1358,17 @@ class LabWorkbenchController extends Controller
 
             // Log audit
             $this->logAudit($id, 'dismiss', 'Lab request dismissed', null, [
-                'reason' => $request->reason
+                'reason' => $request->reason,
             ]);
 
             return response()->json([
                 'success' => true,
-                'message' => 'Lab request dismissed successfully.'
+                'message' => 'Lab request dismissed successfully.',
             ]);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Error dismissing request: ' . $e->getMessage()
+                'message' => 'Error dismissing request: ' . $e->getMessage(),
             ], 500);
         }
     }
@@ -1369,7 +1384,7 @@ class LabWorkbenchController extends Controller
             if (!$labRequest->dismissed_at) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'This request is not dismissed.'
+                    'message' => 'This request is not dismissed.',
                 ], 400);
             }
 
@@ -1393,12 +1408,12 @@ class LabWorkbenchController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => 'Lab request restored successfully.'
+                'message' => 'Lab request restored successfully.',
             ]);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Error restoring request: ' . $e->getMessage()
+                'message' => 'Error restoring request: ' . $e->getMessage(),
             ], 500);
         }
     }
@@ -1422,7 +1437,7 @@ class LabWorkbenchController extends Controller
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Error loading deleted requests: ' . $e->getMessage()
+                'message' => 'Error loading deleted requests: ' . $e->getMessage(),
             ], 500);
         }
     }
@@ -1446,7 +1461,7 @@ class LabWorkbenchController extends Controller
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Error loading dismissed requests: ' . $e->getMessage()
+                'message' => 'Error loading dismissed requests: ' . $e->getMessage(),
             ], 500);
         }
     }
@@ -1487,7 +1502,7 @@ class LabWorkbenchController extends Controller
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Error loading audit logs: ' . $e->getMessage()
+                'message' => 'Error loading audit logs: ' . $e->getMessage(),
             ], 500);
         }
     }
@@ -1527,10 +1542,10 @@ class LabWorkbenchController extends Controller
             ]);
 
             // Validate regular services exist
-            $regularServiceIds = array_filter($request->service_ids, function($id) {
+            $regularServiceIds = array_filter($request->service_ids, function ($id) {
                 return strpos($id, 'FF_') !== 0;
             });
-            
+
             if (count($regularServiceIds) > 0) {
                 $existingCount = \App\Models\Service::whereIn('id', $regularServiceIds)->count();
                 if ($existingCount !== count($regularServiceIds)) {
@@ -1543,7 +1558,7 @@ class LabWorkbenchController extends Controller
             $createdRequests = [];
             foreach ($request->service_ids as $index => $serviceId) {
                 $labRequest = new LabServiceRequest();
-                
+
                 if (strpos($serviceId, 'FF_') === 0) {
                     $labRequest->service_id = null;
                     $labRequest->is_free_form = true;
@@ -1551,7 +1566,7 @@ class LabWorkbenchController extends Controller
                 } else {
                     $labRequest->service_id = $serviceId;
                 }
-                
+
                 $labRequest->patient_id = $request->patient_id;
                 $labRequest->doctor_id = Auth::id();
                 $labRequest->note = $request->clinical_notes[$index] ?? $request->clinical_notes ?? '';
@@ -1569,13 +1584,14 @@ class LabWorkbenchController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => count($createdRequests) . ' lab request(s) created successfully',
-                'request_ids' => $createdRequests
+                'request_ids' => $createdRequests,
             ]);
         } catch (\Exception $e) {
             DB::rollBack();
+
             return response()->json([
                 'success' => false,
-                'message' => 'Error creating lab request: ' . $e->getMessage()
+                'message' => 'Error creating lab request: ' . $e->getMessage(),
             ], 500);
         }
     }
@@ -1592,7 +1608,7 @@ class LabWorkbenchController extends Controller
                 'patient.hmo.scheme',
                 'doctor',
                 'biller',
-                'resultBy'
+                'resultBy',
             ]);
 
             // Apply filters
@@ -1651,6 +1667,7 @@ class LabWorkbenchController extends Controller
                     if ($row->treatment_plan_id && $row->treatmentPlan && $row->treatmentPlan->isAccessibleBy(Auth::user(), 'lab')) {
                         $html .= "<br><a href='#' class='tp-view-link badge mt-1' style='background-color: #e0f2f1; color: #00796b; border: 1px solid #00897b; text-decoration: none;' data-plan-id='{$row->treatment_plan_id}' onclick='ClinicalOrdersKit.viewTreatmentPlan({$row->treatment_plan_id}); return false;'><i class='fa fa-clipboard-list'></i> " . htmlspecialchars($row->treatment_plan_name) . "</a>";
                     }
+
                     return $html;
                 })
                 ->addColumn('doctor_name', function ($row) {
@@ -1666,8 +1683,9 @@ class LabWorkbenchController extends Controller
                         3 => '<span class="badge badge-primary">Awaiting Results</span>',
                         4 => '<span class="badge badge-success">Completed</span>',
                         5 => '<span class="badge" style="background-color: #6f42c1; color: #fff;">Pending Approval</span>',
-                        6 => '<span class="badge badge-danger"><i class="mdi mdi-close-circle"></i> Rejected</span>'
+                        6 => '<span class="badge badge-danger"><i class="mdi mdi-close-circle"></i> Rejected</span>',
                     ];
+
                     return $badges[$row->status] ?? '<span class="badge badge-secondary">Unknown</span>';
                 })
                 ->addColumn('tat', function ($row) {
@@ -1675,8 +1693,10 @@ class LabWorkbenchController extends Controller
                         $created = Carbon::parse($row->created_at);
                         $completed = Carbon::parse($row->result_date);
                         $hours = $created->diffInHours($completed);
+
                         return $hours . 'h';
                     }
+
                     return 'N/A';
                 })
                 ->addColumn('actions', function ($row) {
@@ -1689,7 +1709,7 @@ class LabWorkbenchController extends Controller
         } catch (\Exception $e) {
             return response()->json([
                 'error' => 'An error occurred while fetching reports.',
-                'message' => config('app.debug') ? $e->getMessage() : 'Internal Server Error'
+                'message' => config('app.debug') ? $e->getMessage() : 'Internal Server Error',
             ], 500);
         }
     }
@@ -1710,7 +1730,7 @@ class LabWorkbenchController extends Controller
                 ->map(function ($doctor) {
                     return [
                         'id' => $doctor->id,
-                        'name' => $doctor->surname . ' ' . $doctor->firstname
+                        'name' => $doctor->surname . ' ' . $doctor->firstname,
                     ];
                 })
                 ->sortBy('name')
@@ -1720,7 +1740,7 @@ class LabWorkbenchController extends Controller
         } catch (\Exception $e) {
             return response()->json([
                 'error' => 'Failed to load doctors',
-                'message' => config('app.debug') ? $e->getMessage() : 'Internal Server Error'
+                'message' => config('app.debug') ? $e->getMessage() : 'Internal Server Error',
             ], 500);
         }
     }
@@ -1742,7 +1762,7 @@ class LabWorkbenchController extends Controller
                     return $group->map(function ($hmo) {
                         return [
                             'id' => $hmo->id,
-                            'name' => $hmo->name
+                            'name' => $hmo->name,
                         ];
                     })->values();
                 });
@@ -1751,7 +1771,7 @@ class LabWorkbenchController extends Controller
         } catch (\Exception $e) {
             return response()->json([
                 'error' => 'Failed to load HMOs',
-                'message' => config('app.debug') ? $e->getMessage() : 'Internal Server Error'
+                'message' => config('app.debug') ? $e->getMessage() : 'Internal Server Error',
             ], 500);
         }
     }
@@ -1776,7 +1796,7 @@ class LabWorkbenchController extends Controller
                 ->map(function ($service) {
                     return [
                         'id' => $service->id,
-                        'name' => $service->service_name
+                        'name' => $service->service_name,
                     ];
                 });
 
@@ -1784,7 +1804,7 @@ class LabWorkbenchController extends Controller
         } catch (\Exception $e) {
             return response()->json([
                 'error' => 'Failed to load services',
-                'message' => config('app.debug') ? $e->getMessage() : 'Internal Server Error'
+                'message' => config('app.debug') ? $e->getMessage() : 'Internal Server Error',
             ], 500);
         }
     }
@@ -1835,6 +1855,7 @@ class LabWorkbenchController extends Controller
                 ->map(function ($req) {
                     $created = \Carbon\Carbon::parse($req->created_at);
                     $completed = \Carbon\Carbon::parse($req->result_date);
+
                     return $created->diffInHours($completed);
                 })
                 ->average();
@@ -1851,7 +1872,7 @@ class LabWorkbenchController extends Controller
                 ->map(function ($item) {
                     return [
                         'status' => $item->status,
-                        'count' => $item->count
+                        'count' => $item->count,
                     ];
                 });
 
@@ -1865,7 +1886,9 @@ class LabWorkbenchController extends Controller
                 // But we must apply other filters (doctor, service).
 
                 $trendQuery = LabServiceRequest::query();
-                if ($request->has('doctor_id') && $request->doctor_id) $trendQuery->where('doctor_id', $request->doctor_id);
+                if ($request->has('doctor_id') && $request->doctor_id) {
+                    $trendQuery->where('doctor_id', $request->doctor_id);
+                }
                 // ... apply other non-date filters ...
 
                 $count = $trendQuery->whereYear('created_at', $month->year)
@@ -1874,7 +1897,7 @@ class LabWorkbenchController extends Controller
 
                 $monthlyTrends[] = [
                     'month' => $month->format('M Y'),
-                    'count' => $count
+                    'count' => $count,
                 ];
             }
 
@@ -1889,7 +1912,7 @@ class LabWorkbenchController extends Controller
                     return [
                         'name' => $item->service_name, // JS expects 'name'
                         'count' => $item->total,
-                        'revenue' => 0 // Placeholder
+                        'revenue' => 0, // Placeholder
                     ];
                 });
 
@@ -1905,7 +1928,7 @@ class LabWorkbenchController extends Controller
                     return [
                         'doctor' => $item->doctor, // Pass full object for JS ({firstname, surname})
                         'count' => $item->total,
-                        'revenue' => 0 // Placeholder
+                        'revenue' => 0, // Placeholder
                     ];
                 });
 
@@ -1915,17 +1938,17 @@ class LabWorkbenchController extends Controller
                     'completed_requests' => $completed,
                     'pending_requests' => $pending,
                     'estimated_revenue' => 0,
-                    'avg_tat' => $avgTAT ? round($avgTAT) : 0
+                    'avg_tat' => $avgTAT ? round($avgTAT) : 0,
                 ],
                 'by_status' => $byStatus,
                 'monthly_trends' => $monthlyTrends,
                 'top_services' => $topServices,
-                'top_doctors' => $topDoctors
+                'top_doctors' => $topDoctors,
             ]);
         } catch (\Exception $e) {
             return response()->json([
                 'error' => 'An error occurred while fetching statistics.',
-                'message' => config('app.debug') ? $e->getMessage() : 'Internal Server Error'
+                'message' => config('app.debug') ? $e->getMessage() : 'Internal Server Error',
             ], 500);
         }
     }
@@ -2009,6 +2032,7 @@ class LabWorkbenchController extends Controller
             }
 
             $count = LabServiceRequest::where('status', 5)->count();
+
             return response()->json(['count' => $count]);
         } catch (\Exception $e) {
             return response()->json(['count' => 0]);
@@ -2049,7 +2073,7 @@ class LabWorkbenchController extends Controller
                     'rejection_reason' => $item->rejection_reason,
                     'rejected_by_name' => $item->rejector ? ($item->rejector->surname . ' ' . $item->rejector->firstname) : null,
                     'rejected_at' => $item->rejected_at ? date('d M Y H:i', strtotime($item->rejected_at)) : null,
-                ]
+                ],
             ]);
         } catch (\Exception $e) {
             return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
@@ -2094,6 +2118,7 @@ class LabWorkbenchController extends Controller
             return response()->json(['success' => true, 'message' => 'Result approved successfully.']);
         } catch (\Exception $e) {
             DB::rollBack();
+
             return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
         }
     }
@@ -2136,15 +2161,15 @@ class LabWorkbenchController extends Controller
             DB::beginTransaction();
 
             $labRequest->update([
-                'result'               => $labRequest->pending_result,
-                'result_data'          => $labRequest->pending_result_data,
-                'attachments'          => $labRequest->pending_attachments,
-                'pending_result'       => null,
-                'pending_result_data'  => null,
-                'pending_attachments'  => null,
-                'approved_by'          => Auth::id(),
-                'approved_at'          => now(),
-                'status'               => 4,
+                'result' => $labRequest->pending_result,
+                'result_data' => $labRequest->pending_result_data,
+                'attachments' => $labRequest->pending_attachments,
+                'pending_result' => null,
+                'pending_result_data' => null,
+                'pending_attachments' => null,
+                'approved_by' => Auth::id(),
+                'approved_at' => now(),
+                'status' => 4,
             ]);
 
             $this->logAudit($id, 'result_self_approved', 'Result self-approved by ' . Auth::user()->surname . ' ' . Auth::user()->firstname);
@@ -2154,6 +2179,7 @@ class LabWorkbenchController extends Controller
             return response()->json(['success' => true, 'message' => 'Result approved successfully.']);
         } catch (\Exception $e) {
             DB::rollBack();
+
             return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
         }
     }
@@ -2190,6 +2216,7 @@ class LabWorkbenchController extends Controller
             return response()->json(['success' => true, 'message' => 'Result rejected. The technician will be notified.']);
         } catch (\Exception $e) {
             DB::rollBack();
+
             return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
         }
     }
@@ -2239,6 +2266,7 @@ class LabWorkbenchController extends Controller
             return response()->json(['success' => true, 'message' => 'Approval has been reversed. The result is now pending approval again.']);
         } catch (\Exception $e) {
             DB::rollBack();
+
             return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
         }
     }
@@ -2266,7 +2294,7 @@ class LabWorkbenchController extends Controller
                 'last_lab_number' => null,
                 'recent_lab_numbers' => [],
                 'format_pattern' => 'LAB-####',
-                'format_example' => 'LAB-0001'
+                'format_example' => 'LAB-0001',
             ]);
         }
 
@@ -2281,7 +2309,7 @@ class LabWorkbenchController extends Controller
             'last_lab_number' => $lastLabNo,
             'recent_lab_numbers' => $recentLabNumbers,
             'format_pattern' => $formatInfo['pattern'],
-            'format_example' => $formatInfo['example']
+            'format_example' => $formatInfo['example'],
         ]);
     }
 
@@ -2304,14 +2332,14 @@ class LabWorkbenchController extends Controller
                     ? $req->patient->user->surname . ' ' . $req->patient->user->firstname
                     : 'Unknown',
                 'service_name' => $req->service_name,
-                'lab_number' => $req->lab_number
+                'lab_number' => $req->lab_number,
             ];
         });
 
         return response()->json([
             'exists' => $existing->isNotEmpty(),
             'count' => $existing->count(),
-            'items' => $items
+            'items' => $items,
         ]);
     }
 
@@ -2351,7 +2379,7 @@ class LabWorkbenchController extends Controller
 
         return [
             'pattern' => $pattern,
-            'example' => $example
+            'example' => $example,
         ];
     }
 

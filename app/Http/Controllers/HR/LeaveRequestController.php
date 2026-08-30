@@ -6,8 +6,8 @@ use App\Http\Controllers\Controller;
 use App\Models\HR\LeaveRequest;
 use App\Models\HR\LeaveType;
 use App\Models\Staff;
-use App\Services\LeaveService;
 use App\Services\HrAttachmentService;
+use App\Services\LeaveService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 
@@ -20,6 +20,7 @@ use Illuminate\Support\Facades\Validator;
 class LeaveRequestController extends Controller
 {
     protected LeaveService $leaveService;
+
     protected HrAttachmentService $attachmentService;
 
     public function __construct(LeaveService $leaveService, HrAttachmentService $attachmentService)
@@ -37,7 +38,7 @@ class LeaveRequestController extends Controller
             return response()->json([
                 'pending' => LeaveRequest::whereIn('status', [
                     LeaveRequest::STATUS_PENDING,
-                    LeaveRequest::STATUS_SUPERVISOR_APPROVED
+                    LeaveRequest::STATUS_SUPERVISOR_APPROVED,
                 ])->count(),
                 'approved' => LeaveRequest::where('status', LeaveRequest::STATUS_APPROVED)->count(),
                 'rejected' => LeaveRequest::where('status', LeaveRequest::STATUS_REJECTED)->count(),
@@ -76,12 +77,12 @@ class LeaveRequestController extends Controller
 
             // Search
             if ($searchValue) {
-                $query->where(function($q) use ($searchValue) {
-                    $q->whereHas('staff.user', function($q) use ($searchValue) {
+                $query->where(function ($q) use ($searchValue) {
+                    $q->whereHas('staff.user', function ($q) use ($searchValue) {
                         $q->where('firstname', 'like', "%{$searchValue}%")
                           ->orWhere('surname', 'like', "%{$searchValue}%");
                     })
-                    ->orWhereHas('leaveType', function($q) use ($searchValue) {
+                    ->orWhereHas('leaveType', function ($q) use ($searchValue) {
                         $q->where('name', 'like', "%{$searchValue}%");
                     })
                     ->orWhere('reason', 'like', "%{$searchValue}%");
@@ -105,7 +106,7 @@ class LeaveRequestController extends Controller
                 'draw' => intval($request->input('draw')),
                 'recordsTotal' => $totalRecords,
                 'recordsFiltered' => $filteredRecords,
-                'data' => $leaveRequests->map(function($leaveRequest, $index) use ($start, $statusColors) {
+                'data' => $leaveRequests->map(function ($leaveRequest, $index) use ($start, $statusColors) {
                     $statusBadge = $statusColors[$leaveRequest->status] ?? 'secondary';
                     $statusLabel = ucwords(str_replace('_', ' ', $leaveRequest->status));
 
@@ -116,11 +117,11 @@ class LeaveRequestController extends Controller
                         'period' => \Carbon\Carbon::parse($leaveRequest->start_date)->format('M d') . ' - ' .
                                    \Carbon\Carbon::parse($leaveRequest->end_date)->format('M d, Y'),
                         'days_requested' => $leaveRequest->total_days,
-                        'status_badge' => '<span class="badge badge-'.$statusBadge.'">'.$statusLabel.'</span>',
+                        'status_badge' => '<span class="badge badge-' . $statusBadge . '">' . $statusLabel . '</span>',
                         'created_at' => $leaveRequest->created_at->diffForHumans(),
-                        'action' => '<a href="'.route('hr.leave-requests.show', $leaveRequest).'" class="btn btn-sm btn-primary"><i class="mdi mdi-eye"></i></a>',
+                        'action' => '<a href="' . route('hr.leave-requests.show', $leaveRequest) . '" class="btn btn-sm btn-primary"><i class="mdi mdi-eye"></i></a>',
                     ];
-                })
+                }),
             ]);
         }
 
@@ -164,7 +165,7 @@ class LeaveRequestController extends Controller
         $leaveTypes = LeaveType::active()->orderBy('name')->get();
         $staffList = Staff::active()->with('user')->whereHas('user')->orderBy('id')->get();
         $reliefStaff = Staff::active()->with('user')->whereHas('user')
-            ->when($staff, fn($q) => $q->where('id', '!=', $staff->id))
+            ->when($staff, fn ($q) => $q->where('id', '!=', $staff->id))
             ->get();
 
         // Get current balances for the staff
@@ -199,9 +200,10 @@ class LeaveRequestController extends Controller
                 return response()->json([
                     'success' => false,
                     'message' => 'Validation failed',
-                    'errors' => $validator->errors()
+                    'errors' => $validator->errors(),
                 ], 422);
             }
+
             return back()->withErrors($validator)->withInput();
         }
 
@@ -254,10 +256,11 @@ class LeaveRequestController extends Controller
                 $message = $isHrCreating
                     ? 'Leave request created successfully. Awaiting HR final approval.'
                     : 'Leave request submitted successfully. Awaiting supervisor approval.';
+
                 return response()->json([
                     'success' => true,
                     'message' => $message,
-                    'data' => $leaveRequest
+                    'data' => $leaveRequest,
                 ]);
             }
 
@@ -267,9 +270,10 @@ class LeaveRequestController extends Controller
             if ($request->ajax() || $request->wantsJson()) {
                 return response()->json([
                     'success' => false,
-                    'message' => $e->getMessage()
+                    'message' => $e->getMessage(),
                 ], 422);
             }
+
             return back()->withErrors(['error' => $e->getMessage()])->withInput();
         }
     }
@@ -283,7 +287,7 @@ class LeaveRequestController extends Controller
             'reviewedBy',
             'supervisorApprovedBy',
             'hrApprovedBy',
-            'attachments.uploadedBy'
+            'attachments.uploadedBy',
         ]);
 
         // Get staff's balance for this leave type
@@ -474,6 +478,7 @@ class LeaveRequestController extends Controller
 
         try {
             $this->leaveService->cancelRequest($leaveRequest);
+
             return back()->with('success', 'Leave request cancelled.');
         } catch (\Exception $e) {
             return back()->with('error', $e->getMessage());

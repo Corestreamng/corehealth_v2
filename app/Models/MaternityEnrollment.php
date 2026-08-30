@@ -9,15 +9,16 @@ use OwenIt\Auditing\Contracts\Auditable;
 
 class MaternityEnrollment extends Model implements Auditable
 {
-    use HasFactory, SoftDeletes;
+    use HasFactory;
+    use SoftDeletes;
     use \App\Traits\IsAuditable;
     use \OwenIt\Auditing\Auditable;
 
-    const STATUS_ACTIVE = 'active';
-    const STATUS_POSTNATAL = 'postnatal';
-    const STATUS_COMPLETED = 'completed';
-    const STATUS_TRANSFERRED = 'transferred';
-    const STATUS_DECEASED = 'deceased';
+    public const STATUS_ACTIVE = 'active';
+    public const STATUS_POSTNATAL = 'postnatal';
+    public const STATUS_COMPLETED = 'completed';
+    public const STATUS_TRANSFERRED = 'transferred';
+    public const STATUS_DECEASED = 'deceased';
 
     protected $fillable = [
         'patient_id', 'enrolled_by', 'entry_point', 'status',
@@ -115,9 +116,12 @@ class MaternityEnrollment extends Model implements Auditable
 
     public function getCurrentGestationalAge()
     {
-        if (!$this->lmp) return null;
+        if (!$this->lmp) {
+            return null;
+        }
         $weeks = $this->lmp->diffInWeeks(now());
-        $days  = $this->lmp->diffInDays(now()) % 7;
+        $days = $this->lmp->diffInDays(now()) % 7;
+
         return "{$weeks}w {$days}d";
     }
 
@@ -128,7 +132,10 @@ class MaternityEnrollment extends Model implements Auditable
 
     public function getRemainingDays()
     {
-        if (!$this->edd) return null;
+        if (!$this->edd) {
+            return null;
+        }
+
         return max(0, now()->diffInDays($this->edd, false));
     }
 }

@@ -2,55 +2,53 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
-use App\Models\Patient;
+use App\Enums\QueueStatus;
+use App\Helpers\BatchHelper;
+use App\Helpers\HmoHelper;
+use App\Http\Traits\ClinicalOrdersTrait;
 use App\Models\AdmissionRequest;
 use App\Models\Bed;
-use App\Models\ProductOrServiceRequest;
-use App\Models\ProductRequest;
-use App\Models\Product;
-use App\Models\Service;
-use App\Models\ServiceCategory;
-use App\Models\ProductCategory;
-use App\Models\VitalSign;
-use App\Models\Encounter;
-use App\Models\NursingNote;
-use App\Models\NursingNoteType;
-use App\Models\MedicationSchedule;
-use App\Models\MedicationAdministration;
-use App\Models\IntakeOutputPeriod;
-use App\Models\IntakeOutputRecord;
-use App\Models\InjectionAdministration;
-use App\Models\ImmunizationRecord;
-use App\Models\LabServiceRequest;
-use App\Models\ImagingServiceRequest;
-use App\Models\Procedure;
-use App\Models\VaccineScheduleTemplate;
-use App\Models\VaccineScheduleItem;
-use App\Models\VaccineProductMapping;
-use App\Models\PatientImmunizationSchedule;
-use Carbon\Carbon;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Validator;
-use App\Helpers\HmoHelper;
-use App\Helpers\BatchHelper;
-use App\Models\HmoTariff;
-use App\Models\Store;
-use App\Models\StoreStock;
-use App\Models\StockBatch;
-use App\Services\StockService;
-use App\Services\StoreContextResolver;
-use App\Models\StoreContextRule;
-use Illuminate\Support\Facades\Gate;
 use App\Models\Clinic;
 use App\Models\DoctorQueue;
+use App\Models\Encounter;
+use App\Models\HmoTariff;
+use App\Models\ImagingServiceRequest;
+use App\Models\ImmunizationRecord;
+use App\Models\InjectionAdministration;
+use App\Models\IntakeOutputPeriod;
+use App\Models\LabServiceRequest;
+use App\Models\MedicationAdministration;
+use App\Models\MedicationSchedule;
+use App\Models\NursingNote;
+use App\Models\NursingNoteType;
+use App\Models\Patient;
+use App\Models\PatientImmunizationSchedule;
+use App\Models\Procedure;
+use App\Models\Product;
+use App\Models\ProductCategory;
+use App\Models\ProductOrServiceRequest;
+use App\Models\ProductRequest;
+use App\Models\Service;
+use App\Models\ServiceCategory;
+use App\Models\StockBatch;
+use App\Models\Store;
+use App\Models\StoreContextRule;
+use App\Models\VaccineProductMapping;
+use App\Models\VaccineScheduleTemplate;
+use App\Models\VitalSign;
 use App\Services\QueueStatusService;
-use App\Enums\QueueStatus;
+use App\Services\StockService;
+use App\Services\StoreContextResolver;
+use Carbon\Carbon;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Validator;
 use Yajra\DataTables\DataTables;
-use App\Http\Traits\ClinicalOrdersTrait;
 
-class NursingWorkbenchController extends Controller{
+class NursingWorkbenchController extends Controller
+{
     use ClinicalOrdersTrait;
 
     protected QueueStatusService $queueStatusService;
@@ -84,20 +82,20 @@ class NursingWorkbenchController extends Controller{
 
         $results = $admissions->map(function ($admission) use ($allSchedules, $now) {
             $patient = $admission->patient;
-            
+
             // Get this patient's active schedules
             $patientSchedules = $allSchedules->get($patient->id, collect());
 
             // In-memory filters
-            $dueMeds = $patientSchedules->filter(function($med) use ($now) {
+            $dueMeds = $patientSchedules->filter(function ($med) use ($now) {
                 return Carbon::parse($med->scheduled_time)->lte($now);
             });
 
-            $overdueMeds = $patientSchedules->filter(function($med) use ($now) {
+            $overdueMeds = $patientSchedules->filter(function ($med) use ($now) {
                 return Carbon::parse($med->scheduled_time)->lt($now);
             });
 
-            $nextMed = $patientSchedules->filter(function($med) use ($now) {
+            $nextMed = $patientSchedules->filter(function ($med) use ($now) {
                 return Carbon::parse($med->scheduled_time)->gt($now);
             })->sortBy('scheduled_time')->first();
 
@@ -134,6 +132,7 @@ class NursingWorkbenchController extends Controller{
                     'priority' => $admission->priority ?? 'routine',
                 ];
             }
+
             return null;
         })->filter()->values();
 
@@ -199,6 +198,7 @@ class NursingWorkbenchController extends Controller{
     private function calculateAge($dob)
     {
         $date = $this->safeParseDate($dob);
+
         return $date ? $date->age : 'N/A';
     }
 
@@ -217,8 +217,8 @@ class NursingWorkbenchController extends Controller{
         }
 
         // ── Store Governance: context resolution (Plan §10, §B4) ─────────────
-        $resolver              = app(StoreContextResolver::class);
-        $resolvedStore         = $resolver->resolve(Auth::user());
+        $resolver = app(StoreContextResolver::class);
+        $resolvedStore = $resolver->resolve(Auth::user());
         $contextFallbackAction = $resolvedStore ? null : StoreContextRule::fallbackAction();
 
         // Candidate stores: all ward stores + user's dept store + rule-configured stores.
@@ -290,7 +290,7 @@ class NursingWorkbenchController extends Controller{
                 'patient.user',
                 'patient.hmo',
                 'bed.wardRelation',
-                'doctor'
+                'doctor',
             ])
             ->where('discharged', 0)
             ->whereNotNull('bed_id')
@@ -436,6 +436,7 @@ class NursingWorkbenchController extends Controller{
 
         $results = $records->map(function ($record) {
             $patient = $record->patient;
+
             return [
                 'id' => $record->id,
                 'patient_id' => $patient->id,
@@ -462,7 +463,7 @@ class NursingWorkbenchController extends Controller{
     {
         $request->validate([
             'disposition' => 'required|in:morgue,release',
-            'notes' => 'nullable|string'
+            'notes' => 'nullable|string',
         ]);
 
         $record = \App\Models\DeathRecord::findOrFail($recordId);
@@ -475,7 +476,7 @@ class NursingWorkbenchController extends Controller{
 
         return response()->json([
             'success' => true,
-            'message' => 'Last office procedure completed. Patient set for ' . $request->disposition
+            'message' => 'Last office procedure completed. Patient set for ' . $request->disposition,
         ]);
     }
 
@@ -554,12 +555,12 @@ class NursingWorkbenchController extends Controller{
                 ->whereNotNull('ward')
                 ->pluck('ward');
 
-            $wards = $wardNames->map(function($name, $index) {
+            $wards = $wardNames->map(function ($name, $index) {
                 return [
                     'id' => $index + 1,
                     'name' => $name,
                     'code' => null,
-                    'type' => null
+                    'type' => null,
                 ];
             });
         }
@@ -573,6 +574,7 @@ class NursingWorkbenchController extends Controller{
     public function getClinics()
     {
         $clinics = Clinic::orderBy('name')->get(['id', 'name']);
+
         return response()->json(['clinics' => $clinics]);
     }
 
@@ -615,9 +617,15 @@ class NursingWorkbenchController extends Controller{
             $days = $dob->copy()->addYears($years)->addMonths($months)->diffInDays($now);
 
             $ageParts = [];
-            if ($years > 0) $ageParts[] = $years . 'y';
-            if ($months > 0) $ageParts[] = $months . 'm';
-            if ($days > 0) $ageParts[] = $days . 'd';
+            if ($years > 0) {
+                $ageParts[] = $years . 'y';
+            }
+            if ($months > 0) {
+                $ageParts[] = $months . 'm';
+            }
+            if ($days > 0) {
+                $ageParts[] = $days . 'd';
+            }
             $ageText = !empty($ageParts) ? implode(' ', $ageParts) : '0d';
         }
 
@@ -757,7 +765,7 @@ class NursingWorkbenchController extends Controller{
             ] : null,
             'clinic_name' => $clinic ? $clinic->name : null,
             'vitals_template' => $clinic ? $clinic->vitals_template : null,
-            'dynamic_ranges'  => $dynamicRanges,
+            'dynamic_ranges' => $dynamicRanges,
         ]);
     }
 
@@ -932,8 +940,8 @@ class NursingWorkbenchController extends Controller{
                 $gateCheck = Gate::inspect('administer-from-store', $injectionStore);
                 if ($gateCheck->denied()) {
                     return response()->json([
-                        'success'    => false,
-                        'message'    => $gateCheck->message(),
+                        'success' => false,
+                        'message' => $gateCheck->message(),
                         'gate_error' => true,
                     ], 403);
                 }
@@ -943,15 +951,15 @@ class NursingWorkbenchController extends Controller{
 
         // §7.3: Conditional validation rules per drug source
         $rules = [
-            'patient_id'    => 'required|exists:patients,id',
-            'drug_source'   => 'required|in:pharmacy_dispensed,patient_own,ward_stock',
-            'store_id'      => 'required_if:drug_source,ward_stock|nullable|exists:stores,id',
-            'bill_patient'  => 'nullable|boolean',
-            'products'      => 'required|array|min:1',
+            'patient_id' => 'required|exists:patients,id',
+            'drug_source' => 'required|in:pharmacy_dispensed,patient_own,ward_stock',
+            'store_id' => 'required_if:drug_source,ward_stock|nullable|exists:stores,id',
+            'bill_patient' => 'nullable|boolean',
+            'products' => 'required|array|min:1',
             'products.*.dose' => 'required|string|max:100',
             'products.*.batch_id' => 'nullable|exists:stock_batches,id',
-            'route'         => 'required|in:IM,IV,SC,ID',
-            'site'          => 'nullable|string|max:100',
+            'route' => 'required|in:IM,IV,SC,ID',
+            'site' => 'nullable|string|max:100',
             'administered_at' => 'required|date',
         ];
 
@@ -1002,6 +1010,7 @@ class NursingWorkbenchController extends Controller{
 
                     if (!$productRequest || $productRequest->patient_id !== $patient->id) {
                         DB::rollBack();
+
                         return response()->json([
                             'success' => false,
                             'message' => 'Prescription not found for this patient',
@@ -1010,6 +1019,7 @@ class NursingWorkbenchController extends Controller{
 
                     if ($productRequest->status !== 3) {
                         DB::rollBack();
+
                         return response()->json([
                             'success' => false,
                             'message' => 'This prescription has not been dispensed yet',
@@ -1018,6 +1028,7 @@ class NursingWorkbenchController extends Controller{
 
                     if ($productRequest->product_id !== $product->id) {
                         DB::rollBack();
+
                         return response()->json([
                             'success' => false,
                             'message' => 'Prescription does not match selected product',
@@ -1028,8 +1039,8 @@ class NursingWorkbenchController extends Controller{
                     $productRequestId = $productRequest->id;
                     $dispensedStoreId = $productRequest->dispensed_from_store_id;
 
-                // ─── PATH 2: PATIENT'S OWN (§5.1 Path 2) ───
-                // No hospital product, no billing, no stock. Just record external drug details.
+                    // ─── PATH 2: PATIENT'S OWN (§5.1 Path 2) ───
+                    // No hospital product, no billing, no stock. Just record external drug details.
                 } elseif ($drugSource === 'patient_own') {
                     // Product is optional — patient might bring a drug not in our catalogue
                     if (!empty($productData['product_id'])) {
@@ -1039,12 +1050,13 @@ class NursingWorkbenchController extends Controller{
                     // $productOrServiceRequestId stays null
                     // $dispensedStoreId stays null
 
-                // ─── PATH 3: WARD STOCK (§5.1 Paths 3 & 4) ───
+                    // ─── PATH 3: WARD STOCK (§5.1 Paths 3 & 4) ───
                 } elseif ($drugSource === 'ward_stock') {
                     $product = Product::with(['price', 'stock'])->findOrFail($productData['product_id']);
 
                     if (!$storeId) {
                         DB::rollBack();
+
                         return response()->json([
                             'success' => false,
                             'message' => 'Ward stock administration requires a store',
@@ -1056,6 +1068,7 @@ class NursingWorkbenchController extends Controller{
                     $availableStock = $stockService->getAvailableStock($product->id, $storeId);
                     if ($availableStock < $qty) {
                         DB::rollBack();
+
                         return response()->json([
                             'success' => false,
                             'message' => "Insufficient stock for {$product->product_name} (need {$qty}, available: {$availableStock})",
@@ -1067,14 +1080,14 @@ class NursingWorkbenchController extends Controller{
                         // ─── PATH 3B: WARD STOCK — BILLED (§5.1 Path 4) ───
                         // Create ProductRequest first (mirrors pharmacy prescription flow)
                         $prodReq = ProductRequest::create([
-                            'product_id'   => $product->id,
-                            'patient_id'   => $patient->id,
+                            'product_id' => $product->id,
+                            'patient_id' => $patient->id,
                             'encounter_id' => $patient->current_encounter_id ?? null,
-                            'doctor_id'    => null, // nurse-initiated
-                            'qty'          => $qty,
-                            'status'       => 2,    // billed (skip "requested" since nurse is billing directly)
-                            'billed_by'    => Auth::id(),
-                            'billed_date'  => now(),
+                            'doctor_id' => null, // nurse-initiated
+                            'qty' => $qty,
+                            'status' => 2,    // billed (skip "requested" since nurse is billing directly)
+                            'billed_by' => Auth::id(),
+                            'billed_date' => now(),
                         ]);
 
                         // Create POSR through the tariff pipeline (same as PharmacyWorkbenchController)
@@ -1102,7 +1115,7 @@ class NursingWorkbenchController extends Controller{
                     // Deduct stock regardless of billing
                     $batchId = $productData['batch_id'] ?? null;
                     $refType = $billPatient ? ProductOrServiceRequest::class : InjectionAdministration::class;
-                    $refId   = $billPatient ? $productOrServiceRequestId : null;
+                    $refId = $billPatient ? $productOrServiceRequestId : null;
 
                     if ($batchId) {
                         $stockService->dispenseFromBatch(
@@ -1128,23 +1141,23 @@ class NursingWorkbenchController extends Controller{
 
                 // Create the injection administration record
                 $injection = InjectionAdministration::create([
-                    'patient_id'                    => $patient->id,
-                    'product_id'                    => optional($product)->id,
+                    'patient_id' => $patient->id,
+                    'product_id' => optional($product)->id,
                     'product_or_service_request_id' => $productOrServiceRequestId,
-                    'product_request_id'            => $productRequestId,
-                    'dose'                          => $productData['dose'],
-                    'route'                         => $request->route,
-                    'site'                          => $request->site,
-                    'administered_at'               => $request->administered_at,
-                    'administered_by'               => Auth::id(),
-                    'drug_source'                   => $drugSource,
-                    'dispensed_from_store_id'        => $dispensedStoreId,
-                    'external_drug_name'            => $drugSource === 'patient_own' ? ($productData['external_drug_name'] ?? null) : null,
-                    'external_qty'                  => $drugSource === 'patient_own' ? ($productData['external_qty'] ?? null) : null,
-                    'external_batch_number'         => $drugSource === 'patient_own' ? ($productData['external_batch_number'] ?? null) : null,
-                    'external_expiry_date'          => $drugSource === 'patient_own' ? ($productData['external_expiry_date'] ?? null) : null,
-                    'external_source_note'          => $drugSource === 'patient_own' ? ($productData['external_source_note'] ?? null) : null,
-                    'notes'                         => $request->notes ?? null,
+                    'product_request_id' => $productRequestId,
+                    'dose' => $productData['dose'],
+                    'route' => $request->route,
+                    'site' => $request->site,
+                    'administered_at' => $request->administered_at,
+                    'administered_by' => Auth::id(),
+                    'drug_source' => $drugSource,
+                    'dispensed_from_store_id' => $dispensedStoreId,
+                    'external_drug_name' => $drugSource === 'patient_own' ? ($productData['external_drug_name'] ?? null) : null,
+                    'external_qty' => $drugSource === 'patient_own' ? ($productData['external_qty'] ?? null) : null,
+                    'external_batch_number' => $drugSource === 'patient_own' ? ($productData['external_batch_number'] ?? null) : null,
+                    'external_expiry_date' => $drugSource === 'patient_own' ? ($productData['external_expiry_date'] ?? null) : null,
+                    'external_source_note' => $drugSource === 'patient_own' ? ($productData['external_source_note'] ?? null) : null,
+                    'notes' => $request->notes ?? null,
                 ]);
 
                 $injections[] = $injection;
@@ -1163,9 +1176,10 @@ class NursingWorkbenchController extends Controller{
             ]);
         } catch (\Exception $e) {
             DB::rollBack();
+
             return response()->json([
                 'success' => false,
-                'message' => 'Error administering injection: ' . $e->getMessage()
+                'message' => 'Error administering injection: ' . $e->getMessage(),
             ], 500);
         }
     }
@@ -1188,10 +1202,11 @@ class NursingWorkbenchController extends Controller{
             if ($patient->hmo_id) {
                 $hmoData = HmoHelper::applyHmoTariff($patient->id, $productId, null);
                 if ($hmoData) {
-                    $billReq->payable_amount    = $hmoData['payable_amount'] * $qty;
-                    $billReq->claims_amount     = $hmoData['claims_amount'] * $qty;
-                    $billReq->coverage_mode     = $hmoData['coverage_mode'];
+                    $billReq->payable_amount = $hmoData['payable_amount'] * $qty;
+                    $billReq->claims_amount = $hmoData['claims_amount'] * $qty;
+                    $billReq->coverage_mode = $hmoData['coverage_mode'];
                     $billReq->validation_status = $hmoData['validation_status'] ?? 'pending';
+
                     return;
                 }
             }
@@ -1199,15 +1214,15 @@ class NursingWorkbenchController extends Controller{
             \Log::warning('HMO tariff lookup failed for ward stock injection', [
                 'patient_id' => $patient->id,
                 'product_id' => $productId,
-                'error'      => $e->getMessage(),
+                'error' => $e->getMessage(),
             ]);
         }
 
         // Fallback: cash patient or tariff not found — use product's sale price
         $price = optional(optional($product)->price)->current_sale_price ?? 0;
         $billReq->payable_amount = $price * $qty;
-        $billReq->claims_amount  = 0;
-        $billReq->coverage_mode  = 'none';
+        $billReq->claims_amount = 0;
+        $billReq->coverage_mode = 'none';
     }
 
     // =====================================
@@ -1373,8 +1388,8 @@ class NursingWorkbenchController extends Controller{
                 $gateCheck = Gate::inspect('administer-from-store', $immunizationStore);
                 if ($gateCheck->denied()) {
                     return response()->json([
-                        'success'    => false,
-                        'message'    => $gateCheck->message(),
+                        'success' => false,
+                        'message' => $gateCheck->message(),
                         'gate_error' => true,
                     ], 403);
                 }
@@ -1493,9 +1508,10 @@ class NursingWorkbenchController extends Controller{
             ]);
         } catch (\Exception $e) {
             DB::rollBack();
+
             return response()->json([
                 'success' => false,
-                'message' => 'Error administering immunization: ' . $e->getMessage()
+                'message' => 'Error administering immunization: ' . $e->getMessage(),
             ], 500);
         }
     }
@@ -1561,7 +1577,7 @@ class NursingWorkbenchController extends Controller{
                     ->merge($relatedCombos->pluck('id'))
                     ->unique()
                     ->toArray();
-                    
+
                 $tariffs = HmoTariff::where('hmo_id', $patient->hmo_id)
                     ->whereIn('service_id', $serviceIds)
                     ->whereNull('product_id')
@@ -1571,8 +1587,8 @@ class NursingWorkbenchController extends Controller{
                 foreach ($tariffs as $sid => $tariff) {
                     $hmoMap[$sid] = [
                         'payable' => $tariff->payable_amount,
-                        'claims'  => $tariff->claims_amount,
-                        'mode'    => $tariff->coverage_mode,
+                        'claims' => $tariff->claims_amount,
+                        'mode' => $tariff->coverage_mode,
                     ];
                 }
             }
@@ -1583,48 +1599,48 @@ class NursingWorkbenchController extends Controller{
         foreach ($directServices as $service) {
             $basePrice = $service->price ? $service->price->sale_price : 0;
             $hmoData = $hmoMap[$service->id] ?? null;
-            
+
             $result = [
-                'id'       => $service->id,
-                'name'     => $service->service_name,
-                'code'     => $service->service_code,
-                'price'    => $basePrice,
+                'id' => $service->id,
+                'name' => $service->service_name,
+                'code' => $service->service_code,
+                'price' => $basePrice,
                 'category' => $service->category ? $service->category->category_name : 'N/A',
-                'hmo'      => $hmoData ? [
+                'hmo' => $hmoData ? [
                     'payable' => $hmoData['payable'],
-                    'claims'  => $hmoData['claims'],
-                    'mode'    => $hmoData['mode'],
+                    'claims' => $hmoData['claims'],
+                    'mode' => $hmoData['mode'],
                 ] : null,
                 'is_combo' => false,
             ];
             $results[] = $result;
         }
-        
+
         // Add related combos
         foreach ($relatedCombos as $service) {
             $basePrice = $service->price ? $service->price->sale_price : 0;
             $hmoData = $hmoMap[$service->id] ?? null;
-            
+
             $result = [
-                'id'       => $service->id,
-                'name'     => $service->service_name,
-                'code'     => $service->service_code,
-                'price'    => $basePrice,
+                'id' => $service->id,
+                'name' => $service->service_name,
+                'code' => $service->service_code,
+                'price' => $basePrice,
                 'category' => $service->category ? $service->category->category_name : 'N/A',
-                'hmo'      => $hmoData ? [
+                'hmo' => $hmoData ? [
                     'payable' => $hmoData['payable'],
-                    'claims'  => $hmoData['claims'],
-                    'mode'    => $hmoData['mode'],
+                    'claims' => $hmoData['claims'],
+                    'mode' => $hmoData['mode'],
                 ] : null,
                 'is_combo' => true,
                 'bundle_items' => $service->bundleItems->map(function ($item) {
                     return [
-                        'id'    => $item->id,
-                        'type'  => $item->item_type,
-                        'name'  => $item->item_type === 'service' 
+                        'id' => $item->id,
+                        'type' => $item->item_type,
+                        'name' => $item->item_type === 'service'
                             ? ($item->service->service_name ?? 'Unknown')
                             : ($item->product->product_name ?? 'Unknown'),
-                        'qty'   => $item->qty,
+                        'qty' => $item->qty,
                     ];
                 })->toArray(),
             ];
@@ -1675,8 +1691,8 @@ class NursingWorkbenchController extends Controller{
                 foreach ($tariffs as $pid => $tariff) {
                     $hmoMap[$pid] = [
                         'payable' => $tariff->payable_amount,
-                        'claims'  => $tariff->claims_amount,
-                        'mode'    => $tariff->coverage_mode,
+                        'claims' => $tariff->claims_amount,
+                        'mode' => $tariff->coverage_mode,
                     ];
                 }
             }
@@ -1684,16 +1700,16 @@ class NursingWorkbenchController extends Controller{
 
         $results = $products->map(function ($product) use ($hmoMap) {
             return [
-                'id'       => $product->id,
-                'name'     => $product->product_name,
-                'code'     => $product->product_code,
+                'id' => $product->id,
+                'name' => $product->product_name,
+                'code' => $product->product_code,
                 'product_type' => $product->product_type ?? 'drug',
                 'base_unit_name' => $product->base_unit_name ?? 'Piece',
-                'price'    => $product->price ? $product->price->current_sale_price : 0,
-                'stock'    => $product->stock ? $product->stock->current_quantity : 0,
+                'price' => $product->price ? $product->price->current_sale_price : 0,
+                'stock' => $product->stock ? $product->stock->current_quantity : 0,
                 'category' => $product->category ? $product->category->category_name : 'N/A',
-                'hmo'      => $hmoMap[$product->id] ?? null,
-                'packagings' => $product->packagings->sortBy('level')->map(function($pkg) {
+                'hmo' => $hmoMap[$product->id] ?? null,
+                'packagings' => $product->packagings->sortBy('level')->map(function ($pkg) {
                     return [
                         'id' => $pkg->id,
                         'name' => $pkg->name,
@@ -1832,6 +1848,7 @@ class NursingWorkbenchController extends Controller{
                 'batch_count' => $batches->count(),
                 'batches' => $batches->map(function ($batch) {
                     $expiryDate = $batch->expiry_date ? Carbon::parse($batch->expiry_date) : null;
+
                     return [
                         'id' => $batch->id,
                         'batch_number' => $batch->batch_number ?? "BTH-{$batch->id}",
@@ -1939,7 +1956,7 @@ class NursingWorkbenchController extends Controller{
         $validator = Validator::make($request->all(), [
             'patient_id' => 'required|exists:patients,id',
             'service_id' => 'required|exists:services,id',
-            'qty'        => 'nullable|integer|min:1',
+            'qty' => 'nullable|integer|min:1',
         ]);
 
         if ($validator->fails()) {
@@ -1964,7 +1981,7 @@ class NursingWorkbenchController extends Controller{
                 $hmoData = HmoHelper::applyHmoTariff($patient->id, null, $service->id);
                 if ($hmoData) {
                     $billReq->payable_amount = $hmoData['payable_amount'] * $qty;
-                    $billReq->claims_amount  = $hmoData['claims_amount'] * $qty;
+                    $billReq->claims_amount = $hmoData['claims_amount'] * $qty;
                     $billReq->coverage_mode = $hmoData['coverage_mode'];
                     $billReq->validation_status = $hmoData['validation_status'];
                 }
@@ -1984,9 +2001,10 @@ class NursingWorkbenchController extends Controller{
             ]);
         } catch (\Exception $e) {
             DB::rollBack();
+
             return response()->json([
                 'success' => false,
-                'message' => 'Error adding service: ' . $e->getMessage()
+                'message' => 'Error adding service: ' . $e->getMessage(),
             ], 500);
         }
     }
@@ -2019,8 +2037,8 @@ class NursingWorkbenchController extends Controller{
             $gateCheck = Gate::inspect('bill-consumable-from-store', $consumableStore);
             if ($gateCheck->denied()) {
                 return response()->json([
-                    'success'    => false,
-                    'message'    => $gateCheck->message(),
+                    'success' => false,
+                    'message' => $gateCheck->message(),
                     'gate_error' => true,
                 ], 403);
             }
@@ -2116,9 +2134,10 @@ class NursingWorkbenchController extends Controller{
             ]);
         } catch (\Exception $e) {
             DB::rollBack();
+
             return response()->json([
                 'success' => false,
-                'message' => 'Error adding consumable: ' . $e->getMessage()
+                'message' => 'Error adding consumable: ' . $e->getMessage(),
             ], 500);
         }
     }
@@ -2187,9 +2206,10 @@ class NursingWorkbenchController extends Controller{
             ]);
         } catch (\Exception $e) {
             DB::rollBack();
+
             return response()->json([
                 'success' => false,
-                'message' => 'Error billing lab service: ' . $e->getMessage()
+                'message' => 'Error billing lab service: ' . $e->getMessage(),
             ], 500);
         }
     }
@@ -2258,9 +2278,10 @@ class NursingWorkbenchController extends Controller{
             ]);
         } catch (\Exception $e) {
             DB::rollBack();
+
             return response()->json([
                 'success' => false,
-                'message' => 'Error billing imaging service: ' . $e->getMessage()
+                'message' => 'Error billing imaging service: ' . $e->getMessage(),
             ], 500);
         }
     }
@@ -2277,7 +2298,7 @@ class NursingWorkbenchController extends Controller{
             if ($bill->payment_id) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Cannot remove a paid item'
+                    'message' => 'Cannot remove a paid item',
                 ], 400);
             }
 
@@ -2285,7 +2306,7 @@ class NursingWorkbenchController extends Controller{
             if ($bill->staff_user_id !== Auth::id()) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'You can only remove items that you added'
+                    'message' => 'You can only remove items that you added',
                 ], 403);
             }
 
@@ -2293,7 +2314,7 @@ class NursingWorkbenchController extends Controller{
             if ($bill->sale) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Cannot remove — item has already been dispensed'
+                    'message' => 'Cannot remove — item has already been dispensed',
                 ], 400);
             }
 
@@ -2302,7 +2323,7 @@ class NursingWorkbenchController extends Controller{
             if ($bill->productRequest && $bill->productRequest->status >= 3) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Cannot remove — product has already been dispensed'
+                    'message' => 'Cannot remove — product has already been dispensed',
                 ], 400);
             }
 
@@ -2311,7 +2332,7 @@ class NursingWorkbenchController extends Controller{
             if ($labReq && $labReq->status >= 2) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Cannot remove — lab test is already in progress'
+                    'message' => 'Cannot remove — lab test is already in progress',
                 ], 400);
             }
 
@@ -2320,7 +2341,7 @@ class NursingWorkbenchController extends Controller{
             if ($imagingReq && $imagingReq->status >= 2) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Cannot remove — imaging request is already in progress'
+                    'message' => 'Cannot remove — imaging request is already in progress',
                 ], 400);
             }
 
@@ -2328,12 +2349,12 @@ class NursingWorkbenchController extends Controller{
 
             return response()->json([
                 'success' => true,
-                'message' => 'Bill item removed successfully'
+                'message' => 'Bill item removed successfully',
             ]);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Error removing item: ' . $e->getMessage()
+                'message' => 'Error removing item: ' . $e->getMessage(),
             ], 500);
         }
     }
@@ -2361,13 +2382,18 @@ class NursingWorkbenchController extends Controller{
         if (!$typeFilter || $typeFilter === 'lab') {
             $labQuery = LabServiceRequest::with(['service.price', 'productOrServiceRequest.payment', 'doctor'])
                 ->where('patient_id', $patientId);
-            if ($dateFrom) $labQuery->where('created_at', '>=', $dateFrom);
-            if ($dateTo) $labQuery->where('created_at', '<=', $dateTo);
+            if ($dateFrom) {
+                $labQuery->where('created_at', '>=', $dateFrom);
+            }
+            if ($dateTo) {
+                $labQuery->where('created_at', '<=', $dateTo);
+            }
 
             $labRequests = $labQuery->orderBy('created_at', 'desc')->get()
                 ->map(function ($req) {
                     $posr = $req->productOrServiceRequest;
                     $basePrice = optional(optional($req->service)->price)->sale_price ?? 0;
+
                     return [
                         'id' => $req->id,
                         'request_no' => 'LAB-' . str_pad($req->id, 6, '0', STR_PAD_LEFT),
@@ -2398,13 +2424,18 @@ class NursingWorkbenchController extends Controller{
         if (!$typeFilter || $typeFilter === 'imaging') {
             $imagingQuery = ImagingServiceRequest::with(['service.price', 'productOrServiceRequest.payment', 'doctor'])
                 ->where('patient_id', $patientId);
-            if ($dateFrom) $imagingQuery->where('created_at', '>=', $dateFrom);
-            if ($dateTo) $imagingQuery->where('created_at', '<=', $dateTo);
+            if ($dateFrom) {
+                $imagingQuery->where('created_at', '>=', $dateFrom);
+            }
+            if ($dateTo) {
+                $imagingQuery->where('created_at', '<=', $dateTo);
+            }
 
             $imagingRequests = $imagingQuery->orderBy('created_at', 'desc')->get()
                 ->map(function ($req) {
                     $posr = $req->productOrServiceRequest;
                     $basePrice = optional(optional($req->service)->price)->sale_price ?? 0;
+
                     return [
                         'id' => $req->id,
                         'request_no' => 'IMG-' . str_pad($req->id, 6, '0', STR_PAD_LEFT),
@@ -2435,8 +2466,12 @@ class NursingWorkbenchController extends Controller{
         if (!$typeFilter || $typeFilter === 'product') {
             $productQuery = ProductRequest::with(['product.price', 'productOrServiceRequest.payment', 'doctor'])
                 ->where('patient_id', $patientId);
-            if ($dateFrom) $productQuery->where('created_at', '>=', $dateFrom);
-            if ($dateTo) $productQuery->where('created_at', '<=', $dateTo);
+            if ($dateFrom) {
+                $productQuery->where('created_at', '>=', $dateFrom);
+            }
+            if ($dateTo) {
+                $productQuery->where('created_at', '<=', $dateTo);
+            }
 
             $productRequests = $productQuery->orderBy('created_at', 'desc')->get()
                 ->map(function ($req) {
@@ -2444,6 +2479,7 @@ class NursingWorkbenchController extends Controller{
                     $qty = $posr->qty ?? 1;
                     $unitPrice = optional(optional($req->product)->price)->current_sale_price ?? 0;
                     $basePrice = $unitPrice * $qty;
+
                     return [
                         'id' => $req->id,
                         'request_no' => 'PRD-' . str_pad($req->id, 6, '0', STR_PAD_LEFT),
@@ -2476,33 +2512,39 @@ class NursingWorkbenchController extends Controller{
                 ->where('user_id', $patient->user_id)
                 ->where('is_bundle_item', false)
                 ->whereDoesntHave('productRequest')
-                ->whereNotIn('id', function($q) {
+                ->whereNotIn('id', function ($q) {
                     $q->select('service_request_id')->from('lab_service_requests')->whereNotNull('service_request_id');
                 })
-                ->whereNotIn('id', function($q) {
+                ->whereNotIn('id', function ($q) {
                     $q->select('service_request_id')->from('imaging_service_requests')->whereNotNull('service_request_id');
                 });
 
-            if ($dateFrom) $posrQuery->where('created_at', '>=', $dateFrom);
-            if ($dateTo) $posrQuery->where('created_at', '<=', $dateTo);
+            if ($dateFrom) {
+                $posrQuery->where('created_at', '>=', $dateFrom);
+            }
+            if ($dateTo) {
+                $posrQuery->where('created_at', '<=', $dateTo);
+            }
 
             $posrRequests = $posrQuery->orderBy('created_at', 'desc')->get()
                 ->map(function ($posr) use ($typeFilter) {
                     $isProduct = !is_null($posr->product_id);
                     $type = $isProduct ? 'product' : 'service';
-                    
-                    if ($typeFilter && $typeFilter !== $type) return null;
+
+                    if ($typeFilter && $typeFilter !== $type) {
+                        return null;
+                    }
 
                     $qty = $posr->qty ?? 1;
-                    $unitPrice = $isProduct 
+                    $unitPrice = $isProduct
                         ? (optional(optional($posr->product)->price)->current_sale_price ?? 0)
                         : (optional(optional($posr->service)->price)->sale_price ?? 0);
                     $basePrice = $unitPrice * $qty;
-                    
-                    $name = $isProduct 
+
+                    $name = $isProduct
                         ? (optional($posr->product)->product_name ?? 'Unknown Product')
                         : (optional($posr->service)->service_name ?? 'Unknown Service');
-                    
+
                     $prefix = $isProduct ? 'PRD-' : 'SVC-';
 
                     $deliveryStatus = 'Pending Billing';
@@ -2511,7 +2553,7 @@ class NursingWorkbenchController extends Controller{
                         if ($posr->sale) {
                             $deliveryStatus = 'Dispensed';
                             $deliveryStatusCode = 'completed';
-                        } else if ($posr->payment_id) {
+                        } elseif ($posr->payment_id) {
                             $deliveryStatus = 'Awaiting Dispensing';
                             $deliveryStatusCode = 'in_progress';
                         }
@@ -2582,6 +2624,7 @@ class NursingWorkbenchController extends Controller{
                     'billed' => '<span class="billing-badge billing-billed">Billed</span>',
                     'paid' => '<span class="billing-badge billing-paid">Paid</span>',
                 ];
+
                 return $statusMap[$row['billing_status_code']] ?? '<span class="billing-badge">Unknown</span>';
             })
             ->addColumn('delivery_badge', function ($row) {
@@ -2590,6 +2633,7 @@ class NursingWorkbenchController extends Controller{
                     'in_progress' => '<span class="delivery-badge delivery-progress">In Progress</span>',
                     'completed' => '<span class="delivery-badge delivery-completed">Completed</span>',
                 ];
+
                 return $statusMap[$row['delivery_status_code']] ?? '<span class="delivery-badge">Unknown</span>';
             })
             ->addColumn('type_badge', function ($row) {
@@ -2600,6 +2644,7 @@ class NursingWorkbenchController extends Controller{
                     'consultation' => 'badge-primary',
                     'procedure' => 'badge-secondary',
                 ];
+
                 return '<span class="badge ' . ($typeColors[$row['type']] ?? 'badge-secondary') . '">' . $row['type_label'] . '</span>';
             })
             ->addColumn('actions', function ($row) {
@@ -2652,8 +2697,12 @@ class NursingWorkbenchController extends Controller{
 
         // Lab
         $labQuery = LabServiceRequest::with(['productOrServiceRequest'])->where('patient_id', $patientId);
-        if ($dateFrom) $labQuery->where('created_at', '>=', $dateFrom);
-        if ($dateTo) $labQuery->where('created_at', '<=', $dateTo);
+        if ($dateFrom) {
+            $labQuery->where('created_at', '>=', $dateFrom);
+        }
+        if ($dateTo) {
+            $labQuery->where('created_at', '<=', $dateTo);
+        }
         $labRequests = $labQuery->get();
         $stats['total_requests'] += $labRequests->count();
         $stats['completed'] += $labRequests->where('status', 4)->count();
@@ -2666,8 +2715,12 @@ class NursingWorkbenchController extends Controller{
 
         // Imaging
         $imagingQuery = ImagingServiceRequest::with(['productOrServiceRequest'])->where('patient_id', $patientId);
-        if ($dateFrom) $imagingQuery->where('created_at', '>=', $dateFrom);
-        if ($dateTo) $imagingQuery->where('created_at', '<=', $dateTo);
+        if ($dateFrom) {
+            $imagingQuery->where('created_at', '>=', $dateFrom);
+        }
+        if ($dateTo) {
+            $imagingQuery->where('created_at', '<=', $dateTo);
+        }
         $imagingRequests = $imagingQuery->get();
         $stats['total_requests'] += $imagingRequests->count();
         $stats['completed'] += $imagingRequests->where('status', 3)->count();
@@ -2680,8 +2733,12 @@ class NursingWorkbenchController extends Controller{
 
         // Products
         $productQuery = ProductRequest::with(['productOrServiceRequest'])->where('patient_id', $patientId);
-        if ($dateFrom) $productQuery->where('created_at', '>=', $dateFrom);
-        if ($dateTo) $productQuery->where('created_at', '<=', $dateTo);
+        if ($dateFrom) {
+            $productQuery->where('created_at', '>=', $dateFrom);
+        }
+        if ($dateTo) {
+            $productQuery->where('created_at', '<=', $dateTo);
+        }
         $productRequests = $productQuery->get();
         $stats['total_requests'] += $productRequests->count();
         $stats['completed'] += $productRequests->where('status', 3)->count();
@@ -2691,21 +2748,25 @@ class NursingWorkbenchController extends Controller{
                 $stats['patient_payable'] += $req->productOrServiceRequest->payable_amount ?? 0;
             }
         }
-        
+
         // Pure Services & Products (POSR only)
         $posrQuery = ProductOrServiceRequest::where('user_id', $patient->user_id)
             ->where('is_bundle_item', false)
             ->whereDoesntHave('productRequest')
-            ->whereNotIn('id', function($q) {
+            ->whereNotIn('id', function ($q) {
                 $q->select('service_request_id')->from('lab_service_requests')->whereNotNull('service_request_id');
             })
-            ->whereNotIn('id', function($q) {
+            ->whereNotIn('id', function ($q) {
                 $q->select('service_request_id')->from('imaging_service_requests')->whereNotNull('service_request_id');
             });
-            
-        if ($dateFrom) $posrQuery->where('created_at', '>=', $dateFrom);
-        if ($dateTo) $posrQuery->where('created_at', '<=', $dateTo);
-        
+
+        if ($dateFrom) {
+            $posrQuery->where('created_at', '>=', $dateFrom);
+        }
+        if ($dateTo) {
+            $posrQuery->where('created_at', '<=', $dateTo);
+        }
+
         $posrRequests = $posrQuery->get();
         $stats['total_requests'] += $posrRequests->count();
         $stats['completed'] += $posrRequests->whereNotNull('payment_id')->count();
@@ -2731,6 +2792,7 @@ class NursingWorkbenchController extends Controller{
         if ($posr) {
             return $posr->payment_id ? 'Paid' : 'Billed';
         }
+
         return 'Pending Billing';
     }
 
@@ -2739,36 +2801,67 @@ class NursingWorkbenchController extends Controller{
         if ($posr) {
             return $posr->payment_id ? 'paid' : 'billed';
         }
+
         return 'pending';
     }
 
     private function getReqDeliveryStatus($status, $type)
     {
         if ($type === 'lab') {
-            if ($status == 1) return 'Pending Billing';
-            if ($status == 2) return 'Awaiting Sample';
-            if ($status == 3) return 'Awaiting Results';
-            if ($status == 4) return 'Completed';
+            if ($status == 1) {
+                return 'Pending Billing';
+            }
+            if ($status == 2) {
+                return 'Awaiting Sample';
+            }
+            if ($status == 3) {
+                return 'Awaiting Results';
+            }
+            if ($status == 4) {
+                return 'Completed';
+            }
         } else {
-            if ($status == 1) return 'Pending Billing';
-            if ($status == 2) return 'Awaiting Results';
-            if ($status == 3) return 'Completed';
+            if ($status == 1) {
+                return 'Pending Billing';
+            }
+            if ($status == 2) {
+                return 'Awaiting Results';
+            }
+            if ($status == 3) {
+                return 'Completed';
+            }
         }
+
         return 'Unknown';
     }
 
     private function getReqDeliveryStatusCode($status, $type)
     {
         if ($type === 'lab') {
-            if ($status == 1) return 'pending';
-            if ($status == 2) return 'in_progress';
-            if ($status == 3) return 'in_progress';
-            if ($status == 4) return 'completed';
+            if ($status == 1) {
+                return 'pending';
+            }
+            if ($status == 2) {
+                return 'in_progress';
+            }
+            if ($status == 3) {
+                return 'in_progress';
+            }
+            if ($status == 4) {
+                return 'completed';
+            }
         } else {
-            if ($status == 1) return 'pending';
-            if ($status == 2) return 'in_progress';
-            if ($status == 3) return 'completed';
+            if ($status == 1) {
+                return 'pending';
+            }
+            if ($status == 2) {
+                return 'in_progress';
+            }
+            if ($status == 3) {
+                return 'completed';
+            }
         }
+
         return 'pending';
     }
 
@@ -2777,6 +2870,7 @@ class NursingWorkbenchController extends Controller{
         if ($posr) {
             return $posr->payment_id ? 'Paid' : 'Billed';
         }
+
         return 'Pending Billing';
     }
 
@@ -2785,22 +2879,37 @@ class NursingWorkbenchController extends Controller{
         if ($posr) {
             return $posr->payment_id ? 'paid' : 'billed';
         }
+
         return 'pending';
     }
 
     private function getReqProductDeliveryStatus($status)
     {
-        if ($status == 1) return 'Pending Billing';
-        if ($status == 2) return 'Awaiting Dispensing';
-        if ($status == 3) return 'Dispensed';
+        if ($status == 1) {
+            return 'Pending Billing';
+        }
+        if ($status == 2) {
+            return 'Awaiting Dispensing';
+        }
+        if ($status == 3) {
+            return 'Dispensed';
+        }
+
         return 'Unknown';
     }
 
     private function getReqProductDeliveryStatusCode($status)
     {
-        if ($status == 1) return 'pending';
-        if ($status == 2) return 'in_progress';
-        if ($status == 3) return 'completed';
+        if ($status == 1) {
+            return 'pending';
+        }
+        if ($status == 2) {
+            return 'in_progress';
+        }
+        if ($status == 3) {
+            return 'completed';
+        }
+
         return 'pending';
     }
 
@@ -2868,19 +2977,19 @@ class NursingWorkbenchController extends Controller{
                 $isCreator = Auth::id() == $note->created_by;
 
                 if ($canEdit && $isCreator) {
-                     // Escape content for data attributes
-                     $noteContentEscaped = htmlspecialchars($note->note, ENT_QUOTES);
-                     $typeId = $note->nursing_note_type_id;
+                    // Escape content for data attributes
+                    $noteContentEscaped = htmlspecialchars($note->note, ENT_QUOTES);
+                    $typeId = $note->nursing_note_type_id;
 
-                     $html .= '<div class="card-footer bg-white border-top-0 d-flex justify-content-end pt-0 pb-3">';
-                     $html .= "<button class='btn btn-sm btn-outline-primary edit-note-btn'
+                    $html .= '<div class="card-footer bg-white border-top-0 d-flex justify-content-end pt-0 pb-3">';
+                    $html .= "<button class='btn btn-sm btn-outline-primary edit-note-btn'
                                   onclick='openEditNoteModal(this)'
                                   data-id='{$note->id}'
                                   data-type-id='{$typeId}'
                                   data-content='{$noteContentEscaped}'>";
-                     $html .= '<i class="mdi mdi-pencil"></i> Edit Note';
-                     $html .= '</button>';
-                     $html .= '</div>';
+                    $html .= '<i class="mdi mdi-pencil"></i> Edit Note';
+                    $html .= '</button>';
+                    $html .= '</div>';
                 }
 
                 $html .= '</div>'; // End Card
@@ -2897,6 +3006,7 @@ class NursingWorkbenchController extends Controller{
     public function getNoteTypes()
     {
         $types = NursingNoteType::all(['id', 'name', 'template']);
+
         return response()->json($types);
     }
 
@@ -2906,10 +3016,10 @@ class NursingWorkbenchController extends Controller{
     public function saveNursingNote(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'patient_id'   => 'required|exists:patients,id',
+            'patient_id' => 'required|exists:patients,id',
             'note_type_id' => 'required|exists:nursing_note_types,id',
-            'note'         => 'required|string',
-            'completed'    => 'nullable|boolean',
+            'note' => 'required|string',
+            'completed' => 'nullable|boolean',
         ]);
 
         if ($validator->fails()) {
@@ -2928,19 +3038,19 @@ class NursingWorkbenchController extends Controller{
 
             if ($existingNote) {
                 $existingNote->update([
-                    'note'       => $request->note,
+                    'note' => $request->note,
                     'updated_by' => Auth::id(),
-                    'completed'  => $completed,
+                    'completed' => $completed,
                 ]);
                 $note = $existingNote;
                 $message = $completed ? 'Nursing note saved successfully' : 'Draft autosaved';
             } else {
                 $note = NursingNote::create([
-                    'patient_id'           => $patientId,
+                    'patient_id' => $patientId,
                     'nursing_note_type_id' => $request->note_type_id,
-                    'note'                 => $request->note,
-                    'created_by'           => Auth::id(),
-                    'completed'            => $completed,
+                    'note' => $request->note,
+                    'created_by' => Auth::id(),
+                    'completed' => $completed,
                 ]);
                 $message = $completed ? 'Nursing note created successfully' : 'Draft autosaved';
             }
@@ -2948,12 +3058,12 @@ class NursingWorkbenchController extends Controller{
             return response()->json([
                 'success' => true,
                 'message' => $message,
-                'note'    => $note,
+                'note' => $note,
             ]);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Error saving note: ' . $e->getMessage()
+                'message' => 'Error saving note: ' . $e->getMessage(),
             ], 500);
         }
     }
@@ -2976,16 +3086,16 @@ class NursingWorkbenchController extends Controller{
 
             // Check permissions again just to be safe (backend validation)
             if (Auth::id() != $note->created_by) {
-                 return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
+                return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
             }
 
-             // Check time window
+            // Check time window
             $createdDate = \Carbon\Carbon::parse($note->created_at);
             $editDuration = appsettings('note_edit_duration') ?? 60;
             $editDeadline = $createdDate->copy()->addMinutes($editDuration);
 
             if (\Carbon\Carbon::now()->greaterThan($editDeadline)) {
-                 return response()->json(['success' => false, 'message' => 'Edit window has expired'], 403);
+                return response()->json(['success' => false, 'message' => 'Edit window has expired'], 403);
             }
 
             $note->update([
@@ -3002,7 +3112,7 @@ class NursingWorkbenchController extends Controller{
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Error updating note: ' . $e->getMessage()
+                'message' => 'Error updating note: ' . $e->getMessage(),
             ], 500);
         }
     }
@@ -3172,7 +3282,7 @@ class NursingWorkbenchController extends Controller{
         $admissions = AdmissionRequest::with([
                 'patient.user',
                 'bed',
-                'doctor'
+                'doctor',
             ])
             ->where('discharged', 0)
             ->whereNotNull('bed_id')
@@ -3251,9 +3361,9 @@ class NursingWorkbenchController extends Controller{
     private function buildWardStockSnapshot(): ?array
     {
         $resolver = app(\App\Services\StoreContextResolver::class);
-        $store    = $resolver->resolve(Auth::user());
+        $store = $resolver->resolve(Auth::user());
 
-        if (! $store) {
+        if (!$store) {
             return null;
         }
 
@@ -3274,23 +3384,23 @@ class NursingWorkbenchController extends Controller{
                 : null;
 
             return [
-                'product_id'       => $product->id,
-                'product_name'     => $product->product_name,
-                'product_code'     => $product->product_code,
-                'unit'             => $product->base_unit_name ?? '',
-                'total_qty'        => $totalQty,
-                'batch_count'      => $batchGroup->count(),
-                'earliest_expiry'  => $earliestExpiry?->expiry_date?->format('d M Y'),
+                'product_id' => $product->id,
+                'product_name' => $product->product_name,
+                'product_code' => $product->product_code,
+                'unit' => $product->base_unit_name ?? '',
+                'total_qty' => $totalQty,
+                'batch_count' => $batchGroup->count(),
+                'earliest_expiry' => $earliestExpiry?->expiry_date?->format('d M Y'),
                 'expiry_days_left' => $expiryDays,
-                'stock_status'     => $totalQty <= 0 ? 'out' : ($expiryDays !== null && $expiryDays <= 30 ? 'expiring_soon' : 'ok'),
+                'stock_status' => $totalQty <= 0 ? 'out' : ($expiryDays !== null && $expiryDays <= 30 ? 'expiring_soon' : 'ok'),
             ];
         })->values();
 
         return [
-            'store_id'   => $store->id,
+            'store_id' => $store->id,
             'store_name' => $store->store_name,
             'store_role' => $store->distribution_role,
-            'items'      => $grouped,
+            'items' => $grouped,
             'generated_at' => Carbon::now()->toISOString(),
         ];
     }
@@ -3496,6 +3606,7 @@ class NursingWorkbenchController extends Controller{
         $product = Product::with('price')->findOrFail($validated['product_id']);
 
         DB::beginTransaction();
+
         try {
             // Create billing record
             $billing = new ProductOrServiceRequest();
@@ -3550,6 +3661,7 @@ class NursingWorkbenchController extends Controller{
             ]);
         } catch (\Exception $e) {
             DB::rollBack();
+
             return response()->json([
                 'success' => false,
                 'message' => 'Failed to administer vaccine: ' . $e->getMessage(),
@@ -3634,13 +3746,14 @@ class NursingWorkbenchController extends Controller{
 
         $schedule = PatientImmunizationSchedule::with('scheduleItem')->findOrFail($validated['schedule_id']);
         $patient = Patient::findOrFail($schedule->patient_id);
-        
+
         $product = null;
         if (!empty($validated['product_id'])) {
             $product = Product::with('price')->findOrFail($validated['product_id']);
         }
 
         DB::beginTransaction();
+
         try {
             $billingId = null;
             $storeId = $validated['store_id'] ?? null;
@@ -3656,7 +3769,7 @@ class NursingWorkbenchController extends Controller{
                 $billing->patient_id = $patient->id;
                 $billing->user_id = $patient->user_id;
                 $billing->staff_user_id = Auth::id();
-                
+
                 if ($storeId && $product) {
                     $billing->product_id = $product->id;
                     $billing->type = 'product';
@@ -3664,14 +3777,14 @@ class NursingWorkbenchController extends Controller{
                     $billing->service_id = $serviceId;
                     $billing->type = 'service';
                 }
-                
+
                 $billing->qty = 1;
 
                 // Try to apply HMO tariff, fallback to regular price if not found
                 try {
                     $tariffItemId = $storeId ? $product->id : $serviceId;
                     $hmoData = HmoHelper::applyHmoTariff($patient->id, $storeId ? $tariffItemId : null, $storeId ? null : $tariffItemId);
-                    
+
                     if ($hmoData) {
                         $billing->payable_amount = $hmoData['payable_amount'];
                         $billing->claims_amount = $hmoData['claims_amount'];
@@ -3759,6 +3872,7 @@ class NursingWorkbenchController extends Controller{
             ]);
         } catch (\Exception $e) {
             DB::rollBack();
+
             return response()->json([
                 'success' => false,
                 'message' => 'Failed to administer vaccine: ' . $e->getMessage(),
@@ -3950,7 +4064,7 @@ class NursingWorkbenchController extends Controller{
                     $html .= '</div>';
                 }
 
-                if(!empty($vital->other_notes)){
+                if (!empty($vital->other_notes)) {
                     $html .= '<div class="mt-2 pt-2 border-top">';
                     $html .= '<small class="text-muted">Notes:</small>';
                     $html .= '<p class="mb-0 text-dark">' . htmlspecialchars($vital->other_notes) . '</p>';
@@ -4028,6 +4142,7 @@ class NursingWorkbenchController extends Controller{
                 } elseif ($sys > 140 || $sys < 90 || $dia > 90 || $dia < 60) {
                     return ['status' => 'warning', 'class' => 'text-warning'];
                 }
+
                 return ['status' => 'normal', 'class' => 'text-success'];
 
             case 'temp':
@@ -4037,6 +4152,7 @@ class NursingWorkbenchController extends Controller{
                 } elseif ($t < 36.1 || $t > 38) {
                     return ['status' => 'warning', 'class' => 'text-warning'];
                 }
+
                 return ['status' => 'normal', 'class' => 'text-success'];
 
             case 'hr':
@@ -4046,6 +4162,7 @@ class NursingWorkbenchController extends Controller{
                 } elseif ($hr < 60 || $hr > 100) {
                     return ['status' => 'warning', 'class' => 'text-warning'];
                 }
+
                 return ['status' => 'normal', 'class' => 'text-success'];
 
             case 'rr':
@@ -4055,6 +4172,7 @@ class NursingWorkbenchController extends Controller{
                 } elseif ($rr < 12 || $rr > 20) {
                     return ['status' => 'warning', 'class' => 'text-warning'];
                 }
+
                 return ['status' => 'normal', 'class' => 'text-success'];
 
             case 'spo2':
@@ -4064,6 +4182,7 @@ class NursingWorkbenchController extends Controller{
                 } elseif ($spo2 < 95) {
                     return ['status' => 'warning', 'class' => 'text-warning'];
                 }
+
                 return ['status' => 'normal', 'class' => 'text-success'];
 
             case 'sugar':
@@ -4073,6 +4192,7 @@ class NursingWorkbenchController extends Controller{
                 } elseif ($sugar < 80 || $sugar > 140) {
                     return ['status' => 'warning', 'class' => 'text-warning'];
                 }
+
                 return ['status' => 'normal', 'class' => 'text-success'];
 
             case 'pain':
@@ -4082,6 +4202,7 @@ class NursingWorkbenchController extends Controller{
                 } elseif ($pain >= 4) {
                     return ['status' => 'warning', 'class' => 'text-warning'];
                 }
+
                 return ['status' => 'normal', 'class' => 'text-success'];
 
             default:
@@ -4105,6 +4226,7 @@ class NursingWorkbenchController extends Controller{
         } elseif ($bmi < 30) {
             return 'text-warning'; // Overweight
         }
+
         return 'text-danger'; // Obese
     }
 
@@ -4172,22 +4294,22 @@ class NursingWorkbenchController extends Controller{
             $patient = $queue->patient;
 
             return [
-                'id'                          => $queue->id,
-                'patient_id'                  => $patient ? $patient->id : 0,
-                'patient_name'                => $patient ? userfullname($patient->user_id) : 'Unknown',
-                'file_no'                     => $patient ? ($patient->file_no ?? 'N/A') : 'N/A',
-                'age'                         => $patient ? $this->calculateAge($patient->dob) : 'N/A',
-                'gender'                      => $patient ? ($patient->gender ?? 'N/A') : 'N/A',
-                'hmo'                         => $patient && $patient->hmo ? $patient->hmo->name : null,
-                'doctor'                      => $queue->doctor ? userfullname($queue->doctor->user_id) : 'N/A',
-                'clinic'                      => $queue->clinic ? $queue->clinic->name : 'N/A',
-                'clinic_id'                   => $queue->clinic_id,
-                'priority'                    => $queue->priority ?? 'routine',
-                'source'                      => $queue->source ?? 'walk_in',
-                'consultation_started_at'     => $queue->consultation_started_at,
-                'is_paused'                   => (bool) $queue->is_paused,
+                'id' => $queue->id,
+                'patient_id' => $patient ? $patient->id : 0,
+                'patient_name' => $patient ? userfullname($patient->user_id) : 'Unknown',
+                'file_no' => $patient ? ($patient->file_no ?? 'N/A') : 'N/A',
+                'age' => $patient ? $this->calculateAge($patient->dob) : 'N/A',
+                'gender' => $patient ? ($patient->gender ?? 'N/A') : 'N/A',
+                'hmo' => $patient && $patient->hmo ? $patient->hmo->name : null,
+                'doctor' => $queue->doctor ? userfullname($queue->doctor->user_id) : 'N/A',
+                'clinic' => $queue->clinic ? $queue->clinic->name : 'N/A',
+                'clinic_id' => $queue->clinic_id,
+                'priority' => $queue->priority ?? 'routine',
+                'source' => $queue->source ?? 'walk_in',
+                'consultation_started_at' => $queue->consultation_started_at,
+                'is_paused' => (bool) $queue->is_paused,
                 'consultation_paused_seconds' => (int) ($queue->consultation_paused_seconds ?? 0),
-                'last_paused_at'              => $queue->last_paused_at,
+                'last_paused_at' => $queue->last_paused_at,
             ];
         });
 
@@ -4212,6 +4334,7 @@ class NursingWorkbenchController extends Controller{
                 if ($admission->patient && $admission->patient->user) {
                     return $admission->patient->user->name ?? 'Unknown';
                 }
+
                 return 'Unknown';
             })
             ->addColumn('name', function ($admission) {
@@ -4219,6 +4342,7 @@ class NursingWorkbenchController extends Controller{
                 if ($admission->patient && $admission->patient->user) {
                     return $admission->patient->user->name ?? 'Unknown';
                 }
+
                 return 'Unknown';
             })
             ->addColumn('file_no', function ($admission) {
@@ -4260,7 +4384,7 @@ class NursingWorkbenchController extends Controller{
                     $html .= "<a href='#' class='tp-view-link badge me-2' style='background-color: #e0f2f1; color: #00796b; border: 1px solid #00897b; text-decoration: none;' data-plan-id='{$admission->treatment_plan_id}' onclick='ClinicalOrdersKit.viewTreatmentPlan({$admission->treatment_plan_id}); return false;'><i class='fa fa-clipboard-list'></i> " . htmlspecialchars($admission->treatment_plan_name) . "</a>";
                 }
                 $html .= '<small class="text-muted">' . $time . '</small>';
-                $html .= '<button class="btn btn-sm btn-outline-danger ms-3" onclick="loadPatient('.$patientId.')">Open</button>';
+                $html .= '<button class="btn btn-sm btn-outline-danger ms-3" onclick="loadPatient(' . $patientId . ')">Open</button>';
                 $html .= '</div>';
                 $html .= '</div></div>';
 
@@ -4281,7 +4405,7 @@ class NursingWorkbenchController extends Controller{
         if (\Auth::id() != $vital->taken_by) {
             return response()->json([
                 'success' => false,
-                'message' => 'You can only edit vitals that you recorded.'
+                'message' => 'You can only edit vitals that you recorded.',
             ], 403);
         }
 
@@ -4292,7 +4416,7 @@ class NursingWorkbenchController extends Controller{
         if (\Carbon\Carbon::now()->greaterThan($editDeadline)) {
             return response()->json([
                 'success' => false,
-                'message' => 'The edit window has expired. Vitals can only be edited within ' . $editDuration . ' minutes of recording.'
+                'message' => 'The edit window has expired. Vitals can only be edited within ' . $editDuration . ' minutes of recording.',
             ], 403);
         }
 
@@ -4314,7 +4438,7 @@ class NursingWorkbenchController extends Controller{
 
         return response()->json([
             'success' => true,
-            'message' => 'Vitals updated successfully.'
+            'message' => 'Vitals updated successfully.',
         ]);
     }
 
@@ -4328,13 +4452,13 @@ class NursingWorkbenchController extends Controller{
     public function getWardDashboardStats()
     {
         $totalBeds = Bed::count();
-        $occupiedBeds = Bed::whereHas('currentAdmission', function($q) {
+        $occupiedBeds = Bed::whereHas('currentAdmission', function ($q) {
             $q->where('discharged', 0);
         })->count();
-        $availableBeds = Bed::where(function($q) {
+        $availableBeds = Bed::where(function ($q) {
             $q->where('bed_status', 'available')
               ->orWhereNull('bed_status');
-        })->whereDoesntHave('currentAdmission', function($q) {
+        })->whereDoesntHave('currentAdmission', function ($q) {
             $q->where('discharged', 0);
         })->count();
 
@@ -4357,25 +4481,25 @@ class NursingWorkbenchController extends Controller{
     {
         // Check if Ward model exists, if not fall back to grouping beds by ward column
         if (class_exists('\\App\\Models\\Ward')) {
-            $wards = \App\Models\Ward::with(['beds' => function($q) {
+            $wards = \App\Models\Ward::with(['beds' => function ($q) {
                 $q->select('id', 'name', 'ward_id', 'bed_status')
                   ->with(['currentAdmission.patient.user']);
             }])->get();
 
-            return response()->json($wards->map(function($ward) {
+            return response()->json($wards->map(function ($ward) {
                 return [
                     'id' => $ward->id,
                     'name' => $ward->name,
                     'type' => $ward->type ?? 'general',
                     'capacity' => $ward->capacity ?? $ward->beds->count(),
-                    'occupied_beds' => $ward->beds->filter(function($bed) {
+                    'occupied_beds' => $ward->beds->filter(function ($bed) {
                         return $bed->currentAdmission && !$bed->currentAdmission->discharged;
                     })->count(),
-                    'available_beds' => $ward->beds->filter(function($bed) {
+                    'available_beds' => $ward->beds->filter(function ($bed) {
                         return (!$bed->currentAdmission || $bed->currentAdmission->discharged)
                                && ($bed->bed_status === 'available' || $bed->bed_status === null);
                     })->count(),
-                    'beds' => $ward->beds->map(function($bed) {
+                    'beds' => $ward->beds->map(function ($bed) {
                         $status = 'available';
                         $currentPatient = null;
 
@@ -4405,19 +4529,19 @@ class NursingWorkbenchController extends Controller{
         $beds = Bed::with(['currentAdmission.patient.user'])->get();
         $wardGroups = $beds->groupBy('ward');
 
-        return response()->json($wardGroups->map(function($beds, $wardName) {
+        return response()->json($wardGroups->map(function ($beds, $wardName) {
             return [
                 'id' => md5($wardName),
                 'name' => $wardName ?: 'Unassigned',
                 'type' => 'general',
                 'capacity' => $beds->count(),
-                'occupied_beds' => $beds->filter(function($bed) {
+                'occupied_beds' => $beds->filter(function ($bed) {
                     return $bed->currentAdmission && !$bed->currentAdmission->discharged;
                 })->count(),
-                'available_beds' => $beds->filter(function($bed) {
+                'available_beds' => $beds->filter(function ($bed) {
                     return !$bed->currentAdmission || $bed->currentAdmission->discharged;
                 })->count(),
-                'beds' => $beds->map(function($bed) {
+                'beds' => $beds->map(function ($bed) {
                     $status = 'available';
                     $currentPatient = null;
 
@@ -4450,7 +4574,7 @@ class NursingWorkbenchController extends Controller{
             ->orderBy('created_at', 'asc')
             ->get();
 
-        return response()->json($queue->map(function($admission) {
+        return response()->json($queue->map(function ($admission) {
             return [
                 'id' => $admission->id,
                 'patient_name' => userfullname($admission->patient->user_id ?? 0),
@@ -4469,14 +4593,14 @@ class NursingWorkbenchController extends Controller{
     {
         $queue = AdmissionRequest::with(['patient.user', 'patient.hmo', 'bed', 'doctor'])
             ->where('discharged', 0)
-            ->where(function($q) {
+            ->where(function ($q) {
                 $q->where('admission_status', 'discharge_requested')
                   ->orWhere('admission_status', 'discharge_checklist');
             })
             ->orderBy('updated_at', 'asc')
             ->get();
 
-        return response()->json($queue->map(function($admission) {
+        return response()->json($queue->map(function ($admission) {
             $daysAdmitted = $admission->bed_assign_date
                 ? Carbon::parse($admission->bed_assign_date)->diffInDays(Carbon::now())
                 : 0;
@@ -4517,9 +4641,9 @@ class NursingWorkbenchController extends Controller{
      */
     public function getAvailableBeds(Request $request)
     {
-        $query = Bed::whereDoesntHave('currentAdmission', function($q) {
+        $query = Bed::whereDoesntHave('currentAdmission', function ($q) {
             $q->where('discharged', 0);
-        })->where(function($q) {
+        })->where(function ($q) {
             $q->where('bed_status', 'available')
               ->orWhereNull('bed_status');
         });
@@ -4530,7 +4654,7 @@ class NursingWorkbenchController extends Controller{
 
         $beds = $query->get();
 
-        return response()->json($beds->map(function($bed) {
+        return response()->json($beds->map(function ($bed) {
             return [
                 'id' => $bed->id,
                 'name' => $bed->name,
@@ -4577,7 +4701,7 @@ class NursingWorkbenchController extends Controller{
         if ($bed->currentAdmission && !$bed->currentAdmission->discharged) {
             return response()->json([
                 'success' => false,
-                'message' => 'Cannot set occupied bed to maintenance'
+                'message' => 'Cannot set occupied bed to maintenance',
             ], 400);
         }
 
@@ -4633,8 +4757,9 @@ class NursingWorkbenchController extends Controller{
                     ->whereNull('deleted_at')
                     ->with('productOrServiceRequest.product')
                     ->get()
-                    ->map(function($med) {
+                    ->map(function ($med) {
                         $product = $med->productOrServiceRequest->product ?? null;
+
                         return [
                             'name' => $product->name ?? 'Unknown',
                             'dosage' => $med->dose ?? $med->productOrServiceRequest->dosage ?? '',
@@ -4711,7 +4836,7 @@ class NursingWorkbenchController extends Controller{
                 'payment_type' => $admission->patient->payment_type ?? 'Cash',
                 'hmo_name' => $admission->patient->hmo->scheme->name ?? null,
                 'hmo_id' => $admission->patient->hmo_id ?? null,
-            ]
+            ],
         ]);
     }
 
@@ -4744,7 +4869,7 @@ class NursingWorkbenchController extends Controller{
             }
 
             $items = \App\Models\AdmissionChecklistItem::where('admission_checklist_id', $checklist->id)->get();
-            $completedCount = $items->filter(function($item) {
+            $completedCount = $items->filter(function ($item) {
                 return $item->is_completed;
             })->count();
             $totalCount = $items->count();
@@ -4754,7 +4879,7 @@ class NursingWorkbenchController extends Controller{
                 'id' => $checklist->id,
                 'progress' => $progress,
                 'all_complete' => $progress >= 100,
-                'items' => $items->map(function($item) {
+                'items' => $items->map(function ($item) {
                     return [
                         'id' => $item->id,
                         'name' => $item->item_text,
@@ -4800,7 +4925,7 @@ class NursingWorkbenchController extends Controller{
         // Calculate progress
         $checklist = $item->checklist;
         $items = \App\Models\AdmissionChecklistItem::where('admission_checklist_id', $checklist->id)->get();
-        $completedCount = $items->filter(fn($i) => $i->is_completed)->count();
+        $completedCount = $items->filter(fn ($i) => $i->is_completed)->count();
         $progress = $items->count() > 0 ? round(($completedCount / $items->count()) * 100) : 100;
 
         return response()->json([
@@ -4830,7 +4955,7 @@ class NursingWorkbenchController extends Controller{
         // Calculate progress
         $checklist = $item->checklist;
         $items = \App\Models\AdmissionChecklistItem::where('admission_checklist_id', $checklist->id)->get();
-        $completedCount = $items->filter(fn($i) => $i->is_completed)->count();
+        $completedCount = $items->filter(fn ($i) => $i->is_completed)->count();
         $progress = $items->count() > 0 ? round(($completedCount / $items->count()) * 100) : 100;
 
         return response()->json([
@@ -4859,11 +4984,12 @@ class NursingWorkbenchController extends Controller{
         if ($occupiedCheck) {
             return response()->json([
                 'success' => false,
-                'message' => 'Target bed is already occupied.'
+                'message' => 'Target bed is already occupied.',
             ], 400);
         }
 
         DB::beginTransaction();
+
         try {
             // Release current bed (if any)
             if ($admission->bed_id) {
@@ -4891,13 +5017,14 @@ class NursingWorkbenchController extends Controller{
 
             return response()->json([
                 'success' => true,
-                'message' => 'Patient transferred successfully to ' . ($newBed->name ?? 'new bed') . '.'
+                'message' => 'Patient transferred successfully to ' . ($newBed->name ?? 'new bed') . '.',
             ]);
         } catch (\Exception $e) {
             DB::rollBack();
+
             return response()->json([
                 'success' => false,
-                'message' => 'Transfer failed: ' . $e->getMessage()
+                'message' => 'Transfer failed: ' . $e->getMessage(),
             ], 500);
         }
     }
@@ -4922,11 +5049,12 @@ class NursingWorkbenchController extends Controller{
         if ($existingAdmission) {
             return response()->json([
                 'success' => false,
-                'message' => 'This bed is already occupied'
+                'message' => 'This bed is already occupied',
             ], 400);
         }
 
         DB::beginTransaction();
+
         try {
             $admission->bed_id = $bed->id;
             $admission->admission_status = 'admitted';
@@ -4938,13 +5066,14 @@ class NursingWorkbenchController extends Controller{
 
             return response()->json([
                 'success' => true,
-                'message' => 'Bed assigned successfully'
+                'message' => 'Bed assigned successfully',
             ]);
         } catch (\Exception $e) {
             DB::rollBack();
+
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to assign bed: ' . $e->getMessage()
+                'message' => 'Failed to assign bed: ' . $e->getMessage(),
             ], 500);
         }
     }
@@ -4975,14 +5104,14 @@ class NursingWorkbenchController extends Controller{
             }
 
             $items = \App\Models\DischargeChecklistItem::where('discharge_checklist_id', $checklist->id)->get();
-            $completedCount = $items->filter(fn($item) => $item->is_completed)->count();
+            $completedCount = $items->filter(fn ($item) => $item->is_completed)->count();
             $progress = $items->count() > 0 ? round(($completedCount / $items->count()) * 100) : 100;
 
             return response()->json([
                 'id' => $checklist->id,
                 'progress' => $progress,
                 'all_complete' => $progress >= 100,
-                'items' => $items->map(function($item) {
+                'items' => $items->map(function ($item) {
                     return [
                         'id' => $item->id,
                         'name' => $item->item_text,
@@ -5026,7 +5155,7 @@ class NursingWorkbenchController extends Controller{
 
         $checklist = $item->checklist;
         $items = \App\Models\DischargeChecklistItem::where('discharge_checklist_id', $checklist->id)->get();
-        $completedCount = $items->filter(fn($i) => $i->is_completed)->count();
+        $completedCount = $items->filter(fn ($i) => $i->is_completed)->count();
         $progress = $items->count() > 0 ? round(($completedCount / $items->count()) * 100) : 100;
 
         return response()->json([
@@ -5056,7 +5185,7 @@ class NursingWorkbenchController extends Controller{
         // Calculate progress
         $checklist = $item->checklist;
         $items = \App\Models\DischargeChecklistItem::where('discharge_checklist_id', $checklist->id)->get();
-        $completedCount = $items->filter(fn($i) => $i->is_completed)->count();
+        $completedCount = $items->filter(fn ($i) => $i->is_completed)->count();
         $progress = $items->count() > 0 ? round(($completedCount / $items->count()) * 100) : 100;
 
         return response()->json([
@@ -5073,6 +5202,7 @@ class NursingWorkbenchController extends Controller{
         $admission = AdmissionRequest::with(['bed', 'patient.user'])->findOrFail($admissionId);
 
         DB::beginTransaction();
+
         try {
             // Check for unpaid/unvalidated bed bills before releasing
             if ($admission->bed_id && $admission->service_id && $admission->bed_assign_date) {
@@ -5086,9 +5216,10 @@ class NursingWorkbenchController extends Controller{
 
                 if ($unpaidBills > 0) {
                     DB::rollBack();
+
                     return response()->json([
                         'success' => false,
-                        'message' => "Cannot discharge patient: {$unpaidBills} unpaid bed bill(s) found. Please process all payments before discharge."
+                        'message' => "Cannot discharge patient: {$unpaidBills} unpaid bed bill(s) found. Please process all payments before discharge.",
                     ], 422);
                 }
 
@@ -5096,7 +5227,7 @@ class NursingWorkbenchController extends Controller{
                 $invalidBills = ProductOrServiceRequest::where('user_id', $admission->patient->user->id)
                     ->where('service_id', $admission->service_id)
                     ->whereDate('created_at', '>=', $admission->bed_assign_date)
-                    ->where(function($q) {
+                    ->where(function ($q) {
                         $q->where('validation_status', 'pending')
                           ->orWhere('validation_status', 'rejected');
                     })
@@ -5105,9 +5236,10 @@ class NursingWorkbenchController extends Controller{
 
                 if ($invalidBills > 0) {
                     DB::rollBack();
+
                     return response()->json([
                         'success' => false,
-                        'message' => "Cannot discharge patient: {$invalidBills} bed bill(s) require HMO validation. Please validate all claims before discharge."
+                        'message' => "Cannot discharge patient: {$invalidBills} bed bill(s) require HMO validation. Please validate all claims before discharge.",
                     ], 422);
                 }
             }
@@ -5128,13 +5260,14 @@ class NursingWorkbenchController extends Controller{
 
             return response()->json([
                 'success' => true,
-                'message' => 'Patient discharged successfully, bed released'
+                'message' => 'Patient discharged successfully, bed released',
             ]);
         } catch (\Exception $e) {
             DB::rollBack();
+
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to complete discharge: ' . $e->getMessage()
+                'message' => 'Failed to complete discharge: ' . $e->getMessage(),
             ], 500);
         }
     }
@@ -5176,7 +5309,7 @@ class NursingWorkbenchController extends Controller{
         // Apply ward filter through admissions
         if ($wardId) {
             $patientIds = AdmissionRequest::where('discharged', 0)
-                ->whereHas('bed', function($q) use ($wardId) {
+                ->whereHas('bed', function ($q) use ($wardId) {
                     $q->where('ward_id', $wardId);
                 })->pluck('patient_id');
 
@@ -5246,7 +5379,7 @@ class NursingWorkbenchController extends Controller{
                 ->count();
             $peakHours[] = [
                 'hour' => sprintf('%02d:00', $hour),
-                'count' => $count
+                'count' => $count,
             ];
         }
 
@@ -5261,7 +5394,7 @@ class NursingWorkbenchController extends Controller{
             ->orderByDesc('total_actions')
             ->limit(10)
             ->get()
-            ->map(function($item) {
+            ->map(function ($item) {
                 return [
                     'nurse' => userfullname($item->user_id),
                     'actions' => $item->total_actions ?? 0,
@@ -5298,7 +5431,7 @@ class NursingWorkbenchController extends Controller{
 
         // Summary stats
         $total = $query->clone()->count();
-        $abnormal = $query->clone()->where(function($q) {
+        $abnormal = $query->clone()->where(function ($q) {
             $q->whereRaw("CAST(SUBSTRING_INDEX(blood_pressure, '/', 1) AS UNSIGNED) > 140")
               ->orWhereRaw("CAST(SUBSTRING_INDEX(blood_pressure, '/', 1) AS UNSIGNED) < 90")
               ->orWhere('temp', '>', 38)
@@ -5314,33 +5447,47 @@ class NursingWorkbenchController extends Controller{
         // DataTable response
         if ($request->ajax() && $request->has('draw')) {
             return DataTables::of($query->orderByDesc('created_at'))
-                ->addColumn('datetime', function($row) {
+                ->addColumn('datetime', function ($row) {
                     return $row->created_at->format('M d, Y h:i A');
                 })
-                ->addColumn('patient_name', function($row) {
+                ->addColumn('patient_name', function ($row) {
                     return $row->patient ? userfullname($row->patient->user_id) : 'N/A';
                 })
-                ->addColumn('file_no', function($row) {
+                ->addColumn('file_no', function ($row) {
                     return $row->patient->file_no ?? 'N/A';
                 })
-                ->addColumn('ward_bed', function($row) {
-                    if (!$row->patient) return 'N/A';
+                ->addColumn('ward_bed', function ($row) {
+                    if (!$row->patient) {
+                        return 'N/A';
+                    }
                     $admission = AdmissionRequest::with('bed')
                         ->where('patient_id', $row->patient->id)
                         ->where('discharged', 0)
                         ->first();
+
                     return $admission && $admission->bed ? $admission->bed->ward . ' - ' . $admission->bed->name : 'N/A';
                 })
-                ->addColumn('recorded_by', function($row) {
+                ->addColumn('recorded_by', function ($row) {
                     return $row->taken_by ? userfullname($row->taken_by) : 'N/A';
                 })
-                ->addColumn('status', function($row) {
+                ->addColumn('status', function ($row) {
                     $status = 'normal';
-                    if ($row->temp > 38 || $row->temp < 36) $status = 'warning';
-                    if ($row->heart_rate > 100 || $row->heart_rate < 60) $status = 'warning';
-                    if ($row->spo2 && $row->spo2 < 95) $status = 'warning';
-                    if ($row->spo2 && $row->spo2 < 90) $status = 'critical';
-                    if ($row->temp > 40 || $row->temp < 35) $status = 'critical';
+                    if ($row->temp > 38 || $row->temp < 36) {
+                        $status = 'warning';
+                    }
+                    if ($row->heart_rate > 100 || $row->heart_rate < 60) {
+                        $status = 'warning';
+                    }
+                    if ($row->spo2 && $row->spo2 < 95) {
+                        $status = 'warning';
+                    }
+                    if ($row->spo2 && $row->spo2 < 90) {
+                        $status = 'critical';
+                    }
+                    if ($row->temp > 40 || $row->temp < 35) {
+                        $status = 'critical';
+                    }
+
                     return $status;
                 })
                 ->rawColumns(['status'])
@@ -5378,18 +5525,18 @@ class NursingWorkbenchController extends Controller{
         $total = $query->clone()->count();
 
         // Calculate on-time rate
-        $onTimeCount = $query->clone()->whereHas('schedule', function($q) {
+        $onTimeCount = $query->clone()->whereHas('schedule', function ($q) {
             $q->whereRaw('administered_at <= DATE_ADD(scheduled_time, INTERVAL 30 MINUTE)');
         })->count();
 
-        $lateCount = $query->clone()->whereHas('schedule', function($q) {
+        $lateCount = $query->clone()->whereHas('schedule', function ($q) {
             $q->whereRaw('administered_at > DATE_ADD(scheduled_time, INTERVAL 30 MINUTE)');
         })->count();
 
         // Missed doses (scheduled but not administered)
         $missedCount = MedicationSchedule::whereBetween('scheduled_time', [$dateRange['from'], $dateRange['to']])
             ->where('scheduled_time', '<', now())
-            ->whereDoesntHave('administrations', function($q) {
+            ->whereDoesntHave('administrations', function ($q) {
                 $q->whereNull('deleted_at');
             })->count();
 
@@ -5398,27 +5545,30 @@ class NursingWorkbenchController extends Controller{
         // DataTable response
         if ($request->ajax() && $request->has('draw')) {
             return DataTables::of($query->orderByDesc('administered_at'))
-                ->addColumn('datetime', function($row) {
+                ->addColumn('datetime', function ($row) {
                     return Carbon::parse($row->administered_at)->format('M d, Y h:i A');
                 })
-                ->addColumn('patient_name', function($row) {
+                ->addColumn('patient_name', function ($row) {
                     return $row->patient ? userfullname($row->patient->user_id) : 'N/A';
                 })
-                ->addColumn('medication', function($row) {
+                ->addColumn('medication', function ($row) {
                     return $row->productOrServiceRequest && $row->productOrServiceRequest->product
                         ? $row->productOrServiceRequest->product->product_name
                         : 'N/A';
                 })
-                ->addColumn('scheduled_time', function($row) {
+                ->addColumn('scheduled_time', function ($row) {
                     return $row->schedule ? Carbon::parse($row->schedule->scheduled_time)->format('h:i A') : 'N/A';
                 })
-                ->addColumn('administered_by_name', function($row) {
+                ->addColumn('administered_by_name', function ($row) {
                     return $row->administered_by ? userfullname($row->administered_by) : 'N/A';
                 })
-                ->addColumn('status', function($row) {
-                    if (!$row->schedule) return 'ontime';
+                ->addColumn('status', function ($row) {
+                    if (!$row->schedule) {
+                        return 'ontime';
+                    }
                     $scheduled = Carbon::parse($row->schedule->scheduled_time);
                     $administered = Carbon::parse($row->administered_at);
+
                     return $administered->diffInMinutes($scheduled, false) > 30 ? 'late' : 'ontime';
                 })
                 ->make(true);
@@ -5453,13 +5603,13 @@ class NursingWorkbenchController extends Controller{
         // DataTable response
         if ($request->ajax() && $request->has('draw')) {
             return DataTables::of($query->orderByDesc('administered_at'))
-                ->addColumn('datetime', function($row) {
+                ->addColumn('datetime', function ($row) {
                     return $row->administered_at->format('M d, Y h:i A');
                 })
-                ->addColumn('patient_name', function($row) {
+                ->addColumn('patient_name', function ($row) {
                     return $row->patient ? userfullname($row->patient->user_id) : 'N/A';
                 })
-                ->addColumn('drug_name', function($row) {
+                ->addColumn('drug_name', function ($row) {
                     if ($row->product) {
                         return $row->product->product_name;
                     }
@@ -5467,9 +5617,10 @@ class NursingWorkbenchController extends Controller{
                     if ($row->external_drug_name) {
                         return $row->external_drug_name . ' <span class="badge badge-warning badge-sm">Patient\'s Own</span>';
                     }
+
                     return 'N/A';
                 })
-                ->addColumn('administered_by_name', function($row) {
+                ->addColumn('administered_by_name', function ($row) {
                     return $row->administered_by ? userfullname($row->administered_by) : 'N/A';
                 })
                 ->rawColumns(['drug_name'])
@@ -5500,26 +5651,29 @@ class NursingWorkbenchController extends Controller{
         // DataTable response
         if ($request->ajax() && $request->has('draw')) {
             return DataTables::of($query->orderByDesc('administered_at'))
-                ->addColumn('datetime', function($row) {
+                ->addColumn('datetime', function ($row) {
                     return $row->administered_at ? Carbon::parse($row->administered_at)->format('M d, Y h:i A') : 'N/A';
                 })
-                ->addColumn('patient_name', function($row) {
+                ->addColumn('patient_name', function ($row) {
                     return $row->patient ? userfullname($row->patient->user_id) : 'N/A';
                 })
-                ->addColumn('patient_age', function($row) {
-                    if (!$row->patient || !$row->patient->dob) return 'N/A';
+                ->addColumn('patient_age', function ($row) {
+                    if (!$row->patient || !$row->patient->dob) {
+                        return 'N/A';
+                    }
+
                     return Carbon::parse($row->patient->dob)->age . ' yrs';
                 })
-                ->addColumn('vaccine', function($row) {
+                ->addColumn('vaccine', function ($row) {
                     return $row->vaccine_name ?? ($row->product ? $row->product->product_name : 'N/A');
                 })
-                ->addColumn('dose_number', function($row) {
+                ->addColumn('dose_number', function ($row) {
                     return $row->dose_number ?? 'N/A';
                 })
-                ->addColumn('batch_no', function($row) {
+                ->addColumn('batch_no', function ($row) {
                     return $row->batch_number ?? 'N/A';
                 })
-                ->addColumn('administered_by_name', function($row) {
+                ->addColumn('administered_by_name', function ($row) {
                     return $row->administered_by ? userfullname($row->administered_by) : 'N/A';
                 })
                 ->make(true);
@@ -5554,50 +5708,65 @@ class NursingWorkbenchController extends Controller{
             $output = $period->records->where('type', 'output')->sum('amount');
             $balance = $intake - $output;
 
-            if ($balance > 0) $positive++;
-            elseif ($balance < 0) $negative++;
-            if (abs($balance) > 500) $critical++;
+            if ($balance > 0) {
+                $positive++;
+            } elseif ($balance < 0) {
+                $negative++;
+            }
+            if (abs($balance) > 500) {
+                $critical++;
+            }
         }
 
         // DataTable response
         if ($request->ajax() && $request->has('draw')) {
             return DataTables::of($query->orderByDesc('created_at'))
-                ->addColumn('date_formatted', function($row) {
+                ->addColumn('date_formatted', function ($row) {
                     return $row->created_at->format('M d, Y');
                 })
-                ->addColumn('patient_name', function($row) {
+                ->addColumn('patient_name', function ($row) {
                     return $row->patient ? userfullname($row->patient->user_id) : 'N/A';
                 })
-                ->addColumn('ward_bed', function($row) {
-                    if (!$row->patient) return 'N/A';
+                ->addColumn('ward_bed', function ($row) {
+                    if (!$row->patient) {
+                        return 'N/A';
+                    }
                     $admission = AdmissionRequest::with('bed')
                         ->where('patient_id', $row->patient->id)
                         ->where('discharged', 0)
                         ->first();
+
                     return $admission && $admission->bed ? $admission->bed->ward . ' - ' . $admission->bed->name : 'N/A';
                 })
-                ->addColumn('total_intake', function($row) {
+                ->addColumn('total_intake', function ($row) {
                     return $row->records->where('type', 'intake')->sum('amount') . ' ml';
                 })
-                ->addColumn('total_output', function($row) {
+                ->addColumn('total_output', function ($row) {
                     return $row->records->where('type', 'output')->sum('amount') . ' ml';
                 })
-                ->addColumn('balance', function($row) {
+                ->addColumn('balance', function ($row) {
                     $intake = $row->records->where('type', 'intake')->sum('amount');
                     $output = $row->records->where('type', 'output')->sum('amount');
                     $balance = $intake - $output;
+
                     return ($balance >= 0 ? '+' : '') . $balance . ' ml';
                 })
-                ->addColumn('status', function($row) {
+                ->addColumn('status', function ($row) {
                     $intake = $row->records->where('type', 'intake')->sum('amount');
                     $output = $row->records->where('type', 'output')->sum('amount');
                     $balance = $intake - $output;
-                    if (abs($balance) > 500) return 'critical';
-                    if ($balance < 0) return 'warning';
+                    if (abs($balance) > 500) {
+                        return 'critical';
+                    }
+                    if ($balance < 0) {
+                        return 'warning';
+                    }
+
                     return 'normal';
                 })
-                ->addColumn('recorded_by', function($row) {
+                ->addColumn('recorded_by', function ($row) {
                     $nurse = $row->records->first();
+
                     return $nurse && $nurse->nurse_id ? userfullname($nurse->nurse_id) : 'N/A';
                 })
                 ->make(true);
@@ -5631,7 +5800,7 @@ class NursingWorkbenchController extends Controller{
 
         // Summary stats
         $total = $query->clone()->count();
-        $critical = $query->clone()->whereHas('type', function($q) {
+        $critical = $query->clone()->whereHas('type', function ($q) {
             $q->whereIn('name', ['Incident Report', 'Critical', 'Emergency']);
         })->count();
         $patients = $query->clone()->distinct('patient_id')->count('patient_id');
@@ -5639,22 +5808,22 @@ class NursingWorkbenchController extends Controller{
         // DataTable response
         if ($request->ajax() && $request->has('draw')) {
             return DataTables::of($query->orderByDesc('created_at'))
-                ->addColumn('datetime', function($row) {
+                ->addColumn('datetime', function ($row) {
                     return $row->created_at->format('M d, Y h:i A');
                 })
-                ->addColumn('patient_name', function($row) {
+                ->addColumn('patient_name', function ($row) {
                     return $row->patient ? userfullname($row->patient->user_id) : 'N/A';
                 })
-                ->addColumn('note_type', function($row) {
+                ->addColumn('note_type', function ($row) {
                     return $row->type ? $row->type->name : 'General';
                 })
-                ->addColumn('summary', function($row) {
+                ->addColumn('summary', function ($row) {
                     return \Str::limit(strip_tags($row->note), 80);
                 })
-                ->addColumn('written_by', function($row) {
+                ->addColumn('written_by', function ($row) {
                     return $row->created_by ? userfullname($row->created_by) : 'N/A';
                 })
-                ->addColumn('status', function($row) {
+                ->addColumn('status', function ($row) {
                     return $row->completed ? 'completed' : 'pending';
                 })
                 ->make(true);
@@ -5707,37 +5876,40 @@ class NursingWorkbenchController extends Controller{
         // DataTable response
         if ($request->ajax() && $request->has('draw')) {
             return DataTables::of($query->orderByDesc('started_at'))
-                ->addColumn('date', function($row) {
+                ->addColumn('date', function ($row) {
                     return $row->started_at->format('M d, Y');
                 })
-                ->addColumn('nurse_name', function($row) {
+                ->addColumn('nurse_name', function ($row) {
                     return $row->user ? userfullname($row->user->id) : 'N/A';
                 })
-                ->addColumn('shift_type_label', function($row) {
+                ->addColumn('shift_type_label', function ($row) {
                     return ucfirst($row->shift_type);
                 })
-                ->addColumn('ward_name', function($row) {
+                ->addColumn('ward_name', function ($row) {
                     return $row->ward ? $row->ward->name : 'All Wards';
                 })
-                ->addColumn('start_time', function($row) {
+                ->addColumn('start_time', function ($row) {
                     return $row->started_at->format('h:i A');
                 })
-                ->addColumn('end_time', function($row) {
+                ->addColumn('end_time', function ($row) {
                     return $row->ended_at ? $row->ended_at->format('h:i A') : '-';
                 })
-                ->addColumn('duration', function($row) {
-                    if (!$row->ended_at) return '-';
+                ->addColumn('duration', function ($row) {
+                    if (!$row->ended_at) {
+                        return '-';
+                    }
                     $hours = $row->started_at->diffInHours($row->ended_at);
                     $mins = $row->started_at->diffInMinutes($row->ended_at) % 60;
+
                     return "{$hours}h {$mins}m";
                 })
-                ->addColumn('actions_count', function($row) {
+                ->addColumn('actions_count', function ($row) {
                     return $row->vitals_count + $row->medications_count + $row->injections_count + $row->immunizations_count + $row->notes_count;
                 })
-                ->addColumn('handover_status', function($row) {
+                ->addColumn('handover_status', function ($row) {
                     return $row->handover_created ? 'Yes' : 'No';
                 })
-                ->addColumn('status_label', function($row) {
+                ->addColumn('status_label', function ($row) {
                     return ucfirst(str_replace('_', ' ', $row->status));
                 })
                 ->make(true);
@@ -5832,9 +6004,9 @@ class NursingWorkbenchController extends Controller{
      */
     public function getReportsNurses()
     {
-        $nurses = \App\Models\User::whereHas('roles', function($q) {
+        $nurses = \App\Models\User::whereHas('roles', function ($q) {
             $q->whereIn('name', ['Nurse', 'NURSE', 'Head Nurse', 'Nursing Officer', 'Matron']);
-        })->where('status', 1)->get()->map(function($user) {
+        })->where('status', 1)->get()->map(function ($user) {
             return [
                 'id' => $user->id,
                 'name' => userfullname($user->id),
@@ -5890,11 +6062,11 @@ class NursingWorkbenchController extends Controller{
     {
         try {
             $request->validate([
-                'patient_id'    => 'required|integer|exists:patients,id',
-                'service_ids'   => 'required|array|min:1',
+                'patient_id' => 'required|integer|exists:patients,id',
+                'service_ids' => 'required|array|min:1',
                 'service_ids.*' => 'required|string',
-                'notes'         => 'required|array',
-                'notes.*'       => 'nullable|string',
+                'notes' => 'required|array',
+                'notes.*' => 'nullable|string',
             ]);
 
             if (count($request->service_ids) !== count($request->notes)) {
@@ -5904,17 +6076,17 @@ class NursingWorkbenchController extends Controller{
             $patientId = $request->patient_id;
 
             for ($i = 0; $i < count($request->service_ids); $i++) {
-                $lab              = new LabServiceRequest();
-                $lab->service_id  = $request->service_ids[$i];
-                $lab->note        = $request->notes[$i] ?? null;
-                $lab->patient_id  = $patientId;
-                $lab->doctor_id   = Auth::id();
+                $lab = new LabServiceRequest();
+                $lab->service_id = $request->service_ids[$i];
+                $lab->note = $request->notes[$i] ?? null;
+                $lab->patient_id = $patientId;
+                $lab->doctor_id = Auth::id();
                 $lab->save();
             }
 
             return response()->json([
                 'success' => true,
-                'message' => count($request->service_ids) . ' lab request(s) saved successfully'
+                'message' => count($request->service_ids) . ' lab request(s) saved successfully',
             ]);
         } catch (\Illuminate\Validation\ValidationException $e) {
             return response()->json(['success' => false, 'message' => implode(', ', $e->validator->errors()->all())], 422);
@@ -5930,11 +6102,11 @@ class NursingWorkbenchController extends Controller{
     {
         try {
             $request->validate([
-                'patient_id'    => 'required|integer|exists:patients,id',
-                'service_ids'   => 'required|array|min:1',
+                'patient_id' => 'required|integer|exists:patients,id',
+                'service_ids' => 'required|array|min:1',
                 'service_ids.*' => 'required|string',
-                'notes'         => 'required|array',
-                'notes.*'       => 'nullable|string',
+                'notes' => 'required|array',
+                'notes.*' => 'nullable|string',
             ]);
 
             if (count($request->service_ids) !== count($request->notes)) {
@@ -5944,17 +6116,17 @@ class NursingWorkbenchController extends Controller{
             $patientId = $request->patient_id;
 
             for ($i = 0; $i < count($request->service_ids); $i++) {
-                $img              = new ImagingServiceRequest();
-                $img->service_id  = $request->service_ids[$i];
-                $img->note        = $request->notes[$i] ?? null;
-                $img->patient_id  = $patientId;
-                $img->doctor_id   = Auth::id();
+                $img = new ImagingServiceRequest();
+                $img->service_id = $request->service_ids[$i];
+                $img->note = $request->notes[$i] ?? null;
+                $img->patient_id = $patientId;
+                $img->doctor_id = Auth::id();
                 $img->save();
             }
 
             return response()->json([
                 'success' => true,
-                'message' => count($request->service_ids) . ' imaging request(s) saved successfully'
+                'message' => count($request->service_ids) . ' imaging request(s) saved successfully',
             ]);
         } catch (\Illuminate\Validation\ValidationException $e) {
             return response()->json(['success' => false, 'message' => implode(', ', $e->validator->errors()->all())], 422);
@@ -5970,29 +6142,29 @@ class NursingWorkbenchController extends Controller{
     {
         try {
             $request->validate([
-                'patient_id'      => 'required|integer|exists:patients,id',
-                'product_ids'     => 'required|array|min:1',
+                'patient_id' => 'required|integer|exists:patients,id',
+                'product_ids' => 'required|array|min:1',
                 'product_ids.*' => 'required|string',
-                'doses'           => 'required|array',
-                'doses.*'         => 'nullable|string',
+                'doses' => 'required|array',
+                'doses.*' => 'nullable|string',
             ]);
 
             if (count($request->product_ids) !== count($request->doses)) {
                 return response()->json(['success' => false, 'message' => 'Mismatch between products and doses'], 422);
             }
 
-            $patientId  = $request->patient_id;
+            $patientId = $request->patient_id;
             $emptyDoses = [];
 
             for ($i = 0; $i < count($request->product_ids); $i++) {
                 if (empty(trim($request->doses[$i] ?? ''))) {
                     $emptyDoses[] = $i + 1;
                 }
-                $presc              = new ProductRequest();
-                $presc->product_id  = $request->product_ids[$i];
-                $presc->dose        = $request->doses[$i] ?? '';
-                $presc->patient_id  = $patientId;
-                $presc->doctor_id   = Auth::id();
+                $presc = new ProductRequest();
+                $presc->product_id = $request->product_ids[$i];
+                $presc->dose = $request->doses[$i] ?? '';
+                $presc->patient_id = $patientId;
+                $presc->doctor_id = Auth::id();
                 $presc->save();
             }
 
@@ -6016,35 +6188,37 @@ class NursingWorkbenchController extends Controller{
     {
         try {
             $request->validate([
-                'patient_id'                  => 'required|integer|exists:patients,id',
-                'procedures'                  => 'required|array|min:1',
+                'patient_id' => 'required|integer|exists:patients,id',
+                'procedures' => 'required|array|min:1',
                 'procedures.*.service_id' => 'required|string',
-                'procedures.*.priority'       => 'required|in:routine,urgent,emergency',
+                'procedures.*.priority' => 'required|in:routine,urgent,emergency',
                 'procedures.*.scheduled_date' => 'nullable|date',
-                'procedures.*.pre_notes'      => 'nullable|string|max:2000',
+                'procedures.*.pre_notes' => 'nullable|string|max:2000',
             ]);
 
-            $patientId  = $request->patient_id;
-            $patient    = Patient::findOrFail($patientId);
+            $patientId = $request->patient_id;
+            $patient = Patient::findOrFail($patientId);
             $savedCount = 0;
 
             foreach ($request->procedures as $data) {
                 $service = Service::with('price')->find($data['service_id']);
-                if (!$service) continue;
+                if (!$service) {
+                    continue;
+                }
 
                 // Create the procedure record
-                $procedure                   = new Procedure();
-                $procedure->service_id       = $service->id;
-                $procedure->patient_id       = $patientId;
-                $procedure->requested_by     = Auth::id();
-                $procedure->requested_on     = now();
-                $procedure->priority         = $data['priority'];
+                $procedure = new Procedure();
+                $procedure->service_id = $service->id;
+                $procedure->patient_id = $patientId;
+                $procedure->requested_by = Auth::id();
+                $procedure->requested_on = now();
+                $procedure->priority = $data['priority'];
                 $procedure->procedure_status = Procedure::STATUS_REQUESTED;
-                $procedure->pre_notes        = $data['pre_notes'] ?? null;
-                $procedure->pre_notes_by     = !empty($data['pre_notes']) ? Auth::id() : null;
+                $procedure->pre_notes = $data['pre_notes'] ?? null;
+                $procedure->pre_notes_by = !empty($data['pre_notes']) ? Auth::id() : null;
 
                 if (!empty($data['scheduled_date'])) {
-                    $procedure->scheduled_date   = $data['scheduled_date'];
+                    $procedure->scheduled_date = $data['scheduled_date'];
                     $procedure->procedure_status = Procedure::STATUS_SCHEDULED;
                 }
 
@@ -6056,28 +6230,29 @@ class NursingWorkbenchController extends Controller{
 
                 // Create billing entry
                 $basePrice = optional($service->price)->sale_price ?? 0;
-                $coverage  = null;
+                $coverage = null;
+
                 try {
                     $coverage = HmoHelper::applyHmoTariff($patientId, null, $service->id);
                 } catch (\Exception $e) {
                     $coverage = null;
                 }
 
-                $billing                       = new ProductOrServiceRequest();
-                $billing->type                 = 'service';
-                $billing->service_id           = $service->id;
-                $billing->user_id              = $patient->user_id;
-                $billing->staff_user_id        = Auth::id();
-                $billing->created_by           = Auth::id();
-                $billing->order_date           = now();
+                $billing = new ProductOrServiceRequest();
+                $billing->type = 'service';
+                $billing->service_id = $service->id;
+                $billing->user_id = $patient->user_id;
+                $billing->staff_user_id = Auth::id();
+                $billing->created_by = Auth::id();
+                $billing->order_date = now();
 
                 if ($coverage && ($coverage['coverage_mode'] ?? '') === 'hmo') {
-                    $billing->amount        = $coverage['payable_amount'];
+                    $billing->amount = $coverage['payable_amount'];
                     $billing->claims_amount = $coverage['claims_amount'];
                     $billing->coverage_mode = 'hmo';
-                    $billing->hmo_id        = $coverage['hmo_id'] ?? null;
+                    $billing->hmo_id = $coverage['hmo_id'] ?? null;
                 } else {
-                    $billing->amount        = $basePrice;
+                    $billing->amount = $basePrice;
                     $billing->claims_amount = 0;
                     $billing->coverage_mode = 'cash';
                 }
@@ -6092,7 +6267,7 @@ class NursingWorkbenchController extends Controller{
 
             return response()->json([
                 'success' => true,
-                'message' => $savedCount . ' procedure(s) requested successfully'
+                'message' => $savedCount . ' procedure(s) requested successfully',
             ]);
         } catch (\Illuminate\Validation\ValidationException $e) {
             return response()->json(['success' => false, 'message' => implode(', ', $e->validator->errors()->all())], 422);
@@ -6116,11 +6291,12 @@ class NursingWorkbenchController extends Controller{
                 $request->input('patient_id'),
                 null // nurse has no encounter
             );
+
             return response()->json([
                 'success' => true,
                 'id' => $lab->id,
                 'item' => ['id' => $lab->id, 'service_id' => $lab->service_id, 'note' => $lab->note, 'created_at' => $lab->created_at],
-                'message' => 'Lab added'
+                'message' => 'Lab added',
             ]);
         } catch (\Exception $e) {
             return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
@@ -6131,6 +6307,7 @@ class NursingWorkbenchController extends Controller{
     {
         try {
             $this->removeSingleLab($lab->id, request()->input('reason'));
+
             return response()->json(['success' => true, 'message' => 'Lab removed']);
         } catch (\RuntimeException $e) {
             return response()->json(['success' => false, 'message' => $e->getMessage()], 403);
@@ -6149,11 +6326,12 @@ class NursingWorkbenchController extends Controller{
                 $request->input('patient_id'),
                 null
             );
+
             return response()->json([
                 'success' => true,
                 'id' => $imaging->id,
                 'item' => ['id' => $imaging->id, 'service_id' => $imaging->service_id, 'note' => $imaging->note, 'created_at' => $imaging->created_at],
-                'message' => 'Imaging added'
+                'message' => 'Imaging added',
             ]);
         } catch (\Exception $e) {
             return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
@@ -6164,6 +6342,7 @@ class NursingWorkbenchController extends Controller{
     {
         try {
             $this->removeSingleImaging($imaging->id, request()->input('reason'));
+
             return response()->json(['success' => true, 'message' => 'Imaging removed']);
         } catch (\RuntimeException $e) {
             return response()->json(['success' => false, 'message' => $e->getMessage()], 403);
@@ -6182,11 +6361,12 @@ class NursingWorkbenchController extends Controller{
                 $request->input('patient_id'),
                 null
             );
+
             return response()->json([
                 'success' => true,
                 'id' => $presc->id,
                 'item' => ['id' => $presc->id, 'product_id' => $presc->product_id, 'dose' => $presc->dose, 'created_at' => $presc->created_at],
-                'message' => 'Prescription added'
+                'message' => 'Prescription added',
             ]);
         } catch (\Exception $e) {
             return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
@@ -6198,6 +6378,7 @@ class NursingWorkbenchController extends Controller{
         try {
             $dose = request()->input('dose', '');
             $presc = $this->updateSinglePrescriptionDose($prescription->id, $dose);
+
             return response()->json(['success' => true, 'id' => $presc->id, 'message' => 'Dose updated']);
         } catch (\Exception $e) {
             return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
@@ -6208,6 +6389,7 @@ class NursingWorkbenchController extends Controller{
     {
         try {
             $this->removeSinglePrescription($prescription->id, request()->input('reason'));
+
             return response()->json(['success' => true, 'message' => 'Prescription removed']);
         } catch (\RuntimeException $e) {
             return response()->json(['success' => false, 'message' => $e->getMessage()], 403);
@@ -6230,11 +6412,12 @@ class NursingWorkbenchController extends Controller{
                 null,  // nurse has no encounter
                 null   // nurse has no admission_request_id
             );
+
             return response()->json([
                 'success' => true,
                 'id' => $procedure->id,
                 'item' => ['id' => $procedure->id, 'service_id' => $procedure->service_id, 'priority' => $procedure->priority, 'created_at' => $procedure->created_at],
-                'message' => 'Procedure added'
+                'message' => 'Procedure added',
             ]);
         } catch (\Exception $e) {
             return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
@@ -6245,6 +6428,7 @@ class NursingWorkbenchController extends Controller{
     {
         try {
             $this->removeSingleProcedure($procedure->id, request()->input('reason'));
+
             return response()->json(['success' => true, 'message' => 'Procedure removed']);
         } catch (\RuntimeException $e) {
             return response()->json(['success' => false, 'message' => $e->getMessage()], 403);
@@ -6257,6 +6441,7 @@ class NursingWorkbenchController extends Controller{
     {
         try {
             $lab = $this->updateSingleLabNote($lab->id, request()->input('note', ''));
+
             return response()->json(['success' => true, 'id' => $lab->id, 'message' => 'Note updated']);
         } catch (\Exception $e) {
             return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
@@ -6267,6 +6452,7 @@ class NursingWorkbenchController extends Controller{
     {
         try {
             $imaging = $this->updateSingleImagingNote($imaging->id, request()->input('note', ''));
+
             return response()->json(['success' => true, 'id' => $imaging->id, 'message' => 'Note updated']);
         } catch (\Exception $e) {
             return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
@@ -6281,9 +6467,9 @@ class NursingWorkbenchController extends Controller{
     public function nurseRePrescribe(Request $request)
     {
         $request->validate([
-            'patient_id'   => 'required|integer',
-            'source_type'  => 'required|in:labs,imaging,prescriptions,procedures',
-            'source_ids'   => 'required|array|min:1',
+            'patient_id' => 'required|integer',
+            'source_type' => 'required|in:labs,imaging,prescriptions,procedures',
+            'source_ids' => 'required|array|min:1',
             'source_ids.*' => 'integer',
             'adjust_doses' => 'nullable|array',
         ]);
@@ -6299,9 +6485,9 @@ class NursingWorkbenchController extends Controller{
 
             return response()->json([
                 'success' => true,
-                'items'   => $created->map(fn($item) => ['id' => $item->id]),
-                'count'   => $created->count(),
-                'message' => $created->count() . ' item(s) re-prescribed'
+                'items' => $created->map(fn ($item) => ['id' => $item->id]),
+                'count' => $created->count(),
+                'message' => $created->count() . ' item(s) re-prescribed',
             ]);
         } catch (\Exception $e) {
             return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
@@ -6320,6 +6506,7 @@ class NursingWorkbenchController extends Controller{
             $request->input('patient_id'),
             5
         );
+
         return response()->json(['success' => true, 'encounters' => $encounters]);
     }
 
@@ -6331,6 +6518,7 @@ class NursingWorkbenchController extends Controller{
     public function nurseEncounterItems(Request $request, int $encounterId)
     {
         $items = $this->getEncounterItems($encounterId);
+
         return response()->json(['success' => true, 'items' => $items]);
     }
 
@@ -6338,13 +6526,13 @@ class NursingWorkbenchController extends Controller{
      * Apply a service combo (bundle) for nursing workbench.
      * POST nursing-workbench/clinical-requests/apply-combo
      * Creates parent request (billed once) + child requests (bundled, not billed separately)
-     * 
+     *
      * Payload:
      *   - service_id (int, required): The combo/bundle parent service ID
      *   - patient_id (int, required): Patient ID
      *   - note (string, optional): Clinical note for the bundle
     /**
-     * 
+     *
      * Response: { success: true, message: "...", parent_request: {...} }
      */
     public function nursingApplyCombo(Request $request)
@@ -6353,7 +6541,7 @@ class NursingWorkbenchController extends Controller{
             $request->validate([
                 'service_id' => 'required|string',
                 'patient_id' => 'required|integer|exists:patients,id',
-                'note' => 'nullable|string'
+                'note' => 'nullable|string',
             ]);
 
             $comboService = Service::with('bundleItems')->find($request->service_id);
@@ -6380,7 +6568,7 @@ class NursingWorkbenchController extends Controller{
         try {
             $request->validate([
                 'parent_request_id' => 'required|integer|exists:product_or_service_requests,id',
-                'patient_id' => 'required|integer|exists:patients,id'
+                'patient_id' => 'required|integer|exists:patients,id',
             ]);
 
             $parentRequest = ProductOrServiceRequest::findOrFail($request->parent_request_id);
@@ -6389,7 +6577,7 @@ class NursingWorkbenchController extends Controller{
             if ($parentRequest->user_id !== Patient::find($request->patient_id)->user_id || $parentRequest->parent_id !== null) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Invalid bundle or permission denied'
+                    'message' => 'Invalid bundle or permission denied',
                 ], 403);
             }
 
@@ -6398,12 +6586,12 @@ class NursingWorkbenchController extends Controller{
             if ($result['success']) {
                 return response()->json([
                     'success' => true,
-                    'message' => $result['message']
+                    'message' => $result['message'],
                 ]);
             } else {
                 return response()->json([
                     'success' => false,
-                    'message' => $result['message']
+                    'message' => $result['message'],
                 ], 400);
             }
         } catch (\Exception $e) {

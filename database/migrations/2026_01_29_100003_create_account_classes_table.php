@@ -16,8 +16,7 @@ use Illuminate\Support\Facades\Schema;
  * - INCOME (normal balance: credit, temporary)
  * - EXPENSE (normal balance: debit, temporary)
  */
-return new class extends Migration
-{
+return new class () extends Migration {
     /**
      * Run the migrations.
      */

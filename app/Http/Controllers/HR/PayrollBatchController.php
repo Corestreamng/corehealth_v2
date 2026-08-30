@@ -4,15 +4,14 @@ namespace App\Http\Controllers\HR;
 
 use App\Http\Controllers\Controller;
 use App\Models\Bank;
+use App\Models\Department;
 use App\Models\HR\PayrollBatch;
 use App\Models\HR\PayrollItem;
 use App\Models\Staff;
-use App\Models\Department;
-use App\Services\PayrollService;
 use App\Services\HrAttachmentService;
+use App\Services\PayrollService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
-use Illuminate\Support\Facades\DB;
 
 /**
  * HRMS Implementation Plan - Section 7.2
@@ -21,6 +20,7 @@ use Illuminate\Support\Facades\DB;
 class PayrollBatchController extends Controller
 {
     protected PayrollService $payrollService;
+
     protected HrAttachmentService $attachmentService;
 
     public function __construct(PayrollService $payrollService, HrAttachmentService $attachmentService)
@@ -74,6 +74,7 @@ class PayrollBatchController extends Controller
             ->get()
             ->map(function ($dept) {
                 $dept->total_net = $dept->total_gross - $dept->total_deductions;
+
                 return $dept;
             });
 
@@ -95,6 +96,7 @@ class PayrollBatchController extends Controller
             ->map(function ($type) {
                 $type->total_net = $type->total_gross - $type->total_deductions;
                 $type->employment_type_label = ucfirst(str_replace('_', ' ', $type->employment_type ?? 'Unspecified'));
+
                 return $type;
             });
 
@@ -139,7 +141,7 @@ class PayrollBatchController extends Controller
         if ($validator->fails()) {
             return response()->json([
                 'success' => false,
-                'errors' => $validator->errors()
+                'errors' => $validator->errors(),
             ], 422);
         }
 
@@ -271,6 +273,7 @@ class PayrollBatchController extends Controller
                     if ($batch->pay_period_start) {
                         return $batch->pay_period_start->format('M Y');
                     }
+
                     return 'N/A';
                 })
                 ->addColumn('staff_count', function ($batch) {
@@ -288,6 +291,7 @@ class PayrollBatchController extends Controller
                         'paid' => 'primary',
                     ];
                     $color = $statusColors[$batch->status] ?? 'secondary';
+
                     return '<span class="badge badge-' . $color . '">' . ucfirst($batch->status) . '</span>';
                 })
                 ->addColumn('created_at', function ($batch) {
@@ -402,7 +406,7 @@ class PayrollBatchController extends Controller
                 return response()->json([
                     'success' => false,
                     'message' => 'Validation failed',
-                    'errors' => $validator->errors()
+                    'errors' => $validator->errors(),
                 ], 422);
             }
 
@@ -441,7 +445,7 @@ class PayrollBatchController extends Controller
                     $staffIds = $request->staff_ids;
                 } elseif ($selectionMode === 'department') {
                     // Department selection - get staff by department and optionally employment type
-                    $staffQuery = \App\Models\Staff::whereHas('salaryProfile', function($q) {
+                    $staffQuery = \App\Models\Staff::whereHas('salaryProfile', function ($q) {
                         $q->where('is_active', true);
                     })->where('status', 'active');
 
@@ -449,8 +453,8 @@ class PayrollBatchController extends Controller
                         $departments = collect($request->departments)->filter()->values()->all();
                         if (count($departments) > 0) {
                             // Handle empty string for 'Unassigned' department
-                            $staffQuery->where(function($q) use ($departments) {
-                                $q->whereIn('department', array_filter($departments, fn($d) => $d !== ''));
+                            $staffQuery->where(function ($q) use ($departments) {
+                                $q->whereIn('department', array_filter($departments, fn ($d) => $d !== ''));
                                 if (in_array('', $departments)) {
                                     $q->orWhereNull('department')->orWhere('department', '');
                                 }
@@ -461,8 +465,8 @@ class PayrollBatchController extends Controller
                     if ($request->filled('employment_types')) {
                         $empTypes = collect($request->employment_types)->filter()->values()->all();
                         if (count($empTypes) > 0) {
-                            $staffQuery->where(function($q) use ($empTypes) {
-                                $q->whereIn('employment_type', array_filter($empTypes, fn($t) => $t !== ''));
+                            $staffQuery->where(function ($q) use ($empTypes) {
+                                $q->whereIn('employment_type', array_filter($empTypes, fn ($t) => $t !== ''));
                                 if (in_array('', $empTypes)) {
                                     $q->orWhereNull('employment_type')->orWhere('employment_type', '');
                                 }
@@ -493,12 +497,12 @@ class PayrollBatchController extends Controller
                     'success' => true,
                     'message' => $message,
                     'data' => $batch,
-                    'stats' => $result
+                    'stats' => $result,
                 ]);
             } catch (\Exception $e) {
                 return response()->json([
                     'success' => false,
-                    'message' => $e->getMessage()
+                    'message' => $e->getMessage(),
                 ], 500);
             }
         }
@@ -537,7 +541,7 @@ class PayrollBatchController extends Controller
             'rejectedBy',
             'paidBy',
             'expense',
-            'attachments.uploadedBy'
+            'attachments.uploadedBy',
         ]);
 
         // Handle AJAX request
@@ -712,6 +716,7 @@ class PayrollBatchController extends Controller
 
                 'items' => $payrollBatch->items->map(function ($item) {
                     $user = $item->staff?->user;
+
                     return [
                         'id' => $item->id,
                         'staff_id' => $item->staff_id,
@@ -834,7 +839,7 @@ class PayrollBatchController extends Controller
                 return response()->json([
                     'success' => true,
                     'message' => "Generated payroll for {$count} staff members.",
-                    'count' => $count
+                    'count' => $count,
                 ]);
             }
 
@@ -843,9 +848,10 @@ class PayrollBatchController extends Controller
             if ($request->ajax()) {
                 return response()->json([
                     'success' => false,
-                    'message' => $e->getMessage()
+                    'message' => $e->getMessage(),
                 ], 500);
             }
+
             return back()->with('error', $e->getMessage());
         }
     }
@@ -858,7 +864,7 @@ class PayrollBatchController extends Controller
             if ($request->ajax()) {
                 return response()->json([
                     'success' => true,
-                    'message' => 'Payroll batch submitted for approval.'
+                    'message' => 'Payroll batch submitted for approval.',
                 ]);
             }
 
@@ -868,9 +874,10 @@ class PayrollBatchController extends Controller
             if ($request->ajax()) {
                 return response()->json([
                     'success' => false,
-                    'message' => $e->getMessage()
+                    'message' => $e->getMessage(),
                 ], 500);
             }
+
             return back()->with('error', $e->getMessage());
         }
     }
@@ -887,7 +894,7 @@ class PayrollBatchController extends Controller
             if ($request->ajax()) {
                 return response()->json([
                     'success' => true,
-                    'message' => 'Payroll batch approved. Expense record created.'
+                    'message' => 'Payroll batch approved. Expense record created.',
                 ]);
             }
 
@@ -897,9 +904,10 @@ class PayrollBatchController extends Controller
             if ($request->ajax()) {
                 return response()->json([
                     'success' => false,
-                    'message' => $e->getMessage()
+                    'message' => $e->getMessage(),
                 ], 500);
             }
+
             return back()->with('error', $e->getMessage());
         }
     }
@@ -908,9 +916,9 @@ class PayrollBatchController extends Controller
     {
         // Validate comments/reason
         $validator = Validator::make($request->all(), [
-            'comments' => 'required|string|max:500'
+            'comments' => 'required|string|max:500',
         ], [
-            'comments.required' => 'Please provide a reason for rejection.'
+            'comments.required' => 'Please provide a reason for rejection.',
         ]);
 
         if ($validator->fails()) {
@@ -918,9 +926,10 @@ class PayrollBatchController extends Controller
                 return response()->json([
                     'success' => false,
                     'message' => $validator->errors()->first(),
-                    'errors' => $validator->errors()
+                    'errors' => $validator->errors(),
                 ], 422);
             }
+
             return back()->withErrors($validator);
         }
 
@@ -934,7 +943,7 @@ class PayrollBatchController extends Controller
             if ($request->ajax()) {
                 return response()->json([
                     'success' => true,
-                    'message' => 'Payroll batch rejected.'
+                    'message' => 'Payroll batch rejected.',
                 ]);
             }
 
@@ -944,9 +953,10 @@ class PayrollBatchController extends Controller
             if ($request->ajax()) {
                 return response()->json([
                     'success' => false,
-                    'message' => $e->getMessage()
+                    'message' => $e->getMessage(),
                 ], 500);
             }
+
             return back()->with('error', $e->getMessage());
         }
     }
@@ -962,9 +972,10 @@ class PayrollBatchController extends Controller
             if ($request->ajax()) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Only approved batches can be marked as paid.'
+                    'message' => 'Only approved batches can be marked as paid.',
                 ], 422);
             }
+
             return back()->with('error', 'Only approved batches can be marked as paid.');
         }
 
@@ -990,7 +1001,7 @@ class PayrollBatchController extends Controller
             if ($request->ajax()) {
                 return response()->json([
                     'success' => true,
-                    'message' => 'Payroll batch marked as paid. All payments have been recorded.'
+                    'message' => 'Payroll batch marked as paid. All payments have been recorded.',
                 ]);
             }
 
@@ -1000,9 +1011,10 @@ class PayrollBatchController extends Controller
             if ($request->ajax()) {
                 return response()->json([
                     'success' => false,
-                    'message' => $e->getMessage()
+                    'message' => $e->getMessage(),
                 ], 500);
             }
+
             return back()->with('error', $e->getMessage());
         }
     }
@@ -1014,9 +1026,10 @@ class PayrollBatchController extends Controller
             if ($request->ajax()) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Only rejected batches can be reverted to draft.'
+                    'message' => 'Only rejected batches can be reverted to draft.',
                 ], 422);
             }
+
             return back()->with('error', 'Only rejected batches can be reverted to draft.');
         }
 
@@ -1033,7 +1046,7 @@ class PayrollBatchController extends Controller
             if ($request->ajax()) {
                 return response()->json([
                     'success' => true,
-                    'message' => 'Payroll batch reverted to draft status.'
+                    'message' => 'Payroll batch reverted to draft status.',
                 ]);
             }
 
@@ -1043,9 +1056,10 @@ class PayrollBatchController extends Controller
             if ($request->ajax()) {
                 return response()->json([
                     'success' => false,
-                    'message' => $e->getMessage()
+                    'message' => $e->getMessage(),
                 ], 500);
             }
+
             return back()->with('error', $e->getMessage());
         }
     }
@@ -1057,6 +1071,7 @@ class PayrollBatchController extends Controller
         $payslips = $payrollBatch->items->map(function ($item) {
             $data = $this->payrollService->getPayslipData($item);
             $data['item_id'] = $item->id; // Add item ID for print links
+
             return $data;
         });
 
@@ -1080,7 +1095,7 @@ class PayrollBatchController extends Controller
             fputcsv($file, [
                 'Employee ID', 'Name', 'Department', 'Basic Salary',
                 'Additions', 'Deductions', 'Gross Salary', 'Net Salary',
-                'Bank Name', 'Account Number', 'Account Name'
+                'Bank Name', 'Account Number', 'Account Name',
             ]);
 
             foreach ($payrollBatch->items as $item) {

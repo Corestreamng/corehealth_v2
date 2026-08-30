@@ -9,7 +9,8 @@ use OwenIt\Auditing\Contracts\Auditable;
 
 class BudgetLine extends Model implements Auditable
 {
-    use HasFactory, \OwenIt\Auditing\Auditable;
+    use HasFactory;
+    use \OwenIt\Auditing\Auditable;
 
     protected $fillable = [
         'budget_id',

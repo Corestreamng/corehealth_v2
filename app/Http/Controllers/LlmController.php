@@ -5,12 +5,13 @@ namespace App\Http\Controllers;
 use App\Services\LlmGatewayService;
 use App\Services\PatientContextService;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Log;
 
 class LlmController extends Controller
 {
     protected LlmGatewayService $gateway;
+
     protected PatientContextService $contextService;
 
     public function __construct(LlmGatewayService $gateway, PatientContextService $contextService)
@@ -81,6 +82,7 @@ class LlmController extends Controller
             ]);
         } catch (\Exception $e) {
             Log::error('Patient Summary Error', ['error' => $e->getMessage()]);
+
             return response()->json(['success' => false, 'message' => 'Failed to generate summary: ' . $e->getMessage()], 500);
         }
     }
@@ -123,6 +125,7 @@ class LlmController extends Controller
             ]);
         } catch (\Exception $e) {
             Log::error('Polish Note Error', ['error' => $e->getMessage()]);
+
             return response()->json(['success' => false, 'message' => 'Failed to polish note: ' . $e->getMessage()], 500);
         }
     }
@@ -135,7 +138,7 @@ class LlmController extends Controller
         // Require admin access, logic handled by middleware normally
         return response()->json([
             'success' => true,
-            'providers' => $this->gateway->getProviderStatuses()
+            'providers' => $this->gateway->getProviderStatuses(),
         ]);
     }
 
@@ -146,6 +149,7 @@ class LlmController extends Controller
     {
         try {
             $models = $this->gateway->listModels($provider);
+
             return response()->json([
                 'success' => true,
                 'models' => $models,
@@ -172,12 +176,13 @@ class LlmController extends Controller
                 $request->api_key ?? '',
                 $request->base_url ?? ''
             );
+
             return response()->json(array_merge(['success' => true], $result));
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
                 'valid' => false,
-                'message' => $e->getMessage()
+                'message' => $e->getMessage(),
             ], 500);
         }
     }

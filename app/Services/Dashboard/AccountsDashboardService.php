@@ -2,9 +2,9 @@
 
 namespace App\Services\Dashboard;
 
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Cache;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 
 class AccountsDashboardService
 {
@@ -168,6 +168,7 @@ class AccountsDashboardService
                 $row->module = class_basename($row->auditable_type ?? '');
                 $eventColors = ['created' => 'success', 'updated' => 'info', 'deleted' => 'danger'];
                 $row->event_color = $eventColors[$row->event] ?? 'secondary';
+
                 return $row;
             })
             ->toArray();

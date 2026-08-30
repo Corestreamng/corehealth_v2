@@ -29,12 +29,12 @@ class PatientImmunizationSchedule extends Model implements Auditable
         'administered_date' => 'date',
     ];
 
-    const STATUS_PENDING = 'pending';
-    const STATUS_DUE = 'due';
-    const STATUS_OVERDUE = 'overdue';
-    const STATUS_ADMINISTERED = 'administered';
-    const STATUS_SKIPPED = 'skipped';
-    const STATUS_CONTRAINDICATED = 'contraindicated';
+    public const STATUS_PENDING = 'pending';
+    public const STATUS_DUE = 'due';
+    public const STATUS_OVERDUE = 'overdue';
+    public const STATUS_ADMINISTERED = 'administered';
+    public const STATUS_SKIPPED = 'skipped';
+    public const STATUS_CONTRAINDICATED = 'contraindicated';
 
     /**
      * Get the patient for this schedule entry.
