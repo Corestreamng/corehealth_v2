@@ -338,11 +338,20 @@ The codebase features **35 domain-specific PHPUnit test suites** containing **15
 #### Running Tests
 
 ```bash
-# Run all tests via Makefile
+# Option 1: Run via Makefile locally
+make test-local
+
+# Option 2: Run via Makefile inside Docker containers
 make test
 
-# Or via PHPUnit locally
+# Option 3: Run via Composer script
+composer test
+
+# Option 4: Run via PHPUnit directly with testdox output
 vendor/bin/phpunit --testdox
+
+# Option 5: Run a specific domain suite (e.g. Pharmacy)
+vendor/bin/phpunit tests/Feature/Pharmacy/
 ```
 
 ---
