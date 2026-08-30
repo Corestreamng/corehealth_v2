@@ -24,7 +24,13 @@ When working on this project, strictly adhere to the following standards across 
 - Use `LIKE` (do NOT use `ILIKE`).
 - Ensure JSON column operations use MariaDB-compatible syntax.
 
-## 4. Testing Standards
+## 4. Testing Standards & Commands
+- **Execution Commands**:
+  - `make test-local` — Run full PHPUnit test suite locally
+  - `make test` — Run full PHPUnit test suite inside Docker containers
+  - `composer test` — Run PHPUnit via Composer script
+  - `vendor/bin/phpunit --testdox` — Run PHPUnit directly with detailed output
+  - `vendor/bin/phpunit tests/Feature/Pharmacy/` — Run specific domain suite
 - **Main Database**: Do NOT configure PHPUnit to use SQLite or an in-memory database. Tests MUST run against the main MySQL test database (`_corehealth_db_v2_test`) to ensure complete schema compatibility.
 - **Transactions**: All test classes must extend `Tests\TestCase` (which includes `DatabaseTransactions`). Tests automatically wrap database operations in a MySQL transaction and roll back upon completion.
 - **No RefreshDatabase**: Do NOT add `RefreshDatabase` trait to test classes (it would wipe the database!).
@@ -59,4 +65,4 @@ When working on this project, strictly adhere to the following standards across 
 - **Documentation**: Major architecture changes, test updates, and sprint progress must be documented in `walkthrough.md`, `README.md`, `AGENTS.md`, and `GEMINI.md`.
 
 ## 9. Version Tagging
-- **Semantic Tagging**: Whenever completing a feature or milestone, tag the repository using `git tag` starting from `v2.5.0.2` (`git tag -a v2.X.Y.Z`). Major version increments require explicit instruction from the user.
+- **Semantic Tagging**: Whenever completing a feature or milestone, tag the repository using `git tag` starting from `v2.5.0.4` (`git tag -a v2.X.Y.Z`). Major version increments require explicit instruction from the user.
