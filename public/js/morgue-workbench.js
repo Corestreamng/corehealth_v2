@@ -1,7 +1,7 @@
     $(document).ready(function() {
         // Merge (do not replace) — modal partial already set registerUrl, emergencyIntakeUrl, etc.
         $.extend(window.patientFormConfig, {
-            submitUrl: '{{ route("morgue.admit") }}',
+            submitUrl: wbRoute('morgue_admit', '/morgue/admit'),
             onSuccess: function(patientId, mode) {
                 toastr.success("Patient record created/admitted successfully");
                 $("#patientFormModal").modal("hide");
@@ -29,7 +29,7 @@
         });
 
         function loadData() {
-            $.get('{{ route("morgue.queue") }}', function(response) {
+            $.get(wbRoute('morgue_queue', '/morgue/queue'), function(response) {
                 renderPending(response.pending);
                 renderActive(response.active);
                 $('#stat-pending').text(response.pending.length);
@@ -39,7 +39,7 @@
 
         function loadServices(patientId, targetSelect) {
             $(targetSelect).html('<option value="">Loading services...</option>');
-            $.get('{{ route("morgue.services") }}', { patient_id: patientId }, function(services) {
+            $.get(wbRoute('morgue_services', '/morgue/services'), { patient_id: patientId }, function(services) {
                 let html = '<option value="">-- Select Service --</option>';
                 services.forEach(s => {
                     const basePrice = s.price ? parseFloat(s.price.sale_price) : 0;
@@ -134,7 +134,7 @@
 
         $('#btn-save-admission').click(function() {
             const data = {
-                _token: '{{ csrf_token() }}',
+                _token: (window.WORKBENCH_CONFIG?.csrf || $('meta[name="csrf-token"]').attr('content')),
                 death_record_id: $('#admit-death-record-id').val(),
                 fridge_no: $('#admit-fridge').val(),
                 tray_no: $('#admit-tray').val(),
@@ -149,7 +149,7 @@
 
             $(this).prop('disabled', true).html('<i class="fa fa-spinner fa-spin"></i> Processing...');
 
-            $.post('{{ route("morgue.admit") }}', data, function(res) {
+            $.post(wbRoute('morgue_admit', '/morgue/admit'), data, function(res) {
                 if (res.success) {
                     toastr.success(res.message);
                     $('#admitModal').modal('hide');
@@ -166,7 +166,7 @@
 
         $('#btn-save-service').click(function() {
             const data = {
-                _token: '{{ csrf_token() }}',
+                _token: (window.WORKBENCH_CONFIG?.csrf || $('meta[name="csrf-token"]').attr('content')),
                 morgue_admission_id: $('#service-admission-id').val(),
                 service_id: $('#morgue-service-id').val(),
                 qty: $('#morgue-service-qty').val()
@@ -179,7 +179,7 @@
 
             $(this).prop('disabled', true).html('<i class="fa fa-spinner fa-spin"></i> Adding...');
 
-            $.post('{{ route("morgue.add-service") }}', data, function(res) {
+            $.post(wbRoute('morgue_add-service', '/morgue/add-service'), data, function(res) {
                 if (res.success) {
                     toastr.success(res.message);
                     $('#serviceModal').modal('hide');
@@ -193,7 +193,7 @@
 
         $('#btn-confirm-release').click(function() {
             const data = {
-                _token: '{{ csrf_token() }}',
+                _token: (window.WORKBENCH_CONFIG?.csrf || $('meta[name="csrf-token"]').attr('content')),
                 morgue_admission_id: $('#release-admission-id').val(),
                 released_to_name: $('#release-name').val(),
                 released_to_phone: $('#release-phone').val(),
@@ -207,7 +207,7 @@
 
             $(this).prop('disabled', true).html('<i class="fa fa-spinner fa-spin"></i> Releasing...');
 
-            $.post('{{ route("morgue.release") }}', data, function(res) {
+            $.post(wbRoute('morgue_release', '/morgue/release'), data, function(res) {
                 if (res.success) {
                     toastr.success(res.message);
                     $('#releaseModal').modal('hide');
@@ -221,7 +221,7 @@
         });
     });
 
-{{-- ═══ REPORTS & BILL SCRIPTS ═══ --}}
+/* ═══ REPORTS & BILL SCRIPTS ═══ */
 (function() {
     'use strict';
 
@@ -272,7 +272,7 @@
     function loadReports() {
         const from = $('#rpt-date-from').val();
         const to   = $('#rpt-date-to').val();
-        $.get('{{ route("morgue.reports") }}', { date_from: from, date_to: to })
+        $.get(wbRoute('morgue_reports', '/morgue/reports'), { date_from: from, date_to: to })
             .done(function(res) {
                 /* KPI cards */
                 $('#rpt-total-admissions').text(res.stats.total_admissions);
@@ -384,7 +384,7 @@
 
         $('#billModal').modal('show');
 
-        $.get(`{{ url('morgue/patient') }}/${admissionId}/bill`)
+        $.get(`${wbUrl('morgue/patient')}/${admissionId}/bill`)
             .done(function(res) {
                 $('#bill-loading').hide();
                 $('#bill-patient-info').html(`
