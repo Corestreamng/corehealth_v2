@@ -6,12 +6,8 @@ use App\Models\ImagingServiceRequest;
 use App\Models\LabServiceRequest;
 use App\Models\Patient;
 use App\Models\ResultView;
-use Illuminate\Foundation\Testing\RefreshDatabase;
-use Tests\TestCase;
-
 class ResultViewTest extends TestCase
 {
-    use RefreshDatabase;
 
     public function test_it_can_track_result_view()
     {
