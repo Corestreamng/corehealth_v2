@@ -1331,3 +1331,6 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/workbench/price-list/services', [\App\Http\Controllers\WorkbenchPriceListController::class, 'getServices'])->name('workbench.price-list.services');
     Route::get('/workbench/price-list/tariffs', [\App\Http\Controllers\WorkbenchPriceListController::class, 'getTariffs'])->name('workbench.price-list.tariffs');
 });
+
+// Observability & Health Monitoring
+Route::get('/metrics', [\App\Http\Controllers\MetricsController::class, 'index'])->name('metrics');
