@@ -8,7 +8,7 @@
     ],
     "license": "MIT",
     "require": {
-        "php": "^7.3|^8.0",
+        "php": "^8.1",
         "barryvdh/laravel-dompdf": "^2.2",
         "cmgmyr/messenger": "^2.29",
         "doctrine/dbal": "^4.4",
@@ -24,6 +24,7 @@
         "owen-it/laravel-auditing": "^13.7",
         "phpoffice/phpspreadsheet": "^1.30",
         "realrashid/sweet-alert": "^5.1",
+        "sentry/sentry-laravel": "^4.0",
         "spatie/laravel-permission": "^5.7",
         "yajra/laravel-datatables": "^1.5"
     },

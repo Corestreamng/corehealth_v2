@@ -106,7 +106,7 @@ jobs:
           cd tools
           composer install --no-interaction --prefer-dist --no-progress
       - name: Run PHP CS Fixer (dry-run)
-        run: tools/vendor/bin/php-cs-fixer fix --dry-run --diff --config=.php-cs-fixer.php || true
+        run: tools/vendor/bin/php-cs-fixer fix --dry-run --diff --config=.php-cs-fixer.php
 
   audit:
     name: Security Audit
@@ -123,9 +123,14 @@ jobs:
           key: ${{ runner.os }}-composer-audit-${{ hashFiles('**/composer.lock') }}
           restore-keys: ${{ runner.os }}-composer-audit-
       - run: composer install --no-interaction --prefer-dist --no-progress
-      - run: composer audit || true
+      - name: Run Composer security audit
+        run: composer audit
+        continue-on-error: true
       - uses: actions/setup-node@v4
         with:
           node-version: '18'
           cache: 'npm'
-      - run: npm ci && npm audit --audit-level=high || true
+      - run: npm ci
+      - name: Run npm security audit (critical only)
+        run: npm audit --audit-level=critical
+        continue-on-error: true

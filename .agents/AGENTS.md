@@ -3,7 +3,11 @@
 When working on this project, strictly adhere to the following standards across architecture, UI, and testing:
 
 ## 1. UI, Views, & Workbenches
-- **Major Clinical Workbenches** (Reception, Doctor, Pharmacy, etc.): These are implemented as massive, comprehensive single Blade files (e.g., `reception/workbench.blade.php` is 10,000+ lines). They contain inline CSS/JS, complex modal logic, and AJAX endpoints for a single-page-application feel. They extend `admin.layouts.app`.
+- **Major Clinical Workbenches & Views** (Reception, Doctor, Pharmacy, Nursing, Lab, Morgue, etc.): All workbenches and major views follow the standard modular architecture pattern:
+  - Main Blade view (`workbench.blade.php`) extends `admin.layouts.app` and contains HTML structure only. Do NOT create or maintain single 15,000+ line Blade files with inline JavaScript.
+  - Modals are extracted into `partials/_modals.blade.php`.
+  - `partials/_scripts.blade.php` injects `window.WORKBENCH_CONFIG` with server-side Blade data and loads external JS scripts.
+  - Front-end logic lives strictly in standalone JS modules under `public/js/<module>-workbench.js` (consuming `window.WORKBENCH_CONFIG`).
 - **Audit/Reporting Workbenches** (e.g., `OpsAudit`): These rely on a master layout (e.g., `resources/views/admin/ops_audit/layout.blade.php`). Controllers inject module-specific variables (`$module_title`, `$tabs`) rather than duplicating views.
 - **Sidebar & Access Control**: The main sidebar is located in `resources/views/admin/partials/sidebar.blade.php`. It explicitly uses Spatie `@can` and `@role` directives to control access. Always check this file for role contexts.
 - **DataTables**: The system heavily relies on AJAX-driven Yajra DataTables for data grids.
