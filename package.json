@@ -22,7 +22,7 @@
     },
     "dependencies": {
         "@selectize/selectize": "^0.15.2",
-        "jquery": "^3.6.3",
+        "jquery": "^4.0.0",
         "select2": "^4.1.0-rc.0"
     }
 }
