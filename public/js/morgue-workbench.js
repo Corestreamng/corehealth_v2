@@ -223,16 +223,8 @@
 (function() {
     'use strict';
 
-    /* ── Hospital branding (from appsettings) ── */
-    const HOS = {!! json_encode([
-        'name'    => $sett->site_name ?? config('app.name'),
-        'color'   => $hosColor,
-        'logo'    => $sett->logo ? 'data:image/jpeg;base64,'.$sett->logo : '',
-        'address' => $sett->contact_address ?? '',
-        'phone'   => $sett->contact_phones ?? '',
-        'email'   => $sett->contact_emails ?? '',
-        'tagline' => $sett->hos_tagline ?? '',
-    ]) !!};
+    /* ── Hospital branding (from WORKBENCH_CONFIG) ── */
+    const HOS = window.WORKBENCH_CONFIG?.hospital || {};
 
     let trendChart = null;
     let typesChart = null;
