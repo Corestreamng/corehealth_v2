@@ -5121,7 +5121,7 @@
         $('#admissions-alos-kpi').text('Loading...');
 
         // Overview
-        $.get(`wbRoute('maternity-workbench.reports.summary', '/maternity-workbench/reports/summary')?${qs}`, function(resp) {
+        $.get(wbRoute('maternity-workbench.reports.summary', '/maternity-workbench/reports/summary') + '?' + qs, function(resp) {
             if (!resp.success) return;
             const d = resp.data;
             let html = '<div class="row mb-3">';
@@ -5139,7 +5139,7 @@
             $('#reports-summary-cards').html(html);
 
             // Load Deliveries Chart
-            $.get(`wbRoute('maternity-workbench.reports.delivery-stats', '/maternity-workbench/reports/delivery-stats')?${qs}`, function(r) {
+            $.get(wbRoute('maternity-workbench.reports.delivery-stats', '/maternity-workbench/reports/delivery-stats') + '?' + qs, function(r) {
                 if (!r.success) return;
                 const types = Object.keys(r.by_type);
                 const counts = Object.values(r.by_type);
@@ -5167,7 +5167,7 @@
         });
 
         // Immunization
-        $.get(`wbRoute('maternity-workbench.reports.immunization-coverage', '/maternity-workbench/reports/immunization-coverage')?${qs}`, function(r) {
+        $.get(wbRoute('maternity-workbench.reports.immunization-coverage', '/maternity-workbench/reports/immunization-coverage') + '?' + qs, function(r) {
             if (!r.success || !Object.keys(r.coverage).length) {
                 $('#imm-coverage-body').html('<p class="text-muted mb-0">No data</p>');
                 return;
@@ -5197,7 +5197,7 @@
         });
 
         // Defaulters
-        $.get(`wbRoute('maternity-workbench.reports.anc-defaulters', '/maternity-workbench/reports/anc-defaulters')?${qs}`, function(r) {
+        $.get(wbRoute('maternity-workbench.reports.anc-defaulters', '/maternity-workbench/reports/anc-defaulters') + '?' + qs, function(r) {
             if (!r.success) return;
             if (r.defaulters.length === 0) {
                 $('#defaulters-body').html('<p class="text-muted mb-0">No defaulters</p>');
@@ -5222,7 +5222,7 @@
         });
 
         // High Risk Register
-        $.get(`wbRoute('maternity-workbench.reports.high-risk-register', '/maternity-workbench/reports/high-risk-register')?${qs}`, function(r) {
+        $.get(wbRoute('maternity-workbench.reports.high-risk-register', '/maternity-workbench/reports/high-risk-register') + '?' + qs, function(r) {
             if (!r.success) return;
             if (r.register.length === 0) {
                 $('#high-risk-body').html('<p class="text-muted mb-0">No high-risk patients</p>');
@@ -5256,7 +5256,7 @@
         });
 
         // Admissions Stats
-        $.get(`wbRoute('maternity-workbench.reports.admissions-stats', '/maternity-workbench/reports/admissions-stats')?${qs}`, function(resp) {
+        $.get(wbRoute('maternity-workbench.reports.admissions-stats', '/maternity-workbench/reports/admissions-stats') + '?' + qs, function(resp) {
             if (resp.success) {
                 $('#admissions-total-kpi').text(resp.data.total_admissions);
                 $('#admissions-alos-kpi').text(resp.data.average_length_of_stay + ' Days');

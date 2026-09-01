@@ -620,7 +620,7 @@
 
                             if (isCombo) {
                                 alreadyAdded = false; // combos are always available
-                                onClick = `applyComboEncounter(${item.id}, wbRoute('encounters.applyCombo', '/encounters/applyCombo'))`;
+                                onClick = 'applyComboEncounter(' + item.id + ', "' + wbRoute('encounters.applyCombo', '/encounters/applyCombo') + '")';
                             } else {
                                 const displayName = `${name}[${code}](${qty} avail.)`;
                                 alreadyAdded = ClinicalOrdersKit.isAlreadyAdded('meds', parseInt(item.id));
@@ -901,7 +901,7 @@
                             if (!alreadyAdded) {
                                 if (isCombo) {
                                     // For combos, show confirmation modal first
-                                    onClick = `applyComboEncounter(${item.id}, wbRoute('encounters.applyCombo', '/encounters/applyCombo'))`;
+                                    onClick = 'applyComboEncounter(' + item.id + ', "' + wbRoute('encounters.applyCombo', '/encounters/applyCombo') + '")';
                                 } else {
                                     // For direct services, use existing handler
                                     onClick = `setSearchValSer('${displayName}', '${item.id}', '${basePrice}', '${mode}', '${claims}', '${payable}')`;
@@ -970,7 +970,7 @@
                             let onClick = '';
                             if (!alreadyAdded) {
                                 if (isCombo) {
-                                    onClick = `applyComboEncounter(${item.id}, wbRoute('encounters.applyCombo', '/encounters/applyCombo'))`;
+                                    onClick = 'applyComboEncounter(' + item.id + ', "' + wbRoute('encounters.applyCombo', '/encounters/applyCombo') + '")';
                                 } else {
                                     onClick = `setSearchValImaging('${displayName}', '${item.id}', '${basePrice}', '${mode}', '${claims}', '${payable}')`;
                                 }
@@ -1462,7 +1462,7 @@
                 `;
 
                 // Build URL with query parameters
-                const url = new URL(`wbUrl('/')/patients/${patientId}/nurse-chart/medication`);
+                const url = new URL(wbUrl('/patients/' + patientId + '/nurse-chart/medication'));
                 if (startDate) url.searchParams.append('start_date', formatDateForApi(startDate));
                 if (endDate) url.searchParams.append('end_date', formatDateForApi(endDate));
 
@@ -2177,7 +2177,7 @@
                 solidContainer.innerHTML = loadingHtml;
 
                 // Build URL with query parameters
-                const url = new URL(`wbUrl('/')/patients/${patientId}/nurse-chart/intake-output`);
+                const url = new URL(wbUrl('/patients/' + patientId + '/nurse-chart/intake-output'));
                 if (startDate) url.searchParams.append('start_date', formatDateForApi(startDate));
                 if (endDate) url.searchParams.append('end_date', formatDateForApi(endDate));
 
