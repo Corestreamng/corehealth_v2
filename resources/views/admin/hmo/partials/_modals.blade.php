@@ -910,6 +910,3 @@
         </div>
     </div>
 </div>
-
-@endsection
-

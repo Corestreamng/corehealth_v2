@@ -1934,11 +1934,8 @@ $sett = appsettings();
     @include('admin.partials.dose-mode-toggle', ['prefix' => 'mco_'])
 </div>
 
-{{-- ═══════════════════════════════════════════════════════════════ --}}
 {{-- MATERNITY FORM MODALS --}}
-{{-- ═══════════════════════════════════════════════════════════════ --}}
-
-{{-- 1. Add Medical History Modal --}}
 @include('admin.maternity.partials._modals')
 
+@endsection
 @include('admin.maternity.partials._scripts')

@@ -393,7 +393,7 @@
         $('#btn-clinical-context').prop('disabled', false).attr('title', 'View clinical context for patient');
 
         $.ajax({
-            url: `wbUrl('/maternity-workbench/patient/${patientId}/details')`,
+            url: wbUrl(`/maternity-workbench/patient/${patientId}/details`),
             method: 'GET',
             success: function(data) {
                 currentPatientData = data;
@@ -1540,7 +1540,7 @@
             const formData = {};
             $(this).serializeArray().forEach(f => formData[f.name] = f.value);
             $.ajax({
-                url: `wbUrl('/maternity-workbench/enrollment/${currentEnrollmentId}')`,
+                url: wbUrl(`/maternity-workbench/enrollment/${currentEnrollmentId}`),
                 method: 'PUT',
                 data: formData,
                 headers: {
@@ -1784,7 +1784,7 @@
             const data = {};
             form.serializeArray().forEach(f => data[f.name] = f.value);
             $.ajax({
-                url: `wbUrl('/maternity-workbench/medical-history/${_editId}')`,
+                url: wbUrl(`/maternity-workbench/medical-history/${_editId}`),
                 method: 'PUT',
                 data: data,
                 headers: {
@@ -1812,7 +1812,7 @@
             };
             form.serializeArray().forEach(f => data.items[0][f.name] = f.value);
             $.ajax({
-                url: `wbUrl('/maternity-workbench/enrollment/${currentEnrollmentId}/medical-history')`,
+                url: wbUrl(`/maternity-workbench/enrollment/${currentEnrollmentId}/medical-history`),
                 method: 'POST',
                 data: data,
                 headers: {
@@ -3821,7 +3821,7 @@
             data.notes = getEditorData('delivery_notes', '#mat-delivery-notes-editor');
             data.complications = getEditorData('delivery_complications', '#mat-delivery-complications-editor');
             $.ajax({
-                url: `wbUrl('/maternity-workbench/enrollment/${currentEnrollmentId}/delivery')`,
+                url: wbUrl(`/maternity-workbench/enrollment/${currentEnrollmentId}/delivery`),
                 method: 'POST',
                 data: data,
                 headers: {
@@ -3956,7 +3956,7 @@
                 data.notes = getEditorData('delivery_notes', '#mat-delivery-notes-editor');
                 data.complications = getEditorData('delivery_complications', '#mat-delivery-complications-editor');
                 $.ajax({
-                    url: `wbUrl('/maternity-workbench/delivery/${id}')`,
+                    url: wbUrl(`/maternity-workbench/delivery/${id}`),
                     method: 'PUT',
                     data: data,
                     headers: {
@@ -4176,7 +4176,7 @@
         const btn = $(this);
         btn.prop('disabled', true).html('<i class="mdi mdi-loading mdi-spin"></i> Saving...');
         $.ajax({
-            url: `wbUrl('/maternity-workbench/baby/${bid}/growth')`,
+            url: wbUrl(`/maternity-workbench/baby/${bid}/growth`),
             method: 'POST',
             data: data,
             headers: {
@@ -5036,7 +5036,7 @@
     function deleteNote(id) {
         if (!confirm('Delete this note?')) return;
         $.ajax({
-            url: `wbUrl('/maternity-workbench/note/${id}')`,
+            url: wbUrl(`/maternity-workbench/note/${id}`),
             method: 'DELETE',
             headers: {
                 'X-CSRF-TOKEN': CSRF_TOKEN
@@ -5485,7 +5485,7 @@
 
         // Phase 1: Fetch warnings
         $.ajax({
-            url: `wbUrl('/maternity-workbench/enrollment/${currentEnrollmentId}/discharge')`,
+            url: wbUrl(`/maternity-workbench/enrollment/${currentEnrollmentId}/discharge`),
             method: 'POST',
             headers: {
                 'X-CSRF-TOKEN': CSRF_TOKEN
@@ -5527,7 +5527,7 @@
             $btn.prop('disabled', true).html('<i class="mdi mdi-loading mdi-spin"></i> Discharging...');
 
             $.ajax({
-                url: `wbUrl('/maternity-workbench/enrollment/${currentEnrollmentId}/discharge')`,
+                url: wbUrl(`/maternity-workbench/enrollment/${currentEnrollmentId}/discharge`),
                 method: 'POST',
                 headers: {
                     'X-CSRF-TOKEN': CSRF_TOKEN
@@ -5994,7 +5994,7 @@
     function deleteMatPartographEntry(enrollmentId, entryId) {
         if (!confirm('Delete this partograph entry?')) return;
         $.ajax({
-            url: `wbUrl('/maternity-workbench/enrollment/${enrollmentId}/maternity-partograph/${entryId}')`,
+            url: wbUrl(`/maternity-workbench/enrollment/${enrollmentId}/maternity-partograph/${entryId}`),
             method: 'DELETE',
             headers: { 'X-CSRF-TOKEN': $('meta[name=csrf-token]').attr('content') },
             success: function(res) {

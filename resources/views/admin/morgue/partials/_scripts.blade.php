@@ -1,3 +1,4 @@
+@section('scripts')
 @php
     $sett = appsettings();
     $hosColor = '#8b5cf6';
@@ -19,3 +20,4 @@
 </script>
 <script src="{{ asset('js/workbench-helper.js') }}"></script>
 <script src="{{ asset('js/morgue-workbench.js') }}"></script>
+@endsection

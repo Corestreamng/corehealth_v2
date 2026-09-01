@@ -499,7 +499,7 @@
             const coverageBadge = ClinicalOrdersKit.renderCoverageBadge(coverageMode, payable ?? price, claims ?? 0);
 
             ClinicalOrdersKit.addItem({
-                url: `wbUrl('/encounters/${encounterId}/add-prescription')`,
+                url: wbUrl(`/encounters/${encounterId}/add-prescription`),
                 payload: { product_id: id, dose: initialDose },
                 csrfToken: csrfToken,
                 tableSelector: '#selected-products',
@@ -2623,7 +2623,7 @@
             }
 
             $.ajax({
-                url: `wbUrl('/encounters/${encounterId}/save-diagnosis')`,
+                url: wbUrl(`/encounters/${encounterId}/save-diagnosis`),
                 method: 'POST',
                 data: formData,
                 processData: false,
@@ -2710,7 +2710,7 @@
             setButtonLoading('save_labs_btn', true);
 
             $.ajax({
-                url: `wbUrl('/encounters/${encounterId}/save-labs')`,
+                url: wbUrl(`/encounters/${encounterId}/save-labs`),
                 method: 'POST',
                 data: {
                     consult_invest_id: services,
@@ -2783,7 +2783,7 @@
             setButtonLoading('save_imaging_btn', true);
 
             $.ajax({
-                url: `wbUrl('/encounters/${encounterId}/save-imaging')`,
+                url: wbUrl(`/encounters/${encounterId}/save-imaging`),
                 method: 'POST',
                 data: {
                     consult_imaging_id: services,
@@ -2871,7 +2871,7 @@
             setButtonLoading('save_prescriptions_btn', true);
 
             $.ajax({
-                url: `wbUrl('/encounters/${encounterId}/save-prescriptions')`,
+                url: wbUrl(`/encounters/${encounterId}/save-prescriptions`),
                 method: 'POST',
                 data: {
                     consult_presc_id: products,
@@ -2926,7 +2926,7 @@
             btn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Completing...';
 
             $.ajax({
-                url: `wbUrl('/encounters/${encounterId}/finalize')`,
+                url: wbUrl(`/encounters/${encounterId}/finalize`),
                 method: 'POST',
                 data: {
                     end_consultation: $('#end_consultation').is(':checked') ? 1 : 0,
@@ -2954,7 +2954,7 @@
         function updateSummary() {
             // Fetch real encounter data from database
             $.ajax({
-                url: `wbUrl('/encounters/${encounterId}/summary')`,
+                url: wbUrl(`/encounters/${encounterId}/summary`),
                 method: 'GET',
                 success: function(response) {
                     if (response.success) {
