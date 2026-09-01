@@ -1058,11 +1058,17 @@
         <div class="row">
             <!-- Main Content -->
             <div class="col-md-8">
-            <!-- Requested Items - Enhanced Table -->
-        @if(auth()->user()->can('requisitions.fulfill') || auth()->user()->hasAnyRole(['ADMIN', 'SUPERADMIN', 'STORE']))
-            <form id="fulfill-form" method="POST" action="{{ route('inventory.requisitions.fulfill', $requisition) }}">
-            @csrf
-            <div class="fulfill-panel" id="fulfill-panel">
+                <!-- Requested Items - Enhanced Table -->
+                @php
+                    $isFulfillable = in_array($requisition->status, ['approved', 'partial']) && (auth()->user()->can('requisitions.fulfill') || auth()->user()->hasAnyRole(['ADMIN', 'SUPERADMIN', 'STORE']));
+                @endphp
+
+                @if($isFulfillable)
+                <form id="fulfill-form" method="POST" action="{{ route('inventory.requisitions.fulfill', $requisition) }}">
+                @csrf
+                <div class="fulfill-panel" id="fulfill-panel">
+                @endif
+
                 <div class="detail-card">
                     <h5><i class="mdi mdi-package-variant"></i> Requisition Items</h5>
                     
@@ -1323,8 +1329,7 @@
                     @endforeach
                 </div>
                 
-                @if(auth()->user()->can('requisitions.fulfill') || auth()->user()->hasAnyRole(['ADMIN', 'SUPERADMIN', 'STORE']))
-                @if(in_array($requisition->status, ['approved', 'partial']))
+                @if($isFulfillable)
                 <div class="detail-card sticky-bottom shadow-lg border-top border-primary p-3" style="bottom: 0; z-index: 1000; position: sticky;">
                     <div class="d-flex justify-content-between align-items-center">
                         <div>
@@ -1336,10 +1341,9 @@
                         </button>
                     </div>
                 </div>
-                @endif
-                @endif
+                </div>
                 </form>
-        @endif
+                @endif
 
                 @if($requisition->request_notes)
                 <div class="detail-card">
@@ -1784,7 +1788,7 @@ function reverseItem(itemId) {
     }).then((result) => {
         if (result.isConfirmed) {
             $.ajax({
-                url: `{{ url('/inventory/requisitions/{{ $requisition->id }}/items/${itemId}/reverse') }}`,
+                url: '{{ url("inventory/requisitions") }}/{{ $requisition->id }}/items/' + itemId + '/reverse',
                 type: 'PATCH',
                 data: {
                     _token: '{{ csrf_token() }}'

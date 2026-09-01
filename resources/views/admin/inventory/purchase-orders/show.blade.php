@@ -406,7 +406,8 @@
                             </thead>
                             <tbody>
                                 @foreach($purchaseOrder->items as $index => $item)
-                                <tr>
+                                @php $hasReturned = ($item->returned_qty ?? 0) > 0; @endphp
+                                <tr class="{{ $hasReturned ? 'bg-light-warning' : '' }}">
                                     <td>{{ $index + 1 }}</td>
                                     <td>
                                         <strong>{{ $item->product->product_name ?? 'Product Deleted' }}</strong>
@@ -431,14 +432,19 @@
                                         @if($item->receivedPackaging)
                                         <br><small class="text-info">{{ (float)$item->received_packaging_qty }} {{ $item->receivedPackaging->name }}</small>
                                         @endif
+                                        @if($hasReturned)
+                                        <div class="mt-1"><span class="badge badge-warning text-dark font-weight-bold" style="font-size:0.68rem;" title="Net Received After Returns">Net: {{ max(0, $item->received_qty - $item->returned_qty) }}</span></div>
+                                        @endif
                                     </td>
                                     <td class="text-right">₦{{ number_format($item->unit_cost, 2) }}</td>
                                     <td class="text-right">₦{{ number_format($item->line_total, 2) }}</td>
                                     <td class="text-center">
-                                        @if(($item->returned_qty ?? 0) > 0)
-                                            <span class="text-danger font-weight-bold">{{ $item->returned_qty }}</span>
+                                        @if($hasReturned)
+                                            <span class="badge badge-danger font-weight-bold px-2 py-1" style="font-size:0.78rem;">
+                                                <i class="mdi mdi-undo-variant mr-1"></i>{{ $item->returned_qty }} Returned
+                                            </span>
                                         @else
-                                            <span class="text-muted">0</span>
+                                            <span class="text-muted" style="font-size:0.8rem;">0</span>
                                         @endif
                                     </td>
                                     <td style="width: 100px;">
@@ -559,13 +565,18 @@
                 <div class="detail-card">
                     <h5><i class="mdi mdi-package"></i> Received Items</h5>
                     @foreach($receivedItems as $item)
+                    @php $retQty = $item->returned_qty ?? 0; @endphp
                     <div class="border-bottom pb-2 mb-2">
                         <strong>{{ $item->product->product_name ?? 'Product Deleted' }}</strong>
                         <br>
                         <small class="text-muted">
                             Ordered: {{ $item->ordered_qty }}<br>
-                            Received: {{ $item->received_qty }}<br>
-                            Pending: {{ $item->ordered_qty - $item->received_qty }}
+                            Received: {{ $item->received_qty }}
+                            @if($retQty > 0)
+                                <span class="text-danger font-weight-bold ml-1">(Returned: {{ $retQty }}, Net: {{ max(0, $item->received_qty - $retQty) }})</span>
+                            @endif
+                            <br>
+                            Pending: {{ max(0, $item->ordered_qty - $item->received_qty) }}
                         </small>
                     </div>
                     @endforeach
@@ -592,7 +603,10 @@
                 @php $returns = $purchaseOrder->returns ?? collect(); @endphp
                 @if($returns->count() > 0)
                 <div class="detail-card no-print">
-                    <h5 style="border-bottom-color:#dc2626;"><i class="mdi mdi-undo-variant mr-1" style="color:#dc2626;"></i> Return History</h5>
+                    <div class="d-flex justify-content-between align-items-center mb-2 pb-1 border-bottom" style="border-bottom-color:#dc2626 !important;">
+                        <h5 class="mb-0 border-0 p-0" style="border-bottom:none;"><i class="mdi mdi-undo-variant mr-1" style="color:#dc2626;"></i> Return History</h5>
+                        <a href="{{ route('inventory.po-returns.index') }}" class="btn btn-xs btn-outline-danger" style="font-size:0.75rem;">View All &rarr;</a>
+                    </div>
                     @foreach($returns as $ret)
                     <div class="border-bottom pb-2 mb-2">
                         <div class="d-flex justify-content-between">
@@ -608,6 +622,14 @@
                         </small>
                     </div>
                     @endforeach
+                </div>
+                @else
+                <div class="detail-card no-print">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <h5 class="mb-0 border-0 p-0" style="font-size:0.95rem; border-bottom:none;"><i class="mdi mdi-undo-variant mr-1" style="color:#dc2626;"></i> PO Returns</h5>
+                        <a href="{{ route('inventory.po-returns.index') }}" class="btn btn-xs btn-outline-secondary" style="font-size:0.75rem;">View Returns &rarr;</a>
+                    </div>
+                    <small class="text-muted d-block">No returns recorded for this PO yet.</small>
                 </div>
                 @endif
 

@@ -147,6 +147,20 @@ class PurchaseOrderReturnController extends Controller
                     'approval_notes' => $return->approval_notes,
                     'created_at' => $return->created_at->format('M d, Y h:i A'),
                     'approved_at' => $return->approved_at ? $return->approved_at->format('M d, Y h:i A') : null,
+                    'financial_context' => [
+                        'payment_status' => $return->payment_status_at_return ?: ($return->purchaseOrder->payment_status ?? 'unpaid'),
+                        'po_total_amount' => (float)($return->purchaseOrder->total_amount ?? 0),
+                        'po_amount_paid' => (float)($return->purchaseOrder->amount_paid ?? 0),
+                        'po_balance_due' => (float)($return->purchaseOrder->balance_due ?? 0),
+                        'is_fully_paid' => ($return->payment_status_at_return === 'paid' || ($return->purchaseOrder && $return->purchaseOrder->payment_status === 'paid')),
+                        'dr_account_code' => ($return->payment_status_at_return === 'paid' || ($return->purchaseOrder && $return->purchaseOrder->payment_status === 'paid')) ? '1200' : '2110',
+                        'dr_account_name' => ($return->payment_status_at_return === 'paid' || ($return->purchaseOrder && $return->purchaseOrder->payment_status === 'paid')) ? 'Accounts Receivable (1200) — Supplier Credit' : 'Accounts Payable - Suppliers (2110) — Debt Reduction',
+                        'cr_account_code' => '1310',
+                        'cr_account_name' => 'Inventory - Medical Supplies (1310)',
+                        'impact_summary' => ($return->payment_status_at_return === 'paid' || ($return->purchaseOrder && $return->purchaseOrder->payment_status === 'paid'))
+                            ? 'Fully Paid PO — Approving will create a Supplier Credit Note / Receivable (AR 1200) for ₦' . number_format((float)$return->total_value, 2) . '.'
+                            : 'Unpaid/Partial PO — Approving will reduce Accounts Payable liability (AP 2110) by ₦' . number_format((float)$return->total_value, 2) . ' and lower the PO Net Balance Due.',
+                    ],
                     'journal_entry' => $return->journalEntry ? [
                         'id' => $return->journalEntry->id,
                         'entry_number' => $return->journalEntry->entry_number ?? 'JE-' . $return->journalEntry->id,
@@ -276,7 +290,16 @@ class PurchaseOrderReturnController extends Controller
      */
     public function index()
     {
-        return view('admin.inventory.purchase-order-returns.index');
+        $stats = [
+            'total_count' => PurchaseOrderReturn::count(),
+            'pending_count' => PurchaseOrderReturn::where('status', 'pending')->count(),
+            'approved_count' => PurchaseOrderReturn::where('status', 'approved')->count(),
+            'total_value' => PurchaseOrderReturn::where('status', 'approved')->sum('total_value'),
+        ];
+
+        $stores = \App\Models\Store::active()->orderBy('store_name')->get();
+
+        return view('admin.inventory.purchase-order-returns.index', compact('stats', 'stores'));
     }
 
     public function datatables(Request $request)
@@ -284,8 +307,12 @@ class PurchaseOrderReturnController extends Controller
         $query = PurchaseOrderReturn::with([
             'purchaseOrder:id,po_number,supplier_id',
             'purchaseOrder.supplier:id,company_name',
-            'product:id,product_name',
-            'batch:id,batch_number',
+            'purchaseOrderItem:id,packaging_id,packaging_qty',
+            'purchaseOrderItem.packaging:id,name,base_unit_qty',
+            'product:id,product_name,product_code,base_unit_name',
+            'product.packagings:id,product_id,name,base_unit_qty',
+            'store:id,store_name',
+            'batch:id,batch_number,expiry_date',
             'creator:id,surname,firstname,othername',
         ]);
 
@@ -298,31 +325,108 @@ class PurchaseOrderReturnController extends Controller
 
         return DataTables::eloquent($query)
             ->addIndexColumn()
-            ->addColumn('purchase_order', fn ($r) => $r->purchaseOrder->po_number ?? 'N/A')
-            ->addColumn('supplier', fn ($r) => $r->purchaseOrder->supplier->company_name ?? 'N/A')
-            ->addColumn('product', fn ($r) => $r->product->product_name ?? 'N/A')
-            ->addColumn('batch', fn ($r) => $r->batch->batch_number ?? 'N/A')
-            ->editColumn('status', function ($r) {
-                $badges = [
-                    'pending' => '<span class="status-badge status-pending">Pending</span>',
-                    'approved' => '<span class="status-badge status-approved">Approved</span>',
-                    'rejected' => '<span class="status-badge status-rejected">Rejected</span>',
-                ];
+            // 1. Transaction & Date
+            ->addColumn('return_info', function ($r) {
+                $num = '<strong class="text-dark d-block" style="font-size:0.88rem;">' . e($r->return_number ?? ('POR-' . $r->id)) . '</strong>';
+                $date = '<small class="text-muted"><i class="mdi mdi-calendar-clock mr-1"></i>' . ($r->created_at ? $r->created_at->format('M d, Y H:i') : '—') . '</small>';
 
-                return $badges[$r->status] ?? $r->status;
+                return $num . $date;
             })
-            ->addColumn('returned_by', fn ($r) => $r->creator ? ($r->creator->firstname . ' ' . $r->creator->surname) : 'N/A')
-            ->addColumn('actions', function ($r) {
-                $btns = '<div class="btn-group">';
+            // 2. Order, Supplier & Store
+            ->addColumn('order_info', function ($r) {
+                $poLink = '<span class="text-muted">N/A</span>';
+                if ($r->purchaseOrder) {
+                    $url = route('inventory.purchase-orders.show', $r->purchaseOrder->id);
+                    $poLink = '<a href="' . $url . '" class="font-weight-bold text-primary" target="_blank"><i class="mdi mdi-link-variant mr-1"></i>' . e($r->purchaseOrder->po_number) . '</a>';
+                }
+                $supp = e($r->purchaseOrder->supplier->company_name ?? 'N/A');
+                $store = e($r->store->store_name ?? 'N/A');
+
+                return '<div>' . $poLink . '</div><small class="text-muted d-block"><i class="mdi mdi-truck-delivery-outline mr-1"></i>' . $supp . '</small><small class="text-secondary d-block"><i class="mdi mdi-store mr-1"></i>' . $store . '</small>';
+            })
+            // 3. Product & Batch Details
+            ->addColumn('item_details', function ($r) {
+                $pName = '<strong class="text-dark">' . e($r->product->product_name ?? 'N/A') . '</strong>';
+                if ($r->product && $r->product->product_code) {
+                    $pName .= ' <small class="text-muted">(' . e($r->product->product_code) . ')</small>';
+                }
+
+                $batchStr = '';
+                if ($r->batch) {
+                    $batchStr = '<div class="mt-1"><span class="badge badge-light border text-dark" style="font-size:0.75rem;"><i class="mdi mdi-barcode-scan mr-1"></i>' . e($r->batch->batch_number) . '</span>';
+                    if ($r->batch->expiry_date) {
+                        $expClass = $r->batch->expiry_date->isPast() ? 'badge-danger' : ($r->batch->expiry_date->diffInDays(now()) <= 90 ? 'badge-warning' : 'badge-info');
+                        $batchStr .= ' <span class="badge ' . $expClass . '" style="font-size:0.7rem;"><i class="mdi mdi-calendar mr-1"></i>Exp: ' . $r->batch->expiry_date->format('M Y') . '</span>';
+                    }
+                    $batchStr .= '</div>';
+                } else {
+                    $batchStr = '<small class="text-muted d-block mt-1">No Batch Info</small>';
+                }
+
+                return $pName . $batchStr;
+            })
+            // 4. Quantity & Packaging
+            ->addColumn('qty_packaging', function ($r) {
+                $baseUnit = $r->product->base_unit_name ?? 'Units';
+                $mainQty = number_format($r->qty_returned) . ' ' . $baseUnit;
+
+                $pkgText = '';
+                if ($r->purchaseOrderItem && $r->purchaseOrderItem->packaging) {
+                    $pkg = $r->purchaseOrderItem->packaging;
+                    if ($pkg->base_unit_qty > 1) {
+                        $pkgCount = round($r->qty_returned / $pkg->base_unit_qty, 1);
+                        $pkgText = '<small class="text-info font-weight-bold d-block mt-1"><i class="mdi mdi-package-variant-closed mr-1"></i>' . $pkgCount . ' ' . e($pkg->name) . ' (' . (float)$pkg->base_unit_qty . ' ' . $baseUnit . '/pkg)</small>';
+                    }
+                } elseif ($r->product && $r->product->packagings && $r->product->packagings->count() > 0) {
+                    $firstPkg = $r->product->packagings->first();
+                    if ($firstPkg && $firstPkg->base_unit_qty > 1) {
+                        $pkgCount = round($r->qty_returned / $firstPkg->base_unit_qty, 1);
+                        $pkgText = '<small class="text-info font-weight-bold d-block mt-1"><i class="mdi mdi-package-variant-closed mr-1"></i>~' . $pkgCount . ' ' . e($firstPkg->name) . '</small>';
+                    }
+                }
+
+                return '<div><span class="badge badge-light border font-weight-bold px-2 py-1" style="font-size:0.85rem;">' . $mainQty . '</span></div>' . $pkgText;
+            })
+            // 5. Value, Reason & Status
+            ->addColumn('value_reason_status', function ($r) {
+                $val = '<div class="font-weight-bold text-dark mb-1" style="font-size:0.9rem;">₦' . number_format((float)$r->total_value, 2) . '</div>';
+
+                $reasonLabel = ucfirst(str_replace('_', ' ', $r->return_reason ?? 'Other'));
+                $reasonBadge = '<span class="badge badge-soft-secondary" style="font-size:0.72rem;">' . e($reasonLabel) . '</span>';
+                if ($r->return_notes) {
+                    $reasonBadge .= '<small class="text-muted d-block" title="' . e($r->return_notes) . '"><i class="mdi mdi-note-text mr-1"></i>' . e(\Illuminate\Support\Str::limit($r->return_notes, 25)) . '</small>';
+                }
+
+                $statusBadges = [
+                    'pending' => '<span class="badge badge-warning text-dark px-2 py-1 mt-1 d-inline-block"><i class="mdi mdi-clock-outline mr-1"></i>Pending</span>',
+                    'approved' => '<span class="badge badge-success px-2 py-1 mt-1 d-inline-block"><i class="mdi mdi-check-circle mr-1"></i>Approved</span>',
+                    'rejected' => '<span class="badge badge-danger px-2 py-1 mt-1 d-inline-block"><i class="mdi mdi-close-circle mr-1"></i>Rejected</span>',
+                ];
+                $stBadge = $statusBadges[$r->status] ?? ('<span class="badge badge-secondary mt-1">' . e(ucfirst($r->status)) . '</span>');
+
+                return $val . $reasonBadge . '<div class="mt-1">' . $stBadge . '</div>';
+            })
+            // 6. Recorder & Actions
+            ->addColumn('recorder_actions', function ($r) {
+                $recorderName = 'N/A';
+                if ($r->creator) {
+                    $recorderName = trim(($r->creator->surname ?? '') . ' ' . ($r->creator->firstname ?? '') . ' ' . ($r->creator->othername ?? ''));
+                }
+                $userStr = '<div class="small text-muted mb-2"><i class="mdi mdi-account-outline mr-1"></i>' . e($recorderName ?: 'N/A') . '</div>';
+
+                $btns = '<div class="btn-group btn-group-sm">';
+                if ($r->purchase_order_id) {
+                    $btns .= '<a href="' . route('inventory.purchase-orders.show', $r->purchase_order_id) . '" class="btn btn-outline-info" title="View Purchase Order"><i class="mdi mdi-eye"></i> View PO</a>';
+                }
                 if ($r->status === 'pending') {
-                    $btns .= '<button class="btn btn-sm btn-success mr-1" onclick="approvePOReturn(' . $r->id . ')"><i class="mdi mdi-check"></i></button>';
-                    $btns .= '<button class="btn btn-sm btn-danger" onclick="rejectPOReturn(' . $r->id . ')"><i class="mdi mdi-close"></i></button>';
+                    $btns .= '<button class="btn btn-success btn-approve-por" data-id="' . $r->id . '" title="Approve Return"><i class="mdi mdi-check"></i> Approve</button>';
+                    $btns .= '<button class="btn btn-danger btn-reject-por" data-id="' . $r->id . '" title="Reject Return"><i class="mdi mdi-close"></i> Reject</button>';
                 }
                 $btns .= '</div>';
 
-                return $btns;
+                return $userStr . $btns;
             })
-            ->rawColumns(['status', 'actions'])
+            ->rawColumns(['return_info', 'order_info', 'item_details', 'qty_packaging', 'value_reason_status', 'recorder_actions'])
             ->make(true);
     }
 
