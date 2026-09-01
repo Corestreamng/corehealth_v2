@@ -98,7 +98,6 @@
         </div>
     </div>
 </div>
-@endif
 
 @include('admin.partials.clinical_context_modal')
 @include('admin.partials.treatment-plan-viewer-modal')

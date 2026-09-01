@@ -149,7 +149,7 @@ function loadPatient(patientId) {
 
     // Load patient requests
     $.ajax({
-        url: `wbUrl('/imaging-workbench/patient')/${patientId}/requests`,
+        url: wbUrl('/imaging-workbench/patient/' + patientId + '/requests'),
         method: 'GET',
         success: function(data) {
             currentPatientData = data.patient; // Store patient data including allergies
@@ -189,7 +189,7 @@ function initializeHistoryDataTable(patientId) {
         autoWidth: false,
         dom: '<"top"f>rt<"bottom"lip><"clear">',
         ajax: {
-            url: `wbUrl('/imagingHistoryList')/${patientId}`,
+            url: wbUrl('/imagingHistoryList/' + patientId),
             type: 'GET'
         },
         columns: [
@@ -231,7 +231,7 @@ function initializeProceduresDataTable(patientId) {
         autoWidth: false,
         dom: '<"top"f>rt<"bottom"lip><"clear">',
         ajax: {
-            url: `wbUrl('/patient-procedures/list-by-patient')/${patientId}`,
+            url: wbUrl('/patient-procedures/list-by-patient/' + patientId),
             type: 'GET'
         },
         columns: [
@@ -255,7 +255,7 @@ function initializeProceduresDataTable(patientId) {
 function viewInvestigationResult(requestId) {
     // Open modal to view completed result
     $.ajax({
-        url: `wbUrl('/imaging-workbench/imaging-service-requests')/${requestId}`,
+        url: wbUrl('/imaging-workbench/imaging-service-requests/' + requestId),
         method: 'GET',
         success: function(request) {
             if (request.result || request.result_data) {
@@ -1650,7 +1650,7 @@ $('#deleteRequestForm').on('submit', function(e) {
         return;
     }
     $.ajax({
-        url: `wbUrl('/imaging-workbench/imaging-service-requests')/${deleteRequestId}`,
+        url: wbUrl('/imaging-workbench/imaging-service-requests/' + deleteRequestId),
         method: 'DELETE',
         data: {
             _token: (window.WORKBENCH_CONFIG?.csrf || $('meta[name="csrf-token"]').attr('content') || '')},
@@ -1695,7 +1695,7 @@ $('#dismissRequestForm').on('submit', function(e) {
         return;
     }
     $.ajax({
-        url: `wbUrl('/imaging-workbench/imaging-service-requests')/${dismissRequestId}/dismiss`,
+        url: wbUrl('/imaging-workbench/imaging-service-requests/' + dismissRequestId + '/dismiss'),
         method: 'POST',
         data: {
             _token: (window.WORKBENCH_CONFIG?.csrf || $('meta[name="csrf-token"]').attr('content') || '')},
@@ -1771,7 +1771,7 @@ function loadTrashData() {
 
     // Load dismissed requests
     $.ajax({
-        url: `wbUrl('/imaging-workbench/dismissed-requests')/${patientId || ''}`,
+        url: wbUrl('/imaging-workbench/dismissed-requests/' + (patientId || '')),
         method: 'GET',
         success: function(data) {
             $('#dismissed-count').text(data.length);
@@ -1808,7 +1808,7 @@ function loadTrashData() {
 
     // Load deleted requests
     $.ajax({
-        url: `wbUrl('/imaging-workbench/deleted-requests')/${patientId || ''}`,
+        url: wbUrl('/imaging-workbench/deleted-requests/' + (patientId || '')),
         method: 'GET',
         success: function(data) {
             $('#deleted-count').text(data.length);
@@ -1994,7 +1994,7 @@ $(document).ready(function() {
         if (!$('#trashPanel').is(':visible')) {
             const patientId = currentPatient || null;
             $.ajax({
-                url: `wbUrl('/imaging-workbench/dismissed-requests')/${patientId || ''}`,
+                url: wbUrl('/imaging-workbench/dismissed-requests/' + (patientId || '')),
                 method: 'GET',
                 success: function(data) {
                     $('#dismissed-count').text(data.length);
@@ -2002,7 +2002,7 @@ $(document).ready(function() {
                 }
             });
             $.ajax({
-                url: `wbUrl('/imaging-workbench/deleted-requests')/${patientId || ''}`,
+                url: wbUrl('/imaging-workbench/deleted-requests/' + (patientId || '')),
                 method: 'GET',
                 success: function(data) {
                     $('#deleted-count').text(data.length);
@@ -3450,7 +3450,7 @@ function confirmApproveImagingResult() {
     $('#btn-confirm-approve').prop('disabled', true).html('<i class="mdi mdi-loading mdi-spin"></i> Approving...');
 
     $.ajax({
-        url: `wbUrl('/imaging-workbench/approval')/${currentApprovalId}/approve`,
+        url: wbUrl('/imaging-workbench/approval/' + currentApprovalId + '/approve'),
         type: 'POST',
         data: { _token: (window.WORKBENCH_CONFIG?.csrf || $('meta[name="csrf-token"]').attr('content') || '')},
         success: function(response) {
@@ -3487,7 +3487,7 @@ function confirmReverseImagingApproval() {
     $('#btn-confirm-reverse').prop('disabled', true).html('<i class="mdi mdi-loading mdi-spin"></i> Reversing...');
 
     $.ajax({
-        url: `wbUrl('/imaging-workbench/approval')/${currentReverseId}/reverse`,
+        url: wbUrl('/imaging-workbench/approval/' + currentReverseId + '/reverse'),
         type: 'POST',
         data: { _token: (window.WORKBENCH_CONFIG?.csrf || $('meta[name="csrf-token"]').attr('content') || '')},
         success: function(response) {
@@ -3526,7 +3526,7 @@ function confirmRejectImagingResult() {
         return;
     }
     $.ajax({
-        url: `wbUrl('/imaging-workbench/approval')/${currentApprovalId}/reject`,
+        url: wbUrl('/imaging-workbench/approval/' + currentApprovalId + '/reject'),
         type: 'POST',
         data: {
             _token: (window.WORKBENCH_CONFIG?.csrf || $('meta[name="csrf-token"]').attr('content') || '')},
