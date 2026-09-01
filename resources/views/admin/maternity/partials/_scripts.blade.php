@@ -56,6 +56,6 @@ window.WORKBENCH_CONFIG = {
 @include('admin.partials.combo_confirm_modal')
 @include('admin.partials.patient_summary_overlay')
 @include('admin.partials.ai_quick_actions')
-<script src="{{ asset('js/patient-summary.js') }}"></script>
-<script src="{{ asset('js/maternity-workbench.js') }}?v={{ filemtime(public_path('js/maternity-workbench.js')) }}"></script>
-@endsection
+<script src="{{ asset('js/patient-summary.js') }}"></script><script src="{{ asset('js/maternity-core.js') }}?v={{ filemtime(public_path('js/maternity-core.js')) }}"></script>
+<script src="{{ asset('js/maternity-anc.js') }}?v={{ filemtime(public_path('js/maternity-anc.js')) }}"></script>
+<script src="{{ asset('js/maternity-delivery.js') }}?v={{ filemtime(public_path('js/maternity-delivery.js')) }}"></script>@endsection
