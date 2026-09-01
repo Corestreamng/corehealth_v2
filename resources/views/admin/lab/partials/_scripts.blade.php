@@ -36,9 +36,9 @@ window.WORKBENCH_CONFIG = {
 @include('admin.partials.bulk_result_entry_js', ['resultContext' => 'lab'])
 @include('admin.partials.perform_investigation_modal')
 @include('admin.partials.combo_confirm_modal')
-
-<script src="{{ asset('js/lab-workbench.js') }}?v={{ filemtime(public_path('js/lab-workbench.js')) }}"></script>
-
+<script src="{{ asset('js/lab-core.js') }}?v={{ filemtime(public_path('js/lab-core.js')) }}"></script>
+<script src="{{ asset('js/lab-results.js') }}?v={{ filemtime(public_path('js/lab-results.js')) }}"></script>
+<script src="{{ asset('js/lab-reports.js') }}?v={{ filemtime(public_path('js/lab-reports.js')) }}"></script>
 @include('admin.partials.clinical_alerts_modal')
 <script src="{{ asset('js/clinical-alerts-shared.js') }}"></script>
 <script src="{{ asset('js/clinical-orders-shared.js') }}?v={{ filemtime(public_path('js/clinical-orders-shared.js')) }}"></script>

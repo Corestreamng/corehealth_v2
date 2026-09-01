@@ -20,9 +20,9 @@ window.WORKBENCH_CONFIG = {
 </script>
 <script src="{{ asset('js/workbench-helper.js') }}"></script>
 @include('admin.partials.patient_search_js', ['search_context' => 'reception'])
-<script src="{{ asset('js/request-details.js') }}"></script>
-<script src="{{ asset('js/reception-workbench.js') }}?v={{ filemtime(public_path('js/reception-workbench.js')) }}"></script>
-
+<script src="{{ asset('js/request-details.js') }}"></script><script src="{{ asset('js/reception-core.js') }}?v={{ filemtime(public_path('js/reception-core.js')) }}"></script>
+<script src="{{ asset('js/reception-queue.js') }}?v={{ filemtime(public_path('js/reception-queue.js')) }}"></script>
+<script src="{{ asset('js/reception-registration.js') }}?v={{ filemtime(public_path('js/reception-registration.js')) }}"></script>
 {{-- Admission Module JS --}}
 @include('admin.partials.admissions-module-js')
 

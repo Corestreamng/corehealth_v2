@@ -1,17 +1,4 @@
-:root {
-        --hospital-primary: var(--hospital-primary, #007bff);
-        --hospital-primary-rgb: 0,
-        123,
-        255;
-        --success: #28a745;
-        --warning: #ffc107;
-        --danger: #dc3545;
-        --info: #17a2b8;
-        --maternity-pink: #e91e8a;
-        --maternity-pink-rgb: 233,
-        30,
-        138;
-    }
+
 
     /* ═══ SHARED: Main Layout (identical to nursing workbench) ═══ */
     .nursing-workbench-container {
@@ -1335,7 +1322,7 @@
     }
 
     .mat-stat-blue .mat-stat-icon {
-        background: linear-gradient(135deg, #17a2b8, #007bff);
+        background: linear-gradient(135deg, #17a2b8, var(--hospital-primary, var(--primary-color, #011b33)));
     }
 
     .mat-stat-orange {

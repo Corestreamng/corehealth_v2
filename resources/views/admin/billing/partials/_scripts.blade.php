@@ -16,9 +16,9 @@ window.WORKBENCH_CONFIG = {
 };
 </script>
 <script src="{{ asset('js/workbench-helper.js') }}"></script>
-@include('admin.partials.patient_search_js', ['search_context' => 'billing'])
-<script src="{{ asset('js/billing-workbench.js') }}?v={{ filemtime(public_path('js/billing-workbench.js')) }}"></script>
-
+@include('admin.partials.patient_search_js', ['search_context' => 'billing'])<script src="{{ asset('js/billing-core.js') }}?v={{ filemtime(public_path('js/billing-core.js')) }}"></script>
+<script src="{{ asset('js/billing-payments.js') }}?v={{ filemtime(public_path('js/billing-payments.js')) }}"></script>
+<script src="{{ asset('js/billing-hmo.js') }}?v={{ filemtime(public_path('js/billing-hmo.js')) }}"></script>
 {{-- Payment Scripts --}}
 @include("admin.partials.payment_scripts")
 

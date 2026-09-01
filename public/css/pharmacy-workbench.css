@@ -1,11 +1,4 @@
-:root {
-        --hospital-primary: var(--hospital-primary, #007bff);
-        --hospital-primary-rgb: 0, 123, 255;
-        --success: #28a745;
-        --warning: #ffc107;
-        --danger: #dc3545;
-        --info: #17a2b8;
-    }
+
 
     /* Main Layout */
     .pharmacy-workbench-container {
@@ -112,7 +105,7 @@
     }
 
     #patient-search-input:focus {
-        border-color: var(--hospital-primary);
+        border-color: var(--hospital-primary, var(--primary-color, #011b33));
         outline: none;
         box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
     }
@@ -247,7 +240,7 @@
     .btn-queue-all {
         width: 100%;
         margin-top: 0.5rem;
-        background: var(--hospital-primary);
+        background: var(--hospital-primary, var(--primary-color, #011b33));
         color: white;
         border: none;
         padding: 0.75rem;
@@ -293,7 +286,7 @@
     }
 
     .quick-action-btn:hover {
-        border-color: var(--hospital-primary);
+        border-color: var(--hospital-primary, var(--primary-color, #011b33));
         background: #f8f9fa;
     }
 
@@ -349,7 +342,7 @@
     }
     .store-summary-card h6 {
         margin-bottom: 0.75rem;
-        color: var(--hospital-primary);
+        color: var(--hospital-primary, var(--primary-color, #011b33));
     }
     .store-metric {
         display: flex;
@@ -415,7 +408,7 @@
         background: #f8f9fa;
         border-radius: 0.5rem;
         margin-bottom: 1rem;
-        border-left: 4px solid var(--hospital-primary);
+        border-left: 4px solid var(--hospital-primary, var(--primary-color, #011b33));
     }
 
     .account-balance-info .balance-row {
@@ -428,7 +421,7 @@
     .account-balance-info .balance-amount {
         font-size: 1.25rem;
         font-weight: 700;
-        color: var(--hospital-primary);
+        color: var(--hospital-primary, var(--primary-color, #011b33));
     }
 
     #account-payment-note {
@@ -617,7 +610,7 @@
 
     .queue-view-header {
         padding: 1rem 1.5rem;
-        background: var(--hospital-primary);
+        background: var(--hospital-primary, var(--primary-color, #011b33));
         color: white;
         display: flex;
         justify-content: space-between;
@@ -706,7 +699,7 @@
 
     .queue-card-service {
         padding: 0.375rem 0.75rem;
-        background: var(--hospital-primary);
+        background: var(--hospital-primary, var(--primary-color, #011b33));
         color: white;
         border-radius: 0.5rem;
         font-weight: 600;
@@ -756,7 +749,7 @@
     .queue-card-note {
         padding: 0.75rem;
         background: #e7f3ff;
-        border-left: 4px solid #007bff;
+        border-left: 4px solid var(--hospital-primary, var(--primary-color, #011b33));
         border-radius: 0.5rem;
         margin-bottom: 1rem;
         font-size: 0.875rem;
@@ -764,7 +757,7 @@
 
     .queue-card-note-label {
         font-weight: 700;
-        color: #007bff;
+        color: var(--hospital-primary, var(--primary-color, #011b33));
         margin-bottom: 0.25rem;
     }
 
@@ -910,13 +903,13 @@
     }
 
     .workspace-tab:hover {
-        color: var(--hospital-primary);
+        color: var(--hospital-primary, var(--primary-color, #011b33));
         background: rgba(0, 123, 255, 0.05);
     }
 
     .workspace-tab.active {
-        color: var(--hospital-primary);
-        border-bottom-color: var(--hospital-primary);
+        color: var(--hospital-primary, var(--primary-color, #011b33));
+        border-bottom-color: var(--hospital-primary, var(--primary-color, #011b33));
         background: white;
     }
 
@@ -974,9 +967,9 @@
     }
 
     .pending-subtab.active {
-        background: var(--hospital-primary);
+        background: var(--hospital-primary, var(--primary-color, #011b33));
         color: white;
-        border-color: var(--hospital-primary);
+        border-color: var(--hospital-primary, var(--primary-color, #011b33));
     }
 
     .subtab-badge {
@@ -1014,7 +1007,7 @@
         align-items: center;
         gap: 12px;
         padding: 14px 24px;
-        background: linear-gradient(135deg, var(--hospital-primary) 0%, #0056b3 100%);
+        background: linear-gradient(135deg, var(--hospital-primary, var(--primary-color, #011b33)) 0%, var(--primary-hover, var(--hospital-primary, #011b33)) 100%);
         color: white;
         border: none;
         border-radius: 50px;
@@ -1038,7 +1031,7 @@
         height: 28px;
         padding: 0 8px;
         background: #fff;
-        color: var(--hospital-primary);
+        color: var(--hospital-primary, var(--primary-color, #011b33));
         border-radius: 14px;
         font-weight: 700;
         font-size: 0.9rem;
@@ -1065,7 +1058,7 @@
 
     /* ── Cart Review Modal ── */
     #cartReviewModal .modal-header {
-        background: linear-gradient(135deg, var(--hospital-primary), #0056b3);
+        background: linear-gradient(135deg, var(--hospital-primary, var(--primary-color, #011b33)) 0%, var(--primary-hover, var(--hospital-primary, #011b33)) 100%);
         color: white;
     }
 
@@ -1175,7 +1168,7 @@
         background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
         border-radius: 0.5rem;
         margin-bottom: 1rem;
-        border-left: 4px solid var(--hospital-primary);
+        border-left: 4px solid var(--hospital-primary, var(--primary-color, #011b33));
     }
 
     .request-section-header h5 {
@@ -1206,7 +1199,7 @@
 
     .request-card:hover {
         box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-        border-color: var(--hospital-primary);
+        border-color: var(--hospital-primary, var(--primary-color, #011b33));
     }
 
     .request-card-checkbox {
@@ -1255,7 +1248,7 @@
     }
 
     .request-meta-item i {
-        color: var(--hospital-primary);
+        color: var(--hospital-primary, var(--primary-color, #011b33));
     }
 
     .request-note {
@@ -1357,12 +1350,12 @@
     }
 
     .btn-action-result {
-        background: #007bff;
+        background: var(--hospital-primary, var(--primary-color, #011b33));
         color: white;
     }
 
     .btn-action-result:hover:not(:disabled) {
-        background: #0056b3;
+        background: var(--primary-hover, var(--hospital-primary, #011b33));
     }
 
     .btn-action-dismiss {
@@ -1391,8 +1384,8 @@
 
     .filter-btn:hover,
     .filter-btn.active {
-        border-color: var(--hospital-primary);
-        background: var(--hospital-primary);
+        border-color: var(--hospital-primary, var(--primary-color, #011b33));
+        background: var(--hospital-primary, var(--primary-color, #011b33));
         color: white;
     }
 
@@ -1513,7 +1506,7 @@
         background: white;
         border: 2px dashed #dee2e6;
         border-radius: 0.5rem;
-        color: var(--hospital-primary);
+        color: var(--hospital-primary, var(--primary-color, #011b33));
         text-decoration: none;
         font-weight: 600;
         transition: all 0.2s;
@@ -1521,7 +1514,7 @@
     }
 
     .show-all-link:hover {
-        border-color: var(--hospital-primary);
+        border-color: var(--hospital-primary, var(--primary-color, #011b33));
         background: rgba(0, 123, 255, 0.05);
     }
 
@@ -1560,7 +1553,7 @@
 
     .dataTables_filter input:focus {
         outline: none;
-        border-color: var(--hospital-primary);
+        border-color: var(--hospital-primary, var(--primary-color, #011b33));
         box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
     }
 
@@ -1752,7 +1745,7 @@
     }
 
     .new-request-header h4 {
-        color: var(--hospital-primary);
+        color: var(--hospital-primary, var(--primary-color, #011b33));
         margin-bottom: 0.5rem;
     }
 
@@ -1778,7 +1771,7 @@
 
     #service-search-results .list-group-item:hover {
         background: #f0f8ff;
-        border-left-color: var(--hospital-primary);
+        border-left-color: var(--hospital-primary, var(--primary-color, #011b33));
     }
 
     .selected-service-item {
@@ -1808,7 +1801,7 @@
 
     .selected-service-price {
         font-weight: 600;
-        color: var(--hospital-primary);
+        color: var(--hospital-primary, var(--primary-color, #011b33));
         margin-right: 1rem;
     }
 
@@ -1846,7 +1839,7 @@
     }
 
     .reports-header h4 {
-        color: var(--hospital-primary);
+        color: var(--hospital-primary, var(--primary-color, #011b33));
     }
 
     .reports-filter-panel {
@@ -1921,8 +1914,8 @@
     }
 
     #reports-tabs .nav-link.active {
-        color: var(--hospital-primary, #007bff);
-        border-bottom-color: var(--hospital-primary, #007bff);
+        color: var(--hospital-primary, var(--hospital-primary, var(--primary-color, #011b33)));
+        border-bottom-color: var(--hospital-primary, var(--hospital-primary, var(--primary-color, #011b33)));
         background: transparent;
     }
 
@@ -2626,7 +2619,7 @@
 
     .panel-header {
         padding: 1rem;
-        background: var(--hospital-primary);
+        background: var(--hospital-primary, var(--primary-color, #011b33));
         color: white;
         border-bottom: 2px solid #dee2e6;
         display: flex;
@@ -2806,7 +2799,7 @@
     .procedure-card {
         background: white;
         border: 1px solid #e9ecef;
-        border-left: 4px solid var(--hospital-primary, #007bff);
+        border-left: 4px solid var(--hospital-primary, var(--hospital-primary, var(--primary-color, #011b33)));
         border-radius: 0.5rem;
         padding: 1rem;
         margin-bottom: 1rem;
@@ -2866,7 +2859,7 @@
     }
 
     .procedure-meta-item i {
-        color: var(--hospital-primary, #007bff);
+        color: var(--hospital-primary, var(--hospital-primary, var(--primary-color, #011b33)));
     }
 
     .procedure-actions {
@@ -2930,12 +2923,12 @@
         padding: 1.5rem;
         background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
         border-radius: 0.5rem;
-        border: 2px solid var(--hospital-primary);
+        border: 2px solid var(--hospital-primary, var(--primary-color, #011b33));
     }
 
     .payment-summary-card h5 {
         margin-bottom: 1rem;
-        color: var(--hospital-primary);
+        color: var(--hospital-primary, var(--primary-color, #011b33));
         font-weight: 700;
     }
 
@@ -2958,7 +2951,7 @@
         border-top: 2px solid #495057;
         font-size: 1.25rem;
         font-weight: 700;
-        color: var(--hospital-primary);
+        color: var(--hospital-primary, var(--primary-color, #011b33));
     }
 
     .payment-method-section,
@@ -3001,12 +2994,12 @@
     }
 
     .receipt-tab:hover {
-        color: var(--hospital-primary);
+        color: var(--hospital-primary, var(--primary-color, #011b33));
     }
 
     .receipt-tab.active {
-        color: var(--hospital-primary);
-        border-bottom-color: var(--hospital-primary);
+        color: var(--hospital-primary, var(--primary-color, #011b33));
+        border-bottom-color: var(--hospital-primary, var(--primary-color, #011b33));
     }
 
     .receipt-content {
@@ -3783,7 +3776,7 @@
 
     .request-card:hover {
         box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-        border-color: var(--hospital-primary);
+        border-color: var(--hospital-primary, var(--primary-color, #011b33));
     }
 
     .card-checkbox {
@@ -4009,7 +4002,7 @@
 
 .new-request-header h4 {
     margin-bottom: 0.5rem;
-    color: var(--hospital-primary);
+    color: var(--hospital-primary, var(--primary-color, #011b33));
 }
 
 .new-request-header p {
@@ -4050,7 +4043,7 @@
     position: fixed;
     bottom: 2rem;
     right: 2rem;
-    background: var(--hospital-primary);
+    background: var(--hospital-primary, var(--primary-color, #011b33));
     color: white;
     padding: 1rem 1.5rem;
     border-radius: 0.5rem;
@@ -4099,13 +4092,13 @@
 
 .receipt-modal-tab:hover {
     background: #e9ecef;
-    color: var(--hospital-primary);
+    color: var(--hospital-primary, var(--primary-color, #011b33));
 }
 
 .receipt-modal-tab.active {
     background: white;
-    color: var(--hospital-primary);
-    border-bottom-color: var(--hospital-primary);
+    color: var(--hospital-primary, var(--primary-color, #011b33));
+    border-bottom-color: var(--hospital-primary, var(--primary-color, #011b33));
 }
 
 .receipt-modal-content {

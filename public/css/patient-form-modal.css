@@ -127,7 +127,7 @@
     }
 
     #patient-form-header {
-        background: linear-gradient(135deg, var(--hospital-primary) 0%, #0052a3 100%);
+        background: linear-gradient(135deg, var(--hospital-primary, var(--primary-color, #011b33)) 0%, #0052a3 100%);
         color: white;
         padding: 1.25rem 1.5rem;
         border: none;
@@ -180,7 +180,7 @@
     }
 
     .stepper-item.active .stepper-icon {
-        background: var(--hospital-primary);
+        background: var(--hospital-primary, var(--primary-color, #011b33));
         color: white;
         border-color: rgba(0, 123, 255, 0.3);
         box-shadow: 0 0 0 4px rgba(0, 123, 255, 0.15);
@@ -201,7 +201,7 @@
     }
 
     .stepper-item.active .stepper-label {
-        color: var(--hospital-primary);
+        color: var(--hospital-primary, var(--primary-color, #011b33));
     }
 
     .stepper-item.completed .stepper-label {
@@ -322,7 +322,7 @@
     }
 
     .step-header h6 i {
-        color: var(--hospital-primary);
+        color: var(--hospital-primary, var(--primary-color, #011b33));
     }
 
     .step-content {
@@ -358,7 +358,7 @@
     }
 
     .floating-label .form-control:focus {
-        border-color: var(--hospital-primary);
+        border-color: var(--hospital-primary, var(--primary-color, #011b33));
         box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
     }
 
@@ -370,7 +370,7 @@
         left: 0.5rem;
         font-size: 0.75rem;
         background: white;
-        color: var(--hospital-primary);
+        color: var(--hospital-primary, var(--primary-color, #011b33));
         font-weight: 600;
     }
 
@@ -637,7 +637,7 @@
     }
 
     .allergies-input-container:focus-within {
-        border-color: var(--hospital-primary);
+        border-color: var(--hospital-primary, var(--primary-color, #011b33));
         box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
     }
 
@@ -723,7 +723,7 @@
     }
 
     .summary-section-title i {
-        color: var(--hospital-primary);
+        color: var(--hospital-primary, var(--primary-color, #011b33));
     }
 
     .summary-grid {

@@ -18,9 +18,11 @@ window.WORKBENCH_CONFIG = {
 </script>
 <script src="{{ asset('js/workbench-helper.js') }}"></script>
 @include('admin.partials.patient_search_js', ['search_context' => 'pharmacy'])
-
-<script src="{{ asset('js/pharmacy-workbench.js') }}?v={{ filemtime(public_path('js/pharmacy-workbench.js')) }}"></script>
-
+<script src="{{ asset('js/pharmacy-dispensing.js') }}?v={{ filemtime(public_path('js/pharmacy-dispensing.js')) }}"></script>
+<script src="{{ asset('js/pharmacy-returns.js') }}?v={{ filemtime(public_path('js/pharmacy-returns.js')) }}"></script>
+<script src="{{ asset('js/pharmacy-stock.js') }}?v={{ filemtime(public_path('js/pharmacy-stock.js')) }}"></script>
+<script src="{{ asset('js/pharmacy-reports.js') }}?v={{ filemtime(public_path('js/pharmacy-reports.js')) }}"></script>
+<script src="{{ asset('js/pharmacy-core.js') }}?v={{ filemtime(public_path('js/pharmacy-core.js')) }}"></script>
 @include('admin.partials.clinical_alerts_modal')
 @include('admin.partials.hospital_contacts_modal')
 @include('admin.partials.price_list_modal', ['products_only' => true])

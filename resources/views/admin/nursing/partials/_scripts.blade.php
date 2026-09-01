@@ -44,9 +44,11 @@ window.BILLING_KIT_CONFIG = {
 @include('admin.partials.invest_res_js')
 @include('admin.partials.perform_investigation_modal')
 @include('admin.partials.combo_confirm_modal')
-
-<script src="{{ asset('js/nursing-workbench.js') }}?v={{ filemtime(public_path('js/nursing-workbench.js')) }}"></script>
-
+<script src="{{ asset('js/nursing-core.js') }}?v={{ filemtime(public_path('js/nursing-core.js')) }}"></script>
+<script src="{{ asset('js/nursing-vitals.js') }}?v={{ filemtime(public_path('js/nursing-vitals.js')) }}"></script>
+<script src="{{ asset('js/nursing-medication-chart.js') }}?v={{ filemtime(public_path('js/nursing-medication-chart.js')) }}"></script>
+<script src="{{ asset('js/nursing-notes.js') }}?v={{ filemtime(public_path('js/nursing-notes.js')) }}"></script>
+<script src="{{ asset('js/nursing-clinical-requests.js') }}?v={{ filemtime(public_path('js/nursing-clinical-requests.js')) }}"></script>
 @include('admin.partials.clinical_alerts_modal')
 @include('admin.partials.patient_summary_overlay')
 @include('admin.partials.ai_quick_actions')

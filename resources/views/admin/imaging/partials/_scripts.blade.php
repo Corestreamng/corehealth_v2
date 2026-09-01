@@ -25,6 +25,5 @@
 @include('admin.partials.patient_search_js', [
     'search_context' => 'imaging',
     'search_url' => route('imaging.search-patients')
-])
-<script src="{{ asset('js/imaging-workbench.js') }}?v={{ filemtime(public_path('js/imaging-workbench.js')) }}"></script>
-@endsection
+])<script src="{{ asset('js/imaging-core.js') }}?v={{ filemtime(public_path('js/imaging-core.js')) }}"></script>
+<script src="{{ asset('js/imaging-results.js') }}?v={{ filemtime(public_path('js/imaging-results.js')) }}"></script>@endsection
