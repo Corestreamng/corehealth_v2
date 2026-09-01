@@ -41,6 +41,7 @@
         $primaryColor = appsettings()->hos_color ?? '#011b33';
         $hoverColor = adjustBrightness($primaryColor, 20);
         $lightColor = hexToRgba($primaryColor, 0.1);
+        $rgbColor = hexToRgb($primaryColor);
     @endphp
 
 
@@ -49,6 +50,9 @@
             --primary-color: {{ $primaryColor }};
             --primary-hover: {{ $hoverColor }};
             --primary-light: {{ $lightColor }};
+            --hospital-primary: {{ $primaryColor }};
+            --hospital-primary-rgb: {{ $rgbColor }};
+            --hospital-secondary: {{ appsettings()->hos_secondary_color ?? '#6c757d' }};
         }
 
         /* Paystack-inspired Clean Design */

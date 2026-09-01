@@ -8,6 +8,12 @@ When working on this project, strictly adhere to the following standards across 
   - Modals are extracted into `partials/_modals.blade.php`.
   - `partials/_scripts.blade.php` injects `window.WORKBENCH_CONFIG` with server-side Blade data and loads external JS scripts.
   - Front-end logic lives strictly in standalone JS modules under `public/js/<module>-workbench.js` (consuming `window.WORKBENCH_CONFIG`).
+- **Inline Styles & Scripts Constraint**: Do NOT include inline `<style>` or `<script>` blocks exceeding 10 lines in any Blade view file. All CSS must live in standalone `public/css/<module>.css` files and all JS in `public/js/<module>.js` files.
+- **Dynamic Hospital Theme CSS Variable Provider Mechanism**:
+  - Hospital branding colors (`hos_color`, etc.) are injected into `:root` CSS variables (`--hospital-primary`, `--hospital-primary-rgb`, `--hospital-secondary`, `--primary-color`) inside the master layout `resources/views/admin/layouts/app.blade.php`.
+  - All modular CSS files (`public/css/*.css`) reference these properties using standard CSS custom property functions with fallbacks (e.g., `color: var(--hospital-primary, #011b33);`, `background: rgba(var(--hospital-primary-rgb, 1, 27, 51), 0.1);`).
+  - NEVER put unparsed Blade syntax (such as `{{ appsettings(...) }}` or `{{ $hosColor }}`) inside static `.css` files in `public/css/`.
+- **Mandatory JS/CSS Verification**: Always verify standalone JS files with `node --check public/js/<module>.js` before committing, and run `make lint` / `composer lint` for PHP code formatting.
 - **Audit/Reporting Workbenches** (e.g., `OpsAudit`): These rely on a master layout (`resources/views/admin/ops_audit/layout.blade.php`). Controllers inject module-specific variables (`$module_title`, `$tabs`) rather than duplicating views.
 - **Sidebar & Access Control**: Located in `resources/views/admin/partials/sidebar.blade.php`. Explicitly uses Spatie `@can` and `@role` directives to control access. Always check this file for role contexts.
 - **DataTables**: Rely on AJAX-driven Yajra DataTables for data grids.
