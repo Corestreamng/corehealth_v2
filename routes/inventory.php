@@ -114,6 +114,7 @@ Route::middleware(['auth'])->prefix('inventory')->name('inventory.')->group(func
         // Manual batch entry
         Route::get('/manual-batch', [StoreWorkbenchController::class, 'manualBatchForm'])->name('manual-batch-form');
         Route::post('/manual-batch', [StoreWorkbenchController::class, 'createManualBatch'])->name('create-manual-batch');
+        Route::post('/create-manual-batch', [StoreWorkbenchController::class, 'createManualBatch']);
 
         // Tally Card
         Route::get('/tally-card', [StoreWorkbenchController::class, 'tallyCard'])->name('tally-card');

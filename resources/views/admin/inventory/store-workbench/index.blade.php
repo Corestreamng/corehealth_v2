@@ -454,6 +454,16 @@
                             </div>
                         </a>
 
+                        <a href="{{ route('inventory.po-returns.index') }}?store_id={{ $store->id ?? '' }}" class="action-card">
+                            <div class="action-icon danger">
+                                <i class="mdi mdi-keyboard-return"></i>
+                            </div>
+                            <div class="action-content">
+                                <h6>PO Returns</h6>
+                                <p>Manage supplier return records</p>
+                            </div>
+                        </a>
+
                         @hasanyrole('SUPERADMIN|ADMIN|ACCOUNTS')
                         <a href="{{ route('inventory.purchase-orders.accounts-payable') }}" class="action-card">
                             <div class="action-icon success">

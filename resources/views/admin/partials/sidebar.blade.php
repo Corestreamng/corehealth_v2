@@ -397,17 +397,21 @@
                 </div>
             </li>
 
-            <li class="nav-item {{ request()->routeIs('inventory.purchase-orders.*', 'inventory.requisitions.*', 'inventory.expenses.*') ? 'active' : '' }}">
-                <a class="nav-link {{ request()->routeIs('inventory.purchase-orders.*', 'inventory.requisitions.*', 'inventory.expenses.*') ? 'active' : '' }}" data-toggle="collapse" data-bs-toggle="collapse" href="javascript:void(0);" data-target="#sidebar-store-inventory" data-bs-target="#sidebar-store-inventory" aria-expanded="{{ request()->routeIs('inventory.purchase-orders.*', 'inventory.requisitions.*', 'inventory.expenses.*') ? 'true' : 'false' }}" aria-controls="sidebar-store-inventory" id="sidebar-store-inventory-toggle">
+            <li class="nav-item {{ request()->routeIs('inventory.purchase-orders.*', 'inventory.requisitions.*', 'inventory.expenses.*', 'inventory.po-returns.*') ? 'active' : '' }}">
+                <a class="nav-link {{ request()->routeIs('inventory.purchase-orders.*', 'inventory.requisitions.*', 'inventory.expenses.*', 'inventory.po-returns.*') ? 'active' : '' }}" data-toggle="collapse" data-bs-toggle="collapse" href="javascript:void(0);" data-target="#sidebar-store-inventory" data-bs-target="#sidebar-store-inventory" aria-expanded="{{ request()->routeIs('inventory.purchase-orders.*', 'inventory.requisitions.*', 'inventory.expenses.*', 'inventory.po-returns.*') ? 'true' : 'false' }}" aria-controls="sidebar-store-inventory" id="sidebar-store-inventory-toggle">
                     <i class="mdi mdi-clipboard-list-outline menu-icon"></i>
                     <span class="menu-title">{{ __('sidebar.inventory_operations') }}</span>
                     <i class="mdi mdi-chevron-right menu-arrow"></i>
                 </a>
-                <div class="collapse {{ request()->routeIs('inventory.purchase-orders.*', 'inventory.requisitions.*', 'inventory.expenses.*') ? 'show' : '' }}" id="sidebar-store-inventory">
+                <div class="collapse {{ request()->routeIs('inventory.purchase-orders.*', 'inventory.requisitions.*', 'inventory.expenses.*', 'inventory.po-returns.*') ? 'show' : '' }}" id="sidebar-store-inventory">
                     <ul class="nav flex-column sub-menu">
                         <li class="nav-item">
                             <a class="nav-link {{ request()->routeIs('inventory.purchase-orders.*') ? 'active' : '' }}" href="{{ route('inventory.purchase-orders.index') }}" id="sidebar-store-purchase-orders">
                                 <i class="mdi mdi-cart-arrow-down"></i> {{ __('sidebar.purchase_orders') }}</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {{ request()->routeIs('inventory.po-returns.*') ? 'active' : '' }}" href="{{ route('inventory.po-returns.index') }}" id="sidebar-store-po-returns">
+                                <i class="mdi mdi-keyboard-return"></i> PO Returns</a>
                         </li>
                         <li class="nav-item">
                             <a class="nav-link {{ request()->routeIs('inventory.requisitions.*') && !request()->routeIs('inventory.requisitions.my-stock') ? 'active' : '' }}" href="{{ route('inventory.requisitions.index') }}" id="sidebar-store-requisitions">
