@@ -734,6 +734,3 @@
         </div>
     </div>
 </div>
-
-@endsection
-

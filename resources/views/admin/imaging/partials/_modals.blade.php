@@ -486,6 +486,3 @@
 </div>
 
 @include('admin.partials.patient-form-modal')
-
-@endsection
-

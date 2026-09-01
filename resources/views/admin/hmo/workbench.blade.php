@@ -1218,7 +1218,8 @@
 @include('admin.partials.treatment-plan-viewer-modal')
 @include('admin.partials.patient-form-modal')
 
-<!-- View Details Modal -->
+{{-- View Details Modal --}}
 @include('admin.hmo.partials._modals')
 
+@endsection
 @include('admin.hmo.partials._scripts')

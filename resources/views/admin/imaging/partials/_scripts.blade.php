@@ -6,7 +6,7 @@
     window.WORKBENCH_CONFIG = {
         csrf: '{{ csrf_token() }}',
         baseUrl: '{{ url("/") }}',
-        imagingSearchPatientsUrl: '{{ route("imaging-workbench.search-patients") }}',
+        imagingSearchPatientsUrl: '{{ route("imaging.search-patients") }}',
         requireApproval: {{ (bool) (appsettings('require_imaging_result_approval', 0)) ? 'true' : 'false' }},
         drSelfImg: {{ (bool) (appsettings('enable_doctor_self_imaging', 0)) ? 'true' : 'false' }},
         nrSelfImg: {{ (bool) (appsettings('enable_nurse_self_imaging', 0)) ? 'true' : 'false' }},
