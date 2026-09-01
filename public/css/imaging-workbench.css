@@ -239,7 +239,7 @@
 
     .patient-header {
         padding: 1.5rem;
-        background: linear-gradient(135deg, var(--hospital-primary), var(--hospital-primary));
+        background: linear-gradient(135deg, var(--hospital-primary, var(--primary-color, #011b33)), var(--primary-hover, var(--primary-color, #011b33)));
         color: white;
         display: none;
     }
