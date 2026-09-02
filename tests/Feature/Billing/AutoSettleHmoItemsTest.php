@@ -4,9 +4,9 @@ namespace Tests\Feature\Billing;
 
 use Tests\TestCase;
 
-class BillingWorkbenchTest extends TestCase
+class AutoSettleHmoItemsTest extends TestCase
 {
-    public function test_billing_workbench_sidebar_and_deposit()
+    public function test_auto_settle_hmo_items()
     {
         $this->assertTrue(true);
     }
