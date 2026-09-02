@@ -583,12 +583,19 @@ Route::group(['middleware' => ['auth']], function () {
         Route::get('/pharmacy-workbench/my-transactions', [\App\Http\Controllers\PharmacyWorkbenchController::class, 'getMyTransactions'])->name('pharmacy.my-transactions');
         Route::post('/pharmacy-workbench/print-prescription-slip', [\App\Http\Controllers\PharmacyWorkbenchController::class, 'printPrescriptionSlip'])->name('pharmacy.print-prescription-slip');
 
+        // Dispense Medication with Batch Aliases
+        Route::post('/pharmacy/dispense-with-batch', [\App\Http\Controllers\PharmacyWorkbenchController::class, 'dispenseMedicationWithBatch']);
+        Route::post('/pharmacy-workbench/dispense-with-batch', [\App\Http\Controllers\PharmacyWorkbenchController::class, 'dispenseMedicationWithBatch']);
+
         // Pharmacy Returns Management Routes
         Route::get('/pharmacy/returns', [\App\Http\Controllers\PharmacyReturnsController::class, 'index'])->name('pharmacy.returns.index');
+        Route::get('/pharmacy/returns/index', [\App\Http\Controllers\PharmacyReturnsController::class, 'index']);
         Route::get('/pharmacy/returns/datatables', [\App\Http\Controllers\PharmacyReturnsController::class, 'datatables'])->name('pharmacy.returns.datatables');
+        Route::get('/pharmacy/returns/search-dispensed', [\App\Http\Controllers\PharmacyReturnsController::class, 'searchDispensedItems']);
         Route::get('/pharmacy/returns/search-dispensed-items', [\App\Http\Controllers\PharmacyReturnsController::class, 'searchDispensedItems'])->name('pharmacy.returns.search-dispensed');
         Route::get('/pharmacy/returns/create', [\App\Http\Controllers\PharmacyReturnsController::class, 'create'])->name('pharmacy.returns.create');
         Route::post('/pharmacy/returns', [\App\Http\Controllers\PharmacyReturnsController::class, 'store'])->name('pharmacy.returns.store');
+        Route::post('/pharmacy/returns/store', [\App\Http\Controllers\PharmacyReturnsController::class, 'store']);
         Route::get('/pharmacy/returns/{id}', [\App\Http\Controllers\PharmacyReturnsController::class, 'show'])->name('pharmacy.returns.show');
         Route::post('/pharmacy/returns/{id}/approve', [\App\Http\Controllers\PharmacyReturnsController::class, 'approve'])->name('pharmacy.returns.approve');
         Route::post('/pharmacy/returns/{id}/reject', [\App\Http\Controllers\PharmacyReturnsController::class, 'reject'])->name('pharmacy.returns.reject');
@@ -596,23 +603,30 @@ Route::group(['middleware' => ['auth']], function () {
 
         // Pharmacy Damages Management Routes
         Route::get('/pharmacy/damages', [\App\Http\Controllers\PharmacyDamagesController::class, 'index'])->name('pharmacy.damages.index');
+        Route::get('/pharmacy/damages/index', [\App\Http\Controllers\PharmacyDamagesController::class, 'index']);
         Route::get('/pharmacy/damages/datatables', [\App\Http\Controllers\PharmacyDamagesController::class, 'datatables'])->name('pharmacy.damages.datatables');
         Route::get('/pharmacy/damages/search-products', [\App\Http\Controllers\PharmacyDamagesController::class, 'searchProducts'])->name('pharmacy.damages.search-products');
         Route::get('/pharmacy/damages/get-batches', [\App\Http\Controllers\PharmacyDamagesController::class, 'getBatches'])->name('pharmacy.damages.get-batches');
         Route::get('/pharmacy/damages/create', [\App\Http\Controllers\PharmacyDamagesController::class, 'create'])->name('pharmacy.damages.create');
         Route::post('/pharmacy/damages', [\App\Http\Controllers\PharmacyDamagesController::class, 'store'])->name('pharmacy.damages.store');
+        Route::post('/pharmacy/damages/store', [\App\Http\Controllers\PharmacyDamagesController::class, 'store']);
         Route::get('/pharmacy/damages/{id}', [\App\Http\Controllers\PharmacyDamagesController::class, 'show'])->name('pharmacy.damages.show');
         Route::post('/pharmacy/damages/{id}/approve', [\App\Http\Controllers\PharmacyDamagesController::class, 'approve'])->name('pharmacy.damages.approve');
         Route::post('/pharmacy/damages/{id}/reject', [\App\Http\Controllers\PharmacyDamagesController::class, 'reject'])->name('pharmacy.damages.reject');
 
-        // Pharmacy Reports Routes
+        // Pharmacy Reports Routes & Aliases
         Route::get('/pharmacy/reports', [\App\Http\Controllers\PharmacyReportsController::class, 'index'])->name('pharmacy.reports.index');
+        Route::get('/pharmacy/reports/index', [\App\Http\Controllers\PharmacyReportsController::class, 'index']);
         Route::get('/pharmacy/reports/stock-overview', [\App\Http\Controllers\PharmacyReportsController::class, 'stockReport'])->name('pharmacy.reports.stock-overview');
+        Route::get('/pharmacy/reports/stock-report', [\App\Http\Controllers\PharmacyReportsController::class, 'stockReport']);
         Route::get('/pharmacy/reports/stock-by-store', [\App\Http\Controllers\PharmacyReportsController::class, 'stockByStore'])->name('pharmacy.reports.by-store');
+        Route::get('/pharmacy/reports/by-store', [\App\Http\Controllers\PharmacyReportsController::class, 'stockByStore']);
         Route::get('/pharmacy/reports/stock-by-category', [\App\Http\Controllers\PharmacyReportsController::class, 'stockByCategory'])->name('pharmacy.reports.by-category');
+        Route::get('/pharmacy/reports/by-category', [\App\Http\Controllers\PharmacyReportsController::class, 'stockByCategory']);
         Route::get('/pharmacy/reports/valuation', [\App\Http\Controllers\PharmacyReportsController::class, 'valuationReport'])->name('pharmacy.reports.valuation');
         Route::get('/pharmacy/reports/export-stock', [\App\Http\Controllers\PharmacyReportsController::class, 'exportStock'])->name('pharmacy.reports.export-stock');
         Route::get('/pharmacy/reports/expiring-stock', [\App\Http\Controllers\PharmacyReportsController::class, 'expiringStock'])->name('pharmacy.reports.expiring');
+        Route::get('/pharmacy/reports/expiring', [\App\Http\Controllers\PharmacyReportsController::class, 'expiringStock']);
         Route::get('/pharmacy/reports/movement-analysis', [\App\Http\Controllers\PharmacyReportsController::class, 'movementAnalysis'])->name('pharmacy.reports.movement-analysis');
 
         // Pharmacy Reports & Analytics Routes
@@ -669,6 +683,13 @@ Route::group(['middleware' => ['auth']], function () {
         Route::get('/lab-workbench/filter-hmos', [\App\Http\Controllers\LabWorkbenchController::class, 'getHmosForFilter'])->name('lab.filterHmos');
         Route::get('/lab-workbench/filter-services', [\App\Http\Controllers\LabWorkbenchController::class, 'getLabServicesForFilter'])->name('lab.filterServices');
 
+        // Shorthand Route Aliases for Lab Reports AJAX operations
+        Route::get('/lab/filterDoctors', [\App\Http\Controllers\LabWorkbenchController::class, 'getRequestingDoctors']);
+        Route::get('/lab/filterHmos', [\App\Http\Controllers\LabWorkbenchController::class, 'getHmosForFilter']);
+        Route::get('/lab/filterServices', [\App\Http\Controllers\LabWorkbenchController::class, 'getLabServicesForFilter']);
+        Route::get('/lab/statistics', [\App\Http\Controllers\LabWorkbenchController::class, 'getLabStatistics']);
+        Route::get('/lab/reports', [\App\Http\Controllers\LabWorkbenchController::class, 'getLabReports']);
+
         // Lab Number Routes
         Route::get('/lab-workbench/next-lab-number', [\App\Http\Controllers\LabWorkbenchController::class, 'getNextLabNumber'])->name('lab.nextLabNumber');
         Route::get('/lab-workbench/check-lab-number', [\App\Http\Controllers\LabWorkbenchController::class, 'checkLabNumberExists'])->name('lab.checkLabNumber');
@@ -719,6 +740,13 @@ Route::group(['middleware' => ['auth']], function () {
         Route::post('/imaging-workbench/approval/{id}/reject', [\App\Http\Controllers\ImagingWorkbenchController::class, 'rejectResult'])->name('imaging.rejectResult');
         Route::post('/imaging-workbench/approval/{id}/reverse', [\App\Http\Controllers\ImagingWorkbenchController::class, 'reverseApproval'])->name('imaging.reverseApproval');
         Route::post('/imaging-workbench/self-approve/{id}', [\App\Http\Controllers\ImagingWorkbenchController::class, 'selfApproveResult'])->name('imaging.selfApproveResult');
+
+        // Shorthand Route Aliases for Imaging Workbench AJAX operations
+        Route::post('/imaging/recordBilling', [\App\Http\Controllers\ImagingWorkbenchController::class, 'recordBilling']);
+        Route::post('/imaging/saveResult', [\App\Http\Controllers\ImagingWorkbenchController::class, 'saveResult']);
+        Route::post('/imaging/dismissRequests', [\App\Http\Controllers\ImagingWorkbenchController::class, 'dismissRequests']);
+        Route::get('/imaging/queue-counts', [\App\Http\Controllers\ImagingWorkbenchController::class, 'getQueueCounts']);
+        Route::get('/imaging/queue', [\App\Http\Controllers\ImagingWorkbenchController::class, 'getImagingQueue']);
 
         // Imaging Service Request Routes (Legacy)
         Route::resource('imaging-requests', ImagingServiceRequestController::class);

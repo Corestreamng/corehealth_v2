@@ -9,6 +9,7 @@
 @section('content')
     @include('admin.partials.procedure_outcome_modal')
     <link rel="stylesheet" href="{{ asset('css/clinical-orders-shared.css') }}">
+    <link rel="stylesheet" href="{{ asset('css/nursing-workbench.css') }}">
     <style>
         /* Fix for modals inside overflow containers */
         .modal {

@@ -79,8 +79,17 @@ class TreatmentPlan extends Model
 
         $allowed = array_map('strtolower', $this->visibility);
 
-        if ($roleOrDepartment && in_array(strtolower($roleOrDepartment), $allowed)) {
-            return true;
+        if ($roleOrDepartment) {
+            $reqRole = strtolower($roleOrDepartment);
+            if (in_array($reqRole, $allowed)) {
+                return true;
+            }
+            if (($reqRole === 'imaging' || $reqRole === 'radiology') && (in_array('imaging', $allowed) || in_array('radiology', $allowed))) {
+                return true;
+            }
+            if (($reqRole === 'lab' || $reqRole === 'laboratory') && (in_array('lab', $allowed) || in_array('laboratory', $allowed))) {
+                return true;
+            }
         }
 
         if ($user->staff && $user->staff->role && in_array(strtolower($user->staff->role->name ?? ''), $allowed)) {
