@@ -1,3 +1,24 @@
+if (typeof window.wbUrl !== 'function') {
+    window.wbUrl = function(path) {
+        var base = (window.WORKBENCH_CONFIG && window.WORKBENCH_CONFIG.baseUrl) ? window.WORKBENCH_CONFIG.baseUrl : '';
+        base = base.replace(/\/$/, '');
+        var cleanPath = (path || '').replace(/^\//, '');
+        return base ? (base + '/' + cleanPath) : ('/' + cleanPath);
+    };
+}
+if (typeof window.wbRoute !== 'function') {
+    window.wbRoute = function(name, fallbackPath) {
+        if (window.WORKBENCH_CONFIG && window.WORKBENCH_CONFIG.routes) {
+            if (window.WORKBENCH_CONFIG.routes[name]) return window.WORKBENCH_CONFIG.routes[name];
+            var dotKey = name.replace(/_/g, '.');
+            if (window.WORKBENCH_CONFIG.routes[dotKey]) return window.WORKBENCH_CONFIG.routes[dotKey];
+            var underscoreKey = name.replace(/\./g, '_');
+            if (window.WORKBENCH_CONFIG.routes[underscoreKey]) return window.WORKBENCH_CONFIG.routes[underscoreKey];
+        }
+        return window.wbUrl(fallbackPath || '');
+    };
+}
+
 // Global state
 let currentPatient = null;
 let currentPatientData = null; // Store full patient data including allergies
@@ -1403,7 +1424,7 @@ function loadUserPreferences() {
 // Action handlers for imaging requests
 function recordBilling(requestIds) {
     $.ajax({
-        url: wbRoute('imaging.recordBilling', '/imaging/recordBilling'),
+        url: wbRoute('imaging.recordBilling', '/imaging-workbench/record-billing'),
         method: 'POST',
         data: {
             _token: (window.WORKBENCH_CONFIG?.csrf || $('meta[name="csrf-token"]').attr('content') || '')},
@@ -1427,7 +1448,7 @@ function recordBilling(requestIds) {
 
 function dismissRequests(requestIds, section) {
     $.ajax({
-        url: wbRoute('imaging.dismissRequests', '/imaging/dismissRequests'),
+        url: wbRoute('imaging.dismissRequests', '/imaging-workbench/dismiss-requests'),
         method: 'POST',
         data: {
             _token: (window.WORKBENCH_CONFIG?.csrf || $('meta[name="csrf-token"]').attr('content') || '')},

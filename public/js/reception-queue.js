@@ -1,3 +1,24 @@
+if (typeof window.wbUrl !== 'function') {
+    window.wbUrl = function(path) {
+        var base = (window.WORKBENCH_CONFIG && window.WORKBENCH_CONFIG.baseUrl) ? window.WORKBENCH_CONFIG.baseUrl : '';
+        base = base.replace(/\/$/, '');
+        var cleanPath = (path || '').replace(/^\//, '');
+        return base ? (base + '/' + cleanPath) : ('/' + cleanPath);
+    };
+}
+if (typeof window.wbRoute !== 'function') {
+    window.wbRoute = function(name, fallbackPath) {
+        if (window.WORKBENCH_CONFIG && window.WORKBENCH_CONFIG.routes) {
+            if (window.WORKBENCH_CONFIG.routes[name]) return window.WORKBENCH_CONFIG.routes[name];
+            var dotKey = name.replace(/_/g, '.');
+            if (window.WORKBENCH_CONFIG.routes[dotKey]) return window.WORKBENCH_CONFIG.routes[dotKey];
+            var underscoreKey = name.replace(/\./g, '_');
+            if (window.WORKBENCH_CONFIG.routes[underscoreKey]) return window.WORKBENCH_CONFIG.routes[underscoreKey];
+        }
+        return window.wbUrl(fallbackPath || '');
+    };
+}
+
 // =============================================
 // WALK-IN SALES
 // =============================================
@@ -1141,7 +1162,9 @@ function printHospitalCard() {
         cardContent = document.getElementById('hospital-card-container').innerHTML;
     }
     var pageHeight = (activeTab === 'combined') ? '120mm' : '60mm';
-    const hosColor = '';
+    const hosColor = (window.WORKBENCH_CONFIG && window.WORKBENCH_CONFIG.hospitalColor)
+        || (typeof getComputedStyle === 'function' && getComputedStyle(document.documentElement).getPropertyValue('--hospital-primary').trim())
+        || '#0066cc';
     const printWindow = window.open('', '_blank', 'width=500,height=700');
 
     // Use mm-based sizing for consistent print output (ISO ID-1 card: 85.6mm × 54mm)

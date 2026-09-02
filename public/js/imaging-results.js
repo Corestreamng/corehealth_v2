@@ -1,3 +1,24 @@
+if (typeof window.wbUrl !== 'function') {
+    window.wbUrl = function(path) {
+        var base = (window.WORKBENCH_CONFIG && window.WORKBENCH_CONFIG.baseUrl) ? window.WORKBENCH_CONFIG.baseUrl : '';
+        base = base.replace(/\/$/, '');
+        var cleanPath = (path || '').replace(/^\//, '');
+        return base ? (base + '/' + cleanPath) : ('/' + cleanPath);
+    };
+}
+if (typeof window.wbRoute !== 'function') {
+    window.wbRoute = function(name, fallbackPath) {
+        if (window.WORKBENCH_CONFIG && window.WORKBENCH_CONFIG.routes) {
+            if (window.WORKBENCH_CONFIG.routes[name]) return window.WORKBENCH_CONFIG.routes[name];
+            var dotKey = name.replace(/_/g, '.');
+            if (window.WORKBENCH_CONFIG.routes[dotKey]) return window.WORKBENCH_CONFIG.routes[dotKey];
+            var underscoreKey = name.replace(/\./g, '_');
+            if (window.WORKBENCH_CONFIG.routes[underscoreKey]) return window.WORKBENCH_CONFIG.routes[underscoreKey];
+        }
+        return window.wbUrl(fallbackPath || '');
+    };
+}
+
 function loadTrashData() {
     const patientId = currentPatient || null;
 
@@ -854,7 +875,7 @@ function setDefaultDateFilters() {
 function loadFilterOptions() {
     // Load doctors
     $.ajax({
-        url: wbRoute('lab.filterDoctors', '/lab/filterDoctors'),
+        url: wbRoute('lab.filterDoctors', '/lab-workbench/filter-doctors'),
         method: 'GET',
         success: function(doctors) {
             let options = '<option value="">All Doctors</option>';
@@ -870,7 +891,7 @@ function loadFilterOptions() {
 
     // Load HMOs with optgroups
     $.ajax({
-        url: wbRoute('lab.filterHmos', '/lab/filterHmos'),
+        url: wbRoute('lab.filterHmos', '/lab-workbench/filter-hmos'),
         method: 'GET',
         success: function(hmoGroups) {
             let options = '<option value="">All HMOs</option>';
@@ -890,7 +911,7 @@ function loadFilterOptions() {
 
     // Load services
     $.ajax({
-        url: wbRoute('lab.filterServices', '/lab/filterServices'),
+        url: wbRoute('lab.filterServices', '/lab-workbench/filter-services'),
         method: 'GET',
         success: function(services) {
             let options = '<option value="">All Services</option>';
@@ -905,7 +926,6 @@ function loadFilterOptions() {
     });
 }
 
-/* REPLACED BY NEW IMPLEMENTATION
 function loadReportsStatistics(filters = {}) {
     // If no filters provided, use current form values
     if (Object.keys(filters).length === 0) {
@@ -921,7 +941,7 @@ function loadReportsStatistics(filters = {}) {
     }
 
     $.ajax({
-        url: wbRoute('lab.statistics', '/lab/statistics'),
+        url: wbRoute('lab.statistics', '/lab-workbench/statistics'),
         method: 'GET',
         data: filters,
         success: function(data) {
@@ -972,7 +992,6 @@ function loadReportsStatistics(filters = {}) {
         }
     });
 }
-*/
 
 function initializeReportsDataTable() {
     if (window.reportsDataTable) {
@@ -983,7 +1002,7 @@ function initializeReportsDataTable() {
         processing: true,
         serverSide: true,
         ajax: {
-            url: wbRoute('lab.reports', '/lab/reports'),
+            url: wbRoute('lab.reports', '/lab-workbench/reports'),
             data: function(d) {
                 // Add filter values to request
                 d.date_from = $('#report-date-from').val();

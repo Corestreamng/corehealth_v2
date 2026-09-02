@@ -1,5 +1,22 @@
-        (function() {
-            'use strict';
+if (typeof window.wbUrl !== 'function') {
+    window.wbUrl = function(path) {
+        var base = (window.WORKBENCH_CONFIG && window.WORKBENCH_CONFIG.baseUrl) ? window.WORKBENCH_CONFIG.baseUrl : '';
+        base = base.replace(/\/$/, '');
+        var cleanPath = (path || '').replace(/^\//, '');
+        return base ? (base + '/' + cleanPath) : ('/' + cleanPath);
+    };
+}
+if (typeof window.wbRoute !== 'function') {
+    window.wbRoute = function(name, fallbackPath) {
+        if (window.WORKBENCH_CONFIG && window.WORKBENCH_CONFIG.routes && window.WORKBENCH_CONFIG.routes[name]) {
+            return window.WORKBENCH_CONFIG.routes[name];
+        }
+        return window.wbUrl(fallbackPath || '');
+    };
+}
+
+(function() {
+    'use strict';
 
             // ─── State ───────────────────────────────────────────────────────────────
             var currentAxis = $('#axis-store').hasClass('active') ? 'store' : 'product';
@@ -144,7 +161,7 @@
                                         </div>
                                         <div class="d-flex align-items-center gap-2">
                                             <span class="status-badge ${req.status}">${req.status.charAt(0).toUpperCase() + req.status.slice(1)}</span>
-                                            <a href="wbUrl('inventory/requisitions')/${req.id}" target="_blank" class="btn btn-sm btn-outline-primary" style="border-radius:6px; font-size:0.75rem; padding:4px 10px;">
+                                            <a href="${wbUrl('inventory/requisitions/' + req.id)}" target="_blank" class="btn btn-sm btn-outline-primary" style="border-radius:6px; font-size:0.75rem; padding:4px 10px;">
                                                 <i class="mdi mdi-eye"></i> View
                                             </a>
                                         </div>
@@ -585,7 +602,7 @@
                     '<span class="spinner-border spinner-border-sm"></span> Creating…');
 
                 $.ajax({
-                        url: wbRoute('inventory.store-workbench.create-manual-batch', '/inventory/store-workbench/create-manual-batch'),
+                        url: wbRoute('inventory.store-workbench.create-manual-batch', '/inventory/store-workbench/manual-batch'),
                         method: 'POST',
                         data: $(this).serialize(),
                         dataType: 'json',
@@ -980,7 +997,7 @@
 
                     // Fetch packaging for this product
                     if (productId) {
-                        $.get(wbRoute('products.packagings', '/products/packagings').replace(':id', productId))
+                        $.get(wbRoute('products.packagings', '/products/:id/packagings').replace(':id', productId))
                             .done(function(res) {
                                 if (res.packagings) {
                                     var $sel = $(`.receive-item-row[data-index="${i}"] .rec-packaging-select`);
@@ -1147,7 +1164,7 @@
 
                 if (!productId || productId === 'undefined' || productId === 'null' || isNaN(productId)) return;
 
-                $.get(wbRoute('products.packagings', '/products/packagings').replace(':id', productId))
+                $.get(wbRoute('products.packagings', '/products/:id/packagings').replace(':id', productId))
                     .done(function(res) {
                         if (res.packagings && res.packagings.length) {
                             $.each(res.packagings, function(_, p) {
@@ -2323,7 +2340,7 @@
                             </div>
                             <div class="d-flex align-items-center gap-2">
                                 <span class="status-badge ${it.status}">${it.status}</span>
-                                <a href=wbUrl('inventory/purchase-order-returns') target="_blank" class="btn btn-sm btn-outline-primary" style="border-radius:6px; font-size:0.75rem; padding:4px 10px;">
+                                <a href="${wbUrl('inventory/purchase-order-returns')}" target="_blank" class="btn btn-sm btn-outline-primary" style="border-radius:6px; font-size:0.75rem; padding:4px 10px;">
                                     <i class="mdi mdi-check"></i>
                                 </a>
                             </div>
