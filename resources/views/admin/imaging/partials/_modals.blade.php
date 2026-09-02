@@ -99,8 +99,6 @@
     </div>
 </div>
 
-@include('admin.partials.clinical_context_modal')
-@include('admin.partials.treatment-plan-viewer-modal')
 
 <!-- Delete Reason Modal -->
 <div class="modal fade" id="deleteReasonModal" tabindex="-1" role="dialog">
@@ -484,4 +482,10 @@
     </div>
 </div>
 
+@include('admin.partials.clinical_context_modal')
+@include('admin.partials.clinical_alerts_modal')
+@include('admin.partials.treatment-plan-viewer-modal')
 @include('admin.partials.patient-form-modal')
+@include('admin.partials.medical_report_history_modal')
+@include('admin.partials.bundle_view_modal')
+@include('admin.partials.bundle_remove_modal')
