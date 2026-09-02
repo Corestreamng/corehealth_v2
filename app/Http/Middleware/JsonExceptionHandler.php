@@ -4,9 +4,8 @@ namespace App\Http\Middleware;
 
 use Closure;
 use Illuminate\Http\Request;
-use Illuminate\Http\JsonResponse;
-use Throwable;
 use Illuminate\Support\Facades\Log;
+use Throwable;
 
 class JsonExceptionHandler
 {
@@ -31,19 +30,19 @@ class JsonExceptionHandler
                 'trace' => $e->getTraceAsString(),
                 'url' => $request->fullUrl(),
                 'method' => $request->method(),
-                'inputs' => $request->except(['password', 'password_confirmation'])
+                'inputs' => $request->except(['password', 'password_confirmation']),
             ]);
 
             if ($request->expectsJson() || $request->is('api/*')) {
                 $statusCode = $this->getStatusCode($e);
-                
+
                 return response()->json([
                     'success' => false,
                     'error' => [
                         'message' => $this->getErrorMessage($e, $statusCode),
                         'code' => $statusCode,
-                        'type' => class_basename($e)
-                    ]
+                        'type' => class_basename($e),
+                    ],
                 ], $statusCode);
             }
 
@@ -70,7 +69,7 @@ class JsonExceptionHandler
         if ($e instanceof \Illuminate\Validation\ValidationException) {
             return 422;
         }
-        
+
         if ($e instanceof \Illuminate\Database\Eloquent\ModelNotFoundException) {
             return 404;
         }
