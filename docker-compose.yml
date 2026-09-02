@@ -41,7 +41,7 @@ services:
       MYSQL_ROOT_PASSWORD: secretpassword
     volumes:
       - mysql_data:/var/lib/mysql
-      - ./_corehealth_db_v2_test.sql:/docker-entrypoint-initdb.d/01_seed.sql
+      - ./database/dumps/_corehealth_db_v2_test.sql.gz:/docker-entrypoint-initdb.d/01_seed.sql.gz
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-psecretpassword"]
       timeout: 20s

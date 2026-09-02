@@ -68,7 +68,7 @@ jobs:
       - name: Import test database dump
         run: |
           echo "Importing test database schema and data..."
-          mysql -h 127.0.0.1 -P 3306 -u root -ppassword corehealth_test < database/dumps/_corehealth_db_v2_test.sql
+          zcat database/dumps/_corehealth_db_v2_test.sql.gz | mysql -h 127.0.0.1 -P 3306 -u root -ppassword corehealth_test
           echo "Import complete."
 
       - name: Run PHPUnit test suite

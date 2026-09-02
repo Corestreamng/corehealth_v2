@@ -326,11 +326,11 @@ Code quality and formatting are enforced via **PHP CS Fixer** configured in [.ph
 ## Testing & Application Classification
 
 > [!NOTE]
-> **Application Classification**: CoreHealth v2 is a fullstack Laravel-based Hospital Management Information System (HMIS) monolithic web application. Database fixtures and test schemas are maintained under `database/dumps/_corehealth_db_v2_test.sql`.
+> **Application Classification**: CoreHealth v2 is a fullstack Laravel-based Hospital Management Information System (HMIS) monolithic web application. Database fixtures and test schemas are maintained under `database/dumps/_corehealth_db_v2_test.sql.gz`.
 
 ### Automated Testing Suite (35 Domain Test Suites)
 
-The codebase features **35 domain-specific PHPUnit test suites** containing **155+ test methods**, verified against the live MySQL test database schema (`database/dumps/_corehealth_db_v2_test.sql`).
+The codebase features **35 domain-specific PHPUnit test suites** containing **155+ test methods**, verified against the live MySQL test database schema (`database/dumps/_corehealth_db_v2_test.sql.gz`).
 
 #### Key Test Suites
 - **`PatientRegistrationTest.php`** — Covers reception workbench view, patient creation, and file search.
@@ -361,7 +361,7 @@ vendor/bin/phpunit tests/Feature/Pharmacy/
 
 ## CI/CD & Governance
 
-- **Automated CI Workflow** ([.github/workflows/ci.yml](.github/workflows/ci.yml)): GitHub Actions pipeline running PHP 8.3, setting up a MySQL 8.0 container, importing `_corehealth_db_v2_test.sql`, running PHP CS Fixer lint checks, executing PHPUnit tests, building assets, and auditing security.
+- **Automated CI Workflow** ([.github/workflows/ci.yml](.github/workflows/ci.yml)): GitHub Actions pipeline running PHP 8.3, setting up a MySQL 8.0 container, importing `_corehealth_db_v2_test.sql.gz`, running PHP CS Fixer lint checks, executing PHPUnit tests, building assets, and auditing security.
 - **Structured JSON Logging**: Configured via Monolog `JsonFormatter` channel in `config/logging.php`.
 - **Dependabot**: Configured in [.github/dependabot.yml](.github/dependabot.yml) for weekly Composer and NPM dependency security checks.
 - **Semantic Version Tags**: Tagged across 35 historic milestones starting from `v2.0.0.0` through `v2.5.0.2`.

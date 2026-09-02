@@ -60,7 +60,7 @@ seed: ## Run database seeders
 	$(COMPOSE) exec php php artisan db:seed
 
 import-test-db: ## Import test database snapshot (local)
-	mysql -h 127.0.0.1 -P 3306 -u root -ppassword _corehealth_db_v2_test < database/dumps/_corehealth_db_v2_test.sql
+	zcat database/dumps/_corehealth_db_v2_test.sql.gz | mysql -h 127.0.0.1 -P 3306 -u root -ppassword _corehealth_db_v2_test
 
 fresh-setup: ## Perform a clean end-to-end setup (Docker, dependencies, DB, assets)
 	$(COMPOSE) up -d
