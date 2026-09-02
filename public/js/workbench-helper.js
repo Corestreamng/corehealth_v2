@@ -27,3 +27,53 @@ window.wbRoute = function(name, fallbackPath) {
     }
     return window.wbUrl(fallbackPath || '');
 };
+
+window.openModalSafely = function(target) {
+    var $el = $(target);
+    if (!$el.length) return;
+    var el = $el[0];
+
+    if (typeof bootstrap !== 'undefined' && bootstrap && typeof bootstrap.Modal === 'function' && typeof bootstrap.Modal.getInstance === 'function') {
+        try {
+            var bsInst = bootstrap.Modal.getInstance(el) || new bootstrap.Modal(el);
+            if (bsInst && typeof bsInst.show === 'function') {
+                bsInst.show();
+                return;
+            }
+        } catch (e) {
+            console.warn('BS5 modal show failed, falling back to jQuery:', e);
+        }
+    }
+
+    if (typeof $.fn.modal === 'function') {
+        try {
+            $el.modal('show');
+            return;
+        } catch (e) {
+            console.warn('jQuery modal show failed:', e);
+        }
+    }
+};
+
+window.closeModalSafely = function(target) {
+    var $el = $(target);
+    if (!$el.length) return;
+    var el = $el[0];
+
+    if (typeof bootstrap !== 'undefined' && bootstrap && typeof bootstrap.Modal === 'function' && typeof bootstrap.Modal.getInstance === 'function') {
+        try {
+            var bsInst = bootstrap.Modal.getInstance(el);
+            if (bsInst && typeof bsInst.hide === 'function') {
+                bsInst.hide();
+                return;
+            }
+        } catch (e) {}
+    }
+
+    if (typeof $.fn.modal === 'function') {
+        try {
+            $el.modal('hide');
+            return;
+        } catch (e) {}
+    }
+};

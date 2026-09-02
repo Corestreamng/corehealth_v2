@@ -1041,3 +1041,59 @@ window.BillingKit = (function ($) {
     };
 
 })(jQuery);
+
+/* Shared Receipt Preview Modal Handlers */
+$(document).on('click', '.receipt-modal-tab', function(e) {
+    e.preventDefault();
+    const format = $(this).data('format');
+
+    $('.receipt-modal-tab').removeClass('active');
+    $(this).addClass('active');
+
+    if (format === 'a4') {
+        $('#modal-receipt-a4').show();
+        $('#modal-receipt-thermal').hide();
+    } else {
+        $('#modal-receipt-a4').hide();
+        $('#modal-receipt-thermal').show();
+    }
+});
+
+$(document).on('click', '#modal-print-a4', function(e) {
+    e.preventDefault();
+    printSharedReceiptContent('modal-receipt-a4');
+});
+
+$(document).on('click', '#modal-print-thermal', function(e) {
+    e.preventDefault();
+    printSharedReceiptContent('modal-receipt-thermal');
+});
+
+function printSharedReceiptContent(elementId) {
+    const $el = $(`#${elementId}`);
+    if (!$el.length) return;
+    const content = $el.html();
+    const printWindow = window.open('', '_blank', 'height=700,width=900');
+    if (!printWindow) {
+        alert('Please allow popups to print receipt');
+        return;
+    }
+    printWindow.document.write('<!DOCTYPE html><html><head><title>Receipt</title>');
+    printWindow.document.write('<style>');
+    printWindow.document.write('body { font-family: Arial, sans-serif; padding: 20px; margin: 0; }');
+    printWindow.document.write('table { width: 100%; border-collapse: collapse; }');
+    printWindow.document.write('th, td { padding: 8px; text-align: left; border-bottom: 1px solid #ddd; }');
+    printWindow.document.write('.text-center { text-align: center; }');
+    printWindow.document.write('.text-right, .text-end { text-align: right; }');
+    printWindow.document.write('.font-weight-bold, .fw-bold { font-weight: bold; }');
+    printWindow.document.write('@media print { body { padding: 0; } }');
+    printWindow.document.write('</style>');
+    printWindow.document.write('</head><body>');
+    printWindow.document.write(content);
+    printWindow.document.write('</body></html>');
+    printWindow.document.close();
+    printWindow.focus();
+    setTimeout(function() {
+        printWindow.print();
+    }, 250);
+}

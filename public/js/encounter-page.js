@@ -1,3 +1,24 @@
+if (typeof window.wbUrl !== 'function') {
+    window.wbUrl = function(path) {
+        var base = (window.WORKBENCH_CONFIG && window.WORKBENCH_CONFIG.baseUrl) ? window.WORKBENCH_CONFIG.baseUrl : '';
+        base = base.replace(/\/$/, '');
+        var cleanPath = (path || '').replace(/^\//, '');
+        return base ? (base + '/' + cleanPath) : ('/' + cleanPath);
+    };
+}
+if (typeof window.wbRoute !== 'function') {
+    window.wbRoute = function(name, fallbackPath) {
+        if (window.WORKBENCH_CONFIG && window.WORKBENCH_CONFIG.routes) {
+            if (window.WORKBENCH_CONFIG.routes[name]) return window.WORKBENCH_CONFIG.routes[name];
+            var dotKey = name.replace(/_/g, '.');
+            if (window.WORKBENCH_CONFIG.routes[dotKey]) return window.WORKBENCH_CONFIG.routes[dotKey];
+            var underscoreKey = name.replace(/\./g, '_');
+            if (window.WORKBENCH_CONFIG.routes[underscoreKey]) return window.WORKBENCH_CONFIG.routes[underscoreKey];
+        }
+        return window.wbUrl(fallbackPath || '');
+    };
+}
+
 
     
 
@@ -176,7 +197,7 @@
                     },
                     url: wbRoute('auto-save-encounter-note', '/auto-save-encounter-note'),
                     data: {
-                        patient_id: "(window.WORKBENCH_CONFIG ? window.WORKBENCH_CONFIG.patientId : '')",
+                        patient_id: (window.WORKBENCH_CONFIG ? window.WORKBENCH_CONFIG.patientId : ''),
                         notes: notes,
                         encounter_id: encounter_id,
                         reasons_for_encounter_data: $('#reasons_for_encounter_data').val() || '[]'
@@ -196,139 +217,144 @@
 
         setInterval(autosavenotes, 10000);
         $(function() {
-            $('#profile_forms_table').DataTable({
-                "dom": 'Bfrtip',
-                "iDisplayLength": 5,
-                "lengthMenu": [
-                    [10, 25, 50, 100, -1],
-                    [10, 25, 50, 100, "All"]
-                ],
-                "buttons": ['pageLength', 'copy', 'excel', 'csv', 'pdf', 'print', 'colvis'],
-                "processing": true,
-                "serverSide": true,
-                "ajax": {
-                    "url": wbRoute('patient-form-list', '/patient-form-list'),
-                    "type": "GET"
-                },
-                "columns": [{
-                        data: "DT_RowIndex",
-                        name: "DT_RowIndex"
+            if ($('#profile_forms_table').length) {
+                $('#profile_forms_table').DataTable({
+                    "dom": 'Bfrtip',
+                    "iDisplayLength": 5,
+                    "lengthMenu": [
+                        [10, 25, 50, 100, -1],
+                        [10, 25, 50, 100, "All"]
+                    ],
+                    "buttons": ['pageLength', 'copy', 'excel', 'csv', 'pdf', 'print', 'colvis'],
+                    "processing": true,
+                    "serverSide": true,
+                    "ajax": {
+                        "url": wbRoute('patient-form-list', '/patient-form-list/' + (window.WORKBENCH_CONFIG?.patientId || '0')),
+                        "type": "GET"
                     },
-                    {
-                        data: "form_data",
-                        name: "form_data"
+                    "columns": [{
+                            data: "DT_RowIndex",
+                            name: "DT_RowIndex"
+                        },
+                        {
+                            data: "form_data",
+                            name: "form_data"
+                        },
+                    ],
+                    "paging": true
+                });
+            }
+        });
+        $(function() {
+            if ($('#encounter_history_list').length) {
+                $('#encounter_history_list').DataTable({
+                    "dom": 'Bfrtip',
+                    "iDisplayLength": 50,
+                    "lengthMenu": [
+                        [10, 25, 50, 100, -1],
+                        [10, 25, 50, 100, "All"]
+                    ],
+                    "buttons": ['pageLength', 'copy', 'excel', 'csv', 'pdf', 'print', 'colvis'],
+                    "processing": true,
+                    "serverSide": true,
+                    "ajax": {
+                        "url": wbRoute('EncounterHistoryList', '/EncounterHistoryList/' + (window.WORKBENCH_CONFIG?.patientId || '0')),
+                        "type": "GET",
+                        "data": function(d) {
+                            d.exclude_encounter_id = window.WORKBENCH_CONFIG?.encounterId || '';
+                        }
                     },
-                ],
-
-                "paging": true
-            });
+                    "columns": [
+                        {
+                            data: "info",
+                            name: "info",
+                            orderable: false
+                        }
+                    ],
+                    "paging": true
+                });
+            }
         });
         $(function() {
-            $('#encounter_history_list').DataTable({
-                "dom": 'Bfrtip',
-                "iDisplayLength": 50,
-                "lengthMenu": [
-                    [10, 25, 50, 100, -1],
-                    [10, 25, 50, 100, "All"]
-                ],
-                "buttons": ['pageLength', 'copy', 'excel', 'csv', 'pdf', 'print', 'colvis'],
-                "processing": true,
-                "serverSide": true,
-                "ajax": {
-                    "url": wbRoute('EncounterHistoryList', '/EncounterHistoryList'),
-                    "type": "GET",
-                    "data": function(d) {
-                        d.exclude_encounter_id = '';
-                    }
-                },
-                "columns": [
-                    {
-                        data: "info",
-                        name: "info",
-                        orderable: false
-                    }
-                ],
-
-                "paging": true
-            });
+            if ($('#investigation_history_list').length) {
+                $('#investigation_history_list').DataTable({
+                    "dom": 'Bfrtip',
+                    "iDisplayLength": 50,
+                    "lengthMenu": [
+                        [10, 25, 50, 100, -1],
+                        [10, 25, 50, 100, "All"]
+                    ],
+                    "buttons": ['pageLength', 'copy', 'excel', 'csv', 'pdf', 'print', 'colvis'],
+                    "processing": true,
+                    "serverSide": true,
+                    "ajax": {
+                        "url": wbRoute('investigationHistoryList', '/investigationHistoryList/' + (window.WORKBENCH_CONFIG?.patientId || '0')),
+                        "type": "GET"
+                    },
+                    "columns": [
+                        {
+                            data: "info",
+                            name: "info",
+                            orderable: false
+                        }
+                    ],
+                    "paging": true
+                });
+            }
         });
         $(function() {
-            $('#investigation_history_list').DataTable({
-                "dom": 'Bfrtip',
-                "iDisplayLength": 50,
-                "lengthMenu": [
-                    [10, 25, 50, 100, -1],
-                    [10, 25, 50, 100, "All"]
-                ],
-                "buttons": ['pageLength', 'copy', 'excel', 'csv', 'pdf', 'print', 'colvis'],
-                "processing": true,
-                "serverSide": true,
-                "ajax": {
-                    "url": "(window.WORKBENCH_CONFIG ? window.WORKBENCH_CONFIG.patientId : '')",
-                    "type": "GET"
-                },
-                "columns": [
-                    {
-                        data: "info",
-                        name: "info",
-                        orderable: false
-                    }
-                ],
-
-                "paging": true
-            });
+            if ($('#imaging_history_list').length) {
+                $('#imaging_history_list').DataTable({
+                    "dom": 'Bfrtip',
+                    "iDisplayLength": 50,
+                    "lengthMenu": [
+                        [10, 25, 50, 100, -1],
+                        [10, 25, 50, 100, "All"]
+                    ],
+                    "buttons": ['pageLength', 'copy', 'excel', 'csv', 'pdf', 'print', 'colvis'],
+                    "processing": true,
+                    "serverSide": true,
+                    "ajax": {
+                        "url": wbRoute('imagingHistoryList', '/imagingHistoryList/' + (window.WORKBENCH_CONFIG?.patientId || '0')),
+                        "type": "GET"
+                    },
+                    "columns": [
+                        {
+                            data: "info",
+                            name: "info",
+                            orderable: false
+                        }
+                    ],
+                    "paging": true
+                });
+            }
         });
         $(function() {
-            $('#imaging_history_list').DataTable({
-                "dom": 'Bfrtip',
-                "iDisplayLength": 50,
-                "lengthMenu": [
-                    [10, 25, 50, 100, -1],
-                    [10, 25, 50, 100, "All"]
-                ],
-                "buttons": ['pageLength', 'copy', 'excel', 'csv', 'pdf', 'print', 'colvis'],
-                "processing": true,
-                "serverSide": true,
-                "ajax": {
-                    "url": "(window.WORKBENCH_CONFIG ? window.WORKBENCH_CONFIG.patientId : '')",
-                    "type": "GET"
-                },
-                "columns": [
-                    {
-                        data: "info",
-                        name: "info",
-                        orderable: false
-                    }
-                ],
-
-                "paging": true
-            });
-        });
-        $(function() {
-            $('#presc_history_list').DataTable({
-                "dom": 'Bfrtip',
-                "iDisplayLength": 50,
-                "lengthMenu": [
-                    [10, 25, 50, 100, -1],
-                    [10, 25, 50, 100, "All"]
-                ],
-                "buttons": ['pageLength', 'copy', 'excel', 'csv', 'pdf', 'print', 'colvis'],
-                "processing": true,
-                "serverSide": true,
-                "ajax": {
-                    "url": "(window.WORKBENCH_CONFIG ? window.WORKBENCH_CONFIG.patientId : '')",
-                    "type": "GET"
-                },
-                "columns": [
-                    {
-                        data: "info",
-                        name: "info",
-                        orderable: false
-                    }
-                ],
-
-                "paging": true
-            });
+            if ($('#presc_history_list').length) {
+                $('#presc_history_list').DataTable({
+                    "dom": 'Bfrtip',
+                    "iDisplayLength": 50,
+                    "lengthMenu": [
+                        [10, 25, 50, 100, -1],
+                        [10, 25, 50, 100, "All"]
+                    ],
+                    "buttons": ['pageLength', 'copy', 'excel', 'csv', 'pdf', 'print', 'colvis'],
+                    "processing": true,
+                    "serverSide": true,
+                    "ajax": {
+                        "url": wbRoute('prescHistoryList', '/pharmacy-workbench/presc-history-list/' + (window.WORKBENCH_CONFIG?.patientId || '0')),
+                        "type": "GET"
+                    },
+                    "columns": [
+                        {
+                            data: "info",
+                            name: "info",
+                            orderable: false
+                        }
+                    ],
+                    "paging": true
+                });
+            }
         });
         /* ═══ Re-order / Re-prescribe from history (Plan §5.2) ═══ */
 
@@ -1012,7 +1038,7 @@
                 "processing": true,
                 "serverSide": true,
                 "ajax": {
-                    "url": "(window.WORKBENCH_CONFIG ? window.WORKBENCH_CONFIG.patientId : '')",
+                    "url": wbRoute('patientNursngNote', '/patientNursngNote/' + (window.WORKBENCH_CONFIG?.patientId || '0') + '/1'),
                     "type": "GET"
                 },
                 "columns": [{
@@ -1048,7 +1074,7 @@
                 "processing": true,
                 "serverSide": true,
                 "ajax": {
-                    "url": "(window.WORKBENCH_CONFIG ? window.WORKBENCH_CONFIG.patientId : '')",
+                    "url": wbRoute('patientNursngNote', '/patientNursngNote/' + (window.WORKBENCH_CONFIG?.patientId || '0') + '/2'),
                     "type": "GET"
                 },
                 "columns": [{
@@ -1084,7 +1110,7 @@
                 "processing": true,
                 "serverSide": true,
                 "ajax": {
-                    "url": "(window.WORKBENCH_CONFIG ? window.WORKBENCH_CONFIG.patientId : '')",
+                    "url": wbRoute('patientNursngNote', '/patientNursngNote/' + (window.WORKBENCH_CONFIG?.patientId || '0') + '/3'),
                     "type": "GET"
                 },
                 "columns": [{
@@ -1120,7 +1146,7 @@
                 "processing": true,
                 "serverSide": true,
                 "ajax": {
-                    "url": "(window.WORKBENCH_CONFIG ? window.WORKBENCH_CONFIG.patientId : '')",
+                    "url": wbRoute('patientNursngNote', '/patientNursngNote/' + (window.WORKBENCH_CONFIG?.patientId || '0') + '/4'),
                     "type": "GET"
                 },
                 "columns": [{
@@ -1156,7 +1182,7 @@
                 "processing": true,
                 "serverSide": true,
                 "ajax": {
-                    "url": "(window.WORKBENCH_CONFIG ? window.WORKBENCH_CONFIG.patientId : '')",
+                    "url": wbRoute('patientNursngNote', '/patientNursngNote/' + (window.WORKBENCH_CONFIG?.patientId || '0') + '/5'),
                     "type": "GET"
                 },
                 "columns": [{
@@ -1287,19 +1313,21 @@
         }
 
         // Initialize shared result entry module
-        InvestResultEntry.bindFormSubmit(function() {
-            if ($.fn.DataTable.isDataTable('#investigation_history_list')) {
-                $('#investigation_history_list').DataTable().ajax.reload(null, false);
-            }
-            if ($.fn.DataTable.isDataTable('#imaging_history_list')) {
-                $('#imaging_history_list').DataTable().ajax.reload(null, false);
-            }
-            var ctx = window._investResultContext;
-            if (ctx) {
-                _autoApproveIfEnabled(ctx.id, ctx.type);
-                window._investResultContext = null;
-            }
-        });
+        if (typeof InvestResultEntry !== 'undefined') {
+            InvestResultEntry.bindFormSubmit(function() {
+                if ($.fn.DataTable.isDataTable('#investigation_history_list')) {
+                    $('#investigation_history_list').DataTable().ajax.reload(null, false);
+                }
+                if ($.fn.DataTable.isDataTable('#imaging_history_list')) {
+                    $('#imaging_history_list').DataTable().ajax.reload(null, false);
+                }
+                var ctx = window._investResultContext;
+                if (ctx) {
+                    _autoApproveIfEnabled(ctx.id, ctx.type);
+                    window._investResultContext = null;
+                }
+            });
+        }
         // Wait for document to be ready
         document.addEventListener('DOMContentLoaded', function() {
             // Initialize nurse chart tabs - using bootstrap 5 syntax
@@ -1626,7 +1654,7 @@
                 start.setHours(0, 0, 0, 0);
                 end.setHours(23, 59, 59, 999);
 
-                html += '<div class="unified-med-calendar">';
+                html += '<div class="unified-overview-calendar">';
 
                 // Weekday header
                 html += '<div class="calendar-weekday-header">';
@@ -1846,14 +1874,21 @@
                             // Encode item data as JSON for the click handler
                             const itemData = JSON.stringify(item).replace(/"/g, '&quot;');
 
-                            html += `<div class="med-item ${item.status}"
-                                style="background-color: ${item.color.bg}; border-left-color: ${item.color.border}; color: ${item.color.text};"
+                            // Status icon matching nursing workbench verbatim
+                            const statusIcon = item.status === 'given' ? '✓' :
+                                               item.status === 'missed' ? '✗' :
+                                               item.status === 'discontinued' ? '🚫' : '⏳';
+
+                            const inlineStyle = (item.status === 'given' || item.status === 'missed' || item.status === 'discontinued')
+                                ? ''
+                                : `background-color: ${item.color.bg}; border-left-color: ${item.color.border}; color: ${item.color.text};`;
+
+                            html += `<div class="med-item status-${item.status}"
+                                style="${inlineStyle}"
                                 onclick="showMedDetails(this)" data-med-details="${itemData}">
-                                <i class="mdi ${item.icon} ${iconColor}"></i>
-                                <div class="med-details">
-                                    <span class="med-name">${item.medName}${prnLabel}${sourceLabel}</span>
-                                    <span class="med-time">${item.time}</span>
-                                </div>
+                                <span class="med-time">${item.time}</span>
+                                <span class="med-name">${item.medName}${prnLabel}${sourceLabel}</span>
+                                <span class="med-status">${statusIcon}</span>
                             </div>`;
                         });
                     }
@@ -2475,36 +2510,40 @@
         });
 
         // Phase 3c (Plan §5.3): Initialize re-prescribe from encounter dropdown
-        ClinicalOrdersKit.initRePrescribeFromEncounter({
-            recentUrl: '/encounters/' + encounterId + '/recent-encounters',
-            encounterItemsUrl: '/encounters/' + encounterId + '/encounter-items/{id}',
-            rePrescribeUrl: '/encounters/' + encounterId + '/re-prescribe',
-            csrfToken: $('meta[name="csrf-token"]').attr('content'),
-            dropdownSelector: '#rp-encounter-dropdown',
-            onRePrescribed: function() {
-                // Reload all history tables (B3 fix: include procedures)
-                if ($.fn.DataTable.isDataTable('#investigation_history_list')) {
-                    $('#investigation_history_list').DataTable().ajax.reload(null, false);
+        if (encounterId) {
+            ClinicalOrdersKit.initRePrescribeFromEncounter({
+                recentUrl: '/encounters/' + encounterId + '/recent-encounters',
+                encounterItemsUrl: '/encounters/' + encounterId + '/encounter-items/{id}',
+                rePrescribeUrl: '/encounters/' + encounterId + '/re-prescribe',
+                csrfToken: $('meta[name="csrf-token"]').attr('content'),
+                dropdownSelector: '#rp-encounter-dropdown',
+                onRePrescribed: function() {
+                    // Reload all history tables (B3 fix: include procedures)
+                    if ($.fn.DataTable.isDataTable('#investigation_history_list')) {
+                        $('#investigation_history_list').DataTable().ajax.reload(null, false);
+                    }
+                    if ($.fn.DataTable.isDataTable('#imaging_history_list')) {
+                        $('#imaging_history_list').DataTable().ajax.reload(null, false);
+                    }
+                    if ($.fn.DataTable.isDataTable('#presc_history_list')) {
+                        $('#presc_history_list').DataTable().ajax.reload(null, false);
+                    }
+                    if ($.fn.DataTable.isDataTable('#procedure_history_list')) {
+                        $('#procedure_history_list').DataTable().ajax.reload(null, false);
+                    }
                 }
-                if ($.fn.DataTable.isDataTable('#imaging_history_list')) {
-                    $('#imaging_history_list').DataTable().ajax.reload(null, false);
-                }
-                if ($.fn.DataTable.isDataTable('#presc_history_list')) {
-                    $('#presc_history_list').DataTable().ajax.reload(null, false);
-                }
-                if ($.fn.DataTable.isDataTable('#procedure_history_list')) {
-                    $('#procedure_history_list').DataTable().ajax.reload(null, false);
-                }
-            }
-        });
+            });
+        }
 
         // Initialize Non-Pharmacological Care Orders
-        window.NonPharmManager.init({
-            patientId: patientId,
-            encounterId: encounterId,
-            containerId: '#non-pharm-encounter-container',
-            isNurseView: false
-        });
+        if (patientId && typeof window.NonPharmManager !== 'undefined' && typeof window.NonPharmManager.init === 'function') {
+            window.NonPharmManager.init({
+                patientId: patientId,
+                encounterId: encounterId,
+                containerId: '#non-pharm-encounter-container',
+                isNurseView: false
+            });
+        }
 
         // Helper function to show messages
         function showMessage(elementId, message, type = 'success') {
@@ -3080,7 +3119,7 @@
                 "processing": true,
                 "serverSide": true,
                 "ajax": {
-                    "url": wbRoute('patient-admission-requests-list', '/patient-admission-requests-list'),
+                    "url": wbRoute('patientAdmissionRequestsList', '/patient-admission-requests-list/' + (window.WORKBENCH_CONFIG?.patientId || '0')),
                     "type": "GET"
                 },
                 "columns": [{
