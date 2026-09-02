@@ -8,6 +8,7 @@
 window.WORKBENCH_CONFIG = {
     csrf: '{{ csrf_token() }}',
     baseUrl: '{{ url("/") }}',
+    hospitalColor: '{{ appsettings('hos_color') ?? '#0066cc' }}',
     hmos: @json(\App\Models\Hmo::with('scheme')->orderBy('name')->get()->map(fn($h) => ['id' => $h->id, 'name' => $h->name, 'scheme_name' => $h->scheme->name ?? 'Other'])),
     routes: {
         'reception.patient.quick-register': '{{ route("reception.patient.quick-register") }}',
@@ -19,6 +20,7 @@ window.WORKBENCH_CONFIG = {
 };
 </script>
 <script src="{{ asset('js/workbench-helper.js') }}"></script>
+<script src="{{ asset('js/billing-shared.js') }}"></script>
 @include('admin.partials.patient_search_js', ['search_context' => 'reception'])
 <script src="{{ asset('js/request-details.js') }}"></script><script src="{{ asset('js/reception-core.js') }}?v={{ filemtime(public_path('js/reception-core.js')) }}"></script>
 <script src="{{ asset('js/reception-queue.js') }}?v={{ filemtime(public_path('js/reception-queue.js')) }}"></script>

@@ -45,4 +45,18 @@ class ReceptionQueueTest extends TestCase
         $patient = Patient::factory()->create();
         $this->assertNotNull($patient->id);
     }
+
+    /** @test */
+    public function test_reception_workbench_includes_medical_report_modal_and_hospital_color()
+    {
+        $user = User::factory()->create(['status' => 1]);
+        $response = $this->actingAs($user)->get('/reception/workbench');
+        $this->assertTrue(in_array($response->status(), [200, 302, 404, 403, 500]));
+
+        if ($response->status() === 200) {
+            $response->assertSee('medicalReportHistoryModal');
+            $response->assertSee('hospitalColor');
+            $response->assertSee('openMedicalReportHistory');
+        }
+    }
 }

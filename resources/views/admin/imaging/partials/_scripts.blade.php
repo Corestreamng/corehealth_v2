@@ -3,6 +3,7 @@
 <script src="{{ asset('plugins/ckeditor/ckeditor5/ckeditor.js') }}"></script>
 <script src="{{ asset('js/clinical-context.js') }}"></script>
 <script>
+    window.currentWorkbenchRole = 'imaging';
     window.WORKBENCH_CONFIG = {
         csrf: '{{ csrf_token() }}',
         baseUrl: '{{ url("/") }}',
@@ -14,7 +15,15 @@
         routes: {
             'imaging.queue-counts': '{{ route("imaging.queue-counts") }}',
             'imaging.search-patients': '{{ route("imaging.search-patients") }}',
-            'imaging.queue': '{{ route("imaging.queue") }}'
+            'imaging.queue': '{{ route("imaging.queue") }}',
+            'imaging.recordBilling': '{{ route("imaging.recordBilling") }}',
+            'imaging.dismissRequests': '{{ route("imaging.dismissRequests") }}',
+            'imaging.saveResult': '{{ route("imaging.saveResult") }}',
+            'lab.filterDoctors': '{{ route("lab.filterDoctors") }}',
+            'lab.filterHmos': '{{ route("lab.filterHmos") }}',
+            'lab.filterServices': '{{ route("lab.filterServices") }}',
+            'lab.statistics': '{{ route("lab.statistics") }}',
+            'lab.reports': '{{ route("lab.reports") }}'
         }
     };
 </script>

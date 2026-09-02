@@ -183,4 +183,5 @@
      PRESCRIPTION DASHBOARD & DISMISS UI (Nurse Drug Source Revamp §6)
      ====================================================================== --}}
 
-<script src="{ asset('js/nurse-chart-scripts-enhanced.js') }?v={ filemtime(public_path('js/nurse-chart-scripts-enhanced.js')) }"></script>
+<script src="{{ asset('js/workbench-helper.js') }}"></script>
+<script src="{{ asset('js/nurse-chart-scripts-enhanced.js') }}"></script>

@@ -15,7 +15,7 @@
                 <h5 class="modal-title" id="medicalReportHistoryModalLabel">
                     <i class="mdi mdi-file-document-multiple"></i> Medical Report History
                 </h5>
-                <button type="button" data-bs-dismiss="modal" class="btn- btn-close btn-close-white" aria-label="Close"></button>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" data-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body p-3">
                 {{-- Patient context --}}
@@ -50,7 +50,7 @@
                 </div>
             </div>
             <div class="modal-footer py-2">
-                <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal" data-dismiss="modal">Close</button>
             </div>
         </div>
     </div>
@@ -72,16 +72,13 @@ function openMedicalReportHistory(patientId, patientName, patientFileNo) {
     $('#mrh-patient-file').text(patientFileNo ? `(${patientFileNo})` : '');
     $('#mrh-status-filter').val('');
 
-    // Close any currently-open modal by clicking its close button
-    $('.modal.show .btn-close, .modal.show [data-bs-dismiss="modal"]').first().trigger('click');
-
     initMedicalReportsTable(patientId);
 
-    // Small delay to let the existing modal finish closing
-    setTimeout(function() {
-        var modal = new bootstrap.Modal(document.getElementById('medicalReportHistoryModal'));
-        modal.show();
-    }, 350);
+    if (typeof window.openModalSafely === 'function') {
+        window.openModalSafely('#medicalReportHistoryModal');
+    } else if (typeof $.fn.modal === 'function') {
+        $modal.modal('show');
+    }
 }
 
 function initMedicalReportsTable(patientId) {
@@ -184,10 +181,12 @@ function finalizeMedicalReport(reportId) {
 }
 
 // Status filter
-$('#mrh-status-filter').on('change', function() {
-    var val = $(this).val();
-    if (medicalReportsTable) {
-        medicalReportsTable.column(3).search(val).draw();
+document.addEventListener('change', function(e) {
+    if (e.target && e.target.id === 'mrh-status-filter') {
+        var val = e.target.value;
+        if (typeof medicalReportsTable !== 'undefined' && medicalReportsTable) {
+            medicalReportsTable.column(3).search(val).draw();
+        }
     }
 });
 </script>

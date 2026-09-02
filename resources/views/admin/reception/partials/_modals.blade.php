@@ -803,4 +803,5 @@
 }
 </style>
 
-
+{{-- Medical Report History Modal --}}
+@include('admin.partials.medical_report_history_modal')
