@@ -993,9 +993,16 @@ function injectUnifiedPrescPartial(patientId, patientUserId) {
         }
         </style>
 
-        <div class="presc-management-container" data-patient-id="${patientId}" data-patient-user-id="${patientUserId}">
-            <!-- Sub-tabs Navigation -->
-            <ul class="nav nav-tabs nav-tabs-modern mb-3" id="prescSubTabs" role="tablist">
+        <div class="presc-management-container pharm-checkout" data-patient-id="${patientId}" data-patient-user-id="${patientUserId}">
+            <div class="pharm-shelf">
+            <div class="pharm-add-sku">
+                <button type="button" class="btn btn-sm btn-outline-primary" onclick="switchWorkspaceTab('new-request')">
+                    <i class="mdi mdi-barcode-scan"></i> Add item (not on Rx)
+                </button>
+                <span class="text-muted small ms-2">Search a product and add it to this patient’s bag</span>
+            </div>
+            <!-- Sub-tabs Navigation (stage filters) -->
+            <ul class="nav nav-tabs nav-tabs-modern mb-3 pharm-stage-filters" id="prescSubTabs" role="tablist">
                 <li class="nav-item" role="presentation">
                     <button class="nav-link active" id="presc-billing-tab" data-bs-toggle="tab" data-bs-target="#presc-billing-pane" type="button" role="tab">
                         <i class="mdi mdi-cash-register me-1"></i> Billing
@@ -1196,6 +1203,39 @@ function injectUnifiedPrescPartial(patientId, patientUserId) {
                     </div>
                 </div>
             </div>
+            </div>
+            <aside class="pharm-till" id="pharm-till" aria-label="Checkout till">
+                <div class="pharm-till-header">
+                    <div>
+                        <strong><i class="mdi mdi-cart"></i> Till</strong>
+                        <span class="badge bg-light text-dark ms-1" id="till-item-count">0</span>
+                    </div>
+                    <button type="button" class="btn btn-link btn-sm p-0" onclick="clearAllSelections()">Clear</button>
+                </div>
+                <div class="pharm-till-body" id="till-bag-body">
+                    <div class="pharm-till-empty">
+                        <i class="mdi mdi-cart-outline"></i>
+                        <p>Tick items on the shelf to bag them</p>
+                    </div>
+                </div>
+                <div class="pharm-till-totals">
+                    <div class="pharm-till-row"><span>Items</span><span id="till-count-label">0</span></div>
+                    <div class="pharm-till-row"><span>Bag total</span><strong id="till-grand-total">₦0.00</strong></div>
+                </div>
+                <div class="pharm-till-actions">
+                    <button type="button" class="btn btn-primary w-100" id="till-primary-cta" disabled>
+                        <i class="mdi mdi-cash-register"></i> Select items
+                    </button>
+                    <div class="d-flex gap-1 mt-2">
+                        <button type="button" class="btn btn-outline-secondary btn-sm flex-fill" id="till-print-btn" disabled onclick="tillPrintSelected()">
+                            <i class="mdi mdi-printer"></i> Print
+                        </button>
+                        <button type="button" class="btn btn-outline-danger btn-sm flex-fill" id="till-dismiss-btn" disabled onclick="tillDismissSelected()">
+                            <i class="mdi mdi-close"></i> Dismiss
+                        </button>
+                    </div>
+                </div>
+            </aside>
         </div>
     `;
 
@@ -1536,17 +1576,19 @@ function gatherSelectedItems() {
     return data;
 }
 
-// Update floating cart — called by every checkbox handler
+// Update till bag + floating cart fallback
 function updateStickyActionBar(type) {
-    // Keep selectedItemsData in sync for dismiss modal
     const data = gatherSelectedItems();
     selectedItemsData.billing  = data.billing;
     selectedItemsData.pending  = data.pending;
     selectedItemsData.dispense = data.dispense;
+    renderTillBag(data);
 
-    if (data.totalCount === 0) {
+    const tillVisible = $('#pharm-till').length && window.matchMedia('(min-width: 992px)').matches;
+    if (tillVisible || data.totalCount === 0) {
         $('#floating-cart').fadeOut(200);
-        return;
+        if (data.totalCount === 0) return;
+        if (tillVisible) return;
     }
 
     $('#cart-item-count').text(data.totalCount);
@@ -1554,6 +1596,67 @@ function updateStickyActionBar(type) {
     $('#floating-cart').fadeIn(300);
     $('.floating-cart-btn').addClass('pulse');
     setTimeout(() => $('.floating-cart-btn').removeClass('pulse'), 300);
+}
+
+function renderTillBag(data) {
+    if (!data) data = gatherSelectedItems();
+    const $body = $('#till-bag-body');
+    if (!$body.length) return;
+
+    $('#till-item-count, #till-count-label').text(data.totalCount);
+    $('#till-grand-total').text('₦' + formatMoneyPharmacy(data.grandTotal));
+    $('#till-print-btn, #till-dismiss-btn').prop('disabled', data.totalCount === 0);
+
+    if (data.totalCount === 0) {
+        $body.html('<div class="pharm-till-empty"><i class="mdi mdi-cart-outline"></i><p>Tick items on the shelf to bag them</p></div>');
+        $('#till-primary-cta').prop('disabled', true).removeClass('btn-success').addClass('btn-primary')
+            .html('<i class="mdi mdi-cash-register"></i> Select items').off('click');
+        return;
+    }
+
+    let html = '';
+    function section(title, icon, cls, items, type) {
+        if (!items.length) return;
+        html += '<div class="till-section"><div class="till-section-h"><span><i class="mdi ' + icon + ' ' + cls + '"></i> ' + title + '</span><span class="badge">' + items.length + '</span></div>';
+        items.forEach(function(item) {
+            html += '<div class="till-line"><div class="till-line-name">' + item.name + '<div class="till-line-meta">Qty ' + item.qty + '</div></div>'
+                + '<span class="till-line-price">₦' + formatMoneyPharmacy(item.price) + '</span>'
+                + '<button type="button" class="till-line-x" onclick="removeItemFromSelection(\'' + type + '\', ' + item.id + ')" title="Remove">&times;</button></div>';
+        });
+        html += '</div>';
+    }
+    section('To bill', 'mdi-cash-register', 'text-primary', data.billing, 'billing');
+    section('On hold', 'mdi-clock-outline', 'text-warning', data.pending, 'pending');
+    section('Ready', 'mdi-pill', 'text-success', data.dispense, 'dispense');
+    $body.html(html);
+
+    const $cta = $('#till-primary-cta').prop('disabled', false).off('click');
+    if (data.billing.length) {
+        $cta.removeClass('btn-success').addClass('btn-primary')
+            .html('<i class="mdi mdi-cash-register"></i> Bill ' + data.billing.length + ' item(s)')
+            .on('click', function() { billPrescItems(); });
+    } else if (data.dispense.length) {
+        $cta.removeClass('btn-primary').addClass('btn-success')
+            .html('<i class="mdi mdi-cart-plus"></i> Review &amp; dispense (' + data.dispense.length + ')')
+            .on('click', function() { addSelectedToCartAndOpen(); });
+    } else {
+        $cta.removeClass('btn-success').addClass('btn-primary').prop('disabled', true)
+            .html('<i class="mdi mdi-clock-outline"></i> Waiting payment / HMO');
+    }
+}
+
+function tillPrintSelected() {
+    const data = gatherSelectedItems();
+    if (data.billing.length) printSelectedBillingPrescriptions();
+    else if (data.pending.length) printSelectedPendingPrescriptions();
+    else toastr.info('Select items to print');
+}
+
+function tillDismissSelected() {
+    const data = gatherSelectedItems();
+    if (data.billing.length) showDismissModal('billing');
+    else if (data.pending.length) showDismissModal('pending');
+    else if (data.dispense.length) showDismissModal('dispense');
 }
 
 // Open the cart review modal listing all selected items
@@ -2508,6 +2611,169 @@ function refreshCurrentPatientData() {
     const activeSubtab = $('#prescSubTabs button.active').data('bs-target');
     if (activeSubtab) {
         const tabKey = activeSubtab.includes('billing') ? 'billing' :
+                       activeSubtab.includes('pending') ? 'pending' :
+                       activeSubtab.includes('dispense') ? 'dispense' : null;
+
+        if (tabKey && checkedItemsState[tabKey].size> 0) {
+            console.log('Skipping auto-refresh: active tab has checked items');
+            return;
+        }
+    }
+
+    // Silently reload patient prescriptions
+    loadPrescriptionItems(currentStatusFilter);
+
+    // Also refresh the active prescription subtab's DataTable
+    if (activeSubtab) {
+        refreshPrescSubtab(activeSubtab);
+    }
+
+    // Update sync indicator
+    updateSyncIndicator();
+}
+
+let lastSyncTimestamp = null;
+let syncTimeUpdateInterval = null;
+
+function updateSyncIndicator() {
+    lastSyncTimestamp = Date.now();
+    updateSyncTimeDisplay();
+
+    // Start interval to update relative time every 10 seconds
+    if (syncTimeUpdateInterval) {
+        clearInterval(syncTimeUpdateInterval);
+    }
+    syncTimeUpdateInterval = setInterval(updateSyncTimeDisplay, 10000);
+}
+
+function updateSyncTimeDisplay() {
+    if (!lastSyncTimestamp) {
+        $('#last-sync-time').text('Just now');
+        return;
+    }
+
+    const secondsAgo = Math.floor((Date.now() - lastSyncTimestamp) / 1000);
+
+    if (secondsAgo < 10) {
+        $('#last-sync-time').text('Just now');
+    } else if (secondsAgo < 60) {
+        $('#last-sync-time').text(secondsAgo + 's ago');
+    } else {
+        const minutesAgo = Math.floor(secondsAgo / 60);
+        $('#last-sync-time').text(minutesAgo + 'm ago');
+    }
+}
+
+temsState[tabKey].has(String(id))) {
+            $(this).prop('checked', true);
+            // Trigger change event to update totals
+            $(this).trigger('change');
+        }
+    });
+}
+
+// Clear checked items for a specific tab
+function clearCheckedItems(tab) {
+    if (checkedItemsState[tab]) {
+        checkedItemsState[tab].clear();
+    }
+}
+
+// Track checkbox changes for state management
+$(document).on('change', '.presc-billing-check', function() {
+    const id = $(this).attr('data-id') || $(this).data('id');
+    if (id) {
+        if ($(this).is(':checked')) {
+            checkedItemsState.billing.add(String(id));
+        } else {
+            checkedItemsState.billing.delete(String(id));
+        }
+    }
+});
+
+$(document).on('change', '.presc-pending-check', function() {
+    const id = $(this).attr('data-id') || $(this).data('id');
+    if (id) {
+        if ($(this).is(':checked')) {
+            checkedItemsState.pending.add(String(id));
+        } else {
+            checkedItemsState.pending.delete(String(id));
+        }
+    }
+});
+
+$(document).on('change', '.presc-dispense-check', function() {
+    const id = $(this).attr('data-id') || $(this).data('id');
+    if (id) {
+        if ($(this).is(':checked')) {
+            checkedItemsState.dispense.add(String(id));
+        } else {
+            checkedItemsState.dispense.delete(String(id));
+        }
+    }
+});
+
+function refreshCurrentPatientData() {
+    if (!currentPatient) return;
+
+    // Skip auto-refresh if there are checked items in active tab
+    const activeSubtab = $('#prescSubTabs button.active').data('bs-target');
+    if (activeSubtab) {
+        const tabKey = activeSubtab.includes('billing') ? 'billing' :
+                       activeSubtab.includes('pending') ? 'pending' :
+                       activeSubtab.includes('dispense') ? 'dispense' : null;
+
+        if (tabKey && checkedItemsState[tabKey].size> 0) {
+            console.log('Skipping auto-refresh: active tab has checked items');
+            return;
+        }
+    }
+
+    // Silently reload patient prescriptions
+    loadPrescriptionItems(currentStatusFilter);
+
+    // Also refresh the active prescription subtab's DataTable
+    if (activeSubtab) {
+        refreshPrescSubtab(activeSubtab);
+    }
+
+    // Update sync indicator
+    updateSyncIndicator();
+}
+
+let lastSyncTimestamp = null;
+let syncTimeUpdateInterval = null;
+
+function updateSyncIndicator() {
+    lastSyncTimestamp = Date.now();
+    updateSyncTimeDisplay();
+
+    // Start interval to update relative time every 10 seconds
+    if (syncTimeUpdateInterval) {
+        clearInterval(syncTimeUpdateInterval);
+    }
+    syncTimeUpdateInterval = setInterval(updateSyncTimeDisplay, 10000);
+}
+
+function updateSyncTimeDisplay() {
+    if (!lastSyncTimestamp) {
+        $('#last-sync-time').text('Just now');
+        return;
+    }
+
+    const secondsAgo = Math.floor((Date.now() - lastSyncTimestamp) / 1000);
+
+    if (secondsAgo < 10) {
+        $('#last-sync-time').text('Just now');
+    } else if (secondsAgo < 60) {
+        $('#last-sync-time').text(secondsAgo + 's ago');
+    } else {
+        const minutesAgo = Math.floor(secondsAgo / 60);
+        $('#last-sync-time').text(minutesAgo + 'm ago');
+    }
+}
+
+y = activeSubtab.includes('billing') ? 'billing' :
                        activeSubtab.includes('pending') ? 'pending' :
                        activeSubtab.includes('dispense') ? 'dispense' : null;
 
