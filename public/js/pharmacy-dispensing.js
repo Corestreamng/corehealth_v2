@@ -1674,7 +1674,9 @@ function pharmCheckboxApply(type, checkbox) {
 
 // Cross-file hooks (pharmacy-stock.js bill/dispense/dismiss read the bag).
 window.pharmBagIds = function(type) { return pharmBagList(type).map(function(i){ return i.id; }); };
-window.pharmBagList = function(type) { return pharmBagList(type); };
+// NOTE: do not assign window.pharmBagList = function... here — the top-level
+// function declaration already *is* the global binding, and re-assigning it to
+// a wrapper that calls pharmBagList() makes it call itself (stack overflow).
 window.pharmClearBagType = function(type) { pharmBagClear(type); };
 
 // Keep each stage's "select all" header honest for the rows actually on the

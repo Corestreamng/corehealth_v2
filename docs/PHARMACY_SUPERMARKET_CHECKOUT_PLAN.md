@@ -275,3 +275,10 @@ endpoint, no `sku` column.
   unbilled rows), rebuilds the till, then reloads the shelf for authoritative figures.
   The stepper also reads its current qty from the bag first so rows on other pages step
   from the real quantity.
+
+- **Fix: qty +/- stack overflow (self-shadowing export)** — a `window.pharmBagList =
+  function(){ return pharmBagList(); }` export overwrote the real top-level
+  `pharmBagList` (same global binding), so it called itself → "Maximum call stack size
+  exceeded" inside the qty success handler, which aborted the till rebuild and left a
+  stale qty → repeat taps then hit "new qty same as old" 422s. Removed the wrapper; the
+  top-level declaration already is the global, so pharmacy-stock.js's guarded use works.
