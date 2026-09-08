@@ -691,7 +691,7 @@ function displayPendingRequests(requests) {
     currentPendingRequests = requests;
     // No sample stage for imaging
     const approvalItems = (requests.pending_approval || []).length + (requests.rejected || []).length;
-    const totalPending = requests.billing.length + requests.results.length + approvalItems;
+    const totalPending = requests.billing.length + requests.results.length + approvalItems + (requests.freeform || []).length;
     $('#pending-badge').text(totalPending);
 
     // Store pending results for bulk entry
@@ -1033,8 +1033,15 @@ function createRequestCard(request, section) {
         `;
     } else if (section === 'freeform' || request.is_free_form == 1 || request.is_free_form === true) {
         checkboxOrAction = `
-            <div style="width: 40px; text-align: center; display: flex; align-items: center; justify-content: center;">
-                <span class="badge bg-secondary" style="font-size: 0.7rem;">Ext.</span>
+            <div class="d-flex flex-column gap-1">
+                <button class="btn btn-sm btn-success enter-result-btn" data-request-id="${request.id}" title="Free-form: record result, no billing">
+                    <i class="mdi mdi-check"></i>
+                    Record Result
+                </button>
+                <button class="btn btn-sm btn-outline-secondary dismiss-freeform-btn" data-request-id="${request.id}" data-kind="imaging" title="Close with no EMR result">
+                    <i class="mdi mdi-close"></i>
+                    Dismiss
+                </button>
             </div>
         `;
     } else {
@@ -1787,3 +1794,31 @@ $('.trash-tab').on('click', function() {
     $(`#${tab}-content`).addClass('active');
 });
 
+
+$(document).on('click', '.dismiss-freeform-btn[data-kind="imaging"]', function(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    const requestId = $(this).data('request-id');
+    if (!requestId) return;
+    if (!confirm('Close this free-form request with no EMR result recorded?')) return;
+
+    $.ajax({
+        url: `/imaging-workbench/imaging-service-requests/${requestId}/dismiss-free-form`,
+        method: 'POST',
+        data: { _token: $('meta[name="csrf-token"]').attr('content') },
+        success: function(response) {
+            if (response.success) {
+                toastr.success(response.message || 'Closed with no EMR result.');
+                if (typeof currentPatient !== 'undefined' && currentPatient && typeof loadPatientRequests === 'function') {
+                    loadPatientRequests(currentPatient);
+                }
+                if (typeof window.loadQueue === 'function') window.loadQueue();
+            } else {
+                toastr.error(response.message || 'Could not dismiss request.');
+            }
+        },
+        error: function(xhr) {
+            toastr.error(xhr.responseJSON?.message || 'Could not dismiss request.');
+        }
+    });
+});

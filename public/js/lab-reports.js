@@ -1298,6 +1298,10 @@ $(document).on('click', '.reverse-approval-btn', function(e) {
         window.enterLabResult(requestId);
     });
 
+    $('#queue-datatable').on('click', '.dismiss-freeform-btn', function(e) {
+        e.stopPropagation();
+    });
+
 $(document).on('click', '#btn-confirm-reverse', function() {
     confirmReverseLabApproval();
 });

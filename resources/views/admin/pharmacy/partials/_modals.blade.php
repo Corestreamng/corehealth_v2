@@ -1201,6 +1201,35 @@
     </div>
 </div>
 
+
+{{-- Free-form dispense: no billing, mark as dispensed only --}}
+<div class="modal fade" id="dispenseFreeFormModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-info text-white">
+                <h5 class="modal-title"><i class="mdi mdi-pill"></i> Dispense Free-form Medication</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p class="text-muted mb-2">Free-form items are not billed. Confirm quantity and mark as dispensed.</p>
+                <input type="hidden" id="ff-dispense-request-id">
+                <div class="mb-2">
+                    <label class="form-label">Medication</label>
+                    <div class="form-control-plaintext fw-semibold" id="ff-dispense-item-name"></div>
+                </div>
+                <div class="mb-2">
+                    <label class="form-label">Quantity dispensed</label>
+                    <input type="number" class="form-control" id="ff-dispense-qty" min="1" value="1">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-info" id="btn-confirm-ff-dispense"><i class="mdi mdi-check"></i> Confirm Dispense</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 @include('admin.partials.patient-form-modal')
 @include('admin.partials.combo_confirm_modal')
 @include('admin.partials.clinical_context_modal')

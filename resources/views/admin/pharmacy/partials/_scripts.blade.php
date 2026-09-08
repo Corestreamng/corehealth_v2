@@ -12,7 +12,8 @@ window.WORKBENCH_CONFIG = {
     csrf: '{{ csrf_token() }}',
     baseUrl: '{{ url("/") }}',
     routes: {
-        'pharmacy.queue-counts': '{{ route("pharmacy.queue-counts") }}'
+        'pharmacy.queue-counts': '{{ route("pharmacy.queue-counts") }}',
+        'pharmacy.dispense-free-form': '{{ route("pharmacy.dispense-free-form") }}'
     }
 };
 </script>

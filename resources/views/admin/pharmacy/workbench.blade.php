@@ -231,8 +231,8 @@
         <div class="workspace-content" id="workspace-content">
             <div class="workspace-tabs">
                 <button class="workspace-tab active" data-tab="pending">
-                    <i class="mdi mdi-pill"></i>
-                    <span>Pending</span>
+                    <i class="mdi mdi-cash-register"></i>
+                    <span>Checkout</span>
                     <span class="workspace-tab-badge" id="pending-badge">0</span>
                 </button>
                 <button class="workspace-tab" data-tab="new-request">

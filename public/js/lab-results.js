@@ -1093,7 +1093,10 @@ function initializeQueueDataTable(filter) {
                     let inlineActionBtn = '';
                     if (cardData.is_free_form) {
                         statusBadge = '<span class="badge badge-secondary"><i class="mdi mdi-file-document-edit"></i> Free-Form</span>';
-                        inlineActionBtn = `<button class="btn btn-sm btn-success enter-result-inline-btn" data-request-id="${cardData.id}" style="margin-left: auto;"><i class="mdi mdi-check"></i> Record Result</button>`;
+                        inlineActionBtn = `<div class="d-flex gap-1" style="margin-left: auto;">
+                            <button class="btn btn-sm btn-success enter-result-inline-btn" data-request-id="${cardData.id}"><i class="mdi mdi-check"></i> Record Result</button>
+                            <button class="btn btn-sm btn-outline-secondary dismiss-freeform-btn" data-request-id="${cardData.id}" data-kind="lab"><i class="mdi mdi-close"></i> Dismiss</button>
+                        </div>`;
                     }
 
                     let tpBadge = '';
