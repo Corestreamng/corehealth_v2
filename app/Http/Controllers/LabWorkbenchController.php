@@ -1337,6 +1337,44 @@ class LabWorkbenchController extends Controller
     /**
      * Dismiss a lab request with reason
      */
+    /**
+     * Close a free-form request by recording that no EMR result was captured.
+     */
+    public function dismissFreeForm(Request $request, $id)
+    {
+        $labRequest = LabServiceRequest::findOrFail($id);
+
+        if (!$labRequest->is_free_form) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Only free-form requests can be closed this way.',
+            ], 422);
+        }
+
+        if ((int) $labRequest->status === 4) {
+            return response()->json([
+                'success' => false,
+                'message' => 'This request already has a recorded result.',
+            ], 422);
+        }
+
+        $note = 'This was requested but no results were recorded on EMR.';
+
+        $labRequest->update([
+            'result' => '<p>' . $note . '</p>',
+            'status' => 4,
+            'result_date' => now(),
+            'result_by' => Auth::id(),
+        ]);
+
+        $this->logAudit($id, 'result_entry', $note);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Free-form request closed with no EMR result.',
+        ]);
+    }
+
     public function dismissRequest(Request $request, $id)
     {
         try {

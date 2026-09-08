@@ -670,6 +670,7 @@ Route::group(['middleware' => ['auth']], function () {
         // Delete, Restore, Dismiss, Audit
         Route::delete('/lab-workbench/lab-service-requests/{id}', [\App\Http\Controllers\LabWorkbenchController::class, 'deleteRequest'])->name('lab.deleteRequest');
         Route::post('/lab-workbench/lab-service-requests/{id}/restore', [\App\Http\Controllers\LabWorkbenchController::class, 'restoreRequest'])->name('lab.restoreRequest');
+        Route::post('/lab-workbench/lab-service-requests/{id}/dismiss-free-form', [\App\Http\Controllers\LabWorkbenchController::class, 'dismissFreeForm'])->name('lab.dismissFreeForm');
         Route::post('/lab-workbench/lab-service-requests/{id}/dismiss', [\App\Http\Controllers\LabWorkbenchController::class, 'dismissRequest'])->name('lab.dismissRequest');
         Route::post('/lab-workbench/lab-service-requests/{id}/undismiss', [\App\Http\Controllers\LabWorkbenchController::class, 'undismissRequest'])->name('lab.undismissRequest');
         Route::get('/lab-workbench/deleted-requests/{patientId?}', [\App\Http\Controllers\LabWorkbenchController::class, 'getDeletedRequests'])->name('lab.deletedRequests');
@@ -723,6 +724,7 @@ Route::group(['middleware' => ['auth']], function () {
         Route::post('/imaging-workbench/save-result', [\App\Http\Controllers\ImagingWorkbenchController::class, 'saveResult'])->name('imaging.saveResult');
         Route::delete('/imaging-workbench/imaging-service-requests/{id}', [\App\Http\Controllers\ImagingWorkbenchController::class, 'deleteRequest'])->name('imaging.deleteRequest');
         Route::post('/imaging-workbench/imaging-service-requests/{id}/restore', [\App\Http\Controllers\ImagingWorkbenchController::class, 'restoreRequest'])->name('imaging.restoreRequest');
+        Route::post('/imaging-workbench/imaging-service-requests/{id}/dismiss-free-form', [\App\Http\Controllers\ImagingWorkbenchController::class, 'dismissFreeForm'])->name('imaging.dismissFreeForm');
         Route::post('/imaging-workbench/imaging-service-requests/{id}/dismiss', [\App\Http\Controllers\ImagingWorkbenchController::class, 'dismissRequest'])->name('imaging.dismissRequest');
         Route::post('/imaging-workbench/imaging-service-requests/{id}/undismiss', [\App\Http\Controllers\ImagingWorkbenchController::class, 'undismissRequest'])->name('imaging.undismissRequest');
         Route::get('/imaging-workbench/deleted-requests/{patientId?}', [\App\Http\Controllers\ImagingWorkbenchController::class, 'getDeletedRequests'])->name('imaging.deletedRequests');

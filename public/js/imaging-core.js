@@ -1033,10 +1033,16 @@ function createRequestCard(request, section) {
         `;
     } else if (section === 'freeform' || request.is_free_form == 1 || request.is_free_form === true) {
         checkboxOrAction = `
-            <button class="btn btn-sm btn-success enter-result-btn" data-request-id="${request.id}" title="Free-form: record result, no billing">
-                <i class="mdi mdi-check"></i>
-                Record Result
-            </button>
+            <div class="d-flex flex-column gap-1">
+                <button class="btn btn-sm btn-success enter-result-btn" data-request-id="${request.id}" title="Free-form: record result, no billing">
+                    <i class="mdi mdi-check"></i>
+                    Record Result
+                </button>
+                <button class="btn btn-sm btn-outline-secondary dismiss-freeform-btn" data-request-id="${request.id}" data-kind="imaging" title="Close with no EMR result">
+                    <i class="mdi mdi-close"></i>
+                    Dismiss
+                </button>
+            </div>
         `;
     } else {
         checkboxOrAction = `
@@ -1788,3 +1794,31 @@ $('.trash-tab').on('click', function() {
     $(`#${tab}-content`).addClass('active');
 });
 
+
+$(document).on('click', '.dismiss-freeform-btn[data-kind="imaging"]', function(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    const requestId = $(this).data('request-id');
+    if (!requestId) return;
+    if (!confirm('Close this free-form request with no EMR result recorded?')) return;
+
+    $.ajax({
+        url: `/imaging-workbench/imaging-service-requests/${requestId}/dismiss-free-form`,
+        method: 'POST',
+        data: { _token: $('meta[name="csrf-token"]').attr('content') },
+        success: function(response) {
+            if (response.success) {
+                toastr.success(response.message || 'Closed with no EMR result.');
+                if (typeof currentPatient !== 'undefined' && currentPatient && typeof loadPatientRequests === 'function') {
+                    loadPatientRequests(currentPatient);
+                }
+                if (typeof window.loadQueue === 'function') window.loadQueue();
+            } else {
+                toastr.error(response.message || 'Could not dismiss request.');
+            }
+        },
+        error: function(xhr) {
+            toastr.error(xhr.responseJSON?.message || 'Could not dismiss request.');
+        }
+    });
+});
