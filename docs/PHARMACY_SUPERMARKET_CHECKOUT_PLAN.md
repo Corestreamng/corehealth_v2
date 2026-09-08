@@ -282,3 +282,13 @@ endpoint, no `sku` column.
   exceeded" inside the qty success handler, which aborted the till rebuild and left a
   stale qty → repeat taps then hit "new qty same as old" 422s. Removed the wrapper; the
   top-level declaration already is the global, so pharmacy-stock.js's guarded use works.
+
+- **Till minimise + drag** — the till header now has a minimise button (chevron) that
+  collapses the bag list so only the header (count) and footer (totals + Bill/Print/
+  Dismiss actions) remain; clicking again expands. State persists across patient
+  switches for the session (re-applied after the checkout template is re-injected). The
+  till can also be dragged by its header on wide screens (the fixed docked rail): pointer
+  drag clamps it inside the viewport, remembers the position, and the shelf keeps its
+  right padding so nothing is hidden underneath. Double-click the header to snap the till
+  back to its docked rail position. Drag is available on the fixed rail (>=1200px);
+  minimise works on the sticky layout too.

@@ -4607,3 +4607,60 @@
 .pharm-scanbar.pharm-flash-bad {
     animation: pharmFlashBad 0.7s ease 1;
 }
+
+/* ---- Till minimise + drag ---- */
+#pharm-till.pharm-till-min .pharm-till-body {
+    display: none;
+}
+#pharm-till.pharm-till-min .pharm-till-totals {
+    border-top: none;
+    padding-top: 0.4rem;
+}
+.pharm-till-header {
+    cursor: default;
+    user-select: none;
+    -webkit-user-select: none;
+    gap: 0.4rem;
+}
+.pharm-till-drag {
+    display: flex;
+    align-items: center;
+    gap: 3px;
+    flex: 1;
+    min-width: 0;
+    cursor: grab;
+    touch-action: none;
+}
+.pharm-till-drag:active,
+#pharm-till.pharm-till-dragging .pharm-till-drag {
+    cursor: grabbing;
+}
+.pharm-till-grip {
+    margin-left: auto;
+    padding: 0 2px;
+    opacity: 0.55;
+    font-size: 0.9rem;
+}
+#pharm-till.pharm-till-dragging {
+    opacity: 0.96;
+    box-shadow: 0 14px 36px rgba(0, 0, 0, 0.28), 0 3px 10px rgba(0, 0, 0, 0.18);
+    transition: none;
+}
+body.pharm-till-unselectable {
+    user-select: none;
+    -webkit-user-select: none;
+}
+.pharm-till-min-btn {
+    font-size: 1.05rem;
+    line-height: 1;
+    color: rgba(255, 255, 255, 0.9);
+}
+.pharm-till-min-btn:hover {
+    color: #fff;
+}
+#pharm-till-header .btn-link {
+    color: rgba(255, 255, 255, 0.85);
+}
+#pharm-till-header .btn-link:hover {
+    color: #fff;
+}

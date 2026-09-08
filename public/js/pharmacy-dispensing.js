@@ -898,9 +898,10 @@ function loadPatient(patientId) {
 
             // Switch to pending tab by default
             switchWorkspaceTab('pending');
-            // Make the till a pinned register rail on wide screens.
+            // Make the till a pinned register rail on wide screens and re-apply
+            // any minimise / drag state the user set this session.
             setTimeout(function() {
-                layoutPharmRegister();
+                pharmApplyTillState();
                 pharmFocusScanInput();
             }, 300);
         },
@@ -1223,12 +1224,19 @@ function injectUnifiedPrescPartial(patientId, patientUserId) {
             </div>
             </div>
             <aside class="pharm-till" id="pharm-till" aria-label="Checkout till">
-                <div class="pharm-till-header">
-                    <div>
-                        <strong><i class="mdi mdi-cart"></i> Till</strong>
+                <div class="pharm-till-header" id="pharm-till-header" title="Drag the header to move the till · double-click to re-dock">
+                    <div class="pharm-till-drag" title="Drag to move the till">
+                        <i class="mdi mdi-cart me-1"></i>
+                        <strong>Till</strong>
                         <span class="badge bg-light text-dark ms-1" id="till-item-count">0</span>
+                        <i class="mdi mdi-drag-horizontal-variant pharm-till-grip" title="Drag to move · double-click header to re-dock"></i>
                     </div>
-                    <button type="button" class="btn btn-link btn-sm p-0" onclick="clearAllSelections()">Clear</button>
+                    <div class="d-flex align-items-center gap-1">
+                        <button type="button" class="btn btn-link btn-sm p-0 pharm-till-min-btn" id="pharm-till-min-btn" onclick="pharmToggleTillMin()" title="Minimise the till">
+                            <i class="mdi mdi-chevron-up"></i>
+                        </button>
+                        <button type="button" class="btn btn-link btn-sm p-0" onclick="clearAllSelections()">Clear</button>
+                    </div>
                 </div>
                 <div class="pharm-till-body" id="till-bag-body">
                     <div class="pharm-till-empty">
@@ -2343,7 +2351,12 @@ window.pharmOnTillActionSuccess = function(type) {
 };
 
 // ---- register layout: pin the till on wide screens, whichever ancestor scrolls ----
-function layoutPharmRegister() {
+// ---- till state: minimise + drag ----
+let pharmTillMinimized = false;
+let pharmTillDocked = true;   // becomes false once the user drags the till away
+let pharmTillUserPos = null;  // { left, top, height } after a drag
+
+function layoutPharmRegister(forceRedock) {
     const $till = $('#pharm-till');
     const $checkout = $('.pharm-checkout').first();
     if (!$till.length || !$checkout.length) return;
@@ -2351,11 +2364,36 @@ function layoutPharmRegister() {
     const wide = window.matchMedia('(min-width: 1200px)').matches;
     if (!wide) {
         // Fall back to the CSS sticky layout.
-        $till.css({ position: '', top: '', bottom: '', right: '', left: '', width: '', height: '', margin: '', 'max-height': '' });
+        $till.css({ position: '', top: '', bottom: '', right: '', left: '', width: '', height: '', margin: '', 'max-height': '', boxShadow: '' });
         $checkout.css('padding-right', '');
         return;
     }
 
+    const tillW = 360;
+    // A till the user has dragged stays where they put it (clamped to viewport).
+    if (!forceRedock && !pharmTillDocked && pharmTillUserPos) {
+        const left = Math.min(Math.max(8, pharmTillUserPos.left), Math.max(8, window.innerWidth - tillW - 8));
+        const top = Math.min(Math.max(8, pharmTillUserPos.top), Math.max(8, window.innerHeight - 120));
+        $till.css({
+            position: 'fixed',
+            top: top,
+            left: left,
+            right: 'auto',
+            bottom: 'auto',
+            width: tillW,
+            height: (pharmTillUserPos.height || '') + 'px',
+            margin: 0,
+            'max-height': 'none',
+            'z-index': 1080,
+            boxShadow: '0 8px 30px rgba(0,0,0,0.18), 0 2px 8px rgba(0,0,0,0.10)'
+        });
+        $checkout.css('padding-right', (tillW + 18) + 'px');
+        return;
+    }
+
+    // Dock the till as a rail along the right edge of the workspace.
+    pharmTillDocked = true;
+    pharmTillUserPos = null;
     const $tabs = $('.workspace-tabs');
     const $ws = $('.workspace-content');
     let top = 12;
@@ -2364,7 +2402,6 @@ function layoutPharmRegister() {
     } else if ($ws.length && $ws.is(':visible')) {
         top = Math.max(12, $ws.offset().top + 8);
     }
-    const tillW = 360;
     $till.css({
         position: 'fixed',
         top: top,
@@ -2456,6 +2493,108 @@ $(document).on('keydown', function(e) {
 $(window).on('resize', pharmScheduleLayout);
 $(document).on('click', '.workspace-tab', pharmScheduleLayout);
 $(document).on('click', '#btn-expand-patient', pharmScheduleLayout);
+
+// ---- till: minimise / expand (keeps header + totals/actions, hides the bag) ----
+function pharmSetTillMinIcon() {
+    const $i = $('#pharm-till-min-btn i');
+    if ($i.length) $i.attr('class', 'mdi mdi-' + (pharmTillMinimized ? 'chevron-down' : 'chevron-up'));
+    const $b = $('#pharm-till-min-btn');
+    if ($b.length) $b.attr('title', pharmTillMinimized ? 'Expand the till' : 'Minimise the till');
+}
+function pharmToggleTillMin() {
+    pharmTillMinimized = !pharmTillMinimized;
+    $('#pharm-till').toggleClass('pharm-till-min', pharmTillMinimized);
+    pharmSetTillMinIcon();
+}
+// Re-apply persisted till UI state after the checkout template is re-injected
+// (each patient load rebuilds #pharm-till).
+function pharmApplyTillState() {
+    const $till = $('#pharm-till');
+    if (!$till.length) return;
+    $till.toggleClass('pharm-till-min', pharmTillMinimized);
+    pharmSetTillMinIcon();
+    layoutPharmRegister(); // honours a previous drag via pharmTillDocked/UserPos
+}
+
+// ---- till: drag to move (docked rail on wide screens only) ----
+let pharmDragState = null;
+
+function pharmTillHeaderIsInteractive(e) {
+    return !!(e.target && e.target.closest && e.target.closest('button, a, input, select, textarea, label'));
+}
+
+$(document).on('pointerdown', '#pharm-till-header', function(e) {
+    if (pharmTillHeaderIsInteractive(e)) return;
+    const $till = $('#pharm-till');
+    if (!$till.length || $till.css('position') !== 'fixed') return; // docked rail only
+    const r = $till[0].getBoundingClientRect();
+    pharmDragState = {
+        startX: e.clientX,
+        startY: e.clientY,
+        origLeft: r.left,
+        origTop: r.top,
+        height: r.height,
+        moved: false
+    };
+    $till.addClass('pharm-till-dragging');
+    $('body').addClass('pharm-till-unselectable');
+    try {
+        if (e.currentTarget && e.currentTarget.setPointerCapture) {
+            e.currentTarget.setPointerCapture(e.pointerId);
+        }
+    } catch (err) { /* capture unsupported */ }
+});
+
+$(document).on('pointermove', function(e) {
+    if (!pharmDragState) return;
+    if (!pharmDragState.moved &&
+        Math.abs(e.clientX - pharmDragState.startX) < 4 &&
+        Math.abs(e.clientY - pharmDragState.startY) < 4) return;
+    pharmDragState.moved = true;
+    const $till = $('#pharm-till');
+    if (!$till.length) return;
+    const tillW = $till.outerWidth() || 360;
+    const left = Math.min(
+        Math.max(8, pharmDragState.origLeft + (e.clientX - pharmDragState.startX)),
+        Math.max(8, window.innerWidth - tillW - 8)
+    );
+    const top = Math.min(
+        Math.max(8, pharmDragState.origTop + (e.clientY - pharmDragState.startY)),
+        Math.max(8, window.innerHeight - 120)
+    );
+    $till.css({
+        position: 'fixed',
+        left: left,
+        top: top,
+        right: 'auto',
+        bottom: 'auto',
+        height: (pharmDragState.height || '') + 'px'
+    });
+    if (e.cancelable) e.preventDefault();
+});
+
+function pharmEndTillDrag() {
+    if (!pharmDragState) return;
+    const wasMoved = pharmDragState.moved;
+    pharmDragState = null;
+    const $till = $('#pharm-till');
+    $till.removeClass('pharm-till-dragging');
+    $('body').removeClass('pharm-till-unselectable');
+    if (!wasMoved) return;
+    const r = $till[0].getBoundingClientRect();
+    pharmTillDocked = false;
+    pharmTillUserPos = { left: Math.round(r.left), top: Math.round(r.top), height: Math.round(r.height) };
+}
+$(document).on('pointerup pointercancel', function() { pharmEndTillDrag(); });
+
+// Double-click the header to snap the till back to its docked rail position.
+$(document).on('dblclick', '#pharm-till-header', function(e) {
+    if (pharmTillHeaderIsInteractive(e)) return;
+    if ($('#pharm-till').css('position') !== 'fixed') return;
+    pharmTillDocked = true;
+    pharmTillUserPos = null;
+    layoutPharmRegister(true);
+});
 
 // Clear all selections across all tabs
 function clearAllSelections() {
