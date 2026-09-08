@@ -238,3 +238,22 @@ endpoint, no `sku` column.
 
 **Validation:** `node --check` passes on every first-party script under `public/js`
 (63/63 files), including `pharmacy-dispensing.js` and `pharmacy-stock.js`.
+
+### Follow-up bugfixes (PR #14, second commit)
+
+- **Print 404 fixed** — `printPrescription()` fell back to `/pharmacy/print-prescription-slip`
+  (route is `/pharmacy-workbench/print-prescription-slip`) because only two routes are
+  registered in `WORKBENCH_CONFIG`. Corrected fallbacks for the prescription slip and the
+  returns record-billing call.
+- **Till bag decoupled from the DataTable DOM** — server-side DataTables only render the
+  current page, so a redraw/paging/auto-refresh could "unpark" bagged items out of the till
+  while the select-all header stayed checked. New `pharmBag` maps (keyed by stage) hold a
+  snapshot of each bagged item copied from the card's server-rendered data attributes and
+  are the single source of truth for `gatherSelectedItems()`; bill / dismiss / dispense /
+  print now read the bag (with DOM fallbacks for older call sites). Row re-ticking after
+  redraw refreshes snapshots from the cards; the select-all header now shows a tri-state
+  honest to the rows on the current page.
+- **drawCallback crash fixed** — `this.api().page.info()` could throw on a stale/destroyed
+  DataTable instance during re-init (`recordsTotal` of undefined). All four drawCallbacks now
+  go through a guarded `pharmDtDrawInfo()` and restore the till from the bag even when the
+  instance is mid-teardown.

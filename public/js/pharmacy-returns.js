@@ -1653,7 +1653,7 @@ function recordBillingForPrescriptions(itemIds) {
     }
 
     $.ajax({
-        url: wbRoute('pharmacy.record-billing', '/pharmacy/record-billing'),
+        url: wbRoute('pharmacy.record-billing', '/pharmacy-workbench/record-billing'),
         method: 'POST',
         data: {
             _token: (window.WORKBENCH_CONFIG?.csrf || $('meta[name="csrf-token"]').attr('content')),
@@ -1780,7 +1780,7 @@ function printPrescription(itemIds) {
 
     // Fetch prescription slip HTML via AJAX
     $.ajax({
-        url: wbRoute('pharmacy.print-prescription-slip', '/pharmacy/print-prescription-slip'),
+        url: wbRoute('pharmacy.print-prescription-slip', '/pharmacy-workbench/print-prescription-slip'),
         method: 'POST',
         data: {
             _token: (window.WORKBENCH_CONFIG?.csrf || $('meta[name="csrf-token"]').attr('content')),
@@ -1828,6 +1828,14 @@ function printSelectedBillingPrescriptions() {
         return;
     }
 
+    // When the till bag is present (pharmacy checkout), print the bagged set —
+    // which can span DataTable pages — instead of just the current page's rows.
+    const bagIds = (typeof window.pharmBagIds === 'function') ? window.pharmBagIds('billing') : [];
+    if (bagIds.length) {
+        printPrescription(bagIds);
+        return;
+    }
+
     // Check both DataTable checkboxes and card-based checkboxes
     const itemIds = [];
 
@@ -1862,6 +1870,14 @@ function printSelectedBillingPrescriptions() {
 function printSelectedPendingPrescriptions() {
     if (!currentPatient) {
         toastr.warning('Please select a patient first');
+        return;
+    }
+
+    // When the till bag is present (pharmacy checkout), print the bagged set —
+    // which can span DataTable pages — instead of just the current page's rows.
+    const bagIds = (typeof window.pharmBagIds === 'function') ? window.pharmBagIds('pending') : [];
+    if (bagIds.length) {
+        printPrescription(bagIds);
         return;
     }
 

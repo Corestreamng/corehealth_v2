@@ -845,6 +845,12 @@ function loadPatient(patientId) {
     // Hide all sticky bars when loading new patient
     hideAllStickyBars();
 
+    // Reset till bag + selection bookkeeping (new patient = new bag), so the
+    // previous patient's items can never linger in the till.
+    pharmBagClearAll();
+    selectedItemsData = { billing: [], pending: [], dispense: [] };
+    prescBillingTotal = 0;
+
     // Hide all views to prevent stacking
     hideAllViews();
 
@@ -1311,10 +1317,14 @@ function initializePrescriptionDataTables(patientId) {
         ],
         paging: true,
         drawCallback: function() {
-            const info = this.api().page.info();
-            $('#unbilled-subtab-badge, #queue-unbilled-count, #presc-billing-count').text(info.recordsTotal);
-            // Restore checked items after redraw
+            const info = pharmDtDrawInfo(this);
+            if (info) {
+                $('#unbilled-subtab-badge, #queue-unbilled-count, #presc-billing-count').text(info.recordsTotal);
+            }
+            // Re-tick bagged rows from the till bag (survives redraws) and keep
+            // the "select all" header honest for the current page.
             restoreCheckedItemsState('#presc_billing_table', 'presc-billing-check');
+            pharmSyncSelectAll('billing');
             // Attach action button handlers
             attachPrescCardActionHandlers();
         }
@@ -1353,10 +1363,12 @@ function initializePrescriptionDataTables(patientId) {
         ],
         paging: true,
         drawCallback: function() {
-            const info = this.api().page.info();
-            $('#presc-pending-count').text(info.recordsTotal);
-            // Restore checked items after redraw
+            const info = pharmDtDrawInfo(this);
+            if (info) {
+                $('#presc-pending-count').text(info.recordsTotal);
+            }
             restoreCheckedItemsState('#presc_pending_table', 'presc-pending-check');
+            pharmSyncSelectAll('pending');
             // Attach action button handlers
             attachPrescCardActionHandlers();
         }
@@ -1397,10 +1409,12 @@ function initializePrescriptionDataTables(patientId) {
         ],
         paging: true,
         drawCallback: function() {
-            const info = this.api().page.info();
-            $('#billed-subtab-badge, #ready-subtab-badge, #queue-ready-count, #presc-dispense-count').text(info.recordsTotal);
-            // Restore checked items after redraw
+            const info = pharmDtDrawInfo(this);
+            if (info) {
+                $('#billed-subtab-badge, #ready-subtab-badge, #queue-ready-count, #presc-dispense-count').text(info.recordsTotal);
+            }
             restoreCheckedItemsState('#presc_dispense_table', 'presc-dispense-check');
+            pharmSyncSelectAll('dispense');
             // Attach action button handlers
             attachPrescCardActionHandlers();
         }
@@ -1429,8 +1443,10 @@ function initializePrescriptionDataTables(patientId) {
         ],
         paging: true,
         drawCallback: function() {
-            const info = this.api().page.info();
-            $('#presc-history-count').text(info.recordsTotal);
+            const info = pharmDtDrawInfo(this);
+            if (info) {
+                $('#presc-history-count').text(info.recordsTotal);
+            }
         }
     });
 }
@@ -1438,6 +1454,20 @@ function initializePrescriptionDataTables(patientId) {
 // Helper to format money
 function formatMoneyPharmacy(amount) {
     return parseFloat(amount || 0).toLocaleString('en-NG', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+// Safe DataTables draw info — returns null when the instance is mid-teardown /
+// already destroyed (drawCallback can fire on stale instances after a re-init,
+// where page.info() has no usable recordsTotal; that used to throw).
+function pharmDtDrawInfo(dtThis) {
+    try {
+        const api = dtThis && dtThis.api ? dtThis.api() : null;
+        if (!api || !api.page) return null;
+        const info = api.page.info();
+        return (info && typeof info.recordsTotal !== 'undefined') ? info : null;
+    } catch (e) {
+        return null;
+    }
 }
 
 // Attach action button handlers for prescription cards
@@ -1547,40 +1577,86 @@ let selectedItemsData = {
 // Store dismiss type for modal
 let currentDismissType = null;
 
+// =============================================
+// Till bag — single source of truth for bagged items, DECOUPLED from the
+// DataTable DOM. Server-side DataTables only render the current page's rows,
+// so depending on checkboxes lets redraws / paging / auto-refresh silently
+// drop items out of the till. Every bagged item keeps a snapshot of its
+// card's server-rendered attributes (money is never re-derived).
+// =============================================
+let pharmBag = { billing: new Map(), pending: new Map(), dispense: new Map() };
+
+function pharmSnapshotFromCard($card, id) {
+    const name = $card.find('.presc-card-title').text().trim() || 'Unknown';
+    const qty = parseInt($card.attr('data-qty')) || 1;
+    const price = parseFloat($card.attr('data-total-price')) || 0;
+    const payable = parseFloat($card.attr('data-payable')) || 0;
+    const claims = parseFloat($card.attr('data-claims')) || 0;
+    const coverageMode = $card.attr('data-coverage-mode') || null;
+    const productCode = $card.attr('data-product-code') || '';
+    const productId = $card.attr('data-product-id') || '';
+    const unit = price > 0 && qty > 0 ? (price / qty) : 0;
+    return { id: String(id), name: name, qty: qty, price: price, unit: unit,
+             payable: payable, claims: claims, coverageMode: coverageMode,
+             productCode: productCode, productId: productId };
+}
+function pharmBagAdd(type, id, item) {
+    const sid = String(id);
+    pharmBag[type].set(sid, item);
+    if (checkedItemsState[type]) checkedItemsState[type].add(sid);
+    return item;
+}
+function pharmBagAddFromCard(type, id, $card) {
+    if (!$card || !$card.length) return null;
+    return pharmBagAdd(type, id, pharmSnapshotFromCard($card, id));
+}
+function pharmBagRemove(type, id) {
+    const sid = String(id);
+    pharmBag[type].delete(sid);
+    if (checkedItemsState[type]) checkedItemsState[type].delete(sid);
+}
+function pharmBagClear(type) {
+    pharmBag[type].clear();
+    if (checkedItemsState[type]) checkedItemsState[type].clear();
+}
+function pharmBagClearAll() { ['billing', 'pending', 'dispense'].forEach(function(t){ pharmBagClear(t); }); }
+function pharmBagList(type) { return Array.from(pharmBag[type].values()); }
+function pharmBagHas(type, id) { return pharmBag[type].has(String(id)); }
+// Cross-file hooks (pharmacy-stock.js bill/dispense/dismiss read the bag).
+window.pharmBagIds = function(type) { return pharmBagList(type).map(function(i){ return i.id; }); };
+window.pharmBagList = function(type) { return pharmBagList(type); };
+window.pharmClearBagType = function(type) { pharmBagClear(type); };
+
+// Keep each stage's "select all" header honest for the rows actually on the
+// current page — it can never stay visually checked while its rows are not.
+function pharmSyncSelectAll(type) {
+    const cfg = {
+        billing: { table: '#presc_billing_table', sel: '#select-all-billing', cls: '.presc-billing-check' },
+        pending: { table: '#presc_pending_table', sel: '#select-all-pending', cls: '.presc-pending-check' },
+        dispense: { table: '#presc_dispense_table', sel: '#select-all-dispense', cls: '.presc-dispense-check' }
+    }[type];
+    if (!cfg || !$(cfg.table).length || !$(cfg.sel).length) return;
+    const total = $(cfg.table).find(cfg.cls).length;
+    const ticked = $(cfg.table).find(cfg.cls).filter(':checked').length;
+    $(cfg.sel).prop('checked', total > 0 && ticked === total);
+    $(cfg.sel).prop('indeterminate', ticked > 0 && ticked < total);
+}
+
 // Gather selected items data from all tabs.
 // All money values come straight off the card's server-rendered data attributes
 // (data-total-price / data-payable / data-claims / data-coverage-mode / data-qty),
 // so the till can never show a figure the billing card itself did not display.
 function gatherSelectedItems() {
+    // Till content comes from the bag (client snapshots of server card data),
+    // so paging, redraws and auto-refresh can never unpark bagged items.
     const data = { billing: [], pending: [], dispense: [] };
     let grandTotal = 0;
-
-    function collect(type, tableId, checkboxClass) {
-        $(`${tableId} ${checkboxClass}:checked`).each(function() {
-            const $row = $(this).closest('tr');
-            const $card = $row.find('.presc-card');
-            const id = $(this).data('id');
-            const name = $card.find('.presc-card-title').text().trim() || 'Unknown';
-            const qty = parseInt($card.attr('data-qty')) || 1;
-            const price = parseFloat($card.attr('data-total-price')) || 0;
-            const payable = parseFloat($card.attr('data-payable')) || 0;
-            const claims = parseFloat($card.attr('data-claims')) || 0;
-            const coverageMode = $card.attr('data-coverage-mode') || null;
-            const productCode = $card.attr('data-product-code') || '';
-            const productId = $card.attr('data-product-id') || '';
-            const unit = price > 0 && qty > 0 ? (price / qty) : 0;
-            grandTotal += price;
-            data[type].push({
-                id, name, qty, price, unit,
-                payable, claims, coverageMode, productCode, productId
-            });
+    ['billing', 'pending', 'dispense'].forEach(function(type) {
+        pharmBag[type].forEach(function(item) {
+            grandTotal += item.price;
+            data[type].push(item);
         });
-    }
-
-    collect('billing', '#presc_billing_table', '.presc-billing-check');
-    collect('pending', '#presc_pending_table', '.presc-pending-check');
-    collect('dispense', '#presc_dispense_table', '.presc-dispense-check');
-
+    });
     data.totalCount = data.billing.length + data.pending.length + data.dispense.length;
     data.grandTotal = grandTotal;
     data.patientTotal = data.billing.reduce((s, i) => s + (i.payable || 0), 0)
@@ -2037,9 +2113,36 @@ function pharmQuickAddProduct(product, qty, term) {
             pharmBeep('ok');
             pharmFlash('.pharm-scanbar');
             const ids = (response.requests || []).map(function(r) { return String(r.id); });
-            ids.forEach(function(id) { checkedItemsState.billing.add(id); });
-            // Keep totals coherent: the redraw will re-tick via checkedItemsState.
+            const qtyN = qty || 1;
+            const payUnit = parseFloat(product.payable_amount != null ? product.payable_amount : (product.price || 0)) || 0;
+            const claimUnit = parseFloat(product.claims_amount || 0) || 0;
+            const unitPrice = parseFloat(product.price || 0) || 0;
+            ids.forEach(function(id) {
+                const sid = String(id);
+                const payable = Math.round(payUnit * qtyN * 100) / 100;
+                const claims = Math.round(claimUnit * qtyN * 100) / 100;
+                const estTotal = (payable + claims) > 0
+                    ? (payable + claims)
+                    : Math.round(unitPrice * qtyN * 100) / 100;
+                // Provisional snapshot from the search payload (server figures);
+                // the billing-table redraw re-snapshots it from the card's
+                // authoritative attributes (restoreCheckedItemsState).
+                pharmBagAdd('billing', sid, {
+                    id: sid,
+                    name: product.product_name || term || 'Item',
+                    qty: qtyN,
+                    price: estTotal,
+                    unit: unitPrice,
+                    payable: payable,
+                    claims: claims,
+                    coverageMode: product.coverage_mode || null,
+                    productCode: product.product_code || '',
+                    productId: String(product.id)
+                });
+            });
+            // Keep totals coherent: the redraw will re-tick via the bag.
             prescBillingTotal = 0;
+            updateStickyActionBar('billing');
             if ($.fn.DataTable.isDataTable('#presc_billing_table')) {
                 $('#presc_billing_table').DataTable().ajax.reload(null, false);
             }
@@ -2281,8 +2384,11 @@ function clearAllSelections() {
     $('#cartReviewModal').modal('hide');
 }
 
-// Remove single item from selection
+// Remove single item from selection (till-line × button).
+// Works even when the row lives on another DataTable page (server-side tables
+// only keep the current page in the DOM) — the bag is the source of truth.
 function removeItemFromSelection(type, itemId) {
+    const bagItem = pharmBag[type].get(String(itemId));
     let checkboxClass = '';
     if (type === 'billing') checkboxClass = '.presc-billing-check';
     else if (type === 'pending') checkboxClass = '.presc-pending-check';
@@ -2290,12 +2396,21 @@ function removeItemFromSelection(type, itemId) {
 
     const $checkbox = $(`${checkboxClass}[data-id="${itemId}"]`);
     if ($checkbox.length) {
+        // Unchecking fires the onchange + delegated listeners, which update the
+        // bag, select-all header and till automatically.
         $checkbox.prop('checked', false);
-        // Trigger the handler
-        if (type === 'billing') handlePrescBillingCheckPharmacy($checkbox[0]);
-        else if (type === 'pending') handlePrescPendingCheckPharmacy($checkbox[0]);
-        else if (type === 'dispense') handlePrescDispenseCheckPharmacy($checkbox[0]);
+        $checkbox.closest('tr').find('.presc-card').removeClass('selected');
+    } else if (bagItem) {
+        // Row not in the DOM (another page / not yet drawn) — update bookkeeping
+        // and drop purely from the bag.
+        if (type === 'billing') {
+            prescBillingTotal = Math.max(0, prescBillingTotal - bagItem.price);
+            updatePrescBillingTotalPharmacy();
+        }
+        pharmBagRemove(type, itemId);
+        updateStickyActionBar(type);
     }
+
     // Re-render modal if open
     if ($('#cartReviewModal').hasClass('show')) {
         openCartReviewModal();
@@ -2320,10 +2435,13 @@ function clearSelection(type) {
 
     // Uncheck all
     $(checkboxClass).prop('checked', false);
-    $(selectAllId).prop('checked', false);
+    $(selectAllId).prop('checked', false).prop('indeterminate', false);
 
     // Remove visual selection from cards
     $(checkboxClass).closest('tr').find('.presc-card').removeClass('selected');
+
+    // Drop from the till bag (source of truth) and legacy state sets
+    pharmBagClear(type);
 
     // Reset billing total if billing type
     if (type === 'billing') {
@@ -3064,63 +3182,80 @@ function saveCheckedItemsState(tableId, checkboxClass) {
     });
 }
 
-// Restore checked items state after refresh
+// Restore (re-tick) bagged rows after a DataTable redraw. The till bag is the
+// source of truth: rows that are bagged but live on another page simply stay
+// in the bag; rows on this page get re-ticked and their snapshot refreshed
+// from the card's authoritative server attributes.
 function restoreCheckedItemsState(tableId, checkboxClass) {
     const tabKey = tableId.includes('billing') ? 'billing' :
                    tableId.includes('pending') ? 'pending' :
                    tableId.includes('dispense') ? 'dispense' : null;
+    if (!tabKey) return;
 
-    if (!tabKey || checkedItemsState[tabKey].size === 0) return;
-
+    let ticked = 0;
     $(`${tableId} .${checkboxClass}`).each(function() {
         const id = $(this).attr('data-id') || $(this).data('id');
-        if (id && checkedItemsState[tabKey].has(String(id))) {
+        if (!id) return;
+        if (pharmBagHas(tabKey, id)) {
+            const $card = $(this).closest('tr').find('.presc-card');
             $(this).prop('checked', true);
-            // Trigger change event to update totals
-            $(this).trigger('change');
+            $card.addClass('selected');
+            pharmBagAddFromCard(tabKey, id, $card); // authoritative snapshot
+            ticked++;
+        } else {
+            $(this).prop('checked', false);
         }
     });
+
+    if (tabKey === 'billing') {
+        prescBillingTotal = pharmBagList('billing').reduce(function(sum, i) { return sum + (i.price || 0); }, 0);
+        updatePrescBillingTotalPharmacy();
+    }
+    if (ticked) updateStickyActionBar(tabKey);
 }
 
 // Clear checked items for a specific tab
 function clearCheckedItems(tab) {
-    if (checkedItemsState[tab]) {
-        checkedItemsState[tab].clear();
-    }
+    pharmBagClear(tab);
 }
 
-// Track checkbox changes for state management
+// Track checkbox changes for state management. Every tick lands in the bag
+// (with the card's server-rendered figures); every untick leaves it — so the
+// till never depends on rows staying in the DataTable DOM.
 $(document).on('change', '.presc-billing-check', function() {
     const id = $(this).attr('data-id') || $(this).data('id');
-    if (id) {
-        if ($(this).is(':checked')) {
-            checkedItemsState.billing.add(String(id));
-        } else {
-            checkedItemsState.billing.delete(String(id));
-        }
+    if (!id) return;
+    if ($(this).is(':checked')) {
+        pharmBagAddFromCard('billing', id, $(this).closest('tr').find('.presc-card'));
+    } else {
+        pharmBagRemove('billing', id);
     }
+    pharmSyncSelectAll('billing');
+    updateStickyActionBar('billing');
 });
 
 $(document).on('change', '.presc-pending-check', function() {
     const id = $(this).attr('data-id') || $(this).data('id');
-    if (id) {
-        if ($(this).is(':checked')) {
-            checkedItemsState.pending.add(String(id));
-        } else {
-            checkedItemsState.pending.delete(String(id));
-        }
+    if (!id) return;
+    if ($(this).is(':checked')) {
+        pharmBagAddFromCard('pending', id, $(this).closest('tr').find('.presc-card'));
+    } else {
+        pharmBagRemove('pending', id);
     }
+    pharmSyncSelectAll('pending');
+    updateStickyActionBar('pending');
 });
 
 $(document).on('change', '.presc-dispense-check', function() {
     const id = $(this).attr('data-id') || $(this).data('id');
-    if (id) {
-        if ($(this).is(':checked')) {
-            checkedItemsState.dispense.add(String(id));
-        } else {
-            checkedItemsState.dispense.delete(String(id));
-        }
+    if (!id) return;
+    if ($(this).is(':checked')) {
+        pharmBagAddFromCard('dispense', id, $(this).closest('tr').find('.presc-card'));
+    } else {
+        pharmBagRemove('dispense', id);
     }
+    pharmSyncSelectAll('dispense');
+    updateStickyActionBar('dispense');
 });
 
 function refreshCurrentPatientData() {
