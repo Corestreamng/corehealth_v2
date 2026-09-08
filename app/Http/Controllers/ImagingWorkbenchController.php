@@ -529,6 +529,10 @@ class ImagingWorkbenchController extends Controller
             foreach ($request->request_ids as $requestId) {
                 $imagingRequest = ImagingServiceRequest::findOrFail($requestId);
 
+                if ($imagingRequest->is_free_form) {
+                    continue;
+                }
+
                 // Reuse existing ProductOrServiceRequest created at reception when available.
                 // Only create a new billing record if none exists.
                 $billReq = null;

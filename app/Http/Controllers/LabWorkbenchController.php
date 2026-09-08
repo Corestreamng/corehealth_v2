@@ -565,6 +565,10 @@ class LabWorkbenchController extends Controller
             foreach ($request->request_ids as $requestId) {
                 $labRequest = LabServiceRequest::findOrFail($requestId);
 
+                if ($labRequest->is_free_form) {
+                    continue;
+                }
+
                 // Reuse existing ProductOrServiceRequest created at reception when available.
                 // Only create a new billing record if none exists.
                 $billReq = null;

@@ -1039,7 +1039,11 @@ class EncounterController extends Controller
     public function investBillList($patient_id)
     {
         $his = LabServiceRequest::with(['service', 'encounter', 'patient', 'productOrServiceRequest', 'doctor', 'biller'])
-            ->where('status', '=', 1)->where('patient_id', $patient_id)->orderBy('created_at', 'DESC')->get();
+            ->where('status', '=', 1)->where('patient_id', $patient_id)
+            ->where(function ($q) {
+                $q->whereNull('is_free_form')->orWhere('is_free_form', 0);
+            })
+            ->orderBy('created_at', 'DESC')->get();
 
         // dd($pc);
         return DataTables::of($his)
@@ -1448,7 +1452,11 @@ class EncounterController extends Controller
     public function imagingBillList($patient_id)
     {
         $his = \App\Models\ImagingServiceRequest::with(['service', 'encounter', 'patient', 'productOrServiceRequest', 'doctor', 'biller'])
-            ->where('status', '=', 1)->where('patient_id', $patient_id)->orderBy('created_at', 'DESC')->get();
+            ->where('status', '=', 1)->where('patient_id', $patient_id)
+            ->where(function ($q) {
+                $q->whereNull('is_free_form')->orWhere('is_free_form', 0);
+            })
+            ->orderBy('created_at', 'DESC')->get();
 
         return DataTables::of($his)
             ->addIndexColumn()
@@ -1517,7 +1525,11 @@ class EncounterController extends Controller
             'product.price', 'product.category', 'encounter', 'patient', 'productOrServiceRequest', 'doctor', 'biller',
             'adaptedFromProduct', 'adapter', 'qtyAdjuster',
         ])
-            ->where('status', 1)->where('patient_id', $patient_id)->orderBy('created_at', 'DESC')->get();
+            ->where('status', 1)->where('patient_id', $patient_id)
+            ->where(function ($q) {
+                $q->whereNull('is_free_form')->orWhere('is_free_form', 0);
+            })
+            ->orderBy('created_at', 'DESC')->get();
 
         // Batch-load HMO tariff previews so estimate badges show correct values before billing
         $patient = Patient::find($patient_id);

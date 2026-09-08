@@ -166,6 +166,9 @@ class PharmacyWorkbenchController extends Controller
         ])
             ->where('status', 1)
             ->where('patient_id', $patientId)
+            ->where(function ($q) {
+                $q->whereNull('is_free_form')->orWhere('is_free_form', 0);
+            })
             ->orderBy('created_at', 'DESC')
             ->get();
 
@@ -202,6 +205,9 @@ class PharmacyWorkbenchController extends Controller
             })
             ->addColumn('product_id', function ($item) {
                 return $item->product_id;
+            })
+            ->addColumn('is_free_form', function ($item) {
+                return (bool) $item->is_free_form;
             })
             ->addColumn('product_name', function ($item) {
                 $html = htmlspecialchars($item->item_name ?? '');
@@ -1235,6 +1241,9 @@ class PharmacyWorkbenchController extends Controller
                     });
             })
             ->where('status', 1)
+            ->where(function ($q) {
+                $q->whereNull('is_free_form')->orWhere('is_free_form', 0);
+            })
             ->count();
 
         // Billed but not ready
@@ -2303,6 +2312,12 @@ class PharmacyWorkbenchController extends Controller
                     // Only unbilled items can be billed
                     if ($productRequest->status != 1) {
                         $errors[] = "PR#{$prId}: Already billed or dispensed";
+
+                        continue;
+                    }
+
+                    if ($productRequest->is_free_form) {
+                        $errors[] = "PR#{$prId}: Free-form items are not billed; mark as dispensed instead";
 
                         continue;
                     }
