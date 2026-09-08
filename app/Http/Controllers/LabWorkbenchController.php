@@ -128,14 +128,6 @@ class LabWorkbenchController extends Controller
         $requests = LabServiceRequest::with(['service', 'doctor', 'biller', 'patient', 'productOrServiceRequest', 'resultBy'])
             ->where('patient_id', $patientId)
             ->whereIn('status', $statuses)
-            ->where(function ($q) {
-                $q->whereNull('is_free_form')
-                  ->orWhere('is_free_form', 0)
-                  ->orWhere(function ($sq) {
-                      $sq->where('is_free_form', 1)
-                         ->where('created_at', '>=', now()->subHours(48));
-                  });
-            })
             ->orderBy('created_at', 'desc')
             ->get();
 
@@ -195,8 +187,8 @@ class LabWorkbenchController extends Controller
         });
 
         // Group by status
-        $freeform = $requests->where('is_free_form', 1)->values();
-        $standardRequests = $requests->where('is_free_form', '!=', 1);
+        $freeform = $requests->filter(fn ($r) => (int) $r->is_free_form === 1)->values();
+        $standardRequests = $requests->filter(fn ($r) => (int) $r->is_free_form !== 1);
 
         $billing = $standardRequests->where('status', 1)->values();
         $sample = $standardRequests->where('status', 2)->values();
