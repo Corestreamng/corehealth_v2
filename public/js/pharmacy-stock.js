@@ -1075,6 +1075,10 @@ window.billPrescItems = function() {
                 updatePrescBillingTotalPharmacy();
                 // Update queue counts as items may have moved
                 loadQueueCounts();
+                // Keep the cashier in the flow: bag cleared, scan bar focused.
+                if (typeof window.pharmOnTillActionSuccess === 'function') {
+                    window.pharmOnTillActionSuccess('billed');
+                }
             } else {
                 toastr.error(response.message || 'Failed to bill items');
             }
@@ -1244,6 +1248,9 @@ function addSelectedToCartAndOpen() {
         const productName = $card.find('.presc-card-title').text().trim() || 'Unknown Product';
         const qty = parseInt($card.attr('data-qty')) || 1;
         const price = parseFloat($card.attr('data-total-price')) || 0;
+        const payableTotal = parseFloat($card.attr('data-payable')) || 0;
+        const claimsTotal = parseFloat($card.attr('data-claims')) || 0;
+        const coverageMode = $card.attr('data-coverage-mode') || null;
 
         dispenseCart.push({
             id: id,
@@ -1252,6 +1259,9 @@ function addSelectedToCartAndOpen() {
             qty: qty,
             price: price / qty, // Store as unit price for consistency in renderDispenseCart
             total_billed: price,
+            payable_total: payableTotal,
+            claims_total: claimsTotal,
+            coverage_mode: coverageMode,
             stock: null,
             stock_status: 'pending' // Will check when store is selected
         });
@@ -1344,11 +1354,21 @@ function renderDispenseCart() {
             statusBadge = '<span class="badge bg-warning text-dark badge-sm">?</span>';
         }
 
+        const moneySplit = (item.payable_total > 0 || item.claims_total > 0)
+            ? `<div class="small mt-1">
+                  <span class="text-danger me-2"><i class="mdi mdi-cash"></i> Pay ₦${Number(item.payable_total || 0).toLocaleString('en-NG', {minimumFractionDigits: 2})}</span>
+                  <span class="text-success me-2"><i class="mdi mdi-shield-check"></i> HMO ₦${Number(item.claims_total || 0).toLocaleString('en-NG', {minimumFractionDigits: 2})}</span>
+                  ${item.coverage_mode && item.coverage_mode !== 'cash' && item.coverage_mode !== 'none'
+                      ? `<span class="badge bg-info">${String(item.coverage_mode).toUpperCase()}</span>` : ''}
+               </div>`
+            : '';
+
         html += `
             <tr class="${rowClass}" data-cart-index="${index}" data-item-id="${item.id}" data-product-id="${item.product_id || ''}">
                 <td>
                     <strong class="d-block">${item.product_name}</strong>
                     <small class="text-muted">PR #${item.id} | Prod #${item.product_id || 'N/A'}</small>
+                    ${moneySplit}
                 </td>
                 <td class="text-center">${item.qty}</td>
                 <td class="text-center cart-batch-cell">${batchDisplay}</td>
@@ -1703,6 +1723,10 @@ function dispenseFromCart() {
             refreshAllPrescTables();
             loadPrescriptionItems(currentStatusFilter);
             loadQueueCounts();
+            // Keep the cashier in the flow: bag cleared, scan bar focused.
+            if (typeof window.pharmOnTillActionSuccess === 'function') {
+                window.pharmOnTillActionSuccess('dispensed');
+            }
         },
         error: function(xhr) {
             $btn.prop('disabled', false).html(originalHtml);

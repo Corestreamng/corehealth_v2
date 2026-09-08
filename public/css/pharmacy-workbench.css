@@ -4234,3 +4234,376 @@
         border-top: 2px solid #e9ecef;
     }
 }
+
+/* =========================================================
+   Pharmacy checkout — supermarket register (UX pass)
+   Pins the till, compacts shelf cards, adds money chips and
+   the scan bar. All figures shown originate on the server
+   cards; these rules only arrange/emphasise them.
+   ========================================================= */
+
+/* ---- Scan / add bar (inline on the shelf) ---- */
+.pharm-scanbar {
+    position: relative;
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.45rem;
+}
+.pharm-scanbar-icon {
+    font-size: 1.15rem;
+    line-height: 1;
+    color: var(--hospital-primary, #011b33);
+}
+.pharm-scan-input {
+    flex: 1 1 260px;
+    min-width: 220px;
+    font-size: 0.95rem;
+}
+.pharm-scan-input:focus {
+    box-shadow: 0 0 0 2px rgba(13, 110, 253, 0.35);
+}
+.pharm-scan-add-btn,
+.pharm-scan-ff-btn {
+    white-space: nowrap;
+}
+.pharm-scan-results {
+    position: absolute;
+    top: calc(100% + 4px);
+    left: 0;
+    z-index: 1200;
+    min-width: 420px;
+    max-width: min(560px, 94vw);
+    max-height: 340px;
+    overflow-y: auto;
+    background: #fff;
+    border: 1px solid #ced4da;
+    border-radius: 8px;
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.18);
+}
+.pharm-scan-results-head {
+    padding: 6px 10px;
+    font-size: 0.74rem;
+    font-weight: 700;
+    color: #495057;
+    background: #f1f3f5;
+    border-bottom: 1px solid #e9ecef;
+    position: sticky;
+    top: 0;
+}
+.pharm-scan-result {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 0.75rem;
+    width: 100%;
+    text-align: left;
+    padding: 7px 10px;
+    border: none;
+    border-bottom: 1px solid #f1f3f5;
+    background: #fff;
+    cursor: pointer;
+    font-size: 0.84rem;
+}
+.pharm-scan-result:last-child {
+    border-bottom: none;
+}
+.pharm-scan-result:hover {
+    background: #e7f1ff;
+}
+.pharm-scan-result-price {
+    white-space: nowrap;
+    font-weight: 700;
+    color: #198754;
+}
+.pharm-scan-results-more {
+    padding: 5px 10px;
+    color: #6c757d;
+    font-size: 0.74rem;
+}
+
+/* ---- Compact shelf cards ---- */
+.pharm-shelf .presc-card {
+    padding: 9px 11px;
+    margin-bottom: 6px;
+    font-size: 0.85rem;
+    cursor: pointer;
+}
+.pharm-shelf .presc-card.selected {
+    background: #e7f1ff !important;
+    border-color: #0d6efd !important;
+    box-shadow: inset 3px 0 0 #0d6efd;
+}
+.pharm-shelf .presc-card-title {
+    font-size: 0.92rem;
+}
+.pharm-shelf .presc-card-price {
+    font-size: 0.95rem;
+}
+.pharm-shelf .presc-card-body {
+    font-size: 0.82rem;
+}
+.pharm-shelf .presc-card-body > div {
+    margin-bottom: 2px;
+}
+.pharm-shelf .presc-card-hmo-info,
+.pharm-shelf .presc-card-billing-preview {
+    font-size: 0.8rem;
+}
+.pharm-shelf .presc-card-actions .btn {
+    font-size: 0.72rem;
+    padding: 1px 7px;
+}
+.pharm-shelf .presc-card-meta {
+    margin-top: 6px;
+    padding-top: 6px;
+    font-size: 0.76rem;
+}
+.pharm-shelf .nav-tabs .nav-link {
+    padding: 0.4rem 0.7rem;
+    font-size: 0.82rem;
+}
+.pharm-shelf table.dataTable tbody td {
+    padding: 6px 8px !important;
+}
+.pharm-shelf .dataTables_length,
+.pharm-shelf .dataTables_info,
+.pharm-shelf .dataTables_paginate {
+    font-size: 0.8rem;
+}
+
+/* ---- Till rail: pin above the scroll, only shelf content scrolls ---- */
+@media (min-width: 992px) {
+    .pharm-checkout {
+        align-items: flex-start;
+        background: #fff;
+        border: 1px solid #e9ecef;
+        border-radius: 8px;
+    }
+    .pharm-shelf {
+        padding: 0.6rem 0.8rem 0.9rem;
+    }
+    .pharm-till {
+        align-self: flex-start;
+        position: sticky;
+        top: 8px;
+        width: 340px;
+        min-width: 300px;
+        max-height: calc(100vh - 240px);
+        border-left: 2px solid #e9ecef;
+        border-radius: 0 10px 10px 0;
+        box-shadow: -8px 0 18px rgba(0, 0, 0, 0.06);
+        z-index: 900;
+    }
+}
+@media (max-width: 991.98px) {
+    /* Floating cart + review modal take over on smaller screens. */
+    .pharm-till {
+        display: none;
+    }
+}
+
+/* ---- Dense till lines with payment/HMO chips ---- */
+.pharm-till-body {
+    padding: 0.25rem 0.5rem 0.5rem;
+}
+.till-section {
+    margin-bottom: 0.3rem;
+}
+.till-section-h {
+    padding: 0.3rem 0.5rem;
+    font-size: 0.7rem;
+}
+.till-line {
+    display: block;
+    padding: 0.38rem 0.5rem;
+    font-size: 0.8rem;
+    border-bottom: 1px solid #f1f3f5;
+    background: #fff;
+}
+.till-line:last-child {
+    border-bottom: none;
+}
+.till-line-top {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.4rem;
+}
+.till-line-name {
+    flex: 1;
+    min-width: 0;
+    overflow-wrap: anywhere;
+    font-weight: 600;
+    font-size: 0.8rem;
+    line-height: 1.25;
+}
+.till-line-code {
+    color: #6c757d;
+    font-weight: 400;
+    font-size: 0.68rem;
+    margin-left: 0.2rem;
+}
+.till-line-price {
+    white-space: nowrap;
+    color: #198754;
+    font-weight: 700;
+    font-size: 0.85rem;
+}
+.till-line-x {
+    border: none;
+    background: none;
+    color: #dc3545;
+    font-size: 1.1rem;
+    line-height: 1;
+    cursor: pointer;
+    padding: 0 2px;
+}
+.till-line-x:hover {
+    color: #b02a37;
+}
+.till-line-mid {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    margin-top: 3px;
+}
+.till-qty {
+    display: inline-flex;
+    align-items: center;
+    border: 1px solid #ced4da;
+    border-radius: 14px;
+    overflow: hidden;
+    background: #fff;
+}
+.till-qty-btn {
+    border: none;
+    background: #e9ecef;
+    width: 22px;
+    height: 21px;
+    line-height: 1;
+    font-weight: 700;
+    font-size: 0.9rem;
+    cursor: pointer;
+    color: #212529;
+    padding: 0;
+}
+.till-qty-btn:hover {
+    background: #ced4da;
+}
+.till-qty-btn:disabled {
+    opacity: 0.5;
+    cursor: wait;
+}
+.till-qty-val {
+    min-width: 26px;
+    text-align: center;
+    font-weight: 700;
+    font-size: 0.78rem;
+}
+.till-qty-saving {
+    opacity: 0.55;
+    pointer-events: none;
+}
+.till-qty-static {
+    color: #495057;
+    font-weight: 700;
+    font-size: 0.78rem;
+    padding: 2px 8px;
+    background: #f8f9fa;
+    border-radius: 10px;
+}
+.till-chip-mode {
+    display: inline-block;
+    font-size: 0.6rem;
+    font-weight: 800;
+    letter-spacing: 0.4px;
+    padding: 1px 7px;
+    border-radius: 8px;
+    line-height: 1.5;
+    margin-left: auto;
+}
+.till-mode-cash {
+    background: #e9ecef;
+    color: #495057;
+}
+.till-mode-hmo {
+    background: #d1ecf1;
+    color: #0c5460;
+}
+.till-mode-secondary {
+    background: #fff3cd;
+    color: #856404;
+}
+.till-mode-express {
+    background: #e8d5f5;
+    color: #5b2d86;
+}
+.till-split {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0 1.1rem;
+    font-size: 0.71rem;
+    margin-top: 3px;
+    padding-left: 2px;
+}
+.till-split-pay {
+    color: #b02a37;
+}
+.till-split-claim {
+    color: #146c43;
+}
+
+/* ---- Till totals ---- */
+.pharm-till-totals {
+    padding: 0.55rem 0.8rem;
+}
+.pharm-till-row {
+    font-size: 0.8rem;
+    margin-bottom: 2px;
+}
+.pharm-till-row-grand {
+    border-top: 1px solid #dee2e6;
+    margin-top: 4px;
+    padding-top: 5px;
+    font-weight: 700;
+}
+#till-patient-total {
+    color: #b02a37;
+}
+#till-claims-total {
+    color: #146c43;
+}
+.pharm-till-actions {
+    padding: 0.55rem 0.8rem 0.8rem;
+}
+#till-primary-cta {
+    font-weight: 700;
+}
+
+/* ---- Cart review modal money chips ---- */
+.cart-item-split {
+    margin-top: 2px;
+}
+.cart-item-split .badge {
+    font-weight: 600;
+}
+.cart-section-total {
+    font-size: 0.85rem;
+}
+
+/* ---- Scan/bag flash feedback ---- */
+@keyframes pharmFlashOk {
+    0%   { box-shadow: 0 0 0 3px rgba(25, 135, 84, 0.6); }
+    100% { box-shadow: 0 0 0 0 rgba(25, 135, 84, 0); }
+}
+@keyframes pharmFlashBad {
+    0%   { box-shadow: 0 0 0 3px rgba(220, 53, 69, 0.65); }
+    100% { box-shadow: 0 0 0 0 rgba(220, 53, 69, 0); }
+}
+.pharm-shelf .presc-card.pharm-flash-ok,
+.pharm-scanbar.pharm-flash-ok {
+    animation: pharmFlashOk 0.7s ease 1;
+}
+.pharm-scanbar.pharm-flash-bad {
+    animation: pharmFlashBad 0.7s ease 1;
+}
