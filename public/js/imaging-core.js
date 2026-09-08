@@ -691,7 +691,7 @@ function displayPendingRequests(requests) {
     currentPendingRequests = requests;
     // No sample stage for imaging
     const approvalItems = (requests.pending_approval || []).length + (requests.rejected || []).length;
-    const totalPending = requests.billing.length + requests.results.length + approvalItems;
+    const totalPending = requests.billing.length + requests.results.length + approvalItems + (requests.freeform || []).length;
     $('#pending-badge').text(totalPending);
 
     // Store pending results for bulk entry
