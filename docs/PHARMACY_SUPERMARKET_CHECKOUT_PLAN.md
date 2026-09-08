@@ -301,3 +301,13 @@ endpoint, no `sku` column.
   expanding restores the full rail or the previously dragged height (min 320px). A
   persistent hint strip at the till's bottom edge always reads: "Drag the till by its
   header to move it · double-click the header to snap it back".
+
+- **Mobile: till = persistent bottom floating button (default minimised)** — on
+  <992px the till is no longer hidden behind the floating-cart FAB. It docks to the
+  bottom of the viewport and starts minimised as a compact pill ("🛒 Till · count ·
+  ₦total · chevron"). Tapping the pill expands it into a bottom sheet with the bag
+  list, totals and Bill/Print/Dismiss/Clear; the chevron collapses it back to the
+  pill. Default minimised is applied once per page on mobile (later patient switches
+  keep the user's chosen state), the header shows a live total chip, drag + the drag
+  hint are disabled on mobile, and the old floating-cart fallback only shows if the
+  till element is genuinely not visible. The pill respects the iOS safe-area inset.

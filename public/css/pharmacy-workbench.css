@@ -4397,10 +4397,8 @@
     }
 }
 @media (max-width: 991.98px) {
-    /* Floating cart + review modal take over on smaller screens. */
-    .pharm-till {
-        display: none;
-    }
+    /* Mobile: the till is now a persistent bottom floating button (see the
+       mobile bottom-bar block at the end of this file) — no longer hidden. */
 }
 
 /* ---- Dense till lines with payment/HMO chips ---- */
@@ -4729,4 +4727,100 @@ body.pharm-till-unselectable {
 .pharm-till-hint i {
     font-size: 0.85rem;
     line-height: 1.2;
+}
+
+/* ---- Head total chip (used by the mobile pill) — hidden by default ---- */
+.pharm-till-head-total {
+    display: none;
+    white-space: nowrap;
+    font-weight: 700;
+    font-size: 0.8rem;
+    color: #fff;
+}
+
+/* =========================================================
+   Mobile (<992px): the till is a persistent bottom floating
+   button. Default state (pharmTillMinimized) is a compact
+   pill docked at the bottom of the viewport; tapping it
+   expands the till into a bottom sheet (bag list + totals +
+   actions). Minimise again to collapse back to the pill.
+   ========================================================= */
+@media (max-width: 991.98px) {
+    #pharm-till {
+        position: fixed !important;
+        top: auto !important;
+        bottom: calc(10px + env(safe-area-inset-bottom, 0px)) !important;
+        left: 8px !important;
+        right: 8px !important;
+        width: auto !important;
+        height: auto !important;
+        max-height: min(78vh, 640px);
+        border-left: none;
+        border-radius: 14px;
+        border: 1px solid rgba(255, 255, 255, 0.18);
+        box-shadow: 0 12px 34px rgba(0, 0, 0, 0.35);
+        z-index: 1200;
+        display: flex;
+        transition: max-height 0.22s ease, transform 0.22s ease, border-radius 0.22s ease;
+        overflow: hidden;
+    }
+    #pharm-till.pharm-till-min {
+        left: 50% !important;
+        right: auto !important;
+        transform: translateX(-50%);
+        width: max-content !important;
+        min-width: 235px;
+        max-width: calc(100vw - 16px);
+        max-height: none;
+        border-radius: 999px;
+        border: 1px solid rgba(255, 255, 255, 0.28);
+        box-shadow: 0 8px 26px rgba(0, 0, 0, 0.32);
+    }
+    /* Pill = header only (count + total + chevron). Expanded = full till. */
+    #pharm-till.pharm-till-min .pharm-till-body,
+    #pharm-till.pharm-till-min .pharm-till-totals,
+    #pharm-till.pharm-till-min .pharm-till-actions,
+    #pharm-till.pharm-till-min .pharm-till-clear-row,
+    #pharm-till.pharm-till-min .pharm-till-hint {
+        display: none !important;
+    }
+    #pharm-till.pharm-till-min .pharm-till-header {
+        border-radius: 999px;
+    }
+    #pharm-till.pharm-till-min .pharm-till-header,
+    #pharm-till.pharm-till-header {
+        border-radius: 14px 14px 0 0;
+    }
+    /* Drag affordance removed on mobile: tap the pill to expand. */
+    .pharm-till-grip {
+        display: none;
+    }
+    .pharm-till-drag {
+        cursor: pointer;
+        touch-action: manipulation;
+    }
+    #pharm-till.pharm-till-min .pharm-till-drag {
+        justify-content: center;
+    }
+    .pharm-till-head-total {
+        display: inline-block;
+        margin-left: auto;
+    }
+    #pharm-till.pharm-till-min .pharm-till-head-total {
+        margin-left: 6px;
+    }
+    /* The drag hint does not apply on mobile (no dragging). */
+    .pharm-till-hint {
+        display: none;
+    }
+    /* Keep the sheet's bag list scrollable while the footer stays put. */
+    .pharm-till-body {
+        min-height: 40px;
+    }
+    #pharm-till:not(.pharm-till-min) .pharm-till-header,
+    #pharm-till:not(.pharm-till-min) .pharm-till-totals,
+    #pharm-till:not(.pharm-till-min) .pharm-till-actions,
+    #pharm-till:not(.pharm-till-min) .pharm-till-clear-row {
+        flex-shrink: 0;
+    }
 }

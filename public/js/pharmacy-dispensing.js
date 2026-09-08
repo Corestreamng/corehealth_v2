@@ -1229,6 +1229,7 @@ function injectUnifiedPrescPartial(patientId, patientUserId) {
                         <i class="mdi mdi-cart me-1"></i>
                         <strong>Till</strong>
                         <span class="badge bg-light text-dark ms-1" id="till-item-count">0</span>
+                        <span class="pharm-till-head-total" id="till-head-total">₦0.00</span>
                         <i class="mdi mdi-drag-horizontal-variant pharm-till-grip" title="Drag to move · double-click header to re-dock"></i>
                     </div>
                     <button type="button" class="btn pharm-till-min-btn" id="pharm-till-min-btn" onclick="pharmToggleTillMin()" title="Minimise the till">
@@ -1753,7 +1754,10 @@ function updateStickyActionBar(type) {
     selectedItemsData.dispense = data.dispense;
     renderTillBag(data);
 
-    const tillVisible = $('#pharm-till').length && window.matchMedia('(min-width: 992px)').matches;
+    // The till is "available" whenever its element is actually visible — desktop
+    // rail, the 992-1199px sticky rail, or the mobile bottom floating button.
+    const $tillEl = $('#pharm-till');
+    const tillVisible = $tillEl.length > 0 && $tillEl.is(':visible');
     if (tillVisible || data.totalCount === 0) {
         $('#floating-cart').fadeOut(200);
         if (data.totalCount === 0) return;
@@ -1774,6 +1778,8 @@ function renderTillBag(data) {
 
     $('#till-item-count, #till-count-label').text(data.totalCount);
     $('#till-grand-total').text('₦' + formatMoneyPharmacy(data.grandTotal));
+    const $headTotal = $('#till-head-total');
+    if ($headTotal.length) $headTotal.text('₦' + formatMoneyPharmacy(data.grandTotal));
     $('#till-patient-total').text('₦' + formatMoneyPharmacy(data.patientTotal));
     $('#till-claims-total').text('₦' + formatMoneyPharmacy(data.claimsTotal));
     $('#till-claims-row').toggle(data.claimsTotal > 0);
@@ -2523,9 +2529,17 @@ function pharmToggleTillMin() {
 }
 // Re-apply persisted till UI state after the checkout template is re-injected
 // (each patient load rebuilds #pharm-till).
+let pharmTillMobileDefaultDone = false; // apply "default minimised on mobile" once per page
 function pharmApplyTillState() {
     const $till = $('#pharm-till');
     if (!$till.length) return;
+    // Mobile: the till is a persistent bottom floating button and starts
+    // minimised. Only the first apply forces it; later patient switches keep
+    // whatever state the user chose this session.
+    if (!pharmTillMobileDefaultDone && window.innerWidth < 992) {
+        pharmTillMobileDefaultDone = true;
+        pharmTillMinimized = true;
+    }
     $till.toggleClass('pharm-till-min', pharmTillMinimized);
     pharmSetTillMinIcon();
     layoutPharmRegister(); // honours a previous drag via pharmTillDocked/UserPos
@@ -2540,6 +2554,7 @@ function pharmTillHeaderIsInteractive(e) {
 
 $(document).on('pointerdown', '#pharm-till-header', function(e) {
     if (pharmTillHeaderIsInteractive(e)) return;
+    if (window.innerWidth < 1200) return; // drag is a desktop (fixed rail) feature
     const $till = $('#pharm-till');
     if (!$till.length || $till.css('position') !== 'fixed') return; // docked rail only
     const r = $till[0].getBoundingClientRect();
@@ -2605,10 +2620,20 @@ $(document).on('pointerup pointercancel', function() { pharmEndTillDrag(); });
 // Double-click the header to snap the till back to its docked rail position.
 $(document).on('dblclick', '#pharm-till-header', function(e) {
     if (pharmTillHeaderIsInteractive(e)) return;
+    if (window.innerWidth < 1200) return; // desktop (fixed rail) only
     if ($('#pharm-till').css('position') !== 'fixed') return;
     pharmTillDocked = true;
     pharmTillUserPos = null;
     layoutPharmRegister(true);
+});
+
+// Mobile: the minimised till is a floating bottom pill — tapping it expands.
+$(document).on('click', '.pharm-till-drag', function(e) {
+    if (pharmTillHeaderIsInteractive(e)) return;
+    if (window.innerWidth >= 992) return; // desktop uses drag, not tap
+    if (pharmTillMinimized) {
+        pharmToggleTillMin(); // expand the bottom sheet
+    }
 });
 
 // Clear all selections across all tabs
