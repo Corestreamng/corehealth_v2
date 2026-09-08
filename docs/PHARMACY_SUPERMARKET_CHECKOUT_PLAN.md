@@ -257,3 +257,12 @@ endpoint, no `sku` column.
   DataTable instance during re-init (`recordsTotal` of undefined). All four drawCallbacks now
   go through a guarded `pharmDtDrawInfo()` and restore the till from the bag even when the
   instance is mid-teardown.
+
+- **Row checkboxes persist across redraws** — every path that ticks a row now also
+  populates the till bag: real row clicks (inline handler + delegated listener), the
+  stage **select-all** headers (toggleAll* now feed the bag per row), tap-to-bag, and the
+  scan "already on shelf" path. After any DataTable draw/paging/reload the drawCallback
+  re-ticks every bagged row that is on the current page (restoreCheckedItemsState, now
+  guarded with try/catch so a hiccup can never abort a draw) and keeps the select-all
+  header honest (checked / indeterminate / unchecked) for the current page. Removing a
+  till line now clears the row + bag in the DOM path too.

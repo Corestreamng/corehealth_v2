@@ -1537,28 +1537,34 @@ function attachPrescCardActionHandlers() {
 // Toggle all checkboxes for billing
 function toggleAllPrescBilling(checkbox) {
     const isChecked = $(checkbox).is(':checked');
-    $('.presc-billing-check').prop('checked', isChecked);
     $('.presc-billing-check').each(function() {
-        handlePrescBillingCheckPharmacy(this);
+        $(this).prop('checked', isChecked);
+        handlePrescBillingCheckPharmacy(this); // totals + selected class + till
+        pharmRowBagSync('billing', this);      // bag (so rows persist after redraws)
     });
+    pharmSyncSelectAll('billing');
 }
 
 // Toggle all checkboxes for pending
 function toggleAllPrescPending(checkbox) {
     const isChecked = $(checkbox).is(':checked');
-    $('.presc-pending-check').prop('checked', isChecked);
     $('.presc-pending-check').each(function() {
+        $(this).prop('checked', isChecked);
         handlePrescPendingCheckPharmacy(this);
+        pharmRowBagSync('pending', this);
     });
+    pharmSyncSelectAll('pending');
 }
 
 // Toggle all checkboxes for dispense
 function toggleAllPrescDispense(checkbox) {
     const isChecked = $(checkbox).is(':checked');
-    $('.presc-dispense-check').prop('checked', isChecked);
     $('.presc-dispense-check').each(function() {
+        $(this).prop('checked', isChecked);
         handlePrescDispenseCheckPharmacy(this);
+        pharmRowBagSync('dispense', this);
     });
+    pharmSyncSelectAll('dispense');
 }
 
 // Update billing total display
@@ -1622,6 +1628,33 @@ function pharmBagClear(type) {
 function pharmBagClearAll() { ['billing', 'pending', 'dispense'].forEach(function(t){ pharmBagClear(t); }); }
 function pharmBagList(type) { return Array.from(pharmBag[type].values()); }
 function pharmBagHas(type, id) { return pharmBag[type].has(String(id)); }
+
+// Single place to sync the bag + "select all" header from a row checkbox
+// whose state just changed (used by the delegated change listeners and by
+// select-all / remove flows that toggle checkboxes programmatically).
+function pharmRowBagSync(type, checkbox) {
+    const $cb = $(checkbox);
+    const id = $cb.attr('data-id') || $cb.data('id');
+    if (!id) return;
+    if ($cb.is(':checked')) {
+        pharmBagAddFromCard(type, id, $cb.closest('tr').find('.presc-card'));
+    } else {
+        pharmBagRemove(type, id);
+    }
+    pharmSyncSelectAll(type);
+}
+// Run the full per-row selection pipeline for a checkbox whose state was
+// changed programmatically (inline onchange handlers only fire on real user
+// clicks, so synthetic toggles must run it explicitly): totals/classes via
+// handle*, then bag + select-all via pharmRowBagSync.
+function pharmCheckboxApply(type, checkbox) {
+    if (!checkbox) return;
+    if (type === 'billing') handlePrescBillingCheckPharmacy(checkbox);
+    else if (type === 'pending') handlePrescPendingCheckPharmacy(checkbox);
+    else if (type === 'dispense') handlePrescDispenseCheckPharmacy(checkbox);
+    pharmRowBagSync(type, checkbox);
+}
+
 // Cross-file hooks (pharmacy-stock.js bill/dispense/dismiss read the bag).
 window.pharmBagIds = function(type) { return pharmBagList(type).map(function(i){ return i.id; }); };
 window.pharmBagList = function(type) { return pharmBagList(type); };
@@ -2015,7 +2048,13 @@ function pharmBagCard(found) {
     const $row = found.card.closest('tr');
     const $cb = $row.find('.presc-card-checkbox').first();
     if ($cb.length && !$cb.prop('checked') && !$cb.prop('disabled')) {
-        $cb.prop('checked', true).trigger('change');
+        $cb.prop('checked', true);
+        const typeMap = {
+            '#presc_billing_table': 'billing',
+            '#presc_pending_table': 'pending',
+            '#presc_dispense_table': 'dispense'
+        };
+        pharmCheckboxApply(typeMap[found.table] || 'billing', $cb[0]);
     }
     pharmFlash(found.card);
     if (found.table === '#presc_billing_table') {
@@ -2317,7 +2356,9 @@ $(document).on('click', '.pharm-checkout .presc-card', function(e) {
     const $cb = $row.find('.presc-card-checkbox').first();
     if (!$cb.length || $cb.prop('disabled')) return;
     $cb.prop('checked', !$cb.prop('checked'));
-    $cb.trigger('change');
+    const type = $cb.hasClass('presc-billing-check') ? 'billing'
+        : ($cb.hasClass('presc-pending-check') ? 'pending' : 'dispense');
+    pharmCheckboxApply(type, $cb[0]);
     pharmFlash($(this));
 });
 
@@ -2396,10 +2437,13 @@ function removeItemFromSelection(type, itemId) {
 
     const $checkbox = $(`${checkboxClass}[data-id="${itemId}"]`);
     if ($checkbox.length) {
-        // Unchecking fires the onchange + delegated listeners, which update the
-        // bag, select-all header and till automatically.
+        // Programmatic uncheck does NOT fire a change event, so update totals,
+        // the bag and the select-all header explicitly.
         $checkbox.prop('checked', false);
-        $checkbox.closest('tr').find('.presc-card').removeClass('selected');
+        if (type === 'billing') handlePrescBillingCheckPharmacy($checkbox[0]);
+        else if (type === 'pending') handlePrescPendingCheckPharmacy($checkbox[0]);
+        else if (type === 'dispense') handlePrescDispenseCheckPharmacy($checkbox[0]);
+        pharmRowBagSync(type, $checkbox[0]);
     } else if (bagItem) {
         // Row not in the DOM (another page / not yet drawn) — update bookkeeping
         // and drop purely from the bag.
@@ -3192,26 +3236,34 @@ function restoreCheckedItemsState(tableId, checkboxClass) {
                    tableId.includes('dispense') ? 'dispense' : null;
     if (!tabKey) return;
 
-    let ticked = 0;
-    $(`${tableId} .${checkboxClass}`).each(function() {
-        const id = $(this).attr('data-id') || $(this).data('id');
-        if (!id) return;
-        if (pharmBagHas(tabKey, id)) {
-            const $card = $(this).closest('tr').find('.presc-card');
-            $(this).prop('checked', true);
-            $card.addClass('selected');
-            pharmBagAddFromCard(tabKey, id, $card); // authoritative snapshot
-            ticked++;
-        } else {
-            $(this).prop('checked', false);
-        }
-    });
+    try {
+        let ticked = 0;
+        $(`${tableId} .${checkboxClass}`).each(function() {
+            const id = $(this).attr('data-id') || $(this).data('id');
+            if (!id) return;
+            if (pharmBagHas(tabKey, id)) {
+                const $card = $(this).closest('tr').find('.presc-card');
+                $(this).prop('checked', true);
+                $card.addClass('selected');
+                pharmBagAddFromCard(tabKey, id, $card); // authoritative snapshot
+                ticked++;
+            } else {
+                $(this).prop('checked', false);
+            }
+        });
 
-    if (tabKey === 'billing') {
-        prescBillingTotal = pharmBagList('billing').reduce(function(sum, i) { return sum + (i.price || 0); }, 0);
-        updatePrescBillingTotalPharmacy();
+        if (tabKey === 'billing') {
+            prescBillingTotal = pharmBagList('billing').reduce(function(sum, i) { return sum + (i.price || 0); }, 0);
+            updatePrescBillingTotalPharmacy();
+        }
+        // Keep the header honest for the current page.
+        pharmSyncSelectAll(tabKey);
+        if (ticked) updateStickyActionBar(tabKey);
+    } catch (e) {
+        // Never let a restore hiccup abort the DataTable draw — the till bag
+        // remains intact and the next draw will retry the re-tick.
+        if (window.console) console.warn('restoreCheckedItemsState skipped:', e);
     }
-    if (ticked) updateStickyActionBar(tabKey);
 }
 
 // Clear checked items for a specific tab
@@ -3221,40 +3273,21 @@ function clearCheckedItems(tab) {
 
 // Track checkbox changes for state management. Every tick lands in the bag
 // (with the card's server-rendered figures); every untick leaves it — so the
-// till never depends on rows staying in the DataTable DOM.
+// till never depends on rows staying in the DataTable DOM. (The row checkboxes
+// carry their own inline onchange=handle* for totals/classes; these delegated
+// listeners keep the bag + select-all header in sync for every change event.)
 $(document).on('change', '.presc-billing-check', function() {
-    const id = $(this).attr('data-id') || $(this).data('id');
-    if (!id) return;
-    if ($(this).is(':checked')) {
-        pharmBagAddFromCard('billing', id, $(this).closest('tr').find('.presc-card'));
-    } else {
-        pharmBagRemove('billing', id);
-    }
-    pharmSyncSelectAll('billing');
+    pharmRowBagSync('billing', this);
     updateStickyActionBar('billing');
 });
 
 $(document).on('change', '.presc-pending-check', function() {
-    const id = $(this).attr('data-id') || $(this).data('id');
-    if (!id) return;
-    if ($(this).is(':checked')) {
-        pharmBagAddFromCard('pending', id, $(this).closest('tr').find('.presc-card'));
-    } else {
-        pharmBagRemove('pending', id);
-    }
-    pharmSyncSelectAll('pending');
+    pharmRowBagSync('pending', this);
     updateStickyActionBar('pending');
 });
 
 $(document).on('change', '.presc-dispense-check', function() {
-    const id = $(this).attr('data-id') || $(this).data('id');
-    if (!id) return;
-    if ($(this).is(':checked')) {
-        pharmBagAddFromCard('dispense', id, $(this).closest('tr').find('.presc-card'));
-    } else {
-        pharmBagRemove('dispense', id);
-    }
-    pharmSyncSelectAll('dispense');
+    pharmRowBagSync('dispense', this);
     updateStickyActionBar('dispense');
 });
 
