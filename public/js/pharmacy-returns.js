@@ -1767,40 +1767,84 @@ function editPrescriptionItem(itemId) {
     // Can implement modal edit dialog here later
 }
 
-// Print prescription slip - Load in modal instead of new window
+// Print prescription slip - the server returns a complete standalone HTML
+// document (admin.pharmacy.prescription_slip), so render it in a print popup.
+// (The modal shell this code originally targeted, #prescriptionSlipModal, is
+// not present in the pharmacy workbench DOM - that is why the till Print /
+// Print Selected / dispense-cart Print buttons appeared to do nothing.)
 function printPrescription(itemIds) {
     if (!itemIds || itemIds.length === 0) {
         toastr.warning('Please select items to print');
         return;
     }
 
-    // Show loading in modal
-    $('#prescriptionSlipModal').modal('show');
-    $('#prescription-slip-content').html('<div class="text-center p-5"><i class="mdi mdi-loading mdi-spin" style="font-size: 3rem;"></i><p class="mt-3">Loading prescription slip...</p></div>');
+    const csrf = (window.WORKBENCH_CONFIG && window.WORKBENCH_CONFIG.csrf)
+        || ($('meta[name="csrf-token"]').length ? $('meta[name="csrf-token"]').attr('content') : '');
+
+    // Open the popup inside the user gesture so popup blockers don't swallow it.
+    let printWin = null;
+    try {
+        printWin = window.open('', '_blank', 'width=900,height=700');
+    } catch (e) { printWin = null; }
+    if (!printWin) {
+        toastr.error('Popup blocked - please allow popups for this site to print prescription slips');
+        return;
+    }
+    printWin.document.write('<!DOCTYPE html><html><head><title>Prescription Slip</title></head>' +
+        '<body style="margin:0;font-family:Segoe UI,Arial,sans-serif;display:flex;align-items:center;justify-content:center;height:100vh;color:#6c757d;">' +
+        '<p>Loading prescription slip&hellip;</p></body></html>');
+    printWin.document.close();
 
     // Fetch prescription slip HTML via AJAX
     $.ajax({
         url: wbRoute('pharmacy.print-prescription-slip', '/pharmacy-workbench/print-prescription-slip'),
         method: 'POST',
         data: {
-            _token: (window.WORKBENCH_CONFIG?.csrf || $('meta[name="csrf-token"]').attr('content')),
+            _token: csrf,
             product_request_ids: itemIds
         },
         success: function(response) {
-            // Load the HTML into modal
-            $('#prescription-slip-content').html(response);
+            if (!printWin || printWin.closed) return; // user closed the window while it was loading
+            printWin.document.open();
+            printWin.document.write(response);
+            printWin.document.close();
+            printWin.focus();
+            const doPrint = function() {
+                try { printWin.print(); } catch (e) { /* printing unavailable in this browser */ }
+            };
+            // Wait for the slip's resources (e.g. the hospital logo) before
+            // opening the print dialog; fall back shortly after in case the
+            // load event already fired or never will.
+            if (printWin.document.readyState === 'complete') {
+                setTimeout(doPrint, 300);
+            } else {
+                printWin.addEventListener('load', function() { setTimeout(doPrint, 150); });
+                setTimeout(doPrint, 1200);
+            }
         },
         error: function(xhr) {
-            toastr.error(xhr.responseJSON?.message || 'Failed to load prescription slip');
-            $('#prescriptionSlipModal').modal('hide');
+            if (printWin && !printWin.closed) {
+                try { printWin.close(); } catch (e) { /* noop */ }
+            }
+            toastr.error((xhr.responseJSON && xhr.responseJSON.message) || 'Failed to load prescription slip');
         }
     });
 }
 
-// Print from modal
+// Print from modal (legacy helper - only used if a page provides the old
+// #prescription-slip-content container; printPrescription now prints directly).
 function printPrescriptionSlipFromModal() {
-    const printContent = document.getElementById('prescription-slip-content').innerHTML;
+    const $content = $('#prescription-slip-content');
+    if (!$content.length || !$content.html().trim()) {
+        toastr.info('Nothing to print - open a slip first');
+        return;
+    }
+    const printContent = $content.html();
     const printWindow = window.open('', '_blank', 'width=900,height=700');
+    if (!printWindow) {
+        toastr.error('Popup blocked - please allow popups for this site to print prescription slips');
+        return;
+    }
     printWindow.document.write(`
         <!DOCTYPE html>
         <html>

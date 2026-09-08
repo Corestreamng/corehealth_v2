@@ -1855,9 +1855,19 @@ function renderTillBag(data) {
 
 function tillPrintSelected() {
     const data = gatherSelectedItems();
-    if (data.billing.length) printSelectedBillingPrescriptions();
-    else if (data.pending.length) printSelectedPendingPrescriptions();
-    else toastr.info('Select items to print');
+    // Print one slip covering everything currently bagged (billing, on-hold
+    // pending and ready-to-dispense rows are all product_requests, so they can
+    // ride in a single print request). This keeps the till Print button useful
+    // no matter which stage the bagged rows belong to.
+    const ids = []
+        .concat(data.billing.map(i => i.id))
+        .concat(data.pending.map(i => i.id))
+        .concat(data.dispense.map(i => i.id));
+    if (!ids.length) {
+        toastr.info('Bag is empty - add items before printing');
+        return;
+    }
+    printPrescription(ids);
 }
 
 function tillDismissSelected() {

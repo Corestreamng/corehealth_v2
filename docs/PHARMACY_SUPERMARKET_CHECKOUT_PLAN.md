@@ -355,3 +355,21 @@ endpoint, no `sku` column.
     `table-layout: fixed` with `!important` widths: checkbox column fixed (~34px, 30px on
     phones), card column `auto` (takes the rest) — no more inner horizontal scroll while
     the ajax/render pipeline stays untouched.
+
+- **Fix: Print buttons did nothing (till Print, dispense-cart Print, Print
+  Selected at the top of the tables)** — every print path funnels through
+  `printPrescription()` in `pharmacy-returns.js`, which showed a
+  `#prescriptionSlipModal` preview and injected the slip into
+  `#prescription-slip-content`. That modal is not part of the pharmacy
+  workbench DOM anywhere (and the server returns a full standalone HTML
+  document from `prescription_slip.blade.php`), so `$('#prescriptionSlipModal')
+  .modal('show')` was a silent no-op. `printPrescription()` now opens the
+  print popup inside the click gesture, POSTs the ids to the existing
+  `/pharmacy-workbench/print-prescription-slip` route, writes the returned
+  standalone slip document into the popup and triggers print once it loads
+  (with a fallback timer). Error responses close the popup and toast the
+  server message. The orphaned `printPrescriptionSlipFromModal()` legacy
+  helper is guarded instead of throwing. The till's Print now also covers
+  ready-to-dispense bagged rows (previously it dead-ended with "Select items
+  to print" when only dispense-stage rows were bagged): it prints one slip
+  for the whole bag across billing/pending/dispense.
