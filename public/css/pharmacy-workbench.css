@@ -4664,3 +4664,69 @@ body.pharm-till-unselectable {
 #pharm-till-header .btn-link:hover {
     color: #fff;
 }
+
+/* ---- Till controls: minimise (header, distinct) vs Clear (footer, far away) ---- */
+.pharm-till-min-btn {
+    flex: 0 0 auto;
+    width: 26px;
+    height: 26px;
+    padding: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid rgba(255, 255, 255, 0.4);
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.10);
+    color: #fff;
+    font-size: 1rem;
+    line-height: 1;
+}
+.pharm-till-min-btn:hover,
+.pharm-till-min-btn:focus {
+    background: rgba(255, 255, 255, 0.22);
+    color: #fff;
+}
+
+/* Clear bag — a quiet, deliberate footer control, spatially far from minimise */
+.pharm-till-clear-row {
+    margin-top: 0.5rem;
+    padding-top: 0.45rem;
+    border-top: 1px dashed #e9ecef;
+    text-align: center;
+}
+.pharm-till-clear-btn {
+    border: none;
+    background: none;
+    color: #adb5bd;
+    font-size: 0.72rem;
+    font-weight: 600;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 2px 8px;
+    border-radius: 4px;
+}
+.pharm-till-clear-btn:hover {
+    color: #b02a37;
+    background: rgba(220, 53, 69, 0.08);
+}
+
+/* Persistent drag hint — always visible (incl. when the till is minimised) */
+.pharm-till-hint {
+    display: flex;
+    align-items: flex-start;
+    gap: 6px;
+    padding: 0.4rem 0.7rem 0.55rem;
+    font-size: 0.62rem;
+    line-height: 1.4;
+    color: #6c757d;
+    border-top: 1px solid #f1f3f5;
+    background: #fcfcfd;
+    user-select: none;
+    -webkit-user-select: none;
+}
+.pharm-till-hint i {
+    font-size: 0.85rem;
+    line-height: 1.2;
+}

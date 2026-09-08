@@ -292,3 +292,12 @@ endpoint, no `sku` column.
   right padding so nothing is hidden underneath. Double-click the header to snap the till
   back to its docked rail position. Drag is available on the fixed rail (>=1200px);
   minimise works on the sticky layout too.
+
+- **Till minimise + drag polish** — minimise and Clear are now far apart (minimise is a
+  small circular button alone in the header; "Clear bag" is a quiet, destructive-styled
+  control at the very bottom of the footer), so they can't be clicked by mistake.
+  Minimising now shrinks the whole till container to a compact header+footer bar (the
+  fixed rail drops `bottom` and sizes to content instead of leaving a tall empty box);
+  expanding restores the full rail or the previously dragged height (min 320px). A
+  persistent hint strip at the till's bottom edge always reads: "Drag the till by its
+  header to move it · double-click the header to snap it back".

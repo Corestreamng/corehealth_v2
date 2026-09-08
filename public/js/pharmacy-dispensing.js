@@ -1224,19 +1224,16 @@ function injectUnifiedPrescPartial(patientId, patientUserId) {
             </div>
             </div>
             <aside class="pharm-till" id="pharm-till" aria-label="Checkout till">
-                <div class="pharm-till-header" id="pharm-till-header" title="Drag the header to move the till · double-click to re-dock">
-                    <div class="pharm-till-drag" title="Drag to move the till">
+                <div class="pharm-till-header" id="pharm-till-header">
+                    <div class="pharm-till-drag" title="Drag to move the till · double-click to re-dock">
                         <i class="mdi mdi-cart me-1"></i>
                         <strong>Till</strong>
                         <span class="badge bg-light text-dark ms-1" id="till-item-count">0</span>
                         <i class="mdi mdi-drag-horizontal-variant pharm-till-grip" title="Drag to move · double-click header to re-dock"></i>
                     </div>
-                    <div class="d-flex align-items-center gap-1">
-                        <button type="button" class="btn btn-link btn-sm p-0 pharm-till-min-btn" id="pharm-till-min-btn" onclick="pharmToggleTillMin()" title="Minimise the till">
-                            <i class="mdi mdi-chevron-up"></i>
-                        </button>
-                        <button type="button" class="btn btn-link btn-sm p-0" onclick="clearAllSelections()">Clear</button>
-                    </div>
+                    <button type="button" class="btn pharm-till-min-btn" id="pharm-till-min-btn" onclick="pharmToggleTillMin()" title="Minimise the till">
+                        <i class="mdi mdi-chevron-up"></i>
+                    </button>
                 </div>
                 <div class="pharm-till-body" id="till-bag-body">
                     <div class="pharm-till-empty">
@@ -1262,6 +1259,15 @@ function injectUnifiedPrescPartial(patientId, patientUserId) {
                             <i class="mdi mdi-close"></i> Dismiss
                         </button>
                     </div>
+                    <div class="pharm-till-clear-row">
+                        <button type="button" class="pharm-till-clear-btn" id="till-clear-btn" onclick="clearAllSelections()" title="Remove every item from the till">
+                            <i class="mdi mdi-broom"></i> Clear bag
+                        </button>
+                    </div>
+                </div>
+                <div class="pharm-till-hint" id="pharm-till-hint">
+                    <i class="mdi mdi-drag-horizontal-variant"></i>
+                    <span>Drag the till by its header to move it · double-click the header to snap it back</span>
                 </div>
             </aside>
         </div>
@@ -2374,6 +2380,10 @@ function layoutPharmRegister(forceRedock) {
     if (!forceRedock && !pharmTillDocked && pharmTillUserPos) {
         const left = Math.min(Math.max(8, pharmTillUserPos.left), Math.max(8, window.innerWidth - tillW - 8));
         const top = Math.min(Math.max(8, pharmTillUserPos.top), Math.max(8, window.innerHeight - 120));
+        // When minimised the panel is content-sized (compact bar); when expanded
+        // it keeps the height the user dragged it to (min 320 so the bag list
+        // never gets squeezed after dragging while minimised).
+        const height = pharmTillMinimized ? 'auto' : (Math.max(pharmTillUserPos.height || 0, 320) + 'px');
         $till.css({
             position: 'fixed',
             top: top,
@@ -2381,7 +2391,7 @@ function layoutPharmRegister(forceRedock) {
             right: 'auto',
             bottom: 'auto',
             width: tillW,
-            height: (pharmTillUserPos.height || '') + 'px',
+            height: height,
             margin: 0,
             'max-height': 'none',
             'z-index': 1080,
@@ -2402,14 +2412,16 @@ function layoutPharmRegister(forceRedock) {
     } else if ($ws.length && $ws.is(':visible')) {
         top = Math.max(12, $ws.offset().top + 8);
     }
+    // When minimised the rail becomes a compact bar (content height instead of
+    // stretching to the bottom of the viewport).
     $till.css({
         position: 'fixed',
         top: top,
         right: 18,
-        bottom: 18,
+        bottom: pharmTillMinimized ? 'auto' : 18,
         left: 'auto',
         width: tillW,
-        height: 'auto',
+        height: pharmTillMinimized ? 'auto' : 'auto',
         margin: 0,
         'max-height': 'none',
         'z-index': 1080,
@@ -2505,6 +2517,9 @@ function pharmToggleTillMin() {
     pharmTillMinimized = !pharmTillMinimized;
     $('#pharm-till').toggleClass('pharm-till-min', pharmTillMinimized);
     pharmSetTillMinIcon();
+    // Re-layout the fixed rail so the whole container shrinks to a compact
+    // header+footer bar (not just hiding the bag list inside a tall box).
+    layoutPharmRegister();
 }
 // Re-apply persisted till UI state after the checkout template is re-injected
 // (each patient load rebuilds #pharm-till).
