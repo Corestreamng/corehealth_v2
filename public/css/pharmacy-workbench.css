@@ -5132,6 +5132,29 @@ body.pharm-till-unselectable {
    Card-first density for the DataTable cards
    ========================================================= */
 @media (max-width: 991.98px) {
+    /* Kill the DataTable's inner horizontal scroll: DataTables auto-width
+       measures a pixel width for the card column that can exceed the viewport,
+       so give the two columns a fixed split on mobile/tablet — the checkbox
+       column keeps a small fixed width and the card column takes the rest.
+       !important beats the px widths DataTables writes onto the cells. */
+    .pharm-shelf table.dataTable {
+        table-layout: fixed !important;
+        width: 100% !important;
+    }
+    .pharm-shelf table.dataTable th,
+    .pharm-shelf table.dataTable td {
+        overflow-wrap: break-word;
+    }
+    .pharm-shelf table.dataTable th:first-child,
+    .pharm-shelf table.dataTable td:first-child {
+        width: 34px !important;
+        padding-left: 2px;
+        padding-right: 2px;
+    }
+    .pharm-shelf table.dataTable th:last-child,
+    .pharm-shelf table.dataTable td:last-child {
+        width: auto !important;
+    }
     .pharm-shelf .presc-card-header {
         gap: 0.5rem;
         align-items: flex-start;

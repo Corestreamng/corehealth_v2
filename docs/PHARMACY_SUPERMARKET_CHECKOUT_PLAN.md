@@ -336,3 +336,22 @@ endpoint, no `sku` column.
     `padding-bottom: calc(96px + env(safe-area-inset-bottom))` so the till pill never
     hides the last card; the expanded till bottom-sheet now dims the screen behind it and
     tapping the scrim collapses it back to the pill.
+
+- **Fixes after the mobile look & feel commit** —
+  - **First bagged item never appeared when tapping a card (or scanning)** —
+    `pharmCheckboxApply()` ran the totals/class handlers (which render the till from the
+    bag) *before* `pharmRowBagSync()` added the row, so the very first item rendered an
+    empty till with ₦0 totals and only the next selection repainted it. Bag sync now runs
+    first, then the handlers render a till that already contains the row (programmatic
+    toggles fire no native change event to repaint afterwards). This also fixed the
+    matching "remove by card tap leaves the item until the next change" lag.
+  - **Adjust Price icon was blank** — the button/badge/modal-title used `mdi-cash-edit`,
+    which does not exist in the bundled Material Design Icons v3.7.95 (the glyph has no
+    codepoint, so it never rendered; the text label used to mask it). Replaced all three
+    occurrences with `mdi-cash-usd` (present in v3.7.95).
+  - **DataTable still scrolled horizontally on mobile** — DataTables auto-width measures a
+    px width for the two-column card tables that can exceed the viewport, so the
+    `.table-responsive` wrapper kept a horizontal scrollbar. On <992px the tables now use
+    `table-layout: fixed` with `!important` widths: checkbox column fixed (~34px, 30px on
+    phones), card column `auto` (takes the rest) — no more inner horizontal scroll while
+    the ajax/render pipeline stays untouched.

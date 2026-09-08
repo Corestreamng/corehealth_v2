@@ -1681,10 +1681,13 @@ function pharmRowBagSync(type, checkbox) {
 // handle*, then bag + select-all via pharmRowBagSync.
 function pharmCheckboxApply(type, checkbox) {
     if (!checkbox) return;
+    // Sync the bag FIRST so the totals/class handlers below render a till that
+    // already contains this row. (The card-click / scan flows toggle the box
+    // programmatically, so no native change event fires afterwards to repaint.)
+    pharmRowBagSync(type, checkbox);
     if (type === 'billing') handlePrescBillingCheckPharmacy(checkbox);
     else if (type === 'pending') handlePrescPendingCheckPharmacy(checkbox);
     else if (type === 'dispense') handlePrescDispenseCheckPharmacy(checkbox);
-    pharmRowBagSync(type, checkbox);
 }
 
 // Cross-file hooks (pharmacy-stock.js bill/dispense/dismiss read the bag).
@@ -3111,7 +3114,7 @@ function renderPrescCardPharmacy(row, type) {
         const diffSign = diff>= 0 ? '+' : '';
         priceOverrideBadge = `
             <div class="small mt-1 p-2 rounded border border-primary" style="background: #f0f4ff;">
-                <i class="mdi mdi-cash-edit text-primary me-1"></i>
+                <i class="mdi mdi-cash-usd text-primary me-1"></i>
                 <span class="fw-semibold" style="color: #1a237e;">Price Adjusted:</span>
                 <span style="color: #555; text-decoration: line-through;" class="ms-1">₦${formatMoneyPharmacy(origPrice)}</span>
                 <i class="mdi mdi-arrow-right mx-1" style="color: #333;"></i>
@@ -3137,7 +3140,7 @@ function renderPrescCardPharmacy(row, type) {
                     <i class="mdi mdi-counter"></i> <span class="pharm-label">Adjust Qty</span>
                 </button>
                 <button type="button" class="btn btn-xs btn-outline-primary btn-adjust-price-card ms-1" data-id="${row.id}" data-product="${row.product_name || 'Unknown'}" data-product-code="${row.product_code || ''}" data-qty="${qty}" data-price="${effectiveUnitPrice}" data-coverage-mode="${coverageMode}" data-tariff-payable="${tariffPayableUnit}" data-tariff-claims="${tariffClaimsUnit}" data-price-override="${row.price_override ?? ''}" data-price-override-reason="${row.price_override_reason || ''}" data-price-override-by="${row.price_override_by || ''}" data-price-override-at="${row.price_override_at || ''}" title="Adjust the unit price before billing">
-                    <i class="mdi mdi-cash-edit"></i> <span class="pharm-label">Adjust Price</span>
+                    <i class="mdi mdi-cash-usd"></i> <span class="pharm-label">Adjust Price</span>
                 </button>
             </div>
         `;
