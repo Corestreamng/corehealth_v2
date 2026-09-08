@@ -3131,13 +3131,13 @@ function renderPrescCardPharmacy(row, type) {
         actionButtons = `
             <div class="presc-card-actions mt-2 pt-2 border-top">
                 <button type="button" class="btn btn-xs btn-outline-info btn-adapt-product-card" data-id="${row.id}" data-product="${row.product_name || 'Unknown'}" data-product-code="${row.product_code || ''}" data-dose="${row.dose || ''}" data-qty="${qty}" data-price="${effectiveUnitPrice}" data-status="unbilled" data-payable="${payableAmount}" data-claims="${claimsAmount}" data-is-paid="false" data-is-validated="false" data-coverage-mode="${coverageMode}" title="Change to a different product">
-                    <i class="mdi mdi-swap-horizontal"></i> Adapt Product
+                    <i class="mdi mdi-swap-horizontal"></i> <span class="pharm-label">Adapt Product</span>
                 </button>
                 <button type="button" class="btn btn-xs btn-outline-warning btn-adjust-qty-card ms-1" data-id="${row.id}" data-product="${row.product_name || 'Unknown'}" data-qty="${qty}" data-price="${effectiveUnitPrice}" data-status="unbilled" data-payable="${payableAmount}" data-claims="${claimsAmount}" data-is-paid="false" data-is-validated="false" data-coverage-mode="${coverageMode}" title="Change the quantity">
-                    <i class="mdi mdi-counter"></i> Adjust Qty
+                    <i class="mdi mdi-counter"></i> <span class="pharm-label">Adjust Qty</span>
                 </button>
                 <button type="button" class="btn btn-xs btn-outline-primary btn-adjust-price-card ms-1" data-id="${row.id}" data-product="${row.product_name || 'Unknown'}" data-product-code="${row.product_code || ''}" data-qty="${qty}" data-price="${effectiveUnitPrice}" data-coverage-mode="${coverageMode}" data-tariff-payable="${tariffPayableUnit}" data-tariff-claims="${tariffClaimsUnit}" data-price-override="${row.price_override ?? ''}" data-price-override-reason="${row.price_override_reason || ''}" data-price-override-by="${row.price_override_by || ''}" data-price-override-at="${row.price_override_at || ''}" title="Adjust the unit price before billing">
-                    <i class="mdi mdi-cash-edit"></i> Adjust Price
+                    <i class="mdi mdi-cash-edit"></i> <span class="pharm-label">Adjust Price</span>
                 </button>
             </div>
         `;
@@ -3160,10 +3160,10 @@ function renderPrescCardPharmacy(row, type) {
             actionButtons = `
                 <div class="presc-card-actions mt-2 pt-2 border-top">
                     <button type="button" class="btn btn-xs btn-outline-info btn-adapt-product-card" data-id="${row.id}" data-product="${row.product_name || 'Unknown'}" data-product-code="${row.product_code || ''}" data-dose="${row.dose || ''}" data-qty="${qty}" data-price="${effectiveUnitPrice}" data-status="billed" data-payable="${payableAmount}" data-claims="${claimsAmount}" data-is-paid="${isPaid}" data-is-validated="${isValidated}" data-coverage-mode="${row.coverage_mode || 'none'}" title="Change to a different product (will update billing)">
-                        <i class="mdi mdi-swap-horizontal"></i> Adapt Product
+                        <i class="mdi mdi-swap-horizontal"></i> <span class="pharm-label">Adapt Product</span>
                     </button>
                     <button type="button" class="btn btn-xs btn-outline-warning btn-adjust-qty-card ms-1" data-id="${row.id}" data-product="${row.product_name || 'Unknown'}" data-qty="${qty}" data-price="${effectiveUnitPrice}" data-status="billed" data-payable="${payableAmount}" data-claims="${claimsAmount}" data-is-paid="${isPaid}" data-is-validated="${isValidated}" data-coverage-mode="${row.coverage_mode || 'none'}" title="Change the quantity (will update billing)">
-                        <i class="mdi mdi-counter"></i> Adjust Qty
+                        <i class="mdi mdi-counter"></i> <span class="pharm-label">Adjust Qty</span>
                     </button>
                 </div>
             `;
@@ -3255,19 +3255,40 @@ function renderPrescCardPharmacy(row, type) {
             </div>
             ${pendingAlert}
             <div class="presc-card-body mt-2">
-                <div><strong>Dose/Freq:</strong> ${row.dose || 'N/A'}</div>
-                <div><strong>Qty:</strong> ${qty}</div>
-                ${hmoInfo}
-                ${tariffPreviewHtml}
-                ${priceOverrideBadge}
-                ${adaptationBanner}
-                ${qtyAdjustmentBanner}
-                ${stockInfo}
+                <div class="presc-card-quick">
+                    <span class="presc-quick-chip"><i class="mdi mdi-medical-bag"></i> <strong>Dose:</strong> ${row.dose || 'N/A'}</span>
+                    <span class="presc-quick-chip"><i class="mdi mdi-counter"></i> <strong>Qty:</strong> ${qty}</span>
+                </div>
+                <div class="presc-card-extras">
+                    ${hmoInfo}
+                    ${tariffPreviewHtml}
+                    ${priceOverrideBadge}
+                    ${adaptationBanner}
+                    ${qtyAdjustmentBanner}
+                    ${stockInfo}
+                    ${metaInfo}
+                </div>
+                <button type="button" class="presc-card-details-btn" onclick="pharmToggleCardDetails(this)" title="Show or hide billing / stock / history details">
+                    <i class="mdi mdi-chevron-down"></i> Details
+                </button>
             </div>
-            ${metaInfo}
             ${actionButtons}
         </div>
     `;
+}
+
+// Toggle the verbose billing/stock details block on a prescription card.
+// On phones the block is collapsed by default (see CSS) and shown on tap;
+// on wide screens it is always visible so no information is hidden.
+function pharmToggleCardDetails(btn) {
+    const $btn = $(btn);
+    const $extras = $btn.closest('.presc-card-body').find('.presc-card-extras').first();
+    $extras.toggleClass('expanded');
+    $btn.toggleClass('open', $extras.hasClass('expanded'));
+    const $icon = $btn.find('.mdi');
+    if ($icon.length) {
+        $icon.attr('class', 'mdi ' + ($extras.hasClass('expanded') ? 'mdi-chevron-up' : 'mdi-chevron-down'));
+    }
 }
 
 function displayPatientInfo(patient) {
@@ -3569,3 +3590,38 @@ function updateSyncTimeDisplay() {
 }
 
 
+
+// Wrap the visible text of toolbar buttons in <span class="pharm-label"> so CSS
+// can hide the labels on phones (<576px) and leave icon-only round buttons.
+// Idempotent: only wraps bare text nodes that are not already inside a label.
+function pharmWrapButtonLabels() {
+    $('#workspace-navbar button, .pharm-shelf .presc-card-actions button').each(function() {
+        const btn = this;
+        if (btn.querySelector('.pharm-label')) return; // already wrapped
+        [].slice.call(btn.childNodes).forEach(function(node) {
+            if (node.nodeType !== 3) return; // only wrap text nodes
+            const txt = (node.nodeValue || '').trim();
+            if (!txt) return;
+            const span = document.createElement('span');
+            span.className = 'pharm-label';
+            span.textContent = txt;
+            btn.replaceChild(span, node);
+        });
+    });
+}
+
+// Mobile: tapping the dark scrim behind the expanded till bottom-sheet
+// collapses it back to the floating pill. (The scrim is a ::before on
+// #pharm-till, so taps on it resolve with the till element as the target.)
+$(document).on('click', function(e) {
+    if (window.innerWidth >= 992) return;
+    const $till = $('#pharm-till');
+    if (!$till.length || $till.hasClass('pharm-till-min')) return;
+    if (e.target && e.target === $till[0]) {
+        pharmToggleTillMin(); // collapse sheet -> floating pill
+    }
+});
+
+$(function() {
+    pharmWrapButtonLabels();
+});

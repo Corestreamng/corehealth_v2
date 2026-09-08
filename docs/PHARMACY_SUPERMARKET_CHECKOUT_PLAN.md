@@ -311,3 +311,28 @@ endpoint, no `sku` column.
   keep the user's chosen state), the header shows a live total chip, drag + the drag
   hint are disabled on mobile, and the old floating-cart fallback only shows if the
   till element is genuinely not visible. The pill respects the iOS safe-area inset.
+
+- **Mobile look & feel: patient header, top toolbar, DataTable cards** (implements
+  `docs/PHARMACY_MOBILE_LOOK_PLAN.md` slice order) — CSS + small JS only, no server /
+  blade / business-rule changes:
+  - Patient header becomes a compact identity strip <992px (slimmer padding, truncated
+    one-line name, meta re-flowed into translucent chips, balance pill compacted beside
+    the name, alerts compact); on <576px "more biodata" becomes a slim full-width chevron
+    strip, the expanded grid runs as one tight column, and only File/Age/Gender chips stay
+    on the strip (HMO name/No remain in each card and "more biodata").
+  - Top toolbar on phones (<576px): Contacts / Price List / Clinical Context become
+    icon-only round buttons and Back becomes "← Back" — the row never wraps. Button text
+    is wrapped in `<span class="pharm-label">` by `pharmWrapButtonLabels()` so CSS can
+    hide it without changing blade markup; card action buttons are pre-wrapped in the
+    template. 576–768px keeps smaller labelled buttons with wrapping allowed.
+  - Cards: Dose/Freq + Qty become quick chips; the verbose billing/tariff/stock/override/
+    adaptation/meta content is wrapped in `.presc-card-extras` behind a per-card
+    "Details ▾" toggle (`pharmToggleCardDetails`) that is collapsed by default on phones
+    (<992px) and always expanded on desktop (>=992px — no information is hidden on wide
+    screens). Card title ellipsizes instead of pushing price off-screen; action buttons
+    become a 30px icon row on phones; checkbox column narrows to 30px.
+  - Stage filter pills (`Billing/Pending/Ready to Dispense/History`) are sticky under the
+    top tab bar and swipe horizontally on <992px; `.workspace-tab-content` gets
+    `padding-bottom: calc(96px + env(safe-area-inset-bottom))` so the till pill never
+    hides the last card; the expanded till bottom-sheet now dims the screen behind it and
+    tapping the scrim collapses it back to the pill.
