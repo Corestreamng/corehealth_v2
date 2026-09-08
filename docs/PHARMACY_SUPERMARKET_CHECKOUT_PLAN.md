@@ -266,3 +266,12 @@ endpoint, no `sku` column.
   guarded with try/catch so a hiccup can never abort a draw) and keeps the select-all
   header honest (checked / indeterminate / unchecked) for the current page. Removing a
   till line now clears the row + bag in the DOM path too.
+
+- **Till qty +/- no longer sticks disabled** — the stepper disabled its buttons for the
+  save round-trip and only re-enabled them when a DataTable redraw re-rendered the till;
+  for a bagged row not on the table's current page (server-side paging) that redraw never
+  touches the till, so the buttons stayed disabled. Success now re-enables immediately,
+  syncs the bagged snapshot to the server-confirmed quantity (linear money scaling for
+  unbilled rows), rebuilds the till, then reloads the shelf for authoritative figures.
+  The stepper also reads its current qty from the bag first so rows on other pages step
+  from the real quantity.

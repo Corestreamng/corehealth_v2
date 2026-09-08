@@ -1629,6 +1629,23 @@ function pharmBagClearAll() { ['billing', 'pending', 'dispense'].forEach(functio
 function pharmBagList(type) { return Array.from(pharmBag[type].values()); }
 function pharmBagHas(type, id) { return pharmBag[type].has(String(id)); }
 
+// Apply a server-confirmed quantity change to a bagged snapshot (scales the
+// money linearly, matching the server's unbilled math). Used when the row is
+// not on the DataTable's current page, so the till still updates instantly;
+// the next draw that shows the row re-snapshots from the authoritative card.
+function pharmBagUpdateQty(type, id, newQty) {
+    const sid = String(id);
+    const item = pharmBag[type].get(sid);
+    if (!item) return;
+    const oldQty = item.qty || 1;
+    if (oldQty <= 0 || !(newQty > 0)) return;
+    const f = newQty / oldQty;
+    item.qty = newQty;
+    item.price = Math.round((item.price || 0) * f * 100) / 100;
+    item.payable = Math.round((item.payable || 0) * f * 100) / 100;
+    item.claims = Math.round((item.claims || 0) * f * 100) / 100;
+}
+
 // Single place to sync the bag + "select all" header from a row checkbox
 // whose state just changed (used by the delegated change listeners and by
 // select-all / remove flows that toggle checkboxes programmatically).
@@ -2244,9 +2261,16 @@ function pharmTillQtyStep(type, id, delta) {
     if (type !== 'billing') return;
     if (!currentPatient) { toastr.error('Select a patient first'); return; }
 
+    // Read the current quantity from the bag first (the row may not be on the
+    // DataTable's current page); fall back to the visible card when present.
+    const bagItem = pharmBag.billing.get(String(id));
     const $cb = $('.presc-billing-check[data-id="' + id + '"]').first();
     const $card = $cb.length ? $cb.closest('tr').find('.presc-card') : $();
-    const cur = $card.length ? (parseInt($card.attr('data-qty')) || 1) : 1;
+    let cur = bagItem ? (bagItem.qty || 1) : 1;
+    if ($card.length) {
+        const cardQty = parseInt($card.attr('data-qty')) || 0;
+        if (cardQty > 0) cur = cardQty;
+    }
     const next = cur + delta;
     if (next < 1) return;
 
@@ -2265,9 +2289,21 @@ function pharmTillQtyStep(type, id, delta) {
         },
         success: function(response) {
             pharmBeep('ok');
-            // Redraw the billing shelf from the server; checked items stay ticked and
-            // the till is rebuilt from the refreshed cards (new payable/claims/qty).
-            prescBillingTotal = 0;
+            // Re-enable immediately — the till must not stay disabled waiting on a
+            // table redraw that may not touch the current page.
+            $qty.removeClass('till-qty-saving');
+            $qty.find('button').prop('disabled', false);
+
+            // Sync the bagged snapshot with the server-confirmed quantity and
+            // rebuild the till right away (money scales linearly for unbilled rows).
+            pharmBagUpdateQty('billing', id, next);
+            prescBillingTotal = pharmBagList('billing').reduce(function(sum, i) { return sum + (i.price || 0); }, 0);
+            updatePrescBillingTotalPharmacy();
+            updateStickyActionBar('billing');
+
+            // Refresh the billing shelf from the server so the card's qty /
+            // payable / claims are authoritative; restoreCheckedItemsState will
+            // re-tick the row and re-snapshot it when it is on the drawn page.
             if ($.fn.DataTable.isDataTable('#presc_billing_table')) {
                 $('#presc_billing_table').DataTable().ajax.reload(null, false);
             }
