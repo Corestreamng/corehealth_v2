@@ -1667,7 +1667,7 @@ $(document).on('click', '#btn-confirm-ff-dispense', function() {
     $btn.prop('disabled', true).html('<i class="mdi mdi-loading mdi-spin"></i> Dispensing...');
     
     $.ajax({
-        url: wbRoute('pharmacy.dispense-free-form', '/pharmacy/dispense-free-form'),
+        url: wbRoute('pharmacy.dispense-free-form', '/pharmacy-workbench/dispense-free-form'),
         method: 'POST',
         data: {
             _token: (window.WORKBENCH_CONFIG?.csrf || $('meta[name="csrf-token"]').attr('content')),

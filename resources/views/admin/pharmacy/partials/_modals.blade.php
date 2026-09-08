@@ -1212,10 +1212,10 @@
             </div>
             <div class="modal-body">
                 <p class="text-muted mb-2">Free-form items are not billed. Confirm quantity and mark as dispensed.</p>
-                <input type="hidden" id="ff-dispense-id">
+                <input type="hidden" id="ff-dispense-request-id">
                 <div class="mb-2">
                     <label class="form-label">Medication</label>
-                    <input type="text" class="form-control" id="ff-dispense-name" readonly>
+                    <div class="form-control-plaintext fw-semibold" id="ff-dispense-item-name"></div>
                 </div>
                 <div class="mb-2">
                     <label class="form-label">Quantity dispensed</label>
@@ -1224,7 +1224,7 @@
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
-                <button type="button" class="btn btn-info" id="btn-confirm-ff-dispense">Mark Dispensed</button>
+                <button type="button" class="btn btn-info" id="btn-confirm-ff-dispense"><i class="mdi mdi-check"></i> Confirm Dispense</button>
             </div>
         </div>
     </div>
