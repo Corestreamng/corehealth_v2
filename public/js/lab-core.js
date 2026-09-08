@@ -1006,7 +1006,12 @@ function createRequestCard(request, section) {
             </button>
         `;
     } else if (isFreeForm) {
-        checkboxOrAction = `<div class="request-card-checkbox"><i class="mdi mdi-information-outline text-muted fs-4"></i></div>`;
+        checkboxOrAction = `
+            <button class="btn btn-sm btn-success enter-result-btn" data-request-id="${request.id}" title="Free-form: record result, no billing">
+                <i class="mdi mdi-check"></i>
+                Record Result
+            </button>
+        `;
     } else {
         checkboxOrAction = `
             <div class="request-card-checkbox">
