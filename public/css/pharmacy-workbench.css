@@ -4234,3 +4234,1054 @@
         border-top: 2px solid #e9ecef;
     }
 }
+
+/* =========================================================
+   Pharmacy checkout — supermarket register (UX pass)
+   Pins the till, compacts shelf cards, adds money chips and
+   the scan bar. All figures shown originate on the server
+   cards; these rules only arrange/emphasise them.
+   ========================================================= */
+
+/* ---- Scan / add bar (inline on the shelf) ---- */
+.pharm-scanbar {
+    position: relative;
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.45rem;
+}
+.pharm-scanbar-icon {
+    font-size: 1.15rem;
+    line-height: 1;
+    color: var(--hospital-primary, #011b33);
+}
+.pharm-scan-input {
+    flex: 1 1 260px;
+    min-width: 220px;
+    font-size: 0.95rem;
+}
+.pharm-scan-input:focus {
+    box-shadow: 0 0 0 2px rgba(13, 110, 253, 0.35);
+}
+.pharm-scan-add-btn,
+.pharm-scan-ff-btn {
+    white-space: nowrap;
+}
+.pharm-scan-results {
+    position: absolute;
+    top: calc(100% + 4px);
+    left: 0;
+    z-index: 1200;
+    min-width: 420px;
+    max-width: min(560px, 94vw);
+    max-height: 340px;
+    overflow-y: auto;
+    background: #fff;
+    border: 1px solid #ced4da;
+    border-radius: 8px;
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.18);
+}
+.pharm-scan-results-head {
+    padding: 6px 10px;
+    font-size: 0.74rem;
+    font-weight: 700;
+    color: #495057;
+    background: #f1f3f5;
+    border-bottom: 1px solid #e9ecef;
+    position: sticky;
+    top: 0;
+}
+.pharm-scan-result {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 0.75rem;
+    width: 100%;
+    text-align: left;
+    padding: 7px 10px;
+    border: none;
+    border-bottom: 1px solid #f1f3f5;
+    background: #fff;
+    cursor: pointer;
+    font-size: 0.84rem;
+}
+.pharm-scan-result:last-child {
+    border-bottom: none;
+}
+.pharm-scan-result:hover {
+    background: #e7f1ff;
+}
+.pharm-scan-result-price {
+    white-space: nowrap;
+    font-weight: 700;
+    color: #198754;
+}
+.pharm-scan-results-more {
+    padding: 5px 10px;
+    color: #6c757d;
+    font-size: 0.74rem;
+}
+
+/* ---- Compact shelf cards ---- */
+.pharm-shelf .presc-card {
+    padding: 9px 11px;
+    margin-bottom: 6px;
+    font-size: 0.85rem;
+    cursor: pointer;
+}
+.pharm-shelf .presc-card.selected {
+    background: #e7f1ff !important;
+    border-color: #0d6efd !important;
+    box-shadow: inset 3px 0 0 #0d6efd;
+}
+.pharm-shelf .presc-card-title {
+    font-size: 0.92rem;
+}
+.pharm-shelf .presc-card-price {
+    font-size: 0.95rem;
+}
+.pharm-shelf .presc-card-body {
+    font-size: 0.82rem;
+}
+.pharm-shelf .presc-card-body > div {
+    margin-bottom: 2px;
+}
+.pharm-shelf .presc-card-hmo-info,
+.pharm-shelf .presc-card-billing-preview {
+    font-size: 0.8rem;
+}
+.pharm-shelf .presc-card-actions .btn {
+    font-size: 0.72rem;
+    padding: 1px 7px;
+}
+.pharm-shelf .presc-card-meta {
+    margin-top: 6px;
+    padding-top: 6px;
+    font-size: 0.76rem;
+}
+.pharm-shelf .nav-tabs .nav-link {
+    padding: 0.4rem 0.7rem;
+    font-size: 0.82rem;
+}
+.pharm-shelf table.dataTable tbody td {
+    padding: 6px 8px !important;
+}
+.pharm-shelf .dataTables_length,
+.pharm-shelf .dataTables_info,
+.pharm-shelf .dataTables_paginate {
+    font-size: 0.8rem;
+}
+
+/* ---- Till rail: pin above the scroll, only shelf content scrolls ---- */
+@media (min-width: 992px) {
+    .pharm-checkout {
+        align-items: flex-start;
+        background: #fff;
+        border: 1px solid #e9ecef;
+        border-radius: 8px;
+    }
+    .pharm-shelf {
+        padding: 0.6rem 0.8rem 0.9rem;
+    }
+    .pharm-till {
+        align-self: flex-start;
+        position: sticky;
+        top: 8px;
+        width: 340px;
+        min-width: 300px;
+        max-height: calc(100vh - 240px);
+        border-left: 2px solid #e9ecef;
+        border-radius: 0 10px 10px 0;
+        box-shadow: -8px 0 18px rgba(0, 0, 0, 0.06);
+        z-index: 900;
+    }
+}
+@media (max-width: 991.98px) {
+    /* Mobile: the till is now a persistent bottom floating button (see the
+       mobile bottom-bar block at the end of this file) — no longer hidden. */
+}
+
+/* ---- Dense till lines with payment/HMO chips ---- */
+.pharm-till-body {
+    padding: 0.25rem 0.5rem 0.5rem;
+}
+.till-section {
+    margin-bottom: 0.3rem;
+}
+.till-section-h {
+    padding: 0.3rem 0.5rem;
+    font-size: 0.7rem;
+}
+.till-line {
+    display: block;
+    padding: 0.38rem 0.5rem;
+    font-size: 0.8rem;
+    border-bottom: 1px solid #f1f3f5;
+    background: #fff;
+}
+.till-line:last-child {
+    border-bottom: none;
+}
+.till-line-top {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.4rem;
+}
+.till-line-name {
+    flex: 1;
+    min-width: 0;
+    overflow-wrap: anywhere;
+    font-weight: 600;
+    font-size: 0.8rem;
+    line-height: 1.25;
+}
+.till-line-code {
+    color: #6c757d;
+    font-weight: 400;
+    font-size: 0.68rem;
+    margin-left: 0.2rem;
+}
+.till-line-price {
+    white-space: nowrap;
+    color: #198754;
+    font-weight: 700;
+    font-size: 0.85rem;
+}
+.till-line-x {
+    border: none;
+    background: none;
+    color: #dc3545;
+    font-size: 1.1rem;
+    line-height: 1;
+    cursor: pointer;
+    padding: 0 2px;
+}
+.till-line-x:hover {
+    color: #b02a37;
+}
+.till-line-mid {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    margin-top: 3px;
+}
+.till-qty {
+    display: inline-flex;
+    align-items: center;
+    border: 1px solid #ced4da;
+    border-radius: 14px;
+    overflow: hidden;
+    background: #fff;
+}
+.till-qty-btn {
+    border: none;
+    background: #e9ecef;
+    width: 22px;
+    height: 21px;
+    line-height: 1;
+    font-weight: 700;
+    font-size: 0.9rem;
+    cursor: pointer;
+    color: #212529;
+    padding: 0;
+}
+.till-qty-btn:hover {
+    background: #ced4da;
+}
+.till-qty-btn:disabled {
+    opacity: 0.5;
+    cursor: wait;
+}
+.till-qty-val {
+    min-width: 26px;
+    text-align: center;
+    font-weight: 700;
+    font-size: 0.78rem;
+}
+.till-qty-saving {
+    opacity: 0.55;
+    pointer-events: none;
+}
+.till-qty-static {
+    color: #495057;
+    font-weight: 700;
+    font-size: 0.78rem;
+    padding: 2px 8px;
+    background: #f8f9fa;
+    border-radius: 10px;
+}
+.till-chip-mode {
+    display: inline-block;
+    font-size: 0.6rem;
+    font-weight: 800;
+    letter-spacing: 0.4px;
+    padding: 1px 7px;
+    border-radius: 8px;
+    line-height: 1.5;
+    margin-left: auto;
+}
+.till-mode-cash {
+    background: #e9ecef;
+    color: #495057;
+}
+.till-mode-hmo {
+    background: #d1ecf1;
+    color: #0c5460;
+}
+.till-mode-secondary {
+    background: #fff3cd;
+    color: #856404;
+}
+.till-mode-express {
+    background: #e8d5f5;
+    color: #5b2d86;
+}
+.till-split {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0 1.1rem;
+    font-size: 0.71rem;
+    margin-top: 3px;
+    padding-left: 2px;
+}
+.till-split-pay {
+    color: #b02a37;
+}
+.till-split-claim {
+    color: #146c43;
+}
+
+/* ---- Till totals ---- */
+.pharm-till-totals {
+    padding: 0.55rem 0.8rem;
+}
+.pharm-till-row {
+    font-size: 0.8rem;
+    margin-bottom: 2px;
+}
+.pharm-till-row-grand {
+    border-top: 1px solid #dee2e6;
+    margin-top: 4px;
+    padding-top: 5px;
+    font-weight: 700;
+}
+#till-patient-total {
+    color: #b02a37;
+}
+#till-claims-total {
+    color: #146c43;
+}
+.pharm-till-actions {
+    padding: 0.55rem 0.8rem 0.8rem;
+}
+#till-primary-cta {
+    font-weight: 700;
+}
+
+/* ---- Cart review modal money chips ---- */
+.cart-item-split {
+    margin-top: 2px;
+}
+.cart-item-split .badge {
+    font-weight: 600;
+}
+.cart-section-total {
+    font-size: 0.85rem;
+}
+
+/* ---- Scan/bag flash feedback ---- */
+@keyframes pharmFlashOk {
+    0%   { box-shadow: 0 0 0 3px rgba(25, 135, 84, 0.6); }
+    100% { box-shadow: 0 0 0 0 rgba(25, 135, 84, 0); }
+}
+@keyframes pharmFlashBad {
+    0%   { box-shadow: 0 0 0 3px rgba(220, 53, 69, 0.65); }
+    100% { box-shadow: 0 0 0 0 rgba(220, 53, 69, 0); }
+}
+.pharm-shelf .presc-card.pharm-flash-ok,
+.pharm-scanbar.pharm-flash-ok {
+    animation: pharmFlashOk 0.7s ease 1;
+}
+.pharm-scanbar.pharm-flash-bad {
+    animation: pharmFlashBad 0.7s ease 1;
+}
+
+/* ---- Till minimise + drag ---- */
+#pharm-till.pharm-till-min .pharm-till-body {
+    display: none;
+}
+#pharm-till.pharm-till-min .pharm-till-totals {
+    border-top: none;
+    padding-top: 0.4rem;
+}
+.pharm-till-header {
+    cursor: default;
+    user-select: none;
+    -webkit-user-select: none;
+    gap: 0.4rem;
+}
+.pharm-till-drag {
+    display: flex;
+    align-items: center;
+    gap: 3px;
+    flex: 1;
+    min-width: 0;
+    cursor: grab;
+    touch-action: none;
+}
+.pharm-till-drag:active,
+#pharm-till.pharm-till-dragging .pharm-till-drag {
+    cursor: grabbing;
+}
+.pharm-till-grip {
+    margin-left: auto;
+    padding: 0 2px;
+    opacity: 0.55;
+    font-size: 0.9rem;
+}
+#pharm-till.pharm-till-dragging {
+    opacity: 0.96;
+    box-shadow: 0 14px 36px rgba(0, 0, 0, 0.28), 0 3px 10px rgba(0, 0, 0, 0.18);
+    transition: none;
+}
+body.pharm-till-unselectable {
+    user-select: none;
+    -webkit-user-select: none;
+}
+.pharm-till-min-btn {
+    font-size: 1.05rem;
+    line-height: 1;
+    color: rgba(255, 255, 255, 0.9);
+}
+.pharm-till-min-btn:hover {
+    color: #fff;
+}
+#pharm-till-header .btn-link {
+    color: rgba(255, 255, 255, 0.85);
+}
+#pharm-till-header .btn-link:hover {
+    color: #fff;
+}
+
+/* ---- Till controls: minimise (header, distinct) vs Clear (footer, far away) ---- */
+.pharm-till-min-btn {
+    flex: 0 0 auto;
+    width: 26px;
+    height: 26px;
+    padding: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid rgba(255, 255, 255, 0.4);
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.10);
+    color: #fff;
+    font-size: 1rem;
+    line-height: 1;
+}
+.pharm-till-min-btn:hover,
+.pharm-till-min-btn:focus {
+    background: rgba(255, 255, 255, 0.22);
+    color: #fff;
+}
+
+/* Clear bag — a quiet, deliberate footer control, spatially far from minimise */
+.pharm-till-clear-row {
+    margin-top: 0.5rem;
+    padding-top: 0.45rem;
+    border-top: 1px dashed #e9ecef;
+    text-align: center;
+}
+.pharm-till-clear-btn {
+    border: none;
+    background: none;
+    color: #adb5bd;
+    font-size: 0.72rem;
+    font-weight: 600;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 2px 8px;
+    border-radius: 4px;
+}
+.pharm-till-clear-btn:hover {
+    color: #b02a37;
+    background: rgba(220, 53, 69, 0.08);
+}
+
+/* Persistent drag hint — always visible (incl. when the till is minimised) */
+.pharm-till-hint {
+    display: flex;
+    align-items: flex-start;
+    gap: 6px;
+    padding: 0.4rem 0.7rem 0.55rem;
+    font-size: 0.62rem;
+    line-height: 1.4;
+    color: #6c757d;
+    border-top: 1px solid #f1f3f5;
+    background: #fcfcfd;
+    user-select: none;
+    -webkit-user-select: none;
+}
+.pharm-till-hint i {
+    font-size: 0.85rem;
+    line-height: 1.2;
+}
+
+/* ---- Head total chip (used by the mobile pill) — hidden by default ---- */
+.pharm-till-head-total {
+    display: none;
+    white-space: nowrap;
+    font-weight: 700;
+    font-size: 0.8rem;
+    color: #fff;
+}
+
+/* =========================================================
+   Mobile (<992px): the till is a persistent bottom floating
+   button. Default state (pharmTillMinimized) is a compact
+   pill docked at the bottom of the viewport; tapping it
+   expands the till into a bottom sheet (bag list + totals +
+   actions). Minimise again to collapse back to the pill.
+   ========================================================= */
+@media (max-width: 991.98px) {
+    #pharm-till {
+        position: fixed !important;
+        top: auto !important;
+        bottom: calc(10px + env(safe-area-inset-bottom, 0px)) !important;
+        left: 8px !important;
+        right: 8px !important;
+        width: auto !important;
+        height: auto !important;
+        max-height: min(78vh, 640px);
+        border-left: none;
+        border-radius: 14px;
+        border: 1px solid rgba(255, 255, 255, 0.18);
+        box-shadow: 0 12px 34px rgba(0, 0, 0, 0.35);
+        z-index: 1200;
+        display: flex;
+        transition: max-height 0.22s ease, transform 0.22s ease, border-radius 0.22s ease;
+        overflow: hidden;
+    }
+    #pharm-till.pharm-till-min {
+        left: 50% !important;
+        right: auto !important;
+        transform: translateX(-50%);
+        width: max-content !important;
+        min-width: 235px;
+        max-width: calc(100vw - 16px);
+        max-height: none;
+        border-radius: 999px;
+        border: 1px solid rgba(255, 255, 255, 0.28);
+        box-shadow: 0 8px 26px rgba(0, 0, 0, 0.32);
+    }
+    /* Pill = header only (count + total + chevron). Expanded = full till. */
+    #pharm-till.pharm-till-min .pharm-till-body,
+    #pharm-till.pharm-till-min .pharm-till-totals,
+    #pharm-till.pharm-till-min .pharm-till-actions,
+    #pharm-till.pharm-till-min .pharm-till-clear-row,
+    #pharm-till.pharm-till-min .pharm-till-hint {
+        display: none !important;
+    }
+    #pharm-till.pharm-till-min .pharm-till-header {
+        border-radius: 999px;
+    }
+    #pharm-till.pharm-till-min .pharm-till-header,
+    #pharm-till.pharm-till-header {
+        border-radius: 14px 14px 0 0;
+    }
+    /* Drag affordance removed on mobile: tap the pill to expand. */
+    .pharm-till-grip {
+        display: none;
+    }
+    .pharm-till-drag {
+        cursor: pointer;
+        touch-action: manipulation;
+    }
+    #pharm-till.pharm-till-min .pharm-till-drag {
+        justify-content: center;
+    }
+    .pharm-till-head-total {
+        display: inline-block;
+        margin-left: auto;
+    }
+    #pharm-till.pharm-till-min .pharm-till-head-total {
+        margin-left: 6px;
+    }
+    /* The drag hint does not apply on mobile (no dragging). */
+    .pharm-till-hint {
+        display: none;
+    }
+    /* Keep the sheet's bag list scrollable while the footer stays put. */
+    .pharm-till-body {
+        min-height: 40px;
+    }
+    #pharm-till:not(.pharm-till-min) .pharm-till-header,
+    #pharm-till:not(.pharm-till-min) .pharm-till-totals,
+    #pharm-till:not(.pharm-till-min) .pharm-till-actions,
+    #pharm-till:not(.pharm-till-min) .pharm-till-clear-row {
+        flex-shrink: 0;
+    }
+}
+
+/* =========================================================
+   Mobile look & feel: compact patient identity strip, icon
+   toolbar on phones, card-first dense prescription cards,
+   sticky stage pills, till-sheet scrim, content clear-space.
+   <992px  = unified checkout mobile mode (matches the till)
+   <576px  = phone tier (icon-only toolbar, tighter cards)
+   Desktop (>=992px) keeps the full information layout.
+   ========================================================= */
+
+/* ---- Prescription card quick chips + collapsible details (shared) ---- */
+.presc-card-quick {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.3rem 0.5rem;
+    margin-bottom: 2px;
+}
+.presc-quick-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.28rem;
+    background: #eef2f6;
+    border: 1px solid #e2e8f0;
+    color: #33475b;
+    padding: 0.1rem 0.55rem;
+    border-radius: 999px;
+    font-size: 0.76rem;
+    line-height: 1.5;
+    max-width: 100%;
+}
+.presc-quick-chip .mdi {
+    font-size: 0.92rem;
+    color: #5b6b7b;
+    flex: 0 0 auto;
+}
+.presc-quick-chip strong {
+    font-weight: 600;
+}
+/* Desktop default: the extras (billing/stock/meta) are always visible. */
+.presc-card-extras {
+    display: block;
+}
+.presc-card-details-btn {
+    display: none;
+}
+
+@media (max-width: 991.98px) {
+    /* Phones/tablets: extras are collapsed behind the Details toggle. */
+    .presc-card-extras {
+        display: none;
+    }
+    .presc-card-extras.expanded {
+        display: block;
+        margin-top: 0.35rem;
+    }
+    .presc-card-details-btn {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.3rem;
+        width: 100%;
+        margin-top: 0.4rem;
+        padding: 0.32rem 0.5rem;
+        background: #f8f9fb;
+        border: 1px dashed #cfd8e3;
+        border-radius: 0.5rem;
+        color: #5b6b7b;
+        font-size: 0.74rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: background 0.15s ease, color 0.15s ease;
+    }
+    .presc-card-details-btn:hover {
+        background: #eef2f6;
+        color: #0d6efd;
+    }
+    .presc-card-details-btn.open {
+        color: #0d6efd;
+        border-style: solid;
+    }
+}
+@media (min-width: 992px) {
+    .presc-card-details-btn {
+        display: none !important;
+    }
+}
+
+/* =========================================================
+   <992px: compact patient header (identity strip)
+   ========================================================= */
+@media (max-width: 991.98px) {
+    .patient-header {
+        padding: 0.9rem 1rem 0.6rem;
+    }
+    .patient-header-top {
+        flex-wrap: wrap;
+        align-items: flex-start;
+        column-gap: 0.8rem;
+        row-gap: 0.5rem;
+        margin-bottom: 0.35rem;
+    }
+    .patient-header-top > div:first-child {
+        min-width: 0;
+    }
+    .patient-name {
+        font-size: clamp(1.2rem, 4.2vw, 1.5rem);
+        line-height: 1.3;
+        margin-bottom: 0;
+        min-width: 0;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    .patient-meta {
+        flex-wrap: wrap;
+        gap: 0.35rem 0.6rem;
+        font-size: 0.8rem;
+    }
+    .patient-meta-item {
+        min-width: 0;
+        background: rgba(255, 255, 255, 0.16);
+        border: 1px solid rgba(255, 255, 255, 0.24);
+        padding: 0.1rem 0.55rem;
+        border-radius: 999px;
+        white-space: nowrap;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.32rem;
+        max-width: 100%;
+    }
+    .patient-meta-item span {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        max-width: 36vw;
+    }
+    .patient-meta-item .mdi {
+        font-size: 0.9rem;
+        flex: 0 0 auto;
+    }
+    /* Account balance becomes a slim compact chip beside the name.
+       (Its visibility is still controlled by jQuery .show()/.hide() —
+       this block only restyles it while shown, never forces it open.) */
+    .patient-account-balance {
+        flex: 0 0 auto;
+        align-self: flex-start;
+        margin-top: 0;
+        padding: 0.28rem 0.8rem;
+        border-radius: 999px;
+    }
+    .patient-account-balance .balance-label {
+        margin-bottom: 0.05rem;
+        font-size: 0.56rem;
+        letter-spacing: 0.4px;
+        white-space: nowrap;
+        line-height: 1.2;
+    }
+    .patient-account-balance .balance-value {
+        font-size: 1.02rem;
+        line-height: 1.2;
+        white-space: nowrap;
+    }
+    /* Alerts stays a compact inline pill; alerts feed capped so the band stays slim. */
+    .patient-header #btn-manage-alerts {
+        padding: 0.2rem 0.6rem;
+        font-size: 0.75rem;
+        border-radius: 999px;
+    }
+    .patient-header .sticky-header-alerts {
+        max-height: 44px !important;
+        font-size: 0.78rem;
+    }
+}
+
+/* =========================================================
+   <576px phone tier: patient header + icon-only toolbar
+   ========================================================= */
+@media (max-width: 575.98px) {
+    .patient-header {
+        padding: 0.65rem 0.8rem 0.5rem;
+    }
+    .patient-header-top {
+        row-gap: 0.4rem;
+    }
+    .patient-header .d-flex.align-items-center {
+        min-width: 0;
+    }
+    .patient-name {
+        flex: 1 1 auto;
+        min-width: 0;
+        font-size: clamp(1.02rem, 4.6vw, 1.28rem);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    .patient-header #btn-manage-alerts {
+        flex: 0 0 auto;
+    }
+    /* Only the essential chips on the identity strip; HMO name / HMO No
+       stay available inside "more biodata" (and on each billing card). */
+    .patient-meta-item:has(.mdi-hospital-building),
+    .patient-meta-item:has(.mdi-card-account-details-outline) {
+        display: none;
+    }
+    .patient-meta-item {
+        font-size: 0.74rem;
+        padding: 0.08rem 0.5rem;
+    }
+    .patient-account-balance {
+        padding: 0.24rem 0.7rem;
+    }
+    .patient-account-balance .balance-label {
+        font-size: 0.5rem;
+    }
+    .patient-account-balance .balance-value {
+        font-size: 0.92rem;
+    }
+    /* "more biodata" becomes a slim full-width chevron strip. */
+    .btn-expand-patient {
+        flex: 1 0 100%;
+        width: 100%;
+        order: 20;
+        margin-top: 0.4rem;
+        padding: 0.34rem 0.75rem;
+        font-size: 0.78rem;
+        border-radius: 0.55rem;
+    }
+    /* Expanded biodata reads as one tight column on phones. */
+    .patient-details-expanded.show {
+        margin-top: 0.55rem;
+        padding-top: 0.55rem;
+    }
+    .patient-details-grid {
+        grid-template-columns: 1fr;
+        gap: 0.45rem;
+    }
+    .patient-detail-item {
+        padding: 0.4rem 0.7rem;
+        border-radius: 0.45rem;
+        font-size: 0.85rem;
+    }
+    .patient-detail-item .patient-detail-value {
+        word-break: break-word;
+    }
+
+    /* ---- Top toolbar collapses to an icon-only single row ---- */
+    .workspace-navbar {
+        flex-wrap: nowrap;
+        padding: 0.45rem 0.6rem;
+        gap: 0.5rem;
+    }
+    .workspace-navbar .pharm-label {
+        display: none;
+    }
+    .btn-back-to-search {
+        padding: 0.42rem 0.7rem;
+        font-size: 0.8rem;
+        flex: 0 0 auto;
+    }
+    .btn-back-to-search::after {
+        content: 'Back';
+    }
+    .workspace-navbar-actions {
+        flex-wrap: nowrap;
+        gap: 0.4rem;
+        margin-left: auto;
+    }
+    .workspace-navbar-actions .btn,
+    .workspace-navbar-actions .btn-clinical-context {
+        width: 38px;
+        height: 38px;
+        padding: 0;
+        flex: 0 0 auto;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 50%;
+    }
+    .workspace-navbar-actions .btn i,
+    .workspace-navbar-actions .btn-clinical-context i {
+        font-size: 1.08rem;
+        line-height: 1;
+    }
+}
+
+/* Tablet-and-narrower labelled row (576–768px) without wrapping chaos. */
+@media (min-width: 576px) and (max-width: 767.98px) {
+    .workspace-navbar {
+        flex-wrap: wrap;
+        row-gap: 0.4rem;
+        padding: 0.6rem 0.75rem;
+    }
+    .workspace-navbar-actions {
+        flex-wrap: wrap;
+    }
+    .btn-back-to-search,
+    .workspace-navbar-actions .btn,
+    .workspace-navbar-actions .btn-clinical-context {
+        font-size: 0.82rem;
+        padding: 0.38rem 0.7rem;
+    }
+}
+
+/* =========================================================
+   Card-first density for the DataTable cards
+   ========================================================= */
+@media (max-width: 991.98px) {
+    /* Kill the DataTable's inner horizontal scroll: DataTables auto-width
+       measures a pixel width for the card column that can exceed the viewport,
+       so give the two columns a fixed split on mobile/tablet — the checkbox
+       column keeps a small fixed width and the card column takes the rest.
+       !important beats the px widths DataTables writes onto the cells. */
+    .pharm-shelf table.dataTable {
+        table-layout: fixed !important;
+        width: 100% !important;
+    }
+    .pharm-shelf table.dataTable th,
+    .pharm-shelf table.dataTable td {
+        overflow-wrap: break-word;
+    }
+    .pharm-shelf table.dataTable th:first-child,
+    .pharm-shelf table.dataTable td:first-child {
+        width: 34px !important;
+        padding-left: 2px;
+        padding-right: 2px;
+    }
+    .pharm-shelf table.dataTable th:last-child,
+    .pharm-shelf table.dataTable td:last-child {
+        width: auto !important;
+    }
+    .pharm-shelf .presc-card-header {
+        gap: 0.5rem;
+        align-items: flex-start;
+    }
+    .pharm-shelf .presc-card-header > div:first-child {
+        min-width: 0;
+        flex: 1 1 auto;
+    }
+    .pharm-shelf .presc-card-title {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+    .pharm-shelf .presc-card-header > .text-end {
+        flex: 0 0 auto;
+        padding-left: 0.4rem;
+    }
+    .pharm-shelf .presc-card-actions {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 0.3rem;
+    }
+    .pharm-shelf .presc-card-actions .btn {
+        margin-left: 0 !important;
+    }
+}
+
+@media (max-width: 575.98px) {
+    /* Slimmer checkbox column, tighter cards. */
+    #presc_billing_table th:first-child,
+    #presc_pending_table th:first-child,
+    #presc_dispense_table th:first-child,
+    #presc_history_table th:first-child,
+    #presc_billing_table td:first-child,
+    #presc_pending_table td:first-child,
+    #presc_dispense_table td:first-child,
+    #presc_history_table td:first-child {
+        width: 30px !important;
+        padding-left: 2px;
+        padding-right: 2px;
+    }
+    #presc_billing_table td,
+    #presc_pending_table td,
+    #presc_dispense_table td,
+    #presc_history_table td {
+        padding: 5px;
+    }
+    /* Action buttons become a single row of icon buttons (labels hidden). */
+    .pharm-shelf .presc-card-actions .pharm-label {
+        display: none;
+    }
+    .pharm-shelf .presc-card-actions .btn {
+        width: 30px;
+        height: 30px;
+        padding: 0;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 50%;
+    }
+    .pharm-shelf .presc-card-actions .btn i {
+        font-size: 0.95rem;
+        line-height: 1;
+    }
+    .pharm-shelf .presc-card-price {
+        font-size: 0.88rem;
+    }
+    .pharm-shelf .presc-card-meta {
+        font-size: 0.68rem;
+    }
+}
+
+/* =========================================================
+   <992px: sticky stage pills + content clear space + scrim
+   ========================================================= */
+@media (max-width: 991.98px) {
+    /* Keep enough scroll room under the till pill/sheet for the last card. */
+    .workspace-tab-content {
+        padding-bottom: calc(96px + env(safe-area-inset-bottom, 0px));
+    }
+    /* The stage filter pills pin to the top and swipe horizontally. */
+    .pharm-stage-filters {
+        position: sticky;
+        top: 0;
+        z-index: 30;
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        overflow-y: hidden;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
+        background: #fff;
+        padding: 0.35rem 0.45rem 0.3rem;
+        margin-bottom: 0.6rem !important;
+        box-shadow: 0 1px 0 #e9ecef, 0 2px 6px rgba(0, 0, 0, 0.04);
+    }
+    .pharm-stage-filters::-webkit-scrollbar {
+        display: none;
+    }
+    .pharm-stage-filters .nav-item {
+        margin-bottom: 0;
+    }
+    .pharm-stage-filters .nav-link {
+        border-radius: 999px;
+        white-space: nowrap;
+        padding: 0.42rem 0.8rem;
+        font-size: 0.84rem;
+        border: 1px solid #e2e8f0;
+        background: #f4f6f9;
+        color: #33475b;
+        margin-right: 0.35rem;
+    }
+    .pharm-stage-filters .nav-link.active {
+        background: var(--hospital-primary, #011b33);
+        border-color: var(--hospital-primary, #011b33);
+        color: #fff;
+    }
+    .pharm-stage-filters .nav-link .badge {
+        margin-left: 0.25rem;
+    }
+    /* Dim behind the expanded till bottom sheet (tap to collapse it back
+       to the pill — handled in pharmacy-dispensing.js). */
+    #pharm-till:not(.pharm-till-min)::before {
+        content: '';
+        position: fixed;
+        inset: 0;
+        background: rgba(4, 12, 24, 0.42);
+        z-index: -1;
+    }
+}

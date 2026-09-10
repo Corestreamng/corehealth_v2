@@ -769,7 +769,7 @@
     <div class="modal-dialog modal-md" role="document">
         <div class="modal-content">
             <div class="modal-header" style="background: linear-gradient(135deg, #3949ab, #1a237e); color: #fff;">
-                <h5 class="modal-title"><i class="mdi mdi-cash-edit"></i> Adjust Price (Pre-Billing)</h5>
+                <h5 class="modal-title"><i class="mdi mdi-cash-usd"></i> Adjust Price (Pre-Billing)</h5>
                 <button type="button" data-bs-dismiss="modal" class="btn-close text-white btn-close-white" aria-label="Close"></button>
             </div>
             <div class="modal-body">

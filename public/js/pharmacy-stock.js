@@ -1023,18 +1023,21 @@ window.billPrescItems = function() {
         return;
     }
 
-    // Get selected items from DataTable checkboxes - use scoped selector and attr
-    const selectedIds = [];
-    $('#presc_billing_table').find('.presc-billing-check:checked').each(function() {
-        const id = $(this).attr('data-id') || $(this).data('id');
-        if (id) selectedIds.push(id);
-    });
-
-    // Also check card-based checkboxes (unbilled section)
-    $('.request-section[data-section="unbilled"] .prescription-checkbox:checked').each(function() {
-        const id = $(this).attr('data-id') || $(this).data('id');
-        if (id) selectedIds.push(id);
-    });
+    // Bill from the till bag when present (survives DataTable redraws/paging);
+    // fall back to DataTable checkboxes for older call sites.
+    let selectedIds = (typeof window.pharmBagIds === 'function') ? window.pharmBagIds('billing') : [];
+    if (!selectedIds.length) {
+        selectedIds = [];
+        $('#presc_billing_table').find('.presc-billing-check:checked').each(function() {
+            const id = $(this).attr('data-id') || $(this).data('id');
+            if (id) selectedIds.push(id);
+        });
+        // Also check card-based checkboxes (unbilled section)
+        $('.request-section[data-section="unbilled"] .prescription-checkbox:checked').each(function() {
+            const id = $(this).attr('data-id') || $(this).data('id');
+            if (id) selectedIds.push(id);
+        });
+    }
 
     console.log('Bill - Found checkboxes:', $('#presc_billing_table').find('.presc-billing-check:checked').length);
     console.log('Bill - Selected IDs:', selectedIds);
@@ -1075,6 +1078,10 @@ window.billPrescItems = function() {
                 updatePrescBillingTotalPharmacy();
                 // Update queue counts as items may have moved
                 loadQueueCounts();
+                // Keep the cashier in the flow: bag cleared, scan bar focused.
+                if (typeof window.pharmOnTillActionSuccess === 'function') {
+                    window.pharmOnTillActionSuccess('billed');
+                }
             } else {
                 toastr.error(response.message || 'Failed to bill items');
             }
@@ -1105,41 +1112,46 @@ window.dismissPrescItemsConfirmed = function(type) {
         return;
     }
 
-    const selectedIds = [];
-
-    if (type === 'billing') {
-        // From DataTable - use scoped selector and attr
-        $('#presc_billing_table').find('.presc-billing-check:checked').each(function() {
-            const id = $(this).attr('data-id') || $(this).data('id');
-            if (id) selectedIds.push(id);
-        });
-        // From card-based view
-        $('.request-section[data-section="unbilled"] .prescription-checkbox:checked').each(function() {
-            const id = $(this).attr('data-id') || $(this).data('id');
-            if (id) selectedIds.push(id);
-        });
-    } else if (type === 'pending') {
-        // From DataTable - use scoped selector and attr
-        $('#presc_pending_table').find('.presc-pending-check:checked').each(function() {
-            const id = $(this).attr('data-id') || $(this).data('id');
-            if (id) selectedIds.push(id);
-        });
-        // From card-based view
-        $('.request-section[data-section="billed"] .prescription-checkbox:checked').each(function() {
-            const id = $(this).attr('data-id') || $(this).data('id');
-            if (id) selectedIds.push(id);
-        });
-    } else if (type === 'dispense') {
-        // From DataTable - use scoped selector and attr
-        $('#presc_dispense_table').find('.presc-dispense-check:checked').each(function() {
-            const id = $(this).attr('data-id') || $(this).data('id');
-            if (id) selectedIds.push(id);
-        });
-        // From card-based view
-        $('.request-section[data-section="ready"] .prescription-checkbox:checked').each(function() {
-            const id = $(this).attr('data-id') || $(this).data('id');
-            if (id) selectedIds.push(id);
-        });
+    // Dismiss from the till bag when present (survives DataTable redraws/paging);
+    // fall back to DataTable checkboxes for older call sites.
+    let selectedIds = (typeof window.pharmBagIds === 'function') ? window.pharmBagIds(type) : [];
+    if (!selectedIds.length) {
+        selectedIds = [];
+        const stage = type; // billing | pending | dispense
+        if (stage === 'billing') {
+            // From DataTable - use scoped selector and attr
+            $('#presc_billing_table').find('.presc-billing-check:checked').each(function() {
+                const id = $(this).attr('data-id') || $(this).data('id');
+                if (id) selectedIds.push(id);
+            });
+            // From card-based view
+            $('.request-section[data-section="unbilled"] .prescription-checkbox:checked').each(function() {
+                const id = $(this).attr('data-id') || $(this).data('id');
+                if (id) selectedIds.push(id);
+            });
+        } else if (stage === 'pending') {
+            // From DataTable - use scoped selector and attr
+            $('#presc_pending_table').find('.presc-pending-check:checked').each(function() {
+                const id = $(this).attr('data-id') || $(this).data('id');
+                if (id) selectedIds.push(id);
+            });
+            // From card-based view
+            $('.request-section[data-section="billed"] .prescription-checkbox:checked').each(function() {
+                const id = $(this).attr('data-id') || $(this).data('id');
+                if (id) selectedIds.push(id);
+            });
+        } else if (stage === 'dispense') {
+            // From DataTable - use scoped selector and attr
+            $('#presc_dispense_table').find('.presc-dispense-check:checked').each(function() {
+                const id = $(this).attr('data-id') || $(this).data('id');
+                if (id) selectedIds.push(id);
+            });
+            // From card-based view
+            $('.request-section[data-section="ready"] .prescription-checkbox:checked').each(function() {
+                const id = $(this).attr('data-id') || $(this).data('id');
+                if (id) selectedIds.push(id);
+            });
+        }
     }
 
     console.log('Dismiss - Type:', type, 'Selected IDs:', selectedIds);
@@ -1168,8 +1180,9 @@ window.dismissPrescItemsConfirmed = function(type) {
             $btn.prop('disabled', false).html(originalHtml);
             if (response.success) {
                 toastr.success(response.message || 'Items dismissed successfully');
-                // Clear stored data
+                // Clear stored data + till bag
                 selectedItemsData[type] = [];
+                if (typeof window.pharmClearBagType === 'function') window.pharmClearBagType(type);
                 // Reload DataTables
                 initializePrescriptionDataTables(currentPatient);
                 loadPrescriptionItems(currentStatusFilter);
@@ -1220,48 +1233,85 @@ function addSelectedToCartAndOpen() {
         return;
     }
 
-    // Get selected items from DataTable
+    // Add from the till bag when present (survives DataTable redraws/paging);
+    // fall back to DataTable checkboxes for older call sites.
+    const bagItems = (typeof window.pharmBagIds === 'function') ? (window.pharmBagList ? window.pharmBagList('dispense') : []) : [];
     const $checkedItems = $('#presc_dispense_table').find('.presc-dispense-check:checked');
 
-    if ($checkedItems.length === 0) {
+    if (!bagItems.length && $checkedItems.length === 0) {
         toastr.warning('Please select items to add to cart');
         return;
     }
 
     let addedCount = 0;
-    $checkedItems.each(function() {
-        const $checkbox = $(this);
-        const $card = $checkbox.closest('tr').find('.presc-card');
-        const id = $checkbox.attr('data-id') || $checkbox.data('id');
-
+    const addOne = function(item) {
         // Skip if already in cart
-        if (dispenseCart.find(item => item.id == id)) {
+        if (dispenseCart.find(c => c.id == item.id)) {
             return;
         }
-
-        // Get item details from card data-attributes (most reliable)
-        const productId = $card.attr('data-product-id') || $checkbox.attr('data-product-id');
-        const productName = $card.find('.presc-card-title').text().trim() || 'Unknown Product';
-        const qty = parseInt($card.attr('data-qty')) || 1;
-        const price = parseFloat($card.attr('data-total-price')) || 0;
-
         dispenseCart.push({
-            id: id,
-            product_id: productId,
-            product_name: productName,
-            qty: qty,
-            price: price / qty, // Store as unit price for consistency in renderDispenseCart
-            total_billed: price,
+            id: item.id,
+            product_id: item.productId || item.product_id || '',
+            product_name: item.name || item.product_name || 'Unknown Product',
+            qty: item.qty || 1,
+            price: (item.unit && item.unit > 0) ? item.unit : (item.price || 0), // unit price for renderDispenseCart
+            total_billed: item.price || item.total_billed || 0,
+            payable_total: item.payable || item.payable_total || 0,
+            claims_total: item.claims || item.claims_total || 0,
+            coverage_mode: item.coverageMode || item.coverage_mode || null,
             stock: null,
             stock_status: 'pending' // Will check when store is selected
         });
-
         addedCount++;
-        $checkbox.prop('checked', false);
-    });
+    };
+
+    if (bagItems.length) {
+        bagItems.forEach(addOne);
+        // Rows leave the bag once they move into the dispense cart.
+        if (typeof window.pharmClearBagType === 'function') window.pharmClearBagType('dispense');
+        $('#presc_dispense_table').find('.presc-dispense-check:checked').prop('checked', false);
+        $('#presc_dispense_table').find('.presc-card.selected').removeClass('selected');
+    } else {
+        $checkedItems.each(function() {
+            const $checkbox = $(this);
+            const $card = $checkbox.closest('tr').find('.presc-card');
+            const id = $checkbox.attr('data-id') || $checkbox.data('id');
+
+            // Skip if already in cart
+            if (dispenseCart.find(item => item.id == id)) {
+                return;
+            }
+
+            // Get item details from card data-attributes (most reliable)
+            const productId = $card.attr('data-product-id') || $checkbox.attr('data-product-id');
+            const productName = $card.find('.presc-card-title').text().trim() || 'Unknown Product';
+            const qty = parseInt($card.attr('data-qty')) || 1;
+            const price = parseFloat($card.attr('data-total-price')) || 0;
+            const payableTotal = parseFloat($card.attr('data-payable')) || 0;
+            const claimsTotal = parseFloat($card.attr('data-claims')) || 0;
+            const coverageMode = $card.attr('data-coverage-mode') || null;
+
+            dispenseCart.push({
+                id: id,
+                product_id: productId,
+                product_name: productName,
+                qty: qty,
+                price: price / qty, // Store as unit price for consistency in renderDispenseCart
+                total_billed: price,
+                payable_total: payableTotal,
+                claims_total: claimsTotal,
+                coverage_mode: coverageMode,
+                stock: null,
+                stock_status: 'pending' // Will check when store is selected
+            });
+
+            addedCount++;
+            $checkbox.prop('checked', false);
+        });
+    }
 
     // Uncheck select all
-    $('#select-all-dispense').prop('checked', false);
+    $('#select-all-dispense').prop('checked', false).prop('indeterminate', false);
 
     if (addedCount> 0) {
         toastr.success(`Added ${addedCount} item(s) to cart`);
@@ -1344,11 +1394,21 @@ function renderDispenseCart() {
             statusBadge = '<span class="badge bg-warning text-dark badge-sm">?</span>';
         }
 
+        const moneySplit = (item.payable_total > 0 || item.claims_total > 0)
+            ? `<div class="small mt-1">
+                  <span class="text-danger me-2"><i class="mdi mdi-cash"></i> Pay ₦${Number(item.payable_total || 0).toLocaleString('en-NG', {minimumFractionDigits: 2})}</span>
+                  <span class="text-success me-2"><i class="mdi mdi-shield-check"></i> HMO ₦${Number(item.claims_total || 0).toLocaleString('en-NG', {minimumFractionDigits: 2})}</span>
+                  ${item.coverage_mode && item.coverage_mode !== 'cash' && item.coverage_mode !== 'none'
+                      ? `<span class="badge bg-info">${String(item.coverage_mode).toUpperCase()}</span>` : ''}
+               </div>`
+            : '';
+
         html += `
             <tr class="${rowClass}" data-cart-index="${index}" data-item-id="${item.id}" data-product-id="${item.product_id || ''}">
                 <td>
                     <strong class="d-block">${item.product_name}</strong>
                     <small class="text-muted">PR #${item.id} | Prod #${item.product_id || 'N/A'}</small>
+                    ${moneySplit}
                 </td>
                 <td class="text-center">${item.qty}</td>
                 <td class="text-center cart-batch-cell">${batchDisplay}</td>
@@ -1703,6 +1763,10 @@ function dispenseFromCart() {
             refreshAllPrescTables();
             loadPrescriptionItems(currentStatusFilter);
             loadQueueCounts();
+            // Keep the cashier in the flow: bag cleared, scan bar focused.
+            if (typeof window.pharmOnTillActionSuccess === 'function') {
+                window.pharmOnTillActionSuccess('dispensed');
+            }
         },
         error: function(xhr) {
             $btn.prop('disabled', false).html(originalHtml);

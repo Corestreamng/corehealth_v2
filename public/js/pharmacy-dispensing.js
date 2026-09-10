@@ -845,6 +845,12 @@ function loadPatient(patientId) {
     // Hide all sticky bars when loading new patient
     hideAllStickyBars();
 
+    // Reset till bag + selection bookkeeping (new patient = new bag), so the
+    // previous patient's items can never linger in the till.
+    pharmBagClearAll();
+    selectedItemsData = { billing: [], pending: [], dispense: [] };
+    prescBillingTotal = 0;
+
     // Hide all views to prevent stacking
     hideAllViews();
 
@@ -892,6 +898,12 @@ function loadPatient(patientId) {
 
             // Switch to pending tab by default
             switchWorkspaceTab('pending');
+            // Make the till a pinned register rail on wide screens and re-apply
+            // any minimise / drag state the user set this session.
+            setTimeout(function() {
+                pharmApplyTillState();
+                pharmFocusScanInput();
+            }, 300);
         },
         error: function(xhr) {
             console.error('Error loading patient:', xhr);
@@ -995,11 +1007,18 @@ function injectUnifiedPrescPartial(patientId, patientUserId) {
 
         <div class="presc-management-container pharm-checkout" data-patient-id="${patientId}" data-patient-user-id="${patientUserId}">
             <div class="pharm-shelf">
-            <div class="pharm-add-sku">
-                <button type="button" class="btn btn-sm btn-outline-primary" onclick="switchWorkspaceTab('new-request')">
-                    <i class="mdi mdi-barcode-scan"></i> Add item (not on Rx)
+            <div class="pharm-add-sku pharm-scanbar">
+                <span class="pharm-scanbar-icon"><i class="mdi mdi-barcode-scan"></i></span>
+                <input type="text" id="pharm-scan-input" class="form-control form-control-sm pharm-scan-input" autocomplete="off" autocapitalize="off" spellcheck="false"
+                       placeholder="Scan barcode / product code, or type name — 2*CODE sets qty — Enter adds to bag" />
+                <button type="button" class="btn btn-sm btn-primary pharm-scan-add-btn" id="pharm-scan-add-btn" onclick="pharmScanSubmitFromInput()">
+                    <i class="mdi mdi-cart-plus"></i> Add to bag
                 </button>
-                <span class="text-muted small ms-2">Search a product and add it to this patient’s bag</span>
+                <button type="button" class="btn btn-sm btn-outline-secondary pharm-scan-ff-btn" id="pharm-scan-ff-btn" onclick="switchWorkspaceTab('new-request')" title="Compose a doctor-style request with dose/frequency">
+                    <i class="mdi mdi-file-document-edit"></i> New Request
+                </button>
+                <span class="text-muted small ms-2 d-none d-xl-inline">Scanned or searched items land straight in the till.</span>
+                <div id="pharm-scan-results" class="pharm-scan-results" style="display:none;"></div>
             </div>
             <!-- Sub-tabs Navigation (stage filters) -->
             <ul class="nav nav-tabs nav-tabs-modern mb-3 pharm-stage-filters" id="prescSubTabs" role="tablist">
@@ -1205,12 +1224,17 @@ function injectUnifiedPrescPartial(patientId, patientUserId) {
             </div>
             </div>
             <aside class="pharm-till" id="pharm-till" aria-label="Checkout till">
-                <div class="pharm-till-header">
-                    <div>
-                        <strong><i class="mdi mdi-cart"></i> Till</strong>
+                <div class="pharm-till-header" id="pharm-till-header">
+                    <div class="pharm-till-drag" title="Drag to move the till · double-click to re-dock">
+                        <i class="mdi mdi-cart me-1"></i>
+                        <strong>Till</strong>
                         <span class="badge bg-light text-dark ms-1" id="till-item-count">0</span>
+                        <span class="pharm-till-head-total" id="till-head-total">₦0.00</span>
+                        <i class="mdi mdi-drag-horizontal-variant pharm-till-grip" title="Drag to move · double-click header to re-dock"></i>
                     </div>
-                    <button type="button" class="btn btn-link btn-sm p-0" onclick="clearAllSelections()">Clear</button>
+                    <button type="button" class="btn pharm-till-min-btn" id="pharm-till-min-btn" onclick="pharmToggleTillMin()" title="Minimise the till">
+                        <i class="mdi mdi-chevron-up"></i>
+                    </button>
                 </div>
                 <div class="pharm-till-body" id="till-bag-body">
                     <div class="pharm-till-empty">
@@ -1220,7 +1244,9 @@ function injectUnifiedPrescPartial(patientId, patientUserId) {
                 </div>
                 <div class="pharm-till-totals">
                     <div class="pharm-till-row"><span>Items</span><span id="till-count-label">0</span></div>
-                    <div class="pharm-till-row"><span>Bag total</span><strong id="till-grand-total">₦0.00</strong></div>
+                    <div class="pharm-till-row"><span>Patient pays</span><strong id="till-patient-total">₦0.00</strong></div>
+                    <div class="pharm-till-row" id="till-claims-row"><span>HMO claim</span><strong id="till-claims-total">₦0.00</strong></div>
+                    <div class="pharm-till-row pharm-till-row-grand"><span>Bag total</span><strong id="till-grand-total">₦0.00</strong></div>
                 </div>
                 <div class="pharm-till-actions">
                     <button type="button" class="btn btn-primary w-100" id="till-primary-cta" disabled>
@@ -1234,6 +1260,15 @@ function injectUnifiedPrescPartial(patientId, patientUserId) {
                             <i class="mdi mdi-close"></i> Dismiss
                         </button>
                     </div>
+                    <div class="pharm-till-clear-row">
+                        <button type="button" class="pharm-till-clear-btn" id="till-clear-btn" onclick="clearAllSelections()" title="Remove every item from the till">
+                            <i class="mdi mdi-broom"></i> Clear bag
+                        </button>
+                    </div>
+                </div>
+                <div class="pharm-till-hint" id="pharm-till-hint">
+                    <i class="mdi mdi-drag-horizontal-variant"></i>
+                    <span>Drag the till by its header to move it · double-click the header to snap it back</span>
                 </div>
             </aside>
         </div>
@@ -1297,10 +1332,14 @@ function initializePrescriptionDataTables(patientId) {
         ],
         paging: true,
         drawCallback: function() {
-            const info = this.api().page.info();
-            $('#unbilled-subtab-badge, #queue-unbilled-count, #presc-billing-count').text(info.recordsTotal);
-            // Restore checked items after redraw
+            const info = pharmDtDrawInfo(this);
+            if (info) {
+                $('#unbilled-subtab-badge, #queue-unbilled-count, #presc-billing-count').text(info.recordsTotal);
+            }
+            // Re-tick bagged rows from the till bag (survives redraws) and keep
+            // the "select all" header honest for the current page.
             restoreCheckedItemsState('#presc_billing_table', 'presc-billing-check');
+            pharmSyncSelectAll('billing');
             // Attach action button handlers
             attachPrescCardActionHandlers();
         }
@@ -1339,10 +1378,12 @@ function initializePrescriptionDataTables(patientId) {
         ],
         paging: true,
         drawCallback: function() {
-            const info = this.api().page.info();
-            $('#presc-pending-count').text(info.recordsTotal);
-            // Restore checked items after redraw
+            const info = pharmDtDrawInfo(this);
+            if (info) {
+                $('#presc-pending-count').text(info.recordsTotal);
+            }
             restoreCheckedItemsState('#presc_pending_table', 'presc-pending-check');
+            pharmSyncSelectAll('pending');
             // Attach action button handlers
             attachPrescCardActionHandlers();
         }
@@ -1383,10 +1424,12 @@ function initializePrescriptionDataTables(patientId) {
         ],
         paging: true,
         drawCallback: function() {
-            const info = this.api().page.info();
-            $('#billed-subtab-badge, #ready-subtab-badge, #queue-ready-count, #presc-dispense-count').text(info.recordsTotal);
-            // Restore checked items after redraw
+            const info = pharmDtDrawInfo(this);
+            if (info) {
+                $('#billed-subtab-badge, #ready-subtab-badge, #queue-ready-count, #presc-dispense-count').text(info.recordsTotal);
+            }
             restoreCheckedItemsState('#presc_dispense_table', 'presc-dispense-check');
+            pharmSyncSelectAll('dispense');
             // Attach action button handlers
             attachPrescCardActionHandlers();
         }
@@ -1415,8 +1458,10 @@ function initializePrescriptionDataTables(patientId) {
         ],
         paging: true,
         drawCallback: function() {
-            const info = this.api().page.info();
-            $('#presc-history-count').text(info.recordsTotal);
+            const info = pharmDtDrawInfo(this);
+            if (info) {
+                $('#presc-history-count').text(info.recordsTotal);
+            }
         }
     });
 }
@@ -1424,6 +1469,20 @@ function initializePrescriptionDataTables(patientId) {
 // Helper to format money
 function formatMoneyPharmacy(amount) {
     return parseFloat(amount || 0).toLocaleString('en-NG', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+// Safe DataTables draw info — returns null when the instance is mid-teardown /
+// already destroyed (drawCallback can fire on stale instances after a re-init,
+// where page.info() has no usable recordsTotal; that used to throw).
+function pharmDtDrawInfo(dtThis) {
+    try {
+        const api = dtThis && dtThis.api ? dtThis.api() : null;
+        if (!api || !api.page) return null;
+        const info = api.page.info();
+        return (info && typeof info.recordsTotal !== 'undefined') ? info : null;
+    } catch (e) {
+        return null;
+    }
 }
 
 // Attach action button handlers for prescription cards
@@ -1493,28 +1552,34 @@ function attachPrescCardActionHandlers() {
 // Toggle all checkboxes for billing
 function toggleAllPrescBilling(checkbox) {
     const isChecked = $(checkbox).is(':checked');
-    $('.presc-billing-check').prop('checked', isChecked);
     $('.presc-billing-check').each(function() {
-        handlePrescBillingCheckPharmacy(this);
+        $(this).prop('checked', isChecked);
+        handlePrescBillingCheckPharmacy(this); // totals + selected class + till
+        pharmRowBagSync('billing', this);      // bag (so rows persist after redraws)
     });
+    pharmSyncSelectAll('billing');
 }
 
 // Toggle all checkboxes for pending
 function toggleAllPrescPending(checkbox) {
     const isChecked = $(checkbox).is(':checked');
-    $('.presc-pending-check').prop('checked', isChecked);
     $('.presc-pending-check').each(function() {
+        $(this).prop('checked', isChecked);
         handlePrescPendingCheckPharmacy(this);
+        pharmRowBagSync('pending', this);
     });
+    pharmSyncSelectAll('pending');
 }
 
 // Toggle all checkboxes for dispense
 function toggleAllPrescDispense(checkbox) {
     const isChecked = $(checkbox).is(':checked');
-    $('.presc-dispense-check').prop('checked', isChecked);
     $('.presc-dispense-check').each(function() {
+        $(this).prop('checked', isChecked);
         handlePrescDispenseCheckPharmacy(this);
+        pharmRowBagSync('dispense', this);
     });
+    pharmSyncSelectAll('dispense');
 }
 
 // Update billing total display
@@ -1533,47 +1598,155 @@ let selectedItemsData = {
 // Store dismiss type for modal
 let currentDismissType = null;
 
-// Gather selected items data from all tabs
+// =============================================
+// Till bag — single source of truth for bagged items, DECOUPLED from the
+// DataTable DOM. Server-side DataTables only render the current page's rows,
+// so depending on checkboxes lets redraws / paging / auto-refresh silently
+// drop items out of the till. Every bagged item keeps a snapshot of its
+// card's server-rendered attributes (money is never re-derived).
+// =============================================
+let pharmBag = { billing: new Map(), pending: new Map(), dispense: new Map() };
+
+function pharmSnapshotFromCard($card, id) {
+    const name = $card.find('.presc-card-title').text().trim() || 'Unknown';
+    const qty = parseInt($card.attr('data-qty')) || 1;
+    const price = parseFloat($card.attr('data-total-price')) || 0;
+    const payable = parseFloat($card.attr('data-payable')) || 0;
+    const claims = parseFloat($card.attr('data-claims')) || 0;
+    const coverageMode = $card.attr('data-coverage-mode') || null;
+    const productCode = $card.attr('data-product-code') || '';
+    const productId = $card.attr('data-product-id') || '';
+    const unit = price > 0 && qty > 0 ? (price / qty) : 0;
+    return { id: String(id), name: name, qty: qty, price: price, unit: unit,
+             payable: payable, claims: claims, coverageMode: coverageMode,
+             productCode: productCode, productId: productId };
+}
+function pharmBagAdd(type, id, item) {
+    const sid = String(id);
+    pharmBag[type].set(sid, item);
+    if (checkedItemsState[type]) checkedItemsState[type].add(sid);
+    return item;
+}
+function pharmBagAddFromCard(type, id, $card) {
+    if (!$card || !$card.length) return null;
+    return pharmBagAdd(type, id, pharmSnapshotFromCard($card, id));
+}
+function pharmBagRemove(type, id) {
+    const sid = String(id);
+    pharmBag[type].delete(sid);
+    if (checkedItemsState[type]) checkedItemsState[type].delete(sid);
+}
+function pharmBagClear(type) {
+    pharmBag[type].clear();
+    if (checkedItemsState[type]) checkedItemsState[type].clear();
+}
+function pharmBagClearAll() { ['billing', 'pending', 'dispense'].forEach(function(t){ pharmBagClear(t); }); }
+function pharmBagList(type) { return Array.from(pharmBag[type].values()); }
+function pharmBagHas(type, id) { return pharmBag[type].has(String(id)); }
+
+// Apply a server-confirmed quantity change to a bagged snapshot (scales the
+// money linearly, matching the server's unbilled math). Used when the row is
+// not on the DataTable's current page, so the till still updates instantly;
+// the next draw that shows the row re-snapshots from the authoritative card.
+function pharmBagUpdateQty(type, id, newQty) {
+    const sid = String(id);
+    const item = pharmBag[type].get(sid);
+    if (!item) return;
+    const oldQty = item.qty || 1;
+    if (oldQty <= 0 || !(newQty > 0)) return;
+    const f = newQty / oldQty;
+    item.qty = newQty;
+    item.price = Math.round((item.price || 0) * f * 100) / 100;
+    item.payable = Math.round((item.payable || 0) * f * 100) / 100;
+    item.claims = Math.round((item.claims || 0) * f * 100) / 100;
+}
+
+// Single place to sync the bag + "select all" header from a row checkbox
+// whose state just changed (used by the delegated change listeners and by
+// select-all / remove flows that toggle checkboxes programmatically).
+function pharmRowBagSync(type, checkbox) {
+    const $cb = $(checkbox);
+    const id = $cb.attr('data-id') || $cb.data('id');
+    if (!id) return;
+    if ($cb.is(':checked')) {
+        pharmBagAddFromCard(type, id, $cb.closest('tr').find('.presc-card'));
+    } else {
+        pharmBagRemove(type, id);
+    }
+    pharmSyncSelectAll(type);
+}
+// Run the full per-row selection pipeline for a checkbox whose state was
+// changed programmatically (inline onchange handlers only fire on real user
+// clicks, so synthetic toggles must run it explicitly): totals/classes via
+// handle*, then bag + select-all via pharmRowBagSync.
+function pharmCheckboxApply(type, checkbox) {
+    if (!checkbox) return;
+    // Sync the bag FIRST so the totals/class handlers below render a till that
+    // already contains this row. (The card-click / scan flows toggle the box
+    // programmatically, so no native change event fires afterwards to repaint.)
+    pharmRowBagSync(type, checkbox);
+    if (type === 'billing') handlePrescBillingCheckPharmacy(checkbox);
+    else if (type === 'pending') handlePrescPendingCheckPharmacy(checkbox);
+    else if (type === 'dispense') handlePrescDispenseCheckPharmacy(checkbox);
+}
+
+// Cross-file hooks (pharmacy-stock.js bill/dispense/dismiss read the bag).
+window.pharmBagIds = function(type) { return pharmBagList(type).map(function(i){ return i.id; }); };
+// NOTE: do not assign window.pharmBagList = function... here — the top-level
+// function declaration already *is* the global binding, and re-assigning it to
+// a wrapper that calls pharmBagList() makes it call itself (stack overflow).
+window.pharmClearBagType = function(type) { pharmBagClear(type); };
+
+// Keep each stage's "select all" header honest for the rows actually on the
+// current page — it can never stay visually checked while its rows are not.
+function pharmSyncSelectAll(type) {
+    const cfg = {
+        billing: { table: '#presc_billing_table', sel: '#select-all-billing', cls: '.presc-billing-check' },
+        pending: { table: '#presc_pending_table', sel: '#select-all-pending', cls: '.presc-pending-check' },
+        dispense: { table: '#presc_dispense_table', sel: '#select-all-dispense', cls: '.presc-dispense-check' }
+    }[type];
+    if (!cfg || !$(cfg.table).length || !$(cfg.sel).length) return;
+    const total = $(cfg.table).find(cfg.cls).length;
+    const ticked = $(cfg.table).find(cfg.cls).filter(':checked').length;
+    $(cfg.sel).prop('checked', total > 0 && ticked === total);
+    $(cfg.sel).prop('indeterminate', ticked > 0 && ticked < total);
+}
+
+// Gather selected items data from all tabs.
+// All money values come straight off the card's server-rendered data attributes
+// (data-total-price / data-payable / data-claims / data-coverage-mode / data-qty),
+// so the till can never show a figure the billing card itself did not display.
 function gatherSelectedItems() {
+    // Till content comes from the bag (client snapshots of server card data),
+    // so paging, redraws and auto-refresh can never unpark bagged items.
     const data = { billing: [], pending: [], dispense: [] };
     let grandTotal = 0;
-
-    $('#presc_billing_table').find('.presc-billing-check:checked').each(function() {
-        const $row = $(this).closest('tr');
-        const $card = $row.find('.presc-card');
-        const id = $(this).data('id');
-        const price = parseFloat($card.attr('data-total-price')) || 0;
-        const name = $card.find('.presc-card-title').text().trim() || 'Unknown';
-        const qty = parseInt($card.attr('data-qty')) || 1;
-        grandTotal += price;
-        data.billing.push({ id, name, qty, price });
+    ['billing', 'pending', 'dispense'].forEach(function(type) {
+        pharmBag[type].forEach(function(item) {
+            grandTotal += item.price;
+            data[type].push(item);
+        });
     });
-
-    $('#presc_pending_table').find('.presc-pending-check:checked').each(function() {
-        const $row = $(this).closest('tr');
-        const $card = $row.find('.presc-card');
-        const id = $(this).data('id');
-        const name = $card.find('.presc-card-title').text().trim() || 'Unknown';
-        const qty = parseInt($card.attr('data-qty')) || 1;
-        const price = parseFloat($card.attr('data-total-price')) || 0;
-        grandTotal += price;
-        data.pending.push({ id, name, qty, price });
-    });
-
-    $('#presc_dispense_table').find('.presc-dispense-check:checked').each(function() {
-        const $row = $(this).closest('tr');
-        const $card = $row.find('.presc-card');
-        const id = $(this).data('id');
-        const name = $card.find('.presc-card-title').text().trim() || 'Unknown';
-        const qty = parseInt($card.attr('data-qty')) || 1;
-        const price = parseFloat($card.attr('data-total-price')) || 0;
-        grandTotal += price;
-        data.dispense.push({ id, name, qty, price });
-    });
-
     data.totalCount = data.billing.length + data.pending.length + data.dispense.length;
     data.grandTotal = grandTotal;
+    data.patientTotal = data.billing.reduce((s, i) => s + (i.payable || 0), 0)
+        + data.pending.reduce((s, i) => s + (i.payable || 0), 0)
+        + data.dispense.reduce((s, i) => s + (i.payable || 0), 0);
+    data.claimsTotal = data.billing.reduce((s, i) => s + (i.claims || 0), 0)
+        + data.pending.reduce((s, i) => s + (i.claims || 0), 0)
+        + data.dispense.reduce((s, i) => s + (i.claims || 0), 0);
     return data;
+}
+
+function tillCoverageModeBadge(coverageMode) {
+    const cm = String(coverageMode || '').toLowerCase();
+    if (!cm || cm === 'none' || cm === 'cash' || cm === 'null') {
+        return '<span class="till-chip-mode till-mode-cash">CASH</span>';
+    }
+    const clean = String(coverageMode).replace(/[<>&"']/g, '').toUpperCase();
+    const cls = clean === 'SECONDARY' ? 'till-mode-secondary'
+        : (clean === 'EXPRESS' ? 'till-mode-express' : 'till-mode-hmo');
+    return `<span class="till-chip-mode ${cls}">${clean}</span>`;
 }
 
 // Update till bag + floating cart fallback
@@ -1584,7 +1757,10 @@ function updateStickyActionBar(type) {
     selectedItemsData.dispense = data.dispense;
     renderTillBag(data);
 
-    const tillVisible = $('#pharm-till').length && window.matchMedia('(min-width: 992px)').matches;
+    // The till is "available" whenever its element is actually visible — desktop
+    // rail, the 992-1199px sticky rail, or the mobile bottom floating button.
+    const $tillEl = $('#pharm-till');
+    const tillVisible = $tillEl.length > 0 && $tillEl.is(':visible');
     if (tillVisible || data.totalCount === 0) {
         $('#floating-cart').fadeOut(200);
         if (data.totalCount === 0) return;
@@ -1605,24 +1781,56 @@ function renderTillBag(data) {
 
     $('#till-item-count, #till-count-label').text(data.totalCount);
     $('#till-grand-total').text('₦' + formatMoneyPharmacy(data.grandTotal));
+    const $headTotal = $('#till-head-total');
+    if ($headTotal.length) $headTotal.text('₦' + formatMoneyPharmacy(data.grandTotal));
+    $('#till-patient-total').text('₦' + formatMoneyPharmacy(data.patientTotal));
+    $('#till-claims-total').text('₦' + formatMoneyPharmacy(data.claimsTotal));
+    $('#till-claims-row').toggle(data.claimsTotal > 0);
     $('#till-print-btn, #till-dismiss-btn').prop('disabled', data.totalCount === 0);
 
     if (data.totalCount === 0) {
-        $body.html('<div class="pharm-till-empty"><i class="mdi mdi-cart-outline"></i><p>Tick items on the shelf to bag them</p></div>');
+        $body.html('<div class="pharm-till-empty"><i class="mdi mdi-cart-outline"></i><p>Scan an item or tick items on the shelf to bag them</p></div>');
         $('#till-primary-cta').prop('disabled', true).removeClass('btn-success').addClass('btn-primary')
             .html('<i class="mdi mdi-cash-register"></i> Select items').off('click');
         return;
     }
 
     let html = '';
+    function line(type, item) {
+        const code = item.productCode ? '<span class="till-line-code">[' + item.productCode + ']</span>' : '';
+        // Split row only when the payer is an HMO scheme (or a claim exists) — plain
+        // cash lines already state the amount in the price column, keeping the till dense.
+        const rawMode = String(item.coverageMode || '').toLowerCase();
+        const hmoMode = rawMode && rawMode !== 'cash' && rawMode !== 'none' && rawMode !== 'null';
+        const split = (item.claims > 0 || (item.payable > 0 && hmoMode)) ? `
+            <div class="till-split">
+                <span class="till-split-pay"><i class="mdi mdi-cash text-danger me-1"></i>Patient pays ₦${formatMoneyPharmacy(item.payable)}</span>
+                <span class="till-split-claim"><i class="mdi mdi-shield-check text-success me-1"></i>HMO ₦${formatMoneyPharmacy(item.claims)}</span>
+            </div>` : '';
+        const qtyCtl = type === 'billing' ? `
+            <span class="till-qty" data-till-qty-id="${item.id}">
+                <button type="button" class="till-qty-btn" onclick="pharmTillQtyStep('billing', ${item.id}, -1)" title="Decrease quantity">&minus;</button>
+                <span class="till-qty-val">${item.qty}</span>
+                <button type="button" class="till-qty-btn" onclick="pharmTillQtyStep('billing', ${item.id}, 1)" title="Increase quantity">+</button>
+            </span>` : '<span class="till-qty-static">× ' + item.qty + '</span>';
+        return `
+            <div class="till-line" data-till-type="${type}" data-id="${item.id}">
+                <div class="till-line-top">
+                    <span class="till-line-name">${item.name}${code}</span>
+                    <span class="till-line-price">₦${formatMoneyPharmacy(item.price)}</span>
+                    <button type="button" class="till-line-x" onclick="removeItemFromSelection('${type}', ${item.id})" title="Remove from bag">&times;</button>
+                </div>
+                <div class="till-line-mid">
+                    ${qtyCtl}
+                    ${tillCoverageModeBadge(item.coverageMode)}
+                </div>
+                ${split}
+            </div>`;
+    }
     function section(title, icon, cls, items, type) {
         if (!items.length) return;
         html += '<div class="till-section"><div class="till-section-h"><span><i class="mdi ' + icon + ' ' + cls + '"></i> ' + title + '</span><span class="badge">' + items.length + '</span></div>';
-        items.forEach(function(item) {
-            html += '<div class="till-line"><div class="till-line-name">' + item.name + '<div class="till-line-meta">Qty ' + item.qty + '</div></div>'
-                + '<span class="till-line-price">₦' + formatMoneyPharmacy(item.price) + '</span>'
-                + '<button type="button" class="till-line-x" onclick="removeItemFromSelection(\'' + type + '\', ' + item.id + ')" title="Remove">&times;</button></div>';
-        });
+        items.forEach(function(item) { html += line(type, item); });
         html += '</div>';
     }
     section('To bill', 'mdi-cash-register', 'text-primary', data.billing, 'billing');
@@ -1647,9 +1855,19 @@ function renderTillBag(data) {
 
 function tillPrintSelected() {
     const data = gatherSelectedItems();
-    if (data.billing.length) printSelectedBillingPrescriptions();
-    else if (data.pending.length) printSelectedPendingPrescriptions();
-    else toastr.info('Select items to print');
+    // Print one slip covering everything currently bagged (billing, on-hold
+    // pending and ready-to-dispense rows are all product_requests, so they can
+    // ride in a single print request). This keeps the till Print button useful
+    // no matter which stage the bagged rows belong to.
+    const ids = []
+        .concat(data.billing.map(i => i.id))
+        .concat(data.pending.map(i => i.id))
+        .concat(data.dispense.map(i => i.id));
+    if (!ids.length) {
+        toastr.info('Bag is empty - add items before printing');
+        return;
+    }
+    printPrescription(ids);
 }
 
 function tillDismissSelected() {
@@ -1673,95 +1891,94 @@ function openCartReviewModal() {
             <p class="small">Check items in any tab, then open the cart</p>
         </div>`;
     } else {
-        // Billing section
-        if (data.billing.length> 0) {
-            const billingTotal = data.billing.reduce((s, i) => s + i.price, 0);
-            html += `<div class="cart-section">
-                <div class="cart-section-header">
-                    <span><i class="mdi mdi-cash-register text-primary"></i> Billing</span>
-                    <span class="badge bg-primary">${data.billing.length}</span>
-                </div>`;
-            data.billing.forEach(item => {
-                html += `<div class="cart-item">
+        function cartItem(item, type) {
+            const code = item.productCode ? ` <small class="text-muted">[${item.productCode}]</small>` : '';
+            const split = (item.payable > 0 || item.claims > 0) ? `
+                <div class="cart-item-split">
+                    <span class="badge bg-danger-subtle text-danger me-1">Pay ₦${formatMoneyPharmacy(item.payable)}</span>
+                    <span class="badge bg-success-subtle text-success">HMO ₦${formatMoneyPharmacy(item.claims)}</span>
+                </div>` : '';
+            return `
+                <div class="cart-item">
                     <div style="flex:1">
-                        <div class="cart-item-name">${item.name}</div>
-                        <div class="cart-item-meta">Qty: ${item.qty}</div>
+                        <div class="cart-item-name">${item.name}${code}</div>
+                        <div class="cart-item-meta">Qty: ${item.qty} · ${tillCoverageModeBadge(item.coverageMode)}</div>
+                        ${split}
                     </div>
                     <span class="cart-item-price">₦${formatMoneyPharmacy(item.price)}</span>
-                    <button class="cart-item-remove" onclick="removeItemFromSelection('billing', ${item.id})" title="Remove">
+                    <button class="cart-item-remove" onclick="removeItemFromSelection('${type}', ${item.id})" title="Remove">
                         <i class="mdi mdi-close-circle"></i>
                     </button>
                 </div>`;
-            });
-            html += `<div class="cart-section-total">Subtotal: ₦${formatMoneyPharmacy(billingTotal)}</div>`;
-            html += `<div class="cart-action-row">
-                <button class="btn btn-primary btn-sm" onclick="billPrescItems()">
-                    <i class="mdi mdi-cash-register"></i> Bill (${data.billing.length})
-                </button>
-                <button class="btn btn-outline-danger btn-sm" onclick="showDismissModal('billing')">
-                    <i class="mdi mdi-close-circle"></i> Dismiss
-                </button>
-            </div></div>`;
+        }
+        function sectionTotal(items) {
+            const pay = items.reduce((sum, i) => sum + (i.payable || 0), 0);
+            const claim = items.reduce((sum, i) => sum + (i.claims || 0), 0);
+            const total = items.reduce((sum, i) => sum + (i.price || 0), 0);
+            let chips = `<span class="text-muted me-2">Total ₦${formatMoneyPharmacy(total)}</span>`;
+            if (pay > 0 || claim > 0) {
+                chips = `<span class="text-danger me-2">Patient pays ₦${formatMoneyPharmacy(pay)}</span>
+                         <span class="text-success me-2">HMO claim ₦${formatMoneyPharmacy(claim)}</span>`
+                    + chips;
+            }
+            return chips;
+        }
+
+        // Billing section
+        if (data.billing.length > 0) {
+            html += `<div class="cart-section">
+                <div class="cart-section-header">
+                    <span><i class="mdi mdi-cash-register text-primary"></i> To bill</span>
+                    <span class="badge bg-primary">${data.billing.length}</span>
+                </div>`;
+            data.billing.forEach(item => { html += cartItem(item, 'billing'); });
+            html += `<div class="cart-section-total">${sectionTotal(data.billing)}</div>
+                <div class="cart-action-row">
+                    <button class="btn btn-primary btn-sm" onclick="billPrescItems()">
+                        <i class="mdi mdi-cash-register"></i> Bill (${data.billing.length})
+                    </button>
+                    <button class="btn btn-outline-danger btn-sm" onclick="showDismissModal('billing')">
+                        <i class="mdi mdi-close-circle"></i> Dismiss
+                    </button>
+                </div></div>`;
         }
 
         // Pending section
-        if (data.pending.length> 0) {
+        if (data.pending.length > 0) {
             html += `<div class="cart-section">
                 <div class="cart-section-header">
-                    <span><i class="mdi mdi-clock-outline text-warning"></i> Pending</span>
+                    <span><i class="mdi mdi-clock-outline text-warning"></i> On hold / Awaiting payment</span>
                     <span class="badge bg-warning text-dark">${data.pending.length}</span>
                 </div>`;
-            data.pending.forEach(item => {
-                html += `<div class="cart-item">
-                    <div style="flex:1">
-                        <div class="cart-item-name">${item.name}</div>
-                        <div class="cart-item-meta">Qty: ${item.qty}</div>
-                    </div>
-                    <span class="cart-item-price">₦${formatMoneyPharmacy(item.price)}</span>
-                    <button class="cart-item-remove" onclick="removeItemFromSelection('pending', ${item.id})" title="Remove">
-                        <i class="mdi mdi-close-circle"></i>
+            data.pending.forEach(item => { html += cartItem(item, 'pending'); });
+            html += `<div class="cart-section-total">${sectionTotal(data.pending)}</div>
+                <div class="cart-action-row">
+                    <button class="btn btn-outline-primary btn-sm" onclick="printSelectedPendingPrescriptions()">
+                        <i class="mdi mdi-printer"></i> Print
                     </button>
-                </div>`;
-            });
-            html += `<div class="cart-action-row">
-                <button class="btn btn-outline-primary btn-sm" onclick="printSelectedPendingPrescriptions()">
-                    <i class="mdi mdi-printer"></i> Print
-                </button>
-                <button class="btn btn-outline-danger btn-sm" onclick="showDismissModal('pending')">
-                    <i class="mdi mdi-close-circle"></i> Dismiss
-                </button>
-            </div></div>`;
+                    <button class="btn btn-outline-danger btn-sm" onclick="showDismissModal('pending')">
+                        <i class="mdi mdi-close-circle"></i> Dismiss
+                    </button>
+                </div></div>`;
         }
 
         // Dispense section
-        if (data.dispense.length> 0) {
-            const dispenseTotal = data.dispense.reduce((s, i) => s + i.price, 0);
+        if (data.dispense.length > 0) {
             html += `<div class="cart-section">
                 <div class="cart-section-header">
-                    <span><i class="mdi mdi-pill text-success"></i> Ready to Dispense</span>
+                    <span><i class="mdi mdi-pill text-success"></i> Ready to dispense</span>
                     <span class="badge bg-success">${data.dispense.length}</span>
                 </div>`;
-            data.dispense.forEach(item => {
-                html += `<div class="cart-item">
-                    <div style="flex:1">
-                        <div class="cart-item-name">${item.name}</div>
-                        <div class="cart-item-meta">Qty: ${item.qty}</div>
-                    </div>
-                    <span class="cart-item-price">₦${formatMoneyPharmacy(item.price)}</span>
-                    <button class="cart-item-remove" onclick="removeItemFromSelection('dispense', ${item.id})" title="Remove">
-                        <i class="mdi mdi-close-circle"></i>
+            data.dispense.forEach(item => { html += cartItem(item, 'dispense'); });
+            html += `<div class="cart-section-total">${sectionTotal(data.dispense)}</div>
+                <div class="cart-action-row">
+                    <button class="btn btn-success btn-sm" onclick="$('#cartReviewModal').modal('hide'); addSelectedToCartAndOpen();">
+                        <i class="mdi mdi-cart-plus"></i> Add to Dispense Cart (${data.dispense.length})
                     </button>
-                </div>`;
-            });
-            html += `<div class="cart-section-total">Subtotal: ₦${formatMoneyPharmacy(dispenseTotal)}</div>`;
-            html += `<div class="cart-action-row">
-                <button class="btn btn-success btn-sm" onclick="$('#cartReviewModal').modal('hide'); addSelectedToCartAndOpen();">
-                    <i class="mdi mdi-cart-plus"></i> Add to Dispense Cart (${data.dispense.length})
-                </button>
-                <button class="btn btn-outline-danger btn-sm" onclick="showDismissModal('dispense')">
-                    <i class="mdi mdi-close-circle"></i> Dismiss
-                </button>
-            </div></div>`;
+                    <button class="btn btn-outline-danger btn-sm" onclick="showDismissModal('dispense')">
+                        <i class="mdi mdi-close-circle"></i> Dismiss
+                    </button>
+                </div></div>`;
         }
     }
 
@@ -1769,14 +1986,680 @@ function openCartReviewModal() {
     $('#cartReviewModal').modal('show');
 }
 
+// =============================================
+// SUPERMARKET TILL — scan/add bar, bagging, register layout
+// (all pricing shown here is copied from the shelf card's
+//  server-rendered data attributes — never derived client-side)
+// =============================================
+
+let pharmScanBuf = '';
+let pharmScanBufTimer = null;
+let pharmScanCandidates = [];
+
+function pharmBeep(kind) {
+    try {
+        const Ctx = window.AudioContext || window.webkitAudioContext;
+        if (!Ctx) return;
+        if (!pharmBeep.ctx) pharmBeep.ctx = new Ctx();
+        const ctx = pharmBeep.ctx;
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.connect(gain); gain.connect(ctx.destination);
+        const t = ctx.currentTime;
+        if (kind === 'ok') {
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(950, t);
+            gain.gain.setValueAtTime(0.06, t);
+            gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.14);
+            osc.start(t); osc.stop(t + 0.15);
+        } else {
+            osc.type = 'square';
+            osc.frequency.setValueAtTime(190, t);
+            gain.gain.setValueAtTime(0.05, t);
+            gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.22);
+            osc.start(t); osc.stop(t + 0.24);
+        }
+    } catch (e) { /* audio unavailable — ignore */ }
+}
+
+function pharmFlash(el) {
+    const $el = (el && el.jquery) ? el : $(el);
+    if (!$el.length) return;
+    $el.addClass('pharm-flash-ok');
+    setTimeout(function() { $el.removeClass('pharm-flash-ok'); }, 700);
+}
+
+function pharmFlashBad(el) {
+    const $el = (el && el.jquery) ? el : $(el);
+    if (!$el.length) return;
+    $el.addClass('pharm-flash-bad');
+    setTimeout(function() { $el.removeClass('pharm-flash-bad'); }, 700);
+}
+
+function pharmHideScanPicker() {
+    $('#pharm-scan-results').hide().empty();
+}
+
+function pharmSetScanInput(v) {
+    const $i = $('#pharm-scan-input');
+    if ($i.length) $i.val(v || '');
+}
+
+function pharmFocusScanInput() {
+    if (window.innerWidth < 992) return;
+    const $i = $('#pharm-scan-input');
+    if ($i.length && $i.is(':visible')) {
+        try { $i.trigger('focus'); } catch (e) { /* noop */ }
+    }
+}
+
+function pharmParseScan(raw) {
+    let qty = 1;
+    let term = String(raw || '').trim();
+    const m = term.match(/^(\d{1,3})\s*[*xX]\s*(.+)$/);
+    if (m && m[2].trim()) {
+        qty = Math.min(999, parseInt(m[1], 10) || 1);
+        term = m[2].trim();
+    }
+    return { qty: qty, term: term };
+}
+
+// Stage tables + their card container, in bag priority order
+const PHARM_SHELF_TABLES = [
+    { table: '#presc_billing_table', label: 'billing' },
+    { table: '#presc_pending_table', label: 'pending' },
+    { table: '#presc_dispense_table', label: 'dispense' }
+];
+
+function pharmFindOnShelf(termLower) {
+    for (let i = 0; i < PHARM_SHELF_TABLES.length; i++) {
+        const cfg = PHARM_SHELF_TABLES[i];
+        const $cards = $(cfg.table + ' .presc-card');
+        for (let j = 0; j < $cards.length; j++) {
+            const $card = $cards.eq(j);
+            const code = String($card.attr('data-product-code') || '').toLowerCase();
+            const name = String($card.find('.presc-card-title').text().trim() || '').toLowerCase();
+            if (code && code === termLower) return { table: cfg.table, card: $card };
+        }
+    }
+    // Second pass: exact product-name match (typed names, no code)
+    for (let i = 0; i < PHARM_SHELF_TABLES.length; i++) {
+        const cfg = PHARM_SHELF_TABLES[i];
+        const $cards = $(cfg.table + ' .presc-card');
+        for (let j = 0; j < $cards.length; j++) {
+            const $card = $cards.eq(j);
+            const name = String($card.find('.presc-card-title').text().trim() || '').toLowerCase();
+            if (name === termLower) return { table: cfg.table, card: $card };
+        }
+    }
+    return null;
+}
+
+function pharmBagCard(found) {
+    if (!found || !found.card) return;
+    const $row = found.card.closest('tr');
+    const $cb = $row.find('.presc-card-checkbox').first();
+    if ($cb.length && !$cb.prop('checked') && !$cb.prop('disabled')) {
+        $cb.prop('checked', true);
+        const typeMap = {
+            '#presc_billing_table': 'billing',
+            '#presc_pending_table': 'pending',
+            '#presc_dispense_table': 'dispense'
+        };
+        pharmCheckboxApply(typeMap[found.table] || 'billing', $cb[0]);
+    }
+    pharmFlash(found.card);
+    if (found.table === '#presc_billing_table') {
+        toastr.info('Already on the Billing shelf — bagged', null, { timeOut: 1500 });
+    }
+}
+
+// Entry point: scan typed value OR typed+clicked value
+function pharmScanSubmit(raw) {
+    if (!currentPatient) {
+        toastr.error('Select a patient first before adding items');
+        return;
+    }
+    const parsed = pharmParseScan(raw);
+    if (!parsed.term) return;
+    pharmHideScanPicker();
+
+    // 1) Already an open item on this patient's shelf? Bag it — never duplicate.
+    const existing = pharmFindOnShelf(parsed.term.toLowerCase());
+    if (existing) {
+        pharmBagCard(existing);
+        pharmBeep('ok');
+        pharmSetScanInput('');
+        pharmFocusScanInput();
+        return;
+    }
+    // 2) Otherwise look the product up and create a request (lands in Billing + till).
+    pharmLookupTerm(parsed.term, parsed.qty);
+}
+
+function pharmScanSubmitFromInput() {
+    pharmScanSubmit($('#pharm-scan-input').val());
+}
+
+function pharmLookupTerm(term, qty) {
+    const $btn = $('#pharm-scan-add-btn');
+    const original = $btn.html();
+    $btn.prop('disabled', true).html('<i class="mdi mdi-loading mdi-spin"></i>');
+    $.ajax({
+        url: wbUrl('/pharmacy-workbench/search-products'),
+        method: 'GET',
+        data: { term: term, patient_id: currentPatient },
+        success: function(results) {
+            $btn.prop('disabled', false).html(original);
+            results = results || [];
+            if (!results.length) {
+                pharmBeep('miss');
+                pharmSetScanInput(term);
+                pharmFlashBad('.pharm-scanbar');
+                toastr.error('No product matches "' + term + '" — check the code or use New Request for free-form items', null, { timeOut: 2500 });
+                return;
+            }
+            // Scanner: an exact product_code hit must win outright (no name-fuzzy noise).
+            const exact = results.filter(function(r) {
+                return r.product_code && !r.is_combo &&
+                    String(r.product_code).toLowerCase() === String(term).toLowerCase();
+            });
+            const candidates = exact.length ? exact : results;
+            if (candidates.length === 1) {
+                pharmQuickAddProduct(candidates[0], qty, term);
+            } else {
+                pharmShowPicker(candidates, term, qty);
+            }
+        },
+        error: function(xhr) {
+            $btn.prop('disabled', false).html(original);
+            toastr.error((xhr.responseJSON && xhr.responseJSON.message) || 'Product lookup failed');
+        }
+    });
+}
+
+function pharmQuickAddProduct(product, qty, term) {
+    if (!product || !product.id || !currentPatient) {
+        toastr.error('Cannot add this product — it has no id or no patient is selected');
+        return;
+    }
+    const $btn = $('#pharm-scan-add-btn');
+    const original = $btn.html();
+    $btn.prop('disabled', true).html('<i class="mdi mdi-loading mdi-spin"></i>');
+    $.ajax({
+        url: wbUrl('/pharmacy-workbench/create-request'),
+        method: 'POST',
+        headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') },
+        data: {
+            patient_id: currentPatient,
+            products: [{ product_id: product.id, qty: qty || 1, dose: '' }],
+            notes: 'Added at checkout till (walk-in / OTC)'
+        },
+        success: function(response) {
+            $btn.prop('disabled', false).html(original);
+            if (!response.success) {
+                toastr.error(response.message || 'Failed to add item');
+                return;
+            }
+            pharmBeep('ok');
+            pharmFlash('.pharm-scanbar');
+            const ids = (response.requests || []).map(function(r) { return String(r.id); });
+            const qtyN = qty || 1;
+            const payUnit = parseFloat(product.payable_amount != null ? product.payable_amount : (product.price || 0)) || 0;
+            const claimUnit = parseFloat(product.claims_amount || 0) || 0;
+            const unitPrice = parseFloat(product.price || 0) || 0;
+            ids.forEach(function(id) {
+                const sid = String(id);
+                const payable = Math.round(payUnit * qtyN * 100) / 100;
+                const claims = Math.round(claimUnit * qtyN * 100) / 100;
+                const estTotal = (payable + claims) > 0
+                    ? (payable + claims)
+                    : Math.round(unitPrice * qtyN * 100) / 100;
+                // Provisional snapshot from the search payload (server figures);
+                // the billing-table redraw re-snapshots it from the card's
+                // authoritative attributes (restoreCheckedItemsState).
+                pharmBagAdd('billing', sid, {
+                    id: sid,
+                    name: product.product_name || term || 'Item',
+                    qty: qtyN,
+                    price: estTotal,
+                    unit: unitPrice,
+                    payable: payable,
+                    claims: claims,
+                    coverageMode: product.coverage_mode || null,
+                    productCode: product.product_code || '',
+                    productId: String(product.id)
+                });
+            });
+            // Keep totals coherent: the redraw will re-tick via the bag.
+            prescBillingTotal = 0;
+            updateStickyActionBar('billing');
+            if ($.fn.DataTable.isDataTable('#presc_billing_table')) {
+                $('#presc_billing_table').DataTable().ajax.reload(null, false);
+            }
+            const label = product.product_name || term || 'Item';
+            toastr.success(label + ' × ' + (qty || 1) + ' added to Billing and the till', null, { timeOut: 1800 });
+            pharmSetScanInput('');
+            pharmFocusScanInput();
+            // Show the Billing stage so the cashier sees the item land.
+            if ($('#presc-billing-pane').length && !$('#presc-billing-pane').hasClass('active') &&
+                $('#presc-billing-tab').length) {
+                $('#presc-billing-tab').tab('show');
+            }
+        },
+        error: function(xhr) {
+            $btn.prop('disabled', false).html(original);
+            toastr.error((xhr.responseJSON && xhr.responseJSON.message) || 'Failed to add item');
+        }
+    });
+}
+
+function pharmShowPicker(candidates, term, qty) {
+    window.pharmScanCandidates = candidates;
+    const $box = $('#pharm-scan-results');
+    let html = '<div class="pharm-scan-results-head"><i class="mdi mdi-database-search"></i> ' + candidates.length + ' matches — pick one to add</div>';
+    const maxShow = 8;
+    candidates.slice(0, maxShow).forEach(function(p, i) {
+        const price = parseFloat(p.price || 0);
+        const pay = parseFloat(p.payable_amount != null ? p.payable_amount : price);
+        const claim = parseFloat(p.claims_amount || 0);
+        const chip = p.coverage_mode
+            ? '<span class="badge bg-danger-subtle text-danger ms-2">Pay ₦' + Number(pay).toLocaleString() + '</span>' +
+              '<span class="badge bg-success-subtle text-success ms-2">HMO ₦' + Number(claim).toLocaleString() + '</span>'
+            : '';
+        html += '<button type="button" class="pharm-scan-result" onclick="pharmPickScanResult(' + i + ',' + (qty || 1) + ')">'
+            + '<span class="pharm-scan-result-name"><strong>' + p.product_name + '</strong>'
+            + (p.product_code ? ' <small>[' + p.product_code + ']</small>' : '')
+            + (p.category_name ? ' <small class="text-muted">(' + p.category_name + ')</small>' : '')
+            + chip + '</span>'
+            + '<span class="pharm-scan-result-price">₦' + Number(price).toLocaleString() + '</span>'
+            + '</button>';
+    });
+    if (candidates.length > maxShow) {
+        html += '<div class="pharm-scan-results-more">+' + (candidates.length - maxShow) + ' more — type a longer name</div>';
+    }
+    $box.html(html).show();
+    pharmFocusScanInput();
+}
+
+function pharmPickScanResult(index, qty) {
+    const candidates = window.pharmScanCandidates || [];
+    const product = candidates[index];
+    pharmHideScanPicker();
+    if (product) pharmQuickAddProduct(product, qty, '');
+}
+
+// Till qty stepper — billing (unbilled) rows only. Persists server-side through the
+// existing adjust-quantity endpoint, then the shelf re-renders from the server so the
+// displayed payable/claims are always the billed truth, never a client estimate.
+function pharmTillQtyStep(type, id, delta) {
+    if (type !== 'billing') return;
+    if (!currentPatient) { toastr.error('Select a patient first'); return; }
+
+    // Read the current quantity from the bag first (the row may not be on the
+    // DataTable's current page); fall back to the visible card when present.
+    const bagItem = pharmBag.billing.get(String(id));
+    const $cb = $('.presc-billing-check[data-id="' + id + '"]').first();
+    const $card = $cb.length ? $cb.closest('tr').find('.presc-card') : $();
+    let cur = bagItem ? (bagItem.qty || 1) : 1;
+    if ($card.length) {
+        const cardQty = parseInt($card.attr('data-qty')) || 0;
+        if (cardQty > 0) cur = cardQty;
+    }
+    const next = cur + delta;
+    if (next < 1) return;
+
+    const $qty = $('#till-bag-body .till-qty[data-till-qty-id="' + id + '"]').first();
+    if ($qty.hasClass('till-qty-saving')) return;
+    $qty.addClass('till-qty-saving');
+    $qty.find('button').prop('disabled', true);
+
+    $.ajax({
+        url: wbUrl('/pharmacy-workbench/prescription/' + id + '/adjust-quantity'),
+        method: 'POST',
+        headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') },
+        data: {
+            new_qty: next,
+            adjustment_reason: 'Quantity changed at checkout till'
+        },
+        success: function(response) {
+            pharmBeep('ok');
+            // Re-enable immediately — the till must not stay disabled waiting on a
+            // table redraw that may not touch the current page.
+            $qty.removeClass('till-qty-saving');
+            $qty.find('button').prop('disabled', false);
+
+            // Sync the bagged snapshot with the server-confirmed quantity and
+            // rebuild the till right away (money scales linearly for unbilled rows).
+            pharmBagUpdateQty('billing', id, next);
+            prescBillingTotal = pharmBagList('billing').reduce(function(sum, i) { return sum + (i.price || 0); }, 0);
+            updatePrescBillingTotalPharmacy();
+            updateStickyActionBar('billing');
+
+            // Refresh the billing shelf from the server so the card's qty /
+            // payable / claims are authoritative; restoreCheckedItemsState will
+            // re-tick the row and re-snapshot it when it is on the drawn page.
+            if ($.fn.DataTable.isDataTable('#presc_billing_table')) {
+                $('#presc_billing_table').DataTable().ajax.reload(null, false);
+            }
+        },
+        error: function(xhr) {
+            $qty.removeClass('till-qty-saving');
+            $qty.find('button').prop('disabled', false);
+            toastr.error((xhr.responseJSON && xhr.responseJSON.message) || 'Could not change quantity');
+        }
+    });
+}
+
+// Called after a till CTA action (bill / dispense) completes — keeps the cashier
+// in the flow: bag cleared, scan bar focused, next scan ready.
+window.pharmOnTillActionSuccess = function(type) {
+    try {
+        // Clear the pending-restore sets first so an in-flight table redraw cannot
+        // re-tick items that just moved stage (or were dispensed away).
+        ['billing', 'pending', 'dispense'].forEach(function(t) {
+            if (checkedItemsState[t]) checkedItemsState[t].clear();
+            clearSelection(t);
+        });
+    } catch (e) { /* tables may be mid-redraw */ }
+    try { $('#cartReviewModal').modal('hide'); } catch (e) { /* not open */ }
+    pharmBeep('ok');
+    if (type === 'billed' && $('#presc-pending-pane').length && !$('#presc-pending-pane').hasClass('active')
+        && $('#presc-pending-tab').length) {
+        // Items moved to Pending (awaiting payment / HMO validation) — show where they went.
+        $('#presc-pending-tab').tab('show');
+    }
+    setTimeout(function() {
+        pharmFocusScanInput();
+        layoutPharmRegister();
+    }, 300);
+};
+
+// ---- register layout: pin the till on wide screens, whichever ancestor scrolls ----
+// ---- till state: minimise + drag ----
+let pharmTillMinimized = false;
+let pharmTillDocked = true;   // becomes false once the user drags the till away
+let pharmTillUserPos = null;  // { left, top, height } after a drag
+
+function layoutPharmRegister(forceRedock) {
+    const $till = $('#pharm-till');
+    const $checkout = $('.pharm-checkout').first();
+    if (!$till.length || !$checkout.length) return;
+
+    const wide = window.matchMedia('(min-width: 1200px)').matches;
+    if (!wide) {
+        // Fall back to the CSS sticky layout.
+        $till.css({ position: '', top: '', bottom: '', right: '', left: '', width: '', height: '', margin: '', 'max-height': '', boxShadow: '' });
+        $checkout.css('padding-right', '');
+        return;
+    }
+
+    const tillW = 360;
+    // A till the user has dragged stays where they put it (clamped to viewport).
+    if (!forceRedock && !pharmTillDocked && pharmTillUserPos) {
+        const left = Math.min(Math.max(8, pharmTillUserPos.left), Math.max(8, window.innerWidth - tillW - 8));
+        const top = Math.min(Math.max(8, pharmTillUserPos.top), Math.max(8, window.innerHeight - 120));
+        // When minimised the panel is content-sized (compact bar); when expanded
+        // it keeps the height the user dragged it to (min 320 so the bag list
+        // never gets squeezed after dragging while minimised).
+        const height = pharmTillMinimized ? 'auto' : (Math.max(pharmTillUserPos.height || 0, 320) + 'px');
+        $till.css({
+            position: 'fixed',
+            top: top,
+            left: left,
+            right: 'auto',
+            bottom: 'auto',
+            width: tillW,
+            height: height,
+            margin: 0,
+            'max-height': 'none',
+            'z-index': 1080,
+            boxShadow: '0 8px 30px rgba(0,0,0,0.18), 0 2px 8px rgba(0,0,0,0.10)'
+        });
+        $checkout.css('padding-right', (tillW + 18) + 'px');
+        return;
+    }
+
+    // Dock the till as a rail along the right edge of the workspace.
+    pharmTillDocked = true;
+    pharmTillUserPos = null;
+    const $tabs = $('.workspace-tabs');
+    const $ws = $('.workspace-content');
+    let top = 12;
+    if ($tabs.length && $tabs.is(':visible')) {
+        top = Math.max(12, $tabs.offset().top + $tabs.outerHeight() + 8);
+    } else if ($ws.length && $ws.is(':visible')) {
+        top = Math.max(12, $ws.offset().top + 8);
+    }
+    // When minimised the rail becomes a compact bar (content height instead of
+    // stretching to the bottom of the viewport).
+    $till.css({
+        position: 'fixed',
+        top: top,
+        right: 18,
+        bottom: pharmTillMinimized ? 'auto' : 18,
+        left: 'auto',
+        width: tillW,
+        height: pharmTillMinimized ? 'auto' : 'auto',
+        margin: 0,
+        'max-height': 'none',
+        'z-index': 1080,
+        boxShadow: '0 8px 30px rgba(0,0,0,0.18), 0 2px 8px rgba(0,0,0,0.10)'
+    });
+    $checkout.css('padding-right', (tillW + 18) + 'px');
+}
+
+let pharmLayoutTimer = null;
+function pharmScheduleLayout() {
+    clearTimeout(pharmLayoutTimer);
+    pharmLayoutTimer = setTimeout(function() { layoutPharmRegister(); }, 120);
+}
+
+// ---- global behaviours (delegated once per page load) ----
+$(document).on('click', '.pharm-checkout .presc-card', function(e) {
+    if (e.target.closest('button, a, input, select, textarea, label')) return;
+    const $row = $(this).closest('tr');
+    const $cb = $row.find('.presc-card-checkbox').first();
+    if (!$cb.length || $cb.prop('disabled')) return;
+    $cb.prop('checked', !$cb.prop('checked'));
+    const type = $cb.hasClass('presc-billing-check') ? 'billing'
+        : ($cb.hasClass('presc-pending-check') ? 'pending' : 'dispense');
+    pharmCheckboxApply(type, $cb[0]);
+    pharmFlash($(this));
+});
+
+$(document).on('click', '.pharm-scan-results', function(e) {
+    e.stopPropagation();
+});
+
+$(document).on('keydown', function(e) {
+    if (e.key === 'Escape') {
+        if ($('#pharm-scan-results').is(':visible')) {
+            pharmHideScanPicker();
+            return;
+        }
+        if ($(e.target).is('input, textarea, select')) return;
+        const d = gatherSelectedItems();
+        if (d.totalCount > 0) {
+            clearAllSelections();
+            pharmFocusScanInput();
+            toastr.info('Bag cleared');
+        }
+        return;
+    }
+    if (e.ctrlKey || e.metaKey || e.altKey) return;
+    const $checkout = $('.pharm-checkout').first();
+    if (!$checkout.length || !currentPatient) return;
+    if (!$('#pharmacy-presc-container').is(':visible')) return;
+
+    const $target = $(e.target);
+    const inTextField = $target.is('input, textarea, select') || $target.is('[contenteditable="true"]');
+    const inScanInput = $target.is('#pharm-scan-input');
+
+    if (e.key === 'Enter') {
+        if (inScanInput) {
+            const v = String($target.val() || '').trim();
+            if (v) { pharmScanSubmit(v); pharmSetScanInput(''); }
+            return;
+        }
+        if (!inTextField && pharmScanBuf.length) {
+            e.preventDefault();
+            pharmScanSubmit(pharmScanBuf);
+            pharmScanBuf = '';
+            clearTimeout(pharmScanBufTimer);
+            return;
+        }
+        return;
+    }
+
+    // Capture "typed by a scanner" characters when focus is not in a text field.
+    if (inTextField && !inScanInput) return;
+    if (e.key && e.key.length === 1) {
+        pharmScanBuf += e.key;
+        clearTimeout(pharmScanBufTimer);
+        pharmScanBufTimer = setTimeout(function() { pharmScanBuf = ''; }, 700);
+    }
+});
+
+$(window).on('resize', pharmScheduleLayout);
+$(document).on('click', '.workspace-tab', pharmScheduleLayout);
+$(document).on('click', '#btn-expand-patient', pharmScheduleLayout);
+
+// ---- till: minimise / expand (keeps header + totals/actions, hides the bag) ----
+function pharmSetTillMinIcon() {
+    const $i = $('#pharm-till-min-btn i');
+    if ($i.length) $i.attr('class', 'mdi mdi-' + (pharmTillMinimized ? 'chevron-down' : 'chevron-up'));
+    const $b = $('#pharm-till-min-btn');
+    if ($b.length) $b.attr('title', pharmTillMinimized ? 'Expand the till' : 'Minimise the till');
+}
+function pharmToggleTillMin() {
+    pharmTillMinimized = !pharmTillMinimized;
+    $('#pharm-till').toggleClass('pharm-till-min', pharmTillMinimized);
+    pharmSetTillMinIcon();
+    // Re-layout the fixed rail so the whole container shrinks to a compact
+    // header+footer bar (not just hiding the bag list inside a tall box).
+    layoutPharmRegister();
+}
+// Re-apply persisted till UI state after the checkout template is re-injected
+// (each patient load rebuilds #pharm-till).
+let pharmTillMobileDefaultDone = false; // apply "default minimised on mobile" once per page
+function pharmApplyTillState() {
+    const $till = $('#pharm-till');
+    if (!$till.length) return;
+    // Mobile: the till is a persistent bottom floating button and starts
+    // minimised. Only the first apply forces it; later patient switches keep
+    // whatever state the user chose this session.
+    if (!pharmTillMobileDefaultDone && window.innerWidth < 992) {
+        pharmTillMobileDefaultDone = true;
+        pharmTillMinimized = true;
+    }
+    $till.toggleClass('pharm-till-min', pharmTillMinimized);
+    pharmSetTillMinIcon();
+    layoutPharmRegister(); // honours a previous drag via pharmTillDocked/UserPos
+}
+
+// ---- till: drag to move (docked rail on wide screens only) ----
+let pharmDragState = null;
+
+function pharmTillHeaderIsInteractive(e) {
+    return !!(e.target && e.target.closest && e.target.closest('button, a, input, select, textarea, label'));
+}
+
+$(document).on('pointerdown', '#pharm-till-header', function(e) {
+    if (pharmTillHeaderIsInteractive(e)) return;
+    if (window.innerWidth < 1200) return; // drag is a desktop (fixed rail) feature
+    const $till = $('#pharm-till');
+    if (!$till.length || $till.css('position') !== 'fixed') return; // docked rail only
+    const r = $till[0].getBoundingClientRect();
+    pharmDragState = {
+        startX: e.clientX,
+        startY: e.clientY,
+        origLeft: r.left,
+        origTop: r.top,
+        height: r.height,
+        moved: false
+    };
+    $till.addClass('pharm-till-dragging');
+    $('body').addClass('pharm-till-unselectable');
+    try {
+        if (e.currentTarget && e.currentTarget.setPointerCapture) {
+            e.currentTarget.setPointerCapture(e.pointerId);
+        }
+    } catch (err) { /* capture unsupported */ }
+});
+
+$(document).on('pointermove', function(e) {
+    if (!pharmDragState) return;
+    if (!pharmDragState.moved &&
+        Math.abs(e.clientX - pharmDragState.startX) < 4 &&
+        Math.abs(e.clientY - pharmDragState.startY) < 4) return;
+    pharmDragState.moved = true;
+    const $till = $('#pharm-till');
+    if (!$till.length) return;
+    const tillW = $till.outerWidth() || 360;
+    const left = Math.min(
+        Math.max(8, pharmDragState.origLeft + (e.clientX - pharmDragState.startX)),
+        Math.max(8, window.innerWidth - tillW - 8)
+    );
+    const top = Math.min(
+        Math.max(8, pharmDragState.origTop + (e.clientY - pharmDragState.startY)),
+        Math.max(8, window.innerHeight - 120)
+    );
+    $till.css({
+        position: 'fixed',
+        left: left,
+        top: top,
+        right: 'auto',
+        bottom: 'auto',
+        height: (pharmDragState.height || '') + 'px'
+    });
+    if (e.cancelable) e.preventDefault();
+});
+
+function pharmEndTillDrag() {
+    if (!pharmDragState) return;
+    const wasMoved = pharmDragState.moved;
+    pharmDragState = null;
+    const $till = $('#pharm-till');
+    $till.removeClass('pharm-till-dragging');
+    $('body').removeClass('pharm-till-unselectable');
+    if (!wasMoved) return;
+    const r = $till[0].getBoundingClientRect();
+    pharmTillDocked = false;
+    pharmTillUserPos = { left: Math.round(r.left), top: Math.round(r.top), height: Math.round(r.height) };
+}
+$(document).on('pointerup pointercancel', function() { pharmEndTillDrag(); });
+
+// Double-click the header to snap the till back to its docked rail position.
+$(document).on('dblclick', '#pharm-till-header', function(e) {
+    if (pharmTillHeaderIsInteractive(e)) return;
+    if (window.innerWidth < 1200) return; // desktop (fixed rail) only
+    if ($('#pharm-till').css('position') !== 'fixed') return;
+    pharmTillDocked = true;
+    pharmTillUserPos = null;
+    layoutPharmRegister(true);
+});
+
+// Mobile: the minimised till is a floating bottom pill — tapping it expands.
+$(document).on('click', '.pharm-till-drag', function(e) {
+    if (pharmTillHeaderIsInteractive(e)) return;
+    if (window.innerWidth >= 992) return; // desktop uses drag, not tap
+    if (pharmTillMinimized) {
+        pharmToggleTillMin(); // expand the bottom sheet
+    }
+});
+
 // Clear all selections across all tabs
 function clearAllSelections() {
     ['billing', 'pending', 'dispense'].forEach(type => clearSelection(type));
     $('#cartReviewModal').modal('hide');
 }
 
-// Remove single item from selection
+// Remove single item from selection (till-line × button).
+// Works even when the row lives on another DataTable page (server-side tables
+// only keep the current page in the DOM) — the bag is the source of truth.
 function removeItemFromSelection(type, itemId) {
+    const bagItem = pharmBag[type].get(String(itemId));
     let checkboxClass = '';
     if (type === 'billing') checkboxClass = '.presc-billing-check';
     else if (type === 'pending') checkboxClass = '.presc-pending-check';
@@ -1784,12 +2667,24 @@ function removeItemFromSelection(type, itemId) {
 
     const $checkbox = $(`${checkboxClass}[data-id="${itemId}"]`);
     if ($checkbox.length) {
+        // Programmatic uncheck does NOT fire a change event, so update totals,
+        // the bag and the select-all header explicitly.
         $checkbox.prop('checked', false);
-        // Trigger the handler
         if (type === 'billing') handlePrescBillingCheckPharmacy($checkbox[0]);
         else if (type === 'pending') handlePrescPendingCheckPharmacy($checkbox[0]);
         else if (type === 'dispense') handlePrescDispenseCheckPharmacy($checkbox[0]);
+        pharmRowBagSync(type, $checkbox[0]);
+    } else if (bagItem) {
+        // Row not in the DOM (another page / not yet drawn) — update bookkeeping
+        // and drop purely from the bag.
+        if (type === 'billing') {
+            prescBillingTotal = Math.max(0, prescBillingTotal - bagItem.price);
+            updatePrescBillingTotalPharmacy();
+        }
+        pharmBagRemove(type, itemId);
+        updateStickyActionBar(type);
     }
+
     // Re-render modal if open
     if ($('#cartReviewModal').hasClass('show')) {
         openCartReviewModal();
@@ -1814,10 +2709,13 @@ function clearSelection(type) {
 
     // Uncheck all
     $(checkboxClass).prop('checked', false);
-    $(selectAllId).prop('checked', false);
+    $(selectAllId).prop('checked', false).prop('indeterminate', false);
 
     // Remove visual selection from cards
     $(checkboxClass).closest('tr').find('.presc-card').removeClass('selected');
+
+    // Drop from the till bag (source of truth) and legacy state sets
+    pharmBagClear(type);
 
     // Reset billing total if billing type
     if (type === 'billing') {
@@ -1970,7 +2868,14 @@ function renderPrescCardPharmacy(row, type) {
             <div class="presc-card border-secondary"
                  data-id="${row.id}"
                  data-product-id=""
+                 data-product-code=""
                  data-qty="${qty}"
+                 data-payable="0"
+                 data-claims="0"
+                 data-coverage-mode="cash"
+                 data-total-price="0"
+                 data-unit-price="0"
+                 data-status="${row.status ?? ''}"
                  style="border-left: 4px solid #6c757d; padding: 1rem; margin-bottom: 1rem; border-radius: 4px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); background: #fdfdfd;">
                  <div class="presc-card-header" style="display: flex; justify-content: space-between;">
                     <div>
@@ -2219,7 +3124,7 @@ function renderPrescCardPharmacy(row, type) {
         const diffSign = diff>= 0 ? '+' : '';
         priceOverrideBadge = `
             <div class="small mt-1 p-2 rounded border border-primary" style="background: #f0f4ff;">
-                <i class="mdi mdi-cash-edit text-primary me-1"></i>
+                <i class="mdi mdi-cash-usd text-primary me-1"></i>
                 <span class="fw-semibold" style="color: #1a237e;">Price Adjusted:</span>
                 <span style="color: #555; text-decoration: line-through;" class="ms-1">₦${formatMoneyPharmacy(origPrice)}</span>
                 <i class="mdi mdi-arrow-right mx-1" style="color: #333;"></i>
@@ -2239,13 +3144,13 @@ function renderPrescCardPharmacy(row, type) {
         actionButtons = `
             <div class="presc-card-actions mt-2 pt-2 border-top">
                 <button type="button" class="btn btn-xs btn-outline-info btn-adapt-product-card" data-id="${row.id}" data-product="${row.product_name || 'Unknown'}" data-product-code="${row.product_code || ''}" data-dose="${row.dose || ''}" data-qty="${qty}" data-price="${effectiveUnitPrice}" data-status="unbilled" data-payable="${payableAmount}" data-claims="${claimsAmount}" data-is-paid="false" data-is-validated="false" data-coverage-mode="${coverageMode}" title="Change to a different product">
-                    <i class="mdi mdi-swap-horizontal"></i> Adapt Product
+                    <i class="mdi mdi-swap-horizontal"></i> <span class="pharm-label">Adapt Product</span>
                 </button>
                 <button type="button" class="btn btn-xs btn-outline-warning btn-adjust-qty-card ms-1" data-id="${row.id}" data-product="${row.product_name || 'Unknown'}" data-qty="${qty}" data-price="${effectiveUnitPrice}" data-status="unbilled" data-payable="${payableAmount}" data-claims="${claimsAmount}" data-is-paid="false" data-is-validated="false" data-coverage-mode="${coverageMode}" title="Change the quantity">
-                    <i class="mdi mdi-counter"></i> Adjust Qty
+                    <i class="mdi mdi-counter"></i> <span class="pharm-label">Adjust Qty</span>
                 </button>
                 <button type="button" class="btn btn-xs btn-outline-primary btn-adjust-price-card ms-1" data-id="${row.id}" data-product="${row.product_name || 'Unknown'}" data-product-code="${row.product_code || ''}" data-qty="${qty}" data-price="${effectiveUnitPrice}" data-coverage-mode="${coverageMode}" data-tariff-payable="${tariffPayableUnit}" data-tariff-claims="${tariffClaimsUnit}" data-price-override="${row.price_override ?? ''}" data-price-override-reason="${row.price_override_reason || ''}" data-price-override-by="${row.price_override_by || ''}" data-price-override-at="${row.price_override_at || ''}" title="Adjust the unit price before billing">
-                    <i class="mdi mdi-cash-edit"></i> Adjust Price
+                    <i class="mdi mdi-cash-usd"></i> <span class="pharm-label">Adjust Price</span>
                 </button>
             </div>
         `;
@@ -2268,10 +3173,10 @@ function renderPrescCardPharmacy(row, type) {
             actionButtons = `
                 <div class="presc-card-actions mt-2 pt-2 border-top">
                     <button type="button" class="btn btn-xs btn-outline-info btn-adapt-product-card" data-id="${row.id}" data-product="${row.product_name || 'Unknown'}" data-product-code="${row.product_code || ''}" data-dose="${row.dose || ''}" data-qty="${qty}" data-price="${effectiveUnitPrice}" data-status="billed" data-payable="${payableAmount}" data-claims="${claimsAmount}" data-is-paid="${isPaid}" data-is-validated="${isValidated}" data-coverage-mode="${row.coverage_mode || 'none'}" title="Change to a different product (will update billing)">
-                        <i class="mdi mdi-swap-horizontal"></i> Adapt Product
+                        <i class="mdi mdi-swap-horizontal"></i> <span class="pharm-label">Adapt Product</span>
                     </button>
                     <button type="button" class="btn btn-xs btn-outline-warning btn-adjust-qty-card ms-1" data-id="${row.id}" data-product="${row.product_name || 'Unknown'}" data-qty="${qty}" data-price="${effectiveUnitPrice}" data-status="billed" data-payable="${payableAmount}" data-claims="${claimsAmount}" data-is-paid="${isPaid}" data-is-validated="${isValidated}" data-coverage-mode="${row.coverage_mode || 'none'}" title="Change the quantity (will update billing)">
-                        <i class="mdi mdi-counter"></i> Adjust Qty
+                        <i class="mdi mdi-counter"></i> <span class="pharm-label">Adjust Qty</span>
                     </button>
                 </div>
             `;
@@ -2339,10 +3244,16 @@ function renderPrescCardPharmacy(row, type) {
         <div class="${cardClass}" 
              data-id="${row.id}" 
              data-product-id="${row.product_id || ''}" 
+             data-product-code="${row.product_code || ''}"
              data-qty="${qty}"
              data-payable="${payableAmount}"
              data-claims="${claimsAmount}"
+             data-coverage-mode="${row.coverage_mode || ''}"
+             data-unit-price="${effectiveUnitPrice}"
              data-total-price="${displayPrice}"
+             data-is-paid="${isPaid ? 1 : 0}"
+             data-is-validated="${isValidated ? 1 : 0}"
+             data-status="${row.status ?? ''}"
              style="${cardStyle}">
              <div class="presc-card-header">
                 <div>
@@ -2357,19 +3268,40 @@ function renderPrescCardPharmacy(row, type) {
             </div>
             ${pendingAlert}
             <div class="presc-card-body mt-2">
-                <div><strong>Dose/Freq:</strong> ${row.dose || 'N/A'}</div>
-                <div><strong>Qty:</strong> ${qty}</div>
-                ${hmoInfo}
-                ${tariffPreviewHtml}
-                ${priceOverrideBadge}
-                ${adaptationBanner}
-                ${qtyAdjustmentBanner}
-                ${stockInfo}
+                <div class="presc-card-quick">
+                    <span class="presc-quick-chip"><i class="mdi mdi-medical-bag"></i> <strong>Dose:</strong> ${row.dose || 'N/A'}</span>
+                    <span class="presc-quick-chip"><i class="mdi mdi-counter"></i> <strong>Qty:</strong> ${qty}</span>
+                </div>
+                <div class="presc-card-extras">
+                    ${hmoInfo}
+                    ${tariffPreviewHtml}
+                    ${priceOverrideBadge}
+                    ${adaptationBanner}
+                    ${qtyAdjustmentBanner}
+                    ${stockInfo}
+                    ${metaInfo}
+                </div>
+                <button type="button" class="presc-card-details-btn" onclick="pharmToggleCardDetails(this)" title="Show or hide billing / stock / history details">
+                    <i class="mdi mdi-chevron-down"></i> Details
+                </button>
             </div>
-            ${metaInfo}
             ${actionButtons}
         </div>
     `;
+}
+
+// Toggle the verbose billing/stock details block on a prescription card.
+// On phones the block is collapsed by default (see CSS) and shown on tap;
+// on wide screens it is always visible so no information is hidden.
+function pharmToggleCardDetails(btn) {
+    const $btn = $(btn);
+    const $extras = $btn.closest('.presc-card-body').find('.presc-card-extras').first();
+    $extras.toggleClass('expanded');
+    $btn.toggleClass('open', $extras.hasClass('expanded'));
+    const $icon = $btn.find('.mdi');
+    if ($icon.length) {
+        $icon.attr('class', 'mdi ' + ($extras.hasClass('expanded') ? 'mdi-chevron-up' : 'mdi-chevron-down'));
+    }
 }
 
 function displayPatientInfo(patient) {
@@ -2545,63 +3477,69 @@ function saveCheckedItemsState(tableId, checkboxClass) {
     });
 }
 
-// Restore checked items state after refresh
+// Restore (re-tick) bagged rows after a DataTable redraw. The till bag is the
+// source of truth: rows that are bagged but live on another page simply stay
+// in the bag; rows on this page get re-ticked and their snapshot refreshed
+// from the card's authoritative server attributes.
 function restoreCheckedItemsState(tableId, checkboxClass) {
     const tabKey = tableId.includes('billing') ? 'billing' :
                    tableId.includes('pending') ? 'pending' :
                    tableId.includes('dispense') ? 'dispense' : null;
+    if (!tabKey) return;
 
-    if (!tabKey || checkedItemsState[tabKey].size === 0) return;
+    try {
+        let ticked = 0;
+        $(`${tableId} .${checkboxClass}`).each(function() {
+            const id = $(this).attr('data-id') || $(this).data('id');
+            if (!id) return;
+            if (pharmBagHas(tabKey, id)) {
+                const $card = $(this).closest('tr').find('.presc-card');
+                $(this).prop('checked', true);
+                $card.addClass('selected');
+                pharmBagAddFromCard(tabKey, id, $card); // authoritative snapshot
+                ticked++;
+            } else {
+                $(this).prop('checked', false);
+            }
+        });
 
-    $(`${tableId} .${checkboxClass}`).each(function() {
-        const id = $(this).attr('data-id') || $(this).data('id');
-        if (id && checkedItemsState[tabKey].has(String(id))) {
-            $(this).prop('checked', true);
-            // Trigger change event to update totals
-            $(this).trigger('change');
+        if (tabKey === 'billing') {
+            prescBillingTotal = pharmBagList('billing').reduce(function(sum, i) { return sum + (i.price || 0); }, 0);
+            updatePrescBillingTotalPharmacy();
         }
-    });
+        // Keep the header honest for the current page.
+        pharmSyncSelectAll(tabKey);
+        if (ticked) updateStickyActionBar(tabKey);
+    } catch (e) {
+        // Never let a restore hiccup abort the DataTable draw — the till bag
+        // remains intact and the next draw will retry the re-tick.
+        if (window.console) console.warn('restoreCheckedItemsState skipped:', e);
+    }
 }
 
 // Clear checked items for a specific tab
 function clearCheckedItems(tab) {
-    if (checkedItemsState[tab]) {
-        checkedItemsState[tab].clear();
-    }
+    pharmBagClear(tab);
 }
 
-// Track checkbox changes for state management
+// Track checkbox changes for state management. Every tick lands in the bag
+// (with the card's server-rendered figures); every untick leaves it — so the
+// till never depends on rows staying in the DataTable DOM. (The row checkboxes
+// carry their own inline onchange=handle* for totals/classes; these delegated
+// listeners keep the bag + select-all header in sync for every change event.)
 $(document).on('change', '.presc-billing-check', function() {
-    const id = $(this).attr('data-id') || $(this).data('id');
-    if (id) {
-        if ($(this).is(':checked')) {
-            checkedItemsState.billing.add(String(id));
-        } else {
-            checkedItemsState.billing.delete(String(id));
-        }
-    }
+    pharmRowBagSync('billing', this);
+    updateStickyActionBar('billing');
 });
 
 $(document).on('change', '.presc-pending-check', function() {
-    const id = $(this).attr('data-id') || $(this).data('id');
-    if (id) {
-        if ($(this).is(':checked')) {
-            checkedItemsState.pending.add(String(id));
-        } else {
-            checkedItemsState.pending.delete(String(id));
-        }
-    }
+    pharmRowBagSync('pending', this);
+    updateStickyActionBar('pending');
 });
 
 $(document).on('change', '.presc-dispense-check', function() {
-    const id = $(this).attr('data-id') || $(this).data('id');
-    if (id) {
-        if ($(this).is(':checked')) {
-            checkedItemsState.dispense.add(String(id));
-        } else {
-            checkedItemsState.dispense.delete(String(id));
-        }
-    }
+    pharmRowBagSync('dispense', this);
+    updateStickyActionBar('dispense');
 });
 
 function refreshCurrentPatientData() {
@@ -2665,3 +3603,38 @@ function updateSyncTimeDisplay() {
 }
 
 
+
+// Wrap the visible text of toolbar buttons in <span class="pharm-label"> so CSS
+// can hide the labels on phones (<576px) and leave icon-only round buttons.
+// Idempotent: only wraps bare text nodes that are not already inside a label.
+function pharmWrapButtonLabels() {
+    $('#workspace-navbar button, .pharm-shelf .presc-card-actions button').each(function() {
+        const btn = this;
+        if (btn.querySelector('.pharm-label')) return; // already wrapped
+        [].slice.call(btn.childNodes).forEach(function(node) {
+            if (node.nodeType !== 3) return; // only wrap text nodes
+            const txt = (node.nodeValue || '').trim();
+            if (!txt) return;
+            const span = document.createElement('span');
+            span.className = 'pharm-label';
+            span.textContent = txt;
+            btn.replaceChild(span, node);
+        });
+    });
+}
+
+// Mobile: tapping the dark scrim behind the expanded till bottom-sheet
+// collapses it back to the floating pill. (The scrim is a ::before on
+// #pharm-till, so taps on it resolve with the till element as the target.)
+$(document).on('click', function(e) {
+    if (window.innerWidth >= 992) return;
+    const $till = $('#pharm-till');
+    if (!$till.length || $till.hasClass('pharm-till-min')) return;
+    if (e.target && e.target === $till[0]) {
+        pharmToggleTillMin(); // collapse sheet -> floating pill
+    }
+});
+
+$(function() {
+    pharmWrapButtonLabels();
+});
