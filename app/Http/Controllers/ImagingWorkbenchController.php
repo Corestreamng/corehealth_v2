@@ -121,7 +121,7 @@ class ImagingWorkbenchController extends Controller
 
         $requests = ImagingServiceRequest::with(['service', 'doctor', 'biller', 'patient', 'productOrServiceRequest', 'resultBy'])
             ->where('patient_id', $patientId)
-            ->whereIn('status', $statuses
+            ->whereIn('status', $statuses)
             ->orderBy('created_at', 'desc')
             ->get();
 
@@ -179,8 +179,8 @@ class ImagingWorkbenchController extends Controller
         });
 
         // Group by status - No sample stage for imaging
-        $freeform = $requests->filter(fn ($r) => (int) $r->is_free_form === 1)->values();
-        $standardRequests = $requests->filter(fn ($r) => (int) $r->is_free_form !== 1);
+        $freeform = $requests->filter(fn($r) => (int) $r->is_free_form === 1)->values();
+        $standardRequests = $requests->filter(fn($r) => (int) $r->is_free_form !== 1);
 
         $billing = $standardRequests->where('status', 1)->values();
         $results = $standardRequests->where('status', 2)->values();
@@ -338,7 +338,7 @@ class ImagingWorkbenchController extends Controller
             }
 
             $query->orderByRaw("FIELD(IFNULL(priority,'routine'), 'emergency', 'urgent', 'routine') ASC")
-                  ->orderBy('created_at', 'desc');
+                ->orderBy('created_at', 'desc');
 
             return Datatables::of($query)
                 ->addIndexColumn()
@@ -413,7 +413,7 @@ class ImagingWorkbenchController extends Controller
                     $query->where(function ($q) use ($keyword) {
                         $q->whereHas('patient.user', function ($qu) use ($keyword) {
                             $qu->where('surname', 'like', "%{$keyword}%")
-                               ->orWhere('firstname', 'like', "%{$keyword}%");
+                                ->orWhere('firstname', 'like', "%{$keyword}%");
                         })->orWhereHas('patient', function ($qp) use ($keyword) {
                             $qp->where('file_no', 'like', "%{$keyword}%");
                         })->orWhereHas('service', function ($qs) use ($keyword) {
@@ -779,8 +779,10 @@ class ImagingWorkbenchController extends Controller
             if (!$isImagingStaff) {
                 $isRequestingDoctor = $user->hasRole('DOCTOR') && $user->id == $imagingRequest->doctor_id;
                 $isRequestingNurse = $user->hasRole('NURSE') && $user->id == $imagingRequest->doctor_id;
-                if (!($isRequestingDoctor && appsettings('doctor_can_enter_imaging_result'))
-                    && !($isRequestingNurse && appsettings('nurse_can_enter_imaging_result'))) {
+                if (
+                    !($isRequestingDoctor && appsettings('doctor_can_enter_imaging_result'))
+                    && !($isRequestingNurse && appsettings('nurse_can_enter_imaging_result'))
+                ) {
                     return response()->json([
                         'success' => false,
                         'message' => 'You do not have permission to enter imaging results.',
