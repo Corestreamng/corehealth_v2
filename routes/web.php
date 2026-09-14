@@ -263,7 +263,27 @@ Route::group(['middleware' => ['auth']], function () {
     Route::group(['middleware' => ['auth']], function () {
         // Creating and Listing Permissions
         Route::resource('encounters', EncounterController::class);
-        Route::get('allPrevEncounters', [EncounterController::class, 'allPrevEncounters'])->name('allPrevEncounters');
+        // ── Encounter Intelligence Workbench ──────────────────────────────
+        // Old URL kept as alias so all existing sidebar links continue to work
+        Route::get('allPrevEncounters', [\App\Http\Controllers\EncounterWorkbench\EncounterWorkbenchController::class, 'index'])->name('allPrevEncounters');
+
+        // New named route (canonical)
+        Route::get('encounter-workbench', [\App\Http\Controllers\EncounterWorkbench\EncounterWorkbenchController::class, 'index'])->name('encounter.workbench');
+
+        // AJAX tab endpoints
+        Route::prefix('encounter-workbench')->name('encounter.workbench.')->group(function () {
+            Route::get('list', [\App\Http\Controllers\EncounterWorkbench\EncounterWorkbenchController::class, 'listData'])->name('list');
+            Route::get('kpi', [\App\Http\Controllers\EncounterWorkbench\EncounterWorkbenchController::class, 'kpiData'])->name('kpi');
+            Route::get('kpi-strip', [\App\Http\Controllers\EncounterWorkbench\EncounterWorkbenchController::class, 'kpiStrip'])->name('kpi-strip');
+            Route::get('clinic', [\App\Http\Controllers\EncounterWorkbench\EncounterWorkbenchController::class, 'clinicAnalytics'])->name('clinic');
+            Route::get('doctor', [\App\Http\Controllers\EncounterWorkbench\EncounterWorkbenchController::class, 'doctorProductivity'])->name('doctor');
+            Route::get('revenue', [\App\Http\Controllers\EncounterWorkbench\EncounterWorkbenchController::class, 'revenue'])->name('revenue');
+            Route::get('patients', [\App\Http\Controllers\EncounterWorkbench\EncounterWorkbenchController::class, 'patientInsights'])->name('patients');
+            Route::get('details/{id}', [\App\Http\Controllers\EncounterWorkbench\EncounterWorkbenchController::class, 'details'])->name('details');
+            Route::get('export', [\App\Http\Controllers\EncounterWorkbench\EncounterWorkbenchController::class, 'export'])->name('export');
+        });
+
+        // Legacy list endpoint (kept for backward-compat — now served by workbench)
         Route::get('AllprevEncounterList', [EncounterController::class, 'AllprevEncounterList'])->name('AllprevEncounterList');
         Route::get('NewEncounterList', [EncounterController::class, 'NewEncounterList'])->name('NewEncounterList');
         Route::get('ContEncounterList', [EncounterController::class, 'ContEncounterList'])->name('ContEncounterList');

@@ -1,0 +1,319 @@
+/* ============================================================
+   encounter-workbench.css
+   Encounter Intelligence Workbench — standalone stylesheet.
+   Uses CSS custom properties from the dynamic hospital theme:
+     --hospital-primary, --hospital-primary-rgb, --hospital-secondary, --primary-color
+   ============================================================ */
+
+/* ─── Container ─────────────────────────────────────────────────────────────── */
+.ewb-container {
+    padding: 1rem 1.25rem;
+}
+
+/* ─── Page Header ─────────────────────────────────────────────────────────────*/
+.ewb-page-title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--hospital-primary, #011b33);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.ewb-page-title .mdi {
+    color: var(--hospital-primary, #011b33);
+    font-size: 1.6rem;
+}
+
+.ewb-badge-doctor {
+    background: rgba(var(--hospital-primary-rgb, 1, 27, 51), 0.12);
+    color: var(--hospital-primary, #011b33);
+    font-size: 0.7rem;
+    padding: 0.3em 0.75em;
+    border-radius: 999px;
+    font-weight: 600;
+    border: 1px solid rgba(var(--hospital-primary-rgb, 1, 27, 51), 0.25);
+}
+
+/* ─── Filter Card ─────────────────────────────────────────────────────────────*/
+.ewb-filter-card {
+    border: 1px solid rgba(var(--hospital-primary-rgb, 1, 27, 51), 0.12);
+    background: #f8fafc;
+    border-radius: 10px;
+}
+
+.ewb-filter-label {
+    display: block;
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: #6b7280;
+    margin-bottom: 2px;
+}
+
+/* Tag filter pills */
+.ewb-tag-check {
+    cursor: pointer;
+    user-select: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.ewb-tag-check input[type="checkbox"] { display: none; }
+
+.ewb-tag-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    padding: 0.25em 0.65em;
+    border-radius: 999px;
+    font-size: 0.72rem;
+    font-weight: 600;
+    border: 1.5px solid transparent;
+    transition: all 0.15s ease;
+    cursor: pointer;
+}
+
+.ewb-tag-check input:checked + .ewb-tag-pill {
+    filter: brightness(1.1);
+    box-shadow: 0 0 0 2px rgba(0,0,0,0.15);
+}
+
+.ewb-tag-lab      { background: #dbeafe; color: #1e40af; border-color: #93c5fd; }
+.ewb-tag-imaging  { background: #fef3c7; color: #92400e; border-color: #fcd34d; }
+.ewb-tag-rx       { background: #d1fae5; color: #065f46; border-color: #6ee7b7; }
+.ewb-tag-referral { background: #e0e7ff; color: #3730a3; border-color: #a5b4fc; }
+.ewb-tag-admission{ background: #fee2e2; color: #7f1d1d; border-color: #fca5a5; }
+.ewb-tag-new      { background: #f0fdf4; color: #166534; border-color: #86efac; }
+
+.ewb-apply-btn {
+    background: var(--hospital-primary, #011b33);
+    border-color: var(--hospital-primary, #011b33);
+    color: #fff;
+    font-weight: 600;
+}
+
+.ewb-apply-btn:hover {
+    background: rgba(var(--hospital-primary-rgb, 1, 27, 51), 0.85);
+    border-color: rgba(var(--hospital-primary-rgb, 1, 27, 51), 0.85);
+    color: #fff;
+}
+
+/* ─── KPI Strip ─────────────────────────────────────────────────────────────── */
+.ewb-kpi-strip {
+    display: flex;
+    gap: 0.75rem;
+    overflow-x: auto;
+    padding: 0.25rem 0 0.75rem;
+    scrollbar-width: thin;
+}
+
+.ewb-kpi-strip::-webkit-scrollbar { height: 4px; }
+.ewb-kpi-strip::-webkit-scrollbar-thumb { background: rgba(var(--hospital-primary-rgb, 1, 27, 51), 0.25); border-radius: 4px; }
+
+.ewb-kpi-card {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    background: #fff;
+    border-radius: 10px;
+    padding: 0.65rem 1rem;
+    min-width: 140px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+    flex-shrink: 0;
+    border-top: 3px solid transparent;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.ewb-kpi-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.12);
+}
+
+.ewb-kpi-icon {
+    font-size: 1.6rem;
+    line-height: 1;
+    flex-shrink: 0;
+}
+
+.ewb-kpi-value {
+    font-size: 1.15rem;
+    font-weight: 700;
+    line-height: 1.1;
+}
+
+.ewb-kpi-label {
+    font-size: 0.68rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: #6b7280;
+    font-weight: 600;
+    line-height: 1.2;
+}
+
+.ewb-kpi-sub {
+    font-size: 0.65rem;
+    color: #9ca3af;
+}
+
+.ewb-kpi-loading {
+    padding: 0.5rem 1rem;
+    color: #6b7280;
+    font-size: 0.8rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+/* ─── Tab Navigation ─────────────────────────────────────────────────────────*/
+.ewb-nav-tabs {
+    border-bottom: 2px solid rgba(var(--hospital-primary-rgb, 1, 27, 51), 0.15);
+    gap: 0.25rem;
+    flex-wrap: wrap;
+}
+
+.ewb-nav-tabs .nav-link,
+.ewb-tab-btn {
+    border: none;
+    border-radius: 8px 8px 0 0;
+    padding: 0.55rem 1.1rem;
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: #6b7280;
+    background: transparent;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    transition: all 0.15s ease;
+    cursor: pointer;
+    position: relative;
+}
+
+.ewb-tab-btn:hover {
+    background: rgba(var(--hospital-primary-rgb, 1, 27, 51), 0.06);
+    color: var(--hospital-primary, #011b33);
+}
+
+.ewb-tab-btn.active {
+    background: #fff;
+    color: var(--hospital-primary, #011b33);
+    border: 2px solid rgba(var(--hospital-primary-rgb, 1, 27, 51), 0.15);
+    border-bottom: 2px solid #fff;
+    margin-bottom: -2px;
+    box-shadow: 0 -2px 8px rgba(0,0,0,0.06);
+}
+
+.ewb-admin-badge {
+    font-size: 0.6rem;
+    background: rgba(var(--hospital-primary-rgb, 1, 27, 51), 0.1);
+    color: var(--hospital-primary, #011b33);
+    border-radius: 999px;
+    padding: 1px 6px;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+}
+
+/* ─── Tab Content ─────────────────────────────────────────────────────────────*/
+.ewb-tab-content {
+    background: transparent;
+    padding-top: 1rem;
+}
+
+/* ─── DataTables ─────────────────────────────────────────────────────────────*/
+.ewb-datatable thead.ewb-thead th {
+    background: rgba(var(--hospital-primary-rgb, 1, 27, 51), 0.06);
+    color: var(--hospital-primary, #011b33);
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    border-bottom: 2px solid rgba(var(--hospital-primary-rgb, 1, 27, 51), 0.2);
+    white-space: nowrap;
+    padding: 0.5rem 0.75rem;
+}
+
+.ewb-datatable tbody tr:hover td {
+    background: rgba(var(--hospital-primary-rgb, 1, 27, 51), 0.03);
+}
+
+.ewb-datatable td {
+    vertical-align: middle;
+    font-size: 0.82rem;
+    padding: 0.5rem 0.75rem;
+}
+
+/* ─── Encounter Tag Badges ────────────────────────────────────────────────────*/
+.badge.ewb-tag-lab      { background: #dbeafe !important; color: #1e40af !important; border: 1px solid #93c5fd; }
+.badge.ewb-tag-imaging  { background: #fef3c7 !important; color: #92400e !important; border: 1px solid #fcd34d; }
+.badge.ewb-tag-rx       { background: #d1fae5 !important; color: #065f46 !important; border: 1px solid #6ee7b7; }
+.badge.ewb-tag-referral { background: #e0e7ff !important; color: #3730a3 !important; border: 1px solid #a5b4fc; }
+.badge.ewb-tag-admission{ background: #fee2e2 !important; color: #7f1d1d !important; border: 1px solid #fca5a5; }
+.badge.ewb-tag-procedure{ background: #fdf4ff !important; color: #6b21a8 !important; border: 1px solid #d8b4fe; }
+.badge.ewb-tag-new      { background: #f0fdf4 !important; color: #166534 !important; border: 1px solid #86efac; }
+
+/* ─── Doctor Avatar ──────────────────────────────────────────────────────────*/
+.ewb-doctor-avatar {
+    display: inline-flex;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: var(--hospital-primary, #011b33);
+    color: #fff;
+    font-size: 0.75rem;
+    font-weight: 700;
+    align-items: center;
+    justify-content: center;
+    margin-right: 0.5rem;
+    flex-shrink: 0;
+    vertical-align: middle;
+}
+
+/* ─── Chart Titles ───────────────────────────────────────────────────────────*/
+.ewb-chart-title {
+    font-size: 0.82rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--hospital-primary, #011b33);
+    margin-bottom: 0.75rem;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+}
+
+/* ─── Detail Modal ─────────────────────────────────────────────────────────── */
+#ewb-detail-modal .modal-body {
+    background: #f8fafc;
+}
+
+#ewb-detail-modal .card {
+    transition: box-shadow 0.15s ease;
+}
+
+#ewb-detail-modal .card:hover {
+    box-shadow: 0 4px 16px rgba(0,0,0,0.1) !important;
+}
+
+/* ─── Responsive ─────────────────────────────────────────────────────────────*/
+@media (max-width: 768px) {
+    .ewb-kpi-strip {
+        grid-template-columns: repeat(2, 1fr);
+        display: grid;
+        overflow-x: unset;
+    }
+
+    .ewb-tab-btn span { display: none; }
+    .ewb-tab-btn .mdi { font-size: 1.1rem; }
+
+    .ewb-nav-tabs {
+        gap: 2px;
+    }
+}
+
+@media (max-width: 480px) {
+    .ewb-container { padding: 0.5rem; }
+    .ewb-kpi-card { min-width: unset; }
+}

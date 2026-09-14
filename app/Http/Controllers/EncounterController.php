@@ -547,7 +547,9 @@ class EncounterController extends Controller
 
     public function allPrevEncounters()
     {
-        return view('admin.encounters.index');
+        // Redirected to the Encounter Intelligence Workbench (EncounterWorkbenchController::index)
+        // This method is kept as a fallback; the route now resolves via EncounterWorkbenchController.
+        return redirect()->route('encounter.workbench');
     }
 
     public function AllprevEncounterList(Request $request)

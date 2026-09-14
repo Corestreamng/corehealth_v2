@@ -98,6 +98,11 @@ class Patient extends Model implements Auditable
         return $this->hasOne(PatientAccount::class, 'patient_id', 'id');
     }
 
+    public function encounters()
+    {
+        return $this->hasMany(Encounter::class, 'patient_id');
+    }
+
     public function principal()
     {
         return $this->belongsTo(Patient::class, 'principal_id');
