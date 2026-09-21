@@ -29,10 +29,12 @@
 </script>
 <script src="{{ asset('js/workbench-helper.js') }}"></script>
 <script src="{{ asset('js/clinical-alerts-shared.js') }}"></script>
-<script src="{{ asset('js/clinical-orders-shared.js') }}?v={{ filemtime(public_path('js/clinical-orders-shared.js')) }}"></script>
+<script src="{{ versioned_asset('js/clinical-orders-shared.js') }}"></script>
 @include('admin.partials.invest_res_js', ['resultContext' => 'imaging'])
 @include('admin.partials.patient_search_js', [
     'search_context' => 'imaging',
     'search_url' => route('imaging.search-patients')
-])<script src="{{ asset('js/imaging-core.js') }}?v={{ filemtime(public_path('js/imaging-core.js')) }}"></script>
-<script src="{{ asset('js/imaging-results.js') }}?v={{ filemtime(public_path('js/imaging-results.js')) }}"></script>@endsection
+])
+<script src="{{ versioned_asset('js/imaging-core.js') }}"></script>
+<script src="{{ versioned_asset('js/imaging-results.js') }}"></script>
+@endsection

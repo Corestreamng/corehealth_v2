@@ -23,5 +23,5 @@ window.WORKBENCH_CONFIG = {
 };
 </script>
 <script src="{{ asset('js/workbench-helper.js') }}"></script>
-<script src="{{ asset('js/doctor-queue.js') }}?v={{ filemtime(public_path('js/doctor-queue.js')) }}"></script>
+<script src="{{ versioned_asset('js/doctor-queue.js') }}"></script>
 @endsection

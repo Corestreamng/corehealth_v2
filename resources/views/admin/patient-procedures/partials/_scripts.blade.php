@@ -27,7 +27,7 @@
 <script src="{{ asset('js/workbench-helper.js') }}"></script>
 <script src="{{ asset('js/billing-shared.js') }}"></script>
 <script src="{{ asset('js/request-details.js') }}"></script>
-<script src="{{ asset('js/clinical-orders-shared.js') }}?v={{ filemtime(public_path('js/clinical-orders-shared.js')) }}"></script>
+<script src="{{ versioned_asset('js/clinical-orders-shared.js') }}"></script>
 
 @hasanyrole('SUPERADMIN|ADMIN|DOCTOR|Nurse|RECORD')
 @include('admin.partials.treatment-plan-viewer-modal')

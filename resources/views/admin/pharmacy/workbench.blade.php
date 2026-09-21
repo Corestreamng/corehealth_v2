@@ -3,7 +3,7 @@
 @section('title', 'Pharmacy Workbench')
 
 @push('styles')
-<link rel="stylesheet" href="{{ asset('css/pharmacy-workbench.css') }}?v={{ filemtime(public_path('css/pharmacy-workbench.css')) }}">
+<link rel="stylesheet" href="{{ versioned_asset('css/pharmacy-workbench.css') }}">
 <link rel="stylesheet" href="{{ asset('plugins/dataT/datatables.min.css') }}">
 @endpush
 

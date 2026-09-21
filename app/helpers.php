@@ -517,3 +517,24 @@ if (!function_exists('hexToRgb')) {
         return "$r, $g, $b";
     }
 }
+
+if (!function_exists('versioned_asset')) {
+    /**
+     * Generate an asset URL with safe cache-busting version parameter.
+     * Safely checks if file exists before calling filemtime to prevent stat failed errors.
+     *
+     * @param string $path Relative path to asset within public folder (e.g. 'js/billing-core.js')
+     * @param bool|null $secure
+     * @return string
+     */
+    function versioned_asset(string $path, ?bool $secure = null): string
+    {
+        $relativePath = ltrim($path, '/');
+        $fullPath = public_path($relativePath);
+        $version = (file_exists($fullPath) && is_file($fullPath))
+            ? (@filemtime($fullPath) ?: '1.0')
+            : (config('app.version') ?? '1.0');
+
+        return asset($relativePath, $secure) . '?v=' . $version;
+    }
+}

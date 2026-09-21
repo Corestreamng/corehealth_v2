@@ -125,7 +125,7 @@ class EncounterWorkbenchTest extends TestCase
     public function clinic_analytics_returns_403_for_receptionist(): void
     {
         $user = $this->getOrCreateRoleUser('RECEPTIONIST');
-        if (! $user) {
+        if (!$user) {
             $this->markTestSkipped('No RECEPTIONIST user found.');
         }
 

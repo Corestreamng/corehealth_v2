@@ -223,8 +223,8 @@ class RevenueBillingTab extends EncounterWorkbenchBaseController
             'rows' => $tableRows,
             'chart' => [
                 'labels' => $rows->pluck('label')->toArray(),
-                'billed' => $rows->pluck('total_billed')->map(fn($v) => (float)$v)->toArray(),
-                'hmo' => $rows->pluck('hmo_claims')->map(fn($v) => (float)$v)->toArray(),
+                'billed' => $rows->pluck('total_billed')->map(fn ($v) => (float)$v)->toArray(),
+                'hmo' => $rows->pluck('hmo_claims')->map(fn ($v) => (float)$v)->toArray(),
             ],
         ];
     }

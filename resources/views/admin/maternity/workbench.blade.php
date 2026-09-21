@@ -3,7 +3,7 @@
 @section('title', 'Maternity Workbench')
 
 @push('styles')
-<link rel="stylesheet" href="{{ asset('css/maternity-workbench.css') }}?v={{ filemtime(public_path('css/maternity-workbench.css')) }}">
+<link rel="stylesheet" href="{{ versioned_asset('css/maternity-workbench.css') }}">
 <link rel="stylesheet" href="{{ asset('plugins/dataT/datatables.min.css') }}">
 <link rel="stylesheet" href="{{ asset('css/clinical-orders-shared.css') }}">
 <link rel="stylesheet" href="{{ asset('css/billing-shared.css') }}">

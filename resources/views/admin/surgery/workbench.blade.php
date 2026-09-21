@@ -884,7 +884,7 @@
     @push('scripts')
         <script src="{{ asset('js/patient-search-widget.js') }}?v={{ time() }}"></script>
         @include('admin.partials.treatment-plan-viewer-modal')
-        <script src="{{ asset('js/clinical-orders-shared.js') }}?v={{ filemtime(public_path('js/clinical-orders-shared.js')) }}"></script>
+        <script src="{{ versioned_asset('js/clinical-orders-shared.js') }}"></script>
         <script>
             (function() {
                 'use strict';

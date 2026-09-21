@@ -3,7 +3,7 @@
 @section('title', 'Reception Workbench')
 
 @push('styles')
-<link rel="stylesheet" href="{{ asset('css/reception-workbench.css') }}?v={{ filemtime(public_path('css/reception-workbench.css')) }}">
+<link rel="stylesheet" href="{{ versioned_asset('css/reception-workbench.css') }}">
 <link rel="stylesheet" href="{{ asset('plugins/dataT/datatables.min.css') }}">
 <link rel="stylesheet" href="{{ asset('plugins/fullcalendar/fullcalendar.min.css') }}">
 <link rel="stylesheet" href="{{ asset('css/queue-status.css') }}">

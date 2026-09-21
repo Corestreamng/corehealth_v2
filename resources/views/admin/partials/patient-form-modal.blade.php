@@ -13,12 +13,12 @@
 --}}
 
 @push('styles')
-<link rel="stylesheet" href="{{ asset('css/patient-form-modal.css') }}?v={{ filemtime(public_path('css/patient-form-modal.css')) }}">
+<link rel="stylesheet" href="{{ versioned_asset('css/patient-form-modal.css') }}">
 @endpush
 
 
 @push('scripts')
-<script src="{{ asset('js/patient-form-modal.js') }}?v={{ filemtime(public_path('js/patient-form-modal.js')) }}"></script>
+<script src="{{ versioned_asset('js/patient-form-modal.js') }}"></script>
 @endpush
 
 <div class="modal fade" id="patientFormModal" tabindex="-1" role="dialog">
