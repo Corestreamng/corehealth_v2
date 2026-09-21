@@ -90,7 +90,14 @@
                     <td style="font-size:12px; color:#555;">{{ $row['patient_name'] }}</td>
                     @endif
                     <td>{{ $row['type'] }}</td>
-                    <td>{{ $row['name'] }}</td>
+                    <td>
+                        {{ $row['name'] }}
+                        @if(($site->show_prescription_dose_on_receipt ?? true) && !empty($row['dose']))
+                            <div style="font-size: 11px; color: var(--muted); margin-top: 3px; font-style: italic;">
+                                <strong>Dose:</strong> {{ $row['dose'] }}
+                            </div>
+                        @endif
+                    </td>
                     <td>{{ number_format($row['price'], 2) }}</td>
                     <td>{{ $row['qty'] }}</td>
                     <td>{{ $row['discount_percent'] }}</td>

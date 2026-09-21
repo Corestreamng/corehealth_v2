@@ -792,7 +792,7 @@ class BillingWorkbenchController extends Controller
 
             $ids = collect($data['items'])->pluck('id')->all();
 
-            $rows = ProductOrServiceRequest::with(['service.price', 'product.price', 'user'])
+            $rows = ProductOrServiceRequest::with(['service.price', 'product.price', 'user', 'productRequest'])
                 ->whereIn('id', $ids)
                 ->lockForUpdate()
                 ->get();
@@ -853,6 +853,7 @@ class BillingWorkbenchController extends Controller
                     'discount_percent' => $discountPercent,
                     'discount_amount' => $discountAmount,
                     'amount_paid' => $lineTotal,
+                    'dose' => (!$isService && $row->productRequest) ? $row->productRequest->dose : null,
                 ];
             }
 
@@ -1114,7 +1115,7 @@ class BillingWorkbenchController extends Controller
         // Aggregate items from selected payments
         $allItems = ProductOrServiceRequest::whereIn('payment_id', $request->payment_ids)
             ->where('is_bundle_item', false) // Exclude child items from receipt
-            ->with(['service.price', 'product.price'])
+            ->with(['service.price', 'product.price', 'productRequest'])
             ->get();
 
         $receiptDetails = [];
@@ -1146,6 +1147,7 @@ class BillingWorkbenchController extends Controller
                 'discount_percent' => $discountPercent,
                 'discount_amount' => $discountAmount,
                 'amount_paid' => $lineTotal,
+                'dose' => (!$isService && $row->productRequest) ? $row->productRequest->dose : null,
             ];
         }
 
@@ -1231,7 +1233,7 @@ class BillingWorkbenchController extends Controller
             ->whereNull('payment_id')
             ->whereNull('invoice_id')
             ->where('is_bundle_item', false) // Exclude child items from invoice
-            ->with(['service.price', 'product.price'])
+            ->with(['service.price', 'product.price', 'productRequest'])
             ->get();
 
         if ($items->isEmpty()) {
@@ -1271,6 +1273,7 @@ class BillingWorkbenchController extends Controller
                 'hmo_coverage' => $hmoCoverage,
                 'amount' => $lineTotal,
                 'date' => $row->created_at ? $row->created_at->format('d/m/Y H:i') : 'N/A',
+                'dose' => (!$isService && $row->productRequest) ? $row->productRequest->dose : null,
             ];
         }
 

@@ -77,6 +77,12 @@
                 @endif
                 <div class="item-name">{{ $row['name'] }}</div>
                 <div class="item-type">{{ $row['type'] }}</div>
+                @if(($site->show_prescription_dose_on_receipt ?? true) && !empty($row['dose']))
+                <div class="item-line" style="font-size:7.5px; font-style: italic; margin-bottom: 2px;">
+                    <span class="label">Dose/Freq:</span>
+                    <span class="val">{{ $row['dose'] }}</span>
+                </div>
+                @endif
                 <div class="item-line">
                     <span class="label">Qty &times; Unit Price</span>
                     <span class="val">{{ $row['qty'] }} &times; ₦{{ number_format($row['price'], 2) }}</span>

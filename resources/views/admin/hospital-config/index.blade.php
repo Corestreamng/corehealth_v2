@@ -470,6 +470,23 @@
                                         </div>
                                     </div>
                                 </div>
+                                <div class="row pt-3 mt-2" style="border-top: 1px solid #e9ecef;">
+                                    <div class="col-md-12">
+                                        <label class="form-label" style="font-weight: 600; color: #495057;">
+                                            Prescription Dosage on Receipts
+                                        </label>
+                                        <div class="custom-control custom-switch mt-1">
+                                            <input type="checkbox" class="custom-control-input" id="showPrescriptionDoseSwitch" name="show_prescription_dose_on_receipt" value="1" {{ ($config->show_prescription_dose_on_receipt ?? true) ? 'checked' : '' }}>
+                                            <label class="custom-control-label" for="showPrescriptionDoseSwitch" style="font-weight: 500;">
+                                                Show Dose, Frequency &amp; Duration on Product/Pharmacy Receipts
+                                            </label>
+                                        </div>
+                                        <small class="text-muted mt-1 d-block">
+                                            <i class="mdi mdi-information-outline"></i>
+                                            When enabled, printed A4 and Thermal payment receipts will display the prescribed dosage, frequency, and duration instructions under each pharmacy/medication line item where available.
+                                        </small>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                         {{-- ===== / Printing Settings Card ===== --}}

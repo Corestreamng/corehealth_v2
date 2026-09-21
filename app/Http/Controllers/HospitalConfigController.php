@@ -157,6 +157,8 @@ class HospitalConfigController extends Controller
             'doctor_full_admission' => 'boolean',
             'doctor_full_discharge' => 'boolean',
 
+            'show_prescription_dose_on_receipt' => 'boolean',
+
             // Emergency Intake Toggles
             'enable_ei_reception' => 'boolean',
             'enable_ei_imaging' => 'boolean',
@@ -203,6 +205,7 @@ class HospitalConfigController extends Controller
         $validated['doctor_full_admission'] = $request->has('doctor_full_admission');
         $validated['doctor_full_discharge'] = $request->has('doctor_full_discharge');
         $validated['strict_encounter_navigation'] = $request->has('strict_encounter_navigation');
+        $validated['show_prescription_dose_on_receipt'] = $request->has('show_prescription_dose_on_receipt');
 
         $validated['enable_ei_reception'] = $request->has('enable_ei_reception');
         $validated['enable_ei_imaging'] = $request->has('enable_ei_imaging');

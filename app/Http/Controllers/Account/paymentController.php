@@ -187,7 +187,7 @@ class paymentController extends Controller
 
                 // Products
                 if (session('products') != null) {
-                    $products = ProductOrServiceRequest::with('product.price')->whereIn('id', array_values(session('products')))->get();
+                    $products = ProductOrServiceRequest::with(['product.price', 'productRequest'])->whereIn('id', array_values(session('products')))->get();
                     $l = 0;
                     foreach ($products as $product) {
                         // Assign payment_id to mark as paid
@@ -215,6 +215,7 @@ class paymentController extends Controller
                             'discount_percent' => $discount,
                             'discount_amount' => $discountAmount,
                             'amount_paid' => $amountPaid,
+                            'dose' => $product->productRequest ? $product->productRequest->dose : null,
                         ];
                         ++$l;
                     }
@@ -430,7 +431,7 @@ class paymentController extends Controller
 
             $ids = collect($data['items'])->pluck('id')->all();
 
-            $rows = ProductOrServiceRequest::with(['service.price', 'product.price', 'user'])
+            $rows = ProductOrServiceRequest::with(['service.price', 'product.price', 'user', 'productRequest'])
                 ->whereIn('id', $ids)
                 ->lockForUpdate()
                 ->get();
@@ -485,6 +486,7 @@ class paymentController extends Controller
                     'discount_percent' => $discountPercent,
                     'discount_amount' => $discountAmount,
                     'amount_paid' => $lineTotal,
+                    'dose' => (!$isService && $row->productRequest) ? $row->productRequest->dose : null,
                 ];
             }
 

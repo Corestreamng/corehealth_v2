@@ -76,6 +76,12 @@
     @foreach($invoiceDetails as $row)
         <div class="item-row">
             <div class="item-name">{{ $row['name'] }}</div>
+            @if(($site->show_prescription_dose_on_receipt ?? true) && !empty($row['dose']))
+            <div class="item-line" style="font-size:7.5px; font-style: italic; margin-bottom: 2px;">
+                <span class="label">Dose/Freq:</span>
+                <span class="val">{{ $row['dose'] }}</span>
+            </div>
+            @endif
             <div class="item-line">
                 <span class="label">Qty × Unit Price</span>
                 <span class="val">{{ $row['qty'] }} × ₦{{ number_format($row['price'] ?? ($row['amount'] / max($row['qty'],1)), 2) }}</span>
