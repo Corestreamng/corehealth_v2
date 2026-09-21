@@ -997,7 +997,7 @@ if (typeof window.wbRoute !== 'function') {
     // BILLING SHIFT MANAGEMENT MODULE
     // =============================================
 
-    const BillingShiftManager = {
+    var BillingShiftManager = window.BillingShiftManager = {
         // State
         activeShift: null,
         shiftTimer: null,

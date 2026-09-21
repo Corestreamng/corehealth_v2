@@ -20,10 +20,13 @@ if (typeof window.wbRoute !== 'function') {
 }
 
     // Global state
-    let currentPatient = null;
-    let currentPatientData = null; // Store full patient data including allergies
-    let queueRefreshInterval = null;
-    let vitalTooltip = null;
+    window.currentPatient = window.currentPatient || null;
+    window.currentPatientData = window.currentPatientData || null;
+    window.vitalTooltip = window.vitalTooltip || null;
+    var currentPatient = window.currentPatient;
+    var currentPatientData = window.currentPatientData;
+    var queueRefreshInterval = null;
+    var vitalTooltip = window.vitalTooltip;
 
     $(document).ready(function() {
         // Initialize
@@ -31,13 +34,17 @@ if (typeof window.wbRoute !== 'function') {
         startQueueRefresh();
         initializeEventListeners();
         loadUserPreferences();
-        createVitalTooltip();
-        loadBanks(); // Load available banks for payment
-        loadStaffList(); // Load active staff members for billing
-        loadOrganizationList(); // Load active organizations for billing
+        if (typeof createVitalTooltip === 'function') createVitalTooltip();
+        if (typeof loadBanks === 'function') loadBanks();
+        if (typeof loadStaffList === 'function') loadStaffList();
+        if (typeof loadOrganizationList === 'function') loadOrganizationList();
 
         // Initialize Billing Shift Manager
-        BillingShiftManager.init();
+        if (typeof BillingShiftManager !== 'undefined' && BillingShiftManager && typeof BillingShiftManager.init === 'function') {
+            BillingShiftManager.init();
+        } else if (window.BillingShiftManager && typeof window.BillingShiftManager.init === 'function') {
+            window.BillingShiftManager.init();
+        }
 
         // Auto-select patient from URL query parameter (e.g., from Patient list workbench button)
         const urlParams = new URLSearchParams(window.location.search);
@@ -198,6 +205,7 @@ if (typeof window.wbRoute !== 'function') {
 
     function loadPatient(patientId) {
         console.log('loadPatient called with ID:', patientId);
+        window.currentPatient = patientId;
         currentPatient = patientId;
 
         // Hide all views to prevent stacking
@@ -229,6 +237,7 @@ if (typeof window.wbRoute !== 'function') {
             method: 'GET',
             success: function(data) {
                 console.log('Patient billing data loaded:', data);
+                window.currentPatientData = data.patient;
                 currentPatientData = data.patient;
                 displayPatientInfo(data.patient);
 
