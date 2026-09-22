@@ -352,11 +352,17 @@ trait ClinicalOrdersTrait
             if (!empty($prepDetails['anesthesia_type'])) {
                 $lines[] = '• Anesthesia Plan: ' . ucwords(str_replace('_', ' ', $prepDetails['anesthesia_type']));
             }
+            if (!empty($prepDetails['procedure_pack'])) {
+                $lines[] = '• Procedure Pack: ' . ucwords(str_replace('_', ' ', $prepDetails['procedure_pack']));
+            }
             if (!empty($prepDetails['consent_req'])) {
                 $lines[] = '• Consent: ' . ucwords(str_replace('_', ' ', $prepDetails['consent_req']));
             }
             if (!empty($prepDetails['blood_required'])) {
                 $lines[] = '• Blood Products: G&X Required (Blood on standby)';
+            }
+            if (!empty($prepDetails['observation_plan'])) {
+                $lines[] = '• Observation: ' . ucwords(str_replace('_', ' ', $prepDetails['observation_plan']));
             }
             if (!empty($prepDetails['operating_room']) || !empty($data['operating_room'])) {
                 $room = $data['operating_room'] ?? $prepDetails['operating_room'];
@@ -415,14 +421,20 @@ trait ClinicalOrdersTrait
 
         $procedure->save();
 
-        // 2. Check if doctor/surgeon pricing mode or deferred billing is active
+        // 2. Check if custom procedure pricing mode or deferred billing is active
         $appStatus = \App\Models\ApplicationStatu::first();
         $allowDoctorSetPrice = $appStatus && $appStatus->allow_doctor_set_procedure_price;
-        $deferBilling = ($data['defer_billing'] ?? false) || ($extra['defer_billing'] ?? false);
+        $deferBilling = !empty($data['defer_billing']) || !empty($extra['defer_billing']);
 
-        if ($allowDoctorSetPrice && $deferBilling) {
-            // Defer procedure base fee billing: procedure record exists, bill will be generated later
-            return $procedure;
+        if ($allowDoctorSetPrice) {
+            $hasExplicitCustomPrice = (isset($data['payable_amount']) && (float)$data['payable_amount'] > 0)
+                || (isset($data['claims_amount']) && (float)$data['claims_amount'] > 0)
+                || (isset($data['custom_price']) && (float)$data['custom_price'] > 0);
+
+            if (!$hasExplicitCustomPrice || $deferBilling) {
+                // Defer procedure base fee billing: procedure record exists, bill will be generated in Procedure Workbench
+                return $procedure;
+            }
         }
 
         $patient = Patient::find($patientId);

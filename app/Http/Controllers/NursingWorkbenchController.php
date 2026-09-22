@@ -6407,7 +6407,16 @@ class NursingWorkbenchController extends Controller
                 'priority' => 'required|string',
             ]);
             $procedure = $this->addSingleProcedure(
-                $request->only(['service_id', 'priority', 'scheduled_date', 'pre_notes']),
+                $request->only([
+                    'service_id',
+                    'priority',
+                    'scheduled_date',
+                    'scheduled_time',
+                    'operating_room',
+                    'pre_notes',
+                    'defer_billing',
+                    'prep_details',
+                ]),
                 $request->input('patient_id'),
                 null,  // nurse has no encounter
                 null   // nurse has no admission_request_id
