@@ -24,6 +24,7 @@ window.WORKBENCH_CONFIG = {
     resolvedStoreId: '{{ $resolvedStore->id ?? "" }}',
     resolvedStoreName: '{{ $resolvedStore->store_name ?? "" }}',
     showMedicationOption: true,
+    allowDoctorSetPrice: {{ appsettings('allow_doctor_set_procedure_price', '0') ? 'true' : 'false' }},
     hmos: @json(\App\Models\Hmo::with('scheme')->orderBy('name')->get()->map(fn($h) => ['id' => $h->id, 'name' => $h->name, 'scheme_name' => $h->scheme->name ?? 'Other'])),
     routes: {
         'maternity-workbench.queue.active-anc': '{{ route("maternity-workbench.queue.active-anc") }}',

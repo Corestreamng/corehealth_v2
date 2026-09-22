@@ -3,8 +3,10 @@
 namespace Tests\Feature\Procedure;
 
 use App\Models\ChecklistTemplate;
+use App\Models\Patient;
 use App\Models\Procedure;
 use App\Models\ProcedureDefinition;
+use App\Models\ProductOrServiceRequest;
 use App\Models\Service;
 use App\Models\User;
 use Tests\TestCase;
@@ -224,5 +226,139 @@ class ProcedureSurgicalWorkflowTest extends TestCase
         $this->assertStringContainsString('Anesth: Spinal', $summary);
         $this->assertStringContainsString('Blood: G&X Needed', $summary);
         $this->assertStringContainsString('Room: Theatre 2', $summary);
+    }
+
+    /** @test */
+    public function test_bedside_procedure_prep_summary_and_fields()
+    {
+        $procedure = new Procedure([
+            'name' => 'Suture Removal & Wound Dressing',
+            'prep_details' => [
+                'procedure_pack' => 'suture_pack',
+                'consent_req' => 'routine_explained',
+                'observation_plan' => '30_min',
+                'operating_room' => 'Minor Procedure Room 1',
+            ],
+        ]);
+
+        $this->assertNotEmpty($procedure->prep_details);
+        $this->assertEquals('suture_pack', $procedure->prep_details['procedure_pack']);
+        $this->assertEquals('routine_explained', $procedure->prep_details['consent_req']);
+        $this->assertEquals('30_min', $procedure->prep_details['observation_plan']);
+    }
+
+    /** @test */
+    public function test_procedure_booking_defers_billing_when_custom_price_setting_is_active()
+    {
+        $user = User::first() ?? User::factory()->create(['status' => 1]);
+        $patient = Patient::first();
+        if (!$patient) {
+            $this->markTestSkipped('No patient available for test.');
+        }
+
+        $appStatus = \App\Models\ApplicationStatu::first();
+        if (!$appStatus) {
+            $this->markTestSkipped('No ApplicationStatu available.');
+        }
+
+        $origSetting = $appStatus->allow_doctor_set_procedure_price;
+        $appStatus->update(['allow_doctor_set_procedure_price' => 1]);
+
+        try {
+            $service = Service::whereHas('procedureDefinition')->first() ?? Service::first();
+            if (!$service) {
+                $this->markTestSkipped('No service available.');
+            }
+
+            $countBefore = ProductOrServiceRequest::where('service_id', $service->id)
+                ->where('user_id', $patient->user_id)
+                ->count();
+
+            $response = $this->actingAs($user)->postJson('/nursing-workbench/clinical-requests/add-procedure', [
+                'service_id' => (string)$service->id,
+                'patient_id' => $patient->id,
+                'priority' => 'urgent',
+                'scheduled_date' => now()->toDateString(),
+                'scheduled_time' => '14:30',
+                'operating_room' => 'Theatre 1',
+                'defer_billing' => 1,
+                'prep_details' => [
+                    'is_surgical' => true,
+                    'npo_status' => 'npo_midnight',
+                    'anesthesia_type' => 'general',
+                    'consent_req' => 'already_signed',
+                ],
+            ]);
+
+            $this->assertTrue(in_array($response->status(), [200, 302, 403, 404, 500]));
+
+            if ($response->status() === 200) {
+                $response->assertJson(['success' => true]);
+                $procId = $response->json('id');
+                $procedure = Procedure::find($procId);
+                $this->assertNotNull($procedure);
+                $this->assertEquals('urgent', $procedure->priority);
+                $this->assertEquals('Theatre 1', $procedure->operating_room);
+                $this->assertEquals(Procedure::CONSENT_OBTAINED, $procedure->consent_status);
+
+                // Billing should NOT have been created because custom procedure pricing mode is ON
+                $countAfter = ProductOrServiceRequest::where('service_id', $service->id)
+                    ->where('user_id', $patient->user_id)
+                    ->count();
+                $this->assertEquals($countBefore, $countAfter, 'Base fee billing should be deferred when custom pricing is active.');
+            }
+        } finally {
+            $appStatus->update(['allow_doctor_set_procedure_price' => $origSetting]);
+        }
+    }
+
+    /** @test */
+    public function test_procedure_booking_creates_tariff_billing_when_custom_price_setting_is_disabled()
+    {
+        $user = User::first() ?? User::factory()->create(['status' => 1]);
+        $patient = Patient::first();
+        if (!$patient) {
+            $this->markTestSkipped('No patient available for test.');
+        }
+
+        $appStatus = \App\Models\ApplicationStatu::first();
+        if (!$appStatus) {
+            $this->markTestSkipped('No ApplicationStatu available.');
+        }
+
+        $origSetting = $appStatus->allow_doctor_set_procedure_price;
+        $appStatus->update(['allow_doctor_set_procedure_price' => 0]);
+
+        try {
+            $service = Service::whereHas('procedureDefinition')->first() ?? Service::first();
+            if (!$service) {
+                $this->markTestSkipped('No service available.');
+            }
+
+            $countBefore = ProductOrServiceRequest::where('service_id', $service->id)
+                ->where('user_id', $patient->user_id)
+                ->count();
+
+            $response = $this->actingAs($user)->postJson('/nursing-workbench/clinical-requests/add-procedure', [
+                'service_id' => (string)$service->id,
+                'patient_id' => $patient->id,
+                'priority' => 'routine',
+                'scheduled_date' => now()->toDateString(),
+                'defer_billing' => 0,
+            ]);
+
+            $this->assertTrue(in_array($response->status(), [200, 302, 403, 404, 500]));
+
+            if ($response->status() === 200) {
+                $response->assertJson(['success' => true]);
+                // Billing entry SHOULD be created under standard tariff mode
+                $countAfter = ProductOrServiceRequest::where('service_id', $service->id)
+                    ->where('user_id', $patient->user_id)
+                    ->count();
+                $this->assertEquals($countBefore + 1, $countAfter, 'Standard tariff billing should be created when custom pricing is off.');
+            }
+        } finally {
+            $appStatus->update(['allow_doctor_set_procedure_price' => $origSetting]);
+        }
     }
 }

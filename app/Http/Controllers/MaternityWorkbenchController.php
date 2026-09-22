@@ -1436,7 +1436,11 @@ class MaternityWorkbenchController extends Controller
                     'service_id' => $procData['service_id'],
                     'priority' => $procData['priority'] ?? 'routine',
                     'scheduled_date' => $procData['scheduled_date'] ?? null,
+                    'scheduled_time' => $procData['scheduled_time'] ?? null,
+                    'operating_room' => $procData['operating_room'] ?? null,
                     'pre_notes' => $procData['pre_notes'] ?? null,
+                    'defer_billing' => $procData['defer_billing'] ?? null,
+                    'prep_details' => $procData['prep_details'] ?? null,
                 ], $enrollment->patient_id, null, null);
 
                 $created[] = $procedure;
@@ -1660,7 +1664,16 @@ class MaternityWorkbenchController extends Controller
                 'priority' => 'required|string',
             ]);
             $procedure = $this->addSingleProcedure(
-                $request->only(['service_id', 'priority', 'scheduled_date', 'pre_notes']),
+                $request->only([
+                    'service_id',
+                    'priority',
+                    'scheduled_date',
+                    'scheduled_time',
+                    'operating_room',
+                    'pre_notes',
+                    'defer_billing',
+                    'prep_details',
+                ]),
                 $enrollment->patient_id,
                 null,
                 null

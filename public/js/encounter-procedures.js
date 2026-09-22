@@ -184,80 +184,6 @@
     }
 
     function setupConfiguratorEvents() {
-        // Toggle deferred billing
-        $('#defer_proc_billing').on('change', function () {
-            if ($(this).is(':checked')) {
-                $('#proc_billing_fields_container').slideUp(200);
-                $('#proc_deferred_alert').slideDown(200);
-            } else {
-                $('#proc_billing_fields_container').slideDown(200);
-                $('#proc_deferred_alert').slideUp(200);
-            }
-            updateProcSummary();
-        });
-
-        // Coverage mode change
-        $('#proc_coverage_mode').on('change', function () {
-            const mode = $(this).val();
-            const total = parseFloat($('#proc_total_price').val()) || (currentSelectedProc?.price?.sale_price || 0);
-
-            if (mode === 'cash') {
-                $('#proc_payable_amount').val(total);
-                $('#proc_claims_amount').val(0);
-                $('#proc_auth_code_container').hide();
-                $('#proc_split_breakdown').hide();
-            } else {
-                $('#proc_split_breakdown').show();
-                if (currentSelectedProc) {
-                    const defaultPayable = currentSelectedProc.payable_amount !== undefined ? currentSelectedProc.payable_amount : 0;
-                    const defaultClaims = currentSelectedProc.claims_amount !== undefined ? currentSelectedProc.claims_amount : total;
-                    $('#proc_payable_amount').val(defaultPayable);
-                    $('#proc_claims_amount').val(defaultClaims);
-                    $('#proc_total_price').val(defaultPayable + defaultClaims);
-                }
-                if (mode === 'secondary' || mode === 'primary') {
-                    $('#proc_auth_code_container').show();
-                } else {
-                    $('#proc_auth_code_container').hide();
-                }
-            }
-            updateProcSummary();
-        });
-
-        // Total fee input listener
-        $('#proc_total_price').on('input', function () {
-            const total = parseFloat($(this).val()) || 0;
-            const mode = $('#proc_coverage_mode').val();
-            if (mode === 'cash') {
-                $('#proc_payable_amount').val(total);
-                $('#proc_claims_amount').val(0);
-            } else {
-                const payable = parseFloat($('#proc_payable_amount').val()) || 0;
-                if (payable <= total) {
-                    $('#proc_claims_amount').val(total - payable);
-                } else {
-                    $('#proc_payable_amount').val(total);
-                    $('#proc_claims_amount').val(0);
-                }
-            }
-            updateProcSummary();
-        });
-
-        // Split inputs listener
-        $('#proc_payable_amount').on('input', function () {
-            const payable = parseFloat($(this).val()) || 0;
-            const claims = parseFloat($('#proc_claims_amount').val()) || 0;
-            $('#proc_total_price').val(payable + claims);
-            updateProcSummary();
-        });
-
-        $('#proc_claims_amount').on('input', function () {
-            const payable = parseFloat($('#proc_payable_amount').val()) || 0;
-            const claims = parseFloat($(this).val()) || 0;
-            $('#proc_total_price').val(payable + claims);
-            updateProcSummary();
-        });
-
         $('#proc_priority').on('change', function () {
             updateProcSummary();
         });
@@ -268,21 +194,16 @@
             $('#proc_summary_text').text('Ready to add procedure to encounter');
             return;
         }
-        const isDeferred = $('#defer_proc_billing').is(':checked');
+        const isDeferred = ($('#defer_proc_billing').val() === '1') || $('#defer_proc_billing').is(':checked');
         const priority = $('#proc_priority').val() || 'routine';
         const priorityLabel = priority.charAt(0).toUpperCase() + priority.slice(1);
-        const mode = $('#proc_coverage_mode').val() || 'cash';
-        const total = parseFloat($('#proc_total_price').val()) || 0;
+        const catalogPrice = (currentSelectedProc?.price && currentSelectedProc?.price?.sale_price) ? Number(currentSelectedProc.price.sale_price) : 0;
 
         let billingText = '';
         if (isDeferred) {
-            billingText = '<span class="text-warning fw-semibold"><i class="fa fa-clock"></i> Fee Deferred (Bill Later)</span>';
-        } else if (mode === 'cash') {
-            billingText = `<strong>Fee: ${formatCurrency(total)}</strong> <span class="text-muted">(Self-Pay)</span>`;
+            billingText = '<span class="text-warning fw-semibold"><i class="fa fa-clock"></i> Fee Deferred (Billed in Workbench)</span>';
         } else {
-            const payable = parseFloat($('#proc_payable_amount').val()) || 0;
-            const claims = parseFloat($('#proc_claims_amount').val()) || 0;
-            billingText = `<strong>Fee: ${formatCurrency(total)}</strong> <span class="text-success">[HMO ${mode.toUpperCase()}: ${formatCurrency(payable)} Patient / ${formatCurrency(claims)} Claims]</span>`;
+            billingText = `<strong>Fee: ${formatCurrency(catalogPrice)}</strong> <span class="text-muted">(Standard Tariff)</span>`;
         }
 
         const isSurg = currentSelectedProc ? Boolean(currentSelectedProc.is_surgical) : false;
@@ -300,13 +221,9 @@
 
         const isFreeForm = String(procedure.id).startsWith('FF_');
         const catalogPrice = (procedure.price && procedure.price.sale_price) ? Number(procedure.price.sale_price) : 0;
-        const payable = procedure.payable_amount !== undefined && procedure.payable_amount !== null ? Number(procedure.payable_amount) : catalogPrice;
-        const claims = procedure.claims_amount !== undefined && procedure.claims_amount !== null ? Number(procedure.claims_amount) : 0;
-        const mode = procedure.coverage_mode || (claims > 0 ? 'primary' : 'cash');
         const category = procedure.procedure_category
             || (typeof procedure.category === 'object' ? procedure.category?.category_name : procedure.category)
             || (isFreeForm ? 'Free-form' : 'Procedures');
-        const total = (payable + claims > 0) ? (payable + claims) : catalogPrice;
 
         // Populate summary card
         $('#proc_config_title').text(procedure.service_name || 'Procedure');
@@ -318,7 +235,7 @@
         if (isSurgical) {
             $('#proc_config_surgical_badge').show();
             $('#proc_config_clinical_badge').hide();
-            $('#proc_operating_room_label').html('<i class="fa fa-hospital-alt text-danger me-1"></i> Operating Theatre / OR Suite (Optional)');
+            $('#proc_operating_room_label').html('<i class="fa fa-cut text-danger me-1"></i> Operating Theatre / OR Suite (Optional)');
             $('#proc_operating_room').attr('placeholder', 'e.g. Main OR 1 / Theatre 2');
             $('#proc_surgical_prep_box').slideDown(200);
             $('#proc_clinical_prep_box').slideUp(200);
@@ -326,44 +243,18 @@
         } else {
             $('#proc_config_surgical_badge').hide();
             $('#proc_config_clinical_badge').show();
-            $('#proc_operating_room_label').html('<i class="fa fa-door-open text-primary me-1"></i> Procedure Room / Bedside (Optional)');
+            $('#proc_operating_room_label').html('<i class="fa fa-stethoscope text-primary me-1"></i> Procedure Room / Bedside (Optional)');
             $('#proc_operating_room').attr('placeholder', 'e.g. Minor Procedure Room / Ward Bedside');
             $('#proc_surgical_prep_box').slideUp(200);
             $('#proc_clinical_prep_box').slideDown(200);
             $('#proc_pre_notes').attr('placeholder', 'Clinical indications, dressing type / consumables needed, patient instructions...');
         }
 
-        // Benchmark info
-        $('#proc_bench_catalog').text(formatCurrency(catalogPrice));
-        if (claims > 0 || (mode && mode !== 'cash')) {
-            $('#proc_bench_hmo_box').show();
-            $('#proc_bench_payable').text(formatCurrency(payable));
-            $('#proc_bench_claims').text(formatCurrency(claims));
-            $('#proc_bench_mode').text(mode.toUpperCase());
-        } else {
-            $('#proc_bench_hmo_box').hide();
-        }
-
-        // Pre-fill inputs
-        $('#proc_total_price').val(total);
-        $('#proc_payable_amount').val(payable);
-        $('#proc_claims_amount').val(claims);
-        $('#proc_coverage_mode').val(mode);
-        $('#defer_proc_billing').prop('checked', false);
-        $('#proc_billing_fields_container').show();
-        $('#proc_deferred_alert').hide();
-        $('#proc_auth_code').val('');
-
-        if (mode === 'cash') {
-            $('#proc_split_breakdown').hide();
-            $('#proc_auth_code_container').hide();
-        } else {
-            $('#proc_split_breakdown').show();
-            if (mode === 'secondary' || mode === 'primary') {
-                $('#proc_auth_code_container').show();
-            } else {
-                $('#proc_auth_code_container').hide();
-            }
+        // Set default date to today if empty
+        if (!$('#proc_scheduled_date').val()) {
+            try {
+                $('#proc_scheduled_date').val(new Date().toISOString().split('T')[0]);
+            } catch (e) {}
         }
 
         updateProcSummary();
@@ -434,7 +325,7 @@
         const scheduledTime = $('#proc_scheduled_time').val() || null;
         const operatingRoom = $('#proc_operating_room').val() || null;
         const preNotes = $('#proc_pre_notes').val() || '';
-        const deferBilling = $('#defer_proc_billing').is(':checked') ? 1 : 0;
+        const deferBilling = ($('#proc_defer_billing').val() === '1') || ($('#defer_proc_billing').val() === '1') || $('#defer_proc_billing').is(':checked') ? 1 : 0;
         const coverageMode = $('#proc_coverage_mode').val() || 'cash';
         const payableAmount = parseFloat($('#proc_payable_amount').val()) || 0;
         const claimsAmount = parseFloat($('#proc_claims_amount').val()) || 0;

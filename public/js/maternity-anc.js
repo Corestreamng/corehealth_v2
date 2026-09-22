@@ -252,36 +252,17 @@ if (typeof window.wbRoute !== 'function') {
                             <div class="tab-pane fade" id="mco-proc-new" role="tabpanel">
                                 <div id="mco_proc_message" class="mb-2"></div>
                                 <h6 class="mb-3"><i class="fa fa-plus-circle"></i> Request New Procedure</h6>
-                                <div class="row">
-                                    <div class="col-md-6">
-                                        <div class="form-group mb-3">
+                                <div class="row mb-3">
+                                    <div class="col-12">
+                                        <div class="form-group position-relative">
                                             <label><i class="fa fa-search"></i> Search Procedure</label>
                                             <input type="text" class="form-control" id="mco_proc_search" placeholder="Type procedure name or code..." autocomplete="off">
                                             <ul class="list-group co-search-dropdown" id="mco_proc_results"></ul>
                                         </div>
                                     </div>
-                                    <div class="col-md-3">
-                                        <div class="form-group mb-3">
-                                            <label><i class="fa fa-exclamation-triangle"></i> Priority <span class="mat-tooltip-icon" title="Routine: scheduled normally. Urgent: needs attention soon. Emergency: immediate intervention required"><i class="mdi mdi-help-circle"></i></span></label>
-                                            <select class="form-control" id="mco_proc_priority">
-                                                <option value="routine">Routine</option>
-                                                <option value="urgent">Urgent</option>
-                                                <option value="emergency">Emergency</option>
-                                            </select>
-                                        </div>
-                                    </div>
-                                    <div class="col-md-3">
-                                        <div class="form-group mb-3">
-                                            <label><i class="fa fa-calendar"></i> Scheduled Date</label>
-                                            <input type="date" class="form-control" id="mco_proc_scheduled_date">
-                                            <div class="mat-form-help"><i class="mdi mdi-help-circle"></i> Leave blank for today; set future date for elective procedures</div>
-                                        </div>
-                                    </div>
                                 </div>
-                                <div class="form-group mb-3">
-                                    <label><i class="fa fa-sticky-note"></i> Pre-op / Clinical Notes</label>
-                                    <textarea class="form-control" id="mco_proc_notes" rows="2" placeholder="Clinical indications, relevant history, patient consent status..."></textarea>
-                                    <div class="mat-form-help"><i class="mdi mdi-help-circle"></i> Document clinical indications, relevant history, and any special instructions for the procedure team</div>
+                                <div id="mco-proc-config-container">
+                                    ${ClinicalOrdersKit.renderProcedureConfiguratorHtml('mco_proc_')}
                                 </div>
                                 <div class="table-responsive mt-3">
                                     <table class="table table-sm table-bordered table-striped">
@@ -529,6 +510,21 @@ if (typeof window.wbRoute !== 'function') {
                 ClinicalOrdersKit.positionDropdown('#mco_proc_search', '#mco_proc_results');
                 ClinicalOrdersKit.showSearchLoading('#mco_proc_results');
                 searchTimeout = setTimeout(() => searchProcedureServices(q), 300);
+            });
+
+            // Bind procedure configurator card
+            ClinicalOrdersKit.bindProcedureConfigurator({
+                prefix: 'mco_proc_',
+                submitUrl: wbUrl('/maternity-workbench/enrollment/' + enrollmentId + '/add-procedure'),
+                deleteUrlBase: wbUrl('/maternity-workbench/enrollment/' + enrollmentId + '/procedures'),
+                tableSelector: '#mco-selected-procedures',
+                patientId: patientId,
+                removeHandler: 'MaternityClinicalOrders.removeProcedureRow',
+                onSuccess: function() {
+                    initProcHistory();
+                    $('#mco_proc_search').val('');
+                    $('#mco_proc_results').hide();
+                }
             });
 
             // Re-order from history (nursing parity — Plan §5.2)
@@ -865,7 +861,14 @@ if (typeof window.wbRoute !== 'function') {
             }, function(results) {
                 const $res = $('#mco_proc_results').empty();
                 ClinicalOrdersKit.appendFreeFormLink($res, q, 'Add Free-Form Procedure', 'Enter procedure name:', '#mco_proc_search', function(val) {
-                    MaternityClinicalOrders.addProcedureService(val + ' [Free-form]', 'FF_' + val, 0);
+                    MaternityClinicalOrders.selectProcedureService({
+                        id: 'FF_' + val,
+                        service_name: val + ' [Free-form]',
+                        service_code: 'FF',
+                        is_surgical: 0,
+                        price: { sale_price: 0 },
+                        payable_amount: 0
+                    });
                 });
                 if (!results.length) {
                     ClinicalOrdersKit.showSearchEmpty('#mco_proc_results', 'procedures');
@@ -878,7 +881,8 @@ if (typeof window.wbRoute !== 'function') {
                         const display = name + '[' + code + ']';
                         const alreadyAdded = ClinicalOrdersKit.isAlreadyAdded('procedures', parseInt(item.id));
                         const payable = item.payable_amount ?? price;
-                        const onClick = alreadyAdded ? '' : 'MaternityClinicalOrders.addProcedureService(\'' + display.replace(/'/g, "\\'") + '\', ' + item.id + ', ' + payable + ')';
+                        const itemData = encodeURIComponent(JSON.stringify(item));
+                        const onClick = alreadyAdded ? '' : 'MaternityClinicalOrders.selectProcedureService(decodeURIComponent(\'' + itemData + '\'))';
                         $res.append(ClinicalOrdersKit.renderSearchResultItem({
                             id: item.id,
                             category: item.category?.category_name || 'Procedure',
@@ -1014,6 +1018,20 @@ if (typeof window.wbRoute !== 'function') {
             });
             $('#mco_imaging_search').val('');
             $('#mco_imaging_results').hide();
+        }
+
+        function selectProcedureService(item) {
+            if (typeof item === 'string') {
+                try {
+                    item = JSON.parse(item);
+                } catch(e) {}
+            }
+            $('#mco_proc_results').hide();
+            ClinicalOrdersKit.selectProcedureForBooking('mco_proc_', item);
+        }
+
+        function removeProcedureRow(btn, recordId, serviceId) {
+            removeAutoSavedRow(btn, 'procedure', recordId, serviceId);
         }
 
         function addProcedureService(name, id, price) {
@@ -1234,6 +1252,8 @@ if (typeof window.wbRoute !== 'function') {
             applyLabCombo: applyLabCombo,
             applyImagingCombo: applyImagingCombo,
             addProcedureService: addProcedureService,
+            selectProcedureService: selectProcedureService,
+            removeProcedureRow: removeProcedureRow,
             removeAutoSavedRow: removeAutoSavedRow,
             _searchBound: false
         };
