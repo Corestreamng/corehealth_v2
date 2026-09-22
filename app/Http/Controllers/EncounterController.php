@@ -4439,6 +4439,11 @@ class EncounterController extends Controller
                     $str .= '<div class="mb-1"><i class="fa fa-play-circle text-success"></i> <b>Started:</b> ' . $proc->actual_start_time->format('d M Y H:i') . '</div>';
                 }
 
+                // Prep Summary
+                if (!empty($proc->prep_summary)) {
+                    $str .= '<div class="mb-1"><i class="fa fa-clipboard-check text-secondary"></i> <b>Prep:</b> <span class="badge bg-light text-dark border">' . htmlspecialchars($proc->prep_summary) . '</span></div>';
+                }
+
                 // Pre notes
                 if (!empty($proc->pre_notes)) {
                     $str .= '<div class="mb-1"><i class="fa fa-sticky-note text-info"></i> <b>Pre-Notes:</b> <span class="text-muted">' . htmlspecialchars(substr($proc->pre_notes, 0, 100)) . (strlen($proc->pre_notes) > 100 ? '...' : '') . '</span></div>';
@@ -5281,6 +5286,7 @@ class EncounterController extends Controller
                     'claims_amount',
                     'coverage_mode',
                     'auth_code',
+                    'prep_details',
                 ]),
                 $encounter->patient_id,
                 $encounter->id,

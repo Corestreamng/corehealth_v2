@@ -20,9 +20,18 @@
         searchProductsRoute: '{{ route("nursing-workbench.search-products") }}',
         productBatchesRoute: '{{ route("nursing-workbench.product-batches") }}',
         investigationCategoryId: '{{ appsettings("investigation_category_id", "") }}',
+        imagingCategoryId: '{{ appsettings("imaging_category_id", "") }}',
+        actualStartTime: '{{ $procedure->actual_start_time ? $procedure->actual_start_time->timestamp : "" }}',
+        pageRole: '{{ $pageRole ?? "" }}',
+        storeId: '{{ $resolvedStore?->id ?? "" }}',
         accessibleStores: {!! json_encode($accessibleStores ?? []) !!},
         tariffGuideRoute: '{{ route("patient-procedures.tariff-guide", $procedure->id) }}',
         billBaseFeeRoute: '{{ route("patient-procedures.bill-base-fee", $procedure->id) }}',
+        checklistToggleRoute: '{{ route("patient-procedures.checklist-toggle", $procedure->id) }}',
+        labHistoryRoute: '{{ route("patient-procedures.lab-history", $procedure->id) }}',
+        imagingHistoryRoute: '{{ route("patient-procedures.imaging-history", $procedure->id) }}',
+        medicationHistoryRoute: '{{ route("patient-procedures.medication-history", $procedure->id) }}',
+        isSurgical: {{ ($procedure->is_surgical ?? false) ? 'true' : 'false' }},
     };
     window.BILLING_KIT_CONFIG = window.WORKBENCH_CONFIG;
 </script>

@@ -37,10 +37,15 @@ class ChecklistTemplateController extends Controller
         return DataTables::of($templates)
             ->addIndexColumn()
             ->addColumn('type_badge', function ($template) {
-                $color = $template->type == 'admission' ? 'success' : 'info';
-                $icon = $template->type == 'admission' ? 'mdi-login' : 'mdi-logout';
+                $typeConfig = [
+                    'admission' => ['color' => 'success', 'icon' => 'mdi-login', 'label' => 'Admission'],
+                    'discharge' => ['color' => 'info', 'icon' => 'mdi-logout', 'label' => 'Discharge'],
+                    'surgical' => ['color' => 'danger', 'icon' => 'mdi-content-cut', 'label' => 'Surgical Safety'],
+                    'procedure' => ['color' => 'primary', 'icon' => 'mdi-stethoscope', 'label' => 'Bedside Procedure'],
+                ];
+                $cfg = $typeConfig[$template->type] ?? ['color' => 'secondary', 'icon' => 'mdi-checkbox-marked', 'label' => ucfirst($template->type)];
 
-                return '<span class="badge badge-' . $color . '"><i class="mdi ' . $icon . '"></i> ' . ucfirst($template->type) . '</span>';
+                return '<span class="badge badge-' . $cfg['color'] . '"><i class="mdi ' . $cfg['icon'] . '"></i> ' . $cfg['label'] . '</span>';
             })
             ->addColumn('status_badge', function ($template) {
                 return $template->is_active
@@ -83,7 +88,7 @@ class ChecklistTemplateController extends Controller
     {
         $rules = [
             'name' => 'required|string|max:255',
-            'type' => 'required|in:admission,discharge',
+            'type' => 'required|in:admission,discharge,surgical,procedure',
             'description' => 'nullable|string',
             'is_active' => 'nullable',
             'items' => 'nullable|array',
@@ -178,7 +183,7 @@ class ChecklistTemplateController extends Controller
     {
         $rules = [
             'name' => 'required|string|max:255',
-            'type' => 'required|in:admission,discharge',
+            'type' => 'required|in:admission,discharge,surgical,procedure',
             'description' => 'nullable|string',
             'is_active' => 'nullable',
             'items' => 'nullable|array',

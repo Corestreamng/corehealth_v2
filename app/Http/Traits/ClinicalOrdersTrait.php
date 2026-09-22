@@ -331,8 +331,51 @@ trait ClinicalOrdersTrait
         $procedure->requested_on = now();
         $procedure->priority = $data['priority'] ?? 'routine';
         $procedure->procedure_status = Procedure::STATUS_REQUESTED;
-        $procedure->pre_notes = $data['pre_notes'] ?? null;
-        $procedure->pre_notes_by = !empty($data['pre_notes']) ? Auth::id() : null;
+
+        // Extract and decode prep details
+        $prepDetails = $data['prep_details'] ?? ($extra['prep_details'] ?? null);
+        if (is_string($prepDetails)) {
+            $prepDetails = json_decode($prepDetails, true) ?: null;
+        }
+        $procedure->prep_details = $prepDetails;
+
+        // Structured Pre-Op / Pre-Procedure Note Formatting
+        $isSurgical = (bool) ($service->procedureDefinition?->is_surgical ?? false);
+        $rawNotes = trim($data['pre_notes'] ?? '');
+
+        if (!empty($prepDetails)) {
+            $headerTitle = $isSurgical ? '[PRE-OPERATIVE PREPARATION]' : '[PROCEDURE PREPARATION]';
+            $lines = [$headerTitle];
+            if (!empty($prepDetails['npo_status'])) {
+                $lines[] = '• Fasting (NPO): ' . ucwords(str_replace('_', ' ', $prepDetails['npo_status']));
+            }
+            if (!empty($prepDetails['anesthesia_type'])) {
+                $lines[] = '• Anesthesia Plan: ' . ucwords(str_replace('_', ' ', $prepDetails['anesthesia_type']));
+            }
+            if (!empty($prepDetails['consent_req'])) {
+                $lines[] = '• Consent: ' . ucwords(str_replace('_', ' ', $prepDetails['consent_req']));
+            }
+            if (!empty($prepDetails['blood_required'])) {
+                $lines[] = '• Blood Products: G&X Required (Blood on standby)';
+            }
+            if (!empty($prepDetails['operating_room']) || !empty($data['operating_room'])) {
+                $room = $data['operating_room'] ?? $prepDetails['operating_room'];
+                $lines[] = ($isSurgical ? '• Theatre: ' : '• Room: ') . $room;
+            }
+            if (!empty($prepDetails['prep_notes'])) {
+                $lines[] = '• Prep Instructions: ' . $prepDetails['prep_notes'];
+            }
+            if (!empty($rawNotes)) {
+                $lines[] = '';
+                $lines[] = '[CLINICAL INDICATIONS]';
+                $lines[] = $rawNotes;
+            }
+            $procedure->pre_notes = implode("\n", $lines);
+        } else {
+            $procedure->pre_notes = $rawNotes ?: null;
+        }
+
+        $procedure->pre_notes_by = !empty($procedure->pre_notes) ? Auth::id() : null;
 
         if (!empty($data['scheduled_date'])) {
             $procedure->scheduled_date = $data['scheduled_date'];
@@ -343,8 +386,22 @@ trait ClinicalOrdersTrait
             $procedure->scheduled_time = $data['scheduled_time'];
         }
 
-        if (!empty($data['operating_room'])) {
-            $procedure->operating_room = $data['operating_room'];
+        $room = $data['operating_room'] ?? ($prepDetails['operating_room'] ?? null);
+        if (!empty($room)) {
+            $procedure->operating_room = $room;
+        }
+
+        // Set consent status if specified
+        if (!empty($prepDetails['consent_req'])) {
+            if ($prepDetails['consent_req'] === 'already_signed') {
+                $procedure->consent_status = Procedure::CONSENT_OBTAINED;
+                $procedure->consent_marked_by = Auth::id();
+                $procedure->consent_marked_at = now();
+            } elseif ($prepDetails['consent_req'] === 'not_required') {
+                $procedure->consent_status = Procedure::CONSENT_NOT_REQUIRED;
+            } else {
+                $procedure->consent_status = Procedure::CONSENT_PENDING;
+            }
         }
 
         if ($service->procedureDefinition) {

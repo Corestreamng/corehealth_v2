@@ -65,7 +65,7 @@ $totalItems = $procedure->items->filter(fn($i) => $i->getRequestAttribute() !== 
 
 $isCancelled = $procedure->procedure_status === 'cancelled';
 $isCompleted = $procedure->procedure_status === 'completed';
-$isSurgical = $procedure->procedureDefinition && $procedure->procedureDefinition->is_surgical;
+$isSurgical = $procedure->is_surgical;
 @endphp
 
 @section('content')
@@ -1459,16 +1459,20 @@ $isSurgical = $procedure->procedureDefinition && $procedure->procedureDefinition
         flex-direction: column;
     }
 
-    [data-page-role="nurse"] .clinical-or-panel {
-        order: 3;
-    }
-
     [data-page-role="nurse"] .clinical-notes {
         order: 1;
     }
 
-    [data-page-role="nurse"] .clinical-team {
+    [data-page-role="nurse"] .clinical-checklist-panel {
         order: 2;
+    }
+
+    [data-page-role="nurse"] .clinical-team {
+        order: 3;
+    }
+
+    [data-page-role="nurse"] .clinical-or-panel {
+        order: 4;
     }
 
     [data-page-role="doctor"] .clinical-tab-flex,
@@ -1482,14 +1486,55 @@ $isSurgical = $procedure->procedureDefinition && $procedure->procedureDefinition
         order: 1;
     }
 
+    [data-page-role="doctor"] .clinical-checklist-panel,
+    [data-page-role="admin"] .clinical-checklist-panel {
+        order: 2;
+    }
+
     [data-page-role="doctor"] .clinical-team,
     [data-page-role="admin"] .clinical-team {
-        order: 2;
+        order: 3;
     }
 
     [data-page-role="doctor"] .clinical-notes,
     [data-page-role="admin"] .clinical-notes {
-        order: 3;
+        order: 4;
+    }
+
+    /* Checklist Widget */
+    .checklist-widget-list {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+    .checklist-item-row {
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        border-radius: 6px;
+        padding: 10px 14px;
+        transition: all 0.2s ease;
+    }
+    .checklist-item-row:hover {
+        background: #f1f5f9;
+        border-color: #cbd5e1;
+    }
+    .checklist-item-row.item-checked {
+        background: #f0fdf4;
+        border-color: #bbf7d0;
+    }
+    .checklist-item-row.item-checked strong {
+        color: #166534;
+    }
+    .badge-clinical {
+        background: #e0f2fe;
+        color: #0369a1;
+        border: 1px solid #bae6fd;
+        font-size: 0.72rem;
+        font-weight: 700;
+        padding: 3px 8px;
+        border-radius: 4px;
+        display: inline-flex;
+        align-items: center;
     }
 </style>
 
@@ -1513,14 +1558,22 @@ $isSurgical = $procedure->procedureDefinition && $procedure->procedureDefinition
                     <span><i class="fa fa-folder"></i> {{ $procedure->procedureDefinition->procedureCategory->name }}</span>
                     @endif
                     @if($isSurgical)
-                    <span class="badge-surgical"><i class="fa fa-cut mr-1"></i>SURGICAL</span>
+                    <span class="badge-surgical"><i class="fa fa-cut mr-1"></i>SURGICAL (THEATRE)</span>
+                    @else
+                    <span class="badge-clinical"><i class="fa fa-stethoscope mr-1"></i>BEDSIDE / CLINICAL</span>
                     @endif
                 </div>
             </div>
             <div class="cmd-bar-right">
                 <span class="badge-status badge-{{ $procedure->procedure_status }}">
                     @php
-                    $statusLabels = ['requested'=>'Requested','scheduled'=>'Scheduled','in_progress'=>'In OR','completed'=>'Completed','cancelled'=>'Cancelled'];
+                    $statusLabels = [
+                        'requested' => 'Requested',
+                        'scheduled' => 'Scheduled',
+                        'in_progress' => $isSurgical ? 'In OR / Surgery' : 'In Progress',
+                        'completed' => 'Completed',
+                        'cancelled' => 'Cancelled',
+                    ];
                     @endphp
                     {{ $statusLabels[$procedure->procedure_status] ?? ucfirst($procedure->procedure_status) }}
                 </span>
@@ -1620,10 +1673,10 @@ $isSurgical = $procedure->procedureDefinition && $procedure->procedureDefinition
         @else
         @php
         $steps = [
-        ['key'=>'requested', 'label'=>'Requested', 'icon'=>'fa-clock'],
-        ['key'=>'scheduled', 'label'=>'Scheduled', 'icon'=>'fa-calendar-check'],
-        ['key'=>'in_progress', 'label'=>'In OR', 'icon'=>'fa-play-circle'],
-        ['key'=>'completed', 'label'=>'Completed', 'icon'=>'fa-check-circle'],
+            ['key'=>'requested', 'label'=>'Requested', 'icon'=>'fa-clock'],
+            ['key'=>'scheduled', 'label'=>'Scheduled', 'icon'=>'fa-calendar-check'],
+            ['key'=>'in_progress', 'label'=> $isSurgical ? 'In OR / Surgery' : 'In Progress', 'icon'=>'fa-play-circle'],
+            ['key'=>'completed', 'label'=>'Completed', 'icon'=>'fa-check-circle'],
         ];
         @endphp
         <div class="status-stepper">
@@ -1770,7 +1823,7 @@ $isSurgical = $procedure->procedureDefinition && $procedure->procedureDefinition
                         <div class="clinical-or-panel">
                             <div class="section-card">
                                 <div class="section-card-header">
-                                    <h5><i class="fa fa-hospital-alt"></i> Operating Room</h5>
+                                    <h5><i class="fa {{ $isSurgical ? 'fa-hospital-alt' : 'fa-procedures' }}"></i> {{ $isSurgical ? 'Operating Theatre' : 'Procedure / Treatment Room' }}</h5>
                                     @hasanyrole('SUPERADMIN|ADMIN|DOCTOR')
                                     @if($procedure->procedure_status === 'requested')
                                     <button class="btn btn-sm btn-primary" onclick="openScheduleModal()">
@@ -1797,14 +1850,14 @@ $isSurgical = $procedure->procedureDefinition && $procedure->procedureDefinition
                                     @elseif($procedure->procedure_status === 'in_progress')
                                     <div class="or-panel live">
                                         <div class="live-badge">
-                                            <span class="live-dot"></span>LIVE — IN OR
+                                            <span class="live-dot"></span>LIVE — {{ $isSurgical ? 'IN OR / THEATRE' : 'PROCEDURE IN PROGRESS' }}
                                         </div>
                                         <div class="or-row">
                                             @if($procedure->operating_room)
                                             <div class="or-cell">
-                                                <div class="or-cell-icon"><i class="fa fa-hospital-alt"></i></div>
+                                                <div class="or-cell-icon"><i class="fa {{ $isSurgical ? 'fa-hospital-alt' : 'fa-procedures' }}"></i></div>
                                                 <div class="or-cell-value">{{ $procedure->operating_room }}</div>
-                                                <div class="or-cell-label">Room</div>
+                                                <div class="or-cell-label">{{ $isSurgical ? 'Theatre' : 'Room' }}</div>
                                             </div>
                                             @endif
                                             @if($procedure->actual_start_time)
@@ -1826,9 +1879,9 @@ $isSurgical = $procedure->procedureDefinition && $procedure->procedureDefinition
                                         <div class="or-row">
                                             @if($procedure->operating_room)
                                             <div class="or-cell">
-                                                <div class="or-cell-icon"><i class="fa fa-hospital-alt"></i></div>
+                                                <div class="or-cell-icon"><i class="fa {{ $isSurgical ? 'fa-hospital-alt' : 'fa-procedures' }}"></i></div>
                                                 <div class="or-cell-value">{{ $procedure->operating_room }}</div>
-                                                <div class="or-cell-label">Room</div>
+                                                <div class="or-cell-label">{{ $isSurgical ? 'Theatre' : 'Room' }}</div>
                                             </div>
                                             @endif
                                             @if($procedure->actual_start_time)
@@ -1860,9 +1913,9 @@ $isSurgical = $procedure->procedureDefinition && $procedure->procedureDefinition
                                         <div class="or-row">
                                             @if($procedure->operating_room)
                                             <div class="or-cell">
-                                                <div class="or-cell-icon"><i class="fa fa-hospital-alt"></i></div>
+                                                <div class="or-cell-icon"><i class="fa {{ $isSurgical ? 'fa-hospital-alt' : 'fa-procedures' }}"></i></div>
                                                 <div class="or-cell-value">{{ $procedure->operating_room }}</div>
-                                                <div class="or-cell-label">Room</div>
+                                                <div class="or-cell-label">{{ $isSurgical ? 'Theatre' : 'Room' }}</div>
                                             </div>
                                             @endif
                                             @if($procedure->scheduled_date)
@@ -1893,11 +1946,105 @@ $isSurgical = $procedure->procedureDefinition && $procedure->procedureDefinition
                             </div>
                         </div>
 
-                        {{-- Surgical Team --}}
+                        {{-- Preparation & Safety Checklist Panel --}}
+                        <div class="clinical-checklist-panel">
+                            <div class="section-card">
+                                <div class="section-card-header d-flex align-items-center justify-content-between flex-wrap gap-2">
+                                    <h5 class="mb-0">
+                                        <i class="fa fa-clipboard-check {{ $isSurgical ? 'text-danger' : 'text-primary' }} mr-1"></i>
+                                        {{ $isSurgical ? 'Surgical Safety & Theatre Checklist' : 'Bedside Procedure Safety Checklist' }}
+                                    </h5>
+                                    <div class="d-flex align-items-center gap-2">
+                                        <div id="chk-badge-status">
+                                            @php
+                                            $totalChk = count($checklistItems ?? []);
+                                            $completedChk = count(array_filter($checklistItems ?? [], fn($i) => !empty($i['is_completed'])));
+                                            $percentChk = $totalChk > 0 ? round(($completedChk / $totalChk) * 100) : 0;
+                                            @endphp
+                                            @if($totalChk > 0 && $completedChk === $totalChk)
+                                            <span class="badge badge-success"><i class="fa fa-check-circle mr-1"></i>Checklist Complete</span>
+                                            @elseif($totalChk > 0)
+                                            <span class="badge badge-warning">{{ $completedChk }}/{{ $totalChk }} Verified</span>
+                                            @endif
+                                        </div>
+                                        @hasanyrole('SUPERADMIN|ADMIN')
+                                        <a href="{{ route('checklist-templates.index') }}" target="_blank" class="btn btn-xs btn-outline-secondary" title="Configure checklist templates in hospital settings">
+                                            <i class="fa fa-cog mr-1"></i>Customize
+                                        </a>
+                                        @endhasanyrole
+                                    </div>
+                                </div>
+                                <div class="section-card-body">
+                                    @if(count($checklistItems ?? []) > 0)
+                                    <div class="mb-3">
+                                        <div class="d-flex justify-content-between text-muted small mb-1">
+                                            <span>Safety Verification Progress</span>
+                                            <span class="font-weight-bold" id="chk-progress-count">{{ $completedChk }}/{{ $totalChk }}</span>
+                                        </div>
+                                        <div class="progress" style="height: 6px; border-radius: 4px;">
+                                            <div class="progress-bar bg-success" id="chk-progress-bar" role="progressbar" style="width: {{ $percentChk }}%;" aria-valuenow="{{ $percentChk }}" aria-valuemin="0" aria-valuemax="100"></div>
+                                        </div>
+                                    </div>
+
+                                    <div class="checklist-widget-list" id="checklist-items-wrapper">
+                                        @foreach($checklistItems as $chk)
+                                        <div class="checklist-item-row {{ $chk['is_completed'] ? 'item-checked' : '' }}" id="chk-row-{{ $chk['id'] }}">
+                                            <div class="d-flex align-items-start">
+                                                <div class="custom-control custom-checkbox mr-3 mt-1">
+                                                    <input type="checkbox"
+                                                           class="custom-control-input checklist-toggle-input"
+                                                           id="chk-item-{{ $chk['id'] }}"
+                                                           data-item-id="{{ $chk['id'] }}"
+                                                           {{ $chk['is_completed'] ? 'checked' : '' }}
+                                                           {{ ($isCompleted || $isCancelled) ? 'disabled' : '' }}
+                                                           onchange="toggleChecklistItem({{ $chk['id'] }}, this.checked)">
+                                                    <label class="custom-control-label cursor-pointer" for="chk-item-{{ $chk['id'] }}"></label>
+                                                </div>
+                                                <div class="flex-grow-1">
+                                                    <div class="d-flex align-items-center justify-content-between">
+                                                        <label class="mb-0 font-weight-bold cursor-pointer" for="chk-item-{{ $chk['id'] }}" style="font-size:0.92rem;">
+                                                            {{ $chk['item_text'] }}
+                                                        </label>
+                                                        @if($chk['is_required'])
+                                                        <span class="badge badge-danger text-uppercase ml-2" style="font-size:0.62rem; letter-spacing:0.5px;">Required</span>
+                                                        @endif
+                                                    </div>
+                                                    @if(!empty($chk['guidance']))
+                                                    <div class="text-muted small mt-1" style="line-height:1.35;">
+                                                        <i class="fa fa-info-circle text-info mr-1"></i>{{ $chk['guidance'] }}
+                                                    </div>
+                                                    @endif
+                                                    <div class="chk-audit small text-success mt-1" id="chk-audit-{{ $chk['id'] }}" style="{{ $chk['is_completed'] ? '' : 'display:none;' }}">
+                                                        <i class="fa fa-check-circle mr-1"></i>Verified by <strong>{{ $chk['completed_by_name'] ?? 'Staff' }}</strong>
+                                                        @if(!empty($chk['completed_at']))
+                                                        <span class="text-muted ml-1">{{ \Carbon\Carbon::parse($chk['completed_at'])->format('d M H:i') }}</span>
+                                                        @endif
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        @endforeach
+                                    </div>
+                                    @else
+                                    <div class="empty-state py-3 text-center">
+                                        <i class="fa fa-clipboard-list text-muted fa-2x mb-2"></i>
+                                        <p class="mb-1 text-muted">No safety checklist items configured for {{ $isSurgical ? 'surgical' : 'bedside' }} procedures.</p>
+                                        @hasanyrole('SUPERADMIN|ADMIN')
+                                        <a href="{{ route('checklist-templates.index') }}" class="btn btn-sm btn-outline-primary mt-2">
+                                            <i class="fa fa-plus mr-1"></i>Configure Checklist Template
+                                        </a>
+                                        @endhasanyrole
+                                    </div>
+                                    @endif
+                                </div>
+                            </div>
+                        </div>
+
+                        {{-- Procedure Team --}}
                         <div class="clinical-team">
                             <div class="section-card">
                                 <div class="section-card-header">
-                                    <h5><i class="fa fa-users"></i> Surgical Team</h5>
+                                    <h5><i class="fa fa-users"></i> {{ $isSurgical ? 'Surgical Team' : 'Clinical Procedure Team' }}</h5>
                                     @hasanyrole('SUPERADMIN|ADMIN|DOCTOR')
                                     <button class="btn btn-sm btn-primary" onclick="openAddTeamModal()">
                                         <i class="fa fa-user-plus mr-1"></i>Add Member
@@ -1967,13 +2114,20 @@ $isSurgical = $procedure->procedureDefinition && $procedure->procedureDefinition
 
                                 {{-- Filter pills --}}
                                 @php
-                                $noteTypePills = [
-                                'all' => 'All',
-                                'pre_op' => 'Pre-Op',
-                                'intra_op' => 'Intra-Op',
-                                'post_op' => 'Post-Op',
-                                'anesthesia'=> 'Anesthesia',
-                                'nursing' => 'Nursing',
+                                $noteTypePills = $isSurgical ? [
+                                    'all' => 'All',
+                                    'pre_op' => 'Pre-Op',
+                                    'intra_op' => 'Intra-Op',
+                                    'post_op' => 'Post-Op',
+                                    'anesthesia'=> 'Anesthesia',
+                                    'nursing' => 'Nursing',
+                                ] : [
+                                    'all' => 'All',
+                                    'pre_op' => 'Pre-Procedure',
+                                    'intra_op' => 'Procedure Notes',
+                                    'post_op' => 'Post-Procedure',
+                                    'anesthesia'=> 'Local / Sedation',
+                                    'nursing' => 'Nursing',
                                 ];
                                 @endphp
                                 <div class="notes-filter-pills">
@@ -1986,18 +2140,24 @@ $isSurgical = $procedure->procedureDefinition && $procedure->procedureDefinition
                                 @php
                                 $allNotes = $procedure->notes->sortByDesc('created_at');
                                 $noteTypeColors = [
-                                'pre_op' => '#1976d2',
-                                'intra_op' => '#7b1fa2',
-                                'post_op' => '#388e3c',
-                                'anesthesia'=> '#f57c00',
-                                'nursing' => '#0097a7',
+                                    'pre_op' => '#1976d2',
+                                    'intra_op' => '#7b1fa2',
+                                    'post_op' => '#388e3c',
+                                    'anesthesia'=> '#f57c00',
+                                    'nursing' => '#0097a7',
                                 ];
-                                $noteTypeNames = [
-                                'pre_op' => 'Pre-Op',
-                                'intra_op' => 'Intra-Op',
-                                'post_op' => 'Post-Op',
-                                'anesthesia'=> 'Anesthesia',
-                                'nursing' => 'Nursing',
+                                $noteTypeNames = $isSurgical ? [
+                                    'pre_op' => 'Pre-Op',
+                                    'intra_op' => 'Intra-Op',
+                                    'post_op' => 'Post-Op',
+                                    'anesthesia'=> 'Anesthesia',
+                                    'nursing' => 'Nursing',
+                                ] : [
+                                    'pre_op' => 'Pre-Procedure',
+                                    'intra_op' => 'Procedure Note',
+                                    'post_op' => 'Post-Procedure',
+                                    'anesthesia'=> 'Local / Sedation',
+                                    'nursing' => 'Nursing',
                                 ];
                                 @endphp
                                 @if($allNotes->count() > 0)
@@ -2429,22 +2589,22 @@ $isSurgical = $procedure->procedureDefinition && $procedure->procedureDefinition
                     @endif
                     @if($procedure->procedure_status === 'requested')
                     <button class="btn btn-info btn-block mb-2" onclick="openScheduleModal()">
-                        <i class="fa fa-calendar-check"></i> Schedule &amp; Set OR
+                        <i class="fa fa-calendar-check mr-1"></i> {{ $isSurgical ? 'Schedule & Set Theatre' : 'Schedule Procedure Room' }}
                     </button>
                     <button class="btn btn-success btn-block mb-2" onclick="confirmAction('complete', 'Mark as Complete', 'Mark this procedure as completed?', 'Use only if the procedure is already done.', 'success', 'check-circle')">
-                        <i class="fa fa-check-circle"></i> Mark as Complete
+                        <i class="fa fa-check-circle mr-1"></i> Mark as Complete
                     </button>
                     @elseif($procedure->procedure_status === 'scheduled')
                     @if($isSurgical && $consentNeedsAction)
                     <div class="alert alert-warning py-2 small mb-2">
-                        <i class="fa fa-exclamation-triangle mr-1"></i><strong>Consent pending.</strong> Obtain consent before starting.
+                        <i class="fa fa-exclamation-triangle mr-1"></i><strong>Consent pending.</strong> Obtain surgical consent before starting.
                     </div>
                     @endif
-                    <button class="btn btn-warning btn-block mb-2" onclick="confirmAction('in_progress', 'Start Procedure', 'Start this procedure now?', 'The procedure will be marked as in progress.', 'warning', 'play-circle')">
-                        <i class="fa fa-play-circle"></i> Start Procedure
+                    <button class="btn btn-warning btn-block mb-2" onclick="confirmAction('in_progress', '{{ $isSurgical ? 'Start Surgery' : 'Start Procedure' }}', '{{ $isSurgical ? 'Start this surgical procedure now?' : 'Start this bedside procedure now?' }}', '{{ $isSurgical ? 'Patient is in Operating Theatre.' : 'Procedure is now underway.' }}', 'warning', 'play-circle')">
+                        <i class="fa fa-play-circle mr-1"></i> {{ $isSurgical ? 'Start Surgery / In OR' : 'Start Procedure' }}
                     </button>
                     <button class="btn btn-success btn-block mb-2" onclick="confirmAction('complete', 'Mark as Complete', 'Mark this procedure as completed?', '', 'success', 'check-circle')">
-                        <i class="fa fa-check-circle"></i> Mark as Complete
+                        <i class="fa fa-check-circle mr-1"></i> Mark as Complete
                     </button>
                     <button class="btn btn-outline-secondary btn-block mb-2" onclick="confirmAction('requested', 'Revert to Requested', 'Revert this procedure to Requested?', 'This will unschedule the procedure.', 'secondary', 'undo')">
                         <i class="fa fa-undo"></i> Revert to Requested
@@ -2573,14 +2733,25 @@ $isSurgical = $procedure->procedureDefinition && $procedure->procedureDefinition
                         @endif
                         @if($procedure->operating_room)
                         <div class="info-item">
-                            <span class="info-label">OR Room</span>
+                            <span class="info-label">{{ $isSurgical ? 'Theatre' : 'Room' }}</span>
                             <span class="info-value">{{ $procedure->operating_room }}</span>
                         </div>
                         @endif
                         @if($isSurgical)
                         <div class="info-item">
                             <span class="info-label">Type</span>
-                            <span class="info-value"><span class="badge badge-danger">SURGICAL</span></span>
+                            <span class="info-value"><span class="badge badge-danger"><i class="fa fa-cut mr-1"></i>Surgical</span></span>
+                        </div>
+                        @else
+                        <div class="info-item">
+                            <span class="info-label">Type</span>
+                            <span class="info-value"><span class="badge badge-info"><i class="fa fa-stethoscope mr-1"></i>Bedside / Clinical</span></span>
+                        </div>
+                        @endif
+                        @if($procedure->prep_summary)
+                        <div class="info-item flex-column align-items-start">
+                            <span class="info-label mb-1">Preparation</span>
+                            <span class="info-value text-wrap small text-dark"><i class="fa fa-check-square text-success mr-1"></i>{{ $procedure->prep_summary }}</span>
                         </div>
                         @endif
                     </div>

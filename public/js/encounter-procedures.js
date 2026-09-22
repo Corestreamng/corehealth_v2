@@ -90,7 +90,7 @@
     function executeProcedureSearch(query) {
         const config = getEncounterConfig();
         const patientId = config.patientId || 0;
-        const procedureCategoryId = config.procedureCategoryId || 0;
+        const procedureCategoryId = config.procedureCategoryId || 8;
         const searchUrl = (config.baseUrl || '') + '/live-search-services';
 
         $.ajax({
@@ -110,7 +110,9 @@
                 } else {
                     data.forEach(function (item) {
                         const isSelected = window.ClinicalOrdersKit ? window.ClinicalOrdersKit.isAlreadyAdded('procedures', item.id) : false;
-                        const category = (item.category && item.category.category_name) ? item.category.category_name : 'Procedures';
+                        const category = item.procedure_category
+                            || (typeof item.category === 'object' ? item.category?.category_name : item.category)
+                            || 'Procedures';
                         const name = item.service_name || 'Unknown';
                         const code = item.service_code || '';
                         const price = item.price && item.price.sale_price !== undefined ? item.price.sale_price : 0;
@@ -118,11 +120,17 @@
                         const claims = item.claims_amount !== undefined && item.claims_amount !== null ? item.claims_amount : 0;
                         const mode = item.coverage_mode || null;
 
+                        const isSurgical = Boolean(item.is_surgical);
+                        const surgPill = isSurgical
+                            ? ' <span class="badge bg-danger-subtle text-danger border border-danger-subtle"><i class="fa fa-cut"></i> Surgical</span>'
+                            : ' <span class="badge bg-info-subtle text-info border border-info-subtle"><i class="fa fa-stethoscope"></i> Bedside</span>';
+                        const displayCategory = category + surgPill;
+
                         const onClick = isSelected ? '' : `window.EncounterProcedures.selectProcedureForBooking(${JSON.stringify(item).replace(/"/g, '&quot;')})`;
                         if (window.ClinicalOrdersKit && typeof window.ClinicalOrdersKit.renderSearchResultItem === 'function') {
                             const mk = window.ClinicalOrdersKit.renderSearchResultItem({
                                 id: item.id,
-                                category: category,
+                                category: displayCategory,
                                 name: name,
                                 code: code,
                                 price: price,
@@ -140,7 +148,7 @@
                                     <div class="d-flex justify-content-between align-items-center">
                                         <div>
                                             <strong>${name}</strong> <small class="text-muted">(${code})</small>
-                                            <br><small class="badge bg-light text-dark border">${category}</small>
+                                            <br><small class="badge bg-light text-dark border">${category}</small>${surgPill}
                                         </div>
                                         <div class="text-end">
                                             <span class="fw-bold">${formatCurrency(payable)}</span>
@@ -185,22 +193,27 @@
                 $('#proc_billing_fields_container').slideDown(200);
                 $('#proc_deferred_alert').slideUp(200);
             }
+            updateProcSummary();
         });
 
         // Coverage mode change
         $('#proc_coverage_mode').on('change', function () {
             const mode = $(this).val();
+            const total = parseFloat($('#proc_total_price').val()) || (currentSelectedProc?.price?.sale_price || 0);
+
             if (mode === 'cash') {
-                const catalogPrice = currentSelectedProc?.price?.sale_price || 0;
-                $('#proc_payable_amount').val(catalogPrice);
+                $('#proc_payable_amount').val(total);
                 $('#proc_claims_amount').val(0);
                 $('#proc_auth_code_container').hide();
+                $('#proc_split_breakdown').hide();
             } else {
+                $('#proc_split_breakdown').show();
                 if (currentSelectedProc) {
                     const defaultPayable = currentSelectedProc.payable_amount !== undefined ? currentSelectedProc.payable_amount : 0;
-                    const defaultClaims = currentSelectedProc.claims_amount !== undefined ? currentSelectedProc.claims_amount : (currentSelectedProc.price?.sale_price || 0);
+                    const defaultClaims = currentSelectedProc.claims_amount !== undefined ? currentSelectedProc.claims_amount : total;
                     $('#proc_payable_amount').val(defaultPayable);
                     $('#proc_claims_amount').val(defaultClaims);
+                    $('#proc_total_price').val(defaultPayable + defaultClaims);
                 }
                 if (mode === 'secondary' || mode === 'primary') {
                     $('#proc_auth_code_container').show();
@@ -208,7 +221,76 @@
                     $('#proc_auth_code_container').hide();
                 }
             }
+            updateProcSummary();
         });
+
+        // Total fee input listener
+        $('#proc_total_price').on('input', function () {
+            const total = parseFloat($(this).val()) || 0;
+            const mode = $('#proc_coverage_mode').val();
+            if (mode === 'cash') {
+                $('#proc_payable_amount').val(total);
+                $('#proc_claims_amount').val(0);
+            } else {
+                const payable = parseFloat($('#proc_payable_amount').val()) || 0;
+                if (payable <= total) {
+                    $('#proc_claims_amount').val(total - payable);
+                } else {
+                    $('#proc_payable_amount').val(total);
+                    $('#proc_claims_amount').val(0);
+                }
+            }
+            updateProcSummary();
+        });
+
+        // Split inputs listener
+        $('#proc_payable_amount').on('input', function () {
+            const payable = parseFloat($(this).val()) || 0;
+            const claims = parseFloat($('#proc_claims_amount').val()) || 0;
+            $('#proc_total_price').val(payable + claims);
+            updateProcSummary();
+        });
+
+        $('#proc_claims_amount').on('input', function () {
+            const payable = parseFloat($('#proc_payable_amount').val()) || 0;
+            const claims = parseFloat($(this).val()) || 0;
+            $('#proc_total_price').val(payable + claims);
+            updateProcSummary();
+        });
+
+        $('#proc_priority').on('change', function () {
+            updateProcSummary();
+        });
+    }
+
+    function updateProcSummary() {
+        if (!currentSelectedProc) {
+            $('#proc_summary_text').text('Ready to add procedure to encounter');
+            return;
+        }
+        const isDeferred = $('#defer_proc_billing').is(':checked');
+        const priority = $('#proc_priority').val() || 'routine';
+        const priorityLabel = priority.charAt(0).toUpperCase() + priority.slice(1);
+        const mode = $('#proc_coverage_mode').val() || 'cash';
+        const total = parseFloat($('#proc_total_price').val()) || 0;
+
+        let billingText = '';
+        if (isDeferred) {
+            billingText = '<span class="text-warning fw-semibold"><i class="fa fa-clock"></i> Fee Deferred (Bill Later)</span>';
+        } else if (mode === 'cash') {
+            billingText = `<strong>Fee: ${formatCurrency(total)}</strong> <span class="text-muted">(Self-Pay)</span>`;
+        } else {
+            const payable = parseFloat($('#proc_payable_amount').val()) || 0;
+            const claims = parseFloat($('#proc_claims_amount').val()) || 0;
+            billingText = `<strong>Fee: ${formatCurrency(total)}</strong> <span class="text-success">[HMO ${mode.toUpperCase()}: ${formatCurrency(payable)} Patient / ${formatCurrency(claims)} Claims]</span>`;
+        }
+
+        const isSurg = currentSelectedProc ? Boolean(currentSelectedProc.is_surgical) : false;
+        const typeBadge = isSurg
+            ? '<span class="badge bg-danger me-1"><i class="fa fa-cut"></i> Surgical</span>'
+            : '<span class="badge bg-info text-dark me-1"><i class="fa fa-stethoscope"></i> Bedside</span>';
+
+        $('#proc_summary_text').html(`${typeBadge} ${billingText} &bull; <span class="text-secondary">Priority: ${priorityLabel}</span>`);
     }
 
     function selectProcedureForBooking(procedure) {
@@ -221,12 +303,35 @@
         const payable = procedure.payable_amount !== undefined && procedure.payable_amount !== null ? Number(procedure.payable_amount) : catalogPrice;
         const claims = procedure.claims_amount !== undefined && procedure.claims_amount !== null ? Number(procedure.claims_amount) : 0;
         const mode = procedure.coverage_mode || (claims > 0 ? 'primary' : 'cash');
-        const category = procedure.category?.category_name || (isFreeForm ? 'Free-form' : 'Procedures');
+        const category = procedure.procedure_category
+            || (typeof procedure.category === 'object' ? procedure.category?.category_name : procedure.category)
+            || (isFreeForm ? 'Free-form' : 'Procedures');
+        const total = (payable + claims > 0) ? (payable + claims) : catalogPrice;
 
         // Populate summary card
         $('#proc_config_title').text(procedure.service_name || 'Procedure');
         $('#proc_config_code').text(procedure.service_code || (isFreeForm ? 'Free-form Request' : ''));
         $('#proc_config_category').text(category);
+
+        // Surgical vs Non-Surgical Adaptations
+        const isSurgical = Boolean(procedure.is_surgical);
+        if (isSurgical) {
+            $('#proc_config_surgical_badge').show();
+            $('#proc_config_clinical_badge').hide();
+            $('#proc_operating_room_label').html('<i class="fa fa-hospital-alt text-danger me-1"></i> Operating Theatre / OR Suite (Optional)');
+            $('#proc_operating_room').attr('placeholder', 'e.g. Main OR 1 / Theatre 2');
+            $('#proc_surgical_prep_box').slideDown(200);
+            $('#proc_clinical_prep_box').slideUp(200);
+            $('#proc_pre_notes').attr('placeholder', 'Pre-op diagnosis, surgical approach, implant/stapler requirements, theatre prep notes...');
+        } else {
+            $('#proc_config_surgical_badge').hide();
+            $('#proc_config_clinical_badge').show();
+            $('#proc_operating_room_label').html('<i class="fa fa-door-open text-primary me-1"></i> Procedure Room / Bedside (Optional)');
+            $('#proc_operating_room').attr('placeholder', 'e.g. Minor Procedure Room / Ward Bedside');
+            $('#proc_surgical_prep_box').slideUp(200);
+            $('#proc_clinical_prep_box').slideDown(200);
+            $('#proc_pre_notes').attr('placeholder', 'Clinical indications, dressing type / consumables needed, patient instructions...');
+        }
 
         // Benchmark info
         $('#proc_bench_catalog').text(formatCurrency(catalogPrice));
@@ -240,6 +345,7 @@
         }
 
         // Pre-fill inputs
+        $('#proc_total_price').val(total);
         $('#proc_payable_amount').val(payable);
         $('#proc_claims_amount').val(claims);
         $('#proc_coverage_mode').val(mode);
@@ -248,27 +354,41 @@
         $('#proc_deferred_alert').hide();
         $('#proc_auth_code').val('');
 
-        if (mode === 'secondary' || mode === 'primary') {
-            $('#proc_auth_code_container').show();
-        } else {
+        if (mode === 'cash') {
+            $('#proc_split_breakdown').hide();
             $('#proc_auth_code_container').hide();
+        } else {
+            $('#proc_split_breakdown').show();
+            if (mode === 'secondary' || mode === 'primary') {
+                $('#proc_auth_code_container').show();
+            } else {
+                $('#proc_auth_code_container').hide();
+            }
         }
 
-        // Show configurator
+        updateProcSummary();
+
+        // Hide empty state & show configurator
+        $('#proc_empty_placeholder').slideUp(150);
         $('#proc_config_card').slideDown(250);
         document.getElementById('proc_config_card').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     }
 
     function cancelProcedureBookingConfig() {
         currentSelectedProc = null;
+        $('#proc_config_surgical_badge').hide();
+        $('#proc_config_clinical_badge').hide();
+        $('#proc_surgical_prep_box').hide();
+        $('#proc_clinical_prep_box').hide();
         $('#proc_config_card').slideUp(200);
+        $('#proc_empty_placeholder').slideDown(200);
         $('#procedure_search').val('').focus();
     }
 
     function setProcPreset(type) {
         if (!currentSelectedProc) return;
         const catalogPrice = currentSelectedProc.price?.sale_price || 0;
-        const total = (parseFloat($('#proc_payable_amount').val()) || 0) + (parseFloat($('#proc_claims_amount').val()) || 0) || catalogPrice;
+        const total = parseFloat($('#proc_total_price').val()) || (parseFloat($('#proc_payable_amount').val()) || 0) + (parseFloat($('#proc_claims_amount').val()) || 0) || catalogPrice;
 
         if (type === 'patient') {
             $('#proc_payable_amount').val(total);
@@ -284,10 +404,12 @@
             const payable = currentSelectedProc.payable_amount !== undefined ? currentSelectedProc.payable_amount : catalogPrice;
             const claims = currentSelectedProc.claims_amount !== undefined ? currentSelectedProc.claims_amount : 0;
             const mode = currentSelectedProc.coverage_mode || 'cash';
+            $('#proc_total_price').val(payable + claims > 0 ? (payable + claims) : catalogPrice);
             $('#proc_payable_amount').val(payable);
             $('#proc_claims_amount').val(claims);
             $('#proc_coverage_mode').val(mode).trigger('change');
         }
+        updateProcSummary();
     }
 
     function addConfiguredProcedure() {
@@ -316,10 +438,15 @@
         const coverageMode = $('#proc_coverage_mode').val() || 'cash';
         const payableAmount = parseFloat($('#proc_payable_amount').val()) || 0;
         const claimsAmount = parseFloat($('#proc_claims_amount').val()) || 0;
+        const totalFee = parseFloat($('#proc_total_price').val()) || (payableAmount + claimsAmount);
         const authCode = $('#proc_auth_code').val() || null;
 
         const isFreeForm = String(procId).startsWith('FF_');
-        const categoryName = isFreeForm ? 'Free-form Request' : (currentSelectedProc.category ? currentSelectedProc.category.category_name : 'Procedures');
+        const categoryName = isFreeForm
+            ? 'Free-form Request'
+            : (currentSelectedProc.procedure_category
+                || (typeof currentSelectedProc.category === 'object' ? currentSelectedProc.category?.category_name : currentSelectedProc.category)
+                || 'Procedures');
         const priorityClass = `priority-${priority}`;
         const priorityLabel = priority.charAt(0).toUpperCase() + priority.slice(1);
 
@@ -335,6 +462,25 @@
             billingBadge = `<span class="badge bg-secondary"><i class="fa fa-wallet"></i> Self-Pay</span><br><small class="text-muted">${formatCurrency(payableAmount)}</small>`;
         }
 
+        const isSurgical = Boolean(currentSelectedProc.is_surgical);
+        const prepDetails = {
+            is_surgical: isSurgical,
+            operating_room: operatingRoom,
+        };
+
+        if (isSurgical) {
+            prepDetails.npo_status = $('#proc_npo_status').val() || 'npo_midnight';
+            prepDetails.anesthesia_type = $('#proc_anesthesia_type').val() || 'general';
+            prepDetails.consent_req = $('#proc_surgical_consent').val() || 'required';
+            prepDetails.blood_required = $('#proc_blood_required').is(':checked');
+            prepDetails.prep_notes = $('#proc_surgical_prep_notes').val() || '';
+        } else {
+            prepDetails.procedure_pack = $('#proc_clinical_pack').val() || 'routine_pack';
+            prepDetails.consent_req = $('#proc_clinical_consent').val() || 'routine_explained';
+            prepDetails.observation_plan = $('#proc_observation_plan').val() || 'immediate';
+            prepDetails.prep_notes = $('#proc_clinical_prep_notes').val() || '';
+        }
+
         const payload = {
             service_id: procId,
             priority: priority,
@@ -343,10 +489,12 @@
             operating_room: operatingRoom,
             pre_notes: preNotes,
             defer_billing: deferBilling,
+            custom_price: totalFee,
             coverage_mode: coverageMode,
             payable_amount: payableAmount,
             claims_amount: claimsAmount,
-            auth_code: authCode
+            auth_code: authCode,
+            prep_details: prepDetails
         };
 
         const postUrl = `${baseUrl}/encounters/${encounterId}/add-procedure`;
@@ -362,9 +510,23 @@
                 buildRowHtml: function (resp) {
                     const rowRecordId = resp.id || resp.item?.id || procId;
                     const workbenchUrl = `${baseUrl}/patient-procedures/${rowRecordId}`;
+                    const typeBadge = isSurgical
+                        ? '<span class="badge bg-danger-subtle text-danger border border-danger-subtle ms-1"><i class="fa fa-cut"></i> SURGICAL</span>'
+                        : '<span class="badge bg-info-subtle text-info border border-info-subtle ms-1"><i class="fa fa-stethoscope"></i> CLINICAL</span>';
+
+                    let prepPill = '';
+                    if (isSurgical) {
+                        const npo = prepDetails.npo_status ? prepDetails.npo_status.replace(/_/g, ' ') : '';
+                        const anesth = prepDetails.anesthesia_type ? prepDetails.anesthesia_type.replace(/_/g, ' ') : 'GA';
+                        prepPill = `<br><small class="text-danger"><i class="fa fa-cut"></i> NPO: ${npo} | Anesth: ${anesth.toUpperCase()}</small>`;
+                    } else if (prepDetails.procedure_pack && prepDetails.procedure_pack !== 'routine_pack') {
+                        const packLabel = $('#proc_clinical_pack option:selected').text() || prepDetails.procedure_pack.replace(/_/g, ' ');
+                        prepPill = `<br><small class="text-info"><i class="fa fa-box-open"></i> ${packLabel}</small>`;
+                    }
+
                     return `<tr data-record-id="${rowRecordId}" data-record-type="procedure" data-service-id="${procId}">
                         <td>
-                            ${isFreeForm ? `<h6 class="mb-0"><span class="badge bg-info text-dark">${currentSelectedProc.service_name}</span></h6>` : `<strong><span class="badge bg-success">${currentSelectedProc.service_name || 'Procedure'}</span></strong>`}
+                            ${isFreeForm ? `<h6 class="mb-0"><span class="badge bg-info text-dark">${currentSelectedProc.service_name}</span></h6>` : `<strong><span class="badge bg-success">${currentSelectedProc.service_name || 'Procedure'}</span></strong>`} ${typeBadge}
                             ${!isFreeForm && currentSelectedProc.service_code ? `<br><small class="text-muted">${currentSelectedProc.service_code}</small>` : ''}
                             ${preNotes ? `<br><small class="text-info"><i class="fa fa-sticky-note"></i> ${preNotes.substring(0, 50)}${preNotes.length > 50 ? '...' : ''}</small>` : ''}
                         </td>
@@ -373,6 +535,7 @@
                             <span class="priority-badge ${priorityClass}">${priorityLabel}</span>
                             ${scheduledDate ? `<br><small class="text-muted"><i class="fa fa-calendar"></i> ${scheduledDate}${scheduledTime ? ' ' + scheduledTime : ''}</small>` : ''}
                             ${operatingRoom ? `<br><small class="text-secondary"><i class="fa fa-door-open"></i> ${operatingRoom}</small>` : ''}
+                            ${prepPill}
                         </td>
                         <td>${billingBadge}</td>
                         <td>
@@ -390,6 +553,7 @@
                 onSuccess: function () {
                     $('#no_procedures_message').hide();
                     cancelProcedureBookingConfig();
+                    $('#proc_empty_placeholder').show();
                     if ($('#procedure_history_list').length && $.fn.DataTable.isDataTable('#procedure_history_list')) {
                         $('#procedure_history_list').DataTable().ajax.reload(null, false);
                     }

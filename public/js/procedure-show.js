@@ -19,19 +19,20 @@ if (typeof window.wbRoute !== 'function') {
     };
 }
 
-const procedureId = (window.WORKBENCH_CONFIG ? window.WORKBENCH_CONFIG.patientId : '');
+const procedureId = (window.WORKBENCH_CONFIG ? window.WORKBENCH_CONFIG.procedureId : '');
     const patientId = (window.WORKBENCH_CONFIG ? window.WORKBENCH_CONFIG.patientId : '');
-    const labCategoryId = (window.WORKBENCH_CONFIG ? window.WORKBENCH_CONFIG.patientId : '');
-    const imagingCategoryId = (window.WORKBENCH_CONFIG ? window.WORKBENCH_CONFIG.patientId : '');
+    const labCategoryId = (window.WORKBENCH_CONFIG ? (window.WORKBENCH_CONFIG.investigationCategoryId || '') : '');
+    const imagingCategoryId = (window.WORKBENCH_CONFIG ? (window.WORKBENCH_CONFIG.imagingCategoryId || '') : '');
     let noteEditorInstance = null;
 
     /* ═══════════════ TIMERS ═══════════════ */
-    if (true) {
+    if (window.WORKBENCH_CONFIG && window.WORKBENCH_CONFIG.actualStartTime) {
         (function() {
-            const startMs = (window.WORKBENCH_CONFIG ? window.WORKBENCH_CONFIG.patientId : '') * 1000;
+            const startMs = parseInt(window.WORKBENCH_CONFIG.actualStartTime, 10) * 1000;
+            if (!startMs || isNaN(startMs)) return;
 
             function tick() {
-                const elapsed = Math.floor((Date.now() - startMs) / 1000);
+                const elapsed = Math.max(0, Math.floor((Date.now() - startMs) / 1000));
                 const h = Math.floor(elapsed / 3600);
                 const m = Math.floor((elapsed % 3600) / 60);
                 const s = elapsed % 60;
@@ -43,9 +44,11 @@ const procedureId = (window.WORKBENCH_CONFIG ? window.WORKBENCH_CONFIG.patientId
         })();
     }
 
-    if (true) {
+    if (window.WORKBENCH_CONFIG && window.WORKBENCH_CONFIG.scheduledDate) {
         (function() {
-            const targetMs = new Date((window.WORKBENCH_CONFIG?.scheduledDate || '') + 'T' + (window.WORKBENCH_CONFIG?.scheduledTime || '') + ':00').getTime();
+            const timeStr = window.WORKBENCH_CONFIG.scheduledTime ? (window.WORKBENCH_CONFIG.scheduledTime.length === 5 ? window.WORKBENCH_CONFIG.scheduledTime + ':00' : window.WORKBENCH_CONFIG.scheduledTime) : '00:00:00';
+            const targetMs = new Date(window.WORKBENCH_CONFIG.scheduledDate + 'T' + timeStr).getTime();
+            if (isNaN(targetMs)) return;
 
             function tick() {
                 const diff = targetMs - Date.now();
@@ -102,12 +105,13 @@ const procedureId = (window.WORKBENCH_CONFIG ? window.WORKBENCH_CONFIG.patientId
 
     /* ═══════════════ TABS — Default by role ═══════════════ */
     document.addEventListener('DOMContentLoaded', function() {
-        if (true) {
-        const nurseTab = document.getElementById('tab-consent-billing-link');
-        if (nurseTab) $(nurseTab).tab('show');
+        const pageRole = window.WORKBENCH_CONFIG?.pageRole || document.querySelector('.procedure-page')?.dataset?.pageRole || '';
+        if (pageRole === 'nurse') {
+            const nurseTab = document.getElementById('tab-consent-billing-link');
+            if (nurseTab) $(nurseTab).tab('show');
         } else {
-        const docTab = document.getElementById('tab-clinical-link');
-        if (docTab) $(docTab).tab('show');
+            const docTab = document.getElementById('tab-clinical-link');
+            if (docTab) $(docTab).tab('show');
         }
     });
 
@@ -609,10 +613,10 @@ const procedureId = (window.WORKBENCH_CONFIG ? window.WORKBENCH_CONFIG.patientId
             formData.service_id = $('#item_service_id').val();
         }
         let submitUrl = '';
-        if (formData.item_type === 'lab') submitUrl = '/patient-procedures/' + procedureId + '/items/lab';
-        else if (formData.item_type === 'imaging') submitUrl = '/patient-procedures/' + procedureId + '/items/imaging';
-        else if (formData.item_type === 'service') submitUrl = '/patient-procedures/' + procedureId + '/items/service';
-        else if (formData.item_type === 'medication') submitUrl = '/patient-procedures/' + procedureId + '/items/medication';
+        if (formData.item_type === 'lab') submitUrl = (window.WORKBENCH_CONFIG?.addLabRoute) || wbUrl('/patient-procedures/' + procedureId + '/items/lab');
+        else if (formData.item_type === 'imaging') submitUrl = (window.WORKBENCH_CONFIG?.addImagingRoute) || wbUrl('/patient-procedures/' + procedureId + '/items/imaging');
+        else if (formData.item_type === 'service') submitUrl = (window.WORKBENCH_CONFIG?.addServiceRoute) || wbUrl('/patient-procedures/' + procedureId + '/items/service');
+        else if (formData.item_type === 'medication') submitUrl = (window.WORKBENCH_CONFIG?.addConsumableRoute) || wbUrl('/patient-procedures/' + procedureId + '/items/medication');
 
         $.ajax({
             url: submitUrl,
@@ -830,60 +834,99 @@ const procedureId = (window.WORKBENCH_CONFIG ? window.WORKBENCH_CONFIG.patientId
     /* ═══════════════ DATATABLES ═══════════════ */
     function initLabHistoryTable() {
         if ($.fn.DataTable.isDataTable("#procedure_lab_history")) return;
+        const url = (window.WORKBENCH_CONFIG && window.WORKBENCH_CONFIG.labHistoryRoute)
+            ? window.WORKBENCH_CONFIG.labHistoryRoute
+            : wbUrl('/patient-procedures/' + procedureId + '/lab-history');
         $("#procedure_lab_history").DataTable({
+            processing: true,
+            serverSide: true,
+            responsive: false,
+            autoWidth: false,
+            dom: '<"top"f>rt<"bottom"lip><"clear">',
             ajax: {
-                url: "(window.WORKBENCH_CONFIG ? window.WORKBENCH_CONFIG.patientId : '')",
+                url: url,
                 type: "GET"
             },
             columns: [{
-                data: "info"
+                data: "info",
+                name: "info",
+                orderable: false,
+                searchable: true
             }],
+            order: [[0, 'desc']],
             pageLength: 10,
-            dom: '<"d-flex justify-content-between align-items-center px-3 pt-2"f>t<"d-flex justify-content-between align-items-center px-3"ip>',
+            lengthMenu: [[5, 10, 25], [5, 10, 25]],
             language: {
                 search: "",
                 searchPlaceholder: "Search labs…",
-                emptyTable: "No lab requests."
+                emptyTable: "<div class='text-center text-muted py-4'><i class='fa fa-flask fa-2x mb-2 d-block'></i>No lab requests for this procedure</div>",
+                processing: '<i class="fa fa-spinner fa-spin fa-2x fa-fw"></i><span class="sr-only">Loading...</span>'
             },
         });
     }
 
     function initImagingHistoryTable() {
         if ($.fn.DataTable.isDataTable("#procedure_imaging_history")) return;
+        const url = (window.WORKBENCH_CONFIG && window.WORKBENCH_CONFIG.imagingHistoryRoute)
+            ? window.WORKBENCH_CONFIG.imagingHistoryRoute
+            : wbUrl('/patient-procedures/' + procedureId + '/imaging-history');
         $("#procedure_imaging_history").DataTable({
+            processing: true,
+            serverSide: true,
+            responsive: false,
+            autoWidth: false,
+            dom: '<"top"f>rt<"bottom"lip><"clear">',
             ajax: {
-                url: "(window.WORKBENCH_CONFIG ? window.WORKBENCH_CONFIG.patientId : '')",
+                url: url,
                 type: "GET"
             },
             columns: [{
-                data: "info"
+                data: "info",
+                name: "info",
+                orderable: false,
+                searchable: true
             }],
+            order: [[0, 'desc']],
             pageLength: 10,
-            dom: '<"d-flex justify-content-between align-items-center px-3 pt-2"f>t<"d-flex justify-content-between align-items-center px-3"ip>',
+            lengthMenu: [[5, 10, 25], [5, 10, 25]],
             language: {
                 search: "",
                 searchPlaceholder: "Search imaging…",
-                emptyTable: "No imaging requests."
+                emptyTable: "<div class='text-center text-muted py-4'><i class='fa fa-x-ray fa-2x mb-2 d-block'></i>No imaging requests for this procedure</div>",
+                processing: '<i class="fa fa-spinner fa-spin fa-2x fa-fw"></i><span class="sr-only">Loading...</span>'
             },
         });
     }
 
     function initMedsHistoryTable() {
         if ($.fn.DataTable.isDataTable("#procedure_meds_history")) return;
+        const url = (window.WORKBENCH_CONFIG && window.WORKBENCH_CONFIG.medicationHistoryRoute)
+            ? window.WORKBENCH_CONFIG.medicationHistoryRoute
+            : wbUrl('/patient-procedures/' + procedureId + '/medication-history');
         $("#procedure_meds_history").DataTable({
+            processing: true,
+            serverSide: true,
+            responsive: false,
+            autoWidth: false,
+            dom: '<"top"f>rt<"bottom"lip><"clear">',
             ajax: {
-                url: "(window.WORKBENCH_CONFIG ? window.WORKBENCH_CONFIG.patientId : '')",
+                url: url,
                 type: "GET"
             },
             columns: [{
-                data: "info"
+                data: "info",
+                name: "info",
+                orderable: false,
+                searchable: true
             }],
+            order: [[0, 'desc']],
             pageLength: 10,
-            dom: '<"d-flex justify-content-between align-items-center px-3 pt-2"f>t<"d-flex justify-content-between align-items-center px-3"ip>',
+            lengthMenu: [[5, 10, 25], [5, 10, 25]],
             language: {
                 search: "",
                 searchPlaceholder: "Search meds…",
-                emptyTable: "No medication requests."
+                emptyTable: "<div class='text-center text-muted py-4'><i class='fa fa-pills fa-2x mb-2 d-block'></i>No medications for this procedure</div>",
+                processing: '<i class="fa fa-spinner fa-spin fa-2x fa-fw"></i><span class="sr-only">Loading...</span>'
             },
         });
     }
@@ -1657,6 +1700,77 @@ const procedureId = (window.WORKBENCH_CONFIG ? window.WORKBENCH_CONFIG.patientId
         });
     }
 
+    // ── Procedure Safety Checklist Verification ──
+    function toggleChecklistItem(itemId, isChecked, notes) {
+        const toggleRoute = window.WORKBENCH_CONFIG ? window.WORKBENCH_CONFIG.checklistToggleRoute : null;
+        if (!toggleRoute) {
+            console.error('Checklist toggle route is not configured');
+            return;
+        }
+
+        const checkbox = $(`#chk-item-${itemId}`);
+        const row = $(`#chk-row-${itemId}`);
+        const auditSpan = $(`#chk-audit-${itemId}`);
+
+        // Visual feedback
+        row.css('opacity', '0.6');
+
+        $.ajax({
+            url: toggleRoute,
+            type: 'POST',
+            data: {
+                _token: $('meta[name="csrf-token"]').attr('content') || (window.WORKBENCH_CONFIG ? window.WORKBENCH_CONFIG.csrf : ''),
+                item_id: itemId,
+                is_completed: isChecked ? 1 : 0,
+                notes: notes || ''
+            },
+            success: function(resp) {
+                row.css('opacity', '1');
+                if (resp && resp.success) {
+                    if (isChecked) {
+                        row.addClass('item-checked');
+                        auditSpan.html(`<i class="fa fa-check-circle mr-1"></i>Verified by <strong>${resp.completed_by_name || 'Staff'}</strong> <span class="text-muted ml-1">${resp.completed_at || 'Just now'}</span>`).show();
+                    } else {
+                        row.removeClass('item-checked');
+                        auditSpan.html('').hide();
+                    }
+
+                    // Update summary progress
+                    if (resp.progress) {
+                        $('#chk-progress-count').text(`${resp.progress.completed}/${resp.progress.total}`);
+                        $('#chk-progress-bar').css('width', `${resp.progress.percent}%`).attr('aria-valuenow', resp.progress.percent);
+                        if (resp.progress.percent === 100) {
+                            $('#chk-badge-status').html('<span class="badge badge-success"><i class="fa fa-check-circle mr-1"></i>Checklist Complete</span>');
+                        } else if (resp.progress.completed > 0) {
+                            $('#chk-badge-status').html(`<span class="badge badge-warning">${resp.progress.completed}/${resp.progress.total} Verified</span>`);
+                        } else {
+                            $('#chk-badge-status').html('');
+                        }
+                    }
+
+                    if (typeof toastr !== 'undefined') {
+                        toastr.success(resp.message || 'Checklist updated');
+                    }
+                } else {
+                    checkbox.prop('checked', !isChecked);
+                    if (typeof toastr !== 'undefined') {
+                        toastr.error(resp.message || 'Failed to update checklist item');
+                    }
+                }
+            },
+            error: function(xhr) {
+                row.css('opacity', '1');
+                checkbox.prop('checked', !isChecked);
+                const msg = xhr.responseJSON?.message || 'Error updating checklist item.';
+                if (typeof toastr !== 'undefined') {
+                    toastr.error(msg);
+                } else {
+                    alert(msg);
+                }
+            }
+        });
+    }
+
     // Expose functions to window
     window.openBillBaseFeeModal = openBillBaseFeeModal;
     window.applyTariffBenchmark = applyTariffBenchmark;
@@ -1664,3 +1778,4 @@ const procedureId = (window.WORKBENCH_CONFIG ? window.WORKBENCH_CONFIG.patientId
     window.onBbfTotalOrSplitChange = onBbfTotalOrSplitChange;
     window.setBbfPreset = setBbfPreset;
     window.submitBillBaseFee = submitBillBaseFee;
+    window.toggleChecklistItem = toggleChecklistItem;

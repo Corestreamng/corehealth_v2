@@ -16,7 +16,7 @@
         enableStructuredDose: {{ (bool) (appsettings('enable_structured_dose') ?? 1) ? 'true' : 'false' }},
         defaultDoseMode: '{{ (bool) (appsettings('enable_structured_dose') ?? 1) ? (appsettings('default_dose_mode') ?? 'structured') : 'simple' }}',
         allowDoctorSetProcedurePrice: {{ (bool) (appsettings('allow_doctor_set_procedure_price') ?? 0) ? 'true' : 'false' }},
-        procedureCategoryId: {{ (int) (appsettings('procedure_category_id', 0)) }},
+        procedureCategoryId: {{ (int) (appsettings('procedure_category_id', 8) ?: 8) }},
         routes: {
             'patient-form-list': '{{ url("/patient-form-list") }}/' + ('{{ $pId }}' || '0'),
             'EncounterHistoryList': '{{ url("/EncounterHistoryList") }}/' + ('{{ $pId }}' || '0'),

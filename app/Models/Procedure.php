@@ -62,6 +62,7 @@ class Procedure extends Model implements Auditable
         'consent_notes',
         'treatment_plan_id',
         'treatment_plan_name',
+        'prep_details',
     ];
 
     protected $casts = [
@@ -74,6 +75,7 @@ class Procedure extends Model implements Auditable
         'refund_amount' => 'decimal:2',
         'status' => 'boolean',
         'consent_marked_at' => 'datetime',
+        'prep_details' => 'array',
     ];
 
     /**
@@ -422,5 +424,77 @@ class Procedure extends Model implements Auditable
         }
 
         return optional($this->service)->service_name ?? 'Procedure';
+    }
+
+    /**
+     * Check if this procedure is surgical.
+     */
+    public function getIsSurgicalAttribute(): bool
+    {
+        if ($this->procedureDefinition) {
+            return (bool) $this->procedureDefinition->is_surgical;
+        }
+
+        return (bool) ($this->service?->procedureDefinition?->is_surgical ?? false);
+    }
+
+    /**
+     * Get a formatted human-readable summary of preparation requirements.
+     */
+    public function getPrepSummaryAttribute(): string
+    {
+        $prep = $this->prep_details ?? [];
+        if (empty($prep)) {
+            return '';
+        }
+
+        $parts = [];
+        if (!empty($prep['npo_status'])) {
+            $parts[] = 'NPO: ' . ucwords(str_replace('_', ' ', $prep['npo_status']));
+        }
+        if (!empty($prep['anesthesia_type'])) {
+            $parts[] = 'Anesth: ' . ucwords(str_replace('_', ' ', $prep['anesthesia_type']));
+        }
+        if (!empty($prep['blood_required'])) {
+            $parts[] = 'Blood: G&X Needed';
+        }
+        if (!empty($prep['operating_room'])) {
+            $parts[] = 'Room: ' . $prep['operating_room'];
+        }
+
+        return implode(' | ', $parts);
+    }
+
+    /**
+     * Get merged checklist items (from active ChecklistTemplate + procedure completed state)
+     */
+    public function getChecklistItems(): array
+    {
+        $type = $this->is_surgical ? ChecklistTemplate::TYPE_SURGICAL : ChecklistTemplate::TYPE_PROCEDURE;
+        $template = ChecklistTemplate::getDefaultByType($type);
+
+        $savedChecklist = $this->prep_details['checklist'] ?? [];
+
+        if (!$template || $template->items->isEmpty()) {
+            return [];
+        }
+
+        $result = [];
+        foreach ($template->items as $item) {
+            $saved = $savedChecklist[$item->id] ?? null;
+            $result[] = [
+                'id' => $item->id,
+                'item_text' => $item->item_text,
+                'guidance' => $item->guidance,
+                'is_required' => (bool) $item->is_required,
+                'is_completed' => !empty($saved['completed']),
+                'completed_at' => $saved['completed_at'] ?? null,
+                'completed_by' => $saved['completed_by'] ?? null,
+                'completed_by_name' => $saved['completed_by_name'] ?? null,
+                'notes' => $saved['notes'] ?? null,
+            ];
+        }
+
+        return $result;
     }
 }

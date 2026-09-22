@@ -504,6 +504,9 @@ Route::group(['middleware' => ['auth']], function () {
             Route::patch('{procedure}/consent', [\App\Http\Controllers\PatientProcedureController::class, 'updateConsent'])->name('consent.update');
             Route::post('{procedure}/consent/sign', [\App\Http\Controllers\PatientProcedureController::class, 'signConsent'])->name('consent.sign');
 
+            // Preparation & Safety Checklist Toggle
+            Route::post('{procedure}/checklist-toggle', [\App\Http\Controllers\PatientProcedureController::class, 'toggleChecklistItem'])->name('checklist-toggle');
+
             // Attachments Management
             Route::post('{procedure}/attachments', [\App\Http\Controllers\PatientProcedureController::class, 'uploadAttachment'])->name('attachments.store');
             Route::get('{procedure}/attachments/{attachment}/download', [\App\Http\Controllers\PatientProcedureController::class, 'downloadAttachment'])->name('attachments.download');
