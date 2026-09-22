@@ -1,0 +1,113 @@
+/**
+ * Encounter Procedures Stylesheet
+ * CoreHealth v2 — Doctor Encounter Procedure Booking & Management
+ */
+
+.service-tabs .nav-link {
+    border-radius: 0;
+    transition: all 0.3s ease;
+    font-weight: 500;
+}
+
+.service-tabs .nav-link:hover {
+    background-color: #f8f9fa;
+    transform: translateY(-2px);
+}
+
+.service-tabs .nav-link.active {
+    background-color: var(--hospital-primary, #007bff);
+    color: #ffffff !important;
+    border-color: var(--hospital-primary, #007bff);
+}
+
+.tab-content-fade {
+    animation: procFadeIn 0.35s ease-in-out;
+}
+
+@keyframes procFadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(8px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Priority Badges */
+.priority-badge {
+    padding: 0.25rem 0.5rem;
+    border-radius: 0.25rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    display: inline-block;
+}
+
+.priority-routine {
+    background-color: #d4edda;
+    color: #155724;
+}
+
+.priority-urgent {
+    background-color: #fff3cd;
+    color: #856404;
+}
+
+.priority-emergency {
+    background-color: #f8d7da;
+    color: #721c24;
+}
+
+/* Status Badges */
+.status-badge {
+    padding: 0.25rem 0.5rem;
+    border-radius: 0.25rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    display: inline-block;
+}
+
+.status-requested { background-color: #e2e3e5; color: #383d41; }
+.status-scheduled { background-color: #cce5ff; color: #004085; }
+.status-in_progress { background-color: #fff3cd; color: #856404; }
+.status-completed { background-color: #d4edda; color: #155724; }
+.status-cancelled { background-color: #f8d7da; color: #721c24; }
+
+/* Procedure Configurator Card */
+.proc-config-card {
+    background: #ffffff;
+    border: 1px solid #dee2e6;
+    border-left: 4px solid var(--hospital-primary, #007bff);
+    border-radius: 0.5rem;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    margin-bottom: 1.25rem;
+    transition: all 0.2s ease;
+}
+
+.proc-benchmark-box {
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    border: 1px solid #ced4da;
+    border-radius: 0.375rem;
+    padding: 0.75rem 1rem;
+}
+
+.proc-benchmark-box.is-hmo {
+    background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%);
+    border-color: #a5d6a7;
+}
+
+.proc-preset-btn {
+    font-size: 0.75rem;
+    padding: 0.2rem 0.5rem;
+    border-radius: 0.25rem;
+}
+
+.proc-search-dropdown {
+    position: absolute;
+    z-index: 1050;
+    width: calc(100% - 30px);
+    max-height: 280px;
+    overflow-y: auto;
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.12);
+}

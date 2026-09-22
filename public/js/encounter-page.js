@@ -2448,7 +2448,7 @@ if (typeof window.wbRoute !== 'function') {
         ClinicalOrdersKit.scanExistingRows('#selected-services', 'labs');
         ClinicalOrdersKit.scanExistingRows('#selected-imaging-services', 'imaging');
         ClinicalOrdersKit.scanExistingRows('#selected-products', 'meds');
-        ClinicalOrdersKit.scanExistingRows('#selected-procedures-table tbody', 'procedures');
+        ClinicalOrdersKit.scanExistingRows('#selected-procedures', 'procedures');
 
         // Phase 4d (Plan §6.4): Initialize treatment plans module
         ClinicalOrdersKit.initTreatmentPlans({

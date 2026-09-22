@@ -115,11 +115,13 @@ class ApplicationStatu extends Model implements Auditable
         'enable_ei_lab',
         'enable_ei_doctor',
         'show_prescription_dose_on_receipt',
+        'allow_doctor_set_procedure_price',
     ];
 
     protected $casts = [
         'llm_config' => 'array',
         'show_prescription_dose_on_receipt' => 'boolean',
+        'allow_doctor_set_procedure_price' => 'boolean',
     ];
 
     /**

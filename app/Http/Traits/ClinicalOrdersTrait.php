@@ -339,6 +339,14 @@ trait ClinicalOrdersTrait
             $procedure->procedure_status = Procedure::STATUS_SCHEDULED;
         }
 
+        if (!empty($data['scheduled_time'])) {
+            $procedure->scheduled_time = $data['scheduled_time'];
+        }
+
+        if (!empty($data['operating_room'])) {
+            $procedure->operating_room = $data['operating_room'];
+        }
+
         if ($service->procedureDefinition) {
             $procedure->procedure_definition_id = $service->procedureDefinition->id;
         }
@@ -350,21 +358,19 @@ trait ClinicalOrdersTrait
 
         $procedure->save();
 
-        // 2. Create billing entry (ProductOrServiceRequest)
-        $basePrice = optional($service->price)->sale_price ?? 0;
+        // 2. Check if doctor/surgeon pricing mode or deferred billing is active
+        $appStatus = \App\Models\ApplicationStatu::first();
+        $allowDoctorSetPrice = $appStatus && $appStatus->allow_doctor_set_procedure_price;
+        $deferBilling = ($data['defer_billing'] ?? false) || ($extra['defer_billing'] ?? false);
 
-        $coverage = null;
-        if (!($extra['is_bundle_item'] ?? false)) {
-            try {
-                $coverage = HmoHelper::applyHmoTariff($patientId, null, $service->id);
-            } catch (\Exception $e) {
-                Log::warning('HmoHelper::applyHmoTariff failed: ' . $e->getMessage());
-                $coverage = null;
-            }
+        if ($allowDoctorSetPrice && $deferBilling) {
+            // Defer procedure base fee billing: procedure record exists, bill will be generated later
+            return $procedure;
         }
 
         $patient = Patient::find($patientId);
 
+        // 3. Create billing entry (ProductOrServiceRequest)
         $billing = new ProductOrServiceRequest();
         $billing->type = 'service';
         $billing->service_id = $service->id;
@@ -384,22 +390,55 @@ trait ClinicalOrdersTrait
             $billing->coverage_mode = $extra['coverage_mode'] ?? 'none';
             $billing->parent_id = $extra['parent_id'] ?? null;
             $billing->is_bundle_item = true;
-        } elseif ($coverage && ($coverage['coverage_mode'] ?? '') === 'hmo') {
-            $billing->payable_amount = $coverage['payable_amount'];
-            $billing->claims_amount = $coverage['claims_amount'];
-            $billing->coverage_mode = $coverage['coverage_mode'];
-            $billing->hmo_id = $coverage['hmo_id'] ?? null;
-            $billing->validation_status = $coverage['validation_status'] ?? 'pending';
+        } elseif ($allowDoctorSetPrice && (isset($data['payable_amount']) || isset($data['claims_amount']) || isset($data['custom_price']))) {
+            // Doctor/Surgeon custom pricing provided at booking
+            $covMode = $data['coverage_mode'] ?? ($patient->hmo_id ? 'primary' : 'cash');
+            $billing->coverage_mode = $covMode;
+            $billing->payable_amount = isset($data['payable_amount']) ? (float)$data['payable_amount'] : (float)($data['custom_price'] ?? 0);
+            $billing->claims_amount = isset($data['claims_amount']) ? (float)$data['claims_amount'] : 0;
+            if ($covMode !== 'cash' && $patient->hmo_id) {
+                $billing->hmo_id = $patient->hmo_id;
+                $billing->validation_status = ($covMode === 'express') ? 'approved' : 'pending';
+                if (!empty($data['auth_code'])) {
+                    $billing->auth_code = $data['auth_code'];
+                }
+            } else {
+                $billing->coverage_mode = 'cash';
+                $billing->hmo_id = null;
+                $billing->validation_status = null;
+                $billing->claims_amount = 0;
+            }
         } else {
-            $billing->payable_amount = $basePrice;
-            $billing->claims_amount = 0;
-            $billing->coverage_mode = 'cash';
+            // Standard billing pipeline
+            $basePrice = optional($service->price)->sale_price ?? 0;
+            $coverage = null;
+
+            try {
+                $coverage = HmoHelper::applyHmoTariff($patientId, null, $service->id);
+            } catch (\Exception $e) {
+                Log::warning('HmoHelper::applyHmoTariff failed: ' . $e->getMessage());
+                $coverage = null;
+            }
+
+            if ($coverage) {
+                $billing->payable_amount = $coverage['payable_amount'];
+                $billing->claims_amount = $coverage['claims_amount'];
+                $billing->coverage_mode = $coverage['coverage_mode'] ?? 'primary';
+                $billing->hmo_id = $patient->hmo_id;
+                $billing->validation_status = $coverage['validation_status'] ?? (($billing->coverage_mode === 'express') ? 'approved' : 'pending');
+            } else {
+                $billing->payable_amount = $basePrice;
+                $billing->claims_amount = 0;
+                $billing->coverage_mode = 'cash';
+            }
         }
 
         $billing->save();
 
-        // 3. Link billing to procedure
+        // 4. Link billing to procedure
         $procedure->product_or_service_request_id = $billing->id;
+        $procedure->billed_by = Auth::id();
+        $procedure->billed_on = now();
         $procedure->save();
 
         return $procedure;

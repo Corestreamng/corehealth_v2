@@ -90,14 +90,21 @@ jobs:
         with:
           node-version: '18'
           cache: 'npm'
+      - name: Validate JavaScript Syntax (node --check)
+        run: find public/js -maxdepth 1 -name "*.js" -exec node --check {} +
       - run: npm ci
       - run: npm run production
 
   lint:
-    name: PHP Code Style (CS Fixer)
+    name: Code Style & Syntax (CS Fixer & JS Check)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+      - name: Validate JavaScript Syntax (node --check)
+        run: find public/js -maxdepth 1 -name "*.js" -exec node --check {} +
       - uses: shivammathur/setup-php@v2
         with:
           php-version: '8.3'

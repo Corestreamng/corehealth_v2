@@ -1,57 +1,12 @@
-{{-- Procedures - Tabbed History and New Request --}}
-<style>
-    .service-tabs .nav-link {
-        border-radius: 0;
-        transition: all 0.3s ease;
-        font-weight: 500;
-    }
-    .service-tabs .nav-link:hover {
-        background-color: #f8f9fa;
-        transform: translateY(-2px);
-    }
-    .service-tabs .nav-link.active {
-        background-color: {{ appsettings('hos_color', '#007bff') }};
-        color: white !important;
-        border-color: {{ appsettings('hos_color', '#007bff') }};
-    }
-    .tab-content-fade {
-        animation: fadeIn 0.4s ease-in;
-    }
-    @keyframes fadeIn {
-        from { opacity: 0; transform: translateY(10px); }
-        to { opacity: 1; transform: translateY(0); }
-    }
-    .priority-badge {
-        padding: 0.25rem 0.5rem;
-        border-radius: 0.25rem;
-        font-size: 0.75rem;
-        font-weight: 600;
-    }
-    .priority-routine { background-color: #d4edda; color: #155724; }
-    .priority-urgent { background-color: #fff3cd; color: #856404; }
-    .priority-emergency { background-color: #f8d7da; color: #721c24; }
-    .status-badge {
-        padding: 0.25rem 0.5rem;
-        border-radius: 0.25rem;
-        font-size: 0.75rem;
-        font-weight: 600;
-    }
-    .status-requested { background-color: #e2e3e5; color: #383d41; }
-    .status-scheduled { background-color: #cce5ff; color: #004085; }
-    .status-in_progress { background-color: #fff3cd; color: #856404; }
-    .status-completed { background-color: #d4edda; color: #155724; }
-    .status-cancelled { background-color: #f8d7da; color: #721c24; }
-</style>
-
+{{-- Procedures - Tabbed History and New Booking Request --}}
 <div class="card-modern mt-2 tp-context-borderable">
     <div class="card-body">
         {{-- Active Plan Context Bar (Phase 9) --}}
         @include('admin.partials.active_plan_context_bar')
 
-        {{-- Treatment Plans + Save as Template (Plan §6.4: buttons at top of all 4 tab areas) --}}
+        {{-- Treatment Plans + Save as Template --}}
         <div class="d-flex flex-wrap gap-2 mb-2 align-items-center">
             <div class="btn-group">
-
                 <button class="btn btn-sm btn-outline-success" onclick="ClinicalOrdersKit.openSaveTemplateModal()">
                     <i class="fa fa-save"></i> Save as Template
                 </button>
@@ -67,15 +22,20 @@
             </li>
             <li class="nav-item" role="presentation">
                 <button class="nav-link" id="proc-new-tab" data-bs-toggle="tab" data-bs-target="#proc-new" type="button" role="tab">
-                    <i class="fa fa-plus-circle"></i> Request Procedure
+                    <i class="fa fa-plus-circle"></i> Request / Book Procedure
                 </button>
             </li>
         </ul>
 
         <div class="tab-content">
-            {{-- History Tab --}}
+            {{-- 1. History Tab --}}
             <div class="tab-pane fade show active tab-content-fade" id="proc-history" role="tabpanel">
-                <h5 class="mb-3"><i class="fa fa-user-md"></i> Procedure History</h5>
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h5 class="mb-0"><i class="fa fa-user-md text-primary"></i> Patient Procedure History</h5>
+                    <button type="button" class="btn btn-sm btn-outline-secondary" onclick="window.EncounterProcedures.initProcedureHistoryTable()">
+                        <i class="fa fa-sync-alt"></i> Refresh History
+                    </button>
+                </div>
                 <div class="table-responsive">
                     <table class="table table-hover" style="width: 100%" id="procedure_history_list">
                         <thead class="table-light">
@@ -88,67 +48,181 @@
                 </div>
             </div>
 
-            {{-- New Procedure Request Tab --}}
+            {{-- 2. New Procedure Request / Booking Tab --}}
             <div class="tab-pane fade tab-content-fade" id="proc-new" role="tabpanel">
                 <div id="procedures_save_message" class="mb-2"></div>
-                <h5 class="mb-3"><i class="fa fa-plus-circle"></i> Request New Procedure</h5>
+                <h5 class="mb-3"><i class="fa fa-plus-circle text-success"></i> Book / Request Procedure</h5>
 
-                <div class="row">
-                    <div class="col-md-6">
-                        <div class="form-group mb-3">
-                            <label for="procedure_search"><i class="fa fa-search"></i> Search Procedure</label>
-                            <input type="text" class="form-control" id="procedure_search"
-                                placeholder="Search procedures..." autocomplete="off">
-                            <ul class="list-group" id="procedure_search_results" style="display: none; position: absolute; z-index: 1000; width: calc(100% - 30px);"></ul>
+                {{-- Search Bar --}}
+                <div class="form-group mb-3 position-relative">
+                    <label for="procedure_search" class="form-label fw-bold">
+                        <i class="fa fa-search text-muted"></i> Search Procedure Catalog
+                    </label>
+                    <input type="text" class="form-control form-control-lg" id="procedure_search"
+                        placeholder="Type procedure name, code, or indication..." autocomplete="off">
+                    <ul class="list-group proc-search-dropdown shadow" id="procedure_search_results" style="display: none;"></ul>
+                </div>
+
+                {{-- Procedure Booking Configurator Card --}}
+                <div id="proc_config_card" class="proc-config-card p-3 mb-4" style="display: none;">
+                    <div class="d-flex justify-content-between align-items-start border-bottom pb-2 mb-3">
+                        <div>
+                            <span class="badge bg-primary text-uppercase me-2" id="proc_config_category">Procedures</span>
+                            <span class="fs-5 fw-bold text-dark" id="proc_config_title">Selected Procedure</span>
+                            <small class="text-muted ms-2" id="proc_config_code"></small>
+                        </div>
+                        <button type="button" class="btn btn-sm btn-close" aria-label="Close" onclick="window.EncounterProcedures.cancelProcedureBookingConfig()"></button>
+                    </div>
+
+                    {{-- Live Tariff / Price Benchmark Guide Banner --}}
+                    <div class="proc-benchmark-box mb-3" id="proc_bench_box">
+                        <div class="d-flex flex-wrap justify-content-between align-items-center">
+                            <div>
+                                <small class="text-muted d-block"><i class="fa fa-tag"></i> Standard Catalog Price</small>
+                                <span class="fw-bold fs-6 text-dark" id="proc_bench_catalog">₦0.00</span>
+                            </div>
+                            <div id="proc_bench_hmo_box" style="display: none;">
+                                <small class="text-success fw-bold d-block"><i class="fa fa-shield-alt"></i> HMO Tariff Guidance (<span id="proc_bench_mode">MODE</span>)</small>
+                                <span><b>Patient:</b> <span id="proc_bench_payable">₦0.00</span> | <b>HMO Claims:</b> <span id="proc_bench_claims">₦0.00</span></span>
+                            </div>
+                            <div>
+                                <button type="button" class="btn btn-sm btn-outline-secondary proc-preset-btn" onclick="window.EncounterProcedures.setProcPreset('tariff')">
+                                    <i class="fa fa-sync-alt"></i> Reset to Benchmark
+                                </button>
+                            </div>
                         </div>
                     </div>
-                    <div class="col-md-3">
-                        <div class="form-group mb-3">
-                            <label for="procedure_priority"><i class="fa fa-exclamation-triangle"></i> Priority</label>
-                            <select class="form-control" id="procedure_priority">
+
+                    {{-- Pricing & Billing Section --}}
+                    @if(appsettings('allow_doctor_set_procedure_price'))
+                        <div class="card-modern bg-light p-3 mb-3 border">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <label class="fw-bold mb-0 text-dark">
+                                    <i class="fa fa-money-bill-wave text-success"></i> Procedure Billing & Doctor Pricing
+                                </label>
+                                <div class="form-check form-switch mb-0">
+                                    <input class="form-check-input" type="checkbox" id="defer_proc_billing" style="cursor: pointer;">
+                                    <label class="form-check-label fw-bold text-primary small" for="defer_proc_billing" style="cursor: pointer;">
+                                        <i class="fa fa-clock"></i> Defer Base Fee Billing (Bill later in Workbench)
+                                    </label>
+                                </div>
+                            </div>
+
+                            <div id="proc_deferred_alert" class="alert alert-warning py-2 mb-0 small" style="display: none;">
+                                <i class="fa fa-info-circle"></i> <b>Billing Deferred:</b> The procedure will be booked without creating an immediate bill. The surgeon or clinician can set pricing and bill from the Procedure Workbench later.
+                            </div>
+
+                            <div id="proc_billing_fields_container">
+                                <div class="row g-2 align-items-end mb-2">
+                                    <div class="col-md-3">
+                                        <label for="proc_coverage_mode" class="form-label small fw-bold">Coverage Mode</label>
+                                        <select class="form-select form-select-sm" id="proc_coverage_mode">
+                                            <option value="cash">Self-Pay (Cash / Direct)</option>
+                                            <option value="express">HMO: Express (Auto-Approved)</option>
+                                            <option value="primary">HMO: Primary (Pre-Auth Required)</option>
+                                            <option value="secondary">HMO: Secondary (Specialist Auth)</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <label for="proc_payable_amount" class="form-label small fw-bold">Patient Payable (₦)</label>
+                                        <input type="number" step="0.01" min="0" class="form-control form-control-sm" id="proc_payable_amount" placeholder="0.00">
+                                    </div>
+                                    <div class="col-md-3">
+                                        <label for="proc_claims_amount" class="form-label small fw-bold">HMO Claims (₦)</label>
+                                        <input type="number" step="0.01" min="0" class="form-control form-control-sm" id="proc_claims_amount" placeholder="0.00">
+                                    </div>
+                                    <div class="col-md-3" id="proc_auth_code_container" style="display: none;">
+                                        <label for="proc_auth_code" class="form-label small fw-bold">Pre-Auth Code (Optional)</label>
+                                        <input type="text" class="form-control form-control-sm" id="proc_auth_code" placeholder="AUTH-1234">
+                                    </div>
+                                </div>
+
+                                <div class="d-flex gap-1 align-items-center">
+                                    <small class="text-muted me-1">Quick Presets:</small>
+                                    <button type="button" class="btn btn-light btn-sm proc-preset-btn border" onclick="window.EncounterProcedures.setProcPreset('patient')">100% Patient</button>
+                                    <button type="button" class="btn btn-light btn-sm proc-preset-btn border" onclick="window.EncounterProcedures.setProcPreset('hmo')">100% HMO</button>
+                                    <button type="button" class="btn btn-light btn-sm proc-preset-btn border" onclick="window.EncounterProcedures.setProcPreset('split')">50/50 Co-Pay</button>
+                                </div>
+                            </div>
+                        </div>
+                    @else
+                        <input type="hidden" id="proc_coverage_mode" value="cash">
+                        <input type="hidden" id="proc_payable_amount" value="0">
+                        <input type="hidden" id="proc_claims_amount" value="0">
+                        <input type="hidden" id="defer_proc_billing" value="0">
+                    @endif
+
+                    {{-- Clinical Scheduling & Indication Inputs --}}
+                    <div class="row g-2 mb-3">
+                        <div class="col-md-3">
+                            <label for="proc_priority" class="form-label small fw-bold">
+                                <i class="fa fa-exclamation-triangle text-warning"></i> Priority
+                            </label>
+                            <select class="form-select form-select-sm" id="proc_priority">
                                 <option value="routine">Routine</option>
                                 <option value="urgent">Urgent</option>
                                 <option value="emergency">Emergency</option>
                             </select>
                         </div>
-                    </div>
-                    <div class="col-md-3">
-                        <div class="form-group mb-3">
-                            <label for="procedure_scheduled_date"><i class="fa fa-calendar"></i> Scheduled Date (Optional)</label>
-                            <input type="date" class="form-control" id="procedure_scheduled_date">
+                        <div class="col-md-3">
+                            <label for="proc_scheduled_date" class="form-label small fw-bold">
+                                <i class="fa fa-calendar-alt text-info"></i> Scheduled Date (Optional)
+                            </label>
+                            <input type="date" class="form-control form-control-sm" id="proc_scheduled_date">
+                        </div>
+                        <div class="col-md-3">
+                            <label for="proc_scheduled_time" class="form-label small fw-bold">
+                                <i class="fa fa-clock text-info"></i> Scheduled Time (Optional)
+                            </label>
+                            <input type="time" class="form-control form-control-sm" id="proc_scheduled_time">
+                        </div>
+                        <div class="col-md-3">
+                            <label for="proc_operating_room" class="form-label small fw-bold">
+                                <i class="fa fa-door-open text-secondary"></i> Theatre / Room (Optional)
+                            </label>
+                            <input type="text" class="form-control form-control-sm" id="proc_operating_room" placeholder="e.g. Theatre 1 / Minor OR">
                         </div>
                     </div>
+
+                    <div class="form-group mb-3">
+                        <label for="proc_pre_notes" class="form-label small fw-bold">
+                            <i class="fa fa-sticky-note text-info"></i> Pre-Procedure Clinical Notes & Indications
+                        </label>
+                        <textarea class="form-control form-control-sm" id="proc_pre_notes" rows="2"
+                            placeholder="Clinical indications, instructions for theatre/prep, patient warnings..."></textarea>
+                    </div>
+
+                    {{-- Configurator Action Buttons --}}
+                    <div class="d-flex justify-content-end gap-2">
+                        <button type="button" class="btn btn-secondary btn-sm" onclick="window.EncounterProcedures.cancelProcedureBookingConfig()">
+                            <i class="fa fa-times"></i> Cancel
+                        </button>
+                        <button type="button" class="btn btn-primary btn-sm" id="add_proc_btn" onclick="window.EncounterProcedures.addConfiguredProcedure()">
+                            <i class="fa fa-plus-circle"></i> Add Procedure to Encounter
+                        </button>
+                    </div>
                 </div>
 
-                <div class="form-group mb-3">
-                    <label for="procedure_pre_notes"><i class="fa fa-sticky-note"></i> Pre-Procedure Notes</label>
-                    <textarea class="form-control" id="procedure_pre_notes" rows="3" placeholder="Clinical notes, indications, patient preparation instructions..."></textarea>
-                </div>
-
-                {{-- Selected Procedures List --}}
+                {{-- Selected Procedures Table --}}
                 <div class="table-responsive">
-                    <table class="table table-sm table-bordered table-striped">
-                        <thead>
+                    <table class="table table-sm table-bordered table-striped align-middle">
+                        <thead class="table-light">
                             <tr>
                                 <th>Procedure</th>
-                                <th>Category</th>
-                                <th>Price</th>
-                                <th>HMO Status</th>
-                                <th>Priority</th>
-                                <th>Actions</th>
+                                <th>Category & Schedule</th>
+                                <th>Price & Billing Breakdown</th>
+                                <th style="width: 130px;">Actions</th>
                             </tr>
                         </thead>
                         <tbody id="selected-procedures"></tbody>
                     </table>
                 </div>
 
-                <div id="no_procedures_message" class="alert alert-info mt-3">
-                    <i class="fa fa-info-circle"></i> Search and select procedures above to add to this encounter.
+                <div id="no_procedures_message" class="alert alert-info mt-3 py-2 small">
+                    <i class="fa fa-info-circle"></i> Search and select procedures above to book and add to this encounter.
                 </div>
             </div>
         </div>
-
-
     </div>
 </div>
 
@@ -156,29 +230,18 @@
 <div class="modal fade" id="procedureDetailsModal" tabindex="-1" aria-labelledby="procedureDetailsModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
-            <div class="modal-header bg-primary text-white">
-                <h5 class="modal-title" id="procedureDetailsModalLabel"><i class="fa fa-user-md"></i> Procedure Details</h5>
-                <button type="button" data-bs-dismiss="modal" class="btn- btn-close btn-close-white" aria-label="Close"></button>
+            <div class="modal-header bg-primary text-white py-2">
+                <h5 class="modal-title fs-6" id="procedureDetailsModalLabel"><i class="fa fa-user-md me-1"></i> Procedure Details</h5>
+                <button type="button" data-bs-dismiss="modal" class="btn-close btn-close-white" aria-label="Close"></button>
             </div>
-            <div class="modal-body">
-                <div id="procedureDetailsContent">
-                    <div class="text-center py-4">
-                        <i class="fa fa-spinner fa-spin fa-2x"></i>
-                        <p class="mt-2">Loading procedure details...</p>
-                    </div>
+            <div class="modal-body" id="procedureDetailsContent">
+                <div class="text-center py-4">
+                    <i class="fa fa-spinner fa-spin fa-2x text-muted"></i>
+                    <p class="mt-2 text-muted">Loading procedure details...</p>
                 </div>
             </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                <button type="button" class="btn btn-info" onclick="openTeamModal(currentProcedureId)" id="manageTeamBtn">
-                    <i class="fa fa-users"></i> Manage Team
-                </button>
-                <button type="button" class="btn btn-warning" onclick="openNotesModal(currentProcedureId)" id="manageNotesBtn">
-                    <i class="fa fa-sticky-note"></i> Notes
-                </button>
-                <button type="button" class="btn btn-primary" id="printProcedureBtn">
-                    <i class="fa fa-print"></i> Print
-                </button>
+            <div class="modal-footer py-1">
+                <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Close</button>
             </div>
         </div>
     </div>
@@ -188,111 +251,74 @@
 <div class="modal fade" id="procedureTeamModal" tabindex="-1" aria-labelledby="procedureTeamModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
-            <div class="modal-header bg-info text-white">
-                <h5 class="modal-title" id="procedureTeamModalLabel"><i class="fa fa-users"></i> Procedure Team</h5>
-                <button type="button" data-bs-dismiss="modal" class="btn- btn-close btn-close-white" aria-label="Close"></button>
+            <div class="modal-header bg-info text-white py-2">
+                <h5 class="modal-title fs-6" id="procedureTeamModalLabel"><i class="fa fa-users me-1"></i> Surgical & Procedure Team</h5>
+                <button type="button" data-bs-dismiss="modal" class="btn-close btn-close-white" aria-label="Close"></button>
             </div>
             <div class="modal-body">
                 {{-- Add Team Member Form --}}
-                <div class="card-modern mb-3">
-                    <div class="card-header bg-light">
-                        <i class="fa fa-user-plus"></i> Add Team Member
-                    </div>
-                    <div class="card-body">
-                        <div class="row">
-                            <div class="col-12 mb-3">
-                                <label for="team_member_user" class="form-label">Staff Member</label>
-                                @php
-                                    // Get staff users using UserCategory (exclude is_admin=19 which is Patient)
-                                    // User categories: 19=Patient, 20=Receptionist, 21=Doctor, 22=Nurse, 23=Pharmacist, 24=Lab Tech, 25=Others
-                                    $staffUsers = \App\Models\User::with(['category', 'staff_profile.specialization'])
-                                        ->where('status', 1)
-                                        ->where('is_admin', '!=', 19) // Exclude patients
-                                        ->orderBy('surname')
-                                        ->orderBy('firstname')
-                                        ->get();
-                                @endphp
-                                <select class="form-select" name="team_member_user" id="team_member_user">
-                                    <option value="">-- Select Staff ({{ $staffUsers->count() }} available) --</option>
-                                    @foreach($staffUsers as $user)
-                                        @php
-                                            $categoryName = $user->category->name ?? 'Staff';
-                                            $specialty = $user->staff_profile->specialization->name ?? null;
-                                            $label = trim(($user->surname ?? '') . ' ' . ($user->firstname ?? '') . ' ' . ($user->othername ?? '')) . ' - ' . $categoryName;
-                                            if ($specialty) {
-                                                $label .= ' (' . $specialty . ')';
-                                            }
-                                        @endphp
-                                        <option value="{{ $user->id }}">{{ $label }}</option>
-                                    @endforeach
-                                </select>
-                            </div>
+                <div class="card-modern mb-3 p-3 border">
+                    <h6 class="fw-bold mb-2"><i class="fa fa-user-plus text-primary"></i> Assign Team Member</h6>
+                    <div class="row g-2 mb-2">
+                        <div class="col-md-6">
+                            @php
+                                $staffUsers = \App\Models\User::with(['category', 'staff_profile.specialization'])
+                                    ->where('status', 1)
+                                    ->where('is_admin', '!=', 19)
+                                    ->orderBy('surname')
+                                    ->orderBy('firstname')
+                                    ->get();
+                            @endphp
+                            <label for="team_member_user" class="form-label small fw-bold">Staff Member</label>
+                            <select class="form-select form-select-sm" id="team_member_user">
+                                <option value="">-- Select Staff ({{ $staffUsers->count() }}) --</option>
+                                @foreach($staffUsers as $user)
+                                    <option value="{{ $user->id }}">{{ trim(($user->surname ?? '') . ' ' . ($user->firstname ?? '') . ' ' . ($user->othername ?? '')) }} ({{ $user->category->name ?? 'Staff' }})</option>
+                                @endforeach
+                            </select>
                         </div>
-
-                        <div class="row">
-                            <div class="col-md-5 mb-3">
-                                <label for="team_member_role" class="form-label">Role</label>
-                                <select class="form-select" id="team_member_role" onchange="toggleCustomRole()">
-                                    @foreach(\App\Models\ProcedureTeamMember::ROLES as $key => $label)
-                                        <option value="{{ $key }}">{{ $label }}</option>
-                                    @endforeach
-                                </select>
-                            </div>
-
-                            <div class="col-md-5 mb-3" id="custom_role_container" style="display: none;">
-                                <label for="team_member_custom_role" class="form-label">Custom Role</label>
-                                <input type="text" class="form-control" id="team_member_custom_role" placeholder="Specify role...">
-                            </div>
-
-                            <div class="col-md-2 mb-3">
-                                <label class="form-label d-block user-select-none" style="opacity: 0;">Spacing</label>
-                                <div class="form-check mt-2">
-                                    <input class="form-check-input" type="checkbox" id="team_member_is_lead">
-                                    <label class="form-check-label ms-1" for="team_member_is_lead">
-                                        Lead
-                                    </label>
-                                </div>
-                            </div>
+                        <div class="col-md-4">
+                            <label for="team_member_role" class="form-label small fw-bold">Role</label>
+                            <select class="form-select form-select-sm" id="team_member_role">
+                                @foreach(\App\Models\ProcedureTeamMember::ROLES as $key => $label)
+                                    <option value="{{ $key }}">{{ $label }}</option>
+                                @endforeach
+                            </select>
                         </div>
-
-                        <div class="row">
-                            <div class="col-12 mb-3">
-                                <label for="team_member_notes" class="form-label">Notes (Optional)</label>
-                                <input type="text" class="form-control" id="team_member_notes" placeholder="Any additional notes...">
+                        <div class="col-md-2 d-flex align-items-end pb-1">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="team_member_is_lead">
+                                <label class="form-check-label small fw-bold" for="team_member_is_lead">Lead</label>
                             </div>
-                        </div>
-
-                        <div class="mt-2">
-                            <button type="button" class="btn btn-primary" onclick="addTeamMember()">
-                                <i class="fa fa-plus"></i> Add Member
-                            </button>
                         </div>
                     </div>
+                    <div class="row g-2 mb-2">
+                        <div class="col-12">
+                            <input type="text" class="form-control form-control-sm" id="team_member_notes" placeholder="Notes / specific duties...">
+                        </div>
+                    </div>
+                    <button type="button" class="btn btn-primary btn-sm" onclick="window.EncounterProcedures.addTeamMember()">
+                        <i class="fa fa-plus"></i> Add Member
+                    </button>
                 </div>
 
                 {{-- Team List --}}
-                <h6><i class="fa fa-list"></i> Current Team</h6>
                 <div class="table-responsive">
-                    <table class="table table-sm table-bordered" id="procedure_team_table">
+                    <table class="table table-sm table-bordered align-middle">
                         <thead class="table-light">
                             <tr>
                                 <th>Staff Member</th>
                                 <th>Role</th>
-                                <th>Lead</th>
                                 <th>Notes</th>
-                                <th>Actions</th>
+                                <th style="width: 50px;"></th>
                             </tr>
                         </thead>
-                        <tbody id="procedure_team_list">
-                            <tr>
-                                <td colspan="5" class="text-center text-muted">Loading team members...</td>
-                            </tr>
-                        </tbody>
+                        <tbody id="procedure_team_list"></tbody>
                     </table>
                 </div>
             </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            <div class="modal-footer py-1">
+                <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Close</button>
             </div>
         </div>
     </div>
@@ -300,964 +326,48 @@
 
 {{-- Procedure Notes Modal --}}
 <div class="modal fade" id="procedureNotesModal" tabindex="-1" aria-labelledby="procedureNotesModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-xl">
+    <div class="modal-dialog modal-lg">
         <div class="modal-content">
-            <div class="modal-header bg-warning">
-                <h5 class="modal-title" id="procedureNotesModalLabel"><i class="fa fa-sticky-note"></i> Procedure Notes</h5>
-                <button type="button" data-bs-dismiss="modal" class="btn- btn-close" aria-label="Close"></button>
+            <div class="modal-header bg-warning py-2">
+                <h5 class="modal-title fs-6" id="procedureNotesModalLabel"><i class="fa fa-sticky-note me-1"></i> Procedure Clinical Notes</h5>
+                <button type="button" data-bs-dismiss="modal" class="btn-close" aria-label="Close"></button>
             </div>
             <div class="modal-body">
                 {{-- Add Note Form --}}
-                <div class="card-modern mb-3">
-                    <div class="card-header bg-light">
-                        <i class="fa fa-plus"></i> Add Note
-                    </div>
-                    <div class="card-body">
-                        <div class="row">
-                            <div class="col-md-4">
-                                <div class="form-group">
-                                    <label for="note_type">Note Type</label>
-                                    <select class="form-control" id="note_type">
-                                        @foreach(\App\Models\ProcedureNote::NOTE_TYPES as $key => $label)
-                                            <option value="{{ $key }}">{{ $label }}</option>
-                                        @endforeach
-                                    </select>
-                                </div>
-                            </div>
-                            <div class="col-md-8">
-                                <div class="form-group">
-                                    <label for="note_title">Title</label>
-                                    <input type="text" class="form-control" id="note_title" placeholder="Note title...">
-                                </div>
-                            </div>
+                <div class="card-modern mb-3 p-3 border">
+                    <h6 class="fw-bold mb-2"><i class="fa fa-plus text-primary"></i> Add Clinical Note</h6>
+                    <div class="row g-2 mb-2">
+                        <div class="col-md-4">
+                            <label for="proc_note_type" class="form-label small fw-bold">Note Type</label>
+                            <select class="form-select form-select-sm" id="proc_note_type">
+                                @foreach(\App\Models\ProcedureNote::NOTE_TYPES as $key => $label)
+                                    <option value="{{ $key }}">{{ $label }}</option>
+                                @endforeach
+                            </select>
                         </div>
-                        <div class="form-group mt-3">
-                            <label for="note_content">Content</label>
-                            <textarea class="form-control ckeditor-notes" id="note_content" rows="6"></textarea>
-                        </div>
-                        <div class="mt-3">
-                            <button type="button" class="btn btn-primary" onclick="addProcedureNote()">
-                                <i class="fa fa-plus"></i> Add Note
-                            </button>
+                        <div class="col-md-8">
+                            <label for="proc_note_title" class="form-label small fw-bold">Title</label>
+                            <input type="text" class="form-control form-control-sm" id="proc_note_title" placeholder="e.g. Operative findings, prep note...">
                         </div>
                     </div>
+                    <div class="mb-2">
+                        <textarea class="form-control form-control-sm" id="proc_note_content" rows="3" placeholder="Enter detailed note..."></textarea>
+                    </div>
+                    <button type="button" class="btn btn-primary btn-sm" onclick="window.EncounterProcedures.addProcedureNote()">
+                        <i class="fa fa-plus"></i> Save Note
+                    </button>
                 </div>
 
                 {{-- Notes List --}}
-                <div class="d-flex justify-content-between align-items-center mb-3 mt-4">
-                    <h6 class="m-0"><i class="fa fa-list"></i> Procedure Notes</h6>
-                </div>
                 <div class="table-responsive">
-                    <table class="table table-borderless">
-                        <tbody id="procedure_notes_list">
-                            <tr>
-                                <td class="text-center text-muted py-3">Loading notes...</td>
-                            </tr>
-                        </tbody>
+                    <table class="table table-sm table-borderless">
+                        <tbody id="procedure_notes_list"></tbody>
                     </table>
                 </div>
             </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            <div class="modal-footer py-1">
+                <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Close</button>
             </div>
         </div>
     </div>
 </div>
-
-@push('scripts')
-<script>
-// Procedure Module JavaScript
-// NOTE: selectedProcedures array REMOVED — procedures auto-save via ClinicalOrdersKit.addItem (Phase 2a)
-let procedureCategoryId = {{ appsettings('procedure_category_id', 0) }};
-let currentProcedureId = null;
-
-$(document).ready(function() {
-    // Initialize procedure history DataTable
-    initProcedureHistoryTable();
-
-    // Setup search functionality
-    setupProcedureSearch();
-});
-
-function initProcedureHistoryTable() {
-    if ($.fn.DataTable.isDataTable('#procedure_history_list')) {
-        $('#procedure_history_list').DataTable().destroy();
-    }
-
-    $('#procedure_history_list').DataTable({
-        processing: true,
-        serverSide: true,
-        ajax: {
-            url: '{{ route("procedureHistoryList", ["patient_id" => $encounter->patient_id ?? 0]) }}',
-            type: 'GET',
-            error: function(xhr, error, thrown) {
-                console.log('Error loading procedure history:', error);
-            }
-        },
-        columns: [
-            { data: 'info', name: 'info', orderable: false, searchable: false }
-        ],
-        order: [],
-        language: {
-            emptyTable: "No procedures found for this patient"
-        }
-    });
-}
-
-function setupProcedureSearch() {
-    let searchTimeout;
-
-    $('#procedure_search').on('keyup', function() {
-        const query = $(this).val();
-
-        clearTimeout(searchTimeout);
-
-        if (query.length < 2) {
-            $('#procedure_search_results').hide();
-            return;
-        }
-
-        searchTimeout = setTimeout(function() {
-            searchProcedures(query);
-        }, 300);
-    });
-
-    // Hide results when clicking outside
-    $(document).on('click', function(e) {
-        if (!$(e.target).closest('#procedure_search, #procedure_search_results').length) {
-            $('#procedure_search_results').hide();
-        }
-    });
-}
-
-function searchProcedures(query) {
-    $.ajax({
-        url: '{{ route("live-search-services") }}',
-        type: 'GET',
-        data: {
-            term: query,
-            category_id: procedureCategoryId,
-            patient_id: {{ $encounter->patient_id ?? 0 }}
-        },
-        success: function(data) {
-            const $results = $('#procedure_search_results');
-            $results.empty();
-
-            if (data.length === 0) {
-                $results.append('<li class="list-group-item text-muted">No procedures found</li>');
-            } else {
-                data.forEach(function(item) {
-                    // Check if already selected (Phase 2c — duplicate filtering via shared tracker)
-                    const isSelected = ClinicalOrdersKit.isAlreadyAdded('procedures', item.id);
-
-                    const category = (item.category && item.category.category_name) ? item.category.category_name : 'N/A';
-                    const name = item.service_name || 'Unknown';
-                    const code = item.service_code || '';
-                    const price = item.price && item.price.sale_price !== undefined ? item.price.sale_price : 0;
-                    const payable = item.payable_amount !== undefined && item.payable_amount !== null ? item.payable_amount : price;
-                    const claims = item.claims_amount !== undefined && item.claims_amount !== null ? item.claims_amount : 0;
-                    const mode = item.coverage_mode || null;
-
-                    const onClick = isSelected ? '' : `addProcedure(${JSON.stringify(item).replace(/"/g, '&quot;')})`;
-                    const mk = ClinicalOrdersKit.renderSearchResultItem({
-                        id: item.id,
-                        category: category,
-                        name: name,
-                        code: code,
-                        price: price,
-                        payable: payable,
-                        claims: claims,
-                        mode: mode,
-                        alreadyAdded: isSelected,
-                        alreadyLabel: 'Already Added',
-                        onClick: onClick
-                    });
-                    $results.append(mk);
-                });
-            }
-
-            ClinicalOrdersKit.appendFreeFormLink($results, query, 'Add Free-Form Procedure', 'Enter the procedure name:', '#procedure_search', function(val) {
-                addProcedure({ id: 'FF_' + val, service_name: val + ' [Free-form]', is_free_form: true });
-            });
-
-            $results.show();
-        },
-        error: function(xhr) {
-            console.error('Error searching procedures:', xhr);
-            $('#procedure_search_results').html('<li class="list-group-item text-danger">Error searching procedures</li>').show();
-        }
-    });
-}
-
-function addProcedure(procedure) {
-    // Phase 2a (Plan §4.1): Auto-save procedure via ClinicalOrdersKit.addItem
-    const procId = procedure.id;
-    if (ClinicalOrdersKit.isAlreadyAdded('procedures', procId)) {
-        toastr.warning('This procedure is already added');
-        return;
-    }
-
-    const priority = $('#procedure_priority').val();
-    const scheduledDate = $('#procedure_scheduled_date').val();
-    const preNotes = $('#procedure_pre_notes').val();
-    const encounterId = {{ $encounter->id ?? 0 }};
-    const csrfToken = $('meta[name="csrf-token"]').attr('content');
-
-    const isFreeForm = String(procId).startsWith('FF_');
-    const coverageMode = procedure.coverage_mode || null;
-    const payable = procedure.payable_amount ?? (procedure.price?.sale_price ?? 0);
-    const claims = procedure.claims_amount ?? 0;
-    const basePrice = procedure.price?.sale_price ?? 0;
-
-    const coverageDisplay = isFreeForm ? '<span class="badge bg-secondary">Free-form</span>' : (coverageMode === 'hmo' ?
-        '<span class="badge bg-success"><i class="fa fa-shield-alt"></i> HMO Covered</span>' :
-        '<span class="badge bg-secondary"><i class="fa fa-wallet"></i> Self-Pay</span>');
-    const priceDisplay = isFreeForm ? '<span class="text-muted">N/A</span>' : (coverageMode === 'hmo' ? `₦${formatNumber(claims)}` : `₦${formatNumber(payable)}`);
-    const priorityClass = `priority-${priority}`;
-    const priorityLabel = priority.charAt(0).toUpperCase() + priority.slice(1);
-    const categoryName = isFreeForm ? 'Free-form Request' : (procedure.category ? procedure.category.category_name : 'Procedures');
-
-    ClinicalOrdersKit.addItem({
-        url: `{{ url('/encounters/${encounterId}/add-procedure') }}`,
-        payload: {
-            service_id: procId,
-            priority: priority,
-            scheduled_date: scheduledDate,
-            pre_notes: preNotes
-        },
-        csrfToken: csrfToken,
-        tableSelector: '#selected-procedures',
-        type: 'procedures',
-        referenceId: procId,
-        buildRowHtml: function(resp) {
-            return `<tr data-record-id="${resp.id}" data-record-type="procedure" data-service-id="${procId}">
-                <td>
-                    ${isFreeForm ? `<h6 class="mb-0"><span class="badge bg-info text-dark">${procedure.service_name}</span></h6>` : `<strong><span class="badge bg-success">${procedure.service_name || 'N/A'}</span></strong>`}
-                    ${!isFreeForm && procedure.service_code ? `<br><small class="text-muted">${procedure.service_code}</small>` : ''}
-                    ${preNotes ? `<br><small class="text-info"><i class="fa fa-sticky-note"></i> ${preNotes.substring(0, 50)}...</small>` : ''}
-                </td>
-                <td><small>${categoryName}</small></td>
-                <td>${priceDisplay}</td>
-                <td>${coverageDisplay}</td>
-                <td>
-                    <span class="priority-badge ${priorityClass}">${priorityLabel}</span>
-                    ${scheduledDate ? `<br><small class="text-muted"><i class="fa fa-calendar"></i> ${scheduledDate}</small>` : ''}
-                </td>
-                <td>
-                    <button type="button" class="btn btn-sm btn-outline-danger" onclick="removeProcedure(this, ${procId})">
-                        <i class="fa fa-times"></i>
-                    </button>
-                </td>
-            </tr>`;
-        },
-        onSuccess: function() {
-            // Reload procedure history DataTable
-            if ($('#procedure_history_list').length) {
-                $('#procedure_history_list').DataTable().ajax.reload();
-            }
-        }
-    });
-
-    // Clear search
-    $('#procedure_search').val('');
-    $('#procedure_search_results').hide();
-    // Hide no procedures message
-    $('#no_procedures_message').hide();
-}
-
-function removeProcedure(btn, serviceId) {
-    // Phase 2a (Plan §4.1): Auto-delete procedure via ClinicalOrdersKit.removeItem
-    var $tr = $(btn).closest('tr');
-    var recordId = $tr.data('record-id');
-    var encounterId = {{ $encounter->id ?? 0 }};
-
-    if (recordId) {
-        ClinicalOrdersKit.removeItem({
-            url: '{{ url('/encounters') }}/' + encounterId + '/procedures/' + recordId,
-            csrfToken: $('meta[name="csrf-token"]').attr('content'),
-            rowSelector: $tr,
-            type: 'procedures',
-            referenceId: serviceId ? parseInt(serviceId) : null,
-            tableSelector: '#selected-procedures',
-            onSuccess: function() {
-                if ($('#selected-procedures tr[data-record-id]').length === 0) {
-                    $('#no_procedures_message').show();
-                }
-                if ($('#procedure_history_list').length) {
-                    $('#procedure_history_list').DataTable().ajax.reload();
-                }
-            }
-        });
-    } else {
-        // Fallback for non-auto-saved rows
-        $tr.remove();
-    }
-}
-
-function showProcedureMessage(type, message) {
-    $('#procedures_save_message').html(`
-        <div class="alert alert-${type} alert-dismissible fade show" role="alert">
-            ${message}
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-        </div>
-    `);
-    document.getElementById('procedures_save_message').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-
-    // Auto-hide after 5 seconds
-    setTimeout(function() {
-        $('#procedures_save_message .alert').alert('close');
-    }, 5000);
-}
-
-function viewProcedureDetails(procedureId) {
-    $('#procedureDetailsContent').html(`
-        <div class="text-center py-4">
-            <i class="fa fa-spinner fa-spin fa-2x"></i>
-            <p class="mt-2">Loading procedure details...</p>
-        </div>
-    `);
-
-    $('#procedureDetailsModal').modal('show');
-
-    $.ajax({
-        url: `{{ url('/procedures/${procedureId}') }}`,
-        type: 'GET',
-        success: function(response) {
-            renderProcedureDetails(response);
-        },
-        error: function(xhr) {
-            $('#procedureDetailsContent').html(`
-                <div class="alert alert-danger">
-                    <i class="fa fa-exclamation-triangle"></i> Error loading procedure details
-                </div>
-            `);
-        }
-    });
-}
-
-function renderProcedureDetails(procedure) {
-    const statusClass = `status-${procedure.procedure_status}`;
-    const priorityClass = `priority-${procedure.priority}`;
-
-    const html = `
-        <div class="row">
-            <div class="col-md-6">
-                <h6><i class="fa fa-info-circle"></i> Procedure Information</h6>
-                <table class="table table-sm">
-                    <tr><th>Procedure:</th><td>${procedure.service?.service_name || 'N/A'}</td></tr>
-                    <tr><th>Code:</th><td>${procedure.service?.service_code || 'N/A'}</td></tr>
-                    <tr><th>Status:</th><td><span class="status-badge ${statusClass}">${procedure.procedure_status}</span></td></tr>
-                    <tr><th>Priority:</th><td><span class="priority-badge ${priorityClass}">${procedure.priority}</span></td></tr>
-                    <tr><th>Requested:</th><td>${procedure.requested_on || 'N/A'}</td></tr>
-                    <tr><th>Scheduled:</th><td>${procedure.scheduled_date || 'Not scheduled'}</td></tr>
-                </table>
-            </div>
-            <div class="col-md-6">
-                <h6><i class="fa fa-user-md"></i> Clinical Information</h6>
-                <table class="table table-sm">
-                    <tr><th>Requested By:</th><td>${procedure.requested_by_user?.name || 'N/A'}</td></tr>
-                    <tr><th>Operating Room:</th><td>${procedure.operating_room || 'TBD'}</td></tr>
-                    <tr><th>Outcome:</th><td>${procedure.outcome || 'Pending'}</td></tr>
-                </table>
-            </div>
-        </div>
-        ${procedure.pre_notes ? `
-        <div class="mt-3">
-            <h6><i class="fa fa-sticky-note"></i> Pre-Procedure Notes</h6>
-            <div class="p-2 bg-light rounded">${procedure.pre_notes}</div>
-        </div>
-        ` : ''}
-        ${procedure.post_notes ? `
-        <div class="mt-3">
-            <h6><i class="fa fa-notes-medical"></i> Post-Procedure Notes</h6>
-            <div class="p-2 bg-light rounded">${procedure.post_notes}</div>
-        </div>
-        ` : ''}
-        ${procedure.outcome_notes ? `
-        <div class="mt-3">
-            <h6><i class="fa fa-clipboard-check"></i> Outcome Notes</h6>
-            <div class="p-2 bg-light rounded">${procedure.outcome_notes}</div>
-        </div>
-        ` : ''}
-    `;
-
-    $('#procedureDetailsContent').html(html);
-    currentProcedureId = procedure.id;
-}
-
-function deleteProcedureRequest(procedureId, encounterId, procedureName) {
-    currentDeleteItem = {
-        type: 'procedure',
-        id: procedureId,
-        encounterId: encounterId,
-        name: procedureName
-    };
-
-    $('#deleteItemInfo').html(`
-        <strong>Procedure:</strong> ${procedureName}<br>
-        <strong>Type:</strong> Procedure Request
-    `);
-
-    $('#deleteConfirmModal').modal('show');
-}
-
-function formatNumber(num) {
-    return new Intl.NumberFormat('en-NG').format(num || 0);
-}
-
-// ========================================
-// TEAM MANAGEMENT
-// ========================================
-
-// Wrapper function for datatable action button
-function manageProcedureTeam(procedureId) {
-    openTeamModal(procedureId);
-}
-
-// Wrapper function for datatable action button
-function manageProcedureNotes(procedureId) {
-    openNotesModal(procedureId);
-}
-
-function toggleCustomRole() {
-    const role = $('#team_member_role').val();
-    if (role === 'other') {
-        $('#custom_role_container').show();
-        $('#team_member_custom_role').prop('required', true);
-    } else {
-        $('#custom_role_container').hide();
-        $('#team_member_custom_role').prop('required', false).val('');
-    }
-}
-
-function openTeamModal(procedureId) {
-    if (!procedureId) {
-        alert('No procedure selected');
-        return;
-    }
-
-    currentProcedureId = procedureId;
-    $('#procedure_team_list').html('<tr><td colspan="5" class="text-center"><i class="fa fa-spinner fa-spin"></i> Loading...</td></tr>');
-
-    // Reset selection
-    $('#team_member_user').val('');
-
-    $('#procedureTeamModal').modal('show');
-
-    loadTeamMembers(procedureId);
-}
-
-function loadTeamMembers(procedureId) {
-    console.log('Loading team members for procedure:', procedureId);
-    $.ajax({
-        url: `{{ url('/procedures/${procedureId}/team') }}`,
-        type: 'GET',
-        success: function(response) {
-            console.log('Team response:', response);
-            if (response.success) {
-                renderTeamList(response.team);
-            } else {
-                $('#procedure_team_list').html('<tr><td colspan="5" class="text-center text-danger">Error loading team</td></tr>');
-            }
-        },
-        error: function(xhr) {
-            console.error('Error loading team:', xhr.status, xhr.responseText);
-            $('#procedure_team_list').html('<tr><td colspan="5" class="text-center text-danger">Error loading team: ' + xhr.status + '</td></tr>');
-        }
-    });
-}
-
-function renderTeamList(team) {
-    if (!team || team.length === 0) {
-        $('#procedure_team_list').html('<tr><td colspan="5" class="text-center text-muted">No team members assigned yet</td></tr>');
-        return;
-    }
-
-    let html = '';
-    team.forEach(function(member) {
-        const roleDisplay = member.role === 'other' && member.custom_role ? member.custom_role : getRoleLabel(member.role);
-        const leadBadge = member.is_lead ? '<span class="badge bg-success">Lead</span>' : '';
-
-        html += `
-            <tr>
-                <td>${member.user?.name || 'Unknown'}</td>
-                <td>${roleDisplay}</td>
-                <td>${leadBadge}</td>
-                <td><small>${member.notes || '-'}</small></td>
-                <td>
-                    <button class="btn btn-sm btn-outline-danger" onclick="removeTeamMember(${member.id})" title="Remove">
-                        <i class="fa fa-times"></i>
-                    </button>
-                </td>
-            </tr>
-        `;
-    });
-
-    $('#procedure_team_list').html(html);
-}
-
-function getRoleLabel(role) {
-    const roles = {
-        'chief_surgeon': 'Chief Surgeon',
-        'assistant_surgeon': 'Assistant Surgeon',
-        'anesthesiologist': 'Anesthesiologist',
-        'nurse_anesthetist': 'Nurse Anesthetist',
-        'scrub_nurse': 'Scrub Nurse',
-        'circulating_nurse': 'Circulating Nurse',
-        'surgical_first_assistant': 'Surgical First Assistant',
-        'perfusionist': 'Perfusionist',
-        'radiologist': 'Radiologist',
-        'pathologist': 'Pathologist',
-        'other': 'Other'
-    };
-    return roles[role] || role;
-}
-
-function addTeamMember() {
-    const userId = $('#team_member_user').val();
-    const role = $('#team_member_role').val();
-    const customRole = $('#team_member_custom_role').val();
-    const isLead = $('#team_member_is_lead').is(':checked');
-    const notes = $('#team_member_notes').val();
-
-    if (!currentProcedureId) {
-        alert('No procedure selected. Please try again.');
-        return;
-    }
-
-    if (!userId) {
-        alert('Please select a staff member');
-        return;
-    }
-
-    if (role === 'other' && !customRole) {
-        alert('Please specify the custom role');
-        return;
-    }
-
-    $.ajax({
-        url: `{{ url('/procedures/${currentProcedureId}/team') }}`,
-        type: 'POST',
-        headers: {
-            'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
-        },
-        data: {
-            user_id: userId,
-            role: role,
-            custom_role: customRole,
-            is_lead: isLead ? '1' : '0',
-            notes: notes
-        },
-        success: function(response) {
-            if (response.success) {
-                // Clear form
-                $('#team_member_user').val('').trigger('change');
-                $('#team_member_role').val('chief_surgeon');
-                $('#team_member_custom_role').val('');
-                $('#team_member_is_lead').prop('checked', false);
-                $('#team_member_notes').val('');
-                toggleCustomRole();
-
-                // Reload team list
-                loadTeamMembers(currentProcedureId);
-            } else {
-                alert(response.message || 'Failed to add team member');
-            }
-        },
-        error: function(xhr) {
-            console.error('Error adding team member:', xhr.status, xhr.responseText);
-            alert(xhr.responseJSON?.message || 'Error adding team member: ' + xhr.status);
-        }
-    });
-}
-
-function removeTeamMember(memberId) {
-    if (!confirm('Are you sure you want to remove this team member?')) {
-        return;
-    }
-
-    $.ajax({
-        url: `{{ url('/procedures/${currentProcedureId}/team/${memberId}') }}`,
-        type: 'DELETE',
-        headers: {
-            'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
-        },
-        success: function(response) {
-            if (response.success) {
-                loadTeamMembers(currentProcedureId);
-            } else {
-                alert(response.message || 'Failed to remove team member');
-            }
-        },
-        error: function(xhr) {
-            alert(xhr.responseJSON?.message || 'Error removing team member');
-        }
-    });
-}
-
-// ========================================
-// NOTES MANAGEMENT
-// ========================================
-
-let noteEditorInstance = null;
-
-function openNotesModal(procedureId) {
-    if (!procedureId) {
-        alert('No procedure selected');
-        return;
-    }
-
-    currentProcedureId = procedureId;
-    $('#procedure_notes_list').html('<div class="text-center py-3"><i class="fa fa-spinner fa-spin"></i> Loading...</div>');
-
-    $('#procedureNotesModal').modal('show');
-
-    // Initialize CKEditor after modal is shown
-    setTimeout(function() {
-        initializeNotesEditor();
-    }, 300);
-
-    loadProcedureNotes(procedureId);
-}
-
-function initializeNotesEditor() {
-    // Destroy existing instance if any
-    if (noteEditorInstance) {
-        noteEditorInstance.destroy().catch(err => console.log('Error destroying editor:', err));
-        noteEditorInstance = null;
-    }
-
-    const editorElement = document.querySelector('#note_content');
-    if (!editorElement) return;
-
-    if (typeof ClassicEditor !== 'undefined') {
-        ClassicEditor
-            .create(editorElement, {
-                toolbar: {
-                    items: [
-                        'undo', 'redo',
-                        '|', 'heading',
-                        '|', 'bold', 'italic', 'underline',
-                        '|', 'bulletedList', 'numberedList',
-                        '|', 'link', 'insertTable',
-                        '|', 'outdent', 'indent'
-                    ]
-                }
-            })
-            .then(editor => {
-                noteEditorInstance = editor;
-            })
-            .catch(error => {
-                console.error('Error initializing CKEditor:', error);
-            });
-    }
-}
-
-function loadProcedureNotes(procedureId) {
-    $.ajax({
-        url: `{{ url('/procedures/${procedureId}/notes') }}`,
-        type: 'GET',
-        success: function(response) {
-            if (response.success) {
-                renderNotesList(response.notes);
-            } else {
-                $('#procedure_notes_list').html('<div class="text-center text-danger py-3">Error loading notes</div>');
-            }
-        },
-        error: function(xhr) {
-            $('#procedure_notes_list').html('<div class="text-center text-danger py-3">Error loading notes</div>');
-        }
-    });
-}
-
-function renderNotesList(notes) {
-    if (!notes || notes.length === 0) {
-        $('#procedure_notes_list').html('<div class="text-center text-muted py-3">No notes added yet</div>');
-        return;
-    }
-
-    const noteTypes = {
-        'pre_op': { label: 'Pre-Operative', color: 'info' },
-        'intra_op': { label: 'Intra-Operative', color: 'warning' },
-        'post_op': { label: 'Post-Operative', color: 'success' },
-        'anesthesia': { label: 'Anesthesia', color: 'primary' },
-        'nursing': { label: 'Nursing', color: 'secondary' }
-    };
-
-    let html = '';
-
-    notes.forEach(function(note) {
-        const typeInfo = noteTypes[note.note_type] || { label: note.note_type, color: 'secondary' };
-        const createdDate = new Date(note.created_at).toLocaleString();
-        // Use created_by relation (which overwrites created_by id in JSON if snake_case) or fallbacks
-        const userObj = note.created_by || note.created_by_user;
-        const createdBy = userObj ? (userObj.name || userObj.surname + ' ' + userObj.firstname) : 'Unknown';
-
-        html += `
-            <tr>
-                <td class="p-0 mb-3 d-block">
-                    <div class="card-modern border shadow-sm">
-                        <div class="card-header bg-white d-flex justify-content-between align-items-center py-2">
-                            <div class="d-flex align-items-center">
-                                <span class="badge bg-${typeInfo.color} me-2">${typeInfo.label}</span>
-                                <span class="fw-bold text-dark">${note.title || 'Untitled'}</span>
-                            </div>
-                            <small class="text-muted d-flex align-items-center">
-                                <i class="fa fa-user me-1"></i> ${createdBy}
-                                <span class="mx-2">|</span>
-                                <i class="fa fa-clock-o me-1"></i> ${createdDate}
-                            </small>
-                        </div>
-                        <div class="card-body py-2 bg-light bg-opacity-10">
-                            <div class="note-content">${note.content}</div>
-                        </div>
-                        <div class="card-footer bg-white border-top-0 py-1 text-end">
-                            <button class="btn btn-sm btn-link text-danger p-0 text-decoration-none" onclick="deleteProcedureNote(${note.id})">
-                                <i class="fa fa-trash"></i> Delete
-                            </button>
-                        </div>
-                    </div>
-                </td>
-            </tr>
-        `;
-    });
-
-    $('#procedure_notes_list').html(html);
-}
-
-function addProcedureNote() {
-    const noteType = $('#note_type').val();
-    const title = $('#note_title').val();
-
-    let content = '';
-    if (noteEditorInstance) {
-        content = noteEditorInstance.getData();
-    } else {
-        content = $('#note_content').val();
-    }
-
-    if (!title) {
-        alert('Please enter a note title');
-        return;
-    }
-
-    if (!content || content.trim() === '') {
-        alert('Please enter note content');
-        return;
-    }
-
-    $.ajax({
-        url: `{{ url('/procedures/${currentProcedureId}/notes') }}`,
-        type: 'POST',
-        headers: {
-            'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
-        },
-        data: {
-            note_type: noteType,
-            title: title,
-            content: content
-        },
-        success: function(response) {
-            if (response.success) {
-                // Clear form
-                $('#note_type').val('pre_op');
-                $('#note_title').val('');
-                if (noteEditorInstance) {
-                    noteEditorInstance.setData('');
-                } else {
-                    $('#note_content').val('');
-                }
-
-                // Reload notes list
-                loadProcedureNotes(currentProcedureId);
-            } else {
-                alert(response.message || 'Failed to add note');
-            }
-        },
-        error: function(xhr) {
-            alert(xhr.responseJSON?.message || 'Error adding note');
-        }
-    });
-}
-
-function deleteProcedureNote(noteId) {
-    if (!confirm('Are you sure you want to delete this note?')) {
-        return;
-    }
-
-    $.ajax({
-        url: `{{ url('/procedures/${currentProcedureId}/notes/${noteId}') }}`,
-        type: 'DELETE',
-        headers: {
-            'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
-        },
-        success: function(response) {
-            if (response.success) {
-                loadProcedureNotes(currentProcedureId);
-            } else {
-                alert(response.message || 'Failed to delete note');
-            }
-        },
-        error: function(xhr) {
-            alert(xhr.responseJSON?.message || 'Error deleting note');
-        }
-    });
-}
-
-// Cleanup editors when modals are closed
-$('#procedureNotesModal').on('hidden.bs.modal', function() {
-    if (noteEditorInstance) {
-        noteEditorInstance.destroy().catch(err => {});
-        noteEditorInstance = null;
-    }
-});
-
-// ========================================
-// PROCEDURE CANCELLATION
-// ========================================
-
-function cancelProcedure(procedureId, procedureName) {
-    currentProcedureId = procedureId;
-
-    // Show confirmation with reason input - improved UX
-    const html = `
-        <div class="text-start">
-            <div class="alert alert-danger mb-3">
-                <i class="fa fa-exclamation-triangle fa-lg me-2"></i>
-                <strong>You are about to cancel:</strong><br>
-                <span class="fs-5">${procedureName}</span>
-            </div>
-            <div class="form-group mb-3">
-                <label for="cancellation_reason" class="form-label fw-bold">
-                    <i class="fa fa-comment-dots me-1"></i> Reason for Cancellation <span class="text-danger">*</span>
-                </label>
-                <textarea class="form-control" id="cancellation_reason" rows="3" required
-                    placeholder="Please provide a detailed reason for cancellation..."
-                    style="border: 2px solid #dee2e6;"></textarea>
-                <small class="text-muted">This will be recorded in the patient's medical record.</small>
-            </div>
-            <div class="form-check form-switch mb-2">
-                <input type="checkbox" class="form-check-input" id="process_refund" checked style="cursor: pointer;">
-                <label class="form-check-label" for="process_refund" style="cursor: pointer;">
-                    <i class="fa fa-money-bill-wave me-1 text-success"></i> Process refund (if payment was made)
-                </label>
-            </div>
-        </div>
-    `;
-
-    if (typeof Swal !== 'undefined') {
-        Swal.fire({
-            title: 'Cancel Procedure?',
-            html: html,
-            icon: 'warning',
-            showCancelButton: true,
-            confirmButtonColor: '#dc3545',
-            cancelButtonColor: '#6c757d',
-            confirmButtonText: '<i class="fa fa-times"></i> Cancel Procedure',
-            cancelButtonText: 'Keep Procedure',
-            preConfirm: () => {
-                const reason = document.getElementById('cancellation_reason').value;
-                if (!reason || reason.trim() === '') {
-                    Swal.showValidationMessage('Please provide a cancellation reason');
-                    return false;
-                }
-                return {
-                    reason: reason,
-                    refund: document.getElementById('process_refund').checked
-                };
-            }
-        }).then((result) => {
-            if (result.isConfirmed) {
-                executeCancelProcedure(procedureId, result.value.reason, result.value.refund);
-            }
-        });
-    } else {
-        // Fallback for no SweetAlert
-        if (confirm(`Cancel procedure: ${procedureName}?\n\nNote: A refund may be processed if applicable.`)) {
-            const reason = prompt('Please provide a reason for cancellation:');
-            if (reason && reason.trim() !== '') {
-                executeCancelProcedure(procedureId, reason, true);
-            } else {
-                alert('Cancellation reason is required.');
-            }
-        }
-    }
-}
-
-function executeCancelProcedure(procedureId, reason, processRefund) {
-    $.ajax({
-        url: `{{ url('/procedures/${procedureId}/cancel') }}`,
-        type: 'POST',
-        headers: {
-            'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
-        },
-        data: {
-            cancellation_reason: reason,
-            refund_eligible: processRefund ? '1' : '0'
-        },
-        beforeSend: function() {
-            if (typeof Swal !== 'undefined') {
-                Swal.fire({
-                    title: 'Processing...',
-                    text: 'Cancelling procedure...',
-                    allowOutsideClick: false,
-                    didOpen: () => {
-                        Swal.showLoading();
-                    }
-                });
-            }
-        },
-        success: function(response) {
-            if (response.success) {
-                if (typeof Swal !== 'undefined') {
-                    Swal.fire({
-                        title: 'Cancelled!',
-                        text: response.message || 'Procedure has been cancelled.',
-                        icon: 'success'
-                    });
-                } else {
-                    alert(response.message || 'Procedure cancelled successfully.');
-                }
-
-                // Reload the history table
-                $('#procedure_history_list').DataTable().ajax.reload();
-
-                // Close details modal if open
-                $('#procedureDetailsModal').modal('hide');
-            } else {
-                if (typeof Swal !== 'undefined') {
-                    Swal.fire({
-                        title: 'Error',
-                        text: response.message || 'Failed to cancel procedure.',
-                        icon: 'error'
-                    });
-                } else {
-                    alert(response.message || 'Failed to cancel procedure.');
-                }
-            }
-        },
-        error: function(xhr) {
-            const errorMsg = xhr.responseJSON?.message || 'An error occurred while cancelling the procedure.';
-            if (typeof Swal !== 'undefined') {
-                Swal.fire({
-                    title: 'Error',
-                    text: errorMsg,
-                    icon: 'error'
-                });
-            } else {
-                alert(errorMsg);
-            }
-        }
-    });
-}
-
-// ========================================
-// PRINT PROCEDURE
-// ========================================
-
-function printProcedure(procedureId) {
-    window.open(`/procedures/${procedureId}/print`, '_blank', 'width=800,height=600');
-}
-</script>
-@endpush
-

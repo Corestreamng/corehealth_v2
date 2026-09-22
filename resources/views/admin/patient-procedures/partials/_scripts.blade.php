@@ -21,6 +21,8 @@
         productBatchesRoute: '{{ route("nursing-workbench.product-batches") }}',
         investigationCategoryId: '{{ appsettings("investigation_category_id", "") }}',
         accessibleStores: {!! json_encode($accessibleStores ?? []) !!},
+        tariffGuideRoute: '{{ route("patient-procedures.tariff-guide", $procedure->id) }}',
+        billBaseFeeRoute: '{{ route("patient-procedures.bill-base-fee", $procedure->id) }}',
     };
     window.BILLING_KIT_CONFIG = window.WORKBENCH_CONFIG;
 </script>

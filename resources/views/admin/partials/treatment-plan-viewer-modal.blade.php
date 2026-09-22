@@ -24,7 +24,7 @@
             </div>
             <div class="modal-footer border-0 d-flex flex-wrap justify-content-between align-items-center">
                 <div class="d-flex flex-wrap gap-2 me-auto" id="tpv-action-buttons">
-                    <button type="button" class="btn btn-teal btn-sm" id="tpv-set-active-btn" onclick="TreatmentPlansTab.setActive(window._tpvCurrentPlanId)" style="border-radius: 8px;">
+                    <button type="button" class="btn btn-teal btn-sm" id="tpv-set-active-btn" onclick="if (window.TreatmentPlansTab && typeof window.TreatmentPlansTab.setActive === 'function') { TreatmentPlansTab.setActive(window._tpvCurrentPlanId); } else { toastr.info('Active plan selection is available on the Doctor consultation page.'); }" style="border-radius: 8px;">
                         <i class="fa fa-check-circle me-1"></i> Set as Active
                     </button>
                     <button type="button" class="btn btn-outline-primary btn-sm" id="tpv-edit-btn" onclick="ClinicalOrdersKit.openEditModalFromViewer()" style="border-radius: 8px;">

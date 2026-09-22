@@ -1410,6 +1410,21 @@
                                     </div>
                                 </div>
 
+                                <div class="mb-3">
+                                    <div class="feature-toggle-row">
+                                        <div>
+                                            <label for="allow_doctor_set_procedure_price" class="mb-0" style="font-weight: 600; cursor: pointer;">
+                                                Allow Doctors/Surgeons to Set Procedure Price &amp; Defer Billing
+                                            </label>
+                                            <small class="text-muted d-block">When enabled, procedure base fee billing is optional at booking. Doctors/surgeons can set custom procedure fees and coverage modes during booking or later from the Procedure Workbench with HMO/Catalog tariff guide benchmarks.</small>
+                                        </div>
+                                        <label class="toggle-switch">
+                                            <input type="checkbox" id="allow_doctor_set_procedure_price" name="allow_doctor_set_procedure_price" value="1" {{ ($config->allow_doctor_set_procedure_price ?? 0) ? 'checked' : '' }}>
+                                            <span class="toggle-slider"></span>
+                                        </label>
+                                    </div>
+                                </div>
+
                                 <hr class="my-3">
                                 <h6 class="text-muted mb-3" style="font-weight: 600;"><i class="mdi mdi-pill mr-1"></i> Prescription / Dosage Settings</h6>
 

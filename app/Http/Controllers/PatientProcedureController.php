@@ -565,6 +565,190 @@ class PatientProcedureController extends Controller
     }
 
     // =========================================================================
+    // PROCEDURE BASE FEE PRICING & TARIFF GUIDE
+    // =========================================================================
+
+    /**
+     * Get Tariff Guide for procedure base fee billing
+     * Returns catalog price, HMO tariff (via HmoHelper::applyHmoTariff), and current billing status
+     */
+    public function getTariffGuide(Procedure $procedure)
+    {
+        $procedure->load([
+            'service.price',
+            'patient.user',
+            'patient.hmo',
+            'productOrServiceRequest.payment',
+        ]);
+
+        $patient = $procedure->patient;
+        $service = $procedure->service;
+
+        $catalogPrice = (float) (optional($service?->price)->sale_price ?? 0);
+        $patientName = $patient && $patient->user
+            ? ($patient->user->surname . ' ' . $patient->user->firstname . ($patient->user->othername ? ' ' . $patient->user->othername : ''))
+            : 'Unknown';
+
+        $isHmo = !empty($patient?->hmo_id);
+        $hmoTariff = null;
+
+        if ($isHmo && $service) {
+            try {
+                $hmoData = HmoHelper::applyHmoTariff($procedure->patient_id, null, $service->id);
+                if ($hmoData) {
+                    $hmoTariff = [
+                        'has_tariff' => true,
+                        'payable_amount' => (float) $hmoData['payable_amount'],
+                        'claims_amount' => (float) $hmoData['claims_amount'],
+                        'coverage_mode' => $hmoData['coverage_mode'] ?? 'primary',
+                        'validation_status' => $hmoData['validation_status'] ?? 'pending',
+                    ];
+                }
+            } catch (\Exception $e) {
+                $hmoTariff = [
+                    'has_tariff' => false,
+                    'message' => $e->getMessage(),
+                ];
+            }
+        }
+
+        $billing = $procedure->productOrServiceRequest;
+
+        return response()->json([
+            'success' => true,
+            'procedure_id' => $procedure->id,
+            'procedure_name' => $procedure->name,
+            'is_free_form' => (bool) $procedure->is_free_form,
+            'service' => $service ? [
+                'id' => $service->id,
+                'name' => $service->service_name ?? $procedure->name,
+                'code' => $service->service_code ?? null,
+                'catalog_price' => $catalogPrice,
+            ] : null,
+            'patient' => [
+                'id' => $procedure->patient_id,
+                'name' => trim($patientName),
+                'is_hmo' => $isHmo,
+                'hmo_id' => $patient?->hmo_id,
+                'hmo_name' => $patient?->hmo?->name ?? null,
+                'hmo_code' => $patient?->hmo?->code ?? null,
+            ],
+            'hmo_tariff' => $hmoTariff,
+            'is_billed' => !empty($procedure->product_or_service_request_id),
+            'billing' => $billing ? [
+                'id' => $billing->id,
+                'payable_amount' => (float) $billing->payable_amount,
+                'claims_amount' => (float) $billing->claims_amount,
+                'total_amount' => (float) (($billing->payable_amount ?? 0) + ($billing->claims_amount ?? 0)),
+                'coverage_mode' => $billing->coverage_mode,
+                'validation_status' => $billing->validation_status,
+                'auth_code' => $billing->auth_code,
+                'is_paid' => !empty($billing->payment_id),
+            ] : null,
+        ]);
+    }
+
+    /**
+     * Bill Procedure Base Fee
+     * Allows surgeon/doctor to set custom pricing and coverage mode, creating the ProductOrServiceRequest entry.
+     */
+    public function billBaseFee(Request $request, Procedure $procedure)
+    {
+        $request->validate([
+            'coverage_mode' => 'required|string|in:cash,express,primary,secondary',
+            'payable_amount' => 'required|numeric|min:0',
+            'claims_amount' => 'nullable|numeric|min:0',
+            'auth_code' => 'nullable|string|max:100',
+        ]);
+
+        if ($procedure->is_free_form) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Free-form procedures cannot have a standard base fee bill.',
+            ], 422);
+        }
+
+        // Check if already billed and paid
+        if ($procedure->productOrServiceRequest && $procedure->productOrServiceRequest->payment_id) {
+            return response()->json([
+                'success' => false,
+                'message' => 'This procedure has already been billed and paid. Price cannot be modified.',
+            ], 422);
+        }
+
+        try {
+            return DB::transaction(function () use ($request, $procedure) {
+                $patient = $procedure->patient;
+                $service = $procedure->service;
+
+                $coverageMode = $request->input('coverage_mode', 'cash');
+                $payableAmount = (float) $request->input('payable_amount', 0);
+                $claimsAmount = (float) $request->input('claims_amount', 0);
+                $authCode = $request->input('auth_code');
+
+                $billing = $procedure->productOrServiceRequest ?? new ProductOrServiceRequest();
+                $billing->type = 'service';
+                $billing->service_id = $procedure->service_id;
+                $billing->user_id = $patient->user_id;
+                $billing->staff_user_id = Auth::id();
+                $billing->created_by = Auth::id();
+                $billing->order_date = now();
+                $billing->qty = 1;
+
+                if ($procedure->encounter_id) {
+                    $billing->encounter_id = $procedure->encounter_id;
+                    $billing->admission_request_id = $procedure->admission_request_id;
+                }
+
+                $billing->payable_amount = $payableAmount;
+                $billing->claims_amount = $claimsAmount;
+                $billing->coverage_mode = $coverageMode;
+
+                if ($coverageMode !== 'cash' && $patient->hmo_id) {
+                    $billing->hmo_id = $patient->hmo_id;
+                    $billing->validation_status = ($coverageMode === 'express') ? 'approved' : 'pending';
+                    $billing->auth_code = !empty($authCode) ? $authCode : null;
+                } else {
+                    $billing->coverage_mode = 'cash';
+                    $billing->hmo_id = null;
+                    $billing->validation_status = null;
+                    $billing->claims_amount = 0;
+                    $billing->auth_code = null;
+                }
+
+                $billing->save();
+
+                // Link to procedure
+                $procedure->product_or_service_request_id = $billing->id;
+                $procedure->billed_by = Auth::id();
+                $procedure->billed_on = now();
+                $procedure->save();
+
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Procedure base fee billed successfully',
+                    'billing' => [
+                        'id' => $billing->id,
+                        'payable_amount' => (float) $billing->payable_amount,
+                        'claims_amount' => (float) $billing->claims_amount,
+                        'total_amount' => (float) ($billing->payable_amount + $billing->claims_amount),
+                        'coverage_mode' => $billing->coverage_mode,
+                        'validation_status' => $billing->validation_status,
+                        'auth_code' => $billing->auth_code,
+                        'billed_by' => optional(Auth::user())->name,
+                        'billed_on' => $procedure->billed_on?->format('d M Y H:i'),
+                    ],
+                ]);
+            });
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error billing procedure base fee: ' . $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    // =========================================================================
     // TEAM MEMBERS
     // Spec Reference: Part 3.1.4, 3.4
     // =========================================================================

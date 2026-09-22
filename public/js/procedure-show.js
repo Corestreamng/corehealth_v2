@@ -1360,3 +1360,307 @@ const procedureId = (window.WORKBENCH_CONFIG ? window.WORKBENCH_CONFIG.patientId
             }
         });
     }
+
+    /* ═══════════════════════════════════════════════════════════════
+       PROCEDURE BASE FEE PRICING & TARIFF GUIDE MODAL
+       ═══════════════════════════════════════════════════════════════ */
+
+    let currentTariffGuide = null;
+
+    function formatCurrency(num) {
+        const n = parseFloat(num) || 0;
+        return n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    }
+
+    function openBillBaseFeeModal() {
+        const modal = $('#billBaseFeeModal');
+        if (!modal.length) return;
+
+        // Reset form & states
+        $('#bbf_alert_area').empty();
+        $('#bbf_submit_btn').prop('disabled', false);
+        $('#bbf_patient_type_badge').text('Loading...').attr('class', 'badge bg-secondary text-white');
+        $('#bbf_tariff_details').html('<i class="fa fa-spinner fa-spin mr-1"></i> Loading tariff benchmark guide...');
+        $('#bbf_btn_apply_tariff').hide();
+
+        modal.modal('show');
+
+        const procId = window.WORKBENCH_CONFIG ? window.WORKBENCH_CONFIG.procedureId : '';
+        const guideUrl = (window.WORKBENCH_CONFIG && window.WORKBENCH_CONFIG.tariffGuideRoute)
+            ? window.WORKBENCH_CONFIG.tariffGuideRoute
+            : wbUrl(`/patient-procedures/${procId}/tariff-guide`);
+
+        $.ajax({
+            url: guideUrl,
+            method: 'GET',
+            headers: {
+                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') || (window.WORKBENCH_CONFIG ? window.WORKBENCH_CONFIG.csrf : '')
+            },
+            success: function(resp) {
+                if (!resp || !resp.success) {
+                    $('#bbf_tariff_details').html('<span class="text-danger">Failed to load tariff guide information.</span>');
+                    return;
+                }
+
+                currentTariffGuide = resp;
+                renderTariffGuideDetails(resp);
+
+                // Pre-populate fields
+                if (resp.is_billed && resp.billing) {
+                    $('#bbf_total_price').val(resp.billing.total_amount);
+                    $('#bbf_coverage_mode').val(resp.billing.coverage_mode || 'cash');
+                    $('#bbf_payable_amount').val(resp.billing.payable_amount);
+                    $('#bbf_claims_amount').val(resp.billing.claims_amount);
+                    $('#bbf_auth_code').val(resp.billing.auth_code || '');
+                    $('#bbf_submit_text').text('Update Base Fee Bill');
+                } else {
+                    // Not billed yet -> default to benchmark
+                    if (resp.patient.is_hmo && resp.hmo_tariff && resp.hmo_tariff.has_tariff) {
+                        const tariffTotal = (resp.hmo_tariff.payable_amount || 0) + (resp.hmo_tariff.claims_amount || 0);
+                        $('#bbf_total_price').val(tariffTotal);
+                        $('#bbf_coverage_mode').val(resp.hmo_tariff.coverage_mode || 'primary');
+                        $('#bbf_payable_amount').val(resp.hmo_tariff.payable_amount || 0);
+                        $('#bbf_claims_amount').val(resp.hmo_tariff.claims_amount || 0);
+                    } else {
+                        const catPrice = resp.service ? (resp.service.catalog_price || 0) : 0;
+                        $('#bbf_total_price').val(catPrice);
+                        $('#bbf_coverage_mode').val(resp.patient.is_hmo ? 'primary' : 'cash');
+                        $('#bbf_payable_amount').val(resp.patient.is_hmo ? 0 : catPrice);
+                        $('#bbf_claims_amount').val(resp.patient.is_hmo ? catPrice : 0);
+                    }
+                    $('#bbf_auth_code').val('');
+                    $('#bbf_submit_text').text('Confirm & Bill Base Fee');
+                }
+
+                onBbfCoverageModeChange();
+            },
+            error: function(err) {
+                $('#bbf_tariff_details').html('<span class="text-danger"><i class="fa fa-exclamation-triangle mr-1"></i>Could not load live tariff guide.</span>');
+            }
+        });
+    }
+
+    function renderTariffGuideDetails(data) {
+        const catPrice = data.service ? data.service.catalog_price : 0;
+
+        if (data.patient.is_hmo) {
+            $('#bbf_patient_type_badge').text(`HMO: ${data.patient.hmo_name || 'Enrolled'}`).attr('class', 'badge bg-info text-white');
+
+            if (data.hmo_tariff && data.hmo_tariff.has_tariff) {
+                const totalTariff = (data.hmo_tariff.payable_amount || 0) + (data.hmo_tariff.claims_amount || 0);
+                $('#bbf_tariff_details').html(`
+                    <div class="d-flex flex-wrap gap-3 align-items-center">
+                        <div><strong>HMO Tariff:</strong> <span class="text-primary font-weight-bold">₦${formatCurrency(totalTariff)}</span></div>
+                        <div><strong>Patient Co-Pay:</strong> ₦${formatCurrency(data.hmo_tariff.payable_amount)}</div>
+                        <div><strong>HMO Claims:</strong> ₦${formatCurrency(data.hmo_tariff.claims_amount)}</div>
+                        <div><strong>Mode:</strong> <span class="badge bg-light text-dark border">${(data.hmo_tariff.coverage_mode || 'primary').toUpperCase()}</span></div>
+                        <div class="text-muted small">| Catalog Price: ₦${formatCurrency(catPrice)}</div>
+                    </div>
+                `);
+                $('#bbf_btn_apply_tariff').show();
+            } else {
+                $('#bbf_tariff_details').html(`
+                    <div>
+                        <span class="text-warning"><i class="fa fa-info-circle mr-1"></i>No tariff item mapped for this HMO on this procedure service.</span><br>
+                        <strong>Standard Catalog Base Price:</strong> <span class="text-dark font-weight-bold">₦${formatCurrency(catPrice)}</span>
+                    </div>
+                `);
+                $('#bbf_btn_apply_tariff').show();
+            }
+        } else {
+            $('#bbf_patient_type_badge').text('Self-Pay / Cash Patient').attr('class', 'badge bg-secondary text-white');
+            $('#bbf_tariff_details').html(`
+                <div>
+                    <strong>Hospital Catalog Base Price:</strong> <span class="text-primary font-weight-bold">₦${formatCurrency(catPrice)}</span>
+                </div>
+            `);
+            $('#bbf_btn_apply_tariff').show();
+        }
+    }
+
+    function applyTariffBenchmark() {
+        if (!currentTariffGuide) return;
+
+        const data = currentTariffGuide;
+        const catPrice = data.service ? data.service.catalog_price : 0;
+
+        if (data.patient.is_hmo && data.hmo_tariff && data.hmo_tariff.has_tariff) {
+            const totalTariff = (data.hmo_tariff.payable_amount || 0) + (data.hmo_tariff.claims_amount || 0);
+            $('#bbf_total_price').val(totalTariff);
+            $('#bbf_coverage_mode').val(data.hmo_tariff.coverage_mode || 'primary');
+            $('#bbf_payable_amount').val(data.hmo_tariff.payable_amount || 0);
+            $('#bbf_claims_amount').val(data.hmo_tariff.claims_amount || 0);
+        } else {
+            $('#bbf_total_price').val(catPrice);
+            $('#bbf_coverage_mode').val(data.patient.is_hmo ? 'primary' : 'cash');
+            $('#bbf_payable_amount').val(data.patient.is_hmo ? 0 : catPrice);
+            $('#bbf_claims_amount').val(data.patient.is_hmo ? catPrice : 0);
+        }
+
+        onBbfCoverageModeChange();
+    }
+
+    function onBbfCoverageModeChange() {
+        const mode = $('#bbf_coverage_mode').val();
+        const total = parseFloat($('#bbf_total_price').val()) || 0;
+
+        if (mode === 'cash') {
+            $('#bbf_auth_code_row').hide();
+            $('#bbf_claims_col').hide();
+            $('#bbf_payable_amount').val(total);
+            $('#bbf_claims_amount').val(0);
+            $('#bbf_coverage_hint').text('100% Patient self-pay. No HMO claim will be logged.');
+            $('#bbf_preset_hmo_btn').prop('disabled', true).addClass('opacity-50');
+            $('#bbf_preset_split_btn').prop('disabled', true).addClass('opacity-50');
+        } else {
+            $('#bbf_auth_code_row').show();
+            $('#bbf_claims_col').show();
+            $('#bbf_preset_hmo_btn').prop('disabled', false).removeClass('opacity-50');
+            $('#bbf_preset_split_btn').prop('disabled', false).removeClass('opacity-50');
+
+            if (mode === 'express') {
+                $('#bbf_coverage_hint').text('Auto-approved HMO coverage. Bill drops as approved claims into Cashier.');
+            } else if (mode === 'primary') {
+                $('#bbf_coverage_hint').text('Standard HMO coverage. Claims amount queued for desk verification.');
+            } else if (mode === 'secondary') {
+                $('#bbf_coverage_hint').text('Specialist secondary HMO coverage requiring Pre-Auth Code.');
+            }
+        }
+    }
+
+    function onBbfTotalOrSplitChange(source) {
+        const mode = $('#bbf_coverage_mode').val();
+        const total = parseFloat($('#bbf_total_price').val()) || 0;
+
+        if (mode === 'cash') {
+            $('#bbf_payable_amount').val(total);
+            $('#bbf_claims_amount').val(0);
+            return;
+        }
+
+        if (source === 'total') {
+            const currentPayable = parseFloat($('#bbf_payable_amount').val()) || 0;
+            const currentClaims = parseFloat($('#bbf_claims_amount').val()) || 0;
+
+            if (currentClaims === 0 && currentPayable > 0) {
+                $('#bbf_payable_amount').val(total);
+            } else if (currentPayable === 0 && currentClaims > 0) {
+                $('#bbf_claims_amount').val(total);
+            } else {
+                // Keep payable, adjust claims
+                const newClaims = Math.max(0, total - currentPayable);
+                $('#bbf_claims_amount').val(newClaims);
+            }
+        } else if (source === 'payable') {
+            const payable = parseFloat($('#bbf_payable_amount').val()) || 0;
+            const newClaims = Math.max(0, total - payable);
+            $('#bbf_claims_amount').val(newClaims);
+        } else if (source === 'claims') {
+            const claims = parseFloat($('#bbf_claims_amount').val()) || 0;
+            const newPayable = Math.max(0, total - claims);
+            $('#bbf_payable_amount').val(newPayable);
+        }
+    }
+
+    function setBbfPreset(preset) {
+        const total = parseFloat($('#bbf_total_price').val()) || 0;
+
+        if (preset === '100_cash') {
+            $('#bbf_coverage_mode').val('cash');
+            $('#bbf_payable_amount').val(total);
+            $('#bbf_claims_amount').val(0);
+        } else if (preset === '100_hmo') {
+            if ($('#bbf_coverage_mode').val() === 'cash') {
+                $('#bbf_coverage_mode').val('primary');
+            }
+            $('#bbf_payable_amount').val(0);
+            $('#bbf_claims_amount').val(total);
+        } else if (preset === '50_50') {
+            if ($('#bbf_coverage_mode').val() === 'cash') {
+                $('#bbf_coverage_mode').val('primary');
+            }
+            const half = (total / 2).toFixed(2);
+            $('#bbf_payable_amount').val(half);
+            $('#bbf_claims_amount').val(half);
+        }
+
+        onBbfCoverageModeChange();
+    }
+
+    function submitBillBaseFee(e) {
+        e.preventDefault();
+
+        const form = $('#billBaseFeeForm');
+        const alertArea = $('#bbf_alert_area');
+        alertArea.empty();
+
+        const procId = window.WORKBENCH_CONFIG ? window.WORKBENCH_CONFIG.procedureId : '';
+        const billRoute = (window.WORKBENCH_CONFIG && window.WORKBENCH_CONFIG.billBaseFeeRoute)
+            ? window.WORKBENCH_CONFIG.billBaseFeeRoute
+            : wbUrl(`/patient-procedures/${procId}/bill-base-fee`);
+
+        const total = parseFloat($('#bbf_total_price').val()) || 0;
+        const payable = parseFloat($('#bbf_payable_amount').val()) || 0;
+        const claims = parseFloat($('#bbf_claims_amount').val()) || 0;
+        const mode = $('#bbf_coverage_mode').val();
+        const authCode = $('#bbf_auth_code').val();
+
+        if (total < 0 || payable < 0 || claims < 0) {
+            alertArea.html('<div class="alert alert-danger py-2 mb-3">Prices cannot be negative.</div>');
+            return;
+        }
+
+        const submitBtn = $('#bbf_submit_btn');
+        submitBtn.prop('disabled', true);
+        $('#bbf_submit_text').text('Processing...');
+
+        $.ajax({
+            url: billRoute,
+            method: 'POST',
+            data: {
+                _token: $('meta[name="csrf-token"]').attr('content') || (window.WORKBENCH_CONFIG ? window.WORKBENCH_CONFIG.csrf : ''),
+                coverage_mode: mode,
+                payable_amount: payable,
+                claims_amount: claims,
+                auth_code: authCode
+            },
+            success: function(resp) {
+                submitBtn.prop('disabled', false);
+                $('#bbf_submit_text').text('Confirm & Bill Base Fee');
+
+                if (resp && resp.success) {
+                    $('#billBaseFeeModal').modal('hide');
+
+                    if (typeof Swal !== 'undefined') {
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Billed Successfully',
+                            text: resp.message || 'Procedure base fee has been billed.',
+                            timer: 2000,
+                            showConfirmButton: false
+                        }).then(() => {
+                            window.location.reload();
+                        });
+                    } else {
+                        window.location.reload();
+                    }
+                } else {
+                    alertArea.html(`<div class="alert alert-danger py-2 mb-3">${resp.message || 'An error occurred.'}</div>`);
+                }
+            },
+            error: function(xhr) {
+                submitBtn.prop('disabled', false);
+                $('#bbf_submit_text').text('Confirm & Bill Base Fee');
+                const err = xhr.responseJSON?.message || 'Error communicating with server.';
+                alertArea.html(`<div class="alert alert-danger py-2 mb-3"><i class="fa fa-exclamation-circle mr-1"></i>${err}</div>`);
+            }
+        });
+    }
+
+    // Expose functions to window
+    window.openBillBaseFeeModal = openBillBaseFeeModal;
+    window.applyTariffBenchmark = applyTariffBenchmark;
+    window.onBbfCoverageModeChange = onBbfCoverageModeChange;
+    window.onBbfTotalOrSplitChange = onBbfTotalOrSplitChange;
+    window.setBbfPreset = setBbfPreset;
+    window.submitBillBaseFee = submitBillBaseFee;

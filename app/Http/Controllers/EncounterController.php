@@ -4386,11 +4386,24 @@ class EncounterController extends Controller
                     $str .= "<span class='badge bg-{$prioColor} me-1'><i class='fa fa-exclamation-triangle'></i> " . ucfirst($proc->priority) . "</span>";
                 }
 
-                // HMO Coverage Badge
-                if ($proc->productOrServiceRequest && $proc->productOrServiceRequest->coverage_mode) {
-                    $covMode = $proc->productOrServiceRequest->coverage_mode;
-                    $coverageClass = $covMode === 'express' ? 'success' : ($covMode === 'primary' ? 'primary' : 'secondary');
-                    $str .= "<span class='badge bg-{$coverageClass} me-1'>HMO: " . strtoupper($covMode) . "</span>";
+                // Billing & Coverage Badges
+                if ($proc->productOrServiceRequest) {
+                    $covMode = $proc->productOrServiceRequest->coverage_mode ?? 'cash';
+                    if ($covMode !== 'cash') {
+                        $coverageClass = $covMode === 'express' ? 'success' : ($covMode === 'primary' ? 'primary' : 'secondary');
+                        $str .= "<span class='badge bg-{$coverageClass} me-1'><i class='fa fa-shield-alt'></i> HMO: " . strtoupper($covMode) . "</span>";
+                    } else {
+                        $str .= "<span class='badge bg-secondary me-1'><i class='fa fa-wallet'></i> Self-Pay</span>";
+                    }
+
+                    if ($proc->productOrServiceRequest->payment_id) {
+                        $str .= "<span class='badge bg-success me-1'><i class='fa fa-check-circle'></i> Paid</span>";
+                    } else {
+                        $total = ($proc->productOrServiceRequest->payable_amount ?? 0) + ($proc->productOrServiceRequest->claims_amount ?? 0);
+                        $str .= "<span class='badge bg-light text-dark border me-1'>₦" . number_format($total, 2) . "</span>";
+                    }
+                } elseif (!$proc->is_free_form) {
+                    $str .= "<span class='badge bg-warning text-dark me-1'><i class='fa fa-clock'></i> Base Fee Unbilled</span>";
                 }
 
                 // Consent badge
@@ -5255,7 +5268,20 @@ class EncounterController extends Controller
                 $extra['treatment_plan_name'] = $request->input('treatment_plan_name');
             }
             $procedure = $this->addSingleProcedure(
-                $request->only(['service_id', 'priority', 'scheduled_date', 'pre_notes']),
+                $request->only([
+                    'service_id',
+                    'priority',
+                    'scheduled_date',
+                    'scheduled_time',
+                    'operating_room',
+                    'pre_notes',
+                    'defer_billing',
+                    'custom_price',
+                    'payable_amount',
+                    'claims_amount',
+                    'coverage_mode',
+                    'auth_code',
+                ]),
                 $encounter->patient_id,
                 $encounter->id,
                 $encounter->admission_request_id,

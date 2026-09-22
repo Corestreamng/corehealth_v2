@@ -1581,6 +1581,24 @@ $isSurgical = $procedure->procedureDefinition && $procedure->procedureDefinition
         @endif
         @endif
 
+        {{-- Row B2 — Base Fee Billing Prompt Strip --}}
+        @if(!$procedure->product_or_service_request_id && !$isCancelled)
+        <div class="consent-strip cs-warn" id="unbilled-base-fee-strip">
+            <i class="fa fa-hand-holding-usd fa-lg text-warning"></i>
+            <strong>Base Fee Unbilled</strong>
+            <span class="cs-detail">— Procedure base pricing has not been billed yet. You can set custom price and bill using the tariff guide.</span>
+            @if(!$isCompleted)
+            @hasanyrole('SUPERADMIN|ADMIN|DOCTOR|SURGERY')
+            <div class="cs-action">
+                <button class="btn btn-sm btn-warning text-dark font-weight-bold" onclick="openBillBaseFeeModal()">
+                    <i class="fa fa-calculator mr-1"></i>Set Price &amp; Bill
+                </button>
+            </div>
+            @endhasanyrole
+            @endif
+        </div>
+        @endif
+
         {{-- Row C — Status Stepper / Cancelled Bar --}}
         @if($isCancelled)
         <div class="cancelled-bar">
@@ -2221,10 +2239,17 @@ $isSurgical = $procedure->procedureDefinition && $procedure->procedureDefinition
 
                     {{-- Billing Status Card --}}
                     <div class="section-card">
-                        <div class="section-card-header">
-                            <h5><i class="fa fa-file-invoice-dollar"></i> Billing Status</h5>
+                        <div class="section-card-header d-flex justify-content-between align-items-center">
+                            <h5><i class="fa fa-file-invoice-dollar"></i> Procedure Base Fee Billing Status</h5>
+                            @if(!$isCompleted && !$isCancelled && (!$procedure->productOrServiceRequest || !$procedure->productOrServiceRequest->payment_id))
+                            @hasanyrole('SUPERADMIN|ADMIN|DOCTOR|SURGERY')
+                            <button class="btn btn-sm btn-outline-primary" onclick="openBillBaseFeeModal()">
+                                <i class="fa fa-calculator mr-1"></i>{{ $procedure->productOrServiceRequest ? 'Modify Pricing / Bill' : 'Set Price & Bill Base Fee' }}
+                            </button>
+                            @endhasanyrole
+                            @endif
                         </div>
-                        <div class="section-card-body">
+                        <div class="section-card-body" id="proc-billing-card-body">
                             @if($procedure->productOrServiceRequest)
                             @php
                             $billing = $procedure->productOrServiceRequest;
@@ -2234,12 +2259,12 @@ $isSurgical = $procedure->procedureDefinition && $procedure->procedureDefinition
                                 <div class="billing-box">
                                     <div class="billing-row">
                                         <span>Procedure Fee</span>
-                                        <strong>₦{{ number_format(($billing->amount ?? 0) + ($billing->claims_amount ?? 0), 2) }}</strong>
+                                        <strong>₦{{ number_format(($billing->payable_amount ?? 0) + ($billing->claims_amount ?? 0), 2) }}</strong>
                                     </div>
                                     @if(($billing->claims_amount ?? 0) > 0)
                                     <div class="billing-row">
                                         <span>Patient Pays</span>
-                                        <span>₦{{ number_format($billing->amount ?? 0, 2) }}</span>
+                                        <span>₦{{ number_format($billing->payable_amount ?? 0, 2) }}</span>
                                     </div>
                                     <div class="billing-row">
                                         <span>HMO Claims</span>
@@ -2258,9 +2283,20 @@ $isSurgical = $procedure->procedureDefinition && $procedure->procedureDefinition
                                 <div class="billing-box">
                                     <div class="info-item">
                                         <span class="info-label">Coverage</span>
-                                        <span class="info-value"><span class="badge badge-{{ ($billing->coverage_mode ?? '') === 'hmo' ? 'info' : 'secondary' }}">{{ strtoupper($billing->coverage_mode ?? 'CASH') }}</span></span>
+                                        <span class="info-value">
+                                            @php
+                                                $cov = strtolower($billing->coverage_mode ?? 'cash');
+                                                $covBadgeClass = match($cov) {
+                                                    'express' => 'warning text-dark',
+                                                    'primary' => 'primary',
+                                                    'secondary' => 'info',
+                                                    default => 'secondary'
+                                                };
+                                            @endphp
+                                            <span class="badge badge-{{ $covBadgeClass }}">{{ strtoupper($billing->coverage_mode ?? 'CASH') }}</span>
+                                        </span>
                                     </div>
-                                    @if(($billing->coverage_mode ?? '') === 'hmo' || ($billing->claims_amount ?? 0) > 0)
+                                    @if(($billing->coverage_mode ?? '') !== 'cash' || ($billing->claims_amount ?? 0) > 0)
                                     <div class="info-item">
                                         <span class="info-label">Validation</span>
                                         <span class="info-value">
@@ -2275,10 +2311,28 @@ $isSurgical = $procedure->procedureDefinition && $procedure->procedureDefinition
                                     </div>
                                     @endif
                                     @endif
+                                    @if($procedure->billedByUser)
+                                    <div class="info-item">
+                                        <span class="info-label">Billed By</span>
+                                        <span class="info-value">{{ $procedure->billedByUser->name }} on {{ $procedure->billed_on?->format('d M Y H:i') }}</span>
+                                    </div>
+                                    @endif
                                 </div>
                             </div>
                             @else
-                            <div class="alert alert-info mb-0"><i class="fa fa-info-circle mr-1"></i>No billing entry found for this procedure.</div>
+                            <div class="alert alert-warning mb-0 d-flex align-items-center justify-content-between flex-wrap gap-2">
+                                <div>
+                                    <i class="fa fa-exclamation-triangle mr-1"></i>
+                                    <strong>No base fee bill generated yet.</strong> This procedure was booked with deferred pricing.
+                                </div>
+                                @if(!$isCompleted && !$isCancelled)
+                                @hasanyrole('SUPERADMIN|ADMIN|DOCTOR|SURGERY')
+                                <button class="btn btn-sm btn-primary" onclick="openBillBaseFeeModal()">
+                                    <i class="fa fa-calculator mr-1"></i>Set Price &amp; Bill Now
+                                </button>
+                                @endhasanyrole
+                                @endif
+                            </div>
                             @endif
                         </div>
                     </div>
@@ -2368,6 +2422,11 @@ $isSurgical = $procedure->procedureDefinition && $procedure->procedureDefinition
                     @endif
                 </div>
                 <div class="next-action-body">
+                    @if(!$procedure->product_or_service_request_id && !$isCancelled)
+                    <button class="btn btn-outline-warning btn-block mb-2 font-weight-bold" onclick="openBillBaseFeeModal()">
+                        <i class="fa fa-calculator mr-1"></i> Bill Procedure Base Fee
+                    </button>
+                    @endif
                     @if($procedure->procedure_status === 'requested')
                     <button class="btn btn-info btn-block mb-2" onclick="openScheduleModal()">
                         <i class="fa fa-calendar-check"></i> Schedule &amp; Set OR
@@ -2983,6 +3042,150 @@ $rawTemplate
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
                 <button type="button" class="btn btn-primary" id="confirmActionBtn">Confirm</button>
             </div>
+        </div>
+    </div>
+</div>
+
+{{-- Bill Procedure Base Fee Modal --}}
+<div class="modal fade" id="billBaseFeeModal" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content" style="border: none; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.15);">
+            <div class="modal-header bg-light" style="border-bottom: 1px solid #e9ecef; border-radius: 12px 12px 0 0; padding: 1.25rem 1.5rem;">
+                <div class="d-flex align-items-center">
+                    <div style="background: rgba(0, 102, 204, 0.1); width: 42px; height: 42px; border-radius: 8px; display: flex; align-items: center; justify-content: center; margin-right: 12px;">
+                        <i class="fa fa-calculator text-primary fa-lg" style="color: var(--proc-primary);"></i>
+                    </div>
+                    <div>
+                        <h5 class="modal-title mb-0" style="font-weight: 700; color: #1a1a1a;">Set Procedure Price &amp; Base Fee</h5>
+                        <small class="text-muted" id="bbf_modal_subtitle">Procedure: {{ $procedure->name }} &bull; Patient: {{ $patientName }}</small>
+                    </div>
+                </div>
+                <button type="button" class="close" data-bs-dismiss="modal" style="font-size: 1.75rem; font-weight: 300;"><span>&times;</span></button>
+            </div>
+
+            <form id="billBaseFeeForm" onsubmit="submitBillBaseFee(event)">
+                <div class="modal-body p-4" style="background: #fdfdfd;">
+                    {{-- Alert / Notification Area --}}
+                    <div id="bbf_alert_area"></div>
+
+                    {{-- Live Tariff / Price Benchmark Guide Box --}}
+                    <div class="card mb-4 border-0 shadow-sm" style="background: #f0f7ff; border-radius: 10px; border-left: 4px solid var(--proc-primary, #0066cc) !important;">
+                        <div class="card-body p-3">
+                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                <h6 class="mb-0 font-weight-bold text-primary" style="color: var(--proc-primary, #0066cc) !important;">
+                                    <i class="fa fa-book-medical mr-1"></i> Live Pricing &amp; Tariff Benchmark Guide
+                                </h6>
+                                <span class="badge" id="bbf_patient_type_badge" style="background: #e2e8f0; color: #334155; font-size: 0.8rem;">Loading...</span>
+                            </div>
+
+                            <div class="row align-items-center" id="bbf_tariff_guide_content">
+                                <div class="col-md-8">
+                                    <div id="bbf_tariff_details" class="small text-muted">
+                                        Loading benchmark tariffs and catalog price...
+                                    </div>
+                                </div>
+                                <div class="col-md-4 text-md-right mt-2 mt-md-0">
+                                    <button type="button" class="btn btn-sm btn-primary" id="bbf_btn_apply_tariff" onclick="applyTariffBenchmark()" style="display: none; border-radius: 6px;">
+                                        <i class="fa fa-magic mr-1"></i>Apply Benchmark
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {{-- Billing Form Fields --}}
+                    <div class="row">
+                        {{-- Total Procedure Fee --}}
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label font-weight-bold" style="color: #495057;">
+                                Total Procedure Price (₦) <span class="text-danger">*</span>
+                            </label>
+                            <div class="input-group">
+                                <div class="input-group-prepend">
+                                    <span class="input-group-text bg-light font-weight-bold">₦</span>
+                                </div>
+                                <input type="number" step="0.01" min="0" class="form-control form-control-lg font-weight-bold" id="bbf_total_price" name="total_price" placeholder="0.00" required oninput="onBbfTotalOrSplitChange('total')">
+                            </div>
+                            <small class="text-muted">Agreed surgical/clinical price for this procedure.</small>
+                        </div>
+
+                        {{-- Coverage Mode --}}
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label font-weight-bold" style="color: #495057;">
+                                Coverage Mode <span class="text-danger">*</span>
+                            </label>
+                            <select class="form-control form-control-lg" id="bbf_coverage_mode" name="coverage_mode" required onchange="onBbfCoverageModeChange()">
+                                <option value="cash">Cash / Self-Pay (100% Patient)</option>
+                                <option value="express">Express HMO (Auto-Approved Claims)</option>
+                                <option value="primary">Primary HMO (Desk Authorization Required)</option>
+                                <option value="secondary">Secondary HMO (Specialist Authorization)</option>
+                            </select>
+                            <small class="text-muted" id="bbf_coverage_hint">Select how this procedure will be billed.</small>
+                        </div>
+                    </div>
+
+                    {{-- Split Payable / Claims Row --}}
+                    <div class="row" id="bbf_split_row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label font-weight-bold" style="color: #495057;">
+                                Patient Payable (₦) <span class="text-danger">*</span>
+                            </label>
+                            <div class="input-group">
+                                <div class="input-group-prepend">
+                                    <span class="input-group-text bg-light font-weight-bold">₦</span>
+                                </div>
+                                <input type="number" step="0.01" min="0" class="form-control" id="bbf_payable_amount" name="payable_amount" placeholder="0.00" required oninput="onBbfTotalOrSplitChange('payable')">
+                            </div>
+                            <small class="text-muted">Amount patient pays at the cashier desk.</small>
+                        </div>
+
+                        <div class="col-md-6 mb-3" id="bbf_claims_col">
+                            <label class="form-label font-weight-bold" style="color: #495057;">
+                                HMO Claims Amount (₦)
+                            </label>
+                            <div class="input-group">
+                                <div class="input-group-prepend">
+                                    <span class="input-group-text bg-light font-weight-bold">₦</span>
+                                </div>
+                                <input type="number" step="0.01" min="0" class="form-control" id="bbf_claims_amount" name="claims_amount" placeholder="0.00" oninput="onBbfTotalOrSplitChange('claims')">
+                            </div>
+                            <small class="text-muted">Amount claimed from HMO / NHIA.</small>
+                        </div>
+                    </div>
+
+                    {{-- HMO Auth Code (shown for HMO modes) --}}
+                    <div class="row" id="bbf_auth_code_row" style="display: none;">
+                        <div class="col-md-12 mb-3">
+                            <label class="form-label font-weight-bold" style="color: #495057;">
+                                HMO Pre-Authorization / Approval Code
+                            </label>
+                            <input type="text" class="form-control" id="bbf_auth_code" name="auth_code" placeholder="e.g. AUTH-2026-99824">
+                            <small class="text-muted">Optional HMO authorization code from insurance desk.</small>
+                        </div>
+                    </div>
+
+                    {{-- Quick Preset Split Buttons --}}
+                    <div class="d-flex flex-wrap align-items-center gap-2 pt-2 border-top">
+                        <span class="text-muted small font-weight-bold mr-2">Quick Presets:</span>
+                        <button type="button" class="btn btn-xs btn-outline-secondary py-1 px-2" onclick="setBbfPreset('100_cash')">
+                            <i class="fa fa-user mr-1"></i>100% Patient Pay
+                        </button>
+                        <button type="button" class="btn btn-xs btn-outline-secondary py-1 px-2" id="bbf_preset_hmo_btn" onclick="setBbfPreset('100_hmo')">
+                            <i class="fa fa-shield-alt mr-1"></i>100% HMO Claims
+                        </button>
+                        <button type="button" class="btn btn-xs btn-outline-secondary py-1 px-2" id="bbf_preset_split_btn" onclick="setBbfPreset('50_50')">
+                            <i class="fa fa-columns mr-1"></i>50/50 Co-Pay
+                        </button>
+                    </div>
+                </div>
+
+                <div class="modal-footer bg-light" style="border-top: 1px solid #e9ecef; border-radius: 0 0 12px 12px; padding: 1rem 1.5rem;">
+                    <button type="button" class="btn btn-secondary px-4 py-2" data-bs-dismiss="modal" style="border-radius: 6px; font-weight: 600;">Cancel</button>
+                    <button type="submit" class="btn btn-primary px-4 py-2" id="bbf_submit_btn" style="border-radius: 6px; font-weight: 600; background: var(--proc-primary); border-color: var(--proc-primary);">
+                        <i class="fa fa-check mr-2"></i><span id="bbf_submit_text">Confirm &amp; Bill Base Fee</span>
+                    </button>
+                </div>
+            </form>
         </div>
     </div>
 </div>

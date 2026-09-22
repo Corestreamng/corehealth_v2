@@ -469,6 +469,10 @@ Route::group(['middleware' => ['auth']], function () {
             Route::post('{procedure}/cancel', [\App\Http\Controllers\PatientProcedureController::class, 'cancel'])->name('cancel');
             Route::get('{procedure}/print', [\App\Http\Controllers\PatientProcedureController::class, 'print'])->name('print');
 
+            // Custom Pricing & Base Fee Billing
+            Route::get('{procedure}/tariff-guide', [\App\Http\Controllers\PatientProcedureController::class, 'getTariffGuide'])->name('tariff-guide');
+            Route::post('{procedure}/bill-base-fee', [\App\Http\Controllers\PatientProcedureController::class, 'billBaseFee'])->name('bill-base-fee');
+
             // Items Management (Bundled Billing)
             Route::get('{procedure}/items', [\App\Http\Controllers\PatientProcedureController::class, 'getItems'])->name('items.index');
             Route::get("{procedure}/{patient}/pending-bills", [\App\Http\Controllers\PatientProcedureController::class, "getItems"])->name("items.pending");

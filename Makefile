@@ -36,11 +36,17 @@ test-coverage: ## Run tests with HTML coverage report
 	vendor/bin/phpunit --coverage-html storage/coverage
 
 ##@ Code Quality
-lint: ## Run PHP CS Fixer in dry-run mode (check only)
+check-js: ## Run node --check syntax check on all public/js files
+	@find public/js -maxdepth 1 -name "*.js" -exec node --check {} +
+	@echo "All JavaScript files passed node --check."
+
+lint: ## Run PHP CS Fixer (check only) and JS syntax check
 	tools/vendor/bin/php-cs-fixer fix --dry-run --diff --config=.php-cs-fixer.php
+	@find public/js -maxdepth 1 -name "*.js" -exec node --check {} +
 
 lint-fix: ## Run PHP CS Fixer and apply all fixes
 	tools/vendor/bin/php-cs-fixer fix --config=.php-cs-fixer.php
+	@find public/js -maxdepth 1 -name "*.js" -exec node --check {} +
 
 audit: ## Run composer and npm security audits
 	composer audit || true
