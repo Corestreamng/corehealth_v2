@@ -1,3 +1,14 @@
+:root {
+    --maternity-pink: #e91e8a;
+    --maternity-pink-rgb: 233, 30, 138;
+    --maternity-pink-hover: #d8157d;
+    --maternity-pink-dark: #ad1457;
+    --maternity-pink-light: #fce4ec;
+    --success: #28a745;
+    --warning: #ffc107;
+    --danger: #dc3545;
+    --info: #17a2b8;
+}
 
 
     /* ═══ SHARED: Main Layout (identical to nursing workbench) ═══ */
@@ -250,7 +261,7 @@
     /* ═══ SHARED: Patient Header ═══ */
     .patient-header {
         padding: 1.5rem;
-        background: linear-gradient(135deg, var(--hospital-primary, var(--primary-color, #011b33)), var(--primary-hover, var(--primary-color, #011b33)));
+        background: linear-gradient(135deg, var(--maternity-pink, #e91e8a), var(--maternity-pink-dark, #ad1457));
         color: white;
         display: none;
     }
@@ -662,7 +673,7 @@
         justify-content: space-between;
         align-items: center;
         padding: 0.75rem 1rem;
-        background: var(--maternity-pink);
+        background: var(--maternity-pink, #e91e8a);
         color: white;
     }
 
@@ -670,6 +681,7 @@
         margin: 0;
         font-size: 1rem;
         font-weight: 600;
+        color: white;
     }
 
     .btn-view-work-pane {
@@ -702,7 +714,7 @@
     .btn-back-to-search,
     .btn-toggle-search,
     .btn-clinical-context {
-        background: var(--maternity-pink);
+        background: var(--maternity-pink, #e91e8a);
         color: white;
         border: none;
         padding: 0.5rem 1rem;
@@ -716,7 +728,7 @@
     }
 
     .btn-clinical-context:hover:not(:disabled) {
-        background: #c4177a;
+        background: var(--maternity-pink-hover, #d8157d);
     }
 
     .btn-clinical-context:disabled {

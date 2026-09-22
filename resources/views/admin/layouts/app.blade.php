@@ -53,6 +53,11 @@
             --hospital-primary: {{ $primaryColor }};
             --hospital-primary-rgb: {{ $rgbColor }};
             --hospital-secondary: {{ appsettings()->hos_secondary_color ?? '#6c757d' }};
+            --maternity-pink: #e91e8a;
+            --maternity-pink-rgb: 233, 30, 138;
+            --maternity-pink-hover: #d8157d;
+            --maternity-pink-dark: #ad1457;
+            --maternity-pink-light: #fce4ec;
         }
 
         /* Paystack-inspired Clean Design */
