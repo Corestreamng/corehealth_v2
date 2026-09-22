@@ -1027,6 +1027,7 @@ if (typeof window.wbRoute !== 'function') {
 
     // setResViewInModal, PrintElem, getFileIcon now provided by invest_res_view_js partial
     function openStoreContextOverride() {
+        $('#ctx-override-error').addClass('d-none').text('');
         $('#storeContextOverrideModal').modal('show');
     }
 
@@ -1056,6 +1057,27 @@ if (typeof window.wbRoute !== 'function') {
             }
         });
     }
+
+    function clearStoreContextOverride() {
+        $('#ctx-override-error').addClass('d-none');
+        $('#ctx-override-clear-btn').prop('disabled', true).html('<i class="fas fa-spinner fa-spin me-1"></i> Resetting...');
+        $.ajax({
+            url: wbRoute('store-context.clear', '/store-context/clear'),
+            method: 'POST',
+            data: {
+                _token: (window.WORKBENCH_CONFIG?.csrf || $('meta[name="csrf-token"]').attr('content') || '')
+            },
+            success: function() {
+                window.location.reload();
+            },
+            error: function(xhr) {
+                const msg = xhr.responseJSON?.message ?? 'Failed to reset store context.';
+                $('#ctx-override-error').text(msg).removeClass('d-none');
+                $('#ctx-override-clear-btn').prop('disabled', false).html('<i class="fas fa-undo me-1"></i> Reset to Default');
+            }
+        });
+    }
+
 
     /* ══════════════════════════════════════════════════════════════
        PARTOGRAPH TAB — enrollment-level (pre & post delivery)
