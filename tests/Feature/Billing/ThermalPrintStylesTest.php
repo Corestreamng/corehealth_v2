@@ -213,4 +213,19 @@ class ThermalPrintStylesTest extends TestCase
         $this->assertStringContainsString('flex-wrap: wrap', $content);
         $this->assertStringContainsString('word-break: break-word', $content);
     }
+
+    /** @test */
+    public function test_services_rendered_view_supports_full_notes_and_full_labs_in_a4_and_thermal()
+    {
+        $viewPath = resource_path('views/admin/encounters/services_rendered.blade.php');
+        $content = file_get_contents($viewPath);
+
+        $this->assertStringContainsString('id="toggleFullNotes"', $content);
+        $this->assertStringContainsString('id="toggleFullLabs"', $content);
+        $this->assertStringContainsString('con-full-content', $content);
+        $this->assertStringContainsString('lab-full-content', $content);
+        $this->assertStringContainsString('showFullNotes', $content);
+        $this->assertStringContainsString('showFullLabs', $content);
+        $this->assertStringContainsString('syncFullContentToggles', $content);
+    }
 }

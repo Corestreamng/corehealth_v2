@@ -35,6 +35,8 @@
             #print-header { display:block !important; }
             body.thermal-mode .a4-only { display: none !important; }
             body.thermal-mode .thermal-only { display: block !important; }
+            .con-full-content, .lab-full-content { word-break: break-word !important; overflow-wrap: break-word !important; }
+            .con-full-content .bg-light, .lab-full-content .bg-light { background: transparent !important; }
 
             /* In-page thermal print mode resets */
             body.thermal-mode {
@@ -259,11 +261,11 @@
                         <input type="date" name="stop_at" class="form-control form-control-sm" style="max-width:160px;"
                             value="{{ Request::get('stop_at') }}" required>
                         <div class="custom-control custom-switch ml-2">
-                            <input type="checkbox" class="custom-control-input" id="toggleFullNotes">
+                            <input type="checkbox" class="custom-control-input" id="toggleFullNotes" name="full_notes" value="1" {{ Request::get('full_notes') ? 'checked' : '' }}>
                             <label class="custom-control-label" for="toggleFullNotes">Full Notes</label>
                         </div>
                         <div class="custom-control custom-switch ml-2">
-                            <input type="checkbox" class="custom-control-input" id="toggleFullLabs">
+                            <input type="checkbox" class="custom-control-input" id="toggleFullLabs" name="full_labs" value="1" {{ Request::get('full_labs') ? 'checked' : '' }}>
                             <label class="custom-control-label" for="toggleFullLabs">Full Labs</label>
                         </div>
                         <button type="submit" class="btn btn-primary btn-sm ml-2">
@@ -311,8 +313,8 @@
                                                         {!! \Illuminate\Support\Str::limit(strip_tags($con->notes), 150) !!}
                                                     </div>
                                                     <div class="con-full-content d-none">
-                                                        <div class="p-2 border rounded bg-light mb-1">
-                                                            {!! $con->notes !!}
+                                                        <div class="p-2 border rounded bg-light mb-1" style="word-break:break-word;">
+                                                            {!! \Illuminate\Support\Str::contains($con->notes, '<') ? $con->notes : nl2br(e($con->notes)) !!}
                                                         </div>
                                                     </div>
                                                 @else
@@ -331,9 +333,16 @@
                                         <strong>{{ $con->created_at?->format('d M y') }}</strong>
                                         <span>{{ $con->doctor && $con->doctor->staff_profile ? userfullname($con->doctor->staff_profile->user_id) : 'N/A' }}</span>
                                     </div>
-                                    <div class="mt-1" style="font-size:11px; word-break:break-word;">
-                                        {!! $con->notes ? \Illuminate\Support\Str::limit(strip_tags($con->notes), 120) : '<em>No notes</em>' !!}
-                                    </div>
+                                    @if($con->notes)
+                                        <div class="con-short-content mt-1" style="font-size:11px; word-break:break-word;">
+                                            {!! \Illuminate\Support\Str::limit(strip_tags($con->notes), 120) !!}
+                                        </div>
+                                        <div class="con-full-content d-none mt-1" style="font-size:11px; word-break:break-word;">
+                                            {!! \Illuminate\Support\Str::contains($con->notes, '<') ? $con->notes : nl2br(e($con->notes)) !!}
+                                        </div>
+                                    @else
+                                        <div class="mt-1" style="font-size:11px;"><em>No notes</em></div>
+                                    @endif
                                 </div>
                             @endforeach
                         </div>
@@ -424,8 +433,8 @@
                                                         {!! \Illuminate\Support\Str::limit(strip_tags($la->result), 100) !!}
                                                     </div>
                                                     <div class="lab-full-content d-none">
-                                                        <div class="p-2 border rounded bg-light mb-1">
-                                                            {!! $la->result !!}
+                                                        <div class="p-2 border rounded bg-light mb-1" style="word-break:break-word;">
+                                                            {!! \Illuminate\Support\Str::contains($la->result, '<') ? $la->result : nl2br(e($la->result)) !!}
                                                         </div>
                                                     </div>
                                                 @else
@@ -451,9 +460,12 @@
                                         <span>[{{ $labLabels[$labSt] ?? 'N/A' }}]</span>
                                     </div>
                                     @if($la->result)
-                                    <div class="mt-1" style="font-size:11px; word-break:break-word;">
-                                        <em>Res:</em> {{ \Illuminate\Support\Str::limit(strip_tags($la->result), 120) }}
-                                    </div>
+                                        <div class="lab-short-content mt-1" style="font-size:11px; word-break:break-word;">
+                                            <em>Res:</em> {{ \Illuminate\Support\Str::limit(strip_tags($la->result), 120) }}
+                                        </div>
+                                        <div class="lab-full-content d-none mt-1" style="font-size:11px; word-break:break-word;">
+                                            <em>Res:</em> {!! \Illuminate\Support\Str::contains($la->result, '<') ? $la->result : nl2br(e($la->result)) !!}
+                                        </div>
                                     @endif
                                     <div class="thermal-row mt-1" style="font-size:11px;">
                                         <span>{{ $la->created_at?->format('d M y') }}</span>
@@ -583,10 +595,30 @@
         const $container = $('.sr-container');
         if (!$container.length) return;
 
+        const showFullNotes = $('#toggleFullNotes').is(':checked');
+        const showFullLabs = $('#toggleFullLabs').is(':checked');
+
         const $clone = $container.clone();
         $clone.find('.no-print, .filter-bar, .a4-only, .btn').remove();
         $clone.find('#print-header').show().css('display', 'block');
         $clone.find('.thermal-only').show().css('display', 'block');
+
+        // Apply Full Notes / Full Labs visibility to the cloned thermal document
+        if (showFullNotes) {
+            $clone.find('.con-short-content').remove();
+            $clone.find('.con-full-content').removeClass('d-none').show();
+        } else {
+            $clone.find('.con-full-content').remove();
+            $clone.find('.con-short-content').removeClass('d-none').show();
+        }
+
+        if (showFullLabs) {
+            $clone.find('.lab-short-content').remove();
+            $clone.find('.lab-full-content').removeClass('d-none').show();
+        } else {
+            $clone.find('.lab-full-content').remove();
+            $clone.find('.lab-short-content').removeClass('d-none').show();
+        }
 
         const printWindow = window.open('', '_blank', 'height=700,width=450');
         if (!printWindow) {
@@ -682,6 +714,18 @@
             overflow-wrap: break-word;
             white-space: normal;
         }
+        .con-full-content, .lab-full-content {
+            font-size: 11px !important;
+            word-break: break-word !important;
+            overflow-wrap: break-word !important;
+            white-space: normal !important;
+        }
+        .con-full-content *, .lab-full-content * {
+            font-size: 11px !important;
+            word-break: break-word !important;
+            overflow-wrap: break-word !important;
+        }
+        .d-none { display: none !important; }
         .thermal-item, .thermal-item *, .thermal-row, .thermal-row * {
             font-size: 11px !important;
         }
@@ -718,25 +762,29 @@
             printThermalServicesRendered();
         });
 
-        $('#toggleFullNotes').on('change', function() {
-            if ($(this).is(':checked')) {
+        function syncFullContentToggles() {
+            const showFullNotes = $('#toggleFullNotes').is(':checked');
+            const showFullLabs = $('#toggleFullLabs').is(':checked');
+
+            if (showFullNotes) {
                 $('.con-short-content').addClass('d-none');
                 $('.con-full-content').removeClass('d-none');
             } else {
                 $('.con-full-content').addClass('d-none');
                 $('.con-short-content').removeClass('d-none');
             }
-        });
 
-        $('#toggleFullLabs').on('change', function() {
-            if ($(this).is(':checked')) {
+            if (showFullLabs) {
                 $('.lab-short-content').addClass('d-none');
                 $('.lab-full-content').removeClass('d-none');
             } else {
                 $('.lab-full-content').addClass('d-none');
                 $('.lab-short-content').removeClass('d-none');
             }
-        });
+        }
+
+        $('#toggleFullNotes, #toggleFullLabs').on('change', syncFullContentToggles);
+        syncFullContentToggles();
     });
 </script>
 @endsection
