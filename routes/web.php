@@ -624,10 +624,13 @@ Route::group(['middleware' => ['auth']], function () {
         Route::get('/pharmacy/returns/create', [\App\Http\Controllers\PharmacyReturnsController::class, 'create'])->name('pharmacy.returns.create');
         Route::post('/pharmacy/returns', [\App\Http\Controllers\PharmacyReturnsController::class, 'store'])->name('pharmacy.returns.store');
         Route::post('/pharmacy/returns/store', [\App\Http\Controllers\PharmacyReturnsController::class, 'store']);
+        Route::post('/pharmacy/returns/bulk-store', [\App\Http\Controllers\PharmacyReturnsController::class, 'bulkStore'])->name('pharmacy.returns.bulk-store');
         Route::get('/pharmacy/returns/{id}', [\App\Http\Controllers\PharmacyReturnsController::class, 'show'])->name('pharmacy.returns.show');
         Route::post('/pharmacy/returns/{id}/approve', [\App\Http\Controllers\PharmacyReturnsController::class, 'approve'])->name('pharmacy.returns.approve');
         Route::post('/pharmacy/returns/{id}/reject', [\App\Http\Controllers\PharmacyReturnsController::class, 'reject'])->name('pharmacy.returns.reject');
         Route::post('/pharmacy/returns/{id}/process-refund', [\App\Http\Controllers\PharmacyReturnsController::class, 'processRefund'])->name('pharmacy.returns.process-refund');
+        Route::post('/pharmacy/returns/bulk-approve', [\App\Http\Controllers\PharmacyReturnsController::class, 'bulkApprove'])->name('pharmacy.returns.bulk-approve');
+        Route::post('/pharmacy/returns/bulk-reject', [\App\Http\Controllers\PharmacyReturnsController::class, 'bulkReject'])->name('pharmacy.returns.bulk-reject');
 
         // Pharmacy Damages Management Routes
         Route::get('/pharmacy/damages', [\App\Http\Controllers\PharmacyDamagesController::class, 'index'])->name('pharmacy.damages.index');

@@ -13,7 +13,13 @@ window.WORKBENCH_CONFIG = {
     baseUrl: '{{ url("/") }}',
     routes: {
         'pharmacy.queue-counts': '{{ route("pharmacy.queue-counts") }}',
-        'pharmacy.dispense-free-form': '{{ route("pharmacy.dispense-free-form") }}'
+        'pharmacy.dispense-free-form': '{{ route("pharmacy.dispense-free-form") }}',
+        'pharmacy.returns.index': '{{ route("pharmacy.returns.index") }}',
+        'pharmacy.returns.datatables': '{{ route("pharmacy.returns.datatables") }}',
+        'pharmacy.returns.search-dispensed': '{{ route("pharmacy.returns.search-dispensed") }}',
+        'pharmacy.returns.bulk-store': '{{ route("pharmacy.returns.bulk-store") }}',
+        'pharmacy.returns.bulk-approve': '{{ route("pharmacy.returns.bulk-approve") }}',
+        'pharmacy.returns.bulk-reject': '{{ route("pharmacy.returns.bulk-reject") }}'
     }
 };
 </script>
