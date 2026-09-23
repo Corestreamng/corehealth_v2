@@ -3015,6 +3015,13 @@ class NursingWorkbenchController extends Controller
      */
     public function saveNursingNote(Request $request)
     {
+        if (!$request->filled('note_type_id')) {
+            $defaultType = NursingNoteType::where('id', 5)->first() ?? NursingNoteType::first();
+            if ($defaultType) {
+                $request->merge(['note_type_id' => $defaultType->id]);
+            }
+        }
+
         $validator = Validator::make($request->all(), [
             'patient_id' => 'required|exists:patients,id',
             'note_type_id' => 'required|exists:nursing_note_types,id',

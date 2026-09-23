@@ -1664,15 +1664,15 @@ function initNursingNoteCKEditor() {
         noteTypeId: 5,
         csrfToken: (window.WORKBENCH_CONFIG?.csrf || $('meta[name="csrf-token"]').attr('content')),
         getSaveUrl: function(patientId) {
-            return wbRoute('nursing-workbench.notes.store', '/nursing-workbench/notes/store');
+            return wbRoute('nursing-workbench.notes.store', '/nursing-workbench/nursing-note');
         },
         getPatientId: function() {
-            return currentPatient;
+            return currentPatient || window.currentPatientId;
         },
         onSaveSuccess: function() {
             // Switch to history tab to see the new note
             $('#notes-history-tab-link').tab('show');
-            loadNotesHistory(currentPatient);
+            loadNotesHistory(currentPatient || window.currentPatientId);
         }
     });
     
@@ -1695,13 +1695,17 @@ setTimeout(initNursingNoteCKEditor, 1000);
 function loadNotesHistory(patientId) {
     if (!patientId) return;
 
+    var notesUrl = (typeof wbUrl === 'function') 
+        ? wbUrl('/nursing-workbench/patient/' + patientId + '/nursing-notes')
+        : `/nursing-workbench/patient/${patientId}/nursing-notes`;
+
     if ($.fn.DataTable.isDataTable('#nursing-notes-table')) {
-        $('#nursing-notes-table').DataTable().ajax.url(`/nursing-workbench/patient/${patientId}/nursing-notes`).load();
+        $('#nursing-notes-table').DataTable().ajax.url(notesUrl).load();
     } else {
         $('#nursing-notes-table').DataTable({
             processing: true,
             serverSide: true,
-            ajax: `/nursing-workbench/patient/${patientId}/nursing-notes`,
+            ajax: notesUrl,
             columns: [
                 { data: 'info', name: 'info', orderable: false, searchable: false }
             ],

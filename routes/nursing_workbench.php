@@ -89,6 +89,7 @@ Route::middleware(['web', 'auth'])->prefix('nursing-workbench')->name('nursing-w
     Route::get('/nursing-note/{noteId}', [NursingWorkbenchController::class, 'getNoteDetails'])->name('notes.show');
     Route::get('/note-types', [NursingWorkbenchController::class, 'getNoteTypes'])->name('note-types');
     Route::post('/nursing-note', [NursingWorkbenchController::class, 'saveNursingNote'])->name('notes.store');
+    Route::post('/notes/store', [NursingWorkbenchController::class, 'saveNursingNote'])->name('notes.store-alias');
     Route::put('/nursing-note/{noteId}', [NursingWorkbenchController::class, 'updateNursingNote'])->name('notes.update');
 
     // =====================================

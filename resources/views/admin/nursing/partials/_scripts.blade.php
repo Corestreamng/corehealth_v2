@@ -13,7 +13,13 @@ window.WORKBENCH_CONFIG = {
         'nursing-workbench.admitted-patients': '{{ route("nursing-workbench.admitted-patients") }}',
         'nursing-workbench.vitals-queue': '{{ route("nursing-workbench.vitals-queue") }}',
         'nursing-workbench.bed-requests-queue': '{{ route("nursing-workbench.bed-requests-queue") }}',
-        'nursing-workbench.discharge-queue': '{{ route("nursing-workbench.discharge-queue") }}'
+        'nursing-workbench.discharge-queue': '{{ route("nursing-workbench.discharge-queue") }}',
+        'nursing-workbench.notes.store': '{{ route("nursing-workbench.notes.store") }}',
+        'nursing-workbench.notes.list': '{{ url("nursing-workbench/patient") }}',
+        'nursing-workbench.injection.administer': '{{ route("nursing-workbench.injection.administer") }}',
+        'nursing-workbench.immunization.administer': '{{ route("nursing-workbench.immunization.administer") }}',
+        'nursing-workbench.search-products': '{{ route("nursing-workbench.search-products") }}',
+        'nursing-workbench.product-batches': '{{ route("nursing-workbench.product-batches") }}'
     }
 };
 window.BILLING_KIT_CONFIG = {
