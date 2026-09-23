@@ -361,6 +361,8 @@ class PharmacyDamagesController extends Controller
             $query->where('discovered_date', '<=', $request->date_to);
         }
 
+        $query->orderBy('created_at', 'desc')->orderBy('id', 'desc');
+
         return DataTables::eloquent($query)
             ->addIndexColumn()
             ->addColumn('product_name', function ($damage) {
