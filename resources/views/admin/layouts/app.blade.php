@@ -69,6 +69,26 @@
             overflow-x: hidden;
         }
 
+        /* Master Print Styles — Prevent desktop shell from interfering with printouts */
+        @media print {
+            .ch-sidebar, .sidebar, .navbar, footer, .footer, .no-print {
+                display: none !important;
+            }
+            .container-scroller, .page-body-wrapper, .main-panel, .content-wrapper {
+                display: block !important;
+                position: static !important;
+                width: 100% !important;
+                max-width: 100% !important;
+                min-width: 0 !important;
+                margin: 0 !important;
+                padding: 0 !important;
+                border: 0 !important;
+                box-shadow: none !important;
+                overflow: visible !important;
+                background: transparent !important;
+            }
+        }
+
         .container-scroller {
             display: flex;
             min-height: 100vh;

@@ -474,24 +474,39 @@ if (typeof window.wbRoute !== 'function') {
 
     function printReceiptContent(elementId) {
         const content = $(`#${elementId}`).html();
-        const printWindow = window.open('', '', 'height=600,width=800');
-        printWindow.document.write('<html><head><title>Receipt</title>');
-        printWindow.document.write('<style>');
-        printWindow.document.write('body { font-family: Arial, sans-serif; padding: 20px; margin: 0; }');
-        printWindow.document.write('table { width: 100%; border-collapse: collapse; }');
-        printWindow.document.write('th, td { padding: 8px; text-align: left; border-bottom: 1px solid #ddd; }');
-        printWindow.document.write('.text-center { text-align: center; }');
-        printWindow.document.write('.text-right { text-align: right; }');
-        printWindow.document.write('.font-weight-bold { font-weight: bold; }');
-        printWindow.document.write('@media print { body { padding: 0; } }');
-        printWindow.document.write('</style>');
-        printWindow.document.write('</head><body>');
-        printWindow.document.write(content);
-        printWindow.document.write('</body></html>');
+        if (!content || !content.trim()) return;
+
+        const printWindow = window.open('', '', 'height=600,width=480');
+        if (!printWindow) {
+            toastr.warning('Please allow popups to print receipt');
+            return;
+        }
+
+        printWindow.document.open();
+        if (content.indexOf('<!DOCTYPE') !== -1 || content.indexOf('<html') !== -1) {
+            printWindow.document.write(content);
+        } else {
+            printWindow.document.write('<!DOCTYPE html><html><head><title>Receipt</title>');
+            printWindow.document.write('<style>');
+            printWindow.document.write('* { box-sizing: border-box; }');
+            printWindow.document.write('@page { margin: 0; size: auto; }');
+            printWindow.document.write('html, body { font-family: "Consolas", "Liberation Mono", monospace, Arial, sans-serif; padding: 2mm 3mm; margin: 0; width: 100%; }');
+            printWindow.document.write('table { width: 100%; border-collapse: collapse; }');
+            printWindow.document.write('th, td { padding: 6px 8px; text-align: left; border-bottom: 1px solid #ddd; }');
+            printWindow.document.write('.text-center { text-align: center; }');
+            printWindow.document.write('.text-right { text-align: right; }');
+            printWindow.document.write('.font-weight-bold { font-weight: bold; }');
+            printWindow.document.write('@media print { body { padding: 2mm 3mm !important; margin: 0 !important; width: 100% !important; } }');
+            printWindow.document.write('</style>');
+            printWindow.document.write('</head><body>');
+            printWindow.document.write(content);
+            printWindow.document.write('</body></html>');
+        }
         printWindow.document.close();
         printWindow.focus();
         setTimeout(() => {
             printWindow.print();
+            setTimeout(() => { printWindow.close(); }, 500);
         }, 250);
     }
 
@@ -679,29 +694,44 @@ if (typeof window.wbRoute !== 'function') {
 
     function printStatementContent(elementId) {
         const content = $(`#${elementId}`).html();
-        const printWindow = window.open('', '', 'height=700,width=900');
-        printWindow.document.write('<html><head><title>Account Statement</title>');
-        printWindow.document.write('<style>');
-        printWindow.document.write('body { font-family: Arial, sans-serif; padding: 15px; margin: 0; font-size: 12px; }');
-        printWindow.document.write('table { width: 100%; border-collapse: collapse; }');
-        printWindow.document.write('th, td { padding: 6px 8px; text-align: left; border-bottom: 1px solid #ddd; }');
-        printWindow.document.write('th { background: #f5f5f5; font-weight: bold; }');
-        printWindow.document.write('.text-center { text-align: center; }');
-        printWindow.document.write('.text-right { text-align: right; }');
-        printWindow.document.write('.font-weight-bold { font-weight: bold; }');
-        printWindow.document.write('.summary-card { display: inline-block; padding: 10px; margin: 5px; border: 1px solid #ddd; border-radius: 5px; }');
-        printWindow.document.write('.type-badge { padding: 2px 6px; border-radius: 3px; font-size: 10px; }');
-        printWindow.document.write('.credit { color: #28a745; }');
-        printWindow.document.write('.debit { color: #dc3545; }');
-        printWindow.document.write('@media print { body { padding: 5px; } @page { margin: 0.5cm; } }');
-        printWindow.document.write('</style>');
-        printWindow.document.write('</head><body>');
-        printWindow.document.write(content);
-        printWindow.document.write('</body></html>');
+        if (!content || !content.trim()) return;
+
+        const printWindow = window.open('', '', 'height=700,width=480');
+        if (!printWindow) {
+            toastr.warning('Please allow popups to print statement');
+            return;
+        }
+
+        printWindow.document.open();
+        if (content.indexOf('<!DOCTYPE') !== -1 || content.indexOf('<html') !== -1) {
+            printWindow.document.write(content);
+        } else {
+            printWindow.document.write('<!DOCTYPE html><html><head><title>Account Statement</title>');
+            printWindow.document.write('<style>');
+            printWindow.document.write('* { box-sizing: border-box; }');
+            printWindow.document.write('@page { margin: 0; size: auto; }');
+            printWindow.document.write('html, body { font-family: "Consolas", "Liberation Mono", monospace, Arial, sans-serif; padding: 2mm 3mm; margin: 0; font-size: 11px; width: 100%; }');
+            printWindow.document.write('table { width: 100%; border-collapse: collapse; }');
+            printWindow.document.write('th, td { padding: 6px 8px; text-align: left; border-bottom: 1px solid #ddd; }');
+            printWindow.document.write('th { background: #f5f5f5; font-weight: bold; }');
+            printWindow.document.write('.text-center { text-align: center; }');
+            printWindow.document.write('.text-right { text-align: right; }');
+            printWindow.document.write('.font-weight-bold { font-weight: bold; }');
+            printWindow.document.write('.summary-card { display: inline-block; padding: 8px; margin: 4px; border: 1px solid #ddd; border-radius: 4px; }');
+            printWindow.document.write('.type-badge { padding: 2px 6px; border-radius: 3px; font-size: 10px; }');
+            printWindow.document.write('.credit { color: #28a745; }');
+            printWindow.document.write('.debit { color: #dc3545; }');
+            printWindow.document.write('@media print { body { padding: 2mm 3mm !important; margin: 0 !important; width: 100% !important; } }');
+            printWindow.document.write('</style>');
+            printWindow.document.write('</head><body>');
+            printWindow.document.write(content);
+            printWindow.document.write('</body></html>');
+        }
         printWindow.document.close();
         printWindow.focus();
         setTimeout(() => {
             printWindow.print();
+            setTimeout(() => { printWindow.close(); }, 500);
         }, 300);
     }
 

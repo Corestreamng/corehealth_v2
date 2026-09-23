@@ -11,8 +11,8 @@
             --success: #28a745;
         }
         * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { margin: 0; padding: 0; }
-        .receipt-thermal { font-family: 'Consolas', 'Liberation Mono', 'DejaVu Sans Mono', monospace; font-size: 10px; width: {{ $thermalWidth ?? getThermalPrinterWidth() }}; margin: 0; padding: 0; color: var(--ink); }
+        body { margin: 0; padding: 0; width: 100%; }
+        .receipt-thermal { font-family: 'Consolas', 'Liberation Mono', 'DejaVu Sans Mono', monospace; font-size: 10px; max-width: {{ $thermalWidth ?? getThermalPrinterWidth() }}; width: 100%; margin: 0 auto; padding: 0; color: var(--ink); box-sizing: border-box; }
         .receipt-thermal .wrap { padding: 7px 7px 10px; }
         .receipt-thermal .receipt-header { text-align: center; margin-bottom: 8px; }
         .receipt-thermal .receipt-header img { width: 96px; height: auto; }
@@ -32,10 +32,10 @@
         .receipt-thermal .footer { margin-top: 8px; text-align: center; font-size: 8px; color: var(--muted); line-height: 1.7; }
         .receipt-thermal .footer .barcode { font-family: 'Libre Barcode 39', monospace; font-size: 18px; letter-spacing: -2px; }
         @media print {
-            @page { size: {{ $thermalWidth ?? getThermalPrinterWidth() }} auto; margin: 0; }
-            body { margin: 0; }
-            .receipt-thermal { width: {{ $thermalWidth ?? getThermalPrinterWidth() }}; margin: 0; padding: 0; }
-            .receipt-thermal .wrap { padding: 5px 5px 8px; }
+            @page { margin: 0; size: auto; }
+            html, body { margin: 0 !important; padding: 0 !important; width: 100% !important; background: #fff !important; }
+            .receipt-thermal { width: 100% !important; max-width: 100% !important; min-width: 100% !important; margin: 0 !important; padding: 0 !important; }
+            .receipt-thermal .wrap { padding: 2mm 3mm 4mm !important; width: 100% !important; box-sizing: border-box !important; }
         }
     </style>
 </head>

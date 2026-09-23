@@ -5,14 +5,18 @@
     <title>Invoice (Thermal)</title>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { margin: 0; padding: 0; width: 100%; }
         .invoice-thermal {
             font-family: 'Consolas', 'Liberation Mono', 'DejaVu Sans Mono', monospace;
             font-size: 10px;
             color: #000;
             background: #fff;
-            width: {{ $thermalWidth ?? getThermalPrinterWidth() }};
+            max-width: {{ $thermalWidth ?? getThermalPrinterWidth() }};
+            width: 100%;
+            margin: 0 auto;
             padding: 7px;
             line-height: 1.4;
+            box-sizing: border-box;
         }
         .invoice-thermal .header { text-align: center; border-bottom: 2px solid #000; padding-bottom: 8px; margin-bottom: 8px; }
         .invoice-thermal .header img { width: 96px; height: auto; margin-bottom: 5px; }
@@ -42,9 +46,9 @@
         .invoice-thermal .footer { text-align: center; font-size: 8px; color: #000; margin-top: 12px; border-top: 1px dashed #000; padding-top: 8px; line-height: 1.7; }
         .invoice-thermal .warning-note { background: #fef3c7; padding: 8px; font-size: 8px; text-align: center; margin-top: 8px; border: 1px solid #f59e0b; line-height: 1.5; }
         @media print {
-            @page { size: {{ $thermalWidth ?? getThermalPrinterWidth() }} auto; margin: 0; }
-            body { margin: 0; }
-            .invoice-thermal { width: {{ $thermalWidth ?? getThermalPrinterWidth() }}; padding: 5px; }
+            @page { margin: 0; size: auto; }
+            html, body { margin: 0 !important; padding: 0 !important; width: 100% !important; background: #fff !important; }
+            .invoice-thermal { width: 100% !important; max-width: 100% !important; min-width: 100% !important; margin: 0 !important; padding: 2mm 3mm 4mm !important; box-sizing: border-box !important; }
         }
     </style>
 </head>
