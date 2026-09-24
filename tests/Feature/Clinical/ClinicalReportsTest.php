@@ -86,4 +86,35 @@ class ClinicalReportsTest extends TestCase
         $this->assertIsArray($drillData);
         $this->assertCount(3, $drillData);
     }
+
+    /** @test */
+    public function test_export_diagnosis_generates_csv_with_filters_and_encounters()
+    {
+        $user = User::first() ?? User::factory()->create(['status' => 1]);
+        $p1 = \App\Models\Patient::first();
+        $uniqTag = 'ExportDiagTest_' . uniqid();
+
+        $e = \App\Models\Encounter::create([
+            'patient_id' => $p1->id,
+            'doctor_id' => $user->id,
+            'reasons_for_encounter' => json_encode([['name' => $uniqTag, 'code' => 'CUSTOM', 'comment_1' => 'CONFIRMED', 'comment_2' => 'ACUTE']]),
+            'notes' => 'Clinical note for ' . $uniqTag,
+            'completed' => true,
+        ]);
+
+        $response = $this->actingAs($user)->get('/clinical-reports/export?tab=diagnosis&keyword=' . urlencode($uniqTag) . '&date_from=' . now()->subDay()->toDateString() . '&date_to=' . now()->addDay()->toDateString());
+
+        $this->assertEquals(200, $response->getStatusCode());
+        $this->assertStringContainsString('text/csv', $response->headers->get('Content-Type'));
+        $this->assertStringContainsString('attachment;', $response->headers->get('Content-Disposition'));
+
+        ob_start();
+        $response->sendContent();
+        $content = ob_get_clean();
+
+        $this->assertStringContainsString('REPORT FILTERS & METADATA', $content);
+        $this->assertStringContainsString($uniqTag, $content);
+        $this->assertStringContainsString('DIAGNOSIS SUMMARY', $content);
+        $this->assertStringContainsString('DETAILED ENCOUNTER RECORDS', $content);
+    }
 }

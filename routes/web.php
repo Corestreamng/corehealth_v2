@@ -1234,6 +1234,7 @@ Route::middleware(['auth'])->prefix('clinical-reports')->name('clinical-reports.
     Route::get('/search-diagnosis', [\App\Http\Controllers\ClinicalReportsController::class, 'searchDiagnosis'])->name('search-diagnosis');
     Route::get('/encounter-details/{id}', [\App\Http\Controllers\ClinicalReportsController::class, 'getEncounterDrillDown'])->name('encounter-details');
     Route::get('/drill-down', [\App\Http\Controllers\ClinicalReportsController::class, 'getDrillDownDetails'])->name('drill-down');
+    Route::get('/export', [\App\Http\Controllers\ClinicalReportsController::class, 'export'])->name('export');
     Route::get('/unit-visits', [\App\Http\Controllers\ClinicalReportsController::class, 'getUnitVisits'])->name('unit-visits');
     Route::get('/hmo-trends', [\App\Http\Controllers\ClinicalReportsController::class, 'getHmoTrends'])->name('hmo-trends');
     Route::get('/maternity', [\App\Http\Controllers\ClinicalReportsController::class, 'getMaternityReport'])->name('maternity');

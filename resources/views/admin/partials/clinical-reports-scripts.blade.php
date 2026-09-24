@@ -730,6 +730,20 @@
             crApplyQuickRange('month');
         });
 
+        // Export button beside filters
+        $('#cr-export-btn').on('click', function () {
+            var activeTab = $('#cr-sub-tabs .nav-link.active').attr('href') || '#cr-diagnosis';
+            var tabKey = activeTab.replace('#cr-', '');
+            var params = getCrFilters();
+
+            if (tabKey === 'diagnosis') {
+                params.keyword = $.trim($('#cr-diagnosis-keyword').val());
+            }
+
+            params.tab = tabKey;
+            window.location.href = '{{ route("clinical-reports.export") }}?' + $.param(params);
+        });
+
         // Sub-tab shown events
         $('#cr-sub-tabs a[data-toggle="tab"]').on('shown.bs.tab', function (e) {
             crDispatchLoad($(e.target).attr('href'));
@@ -824,7 +838,7 @@
             case '#cr-overview'    : loadCrOverview();      break;
             case '#cr-unit-visits' : loadCrUnitVisits();    break;
             case '#cr-hmo-trends'  : loadCrHmoTrends();     break;
-            case '#cr-diagnosis'   : /* search on demand */  break;
+            case '#cr-diagnosis'   : if ($.trim($('#cr-diagnosis-keyword').val()).length >= 2) { loadCrDiagnosis(); } break;
             case '#cr-maternity'   : loadCrMaternity('enrollments'); break;
             case '#cr-mortality'   : loadCrMortality();     break;
             case '#cr-surgeries'   : loadCrSurgeries();     break;
