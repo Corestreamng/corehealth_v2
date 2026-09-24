@@ -117,4 +117,71 @@ class ClinicalReportsTest extends TestCase
         $this->assertStringContainsString('DIAGNOSIS SUMMARY', $content);
         $this->assertStringContainsString('DETAILED ENCOUNTER RECORDS', $content);
     }
+
+    /** @test */
+    public function test_encounter_drill_down_returns_resolved_item_names_and_status_labels()
+    {
+        $user = User::first() ?? User::factory()->create(['status' => 1]);
+        $patient = \App\Models\Patient::first();
+
+        $product = \App\Models\Product::first();
+        $service = \App\Models\Service::first();
+
+        $enc = \App\Models\Encounter::create([
+            'patient_id' => $patient->id,
+            'doctor_id' => $user->id,
+            'reasons_for_encounter' => json_encode([['name' => 'Test Malaria', 'code' => 'B54']]),
+            'notes' => 'Testing encounter breakdown',
+            'completed' => true,
+        ]);
+
+        if ($product) {
+            \App\Models\ProductRequest::create([
+                'encounter_id' => $enc->id,
+                'patient_id' => $patient->id,
+                'doctor_id' => $user->id,
+                'product_id' => $product->id,
+                'dose' => '1 tab daily',
+                'qty' => 10,
+                'status' => 1,
+            ]);
+        }
+
+        if ($service) {
+            \App\Models\LabServiceRequest::create([
+                'encounter_id' => $enc->id,
+                'patient_id' => $patient->id,
+                'doctor_id' => $user->id,
+                'service_id' => $service->id,
+                'status' => 4,
+                'result' => 'Negative',
+            ]);
+        }
+
+        $response = $this->actingAs($user)->get('/clinical-reports/encounter-details/' . $enc->id);
+
+        $this->assertEquals(200, $response->getStatusCode());
+        $data = $response->json();
+
+        $this->assertArrayHasKey('encounter', $data);
+        $this->assertArrayHasKey('notes', $data);
+        $this->assertArrayHasKey('prescriptions', $data);
+        $this->assertArrayHasKey('labs', $data);
+        $this->assertArrayHasKey('imaging', $data);
+        $this->assertArrayHasKey('procedures', $data);
+
+        $this->assertNotEmpty($data['encounter']['patient_name']);
+
+        if ($product && count($data['prescriptions']) > 0) {
+            $this->assertEquals($product->product_name, $data['prescriptions'][0]['item_name']);
+            $this->assertEquals('Unbilled', $data['prescriptions'][0]['status_label']);
+            $this->assertNotEmpty($data['prescriptions'][0]['status_badge']);
+        }
+
+        if ($service && count($data['labs']) > 0) {
+            $this->assertEquals($service->service_name, $data['labs'][0]['item_name']);
+            $this->assertEquals('Completed', $data['labs'][0]['status_label']);
+            $this->assertNotEmpty($data['labs'][0]['status_badge']);
+        }
+    }
 }

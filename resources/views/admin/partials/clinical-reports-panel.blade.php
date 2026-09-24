@@ -67,52 +67,52 @@
                  ================================================================ --}}
             <ul class="nav nav-tabs nav-tabs-sm border-bottom" id="cr-sub-tabs" role="tablist">
                 <li class="nav-item">
-                    <a class="nav-link active" id="cr-tab-overview" data-toggle="tab" href="#cr-overview" role="tab">
+                    <a class="nav-link active" id="cr-tab-overview" data-bs-toggle="tab" data-toggle="tab" data-bs-target="#cr-overview" href="#cr-overview" role="tab">
                         <i class="mdi mdi-view-dashboard-outline"></i> Overview
                     </a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" id="cr-tab-unit-visits" data-toggle="tab" href="#cr-unit-visits" role="tab">
+                    <a class="nav-link" id="cr-tab-unit-visits" data-bs-toggle="tab" data-toggle="tab" data-bs-target="#cr-unit-visits" href="#cr-unit-visits" role="tab">
                         <i class="mdi mdi-hospital-building"></i> Unit Visits
                     </a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" id="cr-tab-hmo-trends" data-toggle="tab" href="#cr-hmo-trends" role="tab">
+                    <a class="nav-link" id="cr-tab-hmo-trends" data-bs-toggle="tab" data-toggle="tab" data-bs-target="#cr-hmo-trends" href="#cr-hmo-trends" role="tab">
                         <i class="mdi mdi-trending-up"></i> HMO Trends
                     </a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" id="cr-tab-diagnosis" data-toggle="tab" href="#cr-diagnosis" role="tab">
+                    <a class="nav-link" id="cr-tab-diagnosis" data-bs-toggle="tab" data-toggle="tab" data-bs-target="#cr-diagnosis" href="#cr-diagnosis" role="tab">
                         <i class="mdi mdi-magnify"></i> Diagnosis Search
                     </a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" id="cr-tab-maternity" data-toggle="tab" href="#cr-maternity" role="tab">
+                    <a class="nav-link" id="cr-tab-maternity" data-bs-toggle="tab" data-toggle="tab" data-bs-target="#cr-maternity" href="#cr-maternity" role="tab">
                         <i class="mdi mdi-baby-carriage"></i> Maternity
                     </a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" id="cr-tab-mortality" data-toggle="tab" href="#cr-mortality" role="tab">
+                    <a class="nav-link" id="cr-tab-mortality" data-bs-toggle="tab" data-toggle="tab" data-bs-target="#cr-mortality" href="#cr-mortality" role="tab">
                         <i class="mdi mdi-pulse"></i> Mortality
                     </a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" id="cr-tab-surgeries" data-toggle="tab" href="#cr-surgeries" role="tab">
+                    <a class="nav-link" id="cr-tab-surgeries" data-bs-toggle="tab" data-toggle="tab" data-bs-target="#cr-surgeries" href="#cr-surgeries" role="tab">
                         <i class="mdi mdi-medical-bag"></i> Surgeries
                     </a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" id="cr-tab-vaccinations" data-toggle="tab" href="#cr-vaccinations" role="tab">
+                    <a class="nav-link" id="cr-tab-vaccinations" data-bs-toggle="tab" data-toggle="tab" data-bs-target="#cr-vaccinations" href="#cr-vaccinations" role="tab">
                         <i class="mdi mdi-needle"></i> Vaccinations
                     </a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" id="cr-tab-referrals" data-toggle="tab" href="#cr-referrals" role="tab">
+                    <a class="nav-link" id="cr-tab-referrals" data-bs-toggle="tab" data-toggle="tab" data-bs-target="#cr-referrals" href="#cr-referrals" role="tab">
                         <i class="mdi mdi-share-variant"></i> Referrals
                     </a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" id="cr-tab-occupancy" data-toggle="tab" href="#cr-occupancy" role="tab">
+                    <a class="nav-link" id="cr-tab-occupancy" data-bs-toggle="tab" data-toggle="tab" data-bs-target="#cr-occupancy" href="#cr-occupancy" role="tab">
                         <i class="mdi mdi-bed"></i> Ward Occupancy
                     </a>
                 </li>
@@ -241,11 +241,11 @@
                     </div>
                     {{-- Maternity Sub-Sub-Tabs --}}
                     <ul class="nav nav-pills nav-pills-sm mb-2" id="cr-mat-sub-tabs" role="tablist">
-                        <li class="nav-item"><a class="nav-link active small" data-toggle="tab" href="#cr-mat-enrollments">Enrollments</a></li>
-                        <li class="nav-item"><a class="nav-link small" data-toggle="tab" href="#cr-mat-anc">ANC Visits</a></li>
-                        <li class="nav-item"><a class="nav-link small" data-toggle="tab" href="#cr-mat-deliveries">Deliveries</a></li>
-                        <li class="nav-item"><a class="nav-link small" data-toggle="tab" href="#cr-mat-babies">Babies</a></li>
-                        <li class="nav-item"><a class="nav-link small" data-toggle="tab" href="#cr-mat-postnatal">Postnatal</a></li>
+                        <li class="nav-item"><a class="nav-link active small" data-bs-toggle="tab" data-toggle="tab" data-bs-target="#cr-mat-enrollments" href="#cr-mat-enrollments">Enrollments</a></li>
+                        <li class="nav-item"><a class="nav-link small" data-bs-toggle="tab" data-toggle="tab" data-bs-target="#cr-mat-anc" href="#cr-mat-anc">ANC Visits</a></li>
+                        <li class="nav-item"><a class="nav-link small" data-bs-toggle="tab" data-toggle="tab" data-bs-target="#cr-mat-deliveries" href="#cr-mat-deliveries">Deliveries</a></li>
+                        <li class="nav-item"><a class="nav-link small" data-bs-toggle="tab" data-toggle="tab" data-bs-target="#cr-mat-babies" href="#cr-mat-babies">Babies</a></li>
+                        <li class="nav-item"><a class="nav-link small" data-bs-toggle="tab" data-toggle="tab" data-bs-target="#cr-mat-postnatal" href="#cr-mat-postnatal">Postnatal</a></li>
                     </ul>
                     <div class="tab-content" id="cr-mat-sub-content">
                         <div class="tab-pane fade show active" id="cr-mat-enrollments" role="tabpanel">
@@ -409,63 +409,156 @@
 </div>{{-- /#clinical-reports-content --}}
 
 {{-- Encounter Details Modal --}}
+{{-- Encounter Details Modal --}}
 <div class="modal fade" id="crEncounterDetailModal" tabindex="-1" role="dialog" aria-labelledby="crEncounterDetailModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg" role="document">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title font-weight-bold" id="crEncounterDetailModalLabel">Encounter Details</h5>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
-                </button>
+    <div class="modal-dialog modal-xl modal-dialog-scrollable" role="document">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header bg-light border-bottom">
+                <div>
+                    <h5 class="modal-title font-weight-bold mb-0 text-primary" id="crEncounterDetailModalLabel">
+                        <i class="mdi mdi-clipboard-text-outline me-1"></i> <span id="cr-enc-title">Encounter Details</span>
+                    </h5>
+                    <small class="text-muted" id="cr-enc-subtitle"></small>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" data-dismiss="modal" aria-label="Close"></button>
             </div>
-            <div class="modal-body">
-                <h6 class="font-weight-bold text-muted small text-uppercase mb-2">Clinical Notes</h6>
-                <div id="cr-enc-notes" class="p-3 bg-light rounded mb-3 border" style="max-height: 200px; overflow-y: auto;"></div>
+            <div class="modal-body p-3">
+                {{-- Patient & Encounter Info Banner --}}
+                <div class="card mb-3 border-0 bg-light shadow-sm" id="cr-enc-banner">
+                    <div class="card-body p-3">
+                        <div class="row g-2 align-items-center">
+                            <div class="col-md-3">
+                                <small class="text-muted text-uppercase d-block font-weight-bold" style="font-size: 11px;">Patient</small>
+                                <span class="font-weight-bold text-dark" id="cr-enc-patient-name">—</span>
+                                <div class="small text-muted">File: <span class="badge bg-secondary text-white" id="cr-enc-file-no">—</span></div>
+                            </div>
+                            <div class="col-md-3">
+                                <small class="text-muted text-uppercase d-block font-weight-bold" style="font-size: 11px;">Doctor</small>
+                                <span class="text-dark" id="cr-enc-doctor-name">—</span>
+                                <div class="small text-muted"><span id="cr-enc-clinic-name">—</span></div>
+                            </div>
+                            <div class="col-md-3">
+                                <small class="text-muted text-uppercase d-block font-weight-bold" style="font-size: 11px;">Date & Coverage</small>
+                                <span class="text-dark" id="cr-enc-date">—</span>
+                                <div class="small text-muted"><span class="badge bg-info text-white" id="cr-enc-hmo-name">—</span></div>
+                            </div>
+                            <div class="col-md-3">
+                                <small class="text-muted text-uppercase d-block font-weight-bold" style="font-size: 11px;">Diagnosis / Reason</small>
+                                <div class="text-dark small font-weight-bold text-truncate" id="cr-enc-reasons" title="">—</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
 
-                <div class="row">
-                    <div class="col-md-6 mb-3">
-                        <h6 class="font-weight-bold text-muted small text-uppercase mb-1">Prescriptions</h6>
-                        <div class="table-responsive">
-                            <table class="table table-sm table-bordered mb-0" id="cr-enc-prescriptions">
-                                <thead class="thead-light"><tr><th>Medication</th><th>Dose</th><th>Status</th></tr></thead>
+                {{-- Tab navigation for detailed breakdown --}}
+                <ul class="nav nav-tabs nav-tabs-sm border-bottom mb-3" id="cr-enc-modal-tabs" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active font-weight-bold" id="cr-enc-tab-notes-btn" data-bs-toggle="tab" data-toggle="tab" data-bs-target="#cr-enc-tab-notes" data-target="#cr-enc-tab-notes" type="button" role="tab" aria-selected="true">
+                            <i class="mdi mdi-text-box-outline me-1"></i> Clinical Notes
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link font-weight-bold" id="cr-enc-tab-rx-btn" data-bs-toggle="tab" data-toggle="tab" data-bs-target="#cr-enc-tab-rx" data-target="#cr-enc-tab-rx" type="button" role="tab" aria-selected="false">
+                            <i class="mdi mdi-pill me-1"></i> Prescriptions <span class="badge rounded-pill bg-primary text-white ms-1" id="cr-enc-rx-count">0</span>
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link font-weight-bold" id="cr-enc-tab-labs-btn" data-bs-toggle="tab" data-toggle="tab" data-bs-target="#cr-enc-tab-labs" data-target="#cr-enc-tab-labs" type="button" role="tab" aria-selected="false">
+                            <i class="mdi mdi-flask-outline me-1"></i> Laboratory <span class="badge rounded-pill bg-info text-white ms-1" id="cr-enc-labs-count">0</span>
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link font-weight-bold" id="cr-enc-tab-img-btn" data-bs-toggle="tab" data-toggle="tab" data-bs-target="#cr-enc-tab-img" data-target="#cr-enc-tab-img" type="button" role="tab" aria-selected="false">
+                            <i class="mdi mdi-radiology-box-outline me-1"></i> Imaging <span class="badge rounded-pill text-white ms-1" id="cr-enc-img-count" style="background-color: #6f42c1;">0</span>
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link font-weight-bold" id="cr-enc-tab-proc-btn" data-bs-toggle="tab" data-toggle="tab" data-bs-target="#cr-enc-tab-proc" data-target="#cr-enc-tab-proc" type="button" role="tab" aria-selected="false">
+                            <i class="mdi mdi-needle me-1"></i> Procedures <span class="badge rounded-pill bg-success text-white ms-1" id="cr-enc-proc-count">0</span>
+                        </button>
+                    </li>
+                </ul>
+
+                <div class="tab-content" id="cr-enc-modal-tab-content">
+                    {{-- Tab 1: Clinical Notes --}}
+                    <div class="tab-pane fade show active" id="cr-enc-tab-notes" role="tabpanel">
+                        <div id="cr-enc-notes" class="p-3 bg-white rounded border" style="min-height: 180px; max-height: 400px; overflow-y: auto; line-height: 1.6;">
+                            <div class="text-center p-3"><div class="spinner-border spinner-border-sm text-primary"></div></div>
+                        </div>
+                    </div>
+
+                    {{-- Tab 2: Prescriptions --}}
+                    <div class="tab-pane fade" id="cr-enc-tab-rx" role="tabpanel">
+                        <div class="table-responsive border rounded">
+                            <table class="table table-sm table-hover table-striped mb-0" id="cr-enc-prescriptions">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th style="width: 40px;" class="text-center">#</th>
+                                        <th>Medication</th>
+                                        <th>Dose / Instruction</th>
+                                        <th style="width: 80px;" class="text-center">Qty</th>
+                                        <th style="width: 140px;" class="text-center">Status</th>
+                                    </tr>
+                                </thead>
                                 <tbody></tbody>
                             </table>
                         </div>
                     </div>
-                    <div class="col-md-6 mb-3">
-                        <h6 class="font-weight-bold text-muted small text-uppercase mb-1">Laboratory Orders</h6>
-                        <div class="table-responsive">
-                            <table class="table table-sm table-bordered mb-0" id="cr-enc-labs">
-                                <thead class="thead-light"><tr><th>Investigation</th><th>Status</th><th>Result</th></tr></thead>
+
+                    {{-- Tab 3: Laboratory Orders --}}
+                    <div class="tab-pane fade" id="cr-enc-tab-labs" role="tabpanel">
+                        <div class="table-responsive border rounded">
+                            <table class="table table-sm table-hover table-striped mb-0" id="cr-enc-labs">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th style="width: 40px;" class="text-center">#</th>
+                                        <th>Investigation / Test</th>
+                                        <th style="width: 150px;" class="text-center">Status</th>
+                                        <th>Result / Findings</th>
+                                    </tr>
+                                </thead>
+                                <tbody></tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    {{-- Tab 4: Imaging Orders --}}
+                    <div class="tab-pane fade" id="cr-enc-tab-img" role="tabpanel">
+                        <div class="table-responsive border rounded">
+                            <table class="table table-sm table-hover table-striped mb-0" id="cr-enc-imaging">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th style="width: 40px;" class="text-center">#</th>
+                                        <th>Investigation / Scan</th>
+                                        <th style="width: 150px;" class="text-center">Status</th>
+                                        <th>Result / Findings</th>
+                                    </tr>
+                                </thead>
+                                <tbody></tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    {{-- Tab 5: Procedures --}}
+                    <div class="tab-pane fade" id="cr-enc-tab-proc" role="tabpanel">
+                        <div class="table-responsive border rounded">
+                            <table class="table table-sm table-hover table-striped mb-0" id="cr-enc-procedures">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th style="width: 40px;" class="text-center">#</th>
+                                        <th>Procedure</th>
+                                        <th style="width: 140px;" class="text-center">Status</th>
+                                        <th>Outcome / Clinical Notes</th>
+                                    </tr>
+                                </thead>
                                 <tbody></tbody>
                             </table>
                         </div>
                     </div>
                 </div>
-
-                <div class="row">
-                    <div class="col-md-6 mb-3">
-                        <h6 class="font-weight-bold text-muted small text-uppercase mb-1">Imaging Orders</h6>
-                        <div class="table-responsive">
-                            <table class="table table-sm table-bordered mb-0" id="cr-enc-imaging">
-                                <thead class="thead-light"><tr><th>Investigation</th><th>Status</th><th>Result</th></tr></thead>
-                                <tbody></tbody>
-                            </table>
-                        </div>
-                    </div>
-                    <div class="col-md-6 mb-3">
-                        <h6 class="font-weight-bold text-muted small text-uppercase mb-1">Procedures</h6>
-                        <div class="table-responsive">
-                            <table class="table table-sm table-bordered mb-0" id="cr-enc-procedures">
-                                <thead class="thead-light"><tr><th>Procedure</th><th>Status</th></tr></thead>
-                                <tbody></tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
             </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal">Close</button>
+            <div class="modal-footer bg-light border-top">
+                <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal" data-dismiss="modal">Close</button>
             </div>
         </div>
     </div>
