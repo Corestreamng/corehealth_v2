@@ -105,4 +105,19 @@ class SpecialistReferralTest extends TestCase
         $aliasResponse = $this->actingAs($user)->getJson(route('encounters.referrals.list.alias') . '?encounter_id=' . $encounter->id);
         $this->assertTrue(in_array($aliasResponse->status(), [200, 302]));
     }
+
+    /** @test */
+    public function test_clinic_doctors_can_be_retrieved_for_referral_selection()
+    {
+        $user = User::first() ?? User::factory()->create(['status' => 1]);
+        $clinic = \App\Models\Clinic::first() ?? \App\Models\Clinic::create(['name' => 'ENT Clinic', 'status' => 1]);
+
+        $response = $this->actingAs($user)->getJson(url('/get-doctors/' . $clinic->id));
+        $this->assertTrue(in_array($response->status(), [200, 302]));
+
+        if ($response->status() === 200) {
+            $data = $response->json();
+            $this->assertIsArray($data);
+        }
+    }
 }

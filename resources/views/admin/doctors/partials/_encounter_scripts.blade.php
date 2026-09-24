@@ -38,7 +38,8 @@
             'encounters.referrals.list': '{{ route("encounters.referrals.list", ["encounter" => "__EID__"]) }}',
             'encounters.referrals.patient-all': '{{ route("encounters.referrals.patient-all", ["encounter" => "__EID__"]) }}',
             'encounters.referrals.incoming': '{{ route("encounters.referrals.incoming", ["encounter" => "__EID__"]) }}',
-            'referrals.decline': '{{ route("referrals.decline", ["referral" => "__RID__"]) }}'
+            'referrals.decline': '{{ route("referrals.decline", ["referral" => "__RID__"]) }}',
+            'get-doctors': '{{ url("/get-doctors") }}/__CID__'
         }
     };
     window.INVEST_RES_SOURCE = 'doctor_encounter';

@@ -994,7 +994,7 @@
                                                 <i class="mdi mdi-hospital-building text-info me-1"></i>
                                                 Target Clinic <span class="text-danger">*</span>
                                             </label>
-                                            <select name="target_clinic_id" class="form-select form-select-sm">
+                                            <select name="target_clinic_id" class="form-select form-select-sm" id="referral-target-clinic-select">
                                                 <option value="">-- Select Clinic --</option>
                                                 @foreach($allClinics as $c)
                                                     <option value="{{ $c->id }}">{{ $c->name }}</option>
@@ -1007,10 +1007,10 @@
                                                 <i class="mdi mdi-doctor text-success me-1"></i>
                                                 Target Doctor
                                             </label>
-                                            <select name="target_doctor_id" class="form-select form-select-sm">
+                                            <select name="target_doctor_id" class="form-select form-select-sm" id="referral-target-doctor-select">
                                                 <option value="">-- Any Available Doctor --</option>
                                                 @foreach($doctorStaffList as $staff)
-                                                    <option value="{{ $staff->id }}">{{ $staff->user ? trim(($staff->user->surname ?? '').' '.($staff->user->firstname ?? '')) : 'Staff #'.$staff->id }}</option>
+                                                    <option value="{{ $staff->id }}">{{ $staff->user ? trim(($staff->user->surname ?? '').' '.($staff->user->firstname ?? '').' '.($staff->user->othername ?? '')) : 'Staff #'.$staff->id }}</option>
                                                 @endforeach
                                             </select>
                                             <small class="form-text text-muted">Optional &mdash; leave blank for any available doctor</small>

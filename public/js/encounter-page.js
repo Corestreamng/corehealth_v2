@@ -3133,6 +3133,69 @@ if (typeof window.wbRoute !== 'function') {
             });
         });
 
+        // Dynamic loading of doctors for selected clinic in referral form
+        function loadClinicDoctorsForReferral(clinicId, selectedDoctorId) {
+            var $docSelect = $('#referral-target-doctor-select, [name="target_doctor_id"]');
+            if (!$docSelect.length) return;
+
+            if (!clinicId) {
+                $docSelect.prop('disabled', false).html('<option value="">-- Any Available Doctor --</option>');
+                return;
+            }
+
+            $docSelect.prop('disabled', true).html('<option value="">Loading doctors...</option>');
+
+            var url = wbRoute('get-doctors', '/get-doctors/__CID__').replace('__CID__', clinicId);
+
+            $.ajax({
+                url: url,
+                type: 'GET',
+                dataType: 'json',
+                success: function(data) {
+                    $docSelect.prop('disabled', false).empty();
+                    $docSelect.append('<option value="">-- Any Available Doctor --</option>');
+
+                    var doctors = Array.isArray(data) ? data : (data.doctors || []);
+                    if (doctors.length > 0) {
+                        doctors.forEach(function(d) {
+                            var docName = '';
+                            if (d.display_name) {
+                                docName = d.display_name;
+                            } else if (d.name) {
+                                docName = d.name;
+                            } else if (d.user) {
+                                var parts = [d.user.surname, d.user.firstname, d.user.othername].filter(Boolean);
+                                docName = 'Dr. ' + parts.join(' ');
+                                if (d.specialization && d.specialization.name) {
+                                    docName += ' (' + d.specialization.name + ')';
+                                }
+                            } else {
+                                docName = 'Doctor #' + d.id;
+                            }
+
+                            var isSel = (selectedDoctorId && String(d.id) === String(selectedDoctorId)) ? ' selected' : '';
+                            $docSelect.append('<option value="' + d.id + '"' + isSel + '>' + docName + '</option>');
+                        });
+
+                        if (selectedDoctorId) {
+                            $docSelect.val(selectedDoctorId);
+                        }
+                    } else {
+                        $docSelect.append('<option value="" disabled>-- No doctors registered for this clinic --</option>');
+                    }
+                },
+                error: function(xhr) {
+                    console.error('Failed to load clinic doctors:', xhr);
+                    $docSelect.prop('disabled', false).html('<option value="">-- Any Available Doctor --</option>');
+                }
+            });
+        }
+
+        $(document).on('change', '#referral-target-clinic-select, [name="target_clinic_id"]', function() {
+            var clinicId = $(this).val();
+            loadClinicDoctorsForReferral(clinicId);
+        });
+
         // Toggle internal/external referral fields
         $(document).on('change', '#referral-type-select', function() {
             if ($(this).val() === 'external') {
@@ -3164,6 +3227,7 @@ if (typeof window.wbRoute !== 'function') {
             $('#referral-internal-fields').show();
             $('#referral-external-fields').hide();
             $('#referral-type-select').val('internal');
+            $('#referral-target-doctor-select, [name="target_doctor_id"]').prop('disabled', false).html('<option value="">-- Any Available Doctor --</option>');
         }
 
         // Load referrals when main referrals tab is shown
@@ -3536,7 +3600,11 @@ if (typeof window.wbRoute !== 'function') {
 
             // Set values
             $('[name="target_clinic_id"]').val(ref.target_clinic_id || '');
-            $('[name="target_doctor_id"]').val(ref.target_doctor_id || '');
+            if (ref.target_clinic_id) {
+                loadClinicDoctorsForReferral(ref.target_clinic_id, ref.target_doctor_id);
+            } else {
+                $('[name="target_doctor_id"]').val(ref.target_doctor_id || '');
+            }
             $('[name="external_facility_name"]').val(ref.external_facility || '');
             $('[name="external_doctor_name"]').val(ref.external_doctor || '');
             $('[name="external_facility_address"]').val(ref.external_facility_address || '');

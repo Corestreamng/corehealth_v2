@@ -56,5 +56,6 @@ class EncounterTest extends TestCase
         $this->assertStringContainsString('encounters.referrals.patient-all', $rendered);
         $this->assertStringContainsString('encounters.referrals.incoming', $rendered);
         $this->assertStringContainsString('referrals.decline', $rendered);
+        $this->assertStringContainsString('get-doctors', $rendered);
     }
 }

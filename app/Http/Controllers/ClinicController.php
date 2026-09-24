@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Clinic;
+use App\Models\Staff;
 use Illuminate\Http\Request;
 
 class ClinicController extends Controller
@@ -113,13 +114,35 @@ class ClinicController extends Controller
 
     public function getDoctors($clinic_id)
     {
-        $clinic = Clinic::findOrFail($clinic_id);
+        $clinic = Clinic::find($clinic_id);
         if (!$clinic) {
             return response()->json(['error' => 'Clinic not found'], 404);
         }
 
-        // Fetch doctors associated with the clinic
-        $doctors = $clinic->doctors()->with(['user', 'specialization'])->get();
+        // Fetch doctors whose primary clinic is this clinic OR who have this clinic in can_see_clinic_queues
+        $doctors = Staff::with(['user', 'specialization'])
+            ->where(function ($q) use ($clinic_id) {
+                $q->where('clinic_id', $clinic_id)
+                  ->orWhereJsonContains('can_see_clinic_queues', (int) $clinic_id);
+            })
+            ->whereHas('user')
+            ->get();
+
+        if ($doctors->isEmpty()) {
+            $doctors = $clinic->doctors()->with(['user', 'specialization'])->whereHas('user')->get();
+        }
+
+        $doctors->transform(function ($staff) {
+            $user = $staff->user;
+            $nameParts = array_filter([$user?->surname, $user?->firstname, $user?->othername]);
+            $fullName = implode(' ', $nameParts);
+            $spec = $staff->specialization?->name ? ' (' . $staff->specialization->name . ')' : '';
+
+            $staff->name = $fullName . $spec;
+            $staff->display_name = 'Dr. ' . $fullName . $spec;
+
+            return $staff;
+        });
 
         return response()->json($doctors);
     }
