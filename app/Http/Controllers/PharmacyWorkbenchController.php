@@ -59,9 +59,12 @@ class PharmacyWorkbenchController extends Controller
 
         // Candidate stores: pharmacy-type bucket + user's dept store + rule-configured stores.
         $stores = $resolver->candidateStores(auth()->user(), 'pharmacy');
+        $managedStoreIds = $stores && $stores->isNotEmpty()
+            ? $stores->pluck('id')->toArray()
+            : ($resolvedStore ? [$resolvedStore->id] : [2]);
         // ─────────────────────────────────────────────────────────────────────
 
-        return view('admin.pharmacy.workbench', compact('stores', 'resolvedStore', 'contextFallbackAction'));
+        return view('admin.pharmacy.workbench', compact('stores', 'resolvedStore', 'contextFallbackAction', 'managedStoreIds'));
     }
 
     /**

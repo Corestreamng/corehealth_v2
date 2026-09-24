@@ -562,16 +562,22 @@
                                 <h6 class="mb-0"><i class="mdi mdi-chart-donut"></i> Dispense & Requisition Summary</h6>
                             </div>
                             <div class="card-body">
+                                @php
+                                    $pharmReportStoreIds = !empty($managedStoreIds)
+                                        ? implode(',', $managedStoreIds)
+                                        : ($resolvedStore ? (string)$resolvedStore->id : (optional($stores->first())->id ? (string)$stores->first()->id : '2'));
+                                    $pharmReportStoreName = $resolvedStore->store_name ?? (optional($stores->first())->store_name ?? 'Pharmacy Store');
+                                @endphp
                                 <ul class="nav nav-pills nav-justified mb-3">
-                                    <li class="nav-item"><a class="nav-link active" data-toggle="pill" href="#pharm-sr-given">Stock Given Out (Dispensed/Transferred)</a></li>
-                                    <li class="nav-item"><a class="nav-link" data-toggle="pill" href="#pharm-sr-received">Stock Received</a></li>
+                                    <li class="nav-item"><a class="nav-link active" data-bs-toggle="pill" data-toggle="pill" data-bs-target="#pharm-sr-given" href="#pharm-sr-given">Stock Given Out (Dispensed/Transferred)</a></li>
+                                    <li class="nav-item"><a class="nav-link" data-bs-toggle="pill" data-toggle="pill" data-bs-target="#pharm-sr-received" href="#pharm-sr-received">Stock Received</a></li>
                                 </ul>
                                 <div class="tab-content border rounded p-3 bg-light">
                                     <div class="tab-pane fade show active" id="pharm-sr-given">
-                                        @include('admin.inventory.components.summary-report-ui', ['storeIds' => implode(',', $managedStoreIds ?? []), 'storeName' => $resolvedStore->store_name ?? 'Multiple Pharmacy Units', 'mode' => 'given'])
+                                        @include('admin.inventory.components.summary-report-ui', ['storeIds' => $pharmReportStoreIds, 'storeName' => $pharmReportStoreName, 'mode' => 'given'])
                                     </div>
                                     <div class="tab-pane fade" id="pharm-sr-received">
-                                        @include('admin.inventory.components.summary-report-ui', ['storeIds' => implode(',', $managedStoreIds ?? []), 'storeName' => $resolvedStore->store_name ?? 'Multiple Pharmacy Units', 'mode' => 'received'])
+                                        @include('admin.inventory.components.summary-report-ui', ['storeIds' => $pharmReportStoreIds, 'storeName' => $pharmReportStoreName, 'mode' => 'received'])
                                     </div>
                                 </div>
                             </div>
