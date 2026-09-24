@@ -511,7 +511,7 @@ class ImagingWorkbenchController extends Controller
             $request->validate([
                 'request_ids' => 'required|array',
                 'request_ids.*' => 'exists:imaging_service_requests,id',
-                'patient_id' => 'required|exists:patients,id',
+                'patient_id' => 'nullable|exists:patients,id',
             ]);
 
             DB::beginTransaction();
@@ -590,6 +590,14 @@ class ImagingWorkbenchController extends Controller
                 'success' => true,
                 'message' => count($request->request_ids) . ' request(s) billed successfully',
             ]);
+        } catch (\Illuminate\Validation\ValidationException $ve) {
+            DB::rollBack();
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Validation error: ' . implode(', ', array_map(fn ($errors) => implode(' ', $errors), $ve->errors())),
+                'errors' => $ve->errors(),
+            ], 422);
         } catch (\Exception $e) {
             DB::rollBack();
 
@@ -637,7 +645,7 @@ class ImagingWorkbenchController extends Controller
             $request->validate([
                 'request_ids' => 'required|array',
                 'request_ids.*' => 'exists:imaging_service_requests,id',
-                'patient_id' => 'required|exists:patients,id',
+                'patient_id' => 'nullable|exists:patients,id',
             ]);
 
             DB::beginTransaction();
@@ -660,6 +668,14 @@ class ImagingWorkbenchController extends Controller
                 'success' => true,
                 'message' => count($request->request_ids) . ' request(s) dismissed successfully',
             ]);
+        } catch (\Illuminate\Validation\ValidationException $ve) {
+            DB::rollBack();
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Validation error: ' . implode(', ', array_map(fn ($errors) => implode(' ', $errors), $ve->errors())),
+                'errors' => $ve->errors(),
+            ], 422);
         } catch (\Exception $e) {
             DB::rollBack();
 

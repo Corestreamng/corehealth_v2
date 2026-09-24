@@ -1434,7 +1434,10 @@ function recordBilling(requestIds) {
         url: wbRoute('imaging.recordBilling', '/imaging-workbench/record-billing'),
         method: 'POST',
         data: {
-            _token: (window.WORKBENCH_CONFIG?.csrf || $('meta[name="csrf-token"]').attr('content') || '')},
+            _token: (window.WORKBENCH_CONFIG?.csrf || $('meta[name="csrf-token"]').attr('content') || ''),
+            request_ids: requestIds,
+            patient_id: currentPatient
+        },
         beforeSend: function() {
             toastr.info(`Recording billing for ${requestIds.length} item(s)...`);
         },
@@ -1458,7 +1461,10 @@ function dismissRequests(requestIds, section) {
         url: wbRoute('imaging.dismissRequests', '/imaging-workbench/dismiss-requests'),
         method: 'POST',
         data: {
-            _token: (window.WORKBENCH_CONFIG?.csrf || $('meta[name="csrf-token"]').attr('content') || '')},
+            _token: (window.WORKBENCH_CONFIG?.csrf || $('meta[name="csrf-token"]').attr('content') || ''),
+            request_ids: requestIds,
+            patient_id: currentPatient
+        },
         beforeSend: function() {
             toastr.info(`Dismissing ${requestIds.length} request(s)...`);
         },
