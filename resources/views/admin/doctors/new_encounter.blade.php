@@ -956,6 +956,7 @@
                         <div class="card-body d-none" id="referral-form-card">
                             <form id="create-referral-form">
                                 <input type="hidden" name="_token" value="{{ csrf_token() }}">
+                                <input type="hidden" name="encounter_id" value="{{ $encounter->id ?? request()->get('encounter_id', '') }}">
                                 <input type="hidden" name="_referral_id" id="referral-edit-id" value="">
 
                                 {{-- Row 1: Type + Urgency --}}
@@ -1525,7 +1526,7 @@
         <div class="modal-dialog modal-lg" role="document">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title" id="investResModalLabel">Nursing Note Result (<span
+                    <h5 class="modal-title" id="nursingNoteModalLabel">Nursing Note Result (<span
                             id="note_type_name_"></span>)</h5>
                     <button type="button" data-bs-dismiss="modal" class="btn-close" aria-label="Close"></button>
                 </div>

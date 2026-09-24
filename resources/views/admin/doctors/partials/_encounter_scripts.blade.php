@@ -17,6 +17,12 @@
         defaultDoseMode: '{{ (bool) (appsettings('enable_structured_dose') ?? 1) ? (appsettings('default_dose_mode') ?? 'structured') : 'simple' }}',
         allowDoctorSetProcedurePrice: {{ (bool) (appsettings('allow_doctor_set_procedure_price') ?? 0) ? 'true' : 'false' }},
         procedureCategoryId: {{ (int) (appsettings('procedure_category_id', 8) ?: 8) }},
+        labRequiresApproval: {{ (bool) appsettings('lab_results_require_approval') ? 'true' : 'false' }},
+        imagingRequiresApproval: {{ (bool) appsettings('imaging_results_require_approval') ? 'true' : 'false' }},
+        doctorSelfApproveLab: {{ (bool) appsettings('doctor_self_approve_lab_result') ? 'true' : 'false' }},
+        nurseSelfApproveLab: {{ (bool) appsettings('nurse_self_approve_lab_result') ? 'true' : 'false' }},
+        doctorSelfApproveImaging: {{ (bool) appsettings('doctor_self_approve_imaging_result') ? 'true' : 'false' }},
+        nurseSelfApproveImaging: {{ (bool) appsettings('nurse_self_approve_imaging_result') ? 'true' : 'false' }},
         routes: {
             'patient-form-list': '{{ url("/patient-form-list") }}/' + ('{{ $pId }}' || '0'),
             'EncounterHistoryList': '{{ url("/EncounterHistoryList") }}/' + ('{{ $pId }}' || '0'),
@@ -25,14 +31,27 @@
             'prescHistoryList': '{{ url("/prescHistoryList") }}/' + ('{{ $pId }}' || '0'),
             'procedureHistoryList': '{{ url("/procedureHistoryList") }}/' + ('{{ $pId }}' || '0'),
             'patientAdmissionRequestsList': '{{ url("/patient-admission-requests-list") }}/' + ('{{ $pId }}' || '0'),
-            'patient-admission-requests-list': '{{ url("/patient-admission-requests-list") }}/' + ('{{ $pId }}' || '0')
+            'patient-admission-requests-list': '{{ url("/patient-admission-requests-list") }}/' + ('{{ $pId }}' || '0'),
+            'lab.saveResult': '{{ route("lab.saveResult") }}',
+            'imaging.saveResult': '{{ route("imaging.saveResult") }}',
+            'encounters.referrals.create': '{{ route("encounters.referrals.create", ["encounter" => "__EID__"]) }}',
+            'encounters.referrals.list': '{{ route("encounters.referrals.list", ["encounter" => "__EID__"]) }}',
+            'encounters.referrals.patient-all': '{{ route("encounters.referrals.patient-all", ["encounter" => "__EID__"]) }}',
+            'encounters.referrals.incoming': '{{ route("encounters.referrals.incoming", ["encounter" => "__EID__"]) }}',
+            'referrals.decline': '{{ route("referrals.decline", ["referral" => "__RID__"]) }}'
         }
     };
+    window.INVEST_RES_SOURCE = 'doctor_encounter';
 </script>
 <script src="{{ asset('js/workbench-helper.js') }}"></script>
 <script src="{{ asset('js/clinical-orders-shared.js') }}"></script>
 <script src="{{ asset('js/clinical-alerts-shared.js') }}"></script>
+@include('admin.partials.invest_res_modal', ['save_route' => 'lab.saveResult'])
 @include('admin.partials.invest_res_js')
+@include('admin.partials.invest_res_view_modal')
+@include('admin.partials.invest_res_view_js')
+@include('admin.partials.invest_res_view_imaging_modal')
+@include('admin.partials.invest_res_view_imaging_js')
 @include('admin.partials.perform_investigation_modal')
 @include('admin.partials.combo_confirm_modal')
 @include('admin.partials.patient_summary_overlay')

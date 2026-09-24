@@ -1231,12 +1231,13 @@ if (typeof window.wbRoute !== 'function') {
 
         // Lab result entry (called from investigation history DataTable "Enter Result" button)
         function enterLabResult(requestId) {
-            window._investResultContext = { type: 'lab', id: requestId };
+            window._investResultContext = { type: 'lab', id: requestId, source: 'doctor_encounter' };
             InvestResultEntry.enterResult(
                 requestId,
                 `/lab-workbench/lab-service-requests/${requestId}`,
                 `/lab-workbench/lab-service-requests/${requestId}/attachments`,
-                wbRoute('lab.saveResult', '/lab/saveResult')
+                wbRoute('lab.saveResult', '/lab/saveResult'),
+                'doctor_encounter'
             );
         }
 
@@ -1247,18 +1248,20 @@ if (typeof window.wbRoute !== 'function') {
                 requestId,
                 `/lab-workbench/lab-service-requests/${requestId}`,
                 `/lab-workbench/lab-service-requests/${requestId}/attachments`,
-                wbRoute('lab.saveResult', '/lab/saveResult')
+                wbRoute('lab.saveResult', '/lab/saveResult'),
+                'doctor_encounter'
             );
         }
 
         // Imaging result entry (called from imaging history DataTable "Enter Result" button)
         function enterImagingResult(requestId) {
-            window._investResultContext = { type: 'imaging', id: requestId };
+            window._investResultContext = { type: 'imaging', id: requestId, source: 'doctor_encounter' };
             InvestResultEntry.enterResult(
                 requestId,
                 `/imaging-workbench/imaging-service-requests/${requestId}`,
                 `/imaging-workbench/imaging-service-requests/${requestId}/attachments`,
-                wbRoute('imaging.saveResult', '/imaging/saveResult')
+                wbRoute('imaging.saveResult', '/imaging/saveResult'),
+                'doctor_encounter'
             );
         }
 
@@ -1269,19 +1272,18 @@ if (typeof window.wbRoute !== 'function') {
                 requestId,
                 `/imaging-workbench/imaging-service-requests/${requestId}`,
                 `/imaging-workbench/imaging-service-requests/${requestId}/attachments`,
-                wbRoute('imaging.saveResult', '/imaging/saveResult')
+                wbRoute('imaging.saveResult', '/imaging/saveResult'),
+                'doctor_encounter'
             );
         }
 
         // Self-approve config (server-baked JS constants)
-        var _PI_LAB_REQ_APPROVAL     = (window.WORKBENCH_CONFIG ? window.WORKBENCH_CONFIG.patientId : '');
-        var _PI_IMG_REQ_APPROVAL     = (window.WORKBENCH_CONFIG ? window.WORKBENCH_CONFIG.patientId : '');
-        var _PI_DR_SELF_LAB          = (window.WORKBENCH_CONFIG ? window.WORKBENCH_CONFIG.patientId : '');
-        var _PI_NR_SELF_LAB          = (window.WORKBENCH_CONFIG ? window.WORKBENCH_CONFIG.patientId : '');
-        var _PI_DR_SELF_IMG          = (window.WORKBENCH_CONFIG ? window.WORKBENCH_CONFIG.patientId : '');
-        var _PI_NR_SELF_IMG          = (window.WORKBENCH_CONFIG ? window.WORKBENCH_CONFIG.patientId : '');
-        var _PI_TP_ENABLED           = (window.WORKBENCH_CONFIG ? window.WORKBENCH_CONFIG.patientId : '');
-        var _PI_TP_REQUIRED          = (window.WORKBENCH_CONFIG ? window.WORKBENCH_CONFIG.patientId : '');
+        var _PI_LAB_REQ_APPROVAL     = Boolean(window.WORKBENCH_CONFIG?.labRequiresApproval);
+        var _PI_IMG_REQ_APPROVAL     = Boolean(window.WORKBENCH_CONFIG?.imagingRequiresApproval);
+        var _PI_DR_SELF_LAB          = Boolean(window.WORKBENCH_CONFIG?.doctorSelfApproveLab);
+        var _PI_NR_SELF_LAB          = Boolean(window.WORKBENCH_CONFIG?.nurseSelfApproveLab);
+        var _PI_DR_SELF_IMG          = Boolean(window.WORKBENCH_CONFIG?.doctorSelfApproveImaging);
+        var _PI_NR_SELF_IMG          = Boolean(window.WORKBENCH_CONFIG?.nurseSelfApproveImaging);
 
         function _autoApproveIfEnabled(requestId, type) {
             // Never auto-approve edits
@@ -3187,7 +3189,7 @@ if (typeof window.wbRoute !== 'function') {
 
         function loadEncounterReferrals() {
             $.ajax({
-                url: wbRoute('encounters.referrals.list', '/encounters/referrals/list').replace('__EID__', encounterId),
+                url: wbRoute('encounters.referrals.list', '/encounters/__EID__/referrals').replace('__EID__', encounterId),
                 type: 'GET',
                 success: function(data) {
                     $('#referrals-loading').hide();
@@ -3281,7 +3283,7 @@ if (typeof window.wbRoute !== 'function') {
             $('#patient-referrals-loading').show();
             $('#patient-referrals-list').empty();
             $.ajax({
-                url: wbRoute('encounters.referrals.patient-all', '/encounters/referrals/patient-all').replace('__EID__', encounterId),
+                url: wbRoute('encounters.referrals.patient-all', '/encounters/__EID__/referrals/patient-all').replace('__EID__', encounterId),
                 type: 'GET',
                 success: function(data) {
                     $('#patient-referrals-loading').hide();
@@ -3368,7 +3370,7 @@ if (typeof window.wbRoute !== 'function') {
             $('#incoming-referrals-loading').show();
             $('#incoming-referrals-list').empty();
             $.ajax({
-                url: wbRoute('encounters.referrals.incoming', '/encounters/referrals/incoming').replace('__EID__', encounterId),
+                url: wbRoute('encounters.referrals.incoming', '/encounters/__EID__/referrals/incoming').replace('__EID__', encounterId),
                 type: 'GET',
                 success: function(data) {
                     $('#incoming-referrals-loading').hide();
@@ -3461,7 +3463,7 @@ if (typeof window.wbRoute !== 'function') {
             if (!reason) return;
             var $btn = $(this);
             $btn.prop('disabled', true);
-            $.post(wbRoute('referrals.decline', '/referrals/decline').replace('__RID__', refId), {
+            $.post(wbRoute('referrals.decline', '/referrals/__RID__/decline').replace('__RID__', refId), {
                 _token: (window.WORKBENCH_CONFIG?.csrf || $('meta[name="csrf-token"]').attr('content') || '')}, function(res) {
                 if (res.success) {
                     toastr.success('Referral declined');
@@ -3486,14 +3488,19 @@ if (typeof window.wbRoute !== 'function') {
                 url = wbUrl('encounters/' + encounterId + '/referrals/' + editId);
                 method = 'PUT';
             } else {
-                url = wbRoute('encounters.referrals.create', '/encounters/referrals/create').replace('__EID__', encounterId);
+                url = wbRoute('encounters.referrals.create', '/encounters/__EID__/referrals').replace('__EID__', encounterId);
                 method = 'POST';
+            }
+
+            var formData = $(this).serialize();
+            if (encounterId && !formData.includes('encounter_id=')) {
+                formData += '&encounter_id=' + encodeURIComponent(encounterId);
             }
 
             $.ajax({
                 url: url,
                 type: method,
-                data: $(this).serialize(),
+                data: formData,
                 success: function(response) {
                     toastr.success(response.message || (isEdit ? 'Referral updated' : 'Referral created successfully'));
                     resetReferralForm();

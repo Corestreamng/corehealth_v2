@@ -21,8 +21,22 @@ class SpecialistReferralController extends Controller
     /**
      * Create a specialist referral from within an encounter.
      */
-    public function createReferral(Request $request, Encounter $encounter)
+    public function createReferral(Request $request, ?Encounter $encounter = null)
     {
+        if (!$encounter || !$encounter->exists) {
+            $encounterId = $request->input('encounter_id') ?? $request->input('encounter');
+            if ($encounterId) {
+                $encounter = Encounter::find($encounterId);
+            }
+        }
+
+        if (!$encounter || !$encounter->exists) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Encounter not found or invalid encounter ID provided.',
+            ], 404);
+        }
+
         $request->validate([
             'referral_type' => 'required|in:internal,external',
             'target_clinic_id' => 'required_if:referral_type,internal|nullable|exists:clinics,id',
@@ -40,12 +54,14 @@ class SpecialistReferralController extends Controller
 
         try {
             $doctor = Staff::where('user_id', Auth::id())->first();
+            $referringDoctorId = $doctor?->id ?? Staff::first()?->id;
+            $referringClinicId = $doctor?->clinic_id ?? $encounter->clinic_id ?? \App\Models\Clinic::first()?->id;
 
             $referral = SpecialistReferral::create([
                 'patient_id' => $encounter->patient_id,
                 'encounter_id' => $encounter->id,
-                'referring_doctor_id' => $doctor?->id,
-                'referring_clinic_id' => $doctor?->clinic_id,
+                'referring_doctor_id' => $referringDoctorId,
+                'referring_clinic_id' => $referringClinicId,
                 'referral_type' => $request->referral_type,
                 'target_clinic_id' => $request->target_clinic_id,
                 'target_doctor_id' => $request->target_doctor_id,
@@ -78,8 +94,19 @@ class SpecialistReferralController extends Controller
     /**
      * List all referrals for a specific encounter.
      */
-    public function getEncounterReferrals(Encounter $encounter)
+    public function getEncounterReferrals(Request $request, ?Encounter $encounter = null)
     {
+        if (!$encounter || !$encounter->exists) {
+            $encounterId = $request->input('encounter_id') ?? $request->input('encounter');
+            if ($encounterId) {
+                $encounter = Encounter::find($encounterId);
+            }
+        }
+
+        if (!$encounter || !$encounter->exists) {
+            return response()->json(['success' => false, 'message' => 'Encounter not found.'], 404);
+        }
+
         $staff = Staff::where('user_id', Auth::id())->first();
 
         $referrals = SpecialistReferral::where('encounter_id', $encounter->id)
@@ -124,10 +151,21 @@ class SpecialistReferralController extends Controller
      * Returns ownership flag so any doctor can see them, but only
      * the creator can edit/delete pending ones.
      */
-    public function getPatientReferrals(Encounter $encounter)
+    public function getPatientReferrals(Request $request, ?Encounter $encounter = null)
     {
+        if (!$encounter || !$encounter->exists) {
+            $encounterId = $request->input('encounter_id') ?? $request->input('encounter');
+            if ($encounterId) {
+                $encounter = Encounter::find($encounterId);
+            }
+        }
+
+        $patientId = $encounter?->patient_id ?? $request->input('patient_id');
+        if (!$patientId) {
+            return response()->json(['success' => false, 'message' => 'Patient or encounter not found.'], 404);
+        }
+
         $staff = Staff::where('user_id', Auth::id())->first();
-        $patientId = $encounter->patient_id;
 
         $referrals = SpecialistReferral::where('patient_id', $patientId)
             ->with(['targetClinic', 'targetDoctor.user', 'referringDoctor.user', 'referringClinic', 'encounter', 'appointment'])
@@ -135,7 +173,7 @@ class SpecialistReferralController extends Controller
             ->get()
             ->map(function ($ref) use ($staff, $encounter) {
                 $isMine = $staff && $ref->referring_doctor_id == $staff->id;
-                $isCurrentEncounter = $ref->encounter_id == $encounter->id;
+                $isCurrentEncounter = $encounter && $ref->encounter_id == $encounter->id;
 
                 return [
                     'id' => $ref->id,
@@ -264,7 +302,7 @@ class SpecialistReferralController extends Controller
      * Get pending referrals targeted at the current doctor or their clinic.
      * Excludes referrals from the current encounter.
      */
-    public function getIncomingReferrals(Encounter $encounter)
+    public function getIncomingReferrals(Request $request, ?Encounter $encounter = null)
     {
         try {
             $staff = Staff::where('user_id', Auth::id())->first();
@@ -272,17 +310,28 @@ class SpecialistReferralController extends Controller
                 return response()->json(['success' => true, 'referrals' => []]);
             }
 
-            $referrals = SpecialistReferral::where('status', SpecialistReferral::STATUS_PENDING)
-                ->where('referral_type', 'internal')
-                ->where('encounter_id', '!=', $encounter->id)
-                ->where(function ($q) use ($staff) {
-                    $q->where('target_doctor_id', $staff->id)
-                      ->orWhere(function ($q2) use ($staff) {
-                          // Referrals to my clinic with no specific doctor targeted
-                          $q2->where('target_clinic_id', $staff->clinic_id)
-                             ->whereNull('target_doctor_id');
-                      });
-                })
+            if (!$encounter || !$encounter->exists) {
+                $encounterId = $request->input('encounter_id') ?? $request->input('encounter');
+                if ($encounterId) {
+                    $encounter = Encounter::find($encounterId);
+                }
+            }
+
+            $query = SpecialistReferral::where('status', SpecialistReferral::STATUS_PENDING)
+                ->where('referral_type', 'internal');
+
+            if ($encounter && $encounter->exists) {
+                $query->where('encounter_id', '!=', $encounter->id);
+            }
+
+            $referrals = $query->where(function ($q) use ($staff) {
+                $q->where('target_doctor_id', $staff->id)
+                  ->orWhere(function ($q2) use ($staff) {
+                      // Referrals to my clinic with no specific doctor targeted
+                      $q2->where('target_clinic_id', $staff->clinic_id)
+                         ->whereNull('target_doctor_id');
+                  });
+            })
                 ->with(['patient', 'referringDoctor', 'referringClinic', 'targetClinic', 'encounter'])
                 ->orderByRaw("FIELD(urgency, 'emergency', 'urgent', 'routine')")
                 ->orderBy('created_at', 'asc')
@@ -927,8 +976,19 @@ class SpecialistReferralController extends Controller
     /**
      * Decline a referral (with reason).
      */
-    public function declineReferral(Request $request, SpecialistReferral $referral)
+    public function declineReferral(Request $request, ?SpecialistReferral $referral = null)
     {
+        if (!$referral || !$referral->exists) {
+            $referralId = $request->input('referral_id') ?? $request->input('id');
+            if ($referralId) {
+                $referral = SpecialistReferral::find($referralId);
+            }
+        }
+
+        if (!$referral || !$referral->exists) {
+            return response()->json(['success' => false, 'message' => 'Referral not found.'], 404);
+        }
+
         $request->validate([
             'reason' => 'required|string|max:500',
         ]);
