@@ -296,8 +296,9 @@
                     $('#cr-diagnosis-tbody').html('<tr><td colspan="7" class="text-center text-muted">No matching diagnoses found</td></tr>');
                     return;
                 }
-                var html = '';
+                window.crDiagEncountersCache = {};
                 data.forEach(function (row, idx) {
+                    window.crDiagEncountersCache[idx] = row.encounters || [];
                     var statusList  = (row.statuses  || []).join(', ') || 'N/A';
                     var queryList   = (row.queries   || []).join(', ') || 'N/A';
                     var rowId = 'cr-diag-row-' + idx;
@@ -314,7 +315,7 @@
                     html += '<tr class="cr-diag-enc-row d-none" id="cr-diag-enc-' + idx + '">'
                           + '<td colspan="7" class="p-0 bg-light">'
                           + '<div class="p-2">'
-                          + '<div class="table-responsive"><table class="table table-sm table-bordered mb-0 cr-diag-enc-table" data-icd="' + (row.icd_code || '') + '" data-name="' + row.diagnosis + '">'
+                          + '<div class="table-responsive"><table class="table table-sm table-bordered mb-0 cr-diag-enc-table" data-idx="' + idx + '" data-icd="' + (row.icd_code || '') + '" data-name="' + row.diagnosis + '">'
                           + '<thead class="thead-dark"><tr><th>Patient</th><th>File No</th><th>Date</th><th>Doctor</th><th>Query</th><th>Status</th><th>Details</th></tr></thead>'
                           + '<tbody><tr><td colspan="7" class="text-center"><div class="spinner-border spinner-border-sm text-primary"></div></td></tr></tbody>'
                           + '</table></div>'
@@ -326,31 +327,42 @@
             .fail(function () { crError('#cr-diagnosis-tbody'); });
     }
 
+    function renderCrDiagTableRows($table, rows) {
+        if (!rows || !rows.length) {
+            $table.find('tbody').html('<tr><td colspan="7" class="text-center text-muted">No encounters found</td></tr>');
+            return;
+        }
+        var html = '';
+        rows.forEach(function (e) {
+            var patientName = e.patient || e.patient_name || 'N/A';
+            var queryType = e.query_type || e.query || 'N/A';
+            html += '<tr>'
+                  + '<td><a href="/patient/' + e.patient_id + '">' + patientName + '</a></td>'
+                  + '<td>' + (e.file_no || '') + '</td>'
+                  + '<td>' + (e.date || e.encounter_date || '') + '</td>'
+                  + '<td>' + (e.doctor || 'N/A') + '</td>'
+                  + '<td><small>' + queryType + '</small></td>'
+                  + '<td>' + badge(e.status) + '</td>'
+                  + '<td><button class="btn btn-xs btn-info cr-enc-detail-btn" data-enc-id="' + e.id + '" title="View encounter"><i class="mdi mdi-eye"></i></button></td>'
+                  + '</tr>';
+        });
+        $table.find('tbody').html(html);
+    }
+
     // Load encounters for a specific diagnosis when expanded
     function loadCrDiagnosisEncounters($table) {
+        var idx = $table.data('idx');
+        if (window.crDiagEncountersCache && window.crDiagEncountersCache[idx] && window.crDiagEncountersCache[idx].length) {
+            renderCrDiagTableRows($table, window.crDiagEncountersCache[idx]);
+            return;
+        }
         var icd  = $table.data('icd');
         var name = $table.data('name');
         var params = $.extend(getCrFilters(), { icd_code: icd, diagnosis_name: name });
         $.get('{{ route("clinical-reports.drill-down") }}', $.extend(params, { type: 'diagnosis' }))
             .done(function (data) {
                 var rows = (data.records || data || []);
-                if (!rows.length) {
-                    $table.find('tbody').html('<tr><td colspan="7" class="text-center text-muted">No encounters found</td></tr>');
-                    return;
-                }
-                var html = '';
-                rows.forEach(function (e) {
-                    html += '<tr>'
-                          + '<td><a href="/patient/' + e.patient_id + '">' + e.patient + '</a></td>'
-                          + '<td>' + (e.file_no || '') + '</td>'
-                          + '<td>' + (e.date || e.encounter_date || '') + '</td>'
-                          + '<td>' + (e.doctor || 'N/A') + '</td>'
-                          + '<td><small>' + (e.query_type || 'N/A') + '</small></td>'
-                          + '<td>' + badge(e.status) + '</td>'
-                          + '<td><button class="btn btn-xs btn-info cr-enc-detail-btn" data-enc-id="' + e.id + '" title="View encounter"><i class="mdi mdi-eye"></i></button></td>'
-                          + '</tr>';
-                });
-                $table.find('tbody').html(html);
+                renderCrDiagTableRows($table, rows);
             })
             .fail(function () { $table.find('tbody').html('<tr><td colspan="7" class="text-center text-danger">Failed to load encounters</td></tr>'); });
     }

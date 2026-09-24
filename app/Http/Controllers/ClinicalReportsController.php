@@ -73,6 +73,64 @@ class ClinicalReportsController extends Controller
     }
 
     /**
+     * Normalize a diagnosis item (from JSON array, string, or notes) into a standard representation
+     */
+    private function normalizeDiagnosisItem($item, $defaultComment1 = 'N/A', $defaultComment2 = 'N/A')
+    {
+        $code = '';
+        $name = '';
+        $query = $defaultComment1 ?: 'N/A';
+        $status = $defaultComment2 ?: 'N/A';
+
+        if (is_array($item)) {
+            $code = trim($item['code'] ?? '');
+            $name = trim($item['name'] ?? ($item['value'] ?? ($item['display'] ?? '')));
+            if (!empty($item['comment_1']) && $item['comment_1'] !== 'NA') {
+                $query = $item['comment_1'];
+            }
+            if (!empty($item['comment_2']) && $item['comment_2'] !== 'NA') {
+                $status = $item['comment_2'];
+            }
+        } else {
+            $name = trim((string) $item);
+            if (preg_match('/^([A-Za-z][0-9]{2,3}(?:\.[0-9]+)?)\s*[-:]\s*(.+)$/i', $name, $m)) {
+                $code = trim($m[1]);
+                $name = trim($m[2]);
+            }
+        }
+
+        $name = trim(preg_replace('/^custom:\s*/i', '', $name));
+        $name = trim(preg_replace('/\s+/', ' ', $name));
+        $name = rtrim($name, '.');
+
+        if (empty($code) && preg_match('/^([A-Za-z][0-9]{2,3}(?:\.[0-9]+)?)\s*[-:]\s*(.+)$/i', $name, $m)) {
+            $code = trim($m[1]);
+            $name = trim($m[2]);
+        }
+
+        $isCustom = (empty($code) || strtoupper($code) === 'CUSTOM');
+        if (!$isCustom) {
+            $cleanCode = strtoupper(trim($code));
+            $groupKey = 'ICD_' . $cleanCode;
+            $displayCode = $cleanCode;
+            $displayName = $name ?: $cleanCode;
+        } else {
+            $groupKey = 'CUSTOM_' . strtolower($name);
+            $displayCode = 'CUSTOM';
+            $displayName = $name !== '' ? mb_convert_case($name, MB_CASE_TITLE, 'UTF-8') : 'Unknown';
+        }
+
+        return [
+            'group_key' => $groupKey,
+            'code' => $displayCode,
+            'name' => $displayName,
+            'raw_name' => $name,
+            'query' => $query,
+            'status' => $status,
+        ];
+    }
+
+    /**
      * Search Diagnosis with Keyword
      */
     public function searchDiagnosis(Request $request)
@@ -83,79 +141,146 @@ class ClinicalReportsController extends Controller
             'date_to' => 'nullable|date',
         ]);
 
-        $keyword = $request->keyword;
+        $keyword = trim($request->keyword);
         $dateFrom = $request->filled('date_from') ? Carbon::parse($request->date_from)->startOfDay() : now()->startOfMonth()->startOfDay();
         $dateTo = $request->filled('date_to') ? Carbon::parse($request->date_to)->endOfDay() : now()->endOfDay();
 
-        // Query encounters with reasons_for_encounter matching keyword
-        // Since it's JSON, we use LIKE
+        // Query encounters with reasons_for_encounter OR notes matching keyword
         $encounters = Encounter::with(['patient.user', 'doctor'])
             ->whereBetween('created_at', [$dateFrom, $dateTo])
-            ->where('reasons_for_encounter', 'like', "%{$keyword}%")
+            ->where(function ($q) use ($keyword) {
+                $q->where('reasons_for_encounter', 'like', "%{$keyword}%")
+                  ->orWhere('notes', 'like', "%{$keyword}%");
+            })
+            ->orderByDesc('created_at')
             ->get();
 
         $grouped = [];
         foreach ($encounters as $e) {
-            $rawReasons = json_decode($e->reasons_for_encounter, true);
+            $rawReasons = !empty($e->reasons_for_encounter) ? json_decode($e->reasons_for_encounter, true) : [];
             if (!is_array($rawReasons)) {
                 if (is_string($e->reasons_for_encounter) && trim($e->reasons_for_encounter) !== '') {
-                    $rawReasons = [$e->reasons_for_encounter];
+                    $rawReasons = array_filter(array_map('trim', explode(',', $e->reasons_for_encounter)));
                 } else {
-                    continue;
+                    $rawReasons = [];
                 }
             }
 
+            $matchedInReasons = false;
             foreach ($rawReasons as $item) {
-                // Handle both simple strings and new JSON object format
-                $name = is_array($item) ? ($item['name'] ?? ($item['value'] ?? 'Unknown')) : (string) $item;
-                $code = is_array($item) ? trim($item['code'] ?? '') : '';
-                $query = is_array($item) ? ($item['comment_1'] ?? 'N/A') : ($e->reasons_for_encounter_comment_1 ?? 'N/A');
-                $status = is_array($item) ? ($item['comment_2'] ?? 'N/A') : ($e->reasons_for_encounter_comment_2 ?? 'N/A');
+                $norm = $this->normalizeDiagnosisItem($item, $e->reasons_for_encounter_comment_1, $e->reasons_for_encounter_comment_2);
 
-                if (stripos($name, $keyword) !== false || ($code !== '' && stripos($code, $keyword) !== false)) {
-                    if (!isset($grouped[$name])) {
-                        $grouped[$name] = [
-                            'diagnosis' => $name,
-                            'icd_code' => $code,
+                if (stripos($norm['name'], $keyword) !== false || stripos($norm['raw_name'], $keyword) !== false || ($norm['code'] !== 'CUSTOM' && stripos($norm['code'], $keyword) !== false)) {
+                    $matchedInReasons = true;
+                    $gk = $norm['group_key'];
+
+                    if (!isset($grouped[$gk])) {
+                        $grouped[$gk] = [
+                            'diagnosis' => $norm['name'],
+                            'icd_code' => $norm['code'],
                             'total_encounters' => 0,
                             'unique_patients' => 0,
+                            'encounter_ids' => [],
                             'patient_ids' => [],
                             'statuses' => [],
                             'queries' => [],
                             'encounters' => [],
                         ];
                     }
-                    $grouped[$name]['total_encounters']++;
-                    if (!in_array($e->patient_id, $grouped[$name]['patient_ids'])) {
-                        $grouped[$name]['unique_patients']++;
-                        $grouped[$name]['patient_ids'][] = $e->patient_id;
+
+                    if (!in_array($e->id, $grouped[$gk]['encounter_ids'])) {
+                        $grouped[$gk]['encounter_ids'][] = $e->id;
+                        $grouped[$gk]['total_encounters']++;
+
+                        if (!in_array($e->patient_id, $grouped[$gk]['patient_ids'])) {
+                            $grouped[$gk]['patient_ids'][] = $e->patient_id;
+                            $grouped[$gk]['unique_patients']++;
+                        }
+
+                        $status = $norm['status'];
+                        if ($status !== 'N/A' && $status !== 'NA' && !in_array($status, $grouped[$gk]['statuses'])) {
+                            $grouped[$gk]['statuses'][] = $status;
+                        }
+
+                        $query = $norm['query'];
+                        if ($query !== 'N/A' && $query !== 'NA' && !in_array($query, $grouped[$gk]['queries'])) {
+                            $grouped[$gk]['queries'][] = $query;
+                        }
+
+                        $grouped[$gk]['encounters'][] = [
+                            'id' => $e->id,
+                            'patient' => $e->patient && $e->patient->user ? userfullname($e->patient->user_id) : 'N/A',
+                            'patient_name' => $e->patient && $e->patient->user ? userfullname($e->patient->user_id) : 'N/A',
+                            'patient_id' => $e->patient_id,
+                            'file_no' => $e->patient->file_no ?? '',
+                            'date' => $e->created_at->format('Y-m-d H:i'),
+                            'doctor' => $e->doctor ? userfullname($e->doctor->id) : 'N/A',
+                            'query_type' => $query,
+                            'status' => $status,
+                            'icd_code' => $norm['code'],
+                        ];
                     }
-                    if ($status !== 'N/A' && $status !== 'NA' && !in_array($status, $grouped[$name]['statuses'])) {
-                        $grouped[$name]['statuses'][] = $status;
-                    }
-                    if ($query !== 'N/A' && $query !== 'NA' && !in_array($query, $grouped[$name]['queries'])) {
-                        $grouped[$name]['queries'][] = $query;
+                }
+            }
+
+            // If no match in reasons_for_encounter, but notes matches keyword
+            if (!$matchedInReasons && stripos(strip_tags($e->notes ?? ''), $keyword) !== false) {
+                $norm = $this->normalizeDiagnosisItem($keyword, $e->reasons_for_encounter_comment_1, $e->reasons_for_encounter_comment_2);
+                $gk = $norm['group_key'];
+
+                if (!isset($grouped[$gk])) {
+                    $grouped[$gk] = [
+                        'diagnosis' => $norm['name'],
+                        'icd_code' => $norm['code'],
+                        'total_encounters' => 0,
+                        'unique_patients' => 0,
+                        'encounter_ids' => [],
+                        'patient_ids' => [],
+                        'statuses' => [],
+                        'queries' => [],
+                        'encounters' => [],
+                    ];
+                }
+
+                if (!in_array($e->id, $grouped[$gk]['encounter_ids'])) {
+                    $grouped[$gk]['encounter_ids'][] = $e->id;
+                    $grouped[$gk]['total_encounters']++;
+
+                    if (!in_array($e->patient_id, $grouped[$gk]['patient_ids'])) {
+                        $grouped[$gk]['patient_ids'][] = $e->patient_id;
+                        $grouped[$gk]['unique_patients']++;
                     }
 
-                    $grouped[$name]['encounters'][] = [
+                    $status = $norm['status'];
+                    if ($status !== 'N/A' && $status !== 'NA' && !in_array($status, $grouped[$gk]['statuses'])) {
+                        $grouped[$gk]['statuses'][] = $status;
+                    }
+
+                    $query = $norm['query'];
+                    if ($query !== 'N/A' && $query !== 'NA' && !in_array($query, $grouped[$gk]['queries'])) {
+                        $grouped[$gk]['queries'][] = $query;
+                    }
+
+                    $grouped[$gk]['encounters'][] = [
                         'id' => $e->id,
+                        'patient' => $e->patient && $e->patient->user ? userfullname($e->patient->user_id) : 'N/A',
                         'patient_name' => $e->patient && $e->patient->user ? userfullname($e->patient->user_id) : 'N/A',
                         'patient_id' => $e->patient_id,
                         'file_no' => $e->patient->file_no ?? '',
-                        'date' => $e->created_at->format('M d, Y H:i'),
+                        'date' => $e->created_at->format('Y-m-d H:i'),
                         'doctor' => $e->doctor ? userfullname($e->doctor->id) : 'N/A',
-                        'query' => $query,
+                        'query_type' => $query,
                         'status' => $status,
-                        'icd_code' => $code,
+                        'icd_code' => $norm['code'],
                     ];
                 }
             }
         }
 
-        // Sort by unique patients desc, strip internal tracking key
-        usort($grouped, fn ($a, $b) => $b['unique_patients'] - $a['unique_patients']);
+        // Sort by unique patients desc, then total encounters desc
+        usort($grouped, fn ($a, $b) => $b['unique_patients'] <=> $a['unique_patients'] ?: $b['total_encounters'] <=> $a['total_encounters']);
         foreach ($grouped as &$g) {
-            unset($g['patient_ids']);
+            unset($g['patient_ids'], $g['encounter_ids']);
         }
 
         return response()->json(array_values($grouped));
@@ -384,60 +509,66 @@ class ClinicalReportsController extends Controller
             case 'diagnosis':
                 $icdCode = trim($request->get('icd_code') ?? '');
                 $diagName = trim($request->get('diagnosis_name') ?? '');
+                $isCustom = ($icdCode === '' || strtoupper($icdCode) === 'CUSTOM');
+
                 $dq = Encounter::with(['patient.user', 'doctor'])
                     ->whereBetween('created_at', [$from, $to]);
-                if ($icdCode && $icdCode !== 'CUSTOM') {
+
+                if (!$isCustom) {
                     $dq->where('reasons_for_encounter', 'like', '%' . $icdCode . '%');
-                } elseif ($diagName) {
-                    $dq->where('reasons_for_encounter', 'like', '%' . $diagName . '%');
+                } elseif ($diagName !== '') {
+                    $dq->where(function ($q) use ($diagName) {
+                        $q->where('reasons_for_encounter', 'like', '%' . $diagName . '%')
+                          ->orWhere('notes', 'like', '%' . $diagName . '%');
+                    });
                 }
-                $data = $dq->orderByDesc('created_at')->get()->map(function ($e) use ($icdCode, $diagName) {
-                    $reasons = json_decode($e->reasons_for_encounter, true);
-                    if (!is_array($reasons)) {
+
+                $targetGroupKey = !$isCustom ? ('ICD_' . strtoupper($icdCode)) : ('CUSTOM_' . strtolower(trim(preg_replace('/\s+/', ' ', preg_replace('/^custom:\s*/i', '', $diagName)))));
+
+                $data = $dq->orderByDesc('created_at')->get()->map(function ($e) use ($isCustom, $targetGroupKey, $diagName) {
+                    $rawReasons = !empty($e->reasons_for_encounter) ? json_decode($e->reasons_for_encounter, true) : [];
+                    if (!is_array($rawReasons)) {
                         if (is_string($e->reasons_for_encounter) && trim($e->reasons_for_encounter) !== '') {
-                            $reasons = [$e->reasons_for_encounter];
+                            $rawReasons = array_filter(array_map('trim', explode(',', $e->reasons_for_encounter)));
                         } else {
-                            $reasons = [];
+                            $rawReasons = [];
                         }
                     }
 
-                    $queryType = 'N/A';
-                    $diagStatus = 'N/A';
-                    foreach ($reasons as $item) {
-                        if (!is_array($item)) {
-                            $strItem = (string) $item;
-                            if ($diagName !== '' && (stripos($strItem, $diagName) !== false || stripos($diagName, $strItem) !== false)) {
-                                $queryType = $e->reasons_for_encounter_comment_1 ?? 'N/A';
-                                $diagStatus = $e->reasons_for_encounter_comment_2 ?? 'N/A';
-
-                                break;
-                            }
-
-                            continue;
-                        }
-                        $itemCode = isset($item['code']) ? trim($item['code']) : '';
-                        $itemName = $item['name'] ?? ($item['value'] ?? '');
-                        $matchCode = $icdCode !== '' && $icdCode !== 'CUSTOM' && $itemCode !== '' && strcasecmp($itemCode, $icdCode) === 0;
-                        $matchName = $diagName !== '' && (stripos($itemName, $diagName) !== false || stripos($diagName, $itemName) !== false);
-                        if ($matchCode || (!$matchCode && $matchName)) {
-                            $queryType = $item['comment_1'] ?? 'N/A';
-                            $diagStatus = $item['comment_2'] ?? 'N/A';
+                    $matchedNorm = null;
+                    foreach ($rawReasons as $item) {
+                        $norm = $this->normalizeDiagnosisItem($item, $e->reasons_for_encounter_comment_1, $e->reasons_for_encounter_comment_2);
+                        if ($norm['group_key'] === $targetGroupKey || ($diagName !== '' && (stripos($norm['name'], $diagName) !== false || stripos($diagName, $norm['name']) !== false))) {
+                            $matchedNorm = $norm;
 
                             break;
                         }
                     }
 
+                    // If not found in reasons_for_encounter, check notes for custom diagnosis
+                    if (!$matchedNorm && $isCustom && $diagName !== '') {
+                        if (stripos(strip_tags($e->notes ?? ''), $diagName) !== false) {
+                            $matchedNorm = $this->normalizeDiagnosisItem($diagName, $e->reasons_for_encounter_comment_1, $e->reasons_for_encounter_comment_2);
+                        }
+                    }
+
+                    if (!$matchedNorm) {
+                        return null;
+                    }
+
                     return [
                         'id' => $e->id,
                         'patient' => $e->patient && $e->patient->user ? userfullname($e->patient->user_id) : 'N/A',
+                        'patient_name' => $e->patient && $e->patient->user ? userfullname($e->patient->user_id) : 'N/A',
                         'file_no' => $e->patient->file_no ?? '',
                         'patient_id' => $e->patient_id,
                         'date' => $e->created_at->format('Y-m-d H:i'),
                         'doctor' => $e->doctor ? userfullname($e->doctor->id) : 'N/A',
-                        'query_type' => $queryType,
-                        'status' => $diagStatus,
+                        'query_type' => $matchedNorm['query'],
+                        'status' => $matchedNorm['status'],
+                        'icd_code' => $matchedNorm['code'],
                     ];
-                });
+                })->filter()->unique('id')->values();
 
                 break;
             case 'immunization':
