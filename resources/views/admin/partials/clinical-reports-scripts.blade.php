@@ -297,6 +297,7 @@
                     return;
                 }
                 window.crDiagEncountersCache = {};
+                var html = '';
                 data.forEach(function (row, idx) {
                     window.crDiagEncountersCache[idx] = row.encounters || [];
                     var statusList  = (row.statuses  || []).join(', ') || 'N/A';
