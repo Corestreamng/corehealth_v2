@@ -355,6 +355,66 @@
             .fail(function () { $table.find('tbody').html('<tr><td colspan="7" class="text-center text-danger">Failed to load encounters</td></tr>'); });
     }
 
+    // Show full encounter details in modal
+    function showEncounterDetails(encId) {
+        var $modal = $('#crEncounterDetailModal');
+        $modal.find('.modal-title').text('Encounter #' + encId + ' Details');
+        $modal.find('#cr-enc-notes').html('<div class="text-center p-3"><div class="spinner-border spinner-border-sm text-primary"></div></div>');
+        $modal.find('#cr-enc-labs tbody').empty();
+        $modal.find('#cr-enc-imaging tbody').empty();
+        $modal.find('#cr-enc-prescriptions tbody').empty();
+        $modal.find('#cr-enc-procedures tbody').empty();
+        $modal.modal('show');
+
+        $.get('{{ route("clinical-reports.encounter-details", ":id") }}'.replace(':id', encId))
+            .done(function (data) {
+                $modal.find('#cr-enc-notes').html(data.notes || '<span class="text-muted small">No clinical notes recorded</span>');
+
+                var labsHtml = '';
+                if (data.labs && data.labs.length) {
+                    data.labs.forEach(function (l) {
+                        labsHtml += '<tr><td>' + (l.service ? l.service.item_name : 'Test #' + l.id) + '</td><td>' + badge(l.status || 'pending') + '</td><td>' + (l.result || 'Pending') + '</td></tr>';
+                    });
+                } else {
+                    labsHtml = '<tr><td colspan="3" class="text-center text-muted small">No lab orders</td></tr>';
+                }
+                $modal.find('#cr-enc-labs tbody').html(labsHtml);
+
+                var imgHtml = '';
+                if (data.imaging && data.imaging.length) {
+                    data.imaging.forEach(function (im) {
+                        imgHtml += '<tr><td>' + (im.service ? im.service.item_name : 'Investigation #' + im.id) + '</td><td>' + badge(im.status || 'pending') + '</td><td>' + (im.result || 'Pending') + '</td></tr>';
+                    });
+                } else {
+                    imgHtml = '<tr><td colspan="3" class="text-center text-muted small">No imaging orders</td></tr>';
+                }
+                $modal.find('#cr-enc-imaging tbody').html(imgHtml);
+
+                var rxHtml = '';
+                if (data.prescriptions && data.prescriptions.length) {
+                    data.prescriptions.forEach(function (rx) {
+                        rxHtml += '<tr><td>' + (rx.product ? rx.product.item_name : 'Drug #' + rx.id) + '</td><td>' + (rx.dose || 'N/A') + '</td><td>' + badge(rx.status || 'pending') + '</td></tr>';
+                    });
+                } else {
+                    rxHtml = '<tr><td colspan="3" class="text-center text-muted small">No prescriptions</td></tr>';
+                }
+                $modal.find('#cr-enc-prescriptions tbody').html(rxHtml);
+
+                var procHtml = '';
+                if (data.procedures && data.procedures.length) {
+                    data.procedures.forEach(function (p) {
+                        procHtml += '<tr><td>' + (p.procedure_definition ? p.procedure_definition.name : 'Procedure #' + p.id) + '</td><td>' + (p.status || 'N/A') + '</td></tr>';
+                    });
+                } else {
+                    procHtml = '<tr><td colspan="2" class="text-center text-muted small">No procedures</td></tr>';
+                }
+                $modal.find('#cr-enc-procedures tbody').html(procHtml);
+            })
+            .fail(function () {
+                $modal.find('#cr-enc-notes').html('<div class="text-danger p-2">Failed to load encounter details.</div>');
+            });
+    }
+
     // =========================================================================
     // MATERNITY
     // =========================================================================

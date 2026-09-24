@@ -407,3 +407,66 @@
         </div>{{-- /.card-body --}}
     </div>{{-- /.card --}}
 </div>{{-- /#clinical-reports-content --}}
+
+{{-- Encounter Details Modal --}}
+<div class="modal fade" id="crEncounterDetailModal" tabindex="-1" role="dialog" aria-labelledby="crEncounterDetailModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title font-weight-bold" id="crEncounterDetailModalLabel">Encounter Details</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <h6 class="font-weight-bold text-muted small text-uppercase mb-2">Clinical Notes</h6>
+                <div id="cr-enc-notes" class="p-3 bg-light rounded mb-3 border" style="max-height: 200px; overflow-y: auto;"></div>
+
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <h6 class="font-weight-bold text-muted small text-uppercase mb-1">Prescriptions</h6>
+                        <div class="table-responsive">
+                            <table class="table table-sm table-bordered mb-0" id="cr-enc-prescriptions">
+                                <thead class="thead-light"><tr><th>Medication</th><th>Dose</th><th>Status</th></tr></thead>
+                                <tbody></tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <h6 class="font-weight-bold text-muted small text-uppercase mb-1">Laboratory Orders</h6>
+                        <div class="table-responsive">
+                            <table class="table table-sm table-bordered mb-0" id="cr-enc-labs">
+                                <thead class="thead-light"><tr><th>Investigation</th><th>Status</th><th>Result</th></tr></thead>
+                                <tbody></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <h6 class="font-weight-bold text-muted small text-uppercase mb-1">Imaging Orders</h6>
+                        <div class="table-responsive">
+                            <table class="table table-sm table-bordered mb-0" id="cr-enc-imaging">
+                                <thead class="thead-light"><tr><th>Investigation</th><th>Status</th><th>Result</th></tr></thead>
+                                <tbody></tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <h6 class="font-weight-bold text-muted small text-uppercase mb-1">Procedures</h6>
+                        <div class="table-responsive">
+                            <table class="table table-sm table-bordered mb-0" id="cr-enc-procedures">
+                                <thead class="thead-light"><tr><th>Procedure</th><th>Status</th></tr></thead>
+                                <tbody></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>

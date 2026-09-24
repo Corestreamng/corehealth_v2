@@ -98,20 +98,25 @@ class ClinicalReportsController extends Controller
         foreach ($encounters as $e) {
             $rawReasons = json_decode($e->reasons_for_encounter, true);
             if (!is_array($rawReasons)) {
-                continue;
+                if (is_string($e->reasons_for_encounter) && trim($e->reasons_for_encounter) !== '') {
+                    $rawReasons = [$e->reasons_for_encounter];
+                } else {
+                    continue;
+                }
             }
 
             foreach ($rawReasons as $item) {
                 // Handle both simple strings and new JSON object format
-                $name = is_array($item) ? ($item['name'] ?? ($item['value'] ?? 'Unknown')) : $item;
+                $name = is_array($item) ? ($item['name'] ?? ($item['value'] ?? 'Unknown')) : (string) $item;
+                $code = is_array($item) ? trim($item['code'] ?? '') : '';
                 $query = is_array($item) ? ($item['comment_1'] ?? 'N/A') : ($e->reasons_for_encounter_comment_1 ?? 'N/A');
                 $status = is_array($item) ? ($item['comment_2'] ?? 'N/A') : ($e->reasons_for_encounter_comment_2 ?? 'N/A');
 
-                if (stripos($name, $keyword) !== false) {
+                if (stripos($name, $keyword) !== false || ($code !== '' && stripos($code, $keyword) !== false)) {
                     if (!isset($grouped[$name])) {
                         $grouped[$name] = [
                             'diagnosis' => $name,
-                            'icd_code' => is_array($item) ? ($item['code'] ?? '') : '',
+                            'icd_code' => $code,
                             'total_encounters' => 0,
                             'unique_patients' => 0,
                             'patient_ids' => [],
@@ -134,14 +139,14 @@ class ClinicalReportsController extends Controller
 
                     $grouped[$name]['encounters'][] = [
                         'id' => $e->id,
-                        'patient_name' => userfullname($e->patient->user_id),
+                        'patient_name' => $e->patient && $e->patient->user ? userfullname($e->patient->user_id) : 'N/A',
                         'patient_id' => $e->patient_id,
                         'file_no' => $e->patient->file_no ?? '',
                         'date' => $e->created_at->format('M d, Y H:i'),
                         'doctor' => $e->doctor ? userfullname($e->doctor->id) : 'N/A',
                         'query' => $query,
                         'status' => $status,
-                        'icd_code' => is_array($item) ? ($item['code'] ?? '') : '',
+                        'icd_code' => $code,
                     ];
                 }
             }
@@ -377,26 +382,46 @@ class ClinicalReportsController extends Controller
 
                 break;
             case 'diagnosis':
-                $icdCode = $request->get('icd_code');
-                $diagName = $request->get('diagnosis_name');
+                $icdCode = trim($request->get('icd_code') ?? '');
+                $diagName = trim($request->get('diagnosis_name') ?? '');
                 $dq = Encounter::with(['patient.user', 'doctor'])
                     ->whereBetween('created_at', [$from, $to]);
-                if ($icdCode) {
+                if ($icdCode && $icdCode !== 'CUSTOM') {
                     $dq->where('reasons_for_encounter', 'like', '%' . $icdCode . '%');
                 } elseif ($diagName) {
                     $dq->where('reasons_for_encounter', 'like', '%' . $diagName . '%');
                 }
                 $data = $dq->orderByDesc('created_at')->get()->map(function ($e) use ($icdCode, $diagName) {
-                    $reasons = json_decode($e->reasons_for_encounter, true) ?: [];
+                    $reasons = json_decode($e->reasons_for_encounter, true);
+                    if (!is_array($reasons)) {
+                        if (is_string($e->reasons_for_encounter) && trim($e->reasons_for_encounter) !== '') {
+                            $reasons = [$e->reasons_for_encounter];
+                        } else {
+                            $reasons = [];
+                        }
+                    }
+
                     $queryType = 'N/A';
+                    $diagStatus = 'N/A';
                     foreach ($reasons as $item) {
                         if (!is_array($item)) {
+                            $strItem = (string) $item;
+                            if ($diagName !== '' && (stripos($strItem, $diagName) !== false || stripos($diagName, $strItem) !== false)) {
+                                $queryType = $e->reasons_for_encounter_comment_1 ?? 'N/A';
+                                $diagStatus = $e->reasons_for_encounter_comment_2 ?? 'N/A';
+
+                                break;
+                            }
+
                             continue;
                         }
-                        $matchCode = $icdCode && isset($item['code']) && trim($item['code']) === trim($icdCode);
-                        $matchName = !$icdCode && $diagName && stripos($item['name'] ?? '', $diagName) !== false;
-                        if ($matchCode || $matchName) {
+                        $itemCode = isset($item['code']) ? trim($item['code']) : '';
+                        $itemName = $item['name'] ?? ($item['value'] ?? '');
+                        $matchCode = $icdCode !== '' && $icdCode !== 'CUSTOM' && $itemCode !== '' && strcasecmp($itemCode, $icdCode) === 0;
+                        $matchName = $diagName !== '' && (stripos($itemName, $diagName) !== false || stripos($diagName, $itemName) !== false);
+                        if ($matchCode || (!$matchCode && $matchName)) {
                             $queryType = $item['comment_1'] ?? 'N/A';
+                            $diagStatus = $item['comment_2'] ?? 'N/A';
 
                             break;
                         }
@@ -404,13 +429,13 @@ class ClinicalReportsController extends Controller
 
                     return [
                         'id' => $e->id,
-                        'patient' => userfullname($e->patient->user_id),
+                        'patient' => $e->patient && $e->patient->user ? userfullname($e->patient->user_id) : 'N/A',
                         'file_no' => $e->patient->file_no ?? '',
                         'patient_id' => $e->patient_id,
                         'date' => $e->created_at->format('Y-m-d H:i'),
                         'doctor' => $e->doctor ? userfullname($e->doctor->id) : 'N/A',
                         'query_type' => $queryType,
-                        'status' => $e->status ?? 'N/A',
+                        'status' => $diagStatus,
                     ];
                 });
 
