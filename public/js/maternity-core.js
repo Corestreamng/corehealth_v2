@@ -614,6 +614,21 @@ if (typeof window.wbRoute !== 'function') {
                 label: 'HMO No',
                 value: patient.hmo_no
             },
+            {
+                icon: 'mdi-account-heart',
+                label: 'Next of Kin',
+                value: patient.next_of_kin_name
+            },
+            {
+                icon: 'mdi-phone-outline',
+                label: 'NOK Phone',
+                value: patient.next_of_kin_phone
+            },
+            {
+                icon: 'mdi-map-marker-outline',
+                label: 'NOK Address',
+                value: patient.next_of_kin_address
+            },
         ];
         fields.forEach(function(f) {
             detailsHtml += `<div class="patient-detail-item"><div class="patient-detail-label"><i class="mdi ${f.icon}"></i> ${f.label}</div><div class="patient-detail-value">${f.value || 'N/A'}</div></div>`;

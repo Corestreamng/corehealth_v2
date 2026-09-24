@@ -2505,7 +2505,31 @@ function displayPatientInfo(patient) {
     detailsHtml += `
         <div class="patient-detail-item">
             <div class="patient-detail-label"><i class="mdi mdi-shield-account"></i> Insurance Scheme</div>
-            <div class="patient-detail-value">${patient.insurance_scheme}</div>
+            <div class="patient-detail-value">${patient.insurance_scheme || 'N/A'}</div>
+        </div>
+    `;
+
+    // Next of Kin
+    detailsHtml += `
+        <div class="patient-detail-item">
+            <div class="patient-detail-label"><i class="mdi mdi-account-heart"></i> Next of Kin</div>
+            <div class="patient-detail-value">${patient.next_of_kin_name || 'N/A'}</div>
+        </div>
+    `;
+
+    // Next of Kin Phone
+    detailsHtml += `
+        <div class="patient-detail-item">
+            <div class="patient-detail-label"><i class="mdi mdi-phone-outline"></i> NOK Phone</div>
+            <div class="patient-detail-value">${patient.next_of_kin_phone || 'N/A'}</div>
+        </div>
+    `;
+
+    // Next of Kin Address
+    detailsHtml += `
+        <div class="patient-detail-item">
+            <div class="patient-detail-label"><i class="mdi mdi-map-marker-outline"></i> NOK Address</div>
+            <div class="patient-detail-value">${patient.next_of_kin_address || 'N/A'}</div>
         </div>
     `;
 
