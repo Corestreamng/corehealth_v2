@@ -1,0 +1,18 @@
+/* Inventory Summary Report Styles */
+.drilldown-row {
+    background-color: #f8f9fa;
+}
+
+.drilldown-table-container {
+    padding: 15px 30px;
+    border-left: 3px solid var(--hospital-primary, #007bff);
+}
+
+.report-main-table tbody tr {
+    cursor: pointer;
+    transition: background-color 0.2s ease-in-out;
+}
+
+.report-main-table tbody tr:hover {
+    background-color: #f1f5f9;
+}

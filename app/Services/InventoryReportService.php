@@ -28,40 +28,17 @@ class InventoryReportService
 
         if ($mode === 'given') {
             // 1. Requisitions fulfilled FROM these stores
-            $reqItems = StoreRequisitionItem::with(['product.category', 'product.price', 'requisition.toStore', 'sourceBatch'])
-                ->whereHas('requisition', function ($q) use ($storeIds, $start, $end) {
-                    $q->whereIn('from_store_id', $storeIds)
-                      ->where('status', 'fulfilled')
-                      ->whereBetween('updated_at', [$start, $end]);
-                })
-                ->get();
-
+            $reqItems = $this->buildRequisitionsQuery($storeIds, $start, $end, 'toStore')->get();
             $this->aggregateRequisitions($reqItems, $aggregates, $groupBy, 'toStore');
 
             // 2. Dispenses made FROM these stores
-            $dispenses = ProductRequest::with(['product.category', 'product.price', 'encounter.service', 'encounter.admission_request.preferredWard', 'dispensedFromBatch', 'productOrServiceRequest'])
-                ->whereIn('dispensed_from_store_id', $storeIds)
-                ->where('status', 'dispensed')
-                ->whereBetween('dispense_date', [$start, $end])
-                ->get();
-
+            $dispenses = $this->buildDispensesQuery($storeIds, $start, $end)->get();
             $this->aggregateDispenses($dispenses, $aggregates, $groupBy);
         } else {
             // Received mode
             // 1. Requisitions fulfilled INTO these stores
-            $reqItems = StoreRequisitionItem::with(['product.category', 'product.price', 'requisition.fromStore', 'destinationBatch'])
-                ->whereHas('requisition', function ($q) use ($storeIds, $start, $end) {
-                    $q->whereIn('to_store_id', $storeIds)
-                      ->where('status', 'fulfilled')
-                      ->whereBetween('updated_at', [$start, $end]);
-                })
-                ->get();
-
+            $reqItems = $this->buildRequisitionsQuery($storeIds, $start, $end, 'fromStore')->get();
             $this->aggregateRequisitions($reqItems, $aggregates, $groupBy, 'fromStore');
-
-            // Note: For full accuracy of "Received" we might also need to look at Purchase Orders
-            // or Stock Batches if the central store receives directly from vendors.
-            // For now, based on user requirements, we focus on internal movement & dispenses.
         }
 
         // Format for output
@@ -93,36 +70,79 @@ class InventoryReportService
         $details = [];
 
         if ($mode === 'given') {
-            $reqItems = StoreRequisitionItem::with(['product.category', 'product.price', 'sourceBatch', 'requisition.toStore'])
-                ->whereHas('requisition', function ($q) use ($storeIds, $start, $end) {
-                    $q->whereIn('from_store_id', $storeIds)
-                      ->where('status', 'fulfilled')
-                      ->whereBetween('updated_at', [$start, $end]);
-                })
-                ->get();
-
+            $reqItems = $this->buildRequisitionsQuery($storeIds, $start, $end, 'toStore')->get();
             $this->extractDrillDownRequisitions($reqItems, $details, $groupBy, $groupKey, 'toStore');
 
-            $dispenses = ProductRequest::with(['product.category', 'product.price', 'dispensedFromBatch', 'encounter.service', 'encounter.admission_request.preferredWard', 'productOrServiceRequest'])
-                ->whereIn('dispensed_from_store_id', $storeIds)
-                ->where('status', 'dispensed')
-                ->whereBetween('dispense_date', [$start, $end])
-                ->get();
-
+            $dispenses = $this->buildDispensesQuery($storeIds, $start, $end)->get();
             $this->extractDrillDownDispenses($dispenses, $details, $groupBy, $groupKey);
         } else {
-            $reqItems = StoreRequisitionItem::with(['product.category', 'product.price', 'destinationBatch', 'requisition.fromStore'])
-                ->whereHas('requisition', function ($q) use ($storeIds, $start, $end) {
-                    $q->whereIn('to_store_id', $storeIds)
-                      ->where('status', 'fulfilled')
-                      ->whereBetween('updated_at', [$start, $end]);
-                })
-                ->get();
-
+            $reqItems = $this->buildRequisitionsQuery($storeIds, $start, $end, 'fromStore')->get();
             $this->extractDrillDownRequisitions($reqItems, $details, $groupBy, $groupKey, 'fromStore');
         }
 
         return array_values($details);
+    }
+
+    private function buildRequisitionsQuery(array $storeIds, Carbon $start, Carbon $end, string $storeRelation)
+    {
+        $column = $storeRelation === 'toStore' ? 'from_store_id' : 'to_store_id';
+        $batchRelation = $storeRelation === 'toStore' ? 'sourceBatch' : 'destinationBatch';
+
+        return StoreRequisitionItem::with([
+            'product.category',
+            'product.price',
+            'requisition.' . $storeRelation,
+            $batchRelation,
+        ])
+        ->whereHas('requisition', function ($q) use ($column, $storeIds, $start, $end) {
+            $q->whereIn($column, $storeIds)
+              ->whereIn('status', ['fulfilled', 'partial'])
+              ->whereBetween('updated_at', [$start, $end]);
+        })
+        ->where('fulfilled_qty', '>', 0);
+    }
+
+    private function buildDispensesQuery(array $storeIds, Carbon $start, Carbon $end)
+    {
+        $isPharmacyStore = Store::whereIn('id', $storeIds)
+            ->where(function ($sq) {
+                $sq->where('is_default', 1)
+                   ->orWhere('store_type', 'pharmacy')
+                   ->orWhere('id', 2);
+            })
+            ->exists();
+
+        return ProductRequest::with([
+            'product.category',
+            'product.price',
+            'encounter.service',
+            'encounter.admission_request.preferredWard',
+            'dispensedFromBatch',
+            'productOrServiceRequest',
+        ])
+        ->where(function ($q) use ($storeIds, $isPharmacyStore) {
+            $q->whereIn('dispensed_from_store_id', $storeIds);
+            if ($isPharmacyStore) {
+                $q->orWhere(function ($sub) use ($storeIds) {
+                    $sub->whereNull('dispensed_from_store_id')
+                        ->where(function ($sub2) use ($storeIds) {
+                            $sub2->whereHas('dispensedFromBatch', function ($bq) use ($storeIds) {
+                                $bq->whereIn('store_id', $storeIds);
+                            })->orWhereNull('dispensed_from_batch_id');
+                        });
+                });
+            }
+        })
+        ->where(function ($q) {
+            $q->where('status', 3)->orWhere('status', 'dispensed');
+        })
+        ->where(function ($q) use ($start, $end) {
+            $q->whereBetween('dispense_date', [$start, $end])
+              ->orWhere(function ($sub) use ($start, $end) {
+                  $sub->whereNull('dispense_date')
+                      ->whereBetween('updated_at', [$start, $end]);
+              });
+        });
     }
 
     private function aggregateRequisitions($items, &$aggregates, $groupBy, $storeRelation)
@@ -134,18 +154,18 @@ class InventoryReportService
             }
 
             $batch = $storeRelation === 'toStore' ? $item->sourceBatch : $item->destinationBatch;
-            $cost = ($batch && (float)$batch->cost_price > 0) ? (float)$batch->cost_price : (float)($item->product->price->pr_buy_price ?? 0);
+            $cost = ($batch && (float)$batch->cost_price > 0) ? (float)$batch->cost_price : (float)($item->product?->price?->pr_buy_price ?? 0);
             $val = $qty * $cost;
 
-            $salePrice = $item->product->price->current_sale_price ?? 0;
+            $salePrice = $item->product?->price?->current_sale_price ?? 0;
             $potentialRev = $qty * $salePrice;
 
             if ($groupBy === 'category') {
-                $key = $item->product->category->category_name ?? 'Uncategorized';
+                $key = $item->product?->category?->category_name ?? 'Uncategorized';
             } elseif ($groupBy === 'product') {
-                $key = $item->product->product_name ?? 'Unknown Product';
+                $key = $item->product?->product_name ?? 'Unknown Product';
             } else {
-                $key = $item->requisition->$storeRelation->store_name ?? 'Unknown Store';
+                $key = $item->requisition?->$storeRelation?->store_name ?? 'Unknown Store';
             }
 
             if (!isset($aggregates[$key])) {
@@ -167,7 +187,7 @@ class InventoryReportService
             }
 
             $batch = $item->dispensedFromBatch;
-            $cost = ($batch && (float)$batch->cost_price > 0) ? (float)$batch->cost_price : (float)($item->product->price->pr_buy_price ?? 0);
+            $cost = ($batch && (float)$batch->cost_price > 0) ? (float)$batch->cost_price : (float)($item->product?->price?->pr_buy_price ?? 0);
             $val = $qty * $cost;
 
             $cashRev = 0;
@@ -178,14 +198,14 @@ class InventoryReportService
                 $cashRev = (float)($psr->payable_amount ?? 0);
                 $claimsRev = (float)($psr->claims_amount ?? 0);
             } else {
-                $salePrice = $item->price_override ?? $item->price_original ?? ($item->product->price->current_sale_price ?? 0);
+                $salePrice = $item->price_override ?? $item->price_original ?? ($item->product?->price?->current_sale_price ?? 0);
                 $cashRev = $qty * $salePrice;
             }
 
             if ($groupBy === 'category') {
-                $key = $item->product->category->category_name ?? 'Uncategorized';
+                $key = $item->product?->category?->category_name ?? 'Uncategorized';
             } elseif ($groupBy === 'product') {
-                $key = $item->product->product_name ?? 'Unknown Product';
+                $key = $item->product?->product_name ?? $item->free_form_name ?? $item->item_name ?? 'Unknown Product';
             } else {
                 $key = $this->resolveDispenseDestination($item);
             }
@@ -210,26 +230,26 @@ class InventoryReportService
             }
 
             $key = ($groupBy === 'category')
-                ? ($item->product->category->category_name ?? 'Uncategorized')
-                : (($groupBy === 'product') ? ($item->product->product_name ?? 'Unknown Product') : ($item->requisition->$storeRelation->store_name ?? 'Unknown Store'));
+                ? ($item->product?->category?->category_name ?? 'Uncategorized')
+                : (($groupBy === 'product') ? ($item->product?->product_name ?? 'Unknown Product') : ($item->requisition?->$storeRelation?->store_name ?? 'Unknown Store'));
 
             if (strtolower($key) !== strtolower($targetKey)) {
                 continue;
             }
 
             $batch = $storeRelation === 'toStore' ? $item->sourceBatch : $item->destinationBatch;
-            $cost = ($batch && (float)$batch->cost_price > 0) ? (float)$batch->cost_price : (float)($item->product->price->pr_buy_price ?? 0);
+            $cost = ($batch && (float)$batch->cost_price > 0) ? (float)$batch->cost_price : (float)($item->product?->price?->pr_buy_price ?? 0);
 
-            $salePrice = $item->product->price->current_sale_price ?? 0;
+            $salePrice = $item->product?->price?->current_sale_price ?? 0;
             $potentialRev = $qty * $salePrice;
 
             $this->addDrillDownRow($details, [
                 'type' => 'Requisition',
                 'date' => $item->updated_at->format('Y-m-d H:i'),
-                'product_name' => $item->product->product_name ?? 'Unknown',
-                'packaging' => $item->product->packaging ?? 'Unit',
+                'product_name' => $item->product?->product_name ?? 'Unknown',
+                'packaging' => $item->product?->packaging ?? 'Unit',
                 'batch_number' => $batch->batch_number ?? 'N/A',
-                'expiry_date' => $batch->expiry_date ? $batch->expiry_date->format('Y-m-d') : 'N/A',
+                'expiry_date' => $batch?->expiry_date ? $batch->expiry_date->format('Y-m-d') : 'N/A',
                 'qty' => $qty,
                 'cost_price' => $cost,
                 'total_value' => $qty * $cost,
@@ -250,15 +270,15 @@ class InventoryReportService
             }
 
             $key = ($groupBy === 'category')
-                ? ($item->product->category->category_name ?? 'Uncategorized')
-                : (($groupBy === 'product') ? ($item->product->product_name ?? 'Unknown Product') : $this->resolveDispenseDestination($item));
+                ? ($item->product?->category?->category_name ?? 'Uncategorized')
+                : (($groupBy === 'product') ? ($item->product?->product_name ?? $item->free_form_name ?? $item->item_name ?? 'Unknown Product') : $this->resolveDispenseDestination($item));
 
             if (strtolower($key) !== strtolower($targetKey)) {
                 continue;
             }
 
             $batch = $item->dispensedFromBatch;
-            $cost = ($batch && (float)$batch->cost_price > 0) ? (float)$batch->cost_price : (float)($item->product->price->pr_buy_price ?? 0);
+            $cost = ($batch && (float)$batch->cost_price > 0) ? (float)$batch->cost_price : (float)($item->product?->price?->pr_buy_price ?? 0);
 
             $cashRev = 0;
             $claimsRev = 0;
@@ -268,17 +288,17 @@ class InventoryReportService
                 $cashRev = (float)($psr->payable_amount ?? 0);
                 $claimsRev = (float)($psr->claims_amount ?? 0);
             } else {
-                $salePrice = $item->price_override ?? $item->price_original ?? ($item->product->price->current_sale_price ?? 0);
+                $salePrice = $item->price_override ?? $item->price_original ?? ($item->product?->price?->current_sale_price ?? 0);
                 $cashRev = $qty * $salePrice;
             }
 
             $this->addDrillDownRow($details, [
                 'type' => 'Dispense',
                 'date' => $item->dispense_date ? $item->dispense_date->format('Y-m-d H:i') : $item->created_at->format('Y-m-d H:i'),
-                'product_name' => $item->product->product_name ?? 'Unknown',
-                'packaging' => $item->product->packaging ?? 'Unit',
+                'product_name' => $item->product?->product_name ?? $item->free_form_name ?? $item->item_name ?? 'Unknown',
+                'packaging' => $item->product?->packaging ?? 'Unit',
                 'batch_number' => $batch->batch_number ?? 'N/A',
-                'expiry_date' => $batch->expiry_date ? $batch->expiry_date->format('Y-m-d') : 'N/A',
+                'expiry_date' => $batch?->expiry_date ? $batch->expiry_date->format('Y-m-d') : 'N/A',
                 'qty' => $qty,
                 'cost_price' => $cost,
                 'total_value' => $qty * $cost,
@@ -337,7 +357,9 @@ class InventoryReportService
 
         // Is it linked to a specific Service/Clinic?
         if ($enc->service) {
-            return 'Clinic: ' . $enc->service->name;
+            $serviceName = $enc->service->service_name ?? $enc->service->name ?? '';
+
+            return !empty(trim($serviceName)) ? 'Clinic: ' . $serviceName : 'General Outpatient';
         }
 
         return 'General Outpatient';
