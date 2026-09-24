@@ -867,23 +867,28 @@ class ReceptionWorkbenchController extends Controller
                 $serviceRequestId = null;
 
                 if (!$forceRebill && $service->category_id == $consultationCategoryId) {
-                    $cycleDuration = $service->consult_cycle_duration ?? appsettings('consultation_cycle_duration') ?? 24;
-                    $threshold = Carbon::now()->subHours($cycleDuration);
+                    $cycleDuration = (int) ($service->consult_cycle_duration ?? appsettings('consultation_cycle_duration') ?? 24);
+                    if ($cycleDuration > 0) {
+                        $threshold = Carbon::now()->subHours($cycleDuration);
 
-                    // Find most recent consultation queue for this patient within the duration threshold
-                    $recentConsult = DoctorQueue::where('patient_id', $patient->id)
-                        ->whereHas('request_entry', function ($q) use ($consultationCategoryId) {
-                            $q->whereHas('service', function ($q2) use ($consultationCategoryId) {
-                                $q2->where('category_id', $consultationCategoryId);
-                            });
-                        })
-                        ->where('created_at', '>=', $threshold)
-                        ->latest()
-                        ->first();
+                        // Find most recent consultation queue for this patient in the SAME clinic and SAME service within the duration threshold
+                        $recentConsult = DoctorQueue::where('patient_id', $patient->id)
+                            ->where('clinic_id', $booking['clinic_id'])
+                            ->where('status', '!=', QueueStatus::CANCELLED)
+                            ->whereHas('request_entry', function ($q) use ($booking, $consultationCategoryId) {
+                                $q->where('service_id', $booking['service_id'])
+                                    ->whereHas('service', function ($q2) use ($consultationCategoryId) {
+                                        $q2->where('category_id', $consultationCategoryId);
+                                    });
+                            })
+                            ->where('created_at', '>=', $threshold)
+                            ->latest()
+                            ->first();
 
-                    if ($recentConsult) {
-                        $skipBilling = true;
-                        $serviceRequestId = $recentConsult->request_entry_id;
+                        if ($recentConsult) {
+                            $skipBilling = true;
+                            $serviceRequestId = $recentConsult->request_entry_id;
+                        }
                     }
                 }
 
@@ -3172,16 +3177,19 @@ class ReceptionWorkbenchController extends Controller
 
                     break;
                 case 'queue':
-                    $queue = \App\Models\DoctorQueue::findOrFail($id);
+                    $queue = \App\Models\DoctorQueue::with('receptionist')->findOrFail($id);
                     if (!in_array($queue->status, [\App\Enums\QueueStatus::WAITING, \App\Enums\QueueStatus::SCHEDULED])) {
                         return response()->json(['success' => false, 'message' => 'Cannot discard — consultation is already in progress or completed'], 400);
                     }
                     if ($queue->request_entry_id) {
                         $posr = ProductOrServiceRequest::find($queue->request_entry_id);
 
-                        // If it's a queue entry but the POSR is already paid, it means this was a free
-                        // follow-up (cycle duration). We should ONLY delete the queue, NOT the POSR.
-                        if ($posr && $posr->payment_id) {
+                        // If it's a queue entry but the POSR is already paid or shared with other queues,
+                        // we should ONLY delete the queue, NOT the POSR.
+                        $otherQueuesCount = \App\Models\DoctorQueue::where('request_entry_id', $queue->request_entry_id)
+                            ->where('id', '!=', $queue->id)
+                            ->count();
+                        if (($posr && $posr->payment_id) || $otherQueuesCount > 0) {
                             $posr = null; // Unlink POSR so we don't try to delete or check payment on it
                         }
                     }
@@ -3198,8 +3206,10 @@ class ReceptionWorkbenchController extends Controller
                 ], 400);
             }
 
-            // Check if user can discard (creator or admin)
-            $canDiscard = ($posr && $posr->staff_user_id == $currentUserId) || Auth::user()->hasRole(['SUPERADMIN', 'ADMIN']);
+            // Check if user can discard (creator of request, receptionist who queued, or admin)
+            $canDiscard = ($posr && $posr->staff_user_id == $currentUserId)
+                || ($queue && $queue->receptionist && $queue->receptionist->user_id == $currentUserId)
+                || Auth::user()->hasRole(['SUPERADMIN', 'ADMIN']);
 
             if (!$canDiscard) {
                 return response()->json([
