@@ -3363,7 +3363,9 @@ $rawTemplate
 
 {{-- Result View Modals --}}
 @include("admin.partials.invest_res_view_modal")
+@include("admin.partials.invest_res_view_js")
 @include("admin.partials.invest_res_view_imaging_modal")
+@include("admin.partials.invest_res_view_imaging_js")
 @include('admin.partials.invest_res_modal', ['save_route' => 'lab.saveResult'])
 @include('admin.partials.perform_investigation_modal')
 @include('admin.partials.combo_confirm_modal')

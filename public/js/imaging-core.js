@@ -24,34 +24,17 @@ let currentPatient = null;
 let currentPatientData = null; // Store full patient data including allergies
 let queueRefreshInterval = null;
 let vitalTooltip = null;
-const isApprover = [];
-const requiresApproval = [];
-const currentUserId = '';
+const isApprover = (window.WORKBENCH_CONFIG?.isApprover || false);
+const requiresApproval = (window.WORKBENCH_CONFIG?.requiresApproval || false);
+const currentUserId = (window.CURRENT_USER_ID || window.WORKBENCH_CONFIG?.currentUserId || null);
 let currentApprovalId = null;
-
-var _PI_IMG_REQ_APPROVAL = window.WORKBENCH_CONFIG?.requireApproval || false;
-var _PI_DR_SELF_IMG      = window.WORKBENCH_CONFIG?.drSelfImg || false;
-var _PI_NR_SELF_IMG      = window.WORKBENCH_CONFIG?.nrSelfImg || false;
-
-function _autoApproveIfEnabled(requestId, type) {
-    if ($('#invest_res_is_edit').val() == '1') { return; }
-    if (!_PI_IMG_REQ_APPROVAL) { return; }
-    if (!_PI_DR_SELF_IMG && !_PI_NR_SELF_IMG) { return; }
-    $.post('/imaging-workbench/self-approve/' + requestId, { _token: $('meta[name="csrf-token"]').attr('content') })
-        .done(function (res) {
-            if (res && res.success) { toastr.success('Result approved automatically.'); }
-            else { toastr.warning('Result saved. Auto-approval failed: ' + ((res && res.message) || '')); }
-        })
-        .fail(function () { toastr.warning('Result saved but auto-approval could not be completed.'); });
-}
 
 $(document).ready(function() {
     // Initialize shared result entry module
     InvestResultEntry.bindFormSubmit(function() {
         if (currentPatient) loadPatient(currentPatient);
         getQueueCounts();
-        var ctx = window._investResultContext;
-        if (ctx) { _autoApproveIfEnabled(ctx.id, ctx.type); window._investResultContext = null; }
+        window._investResultContext = null;
     });
 
     // Initialize
@@ -862,6 +845,23 @@ function renderPendingSubtabContent(filter) {
     }
 
 
+    // If active subtab has no items, render a clean empty message
+    if ($container.children().length === 0) {
+        const filterLabels = {
+            'billing': 'Awaiting Billing',
+            'results': 'Awaiting Result Entry',
+            'freeform': 'Free-Form / External',
+            'approval': 'Pending Approval'
+        };
+        const label = filterLabels[filter] || filter;
+        $container.html(`
+            <div class="empty-state text-center p-4" style="background: #f8f9fa; border-radius: 8px; border: 1px dashed #ced4da; margin-top: 1rem;">
+                <i class="mdi mdi-information-outline text-muted" style="font-size: 2rem;"></i>
+                <h6 class="mt-2 text-muted">No ${label} requests for this patient</h6>
+            </div>
+        `);
+    }
+
     // Initialize event handlers + restore preserved selections
     initializeRequestHandlers();
     restoreCheckedItemsState();
@@ -1476,11 +1476,13 @@ function dismissRequests(requestIds, section) {
 }
 
 function enterResult(requestId) {
-    window._investResultContext = { type: 'imaging', id: requestId };
+    window._investResultContext = { type: 'imaging', id: requestId, source: 'imaging_workbench' };
     InvestResultEntry.enterResult(
         requestId,
         `/imaging-workbench/imaging-service-requests/${requestId}`,
-        `/imaging-workbench/imaging-service-requests/${requestId}/attachments`
+        `/imaging-workbench/imaging-service-requests/${requestId}/attachments`,
+        null,
+        'imaging_workbench'
     );
 }
 

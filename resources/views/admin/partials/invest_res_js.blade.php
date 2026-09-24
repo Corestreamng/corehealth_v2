@@ -20,12 +20,13 @@ window.InvestResultEntry = (function() {
 
     /**
      * Open the result entry modal for a new result.
-     * @param {number} requestId  - The lab/imaging service request ID
-     * @param {string} fetchUrl   - Full URL to GET the request data
-     * @param {string} attachUrl  - Full URL to GET attachments (with {id} replaced)
-     * @param {string} [saveUrl]  - Optional URL to override the form action (for multi-context pages)
+     * @param {number} requestId   - The lab/imaging service request ID
+     * @param {string} fetchUrl    - Full URL to GET the request data
+     * @param {string} attachUrl   - Full URL to GET attachments (with {id} replaced)
+     * @param {string} [saveUrl]   - Optional URL to override the form action (for multi-context pages)
+     * @param {string} [entrySource] - Optional entry context (e.g. 'doctor_encounter', 'nursing', 'lab_workbench')
      */
-    function enterResult(requestId, fetchUrl, attachUrl, saveUrl) {
+    function enterResult(requestId, fetchUrl, attachUrl, saveUrl, entrySource) {
         $.ajax({
             url: fetchUrl,
             method: 'GET',
@@ -34,6 +35,8 @@ window.InvestResultEntry = (function() {
                 if (saveUrl) {
                     $('#investResForm').attr('action', saveUrl);
                 }
+                var source = entrySource || window.INVEST_RES_SOURCE || 'workbench';
+                $('#invest_res_entry_source').val(source);
                 $('#investResModal').modal('show');
             },
             error: function(xhr) {
@@ -44,12 +47,13 @@ window.InvestResultEntry = (function() {
 
     /**
      * Open the result entry modal in edit mode.
-     * @param {number} requestId  - The lab/imaging service request ID
-     * @param {string} fetchUrl   - Full URL to GET the request data
-     * @param {string} attachUrl  - Full URL to GET attachments
-     * @param {string} [saveUrl]  - Optional URL to override the form action (for multi-context pages)
+     * @param {number} requestId   - The lab/imaging service request ID
+     * @param {string} fetchUrl    - Full URL to GET the request data
+     * @param {string} attachUrl   - Full URL to GET attachments
+     * @param {string} [saveUrl]   - Optional URL to override the form action (for multi-context pages)
+     * @param {string} [entrySource] - Optional entry context (e.g. 'doctor_encounter', 'nursing', 'lab_workbench')
      */
-    function editResult(requestId, fetchUrl, attachUrl, saveUrl) {
+    function editResult(requestId, fetchUrl, attachUrl, saveUrl, entrySource) {
         $.ajax({
             url: fetchUrl,
             method: 'GET',
@@ -58,6 +62,8 @@ window.InvestResultEntry = (function() {
                 if (saveUrl) {
                     $('#investResForm').attr('action', saveUrl);
                 }
+                var source = entrySource || window.INVEST_RES_SOURCE || 'workbench';
+                $('#invest_res_entry_source').val(source);
                 // Set Edit Mode UI
                 $('#invest_res_is_edit').val(1);
                 let editLabBadge = request.lab_number ? ' <span class="badge bg-info text-white ms-2"><i class="mdi mdi-tag-text"></i> Lab# ' + request.lab_number + '</span>' : '';
@@ -85,6 +91,7 @@ window.InvestResultEntry = (function() {
         $('#invest_res_service_name').text(request.service ? request.service.name : '');
         $('#invest_res_entry_id').val(request.id);
         $('#invest_res_is_edit').val(0);
+        $('#invest_res_entry_source').val(window.INVEST_RES_SOURCE || 'workbench');
         $('#deleted_attachments').val('[]');
         $('#existing_attachments_container').hide();
         $('#existing_attachments_list').html('');

@@ -1322,13 +1322,15 @@ const procedureId = (window.WORKBENCH_CONFIG ? window.WORKBENCH_CONFIG.procedure
     function enterLabResult(requestId) {
         window._investResultContext = {
             type: 'lab',
-            id: requestId
+            id: requestId,
+            source: 'procedure'
         };
         InvestResultEntry.enterResult(
             requestId,
             `/lab-workbench/lab-service-requests/${requestId}`,
             `/lab-workbench/lab-service-requests/${requestId}/attachments`,
-            wbRoute('lab.saveResult', '/lab/saveResult')
+            wbRoute('lab.saveResult', '/lab/saveResult'),
+            'procedure'
         );
     }
 
@@ -1338,20 +1340,23 @@ const procedureId = (window.WORKBENCH_CONFIG ? window.WORKBENCH_CONFIG.procedure
             requestId,
             `/lab-workbench/lab-service-requests/${requestId}`,
             `/lab-workbench/lab-service-requests/${requestId}/attachments`,
-            wbRoute('lab.saveResult', '/lab/saveResult')
+            wbRoute('lab.saveResult', '/lab/saveResult'),
+            'procedure'
         );
     }
 
     function enterImagingResult(requestId) {
         window._investResultContext = {
             type: 'imaging',
-            id: requestId
+            id: requestId,
+            source: 'procedure'
         };
         InvestResultEntry.enterResult(
             requestId,
             `/imaging-workbench/imaging-service-requests/${requestId}`,
             `/imaging-workbench/imaging-service-requests/${requestId}/attachments`,
-            wbRoute('imaging.saveResult', '/imaging/saveResult')
+            wbRoute('imaging.saveResult', '/imaging/saveResult'),
+            'procedure'
         );
     }
 
@@ -1361,7 +1366,8 @@ const procedureId = (window.WORKBENCH_CONFIG ? window.WORKBENCH_CONFIG.procedure
             requestId,
             `/imaging-workbench/imaging-service-requests/${requestId}`,
             `/imaging-workbench/imaging-service-requests/${requestId}/attachments`,
-            wbRoute('imaging.saveResult', '/imaging/saveResult')
+            wbRoute('imaging.saveResult', '/imaging/saveResult'),
+            'procedure'
         );
     }
 

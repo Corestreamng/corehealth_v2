@@ -26,6 +26,7 @@
                     <!-- V2 Hidden Input for structured data -->
                     <input type="hidden" name="invest_res_template_data" id="invest_res_template_data">
                     <input type="hidden" name="deleted_attachments" id="deleted_attachments">
+                    <input type="hidden" name="entry_source" id="invest_res_entry_source" value="workbench">
 
                     <!-- V1/V2 Template Version Toggle (only shown when V2 template exists for the service) -->
                     <div id="template_version_toggle_container" class="mb-3" style="display:none;">

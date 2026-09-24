@@ -193,10 +193,14 @@ function dismissRequests(requestIds, section) {
 }
 
 function enterResult(requestId) {
-    window._investResultContext = { type: 'lab', id: requestId };
-    InvestResultEntry.enterResult(requestId,
+    window._investResultContext = { type: 'lab', id: requestId, source: 'lab_workbench' };
+    InvestResultEntry.enterResult(
+        requestId,
         '/lab-workbench/lab-service-requests/' + requestId,
-        '/lab-workbench/lab-service-requests/' + requestId + '/attachments');
+        '/lab-workbench/lab-service-requests/' + requestId + '/attachments',
+        null,
+        'lab_workbench'
+    );
 }
 window.enterLabResult = enterResult;
 

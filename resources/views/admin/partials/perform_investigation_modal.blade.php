@@ -137,9 +137,11 @@
                 var _capturedCtx = { type: _piCtx.type, id: _piCtx.requestId };
                 $('#performInvestModal').one('hidden.bs.modal', function () {
                     window._investResultContext = {
-                        type: _capturedCtx.type,
-                        id:   _capturedCtx.id
+                        type:   _capturedCtx.type,
+                        id:     _capturedCtx.id,
+                        source: 'self_perform'
                     };
+                    $('#invest_res_entry_source').val('self_perform');
                     if (_capturedCtx.type === 'lab') {
                         if (typeof enterLabResult === 'function') {
                             enterLabResult(_capturedCtx.id);
@@ -199,6 +201,8 @@
                     return;
                 }
                 // Immediately open result entry
+                $('#invest_res_entry_source').val('self_perform');
+                window._investResultContext = { type: type, id: requestId, source: 'self_perform' };
                 if (type === 'lab') {
                     if (typeof enterLabResult === 'function') enterLabResult(requestId);
                 } else {
