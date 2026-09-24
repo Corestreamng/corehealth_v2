@@ -215,9 +215,17 @@ class MaternityWorkbenchController extends Controller
             }
         } else {
             $enrollment = MaternityEnrollment::where('patient_id', $id)
-                ->whereIn('status', ['active', 'postnatal'])
+                ->whereIn('status', ['active', 'delivered', 'postnatal'])
                 ->with(['ancVisits', 'deliveryRecord', 'babies.patient.user', 'postnatalVisits'])
+                ->latest('id')
                 ->first();
+
+            if (!$enrollment) {
+                $enrollment = MaternityEnrollment::where('patient_id', $id)
+                    ->with(['ancVisits', 'deliveryRecord', 'babies.patient.user', 'postnatalVisits'])
+                    ->latest('id')
+                    ->first();
+            }
         }
 
         if ($enrollment) {

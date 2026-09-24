@@ -39,8 +39,15 @@ window.WORKBENCH_CONFIG = {
         'maternity-workbench.queue.counts': '{{ route("maternity-workbench.queue.counts") }}',
         'maternity-workbench.enroll': '{{ route("maternity-workbench.enroll") }}',
         'maternity-workbench.search-patients': '{{ route("maternity-workbench.search-patients") }}'
-    }
+    },
+    labRequiresApproval: {{ (bool) appsettings('lab_results_require_approval') ? 'true' : 'false' }},
+    imagingRequiresApproval: {{ (bool) appsettings('imaging_results_require_approval') ? 'true' : 'false' }},
+    doctorSelfApproveLab: {{ (bool) appsettings('doctor_self_approve_lab_result') ? 'true' : 'false' }},
+    nurseSelfApproveLab: {{ (bool) appsettings('nurse_self_approve_lab_result') ? 'true' : 'false' }},
+    doctorSelfApproveImaging: {{ (bool) appsettings('doctor_self_approve_imaging_result') ? 'true' : 'false' }},
+    nurseSelfApproveImaging: {{ (bool) appsettings('nurse_self_approve_imaging_result') ? 'true' : 'false' }}
 };
+window.INVEST_RES_SOURCE = 'maternity';
 </script>
 <script src="{{ asset('js/workbench-helper.js') }}"></script>
 @include('admin.shared.modals.request_details')

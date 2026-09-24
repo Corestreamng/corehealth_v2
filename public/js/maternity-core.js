@@ -40,12 +40,17 @@ if (typeof window.wbRoute !== 'function') {
     // ═══════════════════════════════════════════════════════════════
     // GLOBAL STATE (mirrors nursing workbench pattern)
     // ═══════════════════════════════════════════════════════════════
-    let currentPatient = null;
-    let currentPatientData = null;
-    let currentEnrollment = null;
-    let currentEnrollmentId = null;
+    var currentPatient = null;
+    var currentPatientData = null;
+    var currentEnrollment = null;
+    var currentEnrollmentId = null;
+    window.currentPatient = null;
+    window.currentPatientId = null;
+    window.currentPatientData = null;
+    window.currentEnrollment = null;
+    window.currentEnrollmentId = null;
     Object.defineProperty(window, 'maternityEnrollmentId', {
-        get: function() { return currentEnrollmentId; }
+        get: function() { return currentEnrollmentId || window.currentEnrollmentId; }
     });
     const CSRF_TOKEN = $('meta[name="csrf-token"]').attr('content');
 
@@ -382,6 +387,7 @@ if (typeof window.wbRoute !== 'function') {
 
     function loadPatient(patientId) {
         currentPatient = patientId;
+        window.currentPatient = patientId;
         window.currentPatientId = patientId;
 
         if (window.loadUnviewedCounts) {
@@ -418,6 +424,7 @@ if (typeof window.wbRoute !== 'function') {
             method: 'GET',
             success: function(data) {
                 currentPatientData = data;
+                window.currentPatientData = data;
 
                 // Detect baby/mother context
                 window.currentPatientIsBaby = data.is_baby || false;
@@ -432,6 +439,8 @@ if (typeof window.wbRoute !== 'function') {
                 // Store enrollment
                 currentEnrollment = data.enrollment;
                 currentEnrollmentId = data.enrollment ? data.enrollment.id : null;
+                window.currentEnrollment = currentEnrollment;
+                window.currentEnrollmentId = currentEnrollmentId;
 
                 // Show/hide print buttons based on enrollment
                 if (currentEnrollmentId) {
@@ -1345,6 +1354,8 @@ if (typeof window.wbRoute !== 'function') {
                         toastr.success(resp.message);
                         currentEnrollment = resp.enrollment;
                         currentEnrollmentId = resp.enrollment_id;
+                        window.currentEnrollment = currentEnrollment;
+                        window.currentEnrollmentId = currentEnrollmentId;
                         loadPatient(currentPatient); // Reload
                     } else {
                         toastr.error(resp.message || 'Enrollment failed');

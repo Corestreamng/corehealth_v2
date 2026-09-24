@@ -19,14 +19,32 @@ if (typeof window.wbRoute !== 'function') {
     };
 }
 
+    function getActiveEnrollmentId() {
+        return window.currentEnrollmentId || (window.currentEnrollment ? window.currentEnrollment.id : null) || window.maternityEnrollmentId || (typeof currentEnrollmentId !== 'undefined' ? currentEnrollmentId : null);
+    }
+    function getActivePatientId() {
+        return window.currentPatientId || window.currentPatient || (typeof currentPatient !== 'undefined' ? currentPatient : null);
+    }
+    function getActivePatientData() {
+        return window.currentPatientData || (typeof currentPatientData !== 'undefined' ? currentPatientData : null);
+    }
+
     // ═══════════════════════════════════════════════════════════════
     // CLINICAL ORDERS TAB (Nursing-parity — auto-save per item)
     // ═══════════════════════════════════════════════════════════════
     function loadClinicalOrdersTab() {
-        if (!currentEnrollmentId || !currentPatient) {
+        const eid = getActiveEnrollmentId();
+        const pid = getActivePatientId();
+        const pData = getActivePatientData();
+
+        if (!eid || !pid) {
             $('#clinical-orders-content').html('<p class="text-muted text-center py-3">Patient not enrolled</p>');
             return;
         }
+
+        const patientDisplayName = (pData && pData.name) ? pData.name : 'Patient';
+        const patientFileNo = (pData && pData.file_no) ? pData.file_no : '';
+        const patientBadgeText = `${patientDisplayName}` + (patientFileNo ? ` (#${patientFileNo})` : '');
 
         const html = `
     <div class="clinical-requests-container p-3">
@@ -35,7 +53,7 @@ if (typeof window.wbRoute !== 'function') {
             <h4 class="mb-0"><i class="mdi mdi-clipboard-pulse"></i> Clinical Orders</h4>
             <div class="d-flex gap-2">
                 ${isBabyContext() ? '<span class="badge bg-info"><i class="mdi mdi-baby-face"></i> BABY CONTEXT</span>' : '<span class="badge bg-secondary">MOTHER CONTEXT</span>'}
-                <span class="badge bg-primary" id="mco-patient-badge">${currentPatientData.name} (#${currentPatientData.file_no})</span>
+                <span class="badge bg-primary" id="mco-patient-badge">${patientBadgeText}</span>
             </div>
         </div>
 
@@ -283,7 +301,7 @@ if (typeof window.wbRoute !== 'function') {
         // Inject the dose-mode toggle from the hidden source into the dynamic container
         $('#mco_dose_mode_container').html($('#mco-dose-mode-toggle-source').html());
 
-        MaternityClinicalOrders.init(currentPatient, currentEnrollmentId);
+        MaternityClinicalOrders.init(pid, eid);
     }
 
     const MaternityClinicalOrders = (function() {
