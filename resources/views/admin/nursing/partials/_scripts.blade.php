@@ -9,6 +9,12 @@
 window.WORKBENCH_CONFIG = {
     csrf: '{{ csrf_token() }}',
     baseUrl: '{{ url("/") }}',
+    labRequiresApproval: {{ (bool) appsettings('lab_results_require_approval') ? 'true' : 'false' }},
+    imagingRequiresApproval: {{ (bool) appsettings('imaging_results_require_approval') ? 'true' : 'false' }},
+    doctorSelfApproveLab: {{ (bool) appsettings('doctor_self_approve_lab_result') ? 'true' : 'false' }},
+    nurseSelfApproveLab: {{ (bool) appsettings('nurse_self_approve_lab_result') ? 'true' : 'false' }},
+    doctorSelfApproveImaging: {{ (bool) appsettings('doctor_self_approve_imaging_result') ? 'true' : 'false' }},
+    nurseSelfApproveImaging: {{ (bool) appsettings('nurse_self_approve_imaging_result') ? 'true' : 'false' }},
     routes: {
         'nursing-workbench.admitted-patients': '{{ route("nursing-workbench.admitted-patients") }}',
         'nursing-workbench.vitals-queue': '{{ route("nursing-workbench.vitals-queue") }}',
@@ -19,9 +25,16 @@ window.WORKBENCH_CONFIG = {
         'nursing-workbench.injection.administer': '{{ route("nursing-workbench.injection.administer") }}',
         'nursing-workbench.immunization.administer': '{{ route("nursing-workbench.immunization.administer") }}',
         'nursing-workbench.search-products': '{{ route("nursing-workbench.search-products") }}',
-        'nursing-workbench.product-batches': '{{ route("nursing-workbench.product-batches") }}'
+        'nursing-workbench.product-batches': '{{ route("nursing-workbench.product-batches") }}',
+        'nursing-workbench.search-services': '{{ route("nursing-workbench.search-services") }}',
+        'nursing-workbench.billing.add-service': '{{ route("nursing-workbench.billing.add-service") }}',
+        'nursing-workbench.billing.add-consumable': '{{ route("nursing-workbench.billing.add-consumable") }}',
+        'nursing-workbench.billing.add-lab-bill': '{{ route("nursing-workbench.billing.add-lab-bill") }}',
+        'nursing-workbench.billing.add-imaging-bill': '{{ route("nursing-workbench.billing.add-imaging-bill") }}',
+        'nursing-workbench.billing.remove': '{{ url("/nursing-workbench/remove-bill") }}'
     }
 };
+window.INVEST_RES_SOURCE = 'nursing';
 window.BILLING_KIT_CONFIG = {
     csrf: '{{ csrf_token() }}',
     addServiceRoute: '{{ route("nursing-workbench.billing.add-service") }}',

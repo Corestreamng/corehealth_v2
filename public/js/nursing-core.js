@@ -19,12 +19,12 @@ if (typeof window.wbRoute !== 'function') {
     };
 }
 
-window.BILLING_KIT_CONFIG = {
+window.BILLING_KIT_CONFIG = Object.assign({
     csrf: (window.WORKBENCH_CONFIG?.csrf || $('meta[name="csrf-token"]').attr('content')),
-    addServiceRoute: wbRoute('nursing-workbench.billing.add-service', '/nursing-workbench/billing/add-service'),
-    addLabRoute: wbRoute('nursing-workbench.billing.add-lab-bill', '/nursing-workbench/billing/add-lab-bill'),
-    addImagingRoute: wbRoute('nursing-workbench.billing.add-imaging-bill', '/nursing-workbench/billing/add-imaging-bill'),
-    addConsumableRoute: wbRoute('nursing-workbench.billing.add-consumable', '/nursing-workbench/billing/add-consumable'),
+    addServiceRoute: wbRoute('nursing-workbench.billing.add-service', '/nursing-workbench/add-service-bill'),
+    addLabRoute: wbRoute('nursing-workbench.billing.add-lab-bill', '/nursing-workbench/add-lab-bill'),
+    addImagingRoute: wbRoute('nursing-workbench.billing.add-imaging-bill', '/nursing-workbench/add-imaging-bill'),
+    addConsumableRoute: wbRoute('nursing-workbench.billing.add-consumable', '/nursing-workbench/add-consumable-bill'),
     removeBillBase: '/nursing-workbench/remove-bill',
     pendingBillsBase: '/nursing-workbench/patient',
     serviceRequestsBase: '/nursing-workbench/patient',
@@ -33,10 +33,10 @@ window.BILLING_KIT_CONFIG = {
     productBatchesRoute: wbRoute('nursing-workbench.product-batches', '/nursing-workbench/product-batches'),
     investigationCategoryId: '',
     imagingCategoryId: 6,
-    resolvedStoreId: (window.BILLING_KIT_CONFIG?.resolvedStoreId || ''),
-    resolvedStoreName: (window.BILLING_KIT_CONFIG?.resolvedStoreName || ''),
+    resolvedStoreId: '',
+    resolvedStoreName: '',
     showMedicationOption: true,
-};
+}, window.BILLING_KIT_CONFIG || {});
 // Global state
 var ClinicalRequests = null;
 var selectedMedication = null;

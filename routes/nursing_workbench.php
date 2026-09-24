@@ -82,6 +82,15 @@ Route::middleware(['web', 'auth'])->prefix('nursing-workbench')->name('nursing-w
     Route::post('/add-imaging-bill', [NursingWorkbenchController::class, 'addImagingBill'])->name('billing.add-imaging-bill');
     Route::delete('/remove-bill/{id}', [NursingWorkbenchController::class, 'removeBillItem'])->name('billing.remove');
 
+    // Nurse Billing URL Aliases (supporting /billing/... sub-path patterns)
+    Route::post('/billing/add-service', [NursingWorkbenchController::class, 'addServiceBill'])->name('billing.add-service-alias');
+    Route::post('/billing/add-consumable', [NursingWorkbenchController::class, 'addConsumableBill'])->name('billing.add-consumable-alias');
+    Route::post('/billing/add-consumable-bill', [NursingWorkbenchController::class, 'addConsumableBill'])->name('billing.add-consumable-bill-alias');
+    Route::post('/billing/add-lab-bill', [NursingWorkbenchController::class, 'addLabBill'])->name('billing.add-lab-bill-alias');
+    Route::post('/billing/add-imaging-bill', [NursingWorkbenchController::class, 'addImagingBill'])->name('billing.add-imaging-bill-alias');
+    Route::delete('/billing/remove-bill/{id}', [NursingWorkbenchController::class, 'removeBillItem'])->name('billing.remove-bill-alias');
+    Route::delete('/billing/remove/{id}', [NursingWorkbenchController::class, 'removeBillItem'])->name('billing.remove-alias');
+
     // =====================================
     // Nursing Notes
     // =====================================
