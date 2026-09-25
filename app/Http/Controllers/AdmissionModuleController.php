@@ -73,7 +73,13 @@ class AdmissionModuleController extends Controller
      */
     public function getAdmissionDetail($admissionId)
     {
-        $admission = AdmissionRequest::with(['bed.wardRelation', 'patient'])->find($admissionId);
+        $admission = AdmissionRequest::with([
+            'bed.wardRelation',
+            'preferredWard',
+            'patient.user',
+            'patient.hmo.scheme',
+            'doctor',
+        ])->find($admissionId);
 
         if (!$admission) {
             return response()->json(['error' => 'Admission not found'], 404);
@@ -322,9 +328,14 @@ class AdmissionModuleController extends Controller
             // Timeline grouped by day -> category -> items
             $dayKey = Carbon::parse($item->created_at)->format('Y-m-d');
             if (!isset($timeline[$dayKey])) {
+                $admitStart = Carbon::parse($admitDate)->startOfDay();
+                $itemDay = Carbon::parse($item->created_at)->startOfDay();
+                $dayDiff = (int) $admitStart->diffInDays($itemDay, false);
+                $dayNumber = max(1, $dayDiff + 1);
+
                 $timeline[$dayKey] = [
                     'date' => Carbon::parse($item->created_at)->format('D, d M Y'),
-                    'day_number' => Carbon::parse($admitDate)->diffInDays(Carbon::parse($item->created_at)) + 1,
+                    'day_number' => $dayNumber,
                     'categories' => [],
                     'total' => 0,
                 ];
@@ -391,6 +402,8 @@ class AdmissionModuleController extends Controller
             $doctorStaff = \App\Models\Staff::find($admission->doctor_id);
             if ($doctorStaff && $doctorStaff->user_id) {
                 $doctorName = userfullname($doctorStaff->user_id);
+            } elseif ($admission->doctor) {
+                $doctorName = trim(($admission->doctor->surname ?? '') . ' ' . ($admission->doctor->firstname ?? '') . ' ' . ($admission->doctor->othername ?? ''));
             }
         }
 
@@ -400,21 +413,62 @@ class AdmissionModuleController extends Controller
             $billerName = userfullname($admission->billed_by);
         }
 
+        $isEmergency = ($admission->priority === 'emergency')
+            || !empty($admission->esi_level)
+            || str_contains($admission->admission_reason ?? '', '[EMERGENCY INTAKE]');
+
+        $emergencyWard = \App\Models\Ward::where('type', 'emergency')->first();
+        $wardName = optional(optional($admission->bed)->wardRelation)->name
+            ?? ($admission->bed->ward ?? null)
+            ?? optional($admission->preferredWard)->name
+            ?? ($isEmergency ? ($emergencyWard?->name ?? 'Emergency Ward') : 'N/A');
+
+        $bedName = optional($admission->bed)->name
+            ?? ($isEmergency ? 'No Bed Assigned (Emergency)' : 'Unassigned Bed');
+
+        $user = $patient->user;
+        $patientFullName = $user
+            ? trim($user->surname . ' ' . $user->firstname . ($user->othername ? ' ' . $user->othername : ''))
+            : userfullname($patient->user_id);
+
+        $hmoName = $patient->hmo?->name ?? 'Private / Self-Pay';
+        if ($patient->hmo && $patient->hmo->scheme) {
+            $hmoName .= ' (' . $patient->hmo->scheme->name . ')';
+        }
+
+        $ageStr = 'N/A';
+        if ($user?->dob) {
+            $ageStr = Carbon::parse($user->dob)->age . ' yrs';
+        } elseif ($user?->approx_age) {
+            $ageStr = ucfirst(str_replace('_', ' ', $user->approx_age));
+        }
+
         return response()->json([
+            'patient_name' => $patientFullName,
             'admission' => [
                 'id' => $admission->id,
-                'patient_name' => userfullname($patient->user_id),
-                'patient_file_no' => $patient->file_no,
+                'patient_id' => $patient->id,
+                'patient_name' => $patientFullName,
+                'patient_file_no' => $patient->file_no ?? 'N/A',
+                'patient_gender' => $user?->gender ?? 'N/A',
+                'patient_dob' => $user?->dob ? Carbon::parse($user->dob)->format('d M Y') : 'N/A',
+                'patient_age' => $ageStr,
+                'patient_phone' => $user?->phone_number ?? $patient->phone_no ?? 'N/A',
+                'patient_hmo' => $hmoName,
+                'patient_hmo_no' => $patient->hmo_no ?? 'N/A',
+                'is_emergency' => $isEmergency,
+                'esi_level' => $admission->esi_level,
+                'priority' => $admission->priority ?? 'routine',
+                'chief_complaint' => $admission->chief_complaint,
+                'triage_notes' => $admission->admission_reason ?? $admission->note,
                 'admitted_date' => $admitDate ? Carbon::parse($admitDate)->format('d/m/Y H:i') : 'N/A',
                 'discharge_date' => $dischargeDate ? Carbon::parse($dischargeDate)->format('d/m/Y H:i') : 'Currently Admitted',
                 'los' => $admitDate ? (Carbon::parse($admitDate)->diffInDays($dischargeDate ? Carbon::parse($dischargeDate) : now()) + 1) . ' days' : 'N/A',
-                'ward' => optional(optional($admission->bed)->wardRelation)->name ?? ($admission->bed->ward ?? 'N/A'),
-                'bed' => optional($admission->bed)->name ?? 'N/A',
+                'ward' => $wardName,
+                'bed' => $bedName,
                 'doctor' => $doctorName,
                 'reason' => $admission->admission_reason ?? $admission->note ?? 'N/A',
                 'status' => $admission->discharged ? 'discharged' : 'admitted',
-                'priority' => $admission->priority ?? 'routine',
-                'chief_complaint' => $admission->chief_complaint,
                 'discharge_note' => $admission->discharge_note,
                 'discharge_reason' => $admission->discharge_reason,
                 'followup_instructions' => $admission->followup_instructions,

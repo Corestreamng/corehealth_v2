@@ -78,6 +78,11 @@
         </a>
     </li>
     <li class="nav-item">
+        <a class="nav-link" id="tab-discharges" data-bs-toggle="tab" href="#pane-discharges" role="tab">
+            <i class="mdi mdi-logout-variant me-1"></i> Recent Discharges
+        </a>
+    </li>
+    <li class="nav-item">
         <a class="nav-link" id="tab-notes" data-bs-toggle="tab" href="#pane-notes" role="tab">
             <i class="mdi mdi-clipboard-text me-1"></i> Nursing Notes
         </a>
@@ -132,7 +137,38 @@
         </div>
     </div>
 
-    {{-- Tab 2: Nursing Notes --}}
+    {{-- Tab 2: Recent Discharges --}}
+    <div class="tab-pane fade" id="pane-discharges" role="tabpanel">
+        <div class="row g-2 mb-3 ops-kpi-row" id="kpi-discharges"></div>
+
+        <div class="row g-2 mb-2">
+            @include('admin.ops_audit.partials.payment_filters', ['tab' => 'discharges'])
+        </div>
+
+        <div class="table-responsive">
+            <table class="table table-sm table-bordered table-striped ops-datatable w-100" id="dt-discharges">
+                <thead>
+                    <tr>
+                        <th>Discharged At</th>
+                        <th>Admitted</th>
+                        <th>Patient</th>
+                        <th>HMO</th>
+                        <th>Ward</th>
+                        <th>Bed</th>
+                        <th>LOS</th>
+                        <th>Reason / Notes</th>
+                        <th>Discharged By</th>
+                        <th>Total Bill</th>
+                        <th style="min-width: 150px;">Payment Info</th>
+                        <th>Audit ⚡</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </div>
+    </div>
+
+    {{-- Tab 3: Nursing Notes --}}
     <div class="tab-pane fade" id="pane-notes" role="tabpanel">
         <div class="row g-2 mb-3 ops-kpi-row" id="kpi-notes"></div>
 
@@ -216,6 +252,7 @@
 $(function() {
     var dataUrls = {
         admissions: "{{ route('ops-audit.nursing.data', 'admissions') }}",
+        discharges: "{{ route('ops-audit.nursing.data', 'discharges') }}",
         notes: "{{ route('ops-audit.nursing.data', 'notes') }}",
         bills: "{{ route('ops-audit.nursing.data', 'bills') }}",
         requisitions: "{{ route('ops-audit.nursing.data', 'requisitions') }}"
@@ -274,7 +311,16 @@ $(function() {
     $('a[data-bs-toggle="tab"]').on('shown.bs.tab', function(e) {
         var tabId = $(e.target).attr('id').replace('tab-', '');
         
-        if (tabId === 'notes' && !dtInstances.notes) {
+        if (tabId === 'discharges' && !dtInstances.discharges) {
+            dtInstances.discharges = $('#dt-discharges').DataTable(commonOpts(dataUrls.discharges, [
+                { data: 'discharge_date' }, { data: 'admit_date' }, { data: 'patient' }, { data: 'hmo' },
+                { data: 'ward' }, { data: 'bed' }, { data: 'los' }, { data: 'reason' },
+                { data: 'discharged_by' }, { data: 'total_bill' },
+                { data: 'payment_info', name: 'payment_info', orderable: false, searchable: false },
+                { data: 'audit', orderable: false, searchable: false }
+            ], 'kpi-discharges'));
+        }
+        else if (tabId === 'notes' && !dtInstances.notes) {
             dtInstances.notes = $('#dt-notes').DataTable(commonOpts(dataUrls.notes, [
                 { data: 'date' }, { data: 'patient' }, { data: 'hmo' }, { data: 'type' }, { data: 'author' },
                 { data: 'status' }, { data: 'completed' },
@@ -307,6 +353,7 @@ $(function() {
     $('#btnApplyFilters').on('click', function(e) {
         e.preventDefault();
         if(dtInstances.admissions) dtInstances.admissions.ajax.reload(null, false);
+        if(dtInstances.discharges) dtInstances.discharges.ajax.reload(null, false);
         if(dtInstances.notes) dtInstances.notes.ajax.reload(null, false);
         if(dtInstances.bills) dtInstances.bills.ajax.reload(null, false);
         if(dtInstances.requisitions) dtInstances.requisitions.ajax.reload(null, false);

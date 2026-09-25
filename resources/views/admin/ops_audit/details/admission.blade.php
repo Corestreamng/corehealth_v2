@@ -1,32 +1,69 @@
-<div class="container pt-3 pb-4">
-    <div class="mb-4 bg-light rounded p-3">
+<div class="container pt-2 pb-4">
+    {{-- Patient Profile & Clinical Summary Card --}}
+    <div class="card-modern shadow-sm border-0 mb-3 bg-white border-start border-primary border-4 rounded p-3">
         <div class="row align-items-center">
-            <div class="col-md-6">
-                <div class="d-flex align-items-center gap-3">
-                @if($data['admission']['status'] === 'admitted')
-                <div class="badge bg-white text-success border border-success p-2 fs-6">
-                    <i class="mdi mdi-hotel"></i> Admitted
+            <div class="col-md-7">
+                <div class="d-flex align-items-center gap-2 flex-wrap mb-1">
+                    <h5 class="font-weight-bold mb-0 text-dark">
+                        <i class="mdi mdi-account-circle text-primary me-1"></i>{{ $data['admission']['patient_name'] ?? 'Unknown Patient' }}
+                    </h5>
+                    @if(!empty($data['admission']['is_emergency']))
+                    <span class="badge bg-danger text-white px-2 py-1"><i class="mdi mdi-ambulance me-1"></i>EMERGENCY INTAKE</span>
+                    @if(!empty($data['admission']['esi_level']))
+                    <span class="badge bg-dark text-white px-2 py-1">ESI Level {{ $data['admission']['esi_level'] }}</span>
+                    @endif
+                    @endif
                 </div>
-                @else
-                <div class="badge bg-white text-secondary border border-secondary p-2 fs-6">
-                    <i class="mdi mdi-logout"></i> Discharged
+
+                <div class="d-flex align-items-center gap-3 flex-wrap text-muted small mt-1">
+                    <span><i class="mdi mdi-file-document-outline"></i> File: <strong class="text-dark">{{ $data['admission']['patient_file_no'] ?? 'N/A' }}</strong></span>
+                    <span><i class="mdi mdi-gender-male-female"></i> {{ $data['admission']['patient_gender'] ?? 'N/A' }} ({{ $data['admission']['patient_age'] ?? 'N/A' }})</span>
+                    <span><i class="mdi mdi-phone-outline"></i> {{ $data['admission']['patient_phone'] ?? 'N/A' }}</span>
+                    <span><i class="mdi mdi-shield-account-outline text-success"></i> <strong class="text-success">{{ $data['admission']['patient_hmo'] ?? 'Private / Self-Pay' }}</strong></span>
                 </div>
-                @endif
-                <div class="badge bg-white text-dark border p-2 fs-6">
-                    <i class="mdi mdi-calendar-clock text-primary"></i> LOS: {{ $data['admission']['los'] }}
+
+                <div class="d-flex align-items-center gap-3 flex-wrap text-muted small mt-2 pt-2 border-top">
+                    <span><i class="mdi mdi-doctor text-info"></i> Attending: <strong class="text-dark">{{ $data['admission']['doctor'] ?? 'N/A' }}</strong></span>
+                    <span><i class="mdi mdi-map-marker text-danger"></i> Ward: <strong class="text-dark">{{ $data['admission']['ward'] ?? 'N/A' }}</strong></span>
+                    <span><i class="mdi mdi-bed text-primary"></i> Bed: <strong class="text-dark">{{ $data['admission']['bed'] ?? 'N/A' }}</strong></span>
                 </div>
             </div>
-            <div class="mt-3">
-                <div class="text-muted small"><i class="mdi mdi-map-marker"></i> Ward & Bed</div>
-                <div class="font-weight-bold">{{ $data['admission']['ward'] }} — {{ $data['admission']['bed'] }}</div>
+
+            <div class="col-md-5 text-md-end mt-3 mt-md-0">
+                <div class="d-flex justify-content-md-end align-items-center gap-2 mb-2">
+                    @if(($data['admission']['status'] ?? '') === 'admitted')
+                    <span class="badge bg-success text-white p-2 fs-6">
+                        <i class="mdi mdi-hotel me-1"></i> Currently Admitted
+                    </span>
+                    @else
+                    <span class="badge bg-secondary text-white p-2 fs-6">
+                        <i class="mdi mdi-logout me-1"></i> Discharged
+                    </span>
+                    @endif
+                    <span class="badge bg-light text-dark border p-2 fs-6">
+                        <i class="mdi mdi-calendar-clock text-primary me-1"></i> LOS: {{ $data['admission']['los'] ?? 'N/A' }}
+                    </span>
+                </div>
+                <div class="small text-muted">
+                    <div><i class="mdi mdi-login text-success me-1"></i> Admitted: <strong class="text-dark">{{ $data['admission']['admitted_date'] ?? 'N/A' }}</strong></div>
+                    <div class="mt-1"><i class="mdi mdi-logout text-danger me-1"></i> Discharged: <strong class="text-dark">{{ $data['admission']['discharge_date'] ?? 'N/A' }}</strong></div>
+                </div>
             </div>
         </div>
-        <div class="col-md-6 text-end">
-            <div class="text-muted small"><i class="mdi mdi-login text-success"></i> Admitted Date</div>
-            <div class="font-weight-bold">{{ $data['admission']['admitted_date'] }}</div>
-            <div class="text-muted small mt-2"><i class="mdi mdi-logout text-danger"></i> Discharged Date</div>
-            <div class="font-weight-bold">{{ $data['admission']['discharge_date'] }}</div>
+
+        @if(!empty($data['admission']['chief_complaint']) || !empty($data['admission']['reason']) || !empty($data['admission']['discharge_reason']))
+        <div class="mt-3 pt-2 border-top bg-light rounded p-2 small">
+            @if(!empty($data['admission']['chief_complaint']))
+            <div class="mb-1"><span class="text-danger font-weight-bold"><i class="mdi mdi-alert-circle-outline me-1"></i>Chief Complaint:</span> {{ $data['admission']['chief_complaint'] }}</div>
+            @endif
+            @if(!empty($data['admission']['reason']) && $data['admission']['reason'] !== 'N/A' && $data['admission']['reason'] !== $data['admission']['chief_complaint'])
+            <div class="text-muted"><span class="text-secondary font-weight-bold"><i class="mdi mdi-clipboard-text-outline me-1"></i>Intake Notes:</span> {{ \Illuminate\Support\Str::limit($data['admission']['reason'], 250) }}</div>
+            @endif
+            @if(!empty($data['admission']['discharge_reason']))
+            <div class="mt-1 text-muted"><span class="text-warning-emphasis font-weight-bold"><i class="mdi mdi-logout me-1"></i>Discharge Note:</span> {{ $data['admission']['discharge_reason'] }}</div>
+            @endif
         </div>
+        @endif
     </div>
 
     <div class="row mb-4">

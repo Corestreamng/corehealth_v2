@@ -2212,9 +2212,14 @@ class BillingWorkbenchController extends Controller
             // Add to timeline
             $dayKey = Carbon::parse($item->created_at)->format('Y-m-d');
             if (!isset($timeline[$dayKey])) {
+                $admitStart = Carbon::parse($admitDate)->startOfDay();
+                $itemDay = Carbon::parse($item->created_at)->startOfDay();
+                $dayDiff = (int) $admitStart->diffInDays($itemDay, false);
+                $dayNumber = max(1, $dayDiff + 1);
+
                 $timeline[$dayKey] = [
                     'date' => Carbon::parse($item->created_at)->format('D, d M Y'),
-                    'day_number' => Carbon::parse($admitDate)->diffInDays(Carbon::parse($item->created_at)) + 1,
+                    'day_number' => $dayNumber,
                     'items' => [],
                     'total' => 0,
                 ];

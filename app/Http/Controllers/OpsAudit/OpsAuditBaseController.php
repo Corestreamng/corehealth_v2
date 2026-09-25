@@ -997,7 +997,7 @@ abstract class OpsAuditBaseController extends Controller
 
         return response()->json([
             'html' => view('admin.ops_audit.details.admission', ['data' => $data])->render(),
-            'title' => '<i class="mdi mdi-bed me-2 text-primary"></i> Admission Details — ' . ($data['patient_name'] ?? 'Unknown'),
+            'title' => '<i class="mdi mdi-bed me-2 text-primary"></i> Admission Details — ' . ($data['admission']['patient_name'] ?? $data['patient_name'] ?? 'Unknown'),
         ]);
     }
 
