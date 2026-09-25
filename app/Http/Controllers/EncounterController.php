@@ -3769,7 +3769,7 @@ class EncounterController extends Controller
                 'end_consultation' => 'nullable|boolean',
                 'consult_admit' => 'nullable|boolean',
                 'admit_note' => 'nullable|string',
-                'queue_id' => 'required',
+                'queue_id' => 'nullable',
                 'outcome' => 'nullable|string',
                 'death_record' => 'nullable|array',
             ]);
@@ -3779,9 +3779,9 @@ class EncounterController extends Controller
             // Mark encounter as complete
             $encounter->completed = true;
             $encounter->completed_at = now();
-            $encounter->doctor_id = Auth::id();
+            $encounter->doctor_id = Auth::id() ?: $encounter->doctor_id;
 
-            if ($request->outcome) {
+            if ($request->filled('outcome')) {
                 $encounter->outcome = $request->outcome;
             }
             $encounter->save();
@@ -3789,12 +3789,14 @@ class EncounterController extends Controller
             // Handle Death Record
             if ($request->outcome && str_starts_with($request->outcome, 'death')) {
                 $patient = $encounter->patient;
-                $patient->is_deceased = true;
-                $patient->save();
+                if ($patient) {
+                    $patient->is_deceased = true;
+                    $patient->save();
+                }
 
-                $dr = $request->death_record;
+                $dr = is_array($request->death_record) ? $request->death_record : [];
                 \App\Models\DeathRecord::updateOrCreate(
-                    ['patient_id' => $patient->id],
+                    ['patient_id' => $encounter->patient_id],
                     [
                         'encounter_id' => $encounter->id,
                         'death_type' => ($request->outcome === 'death_bid' ? 'BID' : 'RIP'),
@@ -3808,11 +3810,12 @@ class EncounterController extends Controller
                 );
             }
 
-            // Handle queue status using QueueStatusService
-            if ($request->queue_id != 'ward_round') {
-                $queue = DoctorQueue::find($request->queue_id);
+            // Handle queue status using QueueStatusService if queue is present
+            $queueId = $request->input('queue_id') ?: $encounter->queue_id;
+            if (!empty($queueId) && $queueId !== 'ward_round') {
+                $queue = DoctorQueue::find($queueId);
                 if ($queue) {
-                    $endConsultation = $request->end_consultation && $request->end_consultation == '1';
+                    $endConsultation = $request->boolean('end_consultation');
                     $newStatus = $endConsultation ? QueueStatus::COMPLETED : QueueStatus::IN_CONSULTATION;
 
                     try {
@@ -3831,7 +3834,7 @@ class EncounterController extends Controller
             }
 
             // Handle admission request
-            if ($request->consult_admit && $request->consult_admit == '1') {
+            if ($request->boolean('consult_admit')) {
                 $admit = new AdmissionRequest();
                 $admit->encounter_id = $encounter->id;
                 $admit->patient_id = $encounter->patient_id;
@@ -3847,6 +3850,14 @@ class EncounterController extends Controller
                 'message' => 'Encounter completed successfully',
                 'redirect' => route('encounters.index'),
             ]);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            DB::rollBack();
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Validation failed: ' . implode(', ', $e->validator->errors()->all()),
+                'errors' => $e->errors(),
+            ], 422);
         } catch (\Exception $e) {
             DB::rollBack();
 
@@ -3863,19 +3874,26 @@ class EncounterController extends Controller
     public function getEncounterSummary(Encounter $encounter)
     {
         try {
-            // Get all encounter IDs associated with the same queue visit or request entry to show all actions across sessions
-            $encounterIds = Encounter::where(function ($q) use ($encounter) {
-                if ($encounter->queue_id) {
-                    $q->where('queue_id', $encounter->queue_id);
-                }
-                if ($encounter->service_request_id) {
-                    $q->orWhere('service_request_id', $encounter->service_request_id);
-                }
-            })
-            ->pluck('id')
-            ->push($encounter->id)
-            ->unique()
-            ->toArray();
+            // Get all encounter IDs associated with the same queue visit or request entry to show all actions across sessions.
+            // If neither queue_id nor service_request_id is present, restrict strictly to this encounter ID.
+            $encounterIds = collect([$encounter->id]);
+
+            if (!empty($encounter->queue_id) || !empty($encounter->service_request_id)) {
+                $relatedIds = Encounter::where('patient_id', $encounter->patient_id)
+                    ->where(function ($q) use ($encounter) {
+                        if (!empty($encounter->queue_id)) {
+                            $q->where('queue_id', $encounter->queue_id);
+                        }
+                        if (!empty($encounter->service_request_id)) {
+                            $q->orWhere('service_request_id', $encounter->service_request_id);
+                        }
+                    })
+                    ->pluck('id');
+
+                $encounterIds = $encounterIds->merge($relatedIds);
+            }
+
+            $encounterIds = $encounterIds->filter()->unique()->values()->slice(0, 100)->toArray();
 
             // Get diagnosis/notes
             $diagnosis = [
@@ -3897,7 +3915,7 @@ class EncounterController extends Controller
                         'code' => $lab->service->service_code ?? '',
                         'note' => $lab->note,
                         'status' => $lab->status ?? 1,
-                        'created_at' => $lab->created_at->format('M d, Y H:i'),
+                        'created_at' => $lab->created_at ? $lab->created_at->format('M d, Y H:i') : '',
                     ];
                 });
 
@@ -3912,7 +3930,7 @@ class EncounterController extends Controller
                         'code' => $img->service->service_code ?? '',
                         'note' => $img->note,
                         'status' => $img->status ?? 1,
-                        'created_at' => $img->created_at->format('M d, Y H:i'),
+                        'created_at' => $img->created_at ? $img->created_at->format('M d, Y H:i') : '',
                     ];
                 });
 
@@ -3926,7 +3944,7 @@ class EncounterController extends Controller
                         'name' => $presc->product->product_name ?? 'N/A',
                         'dose' => $presc->dose,
                         'status' => $presc->status ?? 1,
-                        'created_at' => $presc->created_at->format('M d, Y H:i'),
+                        'created_at' => $presc->created_at ? $presc->created_at->format('M d, Y H:i') : '',
                     ];
                 });
 
@@ -3941,7 +3959,7 @@ class EncounterController extends Controller
                         'code' => $proc->service->service_code ?? '',
                         'priority' => $proc->priority,
                         'status' => $proc->procedure_status,
-                        'created_at' => $proc->created_at->format('M d, Y H:i'),
+                        'created_at' => $proc->created_at ? $proc->created_at->format('M d, Y H:i') : '',
                     ];
                 });
 
@@ -3965,7 +3983,7 @@ class EncounterController extends Controller
                         'target' => $target,
                         'reason' => $ref->reason,
                         'urgency' => $ref->urgency,
-                        'created_at' => $ref->created_at->format('M d, Y H:i'),
+                        'created_at' => $ref->created_at ? $ref->created_at->format('M d, Y H:i') : '',
                     ];
                 });
 
@@ -3981,7 +3999,7 @@ class EncounterController extends Controller
                         'frequency' => $order->frequency,
                         'duration' => $order->duration,
                         'status' => $order->status,
-                        'created_at' => $order->created_at->format('M d, Y H:i'),
+                        'created_at' => $order->created_at ? $order->created_at->format('M d, Y H:i') : '',
                     ];
                 });
 
@@ -3997,9 +4015,9 @@ class EncounterController extends Controller
                     'care_plans' => $carePlans,
                     'encounter' => [
                         'id' => $encounter->id,
-                        'completed' => $encounter->completed,
-                        'created_at' => $encounter->created_at->format('M d, Y H:i'),
-                        'updated_at' => $encounter->updated_at->format('M d, Y H:i'),
+                        'completed' => (bool) $encounter->completed,
+                        'created_at' => $encounter->created_at ? $encounter->created_at->format('M d, Y H:i') : '',
+                        'updated_at' => $encounter->updated_at ? $encounter->updated_at->format('M d, Y H:i') : '',
                     ],
                 ],
             ]);
