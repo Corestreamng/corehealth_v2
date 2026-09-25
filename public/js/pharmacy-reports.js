@@ -437,6 +437,10 @@ function loadExecutiveSummaryData() {
             renderHmoAccordion('#accordion-exec-gender', data.gender_distribution || {}, 'gender');
             renderHmoAccordion('#accordion-exec-age', data.age_distribution || {}, 'age');
             renderHmoAccordion('#accordion-exec-class', data.patient_classifications || {}, 'class');
+
+            // Synchronize Detailed Drill-Down Preview
+            window.lastExecutiveSummaryData = data;
+            populateDetailedExecutiveSummary(data);
         },
         error: function() {
             $('#executive-summary-loader').addClass('d-none');
@@ -509,163 +513,389 @@ function renderHmoAccordion(containerSelector, dataObj, prefix) {
     }
 }
 
-// Render deep financial breakdowns
+// Render deep financial breakdowns (Store -> Scheme -> HMO)
 function renderDeepFinancials(containerSelector, collectionsData) {
     const $container = $(containerSelector);
     $container.empty();
 
     if (!collectionsData || !collectionsData.length) {
-        $container.html('<div class="p-4 text-center text-muted">No financial data available</div>');
+        $container.html('<div class="p-4 text-center text-muted"><i class="mdi mdi-information-outline me-1"></i> No financial breakdown data available for the selected filters.</div>');
         return;
     }
 
     let index = 0;
+    let grandTotalCount = 0;
+    let grandTotalCash = 0;
+    let grandTotalClaims = 0;
+    let grandTotalValue = 0;
+
     collectionsData.forEach(store => {
         const storeId = `heading-fin-store-${index}`;
         const collapseId = `collapse-fin-store-${index}`;
 
-        let schemesHtml = '';
+        const storeCount = parseInt(store.count || 0);
+        const storeCash = parseFloat(store.cash || 0);
+        const storeClaims = parseFloat(store.claims || 0);
+        const storeValue = parseFloat(store.value || 0);
+
+        grandTotalCount += storeCount;
+        grandTotalCash += storeCash;
+        grandTotalClaims += storeClaims;
+        grandTotalValue += storeValue;
+
+        let tableRowsHtml = '';
         if (store.schemes && Object.keys(store.schemes).length) {
-            schemesHtml += '<div class="ms-3 mt-2">';
             for (const [schemeName, schemeData] of Object.entries(store.schemes)) {
-                schemesHtml += `
-                    <div class="card-modern border-0 mb-2 shadow-sm">
-                        <div class="d-flex justify-content-between p-2 bg-light rounded align-items-center border-start border-4 border-info">
-                            <span class="fw-bold text-secondary"><i class="mdi mdi-shield-check-outline me-1"></i> ${escapeHtml(schemeName)}</span>
-                            <div class="text-end">
-                                <span class="fw-bold text-success me-2">${formatCurrency(schemeData.value)}</span>
-                                <span class="badge bg-secondary">${formatNumber(schemeData.count)} items</span>
-                            </div>
-                        </div>
+                const schemeCount = parseInt(schemeData.count || 0);
+                const schemeCash = parseFloat(schemeData.cash || 0);
+                const schemeClaims = parseFloat(schemeData.claims || 0);
+                const schemeValue = parseFloat(schemeData.value || 0);
+
+                tableRowsHtml += `
+                    <tr class="table-light fw-bold" style="background-color: rgba(var(--hospital-primary-rgb, 1, 27, 51), 0.04);">
+                        <td><i class="mdi mdi-shield-check-outline text-primary me-1"></i> ${escapeHtml(schemeName)}</td>
+                        <td class="text-center">${formatNumber(schemeCount)}</td>
+                        <td class="text-end">${formatCurrency(schemeCash)}</td>
+                        <td class="text-end">${formatCurrency(schemeClaims)}</td>
+                        <td class="text-end text-primary">${formatCurrency(schemeValue)}</td>
+                    </tr>
                 `;
-                
+
                 if (schemeData.hmos && Object.keys(schemeData.hmos).length) {
-                    schemesHtml += '<ul class="list-group list-group-flush ms-4 border-start border-2 border-light mb-2 mt-1">';
                     for (const [hmoName, hmoData] of Object.entries(schemeData.hmos)) {
-                        schemesHtml += `
-                            <li class="list-group-item border-0 py-2 ps-3 pe-2 bg-transparent d-flex justify-content-between align-items-center" style="font-size: 0.9rem;">
-                                <span class="text-muted"><i class="mdi mdi-hospital-building me-1"></i> ${escapeHtml(hmoName)}</span>
-                                <div class="text-end">
-                                    <span class="fw-bold text-success d-block" style="font-size: 0.85rem;">${formatCurrency(hmoData.value)}</span>
-                                    <small class="text-muted d-block">${formatNumber(hmoData.count)} items | Cash: ${formatCurrency(hmoData.cash)} | Claims: ${formatCurrency(hmoData.claims)}</small>
-                                </div>
-                            </li>
+                        const hmoCount = parseInt(hmoData.count || 0);
+                        const hmoCash = parseFloat(hmoData.cash || 0);
+                        const hmoClaims = parseFloat(hmoData.claims || 0);
+                        const hmoValue = parseFloat(hmoData.value || 0);
+
+                        tableRowsHtml += `
+                            <tr>
+                                <td class="ps-4 text-muted"><i class="mdi mdi-hospital-building text-secondary me-1"></i> &bull; ${escapeHtml(hmoName)}</td>
+                                <td class="text-center text-muted">${formatNumber(hmoCount)}</td>
+                                <td class="text-end text-muted">${formatCurrency(hmoCash)}</td>
+                                <td class="text-end text-muted">${formatCurrency(hmoClaims)}</td>
+                                <td class="text-end fw-semibold text-secondary">${formatCurrency(hmoValue)}</td>
+                            </tr>
                         `;
                     }
-                    schemesHtml += '</ul>';
                 }
-                schemesHtml += '</div>';
             }
-            schemesHtml += '</div>';
+        } else {
+            tableRowsHtml = '<tr><td colspan="5" class="text-center text-muted py-3">No scheme transactions found</td></tr>';
         }
 
         $container.append(`
-            <div class="accordion-item border border-primary mb-3 rounded overflow-hidden">
+            <div class="accordion-item border mb-3 rounded overflow-hidden store-accordion-item">
                 <h2 class="accordion-header" id="${storeId}">
-                    <button class="accordion-button collapsed py-3 px-3 bg-white text-dark" type="button" data-bs-toggle="collapse" data-bs-target="#${collapseId}" aria-expanded="false" aria-controls="${collapseId}">
-                        <div class="d-flex justify-content-between align-items-center w-100 pe-3">
-                            <span class="fw-bold fs-5 text-primary"><i class="mdi mdi-store me-2"></i>${escapeHtml(store.store_name)}</span>
+                    <button class="accordion-button py-2 px-3 bg-light text-dark fw-bold" type="button" data-bs-toggle="collapse" data-bs-target="#${collapseId}" aria-expanded="true" aria-controls="${collapseId}">
+                        <div class="d-flex justify-content-between align-items-center w-100 pe-3 flex-wrap gap-2">
+                            <span class="fs-6 text-primary"><i class="mdi mdi-store me-2"></i>${escapeHtml(store.store_name)}</span>
                             <div class="text-end">
-                                <span class="fw-bold fs-5 text-success me-3">${formatCurrency(store.value)}</span>
-                                <span class="badge bg-primary rounded-pill px-3 py-2">${formatNumber(store.count)} items total</span>
+                                <span class="badge bg-secondary me-2">${formatNumber(storeCount)} items</span>
+                                <span class="text-muted small me-2">Cash: ${formatCurrency(storeCash)}</span>
+                                <span class="text-muted small me-2">Claims: ${formatCurrency(storeClaims)}</span>
+                                <span class="fw-bold text-success fs-6">${formatCurrency(storeValue)}</span>
                             </div>
                         </div>
                     </button>
                 </h2>
-                <div id="${collapseId}" class="accordion-collapse collapse" aria-labelledby="${storeId}">
-                    <div class="accordion-body p-3 pt-0 bg-white">
-                        ${schemesHtml}
+                <div id="${collapseId}" class="accordion-collapse collapse show" aria-labelledby="${storeId}">
+                    <div class="accordion-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-sm table-hover table-bordered mb-0 align-middle">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th style="width: 40%;">Entity / Scheme / HMO</th>
+                                        <th class="text-center" style="width: 12%;">Items</th>
+                                        <th class="text-end" style="width: 16%;">Cash (₦)</th>
+                                        <th class="text-end" style="width: 16%;">Claims (₦)</th>
+                                        <th class="text-end" style="width: 16%;">Total Amount (₦)</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${tableRowsHtml}
+                                </tbody>
+                                <tfoot class="table-secondary fw-bold">
+                                    <tr>
+                                        <td>SUBTOTAL (${escapeHtml(store.store_name).toUpperCase()})</td>
+                                        <td class="text-center">${formatNumber(storeCount)}</td>
+                                        <td class="text-end">${formatCurrency(storeCash)}</td>
+                                        <td class="text-end">${formatCurrency(storeClaims)}</td>
+                                        <td class="text-end text-success">${formatCurrency(storeValue)}</td>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </div>
                     </div>
                 </div>
             </div>
         `);
         index++;
     });
+
+    if (collectionsData.length > 1) {
+        $container.append(`
+            <div class="card bg-light border-primary mb-3">
+                <div class="card-body py-2 px-3 d-flex justify-content-between align-items-center flex-wrap gap-2">
+                    <span class="fw-bold text-primary"><i class="mdi mdi-calculator me-1"></i> GRAND TOTAL (ALL STORES)</span>
+                    <div class="text-end">
+                        <span class="badge bg-primary me-2">${formatNumber(grandTotalCount)} items</span>
+                        <span class="text-muted small me-2">Cash: <strong>${formatCurrency(grandTotalCash)}</strong></span>
+                        <span class="text-muted small me-2">Claims: <strong>${formatCurrency(grandTotalClaims)}</strong></span>
+                        <span class="fw-bold text-success fs-6">${formatCurrency(grandTotalValue)}</span>
+                    </div>
+                </div>
+            </div>
+        `);
+    }
 }
 
-// Hook into existing success handler inside loadExecutiveSummaryData
-const originalLoadExecSummaryAjaxSuccess = function(data) {
-    // Populate detailed demographic renderers
-    renderHmoAccordion('#detailed-gender-container', data.gender_distribution || {}, 'det-gender');
-    renderHmoAccordion('#detailed-age-container', data.age_distribution || {}, 'det-age');
-    renderHmoAccordion('#detailed-class-container', data.patient_classifications || {}, 'det-class');
+// Render detailed demographic tables matching print view macro
+function renderDetailedDemographics(containerSelector, dataObj) {
+    const $container = $(containerSelector);
+    $container.empty();
 
-    // Populate detailed financial renderer
-    renderDeepFinancials('#exec-detailed-financials', data.collections_by_store || []);
-
-    // Populate Financial Performance Summary
-    $('#exec-det-opening-stock').text(formatCurrency(data.opening_stock || 0));
-    $('#exec-det-purchases').text(formatCurrency(data.total_expenditure || 0));
-    $('#exec-det-goods-available').text(formatCurrency((data.opening_stock || 0) + (data.total_expenditure || 0)));
-    $('#exec-det-goods-used').text(formatCurrency(data.total_goods_used || 0));
-    $('#exec-det-closing-stock').text(formatCurrency(data.stock_valuation || 0));
-
-    // Populate Income by Scheme
-    const $incomeList = $('#exec-det-income-scheme-list');
-    $incomeList.empty();
-    if (data.income_by_scheme && Object.keys(data.income_by_scheme).length) {
-        for (const [schemeName, valObj] of Object.entries(data.income_by_scheme)) {
-            let total = typeof valObj === 'object' ? (valObj.total || 0) : valObj;
-            let cash = typeof valObj === 'object' ? (valObj.cash || 0) : 0;
-            let claims = typeof valObj === 'object' ? (valObj.claims || 0) : 0;
-            $incomeList.append(`
-                <li class="list-group-item d-flex justify-content-between align-items-center">
-                    <div>
-                        <span class="text-muted d-block">${escapeHtml(schemeName)}</span>
-                        <small class="text-secondary" style="font-size: 0.75rem;">Cash: ${formatCurrency(cash)} | Claims: ${formatCurrency(claims)}</small>
-                    </div>
-                    <span class="fw-bold text-success">${formatCurrency(total)}</span>
-                </li>
-            `);
-        }
-    } else {
-        $incomeList.html('<li class="list-group-item text-center text-muted">No data</li>');
+    if (!dataObj || !Object.keys(dataObj).length) {
+        $container.html('<div class="p-4 text-center text-muted"><i class="mdi mdi-information-outline me-1"></i> No demographic data found</div>');
+        return;
     }
 
-    // Populate Patients by Scheme
-    const $patList = $('#exec-det-patients-scheme-list');
-    $patList.empty();
+    let rowsHtml = '';
+    let grandTotalPatients = 0;
+
+    for (const [catName, catData] of Object.entries(dataObj)) {
+        const catCount = parseInt(catData.count || 0);
+        grandTotalPatients += catCount;
+
+        rowsHtml += `
+            <tr class="table-light fw-bold" style="background-color: rgba(var(--hospital-primary-rgb, 1, 27, 51), 0.05);">
+                <td><i class="mdi mdi-label-outline text-primary me-1"></i> ${escapeHtml(catName)}</td>
+                <td class="text-end text-primary fw-bold">${formatNumber(catCount)}</td>
+            </tr>
+        `;
+
+        if (catData.schemes && Object.keys(catData.schemes).length) {
+            for (const [schemeName, schemeData] of Object.entries(catData.schemes)) {
+                const schemeCount = parseInt(schemeData.count || 0);
+                rowsHtml += `
+                    <tr>
+                        <td class="ps-4 fw-semibold text-secondary"><i class="mdi mdi-shield-check-outline me-1"></i> ↳ ${escapeHtml(schemeName)}</td>
+                        <td class="text-end text-secondary">${formatNumber(schemeCount)}</td>
+                    </tr>
+                `;
+
+                if (schemeData.hmos && Object.keys(schemeData.hmos).length) {
+                    for (const [hmoName, count] of Object.entries(schemeData.hmos)) {
+                        rowsHtml += `
+                            <tr>
+                                <td class="ps-5 text-muted"><i class="mdi mdi-hospital-building me-1"></i> &bull; ${escapeHtml(hmoName)}</td>
+                                <td class="text-end text-muted">${formatNumber(count)}</td>
+                            </tr>
+                        `;
+                    }
+                }
+            }
+        }
+    }
+
+    $container.html(`
+        <div class="table-responsive">
+            <table class="table table-sm table-hover table-bordered mb-0 align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th style="width: 75%;">Category / Scheme / HMO</th>
+                        <th class="text-end" style="width: 25%;">Patients</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${rowsHtml}
+                </tbody>
+                <tfoot class="table-light fw-bold">
+                    <tr class="table-info">
+                        <td>TOTAL PATIENTS</td>
+                        <td class="text-end">${formatNumber(grandTotalPatients)}</td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+    `);
+}
+
+// Populate the Detailed Drill-Down preview with data matching the print report
+function populateDetailedExecutiveSummary(data) {
+    if (!data) return;
+
+    // 1. Update Report Scope Banner
+    let dateRangeText = 'All Time';
+    if (pharmReportFilters.date_from && pharmReportFilters.date_to) {
+        dateRangeText = `${pharmReportFilters.date_from} &rarr; ${pharmReportFilters.date_to}`;
+    } else if (pharmReportFilters.date_from) {
+        dateRangeText = `From ${pharmReportFilters.date_from}`;
+    } else if (pharmReportFilters.date_to) {
+        dateRangeText = `Up to ${pharmReportFilters.date_to}`;
+    }
+    $('#exec-det-filter-date').html(dateRangeText);
+
+    let storeText = 'All Hubs & Satellites';
+    if (pharmReportFilters.store_id) {
+        const storeOptionText = $(`#pharm-report-store option[value="${pharmReportFilters.store_id}"]`).text();
+        if (storeOptionText) {
+            storeText = storeOptionText;
+        }
+    }
+    $('#exec-det-filter-store').text(storeText);
+
+    // 2. Financial Performance Summary
+    const openingStock = parseFloat(data.opening_stock || 0);
+    const totalExpenditure = parseFloat(data.total_expenditure || 0);
+    const goodsAvailable = openingStock + totalExpenditure;
+    const stockValuation = parseFloat(data.stock_valuation || 0);
+    const totalGoodsUsed = parseFloat(data.total_goods_used || 0);
+
+    $('#exec-det-opening-stock').text(formatCurrency(openingStock));
+    $('#exec-det-purchases').text(formatCurrency(totalExpenditure));
+    $('#exec-det-goods-available').text(formatCurrency(goodsAvailable));
+    $('#exec-det-closing-stock').text(formatCurrency(stockValuation));
+    $('#exec-det-goods-used').text(formatCurrency(totalGoodsUsed));
+
+    // 3. Income by Scheme Summary Table
+    const $incomeTbody = $('#exec-det-income-scheme-tbody');
+    $incomeTbody.empty();
+
+    let sumCash = 0;
+    let sumClaims = 0;
+    let sumTotal = 0;
+
+    if (data.income_by_scheme && Object.keys(data.income_by_scheme).length) {
+        for (const [schemeName, val] of Object.entries(data.income_by_scheme)) {
+            const cash = typeof val === 'object' ? (parseFloat(val.cash) || 0) : 0;
+            const claims = typeof val === 'object' ? (parseFloat(val.claims) || 0) : 0;
+            const total = typeof val === 'object' ? (parseFloat(val.total) || (cash + claims)) : (parseFloat(val) || 0);
+
+            sumCash += cash;
+            sumClaims += claims;
+            sumTotal += total;
+
+            $incomeTbody.append(`
+                <tr>
+                    <td><strong>${escapeHtml(schemeName.toUpperCase())}</strong></td>
+                    <td class="text-end">${formatCurrency(cash)}</td>
+                    <td class="text-end">${formatCurrency(claims)}</td>
+                    <td class="text-end fw-bold text-success">${formatCurrency(total)}</td>
+                </tr>
+            `);
+        }
+        $('#exec-det-income-total-cash').text(formatCurrency(sumCash));
+        $('#exec-det-income-total-claims').text(formatCurrency(sumClaims));
+        $('#exec-det-income-total-all').text(formatCurrency(totalGoodsUsed > 0 ? totalGoodsUsed : sumTotal));
+    } else {
+        $incomeTbody.html('<tr><td colspan="4" class="text-center text-muted py-3">No income data found</td></tr>');
+        $('#exec-det-income-total-cash').text(formatCurrency(0));
+        $('#exec-det-income-total-claims').text(formatCurrency(0));
+        $('#exec-det-income-total-all').text(formatCurrency(0));
+    }
+
+    // Backward compatibility for list element if present
+    const $incomeList = $('#exec-det-income-scheme-list');
+    if ($incomeList.length) {
+        $incomeList.empty();
+        if (data.income_by_scheme && Object.keys(data.income_by_scheme).length) {
+            for (const [schemeName, valObj] of Object.entries(data.income_by_scheme)) {
+                let total = typeof valObj === 'object' ? (valObj.total || 0) : valObj;
+                let cash = typeof valObj === 'object' ? (valObj.cash || 0) : 0;
+                let claims = typeof valObj === 'object' ? (valObj.claims || 0) : 0;
+                $incomeList.append(`
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        <div>
+                            <span class="text-muted d-block">${escapeHtml(schemeName)}</span>
+                            <small class="text-secondary" style="font-size: 0.75rem;">Cash: ${formatCurrency(cash)} | Claims: ${formatCurrency(claims)}</small>
+                        </div>
+                        <span class="fw-bold text-success">${formatCurrency(total)}</span>
+                    </li>
+                `);
+            }
+        }
+    }
+
+    // 4. Total Patients Attended by Scheme Table
+    const $patientsTbody = $('#exec-det-patients-scheme-tbody');
+    $patientsTbody.empty();
+
+    let totalPat = 0;
     if (data.patients_by_scheme && Object.keys(data.patients_by_scheme).length) {
         for (const [schemeName, val] of Object.entries(data.patients_by_scheme)) {
-            $patList.append(`
-                <li class="list-group-item d-flex justify-content-between align-items-center">
-                    <span class="text-muted">${escapeHtml(schemeName)}</span>
-                    <span class="badge bg-secondary rounded-pill">${formatNumber(val)}</span>
-                </li>
+            const count = parseInt(val) || 0;
+            totalPat += count;
+            $patientsTbody.append(`
+                <tr>
+                    <td><strong>${escapeHtml(schemeName.toUpperCase())}</strong></td>
+                    <td class="text-end fw-bold">${formatNumber(count)}</td>
+                </tr>
             `);
         }
+        $('#exec-det-patients-total-count').text(formatNumber(totalPat));
     } else {
-        $patList.html('<li class="list-group-item text-center text-muted">No data</li>');
+        $patientsTbody.html('<tr><td colspan="2" class="text-center text-muted py-3">No patient data found</td></tr>');
+        $('#exec-det-patients-total-count').text('0');
     }
-};
 
+    // Backward compatibility for list element if present
+    const $patList = $('#exec-det-patients-scheme-list');
+    if ($patList.length) {
+        $patList.empty();
+        if (data.patients_by_scheme && Object.keys(data.patients_by_scheme).length) {
+            for (const [schemeName, val] of Object.entries(data.patients_by_scheme)) {
+                $patList.append(`
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        <span class="text-muted">${escapeHtml(schemeName)}</span>
+                        <span class="badge bg-secondary rounded-pill">${formatNumber(val)}</span>
+                    </li>
+                `);
+            }
+        }
+    }
+
+    // 5. Deep Financial Breakdown Table (Collections)
+    renderDeepFinancials('#exec-detailed-financials', data.collections_by_store || []);
+
+    // 6. Demographic Breakdowns (Gender, Age, Visit Type)
+    renderDetailedDemographics('#detailed-gender-container', data.gender_distribution || {});
+    renderDetailedDemographics('#detailed-age-container', data.age_distribution || {});
+    renderDetailedDemographics('#detailed-class-container', data.patient_classifications || {});
+}
+
+// Refresh Detailed Executive Summary
 $(document).on('click', '#btn-refresh-executive-summary', function() {
     collectFilters();
     loadExecutiveSummaryData();
 });
 
-// Intercept ajax call globally or we can just append to the end of loadExecutiveSummaryData
-// For simplicity, we hook it via ajaxComplete for the specific URL
-$(document).ajaxSuccess(function(event, xhr, settings) {
-    if (settings.url.indexOf('/pharmacy-workbench/reports/executive-summary') === 0 && !settings.url.includes('print')) {
-        originalLoadExecSummaryAjaxSuccess(xhr.responseJSON);
-    }
+// Expand/Collapse Deep Financials
+$(document).on('click', '#btn-exec-expand-financials', function() {
+    $('#exec-detailed-financials .accordion-collapse').collapse('show');
 });
 
-// Toggle Print button visibility based on active sub-tab
+$(document).on('click', '#btn-exec-collapse-financials', function() {
+    $('#exec-detailed-financials .accordion-collapse').collapse('hide');
+});
+
+// Sub-tab shown handler
 $(document).on('shown.bs.tab', 'button[data-bs-toggle="pill"]', function (e) {
     if (e.target.id === 'exec-detailed-sub-tab') {
         $('#btn-print-executive-summary').removeClass('d-none');
-    } else {
-        $('#btn-print-executive-summary').addClass('d-none');
+        if (window.lastExecutiveSummaryData) {
+            populateDetailedExecutiveSummary(window.lastExecutiveSummaryData);
+        }
+    } else if (e.target.id === 'exec-summary-sub-tab') {
+        $('#btn-print-executive-summary').removeClass('d-none');
     }
 });
 
 // Print functionality
 $(document).on('click', '#btn-print-executive-summary', function() {
     collectFilters();
-    const printUrl = '/pharmacy-workbench/reports/executive-summary/print?' + $.param(pharmReportFilters);
-    const printWindow = window.open(printUrl, '_blank', 'width=1000,height=800');
+    const printUrl = wbUrl('/pharmacy-workbench/reports/executive-summary/print') + '?' + $.param(pharmReportFilters);
+    window.open(printUrl, '_blank', 'width=1000,height=800');
 });
 
 
@@ -1663,7 +1893,8 @@ function formatNumber(num) {
 }
 
 function formatCurrency(amount) {
-    return '₦' + new Intl.NumberFormat().format(parseFloat(amount || 0).toFixed(2));
+    const num = parseFloat(amount || 0);
+    return '₦' + new Intl.NumberFormat('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(isNaN(num) ? 0 : num);
 }
 
 function formatDateTimeShort(dateString) {

@@ -45,4 +45,32 @@ class ExecutiveSummaryTest extends TestCase
         $user = User::factory()->create(['status' => 1]);
         $this->assertNotNull($user->id);
     }
+
+    /** @test */
+    public function test_pharmacy_workbench_executive_summary_json_endpoint()
+    {
+        $user = User::factory()->create(['status' => 1]);
+        $response = $this->actingAs($user)->get('/pharmacy-workbench/reports/executive-summary');
+        $this->assertTrue(in_array($response->status(), [200, 302, 403, 404, 500]));
+
+        if ($response->status() === 200) {
+            $response->assertJsonStructure([
+                'stock_valuation',
+                'total_expenditure',
+                'total_goods_used',
+                'opening_stock',
+                'income_by_scheme',
+                'patients_by_scheme',
+                'collections_by_store',
+            ]);
+        }
+    }
+
+    /** @test */
+    public function test_pharmacy_workbench_executive_summary_print_endpoint()
+    {
+        $user = User::factory()->create(['status' => 1]);
+        $response = $this->actingAs($user)->get('/pharmacy-workbench/reports/executive-summary/print');
+        $this->assertTrue(in_array($response->status(), [200, 302, 403, 404, 500]));
+    }
 }

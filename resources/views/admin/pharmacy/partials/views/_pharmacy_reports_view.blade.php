@@ -374,34 +374,48 @@
                             
                             <!-- Detailed Drill-Down Sub-Tab Content -->
                             <div class="tab-pane fade" id="exec-detailed-sub-content" role="tabpanel">
+                                <!-- Report Scope Info Banner -->
+                                <div class="alert alert-light border d-flex justify-content-between align-items-center py-2 px-3 mb-3">
+                                    <div>
+                                        <i class="mdi mdi-filter-outline text-primary me-1"></i>
+                                        <span class="text-muted me-1">Report Scope:</span>
+                                        <span class="badge bg-primary me-2" id="exec-det-filter-date">All Time</span>
+                                        <span class="badge bg-secondary" id="exec-det-filter-store">All Hubs &amp; Satellites</span>
+                                    </div>
+                                    <div class="text-muted small">
+                                        <i class="mdi mdi-check-circle-outline text-success me-1"></i> Synchronized with Detailed Print Report
+                                    </div>
+                                </div>
+
                                 <div class="row g-4 mb-4">
                                     <div class="col-12">
                                         <div class="card-modern border-success">
-                                            <div class="card-header py-3 bg-light">
+                                            <div class="card-header py-3 bg-light d-flex justify-content-between align-items-center">
                                                 <h6 class="mb-0 text-success"><i class="mdi mdi-cash-register"></i> Financial Performance Summary</h6>
+                                                <small class="text-muted">Stock Movement &amp; Sales</small>
                                             </div>
                                             <div class="card-body p-0">
-                                                <table class="table table-bordered mb-0">
+                                                <table class="table table-bordered mb-0 align-middle">
                                                     <tbody>
                                                         <tr>
-                                                            <td class="bg-light fw-bold w-50">Opening Stock</td>
+                                                            <td class="bg-light fw-bold" style="width: 50%;">Opening Stock</td>
                                                             <td class="text-end fw-bold" id="exec-det-opening-stock">₦0.00</td>
                                                         </tr>
                                                         <tr>
                                                             <td class="bg-light fw-bold">Purchases (Expenditure)</td>
                                                             <td class="text-end text-danger fw-bold" id="exec-det-purchases">₦0.00</td>
                                                         </tr>
-                                                        <tr>
-                                                            <td class="bg-light fw-bold">Goods Available</td>
+                                                        <tr style="background: rgba(13, 110, 253, 0.05);">
+                                                            <td class="fw-bold text-primary">Goods Available</td>
                                                             <td class="text-end text-primary fw-bold" id="exec-det-goods-available">₦0.00</td>
-                                                        </tr>
-                                                        <tr>
-                                                            <td class="bg-light fw-bold">Goods Used (Income/Sales)</td>
-                                                            <td class="text-end text-success fw-bold" id="exec-det-goods-used">₦0.00</td>
                                                         </tr>
                                                         <tr>
                                                             <td class="bg-light fw-bold">Closing Stock</td>
                                                             <td class="text-end fw-bold" id="exec-det-closing-stock">₦0.00</td>
+                                                        </tr>
+                                                        <tr style="background: rgba(25, 135, 84, 0.05);">
+                                                            <td class="fw-bold text-success">Goods Used (Income/Sales)</td>
+                                                            <td class="text-end text-success fw-bold" id="exec-det-goods-used">₦0.00</td>
                                                         </tr>
                                                     </tbody>
                                                 </table>
@@ -410,21 +424,63 @@
                                     </div>
                                     <div class="col-md-6">
                                         <div class="card-modern border-warning">
-                                            <div class="card-header py-3 bg-light">
+                                            <div class="card-header py-3 bg-light d-flex justify-content-between align-items-center">
                                                 <h6 class="mb-0 text-warning"><i class="mdi mdi-wallet"></i> Income by Scheme</h6>
+                                                <small class="text-muted">Cash vs Claims</small>
                                             </div>
                                             <div class="card-body p-0">
-                                                <ul class="list-group list-group-flush" id="exec-det-income-scheme-list"></ul>
+                                                <div class="table-responsive" style="max-height: 280px; overflow-y: auto;">
+                                                    <table class="table table-sm table-hover table-bordered mb-0 align-middle" id="exec-det-income-scheme-table">
+                                                        <thead class="table-light sticky-top">
+                                                            <tr>
+                                                                <th style="width: 40%;">Scheme</th>
+                                                                <th class="text-end" style="width: 20%;">Cash (₦)</th>
+                                                                <th class="text-end" style="width: 20%;">Claims (₦)</th>
+                                                                <th class="text-end" style="width: 20%;">Total (₦)</th>
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody id="exec-det-income-scheme-tbody">
+                                                            <tr><td colspan="4" class="text-center text-muted py-3">No income data found</td></tr>
+                                                        </tbody>
+                                                        <tfoot class="table-light fw-bold sticky-bottom" id="exec-det-income-scheme-tfoot">
+                                                            <tr style="background: #fafafa;">
+                                                                <td>TOTAL</td>
+                                                                <td class="text-end" id="exec-det-income-total-cash">₦0.00</td>
+                                                                <td class="text-end" id="exec-det-income-total-claims">₦0.00</td>
+                                                                <td class="text-end text-success" id="exec-det-income-total-all">₦0.00</td>
+                                                            </tr>
+                                                        </tfoot>
+                                                    </table>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
                                     <div class="col-md-6">
                                         <div class="card-modern border-secondary">
-                                            <div class="card-header py-3 bg-light">
+                                            <div class="card-header py-3 bg-light d-flex justify-content-between align-items-center">
                                                 <h6 class="mb-0 text-secondary"><i class="mdi mdi-account-group"></i> Total Patients Attended by Scheme</h6>
+                                                <small class="text-muted">Distinct Patients</small>
                                             </div>
                                             <div class="card-body p-0">
-                                                <ul class="list-group list-group-flush" id="exec-det-patients-scheme-list"></ul>
+                                                <div class="table-responsive" style="max-height: 280px; overflow-y: auto;">
+                                                    <table class="table table-sm table-hover table-bordered mb-0 align-middle" id="exec-det-patients-scheme-table">
+                                                        <thead class="table-light sticky-top">
+                                                            <tr>
+                                                                <th style="width: 70%;">Scheme</th>
+                                                                <th class="text-end" style="width: 30%;">Patients</th>
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody id="exec-det-patients-scheme-tbody">
+                                                            <tr><td colspan="2" class="text-center text-muted py-3">No patient data found</td></tr>
+                                                        </tbody>
+                                                        <tfoot class="table-light fw-bold sticky-bottom" id="exec-det-patients-scheme-tfoot">
+                                                            <tr style="background: #fafafa;">
+                                                                <td>TOTAL</td>
+                                                                <td class="text-end" id="exec-det-patients-total-count">0</td>
+                                                            </tr>
+                                                        </tfoot>
+                                                    </table>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
@@ -433,8 +489,12 @@
                                 <div class="row g-4">
                                     <div class="col-12">
                                         <div class="card-modern border-primary">
-                                            <div class="card-header py-3 bg-light d-flex justify-content-between align-items-center">
+                                            <div class="card-header py-3 bg-light d-flex justify-content-between align-items-center flex-wrap gap-2">
                                                 <h6 class="mb-0 text-primary"><i class="mdi mdi-cash-multiple"></i> Financial Breakdowns (Store &rarr; Scheme &rarr; HMO)</h6>
+                                                <div class="btn-group btn-group-sm">
+                                                    <button type="button" class="btn btn-outline-primary btn-sm" id="btn-exec-expand-financials"><i class="mdi mdi-arrow-expand-vertical"></i> Expand All</button>
+                                                    <button type="button" class="btn btn-outline-secondary btn-sm" id="btn-exec-collapse-financials"><i class="mdi mdi-arrow-collapse-vertical"></i> Collapse All</button>
+                                                </div>
                                             </div>
                                             <div class="card-body p-0">
                                                 <div id="exec-detailed-financials" class="p-3"></div>
