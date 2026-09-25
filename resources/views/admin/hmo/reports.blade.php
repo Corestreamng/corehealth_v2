@@ -1,6 +1,7 @@
 @extends('admin.layouts.app')
 @section('styles')
 <link rel="stylesheet" href="{{ asset('css/hmo-reports.css') }}">
+<link href="{{ asset('assets/css/select2.min.css') }}" rel="stylesheet" />
 @endsection
 
 @section('content')
@@ -784,9 +785,4 @@
 
 @endsection
 
-@section('scripts')
-<script src="{{ asset('/plugins/dataT/datatables.js') }}"></script>
-<link href="{{ asset('assets/css/select2.min.css') }}" rel="stylesheet" />
-<script src="{{ asset('assets/js/select2.min.js') }}"></script>
-<script src="{{ asset('js/hmo-reports.js') }}"></script>
-@endsection
+@include('admin.hmo.partials._reports_scripts')

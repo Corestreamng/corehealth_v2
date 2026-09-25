@@ -806,24 +806,29 @@ class HmoReportsController extends Controller
      */
     public function searchPatients(Request $request)
     {
-        $search = $request->input('q', '');
+        $search = trim($request->input('q', $request->input('term', '')));
+
+        if (mb_strlen($search) < 2) {
+            return response()->json([]);
+        }
 
         $patients = Patient::with(['user', 'hmo'])
-            ->whereHas('user', function ($q) use ($search) {
-                $q->where('fname', 'like', "%$search%")
-                  ->orWhere('lname', 'like', "%$search%");
-            })
-            ->orWhere('file_no', 'like', "%$search%")
-            ->orWhere('hmo_no', 'like', "%$search%")
+            ->searchByTerm($search)
             ->limit(20)
             ->get();
 
         return response()->json($patients->map(function ($p) {
+            $name = userfullname($p->user_id);
+            $hmoName = optional($p->hmo)->name ?? 'Private';
+            $fileNo = $p->file_no ?? 'No File#';
+
             return [
                 'id' => $p->id,
-                'text' => userfullname($p->user_id) . ' (' . ($p->file_no ?? 'No File#') . ')',
-                'file_no' => $p->file_no,
-                'hmo_name' => $p->hmo->name ?? 'N/A',
+                'text' => $name . ' (' . $fileNo . ') · ' . $hmoName . ($p->hmo_no ? ' · ' . $p->hmo_no : ''),
+                'name' => $name,
+                'file_no' => $fileNo,
+                'hmo_name' => $hmoName,
+                'hmo_no' => $p->hmo_no ?? '',
             ];
         }));
     }
