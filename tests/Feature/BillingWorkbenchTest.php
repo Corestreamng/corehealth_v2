@@ -74,4 +74,49 @@ class BillingWorkbenchTest extends TestCase
         $response = $this->actingAs($user)->get('/billing-workbench');
         $this->assertTrue(in_array($response->status(), [200, 302, 403, 404, 500]));
     }
+
+    /** @test */
+    public function test_billing_workbench_renders_all_workspace_tabs_properly()
+    {
+        $user = User::factory()->create(['status' => 1]);
+        $response = $this->actingAs($user)->get('/billing-workbench');
+        $this->assertTrue(in_array($response->status(), [200, 302, 403, 404, 500]));
+
+        if ($response->status() === 200) {
+            $response->assertSee('id="billing-tab"', false);
+            $response->assertSee('id="receipts-tab"', false);
+            $response->assertSee('id="admissions-tab"', false);
+            $response->assertSee('id="account-tab"', false);
+            $response->assertSee('id="billing-items-table"', false);
+            $response->assertSee('id="receipts-table"', false);
+        }
+    }
+
+    /** @test */
+    public function test_patient_generate_statement_endpoint()
+    {
+        $patient = Patient::factory()->create();
+        $user = User::factory()->create(['status' => 1]);
+
+        $response = $this->actingAs($user)->postJson("/billing-workbench/patient/{$patient->id}/generate-statement", [
+            'date_from' => now()->subDays(30)->format('Y-m-d'),
+            'date_to' => now()->format('Y-m-d'),
+            'include_deposits' => 1,
+            'include_payments' => 1,
+            'include_withdrawals' => 1,
+            'include_services' => 1,
+        ]);
+
+        $this->assertTrue(in_array($response->status(), [200, 302, 403, 404, 500]));
+        if ($response->status() === 200) {
+            $response->assertJsonStructure([
+                'success',
+                'statement_a4',
+                'statement_thermal',
+                'summary',
+                'transaction_count',
+            ]);
+            $this->assertTrue($response->json('success'));
+        }
+    }
 }

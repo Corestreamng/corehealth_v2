@@ -1749,7 +1749,9 @@ class BillingWorkbenchController extends Controller
         $includeServices = filter_var($request->include_services, FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE) ?? true;
 
         $patient = Patient::with(['hmo', 'user'])->findOrFail($patientId);
-        $account = PatientAccount::where('patient_id', $patientId)->first();
+        $billingPatientId = $patient->billing_patient_id ?? $patient->id;
+        $account = PatientAccount::where('patient_id', $billingPatientId)->first();
+        $patientIds = array_values(array_unique(array_filter([$patientId, $billingPatientId])));
 
         $dateFrom = Carbon::parse($request->date_from)->startOfDay();
         $dateTo = Carbon::parse($request->date_to)->endOfDay();
@@ -1786,7 +1788,7 @@ class BillingWorkbenchController extends Controller
 
         // Include direct payments (CASH, POS, TRANSFER - not from account)
         if ($includePayments) {
-            $directPayments = Payment::where('patient_id', $patientId)
+            $directPayments = Payment::whereIn('patient_id', $patientIds)
                 ->whereNotIn('payment_type', ['ACC_DEPOSIT', 'ACC_WITHDRAW', 'ACC_ADJUSTMENT'])
                 ->whereBetween('created_at', [$dateFrom, $dateTo])
                 ->with(['product_or_service_request.service', 'product_or_service_request.product'])
@@ -1823,7 +1825,7 @@ class BillingWorkbenchController extends Controller
 
         // Include account withdrawals/payments from balance
         if ($includeWithdrawals) {
-            $withdrawals = Payment::where('patient_id', $patientId)
+            $withdrawals = Payment::whereIn('patient_id', $patientIds)
                 ->whereIn('payment_type', ['ACC_WITHDRAW', 'ACC_ADJUSTMENT'])
                 ->whereBetween('created_at', [$dateFrom, $dateTo])
                 ->orderBy('created_at')
@@ -1856,8 +1858,8 @@ class BillingWorkbenchController extends Controller
 
         // Include services paid from deposit (via deposit applications)
         if ($includeServices) {
-            $applications = \App\Models\Accounting\PatientDepositApplication::whereHas('deposit', function ($q) use ($patientId) {
-                $q->where('patient_id', $patientId);
+            $applications = \App\Models\Accounting\PatientDepositApplication::whereHas('deposit', function ($q) use ($billingPatientId) {
+                $q->where('patient_id', $billingPatientId);
             })
                 ->whereBetween('application_date', [$dateFrom, $dateTo])
                 ->where('status', 'applied')
@@ -1901,22 +1903,22 @@ class BillingWorkbenchController extends Controller
 
         // Calculate running balance
         // First, calculate opening balance (balance before the period)
-        $depositsBeforePeriod = PatientDeposit::where('patient_id', $patientId)
+        $depositsBeforePeriod = PatientDeposit::where('patient_id', $billingPatientId)
             ->where('deposit_date', '<', $dateFrom)
             ->sum('amount');
 
-        $withdrawalsBeforePeriod = abs(Payment::where('patient_id', $patientId)
+        $withdrawalsBeforePeriod = abs(Payment::whereIn('patient_id', $patientIds)
             ->where('payment_type', 'ACC_WITHDRAW')
             ->where('created_at', '<', $dateFrom)
             ->sum('total'));
 
-        $adjustmentsBeforePeriod = Payment::where('patient_id', $patientId)
+        $adjustmentsBeforePeriod = Payment::whereIn('patient_id', $patientIds)
             ->where('payment_type', 'ACC_ADJUSTMENT')
             ->where('created_at', '<', $dateFrom)
             ->sum('total');
 
-        $applicationsBeforePeriod = \App\Models\Accounting\PatientDepositApplication::whereHas('deposit', function ($q) use ($patientId) {
-            $q->where('patient_id', $patientId);
+        $applicationsBeforePeriod = \App\Models\Accounting\PatientDepositApplication::whereHas('deposit', function ($q) use ($billingPatientId) {
+            $q->where('patient_id', $billingPatientId);
         })
             ->where('application_date', '<', $dateFrom)
             ->where('status', 'applied')
