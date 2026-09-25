@@ -51,7 +51,31 @@ if (typeof window.wbRoute !== 'function') {
                         $t.remove();
                     });
                 }, 3500);
-            }
+            };
+
+            // ─── Helper: format XHR error message ───────────────────────────────────────
+            window.formatXhrError = function(xhr, defaultMsg) {
+                if (xhr && xhr.responseJSON) {
+                    if (xhr.responseJSON.errors) {
+                        var msgs = [];
+                        for (var k in xhr.responseJSON.errors) {
+                            if (xhr.responseJSON.errors.hasOwnProperty(k)) {
+                                var val = xhr.responseJSON.errors[k];
+                                if (Array.isArray(val)) {
+                                    msgs.push(val.join(' '));
+                                } else if (typeof val === 'string') {
+                                    msgs.push(val);
+                                }
+                            }
+                        }
+                        if (msgs.length) return msgs.join(' ');
+                    }
+                    if (xhr.responseJSON.message) {
+                        return xhr.responseJSON.message;
+                    }
+                }
+                return defaultMsg || 'Request failed';
+            };
 
             // ─── Axis toggle ─────────────────────────────────────────────────────────
             $(document).on('click', '.axis-toggle-btn', function() {
@@ -565,7 +589,7 @@ if (typeof window.wbRoute !== 'function') {
                     '<span class="spinner-border spinner-border-sm"></span> Submitting…');
 
                 $.ajax({
-                        url: wbRoute('inventory.requisitions.store', '/inventory/requisitions/store'),
+                        url: wbRoute('inventory.requisitions.store', '/inventory/requisitions'),
                         method: 'POST',
                         data: $(this).serialize().replace(/requested_qty=/g, 'ignore_qty=').replace(/base_requested_qty=/g, 'requested_qty='),
                         dataType: 'json',
@@ -828,7 +852,7 @@ if (typeof window.wbRoute !== 'function') {
                 btn.prop('disabled', true).prepend('<span class="spinner-border spinner-border-sm mr-1"></span>');
 
                 $.ajax({
-                        url: wbRoute('inventory.purchase-orders.store', '/inventory/purchase-orders/store'),
+                        url: wbRoute('inventory.purchase-orders.store', '/inventory/purchase-orders'),
                         method: 'POST',
                         data: formData.replace(/ordered_qty=/g, 'ignore_qty=').replace(/base_ordered_qty=/g, 'ordered_qty=').replace(/unit_cost=/g, 'ignore_cost=').replace(/base_unit_cost=/g, 'unit_cost='),
                         dataType: 'json',
@@ -1411,7 +1435,7 @@ if (typeof window.wbRoute !== 'function') {
                 var params = { store_id: currentStoreId };
                 if (productId) params.product_id = productId;
 
-                $.get(wbRoute('inventory.store-workbench.store-batches', '/inventory/store-workbench/store-batches'), params)
+                $.get(wbRoute('inventory.store-workbench.store-batches', '/inventory/store-workbench/ajax/store-batches'), params)
                     .done(function(res) {
                         if (!res.success || !res.batches.length) {
                             $('#adj-batch-list').html('<div class="alert alert-info mb-0">No active batches found for this store.</div>');
@@ -1576,8 +1600,10 @@ if (typeof window.wbRoute !== 'function') {
                     }
                 })
                 .fail(function(xhr) {
-                    var msg = xhr.responseJSON && xhr.responseJSON.message ? xhr.responseJSON.message : 'Request failed';
+                    var msg = window.formatXhrError(xhr, 'Adjustment failed');
                     toast(msg, 'error');
+                })
+                .always(function() {
                     $btn.prop('disabled', false).html('<i class="mdi mdi-check mr-1"></i>Apply Adjustment');
                 });
             });
@@ -1826,7 +1852,7 @@ if (typeof window.wbRoute !== 'function') {
         function loadRecentDmgBatches() {
             var status = $('#dmg-filter-status .filter-pill.active').data('value') || 'recent';
             $('#dmg-batch-list').html('<div class="text-center py-4"><span class="spinner-border spinner-border-sm"></span> Loading recent activity…</div>');
-            $.getJSON(wbRoute('inventory.store-damages.get-recent-batches', '/inventory/store-damages/get-recent-batches'), {
+            $.getJSON(wbRoute('inventory.store-damages.get-recent-batches', '/inventory/store-damages/ajax/get-recent-batches'), {
                 store_id: currentStoreId,
                 status: status
             }, function(res) {
@@ -1839,7 +1865,7 @@ if (typeof window.wbRoute !== 'function') {
             if (!pid) return loadRecentDmgBatches();
 
             $('#dmg-batch-list').html('<div class="text-center py-4"><span class="spinner-border spinner-border-sm"></span> Loading…</div>');
-            $.getJSON(wbRoute('inventory.store-damages.get-batches', '/inventory/store-damages/get-batches'), {
+            $.getJSON(wbRoute('inventory.store-damages.get-batches', '/inventory/store-damages/ajax/get-batches'), {
                 product_id: pid,
                 store_id: currentStoreId,
             }, function(r) {
@@ -1909,7 +1935,7 @@ if (typeof window.wbRoute !== 'function') {
             }
 
             $.ajax({
-                url: wbRoute('inventory.store-damages.store', '/inventory/store-damages/store'),
+                url: wbRoute('inventory.store-damages.store', '/inventory/store-damages'),
                 method: 'POST',
                 data: data,
                 dataType: 'json',
@@ -1925,8 +1951,10 @@ if (typeof window.wbRoute !== 'function') {
                 }
             })
             .fail(function(xhr) {
-                var msg = xhr.responseJSON && xhr.responseJSON.message ? xhr.responseJSON.message : 'Request failed';
+                var msg = window.formatXhrError(xhr, 'Failed to record damage');
                 toastError(msg);
+            })
+            .always(function() {
                 $btn.prop('disabled', false).html('<i class="mdi mdi-check mr-1"></i>Record Damage');
             });
         });
@@ -1955,7 +1983,7 @@ if (typeof window.wbRoute !== 'function') {
 
             var $res = $('#ret-requisition-results').html('<div class="text-center py-4"><span class="spinner-border spinner-border-sm"></span> Loading…</div>');
 
-            $.getJSON(wbRoute('inventory.requisition-returns.search-requisitions', '/inventory/requisition-returns/search-requisitions'), {
+            $.getJSON(wbRoute('inventory.requisition-returns.search-requisitions', '/inventory/requisition-returns/ajax/search-requisitions'), {
                 q: q,
                 store_id: currentStoreId,
                 product_id: currentPid,
@@ -2009,7 +2037,7 @@ if (typeof window.wbRoute !== 'function') {
 
             // Load items
             var $list = $('#ret-item-list').html('<div class="spinner-border spinner-border-sm"></div>');
-            $.getJSON(wbRoute('inventory.requisition-returns.req-items', '/inventory/requisition-returns/req-items'), { requisition_id: req.id }, function(res) {
+            $.getJSON(wbRoute('inventory.requisition-returns.req-items', '/inventory/requisition-returns/ajax/requisition-items'), { requisition_id: req.id }, function(res) {
                 var html = '<div class="row g-2">';
                 (res.items || []).forEach(function(it) {
                     html += `
@@ -2048,7 +2076,7 @@ if (typeof window.wbRoute !== 'function') {
 
             // Load batches for this product in the returning store
             var $b = $('#ret-batch-select').html('<option value="">— Auto / FIFO —</option>');
-            $.getJSON(wbRoute('inventory.requisition-returns.batches-for-product', '/inventory/requisition-returns/batches-for-product'), {
+            $.getJSON(wbRoute('inventory.requisition-returns.batches-for-product', '/inventory/requisition-returns/ajax/batches-for-product'), {
                 product_id: it.product_id,
                 store_id: retSelectedReq.to_store_id, // The store returning the items
             }, function(r) {
@@ -2083,7 +2111,7 @@ if (typeof window.wbRoute !== 'function') {
             var $btn = $(this).prop('disabled', true).html('<span class="spinner-border spinner-border-sm"></span> Processing…');
 
             $.ajax({
-                url: wbRoute('inventory.requisition-returns.store', '/inventory/requisition-returns/store'),
+                url: wbRoute('inventory.requisition-returns.store', '/inventory/requisition-returns'),
                 method: 'POST',
                 data: $form.serialize(),
                 dataType: 'json',
@@ -2095,8 +2123,14 @@ if (typeof window.wbRoute !== 'function') {
                     loadTally();
                 } else {
                     toastError(r.message || 'Failed to submit return');
-                    $btn.prop('disabled', false).html('<i class="mdi mdi-check mr-1"></i>Submit Return');
                 }
+            })
+            .fail(function(xhr) {
+                var msg = window.formatXhrError(xhr, 'Failed to submit return');
+                toastError(msg);
+            })
+            .always(function() {
+                $btn.prop('disabled', false).html('<i class="mdi mdi-check mr-1"></i>Submit Return');
             });
         });
 
@@ -2123,7 +2157,7 @@ if (typeof window.wbRoute !== 'function') {
 
             var $res = $('#ret-po-results').html('<div class="text-center py-4"><span class="spinner-border spinner-border-sm"></span> Loading…</div>');
 
-            $.getJSON(wbRoute('inventory.po-returns.search-pos', '/inventory/po-returns/search-pos'), {
+            $.getJSON(wbRoute('inventory.po-returns.search-pos', '/inventory/purchase-order-returns/ajax/search-pos'), {
                 q: q,
                 store_id: currentStoreId,
                 product_id: currentPid,
@@ -2175,7 +2209,7 @@ if (typeof window.wbRoute !== 'function') {
 
             // Load items
             var $list = $('#ret-po-item-list').html('<div class="spinner-border spinner-border-sm"></div>');
-            $.getJSON(wbRoute('inventory.po-returns.po-items', '/inventory/po-returns/po-items'), { purchase_order_id: po.id }, function(res) {
+            $.getJSON(wbRoute('inventory.po-returns.po-items', '/inventory/purchase-order-returns/ajax/po-items'), { purchase_order_id: po.id }, function(res) {
                 var html = '<div class="row g-2">';
                 (res.items || []).forEach(function(it) {
                     html += `
@@ -2215,7 +2249,7 @@ if (typeof window.wbRoute !== 'function') {
 
             // Load batches for this product
             var $b = $('#ret-po-batch-select').html('<option value="">— Auto / FIFO —</option>');
-            $.getJSON(wbRoute('inventory.requisition-returns.batches-for-product', '/inventory/requisition-returns/batches-for-product'), {
+            $.getJSON(wbRoute('inventory.requisition-returns.batches-for-product', '/inventory/requisition-returns/ajax/batches-for-product'), {
                 product_id: it.product_id,
                 store_id: currentStoreId,
             }, function(r) {
@@ -2250,7 +2284,7 @@ if (typeof window.wbRoute !== 'function') {
             var $btn = $(this).prop('disabled', true).html('<span class="spinner-border spinner-border-sm"></span> Processing…');
 
             $.ajax({
-                url: wbRoute('inventory.po-returns.store', '/inventory/po-returns/store'),
+                url: wbRoute('inventory.po-returns.store', '/inventory/purchase-order-returns'),
                 method: 'POST',
                 data: $form.serialize(),
                 dataType: 'json',
@@ -2266,8 +2300,10 @@ if (typeof window.wbRoute !== 'function') {
                 }
             })
             .fail(function(xhr) {
-                var msg = xhr.responseJSON && xhr.responseJSON.message ? xhr.responseJSON.message : 'Request failed';
+                var msg = window.formatXhrError(xhr, 'Failed to submit PO return');
                 toastError(msg);
+            })
+            .always(function() {
                 $btn.prop('disabled', false).html('<i class="mdi mdi-check mr-1"></i>Submit Return');
             });
         });

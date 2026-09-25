@@ -35,6 +35,7 @@ Route::middleware(['auth'])->prefix('inventory')->name('inventory.')->group(func
         Route::get('/', [PurchaseOrderController::class, 'index'])->name('index');
         Route::get('/create', [PurchaseOrderController::class, 'create'])->name('create');
         Route::post('/', [PurchaseOrderController::class, 'store'])->name('store');
+        Route::post('/store', [PurchaseOrderController::class, 'store']);
 
         // Accounts Payable (must be before {purchaseOrder} routes)
         Route::get('/accounts-payable', [PurchaseOrderController::class, 'accountsPayable'])->name('accounts-payable');
@@ -65,6 +66,7 @@ Route::middleware(['auth'])->prefix('inventory')->name('inventory.')->group(func
         Route::get('/', [StoreRequisitionController::class, 'index'])->name('index');
         Route::get('/create', [StoreRequisitionController::class, 'create'])->name('create');
         Route::post('/', [StoreRequisitionController::class, 'store'])->name('store');
+        Route::post('/store', [StoreRequisitionController::class, 'store']);
         // Queue views
         Route::get('/queue/pending-approval', [StoreRequisitionController::class, 'pendingApproval'])->name('pending-approval');
         Route::get('/queue/pending-fulfillment', [StoreRequisitionController::class, 'pendingFulfillment'])->name('pending-fulfillment');
@@ -128,7 +130,9 @@ Route::middleware(['auth'])->prefix('inventory')->name('inventory.')->group(func
 
         // AJAX
         Route::get('/ajax/batch-availability', [StoreWorkbenchController::class, 'getBatchAvailability'])->name('batch-availability');
+        Route::get('/batch-availability', [StoreWorkbenchController::class, 'getBatchAvailability']);
         Route::get('/ajax/store-batches', [StoreWorkbenchController::class, 'getStoreBatches'])->name('store-batches');
+        Route::get('/store-batches', [StoreWorkbenchController::class, 'getStoreBatches']);
     });
 
     // ===== STORE GOVERNANCE CONFIG (Plan §9.1, §9.3) =====
@@ -160,9 +164,13 @@ Route::middleware(['auth'])->prefix('inventory')->name('inventory.')->group(func
         Route::get('/', [StoreDamagesController::class, 'index'])->name('index');
         Route::get('/datatables/list', [StoreDamagesController::class, 'datatables'])->name('datatables');
         Route::get('/ajax/search-products', [StoreDamagesController::class, 'searchProducts'])->name('search-products');
+        Route::get('/search-products', [StoreDamagesController::class, 'searchProducts']);
         Route::get('/ajax/get-batches', [StoreDamagesController::class, 'getBatches'])->name('get-batches');
+        Route::get('/get-batches', [StoreDamagesController::class, 'getBatches']);
         Route::get('/ajax/get-recent-batches', [StoreDamagesController::class, 'getRecentBatches'])->name('get-recent-batches');
+        Route::get('/get-recent-batches', [StoreDamagesController::class, 'getRecentBatches']);
         Route::post('/', [StoreDamagesController::class, 'store'])->name('store');
+        Route::post('/store', [StoreDamagesController::class, 'store']);
         Route::get('/{id}', [StoreDamagesController::class, 'show'])->name('show');
         Route::post('/{id}/approve', [StoreDamagesController::class, 'approve'])->name('approve');
         Route::post('/{id}/reject', [StoreDamagesController::class, 'reject'])->name('reject');
@@ -173,9 +181,14 @@ Route::middleware(['auth'])->prefix('inventory')->name('inventory.')->group(func
         Route::get('/', [StoreRequisitionReturnController::class, 'index'])->name('index');
         Route::get('/datatables/list', [StoreRequisitionReturnController::class, 'datatables'])->name('datatables');
         Route::get('/ajax/requisition-items', [StoreRequisitionReturnController::class, 'getRequisitionItems'])->name('req-items');
+        Route::get('/requisition-items', [StoreRequisitionReturnController::class, 'getRequisitionItems']);
+        Route::get('/req-items', [StoreRequisitionReturnController::class, 'getRequisitionItems']);
         Route::get('/ajax/search-requisitions', [StoreRequisitionReturnController::class, 'searchRequisitions'])->name('search-requisitions');
+        Route::get('/search-requisitions', [StoreRequisitionReturnController::class, 'searchRequisitions']);
         Route::get('/ajax/batches-for-product', [StoreRequisitionReturnController::class, 'getBatchesForProduct'])->name('batches-for-product');
+        Route::get('/batches-for-product', [StoreRequisitionReturnController::class, 'getBatchesForProduct']);
         Route::post('/', [StoreRequisitionReturnController::class, 'store'])->name('store');
+        Route::post('/store', [StoreRequisitionReturnController::class, 'store']);
         Route::get('/{id}', [StoreRequisitionReturnController::class, 'show'])->name('show');
         Route::post('/{id}/approve', [StoreRequisitionReturnController::class, 'approve'])->name('approve');
         Route::post('/{id}/reject', [StoreRequisitionReturnController::class, 'reject'])->name('reject');
@@ -186,12 +199,28 @@ Route::middleware(['auth'])->prefix('inventory')->name('inventory.')->group(func
         Route::get('/', [PurchaseOrderReturnController::class, 'index'])->name('index');
         Route::get('/datatables/list', [PurchaseOrderReturnController::class, 'datatables'])->name('datatables');
         Route::get('/ajax/search-pos', [PurchaseOrderReturnController::class, 'searchPOs'])->name('search-pos');
+        Route::get('/search-pos', [PurchaseOrderReturnController::class, 'searchPOs']);
         Route::get('/ajax/po-items', [PurchaseOrderReturnController::class, 'getPOItems'])->name('po-items');
+        Route::get('/po-items', [PurchaseOrderReturnController::class, 'getPOItems']);
         Route::get('/ajax/batches-for-item', [PurchaseOrderReturnController::class, 'getBatchesForItem'])->name('batches-for-item');
+        Route::get('/batches-for-item', [PurchaseOrderReturnController::class, 'getBatchesForItem']);
         Route::post('/', [PurchaseOrderReturnController::class, 'store'])->name('store');
+        Route::post('/store', [PurchaseOrderReturnController::class, 'store']);
         Route::get('/{id}', [PurchaseOrderReturnController::class, 'show'])->name('show');
         Route::post('/{id}/approve', [PurchaseOrderReturnController::class, 'approve'])->name('approve');
         Route::post('/{id}/reject', [PurchaseOrderReturnController::class, 'reject'])->name('reject');
+    });
+
+    // Alias group for po-returns URL prefix
+    Route::prefix('po-returns')->group(function () {
+        Route::get('/ajax/search-pos', [PurchaseOrderReturnController::class, 'searchPOs']);
+        Route::get('/search-pos', [PurchaseOrderReturnController::class, 'searchPOs']);
+        Route::get('/ajax/po-items', [PurchaseOrderReturnController::class, 'getPOItems']);
+        Route::get('/po-items', [PurchaseOrderReturnController::class, 'getPOItems']);
+        Route::get('/ajax/batches-for-item', [PurchaseOrderReturnController::class, 'getBatchesForItem']);
+        Route::get('/batches-for-item', [PurchaseOrderReturnController::class, 'getBatchesForItem']);
+        Route::post('/', [PurchaseOrderReturnController::class, 'store']);
+        Route::post('/store', [PurchaseOrderReturnController::class, 'store']);
     });
 
     // ===== EXPENSES =====
