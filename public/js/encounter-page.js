@@ -3858,3 +3858,334 @@ if (typeof window.wbRoute !== 'function') {
             }
         });
     });
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   ENCOUNTER NOTE MANAGEMENT (Delete & Edit Encounter Notes from History)
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+function deleteEncounter(encounterId, encounterDate) {
+    var encName = encounterDate ? ('Encounter from ' + encounterDate) : ('Encounter #' + encounterId);
+
+    // Prefer unified ClinicalOrdersKit delete modal if available
+    if (window.ClinicalOrdersKit && typeof window.ClinicalOrdersKit.showDeleteConfirmation === 'function') {
+        window.ClinicalOrdersKit.showDeleteConfirmation({
+            type: 'encounter',
+            itemName: encName,
+            onConfirm: function (reason, callback) {
+                $.ajax({
+                    url: (window.wbUrl ? window.wbUrl('/encounters/' + encounterId) : ('/encounters/' + encounterId)),
+                    type: 'DELETE',
+                    headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') },
+                    data: { reason: reason },
+                    success: function (response) {
+                        callback(true);
+                        if (response.success) {
+                            if (typeof toastr !== 'undefined') toastr.success(response.message || 'Encounter note deleted successfully');
+                            if ($.fn.DataTable.isDataTable('#encounter_history_list')) {
+                                $('#encounter_history_list').DataTable().ajax.reload(null, false);
+                            }
+                        } else {
+                            if (typeof toastr !== 'undefined') toastr.error(response.message || 'Deletion failed');
+                        }
+                    },
+                    error: function (xhr) {
+                        callback(false);
+                        var msg = xhr.responseJSON ? (xhr.responseJSON.message || 'Error deleting encounter note') : 'Error deleting encounter note';
+                        if (typeof toastr !== 'undefined') toastr.error(msg);
+                    }
+                });
+            }
+        });
+        return;
+    }
+
+    // Modal fallback if #deleteConfirmModal exists in DOM
+    if ($('#deleteConfirmModal').length) {
+        window.currentDeleteItem = {
+            type: 'encounter',
+            id: encounterId,
+            name: encName
+        };
+        $('#deleteItemInfo').html('<strong>Encounter:</strong> ' + (encounterDate || encounterId) + '<br><strong>Type:</strong> Clinical Note');
+        $('#deleteConfirmModal').modal('show');
+        return;
+    }
+
+    // Native browser fallback
+    if (!confirm('Are you sure you want to delete the encounter note from ' + (encounterDate || encounterId) + '? This action cannot be undone.')) {
+        return;
+    }
+    var reason = prompt('Please provide a reason for deleting this encounter note:');
+    if (!reason || !reason.trim()) {
+        if (typeof toastr !== 'undefined') toastr.warning('A reason is required to delete an encounter note.');
+        else alert('A reason is required to delete an encounter note.');
+        return;
+    }
+    $.ajax({
+        url: (window.wbUrl ? window.wbUrl('/encounters/' + encounterId) : ('/encounters/' + encounterId)),
+        type: 'DELETE',
+        headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') },
+        data: { reason: reason },
+        success: function (response) {
+            if (response.success) {
+                if (typeof toastr !== 'undefined') toastr.success(response.message || 'Encounter note deleted successfully');
+                if ($.fn.DataTable.isDataTable('#encounter_history_list')) {
+                    $('#encounter_history_list').DataTable().ajax.reload(null, false);
+                }
+            } else {
+                if (typeof toastr !== 'undefined') toastr.error(response.message || 'Failed to delete encounter note');
+            }
+        },
+        error: function (xhr) {
+            var msg = xhr.responseJSON ? (xhr.responseJSON.message || 'Error deleting encounter note') : 'Error deleting encounter note';
+            if (typeof toastr !== 'undefined') toastr.error(msg);
+        }
+    });
+}
+window.deleteEncounter = deleteEncounter;
+
+// Edit Encounter Note
+var editEncounterEditorInstance = null;
+
+function editEncounterNote(btn) {
+    var $btn = $(btn);
+    var id = $btn.data('id');
+    var notes = $btn.data('notes');
+    var reasons = $btn.attr('data-reasons');
+    var comment1 = $btn.data('comment1');
+    var comment2 = $btn.data('comment2');
+
+    $('#editEncounterId').val(id);
+
+    if ($('#editEncounterReasons').length > 0) {
+        if (reasons && reasons.trim() !== '') {
+            var reasonsArray = [];
+            try {
+                var parsed = JSON.parse(reasons);
+                if (Array.isArray(parsed) && parsed[0] && parsed[0].code) {
+                    reasonsArray = parsed.map(function(r) { return r.code + '-' + r.name; });
+                } else if (Array.isArray(parsed)) {
+                    reasonsArray = parsed;
+                }
+            } catch (e) {
+                reasonsArray = reasons.split(',').map(function(r) { return r.trim(); });
+            }
+            $('#editEncounterReasons').val(reasonsArray).trigger('change');
+            $('#editEncounterNotApplicable').prop('checked', false).trigger('change');
+        } else {
+            $('#editEncounterReasons').val([]).trigger('change');
+            $('#editEncounterNotApplicable').prop('checked', true).trigger('change');
+        }
+
+        $('#editEncounterComment1').val(comment1 || 'NA');
+        $('#editEncounterComment2').val(comment2 || 'NA');
+    }
+
+    var notesContent = notes || '';
+    $('#editEncounterModal').modal('show');
+
+    setTimeout(function() {
+        if (editEncounterEditorInstance) {
+            editEncounterEditorInstance.destroy()
+                .then(function() {
+                    initializeEditEncounterEditor(notesContent);
+                })
+                .catch(function(error) {
+                    console.error('Error destroying editor:', error);
+                    initializeEditEncounterEditor(notesContent);
+                });
+        } else {
+            initializeEditEncounterEditor(notesContent);
+        }
+    }, 300);
+}
+window.editEncounterNote = editEncounterNote;
+
+function initializeEditEncounterEditor(content) {
+    var editorElement = document.querySelector('#editEncounterNotes');
+    if (!editorElement) return;
+
+    if (typeof ClassicEditor !== 'undefined') {
+        ClassicEditor
+            .create(editorElement, {
+                toolbar: {
+                    items: [
+                        'undo', 'redo', '|', 'heading', '|', 'bold', 'italic', '|',
+                        'link', 'uploadImage', 'insertTable', 'mediaEmbed', '|',
+                        'bulletedList', 'numberedList', 'outdent', 'indent'
+                    ]
+                }
+            })
+            .then(function(editor) {
+                editEncounterEditorInstance = editor;
+                editor.setData(content);
+            })
+            .catch(function(error) {
+                console.error('Error initializing editor:', error);
+                $('#editEncounterNotes').val(content);
+            });
+    } else {
+        $('#editEncounterNotes').val(content);
+    }
+}
+
+$(document).on('click', '#saveEncounterEditBtn', function() {
+    var encounterId = $('#editEncounterId').val();
+
+    var notes = '';
+    if (editEncounterEditorInstance) {
+        notes = editEncounterEditorInstance.getData();
+    } else {
+        notes = $('#editEncounterNotes').val();
+    }
+
+    var notApplicable = $('#editEncounterNotApplicable').is(':checked');
+    var reasons = [];
+    var comment1 = 'NA';
+    var comment2 = 'NA';
+
+    if (!notApplicable && $('#editEncounterReasons').length > 0) {
+        reasons = $('#editEncounterReasons').val() || [];
+        comment1 = $('#editEncounterComment1').val();
+        comment2 = $('#editEncounterComment2').val();
+
+        if (!reasons || reasons.length === 0) {
+            if (typeof toastr !== 'undefined') toastr.warning('Please select at least one diagnosis reason or check "Diagnosis Not Applicable".');
+            else alert('Please select at least one diagnosis reason or check "Diagnosis Not Applicable".');
+            return;
+        }
+
+        if (!comment1 || !comment2) {
+            if (typeof toastr !== 'undefined') toastr.warning('Please select both diagnosis comments.');
+            else alert('Please select both diagnosis comments.');
+            return;
+        }
+    }
+
+    if (!notes || !notes.trim()) {
+        if (typeof toastr !== 'undefined') toastr.warning('Clinical notes are required.');
+        else alert('Clinical notes are required.');
+        return;
+    }
+
+    var $btn = $(this);
+    $btn.prop('disabled', true).html('<i class="fa fa-spinner fa-spin"></i> Saving...');
+
+    $.ajax({
+        url: (window.wbUrl ? window.wbUrl('/encounters/' + encounterId + '/notes') : ('/encounters/' + encounterId + '/notes')),
+        type: 'PUT',
+        headers: {
+            'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+        },
+        data: {
+            notes: notes,
+            reasons_for_encounter: notApplicable ? '' : (Array.isArray(reasons) ? reasons.join(',') : reasons),
+            reasons_for_encounter_comment_1: notApplicable ? 'NA' : comment1,
+            reasons_for_encounter_comment_2: notApplicable ? 'NA' : comment2
+        },
+        success: function(response) {
+            if (response.success) {
+                $('#editEncounterModal').modal('hide');
+                if ($.fn.DataTable.isDataTable('#encounter_history_list')) {
+                    $('#encounter_history_list').DataTable().ajax.reload(null, false);
+                }
+                if (typeof toastr !== 'undefined') toastr.success('Encounter note updated successfully!');
+                else alert('Encounter note updated successfully!');
+            } else {
+                if (typeof toastr !== 'undefined') toastr.error(response.message || 'Failed to update encounter note');
+                else alert(response.message || 'Failed to update encounter note');
+            }
+        },
+        error: function(xhr) {
+            var errorMsg = xhr.responseJSON?.message || 'An error occurred while updating the encounter note';
+            if (typeof toastr !== 'undefined') toastr.error(errorMsg);
+            else alert(errorMsg);
+        },
+        complete: function() {
+            $btn.prop('disabled', false).html('<i class="fa fa-save"></i> Save Changes');
+        }
+    });
+});
+
+$(document).on('hidden.bs.modal', '#editEncounterModal', function() {
+    if (editEncounterEditorInstance) {
+        editEncounterEditorInstance.destroy()
+            .then(function() {
+                editEncounterEditorInstance = null;
+            })
+            .catch(function(error) {
+                console.error('Error destroying editor on modal close:', error);
+                editEncounterEditorInstance = null;
+            });
+    }
+});
+
+$(document).on('change', '#editEncounterNotApplicable', function() {
+    var isChecked = $(this).is(':checked');
+    if (isChecked) {
+        $('#editEncounterReasonsGroup').hide();
+        $('#editEncounterCommentsGroup').hide();
+        $('#editEncounterReasons').val(null).trigger('change');
+        $('#editEncounterComment1').val('NA');
+        $('#editEncounterComment2').val('NA');
+    } else {
+        $('#editEncounterReasonsGroup').show();
+        $('#editEncounterCommentsGroup').show();
+    }
+});
+
+$(document).on('click', '#confirmDeleteBtn', function() {
+    if (!window.currentDeleteItem) return;
+    var reasonSelect = $('#deletionReasonSelect').val();
+    var reasonOther = $('#deletionReasonOther').val();
+    var notes = $('#deletionNotes').val();
+
+    if (!reasonSelect) {
+        if (typeof toastr !== 'undefined') toastr.warning('Please select a reason for deletion');
+        else alert('Please select a reason for deletion');
+        return;
+    }
+
+    var finalReason = (reasonSelect === 'Other' && reasonOther) ? reasonOther : reasonSelect;
+    if (notes) finalReason += '. Additional notes: ' + notes;
+
+    var url = (window.wbUrl ? window.wbUrl('/encounters/' + window.currentDeleteItem.id) : ('/encounters/' + window.currentDeleteItem.id));
+    var $btn = $(this);
+    $btn.prop('disabled', true).html('<i class="fa fa-spinner fa-spin"></i> Deleting...');
+
+    $.ajax({
+        url: url,
+        type: 'DELETE',
+        headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') },
+        data: { reason: finalReason },
+        success: function(response) {
+            $('#deleteConfirmModal').modal('hide');
+            if (response.success) {
+                if (typeof toastr !== 'undefined') toastr.success(response.message || 'Request deleted successfully');
+                if ($.fn.DataTable.isDataTable('#encounter_history_list')) {
+                    $('#encounter_history_list').DataTable().ajax.reload(null, false);
+                }
+            } else {
+                if (typeof toastr !== 'undefined') toastr.error(response.message || 'Deletion failed');
+            }
+        },
+        error: function(xhr) {
+            if (xhr.status === 403 && xhr.responseJSON?.message) {
+                $('#deleteConfirmModal').modal('hide');
+                if ($('#deleteDeniedModal').length) {
+                    $('#deleteDeniedReason').html('<strong>' + xhr.responseJSON.message + '</strong>');
+                    $('#deleteDeniedModal').modal('show');
+                } else {
+                    if (typeof toastr !== 'undefined') toastr.error(xhr.responseJSON.message);
+                }
+            } else {
+                var msg = xhr.responseJSON?.message || 'Error deleting encounter note';
+                if (typeof toastr !== 'undefined') toastr.error(msg);
+            }
+        },
+        complete: function() {
+            $btn.prop('disabled', false).html('<i class="fa fa-trash-alt"></i> Delete Request');
+            window.currentDeleteItem = null;
+        }
+    });
+});

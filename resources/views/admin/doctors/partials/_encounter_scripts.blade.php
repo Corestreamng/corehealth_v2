@@ -43,6 +43,8 @@
         }
     };
     window.INVEST_RES_SOURCE = 'doctor_encounter';
+    window.encounterId = '{{ $encId }}';
+    window.patientId = '{{ $pId }}';
 </script>
 <script src="{{ asset('js/workbench-helper.js') }}"></script>
 <script src="{{ asset('js/clinical-orders-shared.js') }}"></script>

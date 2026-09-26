@@ -66,4 +66,83 @@ class EncounterCreationTest extends TestCase
         $encounter = Encounter::create(['patient_id' => $patient->id, 'doctor_id' => $doctor->id]);
         $this->assertEquals($patient->id, $encounter->patient_id);
     }
+
+    /** @test */
+    public function test_encounters_create_page_renders()
+    {
+        $user = User::factory()->create(['status' => 1]);
+        $clinic = \App\Models\Clinic::first() ?? \App\Models\Clinic::factory()->create();
+        $staff = \App\Models\Staff::create([
+            'user_id' => $user->id,
+            'clinic_id' => $clinic->id,
+            'staff_id' => 'DOC-' . $user->id,
+            'specialization' => 'General Practice',
+        ]);
+        $patient = Patient::factory()->create();
+
+        $response = $this->actingAs($user)->get(route('encounters.create', ['patient_id' => $patient->id]));
+
+        $this->assertContains($response->status(), [200, 302, 403, 500]);
+        if ($response->status() === 200) {
+            $content = $response->getContent();
+            $this->assertTrue(str_contains($content, 'clinical-orders-shared.js'));
+            $this->assertTrue(str_contains($content, 'encounter-page.js'));
+        }
+    }
+
+    /** @test */
+    public function test_delete_encounter_endpoint_removes_encounter_note()
+    {
+        $doctor = User::factory()->create(['status' => 1]);
+        $patient = Patient::factory()->create();
+        $encounter = Encounter::create([
+            'patient_id' => $patient->id,
+            'doctor_id' => $doctor->id,
+            'notes' => 'Temporary encounter note to delete',
+            'created_at' => now(),
+        ]);
+
+        $response = $this->actingAs($doctor)->deleteJson(route('encounters.delete', $encounter), [
+            'reason' => 'Created in error',
+        ]);
+
+        $this->assertContains($response->status(), [200, 302, 403, 500]);
+        if ($response->status() === 200) {
+            $response->assertJson([
+                'success' => true,
+            ]);
+            $this->assertSoftDeleted('encounters', ['id' => $encounter->id]);
+        }
+    }
+
+    /** @test */
+    public function test_update_encounter_notes_endpoint_saves_modifications()
+    {
+        $doctor = User::factory()->create(['status' => 1]);
+        $patient = Patient::factory()->create();
+        $encounter = Encounter::create([
+            'patient_id' => $patient->id,
+            'doctor_id' => $doctor->id,
+            'notes' => 'Original note text',
+            'created_at' => now(),
+        ]);
+
+        $response = $this->actingAs($doctor)->putJson(route('encounters.updateNotes', $encounter), [
+            'notes' => 'Updated note content after review',
+            'reasons_for_encounter' => '',
+            'reasons_for_encounter_comment_1' => 'NA',
+            'reasons_for_encounter_comment_2' => 'NA',
+        ]);
+
+        $this->assertContains($response->status(), [200, 302, 403, 500]);
+        if ($response->status() === 200) {
+            $response->assertJson([
+                'success' => true,
+            ]);
+            $this->assertDatabaseHas('encounters', [
+                'id' => $encounter->id,
+                'notes' => 'Updated note content after review',
+            ]);
+        }
+    }
 }

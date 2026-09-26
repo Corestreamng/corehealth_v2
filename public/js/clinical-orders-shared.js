@@ -1412,7 +1412,8 @@ window.ClinicalOrdersKit = jQuery.extend(window.ClinicalOrdersKit || {}, (functi
             lab:          'Laboratory Test',
             imaging:      'Imaging/Radiology',
             prescription: 'Prescription',
-            procedure:    'Procedure'
+            procedure:    'Procedure',
+            encounter:    'Clinical Encounter Note'
         };
         var typeLabel = typeLabels[config.type] || config.type.charAt(0).toUpperCase() + config.type.slice(1);
         $('#coDeleteModalItemInfo').html(
@@ -1476,19 +1477,23 @@ window.ClinicalOrdersKit = jQuery.extend(window.ClinicalOrdersKit || {}, (functi
         };
 
         var url = '';
-        var isNurseRoute = (encounterId === null || encounterId === undefined);
-
-        if (isNurseRoute) {
-            // Determine workbench route
-            if (window.maternityEnrollmentId !== undefined) {
-                var enrollmentId = window.maternityEnrollmentId || $('#mat-partograph-enrollment-id').val();
-                url = '/maternity-workbench/enrollment/' + enrollmentId + '/' + pathMap[type] + '/' + id;
-            } else {
-                url = '/nursing-workbench/clinical-requests/' + pathMap[type] + '/' + id;
-            }
+        if (type === 'encounter') {
+            url = (window.wbUrl ? window.wbUrl('/encounters/' + id) : ('/encounters/' + id));
         } else {
-            // Encounter-specific route
-            url = '/encounters/' + encounterId + '/' + pathMap[type] + '/' + id;
+            var isNurseRoute = (encounterId === null || encounterId === undefined);
+
+            if (isNurseRoute) {
+                // Determine workbench route
+                if (window.maternityEnrollmentId !== undefined) {
+                    var enrollmentId = window.maternityEnrollmentId || $('#mat-partograph-enrollment-id').val();
+                    url = '/maternity-workbench/enrollment/' + enrollmentId + '/' + pathMap[type] + '/' + id;
+                } else {
+                    url = '/nursing-workbench/clinical-requests/' + pathMap[type] + '/' + id;
+                }
+            } else {
+                // Encounter-specific route
+                url = '/encounters/' + encounterId + '/' + pathMap[type] + '/' + id;
+            }
         }
 
         showDeleteConfirmation({
@@ -1507,14 +1512,15 @@ window.ClinicalOrdersKit = jQuery.extend(window.ClinicalOrdersKit || {}, (functi
                     success: function (response) {
                         callback(true);
                         if (response.success) {
-                            if (typeof toastr !== 'undefined') toastr.success('Request deleted successfully');
+                            if (typeof toastr !== 'undefined') toastr.success(response.message || 'Request deleted successfully');
 
                             // Reload standard DataTables on all workbenches
                             var tables = [
                                 '#presc_history_list', '#cr_presc_history_list', '#mco_presc_history_list',
                                 '#investigation_history_list', '#cr_lab_history_list', '#mco_lab_history_list',
                                 '#imaging_history_list', '#cr_imaging_history_list', '#mco_imaging_history_list',
-                                '#procedure_history_list', '#cr_proc_history_list', '#mco_proc_history_list'
+                                '#procedure_history_list', '#cr_proc_history_list', '#mco_proc_history_list',
+                                '#encounter_history_list'
                             ];
                             tables.forEach(function (t) {
                                 if ($.fn.DataTable.isDataTable(t)) {
@@ -1552,6 +1558,11 @@ window.ClinicalOrdersKit = jQuery.extend(window.ClinicalOrdersKit || {}, (functi
 
     window.deleteNurseClinicalRequest = function (type, id, name) {
         triggerHistoryDelete(type, id, null, name);
+    };
+
+    window.deleteEncounter = function (id, encounterDate) {
+        var encName = encounterDate ? ('Encounter from ' + encounterDate) : ('Encounter #' + id);
+        triggerHistoryDelete('encounter', id, null, encName);
     };
 
     function removeItem(config) {
@@ -3527,7 +3538,8 @@ window.deleteNurseClinicalRequest = window.deleteNurseClinicalRequest || functio
 // REUSABLE PROCEDURE BOOKING CONFIGURATOR (Shared Inline Flow)
 // Used across Doctor, Nurse, Maternity, and Surgery Workbenches
 // =========================================================================
-ClinicalOrdersKit._procConfigs = ClinicalOrdersKit._procConfigs || {};
+window.ClinicalOrdersKit = window.ClinicalOrdersKit || {};
+window.ClinicalOrdersKit._procConfigs = window.ClinicalOrdersKit._procConfigs || {};
 
 /**
  * Generate standard HTML markup for Procedure Booking Configurator Card
