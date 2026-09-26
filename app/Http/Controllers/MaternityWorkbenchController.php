@@ -3236,7 +3236,7 @@ class MaternityWorkbenchController extends Controller
                     'created_by_id' => $note->created_by,
                     'created_at' => Carbon::parse($note->created_at)->format('h:i a, d M Y'),
                     'time_ago' => Carbon::parse($note->created_at)->diffForHumans(),
-                    'can_edit' => Auth::id() == $note->created_by && Carbon::parse($note->created_at)->diffInMinutes(now()) < (function_exists('appsettings') ? (appsettings('note_edit_duration') ?? 60) : 60),
+                    'can_edit' => Auth::id() == $note->created_by && Carbon::parse($note->created_at)->diffInMinutes(now()) < (int) (appsettings('note_edit_window') ?? appsettings('note_edit_duration') ?? 60),
                     'completed' => (bool) $note->completed,
                 ];
             });
@@ -3306,7 +3306,7 @@ class MaternityWorkbenchController extends Controller
             return response()->json(['success' => false, 'message' => 'You can only edit your own notes.'], 403);
         }
 
-        $editDuration = function_exists('appsettings') ? (appsettings('note_edit_duration') ?? 60) : 60;
+        $editDuration = (int) (appsettings('note_edit_window') ?? appsettings('note_edit_duration') ?? 60);
         if (Carbon::parse($note->created_at)->addMinutes($editDuration)->isPast()) {
             return response()->json(['success' => false, 'message' => 'Edit window has expired.'], 403);
         }
@@ -3338,7 +3338,7 @@ class MaternityWorkbenchController extends Controller
             return response()->json(['success' => false, 'message' => 'You can only delete your own notes.'], 403);
         }
 
-        $editDuration = function_exists('appsettings') ? (appsettings('note_edit_duration') ?? 60) : 60;
+        $editDuration = (int) (appsettings('note_edit_window') ?? appsettings('note_edit_duration') ?? 60);
         if (Carbon::parse($note->created_at)->addMinutes($editDuration)->isPast()) {
             return response()->json(['success' => false, 'message' => 'Delete window has expired.'], 403);
         }

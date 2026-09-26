@@ -2976,7 +2976,7 @@ class NursingWorkbenchController extends Controller
                 $canEdit = false;
                 if ($note->created_at) {
                     $createdDate = \Carbon\Carbon::parse($note->created_at);
-                    $editDuration = appsettings('note_edit_duration') ?? 60; // Default 60 minutes
+                    $editDuration = (int) (appsettings('note_edit_window') ?? appsettings('note_edit_duration') ?? 60);
                     $editDeadline = $createdDate->copy()->addMinutes($editDuration);
                     $canEdit = \Carbon\Carbon::now()->lessThanOrEqualTo($editDeadline);
                 }
@@ -3106,7 +3106,7 @@ class NursingWorkbenchController extends Controller
 
             // Check time window
             $createdDate = \Carbon\Carbon::parse($note->created_at);
-            $editDuration = appsettings('note_edit_duration') ?? 60;
+            $editDuration = (int) (appsettings('note_edit_window') ?? appsettings('note_edit_duration') ?? 60);
             $editDeadline = $createdDate->copy()->addMinutes($editDuration);
 
             if (\Carbon\Carbon::now()->greaterThan($editDeadline)) {
@@ -4092,7 +4092,7 @@ class NursingWorkbenchController extends Controller
                 $canEdit = false;
                 if ($vital->created_at) {
                     $createdDate = \Carbon\Carbon::parse($vital->created_at);
-                    $editDuration = appsettings('note_edit_duration') ?? 60; // Default 60 minutes
+                    $editDuration = (int) (appsettings('note_edit_window') ?? appsettings('note_edit_duration') ?? 60);
                     $editDeadline = $createdDate->copy()->addMinutes($editDuration);
                     $canEdit = \Carbon\Carbon::now()->lessThanOrEqualTo($editDeadline);
                 }
@@ -4425,7 +4425,7 @@ class NursingWorkbenchController extends Controller
         }
 
         // Check edit time window
-        $editDuration = appsettings('note_edit_duration') ?? 60;
+        $editDuration = (int) (appsettings('note_edit_window') ?? appsettings('note_edit_duration') ?? 60);
         $editDeadline = \Carbon\Carbon::parse($vital->created_at)->addMinutes($editDuration);
 
         if (\Carbon\Carbon::now()->greaterThan($editDeadline)) {

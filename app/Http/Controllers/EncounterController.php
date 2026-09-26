@@ -2666,7 +2666,7 @@ class EncounterController extends Controller
                 $canEdit = false;
                 if ($hist->created_at) {
                     $createdDate = Carbon::parse($hist->created_at);
-                    $editDuration = appsettings('note_edit_duration') ?? 60;
+                    $editDuration = (int) (appsettings('note_edit_window') ?? appsettings('note_edit_duration') ?? 60);
                     $editDeadline = $createdDate->copy()->addMinutes($editDuration);
                     $canEdit = Carbon::now()->lessThanOrEqualTo($editDeadline);
                 }
@@ -2761,7 +2761,7 @@ class EncounterController extends Controller
 
             // Check if within edit window
             $createdDate = Carbon::parse($encounter->created_at);
-            $editDuration = appsettings('note_edit_duration') ?? 60;
+            $editDuration = (int) (appsettings('note_edit_window') ?? appsettings('note_edit_duration') ?? 60);
             $editDeadline = $createdDate->copy()->addMinutes($editDuration);
 
             if (Carbon::now()->greaterThan($editDeadline)) {
@@ -2812,7 +2812,7 @@ class EncounterController extends Controller
 
             // Check if within edit window
             $createdDate = Carbon::parse($encounter->created_at);
-            $editDuration = appsettings('note_edit_duration') ?? 60;
+            $editDuration = (int) (appsettings('note_edit_window') ?? appsettings('note_edit_duration') ?? 60);
             $editDeadline = $createdDate->copy()->addMinutes($editDuration);
 
             if (Carbon::now()->greaterThan($editDeadline)) {

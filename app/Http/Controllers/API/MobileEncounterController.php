@@ -1493,7 +1493,7 @@ class MobileEncounterController extends Controller
 
             $notes = $query->paginate(20);
 
-            $editDuration = appsettings('note_edit_duration') ?? 60;
+            $editDuration = (int) (appsettings('note_edit_window') ?? appsettings('note_edit_duration') ?? 60);
 
             $items = $notes->getCollection()->map(function ($note) use ($editDuration) {
                 $canEdit = false;

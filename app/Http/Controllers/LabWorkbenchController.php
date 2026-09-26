@@ -1855,7 +1855,7 @@ class LabWorkbenchController extends Controller
     {
         try {
             // Get investigation/lab service category ID from app settings
-            $labCategoryId = appsettings()->investigation_service_cat_id ?? null;
+            $labCategoryId = appsettings('investigation_category_id') ?? appsettings()->investigation_service_cat_id ?? null;
 
             $query = \App\Models\Service::orderBy('service_name');
 

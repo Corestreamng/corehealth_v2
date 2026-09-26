@@ -1135,7 +1135,7 @@ class MedicationChartController extends Controller
             $now = Carbon::now();
             $diffMinutes = $now->diffInMinutes($adminTime);
 
-            $editWindow = config('app.note_edit_window', 30); // Default 30 minutes
+            $editWindow = (int) (appsettings('note_edit_window') ?? config('app.note_edit_window', 30));
 
             if ($diffMinutes > $editWindow) {
                 DB::rollBack();
@@ -1211,7 +1211,7 @@ class MedicationChartController extends Controller
             $now = Carbon::now();
             $diffMinutes = $now->diffInMinutes($adminTime);
 
-            $editWindow = config('app.note_edit_window', 30); // Default 30 minutes
+            $editWindow = (int) (appsettings('note_edit_window') ?? config('app.note_edit_window', 30));
 
             if ($diffMinutes > $editWindow) {
                 DB::rollBack();

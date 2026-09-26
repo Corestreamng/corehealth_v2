@@ -89,7 +89,7 @@ class IntakeOutputChartController extends Controller
             ->get();
 
         // Get edit duration for determining if records can be deleted
-        $editDuration = appsettings('note_edit_duration') ?? 60;
+        $editDuration = (int) (appsettings('note_edit_window') ?? appsettings('note_edit_duration') ?? 60);
         $cutoffTime = now()->subMinutes($editDuration);
         $currentUserId = Auth::id();
 
@@ -198,7 +198,7 @@ class IntakeOutputChartController extends Controller
         }
 
         // Get the edit duration from app settings (in minutes)
-        $editDuration = appsettings('note_edit_duration') ?? 60;
+        $editDuration = (int) (appsettings('note_edit_window') ?? appsettings('note_edit_duration') ?? 60);
 
         // Check if the record is within the edit time window
         $createdAt = \Carbon\Carbon::parse($record->created_at);

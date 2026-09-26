@@ -265,8 +265,14 @@ if (!function_exists('generateTransactionId')) {
 
 if (!function_exists('appsettings')) {
 
-    function appsettings($key = null, $forceRefresh = false)
+    function appsettings($key = null, $default = null, $forceRefresh = false)
     {
+        // Backward compatibility: if 2nd parameter is boolean, treat as $forceRefresh
+        if (is_bool($default)) {
+            $forceRefresh = $default;
+            $default = null;
+        }
+
         static $app = null;
 
         if ($forceRefresh) {
@@ -288,7 +294,16 @@ if (!function_exists('appsettings')) {
 
         // If specific key is requested, return it with fallback to env
         if ($key !== null) {
-            $value = $app->{$key} ?? null;
+            // Support transparent key aliases
+            $aliases = [
+                'note_edit_duration' => 'note_edit_window',
+                'hospital_name' => 'site_name',
+                'hospitalname' => 'site_name',
+                'investigation_service_cat_id' => 'investigation_category_id',
+            ];
+
+            $lookupKey = $aliases[$key] ?? $key;
+            $value = $app->{$lookupKey} ?? ($app->{$key} ?? null);
 
             // If value is null or empty, fallback to env
             if ($value === null || $value === '') {
@@ -305,9 +320,10 @@ if (!function_exists('appsettings')) {
                     'procedure_category_id' => 'PROCEDURE_CATEGORY_ID',
                     'consultation_cycle_duration' => 'CONSULTATION_CYCLE_DURATION',
                     'note_edit_window' => 'NOTE_EDIT_WINDOW',
+                    'result_edit_duration' => 'RESULT_EDIT_DURATION',
                 ];
 
-                $envKey = $envMap[$key] ?? strtoupper($key);
+                $envKey = $envMap[$lookupKey] ?? strtoupper($lookupKey);
                 $defaults = [
                     'morgue_category_id' => 9,
                     'imaging_category_id' => 6,
@@ -318,9 +334,14 @@ if (!function_exists('appsettings')) {
                     'consultation_category_id' => 1,
                     'nursing_service_category' => 4,
                     'misc_service_category_id' => 5,
+                    'note_edit_window' => 30,
+                    'result_edit_duration' => 60,
+                    'consultation_cycle_duration' => 24,
                 ];
 
-                return env($envKey, $defaults[$key] ?? null);
+                $envValue = env($envKey, $defaults[$lookupKey] ?? null);
+
+                return $envValue ?? $default;
             }
 
             return $value;
