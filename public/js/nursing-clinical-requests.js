@@ -590,11 +590,25 @@ const ShiftManager = {
     acknowledgedHandovers: [],
     currentHandoverDetail: null,
     forceEndShift: false,
+    defaultWardId: null,
+    defaultShift: null,
 
     // Handover cards state
     handoverCurrentPage: 1,
     handoverPerPage: 12,
     handoverViewMode: 'cards', // 'cards' or 'list'
+
+    // Detect shift type based on current time
+    detectShiftType: function(date = new Date()) {
+        const hour = date.getHours();
+        if (hour >= 6 && hour < 14) {
+            return 'morning';
+        } else if (hour >= 14 && hour < 22) {
+            return 'afternoon';
+        } else {
+            return 'night';
+        }
+    },
 
     // Routes
     routes: {
@@ -638,6 +652,9 @@ const ShiftManager = {
             // Reset handovers when ward changes
             $('#shift-handovers-step').hide();
             self.acknowledgedHandovers = [];
+            if ($(this).val()) {
+                self.loadHandoversForWard();
+            }
         });
 
         // Check for handovers button
@@ -645,13 +662,19 @@ const ShiftManager = {
             self.loadHandoversForWard();
         });
 
+        // Acknowledge handover directly from detail card
+        $(document).on('click', '.acknowledge-handover-from-card', function() {
+            const id = $(this).data('id');
+            self.acknowledgeHandover(id, true);
+        });
+
         // FAB main button toggle
         $('#shift-fab-btn').on('click', function() {
             self.toggleFabActions();
         });
 
-        // End shift button
-        $('#end-shift-btn').on('click', function() {
+        // End shift button (FAB and Navbar)
+        $('#end-shift-btn, #navbar-end-shift-btn').on('click', function() {
             self.showEndShiftModal();
         });
 
@@ -756,6 +779,19 @@ const ShiftManager = {
         $('#acknowledge-handover-detail-btn').on('click', function() {
             if (self.currentHandoverDetail) {
                 self.acknowledgeHandover(self.currentHandoverDetail.id, true);
+            }
+        });
+
+        // Back to handovers list (Master-Detail inline navigation)
+        $('#back-to-handovers-list-btn, #footer-back-to-handovers-btn').on('click', function() {
+            self.backToHandoversList();
+        });
+
+        // Inline acknowledge handover button inside master-detail view
+        $('#acknowledge-handover-inline-btn').on('click', function() {
+            if (self.currentHandoverDetail) {
+                self.acknowledgeHandover(self.currentHandoverDetail.id, true);
+                $(this).hide();
             }
         });
 
@@ -906,6 +942,7 @@ const ShiftManager = {
     showLockOverlay: function() {
         $('#shift-lock-overlay').show();
         $('#shift-control-fab').hide();
+        $('#navbar-shift-status').hide();
         // Show a simple count of handovers (user will see details after selecting ward in modal)
         this.loadPendingHandoversCount();
     },
@@ -914,6 +951,9 @@ const ShiftManager = {
     showWorkbench: function() {
         $('#shift-lock-overlay').hide();
         $('#shift-control-fab').show();
+        if (this.activeShift) {
+            $('#navbar-shift-status').show();
+        }
         this.updateFabDisplay();
     },
 
@@ -988,6 +1028,7 @@ const ShiftManager = {
 
     // Load wards for select
     loadWards: function() {
+        const self = this;
         $.ajax({
             url: this.routes.wards,
             type: 'GET',
@@ -998,6 +1039,18 @@ const ShiftManager = {
                         options += `<option value="${ward.id}">${ward.name}</option>`;
                     });
                     $('#shift-ward-select, #handover-filter-ward').html(options);
+
+                    if (response.default_shift) {
+                        self.defaultShift = response.default_shift;
+                        $('#shift-type-select').val(response.default_shift);
+                    }
+                    if (response.default_ward_id) {
+                        self.defaultWardId = response.default_ward_id;
+                        $('#shift-ward-select').val(response.default_ward_id);
+                        if (!$('#handover-filter-ward').val()) {
+                            $('#handover-filter-ward').val(response.default_ward_id);
+                        }
+                    }
                 }
             }
         });
@@ -1008,10 +1061,27 @@ const ShiftManager = {
         const self = this;
         this.acknowledgedHandovers = [];
 
+        // Auto-select shift based on backend default / config / client-time detection
+        const detectedShift = this.defaultShift || (window.WORKBENCH_CONFIG && window.WORKBENCH_CONFIG.defaultShiftType) || this.detectShiftType();
+        if (detectedShift) {
+            $('#shift-type-select').val(detectedShift);
+        }
+
+        // Auto-select ward based on backend default / config resolved ward
+        const targetWardId = this.defaultWardId || (window.WORKBENCH_CONFIG && window.WORKBENCH_CONFIG.resolvedWardId);
+        if (targetWardId && $('#shift-ward-select option[value="' + targetWardId + '"]').length > 0) {
+            $('#shift-ward-select').val(targetWardId);
+        }
+
         // Show modal with config step first, hide handovers until ward is selected
         $('#shift-config-step').show();
         $('#shift-handovers-step').hide();
         $('#start-shift-handovers-list').html('');
+
+        // If a ward is pre-selected, immediately load handovers for it
+        if ($('#shift-ward-select').val()) {
+            this.loadHandoversForWard();
+        }
 
         // Temporarily hide overlay so modal is visible
         $('#shift-lock-overlay').addClass('modal-open-hidden');
@@ -1315,6 +1385,7 @@ const ShiftManager = {
                 <div class="patient-highlights-preview">
             `;
             preview.patient_highlights.slice(0, 5).forEach(function(patient, idx) {
+                const eventCount = patient.total_events ?? patient.total_activities ?? (patient.activities ? patient.activities.length : 0);
                 html += `
                     <div class="d-flex justify-content-between align-items-center p-2 border-bottom bg-white">
                         <div>
@@ -1322,7 +1393,7 @@ const ShiftManager = {
                             <strong>${patient.patient_name}</strong>
                             <small class="text-muted ml-1">(${patient.patient_no || 'N/A'})</small>
                         </div>
-                        <span class="badge badge-primary badge-pill">${patient.total_events} events</span>
+                        <span class="badge badge-primary badge-pill">${eventCount} ${eventCount === 1 ? 'event' : 'events'}</span>
                     </div>
                 `;
             });
@@ -1330,6 +1401,22 @@ const ShiftManager = {
                 html += `<div class="text-center py-2 text-muted small">... and ${preview.patient_highlights.length - 5} more patients</div>`;
             }
             html += '</div>';
+        }
+
+        // Clinical Alerts preview if critical or warning alerts detected
+        if (preview.alerts && preview.alerts.length > 0) {
+            const critCount = preview.alerts.filter(a => a.level === 'critical').length;
+            const warnCount = preview.alerts.length - critCount;
+            html += `
+                <div class="alert ${critCount > 0 ? 'alert-danger' : 'alert-warning'} mb-3 py-2 px-3">
+                    <div class="d-flex align-items-center justify-content-between">
+                        <div>
+                            <i class="mdi ${critCount > 0 ? 'mdi-alert-circle' : 'mdi-alert'} me-1"></i>
+                            <strong>Clinical Alerts:</strong> ${critCount > 0 ? `${critCount} Critical` : ''}${critCount > 0 && warnCount > 0 ? ', ' : ''}${warnCount > 0 ? `${warnCount} Warnings` : ''} detected
+                        </div>
+                    </div>
+                </div>
+            `;
         }
 
         // Auto-generated summary preview
@@ -1437,8 +1524,22 @@ const ShiftManager = {
     },
 
     // Show handovers list (Cards-based modal)
+    // Back to handovers master view from detail view
+    backToHandoversList: function() {
+        $('#handover-detail-view').hide();
+        $('#handover-master-view').show();
+        $('#back-to-handovers-list-btn').hide();
+        $('#footer-back-to-handovers-btn').hide();
+        $('#acknowledge-handover-inline-btn').hide();
+        $('#handoversListModalLabel').html('<i class="mdi mdi-clipboard-text-multiple-outline"></i> Shift Handovers');
+    },
+
+    // Show handovers list modal
     showHandoversList: function() {
         const self = this;
+        // Always reset to master cards view
+        this.backToHandoversList();
+
         // Reset pagination and load first page
         this.handoverCurrentPage = 1;
         this.handoverPerPage = parseInt($('#handover-per-page').val()) || 12;
@@ -1460,6 +1561,11 @@ const ShiftManager = {
         // Populate wards if not already done
         if ($('#handover-filter-ward option').length <= 1) {
             this.populateHandoverWards();
+        } else if (!$('#handover-filter-ward').val()) {
+            const targetWard = this.defaultWardId || (window.WORKBENCH_CONFIG && window.WORKBENCH_CONFIG.resolvedWardId);
+            if (targetWard && $('#handover-filter-ward option[value="' + targetWard + '"]').length > 0) {
+                $('#handover-filter-ward').val(targetWard);
+            }
         }
 
         this.loadHandoversCards();
@@ -1468,6 +1574,7 @@ const ShiftManager = {
 
     // Populate ward filter options
     populateHandoverWards: function() {
+        const self = this;
         const select = $('#handover-filter-ward');
         $.ajax({
             url: this.routes.wards || '/wards',
@@ -1478,6 +1585,10 @@ const ShiftManager = {
                     wards.forEach(function(ward) {
                         select.append(`<option value="${ward.id}">${ward.name}</option>`);
                     });
+                    const targetWard = self.defaultWardId || (window.WORKBENCH_CONFIG && window.WORKBENCH_CONFIG.resolvedWardId);
+                    if (targetWard && select.find(`option[value="${targetWard}"]`).length > 0) {
+                        select.val(targetWard);
+                    }
                 }
             }
         });
@@ -1574,7 +1685,7 @@ const ShiftManager = {
             }[h.shift_type] || '🔲';
 
             html += `
-                <div class="col-md-6 col-lg-4">
+                <div class="col-12 col-sm-6 col-md-6 col-lg-4 col-xl-3 mb-3">
                     <div class="${cardClasses}" data-handover-id="${h.id}">
                         <div class="handover-card-header">
                             <span class="handover-card-shift-badge ${shiftBadgeClass}">
@@ -1772,7 +1883,7 @@ const ShiftManager = {
         this.reloadHandoversCards();
     },
 
-    // Show handover detail
+    // Show handover detail (Master-Detail inline transition if list open, modal fallback)
     showHandoverDetail: function(id) {
         const self = this;
 
@@ -1784,14 +1895,30 @@ const ShiftManager = {
                     self.currentHandoverDetail = response.handover;
                     self.renderHandoverDetail(response.handover);
 
-                    // Show/hide acknowledge button
-                    if (!response.handover.is_acknowledged) {
-                        $('#acknowledge-handover-detail-btn').show();
-                    } else {
-                        $('#acknowledge-handover-detail-btn').hide();
-                    }
+                    // Check if handoversListModal is open
+                    const listModal = $('#handoversListModal');
+                    const listModalOpen = listModal.hasClass('show') || listModal.is(':visible');
+                    if (listModalOpen) {
+                        $('#handover-master-view').hide();
+                        $('#handover-detail-view').show();
+                        $('#back-to-handovers-list-btn').show();
+                        $('#footer-back-to-handovers-btn').show();
+                        $('#handoversListModalLabel').html('<i class="mdi mdi-file-document-outline"></i> Handover Details');
 
-                    $('#handoverDetailModal').modal('show');
+                        if (!response.handover.is_acknowledged) {
+                            $('#acknowledge-handover-inline-btn').show();
+                        } else {
+                            $('#acknowledge-handover-inline-btn').hide();
+                        }
+                    } else {
+                        // Direct call fallback (e.g. from an external trigger)
+                        if (!response.handover.is_acknowledged) {
+                            $('#acknowledge-handover-detail-btn').show();
+                        } else {
+                            $('#acknowledge-handover-detail-btn').hide();
+                        }
+                        $('#handoverDetailModal').modal('show');
+                    }
                 } else {
                     toastr.error('Failed to load handover details');
                 }
@@ -1802,40 +1929,50 @@ const ShiftManager = {
         });
     },
 
-    // Render handover detail content
+    // Render handover detail content (High-density 2-column clinical cockpit)
     renderHandoverDetail: function(h) {
         let pendingTasksHtml = '';
-        if (h.pending_tasks && h.pending_tasks.length> 0) {
+        if (h.pending_tasks && h.pending_tasks.length > 0) {
             pendingTasksHtml = '<ul class="list-group list-group-flush">';
             h.pending_tasks.forEach(function(task) {
                 const priorityColors = { low: 'secondary', normal: 'primary', high: 'warning', urgent: 'danger' };
+                const priorityIcons = {
+                    urgent: 'mdi-alert-octagon text-danger',
+                    high: 'mdi-alert text-warning',
+                    normal: 'mdi-clock-outline text-primary',
+                    low: 'mdi-information-outline text-secondary'
+                };
+                const icon = priorityIcons[task.priority] || 'mdi-checkbox-blank-outline text-muted';
                 pendingTasksHtml += `
-                    <li class="list-group-item d-flex justify-content-between align-items-center">
-                        ${task.description}
-                        <span class="badge badge-${priorityColors[task.priority] || 'secondary'}">${task.priority || 'normal'}</span>
+                    <li class="list-group-item d-flex justify-content-between align-items-center px-2 py-2">
+                        <div class="d-flex align-items-start gap-2">
+                            <i class="mdi ${icon} mt-1"></i>
+                            <span class="small font-weight-500">${task.description}</span>
+                        </div>
+                        <span class="badge badge-${priorityColors[task.priority] || 'secondary'} ml-2">${task.priority || 'normal'}</span>
                     </li>
                 `;
             });
             pendingTasksHtml += '</ul>';
         } else {
-            pendingTasksHtml = '<p class="text-muted">No pending tasks</p>';
+            pendingTasksHtml = '<p class="text-muted small mb-0 p-2"><i class="mdi mdi-check-circle-outline text-success me-1"></i> No pending tasks recorded</p>';
         }
 
         // Build action summary HTML with icons and colors
         let actionSummaryHtml = '';
-        if (h.action_summary && Object.keys(h.action_summary).length> 0) {
-            actionSummaryHtml = '<div class="row text-center mt-3">';
+        if (h.action_summary && Object.keys(h.action_summary).length > 0) {
+            actionSummaryHtml = '<div class="row g-2 text-center">';
             for (const [key, value] of Object.entries(h.action_summary)) {
                 const icon = value.icon || 'mdi-checkbox-blank-circle';
                 const color = value.color || 'secondary';
                 const count = value.count || 0;
                 const label = value.label || key;
                 actionSummaryHtml += `
-                    <div class="col-4 col-md-3 mb-2">
-                        <div class="stat-box p-2 border rounded">
-                            <i class="mdi ${icon} text-${color}" style="font-size: 1.5rem;"></i>
-                            <div class="stat-value h5 mb-0">${count}</div>
-                            <div class="stat-label small text-muted">${label}</div>
+                    <div class="col-6 col-sm-4 col-md-3 col-lg-6 col-xl-4 mb-2">
+                        <div class="stat-box p-2 border rounded bg-white shadow-xs">
+                            <i class="mdi ${icon} text-${color}" style="font-size: 1.4rem;"></i>
+                            <div class="stat-value h5 mb-0 font-weight-bold">${count}</div>
+                            <div class="stat-label small text-muted text-truncate" title="${label}">${label}</div>
                         </div>
                     </div>
                 `;
@@ -1844,26 +1981,25 @@ const ShiftManager = {
         }
 
         // Build patient highlights HTML
-        let patientHighlightsHtml = '';
-        if (h.patient_highlights && h.patient_highlights.length> 0) {
-            patientHighlightsHtml = `
-                <div class="mt-4">
-                    <h6><i class="mdi mdi-account-group"></i> Patient Activity Summary</h6>
-                    <div class="accordion" id="patientHighlightsAccordion">
+        let patientHighlightsAccordion = '';
+        if (h.patient_highlights && h.patient_highlights.length > 0) {
+            patientHighlightsAccordion = `
+                <div class="accordion" id="patientHighlightsAccordion">
             `;
 
             h.patient_highlights.forEach(function(patient, idx) {
                 const collapseId = `patientCollapse${idx}`;
-                patientHighlightsHtml += `
-                    <div class="card-modern mb-2">
-                        <div class="card-header p-2" id="heading${idx}">
+                const eventCount = patient.total_events ?? patient.total_activities ?? (patient.activities ? patient.activities.length : 0);
+                patientHighlightsAccordion += `
+                    <div class="card mb-2 border rounded">
+                        <div class="card-header p-2 bg-light" id="heading${idx}">
                             <h6 class="mb-0">
-                                <button class="btn btn-link btn-sm w-100 text-left d-flex justify-content-between align-items-center" type="button" data-toggle="collapse" data-target="#${collapseId}">
+                                <button class="btn btn-link btn-sm w-100 text-left d-flex justify-content-between align-items-center text-dark font-weight-bold" type="button" data-toggle="collapse" data-target="#${collapseId}">
                                     <span>
-                                        <i class="mdi mdi-account"></i> ${patient.patient_name}
-                                        <span class="text-muted ml-2">(${patient.patient_no || 'N/A'})</span>
+                                        <i class="mdi mdi-account-circle text-primary me-1"></i> ${patient.patient_name}
+                                        <span class="text-muted small ml-1">(${patient.patient_no || 'N/A'})</span>
                                     </span>
-                                    <span class="badge badge-primary badge-pill">${patient.total_events} events</span>
+                                    <span class="badge badge-primary badge-pill">${eventCount} ${eventCount === 1 ? 'event' : 'events'}</span>
                                 </button>
                             </h6>
                         </div>
@@ -1872,15 +2008,15 @@ const ShiftManager = {
                                 <ul class="list-unstyled mb-0">
                 `;
 
-                if (patient.activities && patient.activities.length> 0) {
+                if (patient.activities && patient.activities.length > 0) {
                     patient.activities.forEach(function(activity) {
-                        patientHighlightsHtml += `
-                            <li class="mb-1">
-                                <i class="mdi ${activity.icon || 'mdi-circle'} text-${activity.color || 'secondary'} mr-1"></i>
-                                <span class="text-muted">${activity.label}:</span>
+                        patientHighlightsAccordion += `
+                            <li class="mb-1 d-flex align-items-center">
+                                <i class="mdi ${activity.icon || 'mdi-circle'} text-${activity.color || 'secondary'} mr-2"></i>
+                                <span class="text-muted mr-1">${activity.label}:</span>
                                 <strong>${activity.count}</strong>
-                                ${activity.events && activity.events.length> 0 ?
-                                    `<span class="text-muted small">(${activity.events.slice(0, 3).join(', ')}${activity.events.length> 3 ? '...' : ''})</span>`
+                                ${activity.events && activity.events.length > 0 ?
+                                    `<span class="text-muted small ml-2">(${activity.events.slice(0, 3).join(', ')}${activity.events.length > 3 ? '...' : ''})</span>`
                                     : ''
                                 }
                             </li>
@@ -1888,7 +2024,7 @@ const ShiftManager = {
                     });
                 }
 
-                patientHighlightsHtml += `
+                patientHighlightsAccordion += `
                                 </ul>
                             </div>
                         </div>
@@ -1896,16 +2032,14 @@ const ShiftManager = {
                 `;
             });
 
-            patientHighlightsHtml += '</div></div>';
+            patientHighlightsAccordion += '</div>';
         }
 
         // Build audit details HTML (detailed changes)
-        let auditDetailsHtml = '';
-        if (h.audit_details && h.audit_details.length> 0) {
-            auditDetailsHtml = `
-                <div class="mt-4">
-                    <h6><i class="mdi mdi-history"></i> Detailed Activity Log <small class="text-muted">(${h.audit_details.length} changes)</small></h6>
-                    <div class="audit-details-list" style="max-height: 400px; overflow-y: auto;">
+        let auditDetailsContent = '';
+        if (h.audit_details && h.audit_details.length > 0) {
+            auditDetailsContent = `
+                <div class="audit-details-list" style="max-height: 480px; overflow-y: auto;">
             `;
 
             // Group by patient
@@ -1919,10 +2053,10 @@ const ShiftManager = {
             });
 
             for (const [patient, details] of Object.entries(byPatient)) {
-                auditDetailsHtml += `
-                    <div class="audit-patient-group mb-3">
-                        <h6 class="text-primary mb-2">
-                            <i class="mdi mdi-account"></i> ${patient}
+                auditDetailsContent += `
+                    <div class="audit-patient-group mb-3 pb-2 border-bottom">
+                        <h6 class="text-primary mb-2 font-weight-bold">
+                            <i class="mdi mdi-account-circle me-1"></i> ${patient}
                         </h6>
                         <div class="audit-items pl-3 border-left">
                 `;
@@ -1934,8 +2068,22 @@ const ShiftManager = {
                         ? '<span class="badge badge-warning badge-sm">Updated</span>'
                         : '<span class="badge badge-danger badge-sm">Deleted</span>';
 
-                    let changesHtml = '<ul class="list-unstyled mb-0 pl-3 small">';
-                    if (detail.changes && detail.changes.length> 0) {
+                    let alertBadge = '';
+                    if (detail.alert) {
+                        const alertLevel = detail.alert.level || 'warning';
+                        const alertIcon = alertLevel === 'critical' ? 'mdi-alert-circle' : 'mdi-alert';
+                        const badgeClass = alertLevel === 'critical' ? 'danger' : 'warning';
+                        alertBadge = `<span class="badge badge-${badgeClass} badge-sm ms-1"><i class="mdi ${alertIcon}"></i> ${detail.alert.message || alertLevel.toUpperCase()}</span>`;
+                    }
+
+                    let lineHtml = '';
+                    if (detail.line) {
+                        lineHtml = `<div class="clinical-line mt-1 font-weight-500 text-dark">${detail.line}</div>`;
+                    }
+
+                    let changesHtml = '';
+                    if (detail.changes && detail.changes.length > 0 && !detail.line) {
+                        changesHtml = '<ul class="list-unstyled mb-0 pl-3 small mt-1">';
                         detail.changes.forEach(function(change) {
                             if (change.type === 'created') {
                                 changesHtml += '<li><span class="text-muted">' + change.label + ':</span> <strong>' + change.value + '</strong></li>';
@@ -1945,97 +2093,181 @@ const ShiftManager = {
                                 changesHtml += '<li><span class="text-muted">' + change.label + ':</span> <del class="text-danger">' + change.value + '</del></li>';
                             }
                         });
+                        changesHtml += '</ul>';
                     }
-                    changesHtml += '</ul>';
 
-                    auditDetailsHtml += `
-                        <div class="audit-item mb-2 p-2 bg-light rounded">
+                    auditDetailsContent += `
+                        <div class="audit-item mb-2 p-2 bg-light rounded ${detail.alert ? 'border-left border-' + (detail.alert.level === 'critical' ? 'danger' : 'warning') : ''}">
                             <div class="d-flex justify-content-between align-items-start">
                                 <div>
                                     <i class="mdi ${detail.icon} text-${detail.color}"></i>
                                     <strong class="ml-1">${detail.category}</strong>
                                     ${eventBadge}
+                                    ${alertBadge}
                                 </div>
                                 <small class="text-muted">${detail.time}</small>
                             </div>
+                            ${lineHtml}
                             ${changesHtml}
                         </div>
                     `;
                 });
 
-                auditDetailsHtml += '</div></div>';
+                auditDetailsContent += '</div></div>';
             }
 
-            auditDetailsHtml += '</div></div>';
+            auditDetailsContent += '</div>';
         }
 
         const html = `
-            <div class="handover-detail">
-                <div class="d-flex justify-content-between align-items-start mb-4">
-                    <div>
-                        ${h.shift_type_badge}
-                        <span class="ml-2">${h.ward_name}</span>
+            <div class="handover-detail container-fluid px-0">
+                <!-- Hero Header Banner -->
+                <div class="handover-detail-hero p-3 mb-3 rounded shadow-sm d-flex flex-wrap justify-content-between align-items-center">
+                    <div class="d-flex flex-wrap align-items-center">
+                        <div class="mr-3 me-3 mb-1">${h.shift_type_badge}</div>
+                        <div class="font-weight-bold text-dark mr-3 me-3 mb-1">
+                            <i class="mdi mdi-hospital-building text-primary mr-1 me-1"></i> ${h.ward_name}
+                        </div>
+                        <div class="text-secondary mr-3 me-3 mb-1">
+                            <i class="mdi mdi-account-nurse text-info mr-1 me-1"></i> Handover By: <strong>${h.created_by.name}</strong>
+                        </div>
+                        <div class="text-muted small mr-3 me-3 mb-1">
+                            <i class="mdi mdi-calendar-clock text-secondary mr-1 me-1"></i> ${h.created_at} <span class="text-muted">(${h.created_at_ago})</span>
+                        </div>
+                        ${h.shift_duration ? `
+                            <div class="text-muted small mr-3 me-3 mb-1">
+                                <i class="mdi mdi-timer-outline text-warning mr-1 me-1"></i> Duration: <strong>${h.shift_duration}</strong>
+                            </div>
+                        ` : ''}
                     </div>
-                    ${h.status_badge}
+                    <div class="d-flex align-items-center mb-1">
+                        ${h.status_badge}
+                    </div>
                 </div>
 
-                <div class="row mb-3">
-                    <div class="col-md-6">
-                        <small class="text-muted">Created By</small>
-                        <div><strong>${h.created_by.name}</strong></div>
+                <!-- 2-Column Clinical Cockpit Layout -->
+                <div class="row g-3">
+                    <!-- Left Column: Narrative Summary, Patient Highlights, and Audit Log -->
+                    <div class="col-12 col-lg-7 col-xl-8">
+                        ${h.critical_notes ? `
+                            <div class="alert alert-danger shadow-sm mb-3">
+                                <div class="d-flex align-items-center mb-1">
+                                    <i class="mdi mdi-alert-circle fs-4 me-2"></i>
+                                    <h6 class="alert-heading mb-0 font-weight-bold">Critical Clinical Handover Alert</h6>
+                                </div>
+                                <div class="ps-4">${h.critical_notes.replace(/\n/g, '<br>')}</div>
+                            </div>
+                        ` : ''}
+
+                        <!-- Clinical Executive Summary -->
+                        <div class="card handover-detail-card shadow-sm mb-3">
+                            <div class="card-header d-flex justify-content-between align-items-center py-2 px-3">
+                                <span><i class="mdi mdi-clipboard-text text-primary me-1"></i> Clinical Executive Summary</span>
+                            </div>
+                            <div class="card-body p-3">
+                                <div class="handover-summary-box">
+                                    ${h.summary ? h.summary.replace(/\n/g, '<br>') : '<em class="text-muted">No summary provided</em>'}
+                                </div>
+                                ${h.concluding_notes ? `
+                                    <div class="mt-3 pt-3 border-top">
+                                        <h6 class="text-muted font-weight-bold small mb-2"><i class="mdi mdi-note-text text-secondary me-1"></i> Concluding Notes & Observations</h6>
+                                        <div class="bg-light p-2 rounded small text-dark">${h.concluding_notes.replace(/\n/g, '<br>')}</div>
+                                    </div>
+                                ` : ''}
+                            </div>
+                        </div>
+
+                        ${patientHighlightsAccordion ? `
+                            <!-- Patient Activity Highlights -->
+                            <div class="card handover-detail-card shadow-sm mb-3">
+                                <div class="card-header d-flex justify-content-between align-items-center py-2 px-3">
+                                    <span><i class="mdi mdi-account-group text-info me-1"></i> Patient Activity Highlights</span>
+                                    <span class="badge badge-info">${h.patient_highlights ? h.patient_highlights.length : 0} Patients</span>
+                                </div>
+                                <div class="card-body p-3">
+                                    ${patientHighlightsAccordion}
+                                </div>
+                            </div>
+                        ` : ''}
+
+                        ${auditDetailsContent ? `
+                            <!-- Detailed Activity Timeline Log -->
+                            <div class="card handover-detail-card shadow-sm mb-3">
+                                <div class="card-header d-flex justify-content-between align-items-center py-2 px-3">
+                                    <span><i class="mdi mdi-history text-secondary me-1"></i> Detailed Clinical Activity Log</span>
+                                    <span class="badge badge-secondary">${h.audit_details ? h.audit_details.length : 0} Changes</span>
+                                </div>
+                                <div class="card-body p-3">
+                                    ${auditDetailsContent}
+                                </div>
+                            </div>
+                        ` : ''}
                     </div>
-                    <div class="col-md-6">
-                        <small class="text-muted">Date/Time</small>
-                        <div>${h.created_at} <span class="text-muted">(${h.created_at_ago})</span></div>
+
+                    <!-- Right Column: Shift Activity Stats, Pending Tasks, and Sign-Off Governance -->
+                    <div class="col-12 col-lg-5 col-xl-4">
+                        <!-- Activity Breakdown Stats -->
+                        <div class="card handover-detail-card shadow-sm mb-3">
+                            <div class="card-header d-flex justify-content-between align-items-center py-2 px-3">
+                                <span><i class="mdi mdi-chart-box-outline text-primary me-1"></i> Shift Activity Breakdown</span>
+                            </div>
+                            <div class="card-body p-3">
+                                ${actionSummaryHtml || '<p class="text-muted small mb-0">No recorded activities in this shift</p>'}
+                            </div>
+                        </div>
+
+                        <!-- Pending Tasks Checklist -->
+                        <div class="card handover-detail-card shadow-sm mb-3">
+                            <div class="card-header d-flex justify-content-between align-items-center py-2 px-3">
+                                <span><i class="mdi mdi-format-list-checks text-warning me-1"></i> Pending Tasks & Actions</span>
+                                <span class="badge badge-${(h.pending_tasks && h.pending_tasks.length > 0) ? 'warning' : 'secondary'}">
+                                    ${h.pending_tasks ? h.pending_tasks.length : 0}
+                                </span>
+                            </div>
+                            <div class="card-body p-3">
+                                ${pendingTasksHtml}
+                            </div>
+                        </div>
+
+                        <!-- Handover Governance Sign-Off -->
+                        <div class="card handover-detail-card shadow-sm mb-3">
+                            <div class="card-header d-flex justify-content-between align-items-center py-2 px-3">
+                                <span><i class="mdi mdi-shield-check text-success me-1"></i> Handover Sign-Off & Governance</span>
+                            </div>
+                            <div class="card-body p-3">
+                                ${h.is_acknowledged ? `
+                                    <div class="alert alert-success mb-0 py-2 px-3">
+                                        <div class="d-flex align-items-center">
+                                            <i class="mdi mdi-check-decagram text-success me-2" style="font-size: 1.8rem;"></i>
+                                            <div>
+                                                <div class="font-weight-bold text-success">Handover Acknowledged</div>
+                                                <small class="text-dark">Acknowledged by: <strong>${h.acknowledged_by_name || 'Staff'}</strong></small><br>
+                                                <small class="text-muted"><i class="mdi mdi-clock-outline"></i> ${h.acknowledged_at}</small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                ` : `
+                                    <div class="alert alert-warning mb-3 py-2 px-3">
+                                        <div class="d-flex align-items-start">
+                                            <i class="mdi mdi-clock-alert text-warning me-2 mt-1" style="font-size: 1.3rem;"></i>
+                                            <div>
+                                                <strong>Pending Nurse Sign-Off</strong>
+                                                <div class="small mt-1 text-muted">Incoming nurse must review clinical notes, tasks, and alerts before acknowledging.</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <button class="btn btn-success w-100 btn-modern acknowledge-handover-from-card" data-id="${h.id}">
+                                        <i class="mdi mdi-check-circle me-1"></i> Review & Acknowledge Handover
+                                    </button>
+                                `}
+                            </div>
+                        </div>
                     </div>
                 </div>
-
-                ${h.shift_duration ? `<div class="mb-3"><small class="text-muted">Shift Duration</small><div>${h.shift_duration}</div></div>` : ''}
-
-                ${actionSummaryHtml ? `
-                    <div class="mt-3">
-                        <h6><i class="mdi mdi-chart-bar"></i> Activity Summary</h6>
-                        ${actionSummaryHtml}
-                    </div>
-                ` : ''}
-
-                ${h.critical_notes ? `
-                    <div class="alert alert-danger mt-4">
-                        <h6 class="alert-heading"><i class="mdi mdi-alert"></i> Critical Notes</h6>
-                        <div>${h.critical_notes}</div>
-                    </div>
-                ` : ''}
-
-                <div class="mt-4">
-                    <h6><i class="mdi mdi-clipboard-text"></i> Summary</h6>
-                    <div class="bg-light p-3 rounded">${h.summary || '<em>No summary provided</em>'}</div>
-                </div>
-
-                ${h.concluding_notes ? `
-                    <div class="mt-4">
-                        <h6><i class="mdi mdi-note-text"></i> Concluding Notes</h6>
-                        <div class="bg-light p-3 rounded">${h.concluding_notes}</div>
-                    </div>
-                ` : ''}
-
-                ${patientHighlightsHtml}
-
-                ${auditDetailsHtml}
-
-                <div class="mt-4">
-                    <h6><i class="mdi mdi-format-list-checks"></i> Pending Tasks</h6>
-                    ${pendingTasksHtml}
-                </div>
-
-                ${h.is_acknowledged ? `
-                    <div class="mt-4 alert alert-success">
-                        <i class="mdi mdi-check-circle"></i> Acknowledged by <strong>${h.acknowledged_by_name}</strong> on ${h.acknowledged_at}
-                    </div>
-                ` : ''}
             </div>
         `;
 
-        $('#handover-detail-content').html(html);
+        $('#handover-detail-content, #handover-inline-detail-content').html(html);
     },
 
     // Acknowledge handover
@@ -2052,8 +2284,14 @@ const ShiftManager = {
 
                     if (fromDetail) {
                         $('#acknowledge-handover-detail-btn').hide();
-                        self.currentHandoverDetail.is_acknowledged = true;
-                        self.currentHandoverDetail.acknowledged_at = response.acknowledged_at;
+                        $('#acknowledge-handover-inline-btn').hide();
+                        if (self.currentHandoverDetail) {
+                            self.currentHandoverDetail.is_acknowledged = true;
+                            self.currentHandoverDetail.acknowledged_at = response.acknowledged_at;
+                            self.currentHandoverDetail.acknowledged_by_name = response.acknowledged_by || (window.WORKBENCH_CONFIG && window.WORKBENCH_CONFIG.userName) || 'Staff';
+                            self.currentHandoverDetail.status_badge = '<span class="badge badge-success"><i class="mdi mdi-check-circle"></i> Acknowledged</span>';
+                            self.renderHandoverDetail(self.currentHandoverDetail);
+                        }
                     }
 
                     // Reload cards list
@@ -2222,6 +2460,7 @@ const ShiftManager = {
             clearInterval(this.shiftTimer);
             this.shiftTimer = null;
         }
+        $('#navbar-shift-status').hide();
     },
 
     // Update FAB display
@@ -2229,13 +2468,21 @@ const ShiftManager = {
         if (!this.activeShift) return;
 
         const elapsed = this.activeShift.elapsed_seconds || 0;
-        $('#shift-elapsed-time').text(this.formatElapsedTime(elapsed));
+        const formattedTime = this.formatElapsedTime(elapsed);
+        $('#shift-elapsed-time').text(formattedTime);
+
+        // Update persistent navbar shift timer and badge
+        $('#navbar-shift-status').show();
+        $('#navbar-shift-timer').text(formattedTime);
 
         // Check if overdue (past max shift duration)
-        if (this.activeShift.is_overdue || elapsed> 12 * 3600) {
+        const isOverdue = this.activeShift.is_overdue || elapsed > 12 * 3600;
+        if (isOverdue) {
             $('.shift-fab-timer').addClass('overdue');
+            $('#navbar-shift-timer').addClass('badge-danger').removeClass('badge-info');
         } else {
             $('.shift-fab-timer').removeClass('overdue');
+            $('#navbar-shift-timer').addClass('badge-info').removeClass('badge-danger');
         }
 
         // Update FAB button state

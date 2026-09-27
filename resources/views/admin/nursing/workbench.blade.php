@@ -4,6 +4,7 @@
 
 @push('styles')
 <link rel="stylesheet" href="{{ versioned_asset('css/nursing-workbench.css') }}">
+<link rel="stylesheet" href="{{ versioned_asset('css/nursing-shift.css') }}">
     
 <link rel="stylesheet" href="{{ asset('plugins/dataT/datatables.min.css') }}">
 <link rel="stylesheet" href="{{ asset('css/clinical-orders-shared.css') }}">
@@ -158,6 +159,15 @@
                 <i class="fa fa-arrow-left"></i> Back to Search
             </button>
             <div class="workspace-navbar-actions">
+                <div id="navbar-shift-status" class="d-none align-items-center gap-2 me-2">
+                    <span class="workbench-shift-status-badge" id="navbar-shift-badge" title="Active Shift">
+                        <span class="shift-pulse-dot"></span>
+                        <span id="navbar-shift-timer">00:00:00</span>
+                    </span>
+                    <button type="button" class="btn btn-sm btn-danger d-inline-flex align-items-center gap-1" id="navbar-end-shift-btn" title="End Current Shift">
+                        <i class="mdi mdi-stop-circle"></i> <span>End Shift</span>
+                    </button>
+                </div>
                 <button class="btn-toggle-search" id="btn-toggle-search">
                     <i class="fa fa-bars"></i> Toggle Search
                 </button>

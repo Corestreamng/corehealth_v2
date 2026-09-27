@@ -182,6 +182,10 @@ class NursingShift extends Model implements Auditable
 
     public function getDurationAttribute(): string
     {
+        if (!$this->started_at) {
+            return '0m';
+        }
+
         $end = $this->ended_at ?? now();
 
         return $this->started_at->diffForHumans($end, true);
@@ -189,6 +193,10 @@ class NursingShift extends Model implements Auditable
 
     public function getDurationMinutesAttribute(): int
     {
+        if (!$this->started_at) {
+            return 0;
+        }
+
         $end = $this->ended_at ?? now();
 
         return $this->started_at->diffInMinutes($end);
@@ -196,11 +204,13 @@ class NursingShift extends Model implements Auditable
 
     public function getElapsedSecondsAttribute(): int
     {
-        if (!$this->is_active) {
+        if (!$this->started_at) {
             return 0;
         }
 
-        return $this->started_at->diffInSeconds(now());
+        $end = $this->ended_at ?? now();
+
+        return (int) $this->started_at->diffInSeconds($end);
     }
 
     public function getRemainingSecondsAttribute(): int
@@ -595,34 +605,8 @@ class NursingShift extends Model implements Auditable
      */
     public function generateAuditDetails(): array
     {
-        $grouped = $this->getGroupedAuditLogs();
-        $details = [];
-
-        foreach ($grouped as $type => $data) {
-            $config = self::NURSING_AUDITABLE_TYPES[$type] ?? ['label' => class_basename($type), 'icon' => 'mdi-file', 'color' => 'secondary'];
-
-            foreach ($data['items'] as $item) {
-                if (empty($item['changes'])) {
-                    continue;
-                }
-
-                $details[] = [
-                    'category' => $config['label'],
-                    'icon' => $config['icon'],
-                    'color' => $config['color'],
-                    'event' => $item['event'],
-                    'patient_id' => $item['patient_id'],
-                    'patient_name' => $item['patient_name'],
-                    'patient_no' => $item['patient_no'],
-                    'changes' => $item['changes'],
-                    'time' => $item['created_at']->format('H:i'),
-                    'time_full' => $item['created_at']->format('M j, Y g:i A'),
-                    'time_ago' => $item['time_ago'],
-                ];
-            }
-        }
-
-        return $details;
+        return app(\App\Services\ClinicalHandoverFormatter::class)
+            ->formatShiftHandover($this)['activity_timeline'];
     }
 
     /**
@@ -630,121 +614,8 @@ class NursingShift extends Model implements Auditable
      */
     public function generateDetailedSummary(): string
     {
-        $grouped = $this->getGroupedAuditLogs();
-        $parts = [];
-        $patientsSeen = [];
-        $keyChanges = [];
-
-        foreach ($grouped as $type => $data) {
-            $total = array_sum($data['events']);
-            if ($total > 0) {
-                $eventDetails = [];
-                if ($data['events']['created'] > 0) {
-                    $eventDetails[] = $data['events']['created'] . ' created';
-                }
-                if ($data['events']['updated'] > 0) {
-                    $eventDetails[] = $data['events']['updated'] . ' updated';
-                }
-                if ($data['events']['deleted'] > 0) {
-                    $eventDetails[] = $data['events']['deleted'] . ' deleted';
-                }
-
-                $parts[] = "<strong>{$data['label']}</strong>: " . implode(', ', $eventDetails);
-
-                // Collect unique patients
-                foreach ($data['patients'] as $pid => $pinfo) {
-                    $patientsSeen[$pid] = $pinfo;
-                }
-
-                // Collect key changes for the summary
-                foreach ($data['items'] as $item) {
-                    if (!empty($item['changes'])) {
-                        $patientDisplay = $item['patient_name'] ?? 'Unknown Patient';
-                        if ($item['patient_no']) {
-                            $patientDisplay .= " ({$item['patient_no']})";
-                        }
-
-                        foreach ($item['changes'] as $change) {
-                            $changeDesc = '';
-                            if ($change['type'] === 'created') {
-                                $changeDesc = "{$change['label']}: {$change['value']}";
-                            } elseif ($change['type'] === 'changed') {
-                                $changeDesc = "{$change['label']}: {$change['old']} → {$change['new']}";
-                            } elseif ($change['type'] === 'deleted') {
-                                $changeDesc = "{$change['label']}: {$change['value']} (removed)";
-                            }
-
-                            if ($changeDesc) {
-                                $keyChanges[] = [
-                                    'category' => $data['label'],
-                                    'patient' => $patientDisplay,
-                                    'event' => $item['event'],
-                                    'change' => $changeDesc,
-                                    'time' => $item['created_at']->format('H:i'),
-                                ];
-                            }
-                        }
-                    }
-                }
-            }
-        }
-
-        $summary = "";
-
-        if (!empty($patientsSeen)) {
-            $summary .= "<p><strong>Patients Attended:</strong> " . count($patientsSeen) . " patient(s)</p>";
-            $summary .= "<ul>";
-            foreach ($patientsSeen as $pid => $pinfo) {
-                $name = is_array($pinfo) ? ($pinfo['name'] ?? 'Unknown') : $pinfo;
-                $fileNo = is_array($pinfo) ? ($pinfo['patient_no'] ?? null) : null;
-                $display = $fileNo ? "{$name} (File No: {$fileNo})" : $name;
-                $summary .= "<li>{$display}</li>";
-            }
-            $summary .= "</ul>";
-        }
-
-        if (!empty($parts)) {
-            $summary .= "<p><strong>Activity Summary:</strong></p><ul>";
-            foreach ($parts as $part) {
-                $summary .= "<li>{$part}</li>";
-            }
-            $summary .= "</ul>";
-        }
-
-        // Add key changes section (limited to most recent 10)
-        if (!empty($keyChanges)) {
-            $summary .= "<p><strong>Key Changes:</strong></p>";
-            $summary .= "<div class='key-changes-list'>";
-
-            // Group by patient for better readability
-            $byPatient = [];
-            foreach (array_slice($keyChanges, 0, 20) as $kc) {
-                $byPatient[$kc['patient']][] = $kc;
-            }
-
-            foreach ($byPatient as $patient => $changes) {
-                $summary .= "<div class='patient-changes mb-2'>";
-                $summary .= "<strong class='text-primary'>{$patient}</strong>";
-                $summary .= "<ul class='mb-1'>";
-                foreach ($changes as $c) {
-                    $eventBadge = match($c['event']) {
-                        'created' => '<span class="badge badge-success badge-sm">New</span>',
-                        'updated' => '<span class="badge badge-warning badge-sm">Updated</span>',
-                        'deleted' => '<span class="badge badge-danger badge-sm">Deleted</span>',
-                        default => '',
-                    };
-                    $summary .= "<li><small class='text-muted'>[{$c['time']}]</small> {$eventBadge} <em>{$c['category']}</em>: {$c['change']}</li>";
-                }
-                $summary .= "</ul></div>";
-            }
-            $summary .= "</div>";
-        }
-
-        if (empty($summary)) {
-            $summary = "<p>No significant nursing activities recorded during this shift.</p>";
-        }
-
-        return $summary;
+        return app(\App\Services\ClinicalHandoverFormatter::class)
+            ->formatShiftHandover($this)['executive_summary'];
     }
 
     /**
@@ -752,51 +623,8 @@ class NursingShift extends Model implements Auditable
      */
     public function getPatientHighlights(): array
     {
-        $grouped = $this->getGroupedAuditLogs();
-        $patientActivities = [];
-
-        foreach ($grouped as $type => $data) {
-            $config = self::NURSING_AUDITABLE_TYPES[$type] ?? ['label' => class_basename($type), 'icon' => 'mdi-file', 'color' => 'secondary'];
-
-            foreach ($data['items'] as $item) {
-                if ($item['patient_id']) {
-                    $pid = $item['patient_id'];
-                    if (!isset($patientActivities[$pid])) {
-                        // Use patient info from the grouped data (already has name and file_no)
-                        $patientInfo = $data['patients'][$pid] ?? null;
-                        $patientActivities[$pid] = [
-                            'patient_id' => $pid,
-                            'patient_name' => $patientInfo['name'] ?? $item['patient_name'] ?? "Patient #{$pid}",
-                            'patient_no' => $patientInfo['patient_no'] ?? $item['patient_no'] ?? null,
-                            'activities' => [],
-                            'activity_counts' => [],
-                            'total_events' => 0,
-                        ];
-                    }
-
-                    $activityType = $config['label'];
-                    $patientActivities[$pid]['activity_counts'][$activityType] =
-                        ($patientActivities[$pid]['activity_counts'][$activityType] ?? 0) + 1;
-                    $patientActivities[$pid]['total_events']++;
-
-                    $patientActivities[$pid]['activities'][] = [
-                        'type' => $activityType,
-                        'icon' => $config['icon'],
-                        'color' => $config['color'],
-                        'event' => $item['event'],
-                        'time' => $item['created_at']->format('H:i'),
-                        'time_ago' => $item['time_ago'],
-                    ];
-                }
-            }
-        }
-
-        // Sort by total events descending
-        usort($patientActivities, function ($a, $b) {
-            return $b['total_events'] - $a['total_events'];
-        });
-
-        return array_values($patientActivities);
+        return app(\App\Services\ClinicalHandoverFormatter::class)
+            ->formatShiftHandover($this)['patient_summaries'];
     }
 
     /**
@@ -804,24 +632,8 @@ class NursingShift extends Model implements Auditable
      */
     public function createHandover(array $data = []): ShiftHandover
     {
-        // Get audit-based data
-        $groupedAudits = $this->getGroupedAuditLogs();
-        $patientHighlights = $this->getPatientHighlights();
-        $auditDetails = $this->generateAuditDetails();
-
-        // Build the detailed action summary from audits
-        $actionSummary = [];
-        foreach ($groupedAudits as $type => $auditData) {
-            $config = self::NURSING_AUDITABLE_TYPES[$type] ?? ['label' => class_basename($type), 'icon' => 'mdi-file', 'color' => 'secondary'];
-            $actionSummary[$type] = [
-                'label' => $config['label'],
-                'icon' => $config['icon'],
-                'color' => $config['color'],
-                'count' => array_sum($auditData['events']),
-                'events' => $auditData['events'],
-                'patients' => array_values($auditData['patients']),
-            ];
-        }
+        $formatter = app(\App\Services\ClinicalHandoverFormatter::class);
+        $formatted = $formatter->formatShiftHandover($this);
 
         $handover = ShiftHandover::create([
             'shift_id' => $this->id,
@@ -831,13 +643,13 @@ class NursingShift extends Model implements Auditable
             'shift_type' => $this->shift_type,
             'shift_started_at' => $this->started_at,
             'shift_ended_at' => $this->ended_at ?? now(),
-            'summary' => $data['summary'] ?? $this->generateDetailedSummary(),
+            'summary' => $data['summary'] ?? $formatted['executive_summary'],
             'critical_notes' => $data['critical_notes'] ?? $this->critical_notes,
             'concluding_notes' => $data['concluding_notes'] ?? $this->concluding_notes,
             'pending_tasks' => $data['pending_tasks'] ?? null,
-            'patient_highlights' => $data['patient_highlights'] ?? $patientHighlights,
-            'action_summary' => $actionSummary,
-            'audit_details' => $auditDetails,
+            'patient_highlights' => $data['patient_highlights'] ?? $formatted['patient_summaries'],
+            'action_summary' => $data['action_summary'] ?? $formatted['category_counts'],
+            'audit_details' => $data['audit_details'] ?? $formatted['activity_timeline'],
         ]);
 
         $this->update(['handover_created' => true]);

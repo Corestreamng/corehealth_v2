@@ -333,46 +333,29 @@ class ShiftController extends Controller
                 ], 404);
             }
 
-            // Get grouped audit logs
-            $groupedAuditLogs = $shift->getGroupedAuditLogs();
-
-            // Get patient highlights
-            $patientHighlights = $shift->getPatientHighlights();
-
-            // Generate detailed summary
-            $detailedSummary = $shift->generateDetailedSummary();
+            $formatter = app(\App\Services\ClinicalHandoverFormatter::class);
+            $formatted = $formatter->formatShiftHandover($shift);
 
             // Build activity summary for display
             $activitySummary = [];
-            foreach ($groupedAuditLogs as $type => $data) {
-                $config = NursingShift::NURSING_AUDITABLE_TYPES[$type] ?? null;
-                if ($config) {
+            foreach ($formatted['category_counts'] as $cat => $data) {
+                if (($data['count'] ?? $data['total'] ?? 0) > 0) {
                     $activitySummary[] = [
-                        'type' => $type,
-                        'label' => $config['label'],
-                        'icon' => $config['icon'],
-                        'color' => $config['color'],
-                        'count' => $data['count'],
+                        'type' => $cat,
+                        'label' => $data['label'] ?? $cat,
+                        'icon' => $data['icon'] ?? 'mdi-file',
+                        'color' => $data['color'] ?? 'secondary',
+                        'count' => $data['count'] ?? $data['total'],
                         'events' => array_map(function ($event, $count) {
                             return ucfirst($event) . ": $count";
-                        }, array_keys($data['events']), $data['events']),
-                        'patients_count' => count($data['patients']),
+                        }, array_keys($data['events'] ?? []), $data['events'] ?? []),
+                        'patients_count' => count($data['patients'] ?? []),
                     ];
                 }
             }
 
-            // Calculate totals
-            $totalEvents = array_sum(array_column($activitySummary, 'count'));
-
-            // Calculate unique patients safely
-            $totalPatients = 0;
-            if (!empty($groupedAuditLogs)) {
-                $allPatientIds = [];
-                foreach ($groupedAuditLogs as $data) {
-                    $allPatientIds = array_merge($allPatientIds, array_keys($data['patients']));
-                }
-                $totalPatients = count(array_unique($allPatientIds));
-            }
+            $totalEvents = count($formatted['activity_timeline']);
+            $totalPatients = count($formatted['patient_summaries']);
 
             return response()->json([
                 'success' => true,
@@ -383,8 +366,10 @@ class ShiftController extends Controller
                     'total_events' => $totalEvents,
                     'total_patients' => $totalPatients,
                     'activity_summary' => $activitySummary,
-                    'patient_highlights' => $patientHighlights,
-                    'detailed_summary' => $detailedSummary,
+                    'patient_highlights' => $formatted['patient_summaries'],
+                    'activity_timeline' => $formatted['activity_timeline'],
+                    'detailed_summary' => $formatted['executive_summary'],
+                    'alerts' => $formatted['alerts'],
                 ],
             ]);
         } catch (\Exception $e) {
@@ -655,6 +640,7 @@ class ShiftController extends Controller
                 'success' => true,
                 'message' => 'Handover acknowledged successfully',
                 'acknowledged_at' => $handover->acknowledged_at->format('M d, Y h:i A'),
+                'acknowledged_by' => auth()->user()?->name ?? 'Staff',
             ]);
         } catch (\Exception $e) {
             Log::error('Error acknowledging handover: ' . $e->getMessage());
@@ -742,6 +728,8 @@ class ShiftController extends Controller
 
     /**
      * Get available wards for shift selection
+     * Automatically resolves default shift based on current time
+     * and default ward based on active shift or current store governance resolution.
      */
     public function getWards()
     {
@@ -750,9 +738,29 @@ class ShiftController extends Controller
                 ->orderBy('name')
                 ->get(['id', 'name', 'code', 'type']);
 
+            $defaultShift = NursingShift::determineShiftType();
+            $defaultWardId = null;
+
+            if (auth()->check()) {
+                $user = auth()->user();
+                $activeShift = NursingShift::getActiveForUser($user->id);
+                if ($activeShift && $activeShift->ward_id) {
+                    $defaultWardId = $activeShift->ward_id;
+                } else {
+                    // Resolve store and find linked ward where possible (Plan §10)
+                    $resolver = app(\App\Services\StoreContextResolver::class);
+                    $resolvedStore = $resolver->resolve($user);
+                    if ($resolvedStore && $resolvedStore->ward_id) {
+                        $defaultWardId = $resolvedStore->ward_id;
+                    }
+                }
+            }
+
             return response()->json([
                 'success' => true,
                 'wards' => $wards,
+                'default_shift' => $defaultShift,
+                'default_ward_id' => $defaultWardId,
             ]);
         } catch (\Exception $e) {
             Log::error('Error loading wards: ' . $e->getMessage());

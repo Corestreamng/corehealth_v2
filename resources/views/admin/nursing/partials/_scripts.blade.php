@@ -32,7 +32,12 @@ window.WORKBENCH_CONFIG = {
         'nursing-workbench.billing.add-lab-bill': '{{ route("nursing-workbench.billing.add-lab-bill") }}',
         'nursing-workbench.billing.add-imaging-bill': '{{ route("nursing-workbench.billing.add-imaging-bill") }}',
         'nursing-workbench.billing.remove': '{{ url("/nursing-workbench/remove-bill") }}'
-    }
+    },
+    resolvedStoreId: '{{ $resolvedStore->id ?? "" }}',
+    resolvedStoreName: '{{ $resolvedStore->store_name ?? "" }}',
+    resolvedWardId: '{{ $resolvedStore->ward_id ?? "" }}',
+    defaultShiftType: '{{ \App\Models\NursingShift::determineShiftType() }}',
+    userName: '{{ auth()->user()?->name ?? "" }}'
 };
 window.INVEST_RES_SOURCE = 'nursing';
 window.BILLING_KIT_CONFIG = {
@@ -67,6 +72,7 @@ window.BILLING_KIT_CONFIG = {
 <script src="{{ versioned_asset('js/nursing-vitals.js') }}"></script>
 <script src="{{ versioned_asset('js/nursing-medication-chart.js') }}"></script>
 <script src="{{ versioned_asset('js/nursing-notes.js') }}"></script>
+<script src="{{ versioned_asset('js/medication-schedule-presets.js') }}"></script>
 <script src="{{ versioned_asset('js/nursing-clinical-requests.js') }}"></script>
 @include('admin.partials.clinical_alerts_modal')
 @include('admin.partials.patient_summary_overlay')

@@ -127,6 +127,23 @@ class ShiftHandover extends Model implements Auditable
         return $this->shift_started_at->diffForHumans($this->shift_ended_at, true);
     }
 
+    public function getSummaryAttribute(?string $value): ?string
+    {
+        if ($value === null) {
+            return null;
+        }
+
+        // Fix duplicated "Shift Shift"
+        $value = preg_replace('/(Morning|Afternoon|Night)\s+Shift\s+Shift/i', '$1 Shift', $value);
+
+        // Fix "Duration: 0m" or "Duration: 0h 0m" when actual shift duration is available
+        if ($this->shift_duration && preg_match('/Duration:\s*0[hm](\s*0m)?/i', $value)) {
+            $value = preg_replace('/Duration:\s*0[hm](\s*0m)?/i', 'Duration: ' . $this->shift_duration, $value);
+        }
+
+        return $value;
+    }
+
     public function getShiftTypeLabelAttribute(): string
     {
         return NursingShift::SHIFT_TYPES[$this->shift_type]['label'] ?? ucfirst($this->shift_type);

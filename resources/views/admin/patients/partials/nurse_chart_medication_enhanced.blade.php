@@ -767,9 +767,47 @@
                                 required>
                         </div>
 
+                        <!-- Clinical Frequency Presets -->
                         <div class="mb-3">
-                            <label for="schedule_time" class="form-label">Time</label>
-                            <input type="time" class="form-control" id="schedule_time" name="time" required>
+                            <label class="form-label d-flex justify-content-between align-items-center">
+                                <span><i class="mdi mdi-clock-fast text-primary"></i> Clinical Frequency Preset</span>
+                                <small class="text-muted">Smart interval generation</small>
+                            </label>
+                            <div class="frequency-preset-pills" id="frequency-presets-group">
+                                <button type="button" class="preset-pill-btn" data-preset="STAT" title="Immediately, 1 dose">STAT</button>
+                                <button type="button" class="preset-pill-btn active" data-preset="OD" title="Once Daily">OD (Daily)</button>
+                                <button type="button" class="preset-pill-btn" data-preset="BD" title="Twice Daily (12h)">BD (12h)</button>
+                                <button type="button" class="preset-pill-btn" data-preset="TID" title="Three Times Daily (8h)">TID (8h)</button>
+                                <button type="button" class="preset-pill-btn" data-preset="QID" title="Four Times Daily (6h)">QID (6h)</button>
+                                <button type="button" class="preset-pill-btn" data-preset="Q4H" title="Every 4 Hours">Q4H</button>
+                                <button type="button" class="preset-pill-btn" data-preset="Q6H" title="Every 6 Hours">Q6H</button>
+                                <button type="button" class="preset-pill-btn" data-preset="Q8H" title="Every 8 Hours">Q8H</button>
+                                <button type="button" class="preset-pill-btn" data-preset="PRN" title="As Needed">PRN</button>
+                                <button type="button" class="preset-pill-btn" data-preset="CUSTOM" title="Custom Schedule">Custom</button>
+                            </div>
+                            <input type="hidden" id="schedule_frequency" name="frequency" value="OD">
+                        </div>
+
+                        <!-- Anchor Time & Dynamic Slots -->
+                        <div class="row g-2 mb-3" id="anchor-time-row">
+                            <div class="col-md-5">
+                                <label for="schedule_anchor_time" class="form-label">
+                                    <i class="mdi mdi-clock-outline"></i> First Dose Time
+                                </label>
+                                <input type="time" class="form-control" id="schedule_anchor_time" value="08:00">
+                                <input type="hidden" id="schedule_time" name="time" value="08:00">
+                            </div>
+                            <div class="col-md-7">
+                                <label class="form-label d-flex justify-content-between align-items-center">
+                                    <span><i class="mdi mdi-calendar-clock text-info"></i> Daily Time Slots</span>
+                                    <button type="button" class="btn btn-sm btn-outline-primary py-0 px-2" id="add-time-slot-btn" style="font-size: 0.75rem;">
+                                        <i class="mdi mdi-plus"></i> Add Slot
+                                    </button>
+                                </label>
+                                <div id="scheduled-time-slots-list" class="schedule-times-container">
+                                    <!-- Populated dynamically by medication-schedule-presets.js -->
+                                </div>
+                            </div>
                         </div>
 
                         <div class="mb-3">
@@ -840,10 +878,24 @@
                             </div>
                         </div>
 
+                        <!-- Duration with Presets -->
                         <div class="mb-3">
-                            <label for="schedule_duration" class="form-label">Duration (days)</label>
-                            <input type="number" class="form-control" id="schedule_duration" name="duration_days"
-                                min="1" value="1" required>
+                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                <label for="schedule_duration" class="form-label mb-0">Duration</label>
+                                <div class="btn-group btn-group-sm" id="duration-preset-pills" role="group">
+                                    <button type="button" class="btn btn-outline-secondary py-0 px-2 duration-pill active" data-days="1">1d</button>
+                                    <button type="button" class="btn btn-outline-secondary py-0 px-2 duration-pill" data-days="3">3d</button>
+                                    <button type="button" class="btn btn-outline-secondary py-0 px-2 duration-pill" data-days="5">5d</button>
+                                    <button type="button" class="btn btn-outline-secondary py-0 px-2 duration-pill" data-days="7">7d</button>
+                                    <button type="button" class="btn btn-outline-secondary py-0 px-2 duration-pill" data-days="14">14d</button>
+                                    <button type="button" class="btn btn-outline-secondary py-0 px-2 duration-pill" data-days="30">30d</button>
+                                </div>
+                            </div>
+                            <div class="input-group">
+                                <input type="number" class="form-control" id="schedule_duration" name="duration_days"
+                                    min="1" value="1" required>
+                                <span class="input-group-text">days</span>
+                            </div>
                         </div>
                     </div>
                     <div class="modal-footer">
