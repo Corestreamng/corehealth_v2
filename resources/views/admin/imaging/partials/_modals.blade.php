@@ -345,3 +345,4 @@
 @include('admin.partials.medical_report_history_modal')
 @include('admin.partials.bundle_view_modal')
 @include('admin.partials.bundle_remove_modal')
+@include('admin.partials.combo_confirm_modal')

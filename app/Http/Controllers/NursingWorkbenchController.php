@@ -6563,7 +6563,7 @@ class NursingWorkbenchController extends Controller
     {
         try {
             $request->validate([
-                'service_id' => 'required|string',
+                'service_id' => 'required|exists:services,id',
                 'patient_id' => 'required|integer|exists:patients,id',
                 'note' => 'nullable|string',
             ]);
@@ -6574,14 +6574,26 @@ class NursingWorkbenchController extends Controller
                 return response()->json(['success' => false, 'message' => 'Invalid combo service'], 400);
             }
 
-            // Delegate to ClinicalOrdersTrait::applyServiceCombo (no encounter for nurse)
-            $result = $this->applyServiceCombo($comboService, (int) $request->patient_id, null);
+            $extra = [];
+            if ($request->has('treatment_plan_id') && $request->input('treatment_plan_id')) {
+                $extra['treatment_plan_id'] = $request->input('treatment_plan_id');
+                $extra['treatment_plan_name'] = $request->input('treatment_plan_name');
+            }
+            if ($request->filled('note')) {
+                $extra['note'] = $request->input('note');
+            }
+            $encounterId = $request->input('encounter_id') ?: null;
+
+            // Delegate to ClinicalOrdersTrait::applyServiceCombo
+            $result = $this->applyServiceCombo($comboService, (int) $request->patient_id, $encounterId ? (int) $encounterId : null, $extra);
 
             return response()->json([
                 'success' => true,
                 'message' => $comboService->service_name . ' combo applied successfully',
                 'parent_billing_id' => $result['parent']->id,
             ]);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json(['success' => false, 'message' => $e->validator->errors()->first()], 422);
         } catch (\Exception $e) {
             return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
         }
@@ -6592,17 +6604,20 @@ class NursingWorkbenchController extends Controller
         try {
             $request->validate([
                 'parent_request_id' => 'required|integer|exists:product_or_service_requests,id',
-                'patient_id' => 'required|integer|exists:patients,id',
+                'patient_id' => 'nullable|integer|exists:patients,id',
             ]);
 
             $parentRequest = ProductOrServiceRequest::findOrFail($request->parent_request_id);
 
-            // Verify this bundle belongs to this patient
-            if ($parentRequest->user_id !== Patient::find($request->patient_id)->user_id || $parentRequest->parent_id !== null) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Invalid bundle or permission denied',
-                ], 403);
+            // Verify this bundle belongs to this patient if provided
+            if ($request->patient_id) {
+                $patient = Patient::find($request->patient_id);
+                if ($patient && ($parentRequest->user_id !== $patient->user_id || $parentRequest->parent_id !== null)) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Invalid bundle or permission denied',
+                    ], 403);
+                }
             }
 
             $result = $this->removeServiceCombo($parentRequest->id);
@@ -6618,6 +6633,22 @@ class NursingWorkbenchController extends Controller
                     'message' => $result['message'],
                 ], 400);
             }
+        } catch (\Exception $e) {
+            return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
+        }
+    }
+
+    public function removeBundleItem(Request $request)
+    {
+        try {
+            $request->validate([
+                'child_request_id' => 'required|integer|exists:product_or_service_requests,id',
+                'reason' => 'nullable|string|max:500',
+            ]);
+
+            $result = $this->removeServiceComboItem($request->child_request_id, $request->reason);
+
+            return response()->json($result, $result['success'] ? 200 : 400);
         } catch (\Exception $e) {
             return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
         }

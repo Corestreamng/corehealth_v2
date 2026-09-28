@@ -801,5 +801,7 @@
 @include('admin.partials.invest_res_view_imaging_js')
 @include('admin.partials.patient-form-modal')
 @include('admin.partials.store_context_override_modal')
+@include('admin.partials.bundle_view_modal')
+@include('admin.partials.bundle_remove_modal')
 
 

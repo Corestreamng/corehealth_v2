@@ -736,4 +736,6 @@
 </div>
 
 @include('admin.partials.store_context_override_modal')
+@include('admin.partials.bundle_view_modal')
+@include('admin.partials.bundle_remove_modal')
 

@@ -17,6 +17,8 @@
         defaultDoseMode: '{{ (bool) (appsettings('enable_structured_dose') ?? 1) ? (appsettings('default_dose_mode') ?? 'structured') : 'simple' }}',
         allowDoctorSetProcedurePrice: {{ (bool) (appsettings('allow_doctor_set_procedure_price') ?? 0) ? 'true' : 'false' }},
         procedureCategoryId: {{ (int) (appsettings('procedure_category_id', 8) ?: 8) }},
+        investigationCategoryId: {{ (int) (appsettings('investigation_category_id', 2) ?: 2) }},
+        imagingCategoryId: {{ (int) (appsettings('imaging_category_id', 6) ?: 6) }},
         labRequiresApproval: {{ (bool) appsettings('lab_results_require_approval') ? 'true' : 'false' }},
         imagingRequiresApproval: {{ (bool) appsettings('imaging_results_require_approval') ? 'true' : 'false' }},
         doctorSelfApproveLab: {{ (bool) appsettings('doctor_self_approve_lab_result') ? 'true' : 'false' }},
@@ -39,6 +41,7 @@
             'encounters.referrals.patient-all': '{{ route("encounters.referrals.patient-all", ["encounter" => "__EID__"]) }}',
             'encounters.referrals.incoming': '{{ route("encounters.referrals.incoming", ["encounter" => "__EID__"]) }}',
             'referrals.decline': '{{ route("referrals.decline", ["referral" => "__RID__"]) }}',
+            'encounters.applyCombo': '{{ $encId ? route("encounters.applyCombo", $encId) : url("/encounters/apply-combo") }}',
             'get-doctors': '{{ url("/get-doctors") }}/__CID__'
         }
     };
@@ -57,6 +60,8 @@
 @include('admin.partials.invest_res_view_imaging_js')
 @include('admin.partials.perform_investigation_modal')
 @include('admin.partials.combo_confirm_modal')
+@include('admin.partials.bundle_view_modal')
+@include('admin.partials.bundle_remove_modal')
 @include('admin.partials.patient_summary_overlay')
 @include('admin.partials.ai_quick_actions')
 @include('admin.doctors.partials.modals')

@@ -2188,6 +2188,17 @@ ClinicalRequests = (function() {
     }
 
     function applyProductCombo(comboId, comboName) {
+        if (window.ClinicalOrdersKit && typeof window.ClinicalOrdersKit.applyCombo === 'function') {
+            ClinicalOrdersKit.applyCombo(comboId, {
+                name: comboName,
+                patientId: patientId,
+                onSuccess: function() {
+                    if (typeof initPrescHistory === 'function') { initPrescHistory(); }
+                }
+            });
+            return;
+        }
+
         var comboData = (window.comboDataMap || {})[comboId] || {};
         var name = comboName || comboData.product_name || comboData.service_name || 'Combo';
 
@@ -2226,6 +2237,17 @@ ClinicalRequests = (function() {
     }
 
     function applyLabCombo(comboId, comboName) {
+        if (window.ClinicalOrdersKit && typeof window.ClinicalOrdersKit.applyCombo === 'function') {
+            ClinicalOrdersKit.applyCombo(comboId, {
+                name: comboName,
+                patientId: patientId,
+                onSuccess: function() {
+                    if (typeof initLabHistory === 'function') { initLabHistory(); }
+                }
+            });
+            return;
+        }
+
         var comboData = (window.comboDataMap || {})[comboId] || {};
         var name = comboName || comboData.service_name || 'Combo';
 
@@ -2264,6 +2286,17 @@ ClinicalRequests = (function() {
     }
 
     function applyImagingCombo(comboId, comboName) {
+        if (window.ClinicalOrdersKit && typeof window.ClinicalOrdersKit.applyCombo === 'function') {
+            ClinicalOrdersKit.applyCombo(comboId, {
+                name: comboName,
+                patientId: patientId,
+                onSuccess: function() {
+                    if (typeof initImagingHistory === 'function') { initImagingHistory(); }
+                }
+            });
+            return;
+        }
+
         var comboData = (window.comboDataMap || {})[comboId] || {};
         var name = comboName || comboData.service_name || 'Combo';
 

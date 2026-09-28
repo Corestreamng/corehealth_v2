@@ -1232,6 +1232,8 @@
 
 @include('admin.partials.patient-form-modal')
 @include('admin.partials.combo_confirm_modal')
+@include('admin.partials.bundle_view_modal')
+@include('admin.partials.bundle_remove_modal')
 @include('admin.partials.clinical_context_modal')
 @include('admin.partials.store_context_override_modal')
 

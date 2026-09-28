@@ -99,6 +99,15 @@ trait ClinicalOrdersTrait
             throw new \RuntimeException($check['reason']);
         }
 
+        if ($lab->service_request_id) {
+            $posr = ProductOrServiceRequest::find($lab->service_request_id);
+            if ($posr && $posr->is_bundle_item) {
+                $this->removeServiceComboItem($posr->id, $reason);
+
+                return;
+            }
+        }
+
         $lab->deleted_by = Auth::id();
         $lab->deletion_reason = $reason ?? 'Removed by requester';
         $lab->save();
@@ -184,6 +193,15 @@ trait ClinicalOrdersTrait
             throw new \RuntimeException($check['reason']);
         }
 
+        if ($imaging->service_request_id) {
+            $posr = ProductOrServiceRequest::find($imaging->service_request_id);
+            if ($posr && $posr->is_bundle_item) {
+                $this->removeServiceComboItem($posr->id, $reason);
+
+                return;
+            }
+        }
+
         $imaging->deleted_by = Auth::id();
         $imaging->deletion_reason = $reason ?? 'Removed by requester';
         $imaging->save();
@@ -263,6 +281,15 @@ trait ClinicalOrdersTrait
 
         if (!$check['allowed']) {
             throw new \RuntimeException($check['reason']);
+        }
+
+        if ($presc->product_request_id) {
+            $posr = ProductOrServiceRequest::find($presc->product_request_id);
+            if ($posr && $posr->is_bundle_item) {
+                $this->removeServiceComboItem($posr->id, $reason);
+
+                return;
+            }
         }
 
         $presc->deleted_by = Auth::id();
@@ -527,6 +554,11 @@ trait ClinicalOrdersTrait
 
         if ($procedure->product_or_service_request_id) {
             $billing = ProductOrServiceRequest::find($procedure->product_or_service_request_id);
+            if ($billing && $billing->is_bundle_item) {
+                $this->removeServiceComboItem($billing->id, $reason);
+
+                return;
+            }
             if ($billing && !$billing->payment_id) {
                 $billing->delete();
             }
@@ -561,9 +593,17 @@ trait ClinicalOrdersTrait
             return ['allowed' => false, 'reason' => 'The edit/delete window has expired.'];
         }
 
-        // Check if billed (except for procedures which have linked billing already)
+        // Check if billed (except for procedures which have linked billing already, and unpaid combo items)
         if ($type !== 'procedure') {
-            if ($model->service_request_id || $model->product_request_id || $model->billed_by) {
+            $isUnpaidCombo = false;
+            $billingId = $model->service_request_id ?? $model->product_request_id ?? null;
+            if ($billingId) {
+                $posr = ProductOrServiceRequest::find($billingId);
+                if ($posr && $posr->is_bundle_item && $posr->parent && empty($posr->parent->payment_id)) {
+                    $isUnpaidCombo = true;
+                }
+            }
+            if (!$isUnpaidCombo && ($model->service_request_id || $model->product_request_id || $model->billed_by)) {
                 return ['allowed' => false, 'reason' => 'This request has already been billed.'];
             }
         } else {
@@ -988,6 +1028,144 @@ trait ClinicalOrdersTrait
                 'success' => true,
                 'message' => "Combo removed successfully. {$childCount} items removed.",
                 'parentRequestId' => $parent->id,
+            ];
+        });
+    }
+
+    /**
+     * Remove an individual item from a service combo.
+     *
+     * @param int $childRequestId ID of child ProductOrServiceRequest
+     * @param string|null $reason
+     * @param int|null $userId
+     * @return array
+     */
+    protected function removeServiceComboItem(int $childRequestId, ?string $reason = null, ?int $userId = null): array
+    {
+        return DB::transaction(function () use ($childRequestId, $reason, $userId) {
+            $child = ProductOrServiceRequest::find($childRequestId);
+
+            if (!$child) {
+                return [
+                    'success' => false,
+                    'message' => 'Combo item request not found.',
+                ];
+            }
+
+            if (!$child->parent_id || !$child->is_bundle_item) {
+                return [
+                    'success' => false,
+                    'message' => 'The specified item is not part of a service combo.',
+                ];
+            }
+
+            if ($child->removed_at !== null) {
+                return [
+                    'success' => false,
+                    'message' => 'This combo item has already been removed.',
+                ];
+            }
+
+            $parent = ProductOrServiceRequest::find($child->parent_id);
+            if ($parent && $parent->payment_id !== null) {
+                return [
+                    'success' => false,
+                    'message' => 'Cannot remove item: the combo has already been paid.',
+                ];
+            }
+
+            // Check clinical fulfillment
+            $lab = LabServiceRequest::where('service_request_id', $child->id)->first();
+            if ($lab && ($lab->status > 2 || !empty($lab->result))) {
+                return [
+                    'success' => false,
+                    'message' => 'Cannot remove item: Lab results have already been entered.',
+                ];
+            }
+
+            $img = ImagingServiceRequest::where('service_request_id', $child->id)->first();
+            if ($img && ($img->status > 2 || !empty($img->result))) {
+                return [
+                    'success' => false,
+                    'message' => 'Cannot remove item: Imaging results have already been entered.',
+                ];
+            }
+
+            $pr = ProductRequest::where('product_request_id', $child->id)->first();
+            if ($pr && ($pr->status > 2 || $pr->dispensed == 1 || !empty($pr->dispensed_by))) {
+                return [
+                    'success' => false,
+                    'message' => 'Cannot remove item: Medication has already been dispensed.',
+                ];
+            }
+
+            $proc = Procedure::where('product_or_service_request_id', $child->id)->first();
+            if ($proc && in_array($proc->procedure_status, [Procedure::STATUS_COMPLETED, Procedure::STATUS_IN_PROGRESS])) {
+                return [
+                    'success' => false,
+                    'message' => 'Cannot remove item: Procedure has already commenced or completed.',
+                ];
+            }
+
+            $staffId = $userId ?: Auth::id();
+            $removedAt = now();
+            $deletionReason = $reason ?? 'Removed individually from combo';
+
+            // Mark child billing request as removed
+            $child->update([
+                'removed_by' => $staffId,
+                'removed_at' => $removedAt,
+            ]);
+
+            // Soft-delete corresponding clinical record
+            if ($lab) {
+                $lab->update(['deleted_by' => $staffId, 'deletion_reason' => $deletionReason]);
+                $lab->delete();
+            }
+            if ($img) {
+                $img->update(['deleted_by' => $staffId, 'deletion_reason' => $deletionReason]);
+                $img->delete();
+            }
+            if ($pr) {
+                $pr->update(['deleted_by' => $staffId, 'deletion_reason' => $deletionReason]);
+                $pr->delete();
+            }
+            if ($proc) {
+                $proc->update([
+                    'cancelled_by' => $staffId,
+                    'cancellation_reason' => $deletionReason,
+                    'cancelled_at' => $removedAt,
+                    'procedure_status' => Procedure::STATUS_CANCELLED,
+                ]);
+                $proc->delete();
+            }
+
+            // Check remaining active children for parent combo
+            $remainingCount = 0;
+            $comboFullyRemoved = false;
+            if ($parent) {
+                $remainingCount = ProductOrServiceRequest::where('parent_id', $parent->id)
+                    ->whereNull('removed_at')
+                    ->count();
+
+                if ($remainingCount === 0) {
+                    $parent->update([
+                        'removed_by' => $staffId,
+                        'removed_at' => $removedAt,
+                    ]);
+                    $comboFullyRemoved = true;
+                }
+            }
+
+            return [
+                'success' => true,
+                'message' => $comboFullyRemoved
+                    ? 'Combo item removed. All items removed, combo cancelled.'
+                    : 'Combo item removed successfully.',
+                'combo_fully_removed' => $comboFullyRemoved,
+                'remaining_count' => $remainingCount,
+                'child_request_id' => $child->id,
+                'parent_request_id' => $parent ? $parent->id : null,
             ];
         });
     }

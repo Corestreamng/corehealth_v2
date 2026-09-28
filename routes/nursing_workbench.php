@@ -224,6 +224,7 @@ Route::middleware(['web', 'auth'])->prefix('nursing-workbench')->name('nursing-w
         // Combo/bundle handling (Phase 1: unified search)
         Route::post('/apply-combo', [NursingWorkbenchController::class, 'nursingApplyCombo'])->name('applyCombo');
         Route::post('/remove-bundle', [NursingWorkbenchController::class, 'removeBundle'])->name('removeBundle');
+        Route::post('/remove-bundle-item', [NursingWorkbenchController::class, 'removeBundleItem'])->name('removeBundleItem');
 
         // Re-prescribe from history (Plan §5.1)
         Route::post('/re-prescribe', [NursingWorkbenchController::class, 'nurseRePrescribe'])->name('rePrescribe');

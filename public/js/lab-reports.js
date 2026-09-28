@@ -536,7 +536,8 @@ function searchLabServices(q) {
             url: wbUrl('live-search-services'),
             data: {
                 term: q,
-                category_id: '',
+                category_id: window.WORKBENCH_CONFIG?.investigationCategoryId || 2,
+                context: 'lab',
                 patient_id: patientId
             },
             onStart: function() {
@@ -564,7 +565,8 @@ function searchLabServices(q) {
                 dataType: 'json',
                 data: {
                     term: q,
-                    category_id: '',
+                    category_id: window.WORKBENCH_CONFIG?.investigationCategoryId || 2,
+                    context: 'lab',
                     patient_id: patientId
                 },
                 success: function(data) {
@@ -686,14 +688,6 @@ function setSearchValLab(name, id, price, coverageMode, claims, payable) {
 }
 
 function applyLabComboWb(comboId) {
-    var comboData = (window.comboDataMap || {})[comboId] || {};
-    var name = comboData.service_name || 'Combo';
-    var bundleItems = comboData.bundle_items || [];
-    var price   = parseFloat(comboData.base_price  || 0);
-    var payable = parseFloat(comboData.payable_amount != null ? comboData.payable_amount : price);
-    var claims  = parseFloat(comboData.claims_amount  || 0);
-    var mode    = comboData.coverage_mode || null;
-
     var patientId = currentPatient
         ? (typeof currentPatient === 'object' ? currentPatient.id : currentPatient)
         : null;
@@ -703,6 +697,29 @@ function applyLabComboWb(comboId) {
         return;
     }
 
+    if (window.ClinicalOrdersKit && typeof window.ClinicalOrdersKit.applyCombo === 'function') {
+        ClinicalOrdersKit.applyCombo(comboId, {
+            patientId: patientId,
+            route: wbRoute('lab.applyCombo', '/lab-workbench/apply-combo'),
+            onSuccess: function() {
+                $('#service-search-results').html('').hide();
+                $('#service-search-input').val('');
+                if (typeof loadLabServices === 'function') loadLabServices();
+                if (typeof LabWorkbench !== 'undefined' && typeof LabWorkbench.refreshPendingQueue === 'function') {
+                    LabWorkbench.refreshPendingQueue();
+                }
+            }
+        });
+        return;
+    }
+
+    var comboData = (window.comboDataMap || {})[comboId] || {};
+    var name = comboData.service_name || 'Combo';
+    var bundleItems = comboData.bundle_items || [];
+    var price   = parseFloat(comboData.base_price  || 0);
+    var payable = parseFloat(comboData.payable_amount != null ? comboData.payable_amount : price);
+    var claims  = parseFloat(comboData.claims_amount  || 0);
+    var mode    = comboData.coverage_mode || null;
 
     ComboConfirmModal.show({
         name        : name,

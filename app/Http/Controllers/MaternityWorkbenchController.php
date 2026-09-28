@@ -4007,8 +4007,18 @@ class MaternityWorkbenchController extends Controller
                 return response()->json(['success' => false, 'message' => 'Invalid combo service'], 400);
             }
 
-            // Delegate to ClinicalOrdersTrait::applyServiceCombo (no encounter for maternity enrollment)
-            $result = $this->applyServiceCombo($comboService, (int) $enrollment->patient_id, null);
+            $extra = [];
+            if ($request->has('treatment_plan_id') && $request->input('treatment_plan_id')) {
+                $extra['treatment_plan_id'] = $request->input('treatment_plan_id');
+                $extra['treatment_plan_name'] = $request->input('treatment_plan_name');
+            }
+            if ($request->filled('note')) {
+                $extra['note'] = $request->input('note');
+            }
+            $encounterId = $request->input('encounter_id') ?: null;
+
+            // Delegate to ClinicalOrdersTrait::applyServiceCombo
+            $result = $this->applyServiceCombo($comboService, (int) $enrollment->patient_id, $encounterId ? (int) $encounterId : null, $extra);
 
             return response()->json([
                 'success' => true,
@@ -4052,6 +4062,22 @@ class MaternityWorkbenchController extends Controller
                     'message' => $result['message'],
                 ], 400);
             }
+        } catch (\Exception $e) {
+            return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
+        }
+    }
+
+    public function removeBundleItem(Request $request, $enrollmentId = null)
+    {
+        try {
+            $request->validate([
+                'child_request_id' => 'required|integer|exists:product_or_service_requests,id',
+                'reason' => 'nullable|string|max:500',
+            ]);
+
+            $result = $this->removeServiceComboItem($request->child_request_id, $request->reason);
+
+            return response()->json($result, $result['success'] ? 200 : 400);
         } catch (\Exception $e) {
             return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
         }

@@ -759,6 +759,20 @@ function setSearchValImaging(name, id, price, coverageMode = null, claims = null
 // Namespace for imaging workbench combo operations
 const ImagingWorkbench = {
     applyCombo: function(comboId, comboName) {
+        if (window.ClinicalOrdersKit && typeof window.ClinicalOrdersKit.applyCombo === 'function') {
+            ClinicalOrdersKit.applyCombo(comboId, {
+                name: comboName,
+                patientId: currentPatient,
+                route: (typeof wbRoute === 'function') ? wbRoute('imaging.applyCombo', '/imaging-workbench/clinical-requests/apply-combo') : '/imaging-workbench/clinical-requests/apply-combo',
+                onSuccess: function() {
+                    $('#service-search-results').html('').hide();
+                    $('#service-search-input').val('');
+                    if (typeof loadImagingServices === 'function') loadImagingServices();
+                }
+            });
+            return;
+        }
+
         var comboData = (window.comboDataMap || {})[comboId] || {};
         var name = comboName || comboData.service_name || 'Combo';
         var bundleItems = comboData.bundle_items || [];

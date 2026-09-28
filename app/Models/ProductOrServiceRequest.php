@@ -53,6 +53,8 @@ class ProductOrServiceRequest extends Model implements Auditable
         'audited_at',
         'audited_by',
         'audit_notes',
+        'removed_by',
+        'removed_at',
     ];
 
     public function receptionValidator()

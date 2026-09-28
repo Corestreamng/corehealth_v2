@@ -261,6 +261,18 @@ Route::group(['middleware' => ['auth']], function () {
     });
 
     Route::group(['middleware' => ['auth']], function () {
+        // Service Combo routes (defined BEFORE resource to prevent 405 Method Not Allowed)
+        Route::post('encounters/apply-combo', [EncounterController::class, 'applyCombo'])->name('encounters.applyCombo.direct');
+        Route::post('encounters/applyCombo', [EncounterController::class, 'applyCombo']);
+        Route::post('encounters/{encounter}/apply-combo', [EncounterController::class, 'applyCombo'])->name('encounters.applyCombo');
+        Route::post('encounters/{encounter}/applyCombo', [EncounterController::class, 'applyCombo.alias']);
+        Route::post('encounters/remove-bundle', [EncounterController::class, 'removeBundleGeneric'])->name('encounters.removeBundle.direct');
+        Route::post('encounters/{encounter}/remove-bundle', [EncounterController::class, 'removeBundle'])->name('encounters.removeBundle');
+        Route::post('encounters/remove-bundle-item', [EncounterController::class, 'removeBundleItemGeneric'])->name('encounters.removeBundleItem.direct');
+        Route::post('encounters/{encounter}/remove-bundle-item', [EncounterController::class, 'removeBundleItem'])->name('encounters.removeBundleItem');
+        Route::post('service-combo/remove-bundle', [EncounterController::class, 'removeBundleGeneric'])->name('serviceCombo.removeBundle');
+        Route::post('service-combo/remove-item', [EncounterController::class, 'removeBundleItemGeneric'])->name('serviceCombo.removeItem');
+
         // Creating and Listing Permissions
         Route::resource('encounters', EncounterController::class);
         // ── Encounter Intelligence Workbench ──────────────────────────────
@@ -370,10 +382,6 @@ Route::group(['middleware' => ['auth']], function () {
         Route::post('encounters/{encounter}/add-procedure', [EncounterController::class, 'addSingleProcedureRequest'])->name('encounters.addProcedure');
 
         // Re-prescribe from history (Plan §5.1)
-        Route::post('encounters/{encounter}/apply-combo', [EncounterController::class, 'applyCombo'])->name('encounters.applyCombo');
-        Route::post('encounters/{encounter}/remove-bundle', [EncounterController::class, 'removeBundle'])->name('encounters.removeBundle');
-        // Generic remove-bundle (no encounter context needed — used by all history views)
-        Route::post('service-combo/remove-bundle', [EncounterController::class, 'removeBundleGeneric'])->name('serviceCombo.removeBundle');
         Route::post('encounters/{encounter}/re-prescribe', [EncounterController::class, 'rePrescribe'])->name('encounters.rePrescribe');
 
         // Recent encounters + items for re-prescribe dropdown (Plan §5.3)
@@ -610,6 +618,9 @@ Route::group(['middleware' => ['auth']], function () {
         Route::post('/pharmacy-workbench/create-request', [\App\Http\Controllers\PharmacyWorkbenchController::class, 'createPrescriptionRequest'])->name('pharmacy.create-request');
         Route::get('/pharmacy-workbench/my-transactions', [\App\Http\Controllers\PharmacyWorkbenchController::class, 'getMyTransactions'])->name('pharmacy.my-transactions');
         Route::post('/pharmacy-workbench/print-prescription-slip', [\App\Http\Controllers\PharmacyWorkbenchController::class, 'printPrescriptionSlip'])->name('pharmacy.print-prescription-slip');
+        Route::post('/pharmacy-workbench/apply-combo', [\App\Http\Controllers\PharmacyWorkbenchController::class, 'pharmacyApplyCombo'])->name('pharmacy.applyCombo');
+        Route::post('/pharmacy-workbench/remove-bundle', [\App\Http\Controllers\PharmacyWorkbenchController::class, 'removeBundle'])->name('pharmacy.removeBundle');
+        Route::post('/pharmacy-workbench/remove-bundle-item', [\App\Http\Controllers\PharmacyWorkbenchController::class, 'removeBundleItem'])->name('pharmacy.removeBundleItem');
 
         // Dispense Medication with Batch Aliases
         Route::post('/pharmacy/dispense-with-batch', [\App\Http\Controllers\PharmacyWorkbenchController::class, 'dispenseMedicationWithBatch']);
@@ -690,6 +701,7 @@ Route::group(['middleware' => ['auth']], function () {
         Route::post('/lab-workbench/record-billing', [\App\Http\Controllers\LabWorkbenchController::class, 'recordBilling'])->name('lab.recordBilling');
         Route::post('/lab-workbench/apply-combo', [\App\Http\Controllers\LabWorkbenchController::class, 'labApplyCombo'])->name('lab.applyCombo');
         Route::post('/lab-workbench/remove-bundle', [\App\Http\Controllers\LabWorkbenchController::class, 'removeBundle'])->name('lab.removeBundle');
+        Route::post('/lab-workbench/remove-bundle-item', [\App\Http\Controllers\LabWorkbenchController::class, 'removeBundleItem'])->name('lab.removeBundleItem');
         Route::post('/lab-workbench/claim-self-perform', [\App\Http\Controllers\LabWorkbenchController::class, 'claimSelfPerform'])->name('lab.claimSelfPerform');
         Route::post('/lab-workbench/collect-sample', [\App\Http\Controllers\LabWorkbenchController::class, 'collectSample'])->name('lab.collectSample');
         Route::post('/lab-workbench/dismiss-requests', [\App\Http\Controllers\LabWorkbenchController::class, 'dismissRequests'])->name('lab.dismissRequests');
@@ -763,7 +775,9 @@ Route::group(['middleware' => ['auth']], function () {
         Route::get('/imaging-workbench/search-services', [\App\Http\Controllers\ImagingWorkbenchController::class, 'searchServices'])->name('imaging.searchServices');
         Route::post('/imaging-workbench/create-request', [\App\Http\Controllers\ImagingWorkbenchController::class, 'createRequest'])->name('imaging.createRequest');
         Route::post('/imaging-workbench/clinical-requests/apply-combo', [\App\Http\Controllers\ImagingWorkbenchController::class, 'imagingApplyCombo'])->name('imaging.applyCombo');
+        Route::post('/imaging-workbench/apply-combo', [\App\Http\Controllers\ImagingWorkbenchController::class, 'imagingApplyCombo']);
         Route::post('/imaging-workbench/remove-bundle', [\App\Http\Controllers\ImagingWorkbenchController::class, 'removeBundle'])->name('imaging.removeBundle');
+        Route::post('/imaging-workbench/remove-bundle-item', [\App\Http\Controllers\ImagingWorkbenchController::class, 'removeBundleItem'])->name('imaging.removeBundleItem');
 
         // Imaging Result Approval Routes
         Route::get('/imaging-workbench/approval-queue', [\App\Http\Controllers\ImagingWorkbenchController::class, 'getApprovalQueue'])->name('imaging.approvalQueue');

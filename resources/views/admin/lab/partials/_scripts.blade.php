@@ -9,6 +9,7 @@ window.CURRENT_USER_ID = {{ Auth::id() ?? 'null' }};
 window.WORKBENCH_CONFIG = {
     csrf: '{{ csrf_token() }}',
     baseUrl: '{{ url("/") }}',
+    investigationCategoryId: {{ (int) (appsettings('investigation_category_id', 2) ?: 2) }},
     isApprover: {{ ($isApprover ?? false) ? 'true' : 'false' }},
     requiresApproval: {{ ($requiresApproval ?? false) ? 'true' : 'false' }},
     currentUserId: {{ Auth::id() ?? 'null' }},

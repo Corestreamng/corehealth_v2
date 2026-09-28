@@ -832,8 +832,19 @@ if (typeof window.wbRoute !== 'function') {
         /**
          * Apply a service combo bundle to the encounter.
          * Shows a confirmation modal first so the user understands the bundle contents.
+         * Delegates to the shared ClinicalOrdersKit.applyCombo handler.
          */
         function applyComboEncounter(comboId, route) {
+            if (window.ClinicalOrdersKit && typeof window.ClinicalOrdersKit.applyCombo === 'function') {
+                ClinicalOrdersKit.applyCombo(comboId, {
+                    route: route || (window.WORKBENCH_CONFIG?.encounterId ? ('/encounters/' + window.WORKBENCH_CONFIG.encounterId + '/apply-combo') : '/encounters/apply-combo'),
+                    onSuccess: function() {
+                        if (typeof refreshProceduresList === 'function') refreshProceduresList();
+                    }
+                });
+                return;
+            }
+
             var comboData = (window.comboDataMap || {})[comboId] || {};
             var name = comboData.service_name || comboData.product_name || 'Combo';
             var bundleItems = comboData.bundle_items || [];
@@ -846,7 +857,6 @@ if (typeof window.wbRoute !== 'function') {
             $('#consult_invest_res, #consult_imaging_res, #consult_presc_res').html('');
             $('#consult_invest_search, #consult_imaging_search, #consult_presc_search').val('');
 
-
             ComboConfirmModal.show({
                 name        : name,
                 bundleItems : bundleItems,
@@ -857,13 +867,17 @@ if (typeof window.wbRoute !== 'function') {
                 onConfirm   : function() {
                     $.ajax({
                         type: 'POST',
-                        url: route,
-                        headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') },
-                        data: { 
+                        url: route || '/encounters/apply-combo',
+                        headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content'), 'Accept': 'application/json' },
+                        contentType: 'application/json',
+                        dataType: 'json',
+                        data: JSON.stringify({ 
                             service_id: comboId,
+                            encounter_id: window.WORKBENCH_CONFIG?.encounterId || window.encounterId || undefined,
+                            patient_id: window.WORKBENCH_CONFIG?.patientId || window.patientId || undefined,
                             treatment_plan_id: window._activeTreatmentPlan ? window._activeTreatmentPlan.id : null,
                             treatment_plan_name: window._activeTreatmentPlan ? window._activeTreatmentPlan.name : null
-                        },
+                        }),
                         success: function(response) {
                             if (response.success) {
                                 toastr.success('Combo applied — all items added.', '', { timeOut: 5000 });
@@ -889,15 +903,19 @@ if (typeof window.wbRoute !== 'function') {
                 }
             });
         }
+        window.applyComboEncounter = applyComboEncounter;
 
         function searchServices(q) {
             if (q != "") {
+                const investCatId = window.WORKBENCH_CONFIG?.investigationCategoryId || 2;
                 searchRequest = $.ajax({
                     url: wbUrl('live-search-services'),
                     method: "GET",
                     dataType: 'json',
                     data: {
                         term: q,
+                        category_id: investCatId,
+                        context: 'lab',
                         patient_id: window.WORKBENCH_CONFIG?.patientId || ''
                     },
                     success: function(data) {
@@ -961,13 +979,15 @@ if (typeof window.wbRoute !== 'function') {
         }
         function searchImagingServices(q) {
             if (q != "") {
+                const imagingCatId = window.WORKBENCH_CONFIG?.imagingCategoryId || 6;
                 searchRequest = $.ajax({
                     url: wbUrl('live-search-services'),
                     method: "GET",
                     dataType: 'json',
                     data: {
                         term: q,
-                        category_id: (window.WORKBENCH_CONFIG ? window.WORKBENCH_CONFIG.patientId : ''),
+                        category_id: imagingCatId,
+                        context: 'imaging',
                         patient_id: window.WORKBENCH_CONFIG?.patientId || ''
                     },
                     success: function(data) {
@@ -3659,8 +3679,13 @@ if (typeof window.wbRoute !== 'function') {
     function showBundleRemove(btn) {
         var parentId = btn.dataset.parentId;
         var bundleName = btn.dataset.bundleName;
-        var items = JSON.parse(btn.dataset.items || '[]');
-        var removeUrl = btn.dataset.removeUrl;
+        var items = [];
+        try {
+            items = JSON.parse(btn.dataset.items || '[]');
+        } catch (e) {
+            items = [];
+        }
+        var removeUrl = btn.dataset.removeUrl || '/service-combo/remove-bundle';
         BundleRemoveModal.show({
             bundleId: parentId,
             bundleName: bundleName,
@@ -3685,11 +3710,16 @@ if (typeof window.wbRoute !== 'function') {
                             callback(true);
                         }
                     },
-                    error: function() { toastr.error('Error removing combo'); callback(true); }
+                    error: function(xhr) {
+                        var msg = (xhr.responseJSON && xhr.responseJSON.message) ? xhr.responseJSON.message : 'Error removing combo';
+                        toastr.error(msg);
+                        callback(true);
+                    }
                 });
             }
         });
     }
+    window.showBundleRemove = showBundleRemove;
 
     // Quick add allergy from sticky header
     function promptAddAllergy(patientId) {

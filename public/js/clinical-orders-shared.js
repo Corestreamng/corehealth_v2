@@ -3957,3 +3957,680 @@ ClinicalOrdersKit.removeConfiguredRow = function(btn, prefix, recordId, serviceI
     });
 };
 
+/**
+ * Shared combo application handler across ALL workbenches
+ * (new_encounter, nurse, maternity, lab, imaging, pharmacy).
+ *
+ * @param {number|string} comboId - ID of the combo Service
+ * @param {object} [opts] - Options:
+ *   - patientId: Patient ID (falls back to workbench config / DOM)
+ *   - encounterId: Encounter ID (falls back to workbench config / DOM)
+ *   - enrollmentId: Maternity enrollment ID
+ *   - treatmentPlanId: Treatment plan ID (falls back to active plan)
+ *   - treatmentPlanName: Treatment plan name (falls back to active plan)
+ *   - url / route: Apply URL override
+ *   - note: Optional clinical note
+ *   - onSuccess: Custom success callback
+ *   - onError: Custom error callback
+ */
+ClinicalOrdersKit.applyCombo = function(comboId, opts) {
+    opts = opts || {};
+    var comboData = (window.comboDataMap || {})[comboId] || opts.comboData || {};
+    var name = opts.name || comboData.service_name || comboData.product_name || 'Combo';
+    var bundleItems = opts.bundleItems || comboData.bundle_items || [];
+    var price = parseFloat(opts.price != null ? opts.price : (comboData.base_price || comboData.price || 0));
+    var payable = parseFloat(opts.payable != null ? opts.payable : (comboData.payable_amount != null ? comboData.payable_amount : price));
+    var claims = parseFloat(opts.claims != null ? opts.claims : (comboData.claims_amount || 0));
+    var mode = opts.mode || comboData.coverage_mode || null;
+
+    // Dismiss common search dropdowns & inputs across all workbenches
+    $(
+        '#consult_invest_res, #consult_imaging_res, #consult_presc_res, ' +
+        '#cr_lab_results, #cr_presc_results, #mco_lab_results, #mco_imaging_results, ' +
+        '#service-search-results, #product-search-results, #pharmacy_product_search_results'
+    ).html('').hide();
+
+    $(
+        '#consult_invest_search, #consult_imaging_search, #consult_presc_search, ' +
+        '#cr_lab_search, #cr_presc_search, #mco_lab_search, #mco_imaging_search, ' +
+        '#service-search-input, #product-search-input, #pharmacy_product_search_input'
+    ).val('');
+
+    // Resolve context IDs
+    var patientId = opts.patientId ||
+        (window.WORKBENCH_CONFIG && window.WORKBENCH_CONFIG.patientId) ||
+        window.patientId ||
+        window.currentPatient ||
+        $('#patient_id').val() ||
+        '';
+
+    var encounterId = opts.encounterId ||
+        (window.WORKBENCH_CONFIG && window.WORKBENCH_CONFIG.encounterId) ||
+        window.encounterId ||
+        $('#encounter_id').val() ||
+        null;
+
+    var enrollmentId = opts.enrollmentId ||
+        window.enrollmentId ||
+        (window.WORKBENCH_CONFIG && window.WORKBENCH_CONFIG.enrollmentId) ||
+        null;
+
+    var activePlan = window._activeTreatmentPlan || null;
+    var treatmentPlanId = opts.treatmentPlanId || (activePlan ? activePlan.id : null) || $('#treatment_plan_id').val() || null;
+    var treatmentPlanName = opts.treatmentPlanName || (activePlan ? activePlan.name : null) || $('#treatment_plan_name').val() || null;
+
+    // Auto-resolve destination URL based on workbench context if not provided
+    var targetUrl = opts.url || opts.route;
+    if (!targetUrl || targetUrl === '/encounters/applyCombo') {
+        if (window.INVEST_RES_SOURCE === 'imaging_workbench' || window.currentWorkbenchRole === 'imaging') {
+            targetUrl = (typeof wbRoute === 'function' ? wbRoute('imaging.applyCombo', '/imaging-workbench/clinical-requests/apply-combo') : '/imaging-workbench/clinical-requests/apply-combo');
+        } else if (window.INVEST_RES_SOURCE === 'lab_workbench' || (typeof LabWorkbench !== 'undefined')) {
+            targetUrl = (typeof wbRoute === 'function' ? wbRoute('lab.applyCombo', '/lab-workbench/apply-combo') : '/lab-workbench/apply-combo');
+        } else if (enrollmentId || (window.location && window.location.pathname.indexOf('/maternity-workbench') !== -1)) {
+            targetUrl = '/maternity-workbench/enrollment/' + (enrollmentId || '0') + '/apply-combo';
+        } else if (window.currentWorkbenchRole === 'nurse' || (window.location && window.location.pathname.indexOf('/nursing-workbench') !== -1)) {
+            targetUrl = (typeof wbRoute === 'function' ? wbRoute('nursing-workbench.clinical-requests.applyCombo', '/nursing-workbench/clinical-requests/apply-combo') : '/nursing-workbench/clinical-requests/apply-combo');
+        } else if (window.currentWorkbenchRole === 'pharmacy' || (window.location && window.location.pathname.indexOf('/pharmacy-workbench') !== -1)) {
+            targetUrl = (typeof wbRoute === 'function' ? wbRoute('pharmacy.applyCombo', '/pharmacy-workbench/apply-combo') : '/pharmacy-workbench/apply-combo');
+        } else {
+            // Doctor Encounter context
+            if (encounterId) {
+                targetUrl = '/encounters/' + encounterId + '/apply-combo';
+            } else if (typeof wbRoute === 'function') {
+                targetUrl = wbRoute('encounters.applyCombo', '/encounters/apply-combo');
+            } else {
+                targetUrl = '/encounters/apply-combo';
+            }
+        }
+    }
+
+    var postData = {
+        service_id: comboId,
+        patient_id: patientId || undefined,
+        encounter_id: encounterId || undefined,
+        treatment_plan_id: treatmentPlanId,
+        treatment_plan_name: treatmentPlanName,
+        note: opts.note || ''
+    };
+
+    function doApply() {
+        var csrfToken = $('meta[name="csrf-token"]').attr('content') ||
+            (window.WORKBENCH_CONFIG && window.WORKBENCH_CONFIG.csrf) ||
+            '';
+
+        $.ajax({
+            type: 'POST',
+            url: targetUrl,
+            headers: {
+                'X-CSRF-TOKEN': csrfToken,
+                'Accept': 'application/json'
+            },
+            data: JSON.stringify(postData),
+            contentType: 'application/json',
+            dataType: 'json',
+            success: function(response) {
+                if (response.success) {
+                    toastr.success(response.message || 'Combo applied — all items added.', 'Combo Applied', { timeOut: 5000 });
+
+                    // Automatic refresh triggers across workbenches
+                    if ($.fn.DataTable) {
+                        if ($.fn.DataTable.isDataTable('#investigation_history_list')) {
+                            $('#investigation_history_list').DataTable().ajax.reload(null, false);
+                        }
+                        if ($.fn.DataTable.isDataTable('#imaging_history_list')) {
+                            $('#imaging_history_list').DataTable().ajax.reload(null, false);
+                        }
+                        if ($.fn.DataTable.isDataTable('#presc_history_list')) {
+                            $('#presc_history_list').DataTable().ajax.reload(null, false);
+                        }
+                        if ($.fn.DataTable.isDataTable('#presc_history_table')) {
+                            $('#presc_history_table').DataTable().ajax.reload(null, false);
+                        }
+                        if ($.fn.DataTable.isDataTable('#procedure_history_list')) {
+                            $('#procedure_history_list').DataTable().ajax.reload(null, false);
+                        }
+                    }
+
+                    if (typeof refreshProceduresList === 'function') { refreshProceduresList(); }
+                    if (typeof initPrescHistory === 'function') { initPrescHistory(); }
+                    if (typeof initLabHistory === 'function') { initLabHistory(); }
+                    if (typeof loadLabServices === 'function') { loadLabServices(); }
+                    if (typeof loadImagingServices === 'function') { loadImagingServices(); }
+                    if (typeof initMaternityLabsHistory === 'function') { initMaternityLabsHistory(); }
+                    if (typeof initMaternityImagingHistory === 'function') { initMaternityImagingHistory(); }
+                    if (typeof loadClinicalOrdersTab === 'function') { loadClinicalOrdersTab(); }
+                    if (typeof LabWorkbench !== 'undefined' && typeof LabWorkbench.refreshPendingQueue === 'function') {
+                        LabWorkbench.refreshPendingQueue();
+                    }
+                    if (typeof PharmacyWorkbench !== 'undefined' && typeof PharmacyWorkbench.loadQueue === 'function') {
+                        PharmacyWorkbench.loadQueue();
+                    }
+
+                    if (typeof opts.onSuccess === 'function') {
+                        opts.onSuccess(response);
+                    }
+                } else {
+                    var err = response.message || 'Failed to apply combo';
+                    toastr.error(err, 'Error');
+                    if (typeof opts.onError === 'function') { opts.onError(response); }
+                }
+            },
+            error: function(xhr) {
+                var msg = (xhr.responseJSON && xhr.responseJSON.message) ? xhr.responseJSON.message : ('Network error: ' + xhr.statusText);
+                toastr.error(msg, 'Error', { timeOut: 5000 });
+                if (typeof opts.onError === 'function') { opts.onError(xhr); }
+            }
+        });
+    }
+
+    if (typeof ComboConfirmModal !== 'undefined' && ComboConfirmModal.show) {
+        ComboConfirmModal.show({
+            name        : name,
+            bundleItems : bundleItems,
+            price       : price,
+            payable     : payable,
+            claims      : claims,
+            mode        : mode,
+            onConfirm   : doApply
+        });
+    } else {
+        // Fallback if modal HTML is not present on the page
+        if (confirm('Apply combo bundle "' + name + '"?')) {
+            doApply();
+        }
+    }
+};
+
+/**
+ * Global Combo View & Remove Modals — Shared across all workbenches
+ */
+window.BundleViewModal = window.BundleViewModal || (function() {
+    function ensureModal() {
+        if (!document.getElementById('bundleViewModal')) {
+            var modalHtml = '<div class="modal fade" id="bundleViewModal" tabindex="-1" role="dialog" aria-labelledby="bundleViewModalLabel" aria-hidden="true" style="z-index: 10650;">' +
+                '<div class="modal-dialog modal-lg" role="document">' +
+                    '<div class="modal-content">' +
+                        '<div class="modal-header bg-light">' +
+                            '<h5 class="modal-title" id="bundleViewModalLabel">' +
+                                '<i class="fa fa-cube text-primary me-2"></i> Combo Details' +
+                            '</h5>' +
+                            '<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>' +
+                        '</div>' +
+                        '<div class="modal-body">' +
+                            '<div id="bundleViewContent">' +
+                                '<div class="spinner-border spinner-border-sm" role="status">' +
+                                    '<span class="visually-hidden">Loading...</span>' +
+                                '</div>' +
+                            '</div>' +
+                        '</div>' +
+                        '<div class="modal-footer bg-light">' +
+                            '<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>' +
+                        '</div>' +
+                    '</div>' +
+                '</div>' +
+            '</div>';
+            $('body').append(modalHtml);
+        }
+    }
+
+    function show(bundleData) {
+        ensureModal();
+        bundleData = bundleData || {};
+        var rawItems = bundleData.items || bundleData.bundle_items || [];
+        var items = rawItems.map(function(item) {
+            return {
+                name: item.name || item.service_name || item.product_name || 'Item',
+                code: item.code || item.service_code || item.product_code || null,
+                qty: item.qty || 1,
+                price: item.price || item.payable_amount || item.amount || 0
+            };
+        });
+
+        var payable = parseFloat(bundleData.payable_amount || 0);
+        var claims = parseFloat(bundleData.claims_amount || 0);
+
+        var rowsHtml = '';
+        if (items.length > 0) {
+            rowsHtml = items.map(function(item) {
+                var codeText = item.code ? '<br><small class="text-muted">Code: ' + item.code + '</small>' : '';
+                return '<tr>' +
+                    '<td><strong>' + (item.name || 'Item') + '</strong>' + codeText + '</td>' +
+                    '<td class="text-center">' + (item.qty || 1) + '</td>' +
+                    '<td class="text-end">₦' + parseFloat(item.price || 0).toLocaleString('en-NG', {minimumFractionDigits: 2}) + '</td>' +
+                '</tr>';
+            }).join('');
+        }
+
+        var coverageHtml = bundleData.coverage_mode ? '<div class="alert alert-info alert-sm py-2 mb-3"><small><strong>Coverage:</strong> ' + String(bundleData.coverage_mode).toUpperCase() + '</small></div>' : '';
+
+        var html = '<div class="card-modern border-0">' +
+            '<div class="card-body">' +
+                '<h6 class="card-title text-primary fw-bold mb-1">' + (bundleData.name || bundleData.service_name || 'Combo') + '</h6>' +
+                '<small class="text-muted d-block mb-3">Code: <code>' + (bundleData.service_code || 'N/A') + '</code></small>' +
+                '<div class="row mb-3">' +
+                    '<div class="col-sm-6">' +
+                        '<div class="bg-light p-2 rounded">' +
+                            '<small class="text-muted">Patient Payable</small>' +
+                            '<div class="text-success fw-bold">₦' + payable.toLocaleString('en-NG', {minimumFractionDigits: 2}) + '</div>' +
+                        '</div>' +
+                    '</div>' +
+                    '<div class="col-sm-6">' +
+                        '<div class="bg-light p-2 rounded">' +
+                            '<small class="text-muted">HMO Claims</small>' +
+                            '<div class="text-info fw-bold">₦' + claims.toLocaleString('en-NG', {minimumFractionDigits: 2}) + '</div>' +
+                        '</div>' +
+                    '</div>' +
+                '</div>' +
+                coverageHtml +
+                '<hr>' +
+                '<h6 class="text-secondary mb-2">Combo Items (' + items.length + ')</h6>' +
+                (items.length > 0 ?
+                    '<div class="table-responsive">' +
+                        '<table class="table table-sm table-hover mb-0">' +
+                            '<thead class="table-light">' +
+                                '<tr>' +
+                                    '<th>Item</th>' +
+                                    '<th class="text-center" style="width: 60px">Qty</th>' +
+                                    '<th class="text-end" style="width: 100px">Price</th>' +
+                                '</tr>' +
+                            '</thead>' +
+                            '<tbody>' + rowsHtml + '</tbody>' +
+                        '</table>' +
+                    '</div>' : '<p class="text-muted mb-0">No items in combo</p>') +
+            '</div>' +
+        '</div>';
+
+        var contentEl = document.getElementById('bundleViewContent');
+        if (contentEl) {
+            contentEl.innerHTML = html;
+        }
+
+        var $modal = $('#bundleViewModal');
+        if (typeof $ !== 'undefined' && $.fn && $.fn.modal) {
+            $modal.modal({ keyboard: true, backdrop: 'static' });
+            $modal.modal('show');
+        } else if (typeof bootstrap !== 'undefined' && typeof bootstrap.Modal === 'function') {
+            var inst = (typeof bootstrap.Modal.getInstance === 'function' ? bootstrap.Modal.getInstance(document.getElementById('bundleViewModal')) : null)
+                || (typeof bootstrap.Modal.getOrCreateInstance === 'function' ? bootstrap.Modal.getOrCreateInstance(document.getElementById('bundleViewModal'), { keyboard: true, backdrop: 'static' }) : null)
+                || new bootstrap.Modal(document.getElementById('bundleViewModal'), { keyboard: true, backdrop: 'static' });
+            if (inst && typeof inst.show === 'function') inst.show();
+        }
+    }
+
+    return { show: show };
+})();
+
+window.BundleRemoveModal = window.BundleRemoveModal || (function() {
+    var currentOptions = {};
+
+    function ensureModal() {
+        if (!document.getElementById('bundleRemoveModal')) {
+            var modalHtml = '<div class="modal fade" id="bundleRemoveModal" tabindex="-1" role="dialog" aria-labelledby="bundleRemoveModalLabel" aria-hidden="true" style="z-index: 10650;">' +
+                '<div class="modal-dialog modal-lg" role="document">' +
+                    '<div class="modal-content">' +
+                        '<div class="modal-header bg-danger text-white">' +
+                            '<h5 class="modal-title" id="bundleRemoveModalLabel">' +
+                                '<i class="fa fa-trash me-2"></i> Remove Combo' +
+                            '</h5>' +
+                            '<button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>' +
+                        '</div>' +
+                        '<div class="modal-body">' +
+                            '<div id="bundleRemoveContent">' +
+                                '<div class="spinner-border spinner-border-sm" role="status">' +
+                                    '<span class="visually-hidden">Loading...</span>' +
+                                '</div>' +
+                            '</div>' +
+                        '</div>' +
+                        '<div class="modal-footer bg-light">' +
+                            '<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>' +
+                            '<button type="button" class="btn btn-danger" id="bundleRemoveConfirmBtn">' +
+                                '<span id="bundleRemoveSpinner" style="display: none;">' +
+                                    '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>' +
+                                '</span>' +
+                                '<span id="bundleRemoveIcon"><i class="fa fa-trash me-1"></i></span>' +
+                                '<span id="bundleRemoveText">Remove Combo</span>' +
+                            '</button>' +
+                        '</div>' +
+                    '</div>' +
+                '</div>' +
+            '</div>';
+            $('body').append(modalHtml);
+        }
+    }
+
+    function show(options) {
+        ensureModal();
+        currentOptions = options || {};
+        var items = currentOptions.items || [];
+        var itemsListHtml = '';
+        if (items.length > 0) {
+            itemsListHtml = '<div class="list-group list-group-flush">' +
+                items.map(function(item, idx) {
+                    var codeText = item.code ? '<br><small class="text-muted">' + item.code + '</small>' : '';
+                    var childId = item.id || item.child_id;
+                    var removeBtnHtml = '';
+                    if (childId) {
+                        var safeItemName = (item.name || 'Item').replace(/'/g, "\\'");
+                        removeBtnHtml = '<button type="button" class="btn btn-outline-danger btn-sm py-0 px-2 ms-auto" ' +
+                            'onclick="window.BundleRemoveModal.removeItem(' + childId + ', \'' + safeItemName + '\')" ' +
+                            'title="Remove only this item">' +
+                            '<i class="fa fa-times me-1"></i> Remove Item' +
+                            '</button>';
+                    }
+                    return '<div class="list-group-item ps-0 border-0 py-1" id="bundle-item-row-' + (childId || idx) + '">' +
+                        '<div class="d-flex align-items-center justify-content-between">' +
+                            '<div class="d-flex align-items-start">' +
+                                '<span class="badge bg-danger me-2 mt-1">' + (idx + 1) + '</span>' +
+                                '<div><strong>' + (item.name || 'Item') + '</strong>' + codeText + '</div>' +
+                            '</div>' +
+                            removeBtnHtml +
+                        '</div>' +
+                    '</div>';
+                }).join('') +
+            '</div>';
+        } else {
+            itemsListHtml = '<p class="text-muted mb-0">No items in combo</p>';
+        }
+
+        var html = '<div class="alert alert-warning alert-sm mb-3">' +
+                '<i class="fa fa-exclamation-triangle me-1"></i>' +
+                '<strong>Remove Combo?</strong> You can remove individual items below, or remove the entire combo.' +
+            '</div>' +
+            '<div class="card-modern border-0 bg-light mb-3">' +
+                '<div class="card-body">' +
+                    '<h6 class="text-danger fw-bold mb-2">' + (currentOptions.bundleName || 'Combo') + '</h6>' +
+                    '<p class="mb-2 text-muted"><small>Combo Items:</small></p>' +
+                    itemsListHtml +
+                    '<hr class="my-2">' +
+                    '<small class="text-muted d-block">' +
+                        '<i class="fa fa-info-circle me-1"></i> Removing an item will cancel it while keeping the rest of the combo active.' +
+                    '</small>' +
+                '</div>' +
+            '</div>';
+
+        var contentEl = document.getElementById('bundleRemoveContent');
+        if (contentEl) {
+            contentEl.innerHTML = html;
+        }
+
+        var confirmBtn = document.getElementById('bundleRemoveConfirmBtn');
+        if (confirmBtn) {
+            confirmBtn.onclick = confirmRemoval;
+        }
+
+        var $modal = $('#bundleRemoveModal');
+        if (typeof $ !== 'undefined' && $.fn && $.fn.modal) {
+            $modal.modal({ keyboard: false, backdrop: 'static' });
+            $modal.modal('show');
+        } else if (typeof bootstrap !== 'undefined' && typeof bootstrap.Modal === 'function') {
+            var inst = (typeof bootstrap.Modal.getInstance === 'function' ? bootstrap.Modal.getInstance(document.getElementById('bundleRemoveModal')) : null)
+                || (typeof bootstrap.Modal.getOrCreateInstance === 'function' ? bootstrap.Modal.getOrCreateInstance(document.getElementById('bundleRemoveModal'), { keyboard: false, backdrop: 'static' }) : null)
+                || new bootstrap.Modal(document.getElementById('bundleRemoveModal'), { keyboard: false, backdrop: 'static' });
+            if (inst && typeof inst.show === 'function') inst.show();
+        }
+    }
+
+    function removeItem(childId, itemName) {
+        if (!confirm('Are you sure you want to remove "' + itemName + '" from this combo?')) {
+            return;
+        }
+
+        var removeItemUrl = currentOptions.removeItemUrl || '/service-combo/remove-item';
+        var csrfToken = $('meta[name="csrf-token"]').attr('content') ||
+            (window.WORKBENCH_CONFIG && window.WORKBENCH_CONFIG.csrf) ||
+            '';
+
+        $.ajax({
+            url: removeItemUrl,
+            method: 'POST',
+            headers: {
+                'X-CSRF-TOKEN': csrfToken,
+                'Accept': 'application/json'
+            },
+            contentType: 'application/json',
+            dataType: 'json',
+            data: JSON.stringify({ child_request_id: childId }),
+            success: function(r) {
+                if (r.success) {
+                    if (typeof toastr !== 'undefined') {
+                        toastr.success(r.message || 'Item removed from combo');
+                    }
+                    if (currentOptions.items) {
+                        currentOptions.items = currentOptions.items.filter(function(it) {
+                            return (it.id != childId && it.child_id != childId);
+                        });
+                        if (currentOptions.items.length === 0) {
+                            var $modal = $('#bundleRemoveModal');
+                            if (typeof $ !== 'undefined' && $.fn && $.fn.modal) {
+                                $modal.modal('hide');
+                            }
+                        } else {
+                            show(currentOptions);
+                        }
+                    }
+                    [
+                        '#investigation_history_list',
+                        '#imaging_history_list',
+                        '#presc_history_list',
+                        '#presc_history_table',
+                        '#cr_presc_history_list',
+                        '#cr_lab_history_list',
+                        '#cr_imaging_history_list',
+                        '#mco_presc_history_list',
+                        '#mco_lab_history_list',
+                        '#mco_imaging_history_list',
+                        '#procedure_history_list',
+                        '#cr_proc_history_list'
+                    ].forEach(function(selector) {
+                        if ($.fn.DataTable && $.fn.DataTable.isDataTable(selector)) {
+                            $(selector).DataTable().ajax.reload(null, false);
+                        }
+                    });
+                    if (typeof initPrescHistory === 'function') { initPrescHistory(); }
+                    if (typeof initLabHistory === 'function') { initLabHistory(); }
+                    if (typeof initImagingHistory === 'function') { initImagingHistory(); }
+                    if (typeof loadLabServices === 'function') { loadLabServices(); }
+                    if (typeof loadImagingServices === 'function') { loadImagingServices(); }
+                } else {
+                    if (typeof toastr !== 'undefined') {
+                        toastr.error(r.message || 'Failed to remove item');
+                    }
+                }
+            },
+            error: function(xhr) {
+                var msg = (xhr.responseJSON && xhr.responseJSON.message) ? xhr.responseJSON.message : 'Error removing item';
+                if (typeof toastr !== 'undefined') {
+                    toastr.error(msg);
+                }
+            }
+        });
+    }
+
+    function confirmRemoval() {
+        if (!currentOptions.onConfirm) return;
+
+        var btn = document.getElementById('bundleRemoveConfirmBtn');
+        var spinner = document.getElementById('bundleRemoveSpinner');
+        var icon = document.getElementById('bundleRemoveIcon');
+        var text = document.getElementById('bundleRemoveText');
+
+        if (btn) btn.disabled = true;
+        if (spinner) spinner.style.display = 'inline';
+        if (icon) icon.style.display = 'none';
+        if (text) text.innerText = 'Removing...';
+
+        currentOptions.onConfirm(function(error) {
+            if (btn) btn.disabled = false;
+            if (spinner) spinner.style.display = 'none';
+            if (icon) icon.style.display = 'inline';
+            if (text) text.innerText = 'Remove Combo';
+
+            if (!error) {
+                var $modal = $('#bundleRemoveModal');
+                if (typeof $ !== 'undefined' && $.fn && $.fn.modal) {
+                    $modal.modal('hide');
+                } else if (typeof bootstrap !== 'undefined' && typeof bootstrap.Modal === 'function') {
+                    var inst = (typeof bootstrap.Modal.getInstance === 'function' ? bootstrap.Modal.getInstance(document.getElementById('bundleRemoveModal')) : null)
+                        || (typeof bootstrap.Modal.getOrCreateInstance === 'function' ? bootstrap.Modal.getOrCreateInstance(document.getElementById('bundleRemoveModal')) : null);
+                    if (inst && typeof inst.hide === 'function') inst.hide();
+                }
+            }
+        });
+    }
+
+    return { show: show, removeItem: removeItem };
+})();
+
+window.showBundleItemRemove = window.showBundleItemRemove || function(btn) {
+    var childId = btn.dataset.childId;
+    var itemName = btn.dataset.itemName || 'Item';
+    var removeItemUrl = btn.dataset.removeItemUrl || '/service-combo/remove-item';
+    var csrfToken = $('meta[name="csrf-token"]').attr('content') ||
+        (window.WORKBENCH_CONFIG && window.WORKBENCH_CONFIG.csrf) ||
+        '';
+
+    if (!childId) return;
+
+    if (!confirm('Are you sure you want to remove "' + itemName + '" from this combo?')) {
+        return;
+    }
+
+    var $btn = $(btn);
+    $btn.prop('disabled', true);
+
+    $.ajax({
+        url: removeItemUrl,
+        method: 'POST',
+        headers: {
+            'X-CSRF-TOKEN': csrfToken,
+            'Accept': 'application/json'
+        },
+        contentType: 'application/json',
+        dataType: 'json',
+        data: JSON.stringify({ child_request_id: childId }),
+        success: function(r) {
+            $btn.prop('disabled', false);
+            if (r.success) {
+                if (typeof toastr !== 'undefined') {
+                    toastr.success(r.message || 'Item removed from combo');
+                }
+                [
+                    '#investigation_history_list',
+                    '#imaging_history_list',
+                    '#presc_history_list',
+                    '#presc_history_table',
+                    '#cr_presc_history_list',
+                    '#cr_lab_history_list',
+                    '#cr_imaging_history_list',
+                    '#mco_presc_history_list',
+                    '#mco_lab_history_list',
+                    '#mco_imaging_history_list',
+                    '#procedure_history_list',
+                    '#cr_proc_history_list'
+                ].forEach(function(selector) {
+                    if ($.fn.DataTable && $.fn.DataTable.isDataTable(selector)) {
+                        $(selector).DataTable().ajax.reload(null, false);
+                    }
+                });
+                if (typeof initPrescHistory === 'function') { initPrescHistory(); }
+                if (typeof initLabHistory === 'function') { initLabHistory(); }
+                if (typeof initImagingHistory === 'function') { initImagingHistory(); }
+                if (typeof loadLabServices === 'function') { loadLabServices(); }
+                if (typeof loadImagingServices === 'function') { loadImagingServices(); }
+            } else {
+                if (typeof toastr !== 'undefined') {
+                    toastr.error(r.message || 'Failed to remove item');
+                }
+            }
+        },
+        error: function(xhr) {
+            $btn.prop('disabled', false);
+            var msg = (xhr.responseJSON && xhr.responseJSON.message) ? xhr.responseJSON.message : 'Error removing item';
+            if (typeof toastr !== 'undefined') {
+                toastr.error(msg);
+            }
+        }
+    });
+};
+
+window.showBundleRemove = window.showBundleRemove || function(btn) {
+    var parentId = btn.dataset.parentId;
+    var bundleName = btn.dataset.bundleName;
+    var items = [];
+    try {
+        items = JSON.parse(btn.dataset.items || '[]');
+    } catch (e) {
+        items = [];
+    }
+    var removeUrl = btn.dataset.removeUrl || '/service-combo/remove-bundle';
+    var removeItemUrl = btn.dataset.removeItemUrl || '/service-combo/remove-item';
+    var csrfToken = $('meta[name="csrf-token"]').attr('content') ||
+        (window.WORKBENCH_CONFIG && window.WORKBENCH_CONFIG.csrf) ||
+        '';
+
+    BundleRemoveModal.show({
+        bundleId: parentId,
+        bundleName: bundleName,
+        items: items,
+        removeItemUrl: removeItemUrl,
+        onConfirm: function(callback) {
+            $.ajax({
+                url: removeUrl,
+                method: 'POST',
+                headers: {
+                    'X-CSRF-TOKEN': csrfToken,
+                    'Accept': 'application/json'
+                },
+                contentType: 'application/json',
+                dataType: 'json',
+                data: JSON.stringify({ parent_request_id: parentId }),
+                success: function(r) {
+                    if (r.success) {
+                        if (typeof toastr !== 'undefined') {
+                            toastr.success(r.message || 'Combo removed');
+                        }
+                        callback(false);
+                        [
+                            '#investigation_history_list',
+                            '#imaging_history_list',
+                            '#presc_history_list',
+                            '#presc_history_table',
+                            '#cr_presc_history_list',
+                            '#cr_lab_history_list',
+                            '#cr_imaging_history_list',
+                            '#mco_presc_history_list',
+                            '#mco_lab_history_list',
+                            '#mco_imaging_history_list',
+                            '#procedure_history_list',
+                            '#cr_proc_history_list'
+                        ].forEach(function(selector) {
+                            if ($.fn.DataTable && $.fn.DataTable.isDataTable(selector)) {
+                                $(selector).DataTable().ajax.reload(null, false);
+                            }
+                        });
+                        if (typeof initPrescHistory === 'function') { initPrescHistory(); }
+                        if (typeof initLabHistory === 'function') { initLabHistory(); }
+                        if (typeof initImagingHistory === 'function') { initImagingHistory(); }
+                        if (typeof loadLabServices === 'function') { loadLabServices(); }
+                        if (typeof loadImagingServices === 'function') { loadImagingServices(); }
+                    } else {
+                        if (typeof toastr !== 'undefined') {
+                            toastr.error(r.message || 'Failed to remove combo');
+                        }
+                        callback(true);
+                    }
+                },
+                error: function(xhr) {
+                    var msg = (xhr.responseJSON && xhr.responseJSON.message) ? xhr.responseJSON.message : 'Error removing combo';
+                    if (typeof toastr !== 'undefined') {
+                        toastr.error(msg);
+                    }
+                    callback(true);
+                }
+            });
+        }
+    });
+};
+
+
+

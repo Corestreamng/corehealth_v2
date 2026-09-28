@@ -23,7 +23,7 @@
 
 @push('scripts')
 <script>
-window.BundleViewModal = (function() {
+window.BundleViewModal = window.BundleViewModal || (function() {
     function show(bundleData) {
         // comboData = { name, service_name, service_code, bundle_items, base_price, payable_amount, claims_amount, coverage_mode }
         const rawItems = bundleData.items || bundleData.bundle_items || [];
@@ -95,9 +95,20 @@ window.BundleViewModal = (function() {
             </div>
         `;
         
-        document.getElementById('bundleViewContent').innerHTML = html;
-        $('#bundleViewModal').modal({ keyboard: true, backdrop: 'static' });
-        $('#bundleViewModal').modal('show');
+        var contentEl = document.getElementById('bundleViewContent');
+        if (contentEl) {
+            contentEl.innerHTML = html;
+        }
+        var $modal = $('#bundleViewModal');
+        if (typeof $ !== 'undefined' && $.fn && $.fn.modal) {
+            $modal.modal({ keyboard: true, backdrop: 'static' });
+            $modal.modal('show');
+        } else if (typeof bootstrap !== 'undefined' && typeof bootstrap.Modal === 'function') {
+            var inst = (typeof bootstrap.Modal.getInstance === 'function' ? bootstrap.Modal.getInstance(document.getElementById('bundleViewModal')) : null)
+                || (typeof bootstrap.Modal.getOrCreateInstance === 'function' ? bootstrap.Modal.getOrCreateInstance(document.getElementById('bundleViewModal'), { keyboard: true, backdrop: 'static' }) : null)
+                || new bootstrap.Modal(document.getElementById('bundleViewModal'), { keyboard: true, backdrop: 'static' });
+            if (inst && typeof inst.show === 'function') inst.show();
+        }
     }
     
     return { show };

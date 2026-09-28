@@ -741,19 +741,27 @@ class EncounterController extends Controller
                         $parentId = $parentReq->id;
                         $isPaid = $parentReq->payment_id !== null;
                         $isCreator = $parentReq->staff_user_id == Auth::id();
-                        $childrenArr = $parentReq->children->map(function ($c) {
-                            return ['name' => optional($c->service)->service_name ?? optional($c->product)->product_name ?? 'Item', 'qty' => $c->qty ?? 1, 'price' => $c->payable_amount ?? $c->amount ?? 0];
+                        $childrenArr = $parentReq->children()->whereNull('removed_at')->get()->map(function ($c) {
+                            return [
+                                'id' => $c->id,
+                                'child_id' => $c->id,
+                                'name' => optional($c->service)->service_name ?? optional($c->product)->product_name ?? 'Item',
+                                'qty' => $c->qty ?? 1,
+                                'price' => $c->payable_amount ?? $c->amount ?? 0,
+                            ];
                         })->values()->toArray();
                         $bundleDataJson = htmlspecialchars(json_encode(['name' => $bundleName, 'payable_amount' => $bundlePayable, 'claims_amount' => $bundleClaims, 'items' => $childrenArr]), ENT_QUOTES);
                         $removeItemsJson = htmlspecialchars(json_encode($childrenArr), ENT_QUOTES);
                         $removeUrl = url('/service-combo/remove-bundle');
+                        $removeItemUrl = url('/service-combo/remove-item');
                         $bundleNameEsc = htmlspecialchars($bundleName, ENT_QUOTES);
                         $str .= "<div class='bundle-info-block mb-2 p-2 bg-light rounded'>";
                         $str .= "<small class='text-muted d-block mb-1'><i class='mdi mdi-link-variant'></i> <strong>Combo: {$bundleNameEsc}</strong> &mdash; &#8358;" . number_format($bundlePayable, 2) . " patient / &#8358;" . number_format($bundleClaims, 2) . " claims</small>";
                         $str .= "<div class='d-flex gap-1 flex-wrap'>";
                         $str .= "<button type='button' class='btn btn-outline-primary btn-sm' onclick='window.BundleViewModal && BundleViewModal.show({$bundleDataJson})' title='View combo details'><i class='fa fa-info-circle'></i> View Combo</button>";
                         if (!$isPaid && $isCreator) {
-                            $str .= "<button type='button' class='btn btn-outline-danger btn-sm' data-parent-id='{$parentId}' data-bundle-name='{$bundleNameEsc}' data-items='{$removeItemsJson}' data-remove-url='{$removeUrl}' onclick='showBundleRemove(this)' title='Remove this combo'><i class='fa fa-trash'></i> Remove Combo</button>";
+                            $str .= "<button type='button' class='btn btn-outline-danger btn-sm' data-parent-id='{$parentId}' data-bundle-name='{$bundleNameEsc}' data-items='{$removeItemsJson}' data-remove-url='{$removeUrl}' data-remove-item-url='{$removeItemUrl}' onclick='showBundleRemove(this)' title='Remove this combo'><i class='fa fa-trash'></i> Remove Combo</button>";
+                            $str .= "<button type='button' class='btn btn-outline-warning btn-sm' data-child-id='{$his->service_request_id}' data-item-name='" . htmlspecialchars($his->service->service_name ?? 'Investigation', ENT_QUOTES) . "' data-remove-item-url='{$removeItemUrl}' onclick='showBundleItemRemove(this)' title='Remove only this item from combo'><i class='fa fa-times'></i> Remove Item</button>";
                         }
                         $str .= "</div></div>";
                     }
@@ -979,13 +987,18 @@ class EncounterController extends Controller
 
                 // Show delete button only if:
                 // 1. Current user is the requester
-                // 2. Status is pending (1) or in progress (2), not yet billed, no results
+                // 2. Status is pending (1) or in progress (2), not yet billed (or part of unpaid combo), no results
                 // 3. Within the note_edit_window
                 $editWindowMinutes = appsettings('note_edit_window', 30);
                 $withinWindow = $his->created_at && now()->diffInMinutes($his->created_at) <= $editWindowMinutes;
+                $isComboItem = $his->productOrServiceRequest && $his->productOrServiceRequest->is_bundle_item;
+                $parentUnpaid = false;
+                if ($isComboItem && $his->productOrServiceRequest->parent) {
+                    $parentUnpaid = empty($his->productOrServiceRequest->parent->payment_id);
+                }
                 $canDelete = (Auth::id() == $his->doctor_id)
                     && ($his->status == 1 || $his->status == 2)
-                    && empty($his->billed_by)
+                    && (empty($his->billed_by) || ($isComboItem && $parentUnpaid))
                     && empty($his->result)
                     && $withinWindow;
 
@@ -1164,19 +1177,27 @@ class EncounterController extends Controller
                         $parentId = $parentReq->id;
                         $isPaid = $parentReq->payment_id !== null;
                         $isCreator = $parentReq->staff_user_id == Auth::id();
-                        $childrenArr = $parentReq->children->map(function ($c) {
-                            return ['name' => optional($c->service)->service_name ?? optional($c->product)->product_name ?? 'Item', 'qty' => $c->qty ?? 1, 'price' => $c->payable_amount ?? $c->amount ?? 0];
+                        $childrenArr = $parentReq->children()->whereNull('removed_at')->get()->map(function ($c) {
+                            return [
+                                'id' => $c->id,
+                                'child_id' => $c->id,
+                                'name' => optional($c->service)->service_name ?? optional($c->product)->product_name ?? 'Item',
+                                'qty' => $c->qty ?? 1,
+                                'price' => $c->payable_amount ?? $c->amount ?? 0,
+                            ];
                         })->values()->toArray();
                         $bundleDataJson = htmlspecialchars(json_encode(['name' => $bundleName, 'payable_amount' => $bundlePayable, 'claims_amount' => $bundleClaims, 'items' => $childrenArr]), ENT_QUOTES);
                         $removeItemsJson = htmlspecialchars(json_encode($childrenArr), ENT_QUOTES);
                         $removeUrl = url('/service-combo/remove-bundle');
+                        $removeItemUrl = url('/service-combo/remove-item');
                         $bundleNameEsc = htmlspecialchars($bundleName, ENT_QUOTES);
                         $str .= "<div class='bundle-info-block mb-2 p-2 bg-light rounded'>";
                         $str .= "<small class='text-muted d-block mb-1'><i class='mdi mdi-link-variant'></i> <strong>Combo: {$bundleNameEsc}</strong> &mdash; &#8358;" . number_format($bundlePayable, 2) . " patient / &#8358;" . number_format($bundleClaims, 2) . " claims</small>";
                         $str .= "<div class='d-flex gap-1 flex-wrap'>";
                         $str .= "<button type='button' class='btn btn-outline-primary btn-sm' onclick='window.BundleViewModal && BundleViewModal.show({$bundleDataJson})' title='View combo details'><i class='fa fa-info-circle'></i> View Combo</button>";
                         if (!$isPaid && $isCreator) {
-                            $str .= "<button type='button' class='btn btn-outline-danger btn-sm' data-parent-id='{$parentId}' data-bundle-name='{$bundleNameEsc}' data-items='{$removeItemsJson}' data-remove-url='{$removeUrl}' onclick='showBundleRemove(this)' title='Remove this combo'><i class='fa fa-trash'></i> Remove Combo</button>";
+                            $str .= "<button type='button' class='btn btn-outline-danger btn-sm' data-parent-id='{$parentId}' data-bundle-name='{$bundleNameEsc}' data-items='{$removeItemsJson}' data-remove-url='{$removeUrl}' data-remove-item-url='{$removeItemUrl}' onclick='showBundleRemove(this)' title='Remove this combo'><i class='fa fa-trash'></i> Remove Combo</button>";
+                            $str .= "<button type='button' class='btn btn-outline-warning btn-sm' data-child-id='{$his->service_request_id}' data-item-name='" . htmlspecialchars($his->service->service_name ?? 'Imaging', ENT_QUOTES) . "' data-remove-item-url='{$removeItemUrl}' onclick='showBundleItemRemove(this)' title='Remove only this item from combo'><i class='fa fa-times'></i> Remove Item</button>";
                         }
                         $str .= "</div></div>";
                     }
@@ -1392,13 +1413,18 @@ class EncounterController extends Controller
 
                 // Show delete button only if:
                 // 1. Current user is the requester
-                // 2. Status is pending (1) or in progress (2), not yet billed, no results
+                // 2. Status is pending (1) or in progress (2), not yet billed (or part of unpaid combo), no results
                 // 3. Within the note_edit_window
                 $editWindowMinutes = appsettings('note_edit_window', 30);
                 $withinWindow = $his->created_at && now()->diffInMinutes($his->created_at) <= $editWindowMinutes;
+                $isComboItem = $his->productOrServiceRequest && $his->productOrServiceRequest->is_bundle_item;
+                $parentUnpaid = false;
+                if ($isComboItem && $his->productOrServiceRequest->parent) {
+                    $parentUnpaid = empty($his->productOrServiceRequest->parent->payment_id);
+                }
                 $canDelete = (Auth::id() == $his->doctor_id)
                     && ($his->status == 1 || $his->status == 2)
-                    && empty($his->billed_by)
+                    && (empty($his->billed_by) || ($isComboItem && $parentUnpaid))
                     && empty($his->result)
                     && $withinWindow;
 
@@ -2463,12 +2489,18 @@ class EncounterController extends Controller
                 $roPay = optional($item->productOrServiceRequest)->payable_amount ?? $price;
                 $roClaim = optional($item->productOrServiceRequest)->claims_amount ?? 0;
 
-                // Delete button — only if requester, within edit window, not yet billed/dispensed
+                // Delete button — only if requester, within edit window, not yet billed/dispensed (or unpaid combo)
                 $editWindowMinutes = appsettings('note_edit_window', 30);
                 $withinWindow = $item->created_at && now()->diffInMinutes($item->created_at) <= $editWindowMinutes;
+                $posr = $item->productOrServiceRequest;
+                $isComboItem = $posr && $posr->is_bundle_item;
+                $parentUnpaid = false;
+                if ($isComboItem && $posr->parent) {
+                    $parentUnpaid = empty($posr->parent->payment_id);
+                }
                 $canDeletePresc = (Auth::id() == $item->doctor_id)
                     && ($status == 1 || $status == 2)
-                    && empty($item->billed_by)
+                    && (empty($item->billed_by) || ($isComboItem && $parentUnpaid))
                     && $withinWindow;
 
                 $deleteBtn = '';
@@ -2491,7 +2523,6 @@ class EncounterController extends Controller
 
                 // Combo info block (if this prescription is a combo child)
                 $bundleHtml = '';
-                $posr = $item->productOrServiceRequest;
                 if ($posr && $posr->is_bundle_item && $posr->parent_id) {
                     $parentReq = $posr->parent;
                     if ($parentReq) {
@@ -2501,19 +2532,27 @@ class EncounterController extends Controller
                         $bId = $parentReq->id;
                         $bPaid = $parentReq->payment_id !== null;
                         $bCreator = $parentReq->staff_user_id == Auth::id();
-                        $bChildren = $parentReq->children->map(function ($c) {
-                            return ['name' => optional($c->service)->service_name ?? optional($c->product)->product_name ?? 'Item', 'qty' => $c->qty ?? 1, 'price' => $c->payable_amount ?? $c->amount ?? 0];
+                        $bChildren = $parentReq->children()->whereNull('removed_at')->get()->map(function ($c) {
+                            return [
+                                'id' => $c->id,
+                                'child_id' => $c->id,
+                                'name' => optional($c->service)->service_name ?? optional($c->product)->product_name ?? 'Item',
+                                'qty' => $c->qty ?? 1,
+                                'price' => $c->payable_amount ?? $c->amount ?? 0,
+                            ];
                         })->values()->toArray();
                         $bDataJson = htmlspecialchars(json_encode(['name' => $bName, 'payable_amount' => $bPay, 'claims_amount' => $bClaims, 'items' => $bChildren]), ENT_QUOTES);
                         $bItemsJson = htmlspecialchars(json_encode($bChildren), ENT_QUOTES);
                         $bRemoveUrl = url('/service-combo/remove-bundle');
+                        $bRemoveItemUrl = url('/service-combo/remove-item');
                         $bNameEsc = htmlspecialchars($bName, ENT_QUOTES);
                         $bundleHtml .= "<div class='bundle-info-block mt-1 mb-1 p-2 bg-light rounded'>";
                         $bundleHtml .= "<small class='text-muted d-block mb-1'><i class='mdi mdi-link-variant'></i> <strong>Combo: {$bNameEsc}</strong> &mdash; &#8358;" . number_format($bPay, 2) . " patient / &#8358;" . number_format($bClaims, 2) . " claims</small>";
                         $bundleHtml .= "<div class='d-flex gap-1 flex-wrap'>";
                         $bundleHtml .= "<button type='button' class='btn btn-outline-primary btn-sm' onclick='window.BundleViewModal && BundleViewModal.show({$bDataJson})' title='View combo details'><i class='fa fa-info-circle'></i> View Combo</button>";
                         if (!$bPaid && $bCreator) {
-                            $bundleHtml .= "<button type='button' class='btn btn-outline-danger btn-sm' data-parent-id='{$bId}' data-bundle-name='{$bNameEsc}' data-items='{$bItemsJson}' data-remove-url='{$bRemoveUrl}' onclick='showBundleRemove(this)' title='Remove this combo'><i class='fa fa-trash'></i> Remove Combo</button>";
+                            $bundleHtml .= "<button type='button' class='btn btn-outline-danger btn-sm' data-parent-id='{$bId}' data-bundle-name='{$bNameEsc}' data-items='{$bItemsJson}' data-remove-url='{$bRemoveUrl}' data-remove-item-url='{$bRemoveItemUrl}' onclick='showBundleRemove(this)' title='Remove this combo'><i class='fa fa-trash'></i> Remove Combo</button>";
+                            $bundleHtml .= "<button type='button' class='btn btn-outline-warning btn-sm' data-child-id='{$posr->id}' data-item-name='" . htmlspecialchars($item->product->product_name ?? 'Prescription', ENT_QUOTES) . "' data-remove-item-url='{$bRemoveItemUrl}' onclick='showBundleItemRemove(this)' title='Remove only this item from combo'><i class='fa fa-times'></i> Remove Item</button>";
                         }
                         $bundleHtml .= "</div></div>";
                     }
@@ -4060,8 +4099,17 @@ class EncounterController extends Controller
                 ], 403);
             }
 
+            // Check if this request is part of an unpaid combo
+            $isCombo = false;
+            if ($lab->service_request_id) {
+                $posr = ProductOrServiceRequest::find($lab->service_request_id);
+                if ($posr && $posr->is_bundle_item && $posr->parent && empty($posr->parent->payment_id)) {
+                    $isCombo = true;
+                }
+            }
+
             // Validate that request has not been billed
-            if ($lab->billed_by || $lab->billed_date) {
+            if (!$isCombo && ($lab->billed_by || $lab->billed_date)) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Cannot delete: This request has already been billed',
@@ -4073,6 +4121,12 @@ class EncounterController extends Controller
             $request->validate([
                 'reason' => 'required|string|max:500',
             ]);
+
+            if ($isCombo) {
+                $result = $this->removeServiceComboItem($lab->service_request_id, $request->reason);
+
+                return response()->json($result, $result['success'] ? 200 : 400);
+            }
 
             // Soft delete the request
             $lab->deleted_by = Auth::id();
@@ -4123,8 +4177,17 @@ class EncounterController extends Controller
                 ], 403);
             }
 
+            // Check if this request is part of an unpaid combo
+            $isCombo = false;
+            if ($imaging->service_request_id) {
+                $posr = ProductOrServiceRequest::find($imaging->service_request_id);
+                if ($posr && $posr->is_bundle_item && $posr->parent && empty($posr->parent->payment_id)) {
+                    $isCombo = true;
+                }
+            }
+
             // Validate that request has not been billed
-            if ($imaging->billed_by || $imaging->billed_date) {
+            if (!$isCombo && ($imaging->billed_by || $imaging->billed_date)) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Cannot delete: This request has already been billed',
@@ -4136,6 +4199,12 @@ class EncounterController extends Controller
             $request->validate([
                 'reason' => 'required|string|max:500',
             ]);
+
+            if ($isCombo) {
+                $result = $this->removeServiceComboItem($imaging->service_request_id, $request->reason);
+
+                return response()->json($result, $result['success'] ? 200 : 400);
+            }
 
             // Soft delete the request
             $imaging->deleted_by = Auth::id();
@@ -4186,8 +4255,17 @@ class EncounterController extends Controller
                 ], 403);
             }
 
+            // Check if this prescription is part of an unpaid combo
+            $isCombo = false;
+            if ($prescription->product_request_id) {
+                $posr = ProductOrServiceRequest::find($prescription->product_request_id);
+                if ($posr && $posr->is_bundle_item && $posr->parent && empty($posr->parent->payment_id)) {
+                    $isCombo = true;
+                }
+            }
+
             // Validate that prescription has not been billed
-            if ($prescription->billed_by || $prescription->billed_date) {
+            if (!$isCombo && ($prescription->billed_by || $prescription->billed_date)) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Cannot delete: This prescription has already been billed',
@@ -4199,6 +4277,12 @@ class EncounterController extends Controller
             $request->validate([
                 'reason' => 'required|string|max:500',
             ]);
+
+            if ($isCombo) {
+                $result = $this->removeServiceComboItem($prescription->product_request_id, $request->reason);
+
+                return response()->json($result, $result['success'] ? 200 : 400);
+            }
 
             // Soft delete the prescription
             $prescription->deleted_by = Auth::id();
@@ -5047,7 +5131,7 @@ class EncounterController extends Controller
     /**
      * Apply a service combo bundle to the encounter.
      */
-    public function applyCombo(Request $request, Encounter $encounter)
+    public function applyCombo(Request $request, ?Encounter $encounter = null)
     {
         try {
             $request->validate([
@@ -5059,13 +5143,40 @@ class EncounterController extends Controller
                 return response()->json(["success" => false, "message" => "Selected service is not a combo."]);
             }
 
+            // Resolve encounter ID and Patient ID
+            $encounterId = ($encounter && $encounter->id) ? $encounter->id : ($request->input('encounter_id') ?: ($request->input('encounter') ?: null));
+            $patientId = null;
+
+            if ($encounter && $encounter->patient_id) {
+                $patientId = $encounter->patient_id;
+            } elseif ($encounterId) {
+                $foundEncounter = Encounter::find($encounterId);
+                if ($foundEncounter) {
+                    $patientId = $foundEncounter->patient_id;
+                }
+            }
+
+            if (!$patientId && $request->filled('patient_id')) {
+                $patientId = (int) $request->input('patient_id');
+            }
+
+            if (!$patientId) {
+                return response()->json([
+                    "success" => false,
+                    "message" => "Patient ID is required to apply combo.",
+                ], 422);
+            }
+
             $extra = [];
-            if ($request->has('treatment_plan_id')) {
+            if ($request->has('treatment_plan_id') && $request->input('treatment_plan_id')) {
                 $extra['treatment_plan_id'] = $request->input('treatment_plan_id');
                 $extra['treatment_plan_name'] = $request->input('treatment_plan_name');
             }
+            if ($request->filled('note')) {
+                $extra['note'] = $request->input('note');
+            }
 
-            $result = $this->applyServiceCombo($service, $encounter->patient_id, $encounter->id, $extra);
+            $result = $this->applyServiceCombo($service, (int) $patientId, $encounterId ? (int) $encounterId : null, $extra);
 
             return response()->json([
                 "success" => true,
@@ -5091,8 +5202,8 @@ class EncounterController extends Controller
 
             $parentRequest = ProductOrServiceRequest::findOrFail($request->parent_request_id);
 
-            // Verify this combo belongs to this encounter and is a combo item
-            if ($parentRequest->encounter_id !== $encounter->id || !$parentRequest->is_bundle_item) {
+            // Verify this combo belongs to this encounter and is a parent combo
+            if ($parentRequest->encounter_id !== $encounter->id || $parentRequest->parent_id !== null) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Invalid combo or permission denied',
@@ -5135,8 +5246,8 @@ class EncounterController extends Controller
 
             $parentRequest = ProductOrServiceRequest::findOrFail($request->parent_request_id);
 
-            // Only the staff member who created the combo may remove it
-            if ($parentRequest->staff_user_id !== Auth::id()) {
+            // Only the staff member who created the combo (or admins) may remove it
+            if ($parentRequest->staff_user_id !== Auth::id() && !optional(Auth::user())->hasAnyRole(['super-admin', 'Admin', 'Super Admin'])) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Permission denied: only the person who applied this combo may remove it.',
@@ -5155,6 +5266,73 @@ class EncounterController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Error removing combo: ' . $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    public function removeBundleItem(Request $request, Encounter $encounter)
+    {
+        try {
+            $request->validate([
+                'child_request_id' => 'required|integer|exists:product_or_service_requests,id',
+                'reason' => 'nullable|string|max:500',
+            ]);
+
+            $childRequest = ProductOrServiceRequest::findOrFail($request->child_request_id);
+
+            // Verify this combo item belongs to this encounter
+            if ($childRequest->encounter_id && $childRequest->encounter_id !== $encounter->id) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Invalid combo item or permission denied',
+                ], 403);
+            }
+
+            $result = $this->removeServiceComboItem($childRequest->id, $request->reason);
+
+            return response()->json($result, $result['success'] ? 200 : 400);
+        } catch (\Exception $e) {
+            Log::error("Error removing combo item: " . $e->getMessage());
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Error removing combo item: ' . $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    /**
+     * Generic remove-bundle-item endpoint — no encounter context required.
+     */
+    public function removeBundleItemGeneric(Request $request)
+    {
+        try {
+            $request->validate([
+                'child_request_id' => 'required|integer|exists:product_or_service_requests,id',
+                'reason' => 'nullable|string|max:500',
+            ]);
+
+            $childRequest = ProductOrServiceRequest::findOrFail($request->child_request_id);
+            $parent = $childRequest->parent;
+            $creatorId = $childRequest->staff_user_id ?: ($parent ? $parent->staff_user_id : null);
+
+            // Only the staff member who created the combo (or admins) may remove items
+            if ($creatorId && $creatorId !== Auth::id() && !optional(Auth::user())->hasAnyRole(['super-admin', 'Admin', 'Super Admin'])) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Permission denied: only the person who applied this combo may remove items from it.',
+                ], 403);
+            }
+
+            $result = $this->removeServiceComboItem($childRequest->id, $request->reason);
+
+            return response()->json($result, $result['success'] ? 200 : 400);
+        } catch (\Exception $e) {
+            Log::error("Error removing combo item (generic): " . $e->getMessage());
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Error removing combo item: ' . $e->getMessage(),
             ], 500);
         }
     }

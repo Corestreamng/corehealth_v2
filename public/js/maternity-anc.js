@@ -1148,6 +1148,17 @@ if (typeof window.wbRoute !== 'function') {
         }
 
         function applyProductCombo(comboId, enrollmentId, comboName) {
+            if (window.ClinicalOrdersKit && typeof window.ClinicalOrdersKit.applyCombo === 'function') {
+                ClinicalOrdersKit.applyCombo(comboId, {
+                    name: comboName,
+                    enrollmentId: enrollmentId,
+                    onSuccess: function() {
+                        if (typeof loadClinicalOrdersTab === 'function') { loadClinicalOrdersTab(); }
+                    }
+                });
+                return;
+            }
+
             var comboData = (window.comboDataMap || {})[comboId] || {};
             var name = comboName || comboData.product_name || comboData.service_name || 'Combo';
 
@@ -1186,6 +1197,17 @@ if (typeof window.wbRoute !== 'function') {
         }
 
         function applyLabCombo(comboId, enrollmentId, comboName) {
+            if (window.ClinicalOrdersKit && typeof window.ClinicalOrdersKit.applyCombo === 'function') {
+                ClinicalOrdersKit.applyCombo(comboId, {
+                    name: comboName,
+                    enrollmentId: enrollmentId,
+                    onSuccess: function() {
+                        if (typeof initMaternityLabsHistory === 'function') { initMaternityLabsHistory(); }
+                    }
+                });
+                return;
+            }
+
             var comboData = (window.comboDataMap || {})[comboId] || {};
             var name = comboName || comboData.service_name || 'Combo';
 
@@ -1224,6 +1246,17 @@ if (typeof window.wbRoute !== 'function') {
         }
 
         function applyImagingCombo(comboId, enrollmentId, comboName) {
+            if (window.ClinicalOrdersKit && typeof window.ClinicalOrdersKit.applyCombo === 'function') {
+                ClinicalOrdersKit.applyCombo(comboId, {
+                    name: comboName,
+                    enrollmentId: enrollmentId,
+                    onSuccess: function() {
+                        if (typeof initMaternityImagingHistory === 'function') { initMaternityImagingHistory(); }
+                    }
+                });
+                return;
+            }
+
             var comboData = (window.comboDataMap || {})[comboId] || {};
             var name = comboName || comboData.service_name || 'Combo';
 

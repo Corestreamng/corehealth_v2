@@ -23,6 +23,7 @@
             'imaging.recordBilling': '{{ route("imaging.recordBilling") }}',
             'imaging.dismissRequests': '{{ route("imaging.dismissRequests") }}',
             'imaging.saveResult': '{{ route("imaging.saveResult") }}',
+            'imaging.applyCombo': '{{ route("imaging.applyCombo") }}',
             'lab.filterDoctors': '{{ route("lab.filterDoctors") }}',
             'lab.filterHmos': '{{ route("lab.filterHmos") }}',
             'lab.filterServices': '{{ route("lab.filterServices") }}',

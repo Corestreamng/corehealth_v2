@@ -42,6 +42,8 @@ use Yajra\DataTables\DataTables;
  */
 class PharmacyWorkbenchController extends Controller
 {
+    use \App\Http\Traits\ClinicalOrdersTrait;
+
     /**
      * Display the pharmacy workbench main page.
      *
@@ -714,15 +716,31 @@ class PharmacyWorkbenchController extends Controller
                         $bName = optional($parentReq->service)->service_name ?? 'Combo';
                         $bPay = $parentReq->payable_amount ?? 0;
                         $bClaims = $parentReq->claims_amount ?? 0;
-                        $bChildren = $parentReq->children->map(function ($c) {
-                            return ['name' => optional($c->service)->service_name ?? optional($c->product)->product_name ?? 'Item', 'qty' => $c->qty ?? 1, 'price' => $c->payable_amount ?? $c->amount ?? 0];
+                        $bChildren = $parentReq->children()->whereNull('removed_at')->get()->map(function ($c) {
+                            return [
+                                'id' => $c->id,
+                                'child_id' => $c->id,
+                                'name' => optional($c->service)->service_name ?? optional($c->product)->product_name ?? 'Item',
+                                'qty' => $c->qty ?? 1,
+                                'price' => $c->payable_amount ?? $c->amount ?? 0,
+                            ];
                         })->values()->toArray();
                         $bDataJson = htmlspecialchars(json_encode(['name' => $bName, 'payable_amount' => $bPay, 'claims_amount' => $bClaims, 'items' => $bChildren]), ENT_QUOTES);
                         $bNameEsc = htmlspecialchars($bName, ENT_QUOTES);
                         $str .= "<div class='bundle-info-block mt-1 p-2 bg-light rounded'>";
                         $str .= "<small class='text-muted d-block mb-1'><i class='mdi mdi-link-variant'></i> <strong>Combo: {$bNameEsc}</strong> &mdash; &#8358;" . number_format($bPay, 2) . " patient / &#8358;" . number_format($bClaims, 2) . " claims</small>";
+                        $str .= "<div class='d-flex gap-1 flex-wrap mt-1'>";
                         $str .= "<button type='button' class='btn btn-outline-primary btn-sm' onclick='window.BundleViewModal && BundleViewModal.show({$bDataJson})' title='View combo details'><i class='fa fa-info-circle'></i> View Combo</button>";
-                        $str .= "</div>";
+                        $isPaid = $parentReq->payment_id !== null;
+                        $isCreator = $parentReq->staff_user_id == Auth::id();
+                        if (!$isPaid && ($isCreator || optional(Auth::user())->hasAnyRole(['super-admin', 'Admin', 'Super Admin']))) {
+                            $bRemoveUrl = url('/service-combo/remove-bundle');
+                            $bRemoveItemUrl = url('/service-combo/remove-item');
+                            $removeItemsJson = htmlspecialchars(json_encode($bChildren), ENT_QUOTES);
+                            $str .= "<button type='button' class='btn btn-outline-danger btn-sm' data-parent-id='{$parentReq->id}' data-bundle-name='{$bNameEsc}' data-items='{$removeItemsJson}' data-remove-url='{$bRemoveUrl}' data-remove-item-url='{$bRemoveItemUrl}' onclick='showBundleRemove(this)' title='Remove this combo'><i class='fa fa-trash'></i> Remove Combo</button>";
+                            $str .= "<button type='button' class='btn btn-outline-warning btn-sm' data-child-id='{$posr->id}' data-item-name='" . htmlspecialchars($item->product->product_name ?? 'Prescription', ENT_QUOTES) . "' data-remove-item-url='{$bRemoveItemUrl}' onclick='showBundleItemRemove(this)' title='Remove only this item from combo'><i class='fa fa-times'></i> Remove Item</button>";
+                        }
+                        $str .= "</div></div>";
                     }
                 }
 
@@ -2167,7 +2185,47 @@ class PharmacyWorkbenchController extends Controller
             });
         }
 
-        return response()->json($products->merge($comboResults)->values());
+        return response()->json(collect($products->all())->concat($comboResults->all())->values());
+    }
+
+    /**
+     * Apply a service combo bundle from pharmacy workbench.
+     */
+    public function pharmacyApplyCombo(Request $request)
+    {
+        try {
+            $request->validate([
+                'service_id' => 'required|integer|exists:services,id',
+                'patient_id' => 'required|integer|exists:patients,id',
+                'note' => 'nullable|string',
+            ]);
+
+            $comboService = Service::with('bundleItems')->find($request->service_id);
+
+            if (!$comboService || !$comboService->is_combo) {
+                return response()->json(['success' => false, 'message' => 'Invalid combo service'], 400);
+            }
+
+            $extra = [];
+            if ($request->has('treatment_plan_id') && $request->input('treatment_plan_id')) {
+                $extra['treatment_plan_id'] = $request->input('treatment_plan_id');
+                $extra['treatment_plan_name'] = $request->input('treatment_plan_name');
+            }
+            if ($request->filled('note')) {
+                $extra['note'] = $request->input('note');
+            }
+            $encounterId = $request->input('encounter_id') ?: null;
+
+            $result = $this->applyServiceCombo($comboService, (int) $request->patient_id, $encounterId ? (int) $encounterId : null, $extra);
+
+            return response()->json([
+                'success' => true,
+                'message' => $comboService->service_name . ' combo applied successfully',
+                'parent_billing_id' => $result['parent']->id,
+            ]);
+        } catch (\Exception $e) {
+            return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
+        }
     }
 
     /**
@@ -4294,5 +4352,62 @@ class PharmacyWorkbenchController extends Controller
             'age_distribution' => $ageBreakdown,
             'age_brackets_used' => $ageBrackets,
         ];
+    }
+
+    /**
+     * Remove a service combo bundle from pharmacy workbench.
+     */
+    public function removeBundle(Request $request)
+    {
+        try {
+            $request->validate([
+                'parent_request_id' => 'required|integer|exists:product_or_service_requests,id',
+                'patient_id' => 'nullable|integer|exists:patients,id',
+            ]);
+
+            $parentRequest = ProductOrServiceRequest::findOrFail($request->parent_request_id);
+
+            if ($request->patient_id) {
+                $patient = Patient::find($request->patient_id);
+                if ($patient && ($parentRequest->user_id !== $patient->user_id || $parentRequest->parent_id !== null)) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Invalid bundle or permission denied',
+                    ], 403);
+                }
+            }
+
+            $result = $this->removeServiceCombo($parentRequest->id);
+
+            return response()->json([
+                'success' => $result['success'],
+                'message' => $result['message'],
+            ], $result['success'] ? 200 : 400);
+        } catch (\Exception $e) {
+            Log::error("Pharmacy remove combo error: " . $e->getMessage());
+
+            return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
+        }
+    }
+
+    /**
+     * Remove an individual item from a combo bundle from pharmacy workbench.
+     */
+    public function removeBundleItem(Request $request)
+    {
+        try {
+            $request->validate([
+                'child_request_id' => 'required|integer|exists:product_or_service_requests,id',
+                'reason' => 'nullable|string|max:500',
+            ]);
+
+            $result = $this->removeServiceComboItem($request->child_request_id, $request->reason);
+
+            return response()->json($result, $result['success'] ? 200 : 400);
+        } catch (\Exception $e) {
+            Log::error("Pharmacy remove combo item error: " . $e->getMessage());
+
+            return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
+        }
     }
 }
