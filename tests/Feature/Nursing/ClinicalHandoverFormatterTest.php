@@ -271,6 +271,41 @@ class ClinicalHandoverFormatterTest extends TestCase
     }
 
     /** @test */
+    public function test_format_billing_audit_resolves_service_from_services_table()
+    {
+        $patient = $this->makePatient();
+        $timestamp = Carbon::now();
+
+        $service = \App\Models\Service::withoutGlobalScopes()->first();
+        if (!$service) {
+            $service = \App\Models\Service::withoutGlobalScopes()->create([
+                'user_id' => $this->makeUser()->id,
+                'category_id' => 1,
+                'service_name' => 'Nursing Consultation Test',
+                'status' => 1,
+            ]);
+        }
+
+        $values = [
+            'patient_id' => $patient->id,
+            'service_id' => $service->id,
+            'qty' => 1,
+            'payable_amount' => 2500,
+        ];
+
+        $result = $this->formatter->formatAudit(
+            ProductOrServiceRequest::class,
+            'created',
+            [],
+            $values,
+            $timestamp
+        );
+
+        $this->assertEquals('Billing', $result['category']);
+        $this->assertStringContainsString($service->service_name, $result['line']);
+    }
+
+    /** @test */
     public function test_patient_name_resolution_includes_othername()
     {
         $patient = $this->makePatient();

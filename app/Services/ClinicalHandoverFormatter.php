@@ -918,8 +918,8 @@ class ClinicalHandoverFormatter
     protected function resolveService(int $serviceId): string
     {
         if (!isset($this->resolveCache['services'][$serviceId])) {
-            $service = DB::table('services')->where('id', $serviceId)->first(['name']);
-            $this->resolveCache['services'][$serviceId] = $service->name ?? "Service #{$serviceId}";
+            $service = DB::table('services')->where('id', $serviceId)->first(['service_name']);
+            $this->resolveCache['services'][$serviceId] = $service->service_name ?? "Service #{$serviceId}";
         }
 
         return $this->resolveCache['services'][$serviceId];
