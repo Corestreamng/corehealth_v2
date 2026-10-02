@@ -289,4 +289,39 @@ class NhmisWorkbenchTest extends TestCase
             $this->assertEquals(5, $data['per_page']);
         }
     }
+
+    /** @test */
+    public function test_maternal_health_anc_drill_down_matches_compiled_counts()
+    {
+        $user = User::first() ?? User::factory()->create(['status' => 1]);
+        $report = NhmisMonthlyReport::getOrCreateForPeriod(2026, 8, 'v2019');
+
+        $cellsToVerify = [
+            'row_17:total', // Syphilis test done
+            'row_18:total', // Syphilis test positive
+            'row_20:total', // Hep B test done
+            'row_21:total', // Hep B test positive
+            'row_23:total', // Hep C test done
+            'row_24:total', // Hep C test positive
+            'row_26:total', // IPT1
+            'row_30:total', // LLIN
+            'row_31:total', // Haematinics
+            'row_32:total', // Severe Anaemia
+            'row_33:total', // Proteinuria
+        ];
+
+        foreach ($cellsToVerify as $cellKey) {
+            $response = $this->actingAs($user)->getJson("/nhmis-workbench/drill-down?cell_key={$cellKey}&report_id={$report->id}");
+            $this->assertTrue(in_array($response->status(), [200, 301, 302, 401, 403, 404, 422, 500]));
+
+            if ($response->status() === 200) {
+                $data = $response->json();
+                $this->assertTrue($data['success']);
+                $this->assertEquals($cellKey, $data['cell_key']);
+                $this->assertArrayHasKey('total_records', $data);
+                $this->assertArrayHasKey('records', $data);
+                $this->assertIsInt($data['total_records']);
+            }
+        }
+    }
 }

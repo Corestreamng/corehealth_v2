@@ -237,7 +237,7 @@ class NhmisDataAggregatorService
     /**
      * Reusable diagnosis matcher across encounters based on ClinicalReportsController normalization
      */
-    private function matchEncounterDiagnosis(Encounter $encounter, array $keywords, array $icdPrefixes = []): bool
+    public function matchEncounterDiagnosis(Encounter $encounter, array $keywords, array $icdPrefixes = []): bool
     {
         $rawReasons = !empty($encounter->reasons_for_encounter) ? json_decode($encounter->reasons_for_encounter, true) : [];
         if (!is_array($rawReasons)) {
@@ -298,7 +298,7 @@ class NhmisDataAggregatorService
      * Check if keyword matches text, strictly enforcing word boundary matching for clinical precision
      * (e.g. 'dm' will never match 'abdominal' or 'admit', 'tb' won't match 'football')
      */
-    private function matchKeywordInText(string $text, string $kw): bool
+    public function matchKeywordInText(string $text, string $kw): bool
     {
         $kw = trim($kw);
         if ($kw === '') {
@@ -811,6 +811,17 @@ class NhmisDataAggregatorService
             }
         }
 
+        foreach ($ancVisits as $v) {
+            $pId = $v->patient_id ?? $v->enrollment?->patient_id;
+            if (!$pId) {
+                continue;
+            }
+            $vNotes = strtolower(($v->clinical_notes ?? '') . ' ' . ($v->treatment ?? '') . ' ' . ($v->plan ?? ''));
+            if (preg_match('/\b(ipt|sp\b|fansidar|maloxine|amalar|sulfadoxine)/i', $vNotes)) {
+                $spPatients[$pId] = true;
+            }
+        }
+
         $ipt1 = [];
         $ipt2 = [];
         $ipt3 = [];
@@ -1211,9 +1222,11 @@ class NhmisDataAggregatorService
                     $temp1h[$gKey]++;
                 }
 
-                if ($b->apgar_1min && (int)$b->apgar_1min < 7) {
+                $apgar1 = (int)($b->apgar_1_min ?? $b->apgar_1min ?? 0);
+                $apgar5 = (int)($b->apgar_5_min ?? $b->apgar_5min ?? 0);
+                if ($apgar1 > 0 && $apgar1 < 7) {
                     $notBreathing[$gKey]++;
-                    if ($b->apgar_5min && (int)$b->apgar_5min >= 7) {
+                    if ($apgar5 >= 7) {
                         $resuscitated[$gKey]++;
                     }
                 }

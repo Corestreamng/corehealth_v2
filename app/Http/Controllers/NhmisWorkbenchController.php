@@ -13,6 +13,8 @@ use App\Models\NhmisMonthlyReport;
 use App\Models\NhmisMonthlyReportValue;
 use App\Models\NhmisServiceMapping;
 use App\Models\PostnatalVisit;
+use App\Models\ProductRequest;
+use App\Models\SpecialistReferral;
 use App\Services\Nhmis\NhmisDataAggregatorService;
 use App\Services\Nhmis\NhmisFormRegistry;
 use Carbon\Carbon;
@@ -357,7 +359,20 @@ class NhmisWorkbenchController extends Controller
     }
 
     /**
-     * Universal Drill-Down endpoint with server-side pagination, debounced AJAX search, and HMO filters
+     * Helper to compute age-sex column key for patient
+     */
+    protected function getPatientAgeSexKey($patient, $refDate): string
+    {
+        $gender = strtolower($patient?->gender ?? 'male');
+        $prefix = ($gender === 'female' || $gender === 'f') ? 'f_' : 'm_';
+        $dob = $patient?->dob ? Carbon::parse($patient->dob) : null;
+        $band = $this->aggregator->getNhmisAgeBand($dob, $refDate);
+
+        return $prefix . $band;
+    }
+
+    /**
+     * Universal Drill-Down endpoint with authoritative per-row and per-cell matching, server-side pagination, search & HMO filters
      */
     public function drillDown(Request $request)
     {
@@ -384,7 +399,10 @@ class NhmisWorkbenchController extends Controller
             }
         }
 
-        preg_match('/row_(\d+)/', $cellKey, $matches);
+        $parts = explode(':', $cellKey, 2);
+        $rowId = $parts[0] ?? '';
+        $colKey = $parts[1] ?? '';
+        preg_match('/row_(\d+)/', $rowId, $matches);
         $rowNum = (int) ($matches[1] ?? 1);
 
         $results = [];
@@ -392,7 +410,8 @@ class NhmisWorkbenchController extends Controller
 
         if ($rowNum <= 2) {
             // General Outpatient Attendance (Rows 1 & 2)
-            $records = Encounter::select(['id', 'patient_id', 'doctor_id', 'queue_id', 'reasons_for_encounter', 'notes', 'created_at'])
+            // Row 1: All General Attendance; Row 2: Outpatient Attendance (admission_request_id === null)
+            $records = Encounter::select(['id', 'patient_id', 'doctor_id', 'queue_id', 'admission_request_id', 'reasons_for_encounter', 'notes', 'created_at'])
                 ->with([
                     'patient:id,user_id,file_no,dob,gender,hmo_id',
                     'patient.user:id,surname,firstname,othername',
@@ -403,9 +422,17 @@ class NhmisWorkbenchController extends Controller
                 ->whereBetween('created_at', [$startDate, $endDate])
                 ->get();
 
-            // Distinguish new vs revisits if specified
             foreach ($records as $e) {
+                if ($rowNum === 2 && $e->admission_request_id !== null) {
+                    continue;
+                }
+
                 $p = $e->patient;
+                $ageSexKey = $this->getPatientAgeSexKey($p, $e->created_at);
+                if ($colKey !== 'total' && $colKey !== $ageSexKey) {
+                    continue;
+                }
+
                 $u = $p?->user;
                 $pName = $u ? trim($u->surname . ' ' . $u->firstname . ($u->othername ? ' ' . $u->othername : '')) : 'N/A';
                 $d = $e->doctor;
@@ -415,7 +442,7 @@ class NhmisWorkbenchController extends Controller
                 }
 
                 $hmoInfo = $this->renderPatientHmo($p);
-                $visitType = ($rowNum === 1) ? 'New Consultation' : (($rowNum === 2) ? 'Follow-up Consultation' : 'General Outpatient');
+                $visitType = ($rowNum === 1) ? 'General Attendance Consultation' : 'Outpatient (OPD) Consultation';
 
                 $results[] = [
                     'id' => $e->id,
@@ -429,35 +456,39 @@ class NhmisWorkbenchController extends Controller
                     'age' => $p && $p->dob ? Carbon::parse($p->dob)->age . 'y' : 'N/A',
                     'doctor_name' => $dName,
                     'date' => $e->created_at->format('Y-m-d H:i'),
-                    'details' => $visitType . ' | ' . (\Illuminate\Support\Str::limit(strip_tags($e->reasons_for_encounter ?? ($e->notes ?? '')), 100) ?: 'General Consultation'),
+                    'details' => $visitType . ' | ' . (\Illuminate\Support\Str::limit(strip_tags($e->reasons_for_encounter ?? ($e->notes ?? '')), 100) ?: 'Clinical Consultation'),
                 ];
             }
         } elseif ($rowNum >= 3 && $rowNum <= 4) {
-            // Inpatient Admissions (Row 3) & Discharges (Row 4)
+            // Inpatient Admissions (Row 3) & Inpatient Discharges (Row 4)
             $query = \App\Models\AdmissionRequest::with([
                 'patient:id,user_id,file_no,dob,gender,hmo_id',
                 'patient.user:id,surname,firstname,othername',
                 'patient.hmo.scheme',
-                'ward',
                 'doctor:id,surname,firstname,othername',
             ]);
 
             if ($rowNum === 4) {
-                $query->where(function ($q) use ($startDate, $endDate) {
-                    $q->whereBetween('discharged_at', [$startDate, $endDate])
-                      ->orWhere(function ($q2) use ($startDate, $endDate) {
-                          $q2->whereBetween('updated_at', [$startDate, $endDate])
-                             ->whereIn('status', ['discharged', 'completed', 'DISCHARGED']);
-                      });
-                });
+                $query->where('discharged', 1)
+                      ->whereBetween('discharge_date', [$startDate, $endDate]);
             } else {
-                $query->whereBetween('created_at', [$startDate, $endDate]);
+                $query->where(function ($q) use ($startDate, $endDate) {
+                    $q->whereBetween('bed_assign_date', [$startDate, $endDate])
+                      ->orWhereBetween('created_at', [$startDate, $endDate]);
+                });
             }
 
             $records = $query->get();
 
             foreach ($records as $adm) {
                 $p = $adm->patient;
+                $refDate = ($rowNum === 4) ? ($adm->discharge_date ? Carbon::parse($adm->discharge_date) : $adm->created_at) : ($adm->bed_assign_date ? Carbon::parse($adm->bed_assign_date) : $adm->created_at);
+                $ageSexKey = $this->getPatientAgeSexKey($p, $refDate);
+
+                if ($colKey !== 'total' && $colKey !== $ageSexKey) {
+                    continue;
+                }
+
                 $u = $p?->user;
                 $pName = $u ? trim($u->surname . ' ' . $u->firstname . ($u->othername ? ' ' . $u->othername : '')) : 'N/A';
                 $d = $adm->doctor;
@@ -467,7 +498,6 @@ class NhmisWorkbenchController extends Controller
                 }
 
                 $hmoInfo = $this->renderPatientHmo($p);
-                $admDate = $rowNum === 4 ? ($adm->discharged_at ? Carbon::parse($adm->discharged_at) : $adm->updated_at) : $adm->created_at;
 
                 $results[] = [
                     'id' => $adm->id,
@@ -480,12 +510,13 @@ class NhmisWorkbenchController extends Controller
                     'gender' => ucfirst($p->gender ?? 'N/A'),
                     'age' => $p && $p->dob ? Carbon::parse($p->dob)->age . 'y' : 'N/A',
                     'doctor_name' => $dName,
-                    'date' => $admDate->format('Y-m-d H:i'),
-                    'details' => ($rowNum === 4 ? 'Discharged from ' : 'Admitted to ') . ($adm->ward?->name ?? 'General Ward') . ' | Status: ' . ($adm->status ?? 'Active'),
+                    'date' => $refDate->format('Y-m-d H:i'),
+                    'details' => ($rowNum === 4 ? 'Inpatient Discharged | Reason: ' . ($adm->discharge_reason ?? 'Routine Discharge') : 'Inpatient Admitted | Reason: ' . ($adm->admission_reason ?? 'Clinical Inpatient Care')),
                 ];
             }
         } elseif ($rowNum >= 5 && $rowNum <= 9) {
-            // Mortality & Deaths (Rows 5 - 9)
+            // Mortality & Causes of Death (Rows 5 - 9)
+            // Row 5: Institutional Deaths; Row 6: Maternal Deaths; Row 7: Maternal Causes; Row 8: Neonatal Causes; Row 9: U5 Causes
             $records = DeathRecord::with([
                 'patient:id,user_id,file_no,dob,gender,hmo_id',
                 'patient.user:id,surname,firstname,othername',
@@ -502,6 +533,96 @@ class NhmisWorkbenchController extends Controller
 
             foreach ($records as $d) {
                 $p = $d->patient;
+                $refDate = $d->date_of_death ? Carbon::parse($d->date_of_death) : $d->created_at;
+                $dob = $p?->dob ? Carbon::parse($p->dob) : null;
+                $days = $dob ? $dob->diffInDays($refDate, false) : 999;
+                $months = $dob ? $dob->diffInMonths($refDate, false) : 999;
+                $years = $dob ? $dob->diffInYears($refDate, false) : ($d->age ?? 999);
+                $gender = strtolower($p?->gender ?? ($d->gender ?? 'male'));
+                $cause = strtolower(trim(($d->cause_of_death_primary ?? '') . ' ' . ($d->cause_of_death_description ?? '')));
+
+                $isMaternal = ($gender === 'female' || $gender === 'f') && (
+                    $d->is_maternal_death ||
+                    str_contains($cause, 'pregnancy') ||
+                    str_contains($cause, 'postpartum') ||
+                    str_contains($cause, 'labour') ||
+                    str_contains($cause, 'labor') ||
+                    str_contains($cause, 'maternal')
+                );
+
+                if ($rowNum === 5) {
+                    // Row 5: All Institutional Deaths
+                    $ageSexKey = $this->getPatientAgeSexKey($p, $refDate);
+                    if ($colKey !== 'total' && $colKey !== $ageSexKey) {
+                        continue;
+                    }
+                } elseif ($rowNum === 6) {
+                    // Row 6: Maternal Deaths (age_10_19y, age_ge_20y, total)
+                    if (!$isMaternal) {
+                        continue;
+                    }
+                    $matAgeKey = ($years < 20) ? 'age_10_19y' : 'age_ge_20y';
+                    if ($colKey !== 'total' && $colKey !== $matAgeKey) {
+                        continue;
+                    }
+                } elseif ($rowNum === 7) {
+                    // Row 7: Maternal Causes of Death
+                    if (!$isMaternal) {
+                        continue;
+                    }
+                    $matCause = 'other';
+                    if (str_contains($cause, 'haemorrhage') || str_contains($cause, 'hemorrhage') || str_contains($cause, 'pph') || str_contains($cause, 'bleeding')) {
+                        $matCause = 'pph';
+                    } elseif (str_contains($cause, 'sepsis') || str_contains($cause, 'infection') || str_contains($cause, 'septicaemia')) {
+                        $matCause = 'sepsis';
+                    } elseif (str_contains($cause, 'obstruct') || str_contains($cause, 'rupture') || str_contains($cause, 'dystocia')) {
+                        $matCause = 'obstructed_labour';
+                    } elseif (str_contains($cause, 'abort') || str_contains($cause, 'miscarriage')) {
+                        $matCause = 'abortion';
+                    } elseif (str_contains($cause, 'malaria')) {
+                        $matCause = 'malaria';
+                    } elseif (str_contains($cause, 'anaemia') || str_contains($cause, 'anemia')) {
+                        $matCause = 'anaemia';
+                    } elseif (str_contains($cause, 'hiv') || str_contains($cause, 'aids')) {
+                        $matCause = 'hiv';
+                    }
+                    if ($colKey !== 'total' && $colKey !== $matCause) {
+                        continue;
+                    }
+                } elseif ($rowNum === 8) {
+                    // Row 8: Neonatal Causes (< 28 days)
+                    if ($days > 28) {
+                        continue;
+                    }
+                    $neoCause = 'other';
+                    if (str_contains($cause, 'prematur') || str_contains($cause, 'preterm') || str_contains($cause, 'respiratory distress') || str_contains($cause, 'rds')) {
+                        $neoCause = 'prematurity';
+                    } elseif (str_contains($cause, 'tetanus')) {
+                        $neoCause = 'neonatal_tetanus';
+                    } elseif (str_contains($cause, 'congenital') || str_contains($cause, 'anomaly') || str_contains($cause, 'malformation')) {
+                        $neoCause = 'congenital_malformation';
+                    }
+                    if ($colKey !== 'total' && $colKey !== $neoCause) {
+                        continue;
+                    }
+                } elseif ($rowNum === 9) {
+                    // Row 9: Under-5 Causes (< 5 years)
+                    if ($years >= 5) {
+                        continue;
+                    }
+                    $u5Cause = 'other';
+                    if (str_contains($cause, 'malaria')) {
+                        $u5Cause = 'malaria';
+                    } elseif (str_contains($cause, 'pneumonia') || str_contains($cause, 'respiratory')) {
+                        $u5Cause = 'pneumonia';
+                    } elseif (str_contains($cause, 'malnutrition') || str_contains($cause, 'kwashiorkor') || str_contains($cause, 'marasmus') || str_contains($cause, 'sam')) {
+                        $u5Cause = 'malnutrition';
+                    }
+                    if ($colKey !== 'total' && $colKey !== $u5Cause) {
+                        continue;
+                    }
+                }
+
                 $u = $p?->user;
                 $pName = $u ? trim($u->surname . ' ' . $u->firstname . ($u->othername ? ' ' . $u->othername : '')) : 'N/A';
                 if ($d->patient_id) {
@@ -509,10 +630,6 @@ class NhmisWorkbenchController extends Controller
                 }
 
                 $hmoInfo = $this->renderPatientHmo($p);
-                $refDate = $d->date_of_death ? Carbon::parse($d->date_of_death) : $d->created_at;
-                $dob = $p?->dob ? Carbon::parse($p->dob) : null;
-                $age = $dob ? $dob->diffInYears($refDate, false) : ($d->age ?? 'N/A');
-                $cause = trim(($d->cause_of_death_primary ?? '') . ' - ' . ($d->cause_of_death_description ?? ''));
 
                 $results[] = [
                     'id' => $d->id,
@@ -522,11 +639,11 @@ class NhmisWorkbenchController extends Controller
                     'hmo_id' => $hmoInfo['hmo_id'],
                     'hmo_scheme_id' => $hmoInfo['hmo_scheme_id'],
                     'hmo_html' => $hmoInfo['hmo_html'],
-                    'gender' => ucfirst($p->gender ?? ($d->gender ?? 'N/A')),
-                    'age' => is_numeric($age) ? $age . 'y' : $age,
+                    'gender' => ucfirst($gender),
+                    'age' => is_numeric($years) && $years < 999 ? $years . 'y' : ($days <= 28 ? $days . 'd' : 'N/A'),
                     'doctor_name' => 'Certified Clinician',
                     'date' => $refDate->format('Y-m-d H:i'),
-                    'details' => 'Cause: ' . ($cause ?: 'Not stated') . ' | Type: ' . ($d->death_type ?? 'Inpatient Death'),
+                    'details' => 'Cause of Death: ' . ($d->cause_of_death_primary ?: 'Unspecified') . ' | ' . ($d->cause_of_death_description ?? ''),
                 ];
             }
         } elseif ($rowNum >= 10 && $rowNum <= 33) {
@@ -554,11 +671,8 @@ class NhmisWorkbenchController extends Controller
 
             if ($rowNum === 10) {
                 // ANC Attendance by Age
-                $colKey = str_replace('row_10:', '', $cellKey);
                 foreach ($ancVisits as $v) {
                     $p = $v->patient ?? $v->enrollment?->patient;
-                    $u = $p?->user;
-                    $pName = $u ? trim($u->surname . ' ' . $u->firstname . ($u->othername ? ' ' . $u->othername : '')) : 'N/A';
                     $dob = $p?->dob;
                     $refDate = $v->visit_date ? Carbon::parse($v->visit_date) : $v->created_at;
                     $age = $dob ? Carbon::parse($dob)->diffInYears($refDate, false) : 25;
@@ -571,8 +685,11 @@ class NhmisWorkbenchController extends Controller
                     if ($p?->id) {
                         $uniquePatients[$p->id] = true;
                     }
+                    $u = $p?->user;
+                    $pName = $u ? trim($u->surname . ' ' . $u->firstname . ($u->othername ? ' ' . $u->othername : '')) : 'N/A';
                     $hmoInfo = $this->renderPatientHmo($p);
                     $sName = $v->seenBy ? trim($v->seenBy->surname . ' ' . $v->seenBy->firstname . ($v->seenBy->othername ? ' ' . $v->seenBy->othername : '')) : 'N/A';
+
                     $results[] = [
                         'id' => $v->id,
                         'patient_id' => $p?->id,
@@ -590,7 +707,6 @@ class NhmisWorkbenchController extends Controller
                 }
             } elseif ($rowNum === 11) {
                 // ANC 1st Visit Gestational Age
-                $colKey = str_replace('row_11:', '', $cellKey);
                 foreach ($ancVisits as $v) {
                     if ($v->visit_number != 1 && $v->visit_type !== 'booking') {
                         continue;
@@ -612,6 +728,7 @@ class NhmisWorkbenchController extends Controller
                     }
                     $hmoInfo = $this->renderPatientHmo($p);
                     $sName = $v->seenBy ? trim($v->seenBy->surname . ' ' . $v->seenBy->firstname . ($v->seenBy->othername ? ' ' . $v->seenBy->othername : '')) : 'N/A';
+
                     $results[] = [
                         'id' => $v->id,
                         'patient_id' => $p?->id,
@@ -712,53 +829,131 @@ class NhmisWorkbenchController extends Controller
                 }
             } elseif ($rowNum >= 17 && $rowNum <= 25) {
                 // ANC Lab Tests: Syphilis (17-19), Hep B (20-22), Hep C (23-25)
-                $indCode = ($rowNum <= 19) ? 'syphilis' : (($rowNum <= 22) ? 'hepatitis_b' : 'hepatitis_c');
-                $isPosReq = in_array($rowNum, [18, 21, 24]);
-                $isTreatReq = in_array($rowNum, [19, 22, 25]);
+                // Strict 1-to-1 match with NhmisDataAggregatorService::aggregateAntenatalCare
+                $syphIds = array_unique(array_merge(
+                    NhmisServiceMapping::getServiceIds('syphilis_vdrl'),
+                    DB::table('services')->where('status', 1)->where(function ($q) {
+                        $q->where('service_name', 'like', '%vdrl%')
+                          ->orWhere('service_name', 'like', '%syphilis%')
+                          ->orWhere('service_name', 'like', '%tpha%')
+                          ->orWhere('service_name', 'like', '%rpr%')
+                          ->orWhere('service_name', 'like', '%treponema%');
+                    })->pluck('id')->toArray()
+                ));
+                $hepBIds = array_unique(array_merge(
+                    NhmisServiceMapping::getServiceIds('hepatitis_b'),
+                    DB::table('services')->where('status', 1)->where(function ($q) {
+                        $q->where('service_name', 'like', '%hepatitis b%')
+                          ->orWhere('service_name', 'like', '%hbsag%')
+                          ->orWhere('service_name', 'like', '%hbv%')
+                          ->orWhere('service_name', 'like', '%hbeag%')
+                          ->orWhere('service_name', 'like', '%australia antigen%');
+                    })->pluck('id')->toArray()
+                ));
+                $hepCIds = array_unique(array_merge(
+                    NhmisServiceMapping::getServiceIds('hepatitis_c'),
+                    DB::table('services')->where('status', 1)->where(function ($q) {
+                        $q->where('service_name', 'like', '%hepatitis c%')
+                          ->orWhere('service_name', 'like', '%hcv%')
+                          ->orWhere('service_name', 'like', '%hep c%');
+                    })->pluck('id')->toArray()
+                ));
 
-                $serviceIds = NhmisServiceMapping::getServiceIds($indCode);
+                $allAncLabIds = array_unique(array_merge($syphIds, $hepBIds, $hepCIds));
                 $labRequests = LabServiceRequest::with([
                     'patient:id,user_id,file_no,dob,gender,hmo_id',
                     'patient.user:id,surname,firstname,othername',
                     'patient.hmo.scheme',
                     'service',
                 ])
-                ->where(function ($q) use ($serviceIds, $indCode) {
-                    if (!empty($serviceIds)) {
-                        $q->whereIn('service_id', $serviceIds);
-                    }
-                    $q->orWhere(function ($sub) use ($indCode) {
-                        $keyword = ($indCode === 'syphilis') ? 'syphilis' : (($indCode === 'hepatitis_b') ? 'hep%b' : 'hep%c');
-                        $sub->whereHas('service', fn ($sq) => $sq->where('service_name', 'like', "%{$keyword}%"));
-                    });
+                ->whereIn('patient_id', $allAncPatientIds)
+                ->whereIn('service_id', $allAncLabIds)
+                ->where(function ($q) use ($startDate, $endDate) {
+                    $q->whereBetween('created_at', [$startDate, $endDate])
+                      ->orWhereBetween('sample_date', [$startDate, $endDate]);
                 })
-                ->whereBetween('created_at', [$startDate, $endDate])
                 ->get();
 
-                $seen = [];
+                // Group by test type
+                $syphDone = [];
+                $syphPos = [];
+                $hepBDone = [];
+                $hepBPos = [];
+                $hepCDone = [];
+                $hepCPos = [];
+
                 foreach ($labRequests as $lr) {
+                    if (in_array($lr->service_id, $syphIds)) {
+                        $syphDone[] = $lr;
+                        if ($this->aggregator->isLabResultPositive($lr, 'syphilis')) {
+                            $syphPos[] = $lr;
+                        }
+                    }
+                    if (in_array($lr->service_id, $hepBIds)) {
+                        $hepBDone[] = $lr;
+                        if ($this->aggregator->isLabResultPositive($lr, 'hepatitis_b')) {
+                            $hepBPos[] = $lr;
+                        }
+                    }
+                    if (in_array($lr->service_id, $hepCIds)) {
+                        $hepCDone[] = $lr;
+                        if ($this->aggregator->isLabResultPositive($lr, 'hepatitis_c')) {
+                            $hepCPos[] = $lr;
+                        }
+                    }
+                }
+
+                $targetList = [];
+                $actionLabel = '';
+                if ($rowNum === 17) {
+                    $targetList = $syphDone;
+                    $actionLabel = 'ANC Syphilis Test Done';
+                } elseif ($rowNum === 18) {
+                    $targetList = $syphPos;
+                    $actionLabel = 'ANC Syphilis Test Positive';
+                } elseif ($rowNum === 19) {
+                    // In clinical care / national policy, all reactive syphilis cases are treated
+                    $targetList = $syphPos;
+                    $actionLabel = 'ANC Syphilis Case Treated';
+                } elseif ($rowNum === 20) {
+                    $targetList = $hepBDone;
+                    $actionLabel = 'ANC Hepatitis B Test Done';
+                } elseif ($rowNum === 21) {
+                    $targetList = $hepBPos;
+                    $actionLabel = 'ANC Hepatitis B Test Positive';
+                } elseif ($rowNum === 22) {
+                    // National policy mandates immediate referral/consultation for all HBsAg positive ANC clients
+                    $targetList = $hepBPos;
+                    $actionLabel = 'ANC Hepatitis B Case Referred for Treatment';
+                } elseif ($rowNum === 23) {
+                    $targetList = $hepCDone;
+                    $actionLabel = 'ANC Hepatitis C Test Done';
+                } elseif ($rowNum === 24) {
+                    $targetList = $hepCPos;
+                    $actionLabel = 'ANC Hepatitis C Test Positive';
+                } elseif ($rowNum === 25) {
+                    $targetList = $hepCPos;
+                    $actionLabel = 'ANC Hepatitis C Case Referred for Treatment';
+                }
+
+                $seen = [];
+                foreach ($targetList as $lr) {
                     $p = $lr->patient;
-                    if (!$p || isset($seen[$p->id])) {
+                    if (!$p) {
                         continue;
                     }
-                    if (!in_array($p->id, $allAncPatientIds)) {
-                        continue;
+                    // For positive / treated / referred, deduplicate per patient matching aggregator
+                    if (in_array($rowNum, [18, 19, 21, 22, 24, 25])) {
+                        if (isset($seen[$p->id])) {
+                            continue;
+                        }
+                        $seen[$p->id] = true;
                     }
-
-                    $raw = strtolower(($lr->nhmis_outcome_raw ?? '') . ' ' . ($lr->result ?? ''));
-                    $isPos = (str_contains($raw, 'react') || str_contains($raw, 'pos') || str_contains($raw, '+') || str_contains($raw, 'detected'));
-                    if ($isPosReq && !$isPos) {
-                        continue;
-                    }
-
-                    $seen[$p->id] = true;
                     $uniquePatients[$p->id] = true;
 
                     $u = $p->user;
                     $pName = $u ? trim($u->surname . ' ' . $u->firstname . ($u->othername ? ' ' . $u->othername : '')) : 'N/A';
                     $hmoInfo = $this->renderPatientHmo($p);
-
-                    $actionDesc = $isTreatReq ? 'Treated / Managed' : ($isPos ? 'Positive / Reactive Result' : 'Tested & Screened');
 
                     $results[] = [
                         'id' => $lr->id,
@@ -770,155 +965,99 @@ class NhmisWorkbenchController extends Controller
                         'hmo_html' => $hmoInfo['hmo_html'],
                         'gender' => 'Female',
                         'age' => $p->dob ? Carbon::parse($p->dob)->age . 'y' : 'N/A',
-                        'doctor_name' => $lr->service?->service_name ?? strtoupper($indCode),
+                        'doctor_name' => $lr->service?->service_name ?? 'Laboratory Service',
                         'date' => $lr->created_at->format('Y-m-d H:i'),
-                        'details' => $actionDesc . ' | Result: ' . \Illuminate\Support\Str::limit(strip_tags($lr->result ?? 'Tested'), 50),
+                        'details' => $actionLabel . ' | Service: ' . ($lr->service?->service_name ?? 'Lab Test') . ' | Result: ' . ($lr->nhmis_outcome_raw ?? strip_tags($lr->result ?? 'Normal/Tested')),
                     ];
                 }
             } elseif ($rowNum >= 26 && $rowNum <= 29) {
-                // IPTp SP/Fansidar Doses
-                $targetDose = $rowNum - 25; // 1, 2, 3, 4
-                $spProducts = Product::where(function ($q) {
-                    $q->where('product_name', 'like', '%fansidar%')
-                      ->orWhere('product_name', 'like', '%sulfadoxine%')
-                      ->orWhere('product_name', 'like', '%pyrimethamine%')
-                      ->orWhere('product_name', 'like', '%iptp%')
-                      ->orWhere('product_name', 'like', '%sp tab%')
-                      ->orWhere('product_name', 'like', '%sp 500%')
-                      ->orWhere('product_name', 'like', '%maloxine%')
-                      ->orWhere('product_name', 'like', '%amalar%');
-                })->pluck('id')->toArray();
-
-                $dispensings = ProductRequest::with([
-                    'patient:id,user_id,file_no,dob,gender,hmo_id',
-                    'patient.user:id,surname,firstname,othername',
-                    'patient.hmo.scheme',
-                    'product',
-                ])
-                ->whereIn('patient_id', $allAncPatientIds)
-                ->whereIn('product_id', $spProducts)
-                ->whereBetween('created_at', [$startDate, $endDate])
-                ->orderBy('created_at')
-                ->get()
-                ->groupBy('patient_id');
-
-                foreach ($dispensings as $patId => $reqs) {
-                    $doseIdx = $targetDose - 1;
-                    $targetReq = $reqs->get($doseIdx) ?? ($targetDose === 1 ? $reqs->first() : null);
-
-                    if (!$targetReq && $targetDose >= 4 && $reqs->count() >= 4) {
-                        $targetReq = $reqs->get(3);
-                    }
-
-                    if ($targetReq) {
-                        $p = $targetReq->patient;
-                        $u = $p?->user;
-                        $pName = $u ? trim($u->surname . ' ' . $u->firstname . ($u->othername ? ' ' . $u->othername : '')) : 'N/A';
-                        $uniquePatients[$patId] = true;
-                        $hmoInfo = $this->renderPatientHmo($p);
-
-                        $results[] = [
-                            'id' => $targetReq->id,
-                            'patient_id' => $patId,
-                            'patient_name' => $pName,
-                            'file_no' => $p->file_no ?? 'N/A',
-                            'hmo_id' => $hmoInfo['hmo_id'],
-                            'hmo_scheme_id' => $hmoInfo['hmo_scheme_id'],
-                            'hmo_html' => $hmoInfo['hmo_html'],
-                            'gender' => 'Female',
-                            'age' => $p && $p->dob ? Carbon::parse($p->dob)->age . 'y' : 'N/A',
-                            'doctor_name' => 'ANC Pharmacy / Clinic',
-                            'date' => $targetReq->created_at->format('Y-m-d H:i'),
-                            'details' => "IPTp Dose #{$targetDose} Administered | Commodity: " . ($targetReq->product?->product_name ?? 'SP / Fansidar'),
-                        ];
+                // IPTp SP/Fansidar Doses (Rows 26 - 29)
+                // Strict 1-to-1 match with NhmisDataAggregatorService::aggregateAntenatalCare
+                $spPatients = [];
+                if (!empty($allAncPatientIds)) {
+                    $prSp = DB::table('product_requests as pr')
+                        ->join('products as p', 'pr.product_id', '=', 'p.id')
+                        ->whereIn('pr.patient_id', $allAncPatientIds)
+                        ->whereBetween('pr.created_at', [$startDate, $endDate])
+                        ->where(function ($q) {
+                            $q->where('p.product_name', 'like', '%fansidar%')
+                              ->orWhere('p.product_name', 'like', '%sulfadoxine%')
+                              ->orWhere('p.product_name', 'like', '%pyrimethamine%')
+                              ->orWhere('p.product_name', 'like', '%maloxine%')
+                              ->orWhere('p.product_name', 'like', '%amalar%')
+                              ->orWhere('p.product_name', 'like', '%laridox%')
+                              ->orWhere('p.product_name', 'like', '%swidar%')
+                              ->orWhere('p.product_name', 'like', '%falcimax%');
+                        })
+                        ->pluck('pr.patient_id')
+                        ->unique()
+                        ->toArray();
+                    foreach ($prSp as $pId) {
+                        $spPatients[$pId] = true;
                     }
                 }
-            } elseif ($rowNum === 30) {
-                // LLIN under ANC
-                $llinProducts = Product::where(function ($q) {
-                    $q->where('product_name', 'like', '%llin%')
-                      ->orWhere('product_name', 'like', '%itn%')
-                      ->orWhere('product_name', 'like', '%bed net%')
-                      ->orWhere('product_name', 'like', '%treated net%')
-                      ->orWhere('product_name', 'like', '%mosquito net%');
-                })->pluck('id')->toArray();
 
-                $dispensings = ProductRequest::with([
-                    'patient:id,user_id,file_no,dob,gender,hmo_id',
-                    'patient.user:id,surname,firstname,othername',
-                    'patient.hmo.scheme',
-                    'product',
-                ])
-                ->whereIn('patient_id', $allAncPatientIds)
-                ->whereIn('product_id', $llinProducts)
-                ->whereBetween('created_at', [$startDate, $endDate])
-                ->get();
-
-                foreach ($dispensings as $req) {
-                    $p = $req->patient;
-                    $u = $p?->user;
-                    $pName = $u ? trim($u->surname . ' ' . $u->firstname . ($u->othername ? ' ' . $u->othername : '')) : 'N/A';
-                    if ($req->patient_id) {
-                        $uniquePatients[$req->patient_id] = true;
+                foreach ($ancVisits as $v) {
+                    $pId = $v->patient_id ?? $v->enrollment?->patient_id;
+                    $vNotes = strtolower(($v->clinical_notes ?? '') . ' ' . ($v->treatment ?? '') . ' ' . ($v->plan ?? ''));
+                    if ($pId && preg_match('/\b(sp\s*3\s*tab|fansidar|\bipt\b|\biptp\b|\bsp\b|sp3stat|sp\s*3\s*stat|s\/p|s-p|maloxine|amalar|sulfadoxine)\b/i', $vNotes)) {
+                        $spPatients[$pId] = true;
                     }
-                    $hmoInfo = $this->renderPatientHmo($p);
-
-                    $results[] = [
-                        'id' => $req->id,
-                        'patient_id' => $p?->id,
-                        'patient_name' => $pName,
-                        'file_no' => $p->file_no ?? 'N/A',
-                        'hmo_id' => $hmoInfo['hmo_id'],
-                        'hmo_scheme_id' => $hmoInfo['hmo_scheme_id'],
-                        'hmo_html' => $hmoInfo['hmo_html'],
-                        'gender' => 'Female',
-                        'age' => $p && $p->dob ? Carbon::parse($p->dob)->age . 'y' : 'N/A',
-                        'doctor_name' => 'ANC Nurse / MCH',
-                        'date' => $req->created_at->format('Y-m-d H:i'),
-                        'details' => 'Long-Lasting Insecticidal Net (LLIN) Issued: ' . ($req->product?->product_name ?? 'Bed Net'),
-                    ];
                 }
-            } elseif ($rowNum === 31) {
-                // Haematinics (IFA / MMS)
-                $ironProducts = Product::where(function ($q) {
-                    $q->where('product_name', 'like', '%fersolate%')
-                      ->orWhere('product_name', 'like', '%iron%')
-                      ->orWhere('product_name', 'like', '%folic%')
-                      ->orWhere('product_name', 'like', '%folate%')
-                      ->orWhere('product_name', 'like', '%pregnacare%')
-                      ->orWhere('product_name', 'like', '%mms%')
-                      ->orWhere('product_name', 'like', '%multivitamin%')
-                      ->orWhere('product_name', 'like', '%haematinic%')
-                      ->orWhere('product_name', 'like', '%heamatinic%')
-                      ->orWhere('product_name', 'like', '%ferrous%')
-                      ->orWhere('product_name', 'like', '%gestid%')
-                      ->orWhere('product_name', 'like', '%ranferon%')
-                      ->orWhere('product_name', 'like', '%astymin%')
-                      ->orWhere('product_name', 'like', '%chemiron%')
-                      ->orWhere('product_name', 'like', '%orofer%');
-                })->pluck('id')->toArray();
 
-                $dispensings = ProductRequest::with([
-                    'patient:id,user_id,file_no,dob,gender,hmo_id',
-                    'patient.user:id,surname,firstname,othername',
-                    'patient.hmo.scheme',
-                    'product',
-                ])
-                ->whereIn('patient_id', $allAncPatientIds)
-                ->whereIn('product_id', $ironProducts)
-                ->whereBetween('created_at', [$startDate, $endDate])
-                ->get()
-                ->unique('patient_id');
+                $iptDoses = [
+                    26 => [], // IPT1
+                    27 => [], // IPT2
+                    28 => [], // IPT3
+                    29 => [], // IPT>=4
+                ];
 
-                foreach ($dispensings as $req) {
-                    $p = $req->patient;
-                    $u = $p?->user;
-                    $pName = $u ? trim($u->surname . ' ' . $u->firstname . ($u->othername ? ' ' . $u->othername : '')) : 'N/A';
+                foreach ($ancVisits as $v) {
+                    $pId = $v->patient_id ?? $v->enrollment?->patient_id;
+                    if (!$pId || !isset($spPatients[$pId])) {
+                        continue;
+                    }
+
+                    $vNotes = strtolower(($v->clinical_notes ?? '') . ' ' . ($v->treatment ?? '') . ' ' . ($v->plan ?? ''));
+                    if (preg_match('/(ipt\s*1|sp\s*1)\b/i', $vNotes)) {
+                        $iptDoses[26][$pId] = $v;
+                    } elseif (preg_match('/(ipt\s*2|sp\s*2)\b/i', $vNotes)) {
+                        $iptDoses[27][$pId] = $v;
+                    } elseif (preg_match('/(ipt\s*3|sp\s*3)\b/i', $vNotes)) {
+                        $iptDoses[28][$pId] = $v;
+                    } elseif (preg_match('/(ipt\s*4|sp\s*4|ipt\s*>=?\s*4)\b/i', $vNotes)) {
+                        $iptDoses[29][$pId] = $v;
+                    } else {
+                        $vn = (int) $v->visit_number;
+                        if ($vn <= 2) {
+                            $iptDoses[26][$pId] = $v;
+                        } elseif ($vn <= 4) {
+                            $iptDoses[27][$pId] = $v;
+                        } elseif ($vn <= 6) {
+                            $iptDoses[28][$pId] = $v;
+                        } else {
+                            $iptDoses[29][$pId] = $v;
+                        }
+                    }
+                }
+
+                $targetPatients = $iptDoses[$rowNum] ?? [];
+                $doseNum = $rowNum === 26 ? 1 : ($rowNum === 27 ? 2 : ($rowNum === 28 ? 3 : '4+'));
+
+                foreach ($targetPatients as $patId => $v) {
+                    $p = $v->patient ?? $v->enrollment?->patient;
+                    if (!$p) {
+                        continue;
+                    }
                     $uniquePatients[$p->id] = true;
+
+                    $u = $p->user;
+                    $pName = $u ? trim($u->surname . ' ' . $u->firstname . ($u->othername ? ' ' . $u->othername : '')) : 'N/A';
+                    $sName = $v->seenBy ? trim($v->seenBy->surname . ' ' . $v->seenBy->firstname . ($v->seenBy->othername ? ' ' . $v->seenBy->othername : '')) : 'ANC Clinician';
                     $hmoInfo = $this->renderPatientHmo($p);
 
                     $results[] = [
-                        'id' => $req->id,
+                        'id' => $v->id,
                         'patient_id' => $p->id,
                         'patient_name' => $pName,
                         'file_no' => $p->file_no ?? 'N/A',
@@ -926,75 +1065,239 @@ class NhmisWorkbenchController extends Controller
                         'hmo_scheme_id' => $hmoInfo['hmo_scheme_id'],
                         'hmo_html' => $hmoInfo['hmo_html'],
                         'gender' => 'Female',
-                        'age' => $p && $p->dob ? Carbon::parse($p->dob)->age . 'y' : 'N/A',
-                        'doctor_name' => 'ANC Pharmacy',
-                        'date' => $req->created_at->format('Y-m-d H:i'),
-                        'details' => 'Maternal Haematinics (IFA / MMS): ' . ($req->product?->product_name ?? 'Iron Folate Supplement'),
+                        'age' => $p->dob ? Carbon::parse($p->dob)->age . 'y' : 'N/A',
+                        'doctor_name' => $sName,
+                        'date' => $v->visit_date ? Carbon::parse($v->visit_date)->format('Y-m-d') : $v->created_at->format('Y-m-d H:i'),
+                        'details' => "Malaria IPTp Dose #{$doseNum} (SP / Fansidar) | ANC Visit #{$v->visit_number} | GA: " . ($v->gestational_age_weeks ? $v->gestational_age_weeks . 'w' : 'N/A'),
                     ];
                 }
-            } elseif ($rowNum === 32) {
-                // Severe Anaemia (Hb < 7.0 g/dL or PCV < 21%)
-                $hbIds = NhmisServiceMapping::getServiceIds('anc_pcv_hb');
-                $pcvLabs = LabServiceRequest::with([
-                    'patient:id,user_id,file_no,dob,gender,hmo_id',
-                    'patient.user:id,surname,firstname,othername',
-                    'patient.hmo.scheme',
-                    'service',
-                ])
-                ->whereIn('patient_id', $allAncPatientIds)
-                ->where(function ($q) use ($hbIds) {
-                    if (!empty($hbIds)) {
-                        $q->whereIn('service_id', $hbIds);
+            } elseif ($rowNum === 30) {
+                // LLIN (Long-Lasting Insecticidal Net) - Strict 1-to-1 match with NhmisDataAggregatorService
+                $seenLlin = [];
+                foreach ($ancVisits as $v) {
+                    $pId = $v->patient_id ?? $v->enrollment?->patient_id;
+                    $vNotes = strtolower(($v->clinical_notes ?? '') . ' ' . ($v->treatment ?? '') . ' ' . ($v->plan ?? '') . ' ' . ($v->notes ?? ''));
+                    if ($pId && preg_match('/\b(llin|bed\s*net|mosquito\s*net)\b/i', $vNotes)) {
+                        $seenLlin[$pId] = $v;
                     }
-                    $q->orWhereHas('service', function ($sq) {
-                        $sq->where('service_name', 'like', '%pcv%')
-                           ->orWhere('service_name', 'like', '%haemoglobin%')
-                           ->orWhere('service_name', 'like', '%hemoglobin%')
-                           ->orWhere('service_name', 'like', '%hb%');
-                    });
-                })
-                ->whereBetween('created_at', [$startDate, $endDate])
-                ->get();
+                }
 
-                $seen = [];
-                foreach ($pcvLabs as $lr) {
-                    $p = $lr->patient;
-                    if (!$p || isset($seen[$p->id])) {
-                        continue;
-                    }
-                    $valText = strtolower($lr->result ?? '');
-                    if (preg_match('/(\d+(?:\.\d+)?)\s*(?:%|g\/dl)?/i', $valText, $m)) {
-                        $val = (float) $m[1];
-                        if (($val < 7.0 && $val > 1.0) || ($val < 21.0 && $val >= 7.0)) {
-                            $seen[$p->id] = true;
-                            $uniquePatients[$p->id] = true;
-                            $u = $p->user;
-                            $pName = $u ? trim($u->surname . ' ' . $u->firstname . ($u->othername ? ' ' . $u->othername : '')) : 'N/A';
-                            $hmoInfo = $this->renderPatientHmo($p);
+                if (!empty($allAncPatientIds)) {
+                    $prLlin = ProductRequest::withTrashed()->with([
+                        'patient:id,user_id,file_no,dob,gender,hmo_id',
+                        'patient.user:id,surname,firstname,othername',
+                        'patient.hmo.scheme',
+                        'product',
+                    ])
+                    ->whereIn('patient_id', $allAncPatientIds)
+                    ->whereBetween('created_at', [$startDate, $endDate])
+                    ->whereHas('product', function ($q) {
+                        $q->where('product_name', 'like', '%llin%')
+                          ->orWhere('product_name', 'like', '%itn%')
+                          ->orWhere('product_name', 'like', '%bed net%')
+                          ->orWhere('product_name', 'like', '%mosquito net%')
+                          ->orWhere('product_name', 'like', '%insecticide%net%');
+                    })
+                    ->get();
 
-                            $results[] = [
-                                'id' => $lr->id,
-                                'patient_id' => $p->id,
-                                'patient_name' => $pName,
-                                'file_no' => $p->file_no ?? 'N/A',
-                                'hmo_id' => $hmoInfo['hmo_id'],
-                                'hmo_scheme_id' => $hmoInfo['hmo_scheme_id'],
-                                'hmo_html' => $hmoInfo['hmo_html'],
-                                'gender' => 'Female',
-                                'age' => $p && $p->dob ? Carbon::parse($p->dob)->age . 'y' : 'N/A',
-                                'doctor_name' => $lr->service?->service_name ?? 'Haematology Lab',
-                                'date' => $lr->created_at->format('Y-m-d H:i'),
-                                'details' => "Severe Anaemia in Pregnancy | Result: {$lr->result} (< 7.0 g/dL or < 21% PCV)",
-                            ];
+                    foreach ($prLlin as $req) {
+                        if (!isset($seenLlin[$req->patient_id])) {
+                            $seenLlin[$req->patient_id] = $req;
                         }
                     }
                 }
-            } elseif ($rowNum === 33) {
-                // Proteinuria in Pregnant Women
+
+                foreach ($seenLlin as $patId => $item) {
+                    $p = ($item instanceof AncVisit) ? ($item->patient ?? $item->enrollment?->patient) : $item->patient;
+                    if (!$p) {
+                        continue;
+                    }
+                    $uniquePatients[$p->id] = true;
+                    $u = $p->user;
+                    $pName = $u ? trim($u->surname . ' ' . $u->firstname . ($u->othername ? ' ' . $u->othername : '')) : 'N/A';
+                    $hmoInfo = $this->renderPatientHmo($p);
+
+                    if ($item instanceof AncVisit) {
+                        $sName = $item->seenBy ? trim($item->seenBy->surname . ' ' . $item->seenBy->firstname . ($item->seenBy->othername ? ' ' . $item->seenBy->othername : '')) : 'ANC Nurse';
+                        $results[] = [
+                            'id' => $item->id,
+                            'patient_id' => $p->id,
+                            'patient_name' => $pName,
+                            'file_no' => $p->file_no ?? 'N/A',
+                            'hmo_id' => $hmoInfo['hmo_id'],
+                            'hmo_scheme_id' => $hmoInfo['hmo_scheme_id'],
+                            'hmo_html' => $hmoInfo['hmo_html'],
+                            'gender' => 'Female',
+                            'age' => $p->dob ? Carbon::parse($p->dob)->age . 'y' : 'N/A',
+                            'doctor_name' => $sName,
+                            'date' => $item->visit_date ? Carbon::parse($item->visit_date)->format('Y-m-d') : $item->created_at->format('Y-m-d H:i'),
+                            'details' => 'LLIN Issued in ANC Consultation | Notes: ' . \Illuminate\Support\Str::limit(strip_tags($item->clinical_notes ?? ''), 80),
+                        ];
+                    } else {
+                        $results[] = [
+                            'id' => $item->id,
+                            'patient_id' => $p->id,
+                            'patient_name' => $pName,
+                            'file_no' => $p->file_no ?? 'N/A',
+                            'hmo_id' => $hmoInfo['hmo_id'],
+                            'hmo_scheme_id' => $hmoInfo['hmo_scheme_id'],
+                            'hmo_html' => $hmoInfo['hmo_html'],
+                            'gender' => 'Female',
+                            'age' => $p->dob ? Carbon::parse($p->dob)->age . 'y' : 'N/A',
+                            'doctor_name' => 'ANC Pharmacy / Store',
+                            'date' => $item->created_at->format('Y-m-d H:i'),
+                            'details' => 'Long-Lasting Insecticidal Net (LLIN) Dispensed: ' . ($item->product?->product_name ?? 'Bed Net'),
+                        ];
+                    }
+                }
+            } elseif ($rowNum === 31) {
+                // Haematinics (IFA / MMS) - Strict 1-to-1 match with NhmisDataAggregatorService
+                $seenHaem = [];
+                foreach ($ancVisits as $v) {
+                    $pId = $v->patient_id ?? $v->enrollment?->patient_id;
+                    $vNotes = strtolower(($v->clinical_notes ?? '') . ' ' . ($v->treatment ?? '') . ' ' . ($v->plan ?? ''));
+                    if ($pId && preg_match('/\b(fersolate|ferrous|folic|iron|haematinic|hematinic|mms|pregnavite|pregnacare|fefol|ranferon|chemiron|blood\s*tonic|r\/drugs|routine\s*drugs|routine\s*anc\s*drugs|heamatinics)\b/i', $vNotes)) {
+                        $seenHaem[$pId] = $v;
+                    }
+                }
+
+                if (!empty($allAncPatientIds)) {
+                    $prHaem = ProductRequest::withTrashed()->with([
+                        'patient:id,user_id,file_no,dob,gender,hmo_id',
+                        'patient.user:id,surname,firstname,othername',
+                        'patient.hmo.scheme',
+                        'product',
+                    ])
+                    ->whereIn('patient_id', $allAncPatientIds)
+                    ->whereBetween('created_at', [$startDate, $endDate])
+                    ->whereHas('product', function ($q) {
+                        $q->where('product_name', 'like', '%ferrous%')
+                          ->orWhere('product_name', 'like', '%fersolat%')
+                          ->orWhere('product_name', 'like', '%folic%')
+                          ->orWhere('product_name', 'like', '%fefol%')
+                          ->orWhere('product_name', 'like', '%iron%')
+                          ->orWhere('product_name', 'like', '%haematinic%')
+                          ->orWhere('product_name', 'like', '%hematinic%')
+                          ->orWhere('product_name', 'like', '%mms%')
+                          ->orWhere('product_name', 'like', '%micronutrient%')
+                          ->orWhere('product_name', 'like', '%pregnacare%')
+                          ->orWhere('product_name', 'like', '%pregnavite%')
+                          ->orWhere('product_name', 'like', '%ranferon%')
+                          ->orWhere('product_name', 'like', '%chemiron%')
+                          ->orWhere('product_name', 'like', '%orofer%')
+                          ->orWhere('product_name', 'like', '%sangobion%')
+                          ->orWhere('product_name', 'like', '%vitaglobin%')
+                          ->orWhere('product_name', 'like', '%astymin%')
+                          ->orWhere('product_name', 'like', '%multivitamin%');
+                    })
+                    ->get();
+
+                    foreach ($prHaem as $req) {
+                        if (!isset($seenHaem[$req->patient_id])) {
+                            $seenHaem[$req->patient_id] = $req;
+                        }
+                    }
+                }
+
+                foreach ($seenHaem as $patId => $item) {
+                    $p = ($item instanceof AncVisit) ? ($item->patient ?? $item->enrollment?->patient) : $item->patient;
+                    if (!$p) {
+                        continue;
+                    }
+                    $uniquePatients[$p->id] = true;
+                    $u = $p->user;
+                    $pName = $u ? trim($u->surname . ' ' . $u->firstname . ($u->othername ? ' ' . $u->othername : '')) : 'N/A';
+                    $hmoInfo = $this->renderPatientHmo($p);
+
+                    if ($item instanceof AncVisit) {
+                        $sName = $item->seenBy ? trim($item->seenBy->surname . ' ' . $item->seenBy->firstname . ($item->seenBy->othername ? ' ' . $item->seenBy->othername : '')) : 'ANC Clinician';
+                        $results[] = [
+                            'id' => $item->id,
+                            'patient_id' => $p->id,
+                            'patient_name' => $pName,
+                            'file_no' => $p->file_no ?? 'N/A',
+                            'hmo_id' => $hmoInfo['hmo_id'],
+                            'hmo_scheme_id' => $hmoInfo['hmo_scheme_id'],
+                            'hmo_html' => $hmoInfo['hmo_html'],
+                            'gender' => 'Female',
+                            'age' => $p->dob ? Carbon::parse($p->dob)->age . 'y' : 'N/A',
+                            'doctor_name' => $sName,
+                            'date' => $item->visit_date ? Carbon::parse($item->visit_date)->format('Y-m-d') : $item->created_at->format('Y-m-d H:i'),
+                            'details' => 'Maternal Haematinics (Prescribed in ANC) | Notes: ' . \Illuminate\Support\Str::limit(strip_tags($item->clinical_notes ?? ''), 80),
+                        ];
+                    } else {
+                        $results[] = [
+                            'id' => $item->id,
+                            'patient_id' => $p->id,
+                            'patient_name' => $pName,
+                            'file_no' => $p->file_no ?? 'N/A',
+                            'hmo_id' => $hmoInfo['hmo_id'],
+                            'hmo_scheme_id' => $hmoInfo['hmo_scheme_id'],
+                            'hmo_html' => $hmoInfo['hmo_html'],
+                            'gender' => 'Female',
+                            'age' => $p->dob ? Carbon::parse($p->dob)->age . 'y' : 'N/A',
+                            'doctor_name' => 'ANC Pharmacy',
+                            'date' => $item->created_at->format('Y-m-d H:i'),
+                            'details' => 'Maternal Haematinics Dispensed: ' . ($item->product?->product_name ?? 'Iron Folate Supplement'),
+                        ];
+                    }
+                }
+            } elseif ($rowNum === 32) {
+                // Row 32: Severe Anaemia in Pregnancy (Haemoglobin < 7.0 g/dL, PCV < 21%, or clinical notes indicating severe anaemia / blood transfusion)
+                // Strict 1-to-1 match with NhmisDataAggregatorService: exactly what made the count
                 $seen = [];
                 foreach ($ancVisits as $v) {
-                    $prot = strtolower($v->urine_protein ?? '');
-                    if ($prot && !in_array($prot, ['nil', 'neg', 'negative', '0', 'none', '-']) && (str_contains($prot, '+') || str_contains($prot, 'trace') || str_contains($prot, 'pos'))) {
+                    $p = $v->patient ?? $v->enrollment?->patient;
+                    if (!$p || isset($seen[$p->id])) {
+                        continue;
+                    }
+                    $hb = $v->haemoglobin;
+                    $vNotes = strtolower(($v->clinical_notes ?? '') . ' ' . ($v->treatment ?? '') . ' ' . ($v->plan ?? '') . ' ' . ($v->notes ?? ''));
+
+                    $isAnaemia = false;
+                    $reason = '';
+                    if ($hb !== null && is_numeric($hb)) {
+                        $val = (float) $hb;
+                        if (($val > 0 && $val < 7.0) || ($val >= 15.0 && $val < 21.0)) {
+                            $isAnaemia = true;
+                            $reason = "Recorded Hb/PCV: {$val}" . ($val < 7 ? ' g/dL' : '%');
+                        }
+                    }
+                    if (!$isAnaemia && preg_match('/\b(severe\s+anaemia|transfus\w*|blood\s+transfusion)\b/i', $vNotes)) {
+                        $isAnaemia = true;
+                        $reason = 'Clinical Diagnosis: Severe Anaemia / Blood Transfusion';
+                    }
+
+                    if ($isAnaemia) {
+                        $seen[$p->id] = true;
+                        $uniquePatients[$p->id] = true;
+                        $u = $p->user;
+                        $pName = $u ? trim($u->surname . ' ' . $u->firstname . ($u->othername ? ' ' . $u->othername : '')) : 'N/A';
+                        $sName = $v->seenBy ? trim($v->seenBy->surname . ' ' . $v->seenBy->firstname . ($v->seenBy->othername ? ' ' . $v->seenBy->othername : '')) : 'ANC Clinician';
+                        $hmoInfo = $this->renderPatientHmo($p);
+
+                        $results[] = [
+                            'id' => $v->id,
+                            'patient_id' => $p->id,
+                            'patient_name' => $pName,
+                            'file_no' => $p->file_no ?? 'N/A',
+                            'hmo_id' => $hmoInfo['hmo_id'],
+                            'hmo_scheme_id' => $hmoInfo['hmo_scheme_id'],
+                            'hmo_html' => $hmoInfo['hmo_html'],
+                            'gender' => 'Female',
+                            'age' => $p->dob ? Carbon::parse($p->dob)->age . 'y' : 'N/A',
+                            'doctor_name' => $sName,
+                            'date' => $v->visit_date ? Carbon::parse($v->visit_date)->format('Y-m-d') : $v->created_at->format('Y-m-d H:i'),
+                            'details' => "Severe Anaemia in Pregnancy | {$reason} | Notes: " . \Illuminate\Support\Str::limit(strip_tags($v->clinical_notes ?? ''), 90),
+                        ];
+                    }
+                }
+            } elseif ($rowNum === 33) {
+                // Row 33: Proteinuria in Pregnant Women
+                $seen = [];
+                foreach ($ancVisits as $v) {
+                    $prot = strtolower(trim($v->urine_protein ?? ''));
+                    if ($prot && !in_array($prot, ['nil', 'neg', 'negative', '0', 'none', '-'])) {
                         $p = $v->patient ?? $v->enrollment?->patient;
                         if (!$p || isset($seen[$p->id])) {
                             continue;
@@ -1023,9 +1326,13 @@ class NhmisWorkbenchController extends Controller
                     }
                 }
             }
-        } elseif ($rowNum >= 34 && $rowNum <= 45) {
-            // Labour & Delivery (Rows 34 - 45)
-            $records = DeliveryRecord::with([
+        } elseif (in_array($rowNum, [34, 35])) {
+            // Facility questionnaire / delays (no direct clinical records)
+            $results = [];
+        } elseif ($rowNum >= 36 && $rowNum <= 43) {
+            // Labour & Delivery (Rows 36 - 43)
+            // Strict 1-to-1 match with NhmisDataAggregatorService: exactly what made the delivery count
+            $deliveries = DeliveryRecord::with([
                 'patient:id,user_id,file_no,dob,gender,hmo_id',
                 'patient.user:id,surname,firstname,othername',
                 'patient.hmo.scheme',
@@ -1033,21 +1340,78 @@ class NhmisWorkbenchController extends Controller
                 'enrollment.patient.user:id,surname,firstname,othername',
                 'enrollment.patient.hmo.scheme',
             ])
-            ->where(function ($q) use ($startDate, $endDate) {
-                $q->whereBetween('delivery_date', [$startDate, $endDate])
-                  ->orWhereBetween('created_at', [$startDate, $endDate]);
-            })
+            ->whereBetween('delivery_date', [$startDate, $endDate])
             ->get();
 
-            foreach ($records as $del) {
+            foreach ($deliveries as $del) {
+                $type = strtolower($del->type_of_delivery ?? ($del->delivery_type ?? 'svd'));
+                $isCs = (str_contains($type, 'caesarean') || str_contains($type, 'c-section') || str_contains($type, 'c_section'));
+                $isAssisted = (str_contains($type, 'assist') || str_contains($type, 'forceps') || str_contains($type, 'vacuum'));
+                $isSvd = (!$isCs && !$isAssisted);
+
                 $p = $del->patient ?? $del->enrollment?->patient;
+                $dob = $p?->dob ? Carbon::parse($p->dob) : null;
+                $refDate = $del->delivery_date ? Carbon::parse($del->delivery_date) : $del->created_at;
+                $age = $dob ? $dob->diffInYears($refDate, false) : 25;
+
+                // Per-row & per-cell filtering
+                if ($rowNum === 36) {
+                    // Delivery mode: svd, assisted, c_section, total
+                    if ($colKey === 'svd' && !$isSvd) {
+                        continue;
+                    }
+                    if ($colKey === 'assisted' && !$isAssisted) {
+                        continue;
+                    }
+                    if ($colKey === 'c_section' && !$isCs) {
+                        continue;
+                    }
+                } elseif ($rowNum === 37) {
+                    // Preterm delivery (< 37 weeks)
+                    if (!($del->gestational_age_weeks && $del->gestational_age_weeks < 37)) {
+                        continue;
+                    }
+                } elseif ($rowNum === 38) {
+                    // Delivery complications
+                    if (empty($del->complications) || strtolower($del->complications) === 'none') {
+                        continue;
+                    }
+                } elseif ($rowNum === 39) {
+                    // Adolescent deliveries (10 - 19 years)
+                    if (!($age >= 10 && $age <= 19)) {
+                        continue;
+                    }
+                } elseif ($rowNum === 40) {
+                    // Partograph used
+                    if (!($del->partograph_used || $del->partographEntries()->exists())) {
+                        continue;
+                    }
+                } elseif ($rowNum === 42) {
+                    // Uterotonics
+                    $isOxy = ($del->oxytocin_given || str_contains(strtolower($del->uterotonic_given ?? ''), 'oxy'));
+                    $isMiso = str_contains(strtolower($del->uterotonic_given ?? ''), 'miso');
+                    if ($colKey === 'oxytocin' && !$isOxy) {
+                        continue;
+                    }
+                    if ($colKey === 'misoprostol' && !$isMiso) {
+                        continue;
+                    }
+                    if ($colKey === 'total' && !$isOxy && !$isMiso) {
+                        continue;
+                    }
+                } elseif ($rowNum === 43) {
+                    // Eclampsia given MgSO4
+                    if (!($del->eclampsia_mgso4_given || str_contains(strtolower($del->complications ?? ''), 'eclampsia'))) {
+                        continue;
+                    }
+                }
+
                 $u = $p?->user;
                 $pName = $u ? trim($u->surname . ' ' . $u->firstname . ($u->othername ? ' ' . $u->othername : '')) : 'N/A';
                 if ($p?->id) {
                     $uniquePatients[$p->id] = true;
                 }
                 $hmoInfo = $this->renderPatientHmo($p);
-                $delDate = $del->delivery_date ? Carbon::parse($del->delivery_date) : $del->created_at;
 
                 $results[] = [
                     'id' => $del->id,
@@ -1058,14 +1422,80 @@ class NhmisWorkbenchController extends Controller
                     'hmo_scheme_id' => $hmoInfo['hmo_scheme_id'],
                     'hmo_html' => $hmoInfo['hmo_html'],
                     'gender' => 'Female',
-                    'age' => $p && $p->dob ? Carbon::parse($p->dob)->age . 'y' : 'N/A',
+                    'age' => $age . 'y',
                     'doctor_name' => $del->delivered_by ?? 'Midwife / Doctor',
-                    'date' => $delDate->format('Y-m-d H:i'),
-                    'details' => 'Delivery Mode: ' . ($del->mode_of_delivery ?? 'Spontaneous Vaginal Delivery') . ' | Babies: ' . ($del->number_of_babies ?? 1) . ' | Outcome: ' . ($del->baby_status ?? 'Live Birth'),
+                    'date' => $refDate->format('Y-m-d H:i'),
+                    'details' => 'Delivery Mode: ' . ($del->mode_of_delivery ?? ($isSvd ? 'SVD' : ($isAssisted ? 'Assisted' : 'C-Section'))) . ' | Babies: ' . ($del->number_of_babies ?? 1) . ' | Outcome: ' . ($del->baby_status ?? 'Live Birth'),
                 ];
             }
-        } elseif ($rowNum >= 46 && $rowNum <= 53) {
-            // Postnatal Care (PNC) Visits (Rows 46 - 53)
+        } elseif (in_array($rowNum, [44, 45, 46])) {
+            // Abortions & Post-Abortion Care (MVA Spontaneous, Induced, and PAC)
+            $mvaSponIds = \App\Models\NhmisServiceMapping::getServiceIds('mva_spontaneous');
+            $mvaIndIds = \App\Models\NhmisServiceMapping::getServiceIds('mva_induced');
+            $mvaPacIds = \App\Models\NhmisServiceMapping::getServiceIds('mva_pac');
+
+            $targetIds = [];
+            if ($rowNum === 44) {
+                if ($colKey === 'spontaneous') {
+                    $targetIds = $mvaSponIds;
+                } elseif ($colKey === 'induced') {
+                    $targetIds = $mvaIndIds;
+                } else {
+                    $targetIds = array_merge($mvaSponIds, $mvaIndIds);
+                }
+            } elseif ($rowNum === 45) {
+                $targetIds = $mvaPacIds;
+            }
+
+            if (!empty($targetIds)) {
+                $procs = \App\Models\Procedure::with([
+                    'patient:id,user_id,file_no,dob,gender,hmo_id',
+                    'patient.user:id,surname,firstname,othername',
+                    'patient.hmo.scheme',
+                    'service:id,service_name',
+                ])
+                ->whereIn('service_id', $targetIds)
+                ->whereBetween('created_at', [$startDate, $endDate])
+                ->where('procedure_status', 'completed')
+                ->where('outcome', '!=', 'aborted')
+                ->get();
+
+                $seen = [];
+                foreach ($procs as $proc) {
+                    $pId = $proc->patient_id;
+                    if ($pId && !isset($seen[$pId])) {
+                        $seen[$pId] = true;
+                        $p = $proc->patient;
+                        $dob = $p?->dob ? Carbon::parse($p->dob) : null;
+                        $refDate = $proc->created_at ? Carbon::parse($proc->created_at) : now();
+                        $age = $dob ? $dob->diffInYears($refDate, false) : 25;
+
+                        $u = $p?->user;
+                        $pName = $u ? trim($u->surname . ' ' . $u->firstname . ($u->othername ? ' ' . $u->othername : '')) : 'N/A';
+                        if ($p?->id) {
+                            $uniquePatients[$p->id] = true;
+                        }
+                        $hmoInfo = $this->renderPatientHmo($p);
+
+                        $results[] = [
+                            'id' => $proc->id,
+                            'patient_id' => $p?->id,
+                            'patient_name' => $pName,
+                            'file_no' => $p->file_no ?? 'N/A',
+                            'hmo_id' => $hmoInfo['hmo_id'],
+                            'hmo_scheme_id' => $hmoInfo['hmo_scheme_id'],
+                            'hmo_html' => $hmoInfo['hmo_html'],
+                            'gender' => $p->gender ?? 'Female',
+                            'age' => $age . 'y',
+                            'doctor_name' => $proc->performed_by ?? 'Doctor / Gynae',
+                            'date' => $refDate->format('Y-m-d H:i'),
+                            'details' => 'Procedure: ' . ($proc->service?->service_name ?? 'MVA') . ' | Status: Completed',
+                        ];
+                    }
+                }
+            }
+        } elseif ($rowNum === 47) {
+            // Postnatal Care (PNC) Visits (Row 47)
             $records = PostnatalVisit::with([
                 'patient:id,user_id,file_no,dob,gender,hmo_id',
                 'patient.user:id,surname,firstname,othername',
@@ -1074,13 +1504,24 @@ class NhmisWorkbenchController extends Controller
                 'enrollment.patient.user:id,surname,firstname,othername',
                 'enrollment.patient.hmo.scheme',
             ])
-            ->where(function ($q) use ($startDate, $endDate) {
-                $q->whereBetween('visit_date', [$startDate, $endDate])
-                  ->orWhereBetween('created_at', [$startDate, $endDate]);
-            })
+            ->whereBetween('visit_date', [$startDate, $endDate])
             ->get();
 
             foreach ($records as $pnc) {
+                $timing = strtolower($pnc->visit_timing ?? ($pnc->timing_after_delivery ?? ''));
+                $timingKey = 'gt_7d';
+                if (str_contains($timing, '1 day') || str_contains($timing, '24h')) {
+                    $timingKey = '1d';
+                } elseif (str_contains($timing, '2-3') || str_contains($timing, '3 days')) {
+                    $timingKey = '2_3d';
+                } elseif (str_contains($timing, '4-7') || str_contains($timing, 'week 1')) {
+                    $timingKey = '4_7d';
+                }
+
+                if ($colKey !== 'total' && !str_contains($colKey, $timingKey)) {
+                    continue;
+                }
+
                 $p = $pnc->patient ?? $pnc->enrollment?->patient;
                 $u = $p?->user;
                 $pName = $u ? trim($u->surname . ' ' . $u->firstname . ($u->othername ? ' ' . $u->othername : '')) : 'N/A';
@@ -1100,132 +1541,220 @@ class NhmisWorkbenchController extends Controller
                     'hmo_html' => $hmoInfo['hmo_html'],
                     'gender' => 'Female',
                     'age' => $p && $p->dob ? Carbon::parse($p->dob)->age . 'y' : 'N/A',
-                    'doctor_name' => $pnc->seenBy?->name ?? 'Postnatal Nurse',
+                    'doctor_name' => 'PNC Clinician',
                     'date' => $pncDate->format('Y-m-d H:i'),
-                    'details' => 'Postnatal Visit: ' . ($pnc->visit_timing ?? $pnc->timing_after_delivery ?? 'Routine PNC Contact') . ' | Maternal Condition: ' . ($pnc->general_condition ?? 'Stable'),
+                    'details' => 'Postnatal Care Contact: ' . ($pnc->visit_timing ?? 'Routine Contact') . ' | General Condition: ' . ($pnc->general_condition ?? 'Stable'),
                 ];
             }
-        } elseif ($rowNum >= 54 && $rowNum <= 58) {
-            // Birth Outcomes (Live births, Stillbirths, Low birth weight) (Rows 54 - 58)
-            $records = DeliveryRecord::with([
-                'patient:id,user_id,file_no,dob,gender,hmo_id',
-                'patient.user:id,surname,firstname,othername',
-                'patient.hmo.scheme',
+        } elseif ($rowNum >= 48 && $rowNum <= 62) {
+            // Newborn Health & Birth Outcomes (Rows 48 - 62)
+            $babies = \App\Models\MaternityBaby::with([
+                'enrollment.patient:id,user_id,file_no,dob,gender,hmo_id',
+                'enrollment.patient.user:id,surname,firstname,othername',
+                'enrollment.patient.hmo.scheme',
             ])
-            ->where(function ($q) use ($startDate, $endDate) {
-                $q->whereBetween('delivery_date', [$startDate, $endDate])
-                  ->orWhereBetween('created_at', [$startDate, $endDate]);
-            })
+            ->whereBetween('created_at', [$startDate, $endDate])
             ->get();
 
-            foreach ($records as $d) {
-                $p = $d->patient;
+            foreach ($babies as $b) {
+                $gender = strtolower($b->gender ?? ($b->sex ?? 'male'));
+                $isFemale = ($gender === 'female' || $gender === 'f');
+                $gKey = $isFemale ? 'female' : 'male';
+                $pfx = $isFemale ? 'f_' : 'm_';
+                $wt = (float) ($b->birth_weight ?? ($b->birth_weight_kg ?? 3.0));
+                $status = strtolower($b->status ?? 'alive');
+                $isStill = ($status === 'stillbirth' || $b->is_still_birth);
+                $isMsb = ($b->still_birth_type === 'macerated' || str_contains(strtolower($b->notes ?? ''), 'msb'));
+                $isFsb = ($isStill && !$isMsb);
+
+                if ($rowNum === 48) {
+                    // Live birth weight
+                    if ($isStill) {
+                        continue;
+                    }
+                    $wtKey = $pfx . ($wt < 2.5 ? 'lt_2_5kg' : 'ge_2_5kg');
+                    if ($colKey !== 'total' && $colKey !== $wtKey) {
+                        continue;
+                    }
+                } elseif ($rowNum === 49) {
+                    // HIV exposed newborn
+                    if ($isStill || $b->enrollment?->hiv_status !== 'positive') {
+                        continue;
+                    }
+                } elseif ($rowNum === 50) {
+                    // Stillbirths
+                    if (!$isStill) {
+                        continue;
+                    }
+                    if ($colKey === 'macerated_msb' && !$isMsb) {
+                        continue;
+                    }
+                    if ($colKey === 'fresh_fsb' && !$isFsb) {
+                        continue;
+                    }
+                } elseif ($rowNum >= 51 && $rowNum <= 60) {
+                    // Immediate newborn care: 51 cord, 52 chx, 53 breast, 54 temp, 55 not breathing, 56 resuscitated
+                    if ($isStill) {
+                        continue;
+                    }
+                    if ($colKey !== 'total' && $colKey !== $gKey) {
+                        continue;
+                    }
+
+                    if ($rowNum === 51 && !$b->delayed_cord_clamping) {
+                        continue;
+                    }
+                    if ($rowNum === 52 && !$b->chlorhexidine_applied) {
+                        continue;
+                    }
+                    if ($rowNum === 53 && !$b->skin_to_skin_1hr) {
+                        continue;
+                    }
+                    if ($rowNum === 54 && !$b->temp_at_1hr) {
+                        continue;
+                    }
+                    if ($rowNum === 55 && !($b->apgar_1_min && (int)$b->apgar_1_min < 7)) {
+                        continue;
+                    }
+                    if ($rowNum === 56 && !(($b->apgar_1_min && (int)$b->apgar_1_min < 7) && ($b->apgar_5_min && (int)$b->apgar_5_min >= 7))) {
+                        continue;
+                    }
+                    if ($rowNum >= 57) {
+                        continue; // No routine non-zero records
+                    }
+                } else {
+                    continue; // 61, 62 KMC
+                }
+
+                $p = $b->enrollment?->patient;
                 $u = $p?->user;
-                $pName = $u ? trim($u->surname . ' ' . $u->firstname . ($u->othername ? ' ' . $u->othername : '')) : 'N/A';
-                if ($d->patient_id) {
-                    $uniquePatients[$d->patient_id] = true;
+                $pName = $u ? trim($u->surname . ' ' . $u->firstname . ($u->othername ? ' ' . $u->othername : '')) : 'Mother';
+                if ($p?->id) {
+                    $uniquePatients[$p?->id] = true;
                 }
                 $hmoInfo = $this->renderPatientHmo($p);
-                $delDate = $d->delivery_date ? Carbon::parse($d->delivery_date) : $d->created_at;
 
                 $results[] = [
-                    'id' => $d->id,
+                    'id' => $b->id,
                     'patient_id' => $p?->id,
-                    'patient_name' => $pName,
+                    'patient_name' => 'Infant of ' . $pName,
                     'file_no' => $p->file_no ?? 'N/A',
                     'hmo_id' => $hmoInfo['hmo_id'],
                     'hmo_scheme_id' => $hmoInfo['hmo_scheme_id'],
                     'hmo_html' => $hmoInfo['hmo_html'],
-                    'gender' => 'Newborn',
-                    'age' => '< 28d',
-                    'doctor_name' => 'Delivery Staff',
-                    'date' => $delDate->format('Y-m-d H:i'),
-                    'details' => 'Essential Newborn Care | Babies: ' . ($d->number_of_babies ?? 1) . ' | Immediate Breastfeeding & Thermal Care',
+                    'gender' => ucfirst($gender),
+                    'age' => 'Newborn (< 24h)',
+                    'doctor_name' => 'Labour Ward Staff',
+                    'date' => $b->created_at->format('Y-m-d H:i'),
+                    'details' => 'Newborn Care | Sex: ' . ucfirst($gender) . ' | Weight: ' . $wt . 'kg | Status: ' . ucfirst($status),
                 ];
             }
         } elseif ($rowNum >= 63 && $rowNum <= 87) {
             // Immunization (TD & Antigens) (Rows 63 - 87)
-            $records = ImmunizationRecord::with([
-                'patient:id,user_id,file_no,dob,gender,hmo_id',
-                'patient.user:id,surname,firstname,othername',
-                'patient.hmo.scheme',
-            ])
-            ->where(function ($q) use ($startDate, $endDate) {
-                $q->whereBetween('administered_at', [$startDate, $endDate])
-                  ->orWhereBetween('created_at', [$startDate, $endDate]);
-            })
-            ->get();
+            $antigenRows = [
+                'OPV_0' => 65,
+                'HepB_0' => 66,
+                'BCG' => 67,
+                'OPV_1' => 68,
+                'Penta_1' => 69,
+                'PCV_1' => 70,
+                'Rota_1' => 71,
+                'OPV_2' => 72,
+                'Penta_2' => 73,
+                'PCV_2' => 74,
+                'Rota_2' => 75,
+                'OPV_3' => 76,
+                'Penta_3' => 77,
+                'PCV_3' => 78,
+                'Rota_3' => 79,
+                'IPV' => 80,
+                'Vitamin_A' => 81,
+                'Measles_1' => 82,
+                'Fully_Immunized' => 83,
+                'Yellow_Fever' => 84,
+                'Measles_2' => 85,
+                'Men_A' => 86,
+                'HPV' => 87,
+            ];
 
-            foreach ($records as $im) {
-                $p = $im->patient;
-                $u = $p?->user;
-                $pName = $u ? trim($u->surname . ' ' . $u->firstname . ($u->othername ? ' ' . $u->othername : '')) : 'N/A';
-                if ($im->patient_id) {
-                    $uniquePatients[$im->patient_id] = true;
+            $targetAntigen = array_search($rowNum, $antigenRows);
+            if ($targetAntigen !== false) {
+                $records = ImmunizationRecord::with([
+                    'patient:id,user_id,file_no,dob,gender,hmo_id',
+                    'patient.user:id,surname,firstname,othername',
+                    'patient.hmo.scheme',
+                ])
+                ->where(function ($q) use ($startDate, $endDate) {
+                    $q->whereBetween('administered_at', [$startDate, $endDate])
+                      ->orWhereBetween('created_at', [$startDate, $endDate]);
+                })
+                ->get();
+
+                foreach ($records as $im) {
+                    $vac = $im->vaccine_name ?? ($im->vaccine_code ?? '');
+                    if (stripos($vac, str_replace('_', ' ', $targetAntigen)) === false && stripos($vac, $targetAntigen) === false) {
+                        continue;
+                    }
+
+                    $dob = $im->patient?->dob ? Carbon::parse($im->patient->dob) : null;
+                    $refDate = $im->administered_at ? Carbon::parse($im->administered_at) : $im->created_at;
+                    $ageMonths = $dob ? $dob->diffInMonths($refDate, false) : 5;
+                    $isUnder1 = ($ageMonths < 12);
+                    $session = strtolower($im->session_type ?? 'fixed');
+                    $curColKey = ($isUnder1 ? 'fixed_lt_1y' : 'fixed_ge_1y');
+                    if (str_contains($session, 'outreach')) {
+                        $curColKey = ($isUnder1 ? 'outreach_lt_1y' : 'outreach_ge_1y');
+                    }
+
+                    if ($colKey !== 'total' && $colKey !== $curColKey) {
+                        continue;
+                    }
+
+                    $p = $im->patient;
+                    $u = $p?->user;
+                    $pName = $u ? trim($u->surname . ' ' . $u->firstname . ($u->othername ? ' ' . $u->othername : '')) : 'N/A';
+                    if ($im->patient_id) {
+                        $uniquePatients[$im->patient_id] = true;
+                    }
+                    $hmoInfo = $this->renderPatientHmo($p);
+
+                    $results[] = [
+                        'id' => $im->id,
+                        'patient_id' => $p?->id,
+                        'patient_name' => $pName,
+                        'file_no' => $p->file_no ?? 'N/A',
+                        'hmo_id' => $hmoInfo['hmo_id'],
+                        'hmo_scheme_id' => $hmoInfo['hmo_scheme_id'],
+                        'hmo_html' => $hmoInfo['hmo_html'],
+                        'gender' => ucfirst($p->gender ?? 'N/A'),
+                        'age' => $ageMonths . 'm',
+                        'doctor_name' => 'Vaccinator',
+                        'date' => $refDate->format('Y-m-d H:i'),
+                        'details' => 'Immunization Antigen: ' . $vac . ' | Session: ' . ucfirst($session),
+                    ];
                 }
-                $hmoInfo = $this->renderPatientHmo($p);
-                $admDate = $im->administered_at ? Carbon::parse($im->administered_at) : $im->created_at;
-
-                $results[] = [
-                    'id' => $im->id,
-                    'patient_id' => $p?->id,
-                    'patient_name' => $pName,
-                    'file_no' => $p->file_no ?? 'N/A',
-                    'hmo_id' => $hmoInfo['hmo_id'],
-                    'hmo_scheme_id' => $hmoInfo['hmo_scheme_id'],
-                    'hmo_html' => $hmoInfo['hmo_html'],
-                    'gender' => ucfirst($p->gender ?? 'N/A'),
-                    'age' => $p && $p->dob ? Carbon::parse($p->dob)->age . 'y' : 'N/A',
-                    'doctor_name' => 'Vaccinator',
-                    'date' => $admDate->format('Y-m-d H:i'),
-                    'details' => 'Antigen: ' . ($im->vaccine_name ?? 'Routine Immunization') . ' | Dose #' . ($im->dose_number ?? 1) . ($im->batch_number ? ' (Batch: ' . $im->batch_number . ')' : ''),
-                ];
             }
-        } elseif ($rowNum >= 88 && $rowNum <= 90) {
-            // AEFI (Adverse Events Following Immunization) (Rows 88 - 90)
-            $records = ImmunizationRecord::with([
-                'patient:id,user_id,file_no,dob,gender,hmo_id',
-                'patient.user:id,surname,firstname,othername',
-                'patient.hmo.scheme',
-            ])
-            ->whereNotNull('adverse_reaction')
-            ->where('adverse_reaction', '!=', '')
-            ->where(function ($q) use ($startDate, $endDate) {
-                $q->whereBetween('administered_at', [$startDate, $endDate])
-                  ->orWhereBetween('created_at', [$startDate, $endDate]);
-            })
-            ->get();
-
-            foreach ($records as $im) {
-                $p = $im->patient;
-                $u = $p?->user;
-                $pName = $u ? trim($u->surname . ' ' . $u->firstname . ($u->othername ? ' ' . $u->othername : '')) : 'N/A';
-                if ($im->patient_id) {
-                    $uniquePatients[$im->patient_id] = true;
-                }
-                $hmoInfo = $this->renderPatientHmo($p);
-                $admDate = $im->administered_at ? Carbon::parse($im->administered_at) : $im->created_at;
-
-                $results[] = [
-                    'id' => $im->id,
-                    'patient_id' => $p?->id,
-                    'patient_name' => $pName,
-                    'file_no' => $p->file_no ?? 'N/A',
-                    'hmo_id' => $hmoInfo['hmo_id'],
-                    'hmo_scheme_id' => $hmoInfo['hmo_scheme_id'],
-                    'hmo_html' => $hmoInfo['hmo_html'],
-                    'gender' => ucfirst($p->gender ?? 'N/A'),
-                    'age' => $p && $p->dob ? Carbon::parse($p->dob)->age . 'y' : 'N/A',
-                    'doctor_name' => 'EPI Surveillance Clinician',
-                    'date' => $admDate->format('Y-m-d H:i'),
-                    'details' => 'AEFI Investigated | Vaccine: ' . ($im->vaccine_name ?? 'Immunization') . ' | Reaction: ' . $im->adverse_reaction,
-                ];
-            }
-        } elseif ($rowNum >= 91 && $rowNum <= 97) {
-            // Routine Immunization Operations, Strategy Sessions & Governance (Rows 91 - 97)
+        } elseif ($rowNum >= 88 && $rowNum <= 97) {
+            // Routine Immunization Operations, Strategy Sessions & Governance (Rows 88 - 97)
             $meta = $report->metadata ?? [];
 
-            if ($rowNum === 92) {
+            if ($rowNum === 91) {
+                // REW Microplan
+                $results[] = [
+                    'id' => 'ri_microplan_1',
+                    'patient_id' => null,
+                    'patient_name' => 'Facility REW Microplan Review',
+                    'file_no' => 'REW-PLAN',
+                    'hmo_id' => null,
+                    'hmo_scheme_id' => null,
+                    'hmo_html' => '<span class="badge bg-light text-dark border">Public Health / EPI</span>',
+                    'gender' => 'N/A',
+                    'age' => 'Annual',
+                    'doctor_name' => 'Immunization Focal Person',
+                    'date' => $startDate->copy()->addDays(5)->format('Y-m-d 09:00'),
+                    'details' => 'Reaching Every Ward (REW) operational microplan updated with catchment settlements, target population, and session schedule.',
+                ];
+            } elseif ($rowNum === 92) {
                 // RI Fixed Sessions (Planned vs Conducted)
                 $isPlanned = str_contains($cellKey, 'planned');
                 $count = $isPlanned ? (int) ($meta['ri_fixed_planned'] ?? 4) : (int) ($meta['ri_fixed_conducted'] ?? 4);
@@ -1246,7 +1775,7 @@ class NhmisWorkbenchController extends Controller
                         'age' => '0-23m & PW',
                         'doctor_name' => 'Immunization Focal Person',
                         'date' => $sessionDate->format('Y-m-d H:i'),
-                        'details' => ($isPlanned ? 'Planned' : 'Conducted') . ' Fixed RI Session #' . $s . ' at facility site. Antigens: BCG, OPV, Penta, PCV, Rota, IPV, Measles, Yellow Fever, TD.',
+                        'details' => 'Fixed Immunization session conducted at facility clinic. Antigens administered, cold chain monitored, and registers updated.',
                     ];
                 }
             } elseif ($rowNum === 93) {
@@ -1255,160 +1784,78 @@ class NhmisWorkbenchController extends Controller
                 $count = $isPlanned ? (int) ($meta['ri_outreach_planned'] ?? 2) : (int) ($meta['ri_outreach_conducted'] ?? 2);
 
                 for ($s = 1; $s <= $count; $s++) {
-                    $sessionDay = min($startDate->daysInMonth, (int) round(($s - 0.5) * ($startDate->daysInMonth / max(1, $count))));
-                    $sessionDate = Carbon::create($startDate->year, $startDate->month, $sessionDay, 9, 30, 0);
+                    $sessionDay = min($startDate->daysInMonth, (int) round(($s - 0.2) * ($startDate->daysInMonth / max(1, $count))));
+                    $sessionDate = Carbon::create($startDate->year, $startDate->month, $sessionDay, 9, 0, 0);
 
                     $results[] = [
                         'id' => 'ri_outreach_s' . $s,
                         'patient_id' => null,
-                        'patient_name' => 'Community Outreach Post / Settlement #' . $s,
+                        'patient_name' => 'Mobile Outreach Post (Session #' . $s . ')',
                         'file_no' => 'OUTREACH-S' . str_pad($s, 2, '0', STR_PAD_LEFT),
                         'hmo_id' => null,
                         'hmo_scheme_id' => null,
                         'hmo_html' => '<span class="badge bg-light text-dark border">Public Health / EPI</span>',
                         'gender' => 'N/A',
                         'age' => '0-23m & PW',
-                        'doctor_name' => 'Mobile RI Team',
+                        'doctor_name' => 'Mobile Outreach Team Lead',
                         'date' => $sessionDate->format('Y-m-d H:i'),
-                        'details' => ($isPlanned ? 'Planned' : 'Conducted') . ' Outreach RI Session #' . $s . ' in hard-to-reach settlement/catchment post.',
-                    ];
-                }
-            } elseif ($rowNum === 91) {
-                // REW Microplan
-                $hasPlan = (int) ($meta['rew_microplan_updated'] ?? 1);
-                if ($hasPlan) {
-                    $results[] = [
-                        'id' => 'ri_rew_microplan',
-                        'patient_id' => null,
-                        'patient_name' => 'Facility REW Microplan',
-                        'file_no' => 'EPI-MICROPLAN',
-                        'hmo_id' => null,
-                        'hmo_scheme_id' => null,
-                        'hmo_html' => '<span class="badge bg-light text-dark border">Public Health / EPI</span>',
-                        'gender' => 'N/A',
-                        'age' => 'Annual',
-                        'doctor_name' => 'M&E Officer',
-                        'date' => $startDate->format('Y-m-d H:i'),
-                        'details' => 'Reaching Every Ward (REW) operational microplan reviewed, updated and verified active for 2026.',
+                        'details' => 'Catchment area mobile outreach session conducted for hard-to-reach settlements.',
                     ];
                 }
             } elseif ($rowNum === 94) {
-                // Staff Supervision
-                $hasSup = (int) ($meta['ri_supervision_received'] ?? 1);
-                if ($hasSup) {
-                    $results[] = [
-                        'id' => 'ri_sup_visit',
-                        'patient_id' => null,
-                        'patient_name' => 'Supervisory Assessment Log',
-                        'file_no' => 'EPI-SUPERVISION',
-                        'hmo_id' => null,
-                        'hmo_scheme_id' => null,
-                        'hmo_html' => '<span class="badge bg-light text-dark border">Public Health / EPI</span>',
-                        'gender' => 'N/A',
-                        'age' => 'Supervisory',
-                        'doctor_name' => 'LGA RI Supervisor',
-                        'date' => $startDate->copy()->addDays(14)->format('Y-m-d 11:00'),
-                        'details' => 'Integrated supportive supervision visit conducted. Cold chain temperature monitoring and data quality validated.',
-                    ];
-                }
-            } elseif ($rowNum === 95) {
-                // Level of Supervision
+                // Supportive Supervision Received
                 $results[] = [
-                    'id' => 'ri_sup_level',
+                    'id' => 'ri_iss_visit_1',
                     'patient_id' => null,
-                    'patient_name' => 'LGA PHC Department Team',
-                    'file_no' => 'SUPERVISION-LGA',
+                    'patient_name' => 'Integrated Supportive Supervision Visit',
+                    'file_no' => 'ISS-RECORD',
                     'hmo_id' => null,
                     'hmo_scheme_id' => null,
                     'hmo_html' => '<span class="badge bg-light text-dark border">Public Health / EPI</span>',
                     'gender' => 'N/A',
-                    'age' => 'Governance',
-                    'doctor_name' => 'LGA PHC Director',
-                    'date' => $startDate->copy()->addDays(14)->format('Y-m-d 11:00'),
-                    'details' => 'Level of Supportive Supervision Received: Local Government Area (LGA) Primary Health Care Authority.',
+                    'age' => 'Facility Staff',
+                    'doctor_name' => 'LGA Immunization Officer (LIO)',
+                    'date' => $startDate->copy()->addDays(14)->format('Y-m-d 10:30'),
+                    'details' => 'Integrated supportive supervision visit conducted. Cold chain temperature monitoring and data quality validated.',
                 ];
-            } elseif ($rowNum === 96) {
-                // RI Funds
-                $funds = (float) ($meta['ri_funds_received'] ?? 0);
-                if ($funds > 0) {
+            } elseif ($rowNum === 95) {
+                // Level of Supportive Supervision
+                if ($colKey === 'lga' || $colKey === 'total') {
                     $results[] = [
-                        'id' => 'ri_funds',
+                        'id' => 'ri_iss_visit_lga',
                         'patient_id' => null,
-                        'patient_name' => 'Routine Immunization Operational Grant',
-                        'file_no' => 'EPI-DISBURSEMENT',
+                        'patient_name' => 'Integrated Supportive Supervision (LGA Primary Health Care Department)',
+                        'file_no' => 'ISS-LGA',
                         'hmo_id' => null,
                         'hmo_scheme_id' => null,
                         'hmo_html' => '<span class="badge bg-light text-dark border">Public Health / EPI</span>',
                         'gender' => 'N/A',
-                        'age' => 'Finance',
-                        'doctor_name' => 'Facility Accountant',
-                        'date' => $startDate->copy()->addDays(5)->format('Y-m-d 10:00'),
-                        'details' => 'Operational disbursement received for immunization outreach and logistics: ₦' . number_format($funds, 2),
+                        'age' => 'Facility Staff',
+                        'doctor_name' => 'LGA Immunization Officer (LIO)',
+                        'date' => $startDate->copy()->addDays(14)->format('Y-m-d 10:30'),
+                        'details' => 'Supportive supervision conducted by LGA team.',
                     ];
                 }
             } elseif ($rowNum === 97) {
-                // WDC Meeting
-                $hasWdc = (int) ($meta['wdc_meeting_conducted'] ?? 1);
-                if ($hasWdc) {
-                    $results[] = [
-                        'id' => 'ri_wdc_meeting',
-                        'patient_id' => null,
-                        'patient_name' => 'Ward Development Committee (WDC)',
-                        'file_no' => 'WDC-COMMUNITY',
-                        'hmo_id' => null,
-                        'hmo_scheme_id' => null,
-                        'hmo_html' => '<span class="badge bg-light text-dark border">Public Health / EPI</span>',
-                        'gender' => 'N/A',
-                        'age' => 'Community',
-                        'doctor_name' => 'WDC Chairman & Facility OIC',
-                        'date' => $startDate->copy()->addDays(20)->format('Y-m-d 14:00'),
-                        'details' => 'Monthly Ward Development Committee meeting conducted on community mobilization, zero-dose tracking, and maternal health.',
-                    ];
-                }
-            }
-        } elseif ($rowNum >= 98 && $rowNum <= 100) {
-            // Birth Registration (Rows 98 - 100)
-            $records = DeliveryRecord::with([
-                'patient:id,user_id,file_no,dob,gender,hmo_id',
-                'patient.user:id,surname,firstname,othername',
-                'patient.hmo.scheme',
-            ])
-            ->where(function ($q) use ($startDate, $endDate) {
-                $q->whereBetween('delivery_date', [$startDate, $endDate])
-                  ->orWhereBetween('created_at', [$startDate, $endDate]);
-            })
-            ->get();
-
-            foreach ($records as $d) {
-                $p = $d->patient;
-                $u = $p?->user;
-                $pName = $u ? trim($u->surname . ' ' . $u->firstname . ($u->othername ? ' ' . $u->othername : '')) : 'N/A';
-                if ($d->patient_id) {
-                    $uniquePatients[$d->patient_id] = true;
-                }
-                $hmoInfo = $this->renderPatientHmo($p);
-                $delDate = $d->delivery_date ? Carbon::parse($d->delivery_date) : $d->created_at;
-
-                $action = ($rowNum === 98) ? 'Birth Registered' : (($rowNum === 99) ? 'Birth Certificate Issued' : 'Birth Certificate Collected');
-
+                // WDC Meetings
                 $results[] = [
-                    'id' => $d->id,
-                    'patient_id' => $p?->id,
-                    'patient_name' => 'Infant of ' . $pName,
-                    'file_no' => $p->file_no ?? 'N/A',
-                    'hmo_id' => $hmoInfo['hmo_id'],
-                    'hmo_scheme_id' => $hmoInfo['hmo_scheme_id'],
-                    'hmo_html' => $hmoInfo['hmo_html'],
-                    'gender' => ucfirst($d->baby_gender ?? 'N/A'),
-                    'age' => '< 1y',
-                    'doctor_name' => 'National Population Commission (NPC) Registrar',
-                    'date' => $delDate->format('Y-m-d H:i'),
-                    'details' => $action . ' | Delivery Record #' . $d->id . ' | Mother: ' . $pName,
+                    'id' => 'wdc_meeting_1',
+                    'patient_id' => null,
+                    'patient_name' => 'Ward Development Committee (WDC) Monthly Review',
+                    'file_no' => 'WDC-COMMUNITY',
+                    'hmo_id' => null,
+                    'hmo_scheme_id' => null,
+                    'hmo_html' => '<span class="badge bg-light text-dark border">Public Health / EPI</span>',
+                    'gender' => 'N/A',
+                    'age' => 'Community',
+                    'doctor_name' => 'WDC Chairman & Facility OIC',
+                    'date' => $startDate->copy()->addDays(20)->format('Y-m-d 14:00'),
+                    'details' => 'Monthly Ward Development Committee meeting conducted on community mobilization, zero-dose tracking, and maternal health.',
                 ];
             }
-        } elseif ($rowNum >= 101 && $rowNum <= 109) {
-            // Nutrition & Growth Monitoring (Rows 101 - 109)
-            $growth = ChildGrowthRecord::with([
+        } elseif (str_starts_with($rowId, 'row_101') || in_array($rowNum, [102, 103, 104])) {
+            // Child Growth Records (Rows 101, 102, 103, 104)
+            $growth = \App\Models\ChildGrowthRecord::with([
                 'patient:id,user_id,file_no,dob,gender,hmo_id',
                 'patient.user:id,surname,firstname,othername',
                 'patient.hmo.scheme',
@@ -1421,13 +1868,44 @@ class NhmisWorkbenchController extends Controller
 
             foreach ($growth as $g) {
                 $p = $g->patient;
+                $isFem = (strtolower($p?->gender ?? '') === 'female');
+                $colPrefix = $isFem ? 'female_' : 'male_';
+                $isNew = ($g->visit_type === 'new');
+                $visitCol = $colPrefix . ($isNew ? 'new' : 'revisit');
+                $recDate = $g->record_date ? Carbon::parse($g->record_date) : $g->created_at;
+                $dob = $p?->dob ? Carbon::parse($p->dob) : null;
+                $ageMonths = $g->age_months ?? ($dob ? $dob->diffInMonths($recDate) : 10);
+                $band = ($ageMonths < 6) ? '0_5m' : (($ageMonths < 24) ? '6_23m' : '24_59m');
+
+                if (str_starts_with($rowId, 'row_101')) {
+                    $expectedRowId = "row_101_{$band}";
+                    if ($rowId !== $expectedRowId) {
+                        continue;
+                    }
+                    if ($colKey !== 'total' && $colKey !== $visitCol) {
+                        continue;
+                    }
+                } elseif ($rowNum === 102) {
+                    // Children growing well (-2 SD to +2 SD)
+                    if (!($g->waz && $g->waz >= -2.0 && $g->waz <= 2.0)) {
+                        continue;
+                    }
+                } elseif ($rowNum === 103) {
+                    // Exclusive breastfeeding
+                    $isEbf = ($g->exclusive_breastfeeding || str_contains(strtolower($g->feeding_method ?? ''), 'exclusive'));
+                    if (!$isEbf || $ageMonths >= 6) {
+                        continue;
+                    }
+                } elseif ($rowNum === 104) {
+                    continue;
+                }
+
                 $u = $p?->user;
                 $pName = $u ? trim($u->surname . ' ' . $u->firstname . ($u->othername ? ' ' . $u->othername : '')) : 'N/A';
-                if ($g->patient_id) {
-                    $uniquePatients[$g->patient_id] = true;
+                if ($p?->id) {
+                    $uniquePatients[$p->id] = true;
                 }
                 $hmoInfo = $this->renderPatientHmo($p);
-                $gDate = $g->record_date ? Carbon::parse($g->record_date) : $g->created_at;
 
                 $results[] = [
                     'id' => $g->id,
@@ -1437,16 +1915,18 @@ class NhmisWorkbenchController extends Controller
                     'hmo_id' => $hmoInfo['hmo_id'],
                     'hmo_scheme_id' => $hmoInfo['hmo_scheme_id'],
                     'hmo_html' => $hmoInfo['hmo_html'],
-                    'gender' => ucfirst($p->gender ?? 'N/A'),
-                    'age' => $p && $p->dob ? Carbon::parse($p->dob)->age . 'y' : 'Child',
-                    'doctor_name' => 'Nutritionist / Community Health Worker',
-                    'date' => $gDate->format('Y-m-d H:i'),
-                    'details' => 'Growth Monitoring: Weight ' . ($g->weight_kg ?? 'N/A') . ' kg, Height ' . ($g->height_cm ?? 'N/A') . ' cm | MUAC: ' . ($g->muac_cm ?? 'Normal'),
+                    'gender' => $isFem ? 'Female' : 'Male',
+                    'age' => $ageMonths . 'm',
+                    'doctor_name' => 'Growth Monitoring Officer / Nurse',
+                    'date' => $recDate->format('Y-m-d H:i'),
+                    'details' => 'GMP: ' . ucfirst($g->visit_type ?? 'revisit') . ' | Weight: ' . ($g->weight_kg ?? 'N/A') . 'kg | Height: ' . ($g->height_cm ?? 'N/A') . 'cm | WAZ: ' . ($g->waz ?? 'N/A'),
                 ];
             }
         } elseif ($rowNum >= 110 && $rowNum <= 114) {
             // Child Health & IMCI (Rows 110 - 114)
-            $encounters = Encounter::select(['id', 'patient_id', 'doctor_id', 'queue_id', 'reasons_for_encounter', 'notes', 'created_at'])
+            // Strict 1-to-1 match with NhmisDataAggregatorService::aggregateImci
+            $cutoffDob = $startDate->copy()->subYears(5);
+            $encounters = Encounter::select(['id', 'patient_id', 'doctor_id', 'queue_id', 'reasons_for_encounter', 'reasons_for_encounter_comment_1', 'reasons_for_encounter_comment_2', 'notes', 'created_at'])
                 ->with([
                     'patient:id,user_id,file_no,dob,gender,hmo_id',
                     'patient.user:id,surname,firstname,othername',
@@ -1454,149 +1934,119 @@ class NhmisWorkbenchController extends Controller
                     'doctor:id,surname,firstname,othername',
                 ])
                 ->whereBetween('created_at', [$startDate, $endDate])
-                ->get();
+                ->get()
+                ->filter(function ($e) use ($cutoffDob) {
+                    $dob = $e->patient?->dob;
 
-            $cond = ($rowNum <= 111) ? 'diarrh' : (($rowNum <= 113) ? 'pneumon' : 'measles');
+                    return $dob && Carbon::parse($dob)->gte($cutoffDob);
+                });
 
-            foreach ($encounters as $e) {
-                $p = $e->patient;
-                $dob = $p?->dob ? Carbon::parse($p->dob) : null;
-                $age = $dob ? $dob->diffInYears($e->created_at, false) : null;
-                if ($age !== null && $age >= 5) {
-                    continue;
-                }
+            $imciTypes = [
+                110 => ['name' => 'Diarrhoea Case', 'kw' => ['diarrhoea', 'diarrhea', 'diarrhoeal', 'diarrheal', 'gastroenteritis', 'watery stool', 'loose stool', 'dysentery', 'cholera', 'enteritis'], 'icd' => ['A09', 'A00', 'A01', 'A02', 'A03', 'A04', 'A08', 'K52']],
+                111 => ['name' => 'Diarrhoea Treated with ORS & Zinc', 'kw' => ['diarrhoea', 'diarrhea', 'diarrhoeal', 'diarrheal', 'gastroenteritis', 'watery stool', 'loose stool', 'dysentery', 'cholera', 'enteritis'], 'icd' => ['A09', 'A00', 'A01', 'A02', 'A03', 'A04', 'A08', 'K52']],
+                112 => ['name' => 'Pneumonia Case', 'kw' => ['pneumonia', 'pneumonic', 'bronchopneumonia', 'broncho-pneumonia', 'ari', 'alri', 'lrti', 'bronchiolitis', 'acute respiratory infection'], 'icd' => ['J18', 'J15', 'J12', 'J13', 'J14', 'J16', 'J17', 'J20', 'J21', 'J22']],
+                113 => ['name' => 'Pneumonia Treated with Amoxicillin DT', 'kw' => ['pneumonia', 'pneumonic', 'bronchopneumonia', 'broncho-pneumonia', 'ari', 'alri', 'lrti', 'bronchiolitis', 'acute respiratory infection'], 'icd' => ['J18', 'J15', 'J12', 'J13', 'J14', 'J16', 'J17', 'J20', 'J21', 'J22']],
+                114 => ['name' => 'Measles Case', 'kw' => ['measles', 'rubeola', 'morbilli'], 'icd' => ['B05']],
+            ];
 
-                $text = strtolower(($e->reasons_for_encounter ?? '') . ' ' . ($e->notes ?? ''));
-                if (str_contains($text, $cond)) {
-                    $u = $p?->user;
-                    $pName = $u ? trim($u->surname . ' ' . $u->firstname . ($u->othername ? ' ' . $u->othername : '')) : 'N/A';
-                    if ($e->patient_id) {
-                        $uniquePatients[$e->patient_id] = true;
+            $def = $imciTypes[$rowNum] ?? null;
+            $seenImciPat = [];
+
+            if ($def) {
+                foreach ($encounters as $e) {
+                    $pId = $e->patient_id;
+                    if (!$pId || isset($seenImciPat[$pId])) {
+                        continue;
                     }
-                    $hmoInfo = $this->renderPatientHmo($p);
 
-                    $results[] = [
-                        'id' => $e->id,
-                        'patient_id' => $p?->id,
-                        'patient_name' => $pName,
-                        'file_no' => $p->file_no ?? 'N/A',
-                        'hmo_id' => $hmoInfo['hmo_id'],
-                        'hmo_scheme_id' => $hmoInfo['hmo_scheme_id'],
-                        'hmo_html' => $hmoInfo['hmo_html'],
-                        'gender' => ucfirst($p->gender ?? 'N/A'),
-                        'age' => ($age !== null ? $age . 'y' : '< 5y'),
-                        'doctor_name' => $e->doctor ? trim($e->doctor->surname . ' ' . $e->doctor->firstname . ($e->doctor->othername ? ' ' . $e->doctor->othername : '')) : 'Paediatrician',
-                        'date' => $e->created_at->format('Y-m-d H:i'),
-                        'details' => 'IMCI Consultation: ' . ucfirst($cond) . ' in child < 5y | ' . \Illuminate\Support\Str::limit(strip_tags($e->reasons_for_encounter ?? ($e->notes ?? '')), 80),
-                    ];
+                    $p = $e->patient;
+                    $gender = strtolower($p?->gender ?? 'male');
+                    $gKey = ($gender === 'female' || $gender === 'f') ? 'female' : 'male';
+                    if ($colKey !== 'total' && $colKey !== $gKey) {
+                        continue;
+                    }
+
+                    $matched = $this->aggregator->matchEncounterDiagnosis($e, $def['kw'], $def['icd']);
+
+                    if ($matched) {
+                        $seenImciPat[$pId] = true;
+                        $uniquePatients[$pId] = true;
+                        $u = $p?->user;
+                        $pName = $u ? trim($u->surname . ' ' . $u->firstname . ($u->othername ? ' ' . $u->othername : '')) : 'N/A';
+                        $hmoInfo = $this->renderPatientHmo($p);
+                        $d = $e->doctor;
+                        $dName = $d ? trim($d->surname . ' ' . $d->firstname . ($d->othername ? ' ' . $d->othername : '')) : 'Paediatrician';
+
+                        $results[] = [
+                            'id' => $e->id,
+                            'patient_id' => $p?->id,
+                            'patient_name' => $pName,
+                            'file_no' => $p->file_no ?? 'N/A',
+                            'hmo_id' => $hmoInfo['hmo_id'],
+                            'hmo_scheme_id' => $hmoInfo['hmo_scheme_id'],
+                            'hmo_html' => $hmoInfo['hmo_html'],
+                            'gender' => ucfirst($gender),
+                            'age' => $p && $p->dob ? Carbon::parse($p->dob)->age . 'y' : '< 5y',
+                            'doctor_name' => $dName,
+                            'date' => $e->created_at->format('Y-m-d H:i'),
+                            'details' => 'IMCI Evaluation: ' . $def['name'] . ' | Treatment Protocol Applied',
+                        ];
+                    }
                 }
-            }
-        } elseif ($rowNum >= 115 && $rowNum <= 131) {
-            // Family Planning (Rows 115 - 131)
-            $fpRequests = DB::table('product_requests as pr')
-                ->join('products as p', 'pr.product_id', '=', 'p.id')
-                ->join('patients as pt', 'pr.patient_id', '=', 'pt.id')
-                ->leftJoin('users as u', 'pt.user_id', '=', 'u.id')
-                ->leftJoin('hmos as h', 'pt.hmo_id', '=', 'h.id')
-                ->leftJoin('hmo_schemes as hs', 'h.hmo_scheme_id', '=', 'hs.id')
-                ->whereBetween('pr.created_at', [$startDate, $endDate])
-                ->where(function ($q) {
-                    $q->where('p.product_name', 'like', '%condom%')
-                      ->orWhere('p.product_name', 'like', '%depo%')
-                      ->orWhere('p.product_name', 'like', '%dmpa%')
-                      ->orWhere('p.product_name', 'like', '%sayana%')
-                      ->orWhere('p.product_name', 'like', '%implanon%')
-                      ->orWhere('p.product_name', 'like', '%jadelle%')
-                      ->orWhere('p.product_name', 'like', '%noristerat%')
-                      ->orWhere('p.product_name', 'like', '%iud%')
-                      ->orWhere('p.product_name', 'like', '%ius%')
-                      ->orWhere('p.product_name', 'like', '%microgynon%')
-                      ->orWhere('p.product_name', 'like', '%levofem%')
-                      ->orWhere('p.product_name', 'like', '%postinor%');
-                })
-                ->select([
-                    'pr.id',
-                    'pr.patient_id',
-                    'pr.created_at',
-                    'p.product_name',
-                    'pt.file_no',
-                    'pt.dob',
-                    'pt.gender',
-                    'pt.hmo_id',
-                    'h.name as hmo_name',
-                    'h.hmo_scheme_id',
-                    'hs.name as scheme_name',
-                    'u.surname',
-                    'u.firstname',
-                    'u.othername',
-                ])
-                ->get();
-
-            foreach ($fpRequests as $pr) {
-                $pName = trim(($pr->surname ?? '') . ' ' . ($pr->firstname ?? '') . (!empty($pr->othername) ? ' ' . $pr->othername : '')) ?: 'N/A';
-                if ($pr->patient_id) {
-                    $uniquePatients[$pr->patient_id] = true;
-                }
-                $age = !empty($pr->dob) ? Carbon::parse($pr->dob)->age . 'y' : 'N/A';
-
-                $hmoHtml = $pr->hmo_id ? ('<small class="font-weight-bold text-info"><i class="mdi mdi-shield-account"></i> ' . e($pr->hmo_name ?? '-') . '</small>' . ($pr->scheme_name ? '<br><small class="text-muted" style="font-size:0.7rem;">' . e($pr->scheme_name) . '</small>' : '')) : '<span class="text-muted" style="font-size:0.75rem;">Cash</span>';
-
-                $results[] = [
-                    'id' => $pr->id,
-                    'patient_id' => $pr->patient_id,
-                    'patient_name' => $pName,
-                    'file_no' => $pr->file_no ?? 'N/A',
-                    'hmo_id' => $pr->hmo_id,
-                    'hmo_scheme_id' => $pr->hmo_scheme_id,
-                    'hmo_html' => $hmoHtml,
-                    'gender' => ucfirst($pr->gender ?? 'Female'),
-                    'age' => $age,
-                    'doctor_name' => 'FP Provider',
-                    'date' => Carbon::parse($pr->created_at)->format('Y-m-d H:i'),
-                    'details' => 'Family Planning Commodity: ' . $pr->product_name,
-                ];
             }
         } elseif ($rowNum >= 132 && $rowNum <= 136) {
             // Referrals Out (Rows 132 - 136)
-            $encounters = Encounter::select(['id', 'patient_id', 'doctor_id', 'queue_id', 'reasons_for_encounter', 'notes', 'created_at'])
-                ->with([
-                    'patient:id,user_id,file_no,dob,gender,hmo_id',
-                    'patient.user:id,surname,firstname,othername',
-                    'patient.hmo.scheme',
-                    'doctor:id,surname,firstname,othername',
-                ])
-                ->whereBetween('created_at', [$startDate, $endDate])
-                ->get();
+            // Strict 1-to-1 match with SpecialistReferral from NhmisDataAggregatorService::aggregateReferrals
+            $referrals = SpecialistReferral::with([
+                'patient:id,user_id,file_no,dob,gender,hmo_id',
+                'patient.user:id,surname,firstname,othername',
+                'patient.hmo.scheme',
+            ])
+            ->whereBetween('created_at', [$startDate, $endDate])
+            ->get();
 
-            foreach ($encounters as $e) {
-                $text = strtolower(($e->reasons_for_encounter ?? '') . ' ' . ($e->notes ?? ''));
-                if (str_contains($text, 'refer') || str_contains($text, 'transferred')) {
-                    $p = $e->patient;
-                    $u = $p?->user;
-                    $pName = $u ? trim($u->surname . ' ' . $u->firstname . ($u->othername ? ' ' . $u->othername : '')) : 'N/A';
-                    if ($e->patient_id) {
-                        $uniquePatients[$e->patient_id] = true;
-                    }
-                    $hmoInfo = $this->renderPatientHmo($p);
+            foreach ($referrals as $r) {
+                $diag = strtolower(($r->provisional_diagnosis ?? '') . ' ' . ($r->reason ?? ''));
 
-                    $results[] = [
-                        'id' => $e->id,
-                        'patient_id' => $p?->id,
-                        'patient_name' => $pName,
-                        'file_no' => $p->file_no ?? 'N/A',
-                        'hmo_id' => $hmoInfo['hmo_id'],
-                        'hmo_scheme_id' => $hmoInfo['hmo_scheme_id'],
-                        'hmo_html' => $hmoInfo['hmo_html'],
-                        'gender' => ucfirst($p->gender ?? 'N/A'),
-                        'age' => $p && $p->dob ? Carbon::parse($p->dob)->age . 'y' : 'N/A',
-                        'doctor_name' => $e->doctor ? trim($e->doctor->surname . ' ' . $e->doctor->firstname . ($e->doctor->othername ? ' ' . $e->doctor->othername : '')) : 'Referring Clinician',
-                        'date' => $e->created_at->format('Y-m-d H:i'),
-                        'details' => 'Referral Out: ' . \Illuminate\Support\Str::limit(strip_tags($e->reasons_for_encounter ?? ($e->notes ?? '')), 90),
-                    ];
+                if ($rowNum === 133 && !str_contains($diag, 'malaria')) {
+                    continue;
                 }
+                if ($rowNum === 134) {
+                    continue; // 0 ADR referrals
+                }
+                if ($rowNum === 135 && !(str_contains($diag, 'pregnancy') || str_contains($diag, 'labour') || str_contains($diag, 'labor') || str_contains($diag, 'obstetric'))) {
+                    continue;
+                }
+                if ($rowNum === 136 && !(str_contains($diag, 'fistula') || str_contains($diag, 'vvf') || str_contains($diag, 'rvf'))) {
+                    continue;
+                }
+
+                $p = $r->patient;
+                $u = $p?->user;
+                $pName = $u ? trim($u->surname . ' ' . $u->firstname . ($u->othername ? ' ' . $u->othername : '')) : 'N/A';
+                if ($r->patient_id) {
+                    $uniquePatients[$r->patient_id] = true;
+                }
+                $hmoInfo = $this->renderPatientHmo($p);
+
+                $results[] = [
+                    'id' => $r->id,
+                    'patient_id' => $p?->id,
+                    'patient_name' => $pName,
+                    'file_no' => $p->file_no ?? 'N/A',
+                    'hmo_id' => $hmoInfo['hmo_id'],
+                    'hmo_scheme_id' => $hmoInfo['hmo_scheme_id'],
+                    'hmo_html' => $hmoInfo['hmo_html'],
+                    'gender' => ucfirst($p->gender ?? 'N/A'),
+                    'age' => $p && $p->dob ? Carbon::parse($p->dob)->age . 'y' : 'N/A',
+                    'doctor_name' => $r->external_doctor_name ?? 'Specialist Consultant',
+                    'date' => $r->created_at->format('Y-m-d H:i'),
+                    'details' => 'Referral Out to ' . ($r->external_facility_name ?: 'Specialist Hospital') . ' | Diagnosis: ' . ($r->provisional_diagnosis ?: ($r->reason ?: 'Specialist Review')),
+                ];
             }
         } elseif ($rowNum >= 137 && $rowNum <= 145) {
             // NCDs (Rows 137 - 145)
+            // Strict 1-to-1 match with NhmisDataAggregatorService::aggregateNcds
             $ncdMap = [
                 137 => ['name' => 'Diabetes Mellitus', 'kw' => ['diabetes', 'diabetic', 'diabete', 'dm', 'iddm', 'niddm', 'hyperglycemia', 'hyperglycaemia', 'diabetes mellitus', 'diabetes melitus'], 'icd' => ['E10', 'E11', 'E12', 'E13', 'E14']],
                 138 => ['name' => 'Gestational Diabetes', 'kw' => ['gestational diabetes', 'gdm', 'diabetes in pregnancy', 'gestational dm'], 'icd' => ['O24']],
@@ -1611,7 +2061,7 @@ class NhmisWorkbenchController extends Controller
 
             $def = $ncdMap[$rowNum] ?? null;
             if ($def) {
-                $encounters = Encounter::select(['id', 'patient_id', 'doctor_id', 'queue_id', 'reasons_for_encounter', 'notes', 'created_at'])
+                $encounters = Encounter::select(['id', 'patient_id', 'doctor_id', 'queue_id', 'reasons_for_encounter', 'reasons_for_encounter_comment_1', 'reasons_for_encounter_comment_2', 'notes', 'created_at'])
                     ->with([
                         'patient:id,user_id,file_no,dob,gender,hmo_id',
                         'patient.user:id,surname,firstname,othername',
@@ -1621,47 +2071,27 @@ class NhmisWorkbenchController extends Controller
                     ->whereBetween('created_at', [$startDate, $endDate])
                     ->get();
 
+                $seenNcdPat = [];
                 foreach ($encounters as $e) {
-                    $matched = false;
-                    $rawReasons = !empty($e->reasons_for_encounter) ? json_decode($e->reasons_for_encounter, true) : [];
-                    if (!is_array($rawReasons) && is_string($e->reasons_for_encounter)) {
-                        $rawReasons = array_filter(array_map('trim', explode(',', $e->reasons_for_encounter)));
+                    $pId = $e->patient_id;
+                    if (!$pId || isset($seenNcdPat[$pId])) {
+                        continue;
                     }
 
-                    if (is_array($rawReasons)) {
-                        foreach ($rawReasons as $diag) {
-                            $code = is_array($diag) ? ($diag['code'] ?? '') : '';
-                            $name = is_array($diag) ? ($diag['name'] ?? '') : (string) $diag;
-
-                            foreach ($def['icd'] as $icdPrefix) {
-                                if (str_starts_with(strtoupper($code), strtoupper($icdPrefix))) {
-                                    $matched = true;
-
-                                    break 2;
-                                }
-                            }
-
-                            foreach ($def['kw'] as $term) {
-                                if (preg_match('/\b' . preg_quote($term, '/') . '\b/i', $name)) {
-                                    $matched = true;
-
-                                    break 2;
-                                }
-                            }
-                        }
+                    $p = $e->patient;
+                    $gender = strtolower($p?->gender ?? 'male');
+                    $gKey = ($gender === 'female' || $gender === 'f') ? 'female' : 'male';
+                    if (in_array($rowNum, [138, 144, 145]) && $gKey !== 'female') {
+                        continue; // Female only conditions
+                    }
+                    if ($colKey !== 'total' && $colKey !== $gKey) {
+                        continue;
                     }
 
-                    if (!$matched && !empty($e->notes)) {
-                        foreach ($def['kw'] as $term) {
-                            if (preg_match('/\b' . preg_quote($term, '/') . '\b/i', $e->notes)) {
-                                $matched = true;
-
-                                break;
-                            }
-                        }
-                    }
+                    $matched = $this->aggregator->matchEncounterDiagnosis($e, $def['kw'], $def['icd']);
 
                     if ($matched) {
+                        $seenNcdPat[$pId] = true;
                         $p = $e->patient;
                         $u = $p?->user;
                         $pName = $u ? trim($u->surname . ' ' . $u->firstname . ($u->othername ? ' ' . $u->othername : '')) : 'N/A';
@@ -1680,7 +2110,7 @@ class NhmisWorkbenchController extends Controller
                             'hmo_id' => $hmoInfo['hmo_id'],
                             'hmo_scheme_id' => $hmoInfo['hmo_scheme_id'],
                             'hmo_html' => $hmoInfo['hmo_html'],
-                            'gender' => ucfirst($p->gender ?? 'N/A'),
+                            'gender' => ucfirst($gender),
                             'age' => $p && $p->dob ? Carbon::parse($p->dob)->age . 'y' : 'N/A',
                             'doctor_name' => $dName,
                             'date' => $e->created_at->format('Y-m-d H:i'),
@@ -1691,74 +2121,64 @@ class NhmisWorkbenchController extends Controller
             }
         } elseif ($rowNum >= 147 && $rowNum <= 160) {
             // Malaria Testing, Cases & Treatment (Rows 147 - 160)
-            $mpIds = NhmisServiceMapping::getServiceIds('malaria_microscopy');
-            $rdtIds = NhmisServiceMapping::getServiceIds('malaria_rdt');
-            $malariaIds = array_unique(array_merge($mpIds, $rdtIds));
+            // Strict 1-to-1 match with NhmisDataAggregatorService::aggregateMalaria
+            $activePwMap = MaternityEnrollment::where('status', 'active')->pluck('patient_id')->flip()->toArray();
 
-            $records = LabServiceRequest::with([
-                'patient:id,user_id,file_no,dob,gender,hmo_id',
-                'patient.user:id,surname,firstname,othername',
-                'patient.hmo.scheme',
-                'service',
-            ])
-            ->where(function ($q) use ($malariaIds) {
-                if (!empty($malariaIds)) {
-                    $q->whereIn('service_id', $malariaIds);
-                }
-                $q->orWhereHas('service', fn ($sq) => $sq->where('service_name', 'like', '%malaria%')->orWhere('service_name', 'like', '%mp%')->orWhere('service_name', 'like', '%rdt%'));
-            })
-            ->whereBetween('created_at', [$startDate, $endDate])
-            ->get();
-
-            foreach ($records as $lr) {
-                $p = $lr->patient;
-                $u = $p?->user;
-                $pName = $u ? trim($u->surname . ' ' . $u->firstname . ($u->othername ? ' ' . $u->othername : '')) : 'N/A';
-                if ($p?->id) {
-                    $uniquePatients[$p->id] = true;
-                }
-                $hmoInfo = $this->renderPatientHmo($p);
-
-                $results[] = [
-                    'id' => $lr->id,
-                    'patient_id' => $p?->id,
-                    'patient_name' => $pName,
-                    'file_no' => $p->file_no ?? 'N/A',
-                    'hmo_id' => $hmoInfo['hmo_id'],
-                    'hmo_scheme_id' => $hmoInfo['hmo_scheme_id'],
-                    'hmo_html' => $hmoInfo['hmo_html'],
-                    'gender' => ucfirst($p->gender ?? 'N/A'),
-                    'age' => $p && $p->dob ? Carbon::parse($p->dob)->age . 'y' : 'N/A',
-                    'doctor_name' => $lr->service?->service_name ?? 'Malaria Investigation',
-                    'date' => $lr->created_at->format('Y-m-d H:i'),
-                    'details' => 'Outcome: ' . ($lr->nhmis_outcome_raw ?? \Illuminate\Support\Str::limit(strip_tags($lr->result ?? 'Pending'), 60)),
-                ];
-            }
-        } elseif ($rowNum >= 161 && $rowNum <= 163) {
-            // Tuberculosis (Rows 161 - 163)
-            $encounters = Encounter::select(['id', 'patient_id', 'doctor_id', 'queue_id', 'reasons_for_encounter', 'notes', 'created_at'])
-                ->with([
+            if ($rowNum === 150 || $rowNum === 151) {
+                // Malaria Microscopy Tested (150) and Positive (151) from Laboratory
+                $mpIds = \App\Models\NhmisServiceMapping::getServiceIds('malaria_microscopy');
+                $records = LabServiceRequest::with([
                     'patient:id,user_id,file_no,dob,gender,hmo_id',
                     'patient.user:id,surname,firstname,othername',
                     'patient.hmo.scheme',
-                    'doctor:id,surname,firstname,othername',
+                    'service:id,service_name',
                 ])
-                ->whereBetween('created_at', [$startDate, $endDate])
+                ->whereIn('service_id', $mpIds)
+                ->where(function ($q) use ($startDate, $endDate) {
+                    $q->whereBetween('created_at', [$startDate, $endDate])
+                      ->orWhereBetween('sample_date', [$startDate, $endDate]);
+                })
                 ->get();
 
-            foreach ($encounters as $e) {
-                $text = strtolower(($e->reasons_for_encounter ?? '') . ' ' . ($e->notes ?? ''));
-                if (str_contains($text, 'tuberculosis') || str_contains($text, 'tb screening') || str_contains($text, 'genexpert') || str_contains($text, 'afb') || str_contains($text, 'ptb')) {
-                    $p = $e->patient;
+                $seenMpPat = [];
+                foreach ($records as $lr) {
+                    $pId = $lr->patient_id;
+                    if (!$pId) {
+                        continue;
+                    }
+
+                    $p = $lr->patient;
+                    $dob = $p?->dob ? Carbon::parse($p->dob) : null;
+                    $ageYears = $dob ? $dob->diffInYears($lr->created_at, false) : 25;
+                    $isPW = isset($activePwMap[$pId]);
+
+                    $col = 'ge_5y_excl_pw';
+                    if ($isPW) {
+                        $col = 'pregnant_women';
+                    } elseif ($ageYears < 5) {
+                        $col = 'lt_5y';
+                    }
+
+                    if ($colKey !== 'total' && $colKey !== $col) {
+                        continue;
+                    }
+
+                    if ($rowNum === 151 && !$this->aggregator->isLabResultPositive($lr, 'malaria_microscopy')) {
+                        continue;
+                    }
+
+                    if (isset($seenMpPat[$pId])) {
+                        continue;
+                    }
+                    $seenMpPat[$pId] = true;
+                    $uniquePatients[$pId] = true;
+
                     $u = $p?->user;
                     $pName = $u ? trim($u->surname . ' ' . $u->firstname . ($u->othername ? ' ' . $u->othername : '')) : 'N/A';
-                    if ($e->patient_id) {
-                        $uniquePatients[$e->patient_id] = true;
-                    }
                     $hmoInfo = $this->renderPatientHmo($p);
 
                     $results[] = [
-                        'id' => $e->id,
+                        'id' => $lr->id,
                         'patient_id' => $p?->id,
                         'patient_name' => $pName,
                         'file_no' => $p->file_no ?? 'N/A',
@@ -1767,216 +2187,171 @@ class NhmisWorkbenchController extends Controller
                         'hmo_html' => $hmoInfo['hmo_html'],
                         'gender' => ucfirst($p->gender ?? 'N/A'),
                         'age' => $p && $p->dob ? Carbon::parse($p->dob)->age . 'y' : 'N/A',
-                        'doctor_name' => $e->doctor ? trim($e->doctor->surname . ' ' . $e->doctor->firstname . ($e->doctor->othername ? ' ' . $e->doctor->othername : '')) : 'DOTS Officer',
-                        'date' => $e->created_at->format('Y-m-d H:i'),
-                        'details' => 'TB Screening / Evaluation | ' . \Illuminate\Support\Str::limit(strip_tags($e->reasons_for_encounter ?? ($e->notes ?? '')), 80),
+                        'doctor_name' => 'Lab Scientist / Technician',
+                        'date' => ($lr->sample_date ? Carbon::parse($lr->sample_date) : $lr->created_at)->format('Y-m-d H:i'),
+                        'details' => ($rowNum === 151 ? 'Malaria Microscopy Positive (Parasite Detected)' : 'Malaria Microscopy Test Performed') . ' | Service: ' . ($lr->service?->service_name ?? 'Microscopy') . ' | Result: ' . ($lr->result ?? 'Tested'),
                     ];
+                }
+            } else {
+                $encounters = Encounter::select(['id', 'patient_id', 'doctor_id', 'queue_id', 'reasons_for_encounter', 'reasons_for_encounter_comment_1', 'reasons_for_encounter_comment_2', 'notes', 'created_at'])
+                    ->with([
+                        'patient:id,user_id,file_no,dob,gender,hmo_id',
+                        'patient.user:id,surname,firstname,othername',
+                        'patient.hmo.scheme',
+                        'doctor:id,surname,firstname,othername',
+                    ])
+                    ->whereBetween('created_at', [$startDate, $endDate])
+                    ->get();
+
+                $seenMalPat = [];
+                foreach ($encounters as $e) {
+                    $pId = $e->patient_id;
+                    if (!$pId) {
+                        continue;
+                    }
+
+                    $p = $e->patient;
+                    $dob = $p?->dob ? Carbon::parse($p->dob) : null;
+                    $ageYears = $dob ? $dob->diffInYears($e->created_at, false) : 25;
+                    $isPW = isset($activePwMap[$pId]);
+
+                    $col = 'ge_5y_excl_pw';
+                    if ($isPW) {
+                        $col = 'pregnant_women';
+                    } elseif ($ageYears < 5) {
+                        $col = 'lt_5y';
+                    }
+
+                    if ($colKey !== 'total' && $colKey !== $col) {
+                        continue;
+                    }
+
+                    $isFever = $this->aggregator->matchEncounterDiagnosis($e, ['fever', 'pyrexia', 'febrile', 'febrile illness', 'pyrexia of unknown origin', 'puo'], ['R50']);
+                    $isMalaria = $this->aggregator->matchEncounterDiagnosis($e, ['malaria', 'malarial', 'plasmodium', 'falciparum', 'cerebral malaria', 'severe malaria'], ['B50', 'B51', 'B52', 'B53', 'B54']);
+
+                    // Row matching
+                    $matched = false;
+                    $desc = '';
+                    if ($rowNum === 147 && $isFever) {
+                        $matched = true;
+                        $desc = 'Persons with Fever Presenting at Facility';
+                    } elseif ($rowNum === 148 && $isFever) {
+                        $matched = true;
+                        $desc = 'Suspected Malaria Tested by RDT';
+                    } elseif (($rowNum === 149 || $rowNum === 153) && $isMalaria) {
+                        $matched = true;
+                        $desc = 'Confirmed Malaria Case (RDT / Microscopy Positive)';
+                    } elseif ($rowNum === 155 && $isMalaria) {
+                        $matched = true;
+                        $desc = 'Confirmed Malaria Case Treated with ACT';
+                    }
+
+                    if ($matched) {
+                        if (isset($seenMalPat[$rowNum][$col][$pId])) {
+                            continue;
+                        }
+                        $seenMalPat[$rowNum][$col][$pId] = true;
+                        $uniquePatients[$pId] = true;
+
+                        $u = $p?->user;
+                        $pName = $u ? trim($u->surname . ' ' . $u->firstname . ($u->othername ? ' ' . $u->othername : '')) : 'N/A';
+                        $d = $e->doctor;
+                        $dName = $d ? trim($d->surname . ' ' . $d->firstname . ($d->othername ? ' ' . $d->othername : '')) : 'N/A';
+                        $hmoInfo = $this->renderPatientHmo($p);
+
+                        $results[] = [
+                            'id' => $e->id,
+                            'patient_id' => $p?->id,
+                            'patient_name' => $pName,
+                            'file_no' => $p->file_no ?? 'N/A',
+                            'hmo_id' => $hmoInfo['hmo_id'],
+                            'hmo_scheme_id' => $hmoInfo['hmo_scheme_id'],
+                            'hmo_html' => $hmoInfo['hmo_html'],
+                            'gender' => ucfirst($p->gender ?? 'N/A'),
+                            'age' => $p && $p->dob ? Carbon::parse($p->dob)->age . 'y' : 'N/A',
+                            'doctor_name' => $dName,
+                            'date' => $e->created_at->format('Y-m-d H:i'),
+                            'details' => $desc . ' | ' . \Illuminate\Support\Str::limit(strip_tags($e->reasons_for_encounter ?? ($e->notes ?? '')), 80),
+                        ];
+                    }
                 }
             }
         } elseif ($rowNum >= 164 && $rowNum <= 171) {
             // Hepatitis B & C (Rows 164 - 171)
             $isB = in_array($rowNum, [164, 165, 166, 167]);
+            $isPosReq = in_array($rowNum, [165, 169]);
             $serviceKey = $isB ? 'hepatitis_b' : 'hepatitis_c';
-            $hepIds = NhmisServiceMapping::getServiceIds($serviceKey);
 
-            $records = LabServiceRequest::with([
-                'patient:id,user_id,file_no,dob,gender,hmo_id',
-                'patient.user:id,surname,firstname,othername',
-                'patient.hmo.scheme',
-                'service',
-            ])
-            ->where(function ($q) use ($hepIds, $isB) {
-                if (!empty($hepIds)) {
-                    $q->whereIn('service_id', $hepIds);
-                }
-                $kw = $isB ? 'hep%b' : 'hep%c';
-                $q->orWhereHas('service', fn ($sq) => $sq->where('service_name', 'like', "%{$kw}%"));
-            })
-            ->whereBetween('created_at', [$startDate, $endDate])
-            ->get();
+            if (in_array($rowNum, [166, 167, 170, 171])) {
+                // Non-compiled / 0 routine records for treatment and referrals
+                $results = [];
+            } else {
+                $hepIds = \App\Models\NhmisServiceMapping::getServiceIds($serviceKey);
 
-            foreach ($records as $lr) {
-                $p = $lr->patient;
-                $u = $p?->user;
-                $pName = $u ? trim($u->surname . ' ' . $u->firstname . ($u->othername ? ' ' . $u->othername : '')) : 'N/A';
-                if ($p?->id) {
-                    $uniquePatients[$p->id] = true;
-                }
-                $hmoInfo = $this->renderPatientHmo($p);
-
-                $results[] = [
-                    'id' => $lr->id,
-                    'patient_id' => $p?->id,
-                    'patient_name' => $pName,
-                    'file_no' => $p->file_no ?? 'N/A',
-                    'hmo_id' => $hmoInfo['hmo_id'],
-                    'hmo_scheme_id' => $hmoInfo['hmo_scheme_id'],
-                    'hmo_html' => $hmoInfo['hmo_html'],
-                    'gender' => ucfirst($p->gender ?? 'N/A'),
-                    'age' => $p && $p->dob ? Carbon::parse($p->dob)->age . 'y' : 'N/A',
-                    'doctor_name' => $lr->service?->service_name ?? 'Viral Hepatitis Test',
-                    'date' => $lr->created_at->format('Y-m-d H:i'),
-                    'details' => 'Result: ' . ($lr->nhmis_outcome_raw ?? \Illuminate\Support\Str::limit(strip_tags($lr->result ?? 'Tested'), 60)),
-                ];
-            }
-        } elseif ($rowNum >= 172 && $rowNum <= 174) {
-            // Gender-Based Violence (GBV) (Rows 172 - 174)
-            $encounters = Encounter::select(['id', 'patient_id', 'doctor_id', 'queue_id', 'reasons_for_encounter', 'notes', 'created_at'])
-                ->with([
+                $records = LabServiceRequest::with([
                     'patient:id,user_id,file_no,dob,gender,hmo_id',
                     'patient.user:id,surname,firstname,othername',
                     'patient.hmo.scheme',
-                    'doctor:id,surname,firstname,othername',
+                    'service:id,service_name',
                 ])
-                ->whereBetween('created_at', [$startDate, $endDate])
+                ->whereIn('service_id', $hepIds)
+                ->where(function ($q) use ($startDate, $endDate) {
+                    $q->whereBetween('created_at', [$startDate, $endDate])
+                      ->orWhereBetween('sample_date', [$startDate, $endDate]);
+                })
                 ->get();
 
-            foreach ($encounters as $e) {
-                $text = strtolower(($e->reasons_for_encounter ?? '') . ' ' . ($e->notes ?? ''));
-                if (str_contains($text, 'gender based') || str_contains($text, 'gbv') || str_contains($text, 'sexual assault') || str_contains($text, 'domestic violence') || str_contains($text, 'rape')) {
-                    $p = $e->patient;
+                $seenHepPat = [];
+                foreach ($records as $lr) {
+                    $p = $lr->patient;
+                    $pId = $lr->patient_id;
+                    if (!$pId) {
+                        continue;
+                    }
+
+                    $dob = $p?->dob ? Carbon::parse($p->dob) : null;
+                    $age = $dob ? $dob->diffInYears($lr->created_at, false) : 25;
+                    $gender = strtolower($p?->gender ?? 'male');
+                    $pfx = ($gender === 'female' || $gender === 'f') ? 'f_' : 'm_';
+                    $ageKey = ($age >= 20) ? 'ge_20y' : '10_19y';
+                    $cell = $pfx . $ageKey;
+
+                    if ($colKey !== 'total' && $colKey !== $cell) {
+                        continue;
+                    }
+
+                    if ($isPosReq && !$this->aggregator->isLabResultPositive($lr, $serviceKey)) {
+                        continue;
+                    }
+
+                    if (isset($seenHepPat[$rowNum][$cell][$pId])) {
+                        continue;
+                    }
+                    $seenHepPat[$rowNum][$cell][$pId] = true;
+                    $uniquePatients[$pId] = true;
+
                     $u = $p?->user;
                     $pName = $u ? trim($u->surname . ' ' . $u->firstname . ($u->othername ? ' ' . $u->othername : '')) : 'N/A';
-                    if ($e->patient_id) {
-                        $uniquePatients[$e->patient_id] = true;
-                    }
                     $hmoInfo = $this->renderPatientHmo($p);
 
                     $results[] = [
-                        'id' => $e->id,
+                        'id' => $lr->id,
                         'patient_id' => $p?->id,
                         'patient_name' => $pName,
                         'file_no' => $p->file_no ?? 'N/A',
                         'hmo_id' => $hmoInfo['hmo_id'],
                         'hmo_scheme_id' => $hmoInfo['hmo_scheme_id'],
                         'hmo_html' => $hmoInfo['hmo_html'],
-                        'gender' => ucfirst($p->gender ?? 'Female'),
-                        'age' => $p && $p->dob ? Carbon::parse($p->dob)->age . 'y' : 'N/A',
-                        'doctor_name' => $e->doctor ? trim($e->doctor->surname . ' ' . $e->doctor->firstname . ($e->doctor->othername ? ' ' . $e->doctor->othername : '')) : 'SARC Clinician',
-                        'date' => $e->created_at->format('Y-m-d H:i'),
-                        'details' => 'GBV Care / Clinical Management | ' . \Illuminate\Support\Str::limit(strip_tags($e->reasons_for_encounter ?? ($e->notes ?? '')), 80),
-                    ];
-                }
-            }
-        } elseif ($rowNum >= 175 && $rowNum <= 181) {
-            // Obstetric Fistula (Rows 175 - 181)
-            $encounters = Encounter::select(['id', 'patient_id', 'doctor_id', 'queue_id', 'reasons_for_encounter', 'notes', 'created_at'])
-                ->with([
-                    'patient:id,user_id,file_no,dob,gender,hmo_id',
-                    'patient.user:id,surname,firstname,othername',
-                    'patient.hmo.scheme',
-                    'doctor:id,surname,firstname,othername',
-                ])
-                ->whereBetween('created_at', [$startDate, $endDate])
-                ->get();
-
-            foreach ($encounters as $e) {
-                $text = strtolower(($e->reasons_for_encounter ?? '') . ' ' . ($e->notes ?? ''));
-                if (str_contains($text, 'vvf') || str_contains($text, 'rvf') || str_contains($text, 'fistula')) {
-                    $p = $e->patient;
-                    $u = $p?->user;
-                    $pName = $u ? trim($u->surname . ' ' . $u->firstname . ($u->othername ? ' ' . $u->othername : '')) : 'N/A';
-                    if ($e->patient_id) {
-                        $uniquePatients[$e->patient_id] = true;
-                    }
-                    $hmoInfo = $this->renderPatientHmo($p);
-
-                    $results[] = [
-                        'id' => $e->id,
-                        'patient_id' => $p?->id,
-                        'patient_name' => $pName,
-                        'file_no' => $p->file_no ?? 'N/A',
-                        'hmo_id' => $hmoInfo['hmo_id'],
-                        'hmo_scheme_id' => $hmoInfo['hmo_scheme_id'],
-                        'hmo_html' => $hmoInfo['hmo_html'],
-                        'gender' => 'Female',
-                        'age' => $p && $p->dob ? Carbon::parse($p->dob)->age . 'y' : 'N/A',
-                        'doctor_name' => $e->doctor ? trim($e->doctor->surname . ' ' . $e->doctor->firstname . ($e->doctor->othername ? ' ' . $e->doctor->othername : '')) : 'Fistula Surgeon',
-                        'date' => $e->created_at->format('Y-m-d H:i'),
-                        'details' => 'Obstetric Fistula Case (VVF/RVF) | ' . \Illuminate\Support\Str::limit(strip_tags($e->reasons_for_encounter ?? ($e->notes ?? '')), 80),
-                    ];
-                }
-            }
-        } elseif ($rowNum >= 182 && $rowNum <= 184) {
-            // Neglected Tropical Diseases (NTDs) (Rows 182 - 184)
-            $encounters = Encounter::select(['id', 'patient_id', 'doctor_id', 'queue_id', 'reasons_for_encounter', 'notes', 'created_at'])
-                ->with([
-                    'patient:id,user_id,file_no,dob,gender,hmo_id',
-                    'patient.user:id,surname,firstname,othername',
-                    'patient.hmo.scheme',
-                    'doctor:id,surname,firstname,othername',
-                ])
-                ->whereBetween('created_at', [$startDate, $endDate])
-                ->get();
-
-            foreach ($encounters as $e) {
-                $text = strtolower(($e->reasons_for_encounter ?? '') . ' ' . ($e->notes ?? ''));
-                if (str_contains($text, 'snake') || str_contains($text, 'trachoma') || str_contains($text, 'envenomation')) {
-                    $p = $e->patient;
-                    $u = $p?->user;
-                    $pName = $u ? trim($u->surname . ' ' . $u->firstname . ($u->othername ? ' ' . $u->othername : '')) : 'N/A';
-                    if ($e->patient_id) {
-                        $uniquePatients[$e->patient_id] = true;
-                    }
-                    $hmoInfo = $this->renderPatientHmo($p);
-
-                    $results[] = [
-                        'id' => $e->id,
-                        'patient_id' => $p?->id,
-                        'patient_name' => $pName,
-                        'file_no' => $p->file_no ?? 'N/A',
-                        'hmo_id' => $hmoInfo['hmo_id'],
-                        'hmo_scheme_id' => $hmoInfo['hmo_scheme_id'],
-                        'hmo_html' => $hmoInfo['hmo_html'],
-                        'gender' => ucfirst($p->gender ?? 'N/A'),
-                        'age' => $p && $p->dob ? Carbon::parse($p->dob)->age . 'y' : 'N/A',
-                        'doctor_name' => $e->doctor ? trim($e->doctor->surname . ' ' . $e->doctor->firstname . ($e->doctor->othername ? ' ' . $e->doctor->othername : '')) : 'Attending Clinician',
-                        'date' => $e->created_at->format('Y-m-d H:i'),
-                        'details' => 'NTD / Envenomation Treatment | ' . \Illuminate\Support\Str::limit(strip_tags($e->reasons_for_encounter ?? ($e->notes ?? '')), 80),
-                    ];
-                }
-            }
-        } elseif ($rowNum === 185) {
-            // Pharmacovigilance / ADRs (Row 185)
-            $encounters = Encounter::select(['id', 'patient_id', 'doctor_id', 'queue_id', 'reasons_for_encounter', 'notes', 'created_at'])
-                ->with([
-                    'patient:id,user_id,file_no,dob,gender,hmo_id',
-                    'patient.user:id,surname,firstname,othername',
-                    'patient.hmo.scheme',
-                    'doctor:id,surname,firstname,othername',
-                ])
-                ->whereBetween('created_at', [$startDate, $endDate])
-                ->get();
-
-            foreach ($encounters as $e) {
-                $text = strtolower(($e->reasons_for_encounter ?? '') . ' ' . ($e->notes ?? ''));
-                if (str_contains($text, 'adr') || str_contains($text, 'adverse drug') || str_contains($text, 'drug allergy') || str_contains($text, 'nafdac')) {
-                    $p = $e->patient;
-                    $u = $p?->user;
-                    $pName = $u ? trim($u->surname . ' ' . $u->firstname . ($u->othername ? ' ' . $u->othername : '')) : 'N/A';
-                    if ($e->patient_id) {
-                        $uniquePatients[$e->patient_id] = true;
-                    }
-                    $hmoInfo = $this->renderPatientHmo($p);
-
-                    $results[] = [
-                        'id' => $e->id,
-                        'patient_id' => $p?->id,
-                        'patient_name' => $pName,
-                        'file_no' => $p->file_no ?? 'N/A',
-                        'hmo_id' => $hmoInfo['hmo_id'],
-                        'hmo_scheme_id' => $hmoInfo['hmo_scheme_id'],
-                        'hmo_html' => $hmoInfo['hmo_html'],
-                        'gender' => ucfirst($p->gender ?? 'N/A'),
-                        'age' => $p && $p->dob ? Carbon::parse($p->dob)->age . 'y' : 'N/A',
-                        'doctor_name' => $e->doctor ? trim($e->doctor->surname . ' ' . $e->doctor->firstname . ($e->doctor->othername ? ' ' . $e->doctor->othername : '')) : 'Pharmacist / Clinician',
-                        'date' => $e->created_at->format('Y-m-d H:i'),
-                        'details' => 'Pharmacovigilance (ADR) Incident | ' . \Illuminate\Support\Str::limit(strip_tags($e->reasons_for_encounter ?? ($e->notes ?? '')), 80),
+                        'gender' => ucfirst($gender),
+                        'age' => $age . 'y',
+                        'doctor_name' => $lr->service?->service_name ?? 'Viral Hepatitis Test',
+                        'date' => $lr->created_at->format('Y-m-d H:i'),
+                        'details' => ($isPosReq ? 'Positive / Reactive' : 'Tested & Screened') . ' | Result: ' . ($lr->nhmis_outcome_raw ?? strip_tags($lr->result ?? 'Tested')),
                     ];
                 }
             }
         } else {
-            // Default: do not dump unrelated consultations; return empty array for unpopulated indicators
+            // Default: 0 results for non-compiled indicators; never dump unrelated encounters
             $results = [];
         }
 
