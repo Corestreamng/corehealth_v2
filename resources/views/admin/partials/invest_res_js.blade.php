@@ -82,6 +82,7 @@ window.InvestResultEntry = (function() {
     var _currentV2Structure = null;
     var _currentV2ExistingData = null;
     var _hasV2Template = false;
+    var _currentNhmisMapping = null;
 
     /**
      * Populate the modal with request data and template.
@@ -106,6 +107,7 @@ window.InvestResultEntry = (function() {
         _currentV2Structure = null;
         _currentV2ExistingData = null;
         _hasV2Template = false;
+        _currentNhmisMapping = null;
 
         // Parse V2 structure if available
         if (request.service && request.service.template_version == 2) {
@@ -141,6 +143,9 @@ window.InvestResultEntry = (function() {
         if (attachUrl) {
             _loadExistingAttachments(attachUrl);
         }
+
+        // Load NHMIS Outcome delegation & setup real-time auto-sense bar
+        _setupNhmisOutcome(request);
     }
 
     /**
@@ -205,12 +210,20 @@ window.InvestResultEntry = (function() {
                 .then(editor => {
                     window.investResEditor = editor;
                     editor.setData(template || '');
+                    editor.model.document.on('change:data', () => {
+                        if ($('#nhmis_outcome_container').is(':visible') && _currentNhmisMapping) {
+                            _triggerAutoSense(editor.getData(), _currentNhmisMapping);
+                        }
+                    });
                 })
                 .catch(err => {
                     console.error(err);
                 });
         } else {
             window.investResEditor.setData(template || '');
+            if ($('#nhmis_outcome_container').is(':visible') && _currentNhmisMapping) {
+                _triggerAutoSense(template || '', _currentNhmisMapping);
+            }
         }
     }
 
@@ -351,8 +364,15 @@ window.InvestResultEntry = (function() {
         formHtml += '</div>';
         $('#v2_form_fields').html(formHtml);
 
-        $('.v2-param-field').on('blur change', function() {
+        $('.v2-param-field').on('blur change input', function() {
             _updateParameterStatus($(this));
+            if ($('#nhmis_outcome_container').is(':visible') && _currentNhmisMapping) {
+                var allVals = '';
+                $('.v2-param-field').each(function() {
+                    allVals += ' ' + ($(this).val() || '');
+                });
+                _triggerAutoSense(allVals, _currentNhmisMapping);
+            }
         });
 
         $('.v2-param-field').each(function() {
@@ -360,6 +380,14 @@ window.InvestResultEntry = (function() {
                 _updateParameterStatus($(this));
             }
         });
+
+        if ($('#nhmis_outcome_container').is(':visible') && _currentNhmisMapping) {
+            var initialVals = '';
+            $('.v2-param-field').each(function() {
+                initialVals += ' ' + ($(this).val() || '');
+            });
+            _triggerAutoSense(initialVals, _currentNhmisMapping);
+        }
     }
 
     /**
@@ -555,6 +583,139 @@ window.InvestResultEntry = (function() {
                 }
             });
         });
+    /**
+     * NHMIS Clinical Outcome Auto-Sense Module
+     */
+    function _setupNhmisOutcome(request) {
+        $('#nhmis_outcome_container').hide();
+        $('#nhmis_outcome_pills').empty();
+        $('#nhmis_outcome').val('');
+        $('#nhmis_outcome_raw').val('');
+        $('#nhmis_indicator_badge').text('');
+        _currentNhmisMapping = null;
+
+        var sId = request.service_id || (request.service ? request.service.id : null);
+        if (!sId) return;
+
+        $.ajax({
+            url: '/nhmis-workbench/service-mapping/' + sId,
+            method: 'GET',
+            success: function(res) {
+                if (res.success && res.is_mapped) {
+                    _currentNhmisMapping = res;
+                    _renderNhmisOutcomeBar(res, request);
+                }
+            }
+        });
+    }
+
+    function _renderNhmisOutcomeBar(mapping, request) {
+        $('#nhmis_outcome_container').show();
+        $('#nhmis_indicator_badge').text(mapping.indicator_label || mapping.indicator_code);
+
+        var currentOutcome = request.nhmis_outcome || '';
+        var currentOutcomeRaw = request.nhmis_outcome_raw || '';
+        var supported = mapping.supported_outcomes || ['Negative', 'Positive'];
+        var positive = mapping.positive_outcomes || ['Positive'];
+
+        var pillsHtml = '';
+        supported.forEach(function(outcome) {
+            var isPos = positive.includes(outcome);
+            var btnClass = isPos ? 'btn-outline-danger' : 'btn-outline-success';
+            var outLower = outcome.toLowerCase();
+            if (outLower.includes('indeterminate') || outLower.includes('trace') || outLower.includes('aborted') || outLower.includes('complication')) {
+                btnClass = 'btn-outline-warning';
+            }
+
+            var isSelected = false;
+            if (currentOutcomeRaw) {
+                isSelected = (currentOutcomeRaw.toLowerCase() === outLower);
+            } else if (currentOutcome) {
+                isSelected = (currentOutcome === 'positive' && isPos) || (currentOutcome === 'negative' && !isPos && !outLower.includes('indeterminate'));
+            }
+
+            pillsHtml += '<button type="button" class="btn btn-sm nhmis-outcome-pill ' + btnClass + (isSelected ? ' active' : '') + '" data-outcome-raw="' + outcome + '" data-is-positive="' + (isPos ? '1' : '0') + '">' + outcome + '</button>';
+        });
+
+        $('#nhmis_outcome_pills').html(pillsHtml);
+
+        // Pre-select if existing
+        if (currentOutcome) {
+            $('#nhmis_outcome').val(currentOutcome);
+            $('#nhmis_outcome_raw').val(currentOutcomeRaw || currentOutcome);
+            $('#nhmis_auto_sense_indicator').html('<i class="mdi mdi-check-circle text-primary"></i> Saved outcome');
+        }
+
+        // Pill click handler
+        $('#nhmis_outcome_pills').off('click', '.nhmis-outcome-pill').on('click', '.nhmis-outcome-pill', function(e) {
+            e.preventDefault();
+            $('.nhmis-outcome-pill').removeClass('active');
+            $(this).addClass('active');
+
+            var raw = $(this).data('outcome-raw');
+            var isPos = $(this).data('is-positive') == '1';
+            var outcome = isPos ? 'positive' : (raw.toLowerCase().includes('indeterminate') ? 'indeterminate' : 'negative');
+
+            $('#nhmis_outcome').val(outcome);
+            $('#nhmis_outcome_raw').val(raw);
+            $('#nhmis_auto_sense_indicator').html('<i class="mdi mdi-hand-pointing-right text-info"></i> Selected: <strong>' + raw + '</strong>');
+        });
+
+        // Trigger initial auto-sense if new entry
+        if (!currentOutcome) {
+            var initialContent = request.result || '';
+            if (request.result_data && typeof request.result_data === 'string') {
+                initialContent += ' ' + request.result_data;
+            }
+            _triggerAutoSense(initialContent, mapping);
+        }
+    }
+
+    function _triggerAutoSense(text, mapping) {
+        if (!text || typeof text !== 'string' || !mapping) return;
+        var clean = text.replace(/<[^>]+>/g, ' ').replace(/&nbsp;/gi, ' ').toLowerCase();
+
+        var matchedPill = null;
+        $('.nhmis-outcome-pill').each(function() {
+            var raw = $(this).data('outcome-raw').toLowerCase();
+            var kw = raw.replace(/[()]/g, '').trim();
+            if (kw) {
+                var regex = new RegExp('\\b' + kw.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '\\b', 'i');
+                if (regex.test(clean)) {
+                    matchedPill = $(this);
+                    return false;
+                }
+            }
+        });
+
+        if (!matchedPill) {
+            var isNeg = /\b(negative|non[- ]reactive|not seen|nil|zero|undetected|normal)\b/i.test(clean);
+            var isPos = !isNeg && /\b(positive|reactive|\+{1,4}|detected|abnormal)\b/i.test(clean);
+
+            $('.nhmis-outcome-pill').each(function() {
+                var pIsPos = $(this).data('is-positive') == '1';
+                if (isPos && pIsPos) {
+                    matchedPill = $(this);
+                    return false;
+                } else if (isNeg && !pIsPos && !$(this).data('outcome-raw').toLowerCase().includes('indeterminate')) {
+                    matchedPill = $(this);
+                    return false;
+                }
+            });
+        }
+
+        if (matchedPill && !matchedPill.hasClass('active')) {
+            $('.nhmis-outcome-pill').removeClass('active');
+            matchedPill.addClass('active');
+
+            var raw = matchedPill.data('outcome-raw');
+            var isPos = matchedPill.data('is-positive') == '1';
+            var outcome = isPos ? 'positive' : (raw.toLowerCase().includes('indeterminate') ? 'indeterminate' : 'negative');
+
+            $('#nhmis_outcome').val(outcome);
+            $('#nhmis_outcome_raw').val(raw);
+            $('#nhmis_auto_sense_indicator').html('<i class="mdi mdi-auto-fix text-success"></i> Auto-sensed: <strong>' + raw + '</strong>');
+        }
     }
 
     // Public API

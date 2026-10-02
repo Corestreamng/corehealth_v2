@@ -211,6 +211,13 @@ class LabServiceRequestController extends Controller
                 }
             }
 
+            // Persist NHMIS outcome if provided
+            if ($request->filled('nhmis_outcome')) {
+                $updateData['nhmis_outcome'] = $request->nhmis_outcome;
+                $updateData['nhmis_outcome_raw'] = $request->get('nhmis_outcome_raw', $request->nhmis_outcome);
+                $updateData['nhmis_classified_at'] = now();
+            }
+
             $labRequest->update($updateData);
             DB::commit();
 
