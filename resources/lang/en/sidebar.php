@@ -48,6 +48,7 @@ return [
     'fixed_assets' => 'Fixed Assets',
     'health_records' => 'Health Records',
     'health_records_workbench' => 'Health Records Workbench',
+    'nhmis_monthly_report' => 'NHMIS Monthly Report',
     'hmo_executive' => 'HMO Executive',
     'hmo_management' => 'HMO Management',
     'hmo_reports' => 'HMO Reports',

@@ -29,6 +29,30 @@ class NhmisWorkbenchController extends Controller
     public function __construct(NhmisDataAggregatorService $aggregator)
     {
         $this->aggregator = $aggregator;
+        $this->middleware(function ($request, $next) {
+            $this->authorizeAccess();
+
+            return $next($request);
+        });
+    }
+
+    /**
+     * Authorize access: accessible to Admins and Receptionists who are unit or department heads
+     */
+    public function authorizeAccess(): void
+    {
+        $user = auth()->user();
+        if (!$user) {
+            abort(401);
+        }
+
+        $isAdmin = $user->hasAnyRole(['SUPERADMIN', 'ADMIN', 'super-admin']);
+        $staff = $user->staff_profile;
+        $isQualifiedReceptionist = $user->hasAnyRole(['RECEPTIONIST', 'Receptionist']) && $staff && ($staff->is_unit_head || $staff->is_dept_head);
+
+        if (!$isAdmin && !$isQualifiedReceptionist) {
+            abort(403, 'Unauthorized access to NHMIS Monthly Summary Workbench. Access is restricted to Administrators and Health Records / Reception unit or department heads.');
+        }
     }
 
     /**
@@ -106,7 +130,7 @@ class NhmisWorkbenchController extends Controller
                     'id' => $report->id,
                     'status' => $report->status,
                     'compiled_at' => $report->compiled_at?->format('M d, Y h:i A'),
-                    'compiler_name' => $report->compiler ? $report->compiler->surname . ' ' . $report->compiler->firstname : 'System',
+                    'compiler_name' => $report->compiler ? trim($report->compiler->surname . ' ' . $report->compiler->firstname . ' ' . ($report->compiler->othername ?? '')) : 'System',
                 ],
                 'values' => $freshValues->map(function ($val) {
                     return [

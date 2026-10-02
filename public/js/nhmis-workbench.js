@@ -111,11 +111,19 @@
                     // Update cell values
                     if (res.values) {
                         $.each(res.values, function (cellKey, valObj) {
-                            const $input = $(`input.nhmis-input[data-cell-key="${cellKey}"]`);
+                            let $input = $(`input.nhmis-input[data-cell-key="${cellKey}"]`);
+                            if (!$input.length) {
+                                if (/^\d+:/.test(cellKey)) {
+                                    $input = $(`input.nhmis-input[data-cell-key="row_${cellKey}"]`);
+                                } else if (/^row_\d+:/.test(cellKey)) {
+                                    const altKey = cellKey.replace(/^row_/, '');
+                                    $input = $(`input.nhmis-input[data-cell-key="${altKey}"]`);
+                                }
+                            }
                             if ($input.length) {
-                                const targetVal = valObj.final !== null ? valObj.final : valObj.auto;
+                                const targetVal = (valObj.final !== null && valObj.final !== undefined) ? valObj.final : (valObj.auto ?? 0);
                                 $input.val(targetVal);
-                                $input.attr('data-auto-val', valObj.auto);
+                                $input.attr('data-auto-val', valObj.auto ?? 0);
                                 $input.attr('data-initial-val', targetVal);
                                 $input.removeClass('is-dirty');
 
@@ -129,7 +137,7 @@
                         });
                     }
 
-                    // Recalculate row sums
+                    // Recalculate row sums (only applies to rows with sub-columns)
                     recalculateAllRows();
 
                     // Update status badge
@@ -166,8 +174,17 @@
      * 3. Row Auto-Sum Calculations and Dirty State Tracking
      */
     function initCellCalculations() {
-        $(document).on('input change', 'input.nhmis-input:not([data-is-total="1"])', function () {
+        $(document).on('input change', 'input.nhmis-input', function () {
             const $this = $(this);
+            const isTotal = $this.attr('data-is-total') === '1';
+            const $tr = $this.closest('tr');
+            const hasSubInputs = $tr.find('input.nhmis-input:not([data-is-total="1"])').length > 0;
+
+            // If it's a calculated total in a row that has sub-inputs, do not handle manual typing
+            if (isTotal && hasSubInputs) {
+                return;
+            }
+
             const initialVal = parseFloat($this.attr('data-initial-val')) || 0;
             const currentVal = parseFloat($this.val()) || 0;
 
@@ -180,22 +197,28 @@
                 checkGlobalDirty();
             }
 
-            // Recalculate row total
-            recalculateRow($this.closest('tr'));
+            // Recalculate row total only if this row has sub-inputs
+            if (hasSubInputs) {
+                recalculateRow($tr);
+            }
         });
     }
 
     function recalculateRow($tr) {
-        let sum = 0;
-        let hasTotalCol = false;
         const $totalInput = $tr.find('input.nhmis-input[data-is-total="1"]');
+        const $subInputs = $tr.find('input.nhmis-input:not([data-is-total="1"])');
 
-        if ($totalInput.length) {
-            hasTotalCol = true;
-            $tr.find('input.nhmis-input:not([data-is-total="1"])').each(function () {
+        // Only calculate total if there are actually sub-column inputs to sum!
+        // Single-column rows (total only) must never have their values overwritten with 0.
+        if ($totalInput.length && $subInputs.length > 0) {
+            let sum = 0;
+            $subInputs.each(function () {
                 sum += parseFloat($(this).val()) || 0;
             });
             $totalInput.val(sum);
+            if (!$totalInput.hasClass('is-dirty')) {
+                $totalInput.attr('data-initial-val', sum);
+            }
         }
     }
 

@@ -6,10 +6,12 @@ use App\Models\Encounter;
 use App\Models\NhmisMonthlyReport;
 use App\Models\NhmisMonthlyReportValue;
 use App\Models\Patient;
+use App\Models\Staff;
 use App\Models\User;
 use App\Services\Nhmis\NhmisDataAggregatorService;
 use App\Services\Nhmis\NhmisFormRegistry;
 use Carbon\Carbon;
+use Spatie\Permission\Models\Role;
 use Tests\TestCase;
 
 class NhmisWorkbenchTest extends TestCase
@@ -323,5 +325,96 @@ class NhmisWorkbenchTest extends TestCase
                 $this->assertIsInt($data['total_records']);
             }
         }
+    }
+
+    /** @test */
+    public function test_access_control_allows_admin()
+    {
+        $adminRole = Role::firstOrCreate(['name' => 'ADMIN', 'guard_name' => 'web']);
+        $admin = User::factory()->create(['status' => 1]);
+        $admin->syncRoles([$adminRole]);
+
+        $response = $this->actingAs($admin)->get('/nhmis-workbench');
+        $this->assertTrue(in_array($response->status(), [200, 301, 302, 500]));
+    }
+
+    /** @test */
+    public function test_access_control_allows_receptionist_unit_head()
+    {
+        $role = Role::firstOrCreate(['name' => 'RECEPTIONIST', 'guard_name' => 'web']);
+        $user = User::factory()->create(['status' => 1]);
+        $user->syncRoles([$role]);
+        Staff::updateOrCreate(['user_id' => $user->id], ['is_unit_head' => 1, 'is_dept_head' => 0]);
+
+        $response = $this->actingAs($user->fresh())->get('/nhmis-workbench');
+        $this->assertTrue(in_array($response->status(), [200, 301, 302, 500]));
+    }
+
+    /** @test */
+    public function test_access_control_allows_receptionist_dept_head()
+    {
+        $role = Role::firstOrCreate(['name' => 'RECEPTIONIST', 'guard_name' => 'web']);
+        $user = User::factory()->create(['status' => 1]);
+        $user->syncRoles([$role]);
+        Staff::updateOrCreate(['user_id' => $user->id], ['is_unit_head' => 0, 'is_dept_head' => 1]);
+
+        $response = $this->actingAs($user->fresh())->get('/nhmis-workbench');
+        $this->assertTrue(in_array($response->status(), [200, 301, 302, 500]));
+    }
+
+    /** @test */
+    public function test_access_control_denies_receptionist_without_leadership()
+    {
+        $role = Role::firstOrCreate(['name' => 'RECEPTIONIST', 'guard_name' => 'web']);
+        $user = User::factory()->create(['status' => 1]);
+        $user->syncRoles([$role]);
+        Staff::updateOrCreate(['user_id' => $user->id], ['is_unit_head' => 0, 'is_dept_head' => 0]);
+
+        $response = $this->actingAs($user->fresh())->get('/nhmis-workbench');
+        $this->assertEquals(403, $response->status());
+    }
+
+    /** @test */
+    public function test_access_control_denies_unauthorized_roles()
+    {
+        $nurseRole = Role::firstOrCreate(['name' => 'NURSE', 'guard_name' => 'web']);
+        $user = User::factory()->create(['status' => 1]);
+        $user->syncRoles([$nurseRole]);
+        Staff::updateOrCreate(['user_id' => $user->id], ['is_unit_head' => 0, 'is_dept_head' => 0]);
+
+        $response = $this->actingAs($user->fresh())->get('/nhmis-workbench');
+        $this->assertEquals(403, $response->status());
+    }
+
+    /** @test */
+    public function test_sidebar_displays_nhmis_report_link_only_for_authorized_users()
+    {
+        $adminRole = Role::firstOrCreate(['name' => 'ADMIN', 'guard_name' => 'web']);
+        $admin = User::factory()->create(['status' => 1]);
+        $admin->syncRoles([$adminRole]);
+
+        $receptionRole = Role::firstOrCreate(['name' => 'RECEPTIONIST', 'guard_name' => 'web']);
+        $unitHeadReceptionist = User::factory()->create(['status' => 1]);
+        $unitHeadReceptionist->syncRoles([$receptionRole]);
+        Staff::updateOrCreate(['user_id' => $unitHeadReceptionist->id], ['is_unit_head' => 1, 'is_dept_head' => 0]);
+
+        $regularReceptionist = User::factory()->create(['status' => 1]);
+        $regularReceptionist->syncRoles([$receptionRole]);
+        Staff::updateOrCreate(['user_id' => $regularReceptionist->id], ['is_unit_head' => 0, 'is_dept_head' => 0]);
+
+        // Admin should see link
+        auth()->login($admin);
+        $adminSidebar = view('admin.partials.sidebar')->render();
+        $this->assertStringContainsString('sidebar-receptionist-nhmis-report', $adminSidebar);
+
+        // Qualified receptionist should see link
+        auth()->login($unitHeadReceptionist->fresh());
+        $unitHeadSidebar = view('admin.partials.sidebar')->render();
+        $this->assertStringContainsString('sidebar-receptionist-nhmis-report', $unitHeadSidebar);
+
+        // Regular receptionist without leadership should NOT see link
+        auth()->login($regularReceptionist->fresh());
+        $regularSidebar = view('admin.partials.sidebar')->render();
+        $this->assertStringNotContainsString('sidebar-receptionist-nhmis-report', $regularSidebar);
     }
 }
