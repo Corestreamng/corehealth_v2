@@ -1406,6 +1406,21 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/workbench/price-list/products', [\App\Http\Controllers\WorkbenchPriceListController::class, 'getProducts'])->name('workbench.price-list.products');
     Route::get('/workbench/price-list/services', [\App\Http\Controllers\WorkbenchPriceListController::class, 'getServices'])->name('workbench.price-list.services');
     Route::get('/workbench/price-list/tariffs', [\App\Http\Controllers\WorkbenchPriceListController::class, 'getTariffs'])->name('workbench.price-list.tariffs');
+
+    // NHMIS Monthly Summary Workbench
+    Route::prefix('nhmis-workbench')->name('nhmis.')->group(function () {
+        Route::get('/', [\App\Http\Controllers\NhmisWorkbenchController::class, 'index'])->name('workbench');
+        Route::post('/compile', [\App\Http\Controllers\NhmisWorkbenchController::class, 'compile'])->name('compile');
+        Route::post('/save-values', [\App\Http\Controllers\NhmisWorkbenchController::class, 'saveValues'])->name('save-values');
+        Route::post('/update-status', [\App\Http\Controllers\NhmisWorkbenchController::class, 'updateStatus'])->name('update-status');
+        Route::get('/audit-diagnosis', [\App\Http\Controllers\NhmisWorkbenchController::class, 'auditDiagnosis'])->name('audit-diagnosis');
+        Route::get('/service-mappings', [\App\Http\Controllers\NhmisWorkbenchController::class, 'getServiceMappings'])->name('service-mappings');
+        Route::post('/service-mappings', [\App\Http\Controllers\NhmisWorkbenchController::class, 'saveServiceMappings'])->name('save-service-mappings');
+        Route::post('/service-mappings/auto-detect', [\App\Http\Controllers\NhmisWorkbenchController::class, 'autoDetectServiceMappings'])->name('auto-detect-service-mappings');
+        Route::post('/backfill-classifications', [\App\Http\Controllers\NhmisWorkbenchController::class, 'backfillClassifications'])->name('backfill-classifications');
+        Route::get('/drill-down', [\App\Http\Controllers\NhmisWorkbenchController::class, 'drillDown'])->name('drill-down');
+        Route::get('/service-mapping/{serviceId}', [\App\Http\Controllers\NhmisWorkbenchController::class, 'getMappingForService'])->name('service-mapping-single');
+    });
 });
 
 // Observability & Health Monitoring

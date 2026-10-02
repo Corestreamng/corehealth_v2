@@ -1342,6 +1342,12 @@
                     <span class="menu-title">{{ __('sidebar.all_encounters') }}</span>
                 </a>
             </li>
+            <li class="nav-item {{ request()->routeIs('nhmis.*') ? 'active' : '' }}">
+                <a class="nav-link {{ request()->routeIs('nhmis.*') ? 'active' : '' }}" href="{{ route('nhmis.workbench') }}" id="sidebar-admin-nhmis-workbench">
+                    <i class="mdi mdi-chart-box-outline menu-icon"></i>
+                    <span class="menu-title">NHMIS Monthly Summary</span>
+                </a>
+            </li>
             <li class="nav-item">
                 <a class="nav-link" data-toggle="collapse" data-bs-toggle="collapse" href="javascript:void(0);" data-target="#sidebar-admin-patients" data-bs-target="#sidebar-admin-patients" aria-expanded="false" aria-controls="sidebar-admin-patients" id="sidebar-admin-patients-toggle">
                     <i class="mdi mdi-crosshairs-gps menu-icon"></i>
