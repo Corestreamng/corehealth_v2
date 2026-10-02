@@ -2203,6 +2203,36 @@ class NhmisWorkbenchController extends Controller
                     ->whereBetween('created_at', [$startDate, $endDate])
                     ->get();
 
+                // Pre-index severe malaria patients who received injectable Artesunate/Artemether
+                $allSeverePatientIds = [];
+                foreach ($encounters as $e) {
+                    $pId = $e->patient_id;
+                    if (!$pId) {
+                        continue;
+                    }
+                    $rawText = ($e->reasons_for_encounter ?? '') . ' ' . ($e->notes ?? '');
+                    if (stripos($rawText, 'severe malaria') !== false || stripos($rawText, 'cerebral malaria') !== false) {
+                        $allSeverePatientIds[$pId] = true;
+                    }
+                }
+
+                $artesunatePatientMap = [];
+                if (!empty($allSeverePatientIds)) {
+                    $pReqs = ProductRequest::with('product')
+                        ->whereIn('patient_id', array_keys($allSeverePatientIds))
+                        ->whereBetween('created_at', [$startDate, $endDate])
+                        ->get();
+                    foreach ($pReqs as $pr) {
+                        $pName = $pr->product?->product_name ?? '';
+                        if (stripos($pName, 'artesunate') !== false && (stripos($pName, 'inj') !== false || stripos($pName, '120mg') !== false || stripos($pName, '60mg') !== false)) {
+                            $artesunatePatientMap[$pr->patient_id] = true;
+                        }
+                        if (stripos($pName, 'artemether') !== false && stripos($pName, 'inj') !== false) {
+                            $artesunatePatientMap[$pr->patient_id] = true;
+                        }
+                    }
+                }
+
                 $seenMalPat = [];
                 foreach ($encounters as $e) {
                     $pId = $e->patient_id;
@@ -2226,6 +2256,8 @@ class NhmisWorkbenchController extends Controller
                         continue;
                     }
 
+                    $rawText = ($e->reasons_for_encounter ?? '') . ' ' . ($e->notes ?? '');
+                    $isSevere = (stripos($rawText, 'severe malaria') !== false || stripos($rawText, 'cerebral malaria') !== false);
                     $isFever = $this->aggregator->matchEncounterDiagnosis($e, ['fever', 'pyrexia', 'febrile', 'febrile illness', 'pyrexia of unknown origin', 'puo'], ['R50']);
                     $isMalaria = $this->aggregator->matchEncounterDiagnosis($e, ['malaria', 'malarial', 'plasmodium', 'falciparum', 'cerebral malaria', 'severe malaria'], ['B50', 'B51', 'B52', 'B53', 'B54']);
 
@@ -2238,12 +2270,21 @@ class NhmisWorkbenchController extends Controller
                     } elseif ($rowNum === 148 && $isFever) {
                         $matched = true;
                         $desc = 'Suspected Malaria Tested by RDT';
-                    } elseif (($rowNum === 149 || $rowNum === 153) && $isMalaria) {
+                    } elseif ($rowNum === 149 && ($isMalaria || $isSevere)) {
                         $matched = true;
                         $desc = 'Confirmed Malaria Case (RDT / Microscopy Positive)';
-                    } elseif ($rowNum === 155 && $isMalaria) {
+                    } elseif ($rowNum === 153 && $isMalaria && !$isSevere) {
                         $matched = true;
-                        $desc = 'Confirmed Malaria Case Treated with ACT';
+                        $desc = 'Confirmed Uncomplicated Malaria Case';
+                    } elseif ($rowNum === 154 && $isSevere) {
+                        $matched = true;
+                        $desc = 'Severe Malaria Case Seen';
+                    } elseif ($rowNum === 155 && $isMalaria && !$isSevere) {
+                        $matched = true;
+                        $desc = 'Confirmed Uncomplicated Malaria Treated with ACT';
+                    } elseif ($rowNum === 159 && $isSevere && isset($artesunatePatientMap[$pId])) {
+                        $matched = true;
+                        $desc = 'Severe Malaria Case Treated with Artesunate Injection';
                     }
 
                     if ($matched) {

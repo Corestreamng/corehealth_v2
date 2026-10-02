@@ -16,6 +16,7 @@ use App\Models\NhmisMonthlyReport;
 use App\Models\NhmisMonthlyReportValue;
 use App\Models\NhmisServiceMapping;
 use App\Models\PostnatalVisit;
+use App\Models\ProductRequest;
 use App\Models\SpecialistReferral;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
@@ -1616,7 +1617,7 @@ class NhmisDataAggregatorService
         $fistulaRef = 0;
 
         foreach ($referrals as $r) {
-            $diag = strtolower($r->diagnosis ?? ($r->reason ?? ''));
+            $diag = strtolower(($r->provisional_diagnosis ?? '') . ' ' . ($r->reason ?? ''));
             if ($this->matchKeywordInText($diag, 'malaria')) {
                 $malariaRef++;
             }
@@ -1730,9 +1731,41 @@ class NhmisDataAggregatorService
         $fever = ['lt_5y' => 0, 'ge_5y_excl_pw' => 0, 'pregnant_women' => 0];
         $clinMalaria = ['lt_5y' => 0, 'ge_5y_excl_pw' => 0, 'pregnant_women' => 0];
         $confMalaria = ['lt_5y' => 0, 'ge_5y_excl_pw' => 0, 'pregnant_women' => 0];
-        $actTx = ['lt_5y' => 0, 'ge_5y_excl_pw' => 0, 'pregnant_women' => 0];
+        $uncompMalaria = ['lt_5y' => 0, 'ge_5y_excl_pw' => 0, 'pregnant_women' => 0];
+        $severeMalaria = ['lt_5y' => 0, 'ge_5y_excl_pw' => 0, 'pregnant_women' => 0];
+        $artesunateInj = ['lt_5y' => 0, 'ge_5y_excl_pw' => 0, 'pregnant_women' => 0];
 
-        $seenMalaria = ['fever' => [], 'malaria' => []];
+        $seenMalaria = ['fever' => [], 'all_malaria' => [], 'uncomp' => [], 'severe' => [], 'artesunate' => []];
+
+        // Pre-index severe malaria patients who received injectable Artesunate/Artemether
+        $allSeverePatientIds = [];
+        foreach ($encounters as $e) {
+            $pId = $e->patient_id;
+            if (!$pId) {
+                continue;
+            }
+            $rawText = ($e->reasons_for_encounter ?? '') . ' ' . ($e->notes ?? '');
+            if (stripos($rawText, 'severe malaria') !== false || stripos($rawText, 'cerebral malaria') !== false) {
+                $allSeverePatientIds[$pId] = true;
+            }
+        }
+
+        $artesunatePatientMap = [];
+        if (!empty($allSeverePatientIds)) {
+            $pReqs = ProductRequest::with('product')
+                ->whereIn('patient_id', array_keys($allSeverePatientIds))
+                ->whereBetween('created_at', [$from, $to])
+                ->get();
+            foreach ($pReqs as $pr) {
+                $pName = $pr->product?->product_name ?? '';
+                if (stripos($pName, 'artesunate') !== false && (stripos($pName, 'inj') !== false || stripos($pName, '120mg') !== false || stripos($pName, '60mg') !== false)) {
+                    $artesunatePatientMap[$pr->patient_id] = true;
+                }
+                if (stripos($pName, 'artemether') !== false && stripos($pName, 'inj') !== false) {
+                    $artesunatePatientMap[$pr->patient_id] = true;
+                }
+            }
+        }
 
         foreach ($encounters as $e) {
             $pId = $e->patient_id;
@@ -1757,10 +1790,29 @@ class NhmisDataAggregatorService
                 $fever[$col]++;
             }
 
-            if (!isset($seenMalaria['malaria'][$col][$pId]) && $this->matchEncounterDiagnosis($e, ['malaria', 'malarial', 'plasmodium', 'falciparum', 'cerebral malaria', 'severe malaria'], ['B50', 'B51', 'B52', 'B53', 'B54'])) {
-                $seenMalaria['malaria'][$col][$pId] = true;
+            $rawText = ($e->reasons_for_encounter ?? '') . ' ' . ($e->notes ?? '');
+            $isSevere = (stripos($rawText, 'severe malaria') !== false || stripos($rawText, 'cerebral malaria') !== false);
+            $isMalaria = $this->matchEncounterDiagnosis($e, ['malaria', 'malarial', 'plasmodium', 'falciparum', 'cerebral malaria', 'severe malaria'], ['B50', 'B51', 'B52', 'B53', 'B54']);
+
+            if (!isset($seenMalaria['all_malaria'][$col][$pId]) && ($isMalaria || $isSevere)) {
+                $seenMalaria['all_malaria'][$col][$pId] = true;
                 $confMalaria[$col]++;
-                $actTx[$col]++;
+            }
+
+            if ($isSevere) {
+                if (!isset($seenMalaria['severe'][$col][$pId])) {
+                    $seenMalaria['severe'][$col][$pId] = true;
+                    $severeMalaria[$col]++;
+                }
+                if (isset($artesunatePatientMap[$pId]) && !isset($seenMalaria['artesunate'][$col][$pId])) {
+                    $seenMalaria['artesunate'][$col][$pId] = true;
+                    $artesunateInj[$col]++;
+                }
+            } elseif ($isMalaria) {
+                if (!isset($seenMalaria['uncomp'][$col][$pId])) {
+                    $seenMalaria['uncomp'][$col][$pId] = true;
+                    $uncompMalaria[$col]++;
+                }
             }
         }
 
@@ -1772,13 +1824,13 @@ class NhmisDataAggregatorService
             'row_150' => ['lt_5y' => 0, 'ge_5y_excl_pw' => 0, 'pregnant_women' => 0], // Microscopy tested
             'row_151' => ['lt_5y' => 0, 'ge_5y_excl_pw' => 0, 'pregnant_women' => 0], // Microscopy positive
             'row_152' => $clinMalaria,
-            'row_153' => $confMalaria,
-            'row_154' => ['lt_5y' => 0, 'ge_5y_excl_pw' => 0, 'pregnant_women' => 0], // Severe malaria
-            'row_155' => $actTx,
+            'row_153' => $uncompMalaria,
+            'row_154' => $severeMalaria,
+            'row_155' => $uncompMalaria,
             'row_156' => $clinMalaria,
             'row_157' => ['lt_5y' => 0, 'ge_5y_excl_pw' => 0, 'pregnant_women' => 0],
             'row_158' => ['lt_5y' => 0, 'ge_5y_excl_pw' => 0, 'pregnant_women' => 0],
-            'row_159' => ['lt_5y' => 0, 'ge_5y_excl_pw' => 0, 'pregnant_women' => 0],
+            'row_159' => $artesunateInj,
             'row_160' => ['lt_5y' => 0, 'ge_5y_excl_pw' => 0, 'pregnant_women' => 0],
         ];
 
