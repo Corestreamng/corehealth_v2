@@ -106,6 +106,19 @@
                 <form id="imm-modal-immunization-form">
                     <div class="form-row">
                         <div class="form-group col-md-6">
+                            <label for="imm-modal-session-type"><i class="mdi mdi-map-marker-radius"></i> Session Type *</label>
+                            <select class="form-control" id="imm-modal-session-type" required>
+                                <option value="fixed" selected>Fixed Session (Hospital Clinic)</option>
+                                <option value="outreach">Outreach Session (Community / Mobile Drive)</option>
+                            </select>
+                        </div>
+                        <div class="form-group col-md-6" id="imm-modal-outreach-location-container" style="display: none;">
+                            <label for="imm-modal-outreach-location"><i class="mdi mdi-map-marker-outline"></i> Outreach Settlement / Location</label>
+                            <input type="text" class="form-control" id="imm-modal-outreach-location" placeholder="e.g. Sabon Gari Market, Ungwan Rogo">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group col-md-6">
                             <label for="imm-modal-vaccine-site"><i class="mdi mdi-map-marker"></i> Administration Site *</label>
                             <select class="form-control" id="imm-modal-vaccine-site" required>
                                 <option value="">Select Site</option>

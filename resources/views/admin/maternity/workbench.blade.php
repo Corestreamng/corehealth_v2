@@ -7,6 +7,7 @@
 <link rel="stylesheet" href="{{ asset('plugins/dataT/datatables.min.css') }}">
 <link rel="stylesheet" href="{{ asset('css/clinical-orders-shared.css') }}">
 <link rel="stylesheet" href="{{ asset('css/billing-shared.css') }}">
+<link rel="stylesheet" href="{{ versioned_asset('css/outreach-immunization.css') }}">
 @endpush
 
 @section('content')
@@ -139,6 +140,19 @@ $sett = appsettings();
                 <i class="mdi mdi-shield-search text-warning"></i>
                 <span>Audit Trail</span>
             </button>
+
+            <!-- Community Outreach Immunization -->
+            <button class="quick-action-btn" id="btn-outreach-immunization">
+                <i class="mdi mdi-needle text-success"></i>
+                <span>Outreach Immunization</span>
+            </button>
+
+            <!-- Outreach Reports & Field Tallies -->
+            <button class="quick-action-btn" id="btn-outreach-reports">
+                <i class="mdi mdi-chart-box-outline text-primary"></i>
+                <span>Outreach Reports</span>
+            </button>
+
             <button class="quick-action-btn" id="btn-discharge-patient" disabled title="Discharge maternity enrollment" style="display:none;">
                 <i class="mdi mdi-exit-run text-danger"></i>
                 <span>Discharge</span>
@@ -528,6 +542,8 @@ $sett = appsettings();
 </div>
 
 @include('admin.partials.administer_vaccine_modal')
+@include('admin.partials.outreach_tally_modal')
+@include('admin.partials.outreach_reports_modal')
 
 {{-- Dose-mode toggle rendered as hidden HTML; moved into dynamic container via JS --}}
 <div id="mco-dose-mode-toggle-source" style="display:none;">

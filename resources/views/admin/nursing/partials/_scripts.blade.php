@@ -31,7 +31,9 @@ window.WORKBENCH_CONFIG = {
         'nursing-workbench.billing.add-consumable': '{{ route("nursing-workbench.billing.add-consumable") }}',
         'nursing-workbench.billing.add-lab-bill': '{{ route("nursing-workbench.billing.add-lab-bill") }}',
         'nursing-workbench.billing.add-imaging-bill': '{{ route("nursing-workbench.billing.add-imaging-bill") }}',
-        'nursing-workbench.billing.remove': '{{ url("/nursing-workbench/remove-bill") }}'
+        'nursing-workbench.billing.remove': '{{ url("/nursing-workbench/remove-bill") }}',
+        'nursing-workbench.outreach-tally': '{{ route("nursing-workbench.outreach-tally") }}',
+        'nursing-workbench.outreach-reports': '{{ route("nursing-workbench.outreach-reports") }}'
     },
     resolvedStoreId: '{{ $resolvedStore->id ?? "" }}',
     resolvedStoreName: '{{ $resolvedStore->store_name ?? "" }}',
@@ -64,6 +66,7 @@ window.BILLING_KIT_CONFIG = {
 <script src="{{ asset('js/billing-shared.js') }}"></script>
 <script src="{{ asset('js/request-details.js') }}"></script>
 <script src="{{ asset('js/immunization-module.js') }}"></script>
+<script src="{{ versioned_asset('js/outreach-immunization.js') }}"></script>
 @include('admin.partials.patient_search_js', ['search_context' => 'nursing'])
 @include('admin.partials.invest_res_js')
 @include('admin.partials.perform_investigation_modal')

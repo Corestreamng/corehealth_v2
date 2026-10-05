@@ -10,6 +10,7 @@
 <link rel="stylesheet" href="{{ asset('css/clinical-orders-shared.css') }}">
 <link rel="stylesheet" href="{{ asset('css/queue-status.css') }}">
 <link rel="stylesheet" href="{{ asset('css/billing-shared.css') }}">
+<link rel="stylesheet" href="{{ versioned_asset('css/outreach-immunization.css') }}">
 @endpush
 
 @section('content')
@@ -141,6 +142,18 @@
             <button class="quick-action-btn" id="btn-admission-summary">
                 <i class="mdi mdi-account-switch text-secondary"></i>
                 <span>Admissions Today</span>
+            </button>
+
+            <!-- Community Outreach Immunization -->
+            <button class="quick-action-btn" id="btn-outreach-immunization">
+                <i class="mdi mdi-needle text-success"></i>
+                <span>Outreach Immunization</span>
+            </button>
+
+            <!-- Outreach Reports & Field Tallies -->
+            <button class="quick-action-btn" id="btn-outreach-reports">
+                <i class="mdi mdi-chart-box-outline text-primary"></i>
+                <span>Outreach Reports</span>
             </button>
             @if(appsettings()->enable_ei_nursing)
 <button class="quick-action-btn" onclick="showEmergencyIntakeModal()">

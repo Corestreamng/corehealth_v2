@@ -804,4 +804,9 @@
 @include('admin.partials.bundle_view_modal')
 @include('admin.partials.bundle_remove_modal')
 
+{{-- Shared Community Outreach Immunization & Field Reports Modals --}}
+@include('admin.partials.outreach_tally_modal')
+@include('admin.partials.outreach_reports_modal')
+
+
 
