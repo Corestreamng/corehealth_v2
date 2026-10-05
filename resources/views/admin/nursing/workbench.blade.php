@@ -70,9 +70,9 @@
         @include('admin.partials.patient_search_html')
 
         <div class="queue-widget">
-            <h6><i class="mdi mdi-clipboard-list"></i> PATIENT QUEUES</h6>
+            <h6><i class="mdi mdi-clipboard-text"></i> PATIENT QUEUES</h6>
             <div class="queue-item" data-filter="admitted">
-                <span class="queue-item-label"><i class="mdi mdi-bed"></i> Admitted Patients</span>
+                <span class="queue-item-label"><i class="mdi mdi-hotel"></i> Admitted Patients</span>
                 <span class="queue-count billing" id="queue-admitted-count">0</span>
             </div>
             <div class="queue-item" data-filter="vitals">
@@ -105,7 +105,7 @@
         </div>
 
         <div class="quick-actions">
-            <h6><i class="mdi mdi-lightning-bolt"></i> QUICK ACTIONS</h6>
+            <h6><i class="mdi mdi-flash text-warning"></i> QUICK ACTIONS</h6>
 
             <!-- Ward & Bed Management -->
             <button class="quick-action-btn" id="btn-ward-dashboard">
@@ -134,7 +134,7 @@
 
             <!-- Nursing Reports -->
             <button class="quick-action-btn" id="btn-nursing-reports">
-                <i class="mdi mdi-chart-box-outline text-success"></i>
+                <i class="mdi mdi-file-chart text-success"></i>
                 <span>Nursing Reports</span>
             </button>
 
@@ -152,7 +152,7 @@
 
             <!-- Outreach Reports & Field Tallies -->
             <button class="quick-action-btn" id="btn-outreach-reports">
-                <i class="mdi mdi-chart-box-outline text-primary"></i>
+                <i class="mdi mdi-file-chart text-primary"></i>
                 <span>Outreach Reports</span>
             </button>
             @if(appsettings()->enable_ei_nursing)

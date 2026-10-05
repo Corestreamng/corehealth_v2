@@ -121,7 +121,7 @@
                                     <input type="radio" name="outreach_stock_source" value="donor_partner">
                                     <div class="stock-source-info">
                                         <div class="stock-source-title">
-                                            <span><i class="mdi mdi-handshake text-info"></i> Partner / Donor Campaign (UNICEF/WHO)</span>
+                                            <span><i class="mdi mdi-charity text-info"></i> Partner / Donor Campaign (UNICEF/WHO)</span>
                                             <span class="badge bg-info-subtle text-info">Partner</span>
                                         </div>
                                         <div class="stock-source-desc">
@@ -306,7 +306,7 @@
                                     <div class="d-flex justify-content-between align-items-center mb-1 flex-wrap">
                                         <div class="d-flex align-items-center gap-1">
                                             <span class="step-subbadge subbadge-amber">2B</span>
-                                            <span class="control-deck-title text-amber-dark"><i class="mdi mdi-lightning-bolt text-warning"></i> Rapid Visit Bundles (+1 Action):</span>
+                                            <span class="control-deck-title text-amber-dark"><i class="mdi mdi-flash text-warning"></i> Rapid Visit Bundles (+1 Action):</span>
                                         </div>
                                         <small class="text-muted"><i class="mdi mdi-cursor-default-click"></i> Click once to increment (+1) all schedule antigens in that visit</small>
                                     </div>
@@ -584,7 +584,7 @@
                                 <div id="review-stock-ledger-card" class="outreach-receipt-card p-3 rounded border d-none" style="background: #f8fafc; border-color: #cbd5e1 !important;">
                                     <div class="d-flex justify-content-between align-items-center mb-2">
                                         <h6 class="fw-bold text-dark mb-0">
-                                            <i class="mdi mdi-database-arrow-right text-success"></i> Hospital Store Inventory Deduction Ledger
+                                            <i class="mdi mdi-database-export text-success"></i> Hospital Store Inventory Deduction Ledger
                                         </h6>
                                         <span class="badge bg-success" id="review-stock-deduction-badge">Auto-Deduction Active</span>
                                     </div>
