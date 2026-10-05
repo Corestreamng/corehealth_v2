@@ -1,0 +1,1529 @@
+/* ==========================================================================
+   Community Outreach & Campaign Immunization Tally Styles
+   Conforms to WHO EPI Form 001, DHIS2, and NHMIS 2019 standards
+   ========================================================================== */
+
+/* 1. Modal Sizing & Layout */
+.modal-outreach-xl .modal-dialog {
+    max-width: 95vw;
+    width: 1400px;
+    margin: 1.5rem auto;
+}
+
+@media (max-width: 1200px) {
+    .modal-outreach-xl .modal-dialog {
+        max-width: 98vw;
+        width: 98vw;
+        margin: 0.5rem auto;
+    }
+}
+
+.outreach-modal-header {
+    background: linear-gradient(135deg, var(--hospital-primary, #011b33) 0%, #0d47a1 100%);
+    color: #ffffff;
+    border-top-left-radius: 8px;
+    border-top-right-radius: 8px;
+    padding: 0.85rem 1.5rem;
+}
+
+.outreach-modal-header .modal-title {
+    font-size: 1.15rem;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+/* 2. Stepper Progress Navigation */
+.outreach-stepper-wrapper {
+    background: #ffffff;
+    border-bottom: 1px solid #e2e8f0;
+    padding: 0.75rem 1.5rem;
+    margin-bottom: 1rem;
+}
+
+.outreach-stepper {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    position: relative;
+    max-width: 860px;
+    margin: 0 auto;
+}
+
+.outreach-stepper::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 40px;
+    right: 40px;
+    height: 3px;
+    background: #e2e8f0;
+    z-index: 1;
+    transform: translateY(-50%);
+}
+
+.stepper-progress-line {
+    position: absolute;
+    top: 50%;
+    left: 40px;
+    height: 3px;
+    background: var(--hospital-primary, #011b33);
+    z-index: 2;
+    transform: translateY(-50%);
+    transition: width 0.3s ease;
+    width: 0%;
+}
+
+.stepper-step {
+    position: relative;
+    z-index: 3;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    background: #ffffff;
+    padding: 0 0.5rem;
+    cursor: pointer;
+}
+
+.stepper-circle {
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    background: #f1f5f9;
+    border: 2px solid #cbd5e1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 0.9rem;
+    color: #64748b;
+    transition: all 0.25s ease;
+}
+
+.stepper-step.active .stepper-circle {
+    background: var(--hospital-primary, #011b33);
+    border-color: var(--hospital-primary, #011b33);
+    color: #ffffff;
+    box-shadow: 0 0 0 4px rgba(var(--hospital-primary-rgb, 1, 27, 51), 0.15);
+}
+
+.stepper-step.completed .stepper-circle {
+    background: #10b981;
+    border-color: #10b981;
+    color: #ffffff;
+}
+
+.stepper-label {
+    margin-top: 0.35rem;
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+}
+
+.stepper-step.active .stepper-label {
+    color: var(--hospital-primary, #011b33);
+    font-weight: 700;
+}
+
+.stepper-step.completed .stepper-label {
+    color: #10b981;
+}
+
+/* 3. Step 1: Multi-Column Setup Grid */
+.outreach-setup-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 1.25rem;
+    margin-bottom: 1rem;
+}
+
+.setup-card {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 1.15rem;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+.setup-card-header {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-weight: 700;
+    font-size: 0.95rem;
+    color: var(--hospital-primary, #011b33);
+    margin-bottom: 0.85rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+/* Stock Source Selector Cards */
+.stock-source-options {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    margin-bottom: 0.75rem;
+}
+
+.stock-source-choice {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    padding: 0.65rem 0.85rem;
+    border: 1.5px solid #cbd5e1;
+    border-radius: 6px;
+    background: #ffffff;
+    cursor: pointer;
+    transition: all 0.15s ease-in-out;
+}
+
+.stock-source-choice:hover {
+    border-color: var(--hospital-primary, #011b33);
+    background: #f8fafc;
+}
+
+.stock-source-choice.selected {
+    border-color: var(--hospital-primary, #011b33);
+    background: rgba(var(--hospital-primary-rgb, 1, 27, 51), 0.04);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.04);
+}
+
+.stock-source-choice input[type="radio"] {
+    margin-top: 3px;
+    cursor: pointer;
+}
+
+.stock-source-info {
+    flex: 1;
+}
+
+.stock-source-title {
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: #1e293b;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.stock-source-desc {
+    font-size: 0.75rem;
+    color: #64748b;
+    margin-top: 2px;
+}
+
+/* VVM Pills */
+.vvm-selector {
+    display: flex;
+    gap: 0.4rem;
+    flex-wrap: wrap;
+    margin-top: 0.35rem;
+}
+
+.vvm-pill {
+    flex: 1;
+    min-width: 65px;
+    padding: 0.4rem 0.25rem;
+    text-align: center;
+    border-radius: 4px;
+    border: 1.5px solid #cbd5e1;
+    background: #fff;
+    cursor: pointer;
+    font-size: 0.75rem;
+    font-weight: 700;
+    transition: all 0.15s ease;
+}
+
+.vvm-pill.stage-usable {
+    color: #15803d;
+    border-color: #86efac;
+}
+
+.vvm-pill.stage-usable:hover,
+.vvm-pill.stage-usable.active {
+    background: #22c55e;
+    color: #ffffff;
+    border-color: #16a34a;
+}
+
+.vvm-pill.stage-discard {
+    color: #b91c1c;
+    border-color: #fca5a5;
+}
+
+.vvm-pill.stage-discard:hover,
+.vvm-pill.stage-discard.active {
+    background: #ef4444;
+    color: #ffffff;
+    border-color: #dc2626;
+}
+
+/* 4. Step 2: Split-Screen Multi-Column Layout */
+.outreach-split-layout {
+    display: flex;
+    gap: 0.85rem;
+    align-items: flex-start;
+}
+
+.outreach-main-column {
+    flex: 1;
+    min-width: 0;
+}
+
+.outreach-sticky-sidebar {
+    width: 260px;
+    min-width: 260px;
+    position: sticky;
+    top: 0.5rem;
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 0.75rem;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+}
+
+@media (max-width: 992px) {
+    .outreach-split-layout {
+        flex-direction: column;
+    }
+    .outreach-sticky-sidebar {
+        width: 100%;
+        min-width: auto;
+        position: static;
+        margin-top: 1rem;
+    }
+}
+
+/* Step 2 Flow Control Deck */
+.outreach-control-deck {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 0.6rem 0.8rem;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
+}
+
+.step-subbadge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 22px;
+    height: 22px;
+    border-radius: 5px;
+    background: var(--hospital-primary, #011b33);
+    color: #ffffff;
+    font-size: 0.68rem;
+    font-weight: 800;
+    letter-spacing: 0.02em;
+}
+
+.step-subbadge.subbadge-amber {
+    background: #f59e0b;
+    color: #ffffff;
+}
+
+.control-deck-title {
+    font-size: 0.74rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: #334155;
+}
+
+.text-amber-dark {
+    color: #92400e !important;
+}
+
+.search-antigen-wrap {
+    width: 220px;
+}
+
+.tab-count-pill {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 18px;
+    height: 18px;
+    padding: 0 5px;
+    border-radius: 10px;
+    background: #e2e8f0;
+    color: #475569;
+    font-size: 0.65rem;
+    font-weight: 800;
+    margin-left: 0.25rem;
+    transition: all 0.15s ease;
+}
+
+.outreach-tab-btn.active .tab-count-pill {
+    background: var(--hospital-primary, #011b33);
+    color: #ffffff;
+}
+
+/* Demographic Filter – Segmented Control */
+.outreach-demographic-tabs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.25rem;
+    background: #f1f5f9;
+    border-radius: 8px;
+    padding: 3px;
+    border: 1px solid #e2e8f0;
+}
+
+.outreach-tab-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    border: none;
+    background: transparent;
+    color: #64748b;
+    padding: 0.32rem 0.6rem;
+    border-radius: 6px;
+    font-size: 0.72rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    white-space: nowrap;
+}
+
+.outreach-tab-btn:hover {
+    color: #1e293b;
+    background: rgba(255, 255, 255, 0.6);
+}
+
+.outreach-tab-btn.active {
+    background: #ffffff;
+    color: var(--hospital-primary, #011b33);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    font-weight: 800;
+}
+
+/* One-Click Action Bundles Bar & Chips */
+.outreach-bundles-bar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem;
+    align-items: center;
+}
+
+.outreach-bundle-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.28rem 0.55rem;
+    font-size: 0.72rem;
+    font-weight: 700;
+    border-radius: 6px;
+    background: #fffbeb;
+    color: #78350f;
+    border: 1.5px solid #fcd34d;
+    cursor: pointer;
+    transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+    white-space: nowrap;
+}
+
+.outreach-bundle-chip:hover {
+    background: #f59e0b;
+    color: #ffffff;
+    border-color: #d97706;
+    transform: translateY(-1px);
+    box-shadow: 0 3px 6px rgba(245, 158, 11, 0.25);
+}
+
+.outreach-bundle-chip:active {
+    transform: scale(0.97);
+    background: #d97706;
+}
+
+.bundle-plus-tag {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.65rem;
+    font-weight: 900;
+    padding: 0.05rem 0.3rem;
+    border-radius: 4px;
+    background: #10b981;
+    color: #ffffff;
+    line-height: 1.2;
+}
+
+.outreach-bundle-chip:hover .bundle-plus-tag {
+    background: #ffffff;
+    color: #d97706;
+}
+
+.bundle-subtext {
+    font-size: 0.65rem;
+    color: #92400e;
+    font-weight: 500;
+    opacity: 0.9;
+}
+
+.outreach-bundle-chip:hover .bundle-subtext {
+    color: #fef3c7;
+}
+
+/* Tally Matrix Table (Strict Fixed Layout - Zero Horizontal Scroll) */
+.outreach-tally-table-wrapper {
+    max-height: 480px;
+    overflow-y: auto;
+    overflow-x: hidden;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    background: #ffffff;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+
+.outreach-tally-table {
+    width: 100%;
+    table-layout: fixed;
+    margin-bottom: 0;
+    border-collapse: separate;
+    border-spacing: 0;
+    font-size: 0.84rem;
+}
+
+.outreach-tally-table thead th {
+    position: sticky;
+    top: 0;
+    background: #f8fafc;
+    color: #1e293b;
+    font-weight: 800;
+    font-size: 0.74rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    padding: 0.6rem 0.65rem;
+    border-bottom: 2px solid #cbd5e1;
+    z-index: 10;
+    white-space: nowrap;
+}
+
+/* Schedule Milestone Section Banners */
+.schedule-group-row td.schedule-group-cell {
+    padding: 0 !important;
+    background: transparent;
+    border-bottom: 1px solid #cbd5e1;
+}
+
+.schedule-group-banner {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.45rem 0.75rem;
+    background: linear-gradient(90deg, #f1f5f9 0%, #f8fafc 100%);
+    border-left: 4px solid var(--hospital-primary, #011b33);
+}
+
+.schedule-group-left {
+    display: flex;
+    align-items: center;
+    gap: 0.55rem;
+    min-width: 0;
+}
+
+.schedule-group-avatar {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 26px;
+    height: 26px;
+    border-radius: 6px;
+    background: #ffffff;
+    color: var(--hospital-primary, #011b33);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
+    font-size: 0.95rem;
+    flex-shrink: 0;
+}
+
+.schedule-group-headings {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+.schedule-group-title {
+    font-size: 0.78rem;
+    font-weight: 800;
+    color: #0f172a;
+    letter-spacing: 0.02em;
+    line-height: 1.2;
+}
+
+.schedule-group-sub {
+    font-size: 0.68rem;
+    color: #64748b;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.schedule-group-right {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    flex-shrink: 0;
+}
+
+.schedule-group-tally-badge {
+    background: #e2e8f0;
+    color: #475569;
+    font-size: 0.68rem;
+    font-weight: 700;
+    padding: 0.2rem 0.5rem;
+    border-radius: 12px;
+    transition: all 0.2s ease;
+}
+
+.schedule-group-tally-badge.has-tallies {
+    background: #10b981 !important;
+    color: #ffffff !important;
+    box-shadow: 0 1px 3px rgba(16, 185, 129, 0.3);
+}
+
+/* Table Row & Cell Layout */
+.outreach-tally-table tbody td {
+    padding: 0.45rem 0.55rem;
+    vertical-align: middle;
+    border-bottom: 1px solid #f1f5f9;
+}
+
+.outreach-tally-table tbody tr.outreach-row {
+    transition: background 0.12s ease;
+}
+
+.outreach-tally-table tbody tr.outreach-row:hover {
+    background: #f8fafc;
+}
+
+.outreach-tally-table tbody tr.row-tallied {
+    background: rgba(16, 185, 129, 0.04) !important;
+    border-left: 3.5px solid #10b981;
+}
+
+.outreach-custom-row {
+    border-left: 3.5px solid #6366f1;
+}
+
+/* Vaccine Card Main (Column 1) */
+.vaccine-card-main {
+    display: flex;
+    align-items: center;
+    gap: 0.55rem;
+    min-width: 0;
+}
+
+.vaccine-avatar {
+    width: 30px;
+    height: 30px;
+    border-radius: 6px;
+    background: rgba(var(--hospital-primary-rgb, 1, 27, 51), 0.07);
+    color: var(--hospital-primary, #011b33);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.95rem;
+    flex-shrink: 0;
+}
+
+.vaccine-card-details {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    gap: 2px;
+}
+
+.vaccine-name-text {
+    font-weight: 800;
+    font-size: 0.88rem;
+    color: #0f172a;
+    line-height: 1.2;
+}
+
+.vaccine-protect-tag {
+    font-size: 0.65rem;
+    font-weight: 700;
+    color: #0284c7;
+    background: #e0f2fe;
+    padding: 1px 5px;
+    border-radius: 4px;
+    white-space: nowrap;
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
+}
+
+.vaccine-route-line {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+}
+
+.vaccine-route-text {
+    font-size: 0.68rem;
+    color: #64748b;
+    font-weight: 500;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Dose Pills (Column 2) */
+.dose-pill {
+    display: inline-block;
+    padding: 0.22rem 0.5rem;
+    border-radius: 6px;
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-align: center;
+    white-space: nowrap;
+    line-height: 1.2;
+}
+
+.dose-pill-birth {
+    background: #ecfdf5;
+    color: #047857;
+    border: 1px solid #a7f3d0;
+}
+
+.dose-pill-dose1 {
+    background: #eff6ff;
+    color: #1d4ed8;
+    border: 1px solid #bfdbfe;
+}
+
+.dose-pill-dose2 {
+    background: #f0fdfa;
+    color: #0f766e;
+    border: 1px solid #99f6e4;
+}
+
+.dose-pill-dose3 {
+    background: #f5f3ff;
+    color: #6d28d9;
+    border: 1px solid #ddd6fe;
+}
+
+.dose-pill-booster {
+    background: #fffbeb;
+    color: #b45309;
+    border: 1px solid #fde68a;
+}
+
+.dose-pill-maternal {
+    background: #eff6ff;
+    color: #1e40af;
+    border: 1px solid #bfdbfe;
+}
+
+.dose-pill-wra {
+    background: #faf5ff;
+    color: #7e22ce;
+    border: 1px solid #e9d5ff;
+}
+
+/* Cohort & Sex Pills (Column 3) */
+.cohort-pill {
+    font-size: 0.7rem;
+    font-weight: 700;
+    padding: 0.18rem 0.45rem;
+    border-radius: 4px;
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    white-space: nowrap;
+}
+
+.sex-pill {
+    font-size: 0.65rem;
+    font-weight: 700;
+    padding: 0.12rem 0.38rem;
+    border-radius: 4px;
+    white-space: nowrap;
+}
+
+/* Stepper Controls (Column 4) */
+.tally-controls-cell {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.35rem;
+    flex-wrap: nowrap;
+}
+
+.tally-stepper-box {
+    display: inline-flex;
+    align-items: center;
+    border: 1.5px solid #cbd5e1;
+    border-radius: 6px;
+    overflow: hidden;
+    background: #ffffff;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+    transition: all 0.15s ease;
+}
+
+.tally-stepper-box:focus-within {
+    border-color: var(--hospital-primary, #011b33);
+    box-shadow: 0 0 0 2px rgba(var(--hospital-primary-rgb, 1, 27, 51), 0.15);
+}
+
+.tally-stepper-btn {
+    border: none;
+    background: #f8fafc;
+    color: #334155;
+    width: 27px;
+    height: 29px;
+    font-weight: 800;
+    font-size: 0.95rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.1s ease;
+}
+
+.tally-stepper-btn.btn-step-plus {
+    background: var(--hospital-primary, #011b33);
+    color: #ffffff;
+}
+
+.tally-stepper-btn.btn-step-plus:hover {
+    filter: brightness(1.15);
+}
+
+.tally-stepper-btn.btn-step-minus:hover:not(:disabled) {
+    background: #fee2e2;
+    color: #dc2626;
+}
+
+.tally-stepper-btn:disabled {
+    cursor: not-allowed;
+    background: #f1f5f9;
+    color: #94a3b8;
+}
+
+.tally-input {
+    width: 44px;
+    height: 29px;
+    text-align: center;
+    border: none;
+    font-weight: 800;
+    font-size: 0.98rem;
+    color: #0f172a;
+    padding: 0 2px;
+    outline: none;
+    background: transparent;
+    transition: all 0.15s ease;
+}
+
+.tally-input.is-tallied {
+    color: #047857;
+    font-weight: 900;
+    background: #f0fdf4;
+}
+
+.tally-quick-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.2rem;
+}
+
+.tally-quick-btn {
+    border: 1px solid #cbd5e1;
+    background: #ffffff;
+    color: #475569;
+    padding: 0.18rem 0.38rem;
+    font-size: 0.68rem;
+    font-weight: 700;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    line-height: 1.2;
+}
+
+.tally-quick-btn:hover {
+    background: var(--hospital-primary, #011b33);
+    color: #ffffff;
+    border-color: var(--hospital-primary, #011b33);
+}
+
+.tally-reset-btn {
+    border: 1px solid #e2e8f0;
+    background: #ffffff;
+    color: #94a3b8;
+    width: 23px;
+    height: 23px;
+    padding: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.78rem;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.tally-reset-btn:hover {
+    background: #fee2e2;
+    color: #dc2626;
+    border-color: #fca5a5;
+    transform: rotate(-90deg);
+}
+
+/* Wasted Doses (Column 5) */
+.vaccine-wasted-cell .row-wasted {
+    width: 52px;
+    height: 29px;
+    margin: 0 auto;
+    font-size: 0.85rem;
+    font-weight: 700;
+    border: 1.5px solid #cbd5e1;
+    border-radius: 6px;
+    padding: 0 4px;
+    transition: all 0.15s ease;
+}
+
+.vaccine-wasted-cell .row-wasted:focus {
+    border-color: #ef4444;
+    box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.15);
+    background: #fef2f2;
+}
+
+/* Sidebar Live Analytics */
+.sidebar-live-title {
+    font-size: 0.82rem;
+    font-weight: 800;
+    color: var(--hospital-primary, #011b33);
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    padding-bottom: 0.4rem;
+    border-bottom: 2px solid #e2e8f0;
+    margin-bottom: 0.65rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.sidebar-kpi-main {
+    background: linear-gradient(135deg, var(--hospital-primary, #011b33) 0%, #1e3a8a 100%);
+    color: #ffffff;
+    border-radius: 8px;
+    padding: 0.75rem;
+    text-align: center;
+    margin-bottom: 0.75rem;
+}
+
+.sidebar-kpi-num {
+    font-size: 2rem;
+    font-weight: 900;
+    line-height: 1;
+}
+
+.sidebar-kpi-lbl {
+    font-size: 0.74rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: #93c5fd;
+    margin-top: 0.2rem;
+}
+
+.sidebar-breakdown-list {
+    list-style: none;
+    padding: 0;
+    margin: 0 0 0.75rem 0;
+}
+
+.sidebar-breakdown-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.32rem 0;
+    font-size: 0.78rem;
+    border-bottom: 1px dashed #f1f5f9;
+}
+
+.sidebar-breakdown-item:last-child {
+    border-bottom: none;
+}
+
+.sidebar-breakdown-item .label {
+    color: #475569;
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+}
+
+.sidebar-breakdown-item .val {
+    font-weight: 700;
+    color: #0f172a;
+}
+
+/* 5. Step 3: Dual-Column Review Invoice Receipt */
+.outreach-review-container {
+    max-width: 100%;
+    margin: 0;
+}
+
+.outreach-receipt-card {
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    background: #ffffff;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.03);
+}
+
+.receipt-grid-compact {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.5rem 0.75rem;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    padding: 0.65rem 0.75rem;
+}
+
+.receipt-cohort-tiles {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.5rem;
+}
+
+.cohort-tile {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    padding: 0.5rem 0.6rem;
+    display: flex;
+    flex-direction: column;
+    border-left: 3px solid #cbd5e1;
+}
+
+.cohort-tile.tile-blue { border-left-color: #0284c7; }
+.cohort-tile.tile-amber { border-left-color: #f59e0b; }
+.cohort-tile.tile-pink { border-left-color: #ec4899; }
+.cohort-tile.tile-purple { border-left-color: #8b5cf6; }
+.cohort-tile.tile-indigo { border-left-color: #6366f1; }
+.cohort-tile.tile-red { border-left-color: #ef4444; }
+
+.cohort-tile .tile-label {
+    font-size: 0.66rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+    color: #64748b;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.cohort-tile .tile-val {
+    font-size: 1.15rem;
+    font-weight: 900;
+    color: #0f172a;
+    margin-top: 0.15rem;
+    line-height: 1;
+}
+
+.receipt-meta-item {
+    font-size: 0.8rem;
+}
+
+.receipt-meta-item strong {
+    color: #1e293b;
+}
+
+/* 6. Reporting Modal Dashboard */
+.outreach-kpi-grid-7 {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 0.75rem;
+    margin-bottom: 1.25rem;
+}
+
+.outreach-kpi-card {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 0.85rem 1rem;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
+    border-left: 4px solid var(--hospital-primary, #011b33);
+}
+
+.outreach-kpi-card.kpi-green { border-left-color: #10b981; }
+.outreach-kpi-card.kpi-amber { border-left-color: #f59e0b; }
+.outreach-kpi-card.kpi-pink { border-left-color: #ec4899; }
+.outreach-kpi-card.kpi-purple { border-left-color: #8b5cf6; }
+.outreach-kpi-card.kpi-red { border-left-color: #ef4444; }
+
+.outreach-kpi-title {
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    color: #64748b;
+    margin-bottom: 0.35rem;
+}
+
+.outreach-kpi-val {
+    font-size: 1.45rem;
+    font-weight: 800;
+    color: #0f172a;
+    line-height: 1;
+}
+
+/* Report Tab Pills */
+.outreach-report-tabs {
+    display: flex;
+    gap: 0.5rem;
+    border-bottom: 2px solid #e2e8f0;
+    padding-bottom: 0.5rem;
+    margin-bottom: 1rem;
+}
+
+.report-tab-btn {
+    border: none;
+    background: transparent;
+    padding: 0.5rem 1rem;
+    font-weight: 600;
+    font-size: 0.85rem;
+    color: #64748b;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.report-tab-btn:hover {
+    color: var(--hospital-primary, #011b33);
+    background: #f1f5f9;
+}
+
+.report-tab-btn.active {
+    color: #ffffff;
+    background: var(--hospital-primary, #011b33);
+    font-weight: 700;
+}
+
+/* Pivot Matrix Table */
+.outreach-pivot-table th {
+    font-size: 0.75rem;
+    text-align: center;
+    vertical-align: middle;
+}
+
+.outreach-pivot-table td {
+    font-size: 0.8rem;
+    text-align: center;
+}
+
+.outreach-pivot-table td:first-child {
+    text-align: left;
+    font-weight: 700;
+}
+
+.outreach-pivot-table tfoot td {
+    font-weight: 800;
+    background: #f1f5f9;
+}
+
+/* ==========================================================================
+   Hospital Stock Accounting & Batch Connector Styles
+   ========================================================================== */
+
+/* Step 1 Store Stock Preview */
+.store-stock-preview {
+    border-left: 3px solid var(--hospital-primary, #011b33) !important;
+    background: rgba(var(--hospital-primary-rgb, 1, 27, 51), 0.04) !important;
+}
+
+/* Row-level Stock Connector */
+.row-stock-connector {
+    display: block;
+    margin-top: 0.35rem;
+    padding: 0;
+    background: transparent;
+    border: none;
+}
+
+/* Suppress admin theme input-helper to prevent floating checkboxes */
+.row-stock-connector .input-helper,
+.stock-deduct-toggle .input-helper {
+    display: none !important;
+}
+
+.stock-line-box {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    padding: 0.45rem 0.65rem;
+    background: #ffffff;
+    border: 1px solid #dbeafe;
+    border-left: 3px solid var(--hospital-primary, #011b33);
+    border-radius: 6px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+    transition: all 0.15s ease-in-out;
+}
+
+.stock-line-box:hover {
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+    border-color: #bfdbfe;
+}
+
+.stock-line-box.unlinked {
+    background: #f8fafc;
+    border: 1px dashed #cbd5e1;
+    border-left: 3px dashed #94a3b8;
+    padding: 0.35rem 0.6rem;
+}
+
+.stock-line-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.stock-product-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    font-size: 0.78rem;
+    color: #1e293b;
+    font-weight: 600;
+    min-width: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.stock-product-chip strong {
+    color: var(--hospital-primary, #011b33);
+    font-weight: 700;
+}
+
+.stock-avail-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    font-size: 0.7rem;
+    font-weight: 700;
+    padding: 0.15rem 0.45rem;
+    border-radius: 12px;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+.stock-avail-pill.badge-in-stock {
+    background: #ecfdf5;
+    color: #065f46;
+    border: 1px solid #a7f3d0;
+}
+
+.stock-avail-pill.badge-out-of-stock {
+    background: #fef2f2;
+    color: #991b1b;
+    border: 1px solid #fecaca;
+}
+
+.stock-line-controls {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.4rem;
+}
+
+.stock-control-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.stock-control-lbl {
+    font-size: 0.68rem;
+    font-weight: 700;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+}
+
+.stock-batch-dropdown {
+    font-size: 0.72rem;
+    padding: 0.15rem 0.4rem;
+    border: 1px solid #cbd5e1;
+    border-radius: 4px;
+    background-color: #ffffff;
+    max-width: 200px;
+    height: 24px;
+    line-height: 1.2;
+    color: #334155;
+    cursor: pointer;
+}
+
+.stock-batch-dropdown:focus {
+    border-color: var(--hospital-primary, #011b33);
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(var(--hospital-primary-rgb, 1, 27, 51), 0.15);
+}
+
+.stock-math-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.15rem 0.45rem;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 4px;
+    font-size: 0.7rem;
+    font-weight: 500;
+    color: #475569;
+    white-space: nowrap;
+}
+
+.stock-math-pill strong {
+    font-weight: 700;
+    color: #0f172a;
+}
+
+/* Explicit anti-floating toggle button & checkbox rules */
+.stock-deduct-toggle {
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 0.35rem !important;
+    padding: 0.15rem 0.45rem !important;
+    font-size: 0.7rem !important;
+    font-weight: 700 !important;
+    border-radius: 4px !important;
+    cursor: pointer !important;
+    user-select: none !important;
+    margin: 0 !important;
+    position: static !important;
+    float: none !important;
+    border: 1px solid #cbd5e1 !important;
+    background: #ffffff !important;
+    color: #64748b !important;
+    transition: all 0.15s ease-in-out !important;
+    line-height: 1.2 !important;
+}
+
+.stock-deduct-toggle.is-checked {
+    background: #f0fdf4 !important;
+    border-color: #86efac !important;
+    color: #166534 !important;
+}
+
+.stock-deduct-checkbox {
+    position: static !important;
+    float: none !important;
+    opacity: 1 !important;
+    display: inline-block !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    width: 13px !important;
+    height: 13px !important;
+    cursor: pointer !important;
+    accent-color: #16a34a !important;
+    vertical-align: middle !important;
+}
+
+.stock-action-btns {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    margin-left: auto;
+}
+
+.stock-action-btns .btn-unlink-row {
+    padding: 0.1rem 0.35rem;
+    line-height: 1;
+}
+
+.stock-deficit-alert {
+    display: none;
+    align-items: center;
+    gap: 0.3rem;
+    color: #9a3412;
+    background: #fff7ed;
+    border: 1px solid #fdba74;
+    padding: 0.2rem 0.45rem;
+    border-radius: 4px;
+    font-size: 0.7rem;
+    font-weight: 600;
+}
+
+.stock-deficit-alert.is-visible {
+    display: flex !important;
+}
+
+.stock-deficit-alert.d-none {
+    display: none !important;
+}
+
+.row-stock-connector.deduction-skipped .stock-line-box {
+    opacity: 0.72;
+    background: #f8fafc;
+    border-color: #e2e8f0;
+    border-left-color: #94a3b8;
+}
+
+.row-stock-connector.has-deficit .stock-line-box {
+    background: #fffbf5;
+    border-color: #fed7aa;
+    border-left-color: #f97316;
+}
+
+.btn-xs {
+    padding: 0.12rem 0.4rem;
+    font-size: 0.7rem;
+    line-height: 1.2;
+    border-radius: 4px;
+}
+
+.picker-filter-chip.active {
+    background-color: var(--hospital-primary, #011b33) !important;
+    border-color: var(--hospital-primary, #011b33) !important;
+    color: #ffffff !important;
+}
+
+/* Column Specific Sizing - 100% Total, Fixed Layout, Zero Horizontal Scroll */
+.outreach-tally-table th.col-sn,
+.outreach-tally-table td.vaccine-sn-cell {
+    width: 4%;
+    min-width: 30px;
+    max-width: 38px;
+    text-align: center;
+}
+
+.outreach-tally-table th.col-antigen,
+.outreach-tally-table td.vaccine-info-cell {
+    width: 28%;
+    min-width: 170px;
+}
+
+.outreach-tally-table th.col-dose,
+.outreach-tally-table td.vaccine-dose-cell {
+    width: 11%;
+    min-width: 85px;
+    text-align: center;
+}
+
+.outreach-tally-table th.col-cohort,
+.outreach-tally-table td.vaccine-cohort-cell {
+    width: 18%;
+    min-width: 130px;
+}
+
+.outreach-tally-table th.col-sex,
+.outreach-tally-table td.vaccine-sex-cell {
+    width: 9%;
+    min-width: 65px;
+    text-align: center;
+}
+
+.outreach-tally-table th.col-headcount,
+.outreach-tally-table td.vaccine-tally-cell {
+    width: 22%;
+    min-width: 165px;
+    text-align: center;
+}
+
+.outreach-tally-table th.col-wasted,
+.outreach-tally-table td.vaccine-wasted-cell {
+    width: 8%;
+    min-width: 55px;
+    text-align: center;
+}
+
+/* S/N Badge */
+.row-sn-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: #f1f5f9;
+    color: #64748b;
+    font-size: 0.72rem;
+    font-weight: 700;
+    border: 1px solid #cbd5e1;
+    transition: all 0.15s ease;
+}
+
+tr.row-tallied .row-sn-badge {
+    background: #10b981;
+    color: #ffffff;
+    border-color: #059669;
+    box-shadow: 0 1px 3px rgba(16, 185, 129, 0.3);
+}
+
+/* Compact In-Row Form Controls */
+.form-select-xs {
+    padding: 0.18rem 0.35rem;
+    font-size: 0.74rem;
+    height: 28px;
+    border: 1px solid #cbd5e1;
+    border-radius: 5px;
+    background-color: #ffffff;
+    color: #1e293b;
+    font-weight: 600;
+    line-height: 1.2;
+    width: 100%;
+    cursor: pointer;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.form-select-xs:focus {
+    border-color: var(--hospital-primary, #011b33);
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(var(--hospital-primary-rgb, 1, 27, 51), 0.15);
+}
+
+.form-control-xs {
+    padding: 0.18rem 0.35rem;
+    font-size: 0.74rem;
+    height: 28px;
+    border: 1px solid #cbd5e1;
+    border-radius: 5px;
+    background-color: #ffffff;
+    color: #1e293b;
+    font-weight: 600;
+    line-height: 1.2;
+    width: 100%;
+}
+
+.form-control-xs:focus {
+    border-color: var(--hospital-primary, #011b33);
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(var(--hospital-primary-rgb, 1, 27, 51), 0.15);
+}
+
+/* Deficit Pulse Animation */
+@keyframes deficitPulse {
+    0%, 100% { background-color: transparent; }
+    50% { background-color: rgba(239, 68, 68, 0.2); }
+}
+
+.row-deficit-pulse {
+    animation: deficitPulse 0.5s ease-in-out 3;
+}
+
+/* Step 3 Ledger Table Styles */
+#review-stock-ledger-card {
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+}
+
+#review-stock-ledger-tbody tr.row-deficit td {
+    background-color: #fff7ed;
+    color: #9a3412;
+}
+
+#review-stock-ledger-tbody tr.row-skipped td {
+    color: #94a3b8;
+}
+

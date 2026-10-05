@@ -33,6 +33,7 @@ use App\Models\ServiceCategory;
 use App\Models\StockBatch;
 use App\Models\Store;
 use App\Models\StoreContextRule;
+use App\Models\StoreStock;
 use App\Models\VaccineProductMapping;
 use App\Models\VaccineScheduleTemplate;
 use App\Models\VitalSign;
@@ -45,6 +46,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Str;
 use Yajra\DataTables\DataTables;
 
 class NursingWorkbenchController extends Controller
@@ -3744,6 +3746,8 @@ class NursingWorkbenchController extends Controller
             'notes' => 'nullable|string',
             'store_id' => 'nullable|exists:stores,id',
             'service_id' => 'nullable|exists:services,id', // NEW: Optional service charge for external vaccines
+            'session_type' => 'nullable|string|in:fixed,outreach',
+            'location_settlement' => 'nullable|string|max:255',
         ]);
 
         // Map full route names to abbreviations for database ENUM
@@ -3868,11 +3872,14 @@ class NursingWorkbenchController extends Controller
                 'site' => $validated['site'],
                 'administered_at' => $validated['administered_at'],
                 'administered_by' => Auth::id(),
-                'batch_number' => $validated['batch_number'],
-                'expiry_date' => $validated['expiry_date'],
-                'manufacturer' => $validated['manufacturer'],
-                'notes' => $validated['notes'],
+                'batch_number' => $validated['batch_number'] ?? null,
+                'expiry_date' => $validated['expiry_date'] ?? null,
+                'manufacturer' => $validated['manufacturer'] ?? null,
+                'notes' => $validated['notes'] ?? null,
                 'dispensed_from_store_id' => $storeId,
+                'session_type' => $validated['session_type'] ?? 'fixed',
+                'location_settlement' => $validated['location_settlement'] ?? null,
+                'headcount' => 1,
             ]);
 
             // Update schedule entry
@@ -3923,6 +3930,649 @@ class NursingWorkbenchController extends Controller
                     'notes' => $record->notes,
                 ];
             }),
+        ]);
+    }
+
+    /**
+     * Save rapid outreach immunization tally matrix session (WHO EPI / DHIS2 / NHMIS standard).
+     * Does not require individual patient files.
+     */
+    public function saveOutreachTally(Request $request)
+    {
+        $validated = $request->validate([
+            'session_date' => 'required|date',
+            'location_settlement' => 'required|string|max:255',
+            'strategy' => 'nullable|string|max:100',
+            'notes' => 'nullable|string',
+            'store_id' => 'nullable|exists:stores,id',
+            'stock_source' => 'nullable|string|in:govt_epi,hospital_store,donor_partner,outbreak_reserve',
+            'cold_chain_carrier' => 'nullable|string|max:100',
+            'vvm_stage' => 'nullable|string|max:20',
+            'doses_wasted' => 'nullable|integer|min:0',
+            'auto_deduct_stock' => 'nullable|boolean',
+            'tallies' => 'required|array|min:1',
+            'tallies.*.vaccine_name' => 'required|string|max:150',
+            'tallies.*.dose' => 'nullable|string|max:50',
+            'tallies.*.dose_number' => 'nullable|integer|min:0|max:10',
+            'tallies.*.age_group' => 'nullable|string|max:50',
+            'tallies.*.target_group' => 'nullable|string|max:50',
+            'tallies.*.gender' => 'nullable|string|max:20',
+            'tallies.*.headcount' => 'required|integer|min:1',
+            'tallies.*.doses_wasted' => 'nullable|integer|min:0',
+            'tallies.*.batch_number' => 'nullable|string|max:100',
+            'tallies.*.batch_id' => 'nullable|integer',
+            'tallies.*.expiry_date' => 'nullable|date',
+            'tallies.*.manufacturer' => 'nullable|string|max:200',
+            'tallies.*.product_id' => 'nullable|exists:products,id',
+            'tallies.*.auto_deduct' => 'nullable|boolean',
+        ]);
+
+        $sessionUuid = 'OUTREACH-' . strtoupper(Str::random(8)) . '-' . date('Ymd');
+        $sessionTime = Carbon::parse($validated['session_date'])->setTime(12, 0, 0);
+        $totalDoses = 0;
+        $totalWasted = (int) ($validated['doses_wasted'] ?? 0);
+        $createdRecords = [];
+
+        $stockSource = $validated['stock_source'] ?? 'govt_epi';
+        $autoDeduct = !empty($validated['auto_deduct_stock']) && $stockSource === 'hospital_store' && !empty($validated['store_id']);
+        $stockService = $autoDeduct ? app(\App\Services\StockService::class) : null;
+
+        // Option B: Strict ERP Pre-check - Ensure no deficit items are set to auto-deduct without resolution
+        if ($autoDeduct && $stockService) {
+            $deficits = [];
+            foreach ($validated['tallies'] as $item) {
+                $headcount = (int) $item['headcount'];
+                if ($headcount <= 0) {
+                    continue;
+                }
+
+                $itemAutoDeduct = (!isset($item['auto_deduct']) || $item['auto_deduct'] === true || $item['auto_deduct'] === 'true' || $item['auto_deduct'] === 1 || $item['auto_deduct'] === '1');
+                if ($itemAutoDeduct && !empty($item['product_id'])) {
+                    $itemWasted = (int) ($item['doses_wasted'] ?? 0);
+                    $reqQty = $headcount + $itemWasted;
+
+                    if (!empty($item['batch_id'])) {
+                        $batch = \App\Models\StockBatch::find($item['batch_id']);
+                        $avail = $batch ? (int) $batch->current_qty : 0;
+                    } else {
+                        $avail = (int) $stockService->getAvailableStock((int) $item['product_id'], (int) $validated['store_id']);
+                    }
+
+                    if ($reqQty > $avail) {
+                        $deficits[] = [
+                            'vaccine_name' => $item['vaccine_name'],
+                            'requested' => $reqQty,
+                            'available' => $avail,
+                            'deficit' => $reqQty - $avail,
+                        ];
+                    }
+                }
+            }
+
+            if (!empty($deficits)) {
+                $first = $deficits[0];
+
+                return response()->json([
+                    'success' => false,
+                    'requires_resolution' => true,
+                    'deficit_items' => $deficits,
+                    'message' => "Strict Inventory Gate: Stock deficit detected for '{$first['vaccine_name']}' ({$first['requested']} required vs {$first['available']} in store). Please cap quantity to available stock or toggle deduction to skip.",
+                ], 422);
+            }
+        }
+
+        DB::beginTransaction();
+
+        try {
+            $deductedCount = 0;
+            $skippedCount = 0;
+
+            foreach ($validated['tallies'] as $item) {
+                $headcount = (int) $item['headcount'];
+                if ($headcount <= 0) {
+                    continue;
+                }
+
+                $itemWasted = (int) ($item['doses_wasted'] ?? 0);
+                $totalWasted += $itemWasted;
+
+                $itemAutoDeduct = $autoDeduct && (!isset($item['auto_deduct']) || $item['auto_deduct'] === true || $item['auto_deduct'] === 'true' || $item['auto_deduct'] === 1 || $item['auto_deduct'] === '1');
+
+                $record = ImmunizationRecord::create([
+                    'patient_id' => null, // Community outreach tally (anonymous / aggregate recipients)
+                    'product_id' => $item['product_id'] ?? null,
+                    'vaccine_name' => $item['vaccine_name'],
+                    'dose_number' => $item['dose_number'] ?? null,
+                    'dose' => $item['dose'] ?? null,
+                    'route' => 'IM',
+                    'site' => 'Deltoid',
+                    'session_type' => 'outreach',
+                    'stock_source' => $stockSource,
+                    'headcount' => $headcount,
+                    'doses_wasted' => $itemWasted,
+                    'age_group' => $item['age_group'] ?? null,
+                    'target_group' => $item['target_group'] ?? null,
+                    'gender' => $item['gender'] ?? 'All',
+                    'location_settlement' => $validated['location_settlement'],
+                    'cold_chain_carrier' => $validated['cold_chain_carrier'] ?? null,
+                    'vvm_stage' => $validated['vvm_stage'] ?? null,
+                    'outreach_session_id' => $sessionUuid,
+                    'administered_at' => $sessionTime,
+                    'administered_by' => Auth::id(),
+                    'batch_number' => $item['batch_number'] ?? null,
+                    'expiry_date' => $item['expiry_date'] ?? null,
+                    'manufacturer' => $item['manufacturer'] ?? null,
+                    'notes' => trim(($validated['notes'] ?? '') . ' ' . (!empty($validated['strategy']) ? '[' . $validated['strategy'] . ']' : '')),
+                    'dispensed_from_store_id' => $validated['store_id'] ?? null,
+                    'auto_deduct_stock' => $itemAutoDeduct,
+                ]);
+
+                // Auto-deduct stock if hospital store stock source is active
+                if ($itemAutoDeduct && !empty($item['product_id'])) {
+                    $qtyToDispense = $headcount + $itemWasted;
+
+                    try {
+                        if (!empty($item['batch_id'])) {
+                            $stockService->dispenseFromBatch(
+                                $item['batch_id'],
+                                $qtyToDispense,
+                                ImmunizationRecord::class,
+                                $record->id,
+                                "Outreach Drive: {$item['vaccine_name']} ({$validated['location_settlement']})"
+                            );
+                        } else {
+                            $stockService->dispenseStock(
+                                $item['product_id'],
+                                $validated['store_id'],
+                                $qtyToDispense,
+                                ImmunizationRecord::class,
+                                $record->id,
+                                "Outreach Drive (FIFO): {$item['vaccine_name']} ({$validated['location_settlement']})"
+                            );
+                        }
+                        $deductedCount++;
+                    } catch (\Exception $stockEx) {
+                        \Log::warning("Outreach stock deduction skipped for {$item['vaccine_name']}: " . $stockEx->getMessage());
+                        $skippedCount++;
+                    }
+                } else {
+                    $skippedCount++;
+                }
+
+                $totalDoses += $headcount;
+                $createdRecords[] = $record->id;
+            }
+
+            DB::commit();
+
+            $statusNotes = '';
+            if ($autoDeduct) {
+                $statusNotes = " ({$deductedCount} item(s) deducted from inventory, {$skippedCount} public health/free item(s) recorded)";
+            }
+
+            return response()->json([
+                'success' => true,
+                'message' => "Successfully recorded outreach session with {$totalDoses} doses across " . count($createdRecords) . " tallies.{$statusNotes}",
+                'outreach_session_id' => $sessionUuid,
+                'session_id' => $sessionUuid,
+                'total_doses' => $totalDoses,
+                'total_wasted' => $totalWasted,
+                'tallies_count' => count($createdRecords),
+                'stock_source' => $stockSource,
+                'deducted_items_count' => $deductedCount,
+                'skipped_items_count' => $skippedCount,
+            ]);
+        } catch (\Exception $e) {
+            DB::rollBack();
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to record outreach session: ' . $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    /**
+     * Get store inventory for outreach sessions (available vaccines, stock levels, batches, and mappings).
+     */
+    public function getOutreachStoreInventory(Request $request)
+    {
+        $storeId = $request->get('store_id');
+        if (!$storeId) {
+            return response()->json(['success' => false, 'message' => 'Store ID is required.'], 400);
+        }
+
+        $store = Store::find($storeId);
+        if (!$store) {
+            return response()->json(['success' => false, 'message' => 'Store not found.'], 404);
+        }
+
+        $searchTerm = trim($request->get('q') ?: $request->get('search') ?: $request->get('term') ?: '');
+
+        // Fetch explicit vaccine-product mappings
+        $mappings = VaccineProductMapping::with('product')
+            ->where('is_active', true)
+            ->get();
+
+        if (!empty($searchTerm)) {
+            // Allow searching ANY active product in the hospital database (by name, code, or category)
+            $matchedProducts = Product::with(['price', 'category'])
+                ->where('status', 1)
+                ->where(function ($q) use ($searchTerm) {
+                    $q->where('product_name', 'like', "%{$searchTerm}%")
+                      ->orWhere('product_code', 'like', "%{$searchTerm}%")
+                      ->orWhereHas('category', function ($cq) use ($searchTerm) {
+                          $cq->where('category_name', 'like', "%{$searchTerm}%");
+                      });
+                })
+                ->limit(100)
+                ->get();
+
+            $allProductIds = $matchedProducts->pluck('id')->values();
+            $catalogProducts = $matchedProducts;
+        } else {
+            // 1. Find all active products associated with vaccines or immunizations
+            $vaccineProducts = Product::with(['price', 'category'])
+                ->where('status', 1)
+                ->where(function ($q) {
+                    $q->where('product_name', 'like', '%vaccine%')
+                      ->orWhere('product_name', 'like', '%bcg%')
+                      ->orWhere('product_name', 'like', '%opv%')
+                      ->orWhere('product_name', 'like', '%ipv%')
+                      ->orWhere('product_name', 'like', '%penta%')
+                      ->orWhere('product_name', 'like', '%pcv%')
+                      ->orWhere('product_name', 'like', '%rota%')
+                      ->orWhere('product_name', 'like', '%measles%')
+                      ->orWhere('product_name', 'like', '%yellow fever%')
+                      ->orWhere('product_name', 'like', '%meningitis%')
+                      ->orWhere('product_name', 'like', '%men-a%')
+                      ->orWhere('product_name', 'like', '%hpv%')
+                      ->orWhere('product_name', 'like', '%td%')
+                      ->orWhere('product_name', 'like', '%tetanus%')
+                      ->orWhere('product_name', 'like', '%hepatitis%')
+                      ->orWhere('product_name', 'like', '%vitamin a%');
+                })
+                ->get();
+
+            // 3. Include any items with active stock or batches in this store
+            $storeStockProductIds = StoreStock::where('store_id', $storeId)
+                ->where('current_quantity', '>', 0)
+                ->pluck('product_id');
+
+            $storeBatchProductIds = StockBatch::where('store_id', $storeId)
+                ->active()
+                ->hasStock()
+                ->pluck('product_id');
+
+            $mappedProductIds = $mappings->pluck('product_id')->filter()->unique();
+            $allProductIds = $vaccineProducts->pluck('id')
+                ->merge($mappedProductIds)
+                ->merge($storeStockProductIds)
+                ->merge($storeBatchProductIds)
+                ->unique()
+                ->values();
+
+            $catalogProducts = Product::with(['price', 'category'])
+                ->whereIn('id', $allProductIds)
+                ->where('status', 1)
+                ->get();
+        }
+
+        // Fetch all active stock batches for these products in this store
+        $stockBatches = StockBatch::whereIn('product_id', $allProductIds)
+            ->where('store_id', $storeId)
+            ->active()
+            ->hasStock()
+            ->orderByRaw('CASE WHEN expiry_date IS NOT NULL THEN 0 ELSE 1 END')
+            ->orderBy('expiry_date', 'asc')
+            ->orderBy('id', 'asc')
+            ->get();
+
+        $batchesByProduct = $stockBatches->groupBy('product_id');
+
+        $productsData = [];
+        foreach ($allProductIds as $pid) {
+            $prod = $catalogProducts->firstWhere('id', $pid) ?? Product::find($pid);
+            if (!$prod) {
+                continue;
+            }
+
+            $pBatches = $batchesByProduct->get($pid, collect());
+            $totalStoreStock = (int) $pBatches->sum('current_qty');
+
+            if ($totalStoreStock === 0) {
+                $storeStock = StoreStock::where('store_id', $storeId)->where('product_id', $pid)->first();
+                if ($storeStock && $storeStock->current_quantity > 0) {
+                    $totalStoreStock = (int) $storeStock->current_quantity;
+                }
+            }
+
+            $formattedBatches = $pBatches->map(function ($b) {
+                return [
+                    'id' => $b->id,
+                    'batch_number' => $b->batch_number ?: "BTH-{$b->id}",
+                    'current_qty' => (int) $b->current_qty,
+                    'expiry_date' => $b->expiry_date ? $b->expiry_date->format('Y-m-d') : null,
+                    'expiry_formatted' => $b->expiry_date ? $b->expiry_date->format('M d, Y') : 'No Expiry',
+                ];
+            })->values()->all();
+
+            $productsData[] = [
+                'id' => $prod->id,
+                'name' => $prod->product_name,
+                'code' => $prod->product_code,
+                'category' => $prod->category->category_name ?? 'Vaccine',
+                'current_stock' => $totalStoreStock,
+                'batches' => $formattedBatches,
+                'fifo_batch' => count($formattedBatches) > 0 ? $formattedBatches[0] : null,
+            ];
+        }
+
+        // Build antigen mapping
+        $antigenMapping = [];
+        foreach ($mappings as $m) {
+            $key = strtolower(trim($m->vaccine_name));
+            if (!isset($antigenMapping[$key]) || $m->is_primary) {
+                $antigenMapping[$key] = $m->product_id;
+            }
+        }
+
+        return response()->json([
+            'success' => true,
+            'store' => [
+                'id' => $store->id,
+                'name' => $store->store_name,
+            ],
+            'products' => $productsData,
+            'antigen_mappings' => $antigenMapping,
+            'total_vaccines' => count($productsData),
+            'total_stock_doses' => array_sum(array_column($productsData, 'current_stock')),
+        ]);
+    }
+
+    /**
+     * Get recent community outreach tallies for review.
+     */
+    public function getOutreachTallies(Request $request)
+    {
+        $query = ImmunizationRecord::where('session_type', 'outreach')
+            ->whereNull('patient_id')
+            ->with('administeredBy')
+            ->orderBy('administered_at', 'desc');
+
+        if ($request->filled('session_id')) {
+            $query->where('outreach_session_id', $request->session_id);
+        }
+
+        if ($request->filled('from') && $request->filled('to')) {
+            $query->whereBetween('administered_at', [$request->from . ' 00:00:00', $request->to . ' 23:59:59']);
+        }
+
+        $records = $query->limit(100)->get();
+
+        return response()->json([
+            'success' => true,
+            'records' => $records->map(function ($r) {
+                return [
+                    'id' => $r->id,
+                    'outreach_session_id' => $r->outreach_session_id,
+                    'location_settlement' => $r->location_settlement,
+                    'vaccine_name' => $r->vaccine_name,
+                    'dose' => $r->dose,
+                    'dose_number' => $r->dose_number,
+                    'headcount' => $r->headcount,
+                    'doses_wasted' => $r->doses_wasted ?? 0,
+                    'age_group' => $r->age_group,
+                    'target_group' => $r->target_group,
+                    'gender' => $r->gender,
+                    'stock_source' => $r->stock_source ?: 'govt_epi',
+                    'cold_chain_carrier' => $r->cold_chain_carrier,
+                    'vvm_stage' => $r->vvm_stage,
+                    'administered_at' => $r->administered_at ? Carbon::parse($r->administered_at)->format('Y-m-d') : null,
+                    'administered_by' => $r->administeredBy ? userfullname($r->administeredBy->id) : 'EPI Team',
+                    'notes' => $r->notes,
+                ];
+            }),
+        ]);
+    }
+
+    /**
+     * Get aggregate KPI metrics, multi-source stock breakdowns, and sessions list for Community Outreach Immunization.
+     */
+    public function getOutreachSessionsReport(Request $request)
+    {
+        $query = ImmunizationRecord::where('session_type', 'outreach')
+            ->whereNull('patient_id')
+            ->with(['administeredBy', 'dispensedFromStore']);
+
+        if ($request->filled('from')) {
+            $query->where('administered_at', '>=', $request->from . ' 00:00:00');
+        }
+        if ($request->filled('to')) {
+            $query->where('administered_at', '<=', $request->to . ' 23:59:59');
+        }
+        if ($request->filled('location')) {
+            $query->where('location_settlement', 'like', '%' . $request->location . '%');
+        }
+        if ($request->filled('stock_source') && $request->stock_source !== 'all') {
+            $query->where('stock_source', $request->stock_source);
+        }
+
+        $records = $query->orderBy('administered_at', 'desc')->get();
+
+        // Calculate KPI Metrics
+        $totalDoses = 0;
+        $totalWasted = 0;
+        $totalInfants = 0;
+        $totalChildren = 0;
+        $totalHpv = 0;
+        $totalPregnant = 0;
+        $totalWra = 0;
+
+        $stockSourcesBreakdown = [
+            'govt_epi' => ['label' => 'Government Free EPI Buffer', 'doses' => 0, 'sessions' => []],
+            'hospital_store' => ['label' => 'Hospital Cold Store', 'doses' => 0, 'sessions' => []],
+            'donor_partner' => ['label' => 'Partner / Donor (UNICEF/WHO)', 'doses' => 0, 'sessions' => []],
+            'outbreak_reserve' => ['label' => 'Outbreak / Emergency Stockpile', 'doses' => 0, 'sessions' => []],
+        ];
+
+        $vvmBreakdown = [
+            'Stage 1' => 0,
+            'Stage 2' => 0,
+            'Stage 3' => 0,
+            'Stage 4' => 0,
+        ];
+
+        // Antigen × Demographic Pivot Matrix
+        $antigenMatrix = [];
+
+        $sessionGroups = [];
+
+        foreach ($records as $r) {
+            $count = max(1, (int) ($r->headcount ?? 1));
+            $wasted = (int) ($r->doses_wasted ?? 0);
+            $totalDoses += $count;
+            $totalWasted += $wasted;
+
+            $sourceKey = $r->stock_source ?: 'govt_epi';
+            if (isset($stockSourcesBreakdown[$sourceKey])) {
+                $stockSourcesBreakdown[$sourceKey]['doses'] += $count;
+            }
+
+            if ($r->vvm_stage && isset($vvmBreakdown[$r->vvm_stage])) {
+                $vvmBreakdown[$r->vvm_stage] += $count;
+            }
+
+            $ag = strtolower($r->age_group ?? '');
+            $tg = strtolower($r->target_group ?? '');
+            $vac = strtolower($r->vaccine_name ?? '');
+            $vacRaw = $r->vaccine_name ?: 'Other Antigen';
+
+            // Pivot matrix initialization
+            if (!isset($antigenMatrix[$vacRaw])) {
+                $antigenMatrix[$vacRaw] = [
+                    'vaccine' => $vacRaw,
+                    'infants' => 0,
+                    'children' => 0,
+                    'hpv' => 0,
+                    'pregnant' => 0,
+                    'wra' => 0,
+                    'adults' => 0,
+                    'total' => 0,
+                    'wasted' => 0,
+                ];
+            }
+            $antigenMatrix[$vacRaw]['total'] += $count;
+            $antigenMatrix[$vacRaw]['wasted'] += $wasted;
+
+            if ($ag === '<1y' || $ag === '0-11m' || $tg === 'infants') {
+                $totalInfants += $count;
+                $antigenMatrix[$vacRaw]['infants'] += $count;
+            } elseif ($ag === '12-59m' || $ag === 'ge_1y' || $ag === '5-9y' || $tg === 'children_1_4' || $tg === 'school_age_5_9') {
+                $totalChildren += $count;
+                $antigenMatrix[$vacRaw]['children'] += $count;
+            }
+
+            if ($ag === '9-14y' || $tg === 'adolescent_girls' || str_contains($vac, 'hpv')) {
+                $totalHpv += $count;
+                $antigenMatrix[$vacRaw]['hpv'] += $count;
+            }
+
+            if ($tg === 'pregnant_women' || str_contains(strtolower($r->notes ?? ''), 'pregnant')) {
+                $totalPregnant += $count;
+                $antigenMatrix[$vacRaw]['pregnant'] += $count;
+            } elseif ($tg === 'non_pregnant_women' || str_contains(strtolower($r->notes ?? ''), 'non-pregnant')) {
+                $totalWra += $count;
+                $antigenMatrix[$vacRaw]['wra'] += $count;
+            } else {
+                $antigenMatrix[$vacRaw]['adults'] += $count;
+            }
+
+            $sId = $r->outreach_session_id ?: ('LEGACY-' . ($r->administered_at ? Carbon::parse($r->administered_at)->format('Ymd') : ''));
+            if (!isset($sessionGroups[$sId])) {
+                $sessionGroups[$sId] = [
+                    'session_id' => $sId,
+                    'date' => $r->administered_at ? Carbon::parse($r->administered_at)->format('Y-m-d') : Carbon::parse($r->created_at)->format('Y-m-d'),
+                    'location' => $r->location_settlement ?: 'Community Site',
+                    'vaccinator' => $r->administeredBy ? userfullname($r->administeredBy->id) : 'EPI Team',
+                    'stock_source' => $sourceKey,
+                    'stock_source_label' => $stockSourcesBreakdown[$sourceKey]['label'] ?? 'Government Free EPI',
+                    'store_name' => $r->dispensedFromStore ? $r->dispensedFromStore->store_name : null,
+                    'cold_chain_carrier' => $r->cold_chain_carrier ?: 'Cold Carrier',
+                    'vvm_stage' => $r->vvm_stage ?: 'Stage 1',
+                    'notes' => $r->notes,
+                    'total_doses' => 0,
+                    'total_wasted' => 0,
+                    'antigens' => [],
+                ];
+                if (isset($stockSourcesBreakdown[$sourceKey])) {
+                    $stockSourcesBreakdown[$sourceKey]['sessions'][] = $sId;
+                }
+            }
+
+            $sessionGroups[$sId]['total_doses'] += $count;
+            $sessionGroups[$sId]['total_wasted'] += $wasted;
+            if ($r->vaccine_name && !in_array($r->vaccine_name, $sessionGroups[$sId]['antigens'])) {
+                $sessionGroups[$sId]['antigens'][] = $r->vaccine_name;
+            }
+        }
+
+        $sessionsList = array_values($sessionGroups);
+
+        return response()->json([
+            'success' => true,
+            'kpis' => [
+                'total_sessions' => count($sessionsList),
+                'total_doses' => $totalDoses,
+                'total_wasted' => $totalWasted,
+                'wastage_rate' => ($totalDoses + $totalWasted > 0) ? round(($totalWasted / ($totalDoses + $totalWasted)) * 100, 1) : 0,
+                'total_infants' => $totalInfants,
+                'total_children' => $totalChildren,
+                'total_hpv' => $totalHpv,
+                'total_pregnant' => $totalPregnant,
+                'total_wra' => $totalWra,
+                'stock_sources' => [
+                    'govt_epi' => $stockSourcesBreakdown['govt_epi']['doses'],
+                    'hospital_store' => $stockSourcesBreakdown['hospital_store']['doses'],
+                    'donor_partner' => $stockSourcesBreakdown['donor_partner']['doses'],
+                    'outbreak_reserve' => $stockSourcesBreakdown['outbreak_reserve']['doses'],
+                ],
+                'vvm_breakdown' => $vvmBreakdown,
+            ],
+            'sessions' => $sessionsList,
+            'antigen_matrix' => array_values($antigenMatrix),
+        ]);
+    }
+
+    /**
+     * Get line-by-line tally breakdown for a single outreach session.
+     */
+    public function getOutreachSessionDetails($sessionId)
+    {
+        $records = ImmunizationRecord::where('session_type', 'outreach')
+            ->where('outreach_session_id', $sessionId)
+            ->with(['administeredBy', 'product', 'dispensedFromStore'])
+            ->get();
+
+        return response()->json([
+            'success' => true,
+            'session_id' => $sessionId,
+            'records' => $records->map(function ($r) {
+                return [
+                    'id' => $r->id,
+                    'vaccine_name' => $r->vaccine_name,
+                    'dose' => $r->dose,
+                    'dose_number' => $r->dose_number,
+                    'target_group' => $r->target_group,
+                    'age_group' => $r->age_group,
+                    'gender' => $r->gender,
+                    'headcount' => $r->headcount,
+                    'doses_wasted' => $r->doses_wasted ?? 0,
+                    'stock_source' => $r->stock_source ?: 'govt_epi',
+                    'store_name' => $r->dispensedFromStore ? $r->dispensedFromStore->store_name : null,
+                    'cold_chain_carrier' => $r->cold_chain_carrier,
+                    'vvm_stage' => $r->vvm_stage,
+                    'batch_number' => $r->batch_number,
+                    'expiry_date' => $r->expiry_date,
+                    'manufacturer' => $r->manufacturer,
+                ];
+            }),
+        ]);
+    }
+
+    /**
+     * Print official Outreach Immunization Summary Report.
+     */
+    public function printOutreachReport(Request $request)
+    {
+        $query = ImmunizationRecord::where('session_type', 'outreach')
+            ->whereNull('patient_id')
+            ->with(['administeredBy', 'dispensedFromStore']);
+
+        if ($request->filled('from')) {
+            $query->where('administered_at', '>=', $request->from . ' 00:00:00');
+        }
+        if ($request->filled('to')) {
+            $query->where('administered_at', '<=', $request->to . ' 23:59:59');
+        }
+        if ($request->filled('location')) {
+            $query->where('location_settlement', 'like', '%' . $request->location . '%');
+        }
+        if ($request->filled('stock_source') && $request->stock_source !== 'all') {
+            $query->where('stock_source', $request->stock_source);
+        }
+
+        $records = $query->orderBy('administered_at', 'asc')->get();
+
+        $from = $request->from ?: Carbon::now()->startOfMonth()->format('Y-m-d');
+        $to = $request->to ?: Carbon::now()->format('Y-m-d');
+
+        return view('admin.nursing.print_outreach_report', [
+            'records' => $records,
+            'from' => $from,
+            'to' => $to,
+            'location' => $request->location,
+            'stock_source' => $request->stock_source,
         ]);
     }
 

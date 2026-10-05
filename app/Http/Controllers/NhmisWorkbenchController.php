@@ -1675,56 +1675,114 @@ class NhmisWorkbenchController extends Controller
             }
         } elseif ($rowNum >= 63 && $rowNum <= 87) {
             // Immunization (TD & Antigens) (Rows 63 - 87)
-            $antigenRows = [
-                'OPV_0' => 65,
-                'HepB_0' => 66,
-                'BCG' => 67,
-                'OPV_1' => 68,
-                'Penta_1' => 69,
-                'PCV_1' => 70,
-                'Rota_1' => 71,
-                'OPV_2' => 72,
-                'Penta_2' => 73,
-                'PCV_2' => 74,
-                'Rota_2' => 75,
-                'OPV_3' => 76,
-                'Penta_3' => 77,
-                'PCV_3' => 78,
-                'Rota_3' => 79,
-                'IPV' => 80,
-                'Vitamin_A' => 81,
-                'Measles_1' => 82,
-                'Fully_Immunized' => 83,
-                'Yellow_Fever' => 84,
-                'Measles_2' => 85,
-                'Men_A' => 86,
-                'HPV' => 87,
-            ];
+            $records = ImmunizationRecord::with([
+                'patient:id,user_id,file_no,dob,gender,hmo_id',
+                'patient.user:id,surname,firstname,othername',
+                'patient.hmo.scheme',
+            ])
+            ->where(function ($q) use ($startDate, $endDate) {
+                $q->whereBetween('administered_at', [$startDate, $endDate])
+                  ->orWhere(function ($q2) use ($startDate, $endDate) {
+                      $q2->whereNull('administered_at')
+                         ->whereBetween('created_at', [$startDate, $endDate]);
+                  });
+            })
+            ->get();
 
-            $targetAntigen = array_search($rowNum, $antigenRows);
-            if ($targetAntigen !== false) {
-                $records = ImmunizationRecord::with([
-                    'patient:id,user_id,file_no,dob,gender,hmo_id',
-                    'patient.user:id,surname,firstname,othername',
-                    'patient.hmo.scheme',
-                ])
-                ->where(function ($q) use ($startDate, $endDate) {
-                    $q->whereBetween('administered_at', [$startDate, $endDate])
-                      ->orWhereBetween('created_at', [$startDate, $endDate]);
-                })
-                ->get();
-
+            if ($rowNum === 63 || $rowNum === 64) {
+                // TD for pregnant / non-pregnant women
+                $targetRowId = "row_{$rowNum}";
                 foreach ($records as $im) {
-                    $vac = $im->vaccine_name ?? ($im->vaccine_code ?? '');
-                    if (stripos($vac, str_replace('_', ' ', $targetAntigen)) === false && stripos($vac, $targetAntigen) === false) {
+                    $tdInfo = NhmisDataAggregatorService::resolveTdRowAndDose($im);
+                    if (!$tdInfo || $tdInfo['row_id'] !== $targetRowId) {
                         continue;
                     }
 
-                    $dob = $im->patient?->dob ? Carbon::parse($im->patient->dob) : null;
+                    if ($colKey !== 'total' && $colKey !== $tdInfo['col_key']) {
+                        continue;
+                    }
+
+                    $isTally = empty($im->patient_id);
+                    $headcount = max(1, (int) ($im->headcount ?? 1));
                     $refDate = $im->administered_at ? Carbon::parse($im->administered_at) : $im->created_at;
-                    $ageMonths = $dob ? $dob->diffInMonths($refDate, false) : 5;
-                    $isUnder1 = ($ageMonths < 12);
-                    $session = strtolower($im->session_type ?? 'fixed');
+
+                    if ($isTally) {
+                        $pName = 'Community Outreach: ' . ($im->location_settlement ?? 'Field Site');
+                        $fileNo = 'TALLY (' . $headcount . ' persons)';
+                        $gender = ucfirst($im->gender ?? 'Female');
+                        $ageDisplay = $im->age_group ?? '15-49y';
+                        $hmoInfo = [
+                            'hmo_id' => null,
+                            'hmo_scheme_id' => null,
+                            'hmo_html' => '<span class="badge bg-success text-white"><i class="mdi mdi-account-group"></i> Outreach (' . $headcount . ')</span>',
+                        ];
+                    } else {
+                        $p = $im->patient;
+                        $u = $p?->user;
+                        $pName = $u ? trim($u->surname . ' ' . $u->firstname . ($u->othername ? ' ' . $u->othername : '')) : 'N/A';
+                        $fileNo = $p->file_no ?? 'N/A';
+                        $gender = ucfirst($p->gender ?? 'Female');
+                        $hmoInfo = $this->renderPatientHmo($p);
+                        if ($im->patient_id) {
+                            $uniquePatients[$im->patient_id] = true;
+                        }
+                        $dob = $p?->dob ? Carbon::parse($p->dob) : null;
+                        $ageYears = $dob ? $dob->diffInYears($refDate, false) : 'N/A';
+                        $ageDisplay = is_numeric($ageYears) ? $ageYears . 'y' : 'N/A';
+                    }
+
+                    $details = $isTally
+                        ? 'TD Outreach Tally: ' . $headcount . ' doses (' . strtoupper($tdInfo['col_key']) . ') | Location: ' . ($im->location_settlement ?? 'Outreach Site')
+                        : 'TD Dose: ' . strtoupper($tdInfo['col_key']) . ' | Vaccine: ' . ($im->vaccine_name ?? 'Td') . ($im->dose ? ' (' . $im->dose . ')' : '');
+
+                    $results[] = [
+                        'id' => $im->id,
+                        'patient_id' => $im->patient_id,
+                        'patient_name' => $pName,
+                        'file_no' => $fileNo,
+                        'hmo_id' => $hmoInfo['hmo_id'],
+                        'hmo_scheme_id' => $hmoInfo['hmo_scheme_id'],
+                        'hmo_html' => $hmoInfo['hmo_html'],
+                        'gender' => $gender,
+                        'age' => $ageDisplay,
+                        'doctor_name' => 'Vaccinator',
+                        'date' => $refDate->format('Y-m-d H:i'),
+                        'details' => $details,
+                        'headcount' => $headcount,
+                    ];
+                }
+            } else {
+                // Rows 65 to 87: Routine antigens
+                $targetRowId = "row_{$rowNum}";
+                foreach ($records as $im) {
+                    $matchedRowId = NhmisDataAggregatorService::resolveAntigenRow($im);
+                    if ($matchedRowId !== $targetRowId) {
+                        continue;
+                    }
+
+                    $isTally = empty($im->patient_id);
+                    $headcount = max(1, (int) ($im->headcount ?? 1));
+                    $refDate = $im->administered_at ? Carbon::parse($im->administered_at) : $im->created_at;
+
+                    if ($im->patient_id && $im->patient?->dob) {
+                        $dob = Carbon::parse($im->patient->dob);
+                        $ageMonths = $dob->diffInMonths($refDate, false);
+                        $isUnder1 = ($ageMonths < 12);
+                        $ageDisplay = $ageMonths . 'm';
+                    } else {
+                        $ag = strtolower($im->age_group ?? '');
+                        $tg = strtolower($im->target_group ?? '');
+                        if ($ag === '<1y' || $ag === '0-11m' || $ag === 'lt_1y' || str_contains($tg, 'infant')) {
+                            $isUnder1 = true;
+                        } elseif ($ag === 'ge_1y' || $ag === '12-59m' || $ag === '5-9y' || $ag === '9-14y' || $ag === '15-49y' || str_contains($tg, 'under_5') || str_contains($tg, 'adolescent') || str_contains($tg, 'adult')) {
+                            $isUnder1 = false;
+                        } else {
+                            $isUnder1 = !in_array($targetRowId, ['row_85', 'row_87']);
+                        }
+                        $ageDisplay = $im->age_group ?? ($isUnder1 ? '< 1 year' : '≥ 1 year');
+                    }
+
+                    $session = strtolower($im->session_type ?? ($im->notes ?? 'fixed'));
                     $curColKey = ($isUnder1 ? 'fixed_lt_1y' : 'fixed_ge_1y');
                     if (str_contains($session, 'outreach')) {
                         $curColKey = ($isUnder1 ? 'outreach_lt_1y' : 'outreach_ge_1y');
@@ -1734,27 +1792,50 @@ class NhmisWorkbenchController extends Controller
                         continue;
                     }
 
-                    $p = $im->patient;
-                    $u = $p?->user;
-                    $pName = $u ? trim($u->surname . ' ' . $u->firstname . ($u->othername ? ' ' . $u->othername : '')) : 'N/A';
-                    if ($im->patient_id) {
-                        $uniquePatients[$im->patient_id] = true;
+                    if ($isTally) {
+                        $pName = 'Community Outreach: ' . ($im->location_settlement ?? 'Field Site');
+                        $fileNo = 'TALLY (' . $headcount . ' persons)';
+                        $gender = ucfirst($im->gender ?? 'All');
+                        $hmoInfo = [
+                            'hmo_id' => null,
+                            'hmo_scheme_id' => null,
+                            'hmo_html' => '<span class="badge bg-success text-white"><i class="mdi mdi-account-group"></i> Outreach (' . $headcount . ')</span>',
+                        ];
+                    } else {
+                        $p = $im->patient;
+                        $u = $p?->user;
+                        $pName = $u ? trim($u->surname . ' ' . $u->firstname . ($u->othername ? ' ' . $u->othername : '')) : 'N/A';
+                        $fileNo = $p->file_no ?? 'N/A';
+                        $gender = ucfirst($p->gender ?? 'N/A');
+                        $hmoInfo = $this->renderPatientHmo($p);
+                        if ($im->patient_id) {
+                            $uniquePatients[$im->patient_id] = true;
+                        }
                     }
-                    $hmoInfo = $this->renderPatientHmo($p);
+
+                    $vac = $im->vaccine_name ?? '';
+                    if ($im->dose) {
+                        $vac .= ' (' . $im->dose . ')';
+                    }
+
+                    $details = $isTally
+                        ? 'Outreach Tally: ' . $headcount . ' doses (' . $vac . ') | Location: ' . ($im->location_settlement ?? 'Outreach Site')
+                        : 'Immunization Antigen: ' . $vac . ' | Session: ' . ucfirst($session);
 
                     $results[] = [
                         'id' => $im->id,
-                        'patient_id' => $p?->id,
+                        'patient_id' => $im->patient_id,
                         'patient_name' => $pName,
-                        'file_no' => $p->file_no ?? 'N/A',
+                        'file_no' => $fileNo,
                         'hmo_id' => $hmoInfo['hmo_id'],
                         'hmo_scheme_id' => $hmoInfo['hmo_scheme_id'],
                         'hmo_html' => $hmoInfo['hmo_html'],
-                        'gender' => ucfirst($p->gender ?? 'N/A'),
-                        'age' => $ageMonths . 'm',
+                        'gender' => $gender,
+                        'age' => $ageDisplay,
                         'doctor_name' => 'Vaccinator',
                         'date' => $refDate->format('Y-m-d H:i'),
-                        'details' => 'Immunization Antigen: ' . $vac . ' | Session: ' . ucfirst($session),
+                        'details' => $details,
+                        'headcount' => $headcount,
                     ];
                 }
             }

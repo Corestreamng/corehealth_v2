@@ -38,7 +38,9 @@ window.WORKBENCH_CONFIG = {
         'maternity-workbench.queue.admitted-patients': '{{ route("maternity-workbench.queue.admitted-patients") }}',
         'maternity-workbench.queue.counts': '{{ route("maternity-workbench.queue.counts") }}',
         'maternity-workbench.enroll': '{{ route("maternity-workbench.enroll") }}',
-        'maternity-workbench.search-patients': '{{ route("maternity-workbench.search-patients") }}'
+        'maternity-workbench.search-patients': '{{ route("maternity-workbench.search-patients") }}',
+        'maternity-workbench.outreach-tally': '{{ route("maternity-workbench.outreach-tally") }}',
+        'maternity-workbench.outreach-reports': '{{ route("maternity-workbench.outreach-reports") }}'
     },
     labRequiresApproval: {{ (bool) appsettings('lab_results_require_approval') ? 'true' : 'false' }},
     imagingRequiresApproval: {{ (bool) appsettings('imaging_results_require_approval') ? 'true' : 'false' }},
@@ -55,6 +57,7 @@ window.INVEST_RES_SOURCE = 'maternity';
 <script src="{{ asset('js/request-details.js') }}"></script>
 <script src="{{ asset('js/clinical-orders-shared.js') }}"></script>
 <script src="{{ asset('js/immunization-module.js') }}"></script>
+<script src="{{ versioned_asset('js/outreach-immunization.js') }}"></script>
 @include('admin.partials.patient_search_js', [
     'search_context' => 'maternity',
     'search_url' => route('maternity-workbench.search-patients')

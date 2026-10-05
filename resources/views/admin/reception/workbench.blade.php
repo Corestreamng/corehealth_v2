@@ -65,7 +65,7 @@
         </div>
 
         <div class="quick-actions">
-            <h6><i class="mdi mdi-lightning-bolt"></i> QUICK ACTIONS</h6>
+            <h6><i class="mdi mdi-flash text-warning"></i> QUICK ACTIONS</h6>
             <button class="quick-action-btn" id="btn-ward-dashboard">
                 <i class="mdi mdi-hospital-building text-primary"></i>
                 <span>Ward Dashboard</span>

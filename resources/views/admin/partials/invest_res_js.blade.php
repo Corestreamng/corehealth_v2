@@ -583,6 +583,8 @@ window.InvestResultEntry = (function() {
                 }
             });
         });
+    }
+
     /**
      * NHMIS Clinical Outcome Auto-Sense Module
      */
