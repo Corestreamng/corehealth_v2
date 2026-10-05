@@ -58,6 +58,16 @@ Route::middleware(['web', 'auth'])->prefix('nursing-workbench')->name('nursing-w
     Route::get('/patient/{patientId}/immunizations', [NursingWorkbenchController::class, 'getImmunizations'])->name('immunization.history');
     Route::get('/patient/{patientId}/immunization-schedule', [NursingWorkbenchController::class, 'getImmunizationSchedule'])->name('immunization.schedule');
     Route::post('/administer-immunization', [NursingWorkbenchController::class, 'administerImmunization'])->name('immunization.administer');
+    Route::post('/outreach-tally', [NursingWorkbenchController::class, 'saveOutreachTally'])->name('outreach-tally');
+    Route::post('/save-outreach-tally', [NursingWorkbenchController::class, 'saveOutreachTally'])->name('save-outreach-tally');
+    Route::get('/outreach-tallies', [NursingWorkbenchController::class, 'getOutreachTallies'])->name('outreach-tallies');
+    Route::get('/outreach-reports', [NursingWorkbenchController::class, 'getOutreachSessionsReport'])->name('outreach-reports');
+    Route::get('/outreach-sessions-report', [NursingWorkbenchController::class, 'getOutreachSessionsReport'])->name('outreach-sessions-report');
+    Route::get('/outreach-session/{sessionId}', [NursingWorkbenchController::class, 'getOutreachSessionDetails'])->name('outreach-session.details');
+    Route::get('/outreach-session-details/{sessionId}', [NursingWorkbenchController::class, 'getOutreachSessionDetails'])->name('outreach-session-details');
+    Route::get('/outreach-report/print', [NursingWorkbenchController::class, 'printOutreachReport'])->name('outreach-report.print');
+    Route::get('/print-outreach-report', [NursingWorkbenchController::class, 'printOutreachReport'])->name('print-outreach-report');
+    Route::get('/outreach-store-inventory', [NursingWorkbenchController::class, 'getOutreachStoreInventory'])->name('outreach-store-inventory');
 
     // =====================================
     // Stock Batch Selection (Store-Based FIFO)
@@ -236,4 +246,19 @@ Route::middleware(['web', 'auth'])->prefix('nursing-workbench')->name('nursing-w
         // Apply treatment plan (Plan §6.3)
         Route::post('/apply-treatment-plan', [\App\Http\Controllers\TreatmentPlanController::class, 'applyForNurse'])->name('applyTreatmentPlan');
     });
+});
+
+// =====================================
+// Global Outreach Aliases (Direct Root Fallbacks)
+// =====================================
+Route::middleware(['web', 'auth'])->group(function () {
+    Route::post('/save-outreach-tally', [NursingWorkbenchController::class, 'saveOutreachTally'])->name('global.save-outreach-tally');
+    Route::post('/outreach-tally', [NursingWorkbenchController::class, 'saveOutreachTally'])->name('global.outreach-tally');
+    Route::get('/outreach-sessions-report', [NursingWorkbenchController::class, 'getOutreachSessionsReport'])->name('global.outreach-sessions-report');
+    Route::get('/outreach-reports', [NursingWorkbenchController::class, 'getOutreachSessionsReport'])->name('global.outreach-reports');
+    Route::get('/outreach-session-details/{sessionId}', [NursingWorkbenchController::class, 'getOutreachSessionDetails'])->name('global.outreach-session-details');
+    Route::get('/outreach-session/{sessionId}', [NursingWorkbenchController::class, 'getOutreachSessionDetails'])->name('global.outreach-session');
+    Route::get('/print-outreach-report', [NursingWorkbenchController::class, 'printOutreachReport'])->name('global.print-outreach-report');
+    Route::get('/outreach-report/print', [NursingWorkbenchController::class, 'printOutreachReport'])->name('global.outreach-report-print');
+    Route::get('/outreach-store-inventory', [NursingWorkbenchController::class, 'getOutreachStoreInventory'])->name('global.outreach-store-inventory');
 });

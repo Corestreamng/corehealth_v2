@@ -1272,6 +1272,180 @@ class NhmisDataAggregatorService
     }
 
     /**
+     * Resolve which routine antigen row (row_65 to row_87) an ImmunizationRecord corresponds to.
+     */
+    public static function resolveAntigenRow(ImmunizationRecord $r): ?string
+    {
+        $vac = strtolower(trim($r->vaccine_name ?? ''));
+        $dose = strtolower(trim($r->dose ?? ''));
+        $doseNum = $r->dose_number !== null ? (int)$r->dose_number : null;
+        $combined = $vac . ' ' . $dose;
+
+        // Row 83: Fully Immunized Children
+        if (str_contains($combined, 'fully immunized') || str_contains($combined, 'fully_immunized') || str_contains($combined, 'fic')) {
+            return 'row_83';
+        }
+
+        // Row 87: HPV (Human Papillomavirus)
+        if (str_contains($combined, 'hpv') || str_contains($combined, 'papilloma')) {
+            return 'row_87';
+        }
+
+        // Row 86: Men A (Meningitis A conjugate)
+        if (str_contains($combined, 'men-a') || str_contains($combined, 'men a') || str_contains($combined, 'men_a') || str_contains($combined, 'meningitis')) {
+            return 'row_86';
+        }
+
+        // Row 84: Yellow Fever
+        if (str_contains($combined, 'yellow fever') || str_contains($combined, 'yf')) {
+            return 'row_84';
+        }
+
+        // Row 80: IPV (Inactivated Polio Vaccine)
+        if (str_contains($combined, 'ipv') || str_contains($combined, 'inactivated polio')) {
+            return 'row_80';
+        }
+
+        // Row 67: BCG
+        if (str_contains($combined, 'bcg')) {
+            return 'row_67';
+        }
+
+        // Row 66: Hepatitis B 0 (given at birth / < 24h)
+        if (str_contains($combined, 'hepb') || str_contains($combined, 'hbv') || str_contains($combined, 'hepatitis b')) {
+            if ($doseNum === 0 || str_contains($combined, '0') || str_contains($combined, 'birth')) {
+                return 'row_66';
+            }
+        }
+
+        // Row 81: Vitamin A (given at 9 months - Dose 1)
+        if (str_contains($combined, 'vitamin a') || str_contains($combined, 'vita')) {
+            if ($doseNum === 2 || str_contains($dose, '2')) {
+                return null;
+            }
+
+            return 'row_81';
+        }
+
+        // Measles (Rows 82 and 85)
+        if (str_contains($combined, 'measles') || str_contains($combined, 'mcv')) {
+            if ($doseNum === 2 || str_contains($dose, '2')) {
+                return 'row_85'; // Measles 2 (at 15 months)
+            }
+            if ($doseNum === 1 || str_contains($dose, '1') || $doseNum === null) {
+                return 'row_82'; // Measles 1 (at 9 months)
+            }
+        }
+
+        // OPV (Rows 65, 68, 72, 76)
+        if (str_contains($combined, 'opv') || (str_contains($combined, 'polio') && !str_contains($combined, 'ipv'))) {
+            if ($doseNum === 0 || str_contains($dose, '0') || str_contains($dose, 'birth')) {
+                return 'row_65'; // OPV 0
+            }
+            if ($doseNum === 1 || str_contains($dose, '1')) {
+                return 'row_68'; // OPV 1
+            }
+            if ($doseNum === 2 || str_contains($dose, '2')) {
+                return 'row_72'; // OPV 2
+            }
+            if ($doseNum === 3 || str_contains($dose, '3')) {
+                return 'row_76'; // OPV 3
+            }
+        }
+
+        // Pentavalent (Rows 69, 73, 77)
+        if (str_contains($combined, 'penta') || str_contains($combined, 'dtp-hepb-hib')) {
+            if ($doseNum === 1 || str_contains($dose, '1')) {
+                return 'row_69'; // Penta 1
+            }
+            if ($doseNum === 2 || str_contains($dose, '2')) {
+                return 'row_73'; // Penta 2
+            }
+            if ($doseNum === 3 || str_contains($dose, '3')) {
+                return 'row_77'; // Penta 3
+            }
+        }
+
+        // PCV (Rows 70, 74, 78)
+        if (str_contains($combined, 'pcv') || str_contains($combined, 'pneumococcal')) {
+            if ($doseNum === 1 || str_contains($dose, '1')) {
+                return 'row_70'; // PCV 1
+            }
+            if ($doseNum === 2 || str_contains($dose, '2')) {
+                return 'row_74'; // PCV 2
+            }
+            if ($doseNum === 3 || str_contains($dose, '3')) {
+                return 'row_78'; // PCV 3
+            }
+        }
+
+        // Rotavirus (Rows 71, 75, 79)
+        if (str_contains($combined, 'rota')) {
+            if ($doseNum === 1 || str_contains($dose, '1')) {
+                return 'row_71'; // Rota 1
+            }
+            if ($doseNum === 2 || str_contains($dose, '2')) {
+                return 'row_75'; // Rota 2
+            }
+            if ($doseNum === 3 || str_contains($dose, '3')) {
+                return 'row_79'; // Rota 3
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Resolve whether an ImmunizationRecord is Td/Tetanus for women and its dose column.
+     * Returns ['row_id' => 'row_63'|'row_64', 'col_key' => 'td1'..'td5'] or null.
+     */
+    public static function resolveTdRowAndDose(ImmunizationRecord $r): ?array
+    {
+        $vac = strtolower(trim($r->vaccine_name ?? ''));
+        $dose = strtolower(trim($r->dose ?? ''));
+        $doseNum = $r->dose_number !== null ? (int)$r->dose_number : null;
+        $combined = $vac . ' ' . $dose;
+
+        if (!str_contains($combined, 'td') && !str_contains($combined, 'tetanus') && !str_contains($combined, 'tt')) {
+            return null;
+        }
+
+        // Exclude Pentavalent (DTP)
+        if (str_contains($combined, 'penta') || str_contains($combined, 'dtp')) {
+            return null;
+        }
+
+        $doseIdx = 1;
+        if (str_contains($combined, '5') || $doseNum === 5) {
+            $doseIdx = 5;
+        } elseif (str_contains($combined, '4') || $doseNum === 4) {
+            $doseIdx = 4;
+        } elseif (str_contains($combined, '3') || $doseNum === 3) {
+            $doseIdx = 3;
+        } elseif (str_contains($combined, '2') || $doseNum === 2) {
+            $doseIdx = 2;
+        } elseif (str_contains($combined, '1') || $doseNum === 1) {
+            $doseIdx = 1;
+        }
+
+        // Pregnant vs Non-pregnant
+        $notes = strtolower($r->notes ?? '');
+        $tg = strtolower($r->target_group ?? '');
+        $isExplicitNonPW = str_contains($notes, 'non-pregnant') || str_contains($notes, 'non pregnant') || str_contains($tg, 'non_pregnant') || str_contains($tg, 'non-pregnant');
+        $isPW = !$isExplicitNonPW && (
+            ($r->patient_id && MaternityEnrollment::where('patient_id', $r->patient_id)->where('status', 'active')->exists()) ||
+            str_contains($tg, 'pregnant') ||
+            str_contains($notes, 'pregnant') ||
+            str_contains($notes, 'anc')
+        );
+
+        return [
+            'row_id' => $isPW ? 'row_63' : 'row_64',
+            'col_key' => "td{$doseIdx}",
+        ];
+    }
+
+    /**
      * 7. Immunizations (TD & Antigens) (Rows 63 - 87)
      */
     private function aggregateImmunizations(Carbon $from, Carbon $to, array &$values): void
@@ -1286,67 +1460,77 @@ class NhmisDataAggregatorService
 
         // Antigens mapping
         $antigenRows = [
-            'OPV_0' => 'row_65',
-            'HepB_0' => 'row_66',
-            'BCG' => 'row_67',
-            'OPV_1' => 'row_68',
-            'Penta_1' => 'row_69',
-            'PCV_1' => 'row_70',
-            'Rota_1' => 'row_71',
-            'OPV_2' => 'row_72',
-            'Penta_2' => 'row_73',
-            'PCV_2' => 'row_74',
-            'Rota_2' => 'row_75',
-            'OPV_3' => 'row_76',
-            'Penta_3' => 'row_77',
-            'PCV_3' => 'row_78',
-            'Rota_3' => 'row_79',
-            'IPV' => 'row_80',
-            'Vitamin_A' => 'row_81',
-            'Measles_1' => 'row_82',
-            'Fully_Immunized' => 'row_83',
-            'Yellow_Fever' => 'row_84',
-            'Measles_2' => 'row_85',
-            'Men_A' => 'row_86',
-            'HPV' => 'row_87',
+            'row_65', 'row_66', 'row_67', 'row_68', 'row_69',
+            'row_70', 'row_71', 'row_72', 'row_73', 'row_74',
+            'row_75', 'row_76', 'row_77', 'row_78', 'row_79',
+            'row_80', 'row_81', 'row_82', 'row_83', 'row_84',
+            'row_85', 'row_86', 'row_87',
         ];
 
-        $records = ImmunizationRecord::with('patient')
-            ->whereBetween('administered_at', [$from, $to])
-            ->get();
-
-        $antigenCounts = [];
-
-        foreach ($records as $r) {
-            $vac = $r->vaccine_name ?? ($r->vaccine_code ?? '');
-            $dob = $r->patient?->dob ? Carbon::parse($r->patient->dob) : null;
-            $refDate = $r->administered_at ? Carbon::parse($r->administered_at) : $r->created_at;
-            $ageMonths = $dob ? $dob->diffInMonths($refDate, false) : 5;
-            $isUnder1 = ($ageMonths < 12);
-            $session = strtolower($r->session_type ?? 'fixed');
-            $colKey = ($isUnder1 ? 'fixed_lt_1y' : 'fixed_ge_1y');
-            if (str_contains($session, 'outreach')) {
-                $colKey = ($isUnder1 ? 'outreach_lt_1y' : 'outreach_ge_1y');
-            }
-
-            foreach ($antigenRows as $code => $rId) {
-                if (stripos($vac, str_replace('_', ' ', $code)) !== false || stripos($vac, $code) !== false) {
-                    $antigenCounts[$rId][$colKey] = ($antigenCounts[$rId][$colKey] ?? 0) + 1;
-                }
-            }
+        foreach ($antigenRows as $rId) {
+            $values["{$rId}:fixed_lt_1y"] = 0;
+            $values["{$rId}:outreach_lt_1y"] = 0;
+            $values["{$rId}:fixed_ge_1y"] = 0;
+            $values["{$rId}:outreach_ge_1y"] = 0;
+            $values["{$rId}:total"] = 0;
         }
 
-        foreach ($antigenRows as $code => $rId) {
-            $fLt = $antigenCounts[$rId]['fixed_lt_1y'] ?? 0;
-            $oLt = $antigenCounts[$rId]['outreach_lt_1y'] ?? 0;
-            $fGe = $antigenCounts[$rId]['fixed_ge_1y'] ?? 0;
-            $oGe = $antigenCounts[$rId]['outreach_ge_1y'] ?? 0;
+        $records = ImmunizationRecord::with('patient')
+            ->where(function ($q) use ($from, $to) {
+                $q->whereBetween('administered_at', [$from, $to])
+                  ->orWhere(function ($q2) use ($from, $to) {
+                      $q2->whereNull('administered_at')
+                         ->whereBetween('created_at', [$from, $to]);
+                  });
+            })
+            ->get();
 
-            $values["{$rId}:fixed_lt_1y"] = $fLt;
-            $values["{$rId}:outreach_lt_1y"] = $oLt;
-            $values["{$rId}:fixed_ge_1y"] = $fGe;
-            $values["{$rId}:outreach_ge_1y"] = $oGe;
-            $values["{$rId}:total"] = $fLt + $oLt + $fGe + $oGe;
+        foreach ($records as $r) {
+            $count = max(1, (int) ($r->headcount ?? 1));
+
+            // Check Td for women first
+            $tdInfo = self::resolveTdRowAndDose($r);
+            if ($tdInfo) {
+                $rowId = $tdInfo['row_id'];
+                $colKey = $tdInfo['col_key'];
+                $values["{$rowId}:{$colKey}"] += $count;
+                $values["{$rowId}:total"] += $count;
+
+                continue;
+            }
+
+            // Check routine antigen
+            $antigenRow = self::resolveAntigenRow($r);
+            if (!$antigenRow) {
+                continue;
+            }
+
+            if ($r->patient_id && $r->patient?->dob) {
+                $dob = Carbon::parse($r->patient->dob);
+                $refDate = $r->administered_at ? Carbon::parse($r->administered_at) : $r->created_at;
+                $ageMonths = $dob->diffInMonths($refDate, false);
+                $isUnder1 = ($ageMonths < 12);
+            } else {
+                // Determine age from age_group or target_group for outreach tallies
+                $ag = strtolower($r->age_group ?? '');
+                $tg = strtolower($r->target_group ?? '');
+                if ($ag === '<1y' || $ag === '0-11m' || $ag === 'lt_1y' || str_contains($tg, 'infant')) {
+                    $isUnder1 = true;
+                } elseif ($ag === 'ge_1y' || $ag === '12-59m' || $ag === '5-9y' || $ag === '9-14y' || $ag === '15-49y' || str_contains($tg, 'under_5') || str_contains($tg, 'adolescent') || str_contains($tg, 'adult')) {
+                    $isUnder1 = false;
+                } else {
+                    $isUnder1 = !in_array($antigenRow, ['row_85', 'row_87']);
+                }
+            }
+
+            $session = strtolower($r->session_type ?? ($r->notes ?? 'fixed'));
+            $isOutreach = str_contains($session, 'outreach');
+            $colKey = $isOutreach
+                ? ($isUnder1 ? 'outreach_lt_1y' : 'outreach_ge_1y')
+                : ($isUnder1 ? 'fixed_lt_1y' : 'fixed_ge_1y');
+
+            $values["{$antigenRow}:{$colKey}"] += $count;
+            $values["{$antigenRow}:total"] += $count;
         }
     }
 

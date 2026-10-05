@@ -3032,6 +3032,31 @@ class MaternityWorkbenchController extends Controller
         return $this->nursingProxy()->getProductBatches($request);
     }
 
+    public function saveOutreachTallyMaternity(Request $request)
+    {
+        return $this->nursingProxy()->saveOutreachTally($request);
+    }
+
+    public function getOutreachSessionsReportMaternity(Request $request)
+    {
+        return $this->nursingProxy()->getOutreachSessionsReport($request);
+    }
+
+    public function getOutreachSessionDetailsMaternity($sessionId)
+    {
+        return $this->nursingProxy()->getOutreachSessionDetails($sessionId);
+    }
+
+    public function printOutreachReportMaternity(Request $request)
+    {
+        return $this->nursingProxy()->printOutreachReport($request);
+    }
+
+    public function getOutreachStoreInventoryMaternity(Request $request)
+    {
+        return $this->nursingProxy()->getOutreachStoreInventory($request);
+    }
+
     public function getMotherSchedule($enrollmentId)
     {
         $enrollment = MaternityEnrollment::findOrFail($enrollmentId);
