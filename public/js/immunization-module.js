@@ -452,6 +452,9 @@
         $('#imm-modal-vaccine-search').val('');
         $('#imm-modal-selected-product-card').addClass('d-none');
         $('#imm-modal-stock-error').remove();
+        $('#imm-modal-session-type').val('fixed');
+        $('#imm-modal-outreach-location').val('');
+        $('#imm-modal-outreach-location-container').hide();
     };
 
     /**
@@ -607,7 +610,9 @@
             vis_date: $('#imm-modal-vaccine-vis').val(),
             notes: $('#imm-modal-vaccine-notes').val(),
             store_id: storeId,
-            service_id: isExternal ? $('#imm-modal-external-service-id').val() : ''
+            service_id: isExternal ? $('#imm-modal-external-service-id').val() : '',
+            session_type: $('#imm-modal-session-type').val() || 'fixed',
+            location_settlement: $('#imm-modal-outreach-location').val() || ''
         };
 
         $.ajax({
@@ -990,6 +995,16 @@
             } else {
                 $('#imm-modal-vaccine-store-info').hide();
                 $('#imm-modal-vaccine-store-placeholder').show();
+            }
+        });
+
+        // Session type toggle
+        $(document).on('change', '#imm-modal-session-type', function() {
+            if ($(this).val() === 'outreach') {
+                $('#imm-modal-outreach-location-container').slideDown(150);
+            } else {
+                $('#imm-modal-outreach-location-container').slideUp(150);
+                $('#imm-modal-outreach-location').val('');
             }
         });
 
