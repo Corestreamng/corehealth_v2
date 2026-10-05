@@ -31,6 +31,18 @@ class ImmunizationRecord extends Model implements Auditable
         'next_due_date',
         'adverse_reaction',
         'notes',
+        'session_type',
+        'stock_source',
+        'headcount',
+        'doses_wasted',
+        'age_group',
+        'target_group',
+        'gender',
+        'location_settlement',
+        'cold_chain_carrier',
+        'vvm_stage',
+        'outreach_session_id',
+        'auto_deduct_stock',
     ];
 
     protected $casts = [
