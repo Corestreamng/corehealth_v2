@@ -835,19 +835,22 @@
                 $showHmoMgmt = $isAdminUser || $isQualifiedHmoExecutive;
             @endphp
             @if($showHmoMgmt)
-            <li class="nav-item {{ request()->routeIs('hmo-tariffs.*', 'hmo.index') ? 'active' : '' }}">
-                <a class="nav-link {{ request()->routeIs('hmo-tariffs.*', 'hmo.index') ? 'active' : '' }}" data-toggle="collapse" data-bs-toggle="collapse" href="javascript:void(0);" data-target="#sidebar-hmo-more-management" data-bs-target="#sidebar-hmo-more-management" aria-expanded="{{ request()->routeIs('hmo-tariffs.*', 'hmo.index') ? 'true' : 'false' }}" aria-controls="sidebar-hmo-more-management" id="sidebar-hmo-more-management-toggle">
+            <li class="nav-item {{ request()->routeIs('hmo-tariffs.*', 'hmo.index', 'organizations.*') ? 'active' : '' }}">
+                <a class="nav-link {{ request()->routeIs('hmo-tariffs.*', 'hmo.index', 'organizations.*') ? 'active' : '' }}" data-toggle="collapse" data-bs-toggle="collapse" href="javascript:void(0);" data-target="#sidebar-hmo-more-management" data-bs-target="#sidebar-hmo-more-management" aria-expanded="{{ request()->routeIs('hmo-tariffs.*', 'hmo.index', 'organizations.*') ? 'true' : 'false' }}" aria-controls="sidebar-hmo-more-management" id="sidebar-hmo-more-management-toggle">
                     <i class="mdi mdi-medical-bag menu-icon"></i>
                     <span class="menu-title">{{ __('sidebar.more_management') }}</span>
                     <i class="mdi mdi-chevron-right menu-arrow"></i>
                 </a>
-                <div class="collapse {{ request()->routeIs('hmo-tariffs.*', 'hmo.index') ? 'show' : '' }}" id="sidebar-hmo-more-management">
+                <div class="collapse {{ request()->routeIs('hmo-tariffs.*', 'hmo.index', 'organizations.*') ? 'show' : '' }}" id="sidebar-hmo-more-management">
                     <ul class="nav flex-column sub-menu">
                         <li class="nav-item">
                             <a class="nav-link {{ request()->routeIs('hmo-tariffs.*') ? 'active' : '' }}" href="{{ route('hmo-tariffs.index') }}" id="sidebar-hmo-more-tariffs">Tariff Management</a>
                         </li>
                         <li class="nav-item">
                             <a class="nav-link {{ request()->routeIs('hmo.index') ? 'active' : '' }}" href="{{ route('hmo.index') }}" id="sidebar-hmo-more-settings">HMO Settings</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {{ request()->routeIs('organizations.*') ? 'active' : '' }}" href="{{ route('organizations.index') }}" id="sidebar-hmo-more-organizations">{{ __('sidebar.billing_organizations') }}</a>
                         </li>
                     </ul>
                 </div>
@@ -1271,19 +1274,22 @@
                     <span class="menu-title">{{ __('sidebar.bank_config') }}</span>
                 </a>
             </li>
-            <li class="nav-item {{ request()->routeIs('hmo-tariffs.*', 'hmo.index') ? 'active' : '' }}">
-                <a class="nav-link {{ request()->routeIs('hmo-tariffs.*', 'hmo.index') ? 'active' : '' }}" data-toggle="collapse" data-bs-toggle="collapse" href="javascript:void(0);" data-target="#sidebar-admin-hmo-management" data-bs-target="#sidebar-admin-hmo-management" aria-expanded="{{ request()->routeIs('hmo-tariffs.*', 'hmo.index') ? 'true' : 'false' }}" aria-controls="sidebar-admin-hmo-management" id="sidebar-admin-hmo-management-toggle">
+            <li class="nav-item {{ request()->routeIs('hmo-tariffs.*', 'hmo.index', 'organizations.*') ? 'active' : '' }}">
+                <a class="nav-link {{ request()->routeIs('hmo-tariffs.*', 'hmo.index', 'organizations.*') ? 'active' : '' }}" data-toggle="collapse" data-bs-toggle="collapse" href="javascript:void(0);" data-target="#sidebar-admin-hmo-management" data-bs-target="#sidebar-admin-hmo-management" aria-expanded="{{ request()->routeIs('hmo-tariffs.*', 'hmo.index', 'organizations.*') ? 'true' : 'false' }}" aria-controls="sidebar-admin-hmo-management" id="sidebar-admin-hmo-management-toggle">
                     <i class="mdi mdi-medical-bag menu-icon"></i>
                     <span class="menu-title">{{ __('sidebar.hmo_management') }}</span>
                     <i class="mdi mdi-chevron-right menu-arrow"></i>
                 </a>
-                <div class="collapse {{ request()->routeIs('hmo-tariffs.*', 'hmo.index') ? 'show' : '' }}" id="sidebar-admin-hmo-management">
+                <div class="collapse {{ request()->routeIs('hmo-tariffs.*', 'hmo.index', 'organizations.*') ? 'show' : '' }}" id="sidebar-admin-hmo-management">
                     <ul class="nav flex-column sub-menu">
                         <li class="nav-item">
                             <a class="nav-link {{ request()->routeIs('hmo-tariffs.*') ? 'active' : '' }}" href="{{ route('hmo-tariffs.index') }}" id="sidebar-admin-hmo-tariffs">Tariff Management</a>
                         </li>
                         <li class="nav-item">
                             <a class="nav-link {{ request()->routeIs('hmo.index') ? 'active' : '' }}" href="{{ route('hmo.index') }}" id="sidebar-admin-hmo-settings">HMO Settings</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {{ request()->routeIs('organizations.*') ? 'active' : '' }}" href="{{ route('organizations.index') }}" id="sidebar-admin-hmo-organizations">{{ __('sidebar.billing_organizations') }}</a>
                         </li>
                     </ul>
                 </div>

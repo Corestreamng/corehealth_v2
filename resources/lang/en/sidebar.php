@@ -21,6 +21,7 @@ return [
     'beds' => 'Beds',
     'billing' => 'Billing',
     'billing_workbench' => 'Billing Workbench',
+    'billing_organizations' => 'Billing Organizations',
     'bookings' => 'Bookings',
     'budgets' => 'Budgets',
     'capex_projects' => 'CAPEX Projects',
