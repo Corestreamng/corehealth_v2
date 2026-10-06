@@ -314,20 +314,34 @@ class ServiceController extends Controller
 
     public function liveSearchServices(Request $request)
     {
-        $term = $request->term;
+        $term = $request->term ?? $request->q;
         $categoryId = $request->input('category_id');
         $patientId = $request->input('patient_id');
-        $context = $request->input('context', 'all'); // 'lab', 'imaging', 'product', 'all'
+        $context = strtolower((string) ($request->input('context', $request->input('type', 'all'))));
+
+        // When category_id is not explicitly provided, deduce it from context/type using appsettings
+        if (empty($categoryId)) {
+            if (in_array($context, ['lab', 'labs', 'investigation', 'investigations'])) {
+                $categoryId = (int) (appsettings('investigation_category_id', 2) ?: 2);
+            } elseif (in_array($context, ['imaging', 'radiology'])) {
+                $categoryId = (int) (appsettings('imaging_category_id', 6) ?: 6);
+            } elseif (in_array($context, ['procedure', 'procedures', 'surgery'])) {
+                $categoryId = (int) (appsettings('procedure_category_id', 8) ?: 8);
+            }
+        }
 
         // PART 1: Direct service/combo matches
-        $query = Service::with(['price', 'category', 'bundleItems.service', 'bundleItems.product'])
+        $query = Service::with(['price', 'category', 'bundleItems.service', 'bundleItems.product', 'procedureDefinition.procedureCategory'])
             ->where('status', 1);
 
-        if ($categoryId) {
+        if (!empty($categoryId)) {
             $query->where('category_id', $categoryId);
         }
         if ($term) {
-            $query->where('service_name', 'LIKE', "%{$term}%");
+            $query->where(function ($q) use ($term) {
+                $q->where('service_name', 'LIKE', "%{$term}%")
+                  ->orWhere('service_code', 'LIKE', "%{$term}%");
+            });
         }
 
         $directServices = $query->limit(20)->get();
@@ -335,7 +349,7 @@ class ServiceController extends Controller
         // PART 2: Combos that contain matching services/products (or match by name)
         $relatedCombos = collect();
         if ($term) {
-            $combosQuery = Service::with(['price', 'category', 'bundleItems.service', 'bundleItems.product'])
+            $combosQuery = Service::with(['price', 'category', 'bundleItems.service', 'bundleItems.product', 'procedureDefinition.procedureCategory'])
                 ->where('is_combo', true)
                 ->where('status', 1)
                 ->where(function ($q) use ($term) {
@@ -356,14 +370,17 @@ class ServiceController extends Controller
                       });
                 });
 
-            // When searching within a specific category (e.g. imaging), only show combos
-            // that contain at least one service item belonging to that category
-            if ($categoryId) {
-                $combosQuery->whereHas('bundleItems', function ($q) use ($categoryId) {
-                    $q->where('item_type', 'service')
-                      ->whereHas('service', function ($sQ) use ($categoryId) {
-                          $sQ->where('category_id', $categoryId);
-                      });
+            // When searching within a specific category (e.g. imaging, lab), only show combos
+            // that match that category or contain at least one service item belonging to that category
+            if (!empty($categoryId)) {
+                $combosQuery->where(function ($cq) use ($categoryId) {
+                    $cq->where('category_id', $categoryId)
+                       ->orWhereHas('bundleItems', function ($q) use ($categoryId) {
+                           $q->where('item_type', 'service')
+                             ->whereHas('service', function ($sQ) use ($categoryId) {
+                                 $sQ->where('category_id', $categoryId);
+                             });
+                       });
                 });
             }
 
@@ -440,6 +457,9 @@ class ServiceController extends Controller
             'claims_amount' => $hmoData['claims_amount'] ?? 0,
             'coverage_mode' => $hmoData['coverage_mode'] ?? null,
             'is_combo' => $isCombo || $service->is_combo,
+            'is_surgical' => (bool) ($service->procedureDefinition?->is_surgical ?? false),
+            'estimated_duration_minutes' => $service->procedureDefinition?->estimated_duration_minutes ?? null,
+            'procedure_category' => $service->procedureDefinition?->procedureCategory?->name ?? null,
         ];
 
         // If this is a combo, include bundle item summary

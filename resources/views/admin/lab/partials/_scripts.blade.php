@@ -5,9 +5,14 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <script>
+window.CURRENT_USER_ID = {{ Auth::id() ?? 'null' }};
 window.WORKBENCH_CONFIG = {
     csrf: '{{ csrf_token() }}',
     baseUrl: '{{ url("/") }}',
+    investigationCategoryId: {{ (int) (appsettings('investigation_category_id', 2) ?: 2) }},
+    isApprover: {{ ($isApprover ?? false) ? 'true' : 'false' }},
+    requiresApproval: {{ ($requiresApproval ?? false) ? 'true' : 'false' }},
+    currentUserId: {{ Auth::id() ?? 'null' }},
     routes: {
         'lab.workbench': '{{ route("lab.workbench") }}',
         'lab.queue': '{{ route("lab.queue") }}',
@@ -29,6 +34,7 @@ window.WORKBENCH_CONFIG = {
         'lab.reports': '{{ route("lab.reports") }}'
     }
 };
+window.INVEST_RES_SOURCE = 'lab_workbench';
 </script>
 <script src="{{ asset('js/workbench-helper.js') }}"></script>
 @include('admin.partials.patient_search_js', ['search_context' => 'lab'])

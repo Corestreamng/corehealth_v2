@@ -956,6 +956,7 @@
                         <div class="card-body d-none" id="referral-form-card">
                             <form id="create-referral-form">
                                 <input type="hidden" name="_token" value="{{ csrf_token() }}">
+                                <input type="hidden" name="encounter_id" value="{{ $encounter->id ?? request()->get('encounter_id', '') }}">
                                 <input type="hidden" name="_referral_id" id="referral-edit-id" value="">
 
                                 {{-- Row 1: Type + Urgency --}}
@@ -993,7 +994,7 @@
                                                 <i class="mdi mdi-hospital-building text-info me-1"></i>
                                                 Target Clinic <span class="text-danger">*</span>
                                             </label>
-                                            <select name="target_clinic_id" class="form-select form-select-sm">
+                                            <select name="target_clinic_id" class="form-select form-select-sm" id="referral-target-clinic-select">
                                                 <option value="">-- Select Clinic --</option>
                                                 @foreach($allClinics as $c)
                                                     <option value="{{ $c->id }}">{{ $c->name }}</option>
@@ -1006,10 +1007,10 @@
                                                 <i class="mdi mdi-doctor text-success me-1"></i>
                                                 Target Doctor
                                             </label>
-                                            <select name="target_doctor_id" class="form-select form-select-sm">
+                                            <select name="target_doctor_id" class="form-select form-select-sm" id="referral-target-doctor-select">
                                                 <option value="">-- Any Available Doctor --</option>
                                                 @foreach($doctorStaffList as $staff)
-                                                    <option value="{{ $staff->id }}">{{ $staff->user ? trim(($staff->user->surname ?? '').' '.($staff->user->firstname ?? '')) : 'Staff #'.$staff->id }}</option>
+                                                    <option value="{{ $staff->id }}">{{ $staff->user ? trim(($staff->user->surname ?? '').' '.($staff->user->firstname ?? '').' '.($staff->user->othername ?? '')) : 'Staff #'.$staff->id }}</option>
                                                 @endforeach
                                             </select>
                                             <small class="form-text text-muted">Optional &mdash; leave blank for any available doctor</small>
@@ -1525,7 +1526,7 @@
         <div class="modal-dialog modal-lg" role="document">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title" id="investResModalLabel">Nursing Note Result (<span
+                    <h5 class="modal-title" id="nursingNoteModalLabel">Nursing Note Result (<span
                             id="note_type_name_"></span>)</h5>
                     <button type="button" data-bs-dismiss="modal" class="btn-close" aria-label="Close"></button>
                 </div>

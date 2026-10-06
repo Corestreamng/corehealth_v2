@@ -1,0 +1,336 @@
+/**
+ * CoreHealth v2 - NHMIS Monthly Summary Workbench Stylesheet
+ * Strict adherence to hospital CSS custom property variables:
+ * --hospital-primary, --hospital-primary-rgb, --hospital-secondary, --primary-color
+ */
+
+.nhmis-workbench-wrapper {
+    background-color: #f4f6f9;
+    min-height: calc(100vh - 120px);
+    padding: 1.25rem 1.5rem;
+}
+
+/* Header & Control Bar */
+.nhmis-header-card {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
+    margin-bottom: 1.25rem;
+    padding: 1rem 1.5rem;
+}
+
+.nhmis-title-block h4 {
+    color: var(--hospital-primary, #011b33);
+    font-weight: 700;
+    margin-bottom: 0.25rem;
+    letter-spacing: -0.2px;
+}
+
+.nhmis-title-block p {
+    color: #64748b;
+    font-size: 0.85rem;
+    margin-bottom: 0;
+}
+
+.nhmis-badge-status {
+    font-size: 0.8rem;
+    padding: 0.35rem 0.75rem;
+    border-radius: 50rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+}
+
+.nhmis-badge-draft {
+    background-color: #f1f5f9;
+    color: #475569;
+    border: 1px solid #cbd5e1;
+}
+
+.nhmis-badge-compiled {
+    background-color: rgba(13, 110, 253, 0.12);
+    color: #0d6efd;
+    border: 1px solid rgba(13, 110, 253, 0.3);
+}
+
+.nhmis-badge-verified {
+    background-color: rgba(25, 135, 84, 0.12);
+    color: #198754;
+    border: 1px solid rgba(25, 135, 84, 0.3);
+}
+
+.nhmis-badge-locked {
+    background-color: rgba(108, 117, 125, 0.15);
+    color: #495057;
+    border: 1px solid #ced4da;
+}
+
+/* Tab Navigation */
+.nhmis-nav-tabs {
+    border-bottom: 2px solid #e2e8f0;
+    margin-bottom: 1rem;
+    gap: 0.5rem;
+}
+
+.nhmis-nav-tabs .nav-link {
+    color: #64748b;
+    font-weight: 600;
+    font-size: 0.875rem;
+    padding: 0.65rem 1.15rem;
+    border: 1px solid transparent;
+    border-top-left-radius: 6px;
+    border-top-right-radius: 6px;
+    transition: all 0.2s ease-in-out;
+    background-color: #ffffff;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+}
+
+.nhmis-nav-tabs .nav-link:hover {
+    color: var(--hospital-primary, #011b33);
+    background-color: #f8fafc;
+    border-color: #e2e8f0 #e2e8f0 transparent;
+}
+
+.nhmis-nav-tabs .nav-link.active {
+    color: #ffffff;
+    background-color: var(--hospital-primary, #011b33);
+    border-color: var(--hospital-primary, #011b33);
+    box-shadow: 0 -2px 6px rgba(var(--hospital-primary-rgb, 1, 27, 51), 0.15);
+}
+
+/* Sections & Tables */
+.nhmis-section-card {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    margin-bottom: 1.25rem;
+    overflow: hidden;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
+}
+
+.nhmis-section-header {
+    background: #f8fafc;
+    border-bottom: 1px solid #e2e8f0;
+    padding: 0.75rem 1.25rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.nhmis-section-title {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: var(--hospital-primary, #011b33);
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.nhmis-table-wrapper {
+    overflow-x: auto;
+    max-width: 100%;
+}
+
+.nhmis-table {
+    width: 100%;
+    margin-bottom: 0;
+    font-size: 0.825rem;
+    border-collapse: collapse;
+}
+
+.nhmis-table th {
+    background-color: #f1f5f9;
+    color: #334155;
+    font-weight: 600;
+    padding: 0.5rem 0.6rem;
+    vertical-align: middle;
+    text-align: center;
+    border: 1px solid #cbd5e1;
+    white-space: nowrap;
+}
+
+.nhmis-table th.col-row-num {
+    width: 48px;
+    min-width: 48px;
+    text-align: center;
+}
+
+.nhmis-table th.col-row-label {
+    min-width: 260px;
+    text-align: left;
+}
+
+.nhmis-table td {
+    padding: 0.35rem 0.45rem;
+    vertical-align: middle;
+    border: 1px solid #e2e8f0;
+}
+
+.nhmis-table td.cell-num {
+    text-align: center;
+    font-weight: 700;
+    color: #64748b;
+    background-color: #f8fafc;
+}
+
+.nhmis-table td.cell-label {
+    font-weight: 500;
+    color: #1e293b;
+    line-height: 1.3;
+}
+
+.nhmis-table td.cell-input-td {
+    position: relative;
+    padding: 0.15rem;
+    text-align: center;
+    min-width: 65px;
+}
+
+/* Cell Inputs */
+.nhmis-input {
+    width: 100%;
+    min-width: 58px;
+    height: 28px;
+    font-size: 0.82rem;
+    text-align: center;
+    font-weight: 600;
+    color: #0f172a;
+    border: 1px solid #cbd5e1;
+    border-radius: 4px;
+    background-color: #ffffff;
+    padding: 0 0.25rem;
+    transition: all 0.15s ease-in-out;
+}
+
+.nhmis-input:focus {
+    border-color: var(--hospital-primary, #011b33);
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(var(--hospital-primary-rgb, 1, 27, 51), 0.2);
+    background-color: #fff;
+}
+
+.nhmis-input.is-total {
+    background-color: #f8fafc;
+    font-weight: 700;
+    color: var(--hospital-primary, #011b33);
+}
+
+.nhmis-input.is-dirty {
+    background-color: #fef9c3 !important;
+    border-color: #eab308 !important;
+}
+
+.nhmis-input.is-overridden {
+    background-color: #eff6ff !important;
+    border-color: #3b82f6 !important;
+    color: #1d4ed8 !important;
+}
+
+.override-dot {
+    position: absolute;
+    top: 2px;
+    right: 2px;
+    width: 6px;
+    height: 6px;
+    background-color: #2563eb;
+    border-radius: 50%;
+    pointer-events: none;
+}
+
+/* Clinical Audit & Row Drill-Down Buttons */
+.btn-xs {
+    padding: 0.15rem 0.45rem;
+    font-size: 0.72rem;
+    line-height: 1.2;
+    border-radius: 4px;
+}
+
+.btn-row-drilldown {
+    border-color: rgba(var(--hospital-primary-rgb, 1, 27, 51), 0.35);
+    color: var(--hospital-primary, #011b33);
+    font-weight: 500;
+    transition: all 0.15s ease-in-out;
+}
+
+.btn-row-drilldown:hover {
+    background-color: var(--hospital-primary, #011b33);
+    border-color: var(--hospital-primary, #011b33);
+    color: #ffffff;
+}
+
+.row-actions-group {
+    opacity: 0.65;
+    transition: opacity 0.15s ease-in-out;
+}
+
+tr:hover .row-actions-group {
+    opacity: 1;
+}
+
+.btn-audit-row {
+    font-size: 0.72rem;
+    padding: 0.15rem 0.45rem;
+    border-radius: 4px;
+    vertical-align: middle;
+}
+
+/* Modals */
+.nhmis-audit-table th {
+    background-color: #f8fafc;
+    font-size: 0.8rem;
+    padding: 0.45rem;
+}
+
+.nhmis-audit-table td {
+    font-size: 0.82rem;
+    padding: 0.45rem;
+    vertical-align: middle;
+}
+
+.nhmis-metadata-bar {
+    font-size: 0.82rem;
+    background: #f8fafc;
+    border-radius: 6px;
+    padding: 0.5rem 0.75rem;
+    margin-bottom: 0.75rem;
+    border: 1px solid #e2e8f0;
+}
+
+/* Print Specific */
+@media print {
+    body {
+        background: #fff;
+    }
+    .no-print {
+        display: none !important;
+    }
+    .nhmis-workbench-wrapper {
+        padding: 0;
+        background: #fff;
+    }
+    .nhmis-section-card {
+        border: none;
+        box-shadow: none;
+        page-break-inside: avoid;
+        margin-bottom: 1.5rem;
+    }
+    .nhmis-table th, .nhmis-table td {
+        border-color: #94a3b8 !important;
+        font-size: 8pt !important;
+        padding: 2px 4px !important;
+    }
+    .nhmis-input {
+        border: none !important;
+        background: transparent !important;
+        font-size: 8pt !important;
+        padding: 0 !important;
+        height: auto !important;
+    }
+}

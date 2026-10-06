@@ -7,6 +7,7 @@
 <link rel="stylesheet" href="{{ asset('plugins/dataT/datatables.min.css') }}">
 <link rel="stylesheet" href="{{ asset('css/clinical-orders-shared.css') }}">
 <link rel="stylesheet" href="{{ asset('css/billing-shared.css') }}">
+<link rel="stylesheet" href="{{ versioned_asset('css/outreach-immunization.css') }}">
 @endpush
 
 @section('content')
@@ -61,7 +62,7 @@ $sett = appsettings();
     <!-- ── Left Panel: Patient Search & Queue (SHARED PATTERN) ── -->
     <div class="left-panel" id="left-panel">
         <div class="panel-header">
-            <h5><i class="mdi mdi-baby-carriage"></i> Maternity</h5>
+            <h5><i class="mdi mdi-baby-buggy"></i> Maternity</h5>
             <button class="btn-view-work-pane" id="btn-view-work-pane" title="View Work Pane">
                 <i class="fa fa-arrow-right"></i> Work Pane
             </button>
@@ -71,7 +72,7 @@ $sett = appsettings();
         @include('admin.partials.patient_search_html')
 
         <div class="queue-widget">
-            <h6><i class="mdi mdi-clipboard-list"></i> MATERNITY QUEUES</h6>
+            <h6><i class="mdi mdi-clipboard-text"></i> MATERNITY QUEUES</h6>
             <div class="queue-item" data-filter="active-anc">
                 <span class="queue-item-label"><i class="mdi mdi-mother-nurse"></i> Active ANC</span>
                 <span class="queue-count anc" id="queue-active-anc-count">0</span>
@@ -97,7 +98,7 @@ $sett = appsettings();
                 <span class="queue-count high-risk" id="queue-high-risk-count">0</span>
             </div>
             <div class="queue-item" data-filter="bed-requests" style="border-left: 3px solid #17a2b8;">
-                <span class="queue-item-label"><i class="mdi mdi-bed"></i> Bed Requests</span>
+                <span class="queue-item-label"><i class="mdi mdi-hotel"></i> Bed Requests</span>
                 <span class="queue-count" id="queue-bed-requests-count">0</span>
             </div>
             <div class="queue-item" data-filter="discharge-requests" style="border-left: 3px solid #ffc107;">
@@ -114,7 +115,7 @@ $sett = appsettings();
         </div>
 
         <div class="quick-actions">
-            <h6><i class="mdi mdi-lightning-bolt"></i> QUICK ACTIONS</h6>
+            <h6><i class="mdi mdi-flash text-warning"></i> QUICK ACTIONS</h6>
             <button class="quick-action-btn" id="btn-enroll-patient">
                 <i class="mdi mdi-clipboard-plus text-success"></i>
                 <span>New Enrollment</span>
@@ -124,7 +125,7 @@ $sett = appsettings();
                 <span>Quick Vitals</span>
             </button>
             <button class="quick-action-btn" id="btn-maternity-reports">
-                <i class="mdi mdi-chart-box-outline text-info"></i>
+                <i class="mdi mdi-file-chart text-info"></i>
                 <span>Reports & Analytics</span>
             </button>
             <button class="quick-action-btn" id="btn-print-anc-card" disabled title="Enroll/select patient first">
@@ -132,13 +133,26 @@ $sett = appsettings();
                 <span>Print ANC Card</span>
             </button>
             <button class="quick-action-btn" id="btn-print-road-card" disabled title="Enroll/select patient first">
-                <i class="mdi mdi-card-account-details-outline text-primary"></i>
+                <i class="mdi mdi-account-card-details-outline text-primary"></i>
                 <span>Print Road to Health</span>
             </button>
             <button class="quick-action-btn" id="btn-maternity-audit" disabled title="Enroll/select patient first">
                 <i class="mdi mdi-shield-search text-warning"></i>
                 <span>Audit Trail</span>
             </button>
+
+            <!-- Community Outreach Immunization -->
+            <button class="quick-action-btn" id="btn-outreach-immunization">
+                <i class="mdi mdi-needle text-success"></i>
+                <span>Outreach Immunization</span>
+            </button>
+
+            <!-- Outreach Reports & Field Tallies -->
+            <button class="quick-action-btn" id="btn-outreach-reports">
+                <i class="mdi mdi-file-chart text-primary"></i>
+                <span>Outreach Reports</span>
+            </button>
+
             <button class="quick-action-btn" id="btn-discharge-patient" disabled title="Discharge maternity enrollment" style="display:none;">
                 <i class="mdi mdi-exit-run text-danger"></i>
                 <span>Discharge</span>
@@ -165,7 +179,7 @@ $sett = appsettings();
 
         <!-- Empty State (SHARED PATTERN) -->
         <div class="empty-state" id="empty-state">
-            <i class="mdi mdi-baby-carriage"></i>
+            <i class="mdi mdi-baby-buggy"></i>
             <h3>Select a patient to begin</h3>
             <p>Search for a female patient or pick from the maternity queues</p>
             <button class="btn btn-lg" id="view-queue-btn" style="background: var(--maternity-pink); color: white;">
@@ -189,7 +203,7 @@ $sett = appsettings();
         <!-- Reports View -->
         <div class="queue-view" id="reports-view">
             <div class="queue-view-header">
-                <h4><i class="mdi mdi-chart-box"></i> Maternity Reports & Analytics</h4>
+                <h4><i class="mdi mdi-file-chart"></i> Maternity Reports & Analytics</h4>
                 <button class="btn btn-secondary btn-close-queue" id="btn-close-reports">
                     <i class="mdi mdi-close"></i> Close
                 </button>
@@ -301,7 +315,7 @@ $sett = appsettings();
                 {{-- Header Actions --}}
                 <div class="header-action-group">
                     <button class="btn btn-sm btn-info" id="btn-print-anc-card" title="Print ANC Card" style="display:none;">
-                        <i class="mdi mdi-card-account-details"></i> ANC Card
+                        <i class="mdi mdi-account-card-details"></i> ANC Card
                     </button>
                     <button class="btn btn-sm btn-success" id="btn-print-road-card" title="Print Road to Health Card" style="display:none;">
                         <i class="mdi mdi-baby-face-outline"></i> Road to Health
@@ -312,7 +326,7 @@ $sett = appsettings();
                         <div class="d-flex flex-column lh-1 text-start" id="admission-status-text"></div>
                     </div>
                     <button class="btn btn-sm btn-primary" id="btn-admit-to-ward" title="Admit Patient" style="display:none;">
-                        <i class="mdi mdi-bed"></i> Admit
+                        <i class="mdi mdi-hotel"></i> Admit
                     </button>
                     <button class="btn btn-sm btn-warning" id="btn-discharge-from-ward" title="Request Ward Discharge" style="display:none;">
                         <i class="mdi mdi-exit-to-app"></i> Ward Discharge
@@ -351,7 +365,7 @@ $sett = appsettings();
                     <span>Enrollment</span>
                 </button>
                 <button class="workspace-tab" data-tab="history">
-                    <i class="mdi mdi-clipboard-text-clock"></i>
+                    <i class="mdi mdi-history"></i>
                     <span>Mother's History</span>
                 </button>
                 <button class="workspace-tab" data-tab="anc">
@@ -363,7 +377,7 @@ $sett = appsettings();
                     <span>Clinical Orders</span>
                 </button>
                 <button class="workspace-tab" data-tab="delivery">
-                    <i class="mdi mdi-baby-carriage"></i>
+                    <i class="mdi mdi-baby-buggy"></i>
                     <span>Delivery</span>
                 </button>
                 <button class="workspace-tab" data-tab="partograph">
@@ -528,6 +542,8 @@ $sett = appsettings();
 </div>
 
 @include('admin.partials.administer_vaccine_modal')
+@include('admin.partials.outreach_tally_modal')
+@include('admin.partials.outreach_reports_modal')
 
 {{-- Dose-mode toggle rendered as hidden HTML; moved into dynamic container via JS --}}
 <div id="mco-dose-mode-toggle-source" style="display:none;">

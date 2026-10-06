@@ -32,8 +32,9 @@ class LabWorkbenchController extends Controller
             abort(403, 'Unauthorized access to Lab Workbench');
         }
 
-        $staff = Auth::user()->staff_profile;
-        $isApprover = $staff && ($staff->is_unit_head || $staff->is_dept_head);
+        $user = Auth::user();
+        $staff = $user->staff_profile;
+        $isApprover = ($staff && ($staff->is_unit_head || $staff->is_dept_head)) || $user->hasAnyRole(['SUPERADMIN', 'ADMIN', 'super-admin']);
         $requiresApproval = (bool) appsettings('lab_results_require_approval');
 
         return view('admin.lab.workbench', compact('isApprover', 'requiresApproval'));
@@ -118,12 +119,8 @@ class LabWorkbenchController extends Controller
     {
         $patient = Patient::with(['user', 'hmo.scheme'])->findOrFail($patientId);
 
-        // Get all pending investigation requests
-        $statuses = [1, 2, 3];
-        // Include approval statuses (5 = pending approval, 6 = rejected) if approval is enabled
-        if (appsettings('lab_results_require_approval')) {
-            $statuses = array_merge($statuses, [5, 6]);
-        }
+        // Get all pending investigation requests (including approval/rejection statuses)
+        $statuses = [1, 2, 3, 5, 6];
 
         $requests = LabServiceRequest::with(['service', 'doctor', 'biller', 'patient', 'productOrServiceRequest', 'resultBy'])
             ->where('patient_id', $patientId)
@@ -187,14 +184,14 @@ class LabWorkbenchController extends Controller
         });
 
         // Group by status
-        $freeform = $requests->filter(fn ($r) => (int) $r->is_free_form === 1)->values();
+        $freeform = $requests->filter(fn ($r) => (int) $r->is_free_form === 1 && !in_array($r->status, [5, 6]))->values();
         $standardRequests = $requests->filter(fn ($r) => (int) $r->is_free_form !== 1);
 
         $billing = $standardRequests->where('status', 1)->values();
         $sample = $standardRequests->where('status', 2)->values();
         $results = $standardRequests->where('status', 3)->values();
-        $pendingApproval = $standardRequests->where('status', 5)->values();
-        $rejected = $standardRequests->where('status', 6)->values();
+        $pendingApproval = $requests->where('status', 5)->values();
+        $rejected = $requests->where('status', 6)->values();
 
         // Calculate detailed age
         $ageText = 'N/A';
@@ -655,7 +652,17 @@ class LabWorkbenchController extends Controller
                 return response()->json(['success' => false, 'message' => 'Invalid combo service'], 400);
             }
 
-            $result = $this->applyServiceCombo($comboService, (int) $request->patient_id, null);
+            $extra = [];
+            if ($request->has('treatment_plan_id') && $request->input('treatment_plan_id')) {
+                $extra['treatment_plan_id'] = $request->input('treatment_plan_id');
+                $extra['treatment_plan_name'] = $request->input('treatment_plan_name');
+            }
+            if ($request->filled('note')) {
+                $extra['note'] = $request->input('note');
+            }
+            $encounterId = $request->input('encounter_id') ?: null;
+
+            $result = $this->applyServiceCombo($comboService, (int) $request->patient_id, $encounterId ? (int) $encounterId : null, $extra);
 
             return response()->json([
                 'success' => true,
@@ -672,17 +679,20 @@ class LabWorkbenchController extends Controller
         try {
             $request->validate([
                 'parent_request_id' => 'required|integer|exists:product_or_service_requests,id',
-                'patient_id' => 'required|integer|exists:patients,id',
+                'patient_id' => 'nullable|integer|exists:patients,id',
             ]);
 
             $parentRequest = ProductOrServiceRequest::findOrFail($request->parent_request_id);
 
-            // Verify this bundle belongs to this patient
-            if ($parentRequest->user_id !== Patient::find($request->patient_id)->user_id || $parentRequest->parent_id !== null) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Invalid bundle or permission denied',
-                ], 403);
+            // Verify this bundle belongs to this patient if provided
+            if ($request->patient_id) {
+                $patient = Patient::find($request->patient_id);
+                if ($patient && ($parentRequest->user_id !== $patient->user_id || $parentRequest->parent_id !== null)) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Invalid bundle or permission denied',
+                    ], 403);
+                }
             }
 
             $result = $this->removeServiceCombo($parentRequest->id);
@@ -698,6 +708,22 @@ class LabWorkbenchController extends Controller
                     'message' => $result['message'],
                 ], 400);
             }
+        } catch (\Exception $e) {
+            return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
+        }
+    }
+
+    public function removeBundleItem(Request $request)
+    {
+        try {
+            $request->validate([
+                'child_request_id' => 'required|integer|exists:product_or_service_requests,id',
+                'reason' => 'nullable|string|max:500',
+            ]);
+
+            $result = $this->removeServiceComboItem($request->child_request_id, $request->reason);
+
+            return response()->json($result, $result['success'] ? 200 : 400);
         } catch (\Exception $e) {
             return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
         }
@@ -1066,20 +1092,55 @@ class LabWorkbenchController extends Controller
 
             DB::beginTransaction();
 
-            $requiresApproval = appsettings('lab_results_require_approval');
+            $entrySource = $request->input('entry_source', 'lab_workbench');
+            $isLabWorkbench = in_array($entrySource, ['lab_workbench', 'lab']);
+            $isClinicalWorkbench = in_array($entrySource, [
+                'doctor_encounter', 'doctor', 'nursing', 'nursing_workbench', 'maternity', 'procedure', 'self_perform',
+            ]);
 
-            // Check if current user can self-approve their own request
+            $requiresApproval = (bool) appsettings('lab_results_require_approval');
+
+            // Self-approval bypass check:
+            // ONLY applies if performed by clinician in their own clinical workbench (doctor encounter, nursing, maternity, procedure)
+            // or explicitly claimed as self-performed, NEVER when processed in the Lab Workbench.
             $canSelfApprove = false;
-            $currentUser = Auth::user();
-            if ($currentUser->hasRole('DOCTOR') && appsettings('doctor_self_approve_lab_result') && Auth::id() == $labRequest->doctor_id) {
-                $canSelfApprove = true;
-            }
-            if ($currentUser->hasRole('NURSE') && appsettings('nurse_self_approve_lab_result') && Auth::id() == $labRequest->doctor_id) {
-                $canSelfApprove = true;
+            if (!$isLabWorkbench && $isClinicalWorkbench && !$isEdit) {
+                $isDoctor = $user->hasRole('DOCTOR') && (bool) appsettings('doctor_self_approve_lab_result');
+                $isNurse = $user->hasRole('NURSE') && (bool) appsettings('nurse_self_approve_lab_result');
+
+                if ($isDoctor || $isNurse) {
+                    $isRequester = (int) $labRequest->doctor_id === (int) $user->id;
+                    $hasClaimedIntent = (bool) $labRequest->self_perform_intent;
+                    $isBiller = (int) $labRequest->billed_by === (int) $user->id;
+
+                    if ($isRequester || $hasClaimedIntent || $isBiller) {
+                        $canSelfApprove = true;
+                    }
+                }
             }
 
-            if ($requiresApproval && !$canSelfApprove && !$isEdit) {
-                // Save to pending columns — result not visible until approved
+            if ($canSelfApprove) {
+                // Clinician self-performed at point-of-care with role self-approval enabled:
+                // Auto-approve directly to live columns (status = 4)
+                $updateData = [
+                    'result' => $resultHtml,
+                    'result_data' => $resultData,
+                    'attachments' => !empty($allAttachments) ? json_encode($allAttachments) : null,
+                    'status' => 4, // Completed & Approved
+                    'approved_by' => Auth::id(),
+                    'approved_at' => now(),
+                    'result_date' => date('Y-m-d H:i:s'),
+                    'result_by' => Auth::id(),
+                    'self_perform_intent' => true,
+                    'pending_result' => null,
+                    'pending_result_data' => null,
+                    'pending_attachments' => null,
+                    'rejected_by' => null,
+                    'rejected_at' => null,
+                    'rejection_reason' => null,
+                ];
+            } elseif ($requiresApproval && !$isEdit) {
+                // Save to pending columns — result not visible until approved in Lab Workbench
                 $updateData = [
                     'pending_result' => $resultHtml,
                     'pending_result_data' => $resultData,
@@ -1118,16 +1179,29 @@ class LabWorkbenchController extends Controller
                 }
             }
 
+            // Persist NHMIS outcome if provided
+            if ($request->filled('nhmis_outcome')) {
+                $updateData['nhmis_outcome'] = $request->nhmis_outcome;
+                $updateData['nhmis_outcome_raw'] = $request->get('nhmis_outcome_raw', $request->nhmis_outcome);
+                $updateData['nhmis_classified_at'] = now();
+            }
+
             $labRequest->update($updateData);
 
             // Log audit trail
-            $action = $isEdit ? 'edit' : 'result_entry';
-            $description = $isEdit ? 'Result edited' : 'Result entered';
+            $action = $isEdit ? 'edit' : ($canSelfApprove ? 'result_self_approved' : 'result_entry');
+            $description = $isEdit ? 'Result edited' : ($canSelfApprove ? 'Result self-performed and auto-approved' : 'Result entered');
             $this->logAudit($request->invest_res_entry_id, $action, $description);
 
             DB::commit();
 
-            $message = $isEdit ? "Results Updated Successfully" : ($requiresApproval && !$isEdit ? "Results saved — pending approval" : "Results Saved Successfully");
+            $message = $isEdit
+                ? "Results Updated Successfully"
+                : ($canSelfApprove
+                    ? "Result saved and auto-approved."
+                    : ($requiresApproval
+                        ? "Results saved — pending approval"
+                        : "Results Saved Successfully"));
 
             return response()->json([
                 'success' => true,
@@ -1817,7 +1891,7 @@ class LabWorkbenchController extends Controller
     {
         try {
             // Get investigation/lab service category ID from app settings
-            $labCategoryId = appsettings()->investigation_service_cat_id ?? null;
+            $labCategoryId = appsettings('investigation_category_id') ?? appsettings()->investigation_service_cat_id ?? null;
 
             $query = \App\Models\Service::orderBy('service_name');
 
@@ -1996,9 +2070,11 @@ class LabWorkbenchController extends Controller
      */
     private function authorizeApprover()
     {
-        $staff = Auth::user()->staff_profile;
+        $user = Auth::user();
+        $isSuper = $user->hasAnyRole(['SUPERADMIN', 'ADMIN', 'super-admin']);
+        $staff = $user->staff_profile;
 
-        if (!$staff || (!$staff->is_unit_head && !$staff->is_dept_head)) {
+        if (!$isSuper && (!$staff || (!$staff->is_unit_head && !$staff->is_dept_head))) {
             abort(403, 'Only Unit Heads and Department Heads can approve results.');
         }
     }
@@ -2060,8 +2136,10 @@ class LabWorkbenchController extends Controller
     public function getApprovalCount()
     {
         try {
-            $staff = Auth::user()->staff_profile;
-            if (!$staff || (!$staff->is_unit_head && !$staff->is_dept_head)) {
+            $user = Auth::user();
+            $isSuper = $user->hasAnyRole(['SUPERADMIN', 'ADMIN', 'super-admin']);
+            $staff = $user->staff_profile;
+            if (!$isSuper && (!$staff || (!$staff->is_unit_head && !$staff->is_dept_head))) {
                 return response()->json(['count' => 0]);
             }
 
@@ -2167,11 +2245,15 @@ class LabWorkbenchController extends Controller
         try {
             $labRequest = LabServiceRequest::findOrFail($id);
 
-            if (Auth::id() !== (int) $labRequest->doctor_id) {
-                return response()->json(['success' => false, 'message' => 'You can only self-approve your own requests.'], 403);
+            $user = Auth::user();
+            $isRequester = (int) $user->id === (int) $labRequest->doctor_id;
+            $hasClaimedIntent = (bool) $labRequest->self_perform_intent;
+            $isBiller = (int) $user->id === (int) $labRequest->billed_by;
+
+            if (!$isRequester && !$hasClaimedIntent && !$isBiller) {
+                return response()->json(['success' => false, 'message' => 'You can only self-approve requests you requested or self-performed.'], 403);
             }
 
-            $user = Auth::user();
             $canSelfApprove = false;
             if ($user->hasRole('DOCTOR') && appsettings('doctor_self_approve_lab_result')) {
                 $canSelfApprove = true;
@@ -2203,6 +2285,7 @@ class LabWorkbenchController extends Controller
                 'pending_attachments' => null,
                 'approved_by' => Auth::id(),
                 'approved_at' => now(),
+                'self_perform_intent' => true,
                 'status' => 4,
             ]);
 

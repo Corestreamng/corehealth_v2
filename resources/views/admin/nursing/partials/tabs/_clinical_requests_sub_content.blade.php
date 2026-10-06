@@ -218,36 +218,21 @@
                                         <div class="tab-pane fade" id="cr-proc-new" role="tabpanel">
                                             <div id="cr_proc_message" class="mb-2"></div>
                                             <h6 class="mb-3"><i class="fa fa-plus-circle"></i> Request New Procedure</h6>
-                                            <div class="row">
-                                                <div class="col-md-6">
-                                                    <div class="form-group mb-3">
-                                                        <label><i class="fa fa-search"></i> Search Procedure</label>
-                                                        <input type="text" class="form-control" id="cr_proc_search"
-                                                            placeholder="Search procedures..." autocomplete="off">
-                                                        <ul class="list-group co-search-dropdown" id="cr_proc_results"></ul>
-                                                    </div>
-                                                </div>
-                                                <div class="col-md-3">
-                                                    <div class="form-group mb-3">
-                                                        <label><i class="fa fa-exclamation-triangle"></i> Priority</label>
-                                                        <select class="form-control" id="cr_proc_priority">
-                                                            <option value="routine">Routine</option>
-                                                            <option value="urgent">Urgent</option>
-                                                            <option value="emergency">Emergency</option>
-                                                        </select>
-                                                    </div>
-                                                </div>
-                                                <div class="col-md-3">
-                                                    <div class="form-group mb-3">
-                                                        <label><i class="fa fa-calendar"></i> Scheduled Date</label>
-                                                        <input type="date" class="form-control" id="cr_proc_scheduled_date">
-                                                    </div>
-                                                </div>
-                                            </div>
                                             <div class="form-group mb-3">
-                                                <label><i class="fa fa-sticky-note"></i> Pre-Procedure Notes</label>
-                                                <textarea class="form-control" id="cr_proc_notes" rows="2" placeholder="Clinical notes, indications..."></textarea>
+                                                <label><i class="fa fa-search"></i> Search Procedure</label>
+                                                <input type="text" class="form-control" id="cr_proc_search"
+                                                    placeholder="Search procedures..." autocomplete="off">
+                                                <ul class="list-group co-search-dropdown" id="cr_proc_results"></ul>
                                             </div>
+
+                                            {{-- Reusable Procedure Booking Configurator Card --}}
+                                            @include('admin.partials.clinical_procedure_booking_card', [
+                                                'prefix' => 'cr_proc_',
+                                                'cancelHandler' => "ClinicalOrdersKit.cancelProcedureConfig('cr_proc_')",
+                                                'submitHandler' => "ClinicalOrdersKit.submitProcedureConfig('cr_proc_')",
+                                                'submitLabel' => 'Add Procedure to Queue'
+                                            ])
+
                                             <div class="table-responsive">
                                                 <table class="table table-sm table-bordered table-striped">
                                                     <thead><tr><th>Procedure</th><th>Price</th><th>Priority</th><th style="width:40px;"><i class="fa fa-trash-alt text-muted" title="Remove"></i></th></tr></thead>

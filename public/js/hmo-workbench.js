@@ -978,7 +978,13 @@ $(function() {
             url: wbUrl('hmo/requests/' + requestId + '/update-tariff'),
             type: 'POST',
             data: {
-                _token: (window.WORKBENCH_CONFIG?.csrf || $('meta[name="csrf-token"]').attr('content') || '')},
+                _token: (window.WORKBENCH_CONFIG?.csrf || $('meta[name="csrf-token"]').attr('content') || ''),
+                coverage_mode: $section.find('.tariff-coverage-mode').val(),
+                claims_amount: $section.find('.tariff-claims-amount').val(),
+                payable_amount: $section.find('.tariff-payable-amount').val(),
+                display_name: $section.find('.tariff-display-name').val() || '',
+                apply_to_scheme: $section.find('.tariff-apply-scheme').is(':checked') ? 1 : 0
+            },
             success: function(resp) { deferred.resolve(resp); },
             error: function(xhr) {
                 let msg = xhr.responseJSON ? xhr.responseJSON.message : 'Failed to update tariff';
@@ -1244,7 +1250,10 @@ $(function() {
             url: wbRoute('hmo.batch-approve', '/hmo/batch-approve'),
             type: 'POST',
             data: {
-                _token: (window.WORKBENCH_CONFIG?.csrf || $('meta[name="csrf-token"]').attr('content') || '')},
+                _token: (window.WORKBENCH_CONFIG?.csrf || $('meta[name="csrf-token"]').attr('content') || ''),
+                request_ids: selectedIds,
+                validation_notes: $(this).find('[name="validation_notes"]').val()
+            },
             success: function(response) {
                 $('#batchApproveModal').modal('hide');
                 selectedIds = [];
@@ -1279,7 +1288,11 @@ $(function() {
             url: wbRoute('hmo.batch-reject', '/hmo/batch-reject'),
             type: 'POST',
             data: {
-                _token: (window.WORKBENCH_CONFIG?.csrf || $('meta[name="csrf-token"]').attr('content') || '')},
+                _token: (window.WORKBENCH_CONFIG?.csrf || $('meta[name="csrf-token"]').attr('content') || ''),
+                request_ids: selectedIds,
+                rejection_reason: $(this).find('[name="rejection_reason"]').val(),
+                validation_notes: $(this).find('[name="validation_notes"]').val()
+            },
             success: function(response) {
                 $('#batchRejectModal').modal('hide');
                 selectedIds = [];
@@ -1719,7 +1732,7 @@ $(function() {
         let allReqs = vgAllRequests();
         let selectedReqs = allReqs.filter(function(r) { return vgSelectedIds.indexOf(r.id) !== -1; });
         let secondarySelected = selectedReqs.filter(function(r) { return r.coverage_mode === 'secondary'; });
-        let authMode = $('input[name="vg_auth_mode"]:checked').val();
+        let authMode = $('input[name="vg_auth_mode"]:checked').val() || 'shared';
 
         // Validate auth codes for secondary items
         if (secondarySelected.length> 0 && authMode !== 'skip') {
@@ -1745,7 +1758,11 @@ $(function() {
 
         // Build payload
         let payload = {
-            _token: (window.WORKBENCH_CONFIG?.csrf || $('meta[name="csrf-token"]').attr('content') || '')};
+            _token: (window.WORKBENCH_CONFIG?.csrf || $('meta[name="csrf-token"]').attr('content') || ''),
+            request_ids: vgSelectedIds,
+            auth_mode: authMode,
+            validation_notes: $('#vg_validation_notes').val()
+        };
 
         if (authMode === 'shared') {
             payload.shared_auth_code = $('#vg_shared_auth_code').val().trim();
@@ -1856,7 +1873,11 @@ $(function() {
             url: wbRoute('hmo.group-reject', '/hmo/group-reject'),
             type: 'POST',
             data: {
-                _token: (window.WORKBENCH_CONFIG?.csrf || $('meta[name="csrf-token"]').attr('content') || '')},
+                _token: (window.WORKBENCH_CONFIG?.csrf || $('meta[name="csrf-token"]').attr('content') || ''),
+                request_ids: vgSelectedIds,
+                rejection_reason: reason,
+                validation_notes: $('#vg_reject_notes').val() || $('#vg_validation_notes').val()
+            },
             success: function(resp) {
                 toastr.success(resp.message);
                 $('#vg_reject_section').slideUp(200);
@@ -1930,7 +1951,10 @@ $(function() {
             url: wbUrl('hmo/patient/' + currentDetailData.patient_id + '/update-hmo'),
             type: 'POST',
             data: {
-                _token: (window.WORKBENCH_CONFIG?.csrf || $('meta[name="csrf-token"]').attr('content') || '')},
+                _token: (window.WORKBENCH_CONFIG?.csrf || $('meta[name="csrf-token"]').attr('content') || ''),
+                hmo_id: $('#detail_edit_hmo_id').val(),
+                hmo_no: $('#detail_edit_hmo_no').val()
+            },
             success: function(resp) {
                 $btn.prop('disabled', false);
                 $('#detail_hmo_edit_section').slideUp(200);
@@ -1999,7 +2023,10 @@ $(function() {
         $.ajax({
             url: wbUrl('hmo/requests/' + id + '/submit-auth-code'),
             type: 'POST',
-            data: { _token: (window.WORKBENCH_CONFIG?.csrf || $('meta[name="csrf-token"]').attr('content') || '')},
+            data: {
+                _token: (window.WORKBENCH_CONFIG?.csrf || $('meta[name="csrf-token"]').attr('content') || ''),
+                auth_code: code
+            },
             success: function(resp) {
                 $('#singleAuthCodeModal').modal('hide');
                 table.ajax.reload(null, false);
@@ -2047,9 +2074,12 @@ $(function() {
 
     $('#batchAuthCodeForm').submit(function(e) {
         e.preventDefault();
-        let authMode = $('input[name="batch_ac_mode"]:checked').val();
+        let authMode = $('input[name="batch_ac_mode"]:checked').val() || 'shared';
         let payload = {
-            _token: (window.WORKBENCH_CONFIG?.csrf || $('meta[name="csrf-token"]').attr('content') || '')};
+            _token: (window.WORKBENCH_CONFIG?.csrf || $('meta[name="csrf-token"]').attr('content') || ''),
+            request_ids: selectedIds,
+            auth_mode: authMode
+        };
         if (authMode === 'shared') {
             let code = $('#batch_ac_shared_code').val().trim();
             if (!code) {
@@ -2686,7 +2716,9 @@ $(function() {
             }
             var $btn = $(this).prop('disabled', true);
             $.post(wbUrl('hmo/requests/' + id + '/submit-auth-code'), {
-                _token: (window.WORKBENCH_CONFIG?.csrf || $('meta[name="csrf-token"]').attr('content') || '')}, function(resp) {
+                _token: (window.WORKBENCH_CONFIG?.csrf || $('meta[name="csrf-token"]').attr('content') || ''),
+                auth_code: code
+            }, function(resp) {
                 toastr.success(resp.message || 'Auth code submitted');
                 loadPatientFocus(pfPatientId);
                 if (typeof table !== 'undefined' && table) { table.ajax.reload(null, false); }
@@ -2737,7 +2769,9 @@ $(function() {
             if (!confirm('Approve ' + pfSelectedIds.length + ' selected request(s)?')) return;
             var $btn = $(this).prop('disabled', true);
             $.post(wbRoute('hmo.batch-approve', '/hmo/batch-approve'), {
-                _token: (window.WORKBENCH_CONFIG?.csrf || $('meta[name="csrf-token"]').attr('content') || '')}, function(resp) {
+                _token: (window.WORKBENCH_CONFIG?.csrf || $('meta[name="csrf-token"]').attr('content') || ''),
+                request_ids: pfSelectedIds
+            }, function(resp) {
                 $btn.prop('disabled', false);
                 toastr.success(resp.message || 'Batch approved');
                 pfSelectedIds = [];
@@ -2758,7 +2792,11 @@ $(function() {
             if (reason === null) return;
             var $btn = $(this).prop('disabled', true);
             $.post(wbRoute('hmo.batch-reject', '/hmo/batch-reject'), {
-                _token: (window.WORKBENCH_CONFIG?.csrf || $('meta[name="csrf-token"]').attr('content') || '')}, function(resp) {
+                _token: (window.WORKBENCH_CONFIG?.csrf || $('meta[name="csrf-token"]').attr('content') || ''),
+                request_ids: pfSelectedIds,
+                rejection_reason: 'other',
+                validation_notes: reason
+            }, function(resp) {
                 $btn.prop('disabled', false);
                 toastr.success(resp.message || 'Batch rejected');
                 pfSelectedIds = [];

@@ -832,8 +832,19 @@ if (typeof window.wbRoute !== 'function') {
         /**
          * Apply a service combo bundle to the encounter.
          * Shows a confirmation modal first so the user understands the bundle contents.
+         * Delegates to the shared ClinicalOrdersKit.applyCombo handler.
          */
         function applyComboEncounter(comboId, route) {
+            if (window.ClinicalOrdersKit && typeof window.ClinicalOrdersKit.applyCombo === 'function') {
+                ClinicalOrdersKit.applyCombo(comboId, {
+                    route: route || (window.WORKBENCH_CONFIG?.encounterId ? ('/encounters/' + window.WORKBENCH_CONFIG.encounterId + '/apply-combo') : '/encounters/apply-combo'),
+                    onSuccess: function() {
+                        if (typeof refreshProceduresList === 'function') refreshProceduresList();
+                    }
+                });
+                return;
+            }
+
             var comboData = (window.comboDataMap || {})[comboId] || {};
             var name = comboData.service_name || comboData.product_name || 'Combo';
             var bundleItems = comboData.bundle_items || [];
@@ -846,7 +857,6 @@ if (typeof window.wbRoute !== 'function') {
             $('#consult_invest_res, #consult_imaging_res, #consult_presc_res').html('');
             $('#consult_invest_search, #consult_imaging_search, #consult_presc_search').val('');
 
-
             ComboConfirmModal.show({
                 name        : name,
                 bundleItems : bundleItems,
@@ -857,13 +867,17 @@ if (typeof window.wbRoute !== 'function') {
                 onConfirm   : function() {
                     $.ajax({
                         type: 'POST',
-                        url: route,
-                        headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') },
-                        data: { 
+                        url: route || '/encounters/apply-combo',
+                        headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content'), 'Accept': 'application/json' },
+                        contentType: 'application/json',
+                        dataType: 'json',
+                        data: JSON.stringify({ 
                             service_id: comboId,
+                            encounter_id: window.WORKBENCH_CONFIG?.encounterId || window.encounterId || undefined,
+                            patient_id: window.WORKBENCH_CONFIG?.patientId || window.patientId || undefined,
                             treatment_plan_id: window._activeTreatmentPlan ? window._activeTreatmentPlan.id : null,
                             treatment_plan_name: window._activeTreatmentPlan ? window._activeTreatmentPlan.name : null
-                        },
+                        }),
                         success: function(response) {
                             if (response.success) {
                                 toastr.success('Combo applied — all items added.', '', { timeOut: 5000 });
@@ -889,15 +903,19 @@ if (typeof window.wbRoute !== 'function') {
                 }
             });
         }
+        window.applyComboEncounter = applyComboEncounter;
 
         function searchServices(q) {
             if (q != "") {
+                const investCatId = window.WORKBENCH_CONFIG?.investigationCategoryId || 2;
                 searchRequest = $.ajax({
                     url: wbUrl('live-search-services'),
                     method: "GET",
                     dataType: 'json',
                     data: {
                         term: q,
+                        category_id: investCatId,
+                        context: 'lab',
                         patient_id: window.WORKBENCH_CONFIG?.patientId || ''
                     },
                     success: function(data) {
@@ -961,13 +979,15 @@ if (typeof window.wbRoute !== 'function') {
         }
         function searchImagingServices(q) {
             if (q != "") {
+                const imagingCatId = window.WORKBENCH_CONFIG?.imagingCategoryId || 6;
                 searchRequest = $.ajax({
                     url: wbUrl('live-search-services'),
                     method: "GET",
                     dataType: 'json',
                     data: {
                         term: q,
-                        category_id: (window.WORKBENCH_CONFIG ? window.WORKBENCH_CONFIG.patientId : ''),
+                        category_id: imagingCatId,
+                        context: 'imaging',
                         patient_id: window.WORKBENCH_CONFIG?.patientId || ''
                     },
                     success: function(data) {
@@ -1231,12 +1251,13 @@ if (typeof window.wbRoute !== 'function') {
 
         // Lab result entry (called from investigation history DataTable "Enter Result" button)
         function enterLabResult(requestId) {
-            window._investResultContext = { type: 'lab', id: requestId };
+            window._investResultContext = { type: 'lab', id: requestId, source: 'doctor_encounter' };
             InvestResultEntry.enterResult(
                 requestId,
                 `/lab-workbench/lab-service-requests/${requestId}`,
                 `/lab-workbench/lab-service-requests/${requestId}/attachments`,
-                wbRoute('lab.saveResult', '/lab/saveResult')
+                wbRoute('lab.saveResult', '/lab/saveResult'),
+                'doctor_encounter'
             );
         }
 
@@ -1247,18 +1268,20 @@ if (typeof window.wbRoute !== 'function') {
                 requestId,
                 `/lab-workbench/lab-service-requests/${requestId}`,
                 `/lab-workbench/lab-service-requests/${requestId}/attachments`,
-                wbRoute('lab.saveResult', '/lab/saveResult')
+                wbRoute('lab.saveResult', '/lab/saveResult'),
+                'doctor_encounter'
             );
         }
 
         // Imaging result entry (called from imaging history DataTable "Enter Result" button)
         function enterImagingResult(requestId) {
-            window._investResultContext = { type: 'imaging', id: requestId };
+            window._investResultContext = { type: 'imaging', id: requestId, source: 'doctor_encounter' };
             InvestResultEntry.enterResult(
                 requestId,
                 `/imaging-workbench/imaging-service-requests/${requestId}`,
                 `/imaging-workbench/imaging-service-requests/${requestId}/attachments`,
-                wbRoute('imaging.saveResult', '/imaging/saveResult')
+                wbRoute('imaging.saveResult', '/imaging/saveResult'),
+                'doctor_encounter'
             );
         }
 
@@ -1269,19 +1292,18 @@ if (typeof window.wbRoute !== 'function') {
                 requestId,
                 `/imaging-workbench/imaging-service-requests/${requestId}`,
                 `/imaging-workbench/imaging-service-requests/${requestId}/attachments`,
-                wbRoute('imaging.saveResult', '/imaging/saveResult')
+                wbRoute('imaging.saveResult', '/imaging/saveResult'),
+                'doctor_encounter'
             );
         }
 
         // Self-approve config (server-baked JS constants)
-        var _PI_LAB_REQ_APPROVAL     = (window.WORKBENCH_CONFIG ? window.WORKBENCH_CONFIG.patientId : '');
-        var _PI_IMG_REQ_APPROVAL     = (window.WORKBENCH_CONFIG ? window.WORKBENCH_CONFIG.patientId : '');
-        var _PI_DR_SELF_LAB          = (window.WORKBENCH_CONFIG ? window.WORKBENCH_CONFIG.patientId : '');
-        var _PI_NR_SELF_LAB          = (window.WORKBENCH_CONFIG ? window.WORKBENCH_CONFIG.patientId : '');
-        var _PI_DR_SELF_IMG          = (window.WORKBENCH_CONFIG ? window.WORKBENCH_CONFIG.patientId : '');
-        var _PI_NR_SELF_IMG          = (window.WORKBENCH_CONFIG ? window.WORKBENCH_CONFIG.patientId : '');
-        var _PI_TP_ENABLED           = (window.WORKBENCH_CONFIG ? window.WORKBENCH_CONFIG.patientId : '');
-        var _PI_TP_REQUIRED          = (window.WORKBENCH_CONFIG ? window.WORKBENCH_CONFIG.patientId : '');
+        var _PI_LAB_REQ_APPROVAL     = Boolean(window.WORKBENCH_CONFIG?.labRequiresApproval);
+        var _PI_IMG_REQ_APPROVAL     = Boolean(window.WORKBENCH_CONFIG?.imagingRequiresApproval);
+        var _PI_DR_SELF_LAB          = Boolean(window.WORKBENCH_CONFIG?.doctorSelfApproveLab);
+        var _PI_NR_SELF_LAB          = Boolean(window.WORKBENCH_CONFIG?.nurseSelfApproveLab);
+        var _PI_DR_SELF_IMG          = Boolean(window.WORKBENCH_CONFIG?.doctorSelfApproveImaging);
+        var _PI_NR_SELF_IMG          = Boolean(window.WORKBENCH_CONFIG?.nurseSelfApproveImaging);
 
         function _autoApproveIfEnabled(requestId, type) {
             // Never auto-approve edits
@@ -3131,6 +3153,69 @@ if (typeof window.wbRoute !== 'function') {
             });
         });
 
+        // Dynamic loading of doctors for selected clinic in referral form
+        function loadClinicDoctorsForReferral(clinicId, selectedDoctorId) {
+            var $docSelect = $('#referral-target-doctor-select, [name="target_doctor_id"]');
+            if (!$docSelect.length) return;
+
+            if (!clinicId) {
+                $docSelect.prop('disabled', false).html('<option value="">-- Any Available Doctor --</option>');
+                return;
+            }
+
+            $docSelect.prop('disabled', true).html('<option value="">Loading doctors...</option>');
+
+            var url = wbRoute('get-doctors', '/get-doctors/__CID__').replace('__CID__', clinicId);
+
+            $.ajax({
+                url: url,
+                type: 'GET',
+                dataType: 'json',
+                success: function(data) {
+                    $docSelect.prop('disabled', false).empty();
+                    $docSelect.append('<option value="">-- Any Available Doctor --</option>');
+
+                    var doctors = Array.isArray(data) ? data : (data.doctors || []);
+                    if (doctors.length > 0) {
+                        doctors.forEach(function(d) {
+                            var docName = '';
+                            if (d.display_name) {
+                                docName = d.display_name;
+                            } else if (d.name) {
+                                docName = d.name;
+                            } else if (d.user) {
+                                var parts = [d.user.surname, d.user.firstname, d.user.othername].filter(Boolean);
+                                docName = 'Dr. ' + parts.join(' ');
+                                if (d.specialization && d.specialization.name) {
+                                    docName += ' (' + d.specialization.name + ')';
+                                }
+                            } else {
+                                docName = 'Doctor #' + d.id;
+                            }
+
+                            var isSel = (selectedDoctorId && String(d.id) === String(selectedDoctorId)) ? ' selected' : '';
+                            $docSelect.append('<option value="' + d.id + '"' + isSel + '>' + docName + '</option>');
+                        });
+
+                        if (selectedDoctorId) {
+                            $docSelect.val(selectedDoctorId);
+                        }
+                    } else {
+                        $docSelect.append('<option value="" disabled>-- No doctors registered for this clinic --</option>');
+                    }
+                },
+                error: function(xhr) {
+                    console.error('Failed to load clinic doctors:', xhr);
+                    $docSelect.prop('disabled', false).html('<option value="">-- Any Available Doctor --</option>');
+                }
+            });
+        }
+
+        $(document).on('change', '#referral-target-clinic-select, [name="target_clinic_id"]', function() {
+            var clinicId = $(this).val();
+            loadClinicDoctorsForReferral(clinicId);
+        });
+
         // Toggle internal/external referral fields
         $(document).on('change', '#referral-type-select', function() {
             if ($(this).val() === 'external') {
@@ -3162,6 +3247,7 @@ if (typeof window.wbRoute !== 'function') {
             $('#referral-internal-fields').show();
             $('#referral-external-fields').hide();
             $('#referral-type-select').val('internal');
+            $('#referral-target-doctor-select, [name="target_doctor_id"]').prop('disabled', false).html('<option value="">-- Any Available Doctor --</option>');
         }
 
         // Load referrals when main referrals tab is shown
@@ -3187,7 +3273,7 @@ if (typeof window.wbRoute !== 'function') {
 
         function loadEncounterReferrals() {
             $.ajax({
-                url: wbRoute('encounters.referrals.list', '/encounters/referrals/list').replace('__EID__', encounterId),
+                url: wbRoute('encounters.referrals.list', '/encounters/__EID__/referrals').replace('__EID__', encounterId),
                 type: 'GET',
                 success: function(data) {
                     $('#referrals-loading').hide();
@@ -3281,7 +3367,7 @@ if (typeof window.wbRoute !== 'function') {
             $('#patient-referrals-loading').show();
             $('#patient-referrals-list').empty();
             $.ajax({
-                url: wbRoute('encounters.referrals.patient-all', '/encounters/referrals/patient-all').replace('__EID__', encounterId),
+                url: wbRoute('encounters.referrals.patient-all', '/encounters/__EID__/referrals/patient-all').replace('__EID__', encounterId),
                 type: 'GET',
                 success: function(data) {
                     $('#patient-referrals-loading').hide();
@@ -3368,7 +3454,7 @@ if (typeof window.wbRoute !== 'function') {
             $('#incoming-referrals-loading').show();
             $('#incoming-referrals-list').empty();
             $.ajax({
-                url: wbRoute('encounters.referrals.incoming', '/encounters/referrals/incoming').replace('__EID__', encounterId),
+                url: wbRoute('encounters.referrals.incoming', '/encounters/__EID__/referrals/incoming').replace('__EID__', encounterId),
                 type: 'GET',
                 success: function(data) {
                     $('#incoming-referrals-loading').hide();
@@ -3461,7 +3547,7 @@ if (typeof window.wbRoute !== 'function') {
             if (!reason) return;
             var $btn = $(this);
             $btn.prop('disabled', true);
-            $.post(wbRoute('referrals.decline', '/referrals/decline').replace('__RID__', refId), {
+            $.post(wbRoute('referrals.decline', '/referrals/__RID__/decline').replace('__RID__', refId), {
                 _token: (window.WORKBENCH_CONFIG?.csrf || $('meta[name="csrf-token"]').attr('content') || '')}, function(res) {
                 if (res.success) {
                     toastr.success('Referral declined');
@@ -3486,14 +3572,19 @@ if (typeof window.wbRoute !== 'function') {
                 url = wbUrl('encounters/' + encounterId + '/referrals/' + editId);
                 method = 'PUT';
             } else {
-                url = wbRoute('encounters.referrals.create', '/encounters/referrals/create').replace('__EID__', encounterId);
+                url = wbRoute('encounters.referrals.create', '/encounters/__EID__/referrals').replace('__EID__', encounterId);
                 method = 'POST';
+            }
+
+            var formData = $(this).serialize();
+            if (encounterId && !formData.includes('encounter_id=')) {
+                formData += '&encounter_id=' + encodeURIComponent(encounterId);
             }
 
             $.ajax({
                 url: url,
                 type: method,
-                data: $(this).serialize(),
+                data: formData,
                 success: function(response) {
                     toastr.success(response.message || (isEdit ? 'Referral updated' : 'Referral created successfully'));
                     resetReferralForm();
@@ -3529,7 +3620,11 @@ if (typeof window.wbRoute !== 'function') {
 
             // Set values
             $('[name="target_clinic_id"]').val(ref.target_clinic_id || '');
-            $('[name="target_doctor_id"]').val(ref.target_doctor_id || '');
+            if (ref.target_clinic_id) {
+                loadClinicDoctorsForReferral(ref.target_clinic_id, ref.target_doctor_id);
+            } else {
+                $('[name="target_doctor_id"]').val(ref.target_doctor_id || '');
+            }
             $('[name="external_facility_name"]').val(ref.external_facility || '');
             $('[name="external_doctor_name"]').val(ref.external_doctor || '');
             $('[name="external_facility_address"]').val(ref.external_facility_address || '');
@@ -3584,8 +3679,13 @@ if (typeof window.wbRoute !== 'function') {
     function showBundleRemove(btn) {
         var parentId = btn.dataset.parentId;
         var bundleName = btn.dataset.bundleName;
-        var items = JSON.parse(btn.dataset.items || '[]');
-        var removeUrl = btn.dataset.removeUrl;
+        var items = [];
+        try {
+            items = JSON.parse(btn.dataset.items || '[]');
+        } catch (e) {
+            items = [];
+        }
+        var removeUrl = btn.dataset.removeUrl || '/service-combo/remove-bundle';
         BundleRemoveModal.show({
             bundleId: parentId,
             bundleName: bundleName,
@@ -3610,11 +3710,16 @@ if (typeof window.wbRoute !== 'function') {
                             callback(true);
                         }
                     },
-                    error: function() { toastr.error('Error removing combo'); callback(true); }
+                    error: function(xhr) {
+                        var msg = (xhr.responseJSON && xhr.responseJSON.message) ? xhr.responseJSON.message : 'Error removing combo';
+                        toastr.error(msg);
+                        callback(true);
+                    }
                 });
             }
         });
     }
+    window.showBundleRemove = showBundleRemove;
 
     // Quick add allergy from sticky header
     function promptAddAllergy(patientId) {
@@ -3783,3 +3888,334 @@ if (typeof window.wbRoute !== 'function') {
             }
         });
     });
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   ENCOUNTER NOTE MANAGEMENT (Delete & Edit Encounter Notes from History)
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+function deleteEncounter(encounterId, encounterDate) {
+    var encName = encounterDate ? ('Encounter from ' + encounterDate) : ('Encounter #' + encounterId);
+
+    // Prefer unified ClinicalOrdersKit delete modal if available
+    if (window.ClinicalOrdersKit && typeof window.ClinicalOrdersKit.showDeleteConfirmation === 'function') {
+        window.ClinicalOrdersKit.showDeleteConfirmation({
+            type: 'encounter',
+            itemName: encName,
+            onConfirm: function (reason, callback) {
+                $.ajax({
+                    url: (window.wbUrl ? window.wbUrl('/encounters/' + encounterId) : ('/encounters/' + encounterId)),
+                    type: 'DELETE',
+                    headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') },
+                    data: { reason: reason },
+                    success: function (response) {
+                        callback(true);
+                        if (response.success) {
+                            if (typeof toastr !== 'undefined') toastr.success(response.message || 'Encounter note deleted successfully');
+                            if ($.fn.DataTable.isDataTable('#encounter_history_list')) {
+                                $('#encounter_history_list').DataTable().ajax.reload(null, false);
+                            }
+                        } else {
+                            if (typeof toastr !== 'undefined') toastr.error(response.message || 'Deletion failed');
+                        }
+                    },
+                    error: function (xhr) {
+                        callback(false);
+                        var msg = xhr.responseJSON ? (xhr.responseJSON.message || 'Error deleting encounter note') : 'Error deleting encounter note';
+                        if (typeof toastr !== 'undefined') toastr.error(msg);
+                    }
+                });
+            }
+        });
+        return;
+    }
+
+    // Modal fallback if #deleteConfirmModal exists in DOM
+    if ($('#deleteConfirmModal').length) {
+        window.currentDeleteItem = {
+            type: 'encounter',
+            id: encounterId,
+            name: encName
+        };
+        $('#deleteItemInfo').html('<strong>Encounter:</strong> ' + (encounterDate || encounterId) + '<br><strong>Type:</strong> Clinical Note');
+        $('#deleteConfirmModal').modal('show');
+        return;
+    }
+
+    // Native browser fallback
+    if (!confirm('Are you sure you want to delete the encounter note from ' + (encounterDate || encounterId) + '? This action cannot be undone.')) {
+        return;
+    }
+    var reason = prompt('Please provide a reason for deleting this encounter note:');
+    if (!reason || !reason.trim()) {
+        if (typeof toastr !== 'undefined') toastr.warning('A reason is required to delete an encounter note.');
+        else alert('A reason is required to delete an encounter note.');
+        return;
+    }
+    $.ajax({
+        url: (window.wbUrl ? window.wbUrl('/encounters/' + encounterId) : ('/encounters/' + encounterId)),
+        type: 'DELETE',
+        headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') },
+        data: { reason: reason },
+        success: function (response) {
+            if (response.success) {
+                if (typeof toastr !== 'undefined') toastr.success(response.message || 'Encounter note deleted successfully');
+                if ($.fn.DataTable.isDataTable('#encounter_history_list')) {
+                    $('#encounter_history_list').DataTable().ajax.reload(null, false);
+                }
+            } else {
+                if (typeof toastr !== 'undefined') toastr.error(response.message || 'Failed to delete encounter note');
+            }
+        },
+        error: function (xhr) {
+            var msg = xhr.responseJSON ? (xhr.responseJSON.message || 'Error deleting encounter note') : 'Error deleting encounter note';
+            if (typeof toastr !== 'undefined') toastr.error(msg);
+        }
+    });
+}
+window.deleteEncounter = deleteEncounter;
+
+// Edit Encounter Note
+var editEncounterEditorInstance = null;
+
+function editEncounterNote(btn) {
+    var $btn = $(btn);
+    var id = $btn.data('id');
+    var notes = $btn.data('notes');
+    var reasons = $btn.attr('data-reasons');
+    var comment1 = $btn.data('comment1');
+    var comment2 = $btn.data('comment2');
+
+    $('#editEncounterId').val(id);
+
+    if ($('#editEncounterReasons').length > 0) {
+        if (reasons && reasons.trim() !== '') {
+            var reasonsArray = [];
+            try {
+                var parsed = JSON.parse(reasons);
+                if (Array.isArray(parsed) && parsed[0] && parsed[0].code) {
+                    reasonsArray = parsed.map(function(r) { return r.code + '-' + r.name; });
+                } else if (Array.isArray(parsed)) {
+                    reasonsArray = parsed;
+                }
+            } catch (e) {
+                reasonsArray = reasons.split(',').map(function(r) { return r.trim(); });
+            }
+            $('#editEncounterReasons').val(reasonsArray).trigger('change');
+            $('#editEncounterNotApplicable').prop('checked', false).trigger('change');
+        } else {
+            $('#editEncounterReasons').val([]).trigger('change');
+            $('#editEncounterNotApplicable').prop('checked', true).trigger('change');
+        }
+
+        $('#editEncounterComment1').val(comment1 || 'NA');
+        $('#editEncounterComment2').val(comment2 || 'NA');
+    }
+
+    var notesContent = notes || '';
+    $('#editEncounterModal').modal('show');
+
+    setTimeout(function() {
+        if (editEncounterEditorInstance) {
+            editEncounterEditorInstance.destroy()
+                .then(function() {
+                    initializeEditEncounterEditor(notesContent);
+                })
+                .catch(function(error) {
+                    console.error('Error destroying editor:', error);
+                    initializeEditEncounterEditor(notesContent);
+                });
+        } else {
+            initializeEditEncounterEditor(notesContent);
+        }
+    }, 300);
+}
+window.editEncounterNote = editEncounterNote;
+
+function initializeEditEncounterEditor(content) {
+    var editorElement = document.querySelector('#editEncounterNotes');
+    if (!editorElement) return;
+
+    if (typeof ClassicEditor !== 'undefined') {
+        ClassicEditor
+            .create(editorElement, {
+                toolbar: {
+                    items: [
+                        'undo', 'redo', '|', 'heading', '|', 'bold', 'italic', '|',
+                        'link', 'uploadImage', 'insertTable', 'mediaEmbed', '|',
+                        'bulletedList', 'numberedList', 'outdent', 'indent'
+                    ]
+                }
+            })
+            .then(function(editor) {
+                editEncounterEditorInstance = editor;
+                editor.setData(content);
+            })
+            .catch(function(error) {
+                console.error('Error initializing editor:', error);
+                $('#editEncounterNotes').val(content);
+            });
+    } else {
+        $('#editEncounterNotes').val(content);
+    }
+}
+
+$(document).on('click', '#saveEncounterEditBtn', function() {
+    var encounterId = $('#editEncounterId').val();
+
+    var notes = '';
+    if (editEncounterEditorInstance) {
+        notes = editEncounterEditorInstance.getData();
+    } else {
+        notes = $('#editEncounterNotes').val();
+    }
+
+    var notApplicable = $('#editEncounterNotApplicable').is(':checked');
+    var reasons = [];
+    var comment1 = 'NA';
+    var comment2 = 'NA';
+
+    if (!notApplicable && $('#editEncounterReasons').length > 0) {
+        reasons = $('#editEncounterReasons').val() || [];
+        comment1 = $('#editEncounterComment1').val();
+        comment2 = $('#editEncounterComment2').val();
+
+        if (!reasons || reasons.length === 0) {
+            if (typeof toastr !== 'undefined') toastr.warning('Please select at least one diagnosis reason or check "Diagnosis Not Applicable".');
+            else alert('Please select at least one diagnosis reason or check "Diagnosis Not Applicable".');
+            return;
+        }
+
+        if (!comment1 || !comment2) {
+            if (typeof toastr !== 'undefined') toastr.warning('Please select both diagnosis comments.');
+            else alert('Please select both diagnosis comments.');
+            return;
+        }
+    }
+
+    if (!notes || !notes.trim()) {
+        if (typeof toastr !== 'undefined') toastr.warning('Clinical notes are required.');
+        else alert('Clinical notes are required.');
+        return;
+    }
+
+    var $btn = $(this);
+    $btn.prop('disabled', true).html('<i class="fa fa-spinner fa-spin"></i> Saving...');
+
+    $.ajax({
+        url: (window.wbUrl ? window.wbUrl('/encounters/' + encounterId + '/notes') : ('/encounters/' + encounterId + '/notes')),
+        type: 'PUT',
+        headers: {
+            'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+        },
+        data: {
+            notes: notes,
+            reasons_for_encounter: notApplicable ? '' : (Array.isArray(reasons) ? reasons.join(',') : reasons),
+            reasons_for_encounter_comment_1: notApplicable ? 'NA' : comment1,
+            reasons_for_encounter_comment_2: notApplicable ? 'NA' : comment2
+        },
+        success: function(response) {
+            if (response.success) {
+                $('#editEncounterModal').modal('hide');
+                if ($.fn.DataTable.isDataTable('#encounter_history_list')) {
+                    $('#encounter_history_list').DataTable().ajax.reload(null, false);
+                }
+                if (typeof toastr !== 'undefined') toastr.success('Encounter note updated successfully!');
+                else alert('Encounter note updated successfully!');
+            } else {
+                if (typeof toastr !== 'undefined') toastr.error(response.message || 'Failed to update encounter note');
+                else alert(response.message || 'Failed to update encounter note');
+            }
+        },
+        error: function(xhr) {
+            var errorMsg = xhr.responseJSON?.message || 'An error occurred while updating the encounter note';
+            if (typeof toastr !== 'undefined') toastr.error(errorMsg);
+            else alert(errorMsg);
+        },
+        complete: function() {
+            $btn.prop('disabled', false).html('<i class="fa fa-save"></i> Save Changes');
+        }
+    });
+});
+
+$(document).on('hidden.bs.modal', '#editEncounterModal', function() {
+    if (editEncounterEditorInstance) {
+        editEncounterEditorInstance.destroy()
+            .then(function() {
+                editEncounterEditorInstance = null;
+            })
+            .catch(function(error) {
+                console.error('Error destroying editor on modal close:', error);
+                editEncounterEditorInstance = null;
+            });
+    }
+});
+
+$(document).on('change', '#editEncounterNotApplicable', function() {
+    var isChecked = $(this).is(':checked');
+    if (isChecked) {
+        $('#editEncounterReasonsGroup').hide();
+        $('#editEncounterCommentsGroup').hide();
+        $('#editEncounterReasons').val(null).trigger('change');
+        $('#editEncounterComment1').val('NA');
+        $('#editEncounterComment2').val('NA');
+    } else {
+        $('#editEncounterReasonsGroup').show();
+        $('#editEncounterCommentsGroup').show();
+    }
+});
+
+$(document).on('click', '#confirmDeleteBtn', function() {
+    if (!window.currentDeleteItem) return;
+    var reasonSelect = $('#deletionReasonSelect').val();
+    var reasonOther = $('#deletionReasonOther').val();
+    var notes = $('#deletionNotes').val();
+
+    if (!reasonSelect) {
+        if (typeof toastr !== 'undefined') toastr.warning('Please select a reason for deletion');
+        else alert('Please select a reason for deletion');
+        return;
+    }
+
+    var finalReason = (reasonSelect === 'Other' && reasonOther) ? reasonOther : reasonSelect;
+    if (notes) finalReason += '. Additional notes: ' + notes;
+
+    var url = (window.wbUrl ? window.wbUrl('/encounters/' + window.currentDeleteItem.id) : ('/encounters/' + window.currentDeleteItem.id));
+    var $btn = $(this);
+    $btn.prop('disabled', true).html('<i class="fa fa-spinner fa-spin"></i> Deleting...');
+
+    $.ajax({
+        url: url,
+        type: 'DELETE',
+        headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') },
+        data: { reason: finalReason },
+        success: function(response) {
+            $('#deleteConfirmModal').modal('hide');
+            if (response.success) {
+                if (typeof toastr !== 'undefined') toastr.success(response.message || 'Request deleted successfully');
+                if ($.fn.DataTable.isDataTable('#encounter_history_list')) {
+                    $('#encounter_history_list').DataTable().ajax.reload(null, false);
+                }
+            } else {
+                if (typeof toastr !== 'undefined') toastr.error(response.message || 'Deletion failed');
+            }
+        },
+        error: function(xhr) {
+            if (xhr.status === 403 && xhr.responseJSON?.message) {
+                $('#deleteConfirmModal').modal('hide');
+                if ($('#deleteDeniedModal').length) {
+                    $('#deleteDeniedReason').html('<strong>' + xhr.responseJSON.message + '</strong>');
+                    $('#deleteDeniedModal').modal('show');
+                } else {
+                    if (typeof toastr !== 'undefined') toastr.error(xhr.responseJSON.message);
+                }
+            } else {
+                var msg = xhr.responseJSON?.message || 'Error deleting encounter note';
+                if (typeof toastr !== 'undefined') toastr.error(msg);
+            }
+        },
+        complete: function() {
+            $btn.prop('disabled', false).html('<i class="fa fa-trash-alt"></i> Delete Request');
+            window.currentDeleteItem = null;
+        }
+    });
+});

@@ -26,31 +26,15 @@ let queueRefreshInterval = null;
 let vitalTooltip = null;
 const isApprover = (window.WORKBENCH_CONFIG?.isApprover || false);
 const requiresApproval = (window.WORKBENCH_CONFIG?.requiresApproval || false);
-const currentUserId = (window.CURRENT_USER_ID || null);
+const currentUserId = (window.CURRENT_USER_ID || window.WORKBENCH_CONFIG?.currentUserId || null);
 let currentApprovalId = null;
-
-var _PI_LAB_REQ_APPROVAL = '';
-var _PI_DR_SELF_LAB      = '';
-var _PI_NR_SELF_LAB      = '';
-
-function _autoApproveIfEnabled(requestId, type) {
-    if ($('#invest_res_is_edit').val() == '1') { return; }
-    if (!_PI_LAB_REQ_APPROVAL) { return; }
-    if (!_PI_DR_SELF_LAB && !_PI_NR_SELF_LAB) { return; }
-    $.post('/lab-workbench/self-approve/' + requestId, { _token: $('meta[name="csrf-token"]').attr('content') })
-        .done(function (res) {
-            if (res && res.success) { toastr.success('Result approved automatically.'); }
-            else { toastr.warning('Result saved. Auto-approval failed: ' + ((res && res.message) || '')); }
-        })
-        .fail(function () { toastr.warning('Result saved but auto-approval could not be completed.'); });
-}
 
 $(document).ready(function() {
     // Initialize shared result entry module
     InvestResultEntry.bindFormSubmit(function() {
         if (currentPatient) loadPatient(currentPatient);
-        var ctx = window._investResultContext;
-        if (ctx) { _autoApproveIfEnabled(ctx.id, ctx.type); window._investResultContext = null; }
+        loadQueueCounts();
+        window._investResultContext = null;
     });
 
     // Initialize
@@ -799,6 +783,24 @@ function renderPendingSubtabContent(filter) {
     }
 
 
+    // If active subtab has no items, render a clean empty message
+    if ($container.children().length === 0) {
+        const filterLabels = {
+            'billing': 'Awaiting Billing',
+            'sample': 'Awaiting Sample Collection',
+            'results': 'Awaiting Result Entry',
+            'freeform': 'Free-Form / External',
+            'approval': 'Pending Approval'
+        };
+        const label = filterLabels[filter] || filter;
+        $container.html(`
+            <div class="empty-state text-center p-4" style="background: #f8f9fa; border-radius: 8px; border: 1px dashed #ced4da; margin-top: 1rem;">
+                <i class="mdi mdi-information-outline text-muted" style="font-size: 2rem;"></i>
+                <h6 class="mt-2 text-muted">No ${label} requests for this patient</h6>
+            </div>
+        `);
+    }
+
     // Initialize event handlers + restore preserved selections
     initializeRequestHandlers();
     restoreCheckedItemsState();
@@ -972,7 +974,7 @@ function createRequestCard(request, section) {
         }
     }
 
-    if (isFreeForm) {
+    if (isFreeForm && section !== 'approval' && section !== 'rejected') {
         statusBadges = '';
         pendingAlerts = '';
         priceHtml = '';
@@ -1293,7 +1295,6 @@ function loadQueueCounts() {
         $('#queue-results-count').text(counts.results);
         $('#queue-completed-count').text(counts.completed);
         $('#queue-freeform-count').text(counts.freeform);
-        $('#freeform-subtab-badge').text(counts.freeform);
         var emergencyCount = counts.emergency || 0;
         $('#queue-emergency-count').text(emergencyCount);
         if (emergencyCount> 0) {

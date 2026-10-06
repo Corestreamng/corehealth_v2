@@ -74,6 +74,12 @@
                                     <option value="discharge" {{ old('type', $checklistTemplate->type) == 'discharge' ? 'selected' : '' }}>
                                         Discharge Checklist
                                     </option>
+                                    <option value="surgical" {{ old('type', $checklistTemplate->type) == 'surgical' ? 'selected' : '' }}>
+                                        Surgical Safety Checklist (Theatre / OR)
+                                    </option>
+                                    <option value="procedure" {{ old('type', $checklistTemplate->type) == 'procedure' ? 'selected' : '' }}>
+                                        Bedside &amp; Minor Procedure Checklist
+                                    </option>
                                 </select>
                                 @error('type')
                                     <span class="invalid-feedback">{{ $message }}</span>

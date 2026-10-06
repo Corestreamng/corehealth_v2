@@ -23,35 +23,16 @@
                                     <h5 class="mb-0"><i class="mdi mdi-plus-circle text-primary"></i> Request New Procedure</h5>
                                 </div>
                                 <div class="card-body">
-                                    <div class="row">
-                                        <div class="col-md-6">
-                                            <div class="form-group mb-3">
+                                    <div class="row mb-3">
+                                        <div class="col-12">
+                                            <div class="form-group position-relative">
                                                 <label><i class="fa fa-search"></i> Search Procedure</label>
                                                 <input type="text" class="form-control" id="sw_proc_search" placeholder="Type procedure name or code..." autocomplete="off">
                                                 <ul class="list-group co-search-dropdown" id="sw_proc_results"></ul>
                                             </div>
                                         </div>
-                                        <div class="col-md-3">
-                                            <div class="form-group mb-3">
-                                                <label><i class="fa fa-exclamation-triangle"></i> Priority</label>
-                                                <select class="form-control" id="sw_proc_priority">
-                                                    <option value="routine">Routine</option>
-                                                    <option value="urgent">Urgent</option>
-                                                    <option value="emergency">Emergency</option>
-                                                </select>
-                                            </div>
-                                        </div>
-                                        <div class="col-md-3">
-                                            <div class="form-group mb-3">
-                                                <label><i class="fa fa-calendar"></i> Scheduled Date</label>
-                                                <input type="date" class="form-control" id="sw_proc_scheduled_date">
-                                            </div>
-                                        </div>
                                     </div>
-                                    <div class="form-group mb-3">
-                                        <label><i class="fa fa-sticky-note"></i> Pre-op / Clinical Notes</label>
-                                        <textarea class="form-control" id="sw_proc_notes" rows="2" placeholder="Clinical indications, relevant history..."></textarea>
-                                    </div>
+                                    @include('admin.partials.clinical_procedure_booking_card', ['prefix' => 'sw_proc_'])
                                     <div class="table-responsive mt-3">
                                         <table class="table table-sm table-bordered table-striped">
                                             <thead class="table-light">
@@ -100,6 +81,26 @@
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     // We defer the setup until ClinicalOrdersKit is initialized for a patient
+    if (typeof ClinicalOrdersKit !== 'undefined' && typeof ClinicalOrdersKit.bindProcedureConfigurator === 'function') {
+        ClinicalOrdersKit.bindProcedureConfigurator({
+            prefix: 'sw_proc_',
+            submitUrl: '{{ url("/nursing-workbench/clinical-requests/add-procedure") }}',
+            deleteUrlBase: '{{ url("/nursing-workbench/clinical-requests/procedures") }}',
+            tableSelector: '#sw-selected-procedures',
+            getPatientId: function() {
+                var patientId = $('#sw-patient-banner').hasClass('visible') ? $('.sw-search-item[data-patient-id]').data('patient-id') : null;
+                if (!patientId && window.ClinicalOrdersKit && ClinicalOrdersKit.currentPatientId) {
+                    patientId = ClinicalOrdersKit.currentPatientId;
+                }
+                return patientId;
+            },
+            onSuccess: function(resp) {
+                $('#sw_proc_search').val('');
+                $('#sw_proc_results').hide();
+                $(document).trigger('clinicalOrders:procedureAdded', [resp]);
+            }
+        });
+    }
     
     // Procedure Search logic
     var swProcTimer;
@@ -122,7 +123,14 @@ document.addEventListener('DOMContentLoaded', function() {
                 // Free form addition fallback
                 if (typeof ClinicalOrdersKit !== 'undefined' && typeof ClinicalOrdersKit.appendFreeFormLink === 'function') {
                     ClinicalOrdersKit.appendFreeFormLink($res, q, 'Add Free-Form Procedure', 'Enter procedure name:', '#sw_proc_search', function(val) {
-                        addSurgeryProcedure(val + ' [Free-form]', 'FF_' + val, 0);
+                        selectSurgeryProcedure({
+                            id: 'FF_' + val,
+                            service_name: val + ' [Free-form]',
+                            service_code: 'FF',
+                            is_surgical: 1,
+                            price: { sale_price: 0 },
+                            payable_amount: 0
+                        });
                     });
                 }
                 
@@ -148,7 +156,8 @@ document.addEventListener('DOMContentLoaded', function() {
                         alreadyAdded = ClinicalOrdersKit.isAlreadyAdded('procedures', parseInt(item.id));
                     }
                     
-                    var onClickStr = alreadyAdded ? '' : 'addSurgeryProcedure(\'' + display.replace(/'/g, "\\'") + '\', ' + item.id + ', ' + payable + ')';
+                    var itemJson = encodeURIComponent(JSON.stringify(item));
+                    var onClickStr = alreadyAdded ? '' : 'selectSurgeryProcedure(decodeURIComponent(\'' + itemJson + '\'))';
                     
                     if (typeof ClinicalOrdersKit !== 'undefined' && typeof ClinicalOrdersKit.renderSearchResultItem === 'function') {
                         $res.append(ClinicalOrdersKit.renderSearchResultItem({
@@ -183,6 +192,16 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 });
+
+function selectSurgeryProcedure(item) {
+    if (typeof item === 'string') {
+        try { item = JSON.parse(item); } catch(e){}
+    }
+    $('#sw_proc_results').hide();
+    if (typeof ClinicalOrdersKit !== 'undefined') {
+        ClinicalOrdersKit.selectProcedureForBooking('sw_proc_', item);
+    }
+}
 
 function addSurgeryProcedure(name, id, price) {
     if (typeof ClinicalOrdersKit !== 'undefined' && typeof ClinicalOrdersKit.isAlreadyAdded === 'function') {

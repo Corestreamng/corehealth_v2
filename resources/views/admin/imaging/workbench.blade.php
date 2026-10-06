@@ -580,10 +580,7 @@
 <!-- Include Bulk Result Entry Modal -->
 @include('admin.partials.bulk_result_entry_modal')
 
-{{-- Result Approval Review Modal --}}
-@if(($isApprover ?? false) && ($requiresApproval ?? false))
 @include('admin.imaging.partials._modals')
-@endif
 
 @endsection
 

@@ -591,15 +591,8 @@ $(document).on('click', '.btn-delete-queue', function(e) {
     const serviceRequestId = $(this).data('service-request-id');
     const serviceName = $(this).closest('.card-body').find('h6').text().trim();
     
-    discardRequestType = 'service';
-    discardRequestId = serviceRequestId; // Note: if serviceRequestId is null (skipped billing), this might need handling
-    
-    // If no service request (e.g. skipped billing), we might need to delete the queue directly
-    if (!serviceRequestId) {
-        // Fallback for cycle-duration skipped billings
-        discardRequestType = 'queue';
-        discardRequestId = queueId;
-    }
+    discardRequestType = 'queue';
+    discardRequestId = queueId;
 
     $('#discard_service_name').text(serviceName + ' (Queue Booking)');
     $('#discard_request_no').text('Q-' + queueId);

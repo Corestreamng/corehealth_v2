@@ -79,6 +79,7 @@ Route::middleware(['web', 'auth', 'role:SUPERADMIN|ADMIN|MATERNITY'])
         // Combo/bundle handling (Phase 1: unified search)
         Route::post('/enrollment/{id}/apply-combo', [MaternityWorkbenchController::class, 'maternityApplyCombo'])->name('enrollment.applyCombo');
         Route::post('/enrollment/{id}/remove-bundle', [MaternityWorkbenchController::class, 'removeBundle'])->name('enrollment.removeBundle');
+        Route::post('/enrollment/{id}/remove-bundle-item', [MaternityWorkbenchController::class, 'removeBundleItem'])->name('enrollment.removeBundleItem');
         // ── Delivery ────────────────────────────────────────────────
         Route::post('/enrollment/{id}/delivery', [MaternityWorkbenchController::class, 'saveDeliveryRecord'])->name('enrollment.delivery.store');
         Route::put('/delivery/{id}', [MaternityWorkbenchController::class, 'updateDeliveryRecord'])->name('delivery.update');
@@ -113,6 +114,15 @@ Route::middleware(['web', 'auth', 'role:SUPERADMIN|ADMIN|MATERNITY'])
         Route::get('/schedule-templates', [MaternityWorkbenchController::class, 'getScheduleTemplatesMaternity'])->name('schedule.templates');
         Route::get('/vaccine-products/{vaccineName}', [MaternityWorkbenchController::class, 'getVaccineProductsMaternity'])->name('vaccine.products');
         Route::get('/product-batches', [MaternityWorkbenchController::class, 'getProductBatchesMaternity'])->name('product-batches');
+        Route::post('/outreach-tally', [MaternityWorkbenchController::class, 'saveOutreachTallyMaternity'])->name('outreach-tally');
+        Route::post('/save-outreach-tally', [MaternityWorkbenchController::class, 'saveOutreachTallyMaternity'])->name('save-outreach-tally');
+        Route::get('/outreach-reports', [MaternityWorkbenchController::class, 'getOutreachSessionsReportMaternity'])->name('outreach-reports');
+        Route::get('/outreach-sessions-report', [MaternityWorkbenchController::class, 'getOutreachSessionsReportMaternity'])->name('outreach-sessions-report');
+        Route::get('/outreach-session/{sessionId}', [MaternityWorkbenchController::class, 'getOutreachSessionDetailsMaternity'])->name('outreach-session.details');
+        Route::get('/outreach-session-details/{sessionId}', [MaternityWorkbenchController::class, 'getOutreachSessionDetailsMaternity'])->name('outreach-session-details');
+        Route::get('/outreach-report/print', [MaternityWorkbenchController::class, 'printOutreachReportMaternity'])->name('outreach-report.print');
+        Route::get('/print-outreach-report', [MaternityWorkbenchController::class, 'printOutreachReportMaternity'])->name('print-outreach-report');
+        Route::get('/outreach-store-inventory', [MaternityWorkbenchController::class, 'getOutreachStoreInventoryMaternity'])->name('outreach-store-inventory');
 
         // Mother-specific wrappers
         Route::get('/enrollment/{id}/mother-schedule', [MaternityWorkbenchController::class, 'getMotherSchedule'])->name('mother.schedule');

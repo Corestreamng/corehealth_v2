@@ -26,6 +26,7 @@
                     <!-- V2 Hidden Input for structured data -->
                     <input type="hidden" name="invest_res_template_data" id="invest_res_template_data">
                     <input type="hidden" name="deleted_attachments" id="deleted_attachments">
+                    <input type="hidden" name="entry_source" id="invest_res_entry_source" value="workbench">
 
                     <!-- V1/V2 Template Version Toggle (only shown when V2 template exists for the service) -->
                     <div id="template_version_toggle_container" class="mb-3" style="display:none;">
@@ -51,6 +52,26 @@
                             <button type="button" class="btn btn-outline-primary" id="v1_insert_template_btn" disabled onclick="insertV1ResultTemplate()">
                                 <i class="mdi mdi-file-import"></i> Insert
                             </button>
+                        </div>
+                    </div>
+
+                    <!-- NHMIS Standardized Clinical Outcome Auto-Sense Bar -->
+                    <div id="nhmis_outcome_container" class="card border-info mb-3" style="display: none; background: rgba(var(--hospital-primary-rgb, 1, 27, 51), 0.03);">
+                        <div class="card-body p-2">
+                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                <span class="small font-weight-bold text-dark">
+                                    <i class="mdi mdi-checkbox-marked-circle-outline text-info"></i> NHMIS Standardized Outcome:
+                                    <span id="nhmis_indicator_badge" class="badge badge-light text-primary border ml-1"></span>
+                                </span>
+                                <span class="small text-muted" id="nhmis_auto_sense_indicator" style="font-size: 0.75rem;">
+                                    <i class="mdi mdi-auto-fix"></i> Auto-sensed from result
+                                </span>
+                            </div>
+                            <div id="nhmis_outcome_pills" class="d-flex flex-wrap gap-2 pt-1">
+                                <!-- Dynamically populated radio pills for supported outcomes -->
+                            </div>
+                            <input type="hidden" name="nhmis_outcome" id="nhmis_outcome">
+                            <input type="hidden" name="nhmis_outcome_raw" id="nhmis_outcome_raw">
                         </div>
                     </div>
 

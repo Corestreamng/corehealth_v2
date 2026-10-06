@@ -38,6 +38,7 @@ class PatientProcedureController extends Controller
     {
         $procedure->load([
             'service.price',
+            'service.procedureDefinition.procedureCategory',
             'procedureDefinition.procedureCategory',
             'requestedByUser',
             'billedByUser',
@@ -61,8 +62,59 @@ class PatientProcedureController extends Controller
         $resolver = app(StoreContextResolver::class);
         $resolvedStore = $resolver->resolve(auth()->user());
         $accessibleStores = $resolver->candidateStores(auth()->user());
+        $checklistItems = $procedure->getChecklistItems();
 
-        return view("admin.patient-procedures.show", compact("procedure", "resolvedStore", "accessibleStores"));
+        return view("admin.patient-procedures.show", compact("procedure", "resolvedStore", "accessibleStores", "checklistItems"));
+    }
+
+    /**
+     * Toggle or update a checklist item on a procedure.
+     * POST patient-procedures/{procedure}/checklist-toggle
+     */
+    public function toggleChecklistItem(Request $request, Procedure $procedure)
+    {
+        $request->validate([
+            'item_id' => 'required|integer',
+            'is_completed' => 'required',
+            'notes' => 'nullable|string|max:500',
+        ]);
+
+        $itemId = (int) $request->item_id;
+        $isCompleted = filter_var($request->is_completed, FILTER_VALIDATE_BOOLEAN);
+        $notes = $request->input('notes');
+
+        $prepDetails = $procedure->prep_details ?? [];
+        $checklist = $prepDetails['checklist'] ?? [];
+
+        $checklist[$itemId] = [
+            'completed' => $isCompleted,
+            'completed_at' => $isCompleted ? now()->toIso8601String() : null,
+            'completed_by' => $isCompleted ? auth()->id() : null,
+            'completed_by_name' => $isCompleted ? (auth()->user()->name ?? 'Staff') : null,
+            'notes' => $notes,
+        ];
+
+        $prepDetails['checklist'] = $checklist;
+        $procedure->prep_details = $prepDetails;
+        $procedure->save();
+
+        $items = $procedure->getChecklistItems();
+        $totalItems = count($items);
+        $completedCount = count(array_filter($items, fn ($i) => !empty($i['is_completed'])));
+        $percent = $totalItems > 0 ? round(($completedCount / $totalItems) * 100) : 0;
+
+        return response()->json([
+            'success' => true,
+            'message' => $isCompleted ? 'Checklist item marked as verified' : 'Checklist item marked as pending',
+            'is_completed' => $isCompleted,
+            'progress' => [
+                'completed' => $completedCount,
+                'total' => $totalItems,
+                'percent' => $percent,
+            ],
+            'completed_by_name' => auth()->user()->name ?? 'Staff',
+            'completed_at' => now()->format('d M H:i'),
+        ]);
     }
 
     /**
@@ -1779,6 +1831,10 @@ class PatientProcedureController extends Controller
         ];
         $priorityBadge = $priorityBadges[$priority] ?? '';
 
+        $typeBadge = $procedure->is_surgical
+            ? '<span class="badge badge-danger badge-sm ms-1"><i class="fa fa-cut"></i> Surgical</span>'
+            : '<span class="badge badge-info badge-sm ms-1"><i class="fa fa-stethoscope"></i> Clinical</span>';
+
         // Billing status
         $billing = $procedure->productOrServiceRequest;
         $paymentStatus = '';
@@ -1810,7 +1866,8 @@ class PatientProcedureController extends Controller
             <div class="procedure-name">{$serviceName}</div>
             <small class="text-muted">{$category}</small>
         </div>
-        <div>
+        <div class="d-flex align-items-center gap-1">
+            {$typeBadge}
             <span class="procedure-status {$statusClass}">{$status}</span>
             {$priorityBadge}
         </div>

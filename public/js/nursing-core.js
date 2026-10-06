@@ -19,12 +19,12 @@ if (typeof window.wbRoute !== 'function') {
     };
 }
 
-window.BILLING_KIT_CONFIG = {
+window.BILLING_KIT_CONFIG = Object.assign({
     csrf: (window.WORKBENCH_CONFIG?.csrf || $('meta[name="csrf-token"]').attr('content')),
-    addServiceRoute: wbRoute('nursing-workbench.billing.add-service', '/nursing-workbench/billing/add-service'),
-    addLabRoute: wbRoute('nursing-workbench.billing.add-lab-bill', '/nursing-workbench/billing/add-lab-bill'),
-    addImagingRoute: wbRoute('nursing-workbench.billing.add-imaging-bill', '/nursing-workbench/billing/add-imaging-bill'),
-    addConsumableRoute: wbRoute('nursing-workbench.billing.add-consumable', '/nursing-workbench/billing/add-consumable'),
+    addServiceRoute: wbRoute('nursing-workbench.billing.add-service', '/nursing-workbench/add-service-bill'),
+    addLabRoute: wbRoute('nursing-workbench.billing.add-lab-bill', '/nursing-workbench/add-lab-bill'),
+    addImagingRoute: wbRoute('nursing-workbench.billing.add-imaging-bill', '/nursing-workbench/add-imaging-bill'),
+    addConsumableRoute: wbRoute('nursing-workbench.billing.add-consumable', '/nursing-workbench/add-consumable-bill'),
     removeBillBase: '/nursing-workbench/remove-bill',
     pendingBillsBase: '/nursing-workbench/patient',
     serviceRequestsBase: '/nursing-workbench/patient',
@@ -33,10 +33,10 @@ window.BILLING_KIT_CONFIG = {
     productBatchesRoute: wbRoute('nursing-workbench.product-batches', '/nursing-workbench/product-batches'),
     investigationCategoryId: '',
     imagingCategoryId: 6,
-    resolvedStoreId: (window.BILLING_KIT_CONFIG?.resolvedStoreId || ''),
-    resolvedStoreName: (window.BILLING_KIT_CONFIG?.resolvedStoreName || ''),
+    resolvedStoreId: '',
+    resolvedStoreName: '',
     showMedicationOption: true,
-};
+}, window.BILLING_KIT_CONFIG || {});
 // Global state
 var ClinicalRequests = null;
 var selectedMedication = null;
@@ -1450,6 +1450,17 @@ ClinicalRequests = (function() {
             // (Plan §6.4 + §5.3) — keeps extraPayload.patient_id current
             ClinicalOrdersKit.updateTreatmentPlanConfig({ extraPayload: { patient_id: patientId } });
             ClinicalOrdersKit.updateRePrescribeConfig({ extraPayload: { patient_id: patientId } });
+
+            // Bind unified procedure configurator for Nursing Workbench
+            ClinicalOrdersKit.bindProcedureConfigurator({
+                prefix: 'cr_proc_',
+                getPatientId: function() { return patientId; },
+                submitUrl: wbUrl('/nursing-workbench/clinical-requests/add-procedure'),
+                tableSelector: '#cr-selected-procedures',
+                onSuccess: function() {
+                    initProcHistory();
+                }
+            });
         } catch (e) {
             console.error('ClinicalRequests: error initializing ClinicalOrdersKit features:', e);
         }
@@ -1771,7 +1782,7 @@ ClinicalRequests = (function() {
         $.get('/live-search-services', { term: q, category_id: procedureCategoryId, patient_id: patientId }, function(data) {
             const $res = $('#cr_proc_results').empty();
             ClinicalOrdersKit.appendFreeFormLink($res, q, 'Add Free-Form Procedure', 'Enter procedure name:', '#cr_proc_search', function(val) {
-                ClinicalRequests.addProcedure({ id: 'FF_' + val, service_name: val + ' [Free-form]', price: {sale_price: 0}, claims_amount: 0, coverage_mode: 'cash' });
+                ClinicalRequests.selectProcedure({ id: 'FF_' + val, service_name: val + ' [Free-form]', price: {sale_price: 0}, claims_amount: 0, coverage_mode: 'cash' });
             });
             if (!data.length) { ClinicalOrdersKit.showSearchEmpty('#cr_proc_results', 'procedures'); return; }
             else {
@@ -1781,10 +1792,15 @@ ClinicalRequests = (function() {
                     const code = item.service_code || '';
                     const price = item.price?.sale_price ?? 0;
                     const payable = item.payable_amount ?? price;
-                    const onClick = isSelected ? '' : `ClinicalRequests.addProcedure(${JSON.stringify(item).replace(/"/g, '&quot;')})`;
+                    const isSurgical = Boolean(item.is_surgical);
+                    const surgPill = isSurgical
+                        ? ' <span class="badge bg-danger-subtle text-danger border border-danger-subtle"><i class="fa fa-cut"></i> Surgical</span>'
+                        : ' <span class="badge bg-info-subtle text-info border border-info-subtle"><i class="fa fa-stethoscope"></i> Bedside</span>';
+                    const category = (item.procedure_category || item.category?.category_name || 'Procedure') + surgPill;
+                    const onClick = isSelected ? '' : `ClinicalRequests.selectProcedure(${JSON.stringify(item).replace(/"/g, '&quot;')})`;
                     $res.append(ClinicalOrdersKit.renderSearchResultItem({
                         id: item.id,
-                        category: item.category?.category_name || 'Procedure',
+                        category: category,
                         name: name,
                         code: code,
                         price: price,
@@ -1924,53 +1940,14 @@ ClinicalRequests = (function() {
         $('#cr_imaging_results').hide();
     }
 
-    function addProcedure(item) {
-        // Phase 2a (Plan §4.1): Auto-save procedure via ClinicalOrdersKit.addItem
-        const procId = item.id;
-        if (ClinicalOrdersKit.isAlreadyAdded('procedures', procId)) {
-            toastr.warning('Procedure already added');
-            return;
-        }
-        const priority = $('#cr_proc_priority').val();
-        const scheduledDate = $('#cr_proc_scheduled_date').val();
-        const preNotes = $('#cr_proc_notes').val();
-
-        const payable = item.payable_amount ?? (item.price?.sale_price ?? 0);
-        const priorityClass = { routine: 'bg-success', urgent: 'bg-warning text-dark', emergency: 'bg-danger' }[priority] || 'bg-secondary';
-        const priorityLabel = priority.charAt(0).toUpperCase() + priority.slice(1);
-
-        ClinicalOrdersKit.addItem({
-            url: wbUrl('/nursing-workbench/clinical-requests/add-procedure'),
-            payload: {
-                patient_id: patientId,
-                service_id: procId,
-                priority: priority,
-                scheduled_date: scheduledDate,
-                pre_notes: preNotes
-            },
-            csrfToken: CSRF_TOKEN,
-            tableSelector: '#cr-selected-procedures',
-            type: 'procedures',
-            referenceId: procId,
-            buildRowHtml: function(resp) {
-                var isFreeForm = String(procId).startsWith('FF_');
-                var nameHtml = isFreeForm ? '<h6 class="mb-0"><span class="badge bg-info text-dark">' + (item.service_name || 'N/A').replace(' [Free-form]', '') + '</span></h6>' : '<strong>' + (item.service_name || 'N/A') + '</strong><br><small class="text-muted">' + (item.service_code || '') + '</small>';
-                var priceHtml = isFreeForm ? '<span class="text-muted">N/A</span>' : 'NGN ' + payable;
-                return '<tr data-record-id="' + resp.id + '" data-record-type="procedure" data-service-id="' + procId + '">' +
-                    '<td>' + nameHtml +
-                    (preNotes ? '<br><small class="text-info"><i class="fa fa-sticky-note"></i> ' + preNotes.substring(0, 60) + '</small>' : '') + '</td>' +
-                    '<td>' + priceHtml + '</td>' +
-                    '<td><span class="badge ' + priorityClass + '">' + priorityLabel + '</span>' +
-                    (scheduledDate ? '<br><small>' + scheduledDate + '</small>' : '') + '</td>' +
-                    '<td><button class="btn btn-sm btn-danger" onclick="ClinicalRequests.removeAutoSavedRow(this,\'procedure\',' + resp.id + ',' + procId + ')"><span class="co-remove-btn"><i class="fa fa-times"></i></span></button></td>' +
-                '</tr>';
-            },
-            onSuccess: function() {
-                initProcHistory();
-            }
-        });
-        $('#cr_proc_search').val('');
+    function selectProcedure(item) {
         $('#cr_proc_results').hide();
+        $('#cr_proc_search').val('');
+        ClinicalOrdersKit.selectProcedureForBooking('cr_proc_', item);
+    }
+
+    function addProcedure(item) {
+        selectProcedure(item);
     }
 
     function removeProcedure(procId) {
@@ -2211,6 +2188,17 @@ ClinicalRequests = (function() {
     }
 
     function applyProductCombo(comboId, comboName) {
+        if (window.ClinicalOrdersKit && typeof window.ClinicalOrdersKit.applyCombo === 'function') {
+            ClinicalOrdersKit.applyCombo(comboId, {
+                name: comboName,
+                patientId: patientId,
+                onSuccess: function() {
+                    if (typeof initPrescHistory === 'function') { initPrescHistory(); }
+                }
+            });
+            return;
+        }
+
         var comboData = (window.comboDataMap || {})[comboId] || {};
         var name = comboName || comboData.product_name || comboData.service_name || 'Combo';
 
@@ -2249,6 +2237,17 @@ ClinicalRequests = (function() {
     }
 
     function applyLabCombo(comboId, comboName) {
+        if (window.ClinicalOrdersKit && typeof window.ClinicalOrdersKit.applyCombo === 'function') {
+            ClinicalOrdersKit.applyCombo(comboId, {
+                name: comboName,
+                patientId: patientId,
+                onSuccess: function() {
+                    if (typeof initLabHistory === 'function') { initLabHistory(); }
+                }
+            });
+            return;
+        }
+
         var comboData = (window.comboDataMap || {})[comboId] || {};
         var name = comboName || comboData.service_name || 'Combo';
 
@@ -2287,6 +2286,17 @@ ClinicalRequests = (function() {
     }
 
     function applyImagingCombo(comboId, comboName) {
+        if (window.ClinicalOrdersKit && typeof window.ClinicalOrdersKit.applyCombo === 'function') {
+            ClinicalOrdersKit.applyCombo(comboId, {
+                name: comboName,
+                patientId: patientId,
+                onSuccess: function() {
+                    if (typeof initImagingHistory === 'function') { initImagingHistory(); }
+                }
+            });
+            return;
+        }
+
         var comboData = (window.comboDataMap || {})[comboId] || {};
         var name = comboName || comboData.service_name || 'Combo';
 
@@ -2332,6 +2342,7 @@ ClinicalRequests = (function() {
         addImagingService: addImagingService,
         applyLabCombo: applyLabCombo,
         applyImagingCombo: applyImagingCombo,
+        selectProcedure: selectProcedure,
         addProcedure: addProcedure,
         removeProcedure: removeProcedure,
         removeAutoSavedRow: removeAutoSavedRow,
@@ -2527,7 +2538,31 @@ function displayPatientInfo(patient) {
     detailsHtml += `
         <div class="patient-detail-item">
             <div class="patient-detail-label"><i class="mdi mdi-shield-account"></i> Insurance Scheme</div>
-            <div class="patient-detail-value">${patient.insurance_scheme}</div>
+            <div class="patient-detail-value">${patient.insurance_scheme || 'N/A'}</div>
+        </div>
+    `;
+
+    // Next of Kin
+    detailsHtml += `
+        <div class="patient-detail-item">
+            <div class="patient-detail-label"><i class="mdi mdi-account-heart"></i> Next of Kin</div>
+            <div class="patient-detail-value">${patient.next_of_kin_name || 'N/A'}</div>
+        </div>
+    `;
+
+    // Next of Kin Phone
+    detailsHtml += `
+        <div class="patient-detail-item">
+            <div class="patient-detail-label"><i class="mdi mdi-phone-outline"></i> NOK Phone</div>
+            <div class="patient-detail-value">${patient.next_of_kin_phone || 'N/A'}</div>
+        </div>
+    `;
+
+    // Next of Kin Address
+    detailsHtml += `
+        <div class="patient-detail-item">
+            <div class="patient-detail-label"><i class="mdi mdi-map-marker-outline"></i> NOK Address</div>
+            <div class="patient-detail-value">${patient.next_of_kin_address || 'N/A'}</div>
         </div>
     `;
 

@@ -1412,7 +1412,8 @@ window.ClinicalOrdersKit = jQuery.extend(window.ClinicalOrdersKit || {}, (functi
             lab:          'Laboratory Test',
             imaging:      'Imaging/Radiology',
             prescription: 'Prescription',
-            procedure:    'Procedure'
+            procedure:    'Procedure',
+            encounter:    'Clinical Encounter Note'
         };
         var typeLabel = typeLabels[config.type] || config.type.charAt(0).toUpperCase() + config.type.slice(1);
         $('#coDeleteModalItemInfo').html(
@@ -1476,19 +1477,23 @@ window.ClinicalOrdersKit = jQuery.extend(window.ClinicalOrdersKit || {}, (functi
         };
 
         var url = '';
-        var isNurseRoute = (encounterId === null || encounterId === undefined);
-
-        if (isNurseRoute) {
-            // Determine workbench route
-            if (window.maternityEnrollmentId !== undefined) {
-                var enrollmentId = window.maternityEnrollmentId || $('#mat-partograph-enrollment-id').val();
-                url = '/maternity-workbench/enrollment/' + enrollmentId + '/' + pathMap[type] + '/' + id;
-            } else {
-                url = '/nursing-workbench/clinical-requests/' + pathMap[type] + '/' + id;
-            }
+        if (type === 'encounter') {
+            url = (window.wbUrl ? window.wbUrl('/encounters/' + id) : ('/encounters/' + id));
         } else {
-            // Encounter-specific route
-            url = '/encounters/' + encounterId + '/' + pathMap[type] + '/' + id;
+            var isNurseRoute = (encounterId === null || encounterId === undefined);
+
+            if (isNurseRoute) {
+                // Determine workbench route
+                if (window.maternityEnrollmentId !== undefined) {
+                    var enrollmentId = window.maternityEnrollmentId || $('#mat-partograph-enrollment-id').val();
+                    url = '/maternity-workbench/enrollment/' + enrollmentId + '/' + pathMap[type] + '/' + id;
+                } else {
+                    url = '/nursing-workbench/clinical-requests/' + pathMap[type] + '/' + id;
+                }
+            } else {
+                // Encounter-specific route
+                url = '/encounters/' + encounterId + '/' + pathMap[type] + '/' + id;
+            }
         }
 
         showDeleteConfirmation({
@@ -1507,14 +1512,15 @@ window.ClinicalOrdersKit = jQuery.extend(window.ClinicalOrdersKit || {}, (functi
                     success: function (response) {
                         callback(true);
                         if (response.success) {
-                            if (typeof toastr !== 'undefined') toastr.success('Request deleted successfully');
+                            if (typeof toastr !== 'undefined') toastr.success(response.message || 'Request deleted successfully');
 
                             // Reload standard DataTables on all workbenches
                             var tables = [
                                 '#presc_history_list', '#cr_presc_history_list', '#mco_presc_history_list',
                                 '#investigation_history_list', '#cr_lab_history_list', '#mco_lab_history_list',
                                 '#imaging_history_list', '#cr_imaging_history_list', '#mco_imaging_history_list',
-                                '#procedure_history_list', '#cr_proc_history_list', '#mco_proc_history_list'
+                                '#procedure_history_list', '#cr_proc_history_list', '#mco_proc_history_list',
+                                '#encounter_history_list'
                             ];
                             tables.forEach(function (t) {
                                 if ($.fn.DataTable.isDataTable(t)) {
@@ -1552,6 +1558,11 @@ window.ClinicalOrdersKit = jQuery.extend(window.ClinicalOrdersKit || {}, (functi
 
     window.deleteNurseClinicalRequest = function (type, id, name) {
         triggerHistoryDelete(type, id, null, name);
+    };
+
+    window.deleteEncounter = function (id, encounterDate) {
+        var encName = encounterDate ? ('Encounter from ' + encounterDate) : ('Encounter #' + id);
+        triggerHistoryDelete('encounter', id, null, encName);
     };
 
     function removeItem(config) {
@@ -3522,4 +3533,1104 @@ window.deleteNurseClinicalRequest = window.deleteNurseClinicalRequest || functio
         }
     });
 };
+
+// =========================================================================
+// REUSABLE PROCEDURE BOOKING CONFIGURATOR (Shared Inline Flow)
+// Used across Doctor, Nurse, Maternity, and Surgery Workbenches
+// =========================================================================
+window.ClinicalOrdersKit = window.ClinicalOrdersKit || {};
+window.ClinicalOrdersKit._procConfigs = window.ClinicalOrdersKit._procConfigs || {};
+
+/**
+ * Generate standard HTML markup for Procedure Booking Configurator Card
+ * Used in dynamic JS workbenches (e.g., Maternity ANC) for complete consistency with Blade partial.
+ */
+ClinicalOrdersKit.renderProcedureConfiguratorHtml = function(prefix, options) {
+    prefix = prefix || 'proc_';
+    options = options || {};
+    var cancelHandler = options.cancelHandler || ("ClinicalOrdersKit.cancelProcedureConfig('" + prefix + "')");
+    var submitHandler = options.submitHandler || ("ClinicalOrdersKit.submitProcedureConfig('" + prefix + "')");
+    var submitLabel = options.submitLabel || 'Add Procedure';
+    var customPriceEnabled = options.customPriceEnabled !== undefined 
+        ? Boolean(options.customPriceEnabled) 
+        : Boolean(window.WORKBENCH_CONFIG && window.WORKBENCH_CONFIG.allowDoctorSetPrice);
+
+    var customModeBadge = customPriceEnabled 
+        ? '<span class="badge bg-warning text-dark border border-warning-subtle"><i class="fa fa-clock me-1"></i> Custom Pricing Mode</span>' 
+        : '';
+
+    var billingAlert = customPriceEnabled
+        ? '<div class="alert alert-info py-2 px-3 mb-3 small rounded d-flex align-items-center justify-content-between">' +
+          '  <div><i class="fa fa-info-circle me-2 text-info"></i>' +
+          '  <strong>Base Fee Billing Deferred:</strong> Custom procedure pricing is active for this facility. Procedure base fee and consumable itemizations will be billed in the <strong>Procedure Workbench</strong> upon execution.</div>' +
+          '  <span class="badge bg-warning text-dark"><i class="fa fa-clock me-1"></i> Deferred Billing</span>' +
+          '</div><input type="hidden" id="' + prefix + 'defer_billing" value="1">'
+        : '<div class="alert alert-light py-2 px-3 mb-3 small rounded border d-flex align-items-center justify-content-between">' +
+          '  <div><i class="fa fa-tag me-2 text-secondary"></i>' +
+          '  <strong>Standard Tariff Billing:</strong> Procedure will be billed according to the standard hospital catalog / HMO tariff.</div>' +
+          '  <span class="badge bg-secondary"><i class="fa fa-receipt me-1"></i> Standard Tariff</span>' +
+          '</div><input type="hidden" id="' + prefix + 'defer_billing" value="0">';
+
+    return '<div id="' + prefix + 'config_card" class="proc-config-card mb-4 shadow-sm border rounded bg-white" style="display: none;">' +
+        '<div class="proc-config-header p-3 bg-light border-bottom d-flex justify-content-between align-items-center rounded-top">' +
+            '<div class="d-flex align-items-center gap-2 flex-wrap">' +
+                '<span class="badge bg-primary text-uppercase" id="' + prefix + 'config_category">Procedure</span>' +
+                '<span id="' + prefix + 'config_surgical_badge" class="badge bg-danger" style="display: none;"><i class="fa fa-cut me-1"></i> Surgical (OR)</span>' +
+                '<span id="' + prefix + 'config_clinical_badge" class="badge bg-info text-dark" style="display: none;"><i class="fa fa-stethoscope me-1"></i> Bedside / Minor</span>' +
+                '<h5 class="mb-0 fw-bold text-dark" id="' + prefix + 'config_title">Selected Procedure</h5>' +
+                '<small class="text-muted fw-normal" id="' + prefix + 'config_code"></small>' +
+            '</div>' +
+            '<div class="d-flex align-items-center gap-2">' +
+                customModeBadge +
+                '<button type="button" class="btn-close ms-2" aria-label="Close" onclick="' + cancelHandler + '"></button>' +
+            '</div>' +
+        '</div>' +
+        '<div class="p-3">' +
+            billingAlert +
+            '<input type="hidden" id="' + prefix + 'total_price" value="0">' +
+            '<input type="hidden" id="' + prefix + 'coverage_mode" value="cash">' +
+            '<input type="hidden" id="' + prefix + 'payable_amount" value="0">' +
+            '<input type="hidden" id="' + prefix + 'claims_amount" value="0">' +
+            '<div class="row g-3 mb-3">' +
+                '<div class="col-md-6">' +
+                    '<div class="border rounded p-3 h-100 bg-light-subtle">' +
+                        '<div class="fw-bold small text-secondary mb-2"><i class="fa fa-calendar-check text-primary me-1"></i> Scheduling &amp; Location</div>' +
+                        '<div class="row g-2">' +
+                            '<div class="col-12 mb-2">' +
+                                '<label for="' + prefix + 'priority" class="form-label small fw-bold mb-1">Priority</label>' +
+                                '<select class="form-select form-select-sm" id="' + prefix + 'priority">' +
+                                    '<option value="routine">Routine</option>' +
+                                    '<option value="urgent">Urgent</option>' +
+                                    '<option value="emergency">Emergency</option>' +
+                                '</select>' +
+                            '</div>' +
+                            '<div class="col-6">' +
+                                '<label for="' + prefix + 'scheduled_date" class="form-label small fw-semibold mb-1">Date (Optional)</label>' +
+                                '<input type="date" class="form-control form-control-sm" id="' + prefix + 'scheduled_date">' +
+                            '</div>' +
+                            '<div class="col-6">' +
+                                '<label for="' + prefix + 'scheduled_time" class="form-label small fw-semibold mb-1">Time (Optional)</label>' +
+                                '<input type="time" class="form-control form-control-sm" id="' + prefix + 'scheduled_time">' +
+                            '</div>' +
+                            '<div class="col-12 mt-2">' +
+                                '<label for="' + prefix + 'operating_room" class="form-label small fw-semibold mb-1" id="' + prefix + 'operating_room_label">Theatre / Room (Optional)</label>' +
+                                '<input type="text" class="form-control form-control-sm" id="' + prefix + 'operating_room" placeholder="e.g. Main OR 1 / Minor Procedure Room / Ward Bedside">' +
+                            '</div>' +
+                        '</div>' +
+                    '</div>' +
+                '</div>' +
+                '<div class="col-md-6">' +
+                    '<div class="border rounded p-3 h-100 bg-light-subtle d-flex flex-column">' +
+                        '<div class="fw-bold small text-secondary mb-2"><i class="fa fa-notes-medical text-info me-1"></i> Clinical Indications &amp; Notes</div>' +
+                        '<textarea class="form-control form-control-sm flex-grow-1" id="' + prefix + 'pre_notes" rows="5" placeholder="Clinical indications, procedure notes, diagnostic findings, special patient instructions..."></textarea>' +
+                    '</div>' +
+                '</div>' +
+            '</div>' +
+            '<div id="' + prefix + 'surgical_prep_box" class="border border-danger-subtle bg-danger-subtle bg-opacity-10 rounded p-3 mb-3" style="display: none;">' +
+                '<div class="d-flex justify-content-between align-items-center mb-2 pb-1 border-bottom border-danger-subtle">' +
+                    '<div class="fw-bold small text-danger"><i class="fa fa-cut me-1"></i> Surgical Preparation &amp; Anesthesia Plan (Pre-Op)</div>' +
+                    '<span class="badge bg-danger">Theatre Protocol</span>' +
+                '</div>' +
+                '<div class="row g-2">' +
+                    '<div class="col-md-3">' +
+                        '<label for="' + prefix + 'npo_status" class="form-label small fw-bold mb-1">Fasting (NPO) Status</label>' +
+                        '<select class="form-select form-select-sm" id="' + prefix + 'npo_status">' +
+                            '<option value="npo_midnight">NPO from Midnight (Standard)</option>' +
+                            '<option value="6_hours_fast">Fasting 6h Pre-Op</option>' +
+                            '<option value="clear_fluids_2h">Clear Fluids Up to 2h</option>' +
+                            '<option value="emergency_none">Emergency (No Fasting)</option>' +
+                        '</select>' +
+                    '</div>' +
+                    '<div class="col-md-3">' +
+                        '<label for="' + prefix + 'anesthesia_type" class="form-label small fw-bold mb-1">Anesthesia Plan</label>' +
+                        '<select class="form-select form-select-sm" id="' + prefix + 'anesthesia_type">' +
+                            '<option value="general">General Anesthesia (GA)</option>' +
+                            '<option value="spinal">Spinal / Subarachnoid Block</option>' +
+                            '<option value="epidural">Epidural Anesthesia</option>' +
+                            '<option value="regional_block">Regional / Nerve Block</option>' +
+                            '<option value="sedation_local">Local Anesthesia + IV Sedation</option>' +
+                            '<option value="local_only">Local Anesthesia Only</option>' +
+                        '</select>' +
+                    '</div>' +
+                    '<div class="col-md-3">' +
+                        '<label for="' + prefix + 'surgical_consent" class="form-label small fw-bold mb-1">Surgical Consent</label>' +
+                        '<select class="form-select form-select-sm" id="' + prefix + 'surgical_consent">' +
+                            '<option value="required">Required (Form to be Signed)</option>' +
+                            '<option value="already_signed">Consent Form Signed &amp; Attached</option>' +
+                            '<option value="emergency_implied">Emergency Implied Consent</option>' +
+                        '</select>' +
+                    '</div>' +
+                    '<div class="col-md-3 d-flex align-items-center pt-3">' +
+                        '<div class="form-check form-switch mb-0">' +
+                            '<input class="form-check-input" type="checkbox" id="' + prefix + 'blood_required" style="cursor: pointer;">' +
+                            '<label class="form-check-label small fw-bold text-danger" for="' + prefix + 'blood_required" style="cursor: pointer;">' +
+                                '<i class="fa fa-tint me-1"></i> G&amp;X / Blood on Standby' +
+                            '</label>' +
+                        '</div>' +
+                    '</div>' +
+                    '<div class="col-12 mt-2">' +
+                        '<input type="text" class="form-control form-control-sm" id="' + prefix + 'surgical_prep_notes" placeholder="Pre-Op Instructions: e.g. Pre-medication, surgical site prep, prophylactic antibiotics, special implants/staplers...">' +
+                    '</div>' +
+                '</div>' +
+            '</div>' +
+            '<div id="' + prefix + 'clinical_prep_box" class="border border-info-subtle bg-info-subtle bg-opacity-10 rounded p-3 mb-3" style="display: none;">' +
+                '<div class="d-flex justify-content-between align-items-center mb-2 pb-1 border-bottom border-info-subtle">' +
+                    '<div class="fw-bold small text-dark"><i class="fa fa-stethoscope text-info me-1"></i> Bedside Preparation &amp; Clinical Consumables</div>' +
+                    '<span class="badge bg-info text-dark">Bedside Protocol</span>' +
+                '</div>' +
+                '<div class="row g-2">' +
+                    '<div class="col-md-4">' +
+                        '<label for="' + prefix + 'clinical_pack" class="form-label small fw-bold mb-1">Procedure Pack / Kit</label>' +
+                        '<select class="form-select form-select-sm" id="' + prefix + 'clinical_pack">' +
+                            '<option value="routine_pack">Standard Treatment Pack</option>' +
+                            '<option value="sterile_dressing_kit">Sterile Dressing Kit</option>' +
+                            '<option value="biopsy_pack">Biopsy Pack &amp; Formalin Container</option>' +
+                            '<option value="catheter_kit">Catheterization Kit</option>' +
+                            '<option value="suture_pack">Suture Pack &amp; Instrument Tray</option>' +
+                        '</select>' +
+                    '</div>' +
+                    '<div class="col-md-4">' +
+                        '<label for="' + prefix + 'clinical_consent" class="form-label small fw-bold mb-1">Informed Consent</label>' +
+                        '<select class="form-select form-select-sm" id="' + prefix + 'clinical_consent">' +
+                            '<option value="routine_explained">Routine Clinical Explanation Given</option>' +
+                            '<option value="written_form">Written Minor Consent Form</option>' +
+                            '<option value="not_required">Not Required</option>' +
+                        '</select>' +
+                    '</div>' +
+                    '<div class="col-md-4">' +
+                        '<label for="' + prefix + 'observation_plan" class="form-label small fw-bold mb-1">Post-Procedure Observation</label>' +
+                        '<select class="form-select form-select-sm" id="' + prefix + 'observation_plan">' +
+                            '<option value="immediate">Immediate Outpatient Discharge</option>' +
+                            '<option value="30_min">30 Minutes Bedside Observation</option>' +
+                            '<option value="extended">Extended Observation / Ward Transfer</option>' +
+                        '</select>' +
+                    '</div>' +
+                    '<div class="col-12 mt-2">' +
+                        '<input type="text" class="form-control form-control-sm" id="' + prefix + 'clinical_prep_notes" placeholder="Specific consumables or wound instructions (e.g. Chlorhexidine scrub, 1% Lignocaine local, Aquacel dressing)...">' +
+                    '</div>' +
+                '</div>' +
+            '</div>' +
+            '<div class="d-flex justify-content-between align-items-center pt-2 border-top">' +
+                '<div class="text-muted small" id="' + prefix + 'summary_text">Ready to add procedure</div>' +
+                '<div class="d-flex gap-2">' +
+                    '<button type="button" class="btn btn-secondary btn-sm" onclick="' + cancelHandler + '"><i class="fa fa-times"></i> Cancel</button>' +
+                    '<button type="button" class="btn btn-primary btn-sm" id="' + prefix + 'add_btn" onclick="' + submitHandler + '"><i class="fa fa-plus-circle"></i> ' + submitLabel + '</button>' +
+                '</div>' +
+            '</div>' +
+        '</div>' +
+    '</div>';
+};
+
+ClinicalOrdersKit.bindProcedureConfigurator = function(config) {
+    if (!config || !config.prefix) return;
+    ClinicalOrdersKit._procConfigs[config.prefix] = config;
+
+    $('#' + config.prefix + 'priority').off('change.procCfg').on('change.procCfg', function() {
+        ClinicalOrdersKit.updateProcedureSummary(config.prefix);
+    });
+};
+
+ClinicalOrdersKit.updateProcedureSummary = function(prefix) {
+    var cfg = ClinicalOrdersKit._procConfigs[prefix] || {};
+    var proc = cfg.selectedProc;
+    if (!proc) {
+        $('#' + prefix + 'summary_text').text('Ready to add procedure');
+        return;
+    }
+    var priority = $('#' + prefix + 'priority').val() || 'routine';
+    var priorityLabel = priority.charAt(0).toUpperCase() + priority.slice(1);
+    var isSurg = Boolean(proc.is_surgical);
+    var typeBadge = isSurg
+        ? '<span class="badge bg-danger me-1"><i class="fa fa-cut"></i> Surgical</span>'
+        : '<span class="badge bg-info text-dark me-1"><i class="fa fa-stethoscope"></i> Bedside</span>';
+
+    var deferVal = parseInt($('#' + prefix + 'defer_billing').val()) || 0;
+    var billingText = deferVal === 1
+        ? '<span class="text-warning fw-semibold"><i class="fa fa-clock"></i> Fee Deferred</span>'
+        : '<span class="text-success"><i class="fa fa-receipt"></i> Standard Tariff</span>';
+
+    $('#' + prefix + 'summary_text').html(typeBadge + ' ' + billingText + ' &bull; <span class="text-secondary">Priority: ' + priorityLabel + '</span>');
+};
+
+ClinicalOrdersKit.selectProcedureForBooking = function(prefix, procedure) {
+    var cfg = ClinicalOrdersKit._procConfigs[prefix];
+    if (!cfg) {
+        ClinicalOrdersKit._procConfigs[prefix] = { prefix: prefix };
+        cfg = ClinicalOrdersKit._procConfigs[prefix];
+    }
+    cfg.selectedProc = procedure;
+
+    var isFreeForm = String(procedure.id).startsWith('FF_');
+    var category = procedure.procedure_category
+        || (typeof procedure.category === 'object' ? procedure.category?.category_name : procedure.category)
+        || (isFreeForm ? 'Free-form' : 'Procedures');
+
+    $('#' + prefix + 'config_title').text(procedure.service_name || 'Procedure');
+    $('#' + prefix + 'config_code').text(procedure.service_code || (isFreeForm ? 'Free-form Request' : ''));
+    $('#' + prefix + 'config_category').text(category);
+
+    var isSurgical = Boolean(procedure.is_surgical);
+    if (isSurgical) {
+        $('#' + prefix + 'config_surgical_badge').show();
+        $('#' + prefix + 'config_clinical_badge').hide();
+        $('#' + prefix + 'operating_room_label').html('<i class="fa fa-cut text-danger me-1"></i> Operating Theatre / OR Suite (Optional)');
+        $('#' + prefix + 'operating_room').attr('placeholder', 'e.g. Main OR 1 / Theatre 2');
+        $('#' + prefix + 'surgical_prep_box').slideDown(200);
+        $('#' + prefix + 'clinical_prep_box').slideUp(200);
+        $('#' + prefix + 'pre_notes').attr('placeholder', 'Pre-op diagnosis, surgical approach, implant/stapler requirements, theatre prep notes...');
+    } else {
+        $('#' + prefix + 'config_surgical_badge').hide();
+        $('#' + prefix + 'config_clinical_badge').show();
+        $('#' + prefix + 'operating_room_label').html('<i class="fa fa-stethoscope text-primary me-1"></i> Procedure Room / Bedside (Optional)');
+        $('#' + prefix + 'operating_room').attr('placeholder', 'e.g. Minor Procedure Room / Ward Bedside');
+        $('#' + prefix + 'surgical_prep_box').slideUp(200);
+        $('#' + prefix + 'clinical_prep_box').slideDown(200);
+        $('#' + prefix + 'pre_notes').attr('placeholder', 'Clinical indications, dressing type / consumables needed, patient instructions...');
+    }
+
+    if (!$('#' + prefix + 'scheduled_date').val()) {
+        try {
+            var today = new Date().toISOString().split('T')[0];
+            $('#' + prefix + 'scheduled_date').val(today);
+        } catch(e){}
+    }
+
+    ClinicalOrdersKit.updateProcedureSummary(prefix);
+
+    $('#' + prefix + 'config_card').slideDown(250);
+    var cardEl = document.getElementById(prefix + 'config_card');
+    if (cardEl) {
+        cardEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+};
+
+ClinicalOrdersKit.cancelProcedureConfig = function(prefix) {
+    var cfg = ClinicalOrdersKit._procConfigs[prefix];
+    if (cfg) {
+        cfg.selectedProc = null;
+    }
+    $('#' + prefix + 'config_card').slideUp(200);
+};
+
+ClinicalOrdersKit.submitProcedureConfig = function(prefix) {
+    var cfg = ClinicalOrdersKit._procConfigs[prefix];
+    if (!cfg || !cfg.selectedProc) {
+        if (typeof toastr !== 'undefined') toastr.warning('Please select a procedure first.');
+        return;
+    }
+    var proc = cfg.selectedProc;
+    var procId = proc.id;
+
+    if (ClinicalOrdersKit.isAlreadyAdded('procedures', procId)) {
+        if (typeof toastr !== 'undefined') toastr.warning('This procedure is already added.');
+        return;
+    }
+
+    var patientId = typeof cfg.getPatientId === 'function' ? cfg.getPatientId() : cfg.patientId;
+    if (!patientId && ClinicalOrdersKit.currentPatientId) {
+        patientId = ClinicalOrdersKit.currentPatientId;
+    }
+
+    var priority = $('#' + prefix + 'priority').val() || 'routine';
+    var scheduledDate = $('#' + prefix + 'scheduled_date').val() || null;
+    var scheduledTime = $('#' + prefix + 'scheduled_time').val() || null;
+    var operatingRoom = $('#' + prefix + 'operating_room').val() || null;
+    var preNotes = $('#' + prefix + 'pre_notes').val() || '';
+    var deferBilling = parseInt($('#' + prefix + 'defer_billing').val()) || 0;
+
+    var isSurgical = Boolean(proc.is_surgical);
+    var prepDetails = {
+        is_surgical: isSurgical,
+        operating_room: operatingRoom
+    };
+
+    if (isSurgical) {
+        prepDetails.npo_status = $('#' + prefix + 'npo_status').val() || 'npo_midnight';
+        prepDetails.anesthesia_type = $('#' + prefix + 'anesthesia_type').val() || 'general';
+        prepDetails.consent_req = $('#' + prefix + 'surgical_consent').val() || 'required';
+        prepDetails.blood_required = $('#' + prefix + 'blood_required').is(':checked');
+        prepDetails.prep_notes = $('#' + prefix + 'surgical_prep_notes').val() || '';
+    } else {
+        prepDetails.procedure_pack = $('#' + prefix + 'clinical_pack').val() || 'routine_pack';
+        prepDetails.consent_req = $('#' + prefix + 'clinical_consent').val() || 'routine_explained';
+        prepDetails.observation_plan = $('#' + prefix + 'observation_plan').val() || 'immediate';
+        prepDetails.prep_notes = $('#' + prefix + 'clinical_prep_notes').val() || '';
+    }
+
+    var csrfToken = $('meta[name="csrf-token"]').attr('content');
+    var payload = {
+        service_id: procId,
+        patient_id: patientId,
+        priority: priority,
+        scheduled_date: scheduledDate,
+        scheduled_time: scheduledTime,
+        operating_room: operatingRoom,
+        pre_notes: preNotes,
+        defer_billing: deferBilling,
+        prep_details: prepDetails
+    };
+
+    var priorityClass = { routine: 'bg-success', urgent: 'bg-warning text-dark', emergency: 'bg-danger' }[priority] || 'bg-secondary';
+    var priorityLabel = priority.charAt(0).toUpperCase() + priority.slice(1);
+    var isFreeForm = String(procId).startsWith('FF_');
+    var payable = proc.payable_amount !== undefined && proc.payable_amount !== null ? proc.payable_amount : (proc.price && proc.price.sale_price !== undefined ? proc.price.sale_price : 0);
+
+    ClinicalOrdersKit.addItem({
+        url: cfg.submitUrl,
+        payload: payload,
+        csrfToken: csrfToken,
+        tableSelector: cfg.tableSelector || ('#' + prefix + 'selected-procedures'),
+        type: 'procedures',
+        referenceId: procId,
+        buildRowHtml: function(resp) {
+            var rowRecordId = resp.id || resp.item?.id || procId;
+            var nameHtml = isFreeForm
+                ? '<h6 class="mb-0"><span class="badge bg-info text-dark">' + (proc.service_name || 'N/A').replace(' [Free-form]', '') + '</span></h6>'
+                : '<strong>' + (proc.service_name || 'N/A') + '</strong><br><small class="text-muted">' + (proc.service_code || '') + '</small>';
+
+            var typeBadge = isSurgical
+                ? '<span class="badge bg-danger-subtle text-danger border border-danger-subtle ms-1"><i class="fa fa-cut"></i> SURGICAL</span>'
+                : '<span class="badge bg-info-subtle text-info border border-info-subtle ms-1"><i class="fa fa-stethoscope"></i> BEDSIDE</span>';
+
+            var schedHtml = '<span class="badge ' + priorityClass + '">' + priorityLabel + '</span>';
+            if (scheduledDate) schedHtml += '<br><small><i class="fa fa-calendar-alt"></i> ' + scheduledDate + (scheduledTime ? ' ' + scheduledTime : '') + '</small>';
+            if (operatingRoom) schedHtml += '<br><small class="text-muted"><i class="fa fa-map-marker-alt"></i> ' + operatingRoom + '</small>';
+
+            var prepPill = '';
+            if (isSurgical) {
+                var npo = prepDetails.npo_status ? prepDetails.npo_status.replace(/_/g, ' ') : '';
+                prepPill = '<br><small class="badge bg-danger-subtle text-danger border border-danger-subtle">NPO: ' + npo + '</small>';
+            } else if (prepDetails.procedure_pack) {
+                prepPill = '<br><small class="badge bg-info-subtle text-info border border-info-subtle">Pack: ' + prepDetails.procedure_pack.replace(/_/g, ' ') + '</small>';
+            }
+
+            var priceHtml = deferBilling ? '<span class="badge bg-warning text-dark"><i class="fa fa-clock"></i> Fee Deferred</span>' : ('NGN ' + payable);
+
+            var removeFn = cfg.removeHandler ? (cfg.removeHandler + '(this, ' + rowRecordId + ', ' + procId + ')') : ('ClinicalOrdersKit.removeConfiguredRow(this, \'' + prefix + '\', ' + rowRecordId + ', ' + procId + ')');
+
+            return '<tr data-record-id="' + rowRecordId + '" data-record-type="procedure" data-service-id="' + procId + '">' +
+                '<td>' + nameHtml + typeBadge + prepPill +
+                (preNotes ? '<br><small class="text-info"><i class="fa fa-sticky-note"></i> ' + preNotes.substring(0, 60) + '</small>' : '') + '</td>' +
+                '<td>' + priceHtml + '</td>' +
+                '<td>' + schedHtml + '</td>' +
+                '<td><button class="btn btn-sm btn-danger" onclick="' + removeFn + '"><span class="co-remove-btn"><i class="fa fa-times"></i></span></button></td>' +
+            '</tr>';
+        },
+        onSuccess: function(resp) {
+            ClinicalOrdersKit.cancelProcedureConfig(prefix);
+            if (typeof cfg.onSuccess === 'function') {
+                cfg.onSuccess(resp);
+            }
+        }
+    });
+};
+
+ClinicalOrdersKit.removeConfiguredRow = function(btn, prefix, recordId, serviceId) {
+    var cfg = ClinicalOrdersKit._procConfigs[prefix] || {};
+    var deleteUrl = cfg.deleteUrlBase ? (cfg.deleteUrlBase + '/' + recordId) : ('/nursing-workbench/clinical-requests/procedures/' + recordId);
+    ClinicalOrdersKit.showDeleteConfirmation({
+        type: 'procedure',
+        itemName: 'Procedure Request',
+        onConfirm: function(reason, callback) {
+            $.ajax({
+                url: deleteUrl,
+                type: 'DELETE',
+                headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') },
+                data: { reason: reason },
+                success: function(response) {
+                    callback(true);
+                    if (response.success) {
+                        $(btn).closest('tr').remove();
+                        ClinicalOrdersKit.untrackId('procedures', serviceId);
+                        toastr.success('Deleted successfully');
+                        if (typeof cfg.onSuccess === 'function') {
+                            cfg.onSuccess();
+                        }
+                    }
+                },
+                error: function() {
+                    callback(false);
+                    toastr.error('Delete failed');
+                }
+            });
+        }
+    });
+};
+
+/**
+ * Shared combo application handler across ALL workbenches
+ * (new_encounter, nurse, maternity, lab, imaging, pharmacy).
+ *
+ * @param {number|string} comboId - ID of the combo Service
+ * @param {object} [opts] - Options:
+ *   - patientId: Patient ID (falls back to workbench config / DOM)
+ *   - encounterId: Encounter ID (falls back to workbench config / DOM)
+ *   - enrollmentId: Maternity enrollment ID
+ *   - treatmentPlanId: Treatment plan ID (falls back to active plan)
+ *   - treatmentPlanName: Treatment plan name (falls back to active plan)
+ *   - url / route: Apply URL override
+ *   - note: Optional clinical note
+ *   - onSuccess: Custom success callback
+ *   - onError: Custom error callback
+ */
+ClinicalOrdersKit.applyCombo = function(comboId, opts) {
+    opts = opts || {};
+    var comboData = (window.comboDataMap || {})[comboId] || opts.comboData || {};
+    var name = opts.name || comboData.service_name || comboData.product_name || 'Combo';
+    var bundleItems = opts.bundleItems || comboData.bundle_items || [];
+    var price = parseFloat(opts.price != null ? opts.price : (comboData.base_price || comboData.price || 0));
+    var payable = parseFloat(opts.payable != null ? opts.payable : (comboData.payable_amount != null ? comboData.payable_amount : price));
+    var claims = parseFloat(opts.claims != null ? opts.claims : (comboData.claims_amount || 0));
+    var mode = opts.mode || comboData.coverage_mode || null;
+
+    // Dismiss common search dropdowns & inputs across all workbenches
+    $(
+        '#consult_invest_res, #consult_imaging_res, #consult_presc_res, ' +
+        '#cr_lab_results, #cr_presc_results, #mco_lab_results, #mco_imaging_results, ' +
+        '#service-search-results, #product-search-results, #pharmacy_product_search_results'
+    ).html('').hide();
+
+    $(
+        '#consult_invest_search, #consult_imaging_search, #consult_presc_search, ' +
+        '#cr_lab_search, #cr_presc_search, #mco_lab_search, #mco_imaging_search, ' +
+        '#service-search-input, #product-search-input, #pharmacy_product_search_input'
+    ).val('');
+
+    // Resolve context IDs
+    var patientId = opts.patientId ||
+        (window.WORKBENCH_CONFIG && window.WORKBENCH_CONFIG.patientId) ||
+        window.patientId ||
+        window.currentPatient ||
+        $('#patient_id').val() ||
+        '';
+
+    var encounterId = opts.encounterId ||
+        (window.WORKBENCH_CONFIG && window.WORKBENCH_CONFIG.encounterId) ||
+        window.encounterId ||
+        $('#encounter_id').val() ||
+        null;
+
+    var enrollmentId = opts.enrollmentId ||
+        window.enrollmentId ||
+        (window.WORKBENCH_CONFIG && window.WORKBENCH_CONFIG.enrollmentId) ||
+        null;
+
+    var activePlan = window._activeTreatmentPlan || null;
+    var treatmentPlanId = opts.treatmentPlanId || (activePlan ? activePlan.id : null) || $('#treatment_plan_id').val() || null;
+    var treatmentPlanName = opts.treatmentPlanName || (activePlan ? activePlan.name : null) || $('#treatment_plan_name').val() || null;
+
+    // Auto-resolve destination URL based on workbench context if not provided
+    var targetUrl = opts.url || opts.route;
+    if (!targetUrl || targetUrl === '/encounters/applyCombo') {
+        if (window.INVEST_RES_SOURCE === 'imaging_workbench' || window.currentWorkbenchRole === 'imaging') {
+            targetUrl = (typeof wbRoute === 'function' ? wbRoute('imaging.applyCombo', '/imaging-workbench/clinical-requests/apply-combo') : '/imaging-workbench/clinical-requests/apply-combo');
+        } else if (window.INVEST_RES_SOURCE === 'lab_workbench' || (typeof LabWorkbench !== 'undefined')) {
+            targetUrl = (typeof wbRoute === 'function' ? wbRoute('lab.applyCombo', '/lab-workbench/apply-combo') : '/lab-workbench/apply-combo');
+        } else if (enrollmentId || (window.location && window.location.pathname.indexOf('/maternity-workbench') !== -1)) {
+            targetUrl = '/maternity-workbench/enrollment/' + (enrollmentId || '0') + '/apply-combo';
+        } else if (window.currentWorkbenchRole === 'nurse' || (window.location && window.location.pathname.indexOf('/nursing-workbench') !== -1)) {
+            targetUrl = (typeof wbRoute === 'function' ? wbRoute('nursing-workbench.clinical-requests.applyCombo', '/nursing-workbench/clinical-requests/apply-combo') : '/nursing-workbench/clinical-requests/apply-combo');
+        } else if (window.currentWorkbenchRole === 'pharmacy' || (window.location && window.location.pathname.indexOf('/pharmacy-workbench') !== -1)) {
+            targetUrl = (typeof wbRoute === 'function' ? wbRoute('pharmacy.applyCombo', '/pharmacy-workbench/apply-combo') : '/pharmacy-workbench/apply-combo');
+        } else {
+            // Doctor Encounter context
+            if (encounterId) {
+                targetUrl = '/encounters/' + encounterId + '/apply-combo';
+            } else if (typeof wbRoute === 'function') {
+                targetUrl = wbRoute('encounters.applyCombo', '/encounters/apply-combo');
+            } else {
+                targetUrl = '/encounters/apply-combo';
+            }
+        }
+    }
+
+    var postData = {
+        service_id: comboId,
+        patient_id: patientId || undefined,
+        encounter_id: encounterId || undefined,
+        treatment_plan_id: treatmentPlanId,
+        treatment_plan_name: treatmentPlanName,
+        note: opts.note || ''
+    };
+
+    function doApply() {
+        var csrfToken = $('meta[name="csrf-token"]').attr('content') ||
+            (window.WORKBENCH_CONFIG && window.WORKBENCH_CONFIG.csrf) ||
+            '';
+
+        $.ajax({
+            type: 'POST',
+            url: targetUrl,
+            headers: {
+                'X-CSRF-TOKEN': csrfToken,
+                'Accept': 'application/json'
+            },
+            data: JSON.stringify(postData),
+            contentType: 'application/json',
+            dataType: 'json',
+            success: function(response) {
+                if (response.success) {
+                    toastr.success(response.message || 'Combo applied — all items added.', 'Combo Applied', { timeOut: 5000 });
+
+                    // Automatic refresh triggers across workbenches
+                    if ($.fn.DataTable) {
+                        if ($.fn.DataTable.isDataTable('#investigation_history_list')) {
+                            $('#investigation_history_list').DataTable().ajax.reload(null, false);
+                        }
+                        if ($.fn.DataTable.isDataTable('#imaging_history_list')) {
+                            $('#imaging_history_list').DataTable().ajax.reload(null, false);
+                        }
+                        if ($.fn.DataTable.isDataTable('#presc_history_list')) {
+                            $('#presc_history_list').DataTable().ajax.reload(null, false);
+                        }
+                        if ($.fn.DataTable.isDataTable('#presc_history_table')) {
+                            $('#presc_history_table').DataTable().ajax.reload(null, false);
+                        }
+                        if ($.fn.DataTable.isDataTable('#procedure_history_list')) {
+                            $('#procedure_history_list').DataTable().ajax.reload(null, false);
+                        }
+                    }
+
+                    if (typeof refreshProceduresList === 'function') { refreshProceduresList(); }
+                    if (typeof initPrescHistory === 'function') { initPrescHistory(); }
+                    if (typeof initLabHistory === 'function') { initLabHistory(); }
+                    if (typeof loadLabServices === 'function') { loadLabServices(); }
+                    if (typeof loadImagingServices === 'function') { loadImagingServices(); }
+                    if (typeof initMaternityLabsHistory === 'function') { initMaternityLabsHistory(); }
+                    if (typeof initMaternityImagingHistory === 'function') { initMaternityImagingHistory(); }
+                    if (typeof loadClinicalOrdersTab === 'function') { loadClinicalOrdersTab(); }
+                    if (typeof LabWorkbench !== 'undefined' && typeof LabWorkbench.refreshPendingQueue === 'function') {
+                        LabWorkbench.refreshPendingQueue();
+                    }
+                    if (typeof PharmacyWorkbench !== 'undefined' && typeof PharmacyWorkbench.loadQueue === 'function') {
+                        PharmacyWorkbench.loadQueue();
+                    }
+
+                    if (typeof opts.onSuccess === 'function') {
+                        opts.onSuccess(response);
+                    }
+                } else {
+                    var err = response.message || 'Failed to apply combo';
+                    toastr.error(err, 'Error');
+                    if (typeof opts.onError === 'function') { opts.onError(response); }
+                }
+            },
+            error: function(xhr) {
+                var msg = (xhr.responseJSON && xhr.responseJSON.message) ? xhr.responseJSON.message : ('Network error: ' + xhr.statusText);
+                toastr.error(msg, 'Error', { timeOut: 5000 });
+                if (typeof opts.onError === 'function') { opts.onError(xhr); }
+            }
+        });
+    }
+
+    if (typeof ComboConfirmModal !== 'undefined' && ComboConfirmModal.show) {
+        ComboConfirmModal.show({
+            name        : name,
+            bundleItems : bundleItems,
+            price       : price,
+            payable     : payable,
+            claims      : claims,
+            mode        : mode,
+            onConfirm   : doApply
+        });
+    } else {
+        // Fallback if modal HTML is not present on the page
+        if (confirm('Apply combo bundle "' + name + '"?')) {
+            doApply();
+        }
+    }
+};
+
+/**
+ * Global Combo View & Remove Modals — Shared across all workbenches
+ */
+window.BundleViewModal = window.BundleViewModal || (function() {
+    function ensureModal() {
+        if (!document.getElementById('bundleViewModal')) {
+            var modalHtml = '<div class="modal fade" id="bundleViewModal" tabindex="-1" role="dialog" aria-labelledby="bundleViewModalLabel" aria-hidden="true" style="z-index: 10650;">' +
+                '<div class="modal-dialog modal-lg" role="document">' +
+                    '<div class="modal-content">' +
+                        '<div class="modal-header bg-light">' +
+                            '<h5 class="modal-title" id="bundleViewModalLabel">' +
+                                '<i class="fa fa-cube text-primary me-2"></i> Combo Details' +
+                            '</h5>' +
+                            '<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>' +
+                        '</div>' +
+                        '<div class="modal-body">' +
+                            '<div id="bundleViewContent">' +
+                                '<div class="spinner-border spinner-border-sm" role="status">' +
+                                    '<span class="visually-hidden">Loading...</span>' +
+                                '</div>' +
+                            '</div>' +
+                        '</div>' +
+                        '<div class="modal-footer bg-light">' +
+                            '<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>' +
+                        '</div>' +
+                    '</div>' +
+                '</div>' +
+            '</div>';
+            $('body').append(modalHtml);
+        }
+    }
+
+    function show(bundleData) {
+        ensureModal();
+        bundleData = bundleData || {};
+        var rawItems = bundleData.items || bundleData.bundle_items || [];
+        var items = rawItems.map(function(item) {
+            return {
+                name: item.name || item.service_name || item.product_name || 'Item',
+                code: item.code || item.service_code || item.product_code || null,
+                qty: item.qty || 1,
+                price: item.price || item.payable_amount || item.amount || 0
+            };
+        });
+
+        var payable = parseFloat(bundleData.payable_amount || 0);
+        var claims = parseFloat(bundleData.claims_amount || 0);
+
+        var rowsHtml = '';
+        if (items.length > 0) {
+            rowsHtml = items.map(function(item) {
+                var codeText = item.code ? '<br><small class="text-muted">Code: ' + item.code + '</small>' : '';
+                return '<tr>' +
+                    '<td><strong>' + (item.name || 'Item') + '</strong>' + codeText + '</td>' +
+                    '<td class="text-center">' + (item.qty || 1) + '</td>' +
+                    '<td class="text-end">₦' + parseFloat(item.price || 0).toLocaleString('en-NG', {minimumFractionDigits: 2}) + '</td>' +
+                '</tr>';
+            }).join('');
+        }
+
+        var coverageHtml = bundleData.coverage_mode ? '<div class="alert alert-info alert-sm py-2 mb-3"><small><strong>Coverage:</strong> ' + String(bundleData.coverage_mode).toUpperCase() + '</small></div>' : '';
+
+        var html = '<div class="card-modern border-0">' +
+            '<div class="card-body">' +
+                '<h6 class="card-title text-primary fw-bold mb-1">' + (bundleData.name || bundleData.service_name || 'Combo') + '</h6>' +
+                '<small class="text-muted d-block mb-3">Code: <code>' + (bundleData.service_code || 'N/A') + '</code></small>' +
+                '<div class="row mb-3">' +
+                    '<div class="col-sm-6">' +
+                        '<div class="bg-light p-2 rounded">' +
+                            '<small class="text-muted">Patient Payable</small>' +
+                            '<div class="text-success fw-bold">₦' + payable.toLocaleString('en-NG', {minimumFractionDigits: 2}) + '</div>' +
+                        '</div>' +
+                    '</div>' +
+                    '<div class="col-sm-6">' +
+                        '<div class="bg-light p-2 rounded">' +
+                            '<small class="text-muted">HMO Claims</small>' +
+                            '<div class="text-info fw-bold">₦' + claims.toLocaleString('en-NG', {minimumFractionDigits: 2}) + '</div>' +
+                        '</div>' +
+                    '</div>' +
+                '</div>' +
+                coverageHtml +
+                '<hr>' +
+                '<h6 class="text-secondary mb-2">Combo Items (' + items.length + ')</h6>' +
+                (items.length > 0 ?
+                    '<div class="table-responsive">' +
+                        '<table class="table table-sm table-hover mb-0">' +
+                            '<thead class="table-light">' +
+                                '<tr>' +
+                                    '<th>Item</th>' +
+                                    '<th class="text-center" style="width: 60px">Qty</th>' +
+                                    '<th class="text-end" style="width: 100px">Price</th>' +
+                                '</tr>' +
+                            '</thead>' +
+                            '<tbody>' + rowsHtml + '</tbody>' +
+                        '</table>' +
+                    '</div>' : '<p class="text-muted mb-0">No items in combo</p>') +
+            '</div>' +
+        '</div>';
+
+        var contentEl = document.getElementById('bundleViewContent');
+        if (contentEl) {
+            contentEl.innerHTML = html;
+        }
+
+        var $modal = $('#bundleViewModal');
+        if (typeof $ !== 'undefined' && $.fn && $.fn.modal) {
+            $modal.modal({ keyboard: true, backdrop: 'static' });
+            $modal.modal('show');
+        } else if (typeof bootstrap !== 'undefined' && typeof bootstrap.Modal === 'function') {
+            var inst = (typeof bootstrap.Modal.getInstance === 'function' ? bootstrap.Modal.getInstance(document.getElementById('bundleViewModal')) : null)
+                || (typeof bootstrap.Modal.getOrCreateInstance === 'function' ? bootstrap.Modal.getOrCreateInstance(document.getElementById('bundleViewModal'), { keyboard: true, backdrop: 'static' }) : null)
+                || new bootstrap.Modal(document.getElementById('bundleViewModal'), { keyboard: true, backdrop: 'static' });
+            if (inst && typeof inst.show === 'function') inst.show();
+        }
+    }
+
+    return { show: show };
+})();
+
+window.BundleRemoveModal = window.BundleRemoveModal || (function() {
+    var currentOptions = {};
+
+    function ensureModal() {
+        if (!document.getElementById('bundleRemoveModal')) {
+            var modalHtml = '<div class="modal fade" id="bundleRemoveModal" tabindex="-1" role="dialog" aria-labelledby="bundleRemoveModalLabel" aria-hidden="true" style="z-index: 10650;">' +
+                '<div class="modal-dialog modal-lg" role="document">' +
+                    '<div class="modal-content">' +
+                        '<div class="modal-header bg-danger text-white">' +
+                            '<h5 class="modal-title" id="bundleRemoveModalLabel">' +
+                                '<i class="fa fa-trash me-2"></i> Remove Combo' +
+                            '</h5>' +
+                            '<button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>' +
+                        '</div>' +
+                        '<div class="modal-body">' +
+                            '<div id="bundleRemoveContent">' +
+                                '<div class="spinner-border spinner-border-sm" role="status">' +
+                                    '<span class="visually-hidden">Loading...</span>' +
+                                '</div>' +
+                            '</div>' +
+                        '</div>' +
+                        '<div class="modal-footer bg-light">' +
+                            '<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>' +
+                            '<button type="button" class="btn btn-danger" id="bundleRemoveConfirmBtn">' +
+                                '<span id="bundleRemoveSpinner" style="display: none;">' +
+                                    '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>' +
+                                '</span>' +
+                                '<span id="bundleRemoveIcon"><i class="fa fa-trash me-1"></i></span>' +
+                                '<span id="bundleRemoveText">Remove Combo</span>' +
+                            '</button>' +
+                        '</div>' +
+                    '</div>' +
+                '</div>' +
+            '</div>';
+            $('body').append(modalHtml);
+        }
+    }
+
+    function show(options) {
+        ensureModal();
+        currentOptions = options || {};
+        var items = currentOptions.items || [];
+        var itemsListHtml = '';
+        if (items.length > 0) {
+            itemsListHtml = '<div class="list-group list-group-flush">' +
+                items.map(function(item, idx) {
+                    var codeText = item.code ? '<br><small class="text-muted">' + item.code + '</small>' : '';
+                    var childId = item.id || item.child_id;
+                    var removeBtnHtml = '';
+                    if (childId) {
+                        var safeItemName = (item.name || 'Item').replace(/'/g, "\\'");
+                        removeBtnHtml = '<button type="button" class="btn btn-outline-danger btn-sm py-0 px-2 ms-auto" ' +
+                            'onclick="window.BundleRemoveModal.removeItem(' + childId + ', \'' + safeItemName + '\')" ' +
+                            'title="Remove only this item">' +
+                            '<i class="fa fa-times me-1"></i> Remove Item' +
+                            '</button>';
+                    }
+                    return '<div class="list-group-item ps-0 border-0 py-1" id="bundle-item-row-' + (childId || idx) + '">' +
+                        '<div class="d-flex align-items-center justify-content-between">' +
+                            '<div class="d-flex align-items-start">' +
+                                '<span class="badge bg-danger me-2 mt-1">' + (idx + 1) + '</span>' +
+                                '<div><strong>' + (item.name || 'Item') + '</strong>' + codeText + '</div>' +
+                            '</div>' +
+                            removeBtnHtml +
+                        '</div>' +
+                    '</div>';
+                }).join('') +
+            '</div>';
+        } else {
+            itemsListHtml = '<p class="text-muted mb-0">No items in combo</p>';
+        }
+
+        var html = '<div class="alert alert-warning alert-sm mb-3">' +
+                '<i class="fa fa-exclamation-triangle me-1"></i>' +
+                '<strong>Remove Combo?</strong> You can remove individual items below, or remove the entire combo.' +
+            '</div>' +
+            '<div class="card-modern border-0 bg-light mb-3">' +
+                '<div class="card-body">' +
+                    '<h6 class="text-danger fw-bold mb-2">' + (currentOptions.bundleName || 'Combo') + '</h6>' +
+                    '<p class="mb-2 text-muted"><small>Combo Items:</small></p>' +
+                    itemsListHtml +
+                    '<hr class="my-2">' +
+                    '<small class="text-muted d-block">' +
+                        '<i class="fa fa-info-circle me-1"></i> Removing an item will cancel it while keeping the rest of the combo active.' +
+                    '</small>' +
+                '</div>' +
+            '</div>';
+
+        var contentEl = document.getElementById('bundleRemoveContent');
+        if (contentEl) {
+            contentEl.innerHTML = html;
+        }
+
+        var confirmBtn = document.getElementById('bundleRemoveConfirmBtn');
+        if (confirmBtn) {
+            confirmBtn.onclick = confirmRemoval;
+        }
+
+        var $modal = $('#bundleRemoveModal');
+        if (typeof $ !== 'undefined' && $.fn && $.fn.modal) {
+            $modal.modal({ keyboard: false, backdrop: 'static' });
+            $modal.modal('show');
+        } else if (typeof bootstrap !== 'undefined' && typeof bootstrap.Modal === 'function') {
+            var inst = (typeof bootstrap.Modal.getInstance === 'function' ? bootstrap.Modal.getInstance(document.getElementById('bundleRemoveModal')) : null)
+                || (typeof bootstrap.Modal.getOrCreateInstance === 'function' ? bootstrap.Modal.getOrCreateInstance(document.getElementById('bundleRemoveModal'), { keyboard: false, backdrop: 'static' }) : null)
+                || new bootstrap.Modal(document.getElementById('bundleRemoveModal'), { keyboard: false, backdrop: 'static' });
+            if (inst && typeof inst.show === 'function') inst.show();
+        }
+    }
+
+    function removeItem(childId, itemName) {
+        if (!confirm('Are you sure you want to remove "' + itemName + '" from this combo?')) {
+            return;
+        }
+
+        var removeItemUrl = currentOptions.removeItemUrl || '/service-combo/remove-item';
+        var csrfToken = $('meta[name="csrf-token"]').attr('content') ||
+            (window.WORKBENCH_CONFIG && window.WORKBENCH_CONFIG.csrf) ||
+            '';
+
+        $.ajax({
+            url: removeItemUrl,
+            method: 'POST',
+            headers: {
+                'X-CSRF-TOKEN': csrfToken,
+                'Accept': 'application/json'
+            },
+            contentType: 'application/json',
+            dataType: 'json',
+            data: JSON.stringify({ child_request_id: childId }),
+            success: function(r) {
+                if (r.success) {
+                    if (typeof toastr !== 'undefined') {
+                        toastr.success(r.message || 'Item removed from combo');
+                    }
+                    if (currentOptions.items) {
+                        currentOptions.items = currentOptions.items.filter(function(it) {
+                            return (it.id != childId && it.child_id != childId);
+                        });
+                        if (currentOptions.items.length === 0) {
+                            var $modal = $('#bundleRemoveModal');
+                            if (typeof $ !== 'undefined' && $.fn && $.fn.modal) {
+                                $modal.modal('hide');
+                            }
+                        } else {
+                            show(currentOptions);
+                        }
+                    }
+                    [
+                        '#investigation_history_list',
+                        '#imaging_history_list',
+                        '#presc_history_list',
+                        '#presc_history_table',
+                        '#cr_presc_history_list',
+                        '#cr_lab_history_list',
+                        '#cr_imaging_history_list',
+                        '#mco_presc_history_list',
+                        '#mco_lab_history_list',
+                        '#mco_imaging_history_list',
+                        '#procedure_history_list',
+                        '#cr_proc_history_list'
+                    ].forEach(function(selector) {
+                        if ($.fn.DataTable && $.fn.DataTable.isDataTable(selector)) {
+                            $(selector).DataTable().ajax.reload(null, false);
+                        }
+                    });
+                    if (typeof initPrescHistory === 'function') { initPrescHistory(); }
+                    if (typeof initLabHistory === 'function') { initLabHistory(); }
+                    if (typeof initImagingHistory === 'function') { initImagingHistory(); }
+                    if (typeof loadLabServices === 'function') { loadLabServices(); }
+                    if (typeof loadImagingServices === 'function') { loadImagingServices(); }
+                } else {
+                    if (typeof toastr !== 'undefined') {
+                        toastr.error(r.message || 'Failed to remove item');
+                    }
+                }
+            },
+            error: function(xhr) {
+                var msg = (xhr.responseJSON && xhr.responseJSON.message) ? xhr.responseJSON.message : 'Error removing item';
+                if (typeof toastr !== 'undefined') {
+                    toastr.error(msg);
+                }
+            }
+        });
+    }
+
+    function confirmRemoval() {
+        if (!currentOptions.onConfirm) return;
+
+        var btn = document.getElementById('bundleRemoveConfirmBtn');
+        var spinner = document.getElementById('bundleRemoveSpinner');
+        var icon = document.getElementById('bundleRemoveIcon');
+        var text = document.getElementById('bundleRemoveText');
+
+        if (btn) btn.disabled = true;
+        if (spinner) spinner.style.display = 'inline';
+        if (icon) icon.style.display = 'none';
+        if (text) text.innerText = 'Removing...';
+
+        currentOptions.onConfirm(function(error) {
+            if (btn) btn.disabled = false;
+            if (spinner) spinner.style.display = 'none';
+            if (icon) icon.style.display = 'inline';
+            if (text) text.innerText = 'Remove Combo';
+
+            if (!error) {
+                var $modal = $('#bundleRemoveModal');
+                if (typeof $ !== 'undefined' && $.fn && $.fn.modal) {
+                    $modal.modal('hide');
+                } else if (typeof bootstrap !== 'undefined' && typeof bootstrap.Modal === 'function') {
+                    var inst = (typeof bootstrap.Modal.getInstance === 'function' ? bootstrap.Modal.getInstance(document.getElementById('bundleRemoveModal')) : null)
+                        || (typeof bootstrap.Modal.getOrCreateInstance === 'function' ? bootstrap.Modal.getOrCreateInstance(document.getElementById('bundleRemoveModal')) : null);
+                    if (inst && typeof inst.hide === 'function') inst.hide();
+                }
+            }
+        });
+    }
+
+    return { show: show, removeItem: removeItem };
+})();
+
+window.showBundleItemRemove = window.showBundleItemRemove || function(btn) {
+    var childId = btn.dataset.childId;
+    var itemName = btn.dataset.itemName || 'Item';
+    var removeItemUrl = btn.dataset.removeItemUrl || '/service-combo/remove-item';
+    var csrfToken = $('meta[name="csrf-token"]').attr('content') ||
+        (window.WORKBENCH_CONFIG && window.WORKBENCH_CONFIG.csrf) ||
+        '';
+
+    if (!childId) return;
+
+    if (!confirm('Are you sure you want to remove "' + itemName + '" from this combo?')) {
+        return;
+    }
+
+    var $btn = $(btn);
+    $btn.prop('disabled', true);
+
+    $.ajax({
+        url: removeItemUrl,
+        method: 'POST',
+        headers: {
+            'X-CSRF-TOKEN': csrfToken,
+            'Accept': 'application/json'
+        },
+        contentType: 'application/json',
+        dataType: 'json',
+        data: JSON.stringify({ child_request_id: childId }),
+        success: function(r) {
+            $btn.prop('disabled', false);
+            if (r.success) {
+                if (typeof toastr !== 'undefined') {
+                    toastr.success(r.message || 'Item removed from combo');
+                }
+                [
+                    '#investigation_history_list',
+                    '#imaging_history_list',
+                    '#presc_history_list',
+                    '#presc_history_table',
+                    '#cr_presc_history_list',
+                    '#cr_lab_history_list',
+                    '#cr_imaging_history_list',
+                    '#mco_presc_history_list',
+                    '#mco_lab_history_list',
+                    '#mco_imaging_history_list',
+                    '#procedure_history_list',
+                    '#cr_proc_history_list'
+                ].forEach(function(selector) {
+                    if ($.fn.DataTable && $.fn.DataTable.isDataTable(selector)) {
+                        $(selector).DataTable().ajax.reload(null, false);
+                    }
+                });
+                if (typeof initPrescHistory === 'function') { initPrescHistory(); }
+                if (typeof initLabHistory === 'function') { initLabHistory(); }
+                if (typeof initImagingHistory === 'function') { initImagingHistory(); }
+                if (typeof loadLabServices === 'function') { loadLabServices(); }
+                if (typeof loadImagingServices === 'function') { loadImagingServices(); }
+            } else {
+                if (typeof toastr !== 'undefined') {
+                    toastr.error(r.message || 'Failed to remove item');
+                }
+            }
+        },
+        error: function(xhr) {
+            $btn.prop('disabled', false);
+            var msg = (xhr.responseJSON && xhr.responseJSON.message) ? xhr.responseJSON.message : 'Error removing item';
+            if (typeof toastr !== 'undefined') {
+                toastr.error(msg);
+            }
+        }
+    });
+};
+
+window.showBundleRemove = window.showBundleRemove || function(btn) {
+    var parentId = btn.dataset.parentId;
+    var bundleName = btn.dataset.bundleName;
+    var items = [];
+    try {
+        items = JSON.parse(btn.dataset.items || '[]');
+    } catch (e) {
+        items = [];
+    }
+    var removeUrl = btn.dataset.removeUrl || '/service-combo/remove-bundle';
+    var removeItemUrl = btn.dataset.removeItemUrl || '/service-combo/remove-item';
+    var csrfToken = $('meta[name="csrf-token"]').attr('content') ||
+        (window.WORKBENCH_CONFIG && window.WORKBENCH_CONFIG.csrf) ||
+        '';
+
+    BundleRemoveModal.show({
+        bundleId: parentId,
+        bundleName: bundleName,
+        items: items,
+        removeItemUrl: removeItemUrl,
+        onConfirm: function(callback) {
+            $.ajax({
+                url: removeUrl,
+                method: 'POST',
+                headers: {
+                    'X-CSRF-TOKEN': csrfToken,
+                    'Accept': 'application/json'
+                },
+                contentType: 'application/json',
+                dataType: 'json',
+                data: JSON.stringify({ parent_request_id: parentId }),
+                success: function(r) {
+                    if (r.success) {
+                        if (typeof toastr !== 'undefined') {
+                            toastr.success(r.message || 'Combo removed');
+                        }
+                        callback(false);
+                        [
+                            '#investigation_history_list',
+                            '#imaging_history_list',
+                            '#presc_history_list',
+                            '#presc_history_table',
+                            '#cr_presc_history_list',
+                            '#cr_lab_history_list',
+                            '#cr_imaging_history_list',
+                            '#mco_presc_history_list',
+                            '#mco_lab_history_list',
+                            '#mco_imaging_history_list',
+                            '#procedure_history_list',
+                            '#cr_proc_history_list'
+                        ].forEach(function(selector) {
+                            if ($.fn.DataTable && $.fn.DataTable.isDataTable(selector)) {
+                                $(selector).DataTable().ajax.reload(null, false);
+                            }
+                        });
+                        if (typeof initPrescHistory === 'function') { initPrescHistory(); }
+                        if (typeof initLabHistory === 'function') { initLabHistory(); }
+                        if (typeof initImagingHistory === 'function') { initImagingHistory(); }
+                        if (typeof loadLabServices === 'function') { loadLabServices(); }
+                        if (typeof loadImagingServices === 'function') { loadImagingServices(); }
+                    } else {
+                        if (typeof toastr !== 'undefined') {
+                            toastr.error(r.message || 'Failed to remove combo');
+                        }
+                        callback(true);
+                    }
+                },
+                error: function(xhr) {
+                    var msg = (xhr.responseJSON && xhr.responseJSON.message) ? xhr.responseJSON.message : 'Error removing combo';
+                    if (typeof toastr !== 'undefined') {
+                        toastr.error(msg);
+                    }
+                    callback(true);
+                }
+            });
+        }
+    });
+};
+
+
 

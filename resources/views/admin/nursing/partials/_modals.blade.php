@@ -508,196 +508,215 @@
         </div>
     </div>
 </div>
-                    <i class="mdi mdi-stop-circle"></i> End Shift
-                </button>
-            </div>
-        </div>
-    </div>
-</div>
 
-<!-- Handovers List Modal (Cards-based with Backend Processing) -->
+<!-- Handovers List Modal (Cards-based with Master-Detail View) -->
 <div class="modal fade" id="handoversListModal" tabindex="-1" aria-labelledby="handoversListModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-xl modal-dialog-scrollable">
+    <div class="modal-dialog modal-xl modal-dialog-scrollable modal-handover-wide">
         <div class="modal-content">
-            <div class="modal-header bg-info text-white">
-                <h5 class="modal-title" id="handoversListModalLabel">
-                    <i class="mdi mdi-file-document-multiple"></i> Shift Handovers
-                </h5>
-                <button type="button" data-bs-dismiss="modal" class="btn- btn-close btn-close-white" aria-label="Close"></button>
+            <div class="modal-header bg-info text-white d-flex align-items-center justify-content-between">
+                <div class="d-flex align-items-center">
+                    <button type="button" class="btn btn-sm btn-outline-light me-2" id="back-to-handovers-list-btn" style="display: none;">
+                        <i class="mdi mdi-arrow-left"></i> Back to Handovers
+                    </button>
+                    <h5 class="modal-title mb-0" id="handoversListModalLabel">
+                        <i class="mdi mdi-file-document-multiple"></i> Shift Handovers
+                    </h5>
+                </div>
+                <button type="button" data-bs-dismiss="modal" class="btn-close btn-close-white" aria-label="Close"></button>
             </div>
             <div class="modal-body p-0">
-                <!-- Filter Panel -->
-                <div class="handover-filter-panel p-3 bg-light border-bottom">
-                    <!-- Primary Filters Row -->
-                    <div class="row g-3 mb-2">
-                        <div class="col-md-3">
-                            <label class="form-label-modern">
-                                <i class="mdi mdi-hospital-building"></i> Ward
-                            </label>
-                            <select class="form-control form-control-modern" id="handover-filter-ward">
-                                <option value="">All Wards</option>
-                            </select>
+                <!-- Master View: Filters & Cards/List -->
+                <div id="handover-master-view" class="handover-master-view">
+                    <!-- Filter Panel -->
+                    <div class="handover-filter-panel p-3 bg-light border-bottom">
+                        <!-- Primary Filters Row -->
+                        <div class="row g-3 mb-2">
+                            <div class="col-md-3">
+                                <label class="form-label-modern">
+                                    <i class="mdi mdi-hospital-building"></i> Ward
+                                </label>
+                                <select class="form-control form-control-modern" id="handover-filter-ward">
+                                    <option value="">All Wards</option>
+                                </select>
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label-modern">
+                                    <i class="mdi mdi-clock-outline"></i> Shift Type
+                                </label>
+                                <select class="form-control form-control-modern" id="handover-filter-shift">
+                                    <option value="">All Shifts</option>
+                                    <option value="morning">🌅 Morning (6AM - 2PM)</option>
+                                    <option value="afternoon">☀️ Afternoon (2PM - 10PM)</option>
+                                    <option value="night">🌙 Night (10PM - 6AM)</option>
+                                </select>
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label-modern">
+                                    <i class="mdi mdi-magnify"></i> Search
+                                </label>
+                                <input type="text" class="form-control form-control-modern" id="handover-filter-search"
+                                       placeholder="Search by nurse, summary...">
+                            </div>
+                            <div class="col-md-3 d-flex align-items-end gap-2">
+                                <button class="btn btn-primary flex-grow-1 btn-modern" id="apply-handover-filters">
+                                    <i class="mdi mdi-filter"></i> Apply Filters
+                                </button>
+                            </div>
                         </div>
-                        <div class="col-md-3">
-                            <label class="form-label-modern">
-                                <i class="mdi mdi-clock-outline"></i> Shift Type
-                            </label>
-                            <select class="form-control form-control-modern" id="handover-filter-shift">
-                                <option value="">All Shifts</option>
-                                <option value="morning">🌅 Morning (6AM - 2PM)</option>
-                                <option value="afternoon">☀️ Afternoon (2PM - 10PM)</option>
-                                <option value="night">🌙 Night (10PM - 6AM)</option>
-                            </select>
-                        </div>
-                        <div class="col-md-3">
-                            <label class="form-label-modern">
-                                <i class="mdi mdi-magnify"></i> Search
-                            </label>
-                            <input type="text" class="form-control form-control-modern" id="handover-filter-search"
-                                   placeholder="Search by nurse, summary...">
-                        </div>
-                        <div class="col-md-3 d-flex align-items-end gap-2">
-                            <button class="btn btn-primary flex-grow-1 btn-modern" id="apply-handover-filters">
-                                <i class="mdi mdi-filter"></i> Apply Filters
-                            </button>
+
+                        <!-- Advanced Filters -->
+                        <div id="advancedFiltersSection">
+                            <div class="row g-2 pt-3 border-top mt-2">
+                                <div class="col-md-2">
+                                    <label class="form-label-modern">
+                                        <i class="mdi mdi-check-circle-outline"></i> Status
+                                    </label>
+                                    <select class="form-control form-control-modern" id="handover-filter-status">
+                                        <option value="">All Status</option>
+                                        <option value="pending">🟡 Pending</option>
+                                        <option value="acknowledged">✅ Acknowledged</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-2">
+                                    <label class="form-label-modern">
+                                        <i class="mdi mdi-alert-circle-outline"></i> Priority
+                                    </label>
+                                    <select class="form-control form-control-modern" id="handover-filter-priority">
+                                        <option value="">All Priority</option>
+                                        <option value="critical">🔴 Critical Only</option>
+                                        <option value="has_tasks">📋 Has Pending Tasks</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-2">
+                                    <label class="form-label-modern">
+                                        <i class="mdi mdi-calendar-start"></i> Date From
+                                    </label>
+                                    <input type="date" class="form-control form-control-modern" id="handover-filter-from">
+                                </div>
+                                <div class="col-md-2">
+                                    <label class="form-label-modern">
+                                        <i class="mdi mdi-calendar-end"></i> Date To
+                                    </label>
+                                    <input type="date" class="form-control form-control-modern" id="handover-filter-to">
+                                </div>
+                                <div class="col-md-2">
+                                    <label class="form-label-modern">
+                                        <i class="mdi mdi-sort"></i> Sort By
+                                    </label>
+                                    <select class="form-control form-control-modern" id="handover-filter-sort">
+                                        <option value="newest">Newest First</option>
+                                        <option value="oldest">Oldest First</option>
+                                        <option value="priority">Priority First</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-2 d-flex align-items-end">
+                                    <button class="btn btn-outline-danger w-100 btn-modern" id="clear-handover-filters">
+                                        <i class="mdi mdi-filter-remove"></i> Clear All
+                                    </button>
+                                </div>
+                            </div>
                         </div>
                     </div>
 
-                    <!-- Advanced Filters -->
-                    <div id="advancedFiltersSection">
-                        <div class="row g-2 pt-3 border-top mt-2">
-                            <div class="col-md-2">
-                                <label class="form-label-modern">
-                                    <i class="mdi mdi-check-circle-outline"></i> Status
-                                </label>
-                                <select class="form-control form-control-modern" id="handover-filter-status">
-                                    <option value="">All Status</option>
-                                    <option value="pending">🟡 Pending</option>
-                                    <option value="acknowledged">✅ Acknowledged</option>
-                                </select>
-                            </div>
-                            <div class="col-md-2">
-                                <label class="form-label-modern">
-                                    <i class="mdi mdi-alert-circle-outline"></i> Priority
-                                </label>
-                                <select class="form-control form-control-modern" id="handover-filter-priority">
-                                    <option value="">All Priority</option>
-                                    <option value="critical">🔴 Critical Only</option>
-                                    <option value="has_tasks">📋 Has Pending Tasks</option>
-                                </select>
-                            </div>
-                            <div class="col-md-2">
-                                <label class="form-label-modern">
-                                    <i class="mdi mdi-calendar-start"></i> Date From
-                                </label>
-                                <input type="date" class="form-control form-control-modern" id="handover-filter-from">
-                            </div>
-                            <div class="col-md-2">
-                                <label class="form-label-modern">
-                                    <i class="mdi mdi-calendar-end"></i> Date To
-                                </label>
-                                <input type="date" class="form-control form-control-modern" id="handover-filter-to">
-                            </div>
-                            <div class="col-md-2">
-                                <label class="form-label-modern">
-                                    <i class="mdi mdi-sort"></i> Sort By
-                                </label>
-                                <select class="form-control form-control-modern" id="handover-filter-sort">
-                                    <option value="newest">Newest First</option>
-                                    <option value="oldest">Oldest First</option>
-                                    <option value="priority">Priority First</option>
-                                </select>
-                            </div>
-                            <div class="col-md-2 d-flex align-items-end">
-                                <button class="btn btn-outline-danger w-100 btn-modern" id="clear-handover-filters">
-                                    <i class="mdi mdi-filter-remove"></i> Clear All
+                    <!-- Stats Summary Bar -->
+                    <div class="handover-stats-bar px-3 py-2 bg-white border-bottom d-flex align-items-center justify-content-between">
+                        <div class="d-flex gap-3">
+                            <span class="badge bg-secondary" id="handover-total-count">
+                                <i class="mdi mdi-file-document-multiple"></i> Total: <span>0</span>
+                            </span>
+                            <span class="badge bg-warning text-dark" id="handover-pending-count">
+                                <i class="mdi mdi-clock-alert"></i> Pending: <span>0</span>
+                            </span>
+                            <span class="badge bg-danger" id="handover-critical-count">
+                                <i class="mdi mdi-alert-circle"></i> Critical: <span>0</span>
+                            </span>
+                        </div>
+                        <div class="d-flex align-items-center gap-2">
+                            <span class="text-muted small" id="handover-page-info">Page 1 of 1</span>
+                            <div class="btn-group btn-group-sm">
+                                <button class="btn btn-outline-secondary" id="handover-view-cards" title="Cards View">
+                                    <i class="mdi mdi-view-grid"></i>
+                                </button>
+                                <button class="btn btn-outline-secondary" id="handover-view-list" title="List View">
+                                    <i class="mdi mdi-view-list"></i>
                                 </button>
                             </div>
                         </div>
                     </div>
-                </div>
 
-                <!-- Stats Summary Bar -->
-                <div class="handover-stats-bar px-3 py-2 bg-white border-bottom d-flex align-items-center justify-content-between">
-                    <div class="d-flex gap-3">
-                        <span class="badge bg-secondary" id="handover-total-count">
-                            <i class="mdi mdi-file-document-multiple"></i> Total: <span>0</span>
-                        </span>
-                        <span class="badge bg-warning text-dark" id="handover-pending-count">
-                            <i class="mdi mdi-clock-alert"></i> Pending: <span>0</span>
-                        </span>
-                        <span class="badge bg-danger" id="handover-critical-count">
-                            <i class="mdi mdi-alert-circle"></i> Critical: <span>0</span>
-                        </span>
-                    </div>
-                    <div class="d-flex align-items-center gap-2">
-                        <span class="text-muted small" id="handover-page-info">Page 1 of 1</span>
-                        <div class="btn-group btn-group-sm">
-                            <button class="btn btn-outline-secondary" id="handover-view-cards" title="Cards View">
-                                <i class="mdi mdi-view-grid"></i>
-                            </button>
-                            <button class="btn btn-outline-secondary" id="handover-view-list" title="List View">
-                                <i class="mdi mdi-view-list"></i>
-                            </button>
+                    <!-- Cards Container -->
+                    <div class="handover-cards-container p-3" id="handover-cards-container">
+                        <!-- Loading State -->
+                        <div class="handover-loading text-center py-5" id="handover-loading">
+                            <div class="spinner-border text-info" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                            <p class="mt-2 text-muted">Loading handovers...</p>
                         </div>
-                    </div>
-                </div>
 
-                <!-- Cards Container -->
-                <div class="handover-cards-container p-3" id="handover-cards-container">
-                    <!-- Loading State -->
-                    <div class="handover-loading text-center py-5" id="handover-loading">
-                        <div class="spinner-border text-info" role="status">
-                            <span class="visually-hidden">Loading...</span>
+                        <!-- Empty State -->
+                        <div class="handover-empty text-center py-5" id="handover-empty" style="display: none;">
+                            <i class="mdi mdi-file-document-outline text-muted" style="font-size: 4rem;"></i>
+                            <h5 class="mt-3 text-muted">No Handovers Found</h5>
+                            <p class="text-muted small">Try adjusting your filters or select a different ward/shift.</p>
                         </div>
-                        <p class="mt-2 text-muted">Loading handovers...</p>
+
+                        <!-- Cards Grid (populated dynamically) -->
+                        <div class="row g-3" id="handover-cards-grid"></div>
                     </div>
 
-                    <!-- Empty State -->
-                    <div class="handover-empty text-center py-5" id="handover-empty" style="display: none;">
-                        <i class="mdi mdi-file-document-outline text-muted" style="font-size: 4rem;"></i>
-                        <h5 class="mt-3 text-muted">No Handovers Found</h5>
-                        <p class="text-muted small">Try adjusting your filters or select a different ward/shift.</p>
+                    <!-- Pagination -->
+                    <div class="handover-pagination p-3 bg-light border-top d-flex justify-content-between align-items-center">
+                        <div class="d-flex align-items-center gap-3">
+                            <label class="form-label-modern mb-0">Per page:</label>
+                            <select class="form-control form-control-modern" id="handover-per-page" style="width: 100px; height: 40px !important;">
+                                <option value="6">6</option>
+                                <option value="12" selected>12</option>
+                                <option value="24">24</option>
+                                <option value="48">48</option>
+                            </select>
+                        </div>
+                        <nav aria-label="Handover pagination">
+                            <ul class="pagination pagination-sm mb-0" id="handover-pagination-list">
+                                <!-- Pagination items populated dynamically -->
+                            </ul>
+                        </nav>
                     </div>
-
-                    <!-- Cards Grid (populated dynamically) -->
-                    <div class="row g-3" id="handover-cards-grid"></div>
                 </div>
 
-                <!-- Pagination -->
-                <div class="handover-pagination p-3 bg-light border-top d-flex justify-content-between align-items-center">
-                    <div class="d-flex align-items-center gap-3">
-                        <label class="form-label-modern mb-0">Per page:</label>
-                        <select class="form-control form-control-modern" id="handover-per-page" style="width: 100px; height: 40px !important;">
-                            <option value="6">6</option>
-                            <option value="12" selected>12</option>
-                            <option value="24">24</option>
-                            <option value="48">48</option>
-                        </select>
+                <!-- Detail View Pane (Inline, eliminates modal-on-modal stacking) -->
+                <div id="handover-detail-view" class="handover-detail-view" style="display: none;">
+                    <div id="handover-inline-detail-content">
+                        <!-- Dynamic handover details loaded here -->
                     </div>
-                    <nav aria-label="Handover pagination">
-                        <ul class="pagination pagination-sm mb-0" id="handover-pagination-list">
-                            <!-- Pagination items populated dynamically -->
-                        </ul>
-                    </nav>
                 </div>
             </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            <div class="modal-footer d-flex justify-content-between">
+                <div>
+                    <button type="button" class="btn btn-outline-secondary" id="footer-back-to-handovers-btn" style="display: none;">
+                        <i class="mdi mdi-arrow-left"></i> Back to Handovers
+                    </button>
+                </div>
+                <div class="d-flex gap-2">
+                    <button type="button" class="btn btn-success" id="acknowledge-handover-inline-btn" style="display: none;">
+                        <i class="mdi mdi-check-circle"></i> Acknowledge Handover
+                    </button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
             </div>
         </div>
     </div>
 </div>
 
-<!-- Handover Detail Modal -->
+<!-- Standalone Handover Detail Modal (Fallback for direct links) -->
 <div class="modal fade" id="handoverDetailModal" tabindex="-1" aria-labelledby="handoverDetailModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
+    <div class="modal-dialog modal-xl modal-dialog-scrollable modal-handover-wide">
         <div class="modal-content">
             <div class="modal-header bg-primary text-white">
                 <h5 class="modal-title" id="handoverDetailModalLabel">
                     <i class="mdi mdi-file-document"></i> Handover Details
                 </h5>
-                <button type="button" data-bs-dismiss="modal" class="btn- btn-close btn-close-white" aria-label="Close"></button>
+                <button type="button" data-bs-dismiss="modal" class="btn-close btn-close-white" aria-label="Close"></button>
             </div>
             <div class="modal-body" id="handover-detail-content">
                 <!-- Dynamic content loaded here -->
@@ -720,7 +739,7 @@
                 <h5 class="modal-title" id="shiftSummaryModalLabel">
                     <i class="mdi mdi-chart-bar"></i> Current Shift Summary
                 </h5>
-                <button type="button" data-bs-dismiss="modal" class="btn- btn-close btn-close-white" aria-label="Close"></button>
+                <button type="button" data-bs-dismiss="modal" class="btn-close btn-close-white" aria-label="Close"></button>
             </div>
             <div class="modal-body" id="shift-summary-content">
                 <!-- Dynamic content loaded here -->
@@ -731,547 +750,6 @@
         </div>
     </div>
 </div>
-
-<!-- Shift Lock Overlay Styles -->
-<style>
-    /* Audit Details Styles */
-    .audit-details-list {
-        font-size: 0.9rem;
-    }
-    .audit-patient-group {
-        border-bottom: 1px solid #e9ecef;
-        padding-bottom: 1rem;
-    }
-    .audit-patient-group:last-child {
-        border-bottom: none;
-    }
-    .audit-items {
-        border-left: 3px solid var(--hospital-primary, #007bff);
-    }
-    .audit-item {
-        border-left: 2px solid transparent;
-    }
-    .audit-item:hover {
-        border-left-color: var(--hospital-primary, #007bff);
-    }
-    .badge-sm {
-        font-size: 0.7rem;
-        padding: 0.2em 0.5em;
-    }
-    .key-changes-list .patient-changes {
-        border-left: 3px solid var(--hospital-primary, #007bff);
-        padding-left: 10px;
-        margin-bottom: 15px;
-    }
-    .key-changes-list ul {
-        padding-left: 20px;
-        margin: 0;
-    }
-    .key-changes-list li {
-        margin-bottom: 3px;
-    }
-
-    /* Shift Lock Overlay */
-    .shift-lock-overlay {
-        position: fixed;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        background: rgba(255, 255, 255, 0.97);
-        z-index: 1040; /* Below Bootstrap modal */
-        display: flex;
-        align-items: center;
-        justify-content: center;
-    }
-
-    .shift-lock-overlay.modal-open-hidden {
-        opacity: 0;
-        pointer-events: none;
-    }
-
-    .shift-lock-content {
-        text-align: center;
-        max-width: 500px;
-        padding: 2rem;
-    }
-
-    .shift-lock-icon {
-        font-size: 5rem;
-        color: var(--hospital-primary);
-        margin-bottom: 1.5rem;
-        animation: pulse 2s infinite;
-    }
-
-    @keyframes pulse {
-        0%, 100% { opacity: 1; transform: scale(1); }
-        50% { opacity: 0.7; transform: scale(1.05); }
-    }
-
-    .shift-lock-content h3 {
-        font-size: 1.75rem;
-        font-weight: 700;
-        margin-bottom: 0.75rem;
-    }
-
-    .pending-handovers-preview {
-        text-align: left;
-        background: #f8f9fa;
-        border-radius: 0.5rem;
-        padding: 1rem;
-        margin: 1.5rem 0;
-    }
-
-    .shift-lock-nav-buttons {
-        display: flex;
-        justify-content: center;
-        gap: 0.5rem;
-        border-top: 1px solid #dee2e6;
-        padding-top: 1.5rem;
-    }
-
-    .pending-handovers-list {
-        max-height: 200px;
-        overflow-y: auto;
-    }
-
-    .pending-handover-item {
-        background: white;
-        border: 1px solid #dee2e6;
-        border-radius: 0.375rem;
-        padding: 0.75rem;
-        margin-bottom: 0.5rem;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-    }
-
-    .pending-handover-item.has-critical {
-        border-left: 3px solid var(--danger);
-    }
-
-    /* Floating Shift Control Button */
-    .shift-control-fab {
-        position: fixed;
-        bottom: 100px;
-        right: 30px;
-        z-index: 1050;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        gap: 10px;
-        cursor: move;
-    }
-
-    .shift-fab-timer {
-        background: rgba(0, 0, 0, 0.8);
-        color: #fff;
-        padding: 0.25rem 0.75rem;
-        border-radius: 1rem;
-        font-size: 0.85rem;
-        font-weight: 600;
-        font-family: monospace;
-    }
-
-    .shift-fab-timer.overdue {
-        background: var(--danger);
-        animation: blink 1s infinite;
-    }
-
-    @keyframes blink {
-        0%, 100% { opacity: 1; }
-        50% { opacity: 0.5; }
-    }
-
-    .shift-fab-main .btn-shift-control {
-        width: 60px;
-        height: 60px;
-        border-radius: 50%;
-        background: var(--hospital-primary);
-        color: white;
-        border: none;
-        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
-        font-size: 1.5rem;
-        transition: all 0.3s;
-    }
-
-    .shift-fab-main .btn-shift-control:hover {
-        transform: scale(1.1);
-        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
-    }
-
-    .shift-fab-main .btn-shift-control.active {
-        background: #28a745;
-    }
-
-    .shift-fab-actions {
-        display: flex;
-        flex-direction: column;
-        gap: 8px;
-    }
-
-    .shift-fab-actions .shift-action-btn {
-        width: 45px;
-        height: 45px;
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
-    }
-
-    /* Handover Acknowledgment List */
-    .handovers-acknowledgment-list {
-        max-height: 400px;
-        overflow-y: auto;
-    }
-
-    .handover-ack-item {
-        background: #f8f9fa;
-        border: 1px solid #dee2e6;
-        border-radius: 0.5rem;
-        padding: 1rem;
-        margin-bottom: 0.75rem;
-    }
-
-    .handover-ack-item.critical {
-        border-left: 4px solid var(--danger);
-        background: #fff5f5;
-    }
-
-    .handover-ack-item.shake-highlight {
-        animation: shake 0.5s ease-in-out;
-        box-shadow: 0 0 10px rgba(220, 53, 69, 0.5);
-    }
-
-    @keyframes shake {
-        0%, 100% { transform: translateX(0); }
-        20%, 60% { transform: translateX(-5px); }
-        40%, 80% { transform: translateX(5px); }
-    }
-
-    .handover-ack-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: flex-start;
-        margin-bottom: 0.5rem;
-    }
-
-    .handover-ack-meta {
-        font-size: 0.85rem;
-        color: #6c757d;
-    }
-
-    .handover-ack-content {
-        font-size: 0.9rem;
-        color: #495057;
-    }
-
-    .handover-ack-footer {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-top: 0.75rem;
-        padding-top: 0.75rem;
-        border-top: 1px solid #dee2e6;
-    }
-
-    /* =============================================
-       HANDOVER CARDS MODAL STYLES
-       ============================================= */
-    .handover-filter-panel {
-        position: sticky;
-        top: 0;
-        z-index: 10;
-    }
-
-    .handover-cards-container {
-        min-height: 400px;
-        max-height: 60vh;
-        overflow-y: auto;
-    }
-
-    .handover-card {
-        background: #fff;
-        border: 1px solid #e9ecef;
-        border-radius: 0.75rem;
-        transition: all 0.2s ease;
-        overflow: hidden;
-        height: 100%;
-        display: flex;
-        flex-direction: column;
-    }
-
-    .handover-card:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-    }
-
-    .handover-card.critical {
-        border-left: 4px solid #dc3545;
-        background: linear-gradient(to right, #fff5f5 0%, #fff 20%);
-    }
-
-    .handover-card.pending {
-        border-top: 3px solid #ffc107;
-    }
-
-    .handover-card.acknowledged {
-        opacity: 0.85;
-    }
-
-    .handover-card-header {
-        padding: 0.75rem 1rem;
-        background: #f8f9fa;
-        border-bottom: 1px solid #e9ecef;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-    }
-
-    .handover-card-shift-badge {
-        font-size: 0.75rem;
-        padding: 0.25rem 0.5rem;
-        border-radius: 0.25rem;
-        font-weight: 600;
-    }
-
-    .handover-card-shift-badge.morning {
-        background: #fff3cd;
-        color: #856404;
-    }
-
-    .handover-card-shift-badge.afternoon {
-        background: #ffe8cc;
-        color: #cc5500;
-    }
-
-    .handover-card-shift-badge.night {
-        background: #d4edda;
-        color: #155724;
-    }
-
-    .handover-card-body {
-        padding: 1rem;
-        flex: 1;
-        display: flex;
-        flex-direction: column;
-    }
-
-    .handover-card-meta {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 0.75rem;
-    }
-
-    .handover-card-nurse {
-        font-weight: 600;
-        color: #333;
-        font-size: 0.95rem;
-    }
-
-    .handover-card-time {
-        font-size: 0.8rem;
-        color: #6c757d;
-    }
-
-    .handover-card-ward {
-        font-size: 0.85rem;
-        color: #495057;
-        margin-bottom: 0.5rem;
-    }
-
-    .handover-card-ward i {
-        color: var(--hospital-primary, #007bff);
-    }
-
-    .handover-card-summary {
-        font-size: 0.9rem;
-        color: #495057;
-        line-height: 1.5;
-        flex: 1;
-        overflow: hidden;
-        display: -webkit-box;
-        -webkit-line-clamp: 3;
-        -webkit-box-orient: vertical;
-    }
-
-    .handover-card-critical-preview {
-        background: #fff3f3;
-        border: 1px solid #f5c6cb;
-        border-radius: 0.375rem;
-        padding: 0.5rem 0.75rem;
-        margin-top: 0.75rem;
-        font-size: 0.85rem;
-        color: #721c24;
-    }
-
-    .handover-card-critical-preview i {
-        color: #dc3545;
-    }
-
-    .handover-card-stats {
-        display: flex;
-        gap: 1rem;
-        padding-top: 0.75rem;
-        margin-top: auto;
-        border-top: 1px solid #e9ecef;
-        font-size: 0.8rem;
-        color: #6c757d;
-    }
-
-    .handover-card-stat {
-        display: flex;
-        align-items: center;
-        gap: 0.25rem;
-    }
-
-    .handover-card-stat.danger {
-        color: #dc3545;
-    }
-
-    .handover-card-stat.warning {
-        color: #ffc107;
-    }
-
-    .handover-card-footer {
-        padding: 0.75rem 1rem;
-        background: #f8f9fa;
-        border-top: 1px solid #e9ecef;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-    }
-
-    .handover-card-status {
-        font-size: 0.75rem;
-        padding: 0.2rem 0.5rem;
-        border-radius: 0.25rem;
-    }
-
-    .handover-card-status.acknowledged {
-        background: #d4edda;
-        color: #155724;
-    }
-
-    .handover-card-status.pending {
-        background: #fff3cd;
-        color: #856404;
-    }
-
-    .handover-card-actions .btn {
-        padding: 0.25rem 0.5rem;
-        font-size: 0.8rem;
-    }
-
-    /* List View Styles */
-    .handover-list-item {
-        background: #fff;
-        border: 1px solid #e9ecef;
-        border-radius: 0.5rem;
-        padding: 1rem;
-        margin-bottom: 0.75rem;
-        display: flex;
-        align-items: center;
-        gap: 1rem;
-        transition: all 0.2s ease;
-    }
-
-    .handover-list-item:hover {
-        background: #f8f9fa;
-    }
-
-    .handover-list-item.critical {
-        border-left: 4px solid #dc3545;
-    }
-
-    .handover-list-info {
-        flex: 1;
-        min-width: 0;
-    }
-
-    .handover-list-meta {
-        display: flex;
-        align-items: center;
-        gap: 0.75rem;
-        margin-bottom: 0.25rem;
-    }
-
-    .handover-list-summary {
-        font-size: 0.9rem;
-        color: #495057;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-    }
-
-    /* Pagination Styles */
-    .handover-pagination .pagination .page-link {
-        padding: 0.375rem 0.75rem;
-        font-size: 0.875rem;
-    }
-
-    /* Stats Bar */
-    .handover-stats-bar .badge {
-        font-size: 0.8rem;
-    }
-
-    /* View Toggle */
-    #handover-view-cards.active,
-    #handover-view-list.active {
-        background: var(--hospital-primary, #007bff);
-        color: white;
-    }
-
-    /* End Shift Stats */
-    .stat-box {
-        background: #f8f9fa;
-        border-radius: 0.5rem;
-        padding: 1rem;
-    }
-
-    .stat-value {
-        font-size: 1.5rem;
-        font-weight: 700;
-        color: var(--hospital-primary);
-    }
-
-    .stat-label {
-        font-size: 0.8rem;
-        color: #6c757d;
-        text-transform: uppercase;
-    }
-
-    /* Pending Tasks */
-    .pending-task-row {
-        animation: fadeIn 0.3s;
-    }
-
-    @keyframes fadeIn {
-        from { opacity: 0; transform: translateY(-10px); }
-        to { opacity: 1; transform: translateY(0); }
-    }
-
-    /* Mobile Responsive */
-    @media (max-width: 768px) {
-        .shift-control-fab {
-            bottom: 80px;
-            right: 15px;
-        }
-
-        .shift-fab-main .btn-shift-control {
-            width: 50px;
-            height: 50px;
-            font-size: 1.25rem;
-        }
-
-        .shift-fab-actions .shift-action-btn {
-            width: 40px;
-            height: 40px;
-        }
-    }
-</style>
 
 {{-- Last Office Modal --}}
     <div class="modal fade" id="lastOfficeModal" tabindex="-1" role="dialog">
@@ -1323,5 +801,12 @@
 @include('admin.partials.invest_res_view_imaging_js')
 @include('admin.partials.patient-form-modal')
 @include('admin.partials.store_context_override_modal')
+@include('admin.partials.bundle_view_modal')
+@include('admin.partials.bundle_remove_modal')
+
+{{-- Shared Community Outreach Immunization & Field Reports Modals --}}
+@include('admin.partials.outreach_tally_modal')
+@include('admin.partials.outreach_reports_modal')
+
 
 

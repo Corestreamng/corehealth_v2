@@ -40,6 +40,26 @@ class ChecklistTemplate extends Model implements Auditable
      */
     public const TYPE_ADMISSION = 'admission';
     public const TYPE_DISCHARGE = 'discharge';
+    public const TYPE_SURGICAL = 'surgical';
+    public const TYPE_PROCEDURE = 'procedure';
+
+    public const TYPES = [
+        self::TYPE_ADMISSION => 'Admission Checklist',
+        self::TYPE_DISCHARGE => 'Discharge Checklist',
+        self::TYPE_SURGICAL => 'Surgical Safety Checklist (Theatre)',
+        self::TYPE_PROCEDURE => 'Bedside & Minor Procedure Checklist',
+    ];
+
+    /**
+     * Get default active template for a given type.
+     */
+    public static function getDefaultByType(string $type): ?self
+    {
+        return self::where('type', $type)
+            ->where('is_active', true)
+            ->where('is_default', true)
+            ->first() ?? self::where('type', $type)->where('is_active', true)->first();
+    }
 
     // =====================
     // Relationships

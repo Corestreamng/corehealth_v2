@@ -50,11 +50,69 @@
         moderate  : 'warning',
         low       : 'info',
         normal    : 'secondary',
+        confirmed : 'success',
+        suspected : 'warning',
+        provisional: 'info',
+        acute     : 'danger',
+        chronic   : 'dark',
     };
 
     function badge(val, map) {
-        var cls = (map || crStatusBadge)[String(val).toLowerCase()] || 'secondary';
-        return '<span class="badge badge-' + cls + '">' + (val || 'N/A') + '</span>';
+        if (!val || val === 'N/A' || val === 'NA') {
+            return '<span class="badge bg-secondary badge-secondary text-white">N/A</span>';
+        }
+        var key = String(val).toLowerCase().trim();
+        var cls = (map || crStatusBadge)[key] || 'secondary';
+        var textColor = (cls === 'warning') ? 'text-dark' : 'text-white';
+        return '<span class="badge bg-' + cls + ' badge-' + cls + ' ' + textColor + '">' + val + '</span>';
+    }
+
+    function formatCrItemStatus(status, type) {
+        var str = String(status !== undefined && status !== null ? status : '').toLowerCase().trim();
+        var code = parseInt(status, 10);
+
+        if (type === 'rx') {
+            if (!isNaN(code)) {
+                switch (code) {
+                    case 0: return '<span class="badge bg-secondary badge-secondary text-white">Dismissed</span>';
+                    case 1: return '<span class="badge bg-warning badge-warning text-dark">Unbilled</span>';
+                    case 2: return '<span class="badge bg-info badge-info text-white">Ready to Dispense</span>';
+                    case 3: return '<span class="badge bg-success badge-success text-white">Dispensed</span>';
+                    case 4: return '<span class="badge bg-danger badge-danger text-white">Returned</span>';
+                }
+            }
+            if (str === 'dispensed') return '<span class="badge bg-success badge-success text-white">Dispensed</span>';
+            if (str === 'billed') return '<span class="badge bg-info badge-info text-white">Ready to Dispense</span>';
+            if (str === 'unbilled' || str === 'pending') return '<span class="badge bg-warning badge-warning text-dark">Unbilled</span>';
+            if (str === 'returned' || str === 'cancelled') return '<span class="badge bg-danger badge-danger text-white">Returned</span>';
+        } else if (type === 'lab' || type === 'imaging') {
+            if (!isNaN(code)) {
+                switch (code) {
+                    case 0: return '<span class="badge bg-secondary badge-secondary text-white">Dismissed</span>';
+                    case 1: return '<span class="badge bg-warning badge-warning text-dark">Awaiting Billing</span>';
+                    case 2: return '<span class="badge bg-info badge-info text-white">' + (type === 'lab' ? 'Awaiting Sample' : 'In Progress') + '</span>';
+                    case 3: return '<span class="badge bg-primary badge-primary text-white">Awaiting Results</span>';
+                    case 4: return '<span class="badge bg-success badge-success text-white">Completed</span>';
+                    case 5: return '<span class="badge text-white" style="background-color: #6f42c1;">Pending Approval</span>';
+                    case 6: return '<span class="badge bg-danger badge-danger text-white">Rejected</span>';
+                }
+            }
+            if (str === 'completed') return '<span class="badge bg-success badge-success text-white">Completed</span>';
+            if (str === 'pending_approval') return '<span class="badge text-white" style="background-color: #6f42c1;">Pending Approval</span>';
+            if (str === 'rejected') return '<span class="badge bg-danger badge-danger text-white">Rejected</span>';
+            if (str === 'in_progress') return '<span class="badge bg-info badge-info text-white">In Progress</span>';
+        } else if (type === 'proc') {
+            switch (str) {
+                case 'requested': return '<span class="badge bg-warning badge-warning text-dark">Requested</span>';
+                case 'scheduled': return '<span class="badge bg-info badge-info text-white">Scheduled</span>';
+                case 'in_progress': return '<span class="badge bg-primary badge-primary text-white">In Progress</span>';
+                case 'completed': return '<span class="badge bg-success badge-success text-white">Completed</span>';
+                case 'cancelled': return '<span class="badge bg-secondary badge-secondary text-white">Cancelled</span>';
+                case '1':
+                case 'true': return '<span class="badge bg-success badge-success text-white">Completed</span>';
+            }
+        }
+        return badge(status || 'Pending');
     }
 
     // =========================================================================
@@ -296,8 +354,10 @@
                     $('#cr-diagnosis-tbody').html('<tr><td colspan="7" class="text-center text-muted">No matching diagnoses found</td></tr>');
                     return;
                 }
+                window.crDiagEncountersCache = {};
                 var html = '';
                 data.forEach(function (row, idx) {
+                    window.crDiagEncountersCache[idx] = row.encounters || [];
                     var statusList  = (row.statuses  || []).join(', ') || 'N/A';
                     var queryList   = (row.queries   || []).join(', ') || 'N/A';
                     var rowId = 'cr-diag-row-' + idx;
@@ -314,7 +374,7 @@
                     html += '<tr class="cr-diag-enc-row d-none" id="cr-diag-enc-' + idx + '">'
                           + '<td colspan="7" class="p-0 bg-light">'
                           + '<div class="p-2">'
-                          + '<div class="table-responsive"><table class="table table-sm table-bordered mb-0 cr-diag-enc-table" data-icd="' + (row.icd_code || '') + '" data-name="' + row.diagnosis + '">'
+                          + '<div class="table-responsive"><table class="table table-sm table-bordered mb-0 cr-diag-enc-table" data-idx="' + idx + '" data-icd="' + (row.icd_code || '') + '" data-name="' + row.diagnosis + '">'
                           + '<thead class="thead-dark"><tr><th>Patient</th><th>File No</th><th>Date</th><th>Doctor</th><th>Query</th><th>Status</th><th>Details</th></tr></thead>'
                           + '<tbody><tr><td colspan="7" class="text-center"><div class="spinner-border spinner-border-sm text-primary"></div></td></tr></tbody>'
                           + '</table></div>'
@@ -326,33 +386,214 @@
             .fail(function () { crError('#cr-diagnosis-tbody'); });
     }
 
+    function renderCrDiagTableRows($table, rows) {
+        if (!rows || !rows.length) {
+            $table.find('tbody').html('<tr><td colspan="7" class="text-center text-muted">No encounters found</td></tr>');
+            return;
+        }
+        var html = '';
+        rows.forEach(function (e) {
+            var patientName = e.patient || e.patient_name || 'N/A';
+            var queryType = e.query_type || e.query || 'N/A';
+            html += '<tr>'
+                  + '<td><a href="/patient/' + e.patient_id + '">' + patientName + '</a></td>'
+                  + '<td>' + (e.file_no || '') + '</td>'
+                  + '<td>' + (e.date || e.encounter_date || '') + '</td>'
+                  + '<td>' + (e.doctor || 'N/A') + '</td>'
+                  + '<td><small>' + queryType + '</small></td>'
+                  + '<td>' + badge(e.status) + '</td>'
+                  + '<td><button class="btn btn-xs btn-info cr-enc-detail-btn" data-enc-id="' + e.id + '" title="View encounter"><i class="mdi mdi-eye"></i></button></td>'
+                  + '</tr>';
+        });
+        $table.find('tbody').html(html);
+    }
+
     // Load encounters for a specific diagnosis when expanded
     function loadCrDiagnosisEncounters($table) {
+        var idx = $table.data('idx');
+        if (window.crDiagEncountersCache && window.crDiagEncountersCache[idx] && window.crDiagEncountersCache[idx].length) {
+            renderCrDiagTableRows($table, window.crDiagEncountersCache[idx]);
+            return;
+        }
         var icd  = $table.data('icd');
         var name = $table.data('name');
         var params = $.extend(getCrFilters(), { icd_code: icd, diagnosis_name: name });
         $.get('{{ route("clinical-reports.drill-down") }}', $.extend(params, { type: 'diagnosis' }))
             .done(function (data) {
                 var rows = (data.records || data || []);
-                if (!rows.length) {
-                    $table.find('tbody').html('<tr><td colspan="7" class="text-center text-muted">No encounters found</td></tr>');
-                    return;
-                }
-                var html = '';
-                rows.forEach(function (e) {
-                    html += '<tr>'
-                          + '<td><a href="/patient/' + e.patient_id + '">' + e.patient + '</a></td>'
-                          + '<td>' + (e.file_no || '') + '</td>'
-                          + '<td>' + (e.date || e.encounter_date || '') + '</td>'
-                          + '<td>' + (e.doctor || 'N/A') + '</td>'
-                          + '<td><small>' + (e.query_type || 'N/A') + '</small></td>'
-                          + '<td>' + badge(e.status) + '</td>'
-                          + '<td><button class="btn btn-xs btn-info cr-enc-detail-btn" data-enc-id="' + e.id + '" title="View encounter"><i class="mdi mdi-eye"></i></button></td>'
-                          + '</tr>';
-                });
-                $table.find('tbody').html(html);
+                renderCrDiagTableRows($table, rows);
             })
             .fail(function () { $table.find('tbody').html('<tr><td colspan="7" class="text-center text-danger">Failed to load encounters</td></tr>'); });
+    }
+
+    // Show full encounter details in modal
+    function showEncounterDetails(encId) {
+        var $modal = $('#crEncounterDetailModal');
+        var modalEl = document.getElementById('crEncounterDetailModal');
+
+        $modal.find('#cr-enc-title').text('Encounter #' + encId + ' Details');
+        $modal.find('#cr-enc-subtitle').text('Loading encounter data...');
+        $modal.find('#cr-enc-patient-name').text('Loading...');
+        $modal.find('#cr-enc-file-no').text('—');
+        $modal.find('#cr-enc-doctor-name').text('—');
+        $modal.find('#cr-enc-clinic-name').text('—');
+        $modal.find('#cr-enc-date').text('—');
+        $modal.find('#cr-enc-hmo-name').text('—');
+        $modal.find('#cr-enc-reasons').text('—').attr('title', '');
+
+        $modal.find('#cr-enc-rx-count').text('0');
+        $modal.find('#cr-enc-labs-count').text('0');
+        $modal.find('#cr-enc-img-count').text('0');
+        $modal.find('#cr-enc-proc-count').text('0');
+
+        $modal.find('#cr-enc-notes').html('<div class="text-center p-4"><div class="spinner-border spinner-border-sm text-primary"></div><div class="small text-muted mt-2">Loading notes...</div></div>');
+        $modal.find('#cr-enc-labs tbody').empty();
+        $modal.find('#cr-enc-imaging tbody').empty();
+        $modal.find('#cr-enc-prescriptions tbody').empty();
+        $modal.find('#cr-enc-procedures tbody').empty();
+
+        // Switch to notes tab by default
+        $('#cr-enc-modal-tabs .nav-link').removeClass('active').attr('aria-selected', 'false');
+        $('#cr-enc-modal-tab-content .tab-pane').removeClass('show active');
+        $('#cr-enc-tab-notes-btn').addClass('active').attr('aria-selected', 'true');
+        $('#cr-enc-tab-notes').addClass('show active');
+        try {
+            $('#cr-enc-tab-notes-btn').tab('show');
+        } catch (e) {}
+
+        // Show modal using standard jQuery modal
+        $modal.modal('show');
+
+        $.get('{{ route("clinical-reports.encounter-details", ":id") }}'.replace(':id', encId))
+            .done(function (data) {
+                var enc = data.encounter || {};
+                $modal.find('#cr-enc-title').text('Encounter #' + (enc.id || encId) + ' Details');
+                $modal.find('#cr-enc-subtitle').text(enc.patient_name ? ('Patient: ' + enc.patient_name + ' | ' + (enc.date || '')) : '');
+                $modal.find('#cr-enc-patient-name').text(enc.patient_name || 'N/A');
+                $modal.find('#cr-enc-file-no').text(enc.file_no || 'N/A');
+                $modal.find('#cr-enc-doctor-name').text(enc.doctor_name || 'N/A');
+                $modal.find('#cr-enc-clinic-name').text(enc.clinic_name || 'Clinic');
+                $modal.find('#cr-enc-date').text(enc.date || 'N/A');
+                $modal.find('#cr-enc-hmo-name').text(enc.hmo_name || 'Cash / Private');
+                $modal.find('#cr-enc-reasons').text(enc.reasons || 'N/A').attr('title', enc.reasons || 'N/A');
+
+                // Notes
+                $modal.find('#cr-enc-notes').html(data.notes || '<span class="text-muted small">No clinical notes recorded</span>');
+
+                // Prescriptions
+                var prescriptions = data.prescriptions || [];
+                $modal.find('#cr-enc-rx-count').text(prescriptions.length);
+                var rxHtml = '';
+                if (prescriptions.length) {
+                    prescriptions.forEach(function (rx, i) {
+                        var name = rx.item_name
+                            || (rx.product ? (rx.product.product_name || rx.product.item_name) : null)
+                            || rx.free_form_name
+                            || ('Drug #' + rx.id);
+                        var dose = rx.dose_formatted || rx.dose || 'N/A';
+                        var qty = rx.qty_formatted !== undefined ? rx.qty_formatted : (rx.qty !== undefined ? rx.qty : 1);
+                        var stBadge = (rx.status_badge && rx.status_label)
+                            ? '<span class="badge ' + rx.status_badge + '">' + rx.status_label + '</span>'
+                            : formatCrItemStatus(rx.status, 'rx');
+
+                        rxHtml += '<tr>'
+                               + '<td class="text-center text-muted small">' + (i + 1) + '</td>'
+                               + '<td class="font-weight-bold text-dark">' + name + '</td>'
+                               + '<td>' + dose + '</td>'
+                               + '<td class="text-center font-weight-bold">' + qty + '</td>'
+                               + '<td class="text-center">' + stBadge + '</td>'
+                               + '</tr>';
+                    });
+                } else {
+                    rxHtml = '<tr><td colspan="5" class="text-center text-muted small py-3">No prescriptions recorded for this encounter</td></tr>';
+                }
+                $modal.find('#cr-enc-prescriptions tbody').html(rxHtml);
+
+                // Labs
+                var labs = data.labs || [];
+                $modal.find('#cr-enc-labs-count').text(labs.length);
+                var labsHtml = '';
+                if (labs.length) {
+                    labs.forEach(function (l, i) {
+                        var name = l.item_name
+                            || (l.service ? (l.service.service_name || l.service.item_name) : null)
+                            || l.free_form_name
+                            || ('Test #' + l.id);
+                        var stBadge = (l.status_badge && l.status_label)
+                            ? '<span class="badge ' + l.status_badge + '">' + l.status_label + '</span>'
+                            : formatCrItemStatus(l.status, 'lab');
+                        var resultText = l.result_display || l.result || 'Pending';
+
+                        labsHtml += '<tr>'
+                                 + '<td class="text-center text-muted small">' + (i + 1) + '</td>'
+                                 + '<td class="font-weight-bold text-dark">' + name + '</td>'
+                                 + '<td class="text-center">' + stBadge + '</td>'
+                                 + '<td><div style="max-height: 120px; overflow-y: auto;">' + resultText + '</div></td>'
+                                 + '</tr>';
+                    });
+                } else {
+                    labsHtml = '<tr><td colspan="4" class="text-center text-muted small py-3">No laboratory investigations ordered</td></tr>';
+                }
+                $modal.find('#cr-enc-labs tbody').html(labsHtml);
+
+                // Imaging
+                var imaging = data.imaging || [];
+                $modal.find('#cr-enc-img-count').text(imaging.length);
+                var imgHtml = '';
+                if (imaging.length) {
+                    imaging.forEach(function (im, i) {
+                        var name = im.item_name
+                            || (im.service ? (im.service.service_name || im.service.item_name) : null)
+                            || im.free_form_name
+                            || ('Investigation #' + im.id);
+                        var stBadge = (im.status_badge && im.status_label)
+                            ? '<span class="badge ' + im.status_badge + '">' + im.status_label + '</span>'
+                            : formatCrItemStatus(im.status, 'imaging');
+                        var resultText = im.result_display || im.result || 'Pending';
+
+                        imgHtml += '<tr>'
+                                + '<td class="text-center text-muted small">' + (i + 1) + '</td>'
+                                + '<td class="font-weight-bold text-dark">' + name + '</td>'
+                                + '<td class="text-center">' + stBadge + '</td>'
+                                + '<td><div style="max-height: 120px; overflow-y: auto;">' + resultText + '</div></td>'
+                                + '</tr>';
+                    });
+                } else {
+                    imgHtml = '<tr><td colspan="4" class="text-center text-muted small py-3">No imaging investigations ordered</td></tr>';
+                }
+                $modal.find('#cr-enc-imaging tbody').html(imgHtml);
+
+                // Procedures
+                var procedures = data.procedures || [];
+                $modal.find('#cr-enc-proc-count').text(procedures.length);
+                var procHtml = '';
+                if (procedures.length) {
+                    procedures.forEach(function (p, i) {
+                        var name = p.item_name
+                            || (p.procedure_definition ? p.procedure_definition.name : null)
+                            || (p.service ? (p.service.service_name || p.service.item_name) : null)
+                            || p.free_form_name
+                            || ('Procedure #' + p.id);
+                        var stBadge = (p.status_badge && p.status_label)
+                            ? '<span class="badge ' + p.status_badge + '">' + p.status_label + '</span>'
+                            : formatCrItemStatus(p.status_label || p.procedure_status || p.status, 'proc');
+                        var notes = p.notes_display || p.notes || p.outcome_notes || p.post_notes || p.pre_notes || 'N/A';
+
+                        procHtml += '<tr>'
+                                 + '<td class="text-center text-muted small">' + (i + 1) + '</td>'
+                                 + '<td class="font-weight-bold text-dark">' + name + '</td>'
+                                 + '<td class="text-center">' + stBadge + '</td>'
+                                 + '<td>' + notes + '</td>'
+                                 + '</tr>';
+                    });
+                } else {
+                    procHtml = '<tr><td colspan="4" class="text-center text-muted small py-3">No procedures recorded</td></tr>';
+                }
+                $modal.find('#cr-enc-procedures tbody').html(procHtml);
+            })
+            .fail(function () {
+                $modal.find('#cr-enc-notes').html('<div class="text-danger p-3"><i class="mdi mdi-alert-circle"></i> Failed to load encounter details.</div>');
+            });
     }
 
     // =========================================================================
@@ -645,7 +886,7 @@
 
         // Apply filters button
         $('#cr-apply-filters').on('click', function () {
-            var activeTab = $('#cr-sub-tabs .nav-link.active').attr('href');
+            var activeTab = $('#cr-sub-tabs .nav-link.active').attr('href') || $('#cr-sub-tabs .nav-link.active').data('bs-target');
             crDispatchLoad(activeTab);
         });
 
@@ -657,9 +898,24 @@
             crApplyQuickRange('month');
         });
 
+        // Export button beside filters
+        $('#cr-export-btn').on('click', function () {
+            var activeTab = $('#cr-sub-tabs .nav-link.active').attr('href') || $('#cr-sub-tabs .nav-link.active').data('bs-target') || '#cr-diagnosis';
+            var tabKey = activeTab.replace('#cr-', '');
+            var params = getCrFilters();
+
+            if (tabKey === 'diagnosis') {
+                params.keyword = $.trim($('#cr-diagnosis-keyword').val());
+            }
+
+            params.tab = tabKey;
+            window.location.href = '{{ route("clinical-reports.export") }}?' + $.param(params);
+        });
+
         // Sub-tab shown events
-        $('#cr-sub-tabs a[data-toggle="tab"]').on('shown.bs.tab', function (e) {
-            crDispatchLoad($(e.target).attr('href'));
+        $('#cr-sub-tabs a[data-toggle="tab"], #cr-sub-tabs a[data-bs-toggle="tab"]').on('shown.bs.tab', function (e) {
+            var target = $(e.target).attr('href') || $(e.target).data('bs-target');
+            crDispatchLoad(target);
         });
 
         // Unit visits row click → drill-down
@@ -711,9 +967,21 @@
             }
         });
 
+        // Encounter detail modal tabs switching
+        $(document).on('click', '#cr-enc-modal-tabs button', function (e) {
+            e.preventDefault();
+            var target = $(this).data('bs-target') || $(this).data('target');
+            if (target) {
+                $('#cr-enc-modal-tabs .nav-link').removeClass('active').attr('aria-selected', 'false');
+                $(this).addClass('active').attr('aria-selected', 'true');
+                $('#cr-enc-modal-tab-content .tab-pane').removeClass('show active');
+                $(target).addClass('show active');
+            }
+        });
+
         // Maternity sub-sub-tab navigation
-        $('#cr-mat-sub-tabs a[data-toggle="tab"]').on('shown.bs.tab', function (e) {
-            var href = $(e.target).attr('href');
+        $('#cr-mat-sub-tabs a[data-toggle="tab"], #cr-mat-sub-tabs a[data-bs-toggle="tab"]').on('shown.bs.tab', function (e) {
+            var href = $(e.target).attr('href') || $(e.target).data('bs-target');
             var subMap = {
                 '#cr-mat-enrollments' : 'enrollments',
                 '#cr-mat-anc'         : 'anc_visits',
@@ -751,7 +1019,7 @@
             case '#cr-overview'    : loadCrOverview();      break;
             case '#cr-unit-visits' : loadCrUnitVisits();    break;
             case '#cr-hmo-trends'  : loadCrHmoTrends();     break;
-            case '#cr-diagnosis'   : /* search on demand */  break;
+            case '#cr-diagnosis'   : if ($.trim($('#cr-diagnosis-keyword').val()).length >= 2) { loadCrDiagnosis(); } break;
             case '#cr-maternity'   : loadCrMaternity('enrollments'); break;
             case '#cr-mortality'   : loadCrMortality();     break;
             case '#cr-surgeries'   : loadCrSurgeries();     break;

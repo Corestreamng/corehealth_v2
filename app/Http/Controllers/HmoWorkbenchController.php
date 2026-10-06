@@ -72,6 +72,10 @@ class HmoWorkbenchController extends Controller
             'validator',
             'staff', // For "Requested By" info
             'procedure.procedureDefinition', // For Procedure items
+            'receptionValidator',
+            'labRequest',
+            'imagingRequest',
+            'productRequest',
         ])
         ->whereHas('user.patient_profile', function ($q) {
             $q->whereNotNull('hmo_id');
@@ -200,10 +204,10 @@ class HmoWorkbenchController extends Controller
         }
 
         // Search
-        if ($request->filled('search')) {
-            $search = $request->search;
+        $search = is_array($request->search) ? ($request->search['value'] ?? null) : $request->search;
+        if (!empty($search) && is_string($search)) {
             $query->where(function ($q) use ($search) {
-                $q->where('id', 'LIKE', "%{$search}%")
+                $q->where('product_or_service_requests.id', 'LIKE', "%{$search}%")
                   ->orWhereHas('user', function ($q2) use ($search) {
                       $q2->where('firstname', 'LIKE', "%{$search}%")
                          ->orWhere('surname', 'LIKE', "%{$search}%");
@@ -224,34 +228,44 @@ class HmoWorkbenchController extends Controller
             });
         }
 
-        $requests = $query->orderBy('created_at', 'DESC')->get();
+        $query->orderBy('product_or_service_requests.created_at', 'DESC');
 
-        // Batch-load emergency patient IDs to avoid N+1 queries in patient_info column
-        $allPatientIds = $requests->map(function ($req) {
-            return $req->user && $req->user->patient_profile ? $req->user->patient_profile->id : null;
-        })->filter()->unique()->values();
-
+        // Batch-load emergency patient IDs from active queues & admissions only
         $emergencyPatientIds = DoctorQueue::where('priority', 'emergency')
-            ->whereIn('patient_id', $allPatientIds)
             ->whereIn('status', [1, 2, 3])
             ->pluck('patient_id')
             ->merge(
                 AdmissionRequest::where('priority', 'emergency')
-                    ->whereIn('patient_id', $allPatientIds)
                     ->where('discharged', 0)
                     ->pluck('patient_id')
             )
             ->unique();
 
-        return DataTables::of($requests)
+        $formatUserName = function ($user, $fallbackId = null) {
+            if ($user instanceof User) {
+                $othername = $user->othername ? ' ' . $user->othername : '';
+
+                return ucwords(trim($user->surname . ' ' . $user->firstname . $othername));
+            }
+            if ($fallbackId) {
+                return userfullname($fallbackId);
+            }
+
+            return 'Unknown';
+        };
+
+        return DataTables::of($query)
+            ->orderColumn('request_info', function ($q, $order) {
+                $q->orderBy('product_or_service_requests.created_at', $order);
+            })
             ->addIndexColumn()
             ->addColumn('checkbox', function ($req) {
                 return '<input type="checkbox" class="batch-select-checkbox" data-id="' . $req->id . '" style="transform: scale(1.5); cursor: pointer;">';
             })
             // Column 1: Patient & Actions (combined)
-            ->addColumn('patient_info', function ($req) use ($emergencyPatientIds) {
+            ->addColumn('patient_info', function ($req) use ($emergencyPatientIds, $formatUserName) {
                 if ($req->user && $req->user->patient_profile) {
-                    $name = userfullname($req->user_id);
+                    $name = $formatUserName($req->user, $req->user_id);
                     $fileNo = $req->user->patient_profile->file_no ?? 'N/A';
                     $hmoNo = $req->user->patient_profile->hmo_no ?? '';
                     $hmoName = $req->user->patient_profile->hmo->name ?? 'N/A';
@@ -338,14 +352,13 @@ class HmoWorkbenchController extends Controller
                 return 'N/A';
             })
             // Column 2: Request Info (combined: ID, Date, SLA, Requested By)
-            ->addColumn('request_info', function ($req) {
+            ->addColumn('request_info', function ($req) use ($formatUserName) {
                 // Get the staff who made the request
                 $requestedBy = 'System';
-                if ($req->staff_user_id) {
+                if ($req->staff) {
+                    $requestedBy = $formatUserName($req->staff);
+                } elseif ($req->staff_user_id) {
                     $requestedBy = userfullname($req->staff_user_id);
-                    if (!$requestedBy && $req->staff) {
-                        $requestedBy = $req->staff->fname . ' ' . $req->staff->lname;
-                    }
                 }
 
                 $date = $req->created_at ? $req->created_at->format('M d, Y H:i') : 'N/A';
@@ -434,7 +447,7 @@ class HmoWorkbenchController extends Controller
                 return "$coverageBadge<br>$paymentBadge";
             })
             // Column 6: Status & Validation (combined)
-            ->addColumn('status_validation', function ($req) {
+            ->addColumn('status_validation', function ($req) use ($formatUserName) {
                 $statusMap = [
                     'pending' => 'warning',
                     'approved' => 'success',
@@ -449,7 +462,7 @@ class HmoWorkbenchController extends Controller
                 $html = $statusBadge;
 
                 if ($req->validated_at && $req->validator) {
-                    $validatorName = userfullname($req->validated_by);
+                    $validatorName = $formatUserName($req->validator, $req->validated_by);
                     $date = Carbon::parse($req->validated_at)->format('M d H:i');
                     $html .= "<br><small class=\"text-muted\">$validatorName</small>";
                     $html .= "<br><small class=\"text-muted\">$date</small>";
@@ -459,7 +472,9 @@ class HmoWorkbenchController extends Controller
 
                 // Reception validated badge
                 if ($req->reception_validated) {
-                    $rcpName = $req->reception_validated_by ? userfullname($req->reception_validated_by) : 'Reception';
+                    $rcpName = $req->receptionValidator
+                        ? $formatUserName($req->receptionValidator)
+                        : ($req->reception_validated_by ? userfullname($req->reception_validated_by) : 'Reception');
                     $rcpDate = $req->reception_validated_at ? Carbon::parse($req->reception_validated_at)->format('M d H:i') : '';
                     $html .= '<br><span class="badge badge-outline-info mt-1" style="border:1px solid #17a2b8;color:#17a2b8;font-size:0.7rem;"><i class="mdi mdi-check-decagram"></i> Reception</span>';
                     $html .= "<br><small class=\"text-info\">$rcpName $rcpDate</small>";
@@ -477,24 +492,32 @@ class HmoWorkbenchController extends Controller
     private function checkServiceDeliveryStatus($request)
     {
         // Check if it's a lab service
-        $labRequest = LabServiceRequest::where('service_request_id', $request->id)->first();
-        if ($labRequest) {
-            if ($labRequest->result || $labRequest->status >= 3) {
-                return ['can_reverse' => false, 'reason' => 'Lab results have been entered'];
+        if ($request->service_id) {
+            $labRequest = $request->relationLoaded('labRequest')
+                ? $request->labRequest
+                : LabServiceRequest::where('service_request_id', $request->id)->first();
+            if ($labRequest) {
+                if ($labRequest->result || $labRequest->status >= 3) {
+                    return ['can_reverse' => false, 'reason' => 'Lab results have been entered'];
+                }
             }
-        }
 
-        // Check if it's an imaging service
-        $imagingRequest = ImagingServiceRequest::where('service_request_id', $request->id)->first();
-        if ($imagingRequest) {
-            if ($imagingRequest->result || $imagingRequest->status >= 3) {
-                return ['can_reverse' => false, 'reason' => 'Imaging results have been entered'];
+            // Check if it's an imaging service
+            $imagingRequest = $request->relationLoaded('imagingRequest')
+                ? $request->imagingRequest
+                : ImagingServiceRequest::where('service_request_id', $request->id)->first();
+            if ($imagingRequest) {
+                if ($imagingRequest->result || $imagingRequest->status >= 3) {
+                    return ['can_reverse' => false, 'reason' => 'Imaging results have been entered'];
+                }
             }
         }
 
         // Check if it's a pharmacy product (dispensed)
         if ($request->product_id) {
-            $productReq = ProductRequest::where('product_request_id', $request->id)->first();
+            $productReq = $request->relationLoaded('productRequest')
+                ? $request->productRequest
+                : ProductRequest::where('product_request_id', $request->id)->first();
             if ($productReq && $productReq->dispensed_by) {
                 return ['can_reverse' => false, 'reason' => 'Product has been dispensed'];
             }

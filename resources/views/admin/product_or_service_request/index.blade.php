@@ -419,22 +419,32 @@
                     setModalAlert('warning', 'No receipt content to print yet.');
                     return;
                 }
-                const printWindow = window.open('', '_blank', 'width=800,height=900');
+                const isThermal = selector === '#thermal-receipt';
+                const printWindow = window.open('', '_blank', isThermal ? 'width=480,height=700' : 'width=800,height=900');
                 if (!printWindow) {
                     setModalAlert('warning', 'Please allow pop-ups to print the receipt.');
                     return;
                 }
-                const styles = document.querySelectorAll('link[rel="stylesheet"], style');
-                let headContent = '';
-                styles.forEach((el) => {
-                    headContent += el.outerHTML;
-                });
-                printWindow.document.write(`<!doctype html><html><head>${headContent}</head><body>${html}</body></html>`);
+                printWindow.document.open();
+                if (html.indexOf('<!DOCTYPE') !== -1 || html.indexOf('<html') !== -1) {
+                    printWindow.document.write(html);
+                } else {
+                    const styles = document.querySelectorAll('link[rel="stylesheet"], style');
+                    let headContent = '';
+                    styles.forEach((el) => {
+                        headContent += el.outerHTML;
+                    });
+                    const extraStyles = isThermal
+                        ? '<style>@page { margin: 0; size: auto; } body { margin: 0 !important; padding: 2mm 3mm !important; width: 100% !important; } .receipt-thermal { width: 100% !important; max-width: 100% !important; margin: 0 !important; }</style>'
+                        : '<style>@page { size: A4; margin: 10mm; } body { padding: 10px; }</style>';
+                    printWindow.document.write(`<!doctype html><html><head>${headContent}${extraStyles}</head><body>${html}</body></html>`);
+                }
                 printWindow.document.close();
                 printWindow.focus();
-                printWindow.print();
-                // Close shortly after to avoid stray blank windows if user cancels
-                setTimeout(() => { printWindow.close(); }, 500);
+                setTimeout(() => {
+                    printWindow.print();
+                    setTimeout(() => { printWindow.close(); }, 500);
+                }, 250);
             }
 
             function setModalAlert(type, message) {

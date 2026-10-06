@@ -25,25 +25,176 @@
         /* ── Print branding header (hidden on screen) ─────────────── */
         #print-header { display:none; }
 
-        /* ── A4 print ─────────────────────────────────────────────── */
+        /* ── Print Styles ─────────────────────────────────────────── */
         .thermal-only { display: none !important; }
         @media print {
-            .no-print, .filter-bar { display:none !important; }
+            @page { margin: 0; size: auto; }
+            .no-print, .filter-bar, .btn { display:none !important; }
             body { background:#fff !important; }
             .card-modern { box-shadow:none !important; border:1px solid #ccc !important; }
             #print-header { display:block !important; }
             body.thermal-mode .a4-only { display: none !important; }
             body.thermal-mode .thermal-only { display: block !important; }
+            .con-full-content, .lab-full-content { word-break: break-word !important; overflow-wrap: break-word !important; }
+            .con-full-content .bg-light, .lab-full-content .bg-light { background: transparent !important; }
+
+            /* In-page thermal print mode resets */
+            body.thermal-mode {
+                margin: 0 !important;
+                padding: 0 !important;
+                width: 100% !important;
+                background: #fff !important;
+            }
+            body.thermal-mode .container-scroller,
+            body.thermal-mode .page-body-wrapper,
+            body.thermal-mode .main-panel,
+            body.thermal-mode .content-wrapper {
+                display: block !important;
+                position: static !important;
+                width: 100% !important;
+                max-width: 100% !important;
+                min-width: 0 !important;
+                margin: 0 !important;
+                padding: 0 !important;
+                border: none !important;
+                box-shadow: none !important;
+                overflow: visible !important;
+                background: transparent !important;
+            }
+            body.thermal-mode .ch-sidebar,
+            body.thermal-mode .sidebar,
+            body.thermal-mode .navbar,
+            body.thermal-mode footer,
+            body.thermal-mode .footer,
+            body.thermal-mode .no-print,
+            body.thermal-mode .filter-bar,
+            body.thermal-mode .btn {
+                display: none !important;
+            }
+            body.thermal-mode .sr-container {
+                width: 100% !important;
+                max-width: 100% !important;
+                min-width: 100% !important;
+                margin: 0 !important;
+                padding: 2mm 3mm 4mm !important;
+                box-sizing: border-box !important;
+                font-size: 11px !important;
+                font-family: 'Consolas', 'Liberation Mono', monospace, sans-serif !important;
+                color: #000 !important;
+                word-break: break-word !important;
+                overflow-wrap: break-word !important;
+            }
+            body.thermal-mode .card-modern {
+                border: none !important;
+                box-shadow: none !important;
+                padding: 0 !important;
+                margin: 0 !important;
+                background: transparent !important;
+            }
+            body.thermal-mode .service-section {
+                margin-bottom: 6px !important;
+            }
+            body.thermal-mode #print-header {
+                display: block !important;
+                margin-bottom: 6px !important;
+                padding-bottom: 4px !important;
+                border-bottom: 1px dashed #000 !important;
+                text-align: center !important;
+                word-break: break-word !important;
+                overflow-wrap: break-word !important;
+            }
+            body.thermal-mode #print-header .hos-logo {
+                max-height: 48px !important;
+                max-width: 60px !important;
+            }
+            body.thermal-mode #print-header h4 {
+                font-size: 13px !important;
+                font-weight: 700 !important;
+                color: #000 !important;
+                margin-bottom: 2px !important;
+                word-break: break-word !important;
+                overflow-wrap: break-word !important;
+            }
+            body.thermal-mode #print-header small,
+            body.thermal-mode #print-header div {
+                font-size: 11px !important;
+                color: #000 !important;
+                word-break: break-word !important;
+                overflow-wrap: break-word !important;
+                white-space: normal !important;
+            }
+            body.thermal-mode .section-header {
+                background: transparent !important;
+                color: #000 !important;
+                border-bottom: 1px solid #000 !important;
+                font-size: 12px !important;
+                font-weight: 700 !important;
+                text-transform: uppercase !important;
+                border-radius: 0 !important;
+                padding: 3px 0 !important;
+                margin-bottom: 3px !important;
+                text-align: center !important;
+                word-break: break-word !important;
+                overflow-wrap: break-word !important;
+            }
+            body.thermal-mode .thermal-item {
+                border-bottom: 1px dashed #aaa !important;
+                padding: 3px 0 !important;
+                margin-bottom: 3px !important;
+                font-size: 11px !important;
+                line-height: 1.35 !important;
+                word-break: break-word !important;
+                overflow-wrap: break-word !important;
+            }
+            body.thermal-mode .thermal-item:last-child {
+                border-bottom: none !important;
+            }
+            body.thermal-mode .thermal-row {
+                display: flex !important;
+                justify-content: space-between !important;
+                align-items: flex-start !important;
+                flex-wrap: wrap !important;
+                gap: 4px !important;
+                font-size: 11px !important;
+                line-height: 1.35 !important;
+                word-break: break-word !important;
+                overflow-wrap: break-word !important;
+            }
+            body.thermal-mode .thermal-row > *:first-child {
+                flex: 1 1 auto !important;
+                min-width: 0 !important;
+                word-break: break-word !important;
+                overflow-wrap: break-word !important;
+                white-space: normal !important;
+            }
+            body.thermal-mode .thermal-row > *:last-child:not(:first-child) {
+                flex-shrink: 0 !important;
+                text-align: right !important;
+                max-width: 48% !important;
+                word-break: break-word !important;
+                overflow-wrap: break-word !important;
+                white-space: normal !important;
+            }
+            body.thermal-mode .thermal-item,
+            body.thermal-mode .thermal-item *,
+            body.thermal-mode .thermal-row,
+            body.thermal-mode .thermal-row * {
+                font-size: 11px !important;
+            }
         }
-        body.thermal-mode #print-header { display:block; }
-        body.thermal-mode .sr-container { max-width:{{ $thermalWidth ?? getThermalPrinterWidth() }} !important; margin:0 auto; font-size:12px; font-family: monospace, sans-serif; color: #000; }
+        body.thermal-mode #print-header { display:block; word-break: break-word; overflow-wrap: break-word; }
+        body.thermal-mode .sr-container { max-width:{{ $thermalWidth ?? getThermalPrinterWidth() }} !important; margin:0 auto; font-size:11px; font-family: 'Consolas', 'Liberation Mono', monospace, sans-serif; color: #000; word-break: break-word; overflow-wrap: break-word; }
         body.thermal-mode #print-header .hos-logo { max-width:64px; }
-        body.thermal-mode #print-header h4 { font-size:14px; text-transform: uppercase; }
-        body.thermal-mode #print-header small { font-size:11px; }
-        body.thermal-mode .thermal-item { border-bottom: 1px dashed #888; padding: 4px 0; margin-bottom: 4px; }
+        body.thermal-mode #print-header h4 { font-size:13px; text-transform: uppercase; word-break: break-word; overflow-wrap: break-word; }
+        body.thermal-mode #print-header small,
+        body.thermal-mode #print-header div { font-size:11px; word-break: break-word; overflow-wrap: break-word; white-space: normal; }
+        body.thermal-mode .thermal-item { border-bottom: 1px dashed #888; padding: 4px 0; margin-bottom: 4px; font-size:11px; word-break: break-word; overflow-wrap: break-word; }
         body.thermal-mode .thermal-item:last-child { border-bottom: none; }
-        body.thermal-mode .thermal-row { display: flex; justify-content: space-between; gap: 4px; }
-        body.thermal-mode .section-header { background: transparent; color: #000; border-bottom: 1px solid #000; font-size: 13px; text-transform: uppercase; border-radius: 0; padding: 4px 0; margin-bottom: 4px; text-align: center; }
+        body.thermal-mode .thermal-row { display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 4px; font-size:11px; word-break: break-word; overflow-wrap: break-word; }
+        body.thermal-mode .thermal-row > *:first-child { flex: 1 1 auto; min-width: 0; word-break: break-word; overflow-wrap: break-word; white-space: normal; }
+        body.thermal-mode .thermal-row > *:last-child:not(:first-child) { flex-shrink: 0; text-align: right; max-width: 48%; word-break: break-word; overflow-wrap: break-word; white-space: normal; }
+        body.thermal-mode .thermal-item *, body.thermal-mode .thermal-row * { font-size: 11px; }
+        body.thermal-mode .section-header { background: transparent; color: #000; border-bottom: 1px solid #000; font-size: 12px; text-transform: uppercase; border-radius: 0; padding: 4px 0; margin-bottom: 4px; text-align: center; word-break: break-word; overflow-wrap: break-word; }
     </style>
 @endsection
 @section('content')
@@ -110,11 +261,11 @@
                         <input type="date" name="stop_at" class="form-control form-control-sm" style="max-width:160px;"
                             value="{{ Request::get('stop_at') }}" required>
                         <div class="custom-control custom-switch ml-2">
-                            <input type="checkbox" class="custom-control-input" id="toggleFullNotes">
+                            <input type="checkbox" class="custom-control-input" id="toggleFullNotes" name="full_notes" value="1" {{ Request::get('full_notes') ? 'checked' : '' }}>
                             <label class="custom-control-label" for="toggleFullNotes">Full Notes</label>
                         </div>
                         <div class="custom-control custom-switch ml-2">
-                            <input type="checkbox" class="custom-control-input" id="toggleFullLabs">
+                            <input type="checkbox" class="custom-control-input" id="toggleFullLabs" name="full_labs" value="1" {{ Request::get('full_labs') ? 'checked' : '' }}>
                             <label class="custom-control-label" for="toggleFullLabs">Full Labs</label>
                         </div>
                         <button type="submit" class="btn btn-primary btn-sm ml-2">
@@ -162,8 +313,8 @@
                                                         {!! \Illuminate\Support\Str::limit(strip_tags($con->notes), 150) !!}
                                                     </div>
                                                     <div class="con-full-content d-none">
-                                                        <div class="p-2 border rounded bg-light mb-1">
-                                                            {!! $con->notes !!}
+                                                        <div class="p-2 border rounded bg-light mb-1" style="word-break:break-word;">
+                                                            {!! \Illuminate\Support\Str::contains($con->notes, '<') ? $con->notes : nl2br(e($con->notes)) !!}
                                                         </div>
                                                     </div>
                                                 @else
@@ -182,9 +333,16 @@
                                         <strong>{{ $con->created_at?->format('d M y') }}</strong>
                                         <span>{{ $con->doctor && $con->doctor->staff_profile ? userfullname($con->doctor->staff_profile->user_id) : 'N/A' }}</span>
                                     </div>
-                                    <div class="mt-1" style="font-size:0.9em;">
-                                        {!! $con->notes ? \Illuminate\Support\Str::limit(strip_tags($con->notes), 60) : '<em>No notes</em>' !!}
-                                    </div>
+                                    @if($con->notes)
+                                        <div class="con-short-content mt-1" style="font-size:11px; word-break:break-word;">
+                                            {!! \Illuminate\Support\Str::limit(strip_tags($con->notes), 120) !!}
+                                        </div>
+                                        <div class="con-full-content d-none mt-1" style="font-size:11px; word-break:break-word;">
+                                            {!! \Illuminate\Support\Str::contains($con->notes, '<') ? $con->notes : nl2br(e($con->notes)) !!}
+                                        </div>
+                                    @else
+                                        <div class="mt-1" style="font-size:11px;"><em>No notes</em></div>
+                                    @endif
                                 </div>
                             @endforeach
                         </div>
@@ -233,13 +391,13 @@
                                         <strong>{{ $pres->product ? $pres->product->product_name : 'N/A' }}</strong>
                                         <span>x{{ $pres->quantity ?? '1' }}</span>
                                     </div>
-                                    <div class="thermal-row mt-1" style="font-size:0.9em;">
+                                    <div class="thermal-row mt-1" style="font-size:11px;">
                                         <span>{{ $pres->dose ?? '' }} {{ $pres->sig ?? '' }}</span>
                                         <span>[{{ $statusLabels[$st] ?? 'Unk' }}]</span>
                                     </div>
-                                    <div class="thermal-row mt-1" style="font-size:0.8em;">
+                                    <div class="thermal-row mt-1" style="font-size:11px;">
                                         <span>{{ $pres->created_at?->format('d M y') }}</span>
-                                        <span>{{ $pres->doctor_id ? \Illuminate\Support\Str::limit(userfullname($pres->doctor_id), 15) : '' }}</span>
+                                        <span>{{ $pres->doctor_id ? userfullname($pres->doctor_id) : '' }}</span>
                                     </div>
                                 </div>
                             @endforeach
@@ -275,8 +433,8 @@
                                                         {!! \Illuminate\Support\Str::limit(strip_tags($la->result), 100) !!}
                                                     </div>
                                                     <div class="lab-full-content d-none">
-                                                        <div class="p-2 border rounded bg-light mb-1">
-                                                            {!! $la->result !!}
+                                                        <div class="p-2 border rounded bg-light mb-1" style="word-break:break-word;">
+                                                            {!! \Illuminate\Support\Str::contains($la->result, '<') ? $la->result : nl2br(e($la->result)) !!}
                                                         </div>
                                                     </div>
                                                 @else
@@ -302,13 +460,16 @@
                                         <span>[{{ $labLabels[$labSt] ?? 'N/A' }}]</span>
                                     </div>
                                     @if($la->result)
-                                    <div class="mt-1" style="font-size:0.9em;">
-                                        <em>Res:</em> {{ \Illuminate\Support\Str::limit(strip_tags($la->result), 40) }}
-                                    </div>
+                                        <div class="lab-short-content mt-1" style="font-size:11px; word-break:break-word;">
+                                            <em>Res:</em> {{ \Illuminate\Support\Str::limit(strip_tags($la->result), 120) }}
+                                        </div>
+                                        <div class="lab-full-content d-none mt-1" style="font-size:11px; word-break:break-word;">
+                                            <em>Res:</em> {!! \Illuminate\Support\Str::contains($la->result, '<') ? $la->result : nl2br(e($la->result)) !!}
+                                        </div>
                                     @endif
-                                    <div class="thermal-row mt-1" style="font-size:0.8em;">
+                                    <div class="thermal-row mt-1" style="font-size:11px;">
                                         <span>{{ $la->created_at?->format('d M y') }}</span>
-                                        <span>Req: {{ \Illuminate\Support\Str::limit(userfullname($la->doctor_id), 12) }}</span>
+                                        <span>Req: {{ userfullname($la->doctor_id) }}</span>
                                     </div>
                                 </div>
                             @endforeach
@@ -367,7 +528,7 @@
                                         <strong>{{ $ward }} / {{ $bedLabel }}</strong>
                                         <span>{{ $disch ? 'Discharged' : 'Active' }}</span>
                                     </div>
-                                    <div class="thermal-row mt-1" style="font-size:0.8em;">
+                                    <div class="thermal-row mt-1" style="font-size:11px;">
                                         <span>In: {{ $admit?->format('d M y') }}</span>
                                         <span>Out: {{ $disch ? $disch->format('d M y') : '—' }}</span>
                                     </div>
@@ -407,12 +568,12 @@
                             @foreach($misc as $i => $mis)
                                 <div class="thermal-item">
                                     <div class="thermal-row">
-                                        <strong>{{ $mis->service ? \Illuminate\Support\Str::limit($mis->service->service_name, 20) : 'N/A' }}</strong>
+                                        <strong>{{ $mis->service ? $mis->service->service_name : 'N/A' }}</strong>
                                         <span>x{{ $mis->quantity ?? 1 }}</span>
                                     </div>
-                                    <div class="thermal-row mt-1" style="font-size:0.8em;">
+                                    <div class="thermal-row mt-1" style="font-size:11px;">
                                         <span>{{ $mis->created_at?->format('d M y') }}</span>
-                                        <span>{{ \Illuminate\Support\Str::limit(userfullname($mis->created_by), 12) }}</span>
+                                        <span>{{ userfullname($mis->created_by) }}</span>
                                     </div>
                                 </div>
                             @endforeach
@@ -430,42 +591,200 @@
 
 @section('scripts')
 <script>
+    function printThermalServicesRendered() {
+        const $container = $('.sr-container');
+        if (!$container.length) return;
+
+        const showFullNotes = $('#toggleFullNotes').is(':checked');
+        const showFullLabs = $('#toggleFullLabs').is(':checked');
+
+        const $clone = $container.clone();
+        $clone.find('.no-print, .filter-bar, .a4-only, .btn').remove();
+        $clone.find('#print-header').show().css('display', 'block');
+        $clone.find('.thermal-only').show().css('display', 'block');
+
+        // Apply Full Notes / Full Labs visibility to the cloned thermal document
+        if (showFullNotes) {
+            $clone.find('.con-short-content').remove();
+            $clone.find('.con-full-content').removeClass('d-none').show();
+        } else {
+            $clone.find('.con-full-content').remove();
+            $clone.find('.con-short-content').removeClass('d-none').show();
+        }
+
+        if (showFullLabs) {
+            $clone.find('.lab-short-content').remove();
+            $clone.find('.lab-full-content').removeClass('d-none').show();
+        } else {
+            $clone.find('.lab-full-content').remove();
+            $clone.find('.lab-short-content').removeClass('d-none').show();
+        }
+
+        const printWindow = window.open('', '_blank', 'height=700,width=450');
+        if (!printWindow) {
+            $('body').addClass('thermal-mode');
+            window.print();
+            $(window).one('afterprint', function () {
+                $('body').removeClass('thermal-mode');
+            });
+            return;
+        }
+
+        const thermalContent = $clone.html();
+        const doc = `<!DOCTYPE html>
+<html>
+<head>
+    <title>Services Rendered (Thermal)</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        @page { margin: 0; size: auto; }
+        html, body {
+            margin: 0 !important;
+            padding: 0 !important;
+            width: 100% !important;
+            background: #fff !important;
+            font-family: 'Consolas', 'Liberation Mono', monospace, sans-serif;
+            font-size: 11px;
+            color: #000;
+            word-break: break-word;
+            overflow-wrap: break-word;
+        }
+        .sr-thermal-print {
+            width: 100% !important;
+            max-width: 100% !important;
+            margin: 0 !important;
+            padding: 2mm 3mm 4mm !important;
+            box-sizing: border-box !important;
+            font-size: 11px;
+            word-break: break-word;
+            overflow-wrap: break-word;
+        }
+        #print-header { text-align: center; margin-bottom: 6px; padding-bottom: 4px; border-bottom: 1px dashed #000; word-break: break-word; overflow-wrap: break-word; }
+        #print-header .hos-logo { max-height: 48px; max-width: 60px; margin-bottom: 2px; }
+        #print-header h4 { font-size: 13px; font-weight: 700; text-transform: uppercase; margin: 0 0 2px; color: #000; word-break: break-word; overflow-wrap: break-word; }
+        #print-header small, #print-header div { font-size: 11px !important; color: #000; display: block; line-height: 1.4; word-break: break-word; overflow-wrap: break-word; white-space: normal; }
+        .service-section { margin-bottom: 6px; }
+        .section-header {
+            background: transparent;
+            color: #000;
+            border-bottom: 1px solid #000;
+            font-size: 12px;
+            font-weight: 700;
+            text-transform: uppercase;
+            padding: 3px 0;
+            margin: 4px 0 2px;
+            text-align: center;
+            word-break: break-word;
+            overflow-wrap: break-word;
+        }
+        .card-modern { border: none; box-shadow: none; padding: 0; margin: 0; background: transparent; }
+        .thermal-item {
+            border-bottom: 1px dashed #aaa;
+            padding: 3px 0;
+            margin-bottom: 2px;
+            font-size: 11px;
+            line-height: 1.35;
+            word-break: break-word;
+            overflow-wrap: break-word;
+        }
+        .thermal-item:last-child { border-bottom: none; }
+        .thermal-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            flex-wrap: wrap;
+            gap: 4px;
+            font-size: 11px;
+            line-height: 1.35;
+            word-break: break-word;
+            overflow-wrap: break-word;
+        }
+        .thermal-row > *:first-child {
+            flex: 1 1 auto;
+            min-width: 0;
+            word-break: break-word;
+            overflow-wrap: break-word;
+            white-space: normal;
+        }
+        .thermal-row > *:last-child:not(:first-child) {
+            flex-shrink: 0;
+            text-align: right;
+            max-width: 48%;
+            word-break: break-word;
+            overflow-wrap: break-word;
+            white-space: normal;
+        }
+        .con-full-content, .lab-full-content {
+            font-size: 11px !important;
+            word-break: break-word !important;
+            overflow-wrap: break-word !important;
+            white-space: normal !important;
+        }
+        .con-full-content *, .lab-full-content * {
+            font-size: 11px !important;
+            word-break: break-word !important;
+            overflow-wrap: break-word !important;
+        }
+        .d-none { display: none !important; }
+        .thermal-item, .thermal-item *, .thermal-row, .thermal-row * {
+            font-size: 11px !important;
+        }
+        @media print {
+            body { margin: 0 !important; padding: 0 !important; width: 100% !important; }
+            .sr-thermal-print { width: 100% !important; max-width: 100% !important; margin: 0 !important; padding: 2mm 3mm 4mm !important; }
+            .thermal-item, .thermal-item *, .thermal-row, .thermal-row * { font-size: 11px !important; }
+        }
+    </style>
+</head>
+<body>
+    <div class="sr-thermal-print">
+        ${thermalContent}
+    </div>
+</body>
+</html>`;
+
+        printWindow.document.open();
+        printWindow.document.write(doc);
+        printWindow.document.close();
+        printWindow.focus();
+        setTimeout(function() {
+            printWindow.print();
+            setTimeout(function() { printWindow.close(); }, 500);
+        }, 250);
+    }
+
     $(function () {
         $('#btnPrintA4').on('click', function () {
             $('body').removeClass('thermal-mode');
             window.print();
         });
         $('#btnPrintThermal').on('click', function () {
-            $('body').addClass('thermal-mode');
-            const pageStyle = $('<style id="thermal-print-page-style">@media print { @page { size: {{ $thermalWidth ?? getThermalPrinterWidth() }} auto; margin: 0; } }</style>');
-            $('head').append(pageStyle);
-            window.print();
-            // Remove class and dynamic page style after printing
-            $(window).one('afterprint', function () {
-                $('body').removeClass('thermal-mode');
-                $('#thermal-print-page-style').remove();
-            });
+            printThermalServicesRendered();
         });
 
-        $('#toggleFullNotes').on('change', function() {
-            if ($(this).is(':checked')) {
+        function syncFullContentToggles() {
+            const showFullNotes = $('#toggleFullNotes').is(':checked');
+            const showFullLabs = $('#toggleFullLabs').is(':checked');
+
+            if (showFullNotes) {
                 $('.con-short-content').addClass('d-none');
                 $('.con-full-content').removeClass('d-none');
             } else {
                 $('.con-full-content').addClass('d-none');
                 $('.con-short-content').removeClass('d-none');
             }
-        });
 
-        $('#toggleFullLabs').on('change', function() {
-            if ($(this).is(':checked')) {
+            if (showFullLabs) {
                 $('.lab-short-content').addClass('d-none');
                 $('.lab-full-content').removeClass('d-none');
             } else {
                 $('.lab-full-content').addClass('d-none');
                 $('.lab-short-content').removeClass('d-none');
             }
-        });
+        }
+
+        $('#toggleFullNotes, #toggleFullLabs').on('change', syncFullContentToggles);
+        syncFullContentToggles();
     });
 </script>
 @endsection

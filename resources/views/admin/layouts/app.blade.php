@@ -53,6 +53,11 @@
             --hospital-primary: {{ $primaryColor }};
             --hospital-primary-rgb: {{ $rgbColor }};
             --hospital-secondary: {{ appsettings()->hos_secondary_color ?? '#6c757d' }};
+            --maternity-pink: #e91e8a;
+            --maternity-pink-rgb: 233, 30, 138;
+            --maternity-pink-hover: #d8157d;
+            --maternity-pink-dark: #ad1457;
+            --maternity-pink-light: #fce4ec;
         }
 
         /* Paystack-inspired Clean Design */
@@ -62,6 +67,26 @@
             color: #333;
             margin: 0;
             overflow-x: hidden;
+        }
+
+        /* Master Print Styles — Prevent desktop shell from interfering with printouts */
+        @media print {
+            .ch-sidebar, .sidebar, .navbar, footer, .footer, .no-print {
+                display: none !important;
+            }
+            .container-scroller, .page-body-wrapper, .main-panel, .content-wrapper {
+                display: block !important;
+                position: static !important;
+                width: 100% !important;
+                max-width: 100% !important;
+                min-width: 0 !important;
+                margin: 0 !important;
+                padding: 0 !important;
+                border: 0 !important;
+                box-shadow: none !important;
+                overflow: visible !important;
+                background: transparent !important;
+            }
         }
 
         .container-scroller {

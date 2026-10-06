@@ -107,7 +107,7 @@
                 <span>My Transactions</span>
             </button>
             <button class="quick-action-btn" id="btn-pharmacy-reports">
-                <i class="mdi mdi-chart-box-outline"></i>
+                <i class="mdi mdi-file-chart"></i>
                 <span>Reports & Analytics</span>
             </button>
 

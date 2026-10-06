@@ -576,8 +576,327 @@ $sett = appsettings();
                             Visible Total: <strong id="billing-visible-total">₦0.00</strong>
                         </span>
                     </div>
+                </div>
 
-@include("admin.billing.partials._modals")
+                <div class="billing-items-container">
+                    <table class="table table-hover" id="billing-items-table">
+                        <thead>
+                            <tr>
+                                <th width="40"><input type="checkbox" id="select-all-billing-items"></th>
+                                <th>Date/Time</th>
+                                <th>Item</th>
+                                <th>Category</th>
+                                <th>Price</th>
+                                <th width="80">Qty</th>
+                                <th width="80">Discount %</th>
+                                <th>HMO Coverage</th>
+                                <th>Total</th>
+                            </tr>
+                        </thead>
+                        <tbody id="billing-items-tbody">
+                            <tr>
+                                <td colspan="9" class="text-center text-muted py-5">
+                                    <i class="mdi mdi-information-outline" style="font-size: 3rem;"></i>
+                                    <p>No unpaid items for this patient</p>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Floating Cart Button (appears when items selected) -->
+                <div class="floating-cart" id="floating-cart">
+                    <button class="floating-cart-btn" data-bs-toggle="modal" data-bs-target="#paymentModal">
+                        <i class="mdi mdi-cart-outline"></i>
+                        <span class="cart-badge" id="cart-item-count">0</span>
+                        <span class="cart-total" id="cart-total-display">₦0.00</span>
+                        <i class="mdi mdi-chevron-up"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Receipts Tab -->
+            <div class="workspace-tab-content" id="receipts-tab">
+                <div class="receipts-tab-header">
+                    <h4><i class="mdi mdi-receipt"></i> Payment Receipts & Transactions</h4>
+                    <div class="receipts-toolbar">
+                        <button class="btn btn-sm btn-secondary" id="refresh-receipts">
+                            <i class="mdi mdi-refresh"></i> Refresh
+                        </button>
+                        <button class="btn btn-sm btn-primary" id="print-selected-receipts" disabled>
+                            <i class="mdi mdi-printer"></i> Print Selected
+                        </button>
+                        <button class="btn btn-sm btn-info" id="export-receipts">
+                            <i class="mdi mdi-download"></i> Export
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Filter Panel -->
+                <div class="transactions-filter-panel">
+                    <div class="row">
+                        <div class="col-md-3">
+                            <label>From Date</label>
+                            <input type="date" class="form-control" id="receipts-from-date">
+                        </div>
+                        <div class="col-md-3">
+                            <label>To Date</label>
+                            <input type="date" class="form-control" id="receipts-to-date">
+                        </div>
+                        <div class="col-md-3">
+                            <label>Payment Type</label>
+                            <select class="form-control" id="receipts-payment-type">
+                                <option value="">All Types</option>
+                                <option value="CASH">Cash</option>
+                                <option value="POS">POS/Card</option>
+                                <option value="TRANSFER">Bank Transfer</option>
+                                <option value="MOBILE">Mobile Money</option>
+                                <option value="ACCOUNT">Account Balance</option>
+                                <option value="ACC_DEPOSIT">Account Deposit</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label>&nbsp;</label>
+                            <button class="btn btn-primary btn-block" id="filter-receipts">
+                                <i class="mdi mdi-filter"></i> Filter
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Summary Statistics -->
+                <div class="transactions-summary" id="receipts-summary" style="display: none;">
+                    <div class="stat-card">
+                        <div class="stat-value" id="receipts-total-count">0</div>
+                        <div class="stat-label">Total Transactions</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="receipts-total-amount">₦0.00</div>
+                        <div class="stat-label">Total Amount</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="receipts-total-discounts">₦0.00</div>
+                        <div class="stat-label">Total Discounts</div>
+                    </div>
+                </div>
+
+                <div class="receipts-container">
+                    <table class="table table-hover" id="receipts-table">
+                        <thead>
+                            <tr>
+                                <th width="40"><input type="checkbox" id="select-all-receipts"></th>
+                                <th>Receipt No</th>
+                                <th>Date</th>
+                                <th>Items</th>
+                                <th>Amount</th>
+                                <th>Discount</th>
+                                <th>Method</th>
+                                <th>Cashier</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="receipts-tbody">
+                            <tr>
+                                <td colspan="9" class="text-center text-muted py-5">
+                                    <i class="mdi mdi-receipt" style="font-size: 3rem;"></i>
+                                    <p>No receipts found for this patient</p>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Admissions Tab (Reusable Module) -->
+            <div class="workspace-tab-content" id="admissions-tab">
+                @include('admin.partials.admissions-module')
+            </div>
+
+            <!-- Account Tab -->
+            <div class="workspace-tab-content" id="account-tab">
+                <!-- Hero Balance Section -->
+                <div class="account-hero-section" id="account-hero-section">
+                    <div class="account-hero-balance" id="account-hero-balance">
+                        <div class="hero-balance-icon">
+                            <i class="mdi mdi-wallet"></i>
+                        </div>
+                        <div class="hero-balance-content">
+                            <span class="hero-balance-label">Current Balance</span>
+                            <span class="hero-balance-amount" id="hero-balance-amount">₦0.00</span>
+                            <span class="hero-balance-status" id="hero-balance-status">Balanced</span>
+                        </div>
+                        <div class="hero-balance-actions">
+                            <div class="action-btn-group">
+                                <button class="btn btn-light btn-sm" id="quick-deposit-btn" title="Make Deposit">
+                                    <i class="mdi mdi-plus-circle text-success"></i> Deposit
+                                </button>
+                                <button class="btn btn-outline-light btn-sm" id="quick-withdraw-btn" title="Withdraw">
+                                    <i class="mdi mdi-minus-circle text-danger"></i> Withdraw
+                                </button>
+                                <button class="btn btn-outline-light btn-sm" id="quick-adjust-btn" title="Adjustment">
+                                    <i class="mdi mdi-swap-horizontal text-info"></i> Adjust
+                                </button>
+                            </div>
+                            <div class="action-btn-group mt-2">
+                                <button class="btn btn-warning btn-sm" id="print-statement-btn" title="Print Account Statement">
+                                    <i class="mdi mdi-file-document-outline"></i> Print Statement
+                                </button>
+                                <button class="btn btn-outline-light btn-sm" id="refresh-account-data" title="Refresh">
+                                    <i class="mdi mdi-refresh"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Account Stats Dashboard -->
+                    <div class="account-stats-grid">
+                        <div class="account-stat-card deposits">
+                            <div class="stat-icon"><i class="mdi mdi-arrow-down-bold-circle"></i></div>
+                            <div class="stat-info">
+                                <span class="stat-value" id="total-deposits-stat">₦0</span>
+                                <span class="stat-label">Total Deposits</span>
+                            </div>
+                        </div>
+                        <div class="account-stat-card withdrawals">
+                            <div class="stat-icon"><i class="mdi mdi-arrow-up-bold-circle"></i></div>
+                            <div class="stat-info">
+                                <span class="stat-value" id="total-withdrawals-stat">₦0</span>
+                                <span class="stat-label">Total Withdrawals</span>
+                            </div>
+                        </div>
+                        <div class="account-stat-card pending">
+                            <div class="stat-icon"><i class="mdi mdi-clock-outline"></i></div>
+                            <div class="stat-info">
+                                <span class="stat-value" id="pending-bills-stat">₦0</span>
+                                <span class="stat-label">Pending Bills</span>
+                            </div>
+                        </div>
+                        <div class="account-stat-card transactions">
+                            <div class="stat-icon"><i class="mdi mdi-swap-horizontal"></i></div>
+                            <div class="stat-info">
+                                <span class="stat-value" id="tx-count-stat">0</span>
+                                <span class="stat-label">Transactions</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- No Account State -->
+                <div class="account-no-account-state" id="no-account-state" style="display: none;">
+                    <div class="no-account-content">
+                        <div class="no-account-icon">
+                            <i class="mdi mdi-wallet-outline"></i>
+                        </div>
+                        <h4>No Account Found</h4>
+                        <p>This patient doesn't have an account yet. Create one to start tracking deposits and payments.</p>
+                        <button class="btn btn-primary btn-lg" id="create-account-btn">
+                            <i class="mdi mdi-plus-circle"></i> Create Account
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Account Transaction Panel (Deposit/Withdraw/Adjust) -->
+                <div class="account-transaction-panel" id="account-transaction-panel" style="display: none;">
+                    <div class="transaction-panel-header" id="transaction-panel-header">
+                        <h5><i class="mdi mdi-cash-plus" id="transaction-panel-icon"></i> <span id="transaction-panel-title">Make Deposit</span></h5>
+                        <button class="btn btn-sm btn-link" id="close-transaction-panel">
+                            <i class="mdi mdi-close"></i>
+                        </button>
+                    </div>
+                    <div class="transaction-panel-body">
+                        <form id="account-transaction-form" class="transaction-form-inline">
+                            <input type="hidden" id="transaction-type" value="deposit">
+                            <div class="form-group">
+                                <label>Amount</label>
+                                <div class="input-group">
+                                    <div class="input-group-prepend">
+                                        <span class="input-group-text">₦</span>
+                                    </div>
+                                    <input type="number" step="0.01" class="form-control form-control-lg" id="transaction-amount" placeholder="0.00" required>
+                                </div>
+                                <small class="form-text text-muted" id="transaction-amount-help">Enter amount to deposit</small>
+                            </div>
+                            <div class="form-group" id="transaction-payment-method-group">
+                                <label>Payment Method</label>
+                                <select class="form-control" id="transaction-payment-method">
+                                    <option value="CASH">Cash</option>
+                                    <option value="POS">POS/Card</option>
+                                    <option value="TRANSFER">Bank Transfer</option>
+                                    <option value="MOBILE">Mobile Money</option>
+                                </select>
+                            </div>
+                            <div class="form-group" id="transaction-bank-group" style="display: none;">
+                                <label>Select Bank</label>
+                                <select class="form-control" id="transaction-bank">
+                                    <option value="">-- Select Bank --</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Description <small class="text-muted">(Required for adjustments)</small></label>
+                                <input type="text" class="form-control" id="transaction-description" placeholder="e.g., Cash deposit, Refund, Correction, etc.">
+                            </div>
+                            <div class="transaction-actions">
+                                <button type="submit" class="btn btn-block" id="transaction-submit-btn">
+                                    <i class="mdi mdi-check"></i> <span id="transaction-submit-text">Confirm Deposit</span>
+                                </button>
+                            </div>
+                        </form>
+
+                        <!-- Balance Preview -->
+                        <div class="balance-preview" id="balance-preview">
+                            <div class="balance-preview-row">
+                                <span>Current Balance:</span>
+                                <span id="preview-current-balance">₦0.00</span>
+                            </div>
+                            <div class="balance-preview-row">
+                                <span id="preview-change-label">After Deposit:</span>
+                                <span id="preview-new-balance">₦0.00</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Transaction History Section -->
+                <div class="account-transactions-section" id="account-transactions-section">
+                    <div class="transactions-section-header">
+                        <h5><i class="mdi mdi-history"></i> Account Transactions</h5>
+                        <div class="transactions-filters">
+                            <div class="filter-group">
+                                <input type="date" class="form-control form-control-sm" id="account-tx-from-date">
+                            </div>
+                            <div class="filter-group">
+                                <input type="date" class="form-control form-control-sm" id="account-tx-to-date">
+                            </div>
+                            <div class="filter-group">
+                                <select class="form-control form-control-sm" id="account-tx-type-filter">
+                                    <option value="">All Types</option>
+                                    <option value="ACC_DEPOSIT">Deposits</option>
+                                    <option value="ACC_WITHDRAW">Withdrawals/Payments</option>
+                                    <option value="ACC_ADJUSTMENT">Adjustments</option>
+                                </select>
+                            </div>
+                            <button class="btn btn-sm btn-primary" id="filter-account-tx">
+                                <i class="mdi mdi-filter"></i> Filter
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Transaction Timeline -->
+                    <div class="transaction-timeline" id="transaction-timeline">
+                        <div class="timeline-empty-state">
+                            <i class="mdi mdi-swap-horizontal"></i>
+                            <p>No account transactions yet</p>
+                            <small>Deposits and withdrawals will appear here</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@include('admin.partials.payment_modal')
+@include('admin.billing.partials._modals')
 @endsection
 
-@include("admin.billing.partials._scripts")
+@include('admin.billing.partials._scripts')

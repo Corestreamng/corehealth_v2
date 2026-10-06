@@ -1,5 +1,5 @@
 {{-- Procedures - Tabbed History and New Booking Request --}}
-<div class="card-modern mt-2 tp-context-borderable">
+<div class="card-modern mt-2 tp-context-borderable proc-tab-card">
     <div class="card-body">
         {{-- Active Plan Context Bar (Phase 9) --}}
         @include('admin.partials.active_plan_context_bar')
@@ -54,154 +54,37 @@
                 <h5 class="mb-3"><i class="fa fa-plus-circle text-success"></i> Book / Request Procedure</h5>
 
                 {{-- Search Bar --}}
-                <div class="form-group mb-3 position-relative">
-                    <label for="procedure_search" class="form-label fw-bold">
+                <div class="proc-search-container mb-3 position-relative">
+                    <label for="procedure_search" class="form-label fw-bold small text-muted">
                         <i class="fa fa-search text-muted"></i> Search Procedure Catalog
                     </label>
-                    <input type="text" class="form-control form-control-lg" id="procedure_search"
-                        placeholder="Type procedure name, code, or indication..." autocomplete="off">
+                    <div class="input-group">
+                        <span class="input-group-text bg-white border-end-0 text-muted"><i class="fa fa-search"></i></span>
+                        <input type="text" class="form-control form-control-lg border-start-0 ps-0" id="procedure_search"
+                            placeholder="Type procedure name, code, or indication..." autocomplete="off">
+                    </div>
                     <ul class="list-group proc-search-dropdown shadow" id="procedure_search_results" style="display: none;"></ul>
                 </div>
 
-                {{-- Procedure Booking Configurator Card --}}
-                <div id="proc_config_card" class="proc-config-card p-3 mb-4" style="display: none;">
-                    <div class="d-flex justify-content-between align-items-start border-bottom pb-2 mb-3">
-                        <div>
-                            <span class="badge bg-primary text-uppercase me-2" id="proc_config_category">Procedures</span>
-                            <span class="fs-5 fw-bold text-dark" id="proc_config_title">Selected Procedure</span>
-                            <small class="text-muted ms-2" id="proc_config_code"></small>
-                        </div>
-                        <button type="button" class="btn btn-sm btn-close" aria-label="Close" onclick="window.EncounterProcedures.cancelProcedureBookingConfig()"></button>
+                {{-- Empty State Placeholder (Visible when no procedure is selected to maintain comfortable card height) --}}
+                <div id="proc_empty_placeholder" class="proc-empty-state text-center py-5 px-3 my-3 border rounded-3 bg-light-subtle">
+                    <div class="mb-3 text-secondary opacity-50">
+                        <i class="fa fa-stethoscope fa-3x"></i>
                     </div>
-
-                    {{-- Live Tariff / Price Benchmark Guide Banner --}}
-                    <div class="proc-benchmark-box mb-3" id="proc_bench_box">
-                        <div class="d-flex flex-wrap justify-content-between align-items-center">
-                            <div>
-                                <small class="text-muted d-block"><i class="fa fa-tag"></i> Standard Catalog Price</small>
-                                <span class="fw-bold fs-6 text-dark" id="proc_bench_catalog">₦0.00</span>
-                            </div>
-                            <div id="proc_bench_hmo_box" style="display: none;">
-                                <small class="text-success fw-bold d-block"><i class="fa fa-shield-alt"></i> HMO Tariff Guidance (<span id="proc_bench_mode">MODE</span>)</small>
-                                <span><b>Patient:</b> <span id="proc_bench_payable">₦0.00</span> | <b>HMO Claims:</b> <span id="proc_bench_claims">₦0.00</span></span>
-                            </div>
-                            <div>
-                                <button type="button" class="btn btn-sm btn-outline-secondary proc-preset-btn" onclick="window.EncounterProcedures.setProcPreset('tariff')">
-                                    <i class="fa fa-sync-alt"></i> Reset to Benchmark
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-
-                    {{-- Pricing & Billing Section --}}
-                    @if(appsettings('allow_doctor_set_procedure_price'))
-                        <div class="card-modern bg-light p-3 mb-3 border">
-                            <div class="d-flex justify-content-between align-items-center mb-2">
-                                <label class="fw-bold mb-0 text-dark">
-                                    <i class="fa fa-money-bill-wave text-success"></i> Procedure Billing & Doctor Pricing
-                                </label>
-                                <div class="form-check form-switch mb-0">
-                                    <input class="form-check-input" type="checkbox" id="defer_proc_billing" style="cursor: pointer;">
-                                    <label class="form-check-label fw-bold text-primary small" for="defer_proc_billing" style="cursor: pointer;">
-                                        <i class="fa fa-clock"></i> Defer Base Fee Billing (Bill later in Workbench)
-                                    </label>
-                                </div>
-                            </div>
-
-                            <div id="proc_deferred_alert" class="alert alert-warning py-2 mb-0 small" style="display: none;">
-                                <i class="fa fa-info-circle"></i> <b>Billing Deferred:</b> The procedure will be booked without creating an immediate bill. The surgeon or clinician can set pricing and bill from the Procedure Workbench later.
-                            </div>
-
-                            <div id="proc_billing_fields_container">
-                                <div class="row g-2 align-items-end mb-2">
-                                    <div class="col-md-3">
-                                        <label for="proc_coverage_mode" class="form-label small fw-bold">Coverage Mode</label>
-                                        <select class="form-select form-select-sm" id="proc_coverage_mode">
-                                            <option value="cash">Self-Pay (Cash / Direct)</option>
-                                            <option value="express">HMO: Express (Auto-Approved)</option>
-                                            <option value="primary">HMO: Primary (Pre-Auth Required)</option>
-                                            <option value="secondary">HMO: Secondary (Specialist Auth)</option>
-                                        </select>
-                                    </div>
-                                    <div class="col-md-3">
-                                        <label for="proc_payable_amount" class="form-label small fw-bold">Patient Payable (₦)</label>
-                                        <input type="number" step="0.01" min="0" class="form-control form-control-sm" id="proc_payable_amount" placeholder="0.00">
-                                    </div>
-                                    <div class="col-md-3">
-                                        <label for="proc_claims_amount" class="form-label small fw-bold">HMO Claims (₦)</label>
-                                        <input type="number" step="0.01" min="0" class="form-control form-control-sm" id="proc_claims_amount" placeholder="0.00">
-                                    </div>
-                                    <div class="col-md-3" id="proc_auth_code_container" style="display: none;">
-                                        <label for="proc_auth_code" class="form-label small fw-bold">Pre-Auth Code (Optional)</label>
-                                        <input type="text" class="form-control form-control-sm" id="proc_auth_code" placeholder="AUTH-1234">
-                                    </div>
-                                </div>
-
-                                <div class="d-flex gap-1 align-items-center">
-                                    <small class="text-muted me-1">Quick Presets:</small>
-                                    <button type="button" class="btn btn-light btn-sm proc-preset-btn border" onclick="window.EncounterProcedures.setProcPreset('patient')">100% Patient</button>
-                                    <button type="button" class="btn btn-light btn-sm proc-preset-btn border" onclick="window.EncounterProcedures.setProcPreset('hmo')">100% HMO</button>
-                                    <button type="button" class="btn btn-light btn-sm proc-preset-btn border" onclick="window.EncounterProcedures.setProcPreset('split')">50/50 Co-Pay</button>
-                                </div>
-                            </div>
-                        </div>
-                    @else
-                        <input type="hidden" id="proc_coverage_mode" value="cash">
-                        <input type="hidden" id="proc_payable_amount" value="0">
-                        <input type="hidden" id="proc_claims_amount" value="0">
-                        <input type="hidden" id="defer_proc_billing" value="0">
-                    @endif
-
-                    {{-- Clinical Scheduling & Indication Inputs --}}
-                    <div class="row g-2 mb-3">
-                        <div class="col-md-3">
-                            <label for="proc_priority" class="form-label small fw-bold">
-                                <i class="fa fa-exclamation-triangle text-warning"></i> Priority
-                            </label>
-                            <select class="form-select form-select-sm" id="proc_priority">
-                                <option value="routine">Routine</option>
-                                <option value="urgent">Urgent</option>
-                                <option value="emergency">Emergency</option>
-                            </select>
-                        </div>
-                        <div class="col-md-3">
-                            <label for="proc_scheduled_date" class="form-label small fw-bold">
-                                <i class="fa fa-calendar-alt text-info"></i> Scheduled Date (Optional)
-                            </label>
-                            <input type="date" class="form-control form-control-sm" id="proc_scheduled_date">
-                        </div>
-                        <div class="col-md-3">
-                            <label for="proc_scheduled_time" class="form-label small fw-bold">
-                                <i class="fa fa-clock text-info"></i> Scheduled Time (Optional)
-                            </label>
-                            <input type="time" class="form-control form-control-sm" id="proc_scheduled_time">
-                        </div>
-                        <div class="col-md-3">
-                            <label for="proc_operating_room" class="form-label small fw-bold">
-                                <i class="fa fa-door-open text-secondary"></i> Theatre / Room (Optional)
-                            </label>
-                            <input type="text" class="form-control form-control-sm" id="proc_operating_room" placeholder="e.g. Theatre 1 / Minor OR">
-                        </div>
-                    </div>
-
-                    <div class="form-group mb-3">
-                        <label for="proc_pre_notes" class="form-label small fw-bold">
-                            <i class="fa fa-sticky-note text-info"></i> Pre-Procedure Clinical Notes & Indications
-                        </label>
-                        <textarea class="form-control form-control-sm" id="proc_pre_notes" rows="2"
-                            placeholder="Clinical indications, instructions for theatre/prep, patient warnings..."></textarea>
-                    </div>
-
-                    {{-- Configurator Action Buttons --}}
-                    <div class="d-flex justify-content-end gap-2">
-                        <button type="button" class="btn btn-secondary btn-sm" onclick="window.EncounterProcedures.cancelProcedureBookingConfig()">
-                            <i class="fa fa-times"></i> Cancel
-                        </button>
-                        <button type="button" class="btn btn-primary btn-sm" id="add_proc_btn" onclick="window.EncounterProcedures.addConfiguredProcedure()">
-                            <i class="fa fa-plus-circle"></i> Add Procedure to Encounter
-                        </button>
-                    </div>
+                    <h6 class="fw-bold text-dark">No Procedure Selected</h6>
+                    <p class="small text-muted mb-0 mx-auto" style="max-width: 520px;">
+                        Search for a procedure above to schedule the session, set clinical indications, and configure procedure base fee billing or defer billing to the Procedure Workbench.
+                    </p>
                 </div>
+
+                {{-- Reusable Procedure Booking Configurator Card --}}
+                @include('admin.partials.clinical_procedure_booking_card', [
+                    'prefix' => 'proc_',
+                    'cancelHandler' => 'window.EncounterProcedures.cancelProcedureBookingConfig()',
+                    'submitHandler' => 'window.EncounterProcedures.addConfiguredProcedure()',
+                    'submitLabel' => 'Add Procedure to Encounter'
+                ])
+
 
                 {{-- Selected Procedures Table --}}
                 <div class="table-responsive">

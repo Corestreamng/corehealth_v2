@@ -26,12 +26,13 @@ if (typeof window.wbRoute !== 'function') {
 
 // Lab result entry (called from investigation history DataTable "Enter Result" button)
 function enterLabResult(requestId) {
-    window._investResultContext = { type: 'lab', id: requestId };
+    window._investResultContext = { type: 'lab', id: requestId, source: 'nursing' };
     InvestResultEntry.enterResult(
         requestId,
         `/lab-workbench/lab-service-requests/${requestId}`,
         `/lab-workbench/lab-service-requests/${requestId}/attachments`,
-        wbRoute('lab.saveResult', '/lab/saveResult')
+        wbRoute('lab.saveResult', '/lab/saveResult'),
+        'nursing'
     );
 }
 
@@ -42,18 +43,20 @@ function editLabResult(obj) {
         requestId,
         `/lab-workbench/lab-service-requests/${requestId}`,
         `/lab-workbench/lab-service-requests/${requestId}/attachments`,
-        wbRoute('lab.saveResult', '/lab/saveResult')
+        wbRoute('lab.saveResult', '/lab/saveResult'),
+        'nursing'
     );
 }
 
 // Imaging result entry (called from imaging history DataTable "Enter Result" button)
 function enterImagingResult(requestId) {
-    window._investResultContext = { type: 'imaging', id: requestId };
+    window._investResultContext = { type: 'imaging', id: requestId, source: 'nursing' };
     InvestResultEntry.enterResult(
         requestId,
         `/imaging-workbench/imaging-service-requests/${requestId}`,
         `/imaging-workbench/imaging-service-requests/${requestId}/attachments`,
-        wbRoute('imaging.saveResult', '/imaging/saveResult')
+        wbRoute('imaging.saveResult', '/imaging/saveResult'),
+        'nursing'
     );
 }
 
@@ -64,16 +67,17 @@ function editImagingResult(obj) {
         requestId,
         `/imaging-workbench/imaging-service-requests/${requestId}`,
         `/imaging-workbench/imaging-service-requests/${requestId}/attachments`,
-        wbRoute('imaging.saveResult', '/imaging/saveResult')
+        wbRoute('imaging.saveResult', '/imaging/saveResult'),
+        'nursing'
     );
 }
 
-var _PI_LAB_REQ_APPROVAL = '';
-var _PI_IMG_REQ_APPROVAL = '';
-var _PI_DR_SELF_LAB      = '';
-var _PI_NR_SELF_LAB      = '';
-var _PI_DR_SELF_IMG      = '';
-var _PI_NR_SELF_IMG      = '';
+var _PI_LAB_REQ_APPROVAL = Boolean(window.WORKBENCH_CONFIG?.labRequiresApproval);
+var _PI_IMG_REQ_APPROVAL = Boolean(window.WORKBENCH_CONFIG?.imagingRequiresApproval);
+var _PI_DR_SELF_LAB      = Boolean(window.WORKBENCH_CONFIG?.doctorSelfApproveLab);
+var _PI_NR_SELF_LAB      = Boolean(window.WORKBENCH_CONFIG?.nurseSelfApproveLab);
+var _PI_DR_SELF_IMG      = Boolean(window.WORKBENCH_CONFIG?.doctorSelfApproveImaging);
+var _PI_NR_SELF_IMG      = Boolean(window.WORKBENCH_CONFIG?.nurseSelfApproveImaging);
 
 function _autoApproveIfEnabled(requestId, type) {
     if ($('#invest_res_is_edit').val() == '1') { return; }

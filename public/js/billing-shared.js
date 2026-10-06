@@ -1073,27 +1073,37 @@ function printSharedReceiptContent(elementId) {
     const $el = $(`#${elementId}`);
     if (!$el.length) return;
     const content = $el.html();
-    const printWindow = window.open('', '_blank', 'height=700,width=900');
+    if (!content || !content.trim()) return;
+
+    const printWindow = window.open('', '_blank', 'height=700,width=480');
     if (!printWindow) {
         alert('Please allow popups to print receipt');
         return;
     }
-    printWindow.document.write('<!DOCTYPE html><html><head><title>Receipt</title>');
-    printWindow.document.write('<style>');
-    printWindow.document.write('body { font-family: Arial, sans-serif; padding: 20px; margin: 0; }');
-    printWindow.document.write('table { width: 100%; border-collapse: collapse; }');
-    printWindow.document.write('th, td { padding: 8px; text-align: left; border-bottom: 1px solid #ddd; }');
-    printWindow.document.write('.text-center { text-align: center; }');
-    printWindow.document.write('.text-right, .text-end { text-align: right; }');
-    printWindow.document.write('.font-weight-bold, .fw-bold { font-weight: bold; }');
-    printWindow.document.write('@media print { body { padding: 0; } }');
-    printWindow.document.write('</style>');
-    printWindow.document.write('</head><body>');
-    printWindow.document.write(content);
-    printWindow.document.write('</body></html>');
+    printWindow.document.open();
+    if (content.indexOf('<!DOCTYPE') !== -1 || content.indexOf('<html') !== -1) {
+        printWindow.document.write(content);
+    } else {
+        printWindow.document.write('<!DOCTYPE html><html><head><title>Receipt</title>');
+        printWindow.document.write('<style>');
+        printWindow.document.write('* { box-sizing: border-box; }');
+        printWindow.document.write('@page { margin: 0; size: auto; }');
+        printWindow.document.write('html, body { font-family: "Consolas", "Liberation Mono", monospace, Arial, sans-serif; padding: 2mm 3mm; margin: 0; width: 100%; }');
+        printWindow.document.write('table { width: 100%; border-collapse: collapse; }');
+        printWindow.document.write('th, td { padding: 6px 8px; text-align: left; border-bottom: 1px solid #ddd; }');
+        printWindow.document.write('.text-center { text-align: center; }');
+        printWindow.document.write('.text-right, .text-end { text-align: right; }');
+        printWindow.document.write('.font-weight-bold, .fw-bold { font-weight: bold; }');
+        printWindow.document.write('@media print { body { padding: 2mm 3mm !important; margin: 0 !important; width: 100% !important; } }');
+        printWindow.document.write('</style>');
+        printWindow.document.write('</head><body>');
+        printWindow.document.write(content);
+        printWindow.document.write('</body></html>');
+    }
     printWindow.document.close();
     printWindow.focus();
     setTimeout(function() {
         printWindow.print();
+        setTimeout(function() { printWindow.close(); }, 500);
     }, 250);
 }

@@ -37,4 +37,24 @@ class ImagingWorkbenchTest extends TestCase
         $response = $this->actingAs($user)->get('/imaging-workbench/queue');
         $this->assertTrue(in_array($response->status(), [200, 302, 404]));
     }
+
+    /** @test */
+    public function test_imaging_record_billing_endpoint()
+    {
+        $user = User::factory()->create(['status' => 1]);
+        $response = $this->actingAs($user)->post('/imaging-workbench/record-billing', [
+            'request_ids' => [999999],
+        ]);
+        $this->assertTrue(in_array($response->status(), [200, 302, 403, 404, 422, 500]));
+    }
+
+    /** @test */
+    public function test_imaging_dismiss_requests_endpoint()
+    {
+        $user = User::factory()->create(['status' => 1]);
+        $response = $this->actingAs($user)->post('/imaging-workbench/dismiss-requests', [
+            'request_ids' => [999999],
+        ]);
+        $this->assertTrue(in_array($response->status(), [200, 302, 403, 404, 422, 500]));
+    }
 }

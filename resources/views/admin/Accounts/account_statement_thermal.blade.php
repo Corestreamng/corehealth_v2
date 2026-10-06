@@ -9,7 +9,8 @@
             font-size: 10px;
             color: var(--ink);
             background: #fff;
-            width: {{ $thermalWidth ?? getThermalPrinterWidth() }};
+            max-width: {{ $thermalWidth ?? getThermalPrinterWidth() }};
+            width: 100%;
             margin: 0 auto;
             padding: 7px;
             box-sizing: border-box;
@@ -136,18 +137,24 @@
 
         @media print {
             @page {
-                size: {{ $thermalWidth ?? getThermalPrinterWidth() }} auto;
                 margin: 0;
+                size: auto;
             }
 
-            body {
-                margin: 0;
+            html, body {
+                margin: 0 !important;
+                padding: 0 !important;
+                width: 100% !important;
+                background: #fff !important;
             }
 
             .statement-thermal-wrapper {
-                width: {{ $thermalWidth ?? getThermalPrinterWidth() }};
-                margin: 0;
-                padding: 5px;
+                width: 100% !important;
+                max-width: 100% !important;
+                min-width: 100% !important;
+                margin: 0 !important;
+                padding: 2mm 3mm 4mm !important;
+                box-sizing: border-box !important;
             }
         }
     </style>

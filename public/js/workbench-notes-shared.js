@@ -66,7 +66,7 @@ window.WorkbenchNotesKit = {
                                 note: content,
                                 completed: 0
                             },
-                            headers: { 'X-CSRF-TOKEN': csrfToken },
+                            headers: { 'X-CSRF-TOKEN': csrfToken || (window.WORKBENCH_CONFIG && window.WORKBENCH_CONFIG.csrf) || $('meta[name="csrf-token"]').attr('content') || '' },
                             success: function() {
                                 const t = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
                                 $(statusSelector).html('<i class="mdi mdi-check-circle text-success"></i> <span class="text-success">Autosaved ' + t + '</span>');
@@ -98,6 +98,15 @@ window.WorkbenchNotesKit = {
             }
 
             const activePatient = typeof getPatientId === 'function' ? getPatientId() : getPatientId;
+            if (!activePatient) {
+                if (typeof showNotification === 'function') {
+                    showNotification('error', 'Please select a patient before saving a note');
+                } else if (typeof toastr !== 'undefined') {
+                    toastr.error('Please select a patient before saving a note');
+                }
+                return;
+            }
+
             const activeEnrollment = typeof getEnrollmentId === 'function' ? getEnrollmentId() : null;
             const saveUrl = typeof getSaveUrl === 'function' ? getSaveUrl(activePatient, activeEnrollment) : getSaveUrl;
             const method = typeof getMethod === 'function' ? getMethod() : 'POST';
@@ -115,7 +124,7 @@ window.WorkbenchNotesKit = {
                 url: saveUrl,
                 method: method,
                 data: data,
-                headers: { 'X-CSRF-TOKEN': csrfToken },
+                headers: { 'X-CSRF-TOKEN': csrfToken || (window.WORKBENCH_CONFIG && window.WORKBENCH_CONFIG.csrf) || $('meta[name="csrf-token"]').attr('content') || '' },
                 success: (response) => {
                     if (typeof showNotification === 'function') {
                         showNotification('success', response.message || 'Note saved successfully');

@@ -2519,6 +2519,42 @@
         vertical-align: middle;
     }
 
+    /* High-Density Dispensed Items Table (Step 1 Search) */
+    #dt-dispensed-items {
+        font-size: 0.82rem;
+    }
+    #dt-dispensed-items thead th {
+        background: #f1f5f9;
+        color: #334155;
+        font-weight: 700;
+        font-size: 0.74rem;
+        text-transform: uppercase;
+        letter-spacing: 0.03em;
+        padding: 0.5rem 0.6rem;
+        border-bottom: 2px solid #cbd5e1;
+    }
+    #dt-dispensed-items tbody td {
+        padding: 0.45rem 0.6rem;
+        vertical-align: middle;
+        font-size: 0.82rem;
+    }
+    .dense-patient-cell,
+    .dense-product-cell,
+    .dense-audit-cell,
+    .dense-action-cell {
+        display: flex;
+        flex-direction: column;
+    }
+    .dense-audit-cell {
+        font-size: 0.78rem;
+        line-height: 1.3;
+    }
+    .dense-action-cell .btn-xs {
+        font-size: 0.74rem;
+        padding: 0.2rem 0.5rem;
+        border-radius: 4px;
+    }
+
     /* Stock Report Tabs */
     #stock-report-tabs {
         background: white;
@@ -5285,3 +5321,210 @@ body.pharm-till-unselectable {
         z-index: -1;
     }
 }
+
+/* =========================================================
+   Pharmacy Returns: Bulk Bars & Dense Table Checkbox Alignment
+   ========================================================= */
+#pending-returns-bulk-bar,
+#dispensed-selection-bar {
+    display: none !important;
+    align-items: center;
+    justify-content: space-between;
+}
+
+#pending-returns-bulk-bar.active,
+#dispensed-selection-bar.active {
+    display: flex !important;
+}
+
+#returnsTable th:first-child,
+#returnsTable td:first-child,
+#dt-dispensed-items th:first-child,
+#dt-dispensed-items td:first-child {
+    text-align: center !important;
+    vertical-align: middle !important;
+    padding-left: 4px !important;
+    padding-right: 4px !important;
+    width: 38px !important;
+    min-width: 38px !important;
+    max-width: 38px !important;
+}
+
+#returnsTable input[type="checkbox"],
+#dt-dispensed-items input[type="checkbox"],
+.pending-return-checkbox,
+.dispensed-item-checkbox {
+    position: static !important;
+    margin: 0 auto !important;
+    display: inline-block !important;
+    cursor: pointer;
+    vertical-align: middle !important;
+    width: 16px;
+    height: 16px;
+}
+
+/* =========================================================
+   Pharmacy Returns: Stepped Wizard Flow Styles
+   ========================================================= */
+.return-stepper {
+    display: flex;
+    align-items: center;
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    padding: 10px 16px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+
+.return-step-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    cursor: pointer;
+    padding: 6px 14px;
+    border-radius: 8px;
+    transition: all 0.2s ease;
+    user-select: none;
+}
+
+.return-step-item:hover:not(.disabled) {
+    background: #f8fafc;
+}
+
+.return-step-item .step-badge {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 0.9rem;
+    background: #e2e8f0;
+    color: #64748b;
+    transition: all 0.2s ease;
+    flex-shrink: 0;
+}
+
+.return-step-item .step-badge .step-check {
+    display: none;
+    font-size: 1.1rem;
+}
+
+.return-step-item .step-info {
+    display: flex;
+    flex-direction: column;
+}
+
+.return-step-item .step-title {
+    font-size: 0.92rem;
+    font-weight: 600;
+    color: #475569;
+    line-height: 1.2;
+}
+
+.return-step-item .step-desc {
+    font-size: 0.75rem;
+    color: #94a3b8;
+}
+
+/* Active State */
+.return-step-item.active {
+    background: rgba(var(--hospital-primary-rgb, 1, 27, 51), 0.05);
+}
+
+.return-step-item.active .step-badge {
+    background: var(--hospital-primary, #011b33);
+    color: #fff;
+    box-shadow: 0 0 0 3px rgba(var(--hospital-primary-rgb, 1, 27, 51), 0.2);
+}
+
+.return-step-item.active .step-title {
+    color: var(--hospital-primary, #011b33);
+    font-weight: 700;
+}
+
+/* Completed State */
+.return-step-item.completed .step-badge {
+    background: #10b981;
+    color: #fff;
+}
+
+.return-step-item.completed .step-badge .step-index {
+    display: none;
+}
+
+.return-step-item.completed .step-badge .step-check {
+    display: inline-block;
+}
+
+.return-step-item.completed .step-title {
+    color: #0f766e;
+}
+
+/* Disabled State */
+.return-step-item.disabled {
+    cursor: not-allowed;
+    opacity: 0.55;
+}
+
+.step-divider {
+    flex: 1;
+    height: 2px;
+    background: #e2e8f0;
+    margin: 0 16px;
+    position: relative;
+}
+
+.return-step-pane {
+    animation: fadeInStep 0.2s ease-in-out;
+}
+
+@keyframes fadeInStep {
+    from {
+        opacity: 0;
+        transform: translateY(4px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@media (max-width: 767.98px) {
+    .return-stepper {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 8px;
+    }
+    .step-divider {
+        display: none;
+    }
+}
+
+.btn-quick-reason {
+    transition: all 0.15s ease;
+    font-size: 0.72rem !important;
+    padding: 2px 8px !important;
+    border-radius: 12px !important;
+    white-space: nowrap;
+    border-color: #cbd5e1;
+    color: #475569;
+    background-color: #fff;
+}
+
+.btn-quick-reason:hover {
+    background-color: var(--hospital-primary, #011b33) !important;
+    border-color: var(--hospital-primary, #011b33) !important;
+    color: #fff !important;
+}
+
+.btn-quick-reason.active {
+    background-color: var(--hospital-primary, #011b33) !important;
+    border-color: var(--hospital-primary, #011b33) !important;
+    color: #fff !important;
+    font-weight: 600;
+}
+
+
+

@@ -261,6 +261,18 @@ Route::group(['middleware' => ['auth']], function () {
     });
 
     Route::group(['middleware' => ['auth']], function () {
+        // Service Combo routes (defined BEFORE resource to prevent 405 Method Not Allowed)
+        Route::post('encounters/apply-combo', [EncounterController::class, 'applyCombo'])->name('encounters.applyCombo.direct');
+        Route::post('encounters/applyCombo', [EncounterController::class, 'applyCombo']);
+        Route::post('encounters/{encounter}/apply-combo', [EncounterController::class, 'applyCombo'])->name('encounters.applyCombo');
+        Route::post('encounters/{encounter}/applyCombo', [EncounterController::class, 'applyCombo.alias']);
+        Route::post('encounters/remove-bundle', [EncounterController::class, 'removeBundleGeneric'])->name('encounters.removeBundle.direct');
+        Route::post('encounters/{encounter}/remove-bundle', [EncounterController::class, 'removeBundle'])->name('encounters.removeBundle');
+        Route::post('encounters/remove-bundle-item', [EncounterController::class, 'removeBundleItemGeneric'])->name('encounters.removeBundleItem.direct');
+        Route::post('encounters/{encounter}/remove-bundle-item', [EncounterController::class, 'removeBundleItem'])->name('encounters.removeBundleItem');
+        Route::post('service-combo/remove-bundle', [EncounterController::class, 'removeBundleGeneric'])->name('serviceCombo.removeBundle');
+        Route::post('service-combo/remove-item', [EncounterController::class, 'removeBundleItemGeneric'])->name('serviceCombo.removeItem');
+
         // Creating and Listing Permissions
         Route::resource('encounters', EncounterController::class);
         // ── Encounter Intelligence Workbench ──────────────────────────────
@@ -370,10 +382,6 @@ Route::group(['middleware' => ['auth']], function () {
         Route::post('encounters/{encounter}/add-procedure', [EncounterController::class, 'addSingleProcedureRequest'])->name('encounters.addProcedure');
 
         // Re-prescribe from history (Plan §5.1)
-        Route::post('encounters/{encounter}/apply-combo', [EncounterController::class, 'applyCombo'])->name('encounters.applyCombo');
-        Route::post('encounters/{encounter}/remove-bundle', [EncounterController::class, 'removeBundle'])->name('encounters.removeBundle');
-        // Generic remove-bundle (no encounter context needed — used by all history views)
-        Route::post('service-combo/remove-bundle', [EncounterController::class, 'removeBundleGeneric'])->name('serviceCombo.removeBundle');
         Route::post('encounters/{encounter}/re-prescribe', [EncounterController::class, 'rePrescribe'])->name('encounters.rePrescribe');
 
         // Recent encounters + items for re-prescribe dropdown (Plan §5.3)
@@ -504,6 +512,9 @@ Route::group(['middleware' => ['auth']], function () {
             Route::patch('{procedure}/consent', [\App\Http\Controllers\PatientProcedureController::class, 'updateConsent'])->name('consent.update');
             Route::post('{procedure}/consent/sign', [\App\Http\Controllers\PatientProcedureController::class, 'signConsent'])->name('consent.sign');
 
+            // Preparation & Safety Checklist Toggle
+            Route::post('{procedure}/checklist-toggle', [\App\Http\Controllers\PatientProcedureController::class, 'toggleChecklistItem'])->name('checklist-toggle');
+
             // Attachments Management
             Route::post('{procedure}/attachments', [\App\Http\Controllers\PatientProcedureController::class, 'uploadAttachment'])->name('attachments.store');
             Route::get('{procedure}/attachments/{attachment}/download', [\App\Http\Controllers\PatientProcedureController::class, 'downloadAttachment'])->name('attachments.download');
@@ -607,6 +618,9 @@ Route::group(['middleware' => ['auth']], function () {
         Route::post('/pharmacy-workbench/create-request', [\App\Http\Controllers\PharmacyWorkbenchController::class, 'createPrescriptionRequest'])->name('pharmacy.create-request');
         Route::get('/pharmacy-workbench/my-transactions', [\App\Http\Controllers\PharmacyWorkbenchController::class, 'getMyTransactions'])->name('pharmacy.my-transactions');
         Route::post('/pharmacy-workbench/print-prescription-slip', [\App\Http\Controllers\PharmacyWorkbenchController::class, 'printPrescriptionSlip'])->name('pharmacy.print-prescription-slip');
+        Route::post('/pharmacy-workbench/apply-combo', [\App\Http\Controllers\PharmacyWorkbenchController::class, 'pharmacyApplyCombo'])->name('pharmacy.applyCombo');
+        Route::post('/pharmacy-workbench/remove-bundle', [\App\Http\Controllers\PharmacyWorkbenchController::class, 'removeBundle'])->name('pharmacy.removeBundle');
+        Route::post('/pharmacy-workbench/remove-bundle-item', [\App\Http\Controllers\PharmacyWorkbenchController::class, 'removeBundleItem'])->name('pharmacy.removeBundleItem');
 
         // Dispense Medication with Batch Aliases
         Route::post('/pharmacy/dispense-with-batch', [\App\Http\Controllers\PharmacyWorkbenchController::class, 'dispenseMedicationWithBatch']);
@@ -621,10 +635,13 @@ Route::group(['middleware' => ['auth']], function () {
         Route::get('/pharmacy/returns/create', [\App\Http\Controllers\PharmacyReturnsController::class, 'create'])->name('pharmacy.returns.create');
         Route::post('/pharmacy/returns', [\App\Http\Controllers\PharmacyReturnsController::class, 'store'])->name('pharmacy.returns.store');
         Route::post('/pharmacy/returns/store', [\App\Http\Controllers\PharmacyReturnsController::class, 'store']);
+        Route::post('/pharmacy/returns/bulk-store', [\App\Http\Controllers\PharmacyReturnsController::class, 'bulkStore'])->name('pharmacy.returns.bulk-store');
         Route::get('/pharmacy/returns/{id}', [\App\Http\Controllers\PharmacyReturnsController::class, 'show'])->name('pharmacy.returns.show');
         Route::post('/pharmacy/returns/{id}/approve', [\App\Http\Controllers\PharmacyReturnsController::class, 'approve'])->name('pharmacy.returns.approve');
         Route::post('/pharmacy/returns/{id}/reject', [\App\Http\Controllers\PharmacyReturnsController::class, 'reject'])->name('pharmacy.returns.reject');
         Route::post('/pharmacy/returns/{id}/process-refund', [\App\Http\Controllers\PharmacyReturnsController::class, 'processRefund'])->name('pharmacy.returns.process-refund');
+        Route::post('/pharmacy/returns/bulk-approve', [\App\Http\Controllers\PharmacyReturnsController::class, 'bulkApprove'])->name('pharmacy.returns.bulk-approve');
+        Route::post('/pharmacy/returns/bulk-reject', [\App\Http\Controllers\PharmacyReturnsController::class, 'bulkReject'])->name('pharmacy.returns.bulk-reject');
 
         // Pharmacy Damages Management Routes
         Route::get('/pharmacy/damages', [\App\Http\Controllers\PharmacyDamagesController::class, 'index'])->name('pharmacy.damages.index');
@@ -684,6 +701,7 @@ Route::group(['middleware' => ['auth']], function () {
         Route::post('/lab-workbench/record-billing', [\App\Http\Controllers\LabWorkbenchController::class, 'recordBilling'])->name('lab.recordBilling');
         Route::post('/lab-workbench/apply-combo', [\App\Http\Controllers\LabWorkbenchController::class, 'labApplyCombo'])->name('lab.applyCombo');
         Route::post('/lab-workbench/remove-bundle', [\App\Http\Controllers\LabWorkbenchController::class, 'removeBundle'])->name('lab.removeBundle');
+        Route::post('/lab-workbench/remove-bundle-item', [\App\Http\Controllers\LabWorkbenchController::class, 'removeBundleItem'])->name('lab.removeBundleItem');
         Route::post('/lab-workbench/claim-self-perform', [\App\Http\Controllers\LabWorkbenchController::class, 'claimSelfPerform'])->name('lab.claimSelfPerform');
         Route::post('/lab-workbench/collect-sample', [\App\Http\Controllers\LabWorkbenchController::class, 'collectSample'])->name('lab.collectSample');
         Route::post('/lab-workbench/dismiss-requests', [\App\Http\Controllers\LabWorkbenchController::class, 'dismissRequests'])->name('lab.dismissRequests');
@@ -757,7 +775,9 @@ Route::group(['middleware' => ['auth']], function () {
         Route::get('/imaging-workbench/search-services', [\App\Http\Controllers\ImagingWorkbenchController::class, 'searchServices'])->name('imaging.searchServices');
         Route::post('/imaging-workbench/create-request', [\App\Http\Controllers\ImagingWorkbenchController::class, 'createRequest'])->name('imaging.createRequest');
         Route::post('/imaging-workbench/clinical-requests/apply-combo', [\App\Http\Controllers\ImagingWorkbenchController::class, 'imagingApplyCombo'])->name('imaging.applyCombo');
+        Route::post('/imaging-workbench/apply-combo', [\App\Http\Controllers\ImagingWorkbenchController::class, 'imagingApplyCombo']);
         Route::post('/imaging-workbench/remove-bundle', [\App\Http\Controllers\ImagingWorkbenchController::class, 'removeBundle'])->name('imaging.removeBundle');
+        Route::post('/imaging-workbench/remove-bundle-item', [\App\Http\Controllers\ImagingWorkbenchController::class, 'removeBundleItem'])->name('imaging.removeBundleItem');
 
         // Imaging Result Approval Routes
         Route::get('/imaging-workbench/approval-queue', [\App\Http\Controllers\ImagingWorkbenchController::class, 'getApprovalQueue'])->name('imaging.approvalQueue');
@@ -1228,6 +1248,7 @@ Route::middleware(['auth'])->prefix('clinical-reports')->name('clinical-reports.
     Route::get('/search-diagnosis', [\App\Http\Controllers\ClinicalReportsController::class, 'searchDiagnosis'])->name('search-diagnosis');
     Route::get('/encounter-details/{id}', [\App\Http\Controllers\ClinicalReportsController::class, 'getEncounterDrillDown'])->name('encounter-details');
     Route::get('/drill-down', [\App\Http\Controllers\ClinicalReportsController::class, 'getDrillDownDetails'])->name('drill-down');
+    Route::get('/export', [\App\Http\Controllers\ClinicalReportsController::class, 'export'])->name('export');
     Route::get('/unit-visits', [\App\Http\Controllers\ClinicalReportsController::class, 'getUnitVisits'])->name('unit-visits');
     Route::get('/hmo-trends', [\App\Http\Controllers\ClinicalReportsController::class, 'getHmoTrends'])->name('hmo-trends');
     Route::get('/maternity', [\App\Http\Controllers\ClinicalReportsController::class, 'getMaternityReport'])->name('maternity');
@@ -1385,6 +1406,21 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/workbench/price-list/products', [\App\Http\Controllers\WorkbenchPriceListController::class, 'getProducts'])->name('workbench.price-list.products');
     Route::get('/workbench/price-list/services', [\App\Http\Controllers\WorkbenchPriceListController::class, 'getServices'])->name('workbench.price-list.services');
     Route::get('/workbench/price-list/tariffs', [\App\Http\Controllers\WorkbenchPriceListController::class, 'getTariffs'])->name('workbench.price-list.tariffs');
+
+    // NHMIS Monthly Summary Workbench
+    Route::prefix('nhmis-workbench')->name('nhmis.')->group(function () {
+        Route::get('/', [\App\Http\Controllers\NhmisWorkbenchController::class, 'index'])->name('workbench');
+        Route::post('/compile', [\App\Http\Controllers\NhmisWorkbenchController::class, 'compile'])->name('compile');
+        Route::post('/save-values', [\App\Http\Controllers\NhmisWorkbenchController::class, 'saveValues'])->name('save-values');
+        Route::post('/update-status', [\App\Http\Controllers\NhmisWorkbenchController::class, 'updateStatus'])->name('update-status');
+        Route::get('/audit-diagnosis', [\App\Http\Controllers\NhmisWorkbenchController::class, 'auditDiagnosis'])->name('audit-diagnosis');
+        Route::get('/service-mappings', [\App\Http\Controllers\NhmisWorkbenchController::class, 'getServiceMappings'])->name('service-mappings');
+        Route::post('/service-mappings', [\App\Http\Controllers\NhmisWorkbenchController::class, 'saveServiceMappings'])->name('save-service-mappings');
+        Route::post('/service-mappings/auto-detect', [\App\Http\Controllers\NhmisWorkbenchController::class, 'autoDetectServiceMappings'])->name('auto-detect-service-mappings');
+        Route::post('/backfill-classifications', [\App\Http\Controllers\NhmisWorkbenchController::class, 'backfillClassifications'])->name('backfill-classifications');
+        Route::get('/drill-down', [\App\Http\Controllers\NhmisWorkbenchController::class, 'drillDown'])->name('drill-down');
+        Route::get('/service-mapping/{serviceId}', [\App\Http\Controllers\NhmisWorkbenchController::class, 'getMappingForService'])->name('service-mapping-single');
+    });
 });
 
 // Observability & Health Monitoring

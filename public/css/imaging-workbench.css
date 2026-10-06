@@ -2758,3 +2758,148 @@
 
     .floating-approval-btn:hover { transform: scale(1.1); box-shadow: 0 6px 20px rgba(111, 66, 193, 0.6); }
     .floating-approval-btn .badge { position: absolute; top: -5px; right: -5px; background: #dc3545; color: white; border-radius: 50%; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; font-size: 0.75rem; font-weight: 700; }
+
+    /* Trash Panel Styles */
+    .trash-panel {
+        position: fixed;
+        right: 0;
+        top: 0;
+        bottom: 0;
+        width: 450px;
+        background: white;
+        box-shadow: -4px 0 15px rgba(0, 0, 0, 0.2);
+        z-index: 2000;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .trash-panel-header {
+        padding: 1.5rem;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-bottom: 3px solid #5a67d8;
+    }
+
+    .trash-panel-header h5 {
+        margin: 0;
+        font-weight: 700;
+        font-size: 1.25rem;
+    }
+
+    .trash-panel-tabs {
+        display: flex;
+        background: #f8f9fa;
+        border-bottom: 2px solid #dee2e6;
+    }
+
+    .trash-tab {
+        flex: 1;
+        padding: 1rem;
+        background: transparent;
+        border: none;
+        border-bottom: 3px solid transparent;
+        cursor: pointer;
+        font-weight: 600;
+        color: #6c757d;
+        transition: all 0.2s;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+    }
+
+    .trash-tab:hover {
+        background: rgba(0, 123, 255, 0.05);
+        color: #007bff;
+    }
+
+    .trash-tab.active {
+        color: #007bff;
+        border-bottom-color: #007bff;
+        background: white;
+    }
+
+    .trash-panel-content {
+        flex: 1;
+        overflow-y: auto;
+        padding: 1rem;
+    }
+
+    .trash-tab-content {
+        display: none;
+    }
+
+    .trash-tab-content.active {
+        display: block;
+    }
+
+    /* Floating Trash Button */
+    .floating-trash-btn {
+        position: fixed;
+        right: 30px;
+        bottom: 100px;
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border: none;
+        box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        transition: all 0.3s;
+        z-index: 1000;
+    }
+
+    .floating-trash-btn:hover {
+        transform: scale(1.1);
+        box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
+    }
+
+    .floating-trash-btn .badge {
+        position: absolute;
+        top: -5px;
+        right: -5px;
+        background: #dc3545;
+        color: white;
+        border-radius: 50%;
+        width: 24px;
+        height: 24px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.75rem;
+        font-weight: 700;
+    }
+
+    /* Audit Log Button */
+    .floating-audit-btn {
+        position: fixed;
+        right: 30px;
+        bottom: 30px;
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        color: white;
+        border: none;
+        box-shadow: 0 4px 15px rgba(240, 147, 251, 0.4);
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        transition: all 0.3s;
+        z-index: 1000;
+    }
+
+    .floating-audit-btn:hover {
+        transform: scale(1.1);
+        box-shadow: 0 6px 20px rgba(240, 147, 251, 0.6);
+    }

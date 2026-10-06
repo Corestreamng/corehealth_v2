@@ -6,15 +6,56 @@ $(function() {
     let currentRemittanceId = null;
     let selectedPatientId = null;
 
-    // App settings for branding
-    const appSettings = {
-        siteName: "{{ appsettings()->site_name ?? config('app.name') }}",
-        logo: "{{ appsettings()->logo ?? '' }}",
-        address: "{{ appsettings()->contact_address ?? '' }}",
-        phones: "{{ appsettings()->contact_phones ?? '' }}",
-        emails: "{{ appsettings()->contact_emails ?? '' }}",
-        hosColor: "{{ appsettings()->hos_color ?? '#0066cc' }}"
+    const cfg = window.WORKBENCH_CONFIG || {};
+    const getRoute = function(name, fallback) {
+        if (typeof window.wbRoute === 'function') {
+            return window.wbRoute(name, fallback);
+        }
+        if (cfg.routes && cfg.routes[name]) {
+            return cfg.routes[name];
+        }
+        var base = (cfg.baseUrl || '').replace(/\/$/, '');
+        var cleanFallback = (fallback || '').replace(/^\//, '');
+        return base ? (base + '/' + cleanFallback) : ('/' + cleanFallback);
     };
+
+    const getUrl = function(path) {
+        if (typeof window.wbUrl === 'function') {
+            return window.wbUrl(path);
+        }
+        var base = (cfg.baseUrl || '').replace(/\/$/, '');
+        var cleanPath = (path || '').replace(/^\//, '');
+        return base ? (base + '/' + cleanPath) : ('/' + cleanPath);
+    };
+
+    const csrfToken = cfg.csrf || $('meta[name="csrf-token"]').attr('content') || '';
+    const bootstrapCssUrl = cfg.bootstrapCss || getUrl('plugins/bootstrap/css/bootstrap.min.css');
+
+    const showModal = function(id) {
+        if (typeof window.openModalSafely === 'function') {
+            window.openModalSafely(id);
+        } else if (typeof $.fn.modal === 'function') {
+            $(id).modal('show');
+        }
+    };
+
+    const hideModal = function(id) {
+        if (typeof window.closeModalSafely === 'function') {
+            window.closeModalSafely(id);
+        } else if (typeof $.fn.modal === 'function') {
+            $(id).modal('hide');
+        }
+    };
+
+    // App settings for branding
+    const appSettings = Object.assign({
+        siteName: 'Hospital',
+        logo: '',
+        address: '',
+        phones: '',
+        emails: '',
+        hosColor: '#0066cc'
+    }, cfg.appSettings || {});
 
     // Initialize Claims DataTable
     function initClaimsTable() {
@@ -26,7 +67,7 @@ $(function() {
             processing: true,
             serverSide: true,
             ajax: {
-                url: "{{ route('hmo.reports.claims') }}",
+                url: getRoute('hmo.reports.claims', '/hmo/reports/claims'),
                 data: function(d) {
                     d.hmo_id = $('#filter_hmo').val();
                     d.status = $('#filter_status').val();
@@ -78,7 +119,7 @@ $(function() {
             processing: true,
             serverSide: true,
             ajax: {
-                url: "{{ route('hmo.reports.remittances') }}",
+                url: getRoute('hmo.reports.remittances', '/hmo/reports/remittances'),
                 data: function(d) {
                     d.hmo_id = $('#remittance_filter_hmo').val();
                     d.date_from = $('#remittance_filter_from').val();
@@ -101,7 +142,7 @@ $(function() {
 
     // Load Outstanding Report
     function loadOutstandingReport() {
-        $.get("{{ route('hmo.reports.outstanding') }}", function(response) {
+        $.get(getRoute('hmo.reports.outstanding', '/hmo/reports/outstanding'), function(response) {
             // Update summary
             $('#summaryTotalClaims').text('₦' + formatNumber(response.summary.total_claims));
             $('#summaryTotalPaid').text('₦' + formatNumber(response.summary.total_paid));
@@ -144,7 +185,7 @@ $(function() {
         let month = $('#monthlyMonth').val();
         let year = $('#monthlyYear').val();
 
-        $.get("{{ route('hmo.reports.monthly') }}", { month: month, year: year }, function(response) {
+        $.get(getRoute('hmo.reports.monthly', '/hmo/reports/monthly'), { month: month, year: year }, function(response) {
             let html = `
                 <div class="row mb-4">
                     <div class="col-md-3">
@@ -323,8 +364,8 @@ $(function() {
 
         if (!confirm('Mark ' + selectedClaimIds.length + ' claims as submitted to HMO?')) return;
 
-        $.post("{{ route('hmo.reports.mark-submitted') }}", {
-            _token: '{{ csrf_token() }}',
+        $.post(getRoute('hmo.reports.mark-submitted', '/hmo/reports/mark-submitted'), {
+            _token: csrfToken,
             claim_ids: selectedClaimIds
         }, function(response) {
             if (response.success) {
@@ -345,10 +386,10 @@ $(function() {
             date_to: $('#filter_date_to').val()
         });
 
-        $.get("{{ route('hmo.reports.print-data') }}?" + params, function(response) {
+        $.get(getRoute('hmo.reports.print-data', '/hmo/reports/print-data') + '?' + params, function(response) {
             let html = generatePrintHTML(response);
             $('#printPreviewContent').html(html);
-            $('#printPreviewModal').modal('show');
+            showModal('#printPreviewModal');
         });
     });
 
@@ -452,7 +493,7 @@ $(function() {
             <html>
             <head>
                 <title>HMO Claims Report</title>
-                <link rel="stylesheet" href="{{ asset('plugins/bootstrap/css/bootstrap.min.css') }}">
+                <link rel="stylesheet" href="${bootstrapCssUrl}">
                 <style>
                     @media print {
                         body { padding: 20px; }
@@ -476,7 +517,7 @@ $(function() {
             date_from: $('#filter_date_from').val(),
             date_to: $('#filter_date_to').val()
         });
-        window.location.href = "{{ route('hmo.reports.export-excel') }}?" + params;
+        window.location.href = getRoute('hmo.reports.export-excel', '/hmo/reports/export-excel') + '?' + params;
     });
 
     // Remittance handlers
@@ -485,21 +526,23 @@ $(function() {
         $('#remittanceForm')[0].reset();
         $('#remittance_id').val('');
         $('#remittance_bank_id').val('');
-        $('#remittanceModal').modal('show');
+        showModal('#remittanceModal');
     });
 
     $('#remittanceForm').on('submit', function(e) {
         e.preventDefault();
 
         let id = $('#remittance_id').val();
-        let url = id ? "{{ url('hmo/reports/remittances') }}/" + id : "{{ route('hmo.reports.remittances.store') }}";
+        let url = id
+            ? (getRoute('hmo.reports.remittances', '/hmo/reports/remittances') + '/' + id)
+            : getRoute('hmo.reports.remittances.store', '/hmo/reports/remittances');
         let method = id ? 'PUT' : 'POST';
 
         $.ajax({
             url: url,
             method: method,
             data: {
-                _token: '{{ csrf_token() }}',
+                _token: csrfToken,
                 hmo_id: $('#remittance_hmo_id').val(),
                 bank_id: $('#remittance_bank_id').val(),
                 amount: $('#remittance_amount').val(),
@@ -514,7 +557,7 @@ $(function() {
             success: function(response) {
                 if (response.success) {
                     toastr.success(response.message);
-                    $('#remittanceModal').modal('hide');
+                    hideModal('#remittanceModal');
                     remittancesTable.ajax.reload();
                     loadRemittanceSummary();
                 }
@@ -530,7 +573,7 @@ $(function() {
         let id = $(this).data('id');
         currentRemittanceId = id;
 
-        $.get("{{ url('hmo/reports/remittances') }}/" + id, function(response) {
+        $.get(getUrl('hmo/reports/remittances/' + id), function(response) {
             let rem = response.remittance;
             let html = `
                 <div class="row">
@@ -567,7 +610,7 @@ $(function() {
                 </table>`;
 
             $('#viewRemittanceContent').html(html);
-            $('#viewRemittanceModal').modal('show');
+            showModal('#viewRemittanceModal');
         });
     });
 
@@ -575,7 +618,7 @@ $(function() {
     $(document).on('click', '.edit-remittance-btn', function() {
         let id = $(this).data('id');
 
-        $.get("{{ url('hmo/reports/remittances') }}/" + id, function(response) {
+        $.get(getUrl('hmo/reports/remittances/' + id), function(response) {
             let rem = response.remittance;
             $('#remittanceModalTitle').text('Edit Remittance');
             $('#remittance_id').val(rem.id);
@@ -589,7 +632,7 @@ $(function() {
             $('#remittance_period_from').val(rem.period_from);
             $('#remittance_period_to').val(rem.period_to);
             $('#remittance_notes').val(rem.notes);
-            $('#remittanceModal').modal('show');
+            showModal('#remittanceModal');
         });
     });
 
@@ -600,9 +643,9 @@ $(function() {
         if (!confirm('Are you sure you want to delete this remittance? Claims will be unlinked.')) return;
 
         $.ajax({
-            url: "{{ url('hmo/reports/remittances') }}/" + id,
+            url: getUrl('hmo/reports/remittances/' + id),
             method: 'DELETE',
-            data: { _token: '{{ csrf_token() }}' },
+            data: { _token: csrfToken },
             success: function(response) {
                 if (response.success) {
                     toastr.success(response.message);
@@ -620,7 +663,7 @@ $(function() {
 
     // Load remittance summary
     function loadRemittanceSummary() {
-        $.get("{{ route('hmo.reports.outstanding') }}", function(response) {
+        $.get(getRoute('hmo.reports.outstanding', '/hmo/reports/outstanding'), function(response) {
             let html = `
                 <div class="text-center mb-3">
                     <h3 class="text-danger">₦${formatNumber(response.summary.total_outstanding)}</h3>
@@ -653,7 +696,7 @@ $(function() {
             <html>
             <head>
                 <title>Outstanding Claims Report</title>
-                <link rel="stylesheet" href="{{ asset('plugins/bootstrap/css/bootstrap.min.css') }}">
+                <link rel="stylesheet" href="${bootstrapCssUrl}">
                 <style>
                     body { padding: 20px; font-family: Arial, sans-serif; }
                     .aging-cell-current { background-color: #d4edda !important; }
@@ -708,7 +751,7 @@ $(function() {
             date_from: $('#filter_date_from').val(),
             date_to: $('#filter_date_to').val()
         });
-        window.location.href = "{{ route('hmo.reports.export-pdf') }}?" + params;
+        window.location.href = getRoute('hmo.reports.export-pdf', '/hmo/reports/export-pdf') + '?' + params;
     });
 
     // =============================================
@@ -724,14 +767,28 @@ $(function() {
             allowClear: true,
             minimumInputLength: 2,
             ajax: {
-                url: "{{ route('hmo.reports.search-patients') }}",
+                url: getRoute('patient-search', '/patient-search'),
                 dataType: 'json',
                 delay: 300,
                 data: function(params) {
-                    return { q: params.term };
+                    return { q: params.term, context: 'hmo' };
                 },
                 processResults: function(data) {
-                    return { results: data };
+                    return {
+                        results: (data || []).map(function(p) {
+                            var hmoName = p.hmo || 'Private';
+                            var fileNo = p.file_no || 'No File#';
+                            return {
+                                id: p.id,
+                                text: p.name + ' (' + fileNo + ') · ' + hmoName + (p.hmo_no ? ' · ' + p.hmo_no : ''),
+                                name: p.name,
+                                file_no: fileNo,
+                                hmo_name: hmoName,
+                                hmo_no: p.hmo_no || '',
+                                photo: p.photo
+                            };
+                        })
+                    };
                 }
             }
         });
@@ -742,7 +799,7 @@ $(function() {
     $('#patientSearchSelect').on('select2:select', function(e) {
         let data = e.params.data;
         selectedPatientId = data.id;
-        $('#patientInfoText').html(`<strong>${data.text}</strong> | HMO: ${data.hmo_name}`);
+        $('#patientInfoText').html(`<strong>${data.name || data.text}</strong> | File: ${data.file_no || 'N/A'} | HMO: ${data.hmo_name || 'N/A'}`);
         $('#selectedPatientInfo').show();
         loadPatientClaims(data.id);
     });
@@ -750,7 +807,7 @@ $(function() {
     function loadPatientClaims(patientId) {
         $('#patientClaimsContent').html('<div class="text-center py-4"><i class="mdi mdi-loading mdi-spin mdi-36px"></i><p>Loading patient claims...</p></div>');
 
-        $.get("{{ url('hmo/reports/patient') }}/" + patientId, function(response) {
+        $.get(getUrl('hmo/reports/patient/' + patientId), function(response) {
             let html = `
                 <div class="row mb-4">
                     <div class="col-md-6">
@@ -846,7 +903,7 @@ $(function() {
 
     // Print patient report
     window.printPatientReport = function(patientId) {
-        $.get("{{ url('hmo/reports/patient') }}/" + patientId + "/print", function(data) {
+        $.get(getUrl('hmo/reports/patient/' + patientId + '/print'), function(data) {
             let html = generatePatientPrintHTML(data);
             let printWindow = window.open('', '', 'height=800,width=1000');
             printWindow.document.write(html);
@@ -954,7 +1011,7 @@ $(function() {
 
         $('#utilizationContent').html('<div class="text-center py-4"><i class="mdi mdi-loading mdi-spin mdi-36px"></i><p>Loading utilization data...</p></div>');
 
-        $.get("{{ route('hmo.reports.utilization') }}", { date_from: dateFrom, date_to: dateTo }, function(response) {
+        $.get(getRoute('hmo.reports.utilization', '/hmo/reports/utilization'), { date_from: dateFrom, date_to: dateTo }, function(response) {
             let html = `
                 <div class="row mb-4">
                     <div class="col-md-3">
@@ -1078,7 +1135,7 @@ $(function() {
             <html>
             <head>
                 <title>Service Utilization Report</title>
-                <link rel="stylesheet" href="{{ asset('plugins/bootstrap/css/bootstrap.min.css') }}">
+                <link rel="stylesheet" href="${bootstrapCssUrl}">
                 <style>
                     body { padding: 20px; font-family: Arial, sans-serif; }
                     @media print { @page { margin: 1cm; } }
@@ -1116,7 +1173,7 @@ $(function() {
             processing: true,
             serverSide: true,
             ajax: {
-                url: "{{ route('hmo.reports.auth-codes') }}",
+                url: getRoute('hmo.reports.auth-codes', '/hmo/reports/auth-codes'),
                 data: function(d) {
                     d.hmo_id = $('#auth_filter_hmo').val();
                     d.auth_status = $('#auth_filter_status').val();
@@ -1159,7 +1216,7 @@ $(function() {
             <html>
             <head>
                 <title>Auth Code Tracker Report</title>
-                <link rel="stylesheet" href="{{ asset('plugins/bootstrap/css/bootstrap.min.css') }}">
+                <link rel="stylesheet" href="${bootstrapCssUrl}">
                 <style>
                     body { padding: 20px; font-family: Arial, sans-serif; }
                     @media print { @page { margin: 1cm; } }

@@ -1680,7 +1680,8 @@
                                 <div class="col-md-6">
                                     <div class="form-group">
                                         <label>Damage Reason <span class="text-danger">*</span></label>
-                                        <input type="text" name="damage_reason" class="form-control" placeholder="Describe the damage…" required>
+                                        <input type="text" name="damage_reason" class="form-control" minlength="10" placeholder="Describe the damage… (min 10 characters)" required>
+                                        <small class="form-text text-muted">Minimum 10 characters required.</small>
                                     </div>
                                 </div>
                             </div>
@@ -1803,7 +1804,8 @@
                             </div>
                             <div class="form-group">
                                 <label>Notes / Reason <span class="text-danger">*</span></label>
-                                <textarea name="return_reason" class="form-control" rows="2" required placeholder="Why are these items being returned?"></textarea>
+                                <textarea name="return_reason" class="form-control" rows="2" minlength="5" required placeholder="Why are these items being returned? (min 5 characters)"></textarea>
+                                <small class="form-text text-muted">Minimum 5 characters required.</small>
                             </div>
                             <div class="form-check mb-2">
                                 <input class="form-check-input" type="checkbox" name="restock" value="1" id="ret-restock" checked>

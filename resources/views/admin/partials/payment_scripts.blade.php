@@ -224,14 +224,40 @@ $(document).on('click', '#close-receipt', function() {
 
 function printReceipt(elementId) {
     const content = $(`#${elementId}`).html();
-    const printWindow = window.open('', '', 'height=600,width=800');
-    printWindow.document.write('<html><head><title>Receipt</title>');
-    printWindow.document.write('<style>body{font-family: Arial, sans-serif; padding: 20px;} table{width: 100%; border-collapse: collapse;} th, td{padding: 8px; text-align: left; border-bottom: 1px solid #ddd;}</style>');
-    printWindow.document.write('</head><body>');
-    printWindow.document.write(content);
-    printWindow.document.write('</body></html>');
+    if (!content || !content.trim()) return;
+
+    const printWindow = window.open('', '', 'height=600,width=480');
+    if (!printWindow) {
+        if (typeof toastr !== 'undefined') toastr.warning('Please allow popups to print receipt');
+        return;
+    }
+
+    printWindow.document.open();
+    if (content.indexOf('<!DOCTYPE') !== -1 || content.indexOf('<html') !== -1) {
+        printWindow.document.write(content);
+    } else {
+        printWindow.document.write('<!DOCTYPE html><html><head><title>Receipt</title>');
+        printWindow.document.write('<style>');
+        printWindow.document.write('* { box-sizing: border-box; }');
+        printWindow.document.write('@page { margin: 0; size: auto; }');
+        printWindow.document.write('html, body { font-family: "Consolas", "Liberation Mono", monospace, Arial, sans-serif; padding: 2mm 3mm; margin: 0; width: 100%; }');
+        printWindow.document.write('table { width: 100%; border-collapse: collapse; }');
+        printWindow.document.write('th, td { padding: 6px 8px; text-align: left; border-bottom: 1px solid #ddd; }');
+        printWindow.document.write('.text-center { text-align: center; }');
+        printWindow.document.write('.text-right, .text-end { text-align: right; }');
+        printWindow.document.write('.font-weight-bold, .fw-bold { font-weight: bold; }');
+        printWindow.document.write('@media print { body { padding: 2mm 3mm !important; margin: 0 !important; width: 100% !important; } }');
+        printWindow.document.write('</style>');
+        printWindow.document.write('</head><body>');
+        printWindow.document.write(content);
+        printWindow.document.write('</body></html>');
+    }
     printWindow.document.close();
-    printWindow.print();
+    printWindow.focus();
+    setTimeout(function() {
+        printWindow.print();
+        setTimeout(function() { printWindow.close(); }, 500);
+    }, 250);
 }
 
 function loadPatientReceipts() {

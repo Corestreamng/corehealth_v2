@@ -5,8 +5,10 @@ namespace App\Http\Controllers;
 use App\Models\AdmissionRequest;
 use App\Models\AncVisit;
 use App\Models\Bed;
+use App\Models\Clinic;
 use App\Models\DeathRecord;
 use App\Models\DeliveryRecord;
+use App\Models\DoctorQueue;
 use App\Models\Encounter;
 use App\Models\Hmo;
 use App\Models\ImagingServiceRequest;
@@ -19,6 +21,7 @@ use App\Models\PatientImmunizationSchedule;
 use App\Models\PostnatalVisit;
 use App\Models\Procedure;
 use App\Models\SpecialistReferral;
+use App\Models\User;
 use App\Models\Ward;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -73,7 +76,94 @@ class ClinicalReportsController extends Controller
     }
 
     /**
-     * Search Diagnosis with Keyword
+     * Normalize a diagnosis item (from JSON array, string, or notes) into a standard representation
+     */
+    private function normalizeDiagnosisItem($item, $defaultComment1 = 'N/A', $defaultComment2 = 'N/A')
+    {
+        $code = '';
+        $name = '';
+        $query = $defaultComment1 ?: 'N/A';
+        $status = $defaultComment2 ?: 'N/A';
+
+        if (is_array($item)) {
+            $code = trim($item['code'] ?? '');
+            $name = trim($item['name'] ?? ($item['value'] ?? ($item['display'] ?? '')));
+            if (!empty($item['comment_1']) && $item['comment_1'] !== 'NA') {
+                $query = $item['comment_1'];
+            }
+            if (!empty($item['comment_2']) && $item['comment_2'] !== 'NA') {
+                $status = $item['comment_2'];
+            }
+        } else {
+            $name = trim((string) $item);
+            if (preg_match('/^([A-Za-z][0-9]{2,3}(?:\.[0-9]+)?)\s*[-:]\s*(.+)$/i', $name, $m)) {
+                $code = trim($m[1]);
+                $name = trim($m[2]);
+            }
+        }
+
+        $name = trim(preg_replace('/^custom:\s*/i', '', $name));
+        $name = trim(preg_replace('/\s+/', ' ', $name));
+        $name = rtrim($name, '.');
+
+        if (empty($code) && preg_match('/^([A-Za-z][0-9]{2,3}(?:\.[0-9]+)?)\s*[-:]\s*(.+)$/i', $name, $m)) {
+            $code = trim($m[1]);
+            $name = trim($m[2]);
+        }
+
+        $isCustom = (empty($code) || strtoupper($code) === 'CUSTOM');
+        if (!$isCustom) {
+            $cleanCode = strtoupper(trim($code));
+            $groupKey = 'ICD_' . $cleanCode;
+            $displayCode = $cleanCode;
+            $displayName = $name ?: $cleanCode;
+        } else {
+            $groupKey = 'CUSTOM_' . strtolower($name);
+            $displayCode = 'CUSTOM';
+            $displayName = $name !== '' ? mb_convert_case($name, MB_CASE_TITLE, 'UTF-8') : 'Unknown';
+        }
+
+        return [
+            'group_key' => $groupKey,
+            'code' => $displayCode,
+            'name' => $displayName,
+            'raw_name' => $name,
+            'query' => $query,
+            'status' => $status,
+        ];
+    }
+
+    /**
+     * Format full name from an in-memory User model (or cached User ID) with 0 redundant queries
+     */
+    protected function formatPersonName($userOrId): string
+    {
+        if (!$userOrId) {
+            return 'N/A';
+        }
+
+        if ($userOrId instanceof User) {
+            $othername = $userOrId->othername ? ' ' . $userOrId->othername : '';
+
+            return trim(ucwords(trim($userOrId->surname . ' ' . $userOrId->firstname . $othername))) ?: 'N/A';
+        }
+
+        static $userCache = [];
+        $userId = is_numeric($userOrId) ? (int) $userOrId : null;
+        if (!$userId) {
+            return 'N/A';
+        }
+
+        if (!isset($userCache[$userId])) {
+            $user = User::select(['id', 'surname', 'firstname', 'othername'])->find($userId);
+            $userCache[$userId] = $user ? $this->formatPersonName($user) : 'Unknown';
+        }
+
+        return $userCache[$userId];
+    }
+
+    /**
+     * Search Diagnosis with Keyword (High-Performance Column-Projected Query)
      */
     public function searchDiagnosis(Request $request)
     {
@@ -83,74 +173,199 @@ class ClinicalReportsController extends Controller
             'date_to' => 'nullable|date',
         ]);
 
-        $keyword = $request->keyword;
+        $keyword = trim($request->keyword);
         $dateFrom = $request->filled('date_from') ? Carbon::parse($request->date_from)->startOfDay() : now()->startOfMonth()->startOfDay();
         $dateTo = $request->filled('date_to') ? Carbon::parse($request->date_to)->endOfDay() : now()->endOfDay();
 
-        // Query encounters with reasons_for_encounter matching keyword
-        // Since it's JSON, we use LIKE
-        $encounters = Encounter::with(['patient.user', 'doctor'])
-            ->whereBetween('created_at', [$dateFrom, $dateTo])
-            ->where('reasons_for_encounter', 'like', "%{$keyword}%")
-            ->get();
+        // Optimized query: select projected columns & eager load only required fields
+        $query = Encounter::select([
+            'id',
+            'patient_id',
+            'doctor_id',
+            'queue_id',
+            'reasons_for_encounter',
+            'reasons_for_encounter_comment_1',
+            'reasons_for_encounter_comment_2',
+            'notes',
+            'created_at',
+        ])->with([
+            'patient:id,user_id,file_no,hmo_id',
+            'patient.user:id,surname,firstname,othername',
+            'patient.hmo:id,name',
+            'doctor:id,surname,firstname,othername',
+            'queue:id,clinic_id',
+            'queue.clinic:id,name',
+        ])->whereBetween('created_at', [$dateFrom, $dateTo]);
+
+        if ($keyword !== '') {
+            $query->where(function ($q) use ($keyword) {
+                $q->where('reasons_for_encounter', 'like', "%{$keyword}%")
+                  ->orWhere('notes', 'like', "%{$keyword}%");
+            });
+        } else {
+            $query->where(function ($q) {
+                $q->whereNotNull('reasons_for_encounter')
+                  ->where('reasons_for_encounter', '!=', '')
+                  ->orWhereNotNull('notes');
+            });
+        }
+
+        // Avoid correlated subqueries by using indexed whereIn on foreign keys
+        if ($request->filled('hmo_id')) {
+            $patientIds = Patient::where('hmo_id', $request->hmo_id)->pluck('id');
+            $query->whereIn('patient_id', $patientIds);
+        }
+
+        if ($request->filled('clinic_id')) {
+            $queueIds = DoctorQueue::where('clinic_id', $request->clinic_id)->pluck('id');
+            $query->whereIn('queue_id', $queueIds);
+        }
+
+        if ($request->filled('ward_id')) {
+            $admissionEncIds = AdmissionRequest::where('ward_id', $request->ward_id)
+                ->orWhereHas('bed', fn ($bq) => $bq->where('ward_id', $request->ward_id))
+                ->whereNotNull('encounter_id')
+                ->pluck('encounter_id');
+            $query->whereIn('id', $admissionEncIds);
+        }
+
+        $encounters = $query->orderByDesc('created_at')->get();
 
         $grouped = [];
         foreach ($encounters as $e) {
-            $rawReasons = json_decode($e->reasons_for_encounter, true);
+            $rawReasons = !empty($e->reasons_for_encounter) ? json_decode($e->reasons_for_encounter, true) : [];
             if (!is_array($rawReasons)) {
-                continue;
+                if (is_string($e->reasons_for_encounter) && trim($e->reasons_for_encounter) !== '') {
+                    $rawReasons = array_filter(array_map('trim', explode(',', $e->reasons_for_encounter)));
+                } else {
+                    $rawReasons = [];
+                }
             }
 
+            $matchedInReasons = false;
             foreach ($rawReasons as $item) {
-                // Handle both simple strings and new JSON object format
-                $name = is_array($item) ? ($item['name'] ?? ($item['value'] ?? 'Unknown')) : $item;
-                $query = is_array($item) ? ($item['comment_1'] ?? 'N/A') : ($e->reasons_for_encounter_comment_1 ?? 'N/A');
-                $status = is_array($item) ? ($item['comment_2'] ?? 'N/A') : ($e->reasons_for_encounter_comment_2 ?? 'N/A');
+                $norm = $this->normalizeDiagnosisItem($item, $e->reasons_for_encounter_comment_1, $e->reasons_for_encounter_comment_2);
 
-                if (stripos($name, $keyword) !== false) {
-                    if (!isset($grouped[$name])) {
-                        $grouped[$name] = [
-                            'diagnosis' => $name,
-                            'icd_code' => is_array($item) ? ($item['code'] ?? '') : '',
+                if (stripos($norm['name'], $keyword) !== false || stripos($norm['raw_name'], $keyword) !== false || ($norm['code'] !== 'CUSTOM' && stripos($norm['code'], $keyword) !== false)) {
+                    $matchedInReasons = true;
+                    $gk = $norm['group_key'];
+
+                    if (!isset($grouped[$gk])) {
+                        $grouped[$gk] = [
+                            'diagnosis' => $norm['name'],
+                            'icd_code' => $norm['code'],
                             'total_encounters' => 0,
                             'unique_patients' => 0,
+                            'encounter_ids' => [],
                             'patient_ids' => [],
                             'statuses' => [],
                             'queries' => [],
                             'encounters' => [],
                         ];
                     }
-                    $grouped[$name]['total_encounters']++;
-                    if (!in_array($e->patient_id, $grouped[$name]['patient_ids'])) {
-                        $grouped[$name]['unique_patients']++;
-                        $grouped[$name]['patient_ids'][] = $e->patient_id;
+
+                    if (!in_array($e->id, $grouped[$gk]['encounter_ids'])) {
+                        $grouped[$gk]['encounter_ids'][] = $e->id;
+                        $grouped[$gk]['total_encounters']++;
+
+                        if (!in_array($e->patient_id, $grouped[$gk]['patient_ids'])) {
+                            $grouped[$gk]['patient_ids'][] = $e->patient_id;
+                            $grouped[$gk]['unique_patients']++;
+                        }
+
+                        $status = $norm['status'];
+                        if ($status !== 'N/A' && $status !== 'NA' && !in_array($status, $grouped[$gk]['statuses'])) {
+                            $grouped[$gk]['statuses'][] = $status;
+                        }
+
+                        $query = $norm['query'];
+                        if ($query !== 'N/A' && $query !== 'NA' && !in_array($query, $grouped[$gk]['queries'])) {
+                            $grouped[$gk]['queries'][] = $query;
+                        }
+
+                        $patientFormatted = $this->formatPersonName($e->patient?->user);
+                        $doctorFormatted = $this->formatPersonName($e->doctor);
+
+                        $grouped[$gk]['encounters'][] = [
+                            'id' => $e->id,
+                            'patient' => $patientFormatted,
+                            'patient_name' => $patientFormatted,
+                            'patient_id' => $e->patient_id,
+                            'file_no' => $e->patient->file_no ?? '',
+                            'date' => $e->created_at->format('Y-m-d H:i'),
+                            'doctor' => $doctorFormatted,
+                            'query_type' => $query,
+                            'status' => $status,
+                            'icd_code' => $norm['code'],
+                        ];
                     }
-                    if ($status !== 'N/A' && $status !== 'NA' && !in_array($status, $grouped[$name]['statuses'])) {
-                        $grouped[$name]['statuses'][] = $status;
-                    }
-                    if ($query !== 'N/A' && $query !== 'NA' && !in_array($query, $grouped[$name]['queries'])) {
-                        $grouped[$name]['queries'][] = $query;
+                }
+            }
+
+            // If no match in reasons_for_encounter, check notes for keyword
+            // Optimization: check stripos on raw notes before calling strip_tags
+            if (!$matchedInReasons && !empty($e->notes) && stripos($e->notes, $keyword) !== false) {
+                if (stripos(strip_tags($e->notes), $keyword) !== false) {
+                    $norm = $this->normalizeDiagnosisItem($keyword, $e->reasons_for_encounter_comment_1, $e->reasons_for_encounter_comment_2);
+                    $gk = $norm['group_key'];
+
+                    if (!isset($grouped[$gk])) {
+                        $grouped[$gk] = [
+                            'diagnosis' => $norm['name'],
+                            'icd_code' => $norm['code'],
+                            'total_encounters' => 0,
+                            'unique_patients' => 0,
+                            'encounter_ids' => [],
+                            'patient_ids' => [],
+                            'statuses' => [],
+                            'queries' => [],
+                            'encounters' => [],
+                        ];
                     }
 
-                    $grouped[$name]['encounters'][] = [
-                        'id' => $e->id,
-                        'patient_name' => userfullname($e->patient->user_id),
-                        'patient_id' => $e->patient_id,
-                        'file_no' => $e->patient->file_no ?? '',
-                        'date' => $e->created_at->format('M d, Y H:i'),
-                        'doctor' => $e->doctor ? userfullname($e->doctor->id) : 'N/A',
-                        'query' => $query,
-                        'status' => $status,
-                        'icd_code' => is_array($item) ? ($item['code'] ?? '') : '',
-                    ];
+                    if (!in_array($e->id, $grouped[$gk]['encounter_ids'])) {
+                        $grouped[$gk]['encounter_ids'][] = $e->id;
+                        $grouped[$gk]['total_encounters']++;
+
+                        if (!in_array($e->patient_id, $grouped[$gk]['patient_ids'])) {
+                            $grouped[$gk]['patient_ids'][] = $e->patient_id;
+                            $grouped[$gk]['unique_patients']++;
+                        }
+
+                        $status = $norm['status'];
+                        if ($status !== 'N/A' && $status !== 'NA' && !in_array($status, $grouped[$gk]['statuses'])) {
+                            $grouped[$gk]['statuses'][] = $status;
+                        }
+
+                        $query = $norm['query'];
+                        if ($query !== 'N/A' && $query !== 'NA' && !in_array($query, $grouped[$gk]['queries'])) {
+                            $grouped[$gk]['queries'][] = $query;
+                        }
+
+                        $patientFormatted = $this->formatPersonName($e->patient?->user);
+                        $doctorFormatted = $this->formatPersonName($e->doctor);
+
+                        $grouped[$gk]['encounters'][] = [
+                            'id' => $e->id,
+                            'patient' => $patientFormatted,
+                            'patient_name' => $patientFormatted,
+                            'patient_id' => $e->patient_id,
+                            'file_no' => $e->patient->file_no ?? '',
+                            'date' => $e->created_at->format('Y-m-d H:i'),
+                            'doctor' => $doctorFormatted,
+                            'query_type' => $query,
+                            'status' => $status,
+                            'icd_code' => $norm['code'],
+                        ];
+                    }
                 }
             }
         }
 
-        // Sort by unique patients desc, strip internal tracking key
-        usort($grouped, fn ($a, $b) => $b['unique_patients'] - $a['unique_patients']);
+        // Sort by unique patients desc, then total encounters desc
+        usort($grouped, fn ($a, $b) => $b['unique_patients'] <=> $a['unique_patients'] ?: $b['total_encounters'] <=> $a['total_encounters']);
         foreach ($grouped as &$g) {
-            unset($g['patient_ids']);
+            unset($g['patient_ids'], $g['encounter_ids']);
         }
 
         return response()->json(array_values($grouped));
@@ -163,23 +378,476 @@ class ClinicalReportsController extends Controller
     {
         $encounter = Encounter::with([
             'patient.user',
+            'patient.hmo',
             'doctor',
+            'queue.clinic',
             'labRequests.service',
             'imagingRequests.service',
             'productRequests.product',
         ])->findOrFail($encounterId);
 
-        $procedures = Procedure::with('procedureDefinition')
+        $procedures = Procedure::with(['procedureDefinition', 'service'])
             ->where('encounter_id', $encounterId)
             ->get();
 
+        $patientUser = $encounter->patient?->user;
+        $patientName = $patientUser
+            ? trim($patientUser->surname . ' ' . $patientUser->firstname . ($patientUser->othername ? ' ' . $patientUser->othername : ''))
+            : 'Unknown Patient';
+
+        $doctorName = $encounter->doctor
+            ? trim($encounter->doctor->surname . ' ' . $encounter->doctor->firstname . ($encounter->doctor->othername ? ' ' . $encounter->doctor->othername : ''))
+            : 'N/A';
+
+        // Format diagnosis / reasons for encounter
+        $reasonsText = 'N/A';
+        if (!empty($encounter->reasons_for_encounter)) {
+            $rawReasons = json_decode($encounter->reasons_for_encounter, true);
+            if (is_array($rawReasons)) {
+                $diagList = [];
+                foreach ($rawReasons as $r) {
+                    if (is_array($r)) {
+                        $diagList[] = $r['name'] ?? ($r['diagnosis'] ?? null);
+                    } elseif (is_string($r)) {
+                        $diagList[] = $r;
+                    }
+                }
+                $filtered = array_filter($diagList);
+                $reasonsText = !empty($filtered) ? implode(', ', $filtered) : 'N/A';
+            } elseif (is_string($encounter->reasons_for_encounter)) {
+                $reasonsText = $encounter->reasons_for_encounter;
+            }
+        }
+
+        // Map Prescriptions
+        $prescriptions = $encounter->productRequests->map(function ($rx) {
+            $name = $rx->product?->product_name ?? $rx->free_form_name ?? ('Drug #' . $rx->id);
+            $statusCode = (int) $rx->status;
+            $statusMap = [
+                0 => ['label' => 'Dismissed', 'badge' => 'bg-secondary text-white'],
+                1 => ['label' => 'Unbilled', 'badge' => 'bg-warning text-dark'],
+                2 => ['label' => 'Ready to Dispense', 'badge' => 'bg-info text-white'],
+                3 => ['label' => 'Dispensed', 'badge' => 'bg-success text-white'],
+                4 => ['label' => 'Returned', 'badge' => 'bg-danger text-white'],
+            ];
+            $statusInfo = $statusMap[$statusCode] ?? ['label' => 'Status #' . $statusCode, 'badge' => 'bg-secondary text-white'];
+
+            $rxData = $rx->toArray();
+            $rxData['item_name'] = $name;
+            $rxData['status_label'] = $statusInfo['label'];
+            $rxData['status_badge'] = $statusInfo['badge'];
+            $rxData['dose_formatted'] = $rx->dose ?: 'N/A';
+            $rxData['qty_formatted'] = $rx->qty ?: 1;
+
+            return $rxData;
+        });
+
+        // Map Labs
+        $labs = $encounter->labRequests->map(function ($lab) {
+            $name = $lab->service?->service_name ?? $lab->free_form_name ?? ('Test #' . $lab->id);
+            $statusCode = (int) $lab->status;
+            $statusMap = [
+                0 => ['label' => 'Dismissed', 'badge' => 'bg-secondary text-white'],
+                1 => ['label' => 'Awaiting Billing', 'badge' => 'bg-warning text-dark'],
+                2 => ['label' => 'Awaiting Sample', 'badge' => 'bg-info text-white'],
+                3 => ['label' => 'Awaiting Results', 'badge' => 'bg-primary text-white'],
+                4 => ['label' => 'Completed', 'badge' => 'bg-success text-white'],
+                5 => ['label' => 'Pending Approval', 'badge' => 'bg-dark text-white'],
+                6 => ['label' => 'Rejected', 'badge' => 'bg-danger text-white'],
+            ];
+            $statusInfo = $statusMap[$statusCode] ?? ['label' => 'Status #' . $statusCode, 'badge' => 'bg-secondary text-white'];
+
+            $labData = $lab->toArray();
+            $labData['item_name'] = $name;
+            $labData['status_label'] = $statusInfo['label'];
+            $labData['status_badge'] = $statusInfo['badge'];
+            $labData['result_display'] = !empty($lab->result) ? $lab->result : 'Pending';
+
+            return $labData;
+        });
+
+        // Map Imaging
+        $imaging = $encounter->imagingRequests->map(function ($img) {
+            $name = $img->service?->service_name ?? $img->free_form_name ?? ('Investigation #' . $img->id);
+            $statusCode = (int) $img->status;
+            $statusMap = [
+                0 => ['label' => 'Dismissed', 'badge' => 'bg-secondary text-white'],
+                1 => ['label' => 'Awaiting Billing', 'badge' => 'bg-warning text-dark'],
+                2 => ['label' => 'In Progress / Scanned', 'badge' => 'bg-info text-white'],
+                3 => ['label' => 'Results Entered', 'badge' => 'bg-primary text-white'],
+                4 => ['label' => 'Completed', 'badge' => 'bg-success text-white'],
+                5 => ['label' => 'Pending Approval', 'badge' => 'bg-dark text-white'],
+                6 => ['label' => 'Rejected', 'badge' => 'bg-danger text-white'],
+            ];
+            $statusInfo = $statusMap[$statusCode] ?? ['label' => 'Status #' . $statusCode, 'badge' => 'bg-secondary text-white'];
+
+            $imgData = $img->toArray();
+            $imgData['item_name'] = $name;
+            $imgData['status_label'] = $statusInfo['label'];
+            $imgData['status_badge'] = $statusInfo['badge'];
+            $imgData['result_display'] = !empty($img->result) ? $img->result : 'Pending';
+
+            return $imgData;
+        });
+
+        // Map Procedures
+        $procList = $procedures->map(function ($proc) {
+            $name = $proc->procedureDefinition?->name ?? $proc->service?->service_name ?? $proc->free_form_name ?? ('Procedure #' . $proc->id);
+            $procStatus = $proc->procedure_status ?? ($proc->status ? 'completed' : 'requested');
+            $statusMap = [
+                'requested' => ['label' => 'Requested', 'badge' => 'bg-warning text-dark'],
+                'scheduled' => ['label' => 'Scheduled', 'badge' => 'bg-info text-white'],
+                'in_progress' => ['label' => 'In Progress', 'badge' => 'bg-primary text-white'],
+                'completed' => ['label' => 'Completed', 'badge' => 'bg-success text-white'],
+                'cancelled' => ['label' => 'Cancelled', 'badge' => 'bg-secondary text-white'],
+            ];
+            $statusInfo = $statusMap[$procStatus] ?? [
+                'label' => ucfirst(str_replace('_', ' ', $procStatus)),
+                'badge' => 'bg-secondary text-white',
+            ];
+
+            $pData = $proc->toArray();
+            $pData['item_name'] = $name;
+            $pData['status_label'] = $statusInfo['label'];
+            $pData['status_badge'] = $statusInfo['badge'];
+            $pData['notes_display'] = $proc->outcome_notes ?? $proc->post_notes ?? $proc->pre_notes ?? 'N/A';
+
+            return $pData;
+        });
+
         return response()->json([
             'notes' => $encounter->notes,
-            'labs' => $encounter->labRequests,
-            'imaging' => $encounter->imagingRequests,
-            'prescriptions' => $encounter->productRequests,
-            'procedures' => $procedures,
+            'labs' => $labs,
+            'imaging' => $imaging,
+            'prescriptions' => $prescriptions,
+            'procedures' => $procList,
+            'encounter' => [
+                'id' => $encounter->id,
+                'patient_id' => $encounter->patient_id,
+                'patient_name' => $patientName,
+                'file_no' => $encounter->patient?->file_no ?? 'N/A',
+                'doctor_name' => $doctorName,
+                'clinic_name' => $encounter->queue?->clinic?->name ?? 'N/A',
+                'hmo_name' => $encounter->patient?->hmo?->name ?? 'Cash / Private',
+                'date' => $encounter->created_at ? $encounter->created_at->format('d M Y, h:i A') : 'N/A',
+                'reasons' => $reasonsText,
+            ],
         ]);
+    }
+
+    /**
+     * Unified Export dispatcher for Clinical Reports
+     */
+    public function export(Request $request)
+    {
+        $tab = $request->get('tab', 'diagnosis');
+
+        switch ($tab) {
+            case 'diagnosis':
+                return $this->exportDiagnosis($request);
+            default:
+                // Start from diagnosis search, fallback to diagnosis if unknown
+                return $this->exportDiagnosis($request);
+        }
+    }
+
+    /**
+     * Export Diagnosis Search report as CSV with filters metadata, summary, and detailed encounters
+     */
+    public function exportDiagnosis(Request $request)
+    {
+        $keyword = trim($request->get('keyword', ''));
+        $dateFrom = $request->filled('date_from') ? Carbon::parse($request->date_from)->startOfDay() : now()->startOfMonth()->startOfDay();
+        $dateTo = $request->filled('date_to') ? Carbon::parse($request->date_to)->endOfDay() : now()->endOfDay();
+
+        $query = Encounter::select([
+            'id',
+            'patient_id',
+            'doctor_id',
+            'queue_id',
+            'reasons_for_encounter',
+            'reasons_for_encounter_comment_1',
+            'reasons_for_encounter_comment_2',
+            'notes',
+            'created_at',
+        ])->with([
+            'patient:id,user_id,file_no,hmo_id',
+            'patient.user:id,surname,firstname,othername',
+            'patient.hmo:id,name',
+            'doctor:id,surname,firstname,othername',
+            'queue:id,clinic_id',
+            'queue.clinic:id,name',
+        ])->whereBetween('created_at', [$dateFrom, $dateTo]);
+
+        if ($keyword !== '') {
+            $query->where(function ($q) use ($keyword) {
+                $q->where('reasons_for_encounter', 'like', "%{$keyword}%")
+                  ->orWhere('notes', 'like', "%{$keyword}%");
+            });
+        } else {
+            $query->where(function ($q) {
+                $q->whereNotNull('reasons_for_encounter')
+                  ->where('reasons_for_encounter', '!=', '')
+                  ->orWhereNotNull('notes');
+            });
+        }
+
+        if ($request->filled('hmo_id')) {
+            $patientIds = Patient::where('hmo_id', $request->hmo_id)->pluck('id');
+            $query->whereIn('patient_id', $patientIds);
+        }
+
+        if ($request->filled('clinic_id')) {
+            $queueIds = DoctorQueue::where('clinic_id', $request->clinic_id)->pluck('id');
+            $query->whereIn('queue_id', $queueIds);
+        }
+
+        if ($request->filled('ward_id')) {
+            $admissionEncIds = AdmissionRequest::where('ward_id', $request->ward_id)
+                ->orWhereHas('bed', fn ($bq) => $bq->where('ward_id', $request->ward_id))
+                ->whereNotNull('encounter_id')
+                ->pluck('encounter_id');
+            $query->whereIn('id', $admissionEncIds);
+        }
+
+        $encounters = $query->orderByDesc('created_at')->get();
+
+        $grouped = [];
+        $allEncounters = [];
+
+        foreach ($encounters as $e) {
+            $rawReasons = !empty($e->reasons_for_encounter) ? json_decode($e->reasons_for_encounter, true) : [];
+            if (!is_array($rawReasons)) {
+                if (is_string($e->reasons_for_encounter) && trim($e->reasons_for_encounter) !== '') {
+                    $rawReasons = array_filter(array_map('trim', explode(',', $e->reasons_for_encounter)));
+                } else {
+                    $rawReasons = [];
+                }
+            }
+
+            $matchedInReasons = false;
+            foreach ($rawReasons as $item) {
+                $norm = $this->normalizeDiagnosisItem($item, $e->reasons_for_encounter_comment_1, $e->reasons_for_encounter_comment_2);
+
+                $matches = ($keyword === '') || (stripos($norm['name'], $keyword) !== false || stripos($norm['raw_name'], $keyword) !== false || ($norm['code'] !== 'CUSTOM' && stripos($norm['code'], $keyword) !== false));
+
+                if ($matches) {
+                    $matchedInReasons = true;
+                    $gk = $norm['group_key'];
+
+                    if (!isset($grouped[$gk])) {
+                        $grouped[$gk] = [
+                            'diagnosis' => $norm['name'],
+                            'icd_code' => $norm['code'],
+                            'total_encounters' => 0,
+                            'unique_patients' => 0,
+                            'encounter_ids' => [],
+                            'patient_ids' => [],
+                            'statuses' => [],
+                            'queries' => [],
+                        ];
+                    }
+
+                    if (!in_array($e->id, $grouped[$gk]['encounter_ids'])) {
+                        $grouped[$gk]['encounter_ids'][] = $e->id;
+                        $grouped[$gk]['total_encounters']++;
+
+                        if (!in_array($e->patient_id, $grouped[$gk]['patient_ids'])) {
+                            $grouped[$gk]['patient_ids'][] = $e->patient_id;
+                            $grouped[$gk]['unique_patients']++;
+                        }
+
+                        $status = $norm['status'];
+                        if ($status !== 'N/A' && $status !== 'NA' && !in_array($status, $grouped[$gk]['statuses'])) {
+                            $grouped[$gk]['statuses'][] = $status;
+                        }
+
+                        $queryType = $norm['query'];
+                        if ($queryType !== 'N/A' && $queryType !== 'NA' && !in_array($queryType, $grouped[$gk]['queries'])) {
+                            $grouped[$gk]['queries'][] = $queryType;
+                        }
+
+                        $patientFormatted = $this->formatPersonName($e->patient?->user);
+                        $doctorFormatted = $this->formatPersonName($e->doctor);
+
+                        $allEncounters[] = [
+                            'id' => $e->id,
+                            'icd_code' => $norm['code'],
+                            'diagnosis' => $norm['name'],
+                            'patient_name' => $patientFormatted,
+                            'file_no' => $e->patient->file_no ?? '',
+                            'date' => $e->created_at->format('Y-m-d H:i'),
+                            'doctor' => $doctorFormatted,
+                            'query_type' => $queryType,
+                            'status' => $status,
+                            'hmo' => $e->patient && $e->patient->hmo ? $e->patient->hmo->name : 'Private / Self Pay',
+                            'clinic' => $e->queue && $e->queue->clinic ? $e->queue->clinic->name : 'N/A',
+                            'notes' => trim(preg_replace('/\s+/', ' ', strip_tags($e->notes ?? ''))),
+                        ];
+                    }
+                }
+            }
+
+            if (!$matchedInReasons && $keyword !== '' && !empty($e->notes) && stripos($e->notes, $keyword) !== false) {
+                if (stripos(strip_tags($e->notes), $keyword) !== false) {
+                    $norm = $this->normalizeDiagnosisItem($keyword, $e->reasons_for_encounter_comment_1, $e->reasons_for_encounter_comment_2);
+                    $gk = $norm['group_key'];
+
+                    if (!isset($grouped[$gk])) {
+                        $grouped[$gk] = [
+                            'diagnosis' => $norm['name'],
+                            'icd_code' => $norm['code'],
+                            'total_encounters' => 0,
+                            'unique_patients' => 0,
+                            'encounter_ids' => [],
+                            'patient_ids' => [],
+                            'statuses' => [],
+                            'queries' => [],
+                        ];
+                    }
+
+                    if (!in_array($e->id, $grouped[$gk]['encounter_ids'])) {
+                        $grouped[$gk]['encounter_ids'][] = $e->id;
+                        $grouped[$gk]['total_encounters']++;
+
+                        if (!in_array($e->patient_id, $grouped[$gk]['patient_ids'])) {
+                            $grouped[$gk]['patient_ids'][] = $e->patient_id;
+                            $grouped[$gk]['unique_patients']++;
+                        }
+
+                        $status = $norm['status'];
+                        if ($status !== 'N/A' && $status !== 'NA' && !in_array($status, $grouped[$gk]['statuses'])) {
+                            $grouped[$gk]['statuses'][] = $status;
+                        }
+
+                        $queryType = $norm['query'];
+                        if ($queryType !== 'N/A' && $queryType !== 'NA' && !in_array($queryType, $grouped[$gk]['queries'])) {
+                            $grouped[$gk]['queries'][] = $queryType;
+                        }
+
+                        $patientFormatted = $this->formatPersonName($e->patient?->user);
+                        $doctorFormatted = $this->formatPersonName($e->doctor);
+
+                        $allEncounters[] = [
+                            'id' => $e->id,
+                            'icd_code' => $norm['code'],
+                            'diagnosis' => $norm['name'],
+                            'patient_name' => $patientFormatted,
+                            'file_no' => $e->patient->file_no ?? '',
+                            'date' => $e->created_at->format('Y-m-d H:i'),
+                            'doctor' => $doctorFormatted,
+                            'query_type' => $queryType,
+                            'status' => $status,
+                            'hmo' => $e->patient && $e->patient->hmo ? $e->patient->hmo->name : 'Private / Self Pay',
+                            'clinic' => $e->queue && $e->queue->clinic ? $e->queue->clinic->name : 'N/A',
+                            'notes' => trim(preg_replace('/\s+/', ' ', strip_tags($e->notes ?? ''))),
+                        ];
+                    }
+                }
+            }
+        }
+
+        // Sort grouped diagnoses by unique patients desc, then total encounters desc
+        usort($grouped, fn ($a, $b) => $b['unique_patients'] <=> $a['unique_patients'] ?: $b['total_encounters'] <=> $a['total_encounters']);
+
+        // Filter label names for the header
+        $clinicName = $request->filled('clinic_id') ? (\App\Models\Clinic::find($request->clinic_id)?->name ?? 'All') : 'All Clinics';
+        $hmoName = $request->filled('hmo_id') ? (\App\Models\Hmo::find($request->hmo_id)?->name ?? 'All') : 'All HMOs';
+        $wardName = $request->filled('ward_id') ? (\App\Models\Ward::find($request->ward_id)?->name ?? 'All') : 'All Wards';
+        $totalEncounters = count($allEncounters);
+        $totalUniquePatients = count(array_unique(array_column($allEncounters, 'patient_name')));
+
+        $metadata = [
+            ['Hospital', appsettings('hospitalname', 'CoreHealth Hospital')],
+            ['Report', 'Clinical Reports - Diagnosis Search Export'],
+            ['Generated At', now()->format('Y-m-d H:i:s')],
+            ['Generated By', auth()->check() ? $this->formatPersonName(auth()->user()) : 'System Admin'],
+            ['Search Keyword', $keyword !== '' ? $keyword : 'All Diagnoses'],
+            ['Date Range', $dateFrom->format('Y-m-d') . ' to ' . $dateTo->format('Y-m-d')],
+            ['Clinic Filter', $clinicName],
+            ['HMO Filter', $hmoName],
+            ['Ward Filter', $wardName],
+            ['Total Diagnoses Found', count($grouped)],
+            ['Total Encounters', $totalEncounters],
+            ['Total Unique Patients', $totalUniquePatients],
+        ];
+
+        $summaryHeaders = ['ICD-10 Code', 'Diagnosis', 'Unique Patients', 'Total Encounters', 'Statuses', 'Query Types'];
+        $summaryRows = [];
+        foreach ($grouped as $g) {
+            $summaryRows[] = [
+                $g['icd_code'],
+                $g['diagnosis'],
+                $g['unique_patients'],
+                $g['total_encounters'],
+                implode(', ', $g['statuses']) ?: 'N/A',
+                implode(', ', $g['queries']) ?: 'N/A',
+            ];
+        }
+
+        $encounterHeaders = ['#', 'ICD-10 Code', 'Diagnosis', 'Patient Name', 'File No', 'Date', 'Doctor', 'Query Type', 'Status', 'HMO', 'Clinic', 'Clinical Notes'];
+        $encounterRows = [];
+        $seq = 1;
+        foreach ($allEncounters as $enc) {
+            $encounterRows[] = [
+                $seq++,
+                $enc['icd_code'],
+                $enc['diagnosis'],
+                $enc['patient_name'],
+                $enc['file_no'],
+                $enc['date'],
+                $enc['doctor'],
+                $enc['query_type'],
+                $enc['status'],
+                $enc['hmo'],
+                $enc['clinic'],
+                $enc['notes'],
+            ];
+        }
+
+        $slug = $keyword !== '' ? \Illuminate\Support\Str::slug($keyword) : 'all_diagnoses';
+        $filename = 'diagnosis_report_' . $slug . '_' . date('Ymd_His') . '.csv';
+
+        $headers = [
+            'Content-Type' => 'text/csv; charset=UTF-8',
+            'Content-Disposition' => "attachment; filename=\"{$filename}\"",
+            'Pragma' => 'no-cache',
+            'Cache-Control' => 'must-revalidate, post-check=0, pre-check=0',
+            'Expires' => '0',
+        ];
+
+        $callback = function () use ($metadata, $summaryHeaders, $summaryRows, $encounterHeaders, $encounterRows) {
+            $file = fopen('php://output', 'w');
+            fprintf($file, chr(0xEF) . chr(0xBB) . chr(0xBF)); // UTF-8 BOM
+
+            // Metadata / Filters Header Block
+            fputcsv($file, ['=== REPORT FILTERS & METADATA ===']);
+            foreach ($metadata as $meta) {
+                fputcsv($file, $meta);
+            }
+
+            fputcsv($file, []); // Blank separator
+
+            // Section 1: Diagnosis Summary
+            fputcsv($file, ['=== DIAGNOSIS SUMMARY ===']);
+            fputcsv($file, $summaryHeaders);
+            foreach ($summaryRows as $row) {
+                fputcsv($file, $row);
+            }
+
+            fputcsv($file, []); // Blank separator
+
+            // Section 2: Detailed Encounters
+            fputcsv($file, ['=== DETAILED ENCOUNTER RECORDS ===']);
+            fputcsv($file, $encounterHeaders);
+            foreach ($encounterRows as $row) {
+                fputcsv($file, $row);
+            }
+
+            fclose($file);
+        };
+
+        return response()->stream($callback, 200, $headers);
     }
 
     private function getVisitsByUnit($from, $to)
@@ -244,7 +912,7 @@ class ClinicalReportsController extends Controller
                         $age = $dob ? Carbon::parse($dob)->age : 'N/A';
 
                         return [
-                            'patient' => userfullname($r->patient->user_id),
+                            'patient' => $this->formatPersonName($r->patient?->user),
                             'file_no' => $r->patient->file_no ?? '',
                             'age' => $age,
                             'sex' => ucfirst($r->patient->sex ?? $r->patient->gender ?? 'N/A'),
@@ -264,7 +932,7 @@ class ClinicalReportsController extends Controller
                         $data = \App\Models\MaternityEnrollment::with(['patient.user'])
                             ->whereBetween('enrollment_date', [$from, $to])
                             ->get()->map(fn ($r) => [
-                                'patient' => userfullname($r->patient->user_id),
+                                'patient' => $this->formatPersonName($r->patient?->user),
                                 'patient_id' => $r->patient_id,
                                 'file_no' => $r->patient->file_no ?? '',
                                 'date' => $r->enrollment_date->format('Y-m-d'),
@@ -277,7 +945,7 @@ class ClinicalReportsController extends Controller
                         $data = \App\Models\AncVisit::with(['enrollment.patient.user'])
                             ->whereBetween('visit_date', [$from, $to])
                             ->get()->map(fn ($r) => [
-                                'patient' => userfullname($r->enrollment->patient->user_id),
+                                'patient' => $this->formatPersonName($r->enrollment?->patient?->user),
                                 'patient_id' => $r->enrollment->patient_id ?? null,
                                 'file_no' => $r->enrollment->patient->file_no ?? '',
                                 'date' => $r->visit_date->format('Y-m-d'),
@@ -290,8 +958,8 @@ class ClinicalReportsController extends Controller
                         $data = \App\Models\MaternityBaby::with(['enrollment.patient.user', 'patient.user'])
                             ->whereBetween('created_at', [$from, $to])
                             ->get()->map(fn ($r) => [
-                                'mother' => userfullname($r->enrollment->patient->user_id),
-                                'baby' => userfullname($r->patient->user_id),
+                                'mother' => $this->formatPersonName($r->enrollment?->patient?->user),
+                                'baby' => $this->formatPersonName($r->patient?->user),
                                 'sex' => ucfirst($r->sex),
                                 'status' => ucfirst($r->status),
                             ]);
@@ -303,10 +971,10 @@ class ClinicalReportsController extends Controller
                             ->get()
                             ->map(function ($r) {
                                 return [
-                                    'patient' => userfullname($r->patient->user_id),
+                                    'patient' => $this->formatPersonName($r->patient?->user),
                                     'date' => $r->created_at->format('Y-m-d H:i'),
                                     'reason' => $r->admission_reason ?? 'N/A',
-                                    'doctor' => $r->doctor ? userfullname($r->doctor->id) : 'N/A',
+                                    'doctor' => $this->formatPersonName($r->doctor),
                                     'status' => ucfirst(str_replace('_', ' ', $r->admission_status)),
                                 ];
                             });
@@ -316,7 +984,7 @@ class ClinicalReportsController extends Controller
                         $data = \App\Models\PostnatalVisit::with(['enrollment.patient.user'])
                             ->whereBetween('visit_date', [$from, $to])
                             ->get()->map(fn ($r) => [
-                                'patient' => userfullname($r->enrollment->patient->user_id),
+                                'patient' => $this->formatPersonName($r->enrollment?->patient?->user),
                                 'patient_id' => $r->enrollment->patient_id ?? null,
                                 'date' => $r->visit_date->format('Y-m-d'),
                                 'mother_condition' => $r->general_condition ?? 'N/A',
@@ -329,7 +997,7 @@ class ClinicalReportsController extends Controller
                             ->where('status', 'completed')
                             ->whereBetween('completed_at', [$from, $to])
                             ->get()->map(fn ($r) => [
-                                'patient' => userfullname($r->patient->user_id),
+                                'patient' => $this->formatPersonName($r->patient?->user),
                                 'date' => $r->completed_at->format('Y-m-d'),
                                 'outcome' => $r->outcome_summary,
                                 'risk' => ucfirst($r->risk_level),
@@ -343,7 +1011,7 @@ class ClinicalReportsController extends Controller
                             ->get()
                             ->map(function ($r) {
                                 return [
-                                    'mother' => userfullname($r->patient->user_id),
+                                    'mother' => $this->formatPersonName($r->patient?->user),
                                     'date' => $r->delivery_date->format('Y-m-d') . ' ' . $r->delivery_time,
                                     'babies' => $r->number_of_babies,
                                     'outcome' => $r->type_of_delivery ?? 'N/A',
@@ -364,55 +1032,118 @@ class ClinicalReportsController extends Controller
                     ->get()
                     ->map(function ($r) {
                         return [
-                            'patient' => userfullname($r->patient->user_id),
+                            'patient' => $this->formatPersonName($r->patient?->user),
                             'patient_id' => $r->patient_id,
                             'file_no' => $r->patient->file_no ?? '',
                             'date' => $r->actual_end_time->format('Y-m-d H:i'),
                             'procedure_name' => $r->procedureDefinition ? $r->procedureDefinition->name : ($r->service ? $r->service->name : 'N/A'),
                             'category' => $r->procedureDefinition && $r->procedureDefinition->procedureCategory ? $r->procedureDefinition->procedureCategory->name : 'N/A',
-                            'doctor' => $r->requestedByUser ? userfullname($r->requestedByUser->id) : 'N/A',
+                            'doctor' => $this->formatPersonName($r->requestedByUser),
                             'outcome' => $r->outcome ?? 'N/A',
                         ];
                     });
 
                 break;
             case 'diagnosis':
-                $icdCode = $request->get('icd_code');
-                $diagName = $request->get('diagnosis_name');
-                $dq = Encounter::with(['patient.user', 'doctor'])
-                    ->whereBetween('created_at', [$from, $to]);
-                if ($icdCode) {
-                    $dq->where('reasons_for_encounter', 'like', '%' . $icdCode . '%');
-                } elseif ($diagName) {
-                    $dq->where('reasons_for_encounter', 'like', '%' . $diagName . '%');
+                $icdCode = trim($request->get('icd_code') ?? '');
+                $diagName = trim($request->get('diagnosis_name') ?? '');
+                $isCustom = ($icdCode === '' || strtoupper($icdCode) === 'CUSTOM');
+
+                $dq = Encounter::select([
+                    'id',
+                    'patient_id',
+                    'doctor_id',
+                    'queue_id',
+                    'reasons_for_encounter',
+                    'reasons_for_encounter_comment_1',
+                    'reasons_for_encounter_comment_2',
+                    'notes',
+                    'created_at',
+                ])->with([
+                    'patient:id,user_id,file_no,hmo_id',
+                    'patient.user:id,surname,firstname,othername',
+                    'patient.hmo:id,name',
+                    'doctor:id,surname,firstname,othername',
+                    'queue:id,clinic_id',
+                    'queue.clinic:id,name',
+                ])->whereBetween('created_at', [$from, $to]);
+
+                if ($request->filled('hmo_id')) {
+                    $patientIds = Patient::where('hmo_id', $request->hmo_id)->pluck('id');
+                    $dq->whereIn('patient_id', $patientIds);
                 }
-                $data = $dq->orderByDesc('created_at')->get()->map(function ($e) use ($icdCode, $diagName) {
-                    $reasons = json_decode($e->reasons_for_encounter, true) ?: [];
-                    $queryType = 'N/A';
-                    foreach ($reasons as $item) {
-                        if (!is_array($item)) {
-                            continue;
+
+                if ($request->filled('clinic_id')) {
+                    $queueIds = DoctorQueue::where('clinic_id', $request->clinic_id)->pluck('id');
+                    $dq->whereIn('queue_id', $queueIds);
+                }
+
+                if ($request->filled('ward_id')) {
+                    $admissionEncIds = AdmissionRequest::where('ward_id', $request->ward_id)
+                        ->orWhereHas('bed', fn ($bq) => $bq->where('ward_id', $request->ward_id))
+                        ->whereNotNull('encounter_id')
+                        ->pluck('encounter_id');
+                    $dq->whereIn('id', $admissionEncIds);
+                }
+
+                if (!$isCustom) {
+                    $dq->where('reasons_for_encounter', 'like', '%' . $icdCode . '%');
+                } elseif ($diagName !== '') {
+                    $dq->where(function ($q) use ($diagName) {
+                        $q->where('reasons_for_encounter', 'like', '%' . $diagName . '%')
+                          ->orWhere('notes', 'like', '%' . $diagName . '%');
+                    });
+                }
+
+                $targetGroupKey = !$isCustom ? ('ICD_' . strtoupper($icdCode)) : ('CUSTOM_' . strtolower(trim(preg_replace('/\s+/', ' ', preg_replace('/^custom:\s*/i', '', $diagName)))));
+
+                $data = $dq->orderByDesc('created_at')->get()->map(function ($e) use ($isCustom, $targetGroupKey, $diagName) {
+                    $rawReasons = !empty($e->reasons_for_encounter) ? json_decode($e->reasons_for_encounter, true) : [];
+                    if (!is_array($rawReasons)) {
+                        if (is_string($e->reasons_for_encounter) && trim($e->reasons_for_encounter) !== '') {
+                            $rawReasons = array_filter(array_map('trim', explode(',', $e->reasons_for_encounter)));
+                        } else {
+                            $rawReasons = [];
                         }
-                        $matchCode = $icdCode && isset($item['code']) && trim($item['code']) === trim($icdCode);
-                        $matchName = !$icdCode && $diagName && stripos($item['name'] ?? '', $diagName) !== false;
-                        if ($matchCode || $matchName) {
-                            $queryType = $item['comment_1'] ?? 'N/A';
+                    }
+
+                    $matchedNorm = null;
+                    foreach ($rawReasons as $item) {
+                        $norm = $this->normalizeDiagnosisItem($item, $e->reasons_for_encounter_comment_1, $e->reasons_for_encounter_comment_2);
+                        if ($norm['group_key'] === $targetGroupKey || ($diagName !== '' && (stripos($norm['name'], $diagName) !== false || stripos($diagName, $norm['name']) !== false))) {
+                            $matchedNorm = $norm;
 
                             break;
                         }
                     }
 
+                    // If not found in reasons_for_encounter, check notes for custom diagnosis
+                    if (!$matchedNorm && $isCustom && $diagName !== '' && !empty($e->notes) && stripos($e->notes, $diagName) !== false) {
+                        if (stripos(strip_tags($e->notes), $diagName) !== false) {
+                            $matchedNorm = $this->normalizeDiagnosisItem($diagName, $e->reasons_for_encounter_comment_1, $e->reasons_for_encounter_comment_2);
+                        }
+                    }
+
+                    if (!$matchedNorm) {
+                        return null;
+                    }
+
+                    $patientFormatted = $this->formatPersonName($e->patient?->user);
+                    $doctorFormatted = $this->formatPersonName($e->doctor);
+
                     return [
                         'id' => $e->id,
-                        'patient' => userfullname($e->patient->user_id),
+                        'patient' => $patientFormatted,
+                        'patient_name' => $patientFormatted,
                         'file_no' => $e->patient->file_no ?? '',
                         'patient_id' => $e->patient_id,
                         'date' => $e->created_at->format('Y-m-d H:i'),
-                        'doctor' => $e->doctor ? userfullname($e->doctor->id) : 'N/A',
-                        'query_type' => $queryType,
-                        'status' => $e->status ?? 'N/A',
+                        'doctor' => $doctorFormatted,
+                        'query_type' => $matchedNorm['query'],
+                        'status' => $matchedNorm['status'],
+                        'icd_code' => $matchedNorm['code'],
                     ];
-                });
+                })->filter()->unique('id')->values();
 
                 break;
             case 'immunization':
@@ -421,12 +1152,12 @@ class ClinicalReportsController extends Controller
                     ->get()
                     ->map(function ($r) {
                         return [
-                            'patient' => userfullname($r->patient->user_id),
+                            'patient' => $this->formatPersonName($r->patient?->user),
                             'patient_id' => $r->patient_id,
                             'file_no' => $r->patient->file_no ?? '',
                             'date' => $r->administered_at->format('Y-m-d H:i'),
                             'vaccine' => $r->vaccine_name,
-                            'nurse' => $r->administeredBy ? userfullname($r->administeredBy->id) : 'N/A',
+                            'nurse' => $this->formatPersonName($r->administeredBy),
                         ];
                     });
 
@@ -437,18 +1168,18 @@ class ClinicalReportsController extends Controller
                     ->get()
                     ->map(function ($r) {
                         return [
-                            'patient' => userfullname($r->patient->user_id),
+                            'patient' => $this->formatPersonName($r->patient?->user),
                             'patient_id' => $r->patient_id,
                             'file_no' => $r->patient->file_no ?? '',
                             'date' => $r->created_at->format('Y-m-d H:i'),
-                            'from_doctor' => $r->referringDoctor && $r->referringDoctor->user ? userfullname($r->referringDoctor->user->id) : 'N/A',
+                            'from_doctor' => $this->formatPersonName($r->referringDoctor?->user),
                             'to_clinic' => $r->targetClinic ? $r->targetClinic->name : ($r->external_facility_name ?? 'N/A'),
                         ];
                     });
 
                 break;
             case 'occupancy':
-                $occupiedBeds = Bed::with(['wardRelation', 'occupant'])
+                $occupiedBeds = Bed::with(['wardRelation', 'occupant.user'])
                     ->where('bed_status', 'occupied')
                     ->when($wardId, fn ($q) => $q->where('ward_id', $wardId))
                     ->get();
@@ -462,7 +1193,7 @@ class ClinicalReportsController extends Controller
                     $admittedAt = $adm ? $adm->created_at : $b->updated_at;
 
                     return [
-                        'patient' => $b->occupant ? userfullname($b->occupant->user_id) : 'N/A',
+                        'patient' => $this->formatPersonName($b->occupant?->user),
                         'patient_id' => $b->occupant_id,
                         'ward' => $b->wardRelation ? $b->wardRelation->name : ($b->ward ?? 'N/A'),
                         'bed' => $b->name,
@@ -502,7 +1233,7 @@ class ClinicalReportsController extends Controller
 
         $drillDown = null;
         if ($clinicId) {
-            $drillDown = Encounter::with(['patient.user', 'doctor'])
+            $drillDown = Encounter::with(['patient.user', 'doctor', 'patient.hmo'])
                 ->whereBetween('encounters.created_at', [$from, $to])
                 ->join('doctor_queues', 'encounters.queue_id', '=', 'doctor_queues.id')
                 ->where('doctor_queues.clinic_id', $clinicId)
@@ -510,12 +1241,12 @@ class ClinicalReportsController extends Controller
                 ->orderByDesc('encounters.created_at')
                 ->get()
                 ->map(fn ($e) => [
-                    'patient' => userfullname($e->patient->user_id),
+                    'patient' => $this->formatPersonName($e->patient?->user),
                     'file_no' => $e->patient->file_no ?? '',
                     'patient_id' => $e->patient_id,
                     'date' => $e->created_at->format('Y-m-d H:i'),
-                    'doctor' => $e->doctor ? userfullname($e->doctor->id) : 'N/A',
-                    'hmo' => $e->patient->hmo->name ?? 'Self/Private',
+                    'doctor' => $this->formatPersonName($e->doctor),
+                    'hmo' => $e->patient?->hmo?->name ?? 'Self/Private',
                     'status' => $e->status ?? 'N/A',
                 ]);
         }
@@ -564,7 +1295,7 @@ class ClinicalReportsController extends Controller
                 ->orderByDesc('encounters.created_at')
                 ->get()
                 ->map(fn ($e) => [
-                    'patient' => userfullname($e->patient->user_id),
+                    'patient' => $this->formatPersonName($e->patient?->user),
                     'file_no' => $e->patient->file_no ?? '',
                     'patient_id' => $e->patient_id,
                     'date' => $e->created_at->format('Y-m-d H:i'),
@@ -607,7 +1338,7 @@ class ClinicalReportsController extends Controller
                     ->whereBetween('enrollment_date', [$from, $to])
                     ->get()
                     ->map(fn ($r) => [
-                        'patient' => userfullname($r->patient->user_id),
+                        'patient' => $this->formatPersonName($r->patient?->user),
                         'file_no' => $r->patient->file_no ?? '',
                         'patient_id' => $r->patient_id,
                         'date' => $r->enrollment_date ? Carbon::parse($r->enrollment_date)->format('Y-m-d') : 'N/A',
@@ -623,7 +1354,7 @@ class ClinicalReportsController extends Controller
                     ->whereBetween('visit_date', [$from, $to])
                     ->get()
                     ->map(fn ($r) => [
-                        'patient' => $r->enrollment ? userfullname($r->enrollment->patient->user_id) : 'N/A',
+                        'patient' => $r->enrollment ? $this->formatPersonName($r->enrollment->patient?->user) : 'N/A',
                         'file_no' => $r->enrollment ? ($r->enrollment->patient->file_no ?? '') : '',
                         'date' => Carbon::parse($r->visit_date)->format('Y-m-d'),
                         'weight_kg' => $r->weight_kg,
@@ -639,7 +1370,7 @@ class ClinicalReportsController extends Controller
                     ->whereBetween('delivery_date', [$from, $to])
                     ->get()
                     ->map(fn ($r) => [
-                        'mother' => userfullname($r->patient->user_id),
+                        'mother' => $this->formatPersonName($r->patient?->user),
                         'file_no' => $r->patient->file_no ?? '',
                         'patient_id' => $r->patient_id,
                         'date' => $r->delivery_date ? Carbon::parse($r->delivery_date)->format('Y-m-d') : 'N/A',
@@ -656,8 +1387,8 @@ class ClinicalReportsController extends Controller
                     ->whereBetween('created_at', [$from, $to])
                     ->get()
                     ->map(fn ($r) => [
-                        'mother' => $r->enrollment ? userfullname($r->enrollment->patient->user_id) : 'N/A',
-                        'baby' => $r->patient ? userfullname($r->patient->user_id) : ('Baby #' . $r->birth_order),
+                        'mother' => $r->enrollment ? $this->formatPersonName($r->enrollment->patient?->user) : 'N/A',
+                        'baby' => $r->patient ? $this->formatPersonName($r->patient->user) : ('Baby #' . $r->birth_order),
                         'sex' => ucfirst($r->sex),
                         'weight_kg' => $r->birth_weight_kg ?? 'N/A',
                         'still_birth' => $r->is_still_birth ? 'Yes' : 'No',
@@ -673,7 +1404,7 @@ class ClinicalReportsController extends Controller
                     ->whereBetween('visit_date', [$from, $to])
                     ->get()
                     ->map(fn ($r) => [
-                        'patient' => $r->enrollment ? userfullname($r->enrollment->patient->user_id) : 'N/A',
+                        'patient' => $r->enrollment ? $this->formatPersonName($r->enrollment->patient?->user) : 'N/A',
                         'date' => Carbon::parse($r->visit_date)->format('Y-m-d'),
                         'mother_condition' => $r->general_condition ?? 'N/A',
                         'baby_condition' => $r->baby_general_condition ?? 'N/A',
@@ -720,11 +1451,11 @@ class ClinicalReportsController extends Controller
 
         $rows = $all->map(fn ($r) => [
             'id' => $r->id,
-            'patient' => userfullname($r->patient->user_id),
+            'patient' => $this->formatPersonName($r->patient?->user),
             'file_no' => $r->patient->file_no ?? '',
             'patient_id' => $r->patient_id,
             'type' => ucfirst($r->referral_type),
-            'from_doctor' => $r->referringDoctor && $r->referringDoctor->user ? userfullname($r->referringDoctor->user->id) : 'N/A',
+            'from_doctor' => $this->formatPersonName($r->referringDoctor?->user),
             'to' => $r->referral_type === 'internal'
                 ? ($r->targetClinic ? $r->targetClinic->name : 'N/A')
                 : ($r->external_facility_name ?? 'N/A'),
@@ -761,14 +1492,14 @@ class ClinicalReportsController extends Controller
         ])->values();
 
         $rows = $administered->map(fn ($r) => [
-            'patient' => userfullname($r->patient->user_id),
+            'patient' => $this->formatPersonName($r->patient?->user),
             'file_no' => $r->patient->file_no ?? '',
             'patient_id' => $r->patient_id,
             'vaccine' => $r->vaccine_name,
             'dose_no' => $r->dose_number,
             'route' => $r->route,
             'date' => Carbon::parse($r->administered_at)->format('Y-m-d H:i'),
-            'nurse' => $r->administeredBy ? userfullname($r->administeredBy->id) : 'N/A',
+            'nurse' => $this->formatPersonName($r->administeredBy),
             'batch' => $r->batch_number ?? 'N/A',
             'next_due' => $r->next_due_date ? Carbon::parse($r->next_due_date)->format('Y-m-d') : 'N/A',
         ]);

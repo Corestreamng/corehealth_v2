@@ -3,12 +3,16 @@
 <script src="{{ asset('plugins/ckeditor/ckeditor5/ckeditor.js') }}"></script>
 <script src="{{ asset('js/clinical-context.js') }}"></script>
 <script>
+    window.CURRENT_USER_ID = {{ Auth::id() ?? 'null' }};
     window.currentWorkbenchRole = 'imaging';
     window.WORKBENCH_CONFIG = {
         csrf: '{{ csrf_token() }}',
         baseUrl: '{{ url("/") }}',
+        isApprover: {{ ($isApprover ?? false) ? 'true' : 'false' }},
+        requiresApproval: {{ ($requiresApproval ?? false) ? 'true' : 'false' }},
+        currentUserId: {{ Auth::id() ?? 'null' }},
         imagingSearchPatientsUrl: '{{ route("imaging.search-patients") }}',
-        requireApproval: {{ (bool) (appsettings('require_imaging_result_approval', 0)) ? 'true' : 'false' }},
+        requireApproval: {{ (bool) (appsettings('imaging_results_require_approval', 0)) ? 'true' : 'false' }},
         drSelfImg: {{ (bool) (appsettings('enable_doctor_self_imaging', 0)) ? 'true' : 'false' }},
         nrSelfImg: {{ (bool) (appsettings('enable_nurse_self_imaging', 0)) ? 'true' : 'false' }},
         imagingCategoryId: {{ appsettings('imaging_category_id', 6) }},
@@ -19,6 +23,7 @@
             'imaging.recordBilling': '{{ route("imaging.recordBilling") }}',
             'imaging.dismissRequests': '{{ route("imaging.dismissRequests") }}',
             'imaging.saveResult': '{{ route("imaging.saveResult") }}',
+            'imaging.applyCombo': '{{ route("imaging.applyCombo") }}',
             'lab.filterDoctors': '{{ route("lab.filterDoctors") }}',
             'lab.filterHmos': '{{ route("lab.filterHmos") }}',
             'lab.filterServices': '{{ route("lab.filterServices") }}',
@@ -26,6 +31,7 @@
             'lab.reports': '{{ route("lab.reports") }}'
         }
     };
+    window.INVEST_RES_SOURCE = 'imaging_workbench';
 </script>
 <script src="{{ asset('js/workbench-helper.js') }}"></script>
 <script src="{{ asset('js/clinical-alerts-shared.js') }}"></script>

@@ -52,6 +52,20 @@ class ProductRequest extends Model implements Auditable
         'free_form_name',
         'treatment_plan_id',
         'treatment_plan_name',
+        'returned_by',
+        'returned_date',
+        'returned_qty',
+        'refund_amount',
+        'return_reason',
+        'return_condition',
+        'damaged_by',
+        'damaged_date',
+        'damaged_qty',
+        'damage_reason',
+        'damage_type',
+        'approved_by',
+        'approved_at',
+        'approval_notes',
     ];
 
     protected $appends = ['item_name'];
@@ -169,6 +183,14 @@ class ProductRequest extends Model implements Auditable
     public function procedureItem()
     {
         return $this->hasOne(ProcedureItem::class, 'product_request_id', 'id');
+    }
+
+    /**
+     * Get the pharmacy returns for this product request.
+     */
+    public function pharmacyReturns()
+    {
+        return $this->hasMany(PharmacyReturn::class, 'product_request_id', 'id');
     }
 
     /**

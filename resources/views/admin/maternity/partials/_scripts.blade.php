@@ -19,11 +19,12 @@ window.WORKBENCH_CONFIG = {
     searchServicesRoute: '{{ route("maternity-workbench.search-services") }}',
     searchProductsRoute: '{{ route("nursing-workbench.search-products") }}',
     productBatchesRoute: '{{ route("maternity-workbench.product-batches") }}',
-    investigationCategoryId: '{{ appsettings("investigation_category_id", "") }}',
-    imagingCategoryId: 6,
+    investigationCategoryId: {{ (int) (appsettings('investigation_category_id', 2) ?: 2) }},
+    imagingCategoryId: {{ (int) (appsettings('imaging_category_id', 6) ?: 6) }},
     resolvedStoreId: '{{ $resolvedStore->id ?? "" }}',
     resolvedStoreName: '{{ $resolvedStore->store_name ?? "" }}',
     showMedicationOption: true,
+    allowDoctorSetPrice: {{ appsettings('allow_doctor_set_procedure_price', '0') ? 'true' : 'false' }},
     hmos: @json(\App\Models\Hmo::with('scheme')->orderBy('name')->get()->map(fn($h) => ['id' => $h->id, 'name' => $h->name, 'scheme_name' => $h->scheme->name ?? 'Other'])),
     routes: {
         'maternity-workbench.queue.active-anc': '{{ route("maternity-workbench.queue.active-anc") }}',
@@ -37,9 +38,18 @@ window.WORKBENCH_CONFIG = {
         'maternity-workbench.queue.admitted-patients': '{{ route("maternity-workbench.queue.admitted-patients") }}',
         'maternity-workbench.queue.counts': '{{ route("maternity-workbench.queue.counts") }}',
         'maternity-workbench.enroll': '{{ route("maternity-workbench.enroll") }}',
-        'maternity-workbench.search-patients': '{{ route("maternity-workbench.search-patients") }}'
-    }
+        'maternity-workbench.search-patients': '{{ route("maternity-workbench.search-patients") }}',
+        'maternity-workbench.outreach-tally': '{{ route("maternity-workbench.outreach-tally") }}',
+        'maternity-workbench.outreach-reports': '{{ route("maternity-workbench.outreach-reports") }}'
+    },
+    labRequiresApproval: {{ (bool) appsettings('lab_results_require_approval') ? 'true' : 'false' }},
+    imagingRequiresApproval: {{ (bool) appsettings('imaging_results_require_approval') ? 'true' : 'false' }},
+    doctorSelfApproveLab: {{ (bool) appsettings('doctor_self_approve_lab_result') ? 'true' : 'false' }},
+    nurseSelfApproveLab: {{ (bool) appsettings('nurse_self_approve_lab_result') ? 'true' : 'false' }},
+    doctorSelfApproveImaging: {{ (bool) appsettings('doctor_self_approve_imaging_result') ? 'true' : 'false' }},
+    nurseSelfApproveImaging: {{ (bool) appsettings('nurse_self_approve_imaging_result') ? 'true' : 'false' }}
 };
+window.INVEST_RES_SOURCE = 'maternity';
 </script>
 <script src="{{ asset('js/workbench-helper.js') }}"></script>
 @include('admin.shared.modals.request_details')
@@ -47,6 +57,7 @@ window.WORKBENCH_CONFIG = {
 <script src="{{ asset('js/request-details.js') }}"></script>
 <script src="{{ asset('js/clinical-orders-shared.js') }}"></script>
 <script src="{{ asset('js/immunization-module.js') }}"></script>
+<script src="{{ versioned_asset('js/outreach-immunization.js') }}"></script>
 @include('admin.partials.patient_search_js', [
     'search_context' => 'maternity',
     'search_url' => route('maternity-workbench.search-patients')

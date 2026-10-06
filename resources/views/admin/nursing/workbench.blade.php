@@ -4,11 +4,13 @@
 
 @push('styles')
 <link rel="stylesheet" href="{{ versioned_asset('css/nursing-workbench.css') }}">
+<link rel="stylesheet" href="{{ versioned_asset('css/nursing-shift.css') }}">
     
 <link rel="stylesheet" href="{{ asset('plugins/dataT/datatables.min.css') }}">
 <link rel="stylesheet" href="{{ asset('css/clinical-orders-shared.css') }}">
 <link rel="stylesheet" href="{{ asset('css/queue-status.css') }}">
 <link rel="stylesheet" href="{{ asset('css/billing-shared.css') }}">
+<link rel="stylesheet" href="{{ versioned_asset('css/outreach-immunization.css') }}">
 @endpush
 
 @section('content')
@@ -68,9 +70,9 @@
         @include('admin.partials.patient_search_html')
 
         <div class="queue-widget">
-            <h6><i class="mdi mdi-clipboard-list"></i> PATIENT QUEUES</h6>
+            <h6><i class="mdi mdi-clipboard-text"></i> PATIENT QUEUES</h6>
             <div class="queue-item" data-filter="admitted">
-                <span class="queue-item-label"><i class="mdi mdi-bed"></i> Admitted Patients</span>
+                <span class="queue-item-label"><i class="mdi mdi-hotel"></i> Admitted Patients</span>
                 <span class="queue-count billing" id="queue-admitted-count">0</span>
             </div>
             <div class="queue-item" data-filter="vitals">
@@ -103,7 +105,7 @@
         </div>
 
         <div class="quick-actions">
-            <h6><i class="mdi mdi-lightning-bolt"></i> QUICK ACTIONS</h6>
+            <h6><i class="mdi mdi-flash text-warning"></i> QUICK ACTIONS</h6>
 
             <!-- Ward & Bed Management -->
             <button class="quick-action-btn" id="btn-ward-dashboard">
@@ -132,7 +134,7 @@
 
             <!-- Nursing Reports -->
             <button class="quick-action-btn" id="btn-nursing-reports">
-                <i class="mdi mdi-chart-box-outline text-success"></i>
+                <i class="mdi mdi-file-chart text-success"></i>
                 <span>Nursing Reports</span>
             </button>
 
@@ -140,6 +142,18 @@
             <button class="quick-action-btn" id="btn-admission-summary">
                 <i class="mdi mdi-account-switch text-secondary"></i>
                 <span>Admissions Today</span>
+            </button>
+
+            <!-- Community Outreach Immunization -->
+            <button class="quick-action-btn" id="btn-outreach-immunization">
+                <i class="mdi mdi-needle text-success"></i>
+                <span>Outreach Immunization</span>
+            </button>
+
+            <!-- Outreach Reports & Field Tallies -->
+            <button class="quick-action-btn" id="btn-outreach-reports">
+                <i class="mdi mdi-file-chart text-primary"></i>
+                <span>Outreach Reports</span>
             </button>
             @if(appsettings()->enable_ei_nursing)
 <button class="quick-action-btn" onclick="showEmergencyIntakeModal()">
@@ -158,6 +172,15 @@
                 <i class="fa fa-arrow-left"></i> Back to Search
             </button>
             <div class="workspace-navbar-actions">
+                <div id="navbar-shift-status" class="d-none align-items-center gap-2 me-2">
+                    <span class="workbench-shift-status-badge" id="navbar-shift-badge" title="Active Shift">
+                        <span class="shift-pulse-dot"></span>
+                        <span id="navbar-shift-timer">00:00:00</span>
+                    </span>
+                    <button type="button" class="btn btn-sm btn-danger d-inline-flex align-items-center gap-1" id="navbar-end-shift-btn" title="End Current Shift">
+                        <i class="mdi mdi-stop-circle"></i> <span>End Shift</span>
+                    </button>
+                </div>
                 <button class="btn-toggle-search" id="btn-toggle-search">
                     <i class="fa fa-bars"></i> Toggle Search
                 </button>

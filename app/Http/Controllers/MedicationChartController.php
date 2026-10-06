@@ -762,7 +762,10 @@ class MedicationChartController extends Controller
         // Build validation rules based on drug source
         $rules = [
             'patient_id' => 'required|exists:patients,id',
-            'time' => 'required',
+            'time' => 'required_without:times',
+            'times' => 'nullable|array|min:1',
+            'times.*' => 'required|string',
+            'frequency' => 'nullable|string|max:50',
             'dose' => 'required|string',
             'route' => 'required|string',
             'repeat_type' => 'nullable|string|in:daily,specific,selected,once',
@@ -795,7 +798,16 @@ class MedicationChartController extends Controller
         $data = $validator->validated();
         $patientId = $data['patient_id'];
         $medicationId = $isDirect ? null : $data['product_or_service_request_id'];
-        $time = $data['time'];
+
+        // Extract time slots (support both times array and single time string)
+        $times = [];
+        if (!empty($data['times']) && is_array($data['times'])) {
+            $times = array_values(array_unique(array_filter($data['times'])));
+        }
+        if (empty($times) && !empty($data['time'])) {
+            $times = [$data['time']];
+        }
+
         $dose = $data['dose'];
         $route = $data['route'];
         $note = $data['note'] ?? null;
@@ -834,28 +846,30 @@ class MedicationChartController extends Controller
                     $shouldSchedule = ($i === 0);
                 }
 
-                // Create schedule if this day should be scheduled
+                // Create schedule for all requested time slots on this day
                 if ($shouldSchedule) {
-                    $scheduledDateTime = $currentDate->format('Y-m-d') . ' ' . $time;
+                    foreach ($times as $timeSlot) {
+                        $scheduledDateTime = $currentDate->format('Y-m-d') . ' ' . trim($timeSlot);
 
-                    $schedule = new MedicationSchedule();
-                    $schedule->patient_id = $patientId;
-                    $schedule->product_or_service_request_id = $medicationId;
-                    $schedule->drug_source = $drugSource;
-                    $schedule->scheduled_time = $scheduledDateTime;
-                    $schedule->dose = $dose;
-                    $schedule->route = $route;
-                    $schedule->created_by = Auth::id();
+                        $schedule = new MedicationSchedule();
+                        $schedule->patient_id = $patientId;
+                        $schedule->product_or_service_request_id = $medicationId;
+                        $schedule->drug_source = $drugSource;
+                        $schedule->scheduled_time = $scheduledDateTime;
+                        $schedule->dose = $dose;
+                        $schedule->route = $route;
+                        $schedule->created_by = Auth::id();
 
-                    // Direct entry fields
-                    if ($isDirect) {
-                        $schedule->product_id = $data['product_id'] ?? null;
-                        $schedule->external_drug_name = $data['external_drug_name'] ?? null;
+                        // Direct entry fields
+                        if ($isDirect) {
+                            $schedule->product_id = $data['product_id'] ?? null;
+                            $schedule->external_drug_name = $data['external_drug_name'] ?? null;
+                        }
+
+                        $schedule->save();
+
+                        $schedules[] = $schedule;
                     }
-
-                    $schedule->save();
-
-                    $schedules[] = $schedule;
                 }
             }
 
@@ -1135,7 +1149,7 @@ class MedicationChartController extends Controller
             $now = Carbon::now();
             $diffMinutes = $now->diffInMinutes($adminTime);
 
-            $editWindow = config('app.note_edit_window', 30); // Default 30 minutes
+            $editWindow = (int) (appsettings('note_edit_window') ?? config('app.note_edit_window', 30));
 
             if ($diffMinutes > $editWindow) {
                 DB::rollBack();
@@ -1211,7 +1225,7 @@ class MedicationChartController extends Controller
             $now = Carbon::now();
             $diffMinutes = $now->diffInMinutes($adminTime);
 
-            $editWindow = config('app.note_edit_window', 30); // Default 30 minutes
+            $editWindow = (int) (appsettings('note_edit_window') ?? config('app.note_edit_window', 30));
 
             if ($diffMinutes > $editWindow) {
                 DB::rollBack();

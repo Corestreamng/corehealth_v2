@@ -1674,16 +1674,31 @@
         $('#scheduleSubmitBtn .spinner-border').removeClass('d-none');
         $('#scheduleSubmitBtn').prop('disabled', true);
 
+        // Collect all time slots if multiple exist
+        const times = [];
+        $('.schedule-time-slot-input').each(function() {
+            const val = $(this).val();
+            if (val && !times.includes(val)) {
+                times.push(val);
+            }
+        });
+        if (times.length === 0 && time) {
+            times.push(time);
+        }
+
+        const frequency = $('#schedule_frequency').val() || 'OD';
+
         // Prepare data for API
         const scheduleData = {
             patient_id: patientId,
             product_or_service_request_id: medicationId,
             start_date: startDate,
-            time: time,
+            time: times[0] || time,
+            times: times,
+            frequency: frequency,
             dose: dose,
             route: route,
-            repeat_daily: repeatDaily ? 1 :
-            0, // Convert to 1/0 for Laravel to properly interpret as boolean
+            repeat_daily: repeatDaily ? 1 : 0, // Convert to 1/0 for Laravel to properly interpret as boolean
             selected_days: selectedDays,
             duration_days: durationDays
         };

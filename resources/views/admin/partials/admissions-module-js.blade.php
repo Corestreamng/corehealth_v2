@@ -455,13 +455,43 @@ window.AdmissionModule = (function() {
     $(document).on('click', '.adm-mod-print-modal .adm-mod-do-print-btn', function() {
         const modal = $(this).closest('.modal');
         const content = modal.find('.adm-mod-print-a4:visible, .adm-mod-print-thermal:visible').html();
-        if (content) {
-            const printWin = window.open('', '_blank');
-            printWin.document.write('<html><head><title>Admission Bill</title></head><body>' + content + '</body></html>');
-            printWin.document.close();
-            printWin.focus();
-            printWin.print();
+        if (!content || !content.trim()) return;
+
+        const isThermal = modal.find('.adm-mod-print-thermal:visible').length > 0;
+        const printWin = window.open('', '_blank', isThermal ? 'height=700,width=480' : 'height=800,width=900');
+        if (!printWin) {
+            if (typeof toastr !== 'undefined') toastr.warning('Please allow popups to print');
+            return;
         }
+
+        printWin.document.open();
+        if (content.indexOf('<!DOCTYPE') !== -1 || content.indexOf('<html') !== -1) {
+            printWin.document.write(content);
+        } else {
+            printWin.document.write('<!DOCTYPE html><html><head><title>Admission Bill</title>');
+            printWin.document.write('<style>');
+            printWin.document.write('* { box-sizing: border-box; }');
+            if (isThermal) {
+                printWin.document.write('@page { margin: 0; size: auto; }');
+                printWin.document.write('html, body { font-family: "Consolas", "Liberation Mono", monospace, Arial, sans-serif; padding: 2mm 3mm; margin: 0; width: 100%; }');
+                printWin.document.write('@media print { body { padding: 2mm 3mm !important; margin: 0 !important; width: 100% !important; } }');
+            } else {
+                printWin.document.write('@page { size: A4; margin: 10mm; }');
+                printWin.document.write('html, body { font-family: Arial, sans-serif; padding: 10px; margin: 0; width: 100%; }');
+            }
+            printWin.document.write('table { width: 100%; border-collapse: collapse; }');
+            printWin.document.write('th, td { padding: 6px 8px; text-align: left; border-bottom: 1px solid #ddd; }');
+            printWin.document.write('</style>');
+            printWin.document.write('</head><body>');
+            printWin.document.write(content);
+            printWin.document.write('</body></html>');
+        }
+        printWin.document.close();
+        printWin.focus();
+        setTimeout(function() {
+            printWin.print();
+            setTimeout(function() { printWin.close(); }, 500);
+        }, 250);
     });
 
     function openHistoryModal() {

@@ -9,13 +9,39 @@
 window.WORKBENCH_CONFIG = {
     csrf: '{{ csrf_token() }}',
     baseUrl: '{{ url("/") }}',
+    labRequiresApproval: {{ (bool) appsettings('lab_results_require_approval') ? 'true' : 'false' }},
+    imagingRequiresApproval: {{ (bool) appsettings('imaging_results_require_approval') ? 'true' : 'false' }},
+    doctorSelfApproveLab: {{ (bool) appsettings('doctor_self_approve_lab_result') ? 'true' : 'false' }},
+    nurseSelfApproveLab: {{ (bool) appsettings('nurse_self_approve_lab_result') ? 'true' : 'false' }},
+    doctorSelfApproveImaging: {{ (bool) appsettings('doctor_self_approve_imaging_result') ? 'true' : 'false' }},
+    nurseSelfApproveImaging: {{ (bool) appsettings('nurse_self_approve_imaging_result') ? 'true' : 'false' }},
     routes: {
         'nursing-workbench.admitted-patients': '{{ route("nursing-workbench.admitted-patients") }}',
         'nursing-workbench.vitals-queue': '{{ route("nursing-workbench.vitals-queue") }}',
         'nursing-workbench.bed-requests-queue': '{{ route("nursing-workbench.bed-requests-queue") }}',
-        'nursing-workbench.discharge-queue': '{{ route("nursing-workbench.discharge-queue") }}'
-    }
+        'nursing-workbench.discharge-queue': '{{ route("nursing-workbench.discharge-queue") }}',
+        'nursing-workbench.notes.store': '{{ route("nursing-workbench.notes.store") }}',
+        'nursing-workbench.notes.list': '{{ url("nursing-workbench/patient") }}',
+        'nursing-workbench.injection.administer': '{{ route("nursing-workbench.injection.administer") }}',
+        'nursing-workbench.immunization.administer': '{{ route("nursing-workbench.immunization.administer") }}',
+        'nursing-workbench.search-products': '{{ route("nursing-workbench.search-products") }}',
+        'nursing-workbench.product-batches': '{{ route("nursing-workbench.product-batches") }}',
+        'nursing-workbench.search-services': '{{ route("nursing-workbench.search-services") }}',
+        'nursing-workbench.billing.add-service': '{{ route("nursing-workbench.billing.add-service") }}',
+        'nursing-workbench.billing.add-consumable': '{{ route("nursing-workbench.billing.add-consumable") }}',
+        'nursing-workbench.billing.add-lab-bill': '{{ route("nursing-workbench.billing.add-lab-bill") }}',
+        'nursing-workbench.billing.add-imaging-bill': '{{ route("nursing-workbench.billing.add-imaging-bill") }}',
+        'nursing-workbench.billing.remove': '{{ url("/nursing-workbench/remove-bill") }}',
+        'nursing-workbench.outreach-tally': '{{ route("nursing-workbench.outreach-tally") }}',
+        'nursing-workbench.outreach-reports': '{{ route("nursing-workbench.outreach-reports") }}'
+    },
+    resolvedStoreId: '{{ $resolvedStore->id ?? "" }}',
+    resolvedStoreName: '{{ $resolvedStore->store_name ?? "" }}',
+    resolvedWardId: '{{ $resolvedStore->ward_id ?? "" }}',
+    defaultShiftType: '{{ \App\Models\NursingShift::determineShiftType() }}',
+    userName: '{{ auth()->user()?->name ?? "" }}'
 };
+window.INVEST_RES_SOURCE = 'nursing';
 window.BILLING_KIT_CONFIG = {
     csrf: '{{ csrf_token() }}',
     addServiceRoute: '{{ route("nursing-workbench.billing.add-service") }}',
@@ -28,8 +54,8 @@ window.BILLING_KIT_CONFIG = {
     searchServicesRoute: '{{ route("nursing-workbench.search-services") }}',
     searchProductsRoute: '{{ route("nursing-workbench.search-products") }}',
     productBatchesRoute: '{{ route("nursing-workbench.product-batches") }}',
-    investigationCategoryId: '{{ appsettings("investigation_category_id", "") }}',
-    imagingCategoryId: 6,
+    investigationCategoryId: {{ (int) (appsettings('investigation_category_id', 2) ?: 2) }},
+    imagingCategoryId: {{ (int) (appsettings('imaging_category_id', 6) ?: 6) }},
     resolvedStoreId: '{{ $resolvedStore->id ?? "" }}',
     resolvedStoreName: '{{ $resolvedStore->store_name ?? "" }}',
     showMedicationOption: true,
@@ -40,6 +66,7 @@ window.BILLING_KIT_CONFIG = {
 <script src="{{ asset('js/billing-shared.js') }}"></script>
 <script src="{{ asset('js/request-details.js') }}"></script>
 <script src="{{ asset('js/immunization-module.js') }}"></script>
+<script src="{{ versioned_asset('js/outreach-immunization.js') }}"></script>
 @include('admin.partials.patient_search_js', ['search_context' => 'nursing'])
 @include('admin.partials.invest_res_js')
 @include('admin.partials.perform_investigation_modal')
@@ -48,6 +75,7 @@ window.BILLING_KIT_CONFIG = {
 <script src="{{ versioned_asset('js/nursing-vitals.js') }}"></script>
 <script src="{{ versioned_asset('js/nursing-medication-chart.js') }}"></script>
 <script src="{{ versioned_asset('js/nursing-notes.js') }}"></script>
+<script src="{{ versioned_asset('js/medication-schedule-presets.js') }}"></script>
 <script src="{{ versioned_asset('js/nursing-clinical-requests.js') }}"></script>
 @include('admin.partials.clinical_alerts_modal')
 @include('admin.partials.patient_summary_overlay')

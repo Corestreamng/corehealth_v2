@@ -876,6 +876,8 @@ if (typeof window.wbRoute !== 'function') {
                 break;
             case 'account':
                 loadAccountSummary();
+                initAccountTxFilters();
+                loadAccountTransactions();
                 break;
         }
     }
@@ -1344,7 +1346,7 @@ if (typeof window.wbRoute !== 'function') {
     });
 
     // Also call on workspace tab click
-    $(document).on('click', '.workspace-tab[data-tab="account-tab"]', function() {
+    $(document).on('click', '.workspace-tab[data-tab="account"], .workspace-tab[data-tab="account-tab"]', function() {
         setTimeout(() => {
             initAccountTxFilters();
             if (currentPatient) {

@@ -26,6 +26,13 @@ Route::middleware(['auth'])->group(function () {
         Route::delete('/referrals/{referral}', [SpecialistReferralController::class, 'deleteReferral'])->name('encounters.referrals.delete');
     });
 
+    // ─── Resilient alias routes for backward compatibility / direct frontend posts ──
+    Route::post('/encounters/referrals/create', [SpecialistReferralController::class, 'createReferral'])->name('encounters.referrals.create.alias');
+    Route::get('/encounters/referrals/list', [SpecialistReferralController::class, 'getEncounterReferrals'])->name('encounters.referrals.list.alias');
+    Route::get('/encounters/referrals/incoming', [SpecialistReferralController::class, 'getIncomingReferrals'])->name('encounters.referrals.incoming.alias');
+    Route::get('/encounters/referrals/patient-all', [SpecialistReferralController::class, 'getPatientReferrals'])->name('encounters.referrals.patient-all.alias');
+    Route::post('/referrals/decline', [SpecialistReferralController::class, 'declineReferral'])->name('referrals.decline.alias');
+
     // ─── Reception: Referral Management ────────────────────────────────────
     Route::prefix('referrals')->name('referrals.')->group(function () {
         Route::get('/pending', [SpecialistReferralController::class, 'getPendingReferrals'])->name('pending');

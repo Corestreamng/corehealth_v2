@@ -97,6 +97,14 @@ class Service extends Model implements Auditable
     }
 
     /**
+     * Check if this service is surgical.
+     */
+    public function getIsSurgicalAttribute(): bool
+    {
+        return (bool) ($this->procedureDefinition?->is_surgical ?? false);
+    }
+
+    /**
      * Get the items that make up this combo service.
      */
     public function bundleItems()

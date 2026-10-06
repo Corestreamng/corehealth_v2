@@ -118,23 +118,25 @@
                     </label>
                     <select name="editEncounterReasons[]" id="editEncounterReasons" class="form-control text-lg"
                         multiple="multiple" required style="width: 100%; display:block;">
-                        @foreach ($reasons_for_encounter_cat_list as $reason_cat)
-                            <optgroup label="{{ $reason_cat->category }}">
-                                @foreach ($reasons_for_encounter_sub_cat_list as $reason_sub_cat)
-                                    @if ($reason_sub_cat->category == $reason_cat->category)
-                                        <option disabled style="font-weight: bold;">
-                                            {{ $reason_sub_cat->sub_category }}</option>
-                                        @foreach ($reasons_for_encounter_list as $reason_item)
-                                            @if ($reason_item->category == $reason_cat->category && $reason_item->sub_category == $reason_sub_cat->sub_category)
-                                                <option value="{{ $reason_item->code }}-{{ $reason_item->name }}">
-                                                    &emsp;{{ $reason_item->code }} {{ $reason_item->name }}
-                                                </option>
-                                            @endif
-                                        @endforeach
-                                    @endif
-                                @endforeach
-                            </optgroup>
-                        @endforeach
+                        @if (!empty($reasons_for_encounter_cat_list))
+                            @foreach ($reasons_for_encounter_cat_list as $reason_cat)
+                                <optgroup label="{{ $reason_cat->category }}">
+                                    @foreach ($reasons_for_encounter_sub_cat_list ?? [] as $reason_sub_cat)
+                                        @if ($reason_sub_cat->category == $reason_cat->category)
+                                            <option disabled style="font-weight: bold;">
+                                                {{ $reason_sub_cat->sub_category }}</option>
+                                            @foreach ($reasons_for_encounter_list ?? [] as $reason_item)
+                                                @if ($reason_item->category == $reason_cat->category && $reason_item->sub_category == $reason_sub_cat->sub_category)
+                                                    <option value="{{ $reason_item->code }}-{{ $reason_item->name }}">
+                                                        &emsp;{{ $reason_item->code }} {{ $reason_item->name }}
+                                                    </option>
+                                                @endif
+                                            @endforeach
+                                        @endif
+                                    @endforeach
+                                </optgroup>
+                            @endforeach
+                        @endif
                     </select>
                 </div>
 
@@ -329,7 +331,7 @@ $('#deletionReasonSelect').on('change', function() {
                             </div>
                             <div class="col-md-12 mb-3">
                                 <label class="form-label fw-bold small">Certified By</label>
-                                <input type="text" class="form-control" id="death-certified-by" value="Dr. {{ Auth::user()->surname }} {{ Auth::user()->firstname }}" readonly>
+                                <input type="text" class="form-control" id="death-certified-by" value="Dr. {{ Auth::user() ? trim(Auth::user()->surname . ' ' . Auth::user()->firstname . ' ' . (Auth::user()->othername ?? '')) : '' }}" readonly>
                             </div>
                         </div>
                     </div>

@@ -215,9 +215,17 @@ class MaternityWorkbenchController extends Controller
             }
         } else {
             $enrollment = MaternityEnrollment::where('patient_id', $id)
-                ->whereIn('status', ['active', 'postnatal'])
+                ->whereIn('status', ['active', 'delivered', 'postnatal'])
                 ->with(['ancVisits', 'deliveryRecord', 'babies.patient.user', 'postnatalVisits'])
+                ->latest('id')
                 ->first();
+
+            if (!$enrollment) {
+                $enrollment = MaternityEnrollment::where('patient_id', $id)
+                    ->with(['ancVisits', 'deliveryRecord', 'babies.patient.user', 'postnatalVisits'])
+                    ->latest('id')
+                    ->first();
+            }
         }
 
         if ($enrollment) {
@@ -284,6 +292,13 @@ class MaternityWorkbenchController extends Controller
             'photo' => $patient->user->photo ?? 'avatar.png',
             'hmo' => $patient->hmo ? $patient->hmo->name : 'N/A',
             'hmo_no' => $patient->hmo_no ?? 'N/A',
+            'nationality' => $patient->nationality ?? 'N/A',
+            'ethnicity' => $patient->ethnicity ?? 'N/A',
+            'disability' => $patient->disability ?? 'No',
+            'insurance_scheme' => $patient->insurance_scheme ?? 'N/A',
+            'next_of_kin_name' => $patient->next_of_kin_name ?? ($mother ? ($mother['name'] . ' (Mother)') : ''),
+            'next_of_kin_phone' => $patient->next_of_kin_phone ?? '',
+            'next_of_kin_address' => $patient->next_of_kin_address ?? '',
             'allergies' => $patient->allergies ?? [],
             'is_baby' => $isBaby,
             'mother' => $mother,
@@ -1436,7 +1451,11 @@ class MaternityWorkbenchController extends Controller
                     'service_id' => $procData['service_id'],
                     'priority' => $procData['priority'] ?? 'routine',
                     'scheduled_date' => $procData['scheduled_date'] ?? null,
+                    'scheduled_time' => $procData['scheduled_time'] ?? null,
+                    'operating_room' => $procData['operating_room'] ?? null,
                     'pre_notes' => $procData['pre_notes'] ?? null,
+                    'defer_billing' => $procData['defer_billing'] ?? null,
+                    'prep_details' => $procData['prep_details'] ?? null,
                 ], $enrollment->patient_id, null, null);
 
                 $created[] = $procedure;
@@ -1660,7 +1679,16 @@ class MaternityWorkbenchController extends Controller
                 'priority' => 'required|string',
             ]);
             $procedure = $this->addSingleProcedure(
-                $request->only(['service_id', 'priority', 'scheduled_date', 'pre_notes']),
+                $request->only([
+                    'service_id',
+                    'priority',
+                    'scheduled_date',
+                    'scheduled_time',
+                    'operating_room',
+                    'pre_notes',
+                    'defer_billing',
+                    'prep_details',
+                ]),
                 $enrollment->patient_id,
                 null,
                 null
@@ -3004,6 +3032,31 @@ class MaternityWorkbenchController extends Controller
         return $this->nursingProxy()->getProductBatches($request);
     }
 
+    public function saveOutreachTallyMaternity(Request $request)
+    {
+        return $this->nursingProxy()->saveOutreachTally($request);
+    }
+
+    public function getOutreachSessionsReportMaternity(Request $request)
+    {
+        return $this->nursingProxy()->getOutreachSessionsReport($request);
+    }
+
+    public function getOutreachSessionDetailsMaternity($sessionId)
+    {
+        return $this->nursingProxy()->getOutreachSessionDetails($sessionId);
+    }
+
+    public function printOutreachReportMaternity(Request $request)
+    {
+        return $this->nursingProxy()->printOutreachReport($request);
+    }
+
+    public function getOutreachStoreInventoryMaternity(Request $request)
+    {
+        return $this->nursingProxy()->getOutreachStoreInventory($request);
+    }
+
     public function getMotherSchedule($enrollmentId)
     {
         $enrollment = MaternityEnrollment::findOrFail($enrollmentId);
@@ -3208,7 +3261,7 @@ class MaternityWorkbenchController extends Controller
                     'created_by_id' => $note->created_by,
                     'created_at' => Carbon::parse($note->created_at)->format('h:i a, d M Y'),
                     'time_ago' => Carbon::parse($note->created_at)->diffForHumans(),
-                    'can_edit' => Auth::id() == $note->created_by && Carbon::parse($note->created_at)->diffInMinutes(now()) < (function_exists('appsettings') ? (appsettings('note_edit_duration') ?? 60) : 60),
+                    'can_edit' => Auth::id() == $note->created_by && Carbon::parse($note->created_at)->diffInMinutes(now()) < (int) (appsettings('note_edit_window') ?? appsettings('note_edit_duration') ?? 60),
                     'completed' => (bool) $note->completed,
                 ];
             });
@@ -3278,7 +3331,7 @@ class MaternityWorkbenchController extends Controller
             return response()->json(['success' => false, 'message' => 'You can only edit your own notes.'], 403);
         }
 
-        $editDuration = function_exists('appsettings') ? (appsettings('note_edit_duration') ?? 60) : 60;
+        $editDuration = (int) (appsettings('note_edit_window') ?? appsettings('note_edit_duration') ?? 60);
         if (Carbon::parse($note->created_at)->addMinutes($editDuration)->isPast()) {
             return response()->json(['success' => false, 'message' => 'Edit window has expired.'], 403);
         }
@@ -3310,7 +3363,7 @@ class MaternityWorkbenchController extends Controller
             return response()->json(['success' => false, 'message' => 'You can only delete your own notes.'], 403);
         }
 
-        $editDuration = function_exists('appsettings') ? (appsettings('note_edit_duration') ?? 60) : 60;
+        $editDuration = (int) (appsettings('note_edit_window') ?? appsettings('note_edit_duration') ?? 60);
         if (Carbon::parse($note->created_at)->addMinutes($editDuration)->isPast()) {
             return response()->json(['success' => false, 'message' => 'Delete window has expired.'], 403);
         }
@@ -3979,8 +4032,18 @@ class MaternityWorkbenchController extends Controller
                 return response()->json(['success' => false, 'message' => 'Invalid combo service'], 400);
             }
 
-            // Delegate to ClinicalOrdersTrait::applyServiceCombo (no encounter for maternity enrollment)
-            $result = $this->applyServiceCombo($comboService, (int) $enrollment->patient_id, null);
+            $extra = [];
+            if ($request->has('treatment_plan_id') && $request->input('treatment_plan_id')) {
+                $extra['treatment_plan_id'] = $request->input('treatment_plan_id');
+                $extra['treatment_plan_name'] = $request->input('treatment_plan_name');
+            }
+            if ($request->filled('note')) {
+                $extra['note'] = $request->input('note');
+            }
+            $encounterId = $request->input('encounter_id') ?: null;
+
+            // Delegate to ClinicalOrdersTrait::applyServiceCombo
+            $result = $this->applyServiceCombo($comboService, (int) $enrollment->patient_id, $encounterId ? (int) $encounterId : null, $extra);
 
             return response()->json([
                 'success' => true,
@@ -4024,6 +4087,22 @@ class MaternityWorkbenchController extends Controller
                     'message' => $result['message'],
                 ], 400);
             }
+        } catch (\Exception $e) {
+            return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
+        }
+    }
+
+    public function removeBundleItem(Request $request, $enrollmentId = null)
+    {
+        try {
+            $request->validate([
+                'child_request_id' => 'required|integer|exists:product_or_service_requests,id',
+                'reason' => 'nullable|string|max:500',
+            ]);
+
+            $result = $this->removeServiceComboItem($request->child_request_id, $request->reason);
+
+            return response()->json($result, $result['success'] ? 200 : 400);
         } catch (\Exception $e) {
             return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
         }

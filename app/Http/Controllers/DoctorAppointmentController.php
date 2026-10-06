@@ -1595,8 +1595,7 @@ class DoctorAppointmentController extends Controller
 
         $unionQuery = $qA->unionAll($qB);
 
-        $query = DB::table(DB::raw("({$unionQuery->toSql()}) as combined"))
-            ->mergeBindings($unionQuery)
+        $query = DB::query()->fromSub($unionQuery, 'combined')
             ->when($statusFilter !== '' && $statusFilter !== 'all', function ($q) use ($statusFilter) {
                 $q->where('status', (int) $statusFilter);
             })
@@ -1636,9 +1635,10 @@ class DoctorAppointmentController extends Controller
 
         return DataTables::of($query)
             ->filter(function ($query) use ($request) {
-                $keyword = $request->input('search.value', '');
-                if (strlen(trim($keyword)) >= 1) {
-                    $query->where(function ($q) use ($keyword) {
+                $keyword = trim($request->input('search.value', ''));
+                if (strlen($keyword) >= 1) {
+                    $terms = array_filter(explode(' ', $keyword));
+                    $query->where(function ($q) use ($keyword, $terms) {
                         $q->where('patient_name', 'LIKE', "%{$keyword}%")
                           ->orWhere('file_no', 'LIKE', "%{$keyword}%")
                           ->orWhere('hmo_name', 'LIKE', "%{$keyword}%")
@@ -1646,6 +1646,14 @@ class DoctorAppointmentController extends Controller
                           ->orWhere('clinic_name', 'LIKE', "%{$keyword}%")
                           ->orWhere('notes', 'LIKE', "%{$keyword}%")
                           ->orWhere('booked_by_name', 'LIKE', "%{$keyword}%");
+
+                        if (count($terms) > 1) {
+                            $q->orWhere(function ($sub) use ($terms) {
+                                foreach ($terms as $t) {
+                                    $sub->where('patient_name', 'LIKE', "%{$t}%");
+                                }
+                            });
+                        }
                     });
                 }
             })

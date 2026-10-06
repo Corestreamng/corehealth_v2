@@ -74,40 +74,90 @@
 .status-completed { background-color: #d4edda; color: #155724; }
 .status-cancelled { background-color: #f8d7da; color: #721c24; }
 
-/* Procedure Configurator Card */
-.proc-config-card {
-    background: #ffffff;
-    border: 1px solid #dee2e6;
-    border-left: 4px solid var(--hospital-primary, #007bff);
-    border-radius: 0.5rem;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
-    margin-bottom: 1.25rem;
-    transition: all 0.2s ease;
+/* ── Containing Card & Search Dropdown Overflow Fixes ── */
+#procedures .card-modern,
+.proc-tab-card {
+    overflow: visible !important;
+    border-radius: 10px;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.04);
 }
 
-.proc-benchmark-box {
-    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
-    border: 1px solid #ced4da;
-    border-radius: 0.375rem;
-    padding: 0.75rem 1rem;
+#procedures .card-body,
+#procedures .tab-content,
+#proc-new {
+    overflow: visible !important;
 }
 
-.proc-benchmark-box.is-hmo {
-    background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%);
-    border-color: #a5d6a7;
+#proc-new {
+    min-height: 480px;
+    position: relative;
 }
 
-.proc-preset-btn {
-    font-size: 0.75rem;
-    padding: 0.2rem 0.5rem;
-    border-radius: 0.25rem;
+.proc-search-container {
+    position: relative;
+    z-index: 1070;
 }
 
 .proc-search-dropdown {
     position: absolute;
-    z-index: 1050;
-    width: calc(100% - 30px);
-    max-height: 280px;
+    top: calc(100% + 4px);
+    left: 0;
+    right: 0;
+    width: 100%;
+    z-index: 1080;
+    max-height: 320px;
     overflow-y: auto;
-    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.12);
+    background: #ffffff;
+    border: 1px solid rgba(0, 0, 0, 0.14);
+    border-radius: 0.5rem;
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.18);
+}
+
+/* Empty State Placeholder (Guarantees card height & clean UX before selection) */
+.proc-empty-state {
+    background: #f8fafc;
+    border: 1px dashed #cbd5e1;
+    border-radius: 0.5rem;
+    transition: all 0.2s ease;
+}
+
+/* ── Streamlined Procedure Configurator Card ── */
+.proc-config-card {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-left: 4px solid var(--hospital-primary, #007bff);
+    border-radius: 0.5rem;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.06);
+    margin-bottom: 1.5rem;
+    transition: all 0.2s ease;
+}
+
+.proc-config-header {
+    background: #f8fafc;
+    border-bottom: 1px solid #e2e8f0;
+    padding: 0.75rem 1rem;
+    border-top-left-radius: 0.5rem;
+    border-top-right-radius: 0.5rem;
+}
+
+.proc-benchmark-pill {
+    background: #ffffff;
+    border: 1px solid #cbd5e1;
+    border-radius: 2rem;
+    padding: 0.25rem 0.65rem;
+    font-size: 0.8rem;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+
+.proc-pricing-panel {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 0.5rem;
+}
+
+.proc-preset-btn {
+    font-size: 0.75rem;
+    padding: 0.25rem 0.6rem;
+    border-radius: 0.25rem;
 }
