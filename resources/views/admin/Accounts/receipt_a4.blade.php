@@ -135,6 +135,8 @@
                 'ACC_DEPOSIT' => 'Account Deposit',
                 'ACC_WITHDRAW' => 'Patient Account',
                 'ACC_ADJUSTMENT' => 'Account Adjustment',
+                'BILL_TO_STAFF' => 'Billed to Staff',
+                'BILL_TO_ORGANIZATION' => 'Billed to Organization',
                 // Lowercase (Accounting Module)
                 'cash' => 'Cash',
                 'pos' => 'POS/Card',

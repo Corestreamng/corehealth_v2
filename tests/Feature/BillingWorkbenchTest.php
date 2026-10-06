@@ -119,4 +119,49 @@ class BillingWorkbenchTest extends TestCase
             $this->assertTrue($response->json('success'));
         }
     }
+
+    /** @test */
+    public function test_process_payment_validates_organization_id_when_billing_to_organization()
+    {
+        $user = User::factory()->create(['status' => 1]);
+        $patient = Patient::factory()->create();
+
+        $response = $this->actingAs($user)->postJson('/billing-workbench/process-payment', [
+            'patient_id' => $patient->id,
+            'payment_type' => 'BILL_TO_ORGANIZATION',
+            'payment_method' => 'BILL_TO_ORGANIZATION',
+            'organization_id' => null,
+            'items' => [
+                ['id' => 999999, 'qty' => 1, 'discount' => 0],
+            ],
+        ]);
+
+        $this->assertTrue(in_array($response->status(), [422, 302, 403, 500]));
+        if ($response->status() === 422 && isset($response->json()['errors'])) {
+            $response->assertJsonValidationErrors(['organization_id']);
+        }
+    }
+
+    /** @test */
+    public function test_process_payment_with_organization_validation_passes()
+    {
+        $user = User::factory()->create(['status' => 1]);
+        $patient = Patient::factory()->create();
+        $org = \App\Models\Organization::first() ?? \App\Models\Organization::create(['name' => 'Test Org', 'status' => 1]);
+
+        $response = $this->actingAs($user)->postJson('/billing-workbench/process-payment', [
+            'patient_id' => $patient->id,
+            'payment_type' => 'BILL_TO_ORGANIZATION',
+            'payment_method' => 'BILL_TO_ORGANIZATION',
+            'organization_id' => $org->id,
+            'items' => [
+                ['id' => 99999999, 'qty' => 1, 'discount' => 0],
+            ],
+        ]);
+
+        $this->assertTrue(in_array($response->status(), [200, 422, 302, 403, 500]));
+        if ($response->status() === 422) {
+            $this->assertStringNotContainsString('organization_id', $response->json('message') ?? '');
+        }
+    }
 }

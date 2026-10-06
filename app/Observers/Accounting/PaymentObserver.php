@@ -605,6 +605,11 @@ class PaymentObserver
             return '1130';
         }
 
+        // If payment method is BILL_TO_ORGANIZATION, debit Accounts Receivable - Organizations
+        if ($payment->payment_method === 'BILL_TO_ORGANIZATION') {
+            return '1131';
+        }
+
         // If bank_id is set, use that bank's GL account
         if ($payment->bank_id) {
             $bank = $payment->bank;
@@ -633,6 +638,11 @@ class PaymentObserver
         // If this is a staff bill settlement, credit Accounts Receivable - Staff
         if ($payment->payment_type === 'STAFF_BILL_SETTLEMENT') {
             return '1130';
+        }
+
+        // If this is an organization bill settlement, credit Accounts Receivable - Organizations
+        if ($payment->payment_type === 'ORGANIZATION_BILL_SETTLEMENT') {
+            return '1131';
         }
 
         // If this is an invoice payment, credit Accounts Receivable
@@ -678,6 +688,14 @@ class PaymentObserver
             }
         }
 
+        // Handle BILL_TO_ORGANIZATION description enrichment
+        if ($payment->payment_method === 'BILL_TO_ORGANIZATION') {
+            $orgBill = \App\Models\OrganizationBill::where('payment_id', $payment->id)->with('organization')->first();
+            if ($orgBill && $orgBill->organization) {
+                $parts[] = "Billed to Organization: {$orgBill->organization->name}";
+            }
+        }
+
         // Handle STAFF_BILL_SETTLEMENT description enrichment
         if ($payment->payment_type === 'STAFF_BILL_SETTLEMENT') {
             $staffBill = \App\Models\StaffBill::where('settlement_payment_id', $payment->id)->with('staffUser.staff_profile')->first();
@@ -687,6 +705,14 @@ class PaymentObserver
                 $empCode = $profile ? $profile->employee_id : 'N/A';
                 $staffName = trim($staff->surname . ' ' . $staff->firstname . ' ' . $staff->othername);
                 $parts[] = "Staff Bill Settlement for: {$staffName} (Code: {$empCode})";
+            }
+        }
+
+        // Handle ORGANIZATION_BILL_SETTLEMENT description enrichment
+        if ($payment->payment_type === 'ORGANIZATION_BILL_SETTLEMENT') {
+            $orgBill = \App\Models\OrganizationBill::where('settlement_payment_id', $payment->id)->with('organization')->first();
+            if ($orgBill && $orgBill->organization) {
+                $parts[] = "Organization Bill Settlement for: {$orgBill->organization->name}";
             }
         }
 

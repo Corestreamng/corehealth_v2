@@ -186,7 +186,7 @@ class BillingWorkbenchController extends Controller
         $defaultName = null;
         if ($patient->default_billing_mode === 'BILL_TO_STAFF' && $patient->default_billing_id) {
             $staff = \App\Models\User::find($patient->default_billing_id);
-            $defaultName = $staff ? trim($staff->surname . ' ' . $staff->firstname) : null;
+            $defaultName = $staff ? trim($staff->surname . ' ' . $staff->firstname . ' ' . ($staff->othername ?? '')) : null;
         } elseif ($patient->default_billing_mode === 'BILL_TO_ORGANIZATION' && $patient->default_billing_id) {
             $org = \App\Models\Organization::find($patient->default_billing_id);
             $defaultName = $org ? $org->name : null;
@@ -777,7 +777,8 @@ class BillingWorkbenchController extends Controller
             'payment_type' => 'required|string',
             'payment_method' => 'nullable|string',
             'bank_id' => 'nullable|integer|exists:banks,id',
-            'staff_user_id' => 'nullable|integer|exists:users,id',
+            'staff_user_id' => 'nullable|required_if:payment_method,BILL_TO_STAFF|required_if:payment_type,BILL_TO_STAFF|integer|exists:users,id',
+            'organization_id' => 'nullable|required_if:payment_method,BILL_TO_ORGANIZATION|required_if:payment_type,BILL_TO_ORGANIZATION|integer|exists:organizations,id',
             'reference_no' => 'nullable|string',
             'items' => 'required|array|min:1',
             'items.*.id' => 'required|integer',
@@ -948,11 +949,17 @@ class BillingWorkbenchController extends Controller
                 $activeShift->increment('total_collected', abs($paymentTotal));
             }
 
+            $effectiveMethod = $data['payment_method'] ?? $data['payment_type'] ?? null;
+
             // Create Staff Bill if payment method is BILL_TO_STAFF
-            if (($data['payment_method'] ?? null) === 'BILL_TO_STAFF') {
+            if ($effectiveMethod === 'BILL_TO_STAFF') {
+                $staffUserId = $data['staff_user_id'] ?? $request->input('staff_user_id');
+                if (!$staffUserId) {
+                    throw new \Exception('Please select a valid staff member to bill.');
+                }
                 \App\Models\StaffBill::create([
                     'patient_id' => $patient->id,
-                    'staff_user_id' => $data['staff_user_id'],
+                    'staff_user_id' => $staffUserId,
                     'payment_id' => $payment->id,
                     'total_amount' => $total,
                     'discount_amount' => $totalDiscount,
@@ -962,10 +969,14 @@ class BillingWorkbenchController extends Controller
             }
 
             // Create Organization Bill if payment method is BILL_TO_ORGANIZATION
-            if (($data['payment_method'] ?? null) === 'BILL_TO_ORGANIZATION') {
+            if ($effectiveMethod === 'BILL_TO_ORGANIZATION') {
+                $organizationId = $data['organization_id'] ?? $request->input('organization_id');
+                if (!$organizationId) {
+                    throw new \Exception('Please select a valid organization to bill.');
+                }
                 \App\Models\OrganizationBill::create([
                     'patient_id' => $patient->id,
-                    'organization_id' => $data['organization_id'],
+                    'organization_id' => $organizationId,
                     'payment_id' => $payment->id,
                     'total_amount' => $total,
                     'discount_amount' => $totalDiscount,
