@@ -104,11 +104,20 @@ function initPharmacyReportsFilters() {
 function loadPharmReportFilterOptions() {
     // Load stores
     $.get('/pharmacy-workbench/stores', function(stores) {
-        const $storeSelect = $('#pharm-report-store, #stock-report-store-filter');
+        const $storeSelect = $('#pharm-report-store, #stock-report-store-filter, #audit-report-store-filter');
         $storeSelect.find('option:not(:first)').remove();
-        stores.forEach(store => {
-            $storeSelect.append(`<option value="${store.id}">${store.name}</option>`);
+        (stores || []).forEach(store => {
+            const storeName = store.store_name || store.name || ('Store #' + store.id);
+            $storeSelect.append(`<option value="${store.id}">${storeName}</option>`);
         });
+
+        // Pre-select active store if available from workbench context
+        if (window.WORKBENCH_CONFIG && window.WORKBENCH_CONFIG.activeStoreId) {
+            const activeId = String(window.WORKBENCH_CONFIG.activeStoreId);
+            if ($('#audit-report-store-filter option[value="' + activeId + '"]').length) {
+                $('#audit-report-store-filter').val(activeId);
+            }
+        }
     });
 
     // Load HMOs with optgroups
@@ -145,10 +154,11 @@ function loadPharmReportFilterOptions() {
 
     // Load product categories
     $.get('/pharmacy-workbench/product-categories', function(categories) {
-        const $catSelect = $('#pharm-report-category, #stock-report-category-filter');
+        const $catSelect = $('#pharm-report-category, #stock-report-category-filter, #audit-report-category-filter');
         $catSelect.find('option:not(:first)').remove();
         (categories || []).forEach(cat => {
-            $catSelect.append(`<option value="${cat.id}">${cat.name}</option>`);
+            const catName = cat.category_name || cat.name || ('Category #' + cat.id);
+            $catSelect.append(`<option value="${cat.id}">${catName}</option>`);
         });
     });
 }
@@ -1361,6 +1371,9 @@ function exportReportsToExcel() {
             case 'pharm-stock-tab':
                 exportStockData(wb);
                 break;
+            case 'pharm-physical-audit-tab':
+                exportPhysicalStockAuditCsv();
+                return;
             case 'pharm-performance-tab':
                 exportPerformanceData(wb);
                 break;
@@ -1560,6 +1573,9 @@ function printReports() {
         case 'pharm-stock-tab':
             reportContent = buildStockPrintContent();
             break;
+        case 'pharm-physical-audit-tab':
+            printPhysicalStockAuditSheet();
+            return;
         case 'pharm-performance-tab':
             reportContent = buildPerformancePrintContent();
             break;
@@ -1751,6 +1767,32 @@ function buildOverviewPrintContent() {
     return html;
 }
 
+function extractRowCellsHtml(rowContext) {
+    const rowNode = rowContext.node();
+    let rowHtml = '<tr>';
+    if (rowNode) {
+        $(rowNode).find('td').each(function() {
+            const cleanText = $(this).text().trim();
+            rowHtml += `<td>${cleanText}</td>`;
+        });
+    } else {
+        const data = rowContext.data();
+        if (Array.isArray(data)) {
+            data.forEach(cell => {
+                const cleanText = $('<div>').html(cell).text().trim();
+                rowHtml += `<td>${cleanText}</td>`;
+            });
+        } else if (typeof data === 'object' && data !== null) {
+            Object.values(data).forEach(cell => {
+                const cleanText = typeof cell === 'object' && cell !== null ? '' : $('<div>').html(cell).text().trim();
+                rowHtml += `<td>${cleanText}</td>`;
+            });
+        }
+    }
+    rowHtml += '</tr>';
+    return rowHtml;
+}
+
 function buildDispensingPrintContent() {
     let html = '<div class="info-section"><h5>Dispensing Report</h5></div><table>';
 
@@ -1763,14 +1805,7 @@ function buildDispensingPrintContent() {
         html += '</tr></thead><tbody>';
 
         table.rows({ search: 'applied' }).every(function() {
-            const data = this.data();
-            html += '<tr>';
-            data.forEach(cell => {
-                // Strip HTML tags for clean printing
-                const cleanText = $('<div>').html(cell).text();
-                html += `<td>${cleanText}</td>`;
-            });
-            html += '</tr>';
+            html += extractRowCellsHtml(this);
         });
         html += '</tbody>';
     }
@@ -1791,13 +1826,7 @@ function buildRevenuePrintContent() {
         html += '</tr></thead><tbody>';
 
         table.rows({ search: 'applied' }).every(function() {
-            const data = this.data();
-            html += '<tr>';
-            data.forEach(cell => {
-                const cleanText = $('<div>').html(cell).text();
-                html += `<td>${cleanText}</td>`;
-            });
-            html += '</tr>';
+            html += extractRowCellsHtml(this);
         });
         html += '</tbody>';
     }
@@ -1807,7 +1836,20 @@ function buildRevenuePrintContent() {
 }
 
 function buildStockPrintContent() {
-    let html = '<div class="info-section"><h5>Stock Status Report</h5></div><table>';
+    const printStockSheetUrl = wbRoute('pharmacy.reports.print-stock', '/pharmacy/reports/print-stock') + '?' + $.param({
+        store_id: $('#stock-report-store-filter').val() || '',
+        category_id: $('#stock-report-category-filter').val() || '',
+        stock_level: $('#stock-show-low-only').is(':checked') ? 'low' : ''
+    });
+
+    let html = `
+        <div class="info-section" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+            <h5 style="margin:0;">Stock Status Report</h5>
+            <a href="${printStockSheetUrl}" target="_blank" class="btn btn-sm btn-primary no-print" style="padding:4px 10px; font-size:11px; text-decoration:none; color:#fff; background:#11998e; border-radius:4px;">
+                <i class="mdi mdi-printer mr-1"></i> Print Physical Stock Sheet (Audit Form)
+            </a>
+        </div>
+        <table>`;
 
     if ($.fn.DataTable.isDataTable('#pharm-stock-table')) {
         const table = $('#pharm-stock-table').DataTable();
@@ -1818,13 +1860,7 @@ function buildStockPrintContent() {
         html += '</tr></thead><tbody>';
 
         table.rows({ search: 'applied' }).every(function() {
-            const data = this.data();
-            html += '<tr>';
-            data.forEach(cell => {
-                const cleanText = $('<div>').html(cell).text();
-                html += `<td>${cleanText}</td>`;
-            });
-            html += '</tr>';
+            html += extractRowCellsHtml(this);
         });
         html += '</tbody>';
     }
@@ -1845,13 +1881,7 @@ function buildPerformancePrintContent() {
         html += '</tr></thead><tbody>';
 
         table.rows({ search: 'applied' }).every(function() {
-            const data = this.data();
-            html += '<tr>';
-            data.forEach(cell => {
-                const cleanText = $('<div>').html(cell).text();
-                html += `<td>${cleanText}</td>`;
-            });
-            html += '</tr>';
+            html += extractRowCellsHtml(this);
         });
         html += '</tbody>';
     }
@@ -1872,13 +1902,7 @@ function buildHmoPrintContent() {
         html += '</tr></thead><tbody>';
 
         table.rows({ search: 'applied' }).every(function() {
-            const data = this.data();
-            html += '<tr>';
-            data.forEach(cell => {
-                const cleanText = $('<div>').html(cell).text();
-                html += `<td>${cleanText}</td>`;
-            });
-            html += '</tr>';
+            html += extractRowCellsHtml(this);
         });
         html += '</tbody>';
     }
@@ -1917,7 +1941,118 @@ function viewDispensingDetail(id) {
 // Tab change handler - lazy load data
 $('#pharmacy-report-tabs button[data-bs-toggle="tab"]').on('shown.bs.tab', function(e) {
     const tabId = $(e.target).attr('id');
-    // Tables are already initialized, just let DataTables handle it
+    if (tabId === 'pharm-physical-audit-tab') {
+        const $iframe = $('#iframe-stock-audit-preview');
+        const currentSrc = $iframe.attr('src') || '';
+        if (!currentSrc || currentSrc === 'about:blank') {
+            updateStockAuditPreview();
+        }
+    }
+});
+
+// ===========================================
+// PHYSICAL STOCK AUDIT & COUNT SHEET MODULE
+// ===========================================
+
+function getStockAuditParams(previewMode) {
+    return {
+        preview: previewMode ? 1 : 0,
+        store_id: $('#audit-report-store-filter').val() || '',
+        category_id: $('#audit-report-category-filter').val() || '',
+        stock_level: $('#audit-report-status-filter').val() || 'all',
+        search: ($('#audit-report-search').val() || '').trim()
+    };
+}
+
+function getStockAuditPrintUrl(previewMode) {
+    const params = getStockAuditParams(previewMode);
+    const baseUrl = wbRoute('pharmacy.reports.print-stock', '/pharmacy/reports/print-stock');
+    return baseUrl + '?' + $.param(params);
+}
+
+function updateStockAuditPreview() {
+    const url = getStockAuditPrintUrl(1);
+    const $iframe = $('#iframe-stock-audit-preview');
+    const $spinner = $('#audit-preview-spinner');
+
+    if ($iframe.length) {
+        $spinner.removeClass('d-none');
+        $iframe.off('load.auditPreview').on('load.auditPreview', function() {
+            $spinner.addClass('d-none');
+        });
+        $iframe.attr('src', url);
+    }
+}
+
+function printPhysicalStockAuditSheet() {
+    const iframe = document.getElementById('iframe-stock-audit-preview');
+    if (iframe && iframe.contentWindow && iframe.src && iframe.src !== 'about:blank') {
+        try {
+            iframe.contentWindow.focus();
+            iframe.contentWindow.print();
+            return;
+        } catch (e) {
+            console.warn('Direct iframe print failed, falling back to window.open:', e);
+        }
+    }
+    const url = getStockAuditPrintUrl(0);
+    window.open(url, '_blank');
+}
+
+function exportPhysicalStockAuditCsv() {
+    const params = getStockAuditParams(0);
+    delete params.preview;
+    const baseUrl = wbRoute('pharmacy.reports.export-stock', '/pharmacy/reports/export-stock');
+    window.location.href = baseUrl + '?' + $.param(params);
+}
+
+// Event listeners for Physical Stock Audit Tab
+$(document).on('click', '#btn-refresh-audit-preview', function() {
+    updateStockAuditPreview();
+});
+
+$(document).on('change', '#audit-report-store-filter, #audit-report-category-filter, #audit-report-status-filter', function() {
+    updateStockAuditPreview();
+});
+
+let auditSearchDebounceTimer = null;
+$(document).on('input keyup', '#audit-report-search', function(e) {
+    if (e.key === 'Enter') {
+        clearTimeout(auditSearchDebounceTimer);
+        updateStockAuditPreview();
+        return;
+    }
+    clearTimeout(auditSearchDebounceTimer);
+    auditSearchDebounceTimer = setTimeout(function() {
+        updateStockAuditPreview();
+    }, 400);
+});
+
+$(document).on('click', '#btn-print-audit-frame, #btn-print-audit-direct', function() {
+    printPhysicalStockAuditSheet();
+});
+
+$(document).on('click', '#btn-open-audit-new-tab', function() {
+    const url = getStockAuditPrintUrl(0);
+    window.open(url, '_blank');
+});
+
+$(document).on('click', '#btn-export-audit-csv', function() {
+    exportPhysicalStockAuditCsv();
+});
+
+$(document).on('click', '#btn-switch-to-physical-audit', function() {
+    const tabBtn = document.getElementById('pharm-physical-audit-tab');
+    if (tabBtn) {
+        if (typeof bootstrap !== 'undefined' && bootstrap.Tab) {
+            bootstrap.Tab.getOrCreateInstance(tabBtn).show();
+        } else if ($.fn.tab) {
+            $(tabBtn).tab('show');
+        } else {
+            tabBtn.click();
+        }
+    }
+    updateStockAuditPreview();
 });
 
 // ===========================================

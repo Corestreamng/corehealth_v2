@@ -12,12 +12,14 @@ use App\Models\StockBatchTransaction;
 use App\Models\StockUtilization;
 use App\Models\Store;
 use App\Models\StoreStock;
+use App\Models\User;
 use App\Services\StockService;
 use App\Services\StoreContextResolver;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 use Yajra\DataTables\DataTables;
 
 class StockUtilizationController extends Controller
@@ -63,6 +65,60 @@ class StockUtilizationController extends Controller
     }
 
     /**
+     * Build the filtered store stock query for products grid, CSV export, and print sheet
+     */
+    protected function buildStockQuery(Request $request, int $storeId)
+    {
+        $query = StoreStock::with(['product.price', 'product.category', 'product.packagings'])
+            ->join('products', 'store_stocks.product_id', '=', 'products.id')
+            ->select('store_stocks.*')
+            ->where('store_stocks.store_id', $storeId)
+            ->where('store_stocks.is_active', true);
+
+        // Apply stock level filters
+        if ($request->stock_level === 'low') {
+            $query->whereRaw('store_stocks.current_quantity <= IFNULL(NULLIF(store_stocks.reorder_level, 0), products.reorder_alert)');
+        } elseif ($request->stock_level === 'out') {
+            $query->where('store_stocks.current_quantity', '<=', 0);
+        } elseif ($request->stock_level === 'expiring_soon') {
+            $query->whereExists(function ($q) use ($storeId) {
+                $q->select(DB::raw(1))
+                    ->from('stock_batches')
+                    ->whereColumn('stock_batches.product_id', 'store_stocks.product_id')
+                    ->where('stock_batches.store_id', $storeId)
+                    ->where('stock_batches.current_qty', '>', 0)
+                    ->where('stock_batches.expiry_date', '<=', Carbon::now()->addMonths(3))
+                    ->where('stock_batches.expiry_date', '>=', Carbon::now());
+            });
+        } elseif ($request->stock_level === 'expired') {
+            $query->whereExists(function ($q) use ($storeId) {
+                $q->select(DB::raw(1))
+                    ->from('stock_batches')
+                    ->whereColumn('stock_batches.product_id', 'store_stocks.product_id')
+                    ->where('stock_batches.store_id', $storeId)
+                    ->where('stock_batches.current_qty', '>', 0)
+                    ->where('stock_batches.expiry_date', '<', Carbon::now());
+            });
+        }
+
+        // Apply search query
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function ($q) use ($search) {
+                $q->where('products.product_name', 'like', "%{$search}%")
+                    ->orWhere('products.product_code', 'like', "%{$search}%");
+            });
+        }
+
+        // Apply category filter
+        if ($request->filled('category_id')) {
+            $query->where('products.category_id', $request->category_id);
+        }
+
+        return $query;
+    }
+
+    /**
      * Retrieve products in store for card-based grid (AJAX pagination/search)
      */
     public function getProducts(Request $request)
@@ -71,9 +127,10 @@ class StockUtilizationController extends Controller
             'store_id' => 'required|exists:stores,id',
             'search' => 'nullable|string',
             'stock_level' => 'nullable|string|in:all,low,out,expiring_soon,expired',
+            'category_id' => 'nullable|exists:product_categories,id',
         ]);
 
-        $storeId = $request->store_id;
+        $storeId = (int) $request->store_id;
         $user = auth()->user();
 
         // Security check
@@ -82,46 +139,8 @@ class StockUtilizationController extends Controller
             return response()->json(['error' => 'Unauthorized store access.'], 403);
         }
 
-        $query = StoreStock::with(['product.price', 'product.category'])
-            ->where('store_id', $storeId)
-            ->active();
-
-        // Apply stock level filters
-        if ($request->stock_level === 'low') {
-            $query->whereRaw('current_quantity <= IFNULL(NULLIF(reorder_level, 0), (SELECT reorder_alert FROM products WHERE products.id = store_stocks.product_id))');
-        } elseif ($request->stock_level === 'out') {
-            $query->outOfStock();
-        } elseif ($request->stock_level === 'expiring_soon') {
-            $query->whereExists(function ($q) use ($storeId) {
-                $q->select(DB::raw(1))
-                  ->from('stock_batches')
-                  ->whereColumn('stock_batches.product_id', 'store_stocks.product_id')
-                  ->where('stock_batches.store_id', $storeId)
-                  ->where('stock_batches.current_qty', '>', 0)
-                  ->where('stock_batches.expiry_date', '<=', Carbon::now()->addMonths(3))
-                  ->where('stock_batches.expiry_date', '>=', Carbon::now());
-            });
-        } elseif ($request->stock_level === 'expired') {
-            $query->whereExists(function ($q) use ($storeId) {
-                $q->select(DB::raw(1))
-                  ->from('stock_batches')
-                  ->whereColumn('stock_batches.product_id', 'store_stocks.product_id')
-                  ->where('stock_batches.store_id', $storeId)
-                  ->where('stock_batches.current_qty', '>', 0)
-                  ->where('stock_batches.expiry_date', '<', Carbon::now());
-            });
-        }
-
-        // Apply search query
-        if ($request->filled('search')) {
-            $search = $request->search;
-            $query->whereHas('product', function ($q) use ($search) {
-                $q->where('product_name', 'like', "%{$search}%")
-                  ->orWhere('product_code', 'like', "%{$search}%");
-            });
-        }
-
-        $products = $query->paginate(12);
+        $query = $this->buildStockQuery($request, $storeId);
+        $products = $query->orderBy('products.product_name', 'asc')->paginate(12);
 
         // Manually attach batches — the hasMany on StoreStock uses product_id as FK which
         // breaks standard eager-loading across multiple store_ids. We load them directly.
@@ -144,6 +163,425 @@ class StockUtilizationController extends Controller
         });
 
         return response()->json($products);
+    }
+
+    /**
+     * Compute packaging hierarchy string and bulk breakdown for a product item
+     */
+    protected function computePackagingInfo($product, float $quantity): array
+    {
+        if (!$product) {
+            return [
+                'base_unit' => 'Units',
+                'packaging_hierarchy' => 'Base: Units',
+                'bulk_breakdown' => '',
+            ];
+        }
+
+        $baseUnit = $product->base_unit_name ?: 'Units';
+        $packagings = $product->packagings ? $product->packagings->sortBy('level') : collect();
+        $hierarchyParts = [];
+
+        if ($packagings->isNotEmpty()) {
+            foreach ($packagings as $pkg) {
+                $qtyStr = number_format($pkg->base_unit_qty, $pkg->base_unit_qty == intval($pkg->base_unit_qty) ? 0 : 2);
+                $hierarchyParts[] = "1 {$pkg->name} = {$qtyStr} {$baseUnit}";
+            }
+        } elseif (!empty($product->howmany_to) && $product->howmany_to > 1) {
+            $hierarchyParts[] = "1 Pack = " . number_format($product->howmany_to) . " {$baseUnit}";
+        }
+
+        $hierarchyStr = count($hierarchyParts) > 0 ? implode('; ', $hierarchyParts) : "Base: {$baseUnit}";
+
+        // Bulk packaging breakdown
+        $bulkBreakdown = '';
+        $defaultBulkPack = $packagings->where('is_default_purchase', true)->first()
+            ?: $packagings->where('base_unit_qty', '>', 1)->sortByDesc('base_unit_qty')->first();
+
+        if ($defaultBulkPack && $defaultBulkPack->base_unit_qty > 1) {
+            $baseQty = (float) $defaultBulkPack->base_unit_qty;
+            $packQty = floor($quantity / $baseQty);
+            $remainder = fmod($quantity, $baseQty);
+            $pName = $defaultBulkPack->name;
+            $pNamePlural = str_ends_with($pName, 's') ? $pName : $pName . 's';
+            $packStr = "{$packQty} " . ($packQty == 1 ? $pName : $pNamePlural);
+            if ($remainder > 0) {
+                $bulkBreakdown = $packQty > 0 ? "{$packStr} & {$remainder} {$baseUnit}" : "{$remainder} {$baseUnit}";
+            } else {
+                $bulkBreakdown = $packStr;
+            }
+        } elseif (!empty($product->howmany_to) && $product->howmany_to > 1) {
+            $baseQty = (float) $product->howmany_to;
+            $packQty = floor($quantity / $baseQty);
+            $remainder = fmod($quantity, $baseQty);
+            $packStr = "{$packQty} " . ($packQty == 1 ? 'Pack' : 'Packs');
+            if ($remainder > 0) {
+                $bulkBreakdown = $packQty > 0 ? "{$packStr} & {$remainder} {$baseUnit}" : "{$remainder} {$baseUnit}";
+            } else {
+                $bulkBreakdown = $packStr;
+            }
+        }
+
+        return [
+            'base_unit' => $baseUnit,
+            'packaging_hierarchy' => $hierarchyStr,
+            'bulk_breakdown' => $bulkBreakdown,
+        ];
+    }
+
+    /**
+     * Format person name strictly including othername if available
+     */
+    protected function formatPersonName(?User $user): ?string
+    {
+        if (!$user) {
+            return null;
+        }
+
+        $parts = array_filter([
+            trim($user->surname ?? ''),
+            trim($user->firstname ?? ''),
+            trim($user->othername ?? ''),
+        ]);
+
+        return count($parts) > 0 ? implode(' ', $parts) : null;
+    }
+
+    /**
+     * Format a timestamp into standard audit date and time format
+     */
+    protected function formatAuditDateTime($date): ?string
+    {
+        if (empty($date)) {
+            return null;
+        }
+
+        try {
+            $c = Carbon::parse($date);
+
+            return $c->format('H:i:s') === '00:00:00'
+                ? $c->format('d-M-Y')
+                : $c->format('d-M-Y h:i A');
+        } catch (\Throwable $e) {
+            return null;
+        }
+    }
+
+    /**
+     * Enrich a stock batch with calculated packaging breakdown and chain-of-custody metadata with datetimes
+     */
+    protected function enrichBatchDetails($batch, $product, $packagings): void
+    {
+        // 1. Packaging breakdown for this batch's current quantity
+        $batchPkg = $this->computePackagingInfo($product, (float) $batch->current_qty);
+        $batch->pack_breakdown = $batchPkg['bulk_breakdown'] ?? '';
+
+        // 2. Chain of custody details with timestamps
+        $collectedBy = null;
+        $collectedAt = null;
+        $approvedBy = null;
+        $approvedAt = null;
+        $fulfilledBy = null;
+        $fulfilledAt = null;
+        $sourceOrigin = null;
+        $sourceDate = null;
+
+        if ($batch->sourceRequisition) {
+            $req = $batch->sourceRequisition;
+            $collectedBy = $this->formatPersonName($req->requester);
+            $collectedAt = $this->formatAuditDateTime($req->created_at);
+
+            $approvedBy = $this->formatPersonName($req->approver);
+            $approvedAt = $this->formatAuditDateTime($req->approved_at);
+
+            $fulfilledBy = $this->formatPersonName($req->fulfiller);
+            $fulfilledAt = $this->formatAuditDateTime($req->fulfilled_at);
+
+            $fromStoreName = $req->fromStore ? $req->fromStore->store_name : null;
+            $sourceOrigin = $fromStoreName
+                ? ($req->requisition_number ? "{$fromStoreName} ({$req->requisition_number})" : $fromStoreName)
+                : ($req->requisition_number ?: 'Requisition Transfer');
+            $sourceDate = $this->formatAuditDateTime($req->fulfilled_at ?? $req->created_at);
+        }
+
+        if (!$collectedBy && $batch->creator) {
+            $collectedBy = $this->formatPersonName($batch->creator);
+            $collectedAt = $this->formatAuditDateTime($batch->created_at ?? $batch->received_date);
+        } elseif (!$collectedAt && $batch->received_date) {
+            $collectedAt = $this->formatAuditDateTime($batch->received_date);
+        }
+
+        if (!$approvedBy && $batch->purchaseOrderItem?->purchaseOrder?->approver) {
+            $approvedBy = $this->formatPersonName($batch->purchaseOrderItem->purchaseOrder->approver);
+            $approvedAt = $this->formatAuditDateTime($batch->purchaseOrderItem->purchaseOrder->approved_at);
+        }
+
+        if (!$fulfilledBy && $batch->purchaseOrderItem?->purchaseOrder?->creator) {
+            $fulfilledBy = $this->formatPersonName($batch->purchaseOrderItem->purchaseOrder->creator);
+            $fulfilledAt = $this->formatAuditDateTime($batch->purchaseOrderItem->received_at ?? $batch->purchaseOrderItem->purchaseOrder->created_at);
+        }
+
+        if (!$sourceOrigin) {
+            if ($batch->supplier) {
+                $sourceOrigin = $batch->supplier->company_name;
+                $sourceDate = $this->formatAuditDateTime($batch->received_date ?? $batch->created_at);
+            } elseif ($batch->purchaseOrderItem?->purchaseOrder?->supplier) {
+                $po = $batch->purchaseOrderItem->purchaseOrder;
+                $supplierName = $po->supplier->company_name;
+                $sourceOrigin = $po->po_number ? "{$supplierName} ({$po->po_number})" : $supplierName;
+                $sourceDate = $this->formatAuditDateTime($batch->purchaseOrderItem->received_at ?? $po->created_at);
+            } elseif (!empty($batch->source)) {
+                $sourceOrigin = ucwords(str_replace('_', ' ', $batch->source));
+                $sourceDate = $this->formatAuditDateTime($batch->received_date ?? $batch->created_at);
+            }
+        }
+
+        $batch->collected_by_name = $collectedBy;
+        $batch->collected_at = $collectedAt;
+        $batch->approved_by_name = $approvedBy;
+        $batch->approved_at = $approvedAt;
+        $batch->fulfilled_by_name = $fulfilledBy;
+        $batch->fulfilled_at = $fulfilledAt;
+        $batch->source_origin = $sourceOrigin;
+        $batch->source_date = $sourceDate;
+    }
+
+    /**
+     * Export filtered store stock to CSV (includes manual audit physical count columns)
+     */
+    public function exportCsv(Request $request)
+    {
+        $request->validate([
+            'store_id' => 'required|exists:stores,id',
+            'search' => 'nullable|string',
+            'stock_level' => 'nullable|string|in:all,low,out,expiring_soon,expired',
+            'category_id' => 'nullable|exists:product_categories,id',
+        ]);
+
+        $storeId = (int) $request->store_id;
+        $user = auth()->user();
+
+        // Security check
+        $myStores = $this->resolver->candidateStores($user);
+        if (!$user->hasPermissionTo('stores.candidate-all') && !$myStores->contains('id', $storeId)) {
+            abort(403, 'Unauthorized store access.');
+        }
+
+        $store = Store::findOrFail($storeId);
+        $query = $this->buildStockQuery($request, $storeId);
+        $items = $query->orderBy('products.product_name', 'asc')->get();
+
+        $productIds = $items->pluck('product_id')->unique()->values()->all();
+        $batchMap = StockBatch::where('store_id', $storeId)
+            ->whereIn('product_id', $productIds)
+            ->where('current_qty', '>', 0)
+            ->active()
+            ->with([
+                'creator',
+                'supplier',
+                'sourceRequisition.requester',
+                'sourceRequisition.approver',
+                'sourceRequisition.fulfiller',
+                'sourceRequisition.fromStore',
+                'purchaseOrderItem.purchaseOrder.supplier',
+                'purchaseOrderItem.purchaseOrder.approver',
+                'purchaseOrderItem.purchaseOrder.creator',
+            ])
+            ->orderByRaw('CASE WHEN expiry_date IS NULL THEN 1 ELSE 0 END')
+            ->orderBy('expiry_date', 'asc')
+            ->get()
+            ->groupBy('product_id');
+
+        $filename = 'my_stock_physical_audit_' . Str::slug($store->store_name) . '_' . date('Y-m-d_His') . '.csv';
+        $headers = [
+            'Content-Type' => 'text/csv',
+            'Content-Disposition' => 'attachment; filename="' . $filename . '"',
+        ];
+
+        $callback = function () use ($items, $batchMap, $store) {
+            $file = fopen('php://output', 'w');
+
+            // Header Row with explicit packaging and physical verification columns
+            fputcsv($file, [
+                'Store Name',
+                'Product Code',
+                'Product Name',
+                'Category',
+                'Base Unit',
+                'Packaging Levels & Hierarchy',
+                'EMR System Qty (Base Units)',
+                'Bulk Pack Equiv',
+                'Active Batches & Expiry Dates',
+                'Reorder Level',
+                'Unit Cost (NGN)',
+                'Total Valuation (NGN)',
+                'Stock Status',
+                'Physical Verification Count (Packs / Units)',
+                'Physical Count (Total Base Units)',
+                'Variance (+/-)',
+                'Verification Status (Match/Surplus/Deficit/Damaged)',
+                'Remarks / Discrepancy Note',
+            ]);
+
+            foreach ($items as $item) {
+                $p = $item->product;
+                $categoryName = $p && $p->category ? $p->category->category_name : 'Uncategorized';
+                $reorder = $item->reorder_level > 0 ? $item->reorder_level : ($p->reorder_alert ?? 0);
+                $unitCost = ($p && $p->price) ? ($p->price->pr_buy_price ?? 0) : 0;
+                $totalVal = $item->current_quantity * $unitCost;
+
+                $pkgInfo = $this->computePackagingInfo($p, (float) $item->current_quantity);
+
+                $status = 'In Stock';
+                if ($item->current_quantity <= 0) {
+                    $status = 'Out of Stock';
+                } elseif ($item->current_quantity <= $reorder) {
+                    $status = 'Low Stock';
+                }
+
+                $batches = $batchMap->get($item->product_id, collect());
+                $batchStrParts = [];
+                $pkgs = $p && $p->packagings ? $p->packagings : collect();
+                foreach ($batches as $b) {
+                    $this->enrichBatchDetails($b, $p, $pkgs);
+                    $exp = $b->expiry_date ? date('d-M-Y', strtotime($b->expiry_date)) : 'No Exp';
+                    $qtyStr = "Qty: {$b->current_qty}";
+                    if (!empty($b->pack_breakdown)) {
+                        $qtyStr .= " ({$b->pack_breakdown})";
+                    }
+                    $part = "{$b->batch_number} [{$qtyStr}, Exp: {$exp}";
+                    if ($b->collected_by_name) {
+                        $part .= ", Collected: {$b->collected_by_name}" . ($b->collected_at ? " ({$b->collected_at})" : '');
+                    }
+                    if ($b->approved_by_name) {
+                        $part .= ", Approved: {$b->approved_by_name}" . ($b->approved_at ? " ({$b->approved_at})" : '');
+                    }
+                    if ($b->fulfilled_by_name) {
+                        $part .= ", Fulfilled: {$b->fulfilled_by_name}" . ($b->fulfilled_at ? " ({$b->fulfilled_at})" : '');
+                    }
+                    if ($b->source_origin) {
+                        $part .= ", Source: {$b->source_origin}" . ($b->source_date ? " ({$b->source_date})" : '');
+                    }
+                    $part .= "]";
+                    $batchStrParts[] = $part;
+                }
+                $batchStr = count($batchStrParts) > 0 ? implode('; ', $batchStrParts) : 'None';
+
+                fputcsv($file, [
+                    $store->store_name,
+                    $p ? $p->product_code : '',
+                    $p ? $p->product_name : '',
+                    $categoryName,
+                    $pkgInfo['base_unit'],
+                    $pkgInfo['packaging_hierarchy'],
+                    $item->current_quantity,
+                    $pkgInfo['bulk_breakdown'],
+                    $batchStr,
+                    $reorder,
+                    number_format($unitCost, 2, '.', ''),
+                    number_format($totalVal, 2, '.', ''),
+                    $status,
+                    '', // Physical Count (Packs / Units)
+                    '', // Physical Count Total Base
+                    '', // Variance (+/-)
+                    '', // Status (Match/Surplus/Deficit/Damaged)
+                    '', // Remarks column
+                ]);
+            }
+
+            fclose($file);
+        };
+
+        return response()->stream($callback, 200, $headers);
+    }
+
+    /**
+     * Print physical stock count / audit verification sheet
+     */
+    public function printStock(Request $request)
+    {
+        $request->validate([
+            'store_id' => 'required|exists:stores,id',
+            'search' => 'nullable|string',
+            'stock_level' => 'nullable|string|in:all,low,out,expiring_soon,expired',
+            'category_id' => 'nullable|exists:product_categories,id',
+        ]);
+
+        $storeId = (int) $request->store_id;
+        $user = auth()->user();
+
+        // Security check
+        $myStores = $this->resolver->candidateStores($user);
+        if (!$user->hasPermissionTo('stores.candidate-all') && !$myStores->contains('id', $storeId)) {
+            abort(403, 'Unauthorized store access.');
+        }
+
+        $store = Store::findOrFail($storeId);
+        $query = $this->buildStockQuery($request, $storeId);
+        $items = $query->orderBy('products.product_name', 'asc')->get();
+
+        $productIds = $items->pluck('product_id')->unique()->values()->all();
+        $batchMap = StockBatch::where('store_id', $storeId)
+            ->whereIn('product_id', $productIds)
+            ->where('current_qty', '>', 0)
+            ->active()
+            ->with([
+                'creator',
+                'supplier',
+                'sourceRequisition.requester',
+                'sourceRequisition.approver',
+                'sourceRequisition.fulfiller',
+                'sourceRequisition.fromStore',
+                'purchaseOrderItem.purchaseOrder.supplier',
+                'purchaseOrderItem.purchaseOrder.approver',
+                'purchaseOrderItem.purchaseOrder.creator',
+            ])
+            ->orderByRaw('CASE WHEN expiry_date IS NULL THEN 1 ELSE 0 END')
+            ->orderBy('expiry_date', 'asc')
+            ->get()
+            ->groupBy('product_id');
+
+        $totalValuation = 0;
+        $totalQuantity = 0;
+
+        foreach ($items as $item) {
+            $itemBatches = $batchMap->get($item->product_id, collect());
+            $packagings = $item->product && $item->product->packagings ? $item->product->packagings->sortBy('level') : collect();
+            foreach ($itemBatches as $b) {
+                $this->enrichBatchDetails($b, $item->product, $packagings);
+            }
+            $item->batches = $itemBatches;
+            $unitCost = ($item->product && $item->product->price) ? ($item->product->price->pr_buy_price ?? 0) : 0;
+            $item->unit_cost = $unitCost;
+            $item->line_valuation = $item->current_quantity * $unitCost;
+            $totalValuation += $item->line_valuation;
+            $totalQuantity += $item->current_quantity;
+
+            $pkgInfo = $this->computePackagingInfo($item->product, (float) $item->current_quantity);
+            $item->base_unit = $pkgInfo['base_unit'];
+            $item->packaging_hierarchy = $pkgInfo['packaging_hierarchy'];
+            $item->bulk_breakdown = $pkgInfo['bulk_breakdown'];
+            $item->packagings = $packagings;
+        }
+
+        $printedBy = $user ? ($this->formatPersonName($user) ?? 'System') : 'System';
+
+        $filterLabel = 'All Stock';
+        if ($request->stock_level && $request->stock_level !== 'all') {
+            $filterLabel = ucwords(str_replace('_', ' ', $request->stock_level));
+        }
+
+        return view('admin.inventory.print.my-stock-print', [
+            'store' => $store,
+            'items' => $items,
+            'totalProducts' => $items->count(),
+            'totalQuantity' => $totalQuantity,
+            'totalValuation' => $totalValuation,
+            'filterLabel' => $filterLabel,
+            'searchQuery' => $request->search,
+            'printedBy' => $printedBy,
+            'printDate' => Carbon::now()->format('d M Y, h:i A'),
+        ]);
     }
 
     /**

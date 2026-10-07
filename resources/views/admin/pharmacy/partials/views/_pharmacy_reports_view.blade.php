@@ -236,6 +236,11 @@
                         </button>
                     </li>
                     <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="pharm-physical-audit-tab" data-bs-toggle="tab" data-bs-target="#pharm-physical-audit-content" type="button" role="tab">
+                            <i class="mdi mdi-clipboard-text-search-outline"></i> Physical Stock Audit
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
                         <button class="nav-link" id="pharm-performance-tab" data-bs-toggle="tab" data-bs-target="#pharm-performance-content" type="button" role="tab">
                             <i class="mdi mdi-account-tie"></i> Performance
                         </button>
@@ -737,6 +742,18 @@
                                 </div>
                             </div>
                         </div>
+                        <div class="alert alert-info d-flex flex-wrap justify-content-between align-items-center py-2 px-3 mb-3">
+                            <div class="d-flex align-items-center">
+                                <i class="mdi mdi-clipboard-text-search-outline text-primary me-2" style="font-size: 22px;"></i>
+                                <div>
+                                    <strong class="text-dark">Physical Stock Audit &amp; Verification Instrument:</strong>
+                                    <div class="small text-muted">Need to print physical count sheets with handwriting blanks, batch breakdowns, and auditor signatures?</div>
+                                </div>
+                            </div>
+                            <button type="button" class="btn btn-sm btn-primary mt-2 mt-md-0" id="btn-switch-to-physical-audit">
+                                <i class="mdi mdi-eye me-1"></i> Preview &amp; Print Audit Sheet
+                            </button>
+                        </div>
                         <div class="card-modern">
                             <div class="card-body">
                                 <div class="table-responsive">
@@ -840,6 +857,72 @@
                                     </table>
                                 </div>
                             </div>
+                        </div>
+                    </div>
+
+                    <!-- Physical Stock Audit Tab -->
+                    <div class="tab-pane fade" id="pharm-physical-audit-content" role="tabpanel">
+                        <div class="card-modern p-3 mb-3">
+                            <div class="row g-2 align-items-end">
+                                <div class="col-lg-3 col-md-6">
+                                    <label class="form-label fw-bold small text-muted mb-1"><i class="mdi mdi-store"></i> Dispensing Store / Location</label>
+                                    <select class="form-select form-select-sm" id="audit-report-store-filter">
+                                        <option value="">All Stores (Combined)</option>
+                                    </select>
+                                </div>
+                                <div class="col-lg-2 col-md-6">
+                                    <label class="form-label fw-bold small text-muted mb-1"><i class="mdi mdi-shape"></i> Product Category</label>
+                                    <select class="form-select form-select-sm" id="audit-report-category-filter">
+                                        <option value="">All Categories</option>
+                                    </select>
+                                </div>
+                                <div class="col-lg-2 col-md-4">
+                                    <label class="form-label fw-bold small text-muted mb-1"><i class="mdi mdi-filter-variant"></i> Stock Status</label>
+                                    <select class="form-select form-select-sm" id="audit-report-status-filter">
+                                        <option value="all">All Items</option>
+                                        <option value="in_stock">In Stock Only</option>
+                                        <option value="low">Low Stock (≤ Reorder)</option>
+                                        <option value="out">Out of Stock</option>
+                                        <option value="expiring_soon">Expiring Soon (90d)</option>
+                                        <option value="expired">Expired Batches</option>
+                                    </select>
+                                </div>
+                                <div class="col-lg-2 col-md-4">
+                                    <label class="form-label fw-bold small text-muted mb-1"><i class="mdi mdi-magnify"></i> Search Drug / Code</label>
+                                    <input type="text" class="form-control form-control-sm" id="audit-report-search" placeholder="Search drug...">
+                                </div>
+                                <div class="col-lg-3 col-md-4 d-flex gap-2">
+                                    <button type="button" class="btn btn-sm btn-outline-primary flex-grow-1" id="btn-refresh-audit-preview" title="Refresh Preview">
+                                        <i class="mdi mdi-refresh"></i> Update
+                                    </button>
+                                    <button type="button" class="btn btn-sm btn-outline-success" id="btn-export-audit-csv" title="Export CSV for spreadsheet audit">
+                                        <i class="mdi mdi-file-delimited-outline"></i> CSV
+                                    </button>
+                                    <button type="button" class="btn btn-sm btn-primary flex-grow-1" id="btn-print-audit-frame" title="Print Audit Sheet">
+                                        <i class="mdi mdi-printer"></i> Print
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Embedded Interactive A4 Preview Stage -->
+                        <div class="audit-preview-stage position-relative">
+                            <div class="d-flex justify-content-between align-items-center mb-2 px-2 text-white">
+                                <div class="small d-flex align-items-center gap-2">
+                                    <i class="mdi mdi-file-document-outline"></i>
+                                    <strong>Physical Stock Count Sheet Live Preview</strong> — Formatted for A4 Landscape
+                                    <span class="spinner-border spinner-border-sm text-light ms-2 d-none" id="audit-preview-spinner" role="status" aria-hidden="true"></span>
+                                </div>
+                                <div class="d-flex gap-2">
+                                    <button type="button" class="btn btn-xs btn-outline-light" id="btn-open-audit-new-tab" title="Open full printable view in new browser tab">
+                                        <i class="mdi mdi-open-in-new me-1"></i> Open in New Window
+                                    </button>
+                                    <button type="button" class="btn btn-xs btn-light text-primary fw-bold" id="btn-print-audit-direct" title="Print physical count sheet directly">
+                                        <i class="mdi mdi-printer me-1"></i> Print Sheet
+                                    </button>
+                                </div>
+                            </div>
+                            <iframe id="iframe-stock-audit-preview" class="audit-preview-frame" src="about:blank" title="Stock Audit Preview"></iframe>
                         </div>
                     </div>
                 </div>

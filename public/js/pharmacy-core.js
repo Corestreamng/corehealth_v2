@@ -2198,10 +2198,21 @@ $('#refresh-category-summary').on('click', function() {
 
 // Stock Reports: CSV Export
 $('#btn-export-stock-csv').on('click', function() {
-    window.location.href = wbRoute('pharmacy.reports.export-stock', '/pharmacy-workbench/reports/export-stock') + '?' + $.param({
+    window.location.href = wbRoute('pharmacy.reports.export-stock', '/pharmacy/reports/export-stock') + '?' + $.param({
         store_id: $('#stock-store-filter').val(),
-        category_id: $('#stock-category-filter').val()
+        category_id: $('#stock-category-filter').val(),
+        stock_level: $('#stock-level-filter').val()
     });
+});
+
+// Stock Reports: Print Physical Stock Sheet
+$('#btn-print-stock-sheet').on('click', function() {
+    const url = wbRoute('pharmacy.reports.print-stock', '/pharmacy/reports/print-stock') + '?' + $.param({
+        store_id: $('#stock-store-filter').val(),
+        category_id: $('#stock-category-filter').val(),
+        stock_level: $('#stock-level-filter').val()
+    });
+    window.open(url, '_blank');
 });
 
 // Stock Reports: Button handlers

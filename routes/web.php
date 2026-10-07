@@ -667,6 +667,8 @@ Route::group(['middleware' => ['auth']], function () {
         Route::get('/pharmacy/reports/by-category', [\App\Http\Controllers\PharmacyReportsController::class, 'stockByCategory']);
         Route::get('/pharmacy/reports/valuation', [\App\Http\Controllers\PharmacyReportsController::class, 'valuationReport'])->name('pharmacy.reports.valuation');
         Route::get('/pharmacy/reports/export-stock', [\App\Http\Controllers\PharmacyReportsController::class, 'exportStock'])->name('pharmacy.reports.export-stock');
+        Route::get('/pharmacy/reports/print-stock', [\App\Http\Controllers\PharmacyReportsController::class, 'printStock'])->name('pharmacy.reports.print-stock');
+        Route::get('/pharmacy-workbench/reports/print-stock', [\App\Http\Controllers\PharmacyReportsController::class, 'printStock']);
         Route::get('/pharmacy/reports/expiring-stock', [\App\Http\Controllers\PharmacyReportsController::class, 'expiringStock'])->name('pharmacy.reports.expiring');
         Route::get('/pharmacy/reports/expiring', [\App\Http\Controllers\PharmacyReportsController::class, 'expiringStock']);
         Route::get('/pharmacy/reports/movement-analysis', [\App\Http\Controllers\PharmacyReportsController::class, 'movementAnalysis'])->name('pharmacy.reports.movement-analysis');

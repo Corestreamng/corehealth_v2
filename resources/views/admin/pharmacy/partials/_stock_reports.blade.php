@@ -5,8 +5,11 @@
     <div class="queue-view-header" style="background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);">
         <h4><i class="mdi mdi-file-chart"></i> Stock Reports</h4>
         <div class="reports-header-actions">
-            <button class="btn btn-sm btn-outline-light" id="btn-export-stock-csv">
+            <button class="btn btn-sm btn-outline-light mr-1" id="btn-export-stock-csv">
                 <i class="mdi mdi-download"></i> Export CSV
+            </button>
+            <button class="btn btn-sm btn-light mr-1" id="btn-print-stock-sheet" title="Print physical stock inventory count sheet">
+                <i class="mdi mdi-printer"></i> Print Stock Sheet
             </button>
             <button class="btn btn-secondary btn-close-queue" id="btn-close-stock-reports">
                 <i class="mdi mdi-close"></i> Close

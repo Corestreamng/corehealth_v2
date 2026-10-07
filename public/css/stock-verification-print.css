@@ -1,0 +1,762 @@
+/**
+ * CoreHealth v2 - Physical Stock Verification & Audit Print Stylesheet
+ * Standardized A4 Landscape Physical Inventory Count & Verification Template
+ */
+
+:root {
+    --brand: var(--hospital-primary, #011b33);
+    --ink: #111827;
+    --muted: #4b5563;
+    --border: #cbd5e1;
+    --border-dark: #475569;
+    --bg-light: #f8fafc;
+    --bg-table-header: #f1f5f9;
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    font-size: 11px;
+    color: var(--ink);
+    background-color: #f1f5f9;
+    line-height: 1.35;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+}
+
+/* Top Action Bar (Screen Only) */
+.action-bar {
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+    background: #ffffff;
+    border-bottom: 1px solid var(--border);
+    padding: 10px 24px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+.action-bar .brand-label {
+    font-weight: 700;
+    font-size: 14px;
+    color: var(--brand);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.action-bar .actions {
+    display: flex;
+    gap: 8px;
+}
+
+.btn-act {
+    border: 1px solid var(--border);
+    background: #ffffff;
+    color: var(--ink);
+    padding: 6px 14px;
+    font-size: 12px;
+    font-weight: 600;
+    border-radius: 6px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    text-decoration: none;
+    transition: all 0.15s ease;
+}
+
+.btn-act:hover {
+    background: #f8fafc;
+}
+
+.btn-act-primary {
+    background: var(--brand);
+    color: #ffffff;
+    border-color: var(--brand);
+}
+
+.btn-act-primary:hover {
+    opacity: 0.92;
+    color: #ffffff;
+}
+
+/* Main Printable Sheet */
+.sheet {
+    max-width: 1200px;
+    margin: 20px auto;
+    background: #ffffff;
+    padding: 24px 28px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+/* Verification Header Banner */
+.verification-banner {
+    background: linear-gradient(135deg, var(--brand) 0%, #1e3a5f 100%);
+    color: #ffffff;
+    border-radius: 6px;
+    padding: 6px 14px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 14px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+}
+
+.verification-banner .banner-left {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.verification-banner .banner-tag {
+    background: #f59e0b;
+    color: #78350f;
+    font-size: 9.5px;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-weight: 800;
+}
+
+/* Hospital & Document Header */
+.doc-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    border-bottom: 2px solid var(--brand);
+    padding-bottom: 12px;
+    margin-bottom: 14px;
+}
+
+.hospital-brand {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+}
+
+.hospital-logo {
+    max-width: 60px;
+    max-height: 60px;
+    object-fit: contain;
+}
+
+.hospital-name {
+    font-size: 18px;
+    font-weight: 800;
+    text-transform: uppercase;
+    color: var(--brand);
+    letter-spacing: 0.5px;
+}
+
+.hospital-meta {
+    font-size: 10.5px;
+    color: var(--muted);
+    margin-top: 2px;
+    line-height: 1.4;
+}
+
+.doc-title-box {
+    text-align: right;
+}
+
+.audit-stamp-badge {
+    display: inline-block;
+    background: #fef2f2;
+    color: #b91c1c;
+    border: 1px solid #fecaca;
+    padding: 3px 8px;
+    border-radius: 4px;
+    font-size: 9px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 4px;
+}
+
+.doc-title {
+    font-size: 16px;
+    font-weight: 800;
+    text-transform: uppercase;
+    color: #111827;
+    letter-spacing: 0.5px;
+}
+
+.doc-subtitle {
+    font-size: 10.5px;
+    font-weight: 600;
+    color: var(--brand);
+    margin-top: 2px;
+}
+
+/* Metadata Strip */
+.meta-strip {
+    background: var(--bg-light);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 8px 12px;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+    margin-bottom: 12px;
+}
+
+.meta-item {
+    display: flex;
+    flex-direction: column;
+}
+
+.meta-item .label {
+    font-size: 9px;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: #64748b;
+    letter-spacing: 0.3px;
+}
+
+.meta-item .value {
+    font-size: 11px;
+    font-weight: 600;
+    color: #0f172a;
+    margin-top: 2px;
+}
+
+/* KPI Cards */
+.kpi-row {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+    margin-bottom: 12px;
+}
+
+.kpi-card {
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 6px 10px;
+    background: #ffffff;
+}
+
+.kpi-card .kpi-label {
+    font-size: 9px;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: #64748b;
+}
+
+.kpi-card .kpi-val {
+    font-size: 14px;
+    font-weight: 800;
+    color: var(--brand);
+    margin-top: 2px;
+}
+
+/* Stocktaker Instructions Notice */
+.instructions-box {
+    background: #fffbeb;
+    border: 1px dashed #f59e0b;
+    border-radius: 6px;
+    padding: 8px 12px;
+    margin-bottom: 14px;
+    font-size: 10px;
+    color: #92400e;
+    line-height: 1.4;
+}
+
+.instructions-box strong {
+    color: #78350f;
+    display: block;
+    margin-bottom: 3px;
+    font-size: 10.5px;
+}
+
+/* Verification Table */
+.count-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 16px;
+}
+
+.count-table th,
+.count-table td {
+    border: 1px solid #94a3b8;
+    padding: 5px 6px;
+    vertical-align: middle;
+}
+
+.count-table th {
+    background: var(--bg-table-header);
+    color: #0f172a;
+    font-size: 9.5px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    text-align: center;
+}
+
+.count-table tbody tr:nth-child(even) {
+    background: #fafbfc;
+}
+
+.count-table .text-center { text-align: center; }
+.count-table .text-right { text-align: right; }
+.count-table .text-left { text-align: left; }
+
+.prod-code {
+    font-size: 9px;
+    color: #64748b;
+    font-weight: 600;
+    display: block;
+}
+
+.prod-name {
+    font-weight: 700;
+    color: #0f172a;
+    font-size: 10.5px;
+    line-height: 1.25;
+}
+
+.prod-cat {
+    font-size: 9px;
+    color: #475569;
+    display: block;
+}
+
+/* Packaging Elements */
+.pkg-base-tag {
+    display: inline-block;
+    background: #e0f2fe;
+    color: #0369a1;
+    border: 1px solid #bae6fd;
+    font-weight: 700;
+    font-size: 9px;
+    padding: 1px 5px;
+    border-radius: 3px;
+    margin-bottom: 3px;
+}
+
+.pkg-level-line {
+    font-size: 9px;
+    color: #1e293b;
+    line-height: 1.3;
+    margin-top: 2px;
+}
+
+.pkg-subtag {
+    display: inline-block;
+    background: #fef3c7;
+    color: #92400e;
+    font-size: 8px;
+    padding: 0 4px;
+    border-radius: 2px;
+    margin-left: 2px;
+    font-weight: 600;
+}
+
+.emr-bulk-equiv {
+    font-size: 9px;
+    color: #047857;
+    font-weight: 600;
+    margin-top: 2px;
+    display: block;
+}
+
+/* Batch chips (Legacy) */
+.batch-chip {
+    display: inline-block;
+    background: #f1f5f9;
+    border: 1px solid #e2e8f0;
+    border-radius: 3px;
+    padding: 1px 4px;
+    font-size: 9px;
+    margin-bottom: 2px;
+    margin-right: 2px;
+    white-space: nowrap;
+}
+
+.batch-chip .b-num { font-weight: 700; color: #1e293b; }
+.batch-chip .b-qty { color: #047857; font-weight: 600; }
+.batch-chip .b-exp { color: #b45309; }
+
+/* Detailed Batch Cards in Verification Count Sheet */
+.batch-detail-card {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 4px;
+    padding: 4px 6px;
+    margin-bottom: 4px;
+    font-size: 8.5px;
+    line-height: 1.35;
+    page-break-inside: avoid;
+    break-inside: avoid;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02);
+}
+
+.batch-detail-card:last-child {
+    margin-bottom: 0;
+}
+
+.batch-header-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 4px;
+    margin-bottom: 2px;
+    padding-bottom: 2px;
+    border-bottom: 1px solid #f1f5f9;
+}
+
+.batch-code {
+    font-weight: 700;
+    color: #0f172a;
+    font-size: 9px;
+    letter-spacing: 0.1px;
+}
+
+.batch-exp-badge {
+    font-size: 8px;
+    font-weight: 600;
+    padding: 1px 4px;
+    border-radius: 3px;
+    white-space: nowrap;
+}
+
+.badge-valid {
+    background: #ecfdf5;
+    color: #065f46;
+    border: 1px solid #a7f3d0;
+}
+
+.badge-soon {
+    background: #fffbeb;
+    color: #b45309;
+    border: 1px solid #fde68a;
+}
+
+.badge-expired {
+    background: #fef2f2;
+    color: #991b1b;
+    border: 1px solid #fecaca;
+    font-weight: 700;
+}
+
+.badge-na {
+    background: #f8fafc;
+    color: #64748b;
+    border: 1px solid #e2e8f0;
+}
+
+.batch-qty-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 2px;
+}
+
+.batch-qty-val {
+    color: #047857;
+    font-weight: 600;
+}
+
+.batch-pack-equiv {
+    display: inline-block;
+    background: #eff6ff;
+    color: #1e40af;
+    border: 1px solid #bfdbfe;
+    border-radius: 3px;
+    padding: 0 4px;
+    font-size: 8px;
+    font-weight: 600;
+}
+
+.batch-custody-row {
+    margin-top: 3px;
+    padding-top: 3px;
+    border-top: 1px dashed #e2e8f0;
+    font-size: 8px;
+    color: #334155;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5px;
+}
+
+.custody-item {
+    display: flex;
+    align-items: baseline;
+    gap: 3px;
+}
+
+.custody-lbl {
+    color: #64748b;
+    font-weight: 600;
+    font-size: 7.5px;
+    text-transform: uppercase;
+    min-width: 46px;
+    flex-shrink: 0;
+}
+
+.custody-val {
+    color: #1e293b;
+    font-weight: 500;
+    word-break: break-word;
+}
+
+.custody-time {
+    color: #64748b;
+    font-size: 7.5px;
+    font-weight: 500;
+    margin-left: 2px;
+}
+
+/* Physical Verification Write-In Boxes */
+.phys-count-box {
+    background: #ffffff;
+    font-size: 9px;
+    color: #334155;
+    padding: 2px;
+}
+
+.phys-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 3px;
+}
+
+.phys-row .phys-lbl {
+    font-size: 8.5px;
+    font-weight: 600;
+    color: #64748b;
+    width: 32px;
+}
+
+.blank-writein {
+    flex: 1;
+    border-bottom: 1px dashed #64748b;
+    height: 12px;
+    margin-left: 4px;
+}
+
+.phys-total-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-top: 1px solid #e2e8f0;
+    padding-top: 2px;
+    margin-top: 2px;
+}
+
+.phys-total-row .phys-lbl-bold {
+    font-size: 9px;
+    font-weight: 700;
+    color: #0f172a;
+    width: 32px;
+}
+
+.blank-writein-total {
+    flex: 1;
+    border-bottom: 1px solid #0f172a;
+    height: 12px;
+    margin-left: 4px;
+}
+
+.blank-var-box {
+    background: #ffffff;
+    text-align: center;
+    padding: 4px 2px;
+}
+
+.blank-writein-var {
+    display: block;
+    border-bottom: 1px dashed #64748b;
+    width: 80%;
+    margin: 12px auto 0;
+}
+
+.audit-check-box {
+    font-size: 8.5px;
+    color: #334155;
+}
+
+.chk-row {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 2px;
+    font-weight: 500;
+}
+
+/* Formal 4-Card Certification Grid */
+.signoff-section {
+    page-break-inside: avoid;
+    margin-top: 18px;
+    border-top: 2px solid #cbd5e1;
+    padding-top: 14px;
+}
+
+.signoff-title {
+    font-size: 11px;
+    font-weight: 800;
+    text-transform: uppercase;
+    color: var(--brand);
+    margin-bottom: 10px;
+    letter-spacing: 0.4px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.signoff-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+}
+
+.sign-card {
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    padding: 10px;
+    background: var(--bg-light);
+}
+
+.sign-role {
+    font-size: 9.5px;
+    font-weight: 800;
+    text-transform: uppercase;
+    color: #0f172a;
+    margin-bottom: 8px;
+    border-bottom: 1px solid #e2e8f0;
+    padding-bottom: 4px;
+    letter-spacing: 0.3px;
+}
+
+.sign-field {
+    margin-bottom: 6px;
+    font-size: 9px;
+    color: #475569;
+}
+
+.sign-line {
+    display: inline-block;
+    border-bottom: 1px dotted #334155;
+    width: 100px;
+    height: 10px;
+    vertical-align: bottom;
+    margin-left: 4px;
+}
+
+.stamp-box {
+    border: 1px dashed #94a3b8;
+    height: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #94a3b8;
+    font-size: 8.5px;
+    text-transform: uppercase;
+    margin-top: 6px;
+    border-radius: 4px;
+    background: #ffffff;
+    text-align: center;
+    padding: 4px;
+}
+
+.doc-footer {
+    margin-top: 16px;
+    text-align: center;
+    font-size: 9px;
+    color: #64748b;
+    border-top: 1px solid #e2e8f0;
+    padding-top: 8px;
+}
+
+/* Print Media Optimizations */
+@media print {
+    @page {
+        size: A4 landscape;
+        margin: 8mm 6mm;
+    }
+
+    .no-print {
+        display: none !important;
+    }
+
+    body {
+        background: #ffffff !important;
+        color: #000000 !important;
+        font-size: 9.5px !important;
+    }
+
+    .sheet {
+        border: none !important;
+        box-shadow: none !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        max-width: 100% !important;
+        width: 100% !important;
+    }
+
+    .count-table th {
+        background: #f1f5f9 !important;
+        color: #000000 !important;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+    }
+
+    .count-table th,
+    .count-table td {
+        border: 1px solid #475569 !important;
+        padding: 3px 5px !important;
+    }
+
+    .instructions-box {
+        border: 1px solid #cbd5e1 !important;
+        background: #fafafa !important;
+        color: #1e293b !important;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+    }
+
+    .meta-strip,
+    .kpi-card,
+    .sign-card {
+        border: 1px solid #cbd5e1 !important;
+        background: #ffffff !important;
+    }
+
+    .stamp-box {
+        border: 1px dashed #64748b !important;
+        color: #64748b !important;
+    }
+
+    .verification-banner {
+        background: #1e3a5f !important;
+        color: #ffffff !important;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+    }
+}
+
+/* ==========================================================================
+   Embedded Preview Mode (When hosted inside Workbench iframe)
+   ========================================================================== */
+body.is-preview {
+    padding-top: 14px;
+    background: #f1f5f9;
+}
+
+body.is-preview .sheet {
+    margin: 0 auto 20px auto;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+}
+

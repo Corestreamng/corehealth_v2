@@ -190,8 +190,16 @@
                                     <button type="button" class="btn btn-outline-dark btn-sm stock-filter-btn" data-filter="expired">Expired</button>
                                 </div>
                             </div>
-                            <div class="col-md-4 text-md-right mt-2 mt-md-0">
-                                <span class="text-muted small" id="total-count-label">Loading items...</span>
+                            <div class="col-md-4 text-md-right mt-2 mt-md-0 d-flex justify-content-md-end align-items-center flex-wrap">
+                                <span class="text-muted small mr-2" id="total-count-label">Loading items...</span>
+                                <div class="btn-group">
+                                    <button type="button" class="btn btn-outline-success btn-sm" id="btn-export-my-stock-csv" title="Export filtered stock list to CSV">
+                                        <i class="mdi mdi-download mr-1"></i> CSV
+                                    </button>
+                                    <button type="button" class="btn btn-outline-primary btn-sm" id="btn-print-my-stock" title="Print physical stock verification sheet">
+                                        <i class="mdi mdi-printer mr-1"></i> Print
+                                    </button>
+                                </div>
                             </div>
                         </div>
 
@@ -504,6 +512,19 @@
             $('.stock-filter-btn').removeClass('active');
             $(this).addClass('active');
             loadProducts(1);
+        });
+
+        // Export CSV & Print Stock Sheet handlers
+        $('#btn-export-my-stock-csv').on('click', function() {
+            const searchVal = document.getElementById('product-search').value;
+            const levelVal = document.querySelector('.stock-filter-btn.active').getAttribute('data-filter');
+            window.location.href = `{{ route('inventory.requisitions.my-stock.export-csv') }}?store_id=${activeStoreId}&search=${encodeURIComponent(searchVal)}&stock_level=${levelVal}`;
+        });
+
+        $('#btn-print-my-stock').on('click', function() {
+            const searchVal = document.getElementById('product-search').value;
+            const levelVal = document.querySelector('.stock-filter-btn.active').getAttribute('data-filter');
+            window.open(`{{ route('inventory.requisitions.my-stock.print') }}?store_id=${activeStoreId}&search=${encodeURIComponent(searchVal)}&stock_level=${levelVal}`, '_blank');
         });
 
         // Load products grid

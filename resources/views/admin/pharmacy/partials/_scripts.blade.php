@@ -11,6 +11,8 @@
 window.WORKBENCH_CONFIG = {
     csrf: '{{ csrf_token() }}',
     baseUrl: '{{ url("/") }}',
+    activeStoreId: '{{ $resolvedStore->id ?? "" }}',
+    activeStoreName: '{{ addslashes($resolvedStore->store_name ?? "") }}',
     routes: {
         'pharmacy.queue-counts': '{{ route("pharmacy.queue-counts") }}',
         'pharmacy.dispense-free-form': '{{ route("pharmacy.dispense-free-form") }}',
@@ -20,7 +22,9 @@ window.WORKBENCH_CONFIG = {
         'pharmacy.returns.bulk-store': '{{ route("pharmacy.returns.bulk-store") }}',
         'pharmacy.returns.bulk-approve': '{{ route("pharmacy.returns.bulk-approve") }}',
         'pharmacy.returns.bulk-reject': '{{ route("pharmacy.returns.bulk-reject") }}',
-        'pharmacy.applyCombo': '{{ route("pharmacy.applyCombo") }}'
+        'pharmacy.applyCombo': '{{ route("pharmacy.applyCombo") }}',
+        'pharmacy.reports.print-stock': '{{ route("pharmacy.reports.print-stock") }}',
+        'pharmacy.reports.export-stock': '{{ route("pharmacy.reports.export-stock") }}'
     }
 };
 </script>
