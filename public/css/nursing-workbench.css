@@ -2686,6 +2686,58 @@
         flex: 1;
         overflow-y: auto;
         background: #f8f9fa;
+        position: relative;
+    }
+
+    #nursing-reports-view .tab-pane {
+        position: relative;
+        min-height: 250px;
+    }
+
+    /* Scoped Reports Section Loading Overlay (Replaces full-page spinner) */
+    .nr-section-loading {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        width: 100%;
+        height: 100%;
+        min-height: 160px;
+        background: rgba(255, 255, 255, 0.85);
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        z-index: 20;
+        border-radius: inherit;
+        backdrop-filter: blur(1.5px);
+        pointer-events: all;
+    }
+
+    .nr-section-loading .spinner-border {
+        width: 2.25rem;
+        height: 2.25rem;
+        border-width: 0.25em;
+    }
+
+    .nr-section-loading .nr-loading-text {
+        margin-top: 0.6rem;
+        font-size: 0.85rem;
+        font-weight: 600;
+        color: var(--hospital-primary, var(--primary-color, #011b33));
+        letter-spacing: 0.01em;
+    }
+
+    /* Never allow any loading-overlay inside nursing reports view to become full-screen fixed */
+    #nursing-reports-view .loading-overlay {
+        position: absolute !important;
+        top: 0 !important;
+        left: 0 !important;
+        width: 100% !important;
+        height: 100% !important;
+        z-index: 20 !important;
+        background-color: rgba(255, 255, 255, 0.85) !important;
     }
 
     /* Stat Cards */

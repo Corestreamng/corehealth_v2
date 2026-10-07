@@ -110,6 +110,20 @@
                                 <i class="mdi mdi-bed"></i> Ward Occupancy
                             </a>
                         </li>
+                        @php
+                            $staffProfile = Auth::user() ? Auth::user()->staff_profile : null;
+                            $canAccessClinicalReports = Auth::user() && (
+                                Auth::user()->hasAnyRole(['SUPERADMIN', 'ADMIN', 'super-admin']) ||
+                                ($staffProfile && ($staffProfile->is_unit_head || $staffProfile->is_dept_head))
+                            );
+                        @endphp
+                        @if($canAccessClinicalReports)
+                        <li class="nav-item">
+                            <a class="nav-link" id="clinical-reports-tab" data-toggle="tab" href="#clinical-reports-content" role="tab">
+                                <i class="mdi mdi-clipboard-text-clock-outline"></i> Clinical Reports
+                            </a>
+                        </li>
+                        @endif
                     </ul>
                 </div>
 
@@ -138,6 +152,11 @@
 
                     <!-- Ward Occupancy Tab -->
                     @include('admin.nursing.partials.tabs._occupancy')
+
+                    @if($canAccessClinicalReports)
+                    <!-- Clinical Reports & DNS Tab -->
+                    @include('admin.partials.clinical-reports-panel')
+                    @endif
                 </div>
             </div>
         </div>

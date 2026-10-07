@@ -116,6 +116,11 @@
                         <i class="mdi mdi-bed"></i> Ward Occupancy
                     </a>
                 </li>
+                <li class="nav-item">
+                    <a class="nav-link" id="cr-tab-dns" data-bs-toggle="tab" data-toggle="tab" data-bs-target="#cr-dns" href="#cr-dns" role="tab">
+                        <i class="mdi mdi-clipboard-text-clock-outline"></i> DNS Report
+                    </a>
+                </li>
             </ul>
 
             {{-- ================================================================
@@ -403,6 +408,149 @@
                     </div>
                 </div>
 
+                {{-- ---- DNS REPORT (DIRECTOR OF NURSING SERVICES) ---- --}}
+                <div class="tab-pane fade" id="cr-dns" role="tabpanel">
+                    {{-- Action & Period Header Bar --}}
+                    <div class="d-flex flex-wrap justify-content-between align-items-center bg-light p-2 rounded mb-3 border">
+                        <div class="d-flex align-items-center mb-1 mb-md-0">
+                            <span class="badge bg-dark text-white me-2 px-2 py-1"><i class="mdi mdi-office-building"></i> DNS Office</span>
+                            <h6 class="mb-0 font-weight-bold text-primary">Director of Nursing Services — Daily / Periodic Census</h6>
+                            <span class="badge bg-info text-white ms-2 px-2 py-1" id="cr-dns-period-badge">Loading period...</span>
+                        </div>
+                        <div class="d-flex align-items-center gap-2">
+                            <button type="button" class="btn btn-sm btn-outline-primary" id="cr-dns-print-btn">
+                                <i class="mdi mdi-printer me-1"></i> Print DNS Report
+                            </button>
+                            <button type="button" class="btn btn-sm btn-outline-success" id="cr-dns-export-tab-btn">
+                                <i class="mdi mdi-file-excel me-1"></i> Export CSV
+                            </button>
+                        </div>
+                    </div>
+
+                    {{-- Hero 4 KPI Cards (Clickable) --}}
+                    <div class="row g-2 mb-3" id="cr-dns-hero-kpis">
+                        <div class="col-12 text-center py-3">
+                            <div class="spinner-border spinner-border-sm text-primary"></div>
+                        </div>
+                    </div>
+
+                    {{-- Secondary Operational Indicators Grid --}}
+                    <div class="card shadow-sm border-0 mb-3 bg-light">
+                        <div class="card-body p-2">
+                            <div class="small font-weight-bold text-uppercase text-muted mb-2 px-1">
+                                <i class="mdi mdi-view-grid-outline me-1"></i> Key Clinical & Departmental Indicators (Click to Drill-Down)
+                            </div>
+                            <div class="row g-2" id="cr-dns-secondary-kpis">
+                                <div class="col-12 text-center py-2 text-muted">
+                                    <div class="spinner-border spinner-border-sm text-secondary"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {{-- Active Wards Bed Census Strip (All Active Wards) --}}
+                    <div class="card shadow-sm border mb-3 bg-white">
+                        <div class="card-header bg-white py-2 d-flex justify-content-between align-items-center border-bottom">
+                            <span class="small font-weight-bold text-uppercase text-dark">
+                                <i class="mdi mdi-hospital-building text-primary me-1"></i> Active Wards Bed Census Strip
+                            </span>
+                            <span class="badge bg-light text-muted border font-weight-normal px-2 py-1">Click any ward to inspect active inpatients</span>
+                        </div>
+                        <div class="card-body p-2">
+                            <div class="row g-2" id="cr-dns-wards-strip">
+                                <div class="col-12 text-center py-2 text-muted">
+                                    <div class="spinner-border spinner-border-sm text-primary"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {{-- Dynamic Ward Bed & Inpatient Census Table --}}
+                    <div class="card shadow-sm border mb-3">
+                        <div class="card-header bg-white py-2 d-flex justify-content-between align-items-center">
+                            <h6 class="mb-0 font-weight-bold text-dark">
+                                <i class="mdi mdi-bed-empty text-primary me-1"></i> Inpatient Ward Bed & Occupancy Census
+                            </h6>
+                            <small class="text-muted">Dynamic hospital-wide ward occupancy state</small>
+                        </div>
+                        <div class="card-body p-0">
+                            <div class="table-responsive">
+                                <table class="table table-sm table-hover table-bordered mb-0" id="cr-dns-ward-table">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th>Ward Name</th>
+                                            <th>Specialty / Description</th>
+                                            <th class="text-center" style="width: 100px;">Total Beds</th>
+                                            <th class="text-center" style="width: 100px;">Inpatients</th>
+                                            <th class="text-center" style="width: 100px;">Empty Beds</th>
+                                            <th style="width: 220px;">Occupancy Rate</th>
+                                            <th class="text-center" style="width: 120px;">Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {{-- Injected by JS --}}
+                                    </tbody>
+                                    <tfoot class="table-light font-weight-bold" id="cr-dns-ward-foot">
+                                        {{-- Injected by JS --}}
+                                    </tfoot>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    {{-- Two-column Row: All Clinics Outpatient & Day Care / Emergency Breakdown --}}
+                    <div class="row g-3">
+                        {{-- All Clinics Outpatient Throughput --}}
+                        <div class="col-lg-7">
+                            <div class="card shadow-sm border h-100">
+                                <div class="card-header bg-white py-2 d-flex justify-content-between align-items-center">
+                                    <h6 class="mb-0 font-weight-bold text-dark">
+                                        <i class="mdi mdi-hospital-building text-info me-1"></i> All-Clinics Outpatient Throughput
+                                    </h6>
+                                    <small class="text-muted">Every configured active clinic</small>
+                                </div>
+                                <div class="card-body p-0">
+                                    <div class="table-responsive">
+                                        <table class="table table-sm table-hover table-bordered mb-0" id="cr-dns-clinics-table">
+                                            <thead class="table-light">
+                                                <tr>
+                                                    <th>Clinic Name</th>
+                                                    <th class="text-center" style="width: 120px;">Encounters</th>
+                                                    <th style="width: 160px;">Volume Share</th>
+                                                    <th class="text-center" style="width: 100px;">Action</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {{-- Injected by JS --}}
+                                            </tbody>
+                                            <tfoot class="table-light font-weight-bold" id="cr-dns-clinics-foot">
+                                                {{-- Injected by JS --}}
+                                            </tfoot>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {{-- Day Care & Emergency Intake Details Card --}}
+                        <div class="col-lg-5">
+                            <div class="card shadow-sm border h-100">
+                                <div class="card-header bg-white py-2 d-flex justify-content-between align-items-center">
+                                    <h6 class="mb-0 font-weight-bold text-dark">
+                                        <i class="mdi mdi-ambulance text-danger me-1"></i> Day Care & Emergency Intake
+                                    </h6>
+                                    <button type="button" class="btn btn-xs btn-outline-danger cr-dns-drill-btn" data-metric="day_care" data-title="Day Care & Emergency Inpatients">
+                                        View Details
+                                    </button>
+                                </div>
+                                <div class="card-body p-3" id="cr-dns-daycare-section">
+                                    {{-- Injected by JS --}}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
             </div>{{-- /#cr-sub-tab-content --}}
         </div>{{-- /.card-body --}}
     </div>{{-- /.card --}}
@@ -559,6 +707,126 @@
             </div>
             <div class="modal-footer bg-light border-top">
                 <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal" data-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{{-- DNS Drill-Down Modal --}}
+<div class="modal fade" id="crDnsDrillDownModal" tabindex="-1" role="dialog" aria-labelledby="crDnsDrillDownModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-scrollable" role="document">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header bg-light border-bottom">
+                <h5 class="modal-title font-weight-bold text-dark mb-0" id="crDnsDrillDownModalLabel">
+                    <i class="mdi mdi-clipboard-text-search-outline text-primary me-1"></i> DNS Operational Inspection & Patient Drill-Down
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" data-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-3">
+                {{-- Row Label Banner --}}
+                <div class="mb-2 p-2 bg-light border rounded">
+                    <h6 class="font-weight-bold text-dark mb-0">
+                        <i class="mdi mdi-text-box-search-outline text-primary me-1"></i> <span id="cr-dns-drilldown-row-label">Indicator Name</span>
+                    </h6>
+                </div>
+
+                {{-- Badges & Stats --}}
+                <div class="row align-items-center mb-3">
+                    <div class="col-md-6">
+                        <span class="badge bg-secondary badge-secondary text-white font-weight-bold py-2 px-3 me-2" id="cr-dns-drilldown-badge-metric"></span>
+                        <span class="text-muted small" id="cr-dns-drilldown-period-text"></span>
+                    </div>
+                    <div class="col-md-6 text-md-end mt-2 mt-md-0">
+                        <span class="badge bg-info badge-info text-white py-2 px-3 me-2" id="cr-dns-drilldown-stat-patients">
+                            <i class="mdi mdi-account-multiple"></i> Unique Patients: 0
+                        </span>
+                        <span class="badge bg-primary badge-primary text-white py-2 px-3" id="cr-dns-drilldown-stat-records">
+                            <i class="mdi mdi-file-document-outline"></i> Total Records: 0
+                        </span>
+                    </div>
+                </div>
+
+                {{-- Search & Filters Toolbar --}}
+                <div class="card bg-light border mb-3">
+                    <div class="card-body p-2">
+                        <div class="row g-2 align-items-center">
+                            <div class="col-md-4">
+                                <div class="input-group input-group-sm">
+                                    <span class="input-group-text"><i class="mdi mdi-magnify"></i></span>
+                                    <input type="text" class="form-control" id="cr-dns-drilldown-search-input" placeholder="Search patient, file no, clinician, notes...">
+                                    <button class="btn btn-outline-secondary" type="button" id="cr-dns-drilldown-search-clear" style="display:none;">
+                                        <i class="mdi mdi-close"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <select class="form-control form-control-sm form-select form-select-sm" id="cr-dns-drilldown-hmo-filter">
+                                    <option value="">All HMOs / Coverage</option>
+                                    <option value="cash">Private / Cash (Non-HMO)</option>
+                                </select>
+                            </div>
+                            <div class="col-md-3">
+                                <select class="form-control form-control-sm form-select form-select-sm" id="cr-dns-drilldown-scheme-filter">
+                                    <option value="">All HMO Schemes</option>
+                                </select>
+                            </div>
+                            <div class="col-md-2 d-flex align-items-center justify-content-end">
+                                <label class="me-1 mb-0 small text-muted">Per page:</label>
+                                <select class="form-control form-control-sm form-select form-select-sm w-auto" id="cr-dns-drilldown-per-page">
+                                    <option value="15">15</option>
+                                    <option value="25" selected>25</option>
+                                    <option value="50">50</option>
+                                    <option value="100">100</option>
+                                </select>
+                                <button type="button" class="btn btn-outline-secondary btn-sm ms-1" id="cr-dns-drilldown-btn-reset" title="Reset Filters">
+                                    <i class="mdi mdi-refresh"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {{-- Table --}}
+                <div class="table-responsive" style="max-height: 480px;">
+                    <table class="table table-sm table-hover table-bordered mb-0" id="table-cr-dns-drilldown-results">
+                        <thead class="table-light">
+                            <tr>
+                                <th style="width: 4%;" class="text-center">#</th>
+                                <th style="width: 12%;">Date & Time</th>
+                                <th style="width: 18%;">Patient Full Name</th>
+                                <th style="width: 10%;">File Number</th>
+                                <th style="width: 14%;">HMO & Scheme</th>
+                                <th style="width: 6%;" class="text-center">Sex</th>
+                                <th style="width: 6%;" class="text-center">Age</th>
+                                <th style="width: 13%;">Location</th>
+                                <th style="width: 13%;">Attending Personnel</th>
+                                <th style="width: 16%;">Clinical Details / Reason</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tbody-cr-dns-drilldown-results">
+                            <tr>
+                                <td colspan="10" class="text-center text-muted py-4">
+                                    <div class="spinner-border spinner-border-sm text-primary me-1"></div> Loading underlying records...
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                {{-- Server-Side Pagination Bar --}}
+                <div class="d-flex align-items-center justify-content-between mt-3 px-1" id="cr-dns-drilldown-pagination-wrapper">
+                    <div class="small text-muted" id="cr-dns-drilldown-pagination-info">
+                        Showing 0 to 0 of 0 records
+                    </div>
+                    <nav aria-label="DNS drilldown pagination">
+                        <ul class="pagination pagination-sm mb-0" id="cr-dns-drilldown-pagination-links">
+                            {{-- Populated dynamically via JS --}}
+                        </ul>
+                    </nav>
+                </div>
+            </div>
+            <div class="modal-footer bg-light border-top py-2">
+                <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal" data-dismiss="modal">Close</button>
             </div>
         </div>
     </div>

@@ -122,6 +122,14 @@ class User extends Authenticatable implements Auditable
         return $this->staff_profile();
     }
 
+    /**
+     * Check if user is a leadership staff (unit head or dept head)
+     */
+    public function isUnitOrDeptHead(): bool
+    {
+        return (bool) ($this->staff_profile && ($this->staff_profile->is_unit_head || $this->staff_profile->is_dept_head));
+    }
+
     public function patient_profile()
     {
         return $this->hasOne(Patient::class, 'user_id', 'id');

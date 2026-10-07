@@ -77,6 +77,19 @@ window.BILLING_KIT_CONFIG = {
 <script src="{{ versioned_asset('js/nursing-notes.js') }}"></script>
 <script src="{{ versioned_asset('js/medication-schedule-presets.js') }}"></script>
 <script src="{{ versioned_asset('js/nursing-clinical-requests.js') }}"></script>
+
+@php
+    $staffProfile = Auth::user() ? Auth::user()->staff_profile : null;
+    $canAccessClinicalReports = Auth::user() && (
+        Auth::user()->hasAnyRole(['SUPERADMIN', 'ADMIN', 'super-admin']) ||
+        ($staffProfile && ($staffProfile->is_unit_head || $staffProfile->is_dept_head))
+    );
+@endphp
+@if($canAccessClinicalReports)
+{{-- Clinical Reports JS --}}
+@include('admin.partials.clinical-reports-scripts')
+@endif
+
 @include('admin.partials.clinical_alerts_modal')
 @include('admin.partials.patient_summary_overlay')
 @include('admin.partials.ai_quick_actions')

@@ -874,6 +874,461 @@
     }
 
     // =========================================================================
+    // DNS (DIRECTOR OF NURSING SERVICES) STATISTICS & CENSUS REPORT
+    // =========================================================================
+    var currentDnsDrillDownMetric = null;
+    var currentDnsDrillDownTitle = '';
+    var currentDnsDrillDownClinicId = '';
+    var currentDnsDrillDownWardId = '';
+    var currentDnsDrillDownPage = 1;
+    var dnsDrillDownDebounceTimer = null;
+    var cachedDnsHmoList = null;
+    var cachedDnsSchemeList = null;
+
+    function loadCrDnsReport() {
+        var params = getCrFilters();
+        $('#cr-dns-period-badge').html('<span class="spinner-border spinner-border-sm"></span> Loading...');
+        $('#cr-dns-hero-kpis').html('<div class="col-12 text-center py-3"><div class="spinner-border text-primary"></div></div>');
+        $('#cr-dns-secondary-kpis').html('<div class="col-12 text-center py-2 text-muted"><div class="spinner-border spinner-border-sm text-secondary"></div></div>');
+        $('#cr-dns-wards-strip').html('<div class="col-12 text-center py-2 text-muted"><div class="spinner-border spinner-border-sm text-primary"></div></div>');
+        crLoading('#cr-dns-ward-table tbody');
+        crLoading('#cr-dns-clinics-table tbody');
+        $('#cr-dns-daycare-section').html('<div class="text-center py-3 text-muted"><div class="spinner-border spinner-border-sm text-danger"></div></div>');
+
+        $.getJSON('{{ route("clinical-reports.dns-report") }}', params)
+            .done(function (res) {
+                if (!res.success) {
+                    crError('#cr-dns-ward-table tbody', 'Failed to load DNS report');
+                    return;
+                }
+
+                // 1. Period badge
+                $('#cr-dns-period-badge').text(res.period ? res.period.formatted : 'Current Filter');
+
+                // 2. 6 Hero KPI Cards (Clickable)
+                var kpis = res.kpis || {};
+                var heroHtml = `
+                    <div class="col-lg-2 col-md-4 col-6 mb-2">
+                        <div class="card shadow-sm border-start border-primary border-3 h-100 py-1 cr-dns-drill-btn" style="cursor:pointer;" data-metric="gopd" data-title="General Outpatient Department (GOPD)">
+                            <div class="card-body p-2">
+                                <div class="row align-items-center">
+                                    <div class="col">
+                                        <div class="small font-weight-bold text-primary text-uppercase mb-1">GOPD Visits</div>
+                                        <div class="h4 mb-0 font-weight-bold text-dark">${(kpis.gopd || 0).toLocaleString()}</div>
+                                        <small class="text-muted"><i class="mdi mdi-cursor-default-click"></i> General Outpatient</small>
+                                    </div>
+                                    <div class="col-auto"><i class="mdi mdi-account-group fa-2x text-primary opacity-50"></i></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-lg-2 col-md-4 col-6 mb-2">
+                        <div class="card shadow-sm border-start border-warning border-3 h-100 py-1 cr-dns-drill-btn" style="cursor:pointer;" data-metric="popd" data-title="Private Outpatient Department (POPD)">
+                            <div class="card-body p-2">
+                                <div class="row align-items-center">
+                                    <div class="col">
+                                        <div class="small font-weight-bold text-warning text-uppercase mb-1">POPD Visits</div>
+                                        <div class="h4 mb-0 font-weight-bold text-dark">${(kpis.popd || 0).toLocaleString()}</div>
+                                        <small class="text-muted"><i class="mdi mdi-cursor-default-click"></i> Private Outpatient</small>
+                                    </div>
+                                    <div class="col-auto"><i class="mdi mdi-star-circle fa-2x text-warning opacity-50"></i></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-lg-2 col-md-4 col-6 mb-2">
+                        <div class="card shadow-sm border-start border-secondary border-3 h-100 py-1 cr-dns-drill-btn" style="cursor:pointer;" data-metric="outpatient" data-title="All Outpatient Consultations">
+                            <div class="card-body p-2">
+                                <div class="row align-items-center">
+                                    <div class="col">
+                                        <div class="small font-weight-bold text-secondary text-uppercase mb-1">Outpatient (All)</div>
+                                        <div class="h4 mb-0 font-weight-bold text-dark">${(kpis.total_outpatient || 0).toLocaleString()}</div>
+                                        <small class="text-muted"><i class="mdi mdi-cursor-default-click"></i> All active clinics</small>
+                                    </div>
+                                    <div class="col-auto"><i class="mdi mdi-account-multiple fa-2x text-secondary opacity-50"></i></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-lg-2 col-md-4 col-6 mb-2">
+                        <div class="card shadow-sm border-start border-danger border-3 h-100 py-1 cr-dns-drill-btn" style="cursor:pointer;" data-metric="inpatients" data-title="Active Inpatients (Occupied Beds)">
+                            <div class="card-body p-2">
+                                <div class="row align-items-center">
+                                    <div class="col">
+                                        <div class="small font-weight-bold text-danger text-uppercase mb-1">Inpatients (Wards)</div>
+                                        <div class="h4 mb-0 font-weight-bold text-dark">${(kpis.total_inpatients || 0).toLocaleString()}</div>
+                                        <small class="text-muted"><i class="mdi mdi-cursor-default-click"></i> Occupied ward beds</small>
+                                    </div>
+                                    <div class="col-auto"><i class="mdi mdi-bed-patient fa-2x text-danger opacity-50"></i></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-lg-2 col-md-4 col-6 mb-2">
+                        <div class="card shadow-sm border-start border-success border-3 h-100 py-1 cr-dns-drill-btn" style="cursor:pointer;" data-metric="empty_beds" data-title="Available Empty Beds">
+                            <div class="card-body p-2">
+                                <div class="row align-items-center">
+                                    <div class="col">
+                                        <div class="small font-weight-bold text-success text-uppercase mb-1">Empty Beds Available</div>
+                                        <div class="h4 mb-0 font-weight-bold text-dark">${(kpis.empty_beds || 0).toLocaleString()}</div>
+                                        <small class="text-muted"><i class="mdi mdi-cursor-default-click"></i> Hospital capacity</small>
+                                    </div>
+                                    <div class="col-auto"><i class="mdi mdi-bed-empty fa-2x text-success opacity-50"></i></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-lg-2 col-md-4 col-6 mb-2">
+                        <div class="card shadow-sm border-start border-info border-3 h-100 py-1 cr-dns-drill-btn" style="cursor:pointer;" data-metric="day_care" data-title="Day Care & Emergency Inpatients">
+                            <div class="card-body p-2">
+                                <div class="row align-items-center">
+                                    <div class="col">
+                                        <div class="small font-weight-bold text-info text-uppercase mb-1">Day Care / Emergency</div>
+                                        <div class="h4 mb-0 font-weight-bold text-dark">${(kpis.day_care || 0).toLocaleString()}</div>
+                                        <small class="text-muted"><i class="mdi mdi-cursor-default-click"></i> A&E and same-day obs</small>
+                                    </div>
+                                    <div class="col-auto"><i class="mdi mdi-ambulance fa-2x text-info opacity-50"></i></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                $('#cr-dns-hero-kpis').html(heroHtml);
+
+                // 3. Secondary Indicators Grid (Clickable)
+                var secondaryList = [
+                    { key: 'admissions', label: 'Admissions', value: kpis.total_admissions || 0, icon: 'mdi-login', color: 'primary', sub: 'New ward intake' },
+                    { key: 'discharges', label: 'Discharges', value: kpis.total_discharges || 0, icon: 'mdi-logout', color: 'success', sub: 'Routine & transfers' },
+                    { key: 'sama', label: 'SAMA', value: kpis.sama || 0, icon: 'mdi-alert-octagon', color: 'danger', sub: 'Signed Med. Advice' },
+                    { key: 'absconsion', label: 'Absconsion', value: kpis.absconsion || 0, icon: 'mdi-run-fast', color: 'danger', sub: 'Left without notice' },
+                    { key: 'referrals', label: 'Referrals / Transfers', value: kpis.referrals || 0, icon: 'mdi-share-variant', color: 'secondary', sub: 'External facilities' },
+                    { key: 'normal_delivery', label: 'Normal Deliveries', value: kpis.normal_delivery || 0, icon: 'mdi-baby', color: 'success', sub: 'SVD / Vaginal' },
+                    { key: 'cs_delivery', label: 'CS Deliveries', value: kpis.cs_delivery || 0, icon: 'mdi-baby-carriage', color: 'warning', sub: 'CS Rate: ' + (kpis.cs_rate || 0) + '%' },
+                    { key: 'surgeries', label: 'Surgeries', value: kpis.total_surgeries || 0, icon: 'mdi-medical-bag', color: 'dark', sub: 'Operating theatres' },
+                    { key: 'deaths', label: 'Mortalities (RIP)', value: kpis.total_deaths || 0, icon: 'mdi-pulse', color: 'danger', sub: 'Certified deaths' },
+                    { key: 'corpses', label: 'Morgue Received', value: kpis.corpses || 0, icon: 'mdi-archive-arrow-down-outline', color: 'secondary', sub: 'Mortuary received' },
+                ];
+                var secHtml = '';
+                secondaryList.forEach(function (item) {
+                    secHtml += `
+                        <div class="col-lg-2 col-md-3 col-6 mb-1">
+                            <div class="card border rounded p-2 h-100 cr-dns-drill-btn hover-shadow" style="cursor:pointer;" data-metric="${item.key}" data-title="${item.label}">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div class="text-truncate">
+                                        <div class="small text-muted text-truncate font-weight-bold">${item.label}</div>
+                                        <div class="h5 mb-0 font-weight-bold text-${item.color}">${item.value.toLocaleString()}</div>
+                                        <small class="text-muted" style="font-size: 0.7rem;">${item.sub}</small>
+                                    </div>
+                                    <i class="mdi ${item.icon} text-${item.color} fs-4 opacity-75"></i>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                });
+                $('#cr-dns-secondary-kpis').html(secHtml);
+
+                // 4. Inpatient Ward Bed & Occupancy Census Table & Strip (All Active Wards)
+                var wardCensus = res.ward_census || {};
+                var wards = wardCensus.wards || [];
+                var wardRows = '';
+                var wardStripHtml = '';
+
+                wards.forEach(function (w) {
+                    var pct = w.occupancy_pct || 0;
+                    var barClass = pct >= 90 ? 'bg-danger' : (pct >= 70 ? 'bg-warning' : 'bg-success');
+                    var badgeClass = pct >= 90 ? 'bg-danger text-white' : (pct >= 70 ? 'bg-warning text-dark' : 'bg-success text-white');
+
+                    // Mini-card for strip
+                    wardStripHtml += `
+                        <div class="col-xl-2 col-lg-3 col-md-4 col-6 mb-2">
+                            <div class="card border rounded p-2 h-100 cr-dns-drill-btn hover-shadow" style="cursor:pointer;" data-metric="ward" data-ward-id="${w.ward_id}" data-title="Inpatients: ${w.ward_name}">
+                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                    <span class="badge bg-dark text-white px-2 py-1 font-monospace font-weight-bold">${w.code || 'WARD'}</span>
+                                    <span class="badge ${badgeClass} font-monospace">${pct}%</span>
+                                </div>
+                                <div class="small font-weight-bold text-dark text-truncate" title="${w.ward_name}">${w.ward_name}</div>
+                                <div class="d-flex justify-content-between align-items-end mt-2">
+                                    <div>
+                                        <div class="h5 mb-0 font-weight-bold text-primary font-monospace">${w.occupied} <span class="small font-weight-normal text-muted" style="font-size:0.7rem;">/ ${w.total_beds}</span></div>
+                                        <div class="text-success small" style="font-size:0.7rem;"><i class="mdi mdi-bed-empty"></i> ${w.available} empty</div>
+                                    </div>
+                                    <i class="mdi mdi-bed-patient text-primary fs-4 opacity-50"></i>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+
+                    // Full table row
+                    wardRows += `
+                        <tr>
+                            <td><strong class="text-dark">${w.ward_name}</strong></td>
+                            <td class="text-muted small">${w.specialty || 'General Inpatient'}</td>
+                            <td class="text-center font-monospace">${w.total_beds}</td>
+                            <td class="text-center font-monospace font-weight-bold text-danger">${w.occupied}</td>
+                            <td class="text-center font-monospace font-weight-bold text-success">${w.available}</td>
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    <div class="progress flex-grow-1" style="height: 14px;">
+                                        <div class="progress-bar ${barClass}" role="progressbar" style="width: ${Math.min(pct, 100)}%;" aria-valuenow="${pct}" aria-valuemin="0" aria-valuemax="100">
+                                            ${pct}%
+                                        </div>
+                                    </div>
+                                    <span class="ms-2 small font-weight-bold font-monospace">${pct}%</span>
+                                </div>
+                            </td>
+                            <td class="text-center">
+                                <button type="button" class="btn btn-xs btn-outline-primary cr-dns-drill-btn" data-metric="ward" data-ward-id="${w.ward_id}" data-title="Inpatients: ${w.ward_name}">
+                                    <i class="mdi mdi-eye-outline me-1"></i> Patients
+                                </button>
+                            </td>
+                        </tr>
+                    `;
+                });
+                if (!wards.length) {
+                    wardRows = '<tr><td colspan="7" class="text-center text-muted py-3">No active wards configured.</td></tr>';
+                }
+                $('#cr-dns-wards-strip').html(wardStripHtml || '<div class="col-12 text-muted text-center py-2">No active wards configured.</div>');
+                $('#cr-dns-ward-table tbody').html(wardRows);
+                $('#cr-dns-ward-foot').html(`
+                    <tr>
+                        <td colspan="2">HOSPITAL TOTAL / SUMMARY</td>
+                        <td class="text-center font-monospace">${wardCensus.total_beds || 0}</td>
+                        <td class="text-center font-monospace text-danger">${wardCensus.occupied || 0}</td>
+                        <td class="text-center font-monospace text-success">${wardCensus.available || 0}</td>
+                        <td colspan="2">
+                            <span class="badge bg-primary text-white font-weight-bold px-2 py-1">Overall Occupancy: ${wardCensus.occupancy_rate || '0%'}</span>
+                        </td>
+                    </tr>
+                `);
+
+                // 5. All-Clinics Outpatient Throughput Table
+                var clinics = res.clinics || [];
+                var clinicRows = '';
+                var totalClinicsVol = 0;
+                clinics.forEach(function (c) {
+                    totalClinicsVol += c.total;
+                    clinicRows += `
+                        <tr>
+                            <td><strong class="text-dark">${c.name}</strong></td>
+                            <td class="text-center font-monospace font-weight-bold text-primary">${c.total.toLocaleString()}</td>
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    <div class="progress flex-grow-1" style="height: 12px;">
+                                        <div class="progress-bar bg-info" role="progressbar" style="width: ${c.percentage}%;"></div>
+                                    </div>
+                                    <span class="ms-2 small text-muted font-monospace">${c.percentage}%</span>
+                                </div>
+                            </td>
+                            <td class="text-center">
+                                <button type="button" class="btn btn-xs btn-outline-info cr-dns-drill-btn" data-metric="clinic" data-clinic-id="${c.id}" data-title="Outpatients: ${c.name}">
+                                    <i class="mdi mdi-eye me-1"></i> View
+                                </button>
+                            </td>
+                        </tr>
+                    `;
+                });
+                if (!clinics.length) {
+                    clinicRows = '<tr><td colspan="4" class="text-center text-muted py-3">No clinics found.</td></tr>';
+                }
+                $('#cr-dns-clinics-table tbody').html(clinicRows);
+                $('#cr-dns-clinics-foot').html(`
+                    <tr>
+                        <td>TOTAL OUTPATIENT CONSULTATIONS</td>
+                        <td class="text-center font-monospace text-primary font-weight-bold">${totalClinicsVol.toLocaleString()}</td>
+                        <td colspan="2"><span class="badge bg-secondary text-white">100% Total Volume</span></td>
+                    </tr>
+                `);
+
+                // 6. Day Care & Emergency Intake Details Card
+                var dcHtml = `
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <span class="text-muted small"><i class="mdi mdi-clock-fast text-danger me-1"></i> Emergency Intake Queue:</span>
+                            <span class="badge bg-danger text-white font-monospace font-weight-bold">${(kpis.emergency_intakes || 0).toLocaleString()}</span>
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <span class="text-muted small"><i class="mdi mdi-alert-circle text-warning me-1"></i> Emergency Priority Admissions:</span>
+                            <span class="badge bg-warning text-dark font-monospace font-weight-bold">${(kpis.emergency_admissions || 0).toLocaleString()}</span>
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <span class="text-muted small"><i class="mdi mdi-calendar-today text-info me-1"></i> Same-Day Observation Discharges:</span>
+                            <span class="badge bg-info text-white font-monospace font-weight-bold">${(kpis.same_day_observations || 0).toLocaleString()}</span>
+                        </div>
+                        <hr class="my-2">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span class="font-weight-bold text-dark">Combined Day Care Volume:</span>
+                            <span class="h5 mb-0 text-danger font-weight-bold font-monospace">${(kpis.day_care || 0).toLocaleString()}</span>
+                        </div>
+                    </div>
+                    <div class="alert alert-light border small text-muted mb-0">
+                        <i class="mdi mdi-information-outline text-primary me-1"></i>
+                        Inpatient day care captures same-day admissions/observations and emergency walk-ins managed by the nursing observation team.
+                    </div>
+                `;
+                $('#cr-dns-daycare-section').html(dcHtml);
+            })
+            .fail(function () {
+                crError('#cr-dns-ward-table tbody', 'Failed to connect to DNS report server');
+                crError('#cr-dns-clinics-table tbody', 'Failed to load clinics');
+            });
+    }
+
+    // =========================================================================
+    // UNIVERSAL DNS DRILL-DOWN WITH SERVER-SIDE PAGINATION, SEARCH & HMO FILTERS
+    // =========================================================================
+    function openCrDnsDrillDown(metric, title, clinicId, wardId) {
+        currentDnsDrillDownMetric = metric;
+        currentDnsDrillDownTitle = title || 'Metric Drill-Down';
+        currentDnsDrillDownClinicId = clinicId || '';
+        currentDnsDrillDownWardId = wardId || '';
+        currentDnsDrillDownPage = 1;
+
+        $('#crDnsDrillDownModal').modal('show');
+        $('#cr-dns-drilldown-row-label').text(currentDnsDrillDownTitle);
+        $('#cr-dns-drilldown-badge-metric').text(metric.toUpperCase().replace(/_/g, ' '));
+        $('#cr-dns-drilldown-period-text').text($('#cr-dns-period-badge').text() || 'Period: Filter Selected');
+
+        $('#cr-dns-drilldown-search-input').val('');
+        $('#cr-dns-drilldown-search-clear').hide();
+        $('#cr-dns-drilldown-hmo-filter').val('');
+        $('#cr-dns-drilldown-scheme-filter').val('');
+        $('#cr-dns-drilldown-per-page').val('25');
+
+        fetchCrDnsDrillDownData();
+    }
+
+    function fetchCrDnsDrillDownData() {
+        if (!currentDnsDrillDownMetric) return;
+
+        $('#tbody-cr-dns-drilldown-results').html('<tr><td colspan="10" class="text-center text-muted py-4"><div class="spinner-border spinner-border-sm text-primary me-1"></div> Loading underlying records...</td></tr>');
+        $('#cr-dns-drilldown-stat-patients').html('<i class="mdi mdi-account-multiple"></i> Unique Patients: ...');
+        $('#cr-dns-drilldown-stat-records').html('<i class="mdi mdi-file-document-outline"></i> Total Records: ...');
+
+        var filters = getCrFilters();
+        var params = {
+            metric: currentDnsDrillDownMetric,
+            clinic_id: currentDnsDrillDownClinicId || filters.clinic_id,
+            ward_id: currentDnsDrillDownWardId || filters.ward_id,
+            date_from: filters.date_from,
+            date_to: filters.date_to,
+            page: currentDnsDrillDownPage,
+            per_page: $('#cr-dns-drilldown-per-page').val() || 25,
+            search: $.trim($('#cr-dns-drilldown-search-input').val()),
+            hmo_id: $('#cr-dns-drilldown-hmo-filter').val(),
+            scheme_id: $('#cr-dns-drilldown-scheme-filter').val()
+        };
+
+        $.ajax({
+            url: '{{ route("clinical-reports.dns-drill-down") }}',
+            type: 'GET',
+            data: params
+        }).done(function (res) {
+            if (res.success) {
+                $('#cr-dns-drilldown-stat-patients').html('<i class="mdi mdi-account-multiple"></i> Unique Patients: ' + (res.unique_patients || 0).toLocaleString());
+                $('#cr-dns-drilldown-stat-records').html('<i class="mdi mdi-file-document-outline"></i> Total Records: ' + (res.total_records || 0).toLocaleString());
+
+                populateDnsHmoFilters(res.hmos, res.schemes);
+                renderCrDnsDrillDownTable(res.records, res.from);
+                renderCrDnsDrillDownPagination(res.current_page, res.last_page, res.total_records, res.from, res.to);
+            } else {
+                $('#tbody-cr-dns-drilldown-results').html('<tr><td colspan="10" class="text-center text-danger py-4">Error loading records.</td></tr>');
+            }
+        }).fail(function (xhr) {
+            $('#tbody-cr-dns-drilldown-results').html('<tr><td colspan="10" class="text-center text-danger py-4">' + (xhr.responseJSON && xhr.responseJSON.message ? xhr.responseJSON.message : 'Failed to load drill-down records.') + '</td></tr>');
+        });
+    }
+
+    function populateDnsHmoFilters(hmos, schemes) {
+        if (hmos && hmos.length && !cachedDnsHmoList) {
+            cachedDnsHmoList = hmos;
+            var $hmoSelect = $('#cr-dns-drilldown-hmo-filter');
+            $hmoSelect.find('option:gt(1)').remove();
+            $.each(hmos, function (i, h) {
+                $hmoSelect.append('<option value="' + h.id + '">' + h.name + '</option>');
+            });
+        }
+
+        if (schemes && schemes.length && !cachedDnsSchemeList) {
+            cachedDnsSchemeList = schemes;
+            var $schemeSelect = $('#cr-dns-drilldown-scheme-filter');
+            $schemeSelect.find('option:gt(0)').remove();
+            $.each(schemes, function (i, s) {
+                $schemeSelect.append('<option value="' + s.id + '">' + s.name + '</option>');
+            });
+        }
+    }
+
+    function renderCrDnsDrillDownTable(records, fromIdx) {
+        var $tbody = $('#tbody-cr-dns-drilldown-results');
+        $tbody.empty();
+
+        if (!records || !records.length) {
+            $tbody.html('<tr><td colspan="10" class="text-center text-muted py-4"><i class="mdi mdi-information-outline"></i> No matching underlying records found for this metric in the selected period.</td></tr>');
+            return;
+        }
+
+        $.each(records, function (idx, r) {
+            var itemNum = (fromIdx || 1) + idx;
+            var hmoMarkup = r.hmo_html || '<span class="text-muted small">Cash</span>';
+            var patientLink = r.patient_id ? '<a href="/patient/' + r.patient_id + '" class="text-dark font-weight-bold" target="_blank">' + (r.patient_name || 'Unknown') + '</a>' : '<strong class="text-dark">' + (r.patient_name || 'Unknown') + '</strong>';
+
+            var rowHtml = `
+                <tr>
+                    <td class="text-muted font-monospace text-center">${itemNum}</td>
+                    <td class="font-monospace small">${r.date || 'N/A'}</td>
+                    <td>${patientLink}</td>
+                    <td class="font-monospace text-primary">#${r.file_no || 'N/A'}</td>
+                    <td>${hmoMarkup}</td>
+                    <td class="text-center"><span class="badge bg-light text-dark border">${r.gender || 'N/A'}</span></td>
+                    <td class="text-center">${r.age || 'N/A'}</td>
+                    <td><small class="text-dark font-weight-bold">${r.location || 'N/A'}</small></td>
+                    <td><small class="text-secondary">${r.doctor_name || 'N/A'}</small></td>
+                    <td><small class="text-muted">${r.details || 'N/A'}</small></td>
+                </tr>
+            `;
+            $tbody.append(rowHtml);
+        });
+    }
+
+    function renderCrDnsDrillDownPagination(currentPage, lastPage, totalRecords, from, to) {
+        $('#cr-dns-drilldown-pagination-info').text('Showing ' + from + ' to ' + to + ' of ' + totalRecords + ' records');
+        var $links = $('#cr-dns-drilldown-pagination-links');
+        $links.empty();
+
+        if (lastPage <= 1) {
+            return;
+        }
+
+        var prevDisabled = currentPage <= 1 ? 'disabled' : '';
+        $links.append('<li class="page-item ' + prevDisabled + '"><a class="page-link" href="#" data-page="' + (currentPage - 1) + '">&laquo; Prev</a></li>');
+
+        var startPage = Math.max(1, currentPage - 2);
+        var endPage = Math.min(lastPage, currentPage + 2);
+
+        if (startPage > 1) {
+            $links.append('<li class="page-item"><a class="page-link" href="#" data-page="1">1</a></li>');
+            if (startPage > 2) {
+                $links.append('<li class="page-item disabled"><span class="page-link">...</span></li>');
+            }
+        }
+
+        for (var p = startPage; p <= endPage; p++) {
+            var active = (p === currentPage) ? 'active' : '';
+            $links.append('<li class="page-item ' + active + '"><a class="page-link" href="#" data-page="' + p + '">' + p + '</a></li>');
+        }
+
+        if (endPage < lastPage) {
+            if (endPage < lastPage - 1) {
+                $links.append('<li class="page-item disabled"><span class="page-link">...</span></li>');
+            }
+            $links.append('<li class="page-item"><a class="page-link" href="#" data-page="' + lastPage + '">' + lastPage + '</a></li>');
+        }
+
+        var nextDisabled = currentPage >= lastPage ? 'disabled' : '';
+        $links.append('<li class="page-item ' + nextDisabled + '"><a class="page-link" href="#" data-page="' + (currentPage + 1) + '">Next &raquo;</a></li>');
+    }
+
+    // =========================================================================
     // EVENT BINDINGS
     // =========================================================================
     $(document).ready(function () {
@@ -1005,8 +1460,92 @@
             $('#cr-occupancy-patients-section').hide();
         });
 
+        // DNS Drill-Down button click
+        $(document).on('click', '.cr-dns-drill-btn', function (e) {
+            e.preventDefault();
+            var metric = $(this).data('metric');
+            var title = $(this).data('title') || $(this).attr('data-title');
+            var clinicId = $(this).data('clinic-id');
+            var wardId = $(this).data('ward-id');
+            if (metric) {
+                openCrDnsDrillDown(metric, title, clinicId, wardId);
+            }
+        });
+
+        // DNS Print button click
+        $(document).on('click', '#cr-dns-print-btn', function () {
+            var params = getCrFilters();
+            var url = '{{ route("clinical-reports.dns-print") }}?' + $.param(params);
+            window.open(url, '_blank');
+        });
+
+        // DNS Export CSV tab button click
+        $(document).on('click', '#cr-dns-export-tab-btn', function () {
+            var params = $.extend(getCrFilters(), { tab: 'dns' });
+            window.location.href = '{{ route("clinical-reports.export") }}?' + $.param(params);
+        });
+
+        // DNS Drill-Down debounced search input (300ms)
+        $('#cr-dns-drilldown-search-input').on('keyup input', function () {
+            var val = $.trim($(this).val());
+            if (val.length > 0) {
+                $('#cr-dns-drilldown-search-clear').show();
+            } else {
+                $('#cr-dns-drilldown-search-clear').hide();
+            }
+
+            clearTimeout(dnsDrillDownDebounceTimer);
+            dnsDrillDownDebounceTimer = setTimeout(function () {
+                currentDnsDrillDownPage = 1;
+                fetchCrDnsDrillDownData();
+            }, 300);
+        });
+
+        // DNS Drill-Down clear search button
+        $('#cr-dns-drilldown-search-clear').on('click', function () {
+            $('#cr-dns-drilldown-search-input').val('');
+            $(this).hide();
+            currentDnsDrillDownPage = 1;
+            fetchCrDnsDrillDownData();
+        });
+
+        // DNS Drill-Down HMO, Scheme and Per-Page filters
+        $('#cr-dns-drilldown-hmo-filter, #cr-dns-drilldown-scheme-filter, #cr-dns-drilldown-per-page').on('change', function () {
+            currentDnsDrillDownPage = 1;
+            fetchCrDnsDrillDownData();
+        });
+
+        // DNS Drill-Down reset filters button
+        $('#cr-dns-drilldown-btn-reset').on('click', function () {
+            $('#cr-dns-drilldown-search-input').val('');
+            $('#cr-dns-drilldown-search-clear').hide();
+            $('#cr-dns-drilldown-hmo-filter').val('');
+            $('#cr-dns-drilldown-scheme-filter').val('');
+            $('#cr-dns-drilldown-per-page').val('25');
+            currentDnsDrillDownPage = 1;
+            fetchCrDnsDrillDownData();
+        });
+
+        // DNS Drill-Down pagination links click
+        $(document).on('click', '#cr-dns-drilldown-pagination-links a[data-page]', function (e) {
+            e.preventDefault();
+            var targetPage = parseInt($(this).attr('data-page'), 10);
+            if (targetPage && targetPage !== currentDnsDrillDownPage) {
+                currentDnsDrillDownPage = targetPage;
+                fetchCrDnsDrillDownData();
+            }
+        });
+
+        // Ensure modals are appended to body to prevent stacking context/overflow clipping
+        if ($('#crDnsDrillDownModal').length && !$('#crDnsDrillDownModal').parent().is('body')) {
+            $('#crDnsDrillDownModal').appendTo('body');
+        }
+        if ($('#crEncounterDetailModal').length && !$('#crEncounterDetailModal').parent().is('body')) {
+            $('#crEncounterDetailModal').appendTo('body');
+        }
+
         // Tab activation from parent: bind Clinical Reports main tab
-        $('#clinical-reports-tab').on('shown.bs.tab', function () {
+        $(document).on('shown.bs.tab', '#clinical-reports-tab', function () {
             window.initClinicalReports();
         });
     });
@@ -1026,6 +1565,7 @@
             case '#cr-vaccinations': loadCrVaccinations();  break;
             case '#cr-referrals'   : loadCrReferrals();     break;
             case '#cr-occupancy'   : loadCrOccupancy();     break;
+            case '#cr-dns'         : loadCrDnsReport();     break;
         }
     }
 

@@ -11,6 +11,7 @@ use App\Models\DeliveryRecord;
 use App\Models\DoctorQueue;
 use App\Models\Encounter;
 use App\Models\Hmo;
+use App\Models\HmoScheme;
 use App\Models\ImagingServiceRequest;
 use App\Models\ImmunizationRecord;
 use App\Models\LabServiceRequest;
@@ -543,12 +544,85 @@ class ClinicalReportsController extends Controller
         $tab = $request->get('tab', 'diagnosis');
 
         switch ($tab) {
+            case 'dns':
+                return $this->exportDns($request);
             case 'diagnosis':
                 return $this->exportDiagnosis($request);
             default:
                 // Start from diagnosis search, fallback to diagnosis if unknown
                 return $this->exportDiagnosis($request);
         }
+    }
+
+    /**
+     * Export DNS Report as CSV
+     */
+    public function exportDns(Request $request)
+    {
+        $from = $request->filled('date_from') ? Carbon::parse($request->date_from)->startOfDay() : now()->startOfMonth()->startOfDay();
+        $to = $request->filled('date_to') ? Carbon::parse($request->date_to)->endOfDay() : now()->endOfDay();
+        $wardId = $request->get('ward_id');
+
+        $data = $this->getDnsReportData($from, $to, $wardId);
+        $filename = 'dns_report_' . $from->format('Y_m_d') . '_to_' . $to->format('Y_m_d') . '.csv';
+
+        $callback = function () use ($data) {
+            $fh = fopen('php://output', 'w');
+            fputcsv($fh, ['DNS CLINICAL REPORT & CENSUS']);
+            fputcsv($fh, ['Hospital', $data['hospital']['name']]);
+            fputcsv($fh, ['Period', $data['period']['formatted']]);
+            fputcsv($fh, []);
+            fputcsv($fh, ['KEY CLINICAL INDICATORS']);
+            fputcsv($fh, ['Indicator', 'Count / Value']);
+            $kpiLabels = [
+                'total_outpatient' => 'Total Outpatient (All Clinics)',
+                'gopd' => 'GOPD Visits (General Outpatient)',
+                'popd' => 'POPD Visits (Private Outpatient)',
+                'total_inpatients' => 'Total Inpatients (Active in Wards)',
+                'empty_beds' => 'Available Empty Beds',
+                'total_admissions' => 'Inpatient Admissions',
+                'total_discharges' => 'Inpatient Discharges',
+                'sama' => 'Signed Against Medical Advice (SAMA)',
+                'absconsion' => 'Absconsion (Left Without Notice)',
+                'referrals' => 'Referrals & Outward Transfers',
+                'normal_delivery' => 'Normal Deliveries (SVD / Vaginal)',
+                'cs_delivery' => 'Caesarean Sections (CS)',
+                'total_deliveries' => 'Total Deliveries',
+                'cs_rate' => 'Caesarean Section (CS) Rate (%)',
+                'total_surgeries' => 'Completed Surgical Operations',
+                'total_deaths' => 'Total Mortalities / Deaths',
+                'corpses' => 'Morgue Received (Corpses)',
+                'corpses_active' => 'Current Bodies in Mortuary',
+                'day_care' => 'Day Care & Emergency Inpatients',
+                'emergency_intakes' => 'Emergency Intakes (A&E Queue)',
+                'emergency_admissions' => 'Emergency Admissions',
+                'same_day_observations' => 'Same-Day Observations',
+            ];
+            foreach ($data['kpis'] as $key => $val) {
+                $label = $kpiLabels[$key] ?? ucwords(str_replace('_', ' ', $key));
+                $displayVal = ($key === 'cs_rate') ? ($val . '%') : $val;
+                fputcsv($fh, [$label, $displayVal]);
+            }
+            fputcsv($fh, []);
+            fputcsv($fh, ['WARD INPATIENT & BED CENSUS']);
+            fputcsv($fh, ['Ward Name', 'Specialty', 'Total Beds', 'Inpatients', 'Available Beds', 'Occupancy %']);
+            foreach ($data['ward_census']['wards'] as $w) {
+                fputcsv($fh, [$w['ward_name'], $w['specialty'], $w['total_beds'], $w['occupied'], $w['available'], $w['occupancy_rate']]);
+            }
+            fputcsv($fh, ['TOTAL / AVERAGE', '', $data['ward_census']['total_beds'], $data['ward_census']['occupied'], $data['ward_census']['available'], $data['ward_census']['occupancy_rate']]);
+            fputcsv($fh, []);
+            fputcsv($fh, ['ALL CLINICS OUTPATIENT VOLUME']);
+            fputcsv($fh, ['Clinic Name', 'Attended Encounters', 'Percentage Share']);
+            foreach ($data['clinics'] as $c) {
+                fputcsv($fh, [$c['name'], $c['total'], $c['percentage'] . '%']);
+            }
+            fclose($fh);
+        };
+
+        return response()->stream($callback, 200, [
+            'Content-Type' => 'text/csv',
+            'Content-Disposition' => "attachment; filename=\"{$filename}\"",
+        ]);
     }
 
     /**
@@ -1582,5 +1656,1045 @@ class ClinicalReportsController extends Controller
             'avg_los_days' => $avgLos ? round($avgLos, 1) : 0,
             'current_patients' => $currentPatients,
         ]);
+    }
+
+    // -----------------------------------------------------------------------
+    // DNS (Director of Nursing Services) Statistics & Census Report Engine
+    // -----------------------------------------------------------------------
+
+    /**
+     * Build generic DNS operational statistics and census dataset
+     */
+    public function getDnsReportData(Carbon $from, Carbon $to, $wardId = null): array
+    {
+        // 1. ALL ACTIVE CLINICS OUTPATIENT VOLUME (Generic, dynamic, resilient)
+        $clinics = Clinic::where('status', 1)->orderBy('name')->get();
+        $encountersByClinic = Encounter::whereBetween('encounters.created_at', [$from, $to])
+            ->join('doctor_queues', 'encounters.queue_id', '=', 'doctor_queues.id')
+            ->select('doctor_queues.clinic_id', DB::raw('count(*) as total'))
+            ->groupBy('doctor_queues.clinic_id')
+            ->pluck('total', 'clinic_id');
+
+        $totalOutpatient = Encounter::whereBetween('created_at', [$from, $to])->count();
+        $clinicData = [];
+        $totalMappedClinics = 0;
+
+        foreach ($clinics as $clinic) {
+            $count = (int) ($encountersByClinic[$clinic->id] ?? 0);
+            $totalMappedClinics += $count;
+            $clinicData[] = [
+                'id' => $clinic->id,
+                'name' => $clinic->name,
+                'total' => $count,
+                'percentage' => $totalOutpatient > 0 ? round(($count / $totalOutpatient) * 100, 1) : 0,
+            ];
+        }
+
+        // Catch unassigned or direct encounters if any
+        $unassignedCount = max(0, $totalOutpatient - $totalMappedClinics);
+        if ($unassignedCount > 0) {
+            $clinicData[] = [
+                'id' => null,
+                'name' => 'General / Direct Outpatient',
+                'total' => $unassignedCount,
+                'percentage' => $totalOutpatient > 0 ? round(($unassignedCount / $totalOutpatient) * 100, 1) : 0,
+            ];
+        }
+
+        // Dynamically compute GOPD and POPD without fragile clinic assumptions
+        // POPD: Any consultation in a clinic named POPD/Private OR patient has Private scheme
+        $popdCount = Encounter::whereBetween('encounters.created_at', [$from, $to])
+            ->where(function ($q) {
+                $q->whereHas('patient', function ($p) {
+                    $p->where('hmo_id', 1)
+                      ->orWhereHas('hmo', fn ($h) => $h->where('name', 'LIKE', '%Private%'));
+                })
+                ->orWhereHas('queue.clinic', function ($c) {
+                    $c->where('name', 'LIKE', '%POPD%')
+                      ->orWhere('name', 'LIKE', '%Private%');
+                });
+            })
+            ->count();
+
+        // GOPD: Consultations in General/GOPD clinic or non-private patients
+        $gopdCount = Encounter::whereBetween('encounters.created_at', [$from, $to])
+            ->where(function ($q) {
+                $q->whereHas('queue.clinic', function ($c) {
+                    $c->where('name', 'LIKE', '%General%')
+                      ->orWhere('name', 'LIKE', '%GOPD%');
+                })
+                ->orWhereDoesntHave('patient', function ($p) {
+                    $p->where('hmo_id', 1)
+                      ->orWhereHas('hmo', fn ($h) => $h->where('name', 'LIKE', '%Private%'));
+                });
+            })
+            ->count();
+
+        if ($gopdCount === 0 && $popdCount === 0 && $totalOutpatient > 0) {
+            $gopdCount = $totalOutpatient;
+        }
+
+        // 2. DAY CARE & EMERGENCY INTAKE
+        $emergencyQueueCount = DoctorQueue::whereBetween('created_at', [$from, $to])
+            ->where('source', 'emergency_intake')
+            ->count();
+
+        $emergencyAdmissionCount = AdmissionRequest::whereBetween('created_at', [$from, $to])
+            ->where('priority', 'emergency')
+            ->count();
+
+        $sameDayObservationsCount = AdmissionRequest::where('discharged', 1)
+            ->whereBetween('discharge_date', [$from, $to])
+            ->whereDate('created_at', DB::raw('DATE(discharge_date)'))
+            ->count();
+
+        $totalDayCare = $emergencyQueueCount + $sameDayObservationsCount;
+
+        // 3. INPATIENT ADMISSIONS & DISCHARGES
+        $totalAdmissions = AdmissionRequest::whereBetween('created_at', [$from, $to])
+            ->when($wardId, fn ($q) => $q->whereHas('bed', fn ($b) => $b->where('ward_id', $wardId)))
+            ->count();
+
+        $totalDischarges = AdmissionRequest::where('discharged', 1)
+            ->whereBetween('discharge_date', [$from, $to])
+            ->when($wardId, fn ($q) => $q->whereHas('bed', fn ($b) => $b->where('ward_id', $wardId)))
+            ->count();
+
+        // 4. CRITICAL DISCHARGES: SAMA & ABSCONSION
+        $samaCount = AdmissionRequest::where('discharged', 1)
+            ->whereBetween('discharge_date', [$from, $to])
+            ->when($wardId, fn ($q) => $q->whereHas('bed', fn ($b) => $b->where('ward_id', $wardId)))
+            ->where(function ($q) {
+                $q->where('discharge_reason', 'LIKE', '%against medical advice%')
+                  ->orWhere('discharge_reason', 'LIKE', '%ama%')
+                  ->orWhere('discharge_reason', 'LIKE', '%sama%')
+                  ->orWhere('discharge_reason', 'LIKE', '%dama%')
+                  ->orWhere('discharge_note', 'LIKE', '%against medical advice%')
+                  ->orWhere('discharge_note', 'LIKE', '%ama%');
+            })
+            ->count();
+
+        $absconsionCount = AdmissionRequest::where('discharged', 1)
+            ->whereBetween('discharge_date', [$from, $to])
+            ->when($wardId, fn ($q) => $q->whereHas('bed', fn ($b) => $b->where('ward_id', $wardId)))
+            ->where(function ($q) {
+                $q->where('discharge_reason', 'LIKE', '%abscond%')
+                  ->orWhere('discharge_reason', 'LIKE', '%left without notice%')
+                  ->orWhere('discharge_reason', 'LIKE', '%eloped%')
+                  ->orWhere('discharge_note', 'LIKE', '%abscond%');
+            })
+            ->count();
+
+        // 5. REFERRALS (Inpatient transfer discharges + Outgoing specialist referrals)
+        $externalReferrals = SpecialistReferral::whereBetween('created_at', [$from, $to])
+            ->where('referral_type', 'external')
+            ->count();
+
+        $transferDischarges = AdmissionRequest::where('discharged', 1)
+            ->whereBetween('discharge_date', [$from, $to])
+            ->when($wardId, fn ($q) => $q->whereHas('bed', fn ($b) => $b->where('ward_id', $wardId)))
+            ->where(function ($q) {
+                $q->where('discharge_reason', 'LIKE', '%transfer%')
+                  ->orWhere('discharge_reason', 'LIKE', '%higher level%')
+                  ->orWhere('discharge_reason', 'LIKE', '%another facility%')
+                  ->orWhere('discharge_reason', 'LIKE', '%referral%');
+            })
+            ->count();
+
+        $totalReferrals = $externalReferrals + $transferDischarges;
+
+        // 6. MATERNITY DELIVERIES (Normal vs Caesarean Section)
+        $normalDeliveries = DeliveryRecord::whereBetween('delivery_date', [$from, $to])
+            ->where(function ($q) {
+                $q->whereIn('type_of_delivery', ['svd', 'assisted_vaginal', 'vacuum', 'normal', 'vaginal'])
+                  ->orWhere(function ($sub) {
+                      $sub->where('type_of_delivery', 'NOT LIKE', '%cs%')
+                          ->where('type_of_delivery', 'NOT LIKE', '%caesarean%')
+                          ->where('type_of_delivery', 'NOT LIKE', '%cesarean%');
+                  });
+            })
+            ->count();
+
+        $csDeliveries = DeliveryRecord::whereBetween('delivery_date', [$from, $to])
+            ->where(function ($q) {
+                $q->whereIn('type_of_delivery', ['elective_cs', 'emergency_cs', 'cs'])
+                  ->orWhere('type_of_delivery', 'LIKE', '%cs%')
+                  ->orWhere('type_of_delivery', 'LIKE', '%caesarean%')
+                  ->orWhere('type_of_delivery', 'LIKE', '%cesarean%');
+            })
+            ->count();
+
+        $totalDeliveries = $normalDeliveries + $csDeliveries;
+        $csRate = $totalDeliveries > 0 ? round(($csDeliveries / $totalDeliveries) * 100, 1) : 0;
+
+        // 7. SURGERIES
+        $totalSurgeries = Procedure::where('procedure_status', 'completed')
+            ->whereBetween('actual_end_time', [$from, $to])
+            ->whereHas('procedureDefinition', fn ($q) => $q->where('is_surgical', 1))
+            ->count();
+
+        // 8. TOTAL DEATHS
+        $deathRecordsCount = DeathRecord::whereBetween('date_of_death', [$from, $to])->count();
+        $inpatientDeathsCount = AdmissionRequest::where('discharged', 1)
+            ->whereBetween('discharge_date', [$from, $to])
+            ->when($wardId, fn ($q) => $q->whereHas('bed', fn ($b) => $b->where('ward_id', $wardId)))
+            ->where(function ($q) {
+                $q->where('discharge_reason', 'Deceased')
+                  ->orWhereNotNull('death_record_id');
+            })
+            ->count();
+
+        $totalDeaths = max($deathRecordsCount, $inpatientDeathsCount);
+
+        // 9. CORPSES (Morgue)
+        $corpsesActive = \Illuminate\Support\Facades\Schema::hasTable('morgue_admissions')
+            ? \App\Models\MorgueAdmission::where('status', 'admitted')->count()
+            : 0;
+        $corpsesReceived = \Illuminate\Support\Facades\Schema::hasTable('morgue_admissions')
+            ? \App\Models\MorgueAdmission::whereBetween('arrival_time', [$from, $to])->count()
+            : $deathRecordsCount;
+
+        // 10. DYNAMIC WARD CENSUS FOR ALL ACTIVE WARDS (Generic, never hardcoded)
+        $wards = Ward::with(['beds'])
+            ->where('is_active', 1)
+            ->when($wardId, fn ($q) => $q->where('id', $wardId))
+            ->orderBy('name')
+            ->get();
+
+        $wardData = [];
+        $hospitalTotalBeds = 0;
+        $hospitalOccupied = 0;
+        $hospitalAvailable = 0;
+        $hospitalMaintenance = 0;
+
+        foreach ($wards as $w) {
+            $totalBeds = $w->beds->count() > 0 ? $w->beds->count() : (int) $w->capacity;
+            $wOccupied = $w->beds->where('bed_status', 'occupied')->count();
+            $wAvailable = $w->beds->where('bed_status', 'available')->count();
+            $wMaint = $w->beds->where('bed_status', 'maintenance')->count();
+
+            if ($wAvailable === 0 && ($totalBeds - $wOccupied - $wMaint) > 0) {
+                $wAvailable = max(0, $totalBeds - $wOccupied - $wMaint);
+            }
+
+            $rate = $totalBeds > 0 ? round(($wOccupied / $totalBeds) * 100, 1) : 0;
+
+            $hospitalTotalBeds += $totalBeds;
+            $hospitalOccupied += $wOccupied;
+            $hospitalAvailable += $wAvailable;
+            $hospitalMaintenance += $wMaint;
+
+            $wardData[] = [
+                'ward_id' => $w->id,
+                'ward' => $w->name,
+                'ward_name' => $w->name,
+                'code' => $w->code ?: strtoupper(substr(preg_replace('/[^A-Za-z0-9]/', '', $w->name), 0, 4)),
+                'type' => ucfirst($w->type ?? 'General'),
+                'specialty' => ucfirst($w->type ?? 'General'),
+                'total' => $totalBeds,
+                'total_beds' => $totalBeds,
+                'occupied' => $wOccupied,
+                'available' => $wAvailable,
+                'maintenance' => $wMaint,
+                'occupancy_rate' => $rate . '%',
+                'occupancy_pct' => $rate,
+            ];
+        }
+
+        $overallOccupancyRate = $hospitalTotalBeds > 0 ? round(($hospitalOccupied / $hospitalTotalBeds) * 100, 1) : 0;
+
+        return [
+            'period' => [
+                'from' => $from->format('Y-m-d'),
+                'to' => $to->format('Y-m-d'),
+                'formatted' => $from->format('d M Y') . ' — ' . $to->format('d M Y'),
+            ],
+            'kpis' => [
+                'total_outpatient' => $totalOutpatient,
+                'gopd' => $gopdCount,
+                'popd' => $popdCount,
+                'total_inpatients' => $hospitalOccupied,
+                'empty_beds' => $hospitalAvailable,
+                'total_admissions' => $totalAdmissions,
+                'total_discharges' => $totalDischarges,
+                'sama' => $samaCount,
+                'absconsion' => $absconsionCount,
+                'referrals' => $totalReferrals,
+                'normal_delivery' => $normalDeliveries,
+                'cs_delivery' => $csDeliveries,
+                'total_deliveries' => $totalDeliveries,
+                'cs_rate' => $csRate,
+                'total_surgeries' => $totalSurgeries,
+                'total_deaths' => $totalDeaths,
+                'corpses' => $corpsesReceived,
+                'corpses_active' => $corpsesActive,
+                'day_care' => $totalDayCare,
+                'emergency_intakes' => $emergencyQueueCount,
+                'emergency_admissions' => $emergencyAdmissionCount,
+                'same_day_observations' => $sameDayObservationsCount,
+            ],
+            'ward_census' => [
+                'total_beds' => $hospitalTotalBeds,
+                'total' => $hospitalTotalBeds,
+                'occupied' => $hospitalOccupied,
+                'available' => $hospitalAvailable,
+                'maintenance' => $hospitalMaintenance,
+                'occupancy_rate' => $overallOccupancyRate . '%',
+                'occupancy_pct' => $overallOccupancyRate,
+                'wards' => $wardData,
+            ],
+            'clinics' => $clinicData,
+            'hospital' => [
+                'name' => appsettings('hos_name') ?? appsettings('site_name') ?? 'Hospital Management System',
+                'address' => appsettings('contact_address') ?? '',
+                'phone' => appsettings('contact_phones') ?? '',
+            ],
+        ];
+    }
+
+    /**
+     * Get DNS Statistics and Ward Census Report (JSON API)
+     */
+    public function getDnsReport(Request $request)
+    {
+        $from = $request->filled('date_from') ? Carbon::parse($request->date_from)->startOfDay() : now()->startOfMonth()->startOfDay();
+        $to = $request->filled('date_to') ? Carbon::parse($request->date_to)->endOfDay() : now()->endOfDay();
+        $wardId = $request->get('ward_id');
+
+        $data = $this->getDnsReportData($from, $to, $wardId);
+
+        return response()->json(array_merge(['success' => true], $data));
+    }
+
+    /**
+     * Render patient HMO and Scheme markup matching NHMIS workbench standard
+     */
+    protected function renderPatientHmo($patient): array
+    {
+        $hmo = $patient?->hmo;
+        if (!$hmo) {
+            return [
+                'hmo_id' => null,
+                'hmo_scheme_id' => null,
+                'hmo_html' => '<span class="text-muted" style="font-size:0.75rem;">Cash</span>',
+            ];
+        }
+
+        $html = '<small class="font-weight-bold text-info"><i class="mdi mdi-shield-account"></i> ' . e($hmo->name ?? '-') . '</small>' .
+            ($hmo->scheme ? '<br><small class="text-muted" style="font-size:0.7rem;">' . e($hmo->scheme->name) . '</small>' : '');
+
+        return [
+            'hmo_id' => $hmo->id,
+            'hmo_scheme_id' => $hmo->hmo_scheme_id,
+            'hmo_html' => $html,
+        ];
+    }
+
+    /**
+     * Universal Paginated & Server-Side Filterable Drill-Down for DNS Report Metrics
+     * Follows the exact architecture of NhmisWorkbenchController::drillDown
+     */
+    public function getDnsDrillDown(Request $request)
+    {
+        $from = $request->filled('date_from') ? Carbon::parse($request->date_from)->startOfDay() : now()->startOfMonth()->startOfDay();
+        $to = $request->filled('date_to') ? Carbon::parse($request->date_to)->endOfDay() : now()->endOfDay();
+        $metric = $request->get('metric', 'inpatients');
+        $clinicId = $request->get('clinic_id');
+        $wardId = $request->get('ward_id');
+
+        $results = [];
+        $title = 'Drill-Down Details';
+
+        switch ($metric) {
+            case 'gopd':
+                $title = 'General Outpatient Department (GOPD) Consultations';
+                $q = Encounter::with(['patient.user', 'patient.hmo.scheme', 'doctor', 'queue.clinic'])
+                    ->whereBetween('encounters.created_at', [$from, $to])
+                    ->where(function ($query) {
+                        $query->whereHas('queue.clinic', function ($c) {
+                            $c->where('name', 'LIKE', '%General%')
+                              ->orWhere('name', 'LIKE', '%GOPD%');
+                        })
+                        ->orWhereDoesntHave('patient', function ($p) {
+                            $p->where('hmo_id', 1)
+                              ->orWhereHas('hmo', fn ($h) => $h->where('name', 'LIKE', '%Private%'));
+                        });
+                    })
+                    ->orderByDesc('encounters.created_at');
+
+                foreach ($q->get() as $e) {
+                    $p = $e->patient;
+                    $hmoInfo = $this->renderPatientHmo($p);
+                    $results[] = [
+                        'id' => $e->id,
+                        'patient_id' => $e->patient_id,
+                        'patient_name' => $this->formatPersonName($p?->user),
+                        'file_no' => $p?->file_no ?? 'N/A',
+                        'gender' => $p?->gender ?? 'N/A',
+                        'age' => $p?->dob ? Carbon::parse($p->dob)->age . 'y' : 'N/A',
+                        'hmo_id' => $hmoInfo['hmo_id'],
+                        'hmo_scheme_id' => $hmoInfo['hmo_scheme_id'],
+                        'hmo_html' => $hmoInfo['hmo_html'],
+                        'date' => $e->created_at->format('Y-m-d H:i'),
+                        'location' => $e->queue?->clinic?->name ?? 'GOPD / General Outpatient',
+                        'doctor_name' => $this->formatPersonName($e->doctor),
+                        'details' => $e->reasons_for_encounter ?? $e->notes ?? 'GOPD Consultation',
+                    ];
+                }
+
+                break;
+
+            case 'popd':
+                $title = 'Private Outpatient Department (POPD) Consultations';
+                $q = Encounter::with(['patient.user', 'patient.hmo.scheme', 'doctor', 'queue.clinic'])
+                    ->whereBetween('encounters.created_at', [$from, $to])
+                    ->where(function ($query) {
+                        $query->whereHas('patient', function ($p) {
+                            $p->where('hmo_id', 1)
+                              ->orWhereHas('hmo', fn ($h) => $h->where('name', 'LIKE', '%Private%'));
+                        })
+                        ->orWhereHas('queue.clinic', function ($c) {
+                            $c->where('name', 'LIKE', '%POPD%')
+                              ->orWhere('name', 'LIKE', '%Private%');
+                        });
+                    })
+                    ->orderByDesc('encounters.created_at');
+
+                foreach ($q->get() as $e) {
+                    $p = $e->patient;
+                    $hmoInfo = $this->renderPatientHmo($p);
+                    $results[] = [
+                        'id' => $e->id,
+                        'patient_id' => $e->patient_id,
+                        'patient_name' => $this->formatPersonName($p?->user),
+                        'file_no' => $p?->file_no ?? 'N/A',
+                        'gender' => $p?->gender ?? 'N/A',
+                        'age' => $p?->dob ? Carbon::parse($p->dob)->age . 'y' : 'N/A',
+                        'hmo_id' => $hmoInfo['hmo_id'],
+                        'hmo_scheme_id' => $hmoInfo['hmo_scheme_id'],
+                        'hmo_html' => $hmoInfo['hmo_html'],
+                        'date' => $e->created_at->format('Y-m-d H:i'),
+                        'location' => $e->queue?->clinic?->name ?? 'POPD / Private Outpatient',
+                        'doctor_name' => $this->formatPersonName($e->doctor),
+                        'details' => $e->reasons_for_encounter ?? $e->notes ?? 'POPD Private Consultation',
+                    ];
+                }
+
+                break;
+
+            case 'outpatient':
+            case 'clinic':
+                $q = Encounter::with(['patient.user', 'patient.hmo.scheme', 'doctor', 'queue.clinic'])
+                    ->whereBetween('encounters.created_at', [$from, $to])
+                    ->join('doctor_queues', 'encounters.queue_id', '=', 'doctor_queues.id')
+                    ->when($clinicId, fn ($query) => $query->where('doctor_queues.clinic_id', $clinicId))
+                    ->select('encounters.*')
+                    ->orderByDesc('encounters.created_at');
+
+                $title = $clinicId ? ('Outpatient Consultations: ' . (Clinic::find($clinicId)?->name ?? 'Clinic')) : 'All Outpatient Consultations';
+                foreach ($q->get() as $e) {
+                    $p = $e->patient;
+                    $hmoInfo = $this->renderPatientHmo($p);
+                    $results[] = [
+                        'id' => $e->id,
+                        'patient_id' => $e->patient_id,
+                        'patient_name' => $this->formatPersonName($p?->user),
+                        'file_no' => $p?->file_no ?? 'N/A',
+                        'gender' => $p?->gender ?? 'N/A',
+                        'age' => $p?->dob ? Carbon::parse($p->dob)->age . 'y' : 'N/A',
+                        'hmo_id' => $hmoInfo['hmo_id'],
+                        'hmo_scheme_id' => $hmoInfo['hmo_scheme_id'],
+                        'hmo_html' => $hmoInfo['hmo_html'],
+                        'date' => $e->created_at->format('Y-m-d H:i'),
+                        'location' => $e->queue?->clinic?->name ?? 'OPD',
+                        'doctor_name' => $this->formatPersonName($e->doctor),
+                        'details' => $e->reasons_for_encounter ?? $e->notes ?? 'Outpatient Consultation',
+                    ];
+                }
+
+                break;
+
+            case 'emergency_intakes':
+                $title = 'Emergency Intakes';
+                $records = DoctorQueue::with(['patient.user', 'patient.hmo.scheme', 'clinic', 'doctor.user'])
+                    ->whereBetween('created_at', [$from, $to])
+                    ->where('source', 'emergency_intake')
+                    ->orderByDesc('created_at')
+                    ->get();
+
+                foreach ($records as $dq) {
+                    $p = $dq->patient;
+                    $hmoInfo = $this->renderPatientHmo($p);
+                    $results[] = [
+                        'id' => $dq->id,
+                        'patient_id' => $dq->patient_id,
+                        'patient_name' => $this->formatPersonName($p?->user),
+                        'file_no' => $p?->file_no ?? 'N/A',
+                        'gender' => $p?->gender ?? 'N/A',
+                        'age' => $p?->dob ? Carbon::parse($p->dob)->age . 'y' : 'N/A',
+                        'hmo_id' => $hmoInfo['hmo_id'],
+                        'hmo_scheme_id' => $hmoInfo['hmo_scheme_id'],
+                        'hmo_html' => $hmoInfo['hmo_html'],
+                        'date' => $dq->created_at->format('Y-m-d H:i'),
+                        'location' => 'Emergency Intake (A&E)' . ($dq->clinic ? ' - ' . $dq->clinic->name : ''),
+                        'doctor_name' => $this->formatPersonName($dq->doctor?->user),
+                        'details' => 'Emergency Queue | Priority: ' . ucfirst($dq->priority ?? 'emergency') . ($dq->triage_note ? ' | ' . $dq->triage_note : ''),
+                    ];
+                }
+
+                break;
+
+            case 'same_day_observations':
+            case 'day_care':
+                $title = 'Day Care & Emergency Inpatients';
+                // 1. Emergency Queue
+                $eq = DoctorQueue::with(['patient.user', 'patient.hmo.scheme', 'clinic', 'doctor.user'])
+                    ->whereBetween('created_at', [$from, $to])
+                    ->where('source', 'emergency_intake')
+                    ->orderByDesc('created_at')
+                    ->get();
+                foreach ($eq as $dq) {
+                    $p = $dq->patient;
+                    $hmoInfo = $this->renderPatientHmo($p);
+                    $results[] = [
+                        'id' => 'eq_' . $dq->id,
+                        'patient_id' => $dq->patient_id,
+                        'patient_name' => $this->formatPersonName($p?->user),
+                        'file_no' => $p?->file_no ?? 'N/A',
+                        'gender' => $p?->gender ?? 'N/A',
+                        'age' => $p?->dob ? Carbon::parse($p->dob)->age . 'y' : 'N/A',
+                        'hmo_id' => $hmoInfo['hmo_id'],
+                        'hmo_scheme_id' => $hmoInfo['hmo_scheme_id'],
+                        'hmo_html' => $hmoInfo['hmo_html'],
+                        'date' => $dq->created_at->format('Y-m-d H:i'),
+                        'location' => 'Emergency Room (A&E)',
+                        'doctor_name' => $this->formatPersonName($dq->doctor?->user),
+                        'details' => 'Emergency Intake Queue | Priority: ' . ucfirst($dq->priority ?? 'emergency'),
+                    ];
+                }
+
+                // 2. Same-Day Observations
+                $obs = AdmissionRequest::with(['patient.user', 'patient.hmo.scheme', 'bed.wardRelation', 'doctor'])
+                    ->where('discharged', 1)
+                    ->whereBetween('discharge_date', [$from, $to])
+                    ->whereDate('created_at', DB::raw('DATE(discharge_date)'))
+                    ->orderByDesc('created_at')
+                    ->get();
+                foreach ($obs as $adm) {
+                    $p = $adm->patient;
+                    $hmoInfo = $this->renderPatientHmo($p);
+                    $results[] = [
+                        'id' => 'obs_' . $adm->id,
+                        'patient_id' => $adm->patient_id,
+                        'patient_name' => $this->formatPersonName($p?->user),
+                        'file_no' => $p?->file_no ?? 'N/A',
+                        'gender' => $p?->gender ?? 'N/A',
+                        'age' => $p?->dob ? Carbon::parse($p->dob)->age . 'y' : 'N/A',
+                        'hmo_id' => $hmoInfo['hmo_id'],
+                        'hmo_scheme_id' => $hmoInfo['hmo_scheme_id'],
+                        'hmo_html' => $hmoInfo['hmo_html'],
+                        'date' => $adm->created_at->format('Y-m-d H:i') . ' to ' . Carbon::parse($adm->discharge_date)->format('H:i'),
+                        'location' => $adm->bed?->wardRelation?->name ?? 'Day Care / Observation',
+                        'doctor_name' => $this->formatPersonName($adm->doctor),
+                        'details' => 'Same-Day Observation | ' . ($adm->discharge_reason ?? 'Discharged'),
+                    ];
+                }
+
+                break;
+
+            case 'admissions':
+                $title = 'Inpatient Admissions';
+                $adms = AdmissionRequest::with(['patient.user', 'patient.hmo.scheme', 'bed.wardRelation', 'doctor'])
+                    ->whereBetween('created_at', [$from, $to])
+                    ->when($wardId, fn ($q) => $q->whereHas('bed', fn ($b) => $b->where('ward_id', $wardId)))
+                    ->orderByDesc('created_at')
+                    ->get();
+                foreach ($adms as $adm) {
+                    $p = $adm->patient;
+                    $hmoInfo = $this->renderPatientHmo($p);
+                    $results[] = [
+                        'id' => $adm->id,
+                        'patient_id' => $adm->patient_id,
+                        'patient_name' => $this->formatPersonName($p?->user),
+                        'file_no' => $p?->file_no ?? 'N/A',
+                        'gender' => $p?->gender ?? 'N/A',
+                        'age' => $p?->dob ? Carbon::parse($p->dob)->age . 'y' : 'N/A',
+                        'hmo_id' => $hmoInfo['hmo_id'],
+                        'hmo_scheme_id' => $hmoInfo['hmo_scheme_id'],
+                        'hmo_html' => $hmoInfo['hmo_html'],
+                        'date' => $adm->created_at->format('Y-m-d H:i'),
+                        'location' => ($adm->bed?->wardRelation?->name ?? 'Ward') . ' - ' . ($adm->bed?->name ?? 'Bed'),
+                        'doctor_name' => $this->formatPersonName($adm->doctor),
+                        'details' => $adm->admission_reason ?? $adm->chief_complaint ?? 'Admitted',
+                    ];
+                }
+
+                break;
+
+            case 'discharges':
+                $title = 'Inpatient Discharges';
+                $dischs = AdmissionRequest::with(['patient.user', 'patient.hmo.scheme', 'bed.wardRelation', 'doctor'])
+                    ->where('discharged', 1)
+                    ->whereBetween('discharge_date', [$from, $to])
+                    ->when($wardId, fn ($q) => $q->whereHas('bed', fn ($b) => $b->where('ward_id', $wardId)))
+                    ->orderByDesc('discharge_date')
+                    ->get();
+                foreach ($dischs as $adm) {
+                    $p = $adm->patient;
+                    $hmoInfo = $this->renderPatientHmo($p);
+                    $results[] = [
+                        'id' => $adm->id,
+                        'patient_id' => $adm->patient_id,
+                        'patient_name' => $this->formatPersonName($p?->user),
+                        'file_no' => $p?->file_no ?? 'N/A',
+                        'gender' => $p?->gender ?? 'N/A',
+                        'age' => $p?->dob ? Carbon::parse($p->dob)->age . 'y' : 'N/A',
+                        'hmo_id' => $hmoInfo['hmo_id'],
+                        'hmo_scheme_id' => $hmoInfo['hmo_scheme_id'],
+                        'hmo_html' => $hmoInfo['hmo_html'],
+                        'date' => Carbon::parse($adm->discharge_date)->format('Y-m-d H:i'),
+                        'location' => $adm->bed?->wardRelation?->name ?? 'Ward',
+                        'doctor_name' => $this->formatPersonName($adm->doctor),
+                        'details' => $adm->discharge_reason ?? $adm->discharge_note ?? 'Discharged',
+                    ];
+                }
+
+                break;
+
+            case 'sama':
+                $title = 'Signed Against Medical Advice (SAMA)';
+                $samas = AdmissionRequest::with(['patient.user', 'patient.hmo.scheme', 'bed.wardRelation', 'doctor'])
+                    ->where('discharged', 1)
+                    ->whereBetween('discharge_date', [$from, $to])
+                    ->where(function ($q) {
+                        $q->where('discharge_reason', 'LIKE', '%against medical advice%')
+                          ->orWhere('discharge_reason', 'LIKE', '%ama%')
+                          ->orWhere('discharge_reason', 'LIKE', '%sama%')
+                          ->orWhere('discharge_reason', 'LIKE', '%dama%')
+                          ->orWhere('discharge_note', 'LIKE', '%against medical advice%')
+                          ->orWhere('discharge_note', 'LIKE', '%ama%');
+                    })
+                    ->orderByDesc('discharge_date')
+                    ->get();
+                foreach ($samas as $adm) {
+                    $p = $adm->patient;
+                    $hmoInfo = $this->renderPatientHmo($p);
+                    $results[] = [
+                        'id' => $adm->id,
+                        'patient_id' => $adm->patient_id,
+                        'patient_name' => $this->formatPersonName($p?->user),
+                        'file_no' => $p?->file_no ?? 'N/A',
+                        'gender' => $p?->gender ?? 'N/A',
+                        'age' => $p?->dob ? Carbon::parse($p->dob)->age . 'y' : 'N/A',
+                        'hmo_id' => $hmoInfo['hmo_id'],
+                        'hmo_scheme_id' => $hmoInfo['hmo_scheme_id'],
+                        'hmo_html' => $hmoInfo['hmo_html'],
+                        'date' => Carbon::parse($adm->discharge_date)->format('Y-m-d H:i'),
+                        'location' => $adm->bed?->wardRelation?->name ?? 'Ward',
+                        'doctor_name' => $this->formatPersonName($adm->doctor),
+                        'details' => $adm->discharge_reason . ($adm->discharge_note ? ' - ' . $adm->discharge_note : ''),
+                    ];
+                }
+
+                break;
+
+            case 'absconsion':
+                $title = 'Absconsion (Left Without Notice)';
+                $abss = AdmissionRequest::with(['patient.user', 'patient.hmo.scheme', 'bed.wardRelation', 'doctor'])
+                    ->where('discharged', 1)
+                    ->whereBetween('discharge_date', [$from, $to])
+                    ->where(function ($q) {
+                        $q->where('discharge_reason', 'LIKE', '%abscond%')
+                          ->orWhere('discharge_reason', 'LIKE', '%left without notice%')
+                          ->orWhere('discharge_reason', 'LIKE', '%eloped%')
+                          ->orWhere('discharge_note', 'LIKE', '%abscond%');
+                    })
+                    ->orderByDesc('discharge_date')
+                    ->get();
+                foreach ($abss as $adm) {
+                    $p = $adm->patient;
+                    $hmoInfo = $this->renderPatientHmo($p);
+                    $results[] = [
+                        'id' => $adm->id,
+                        'patient_id' => $adm->patient_id,
+                        'patient_name' => $this->formatPersonName($p?->user),
+                        'file_no' => $p?->file_no ?? 'N/A',
+                        'gender' => $p?->gender ?? 'N/A',
+                        'age' => $p?->dob ? Carbon::parse($p->dob)->age . 'y' : 'N/A',
+                        'hmo_id' => $hmoInfo['hmo_id'],
+                        'hmo_scheme_id' => $hmoInfo['hmo_scheme_id'],
+                        'hmo_html' => $hmoInfo['hmo_html'],
+                        'date' => Carbon::parse($adm->discharge_date)->format('Y-m-d H:i'),
+                        'location' => $adm->bed?->wardRelation?->name ?? 'Ward',
+                        'doctor_name' => $this->formatPersonName($adm->doctor),
+                        'details' => $adm->discharge_reason . ($adm->discharge_note ? ' - ' . $adm->discharge_note : ''),
+                    ];
+                }
+
+                break;
+
+            case 'referrals':
+                $title = 'Referrals & Outward Transfers';
+                $external = SpecialistReferral::with(['patient.user', 'patient.hmo.scheme', 'referringDoctor.user'])
+                    ->whereBetween('created_at', [$from, $to])
+                    ->where('referral_type', 'external')
+                    ->get();
+                foreach ($external as $r) {
+                    $p = $r->patient;
+                    $hmoInfo = $this->renderPatientHmo($p);
+                    $results[] = [
+                        'id' => 'ref_' . $r->id,
+                        'patient_id' => $r->patient_id,
+                        'patient_name' => $this->formatPersonName($p?->user),
+                        'file_no' => $p?->file_no ?? 'N/A',
+                        'gender' => $p?->gender ?? 'N/A',
+                        'age' => $p?->dob ? Carbon::parse($p->dob)->age . 'y' : 'N/A',
+                        'hmo_id' => $hmoInfo['hmo_id'],
+                        'hmo_scheme_id' => $hmoInfo['hmo_scheme_id'],
+                        'hmo_html' => $hmoInfo['hmo_html'],
+                        'date' => $r->created_at->format('Y-m-d H:i'),
+                        'location' => 'External Facility: ' . ($r->external_facility_name ?? 'Outward Transfer'),
+                        'doctor_name' => $this->formatPersonName($r->referringDoctor?->user),
+                        'details' => $r->reason ?? 'Specialist Referral',
+                    ];
+                }
+
+                $transfers = AdmissionRequest::with(['patient.user', 'patient.hmo.scheme', 'bed.wardRelation', 'doctor'])
+                    ->where('discharged', 1)
+                    ->whereBetween('discharge_date', [$from, $to])
+                    ->where(function ($q) {
+                        $q->where('discharge_reason', 'LIKE', '%transfer%')
+                          ->orWhere('discharge_reason', 'LIKE', '%higher level%')
+                          ->orWhere('discharge_reason', 'LIKE', '%another facility%')
+                          ->orWhere('discharge_reason', 'LIKE', '%referral%');
+                    })
+                    ->get();
+                foreach ($transfers as $adm) {
+                    $p = $adm->patient;
+                    $hmoInfo = $this->renderPatientHmo($p);
+                    $results[] = [
+                        'id' => 'tr_' . $adm->id,
+                        'patient_id' => $adm->patient_id,
+                        'patient_name' => $this->formatPersonName($p?->user),
+                        'file_no' => $p?->file_no ?? 'N/A',
+                        'gender' => $p?->gender ?? 'N/A',
+                        'age' => $p?->dob ? Carbon::parse($p->dob)->age . 'y' : 'N/A',
+                        'hmo_id' => $hmoInfo['hmo_id'],
+                        'hmo_scheme_id' => $hmoInfo['hmo_scheme_id'],
+                        'hmo_html' => $hmoInfo['hmo_html'],
+                        'date' => Carbon::parse($adm->discharge_date)->format('Y-m-d H:i'),
+                        'location' => $adm->bed?->wardRelation?->name ?? 'Ward Transfer',
+                        'doctor_name' => $this->formatPersonName($adm->doctor),
+                        'details' => $adm->discharge_reason,
+                    ];
+                }
+
+                break;
+
+            case 'normal_delivery':
+                $title = 'Normal Deliveries (SVD / Vaginal)';
+                $delRecords = DeliveryRecord::with(['patient.user', 'patient.hmo.scheme', 'deliveredBy'])
+                    ->whereBetween('delivery_date', [$from, $to])
+                    ->where(function ($q) {
+                        $q->whereIn('type_of_delivery', ['svd', 'assisted_vaginal', 'vacuum', 'normal', 'vaginal'])
+                          ->orWhere(function ($sub) {
+                              $sub->where('type_of_delivery', 'NOT LIKE', '%cs%')
+                                  ->where('type_of_delivery', 'NOT LIKE', '%caesarean%')
+                                  ->where('type_of_delivery', 'NOT LIKE', '%cesarean%');
+                          });
+                    })
+                    ->orderByDesc('delivery_date')
+                    ->get();
+                foreach ($delRecords as $dr) {
+                    $p = $dr->patient;
+                    $hmoInfo = $this->renderPatientHmo($p);
+                    $results[] = [
+                        'id' => $dr->id,
+                        'patient_id' => $p?->id,
+                        'patient_name' => $this->formatPersonName($p?->user),
+                        'file_no' => $p?->file_no ?? 'N/A',
+                        'gender' => 'Female',
+                        'age' => $p?->dob ? Carbon::parse($p->dob)->age . 'y' : 'N/A',
+                        'hmo_id' => $hmoInfo['hmo_id'],
+                        'hmo_scheme_id' => $hmoInfo['hmo_scheme_id'],
+                        'hmo_html' => $hmoInfo['hmo_html'],
+                        'date' => Carbon::parse($dr->delivery_date)->format('Y-m-d') . ($dr->delivery_time ? ' ' . $dr->delivery_time : ''),
+                        'location' => 'Labour / Maternity Ward',
+                        'doctor_name' => $dr->deliveredBy ? $this->formatPersonName($dr->deliveredBy) : 'Midwife / Doctor',
+                        'details' => strtoupper(str_replace('_', ' ', $dr->type_of_delivery ?? 'Normal')) . ' | Babies: ' . ($dr->number_of_babies ?? 1) . ($dr->blood_loss_ml ? ' | EBL: ' . $dr->blood_loss_ml . 'ml' : ''),
+                    ];
+                }
+
+                break;
+
+            case 'cs_delivery':
+                $title = 'Caesarean Section (CS) Deliveries';
+                $csRecords = DeliveryRecord::with(['patient.user', 'patient.hmo.scheme', 'deliveredBy'])
+                    ->whereBetween('delivery_date', [$from, $to])
+                    ->where(function ($q) {
+                        $q->whereIn('type_of_delivery', ['elective_cs', 'emergency_cs', 'cs'])
+                          ->orWhere('type_of_delivery', 'LIKE', '%cs%')
+                          ->orWhere('type_of_delivery', 'LIKE', '%caesarean%')
+                          ->orWhere('type_of_delivery', 'LIKE', '%cesarean%');
+                    })
+                    ->orderByDesc('delivery_date')
+                    ->get();
+                foreach ($csRecords as $dr) {
+                    $p = $dr->patient;
+                    $hmoInfo = $this->renderPatientHmo($p);
+                    $results[] = [
+                        'id' => $dr->id,
+                        'patient_id' => $p?->id,
+                        'patient_name' => $this->formatPersonName($p?->user),
+                        'file_no' => $p?->file_no ?? 'N/A',
+                        'gender' => 'Female',
+                        'age' => $p?->dob ? Carbon::parse($p->dob)->age . 'y' : 'N/A',
+                        'hmo_id' => $hmoInfo['hmo_id'],
+                        'hmo_scheme_id' => $hmoInfo['hmo_scheme_id'],
+                        'hmo_html' => $hmoInfo['hmo_html'],
+                        'date' => Carbon::parse($dr->delivery_date)->format('Y-m-d') . ($dr->delivery_time ? ' ' . $dr->delivery_time : ''),
+                        'location' => 'Theatre / Maternity Ward',
+                        'doctor_name' => $dr->deliveredBy ? $this->formatPersonName($dr->deliveredBy) : 'Obstetric Surgeon',
+                        'details' => strtoupper(str_replace('_', ' ', $dr->type_of_delivery ?? 'CS')) . ' | Babies: ' . ($dr->number_of_babies ?? 1) . ($dr->blood_loss_ml ? ' | EBL: ' . $dr->blood_loss_ml . 'ml' : ''),
+                    ];
+                }
+
+                break;
+
+            case 'surgeries':
+                $title = 'Completed Surgical Procedures';
+                $procs = Procedure::with(['patient.user', 'patient.hmo.scheme', 'procedureDefinition', 'requestedByUser'])
+                    ->where('procedure_status', 'completed')
+                    ->whereBetween('actual_end_time', [$from, $to])
+                    ->whereHas('procedureDefinition', fn ($q) => $q->where('is_surgical', 1))
+                    ->orderByDesc('actual_end_time')
+                    ->get();
+                foreach ($procs as $p) {
+                    $patient = $p->patient;
+                    $hmoInfo = $this->renderPatientHmo($patient);
+                    $results[] = [
+                        'id' => $p->id,
+                        'patient_id' => $p->patient_id,
+                        'patient_name' => $this->formatPersonName($patient?->user),
+                        'file_no' => $patient?->file_no ?? 'N/A',
+                        'gender' => $patient?->gender ?? 'N/A',
+                        'age' => $patient?->dob ? Carbon::parse($patient->dob)->age . 'y' : 'N/A',
+                        'hmo_id' => $hmoInfo['hmo_id'],
+                        'hmo_scheme_id' => $hmoInfo['hmo_scheme_id'],
+                        'hmo_html' => $hmoInfo['hmo_html'],
+                        'date' => $p->actual_end_time ? Carbon::parse($p->actual_end_time)->format('Y-m-d H:i') : 'N/A',
+                        'location' => $p->operating_room ?? 'Operating Theatre',
+                        'doctor_name' => $this->formatPersonName($p->requestedByUser),
+                        'details' => optional($p->procedureDefinition)->name ?? $p->free_form_name ?? 'Surgical Operation',
+                    ];
+                }
+
+                break;
+
+            case 'deaths':
+                $title = 'Mortality Records';
+                $deaths = DeathRecord::with(['patient.user', 'patient.hmo.scheme', 'doctor'])
+                    ->whereBetween('date_of_death', [$from, $to])
+                    ->orderByDesc('date_of_death')
+                    ->get();
+                foreach ($deaths as $d) {
+                    $p = $d->patient;
+                    $hmoInfo = $this->renderPatientHmo($p);
+                    $results[] = [
+                        'id' => $d->id,
+                        'patient_id' => $d->patient_id,
+                        'patient_name' => $this->formatPersonName($p?->user),
+                        'file_no' => $p?->file_no ?? 'N/A',
+                        'gender' => $p?->gender ?? 'N/A',
+                        'age' => $p?->dob ? Carbon::parse($p->dob)->age . 'y' : 'N/A',
+                        'hmo_id' => $hmoInfo['hmo_id'],
+                        'hmo_scheme_id' => $hmoInfo['hmo_scheme_id'],
+                        'hmo_html' => $hmoInfo['hmo_html'],
+                        'date' => Carbon::parse($d->date_of_death)->format('Y-m-d') . ($d->time_of_death ? ' ' . $d->time_of_death : ''),
+                        'location' => 'Inpatient / Ward',
+                        'doctor_name' => $d->doctor ? $this->formatPersonName($d->doctor) : 'Certifying Physician',
+                        'details' => 'Cause: ' . ($d->cause_of_death_primary ?? $d->cause_of_death_description ?? 'N/A'),
+                    ];
+                }
+
+                break;
+
+            case 'corpses':
+                $title = 'Morgue Received / In-Morgue Corpses';
+                if (\Illuminate\Support\Facades\Schema::hasTable('morgue_admissions')) {
+                    $morgueRecords = \App\Models\MorgueAdmission::with(['patient.user', 'patient.hmo.scheme'])
+                        ->whereBetween('arrival_time', [$from, $to])
+                        ->orderByDesc('arrival_time')
+                        ->get();
+                    foreach ($morgueRecords as $ma) {
+                        $p = $ma->patient;
+                        $hmoInfo = $this->renderPatientHmo($p);
+                        $results[] = [
+                            'id' => $ma->id,
+                            'patient_id' => $ma->patient_id,
+                            'patient_name' => $p ? $this->formatPersonName($p->user) : ($ma->deceased_name ?? 'Unidentified'),
+                            'file_no' => $p?->file_no ?? ($ma->tag_number ?? 'Morgue Tag'),
+                            'gender' => $ma->gender ?? $p?->gender ?? 'N/A',
+                            'age' => $p?->dob ? Carbon::parse($p->dob)->age . 'y' : 'N/A',
+                            'hmo_id' => $hmoInfo['hmo_id'],
+                            'hmo_scheme_id' => $hmoInfo['hmo_scheme_id'],
+                            'hmo_html' => $hmoInfo['hmo_html'],
+                            'date' => Carbon::parse($ma->arrival_time)->format('Y-m-d H:i'),
+                            'location' => 'Morgue / Mortuary',
+                            'doctor_name' => 'Attending Pathologist / Mortuary Team',
+                            'details' => 'Tag: ' . ($ma->tag_number ?? 'N/A') . ' | Status: ' . ucfirst($ma->status ?? 'Admitted'),
+                        ];
+                    }
+                }
+
+                break;
+
+            case 'empty_beds':
+                $title = 'Hospital Empty / Available Beds';
+                $emptyBeds = Bed::with(['wardRelation'])
+                    ->where('bed_status', 'available')
+                    ->when($wardId, fn ($q) => $q->where('ward_id', $wardId))
+                    ->orderBy('name')
+                    ->get();
+                foreach ($emptyBeds as $b) {
+                    $results[] = [
+                        'id' => $b->id,
+                        'patient_id' => null,
+                        'patient_name' => '<span class="badge badge-success text-white">Available Bed</span>',
+                        'file_no' => '-',
+                        'gender' => '-',
+                        'age' => '-',
+                        'hmo_id' => null,
+                        'hmo_scheme_id' => null,
+                        'hmo_html' => '<span class="text-muted">-</span>',
+                        'date' => Carbon::parse($b->updated_at)->format('Y-m-d H:i'),
+                        'location' => ($b->wardRelation?->name ?? 'Ward') . ' - Bed ' . $b->name,
+                        'doctor_name' => 'Nursing Department',
+                        'details' => 'Ready for Admission | Status: Available',
+                    ];
+                }
+
+                break;
+
+            case 'ward_patients':
+            case 'inpatients':
+            case 'ward':
+            default:
+                $wardIds = [];
+                if ($request->filled('ward_ids')) {
+                    $wardIds = array_filter(explode(',', $request->get('ward_ids')));
+                } elseif ($wardId) {
+                    $wardIds = [$wardId];
+                }
+
+                $targetWard = count($wardIds) === 1 ? Ward::find($wardIds[0]) : null;
+                $title = count($wardIds) === 1 && $targetWard ? ('Active Inpatients: ' . $targetWard->name) : 'Active Inpatients: All Wards';
+                $beds = Bed::with(['wardRelation', 'occupant.user', 'occupant.hmo.scheme'])
+                    ->where('bed_status', 'occupied')
+                    ->when(!empty($wardIds), fn ($q) => $q->whereIn('ward_id', $wardIds))
+                    ->get();
+                foreach ($beds as $b) {
+                    $p = $b->occupant;
+                    $hmoInfo = $this->renderPatientHmo($p);
+                    $results[] = [
+                        'id' => $b->id,
+                        'patient_id' => $p?->id,
+                        'patient_name' => $this->formatPersonName($p?->user),
+                        'file_no' => $p?->file_no ?? 'N/A',
+                        'gender' => $p?->gender ?? 'N/A',
+                        'age' => $p?->dob ? Carbon::parse($p->dob)->age . 'y' : 'N/A',
+                        'hmo_id' => $hmoInfo['hmo_id'],
+                        'hmo_scheme_id' => $hmoInfo['hmo_scheme_id'],
+                        'hmo_html' => $hmoInfo['hmo_html'],
+                        'date' => Carbon::parse($b->updated_at)->format('Y-m-d H:i'),
+                        'location' => ($b->wardRelation?->name ?? 'Ward') . ' - Bed ' . $b->name,
+                        'doctor_name' => 'Attending Nursing Team',
+                        'details' => 'Currently Admitted in Bed ' . $b->name,
+                    ];
+                }
+
+                break;
+        }
+
+        // Filter by HMO
+        $hmoId = $request->get('hmo_id');
+        if ($hmoId === 'cash') {
+            $results = array_values(array_filter($results, fn ($r) => empty($r['hmo_id'])));
+        } elseif (!empty($hmoId)) {
+            $results = array_values(array_filter($results, fn ($r) => ($r['hmo_id'] ?? null) == $hmoId));
+        }
+
+        // Filter by Scheme
+        $schemeId = $request->get('scheme_id');
+        if (!empty($schemeId)) {
+            $results = array_values(array_filter($results, fn ($r) => ($r['hmo_scheme_id'] ?? null) == $schemeId));
+        }
+
+        // Filter by Search (debounced search across all relevant fields)
+        if ($request->filled('search')) {
+            $searchLower = mb_strtolower(trim($request->get('search')));
+            $results = array_values(array_filter($results, function ($r) use ($searchLower) {
+                $haystack = mb_strtolower(
+                    ($r['patient_name'] ?? '') . ' ' .
+                    ($r['file_no'] ?? '') . ' ' .
+                    ($r['doctor_name'] ?? '') . ' ' .
+                    ($r['location'] ?? '') . ' ' .
+                    ($r['details'] ?? '') . ' ' .
+                    strip_tags($r['hmo_html'] ?? '')
+                );
+
+                return str_contains($haystack, $searchLower);
+            }));
+        }
+
+        $totalRecords = count($results);
+        $uniquePatientsCount = count(array_unique(array_filter(array_column($results, 'patient_id'))));
+        if ($uniquePatientsCount === 0 && $totalRecords > 0) {
+            $uniquePatientsCount = $totalRecords;
+        }
+
+        $perPage = max(5, min(100, (int) $request->query('per_page', 25)));
+        $lastPage = (int) max(1, ceil($totalRecords / $perPage));
+        $page = max(1, min((int) $request->query('page', 1), $lastPage));
+
+        $paginatedRecords = array_slice($results, ($page - 1) * $perPage, $perPage);
+        $fromIdx = $totalRecords > 0 ? (($page - 1) * $perPage + 1) : 0;
+        $toIdx = min($page * $perPage, $totalRecords);
+
+        // Fetch HMO and Scheme lists for dynamic filter population
+        $hmos = Hmo::select('id', 'name', 'hmo_scheme_id')->where('status', 1)->orderBy('name')->get();
+        $schemes = HmoScheme::select('id', 'name')->orderBy('name')->get();
+
+        return response()->json([
+            'success' => true,
+            'metric' => $metric,
+            'title' => $title,
+            'total_records' => $totalRecords,
+            'unique_patients' => $uniquePatientsCount,
+            'current_page' => $page,
+            'last_page' => $lastPage,
+            'per_page' => $perPage,
+            'from' => $fromIdx,
+            'to' => $toIdx,
+            'records' => $paginatedRecords,
+            'hmos' => $hmos,
+            'schemes' => $schemes,
+        ]);
+    }
+
+    /**
+     * Printable Official DNS Report View
+     */
+    public function printDnsReport(Request $request)
+    {
+        $from = $request->filled('date_from') ? Carbon::parse($request->date_from)->startOfDay() : now()->startOfMonth()->startOfDay();
+        $to = $request->filled('date_to') ? Carbon::parse($request->date_to)->endOfDay() : now()->endOfDay();
+        $wardId = $request->get('ward_id');
+
+        $report = $this->getDnsReportData($from, $to, $wardId);
+
+        $site = appsettings();
+
+        return view('admin.clinical_reports.dns_print', compact('report', 'site'));
     }
 }

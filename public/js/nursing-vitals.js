@@ -891,8 +891,8 @@ const NursingReports = (function() {
         hideAllViews();
         $('#nursing-reports-view').show();
 
-        // Load activity summary (first tab)
-        loadTabData('#nr-activity');
+        const activeTab = $('#nursingReportsTabs a.active').attr('href') || '#nr-activity';
+        loadTabData(activeTab);
     }
 
     // Hide reports view
@@ -981,6 +981,16 @@ const NursingReports = (function() {
 
     // Load data for specific tab
     function loadTabData(tabId, forceReload = false) {
+        if (tabId === '#clinical-reports-content') {
+            $('.nursing-reports-filters').slideUp(150);
+            if (typeof window.initClinicalReports === 'function') {
+                window.initClinicalReports();
+            }
+            return;
+        } else {
+            $('.nursing-reports-filters').slideDown(150);
+        }
+
         const filters = getFilters();
 
         switch (tabId) {
@@ -1614,18 +1624,30 @@ const NursingReports = (function() {
         });
     }
 
-    // Show loading state
+    // Show loading state limited to the report section
     function showLoading(container) {
-        $(container).find('.card-body').each(function() {
-            if (!$(this).find('.loading-overlay').length) {
-                $(this).append('<div class="loading-overlay"><div class="spinner-border text-primary"></div></div>');
-            }
-        });
+        const $target = $(container);
+        if (!$target.length) return;
+
+        // Ensure container is positioned relatively so overlay is scoped to this section
+        $target.css('position', 'relative');
+
+        // Remove any existing overlay
+        $target.find('.nr-section-loading, .loading-overlay').remove();
+
+        const spinnerHtml = `
+            <div class="nr-section-loading" role="status">
+                <div class="spinner-border text-primary" role="status"></div>
+                <div class="nr-loading-text"><i class="mdi mdi-loading mdi-spin me-1"></i> Loading report data...</div>
+            </div>
+        `;
+
+        $target.append(spinnerHtml);
     }
 
     // Hide loading state
     function hideLoading(container) {
-        $(container).find('.loading-overlay').remove();
+        $(container).find('.nr-section-loading, .loading-overlay').remove();
     }
 
     // Public API

@@ -1255,6 +1255,9 @@ Route::middleware(['auth'])->prefix('clinical-reports')->name('clinical-reports.
     Route::get('/referrals', [\App\Http\Controllers\ClinicalReportsController::class, 'getReferrals'])->name('referrals');
     Route::get('/vaccinations', [\App\Http\Controllers\ClinicalReportsController::class, 'getVaccinations'])->name('vaccinations');
     Route::get('/occupancy', [\App\Http\Controllers\ClinicalReportsController::class, 'getOccupancy'])->name('occupancy');
+    Route::get('/dns-report', [\App\Http\Controllers\ClinicalReportsController::class, 'getDnsReport'])->name('dns-report');
+    Route::get('/dns-drill-down', [\App\Http\Controllers\ClinicalReportsController::class, 'getDnsDrillDown'])->name('dns-drill-down');
+    Route::get('/dns-print', [\App\Http\Controllers\ClinicalReportsController::class, 'printDnsReport'])->name('dns-print');
 });
 
 // Internal Audit Workbench routes

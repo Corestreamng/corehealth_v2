@@ -449,11 +449,20 @@
                             <i class="mdi mdi-calendar-check"></i> Visits
                         </a>
                     </li>
+                    @php
+                        $staffProfile = Auth::user() ? Auth::user()->staff_profile : null;
+                        $canAccessClinicalReports = Auth::user() && (
+                            Auth::user()->hasAnyRole(['SUPERADMIN', 'ADMIN', 'super-admin']) ||
+                            ($staffProfile && ($staffProfile->is_unit_head || $staffProfile->is_dept_head))
+                        );
+                    @endphp
+                    @if($canAccessClinicalReports)
                     <li class="nav-item">
                         <a class="nav-link" id="clinical-reports-tab" data-toggle="tab" href="#clinical-reports-content" role="tab">
                             <i class="mdi mdi-chart-timeline-variant"></i> Clinical Reports
                         </a>
                     </li>
+                    @endif
                 </ul>
 
                 <!-- Tab Content -->
@@ -702,7 +711,9 @@
                         </div>
                     </div>
 
-                    @include('admin.partials.clinical-reports-panel')
+                    @if($canAccessClinicalReports)
+                        @include('admin.partials.clinical-reports-panel')
+                    @endif
 
                 </div>
             </div>
