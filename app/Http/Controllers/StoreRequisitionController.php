@@ -6,6 +6,7 @@ use App\Models\Product;
 use App\Models\Store;
 use App\Models\StoreRequisition;
 use App\Models\StoreRequisitionItem;
+use App\Models\User;
 use App\Services\RequisitionService;
 use App\Services\StockService;
 use App\Services\StoreContextResolver;
@@ -90,11 +91,30 @@ class StoreRequisitionController extends Controller
                 $query->where('to_store_id', $request->to_store_id);
             }
 
+            $userNameFilter = function ($query, $keyword) {
+                $query->whereHas('requester', function ($q) use ($keyword) {
+                    $q->where(function ($sub) use ($keyword) {
+                        $sub->where('firstname', 'like', "%{$keyword}%")
+                            ->orWhere('surname', 'like', "%{$keyword}%")
+                            ->orWhere('othername', 'like', "%{$keyword}%")
+                            ->orWhereRaw("CONCAT_WS(' ', surname, firstname, othername) LIKE ?", ["%{$keyword}%"])
+                            ->orWhereRaw("CONCAT_WS(' ', firstname, surname) LIKE ?", ["%{$keyword}%"]);
+                    });
+                });
+            };
+
             return DataTables::of($query)
                 ->addColumn('request_date', fn ($r) => $r->created_at->format('d M Y H:i'))
                 ->addColumn('from_store', fn ($r) => $r->fromStore->store_name ?? '-')
                 ->addColumn('to_store', fn ($r) => $r->toStore->store_name ?? '-')
-                ->addColumn('requested_by', fn ($r) => $r->requester->name ?? '-')
+                ->addColumn('requested_by', function ($r) {
+                    if (!$r->requester) {
+                        return '-';
+                    }
+                    $othername = $r->requester->othername ? ' ' . $r->requester->othername : '';
+
+                    return ucwords(trim($r->requester->surname . ' ' . $r->requester->firstname . $othername)) ?: '-';
+                })
                 ->addColumn('status', function ($r) {
                     $badge = sprintf(
                         '<span class="badge %s">%s</span>',
@@ -127,6 +147,38 @@ class StoreRequisitionController extends Controller
                     return "{$total} items";
                 })
                 ->addColumn('actions', fn ($r) => $this->getActionButtons($r))
+                ->filterColumn('requested_by', $userNameFilter)
+                ->filterColumn('requester.name', $userNameFilter)
+                ->orderColumn('requested_by', function ($query, $order) {
+                    $query->orderBy(
+                        User::select('surname')->whereColumn('users.id', 'store_requisitions.requested_by'),
+                        $order
+                    );
+                })
+                ->orderColumn('from_store', function ($query, $order) {
+                    $query->orderBy(
+                        Store::select('store_name')->whereColumn('stores.id', 'store_requisitions.from_store_id'),
+                        $order
+                    );
+                })
+                ->orderColumn('fromStore.store_name', function ($query, $order) {
+                    $query->orderBy(
+                        Store::select('store_name')->whereColumn('stores.id', 'store_requisitions.from_store_id'),
+                        $order
+                    );
+                })
+                ->orderColumn('to_store', function ($query, $order) {
+                    $query->orderBy(
+                        Store::select('store_name')->whereColumn('stores.id', 'store_requisitions.to_store_id'),
+                        $order
+                    );
+                })
+                ->orderColumn('toStore.store_name', function ($query, $order) {
+                    $query->orderBy(
+                        Store::select('store_name')->whereColumn('stores.id', 'store_requisitions.to_store_id'),
+                        $order
+                    );
+                })
                 ->rawColumns(['status', 'actions'])
                 ->make(true);
         }

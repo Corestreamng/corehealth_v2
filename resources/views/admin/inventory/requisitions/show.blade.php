@@ -834,7 +834,7 @@
                                                     @php
                                                         $baseUnitName = $item->product->base_unit_name ?? 'Units';
                                                         $reqUnitStr = $item->packaging ? $item->packaging->name : $baseUnitName;
-                                                        $factor = $item->packaging ? $item->packaging->base_unit_qty : 1;
+                                                        $factor = ($item->packaging && $item->packaging->base_unit_qty > 0) ? (float)$item->packaging->base_unit_qty : 1;
                                                         $reqDisplay = $item->packaging ? (float)$item->packaging_qty : $item->requested_qty;
                                                     @endphp
                                                     <strong class="text-dark d-block mt-1" style="font-size: 0.85rem;">{{ $reqDisplay }} {{ $reqUnitStr }}</strong>
@@ -891,7 +891,7 @@
                                     @else
                                         <div class="d-flex align-items-center gap-2 flex-grow-1 flex-sm-grow-0">
                                             @php
-                                                $defaultFactor = $item->packaging ? $item->packaging->base_unit_qty : 1;
+                                                $defaultFactor = ($item->packaging && $item->packaging->base_unit_qty > 0) ? (float)$item->packaging->base_unit_qty : 1;
                                                 $defaultDisplayVal = $defaultFactor > 0 ? round(min($item->requested_qty, $sourceStock) / $defaultFactor, 1) : 0;
                                             @endphp
                                             <input type="number"
@@ -904,8 +904,9 @@
                                             <select class="form-control form-control-sm approve-unit-select" style="min-width: 150px;">
                                                 <option value="" data-factor="1" data-name="{{ $item->product->base_unit_name ?? 'Base Unit' }}" {{ !$item->packaging_id ? 'selected' : '' }}>{{ $item->product->base_unit_name ?? 'Base Unit' }}</option>
                                                 @foreach($item->product->packagings as $pkg)
-                                                    <option value="{{ $pkg->id }}" data-factor="{{ (float)$pkg->base_unit_qty }}" data-name="{{ $pkg->name }}" {{ $item->packaging_id == $pkg->id ? 'selected' : '' }}>
-                                                        {{ $pkg->name }} ({{ (float)$pkg->base_unit_qty }} {{ $item->product->base_unit_name ?? 'units' }})
+                                                    @php $pkgFactor = (float)($pkg->base_unit_qty > 0 ? $pkg->base_unit_qty : 1); @endphp
+                                                    <option value="{{ $pkg->id }}" data-factor="{{ $pkgFactor }}" data-name="{{ $pkg->name }}" {{ $item->packaging_id == $pkg->id ? 'selected' : '' }}>
+                                                        {{ $pkg->name }} ({{ $pkgFactor }} {{ $item->product->base_unit_name ?? 'units' }})
                                                     </option>
                                                 @endforeach
                                             </select>
@@ -1256,7 +1257,7 @@
                                                     <span class="badge badge-{{ $batch->current_qty > 10 ? 'success' : ($batch->current_qty > 0 ? 'warning' : 'danger') }}">
                                                         {{ $batch->current_qty }} {{ $item->product->base_unit_name ?? 'pcs' }}
                                                     </span>
-                                                    @if($item->packaging)
+                                                    @if($item->packaging && $item->packaging->base_unit_qty > 0)
                                                         <br><small class="text-muted">≈ {{ round($batch->current_qty / $item->packaging->base_unit_qty, 1) }} {{ $item->packaging->name }}</small>
                                                     @endif
                                                 </td>
@@ -1264,7 +1265,7 @@
                                                     @if($batch->expiry_date)
                                                         @php $isExpiringSoon = $batch->expiry_date->diffInDays(now()) < 30; @endphp
                                                         <span class="{{ $isExpiringSoon ? 'text-danger' : '' }}">
-                                                            {{ $batch->expiry_date->format('M d, Y') }}
+                                                             {{ $batch->expiry_date->format('M d, Y') }}
                                                         </span>
                                                     @else
                                                         <span class="text-muted">N/A</span>
@@ -1278,8 +1279,9 @@
                                                             style="min-width: 140px;">
                                                         <option value="" data-factor="1">{{ $item->product->base_unit_name ?? 'Base Unit' }}</option>
                                                         @foreach($item->product->packagings as $pkg)
-                                                            <option value="{{ $pkg->id }}" data-factor="{{ $pkg->base_unit_qty }}">
-                                                                {{ $pkg->name }} ({{ $pkg->base_unit_qty }} {{ $item->product->base_unit_name ?? 'units' }})
+                                                            @php $pkgFactor = (float)($pkg->base_unit_qty > 0 ? $pkg->base_unit_qty : 1); @endphp
+                                                            <option value="{{ $pkg->id }}" data-factor="{{ $pkgFactor }}">
+                                                                {{ $pkg->name }} ({{ $pkgFactor }} {{ $item->product->base_unit_name ?? 'units' }})
                                                             </option>
                                                         @endforeach
                                                     </select>
@@ -1514,6 +1516,7 @@ $(function() {
 
         var displayVal = parseFloat($displayInput.val()) || 0;
         var factor = parseFloat($unitSelect.find('option:selected').data('factor')) || 1;
+        if (factor <= 0) factor = 1;
         var baseVal = displayVal * factor;
         
         if (!allowDecimal) {

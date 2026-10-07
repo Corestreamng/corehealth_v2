@@ -43,9 +43,9 @@ $(function() {
                 { data: "request_date", name: "created_at" },
                 { data: "from_store", name: "fromStore.store_name" },
                 { data: "to_store", name: "toStore.store_name" },
-                { data: "items_count", name: "items_count", orderable: false },
+                { data: "items_count", name: "items_count", orderable: false, searchable: false },
                 { data: "status", name: "status" },
-                { data: "requested_by", name: "requester.name" },
+                { data: "requested_by", name: "requested_by" },
                 { data: "actions", name: "actions", orderable: false, searchable: false }
             ],
             order: [[1, 'desc']]
