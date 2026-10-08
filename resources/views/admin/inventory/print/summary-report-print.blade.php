@@ -300,6 +300,7 @@
         BREAKDOWN BY 
         @if($group_by === 'category') DRUG/PRODUCT CATEGORY
         @elseif($group_by === 'product') PRODUCT NAME
+        @elseif(($mode ?? 'given') === 'received') SOURCE STORE / RECEIPT CHANNEL
         @else DESTINATION UNIT/DEPARTMENT @endif
     </h3>
     <table style="width: 100%; margin-bottom: 24px;">
@@ -325,7 +326,20 @@
                         $profitColor = $profit > 0 ? '#28a745' : ($profit < 0 ? '#dc3545' : 'inherit');
                     @endphp
                     <tr>
-                        <td><strong>{{ $row['grouping_key'] }}</strong></td>
+                        <td>
+                            <strong>{{ $row['grouping_key'] }}</strong>
+                            @if(!empty($row['channels']) && is_array($row['channels']))
+                                <div style="font-size: 11px; margin-top: 3px;">
+                                    @foreach($row['channels'] as $chName => $chQty)
+                                        @if($chQty > 0)
+                                            <span style="display: inline-block; background: #e9ecef; color: #495057; padding: 1px 6px; border-radius: 3px; margin-right: 4px; font-weight: 500;">
+                                                {{ $chName }}: {{ number_format($chQty) }}
+                                            </span>
+                                        @endif
+                                    @endforeach
+                                </div>
+                            @endif
+                        </td>
                         <td class="text-right">{{ number_format($row['total_qty']) }}</td>
                         <td class="text-right">{{ number_format($row['total_value'], 2) }}</td>
                         <td class="text-right">{{ number_format($sales, 2) }}</td>

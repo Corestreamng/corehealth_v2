@@ -10,7 +10,7 @@
             <label class="small text-muted mb-1 font-weight-bold">Report Type</label>
             <select class="form-control form-control-sm report-group-by">
                 <option value="category">Drug/Product Category</option>
-                <option value="destination">Unit/Department Collection</option>
+                <option value="destination">{{ ($mode ?? 'given') === 'received' ? 'Source Store / Receipt Channel' : 'Unit/Department Collection' }}</option>
                 <option value="product">Product (Velocity)</option>
             </select>
         </div>

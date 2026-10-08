@@ -268,12 +268,12 @@ class StockService
             $batchNumber = $data['batch_number'] ?? 'BATCH-' . now()->format('YmdHis') . '-' . str_pad(rand(1, 999), 3, '0', STR_PAD_LEFT);
             $batchName = $data['batch_name'] ?? $batchNumber . '-' . now()->format('YmdHis');
 
-            // Resolve cost price: use provided value, fall back to product's buy price
-            $costPrice = $data['cost_price'] ?? 0;
-            if ($costPrice <= 0) {
-                $price = \App\Models\Price::where('product_id', $data['product_id'])->first();
-                $costPrice = (float) ($price->pr_buy_price ?? 0);
-            }
+            $isDonation = !empty($data['is_donation']);
+
+            // Resolve cost price: use provided value with 0 as fallback (forced 0 for donations)
+            $costPrice = $isDonation ? 0.0 : (isset($data['cost_price']) && is_numeric($data['cost_price'])
+                ? (float) $data['cost_price']
+                : 0.0);
 
             $batch = StockBatch::create([
                 'product_id' => $data['product_id'],
@@ -292,6 +292,7 @@ class StockService
                 'source_requisition_id' => $data['source_requisition_id'] ?? null,
                 'created_by' => $data['created_by'] ?? auth()->id(),
                 'is_active' => true,
+                'is_donation' => $isDonation,
             ]);
 
             // Record the initial stock transaction
@@ -303,7 +304,7 @@ class StockService
                 'reference_type' => $data['reference_type'] ?? null,
                 'reference_id' => $data['reference_id'] ?? null,
                 'notes' => $data['notes'] ?? 'Initial batch creation',
-                'performed_by' => auth()->id(),
+                'performed_by' => $data['created_by'] ?? auth()->id() ?? 1,
             ]);
 
             // Sync store_stocks
@@ -352,12 +353,8 @@ class StockService
                     $options['notes'] ?? "Transferred to store ID: {$toStoreId}"
                 );
 
-                // Use source batch cost_price, fallback to product's buy price if not set
-                $costPrice = $sourceBatch->cost_price;
-                if (empty($costPrice) || $costPrice <= 0) {
-                    $productPrice = \App\Models\Price::where('product_id', $productId)->first();
-                    $costPrice = $productPrice->pr_buy_price ?? 0;
-                }
+                // Use source batch cost_price with 0 fallback
+                $costPrice = (float) ($sourceBatch->cost_price ?? 0);
                 $expiryDate = $expiryDate ?? $sourceBatch->expiry_date;
             } else {
                 // FIFO transfer
@@ -381,12 +378,8 @@ class StockService
                         $options['notes'] ?? "Transferred to store ID: {$toStoreId}"
                     );
 
-                    // Accumulate total cost for weighted average (use batch cost or fallback to product price)
-                    $batchCost = $batch->cost_price;
-                    if (empty($batchCost) || $batchCost <= 0) {
-                        $productPrice = \App\Models\Price::where('product_id', $productId)->first();
-                        $batchCost = $productPrice->pr_buy_price ?? 0;
-                    }
+                    // Accumulate total cost for weighted average (use batch cost with 0 fallback)
+                    $batchCost = (float) ($batch->cost_price ?? 0);
                     $totalCost += ($batchCost * $deductQty);
                     $totalQtyProcessed += $deductQty;
                     $remainingQty -= $deductQty;

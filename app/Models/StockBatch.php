@@ -48,6 +48,7 @@ class StockBatch extends Model implements Auditable
         'source_requisition_id',
         'created_by',
         'is_active',
+        'is_donation',
     ];
 
     protected $casts = [
@@ -58,6 +59,7 @@ class StockBatch extends Model implements Auditable
         'expiry_date' => 'date',
         'received_date' => 'date',
         'is_active' => 'boolean',
+        'is_donation' => 'boolean',
     ];
 
     /**
@@ -148,6 +150,14 @@ class StockBatch extends Model implements Auditable
     public function supplier()
     {
         return $this->belongsTo(Supplier::class);
+    }
+
+    /**
+     * Get the donor (supplier organization acting as donor)
+     */
+    public function donor()
+    {
+        return $this->belongsTo(Supplier::class, 'supplier_id');
     }
 
     /**

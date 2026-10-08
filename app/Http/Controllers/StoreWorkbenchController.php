@@ -500,25 +500,30 @@ class StoreWorkbenchController extends Controller
             abort(403, 'You are not authorised to add stock to this store.');
         }
 
+        $isDonation = $request->boolean('is_donation') || $request->reference_type === 'donation';
+
         $request->validate([
             'supplier_id' => 'nullable|exists:suppliers,id',
             'quantity' => 'required|integer|min:1',
-            'cost_price' => 'required_unless:skip_cost_price,1|numeric|min:0|nullable',
+            'cost_price' => $isDonation ? 'nullable|numeric|min:0' : 'required_unless:skip_cost_price,1|numeric|min:0|nullable',
             'expiry_date' => 'nullable|date|after:today',
             'batch_name' => 'nullable|string|max:100',
             'batch_number' => 'required|string|max:100|unique:stock_batches,batch_number',
             'notes' => 'nullable|string|max:500',
             'packaging_id' => 'nullable|exists:product_packagings,id',
+            'batch_packaging' => 'nullable|exists:product_packagings,id',
             'packaging_qty' => 'nullable|numeric|min:0',
+            'is_donation' => 'nullable|boolean',
         ]);
 
         try {
             // Convert packaging-level cost to base-unit cost
             // The user enters cost per packaging unit (e.g. cost per Box of 100 tablets).
             // We divide by base_unit_qty to get cost per single base unit (e.g. per Tablet).
-            $costPrice = $request->cost_price ?? 0;
-            if ($request->packaging_id && $costPrice > 0) {
-                $packaging = \App\Models\ProductPackaging::find($request->packaging_id);
+            $packagingId = $request->packaging_id ?? $request->batch_packaging;
+            $costPrice = $isDonation ? 0.0 : (float) ($request->cost_price ?? 0);
+            if ($packagingId && $costPrice > 0) {
+                $packaging = \App\Models\ProductPackaging::find($packagingId);
                 if ($packaging && $packaging->base_unit_qty > 1) {
                     $costPrice = $costPrice / $packaging->base_unit_qty;
                 }
@@ -534,9 +539,10 @@ class StoreWorkbenchController extends Controller
                 'batch_name' => $request->batch_name,
                 'batch_number' => $request->batch_number,
                 'source' => StockBatch::SOURCE_MANUAL,
-                'notes' => $request->notes ?? 'Manual entry',
-                'packaging_id' => $request->packaging_id,
+                'notes' => $request->notes ?? ($isDonation ? 'Donation received' : 'Manual entry'),
+                'packaging_id' => $packagingId,
                 'packaging_qty' => $request->packaging_qty,
+                'is_donation' => $isDonation,
             ]);
 
             // Handle AJAX vs regular form submission
@@ -968,11 +974,8 @@ class StoreWorkbenchController extends Controller
             $batchNumber = $tx->stockBatch->batch_number ?? '—';
             $expiryDate = $tx->stockBatch->expiry_date ? $tx->stockBatch->expiry_date->format('Y-m-d') : '—';
 
-            // Cost price fallback: batch cost -> product sale price -> 0
+            // Batch cost price with 0 as fallback
             $costPrice = (float) ($tx->stockBatch->cost_price ?? 0);
-            if ($costPrice <= 0 && $product && $product->price) {
-                $costPrice = (float) ($product->price->cur_sale_price ?? 0);
-            }
 
             $type = $tx->type;
             $txQty = abs((int) $tx->qty);
@@ -1035,7 +1038,11 @@ class StoreWorkbenchController extends Controller
             }
 
             // Determine direction and labels
-            if ($type === 'in' && class_basename($refType ?? '') === 'StoreRequisition') {
+            if ($type === 'in' && ($tx->stockBatch?->is_donation || $refType === 'donation')) {
+                $direction = 'donation_in';
+                $typeLabel = 'Donation In';
+                $badgeType = 'donation_in';
+            } elseif ($type === 'in' && class_basename($refType ?? '') === 'StoreRequisition') {
                 $direction = 'transfer_in';
                 $typeLabel = 'Transfer In';
                 $badgeType = 'transfer_in';
@@ -1064,7 +1071,9 @@ class StoreWorkbenchController extends Controller
                 'product_name' => $productName,
                 'type_label' => $typeLabel,
                 'badge_type' => $badgeType,
+                'is_donation' => (bool) ($tx->stockBatch?->is_donation || $refType === 'donation'),
                 'direction' => $direction,
+                'batch_id' => $tx->stock_batch_id,
                 'batch_number' => $batchNumber,
                 'expiry_date' => $expiryDate,
                 'cost_price' => $costPrice,

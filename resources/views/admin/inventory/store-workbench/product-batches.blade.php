@@ -172,6 +172,9 @@
                     @if($batch->batch_name)
                         <small class="text-muted ml-2">({{ $batch->batch_name }})</small>
                     @endif
+                    @if($batch->is_donation)
+                        <span class="badge badge-success ml-1"><i class="mdi mdi-gift-outline mr-1"></i>Donation</span>
+                    @endif
                     @if(!$selectedStore && $batch->store)
                         <span class="badge badge-info ml-2">{{ $batch->store->store_name }}</span>
                     @endif
@@ -198,7 +201,12 @@
                 </div>
                 <div class="detail-item">
                     <label>Cost Price</label>
-                    <div class="value">₦{{ number_format($batch->cost_price, 2) }}</div>
+                    <div class="value">
+                        ₦{{ number_format($batch->cost_price, 2) }}
+                        @if($batch->is_donation)
+                            <small class="badge badge-success ml-1" style="font-size:0.65rem;">Donation</small>
+                        @endif
+                    </div>
                 </div>
                 <div class="detail-item">
                     <label>Expiry Date</label>
@@ -213,7 +221,9 @@
                 <div class="detail-item">
                     <label>Source</label>
                     <div class="value">
-                        @if($batch->purchaseOrderItem)
+                        @if($batch->is_donation)
+                            Donation
+                        @elseif($batch->purchaseOrderItem)
                             PO #{{ $batch->purchaseOrderItem->purchaseOrder->po_number ?? 'N/A' }}
                         @else
                             {{ ucfirst($batch->source ?? 'Manual') }}
@@ -221,7 +231,7 @@
                     </div>
                 </div>
                 <div class="detail-item">
-                    <label>Supplier</label>
+                    <label>{{ $batch->is_donation ? 'Donor / Supplier' : 'Supplier' }}</label>
                     <div class="value">
                         @if($batch->supplier)
                             <a href="{{ route('suppliers.show', $batch->supplier_id) }}" class="text-primary">

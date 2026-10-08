@@ -19,6 +19,23 @@
         return new Intl.NumberFormat('en-NG', { style: 'currency', currency: 'NGN' }).format(val || 0);
     }
 
+    function getTypeBadgeClass(type) {
+        switch (type) {
+            case 'Dispense':
+                return 'badge-success';
+            case 'PO Receipt':
+                return 'badge-primary';
+            case 'Donation':
+                return 'badge-success';
+            case 'Manual Batch':
+                return 'badge-warning text-dark';
+            case 'Requisition':
+                return 'badge-info';
+            default:
+                return 'badge-secondary';
+        }
+    }
+
     function isExpiringSoon(dateStr) {
         if (!dateStr || dateStr === 'N/A') return false;
         var exp = new Date(dateStr);
@@ -79,7 +96,7 @@
             if (colHeader) {
                 if (groupBy === 'category') colHeader.textContent = 'Drug/Product Category';
                 else if (groupBy === 'product') colHeader.textContent = 'Product Name';
-                else colHeader.textContent = 'Destination Unit/Department';
+                else colHeader.textContent = mode === 'received' ? 'Source Store / Receipt Channel' : 'Destination Unit/Department';
             }
 
             var params = new URLSearchParams({
@@ -150,11 +167,32 @@
 
                 var profitClass = rowProfit > 0 ? 'text-success' : (rowProfit < 0 ? 'text-danger' : '');
 
+                var channelBadges = '';
+                if (row.channels && typeof row.channels === 'object') {
+                    var channelPills = [];
+                    if (row.channels['PO Receipt']) {
+                        channelPills.push('<span class="badge badge-primary mr-1" title="Purchase Order Receipt"><i class="mdi mdi-cart-outline mr-1"></i>PO: ' + Number(row.channels['PO Receipt']).toLocaleString() + '</span>');
+                    }
+                    if (row.channels['Donation']) {
+                        channelPills.push('<span class="badge badge-success mr-1" title="Donated Stock Batch"><i class="mdi mdi-gift-outline mr-1"></i>Donation: ' + Number(row.channels['Donation']).toLocaleString() + '</span>');
+                    }
+                    if (row.channels['Manual Batch']) {
+                        channelPills.push('<span class="badge badge-warning text-dark mr-1" title="Manual Stock Batch"><i class="mdi mdi-pencil-box-outline mr-1"></i>Manual: ' + Number(row.channels['Manual Batch']).toLocaleString() + '</span>');
+                    }
+                    if (row.channels['Requisition']) {
+                        channelPills.push('<span class="badge badge-info mr-1" title="Store Requisition"><i class="mdi mdi-swap-horizontal mr-1"></i>Req: ' + Number(row.channels['Requisition']).toLocaleString() + '</span>');
+                    }
+                    if (channelPills.length > 0) {
+                        channelBadges = '<div class="mt-1" style="line-height: 1.6;">' + channelPills.join('') + '</div>';
+                    }
+                }
+
                 var tr = document.createElement('tr');
                 tr.innerHTML =
                     '<td class="font-weight-medium">' +
                         '<i class="mdi mdi-chevron-right mr-2 text-primary toggle-icon"></i> ' +
-                        (row.grouping_key || 'Unknown') +
+                        '<span>' + (row.grouping_key || 'Unknown') + '</span>' +
+                        channelBadges +
                     '</td>' +
                     '<td class="text-right">' + rowQty.toLocaleString() + '</td>' +
                     '<td class="text-right">' + formatCurrency(rowVal) + '</td>' +
@@ -300,7 +338,7 @@
 
                         var tr = document.createElement('tr');
                         tr.innerHTML =
-                            '<td><span class="badge badge-' + (item.type === 'Dispense' ? 'success' : 'info') + '">' + (item.type || 'Item') + '</span></td>' +
+                            '<td><span class="badge ' + getTypeBadgeClass(item.type) + '">' + (item.type || 'Item') + '</span></td>' +
                             '<td class="small">' + (item.date || 'N/A') + '</td>' +
                             '<td>' +
                                 '<div class="font-weight-bold">' + (item.product_name || 'N/A') + '</div>' +

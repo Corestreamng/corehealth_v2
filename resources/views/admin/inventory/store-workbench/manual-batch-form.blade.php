@@ -112,14 +112,14 @@
                         <div class="row">
                             <div class="col-md-6">
                                 <div class="form-group">
-                                    <label for="supplier_id">Supplier</label>
+                                    <label for="supplier_id" id="manual_supplier_label">Supplier / Donor</label>
                                     <select name="supplier_id" id="supplier_id" class="form-control supplier-select @error('supplier_id') is-invalid @enderror">
-                                        <option value="">Select supplier (optional)...</option>
+                                        <option value="">Select supplier / donor (optional)...</option>
                                     </select>
                                     @error('supplier_id')
                                     <div class="invalid-feedback">{{ $message }}</div>
                                     @enderror
-                                    <small class="text-muted">
+                                    <small class="text-muted" id="manual_supplier_hint">
                                         <a href="{{ route('suppliers.create') }}" target="_blank">+ Add new supplier</a>
                                     </small>
                                 </div>
@@ -207,15 +207,22 @@
                                           <input type="number" name="cost_price" id="cost_price"
                                               class="form-control"
                                               value="{{ old('cost_price', '') }}" step="0.01" min="0" required
+                                              placeholder="0.00 — enter 0 for donations"
                                               oninput="updateManualBatchCostPreview()">
                                       </div>
                                       <div class="custom-control custom-checkbox mt-2">
                                           <input type="checkbox" class="custom-control-input" name="skip_cost_price" id="manual_skip_cost_price" value="1" onchange="toggleManualCostRequirement(this)">
                                           <label class="custom-control-label" for="manual_skip_cost_price" style="font-size: 0.8rem;">Skip Cost Price (Not Recommended)</label>
                                       </div>
+                                      <div class="custom-control custom-checkbox mt-1">
+                                          <input type="checkbox" class="custom-control-input" name="is_donation" id="manual_is_donation" value="1" {{ old('is_donation') || old('reference_type') === 'donation' ? 'checked' : '' }} onchange="toggleManualDonation(this)">
+                                          <label class="custom-control-label text-success font-weight-bold" for="manual_is_donation" style="font-size: 0.8rem; cursor:pointer;">
+                                              <i class="mdi mdi-gift-outline mr-1"></i>Mark as Donation (Cost: ₦0.00)
+                                          </label>
+                                      </div>
                                     <small class="text-muted d-block mt-1">
                                         <i class="mdi mdi-information-outline"></i>
-                                        Enter cost per <strong>selected packaging unit</strong>. The system automatically converts to base-unit cost for storage.
+                                        Enter cost per <strong>selected packaging unit</strong>. For donations, cost is ₦0.00.
                                     </small>
                                     <div id="manual-batch-cost-preview" class="mt-1" style="display:none; background:#f0fdf4; border:1px solid #bbf7d0; border-radius:6px; padding:6px 10px; font-size:0.8rem;">
                                         <i class="mdi mdi-calculator text-success mr-1"></i>
@@ -227,11 +234,11 @@
                                 <div class="form-group">
                                     <label for="reference_type">Reason/Reference</label>
                                     <select name="reference_type" id="reference_type" class="form-control">
-                                        <option value="manual_entry">Manual Entry</option>
-                                        <option value="opening_stock">Opening Stock</option>
-                                        <option value="donation">Donation</option>
-                                        <option value="transfer_in">Transfer In</option>
-                                        <option value="other">Other</option>
+                                        <option value="manual_entry" {{ old('reference_type') == 'manual_entry' ? 'selected' : '' }}>Manual Entry</option>
+                                        <option value="opening_stock" {{ old('reference_type') == 'opening_stock' ? 'selected' : '' }}>Opening Stock</option>
+                                        <option value="donation" {{ old('reference_type') == 'donation' ? 'selected' : '' }}>Donation</option>
+                                        <option value="transfer_in" {{ old('reference_type') == 'transfer_in' ? 'selected' : '' }}>Transfer In</option>
+                                        <option value="other" {{ old('reference_type') == 'other' ? 'selected' : '' }}>Other</option>
                                     </select>
                                 </div>
                             </div>
@@ -387,9 +394,13 @@
                         
                         // Initial scale if default is selected
                         var costInput = $('#cost_price');
-                        var baseCost = parseFloat(costInput.val()) || 0;
-                        if (baseCost > 0 && defaultFactor > 1) {
-                            costInput.val(parseFloat((baseCost * defaultFactor).toFixed(4)));
+                        if ($('#manual_is_donation').is(':checked')) {
+                            costInput.val('0.00');
+                        } else {
+                            var baseCost = parseFloat(costInput.val()) || 0;
+                            if (baseCost > 0 && defaultFactor > 1) {
+                                costInput.val(parseFloat((baseCost * defaultFactor).toFixed(4)));
+                            }
                         }
 
                         updateBatchBaseEquiv();
@@ -442,15 +453,42 @@
         });
         $('#quantity').on('change input', updateBatchBaseEquiv);
 
+        // Reference type sync with donation
+        $('#reference_type').on('change', function() {
+            if ($(this).val() === 'donation') {
+                if (!$('#manual_is_donation').is(':checked')) {
+                    $('#manual_is_donation').prop('checked', true);
+                    window.toggleManualDonation($('#manual_is_donation')[0]);
+                }
+            } else if ($('#manual_is_donation').is(':checked')) {
+                $('#manual_is_donation').prop('checked', false);
+                window.toggleManualDonation($('#manual_is_donation')[0]);
+            }
+        });
+
+        // Initialize donation state on load if checked or donation selected
+        if ($('#manual_is_donation').is(':checked') || $('#reference_type').val() === 'donation') {
+            $('#manual_is_donation').prop('checked', true);
+            window.toggleManualDonation($('#manual_is_donation')[0]);
+        }
+
         /**
          * Live preview of base-unit cost calculation for manual batch form.
          */
         window.updateManualBatchCostPreview = function() {
-            var cost = parseFloat($('#cost_price').val()) || 0;
+            var isDonation = $('#manual_is_donation').is(':checked') || $('#reference_type').val() === 'donation';
+            var rawVal = $('#cost_price').val();
+            var cost = parseFloat(rawVal) || 0;
             var factor = parseFloat($('#batch_packaging').find(':selected').data('base')) || 1;
             var pkgName = $('#batch_packaging').find(':selected').text().trim() || 'Base Unit';
             var $preview = $('#manual-batch-cost-preview');
             var $text = $('#manual-batch-cost-preview-text');
+
+            if (isDonation || (rawVal !== '' && cost === 0)) {
+                $text.html('<i class="mdi mdi-gift-outline text-success mr-1"></i><strong>' + (isDonation ? 'Donation Batch' : 'Zero-Cost Batch') + ':</strong> Cost price is fixed at <strong>₦0.00</strong>');
+                $preview.show();
+                return;
+            }
 
             if (cost > 0 && factor > 1) {
                 var baseUnitCost = (cost / factor).toFixed(4);
@@ -469,6 +507,10 @@
 
         // Convert to base units before form submission
         $('form').on('submit', function() {
+            var isDonation = $('#manual_is_donation').is(':checked') || $('#reference_type').val() === 'donation';
+            if (isDonation) {
+                $('#cost_price').val('0.00');
+            }
             var base = parseFloat($('#batch_packaging').find(':selected').data('base')) || 1;
             if (base > 1) {
                 var qty = parseFloat($('#quantity').val()) || 0;
@@ -478,7 +520,7 @@
                 $('#quantity').val(Math.round(qty * base));
 
                 // Convert cost price to cost per piece
-                if (cost > 0) {
+                if (cost > 0 && !isDonation) {
                     $('#cost_price').val((cost / base).toFixed(4));
                 }
             }
@@ -489,6 +531,12 @@
         var costInput = $('#cost_price');
         var labelSpan = $('#manual-cost-price-label span.text-danger');
         if (checkbox.checked) {
+            if ($('#manual_is_donation').is(':checked')) {
+                $('#manual_is_donation').prop('checked', false);
+                if (typeof window.toggleManualDonation === 'function') {
+                    window.toggleManualDonation($('#manual_is_donation')[0]);
+                }
+            }
             costInput.prop('required', false);
             costInput.prop('disabled', true);
             costInput.val('');
@@ -498,6 +546,55 @@
             costInput.prop('required', true);
             costInput.prop('disabled', false);
             labelSpan.show();
+        }
+    };
+
+    window.toggleManualDonation = function(checkbox) {
+        var isChecked = $(checkbox).is(':checked');
+        var $costInput = $('#cost_price');
+        var $skipCost = $('#manual_skip_cost_price');
+        var $supplierLabel = $('#manual_supplier_label');
+        var $supplierHint = $('#manual_supplier_hint');
+        var $costLabel = $('#manual-cost-price-label');
+        var $refType = $('#reference_type');
+        var $notes = $('#notes');
+        var $preview = $('#manual-batch-cost-preview');
+        var $previewText = $('#manual-batch-cost-preview-text');
+
+        if (isChecked) {
+            $skipCost.prop('checked', false).prop('disabled', true);
+            $costInput.prop('disabled', false).prop('required', false).val('0.00');
+            $costLabel.html('Cost Price <span class="badge badge-success ml-1"><i class="mdi mdi-gift-outline mr-1"></i>Donation (₦0.00)</span>');
+            $supplierLabel.html('Donor / Supplier <span class="badge badge-success ml-1"><i class="mdi mdi-gift-outline mr-1"></i>Donor</span>');
+            $supplierHint.html('<a href="{{ route("suppliers.create") }}" target="_blank">+ Add new donor / supplier</a>');
+            if ($refType.val() !== 'donation') {
+                $refType.val('donation');
+            }
+            if (!$notes.val().trim()) {
+                $notes.val('Donation batch received');
+            }
+            $previewText.html('<i class="mdi mdi-gift-outline text-success mr-1"></i><strong>Donation Batch:</strong> Cost price set to <strong>₦0.00</strong>');
+            $preview.show();
+        } else {
+            $skipCost.prop('disabled', false);
+            $costInput.prop('required', true);
+            if ($costInput.val() === '0.00' || $costInput.val() === '0') {
+                $costInput.val('');
+            }
+            var baseUnitName = $('#batch-base-unit-name').text() || 'packaging unit';
+            $costLabel.html('Cost Price (per ' + baseUnitName + ') <span class="text-danger">*</span>');
+            $supplierLabel.text('Supplier / Donor');
+            $supplierHint.html('<a href="{{ route("suppliers.create") }}" target="_blank">+ Add new supplier</a>');
+            if ($refType.val() === 'donation') {
+                $refType.val('manual_entry');
+            }
+            if ($notes.val().trim() === 'Donation batch received') {
+                $notes.val('');
+            }
+            $preview.hide();
+            if (typeof window.updateManualBatchCostPreview === 'function') {
+                window.updateManualBatchCostPreview();
+            }
         }
     };
 </script>

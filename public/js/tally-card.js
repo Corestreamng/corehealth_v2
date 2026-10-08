@@ -391,9 +391,14 @@ if (typeof window.wbRoute !== 'function') {
                     var balAfterCell = '<div style="font-weight:700; color:#1e293b;">' + r.bal_after + '</div>' +
                                        '<div style="font-size:0.7rem; color:#475569;">' + formatPackaging(r.bal_after, r.base_unit, r.packaging) + '</div>';
 
+                    var isDonationBatch = r.is_donation || r.type_label === 'Donation In';
+                    var costText = isDonationBatch
+                        ? '<span class="badge badge-success" style="font-size:0.68rem; font-weight:600;"><i class="mdi mdi-gift-outline mr-1"></i>Donation (₦0.00)</span>'
+                        : 'Cost: ₦' + parseFloat(r.cost_price).toLocaleString(undefined, {minimumFractionDigits:2});
+
                     var batchCell = '<div><code style="font-size:0.82rem; color:#0f172a;">' + escHtml(r.batch_number) + '</code></div>' +
                                     '<div style="font-size:0.72rem; color:#64748b;">Exp: ' + escHtml(r.expiry_date) + '</div>' +
-                                    '<div style="font-size:0.72rem; color:#059669; font-weight:600;">Cost: ₦' + parseFloat(r.cost_price).toLocaleString(undefined, {minimumFractionDigits:2}) + '</div>';
+                                    '<div style="font-size:0.72rem; color:' + (isDonationBatch ? '#15803d' : '#059669') + '; font-weight:600;">' + costText + '</div>';
 
                     var actionCell = '<span class="' + typeClass + '">' + escHtml(r.type_label) + '</span>' +
                                      (r.ref_url ? '<div style="margin-top:2px;"><a href="' + escHtml(r.ref_url) + '" target="_blank" style="font-size:0.72rem; text-decoration:underline;">' + escHtml(r.ref_label) + '</a></div>' :
@@ -636,6 +641,12 @@ if (typeof window.wbRoute !== 'function') {
                             toast(res.message || 'Batch created successfully');
                             $('#modal-add-batch').modal('hide');
                             $('#form-add-batch')[0].reset();
+                            if ($('#tally_is_donation').length) {
+                                $('#tally_is_donation').prop('checked', false);
+                                if (typeof window.toggleTallyDonation === 'function') {
+                                    window.toggleTallyDonation($('#tally_is_donation')[0]);
+                                }
+                            }
                             loadTally();
                         } else {
                             toast(res.message || 'Error creating batch', 'error');
@@ -1148,13 +1159,21 @@ if (typeof window.wbRoute !== 'function') {
              * Formula: base_unit_cost = cost_entered / packaging.base_unit_qty
              */
             window.updateBatchCostPreview = function() {
-                var costEntered = parseFloat($('#batch-cost-price').val()) || 0;
+                var isDonation = $('#tally_is_donation').is(':checked');
+                var rawVal = $('#batch-cost-price').val();
+                var costEntered = parseFloat(rawVal) || 0;
                 var $pkg = $('#batch-packaging option:selected');
                 var factor = parseFloat($pkg.data('qty')) || 1;
                 var pkgName = $pkg.text().trim() || 'Base Unit';
                 var baseUnit = $('#batch-product option:selected').data('base-unit') || 'unit';
                 var $preview = $('#batch-cost-preview');
                 var $previewText = $('#batch-cost-preview-text');
+
+                if (isDonation || (rawVal !== '' && costEntered === 0)) {
+                    $previewText.html('<i class="mdi mdi-gift-outline text-success mr-1"></i><strong>' + (isDonation ? 'Donation Batch' : 'Zero-Cost Batch') + ':</strong> Cost price is fixed at <strong>₦0.00</strong>');
+                    $preview.show();
+                    return;
+                }
 
                 if (costEntered > 0 && factor > 1) {
                     var baseUnitCost = (costEntered / factor).toFixed(4);
@@ -1209,7 +1228,11 @@ if (typeof window.wbRoute !== 'function') {
                             // Check if we are in Manual Batch modal
                             var $manualCost = $('#batch-cost-price');
                             if ($manualCost.length && $pkgSelect.closest('#form-add-batch').length) {
-                                $manualCost.val(defaultPrice.toFixed(2));
+                                if (!$('#tally_is_donation').is(':checked')) {
+                                    $manualCost.val(defaultPrice.toFixed(2));
+                                } else {
+                                    $manualCost.val('0.00');
+                                }
                             }
 
                             // Check if we are in PO row
@@ -2400,6 +2423,12 @@ if (typeof window.wbRoute !== 'function') {
             var costInput = $('#batch-cost-price');
             var labelSpan = $('#batch-cost-price-label span.text-danger');
             if (checkbox.checked) {
+                if ($('#tally_is_donation').is(':checked')) {
+                    $('#tally_is_donation').prop('checked', false);
+                    if (typeof window.toggleTallyDonation === 'function') {
+                        window.toggleTallyDonation($('#tally_is_donation')[0]);
+                    }
+                }
                 costInput.prop('required', false);
                 costInput.prop('disabled', true);
                 costInput.val('');
@@ -2409,6 +2438,54 @@ if (typeof window.wbRoute !== 'function') {
                 costInput.prop('required', true);
                 costInput.prop('disabled', false);
                 labelSpan.show();
+            }
+        };
+
+        window.toggleTallyDonation = function(checkbox) {
+            var isChecked = $(checkbox).is(':checked');
+            var $costInput = $('#batch-cost-price');
+            var $skipCost = $('#tally_skip_cost_price');
+            var $supplierLabel = $('#tally-supplier-label');
+            var $supplierHint = $('#tally-supplier-hint');
+            var $costLabel = $('#batch-cost-price-label');
+            var $notes = $('#form-add-batch textarea[name="notes"]');
+            var $preview = $('#batch-cost-preview');
+            var $previewText = $('#batch-cost-preview-text');
+
+            if (isChecked) {
+                // If marked as donation:
+                // 1. Uncheck and disable skip_cost_price
+                $skipCost.prop('checked', false).prop('disabled', true);
+                // 2. Set cost price to 0.00 and make it non-required
+                $costInput.prop('disabled', false).prop('required', false).val('0.00');
+                $costLabel.html('Cost Price (₦) <span class="badge badge-success ml-1"><i class="mdi mdi-gift-outline mr-1"></i>Donation (₦0.00)</span>');
+                // 3. Highlight donor in supplier field
+                $supplierLabel.html('Donor / Supplier <span class="badge badge-success ml-1"><i class="mdi mdi-gift-outline mr-1"></i>Donor</span>');
+                $supplierHint.html('<a href="' + (wbRoute('suppliers.create', '/suppliers/create')) + '" target="_blank">+ Add new donor / supplier</a>');
+                // 4. Default notes if empty
+                if (!$notes.val().trim()) {
+                    $notes.val('Donation batch received');
+                }
+                // 5. Show preview badge
+                $previewText.html('<i class="mdi mdi-gift-outline text-success mr-1"></i><strong>Donation Batch:</strong> Cost price set to <strong>₦0.00</strong>');
+                $preview.show();
+            } else {
+                // Revert donation
+                $skipCost.prop('disabled', false);
+                $costInput.prop('required', true);
+                if ($costInput.val() === '0.00' || $costInput.val() === '0') {
+                    $costInput.val('');
+                }
+                $costLabel.html('Cost Price (₦) <span class="text-danger">*</span>');
+                $supplierLabel.text('Supplier / Donor');
+                $supplierHint.html('<a href="' + (wbRoute('suppliers.create', '/suppliers/create')) + '" target="_blank">+ Add new supplier</a>');
+                if ($notes.val().trim() === 'Donation batch received') {
+                    $notes.val('');
+                }
+                $preview.hide();
+                if (typeof window.updateBatchCostPreview === 'function') {
+                    window.updateBatchCostPreview();
+                }
             }
         };
 
