@@ -4098,9 +4098,8 @@ class PharmacyWorkbenchController extends Controller
             ];
         }
 
-        // 1. Stock Valuation
-        $stockQuery = \App\Models\StockBatch::with('product.price')
-            ->where('current_qty', '>', 0)
+        // 1. Stock Valuation (strictly from batch cost price)
+        $stockQuery = \App\Models\StockBatch::where('current_qty', '>', 0)
             ->whereHas('store', function ($q) {
                 $q->whereIn('distribution_role', [\App\Models\Store::ROLE_PHARMACY_HUB, \App\Models\Store::ROLE_PHARMACY_SATELLITE]);
             });
@@ -4112,11 +4111,7 @@ class PharmacyWorkbenchController extends Controller
         $totalStockValue = 0;
         $stockQuery->chunk(500, function ($batches) use (&$totalStockValue) {
             foreach ($batches as $batch) {
-                $cost = $batch->cost_price;
-                if (empty($cost) || $cost <= 0) {
-                    $price = $batch->product->price ?? null;
-                    $cost = $price ? $price->pr_buy_price : 0;
-                }
+                $cost = (float)($batch->cost_price ?? 0.0);
                 $totalStockValue += ($batch->current_qty * $cost);
             }
         });
@@ -4137,8 +4132,8 @@ class PharmacyWorkbenchController extends Controller
             $posrQuery->where('dispensed_from_store_id', $storeId);
         }
 
-        // 1.5 Expenditure (Purchases)
-        $reqQuery = \App\Models\StoreRequisitionItem::with(['sourceBatch', 'product.price'])
+        // 1.5 Expenditure (Purchases) - strictly from batch cost price
+        $reqQuery = \App\Models\StoreRequisitionItem::with(['sourceBatch', 'destinationBatch'])
             ->where('status', 'fulfilled')
             ->whereHas('requisition', function ($q) use ($dateFrom, $dateTo, $storeId) {
                 $q->where('status', 'fulfilled');
@@ -4159,25 +4154,18 @@ class PharmacyWorkbenchController extends Controller
         $totalExpenditure = 0;
         $reqQuery->chunk(500, function ($requisitions) use (&$totalExpenditure) {
             foreach ($requisitions as $reqItem) {
-                $cost = 0;
-                if ($reqItem->sourceBatch) {
-                    $batch = $reqItem->sourceBatch;
-                    if ($batch && $batch->cost_price > 0) {
-                        $cost = $batch->cost_price;
-                    }
-                }
-                if ($cost <= 0) {
-                    $price = $reqItem->product->price ?? null;
-                    $cost = $price ? $price->pr_buy_price : 0;
-                }
+                $cost = (float)($reqItem->destinationBatch?->cost_price ?? $reqItem->sourceBatch?->cost_price ?? 0.0);
                 $totalExpenditure += ($reqItem->fulfilled_qty * $cost);
             }
         });
 
-        // 2. Collections by Store & Demographics Data Preparation
+        // 2. Collections by Store, Demographics & Financials
         $collectionsByStore = [];
         $incomeByScheme = [];
-        $totalGoodsUsed = 0;
+        $totalGoodsUsed = 0; // COGS strictly based on batch cost price
+        $totalRevenue = 0;   // Dispense revenue (cash + claims)
+        $totalCash = 0;
+        $totalClaims = 0;
 
         $visitTypeCounts = ['Admitted' => 0, 'Out-Patient' => 0, 'Walk-in' => 0];
         $patientClassBreakdown = [];
@@ -4215,11 +4203,14 @@ class PharmacyWorkbenchController extends Controller
         $processedPatients = [];
         $patientsByScheme = [];
 
-        $posrQuery->with(['dispensedFromStore', 'patient.hmo.scheme', 'hmo.scheme', 'encounter.queue.clinic'])
+        $posrQuery->with(['dispensedFromStore', 'productRequest.dispensedFromBatch', 'patient.hmo.scheme', 'hmo.scheme', 'encounter.queue.clinic'])
             ->chunk(500, function ($posrRecords) use (
                 &$collectionsByStore,
                 &$incomeByScheme,
                 &$totalGoodsUsed,
+                &$totalRevenue,
+                &$totalCash,
+                &$totalClaims,
                 &$visitTypeCounts,
                 &$patientClassBreakdown,
                 &$genderBreakdown,
@@ -4236,7 +4227,15 @@ class PharmacyWorkbenchController extends Controller
                     $claimsAmount = (float)$record->claims_amount;
                     $amount = $cashAmount + $claimsAmount;
 
-                    $totalGoodsUsed += $amount;
+                    $totalRevenue += $amount;
+                    $totalCash += $cashAmount;
+                    $totalClaims += $claimsAmount;
+
+                    // Cost of Goods Sold: strictly batch cost price * qty
+                    $batch = $record->productRequest?->dispensedFromBatch;
+                    $batchCostPrice = $batch ? (float)($batch->cost_price ?? 0.0) : 0.0;
+                    $itemQty = (float)($record->qty ?: 1);
+                    $totalGoodsUsed += ($itemQty * $batchCostPrice);
 
                     $patient = $record->patient;
                     $hmoId = $record->hmo_id ?: ($patient->hmo_id ?? null);
@@ -4335,13 +4334,18 @@ class PharmacyWorkbenchController extends Controller
             });
 
         // Calculate Opening Stock
-        // Opening Stock = Closing Stock + Goods Used - Expenditure
+        // Opening Stock = Closing Stock + Goods Used (COGS) - Expenditure
         $openingStock = $totalStockValue + $totalGoodsUsed - $totalExpenditure;
+        $grossProfit = $totalRevenue - $totalGoodsUsed;
 
         return [
             'stock_valuation' => $totalStockValue,
             'total_expenditure' => $totalExpenditure,
             'total_goods_used' => $totalGoodsUsed,
+            'total_revenue' => $totalRevenue,
+            'total_cash' => $totalCash,
+            'total_claims' => $totalClaims,
+            'gross_profit' => $grossProfit,
             'opening_stock' => $openingStock,
             'income_by_scheme' => $incomeByScheme,
             'patients_by_scheme' => $patientsByScheme,

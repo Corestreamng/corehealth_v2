@@ -1329,10 +1329,6 @@ $hosColor = appsettings('hos_color') ?? '#0066cc';
                             <div class="form-group">
                                 <label class="small font-weight-bold" id="batch-cost-price-label">Cost Price (₦) <span class="text-danger">*</span></label>
                                 <input type="number" name="cost_price" id="batch-cost-price" class="form-control" step="0.01" min="0" required style="border-radius:8px;" placeholder="0.00 — enter 0 for donations" oninput="updateBatchCostPreview()">
-                                <div class="custom-control custom-checkbox mt-2">
-                                    <input type="checkbox" class="custom-control-input" name="skip_cost_price" id="tally_skip_cost_price" value="1" onchange="toggleTallyCostRequirement(this)">
-                                    <label class="custom-control-label" for="tally_skip_cost_price" style="font-size: 0.8rem;">Skip Cost Price (Not Recommended)</label>
-                                </div>
                                 <div class="custom-control custom-checkbox mt-1">
                                     <input type="checkbox" class="custom-control-input" name="is_donation" id="tally_is_donation" value="1" onchange="toggleTallyDonation(this)">
                                     <label class="custom-control-label text-success font-weight-bold" for="tally_is_donation" style="font-size: 0.8rem; cursor:pointer;">

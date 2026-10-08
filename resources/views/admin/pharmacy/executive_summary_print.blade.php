@@ -311,8 +311,16 @@
                 <td class="text-right">₦{{ number_format($stock_valuation, 2) }}</td>
             </tr>
             <tr>
-                <td><strong>Goods Used (Income/Sales)</strong></td>
+                <td><strong>Goods Used (Cost of Goods Sold)</strong></td>
                 <td class="text-right">₦{{ number_format($total_goods_used, 2) }}</td>
+            </tr>
+            <tr>
+                <td><strong>Dispense Revenue (Sales)</strong></td>
+                <td class="text-right" style="color: var(--brand); font-weight: bold;">₦{{ number_format($total_revenue ?? $total_goods_used, 2) }}</td>
+            </tr>
+            <tr style="background: rgba(40, 167, 69, 0.08);">
+                <td><strong>Gross Margin / Profit</strong></td>
+                <td class="text-right" style="color: #28a745; font-weight: bold;">₦{{ number_format($gross_profit ?? (($total_revenue ?? 0) - $total_goods_used), 2) }}</td>
             </tr>
         </tbody>
     </table>
@@ -355,7 +363,7 @@
                     <td>TOTAL</td>
                     <td class="text-right">{{ number_format($sumCash, 2) }}</td>
                     <td class="text-right">{{ number_format($sumClaims, 2) }}</td>
-                    <td class="text-right">₦{{ number_format($total_goods_used, 2) }}</td>
+                    <td class="text-right">₦{{ number_format($total_revenue ?? ($sumCash + $sumClaims), 2) }}</td>
                 </tr>
             @endif
         </tbody>

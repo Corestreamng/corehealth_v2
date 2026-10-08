@@ -505,7 +505,7 @@ class StoreWorkbenchController extends Controller
         $request->validate([
             'supplier_id' => 'nullable|exists:suppliers,id',
             'quantity' => 'required|integer|min:1',
-            'cost_price' => $isDonation ? 'nullable|numeric|min:0' : 'required_unless:skip_cost_price,1|numeric|min:0|nullable',
+            'cost_price' => $isDonation ? 'nullable|numeric|min:0' : 'required|numeric|gt:0',
             'expiry_date' => 'nullable|date|after:today',
             'batch_name' => 'nullable|string|max:100',
             'batch_number' => 'required|string|max:100|unique:stock_batches,batch_number',
@@ -521,7 +521,7 @@ class StoreWorkbenchController extends Controller
             // The user enters cost per packaging unit (e.g. cost per Box of 100 tablets).
             // We divide by base_unit_qty to get cost per single base unit (e.g. per Tablet).
             $packagingId = $request->packaging_id ?? $request->batch_packaging;
-            $costPrice = $isDonation ? 0.0 : (float) ($request->cost_price ?? 0);
+            $costPrice = $isDonation ? (float) ($request->cost_price ?? 0) : (float) $request->cost_price;
             if ($packagingId && $costPrice > 0) {
                 $packaging = \App\Models\ProductPackaging::find($packagingId);
                 if ($packaging && $packaging->base_unit_qty > 1) {

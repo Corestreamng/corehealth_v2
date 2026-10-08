@@ -34,7 +34,6 @@ class StoreDamagesController extends Controller
         try {
             DB::beginTransaction();
 
-            $validated['total_value'] = $validated['qty_damaged'] * $validated['unit_cost'];
             $validated['created_by'] = Auth::id();
             $validated['status'] = 'pending';
 
@@ -46,6 +45,8 @@ class StoreDamagesController extends Controller
                         'message' => 'Insufficient quantity in selected batch. Available: ' . $batch->current_qty,
                     ], 422);
                 }
+                $validated['unit_cost'] = (float)($batch->cost_price ?? 0.0);
+                $validated['total_value'] = $validated['qty_damaged'] * $validated['unit_cost'];
             } else {
                 $autoBatch = StockBatch::where('product_id', $validated['product_id'])
                     ->where('store_id', $validated['store_id'])
@@ -57,7 +58,10 @@ class StoreDamagesController extends Controller
 
                 if ($autoBatch) {
                     $validated['batch_id'] = $autoBatch->id;
+                    $validated['unit_cost'] = (float)($autoBatch->cost_price ?? 0.0);
+                    $validated['total_value'] = $validated['qty_damaged'] * $validated['unit_cost'];
                 } else {
+                    $validated['total_value'] = $validated['qty_damaged'] * $validated['unit_cost'];
                     $productStock = StoreStock::where('product_id', $validated['product_id'])
                         ->where('store_id', $validated['store_id'])
                         ->first();

@@ -419,8 +419,16 @@
                                                             <td class="text-end fw-bold" id="exec-det-closing-stock">₦0.00</td>
                                                         </tr>
                                                         <tr style="background: rgba(25, 135, 84, 0.05);">
-                                                            <td class="fw-bold text-success">Goods Used (Income/Sales)</td>
+                                                            <td class="fw-bold text-success">Goods Used (Cost of Goods Sold)</td>
                                                             <td class="text-end text-success fw-bold" id="exec-det-goods-used">₦0.00</td>
+                                                        </tr>
+                                                        <tr>
+                                                            <td class="bg-light fw-bold">Dispense Revenue (Sales)</td>
+                                                            <td class="text-end text-primary fw-bold" id="exec-det-total-revenue">₦0.00</td>
+                                                        </tr>
+                                                        <tr style="background: rgba(13, 202, 240, 0.05);">
+                                                            <td class="fw-bold text-info">Gross Margin / Profit</td>
+                                                            <td class="text-end text-info fw-bold" id="exec-det-gross-profit">₦0.00</td>
                                                         </tr>
                                                     </tbody>
                                                 </table>

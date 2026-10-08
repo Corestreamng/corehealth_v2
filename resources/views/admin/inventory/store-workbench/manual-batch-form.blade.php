@@ -210,10 +210,6 @@
                                               placeholder="0.00 — enter 0 for donations"
                                               oninput="updateManualBatchCostPreview()">
                                       </div>
-                                      <div class="custom-control custom-checkbox mt-2">
-                                          <input type="checkbox" class="custom-control-input" name="skip_cost_price" id="manual_skip_cost_price" value="1" onchange="toggleManualCostRequirement(this)">
-                                          <label class="custom-control-label" for="manual_skip_cost_price" style="font-size: 0.8rem;">Skip Cost Price (Not Recommended)</label>
-                                      </div>
                                       <div class="custom-control custom-checkbox mt-1">
                                           <input type="checkbox" class="custom-control-input" name="is_donation" id="manual_is_donation" value="1" {{ old('is_donation') || old('reference_type') === 'donation' ? 'checked' : '' }} onchange="toggleManualDonation(this)">
                                           <label class="custom-control-label text-success font-weight-bold" for="manual_is_donation" style="font-size: 0.8rem; cursor:pointer;">
@@ -431,9 +427,6 @@
             }
             
             $('#manual-cost-price-label').html('Cost Price (per ' + labelStr + ') <span class="text-danger">*</span>');
-            if ($('#manual_skip_cost_price').is(':checked')) {
-                $('#manual-cost-price-label span.text-danger').hide();
-            }
 
             var costInput = $('#cost_price');
             var currentCost = parseFloat(costInput.val()) || 0;
@@ -527,32 +520,9 @@
         });
     });
 
-    window.toggleManualCostRequirement = function(checkbox) {
-        var costInput = $('#cost_price');
-        var labelSpan = $('#manual-cost-price-label span.text-danger');
-        if (checkbox.checked) {
-            if ($('#manual_is_donation').is(':checked')) {
-                $('#manual_is_donation').prop('checked', false);
-                if (typeof window.toggleManualDonation === 'function') {
-                    window.toggleManualDonation($('#manual_is_donation')[0]);
-                }
-            }
-            costInput.prop('required', false);
-            costInput.prop('disabled', true);
-            costInput.val('');
-            labelSpan.hide();
-            $('#manual-batch-cost-preview').hide();
-        } else {
-            costInput.prop('required', true);
-            costInput.prop('disabled', false);
-            labelSpan.show();
-        }
-    };
-
     window.toggleManualDonation = function(checkbox) {
         var isChecked = $(checkbox).is(':checked');
         var $costInput = $('#cost_price');
-        var $skipCost = $('#manual_skip_cost_price');
         var $supplierLabel = $('#manual_supplier_label');
         var $supplierHint = $('#manual_supplier_hint');
         var $costLabel = $('#manual-cost-price-label');
@@ -562,7 +532,6 @@
         var $previewText = $('#manual-batch-cost-preview-text');
 
         if (isChecked) {
-            $skipCost.prop('checked', false).prop('disabled', true);
             $costInput.prop('disabled', false).prop('required', false).val('0.00');
             $costLabel.html('Cost Price <span class="badge badge-success ml-1"><i class="mdi mdi-gift-outline mr-1"></i>Donation (₦0.00)</span>');
             $supplierLabel.html('Donor / Supplier <span class="badge badge-success ml-1"><i class="mdi mdi-gift-outline mr-1"></i>Donor</span>');
@@ -576,7 +545,6 @@
             $previewText.html('<i class="mdi mdi-gift-outline text-success mr-1"></i><strong>Donation Batch:</strong> Cost price set to <strong>₦0.00</strong>');
             $preview.show();
         } else {
-            $skipCost.prop('disabled', false);
             $costInput.prop('required', true);
             if ($costInput.val() === '0.00' || $costInput.val() === '0') {
                 $costInput.val('');

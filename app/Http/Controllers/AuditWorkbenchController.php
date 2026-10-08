@@ -1039,9 +1039,6 @@ class AuditWorkbenchController extends Controller
         foreach ($consumptions as $c) {
             $qty = (float)$c->qty;
             $costPrice = (float)($c->stockBatch->cost_price ?? 0);
-            if ($costPrice <= 0 && $c->stockBatch->product && $c->stockBatch->product->price) {
-                $costPrice = (float)$c->stockBatch->product->price->initial_buy_price;
-            }
 
             $value = $qty * $costPrice;
             $totalConsumptionValue += $value;
@@ -1054,34 +1051,38 @@ class AuditWorkbenchController extends Controller
             if ($c->reference_type === 'ProductRequest' && $c->reference_id) {
                 $pr = \App\Models\ProductRequest::with(['productOrServiceRequest', 'patient.user'])->find($c->reference_id);
                 if ($pr) {
-                    $patientName = $pr->patient && $pr->patient->user ? $pr->patient->user->surname . ' ' . $pr->patient->user->firstname : 'Unknown';
+                    $u = $pr->patient->user ?? null;
+                    $patientName = $u ? trim($u->surname . ' ' . $u->firstname . ' ' . ($u->othername ?? '')) : 'Unknown';
                     if ($pr->productOrServiceRequest) {
-                        $incomeValue = (float)$pr->productOrServiceRequest->payable_amount;
+                        $incomeValue = (float)$pr->productOrServiceRequest->payable_amount + (float)($pr->productOrServiceRequest->claims_amount ?? 0);
                         $billRef = $pr->productOrServiceRequest->request_number ?? 'Billed';
                     }
                 }
             } elseif ($c->reference_type === 'ProductOrServiceRequest' && $c->reference_id) {
                 $posr = \App\Models\ProductOrServiceRequest::with('patient.user')->find($c->reference_id);
                 if ($posr) {
-                    $patientName = $posr->patient && $posr->patient->user ? $posr->patient->user->surname . ' ' . $posr->patient->user->firstname : 'Unknown';
-                    $incomeValue = (float)$posr->payable_amount;
+                    $u = $posr->patient->user ?? null;
+                    $patientName = $u ? trim($u->surname . ' ' . $u->firstname . ' ' . ($u->othername ?? '')) : 'Unknown';
+                    $incomeValue = (float)$posr->payable_amount + (float)($posr->claims_amount ?? 0);
                     $billRef = $posr->request_number ?? 'Billed';
                 }
             } elseif ($c->reference_type === 'LabServiceRequest' && $c->reference_id) {
                 $lsr = \App\Models\LabServiceRequest::with(['productOrServiceRequest', 'patient.user'])->find($c->reference_id);
                 if ($lsr) {
-                    $patientName = $lsr->patient && $lsr->patient->user ? $lsr->patient->user->surname . ' ' . $lsr->patient->user->firstname : 'Unknown';
+                    $u = $lsr->patient->user ?? null;
+                    $patientName = $u ? trim($u->surname . ' ' . $u->firstname . ' ' . ($u->othername ?? '')) : 'Unknown';
                     if ($lsr->productOrServiceRequest) {
-                        $incomeValue = (float)$lsr->productOrServiceRequest->payable_amount;
+                        $incomeValue = (float)$lsr->productOrServiceRequest->payable_amount + (float)($lsr->productOrServiceRequest->claims_amount ?? 0);
                         $billRef = $lsr->productOrServiceRequest->request_number ?? 'Billed';
                     }
                 }
             } elseif ($c->reference_type === 'ImagingServiceRequest' && $c->reference_id) {
                 $isr = \App\Models\ImagingServiceRequest::with(['productOrServiceRequest', 'patient.user'])->find($c->reference_id);
                 if ($isr) {
-                    $patientName = $isr->patient && $isr->patient->user ? $isr->patient->user->surname . ' ' . $isr->patient->user->firstname : 'Unknown';
+                    $u = $isr->patient->user ?? null;
+                    $patientName = $u ? trim($u->surname . ' ' . $u->firstname . ' ' . ($u->othername ?? '')) : 'Unknown';
                     if ($isr->productOrServiceRequest) {
-                        $incomeValue = (float)$isr->productOrServiceRequest->payable_amount;
+                        $incomeValue = (float)$isr->productOrServiceRequest->payable_amount + (float)($isr->productOrServiceRequest->claims_amount ?? 0);
                         $billRef = $isr->productOrServiceRequest->request_number ?? 'Billed';
                     }
                 }
@@ -1787,7 +1788,7 @@ class AuditWorkbenchController extends Controller
                 $reqItems = $reqItemsQuery->with(['product.price', 'sourceBatch'])->get();
 
                 foreach ($reqItems as $item) {
-                    $unitCost = $item->sourceBatch->unit_cost ?? $item->sourceBatch->cost_price ?? $item->product->cost_price ?? ($item->product->price->pr_buy_price ?? 0);
+                    $unitCost = $item->sourceBatch ? (float)($item->sourceBatch->cost_price ?? $item->sourceBatch->unit_cost ?? 0.0) : (float)($item->product->cost_price ?? ($item->product->price->pr_buy_price ?? 0.0));
                     $reqFulfilledValue += ($item->fulfilled_qty ?? $item->requested_qty) * $unitCost;
                 }
             }
@@ -2264,7 +2265,7 @@ class AuditWorkbenchController extends Controller
 
         // 2. Departmental Requisitions vs Revenue Reconciliation with Extensive Synonyms
         $getUnitCost = function ($item) {
-            return $item->sourceBatch->unit_cost ?? $item->sourceBatch->cost_price ?? $item->product->cost_price ?? ($item->product->price->pr_buy_price ?? 0);
+            return $item->sourceBatch ? (float)($item->sourceBatch->cost_price ?? $item->sourceBatch->unit_cost ?? 0.0) : (float)($item->product->cost_price ?? ($item->product->price->pr_buy_price ?? 0.0));
         };
 
         // A. Lab Reconciliation
@@ -3673,8 +3674,7 @@ class AuditWorkbenchController extends Controller
                 $q = \DB::table('stock_batches as sb')
                     ->join('products as p', 'sb.product_id', '=', 'p.id')
                     ->join('stores as s', 'sb.store_id', '=', 's.id')
-                    ->leftJoin('prices as pp', 'p.id', '=', 'pp.product_id')
-                    ->select('sb.*', 'p.product_name', 's.store_name', \DB::raw('COALESCE(NULLIF(sb.cost_price,0), pp.pr_buy_price, 0) as calc_cost'))
+                    ->select('sb.*', 'p.product_name', 's.store_name', \DB::raw('COALESCE(sb.cost_price, 0) as calc_cost'))
                     ->whereBetween('sb.created_at', [$startDate, $endDate]);
 
                 if ($story === 'batch-valuation') {
@@ -3714,7 +3714,6 @@ class AuditWorkbenchController extends Controller
             case 'scheme-breakdown':
             case 'coverage-mode-analysis':
             case 'remittance-vs-claims-matching':
-            case 'dispensing-revenue-attribution':
             case 'store-dispensing-contribution':
             case 'service-category-revenue':
             case 'doctor-referral-billing':
@@ -3738,7 +3737,7 @@ class AuditWorkbenchController extends Controller
                     ->leftJoin('hmo_schemes as hs', 'h.hmo_scheme_id', '=', 'hs.id')
                     ->leftJoin('encounters as enc', 'posr.encounter_id', '=', 'enc.id')
                     ->leftJoin('users as doc', 'enc.doctor_id', '=', 'doc.id')
-                    ->select('posr.*', 'p.product_name', 'sv.service_name', 'sv.category_id as service_cat_id', 'h.name as hmo_name', 'hs.name as scheme_name', 'hs.code as scheme_code', \DB::raw("CONCAT_WS(' ', pu.firstname, pu.surname) as patient_name"), 'pat.file_no', 'pat.hmo_no', \DB::raw("CONCAT_WS(' ', doc.firstname, doc.surname) as doctor_name"))
+                    ->select('posr.*', 'p.product_name', 'sv.service_name', 'sv.category_id as service_cat_id', 'h.name as hmo_name', 'hs.name as scheme_name', 'hs.code as scheme_code', \DB::raw("CONCAT_WS(' ', pu.firstname, pu.surname, pu.othername) as patient_name"), 'pat.file_no', 'pat.hmo_no', \DB::raw("CONCAT_WS(' ', doc.firstname, doc.surname, doc.othername) as doctor_name"))
                     ->whereBetween('posr.created_at', [$startDate, $endDate]);
 
                 if ($story === 'hmo-claims-by-provider') {
@@ -3751,8 +3750,6 @@ class AuditWorkbenchController extends Controller
                     $q->where('posr.coverage_mode', $key);
                 } elseif ($story === 'remittance-vs-claims-matching') {
                     $q->where('posr.hmo_remittance_id', $key);
-                } elseif ($story === 'dispensing-revenue-attribution') {
-                    $q->where('posr.product_id', $key);
                 } elseif ($story === 'store-dispensing-contribution') {
                     $q->where('posr.dispensed_from_store_id', $key);
                 } elseif ($story === 'service-category-revenue') {
@@ -3780,6 +3777,69 @@ class AuditWorkbenchController extends Controller
                     ['label' => 'Total Payable ₦', 'value' => '₦' . number_format((float)$records->sum('payable_amount'), 2), 'class' => 'bg-info text-white'],
                 ];
                 $headers = ['Date', 'Code', 'Patient', 'Item / Service', 'HMO & Scheme', 'Claims ₦', 'Payable ₦', 'Validation Status'];
+
+                break;
+
+            case 'dispensing-revenue-attribution':
+                $product = \DB::table('products')->where('id', $key)->first();
+                $title = 'Dispensing Revenue & COGS Attribution (' . ($product->product_name ?? ('Product #' . $key)) . ')';
+                $records = \DB::table('product_or_service_requests as posr')
+                    ->leftJoin('products as p', 'posr.product_id', '=', 'p.id')
+                    ->leftJoin('product_requests as pr', 'pr.product_request_id', '=', 'posr.id')
+                    ->leftJoin('stock_batches as sb', 'pr.dispensed_from_batch_id', '=', 'sb.id')
+                    ->leftJoin('stores as s', 'posr.dispensed_from_store_id', '=', 's.id')
+                    ->leftJoin('patients as pat', function ($join) {
+                        $join->on('posr.patient_id', '=', 'pat.id')
+                             ->orOn('posr.user_id', '=', 'pat.user_id');
+                    })
+                    ->leftJoin('users as pu', function ($join) {
+                        $join->on('pat.user_id', '=', 'pu.id')
+                             ->orOn('posr.user_id', '=', 'pu.id');
+                    })
+                    ->select(
+                        'posr.*',
+                        'p.product_name',
+                        's.store_name',
+                        'sb.batch_number',
+                        \DB::raw('COALESCE(sb.cost_price, 0) as batch_cost_price'),
+                        \DB::raw("CONCAT_WS(' ', pu.firstname, pu.surname, pu.othername) as patient_name"),
+                        'pat.file_no'
+                    )
+                    ->where('posr.product_id', $key)
+                    ->whereBetween('posr.created_at', [$startDate, $endDate])
+                    ->orderByDesc('posr.created_at')
+                    ->limit(500)
+                    ->get();
+
+                $rows = $records->map(function ($r) {
+                    $qty = (float)($r->qty ?: 1);
+                    $unitCost = (float)$r->batch_cost_price;
+                    $cogs = $qty * $unitCost;
+                    $soldRevenue = (float)$r->payable_amount + (float)($r->claims_amount ?? 0);
+                    $margin = $soldRevenue - $cogs;
+
+                    return [
+                        'date' => \Carbon\Carbon::parse($r->created_at)->format('Y-m-d H:i'),
+                        'patient' => '<div class="font-weight-bold">' . e($r->patient_name ?? 'Walk-in') . '</div><small class="text-muted">' . e($r->file_no ?? 'No File') . '</small>',
+                        'batch' => '<span class="badge bg-secondary text-white">' . e($r->batch_number ?? 'No Batch') . '</span>',
+                        'qty' => '<span class="badge bg-light text-dark border">' . number_format($qty) . '</span>',
+                        'cost_price' => '<span class="font-weight-bold text-dark">₦' . number_format($unitCost, 2) . '</span>',
+                        'cogs' => '<span class="font-weight-bold text-dark">₦' . number_format($cogs, 2) . '</span>',
+                        'revenue' => '<span class="font-weight-bold text-success">₦' . number_format($soldRevenue, 2) . '</span>',
+                        'margin' => '<span class="font-weight-bold ' . ($margin >= 0 ? 'text-success' : 'text-danger') . '">₦' . number_format($margin, 2) . '</span>',
+                    ];
+                });
+
+                $totalDrillRevenue = $records->sum(fn ($r) => (float)$r->payable_amount + (float)($r->claims_amount ?? 0));
+                $totalDrillCogs = $records->sum(fn ($r) => ((float)($r->qty ?: 1)) * ((float)$r->batch_cost_price));
+
+                $cards = [
+                    ['label' => 'Total Dispensed Units', 'value' => number_format($records->sum('qty')), 'class' => 'bg-primary text-white'],
+                    ['label' => 'Total Dispense Revenue ₦', 'value' => '₦' . number_format($totalDrillRevenue, 2), 'class' => 'bg-success text-white'],
+                    ['label' => 'Total Batch COGS ₦', 'value' => '₦' . number_format($totalDrillCogs, 2), 'class' => 'bg-info text-white'],
+                    ['label' => 'Gross Margin ₦', 'value' => '₦' . number_format($totalDrillRevenue - $totalDrillCogs, 2), 'class' => 'bg-secondary text-white'],
+                ];
+                $headers = ['Date', 'Patient', 'Batch #', 'Qty', 'Batch Cost ₦', 'COGS ₦', 'Sold Revenue ₦', 'Gross Margin ₦'];
 
                 break;
 
@@ -3828,8 +3888,7 @@ class AuditWorkbenchController extends Controller
                     $q = \DB::table('stock_batches as sb')
                         ->join('products as p', 'sb.product_id', '=', 'p.id')
                         ->join('stores as s', 'sb.store_id', '=', 's.id')
-                        ->leftJoin('prices as pp', 'p.id', '=', 'pp.product_id')
-                        ->select('sb.*', 'p.product_name', 's.store_name', \DB::raw('COALESCE(NULLIF(sb.cost_price,0), pp.pr_buy_price, 0) as calc_cost'))
+                        ->select('sb.*', 'p.product_name', 's.store_name', \DB::raw('COALESCE(sb.cost_price, 0) as calc_cost'))
                         ->where(function ($sq) {
                             $sq->where('s.distribution_role', 'central')
                                 ->orWhere('s.store_type', 'warehouse');
@@ -3989,9 +4048,9 @@ class AuditWorkbenchController extends Controller
                 $q = \DB::table('store_requisition_returns as srr')
                     ->join('products as p', 'srr.product_id', '=', 'p.id')
                     ->join('stores as s', 'srr.source_store_id', '=', 's.id')
-                    ->leftJoin('prices as pp', 'p.id', '=', 'pp.product_id')
+                    ->leftJoin('stock_batches as sb', 'srr.batch_id', '=', 'sb.id')
                     ->leftJoin('users as u', 'srr.created_by', '=', 'u.id')
-                    ->select('srr.*', 'p.product_name', 's.store_name', \DB::raw("CONCAT_WS(' ', u.firstname, u.surname) as creator_name"), \DB::raw('COALESCE(pp.pr_buy_price, 0) as calc_cost'))
+                    ->select('srr.*', 'p.product_name', 's.store_name', \DB::raw("CONCAT_WS(' ', u.firstname, u.surname, u.othername) as creator_name"), \DB::raw('COALESCE(sb.cost_price, 0) as calc_cost'))
                     ->whereBetween('srr.created_at', [$startDate, $endDate]);
 
                 if ($key) {
@@ -4024,8 +4083,7 @@ class AuditWorkbenchController extends Controller
                 $q = \DB::table('stock_batches as sb')
                     ->join('products as p', 'sb.product_id', '=', 'p.id')
                     ->join('stores as s', 'sb.store_id', '=', 's.id')
-                    ->leftJoin('prices as pp', 'p.id', '=', 'pp.product_id')
-                    ->select('sb.*', 'p.product_name', 's.store_name', \DB::raw('COALESCE(NULLIF(sb.cost_price,0), pp.pr_buy_price, 0) as calc_cost'))
+                    ->select('sb.*', 'p.product_name', 's.store_name', \DB::raw('COALESCE(sb.cost_price, 0) as calc_cost'))
                     ->where('sb.source', $key)
                     ->whereBetween('sb.created_at', [$startDate, $endDate]);
 
@@ -4829,7 +4887,7 @@ class AuditWorkbenchController extends Controller
                     return '<span class="badge bg-primary fs-6">' . $r->quantity . ' Base Units</span>';
                 })
                 ->addColumn('cost_valuation', function ($r) {
-                    $cost = $r->unit_cost ?? $r->cost_price ?? $r->product->cost_price ?? ($r->product->price->pr_buy_price ?? 0);
+                    $cost = (float)($r->cost_price ?? $r->unit_cost ?? 0.0);
                     $val = $r->quantity * $cost;
 
                     return '<div class="font-weight-bold text-dark">₦' . number_format($val, 2) . '</div><small class="text-muted">Unit: ₦' . number_format($cost, 2) . '</small>';
@@ -4904,7 +4962,7 @@ class AuditWorkbenchController extends Controller
                     return '<span class="badge bg-info">' . $r->quantity . ' Base Units</span>';
                 })
                 ->addColumn('valuation', function ($r) {
-                    $cost = $r->unit_cost ?? $r->cost_price ?? $r->product->cost_price ?? ($r->product->price->pr_buy_price ?? 0);
+                    $cost = (float)($r->cost_price ?? $r->unit_cost ?? 0.0);
 
                     return '<div class="font-weight-bold text-dark">₦' . number_format($r->quantity * $cost, 2) . '</div>';
                 })
@@ -5416,8 +5474,8 @@ class AuditWorkbenchController extends Controller
                         'pc.category_name',
                         \DB::raw('COUNT(sb.id) as batch_count'),
                         \DB::raw('SUM(sb.current_qty) as total_units'),
-                        \DB::raw('SUM(sb.current_qty * COALESCE(NULLIF(sb.cost_price,0), pp.pr_buy_price, 0)) as total_value'),
-                        \DB::raw('SUM(CASE WHEN sb.expiry_date < NOW() AND sb.expiry_date IS NOT NULL AND sb.current_qty > 0 THEN sb.current_qty * COALESCE(NULLIF(sb.cost_price,0), pp.pr_buy_price, 0) ELSE 0 END) as expired_value')
+                        \DB::raw('SUM(sb.current_qty * COALESCE(sb.cost_price, 0)) as total_value'),
+                        \DB::raw('SUM(CASE WHEN sb.expiry_date < NOW() AND sb.expiry_date IS NOT NULL AND sb.current_qty > 0 THEN sb.current_qty * COALESCE(sb.cost_price, 0) ELSE 0 END) as expired_value')
                     )
                     ->where(function ($q) {
                         $q->where('s.distribution_role', 'central')
@@ -5556,7 +5614,7 @@ class AuditWorkbenchController extends Controller
                         \DB::raw('"expired" as damage_type'),
                         \DB::raw('COUNT(sb.id) as incident_count'),
                         \DB::raw('SUM(sb.current_qty) as total_qty'),
-                        \DB::raw('SUM(sb.current_qty * COALESCE(NULLIF(sb.cost_price,0), pp.pr_buy_price, 0)) as total_value'),
+                        \DB::raw('SUM(sb.current_qty * COALESCE(sb.cost_price, 0)) as total_value'),
                         \DB::raw('0 as pending_count')
                     )
                     ->where(function ($q) {
@@ -5600,8 +5658,8 @@ class AuditWorkbenchController extends Controller
                         \DB::raw('COUNT(sb.id) as batch_count'),
                         \DB::raw('SUM(sb.initial_qty) as total_initial_qty'),
                         \DB::raw('SUM(sb.current_qty) as total_current_qty'),
-                        \DB::raw('SUM(sb.initial_qty * COALESCE(NULLIF(sb.cost_price,0), pp.pr_buy_price, 0)) as total_acquisition_value'),
-                        \DB::raw('SUM(sb.current_qty * COALESCE(NULLIF(sb.cost_price,0), pp.pr_buy_price, 0)) as remaining_value')
+                        \DB::raw('SUM(sb.initial_qty * COALESCE(sb.cost_price, 0)) as total_acquisition_value'),
+                        \DB::raw('SUM(sb.current_qty * COALESCE(sb.cost_price, 0)) as remaining_value')
                     )
                     ->whereBetween('sb.received_date', [$startDate, $endDate])
                     ->groupBy('sb.source')
@@ -5661,7 +5719,7 @@ class AuditWorkbenchController extends Controller
                         's.distribution_role',
                         \DB::raw('COUNT(sb.id) as batch_count'),
                         \DB::raw('SUM(sb.current_qty) as total_units'),
-                        \DB::raw('SUM(sb.current_qty * COALESCE(NULLIF(sb.cost_price,0), pp.pr_buy_price, 0)) as total_value'),
+                        \DB::raw('SUM(sb.current_qty * COALESCE(sb.cost_price, 0)) as total_value'),
                         \DB::raw('SUM(CASE WHEN sb.current_qty <= COALESCE(ss.reorder_level, 10) THEN 1 ELSE 0 END) as low_stock_lines')
                     )
                     ->whereIn('s.distribution_role', $allSubRoles)
@@ -5827,7 +5885,7 @@ class AuditWorkbenchController extends Controller
                         'p.product_name',
                         'pc.category_name',
                         \DB::raw('SUM(srr.qty_returned) as qty_returned'),
-                        \DB::raw('SUM(srr.qty_returned * COALESCE(NULLIF(sb.cost_price,0), pp.pr_buy_price, 0)) as cost_value'),
+                        \DB::raw('SUM(srr.qty_returned * COALESCE(sb.cost_price, 0)) as cost_value'),
                         \DB::raw('"requisition_return" as return_source')
                     )
                     ->whereBetween('srr.created_at', [$startDate, $endDate])
@@ -5846,7 +5904,7 @@ class AuditWorkbenchController extends Controller
                         'pc.category_name',
                         \DB::raw('SUM(pr.returned_qty) as qty_returned'),
                         \DB::raw('SUM(COALESCE(pr.refund_amount, 0)) as refund_amount'),
-                        \DB::raw('SUM(pr.returned_qty * COALESCE(NULLIF(sb.cost_price,0), pp.pr_buy_price, 0)) as cost_value'),
+                        \DB::raw('SUM(pr.returned_qty * COALESCE(sb.cost_price, 0)) as cost_value'),
                         \DB::raw('"pharmacy_return" as return_source')
                     )
                     ->whereNotNull('pr.returned_qty')
@@ -5902,16 +5960,19 @@ class AuditWorkbenchController extends Controller
                 $rows = \DB::table('product_or_service_requests as posr')
                     ->join('products as p', 'posr.product_id', '=', 'p.id')
                     ->leftJoin('product_categories as pc', 'p.category_id', '=', 'pc.id')
-                    ->leftJoin('prices as pp', 'p.id', '=', 'pp.product_id')
+                    ->leftJoin('product_requests as pr', 'pr.product_request_id', '=', 'posr.id')
+                    ->leftJoin('stock_batches as sb', 'pr.dispensed_from_batch_id', '=', 'sb.id')
                     ->select(
                         'posr.product_id',
                         'p.product_name',
                         'pc.category_name',
                         \DB::raw('COUNT(posr.id) as item_count'),
                         \DB::raw('SUM(posr.qty) as total_qty'),
-                        \DB::raw('SUM(posr.payable_amount) as total_revenue'),
+                        \DB::raw('SUM(posr.payable_amount + COALESCE(posr.claims_amount, 0)) as total_revenue'),
+                        \DB::raw('SUM(posr.payable_amount) as total_cash'),
                         \DB::raw('SUM(CASE WHEN posr.claims_amount > 0 THEN posr.claims_amount ELSE 0 END) as total_claims'),
-                        \DB::raw('AVG(COALESCE(NULLIF(pp.pr_buy_price,0), 0)) as avg_cost_price')
+                        \DB::raw('SUM(posr.qty * COALESCE(sb.cost_price, 0)) as total_cogs'),
+                        \DB::raw('AVG(COALESCE(sb.cost_price, 0)) as avg_cost_price')
                     )
                     ->whereNotNull('posr.product_id')
                     ->whereBetween('posr.created_at', [$startDate, $endDate])
@@ -5920,14 +5981,15 @@ class AuditWorkbenchController extends Controller
                     ->get();
 
                 $formattedRows = $rows->map(function ($r) {
-                    $cogs = round($r->total_qty * $r->avg_cost_price, 2);
-                    $margin = $r->total_revenue - $cogs;
+                    $cogs = round((float)$r->total_cogs, 2);
+                    $revenue = (float)$r->total_revenue;
+                    $margin = $revenue - $cogs;
 
                     return [
                         'action' => '<button class="btn btn-xs btn-outline-primary story-detail-btn font-weight-bold py-1 px-2" data-zone="store-utilization" data-story="dispensing-revenue-attribution" data-key="' . e($r->product_id) . '"><i class="mdi mdi-eye"></i> Details</button>',
                         'product' => '<div class="font-weight-bold text-dark"><i class="mdi mdi-pill text-primary"></i> ' . e($r->product_name) . '</div><small class="text-muted">' . e($r->category_name ?? 'N/A') . '</small>',
                         'qty' => '<span class="badge bg-light text-dark border font-weight-bold">' . number_format($r->total_qty) . ' Units</span>',
-                        'revenue' => '<span class="font-weight-bold text-success" style="font-size:1.05rem;">₦' . number_format($r->total_revenue, 2) . '</span>',
+                        'revenue' => '<span class="font-weight-bold text-success" style="font-size:1.05rem;">₦' . number_format($revenue, 2) . '</span>',
                         'claims' => '<span class="font-weight-bold text-info">₦' . number_format($r->total_claims, 2) . '</span>',
                         'cogs' => '<span class="font-weight-bold text-dark">₦' . number_format($cogs, 2) . '</span>',
                         'margin' => '<span class="font-weight-bold ' . ($margin >= 0 ? 'text-success' : 'text-danger') . '">₦' . number_format($margin, 2) . '</span>',
@@ -5936,16 +5998,16 @@ class AuditWorkbenchController extends Controller
 
                 $totalRevenue = $rows->sum('total_revenue');
                 $totalClaims = $rows->sum('total_claims');
-                $totalCogs = $rows->sum(fn ($r) => $r->total_qty * $r->avg_cost_price);
+                $totalCogs = $rows->sum('total_cogs');
 
                 $cards = [
-                    ['label' => 'Total Product Revenue', 'value' => '₦' . number_format($totalRevenue, 2), 'class' => 'bg-success text-white'],
+                    ['label' => 'Total Product Revenue (Cash + Claims)', 'value' => '₦' . number_format($totalRevenue, 2), 'class' => 'bg-success text-white'],
                     ['label' => 'Total HMO Claims', 'value' => '₦' . number_format($totalClaims, 2), 'class' => 'bg-info text-white'],
-                    ['label' => 'Est. Total COGS', 'value' => '₦' . number_format($totalCogs, 2), 'class' => 'bg-primary text-white'],
-                    ['label' => 'Est. Gross Margin', 'value' => '₦' . number_format($totalRevenue - $totalCogs, 2), 'class' => 'bg-secondary text-white'],
+                    ['label' => 'Total Batch COGS', 'value' => '₦' . number_format($totalCogs, 2), 'class' => 'bg-primary text-white'],
+                    ['label' => 'Gross Margin', 'value' => '₦' . number_format($totalRevenue - $totalCogs, 2), 'class' => 'bg-secondary text-white'],
                 ];
 
-                return response()->json(['cards' => $cards, 'rows' => $formattedRows->values(), 'headers' => ['Action', 'Product', 'Qty Sold', 'Revenue ₦', 'Claims ₦', 'Est. COGS ₦', 'Est. Margin ₦']]);
+                return response()->json(['cards' => $cards, 'rows' => $formattedRows->values(), 'headers' => ['Action', 'Product', 'Qty Sold', 'Revenue (Cash+Claims) ₦', 'Claims ₦', 'Batch COGS ₦', 'Gross Margin ₦']]);
 
             case 'store-dispensing-contribution':
                 $rows = \DB::table('product_or_service_requests as posr')
@@ -6071,7 +6133,7 @@ class AuditWorkbenchController extends Controller
                         \DB::raw('SUM(sb.initial_qty) as total_initial'),
                         \DB::raw('SUM(sb.sold_qty) as total_sold'),
                         \DB::raw('SUM(sb.current_qty) as total_remaining'),
-                        \DB::raw('SUM(sb.current_qty * COALESCE(NULLIF(sb.cost_price,0), pp.pr_buy_price, 0)) as value_remaining')
+                        \DB::raw('SUM(sb.current_qty * COALESCE(sb.cost_price, 0)) as value_remaining')
                     )
                     ->whereBetween('sb.received_date', [$startDate, $endDate])
                     ->groupBy('sb.product_id', 'p.product_name', 'pc.category_name')
@@ -6752,7 +6814,7 @@ class AuditWorkbenchController extends Controller
                         'pc.category_name',
                         \DB::raw('SUM(COALESCE(pr.returned_qty, 1)) as qty_returned'),
                         \DB::raw('SUM(COALESCE(pr.refund_amount, 0)) as refund_amount'),
-                        \DB::raw('SUM(COALESCE(pr.returned_qty, 1) * COALESCE(NULLIF(sb.cost_price, 0), pp.pr_buy_price, 0)) as cost_of_return'),
+                        \DB::raw('SUM(COALESCE(pr.returned_qty, 1) * COALESCE(sb.cost_price, 0)) as cost_of_return'),
                         \DB::raw('"pharmacy_return" as loss_type')
                     )
                     ->where(function ($q) {
@@ -6776,7 +6838,7 @@ class AuditWorkbenchController extends Controller
                         'pc.category_name',
                         \DB::raw('SUM(sbt.qty) as qty_returned'),
                         \DB::raw('0 as refund_amount'),
-                        \DB::raw('SUM(sbt.qty * COALESCE(NULLIF(sb.cost_price, 0), pp.pr_buy_price, 0)) as cost_of_return'),
+                        \DB::raw('SUM(sbt.qty * COALESCE(sb.cost_price, 0)) as cost_of_return'),
                         \DB::raw('sbt.type as loss_type')
                     )
                     ->whereIn('sbt.type', ['damaged', 'expired', 'req_return', 'return', 'write_off'])
@@ -6795,7 +6857,7 @@ class AuditWorkbenchController extends Controller
                         'pc.category_name',
                         \DB::raw('SUM(sb.current_qty) as qty_returned'),
                         \DB::raw('0 as refund_amount'),
-                        \DB::raw('SUM(sb.current_qty * COALESCE(NULLIF(sb.cost_price, 0), pp.pr_buy_price, 0)) as cost_of_return'),
+                        \DB::raw('SUM(sb.current_qty * COALESCE(sb.cost_price, 0)) as cost_of_return'),
                         \DB::raw('"expired_batch" as loss_type')
                     )
                     ->where('sb.expiry_date', '<', now())

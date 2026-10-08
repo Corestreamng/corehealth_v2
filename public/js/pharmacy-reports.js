@@ -761,12 +761,16 @@ function populateDetailedExecutiveSummary(data) {
     const goodsAvailable = openingStock + totalExpenditure;
     const stockValuation = parseFloat(data.stock_valuation || 0);
     const totalGoodsUsed = parseFloat(data.total_goods_used || 0);
+    const totalRevenue = parseFloat(data.total_revenue !== undefined ? data.total_revenue : (data.total_goods_used || 0));
+    const grossProfit = parseFloat(data.gross_profit !== undefined ? data.gross_profit : (totalRevenue - totalGoodsUsed));
 
     $('#exec-det-opening-stock').text(formatCurrency(openingStock));
     $('#exec-det-purchases').text(formatCurrency(totalExpenditure));
     $('#exec-det-goods-available').text(formatCurrency(goodsAvailable));
     $('#exec-det-closing-stock').text(formatCurrency(stockValuation));
     $('#exec-det-goods-used').text(formatCurrency(totalGoodsUsed));
+    $('#exec-det-total-revenue').text(formatCurrency(totalRevenue));
+    $('#exec-det-gross-profit').text(formatCurrency(grossProfit));
 
     // 3. Income by Scheme Summary Table
     const $incomeTbody = $('#exec-det-income-scheme-tbody');
@@ -797,7 +801,7 @@ function populateDetailedExecutiveSummary(data) {
         }
         $('#exec-det-income-total-cash').text(formatCurrency(sumCash));
         $('#exec-det-income-total-claims').text(formatCurrency(sumClaims));
-        $('#exec-det-income-total-all').text(formatCurrency(totalGoodsUsed > 0 ? totalGoodsUsed : sumTotal));
+        $('#exec-det-income-total-all').text(formatCurrency(totalRevenue > 0 ? totalRevenue : sumTotal));
     } else {
         $incomeTbody.html('<tr><td colspan="4" class="text-center text-muted py-3">No income data found</td></tr>');
         $('#exec-det-income-total-cash').text(formatCurrency(0));

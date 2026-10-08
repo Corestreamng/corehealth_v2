@@ -1141,9 +1141,10 @@ if (typeof window.wbRoute !== 'function') {
                     labelStr = baseUnit;
                 }
 
-                $('#batch-cost-price-label').html('Cost Price (per ' + labelStr + ') <span class="text-danger">*</span>');
-                if ($('#tally_skip_cost_price').is(':checked')) {
-                    $('#batch-cost-price-label span.text-danger').hide();
+                if ($('#tally_is_donation').is(':checked')) {
+                    $('#batch-cost-price-label').html('Cost Price (per ' + labelStr + ') <span class="badge badge-success ml-1"><i class="mdi mdi-gift-outline mr-1"></i>Donation (₦0.00)</span>');
+                } else {
+                    $('#batch-cost-price-label').html('Cost Price (per ' + labelStr + ') <span class="text-danger">*</span>');
                 }
                 if (factor > 1 && qty > 0) {
                     $('#batch-qty-hint').text(`= ${baseQty} ${baseUnit}`);
@@ -2419,32 +2420,9 @@ if (typeof window.wbRoute !== 'function') {
             else alert('Error: ' + msg);
         }
 
-        window.toggleTallyCostRequirement = function(checkbox) {
-            var costInput = $('#batch-cost-price');
-            var labelSpan = $('#batch-cost-price-label span.text-danger');
-            if (checkbox.checked) {
-                if ($('#tally_is_donation').is(':checked')) {
-                    $('#tally_is_donation').prop('checked', false);
-                    if (typeof window.toggleTallyDonation === 'function') {
-                        window.toggleTallyDonation($('#tally_is_donation')[0]);
-                    }
-                }
-                costInput.prop('required', false);
-                costInput.prop('disabled', true);
-                costInput.val('');
-                labelSpan.hide();
-                $('#batch-cost-preview').hide();
-            } else {
-                costInput.prop('required', true);
-                costInput.prop('disabled', false);
-                labelSpan.show();
-            }
-        };
-
         window.toggleTallyDonation = function(checkbox) {
             var isChecked = $(checkbox).is(':checked');
             var $costInput = $('#batch-cost-price');
-            var $skipCost = $('#tally_skip_cost_price');
             var $supplierLabel = $('#tally-supplier-label');
             var $supplierHint = $('#tally-supplier-hint');
             var $costLabel = $('#batch-cost-price-label');
@@ -2454,24 +2432,21 @@ if (typeof window.wbRoute !== 'function') {
 
             if (isChecked) {
                 // If marked as donation:
-                // 1. Uncheck and disable skip_cost_price
-                $skipCost.prop('checked', false).prop('disabled', true);
-                // 2. Set cost price to 0.00 and make it non-required
+                // Set cost price to 0.00 and make it non-required
                 $costInput.prop('disabled', false).prop('required', false).val('0.00');
                 $costLabel.html('Cost Price (₦) <span class="badge badge-success ml-1"><i class="mdi mdi-gift-outline mr-1"></i>Donation (₦0.00)</span>');
-                // 3. Highlight donor in supplier field
+                // Highlight donor in supplier field
                 $supplierLabel.html('Donor / Supplier <span class="badge badge-success ml-1"><i class="mdi mdi-gift-outline mr-1"></i>Donor</span>');
                 $supplierHint.html('<a href="' + (wbRoute('suppliers.create', '/suppliers/create')) + '" target="_blank">+ Add new donor / supplier</a>');
-                // 4. Default notes if empty
+                // Default notes if empty
                 if (!$notes.val().trim()) {
                     $notes.val('Donation batch received');
                 }
-                // 5. Show preview badge
+                // Show preview badge
                 $previewText.html('<i class="mdi mdi-gift-outline text-success mr-1"></i><strong>Donation Batch:</strong> Cost price set to <strong>₦0.00</strong>');
                 $preview.show();
             } else {
-                // Revert donation
-                $skipCost.prop('disabled', false);
+                // Revert donation: cost price is required
                 $costInput.prop('required', true);
                 if ($costInput.val() === '0.00' || $costInput.val() === '0') {
                     $costInput.val('');

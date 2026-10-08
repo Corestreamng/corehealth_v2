@@ -75,12 +75,10 @@ class PharmacyDamagesController extends Controller
         try {
             DB::beginTransaction();
 
-            // Calculate total value
-            $validated['total_value'] = $validated['qty_damaged'] * $validated['unit_cost'];
             $validated['created_by'] = Auth::id();
             $validated['status'] = 'pending';
 
-            // Check if batch has sufficient quantity
+            // Check if batch has sufficient quantity and derive cost from batch
             if (isset($validated['batch_id'])) {
                 $batch = StockBatch::findOrFail($validated['batch_id']);
                 if ($batch->current_qty < $validated['qty_damaged']) {
@@ -89,6 +87,8 @@ class PharmacyDamagesController extends Controller
                         'message' => 'Insufficient quantity in selected batch. Available: ' . $batch->current_qty,
                     ], 422);
                 }
+                $validated['unit_cost'] = (float)($batch->cost_price ?? 0.0);
+                $validated['total_value'] = $validated['qty_damaged'] * $validated['unit_cost'];
             } else {
                 // Auto-assign the first available batch (FIFO) when no batch selected
                 $autoBatch = StockBatch::where('product_id', $validated['product_id'])
@@ -101,7 +101,10 @@ class PharmacyDamagesController extends Controller
 
                 if ($autoBatch) {
                     $validated['batch_id'] = $autoBatch->id;
+                    $validated['unit_cost'] = (float)($autoBatch->cost_price ?? 0.0);
+                    $validated['total_value'] = $validated['qty_damaged'] * $validated['unit_cost'];
                 } else {
+                    $validated['total_value'] = $validated['qty_damaged'] * $validated['unit_cost'];
                     // No single batch can cover it — check total store stock
                     $productStock = StoreStock::where('product_id', $validated['product_id'])
                         ->where('store_id', $validated['store_id'])

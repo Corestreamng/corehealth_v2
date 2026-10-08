@@ -427,8 +427,15 @@ class StockUtilizationController extends Controller
                 $p = $item->product;
                 $categoryName = $p && $p->category ? $p->category->category_name : 'Uncategorized';
                 $reorder = $item->reorder_level > 0 ? $item->reorder_level : ($p->reorder_alert ?? 0);
-                $unitCost = ($p && $p->price) ? ($p->price->pr_buy_price ?? 0) : 0;
-                $totalVal = $item->current_quantity * $unitCost;
+                $batches = $batchMap->get($item->product_id, collect());
+                if ($batches->isNotEmpty()) {
+                    $totalVal = $batches->sum(fn ($b) => $b->current_qty * (float)($b->cost_price ?? 0.0));
+                    $totalBatchQty = $batches->sum('current_qty');
+                    $unitCost = $totalBatchQty > 0 ? ($totalVal / $totalBatchQty) : 0.0;
+                } else {
+                    $unitCost = 0.0;
+                    $totalVal = 0.0;
+                }
 
                 $pkgInfo = $this->computePackagingInfo($p, (float) $item->current_quantity);
 
@@ -439,7 +446,6 @@ class StockUtilizationController extends Controller
                     $status = 'Low Stock';
                 }
 
-                $batches = $batchMap->get($item->product_id, collect());
                 $batchStrParts = [];
                 $pkgs = $p && $p->packagings ? $p->packagings : collect();
                 foreach ($batches as $b) {
@@ -551,9 +557,14 @@ class StockUtilizationController extends Controller
                 $this->enrichBatchDetails($b, $item->product, $packagings);
             }
             $item->batches = $itemBatches;
-            $unitCost = ($item->product && $item->product->price) ? ($item->product->price->pr_buy_price ?? 0) : 0;
-            $item->unit_cost = $unitCost;
-            $item->line_valuation = $item->current_quantity * $unitCost;
+            if ($itemBatches->isNotEmpty()) {
+                $item->line_valuation = $itemBatches->sum(fn ($b) => $b->current_qty * (float)($b->cost_price ?? 0.0));
+                $totalBatchQty = $itemBatches->sum('current_qty');
+                $item->unit_cost = $totalBatchQty > 0 ? ($item->line_valuation / $totalBatchQty) : 0.0;
+            } else {
+                $item->unit_cost = 0.0;
+                $item->line_valuation = 0.0;
+            }
             $totalValuation += $item->line_valuation;
             $totalQuantity += $item->current_quantity;
 

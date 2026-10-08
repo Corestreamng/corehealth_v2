@@ -914,7 +914,7 @@ abstract class OpsAuditBaseController extends Controller
             $statusColors = ['pending' => 'warning text-dark', 'approved' => 'info', 'fulfilled' => 'success', 'rejected' => 'danger', 'partial' => 'warning'];
             $sColor = $statusColors[$row->status] ?? 'secondary';
 
-            $getCost = fn ($i) => ($i->sourceBatch && (float)$i->sourceBatch->cost_price > 0) ? (float)$i->sourceBatch->cost_price : (float)($i->product->price->pr_buy_price ?? 0);
+            $getCost = fn ($i) => ($i->sourceBatch || $i->destinationBatch) ? (float)($i->sourceBatch?->cost_price ?? $i->destinationBatch?->cost_price ?? 0.0) : (float)($i->product->price->pr_buy_price ?? 0.0);
 
             $reqValue = $row->items ? $row->items->sum(fn ($i) => $i->status !== 'rejected' ? (($i->requested_qty ?? 0) * $getCost($i)) : 0) : 0;
             $apprValue = $row->items ? $row->items->sum(fn ($i) => $i->status !== 'rejected' ? (($i->approved_qty ?? 0) * $getCost($i)) : 0) : 0;
@@ -927,9 +927,9 @@ abstract class OpsAuditBaseController extends Controller
                 'from_store' => $row->fromStore ? ($row->fromStore->store_name . '<br><small class="text-muted">' . $row->fromStore->distributionRoleLabel() . '</small>') : '-',
                 'to_store' => $row->toStore ? ($row->toStore->store_name . '<br><small class="text-muted">' . $row->toStore->distributionRoleLabel() . '</small>') : '-',
                 'status' => '<span class="badge bg-' . $sColor . '">' . ucfirst($row->status ?? '-') . '</span>',
-                'requested_by' => $row->requester?->firstname ? ($row->requester->firstname . ' ' . ($row->requester->surname ?? '')) : '-',
-                'approved_by' => $row->approver?->firstname ? ($row->approver->firstname . ' ' . ($row->approver->surname ?? '')) : '-',
-                'fulfilled_by' => $row->fulfiller?->firstname ? ($row->fulfiller->firstname . ' ' . ($row->fulfiller->surname ?? '')) : '-',
+                'requested_by' => $row->requester?->firstname ? trim($row->requester->surname . ' ' . $row->requester->firstname . ' ' . ($row->requester->othername ?? '')) : '-',
+                'approved_by' => $row->approver?->firstname ? trim($row->approver->surname . ' ' . $row->approver->firstname . ' ' . ($row->approver->othername ?? '')) : '-',
+                'fulfilled_by' => $row->fulfiller?->firstname ? trim($row->fulfiller->surname . ' ' . $row->fulfiller->firstname . ' ' . ($row->fulfiller->othername ?? '')) : '-',
                 'items_count' => $row->items ? $row->items->count() : '-',
                 'req_value' => '₦' . number_format($reqValue, 2),
                 'appr_value' => '₦' . number_format($apprValue, 2),
@@ -940,7 +940,7 @@ abstract class OpsAuditBaseController extends Controller
             ];
         }, function ($kpiQuery) {
             $all = $kpiQuery->get();
-            $getCost = fn ($i) => ($i->sourceBatch && (float)$i->sourceBatch->cost_price > 0) ? (float)$i->sourceBatch->cost_price : (float)($i->product->price->pr_buy_price ?? 0);
+            $getCost = fn ($i) => ($i->sourceBatch || $i->destinationBatch) ? (float)($i->sourceBatch?->cost_price ?? $i->destinationBatch?->cost_price ?? 0.0) : (float)($i->product->price->pr_buy_price ?? 0.0);
 
             $totalReqCost = $all->sum(function ($req) use ($getCost) {
                 return $req->items ? $req->items->sum(fn ($i) => $i->status !== 'rejected' ? (($i->requested_qty ?? 0) * $getCost($i)) : 0) : 0;
