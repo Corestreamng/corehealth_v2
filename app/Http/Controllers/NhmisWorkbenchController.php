@@ -264,7 +264,39 @@ class NhmisWorkbenchController extends Controller
      */
     public function getMappingForService($serviceId)
     {
-        $mapping = NhmisServiceMapping::where('service_id', (int) $serviceId)->first();
+        $mapping = null;
+        if ((int) $serviceId > 0) {
+            $mapping = NhmisServiceMapping::where('service_id', (int) $serviceId)->first();
+        }
+
+        if (!$mapping && request()->filled('service_name')) {
+            $sName = trim(request('service_name'));
+            $mapping = NhmisServiceMapping::whereHas('service', function ($q) use ($sName) {
+                $q->where('service_name', $sName);
+            })->first();
+
+            if (!$mapping) {
+                // Match against indicator keywords
+                foreach (NhmisServiceMapping::INDICATORS as $code => $meta) {
+                    foreach ($meta['keywords'] as $kw) {
+                        if (stripos($sName, $kw) !== false) {
+                            $presets = NhmisServiceMapping::getPresetsForIndicator($code);
+
+                            return response()->json([
+                                'success' => true,
+                                'is_mapped' => true,
+                                'indicator_code' => $code,
+                                'indicator_label' => $meta['label'] ?? $code,
+                                'service_type' => $meta['service_type'] ?? 'investigation',
+                                'supported_outcomes' => $presets['supported'],
+                                'positive_outcomes' => $presets['positive'],
+                            ]);
+                        }
+                    }
+                }
+            }
+        }
+
         if (!$mapping) {
             return response()->json([
                 'success' => true,

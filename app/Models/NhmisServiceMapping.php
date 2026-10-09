@@ -53,12 +53,20 @@ class NhmisServiceMapping extends Model implements Auditable
             'positive' => ['Positive'],
         ],
         'procedure' => [
-            'supported' => ['Successful', 'Complications', 'Aborted'],
+            'supported' => ['Successful', 'Complications', 'Aborted', 'Converted'],
             'positive' => ['Successful'],
         ],
         'imaging' => [
             'supported' => ['Normal / Completed', 'Abnormal / Pathological Findings'],
-            'positive' => ['Normal / Completed', 'Abnormal / Pathological Findings'],
+            'positive' => ['Abnormal / Pathological Findings'],
+        ],
+        'chest_xray' => [
+            'supported' => ['Normal / Clear', 'Abnormal (TB Presumptive)', 'Other Abnormalities'],
+            'positive' => ['Abnormal (TB Presumptive)'],
+        ],
+        'ultrasound' => [
+            'supported' => ['Normal / Viable', 'Abnormal / Complications'],
+            'positive' => ['Abnormal / Complications'],
         ],
     ];
 
@@ -249,7 +257,7 @@ class NhmisServiceMapping extends Model implements Auditable
             'section' => 'Antenatal Care & Imaging',
             'service_type' => 'imaging',
             'category_id' => 6,
-            'preset_key' => 'imaging',
+            'preset_key' => 'ultrasound',
         ],
         'chest_xray_tb' => [
             'label' => 'Chest X-Ray (Presumptive TB Screening)',
@@ -258,7 +266,7 @@ class NhmisServiceMapping extends Model implements Auditable
             'section' => 'Infectious Diseases & Imaging',
             'service_type' => 'imaging',
             'category_id' => 6,
-            'preset_key' => 'imaging',
+            'preset_key' => 'chest_xray',
         ],
     ];
 

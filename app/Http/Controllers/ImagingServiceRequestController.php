@@ -187,6 +187,34 @@ class ImagingServiceRequestController extends Controller
                 $updateData['result_by'] = Auth::id();
             }
 
+            // Only classify for NHMIS if the service is mapped to an NHMIS indicator
+            $sId = $imagingRequest->service_id ?? ($imagingRequest->productOrServiceRequest?->service_id ?? null);
+            $mapping = $sId ? \App\Models\NhmisServiceMapping::where('service_id', $sId)->first() : null;
+            if (!$mapping && $imagingRequest->service_name) {
+                $sName = $imagingRequest->service_name;
+                $mapping = \App\Models\NhmisServiceMapping::whereHas('service', function ($q) use ($sName) {
+                    $q->where('service_name', $sName);
+                })->first();
+            }
+
+            if ($mapping) {
+                if (!$request->filled('nhmis_outcome')) {
+                    DB::rollBack();
+                    if ($request->wantsJson() || $request->ajax()) {
+                        return response()->json([
+                            'success' => false,
+                            'message' => 'Selecting an NHMIS clinical outcome is required for this mapped service. Please select an outcome.',
+                        ], 422);
+                    }
+
+                    return redirect()->back()->with(['message' => 'Selecting an NHMIS clinical outcome is required for this mapped service. Please select an outcome.', 'message_type' => 'error']);
+                }
+
+                $updateData['nhmis_outcome'] = $request->nhmis_outcome;
+                $updateData['nhmis_outcome_raw'] = $request->get('nhmis_outcome_raw', $request->nhmis_outcome);
+                $updateData['nhmis_classified_at'] = now();
+            }
+
             $imagingRequest->update($updateData);
             DB::commit();
 

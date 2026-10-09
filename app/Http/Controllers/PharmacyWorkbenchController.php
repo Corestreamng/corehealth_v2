@@ -4117,10 +4117,18 @@ class PharmacyWorkbenchController extends Controller
         });
 
         // Base query for dispensed items
-        $posrQuery = \App\Models\ProductOrServiceRequest::whereNotNull('dispensed_from_store_id')
-            ->whereHas('dispensedFromStore', function ($q) {
-                $q->whereIn('distribution_role', [\App\Models\Store::ROLE_PHARMACY_HUB, \App\Models\Store::ROLE_PHARMACY_SATELLITE]);
+        $posrQuery = \App\Models\ProductOrServiceRequest::where(function ($q) {
+            $q->whereNotNull('dispensed_from_store_id')
+              ->orWhereHas('productRequest', function ($sub) {
+                  $sub->whereNotNull('dispensed_from_store_id');
+              });
+        })->where(function ($q) {
+            $q->whereHas('dispensedFromStore', function ($sub) {
+                $sub->whereIn('distribution_role', [\App\Models\Store::ROLE_PHARMACY_HUB, \App\Models\Store::ROLE_PHARMACY_SATELLITE]);
+            })->orWhereHas('productRequest.dispensedFromStore', function ($sub) {
+                $sub->whereIn('distribution_role', [\App\Models\Store::ROLE_PHARMACY_HUB, \App\Models\Store::ROLE_PHARMACY_SATELLITE]);
             });
+        });
 
         if ($dateFrom) {
             $posrQuery->where('created_at', '>=', $dateFrom);
@@ -4129,7 +4137,12 @@ class PharmacyWorkbenchController extends Controller
             $posrQuery->where('created_at', '<=', $dateTo);
         }
         if ($storeId) {
-            $posrQuery->where('dispensed_from_store_id', $storeId);
+            $posrQuery->where(function ($q) use ($storeId) {
+                $q->where('dispensed_from_store_id', $storeId)
+                  ->orWhereHas('productRequest', function ($sub) use ($storeId) {
+                      $sub->where('dispensed_from_store_id', $storeId);
+                  });
+            });
         }
 
         // 1.5 Expenditure (Purchases) - strictly from batch cost price
@@ -4203,7 +4216,7 @@ class PharmacyWorkbenchController extends Controller
         $processedPatients = [];
         $patientsByScheme = [];
 
-        $posrQuery->with(['dispensedFromStore', 'productRequest.dispensedFromBatch', 'patient.hmo.scheme', 'hmo.scheme', 'encounter.queue.clinic'])
+        $posrQuery->with(['dispensedFromStore', 'productRequest.dispensedFromStore', 'productRequest.dispensedFromBatch', 'patient.hmo.scheme', 'hmo.scheme', 'encounter.queue.clinic'])
             ->chunk(500, function ($posrRecords) use (
                 &$collectionsByStore,
                 &$incomeByScheme,
@@ -4222,9 +4235,31 @@ class PharmacyWorkbenchController extends Controller
             ) {
                 foreach ($posrRecords as $record) {
                     // Part A: Financials
-                    $storeName = $record->dispensedFromStore->store_name ?? 'Unknown Store';
-                    $cashAmount = (float)$record->payable_amount;
-                    $claimsAmount = (float)$record->claims_amount;
+                    $storeName = $record->dispensedFromStore->store_name
+                        ?? $record->productRequest?->dispensedFromStore?->store_name
+                        ?? 'Unknown Store';
+
+                    $payable = $record->payable_amount !== null ? max(0.0, (float) $record->payable_amount) : 0.0;
+                    $claim = $record->claims_amount !== null ? max(0.0, (float) $record->claims_amount) : 0.0;
+                    $rawAmount = $record->amount !== null ? max(0.0, (float) $record->amount) : 0.0;
+
+                    $patient = $record->patient;
+                    $hmoId = $record->hmo_id ?: ($patient->hmo_id ?? null);
+                    $hmo = $record->hmo ?: ($patient->hmo ?? null);
+
+                    // If payable and claim are both 0.00 but amount > 0, attribute based on HMO coverage
+                    if ($payable == 0.0 && $claim == 0.0 && $rawAmount > 0.0) {
+                        if (!empty($hmoId) && $hmoId != 1) {
+                            $claim = $rawAmount;
+                            $payable = 0.0;
+                        } else {
+                            $payable = $rawAmount;
+                            $claim = 0.0;
+                        }
+                    }
+
+                    $cashAmount = $payable;
+                    $claimsAmount = $claim;
                     $amount = $cashAmount + $claimsAmount;
 
                     $totalRevenue += $amount;

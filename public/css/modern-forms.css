@@ -375,3 +375,69 @@ textarea.form-control-modern {
         padding: 0.6rem 0.75rem;
     }
 }
+
+/* ═══ NHMIS Clinical Outcome Interactive UI ═══ */
+.nhmis-outcome-bar {
+    border-radius: 0.65rem;
+    transition: all 0.2s ease-in-out;
+}
+
+.nhmis-outcome-bar.has-error {
+    border-color: #dc3545 !important;
+    background-color: rgba(220, 53, 69, 0.04) !important;
+    box-shadow: 0 0 0 3px rgba(220, 53, 69, 0.18) !important;
+    animation: nhmisPulse 0.4s ease-in-out;
+}
+
+@keyframes nhmisPulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.01); }
+}
+
+.nhmis-outcome-pill {
+    border-radius: 20px;
+    font-size: 0.82rem;
+    font-weight: 500;
+    padding: 0.35rem 0.85rem;
+    transition: all 0.16s ease-in-out;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    cursor: pointer;
+    user-select: none;
+}
+
+.nhmis-outcome-pill:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.nhmis-outcome-pill.active {
+    font-weight: 700;
+    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.16);
+    transform: scale(1.03);
+}
+
+.nhmis-outcome-pill.btn-outline-success.active {
+    background-color: #198754 !important;
+    border-color: #198754 !important;
+    color: #ffffff !important;
+}
+
+.nhmis-outcome-pill.btn-outline-danger.active {
+    background-color: #dc3545 !important;
+    border-color: #dc3545 !important;
+    color: #ffffff !important;
+}
+
+.nhmis-outcome-pill.btn-outline-warning.active {
+    background-color: #ffc107 !important;
+    border-color: #ffc107 !important;
+    color: #212529 !important;
+}
+
+.nhmis-outcome-pill.btn-outline-info.active {
+    background-color: #0dcaf0 !important;
+    border-color: #0dcaf0 !important;
+    color: #000000 !important;
+}

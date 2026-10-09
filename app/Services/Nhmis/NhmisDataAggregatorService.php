@@ -1775,9 +1775,32 @@ class NhmisDataAggregatorService
         $values['row_123:jadelle'] = 0;
         $values['row_123:total'] = 0;
 
-        $values['row_124:male'] = 0;
-        $values['row_124:female'] = 0;
-        $values['row_124:total'] = 0; // Sterilization
+        // Voluntary Sterilization from delegated procedures (Vasectomy & Tubal Ligation)
+        $vasectomyIds = NhmisServiceMapping::getServiceIds('vasectomy');
+        $btlIds = NhmisServiceMapping::getServiceIds('tubal_ligation');
+        $maleSter = 0;
+        $femaleSter = 0;
+        if (!empty($vasectomyIds)) {
+            $maleSter = DB::table('procedures')
+                ->whereIn('service_id', $vasectomyIds)
+                ->whereBetween('created_at', [$from, $to])
+                ->where('procedure_status', 'completed')
+                ->where('outcome', '!=', 'aborted')
+                ->distinct('patient_id')
+                ->count('patient_id');
+        }
+        if (!empty($btlIds)) {
+            $femaleSter = DB::table('procedures')
+                ->whereIn('service_id', $btlIds)
+                ->whereBetween('created_at', [$from, $to])
+                ->where('procedure_status', 'completed')
+                ->where('outcome', '!=', 'aborted')
+                ->distinct('patient_id')
+                ->count('patient_id');
+        }
+        $values['row_124:male'] = $maleSter;
+        $values['row_124:female'] = $femaleSter;
+        $values['row_124:total'] = $maleSter + $femaleSter;
         $values['row_125:total'] = 0; // Condom clients
         $values['row_126:male_condom'] = 0;
         $values['row_126:female_condom'] = 0;
@@ -2091,16 +2114,73 @@ class NhmisDataAggregatorService
      */
     private function aggregateCommunicableAndSpecialized($encounters, Carbon $from, Carbon $to, array &$values): void
     {
-        // TB (Rows 161 - 163)
-        $values['row_161:male'] = 0;
-        $values['row_161:female'] = 0;
-        $values['row_161:total'] = 0;
-        $values['row_162:male'] = 0;
-        $values['row_162:female'] = 0;
-        $values['row_162:total'] = 0;
-        $values['row_163:male'] = 0;
-        $values['row_163:female'] = 0;
-        $values['row_163:total'] = 0;
+        // TB (Rows 161 - 163): Integrated across delegated Sputum AFB lab tests and Chest X-Ray TB screening
+        foreach (['row_161', 'row_162', 'row_163'] as $tbRow) {
+            $values["{$tbRow}:male"] = 0;
+            $values["{$tbRow}:female"] = 0;
+            $values["{$tbRow}:total"] = 0;
+        }
+
+        $tbLabIds = NhmisServiceMapping::getServiceIds('tb_sputum_afb');
+        $cxrIds = NhmisServiceMapping::getServiceIds('chest_xray_tb');
+
+        $seenTb = ['screened' => [], 'pos' => []];
+
+        if (!empty($tbLabIds)) {
+            $tbLabReqs = LabServiceRequest::with('patient.user')
+                ->whereIn('service_id', $tbLabIds)
+                ->where(function ($q) use ($from, $to) {
+                    $q->whereBetween('created_at', [$from, $to])
+                      ->orWhereBetween('sample_date', [$from, $to]);
+                })
+                ->get();
+
+            foreach ($tbLabReqs as $tlr) {
+                $pId = $tlr->patient_id;
+                if (!$pId || isset($seenTb['screened'][$pId])) {
+                    continue;
+                }
+                $seenTb['screened'][$pId] = true;
+                $g = strtolower($tlr->patient?->gender ?? 'male');
+                $gKey = ($g === 'female' || $g === 'f') ? 'female' : 'male';
+                $values["row_161:{$gKey}"] = ($values["row_161:{$gKey}"] ?? 0) + 1;
+                $values['row_161:total'] = ($values['row_161:total'] ?? 0) + 1;
+
+                if (!isset($seenTb['pos'][$pId]) && $this->isLabResultPositive($tlr, 'tb_afb')) {
+                    $seenTb['pos'][$pId] = true;
+                    $values["row_162:{$gKey}"] = ($values["row_162:{$gKey}"] ?? 0) + 1;
+                    $values['row_162:total'] = ($values['row_162:total'] ?? 0) + 1;
+                }
+            }
+        }
+
+        if (!empty($cxrIds)) {
+            $cxrReqs = DB::table('imaging_service_requests')
+                ->join('patients', 'imaging_service_requests.patient_id', '=', 'patients.id')
+                ->whereIn('imaging_service_requests.service_id', $cxrIds)
+                ->whereBetween('imaging_service_requests.created_at', [$from, $to])
+                ->whereNotNull('imaging_service_requests.result')
+                ->where('imaging_service_requests.status', 4)
+                ->get(['imaging_service_requests.id', 'imaging_service_requests.patient_id', 'imaging_service_requests.nhmis_outcome', 'patients.gender']);
+
+            foreach ($cxrReqs as $cxr) {
+                $pId = $cxr->patient_id;
+                if (!$pId || isset($seenTb['screened'][$pId])) {
+                    continue;
+                }
+                $seenTb['screened'][$pId] = true;
+                $g = strtolower($cxr->gender ?? 'male');
+                $gKey = ($g === 'female' || $g === 'f') ? 'female' : 'male';
+                $values["row_161:{$gKey}"] = ($values["row_161:{$gKey}"] ?? 0) + 1;
+                $values['row_161:total'] = ($values['row_161:total'] ?? 0) + 1;
+
+                if (!isset($seenTb['pos'][$pId]) && $cxr->nhmis_outcome === 'positive') {
+                    $seenTb['pos'][$pId] = true;
+                    $values["row_162:{$gKey}"] = ($values["row_162:{$gKey}"] ?? 0) + 1;
+                    $values['row_162:total'] = ($values['row_162:total'] ?? 0) + 1;
+                }
+            }
+        }
 
         // Hepatitis B & C (Rows 164 - 171)
         foreach (['row_164', 'row_165', 'row_166', 'row_167', 'row_168', 'row_169', 'row_170', 'row_171'] as $rId) {
@@ -2187,6 +2267,19 @@ class NhmisDataAggregatorService
                 $values["{$rId}:{$fc}"] = 0;
             }
             $values["{$rId}:total"] = 0;
+        }
+
+        // Account for successfully repaired Obstetric Fistula from delegated procedures
+        $fistulaIds = NhmisServiceMapping::getServiceIds('fistula_repair');
+        if (!empty($fistulaIds)) {
+            $fistulaCount = DB::table('procedures')
+                ->whereIn('service_id', $fistulaIds)
+                ->whereBetween('created_at', [$from, $to])
+                ->where('procedure_status', 'completed')
+                ->where('outcome', 'successful')
+                ->distinct('patient_id')
+                ->count('patient_id');
+            $values['row_176:total'] = $fistulaCount;
         }
 
         // NTDs (Rows 182 - 184)

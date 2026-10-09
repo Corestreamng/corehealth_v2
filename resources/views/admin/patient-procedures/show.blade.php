@@ -2646,6 +2646,31 @@ $isSurgical = $procedure->is_surgical;
                     @endhasanyrole
                 </div>
                 <div class="section-card-body">
+                    @php
+                    $procMapping = null;
+                    if ($procedure->service_id) {
+                        $procMapping = \App\Models\NhmisServiceMapping::where('service_id', $procedure->service_id)->first();
+                    }
+                    if (!$procMapping && $procedure->service?->service_name) {
+                        $sName = $procedure->service->service_name;
+                        $procMapping = \App\Models\NhmisServiceMapping::whereHas('service', fn($q) => $q->where('service_name', $sName))->first();
+                    }
+                    if (!$procMapping && $procedure->is_free_form && $procedure->free_form_name) {
+                        $sName = $procedure->free_form_name;
+                        foreach (\App\Models\NhmisServiceMapping::INDICATORS as $code => $meta) {
+                            if (($meta['service_type'] ?? '') === 'procedure') {
+                                foreach ($meta['keywords'] as $kw) {
+                                    if (stripos($sName, $kw) !== false) {
+                                        $procMapping = (object) ['indicator_code' => $code, 'indicator_label' => $meta['label']];
+                                        break 2;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    $isNhmisMapped = !is_null($procMapping);
+                    $nhmisLabel = $isNhmisMapped ? ($procMapping->indicator_label ?? \App\Models\NhmisServiceMapping::INDICATORS[$procMapping->indicator_code]['label'] ?? $procMapping->indicator_code) : null;
+                    @endphp
                     <div id="outcome-display" style="{{ $procedure->outcome ? '' : 'display:none;' }}">
                         @if($procedure->outcome)
                         @php
@@ -2655,11 +2680,21 @@ $isSurgical = $procedure->is_surgical;
                         $oIcon = $outcomeIcons[$procedure->outcome] ?? 'flag';
                         @endphp
                         <div style="border-left:4px solid; padding:14px; border-radius:6px; background:#f8f9fa;" class="border-{{ $oColor }}">
-                            <div class="d-flex align-items-center mb-2">
+                            <div class="d-flex align-items-center mb-2 flex-wrap">
                                 <span class="badge badge-{{ $oColor }} px-3 py-2" style="font-size:.9rem;">
                                     <i class="fa fa-{{ $oIcon }} mr-1"></i>
                                     {{ \App\Models\Procedure::OUTCOMES[$procedure->outcome] ?? ucfirst($procedure->outcome) }}
                                 </span>
+                                @if($isNhmisMapped)
+                                <span class="badge badge-primary px-2 py-1 ml-2" style="font-size: 0.8rem;">
+                                    <i class="fa fa-clipboard-check mr-1"></i> NHMIS: {{ $nhmisLabel }}
+                                </span>
+                                @if($procedure->nhmis_outcome)
+                                <span class="badge badge-light border text-dark ml-1" style="font-size: 0.8rem;">
+                                    Outcome: {{ ucfirst($procedure->nhmis_outcome_raw ?? $procedure->nhmis_outcome) }}
+                                </span>
+                                @endif
+                                @endif
                                 <small class="text-muted ml-auto"><i class="fa fa-clock"></i> {{ $procedure->updated_at?->diffForHumans() }}</small>
                             </div>
                             @if($procedure->outcome_notes)
@@ -2678,15 +2713,38 @@ $isSurgical = $procedure->is_surgical;
                     @hasanyrole('SUPERADMIN|ADMIN|DOCTOR')
                     <div id="outcome-form-wrapper" style="{{ $procedure->outcome ? 'display:none;' : '' }}">
                         <form id="outcome-form">
-                            <div class="form-group">
-                                <label for="outcome">Outcome <span class="text-danger">*</span></label>
-                                <select class="form-control" id="outcome" name="outcome" required>
+                            @if($isNhmisMapped)
+                            <div class="alert alert-info py-2 px-3 mb-3 small d-flex align-items-center justify-content-between">
+                                <span><i class="fa fa-info-circle mr-1"></i> NHMIS Delegated: <strong>{{ $nhmisLabel }}</strong></span>
+                                <span class="badge badge-light border text-primary">Syncs to NHMIS Monthly Report</span>
+                            </div>
+                            @endif
+                            <div class="form-group mb-2">
+                                <label class="d-block mb-1 font-weight-bold">Outcome <span class="text-danger">*</span></label>
+                                <div class="btn-group btn-group-toggle w-100 mb-2 flex-wrap" id="outcome-pills-group" data-toggle="buttons">
+                                    <button type="button" class="btn btn-outline-success outcome-pill-btn {{ $procedure->outcome === 'successful' ? 'active' : '' }}" data-val="successful" data-is-pos="1">
+                                        <i class="fa fa-check-circle mr-1"></i> Successful
+                                    </button>
+                                    <button type="button" class="btn btn-outline-warning outcome-pill-btn {{ $procedure->outcome === 'complications' ? 'active' : '' }}" data-val="complications" data-is-pos="0">
+                                        <i class="fa fa-exclamation-triangle mr-1"></i> Complications
+                                    </button>
+                                    <button type="button" class="btn btn-outline-danger outcome-pill-btn {{ $procedure->outcome === 'aborted' ? 'active' : '' }}" data-val="aborted" data-is-pos="0">
+                                        <i class="fa fa-times-circle mr-1"></i> Aborted
+                                    </button>
+                                    <button type="button" class="btn btn-outline-info outcome-pill-btn {{ $procedure->outcome === 'converted' ? 'active' : '' }}" data-val="converted" data-is-pos="0">
+                                        <i class="fa fa-exchange-alt mr-1"></i> Converted
+                                    </button>
+                                </div>
+                                <select class="form-control form-control-sm" id="outcome" name="outcome" required>
                                     <option value="">-- Select Outcome --</option>
                                     @foreach(\App\Models\Procedure::OUTCOMES as $key => $label)
                                     <option value="{{ $key }}" {{ $procedure->outcome === $key ? 'selected' : '' }}>{{ $label }}</option>
                                     @endforeach
                                 </select>
                             </div>
+                            <input type="hidden" id="nhmis_outcome" name="nhmis_outcome" value="{{ $isNhmisMapped ? ($procedure->nhmis_outcome ?? '') : '' }}">
+                            <input type="hidden" id="nhmis_outcome_raw" name="nhmis_outcome_raw" value="{{ $isNhmisMapped ? ($procedure->nhmis_outcome_raw ?? '') : '' }}">
+                            <input type="hidden" id="is_nhmis_mapped" value="{{ $isNhmisMapped ? '1' : '0' }}">
                             <div class="form-group">
                                 <label for="outcome_notes">Outcome Notes</label>
                                 <textarea class="form-control" id="outcome_notes" name="outcome_notes" rows="3" placeholder="Relevant notes about the outcome…">{{ $procedure->outcome_notes }}</textarea>

@@ -695,9 +695,12 @@ class ImagingWorkbenchController extends Controller
             $request = ImagingServiceRequest::with(['service', 'patient.user', 'doctor', 'resultBy'])
                 ->findOrFail($id);
 
+            $serviceId = $request->service_id ?? ($request->productOrServiceRequest?->service_id ?? ($request->service->id ?? null));
+
             return response()->json([
                 'id' => $request->id,
                 'patient_id' => $request->patient_id,
+                'service_id' => $serviceId,
                 'patient' => [
                     'file_no' => $request->patient->file_no ?? 'N/A',
                     'date_of_birth' => $request->patient->dob ?? null,
@@ -708,6 +711,7 @@ class ImagingWorkbenchController extends Controller
                     ],
                 ],
                 'service' => [
+                    'id' => $serviceId,
                     'name' => $request->service_name,
                     'template_version' => !empty($request->service->result_template_v2) ? 2 : 1,
                     'template_body' => $request->service->template ?? '',
@@ -719,6 +723,8 @@ class ImagingWorkbenchController extends Controller
                 'result_date' => $request->result_date,
                 'sample_date' => $request->sample_date ?? null,
                 'attachments' => $request->attachments,
+                'nhmis_outcome' => $request->nhmis_outcome ?? null,
+                'nhmis_outcome_raw' => $request->nhmis_outcome_raw ?? null,
                 'results_person' => [
                     'firstname' => $request->resultBy->firstname ?? 'N/A',
                     'surname' => $request->resultBy->surname ?? 'N/A',
@@ -1010,6 +1016,31 @@ class ImagingWorkbenchController extends Controller
                     $updateData['rejected_at'] = null;
                     $updateData['rejection_reason'] = null;
                 }
+            }
+
+            // Only classify for NHMIS if the service is mapped to an NHMIS indicator
+            $sId = $imagingRequest->service_id ?? ($imagingRequest->productOrServiceRequest?->service_id ?? null);
+            $mapping = $sId ? \App\Models\NhmisServiceMapping::where('service_id', $sId)->first() : null;
+            if (!$mapping && $imagingRequest->service_name) {
+                $sName = $imagingRequest->service_name;
+                $mapping = \App\Models\NhmisServiceMapping::whereHas('service', function ($q) use ($sName) {
+                    $q->where('service_name', $sName);
+                })->first();
+            }
+
+            if ($mapping) {
+                if (!$request->filled('nhmis_outcome')) {
+                    DB::rollBack();
+
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Selecting an NHMIS clinical outcome is required for this mapped service. Please select an outcome.',
+                    ], 422);
+                }
+
+                $updateData['nhmis_outcome'] = $request->nhmis_outcome;
+                $updateData['nhmis_outcome_raw'] = $request->get('nhmis_outcome_raw', $request->nhmis_outcome);
+                $updateData['nhmis_classified_at'] = now();
             }
 
             $imagingRequest->update($updateData);

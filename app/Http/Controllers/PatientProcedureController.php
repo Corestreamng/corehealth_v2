@@ -191,11 +191,56 @@ class PatientProcedureController extends Controller
         $request->validate([
             'outcome' => 'required|in:successful,complications,aborted,converted',
             'outcome_notes' => 'nullable|string|max:5000',
+            'nhmis_outcome' => 'nullable|string|max:50',
+            'nhmis_outcome_raw' => 'nullable|string|max:100',
         ]);
 
         try {
             $procedure->outcome = $request->outcome;
             $procedure->outcome_notes = $request->outcome_notes;
+
+            // Only classify for NHMIS if the procedure is mapped to an NHMIS indicator
+            $sId = $procedure->service_id ?? null;
+            $sName = $procedure->is_free_form ? ($procedure->free_form_name ?? '') : ($procedure->service?->service_name ?? '');
+            $mapping = null;
+            if ($sId) {
+                $mapping = \App\Models\NhmisServiceMapping::where('service_id', $sId)->first();
+            }
+            if (!$mapping && $sName) {
+                $mapping = \App\Models\NhmisServiceMapping::whereHas('service', function ($q) use ($sName) {
+                    $q->where('service_name', $sName);
+                })->first();
+            }
+            if (!$mapping && $sName) {
+                foreach (\App\Models\NhmisServiceMapping::INDICATORS as $code => $meta) {
+                    if (($meta['service_type'] ?? '') === 'procedure') {
+                        foreach ($meta['keywords'] as $kw) {
+                            if (stripos($sName, $kw) !== false) {
+                                $mapping = (object) ['indicator_code' => $code];
+
+                                break 2;
+                            }
+                        }
+                    }
+                }
+            }
+
+            if ($mapping) {
+                if ($request->filled('nhmis_outcome')) {
+                    $procedure->nhmis_outcome = $request->nhmis_outcome;
+                    $procedure->nhmis_outcome_raw = $request->get('nhmis_outcome_raw', $request->nhmis_outcome);
+                    $procedure->nhmis_classified_at = now();
+                } else {
+                    $isSuccessful = strtolower($request->outcome) === 'successful';
+                    $procedure->nhmis_outcome = $isSuccessful ? 'positive' : 'negative';
+                    $procedure->nhmis_outcome_raw = ucfirst($request->outcome);
+                    $procedure->nhmis_classified_at = now();
+                }
+            } else {
+                $procedure->nhmis_outcome = null;
+                $procedure->nhmis_outcome_raw = null;
+                $procedure->nhmis_classified_at = null;
+            }
 
             // Documenting an outcome is considered completing the procedure
             if ($procedure->procedure_status !== \App\Models\Procedure::STATUS_CANCELLED) {
@@ -214,6 +259,8 @@ class PatientProcedureController extends Controller
                 'message' => 'Outcome saved successfully',
                 'outcome' => $procedure->outcome,
                 'outcome_notes' => $procedure->outcome_notes,
+                'nhmis_outcome' => $procedure->nhmis_outcome,
+                'nhmis_outcome_raw' => $procedure->nhmis_outcome_raw,
             ]);
         } catch (\Exception $e) {
             return response()->json([

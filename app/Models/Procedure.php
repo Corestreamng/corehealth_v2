@@ -63,6 +63,9 @@ class Procedure extends Model implements Auditable
         'treatment_plan_id',
         'treatment_plan_name',
         'prep_details',
+        'nhmis_outcome',
+        'nhmis_outcome_raw',
+        'nhmis_classified_at',
     ];
 
     protected $casts = [

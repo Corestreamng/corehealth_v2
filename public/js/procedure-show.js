@@ -689,19 +689,81 @@ const procedureId = (window.WORKBENCH_CONFIG ? window.WORKBENCH_CONFIG.procedure
         $('#outcome-form-wrapper').toggle();
     }
 
+    // Interactive outcome pill buttons
+    $(document).on('click', '.outcome-pill-btn', function(e) {
+        e.preventDefault();
+        const val = $(this).data('val');
+        const isPos = $(this).data('is-pos') == '1';
+
+        $('.outcome-pill-btn').removeClass('active');
+        $(this).addClass('active');
+
+        $('#outcome').val(val);
+
+        const isMapped = $('#is_nhmis_mapped').val() === '1';
+        if (isMapped) {
+            $('#nhmis_outcome').val(isPos ? 'positive' : 'negative');
+            $('#nhmis_outcome_raw').val(val.charAt(0).toUpperCase() + val.slice(1));
+        } else {
+            $('#nhmis_outcome').val('');
+            $('#nhmis_outcome_raw').val('');
+        }
+
+        // Suggest note if empty
+        const curNotes = $('#outcome_notes').val();
+        if (!curNotes || curNotes.trim() === '') {
+            if (val === 'successful') {
+                $('#outcome_notes').val('Procedure completed successfully without immediate complications. Patient stable post-procedure.');
+            }
+        }
+    });
+
+    $(document).on('change', '#outcome', function() {
+        const val = $(this).val();
+        $('.outcome-pill-btn').removeClass('active');
+        if (val) {
+            const $btn = $('.outcome-pill-btn[data-val="' + val + '"]');
+            $btn.addClass('active');
+            const isMapped = $('#is_nhmis_mapped').val() === '1';
+            if (isMapped) {
+                const isPos = $btn.data('is-pos') == '1';
+                $('#nhmis_outcome').val(isPos ? 'positive' : 'negative');
+                $('#nhmis_outcome_raw').val(val.charAt(0).toUpperCase() + val.slice(1));
+            } else {
+                $('#nhmis_outcome').val('');
+                $('#nhmis_outcome_raw').val('');
+            }
+        }
+    });
+
     $('#outcome-form').on('submit', function(e) {
         e.preventDefault();
         const btn = $(this).find('button[type=submit]');
         btn.prop('disabled', true).html('<i class="fa fa-spin fa-spinner mr-1"></i>Saving…');
+
+        const outcomeVal = $('#outcome').val();
+        if (!outcomeVal) {
+            toastr.warning('Please select an outcome for the procedure.');
+            btn.prop('disabled', false).html('<i class="fa fa-save mr-1"></i>Save Outcome');
+            return;
+        }
+
+        const payload = {
+            outcome: outcomeVal,
+            outcome_notes: $('#outcome_notes').val(),
+            _method: 'PUT',
+            _token: $('meta[name="csrf-token"]').attr('content'),
+        };
+
+        if ($('#nhmis_outcome').val()) {
+            payload.nhmis_outcome = $('#nhmis_outcome').val();
+            payload.nhmis_outcome_raw = $('#nhmis_outcome_raw').val();
+        }
+
         $.ajax({
             url: wbUrl('/patient-procedures/' + procedureId + '/outcome'),
             method: 'POST',
-            data: {
-                outcome: $('#outcome').val(),
-                outcome_notes: $('#outcome_notes').val(),
-                _method: 'PUT',
-                _token: $('meta[name="csrf-token"]').attr('content'),
-            },
+            data: payload,
             success: function() {
                 toastr.success('Outcome saved.');
                 location.reload();

@@ -544,6 +544,21 @@ window.InvestResultEntry = (function() {
             e.preventDefault();
             copyResTemplateToField();
 
+            // Frictionless validation: if mapped to NHMIS indicator, outcome selection is required
+            if ($('#nhmis_outcome_container').is(':visible') && _currentNhmisMapping && _currentNhmisMapping.is_mapped) {
+                var outcomeVal = $('#nhmis_outcome').val();
+                if (!outcomeVal || outcomeVal.trim() === '') {
+                    toastr.warning('Please select an NHMIS clinical outcome before saving.');
+                    $('#nhmis_outcome_container').addClass('has-error');
+                    $('#nhmis_outcome_validation_hint').slideDown(150);
+                    var containerEl = document.getElementById('nhmis_outcome_container');
+                    if (containerEl && typeof containerEl.scrollIntoView === 'function') {
+                        containerEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                    }
+                    return false;
+                }
+            }
+
             const formData = new FormData(this);
             const $submitBtn = $(this).find('button[type="submit"]');
             const originalBtnHtml = $submitBtn.html();
@@ -591,16 +606,23 @@ window.InvestResultEntry = (function() {
     function _setupNhmisOutcome(request) {
         $('#nhmis_outcome_container').hide();
         $('#nhmis_outcome_pills').empty();
+        $('#nhmis_outcome_select').empty().html('<option value="">-- Choose Outcome --</option>');
         $('#nhmis_outcome').val('');
         $('#nhmis_outcome_raw').val('');
         $('#nhmis_indicator_badge').text('');
         _currentNhmisMapping = null;
 
         var sId = request.service_id || (request.service ? request.service.id : null);
-        if (!sId) return;
+        var sName = request.service ? (request.service.name || '') : (request.service_name || '');
+        if (!sId && !sName) return;
+
+        var url = '/nhmis-workbench/service-mapping/' + (sId || 0);
+        if (sName) {
+            url += '?service_name=' + encodeURIComponent(sName);
+        }
 
         $.ajax({
-            url: '/nhmis-workbench/service-mapping/' + sId,
+            url: url,
             method: 'GET',
             success: function(res) {
                 if (res.success && res.is_mapped) {
@@ -621,12 +643,16 @@ window.InvestResultEntry = (function() {
         var positive = mapping.positive_outcomes || ['Positive'];
 
         var pillsHtml = '';
+        var selectOptionsHtml = '<option value="">-- Choose Outcome --</option>';
+
         supported.forEach(function(outcome) {
             var isPos = positive.includes(outcome);
             var btnClass = isPos ? 'btn-outline-danger' : 'btn-outline-success';
             var outLower = outcome.toLowerCase();
             if (outLower.includes('indeterminate') || outLower.includes('trace') || outLower.includes('aborted') || outLower.includes('complication')) {
                 btnClass = 'btn-outline-warning';
+            } else if (outLower.includes('converted')) {
+                btnClass = 'btn-outline-info';
             }
 
             var isSelected = false;
@@ -637,30 +663,83 @@ window.InvestResultEntry = (function() {
             }
 
             pillsHtml += '<button type="button" class="btn btn-sm nhmis-outcome-pill ' + btnClass + (isSelected ? ' active' : '') + '" data-outcome-raw="' + outcome + '" data-is-positive="' + (isPos ? '1' : '0') + '">' + outcome + '</button>';
+            selectOptionsHtml += '<option value="' + outcome + '" data-is-positive="' + (isPos ? '1' : '0') + '"' + (isSelected ? ' selected' : '') + '>' + outcome + '</option>';
         });
 
         $('#nhmis_outcome_pills').html(pillsHtml);
+        $('#nhmis_outcome_select').html(selectOptionsHtml);
+
+        function setOutcomeSelection(raw, isPos) {
+            $('.nhmis-outcome-pill').removeClass('active');
+            $('.nhmis-outcome-pill[data-outcome-raw="' + raw + '"]').addClass('active');
+            $('#nhmis_outcome_select').val(raw);
+
+            var outcome = isPos ? 'positive' : (raw.toLowerCase().includes('indeterminate') ? 'indeterminate' : 'negative');
+            $('#nhmis_outcome').val(outcome);
+            $('#nhmis_outcome_raw').val(raw);
+            $('#nhmis_outcome_container').removeClass('has-error');
+            $('#nhmis_outcome_validation_hint').slideUp(100);
+            $('#nhmis_auto_sense_indicator').html('<i class="mdi mdi-check-circle text-success"></i> Selected: <strong>' + raw + '</strong>');
+
+            // Synchronize with CKEditor if empty or default placeholder
+            if (window.investResEditor) {
+                var currentHtml = window.investResEditor.getData();
+                var textOnly = currentHtml.replace(/<[^>]+>/g, '').trim();
+                var isDefault = !textOnly || textOnly === 'No description available' || textOnly.startsWith('Result:') || textOnly.startsWith('Microscopy:');
+                if (isDefault) {
+                    var formattedText = '<p><strong>Result:</strong> ' + raw + '</p>';
+                    if (mapping.indicator_code === 'malaria_microscopy') {
+                        formattedText = isPos
+                            ? '<p><strong>Microscopy:</strong> Malaria parasites seen (P. falciparum): <strong>' + raw + '</strong>.</p>'
+                            : '<p><strong>Microscopy:</strong> No malaria parasites seen (Negative / NPS).</p>';
+                    } else if (mapping.indicator_code === 'malaria_rdt') {
+                        formattedText = isPos
+                            ? '<p><strong>Malaria RDT:</strong> Positive (Antigen detected).</p>'
+                            : '<p><strong>Malaria RDT:</strong> Negative (Non-reactive).</p>';
+                    } else if (mapping.indicator_code === 'hiv_screening' || mapping.indicator_code === 'hiv_confirmatory') {
+                        formattedText = isPos
+                            ? '<p><strong>HIV Test:</strong> Reactive.</p>'
+                            : '<p><strong>HIV Test:</strong> Non-Reactive.</p>';
+                    } else if (mapping.indicator_code === 'syphilis_vdrl') {
+                        formattedText = isPos
+                            ? '<p><strong>Syphilis Screening (VDRL):</strong> Reactive.</p>'
+                            : '<p><strong>Syphilis Screening (VDRL):</strong> Non-Reactive.</p>';
+                    } else if (mapping.indicator_code === 'obstetric_ultrasound') {
+                        formattedText = isPos
+                            ? '<p><strong>Obstetric Ultrasound:</strong> Abnormal / complicated obstetric ultrasound findings: [Specify findings].</p>'
+                            : '<p><strong>Obstetric Ultrasound:</strong> Single intrauterine gestation, viable fetus, normal cardiac activity and liquor volume. Normal study.</p>';
+                    } else if (mapping.indicator_code === 'chest_xray_tb') {
+                        formattedText = isPos
+                            ? '<p><strong>Chest Radiography:</strong> Abnormal findings / infiltrates consistent with presumptive TB evaluation.</p>'
+                            : '<p><strong>Chest Radiography:</strong> Clear lung fields, normal cardiothoracic ratio. No active pulmonary lesions or infiltrates seen.</p>';
+                    }
+                    window.investResEditor.setData(formattedText);
+                }
+            }
+        }
 
         // Pre-select if existing
         if (currentOutcome) {
             $('#nhmis_outcome').val(currentOutcome);
             $('#nhmis_outcome_raw').val(currentOutcomeRaw || currentOutcome);
-            $('#nhmis_auto_sense_indicator').html('<i class="mdi mdi-check-circle text-primary"></i> Saved outcome');
+            $('#nhmis_outcome_select').val(currentOutcomeRaw || currentOutcome);
+            $('#nhmis_auto_sense_indicator').html('<i class="mdi mdi-check-circle text-primary"></i> Saved outcome: <strong>' + (currentOutcomeRaw || currentOutcome) + '</strong>');
         }
 
         // Pill click handler
         $('#nhmis_outcome_pills').off('click', '.nhmis-outcome-pill').on('click', '.nhmis-outcome-pill', function(e) {
             e.preventDefault();
-            $('.nhmis-outcome-pill').removeClass('active');
-            $(this).addClass('active');
-
             var raw = $(this).data('outcome-raw');
             var isPos = $(this).data('is-positive') == '1';
-            var outcome = isPos ? 'positive' : (raw.toLowerCase().includes('indeterminate') ? 'indeterminate' : 'negative');
+            setOutcomeSelection(raw, isPos);
+        });
 
-            $('#nhmis_outcome').val(outcome);
-            $('#nhmis_outcome_raw').val(raw);
-            $('#nhmis_auto_sense_indicator').html('<i class="mdi mdi-hand-pointing-right text-info"></i> Selected: <strong>' + raw + '</strong>');
+        // Dropdown change handler
+        $('#nhmis_outcome_select').off('change').on('change', function() {
+            var raw = $(this).val();
+            if (!raw) return;
+            var isPos = $(this).find('option:selected').data('is-positive') == '1';
+            setOutcomeSelection(raw, isPos);
         });
 
         // Trigger initial auto-sense if new entry
@@ -678,35 +757,118 @@ window.InvestResultEntry = (function() {
         var clean = text.replace(/<[^>]+>/g, ' ').replace(/&nbsp;/gi, ' ').toLowerCase();
 
         var matchedPill = null;
-        $('.nhmis-outcome-pill').each(function() {
-            var raw = $(this).data('outcome-raw').toLowerCase();
-            var kw = raw.replace(/[()]/g, '').trim();
-            if (kw) {
-                var regex = new RegExp('\\b' + kw.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '\\b', 'i');
-                if (regex.test(clean)) {
-                    matchedPill = $(this);
-                    return false;
+
+        // Specific high-precision auto-sensing for Malaria (Microscopy & mRDT)
+        if (mapping.indicator_code === 'malaria_microscopy' || mapping.indicator_code === 'malaria_rdt') {
+            var isNeg = /(not\s*seen|neg|nil|no\s*malaria|no\s*parasite|none\s*seen|absent|not\s*detected|\bnps\b)/i.test(clean);
+            if (isNeg) {
+                matchedPill = $('.nhmis-outcome-pill[data-outcome-raw="Negative"]');
+            } else if (/(indeterminate|inconclusive|doubtful|repeat)/i.test(clean)) {
+                matchedPill = $('.nhmis-outcome-pill[data-outcome-raw="Indeterminate"]');
+            } else {
+                // Check grades from highest (4+) to lowest (1+)
+                if (/\+{4}|4\+|positive\s*\(\+{4}\)|positive\s*4\+/i.test(clean)) {
+                    matchedPill = $('.nhmis-outcome-pill[data-outcome-raw="Positive (++++)"]');
+                } else if (/\+{3}|3\+|positive\s*\(\+{3}\)|positive\s*3\+/i.test(clean)) {
+                    matchedPill = $('.nhmis-outcome-pill[data-outcome-raw="Positive (+++)"]');
+                } else if (/\+{2}|2\+|positive\s*\(\+{2}\)|positive\s*2\+/i.test(clean)) {
+                    matchedPill = $('.nhmis-outcome-pill[data-outcome-raw="Positive (++)"]');
+                } else if (/\+{1}|1\+|positive|\bpos\b|\bseen\b|present|detected/i.test(clean)) {
+                    matchedPill = $('.nhmis-outcome-pill[data-outcome-raw="Positive (+)"]');
+                    if (!matchedPill.length) {
+                        matchedPill = $('.nhmis-outcome-pill[data-is-positive="1"]').first();
+                    }
                 }
             }
-        });
+        } else if (mapping.indicator_code === 'hiv_screening' || mapping.indicator_code === 'hiv_confirmatory' || mapping.indicator_code === 'syphilis_vdrl' || mapping.indicator_code === 'hepatitis_b' || mapping.indicator_code === 'hepatitis_c') {
+            if (/(indeterminate|inconclusive|doubtful)/i.test(clean)) {
+                matchedPill = $('.nhmis-outcome-pill[data-outcome-raw="Indeterminate"]');
+            } else if (/(\bnr\b|non[\s\-]*re?a?c?tive|negative|\bneg\b|nil|not\s*seen|absent|not\s*detected)/i.test(clean)) {
+                matchedPill = $('.nhmis-outcome-pill[data-outcome-raw="Non-Reactive"]');
+            } else if (/(reactive|positive|\bpos\b|detected|present)/i.test(clean)) {
+                matchedPill = $('.nhmis-outcome-pill[data-outcome-raw="Reactive"]');
+            }
+        } else if (mapping.indicator_code === 'tb_sputum_afb') {
+            if (/(indeterminate|inconclusive|invalid|error)/i.test(clean)) {
+                matchedPill = $('.nhmis-outcome-pill[data-outcome-raw="Indeterminate"]');
+            } else if (/(mtb\s*not\s*detected|genexpert\s*negative)/i.test(clean)) {
+                matchedPill = $('.nhmis-outcome-pill[data-outcome-raw="MTB Not Detected"]');
+            } else if (/(not\s*seen|negative|\bneg\b|nil|none\s*seen|absent|not\s*detected|no\s*afb)/i.test(clean)) {
+                matchedPill = $('.nhmis-outcome-pill[data-outcome-raw="Negative (Not Seen)"]');
+            } else if (/(mtb\s*detected|genexpert\s*positive)/i.test(clean)) {
+                matchedPill = $('.nhmis-outcome-pill[data-outcome-raw="MTB Detected"]');
+            } else if (/(\b3\+\b|\+{3}|positive\s*3\+|positive\s*\(\+{3}\))/i.test(clean)) {
+                matchedPill = $('.nhmis-outcome-pill[data-outcome-raw="Positive (3+)"]');
+            } else if (/(\b2\+\b|\+{2}|positive\s*2\+|positive\s*\(\+{2}\))/i.test(clean)) {
+                matchedPill = $('.nhmis-outcome-pill[data-outcome-raw="Positive (2+)"]');
+            } else if (/(\b1\+\b|\+{1}|positive\s*1\+|positive\s*\(\+{1}\)|positive|\bpos\b|afb\s*seen|\bseen\b)/i.test(clean)) {
+                matchedPill = $('.nhmis-outcome-pill[data-outcome-raw="Positive (1+)"]');
+            }
+        } else if (mapping.indicator_code === 'chest_xray_tb') {
+            if (/(tb|infiltrate|cavitary|consolidation|apical|tuberculosis|presumptive)/i.test(clean)) {
+                matchedPill = $('.nhmis-outcome-pill[data-outcome-raw="Abnormal (TB Presumptive)"]');
+            } else if (/(cardiomegaly|pleural\s*effusion|mass|opacity|other\s*abnormal)/i.test(clean)) {
+                matchedPill = $('.nhmis-outcome-pill[data-outcome-raw="Other Abnormalities"]');
+            } else if (/(clear|normal|unremarkable|no\s*active|clear\s*lung)/i.test(clean)) {
+                matchedPill = $('.nhmis-outcome-pill[data-outcome-raw="Normal / Clear"]');
+            }
+        } else if (mapping.indicator_code === 'obstetric_ultrasound') {
+            if (/(abnormal|complication|miscarriage|ectopic|dead|non-viable|previa|praevia|oligohydramnios|polyhydramnios)/i.test(clean)) {
+                matchedPill = $('.nhmis-outcome-pill[data-outcome-raw="Abnormal / Complications"]');
+            } else if (/(viable|normal|single\s*intrauterine|good\s*liquor|cardiac\s*activity|unremarkable)/i.test(clean)) {
+                matchedPill = $('.nhmis-outcome-pill[data-outcome-raw="Normal / Viable"]');
+            }
+        } else if (mapping.indicator_code === 'pregnancy_test') {
+            if (/(positive|\bpos\b|pregnant)/i.test(clean)) {
+                matchedPill = $('.nhmis-outcome-pill[data-outcome-raw="Positive"]');
+            } else if (/(negative|\bneg\b|not\s*pregnant|nil)/i.test(clean)) {
+                matchedPill = $('.nhmis-outcome-pill[data-outcome-raw="Negative"]');
+            }
+        } else if (mapping.indicator_code === 'pcv_hb' || mapping.indicator_code === 'urinalysis_protein' || mapping.indicator_code === 'blood_glucose') {
+            if (/(\b4\+\b|\+{4})/i.test(clean)) {
+                matchedPill = $('.nhmis-outcome-pill[data-outcome-raw="4+"]');
+            } else if (/(\b3\+\b|\+{3})/i.test(clean)) {
+                matchedPill = $('.nhmis-outcome-pill[data-outcome-raw="3+"]');
+            } else if (/(\b2\+\b|\+{2})/i.test(clean)) {
+                matchedPill = $('.nhmis-outcome-pill[data-outcome-raw="2+"]');
+            } else if (/(\b1\+\b|\+{1})/i.test(clean)) {
+                matchedPill = $('.nhmis-outcome-pill[data-outcome-raw="1+"]');
+            } else if (/(trace)/i.test(clean)) {
+                matchedPill = $('.nhmis-outcome-pill[data-outcome-raw="Trace"]');
+            } else if (/(negative|\bneg\b|nil|zero|normal)/i.test(clean)) {
+                matchedPill = $('.nhmis-outcome-pill[data-outcome-raw="Negative"]');
+            }
+        }
 
-        if (!matchedPill) {
-            var isNeg = /\b(negative|non[- ]reactive|not seen|nil|zero|undetected|normal)\b/i.test(clean);
-            var isPos = !isNeg && /\b(positive|reactive|\+{1,4}|detected|abnormal)\b/i.test(clean);
-
+        // General indicator auto-sensing fallback
+        if (!matchedPill || !matchedPill.length) {
             $('.nhmis-outcome-pill').each(function() {
-                var pIsPos = $(this).data('is-positive') == '1';
-                if (isPos && pIsPos) {
-                    matchedPill = $(this);
-                    return false;
-                } else if (isNeg && !pIsPos && !$(this).data('outcome-raw').toLowerCase().includes('indeterminate')) {
+                var raw = $(this).data('outcome-raw').toLowerCase();
+                var kw = raw.replace(/[()]/g, '').trim();
+                if (kw && clean.indexOf(kw) !== -1) {
                     matchedPill = $(this);
                     return false;
                 }
             });
         }
 
-        if (matchedPill && !matchedPill.hasClass('active')) {
+        if (!matchedPill || !matchedPill.length) {
+            var isNegGeneral = /\b(negative|non[- ]reactive|not seen|nil|zero|undetected|normal)\b/i.test(clean);
+            var isPosGeneral = !isNegGeneral && /\b(positive|reactive|\+{1,4}|detected|abnormal)\b/i.test(clean);
+
+            $('.nhmis-outcome-pill').each(function() {
+                var pIsPos = $(this).data('is-positive') == '1';
+                if (isPosGeneral && pIsPos) {
+                    matchedPill = $(this);
+                    return false;
+                } else if (isNegGeneral && !pIsPos && !$(this).data('outcome-raw').toLowerCase().includes('indeterminate')) {
+                    matchedPill = $(this);
+                    return false;
+                }
+            });
+        }
+
+        if (matchedPill && matchedPill.length && !matchedPill.hasClass('active')) {
             $('.nhmis-outcome-pill').removeClass('active');
             matchedPill.addClass('active');
 
@@ -716,6 +878,11 @@ window.InvestResultEntry = (function() {
 
             $('#nhmis_outcome').val(outcome);
             $('#nhmis_outcome_raw').val(raw);
+            $('#nhmis_outcome_container').removeClass('has-error');
+            $('#nhmis_outcome_validation_hint').slideUp(100);
+            if ($('#nhmis_outcome_select').length) {
+                $('#nhmis_outcome_select').val(raw);
+            }
             $('#nhmis_auto_sense_indicator').html('<i class="mdi mdi-auto-fix text-success"></i> Auto-sensed: <strong>' + raw + '</strong>');
         }
     }

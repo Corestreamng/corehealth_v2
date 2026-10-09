@@ -155,12 +155,36 @@ class NhmisClassifyHistoricalLabRecords extends Command
                     $status = strtolower($p['status'] ?? '');
                     $val = strtolower((string) ($p['value'] ?? ''));
 
+                    // Indeterminate
+                    if (str_contains($val, 'indeterminate') || str_contains($val, 'inconclusive')) {
+                        return ['outcome' => 'indeterminate', 'raw' => 'Indeterminate'];
+                    }
+
+                    // Malaria specific V2 structured values
+                    if (str_contains($indicatorCode, 'malaria')) {
+                        if (str_contains($val, '++++') || str_contains($val, '4+')) {
+                            return ['outcome' => 'positive', 'raw' => 'Positive (++++)'];
+                        }
+                        if (str_contains($val, '+++') || str_contains($val, '3+')) {
+                            return ['outcome' => 'positive', 'raw' => 'Positive (+++)'];
+                        }
+                        if (str_contains($val, '++') || str_contains($val, '2+')) {
+                            return ['outcome' => 'positive', 'raw' => 'Positive (++)'];
+                        }
+                        if (str_contains($val, '+') || str_contains($val, '1+') || $val === 'positive' || $status === 'abnormal' || $status === 'positive' || $status === 'high') {
+                            return ['outcome' => 'positive', 'raw' => 'Positive (+)'];
+                        }
+                        if ($val === 'false' || $val === '0' || $val === 'negative' || $val === 'nps' || str_contains($val, 'not seen') || $status === 'normal' || $status === 'negative') {
+                            return ['outcome' => 'negative', 'raw' => 'Negative'];
+                        }
+                    }
+
                     if ($val === 'true' || $val === '1' || $val === 'positive' || $val === 'reactive' || $status === 'abnormal' || $status === 'high' || $status === 'positive') {
-                        return ['outcome' => 'positive', 'raw' => $p['value'] ?? 'Positive (Template V2)'];
+                        return ['outcome' => 'positive', 'raw' => $p['value'] ?? 'Positive'];
                     }
 
                     if ($val === 'false' || $val === '0' || $val === 'negative' || $val === 'non-reactive' || $status === 'normal' || $status === 'negative') {
-                        return ['outcome' => 'negative', 'raw' => $p['value'] ?? 'Negative (Template V2)'];
+                        return ['outcome' => 'negative', 'raw' => $p['value'] ?? 'Negative'];
                     }
                 }
             }
@@ -174,32 +198,40 @@ class NhmisClassifyHistoricalLabRecords extends Command
         $text = strtolower(strip_tags(html_entity_decode($rawResult, ENT_QUOTES, 'UTF-8')));
         $text = preg_replace('/\s+/', ' ', trim($text));
 
-        // Malaria
+        // Malaria (Microscopy & mRDT)
         if (str_contains($indicatorCode, 'malaria')) {
-            // Negative precedence
-            if (preg_match('/(not\s*seen|neg|nil|no\s*malaria|none\s*seen|absent|not\s*detected)/i', $text)) {
-                return ['outcome' => 'negative', 'raw' => 'Negative / Not Seen'];
-            }
-            if (preg_match('/(\+{1,4}|\[\+\]|\(\+\)|positive|\bpos\b|\bseen\b|present|detected)/i', $text)) {
-                // Determine grade if possible
-                if (str_contains($text, '++++')) {
-                    $grade = 'Positive (++++)';
-                } elseif (str_contains($text, '+++')) {
-                    $grade = 'Positive (+++)';
-                } elseif (str_contains($text, '++')) {
-                    $grade = 'Positive (++)';
-                } else {
-                    $grade = 'Positive (+)';
-                }
-
-                return ['outcome' => 'positive', 'raw' => $grade];
+            // Negative precedence (covers NPS, no malaria parasites seen, no parasite seen, negative, nil, not seen, not detected, absent)
+            if (preg_match('/(not\s*seen|neg|nil|no\s*malaria|no\s*parasite|none\s*seen|absent|not\s*detected|\bnps\b)/i', $text)) {
+                return ['outcome' => 'negative', 'raw' => 'Negative'];
             }
 
-            return ['outcome' => 'indeterminate', 'raw' => substr($text, 0, 40)];
+            // Indeterminate
+            if (preg_match('/(indeterminate|inconclusive|doubtful|repeat\s*test)/i', $text)) {
+                return ['outcome' => 'indeterminate', 'raw' => 'Indeterminate'];
+            }
+
+            // Positive grades from 4+ down to 1+
+            if (preg_match('/(\+{4}|4\s*\+|positive\s*\(\+{4}\)|positive\s*4\+)/i', $text)) {
+                return ['outcome' => 'positive', 'raw' => 'Positive (++++)'];
+            }
+            if (preg_match('/(\+{3}|3\s*\+|positive\s*\(\+{3}\)|positive\s*3\+)/i', $text)) {
+                return ['outcome' => 'positive', 'raw' => 'Positive (+++)'];
+            }
+            if (preg_match('/(\+{2}|2\s*\+|positive\s*\(\+{2}\)|positive\s*2\+)/i', $text)) {
+                return ['outcome' => 'positive', 'raw' => 'Positive (++)'];
+            }
+            if (preg_match('/(\+{1}|1\s*\+|\[\+\]|\(\+\)|positive|\bpos\b|\bseen\b|present|detected)/i', $text)) {
+                return ['outcome' => 'positive', 'raw' => 'Positive (+)'];
+            }
+
+            return ['outcome' => 'indeterminate', 'raw' => 'Indeterminate'];
         }
 
         // Serology (HIV, Syphilis, Hep B, Hep C)
         if (str_contains($indicatorCode, 'hiv') || str_contains($indicatorCode, 'syphilis') || str_contains($indicatorCode, 'hepatitis')) {
+            if (preg_match('/(indeterminate|inconclusive|doubtful)/i', $text)) {
+                return ['outcome' => 'indeterminate', 'raw' => 'Indeterminate'];
+            }
             if (preg_match('/(\bnr\b|non[\s\-]*re?a?c?tive|negative|\bneg\b|nil|not\s*seen|absent|not\s*detected)/i', $text)) {
                 return ['outcome' => 'negative', 'raw' => 'Non-Reactive'];
             }
@@ -207,19 +239,110 @@ class NhmisClassifyHistoricalLabRecords extends Command
                 return ['outcome' => 'positive', 'raw' => 'Reactive'];
             }
 
-            return ['outcome' => 'indeterminate', 'raw' => substr($text, 0, 40)];
+            return ['outcome' => 'indeterminate', 'raw' => 'Indeterminate'];
+        }
+
+        // Chest X-Ray (Presumptive TB Screening) - evaluate before sputum TB to avoid indicator code collision
+        if (str_contains($indicatorCode, 'chest_xray') || str_contains($indicatorCode, 'cxr')) {
+            if (preg_match('/(tb|infiltrate|cavitary|consolidation|apical|tuberculosis|presumptive)/i', $text)) {
+                return ['outcome' => 'positive', 'raw' => 'Abnormal (TB Presumptive)'];
+            }
+            if (preg_match('/(cardiomegaly|pleural\s*effusion|mass|opacity|other\s*abnormal)/i', $text)) {
+                return ['outcome' => 'indeterminate', 'raw' => 'Other Abnormalities'];
+            }
+            if (preg_match('/(clear|normal|unremarkable|no\s*active|clear\s*lung)/i', $text)) {
+                return ['outcome' => 'negative', 'raw' => 'Normal / Clear'];
+            }
+
+            return ['outcome' => 'indeterminate', 'raw' => 'Other Abnormalities'];
         }
 
         // TB Sputum AFB / GeneXpert
-        if (str_contains($indicatorCode, 'tb') || str_contains($indicatorCode, 'sputum')) {
-            if (preg_match('/(not\s*seen|negative|\bneg\b|nil|none\s*seen|absent|not\s*detected)/i', $text)) {
-                return ['outcome' => 'negative', 'raw' => 'Negative / Not Seen'];
+        if (str_contains($indicatorCode, 'tb_sputum') || str_contains($indicatorCode, 'sputum') || $indicatorCode === 'tb') {
+            if (preg_match('/(indeterminate|inconclusive|invalid|error)/i', $text)) {
+                return ['outcome' => 'indeterminate', 'raw' => 'Indeterminate'];
             }
-            if (preg_match('/(\bseen\b|positive|\bpos\b|afb\s*positive|\bdetected\b|\b1\+\b|\b2\+\b|\b3\+\b)/i', $text)) {
-                return ['outcome' => 'positive', 'raw' => 'Positive / Detected'];
+            if (preg_match('/(mtb\s*not\s*detected|genexpert\s*negative)/i', $text)) {
+                return ['outcome' => 'negative', 'raw' => 'MTB Not Detected'];
+            }
+            if (preg_match('/(not\s*seen|negative|\bneg\b|nil|none\s*seen|absent|not\s*detected|no\s*afb)/i', $text)) {
+                return ['outcome' => 'negative', 'raw' => 'Negative (Not Seen)'];
+            }
+            if (preg_match('/(mtb\s*detected|genexpert\s*positive)/i', $text)) {
+                return ['outcome' => 'positive', 'raw' => 'MTB Detected'];
+            }
+            if (preg_match('/(\b3\s*\+|\+{3}|positive\s*3\+|positive\s*\(\+{3}\))/i', $text)) {
+                return ['outcome' => 'positive', 'raw' => 'Positive (3+)'];
+            }
+            if (preg_match('/(\b2\s*\+|\+{2}|positive\s*2\+|positive\s*\(\+{2}\))/i', $text)) {
+                return ['outcome' => 'positive', 'raw' => 'Positive (2+)'];
+            }
+            if (preg_match('/(\b1\s*\+|\+{1}|positive\s*1\+|positive\s*\(\+{1}\)|positive|\bpos\b|afb\s*seen|\bseen\b)/i', $text)) {
+                return ['outcome' => 'positive', 'raw' => 'Positive (1+)'];
             }
 
-            return ['outcome' => 'indeterminate', 'raw' => substr($text, 0, 40)];
+            return ['outcome' => 'indeterminate', 'raw' => 'Indeterminate'];
+        }
+
+        // Obstetric Ultrasound Scan
+        if (str_contains($indicatorCode, 'ultrasound') || str_contains($indicatorCode, 'scan')) {
+            if (preg_match('/(abnormal|complication|miscarriage|ectopic|dead|non-viable|previa|praevia|oligohydramnios|polyhydramnios)/i', $text)) {
+                return ['outcome' => 'positive', 'raw' => 'Abnormal / Complications'];
+            }
+            if (preg_match('/(viable|normal|single\s*intrauterine|good\s*liquor|cardiac\s*activity|unremarkable)/i', $text)) {
+                return ['outcome' => 'negative', 'raw' => 'Normal / Viable'];
+            }
+        }
+
+        // Pregnancy Test
+        if (str_contains($indicatorCode, 'pregnancy') || str_contains($indicatorCode, 'pt')) {
+            if (preg_match('/(negative|\bneg\b|not\s*pregnant|nil)/i', $text)) {
+                return ['outcome' => 'negative', 'raw' => 'Negative'];
+            }
+            if (preg_match('/(positive|\bpos\b|pregnant)/i', $text)) {
+                return ['outcome' => 'positive', 'raw' => 'Positive'];
+            }
+        }
+
+        // Qualitative / Lab Chemistry / Hematology
+        if (str_contains($indicatorCode, 'protein') || str_contains($indicatorCode, 'glucose') || str_contains($indicatorCode, 'pcv') || str_contains($indicatorCode, 'urinalysis')) {
+            if (preg_match('/(\+{4}|4\s*\+)/i', $text)) {
+                return ['outcome' => 'positive', 'raw' => '4+'];
+            }
+            if (preg_match('/(\+{3}|3\s*\+)/i', $text)) {
+                return ['outcome' => 'positive', 'raw' => '3+'];
+            }
+            if (preg_match('/(\+{2}|2\s*\+)/i', $text)) {
+                return ['outcome' => 'positive', 'raw' => '2+'];
+            }
+            if (preg_match('/(\+{1}|1\s*\+|positive|\bpos\b)/i', $text)) {
+                return ['outcome' => 'positive', 'raw' => '1+'];
+            }
+            if (preg_match('/(trace)/i', $text)) {
+                return ['outcome' => 'negative', 'raw' => 'Trace'];
+            }
+            if (preg_match('/(negative|\bneg\b|nil|zero|normal)/i', $text)) {
+                return ['outcome' => 'negative', 'raw' => 'Negative'];
+            }
+        }
+
+        // Procedures
+        if (str_contains($indicatorCode, 'caesarean') || str_contains($indicatorCode, 'mva') || str_contains($indicatorCode, 'tubal') || str_contains($indicatorCode, 'vasectomy') || str_contains($indicatorCode, 'fistula')) {
+            if (preg_match('/(abort)/i', $text)) {
+                return ['outcome' => 'negative', 'raw' => 'Aborted'];
+            }
+            if (preg_match('/(convert)/i', $text)) {
+                return ['outcome' => 'negative', 'raw' => 'Converted'];
+            }
+            if (preg_match('/(no\s*complications?|without\s*complications?|success|uneventful)/i', $text)) {
+                return ['outcome' => 'positive', 'raw' => 'Successful'];
+            }
+            if (preg_match('/(complication)/i', $text)) {
+                return ['outcome' => 'negative', 'raw' => 'Complications'];
+            }
+            if (preg_match('/(complete|done)/i', $text)) {
+                return ['outcome' => 'positive', 'raw' => 'Successful'];
+            }
         }
 
         // General fallback
@@ -230,6 +353,6 @@ class NhmisClassifyHistoricalLabRecords extends Command
             return ['outcome' => 'positive', 'raw' => 'Positive'];
         }
 
-        return ['outcome' => 'indeterminate', 'raw' => substr($text, 0, 40)];
+        return ['outcome' => 'indeterminate', 'raw' => 'Indeterminate'];
     }
 }
