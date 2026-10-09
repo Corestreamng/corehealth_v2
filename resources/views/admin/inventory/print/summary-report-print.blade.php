@@ -1,8 +1,8 @@
-{{-- Executive Summary Detailed Print --}}
+{{-- Dispense & Requisition Summary Print --}}
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Executive Summary Detailed - {{ $print_date }}</title>
+    <title>Dispense & Requisition Summary - {{ $print_date }}</title>
     <style>
         :root {
             --brand: {{ $appsettings->hos_color ?? '#0a6cf2' }};
@@ -244,7 +244,7 @@
             </div>
         </div>
         <div class="doc-title">
-            INVENTORY SUMMARY
+            DISPENSE & REQUISITION SUMMARY
             <small>Printed: {{ $print_date }}</small>
             <small>By: {{ $pharmacist }}</small>
         </div>
@@ -306,23 +306,31 @@
     <table style="width: 100%; margin-bottom: 24px;">
         <thead>
             <tr>
-                <th style="width: 30%; text-align: left;">Category/Group</th>
-                <th class="text-right">Volume (Qty)</th>
-                <th class="text-right">Cost (₦)</th>
-                <th class="text-right">Sales / Potential (₦)</th>
-                <th class="text-right">Cash (₦)</th>
-                <th class="text-right">Claims (₦)</th>
-                <th class="text-right">Profit/Loss (₦)</th>
+                <th rowspan="2" style="width: 25%; text-align: left;">Category / Group</th>
+                <th rowspan="2" class="text-right">Qty</th>
+                <th rowspan="2" class="text-right">Cost (₦)</th>
+                <th rowspan="2" class="text-right">Unit Price (₦)</th>
+                <th colspan="3" class="text-center" style="background: #e9ecef; font-weight: bold;">Sale Amount (₦)</th>
+                <th rowspan="2" class="text-right">Profit / Loss (₦)</th>
+            </tr>
+            <tr>
+                <th class="text-right" style="background: #f1f3f5; font-size: 11px;">Payable</th>
+                <th class="text-right" style="background: #f1f3f5; font-size: 11px;">Claim</th>
+                <th class="text-right" style="background: #e9ecef; font-size: 11px; font-weight: bold;">Total</th>
             </tr>
         </thead>
         <tbody>
             @if(empty($data))
-                <tr><td colspan="7" style="text-align: center; color: var(--muted);">No records found for the selected period</td></tr>
+                <tr><td colspan="8" style="text-align: center; color: var(--muted);">No records found for the selected period</td></tr>
             @else
                 @foreach($data as $row)
                     @php
-                        $sales = ($row['potential_revenue'] ?? 0) + ($row['cash_revenue'] ?? 0) + ($row['claims_revenue'] ?? 0);
-                        $profit = $row['profit'] ?? 0;
+                        $payable = (float) ($row['sale_amount_payable'] ?? $row['cash_revenue'] ?? 0);
+                        $claim = (float) ($row['sale_amount_claim'] ?? $row['claims_revenue'] ?? 0);
+                        $totalSales = (float) ($row['sale_amount_total'] ?? ($row['potential_revenue'] ?? 0) + $payable + $claim);
+                        $qty = (float) ($row['total_qty'] ?? 0);
+                        $unitSalePrice = (float) ($row['sale_price_per_unit'] ?? ($qty > 0 ? ($totalSales / $qty) : 0));
+                        $profit = (float) ($row['profit'] ?? 0);
                         $profitColor = $profit > 0 ? '#28a745' : ($profit < 0 ? '#dc3545' : 'inherit');
                     @endphp
                     <tr>
@@ -342,14 +350,47 @@
                         </td>
                         <td class="text-right">{{ number_format($row['total_qty']) }}</td>
                         <td class="text-right">{{ number_format($row['total_value'], 2) }}</td>
-                        <td class="text-right">{{ number_format($sales, 2) }}</td>
-                        <td class="text-right">{{ number_format($row['cash_revenue'] ?? 0, 2) }}</td>
-                        <td class="text-right">{{ number_format($row['claims_revenue'] ?? 0, 2) }}</td>
+                        <td class="text-right">{{ number_format($unitSalePrice, 2) }}</td>
+                        <td class="text-right">{{ number_format($payable, 2) }}</td>
+                        <td class="text-right">{{ number_format($claim, 2) }}</td>
+                        <td class="text-right" style="font-weight: bold;">{{ number_format($totalSales, 2) }}</td>
                         <td class="text-right" style="color: {{ $profitColor }}; font-weight: bold;">{{ number_format($profit, 2) }}</td>
                     </tr>
                 @endforeach
             @endif
         </tbody>
+        <tfoot style="background: #f8f9fa; font-weight: bold;">
+            @php
+                $gQty = 0;
+                $gCost = 0;
+                $gPayable = 0;
+                $gClaim = 0;
+                $gTotalSale = 0;
+                $gProfit = 0;
+                foreach ($data as $r) {
+                    $gQty += ($r['total_qty'] ?? 0);
+                    $gCost += ($r['total_value'] ?? 0);
+                    $p = (float) ($r['sale_amount_payable'] ?? $r['cash_revenue'] ?? 0);
+                    $c = (float) ($r['sale_amount_claim'] ?? $r['claims_revenue'] ?? 0);
+                    $t = (float) ($r['sale_amount_total'] ?? ($r['potential_revenue'] ?? 0) + $p + $c);
+                    $gPayable += $p;
+                    $gClaim += $c;
+                    $gTotalSale += $t;
+                    $gProfit += ($r['profit'] ?? 0);
+                }
+                $gAvgUnit = $gQty > 0 ? ($gTotalSale / $gQty) : 0;
+            @endphp
+            <tr>
+                <td>Grand Total</td>
+                <td class="text-right">{{ number_format($gQty) }}</td>
+                <td class="text-right">₦{{ number_format($gCost, 2) }}</td>
+                <td class="text-right">₦{{ number_format($gAvgUnit, 2) }}</td>
+                <td class="text-right">₦{{ number_format($gPayable, 2) }}</td>
+                <td class="text-right">₦{{ number_format($gClaim, 2) }}</td>
+                <td class="text-right">₦{{ number_format($gTotalSale, 2) }}</td>
+                <td class="text-right" style="color: {{ $gProfit > 0 ? '#28a745' : ($gProfit < 0 ? '#dc3545' : 'inherit') }};">₦{{ number_format($gProfit, 2) }}</td>
+            </tr>
+        </tfoot>
     </table>
 
     <!-- Signatures -->

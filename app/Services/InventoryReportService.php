@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\HmoTariff;
+use App\Models\ProductOrServiceRequest;
 use App\Models\ProductRequest;
 use App\Models\StockBatch;
 use App\Models\Store;
@@ -65,6 +66,124 @@ class InventoryReportService
     }
 
     /**
+     * Resolve dispense sale amounts (payable, claim, total) based strictly on amounts set
+     * for each sale in the product_or_service_requests table, and determine realized revenue
+     * (paid cash, validated HMO claim) vs unpaid deficit (dispensed without payment/validation).
+     *
+     * @param ProductRequest $item
+     * @param array $tariffAvgMap
+     * @return array
+     */
+    protected function resolveDispenseSaleAmounts($item, array $tariffAvgMap = []): array
+    {
+        $psr = $item->productOrServiceRequest;
+
+        // If not eager-loaded or relation null, check foreign key directly
+        if (!$psr && !empty($item->product_request_id)) {
+            $psr = ProductOrServiceRequest::with('payment')->find($item->product_request_id);
+        }
+
+        // If not directly linked via product_request_id, attempt to resolve via matching encounter and product
+        if (!$psr && $item->product_id && $item->encounter_id) {
+            $psr = ProductOrServiceRequest::with('payment')
+                ->where('product_id', $item->product_id)
+                ->where('encounter_id', $item->encounter_id)
+                ->orderByDesc('id')
+                ->first();
+        }
+
+        if ($psr) {
+            $payable = $psr->payable_amount !== null ? max(0.0, (float) $psr->payable_amount) : 0.0;
+            $claim = $psr->claims_amount !== null ? max(0.0, (float) $psr->claims_amount) : 0.0;
+            $amount = $psr->amount !== null ? max(0.0, (float) $psr->amount) : 0.0;
+
+            // If payable and claim are both 0.00 but amount > 0, attribute based on HMO coverage
+            if ($payable == 0.0 && $claim == 0.0 && $amount > 0.0) {
+                if (!empty($psr->hmo_id) && $psr->hmo_id != 1) {
+                    $claim = $amount;
+                    $payable = 0.0;
+                } else {
+                    $payable = $amount;
+                    $claim = 0.0;
+                }
+            }
+
+            $total = $payable + $claim;
+
+            // Determine if cash/copay portion is paid
+            $isPaid = false;
+            if ($payable <= 0.0) {
+                $isPaid = true; // No patient out-of-pocket required
+            } elseif (!empty($psr->payment_id)) {
+                $isPaid = true;
+            } elseif ($psr->payment && ($psr->payment->status >= 1 || $psr->payment->payment_status === 'paid')) {
+                $isPaid = true;
+            }
+
+            // Determine if HMO claim portion is validated/approved
+            $isValidated = false;
+            $vStatus = strtolower(trim((string) $psr->validation_status));
+            if ($claim <= 0.0) {
+                $isValidated = true; // No HMO claim required
+            } elseif (in_array($vStatus, ['validated', 'approved'])) {
+                $isValidated = true;
+            }
+
+            $paidPayable = $isPaid ? $payable : 0.0;
+            $unpaidPayable = $isPaid ? 0.0 : $payable;
+
+            $validatedClaim = $isValidated ? $claim : 0.0;
+            $unvalidatedClaim = $isValidated ? 0.0 : $claim;
+
+            $realizedRevenue = $paidPayable + $validatedClaim;
+            $deficit = $unpaidPayable + $unvalidatedClaim;
+
+            return [
+                'payable' => $payable,
+                'claim' => $claim,
+                'total' => $total,
+                'is_from_posr' => true,
+                'is_paid' => $isPaid,
+                'is_validated' => $isValidated,
+                'paid_payable' => $paidPayable,
+                'unpaid_payable' => $unpaidPayable,
+                'validated_claim' => $validatedClaim,
+                'unvalidated_claim' => $unvalidatedClaim,
+                'revenue' => $realizedRevenue,
+                'deficit' => $deficit,
+                'deficit_payable' => $unpaidPayable,
+                'deficit_claim' => $unvalidatedClaim,
+            ];
+        }
+
+        // Fallback when no product_or_service_requests record exists
+        $qty = $item->qty ?? 0;
+        $salePrice = $this->resolveProductSellingPrice(
+            $item->product,
+            $tariffAvgMap,
+            $item->price_override ?? $item->price_original
+        );
+        $total = $qty * $salePrice;
+
+        return [
+            'payable' => $total,
+            'claim' => 0.0,
+            'total' => $total,
+            'is_from_posr' => false,
+            'is_paid' => false,
+            'is_validated' => true,
+            'paid_payable' => 0.0,
+            'unpaid_payable' => $total,
+            'validated_claim' => 0.0,
+            'unvalidated_claim' => 0.0,
+            'revenue' => 0.0,
+            'deficit' => $total,
+            'deficit_payable' => $total,
+            'deficit_claim' => 0.0,
+        ];
+    }
+
+    /**
      * Get aggregate summary data.
      *
      * @param int|array $storeIds Target store ID(s)
@@ -119,14 +238,35 @@ class InventoryReportService
         // Format for output
         $results = [];
         foreach ($aggregates as $key => $data) {
+            $totalSale = (float) (($data['sale_amount_total'] ?? 0) + ($data['potential_revenue'] ?? 0));
+            $qty = (float) ($data['qty'] ?? 0);
+            $unitSalePrice = $qty > 0 ? round($totalSale / $qty, 2) : 0.0;
+            $cashRev = (float) ($data['cash_revenue'] ?? 0);
+            $claimsRev = (float) ($data['claims_revenue'] ?? 0);
+            $realizedRev = $cashRev + $claimsRev;
+            $potentialRev = (float) ($data['potential_revenue'] ?? 0);
+
             $results[] = [
                 'grouping_key' => $key,
                 'total_qty' => $data['qty'],
                 'total_value' => $data['value'],
-                'cash_revenue' => $data['cash_revenue'] ?? 0,
-                'claims_revenue' => $data['claims_revenue'] ?? 0,
-                'potential_revenue' => $data['potential_revenue'] ?? 0,
-                'profit' => $data['profit'] ?? 0,
+                'sale_price_per_unit' => $unitSalePrice,
+                'unit_sale_price' => $unitSalePrice,
+                'sale_amount_payable' => (float) ($data['sale_amount_payable'] ?? 0),
+                'sale_amount_claim' => (float) ($data['sale_amount_claim'] ?? 0),
+                'sale_amount_total' => $totalSale,
+                'cash_revenue' => $cashRev,
+                'claims_revenue' => $claimsRev,
+                'paid_revenue' => $cashRev,
+                'validated_claims_revenue' => $claimsRev,
+                'realized_revenue' => $realizedRev,
+                'deficit' => (float) ($data['deficit'] ?? 0),
+                'deficit_payable' => (float) ($data['deficit_payable'] ?? 0),
+                'deficit_claim' => (float) ($data['deficit_claim'] ?? 0),
+                'potential_revenue' => $potentialRev,
+                'total_revenue' => $totalSale,
+                'profit' => (float) ($data['profit'] ?? 0),
+                'realized_profit' => (float) ($realizedRev - ($data['value'] ?? 0)),
                 'channels' => $data['channels'] ?? [],
             ];
         }
@@ -211,7 +351,7 @@ class InventoryReportService
             'encounter.service',
             'encounter.admission_request.preferredWard',
             'dispensedFromBatch',
-            'productOrServiceRequest',
+            'productOrServiceRequest.payment',
         ])
         ->where(function ($q) use ($storeIds, $isPharmacyStore) {
             $q->whereIn('dispensed_from_store_id', $storeIds);
@@ -332,8 +472,16 @@ class InventoryReportService
                 $aggregates[$key] = [
                     'qty' => 0,
                     'value' => 0,
+                    'sale_amount_payable' => 0,
+                    'sale_amount_claim' => 0,
+                    'sale_amount_total' => 0,
                     'cash_revenue' => 0,
                     'claims_revenue' => 0,
+                    'paid_revenue' => 0,
+                    'validated_claims_revenue' => 0,
+                    'deficit' => 0,
+                    'deficit_payable' => 0,
+                    'deficit_claim' => 0,
                     'potential_revenue' => 0,
                     'profit' => 0,
                     'channels' => [],
@@ -359,22 +507,17 @@ class InventoryReportService
             $cost = $this->resolveBatchCostPrice($batch);
             $val = $qty * $cost;
 
-            $cashRev = 0;
-            $claimsRev = 0;
-            $potentialRev = 0;
-            $psr = $item->productOrServiceRequest;
+            $saleAmounts = $this->resolveDispenseSaleAmounts($item, $tariffAvgMap);
+            $payable = $saleAmounts['payable'];
+            $claim = $saleAmounts['claim'];
+            $totalSale = $saleAmounts['total'];
 
-            if ($psr) {
-                $cashRev = (float) ($psr->payable_amount ?? 0);
-                $claimsRev = (float) ($psr->claims_amount ?? 0);
-            } else {
-                $salePrice = $this->resolveProductSellingPrice(
-                    $item->product,
-                    $tariffAvgMap,
-                    $item->price_override ?? $item->price_original
-                );
-                $potentialRev = $qty * $salePrice;
-            }
+            $paidPayable = $saleAmounts['paid_payable'];
+            $validatedClaim = $saleAmounts['validated_claim'];
+            $deficit = $saleAmounts['deficit'];
+            $deficitPayable = $saleAmounts['deficit_payable'];
+            $deficitClaim = $saleAmounts['deficit_claim'];
+            $potentialRev = $saleAmounts['is_from_posr'] ? 0.0 : $totalSale;
 
             if ($groupBy === 'category') {
                 $key = $item->product?->category?->category_name ?? 'Uncategorized';
@@ -388,8 +531,16 @@ class InventoryReportService
                 $aggregates[$key] = [
                     'qty' => 0,
                     'value' => 0,
+                    'sale_amount_payable' => 0,
+                    'sale_amount_claim' => 0,
+                    'sale_amount_total' => 0,
                     'cash_revenue' => 0,
                     'claims_revenue' => 0,
+                    'paid_revenue' => 0,
+                    'validated_claims_revenue' => 0,
+                    'deficit' => 0,
+                    'deficit_payable' => 0,
+                    'deficit_claim' => 0,
                     'potential_revenue' => 0,
                     'profit' => 0,
                     'channels' => [],
@@ -397,11 +548,18 @@ class InventoryReportService
             }
             $aggregates[$key]['qty'] += $qty;
             $aggregates[$key]['value'] += $val;
-            $aggregates[$key]['cash_revenue'] += $cashRev;
-            $aggregates[$key]['claims_revenue'] += $claimsRev;
+            $aggregates[$key]['sale_amount_payable'] += $payable;
+            $aggregates[$key]['sale_amount_claim'] += $claim;
+            $aggregates[$key]['sale_amount_total'] += $totalSale;
+            $aggregates[$key]['cash_revenue'] += $paidPayable;
+            $aggregates[$key]['claims_revenue'] += $validatedClaim;
+            $aggregates[$key]['paid_revenue'] += $paidPayable;
+            $aggregates[$key]['validated_claims_revenue'] += $validatedClaim;
+            $aggregates[$key]['deficit'] += $deficit;
+            $aggregates[$key]['deficit_payable'] += $deficitPayable;
+            $aggregates[$key]['deficit_claim'] += $deficitClaim;
             $aggregates[$key]['potential_revenue'] += $potentialRev;
-            $totalRevenue = $cashRev + $claimsRev + $potentialRev;
-            $aggregates[$key]['profit'] += ($totalRevenue - $val);
+            $aggregates[$key]['profit'] += ($totalSale - $val);
             $aggregates[$key]['channels']['Dispense'] = ($aggregates[$key]['channels']['Dispense'] ?? 0) + $qty;
         }
     }
@@ -434,8 +592,16 @@ class InventoryReportService
                 $aggregates[$key] = [
                     'qty' => 0,
                     'value' => 0,
+                    'sale_amount_payable' => 0,
+                    'sale_amount_claim' => 0,
+                    'sale_amount_total' => 0,
                     'cash_revenue' => 0,
                     'claims_revenue' => 0,
+                    'paid_revenue' => 0,
+                    'validated_claims_revenue' => 0,
+                    'deficit' => 0,
+                    'deficit_payable' => 0,
+                    'deficit_claim' => 0,
                     'potential_revenue' => 0,
                     'profit' => 0,
                     'channels' => [],
@@ -479,6 +645,7 @@ class InventoryReportService
 
             $salePrice = $this->resolveProductSellingPrice($item->product, $tariffAvgMap);
             $potentialRev = $qty * $salePrice;
+            $unitSalePrice = $qty > 0 ? round($potentialRev / $qty, 2) : 0.0;
 
             $this->addDrillDownRow($details, [
                 'type' => 'Requisition',
@@ -490,6 +657,11 @@ class InventoryReportService
                 'qty' => $qty,
                 'cost_price' => $cost,
                 'total_value' => $qty * $cost,
+                'sale_price_per_unit' => $unitSalePrice,
+                'unit_sale_price' => $unitSalePrice,
+                'sale_amount_payable' => 0.0,
+                'sale_amount_claim' => 0.0,
+                'sale_amount_total' => $potentialRev,
                 'cash_paid' => 0,
                 'claims_paid' => 0,
                 'total_revenue' => $potentialRev,
@@ -517,24 +689,34 @@ class InventoryReportService
             $batch = $item->dispensedFromBatch;
             $cost = $this->resolveBatchCostPrice($batch);
 
-            $cashRev = 0;
-            $claimsRev = 0;
-            $potentialRev = 0;
-            $psr = $item->productOrServiceRequest;
+            $saleAmounts = $this->resolveDispenseSaleAmounts($item, $tariffAvgMap);
+            $payable = $saleAmounts['payable'];
+            $claim = $saleAmounts['claim'];
+            $totalSale = $saleAmounts['total'];
+            $paidPayable = $saleAmounts['paid_payable'];
+            $validatedClaim = $saleAmounts['validated_claim'];
+            $deficit = $saleAmounts['deficit'];
+            $unitSalePrice = $qty > 0 ? round($totalSale / $qty, 2) : 0.0;
 
-            if ($psr) {
-                $cashRev = (float) ($psr->payable_amount ?? 0);
-                $claimsRev = (float) ($psr->claims_amount ?? 0);
+            // Determine status label and badge
+            if ($saleAmounts['is_from_posr']) {
+                if ($saleAmounts['is_paid'] && $saleAmounts['is_validated']) {
+                    $statusLabel = $claim > 0 ? ($payable > 0 ? 'Paid & HMO Validated' : 'HMO Validated') : 'Paid';
+                    $statusBadge = 'badge-success';
+                } elseif ($saleAmounts['is_paid'] && !$saleAmounts['is_validated']) {
+                    $statusLabel = 'Copay Paid (HMO Pending)';
+                    $statusBadge = 'badge-warning text-dark';
+                } elseif (!$saleAmounts['is_paid'] && $saleAmounts['is_validated']) {
+                    $statusLabel = 'Unpaid Copay (Deficit)';
+                    $statusBadge = 'badge-danger';
+                } else {
+                    $statusLabel = $claim > 0 ? 'Unpaid / Pending (Deficit)' : 'Unpaid (Deficit)';
+                    $statusBadge = 'badge-danger';
+                }
             } else {
-                $salePrice = $this->resolveProductSellingPrice(
-                    $item->product,
-                    $tariffAvgMap,
-                    $item->price_override ?? $item->price_original
-                );
-                $potentialRev = $qty * $salePrice;
+                $statusLabel = 'Unbilled (Deficit)';
+                $statusBadge = 'badge-secondary';
             }
-
-            $totalRev = $cashRev + $claimsRev + $potentialRev;
 
             $this->addDrillDownRow($details, [
                 'type' => 'Dispense',
@@ -546,10 +728,22 @@ class InventoryReportService
                 'qty' => $qty,
                 'cost_price' => $cost,
                 'total_value' => $qty * $cost,
-                'cash_paid' => $cashRev,
-                'claims_paid' => $claimsRev,
-                'total_revenue' => $totalRev,
-                'profit' => $totalRev - ($qty * $cost),
+                'sale_price_per_unit' => $unitSalePrice,
+                'unit_sale_price' => $unitSalePrice,
+                'sale_amount_payable' => $payable,
+                'sale_amount_claim' => $claim,
+                'sale_amount_total' => $totalSale,
+                'cash_paid' => $paidPayable,
+                'claims_paid' => $validatedClaim,
+                'deficit' => $deficit,
+                'deficit_payable' => $saleAmounts['deficit_payable'],
+                'deficit_claim' => $saleAmounts['deficit_claim'],
+                'is_paid' => $saleAmounts['is_paid'],
+                'is_validated' => $saleAmounts['is_validated'],
+                'status_label' => $statusLabel,
+                'status_badge' => $statusBadge,
+                'total_revenue' => $totalSale,
+                'profit' => $totalSale - ($qty * $cost),
             ]);
         }
     }
@@ -579,6 +773,7 @@ class InventoryReportService
             $cost = $this->resolveBatchCostPrice($batch);
             $salePrice = $this->resolveProductSellingPrice($batch->product, $tariffAvgMap);
             $potentialRev = $qty * $salePrice;
+            $unitSalePrice = $qty > 0 ? round($potentialRev / $qty, 2) : 0.0;
 
             $dateStr = $batch->received_date
                 ? $batch->received_date->format('Y-m-d')
@@ -594,6 +789,11 @@ class InventoryReportService
                 'qty' => $qty,
                 'cost_price' => $cost,
                 'total_value' => $qty * $cost,
+                'sale_price_per_unit' => $unitSalePrice,
+                'unit_sale_price' => $unitSalePrice,
+                'sale_amount_payable' => 0.0,
+                'sale_amount_claim' => 0.0,
+                'sale_amount_total' => $potentialRev,
                 'cash_paid' => 0,
                 'claims_paid' => 0,
                 'total_revenue' => $potentialRev,
@@ -614,7 +814,14 @@ class InventoryReportService
             $details[$hash]['cash_paid'] += $row['cash_paid'];
             $details[$hash]['claims_paid'] += $row['claims_paid'];
             $details[$hash]['total_revenue'] += $row['total_revenue'];
+            $details[$hash]['sale_amount_payable'] = $details[$hash]['cash_paid'];
+            $details[$hash]['sale_amount_claim'] = $details[$hash]['claims_paid'];
+            $details[$hash]['sale_amount_total'] = $details[$hash]['total_revenue'];
             $details[$hash]['profit'] += $row['profit'];
+            $details[$hash]['sale_price_per_unit'] = $details[$hash]['qty'] > 0
+                ? round($details[$hash]['total_revenue'] / $details[$hash]['qty'], 2)
+                : 0.0;
+            $details[$hash]['unit_sale_price'] = $details[$hash]['sale_price_per_unit'];
         }
     }
 

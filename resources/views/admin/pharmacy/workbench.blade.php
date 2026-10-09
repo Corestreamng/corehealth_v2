@@ -125,6 +125,10 @@
                 <i class="mdi mdi-file-chart"></i>
                 <span>Stock Reports</span>
             </button>
+            <button class="quick-action-btn" id="btn-pharmacy-summary-report" data-bs-toggle="modal" data-bs-target="#summaryReportsModal" data-toggle="modal" data-target="#summaryReportsModal">
+                <i class="mdi mdi-chart-donut text-info"></i>
+                <span>Dispense & Requisition Summary</span>
+            </button>
             @endhasanyrole
 
             <button class="quick-action-btn" disabled style="opacity: 0.5;">

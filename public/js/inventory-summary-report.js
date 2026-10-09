@@ -148,21 +148,25 @@
             var grandSales = 0;
             var grandCash = 0;
             var grandClaims = 0;
+            var grandDeficit = 0;
             var grandProfit = 0;
 
             data.forEach(function(row) {
-                var totalSales = (Number(row.potential_revenue) || 0) + (Number(row.cash_revenue) || 0) + (Number(row.claims_revenue) || 0);
-                var rowProfit = Number(row.profit) || 0;
                 var rowQty = Number(row.total_qty) || 0;
                 var rowVal = Number(row.total_value) || 0;
-                var rowCash = Number(row.cash_revenue) || 0;
-                var rowClaims = Number(row.claims_revenue) || 0;
+                var rowPayable = Number(row.sale_amount_payable != null ? row.sale_amount_payable : row.cash_revenue) || 0;
+                var rowClaim = Number(row.sale_amount_claim != null ? row.sale_amount_claim : row.claims_revenue) || 0;
+                var totalSales = Number(row.sale_amount_total != null ? row.sale_amount_total : ((Number(row.potential_revenue) || 0) + rowPayable + rowClaim)) || 0;
+                var unitSalePrice = Number(row.sale_price_per_unit != null ? row.sale_price_per_unit : row.unit_sale_price) || (rowQty > 0 ? (totalSales / rowQty) : 0);
+                var rowDeficit = Number(row.deficit) || 0;
+                var rowProfit = Number(row.profit) || 0;
 
                 grandQty += rowQty;
                 grandVal += rowVal;
                 grandSales += totalSales;
-                grandCash += rowCash;
-                grandClaims += rowClaims;
+                grandCash += rowPayable;
+                grandClaims += rowClaim;
+                grandDeficit += rowDeficit;
                 grandProfit += rowProfit;
 
                 var profitClass = rowProfit > 0 ? 'text-success' : (rowProfit < 0 ? 'text-danger' : '');
@@ -195,10 +199,11 @@
                         channelBadges +
                     '</td>' +
                     '<td class="text-right">' + rowQty.toLocaleString() + '</td>' +
-                    '<td class="text-right">' + formatCurrency(rowVal) + '</td>' +
-                    '<td class="text-right">' + formatCurrency(totalSales) + '</td>' +
-                    '<td class="text-right text-info">' + formatCurrency(rowCash) + '</td>' +
-                    '<td class="text-right text-primary">' + formatCurrency(rowClaims) + '</td>' +
+                    '<td class="text-right text-muted">' + formatCurrency(rowVal) + '</td>' +
+                    '<td class="text-right font-weight-medium">' + formatCurrency(unitSalePrice) + '</td>' +
+                    '<td class="text-right text-info">' + formatCurrency(rowPayable) + '</td>' +
+                    '<td class="text-right text-primary">' + formatCurrency(rowClaim) + '</td>' +
+                    '<td class="text-right font-weight-bold text-dark">' + formatCurrency(totalSales) + '</td>' +
                     '<td class="text-right font-weight-bold ' + profitClass + '">' + formatCurrency(rowProfit) + '</td>' +
                     '<td class="text-center">' +
                         '<button type="button" class="btn btn-xs btn-outline-primary btn-drilldown">Details</button>' +
@@ -207,25 +212,27 @@
                 var drilldownTr = document.createElement('tr');
                 drilldownTr.className = 'drilldown-row d-none';
                 drilldownTr.innerHTML =
-                    '<td colspan="8" class="p-0">' +
+                    '<td colspan="9" class="p-0">' +
                         '<div class="drilldown-table-container">' +
                             '<div class="text-center py-3 drilldown-loading"><div class="spinner-border spinner-border-sm text-primary"></div></div>' +
                             '<div class="table-responsive drilldown-content d-none">' +
-                                '<table class="table table-bordered table-sm mb-0 bg-white" style="font-size: 0.85rem;">' +
+                                '<table class="table table-bordered table-sm mb-0 bg-white" style="font-size: 0.82rem;">' +
                                     '<thead class="bg-primary text-white">' +
                                         '<tr>' +
-                                            '<th>Type</th>' +
-                                            '<th>Date</th>' +
-                                            '<th>Product</th>' +
-                                            '<th>Batch #</th>' +
-                                            '<th>Expiry</th>' +
-                                            '<th class="text-right">Qty</th>' +
-                                            '<th class="text-right">Unit Cost</th>' +
-                                            '<th class="text-right">Total Cost</th>' +
-                                            '<th class="text-right">Cash</th>' +
-                                            '<th class="text-right">Claims</th>' +
-                                            '<th class="text-right">Rev</th>' +
-                                            '<th class="text-right">Profit</th>' +
+                                            '<th rowspan="2" class="align-middle">Type</th>' +
+                                            '<th rowspan="2" class="align-middle">Date</th>' +
+                                            '<th rowspan="2" class="align-middle">Product & Batch</th>' +
+                                            '<th rowspan="2" class="text-right align-middle">Qty</th>' +
+                                            '<th rowspan="2" class="text-right align-middle">Unit Cost</th>' +
+                                            '<th rowspan="2" class="text-right align-middle">Total Cost</th>' +
+                                            '<th rowspan="2" class="text-right align-middle">Unit Price</th>' +
+                                            '<th colspan="3" class="text-center py-1" style="background: rgba(255,255,255,0.18);">Sale Amount</th>' +
+                                            '<th rowspan="2" class="text-right align-middle">Profit</th>' +
+                                        '</tr>' +
+                                        '<tr>' +
+                                            '<th class="text-right py-1" style="background: rgba(255,255,255,0.1); font-size: 0.76rem;">Payable</th>' +
+                                            '<th class="text-right py-1" style="background: rgba(255,255,255,0.1); font-size: 0.76rem;">Claim</th>' +
+                                            '<th class="text-right py-1 font-weight-bold" style="background: rgba(255,255,255,0.18); font-size: 0.76rem;">Total</th>' +
                                         '</tr>' +
                                     '</thead>' +
                                     '<tbody class="drilldown-tbody"></tbody>' +
@@ -264,12 +271,14 @@
             if (grandQtyEl) grandQtyEl.textContent = grandQty.toLocaleString();
             var grandValEl = container.querySelector('.report-grand-value');
             if (grandValEl) grandValEl.textContent = formatCurrency(grandVal);
-            var grandSalesEl = container.querySelector('.report-grand-sales');
-            if (grandSalesEl) grandSalesEl.textContent = formatCurrency(grandSales);
-            var grandCashEl = container.querySelector('.report-grand-cash');
-            if (grandCashEl) grandCashEl.textContent = formatCurrency(grandCash);
-            var grandClaimsEl = container.querySelector('.report-grand-claims');
-            if (grandClaimsEl) grandClaimsEl.textContent = formatCurrency(grandClaims);
+            var grandUnitSaleEl = container.querySelector('.report-grand-unit-sale');
+            if (grandUnitSaleEl) grandUnitSaleEl.textContent = formatCurrency(grandQty > 0 ? (grandSales / grandQty) : 0);
+            var grandPayableEl = container.querySelector('.report-grand-payable');
+            if (grandPayableEl) grandPayableEl.textContent = formatCurrency(grandCash);
+            var grandClaimEl = container.querySelector('.report-grand-claim');
+            if (grandClaimEl) grandClaimEl.textContent = formatCurrency(grandClaims);
+            var grandTotalSaleEl = container.querySelector('.report-grand-total-sale');
+            if (grandTotalSaleEl) grandTotalSaleEl.textContent = formatCurrency(grandSales);
             var grandProfitEl = container.querySelector('.report-grand-profit');
             if (grandProfitEl) grandProfitEl.textContent = formatCurrency(grandProfit);
 
@@ -283,11 +292,22 @@
             var kpiRevEl = container.querySelector('.report-kpi-revenue');
             if (kpiRevEl) kpiRevEl.textContent = formatCurrency(grandSales);
 
+            var kpiPayEl = container.querySelector('.report-kpi-pay');
+            if (kpiPayEl) kpiPayEl.textContent = formatCurrency(grandCash);
+
+            var kpiClmEl = container.querySelector('.report-kpi-clm');
+            if (kpiClmEl) kpiClmEl.textContent = formatCurrency(grandClaims);
+
             var kpiProfitEl = container.querySelector('.report-kpi-profit');
             if (kpiProfitEl) {
                 kpiProfitEl.textContent = formatCurrency(grandProfit);
                 kpiProfitEl.className = 'mb-0 report-kpi-profit ' + (grandProfit > 0 ? 'text-success' : (grandProfit < 0 ? 'text-danger' : 'text-dark'));
             }
+
+            var kpiDeficitEl = container.querySelector('.report-kpi-deficit');
+            if (kpiDeficitEl) kpiDeficitEl.textContent = formatCurrency(grandDeficit);
+            var kpiDeficitWrap = container.querySelector('.report-kpi-deficit-wrap');
+            if (kpiDeficitWrap) kpiDeficitWrap.style.display = grandDeficit > 0 ? '' : 'none';
         }
 
         function loadDrillDown(groupKey, groupBy, drilldownTr) {
@@ -332,31 +352,40 @@
                         var qty = Number(item.qty) || 0;
                         var costPrice = Number(item.cost_price) || 0;
                         var totalVal = Number(item.total_value) || 0;
-                        var cashPaid = Number(item.cash_paid) || 0;
-                        var claimsPaid = Number(item.claims_paid) || 0;
-                        var totalRev = Number(item.total_revenue) || 0;
+                        var cashPaid = Number(item.sale_amount_payable != null ? item.sale_amount_payable : item.cash_paid) || 0;
+                        var claimsPaid = Number(item.sale_amount_claim != null ? item.sale_amount_claim : item.claims_paid) || 0;
+                        var totalRev = Number(item.sale_amount_total != null ? item.sale_amount_total : item.total_revenue) || 0;
+                        var unitSale = Number(item.sale_price_per_unit != null ? item.sale_price_per_unit : item.unit_sale_price) || (qty > 0 ? (totalRev / qty) : 0);
+
+                        var statusBadgeHtml = '';
+                        if (item.status_label) {
+                            statusBadgeHtml = '<div class="mt-1"><span class="badge ' + (item.status_badge || 'badge-secondary') + '" style="font-size: 0.68rem; font-weight: 600;">' + item.status_label + '</span></div>';
+                        }
 
                         var tr = document.createElement('tr');
                         tr.innerHTML =
-                            '<td><span class="badge ' + getTypeBadgeClass(item.type) + '">' + (item.type || 'Item') + '</span></td>' +
-                            '<td class="small">' + (item.date || 'N/A') + '</td>' +
+                            '<td><span class="badge ' + getTypeBadgeClass(item.type) + '">' + (item.type || 'Item') + '</span>' + statusBadgeHtml + '</td>' +
+                            '<td class="small text-nowrap">' + (item.date || 'N/A') + '</td>' +
                             '<td>' +
-                                '<div class="font-weight-bold">' + (item.product_name || 'N/A') + '</div>' +
-                                '<small class="text-muted">Pkg: ' + (item.packaging || 'Unit') + '</small>' +
+                                '<div class="font-weight-bold text-dark">' + (item.product_name || 'N/A') + '</div>' +
+                                '<div class="small text-muted" style="font-size: 0.75rem;">' +
+                                    '<span>Bth: <strong>' + (item.batch_number || 'N/A') + '</strong></span> · ' +
+                                    '<span class="' + (isExpiringSoon(item.expiry_date) ? 'text-danger font-weight-bold' : '') + '">Exp: ' + (item.expiry_date || 'N/A') + '</span> · ' +
+                                    '<span>Pkg: ' + (item.packaging || 'Unit') + '</span>' +
+                                '</div>' +
                             '</td>' +
-                            '<td>' + (item.batch_number || 'N/A') + '</td>' +
-                            '<td class="' + (isExpiringSoon(item.expiry_date) ? 'text-danger font-weight-bold' : '') + '">' + (item.expiry_date || 'N/A') + '</td>' +
-                            '<td class="text-right font-weight-bold">' + qty.toLocaleString() + '</td>' +
-                            '<td class="text-right">' + formatCurrency(costPrice) + '</td>' +
-                            '<td class="text-right text-muted">' + formatCurrency(totalVal) + '</td>' +
-                            '<td class="text-right">' + formatCurrency(cashPaid) + '</td>' +
-                            '<td class="text-right">' + formatCurrency(claimsPaid) + '</td>' +
-                            '<td class="text-right font-weight-bold text-primary">' + formatCurrency(totalRev) + '</td>' +
-                            '<td class="text-right font-weight-bold ' + profitClass + '">' + formatCurrency(profit) + '</td>';
+                            '<td class="text-right font-weight-bold text-nowrap">' + qty.toLocaleString() + '</td>' +
+                            '<td class="text-right text-nowrap">' + formatCurrency(costPrice) + '</td>' +
+                            '<td class="text-right text-muted text-nowrap">' + formatCurrency(totalVal) + '</td>' +
+                            '<td class="text-right font-weight-medium text-nowrap">' + formatCurrency(unitSale) + '</td>' +
+                            '<td class="text-right text-info text-nowrap">' + formatCurrency(cashPaid) + '</td>' +
+                            '<td class="text-right text-primary text-nowrap">' + formatCurrency(claimsPaid) + '</td>' +
+                            '<td class="text-right font-weight-bold text-dark text-nowrap">' + formatCurrency(totalRev) + '</td>' +
+                            '<td class="text-right font-weight-bold text-nowrap ' + profitClass + '">' + formatCurrency(profit) + '</td>';
                         drillTbody.appendChild(tr);
                     });
                 } else {
-                    drillTbody.innerHTML = '<tr><td colspan="12" class="text-center text-muted py-3">No details available for this group.</td></tr>';
+                    drillTbody.innerHTML = '<tr><td colspan="11" class="text-center text-muted py-3">No details available for this group.</td></tr>';
                 }
             })
             .catch(function(err) {

@@ -1237,4 +1237,16 @@
 @include('admin.partials.clinical_context_modal')
 @include('admin.partials.store_context_override_modal')
 
-
+@php
+    $pharmModalStoreIds = !empty($managedStoreIds)
+        ? implode(',', $managedStoreIds)
+        : ($resolvedStore ? (string)$resolvedStore->id : (optional($stores->first())->id ? (string)$stores->first()->id : '2'));
+    $pharmModalStoreName = $resolvedStore->store_name ?? (optional($stores->first())->store_name ?? 'Pharmacy Store');
+@endphp
+@include('admin.inventory.components.summary-report-modal', [
+    'modalId' => 'summaryReportsModal',
+    'tabPrefix' => 'pharm-modal-sr',
+    'storeIds' => $pharmModalStoreIds,
+    'storeName' => $pharmModalStoreName,
+    'modalTitle' => 'Dispense & Requisition Summary',
+])

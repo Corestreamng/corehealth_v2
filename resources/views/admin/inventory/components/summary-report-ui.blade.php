@@ -61,8 +61,11 @@
         <div class="col-md-3">
             <div class="card shadow-sm border-0 rounded h-100" style="background-color: #e3f2fd;">
                 <div class="card-body py-3">
-                    <p class="text-muted mb-1 small text-uppercase font-weight-bold">Total Expected Rev</p>
+                    <p class="text-muted mb-1 small text-uppercase font-weight-bold">Total Sale Amount</p>
                     <h4 class="mb-0 text-primary report-kpi-revenue">₦0.00</h4>
+                    <div class="small text-muted mt-1" style="font-size: 0.72rem;">
+                        Pay: <span class="report-kpi-pay font-weight-bold text-info">₦0.00</span> | Clm: <span class="report-kpi-clm font-weight-bold text-primary">₦0.00</span>
+                    </div>
                 </div>
             </div>
         </div>
@@ -71,6 +74,9 @@
                 <div class="card-body py-3">
                     <p class="text-muted mb-1 small text-uppercase font-weight-bold">Total Profit/Loss</p>
                     <h4 class="mb-0 report-kpi-profit">₦0.00</h4>
+                    <div class="small text-muted mt-1 report-kpi-deficit-wrap" style="font-size: 0.72rem;">
+                        Deficit: <span class="report-kpi-deficit font-weight-bold text-danger">₦0.00</span>
+                    </div>
                 </div>
             </div>
         </div>
@@ -81,14 +87,18 @@
         <table class="table table-hover table-sm mb-0 report-main-table">
             <thead class="bg-light">
                 <tr>
-                    <th><i class="mdi mdi-chevron-down mr-2 invisible"></i> <span class="report-col-header">Category</span></th>
-                    <th class="text-right">Volume (Qty)</th>
-                    <th class="text-right">Cost (NGN)</th>
-                    <th class="text-right">Sales / Potential (NGN)</th>
-                    <th class="text-right">Cash Paid</th>
-                    <th class="text-right">Claims (HMO)</th>
-                    <th class="text-right">Profit/Loss</th>
-                    <th class="text-center" style="width: 80px;">Action</th>
+                    <th rowspan="2" class="align-middle"><i class="mdi mdi-chevron-down mr-2 invisible"></i> <span class="report-col-header">Category</span></th>
+                    <th rowspan="2" class="text-right align-middle">Qty</th>
+                    <th rowspan="2" class="text-right align-middle">Cost (₦)</th>
+                    <th rowspan="2" class="text-right align-middle">Unit Price (₦)</th>
+                    <th colspan="3" class="text-center py-1 border-bottom-0" style="background-color: #e9ecef; font-weight: 700; font-size: 0.8rem;">Sale Amount (₦)</th>
+                    <th rowspan="2" class="text-right align-middle">Profit / Loss (₦)</th>
+                    <th rowspan="2" class="text-center align-middle" style="width: 70px;">Action</th>
+                </tr>
+                <tr>
+                    <th class="text-right py-1" style="background-color: #f1f3f5; font-size: 0.78rem;">Payable</th>
+                    <th class="text-right py-1" style="background-color: #f1f3f5; font-size: 0.78rem;">Claim</th>
+                    <th class="text-right py-1 font-weight-bold" style="background-color: #e9ecef; font-size: 0.78rem;">Total</th>
                 </tr>
             </thead>
             <tbody>
@@ -99,9 +109,10 @@
                     <td>Grand Total</td>
                     <td class="text-right report-grand-qty">0</td>
                     <td class="text-right report-grand-value">₦0.00</td>
-                    <td class="text-right report-grand-sales">₦0.00</td>
-                    <td class="text-right report-grand-cash">₦0.00</td>
-                    <td class="text-right report-grand-claims">₦0.00</td>
+                    <td class="text-right report-grand-unit-sale">₦0.00</td>
+                    <td class="text-right report-grand-payable">₦0.00</td>
+                    <td class="text-right report-grand-claim">₦0.00</td>
+                    <td class="text-right report-grand-total-sale">₦0.00</td>
                     <td class="text-right report-grand-profit">₦0.00</td>
                     <td></td>
                 </tr>

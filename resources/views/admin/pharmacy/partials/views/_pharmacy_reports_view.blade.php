@@ -217,7 +217,7 @@
                     </li>
                     <li class="nav-item" role="presentation">
                         <button class="nav-link" id="pharm-aggregate-tab" data-bs-toggle="tab" data-bs-target="#pharm-aggregate-content" type="button" role="tab">
-                            <i class="mdi mdi-chart-donut"></i> Aggregate Summaries
+                            <i class="mdi mdi-chart-donut"></i> Dispense & Requisition Summary
                         </button>
                     </li>
                     <li class="nav-item" role="presentation">
