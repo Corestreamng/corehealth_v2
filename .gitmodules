@@ -1,0 +1,12 @@
+[submodule "Corehealth-Super-Admin"]
+	path = Corehealth-Super-Admin
+	url = https://github.com/Corestream-Networks-and-Robotics-LTD/Corehealth-Super-Admin
+[submodule "wecare247"]
+	path = wecare247
+	url = https://github.com/walshak/wecare247
+[submodule "native_clients/client_app"]
+	path = native_clients/client_app
+	url = https://github.com/Corestream-Networks-and-Robotics-LTD/corehealth-client-app
+[submodule "native_clients/patient_app"]
+	path = native_clients/patient_app
+	url = https://github.com/Corestream-Networks-and-Robotics-LTD/corehealth-patient-app
