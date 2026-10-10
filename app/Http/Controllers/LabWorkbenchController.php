@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Helpers\HmoHelper;
 use App\Http\Traits\ClinicalOrdersTrait;
+use App\Jobs\DispatchCoreHmsSyncJob;
 use App\Models\Encounter;
 use App\Models\LabServiceRequest;
 use App\Models\Patient;
@@ -1219,6 +1220,25 @@ class LabWorkbenchController extends Controller
 
             DB::commit();
 
+            if (appsettings('goonline', 0) == 1 && (int)($updateData['status'] ?? $labRequest->status) === 4) {
+                DispatchCoreHmsSyncJob::dispatch(new \App\Services\CoreHms\Events\LabSyncEvent(
+                    $labRequest->id,
+                    $labRequest->patient_id,
+                    $labRequest->service->name ?? ($labRequest->free_form_name ?? 'Investigation'),
+                    $labRequest->service_id,
+                    null,
+                    $labRequest->nhmis_outcome,
+                    $labRequest->nhmis_outcome_raw,
+                    'cash',
+                    0.00,
+                    $labRequest->result_by,
+                    $labRequest->approved_by,
+                    'completed',
+                    null,
+                    now()->toDateTimeString()
+                ));
+            }
+
             $message = $isEdit
                 ? "Results Updated Successfully"
                 : ($canSelfApprove
@@ -2251,6 +2271,25 @@ class LabWorkbenchController extends Controller
 
             DB::commit();
 
+            if (appsettings('goonline', 0) == 1) {
+                DispatchCoreHmsSyncJob::dispatch(new \App\Services\CoreHms\Events\LabSyncEvent(
+                    $labRequest->id,
+                    $labRequest->patient_id,
+                    $labRequest->service->name ?? ($labRequest->free_form_name ?? 'Investigation'),
+                    $labRequest->service_id,
+                    null,
+                    $labRequest->nhmis_outcome,
+                    $labRequest->nhmis_outcome_raw,
+                    'cash',
+                    0.00,
+                    $labRequest->result_by,
+                    $labRequest->approved_by,
+                    'completed',
+                    null,
+                    now()->toDateTimeString()
+                ));
+            }
+
             return response()->json(['success' => true, 'message' => 'Result approved successfully.']);
         } catch (\Exception $e) {
             DB::rollBack();
@@ -2316,6 +2355,25 @@ class LabWorkbenchController extends Controller
             $this->logAudit($id, 'result_self_approved', 'Result self-approved by ' . Auth::user()->surname . ' ' . Auth::user()->firstname);
 
             DB::commit();
+
+            if (appsettings('goonline', 0) == 1) {
+                DispatchCoreHmsSyncJob::dispatch(new \App\Services\CoreHms\Events\LabSyncEvent(
+                    $labRequest->id,
+                    $labRequest->patient_id,
+                    $labRequest->service->name ?? ($labRequest->free_form_name ?? 'Investigation'),
+                    $labRequest->service_id,
+                    null,
+                    $labRequest->nhmis_outcome,
+                    $labRequest->nhmis_outcome_raw,
+                    'cash',
+                    0.00,
+                    $labRequest->result_by,
+                    $labRequest->approved_by,
+                    'completed',
+                    null,
+                    now()->toDateTimeString()
+                ));
+            }
 
             return response()->json(['success' => true, 'message' => 'Result approved successfully.']);
         } catch (\Exception $e) {

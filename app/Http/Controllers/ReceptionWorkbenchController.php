@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Enums\QueueStatus;
 use App\Helpers\HmoHelper;
+use App\Jobs\DispatchCoreHmsSyncJob;
 use App\Models\AdmissionRequest;
 use App\Models\Clinic;
 use App\Models\DoctorAppointment;
@@ -1355,13 +1356,26 @@ class ReceptionWorkbenchController extends Controller
 
             DB::commit();
 
+            if (appsettings('goonline', 0) == 1) {
+                $fullName = trim($user->surname . ' ' . $user->firstname . ' ' . ($user->othername ?? ''));
+                DispatchCoreHmsSyncJob::dispatch('patient', [
+                    'name' => $fullName,
+                    'gender' => $user->gender ?? $patient->gender,
+                    'dob' => $patient->dob ?? null,
+                    'phone_no' => $patient->phone_no ?? null,
+                    'hmo_id' => $patient->hmo_id ?? null,
+                    'file_no' => $patient->file_no ?? null,
+                    'status' => 'Active',
+                ], $patient->id, now()->toDateTimeString());
+            }
+
             return response()->json([
                 'success' => true,
                 'message' => 'Patient registered successfully',
                 'patient' => [
                     'id' => $patient->id,
                     'user_id' => $user->id,
-                    'name' => userfullname($user->id),
+                    'name' => trim($user->surname . ' ' . $user->firstname . ' ' . ($user->othername ?? '')),
                     'file_no' => $patient->file_no,
                 ],
             ]);
@@ -1840,13 +1854,26 @@ class ReceptionWorkbenchController extends Controller
 
             DB::commit();
 
+            if (appsettings('goonline', 0) == 1) {
+                $fullName = trim($user->surname . ' ' . $user->firstname . ' ' . ($user->othername ?? ''));
+                DispatchCoreHmsSyncJob::dispatch('patient', [
+                    'name' => $fullName,
+                    'gender' => $user->gender ?? $patient->gender,
+                    'dob' => $patient->dob ?? null,
+                    'phone_no' => $patient->phone_no ?? null,
+                    'hmo_id' => $patient->hmo_id ?? null,
+                    'file_no' => $patient->file_no ?? null,
+                    'status' => 'Active',
+                ], $patient->id, now()->toDateTimeString());
+            }
+
             return response()->json([
                 'success' => true,
                 'message' => 'Patient updated successfully',
                 'patient' => [
                     'id' => $patient->id,
                     'user_id' => $user->id,
-                    'name' => userfullname($user->id),
+                    'name' => trim($user->surname . ' ' . $user->firstname . ' ' . ($user->othername ?? '')),
                     'file_no' => $patient->file_no,
                 ],
             ]);

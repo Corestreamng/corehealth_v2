@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Jobs\DispatchCoreHmsSyncJob;
 use App\Models\Clinic;
 use App\Models\Department;
 use App\Models\HR\Cadre;
@@ -16,7 +17,6 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
@@ -630,42 +630,19 @@ class StaffController extends Controller
                 DB::commit();
 
                 if (appsettings('goonline', 0) == 1) {
-                    try {
-                        // Send to CoreHealth SuperAdmin
-                        // For doctors and nurses
-                        if ($request->is_admin == 21) {
-                            $response = Http::withBasicAuth(
-                                appsettings('COREHMS_SUPERADMIN_USERNAME'),
-                                appsettings('COREHMS_SUPERADMIN_PASS')
-                            )->withHeaders([
-                                'Content-Type' => 'application/json',
-                            ])->post(appsettings('COREHMS_SUPERADMIN_URL') . '/event-notification.php?notification_type=staff', [
-                                'type' => 'Doctors',
-                                'specialization' => $request->specialization ?? null,
-                                'gender' => $request->gender ?? null,
-                            ]);
+                    $staffName = trim($user->surname . ' ' . $user->firstname . ' ' . ($user->othername ?? ''));
+                    $staffType = ($request->is_admin == 21) ? 'Doctors' : (($request->is_admin == 22) ? 'Nurse' : 'Staffs');
 
-                            Log::info("sent api request For Staff doc, ", [$response->body()]);
-                        } elseif ($request->is_admin == 22) {
-                            $response = Http::withBasicAuth(
-                                appsettings('COREHMS_SUPERADMIN_USERNAME'),
-                                appsettings('COREHMS_SUPERADMIN_PASS')
-                            )->withHeaders([
-                                'Content-Type' => 'application/json',
-                            ])->post(appsettings('COREHMS_SUPERADMIN_URL') . '/event-notification.php?notification_type=staff', [
-                                'type' => 'Nurse',
-                                'specialization' => $request->specialization ?? null,
-                                'gender' => $request->gender ?? null,
-                            ]);
-
-                            Log::info("sent api request For staff nurse, ", [$response->body()]);
-                        }
-                    } catch (\Exception $apiEx) {
-                        Log::error("Failed sending API request to CoreHealth SuperAdmin: " . $apiEx->getMessage());
-                    }
+                    DispatchCoreHmsSyncJob::dispatch('staff', [
+                        'type' => $staffType,
+                        'name' => $staffName,
+                        'specialization' => $request->specialization ?? null,
+                        'gender' => $request->gender ?? null,
+                        'email' => $user->email ?? null,
+                    ], $user->id, now()->toDateTimeString());
                 }
 
-                $msg = 'User [' . $user->firstname . ' ' . $user->surname . '] was successfully created.';
+                $msg = 'User [' . trim($user->surname . ' ' . $user->firstname . ' ' . ($user->othername ?? '')) . '] was successfully created.';
                 Alert::success('Success ', $msg);
 
                 return redirect()->route('staff.index')->withMessage($msg)->withMessageType('success');

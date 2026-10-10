@@ -134,6 +134,25 @@ Route::get('get-facility-monthly-encounter/{year}', [DataEndpoint::class, 'encou
 Route::get('get-facility-monthly-income/{year}', [DataEndpoint::class, 'incomePerMonth'])->middleware(['auth.basic.sha256']);
 Route::get('get-facility-monthly-investigations/{year}', [DataEndpoint::class, 'investigationsPerMonth'])->middleware(['auth.basic.sha256']);
 Route::get('get-facility-monthly-hospitalization/{year}', [DataEndpoint::class, 'hospitalizationsPerMonth'])->middleware(['auth.basic.sha256']);
+Route::get('get-facility-dispenses', [DataEndpoint::class, 'getAllDispenses'])->middleware(['auth.basic.sha256']);
+Route::get('get-facility-investigations', [DataEndpoint::class, 'getAllInvestigations'])->middleware(['auth.basic.sha256']);
+Route::get('get-facility-procedures', [DataEndpoint::class, 'getAllProcedures'])->middleware(['auth.basic.sha256']);
+
+// Ultra-fast Ping & Health Monitoring
+Route::get('corehms/ping', [\App\Http\Controllers\API\CoreHmsHealthApiController::class, 'ping']);
+Route::get('corehms/health', [\App\Http\Controllers\API\CoreHmsHealthApiController::class, 'health']);
+
+/*
+|--------------------------------------------------------------------------
+| CoreHMS SuperAdmin Backup & Management Endpoints
+|--------------------------------------------------------------------------
+*/
+Route::prefix('corehms')->middleware(['auth.basic.sha256'])->group(function () {
+    Route::get('backups/status', [\App\Http\Controllers\API\CoreHmsBackupApiController::class, 'status']);
+    Route::get('backups', [\App\Http\Controllers\API\CoreHmsBackupApiController::class, 'list']);
+    Route::post('backups/generate', [\App\Http\Controllers\API\CoreHmsBackupApiController::class, 'generate']);
+    Route::get('backups/{filename}/download', [\App\Http\Controllers\API\CoreHmsBackupApiController::class, 'download']);
+});
 
 /*
 |--------------------------------------------------------------------------

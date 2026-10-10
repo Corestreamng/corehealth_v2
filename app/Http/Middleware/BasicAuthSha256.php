@@ -16,8 +16,8 @@ class BasicAuthSha256
      */
     public function handle(Request $request, Closure $next)
     {
-        $clientId = env('CLIENT_ID');
-        $clientSecret = env('CLIENT_SECRET');
+        $clientId = appsettings('client_id') ?: env('CLIENT_ID', '123');
+        $clientSecret = appsettings('client_secret') ?: env('CLIENT_SECRET', '123');
         $expectedHash = hash('sha256', $clientId . ':' . $clientSecret);
 
         // Check for Authorization header
@@ -43,9 +43,9 @@ class BasicAuthSha256
             return response('Invalid credentials format', 401, ['WWW-Authenticate' => 'Basic realm="Corehealth"']);
         }
 
-        // Validate hash
+        // Validate hash timing-safely
         $providedHash = hash('sha256', $providedClientId . ':' . $providedClientSecret);
-        if ($expectedHash !== $providedHash) {
+        if (!hash_equals($expectedHash, $providedHash)) {
             return response('Unauthorized', 401, ['WWW-Authenticate' => 'Basic realm="Corehealth"']);
         }
 

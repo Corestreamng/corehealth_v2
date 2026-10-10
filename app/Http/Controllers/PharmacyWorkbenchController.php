@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Helpers\BatchHelper;
 use App\Helpers\HmoHelper;
+use App\Jobs\DispatchCoreHmsSyncJob;
 use App\Models\AdmissionRequest;
 use App\Models\DoctorQueue;
 use App\Models\Hmo;
@@ -1779,6 +1780,26 @@ class PharmacyWorkbenchController extends Controller
 
             DB::commit();
 
+            if (appsettings('goonline', 0) == 1) {
+                foreach ($itemsToDispense as $item) {
+                    $pr = $item['productRequest'] ?? null;
+                    if ($pr) {
+                        $posr = $pr->productOrServiceRequest;
+                        DispatchCoreHmsSyncJob::dispatch('dispense', [
+                            'drug_name' => $pr->product->name ?? 'Medication',
+                            'product_id' => $pr->product_id,
+                            'store_name' => $store->name ?? 'Pharmacy Store',
+                            'store_id' => $storeId,
+                            'qty' => $item['qty'] ?? 1,
+                            'amount' => $posr?->payable_amount ?? ($posr?->amount ?? 0.00),
+                            'coverage_mode' => $posr?->coverage_mode ?? 'cash',
+                            'patient_id' => $pr->patient_id,
+                            'status' => 'dispensed',
+                        ], $pr->id, now()->toDateTimeString());
+                    }
+                }
+            }
+
             return response()->json([
                 'success' => true,
                 'message' => "Successfully dispensed {$dispensedCount} medication(s) from '{$store->name}'",
@@ -3546,6 +3567,27 @@ class PharmacyWorkbenchController extends Controller
             }
 
             DB::commit();
+
+            if (appsettings('goonline', 0) == 1) {
+                foreach ($itemsToDispense as $item) {
+                    $pr = $item['productRequest'] ?? null;
+                    if ($pr) {
+                        $posr = $pr->productOrServiceRequest;
+                        DispatchCoreHmsSyncJob::dispatch('dispense', [
+                            'drug_name' => $pr->product->name ?? 'Medication',
+                            'product_id' => $pr->product_id,
+                            'batch_id' => $item['batch_id'] ?? null,
+                            'store_name' => $store->store_name ?? 'Pharmacy Store',
+                            'store_id' => $storeId,
+                            'qty' => $item['qty'] ?? 1,
+                            'amount' => $posr?->payable_amount ?? ($posr?->amount ?? 0.00),
+                            'coverage_mode' => $posr?->coverage_mode ?? 'cash',
+                            'patient_id' => $pr->patient_id,
+                            'status' => 'dispensed',
+                        ], $pr->id, now()->toDateTimeString());
+                    }
+                }
+            }
 
             return response()->json([
                 'success' => true,

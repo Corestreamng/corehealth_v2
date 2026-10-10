@@ -10,7 +10,9 @@ use App\Models\Encounter;
 use App\Models\Hmo;
 use App\Models\LabServiceRequest;
 use App\Models\Patient;
+use App\Models\Procedure;
 use App\Models\ProductOrServiceRequest;
+use App\Models\ProductRequest;
 use App\Models\Service;
 use App\Models\Staff;
 use App\Models\User;
@@ -845,6 +847,107 @@ class DataEndpoint extends Controller
             Log::error('Failed to get Facility Consultations: ' . $e->getMessage(), [$e]);
 
             return response()->json(['status' => false, 'message' => 'Failed to get Facility HMOs'], 500);
+        }
+    }
+
+    public function getAllDispenses(Request $request)
+    {
+        try {
+            $query = ProductRequest::with(['patient.user', 'product'])
+                ->where('status', 1);
+
+            $perPage = (int)$request->input('per_page', 50);
+            $page = (int)$request->input('page', 1);
+
+            if ($request->has('start_date') && $request->has('end_date')) {
+                $query->whereBetween('created_at', [$request->input('start_date'), $request->input('end_date')]);
+            }
+
+            $query->orderBy('id', 'desc');
+            $a = $query->paginate($perPage, ['*'], 'page', $page);
+
+            return response()->json([
+                'status' => true,
+                'message' => 'Successfully retrieved data',
+                'data' => $a->items(),
+                'metadata' => [
+                    'current_page' => $a->currentPage(),
+                    'per_page' => $a->perPage(),
+                    'total' => $a->total(),
+                    'last_page' => $a->lastPage(),
+                ],
+            ]);
+        } catch (Exception $e) {
+            Log::error('Failed to get Facility Dispenses: ' . $e->getMessage(), [$e]);
+
+            return response()->json(['status' => false, 'message' => 'Failed to get Facility Dispenses'], 500);
+        }
+    }
+
+    public function getAllInvestigations(Request $request)
+    {
+        try {
+            $query = LabServiceRequest::with(['patient.user', 'service'])
+                ->where('status', 1);
+
+            $perPage = (int)$request->input('per_page', 50);
+            $page = (int)$request->input('page', 1);
+
+            if ($request->has('start_date') && $request->has('end_date')) {
+                $query->whereBetween('created_at', [$request->input('start_date'), $request->input('end_date')]);
+            }
+
+            $query->orderBy('id', 'desc');
+            $a = $query->paginate($perPage, ['*'], 'page', $page);
+
+            return response()->json([
+                'status' => true,
+                'message' => 'Successfully retrieved data',
+                'data' => $a->items(),
+                'metadata' => [
+                    'current_page' => $a->currentPage(),
+                    'per_page' => $a->perPage(),
+                    'total' => $a->total(),
+                    'last_page' => $a->lastPage(),
+                ],
+            ]);
+        } catch (Exception $e) {
+            Log::error('Failed to get Facility Investigations: ' . $e->getMessage(), [$e]);
+
+            return response()->json(['status' => false, 'message' => 'Failed to get Facility Investigations'], 500);
+        }
+    }
+
+    public function getAllProcedures(Request $request)
+    {
+        try {
+            $query = Procedure::with(['patient.user', 'service']);
+
+            $perPage = (int)$request->input('per_page', 50);
+            $page = (int)$request->input('page', 1);
+
+            if ($request->has('start_date') && $request->has('end_date')) {
+                $query->whereBetween('created_at', [$request->input('start_date'), $request->input('end_date')]);
+            }
+
+            $query->orderBy('id', 'desc');
+            $a = $query->paginate($perPage, ['*'], 'page', $page);
+
+            return response()->json([
+                'status' => true,
+                'message' => 'Successfully retrieved data',
+                'data' => $a->items(),
+                'metadata' => [
+                    'current_page' => $a->currentPage(),
+                    'per_page' => $a->perPage(),
+                    'total' => $a->total(),
+                    'last_page' => $a->lastPage(),
+                ],
+            ]);
+        } catch (Exception $e) {
+            Log::error('Failed to get Facility Procedures: ' . $e->getMessage(), [$e]);
+
+            return response()->json(['status' => false, 'message' => 'Failed to get Facility Procedures'], 500);
         }
     }
 }

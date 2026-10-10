@@ -6,6 +6,7 @@ use App\Enums\QueueStatus;
 use App\Helpers\BatchHelper;
 use App\Helpers\HmoHelper;
 use App\Http\Traits\ClinicalOrdersTrait;
+use App\Jobs\DispatchCoreHmsSyncJob;
 use App\Models\AdmissionRequest;
 use App\Models\Bed;
 use App\Models\Clinic;
@@ -5729,6 +5730,25 @@ class NursingWorkbenchController extends Controller
 
             DB::commit();
 
+            if (appsettings('goonline', 0) == 1) {
+                $ward = \App\Models\Ward::find($bed->ward_id);
+                DispatchCoreHmsSyncJob::dispatch(new \App\Services\CoreHms\Events\AdmissionSyncEvent(
+                    $admission->id,
+                    $admission->patient_id,
+                    'admitted',
+                    $bed->id,
+                    $bed->name,
+                    $ward?->id,
+                    $ward?->name ?? 'General Ward',
+                    null,
+                    'cash',
+                    0.00,
+                    'active',
+                    null,
+                    now()->toDateTimeString()
+                ));
+            }
+
             return response()->json([
                 'success' => true,
                 'message' => 'Bed assigned successfully',
@@ -5922,6 +5942,25 @@ class NursingWorkbenchController extends Controller
             $admission->save();
 
             DB::commit();
+
+            if (appsettings('goonline', 0) == 1) {
+                $ward = $admission->bed ? \App\Models\Ward::find($admission->bed->ward_id) : null;
+                DispatchCoreHmsSyncJob::dispatch(new \App\Services\CoreHms\Events\AdmissionSyncEvent(
+                    $admission->id,
+                    $admission->patient_id,
+                    'discharged',
+                    $admission->bed_id,
+                    $admission->bed?->name,
+                    $ward?->id,
+                    $ward?->name ?? 'General Ward',
+                    now()->toDateTimeString(),
+                    'cash',
+                    0.00,
+                    'discharged',
+                    null,
+                    now()->toDateTimeString()
+                ));
+            }
 
             return response()->json([
                 'success' => true,

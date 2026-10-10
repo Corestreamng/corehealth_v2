@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Jobs\DispatchCoreHmsSyncJob;
 use App\Models\AdmissionRequest;
 use App\Models\Bed;
 use App\Models\Clinic;
@@ -727,19 +728,18 @@ class PatientController extends Controller
                 }
 
                 if (appsettings('goonline', 0) == 1) {
-                    //send to corehms super admin
-                    $response = Http::withBasicAuth(
-                        appsettings('COREHMS_SUPERADMIN_USERNAME'),
-                        appsettings('COREHMS_SUPERADMIN_PASS')
-                    )->withHeaders([
-                        'Content-Type' => 'application/json',
-                    ])->post(appsettings('COREHMS_SUPERADMIN_URL') . '/event-notification.php?notification_type=patient', [
-                        'nothing' => true,
-                    ]);
-
-                    Log::info("sent api request For Patient, ", [$response->body()]);
+                    $fullName = trim($user->surname . ' ' . $user->firstname . ' ' . ($user->othername ?? ''));
+                    DispatchCoreHmsSyncJob::dispatch('patient', [
+                        'name' => $fullName,
+                        'gender' => $user->gender ?? null,
+                        'dob' => $patient->dob ?? null,
+                        'phone_no' => $patient->phone_no ?? null,
+                        'hmo_id' => $patient->hmo_id ?? null,
+                        'file_no' => $patient->file_no ?? null,
+                        'status' => 'Active',
+                    ], $patient->id, now()->toDateTimeString());
                 }
-                $msg = 'Patient  [' . $user->firstname . ' ' . $user->surname . '] was successfully created.';
+                $msg = 'Patient  [' . trim($user->surname . ' ' . $user->firstname . ' ' . ($user->othername ?? '')) . '] was successfully created.';
                 Db::commit();
 
                 return redirect()->back()->withMessage($msg)->withMessageType('success');

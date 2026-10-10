@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Helpers\HmoHelper;
+use App\Jobs\DispatchCoreHmsSyncJob;
 use App\Models\ImagingServiceRequest;
 use App\Models\LabServiceRequest;
 use App\Models\PatientAccount;
@@ -253,6 +254,26 @@ class PatientProcedureController extends Controller
             }
 
             $procedure->save();
+
+            if (appsettings('goonline', 0) == 1) {
+                $procName = $procedure->is_free_form ? ($procedure->free_form_name ?? 'Procedure') : ($procedure->service?->service_name ?? 'Procedure');
+                DispatchCoreHmsSyncJob::dispatch(new \App\Services\CoreHms\Events\ProcedureSyncEvent(
+                    $procedure->id,
+                    $procedure->patient_id,
+                    $procName,
+                    $procedure->outcome ?? 'successful',
+                    'Minor Theater',
+                    $procedure->outcome_notes,
+                    $procedure->nhmis_outcome,
+                    $procedure->nhmis_outcome_raw,
+                    'cash',
+                    0.00,
+                    auth()->id(),
+                    'completed',
+                    null,
+                    now()->toDateTimeString()
+                ));
+            }
 
             return response()->json([
                 'success' => true,

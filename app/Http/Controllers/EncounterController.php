@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Enums\QueueStatus;
 use App\Helpers\HmoHelper;
 use App\Http\Traits\ClinicalOrdersTrait;
+use App\Jobs\DispatchCoreHmsSyncJob;
 use App\Models\AdmissionRequest;
 use App\Models\Clinic;
 use App\Models\DoctorQueue;
@@ -3407,17 +3408,18 @@ class EncounterController extends Controller
                 // dd($queue);
 
                 if (appsettings('goonline', 0) == 1) {
-                    $response = Http::withBasicAuth(
-                        appsettings('COREHMS_SUPERADMIN_USERNAME'),
-                        appsettings('COREHMS_SUPERADMIN_PASS')
-                    )->withHeaders([
-                        'Content-Type' => 'application/json',
-                    ])->post(appsettings('COREHMS_SUPERADMIN_URL') . '/event-notification.php?notification_type=consultation', [
-                        'category' => $queue->clinic->name,
-                        'health_case' => $request->reasons_for_encounter[0] ?? null,
-                    ]);
+                    $clinicName = $queue?->clinic?->name ?? 'General Clinic';
+                    $reason = is_array($request->reasons_for_encounter) ? ($request->reasons_for_encounter[0] ?? null) : $request->reasons_for_encounter;
+                    $diagnosis = $request->doctor_diagnosis ?? $reason;
+                    $encounterId = $request->encounter_id ?? ($queue?->id ?? uniqid('enc_'));
 
-                    Log::info("sent api request For encounter, ", [$response->body()]);
+                    DispatchCoreHmsSyncJob::dispatch('consultation', [
+                        'category' => $clinicName,
+                        'health_case' => $reason ?: $diagnosis,
+                        'diagnosis' => $diagnosis,
+                        'patient_id' => $request->patient_id,
+                        'doctor_id' => auth()->id(),
+                    ], $encounterId, now()->toDateTimeString());
                 }
             }
 
