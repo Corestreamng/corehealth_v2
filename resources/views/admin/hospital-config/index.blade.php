@@ -45,6 +45,11 @@
                                     <i class="mdi mdi-robot-outline mr-1"></i> AI & LLM Integration
                                 </a>
                             </li>
+                            <li class="nav-item" style="flex: 1; text-align: center; list-style: none;">
+                                <a class="nav-link" id="wecare-tab" data-toggle="tab" href="#wecare-settings" role="tab" style="font-weight: 600; border-radius: 8px; padding: 10px 15px; display: block; text-decoration: none; transition: all 0.2s;">
+                                    <i class="mdi mdi-cellphone-link mr-1"></i> WeCare247
+                                </a>
+                            </li>
                         </ul>
 
                         <!-- Tab content -->
@@ -985,6 +990,162 @@
                                     </div>
                                 </div>
                             </div>
+
+                            <!-- WeCare247 Telehealth & Remote Care Tab -->
+                            <div class="tab-pane fade" id="wecare-settings" role="tabpanel" aria-labelledby="wecare-tab">
+                                <div class="card-modern mb-4" style="border-radius: 12px; border: none; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+                                    <div class="card-header bg-white" style="border-bottom: 1px solid #e9ecef;">
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <h5 class="mb-0" style="font-weight: 600; color: #1a1a1a;">
+                                                <i class="mdi mdi-cellphone-link mr-2" style="color: var(--primary-color);"></i>
+                                                WeCare247 Telehealth Integration
+                                            </h5>
+                                            <span class="badge {{ $config->wecare_enabled ? 'badge-success' : 'badge-secondary' }} px-3 py-2" id="wecare-header-badge" style="font-size: 0.85rem; border-radius: 20px;">
+                                                <i class="mdi {{ $config->wecare_enabled ? 'mdi-check-circle' : 'mdi-power-standby' }} mr-1"></i>
+                                                {{ $config->wecare_enabled ? 'Integration Active' : 'Integration Turned Off' }}
+                                            </span>
+                                        </div>
+                                    </div>
+                                    <div class="card-body" style="padding: 2rem;">
+                                        <p class="text-muted mb-4" style="font-size: 0.95rem;">
+                                            <i class="mdi mdi-information-outline text-info mr-1"></i>
+                                            Connect this CoreHealth hospital instance to the <strong>WeCare247 Telehealth Platform</strong>. 
+                                            Enables bidirectional synchronization of patient accounts, tele-consultation encounters into longitudinal hospital records, and verified laboratory reports.
+                                        </p>
+
+                                        <!-- Master Switch Toggle (Option to turn it off) -->
+                                        <div class="p-3 mb-4 rounded" style="background: {{ $config->wecare_enabled ? '#f0fdf4; border: 1px solid #bbf7d0;' : '#f8f9fa; border: 1px solid #e9ecef;' }}" id="wecare-master-switch-box">
+                                            <div class="d-flex justify-content-between align-items-center">
+                                                <div>
+                                                    <h6 class="mb-1" style="font-weight: 700; color: #1f2937;">
+                                                        <i class="mdi mdi-power mr-1 text-primary"></i> Master WeCare247 Sync Toggle
+                                                    </h6>
+                                                    <small class="text-muted d-block">
+                                                        Turn on or off all inbound and outbound data synchronization with WeCare247. When turned off, all integration endpoints reject requests immediately.
+                                                    </small>
+                                                </div>
+                                                <div class="custom-control custom-switch custom-switch-lg">
+                                                    <input type="checkbox" class="custom-control-input" id="wecare_enabled" name="wecare_enabled" value="1" {{ $config->wecare_enabled ? 'checked' : '' }} onchange="toggleWeCareActiveBadge(this.checked)">
+                                                    <label class="custom-control-label" for="wecare_enabled" style="font-weight: 600; cursor: pointer;">Enable WeCare247</label>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <!-- CoreHealth Credentials Card (Inbound) -->
+                                        <div class="card mb-4" style="border: 1px solid #e2e8f0; border-radius: 8px; background: #f8fafc;">
+                                            <div class="card-body p-3">
+                                                <h6 class="text-dark font-weight-bold mb-2">
+                                                    <i class="mdi mdi-key-variant text-warning mr-1"></i> CoreHealth Inbound Credentials
+                                                </h6>
+                                                <p class="text-muted small mb-3">
+                                                    Copy these credentials into your <strong>WeCare247 Facility Admin &gt; Settings &gt; CoreHealth Sync</strong> tab so WeCare can authenticate with this hospital instance.
+                                                </p>
+                                                <div class="row">
+                                                    <div class="col-md-6 mb-2">
+                                                        <label class="text-xs text-muted font-weight-bold text-uppercase">CoreHealth Base URL</label>
+                                                        <div class="input-group input-group-sm">
+                                                            <input type="text" class="form-control bg-white" readonly value="{{ url('/api') }}" id="wecare_ch_base_url">
+                                                            <div class="input-group-append">
+                                                                <button class="btn btn-outline-secondary" type="button" onclick="copyWeCareCredential('{{ url('/api') }}', 'Base URL')">
+                                                                    <i class="mdi mdi-content-copy"></i>
+                                                                </button>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-md-3 mb-2">
+                                                        <label class="text-xs text-muted font-weight-bold text-uppercase">Facility ID</label>
+                                                        <input type="text" class="form-control form-control-sm bg-white" readonly value="{{ $config->id ?? 1 }}">
+                                                    </div>
+                                                    <div class="col-md-3 mb-2">
+                                                        <label class="text-xs text-muted font-weight-bold text-uppercase">Client ID</label>
+                                                        <input type="text" class="form-control form-control-sm bg-white" readonly value="{{ $config->client_id ?? '123' }}">
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <!-- Outbound WeCare247 Platform Configuration -->
+                                        <h6 class="font-weight-bold text-dark mb-3">
+                                            <i class="mdi mdi-cloud-sync-outline mr-1 text-primary"></i> Outbound WeCare247 Configuration
+                                        </h6>
+                                        <div class="row mb-3">
+                                            <div class="col-md-6 mb-3">
+                                                <label class="form-label" style="font-weight: 600;">WeCare247 Platform URL</label>
+                                                <input type="url" class="form-control" name="wecare_url" id="wecare_url_input" value="{{ $config->wecare_url }}" placeholder="https://app.wecare247.com or http://localhost:3000" style="border-radius: 8px;">
+                                                <small class="text-muted d-block mt-1">The base URL of the remote WeCare247 platform instance.</small>
+                                            </div>
+                                            <div class="col-md-6 mb-3">
+                                                <label class="form-label" style="font-weight: 600;">WeCare Facility Identifier / Code</label>
+                                                <input type="text" class="form-control" name="wecare_facility_id" value="{{ $config->wecare_facility_id }}" placeholder="e.g. 67092b3a987654321..." style="border-radius: 8px;">
+                                                <small class="text-muted d-block mt-1">Facility MongoDB ObjectId assigned in WeCare247.</small>
+                                            </div>
+                                            <div class="col-md-12 mb-3">
+                                                <label class="form-label" style="font-weight: 600;">WeCare Shared API Key / Webhook Secret</label>
+                                                <div class="input-group">
+                                                    <input type="password" class="form-control" name="wecare_api_key" id="wecare_api_key_input" value="{{ $config->wecare_api_key }}" placeholder="Shared secret for signing outbound payloads" style="border-radius: 8px 0 0 8px;">
+                                                    <div class="input-group-append">
+                                                        <button class="btn btn-outline-secondary" type="button" onclick="var el = document.getElementById('wecare_api_key_input'); el.type = el.type === 'password' ? 'text' : 'password';">
+                                                            <i class="mdi mdi-eye-outline"></i>
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                                <small class="text-muted d-block mt-1">Secret key used to authenticate lab result webhooks sent to WeCare247.</small>
+                                            </div>
+                                        </div>
+
+                                        <!-- Synchronization Policies -->
+                                        <h6 class="font-weight-bold text-dark mb-3">
+                                            <i class="mdi mdi-tune mr-1 text-primary"></i> Synchronization Rules & Policies
+                                        </h6>
+                                        <div class="row mb-4">
+                                            <div class="col-md-12">
+                                                <div class="feature-toggle-row d-flex justify-content-between align-items-center py-2 border-bottom">
+                                                    <div>
+                                                        <label class="form-label mb-0" style="font-weight: 600;">Ingest Tele-Consultation Encounters</label>
+                                                        <small class="text-muted d-block">Automatically create encounter records in the hospital EHR when a teleconsultation is completed in WeCare.</small>
+                                                    </div>
+                                                    <div class="custom-control custom-switch">
+                                                        <input type="checkbox" class="custom-control-input" id="wecare_auto_sync_encounters" name="wecare_auto_sync_encounters" value="1" {{ $config->wecare_auto_sync_encounters ? 'checked' : '' }}>
+                                                        <label class="custom-control-label" for="wecare_auto_sync_encounters"></label>
+                                                    </div>
+                                                </div>
+                                                <div class="feature-toggle-row d-flex justify-content-between align-items-center py-2 border-bottom">
+                                                    <div>
+                                                        <label class="form-label mb-0" style="font-weight: 600;">Push Verified Lab & Investigation Results</label>
+                                                        <small class="text-muted d-block">Dispatch verified laboratory reports to WeCare247 patient portal as soon as they are approved in CoreHealth.</small>
+                                                    </div>
+                                                    <div class="custom-control custom-switch">
+                                                        <input type="checkbox" class="custom-control-input" id="wecare_auto_sync_labs" name="wecare_auto_sync_labs" value="1" {{ $config->wecare_auto_sync_labs ? 'checked' : '' }}>
+                                                        <label class="custom-control-label" for="wecare_auto_sync_labs"></label>
+                                                    </div>
+                                                </div>
+                                                <div class="feature-toggle-row d-flex justify-content-between align-items-center py-2">
+                                                    <div>
+                                                        <label class="form-label mb-0" style="font-weight: 600;">Allow Demographic Lookups</label>
+                                                        <small class="text-muted d-block">Allow WeCare247 Facility Admin to query hospital MRN or phone number to auto-populate patient invitations.</small>
+                                                    </div>
+                                                    <div class="custom-control custom-switch">
+                                                        <input type="checkbox" class="custom-control-input" id="wecare_allow_patient_lookup" name="wecare_allow_patient_lookup" value="1" {{ $config->wecare_allow_patient_lookup ? 'checked' : '' }}>
+                                                        <label class="custom-control-label" for="wecare_allow_patient_lookup"></label>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <!-- Connectivity Probe Section -->
+                                        <div class="p-3 rounded bg-light border d-flex justify-content-between align-items-center">
+                                            <div>
+                                                <h6 class="mb-1 font-weight-bold text-dark"><i class="mdi mdi-lan-connect mr-1 text-info"></i> Test Connectivity</h6>
+                                                <small class="text-muted d-block">Probe the remote WeCare247 instance to verify network reachability and measure round-trip latency.</small>
+                                            </div>
+                                            <button type="button" class="btn btn-outline-primary btn-sm" id="btn-test-wecare-probe" onclick="runWeCareProbe()">
+                                                <i class="mdi mdi-refresh mr-1"></i> Test Connection
+                                            </button>
+                                        </div>
+                                        <div id="wecare-probe-result" class="mt-2" style="display: none;"></div>
+                                    </div>
+                                </div>
+                            </div>
                         </div> {{-- End of #configTabsContent --}}
                     </div> <!-- End col-lg-8 -->
                     <!-- Branding & System Settings -->
@@ -1814,6 +1975,10 @@
     }
     $('#enable_structured_dose').on('change', syncDoseModeRow);
     syncDoseModeRow(); // run on load
+</script>
+<script src="{{ asset('js/wecare-config.js') }}"></script>
+<script>
+    window.WECARE_PROBE_URL = "{{ route('hospital-config.test-wecare') }}";
 </script>
 <style>
     #consent-template .ck-editor__editable_inline {

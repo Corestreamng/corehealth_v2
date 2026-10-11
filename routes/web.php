@@ -124,6 +124,7 @@ Route::group(['middleware' => ['auth']], function () {
     Route::group(['middleware' => ['auth', 'role:SUPERADMIN|ADMIN']], function () {
         Route::get('hospital-config', [HospitalConfigController::class, 'index'])->name('hospital-config.index');
         Route::put('hospital-config', [HospitalConfigController::class, 'update'])->name('hospital-config.update');
+        Route::post('hospital-config/test-wecare', [HospitalConfigController::class, 'testWeCare'])->name('hospital-config.test-wecare');
     });
 
     // Vaccine Schedule Configuration

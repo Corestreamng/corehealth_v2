@@ -169,6 +169,15 @@ class HospitalConfigController extends Controller
             'enable_ei_billing' => 'boolean',
             'enable_ei_lab' => 'boolean',
             'enable_ei_doctor' => 'boolean',
+
+            // WeCare247 Integration
+            'wecare_enabled' => 'nullable|boolean',
+            'wecare_url' => 'nullable|string|max:255',
+            'wecare_facility_id' => 'nullable|string|max:64',
+            'wecare_api_key' => 'nullable|string|max:255',
+            'wecare_auto_sync_encounters' => 'nullable|boolean',
+            'wecare_auto_sync_labs' => 'nullable|boolean',
+            'wecare_allow_patient_lookup' => 'nullable|boolean',
         ]);
 
         $config = ApplicationStatu::first();
@@ -217,6 +226,12 @@ class HospitalConfigController extends Controller
         $validated['enable_ei_billing'] = $request->has('enable_ei_billing');
         $validated['enable_ei_lab'] = $request->has('enable_ei_lab');
         $validated['enable_ei_doctor'] = $request->has('enable_ei_doctor');
+
+        // WeCare247 Checkboxes
+        $validated['wecare_enabled'] = $request->has('wecare_enabled');
+        $validated['wecare_auto_sync_encounters'] = $request->has('wecare_auto_sync_encounters');
+        $validated['wecare_auto_sync_labs'] = $request->has('wecare_auto_sync_labs');
+        $validated['wecare_allow_patient_lookup'] = $request->has('wecare_allow_patient_lookup');
 
         // Handle LLM Config Checkboxes and processing
         if ($request->has('llm_config')) {
@@ -298,5 +313,51 @@ class HospitalConfigController extends Controller
 
         return redirect()->route('hospital-config.index')
             ->with('success', 'Hospital configuration updated successfully!');
+    }
+
+    /**
+     * AJAX probe to test connectivity to WeCare247 instance.
+     */
+    public function testWeCare(Request $request)
+    {
+        $config = ApplicationStatu::first();
+        $targetUrl = rtrim($request->input('wecare_url') ?: ($config->wecare_url ?? 'http://localhost:3000'), '/');
+
+        if (empty($targetUrl)) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Please provide a WeCare247 platform URL.',
+            ], 422);
+        }
+
+        $start = microtime(true);
+
+        try {
+            $response = \Illuminate\Support\Facades\Http::timeout(5)->get("{$targetUrl}/api/ping");
+            $latency = round((microtime(true) - $start) * 1000, 2);
+
+            if ($response->successful()) {
+                return response()->json([
+                    'status' => true,
+                    'message' => 'Successfully connected to WeCare247 platform.',
+                    'latency_ms' => $latency,
+                    'data' => $response->json(),
+                ]);
+            }
+
+            return response()->json([
+                'status' => false,
+                'message' => "WeCare returned HTTP status {$response->status()}",
+                'latency_ms' => $latency,
+            ], 400);
+        } catch (\Throwable $e) {
+            $latency = round((microtime(true) - $start) * 1000, 2);
+
+            return response()->json([
+                'status' => false,
+                'message' => 'Connection probe failed: ' . $e->getMessage(),
+                'latency_ms' => $latency,
+            ], 500);
+        }
     }
 }

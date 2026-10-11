@@ -144,6 +144,27 @@ Route::get('corehms/health', [\App\Http\Controllers\API\CoreHmsHealthApiControll
 
 /*
 |--------------------------------------------------------------------------
+| WeCare247 ↔ CoreHealth v2 Bidirectional Integration Endpoints
+|--------------------------------------------------------------------------
+|
+| Public liveness probe (no auth) — matches /api/corehms/ping pattern.
+| All write/lookup routes are protected by SHA-256 Basic Auth.
+|
+*/
+Route::get('corehealth/ping', [\App\Http\Controllers\API\WeCareIntegrationController::class, 'ping']);
+
+Route::prefix('corehealth')->middleware(['auth.basic.sha256'])->group(function () {
+    // Patient lookup for WeCare247 invite autofill
+    Route::get('patient/lookup', [\App\Http\Controllers\API\WeCareIntegrationController::class, 'lookupPatient']);
+
+    // Sync callbacks from WeCare247
+    Route::post('sync/patient-linked', [\App\Http\Controllers\API\WeCareIntegrationController::class, 'patientLinked']);
+    Route::post('sync/patient-unlink', [\App\Http\Controllers\API\WeCareIntegrationController::class, 'patientUnlink']);
+    Route::post('sync/encounter', [\App\Http\Controllers\API\WeCareIntegrationController::class, 'ingestEncounter']);
+});
+
+/*
+|--------------------------------------------------------------------------
 | CoreHMS SuperAdmin Backup & Management Endpoints
 |--------------------------------------------------------------------------
 */

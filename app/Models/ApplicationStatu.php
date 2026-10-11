@@ -116,12 +116,25 @@ class ApplicationStatu extends Model implements Auditable
         'enable_ei_doctor',
         'show_prescription_dose_on_receipt',
         'allow_doctor_set_procedure_price',
+
+        // WeCare247 Integration
+        'wecare_enabled',
+        'wecare_url',
+        'wecare_facility_id',
+        'wecare_api_key',
+        'wecare_auto_sync_encounters',
+        'wecare_auto_sync_labs',
+        'wecare_allow_patient_lookup',
     ];
 
     protected $casts = [
         'llm_config' => 'array',
         'show_prescription_dose_on_receipt' => 'boolean',
         'allow_doctor_set_procedure_price' => 'boolean',
+        'wecare_enabled' => 'boolean',
+        'wecare_auto_sync_encounters' => 'boolean',
+        'wecare_auto_sync_labs' => 'boolean',
+        'wecare_allow_patient_lookup' => 'boolean',
     ];
 
     /**
