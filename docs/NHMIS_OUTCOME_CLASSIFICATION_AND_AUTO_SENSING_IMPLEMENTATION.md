@@ -15,7 +15,7 @@ This document details the architectural and clinical implementation of **NHMIS C
 
 ## 2. Standardized Indicator Catalog & Outcome Presets
 
-All indicators are registered in [`app/Models/NhmisServiceMapping.php`](file:///home/mrapollos/Documents/work/corehealth_v2/app/Models/NhmisServiceMapping.php) with standardized presets:
+All indicators are registered in [`app/Models/NhmisServiceMapping.php`](app/Models/NhmisServiceMapping.php) with standardized presets:
 
 | Category | Indicator Code | Service Type | Supported Outcomes | Positive Outcomes |
 | :--- | :--- | :--- | :--- | :--- |
@@ -45,7 +45,7 @@ All indicators are registered in [`app/Models/NhmisServiceMapping.php`](file:///
 
 ## 3. Malaria Auto-Sensing Engine
 
-The auto-sensing engine in [`app/Console/Commands/NhmisClassifyHistoricalLabRecords.php`](file:///home/mrapollos/Documents/work/corehealth_v2/app/Console/Commands/NhmisClassifyHistoricalLabRecords.php) and [`resources/views/admin/partials/invest_res_js.blade.php`](file:///home/mrapollos/Documents/work/corehealth_v2/resources/views/admin/partials/invest_res_js.blade.php) evaluates text in descending grade order with negative precedence:
+The auto-sensing engine in [`app/Console/Commands/NhmisClassifyHistoricalLabRecords.php`](app/Console/Commands/NhmisClassifyHistoricalLabRecords.php) and [`resources/views/admin/partials/invest_res_js.blade.php`](resources/views/admin/partials/invest_res_js.blade.php) evaluates text in descending grade order with negative precedence:
 
 ### A. Evaluated Out-of-the-Box Patterns
 1. **Negative Precedence:**
@@ -76,11 +76,11 @@ The auto-sensing engine in [`app/Console/Commands/NhmisClassifyHistoricalLabReco
 ### A. Mandatory Selection for Mapped Services
 When a laboratory test, imaging scan, or procedure is mapped to an NHMIS indicator:
 - **Backend Controllers**:
-  - [`LabWorkbenchController::saveResult`](file:///home/mrapollos/Documents/work/corehealth_v2/app/Http/Controllers/LabWorkbenchController.php)
-  - [`LabServiceRequestController::saveResult`](file:///home/mrapollos/Documents/work/corehealth_v2/app/Http/Controllers/LabServiceRequestController.php)
-  - [`ImagingWorkbenchController::saveResult`](file:///home/mrapollos/Documents/work/corehealth_v2/app/Http/Controllers/ImagingWorkbenchController.php)
-  - [`ImagingServiceRequestController::saveResult`](file:///home/mrapollos/Documents/work/corehealth_v2/app/Http/Controllers/ImagingServiceRequestController.php)
-  - [`PatientProcedureController::updateOutcome`](file:///home/mrapollos/Documents/work/corehealth_v2/app/Http/Controllers/PatientProcedureController.php)
+  - [`LabWorkbenchController::saveResult`](app/Http/Controllers/LabWorkbenchController.php)
+  - [`LabServiceRequestController::saveResult`](app/Http/Controllers/LabServiceRequestController.php)
+  - [`ImagingWorkbenchController::saveResult`](app/Http/Controllers/ImagingWorkbenchController.php)
+  - [`ImagingServiceRequestController::saveResult`](app/Http/Controllers/ImagingServiceRequestController.php)
+  - [`PatientProcedureController::updateOutcome`](app/Http/Controllers/PatientProcedureController.php)
   If mapped and `nhmis_outcome` is missing/empty, the request is blocked with HTTP `422`:
   ```json
   {

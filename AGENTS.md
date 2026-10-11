@@ -60,7 +60,7 @@ When working on this project, strictly adhere to the following standards across 
 - **Environment Parity**: Maintain environment parity across local development, Docker, and CI/CD pipelines.
 
 ## 7. Developer Ergonomics & Makefile Workflow
-- **Makefile Standard**: Always utilize the project [Makefile](file:///home/mrapollos/Documents/work/corehealth_v2/Makefile) for standard commands:
+- **Makefile Standard**: Always utilize the project [Makefile](Makefile) for standard commands:
   - `make help` — List all available targets
   - `make up` / `make down` / `make restart` — Manage Docker services
   - `make test` / `make test-local` — Run PHPUnit test suite
@@ -76,3 +76,54 @@ When working on this project, strictly adhere to the following standards across 
 
 ## 9. Version Tagging
 - **Semantic Tagging**: Whenever completing a feature or milestone, tag the repository using `git tag` starting from `v2.5.0.4` (`git tag -a v2.X.Y.Z`). Major version increments require explicit instruction from the user.
+
+## 10. CoreHMS SuperAdmin Synchronization, Contract Parity & Co-Development Standards
+- **Mandatory Co-Development Loop**: CoreHealth v2 (hospital instance) and CoreHMS SuperAdmin (`Corehealth-Super-Admin/`, central multi-tenant administrative platform) operate as an integrated ecosystem. Whenever adding, modifying, or refactoring clinical domains, entities, or controllers (e.g., Patients, Consultations/Encounters, Pharmacy Dispensing, Laboratory/Imaging, Surgical Procedures, Ward Admissions, Staff, Backups, or Metrics), CoreHMS SuperAdmin MUST be kept in the loop in lockstep.
+- **Event Contract Parity**: Both applications enforce strict contract parity through typed interfaces:
+  - CoreHealth: `app/Contracts/CoreHms/*` (`PatientSyncEventInterface`, `ConsultationSyncEventInterface`, `DispenseSyncEventInterface`, `LabSyncEventInterface`, `ProcedureSyncEventInterface`, `AdmissionSyncEventInterface`, `StaffSyncEventInterface`, `HeartbeatSyncEventInterface`, `CoreHmsSyncEventInterface`).
+  - CoreHMS SuperAdmin: `Corehealth-Super-Admin/includes/contracts/*` (`PatientEventInterface`, `ConsultationEventInterface`, `DispenseEventInterface`, `LabEventInterface`, `ProcedureEventInterface`, `AdmissionEventInterface`, `StaffEventInterface`, `HeartbeatEventInterface`, `CoreHmsEventInterface`).
+  - When modifying payload schemas or adding event types, update both contract interfaces and payload generators simultaneously.
+- **Idempotency & Deduplication Engine**:
+  - All real-time events and retroactive synchronizations must maintain deduplication keys matching `sha1(facility_id + ':' + event_type + ':' + source_id)`.
+  - Dispatches must be non-blocking and queued via Laravel database queue (`DispatchCoreHmsSyncJob`).
+  - SuperAdmin must record event audit in `facility_sync_events` and rollups in `facility_clinical_records` and `total_statistics` without duplicate counts upon retries.
+- **Liveness Monitoring & Health Endpoints**:
+  - CoreHealth endpoints (`GET /api/corehms/ping` and `GET /api/corehms/health`) must remain fast, non-blocking, and unencumbered by session middleware or redirects.
+  - Health checks must report live facility status, database latency, queue driver, and pending/failed queue job counts.
+  - SuperAdmin monitoring (`ajax/ping-facility.php`, `assets/js/facility-monitor.js`) must preserve interactive single/bulk pinging and dynamic latency badges.
+- **Retroactive Ingest & Automated Backups**:
+  - Export endpoints (`/api/get-facility-*`) and artisan commands (`php artisan corehms:backfill`) must remain synchronized with SuperAdmin's retroactive fetch modal (`ajax/retroactive-fetch.php`).
+  - Backup endpoint (`/api/corehms/backup`) and SuperAdmin backup console (`backups.php`) must be kept functional for automated database dump rotation and central retrieval.
+- **Same Coding & Engineering Standards for SuperAdmin**:
+  - Code in `Corehealth-Super-Admin/` must follow the exact same standards as CoreHealth:
+    - **PSR-12 Code Style**: Strictly formatted and checked via `make lint` / `composer lint`.
+    - **Database Compatibility**: MariaDB / MySQL 8.0 compatibility only; all queries must use PDO prepared statements with parameter binding (no raw variable interpolation).
+    - **UI & Assets**: Standalone JavaScript modules (e.g. `assets/js/facility-monitor.js`) and CSS; no multi-line inline scripts or styles.
+    - **Safe Networking**: All cURL calls must enforce safe connect/read timeouts (e.g. 3-15 seconds) and graceful failure modes.
+    - **Feature Testing**: Any changes to sync events, health inspection, or backfill workflows must be accompanied by PHPUnit feature tests under `tests/Feature/CoreHms/` (e.g., `CoreHmsMonitoringAndSyncTest.php`).
+
+## 11. WeCare247 Telehealth Platform Synchronization & Integration Standards
+- **Architectural Scope & Contract**:
+  - CoreHealth v2 (hospital HMIS instance) and WeCare247 (`wecare247/`, multi-tenant telemedicine and remote care platform) maintain real-time bidirectional clinical synchronization.
+  - Integration endpoints are unified under `/api/corehealth/*`:
+    - `GET /api/corehealth/ping` — Public, non-blocking liveness check reporting facility status, version, and `wecare_enabled`.
+    - `GET /api/corehealth/patient/lookup` — SHA256 Basic Auth protected demographic lookup by `file_no` or `phone_no`.
+    - `POST /api/corehealth/sync/patient-linked` — Callback confirming patient activation from invite or manual link.
+    - `POST /api/corehealth/sync/encounter` — Ingestion of tele-consultation encounters into hospital longitudinal EHR.
+    - `POST /api/corehealth/sync/patient-unlink` — Deactivates sync without data loss.
+    - `POST /api/integrations/corehealth/webhook/lab-result` — Outbound dispatch of approved lab and investigation results.
+- **Hospital Settings Master Switch & Policy Controls**:
+  - All synchronization logic must strictly check the master toggle `wecare_enabled` in `application_status` (configured in Hospital Settings under the WeCare247 tab).
+  - When `wecare_enabled` is false, incoming sync endpoints must reject requests immediately with **HTTP 403** (`WECARE_INTEGRATION_DISABLED`), and outbound lab webhooks must be suppressed.
+  - Granular policy switches must be respected:
+    - `wecare_auto_sync_encounters`: Automatically ingest tele-consultations into the hospital encounter timeline.
+    - `wecare_auto_sync_labs`: Automatically dispatch approved lab & imaging results to WeCare patient portal.
+    - `wecare_allow_patient_lookup`: Allow WeCare facility admins to query patient demographics by file number or phone.
+  - Outbound probe test endpoint (`POST /admin/hospital-config/test-wecare`) allows hospital administrators to test WeCare network reachability and measure roundtrip latency.
+- **Shared Identity & Deterministic Deduplication**:
+  - Patient sync bindings require 4 composite keys: `corehealth_file_no`, `corehealth_patient_id`, `wecare_patient_id`, and `wecare_sync_uuid` (`sha1(facility_id + ':' + patient_id + ':' + file_no)`).
+  - Tele-consultation encounter ingestion must enforce strict idempotency using `sha1('wecare_encounter:' + wecare_appointment_id)` against `encounters.wecare_sync_ref`.
+- **UI, Assets & Testing Standards**:
+  - All frontend logic for the WeCare settings tab resides in `public/js/wecare-config.js` and must be validated with `node --check public/js/wecare-config.js`.
+  - Every change to WeCare endpoints, settings, or sync behavior must be covered by PHPUnit tests in `tests/Feature/WeCare/` (e.g., `WeCareIntegrationAndSettingsTest.php`).
+

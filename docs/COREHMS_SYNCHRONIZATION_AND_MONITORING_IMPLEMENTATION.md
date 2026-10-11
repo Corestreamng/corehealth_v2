@@ -9,13 +9,13 @@ This document outlines the synchronization architecture, liveness monitoring sub
 
 ### A. Real-Time Event Synchronization
 When key clinical actions occur in CoreHealth modern workbenches, non-blocking asynchronous jobs (`DispatchCoreHmsSyncJob`) are dispatched through the Laravel database queue (`QUEUE_CONNECTION=database`):
-- **Patient Registrations / Edits**: [PatientController.php](file:///home/mrapollos/Documents/work/corehealth_v2/app/Http/Controllers/PatientController.php) -> `PatientSyncEvent`
-- **Clinical Encounters & Consultations**: [EncounterController.php](file:///home/mrapollos/Documents/work/corehealth_v2/app/Http/Controllers/EncounterController.php) & [ReceptionWorkbenchController.php](file:///home/mrapollos/Documents/work/corehealth_v2/app/Http/Controllers/ReceptionWorkbenchController.php) -> `ConsultationSyncEvent`
-- **Pharmacy Dispensing**: [PharmacyWorkbenchController.php](file:///home/mrapollos/Documents/work/corehealth_v2/app/Http/Controllers/PharmacyWorkbenchController.php) -> `DispenseSyncEvent`
-- **Lab & Imaging Investigations**: [LabWorkbenchController.php](file:///home/mrapollos/Documents/work/corehealth_v2/app/Http/Controllers/LabWorkbenchController.php) -> `LabSyncEvent`
-- **Surgical Procedures**: [PatientProcedureController.php](file:///home/mrapollos/Documents/work/corehealth_v2/app/Http/Controllers/PatientProcedureController.php) -> `ProcedureSyncEvent`
-- **Ward Admissions & Nursing**: [NursingWorkbenchController.php](file:///home/mrapollos/Documents/work/corehealth_v2/app/Http/Controllers/NursingWorkbenchController.php) -> `AdmissionSyncEvent`
-- **Staff Onboarding & Updates**: [StaffController.php](file:///home/mrapollos/Documents/work/corehealth_v2/app/Http/Controllers/StaffController.php) -> `StaffSyncEvent`
+- **Patient Registrations / Edits**: [PatientController.php](app/Http/Controllers/PatientController.php) -> `PatientSyncEvent`
+- **Clinical Encounters & Consultations**: [EncounterController.php](app/Http/Controllers/EncounterController.php) & [ReceptionWorkbenchController.php](app/Http/Controllers/ReceptionWorkbenchController.php) -> `ConsultationSyncEvent`
+- **Pharmacy Dispensing**: [PharmacyWorkbenchController.php](app/Http/Controllers/PharmacyWorkbenchController.php) -> `DispenseSyncEvent`
+- **Lab & Imaging Investigations**: [LabWorkbenchController.php](app/Http/Controllers/LabWorkbenchController.php) -> `LabSyncEvent`
+- **Surgical Procedures**: [PatientProcedureController.php](app/Http/Controllers/PatientProcedureController.php) -> `ProcedureSyncEvent`
+- **Ward Admissions & Nursing**: [NursingWorkbenchController.php](app/Http/Controllers/NursingWorkbenchController.php) -> `AdmissionSyncEvent`
+- **Staff Onboarding & Updates**: [StaffController.php](app/Http/Controllers/StaffController.php) -> `StaffSyncEvent`
 
 ### B. Event Payload Interfaces & Data Consistency
 Both sides enforce strict contract parity through typed interfaces:

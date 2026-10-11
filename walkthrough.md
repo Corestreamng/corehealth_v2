@@ -24,5 +24,5 @@
    - Cryptographic SHA1 idempotency key (`sha1($facilityId . ':' . $eventType . ':' . $sourceId)`) guaranteeing complete deduplication across re-syncs and backfills.
 
 4. **Testing & Code Quality**:
-   - PHPUnit Feature Suite: [CoreHmsMonitoringAndSyncTest.php](file:///home/mrapollos/Documents/work/corehealth_v2/tests/Feature/CoreHms/CoreHmsMonitoringAndSyncTest.php) (4 tests, 25 assertions, 100% passing).
+   - PHPUnit Feature Suite: [CoreHmsMonitoringAndSyncTest.php](tests/Feature/CoreHms/CoreHmsMonitoringAndSyncTest.php) (4 tests, 25 assertions, 100% passing).
    - PSR-12 standard compliance verified via `composer lint` (1,270 files checked, 0 errors).

@@ -7,16 +7,14 @@ CoreHealth v2 is a comprehensive, enterprise-grade Hospital Management Informati
 - [Overview](#overview)
 - [Core Modules](#core-modules)
 - [System Architecture](#system-architecture)
-- [Inventory & Stock Management](#inventory--stock-management)
-- [Accounting & Finance](#accounting--finance)
-- [Module Documentation](#module-documentation)
+- [CoreHMS SuperAdmin Integration & Sync](#corehms-superadmin-integration--sync)
+- [WeCare247 Telehealth Integration & Sync](#wecare247-telehealth-integration--sync)
 - [Installation & Setup](#installation--setup)
 - [Docker Deployment](#docker-deployment)
 - [Developer Ergonomics & Makefile](#developer-ergonomics--makefile)
 - [Code Style & Linting](#code-style--linting)
-- [Development](#development)
 - [Artisan Commands](#artisan-commands)
-- [Testing](#testing)
+- [Testing & Application Classification](#testing--application-classification)
 - [CI/CD & Governance](#cicd--governance)
 - [Contributing](#contributing)
 - [Security](#security)
@@ -188,13 +186,22 @@ CoreHealth v2 is designed to streamline hospital operations by integrating clini
 - **Import/Export** — bulk data (products, services, staff, patients)
 - **Chat/Messaging** — internal messaging system
 
+### 22. CoreHMS SuperAdmin Integration & Central Monitoring
+- **Real-Time Clinical Sync** — non-blocking queued synchronization of patients, consultations, pharmacy dispenses, labs, procedures, admissions, and staff via `DispatchCoreHmsSyncJob`
+- **Contract Parity** — interface-driven payloads shared across CoreHealth (`app/Contracts/CoreHms/*`) and SuperAdmin (`Corehealth-Super-Admin/includes/contracts/*`)
+- **Liveness & Health Monitoring** — lightweight `/api/corehms/ping` and detailed `/api/corehms/health` endpoints inspecting database latency and queue health
+- **Retroactive Historical Ingest & CLI Backfill** — backfill CLI (`php artisan corehms:backfill`) and SuperAdmin retroactive fetch modal with SHA1 deduplication
+- **Automated Database Backups** — endpoint `/api/corehms/backup` providing automated SQL dump streaming and central retention in SuperAdmin
+
 ---
 
 ## System Architecture
 
 ```
 app/
-├── Console/Commands/     # 5 artisan commands
+├── Console/Commands/     # 5 artisan commands (including CoreHmsBackfillCommand)
+├── Contracts/            # Typed interfaces
+│   └── CoreHms/          # 9 synchronization contract interfaces
 ├── Events/               # Domain events
 ├── Exceptions/           # Custom exception handlers
 ├── Helpers/              # Utility functions + BatchHelper
@@ -202,12 +209,12 @@ app/
 │   ├── Account/          # Legacy patient accounts
 │   ├── Accounting/       # 19 controllers (GL, assets, leases, CAPEX, etc.)
 │   ├── Admin/            # Tariff management
-│   ├── API/              # Data endpoints
+│   ├── API/              # Data endpoints (including CoreHms health & backup APIs)
 │   ├── Auth/             # Authentication (6 controllers)
 │   ├── Doctor/           # Doctor dashboard & consultations
 │   ├── HR/               # 12 controllers (leave, payroll, disciplinary, ESS)
 │   └── Product/          # Legacy product controller
-├── Jobs/                 # Queued jobs
+├── Jobs/                 # Queued jobs (including DispatchCoreHmsSyncJob)
 ├── Models/               # 199 Eloquent models
 │   ├── Accounting/       # 38 models (JE, assets, leases, budgets, etc.)
 │   └── HR/               # 22 models (leave, payroll, disciplinary)
@@ -218,7 +225,14 @@ app/
 ├── Providers/            # Service + event providers
 └── Services/             # 47 services
     ├── Accounting/       # 12 accounting services
+    ├── CoreHms/          # CoreHMS event payload services & generators
     └── Dashboard/        # 17 dashboard-specific services
+
+Corehealth-Super-Admin/   # Central Multi-Tenant Administration Platform
+├── ajax/                 # Facility liveness pinging, backups & retro-fetch endpoints
+├── api/                  # Event notification receiver (api/event-notification.php)
+├── assets/               # Facility monitoring JS and UI assets
+└── includes/contracts/   # Interface contract parity mirror
 
 database/
 ├── migrations/           # Schema history
@@ -232,6 +246,162 @@ tools/                    # Isolated tooling environment (friendsofphp/php-cs-fi
 Makefile                  # Unified developer command suite
 docs/                     # 30+ documentation files
 ```
+
+---
+
+## CoreHMS SuperAdmin Integration & Sync
+
+CoreHealth v2 (hospital instance) operates in tandem with **CoreHMS SuperAdmin** (`Corehealth-Super-Admin/`), the central multi-tenant cloud platform that aggregates healthcare analytics, tracks facility liveness, provides centralized backup archives, and enables longitudinal reporting across healthcare institutions.
+
+### Architecture & Synchronization Subsystem
+
+```
+CoreHealth v2 (Facility Instance)                CoreHMS SuperAdmin (Central Cloud)
+┌─────────────────────────────────┐               ┌─────────────────────────────────┐
+│ Clinical Workbenches            │               │ Event Notification Ingest       │
+│ (Reception, Doctor, Pharmacy,   │               │ api/event-notification.php      │
+│  Nursing, Lab, Surgery, Staff)  │               └───────────────┬─────────────────┘
+└────────────────┬────────────────┘                               │
+                 │ Event Dispatch                                 ▼
+                 ▼                               ┌─────────────────────────────────┐
+┌─────────────────────────────────┐               │ Idempotency & Dedup Engine      │
+│ DispatchCoreHmsSyncJob (Queue)  │──────────────>│ sha1(fac_id:type:source_id)     │
+│ - BaseCoreHmsEvent              │ (cURL/HTTP)   │ facility_sync_events            │
+│ - Typed Event Payload Contracts │               └───────────────┬─────────────────┘
+└─────────────────────────────────┘                               │
+                                                                  ▼
+┌─────────────────────────────────┐               ┌─────────────────────────────────┐
+│ Health & Liveness Endpoints     │<──────────────│ Central Facility Monitor        │
+│ - GET /api/corehms/ping         │  Heartbeat    │ - ajax/ping-facility.php        │
+│ - GET /api/corehms/health       │  Inspections  │ - assets/js/facility-monitor.js │
+└─────────────────────────────────┘               └─────────────────────────────────┘
+                                                                  ▲
+┌─────────────────────────────────┐                               │
+│ Central Backups & Retro-Ingest  │───────────────────────────────┘
+│ - GET /api/corehms/backup       │  (Streaming Backups & Retroactive Pulls)
+│ - php artisan corehms:backfill  │
+└─────────────────────────────────┘
+```
+
+#### 1. Real-Time Clinical Event Synchronization
+Whenever clinical or operational changes occur in CoreHealth modern workbenches, asynchronous background jobs (`DispatchCoreHmsSyncJob`) are queued into the Laravel database queue (`QUEUE_CONNECTION=database`):
+- **Patient Registrations / Edits**: [PatientController.php](app/Http/Controllers/PatientController.php) $\rightarrow$ `PatientSyncEvent`
+- **Clinical Encounters & Consultations**: [EncounterController.php](app/Http/Controllers/EncounterController.php) & [ReceptionWorkbenchController.php](app/Http/Controllers/ReceptionWorkbenchController.php) $\rightarrow$ `ConsultationSyncEvent`
+- **Pharmacy Dispensing**: [PharmacyWorkbenchController.php](app/Http/Controllers/PharmacyWorkbenchController.php) $\rightarrow$ `DispenseSyncEvent`
+- **Lab & Imaging Investigations**: [LabWorkbenchController.php](app/Http/Controllers/LabWorkbenchController.php) $\rightarrow$ `LabSyncEvent`
+- **Surgical Procedures**: [PatientProcedureController.php](app/Http/Controllers/PatientProcedureController.php) $\rightarrow$ `ProcedureSyncEvent`
+- **Ward Admissions & Nursing**: [NursingWorkbenchController.php](app/Http/Controllers/NursingWorkbenchController.php) $\rightarrow$ `AdmissionSyncEvent`
+- **Staff Onboarding & Updates**: [StaffController.php](app/Http/Controllers/StaffController.php) $\rightarrow$ `StaffSyncEvent`
+
+#### 2. Event Payload Contracts & Typed Parity
+Both sides maintain strict contract parity through typed interfaces:
+- **CoreHealth Contracts** (`app/Contracts/CoreHms/`): `CoreHmsSyncEventInterface`, `PatientSyncEventInterface`, `ConsultationSyncEventInterface`, `DispenseSyncEventInterface`, `LabSyncEventInterface`, `ProcedureSyncEventInterface`, `AdmissionSyncEventInterface`, `StaffSyncEventInterface`, `HeartbeatSyncEventInterface`.
+- **CoreHMS SuperAdmin Contracts** (`Corehealth-Super-Admin/includes/contracts/`): `CoreHmsEventInterface`, `PatientEventInterface`, `ConsultationEventInterface`, `DispenseEventInterface`, `LabEventInterface`, `ProcedureEventInterface`, `AdmissionEventInterface`, `StaffEventInterface`, `HeartbeatEventInterface`.
+
+#### 3. Idempotency & SHA1 Deduplication Engine
+Network retries, queue re-attempts, and historical backfills never generate duplicate statistics:
+- **Deterministic Deduplication Key**: `sha1(facility_id + ':' + event_type + ':' + source_id)`.
+- **Event Audit**: Recorded in `facility_sync_events` with unique index on `dedup_key`.
+- **Aggregated Analytics**: Updated in `facility_clinical_records` and `total_statistics`.
+
+#### 4. Facility Liveness Monitoring & Health Diagnostics
+- **`GET /api/corehms/ping`**: High-frequency ping endpoint returning instant pong, facility ID, and timestamp.
+- **`GET /api/corehms/health`**: Deep health diagnostics inspecting facility registration, database connectivity, database latency in milliseconds, queue connection driver, and pending/failed job counts.
+- **SuperAdmin Facility Monitor**: `assets/js/facility-monitor.js` and `ajax/ping-facility.php` provide live single/bulk health checks, latency badges, and automated status tagging (`Online (<15m)`, `Idle (<24h)`, `Offline (>24h)`).
+
+#### 5. Retroactive Historical Sync & Backfill
+- **CLI Backfill Command**:
+  ```bash
+  php artisan corehms:backfill --module=all
+  ```
+  Supports backfilling individual modules (`--module=patients`, `--module=dispenses`, etc.) or all clinical domains with progress bars and batch dispatching.
+- **SuperAdmin Retroactive Pull**: Interactive modal in SuperAdmin `view-facility.php` pulling paginated records from CoreHealth export endpoints (`/api/get-facility-dispenses`, `/api/get-facility-investigations`, `/api/get-facility-procedures`, `/api/get-facility-patients`, `/api/get-facility-consultations`).
+
+#### 6. Central Automated Backup Archives
+- **CoreHealth Endpoint**: `GET /api/corehms/backup` triggers dynamic `mysqldump`, gzip compression, and streams database dumps directly to authorized administrative requesters.
+- **SuperAdmin Backup Management**: `backups.php` enables central backup generation, tracking, and direct cPanel server downloads.
+
+#### 7. Co-Development Mandate: Keeping CoreHMS SuperAdmin in the Loop
+- **Lockstep Development**: Any change to clinical workflows, database schema, or domain models in CoreHealth must be mirrored in CoreHMS SuperAdmin contracts and ingestion logic.
+- **Unified Coding Standards**: Code written for `Corehealth-Super-Admin/` must adhere to the exact same standards as CoreHealth:
+  - **PSR-12 code style** verified with `make lint` / `composer lint`.
+  - **MySQL 8.0 / MariaDB** compatibility using parameterized PDO queries.
+  - **Modular UI architecture** with standalone CSS/JS (no inline scripts/styles > 10 lines).
+  - **Zero regressions** verified by feature tests in `tests/Feature/CoreHms/`.
+
+---
+
+## WeCare247 Telehealth Integration & Sync
+
+CoreHealth v2 maintains real-time bidirectional synchronization with **WeCare247** (`wecare247/`), a multi-tenant telehealth platform connecting healthcare facilities, virtual teleconsultants, diagnostic centers, and patients.
+
+### Integration Topology
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor Admin as Facility Admin
+    participant WC as WeCare247 (Next.js / MongoDB)
+    actor Patient as Patient
+    participant CH as CoreHealth v2 (Laravel / MySQL)
+
+    Note over Admin,CH: 1. Setup & Connectivity Probe
+    Admin->>CH: Configure WeCare URL & Master Switch (Hospital Settings)
+    Admin->>WC: Configure CoreHealth URL, Client ID, Secret
+    WC->>CH: GET /api/corehealth/ping
+    CH-->>WC: { status: true, wecare_enabled: true, latency_ms: 8 }
+
+    Note over Admin,Patient: 2. Patient Onboarding & Autofill
+    Admin->>WC: Invite Patient (Input Hospital File No)
+    WC->>CH: GET /api/corehealth/patient/lookup?file_no=CH/2026/0491
+    CH-->>WC: Returns patient demographics (Name, Phone, DOB, Gender)
+    WC->>Patient: Tokenized Signup Link with sync_uuid
+
+    Note over Patient,CH: 3. Registration & Identity Binding
+    Patient->>WC: Completes registration
+    WC->>CH: POST /api/corehealth/sync/patient-linked
+    CH->>CH: Update patients.wecare_patient_id & wecare_sync_active=1
+
+    Note over Patient,CH: 4. Bidirectional Clinical Sync
+    Patient->>WC: Virtual Tele-Consultation with Doctor
+    WC->>CH: POST /api/corehealth/sync/encounter (Notes, ICD-10, Vitals)
+    CH->>CH: Ingests into longitudinal EHR encounter timeline
+    CH->>WC: Webhook: Lab / Investigation Results Approved
+    WC->>Patient: Patient portal receives verified hospital lab report
+```
+
+### Key Capabilities & Policy Controls
+
+1. **Hospital Settings Master Switch**:
+   - Configured in `Hospital Settings > WeCare247` tab.
+   - Allows turning the entire integration **ON or OFF** via the `wecare_enabled` toggle in `application_status`.
+   - When turned off, all integration endpoints reject requests with **HTTP 403** (`WECARE_INTEGRATION_DISABLED`), and outbound lab result webhooks are immediately suppressed.
+   - Granular policy switches:
+     - `wecare_auto_sync_encounters`: Automatically ingest tele-consultations into the hospital encounter timeline.
+     - `wecare_auto_sync_labs`: Automatically dispatch approved lab & imaging results to WeCare.
+     - `wecare_allow_patient_lookup`: Allow WeCare facility admins to query patient demographics by file number or phone.
+   - **Interactive Probe**: *"Test Connection"* button sends live probe to WeCare (`/api/ping`) and measures roundtrip latency.
+
+2. **Shared Identity Contract**:
+   - `corehealth_file_no`: Hospital Medical Record Number (MRN), e.g. `CH/2026/0491`.
+   - `corehealth_patient_id`: Primary key in MySQL `patients.id`.
+   - `corehealth_sync_uuid`: Canonical hash: `sha1(facility_id + ':' + patient_id + ':' + file_no)`.
+   - `wecare_patient_id`: MongoDB ObjectId in `users._id`.
+   - `wecare_sync_active`: Status flag (`1` = active sync, `0` = unlinked).
+
+3. **Endpoints Reference**:
+   | Method | Endpoint | Auth | Purpose |
+   |---|---|---|---|
+   | `GET` | `/api/corehealth/ping` | None | Public liveness probe & `wecare_enabled` status |
+   | `GET` | `/api/corehealth/patient/lookup` | SHA-256 Basic | Demographic query by `file_no` or `phone_no` |
+   | `POST` | `/api/corehealth/sync/patient-linked` | SHA-256 Basic | Callback activating bidirectional sync |
+   | `POST` | `/api/corehealth/sync/encounter` | SHA-256 Basic | Ingests tele-consultation into EHR timeline |
+   | `POST` | `/api/corehealth/sync/patient-unlink` | SHA-256 Basic | Safely unlinks WeCare binding |
+   | `POST` | `/admin/hospital-config/test-wecare` | Web Session | Internal AJAX connectivity probe to WeCare |
+
+4. **Testing & Code Quality**:
+   - Covered by [WeCareIntegrationAndSettingsTest.php](tests/Feature/WeCare/WeCareIntegrationAndSettingsTest.php) (`vendor/bin/phpunit tests/Feature/WeCare/ --testdox`).
+   - Settings frontend logic isolated in [public/js/wecare-config.js](public/js/wecare-config.js), verified with `node --check`.
 
 ---
 
@@ -290,7 +460,7 @@ make logs
 
 ## Developer Ergonomics & Makefile
 
-The project includes a comprehensive [Makefile](file:///home/mrapollos/Documents/work/corehealth_v2/Makefile) providing simple, standardized developer commands:
+The project includes a comprehensive [Makefile](Makefile) providing simple, standardized developer commands:
 
 | Command | Description |
 |---------|-------------|
@@ -310,7 +480,7 @@ The project includes a comprehensive [Makefile](file:///home/mrapollos/Documents
 
 ## Code Style & Linting
 
-Code quality and formatting are enforced via **PHP CS Fixer** configured in [.php-cs-fixer.php](file:///home/mrapollos/Documents/work/corehealth_v2/.php-cs-fixer.php):
+Code quality and formatting are enforced via **PHP CS Fixer** configured in [.php-cs-fixer.php](.php-cs-fixer.php):
 
 - **Standard**: Strictly follows PSR-12 code style guidelines across `app/`, `config/`, `database/`, `routes/`, and `tests/`.
 - **Isolated Environment**: Maintained in an isolated `tools/` folder (`tools/vendor/bin/php-cs-fixer`) to prevent dependency conflicts with Laravel 8 core packages.
@@ -320,6 +490,18 @@ Code quality and formatting are enforced via **PHP CS Fixer** configured in [.ph
   composer lint-fix # or make lint-fix (auto-fix formatting)
   ```
 - **Automated Gating**: Enforced automatically on all pushes and pull requests via GitHub Actions.
+
+---
+
+## Artisan Commands
+
+CoreHealth v2 provides domain-specific Artisan commands for system maintenance, price synchronization, and CoreHMS multi-tenant backfilling:
+
+| Command | Description |
+|---------|-------------|
+| `php artisan corehms:backfill --module=all` | Retroactively synchronize historical clinical events (patients, encounters, dispenses, labs, procedures, admissions, staff) to CoreHMS SuperAdmin |
+| `php artisan app:sync-prices` | Synchronize base product and service prices across hospital price lists and HMO tariffs |
+| `php artisan corehealth:optimize` | Clear and rebuild route, config, view, and compiled application caches |
 
 ---
 
@@ -337,6 +519,7 @@ The codebase features **35 domain-specific PHPUnit test suites** containing **15
 - **`BillingWorkbenchTest.php`** — Covers cash, HMO, wallet payments, observer triggers, and datatable queue responses.
 - **`AuthBootstrapTest.php` & `RolePermissionTest.php`** — Covers Spatie permission guards and authentication flows.
 - **`FifoDispenseTest.php` & `PharmacyReturnsTest.php`** — Covers stock sync, FIFO dispensing, and inventory returns.
+- **`CoreHmsMonitoringAndSyncTest.php`** — Covers CoreHMS SuperAdmin ping, health inspection, export endpoints, and backfill command.
 
 #### Running Tests
 
