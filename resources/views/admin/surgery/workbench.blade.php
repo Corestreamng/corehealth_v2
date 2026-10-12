@@ -882,7 +882,7 @@
     @include('admin.partials.clinical_orders_modal')
 
     @push('scripts')
-        <script src="{{ asset('js/patient-search-widget.js') }}?v={{ time() }}"></script>
+        <script src="{{ versioned_asset('js/patient-search-widget.js') }}"></script>
         @include('admin.partials.treatment-plan-viewer-modal')
         <script src="{{ versioned_asset('js/clinical-orders-shared.js') }}"></script>
         <script>

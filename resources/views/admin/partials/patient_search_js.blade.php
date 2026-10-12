@@ -4,7 +4,7 @@
     Usage:  @include('admin.partials.patient_search_js', ['search_context' => 'lab'])
 --}}
 
-<script src="{{ asset('js/patient-search-widget.js') }}?v={{ time() }}"></script>
+<script src="{{ versioned_asset('js/patient-search-widget.js') }}"></script>
 <script>
     // Bridge for legacy implementations
     window.onLegacyPatientSelected = function(patientData) {

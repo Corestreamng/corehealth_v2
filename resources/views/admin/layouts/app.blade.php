@@ -37,6 +37,9 @@
     <!-- Google Fonts: Inter -->
     <link href="{{ asset('assets/css/inter-font.css') }}" rel="stylesheet">
 
+    <!-- Sidebar Styles (extracted to standalone CSS) -->
+    <link rel="stylesheet" href="{{ versioned_asset('css/sidebar.css') }}">
+
     @php
         $primaryColor = appsettings()->hos_color ?? '#011b33';
         $hoverColor = adjustBrightness($primaryColor, 20);
@@ -94,518 +97,8 @@
             min-height: 100vh;
         }
 
-        /* Paystack Sidebar Styles */
-        .ch-sidebar {
-            width: 250px;
-            background: var(--primary-color);
-            position: fixed;
-            height: 100vh;
-            overflow: hidden;
-            z-index: 1000;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            display: flex;
-            flex-direction: column;
-        }
+        /* Sidebar styles extracted to public/css/sidebar.css */
 
-        /* Sidebar minimized state */
-        .sidebar-icon-only .ch-sidebar {
-            width: 70px;
-            overflow: visible;
-        }
-
-        /* Hide text elements with smooth fade */
-        .sidebar-icon-only .ch-sidebar .nav-brand h6,
-        .sidebar-icon-only .ch-sidebar .nav-brand p,
-        .sidebar-icon-only .ch-sidebar .nav-brand-title,
-        .sidebar-icon-only .ch-sidebar .nav-brand-version,
-        .sidebar-icon-only .ch-sidebar .menu-title,
-        .sidebar-icon-only .ch-sidebar .menu-arrow,
-        .sidebar-icon-only .ch-sidebar .nav-item-head {
-            opacity: 0;
-            visibility: hidden;
-            width: 0;
-            transition: opacity 0.2s ease, visibility 0.2s ease, width 0.2s ease;
-        }
-
-        /* Adjust nav-brand in icon-only mode */
-        .sidebar-icon-only .ch-sidebar .nav-brand {
-            padding: 15px 0 !important;
-            display: flex !important;
-            justify-content: center !important;
-            align-items: center !important;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
-            overflow: hidden;
-        }
-
-        .sidebar-icon-only .ch-sidebar .nav-brand> div {
-            display: flex !important;
-            flex-direction: column !important;
-            align-items: center !important;
-            justify-content: center !important;
-            width: 100% !important;
-        }
-
-        .sidebar-icon-only .ch-sidebar .nav-brand img {
-            max-width: 35px !important;
-            width: 35px !important;
-            height: 35px !important;
-            margin-bottom: 0 !important;
-            object-fit: contain !important;
-        }
-
-        .sidebar-icon-only .ch-sidebar .nav-brand> div> div {
-            width: 35px !important;
-            height: 35px !important;
-            font-size: 0.85rem !important;
-            margin-bottom: 0 !important;
-        }
-
-        /* Center nav links in icon-only mode */
-        .sidebar-icon-only .ch-sidebar .nav-link {
-            justify-content: center;
-            padding: 12px 0 !important;
-            position: relative;
-            width: 70px;
-        }
-
-        /* Fix profile in icon-only mode */
-        .sidebar-icon-only .ch-sidebar .nav-profile {
-            padding: 15px 0 !important;
-            justify-content: center !important;
-        }
-
-        .sidebar-icon-only .ch-sidebar .nav-profile a {
-            justify-content: center !important;
-            width: 100% !important;
-        }
-
-        .sidebar-icon-only .ch-sidebar .nav-profile .ml-3,
-        .sidebar-icon-only .ch-sidebar .nav-profile .mdi-logout {
-            display: none !important;
-        }
-
-        .sidebar-icon-only .ch-sidebar .nav-profile img {
-            margin: 0 !important;
-        }
-
-        /* Keep icons visible and centered */
-        .sidebar-icon-only .ch-sidebar .menu-icon {
-            margin-right: 0 !important;
-            font-size: 20px !important;
-            transition: all 0.3s ease;
-        }
-
-        /* Hide submenus completely */
-        .sidebar-icon-only .ch-sidebar .sub-menu {
-            display: none !important;
-        }
-
-        /* =============================================
-           FLYOUT MENU LOGIC (Desktop Icon-Only Mode)
-           ============================================= */
-        @media (min-width: 992px) {
-            /* When sidebar is collapsed */
-            .sidebar-icon-only .ch-sidebar {
-                overflow: visible !important; /* Allow flyouts to spill out */
-            }
-
-            .sidebar-icon-only .ch-sidebar .nav-item {
-                position: relative; /* Anchor for absolute positioning */
-            }
-
-            /* Show submenu on hover */
-            .sidebar-icon-only .ch-sidebar .nav-item:hover> .collapse,
-            .sidebar-icon-only .ch-sidebar .nav-item:hover> .collapsing {
-                display: block !important;
-                position: absolute;
-                left: 70px;
-                top: 0;
-                width: 240px;
-                background: white;
-                box-shadow: 4px 4px 15px rgba(0, 0, 0, 0.1);
-                border-radius: 0 12px 12px 0;
-                z-index: 9999;
-                height: auto !important;
-                padding: 10px 0;
-                visibility: visible !important;
-                opacity: 1 !important;
-                border: 1px solid #f0f0f0;
-            }
-
-            /* Style the flyout content */
-            .sidebar-icon-only .ch-sidebar .sub-menu {
-                background: transparent !important;
-                padding: 0 !important;
-                margin: 0 !important;
-                border: none !important;
-                box-shadow: none !important;
-                display: block !important;
-                transform: none !important;
-                opacity: 1 !important;
-            }
-
-            .sidebar-icon-only .ch-sidebar .sub-menu .nav-item {
-                opacity: 1 !important;
-                transform: none !important;
-                display: block !important;
-            }
-
-            .sidebar-icon-only .ch-sidebar .sub-menu .nav-link {
-                padding: 10px 20px !important;
-                color: #4B5563 !important;
-                font-size: 13px !important;
-                text-align: left !important;
-                justify-content: flex-start !important;
-            }
-
-            .sidebar-icon-only .ch-sidebar .sub-menu .nav-link:hover {
-                background: #F3F4F6 !important;
-                color: var(--primary-color) !important;
-                padding-left: 25px !important;
-            }
-
-            .sidebar-icon-only .ch-sidebar .sub-menu .nav-link::before {
-                display: none !important; /* Remove the dot */
-            }
-
-            /* Hide the original tooltips since we have the menu now */
-            .sidebar-icon-only .ch-sidebar .nav-link:hover::after,
-            .sidebar-icon-only .ch-sidebar .nav-link:hover::before {
-                display: none !important;
-            }
-        }
-
-        /* =============================================
-           MOBILE RESTORATION (Fixing the broken expansion)
-           ============================================= */
-        @media (max-width: 991px) {
-            /* Reset all "icon-only" overrides for mobile */
-            .sidebar-icon-only .ch-sidebar .collapse {
-                display: none; /* Default bootstrap behavior */
-                position: static !important;
-                width: auto !important;
-                background: transparent !important;
-                box-shadow: none !important;
-                border-radius: 0 !important;
-            }
-
-            .sidebar-icon-only .ch-sidebar .collapse.show {
-                display: block; /* Default bootstrap behavior */
-            }
-
-            .sidebar-icon-only .ch-sidebar .collapsing {
-                display: block;
-                position: static !important;
-                width: auto !important;
-                background: transparent !important;
-                height: 0;
-                overflow: hidden;
-                transition: height 0.35s ease;
-            }
-
-            /* Ensure submenus look correct inline */
-            .sidebar-icon-only .ch-sidebar .sub-menu {
-                background: rgba(0, 0, 0, 0.2) !important;
-                box-shadow: none !important;
-                padding: 5px 0 !important;
-            }
-
-            .sidebar-icon-only .ch-sidebar .sub-menu .nav-link {
-                color: rgba(255,255,255,0.7) !important;
-                padding-left: 40px !important;
-            }
-        }
-
-        /* Smooth transitions for all text elements */
-        .ch-sidebar .nav-brand h6,
-        .ch-sidebar .nav-brand p,
-        .ch-sidebar .menu-title,
-        .ch-sidebar .menu-arrow,
-        .ch-sidebar .nav-item-head {
-            transition: opacity 0.3s ease, visibility 0.3s ease, width 0.3s ease;
-            opacity: 1;
-            visibility: visible;
-        }
-
-        .ch-sidebar .nav {
-            padding: 0;
-            display: flex;
-            flex-direction: column;
-            height: 100%;
-            margin: 0;
-        }
-
-        /* Top brand section */
-        .ch-sidebar .nav-brand {
-            padding: 20px;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-            flex-shrink: 0;
-        }
-
-        .ch-sidebar .nav-brand-logo {
-            max-width: 80px;
-            height: auto;
-            border-radius: 12px;
-            margin-bottom: 0.5rem;
-            transition: all 0.3s ease;
-        }
-
-        .ch-sidebar .nav-brand-abbr {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            width: 56px;
-            height: 56px;
-            border-radius: 12px;
-            background: rgba(255, 255, 255, 0.2);
-            font-size: 1.5rem;
-            font-weight: 700;
-            color: white;
-            margin-bottom: 0.5rem;
-            transition: all 0.3s ease;
-        }
-
-        .ch-sidebar .nav-brand-title {
-            font-size: 14px !important;
-            font-weight: 600 !important;
-            margin-bottom: 3px !important;
-            color: #fff !important;
-        }
-
-        .ch-sidebar .nav-brand-version {
-            font-size: 12px !important;
-            color: rgba(255, 255, 255, 0.6) !important;
-        }
-
-        .ch-sidebar .nav-brand h6 {
-            font-size: 14px !important;
-            font-weight: 600 !important;
-            margin-bottom: 3px !important;
-            color: #fff !important;
-        }
-
-        .ch-sidebar .nav-brand p {
-            font-size: 12px !important;
-            color: rgba(255, 255, 255, 0.6) !important;
-        }
-
-        /* Scrollable navigation area */
-        .ch-sidebar-nav-scrollable {
-            flex: 1;
-            overflow-y: auto;
-            overflow-x: hidden;
-            padding: 20px 0;
-        }
-
-        .ch-sidebar-nav-scrollable::-webkit-scrollbar {
-            width: 4px;
-        }
-
-        .ch-sidebar-nav-scrollable::-webkit-scrollbar-thumb {
-            background: rgba(255, 255, 255, 0.2);
-            border-radius: 4px;
-        }
-
-        .ch-sidebar-nav-scrollable::-webkit-scrollbar-track {
-            background: transparent;
-        }
-
-        /* Section titles - Dynamic lighter shade */
-        .nav-item-head {
-            font-size: 11px !important;
-            text-transform: uppercase;
-            color: rgba(255, 255, 255, 0.6) !important;
-            padding: 0 20px;
-            margin-bottom: 10px;
-            margin-top: 5px;
-            font-weight: 600;
-            letter-spacing: 0.5px;
-            display: block;
-        }
-
-        .ch-sidebar .nav-item.pt-2 {
-            margin-top: 20px;
-            padding-top: 0 !important;
-        }
-
-        .ch-sidebar .nav-item.pb-1 {
-            padding-bottom: 0 !important;
-        }
-
-        /* Menu items - Dynamic colors based on hos_color */
-        .ch-sidebar .nav-item {
-            margin: 0;
-            border: none;
-        }
-
-        .ch-sidebar .nav-link {
-            padding: 10px 20px !important;
-            color: rgba(255, 255, 255, 0.8) !important;
-            font-weight: 500;
-            font-size: 14px !important;
-            border-left: 3px solid transparent;
-            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-            display: flex;
-            align-items: center;
-            text-decoration: none;
-            background: transparent;
-        }
-
-        .ch-sidebar .nav-link:hover {
-            background: rgba(255, 255, 255, 0.08) !important;
-            color: #fff !important;
-            text-decoration: none;
-            transform: translateX(2px);
-        }
-
-        .ch-sidebar .nav-link.active,
-        .ch-sidebar .nav-item.active> .nav-link {
-            background: rgba(255, 255, 255, 0.1) !important;
-            color: #fff !important;
-            border-left-color: #fff !important;
-            font-weight: 600;
-        }
-
-        .ch-sidebar .menu-icon {
-            width: 20px;
-            margin-right: 12px !important;
-            font-size: 16px !important;
-            color: inherit;
-            transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-
-        .ch-sidebar .nav-link:hover .menu-icon {
-            transform: scale(1.1);
-        }
-
-        .ch-sidebar .menu-title {
-            flex: 1;
-            color: inherit;
-            font-size: 14px;
-        }
-
-        .ch-sidebar .menu-arrow {
-            margin-left: auto;
-            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            font-size: 18px;
-            color: rgba(255, 255, 255, 0.8) !important;
-        }
-
-        .ch-sidebar .nav-link[aria-expanded="true"] .menu-arrow {
-            transform: rotate(90deg);
-            color: rgba(255, 255, 255, 0.95) !important;
-        }
-
-        .ch-sidebar .nav-link:hover .menu-arrow {
-            color: #fff !important;
-        }
-
-        /* Submenu - Smooth expansion animation */
-        .ch-sidebar .sub-menu {
-            background: rgba(0, 0, 0, 0.4);
-            padding: 8px 0;
-            margin: 0;
-            border-left: 2px solid rgba(255, 255, 255, 0.1);
-            margin-left: 20px;
-        }
-
-        .ch-sidebar .sub-menu .nav-item {
-            margin: 0;
-        }
-rgba(255, 255, 255, 0.7) !important;
-            font-size: 11px;
-            font-weight: 400;
-        }
-
-        /* Override any conflicting styles */
-        .ch-sidebar .nav-item:not(.active):not(.nav-profile):not(.nav-brand) {
-            background: transparent !important;
-        }
-
-        .ch-sidebar .nav-item:not(.active) .nav-link:not(:hover) {
-            background: transparent !important;
-        }
-
-        /* Enhance collapse animation */
-        .ch-sidebar .collapse {
-            transition: height 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-
-        .ch-sidebar .collapsing {
-            transition: height 0.4s cubic-bezier(0.4, 0, 0.2, 1)
-                transform: translateX(0);
-            }
-        }
-
-        .ch-sidebar .sub-menu .nav-link {
-            padding: 10px 20px 10px 40px !important;
-            font-size: 13px !important;
-            border-left: none;
-            color: rgba(255, 255, 255, 0.85) !important;
-            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-            position: relative;
-        }
-
-        .ch-sidebar .sub-menu .nav-link:hover {
-            background: rgba(255, 255, 255, 0.12) !important;
-            color: #fff !important;
-            padding-left: 42px !important;
-        }
-
-        .ch-sidebar .sub-menu .nav-link.active {
-            color: #fff !important;
-            background: rgba(255, 255, 255, 0.15) !important;
-            position: relative;
-            font-weight: 500;
-        }
-
-        .ch-sidebar .sub-menu .nav-link.active::after {
-            content: '';
-            position: absolute;
-            left: 0;
-            top: 0;
-            bottom: 0;
-            width: 3px;
-            background: #fff;
-            border-radius: 0 3px 3px 0;
-        }
-
-        /* Bottom user profile section */
-        .ch-sidebar .nav-profile {
-            padding: 15px 20px;
-            border-top: 1px solid rgba(255, 255, 255, 0.1);
-            flex-shrink: 0;
-            margin-top: auto;
-            margin-bottom: 0 !important;
-        }
-
-        .ch-sidebar .nav-profile img {
-            width: 32px;
-            height: 32px;
-            border-radius: 50%;
-            object-fit: cover;
-        }
-
-        .ch-sidebar .nav-profile-text {
-            color: white !important;
-            font-weight: 600;
-            font-size: 13px !important;
-        }
-
-        .ch-sidebar .nav-profile span {
-            color: #8b9db8 !important;
-            font-size: 11px;
-            font-weight: 400;
-        }
-
-        /* Override any conflicting styles */
-        .ch-sidebar .nav-item:not(.active):not(.nav-profile):not(.nav-brand) {
-            background: transparent !important;
-        }
-
-        .ch-sidebar .nav-item:not(.active) .nav-link:not(:hover) {
-            background: transparent !important;
-        }
         /* Paystack Navbar Styles - White background, minimal */
         .ch-navbar {
             background: #fff !important;
@@ -1434,133 +927,69 @@ rgba(255, 255, 255, 0.7) !important;
             z-index: 1056 !important;
         }
 
-        /* Mobile responsive */
-        @media (max-width: 991px) {
+        /* Tablet responsive (768px–1199px): 80px icon rail */
+        @media (min-width: 768px) and (max-width: 1199px) {
             .ch-navbar {
-                left: 0;
-                width: 100%;
+                left: 80px !important;
+                width: calc(100% - 80px) !important;
             }
 
             .page-body-wrapper {
-                margin-left: 0;
-                width: 100%;
-            }
-
-            .ch-sidebar {
-                left: -260px;
-            }
-
-            .ch-sidebar.active {
-                left: 0;
+                margin-left: 80px !important;
+                width: calc(100% - 80px) !important;
             }
 
             .footer {
-                left: 0;
-                width: 100%;
+                left: 80px !important;
+                width: calc(100% - 80px) !important;
             }
 
-            /* Hide desktop toggle button on mobile */
-            .sidebar-toggle-btn {
+            .sidebar-mobile-toggle-btn {
                 display: none !important;
             }
 
-            /* FORCE FULL SIDEBAR ON MOBILE even if sidebar-icon-only class is present */
-            .sidebar-icon-only .ch-sidebar {
-                width: 250px !important;
-                left: -260px; /* Keep hidden by default */
+            .sidebar-toggle-btn {
+                display: none !important;
             }
+        }
 
-            .sidebar-icon-only .ch-sidebar.active {
-                left: 0; /* Show when active */
-            }
-
-            .sidebar-icon-only .ch-navbar {
+        /* Mobile responsive (<768px): off-canvas drawer with full width content */
+        @media (max-width: 767.98px) {
+            .ch-navbar {
                 left: 0 !important;
                 width: 100% !important;
             }
 
-            .sidebar-icon-only .page-body-wrapper {
+            .page-body-wrapper {
                 margin-left: 0 !important;
                 width: 100% !important;
             }
 
-            .sidebar-icon-only .footer {
+            .footer {
                 left: 0 !important;
                 width: 100% !important;
             }
 
-            /* Restore text visibility */
-            .sidebar-icon-only .ch-sidebar .nav-brand h6,
-            .sidebar-icon-only .ch-sidebar .nav-brand p,
-            .sidebar-icon-only .ch-sidebar .nav-brand-title,
-            .sidebar-icon-only .ch-sidebar .nav-brand-version,
-            .sidebar-icon-only .ch-sidebar .menu-title,
-            .sidebar-icon-only .ch-sidebar .menu-arrow,
-            .sidebar-icon-only .ch-sidebar .nav-item-head {
-                opacity: 1 !important;
-                visibility: visible !important;
-                width: auto !important;
-            }
-
-            /* Restore nav link layout */
-            .sidebar-icon-only .ch-sidebar .nav-link {
-                justify-content: flex-start !important;
-                width: 100% !important;
-                padding: 10px 20px !important;
-            }
-
-            .sidebar-icon-only .ch-sidebar .nav-link:hover::after,
-            .sidebar-icon-only .ch-sidebar .nav-link:hover::before {
-                display: none !important; /* Remove tooltips on mobile */
-            }
-
-            /* Restore profile section */
-            .sidebar-icon-only .ch-sidebar .nav-profile {
-                padding: 15px 20px !important;
-                justify-content: flex-start !important;
-            }
-
-            .sidebar-icon-only .ch-sidebar .nav-profile a {
-                justify-content: flex-start !important;
-                width: auto !important;
-            }
-
-            .sidebar-icon-only .ch-sidebar .nav-profile .ml-3,
-            .sidebar-icon-only .ch-sidebar .nav-profile .mdi-logout {
-                display: block !important;
-            }
-
-            .sidebar-icon-only .ch-sidebar .nav-profile img {
-                margin: 0 !important;
-            }
-
-            /* Restore submenus */
-            .sidebar-icon-only .ch-sidebar .sub-menu {
-                display: block !important; /* Let the parent .collapse div control visibility */
-            }
-
-            .sidebar-icon-only .ch-sidebar .collapse {
-                display: none;
-            }
-
-            .sidebar-icon-only .ch-sidebar .collapse.show {
-                display: block;
-            }
-
-            .sidebar-icon-only .ch-sidebar .collapsing {
-                display: block;
-                height: 0;
-                overflow: hidden;
-                transition: height 0.35s ease;
-            }
-        }
-
-        /* Hide mobile toggle button on desktop */
-        @media (min-width: 992px) {
             .sidebar-mobile-toggle-btn {
+                display: flex !important;
+            }
+
+            .sidebar-toggle-btn {
                 display: none !important;
             }
         }
+
+        /* Desktop responsive (≥1200px) */
+        @media (min-width: 1200px) {
+            .sidebar-mobile-toggle-btn {
+                display: none !important;
+            }
+
+            .sidebar-toggle-btn {
+                display: flex !important;
+            }
+        }
+
 
         /* Breadcrumb */
         .content-header {
@@ -2200,7 +1629,7 @@ rgba(255, 255, 255, 0.7) !important;
 
     <!-- Chat Core JS - Must load before page scripts -->
     @if(appsettings('chat_enabled') ?? true)
-    <script src="{{ asset('js/chat-core.js') }}?v={{ time() }}"></script>
+    <script src="{{ versioned_asset('js/chat-core.js') }}"></script>
     @endif
 
     {{-- <script src="admin/assets/vendors/chart.js/Chart.min.js"></script> --}}
@@ -2307,83 +1736,8 @@ rgba(255, 255, 255, 0.7) !important;
         }
     </script>
 
-    <!-- Fresh Hamburger Menu Implementation -->
-    <script>
-        $(document).ready(function() {
-            // Add data-title attributes to all nav links for tooltips
-            $('.ch-sidebar .nav-link').each(function() {
-                var title = $(this).find('.menu-title').text().trim();
-                if (title) {
-                    $(this).attr('data-title', title);
-                }
-            });
-
-            // Fix: Remove incorrectly added active classes by misc.js
-            $('.sidebar .nav-item').removeClass('active');
-            $('.sidebar .nav-link').removeClass('active');
-
-            // Re-add active classes only from server-side Blade conditions
-            var currentPath = window.location.pathname;
-            $('.sidebar .nav-link').each(function() {
-                var href = $(this).attr('href');
-                if (href && href !== '#') {
-                    var linkPath = new URL(href, window.location.origin).pathname;
-                    if (linkPath === currentPath) {
-                        $(this).addClass('active');
-                        $(this).closest('.nav-item').addClass('active');
-                        if ($(this).parents('.sub-menu').length) {
-                            $(this).closest('.collapse').addClass('show');
-                        }
-                    }
-                }
-            });
-
-            // DESKTOP: Toggle sidebar minimize (icon-only mode)
-            $('.sidebar-toggle-btn').on('click', function(e) {
-                e.preventDefault();
-                e.stopPropagation();
-                console.log('Desktop toggle clicked');
-                $('body').toggleClass('sidebar-icon-only');
-
-                // Collapse all open submenus when switching to icon-only mode
-                if ($('body').hasClass('sidebar-icon-only')) {
-                    $('.ch-sidebar .collapse.show').removeClass('show');
-                }
-            });
-
-            // MOBILE: Toggle sidebar slide in/out
-            $('.sidebar-mobile-toggle-btn').on('click', function(e) {
-                e.preventDefault();
-                e.stopPropagation();
-                console.log('Mobile toggle clicked');
-                $('.ch-sidebar').toggleClass('active');
-            });
-
-            // Close mobile sidebar when clicking outside
-            $(document).on('click', function(e) {
-                if ($(window).width() < 992) {
-                    if (!$(e.target).closest('.ch-sidebar, .sidebar-mobile-toggle-btn').length) {
-                        $('.ch-sidebar').removeClass('active');
-                    }
-                }
-            });
-
-            // Prevent clicks inside sidebar from closing it
-            $('.ch-sidebar').on('click', function(e) {
-                e.stopPropagation();
-            });
-
-            // Disable submenu clicks in icon-only mode (Desktop only)
-            $('body').on('click', '.sidebar-icon-only .ch-sidebar .nav-link[data-toggle="collapse"]', function(e) {
-                // Only prevent default if we are on desktop (width>= 992px)
-                if ($(window).width()>= 992) {
-                    e.preventDefault();
-                    return false;
-                }
-                // On mobile, allow the click to proceed so submenus can expand
-            });
-        });
-    </script>
+    <!-- Standalone Sidebar Interactive Module -->
+    <script src="{{ versioned_asset('js/sidebar.js') }}"></script>
 
     <!-- Toastr JS -->
     <script src="{{ asset('assets/js/toastr.min.js') }}"></script>
