@@ -68,7 +68,12 @@ class RouteMetadata extends Model
      */
     public function scopeForRoles($query, array $userRoles, ?object $user = null)
     {
-        return $query->where(function ($q) use ($userRoles, $user) {
+        // Superadmins can access and search all system routes
+        if ($user && method_exists($user, 'hasAnyRole') && $user->hasAnyRole(['SUPERADMIN', 'super-admin'])) {
+            return $query;
+        }
+
+        return $query->where(function ($q) use ($userRoles) {
             // Routes with no role restrictions (empty array or null)
             $q->where(function ($sub) {
                 $sub->whereNull('roles')
@@ -80,18 +85,6 @@ class RouteMetadata extends Model
             foreach ($userRoles as $role) {
                 $q->orWhereJsonContains('roles', $role);
             }
-        })->when($user, function ($q) use ($user) {
-            // Additionally filter by permissions if user is provided
-            return $q->where(function ($sub) use ($user) {
-                $sub->where(function ($permSub) {
-                    $permSub->whereNull('permissions')
-                            ->orWhere('permissions', '[]')
-                            ->orWhere('permissions', 'null');
-                });
-
-                // Check each required permission
-                // This is done in PHP since it requires checking against user's actual permissions
-            });
         });
     }
 
@@ -107,6 +100,11 @@ class RouteMetadata extends Model
 
                 return empty($permissions);
             });
+        }
+
+        // Superadmins bypass permission restrictions
+        if (method_exists($user, 'hasAnyRole') && $user->hasAnyRole(['SUPERADMIN', 'super-admin'])) {
+            return $routes;
         }
 
         return $routes->filter(function ($route) use ($user) {
@@ -133,6 +131,14 @@ class RouteMetadata extends Model
      */
     public function isAccessibleBy($user): bool
     {
+        if (!$user) {
+            return empty($this->roles) && empty($this->permissions);
+        }
+
+        if (method_exists($user, 'hasAnyRole') && $user->hasAnyRole(['SUPERADMIN', 'super-admin'])) {
+            return true;
+        }
+
         // Check roles
         $roles = $this->roles ?? [];
         if (!empty($roles)) {

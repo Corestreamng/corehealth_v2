@@ -15,6 +15,6 @@
                 style="display: none;">
             <i class="mdi mdi-close"></i>
         </button>
-        <kbd class="ch-sidebar-search-shortcut" title="Press Ctrl+K or Cmd+K to search">⌘K</kbd>
+        <kbd class="ch-sidebar-search-shortcut" title="Press / to filter menu, or Ctrl+K for global search">/</kbd>
     </div>
 </li>
