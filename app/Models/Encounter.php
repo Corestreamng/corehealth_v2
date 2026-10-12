@@ -36,6 +36,7 @@ class Encounter extends Model implements Auditable
         'deletion_reason',
         'treatment_plan_id',
         'treatment_plan_name',
+        'wecare_sync_ref',
     ];
 
     public function deathRecord()

@@ -157,6 +157,9 @@ Route::prefix('corehealth')->middleware(['auth.basic.sha256'])->group(function (
     // Patient lookup for WeCare247 invite autofill
     Route::get('patient/lookup', [\App\Http\Controllers\API\WeCareIntegrationController::class, 'lookupPatient']);
 
+    // Longitudinal Clinical Story EHR Sync endpoint
+    Route::get('patient/clinical-story', [\App\Http\Controllers\API\WeCareIntegrationController::class, 'getClinicalStory']);
+
     // Sync callbacks from WeCare247
     Route::post('sync/patient-linked', [\App\Http\Controllers\API\WeCareIntegrationController::class, 'patientLinked']);
     Route::post('sync/patient-unlink', [\App\Http\Controllers\API\WeCareIntegrationController::class, 'patientUnlink']);
