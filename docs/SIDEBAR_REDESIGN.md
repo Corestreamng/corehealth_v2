@@ -166,9 +166,37 @@ All authorization rules were audited and preserved:
 - **Strict 80px Rail Bounds**: Enforced `width: 80px !important; max-width: 80px !important; overflow-x: hidden !important;` on `.ch-sidebar` and `.ch-sidebar-nav-scrollable`.
 - **In-Flow Submenu Suppression**: Suppressed in-flow `.collapse.show` and `.sub-menu` during search and clicks in tablet rail mode (`display: none !important`), ensuring all submenus display exclusively via the body portal `#ch-sidebar-flyout`.
 - **Leadership Badges Containment**: Constrained `DEPT HEAD` and `UNIT HEAD` badges on tablet rail to `max-width: 64px !important; margin: 2px auto !important;`, preventing badge overflow.
-- **Topbar & Sidebar Search Synergy**: 
+- **Topbar & Sidebar Search Initial Bridge**: 
   - Standardized `.navbar-search-box` container with absolute centering for search icon and `Ctrl+K` shortcut badge.
   - Indexed 105+ core clinical and administrative routes across all 19 hospital domains in `App\Console\Commands\ScanRoutesCommand.php` and auto-seed migration.
   - Added self-healing route population on zero metadata count and superadmin permission bypass.
   - Linked sidebar "No results" empty state with one-click trigger to topbar global search modal.
+
+### 6.6 Deep Search Synergy & Bidirectional Key Combination Capture (v2.6.0.41)
+- **Complementary Search Roles**:
+  - **Sidebar Menu Filter (`#ch-sidebar-search`, `/`)**: Quick local tree filter that keeps the user within the active navigation hierarchy, collapses non-matching sections, and highlights visible items.
+  - **Topbar Global Omnibar (`#globalSearchInput`, `Ctrl+K` / `⌘K`)**: Exhaustive system-wide catalog searching across 105+ hospital routes in 19 clinical and administrative domains.
+- **Bidirectional Key Combination Capture**:
+  - `Ctrl+K` / `⌘K`: Global shortcut from anywhere. When pressed while typing in the sidebar search, it seamlessly captures the current text query and transfers it directly to the Topbar Omnibar.
+  - `/` (Forward Slash): Dedicated sidebar filter shortcut when pressed anywhere outside form inputs. When pressed inside the Topbar Omnibar (with an empty field or via `Ctrl+/`), it hands off focus and query immediately to the Sidebar filter.
+  - `Enter` in Sidebar Search:
+    - If exactly **1 item** matches: directly navigates to the target page.
+    - If **0 items** match or multiple items exist: automatically triggers the Topbar Global Omnibar with the typed query, opening all matching routes without retyping.
+  - `ArrowDown` & `ArrowUp`:
+    - In Sidebar Search: `ArrowDown` moves focus into the matching `.nav-link` elements; `ArrowUp` returns focus back to `#ch-sidebar-search`.
+    - In Topbar Omnibar: `ArrowDown` / `ArrowUp` highlights items, `Enter` navigates to the selected route.
+  - `Alt+Enter` in Topbar Omnibar: Locates and reveals the selected route in the sidebar navigation tree.
+- **Visual & UI Synergy Enhancements**:
+  - **In-Menu Badges & GPS Locator**: Topbar search results that exist in the sidebar display an `"In menu"` badge and a locate button (`mdi-crosshairs-gps`).
+  - **Sidebar Reveal Animation**: Clicking "Locate in sidebar" or pressing `Alt+Enter` executes `window.revealInSidebar(url)`, which:
+    - Clears active sidebar filter filters.
+    - Expands parent section groups and dropdown collapses.
+    - Smoothly scrolls to the target link.
+    - Applies the glowing pulse animation (`.ch-sidebar-item-revealed`).
+  - **Synergy Bridge Bar in Sidebar**: While filtering the sidebar, a real-time bridge bar (`{count} in menu · Search all ↵`) appears with a one-click CTA to search all 105+ routes in the Global Omnibar.
+  - **Pinned Dropdown Footer**: The Topbar Omnibar features a pinned sticky footer showing keyboard hints (`↑↓ Navigate`, `↵ Open`, `Alt+↵ Locate`, `Esc Close`) and a quick switch button `Menu (/)` that transfers the query back to the sidebar.
+- **Asset Verification & Standards Compliance**:
+  - Verified with `node --check public/js/sidebar.js` and `node --check public/js/global-search.js`.
+  - PHP syntax and formatting validated with `make lint` (0 errors across 1,289 files).
+  - All feature test assertions passing under `vendor/bin/phpunit tests/Feature/Navigation/RouteSearchTest.php`.
 

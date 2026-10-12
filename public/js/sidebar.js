@@ -322,8 +322,49 @@
             searchInput.val('').trigger('input').focus();
         });
 
-        // ESC clears search
+        // Search input keyboard interactions: Enter, ArrowDown, Ctrl+K, Escape
         searchInput.on('keydown', function (e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                var val = $(this).val().trim();
+                var visibleLinks = sidebar.find('.ch-sidebar-nav-scrollable .nav-link:visible').filter(function () {
+                    var href = $(this).attr('href');
+                    return !$(this).is('[data-toggle="collapse"], [data-bs-toggle="collapse"]') && href && href !== '#' && href !== 'javascript:void(0);';
+                });
+
+                if (visibleLinks.length === 1) {
+                    var targetHref = visibleLinks.first().attr('href');
+                    if (targetHref) {
+                        window.location.href = targetHref;
+                        return;
+                    }
+                }
+
+                // If 0 matches or multiple matches, hand off to global omnibar search
+                if (typeof window.triggerGlobalSearch === 'function') {
+                    window.triggerGlobalSearch(val);
+                }
+                return;
+            }
+
+            if (e.key === 'ArrowDown') {
+                e.preventDefault();
+                var focusableLinks = sidebar.find('.ch-sidebar-nav-scrollable .nav-link:visible');
+                if (focusableLinks.length) {
+                    focusableLinks.first().focus();
+                }
+                return;
+            }
+
+            if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
+                e.preventDefault();
+                var currentQuery = $(this).val().trim();
+                if (typeof window.triggerGlobalSearch === 'function') {
+                    window.triggerGlobalSearch(currentQuery);
+                }
+                return;
+            }
+
             if (e.key === 'Escape') {
                 if ($(this).val().length > 0) {
                     $(this).val('').trigger('input');
@@ -339,7 +380,7 @@
     }
 
     function filterSidebar(term) {
-        sidebar.find('.ch-sidebar-no-results').remove();
+        sidebar.find('.ch-sidebar-no-results, .ch-sidebar-search-bridge-bar').remove();
 
         if (!term) {
             // Restore all items and section headers
@@ -357,6 +398,7 @@
         }
 
         var anyMatch = false;
+        var matchCount = 0;
 
         // Reset search-hidden state
         sidebar.find('.ch-sidebar-nav-scrollable li, .ch-sidebar-nav-scrollable .nav-item')
@@ -379,6 +421,8 @@
                     var item = $(this);
                     item.removeClass('ch-sidebar-search-hidden').removeAttr('style');
                     item.find('.nav-item').removeClass('ch-sidebar-search-hidden').removeAttr('style');
+                    var directLinks = item.find('.nav-link').not('[data-toggle="collapse"], [data-bs-toggle="collapse"]');
+                    matchCount += directLinks.length || 1;
                 });
                 sectionHasMatch = true;
                 anyMatch = true;
@@ -404,6 +448,7 @@
                             if (subText.indexOf(term) !== -1 || parentText.indexOf(term) !== -1) {
                                 subItem.removeClass('ch-sidebar-search-hidden').removeAttr('style');
                                 subMatchCount++;
+                                matchCount++;
                             } else {
                                 subItem.addClass('ch-sidebar-search-hidden').attr('style', 'display: none !important;');
                             }
@@ -422,6 +467,9 @@
                         item.removeClass('ch-sidebar-search-hidden').removeAttr('style');
                         sectionHasMatch = true;
                         anyMatch = true;
+                        if (!subMenu.length) {
+                            matchCount++;
+                        }
                     } else {
                         item.addClass('ch-sidebar-search-hidden').attr('style', 'display: none !important;');
                     }
@@ -445,10 +493,32 @@
             if (isMatch) {
                 item.removeClass('ch-sidebar-search-hidden').removeAttr('style');
                 anyMatch = true;
+                matchCount++;
             } else {
                 item.addClass('ch-sidebar-search-hidden').attr('style', 'display: none !important;');
             }
         });
+
+        // Show synergy bridge bar if items match
+        if (anyMatch && !isRailMode()) {
+            var matchLabel = matchCount === 1 ? '1 item in menu' : matchCount + ' items in menu';
+            var bridgeBar = $('<div class="ch-sidebar-search-bridge-bar">' +
+                '<span><i class="mdi mdi-filter-outline mr-1"></i> ' + matchLabel + '</span>' +
+                '<button type="button" class="btn btn-link p-0 ch-sidebar-bridge-btn" id="ch-sidebar-bridge-global" title="Search all 105+ hospital routes in Global Omnibar">' +
+                'Search all <kbd>↵</kbd>' +
+                '</button>' +
+                '</div>');
+            sidebar.find('.ch-sidebar-nav-scrollable').prepend(bridgeBar);
+
+            bridgeBar.find('#ch-sidebar-bridge-global').on('click', function (e) {
+                e.preventDefault();
+                e.stopPropagation();
+                var currentTerm = (searchInput && searchInput.length ? searchInput.val().trim() : '') || term;
+                if (typeof window.triggerGlobalSearch === 'function') {
+                    window.triggerGlobalSearch(currentTerm);
+                }
+            });
+        }
 
         // Show "no results" message with global search bridge if no match found
         if (!anyMatch) {
@@ -461,9 +531,12 @@
                 '</div>');
             sidebar.find('.ch-sidebar-nav-scrollable').append(noResults);
 
-            noResults.find('#ch-sidebar-global-bridge-btn').on('click', function () {
+            noResults.find('#ch-sidebar-global-bridge-btn').on('click', function (e) {
+                e.preventDefault();
+                e.stopPropagation();
+                var currentTerm = (searchInput && searchInput.length ? searchInput.val().trim() : '') || term;
                 if (typeof window.triggerGlobalSearch === 'function') {
-                    window.triggerGlobalSearch(term);
+                    window.triggerGlobalSearch(currentTerm);
                 }
             });
         }
@@ -996,5 +1069,122 @@
         div.appendChild(document.createTextNode(str));
         return div.innerHTML;
     }
+
+    /* ──────────────────────────────────────
+       GLOBAL SYNERGY API
+       ────────────────────────────────────── */
+
+    /**
+     * Trigger sidebar menu search with optional prefilled query
+     */
+    window.triggerSidebarSearch = function (query) {
+        if (getViewportTier() !== 'desktop' && !sidebar.hasClass('active')) {
+            openMobileDrawer();
+        }
+
+        if (searchInput && searchInput.length) {
+            if (typeof query === 'string') {
+                searchInput.val(query);
+                filterSidebar(query.toLowerCase().trim());
+                toggleSearchClear(query.trim().length > 0);
+            }
+            searchInput.focus();
+            searchInput.select();
+        }
+    };
+
+    /**
+     * Locate and reveal a link in the sidebar by URL or route path
+     * Expands collapsed parent submenus and sections, scrolls into view,
+     * and triggers a highlighting pulse animation.
+     */
+    window.revealInSidebar = function (url) {
+        if (!url || !sidebar.length) return false;
+
+        var targetPath = url;
+        try {
+            targetPath = new URL(url, window.location.origin).pathname;
+        } catch (e) {
+            // Keep targetPath as url string
+        }
+
+        // Clear any active search in sidebar that might hide the target item
+        if (searchInput.length && searchInput.val().trim().length > 0) {
+            searchInput.val('');
+            filterSidebar('');
+            toggleSearchClear(false);
+        }
+
+        // Locate link by href matching url or pathname
+        var matchingLink = sidebar.find('.ch-sidebar-nav-scrollable a.nav-link').filter(function () {
+            var href = $(this).attr('href');
+            if (!href || href === '#' || href === 'javascript:void(0);') return false;
+            try {
+                var linkPath = new URL(href, window.location.origin).pathname;
+                return href === url || linkPath === targetPath || href.indexOf(targetPath) !== -1;
+            } catch (err) {
+                return href === url || href === targetPath;
+            }
+        }).first();
+
+        if (!matchingLink.length) {
+            return false;
+        }
+
+        // If on mobile, open drawer
+        if (getViewportTier() !== 'desktop' && !sidebar.hasClass('active')) {
+            openMobileDrawer();
+        }
+
+        // If in desktop icon-only mode, un-collapse sidebar to show full menu
+        if ($('body').hasClass('sidebar-icon-only')) {
+            $('body').removeClass('sidebar-icon-only');
+            saveSidebarState('full');
+        }
+
+        // Un-collapse parent section group if collapsed
+        var parentSection = matchingLink.closest('.ch-sidebar-section');
+        if (parentSection.hasClass('ch-section-collapsed')) {
+            parentSection.removeClass('ch-section-collapsed');
+            var sectionId = parentSection.attr('id') ? parentSection.attr('id').replace('section-', '') : '';
+            if (sectionId) {
+                saveCollapsedSection(sectionId, false);
+                $('[data-section-toggle="' + sectionId + '"]').removeClass('ch-section-collapsed').attr('aria-expanded', 'true');
+            }
+        }
+
+        // Un-collapse parent sub-menu collapse if in dropdown
+        var parentCollapse = matchingLink.closest('.collapse');
+        if (parentCollapse.length) {
+            parentCollapse.addClass('show');
+            var collapseToggle = parentCollapse.siblings('.nav-link[data-toggle="collapse"], .nav-link[data-bs-toggle="collapse"]');
+            collapseToggle.attr('aria-expanded', 'true');
+        }
+
+        var targetContainer = matchingLink.closest('.nav-item');
+
+        // Scroll smoothly into view
+        setTimeout(function () {
+            var scrollable = sidebar.find('.ch-sidebar-nav-scrollable');
+            if (scrollable.length && matchingLink.length) {
+                var linkTop = matchingLink.offset().top;
+                var scrollTop = scrollable.scrollTop();
+                var scrollableTop = scrollable.offset().top;
+                var targetOffset = linkTop - scrollableTop + scrollTop - 80;
+
+                scrollable.animate({ scrollTop: Math.max(0, targetOffset) }, 250);
+            }
+
+            // Apply reveal pulse animation
+            targetContainer.addClass('ch-sidebar-item-revealed');
+            matchingLink.focus();
+
+            setTimeout(function () {
+                targetContainer.removeClass('ch-sidebar-item-revealed');
+            }, 2500);
+        }, 50);
+
+        return true;
+    };
 
 })(jQuery);

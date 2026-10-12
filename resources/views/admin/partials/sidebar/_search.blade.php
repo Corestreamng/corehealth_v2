@@ -4,7 +4,7 @@
         <i class="mdi mdi-magnify ch-sidebar-search-icon" aria-hidden="true"></i>
         <input type="text"
                id="ch-sidebar-search"
-               placeholder="Search menu..."
+               placeholder="Filter menu (/)..."
                autocomplete="off"
                aria-label="Search navigation menu"
                spellcheck="false">

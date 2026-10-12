@@ -153,10 +153,11 @@ body.dark-mode .global-search-kbd {
     border: 1px solid var(--border-color, #e5e7eb);
     border-radius: 10px;
     box-shadow: 0 12px 35px rgba(0, 0, 0, 0.12), 0 2px 6px rgba(0, 0, 0, 0.04);
-    max-height: 420px;
-    overflow-y: auto;
-    z-index: 1050;
+    max-height: 460px;
     display: none;
+    flex-direction: column;
+    overflow: hidden;
+    z-index: 1050;
     animation: searchDropdownFadeIn 0.18s ease-out;
 }
 
@@ -178,12 +179,15 @@ body.dark-mode .global-search-results {
 }
 
 .global-search-results.show {
-    display: block;
+    display: flex;
 }
 
 /* Dropdown Result Items */
 .search-results-list {
     padding: 4px 0;
+    overflow-y: auto;
+    flex: 1 1 auto;
+    max-height: 380px;
 }
 
 .search-result-item {
@@ -330,6 +334,132 @@ body.dark-mode .search-view-all {
 
 body.dark-mode .search-view-all:hover {
     background: #374151;
+}
+
+/* Global Search Dropdown Footer & Key Combination Hints */
+.global-search-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 14px;
+    background: #f9fafb;
+    border-top: 1px solid var(--border-color, #e5e7eb);
+    font-size: 11px;
+    color: #6b7280;
+}
+
+body.dark-mode .global-search-footer {
+    background: #111827;
+    border-top-color: #374151;
+    color: #9ca3af;
+}
+
+.global-search-hints {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.global-search-hints span {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+}
+
+.global-search-hints kbd,
+.global-search-switch-btn kbd {
+    background: #ffffff;
+    border: 1px solid #d1d5db;
+    box-shadow: 0 1px 1px rgba(0, 0, 0, 0.05);
+    padding: 1px 4px;
+    border-radius: 3px;
+    font-size: 10px;
+    font-family: ui-monospace, SFMono-Regular, monospace;
+    color: #374151;
+    line-height: 1.2;
+}
+
+body.dark-mode .global-search-hints kbd,
+body.dark-mode .global-search-switch-btn kbd {
+    background: #374151;
+    border-color: #4b5563;
+    color: #e5e7eb;
+}
+
+.global-search-switch-btn {
+    border: 1px solid #d1d5db;
+    background: #ffffff;
+    color: var(--hospital-primary, #011b33);
+    font-size: 11px;
+    font-weight: 600;
+    padding: 3px 8px;
+    border-radius: 5px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    transition: all 0.15s ease;
+}
+
+.global-search-switch-btn:hover {
+    background: #f3f4f6;
+    border-color: #9ca3af;
+}
+
+body.dark-mode .global-search-switch-btn {
+    background: #374151;
+    border-color: #4b5563;
+    color: #93c5fd;
+}
+
+body.dark-mode .global-search-switch-btn:hover {
+    background: #4b5563;
+}
+
+/* "In Menu" badge and "Locate in sidebar" button on search result items */
+.search-result-in-menu {
+    display: inline-flex;
+    align-items: center;
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--hospital-primary, #011b33);
+    background: rgba(1, 27, 51, 0.08);
+    padding: 1px 6px;
+    border-radius: 4px;
+    margin-left: 6px;
+    vertical-align: middle;
+}
+
+body.dark-mode .search-result-in-menu {
+    color: #93c5fd;
+    background: rgba(147, 197, 253, 0.12);
+}
+
+.search-result-locate-btn {
+    border: none;
+    background: transparent;
+    color: #9ca3af;
+    font-size: 15px;
+    padding: 4px 6px;
+    border-radius: 4px;
+    cursor: pointer;
+    margin-left: 6px;
+    transition: all 0.15s ease;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.search-result-locate-btn:hover {
+    background: rgba(1, 27, 51, 0.08);
+    color: var(--hospital-primary, #011b33);
+    transform: scale(1.1);
+}
+
+body.dark-mode .search-result-locate-btn:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: #93c5fd;
 }
 
 /* Mobile Search Modal */

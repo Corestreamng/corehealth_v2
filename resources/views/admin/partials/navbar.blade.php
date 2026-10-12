@@ -29,6 +29,17 @@
                     <a href="{{ route('search.index') }}" class="search-view-all d-none">
                         <i class="mdi mdi-arrow-right-circle mr-1"></i> {{ __('front.view_all_results') }}
                     </a>
+                    <div class="global-search-footer">
+                        <div class="global-search-hints">
+                            <span><kbd>↑</kbd><kbd>↓</kbd> Select</span>
+                            <span><kbd>↵</kbd> Open</span>
+                            <span><kbd>Alt+↵</kbd> Locate</span>
+                            <span><kbd>Esc</kbd> Close</span>
+                        </div>
+                        <button type="button" class="global-search-switch-btn" id="globalSearchSwitchToSidebar" title="Filter sidebar menu with current query">
+                            <i class="mdi mdi-page-layout-sidebar-left mr-1"></i> Menu (<kbd>/</kbd>)
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
