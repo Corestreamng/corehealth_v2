@@ -1,0 +1,1487 @@
+/* =============================================
+   CoreHealth v2 — Sidebar Styles
+   Extracted from admin/layouts/app.blade.php
+   All dynamic values use CSS custom properties
+   injected in :root by the master layout.
+
+   Structure:
+   1. Base Sidebar Shell
+   2. Icon-Only (Minimized) State
+   3. Flyout Menus (Desktop Icon-Only)
+   4. Nav Container & Brand
+   5. Scrollable Area & Section Headers
+   6. Menu Items, Icons, Arrows
+   7. Submenus & Collapse Animation
+   8. Search / Filter Bar
+   9. Section Collapse Groups
+   10. User Profile & Leadership Badges
+   11. Backdrop Overlay
+   12. Responsive: Desktop (≥1200px)
+   13. Responsive: Tablet (768px–1199px)
+   14. Responsive: Mobile (<768px)
+   15. Visual Polish & Micro-Animations
+   16. Reduced Motion
+   17. Print Styles
+   ============================================= */
+
+/* ─────────────────────────────────────────────
+   1. BASE SIDEBAR SHELL
+   ───────────────────────────────────────────── */
+.ch-sidebar {
+    width: 260px;
+    background: var(--primary-color, #011b33);
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 100vh;
+    overflow: hidden;
+    z-index: 1040;
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+                width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    display: flex;
+    flex-direction: column;
+    will-change: transform, width;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+.ch-sidebar--ready {
+    /* Ensure transitions only fire after initial load */
+}
+
+/* ─────────────────────────────────────────────
+   2. DESKTOP ICON-ONLY (MINIMIZED) STATE (≥1200px)
+   ───────────────────────────────────────────── */
+@media (min-width: 1200px) {
+    .sidebar-icon-only .ch-sidebar {
+        width: 72px;
+        overflow: visible;
+    }
+
+    /* Hide text with smooth fade on desktop icon-only */
+    .sidebar-icon-only .ch-sidebar .nav-brand h6,
+    .sidebar-icon-only .ch-sidebar .nav-brand p,
+    .sidebar-icon-only .ch-sidebar .nav-brand-title,
+    .sidebar-icon-only .ch-sidebar .nav-brand-version,
+    .sidebar-icon-only .ch-sidebar .menu-title,
+    .sidebar-icon-only .ch-sidebar .menu-arrow,
+    .sidebar-icon-only .ch-sidebar .nav-item-head,
+    .sidebar-icon-only .ch-sidebar .ch-sidebar-search-wrap,
+    .sidebar-icon-only .ch-sidebar .ch-sidebar-section-count {
+        opacity: 0;
+        visibility: hidden;
+        width: 0;
+        overflow: hidden;
+        transition: opacity 0.2s ease, visibility 0.2s ease, width 0.2s ease;
+    }
+
+    /* Brand in icon-only mode */
+    .sidebar-icon-only .ch-sidebar .nav-brand {
+        padding: 15px 0 !important;
+        display: flex !important;
+        justify-content: center !important;
+        align-items: center !important;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
+        overflow: hidden;
+    }
+
+    .sidebar-icon-only .ch-sidebar .nav-brand > div {
+        display: flex !important;
+        flex-direction: column !important;
+        align-items: center !important;
+        justify-content: center !important;
+        width: 100% !important;
+    }
+
+    .sidebar-icon-only .ch-sidebar .nav-brand img {
+        max-width: 36px !important;
+        width: 36px !important;
+        height: 36px !important;
+        margin-bottom: 0 !important;
+        object-fit: contain !important;
+    }
+
+    .sidebar-icon-only .ch-sidebar .nav-brand > div > div {
+        width: 36px !important;
+        height: 36px !important;
+        font-size: 0.85rem !important;
+        margin-bottom: 0 !important;
+    }
+
+    /* Center nav links in icon-only mode */
+    .sidebar-icon-only .ch-sidebar .nav-link {
+        justify-content: center;
+        padding: 12px 0 !important;
+        position: relative;
+        width: 72px;
+    }
+
+    /* Profile in icon-only mode */
+    .sidebar-icon-only .ch-sidebar .nav-profile {
+        padding: 15px 0 !important;
+        justify-content: center !important;
+    }
+
+    .sidebar-icon-only .ch-sidebar .nav-profile a {
+        justify-content: center !important;
+        width: 100% !important;
+    }
+
+    .sidebar-icon-only .ch-sidebar .nav-profile .ml-3,
+    .sidebar-icon-only .ch-sidebar .nav-profile .mdi-logout,
+    .sidebar-icon-only .ch-sidebar .nav-profile .ch-sidebar-profile-details {
+        display: none !important;
+    }
+
+    .sidebar-icon-only .ch-sidebar .nav-profile img {
+        margin: 0 auto !important;
+    }
+
+    /* Icons visible and centered */
+    .sidebar-icon-only .ch-sidebar .menu-icon {
+        margin-right: 0 !important;
+        font-size: 20px !important;
+        transition: all 0.2s ease;
+    }
+
+    /* Hide submenus completely in icon-only */
+    .sidebar-icon-only .ch-sidebar .sub-menu {
+        display: none !important;
+    }
+}
+
+/* ─────────────────────────────────────────────
+   3. FLOATING FLYOUT PANEL (Body-Level Portal)
+   Immune to container overflow clipping & stacking
+   ───────────────────────────────────────────── */
+.ch-sidebar-flyout {
+    position: fixed;
+    z-index: 1060;
+    width: 250px;
+    max-width: calc(100vw - 90px);
+    max-height: calc(100vh - 32px);
+    background: #ffffff;
+    border-radius: 12px;
+    box-shadow: 0 14px 40px rgba(0, 0, 0, 0.2),
+                0 4px 12px rgba(0, 0, 0, 0.08);
+    border: 1px solid rgba(0, 0, 0, 0.08);
+    display: none;
+    flex-direction: column;
+    overflow: hidden;
+    opacity: 0;
+    pointer-events: none;
+    transform: translateX(-8px) scale(0.98);
+    transition: opacity 0.18s cubic-bezier(0.4, 0, 0.2, 1),
+                transform 0.18s cubic-bezier(0.4, 0, 0.2, 1);
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+.ch-sidebar-flyout--visible {
+    opacity: 1 !important;
+    pointer-events: auto !important;
+    transform: translateX(0) scale(1) !important;
+}
+
+/* Flyout Header */
+.ch-sidebar-flyout-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    padding: 12px 16px;
+    background: var(--primary-color, #011b33);
+    color: #ffffff;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.ch-sidebar-flyout-header-content {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    padding-right: 8px;
+}
+
+.ch-sidebar-flyout-header-group {
+    font-size: 9px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--hospital-secondary, #38bdf8);
+    margin-bottom: 2px;
+    line-height: 1.2;
+}
+
+.ch-sidebar-flyout-header-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    color: #ffffff;
+    line-height: 1.3;
+}
+
+.ch-sidebar-flyout-header-title i {
+    font-size: 17px;
+    color: var(--hospital-secondary, #38bdf8);
+}
+
+.ch-sidebar-flyout-close {
+    background: transparent;
+    border: none;
+    color: rgba(255, 255, 255, 0.6);
+    font-size: 16px;
+    cursor: pointer;
+    padding: 3px 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 6px;
+    transition: all 0.15s ease;
+}
+
+.ch-sidebar-flyout-close:hover {
+    color: #ffffff;
+    background: rgba(255, 255, 255, 0.15);
+}
+
+/* Flyout Body */
+.ch-sidebar-flyout-body {
+    display: block !important;
+    flex: 1 1 auto;
+    overflow-y: auto !important;
+    padding: 8px !important;
+    background: #ffffff !important;
+    min-height: 48px !important;
+    max-height: calc(100vh - 120px) !important;
+}
+
+.ch-sidebar-flyout-body::-webkit-scrollbar {
+    width: 4px;
+}
+
+.ch-sidebar-flyout-body::-webkit-scrollbar-thumb {
+    background: rgba(0, 0, 0, 0.15);
+    border-radius: 4px;
+}
+
+.ch-sidebar-flyout-body .ch-sidebar-flyout-menu,
+.ch-sidebar-flyout-body .sub-menu {
+    display: flex !important;
+    flex-direction: column !important;
+    list-style: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    gap: 3px !important;
+}
+
+.ch-sidebar-flyout-body .ch-sidebar-flyout-item,
+.ch-sidebar-flyout-body .sub-menu .nav-item {
+    display: block !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    list-style: none !important;
+}
+
+.ch-sidebar-flyout-body .ch-sidebar-flyout-link,
+.ch-sidebar-flyout-body .sub-menu .nav-link {
+    display: flex !important;
+    align-items: center !important;
+    padding: 10px 14px !important;
+    color: #1f2937 !important;
+    font-size: 13.5px !important;
+    font-weight: 500 !important;
+    border-radius: 8px !important;
+    text-decoration: none !important;
+    transition: background 0.15s ease, color 0.15s ease !important;
+    line-height: 1.35 !important;
+    width: 100% !important;
+    background: transparent !important;
+    box-sizing: border-box !important;
+}
+
+.ch-sidebar-flyout-body .ch-sidebar-flyout-link:hover,
+.ch-sidebar-flyout-body .sub-menu .nav-link:hover {
+    background: #f3f4f6 !important;
+    color: var(--primary-color, #011b33) !important;
+    text-decoration: none !important;
+}
+
+.ch-sidebar-flyout-body .ch-sidebar-flyout-item.active > .ch-sidebar-flyout-link,
+.ch-sidebar-flyout-body .ch-sidebar-flyout-link.active,
+.ch-sidebar-flyout-body .sub-menu .nav-item.active > .nav-link,
+.ch-sidebar-flyout-body .sub-menu .nav-link.active {
+    background: rgba(var(--hospital-primary-rgb, 1, 27, 51), 0.08) !important;
+    color: var(--primary-color, #011b33) !important;
+    font-weight: 600 !important;
+}
+
+/* Active indicator on rail item when flyout is open */
+.ch-sidebar .nav-item.ch-sidebar-flyout-active > .nav-link {
+    background: rgba(255, 255, 255, 0.22) !important;
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.35) !important;
+}
+
+/* Hide in-flow collapse in desktop icon-only mode to prevent layout breaking */
+@media (min-width: 1200px) {
+    .sidebar-icon-only .ch-sidebar .collapse,
+    .sidebar-icon-only .ch-sidebar .collapsing {
+        display: none !important;
+    }
+}
+
+    /* Icon-only tooltip on hover (for items without submenus) */
+    .sidebar-icon-only .ch-sidebar .nav-link[data-title]:not([data-toggle="collapse"]):not([data-bs-toggle="collapse"]):hover::after {
+        content: attr(data-title);
+        position: absolute;
+        left: 72px;
+        top: 50%;
+        transform: translateY(-50%);
+        background: #1F2937;
+        color: white;
+        padding: 6px 12px;
+        border-radius: 6px;
+        font-size: 12px;
+        font-weight: 500;
+        white-space: nowrap;
+        z-index: 9999;
+        pointer-events: none;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        animation: ch-tooltip-enter 0.15s ease;
+    }
+
+    .sidebar-icon-only .ch-sidebar .nav-link[data-title]:not([data-toggle="collapse"]):not([data-bs-toggle="collapse"]):hover::before {
+        content: '';
+        position: absolute;
+        left: 68px;
+        top: 50%;
+        transform: translateY(-50%);
+        border: 4px solid transparent;
+        border-right-color: #1F2937;
+        z-index: 9999;
+        pointer-events: none;
+    }
+
+    @keyframes ch-tooltip-enter {
+        from { opacity: 0; transform: translateY(-50%) translateX(-4px); }
+        to   { opacity: 1; transform: translateY(-50%) translateX(0); }
+    }
+}
+
+/* ─────────────────────────────────────────────
+   4. NAV CONTAINER & BRAND
+   ───────────────────────────────────────────── */
+
+/* Text element transitions */
+.ch-sidebar .nav-brand h6,
+.ch-sidebar .nav-brand p,
+.ch-sidebar .menu-title,
+.ch-sidebar .menu-arrow,
+.ch-sidebar .nav-item-head {
+    transition: opacity 0.3s ease, visibility 0.3s ease, width 0.3s ease;
+    opacity: 1;
+    visibility: visible;
+}
+
+.ch-sidebar .nav {
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    margin: 0;
+}
+
+/* Brand section */
+.ch-sidebar .nav-brand {
+    padding: 20px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    flex-shrink: 0;
+}
+
+.ch-sidebar .nav-brand-logo {
+    max-width: 72px;
+    height: auto;
+    border-radius: 12px;
+    margin-bottom: 0.5rem;
+    transition: all 0.3s ease;
+}
+
+.ch-sidebar .nav-brand-abbr {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 52px;
+    height: 52px;
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.15);
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: white;
+    margin-bottom: 0.5rem;
+    transition: all 0.3s ease;
+    backdrop-filter: blur(4px);
+}
+
+.ch-sidebar .nav-brand-title {
+    font-size: 14px !important;
+    font-weight: 600 !important;
+    margin-bottom: 2px !important;
+    color: #fff !important;
+    letter-spacing: -0.01em;
+}
+
+.ch-sidebar .nav-brand-version {
+    font-size: 11px !important;
+    color: rgba(255, 255, 255, 0.45) !important;
+    font-weight: 400;
+    letter-spacing: 0.02em;
+}
+
+.ch-sidebar .nav-brand h6 {
+    font-size: 14px !important;
+    font-weight: 600 !important;
+    margin-bottom: 2px !important;
+    color: #fff !important;
+    letter-spacing: -0.01em;
+}
+
+.ch-sidebar .nav-brand p {
+    font-size: 11px !important;
+    color: rgba(255, 255, 255, 0.45) !important;
+}
+
+/* Mobile close button in brand area */
+.ch-sidebar-close-btn {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    width: 32px;
+    height: 32px;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255, 255, 255, 0.1);
+    border: none;
+    border-radius: 8px;
+    color: rgba(255, 255, 255, 0.7);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-size: 18px;
+    padding: 0;
+    z-index: 10;
+}
+
+.ch-sidebar-close-btn:hover {
+    background: rgba(255, 255, 255, 0.2);
+    color: #fff;
+}
+
+/* ─────────────────────────────────────────────
+   5. SCROLLABLE AREA & SECTION HEADERS
+   ───────────────────────────────────────────── */
+.ch-sidebar-nav-scrollable {
+    flex: 1;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding: 12px 0;
+    -webkit-overflow-scrolling: touch;
+    scroll-behavior: smooth;
+}
+
+.ch-sidebar-nav-scrollable::-webkit-scrollbar {
+    width: 3px;
+}
+
+.ch-sidebar-nav-scrollable::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.15);
+    border-radius: 3px;
+}
+
+.ch-sidebar-nav-scrollable::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.3);
+}
+
+.ch-sidebar-nav-scrollable::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+/* Section headers */
+.nav-item-head {
+    font-size: 10px !important;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.4) !important;
+    padding: 0 20px;
+    margin-bottom: 8px;
+    margin-top: 4px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    display: block;
+    user-select: none;
+}
+
+/* Section header with collapse toggle */
+.ch-sidebar-section-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    cursor: pointer;
+    padding-right: 20px;
+    transition: color 0.2s ease;
+}
+
+.ch-sidebar-section-header:hover .nav-item-head {
+    color: rgba(255, 255, 255, 0.6) !important;
+}
+
+.ch-sidebar-section-header .ch-sidebar-section-chevron {
+    font-size: 14px;
+    color: rgba(255, 255, 255, 0.3);
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.ch-sidebar-section-header.ch-section-collapsed .ch-sidebar-section-chevron {
+    transform: rotate(-90deg);
+}
+
+/* Section count badge */
+.ch-sidebar-section-count {
+    font-size: 10px;
+    color: rgba(255, 255, 255, 0.35);
+    margin-left: 6px;
+    font-weight: 500;
+}
+
+/* Collapsed section content */
+.ch-sidebar-section-body.ch-section-collapsed {
+    max-height: 0;
+    overflow: hidden;
+    opacity: 0;
+    transition: max-height 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+                opacity 0.2s ease;
+}
+
+.ch-sidebar-section-body:not(.ch-section-collapsed) {
+    max-height: 2000px;
+    opacity: 1;
+    transition: max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1),
+                opacity 0.3s ease;
+}
+
+.ch-sidebar .nav-item.pt-2 {
+    margin-top: 16px;
+    padding-top: 0 !important;
+}
+
+.ch-sidebar .nav-item.pb-1 {
+    padding-bottom: 0 !important;
+}
+
+/* Section divider line */
+.ch-sidebar .nav-item.pt-2::before {
+    content: '';
+    display: block;
+    height: 1px;
+    background: rgba(255, 255, 255, 0.06);
+    margin: 0 20px 12px 20px;
+}
+
+/* ─────────────────────────────────────────────
+   6. MENU ITEMS, ICONS, ARROWS
+   ───────────────────────────────────────────── */
+.ch-sidebar .nav-item {
+    margin: 0;
+    border: none;
+}
+
+.ch-sidebar .nav-link {
+    padding: 9px 20px !important;
+    color: rgba(255, 255, 255, 0.7) !important;
+    font-weight: 500;
+    font-size: 13.5px !important;
+    border-left: 3px solid transparent;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    display: flex;
+    align-items: center;
+    text-decoration: none;
+    background: transparent;
+    position: relative;
+    line-height: 1.4;
+}
+
+.ch-sidebar .nav-link:hover {
+    background: rgba(255, 255, 255, 0.06) !important;
+    color: #fff !important;
+    text-decoration: none;
+}
+
+.ch-sidebar .nav-link.active,
+.ch-sidebar .nav-item.active > .nav-link {
+    background: rgba(255, 255, 255, 0.08) !important;
+    color: #fff !important;
+    border-left-color: #fff !important;
+    font-weight: 600;
+}
+
+/* Active indicator glow */
+.ch-sidebar .nav-link.active::before,
+.ch-sidebar .nav-item.active > .nav-link::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 3px;
+    background: #fff;
+    box-shadow: 0 0 8px rgba(255, 255, 255, 0.3);
+}
+
+/* Icons */
+.ch-sidebar .menu-icon {
+    width: 20px;
+    margin-right: 12px !important;
+    font-size: 17px !important;
+    color: inherit;
+    transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    flex-shrink: 0;
+}
+
+.ch-sidebar .nav-link:hover .menu-icon {
+    transform: scale(1.08);
+}
+
+/* Menu title */
+.ch-sidebar .menu-title {
+    flex: 1;
+    color: inherit;
+    font-size: inherit;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Menu arrow */
+.ch-sidebar .menu-arrow {
+    margin-left: auto;
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    font-size: 16px;
+    color: rgba(255, 255, 255, 0.4) !important;
+    flex-shrink: 0;
+}
+
+.ch-sidebar .nav-link[aria-expanded="true"] .menu-arrow {
+    transform: rotate(90deg);
+    color: rgba(255, 255, 255, 0.8) !important;
+}
+
+.ch-sidebar .nav-link:hover .menu-arrow {
+    color: rgba(255, 255, 255, 0.6) !important;
+}
+
+/* ─────────────────────────────────────────────
+   7. SUBMENUS & COLLAPSE ANIMATION
+   ───────────────────────────────────────────── */
+.ch-sidebar .sub-menu {
+    background: rgba(0, 0, 0, 0.25);
+    padding: 4px 0;
+    margin: 0;
+    border-left: 2px solid rgba(255, 255, 255, 0.08);
+    margin-left: 20px;
+}
+
+.ch-sidebar .sub-menu .nav-item {
+    margin: 0;
+}
+
+.ch-sidebar .sub-menu .nav-link {
+    padding: 8px 20px 8px 36px !important;
+    font-size: 12.5px !important;
+    border-left: none;
+    color: rgba(255, 255, 255, 0.65) !important;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+}
+
+.ch-sidebar .sub-menu .nav-link:hover {
+    background: rgba(255, 255, 255, 0.08) !important;
+    color: #fff !important;
+    padding-left: 40px !important;
+}
+
+.ch-sidebar .sub-menu .nav-link.active {
+    color: #fff !important;
+    background: rgba(255, 255, 255, 0.1) !important;
+    position: relative;
+    font-weight: 500;
+}
+
+.ch-sidebar .sub-menu .nav-link.active::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 3px;
+    background: #fff;
+    border-radius: 0 3px 3px 0;
+}
+
+/* Collapse animation */
+.ch-sidebar .collapse {
+    transition: none;
+}
+
+.ch-sidebar .collapsing {
+    transition: height 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Override conflicts */
+.ch-sidebar .nav-item:not(.active):not(.nav-profile):not(.nav-brand) {
+    background: transparent !important;
+}
+
+.ch-sidebar .nav-item:not(.active) .nav-link:not(:hover) {
+    background: transparent !important;
+}
+
+/* ─────────────────────────────────────────────
+   8. SEARCH / FILTER BAR
+   ───────────────────────────────────────────── */
+.ch-sidebar-search-wrap {
+    padding: 12px 16px 8px 16px;
+    flex-shrink: 0;
+}
+
+.ch-sidebar-search {
+    position: relative;
+}
+
+.ch-sidebar-search input {
+    width: 100%;
+    padding: 8px 36px 8px 34px;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 8px;
+    color: #fff;
+    font-size: 12.5px;
+    font-weight: 400;
+    outline: none;
+    transition: all 0.2s ease;
+    font-family: inherit;
+}
+
+.ch-sidebar-search input::placeholder {
+    color: rgba(255, 255, 255, 0.35);
+    font-weight: 400;
+}
+
+.ch-sidebar-search input:focus {
+    background: rgba(255, 255, 255, 0.12);
+    border-color: rgba(255, 255, 255, 0.2);
+    box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.05);
+}
+
+.ch-sidebar-search .ch-sidebar-search-icon {
+    position: absolute;
+    left: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: rgba(255, 255, 255, 0.35);
+    font-size: 15px;
+    pointer-events: none;
+}
+
+.ch-sidebar-search-clear {
+    position: absolute;
+    right: 8px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    color: rgba(255, 255, 255, 0.4);
+    cursor: pointer;
+    font-size: 14px;
+    padding: 2px 4px;
+    display: none;
+    transition: color 0.2s ease;
+}
+
+.ch-sidebar-search-clear:hover {
+    color: rgba(255, 255, 255, 0.8);
+}
+
+.ch-sidebar-search-shortcut {
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 10px;
+    color: rgba(255, 255, 255, 0.25);
+    background: rgba(255, 255, 255, 0.06);
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-weight: 500;
+    pointer-events: none;
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    font-family: 'SF Mono', 'Fira Code', monospace;
+}
+
+/* No results message */
+.ch-sidebar-no-results {
+    padding: 24px 20px;
+    text-align: center;
+    color: rgba(255, 255, 255, 0.4);
+    font-size: 12px;
+    line-height: 1.5;
+}
+
+.ch-sidebar-no-results strong {
+    color: rgba(255, 255, 255, 0.6);
+}
+
+/* Search filtering: force-hide non-matching items and empty section headers */
+.ch-sidebar-search-hidden,
+li.ch-sidebar-search-hidden,
+.ch-sidebar li.ch-sidebar-search-hidden,
+.ch-sidebar-section-header.ch-sidebar-search-hidden,
+.ch-sidebar-nav-scrollable .ch-sidebar-section-header.ch-sidebar-search-hidden,
+.ch-sidebar-nav-scrollable li.ch-sidebar-search-hidden,
+.ch-sidebar-nav-scrollable li:has(.nav-item-head).ch-sidebar-search-hidden {
+    display: none !important;
+}
+
+/* Ensure collapse.show is always expanded in desktop view */
+.ch-sidebar .collapse.show {
+    display: block !important;
+}
+
+/* ─────────────────────────────────────────────
+   10. USER PROFILE & LEADERSHIP BADGES
+   ───────────────────────────────────────────── */
+.ch-sidebar .nav-profile {
+    padding: 16px 20px;
+    border-top: 1px solid rgba(255, 255, 255, 0.06);
+    flex-shrink: 0;
+    margin-top: auto;
+    margin-bottom: 0 !important;
+}
+
+.ch-sidebar .nav-profile img {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid rgba(255, 255, 255, 0.15);
+}
+
+.ch-sidebar .nav-profile-text {
+    color: white !important;
+    font-weight: 600;
+    font-size: 13px !important;
+}
+
+.ch-sidebar .nav-profile span {
+    color: rgba(255, 255, 255, 0.45) !important;
+    font-size: 11px;
+    font-weight: 400;
+}
+
+/* User section background */
+.ch-sidebar .nav-profile.ch-sidebar-user-section {
+    background: rgba(0, 0, 0, 0.12);
+}
+
+/* Leadership badges */
+.ch-sidebar-badge-dept-head {
+    background: linear-gradient(135deg, #f6ad55, #ed8936);
+    color: #ffffff !important;
+    padding: 0.3rem 0.5rem;
+    border-radius: 5px;
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-shadow: 0 1px 1px rgba(0, 0, 0, 0.15);
+    letter-spacing: 0.02em;
+}
+
+.ch-sidebar-badge-unit-head {
+    background: linear-gradient(135deg, #63b3ed, #4299e1);
+    color: #ffffff !important;
+    padding: 0.3rem 0.5rem;
+    border-radius: 5px;
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-shadow: 0 1px 1px rgba(0, 0, 0, 0.15);
+    letter-spacing: 0.02em;
+}
+
+/* Logout button */
+.ch-sidebar-logout-btn {
+    background: rgba(220, 53, 69, 0.15);
+    border: 1px solid rgba(220, 53, 69, 0.25);
+    color: rgba(220, 53, 69, 0.9) !important;
+    border-radius: 8px;
+    transition: all 0.2s ease;
+    font-size: 13px;
+}
+
+.ch-sidebar-logout-btn:hover {
+    background: rgba(220, 53, 69, 0.9);
+    border-color: rgba(220, 53, 69, 1);
+    color: #ffffff !important;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(220, 53, 69, 0.3);
+}
+
+.ch-sidebar-logout-btn span {
+    font-weight: 600;
+    color: inherit !important;
+}
+
+.ch-sidebar-logout-btn i {
+    color: inherit !important;
+}
+
+/* ─────────────────────────────────────────────
+   11. BACKDROP OVERLAY
+   ───────────────────────────────────────────── */
+.ch-sidebar-backdrop {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 1039;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s ease, visibility 0.3s ease;
+    -webkit-backdrop-filter: blur(2px);
+    backdrop-filter: blur(2px);
+}
+
+.ch-sidebar-backdrop--visible {
+    opacity: 1;
+    visibility: visible;
+}
+
+/* ─────────────────────────────────────────────
+   12. RESPONSIVE: DESKTOP (≥1200px)
+   ───────────────────────────────────────────── */
+@media (min-width: 1200px) {
+    .ch-sidebar-close-btn {
+        display: none !important;
+    }
+
+    .sidebar-mobile-toggle-btn {
+        display: none !important;
+    }
+}
+
+/* ─────────────────────────────────────────────
+   13. RESPONSIVE: TABLET (768px–1199px)
+       Icon Rail with small text under each icon
+   ───────────────────────────────────────────── */
+@media (min-width: 768px) and (max-width: 1199px) {
+    /* Fixed 80px icon rail */
+    .ch-sidebar {
+        width: 80px !important;
+        overflow: visible !important;
+    }
+
+    /* Brand Header on Tablet */
+    .ch-sidebar .nav-brand {
+        padding: 12px 0 !important;
+        justify-content: center !important;
+        align-items: center !important;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+    }
+
+    .ch-sidebar .nav-brand img {
+        max-width: 38px !important;
+        width: 38px !important;
+        height: 38px !important;
+        margin-bottom: 0 !important;
+    }
+
+    .ch-sidebar .nav-brand .nav-brand-abbr {
+        width: 38px !important;
+        height: 38px !important;
+        font-size: 0.9rem !important;
+        margin-bottom: 0 !important;
+    }
+
+    .ch-sidebar .nav-brand h6,
+    .ch-sidebar .nav-brand p {
+        display: none !important;
+    }
+
+    .ch-sidebar .nav-brand .nav-brand-title {
+        display: block !important;
+        opacity: 1 !important;
+        visibility: visible !important;
+        width: auto !important;
+        height: auto !important;
+        font-size: 10px !important;
+        font-weight: 700 !important;
+        line-height: 1.2 !important;
+        margin-top: 4px !important;
+        margin-bottom: 0 !important;
+        color: #ffffff !important;
+        text-align: center !important;
+        letter-spacing: 0.02em !important;
+        max-width: 72px !important;
+        white-space: nowrap !important;
+        overflow: hidden !important;
+        text-overflow: ellipsis !important;
+    }
+
+    .ch-sidebar .nav-brand .nav-brand-version {
+        display: block !important;
+        opacity: 0.75 !important;
+        visibility: visible !important;
+        width: auto !important;
+        height: auto !important;
+        font-size: 8px !important;
+        color: rgba(255, 255, 255, 0.75) !important;
+        margin-top: 1px !important;
+        text-align: center !important;
+    }
+
+    /* Quick Search on Tablet - compact icon trigger */
+    .ch-sidebar .ch-sidebar-search-wrap {
+        padding: 8px 6px !important;
+    }
+
+    .ch-sidebar .ch-sidebar-search input {
+        padding: 6px 4px !important;
+        font-size: 10px !important;
+        text-align: center !important;
+        border-radius: 6px !important;
+    }
+
+    .ch-sidebar .ch-sidebar-search-shortcut,
+    .ch-sidebar .ch-sidebar-search-icon {
+        display: none !important;
+    }
+
+    /* Section Group Badges on Tablet: clearly distinguish departments */
+    .ch-sidebar-nav-scrollable .ch-sidebar-section-header:not(.ch-sidebar-search-hidden),
+    .ch-sidebar-nav-scrollable li:has(.nav-item-head):not(.ch-sidebar-search-hidden) {
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        margin: 10px 4px 4px 4px !important;
+        padding: 6px 0 2px 0 !important;
+        border-top: 1px solid rgba(255, 255, 255, 0.12) !important;
+        background: transparent !important;
+        height: auto !important;
+    }
+
+    .ch-sidebar .nav-item-head {
+        display: block !important;
+        font-size: 8px !important;
+        font-weight: 800 !important;
+        text-transform: uppercase !important;
+        letter-spacing: 0.08em !important;
+        color: rgba(255, 255, 255, 0.88) !important;
+        background: rgba(255, 255, 255, 0.14) !important;
+        border: 1px solid rgba(255, 255, 255, 0.2) !important;
+        padding: 2px 5px !important;
+        border-radius: 4px !important;
+        text-align: center !important;
+        max-width: 72px !important;
+        white-space: nowrap !important;
+        overflow: hidden !important;
+        text-overflow: ellipsis !important;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2) !important;
+        line-height: 1.2 !important;
+        height: auto !important;
+    }
+
+    .ch-sidebar .ch-sidebar-section-count {
+        display: none !important;
+    }
+
+    /* Nav Links on Tablet: Centered icon with small text UNDER IT */
+    .ch-sidebar .nav-link {
+        display: flex !important;
+        flex-direction: column !important;
+        align-items: center !important;
+        justify-content: center !important;
+        text-align: center !important;
+        padding: 8px 3px 6px !important;
+        margin: 2px 4px !important;
+        width: calc(100% - 8px) !important;
+        min-height: 54px !important;
+        border-left: none !important;
+        border-radius: 8px !important;
+        position: relative !important;
+        transition: background 0.2s ease, transform 0.15s ease !important;
+        cursor: pointer;
+    }
+
+    .ch-sidebar .nav-link:hover {
+        background: rgba(255, 255, 255, 0.1) !important;
+        transform: translateY(-1px);
+    }
+
+    .ch-sidebar .nav-item.active > .nav-link,
+    .ch-sidebar .nav-link.active {
+        background: rgba(255, 255, 255, 0.18) !important;
+        box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.25) !important;
+    }
+
+    /* Icon: Top-centered */
+    .ch-sidebar .menu-icon {
+        margin-right: 0 !important;
+        margin-bottom: 3px !important;
+        font-size: 20px !important;
+        line-height: 1 !important;
+        display: block !important;
+        text-align: center !important;
+        color: rgba(255, 255, 255, 0.9) !important;
+        transition: transform 0.2s ease;
+    }
+
+    .ch-sidebar .nav-link:hover .menu-icon {
+        transform: scale(1.08);
+    }
+
+    .ch-sidebar .nav-item.active > .nav-link .menu-icon,
+    .ch-sidebar .nav-link.active .menu-icon {
+        color: var(--hospital-secondary, #38bdf8) !important;
+    }
+
+    /* Small Text UNDER the Icon */
+    .ch-sidebar .menu-title {
+        display: block !important;
+        opacity: 1 !important;
+        visibility: visible !important;
+        width: 100% !important;
+        font-size: 10.5px !important;
+        line-height: 1.15 !important;
+        font-weight: 500 !important;
+        text-align: center !important;
+        color: rgba(255, 255, 255, 0.85) !important;
+        white-space: normal !important;
+        overflow: hidden !important;
+        text-overflow: ellipsis !important;
+        display: -webkit-box !important;
+        -webkit-line-clamp: 2 !important;
+        -webkit-box-orient: vertical !important;
+        word-break: break-word !important;
+        max-width: 74px !important;
+        letter-spacing: -0.2px !important;
+        margin: 0 !important;
+        padding: 0 2px !important;
+    }
+
+    .ch-sidebar .nav-item.active > .nav-link .menu-title,
+    .ch-sidebar .nav-link.active .menu-title {
+        color: #ffffff !important;
+        font-weight: 600 !important;
+    }
+
+    /* Hide arrow chevron on main rail buttons */
+    .ch-sidebar .menu-arrow {
+        display: none !important;
+    }
+
+    /* Badge indicators on tablet (e.g., unread messenger) */
+    .ch-sidebar .nav-link .badge,
+    .ch-sidebar .nav-link .notification-badge {
+        position: absolute !important;
+        top: 4px !important;
+        right: 8px !important;
+        padding: 2px 5px !important;
+        font-size: 9px !important;
+        min-width: 16px !important;
+        height: 16px !important;
+    }
+
+    /* Profile Card at Bottom on Tablet */
+    .ch-sidebar .nav-profile {
+        padding: 10px 0 !important;
+        justify-content: center !important;
+        border-top: 1px solid rgba(255, 255, 255, 0.1) !important;
+    }
+
+    .ch-sidebar .nav-profile .ch-sidebar-user-section > div,
+    .ch-sidebar .nav-profile > div {
+        padding: 0 4px !important;
+        display: flex !important;
+        flex-direction: column !important;
+        align-items: center !important;
+        width: 100% !important;
+    }
+
+    .ch-sidebar .nav-profile .ml-3,
+    .ch-sidebar .ch-sidebar-logout-btn span {
+        display: none !important;
+    }
+
+    .ch-sidebar .nav-profile .ch-sidebar-leadership-wrap {
+        display: block !important;
+        margin: 4px auto !important;
+        width: 100% !important;
+    }
+
+    .ch-sidebar .nav-profile .ch-sidebar-badge-dept-head,
+    .ch-sidebar .nav-profile .ch-sidebar-badge-unit-head {
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        font-size: 7.5px !important;
+        font-weight: 700 !important;
+        padding: 2px 4px !important;
+        max-width: 68px !important;
+        border-radius: 4px !important;
+        white-space: nowrap !important;
+        overflow: hidden !important;
+        text-overflow: ellipsis !important;
+        margin: 2px auto !important;
+    }
+
+    .ch-sidebar .nav-profile .ch-sidebar-badge-dept-head i,
+    .ch-sidebar .nav-profile .ch-sidebar-badge-unit-head i {
+        font-size: 9px !important;
+        margin-right: 2px !important;
+    }
+
+    .ch-sidebar .ch-sidebar-logout-btn {
+        width: 38px !important;
+        height: 38px !important;
+        padding: 0 !important;
+        border-radius: 8px !important;
+        margin: 6px auto 0 !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+    }
+
+    .ch-sidebar .ch-sidebar-logout-btn i {
+        margin-right: 0 !important;
+        font-size: 18px !important;
+    }
+
+    .ch-sidebar-close-btn {
+        display: none !important;
+    }
+
+    .sidebar-mobile-toggle-btn {
+        display: none !important;
+    }
+
+    /* Suppress in-flow collapse inside tablet rail:
+       Flyouts are rendered via portal #ch-sidebar-flyout to avoid overflow clipping */
+    .ch-sidebar .collapse,
+    .ch-sidebar .collapsing {
+        display: none !important;
+    }
+}
+
+/* ─────────────────────────────────────────────
+   14. RESPONSIVE: MOBILE (<768px)
+   ───────────────────────────────────────────── */
+@media (max-width: 767px) {
+    .ch-sidebar {
+        width: 280px;
+        max-width: 85vw;
+        transform: translateX(-100%);
+        left: 0;
+        box-shadow: none;
+    }
+
+    .ch-sidebar.active {
+        transform: translateX(0);
+        box-shadow: 4px 0 24px rgba(0, 0, 0, 0.2);
+    }
+
+    /* Show close button on mobile */
+    .ch-sidebar-close-btn {
+        display: flex !important;
+    }
+
+    /* Desktop toggle hidden on mobile */
+    .sidebar-toggle-btn {
+        display: none !important;
+    }
+
+    /* Force full sidebar on mobile even if icon-only class is present */
+    .sidebar-icon-only .ch-sidebar {
+        width: 280px !important;
+        max-width: 85vw;
+        transform: translateX(-100%);
+    }
+
+    .sidebar-icon-only .ch-sidebar.active {
+        transform: translateX(0);
+    }
+
+    /* Restore text visibility */
+    .sidebar-icon-only .ch-sidebar .nav-brand h6,
+    .sidebar-icon-only .ch-sidebar .nav-brand p,
+    .sidebar-icon-only .ch-sidebar .nav-brand-title,
+    .sidebar-icon-only .ch-sidebar .nav-brand-version,
+    .sidebar-icon-only .ch-sidebar .menu-title,
+    .sidebar-icon-only .ch-sidebar .menu-arrow,
+    .sidebar-icon-only .ch-sidebar .nav-item-head,
+    .sidebar-icon-only .ch-sidebar .ch-sidebar-search-wrap {
+        opacity: 1 !important;
+        visibility: visible !important;
+        width: auto !important;
+    }
+
+    /* Restore nav link layout */
+    .sidebar-icon-only .ch-sidebar .nav-link {
+        justify-content: flex-start !important;
+        width: 100% !important;
+        padding: 9px 20px !important;
+    }
+
+    .sidebar-icon-only .ch-sidebar .nav-link:hover::after,
+    .sidebar-icon-only .ch-sidebar .nav-link:hover::before {
+        display: none !important;
+    }
+
+    /* Restore profile section */
+    .sidebar-icon-only .ch-sidebar .nav-profile {
+        padding: 16px 20px !important;
+        justify-content: flex-start !important;
+    }
+
+    .sidebar-icon-only .ch-sidebar .nav-profile a {
+        justify-content: flex-start !important;
+        width: auto !important;
+    }
+
+    .sidebar-icon-only .ch-sidebar .nav-profile .ml-3,
+    .sidebar-icon-only .ch-sidebar .nav-profile .mdi-logout,
+    .sidebar-icon-only .ch-sidebar .nav-profile .ch-sidebar-profile-details {
+        display: block !important;
+    }
+
+    .sidebar-icon-only .ch-sidebar .nav-profile img {
+        margin: 0 !important;
+    }
+
+    /* Restore submenus */
+    .sidebar-icon-only .ch-sidebar .sub-menu {
+        display: block !important;
+    }
+
+    .sidebar-icon-only .ch-sidebar .collapse {
+        display: none;
+        position: static !important;
+        width: auto !important;
+        background: transparent !important;
+        box-shadow: none !important;
+    }
+
+    .sidebar-icon-only .ch-sidebar .collapse.show {
+        display: block;
+    }
+
+    .sidebar-icon-only .ch-sidebar .collapsing {
+        display: block;
+        height: 0;
+        overflow: hidden;
+        transition: height 0.35s ease;
+    }
+
+    /* Restore icon margins */
+    .sidebar-icon-only .ch-sidebar .menu-icon {
+        margin-right: 12px !important;
+        font-size: 17px !important;
+    }
+
+    /* Hide search shortcut badge on mobile */
+    .ch-sidebar-search-shortcut {
+        display: none;
+    }
+}
+
+/* Fallback: tablets in the old 768-991 range also need layout fixes */
+@media (max-width: 1199px) {
+    /* Navbar and page body adjustments handled in app.blade.php */
+}
+
+/* Hide mobile toggle button on desktop */
+@media (min-width: 1200px) {
+    .sidebar-mobile-toggle-btn {
+        display: none !important;
+    }
+}
+
+/* ─────────────────────────────────────────────
+   15. VISUAL POLISH & MICRO-ANIMATIONS
+   ───────────────────────────────────────────── */
+
+/* Smooth hover slide on nav links */
+.ch-sidebar .nav-link::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 0;
+    background: rgba(255, 255, 255, 0.1);
+    transition: width 0.2s ease;
+    pointer-events: none;
+    z-index: -1;
+}
+
+/* Focus visible ring for keyboard users */
+.ch-sidebar .nav-link:focus-visible {
+    outline: 2px solid rgba(255, 255, 255, 0.5);
+    outline-offset: -2px;
+    border-radius: 4px;
+}
+
+/* Submenu item dot indicator */
+.ch-sidebar .sub-menu .nav-link::before {
+    content: '';
+    position: absolute;
+    left: 22px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.2);
+    transition: all 0.2s ease;
+}
+
+.ch-sidebar .sub-menu .nav-link:hover::before,
+.ch-sidebar .sub-menu .nav-link.active::before {
+    background: rgba(255, 255, 255, 0.6);
+    transform: translateY(-50%) scale(1.3);
+}
+
+/* Brand logo hover effect */
+.ch-sidebar .nav-brand-logo:hover,
+.ch-sidebar .nav-brand-abbr:hover {
+    transform: scale(1.05);
+}
+
+/* ─────────────────────────────────────────────
+   16. REDUCED MOTION
+   ───────────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+    .ch-sidebar,
+    .ch-sidebar *,
+    .ch-sidebar-backdrop {
+        transition-duration: 0.01ms !important;
+        animation-duration: 0.01ms !important;
+    }
+}
+
+/* ─────────────────────────────────────────────
+   17. PRINT STYLES
+   ───────────────────────────────────────────── */
+@media print {
+    .ch-sidebar,
+    .ch-sidebar-backdrop {
+        display: none !important;
+    }
+}
