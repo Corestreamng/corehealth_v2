@@ -329,7 +329,6 @@
     .sidebar-icon-only .ch-sidebar .collapsing {
         display: none !important;
     }
-}
 
     /* Icon-only tooltip on hover (for items without submenus) */
     .sidebar-icon-only .ch-sidebar .nav-link[data-title]:not([data-toggle="collapse"]):not([data-bs-toggle="collapse"]):hover::after {
@@ -982,15 +981,26 @@ li.ch-sidebar-search-hidden,
        Icon Rail with small text under each icon
    ───────────────────────────────────────────── */
 @media (min-width: 768px) and (max-width: 1199px) {
-    /* Fixed 80px icon rail */
+    /* Fixed 80px icon rail strictly bounded */
     .ch-sidebar {
         width: 80px !important;
-        overflow: visible !important;
+        max-width: 80px !important;
+        min-width: 80px !important;
+        overflow-x: hidden !important;
+    }
+
+    .ch-sidebar .ch-sidebar-nav-scrollable {
+        width: 80px !important;
+        max-width: 80px !important;
+        overflow-x: hidden !important;
     }
 
     /* Brand Header on Tablet */
     .ch-sidebar .nav-brand {
         padding: 12px 0 !important;
+        width: 80px !important;
+        max-width: 80px !important;
+        overflow: hidden !important;
         justify-content: center !important;
         align-items: center !important;
         border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
@@ -1047,16 +1057,30 @@ li.ch-sidebar-search-hidden,
         text-align: center !important;
     }
 
-    /* Quick Search on Tablet - compact icon trigger */
+    /* Quick Search on Tablet - strictly bounded within 80px rail */
     .ch-sidebar .ch-sidebar-search-wrap {
-        padding: 8px 6px !important;
+        padding: 8px 4px !important;
+        width: 80px !important;
+        max-width: 80px !important;
+        box-sizing: border-box !important;
+        overflow: hidden !important;
+    }
+
+    .ch-sidebar .ch-sidebar-search {
+        width: 72px !important;
+        max-width: 72px !important;
+        margin: 0 auto !important;
+        overflow: hidden !important;
     }
 
     .ch-sidebar .ch-sidebar-search input {
-        padding: 6px 4px !important;
-        font-size: 10px !important;
+        width: 72px !important;
+        max-width: 72px !important;
+        padding: 6px 2px !important;
+        font-size: 9.5px !important;
         text-align: center !important;
         border-radius: 6px !important;
+        box-sizing: border-box !important;
     }
 
     .ch-sidebar .ch-sidebar-search-shortcut,
@@ -1201,7 +1225,10 @@ li.ch-sidebar-search-hidden,
 
     /* Profile Card at Bottom on Tablet */
     .ch-sidebar .nav-profile {
-        padding: 10px 0 !important;
+        padding: 8px 0 !important;
+        width: 80px !important;
+        max-width: 80px !important;
+        overflow: hidden !important;
         justify-content: center !important;
         border-top: 1px solid rgba(255, 255, 255, 0.1) !important;
     }
@@ -1212,7 +1239,9 @@ li.ch-sidebar-search-hidden,
         display: flex !important;
         flex-direction: column !important;
         align-items: center !important;
-        width: 100% !important;
+        width: 80px !important;
+        max-width: 80px !important;
+        overflow: hidden !important;
     }
 
     .ch-sidebar .nav-profile .ml-3,
@@ -1222,8 +1251,10 @@ li.ch-sidebar-search-hidden,
 
     .ch-sidebar .nav-profile .ch-sidebar-leadership-wrap {
         display: block !important;
-        margin: 4px auto !important;
-        width: 100% !important;
+        margin: 3px auto !important;
+        width: 72px !important;
+        max-width: 72px !important;
+        overflow: hidden !important;
     }
 
     .ch-sidebar .nav-profile .ch-sidebar-badge-dept-head,
@@ -1231,15 +1262,17 @@ li.ch-sidebar-search-hidden,
         display: flex !important;
         align-items: center !important;
         justify-content: center !important;
-        font-size: 7.5px !important;
+        font-size: 7px !important;
         font-weight: 700 !important;
-        padding: 2px 4px !important;
-        max-width: 68px !important;
+        padding: 2px 2px !important;
+        max-width: 64px !important;
+        width: 64px !important;
         border-radius: 4px !important;
         white-space: nowrap !important;
         overflow: hidden !important;
         text-overflow: ellipsis !important;
         margin: 2px auto !important;
+        box-sizing: border-box !important;
     }
 
     .ch-sidebar .nav-profile .ch-sidebar-badge-dept-head i,
@@ -1272,11 +1305,32 @@ li.ch-sidebar-search-hidden,
         display: none !important;
     }
 
-    /* Suppress in-flow collapse inside tablet rail:
-       Flyouts are rendered via portal #ch-sidebar-flyout to avoid overflow clipping */
+    /* Suppress in-flow collapse and submenus inside tablet rail:
+       Submenus only render via body portal #ch-sidebar-flyout to avoid overflow clipping */
     .ch-sidebar .collapse,
-    .ch-sidebar .collapsing {
+    .ch-sidebar .collapse.show,
+    .ch-sidebar .collapsing,
+    .ch-sidebar .sub-menu {
         display: none !important;
+        width: 0 !important;
+        height: 0 !important;
+        overflow: hidden !important;
+        visibility: hidden !important;
+    }
+
+    .ch-sidebar .ch-sidebar-no-results {
+        padding: 10px 4px !important;
+        font-size: 8.5px !important;
+        max-width: 76px !important;
+        overflow: hidden !important;
+        word-break: break-word !important;
+    }
+
+    .ch-sidebar .ch-sidebar-search-all-btn {
+        font-size: 7.5px !important;
+        padding: 3px 4px !important;
+        max-width: 70px !important;
+        white-space: normal !important;
     }
 }
 

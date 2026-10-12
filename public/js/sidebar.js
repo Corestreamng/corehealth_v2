@@ -279,9 +279,29 @@
     function setupSearch() {
         if (!searchInput.length) return;
 
-        // Keyboard shortcut: Ctrl+K or Cmd+K
+        // Keyboard shortcut: '/' (forward slash) to quickly filter sidebar menu
         $(document).on('keydown', function (e) {
-            if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+            var tag = (e.target.tagName || '').toLowerCase();
+            var isEditing = tag === 'input' || tag === 'textarea' || e.target.isContentEditable;
+            if (e.key === '/' && !isEditing && !e.ctrlKey && !e.metaKey && !e.altKey) {
+                e.preventDefault();
+                if (getViewportTier() !== 'desktop' && !sidebar.hasClass('active')) {
+                    openMobileDrawer();
+                }
+                searchInput.focus();
+                searchInput.select();
+            }
+        });
+
+        // Keyboard shortcut: Ctrl+K or Cmd+K fallback for mobile/sidebar drawer
+        $(document).on('keydown', function (e) {
+            if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
+                var globalInput = document.getElementById('globalSearchInput');
+                // On desktop when global topbar search is present, let global-search.js take priority
+                if (getViewportTier() === 'desktop' && globalInput) {
+                    return;
+                }
+
                 e.preventDefault();
                 if (getViewportTier() !== 'desktop' && !sidebar.hasClass('active')) {
                     openMobileDrawer();
@@ -391,8 +411,10 @@
 
                         if (subMatchCount > 0) {
                             itemHasMatch = true;
-                            item.find('.collapse').addClass('show');
-                            item.children('.nav-link').attr('aria-expanded', 'true');
+                            if (!isRailMode()) {
+                                item.find('.collapse').addClass('show');
+                                item.children('.nav-link').attr('aria-expanded', 'true');
+                            }
                         }
                     }
 
@@ -428,11 +450,22 @@
             }
         });
 
-        // Show "no results" message if no match found
+        // Show "no results" message with global search bridge if no match found
         if (!anyMatch) {
-            var noResults = $('<div class="ch-sidebar-no-results text-center py-3 text-muted" style="font-size: 13px;"><i class="mdi mdi-magnify mr-1"></i> No menu items match "<strong>' +
-                escapeHtml(term) + '</strong>"</div>');
+            var noResults = $('<div class="ch-sidebar-no-results text-center py-3">' +
+                '<div style="opacity: 0.8; margin-bottom: 8px;"><i class="mdi mdi-magnify-close mr-1"></i> No menu items match "<strong>' +
+                escapeHtml(term) + '</strong>"</div>' +
+                '<button type="button" class="ch-sidebar-search-all-btn" id="ch-sidebar-global-bridge-btn">' +
+                '<i class="mdi mdi-magnify mr-1"></i> Search all routes with Global Search' +
+                '</button>' +
+                '</div>');
             sidebar.find('.ch-sidebar-nav-scrollable').append(noResults);
+
+            noResults.find('#ch-sidebar-global-bridge-btn').on('click', function () {
+                if (typeof window.triggerGlobalSearch === 'function') {
+                    window.triggerGlobalSearch(term);
+                }
+            });
         }
     }
 
@@ -631,7 +664,7 @@
         });
 
         // Close on clicking links inside flyout
-        flyoutEl.on('click', '.nav-link', function () {
+        flyoutEl.on('click', '.ch-sidebar-flyout-link, .nav-link', function () {
             hideFlyout(true);
         });
     }
@@ -789,6 +822,8 @@
                 } else {
                     showFlyoutFor(parentItem, true);
                 }
+            } else {
+                hideFlyout(true);
             }
         });
 

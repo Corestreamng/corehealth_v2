@@ -58,6 +58,9 @@ class DatabaseSeeder extends Seeder
             // Clinical Templates
             ClinicNoteTemplateSeeder::class,
             ProcedureConsentTemplateSeeder::class,
+
+            // Navigation Route Metadata (Global Search)
+            RouteMetadataSeeder::class,
         ]);
     }
 }

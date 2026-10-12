@@ -40,6 +40,9 @@
     <!-- Sidebar Styles (extracted to standalone CSS) -->
     <link rel="stylesheet" href="{{ versioned_asset('css/sidebar.css') }}">
 
+    <!-- Navbar & Global Search Styles -->
+    <link rel="stylesheet" href="{{ versioned_asset('css/navbar.css') }}">
+
     @php
         $primaryColor = appsettings()->hos_color ?? '#011b33';
         $hoverColor = adjustBrightness($primaryColor, 20);
@@ -1735,6 +1738,9 @@
             });
         }
     </script>
+
+    <!-- Standalone Global Search Module -->
+    <script src="{{ versioned_asset('js/global-search.js') }}"></script>
 
     <!-- Standalone Sidebar Interactive Module -->
     <script src="{{ versioned_asset('js/sidebar.js') }}"></script>

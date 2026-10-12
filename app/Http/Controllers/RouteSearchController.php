@@ -26,6 +26,11 @@ class RouteSearchController extends Controller
             return response()->json([]);
         }
 
+        // Self-heal: ensure routes are populated on fresh or unseeded instances
+        if (RouteMetadata::count() === 0) {
+            \Illuminate\Support\Facades\Artisan::call('routes:scan');
+        }
+
         $user = Auth::user();
         $userRoles = $user ? $user->getRoleNames()->toArray() : [];
 
@@ -41,11 +46,20 @@ class RouteSearchController extends Controller
         $routes = RouteMetadata::filterByPermissions($routes, $user)
             ->take(15)
             ->map(function ($route) {
+                $targetUrl = $route->url;
+                if ($route->route_name && \Illuminate\Support\Facades\Route::has($route->route_name)) {
+                    try {
+                        $targetUrl = route($route->route_name, [], false);
+                    } catch (\Throwable $e) {
+                        $targetUrl = $route->url;
+                    }
+                }
+
                 return [
                     'id' => $route->id,
                     'title' => $route->title,
                     'description' => $route->description,
-                    'url' => $route->url,
+                    'url' => $targetUrl,
                     'route_name' => $route->route_name,
                     'section' => $route->section,
                     'hierarchy' => $route->hierarchy_path,
@@ -64,6 +78,11 @@ class RouteSearchController extends Controller
         $query = $request->get('q', '');
         $user = Auth::user();
         $userRoles = $user ? $user->getRoleNames()->toArray() : [];
+
+        // Self-heal: ensure routes are populated on fresh or unseeded instances
+        if (RouteMetadata::count() === 0) {
+            \Illuminate\Support\Facades\Artisan::call('routes:scan');
+        }
 
         // Default empty paginator
         $routes = new \Illuminate\Pagination\LengthAwarePaginator(

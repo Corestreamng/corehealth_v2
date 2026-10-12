@@ -1,7 +1,7 @@
 # CoreHealth v2 — Sidebar Architecture & UX Redesign
 
 **Date**: 2026-10-12  
-**Git Release Tag**: v2.6.0.39  
+**Git Release Tag**: v2.6.0.40  
 **Status**: Completed & Verified  
 
 ---
@@ -159,5 +159,16 @@ All authorization rules were audited and preserved:
 - Viewport boundary detection automatically clamps flyout positioning within visible screen dimensions.
 
 ### 6.4 Asset Cache-Busting
-- In `resources/views/admin/layouts/app.blade.php`, both `sidebar.css` and `sidebar.js` are referenced using the safe `versioned_asset('css/sidebar.css')` and `versioned_asset('js/sidebar.js')` helper function, ensuring browsers immediately load current CSS/JS bundles with fallback resilience.
+- In `resources/views/admin/layouts/app.blade.php`, both `sidebar.css`, `navbar.css`, and `sidebar.js` are referenced using the safe `versioned_asset(...)` helper function, ensuring browsers immediately load current bundles with timestamp cache-busting.
+
+### 6.5 Tablet Rail Bounds Containment & Global Search Synergy (v2.6.0.40)
+- **CSS Media Query Fix**: Resolved premature closing brace in `@media (min-width: 1200px)` in `public/css/sidebar.css` that previously caused browser parsers to drop Section 13 tablet styles.
+- **Strict 80px Rail Bounds**: Enforced `width: 80px !important; max-width: 80px !important; overflow-x: hidden !important;` on `.ch-sidebar` and `.ch-sidebar-nav-scrollable`.
+- **In-Flow Submenu Suppression**: Suppressed in-flow `.collapse.show` and `.sub-menu` during search and clicks in tablet rail mode (`display: none !important`), ensuring all submenus display exclusively via the body portal `#ch-sidebar-flyout`.
+- **Leadership Badges Containment**: Constrained `DEPT HEAD` and `UNIT HEAD` badges on tablet rail to `max-width: 64px !important; margin: 2px auto !important;`, preventing badge overflow.
+- **Topbar & Sidebar Search Synergy**: 
+  - Standardized `.navbar-search-box` container with absolute centering for search icon and `Ctrl+K` shortcut badge.
+  - Indexed 105+ core clinical and administrative routes across all 19 hospital domains in `App\Console\Commands\ScanRoutesCommand.php` and auto-seed migration.
+  - Added self-healing route population on zero metadata count and superadmin permission bypass.
+  - Linked sidebar "No results" empty state with one-click trigger to topbar global search modal.
 
