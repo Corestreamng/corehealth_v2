@@ -72,7 +72,12 @@ When working on this project, strictly adhere to the following standards across 
 - **Automated Workflow**: All commits and PRs must pass the `.github/workflows/ci.yml` pipeline (PHP 8.3 + MySQL 8.0 + asset build + lint + audit).
 - **No Hardcoded Secrets**: Inject sensitive keys via environment variables (e.g., `GOOGLE_MAPS_API_KEY`) and `.env.example`.
 - **Structured Logging**: Log events using the structured Monolog JSON channel (`config/logging.php`).
-- **Documentation**: Major architecture changes, test updates, and sprint progress must be documented in `walkthrough.md`, `README.md`, `AGENTS.md`, and `GEMINI.md`.
+- **Feature Documentation Mandate (NO walkthrough.md)**:
+  - Do NOT create or maintain `walkthrough.md` files. Purge any existing `walkthrough.md` files.
+  - For ANY feature or architectural enhancement, carefully inspect the `docs/` directory for the related documentation file. If none exists, create one (e.g., `docs/<FEATURE_NAME>.md`).
+  - All documentation files in `docs/` MUST be explicitly dated (e.g., `**Date**: YYYY-MM-DD`) and bound to their corresponding semantic Git release tag (e.g., `**Git Release Tag**: v2.X.Y.Z`).
+  - Never include local filesystem absolute paths (e.g., `/home/username/...`) in any documentation or code files; use project-relative paths only.
+  - Major architectural changes, test updates, and sprint progress must be documented in `docs/<FEATURE_NAME>.md`, `README.md`, `AGENTS.md`, and `GEMINI.md`.
 
 ## 9. Version Tagging
 - **Semantic Tagging**: Whenever completing a feature or milestone, tag the repository using `git tag` starting from `v2.5.0.4` (`git tag -a v2.X.Y.Z`). Major version increments require explicit instruction from the user.
@@ -126,4 +131,12 @@ When working on this project, strictly adhere to the following standards across 
 - **UI, Assets & Testing Standards**:
   - All frontend logic for the WeCare settings tab resides in `public/js/wecare-config.js` and must be validated with `node --check public/js/wecare-config.js`.
   - Every change to WeCare endpoints, settings, or sync behavior must be covered by PHPUnit tests in `tests/Feature/WeCare/` (e.g., `WeCareIntegrationAndSettingsTest.php`).
+
+## 12. Repository Independence & Standalone Operation Standards
+- **Complete Decoupling**: All repositories (`corehealth_v2`, `wecare247`, and `Corehealth-Super-Admin`) must be maintained so they can be cloned, developed, tested, and deployed independently without assuming a shared parent directory or sibling filesystem paths.
+- **Pure Network API Contracts**: Cross-platform communications must occur strictly via standard network HTTP REST APIs, Webhooks, or message queues.
+- **Self-Contained Documentation & Guides**: Each repository must maintain its own independent setup, testing, and operation guides under its own `docs/` folder (dated and tagged).
+- **Zero Hardcoded Environment Variables for Facility Identity**: Integration credentials must be stored per-facility in database configurations rather than hardcoded environment variables.
+- **Generic Documentation**: All documentation, guides, and testing references must use generic names (e.g., `General Hospital Example`, `Integrated Healthcare Facility`) and generic identifiers.
+
 

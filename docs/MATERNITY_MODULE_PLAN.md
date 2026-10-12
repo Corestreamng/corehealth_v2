@@ -4,7 +4,7 @@
 
 A standalone **Maternity Workbench** for tracking the complete maternal and child health journey — from ANC booking through delivery to postnatal care and child wellness monitoring up to age 5. The module serves both **doctors** and **nurses** (role: `MATERNITY`), integrates with existing lab, imaging, pharmacy, billing, and immunization systems, and follows WHO/FIGO ANC standards.
 
-> **Reference:** OLA Hospital Jos — Road to Health Card + ANC Card (attached images)
+> **Reference:** Clinical Sample — Road to Health Card + ANC Card (attached images)
 
 ---
 

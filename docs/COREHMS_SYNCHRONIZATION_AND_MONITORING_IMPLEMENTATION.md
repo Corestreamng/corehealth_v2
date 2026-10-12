@@ -1,5 +1,9 @@
 # CoreHMS Synchronization, Liveness Monitoring & Retroactive Ingest Implementation
 
+**Date**: October 10, 2026  
+**Git Release Tag**: `v2.6.0.37`  
+**Status**: Production Ready  
+
 ## 1. Overview
 This document outlines the synchronization architecture, liveness monitoring subsystem, and historical data ingest workflow between **CoreHealth v2** (hospital instance) and **CoreHMS SuperAdmin** (multi-tenant central administrative platform).
 
@@ -44,7 +48,7 @@ To ensure duplicate dispatches, network retries, and retroactive historical data
    {
      "status": true,
      "healthy": true,
-     "facility": { "id": "123", "name": "Our Lady Of Apostles Hospital, Jos", "goonline": 1, "version": "Ver. 1.0" },
+     "facility": { "id": "123", "name": "General Hospital Example", "goonline": 1, "version": "Ver. 1.0" },
      "system": {
        "php_version": "8.3.6",
        "laravel_version": "8.83.29",
