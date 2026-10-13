@@ -33,6 +33,52 @@ if (typeof window.wbRoute !== 'function') {
         var referralTablesInitialized = false;
 
         // ═══════════════════════════════════════════════════════════════
+        //  URL Deep Linking (patient_id, queue_filter, status, tab)
+        // ═══════════════════════════════════════════════════════════════
+        var urlParams = new URLSearchParams(window.location.search);
+        var deepPatientId = urlParams.get('patient_id');
+        if (deepPatientId) {
+            window.location.href = wbUrl('encounters/create?patient_id=' + encodeURIComponent(deepPatientId));
+            return;
+        }
+
+        var deepTab = urlParams.get('tab');
+        if (deepTab === 'history' || deepTab === 'admissions') {
+            setTimeout(function() {
+                var historyTab = document.getElementById('history-lists-tab');
+                if (historyTab) {
+                    if (window.bootstrap && bootstrap.Tab) {
+                        new bootstrap.Tab(historyTab).show();
+                    } else {
+                        $('#history-lists-tab').tab('show');
+                    }
+                }
+            }, 150);
+        }
+
+        var deepFilter = urlParams.get('queue_filter') || urlParams.get('status');
+        if (deepFilter) {
+            var filterMap = {
+                'waiting': '1',
+                'vitals': '2',
+                'ready': '3',
+                'consult': '4',
+                'in-progress': '4',
+                'in-consultation': '4',
+                'scheduled': '6',
+                'completed': '5',
+                'all': 'all'
+            };
+            var resolvedStatus = filterMap[deepFilter.toString().toLowerCase()] || deepFilter;
+            setTimeout(function() {
+                var $pill = $('#statusPillBar .status-pill[data-status="' + resolvedStatus + '"]');
+                if ($pill.length) {
+                    $pill.trigger('click');
+                }
+            }, 300);
+        }
+
+        // ═══════════════════════════════════════════════════════════════
         //  Main Tab: Lazy-init history tables when tab 2 is shown
         // ═══════════════════════════════════════════════════════════════
         $('#history-lists-tab').on('shown.bs.tab', function() {

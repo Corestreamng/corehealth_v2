@@ -48,6 +48,13 @@ CoreHealth v2 is designed to streamline hospital operations by integrating clini
 
 ## Core Modules
 
+### 0. Operational Cockpit Dashboard (`/home`)
+- **Zero-Scroll Viewport Geometry** — space-maximizing command center locked to `calc(100vh - 62px)` on desktop with 3px micro-scrollbars (`.dash-scrollable`).
+- **Tri-Column Division** — Pipeline (28%), Telemetry & Micro-Charts (44%), and Real-Time Activity Stream + All-Role Workbench Dock (28%).
+- **All 18 Hospital Roles Covered** — Reception, Doctor, Nursing, Pharmacy, Lab, Radiology, Surgery, Maternity, Pediatrics, Store, Billing, HMO, Accounts, Audit, HR, ESS, Morgue, Admin.
+- **Deep-Linking & Instant Intake** — direct deep-linking into workbenches; Doctor consults open directly in `encounters/create?patient_id={id}`, and queues filter automatically via URL query params (`status=waiting`, `tab=pending`).
+- **Responsive Parity** — optimized for desktop, tablet portrait/landscape, and mobile (< 768px segmented view switcher) with zero loss of data or clinical visibility.
+
 ### 1. Reception & Patient Management
 - **Patient Registration** — demographics, dependants, photo, covered by `PatientRegistrationTest`
 - **Queue Management** — doctor queue with priority routing

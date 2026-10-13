@@ -136,7 +136,14 @@ When working on this project, strictly adhere to the following standards across 
 - **Complete Decoupling**: All repositories (`corehealth_v2`, `wecare247`, and `Corehealth-Super-Admin`) must be maintained so they can be cloned, developed, tested, and deployed independently without assuming a shared parent directory or sibling filesystem paths.
 - **Pure Network API Contracts**: Cross-platform communications must occur strictly via standard network HTTP REST APIs, Webhooks, or message queues.
 - **Self-Contained Documentation & Guides**: Each repository must maintain its own independent setup, testing, and operation guides under its own `docs/` folder (dated and tagged).
-- **Zero Hardcoded Environment Variables for Facility Identity**: Integration credentials must be stored per-facility in database configurations rather than hardcoded environment variables.
 - **Generic Documentation**: All documentation, guides, and testing references must use generic names (e.g., `General Hospital Example`, `Integrated Healthcare Facility`) and generic identifiers.
 
-
+## 13. Operational Cockpit Dashboard Standards
+- **Zero-Scroll Viewport Layout**: The default `/home` route renders a space-maximizing operational cockpit (`dash-cockpit-viewport`) locked to `calc(100vh - 62px)` on desktop. Overflow within columns is managed using `.dash-scrollable` micro-scrollbars.
+- **Tri-Column Division**:
+  - Column 1 (`dash-col-pipeline`, 28%): High-density triage and departmental queues with live counts.
+  - Column 2 (`dash-col-telemetry`, 44%): 2x3 KPI matrix, dual Chart.js sparkline charts (Hourly Inflow & 7-Day Revenue Trend), and operational insights strip.
+  - Column 3 (`dash-col-ledger`, 28%): Real-time multi-department activity feed with direct deep-linking and persistent 18-role workbench launchpad dock.
+- **Complete Role Coverage**: All 18 supported hospital roles (Receptionist, Biller, Doctor, Nurse, Pharmacist, Store, Lab Scientist, Radiologist, Surgeon, Maternity, Pediatrics, Morgue, HMO Executive, Accountant, Internal Auditor, HR, ESS, Admin) are represented via dynamic perspective switcher pills and direct launcher docks.
+- **Doctor Consultation Deep Link**: Doctor queue items and activities deep link to `encounters/create?patient_id={id}` for active intake, and `encounters?status=waiting` for queue status filtering.
+- **Assets & Verification**: CSS lives in `public/css/dashboard-cockpit.css` (using `--hospital-primary` variables) and JS in `public/js/dashboard-cockpit.js` (verified with `node --check`).

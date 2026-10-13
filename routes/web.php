@@ -1167,6 +1167,7 @@ Route::get('/dashboard/chart/registrations', [App\Http\Controllers\HomeControlle
 
 // Enhanced dashboard data API (queues, insights, charts, activity)
 Route::prefix('dashboard/data')->group(function () {
+    Route::get('/cockpit-summary', [App\Http\Controllers\DashboardDataController::class, 'cockpitSummary'])->name('dashboard.data.cockpit-summary');
     Route::get('/reception', [App\Http\Controllers\DashboardDataController::class, 'receptionData'])->name('dashboard.data.reception');
     Route::get('/billing', [App\Http\Controllers\DashboardDataController::class, 'billingData'])->name('dashboard.data.billing');
     Route::get('/pharmacy', [App\Http\Controllers\DashboardDataController::class, 'pharmacyData'])->name('dashboard.data.pharmacy');

@@ -1,0 +1,1141 @@
+/* ==========================================================================
+   CoreHealth v2 — Space-Maximizing Multi-Column High-Density Cockpit
+   Zero-Scroll Viewport Layout & Dynamic Hospital Theming
+   ========================================================================== */
+
+/* ── Absolute Zero-Scroll Window Bounding on Cockpit Dashboard View ────── */
+html,
+body {
+    overflow: hidden !important;
+    height: 100vh !important;
+    max-height: 100vh !important;
+}
+
+.main-panel {
+    overflow: hidden !important;
+    height: 100vh !important;
+    max-height: 100vh !important;
+}
+
+.content-wrapper {
+    padding: 54px 8px 4px 8px !important;
+    min-height: 100vh !important;
+    height: 100vh !important;
+    max-height: 100vh !important;
+    overflow: hidden !important;
+    background: #f1f5f9 !important;
+    box-sizing: border-box !important;
+}
+
+.content-header,
+footer,
+.footer,
+.cloud {
+    display: none !important;
+}
+
+/* ── Viewport Master Container ─────────────────────────────────────────── */
+.dash-cockpit-viewport {
+    height: calc(100vh - 58px) !important;
+    max-height: calc(100vh - 58px) !important;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 0;
+    background: transparent;
+    box-sizing: border-box;
+}
+
+/* ── Top Utility Header Ribbon (Height 36px) ───────────────────────────── */
+.dash-ribbon {
+    flex: 0 0 36px;
+    height: 36px;
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 10px;
+    gap: 8px;
+    min-width: 0;
+}
+
+.dash-ribbon-left {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+}
+
+.dash-pulse-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 2px 7px;
+    border-radius: 5px;
+    background: rgba(var(--hospital-primary-rgb, 1, 27, 51), 0.08);
+    color: var(--hospital-primary, #011b33);
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.4px;
+    text-transform: uppercase;
+}
+
+.dash-pulse-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: #10b981;
+    box-shadow: 0 0 0 rgba(16, 185, 129, 0.7);
+    animation: dashPulse 2s infinite;
+}
+
+@keyframes dashPulse {
+    0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
+    70% { box-shadow: 0 0 0 6px rgba(16, 185, 129, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+}
+
+.dash-shift-badge {
+    font-size: 0.68rem;
+    font-weight: 600;
+    color: #475569;
+    background: #f1f5f9;
+    padding: 2px 6px;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+}
+
+.dash-clock {
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: #64748b;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-family: 'Inter', system-ui, sans-serif;
+}
+
+/* ── Role Perspective Switcher Bar ─────────────────────────────────────── */
+.dash-perspective-bar {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    overflow-x: auto;
+    padding: 2px 0;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+    flex: 1 1 auto;
+    min-width: 0;
+}
+.dash-perspective-bar::-webkit-scrollbar { display: none; }
+
+.dash-perspective-pill {
+    padding: 2px 8px;
+    border-radius: 5px;
+    font-size: 0.68rem;
+    font-weight: 600;
+    color: #475569;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: all 0.15s ease;
+    user-select: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+}
+.dash-perspective-pill:hover {
+    background: #e2e8f0;
+    color: #0f172a;
+    border-color: #cbd5e1;
+}
+.dash-perspective-pill.active {
+    background: var(--hospital-primary, #011b33);
+    color: #ffffff;
+    border-color: var(--hospital-primary, #011b33);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
+}
+
+.dash-ribbon-right {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-shrink: 0;
+}
+
+/* ── Ribbon Action Buttons ─────────────────────────────────────────────── */
+.dash-btn-emergency {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 3px 9px;
+    border-radius: 6px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    color: #ffffff;
+    background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+    border: 1px solid #b91c1c;
+    box-shadow: 0 1px 2px rgba(220, 38, 38, 0.2);
+    cursor: pointer;
+    transition: all 0.15s ease;
+    white-space: nowrap;
+}
+.dash-btn-emergency:hover {
+    background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+    transform: translateY(-1px);
+    box-shadow: 0 2px 5px rgba(220, 38, 38, 0.3);
+    color: #ffffff;
+}
+
+.dash-btn-primary {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 3px 9px;
+    border-radius: 6px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    color: #ffffff;
+    background: linear-gradient(135deg, var(--hospital-primary, #011b33) 0%, #1e3a8a 100%);
+    border: 1px solid var(--hospital-primary, #011b33);
+    box-shadow: 0 1px 2px rgba(1, 27, 51, 0.2);
+    cursor: pointer;
+    transition: all 0.15s ease;
+    white-space: nowrap;
+}
+.dash-btn-primary:hover {
+    opacity: 0.95;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 5px rgba(1, 27, 51, 0.3);
+    color: #ffffff;
+}
+
+.dash-sync-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 2px 7px;
+    border-radius: 12px;
+    font-size: 0.67rem;
+    font-weight: 700;
+    color: #065f46;
+    background: #ecfdf5;
+    border: 1px solid #a7f3d0;
+}
+.dash-sync-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #10b981;
+}
+.dash-sync-badge.syncing {
+    background: #eff6ff;
+    color: #1e40af;
+    border-color: #bfdbfe;
+}
+.dash-sync-badge.syncing .dash-sync-dot {
+    background: #3b82f6;
+    animation: dashPulse 1s infinite;
+}
+
+.dash-btn-refresh {
+    width: 26px;
+    height: 26px;
+    border-radius: 5px;
+    border: 1px solid #e2e8f0;
+    background: #f8fafc;
+    color: #475569;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    font-size: 0.82rem;
+}
+.dash-btn-refresh:hover {
+    background: #e2e8f0;
+    color: #0f172a;
+    border-color: #cbd5e1;
+}
+.dash-btn-refresh.spinning i {
+    animation: dashSpin 0.75s linear infinite;
+}
+
+@keyframes dashSpin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+/* ── Multi-Column Cockpit Grid (Height calc(100% - 42px)) ──────────────── */
+.dash-grid,
+.dash-grid-3col {
+    flex: 1 1 auto;
+    min-height: 0;
+    display: flex;
+    gap: 6px;
+    overflow: hidden;
+}
+
+.dash-col-pipeline {
+    flex: 0 0 28%;
+    max-width: 28%;
+    min-width: 265px;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    height: 100%;
+}
+
+.dash-col-telemetry {
+    flex: 1 1 44%;
+    min-width: 390px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    min-height: 0;
+    height: 100%;
+}
+
+.dash-col-ledger {
+    flex: 0 0 28%;
+    max-width: 28%;
+    min-width: 275px;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    height: 100%;
+}
+
+/* ── Universal Cockpit Card Container ──────────────────────────────────── */
+.dash-card {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    height: 100%;
+}
+
+.dash-card-header {
+    flex: 0 0 32px;
+    height: 32px;
+    padding: 0 10px;
+    border-bottom: 1px solid #f1f5f9;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: #ffffff;
+}
+
+.dash-card-title {
+    font-size: 0.73rem;
+    font-weight: 700;
+    color: #1e293b;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin: 0;
+}
+.dash-card-title i {
+    font-size: 0.92rem;
+    color: var(--hospital-primary, #011b33);
+}
+
+.dash-card-badge {
+    font-size: 0.67rem;
+    font-weight: 700;
+    padding: 1px 6px;
+    border-radius: 10px;
+    background: #f1f5f9;
+    color: #475569;
+}
+
+.dash-card-body {
+    flex: 1 1 0px !important;
+    min-height: 0 !important;
+    padding: 4px 6px;
+}
+
+/* ── Micro Custom Scrollbar ────────────────────────────────────────────── */
+.dash-scrollable {
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+}
+.dash-scrollable::-webkit-scrollbar {
+    width: 3px;
+}
+.dash-scrollable::-webkit-scrollbar-thumb {
+    background: rgba(var(--hospital-primary-rgb, 1, 27, 51), 0.25);
+    border-radius: 3px;
+}
+.dash-scrollable::-webkit-scrollbar-thumb:hover {
+    background: rgba(var(--hospital-primary-rgb, 1, 27, 51), 0.5);
+}
+.dash-scrollable::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+/* ── Column 1: Patient Pipeline & Queue Launchpad Items ───────────────── */
+.dash-pipeline-list {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    padding: 1px 0;
+}
+
+.dash-pipeline-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 4px 7px;
+    border-radius: 6px;
+    background: #f8fafc;
+    border: 1px solid #f1f5f9;
+    text-decoration: none;
+    color: inherit;
+    transition: all 0.15s ease;
+    cursor: pointer;
+}
+
+.dash-pipeline-item:hover {
+    background: #ffffff;
+    border-color: #cbd5e1;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.04);
+    transform: translateX(2px);
+    color: inherit;
+}
+
+.dash-pipe-left {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    min-width: 0;
+}
+
+.dash-pipe-icon {
+    width: 24px;
+    height: 24px;
+    border-radius: 5px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.82rem;
+    flex-shrink: 0;
+}
+
+.dash-pipe-text {
+    min-width: 0;
+}
+
+.dash-pipe-name {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #1e293b;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    line-height: 1.15;
+}
+
+.dash-pipe-sub {
+    font-size: 0.62rem;
+    color: #64748b;
+    white-space: nowrap;
+    line-height: 1.1;
+}
+
+.dash-pipe-right {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    flex-shrink: 0;
+}
+
+.dash-pipe-count {
+    padding: 1px 6px;
+    border-radius: 10px;
+    font-size: 0.72rem;
+    font-weight: 700;
+    min-width: 20px;
+    text-align: center;
+    transition: all 0.15s ease;
+}
+
+.dash-pipe-count.badge-zero {
+    background: #f1f5f9;
+    color: #94a3b8;
+}
+
+.dash-pipe-count.badge-active {
+    font-weight: 800;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+.dash-pipe-arrow {
+    font-size: 0.8rem;
+    color: #cbd5e1;
+    transition: transform 0.15s ease;
+}
+.dash-pipeline-item:hover .dash-pipe-arrow {
+    transform: translateX(2px);
+    color: var(--hospital-primary, #011b33);
+}
+
+/* ── Stage Color Palette ───────────────────────────────────────────────── */
+.pipe-waiting .dash-pipe-icon { background: #fef3c7; color: #d97706; }
+.pipe-waiting .badge-active   { background: #fef3c7; color: #b45309; border: 1px solid #fde68a; }
+
+.pipe-vitals .dash-pipe-icon  { background: #e0f2fe; color: #0284c7; }
+.pipe-vitals .badge-active    { background: #e0f2fe; color: #0369a1; border: 1px solid #bae6fd; }
+
+.pipe-consult .dash-pipe-icon { background: #dcfce7; color: #16a34a; }
+.pipe-consult .badge-active   { background: #dcfce7; color: #15803d; border: 1px solid #bbf7d0; }
+
+.pipe-dispense .dash-pipe-icon{ background: #f3e8ff; color: #9333ea; }
+.pipe-dispense .badge-active  { background: #f3e8ff; color: #7e22ce; border: 1px solid #e9d5ff; }
+
+.pipe-lab .dash-pipe-icon     { background: #ecfeff; color: #0891b2; }
+.pipe-lab .badge-active       { background: #ecfeff; color: #0e7490; border: 1px solid #a5f3fc; }
+
+.pipe-imaging .dash-pipe-icon { background: #ede9fe; color: #7c3aed; }
+.pipe-imaging .badge-active   { background: #ede9fe; color: #6d28d9; border: 1px solid #ddd6fe; }
+
+.pipe-theatre .dash-pipe-icon { background: #ffe4e6; color: #e11d48; }
+.pipe-theatre .badge-active   { background: #ffe4e6; color: #be123c; border: 1px solid #fecdd3; }
+
+.pipe-maternity .dash-pipe-icon { background: #fce7f3; color: #db2777; }
+.pipe-maternity .badge-active   { background: #fce7f3; color: #be185d; border: 1px solid #fbcfe8; }
+
+.pipe-admitted .dash-pipe-icon{ background: #fee2e2; color: #dc2626; }
+.pipe-admitted .badge-active  { background: #fee2e2; color: #b91c1c; border: 1px solid #fecaca; }
+
+.pipe-store .dash-pipe-icon   { background: #ffedd5; color: #ea580c; }
+.pipe-store .badge-active     { background: #ffedd5; color: #c2410c; border: 1px solid #fed7aa; }
+
+.pipe-billing .dash-pipe-icon { background: #f0fdf4; color: #059669; }
+.pipe-billing .badge-active   { background: #f0fdf4; color: #047857; border: 1px solid #bbf7d0; }
+
+.pipe-hmo .dash-pipe-icon     { background: #e0e7ff; color: #4f46e5; }
+.pipe-hmo .badge-active       { background: #e0e7ff; color: #3730a3; border: 1px solid #c7d2fe; }
+
+.pipe-hr .dash-pipe-icon      { background: #ccfbf1; color: #0d9488; }
+.pipe-hr .badge-active        { background: #ccfbf1; color: #0f766e; border: 1px solid #99f6e4; }
+
+.pipe-morgue .dash-pipe-icon  { background: #f1f5f9; color: #475569; }
+.pipe-morgue .badge-active    { background: #f1f5f9; color: #334155; border: 1px solid #e2e8f0; }
+
+/* Perspective Highlight Filters */
+.dash-pipeline-item.focused {
+    border-color: var(--hospital-primary, #011b33);
+    background: #ffffff;
+    box-shadow: 0 0 0 2px rgba(var(--hospital-primary-rgb, 1, 27, 51), 0.18);
+}
+.dash-pipeline-item.dimmed {
+    opacity: 0.4;
+}
+
+/* ── Pipeline Quick Action Dock ────────────────────────────────────────── */
+.dash-quick-dock {
+    flex: 0 0 30px !important;
+    height: 30px !important;
+    flex-shrink: 0 !important;
+    padding: 3px 6px;
+    background: #f8fafc;
+    border-top: 1px solid #e2e8f0;
+    display: flex;
+    gap: 4px;
+}
+
+.dash-dock-btn {
+    flex: 1;
+    padding: 3px 5px;
+    font-size: 0.68rem;
+    font-weight: 600;
+    border-radius: 5px;
+    text-align: center;
+    text-decoration: none !important;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 3px;
+    white-space: nowrap;
+    border: 1px solid #e2e8f0;
+    background: #ffffff;
+    color: #334155;
+    transition: all 0.15s ease;
+}
+.dash-dock-btn:hover {
+    background: #f1f5f9;
+    color: #0f172a;
+    border-color: #cbd5e1;
+}
+
+/* ── Column 2: Telemetry Top 2x3 KPI Matrix ────────────────────────────── */
+.dash-kpi-matrix {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 5px;
+    flex: 0 0 auto;
+}
+
+.dash-kpi-tile {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 7px;
+    padding: 5px 8px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+    min-height: 54px;
+    text-decoration: none !important;
+    color: inherit !important;
+}
+.dash-kpi-tile:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
+    border-color: #cbd5e1;
+}
+
+.dash-kpi-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 2px;
+}
+
+.dash-kpi-label {
+    font-size: 0.66rem;
+    font-weight: 700;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    white-space: nowrap;
+}
+
+.dash-kpi-icon {
+    font-size: 0.85rem;
+    color: #94a3b8;
+}
+
+.dash-kpi-val {
+    font-size: 1.18rem;
+    font-weight: 800;
+    color: #0f172a;
+    line-height: 1.1;
+    margin-bottom: 2px;
+}
+
+.dash-kpi-unit {
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: #64748b;
+}
+
+.dash-kpi-sub {
+    font-size: 0.62rem;
+    color: #64748b;
+    display: flex;
+    align-items: center;
+    gap: 3px;
+    white-space: nowrap;
+}
+
+.kpi-tile-revenue:hover .dash-kpi-icon { color: #10b981; }
+.kpi-tile-occupancy:hover .dash-kpi-icon { color: #0284c7; }
+.kpi-tile-vitals:hover .dash-kpi-icon { color: #06b6d4; }
+.kpi-tile-pharmacy:hover .dash-kpi-icon { color: #8b5cf6; }
+.kpi-tile-lab:hover .dash-kpi-icon { color: #0d9488; }
+.kpi-tile-stock:hover .dash-kpi-icon { color: #ef4444; }
+
+/* ── Telemetry Center: Dual Micro Sparklines (Height 140px) ────────────── */
+.dash-charts-row {
+    flex: 0 0 140px;
+    height: 140px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 5px;
+    min-height: 0;
+}
+
+.dash-chart-card {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 7px;
+    padding: 5px 7px;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    height: 100%;
+}
+
+.dash-chart-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 2px;
+    flex: 0 0 auto;
+}
+
+.dash-chart-title {
+    font-size: 0.7rem;
+    font-weight: 700;
+    color: #334155;
+    text-transform: uppercase;
+    display: flex;
+    align-items: center;
+}
+
+.dash-chart-badge {
+    font-size: 0.63rem;
+    font-weight: 600;
+    color: #64748b;
+    background: #f1f5f9;
+    padding: 1px 5px;
+    border-radius: 4px;
+}
+
+.dash-chart-canvas-wrap {
+    flex: 1 1 auto;
+    position: relative;
+    min-height: 0;
+    width: 100%;
+    height: calc(100% - 22px);
+}
+
+/* ── Telemetry Bottom: Live Operational Insights Strip ─────────────────── */
+.dash-insights-box {
+    flex: 1 1 auto;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+.dash-insights-box .dash-card-header {
+    flex: 0 0 30px;
+    height: 30px;
+}
+
+.dash-insights-list {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+}
+
+.dash-insight-pill {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    padding: 4px 7px;
+    border-radius: 6px;
+    font-size: 0.72rem;
+    line-height: 1.25;
+    transition: all 0.15s ease;
+    cursor: default;
+}
+.dash-insight-pill i {
+    font-size: 0.9rem;
+    flex-shrink: 0;
+}
+
+.insight-urgent,
+.insight-danger {
+    background: #fef2f2;
+    color: #991b1b;
+    border: 1px solid #fecaca;
+}
+.insight-warning {
+    background: #fffbeb;
+    color: #92400e;
+    border: 1px solid #fde68a;
+}
+.insight-action,
+.insight-primary,
+.insight-info {
+    background: #eff6ff;
+    color: #1e40af;
+    border: 1px solid #bfdbfe;
+}
+.insight-ok {
+    background: #ecfdf5;
+    color: #065f46;
+    border: 1px solid #a7f3d0;
+}
+
+/* ── Column 3: Live Patient Activity Ledger Table ──────────────────────── */
+.dash-col-ledger .table-responsive {
+    overflow-x: hidden !important;
+}
+
+.dash-ledger-table {
+    width: 100%;
+    table-layout: fixed;
+    border-collapse: collapse;
+}
+
+.dash-ledger-table th {
+    font-size: 0.66rem;
+    font-weight: 700;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    padding: 3px 5px;
+    background: #f8fafc;
+    border-bottom: 1px solid #e2e8f0;
+    text-align: left;
+    position: sticky;
+    top: 0;
+    z-index: 5;
+}
+
+.dash-ledger-table .col-patient { width: 34%; }
+.dash-ledger-table .col-dept    { width: 17%; }
+.dash-ledger-table .col-event   { width: 27%; }
+.dash-ledger-table .col-status  { width: 22%; text-align: right; }
+
+.dash-ledger-row {
+    border-bottom: 1px solid #f1f5f9;
+    cursor: pointer;
+    transition: background 0.15s ease;
+}
+.dash-ledger-row:hover {
+    background: #f8fafc;
+}
+
+.dash-ledger-row td {
+    padding: 4px 5px;
+    font-size: 0.72rem;
+    color: #334155;
+    vertical-align: middle;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.dash-patient-name {
+    font-weight: 700;
+    color: #0f172a;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.dash-patient-file {
+    font-size: 0.62rem;
+    color: #64748b;
+    font-family: monospace;
+}
+
+.dash-dept-pill {
+    display: inline-block;
+    padding: 1px 4px;
+    border-radius: 4px;
+    font-size: 0.62rem;
+    font-weight: 700;
+    text-transform: uppercase;
+}
+.badge-dept-doctor   { background: #dcfce7; color: #166534; }
+.badge-dept-nursing  { background: #e0f2fe; color: #0369a1; }
+.badge-dept-pharmacy { background: #f3e8ff; color: #7e22ce; }
+.badge-dept-lab      { background: #ecfeff; color: #0e7490; }
+.badge-dept-billing  { background: #f0fdf4; color: #047857; }
+.badge-dept-surgery  { background: #ffe4e6; color: #be123c; }
+.badge-dept-store    { background: #ffedd5; color: #c2410c; }
+.badge-dept-default  { background: #f1f5f9; color: #475569; }
+
+.dash-event-text {
+    display: block;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    font-size: 0.71rem;
+}
+
+.dash-status-pill {
+    display: inline-block;
+    padding: 1px 4px;
+    border-radius: 4px;
+    font-size: 0.61rem;
+    font-weight: 700;
+}
+.badge-status-success  { background: #dcfce7; color: #166534; }
+.badge-status-warning  { background: #fef3c7; color: #b45309; }
+.badge-status-danger   { background: #fee2e2; color: #b91c1c; }
+.badge-status-primary  { background: #dbeafe; color: #1e40af; }
+.badge-status-purple   { background: #f3e8ff; color: #7e22ce; }
+.badge-status-secondary{ background: #f1f5f9; color: #475569; }
+
+.dash-event-time {
+    font-size: 0.6rem;
+    color: #94a3b8;
+    margin-top: 1px;
+}
+
+/* ── All-Role Workbench Rapid Launch Dock ──────────────────────────────── */
+.dash-dock-container {
+    padding: 4px 6px;
+    background: #f8fafc;
+    border-top: 1px solid #e2e8f0;
+    flex-shrink: 0;
+}
+
+.dash-dock-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 2px;
+    padding: 0 2px;
+}
+
+.dash-dock-title {
+    font-size: 0.67rem;
+    font-weight: 700;
+    color: #334155;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+}
+
+.dash-role-dock {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 3px;
+}
+
+.dash-dock-tile {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 3px 2px;
+    min-height: 36px;
+    border-radius: 5px;
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    text-decoration: none !important;
+    color: #475569;
+    font-size: 0.61rem;
+    font-weight: 600;
+    text-align: center;
+    transition: all 0.15s ease;
+    user-select: none;
+    line-height: 1.1;
+}
+.dash-dock-tile i {
+    font-size: 0.85rem;
+    color: var(--hospital-primary, #011b33);
+    margin-bottom: 1px;
+    transition: color 0.15s ease;
+}
+.dash-dock-tile:hover {
+    background: var(--hospital-primary, #011b33);
+    color: #ffffff !important;
+    border-color: var(--hospital-primary, #011b33);
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+.dash-dock-tile:hover i {
+    color: #ffffff !important;
+}
+
+/* ==========================================================================
+   RESPONSIVE DESIGN SYSTEM (Tablets & Mobile: Landscape & Portrait)
+   No Information Lost Due to Screen Size
+   ========================================================================== */
+
+/* ── Tablet Landscape (992px to 1199.98px) ─────────────────────────────── */
+@media (max-width: 1199.98px) {
+    .dash-col-pipeline {
+        flex: 0 0 29%;
+        max-width: 29%;
+    }
+    .dash-col-telemetry {
+        flex: 1 1 42%;
+    }
+    .dash-col-ledger {
+        flex: 0 0 29%;
+        max-width: 29%;
+    }
+    .dash-role-dock {
+        grid-template-columns: repeat(4, 1fr);
+    }
+}
+
+/* ── Tablet Portrait (768px to 991.98px) ───────────────────────────────── */
+@media (max-width: 991.98px) {
+    html:has(.dash-cockpit-viewport),
+    body:has(.dash-cockpit-viewport) {
+        overflow-y: auto !important;
+        height: auto !important;
+    }
+    body:has(.dash-cockpit-viewport) .main-panel {
+        overflow-y: auto !important;
+        height: auto !important;
+    }
+    .content-wrapper {
+        height: auto !important;
+        min-height: 100vh !important;
+        overflow-y: auto !important;
+    }
+    .dash-cockpit-viewport {
+        height: auto;
+        max-height: none;
+        overflow-y: visible !important;
+        padding: 4px;
+    }
+    .dash-ribbon {
+        height: auto;
+        padding: 6px 8px;
+        flex-wrap: wrap;
+    }
+    .dash-grid,
+    .dash-grid-3col {
+        flex-direction: column;
+        overflow: visible;
+        height: auto;
+    }
+    .dash-col-pipeline,
+    .dash-col-telemetry,
+    .dash-col-ledger {
+        flex: 1 1 auto;
+        max-width: 100%;
+        width: 100%;
+        min-width: 0;
+        height: auto;
+    }
+    .dash-col-pipeline { min-height: 280px; }
+    .dash-col-telemetry { min-height: 460px; }
+    .dash-col-ledger { min-height: 380px; }
+    .dash-scrollable {
+        max-height: 280px;
+    }
+    .dash-charts-row {
+        flex: 0 0 150px;
+        height: 150px;
+    }
+}
+
+/* ── Mobile Devices (< 767.98px) Portrait & Landscape ──────────────────── */
+@media (max-width: 767.98px) {
+    html:has(.dash-cockpit-viewport),
+    body:has(.dash-cockpit-viewport) {
+        overflow-y: auto !important;
+        height: auto !important;
+    }
+    body:has(.dash-cockpit-viewport) .main-panel {
+        overflow-y: auto !important;
+        height: auto !important;
+    }
+    .content-wrapper {
+        height: auto !important;
+        min-height: 100vh !important;
+        overflow-y: auto !important;
+    }
+    .dash-cockpit-viewport {
+        height: auto;
+        max-height: none;
+        overflow-y: visible !important;
+        padding: 4px;
+        gap: 6px;
+    }
+    .dash-ribbon {
+        height: auto;
+        flex-direction: column;
+        align-items: stretch;
+        gap: 5px;
+        padding: 5px 7px;
+    }
+    .dash-ribbon-left {
+        justify-content: space-between;
+    }
+    .dash-ribbon-right {
+        justify-content: space-between;
+        flex-wrap: wrap;
+    }
+    .dash-perspective-bar {
+        width: 100%;
+        padding-bottom: 3px;
+    }
+
+    /* Mobile Segmented View Control */
+    .dash-mobile-tabs {
+        display: flex !important;
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 7px;
+        padding: 3px;
+        gap: 4px;
+        margin-bottom: 4px;
+    }
+    .dash-mobile-tab-btn {
+        flex: 1;
+        padding: 5px 4px;
+        border-radius: 5px;
+        font-size: 0.7rem;
+        font-weight: 700;
+        text-align: center;
+        border: none;
+        background: transparent;
+        color: #64748b;
+        cursor: pointer;
+        transition: all 0.15s ease;
+    }
+    .dash-mobile-tab-btn.active {
+        background: var(--hospital-primary, #011b33);
+        color: #ffffff;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    }
+
+    .dash-grid,
+    .dash-grid-3col {
+        flex-direction: column;
+    }
+
+    /* Mobile column switching */
+    .dash-column {
+        display: none !important;
+    }
+    .dash-column.mobile-active {
+        display: flex !important;
+    }
+
+    .dash-kpi-matrix {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 4px;
+    }
+    .dash-kpi-tile {
+        padding: 5px 6px;
+        min-height: 48px;
+    }
+    .dash-kpi-val {
+        font-size: 1.05rem;
+    }
+
+    .dash-charts-row {
+        grid-template-columns: 1fr;
+        height: auto;
+        flex: 0 0 auto;
+        gap: 5px;
+    }
+    .dash-chart-card {
+        height: 130px;
+    }
+
+    .dash-role-dock {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+/* Mobile Tabs Wrapper Hidden on Desktop/Tablet */
+.dash-mobile-tabs {
+    display: none;
+}
