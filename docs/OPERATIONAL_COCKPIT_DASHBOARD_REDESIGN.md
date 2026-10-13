@@ -1,7 +1,7 @@
 # CoreHealth v2 — Operational Cockpit Dashboard Redesign
 
 **Date**: 2026-10-13  
-**Git Release Tag**: `v2.6.0.45`  
+**Git Release Tag**: `v2.6.0.46`  
 **Status**: Completed & Verified  
 
 ---
@@ -114,3 +114,7 @@ The default `/home` route has been completely transformed into a space-maximizin
      - Bottom margin: Clean 22px margin between cockpit cards and footer (`padding-bottom: 74px / 76px`).
      - Footer styling: Standard CoreHealth layout footer appearance restored (`#f5f5f5` background, `1px solid #e0e0e0` top border, 13px muted typography, dynamic `--hospital-primary` link color).
      - Viewport containment: Zero browser window scrollbars; micro-scrollbars handle overflow strictly within column containers.
+6. **Departmental Operational Insights Normalization**:
+   - Resolved `undefined` text bug in Hospital Cockpit domain insights strip.
+   - Normalized payload schema in `DashboardDataController.php` and `dashboard-cockpit.js` to guarantee both `desc` / `message` and `color` / `severity` are seamlessly handled.
+   - Added `.insight-success` class in `dashboard-cockpit.css` for clear visual distinction across green, yellow, blue, and red alert badges.

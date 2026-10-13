@@ -913,7 +913,8 @@ body.dark-mode .footer .text-muted {
     color: #1e40af;
     border: 1px solid #bfdbfe;
 }
-.insight-ok {
+.insight-ok,
+.insight-success {
     background: #ecfdf5;
     color: #065f46;
     border: 1px solid #a7f3d0;

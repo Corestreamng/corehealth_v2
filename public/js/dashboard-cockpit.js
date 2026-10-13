@@ -325,10 +325,14 @@
                 $insightsContainer.html('<div class="dash-insight-pill insight-ok"><i class="mdi mdi-check-circle"></i> Operational parameters within nominal benchmarks</div>');
             } else {
                 insights.forEach(function (ins) {
-                    var color = ins.color || 'info';
+                    var color = ins.color || ins.severity || 'info';
+                    if (color === 'success') color = 'ok';
+                    var icon = ins.icon || 'mdi-information-outline';
+                    var desc = ins.desc || ins.message || ins.text || '';
+                    var title = ins.title || 'Insight';
                     var pillHtml = '<div class="dash-insight-pill insight-' + color + '">' +
-                        '<i class="mdi ' + ins.icon + '"></i>' +
-                        '<span><strong>' + ins.title + ':</strong> ' + ins.desc + '</span>' +
+                        '<i class="mdi ' + icon + '"></i>' +
+                        '<span><strong>' + title + ':</strong> ' + desc + '</span>' +
                     '</div>';
                     $insightsContainer.append(pillHtml);
                 });

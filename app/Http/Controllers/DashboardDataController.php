@@ -490,7 +490,19 @@ class DashboardDataController extends Controller
                     'queue_title' => 'Live Activity Stream',
                     'queue_badge' => 'Multi-Dept',
                     'queue_items' => $sortedLedger,
-                    'insights' => array_slice($insights, 0, 4),
+                    'insights' => array_map(function ($ins) {
+                        $msg = $ins['message'] ?? ($ins['desc'] ?? '');
+                        $color = $ins['color'] ?? ($ins['severity'] ?? 'info');
+                        return [
+                            'type' => $ins['type'] ?? 'info',
+                            'severity' => $color,
+                            'color' => $color,
+                            'icon' => $ins['icon'] ?? 'mdi-information-outline',
+                            'title' => $ins['title'] ?? 'Insight',
+                            'message' => $msg,
+                            'desc' => $msg,
+                        ];
+                    }, array_slice($insights, 0, 4)),
                 ],
                 'receptionist' => [
                     'domain' => 'receptionist',
