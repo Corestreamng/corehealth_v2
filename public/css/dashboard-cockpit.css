@@ -20,17 +20,19 @@ body {
 }
 
 .content-wrapper {
-    padding: 58px 24px 6px 24px !important;
+    padding: 76px 24px 74px 24px !important;
     flex: 1 1 auto !important;
     min-height: 0 !important;
+    height: 100vh !important;
+    max-height: 100vh !important;
     overflow: hidden !important;
-    background: #f8fafc !important;
+    background: #f5f5f5 !important;
     box-sizing: border-box !important;
 }
 
 @media (min-width: 1400px) {
     .content-wrapper {
-        padding: 60px 32px 8px 32px !important;
+        padding: 78px 32px 76px 32px !important;
     }
 }
 
@@ -39,25 +41,77 @@ body {
     display: none !important;
 }
 
-/* ── Layout Footer Display Anchored at Bottom ───────────────────────────── */
+/* ── Layout Footer Display Anchored at Bottom (Standard Hospital Look) ─── */
 footer,
 .footer {
     display: block !important;
-    flex: 0 0 auto !important;
-    padding: 6px 24px !important;
-    background: #ffffff !important;
-    border-top: 1px solid #e2e8f0 !important;
-    font-size: 0.72rem !important;
-    color: #64748b !important;
-    line-height: 1.2 !important;
-    z-index: 10 !important;
+    position: fixed !important;
+    bottom: 0 !important;
+    left: 250px !important;
+    width: calc(100% - 250px) !important;
+    background: #f5f5f5 !important;
+    border-top: 1px solid #e0e0e0 !important;
+    padding: 16px 24px !important;
+    font-size: 13px !important;
+    color: #666666 !important;
+    line-height: 1.5 !important;
+    z-index: 998 !important;
+    box-sizing: border-box !important;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.sidebar-icon-only footer,
+.sidebar-icon-only .footer {
+    left: 70px !important;
+    width: calc(100% - 70px) !important;
 }
 
 @media (min-width: 1400px) {
     footer,
     .footer {
-        padding: 6px 32px !important;
+        padding: 18px 32px !important;
     }
+}
+
+@media (max-width: 991.98px) {
+    footer,
+    .footer {
+        left: 80px !important;
+        width: calc(100% - 80px) !important;
+    }
+}
+
+@media (max-width: 767.98px) {
+    footer,
+    .footer {
+        left: 0 !important;
+        width: 100% !important;
+    }
+}
+
+.footer .text-muted {
+    font-size: 13px !important;
+    color: #666666 !important;
+}
+
+.footer a {
+    color: var(--hospital-primary, #011b33) !important;
+    font-weight: 500 !important;
+    text-decoration: none !important;
+}
+
+.footer a:hover {
+    text-decoration: underline !important;
+}
+
+body.dark-mode footer,
+body.dark-mode .footer {
+    background: #1a1a1a !important;
+    border-top-color: #3d3d3d !important;
+}
+
+body.dark-mode .footer .text-muted {
+    color: #a0a0a0 !important;
 }
 
 .footer .container-fluid,
@@ -77,7 +131,7 @@ footer,
     overflow: hidden;
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: 10px;
     padding: 0;
     background: transparent;
     box-sizing: border-box;

@@ -1,7 +1,7 @@
 # CoreHealth v2 — Operational Cockpit Dashboard Redesign
 
 **Date**: 2026-10-13  
-**Git Release Tag**: `v2.6.0.44`  
+**Git Release Tag**: `v2.6.0.45`  
 **Status**: Completed & Verified  
 
 ---
@@ -11,7 +11,7 @@
 The default `/home` route has been completely transformed into a space-maximizing, zero-scroll operational cockpit. The cockpit functions as the command center for the entire hospital, featuring an interactive domain-driven engine where operational pipeline stages contextually drive telemetry, charts, shortcuts, and actionable live queues across Columns 2 & 3 without full page refreshes.
 
 ### Key Objectives Achieved:
-1. **Zero-Scroll Viewport Lock with Persistent Layout Footer**: Viewport locked strictly to desktop screen bounds with zero window vertical scrollbars. The layout footer (`admin.partials.footer`) is anchored at the bottom, and generous margins (28px - 36px) eliminate edge-hugging. Internal micro-scrollbars (`.dash-scrollable`) manage overflow within bounded columns.
+1. **Zero-Scroll Viewport Lock with Restored Standard Hospital Footer & Refined Margins**: Viewport locked strictly to desktop screen bounds with zero window vertical scrollbars. Generous top margin (16px - 18px below navbar) and bottom margin (20px - 24px above footer) provide comfortable breathing room. The standard CoreHealth layout footer (`#f5f5f5` background, `1px solid #e0e0e0` top border, 13px muted typography, hospital primary branding link) is faithfully restored, matching all other pages across the application. Internal micro-scrollbars (`.dash-scrollable`) manage overflow within bounded columns.
 2. **Contextual Domain-Driven Tri-Column Architecture**:
    - **Column 1 (28%)**: Operational Pipeline organized into 6 operational tiers (Executive Overview, Clinical & Consultations, Diagnostics & Investigations, Pharmacy & Supply Chain, Inpatients & Surgical Care, Revenue & Governance). Features role-scoped badges (`MY SPECIALTY`, `MY ROLE`), live counts, and interactive pipeline stage selectors.
    - **Column 2 (44%)**: Dynamic Domain Telemetry featuring 6 granular, intensive KPI cards strictly tailored to the selected domain (e.g., Lab displays specimen and test metrics with zero revenue figures; Doctor displays consultation queues and inpatients; Pharmacy displays dispensing and stock health), adaptive micro-charts, and proactive clinical insight alerts.
@@ -108,3 +108,9 @@ The default `/home` route has been completely transformed into a space-maximizin
    - Verified via `tools/vendor/bin/php-cs-fixer fix --dry-run` on modified controllers and test suites (Clean).
 4. **View Render Test**:
    - Verified via tinker: `view('admin.home')->render()` renders 495KB of semantic markup with all partials cleanly included.
+5. **Layout & Visual Verification**:
+   - Verified in headless browser at 1920x953 viewport:
+     - Top margin: Clean 18px breathing space below fixed navbar (`padding-top: 76px / 78px`).
+     - Bottom margin: Clean 22px margin between cockpit cards and footer (`padding-bottom: 74px / 76px`).
+     - Footer styling: Standard CoreHealth layout footer appearance restored (`#f5f5f5` background, `1px solid #e0e0e0` top border, 13px muted typography, dynamic `--hospital-primary` link color).
+     - Viewport containment: Zero browser window scrollbars; micro-scrollbars handle overflow strictly within column containers.
