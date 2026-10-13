@@ -12,36 +12,72 @@ body {
 }
 
 .main-panel {
-    overflow: hidden !important;
+    display: flex !important;
+    flex-direction: column !important;
     height: 100vh !important;
     max-height: 100vh !important;
+    overflow: hidden !important;
 }
 
 .content-wrapper {
-    padding: 54px 8px 4px 8px !important;
-    min-height: 100vh !important;
-    height: 100vh !important;
-    max-height: 100vh !important;
+    padding: 58px 24px 6px 24px !important;
+    flex: 1 1 auto !important;
+    min-height: 0 !important;
     overflow: hidden !important;
-    background: #f1f5f9 !important;
+    background: #f8fafc !important;
     box-sizing: border-box !important;
 }
 
+@media (min-width: 1400px) {
+    .content-wrapper {
+        padding: 60px 32px 8px 32px !important;
+    }
+}
+
 .content-header,
-footer,
-.footer,
 .cloud {
     display: none !important;
 }
 
+/* ── Layout Footer Display Anchored at Bottom ───────────────────────────── */
+footer,
+.footer {
+    display: block !important;
+    flex: 0 0 auto !important;
+    padding: 6px 24px !important;
+    background: #ffffff !important;
+    border-top: 1px solid #e2e8f0 !important;
+    font-size: 0.72rem !important;
+    color: #64748b !important;
+    line-height: 1.2 !important;
+    z-index: 10 !important;
+}
+
+@media (min-width: 1400px) {
+    footer,
+    .footer {
+        padding: 6px 32px !important;
+    }
+}
+
+.footer .container-fluid,
+.footer .d-sm-flex {
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    width: 100% !important;
+}
+
 /* ── Viewport Master Container ─────────────────────────────────────────── */
 .dash-cockpit-viewport {
-    height: calc(100vh - 58px) !important;
-    max-height: calc(100vh - 58px) !important;
+    height: 100% !important;
+    max-height: 100% !important;
     overflow: hidden;
     display: flex;
     flex-direction: column;
-    gap: 6px;
+    gap: 8px;
     padding: 0;
     background: transparent;
     box-sizing: border-box;
@@ -272,13 +308,13 @@ footer,
     to { transform: rotate(360deg); }
 }
 
-/* ── Multi-Column Cockpit Grid (Height calc(100% - 42px)) ──────────────── */
+/* ── Multi-Column Cockpit Grid (Height calc(100% - 44px)) ──────────────── */
 .dash-grid,
 .dash-grid-3col {
     flex: 1 1 auto;
     min-height: 0;
     display: flex;
-    gap: 6px;
+    gap: 12px;
     overflow: hidden;
 }
 
@@ -393,18 +429,39 @@ footer,
     padding: 1px 0;
 }
 
+.dash-pipe-section-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 6px 10px 4px 10px;
+    font-size: 0.65rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: #64748b;
+    border-bottom: 1px solid #f1f5f9;
+    background: #f8fafc;
+    margin-top: 5px;
+    margin-bottom: 2px;
+}
+.dash-pipe-section-head i {
+    font-size: 0.82rem;
+    color: #94a3b8;
+}
+
 .dash-pipeline-item {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 4px 7px;
+    padding: 5px 8px;
     border-radius: 6px;
     background: #f8fafc;
     border: 1px solid #f1f5f9;
     text-decoration: none;
     color: inherit;
-    transition: all 0.15s ease;
+    transition: all 0.18s ease;
     cursor: pointer;
+    position: relative;
 }
 
 .dash-pipeline-item:hover {
@@ -413,6 +470,42 @@ footer,
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.04);
     transform: translateX(2px);
     color: inherit;
+}
+
+.dash-pipeline-item.active-pipeline {
+    background: #ffffff !important;
+    border-color: rgba(var(--hospital-primary-rgb, 1, 27, 51), 0.35) !important;
+    border-left: 4px solid var(--hospital-primary, #011b33) !important;
+    box-shadow: 0 3px 10px rgba(1, 27, 51, 0.08) !important;
+}
+
+.dash-pipeline-item.active-pipeline .active-dot {
+    display: inline-block !important;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #10b981;
+    margin-left: 6px;
+    box-shadow: 0 0 6px #10b981;
+    vertical-align: middle;
+}
+
+.active-dot {
+    display: none;
+}
+
+.dash-role-badge {
+    display: inline-block;
+    background: rgba(16, 185, 129, 0.12);
+    color: #047857;
+    font-size: 0.58rem;
+    font-weight: 700;
+    padding: 1px 5px;
+    border-radius: 3px;
+    text-transform: uppercase;
+    margin-left: 5px;
+    border: 1px solid rgba(16, 185, 129, 0.25);
+    vertical-align: middle;
 }
 
 .dash-pipe-left {
@@ -945,6 +1038,132 @@ footer,
 }
 .dash-dock-tile:hover i {
     color: #ffffff !important;
+}
+
+/* ── Contextual Domain Shortcuts Dock Grid & Cards ─────────────────────── */
+.dash-shortcuts-custom-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 5px;
+}
+
+.dash-shortcut-card {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    padding: 5px 8px;
+    border-radius: 6px;
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    text-decoration: none !important;
+    transition: all 0.16s ease;
+    min-height: 40px;
+}
+
+.dash-shortcut-card:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.06);
+    border-color: #cbd5e1;
+}
+
+.dash-shortcut-card-icon {
+    width: 26px;
+    height: 26px;
+    border-radius: 5px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.95rem;
+    flex-shrink: 0;
+}
+
+.dash-shortcut-card-info {
+    min-width: 0;
+    flex: 1 1 auto;
+}
+
+.dash-shortcut-card-title {
+    font-size: 0.7rem;
+    font-weight: 700;
+    color: #1e293b;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    line-height: 1.2;
+}
+
+.dash-shortcut-card-sub {
+    font-size: 0.6rem;
+    color: #64748b;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Shortcut Card Color Variants */
+.shortcut-primary .dash-shortcut-card-icon { background: rgba(var(--hospital-primary-rgb, 1, 27, 51), 0.1); color: var(--hospital-primary, #011b33); }
+.shortcut-success .dash-shortcut-card-icon { background: rgba(16, 185, 129, 0.12); color: #059669; }
+.shortcut-warning .dash-shortcut-card-icon { background: rgba(245, 158, 11, 0.12); color: #d97706; }
+.shortcut-danger .dash-shortcut-card-icon  { background: rgba(239, 68, 68, 0.12); color: #dc2626; }
+.shortcut-info .dash-shortcut-card-icon    { background: rgba(14, 165, 233, 0.12); color: #0284c7; }
+.shortcut-purple .dash-shortcut-card-icon  { background: rgba(147, 51, 234, 0.12); color: #7c3aed; }
+.shortcut-teal .dash-shortcut-card-icon    { background: rgba(20, 184, 166, 0.12); color: #0d9488; }
+
+/* ── High-Impact 1-Click Primary Action Buttons in Live Queue Stream ────── */
+.btn-action-sm {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 3px 8px;
+    font-size: 0.68rem;
+    font-weight: 700;
+    border-radius: 4px;
+    text-decoration: none !important;
+    transition: all 0.15s ease;
+    white-space: nowrap;
+    border: 1px solid transparent;
+    cursor: pointer;
+}
+
+.btn-action-sm:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.14);
+}
+
+.btn-action-sm.btn-primary {
+    background: var(--hospital-primary, #011b33);
+    color: #ffffff !important;
+    border-color: var(--hospital-primary, #011b33);
+}
+
+.btn-action-sm.btn-success {
+    background: #10b981;
+    color: #ffffff !important;
+    border-color: #059669;
+}
+
+.btn-action-sm.btn-warning {
+    background: #f59e0b;
+    color: #ffffff !important;
+    border-color: #d97706;
+}
+
+.btn-action-sm.btn-danger {
+    background: #ef4444;
+    color: #ffffff !important;
+    border-color: #dc2626;
+}
+
+.btn-action-sm.btn-teal {
+    background: #0d9488;
+    color: #ffffff !important;
+    border-color: #0f766e;
+}
+
+.btn-action-sm.btn-purple {
+    background: #7c3aed;
+    color: #ffffff !important;
+    border-color: #6d28d9;
 }
 
 /* ==========================================================================

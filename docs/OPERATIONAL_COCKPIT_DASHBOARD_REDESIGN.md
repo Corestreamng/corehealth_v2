@@ -1,22 +1,23 @@
 # CoreHealth v2 — Operational Cockpit Dashboard Redesign
 
 **Date**: 2026-10-13  
-**Git Release Tag**: `v2.6.0.42`  
+**Git Release Tag**: `v2.6.0.44`  
 **Status**: Completed & Verified  
 
 ---
 
 ## 1. Executive Summary
 
-The default `/home` route has been completely transformed from a legacy tabbed Blade view into a modern, space-maximizing, zero-scroll operational cockpit. The new design acts as the central command center for the entire hospital, synthesizing clinical, diagnostic, inventory, inpatient, and financial activities into a high-density, multi-column dashboard with instant deep-linking to all departmental workbenches.
+The default `/home` route has been completely transformed into a space-maximizing, zero-scroll operational cockpit. The cockpit functions as the command center for the entire hospital, featuring an interactive domain-driven engine where operational pipeline stages contextually drive telemetry, charts, shortcuts, and actionable live queues across Columns 2 & 3 without full page refreshes.
 
 ### Key Objectives Achieved:
-1. **Zero-Scroll Viewport Lock (Desktop)**: Viewport locked strictly to `100vh - 62px` with zero browser scrollbar on desktop workstations. Internal micro-scrollbars (`.dash-scrollable`, 3px slim track) manage overflow within bounded columns.
-2. **Tri-Column High-Density Geometry**:
-   - **Column 1 (28%)**: Operational Pipeline & Triage Queues with live counter badges, pulse indicators, and 1-click deep links.
-   - **Column 2 (44%)**: Clinical Telemetry & Analytics featuring a 2x3 KPI matrix, dual micro-charts (Hourly Patient Flow & 7-Day Revenue Trend), and proactive operational insight alerts.
-   - **Column 3 (28%)**: Multi-Department Real-Time Activity Ledger with direct patient-to-encounter links, plus a persistent 18-role Quick Workbench Launch Dock.
-3. **Comprehensive 18-Role Coverage**: Every role supported in `resources/views/admin/partials/sidebar.blade.php` is fully integrated with role-tailored perspective pills, dedicated pipeline queues, and direct workbench dock launchers:
+1. **Zero-Scroll Viewport Lock with Persistent Layout Footer**: Viewport locked strictly to desktop screen bounds with zero window vertical scrollbars. The layout footer (`admin.partials.footer`) is anchored at the bottom, and generous margins (28px - 36px) eliminate edge-hugging. Internal micro-scrollbars (`.dash-scrollable`) manage overflow within bounded columns.
+2. **Contextual Domain-Driven Tri-Column Architecture**:
+   - **Column 1 (28%)**: Operational Pipeline organized into 6 operational tiers (Executive Overview, Clinical & Consultations, Diagnostics & Investigations, Pharmacy & Supply Chain, Inpatients & Surgical Care, Revenue & Governance). Features role-scoped badges (`MY SPECIALTY`, `MY ROLE`), live counts, and interactive pipeline stage selectors.
+   - **Column 2 (44%)**: Dynamic Domain Telemetry featuring 6 granular, intensive KPI cards strictly tailored to the selected domain (e.g., Lab displays specimen and test metrics with zero revenue figures; Doctor displays consultation queues and inpatients; Pharmacy displays dispensing and stock health), adaptive micro-charts, and proactive clinical insight alerts.
+   - **Column 3 (28%)**: Contextual Shortcuts Dock (with rich action cards inspired by the legacy dashboard plus a toggle to the 18-role persistent dock) and a Deeply Intensive Live Queue Stream with 1-click primary action buttons (`Consult Now`, `Process Lab`, `Dispense`, `Collect`, `Fulfill`).
+3. **Comprehensive 18-Role Coverage**: Every role supported in `resources/views/admin/partials/sidebar.blade.php` is fully integrated with role-tailored perspective pills, dedicated pipeline queues, and direct workbench dock launchers.
+4. **Doctor Workbench Deep-Linking Contract**: Doctor queue items and shortcuts deep-link directly to `encounters/create?patient_id={id}` (`new_encounter.blade.php`) and `encounters.index` (Doctor Workbench / My Queues).
    - Receptionist (`reception.workbench`)
    - Biller / Cashier (`billing.workbench`)
    - Doctor / Consultant (`encounters.index`, `encounters/create?patient_id={id}`)

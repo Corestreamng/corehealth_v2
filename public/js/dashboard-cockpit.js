@@ -16,17 +16,21 @@
 
         state: {
             data: null,
-            activePerspective: 'cockpit',
-            chartHourly: null,
-            chartRevenue: null,
+            activeDomain: 'cockpit',
+            chartInstance: null,
             refreshTimer: null,
-            autoRefreshEnabled: true
+            autoRefreshEnabled: true,
+            hasInitializedDomain: false,
+            cachedLaunchpadHtml: ''
         },
 
         init: function (customConfig) {
             if (customConfig) {
                 $.extend(this.config, customConfig);
             }
+
+            // Cache default launchpad HTML
+            this.state.cachedLaunchpadHtml = $('#dash-shortcuts-dock').html();
 
             this.setupClock();
             this.setupEventListeners();
@@ -63,7 +67,6 @@
                 $('.dash-mobile-tab-btn').removeClass('active');
                 $(this).addClass('active');
 
-                // On small screens, hide other columns and show target
                 if ($(window).width() < 768) {
                     $('.dash-column').removeClass('mobile-active');
                     $('.' + targetCol).addClass('mobile-active');
@@ -74,11 +77,20 @@
         setupEventListeners: function () {
             var self = this;
 
-            // Perspective Pills
-            $(document).on('click', '.dash-perspective-pill', function (e) {
+            // Operational Pipeline Item Click (Contextually drives Col 2 & Col 3)
+            $(document).on('click', '.dash-pipeline-item[data-domain]', function (e) {
+                e.preventDefault();
+                var domainKey = $(this).data('domain');
+                if (domainKey) {
+                    self.switchDomain(domainKey);
+                }
+            });
+
+            // Perspective Pills in Header Ribbon
+            $(document).on('click', '.dash-perspective-pill[data-perspective]', function (e) {
                 e.preventDefault();
                 var perspective = $(this).data('perspective');
-                self.setPerspective(perspective);
+                self.switchDomain(perspective);
             });
 
             // Manual Refresh
@@ -98,25 +110,26 @@
                 self.state.autoRefreshEnabled = $(this).is(':checked');
             });
 
-            // Pipeline item click redirection
-            $(document).on('click', '.dash-pipeline-item[data-href]', function (e) {
-                // If user clicked a direct child action button, don't double navigate
-                if ($(e.target).closest('a, button').not(this).length) {
-                    return;
-                }
-                var href = $(this).data('href');
-                if (href) {
-                    window.location.href = href;
+            // Toggle "All Workbenches" dock from contextual shortcuts
+            $(document).on('click', '#btn-toggle-all-workbenches', function (e) {
+                e.preventDefault();
+                var $dock = $('#all-workbenches-dock');
+                if ($dock.hasClass('d-none')) {
+                    $dock.removeClass('d-none');
+                    $(this).html('<i class="mdi mdi-chevron-up me-1"></i> Hide Workbenches');
+                } else {
+                    $dock.addClass('d-none');
+                    $(this).html('<i class="mdi mdi-dots-grid me-1"></i> All Workbenches');
                 }
             });
 
-            // Ledger row click redirection
+            // Ledger row click redirection (if user didn't click action button directly)
             $(document).on('click', '.dash-ledger-row[data-target-url]', function (e) {
-                if ($(e.target).closest('a, button').not(this).length) {
+                if ($(e.target).closest('a, button').length) {
                     return;
                 }
                 var url = $(this).data('target-url');
-                if (url) {
+                if (url && url !== '#') {
                     window.location.href = url;
                 }
             });
@@ -146,7 +159,18 @@
                 dataType: 'json',
                 success: function (res) {
                     self.state.data = res;
-                    self.renderAll();
+                    self.renderPipelineCounts();
+
+                    // If domain has not been initialized, determine from user role
+                    if (!self.state.hasInitializedDomain) {
+                        self.state.hasInitializedDomain = true;
+                        var defaultDomain = self.determineInitialDomain();
+                        self.switchDomain(defaultDomain);
+                    } else {
+                        // Re-render current active domain with fresh data
+                        self.switchDomain(self.state.activeDomain);
+                    }
+
                     $('#dash-sync-indicator').text('Live').removeClass('syncing');
                     if (typeof callback === 'function') {
                         callback(null, res);
@@ -162,20 +186,24 @@
             });
         },
 
-        renderAll: function () {
-            if (!this.state.data) return;
-            this.renderPipeline();
-            this.renderKPIs();
-            this.renderCharts();
-            this.renderActivity();
-            this.renderInsights();
-            this.applyPerspectiveFilter();
+        determineInitialDomain: function () {
+            var roles = this.config.userRoles || [];
+            if (roles.indexOf('DOCTOR') !== -1) return 'doctor';
+            if (roles.indexOf('LAB SCIENTIST') !== -1) return 'lab';
+            if (roles.indexOf('PHARMACIST') !== -1) return 'pharmacy';
+            if (roles.indexOf('NURSE') !== -1) return 'nursing';
+            if (roles.indexOf('STORE') !== -1) return 'store';
+            if (roles.indexOf('BILLER') !== -1 || roles.indexOf('CASHIER') !== -1 || roles.indexOf('ACCOUNTS') !== -1) return 'billing';
+            if (roles.indexOf('RECEPTIONIST') !== -1 || roles.indexOf('Receptionist') !== -1) return 'receptionist';
+            if (roles.indexOf('RADIOLOGIST') !== -1) return 'imaging';
+            if (roles.indexOf('SURGEON') !== -1) return 'theatre';
+            if (roles.indexOf('MATERNITY') !== -1) return 'maternity';
+            return 'cockpit';
         },
 
-        renderPipeline: function () {
-            var pipeline = this.state.data.pipeline || {};
+        renderPipelineCounts: function () {
+            var pipeline = (this.state.data && this.state.data.pipeline) || {};
 
-            // Helper to set badge count and flasher
             var setQueue = function (elemId, count, highAlertThreshold) {
                 var $elem = $(elemId);
                 var num = parseInt(count, 10) || 0;
@@ -210,350 +238,290 @@
             setQueue('#pipe-morgue-count', pipeline.morgue, 5);
             setQueue('#pipe-leave-count', pipeline.leave, 3);
 
-            var totalActive = (parseInt(pipeline.waiting, 10) || 0) +
-                              (parseInt(pipeline.vitals, 10) || 0) +
-                              (parseInt(pipeline.consultation, 10) || 0) +
-                              (parseInt(pipeline.dispense, 10) || 0) +
-                              (parseInt(pipeline.lab, 10) || 0) +
-                              (parseInt(pipeline.imaging, 10) || 0) +
-                              (parseInt(pipeline.surgery, 10) || 0) +
-                              (parseInt(pipeline.maternity, 10) || 0) +
-                              (parseInt(pipeline.admitted, 10) || 0) +
-                              (parseInt(pipeline.store, 10) || 0) +
-                              (parseInt(pipeline.unpaid, 10) || 0) +
-                              (parseInt(pipeline.hmo, 10) || 0) +
-                              (parseInt(pipeline.morgue, 10) || 0) +
-                              (parseInt(pipeline.leave, 10) || 0);
-
+            var totalActive = 0;
+            for (var key in pipeline) {
+                if (pipeline.hasOwnProperty(key)) {
+                    totalActive += (parseInt(pipeline[key], 10) || 0);
+                }
+            }
             $('#pipe-total-label').text(totalActive > 0 ? (totalActive.toLocaleString() + ' Active') : 'Active Flow');
         },
 
-        renderKPIs: function () {
-            var kpis = this.state.data.kpis || {};
+        switchDomain: function (domainKey) {
+            domainKey = domainKey || 'cockpit';
+            this.state.activeDomain = domainKey;
 
-            var formatMoney = function (amount) {
-                var val = parseFloat(amount) || 0;
-                return '₦' + val.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
-            };
+            // 1. Highlight clicked pipeline item in Col 1
+            $('.dash-pipeline-item').removeClass('active-pipeline focused dimmed');
+            var $activePipe = $('.dash-pipeline-item[data-domain="' + domainKey + '"]');
+            if ($activePipe.length) {
+                $activePipe.addClass('active-pipeline');
+            }
 
-            var formatNumber = function (val) {
-                return (parseInt(val, 10) || 0).toLocaleString('en-US');
-            };
+            // 2. Sync header ribbon perspective pill
+            $('.dash-perspective-pill').removeClass('active');
+            var $activePill = $('.dash-perspective-pill[data-perspective="' + domainKey + '"]');
+            if ($activePill.length) {
+                $activePill.addClass('active');
+                $('#dash-active-perspective-label').text($activePill.text().trim());
+            }
 
-            $('#kpi-today-revenue').text(formatMoney(kpis.today_revenue));
-            $('#kpi-vitals-today').text(formatNumber(kpis.vitals_today));
-            $('#kpi-admitted-patients').text(formatNumber(kpis.admitted_patients));
-            $('#kpi-occupancy-rate').text((parseFloat(kpis.occupancy_rate) || 0) + '%');
-            $('#kpi-dispensed-today').text(formatNumber(kpis.dispensed_today));
-            $('#kpi-lab-completed').text(formatNumber(kpis.lab_completed));
-            $('#kpi-unbilled-bills').text(formatNumber(kpis.unbilled_bills));
-            $('#kpi-low-stock').text(formatNumber(kpis.low_stock));
-            $('#kpi-out-of-stock').text(formatNumber(kpis.out_of_stock));
-            $('#kpi-surgery-pending').text(formatNumber(kpis.surgery_pending));
-            $('#kpi-maternity-active').text(formatNumber(kpis.maternity_active));
-            $('#kpi-store-requisitions').text(formatNumber(kpis.store_requisitions));
-            $('#kpi-leave-pending').text(formatNumber(kpis.leave_pending));
+            if (!this.state.data || !this.state.data.domains) {
+                return;
+            }
+
+            var domainData = this.state.data.domains[domainKey] || this.state.data.domains['cockpit'];
+            if (!domainData) return;
+
+            // 3. Update Column 2: Header, KPIs, Chart, Insights
+            this.renderColumn2Telemetry(domainData);
+
+            // 4. Update Column 3: Header, Shortcuts Dock, Live Queue Stream
+            this.renderColumn3Ledger(domainData, domainKey);
         },
 
-        renderCharts: function () {
+        renderColumn2Telemetry: function (domainData) {
+            // Header
+            $('#col2-domain-icon').attr('class', 'mdi ' + (domainData.icon || 'mdi-chart-areaspline') + ' text-primary');
+            $('#col2-domain-title').text(domainData.title || 'Clinical Telemetry & Analytics');
+            $('#col2-domain-badge').text(domainData.badge || 'Active Telemetry');
+
+            // 2x3 Intensive KPI Matrix
+            var $matrix = $('#dash-kpi-matrix');
+            $matrix.empty();
+
+            var kpis = domainData.kpis || [];
+            kpis.forEach(function (k) {
+                var valClass = k.color === 'danger' ? 'text-danger' : '';
+                var unitHtml = k.unit ? '<span class="dash-kpi-unit ' + (k.color === 'danger' ? 'text-danger' : '') + '">' + k.unit + '</span>' : '';
+                var href = k.link || '#';
+
+                var tileHtml = '<a href="' + href + '" class="dash-kpi-tile kpi-tile-' + (k.color || 'primary') + ' text-decoration-none">' +
+                    '<div class="dash-kpi-head">' +
+                        '<span class="dash-kpi-label">' + k.label + '</span>' +
+                        '<i class="mdi ' + k.icon + ' dash-kpi-icon text-' + (k.color || 'primary') + '"></i>' +
+                    '</div>' +
+                    '<div class="dash-kpi-val">' +
+                        '<span class="' + valClass + '">' + k.val + '</span> ' + unitHtml +
+                    '</div>' +
+                    '<div class="dash-kpi-sub text-' + (k.color || 'muted') + '">' +
+                        '<i class="mdi mdi-arrow-right-circle-outline"></i> ' + k.sub +
+                    '</div>' +
+                '</a>';
+                $matrix.append(tileHtml);
+            });
+
+            // Micro-Chart
+            this.renderDomainChart(domainData);
+
+            // Domain Insights Strip
+            var $insightsContainer = $('#dash-insights-container');
+            $insightsContainer.empty();
+
+            var insights = domainData.insights || [];
+            $('#dash-insights-count').text(insights.length > 0 ? (insights.length + ' Insights') : 'Live');
+
+            if (insights.length === 0) {
+                $insightsContainer.html('<div class="dash-insight-pill insight-ok"><i class="mdi mdi-check-circle"></i> Operational parameters within nominal benchmarks</div>');
+            } else {
+                insights.forEach(function (ins) {
+                    var color = ins.color || 'info';
+                    var pillHtml = '<div class="dash-insight-pill insight-' + color + '">' +
+                        '<i class="mdi ' + ins.icon + '"></i>' +
+                        '<span><strong>' + ins.title + ':</strong> ' + ins.desc + '</span>' +
+                    '</div>';
+                    $insightsContainer.append(pillHtml);
+                });
+            }
+        },
+
+        renderDomainChart: function (domainData) {
             if (typeof window.Chart === 'undefined') return;
 
-            var self = this;
-            var hourlyFlow = this.state.data.hourlyFlow || [];
-            var revenueTrend = this.state.data.revenueTrend || [];
+            $('#col2-chart-title').text(domainData.chart_title || 'Operational Hourly Activity Flow');
+            $('#col2-chart-badge').text(domainData.chart_badge || 'Real-time Flow');
 
-            // Primary theme color
+            var ctx = document.getElementById('dash-chart-canvas');
+            if (!ctx) return;
+
             var primaryColor = getComputedStyle(document.documentElement).getPropertyValue('--hospital-primary').trim() || '#011b33';
+            var chartType = domainData.chart_type || 'hourly_inflow';
 
-            // 1. Hourly Flow Bar Chart
-            var flowLabels = [];
-            var flowData = [];
-            hourlyFlow.forEach(function (item) {
-                flowLabels.push(item.label);
-                flowData.push(item.total);
-            });
+            var labels = [];
+            var dataValues = [];
 
-            var ctxHourly = document.getElementById('dash-chart-hourly');
-            if (ctxHourly) {
-                if (self.state.chartHourly) {
-                    self.state.chartHourly.data.labels = flowLabels;
-                    self.state.chartHourly.data.datasets[0].data = flowData;
-                    self.state.chartHourly.update();
-                } else {
-                    self.state.chartHourly = new window.Chart(ctxHourly, {
-                        type: 'bar',
-                        data: {
-                            labels: flowLabels,
-                            datasets: [{
-                                label: 'Visits',
-                                data: flowData,
-                                backgroundColor: 'rgba(16, 185, 129, 0.65)',
-                                hoverBackgroundColor: 'rgba(16, 185, 129, 0.9)',
-                                borderRadius: 3,
-                                maxBarThickness: 14
-                            }]
-                        },
-                        options: {
-                            responsive: true,
-                            maintainAspectRatio: false,
-                            legend: { display: false },
-                            tooltips: {
-                                mode: 'index',
-                                intersect: false,
-                                xPadding: 8,
-                                yPadding: 6,
-                                titleFontSize: 11,
-                                bodyFontSize: 11
-                            },
-                            scales: {
-                                xAxes: [{
-                                    gridLines: { display: false },
-                                    ticks: {
-                                        fontSize: 9,
-                                        fontColor: '#94a3b8',
-                                        maxRotation: 0,
-                                        autoSkip: true,
-                                        maxTicksLimit: 7
-                                    }
-                                }],
-                                yAxes: [{
-                                    gridLines: {
-                                        color: '#f1f5f9',
-                                        drawBorder: false
-                                    },
-                                    ticks: {
-                                        fontSize: 9,
-                                        fontColor: '#94a3b8',
-                                        beginAtZero: true,
-                                        precision: 0,
-                                        maxTicksLimit: 4
-                                    }
-                                }]
-                            }
-                        }
-                    });
-                }
+            if (chartType === 'revenue_trend') {
+                var revList = (this.state.data && this.state.data.revenueTrend) || [];
+                revList.forEach(function (item) {
+                    var d = new Date(item.date);
+                    labels.push(d.toLocaleDateString('en-US', { weekday: 'short', month: 'numeric', day: 'numeric' }));
+                    dataValues.push(item.total);
+                });
+            } else {
+                var flowList = (this.state.data && this.state.data.hourlyFlow) || [];
+                flowList.forEach(function (item) {
+                    labels.push(item.label);
+                    dataValues.push(item.total);
+                });
             }
 
-            // 2. Revenue Trend Area Chart
-            var revLabels = [];
-            var revData = [];
-            revenueTrend.forEach(function (item) {
-                var d = new Date(item.date);
-                var formatted = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-                revLabels.push(formatted);
-                revData.push(item.total);
-            });
+            if (this.state.chartInstance) {
+                this.state.chartInstance.destroy();
+            }
 
-            var ctxRev = document.getElementById('dash-chart-revenue');
-            if (ctxRev) {
-                if (self.state.chartRevenue) {
-                    self.state.chartRevenue.data.labels = revLabels;
-                    self.state.chartRevenue.data.datasets[0].data = revData;
-                    self.state.chartRevenue.update();
-                } else {
-                    self.state.chartRevenue = new window.Chart(ctxRev, {
-                        type: 'line',
-                        data: {
-                            labels: revLabels,
-                            datasets: [{
-                                label: 'Revenue (₦)',
-                                data: revData,
-                                borderColor: primaryColor,
-                                backgroundColor: 'rgba(1, 27, 51, 0.08)',
-                                borderWidth: 2,
-                                pointRadius: 2,
-                                pointHoverRadius: 4,
-                                lineTension: 0.3
-                            }]
-                        },
-                        options: {
-                            responsive: true,
-                            maintainAspectRatio: false,
-                            legend: { display: false },
-                            tooltips: {
-                                mode: 'index',
-                                intersect: false,
-                                xPadding: 8,
-                                yPadding: 6,
-                                callbacks: {
-                                    label: function (tooltipItem) {
-                                        return '₦' + Number(tooltipItem.yLabel).toLocaleString();
-                                    }
+            var isArea = chartType === 'revenue_trend';
+
+            this.state.chartInstance = new window.Chart(ctx, {
+                type: isArea ? 'line' : 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: isArea ? 'Revenue (₦)' : 'Volume',
+                        data: dataValues,
+                        backgroundColor: isArea ? 'rgba(1, 27, 51, 0.08)' : 'rgba(16, 185, 129, 0.65)',
+                        borderColor: isArea ? primaryColor : 'transparent',
+                        borderWidth: isArea ? 2 : 0,
+                        hoverBackgroundColor: isArea ? 'rgba(1, 27, 51, 0.15)' : 'rgba(16, 185, 129, 0.9)',
+                        pointRadius: isArea ? 3 : 0,
+                        pointHoverRadius: isArea ? 5 : 0,
+                        fill: isArea
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    legend: { display: false },
+                    tooltips: {
+                        mode: 'index',
+                        intersect: false,
+                        xPadding: 8,
+                        yPadding: 6,
+                        titleFontSize: 11,
+                        bodyFontSize: 11,
+                        callbacks: {
+                            label: function (tooltipItem) {
+                                if (isArea) {
+                                    return '₦' + Number(tooltipItem.yLabel).toLocaleString();
                                 }
-                            },
-                            scales: {
-                                xAxes: [{
-                                    gridLines: { display: false },
-                                    ticks: {
-                                        fontSize: 9,
-                                        fontColor: '#94a3b8',
-                                        maxRotation: 0
-                                    }
-                                }],
-                                yAxes: [{
-                                    gridLines: {
-                                        color: '#f1f5f9',
-                                        drawBorder: false
-                                    },
-                                    ticks: {
-                                        fontSize: 9,
-                                        fontColor: '#94a3b8',
-                                        beginAtZero: true,
-                                        maxTicksLimit: 4,
-                                        callback: function (value) {
-                                            if (value >= 1000000) return '₦' + (value / 1000000).toFixed(1) + 'M';
-                                            if (value >= 1000) return '₦' + (value / 1000).toFixed(0) + 'k';
-                                            return '₦' + value;
-                                        }
-                                    }
-                                }]
+                                return tooltipItem.yLabel + ' Patients / Orders';
                             }
                         }
-                    });
+                    },
+                    scales: {
+                        xAxes: [{
+                            gridLines: { display: false },
+                            ticks: {
+                                fontSize: 9,
+                                fontColor: '#94a3b8',
+                                maxRotation: 0,
+                                autoSkip: true,
+                                maxTicksLimit: 7
+                            }
+                        }],
+                        yAxes: [{
+                            gridLines: {
+                                color: '#f1f5f9',
+                                drawBorder: false
+                            },
+                            ticks: {
+                                fontSize: 9,
+                                fontColor: '#94a3b8',
+                                beginAtZero: true,
+                                precision: 0,
+                                maxTicksLimit: 4,
+                                callback: function (val) {
+                                    if (isArea) {
+                                        if (val >= 1000000) return '₦' + (val / 1000000).toFixed(1) + 'M';
+                                        if (val >= 1000) return '₦' + (val / 1000).toFixed(0) + 'k';
+                                        return '₦' + val;
+                                    }
+                                    return val;
+                                }
+                            }
+                        }]
+                    }
                 }
-            }
+            });
         },
 
-        renderActivity: function () {
-            var activity = this.state.data.activity || [];
+        renderColumn3Ledger: function (domainData, domainKey) {
+            // Header
+            $('#col3-queue-title').text(domainData.queue_title || 'Live Queue & Quick Actions');
+            $('#col3-queue-badge').text(domainData.queue_badge || 'Live Stream');
+
+            // Contextual Shortcuts Dock
+            var $dock = $('#dash-shortcuts-dock');
+            var shortcuts = domainData.shortcuts || [];
+
+            if (domainData.shortcuts_type === 'custom' && shortcuts.length > 0) {
+                var html = '<div class="d-flex justify-content-between align-items-center mb-1">' +
+                    '<span class="dash-dock-title">' + (domainData.title ? domainData.title.split(' ')[0] : 'Domain') + ' Actions</span>' +
+                    '<button type="button" class="btn btn-link btn-xs p-0 text-decoration-none text-muted" id="btn-toggle-all-workbenches" style="font-size:0.63rem;">' +
+                        '<i class="mdi mdi-dots-grid me-1"></i> All Workbenches' +
+                    '</button>' +
+                '</div>' +
+                '<div class="dash-shortcuts-custom-grid" id="domain-shortcuts-grid">';
+
+                shortcuts.forEach(function (s) {
+                    html += '<a href="' + s.url + '" class="dash-shortcut-card shortcut-' + (s.color || 'primary') + '" title="' + s.label + '">' +
+                        '<div class="dash-shortcut-card-icon"><i class="mdi ' + s.icon + '"></i></div>' +
+                        '<div class="dash-shortcut-card-info">' +
+                            '<div class="dash-shortcut-card-title">' + s.label + '</div>' +
+                            '<div class="dash-shortcut-card-sub">' + s.sub + '</div>' +
+                        '</div>' +
+                    '</a>';
+                });
+
+                html += '</div>';
+                html += '<div class="dash-role-dock mt-2 d-none" id="all-workbenches-dock">' + this.state.cachedLaunchpadHtml + '</div>';
+
+                $dock.html(html);
+            } else {
+                // Cockpit default: 18-role persistent dock
+                $dock.html(this.state.cachedLaunchpadHtml);
+            }
+
+            // Live Queue Table
             var $tbody = $('#dash-ledger-tbody');
             $tbody.empty();
 
-            if (activity.length === 0) {
-                $tbody.append('<tr><td colspan="4" class="text-center py-4 text-muted small">No recent department activities recorded today</td></tr>');
+            var items = domainData.queue_items || [];
+            if (items.length === 0) {
+                $tbody.append('<tr class="empty-filter-row"><td colspan="4" class="text-center py-4 text-muted small"><i class="mdi mdi-check-circle-outline me-1"></i> No active queue items for this clinical domain</td></tr>');
                 return;
             }
 
-            var deptBadgeClass = function (deptCode) {
-                switch (deptCode) {
-                    case 'doctor': return 'badge-dept-doctor';
-                    case 'pharmacy': return 'badge-dept-pharmacy';
-                    case 'lab': return 'badge-dept-lab';
-                    case 'billing': return 'badge-dept-billing';
-                    case 'nursing': return 'badge-dept-nursing';
-                    case 'surgery': return 'badge-dept-surgery';
-                    case 'store': return 'badge-dept-store';
-                    default: return 'badge-dept-default';
+            items.forEach(function (item) {
+                var targetUrl = item.action_url || item.target_url || '#';
+                var actionBtnHtml = '';
+
+                if (item.action_label && targetUrl !== '#') {
+                    actionBtnHtml = '<a href="' + targetUrl + '" class="btn-action-sm ' + (item.action_class || 'btn-primary') + '">' +
+                        item.action_label +
+                    '</a>';
+                } else if (item.target_url && item.target_url !== '#') {
+                    actionBtnHtml = '<a href="' + item.target_url + '" class="btn-action-sm btn-primary">Open</a>';
                 }
-            };
 
-            var statusBadgeClass = function (color) {
-                switch (color) {
-                    case 'success': return 'badge-status-success';
-                    case 'warning': return 'badge-status-warning';
-                    case 'danger': return 'badge-status-danger';
-                    case 'primary': return 'badge-status-primary';
-                    case 'purple': return 'badge-status-purple';
-                    default: return 'badge-status-secondary';
-                }
-            };
+                var rowHtml = '<tr class="dash-ledger-row" data-target-url="' + targetUrl + '">' +
+                    '<td class="col-patient">' +
+                        '<div class="dash-patient-name" title="' + (item.patient_name || 'Walk-in') + '">' + (item.patient_name || 'Walk-in') + '</div>' +
+                        '<div class="dash-patient-file">#' + (item.file_no || 'N/A') + '</div>' +
+                    '</td>' +
+                    '<td class="col-dept">' +
+                        '<div class="dash-event-text" title="' + (item.detail || item.event || '') + '">' + (item.detail || item.event || '') + '</div>' +
+                        '<div class="dash-event-time">' + (item.meta || item.time || '') + '</div>' +
+                    '</td>' +
+                    '<td class="col-status text-right">' +
+                        '<span class="dash-status-pill badge-status-' + (item.status_color || 'primary') + '">' + (item.status_label || 'Active') + '</span>' +
+                    '</td>' +
+                    '<td class="col-action text-right">' +
+                        actionBtnHtml +
+                    '</td>' +
+                '</tr>';
 
-            activity.forEach(function (item) {
-                var rowHtml = '<tr class="dash-ledger-row" data-dept="' + (item.dept_code || 'all') + '" data-target-url="' + (item.target_url || '#') + '">';
-
-                // Patient / File No
-                rowHtml += '<td class="col-patient">';
-                rowHtml += '  <div class="dash-patient-name" title="' + item.patient_name + '">' + item.patient_name + '</div>';
-                rowHtml += '  <div class="dash-patient-file">#' + item.file_no + '</div>';
-                rowHtml += '</td>';
-
-                // Department
-                rowHtml += '<td class="col-dept">';
-                rowHtml += '  <span class="dash-dept-pill ' + deptBadgeClass(item.dept_code) + '">' + item.dept + '</span>';
-                rowHtml += '</td>';
-
-                // Event Description
-                rowHtml += '<td class="col-event">';
-                rowHtml += '  <span class="dash-event-text" title="' + item.event + '">' + item.event + '</span>';
-                rowHtml += '</td>';
-
-                // Status & Time
-                rowHtml += '<td class="col-status text-right">';
-                rowHtml += '  <span class="dash-status-pill ' + statusBadgeClass(item.status_color) + '">' + item.status_label + '</span>';
-                rowHtml += '  <div class="dash-event-time">' + item.time + '</div>';
-                rowHtml += '</td>';
-
-                rowHtml += '</tr>';
                 $tbody.append(rowHtml);
             });
-        },
-
-        renderInsights: function () {
-            var insights = this.state.data.insights || [];
-            var $strip = $('#dash-insights-strip');
-            $strip.empty();
-
-            $('#dash-insights-count').text(insights.length > 0 ? (insights.length + ' Alerts') : 'Live');
-
-            if (insights.length === 0) {
-                $strip.html('<div class="dash-insight-pill insight-ok"><i class="mdi mdi-check-circle"></i> All hospital operational queues running normal</div>');
-                return;
-            }
-
-            insights.forEach(function (ins) {
-                var severityClass = 'insight-' + (ins.severity || 'info');
-                var iconClass = ins.icon || 'mdi-information-outline';
-                var pill = '<div class="dash-insight-pill ' + severityClass + '">';
-                pill += '  <i class="mdi ' + iconClass + '"></i>';
-                pill += '  <strong>' + ins.title + ':</strong> ' + ins.message;
-                pill += '</div>';
-                $strip.append(pill);
-            });
-        },
-
-        setPerspective: function (roleKey) {
-            this.state.activePerspective = roleKey || 'cockpit';
-
-            // Update pills UI
-            $('.dash-perspective-pill').removeClass('active');
-            $('.dash-perspective-pill[data-perspective="' + this.state.activePerspective + '"]').addClass('active');
-
-            // Update ribbon title or perspective label
-            var perspectiveName = $('.dash-perspective-pill[data-perspective="' + this.state.activePerspective + '"]').text().trim();
-            $('#dash-active-perspective-label').text(perspectiveName);
-
-            this.applyPerspectiveFilter();
-        },
-
-        applyPerspectiveFilter: function () {
-            var perspective = this.state.activePerspective;
-
-            // 1. Filter / Highlight Pipeline Queues in Col 1
-            if (perspective === 'cockpit') {
-                $('.dash-pipeline-item').removeClass('dimmed focused');
-            } else {
-                $('.dash-pipeline-item').each(function () {
-                    var itemRole = $(this).data('role');
-                    if (itemRole === perspective) {
-                        $(this).addClass('focused').removeClass('dimmed');
-                    } else {
-                        $(this).addClass('dimmed').removeClass('focused');
-                    }
-                });
-            }
-
-            // 2. Filter Activity Ledger in Col 3
-            if (perspective === 'cockpit') {
-                $('.dash-ledger-row').show();
-            } else {
-                var visibleCount = 0;
-                $('.dash-ledger-row').each(function () {
-                    var rowDept = $(this).data('dept');
-                    if (rowDept === perspective) {
-                        $(this).show();
-                        visibleCount++;
-                    } else {
-                        $(this).hide();
-                    }
-                });
-                if (visibleCount === 0) {
-                    $('#dash-ledger-tbody .empty-filter-row').remove();
-                    $('#dash-ledger-tbody').append('<tr class="empty-filter-row"><td colspan="4" class="text-center py-4 text-muted small">No recent events for ' + perspective + ' perspective</td></tr>');
-                } else {
-                    $('#dash-ledger-tbody .empty-filter-row').remove();
-                }
-            }
         }
     };
 
