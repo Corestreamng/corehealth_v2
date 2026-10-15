@@ -79,14 +79,14 @@
                     </a>
                 @endif
 
-                @if($isAdmin || $user->hasAnyRole(['SURGEON', 'THEATRE-NURSE']))
+                @if($isAdmin || $user->hasAnyRole(['SURGEON', 'THEATRE-NURSE', 'DOCTOR', 'NURSE']))
                     <a href="{{ route('surgery-workbench.index') }}" class="dash-dock-tile dock-theatre" title="Theatre Workbench">
                         <i class="mdi mdi-scalpel"></i>
                         <span>Theatre</span>
                     </a>
                 @endif
 
-                @if($isAdmin || $user->hasRole('MATERNITY'))
+                @if($isAdmin || $user->hasAnyRole(['MATERNITY', 'NURSE', 'DOCTOR']))
                     <a href="{{ route('maternity-workbench.index') }}" class="dash-dock-tile dock-maternity" title="Maternity Workbench">
                         <i class="mdi mdi-mother-nurse"></i>
                         <span>Maternity</span>
@@ -107,10 +107,52 @@
                     </a>
                 @endif
 
-                @if($isAdmin || $user->hasRole('HMO'))
+                @if($isAdmin || $user->hasAnyRole(['HMO', 'HMO Executive']))
                     <a href="{{ route('hmo.workbench') }}" class="dash-dock-tile dock-hmo" title="HMO Claims Workbench">
                         <i class="mdi mdi-shield-check"></i>
                         <span>HMO</span>
+                    </a>
+                @endif
+
+                @if($isAdmin || $user->hasRole('ACCOUNTS'))
+                    <a href="{{ route('accounting.dashboard') }}" class="dash-dock-tile dock-accounts" title="Accounting Dashboard">
+                        <i class="mdi mdi-calculator"></i>
+                        <span>Accounts</span>
+                    </a>
+                @endif
+
+                @if($isAdmin || $user->hasAnyRole(['HR MANAGER', 'PAYROLL APPROVER']))
+                    <a href="{{ route('hr.workbench.index') }}" class="dash-dock-tile dock-hr" title="Human Resources Workbench">
+                        <i class="mdi mdi-account-group"></i>
+                        <span>HR</span>
+                    </a>
+                @endif
+
+                @if($isAdmin || $user->hasAnyRole(['AUDITOR', 'AUDIT']))
+                    <a href="{{ url('/audit-workbench') }}" class="dash-dock-tile dock-audit" title="Internal Audit Workbench">
+                        <i class="mdi mdi-shield-check-outline"></i>
+                        <span>Audit</span>
+                    </a>
+                @endif
+
+                @if($isAdmin || $user->hasRole('MORGUE'))
+                    <a href="{{ route('morgue.workbench') }}" class="dash-dock-tile dock-morgue" title="Morgue Workbench">
+                        <i class="mdi mdi-emoticon-dead"></i>
+                        <span>Morgue</span>
+                    </a>
+                @endif
+
+                @if($user->staff_profile && Auth::user()->can('ess.access'))
+                    <a href="{{ route('hr.ess.index') }}" class="dash-dock-tile dock-ess" title="Staff Self-Service Portal">
+                        <i class="mdi mdi-account-circle-outline"></i>
+                        <span>My Portal</span>
+                    </a>
+                @endif
+
+                @if($isAdmin)
+                    <a href="{{ route('hospital-config.index') }}" class="dash-dock-tile dock-admin" title="Hospital Settings & Governance">
+                        <i class="mdi mdi-cogs"></i>
+                        <span>Settings</span>
                     </a>
                 @endif
             </div>

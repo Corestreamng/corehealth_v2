@@ -1,7 +1,7 @@
 # CoreHealth v2 — Operational Cockpit Dashboard Redesign
 
 **Date**: 2026-10-15  
-**Git Release Tag**: `v2.6.0.47`  
+**Git Release Tag**: `v2.6.0.48`  
 **Status**: Completed & Verified  
 
 ---
@@ -146,3 +146,31 @@ The default `/home` route has been completely transformed into a space-maximizin
    - Added complete telemetry and shortcuts for `morgue`, `audit`, `hr`, `accounts`, `ess`, and `admin`.
    - Resolved SQL column alias bug on `wards.name as ward_name` and `beds.name as bed_name`.
    - Corrected route reference from non-existent `users.index` to `staff.index`.
+
+---
+
+## 6. Authoritative Sidebar Guard Auditing & Complete 18-Role Scoping (v2.6.0.48)
+
+### 1. Architectural Guard Strategy: Sidebar as Authoritative Source of Truth
+To eliminate authorization bypasses and 403 Forbidden leaks, the operational cockpit mirrors the exact Spatie role and permission constraints enforced in `resources/views/admin/partials/sidebar.blade.php`:
+
+1. **Elimination of Forbidden Route Leaks**:
+   - **Doctor & Receptionist**: Non-nursing users previously encountered 403 errors when clicking `nursing-workbench` links. Doctor KPIs now route strictly to `encounters.index`, `surgery-workbench.index`, and `maternity-workbench.index`. Receptionist KPIs route to `reception.workbench` and `patient.index`.
+   - **Morgue Domain**: Replaced non-view JSON endpoints (`morgue.queue`, `morgue.reports`) and 403 targets (`ops-audit.morgue`, `billing.workbench`) with the authoritative `route('morgue.workbench')` view and parameter tabs.
+   - **HR Domain**: Substituted restricted administrative routes (`staff.create`, `staff.index`) with HR-accessible `hr.staff-registry.index` and `hr.disciplinary.index`.
+   - **Employee Self-Service (ESS)**: Replaced non-existent `my-profile` with valid authenticated staff routes (`hr.ess.index`, `hr.ess.my-leave`, `hr.ess.my-roster`).
+   - **HMO Role Normalization**: Aligned role checks to encompass both `'HMO'` and `'HMO Executive'`.
+
+2. **Column 1 Pipeline Multi-Tier Scoping**:
+   - Expanded Column 1 into 13 high-density operational tiers (`Executive Overview`, `Reception & Intake`, `Nursing & Inpatients`, `Clinical Consultations`, `Diagnostics & Investigations`, `Pharmacy & Supply Chain`, `Operating Theatre & Maternity`, `Revenue & Billing`, `Finance & Treasury`, `Human Resources`, `Internal Audit`, `Morgue & Mortuary`, `Employee Self-Service`).
+   - Every tier and queue item is guarded character-for-character by `@if($isAdmin || $isX)`. Non-admin users see strictly their department and clinical responsibilities.
+   - Replaced static action links with a dynamic role-scoped quick action footer dock that adapts seamlessly to Nurse, Doctor, Pharmacist, Storekeeper, Accountant, HR Manager, Auditor, Morgue Attendant, HMO Officer, Receptionist, Biller, and ESS users, preventing any non-admin role from falling into administrative configuration shortcuts.
+
+3. **Column 2 & Column 3 Guard Protection**:
+   - In `_col_telemetry.blade.php`, pre-rendered KPI links evaluate server-side role checks (`$revLink`, `$bedLink`, `$vitalsLink`, `$pharmLink`, `$labLink`, `$docLink`, `$recepLink`, `$storeLink`) and safely fall back to `javascript:void(0);` if the active user lacks access.
+   - In `_col_ledger.blade.php`, the persistent launchpad dock integrates all 18 roles with Spatie role checks, preventing unauthorized workbench links.
+
+4. **Testing & Quality Assurance**:
+   - Expanded PHPUnit test suite (`tests/Feature/Dashboard/DashboardCockpitTest.php`) with 10 feature tests and 396 assertions covering Doctor, Nurse, Receptionist, Biller, and SuperAdmin view scoping and pipeline key validation.
+   - Clean PSR-12 code style verified via PHP-CS-Fixer.
+   - Zero JavaScript syntax errors verified across all files via `node --check`.

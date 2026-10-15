@@ -3,6 +3,7 @@
 namespace Tests\Feature\Dashboard;
 
 use App\Models\User;
+use Spatie\Permission\Models\Role;
 use Tests\TestCase;
 
 class DashboardCockpitTest extends TestCase
@@ -44,7 +45,6 @@ class DashboardCockpitTest extends TestCase
             $this->assertArrayHasKey('insights', $data);
             $this->assertArrayHasKey('domains', $data);
 
-            // Verify all role pipeline queues exist
             $pipeline = $data['pipeline'];
             $this->assertArrayHasKey('waiting', $pipeline);
             $this->assertArrayHasKey('vitals', $pipeline);
@@ -60,6 +60,9 @@ class DashboardCockpitTest extends TestCase
             $this->assertArrayHasKey('hmo', $pipeline);
             $this->assertArrayHasKey('morgue', $pipeline);
             $this->assertArrayHasKey('leave', $pipeline);
+            $this->assertArrayHasKey('accounts', $pipeline);
+            $this->assertArrayHasKey('audit', $pipeline);
+            $this->assertArrayHasKey('ess', $pipeline);
 
             // Verify KPI attributes
             $kpis = $data['kpis'];
@@ -152,6 +155,108 @@ class DashboardCockpitTest extends TestCase
                 $this->assertArrayHasKey('shortcuts', $domains[$domain]);
                 $this->assertArrayHasKey('kpis', $domains[$domain]);
             }
+        }
+    }
+
+    /** @test */
+    public function test_doctor_role_sees_doctor_pipeline_and_scoped_footer_actions()
+    {
+        $roleDoctor = Role::firstOrCreate(['name' => 'DOCTOR', 'guard_name' => 'web']);
+        $doctor = User::factory()->create(['status' => 1]);
+        $doctor->assignRole($roleDoctor);
+
+        $response = $this->actingAs($doctor)->get('/home');
+
+        $this->assertTrue(in_array($response->status(), [200, 302]));
+        if ($response->status() === 200) {
+            $content = $response->getContent();
+            // Should see Doctor Consult actions in footer dock
+            $this->assertStringContainsString('+ Consult', $content);
+            $this->assertStringContainsString('My Queues', $content);
+            // Should NOT see nurse shift management in footer dock
+            $this->assertStringNotContainsString('Shift Mgmt', $content);
+            // Should NOT see admin configuration in footer dock
+            $this->assertStringNotContainsString('Hospital Config', $content);
+        }
+    }
+
+    /** @test */
+    public function test_nurse_role_sees_nursing_pipeline_and_scoped_footer_actions()
+    {
+        $roleNurse = Role::firstOrCreate(['name' => 'NURSE', 'guard_name' => 'web']);
+        $nurse = User::factory()->create(['status' => 1]);
+        $nurse->assignRole($roleNurse);
+
+        $response = $this->actingAs($nurse)->get('/home');
+
+        $this->assertTrue(in_array($response->status(), [200, 302]));
+        if ($response->status() === 200) {
+            $content = $response->getContent();
+            // Should see Fast Triage and Shift Mgmt in footer dock
+            $this->assertStringContainsString('Fast Triage', $content);
+            $this->assertStringContainsString('Shift Mgmt', $content);
+            // Should NOT see doctor consult creation in footer dock
+            $this->assertStringNotContainsString('+ Consult', $content);
+            // Should NOT see admin configuration in footer dock
+            $this->assertStringNotContainsString('Hospital Config', $content);
+        }
+    }
+
+    /** @test */
+    public function test_receptionist_role_sees_reception_actions_and_scoped_footer()
+    {
+        $roleRecep = Role::firstOrCreate(['name' => 'RECEPTIONIST', 'guard_name' => 'web']);
+        $recep = User::factory()->create(['status' => 1]);
+        $recep->assignRole($roleRecep);
+
+        $response = $this->actingAs($recep)->get('/home');
+
+        $this->assertTrue(in_array($response->status(), [200, 302]));
+        if ($response->status() === 200) {
+            $content = $response->getContent();
+            // Should see New Patient and Appointments in footer dock
+            $this->assertStringContainsString('New Patient', $content);
+            $this->assertStringContainsString('Appointments', $content);
+            // Should NOT see admin configuration in footer dock
+            $this->assertStringNotContainsString('Hospital Config', $content);
+        }
+    }
+
+    /** @test */
+    public function test_biller_role_sees_billing_workbench_actions_in_footer()
+    {
+        $roleBiller = Role::firstOrCreate(['name' => 'BILLER', 'guard_name' => 'web']);
+        $biller = User::factory()->create(['status' => 1]);
+        $biller->assignRole($roleBiller);
+
+        $response = $this->actingAs($biller)->get('/home');
+
+        $this->assertTrue(in_array($response->status(), [200, 302]));
+        if ($response->status() === 200) {
+            $content = $response->getContent();
+            // Should see Billing Hub and Unpaid Bills in footer dock
+            $this->assertStringContainsString('Billing Hub', $content);
+            $this->assertStringContainsString('Unpaid Bills', $content);
+            // Should NOT see admin configuration in footer dock
+            $this->assertStringNotContainsString('Hospital Config', $content);
+        }
+    }
+
+    /** @test */
+    public function test_superadmin_role_sees_executive_actions_in_footer()
+    {
+        $roleAdmin = Role::firstOrCreate(['name' => 'SUPERADMIN', 'guard_name' => 'web']);
+        $admin = User::factory()->create(['status' => 1]);
+        $admin->assignRole($roleAdmin);
+
+        $response = $this->actingAs($admin)->get('/home');
+
+        $this->assertTrue(in_array($response->status(), [200, 302]));
+        if ($response->status() === 200) {
+            $content = $response->getContent();
+            // Should see Hospital Config and Access Control in footer dock
+            $this->assertStringContainsString('Hospital Config', $content);
+            $this->assertStringContainsString('Access Control', $content);
         }
     }
 }

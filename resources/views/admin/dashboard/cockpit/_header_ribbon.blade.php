@@ -70,13 +70,13 @@
             </button>
         @endif
 
-        @if($isAdmin || $user->hasAnyRole(['SURGERY', 'SURGEON', 'THEATRE-NURSE']))
+        @if($isAdmin || $user->hasAnyRole(['SURGERY', 'SURGEON', 'THEATRE-NURSE', 'DOCTOR', 'NURSE']))
             <button type="button" class="dash-perspective-pill" data-perspective="theatre">
                 <i class="mdi mdi-scalpel me-1"></i> Theatre
             </button>
         @endif
 
-        @if($isAdmin || $user->hasRole('MATERNITY'))
+        @if($isAdmin || $user->hasAnyRole(['MATERNITY', 'NURSE', 'DOCTOR']))
             <button type="button" class="dash-perspective-pill" data-perspective="maternity">
                 <i class="mdi mdi-mother-nurse me-1"></i> Maternity
             </button>
@@ -88,13 +88,13 @@
             </button>
         @endif
 
-        @if($isAdmin || $user->hasAnyRole(['BILLER', 'ACCOUNTS']))
+        @if($isAdmin || $user->hasAnyRole(['BILLER', 'CASHIER', 'ACCOUNTS']))
             <button type="button" class="dash-perspective-pill" data-perspective="biller">
                 <i class="mdi mdi-cash-register me-1"></i> Billing
             </button>
         @endif
 
-        @if($isAdmin || $user->hasRole('HMO Executive'))
+        @if($isAdmin || $user->hasAnyRole(['HMO', 'HMO Executive']))
             <button type="button" class="dash-perspective-pill" data-perspective="hmo">
                 <i class="mdi mdi-hospital-building me-1"></i> HMO
             </button>
@@ -118,7 +118,7 @@
             </button>
         @endif
 
-        @if($user->staff_profile)
+        @if($user->staff_profile && Auth::user()->can('ess.access'))
             <button type="button" class="dash-perspective-pill" data-perspective="ess">
                 <i class="mdi mdi-account-circle-outline me-1"></i> My Portal
             </button>

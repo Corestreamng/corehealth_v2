@@ -266,11 +266,18 @@
             if (roles.indexOf('PHARMACIST') !== -1) return 'pharmacy';
             if (roles.indexOf('NURSE') !== -1) return 'nursing';
             if (roles.indexOf('STORE') !== -1) return 'store';
-            if (roles.indexOf('BILLER') !== -1 || roles.indexOf('CASHIER') !== -1 || roles.indexOf('ACCOUNTS') !== -1) return 'billing';
+            if (roles.indexOf('BILLER') !== -1 || roles.indexOf('CASHIER') !== -1) return 'billing';
+            if (roles.indexOf('ACCOUNTS') !== -1 || roles.indexOf('ACCOUNTANT') !== -1) return 'accounts';
             if (roles.indexOf('RECEPTIONIST') !== -1 || roles.indexOf('Receptionist') !== -1) return 'receptionist';
             if (roles.indexOf('RADIOLOGIST') !== -1) return 'imaging';
             if (roles.indexOf('SURGEON') !== -1) return 'theatre';
             if (roles.indexOf('MATERNITY') !== -1) return 'maternity';
+            if (roles.indexOf('HMO') !== -1 || roles.indexOf('HMO Executive') !== -1) return 'hmo';
+            if (roles.indexOf('HR') !== -1 || roles.indexOf('HR Executive') !== -1) return 'hr';
+            if (roles.indexOf('INTERNAL AUDITOR') !== -1 || roles.indexOf('Auditor') !== -1) return 'audit';
+            if (roles.indexOf('MORGUE') !== -1 || roles.indexOf('Morgue Attendant') !== -1) return 'morgue';
+            if (roles.indexOf('ESS') !== -1) return 'ess';
+            if (roles.indexOf('SUPERADMIN') !== -1 || roles.indexOf('ADMIN') !== -1) return 'cockpit';
             return 'cockpit';
         },
 
@@ -308,8 +315,10 @@
             setQueue('#pipe-store-count', pipeline.store, 10);
             setQueue('#pipe-unpaid-count', pipeline.unpaid, 5);
             setQueue('#pipe-hmo-count', pipeline.hmo, 10);
-            setQueue('#pipe-morgue-count', pipeline.morgue, 5);
+            setQueue('#pipe-accounts-count', pipeline.accounts, 20);
             setQueue('#pipe-leave-count', pipeline.leave, 3);
+            setQueue('#pipe-audit-count', pipeline.audit, 5);
+            setQueue('#pipe-morgue-count', pipeline.morgue, 5);
 
             var totalActive = 0;
             for (var key in pipeline) {
@@ -646,7 +655,13 @@
                 theatre: 'mdi-scalpel',
                 maternity: 'mdi-mother-nurse',
                 receptionist: 'mdi-account-plus',
-                hmo: 'mdi-shield-check'
+                hmo: 'mdi-shield-check',
+                accounts: 'mdi-calculator',
+                hr: 'mdi-account-group',
+                audit: 'mdi-shield-check-outline',
+                morgue: 'mdi-emoticon-dead',
+                ess: 'mdi-account-circle-outline',
+                admin: 'mdi-cogs'
             };
 
             var streamBuffer = '';

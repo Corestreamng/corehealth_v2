@@ -2,6 +2,18 @@
      Column 2: Clinical Telemetry & Telemetry Analytics (44% Desktop Width)
      Driven by Active Operational Pipeline Stage (Contextual 2x3 KPIs & Charts)
      ========================================================================== --}}
+@php
+    $u = Auth::user();
+    $isAdm = $u && $u->hasAnyRole(['SUPERADMIN', 'ADMIN', 'super-admin']);
+    $revLink = ($isAdm || ($u && $u->hasAnyRole(['BILLER', 'CASHIER', 'ACCOUNTS']))) ? route('billing.workbench') : 'javascript:void(0);';
+    $bedLink = ($isAdm || ($u && $u->hasRole('NURSE'))) ? url('nursing-workbench?filter=admitted') : 'javascript:void(0);';
+    $vitalsLink = ($isAdm || ($u && $u->hasRole('NURSE'))) ? url('nursing-workbench?filter=vitals') : 'javascript:void(0);';
+    $pharmLink = ($isAdm || ($u && $u->hasRole('PHARMACIST'))) ? route('pharmacy.workbench') : 'javascript:void(0);';
+    $labLink = ($isAdm || ($u && $u->hasRole('LAB SCIENTIST'))) ? url('lab-workbench?tab=completed') : 'javascript:void(0);';
+    $docLink = ($isAdm || ($u && $u->hasRole('DOCTOR'))) ? route('encounters.index') : 'javascript:void(0);';
+    $recepLink = ($isAdm || ($u && $u->hasAnyRole(['RECEPTIONIST', 'Receptionist']))) ? route('patient.index') : 'javascript:void(0);';
+    $storeLink = ($isAdm || ($u && $u->hasRole('STORE'))) ? route('inventory.store-workbench.index') : 'javascript:void(0);';
+@endphp
 <div class="dash-column dash-col-telemetry">
 
     {{-- Domain Telemetry Header Card --}}
@@ -21,7 +33,7 @@
             <div class="dash-kpi-matrix" id="dash-kpi-matrix">
 
                 {{-- Default Server-Side Pre-rendered KPI Tiles (Replaced instantly on client domain select) --}}
-                <a href="{{ route('billing.workbench') }}" class="dash-kpi-tile kpi-tile-revenue">
+                <a href="{{ $revLink }}" class="dash-kpi-tile kpi-tile-revenue">
                     <div class="dash-kpi-head">
                         <span class="dash-kpi-label">Today's Revenue</span>
                         <i class="mdi mdi-cash-multiple dash-kpi-icon"></i>
@@ -32,7 +44,7 @@
                     </div>
                 </a>
 
-                <a href="{{ url('nursing-workbench?filter=admitted') }}" class="dash-kpi-tile kpi-tile-occupancy">
+                <a href="{{ $bedLink }}" class="dash-kpi-tile kpi-tile-occupancy">
                     <div class="dash-kpi-head">
                         <span class="dash-kpi-label">Bed Occupancy</span>
                         <i class="mdi mdi-hotel dash-kpi-icon"></i>
@@ -46,7 +58,7 @@
                     </div>
                 </a>
 
-                <a href="{{ url('nursing-workbench?filter=vitals') }}" class="dash-kpi-tile kpi-tile-vitals">
+                <a href="{{ $vitalsLink }}" class="dash-kpi-tile kpi-tile-vitals">
                     <div class="dash-kpi-head">
                         <span class="dash-kpi-label">Vitals Checked</span>
                         <i class="mdi mdi-heart-pulse dash-kpi-icon"></i>
@@ -57,7 +69,7 @@
                     </div>
                 </a>
 
-                <a href="{{ route('pharmacy.workbench') }}" class="dash-kpi-tile kpi-tile-pharmacy">
+                <a href="{{ $pharmLink }}" class="dash-kpi-tile kpi-tile-pharmacy">
                     <div class="dash-kpi-head">
                         <span class="dash-kpi-label">Dispensed Today</span>
                         <i class="mdi mdi-pill dash-kpi-icon"></i>
@@ -68,7 +80,7 @@
                     </div>
                 </a>
 
-                <a href="{{ url('lab-workbench?tab=completed') }}" class="dash-kpi-tile kpi-tile-lab">
+                <a href="{{ $labLink }}" class="dash-kpi-tile kpi-tile-lab">
                     <div class="dash-kpi-head">
                         <span class="dash-kpi-label">Lab Tests Done</span>
                         <i class="mdi mdi-flask-outline dash-kpi-icon"></i>
@@ -79,7 +91,7 @@
                     </div>
                 </a>
 
-                <a href="{{ route('encounters.index') }}" class="dash-kpi-tile kpi-tile-primary">
+                <a href="{{ $docLink }}" class="dash-kpi-tile kpi-tile-primary">
                     <div class="dash-kpi-head">
                         <span class="dash-kpi-label">Consultations</span>
                         <i class="mdi mdi-stethoscope dash-kpi-icon"></i>
@@ -90,7 +102,7 @@
                     </div>
                 </a>
 
-                <a href="{{ route('patient.index') }}" class="dash-kpi-tile kpi-tile-success">
+                <a href="{{ $recepLink }}" class="dash-kpi-tile kpi-tile-success">
                     <div class="dash-kpi-head">
                         <span class="dash-kpi-label">Registrations</span>
                         <i class="mdi mdi-account-plus dash-kpi-icon"></i>
@@ -101,7 +113,7 @@
                     </div>
                 </a>
 
-                <a href="{{ route('inventory.store-workbench.index') }}" class="dash-kpi-tile kpi-tile-stock">
+                <a href="{{ $storeLink }}" class="dash-kpi-tile kpi-tile-stock">
                     <div class="dash-kpi-head">
                         <span class="dash-kpi-label">Stock Alerts</span>
                         <i class="mdi mdi-alert-circle-outline dash-kpi-icon text-danger"></i>
