@@ -222,4 +222,26 @@ class SidebarRedesignTest extends TestCase
         // Tablet leadership badge styling
         $this->assertStringContainsString('.ch-sidebar .nav-profile .ch-sidebar-leadership-wrap', $cssContent);
     }
+
+    /** @test */
+    public function test_sidebar_js_touch_scroll_and_search_autofocus_guards()
+    {
+        $jsContent = file_get_contents(public_path('js/sidebar.js'));
+
+        // Verify touch detection prevents auto-focusing search on touch devices
+        $this->assertStringContainsString('var isTouchDevice =', $jsContent);
+        $this->assertStringContainsString('if (options.focusSearch && !isTouchDevice)', $jsContent);
+
+        // Verify search input is blurred when drawer is closed
+        $this->assertStringContainsString('searchInput.blur()', $jsContent);
+
+        // Verify edge swipe touchstart is constrained to extreme left edge (<= 15px)
+        $this->assertStringContainsString('clientX <= 15', $jsContent);
+
+        // Verify vertical scrolling cancels edge swipe candidate
+        $this->assertStringContainsString('deltaY > Math.abs(edgeTouchDeltaX)', $jsContent);
+
+        // Verify drawer open via swipe is restricted strictly to mobile viewport (< 768px)
+        $this->assertStringContainsString("if (getViewportTier() === 'mobile')", $jsContent);
+    }
 }

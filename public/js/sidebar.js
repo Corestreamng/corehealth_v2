@@ -27,10 +27,6 @@
 
     /* ── State ── */
     var sidebar, backdrop, searchInput, searchClear;
-    var touchStartX = 0;
-    var touchStartY = 0;
-    var touchDeltaX = 0;
-    var isSwiping   = false;
     var currentWidth = window.innerWidth;
 
     /* ──────────────────────────────────────
@@ -156,7 +152,7 @@
         $(document).on('click', '.sidebar-mobile-toggle-btn', function (e) {
             e.preventDefault();
             e.stopPropagation();
-            openMobileDrawer();
+            openMobileDrawer({ focusSearch: false });
         });
 
         // Close button inside brand header on mobile
@@ -173,18 +169,25 @@
         });
     }
 
-    function openMobileDrawer() {
+    function openMobileDrawer(options) {
+        options = options || {};
         sidebar.addClass('active');
         showBackdrop();
         lockBodyScroll();
         sidebar.attr('aria-hidden', 'false');
 
-        // Focus the search input for quick access
-        setTimeout(function () {
-            if (searchInput.length && searchInput.is(':visible')) {
-                searchInput.focus();
-            }
-        }, TRANSITION_MS);
+        // Never auto-focus search on touch devices.
+        // Calling .focus() on touchscreens brings up the on-screen virtual keyboard,
+        // which covers 50-70% of the screen, locks scrolling, and interrupts navigation.
+        // Users on touchscreens should explicitly tap the search input to begin typing.
+        var isTouchDevice = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0) || (navigator.msMaxTouchPoints > 0);
+        if (options.focusSearch && !isTouchDevice) {
+            setTimeout(function () {
+                if (searchInput.length && searchInput.is(':visible')) {
+                    searchInput.focus();
+                }
+            }, TRANSITION_MS);
+        }
     }
 
     function closeMobileDrawer() {
@@ -192,6 +195,11 @@
         hideBackdrop();
         unlockBodyScroll();
         sidebar.attr('aria-hidden', 'true');
+
+        // Ensure search input loses focus and virtual keyboard dismisses
+        if (searchInput && searchInput.length && document.activeElement === searchInput[0]) {
+            searchInput.blur();
+        }
     }
 
     /* ──────────────────────────────────────
@@ -213,63 +221,113 @@
     }
 
     /* ──────────────────────────────────────
-       SWIPE GESTURE (Mobile)
+       SWIPE GESTURE (Mobile Only: < 768px)
        ────────────────────────────────────── */
     function setupSwipeGesture() {
         var sidebarEl = sidebar[0];
         if (!sidebarEl) return;
 
-        // Swipe-to-close on the sidebar
+        // Dedicated state for closing the open sidebar drawer
+        var closeTouchStartX = -1;
+        var closeTouchStartY = -1;
+        var closeTouchDeltaX = 0;
+        var isCloseSwiping = false;
+
+        // 1. Swipe-to-close on the active sidebar drawer
         sidebarEl.addEventListener('touchstart', function (e) {
-            touchStartX = e.touches[0].clientX;
-            touchStartY = e.touches[0].clientY;
-            isSwiping = false;
+            if (!sidebar.hasClass('active')) {
+                closeTouchStartX = -1;
+                return;
+            }
+            if (e.touches && e.touches.length === 1) {
+                closeTouchStartX = e.touches[0].clientX;
+                closeTouchStartY = e.touches[0].clientY;
+                closeTouchDeltaX = 0;
+                isCloseSwiping = false;
+            }
         }, { passive: true });
 
         sidebarEl.addEventListener('touchmove', function (e) {
-            touchDeltaX = e.touches[0].clientX - touchStartX;
-            var deltaY = Math.abs(e.touches[0].clientY - touchStartY);
+            if (!sidebar.hasClass('active') || closeTouchStartX < 0) return;
+            if (e.touches && e.touches.length === 1) {
+                closeTouchDeltaX = e.touches[0].clientX - closeTouchStartX;
+                var deltaY = Math.abs(e.touches[0].clientY - closeTouchStartY);
 
-            // Only treat as horizontal swipe if horizontal movement dominates
-            if (Math.abs(touchDeltaX) > deltaY && Math.abs(touchDeltaX) > 10) {
-                isSwiping = true;
+                // Only treat as horizontal swipe if horizontal movement clearly dominates vertical scrolling
+                if (Math.abs(closeTouchDeltaX) > deltaY * 1.5 && Math.abs(closeTouchDeltaX) > 15) {
+                    isCloseSwiping = true;
+                }
             }
         }, { passive: true });
 
         sidebarEl.addEventListener('touchend', function () {
-            if (isSwiping && touchDeltaX < -SWIPE_THRESHOLD) {
+            if (sidebar.hasClass('active') && isCloseSwiping && closeTouchDeltaX < -SWIPE_THRESHOLD) {
                 closeMobileDrawer();
             }
-            isSwiping = false;
-            touchDeltaX = 0;
+            closeTouchStartX = -1;
+            closeTouchStartY = -1;
+            closeTouchDeltaX = 0;
+            isCloseSwiping = false;
         }, { passive: true });
 
-        // Swipe-to-open from left edge of screen
+        // 2. Swipe-to-open from left edge of screen
+        // STRICT CONSTRAINTS:
+        // - Mobile ONLY (< 768px). Never on tablets (>= 768px) or desktop!
+        // - Touch MUST originate strictly within 15px of screen edge (clientX <= 15).
+        // - Any touch anywhere else on the screen (clientX > 15) IMMEDIATELY clears state.
+        // - If vertical movement (deltaY) occurs during scroll, IMMEDIATELY abort gesture.
+        var edgeTouchStartX = -1;
+        var edgeTouchStartY = -1;
+        var edgeTouchDeltaX = 0;
+        var isEdgeSwipeCandidate = false;
+
         document.addEventListener('touchstart', function (e) {
-            if (e.touches[0].clientX < 20 && !sidebar.hasClass('active')) {
-                touchStartX = e.touches[0].clientX;
-                isSwiping = false;
+            // Reset state on EVERY touchstart to prevent stale or 0 values
+            isEdgeSwipeCandidate = false;
+            edgeTouchStartX = -1;
+            edgeTouchStartY = -1;
+            edgeTouchDeltaX = 0;
+
+            // Only mobile tier (< 768px) and only when drawer is currently closed
+            if (getViewportTier() !== 'mobile' || sidebar.hasClass('active')) {
+                return;
+            }
+
+            if (e.touches && e.touches.length === 1 && e.touches[0].clientX <= 15) {
+                edgeTouchStartX = e.touches[0].clientX;
+                edgeTouchStartY = e.touches[0].clientY;
+                isEdgeSwipeCandidate = true;
             }
         }, { passive: true });
 
         document.addEventListener('touchmove', function (e) {
-            if (touchStartX < 20 && !sidebar.hasClass('active')) {
-                touchDeltaX = e.touches[0].clientX - touchStartX;
-                if (touchDeltaX > 10) {
-                    isSwiping = true;
+            if (!isEdgeSwipeCandidate || edgeTouchStartX < 0 || getViewportTier() !== 'mobile' || sidebar.hasClass('active')) {
+                return;
+            }
+
+            if (e.touches && e.touches.length === 1) {
+                edgeTouchDeltaX = e.touches[0].clientX - edgeTouchStartX;
+                var deltaY = Math.abs(e.touches[0].clientY - edgeTouchStartY);
+
+                // If user is scrolling vertically anywhere on the page, cancel edge swipe immediately
+                if (deltaY > Math.abs(edgeTouchDeltaX) || deltaY > 15) {
+                    isEdgeSwipeCandidate = false;
+                    edgeTouchStartX = -1;
+                    return;
                 }
             }
         }, { passive: true });
 
         document.addEventListener('touchend', function () {
-            if (isSwiping && touchDeltaX > SWIPE_THRESHOLD && !sidebar.hasClass('active')) {
-                if (getViewportTier() !== 'desktop') {
-                    openMobileDrawer();
+            if (isEdgeSwipeCandidate && edgeTouchStartX >= 0 && edgeTouchDeltaX > (SWIPE_THRESHOLD * 1.5) && !sidebar.hasClass('active')) {
+                if (getViewportTier() === 'mobile') {
+                    openMobileDrawer({ focusSearch: false });
                 }
             }
-            isSwiping = false;
-            touchDeltaX = 0;
-            touchStartX = 0;
+            isEdgeSwipeCandidate = false;
+            edgeTouchStartX = -1;
+            edgeTouchStartY = -1;
+            edgeTouchDeltaX = 0;
         }, { passive: true });
     }
 
@@ -281,15 +339,19 @@
 
         // Keyboard shortcut: '/' (forward slash) to quickly filter sidebar menu
         $(document).on('keydown', function (e) {
+            var isTouch = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0) || (navigator.msMaxTouchPoints > 0);
+            if (isTouch) return; // Never intercept slash on touch devices
+
             var tag = (e.target.tagName || '').toLowerCase();
             var isEditing = tag === 'input' || tag === 'textarea' || e.target.isContentEditable;
             if (e.key === '/' && !isEditing && !e.ctrlKey && !e.metaKey && !e.altKey) {
                 e.preventDefault();
                 if (getViewportTier() !== 'desktop' && !sidebar.hasClass('active')) {
-                    openMobileDrawer();
+                    openMobileDrawer({ focusSearch: true });
+                } else {
+                    searchInput.focus();
+                    searchInput.select();
                 }
-                searchInput.focus();
-                searchInput.select();
             }
         });
 
@@ -304,9 +366,10 @@
 
                 e.preventDefault();
                 if (getViewportTier() !== 'desktop' && !sidebar.hasClass('active')) {
-                    openMobileDrawer();
+                    openMobileDrawer({ focusSearch: true });
+                } else {
+                    searchInput.focus();
                 }
-                searchInput.focus();
             }
         });
 

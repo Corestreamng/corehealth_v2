@@ -195,8 +195,26 @@ All authorization rules were audited and preserved:
     - Applies the glowing pulse animation (`.ch-sidebar-item-revealed`).
   - **Synergy Bridge Bar in Sidebar**: While filtering the sidebar, a real-time bridge bar (`{count} in menu · Search all ↵`) appears with a one-click CTA to search all 105+ routes in the Global Omnibar.
   - **Pinned Dropdown Footer**: The Topbar Omnibar features a pinned sticky footer showing keyboard hints (`↑↓ Navigate`, `↵ Open`, `Alt+↵ Locate`, `Esc Close`) and a quick switch button `Menu (/)` that transfers the query back to the sidebar.
-- **Asset Verification & Standards Compliance**:
-  - Verified with `node --check public/js/sidebar.js` and `node --check public/js/global-search.js`.
-  - PHP syntax and formatting validated with `make lint` (0 errors across 1,289 files).
-  - All feature test assertions passing under `vendor/bin/phpunit tests/Feature/Navigation/RouteSearchTest.php`.
+### 6.7 Touchscreen Scroll Guard & Search Input Auto-Focus Elimination (v2.6.0.49)
+**Date**: 2026-10-15  
+**Git Release Tag**: v2.6.0.49  
+
+- **Problem & Root Cause**:
+  - Global touch variables (`touchStartX`, `touchStartY`, `touchDeltaX`, `isSwiping`) in `public/js/sidebar.js` were shared across both the document and the sidebar container.
+  - On standard touch interactions where `clientX >= 20px` (such as normal vertical page scrolling), `touchStartX` remained `0`. During `touchmove`, `touchDeltaX` computed as `clientX - 0 = clientX`. When releasing the touch (`touchend`), if `touchDeltaX > 50`, `openMobileDrawer()` was erroneously triggered anywhere on touchscreen laptops, tablets, and phones.
+  - In addition, `openMobileDrawer()` unconditionally invoked `searchInput.focus()` after 300ms, which summoned the on-screen virtual keyboard and hijacked the user's viewport on mobile/tablet devices.
+- **Independent Gesture Engine**:
+  - Completely removed shared touch variables from the module scope.
+  - `setupSwipeGesture()` now isolates swipe-to-close (`closeTouchStartX`, `closeTouchStartY`, `closeTouchDeltaX`) from edge-swipe-to-open (`edgeTouchStartX`, `edgeTouchStartY`, `edgeTouchDeltaX`).
+  - Drawer swipe-to-close requires horizontal dominance (`Math.abs(closeTouchDeltaX) > deltaY * 1.5`).
+  - Edge-swipe-to-open strictly applies only to the mobile tier (`getViewportTier() === 'mobile'`), requires touchstart within 15px of the screen edge (`clientX <= 15`), and immediately cancels if vertical scroll movement (`deltaY > Math.abs(edgeTouchDeltaX) || deltaY > 15`) occurs. Every touch outside 15px resets state to `-1`.
+  - Tablet rail mode (768px–1199px) never triggers an off-canvas drawer open via touch swipe.
+- **Touchscreen Auto-Focus Suppression**:
+  - `openMobileDrawer(options)` checks for touch capabilities (`'ontouchstart' in window || navigator.maxTouchPoints > 0`). It strictly suppresses programmatic `.focus()` on touchscreens, preventing viewport displacement and virtual keyboard popups.
+  - `closeMobileDrawer()` explicitly invokes `searchInput.blur()` to release any active focus and dismiss virtual keyboards.
+  - The `/` (forward slash) keyboard navigation shortcut guards against touch devices so virtual keyboards are not triggered accidentally.
+- **Verification & Testing**:
+  - Verified with `node --check public/js/sidebar.js` (0 syntax errors).
+  - Feature test added to `tests/Feature/UI/SidebarRedesignTest.php` (`test_sidebar_js_touch_scroll_and_search_autofocus_guards`), passing all 11 tests (78 assertions).
+  - Code style audited and compliant with PSR-12 via `php-cs-fixer`.
 
