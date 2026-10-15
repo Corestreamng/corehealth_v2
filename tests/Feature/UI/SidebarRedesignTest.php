@@ -23,7 +23,7 @@ class SidebarRedesignTest extends TestCase
 
         $cssContent = file_get_contents($cssPath);
         $this->assertStringContainsString('ch-sidebar', $cssContent);
-        $this->assertStringContainsString('@media (min-width: 768px) and (max-width: 1199px)', $cssContent);
+        $this->assertStringContainsString('@media (min-width: 768px) and (max-width: 1199', $cssContent);
         $this->assertStringContainsString('menu-title', $cssContent);
     }
 
@@ -98,7 +98,7 @@ class SidebarRedesignTest extends TestCase
 
         // Verify the 768px-1199px tablet media query exists
         $this->assertMatchesRegularExpression(
-            '/@media\s*\(min-width:\s*768px\)\s*and\s*\(max-width:\s*1199px\)/',
+            '/@media\s*\(min-width:\s*768px\)\s*and\s*\(max-width:\s*1199(\.98px|px)\)/',
             $cssContent,
             'Tablet media query must be present in sidebar.css'
         );

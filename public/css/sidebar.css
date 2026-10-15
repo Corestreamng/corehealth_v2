@@ -17,7 +17,7 @@
    10. User Profile & Leadership Badges
    11. Backdrop Overlay
    12. Responsive: Desktop (≥1200px)
-   13. Responsive: Tablet (768px–1199px)
+   13. Responsive: Tablet (768px–1199.98px)
    14. Responsive: Mobile (<768px)
    15. Visual Polish & Micro-Animations
    16. Reduced Motion
@@ -53,8 +53,26 @@
    ───────────────────────────────────────────── */
 @media (min-width: 1200px) {
     .sidebar-icon-only .ch-sidebar {
-        width: 72px;
-        overflow: visible;
+        width: 72px !important;
+        max-width: 72px !important;
+        min-width: 72px !important;
+        overflow: visible !important;
+        padding: 0 !important;
+        margin: 0 !important;
+    }
+
+    .sidebar-icon-only .ch-sidebar .nav {
+        width: 72px !important;
+        padding: 0 !important;
+        margin: 0 !important;
+    }
+
+    .sidebar-icon-only .ch-sidebar .ch-sidebar-nav-scrollable {
+        width: 72px !important;
+        max-width: 72px !important;
+        overflow-x: hidden !important;
+        padding: 0 !important;
+        margin: 0 !important;
     }
 
     /* Hide text with smooth fade on desktop icon-only */
@@ -67,10 +85,13 @@
     .sidebar-icon-only .ch-sidebar .nav-item-head,
     .sidebar-icon-only .ch-sidebar .ch-sidebar-search-wrap,
     .sidebar-icon-only .ch-sidebar .ch-sidebar-section-count {
-        opacity: 0;
-        visibility: hidden;
-        width: 0;
-        overflow: hidden;
+        opacity: 0 !important;
+        visibility: hidden !important;
+        width: 0 !important;
+        height: 0 !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        overflow: hidden !important;
         transition: opacity 0.2s ease, visibility 0.2s ease, width 0.2s ease;
     }
 
@@ -81,7 +102,9 @@
         justify-content: center !important;
         align-items: center !important;
         border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
-        overflow: hidden;
+        overflow: hidden !important;
+        width: 72px !important;
+        max-width: 72px !important;
     }
 
     .sidebar-icon-only .ch-sidebar .nav-brand > div {
@@ -107,40 +130,92 @@
         margin-bottom: 0 !important;
     }
 
-    /* Center nav links in icon-only mode */
+    /* Center nav links in icon-only mode with zero clipping */
     .sidebar-icon-only .ch-sidebar .nav-link {
-        justify-content: center;
+        display: flex !important;
+        justify-content: center !important;
+        align-items: center !important;
         padding: 12px 0 !important;
-        position: relative;
-        width: 72px;
-    }
-
-    /* Profile in icon-only mode */
-    .sidebar-icon-only .ch-sidebar .nav-profile {
-        padding: 15px 0 !important;
-        justify-content: center !important;
-    }
-
-    .sidebar-icon-only .ch-sidebar .nav-profile a {
-        justify-content: center !important;
-        width: 100% !important;
-    }
-
-    .sidebar-icon-only .ch-sidebar .nav-profile .ml-3,
-    .sidebar-icon-only .ch-sidebar .nav-profile .mdi-logout,
-    .sidebar-icon-only .ch-sidebar .nav-profile .ch-sidebar-profile-details {
-        display: none !important;
-    }
-
-    .sidebar-icon-only .ch-sidebar .nav-profile img {
-        margin: 0 auto !important;
+        margin: 2px auto !important;
+        position: relative !important;
+        width: 56px !important;
+        border-radius: 8px !important;
+        text-align: center !important;
     }
 
     /* Icons visible and centered */
     .sidebar-icon-only .ch-sidebar .menu-icon {
-        margin-right: 0 !important;
+        margin: 0 auto !important;
         font-size: 20px !important;
+        display: block !important;
+        text-align: center !important;
+        line-height: 1 !important;
         transition: all 0.2s ease;
+    }
+
+    /* Profile in icon-only mode */
+    .sidebar-icon-only .ch-sidebar .nav-profile {
+        padding: 12px 0 !important;
+        width: 72px !important;
+        max-width: 72px !important;
+        overflow: hidden !important;
+        display: flex !important;
+        justify-content: center !important;
+        border-top: 1px solid rgba(255, 255, 255, 0.1) !important;
+    }
+
+    .sidebar-icon-only .ch-sidebar .nav-profile .ch-sidebar-user-section > div,
+    .sidebar-icon-only .ch-sidebar .nav-profile > div {
+        padding: 0 !important;
+        display: flex !important;
+        flex-direction: column !important;
+        align-items: center !important;
+        width: 72px !important;
+        max-width: 72px !important;
+        overflow: hidden !important;
+    }
+
+    .sidebar-icon-only .ch-sidebar .nav-profile a.ch-sidebar-user-link {
+        display: flex !important;
+        justify-content: center !important;
+        align-items: center !important;
+        width: 44px !important;
+        margin: 0 auto !important;
+        padding: 0 !important;
+    }
+
+    .sidebar-icon-only .ch-sidebar .nav-profile .ml-3,
+    .sidebar-icon-only .ch-sidebar .nav-profile .ch-sidebar-profile-details,
+    .sidebar-icon-only .ch-sidebar .nav-profile .ch-sidebar-leadership-wrap {
+        display: none !important;
+    }
+
+    .sidebar-icon-only .ch-sidebar .nav-profile img,
+    .sidebar-icon-only .ch-sidebar .nav-profile .avatar,
+    .sidebar-icon-only .ch-sidebar .nav-profile [class*="avatar"] {
+        margin: 0 auto !important;
+    }
+
+    /* Compact Logout Icon Button */
+    .sidebar-icon-only .ch-sidebar .ch-sidebar-logout-btn {
+        width: 44px !important;
+        height: 38px !important;
+        padding: 0 !important;
+        margin: 6px auto 0 !important;
+        border-radius: 8px !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+    }
+
+    .sidebar-icon-only .ch-sidebar .ch-sidebar-logout-btn span {
+        display: none !important;
+    }
+
+    .sidebar-icon-only .ch-sidebar .ch-sidebar-logout-btn .mdi-logout {
+        display: block !important;
+        margin: 0 !important;
+        font-size: 18px !important;
     }
 
     /* Hide submenus completely in icon-only */
@@ -1147,22 +1222,32 @@ li.ch-sidebar-search-hidden,
 }
 
 /* ─────────────────────────────────────────────
-   13. RESPONSIVE: TABLET (768px–1199px)
+   13. RESPONSIVE: TABLET (768px–1199.98px)
        Icon Rail with small text under each icon
    ───────────────────────────────────────────── */
-@media (min-width: 768px) and (max-width: 1199px) {
+@media (min-width: 768px) and (max-width: 1199.98px) {
     /* Fixed 80px icon rail strictly bounded */
     .ch-sidebar {
         width: 80px !important;
         max-width: 80px !important;
         min-width: 80px !important;
         overflow-x: hidden !important;
+        padding: 0 !important;
+        margin: 0 !important;
+    }
+
+    .ch-sidebar .nav {
+        width: 80px !important;
+        padding: 0 !important;
+        margin: 0 !important;
     }
 
     .ch-sidebar .ch-sidebar-nav-scrollable {
         width: 80px !important;
         max-width: 80px !important;
         overflow-x: hidden !important;
+        padding: 0 !important;
+        margin: 0 !important;
     }
 
     /* Brand Header on Tablet */
@@ -1625,12 +1710,12 @@ li.ch-sidebar-search-hidden,
     }
 }
 
-/* Fallback: tablets in the old 768-991 range also need layout fixes */
-@media (max-width: 1199px) {
+/* Fallback: tablets and screens below desktop */
+@media (max-width: 1199.98px) {
     /* Navbar and page body adjustments handled in app.blade.php */
 }
 
-/* Hide mobile toggle button on desktop */
+/* Hide mobile toggle button on desktop (≥1200px) */
 @media (min-width: 1200px) {
     .sidebar-mobile-toggle-btn {
         display: none !important;

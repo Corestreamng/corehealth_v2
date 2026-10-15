@@ -242,3 +242,29 @@ All authorization rules were audited and preserved:
   - Full PHPUnit test coverage in `tests/Feature/UI/SidebarRedesignTest.php` (`test_condensed_staff_workspace_and_global_navigation`), passing all 12 tests (100 assertions).
   - Formatted strictly to PSR-12 via `php-cs-fixer`.
 
+### 6.9 Responsive Viewport Calibration & Desktop Icon-Only Alignment (v2.6.0.51)
+**Date**: 2026-10-15  
+**Git Release Tag**: v2.6.0.51  
+
+- **Problem & Root Cause**:
+  - Setting a breakpoint of 1920px caused standard 1080p Full HD monitors to enter tablet rail mode whenever the browser was maximized. In Linux desktop environments (e.g. Ubuntu with dock) and Windows (with window borders/chrome), a maximized browser on a 1920x1080 screen measures ~1856px–1876px viewport width.
+  - Because 1876px < 1920px, the viewport erroneously entered tablet media queries, hiding the desktop hamburger button and conflicting with desktop layout offsets (`margin-left: 260px` vs `80px`).
+  - Furthermore, when icon-only mode was active, legacy CSS styles and padding caused menu icons to be displaced and partially clipped on the left/right edges, with an unaligned profile section at the bottom.
+- **Architectural Solution & Responsive Breakpoint Standard**:
+  - **Desktop Breakpoint Standardized to ≥1200px**:
+    - `BREAKPOINT_TABLET` set to `1200` in `public/js/sidebar.js`.
+    - Desktop layout media queries calibrated to `@media (min-width: 1200px)` in `public/css/sidebar.css` and `resources/views/admin/layouts/app.blade.php`.
+    - Maximized desktop monitors (1876px, 1920px, 1440p, 4K) cleanly render full 260px desktop navigation with the topbar search and desktop hamburger toggle.
+  - **Tablet Navigation Rail Strictly Bounded (768px–1199.98px)**:
+    - Bounded to actual tablet and small laptop viewports.
+    - Zero padding/margin on `.ch-sidebar` and `.nav` ensures icons are centered without horizontal clipping.
+  - **Desktop Icon-Only (72px) Overhaul**:
+    - Aligned navbar (`left: 72px !important`), page wrapper (`margin-left: 72px !important`), and footer (`left: 72px !important`) in `app.blade.php`.
+    - Nav links in icon-only mode set to `width: 56px !important; margin: 2px auto !important; justify-content: center !important;` so that all 20px icons are centered with zero clipping.
+    - Bottom profile section transformed into a centered avatar with a dedicated compact 44x38px icon-only logout button.
+- **Verification & Testing**:
+  - Validated in browser tool across maximized desktop (1876x953), icon-only (72px), full sidebar (260px), and tablet rail (900x800).
+  - Validated with `node --check public/js/sidebar.js` (0 errors).
+  - Passing all 12 feature tests in `tests/Feature/UI/SidebarRedesignTest.php` (100 assertions).
+  - Compliant with PSR-12 code style via `php-cs-fixer`.
+

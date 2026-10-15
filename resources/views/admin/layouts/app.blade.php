@@ -136,8 +136,8 @@
 
         /* Handle sidebar collapse state */
         .sidebar-icon-only .ch-navbar {
-            left: 70px;
-            width: calc(100% - 70px);
+            left: 72px !important;
+            width: calc(100% - 72px) !important;
         }
 
         /* Fresh Hamburger Button Styles */
@@ -256,8 +256,8 @@
         }
 
         .sidebar-icon-only .page-body-wrapper {
-            margin-left: 70px;
-            width: calc(100% - 70px);
+            margin-left: 72px !important;
+            width: calc(100% - 72px) !important;
         }
 
         .main-panel {
@@ -385,8 +385,8 @@
 
         /* Footer adjusts when sidebar is minimized */
         .sidebar-icon-only .footer {
-            left: 70px;
-            width: calc(100% - 70px);
+            left: 72px !important;
+            width: calc(100% - 72px) !important;
         }
 
         .footer .text-muted {
@@ -930,8 +930,8 @@
             z-index: 1056 !important;
         }
 
-        /* Tablet responsive (768px–1199px): 80px icon rail */
-        @media (min-width: 768px) and (max-width: 1199px) {
+        /* Tablet responsive (768px–1199.98px): 80px icon rail */
+        @media (min-width: 768px) and (max-width: 1199.98px) {
             .ch-navbar {
                 left: 80px !important;
                 width: calc(100% - 80px) !important;
