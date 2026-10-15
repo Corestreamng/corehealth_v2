@@ -1,7 +1,7 @@
 {{-- Bottom User Profile Section --}}
 <li class="nav-item nav-profile pt-3 mt-auto border-top ch-sidebar-user-section">
     <div class="px-3 pb-3">
-        <div class="d-flex align-items-center mb-3">
+        <a href="{{ route('hr.ess.my-profile') }}" class="d-flex align-items-center mb-3 text-white text-decoration-none ch-sidebar-user-link" title="{{ __('sidebar.my_profile') }}" id="sidebar-user-profile-link">
             <x-user-avatar :user="Auth::user()" width="40px" height="40px" class="border border-light" />
             <div class="ml-3 overflow-hidden">
                 <div class="font-weight-bold text-white text-truncate" style="font-size: 0.95rem;">
@@ -9,7 +9,7 @@
                 </div>
                 <div class="small text-truncate" style="color: rgba(255,255,255,0.8) !important;">{{ Auth::user()->category->name ?? '' }}</div>
             </div>
-        </div>
+        </a>
 
         {{-- Leadership Role Badges --}}
         @php

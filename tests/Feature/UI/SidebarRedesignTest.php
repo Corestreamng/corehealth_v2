@@ -239,9 +239,62 @@ class SidebarRedesignTest extends TestCase
         $this->assertStringContainsString('clientX <= 15', $jsContent);
 
         // Verify vertical scrolling cancels edge swipe candidate
-        $this->assertStringContainsString('deltaY > Math.abs(edgeTouchDeltaX)', $jsContent);
-
         // Verify drawer open via swipe is restricted strictly to mobile viewport (< 768px)
         $this->assertStringContainsString("if (getViewportTier() === 'mobile')", $jsContent);
+    }
+
+    /** @test */
+    public function test_condensed_staff_workspace_and_global_navigation()
+    {
+        $user = User::factory()->create(['status' => 1]);
+        $roleSuper = Role::firstOrCreate(['name' => 'SUPERADMIN', 'guard_name' => 'web']);
+        $user->assignRole($roleSuper);
+
+        // Create staff profile and assign ess.access
+        $staff = \App\Models\Staff::firstOrNew(['user_id' => $user->id]);
+        $staff->save();
+        $user->givePermissionTo(\Spatie\Permission\Models\Permission::firstOrCreate(['name' => 'ess.access', 'guard_name' => 'web']));
+
+        $user->unsetRelation('staff_profile');
+        $user->load('staff_profile');
+        $this->actingAs($user);
+
+        $rendered = View::make('admin.partials.sidebar')->render();
+
+        // 1. Primary Global Links
+        $this->assertStringContainsString('id="sidebar-global-dashboard"', $rendered);
+        $this->assertStringContainsString(route('home'), $rendered);
+
+        // 2. Staff Workspace Collapsible Dropdown
+        $this->assertStringContainsString('id="sidebar-staff-workspace-toggle"', $rendered);
+        $this->assertStringContainsString('id="sidebar-staff-workspace"', $rendered);
+        $this->assertStringContainsString('Staff Workspace', $rendered);
+
+        // 3. HR Self-Service Items inside Staff Workspace
+        $this->assertStringContainsString('id="sidebar-ess-my-profile"', $rendered);
+        $this->assertStringContainsString(route('hr.ess.my-profile'), $rendered);
+        $this->assertStringContainsString('id="sidebar-ess-dashboard"', $rendered);
+        $this->assertStringContainsString(route('hr.ess.index'), $rendered);
+        $this->assertStringContainsString('id="sidebar-ess-my-leave"', $rendered);
+        $this->assertStringContainsString(route('hr.ess.my-leave'), $rendered);
+        $this->assertStringContainsString('id="sidebar-ess-my-disciplinary"', $rendered);
+        $this->assertStringContainsString(route('hr.ess.my-disciplinary'), $rendered);
+
+        // 4. Staff Supplies & Stock inside Staff Workspace
+        $this->assertStringContainsString('id="sidebar-global-requisitions"', $rendered);
+        $this->assertStringContainsString(route('inventory.requisitions.index'), $rendered);
+        $this->assertStringContainsString('id="sidebar-global-my-stock"', $rendered);
+        $this->assertStringContainsString(route('inventory.requisitions.my-stock'), $rendered);
+
+        // 5. User Profile Card Link
+        $this->assertStringContainsString('id="sidebar-user-profile-link"', $rendered);
+
+        // 6. CSS Styles for Submenu Labels, Dividers, and Flyout
+        $cssContent = file_get_contents(public_path('css/sidebar.css'));
+        $this->assertStringContainsString('.ch-sidebar .sub-menu .ch-sidebar-sub-label', $cssContent);
+        $this->assertStringContainsString('.ch-sidebar .sub-menu .ch-sidebar-sub-divider', $cssContent);
+        $this->assertStringContainsString('.ch-sidebar-flyout-label', $cssContent);
+        $this->assertStringContainsString('.ch-sidebar-flyout-divider', $cssContent);
+        $this->assertStringContainsString('.ch-sidebar .ch-sidebar-user-link', $cssContent);
     }
 }

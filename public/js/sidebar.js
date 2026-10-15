@@ -468,6 +468,11 @@
             .removeClass('ch-sidebar-search-hidden')
             .removeAttr('style');
 
+        // Hide decorative sub-labels and dividers while filtering
+        sidebar.find('.ch-sidebar-sub-label, .ch-sidebar-sub-divider')
+            .addClass('ch-sidebar-search-hidden')
+            .attr('style', 'display: none !important;');
+
         // Step 1: Section-aware filtering
         var headerLis = sidebar.find('.ch-sidebar-section-header, .ch-sidebar-nav-scrollable li:has(.nav-item-head)');
 
@@ -547,16 +552,55 @@
             }
         });
 
-        // Step 2: Items before first header (e.g., Dashboard, Profile)
+        // Step 2: Items before first header (e.g., Dashboard, Messenger, Staff Workspace)
         var preItems = headerLis.first().prevAll('.nav-item');
         preItems.each(function () {
             var item = $(this);
-            var text = item.find('.nav-link').text().toLowerCase();
-            var isMatch = text.indexOf(term) !== -1;
-            if (isMatch) {
+            var parentLink = item.children('.nav-link');
+            var parentText = (parentLink.find('.menu-title').text() || parentLink.text()).toLowerCase().trim();
+            var subMenu = item.find('.sub-menu');
+            var itemHasMatch = false;
+
+            if (parentText.indexOf(term) !== -1) {
+                itemHasMatch = true;
+                if (subMenu.length) {
+                    subMenu.find('.nav-item').removeClass('ch-sidebar-search-hidden').removeAttr('style');
+                    var directLinks = subMenu.find('.nav-link');
+                    matchCount += directLinks.length || 1;
+                }
+            }
+
+            if (subMenu.length) {
+                var subLinks = subMenu.find('.nav-link');
+                var subMatchCount = 0;
+                subLinks.each(function () {
+                    var subLink = $(this);
+                    var subText = subLink.text().toLowerCase();
+                    var subItem = subLink.closest('.nav-item');
+                    if (subText.indexOf(term) !== -1 || parentText.indexOf(term) !== -1) {
+                        subItem.removeClass('ch-sidebar-search-hidden').removeAttr('style');
+                        subMatchCount++;
+                        matchCount++;
+                    } else {
+                        subItem.addClass('ch-sidebar-search-hidden').attr('style', 'display: none !important;');
+                    }
+                });
+
+                if (subMatchCount > 0) {
+                    itemHasMatch = true;
+                    if (!isRailMode()) {
+                        item.find('.collapse').addClass('show');
+                        item.children('.nav-link').attr('aria-expanded', 'true');
+                    }
+                }
+            }
+
+            if (itemHasMatch) {
                 item.removeClass('ch-sidebar-search-hidden').removeAttr('style');
                 anyMatch = true;
-                matchCount++;
+                if (!subMenu.length) {
+                    matchCount++;
+                }
             } else {
                 item.addClass('ch-sidebar-search-hidden').attr('style', 'display: none !important;');
             }
@@ -847,31 +891,72 @@
         flyoutBody.empty();
         var menuList = $('<ul class="ch-sidebar-flyout-menu"></ul>');
 
-        var foundLinks = subMenu.find('.nav-link');
-        if (!foundLinks.length) {
-            foundLinks = navItem.find('.collapse .nav-link, [id^="sidebar-"] .nav-link').not(parentLink);
+        var subItems = subMenu.children('li');
+        if (!subItems.length) {
+            subItems = navItem.find('.collapse .sub-menu > li');
         }
 
-        foundLinks.each(function () {
-            var origLink = $(this);
-            var href = origLink.attr('href') || 'javascript:void(0);';
-            var linkText = origLink.clone().children('.menu-icon, .badge, i').remove().end().text().trim() || origLink.text().trim();
-            var origId = origLink.attr('id') || '';
-            var isActive = origLink.hasClass('active') || origLink.closest('.nav-item').hasClass('active');
-            var icon = origLink.find('i').clone();
+        if (subItems.length) {
+            subItems.each(function () {
+                var item = $(this);
+                if (item.hasClass('ch-sidebar-sub-label')) {
+                    var labelLi = $('<li class="ch-sidebar-flyout-label"></li>').text(item.text().trim());
+                    menuList.append(labelLi);
+                    return;
+                }
+                if (item.hasClass('ch-sidebar-sub-divider')) {
+                    menuList.append($('<li class="ch-sidebar-flyout-divider"></li>'));
+                    return;
+                }
 
-            var li = $('<li class="ch-sidebar-flyout-item"></li>');
-            var a = $('<a class="ch-sidebar-flyout-link" href="' + escapeHtml(href) + '"></a>');
-            if (isActive) a.addClass('active');
-            if (origId) a.attr('id', 'flyout-' + origId);
-            if (icon.length) {
-                icon.css('margin-right', '8px');
-                a.append(icon);
+                var origLink = item.find('> .nav-link, .nav-link').first();
+                if (!origLink.length) return;
+
+                var href = origLink.attr('href') || 'javascript:void(0);';
+                var linkText = origLink.clone().children('.menu-icon, .badge, i').remove().end().text().trim() || origLink.text().trim();
+                var origId = origLink.attr('id') || '';
+                var isActive = origLink.hasClass('active') || origLink.closest('.nav-item').hasClass('active');
+                var icon = origLink.find('i').clone();
+
+                var li = $('<li class="ch-sidebar-flyout-item"></li>');
+                var a = $('<a class="ch-sidebar-flyout-link" href="' + escapeHtml(href) + '"></a>');
+                if (isActive) a.addClass('active');
+                if (origId) a.attr('id', 'flyout-' + origId);
+                if (icon.length) {
+                    icon.css('margin-right', '8px');
+                    a.append(icon);
+                }
+                a.append($('<span></span>').text(linkText));
+                li.append(a);
+                menuList.append(li);
+            });
+        } else {
+            var foundLinks = subMenu.find('.nav-link');
+            if (!foundLinks.length) {
+                foundLinks = navItem.find('.collapse .nav-link, [id^="sidebar-"] .nav-link').not(parentLink);
             }
-            a.append($('<span></span>').text(linkText));
-            li.append(a);
-            menuList.append(li);
-        });
+
+            foundLinks.each(function () {
+                var origLink = $(this);
+                var href = origLink.attr('href') || 'javascript:void(0);';
+                var linkText = origLink.clone().children('.menu-icon, .badge, i').remove().end().text().trim() || origLink.text().trim();
+                var origId = origLink.attr('id') || '';
+                var isActive = origLink.hasClass('active') || origLink.closest('.nav-item').hasClass('active');
+                var icon = origLink.find('i').clone();
+
+                var li = $('<li class="ch-sidebar-flyout-item"></li>');
+                var a = $('<a class="ch-sidebar-flyout-link" href="' + escapeHtml(href) + '"></a>');
+                if (isActive) a.addClass('active');
+                if (origId) a.attr('id', 'flyout-' + origId);
+                if (icon.length) {
+                    icon.css('margin-right', '8px');
+                    a.append(icon);
+                }
+                a.append($('<span></span>').text(linkText));
+                li.append(a);
+                menuList.append(li);
+            });
+        }
 
         flyoutBody.append(menuList);
 

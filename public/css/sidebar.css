@@ -317,6 +317,28 @@
     font-weight: 600 !important;
 }
 
+/* Flyout portal sub-group labels & dividers */
+.ch-sidebar-flyout-label {
+    display: block !important;
+    padding: 8px 14px 4px 14px !important;
+    font-size: 10px !important;
+    font-weight: 700 !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.05em !important;
+    color: #6b7280 !important;
+    list-style: none !important;
+    pointer-events: none !important;
+    user-select: none !important;
+}
+
+.ch-sidebar-flyout-divider {
+    display: block !important;
+    height: 1px !important;
+    margin: 4px 12px !important;
+    background: #e5e7eb !important;
+    list-style: none !important;
+}
+
 /* Active indicator on rail item when flyout is open */
 .ch-sidebar .nav-item.ch-sidebar-flyout-active > .nav-link {
     background: rgba(255, 255, 255, 0.22) !important;
@@ -725,6 +747,26 @@
     border-radius: 0 3px 3px 0;
 }
 
+/* Sub-group labels and dividers inside in-flow submenus */
+.ch-sidebar .sub-menu .ch-sidebar-sub-label {
+    padding: 10px 20px 4px 36px;
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: rgba(255, 255, 255, 0.45);
+    list-style: none;
+    pointer-events: none;
+    user-select: none;
+}
+
+.ch-sidebar .sub-menu .ch-sidebar-sub-divider {
+    height: 1px;
+    margin: 6px 20px 6px 36px;
+    background: rgba(255, 255, 255, 0.08);
+    list-style: none;
+}
+
 /* Collapse animation */
 .ch-sidebar .collapse {
     transition: none;
@@ -1002,6 +1044,20 @@ li.ch-sidebar-search-hidden,
 /* User section background */
 .ch-sidebar .nav-profile.ch-sidebar-user-section {
     background: rgba(0, 0, 0, 0.12);
+}
+
+.ch-sidebar .ch-sidebar-user-link {
+    transition: opacity 0.2s ease, transform 0.2s ease;
+    border-radius: 6px;
+    padding: 4px;
+    margin: -4px;
+    cursor: pointer;
+}
+
+.ch-sidebar .ch-sidebar-user-link:hover {
+    opacity: 0.92;
+    transform: translateX(2px);
+    text-decoration: none !important;
 }
 
 /* Leadership badges */

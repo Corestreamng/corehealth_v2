@@ -218,3 +218,27 @@ All authorization rules were audited and preserved:
   - Feature test added to `tests/Feature/UI/SidebarRedesignTest.php` (`test_sidebar_js_touch_scroll_and_search_autofocus_guards`), passing all 11 tests (78 assertions).
   - Code style audited and compliant with PSR-12 via `php-cs-fixer`.
 
+### 6.8 Condensed Staff Workspace & Global Navigation Unification (v2.6.0.50)
+**Date**: 2026-10-15  
+**Git Release Tag**: v2.6.0.50  
+
+- **Motivation & Spatial Optimization**:
+  - Previously, the top of the sidebar was occupied by 10 separate links plus a section header (Dashboard, Profile, Messenger, Requisitions, My Stock, [My HR Portal], ESS Dashboard, My Leave, My Payslips, My Disciplinary, My Profile).
+  - This consumed ~450px of vertical space (over 50% of screen height on tablet and laptop viewports) and caused duplicate listings for user profile.
+  - On the 80px tablet navigation rail, 10 individual icons pushed primary clinical workbenches (Doctor, Nursing, Pharmacy, Reception, Lab) completely off the screen.
+- **Unified 3-Top-Level Architecture**:
+  1. **Dashboard** (`sidebar-global-dashboard`, `route('home')`): Primary 1-click operational cockpit anchor.
+  2. **Messenger** (`sidebar-global-messenger`, `route('chat.index')`): Direct 1-click communications launcher with live unread badge.
+  3. **Staff Workspace** (`sidebar-staff-workspace-toggle`, `#sidebar-staff-workspace`): Single, collapsible dropdown uniting:
+     - **HR Self-Service**: My Profile, ESS Dashboard, My Leave, My Payslips (`@can('ess.view-payslips')`), and My Disciplinary.
+     - **Supplies & Stock**: Store Requisitions and My Stock.
+- **Flyout Portal & Search Synergy**:
+  - Added support for sub-group labels (`.ch-sidebar-sub-label`, `.ch-sidebar-flyout-label`) and dividers (`.ch-sidebar-sub-divider`, `.ch-sidebar-flyout-divider`).
+  - Tablet navigation rail now renders a single `Workspace` icon, opening a clean, divided flyout card on hover or tap.
+  - Enhanced `filterSidebar` in `public/js/sidebar.js` so searches before section headers (e.g., "leave", "payslip", "requisition", "stock") automatically expand the Staff Workspace collapse and isolate matching sub-items.
+  - User avatar and name in the bottom profile card (`#sidebar-user-profile-link`) now link directly to `hr.ess.my-profile`.
+- **Verification & Testing**:
+  - Standalone JS verified with `node --check public/js/sidebar.js` (0 errors).
+  - Full PHPUnit test coverage in `tests/Feature/UI/SidebarRedesignTest.php` (`test_condensed_staff_workspace_and_global_navigation`), passing all 12 tests (100 assertions).
+  - Formatted strictly to PSR-12 via `php-cs-fixer`.
+
