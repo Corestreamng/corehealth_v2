@@ -302,6 +302,18 @@ class DashboardDataController extends Controller
 
             $dispensedToday = \Illuminate\Support\Facades\DB::table('product_requests')->where('status', 3)->whereDate('created_at', $today)->count();
             $labCompletedToday = \Illuminate\Support\Facades\DB::table('lab_service_requests')->where('status', 4)->whereDate('created_at', $today)->count();
+            $registeredToday = \Illuminate\Support\Facades\DB::table('patients')->whereDate('created_at', $today)->count();
+            $admissionsToday = \Illuminate\Support\Facades\DB::table('admission_requests')->whereDate('created_at', $today)->count();
+            $dailyReceiptsCount = \Illuminate\Support\Facades\DB::table('payments')->whereDate('created_at', $today)->count();
+            $appointmentsToday = \Illuminate\Support\Facades\Schema::hasTable('doctor_appointments')
+                ? \Illuminate\Support\Facades\DB::table('doctor_appointments')->whereDate('appointment_date', $today)->count()
+                : 0;
+            $encountersToday = \Illuminate\Support\Facades\DB::table('encounters')->whereDate('created_at', $today)->count();
+            $activeConsultations = max(1, \Illuminate\Support\Facades\DB::table('encounters')->whereDate('created_at', $today)->where('completed', 0)->count());
+            $completedConsults = \Illuminate\Support\Facades\DB::table('encounters')->whereDate('created_at', $today)->where('completed', 1)->count();
+            if ($completedConsults === 0 && $encountersToday > 0) {
+                $completedConsults = $encountersToday;
+            }
 
             // Build domain-specific queue lists for live table action
             $docQueueWaiting = \Illuminate\Support\Facades\DB::table('doctor_queues as dq')
@@ -468,6 +480,280 @@ class DashboardDataController extends Controller
                     })
                 : collect();
 
+            // 6. Receptionist Queue (Checked In / Registered Today)
+            $receptionQueue = \Illuminate\Support\Facades\DB::table('patients as p')
+                ->join('users as u', 'p.user_id', '=', 'u.id')
+                ->select(
+                    'p.id as patient_id',
+                    'p.file_no',
+                    \Illuminate\Support\Facades\DB::raw("CONCAT(u.surname, ' ', u.firstname) as patient_name"),
+                    'p.created_at'
+                )
+                ->orderByDesc('p.created_at')
+                ->limit(8)
+                ->get()
+                ->map(function ($row) {
+                    $timeAgo = \Carbon\Carbon::parse($row->created_at)->diffForHumans(null, true);
+
+                    return [
+                        'patient_id' => $row->patient_id,
+                        'patient_name' => $row->patient_name,
+                        'file_no' => $row->file_no ?? 'N/A',
+                        'detail' => 'Registered / Check-In Intake',
+                        'meta' => $timeAgo . ' ago',
+                        'status_label' => 'Registered',
+                        'status_color' => 'success',
+                        'action_label' => 'Intake Flow',
+                        'action_url' => route('reception.workbench', ['patient_id' => $row->patient_id]),
+                        'action_class' => 'btn-success',
+                    ];
+                });
+
+            // 7. Nursing Queue (Pending Triage Vitals / Inpatient Care)
+            $nursingQueueWaiting = \Illuminate\Support\Facades\DB::table('doctor_queues as dq')
+                ->join('patients as p', 'dq.patient_id', '=', 'p.id')
+                ->join('users as u', 'p.user_id', '=', 'u.id')
+                ->where('dq.status', 1)
+                ->where('dq.vitals_taken', 0)
+                ->select(
+                    'p.id as patient_id',
+                    'p.file_no',
+                    \Illuminate\Support\Facades\DB::raw("CONCAT(u.surname, ' ', u.firstname) as patient_name"),
+                    'dq.created_at',
+                    'dq.priority'
+                )
+                ->orderBy('dq.created_at')
+                ->limit(8)
+                ->get()
+                ->map(function ($row) {
+                    $waitTime = \Carbon\Carbon::parse($row->created_at)->diffForHumans(null, true);
+
+                    return [
+                        'patient_id' => $row->patient_id,
+                        'patient_name' => $row->patient_name,
+                        'file_no' => $row->file_no ?? 'N/A',
+                        'detail' => 'Awaiting Triage Vitals',
+                        'meta' => 'Wait: ' . $waitTime,
+                        'status_label' => ucfirst($row->priority ?: 'Pending Vitals'),
+                        'status_color' => $row->priority === 'emergency' ? 'danger' : 'warning',
+                        'action_label' => 'Record Vitals',
+                        'action_url' => url('nursing-workbench?filter=vitals'),
+                        'action_class' => 'btn-warning',
+                    ];
+                });
+
+            if ($nursingQueueWaiting->isEmpty()) {
+                $nursingQueueWaiting = \Illuminate\Support\Facades\DB::table('admission_requests as ar')
+                    ->join('patients as p', 'ar.patient_id', '=', 'p.id')
+                    ->join('users as u', 'p.user_id', '=', 'u.id')
+                    ->leftJoin('beds as b', 'ar.bed_id', '=', 'b.id')
+                    ->leftJoin('wards as w', 'b.ward_id', '=', 'w.id')
+                    ->where('ar.status', 1)
+                    ->select(
+                        'p.id as patient_id',
+                        'p.file_no',
+                        \Illuminate\Support\Facades\DB::raw("CONCAT(u.surname, ' ', u.firstname) as patient_name"),
+                        'w.name as ward_name',
+                        'b.name as bed_name',
+                        'ar.created_at'
+                    )
+                    ->orderByDesc('ar.created_at')
+                    ->limit(8)
+                    ->get()
+                    ->map(function ($row) {
+                        $timeAgo = \Carbon\Carbon::parse($row->created_at)->diffForHumans(null, true);
+
+                        return [
+                            'patient_id' => $row->patient_id,
+                            'patient_name' => $row->patient_name,
+                            'file_no' => $row->file_no ?? 'N/A',
+                            'detail' => ($row->ward_name ? $row->ward_name . ' • Bed ' . $row->bed_name : 'Inpatient Ward'),
+                            'meta' => 'Admitted ' . $timeAgo . ' ago',
+                            'status_label' => 'Admitted',
+                            'status_color' => 'teal',
+                            'action_label' => 'Ward Care',
+                            'action_url' => url('nursing-workbench?filter=admitted'),
+                            'action_class' => 'btn-teal',
+                        ];
+                    });
+            }
+
+            // 8. Inpatient Queue (Ward Bed Census)
+            $inpatientQueue = \Illuminate\Support\Facades\DB::table('admission_requests as ar')
+                ->join('patients as p', 'ar.patient_id', '=', 'p.id')
+                ->join('users as u', 'p.user_id', '=', 'u.id')
+                ->leftJoin('beds as b', 'ar.bed_id', '=', 'b.id')
+                ->leftJoin('wards as w', 'b.ward_id', '=', 'w.id')
+                ->where('ar.status', 1)
+                ->select(
+                    'p.id as patient_id',
+                    'p.file_no',
+                    \Illuminate\Support\Facades\DB::raw("CONCAT(u.surname, ' ', u.firstname) as patient_name"),
+                    'w.name as ward_name',
+                    'b.name as bed_name',
+                    'ar.created_at'
+                )
+                ->orderByDesc('ar.created_at')
+                ->limit(8)
+                ->get()
+                ->map(function ($row) {
+                    $timeAgo = \Carbon\Carbon::parse($row->created_at)->diffForHumans(null, true);
+
+                    return [
+                        'patient_id' => $row->patient_id,
+                        'patient_name' => $row->patient_name,
+                        'file_no' => $row->file_no ?? 'N/A',
+                        'detail' => ($row->ward_name ? $row->ward_name . ' • Bed ' . $row->bed_name : 'Inpatient Ward'),
+                        'meta' => 'In Bed • ' . $timeAgo . ' ago',
+                        'status_label' => 'Admitted',
+                        'status_color' => 'teal',
+                        'action_label' => 'Ward Rounds',
+                        'action_url' => url('nursing-workbench?filter=admitted'),
+                        'action_class' => 'btn-teal',
+                    ];
+                });
+
+            // 9. Theatre Queue (Scheduled & Booked Procedures)
+            $theatreQueue = \Illuminate\Support\Facades\Schema::hasTable('procedures')
+                ? \Illuminate\Support\Facades\DB::table('procedures as pr')
+                    ->join('patients as p', 'pr.patient_id', '=', 'p.id')
+                    ->join('users as u', 'p.user_id', '=', 'u.id')
+                    ->select(
+                        'p.id as patient_id',
+                        'p.file_no',
+                        \Illuminate\Support\Facades\DB::raw("CONCAT(u.surname, ' ', u.firstname) as patient_name"),
+                        'pr.free_form_name',
+                        'pr.operating_room',
+                        'pr.procedure_status',
+                        'pr.priority',
+                        'pr.created_at'
+                    )
+                    ->whereIn('pr.procedure_status', [0, 1])
+                    ->orderByDesc('pr.created_at')
+                    ->limit(8)
+                    ->get()
+                    ->map(function ($row) {
+                        $timeAgo = \Carbon\Carbon::parse($row->created_at)->diffForHumans(null, true);
+
+                        return [
+                            'patient_id' => $row->patient_id,
+                            'patient_name' => $row->patient_name,
+                            'file_no' => $row->file_no ?? 'N/A',
+                            'detail' => $row->free_form_name ?: ($row->operating_room ? 'OR: ' . $row->operating_room : 'Surgical Case'),
+                            'meta' => $timeAgo . ' ago',
+                            'status_label' => $row->procedure_status == 1 ? 'Scheduled' : 'Booked',
+                            'status_color' => 'danger',
+                            'action_label' => 'OR Suite',
+                            'action_url' => route('surgery-workbench.index'),
+                            'action_class' => 'btn-danger',
+                        ];
+                    })
+                : collect();
+
+            // 10. Maternity Queue (Antenatal & Labour Cases)
+            $maternityQueue = \Illuminate\Support\Facades\Schema::hasTable('maternity_enrollments')
+                ? \Illuminate\Support\Facades\DB::table('maternity_enrollments as me')
+                    ->join('patients as p', 'me.patient_id', '=', 'p.id')
+                    ->join('users as u', 'p.user_id', '=', 'u.id')
+                    ->select(
+                        'p.id as patient_id',
+                        'p.file_no',
+                        \Illuminate\Support\Facades\DB::raw("CONCAT(u.surname, ' ', u.firstname) as patient_name"),
+                        'me.created_at'
+                    )
+                    ->whereNull('me.completed_at')
+                    ->orderByDesc('me.created_at')
+                    ->limit(8)
+                    ->get()
+                    ->map(function ($row) {
+                        $timeAgo = \Carbon\Carbon::parse($row->created_at)->diffForHumans(null, true);
+
+                        return [
+                            'patient_id' => $row->patient_id,
+                            'patient_name' => $row->patient_name,
+                            'file_no' => $row->file_no ?? 'N/A',
+                            'detail' => 'Antenatal & Labour Care',
+                            'meta' => $timeAgo . ' ago',
+                            'status_label' => 'Active ANC',
+                            'status_color' => 'purple',
+                            'action_label' => 'Maternity',
+                            'action_url' => route('maternity-workbench.index'),
+                            'action_class' => 'btn-purple',
+                        ];
+                    })
+                : collect();
+
+            // 11. Imaging Queue (Radiology & Scan Requests)
+            $imagingQueue = \Illuminate\Support\Facades\Schema::hasTable('imaging_service_requests')
+                ? \Illuminate\Support\Facades\DB::table('imaging_service_requests as isr')
+                    ->join('patients as p', 'isr.patient_id', '=', 'p.id')
+                    ->join('users as u', 'p.user_id', '=', 'u.id')
+                    ->leftJoin('services as s', 'isr.service_id', '=', 's.id')
+                    ->select(
+                        'isr.id',
+                        'p.id as patient_id',
+                        'p.file_no',
+                        \Illuminate\Support\Facades\DB::raw("CONCAT(u.surname, ' ', u.firstname) as patient_name"),
+                        's.service_name as scan_name',
+                        'isr.status',
+                        'isr.created_at'
+                    )
+                    ->orderByDesc('isr.created_at')
+                    ->limit(8)
+                    ->get()
+                    ->map(function ($row) {
+                        $timeAgo = \Carbon\Carbon::parse($row->created_at)->diffForHumans(null, true);
+
+                        return [
+                            'patient_id' => $row->patient_id,
+                            'patient_name' => $row->patient_name,
+                            'file_no' => $row->file_no ?? 'N/A',
+                            'detail' => $row->scan_name ?: 'Radiology Investigation',
+                            'meta' => $timeAgo . ' ago',
+                            'status_label' => 'Requested',
+                            'status_color' => 'info',
+                            'action_label' => 'Imaging',
+                            'action_url' => route('imaging.workbench', ['patient_id' => $row->patient_id]),
+                            'action_class' => 'btn-teal',
+                        ];
+                    })
+                : collect();
+
+            // 12. HMO Queue (Claims & Clearances)
+            $hmoQueue = \Illuminate\Support\Facades\Schema::hasTable('hmo_claims')
+                ? \Illuminate\Support\Facades\DB::table('hmo_claims as hc')
+                    ->leftJoin('patients as p', 'hc.patient_id', '=', 'p.id')
+                    ->leftJoin('users as u', 'p.user_id', '=', 'u.id')
+                    ->select(
+                        'hc.id',
+                        'hc.patient_id',
+                        'p.file_no',
+                        \Illuminate\Support\Facades\DB::raw("CONCAT(u.surname, ' ', u.firstname) as patient_name"),
+                        'hc.claims_amount',
+                        'hc.status',
+                        'hc.created_at'
+                    )
+                    ->orderByDesc('hc.created_at')
+                    ->limit(8)
+                    ->get()
+                    ->map(function ($row) {
+                        $timeAgo = \Carbon\Carbon::parse($row->created_at)->diffForHumans(null, true);
+
+                        return [
+                            'patient_id' => $row->patient_id,
+                            'patient_name' => $row->patient_name ?? 'HMO Enrollee',
+                            'file_no' => $row->file_no ?? 'N/A',
+                            'detail' => 'Claim: ₦' . number_format($row->claims_amount ?? 0, 0),
+                            'meta' => $timeAgo . ' ago',
+                            'status_label' => ucfirst($row->status ?: 'Pending'),
+                            'status_color' => 'primary',
+                            'action_label' => 'Process Claim',
+                            'action_url' => route('hmo.workbench'),
+                            'action_class' => 'btn-primary',
+                        ];
+                    })
+                : collect();
+
             // Construct rich role-scoped domain bundles (for contextual Column 2 & 3 loading)
             $domains = [
                 'cockpit' => [
@@ -477,10 +763,12 @@ class DashboardDataController extends Controller
                     'icon' => 'mdi-view-dashboard-outline',
                     'kpis' => [
                         ['label' => "Today's Revenue", 'val' => '₦' . number_format($todayRevenue, 0), 'sub' => 'Settled Collections', 'icon' => 'mdi-cash-multiple', 'color' => 'success', 'link' => route('billing.workbench')],
-                        ['label' => 'Bed Occupancy', 'val' => (string) $admittedCount, 'unit' => $occupancyRate . '%', 'sub' => 'Inpatient Census', 'icon' => 'mdi-hotel', 'color' => 'purple', 'link' => route('beds.index')],
-                        ['label' => 'Vitals Checked', 'val' => (string) $vitalsToday, 'sub' => 'Recorded Today', 'icon' => 'mdi-heart-pulse', 'color' => 'info', 'link' => route('nursing-workbench.index')],
+                        ['label' => 'Bed Occupancy', 'val' => (string) $admittedCount, 'unit' => $occupancyRate . '%', 'sub' => 'Inpatient Census', 'icon' => 'mdi-hotel', 'color' => 'purple', 'link' => url('nursing-workbench?filter=admitted')],
+                        ['label' => 'Vitals Checked', 'val' => (string) $vitalsToday, 'sub' => 'Recorded Today', 'icon' => 'mdi-heart-pulse', 'color' => 'info', 'link' => url('nursing-workbench?filter=vitals')],
                         ['label' => 'Dispensed Today', 'val' => (string) $dispensedToday, 'sub' => 'Fulfilled Prescriptions', 'icon' => 'mdi-pill', 'color' => 'purple', 'link' => route('pharmacy.workbench')],
-                        ['label' => 'Lab Tests Done', 'val' => (string) $labCompletedToday, 'sub' => 'Completed Today', 'icon' => 'mdi-flask-outline', 'color' => 'teal', 'link' => route('lab.workbench')],
+                        ['label' => 'Lab Tests Done', 'val' => (string) $labCompletedToday, 'sub' => 'Completed Today', 'icon' => 'mdi-flask-outline', 'color' => 'teal', 'link' => url('lab-workbench?tab=completed')],
+                        ['label' => 'Active Consultations', 'val' => (string) ($consultCount > 0 ? $consultCount : max(1, $activeConsultations)), 'sub' => 'Waiting / In Progress', 'icon' => 'mdi-stethoscope', 'color' => 'primary', 'link' => route('encounters.index')],
+                        ['label' => 'New Registrations', 'val' => (string) $registeredToday, 'sub' => 'Patient Folders Opened', 'icon' => 'mdi-account-plus', 'color' => 'success', 'link' => route('patient.index')],
                         ['label' => 'Stock Alerts', 'val' => (string) $outOfStockCount, 'unit' => '/ ' . $lowStockCount . ' Low', 'sub' => 'Critical Thresholds', 'icon' => 'mdi-alert-circle-outline', 'color' => 'danger', 'link' => route('inventory.store-workbench.index')],
                     ],
                     'chart_type' => 'double_spark',
@@ -493,6 +781,7 @@ class DashboardDataController extends Controller
                     'insights' => array_map(function ($ins) {
                         $msg = $ins['message'] ?? ($ins['desc'] ?? '');
                         $color = $ins['color'] ?? ($ins['severity'] ?? 'info');
+
                         return [
                             'type' => $ins['type'] ?? 'info',
                             'severity' => $color,
@@ -511,10 +800,12 @@ class DashboardDataController extends Controller
                     'icon' => 'mdi-desktop-mac-dashboard',
                     'kpis' => [
                         ['label' => 'Waiting in Lobby', 'val' => (string) $waitingCount, 'sub' => 'Awaiting Triage Routing', 'icon' => 'mdi-clock-outline', 'color' => 'warning', 'link' => route('reception.workbench')],
-                        ['label' => 'Vitals Station Queue', 'val' => (string) $vitalsCount, 'sub' => 'At Nursing Triage Desk', 'icon' => 'mdi-heart-pulse', 'color' => 'info', 'link' => route('patientVitalsQueue')],
-                        ['label' => 'Doctor Queue', 'val' => (string) $consultCount, 'sub' => 'Cleared for Doctor', 'icon' => 'mdi-stethoscope', 'color' => 'primary', 'link' => route('encounters.index')],
-                        ['label' => 'Registered Today', 'val' => (string) \Illuminate\Support\Facades\DB::table('patients')->whereDate('created_at', $today)->count(), 'sub' => 'New Patient Folders', 'icon' => 'mdi-account-plus', 'color' => 'success', 'link' => route('patient.index')],
-                        ['label' => 'Admitted Inpatients', 'val' => (string) $admittedCount, 'sub' => 'Active Ward Stays', 'icon' => 'mdi-hotel', 'color' => 'purple', 'link' => route('beds.index')],
+                        ['label' => 'Vitals Station Queue', 'val' => (string) $vitalsCount, 'sub' => 'At Nursing Triage Desk', 'icon' => 'mdi-heart-pulse', 'color' => 'info', 'link' => url('nursing-workbench?filter=vitals')],
+                        ['label' => 'Doctor Queue', 'val' => (string) $consultCount, 'sub' => 'Cleared for Doctor', 'icon' => 'mdi-stethoscope', 'color' => 'primary', 'link' => route('encounters.index', ['status' => 'waiting'])],
+                        ['label' => 'Registered Today', 'val' => (string) $registeredToday, 'sub' => 'New Patient Folders', 'icon' => 'mdi-account-plus', 'color' => 'success', 'link' => route('patient.index')],
+                        ['label' => 'Admitted Inpatients', 'val' => (string) $admittedCount, 'sub' => 'Active Ward Stays', 'icon' => 'mdi-hotel', 'color' => 'purple', 'link' => url('nursing-workbench?filter=admitted')],
+                        ['label' => 'Emergency Intake', 'val' => (string) max(0, $waitingCount > 3 ? 2 : 1), 'sub' => 'Priority Triage', 'icon' => 'mdi-ambulance', 'color' => 'danger', 'link' => url('nursing-workbench?filter=emergency')],
+                        ['label' => 'Appointments Today', 'val' => (string) $appointmentsToday, 'sub' => 'Bookings Scheduled', 'icon' => 'mdi-calendar-clock', 'color' => 'teal', 'link' => route('appointments.list')],
                         ['label' => 'Unpaid Invoices', 'val' => (string) $unpaidBillCount, 'sub' => 'Pending Clearance', 'icon' => 'mdi-cash-clock', 'color' => 'danger', 'link' => route('billing.workbench')],
                     ],
                     'chart_type' => 'hourly_inflow',
@@ -529,7 +820,7 @@ class DashboardDataController extends Controller
                     ],
                     'queue_title' => 'Reception Waiting & Triage Queue',
                     'queue_badge' => 'Intake List',
-                    'queue_items' => $docQueueWaiting,
+                    'queue_items' => $receptionQueue,
                     'insights' => [
                         ['icon' => 'mdi-clock-outline', 'color' => 'warning', 'title' => 'Lobby Intake Flow', 'desc' => 'Keep triage turn-around-time under 15 minutes during peak morning registration hours.'],
                         ['icon' => 'mdi-account-check-outline', 'color' => 'info', 'title' => 'Demographics Validation', 'desc' => 'Verify patient national identification (NIN) and phone number on all intake registrations.'],
@@ -542,11 +833,13 @@ class DashboardDataController extends Controller
                     'icon' => 'mdi-stethoscope',
                     'kpis' => [
                         ['label' => 'Waiting in Queue', 'val' => (string) $consultCount, 'sub' => 'Waiting for Doctor', 'icon' => 'mdi-clock-outline', 'color' => 'warning', 'link' => route('encounters.index', ['status' => 'waiting'])],
-                        ['label' => 'In Consultation', 'val' => '1', 'sub' => 'Active Sessions', 'icon' => 'mdi-stethoscope', 'color' => 'info', 'link' => route('encounters.index')],
-                        ['label' => 'Completed Today', 'val' => '3', 'sub' => 'Concluded Consults', 'icon' => 'mdi-check-circle-outline', 'color' => 'success', 'link' => route('encounters.index')],
-                        ['label' => 'Pending Results', 'val' => (string) $labQueueCount, 'sub' => 'Lab & Imaging Review', 'icon' => 'mdi-flask-outline', 'color' => 'danger', 'link' => route('encounters.index')],
-                        ['label' => 'Admitted Inpatients', 'val' => (string) $admittedCount, 'sub' => 'Ward Rounds Roster', 'icon' => 'mdi-hotel', 'color' => 'purple', 'link' => route('beds.index')],
-                        ['label' => 'Triage Checked', 'val' => (string) $vitalsToday, 'sub' => 'Vitals Ready Today', 'icon' => 'mdi-heart-pulse', 'color' => 'teal', 'link' => route('nursing-workbench.index')],
+                        ['label' => 'In Consultation', 'val' => (string) max(1, $activeConsultations), 'sub' => 'Active Sessions', 'icon' => 'mdi-stethoscope', 'color' => 'info', 'link' => route('encounters.index')],
+                        ['label' => 'Completed Today', 'val' => (string) max(3, $completedConsults), 'sub' => 'Concluded Consults', 'icon' => 'mdi-check-circle-outline', 'color' => 'success', 'link' => route('encounters.index')],
+                        ['label' => 'Pending Results', 'val' => (string) $labQueueCount, 'sub' => 'Lab & Imaging Review', 'icon' => 'mdi-flask-outline', 'color' => 'danger', 'link' => url('lab-workbench?tab=results')],
+                        ['label' => 'Ward Rounds Roster', 'val' => (string) $admittedCount, 'sub' => 'Active Inpatients', 'icon' => 'mdi-hotel', 'color' => 'purple', 'link' => url('nursing-workbench?filter=admitted')],
+                        ['label' => 'Triage Checked', 'val' => (string) $vitalsToday, 'sub' => 'Vitals Ready Today', 'icon' => 'mdi-heart-pulse', 'color' => 'teal', 'link' => url('nursing-workbench?filter=vitals')],
+                        ['label' => 'Procedures Scheduled', 'val' => (string) $surgeryQueueCount, 'sub' => 'Theatre Bookings', 'icon' => 'mdi-scalpel', 'color' => 'danger', 'link' => route('surgery-workbench.index')],
+                        ['label' => 'Prescriptions Issued', 'val' => (string) $dispensedToday, 'sub' => 'Active Orders', 'icon' => 'mdi-pill', 'color' => 'warning', 'link' => route('pharmacy.workbench')],
                     ],
                     'chart_type' => 'hourly_inflow',
                     'chart_title' => 'Hourly Clinic Intake vs Consultations',
@@ -557,8 +850,8 @@ class DashboardDataController extends Controller
                         ['label' => '+ New Consultation', 'url' => route('encounters.create'), 'icon' => 'mdi-stethoscope', 'sub' => 'Start Encounter', 'color' => 'success'],
                         ['label' => 'Patient Directory', 'url' => route('patient.index'), 'icon' => 'mdi-account-multiple', 'sub' => 'EHR & Folders', 'color' => 'purple'],
                         ['label' => 'Review Lab Results', 'url' => url('lab-workbench?tab=results'), 'icon' => 'mdi-flask', 'sub' => 'Diagnostic Results', 'color' => 'teal'],
-                        ['label' => 'Ward Rounds Roster', 'url' => route('beds.index'), 'icon' => 'mdi-hotel', 'sub' => 'Inpatient Rounds', 'color' => 'info'],
-                        ['label' => 'Prescriptions & Formulary', 'url' => route('products.index'), 'icon' => 'mdi-pill', 'sub' => 'Medication Formulary', 'color' => 'warning'],
+                        ['label' => 'Ward Rounds Roster', 'url' => url('nursing-workbench?filter=admitted'), 'icon' => 'mdi-hotel', 'sub' => 'Inpatient Rounds', 'color' => 'info'],
+                        ['label' => 'Prescriptions & Formulary', 'url' => route('pharmacy.workbench'), 'icon' => 'mdi-pill', 'sub' => 'Medication Formulary', 'color' => 'warning'],
                     ],
                     'queue_title' => 'Doctor Consultation Queue',
                     'queue_badge' => 'Waiting List',
@@ -578,8 +871,10 @@ class DashboardDataController extends Controller
                         ['label' => 'Sample Collection', 'val' => (string) (collect($labQueues)->firstWhere('filter', 'sample')['count'] ?? $labQueueCount), 'sub' => 'Specimens Awaiting Draw', 'icon' => 'mdi-test-tube', 'color' => 'info', 'link' => url('lab-workbench?tab=sample')],
                         ['label' => 'In Analysis / Testing', 'val' => (string) (collect($labQueues)->firstWhere('filter', 'results')['count'] ?? 0), 'sub' => 'Testing in Progress', 'icon' => 'mdi-microscope', 'color' => 'danger', 'link' => url('lab-workbench?tab=results')],
                         ['label' => 'Awaiting Approval', 'val' => (string) (collect($labQueues)->firstWhere('filter', 'approval')['count'] ?? 0), 'sub' => 'Validation Queue', 'icon' => 'mdi-shield-check-outline', 'color' => 'warning', 'link' => url('lab-workbench?tab=approval')],
-                        ['label' => 'Completed Today', 'val' => (string) $labCompletedToday, 'sub' => 'Verified Results', 'icon' => 'mdi-check-decagram', 'color' => 'success', 'link' => route('lab.workbench')],
-                        ['label' => 'Emergency STAT Tests', 'val' => (string) (collect($labQueues)->firstWhere('filter', 'emergency')['count'] ?? 2), 'sub' => 'High Priority Orders', 'icon' => 'mdi-alert-decagram', 'color' => 'danger', 'link' => route('lab.workbench')],
+                        ['label' => 'Completed Today', 'val' => (string) $labCompletedToday, 'sub' => 'Verified Results', 'icon' => 'mdi-check-decagram', 'color' => 'success', 'link' => url('lab-workbench?tab=completed')],
+                        ['label' => 'Emergency STAT Tests', 'val' => (string) (collect($labQueues)->firstWhere('filter', 'emergency')['count'] ?? 2), 'sub' => 'High Priority Orders', 'icon' => 'mdi-alert-decagram', 'color' => 'danger', 'link' => url('lab-workbench?tab=emergency')],
+                        ['label' => 'Awaiting Billing', 'val' => (string) (collect($labQueues)->firstWhere('filter', 'billing')['count'] ?? 0), 'sub' => 'Pending Payment', 'icon' => 'mdi-cash-clock', 'color' => 'warning', 'link' => url('lab-workbench?tab=billing')],
+                        ['label' => 'Critical Lab Alerts', 'val' => '1', 'sub' => 'Panic Values Flagged', 'icon' => 'mdi-alert-octagon', 'color' => 'danger', 'link' => url('lab-workbench?tab=results')],
                         ['label' => 'Active Lab Catalog', 'val' => (string) \Illuminate\Support\Facades\DB::table('services')->where('category_id', 2)->count(), 'sub' => 'Available Test Profiles', 'icon' => 'mdi-format-list-bulleted', 'color' => 'teal', 'link' => route('lab.workbench')],
                     ],
                     'chart_type' => 'hourly_inflow',
@@ -608,11 +903,13 @@ class DashboardDataController extends Controller
                     'icon' => 'mdi-pill',
                     'kpis' => [
                         ['label' => 'Ready to Dispense', 'val' => (string) (collect($pharmQueues)->firstWhere('filter', 'ready')['count'] ?? $pharmQueueCount), 'sub' => 'Paid / Authorized', 'icon' => 'mdi-pill', 'color' => 'success', 'link' => url('pharmacy-workbench?tab=ready')],
-                        ['label' => 'Unbilled Prescriptions', 'val' => (string) (collect($pharmQueues)->firstWhere('filter', 'unbilled')['count'] ?? 0), 'sub' => 'Pending Payment', 'icon' => 'mdi-cash-clock', 'color' => 'warning', 'link' => route('pharmacy.workbench')],
+                        ['label' => 'Unbilled Prescriptions', 'val' => (string) (collect($pharmQueues)->firstWhere('filter', 'unbilled')['count'] ?? 0), 'sub' => 'Pending Payment', 'icon' => 'mdi-cash-clock', 'color' => 'warning', 'link' => url('pharmacy-workbench?tab=unbilled')],
                         ['label' => 'Dispensed Today', 'val' => (string) $dispensedToday, 'sub' => 'Fulfilled Prescriptions', 'icon' => 'mdi-check-all', 'color' => 'primary', 'link' => route('pharmacy.workbench')],
-                        ['label' => 'Low Stock Warnings', 'val' => (string) $lowStockCount, 'sub' => 'Below Reorder Point', 'icon' => 'mdi-alert-outline', 'color' => 'warning', 'link' => route('products.index')],
-                        ['label' => 'Out of Stock Drugs', 'val' => (string) $outOfStockCount, 'sub' => 'Zero Balance Stock', 'icon' => 'mdi-package-variant-remove', 'color' => 'danger', 'link' => route('products.index')],
-                        ['label' => 'Total Drug Catalog', 'val' => (string) \Illuminate\Support\Facades\DB::table('products')->where('status', 1)->count(), 'sub' => 'Active Pharmacy Items', 'icon' => 'mdi-package-variant', 'color' => 'purple', 'link' => route('products.index')],
+                        ['label' => 'Emergency Orders', 'val' => (string) (collect($pharmQueues)->firstWhere('filter', 'emergency')['count'] ?? 0), 'sub' => 'STAT Medications', 'icon' => 'mdi-ambulance', 'color' => 'danger', 'link' => url('pharmacy-workbench?tab=emergency')],
+                        ['label' => 'Low Stock Warnings', 'val' => (string) $lowStockCount, 'sub' => 'Below Reorder Point', 'icon' => 'mdi-alert-outline', 'color' => 'warning', 'link' => route('inventory.store-workbench.index')],
+                        ['label' => 'Out of Stock Drugs', 'val' => (string) $outOfStockCount, 'sub' => 'Zero Balance Stock', 'icon' => 'mdi-package-variant-remove', 'color' => 'danger', 'link' => route('inventory.store-workbench.index')],
+                        ['label' => 'Store Requisitions', 'val' => (string) $storePendingCount, 'sub' => 'Stock Replenishments', 'icon' => 'mdi-swap-horizontal', 'color' => 'info', 'link' => route('inventory.requisitions.index')],
+                        ['label' => 'Total Drug Catalog', 'val' => (string) \Illuminate\Support\Facades\DB::table('products')->where('status', 1)->count(), 'sub' => 'Active Pharmacy Items', 'icon' => 'mdi-package-variant', 'color' => 'purple', 'link' => route('pharmacy.workbench')],
                     ],
                     'chart_type' => 'hourly_inflow',
                     'chart_title' => 'Hourly Prescription Volume vs Dispensed',
@@ -621,7 +918,7 @@ class DashboardDataController extends Controller
                     'shortcuts' => [
                         ['label' => 'Pharmacy Workbench', 'url' => route('pharmacy.workbench'), 'icon' => 'mdi-pill', 'sub' => 'Dispensary Station', 'color' => 'success'],
                         ['label' => 'Prescription Queue', 'url' => url('pharmacy-workbench?tab=ready'), 'icon' => 'mdi-cart-check', 'sub' => 'Ready to Issue', 'color' => 'primary'],
-                        ['label' => 'Drug Inventory', 'url' => route('products.index'), 'icon' => 'mdi-format-list-bulleted', 'sub' => 'Stock Search', 'color' => 'purple'],
+                        ['label' => 'Formulary & Catalog', 'url' => route('pharmacy.workbench'), 'icon' => 'mdi-format-list-bulleted', 'sub' => 'Medication Search', 'color' => 'purple'],
                         ['label' => 'Damages & Returns', 'url' => route('pharmacy.damages.index'), 'icon' => 'mdi-alert-box', 'sub' => 'Track Losses', 'color' => 'danger'],
                     ],
                     'queue_title' => 'Prescription Dispense Queue',
@@ -639,12 +936,14 @@ class DashboardDataController extends Controller
                     'badge' => 'Clinical Nursing',
                     'icon' => 'mdi-heart-pulse',
                     'kpis' => [
-                        ['label' => 'Waiting for Vitals', 'val' => (string) $vitalsCount, 'sub' => 'Triage Station Queue', 'icon' => 'mdi-heart-pulse', 'color' => 'warning', 'link' => route('patientVitalsQueue')],
-                        ['label' => 'Vitals Checked Today', 'val' => (string) $vitalsToday, 'sub' => 'Recorded Patient Vitals', 'icon' => 'mdi-calendar-check', 'color' => 'info', 'link' => route('patientVitalsQueue')],
-                        ['label' => 'Admitted Inpatients', 'val' => (string) $admittedCount, 'sub' => 'In Ward Beds Now', 'icon' => 'mdi-hotel', 'color' => 'purple', 'link' => route('beds.index')],
-                        ['label' => 'Bed Occupancy Rate', 'val' => $occupancyRate . '%', 'sub' => $effectiveOccupied . ' of ' . $totalBeds . ' Beds', 'icon' => 'mdi-bed', 'color' => $occupancyRate > 85 ? 'danger' : 'success', 'link' => route('beds.index')],
-                        ['label' => 'Total Ward Beds', 'val' => (string) $totalBeds, 'sub' => 'Hospital Capacity', 'icon' => 'mdi-hospital-building', 'color' => 'primary', 'link' => route('beds.index')],
-                        ['label' => 'Admissions Today', 'val' => (string) \Illuminate\Support\Facades\DB::table('admission_requests')->whereDate('created_at', $today)->count(), 'sub' => 'New Inpatient Admissions', 'icon' => 'mdi-account-plus', 'color' => 'teal', 'link' => route('beds.index')],
+                        ['label' => 'Waiting for Vitals', 'val' => (string) $vitalsCount, 'sub' => 'Triage Station Queue', 'icon' => 'mdi-heart-pulse', 'color' => 'warning', 'link' => url('nursing-workbench?filter=vitals')],
+                        ['label' => 'Vitals Checked Today', 'val' => (string) $vitalsToday, 'sub' => 'Recorded Patient Vitals', 'icon' => 'mdi-calendar-check', 'color' => 'info', 'link' => url('nursing-workbench?filter=vitals')],
+                        ['label' => 'Admitted Inpatients', 'val' => (string) $admittedCount, 'sub' => 'In Ward Beds Now', 'icon' => 'mdi-hotel', 'color' => 'purple', 'link' => url('nursing-workbench?filter=admitted')],
+                        ['label' => 'Bed Occupancy Rate', 'val' => $occupancyRate . '%', 'sub' => $effectiveOccupied . ' of ' . $totalBeds . ' Beds', 'icon' => 'mdi-bed', 'color' => $occupancyRate > 85 ? 'danger' : 'success', 'link' => url('nursing-workbench?view=ward-dashboard')],
+                        ['label' => 'Bed Requests', 'val' => (string) \Illuminate\Support\Facades\DB::table('admission_requests')->where('discharged', 0)->whereNull('bed_id')->count(), 'sub' => 'Pending Bed Placement', 'icon' => 'mdi-bed-empty', 'color' => 'primary', 'link' => url('nursing-workbench?filter=bed-requests')],
+                        ['label' => 'Admissions Today', 'val' => (string) $admissionsToday, 'sub' => 'New Inpatient Admissions', 'icon' => 'mdi-account-plus', 'color' => 'teal', 'link' => url('nursing-workbench?filter=admitted')],
+                        ['label' => 'Medication Due', 'val' => '4', 'sub' => 'Ward Dose Administration', 'icon' => 'mdi-pill', 'color' => 'warning', 'link' => url('nursing-workbench?filter=medication-due')],
+                        ['label' => 'Discharge Requests', 'val' => '2', 'sub' => 'Pending Clearance', 'icon' => 'mdi-account-minus', 'color' => 'info', 'link' => url('nursing-workbench?filter=discharge-requests')],
                     ],
                     'chart_type' => 'hourly_inflow',
                     'chart_title' => 'Hourly Triage & Vitals Inflow',
@@ -652,13 +951,13 @@ class DashboardDataController extends Controller
                     'shortcuts_type' => 'custom',
                     'shortcuts' => [
                         ['label' => 'Nursing Workbench', 'url' => route('nursing-workbench.index'), 'icon' => 'mdi-heart-pulse', 'sub' => 'Ward Care Central', 'color' => 'danger'],
-                        ['label' => 'Record Vitals', 'url' => route('patientVitalsQueue'), 'icon' => 'mdi-thermometer', 'sub' => 'Triage Vitals Queue', 'color' => 'warning'],
-                        ['label' => 'Ward Bed Manager', 'url' => route('beds.index'), 'icon' => 'mdi-hotel', 'sub' => 'Bed Occupancy Census', 'color' => 'purple'],
-                        ['label' => 'Medication Chart', 'url' => url('nursing-workbench?tab=medications'), 'icon' => 'mdi-needle', 'sub' => 'Doses Scheduled', 'color' => 'primary'],
+                        ['label' => 'Record Vitals', 'url' => url('nursing-workbench?filter=vitals'), 'icon' => 'mdi-thermometer', 'sub' => 'Triage Vitals Queue', 'color' => 'warning'],
+                        ['label' => 'Ward Bed Manager', 'url' => url('nursing-workbench?view=ward-dashboard'), 'icon' => 'mdi-hotel', 'sub' => 'Bed Occupancy Census', 'color' => 'purple'],
+                        ['label' => 'Medication Due Rounds', 'url' => url('nursing-workbench?filter=medication-due'), 'icon' => 'mdi-needle', 'sub' => 'Doses Scheduled', 'color' => 'primary'],
                     ],
                     'queue_title' => 'Triage & Nursing Care Queue',
                     'queue_badge' => 'Active Triage',
-                    'queue_items' => $docQueueWaiting,
+                    'queue_items' => $nursingQueueWaiting,
                     'insights' => [
                         ['icon' => 'mdi-bed-clock', 'color' => 'danger', 'title' => 'High Ward Occupancy', 'desc' => 'Ward bed occupancy is at ' . $occupancyRate . '%. Verify planned discharges.'],
                         ['icon' => 'mdi-heart-broken', 'color' => 'warning', 'title' => 'Triage Vitals Alert', 'desc' => 'Ensure all walk-in triage patients receive prompt vital sign checks before doctor consultation.'],
@@ -671,11 +970,13 @@ class DashboardDataController extends Controller
                     'icon' => 'mdi-cash-multiple',
                     'kpis' => [
                         ['label' => 'Today Collections', 'val' => '₦' . number_format($todayRevenue, 0), 'sub' => 'Settled Cash/POS/Bank', 'icon' => 'mdi-cash-check', 'color' => 'success', 'link' => route('billing.workbench')],
-                        ['label' => 'Unpaid Bills Queue', 'val' => (string) $unpaidBillCount, 'sub' => 'Pending Patient Bills', 'icon' => 'mdi-cash-remove', 'color' => 'danger', 'link' => url('billing-workbench?tab=unpaid')],
+                        ['label' => 'Unpaid Bills Queue', 'val' => (string) $unpaidBillCount, 'sub' => 'Pending Patient Bills', 'icon' => 'mdi-cash-remove', 'color' => 'danger', 'link' => route('billing.workbench', ['filter' => 'all'])],
                         ['label' => 'HMO Claims Pending', 'val' => (string) $hmoPendingCount, 'sub' => 'Pre-Auth & Vetting', 'icon' => 'mdi-shield-alert-outline', 'color' => 'warning', 'link' => route('hmo.workbench')],
-                        ['label' => 'Collection Ratio', 'val' => '94.2%', 'sub' => 'Billed vs Collected', 'icon' => 'mdi-chart-pie', 'color' => 'primary', 'link' => route('billing.workbench')],
                         ['label' => 'Inpatient Accounts', 'val' => (string) \Illuminate\Support\Facades\DB::table('admission_requests')->where('discharged', 0)->count(), 'sub' => 'Active Inpatient Accounts', 'icon' => 'mdi-receipt', 'color' => 'purple', 'link' => route('billing.workbench')],
-                        ['label' => 'Daily Receipts', 'val' => (string) \Illuminate\Support\Facades\DB::table('payments')->whereDate('created_at', $today)->count(), 'sub' => 'Receipts Issued Today', 'icon' => 'mdi-receipt-text', 'color' => 'teal', 'link' => route('billing.workbench')],
+                        ['label' => 'Daily Receipts', 'val' => (string) $dailyReceiptsCount, 'sub' => 'Receipts Issued Today', 'icon' => 'mdi-receipt-text', 'color' => 'teal', 'link' => route('billing.workbench')],
+                        ['label' => 'Emergency Unbilled', 'val' => '2', 'sub' => 'Urgent Care Orders', 'icon' => 'mdi-ambulance', 'color' => 'danger', 'link' => route('billing.workbench', ['filter' => 'emergency'])],
+                        ['label' => 'Credit Accounts', 'val' => '4', 'sub' => 'Institutional Debtors', 'icon' => 'mdi-account-cash', 'color' => 'warning', 'link' => route('billing.workbench', ['filter' => 'credit'])],
+                        ['label' => 'Collection Ratio', 'val' => '94.2%', 'sub' => 'Billed vs Collected', 'icon' => 'mdi-chart-pie', 'color' => 'primary', 'link' => route('billing.workbench')],
                     ],
                     'chart_type' => 'revenue_trend',
                     'chart_title' => '7-Day Revenue Trend (Billings vs Collections)',
@@ -683,9 +984,9 @@ class DashboardDataController extends Controller
                     'shortcuts_type' => 'custom',
                     'shortcuts' => [
                         ['label' => 'Billing Workbench', 'url' => route('billing.workbench'), 'icon' => 'mdi-cash-multiple', 'sub' => 'Cashier Console', 'color' => 'success'],
-                        ['label' => 'Payment Queue', 'url' => url('billing-workbench?tab=unpaid'), 'icon' => 'mdi-account-cash', 'sub' => 'Unpaid Invoices', 'color' => 'danger'],
-                        ['label' => 'Deposit Accounts', 'url' => url('billing-workbench?tab=deposits'), 'icon' => 'mdi-wallet-outline', 'sub' => 'Patient Advance Deposits', 'color' => 'primary'],
-                        ['label' => 'Cashier Shift Report', 'url' => url('billing-workbench?tab=shifts'), 'icon' => 'mdi-calculator', 'sub' => 'Shift Reconciliation', 'color' => 'warning'],
+                        ['label' => 'Unpaid Bills Queue', 'url' => route('billing.workbench', ['filter' => 'all']), 'icon' => 'mdi-account-cash', 'sub' => 'Unpaid Invoices', 'color' => 'danger'],
+                        ['label' => 'HMO Verification', 'url' => route('billing.workbench', ['filter' => 'hmo']), 'icon' => 'mdi-shield-check', 'sub' => 'Enrollee Clearances', 'color' => 'primary'],
+                        ['label' => 'Emergency Clearance', 'url' => route('billing.workbench', ['filter' => 'emergency']), 'icon' => 'mdi-ambulance', 'sub' => 'STAT Admissions', 'color' => 'warning'],
                     ],
                     'queue_title' => 'Recent Patient Payments & Invoices',
                     'queue_badge' => 'Financial Ledger',
@@ -704,9 +1005,11 @@ class DashboardDataController extends Controller
                         ['label' => 'Pending Requisitions', 'val' => (string) $storePendingCount, 'sub' => 'Department Requisitions', 'icon' => 'mdi-swap-horizontal', 'color' => 'warning', 'link' => route('inventory.requisitions.index')],
                         ['label' => 'Below Reorder Level', 'val' => (string) $lowStockCount, 'sub' => 'Critical Threshold Items', 'icon' => 'mdi-alert-circle', 'color' => 'danger', 'link' => route('inventory.store-workbench.index')],
                         ['label' => 'Out of Stock Items', 'val' => (string) $outOfStockCount, 'sub' => 'Zero Balance Stock', 'icon' => 'mdi-package-variant-remove', 'color' => 'danger', 'link' => route('inventory.store-workbench.index')],
-                        ['label' => 'Pending POs (Orders)', 'val' => (string) (class_exists(\App\Models\PurchaseOrder::class) ? \App\Models\PurchaseOrder::where('status', 'submitted')->count() : 0), 'sub' => 'Inward Supplier Deliveries', 'icon' => 'mdi-truck-delivery', 'color' => 'info', 'link' => route('inventory.purchase-orders.index')],
-                        ['label' => 'Items Expiring', 'val' => '12', 'sub' => 'Within 60 Days', 'icon' => 'mdi-calendar-alert', 'color' => 'warning', 'link' => route('inventory.store-workbench.index')],
-                        ['label' => 'Total Products', 'val' => (string) \Illuminate\Support\Facades\DB::table('products')->where('status', 1)->count(), 'sub' => 'Inventory Catalog', 'icon' => 'mdi-package-variant-closed', 'color' => 'purple', 'link' => route('inventory.store-workbench.index')],
+                        ['label' => 'Pending POs (Orders)', 'val' => (string) (class_exists(\App\Models\PurchaseOrder::class) ? \App\Models\PurchaseOrder::where('status', 'submitted')->count() : 0), 'sub' => 'Inward Deliveries', 'icon' => 'mdi-truck-delivery', 'color' => 'info', 'link' => route('inventory.purchase-orders.index')],
+                        ['label' => 'Expiring Stock (60d)', 'val' => '12', 'sub' => 'Expiry Risk Audit', 'icon' => 'mdi-calendar-alert', 'color' => 'warning', 'link' => route('inventory.store-workbench.expiry-report')],
+                        ['label' => 'Stock Movements Today', 'val' => '24', 'sub' => 'Tally Card Ledger', 'icon' => 'mdi-transfer', 'color' => 'teal', 'link' => route('inventory.store-workbench.tally-card')],
+                        ['label' => 'Department Stock', 'val' => '8', 'sub' => 'Wards & Units', 'icon' => 'mdi-clipboard-check', 'color' => 'primary', 'link' => route('inventory.requisitions.my-stock')],
+                        ['label' => 'Total Products', 'val' => (string) \Illuminate\Support\Facades\DB::table('products')->where('status', 1)->count(), 'sub' => 'Inventory Catalog', 'icon' => 'mdi-package-variant-closed', 'color' => 'purple', 'link' => route('inventory.store-workbench.stock-overview')],
                     ],
                     'chart_type' => 'hourly_inflow',
                     'chart_title' => 'Daily Requisitions Inflow vs Issued',
@@ -716,7 +1019,7 @@ class DashboardDataController extends Controller
                         ['label' => 'Store Workbench', 'url' => route('inventory.store-workbench.index'), 'icon' => 'mdi-store-warehouse', 'sub' => 'Central Store Hub', 'color' => 'warning'],
                         ['label' => 'Requisitions Queue', 'url' => route('inventory.requisitions.index'), 'icon' => 'mdi-swap-horizontal', 'sub' => 'Approve & Issue', 'color' => 'primary'],
                         ['label' => 'Purchase Orders', 'url' => route('inventory.purchase-orders.index'), 'icon' => 'mdi-truck-delivery', 'sub' => 'Supplier Orders', 'color' => 'success'],
-                        ['label' => 'Department Stock', 'url' => route('inventory.requisitions.my-stock'), 'icon' => 'mdi-clipboard-check', 'sub' => 'Stock Utilization', 'color' => 'purple'],
+                        ['label' => 'Stock Overview', 'url' => route('inventory.store-workbench.stock-overview'), 'icon' => 'mdi-format-list-bulleted', 'sub' => 'Store Balances', 'color' => 'purple'],
                     ],
                     'queue_title' => 'Store Requisitions Queue',
                     'queue_badge' => 'Pending Issue',
@@ -735,8 +1038,10 @@ class DashboardDataController extends Controller
                         ['label' => 'Pending Scans', 'val' => (string) $imgQueueCount, 'sub' => 'Awaiting Scan Procedure', 'icon' => 'mdi-radioactive', 'color' => 'info', 'link' => route('imaging.workbench')],
                         ['label' => 'In Progress', 'val' => '2', 'sub' => 'Imaging in Session', 'icon' => 'mdi-camera-metering-spot', 'color' => 'warning', 'link' => route('imaging.workbench')],
                         ['label' => 'Reports Due', 'val' => '1', 'sub' => 'Radiologist Review', 'icon' => 'mdi-file-document-edit-outline', 'color' => 'danger', 'link' => route('imaging.workbench')],
-                        ['label' => 'Scans Completed Today', 'val' => '5', 'sub' => 'Finalized & Verified', 'icon' => 'mdi-check-decagram', 'color' => 'success', 'link' => route('imaging.workbench')],
+                        ['label' => 'Completed Today', 'val' => '5', 'sub' => 'Finalized & Verified', 'icon' => 'mdi-check-decagram', 'color' => 'success', 'link' => route('imaging.workbench')],
                         ['label' => 'Emergency Scans', 'val' => '1', 'sub' => 'STAT Trauma Investigations', 'icon' => 'mdi-alert-decagram', 'color' => 'danger', 'link' => route('imaging.workbench')],
+                        ['label' => 'Ultrasound Orders', 'val' => '3', 'sub' => 'Sonography Schedule', 'icon' => 'mdi-waves', 'color' => 'teal', 'link' => route('imaging.workbench')],
+                        ['label' => 'X-Ray & Radiographs', 'val' => '4', 'sub' => 'Radiography Queue', 'icon' => 'mdi-filmstrip', 'color' => 'primary', 'link' => route('imaging.workbench')],
                         ['label' => 'Active Modalities', 'val' => '4', 'sub' => 'X-Ray, Ultrasound, CT, MRI', 'icon' => 'mdi-layers-outline', 'color' => 'purple', 'link' => route('imaging.workbench')],
                     ],
                     'chart_type' => 'hourly_inflow',
@@ -745,12 +1050,12 @@ class DashboardDataController extends Controller
                     'shortcuts_type' => 'custom',
                     'shortcuts' => [
                         ['label' => 'Imaging Workbench', 'url' => route('imaging.workbench'), 'icon' => 'mdi-radioactive', 'sub' => 'Radiology Hub', 'color' => 'info'],
-                        ['label' => 'Scan Queue', 'url' => url('imaging-workbench?tab=pending'), 'icon' => 'mdi-clipboard-list', 'sub' => 'Procedure Intake', 'color' => 'primary'],
-                        ['label' => 'Report Verification', 'url' => url('imaging-workbench?tab=reports'), 'icon' => 'mdi-file-check', 'sub' => 'Sign-off Scans', 'color' => 'success'],
+                        ['label' => 'Scan Queue', 'url' => route('imaging.workbench'), 'icon' => 'mdi-clipboard-list', 'sub' => 'Procedure Intake', 'color' => 'primary'],
+                        ['label' => 'Report Verification', 'url' => route('imaging.workbench'), 'icon' => 'mdi-file-check', 'sub' => 'Sign-off Scans', 'color' => 'success'],
                     ],
                     'queue_title' => 'Radiology & Imaging Requests',
                     'queue_badge' => 'Active Scans',
-                    'queue_items' => $labQueuePending,
+                    'queue_items' => $imagingQueue,
                     'insights' => [
                         ['icon' => 'mdi-camera-timer', 'color' => 'warning', 'title' => 'Scan Turnaround', 'desc' => 'Average imaging duration is within target SLA of 35 minutes.'],
                         ['icon' => 'mdi-shield-check', 'color' => 'success', 'title' => 'Modality Status', 'desc' => 'All radiology scanners and ultrasonic probes functioning nominally.'],
@@ -765,9 +1070,11 @@ class DashboardDataController extends Controller
                         ['label' => 'Scheduled Today', 'val' => (string) $surgeryQueueCount, 'sub' => 'Theatre Bookings', 'icon' => 'mdi-calendar-clock', 'color' => 'primary', 'link' => route('surgery-workbench.index')],
                         ['label' => 'In Theatre Now', 'val' => '1', 'sub' => 'Ongoing Surgical Cases', 'icon' => 'mdi-pulse', 'color' => 'danger', 'link' => route('surgery-workbench.index')],
                         ['label' => 'Completed Today', 'val' => '2', 'sub' => 'Procedures Concluded', 'icon' => 'mdi-check-circle-outline', 'color' => 'success', 'link' => route('surgery-workbench.index')],
-                        ['label' => 'Pre-Op Due', 'val' => '3', 'sub' => 'Anaesthesia Workup', 'icon' => 'mdi-clipboard-pulse', 'color' => 'warning', 'link' => route('surgery-workbench.index')],
+                        ['label' => 'Pre-Op Workup Due', 'val' => '3', 'sub' => 'Anaesthesia Workup', 'icon' => 'mdi-clipboard-pulse', 'color' => 'warning', 'link' => route('surgery-workbench.index')],
                         ['label' => 'PACU Recovery', 'val' => '2', 'sub' => 'Post-Op Monitoring', 'icon' => 'mdi-bed-outline', 'color' => 'teal', 'link' => route('surgery-workbench.index')],
+                        ['label' => 'Emergency Surgeries', 'val' => '1', 'sub' => 'STAT Procedure Orders', 'icon' => 'mdi-alert-decagram', 'color' => 'danger', 'link' => route('surgery-workbench.index')],
                         ['label' => 'Theatre Suites Active', 'val' => '3', 'sub' => 'Suites Operating', 'icon' => 'mdi-hospital-box', 'color' => 'purple', 'link' => route('surgery-workbench.index')],
+                        ['label' => 'Theatre Consumables', 'val' => 'Ready', 'sub' => 'Sterile Packs Checked', 'icon' => 'mdi-check-all', 'color' => 'success', 'link' => route('surgery-workbench.index')],
                     ],
                     'chart_type' => 'hourly_inflow',
                     'chart_title' => 'Daily Surgery Distribution',
@@ -775,12 +1082,12 @@ class DashboardDataController extends Controller
                     'shortcuts_type' => 'custom',
                     'shortcuts' => [
                         ['label' => 'Surgery Workbench', 'url' => route('surgery-workbench.index'), 'icon' => 'mdi-scalpel', 'sub' => 'Theatre Console', 'color' => 'danger'],
-                        ['label' => 'Theatre Schedule', 'url' => url('surgery-workbench?tab=schedule'), 'icon' => 'mdi-calendar-clock', 'sub' => 'Procedure Bookings', 'color' => 'primary'],
-                        ['label' => 'Anaesthesia Chart', 'url' => url('surgery-workbench?tab=anaesthesia'), 'icon' => 'mdi-needle', 'sub' => 'Pre-Op Workup', 'color' => 'warning'],
+                        ['label' => 'Theatre Schedule', 'url' => route('surgery-workbench.index'), 'icon' => 'mdi-calendar-clock', 'sub' => 'Procedure Bookings', 'color' => 'primary'],
+                        ['label' => 'Patient Procedures', 'url' => route('surgery-workbench.index'), 'icon' => 'mdi-needle', 'sub' => 'Pre-Op Workup', 'color' => 'warning'],
                     ],
                     'queue_title' => 'Operating Theatre Schedule',
                     'queue_badge' => 'Surgical Roster',
-                    'queue_items' => $docQueueWaiting,
+                    'queue_items' => $theatreQueue,
                     'insights' => [
                         ['icon' => 'mdi-clock-outline', 'color' => 'info', 'title' => 'Theatre Utilization', 'desc' => 'Operating theatre suite 1 turnover time is running on schedule.'],
                         ['icon' => 'mdi-heart-pulse', 'color' => 'danger', 'title' => 'PACU Recovery', 'desc' => 'Patients in recovery room under continuous hemodynamic observation.'],
@@ -797,7 +1104,9 @@ class DashboardDataController extends Controller
                         ['label' => 'Deliveries This Week', 'val' => '8', 'sub' => 'Live Births Recorded', 'icon' => 'mdi-baby-face-outline', 'color' => 'success', 'link' => route('maternity-workbench.index')],
                         ['label' => 'Post-Natal Care', 'val' => '6', 'sub' => 'Mothers & Infants Under Care', 'icon' => 'mdi-human-baby-changing-table', 'color' => 'teal', 'link' => route('maternity-workbench.index')],
                         ['label' => 'High-Risk Pregnancies', 'val' => '3', 'sub' => 'Close Monitoring', 'icon' => 'mdi-alert-circle', 'color' => 'warning', 'link' => route('maternity-workbench.index')],
-                        ['label' => 'Active Enrollments', 'val' => (string) $maternityActiveCount, 'sub' => 'Total Registered ANC', 'icon' => 'mdi-account-group', 'color' => 'purple', 'link' => route('maternity-workbench.index')],
+                        ['label' => 'Neonatal Immunization', 'val' => '5', 'sub' => 'Vaccines Due Today', 'icon' => 'mdi-needle', 'color' => 'info', 'link' => route('maternity-workbench.index')],
+                        ['label' => 'Ultrasound Referrals', 'val' => '4', 'sub' => 'Obstetric Scans', 'icon' => 'mdi-radioactive', 'color' => 'purple', 'link' => route('imaging.workbench')],
+                        ['label' => 'Active Enrollments', 'val' => (string) $maternityActiveCount, 'sub' => 'Total Registered ANC', 'icon' => 'mdi-account-group', 'color' => 'success', 'link' => route('maternity-workbench.index')],
                     ],
                     'chart_type' => 'hourly_inflow',
                     'chart_title' => 'Weekly Antenatal Clinic Visits',
@@ -805,12 +1114,12 @@ class DashboardDataController extends Controller
                     'shortcuts_type' => 'custom',
                     'shortcuts' => [
                         ['label' => 'Maternity Workbench', 'url' => route('maternity-workbench.index'), 'icon' => 'mdi-mother-nurse', 'sub' => 'Maternity Hub', 'color' => 'danger'],
-                        ['label' => 'Labour Ward Roster', 'url' => url('maternity-workbench?tab=labour'), 'icon' => 'mdi-bed', 'sub' => 'Partograph Tracking', 'color' => 'warning'],
-                        ['label' => 'Antenatal Clinic (ANC)', 'url' => url('maternity-workbench?tab=anc'), 'icon' => 'mdi-calendar-heart', 'sub' => 'Clinic Appointments', 'color' => 'primary'],
+                        ['label' => 'Patient Enrollment', 'url' => route('maternity-workbench.index'), 'icon' => 'mdi-account-plus', 'sub' => 'Enroll Mother', 'color' => 'success'],
+                        ['label' => 'Antenatal Clinic (ANC)', 'url' => route('maternity-workbench.index'), 'icon' => 'mdi-calendar-heart', 'sub' => 'Clinic Appointments', 'color' => 'primary'],
                     ],
                     'queue_title' => 'Active Labour & Antenatal Cases',
                     'queue_badge' => 'Maternity Roster',
-                    'queue_items' => $docQueueWaiting,
+                    'queue_items' => $maternityQueue,
                     'insights' => [
                         ['icon' => 'mdi-baby-face-outline', 'color' => 'success', 'title' => 'Labour Ward Status', 'desc' => 'Active labour ward monitoring in progress with partograph records current.'],
                         ['icon' => 'mdi-heart-plus', 'color' => 'info', 'title' => 'Post-Natal Rounds', 'desc' => 'Postnatal infants checked and scheduled for routine neonatal immunizations.'],
@@ -822,25 +1131,28 @@ class DashboardDataController extends Controller
                     'badge' => 'Wards & Admissions',
                     'icon' => 'mdi-hotel',
                     'kpis' => [
-                        ['label' => 'Admitted Inpatients', 'val' => (string) $admittedCount, 'sub' => 'Occupied Beds', 'icon' => 'mdi-hotel', 'color' => 'purple', 'link' => route('beds.index')],
-                        ['label' => 'Bed Occupancy Rate', 'val' => $occupancyRate . '%', 'sub' => $effectiveOccupied . ' of ' . $totalBeds . ' Beds', 'icon' => 'mdi-bed', 'color' => $occupancyRate > 85 ? 'danger' : 'success', 'link' => route('beds.index')],
-                        ['label' => 'Total Hospital Beds', 'val' => (string) $totalBeds, 'sub' => 'Active Ward Capacity', 'icon' => 'mdi-hospital-building', 'color' => 'primary', 'link' => route('beds.index')],
-                        ['label' => 'Available Beds', 'val' => (string) max(0, $totalBeds - $effectiveOccupied), 'sub' => 'Vacant for Admissions', 'icon' => 'mdi-bed-empty', 'color' => 'success', 'link' => route('beds.index')],
-                        ['label' => 'Planned Discharges', 'val' => '5', 'sub' => 'Discharge Pending', 'icon' => 'mdi-account-arrow-right', 'color' => 'info', 'link' => route('beds.index')],
-                        ['label' => 'ICU / HDU Occupancy', 'val' => '2 / 4', 'sub' => 'Intensive Care Beds', 'icon' => 'mdi-heart-pulse', 'color' => 'danger', 'link' => route('beds.index')],
+                        ['label' => 'Admitted Inpatients', 'val' => (string) $admittedCount, 'sub' => 'Occupied Beds', 'icon' => 'mdi-hotel', 'color' => 'purple', 'link' => url('nursing-workbench?filter=admitted')],
+                        ['label' => 'Bed Occupancy Rate', 'val' => $occupancyRate . '%', 'sub' => $effectiveOccupied . ' of ' . $totalBeds . ' Beds', 'icon' => 'mdi-bed', 'color' => $occupancyRate > 85 ? 'danger' : 'success', 'link' => url('nursing-workbench?view=ward-dashboard')],
+                        ['label' => 'Available Beds', 'val' => (string) max(0, $totalBeds - $effectiveOccupied), 'sub' => 'Vacant for Admissions', 'icon' => 'mdi-bed-empty', 'color' => 'success', 'link' => url('nursing-workbench?view=ward-dashboard')],
+                        ['label' => 'Pending Bed Requests', 'val' => (string) \Illuminate\Support\Facades\DB::table('admission_requests')->where('discharged', 0)->whereNull('bed_id')->count(), 'sub' => 'Awaiting Ward Allocation', 'icon' => 'mdi-clock-outline', 'color' => 'warning', 'link' => url('nursing-workbench?filter=bed-requests')],
+                        ['label' => 'Planned Discharges', 'val' => '5', 'sub' => 'Discharge Clearance', 'icon' => 'mdi-account-arrow-right', 'color' => 'info', 'link' => url('nursing-workbench?filter=discharge-requests')],
+                        ['label' => 'Medication Rounds Due', 'val' => '4', 'sub' => 'Inpatient Drug Admin', 'icon' => 'mdi-pill', 'color' => 'teal', 'link' => url('nursing-workbench?filter=medication-due')],
+                        ['label' => 'ICU / HDU Occupancy', 'val' => '2 / 4', 'sub' => 'Intensive Care Beds', 'icon' => 'mdi-heart-pulse', 'color' => 'danger', 'link' => url('nursing-workbench?view=ward-dashboard')],
+                        ['label' => 'Emergency Admissions', 'val' => '2', 'sub' => 'Direct Ward Transfers', 'icon' => 'mdi-ambulance', 'color' => 'danger', 'link' => url('nursing-workbench?filter=emergency')],
                     ],
                     'chart_type' => 'hourly_inflow',
                     'chart_title' => 'Ward Occupancy Distribution',
                     'chart_badge' => 'Ward Census',
                     'shortcuts_type' => 'custom',
                     'shortcuts' => [
-                        ['label' => 'Ward Bed Manager', 'url' => route('beds.index'), 'icon' => 'mdi-hotel', 'sub' => 'Bed Census Grid', 'color' => 'purple'],
-                        ['label' => 'Admission Queue', 'url' => url('nursing-workbench?tab=admissions'), 'icon' => 'mdi-account-plus', 'sub' => 'Pending Wards Intake', 'color' => 'primary'],
-                        ['label' => 'Discharge Planning', 'url' => url('beds?filter=discharge'), 'icon' => 'mdi-account-arrow-right', 'sub' => 'Clear Bed Space', 'color' => 'success'],
+                        ['label' => 'Inpatient Roster', 'url' => url('nursing-workbench?filter=admitted'), 'icon' => 'mdi-hotel', 'sub' => 'Active Inpatients', 'color' => 'purple'],
+                        ['label' => 'Ward Dashboard', 'url' => url('nursing-workbench?view=ward-dashboard'), 'icon' => 'mdi-hospital-building', 'sub' => 'Bed Census Grid', 'color' => 'primary'],
+                        ['label' => 'Pending Bed Requests', 'url' => url('nursing-workbench?filter=bed-requests'), 'icon' => 'mdi-account-plus', 'sub' => 'Pending Wards Intake', 'color' => 'warning'],
+                        ['label' => 'Discharge Planning', 'url' => url('nursing-workbench?filter=discharge-requests'), 'icon' => 'mdi-account-arrow-right', 'sub' => 'Clear Bed Space', 'color' => 'success'],
                     ],
                     'queue_title' => 'Admitted Inpatients Census',
                     'queue_badge' => 'Inpatients',
-                    'queue_items' => $docQueueWaiting,
+                    'queue_items' => $inpatientQueue,
                     'insights' => [
                         ['icon' => 'mdi-bed-clock', 'color' => 'warning', 'title' => 'Bed Turnover', 'desc' => '5 patients scheduled for discharge clearance to free up male and female surgical ward beds.'],
                         ['icon' => 'mdi-alert-octagon', 'color' => 'danger', 'title' => 'ICU Bed Availability', 'desc' => '2 intensive care beds available. Triage incoming high-dependency cases accordingly.'],
@@ -853,11 +1165,13 @@ class DashboardDataController extends Controller
                     'icon' => 'mdi-shield-check',
                     'kpis' => [
                         ['label' => 'Pending Claims', 'val' => (string) $hmoPendingCount, 'sub' => 'Awaiting Submission', 'icon' => 'mdi-file-document-outline', 'color' => 'warning', 'link' => route('hmo.workbench')],
+                        ['label' => 'Pre-Auth Requests', 'val' => '4', 'sub' => 'Secondary Care Authorizations', 'icon' => 'mdi-clock-check-outline', 'color' => 'info', 'link' => route('hmo.workbench')],
                         ['label' => 'Vetting Discrepancies', 'val' => '2', 'sub' => 'Requires Reconciliation', 'icon' => 'mdi-alert-circle-outline', 'color' => 'danger', 'link' => route('hmo.workbench')],
                         ['label' => 'Active HMO Schemes', 'val' => (string) (\Illuminate\Support\Facades\Schema::hasTable('hmos') ? \Illuminate\Support\Facades\DB::table('hmos')->count() : 12), 'sub' => 'Contracted Insurers', 'icon' => 'mdi-shield-outline', 'color' => 'primary', 'link' => route('hmo.workbench')],
-                        ['label' => 'Pre-Auth Requests', 'val' => '4', 'sub' => 'Secondary Care Authorizations', 'icon' => 'mdi-clock-check-outline', 'color' => 'info', 'link' => route('hmo.workbench')],
                         ['label' => 'Claims Settled (Month)', 'val' => '₦2,450,000', 'sub' => 'Reimbursed Collections', 'icon' => 'mdi-cash-check', 'color' => 'success', 'link' => route('hmo.workbench')],
-                        ['label' => 'HMO Patients Today', 'val' => '19', 'sub' => 'Enrollees Treated', 'icon' => 'mdi-account-group', 'color' => 'teal', 'link' => route('hmo.workbench')],
+                        ['label' => 'HMO Patients Today', 'val' => '19', 'sub' => 'Enrollees Treated', 'icon' => 'mdi-account-group', 'color' => 'teal', 'link' => route('patient.index', ['hmo_only' => 1])],
+                        ['label' => 'Primary Care Visits', 'val' => '15', 'sub' => 'Capitation / Fee-for-Service', 'icon' => 'mdi-stethoscope', 'color' => 'primary', 'link' => route('encounters.index')],
+                        ['label' => 'HMO Reports', 'val' => 'Current', 'sub' => 'Monthly Utilization', 'icon' => 'mdi-file-chart', 'color' => 'purple', 'link' => route('hmo.reports')],
                     ],
                     'chart_type' => 'hourly_inflow',
                     'chart_title' => 'Weekly HMO Claims Submission vs Approvals',
@@ -865,19 +1179,213 @@ class DashboardDataController extends Controller
                     'shortcuts_type' => 'custom',
                     'shortcuts' => [
                         ['label' => 'HMO Workbench', 'url' => route('hmo.workbench'), 'icon' => 'mdi-shield-check', 'sub' => 'Claims Management', 'color' => 'primary'],
-                        ['label' => 'Tariff Schedule', 'url' => url('admin/hmo-tariffs/overrides'), 'icon' => 'mdi-table-cog', 'sub' => 'Price Rules', 'color' => 'warning'],
-                        ['label' => 'Pre-Authorizations', 'url' => url('hmo-workbench?tab=preauth'), 'icon' => 'mdi-check-decagram', 'sub' => 'Secondary Codes', 'color' => 'success'],
-                        ['label' => 'Claims Batches', 'url' => url('hmo-workbench?tab=batches'), 'icon' => 'mdi-package-variant', 'sub' => 'Monthly Invoicing', 'color' => 'purple'],
+                        ['label' => 'HMO Reports', 'url' => route('hmo.reports'), 'icon' => 'mdi-file-chart', 'sub' => 'Utilization Statistics', 'color' => 'info'],
+                        ['label' => 'HMO Patients', 'url' => route('patient.index', ['hmo_only' => 1]), 'icon' => 'mdi-account-group', 'sub' => 'Enrollee EHR', 'color' => 'purple'],
                     ],
                     'queue_title' => 'HMO Claims & Authorization Queue',
                     'queue_badge' => 'Claims Queue',
-                    'queue_items' => $billQueuePending,
+                    'queue_items' => $hmoQueue,
                     'insights' => [
                         ['icon' => 'mdi-shield-alert', 'color' => 'warning', 'title' => 'Pre-Auth Verification', 'desc' => 'Ensure secondary care authorizations are received prior to surgical admission and high-cost scans.'],
                         ['icon' => 'mdi-file-check', 'color' => 'info', 'title' => 'Claims Batch Submission', 'desc' => 'Review monthly claim batches for completeness before deadline.'],
                     ],
                 ],
+                'morgue' => [
+                    'domain' => 'morgue',
+                    'title' => 'Morgue & Mortuary Telemetry',
+                    'badge' => 'Mortuary Operations',
+                    'icon' => 'mdi-emoticon-dead',
+                    'kpis' => [
+                        ['label' => 'Active Remains', 'val' => (string) $morgueActiveCount, 'sub' => 'Currently in Mortuary', 'icon' => 'mdi-emoticon-dead', 'color' => 'danger', 'link' => route('morgue.workbench')],
+                        ['label' => 'Vaults Occupied', 'val' => (string) min(12, $morgueActiveCount), 'sub' => 'Vault Space Usage', 'icon' => 'mdi-archive-outline', 'color' => 'purple', 'link' => route('morgue.workbench')],
+                        ['label' => 'Deceased Today', 'val' => '1', 'sub' => 'Registered Today', 'icon' => 'mdi-calendar-today', 'color' => 'info', 'link' => route('morgue.workbench')],
+                        ['label' => 'Released This Month', 'val' => '4', 'sub' => 'Cleared & Released', 'icon' => 'mdi-check-decagram', 'color' => 'success', 'link' => route('morgue.reports')],
+                        ['label' => 'Autopsies Scheduled', 'val' => '1', 'sub' => 'Pathology Review', 'icon' => 'mdi-clipboard-pulse', 'color' => 'warning', 'link' => route('morgue.workbench')],
+                        ['label' => 'Cold Storage Status', 'val' => '-4°C', 'sub' => 'Optimal Temperature', 'icon' => 'mdi-snowflake', 'color' => 'teal', 'link' => route('morgue.workbench')],
+                        ['label' => 'Pending Bills', 'val' => '2', 'sub' => 'Awaiting Settlement', 'icon' => 'mdi-cash-clock', 'color' => 'warning', 'link' => route('billing.workbench')],
+                        ['label' => 'Ops Audit Log', 'val' => 'Clean', 'sub' => 'Mortuary Audit Trail', 'icon' => 'mdi-shield-check', 'color' => 'success', 'link' => route('ops-audit.morgue')],
+                    ],
+                    'chart_type' => 'hourly_inflow',
+                    'chart_title' => 'Monthly Mortuary Admissions vs Releases',
+                    'chart_badge' => 'Mortuary Flow',
+                    'shortcuts_type' => 'custom',
+                    'shortcuts' => [
+                        ['label' => 'Morgue Workbench', 'url' => route('morgue.workbench'), 'icon' => 'mdi-emoticon-dead', 'sub' => 'Mortuary Console', 'color' => 'danger'],
+                        ['label' => 'Admissions Queue', 'url' => route('morgue.queue'), 'icon' => 'mdi-clipboard-list', 'sub' => 'Intake Records', 'color' => 'primary'],
+                        ['label' => 'Mortuary Reports', 'url' => route('morgue.reports'), 'icon' => 'mdi-file-chart', 'sub' => 'Audit & Registers', 'color' => 'info'],
+                        ['label' => 'Ops Audit Morgue', 'url' => route('ops-audit.morgue'), 'icon' => 'mdi-shield-check', 'sub' => 'Compliance Review', 'color' => 'teal'],
+                    ],
+                    'queue_title' => 'Mortuary Admissions & Registrations',
+                    'queue_badge' => 'Morgue Census',
+                    'queue_items' => $sortedLedger,
+                    'insights' => [
+                        ['icon' => 'mdi-snowflake', 'color' => 'info', 'title' => 'Cold Room Telemetry', 'desc' => 'Chamber refrigeration systems are maintaining optimal storage temperature.'],
+                        ['icon' => 'mdi-file-document-check', 'color' => 'success', 'title' => 'Release Documentation', 'desc' => 'Ensure cause-of-death certification and police permits are verified prior to release.'],
+                    ],
+                ],
+                'audit' => [
+                    'domain' => 'audit',
+                    'title' => 'Internal Audit & Clinical Governance',
+                    'badge' => 'Compliance & Audit',
+                    'icon' => 'mdi-shield-check-outline',
+                    'kpis' => [
+                        ['label' => 'Unpaid Invoices', 'val' => (string) $unpaidBillCount, 'sub' => 'Potential Revenue Leak', 'icon' => 'mdi-cash-remove', 'color' => 'danger', 'link' => url('/audit-workbench')],
+                        ['label' => 'Critical Low Stock', 'val' => (string) $lowStockCount, 'sub' => 'Inventory Threshold Flags', 'icon' => 'mdi-alert-circle', 'color' => 'warning', 'link' => route('ops-audit.store')],
+                        ['label' => 'Out of Stock Items', 'val' => (string) $outOfStockCount, 'sub' => 'Supply Stock-outs', 'icon' => 'mdi-package-variant-remove', 'color' => 'danger', 'link' => route('ops-audit.store')],
+                        ['label' => 'HMO Pending Vetting', 'val' => (string) $hmoPendingCount, 'sub' => 'Tariff Discrepancies', 'icon' => 'mdi-shield-alert', 'color' => 'warning', 'link' => route('hmo.workbench')],
+                        ['label' => 'Bed Census Audited', 'val' => (string) $admittedCount, 'sub' => 'Active Inpatients', 'icon' => 'mdi-hotel', 'color' => 'purple', 'link' => route('ops-audit.nursing')],
+                        ['label' => 'Dispensed Audits', 'val' => (string) $dispensedToday, 'sub' => 'Pharmacy Dispatches', 'icon' => 'mdi-pill', 'color' => 'teal', 'link' => route('ops-audit.pharmacy')],
+                        ['label' => 'Lab Results Signed', 'val' => (string) $labCompletedToday, 'sub' => 'Diagnostic Verifications', 'icon' => 'mdi-flask', 'color' => 'info', 'link' => route('ops-audit.lab')],
+                        ['label' => 'Audit Variance', 'val' => '0.2%', 'sub' => 'Within Quality SLA', 'icon' => 'mdi-scale-balance', 'color' => 'success', 'link' => url('/audit-workbench')],
+                    ],
+                    'chart_type' => 'revenue_trend',
+                    'chart_title' => 'Revenue Audit & Collection Reconciliation',
+                    'chart_badge' => 'Financial Audit',
+                    'shortcuts_type' => 'custom',
+                    'shortcuts' => [
+                        ['label' => 'Audit Workbench', 'url' => url('/audit-workbench'), 'icon' => 'mdi-shield-check-outline', 'sub' => 'Central Audit Hub', 'color' => 'primary'],
+                        ['label' => 'Ops Audit Reception', 'url' => route('ops-audit.reception'), 'icon' => 'mdi-account-tie', 'sub' => 'Intake Audit', 'color' => 'info'],
+                        ['label' => 'Ops Audit Store', 'url' => route('ops-audit.store'), 'icon' => 'mdi-store-warehouse', 'sub' => 'Inventory Audit', 'color' => 'warning'],
+                        ['label' => 'Ops Audit Pharmacy', 'url' => route('ops-audit.pharmacy'), 'icon' => 'mdi-pill', 'sub' => 'Prescription Audit', 'color' => 'danger'],
+                    ],
+                    'queue_title' => 'Clinical & Financial Exception Ledger',
+                    'queue_badge' => 'Audit Stream',
+                    'queue_items' => $sortedLedger,
+                    'insights' => [
+                        ['icon' => 'mdi-alert-octagon', 'color' => 'danger', 'title' => 'Discrepancy Monitoring', 'desc' => 'High-value pharmacy items and cashier remittances monitored for 100% voucher matching.'],
+                        ['icon' => 'mdi-check-decagram', 'color' => 'success', 'title' => 'Governance Checklist', 'desc' => 'Periodic physical ward bed census matched against digital admission records.'],
+                    ],
+                ],
+                'hr' => [
+                    'domain' => 'hr',
+                    'title' => 'Human Resources & Workforce Telemetry',
+                    'badge' => 'Personnel & Roster',
+                    'icon' => 'mdi-account-group',
+                    'kpis' => [
+                        ['label' => 'Pending Leave Requests', 'val' => (string) $leavePendingCount, 'sub' => 'Awaiting HR Approval', 'icon' => 'mdi-calendar-clock', 'color' => 'warning', 'link' => route('hr.leave-requests.index')],
+                        ['label' => 'Total Hospital Staff', 'val' => (string) (\Illuminate\Support\Facades\Schema::hasTable('staff') ? \Illuminate\Support\Facades\DB::table('staff')->count() : 48), 'sub' => 'Active Personnel', 'icon' => 'mdi-account-multiple-check', 'color' => 'primary', 'link' => route('hr.workbench.index')],
+                        ['label' => 'Staff On Duty Today', 'val' => '38', 'sub' => 'Morning & Evening Shifts', 'icon' => 'mdi-account-badge-horizontal', 'color' => 'success', 'link' => route('hr.workbench.index')],
+                        ['label' => 'Shift Compliance', 'val' => '98.5%', 'sub' => 'On-Time Clock-in Rate', 'icon' => 'mdi-clock-check', 'color' => 'teal', 'link' => route('hr.workbench.index')],
+                        ['label' => 'Probation Due', 'val' => '2', 'sub' => 'Staff Evaluations', 'icon' => 'mdi-account-alert', 'color' => 'info', 'link' => route('hr.workbench.index')],
+                        ['label' => 'Licence Renewals (30d)', 'val' => '3', 'sub' => 'Medical & Nursing Licences', 'icon' => 'mdi-certificate', 'color' => 'danger', 'link' => route('hr.workbench.index')],
+                        ['label' => 'Active Departments', 'val' => '14', 'sub' => 'Clinical & Support Units', 'icon' => 'mdi-hospital-building', 'color' => 'purple', 'link' => route('hr.workbench.index')],
+                        ['label' => 'Annual Leave Roster', 'val' => 'Balanced', 'sub' => 'Workforce Headcount SLA', 'icon' => 'mdi-calendar-multiselect', 'color' => 'success', 'link' => route('hr.leave-requests.index')],
+                    ],
+                    'chart_type' => 'hourly_inflow',
+                    'chart_title' => 'Workforce Shift Allocation by Department',
+                    'chart_badge' => 'HR Operations',
+                    'shortcuts_type' => 'custom',
+                    'shortcuts' => [
+                        ['label' => 'HR Workbench', 'url' => route('hr.workbench.index'), 'icon' => 'mdi-account-group', 'sub' => 'Workforce Console', 'color' => 'primary'],
+                        ['label' => 'Leave Management', 'url' => route('hr.leave-requests.index'), 'icon' => 'mdi-calendar-clock', 'sub' => 'Approve & Track Leave', 'color' => 'warning'],
+                        ['label' => 'Staff Directory', 'url' => route('staff.index'), 'icon' => 'mdi-account-search', 'sub' => 'Personnel Records', 'color' => 'purple'],
+                        ['label' => '+ Add New Staff', 'url' => route('staff.create'), 'icon' => 'mdi-account-plus', 'sub' => 'Onboarding Roster', 'color' => 'success'],
+                    ],
+                    'queue_title' => 'Workforce Requests & Duty Roster Stream',
+                    'queue_badge' => 'Staff Stream',
+                    'queue_items' => $sortedLedger,
+                    'insights' => [
+                        ['icon' => 'mdi-calendar-alert', 'color' => 'warning', 'title' => 'Leave Approval SLA', 'desc' => $leavePendingCount . ' leave applications awaiting supervisor and HR review.'],
+                        ['icon' => 'mdi-shield-account', 'color' => 'info', 'title' => 'Clinical Credentials', 'desc' => 'Ensure all practicing doctors and nurses hold current council practicing licenses.'],
+                    ],
+                ],
+                'accounts' => [
+                    'domain' => 'accounts',
+                    'title' => 'Financial Accounting & General Ledger',
+                    'badge' => 'Finance & Treasury',
+                    'icon' => 'mdi-calculator',
+                    'kpis' => [
+                        ['label' => "Today's Collections", 'val' => '₦' . number_format($todayRevenue, 0), 'sub' => 'Cash/POS/Bank Deposits', 'icon' => 'mdi-cash-check', 'color' => 'success', 'link' => route('billing.workbench')],
+                        ['label' => 'Unpaid Invoices', 'val' => (string) $unpaidBillCount, 'sub' => 'Accounts Receivable', 'icon' => 'mdi-receipt', 'color' => 'danger', 'link' => route('billing.workbench')],
+                        ['label' => 'HMO Claims Value', 'val' => '₦1,850,000', 'sub' => 'Pending Reimbursable Claims', 'icon' => 'mdi-shield-outline', 'color' => 'warning', 'link' => route('hmo.workbench')],
+                        ['label' => 'Daily Receipts Issued', 'val' => (string) $dailyReceiptsCount, 'sub' => 'Settled Vouchers', 'icon' => 'mdi-receipt-text', 'color' => 'teal', 'link' => route('billing.workbench')],
+                        ['label' => 'Journal Entries', 'val' => '24', 'sub' => 'General Ledger Postings', 'icon' => 'mdi-book-open-page-variant', 'color' => 'primary', 'link' => route('accounting.journal-entries.index')],
+                        ['label' => 'Chart of Accounts', 'val' => 'Active', 'sub' => 'Assets, Liab, Equity, Rev', 'icon' => 'mdi-file-tree', 'color' => 'purple', 'link' => route('accounting.chart-of-accounts.index')],
+                        ['label' => 'Cashier Drawers', 'val' => 'Reconciled', 'sub' => 'Shift Balance Validated', 'icon' => 'mdi-cash-register', 'color' => 'success', 'link' => route('billing.workbench')],
+                        ['label' => 'Accounts Payable Due', 'val' => '₦420,000', 'sub' => 'Vendor Invoices Pending', 'icon' => 'mdi-truck-delivery', 'color' => 'warning', 'link' => route('accounting.reports.index')],
+                    ],
+                    'chart_type' => 'revenue_trend',
+                    'chart_title' => '7-Day Revenue Trend (Billings vs Collections)',
+                    'chart_badge' => 'Treasury',
+                    'shortcuts_type' => 'custom',
+                    'shortcuts' => [
+                        ['label' => 'Accounting Dashboard', 'url' => route('accounting.dashboard'), 'icon' => 'mdi-calculator', 'sub' => 'Financial Central', 'color' => 'success'],
+                        ['label' => 'Journal Entries', 'url' => route('accounting.journal-entries.index'), 'icon' => 'mdi-book-open-page-variant', 'sub' => 'Ledger Postings', 'color' => 'primary'],
+                        ['label' => 'Chart of Accounts', 'url' => route('accounting.chart-of-accounts.index'), 'icon' => 'mdi-file-tree', 'sub' => 'General Ledger', 'color' => 'purple'],
+                        ['label' => 'Financial Reports', 'url' => route('accounting.reports.index'), 'icon' => 'mdi-chart-bar', 'sub' => 'P&L, Balance Sheet', 'color' => 'info'],
+                    ],
+                    'queue_title' => 'Recent Financial Transactions & Receipts',
+                    'queue_badge' => 'Receipts Ledger',
+                    'queue_items' => $billQueuePending,
+                    'insights' => [
+                        ['icon' => 'mdi-bank-transfer', 'color' => 'info', 'title' => 'Bank Reconciliation', 'desc' => 'Daily electronic POS settlements and direct bank transfers matched to patient receipts.'],
+                        ['icon' => 'mdi-file-chart-outline', 'color' => 'success', 'title' => 'General Ledger Posting', 'desc' => 'Auto-posting observers active for patient bill payments and supplier purchases.'],
+                    ],
+                ],
+                'ess' => [
+                    'domain' => 'ess',
+                    'title' => 'Staff Self-Service (ESS) Portal',
+                    'badge' => 'My Workstation',
+                    'icon' => 'mdi-account-circle-outline',
+                    'kpis' => [
+                        ['label' => 'Assigned Duty', 'val' => 'On Duty', 'sub' => 'Active Workstation Shift', 'icon' => 'mdi-briefcase-check', 'color' => 'success', 'link' => route('my-profile')],
+                        ['label' => 'Leave Balance', 'val' => '18 Days', 'sub' => 'Annual Leave Remaining', 'icon' => 'mdi-calendar-check', 'color' => 'teal', 'link' => route('hr.leave-requests.create')],
+                        ['label' => 'Pending Requests', 'val' => '0', 'sub' => 'No Pending Approvals', 'icon' => 'mdi-clock-outline', 'color' => 'info', 'link' => route('my-profile')],
+                        ['label' => 'Staff Profile', 'val' => 'Verified', 'sub' => 'Biodata & Credentials Active', 'icon' => 'mdi-shield-check', 'color' => 'primary', 'link' => route('my-profile')],
+                    ],
+                    'chart_type' => 'hourly_inflow',
+                    'chart_title' => 'Hospital Inflow Trend',
+                    'chart_badge' => 'Live Ops',
+                    'shortcuts_type' => 'custom',
+                    'shortcuts' => [
+                        ['label' => 'My Profile & Bio', 'url' => route('my-profile'), 'icon' => 'mdi-account-circle-outline', 'sub' => 'Staff Credentials', 'color' => 'primary'],
+                        ['label' => 'Request Annual Leave', 'url' => route('hr.leave-requests.create'), 'icon' => 'mdi-calendar-plus', 'sub' => 'Submit Application', 'color' => 'warning'],
+                        ['label' => 'Cockpit Dashboard', 'url' => route('home'), 'icon' => 'mdi-view-dashboard-outline', 'sub' => 'Hospital Central', 'color' => 'info'],
+                    ],
+                    'queue_title' => 'Recent Operational Activity',
+                    'queue_badge' => 'My Feed',
+                    'queue_items' => $sortedLedger,
+                    'insights' => [
+                        ['icon' => 'mdi-account-tie', 'color' => 'info', 'title' => 'Employee Profile Active', 'desc' => 'Personal biodata, department posting, and next-of-kin records are verified.'],
+                    ],
+                ],
+                'admin' => [
+                    'domain' => 'admin',
+                    'title' => 'Executive Hospital Administration',
+                    'badge' => 'Governance & Management',
+                    'icon' => 'mdi-cogs',
+                    'kpis' => [
+                        ['label' => "Today's Hospital Revenue", 'val' => '₦' . number_format($todayRevenue, 0), 'sub' => 'Gross Collections', 'icon' => 'mdi-cash-multiple', 'color' => 'success', 'link' => route('billing.workbench')],
+                        ['label' => 'Bed Occupancy Rate', 'val' => $occupancyRate . '%', 'sub' => $effectiveOccupied . ' of ' . $totalBeds . ' Beds', 'icon' => 'mdi-hotel', 'color' => $occupancyRate > 85 ? 'danger' : 'success', 'link' => url('nursing-workbench?view=ward-dashboard')],
+                        ['label' => 'Consultations In Flow', 'val' => (string) $consultCount, 'sub' => 'Active Clinical Care', 'icon' => 'mdi-stethoscope', 'color' => 'primary', 'link' => route('encounters.index')],
+                        ['label' => 'Lab Tests Finalized', 'val' => (string) $labCompletedToday, 'sub' => 'Completed Investigations', 'icon' => 'mdi-flask-outline', 'color' => 'teal', 'link' => url('lab-workbench?tab=completed')],
+                        ['label' => 'Prescriptions Filled', 'val' => (string) $dispensedToday, 'sub' => 'Pharmacy Dispensations', 'icon' => 'mdi-pill', 'color' => 'purple', 'link' => route('pharmacy.workbench')],
+                        ['label' => 'Stock Depletion Flags', 'val' => (string) $outOfStockCount, 'unit' => '/ ' . $lowStockCount . ' Low', 'sub' => 'Critical Supplies', 'icon' => 'mdi-alert-circle', 'color' => 'danger', 'link' => route('inventory.store-workbench.index')],
+                        ['label' => 'HMO Claims Pending', 'val' => (string) $hmoPendingCount, 'sub' => 'Institutional Billing', 'icon' => 'mdi-shield-alert', 'color' => 'warning', 'link' => route('hmo.workbench')],
+                        ['label' => 'Hospital System Status', 'val' => '100% Online', 'sub' => 'All Micro-Services Nominal', 'icon' => 'mdi-check-decagram', 'color' => 'success', 'link' => route('hospital-config.index')],
+                    ],
+                    'chart_type' => 'double_spark',
+                    'chart_title' => 'Hourly Inflow & Admissions',
+                    'chart_badge' => 'Executive',
+                    'shortcuts_type' => 'custom',
+                    'shortcuts' => [
+                        ['label' => 'Hospital Settings', 'url' => route('hospital-config.index'), 'icon' => 'mdi-cogs', 'sub' => 'System Preferences', 'color' => 'primary'],
+                        ['label' => 'Role Permissions', 'url' => route('roles.index'), 'icon' => 'mdi-shield-account', 'sub' => 'Access Control (RBAC)', 'color' => 'warning'],
+                        ['label' => 'Audit & Governance Hub', 'url' => route('ops-audit.reception'), 'icon' => 'mdi-shield-check', 'sub' => 'Multi-Dept Ops Audit', 'color' => 'teal'],
+                        ['label' => 'Staff Directory', 'url' => route('staff.index'), 'icon' => 'mdi-account-multiple', 'sub' => 'Staff Accounts', 'color' => 'purple'],
+                    ],
+                    'queue_title' => 'Executive Hospital Activity Ledger',
+                    'queue_badge' => 'All Departments',
+                    'queue_items' => $sortedLedger,
+                    'insights' => [
+                        ['icon' => 'mdi-shield-check', 'color' => 'success', 'title' => 'Hospital Systems Nominal', 'desc' => 'Database latency, background queue workers, and EHR transactions running at optimal performance.'],
+                        ['icon' => 'mdi-chart-line', 'color' => 'info', 'title' => 'Capacity Planning', 'desc' => 'Review ward bed occupancy and daily patient inflow to adjust shift staffing accordingly.'],
+                    ],
+                ],
             ];
+
+            // Backward-compatible alias for biller -> billing
+            $domains['biller'] = &$domains['billing'];
 
             return response()->json([
                 'pipeline' => [

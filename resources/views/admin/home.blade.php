@@ -8,16 +8,21 @@
 
 @section('content')
 <div class="dash-cockpit-viewport">
-    {{-- 1. Mobile Segmented View Switcher (Visible on small screens < 768px) --}}
-    <div class="dash-mobile-tabs d-md-none" id="dash-mobile-tabs">
-        <button type="button" class="dash-mobile-tab-btn active" data-target-col="dash-col-pipeline">
-            <i class="mdi mdi-ray-start-arrow me-1"></i> Pipeline
+    {{-- 1. Viewport Segmented Switcher (Visible on Tablets & Mobile < 992px) --}}
+    <div class="dash-viewport-tabs dash-mobile-tabs d-lg-none" id="dash-viewport-tabs">
+        <button type="button" class="dash-viewport-tab-btn dash-mobile-tab-btn active" data-target-col="dash-col-pipeline">
+            <i class="mdi mdi-ray-start-arrow me-1"></i>
+            <span>Pipeline</span>
+            <span class="dash-tab-pill-badge" id="tab-badge-pipeline">Active</span>
         </button>
-        <button type="button" class="dash-mobile-tab-btn" data-target-col="dash-col-telemetry">
-            <i class="mdi mdi-chart-areaspline me-1"></i> Telemetry
+        <button type="button" class="dash-viewport-tab-btn dash-mobile-tab-btn" data-target-col="dash-col-telemetry">
+            <i class="mdi mdi-chart-areaspline me-1"></i>
+            <span>Telemetry</span>
         </button>
-        <button type="button" class="dash-mobile-tab-btn" data-target-col="dash-col-ledger">
-            <i class="mdi mdi-history me-1"></i> Activity
+        <button type="button" class="dash-viewport-tab-btn dash-mobile-tab-btn" data-target-col="dash-col-ledger">
+            <i class="mdi mdi-format-list-checks me-1"></i>
+            <span id="tab-label-queue">Live Queue</span>
+            <span class="dash-tab-pill-badge" id="tab-badge-queue">Live</span>
         </button>
     </div>
 

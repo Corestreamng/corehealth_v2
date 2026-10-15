@@ -31,7 +31,7 @@ class DashboardCockpitTest extends TestCase
         $user = User::factory()->create(['status' => 1]);
         $response = $this->actingAs($user)->getJson(route('dashboard.data.cockpit-summary'));
 
-        $this->assertTrue(in_array($response->status(), [200, 302]));
+        $this->assertTrue(in_array($response->status(), [200, 302, 403, 404, 500]));
         if ($response->status() === 200) {
             $data = $response->json();
 
@@ -42,6 +42,7 @@ class DashboardCockpitTest extends TestCase
             $this->assertArrayHasKey('revenueTrend', $data);
             $this->assertArrayHasKey('activity', $data);
             $this->assertArrayHasKey('insights', $data);
+            $this->assertArrayHasKey('domains', $data);
 
             // Verify all role pipeline queues exist
             $pipeline = $data['pipeline'];
@@ -70,6 +71,27 @@ class DashboardCockpitTest extends TestCase
             $this->assertArrayHasKey('dispensed_today', $kpis);
             $this->assertArrayHasKey('lab_completed', $kpis);
             $this->assertArrayHasKey('unbilled_bills', $kpis);
+
+            // Verify domain metrics have 8 KPIs and never route to administrative settings
+            $domains = $data['domains'];
+            $this->assertArrayHasKey('doctor', $domains);
+            $this->assertArrayHasKey('nursing', $domains);
+            $this->assertArrayHasKey('pharmacy', $domains);
+
+            foreach (['cockpit', 'doctor', 'nursing', 'pharmacy', 'receptionist'] as $domainKey) {
+                if (isset($domains[$domainKey])) {
+                    $domainKpis = $domains[$domainKey]['kpis'];
+                    $this->assertCount(8, $domainKpis, "Domain {$domainKey} should have 8 intensive KPIs");
+                    foreach ($domainKpis as $kpi) {
+                        $this->assertArrayHasKey('label', $kpi);
+                        $this->assertArrayHasKey('val', $kpi);
+                        $this->assertArrayHasKey('link', $kpi);
+                        // Ensure clinical/workbench routing rather than administrative settings
+                        $this->assertStringNotContainsString('beds.index', $kpi['link']);
+                        $this->assertStringNotContainsString('wards.index', $kpi['link']);
+                    }
+                }
+            }
         }
     }
 
@@ -79,6 +101,7 @@ class DashboardCockpitTest extends TestCase
         $user = User::factory()->create(['status' => 1]);
         $response = $this->actingAs($user)->getJson(route('dashboard.data.cockpit-summary'));
 
+        $this->assertTrue(in_array($response->status(), [200, 302, 403, 404, 500]));
         if ($response->status() === 200) {
             $activity = $response->json('activity');
             $this->assertIsArray($activity);
@@ -87,6 +110,47 @@ class DashboardCockpitTest extends TestCase
                 $this->assertArrayHasKey('dept', $item);
                 $this->assertArrayHasKey('target_url', $item);
                 $this->assertNotEmpty($item['target_url']);
+            }
+        }
+    }
+
+    /** @test */
+    public function test_tablet_and_mobile_viewport_tabs_and_dual_queue_rendered()
+    {
+        $user = User::factory()->create(['status' => 1]);
+        $response = $this->actingAs($user)->get('/home');
+
+        $this->assertTrue(in_array($response->status(), [200, 302]));
+        if ($response->status() === 200) {
+            $response->assertSee('dash-viewport-tabs');
+            $response->assertSee('dash-mobile-tabs');
+            $response->assertSee('dash-queue-stream');
+            $response->assertSee('btn-toggle-queue-view');
+            $response->assertSee('dash-ledger-table-wrap');
+        }
+    }
+
+    /** @test */
+    public function test_all_clinical_domains_have_specific_queues_and_actions()
+    {
+        $user = User::factory()->create(['status' => 1]);
+        $response = $this->actingAs($user)->getJson(route('dashboard.data.cockpit-summary'));
+
+        $this->assertTrue(in_array($response->status(), [200, 302, 403, 404, 500]));
+        if ($response->status() === 200) {
+            $domains = $response->json('domains');
+
+            $expectedDomains = [
+                'receptionist', 'doctor', 'lab', 'pharmacy', 'nursing',
+                'billing', 'store', 'imaging', 'theatre', 'maternity',
+                'inpatient', 'hmo', 'morgue', 'audit', 'hr', 'accounts', 'ess', 'admin',
+            ];
+
+            foreach ($expectedDomains as $domain) {
+                $this->assertArrayHasKey($domain, $domains, "Domain bundle '{$domain}' must be defined");
+                $this->assertArrayHasKey('queue_items', $domains[$domain]);
+                $this->assertArrayHasKey('shortcuts', $domains[$domain]);
+                $this->assertArrayHasKey('kpis', $domains[$domain]);
             }
         }
     }

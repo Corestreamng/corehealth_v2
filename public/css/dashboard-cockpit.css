@@ -456,6 +456,49 @@ body.dark-mode .footer .text-muted {
     padding: 4px 6px;
 }
 
+.dash-card-footer {
+    flex: 0 0 auto;
+    padding: 5px 8px;
+    background: #f8fafc;
+    border-top: 1px solid #f1f5f9;
+}
+
+.dash-pipe-actions {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 5px;
+}
+
+.dash-pipe-action-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    font-size: 0.68rem;
+    font-weight: 600;
+    color: #475569;
+    padding: 3px 5px;
+    border-radius: 4px;
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    text-decoration: none;
+    transition: all 0.15s ease;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.dash-pipe-action-btn:hover {
+    background: #f1f5f9;
+    color: var(--hospital-primary, #011b33);
+    border-color: #cbd5e1;
+    text-decoration: none;
+}
+
+.dash-pipe-action-btn i {
+    font-size: 0.82rem;
+}
+
 /* ── Micro Custom Scrollbar ────────────────────────────────────────────── */
 .dash-scrollable {
     overflow-y: auto !important;
@@ -727,24 +770,35 @@ body.dark-mode .footer .text-muted {
     border-color: #cbd5e1;
 }
 
-/* ── Column 2: Telemetry Top 2x3 KPI Matrix ────────────────────────────── */
+/* ── Column 2: Telemetry Top 2x4 KPI Matrix ────────────────────────────── */
 .dash-kpi-matrix {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(4, 1fr);
     gap: 5px;
     flex: 0 0 auto;
+}
+
+@media (max-width: 1400px) {
+    .dash-kpi-matrix {
+        grid-template-columns: repeat(4, 1fr);
+    }
+}
+@media (max-width: 991px) {
+    .dash-kpi-matrix {
+        grid-template-columns: repeat(2, 1fr);
+    }
 }
 
 .dash-kpi-tile {
     background: #ffffff;
     border: 1px solid #e2e8f0;
     border-radius: 7px;
-    padding: 5px 8px;
+    padding: 4px 7px;
     display: flex;
     flex-direction: column;
     justify-content: space-between;
     transition: transform 0.15s ease, box-shadow 0.15s ease;
-    min-height: 54px;
+    min-height: 50px;
     text-decoration: none !important;
     color: inherit !important;
 }
@@ -762,21 +816,23 @@ body.dark-mode .footer .text-muted {
 }
 
 .dash-kpi-label {
-    font-size: 0.66rem;
+    font-size: 0.63rem;
     font-weight: 700;
     color: #64748b;
     text-transform: uppercase;
-    letter-spacing: 0.3px;
+    letter-spacing: 0.2px;
     white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .dash-kpi-icon {
-    font-size: 0.85rem;
+    font-size: 0.82rem;
     color: #94a3b8;
 }
 
 .dash-kpi-val {
-    font-size: 1.18rem;
+    font-size: 1.05rem;
     font-weight: 800;
     color: #0f172a;
     line-height: 1.1;
@@ -784,18 +840,20 @@ body.dark-mode .footer .text-muted {
 }
 
 .dash-kpi-unit {
-    font-size: 0.7rem;
+    font-size: 0.68rem;
     font-weight: 600;
     color: #64748b;
 }
 
 .dash-kpi-sub {
-    font-size: 0.62rem;
+    font-size: 0.58rem;
     color: #64748b;
     display: flex;
     align-items: center;
     gap: 3px;
     white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .kpi-tile-revenue:hover .dash-kpi-icon { color: #10b981; }
@@ -805,21 +863,29 @@ body.dark-mode .footer .text-muted {
 .kpi-tile-lab:hover .dash-kpi-icon { color: #0d9488; }
 .kpi-tile-stock:hover .dash-kpi-icon { color: #ef4444; }
 
-/* ── Telemetry Center: Dual Micro Sparklines (Height 140px) ────────────── */
+/* ── Telemetry Center: Dual Micro Sparklines (Height 135px) ────────────── */
 .dash-charts-row {
-    flex: 0 0 140px;
-    height: 140px;
+    flex: 0 0 135px;
+    height: 135px;
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 5px;
+    gap: 6px;
     min-height: 0;
+}
+
+@media (max-width: 768px) {
+    .dash-charts-row {
+        grid-template-columns: 1fr;
+        height: auto;
+        flex: 0 0 auto;
+    }
 }
 
 .dash-chart-card {
     background: #ffffff;
     border: 1px solid #e2e8f0;
     border-radius: 7px;
-    padding: 5px 7px;
+    padding: 4px 6px;
     display: flex;
     flex-direction: column;
     overflow: hidden;
@@ -835,21 +901,25 @@ body.dark-mode .footer .text-muted {
 }
 
 .dash-chart-title {
-    font-size: 0.7rem;
+    font-size: 0.67rem;
     font-weight: 700;
     color: #334155;
     text-transform: uppercase;
     display: flex;
     align-items: center;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .dash-chart-badge {
-    font-size: 0.63rem;
+    font-size: 0.60rem;
     font-weight: 600;
     color: #64748b;
     background: #f1f5f9;
     padding: 1px 5px;
     border-radius: 4px;
+    white-space: nowrap;
 }
 
 .dash-chart-canvas-wrap {
@@ -857,41 +927,66 @@ body.dark-mode .footer .text-muted {
     position: relative;
     min-height: 0;
     width: 100%;
-    height: calc(100% - 22px);
+    height: calc(100% - 20px);
 }
 
-/* ── Telemetry Bottom: Live Operational Insights Strip ─────────────────── */
-.dash-insights-box {
-    flex: 1 1 auto;
-    min-height: 0;
+/* ── Telemetry Bottom: Live Operational Insights Strip (Compact Micro-Grid) ─ */
+.dash-insights-strip {
+    flex: 0 0 auto;
+    margin-top: 6px !important;
+}
+
+.dash-insights-head {
     display: flex;
-    flex-direction: column;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 3px;
 }
 
-.dash-insights-box .dash-card-header {
-    flex: 0 0 30px;
-    height: 30px;
+.dash-insights-title {
+    font-size: 0.67rem;
+    font-weight: 700;
+    color: #475569;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    display: flex;
+    align-items: center;
 }
 
 .dash-insights-list {
-    display: flex;
-    flex-direction: column;
-    gap: 3px;
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 4px;
+}
+
+@media (max-width: 991px) {
+    .dash-insights-list {
+        grid-template-columns: 1fr;
+    }
 }
 
 .dash-insight-pill {
     display: flex;
     align-items: center;
-    gap: 7px;
-    padding: 4px 7px;
-    border-radius: 6px;
-    font-size: 0.72rem;
-    line-height: 1.25;
+    gap: 5px;
+    padding: 2.5px 6px;
+    border-radius: 5px;
+    font-size: 0.68rem;
+    line-height: 1.15;
     transition: all 0.15s ease;
     cursor: default;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    border: 1px solid transparent;
+}
+.dash-insight-pill span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 .dash-insight-pill i {
-    font-size: 0.9rem;
+    font-size: 0.78rem;
     flex-shrink: 0;
 }
 
@@ -925,10 +1020,203 @@ body.dark-mode .footer .text-muted {
     overflow-x: hidden !important;
 }
 
+/* ── Queue Header Action & Toggle Button ───────────────────────────────── */
+.dash-card-header-actions {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+.dash-view-toggle-btn {
+    background: #f1f5f9;
+    border: 1px solid #e2e8f0;
+    color: #475569;
+    width: 22px;
+    height: 22px;
+    border-radius: 4px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.82rem;
+    cursor: pointer;
+    padding: 0;
+    transition: all 0.15s ease;
+}
+.dash-view-toggle-btn:hover {
+    background: var(--hospital-primary, #011b33);
+    color: #ffffff;
+    border-color: var(--hospital-primary, #011b33);
+}
+
+/* ── Mode A: High-Density Queue Stream Cards (Default, Fluid & Touch-Ready) ─ */
+.dash-queue-stream {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    padding: 6px;
+}
+
+.dash-queue-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 6px 9px;
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    transition: all 0.15s ease;
+    cursor: pointer;
+    text-decoration: none;
+    color: inherit;
+    position: relative;
+}
+.dash-queue-item:hover {
+    background: #f8fafc;
+    border-color: #cbd5e1;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.04);
+    transform: translateY(-1px);
+    text-decoration: none;
+    color: inherit;
+}
+.dash-queue-item::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 3px;
+    border-radius: 6px 0 0 6px;
+    background: #94a3b8;
+}
+.dash-queue-item.qi-priority-emergency::before { background: #ef4444; }
+.dash-queue-item.qi-priority-warning::before   { background: #f59e0b; }
+.dash-queue-item.qi-priority-primary::before   { background: #3b82f6; }
+.dash-queue-item.qi-priority-success::before   { background: #10b981; }
+.dash-queue-item.qi-priority-teal::before      { background: #0d9488; }
+.dash-queue-item.qi-priority-purple::before    { background: #8b5cf6; }
+
+.dash-qi-left {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+    flex: 1 1 auto;
+}
+.dash-qi-avatar {
+    width: 28px;
+    height: 28px;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.9rem;
+    flex-shrink: 0;
+    background: #f1f5f9;
+    color: #475569;
+}
+.dash-qi-avatar.avatar-doctor    { background: #dbeafe; color: #1e40af; }
+.dash-qi-avatar.avatar-nursing   { background: #fee2e2; color: #b91c1c; }
+.dash-qi-avatar.avatar-pharmacy  { background: #f3e8ff; color: #7e22ce; }
+.dash-qi-avatar.avatar-lab       { background: #ecfeff; color: #0e7490; }
+.dash-qi-avatar.avatar-billing   { background: #dcfce7; color: #166534; }
+.dash-qi-avatar.avatar-inpatient { background: #ccfbf1; color: #0f766e; }
+
+.dash-qi-info {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    flex: 1 1 auto;
+}
+.dash-qi-head {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    line-height: 1.2;
+}
+.dash-qi-name {
+    font-weight: 700;
+    font-size: 0.76rem;
+    color: #0f172a;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.dash-qi-file {
+    font-size: 0.63rem;
+    font-family: monospace;
+    color: #64748b;
+    background: #f1f5f9;
+    padding: 0 4px;
+    border-radius: 3px;
+    flex-shrink: 0;
+}
+.dash-qi-badge {
+    font-size: 0.61rem;
+    font-weight: 700;
+    padding: 1px 5px;
+    border-radius: 10px;
+    flex-shrink: 0;
+    margin-left: auto;
+}
+.dash-qi-sub {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.67rem;
+    color: #64748b;
+    margin-top: 2px;
+    line-height: 1.2;
+}
+.dash-qi-detail {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    color: #475569;
+}
+.dash-qi-meta {
+    color: #94a3b8;
+    flex-shrink: 0;
+    font-size: 0.62rem;
+}
+
+.dash-qi-right {
+    flex-shrink: 0;
+}
+.dash-qi-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    font-size: 0.67rem;
+    font-weight: 600;
+    padding: 3px 7px;
+    border-radius: 4px;
+    text-decoration: none;
+    transition: all 0.15s ease;
+    white-space: nowrap;
+    border: 1px solid transparent;
+}
+.dash-qi-btn:hover {
+    text-decoration: none;
+    transform: translateY(-1px);
+}
+.btn-action-primary { background: #eff6ff; color: #1d4ed8; border-color: #bfdbfe; }
+.btn-action-primary:hover { background: #1d4ed8; color: #fff; }
+.btn-action-success { background: #f0fdf4; color: #15803d; border-color: #bbf7d0; }
+.btn-action-success:hover { background: #15803d; color: #fff; }
+.btn-action-danger  { background: #fef2f2; color: #b91c1c; border-color: #fecaca; }
+.btn-action-danger:hover { background: #b91c1c; color: #fff; }
+.btn-action-purple  { background: #faf5ff; color: #7e22ce; border-color: #e9d5ff; }
+.btn-action-purple:hover { background: #7e22ce; color: #fff; }
+.btn-action-teal    { background: #f0fdfa; color: #0f766e; border-color: #99f6e4; }
+.btn-action-teal:hover { background: #0f766e; color: #fff; }
+.btn-action-warning { background: #fffbeb; color: #b45309; border-color: #fde68a; }
+.btn-action-warning:hover { background: #b45309; color: #fff; }
+
+/* ── Mode B: Modern Responsive Table ────────────────────────────────────── */
 .dash-ledger-table {
     width: 100%;
-    table-layout: fixed;
-    border-collapse: collapse;
+    border-collapse: separate;
+    border-spacing: 0;
 }
 
 .dash-ledger-table th {
@@ -937,7 +1225,7 @@ body.dark-mode .footer .text-muted {
     color: #64748b;
     text-transform: uppercase;
     letter-spacing: 0.4px;
-    padding: 3px 5px;
+    padding: 4px 6px;
     background: #f8fafc;
     border-bottom: 1px solid #e2e8f0;
     text-align: left;
@@ -946,10 +1234,10 @@ body.dark-mode .footer .text-muted {
     z-index: 5;
 }
 
-.dash-ledger-table .col-patient { width: 34%; }
-.dash-ledger-table .col-dept    { width: 17%; }
-.dash-ledger-table .col-event   { width: 27%; }
-.dash-ledger-table .col-status  { width: 22%; text-align: right; }
+.dash-ledger-table .col-patient { width: 36%; }
+.dash-ledger-table .col-dept    { width: 32%; }
+.dash-ledger-table .col-status  { width: 16%; text-align: right; }
+.dash-ledger-table .col-action  { width: 16%; text-align: right; }
 
 .dash-ledger-row {
     border-bottom: 1px solid #f1f5f9;
@@ -1244,117 +1532,87 @@ body.dark-mode .footer .text-muted {
     }
 }
 
-/* ── Tablet Portrait (768px to 991.98px) ───────────────────────────────── */
-@media (max-width: 991.98px) {
-    html:has(.dash-cockpit-viewport),
-    body:has(.dash-cockpit-viewport) {
-        overflow-y: auto !important;
-        height: auto !important;
-    }
-    body:has(.dash-cockpit-viewport) .main-panel {
-        overflow-y: auto !important;
-        height: auto !important;
-    }
-    .content-wrapper {
-        height: auto !important;
-        min-height: 100vh !important;
-        overflow-y: auto !important;
-    }
-    .dash-cockpit-viewport {
-        height: auto;
-        max-height: none;
-        overflow-y: visible !important;
-        padding: 4px;
-    }
-    .dash-ribbon {
-        height: auto;
-        padding: 6px 8px;
-        flex-wrap: wrap;
-    }
-    .dash-grid,
-    .dash-grid-3col {
-        flex-direction: column;
-        overflow: visible;
-        height: auto;
-    }
-    .dash-col-pipeline,
-    .dash-col-telemetry,
-    .dash-col-ledger {
-        flex: 1 1 auto;
-        max-width: 100%;
-        width: 100%;
-        min-width: 0;
-        height: auto;
-    }
-    .dash-col-pipeline { min-height: 280px; }
-    .dash-col-telemetry { min-height: 460px; }
-    .dash-col-ledger { min-height: 380px; }
-    .dash-scrollable {
-        max-height: 280px;
-    }
-    .dash-charts-row {
-        flex: 0 0 150px;
-        height: 150px;
+/* ── Global Viewport Tabs Hidden on Desktop (>= 992px) ─────────────────── */
+@media (min-width: 992px) {
+    .dash-viewport-tabs,
+    .dash-mobile-tabs {
+        display: none !important;
     }
 }
 
-/* ── Mobile Devices (< 767.98px) Portrait & Landscape ──────────────────── */
-@media (max-width: 767.98px) {
-    html:has(.dash-cockpit-viewport),
-    body:has(.dash-cockpit-viewport) {
-        overflow-y: auto !important;
-        height: auto !important;
-    }
-    body:has(.dash-cockpit-viewport) .main-panel {
-        overflow-y: auto !important;
-        height: auto !important;
-    }
+/* ── Tablet & Mobile Segmented View Controller (<= 991.98px) ────────────── */
+@media (max-width: 991.98px) {
     .content-wrapper {
-        height: auto !important;
-        min-height: 100vh !important;
-        overflow-y: auto !important;
-    }
-    .dash-cockpit-viewport {
-        height: auto;
-        max-height: none;
-        overflow-y: visible !important;
-        padding: 4px;
-        gap: 6px;
-    }
-    .dash-ribbon {
-        height: auto;
-        flex-direction: column;
-        align-items: stretch;
-        gap: 5px;
-        padding: 5px 7px;
-    }
-    .dash-ribbon-left {
-        justify-content: space-between;
-    }
-    .dash-ribbon-right {
-        justify-content: space-between;
-        flex-wrap: wrap;
-    }
-    .dash-perspective-bar {
-        width: 100%;
-        padding-bottom: 3px;
+        padding: 60px 8px 6px 8px !important;
+        height: 100vh !important;
+        max-height: 100vh !important;
+        overflow: hidden !important;
     }
 
-    /* Mobile Segmented View Control */
+    footer,
+    .footer {
+        display: none !important;
+    }
+
+    .dash-cockpit-viewport {
+        height: 100% !important;
+        max-height: 100% !important;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+        padding: 2px 2px;
+        gap: 4px;
+    }
+
+    .dash-ribbon {
+        height: auto;
+        padding: 4px 6px;
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: space-between;
+        flex-shrink: 0;
+        gap: 4px;
+    }
+    .dash-ribbon-left {
+        order: 1;
+        flex: 0 0 auto;
+    }
+    .dash-ribbon-right {
+        order: 2;
+        flex: 0 0 auto;
+    }
+    .dash-perspective-bar {
+        order: 3;
+        width: 100%;
+        overflow-x: auto;
+        padding-bottom: 2px;
+        margin-top: 2px;
+    }
+
+    /* Segmented Tab Switcher Pills */
+    .dash-viewport-tabs,
     .dash-mobile-tabs {
         display: flex !important;
         background: #ffffff;
         border: 1px solid #e2e8f0;
-        border-radius: 7px;
+        border-radius: 8px;
         padding: 3px;
         gap: 4px;
         margin-bottom: 4px;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+        flex-shrink: 0;
     }
+    .dash-viewport-tab-btn,
     .dash-mobile-tab-btn {
         flex: 1;
-        padding: 5px 4px;
-        border-radius: 5px;
-        font-size: 0.7rem;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 5px;
+        padding: 6px 10px;
+        border-radius: 6px;
+        font-size: 0.74rem;
         font-weight: 700;
         text-align: center;
         border: none;
@@ -1362,54 +1620,174 @@ body.dark-mode .footer .text-muted {
         color: #64748b;
         cursor: pointer;
         transition: all 0.15s ease;
+        white-space: nowrap;
     }
+    .dash-viewport-tab-btn.active,
     .dash-mobile-tab-btn.active {
         background: var(--hospital-primary, #011b33);
+        color: #ffffff !important;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.12);
+    }
+    .dash-tab-pill-badge {
+        display: inline-block;
+        padding: 1px 6px;
+        border-radius: 10px;
+        font-size: 0.62rem;
+        font-weight: 700;
+        background: rgba(0, 0, 0, 0.08);
+        color: inherit;
+    }
+    .dash-viewport-tab-btn.active .dash-tab-pill-badge,
+    .dash-mobile-tab-btn.active .dash-tab-pill-badge {
+        background: rgba(255, 255, 255, 0.25);
         color: #ffffff;
-        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
     }
 
+    /* Viewport-locked active column */
     .dash-grid,
     .dash-grid-3col {
-        flex-direction: column;
+        flex: 1 1 0px !important;
+        min-height: 0 !important;
+        height: auto !important;
+        overflow: hidden;
+        display: flex;
+        flex-direction: row;
     }
 
-    /* Mobile column switching */
     .dash-column {
         display: none !important;
     }
     .dash-column.mobile-active {
         display: flex !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        flex: 1 1 0px !important;
+        height: 100% !important;
+        min-height: 0 !important;
+    }
+
+    /* Tablet KPI Matrix (4 columns on tablets >= 640px) */
+    .dash-kpi-matrix {
+        grid-template-columns: repeat(4, 1fr);
+        gap: 5px;
+    }
+    .dash-kpi-tile {
+        padding: 4px 6px;
+        min-height: 44px;
+    }
+    .dash-kpi-val {
+        font-size: 1.05rem;
+        line-height: 1.1;
+    }
+    .dash-kpi-sub {
+        font-size: 0.58rem;
+    }
+
+    /* Tablet Dual Micro-Charts Side by Side */
+    .dash-charts-row {
+        grid-template-columns: 1fr 1fr;
+        height: 115px;
+        flex: 0 0 115px;
+        gap: 5px;
+    }
+    .dash-chart-card {
+        height: 115px;
+    }
+
+    /* Tablet Role Launch Dock & Compact Domain Shortcuts */
+    .dash-shortcuts-custom-grid {
+        grid-template-columns: repeat(3, 1fr);
+        gap: 4px;
+    }
+    .dash-shortcut-card {
+        padding: 3px 6px;
+        min-height: 28px;
+        gap: 5px;
+    }
+    .dash-shortcut-card-icon {
+        width: 20px;
+        height: 20px;
+        font-size: 0.8rem;
+    }
+    .dash-shortcut-card-title {
+        font-size: 0.68rem;
+        font-weight: 600;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    .dash-shortcut-card-sub {
+        display: none;
+    }
+
+    .dash-role-dock {
+        grid-template-columns: repeat(6, 1fr);
+        gap: 4px;
+    }
+    .dash-dock-tile {
+        padding: 4px 2px;
+        min-height: 38px;
+    }
+    .dash-dock-tile i {
+        font-size: 1rem;
+    }
+    .dash-dock-tile span {
+        font-size: 0.58rem;
+    }
+
+    /* Table & Queue Cards Touch Optimizations */
+    .dash-queue-item {
+        padding: 6px 10px;
+        gap: 8px;
+    }
+    .dash-qi-name {
+        font-size: 0.8rem;
+    }
+    .dash-qi-sub {
+        font-size: 0.7rem;
+    }
+    .dash-qi-btn {
+        padding: 4px 8px;
+        font-size: 0.7rem;
+    }
+
+    .dash-ledger-table th,
+    .dash-ledger-table td {
+        padding: 6px 8px;
+        font-size: 0.74rem;
+    }
+}
+
+/* ── Phones (< 640px) ─────────────────────────────────────────────────── */
+@media (max-width: 639.98px) {
+    .dash-ribbon {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    .dash-ribbon-left,
+    .dash-ribbon-right {
+        justify-content: space-between;
+    }
+
+    .dash-viewport-tab-btn,
+    .dash-mobile-tab-btn {
+        font-size: 0.7rem;
+        padding: 5px 6px;
     }
 
     .dash-kpi-matrix {
         grid-template-columns: repeat(2, 1fr);
         gap: 4px;
     }
-    .dash-kpi-tile {
-        padding: 5px 6px;
-        min-height: 48px;
-    }
-    .dash-kpi-val {
-        font-size: 1.05rem;
-    }
-
     .dash-charts-row {
         grid-template-columns: 1fr;
         height: auto;
         flex: 0 0 auto;
-        gap: 5px;
     }
     .dash-chart-card {
-        height: 130px;
+        height: 125px;
     }
-
     .dash-role-dock {
         grid-template-columns: repeat(3, 1fr);
     }
-}
-
-/* Mobile Tabs Wrapper Hidden on Desktop/Tablet */
-.dash-mobile-tabs {
-    display: none;
 }

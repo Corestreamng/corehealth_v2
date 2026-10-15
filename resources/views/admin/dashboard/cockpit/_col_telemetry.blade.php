@@ -17,11 +17,11 @@
 
         <div class="dash-card-body dash-scrollable flex-grow-1">
 
-            {{-- 1. High-Density 2x3 KPI Matrix (Container dynamically populated by active domain) --}}
+            {{-- 1. High-Density 2x4 KPI Matrix (Container dynamically populated by active domain) --}}
             <div class="dash-kpi-matrix" id="dash-kpi-matrix">
 
                 {{-- Default Server-Side Pre-rendered KPI Tiles (Replaced instantly on client domain select) --}}
-                <div class="dash-kpi-tile kpi-tile-revenue">
+                <a href="{{ route('billing.workbench') }}" class="dash-kpi-tile kpi-tile-revenue">
                     <div class="dash-kpi-head">
                         <span class="dash-kpi-label">Today's Revenue</span>
                         <i class="mdi mdi-cash-multiple dash-kpi-icon"></i>
@@ -30,9 +30,9 @@
                     <div class="dash-kpi-sub text-success">
                         <i class="mdi mdi-check-circle-outline"></i> Settled Collections
                     </div>
-                </div>
+                </a>
 
-                <div class="dash-kpi-tile kpi-tile-occupancy">
+                <a href="{{ url('nursing-workbench?filter=admitted') }}" class="dash-kpi-tile kpi-tile-occupancy">
                     <div class="dash-kpi-head">
                         <span class="dash-kpi-label">Bed Occupancy</span>
                         <i class="mdi mdi-hotel dash-kpi-icon"></i>
@@ -44,9 +44,9 @@
                     <div class="dash-kpi-sub text-muted">
                         <i class="mdi mdi-bed"></i> Inpatient Census
                     </div>
-                </div>
+                </a>
 
-                <div class="dash-kpi-tile kpi-tile-vitals">
+                <a href="{{ url('nursing-workbench?filter=vitals') }}" class="dash-kpi-tile kpi-tile-vitals">
                     <div class="dash-kpi-head">
                         <span class="dash-kpi-label">Vitals Checked</span>
                         <i class="mdi mdi-heart-pulse dash-kpi-icon"></i>
@@ -55,9 +55,9 @@
                     <div class="dash-kpi-sub text-info">
                         <i class="mdi mdi-calendar-check"></i> Recorded Today
                     </div>
-                </div>
+                </a>
 
-                <div class="dash-kpi-tile kpi-tile-pharmacy">
+                <a href="{{ route('pharmacy.workbench') }}" class="dash-kpi-tile kpi-tile-pharmacy">
                     <div class="dash-kpi-head">
                         <span class="dash-kpi-label">Dispensed Today</span>
                         <i class="mdi mdi-pill dash-kpi-icon"></i>
@@ -66,9 +66,9 @@
                     <div class="dash-kpi-sub text-purple">
                         <i class="mdi mdi-check-all"></i> Fulfilled Prescriptions
                     </div>
-                </div>
+                </a>
 
-                <div class="dash-kpi-tile kpi-tile-lab">
+                <a href="{{ url('lab-workbench?tab=completed') }}" class="dash-kpi-tile kpi-tile-lab">
                     <div class="dash-kpi-head">
                         <span class="dash-kpi-label">Lab Tests Done</span>
                         <i class="mdi mdi-flask-outline dash-kpi-icon"></i>
@@ -77,9 +77,31 @@
                     <div class="dash-kpi-sub text-teal">
                         <i class="mdi mdi-check-decagram"></i> Completed Today
                     </div>
-                </div>
+                </a>
 
-                <div class="dash-kpi-tile kpi-tile-stock">
+                <a href="{{ route('encounters.index') }}" class="dash-kpi-tile kpi-tile-primary">
+                    <div class="dash-kpi-head">
+                        <span class="dash-kpi-label">Consultations</span>
+                        <i class="mdi mdi-stethoscope dash-kpi-icon"></i>
+                    </div>
+                    <div class="dash-kpi-val" id="kpi-consultations-active">0</div>
+                    <div class="dash-kpi-sub text-primary">
+                        <i class="mdi mdi-account-clock"></i> Active Intake
+                    </div>
+                </a>
+
+                <a href="{{ route('patient.index') }}" class="dash-kpi-tile kpi-tile-success">
+                    <div class="dash-kpi-head">
+                        <span class="dash-kpi-label">Registrations</span>
+                        <i class="mdi mdi-account-plus dash-kpi-icon"></i>
+                    </div>
+                    <div class="dash-kpi-val" id="kpi-registered-today">0</div>
+                    <div class="dash-kpi-sub text-success">
+                        <i class="mdi mdi-folder-plus"></i> New Folders
+                    </div>
+                </a>
+
+                <a href="{{ route('inventory.store-workbench.index') }}" class="dash-kpi-tile kpi-tile-stock">
                     <div class="dash-kpi-head">
                         <span class="dash-kpi-label">Stock Alerts</span>
                         <i class="mdi mdi-alert-circle-outline dash-kpi-icon text-danger"></i>
@@ -91,28 +113,40 @@
                     <div class="dash-kpi-sub text-danger">
                         <i class="mdi mdi-package-variant-remove"></i> Critical Thresholds
                     </div>
-                </div>
+                </a>
 
             </div>
 
-            {{-- 2. Telemetry Micro Sparkline Chart --}}
-            <div class="dash-charts-row mt-3">
-                <div class="dash-chart-card w-100">
+            {{-- 2. Telemetry Dual Micro Sparklines --}}
+            <div class="dash-charts-row mt-2">
+                <div class="dash-chart-card">
                     <div class="dash-chart-head">
                         <div class="dash-chart-title">
                             <i class="mdi mdi-chart-areaspline text-primary me-1" id="col2-chart-icon"></i>
-                            <span id="col2-chart-title">Hourly Operational Inflow</span>
+                            <span id="col2-chart-title">Hourly Activity Inflow</span>
                         </div>
                         <span class="dash-chart-badge" id="col2-chart-badge">Today (7AM - 8PM)</span>
                     </div>
                     <div class="dash-chart-canvas-wrap">
-                        <canvas id="dash-chart-canvas" height="135"></canvas>
+                        <canvas id="dash-chart-canvas" height="110"></canvas>
+                    </div>
+                </div>
+                <div class="dash-chart-card">
+                    <div class="dash-chart-head">
+                        <div class="dash-chart-title">
+                            <i class="mdi mdi-chart-timeline-variant text-success me-1" id="col2-chart2-icon"></i>
+                            <span id="col2-chart2-title">7-Day Trend</span>
+                        </div>
+                        <span class="dash-chart-badge" id="col2-chart2-badge">Past Week</span>
+                    </div>
+                    <div class="dash-chart-canvas-wrap">
+                        <canvas id="dash-chart-canvas-2" height="110"></canvas>
                     </div>
                 </div>
             </div>
 
-            {{-- 3. Operational Insights Strip --}}
-            <div class="dash-insights-strip mt-3" id="dash-insights-strip">
+            {{-- 3. Departmental Operational Insights Strip (Compact Micro-Grid) --}}
+            <div class="dash-insights-strip mt-2" id="dash-insights-strip">
                 <div class="dash-insights-head">
                     <span class="dash-insights-title">
                         <i class="mdi mdi-lightbulb-on-outline text-warning me-1"></i>
@@ -123,7 +157,11 @@
                 <div class="dash-insights-list" id="dash-insights-container">
                     <div class="dash-insight-pill insight-info">
                         <i class="mdi mdi-information-outline"></i>
-                        <span>Telemetry active. Selecting a pipeline stage updates this console contextually.</span>
+                        <span><strong>Telemetry:</strong> Live parameters active</span>
+                    </div>
+                    <div class="dash-insight-pill insight-ok">
+                        <i class="mdi mdi-check-circle-outline"></i>
+                        <span><strong>Status:</strong> Operations within nominal benchmarks</span>
                     </div>
                 </div>
             </div>

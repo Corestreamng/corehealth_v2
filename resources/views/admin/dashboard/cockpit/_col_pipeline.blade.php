@@ -14,9 +14,9 @@
     $isAdmin = $user && $user->hasAnyRole(['SUPERADMIN', 'ADMIN', 'super-admin']);
 @endphp
 <div class="dash-column dash-col-pipeline mobile-active">
-    <div class="dash-card h-100">
+    <div class="dash-card h-100 d-flex flex-column">
         {{-- Card Header --}}
-        <div class="dash-card-header">
+        <div class="dash-card-header flex-shrink-0">
             <div class="dash-card-title">
                 <i class="mdi mdi-ray-start-arrow text-primary"></i>
                 <span>Operational Pipelines</span>
@@ -25,7 +25,7 @@
         </div>
 
         {{-- Card Body: Micro-Scrollable Categorized Queue List --}}
-        <div class="dash-card-body dash-scrollable">
+        <div class="dash-card-body dash-scrollable flex-grow-1">
             <div class="dash-pipeline-list">
 
                 {{-- ── Tier 0: Executive Overview ── --}}
@@ -314,7 +314,7 @@
         </div>
 
         {{-- Card Footer: Quick Actions Dock --}}
-        <div class="dash-card-footer">
+        <div class="dash-card-footer flex-shrink-0">
             <div class="dash-pipe-actions">
                 <a href="{{ route('appointments.list') }}" class="dash-pipe-action-btn" title="Clinic Appointments Roster">
                     <i class="mdi mdi-calendar-clock text-primary"></i>

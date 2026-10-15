@@ -15,7 +15,12 @@
                 <i class="mdi mdi-format-list-checks text-success" id="col3-queue-icon"></i>
                 <span id="col3-queue-title">Live Activity Stream & Queue</span>
             </div>
-            <span class="dash-card-badge" id="col3-queue-badge">Live Stream</span>
+            <div class="dash-card-header-actions">
+                <span class="dash-card-badge" id="col3-queue-badge">Live Stream</span>
+                <button type="button" class="dash-view-toggle-btn" id="btn-toggle-queue-view" title="Toggle Queue Cards / Table Grid">
+                    <i class="mdi mdi-view-headline" id="icon-queue-view-toggle"></i>
+                </button>
+            </div>
         </div>
 
         {{-- Top Section: Contextual Quick Shortcuts Dock --}}
@@ -111,14 +116,22 @@
             </div>
         </div>
 
-        {{-- Bottom Section: Live Domain Queue & Activity Table --}}
-        <div class="dash-card-body dash-scrollable flex-grow-1 p-0">
-            <div class="table-responsive h-100 mb-0">
+        {{-- Bottom Section: Live Domain Queue & Activity Stream / Table --}}
+        <div class="dash-card-body dash-scrollable flex-grow-1 p-0" id="col3-scroll-container">
+            {{-- Mode A: High-Density Queue Stream Cards (Default, Fluid, Never Truncates Badly) --}}
+            <div class="dash-queue-stream" id="dash-queue-stream">
+                <div class="text-center py-4 text-muted small">
+                    <i class="mdi mdi-loading mdi-spin me-1"></i> Synchronizing operational stream...
+                </div>
+            </div>
+
+            {{-- Mode B: Modern Responsive Table (Optional Grid View) --}}
+            <div class="table-responsive h-100 mb-0 d-none" id="dash-ledger-table-wrap">
                 <table class="table dash-ledger-table mb-0" id="dash-ledger-table">
                     <thead>
                         <tr>
                             <th class="col-patient">Patient / Entity</th>
-                            <th class="col-dept" id="col3-th-dept">Details</th>
+                            <th class="col-dept" id="col3-th-dept">Clinic & Details</th>
                             <th class="col-status text-right">Status</th>
                             <th class="col-action text-right">Action</th>
                         </tr>

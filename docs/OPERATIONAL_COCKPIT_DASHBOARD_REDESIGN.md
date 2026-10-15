@@ -1,7 +1,7 @@
 # CoreHealth v2 — Operational Cockpit Dashboard Redesign
 
-**Date**: 2026-10-13  
-**Git Release Tag**: `v2.6.0.46`  
+**Date**: 2026-10-15  
+**Git Release Tag**: `v2.6.0.47`  
 **Status**: Completed & Verified  
 
 ---
@@ -118,3 +118,31 @@ The default `/home` route has been completely transformed into a space-maximizin
    - Resolved `undefined` text bug in Hospital Cockpit domain insights strip.
    - Normalized payload schema in `DashboardDataController.php` and `dashboard-cockpit.js` to guarantee both `desc` / `message` and `color` / `severity` are seamlessly handled.
    - Added `.insight-success` class in `dashboard-cockpit.css` for clear visual distinction across green, yellow, blue, and red alert badges.
+
+---
+
+## 5. Tablet & Mobile Viewport Overhaul & Dual-Mode Queue (v2.6.0.47)
+
+### 1. Root Cause of Previous Tablet Failures
+- **Tablet No-Man's Land**: The previous mobile switcher pills were bound to `d-md-none` (< 768px). Devices in the 768px - 991.98px range (iPads, Galaxy Tabs, small netbooks, or 850x540 / 869x538 viewports) had the segmented tabs hidden while desktop columns were stacked vertically, causing a 1,500px+ vertical overflow that destroyed the zero-scroll layout.
+- **Excess Container Padding**: `.content-wrapper` applied `padding: 76px 24px 74px 24px` (150px of dead vertical padding) plus fixed footer overhead on small screens, squeezing the dashboard into under 380px.
+- **Table Truncation**: A rigid 4-column fixed table in Column 3 allocated only 17% width to clinic details, truncating text to "Cli..." and squishing names.
+
+### 2. Architectural Enhancements Implemented
+1. **Segmented Viewport Switcher for All Tablets & Mobile (< 992px)**:
+   - Elevated `.dash-viewport-tabs` / `.dash-mobile-tabs` breakpoint to `d-lg-none` (< 992px).
+   - Tablets seamlessly display high-density segmented pills: `Pipeline (with live count badge) | Telemetry | Live Queue (with live count badge)`.
+   - Switching tabs switches columns with zero window scroll. Clicking a pipeline item or role perspective pill automatically activates the Telemetry tab.
+2. **Dual-Mode Clinical Queue Engine (Column 3)**:
+   - **Mode A (Default)**: High-Density Queue Stream Cards (`.dash-queue-stream`) with fluid layout, priority indicator stripes, clinic/department avatars, unclipped patient names and file numbers, full appointment/order details, and touch-ready action buttons.
+   - **Mode B (Data Table)**: Modern Responsive Table (`.dash-ledger-table`) with proportional column widths (`col-patient 36%`, `col-dept 32%`, `col-status 16%`, `col-action 16%`) and generous touch padding.
+   - View mode toggle button (`#btn-toggle-queue-view`) in card header with `localStorage` persistence.
+3. **Optimized Screen Real Estate on Small Viewports**:
+   - Eliminated dead padding: `.content-wrapper` on `<= 991.98px` now uses `padding: 60px 8px 6px 8px`, and layout footer is cleanly suppressed on `/home`.
+   - Compact 2-line ribbon: Line 1 groups Shift & Fast Intake buttons; Line 2 renders the horizontally scrollable perspective bar (~58px total height).
+   - High-density shortcuts dock in Column 3: 3-column micro-grid (`repeat(3, 1fr)`) taking only ~56px instead of ~150px, maximizing vertical space for the active queue.
+4. **Domain-Specific Queues & Complete 18-Role Telemetry**:
+   - Discontinued `$docQueueWaiting` reuse; wired real live queues for `receptionist`, `doctor`, `nursing`, `lab`, `pharmacy`, `billing`, `store`, `imaging`, `theatre`, `maternity`, `inpatient`, and `hmo`.
+   - Added complete telemetry and shortcuts for `morgue`, `audit`, `hr`, `accounts`, `ess`, and `admin`.
+   - Resolved SQL column alias bug on `wards.name as ward_name` and `beds.name as bed_name`.
+   - Corrected route reference from non-existent `users.index` to `staff.index`.
