@@ -401,6 +401,8 @@ class ImportPatientsJob implements ShouldQueue
                         'next_of_kin_name' => $nullIfEmpty($row['next_of_kin_name'] ?? null),
                         'next_of_kin_phone' => $nullIfEmpty($row['next_of_kin_phone'] ?? null),
                         'allergies' => $allergies,
+                        'registration_workbench' => 'import',
+                        'registered_by' => $this->userId,
                     ]);
 
                     $existingPatients[$fileNo] = $user->id;

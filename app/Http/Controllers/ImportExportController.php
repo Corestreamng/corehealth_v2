@@ -1910,6 +1910,8 @@ class ImportExportController extends Controller
                                 'next_of_kin_name' => $row['next_of_kin_name'] ?? null,
                                 'next_of_kin_phone' => $row['next_of_kin_phone'] ?? null,
                                 'next_of_kin_address' => $row['next_of_kin_address'] ?? null,
+                                'registration_workbench' => 'import',
+                                'registered_by' => Auth::id(),
                             ]);
 
                             // Cache new entries

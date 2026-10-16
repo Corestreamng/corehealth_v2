@@ -118,7 +118,7 @@
                 </div>
                 <div class="row g-2">
                     <div class="col-6 col-md-4">
-                        <a href="{{ route('patient.create') }}" class="btn btn-outline-primary w-100 rounded-pill py-2 text-start">
+                        <a href="{{ route('reception.workbench', ['action' => 'new-patient']) }}" class="btn btn-outline-primary w-100 rounded-pill py-2 text-start">
                             <i class="mdi mdi-account-plus me-2"></i>New Patient
                         </a>
                     </div>

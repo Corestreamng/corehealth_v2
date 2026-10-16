@@ -25,6 +25,7 @@ use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Intervention\Image\Facades\Image;
@@ -267,6 +268,12 @@ class ReceptionWorkbenchController extends Controller
                 'passport_url' => $patient->user->filename ? asset('storage/image/user/' . $patient->user->filename) : null,
                 'old_records' => $patient->user->old_records ?? '',
                 'old_records_url' => $patient->user->old_records ? asset('storage/image/user/old_records/' . $patient->user->old_records) : null,
+                'registration_workbench' => $patient->registration_workbench ?? 'reception',
+                'registration_workbench_label' => $patient->registration_workbench_label,
+                'registered_on' => $patient->registered_on,
+                'registered_by' => $patient->registered_by,
+                'registered_by_name' => $patient->registered_by_name,
+                'can_edit' => $patient->can_edit,
             ],
             'queue_entries' => $queueEntries,
             'recent_visits' => $recentVisits,
@@ -1256,6 +1263,8 @@ class ReceptionWorkbenchController extends Controller
             $patient->next_of_kin_address = $request->next_of_kin_address;
             $patient->hmo_id = $request->hmo_id ?? 1; // Default to Private
             $patient->hmo_no = $request->hmo_no;
+            $patient->registration_workbench = $request->registration_workbench ?? 'reception';
+            $patient->registered_by = Auth::id();
 
             $patient->is_family_principal = $request->has('is_family_principal') && filter_var($request->is_family_principal, FILTER_VALIDATE_BOOLEAN) ? 1 : 0;
             $patient->principal_id = $request->principal_id ?? null;
@@ -1437,7 +1446,12 @@ class ReceptionWorkbenchController extends Controller
      */
     public function getNextFileNumber()
     {
+        $workbench = request()->query('workbench');
         $prefix = request()->query('prefix');
+
+        if (empty($prefix) && !empty($workbench)) {
+            $prefix = Patient::getPrefixForWorkbench($workbench);
+        }
 
         // If a prefix is specified, scope query to that prefix
         $query = Patient::whereNotNull('file_no')->where('file_no', '!=', '');
@@ -1460,11 +1474,17 @@ class ReceptionWorkbenchController extends Controller
                 'recent_file_nos' => [],
                 'format_pattern' => $prefix ? $prefix . 'NNN' : null,
                 'format_example' => null,
+                'prefix' => $prefix,
+                'workbench' => $workbench,
             ]);
         }
 
         $lastFileNo = $recentPatients->first()->file_no;
         $nextFileNo = $this->incrementLastNumericSegment($lastFileNo);
+
+        if ($prefix && !str_starts_with(strtoupper($nextFileNo), strtoupper($prefix))) {
+            $nextFileNo = $prefix . ltrim($nextFileNo, '- ');
+        }
 
         // Detect and describe the format pattern
         $formatInfo = $this->detectFileNumberFormat($lastFileNo);
@@ -1475,6 +1495,8 @@ class ReceptionWorkbenchController extends Controller
             'recent_file_nos' => $recentFileNumbers,
             'format_pattern' => $formatInfo['pattern'],
             'format_example' => $formatInfo['example'],
+            'prefix' => $prefix,
+            'workbench' => $workbench,
         ]);
     }
 
@@ -1732,6 +1754,14 @@ class ReceptionWorkbenchController extends Controller
             DB::beginTransaction();
 
             $patient = Patient::with('user')->findOrFail($patientId);
+
+            if (!Gate::allows('patient-edit', $patient)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Unauthorized: You are only permitted to edit patients registered by your department or from Reception.',
+                ], 403);
+            }
+
             $user = $patient->user;
 
             // Update user info

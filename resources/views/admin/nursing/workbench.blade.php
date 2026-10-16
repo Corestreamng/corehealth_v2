@@ -107,6 +107,12 @@
         <div class="quick-actions">
             <h6><i class="mdi mdi-flash text-warning"></i> QUICK ACTIONS</h6>
 
+            <!-- Register Walk-in Patient -->
+            <button class="quick-action-btn" id="btn-register-walkin">
+                <i class="mdi mdi-account-plus text-success"></i>
+                <span>Register Walk-in</span>
+            </button>
+
             <!-- Ward & Bed Management -->
             <button class="quick-action-btn" id="btn-ward-dashboard">
                 <i class="mdi mdi-hospital-building text-primary"></i>
@@ -231,10 +237,15 @@
                     <div class="patient-meta" id="patient-meta"></div>
                     <div class="sticky-header-alerts mt-2" style="max-height: 60px; overflow-y: auto;"></div>
                 </div>
-                <button class="btn-expand-patient mt-2" id="btn-expand-patient" title="Show more details">
-                    <span class="btn-expand-text">more biodata</span>
-                    <i class="mdi mdi-chevron-down"></i>
-                </button>
+                <div class="d-flex align-items-center gap-2 mt-2">
+                    <button class="btn btn-sm btn-light" id="btn-edit-patient" title="Edit Patient" style="display: none;">
+                        <i class="mdi mdi-pencil"></i> Edit
+                    </button>
+                    <button class="btn-expand-patient" id="btn-expand-patient" title="Show more details">
+                        <span class="btn-expand-text">more biodata</span>
+                        <i class="mdi mdi-chevron-down"></i>
+                    </button>
+                </div>
             </div>
             <div class="patient-details-expanded" id="patient-details-expanded">
                 <div class="patient-details-grid" id="patient-details-grid"></div>

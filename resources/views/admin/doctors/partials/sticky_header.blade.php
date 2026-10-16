@@ -483,6 +483,11 @@
 
         {{-- Compact action buttons — ONLY shown when panel is COLLAPSED --}}
         <div class="sch-compact-actions" id="sch-compact-actions">
+            @if($patient->can_edit)
+                <button type="button" class="btn btn-light text-dark" onclick="showPatientFormModal('edit', {{ $patient->id }})" title="Edit Patient">
+                    <i class="mdi mdi-pencil"></i><span>Edit</span>
+                </button>
+            @endif
             @if (isset($admission_request))
                 @if(!$admission_request->discharged && $admission_request->admission_status !== 'discharge_requested')
                     <button type="button" class="btn btn-warning text-dark" onclick="openDischargeModal()" title="Discharge">
@@ -520,6 +525,9 @@
                 <i class="fa fa-ellipsis-v" style="font-size:1rem;"></i>
             </button>
             <ul class="dropdown-menu dropdown-menu-end shadow-lg" style="border-radius:12px; min-width:180px; padding:6px;">
+                @if($patient->can_edit)
+                <li><a class="dropdown-item d-flex align-items-center gap-2 py-2" href="#" onclick="event.preventDefault(); showPatientFormModal('edit', {{ $patient->id }})"><i class="mdi mdi-pencil text-primary"></i> Edit Patient</a></li>
+                @endif
                 @if (isset($admission_request))
                     @if(!$admission_request->discharged && $admission_request->admission_status !== 'discharge_requested')
                     <li><a class="dropdown-item d-flex align-items-center gap-2 py-2" href="#" onclick="event.preventDefault(); openDischargeModal()"><i class="fa fa-sign-out-alt text-warning"></i> Discharge</a></li>
@@ -629,6 +637,20 @@
                 </p>
             </div>
 
+            {{-- Registration Info --}}
+            <div>
+                <div class="sch-details-section-title"><i class="mdi mdi-source-branch"></i> Registration</div>
+                <p class="sch-admin-line" title="Registration Origin">
+                    <i class="mdi mdi-source-branch text-primary"></i> <strong>From:</strong> <span class="badge bg-soft-primary text-primary" style="font-size: 9pt;">{{ $patient->registration_workbench_label ?? 'Reception' }}</span>
+                </p>
+                <p class="sch-admin-line" title="Registration Date & Time">
+                    <i class="mdi mdi-calendar-clock"></i> <strong>Reg:</strong> {{ $patient->registered_on ?? 'N/A' }}
+                </p>
+                <p class="sch-admin-line" title="Registered By">
+                    <i class="mdi mdi-account-tie"></i> <strong>By:</strong> {{ $patient->registered_by_name ?? 'System / Reception' }}
+                </p>
+            </div>
+
         </div>{{-- /.sch-details-grid --}}
 
         {{-- Full action buttons row (moved in from compact bar when expanded) --}}
@@ -636,6 +658,12 @@
             <div class="sch-expanded-actions" id="schExpandedActions">
                 {{-- Timer --}}
             @include('admin.doctors.partials.consultation_timer')
+
+            @if($patient->can_edit)
+                <button type="button" class="btn btn-outline-secondary d-flex align-items-center shadow-sm" onclick="showPatientFormModal('edit', {{ $patient->id }})">
+                    <i class="mdi mdi-pencil me-1"></i> Edit Patient
+                </button>
+            @endif
 
             {{-- All buttons with original Bootstrap styling --}}
             @if (isset($admission_request))

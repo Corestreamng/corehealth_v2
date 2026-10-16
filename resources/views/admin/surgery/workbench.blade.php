@@ -858,7 +858,10 @@
                 <div class="spb-name" id="spb-name"></div>
                 <div class="spb-meta" id="spb-meta"></div>
             </div>
-            <div style="margin-left: auto; display: flex; gap: 0.5rem; flex-wrap: wrap;">
+            <div style="margin-left: auto; display: flex; gap: 0.5rem; flex-wrap: wrap; align-items: center;">
+                <button class="btn btn-sm btn-light" id="btn-edit-patient" title="Edit Patient" style="display: none; font-size: 0.82rem; font-weight: 600; padding: 3px 12px; border-radius: 6px;">
+                    <i class="mdi mdi-pencil"></i> Edit
+                </button>
                 <button class="btn btn-sm btn-primary" id="btn-book-procedure" style="font-size: 0.82rem; font-weight: 600; padding: 3px 12px; border-radius: 6px;">
                     <i class="mdi mdi-plus-circle"></i> Book Procedure
                 </button>
@@ -1133,6 +1136,9 @@
                     if (age)    meta.push(age + ' yrs');
                     if (gender && gender !== 'N/A') meta.push(gender);
                     if (hmo)    meta.push('<i class="mdi mdi-shield-plus-outline"></i> ' + hmo);
+                    if (patientData.registration_workbench_label) meta.push('<i class="mdi mdi-source-branch text-primary"></i> ' + patientData.registration_workbench_label);
+                    if (patientData.registered_on) meta.push('<i class="mdi mdi-calendar-clock"></i> ' + patientData.registered_on);
+                    if (patientData.registered_by_name) meta.push('<i class="mdi mdi-account-tie"></i> ' + patientData.registered_by_name);
                     
                     let badges = '';
                     if (active > 0) badges += '<span class="spb-badge"><i class="mdi mdi-progress-clock"></i> ' + active + ' In OR</span>';
@@ -1140,6 +1146,11 @@
                     
                     $('#spb-name').text(name);
                     $('#spb-meta').html(meta.join(' &nbsp;&middot;&nbsp; ') + (badges ? '&nbsp;&nbsp;' + badges : ''));
+                    if (typeof patientData.can_edit !== 'undefined') {
+                        $('#btn-edit-patient').toggle(!!patientData.can_edit);
+                    } else {
+                        $('#btn-edit-patient').show();
+                    }
                     $('#sw-patient-banner').addClass('visible');
 
                     // Initialize ClinicalOrdersKit for this patient
@@ -1233,9 +1244,15 @@
                             $('#tab-in-progress').css('animation', 'none');
                         }
                     }, 2000);
+                    $('#btn-edit-patient').on('click', function() {
+                        if (selectedPatientId) {
+                            showPatientFormModal('edit', selectedPatientId);
+                        }
+                    });
                 });
 
             })();
         </script>
     @endpush
+    @include('admin.partials.patient-form-modal')
 @endsection

@@ -584,6 +584,18 @@ function displayPatientInfo(patient) {
             <i class="mdi mdi-phone"></i>
             <span>${patient.phone || 'N/A'}</span>
         </div>
+        <div class="patient-meta-item">
+            <i class="mdi mdi-source-branch text-primary"></i>
+            <span>From: <strong>${patient.registration_workbench_label || 'Reception'}</strong></span>
+        </div>
+        <div class="patient-meta-item">
+            <i class="mdi mdi-calendar-clock"></i>
+            <span>Reg: ${patient.registered_on || 'N/A'}</span>
+        </div>
+        <div class="patient-meta-item">
+            <i class="mdi mdi-account-tie"></i>
+            <span>By: ${patient.registered_by_name || 'System / Reception'}</span>
+        </div>
         ${patient.hmo_name ? `
         <div class="patient-meta-item">
             <i class="mdi mdi-hospital-building"></i>
@@ -594,9 +606,24 @@ function displayPatientInfo(patient) {
     `;
 
     $('#patient-meta').html(metaHtml);
+    if (typeof patient.can_edit !== 'undefined') {
+        $('#btn-edit-patient').toggle(!!patient.can_edit);
+    }
 
     // Populate expanded patient details
     const expandedDetailsHtml = `
+        <div class="patient-detail-item">
+            <div class="patient-detail-label"><i class="mdi mdi-source-branch"></i> Registered From</div>
+            <div class="patient-detail-value"><span class="badge bg-soft-primary text-primary">${patient.registration_workbench_label || 'Reception'}</span></div>
+        </div>
+        <div class="patient-detail-item">
+            <div class="patient-detail-label"><i class="mdi mdi-calendar-clock"></i> Registered On</div>
+            <div class="patient-detail-value">${patient.registered_on || 'N/A'}</div>
+        </div>
+        <div class="patient-detail-item">
+            <div class="patient-detail-label"><i class="mdi mdi-account-tie"></i> Registered By</div>
+            <div class="patient-detail-value">${patient.registered_by_name || 'System / Reception'}</div>
+        </div>
         <div class="patient-detail-item">
             <div class="patient-detail-label"><i class="mdi mdi-water"></i> Blood Group</div>
             <div class="patient-detail-value">${patient.blood_group || 'N/A'}</div>

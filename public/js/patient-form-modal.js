@@ -54,6 +54,41 @@ let pfWalkInMode = false;
 let pfStepSequence = [1, 2, 3, 4];
 let patientFormAllergies = [];
 
+// Authoritative fixed file number prefixes per workbench
+const WORKBENCH_PREFIX_MAP = {
+    'lab': 'LAB-',
+    'pharmacy': 'PHARM-',
+    'maternity': 'ANC-',
+    'imaging': 'RAD-',
+    'nursing': 'NUR-',
+    'emergency': 'EMG-',
+    'billing': 'BIL-',
+    'hmo': 'HMO-',
+    'surgery': 'SURG-',
+    'morgue': 'MOR-',
+    'doctor': 'DOC-'
+};
+
+function getWorkbenchPrefix(wb) {
+    if (!wb) wb = detectRegistrationWorkbench();
+    if (!wb) return null;
+    return WORKBENCH_PREFIX_MAP[String(wb).toLowerCase()] || null;
+}
+
+function getFullPatientFileNumber() {
+    const $input = $('#pf-file-no');
+    const raw = ($input.val() || '').trim();
+    if (!raw) return '';
+    const prefix = $input.data('fixedPrefix') || getWorkbenchPrefix();
+    if (prefix) {
+        if (raw.toUpperCase().startsWith(prefix.toUpperCase())) {
+            return raw;
+        }
+        return prefix + raw.replace(/^[A-Za-z]+[-_]?/, '');
+    }
+    return raw;
+}
+
 function showPatientFormModal(mode = 'create', patientData = null) {
     // Reset form
     resetPatientForm();
@@ -62,13 +97,23 @@ function showPatientFormModal(mode = 'create', patientData = null) {
     $('#patient-form-mode').val(mode);
 
     if (mode === 'edit' && patientData) {
-        $('#patient-form-id').val(patientData.id);
+        var patientId = typeof patientData === 'object' ? patientData.id : patientData;
+        $('#patient-form-id').val(patientId);
         $('#patient-form-title').html('<i class="mdi mdi-account-edit"></i> Edit Patient');
         $('#patient-form-header').addClass('edit-mode');
         $('#pf-submit-text').text('Update Patient');
+        $('#pf-fileno-prefix-addon').text('').hide();
+        $('#pf-file-no').removeData('fixedPrefix');
 
-        // Populate form with patient data
-        populatePatientForm(patientData);
+        if (typeof patientData === 'object' && (patientData.firstname || patientData.name)) {
+            populatePatientForm(patientData);
+        } else {
+            $.get('/reception/patient/' + patientId, function(resp) {
+                if (resp && resp.patient) {
+                    populatePatientForm(resp.patient);
+                }
+            });
+        }
     } else {
         $('#patient-form-title').html('<i class="mdi mdi-account-plus"></i> New Patient Registration');
         $('#patient-form-header').removeClass('edit-mode');
@@ -108,9 +153,21 @@ function resetPatientForm() {
     // Reset file number toggle to Auto mode
     $('#pf-file-no').prop('readonly', true);
     $('#pf-file-no-toggle').prop('checked', false);
+    $('.file-no-mode-btn').removeClass('active');
+    $('.file-no-mode-btn[data-mode="auto"]').addClass('active');
     $('#mode-auto-label').addClass('active');
     $('#mode-manual-label').removeClass('active');
     $('#pf-file-no-hint').html('<i class="mdi mdi-information-outline"></i> Next number: <strong id="pf-last-file-no">--</strong> + 1 = <strong id="pf-next-file-no">--</strong>').removeClass('manual-mode');
+
+    const wb = detectRegistrationWorkbench();
+    const prefix = getWorkbenchPrefix(wb);
+    if (prefix) {
+        $('#pf-file-no').data('fixedPrefix', prefix);
+        $('#pf-fileno-prefix-addon').text(prefix).show();
+    } else {
+        $('#pf-file-no').removeData('fixedPrefix');
+        $('#pf-fileno-prefix-addon').text('').hide();
+    }
 
     // Reset stepper
     patientFormCurrentStep = 1;
@@ -173,24 +230,44 @@ function generatePatientFormFileNumber() {
     const $input = $('#pf-file-no');
     $input.removeClass('status-valid status-checking status-duplicate');
 
+    const wb = detectRegistrationWorkbench();
+    const prefix = getWorkbenchPrefix(wb);
+
+    if (prefix) {
+        $input.data('fixedPrefix', prefix);
+        $('#pf-fileno-prefix-addon').text(prefix).show();
+    } else {
+        $input.removeData('fixedPrefix');
+        $('#pf-fileno-prefix-addon').text('').hide();
+    }
+
     $.ajax({
         url: patientFormConfig.nextFileNumberUrl,
         method: 'GET',
+        data: {
+            prefix: prefix || '',
+            workbench: wb || ''
+        },
         success: function(response) {
-            $('#pf-file-no').val(response.file_no);
-            $('#pf-next-file-no').text(response.file_no);
+            let fullNo = response.file_no;
+            let displayVal = fullNo;
+            if (prefix && fullNo.toUpperCase().startsWith(prefix.toUpperCase())) {
+                displayVal = fullNo.substring(prefix.length);
+            }
+            $('#pf-file-no').val(displayVal);
+            $('#pf-next-file-no').text(fullNo);
 
             // Update format pattern display
             if (response.format_pattern) {
                 $('#pf-format-pattern').text(response.format_pattern);
             } else {
-                $('#pf-format-pattern').text('Sequential');
+                $('#pf-format-pattern').text(prefix ? prefix + 'NNN' : 'Sequential');
             }
 
             // Populate recent file numbers
             const $recentList = $('#pf-recent-file-nos');
             $recentList.empty();
-            if (response.recent_file_nos && response.recent_file_nos.length> 0) {
+            if (response.recent_file_nos && response.recent_file_nos.length > 0) {
                 response.recent_file_nos.forEach(fileNo => {
                     $recentList.append(`<span class="file-no-recent-item" data-file-no="${fileNo}">${fileNo}</span>`);
                 });
@@ -206,10 +283,12 @@ function generatePatientFormFileNumber() {
         },
         error: function() {
             const now = new Date();
-            const fallbackNo = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(Math.floor(Math.random() * 10000)).padStart(4, '0')}`;
-            $('#pf-file-no').val(fallbackNo);
-            $('#pf-next-file-no').text(fallbackNo);
-            $('#pf-format-pattern').text('Auto-generated');
+            const fallbackSeq = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(Math.floor(Math.random() * 10000)).padStart(4, '0')}`;
+            const fullFallback = prefix ? prefix + '001' : fallbackSeq;
+            const displayFallback = prefix ? '001' : fallbackSeq;
+            $('#pf-file-no').val(displayFallback);
+            $('#pf-next-file-no').text(fullFallback);
+            $('#pf-format-pattern').text(prefix ? prefix + 'NNN' : 'Auto-generated');
             $('#pf-recent-file-nos').empty();
         }
     });
@@ -283,11 +362,17 @@ $(document).on('click', '.file-no-recent-item', function() {
     // Switch to manual mode
     toggleFileNumberEdit('manual');
 
+    const prefix = $input.data('fixedPrefix') || getWorkbenchPrefix();
+    let displayVal = fileNo;
+    if (prefix && String(fileNo).toUpperCase().startsWith(prefix.toUpperCase())) {
+        displayVal = String(fileNo).substring(prefix.length);
+    }
+
     // Set the value
-    $input.val(fileNo);
+    $input.val(displayVal);
 
     // Check for duplicates
-    checkFileNumberDuplicate(fileNo);
+    checkFileNumberDuplicate(getFullPatientFileNumber());
 
     toastr.info(`Copied "${fileNo}" - you can edit it now`);
 });
@@ -307,13 +392,21 @@ $('#pf-file-no-refresh').on('click', function() {
     toastr.info('File number regenerated');
 });
 
-// Input change handler for duplicate check (in manual mode)
-$('#pf-file-no').on('input', function() {
+// Input change handler for duplicate check (in manual mode with fixed prefix appendage)
+$(document).on('input', '#pf-file-no', function() {
     const $input = $(this);
     if (!$input.prop('readonly')) {
-        const fileNo = $input.val();
+        const fixedPrefix = $input.data('fixedPrefix') || getWorkbenchPrefix();
+        if (fixedPrefix) {
+            let val = $input.val();
+            if (val.toUpperCase().startsWith(fixedPrefix.toUpperCase())) {
+                val = val.substring(fixedPrefix.length);
+                $input.val(val);
+            }
+        }
+        const fullFileNo = getFullPatientFileNumber();
         const excludeId = $input.data('editPatientId'); // Set when editing existing patient
-        checkFileNumberDuplicate(fileNo, excludeId);
+        checkFileNumberDuplicate(fullFileNo, excludeId);
     }
 });
 
@@ -400,6 +493,7 @@ function renderDuplicateHints(matches) {
 }
 
 function toggleFileNumberEdit(mode) {
+    if (!mode) return;
     const $input = $('#pf-file-no');
     const $hint = $('#pf-file-no-hint');
     const $buttons = $('.file-no-mode-btn');
@@ -408,20 +502,45 @@ function toggleFileNumberEdit(mode) {
     $buttons.removeClass('active');
     $buttons.filter('[data-mode="' + mode + '"]').addClass('active');
 
+    const fixedPrefix = $input.data('fixedPrefix') || getWorkbenchPrefix();
+
     if (mode === 'manual') {
-        // Manual mode - allow editing
-        $input.prop('readonly', false).attr('placeholder', 'Enter file number');
+        // Manual mode - allow editing with fixed prefix appendage
+        $input.prop('readonly', false);
         $hint.addClass('manual-mode');
-        $input.focus().select();
+
+        if (fixedPrefix) {
+            $('#pf-fileno-prefix-addon').text(fixedPrefix).show();
+            let curVal = ($input.val() || '').trim();
+            if (curVal.toUpperCase().startsWith(fixedPrefix.toUpperCase())) {
+                curVal = curVal.substring(fixedPrefix.length);
+                $input.val(curVal);
+            }
+            $input.attr('placeholder', 'Enter sequence (e.g. 001)');
+            $input.focus();
+            const len = curVal.length;
+            if ($input[0] && $input[0].setSelectionRange) {
+                $input[0].setSelectionRange(len, len);
+            }
+        } else {
+            $('#pf-fileno-prefix-addon').text('').hide();
+            $input.attr('placeholder', 'Enter file number');
+            $input.focus().select();
+        }
 
         // Check current value for duplicates
         if ($input.val()) {
-            checkFileNumberDuplicate($input.val(), $input.data('editPatientId'));
+            checkFileNumberDuplicate(getFullPatientFileNumber(), $input.data('editPatientId'));
         }
     } else {
         // Auto mode - readonly with generated number
         $input.prop('readonly', true).attr('placeholder', 'Auto-generated');
         $hint.removeClass('manual-mode');
+        if (fixedPrefix) {
+            $('#pf-fileno-prefix-addon').text(fixedPrefix).show();
+        } else {
+            $('#pf-fileno-prefix-addon').text('').hide();
+        }
         generatePatientFormFileNumber();
     }
 }
@@ -880,7 +999,7 @@ function updatePatientFormSummary() {
     ].filter(Boolean).join(' ');
 
     // Basic Information
-    $('#summary-file-no').text($('#pf-file-no').val() || '-');
+    $('#summary-file-no').text(getFullPatientFileNumber() || '-');
     $('#summary-name').text(fullName || '-');
     $('#summary-gender').text($('#pf-gender').val() || '-');
     $('#summary-phone').text($('#pf-phone').val() || 'N/A');
@@ -972,6 +1091,34 @@ function clearPatientFormSummary() {
     $('#summary-hmo-no').text('-');
 }
 
+function detectRegistrationWorkbench() {
+    if (window.patientFormConfig && window.patientFormConfig.workbench) {
+        return window.patientFormConfig.workbench;
+    }
+    if (window.WORKBENCH_CONFIG && window.WORKBENCH_CONFIG.workbench) {
+        return window.WORKBENCH_CONFIG.workbench;
+    }
+    if (typeof pfEmergencyMode !== 'undefined' && pfEmergencyMode) {
+        return 'emergency';
+    }
+    var path = (window.location.pathname || '').toLowerCase();
+    if (path.indexOf('reception') !== -1) return 'reception';
+    if (path.indexOf('pharmacy') !== -1) return 'pharmacy';
+    if (path.indexOf('lab') !== -1) return 'lab';
+    if (path.indexOf('imaging') !== -1) return 'imaging';
+    if (path.indexOf('nursing') !== -1) return 'nursing';
+    if (path.indexOf('maternity') !== -1) return 'maternity';
+    if (path.indexOf('hmo') !== -1) return 'hmo';
+    if (path.indexOf('billing') !== -1) return 'billing';
+    if (path.indexOf('emergency') !== -1) return 'emergency';
+    if (path.indexOf('doctor') !== -1 || path.indexOf('encounters') !== -1) return 'doctor';
+    if (path.indexOf('surgery') !== -1) return 'surgery';
+    if (path.indexOf('morgue') !== -1) return 'morgue';
+    if (path.indexOf('patient') !== -1) return 'patients_index';
+    if (path.indexOf('home') !== -1) return 'cockpit';
+    return 'reception';
+}
+
 function submitPatientForm() {
     // Final validation
     if (!validatePatientFormStep(1)) {
@@ -989,7 +1136,9 @@ function submitPatientForm() {
     // Use FormData for file uploads
     const formData = new FormData();
     formData.append('_token', $('meta[name="csrf-token"]').attr('content'));
-    formData.append('file_no', $('#pf-file-no').val());
+
+    const fileNoVal = getFullPatientFileNumber();
+    formData.append('file_no', fileNoVal);
     formData.append('surname', $('#pf-surname').val().trim());
     formData.append('firstname', $('#pf-firstname').val().trim());
     formData.append('othername', $('#pf-othername').val().trim());
@@ -1013,6 +1162,7 @@ function submitPatientForm() {
     formData.append('hmo_no', $('#pf-hmo-no').val().trim());
     formData.append('is_family_principal', $('#pf-is-family-principal').is(':checked') ? 1 : 0);
     formData.append('principal_id', $('#pf-principal-id').val() || '');
+    formData.append('registration_workbench', detectRegistrationWorkbench());
 
     // Add registration service if selected
     const registrationServiceId = $('#pf-registration-service').val();
@@ -1512,24 +1662,44 @@ function enableWalkInMode(prefix) {
     $('#patient-form-title').html('<i class="mdi mdi-account-plus"></i> Register Walk-in Patient');
     
     // Customize file number field
-    $('.file-no-btn-group').hide();
-    $('#pf-file-no').prop('readonly', false);
+    $('.file-no-btn-group').show();
+    $('#pf-file-no').prop('readonly', true);
+
+    const wb = detectRegistrationWorkbench();
+    if (!prefix) {
+        prefix = getWorkbenchPrefix(wb) || 'WALK-';
+    }
+    if (prefix === 'IMG-') prefix = 'RAD-';
+
+    $('#pf-file-no').data('fixedPrefix', prefix);
+    $('#pf-fileno-prefix-addon').text(prefix).show();
     
     // Update total steps for navigation
     window._pfTotalSteps = pfStepSequence.length;
     
-    generatePrefixedFileNumber(prefix);
+    generatePrefixedFileNumber(prefix, wb);
 }
 
-function generatePrefixedFileNumber(prefix) {
+function generatePrefixedFileNumber(prefix, wb) {
+    if (!wb) wb = detectRegistrationWorkbench();
+    if (!prefix) prefix = getWorkbenchPrefix(wb) || 'WALK-';
+    if (prefix === 'IMG-') prefix = 'RAD-';
+
+    $('#pf-file-no').data('fixedPrefix', prefix);
+    $('#pf-fileno-prefix-addon').text(prefix).show();
+
     $.ajax({
         url: wbUrl('/reception/patient/next-file-number'),
         method: 'GET',
-        data: { prefix: prefix },
+        data: { prefix: prefix, workbench: wb || '' },
         success: function(response) {
-            var nextFileNo = response.file_no;
-            $('#pf-file-no').val(nextFileNo).addClass('status-valid');
-            $('#pf-next-file-no').text(nextFileNo);
+            var fullFileNo = response.file_no;
+            var displayVal = fullFileNo;
+            if (prefix && fullFileNo.toUpperCase().startsWith(prefix.toUpperCase())) {
+                displayVal = fullFileNo.substring(prefix.length);
+            }
+            $('#pf-file-no').val(displayVal).addClass('status-valid');
+            $('#pf-next-file-no').text(fullFileNo);
             $('#pf-duplicate-warning').hide();
             
             var recent = response.recent_file_nos || [];
@@ -1541,7 +1711,7 @@ function generatePrefixedFileNumber(prefix) {
             }
         },
         error: function() {
-            $('#pf-file-no').val(prefix + '001');
+            $('#pf-file-no').val('001');
             $('#pf-next-file-no').text(prefix + '001');
         }
     });
@@ -1558,6 +1728,16 @@ function disableWalkInMode() {
     $('#pf-file-no').prop('readonly', true);
     $('#patient-form-title').html('<i class="mdi mdi-account-plus"></i> New Patient Registration');
     
+    const wb = detectRegistrationWorkbench();
+    const prefix = getWorkbenchPrefix(wb);
+    if (prefix) {
+        $('#pf-file-no').data('fixedPrefix', prefix);
+        $('#pf-fileno-prefix-addon').text(prefix).show();
+    } else {
+        $('#pf-file-no').removeData('fixedPrefix');
+        $('#pf-fileno-prefix-addon').text('').hide();
+    }
+
     // Reset total steps
     window._pfTotalSteps = 4;
 }
@@ -1674,24 +1854,30 @@ function disableWalkInMode() {
     }
 
     function generateEmergencyFileNumber() {
+        $('#pf-file-no').data('fixedPrefix', 'EX-');
+        $('#pf-fileno-prefix-addon').text('EX-').show();
         $.ajax({
             url: wbUrl('/reception/patient/next-file-number'),
             method: 'GET',
             data: { prefix: 'EX-' },
             success: function(response) {
-                var nextFileNo = response.file_no;
-                $('#pf-file-no').val(nextFileNo).addClass('status-valid');
-                $('#pf-next-file-no').text(nextFileNo);
+                var fullFileNo = response.file_no;
+                var displayVal = fullFileNo;
+                if (fullFileNo.toUpperCase().startsWith('EX-')) {
+                    displayVal = fullFileNo.substring(3);
+                }
+                $('#pf-file-no').val(displayVal).addClass('status-valid');
+                $('#pf-next-file-no').text(fullFileNo);
                 $('#pf-duplicate-warning').hide();
                 // Show recent EX- numbers as hint
                 var recent = response.recent_file_nos || [];
                 var lastTwo = recent.slice(0, 2);
-                if (lastTwo.length> 0) {
+                if (lastTwo.length > 0) {
                     $('#pf-file-no-hint').html('<small class="text-muted">Recent: ' + lastTwo.join(', ') + '</small>').show();
                 }
             },
             error: function() {
-                $('#pf-file-no').val('EX-001');
+                $('#pf-file-no').val('001');
                 $('#pf-next-file-no').text('EX-001');
             }
         });
@@ -2430,7 +2616,7 @@ function disableWalkInMode() {
 
             var formData = new FormData();
             formData.append('_token', $('meta[name="csrf-token"]').attr('content') || $('meta[name="csrf-token"]').attr('content'));
-            formData.append('file_no', $('#pf-file-no').val());
+            formData.append('file_no', getFullPatientFileNumber());
             formData.append('surname', $('#pf-surname').val().trim());
             formData.append('firstname', $('#pf-firstname').val().trim());
             formData.append('othername', $('#pf-othername').val().trim());
@@ -2454,6 +2640,7 @@ function disableWalkInMode() {
             formData.append('hmo_no', $('#pf-hmo-no').val().trim());
             formData.append('is_family_principal', $('#pf-is-family-principal').is(':checked') ? 1 : 0);
             formData.append('principal_id', $('#pf-principal-id').val() || '');
+            formData.append('registration_workbench', detectRegistrationWorkbench() || 'emergency');
 
             // File uploads
             var passportFile = $('#pf-passport')[0].files[0];
@@ -2628,7 +2815,7 @@ function disableWalkInMode() {
         } else {
             var fullName = [$('#pf-surname').val(), $('#pf-firstname').val(), $('#pf-othername').val()].filter(Boolean).join(' ');
             $('#emg-summary-name').text(fullName || '-');
-            $('#emg-summary-fileno').text($('#pf-file-no').val() || '-');
+            $('#emg-summary-fileno').text(getFullPatientFileNumber() || '-');
             $('#emg-summary-gender').text($('#pf-gender').val() || '-');
             var isUnidentified = $('#pf-is-unidentified').val() === '1';
             $('#emg-summary-patient-type').html(isUnidentified

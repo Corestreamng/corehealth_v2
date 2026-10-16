@@ -203,7 +203,10 @@
                                                     <i class="mdi mdi-refresh"></i>
                                                 </button>
                                             </div>
-                                            <input type="text" class="form-control file-no-input" id="pf-file-no" readonly placeholder="Auto-generated">
+                                            <div class="input-group pf-fileno-input-group" id="pf-fileno-input-group">
+                                                <span class="input-group-text pf-fileno-prefix-addon" id="pf-fileno-prefix-addon" style="display: none;"></span>
+                                                <input type="text" class="form-control file-no-input" id="pf-file-no" readonly placeholder="Auto-generated">
+                                            </div>
                                             <!-- Info panel showing format and recent numbers -->
                                             <div class="file-no-info-panel" id="pf-file-no-info">
                                                 <div class="format-display">

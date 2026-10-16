@@ -110,9 +110,9 @@
                     </a>
                 </div>
                 @endif
-                @if(Route::has('patient.create'))
+                @if(Route::has('reception.workbench'))
                 <div class="col-6 col-md-3">
-                    <a href="{{ route('patient.create') }}" class="text-decoration-none">
+                    <a href="{{ route('reception.workbench', ['action' => 'new-patient']) }}" class="text-decoration-none">
                         <div class="dash-shortcut" style="background: linear-gradient(145deg, #dcfce7, #bbf7d0); border-color: #86efac;">
                             <i class="mdi mdi-account-plus dash-shortcut-icon" style="color: #166534;"></i>
                             <h6 class="dash-shortcut-title" style="color: #166534;">{{ __('dashboard.new_patient') }}</h6>

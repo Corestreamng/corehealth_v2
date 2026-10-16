@@ -814,7 +814,7 @@ class DashboardDataController extends Controller
                     'shortcuts_type' => 'custom',
                     'shortcuts' => [
                         ['label' => 'Reception Workbench', 'url' => route('reception.workbench'), 'icon' => 'mdi-desktop-mac-dashboard', 'sub' => 'Front Desk Central', 'color' => 'primary'],
-                        ['label' => '+ Register Patient', 'url' => route('patient.create'), 'icon' => 'mdi-account-plus', 'sub' => 'New Patient File', 'color' => 'success'],
+                        ['label' => '+ Register Patient', 'url' => route('reception.workbench', ['action' => 'new-patient']), 'icon' => 'mdi-account-plus', 'sub' => 'New Patient File', 'color' => 'success'],
                         ['label' => 'Patient Directory', 'url' => route('patient.index'), 'icon' => 'mdi-account-search', 'sub' => 'Folder Lookup', 'color' => 'purple'],
                         ['label' => 'Add to Doctor Queue', 'url' => route('add-to-queue'), 'icon' => 'mdi-clipboard-arrow-right', 'sub' => 'Route Patient', 'color' => 'warning'],
                     ],

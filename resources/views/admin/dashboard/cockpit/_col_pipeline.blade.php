@@ -668,7 +668,7 @@
                         <span>Enrollees</span>
                     </a>
                 @elseif($isRecep && !$isAdmin)
-                    <a href="{{ route('patient.create') }}" class="dash-pipe-action-btn" title="Register New Patient">
+                    <a href="{{ route('reception.workbench', ['action' => 'new-patient']) }}" onclick="if(typeof showPatientFormModal==='function'){event.preventDefault();showPatientFormModal('create');}" class="dash-pipe-action-btn" title="Register New Patient">
                         <i class="mdi mdi-account-plus text-success"></i>
                         <span>New Patient</span>
                     </a>

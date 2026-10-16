@@ -299,6 +299,12 @@ class MaternityWorkbenchController extends Controller
             'next_of_kin_name' => $patient->next_of_kin_name ?? ($mother ? ($mother['name'] . ' (Mother)') : ''),
             'next_of_kin_phone' => $patient->next_of_kin_phone ?? '',
             'next_of_kin_address' => $patient->next_of_kin_address ?? '',
+            'registration_workbench' => $patient->registration_workbench ?? 'reception',
+            'registration_workbench_label' => $patient->registration_workbench_label,
+            'registered_on' => $patient->registered_on,
+            'registered_by' => $patient->registered_by,
+            'registered_by_name' => $patient->registered_by_name,
+            'can_edit' => $patient->can_edit,
             'allergies' => $patient->allergies ?? [],
             'is_baby' => $isBaby,
             'mother' => $mother,
@@ -2489,6 +2495,8 @@ class MaternityWorkbenchController extends Controller
                 'address' => $motherPatient ? $motherPatient->address : null,
                 'next_of_kin_name' => $motherPatient ? userfullname($motherPatient->user_id) : null,
                 'next_of_kin_phone' => $motherPatient ? $motherPatient->phone_no : null,
+                'registration_workbench' => 'maternity',
+                'registered_by' => Auth::id(),
             ]);
 
             // Determine birth order

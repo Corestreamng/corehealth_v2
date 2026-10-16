@@ -50,9 +50,9 @@
                 <div class="card-header-modern d-flex justify-content-between align-items-center">
                     <h3 class="card-title mb-0"><i class="mdi mdi-account-group mr-2"></i>Patients</h3>
                     @can('patient-create')
-                        <a href="{{ route('patient.create') }}" class="btn btn-primary btn-sm">
+                        <button type="button" class="btn btn-primary btn-sm" id="btn-add-patient" onclick="showPatientFormModal('create')">
                             <i class="mdi mdi-account-plus mr-1"></i> Add Patient
-                        </a>
+                        </button>
                     @endcan
                 </div>
 
@@ -81,7 +81,7 @@
                                 @endforeach
                             </select>
                         </div>
-                        <div class="col-12 col-sm-6 col-md-2">
+                        <div class="col-12 col-sm-6 col-md-1">
                             <label class="form-label small mb-1">Gender</label>
                             <select id="filterGender" class="form-control form-control-sm">
                                 <option value="">— All —</option>
@@ -91,6 +91,25 @@
                             </select>
                         </div>
                         <div class="col-12 col-sm-6 col-md-2">
+                            <label class="form-label small mb-1">Registered From</label>
+                            <select id="filterWorkbench" class="form-control form-control-sm">
+                                <option value="">— All Sources —</option>
+                                <option value="reception">Reception</option>
+                                <option value="pharmacy">Pharmacy</option>
+                                <option value="lab">Medical Lab</option>
+                                <option value="imaging">Imaging</option>
+                                <option value="nursing">Nursing</option>
+                                <option value="maternity">Maternity</option>
+                                <option value="hmo">HMO / Insurance</option>
+                                <option value="billing">Billing</option>
+                                <option value="emergency">Emergency Intake</option>
+                                <option value="doctor">Doctor Consultation</option>
+                                <option value="cockpit">Operational Cockpit</option>
+                                <option value="import">Data Import</option>
+                                <option value="patients_directory">Patients Directory</option>
+                            </select>
+                        </div>
+                        <div class="col-6 col-sm-6 col-md-1">
                             <label class="form-label small mb-1">From</label>
                             <input type="date" id="filterDateFrom" class="form-control form-control-sm">
                         </div>
@@ -161,6 +180,7 @@
                         d.hmo_id     = $('#filterHmo').val();
                         d.scheme_id  = $('#filterScheme').val();
                         d.gender     = $('#filterGender').val();
+                        d.registration_workbench = $('#filterWorkbench').val();
                         d.date_from  = $('#filterDateFrom').val();
                         d.date_to    = $('#filterDateTo').val();
                     }
@@ -221,10 +241,19 @@
             $('#applyFilters').on('click', function () { table.ajax.reload(); });
             $('#resetFilters').on('click', function () {
                 $('#filterHmo').val(null).trigger('change');
-                $('#filterScheme, #filterGender').val('');
+                $('#filterScheme, #filterGender, #filterWorkbench').val('');
                 $('#filterDateFrom, #filterDateTo').val('');
                 table.ajax.reload();
             });
+
+            window.patientFormConfig = window.patientFormConfig || {};
+            window.patientFormConfig.workbench = 'patients_directory';
+            window.patientFormConfig.onSuccess = function () {
+                if (typeof table !== 'undefined' && table.ajax) {
+                    table.ajax.reload();
+                }
+            };
         });
     </script>
+    @include('admin.partials.patient-form-modal')
 @endsection

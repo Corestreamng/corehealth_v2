@@ -133,6 +133,18 @@ if (typeof window.wbRoute !== 'function') {
         });
     }
 
+    $(document).on('click', '#btn-register-walkin', function() {
+        openAncPatientRegistration();
+    });
+
+    $(document).on('click', '#btn-enroll-patient', function() {
+        if (!currentPatientData) {
+            openAncPatientRegistration();
+        } else if ($('#enrollmentModal').length) {
+            $('#enrollmentModal').modal('show');
+        }
+    });
+
     // Edit mode state tracking (shared pattern for modal reuse)
     let _editMode = null; // null = create, 'anc'|'postnatal'|'baby'|'note'|'history'|'pregnancy' = edit
     let _editId = null; // ID of record being edited
@@ -537,6 +549,18 @@ if (typeof window.wbRoute !== 'function') {
         <div class="patient-meta-item"><i class="mdi mdi-account"></i><span>${patient.age} ${patient.gender}</span></div>
         <div class="patient-meta-item"><i class="mdi mdi-water"></i><span>${patient.blood_group} ${patient.genotype !== 'N/A' ? '(' + patient.genotype + ')' : ''}</span></div>
         <div class="patient-meta-item"><i class="mdi mdi-phone"></i><span>${patient.phone}</span></div>
+        <div class="patient-meta-item">
+            <i class="mdi mdi-source-branch text-primary"></i>
+            <span>From: <strong>${patient.registration_workbench_label || 'Reception'}</strong></span>
+        </div>
+        <div class="patient-meta-item">
+            <i class="mdi mdi-calendar-clock"></i>
+            <span>Reg: ${patient.registered_on || 'N/A'}</span>
+        </div>
+        <div class="patient-meta-item">
+            <i class="mdi mdi-account-tie"></i>
+            <span>By: ${patient.registered_by_name || 'System / Reception'}</span>
+        </div>
     `;
 
         if (patient.enrollment) {
@@ -574,6 +598,23 @@ if (typeof window.wbRoute !== 'function') {
 
         // Build expanded details grid (SHARED pattern)
         let detailsHtml = '';
+
+        // Registration Info
+        detailsHtml += `
+            <div class="patient-detail-item">
+                <div class="patient-detail-label"><i class="mdi mdi-source-branch"></i> Registered From</div>
+                <div class="patient-detail-value"><span class="badge bg-soft-primary text-primary">${patient.registration_workbench_label || 'Reception'}</span></div>
+            </div>
+            <div class="patient-detail-item">
+                <div class="patient-detail-label"><i class="mdi mdi-calendar-clock"></i> Registered On</div>
+                <div class="patient-detail-value">${patient.registered_on || 'N/A'}</div>
+            </div>
+            <div class="patient-detail-item">
+                <div class="patient-detail-label"><i class="mdi mdi-account-tie"></i> Registered By</div>
+                <div class="patient-detail-value">${patient.registered_by_name || 'System / Reception'}</div>
+            </div>
+        `;
+
         const fields = [{
                 icon: 'mdi-calendar-clock',
                 label: 'Age',
@@ -716,6 +757,18 @@ if (typeof window.wbRoute !== 'function') {
         }
 
         $('#patient-details-grid').html(detailsHtml);
+
+        // Toggle edit button
+        if (typeof patient.can_edit !== 'undefined') {
+            $('#btn-edit-patient').toggle(!!patient.can_edit);
+        }
+
+        // Wire edit patient button
+        $('#btn-edit-patient').off('click').on('click', function() {
+            if (currentPatientData) {
+                showPatientFormModal('edit', currentPatientData);
+            }
+        });
 
         // SHARED: Toggle expand/collapse (identical to nursing)
         $('#btn-expand-patient').off('click').on('click', function() {

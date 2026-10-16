@@ -1874,7 +1874,7 @@ function openWalkInRegistration() {
 
     // After modal is shown, enable walk-in mode
     $('#patientFormModal').one('shown.bs.modal', function() {
-        enableWalkInMode('IMG-');
+        enableWalkInMode('RAD-');
     });
 }
 

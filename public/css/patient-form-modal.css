@@ -490,7 +490,46 @@
         font-size: 1rem;
     }
 
-    /* File Number Input */
+    /* File Number Input & Appendage Group */
+    .pf-fileno-input-group {
+        display: flex;
+        align-items: stretch;
+    }
+
+    .pf-fileno-prefix-addon {
+        background: #eef3f8;
+        border: 2px solid #e9ecef;
+        border-right: none;
+        border-top-left-radius: 0.5rem;
+        border-bottom-left-radius: 0.5rem;
+        font-weight: 700;
+        font-size: 0.95rem;
+        letter-spacing: 0.5px;
+        color: var(--hospital-primary, #011b33);
+        padding: 0.75rem 0.85rem;
+        transition: all 0.2s ease;
+        display: inline-flex;
+        align-items: center;
+    }
+
+    .pf-fileno-input-group:has(.file-no-input[readonly]) .pf-fileno-prefix-addon {
+        border-color: #28a745;
+        background: #e8f5e9;
+        color: #1e7e34;
+    }
+
+    .pf-fileno-input-group:has(.file-no-input:not([readonly])) .pf-fileno-prefix-addon {
+        border-color: #fd7e14;
+        background: #fff3e6;
+        color: #d96500;
+    }
+
+    .pf-fileno-input-group .pf-fileno-prefix-addon:not([style*="display: none"]) + .file-no-input {
+        border-top-left-radius: 0;
+        border-bottom-left-radius: 0;
+        border-left: none;
+    }
+
     .file-no-input {
         border: 2px solid #e9ecef;
         border-radius: 0.5rem;

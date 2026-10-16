@@ -211,8 +211,9 @@ Route::group(['middleware' => ['auth']], function () {
     });
 
     Route::group(['middleware' => ['auth']], function () {
-        // Creating and Listing Permissions
-        Route::resource('patient', PatientController::class);
+        // Patient Management (patient.create route deprecated; creation occurs via reception workbench modal)
+        Route::get('patient/create', [PatientController::class, 'create']);
+        Route::resource('patient', PatientController::class)->except(['create']);
         Route::put('patient/{patient}/update-allergies', [PatientController::class, 'updateAllergies'])->name('patient.update-allergies');
         Route::get('patientsList', [PatientController::class, 'patientsList'])->name('patientsList');
         Route::get('patient-services-rendered/{patient_id}', [PatientController::class, 'PatientServicesRendered'])->name('patient-services-rendered');

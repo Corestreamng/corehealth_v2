@@ -228,8 +228,8 @@ class ScanRoutesCommand extends Command
                 'sort_order' => 20,
             ],
             [
-                'route_name' => 'patient.create',
-                'url' => '/patient/create',
+                'route_name' => 'reception.workbench.new-patient',
+                'url' => '/reception/workbench?action=new-patient',
                 'title' => 'New Patient Registration',
                 'description' => 'Register a new patient into the hospital HMIS. Capture demographics, next of kin, contact details, and HMO scheme.',
                 'section' => 'Health Records',

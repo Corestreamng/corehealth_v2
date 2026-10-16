@@ -2296,6 +2296,12 @@ class HmoWorkbenchController extends Controller
                                     ? asset('storage/image/user/' . $patient->user->filename)
                                     : asset('assets/images/default-avatar.png'),
                 'balance' => optional($patient->account)->balance ?? 0,
+                'registration_workbench' => $patient->registration_workbench ?? 'reception',
+                'registration_workbench_label' => $patient->registration_workbench_label,
+                'registered_on' => $patient->registered_on,
+                'registered_by' => $patient->registered_by,
+                'registered_by_name' => $patient->registered_by_name,
+                'can_edit' => $patient->can_edit,
             ],
             'counts' => $counts,
             'tabs' => $result,

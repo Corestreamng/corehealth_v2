@@ -3320,6 +3320,18 @@ function displayPatientInfo(patient) {
             <i class="mdi mdi-gender-${patient.gender === 'Male' ? 'male' : 'female'}"></i>
             <span>${patient.gender}</span>
         </div>
+        <div class="patient-meta-item">
+            <i class="mdi mdi-source-branch text-primary"></i>
+            <span>From: <strong>${patient.registration_workbench_label || 'Reception'}</strong></span>
+        </div>
+        <div class="patient-meta-item">
+            <i class="mdi mdi-calendar-clock"></i>
+            <span>Reg: ${patient.registered_on || 'N/A'}</span>
+        </div>
+        <div class="patient-meta-item">
+            <i class="mdi mdi-account-tie"></i>
+            <span>By: ${patient.registered_by_name || 'System / Reception'}</span>
+        </div>
         ${patient.hmo_name ? `
         <div class="patient-meta-item">
             <i class="mdi mdi-hospital-building"></i>
@@ -3335,6 +3347,89 @@ function displayPatientInfo(patient) {
     `;
 
     $('#patient-meta').html(metaHtml);
+
+    // Build details grid
+    const detailsHtml = `
+        <div class="patient-detail-item">
+            <div class="patient-detail-label"><i class="mdi mdi-source-branch"></i> Registered From</div>
+            <div class="patient-detail-value"><span class="badge bg-soft-primary text-primary">${patient.registration_workbench_label || 'Reception'}</span></div>
+        </div>
+        <div class="patient-detail-item">
+            <div class="patient-detail-label"><i class="mdi mdi-calendar-clock"></i> Registered On</div>
+            <div class="patient-detail-value">${patient.registered_on || 'N/A'}</div>
+        </div>
+        <div class="patient-detail-item">
+            <div class="patient-detail-label"><i class="mdi mdi-account-tie"></i> Registered By</div>
+            <div class="patient-detail-value">${patient.registered_by_name || 'System / Reception'}</div>
+        </div>
+        <div class="patient-detail-item">
+            <div class="patient-detail-label"><i class="mdi mdi-water"></i> Blood Group</div>
+            <div class="patient-detail-value">${patient.blood_group || 'N/A'}</div>
+        </div>
+        <div class="patient-detail-item">
+            <div class="patient-detail-label"><i class="mdi mdi-dna"></i> Genotype</div>
+            <div class="patient-detail-value">${patient.genotype || 'N/A'}</div>
+        </div>
+        <div class="patient-detail-item">
+            <div class="patient-detail-label"><i class="mdi mdi-phone"></i> Phone</div>
+            <div class="patient-detail-value">${patient.phone || 'N/A'}</div>
+        </div>
+        <div class="patient-detail-item">
+            <div class="patient-detail-label"><i class="mdi mdi-map-marker"></i> Address</div>
+            <div class="patient-detail-value">${patient.address || 'N/A'}</div>
+        </div>
+        <div class="patient-detail-item">
+            <div class="patient-detail-label"><i class="mdi mdi-flag"></i> Nationality</div>
+            <div class="patient-detail-value">${patient.nationality || 'N/A'}</div>
+        </div>
+        <div class="patient-detail-item">
+            <div class="patient-detail-label"><i class="mdi mdi-account-group"></i> Ethnicity</div>
+            <div class="patient-detail-value">${patient.ethnicity || 'N/A'}</div>
+        </div>
+        <div class="patient-detail-item">
+            <div class="patient-detail-label"><i class="mdi mdi-wheelchair-accessibility"></i> Disability</div>
+            <div class="patient-detail-value">${patient.disability || 'No'}</div>
+        </div>
+        <div class="patient-detail-item">
+            <div class="patient-detail-label"><i class="mdi mdi-hospital-building"></i> HMO</div>
+            <div class="patient-detail-value">${patient.hmo_name || 'Private'}</div>
+        </div>
+        <div class="patient-detail-item">
+            <div class="patient-detail-label"><i class="mdi mdi-card-account-details"></i> HMO Number</div>
+            <div class="patient-detail-value">${patient.hmo_no || 'N/A'}</div>
+        </div>
+        <div class="patient-detail-item">
+            <div class="patient-detail-label"><i class="mdi mdi-account-heart"></i> Next of Kin</div>
+            <div class="patient-detail-value">${patient.next_of_kin_name || 'N/A'}</div>
+        </div>
+        <div class="patient-detail-item">
+            <div class="patient-detail-label"><i class="mdi mdi-phone-outline"></i> NOK Phone</div>
+            <div class="patient-detail-value">${patient.next_of_kin_phone || 'N/A'}</div>
+        </div>
+        <div class="patient-detail-item">
+            <div class="patient-detail-label"><i class="mdi mdi-map-marker-outline"></i> NOK Address</div>
+            <div class="patient-detail-value">${patient.next_of_kin_address || 'N/A'}</div>
+        </div>
+    `;
+    $('#patient-details-grid').html(detailsHtml);
+
+    // Toggle edit button
+    if (typeof patient.can_edit !== 'undefined') {
+        $('#btn-edit-patient').toggle(!!patient.can_edit);
+    }
+
+    // Toggle expand/collapse functionality
+    $('#btn-expand-patient').off('click').on('click', function() {
+        $(this).toggleClass('expanded');
+        $('#patient-details-expanded').toggleClass('show');
+    });
+
+    // Wire edit patient button
+    $('#btn-edit-patient').off('click').on('click', function() {
+        if (currentPatientData) {
+            showPatientFormModal('edit', currentPatientData);
+        }
+    });
 
     // Enable clinical context button
     $('#btn-clinical-context').prop('disabled', false).attr('title', 'View clinical context for ' + patient.name);

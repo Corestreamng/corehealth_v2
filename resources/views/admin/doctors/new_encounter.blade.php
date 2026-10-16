@@ -1543,5 +1543,7 @@
         </div>
     </div>
 
+    @include('admin.partials.patient-form-modal')
+
 @endsection
 @include('admin.doctors.partials._encounter_scripts')

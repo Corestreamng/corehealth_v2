@@ -116,8 +116,12 @@ $sett = appsettings();
 
         <div class="quick-actions">
             <h6><i class="mdi mdi-flash text-warning"></i> QUICK ACTIONS</h6>
+            <button class="quick-action-btn" id="btn-register-walkin">
+                <i class="mdi mdi-account-plus text-success"></i>
+                <span>Register Walk-in</span>
+            </button>
             <button class="quick-action-btn" id="btn-enroll-patient">
-                <i class="mdi mdi-clipboard-plus text-success"></i>
+                <i class="mdi mdi-clipboard-plus text-primary"></i>
                 <span>New Enrollment</span>
             </button>
             <button class="quick-action-btn" id="btn-quick-vitals" disabled title="Select a patient first">
@@ -333,6 +337,9 @@ $sett = appsettings();
                     </button>
                     <button class="btn btn-sm btn-danger" id="btn-discharge-patient" title="Discharge maternity enrollment" style="display:none;">
                         <i class="mdi mdi-exit-to-app"></i> Discharge
+                    </button>
+                    <button class="btn btn-sm btn-light" id="btn-edit-patient" title="Edit Patient" style="display: none;">
+                        <i class="mdi mdi-pencil"></i> Edit
                     </button>
                     <button class="btn-expand-patient" id="btn-expand-patient" title="Show more details">
                         <span class="btn-expand-text">more biodata</span>

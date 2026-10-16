@@ -57,5 +57,30 @@ class AuthServiceProvider extends ServiceProvider
         // Admin config page access (Plan §9.1)
         Gate::define('store-governance.view', [StoreGovernancePolicy::class, 'viewGovernance']);
         Gate::define('store-governance.manage', [StoreGovernancePolicy::class, 'manageGovernance']);
+
+        // Patient registration / create gate (Reception, Biller, HMO, Nurse, Maternity, Lab, Imaging, Pharmacy, Admin, Staff)
+        Gate::define('patient-create', function ($user) {
+            return $user->hasAnyRole([
+                'SUPERADMIN', 'ADMIN', 'super-admin',
+                'RECEPTIONIST', 'Receptionist',
+                'BILLER', 'Biller',
+                'HMO Executive', 'HMO',
+                'NURSE', 'Nurse',
+                'MATERNITY', 'Maternity',
+                'LAB SCIENTIST', 'Lab Scientist',
+                'RADIOLOGIST', 'Radiologist', 'Scanning Room',
+                'PHARMACIST', 'Pharmacist',
+                'DOCTOR', 'Doctor',
+                'SURGEON', 'Surgeon',
+            ]) || ($user->is_admin && $user->is_admin != 19)
+               || ($user->staff_profile()->exists());
+        });
+
+        // Patient demographics edit gate:
+        // Reception, SuperAdmin, Admin can edit ALL patients.
+        // Departmental workbenches can edit patients registered by their department or by themselves.
+        Gate::define('patient-edit', function ($user, \App\Models\Patient $patient) {
+            return $patient->canBeEditedBy($user);
+        });
     }
 }

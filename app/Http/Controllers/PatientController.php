@@ -73,7 +73,7 @@ class PatientController extends Controller
             $query = Patient::select([
                 'id', 'user_id', 'file_no', 'hmo_id', 'hmo_no', 'phone_no',
                 'gender', 'dob', 'blood_group', 'genotype', 'created_at',
-                'next_of_kin_name', 'next_of_kin_phone',
+                'next_of_kin_name', 'next_of_kin_phone', 'registration_workbench',
             ])->with(['user', 'hmo.scheme']);
 
             // Server-side filters
@@ -85,6 +85,9 @@ class PatientController extends Controller
             }
             if ($request->filled('gender')) {
                 $query->where('gender', $request->gender);
+            }
+            if ($request->filled('registration_workbench')) {
+                $query->where('registration_workbench', $request->registration_workbench);
             }
             if ($request->filled('date_from')) {
                 $query->whereDate('created_at', '>=', $request->date_from);
@@ -114,7 +117,13 @@ class PatientController extends Controller
                     });
                 })
                 ->editColumn('created_at', function ($patient) {
-                    return date('D M j, Y', strtotime($patient->created_at));
+                    $date = date('D M j, Y', strtotime($patient->created_at));
+                    $source = e($patient->registration_workbench_label);
+
+                    return '<div>' . e($date) . '</div><span class="badge badge-light-primary border text-primary mt-1" style="font-size: 11px;"><i class="mdi mdi-map-marker-radius-outline mr-1"></i>' . $source . '</span>';
+                })
+                ->addColumn('registration_workbench', function ($patient) {
+                    return $patient->registration_workbench_label;
                 })
                 ->editColumn('hmo_id', function ($patient) {
                     return $patient->hmo ? $patient->hmo->name : 'N/A';
@@ -190,7 +199,7 @@ class PatientController extends Controller
                         . '<ul class="dropdown-menu dropdown-menu-end">' . $items . '</ul>'
                         . '</div></div>';
                 })
-                ->rawColumns(['fullname', 'actions'])
+                ->rawColumns(['fullname', 'actions', 'created_at'])
                 ->make(true);
         } catch (\Exception $e) {
             Log::error($e->getMessage(), ['exception' => $e]);
@@ -386,42 +395,14 @@ class PatientController extends Controller
     }
 
     /**
-     * Show the form for creating a new resource.
+     * Show the form for creating a new resource (Deprecated).
+     * Patients are created using the patient modal in the reception workbench.
      *
-     * @return \Illuminate\Http\Response
+     * @return \Illuminate\Http\RedirectResponse
      */
     public function create()
     {
-        try {
-            $all_patients = Patient::with(['user'])->where('status', 1);
-            $hmos = Hmo::with('scheme')->where('status', 1)->get()->groupBy('scheme.name');
-
-            // Get registration services for optional registration fee
-            $registrationCategoryId = appsettings('registration_category_id');
-            $registrationServices = collect();
-            if ($registrationCategoryId) {
-                $registrationServices = Service::with('price')
-                    ->where('category_id', $registrationCategoryId)
-                    ->where('status', 1)
-                    ->orderBy('service_name')
-                    ->get();
-            }
-
-            $family_principals = Patient::with(['user'])->where('is_family_principal', 1)->get();
-            $hmo_principals = Patient::with(['user'])->where('is_hmo_principal', 1)->get();
-
-            return view('admin.receptionist.new_patient')->with([
-                'all_patients' => $all_patients,
-                'hmos' => $hmos,
-                'registrationServices' => $registrationServices,
-                'family_principals' => $family_principals,
-                'hmo_principals' => $hmo_principals,
-            ]);
-        } catch (\Exception $e) {
-            Log::error($e->getMessage(), ['exception' => $e]);
-
-            return redirect()->back()->withInput()->with('error', $e->getMessage());
-        }
+        return redirect()->route('reception.workbench', ['action' => 'new-patient']);
     }
 
     /**
@@ -687,6 +668,18 @@ class PatientController extends Controller
                 $patient->next_of_kin_phone = $request->next_of_kin_phone ?? null;
                 $patient->next_of_kin_address = $request->next_of_kin_address ?? null;
                 $patient->phone_no = $request->phone_no ?? null;
+                $patient->registration_workbench = $request->registration_workbench ?? 'reception';
+                $patient->registered_by = Auth::id();
+
+                // Enforce fixed standardized prefix if registered from a department with a configured prefix
+                $expectedPrefix = patient::getPrefixForWorkbench($patient->registration_workbench);
+                if ($expectedPrefix && !empty($patient->file_no)) {
+                    $cleanedFileNo = trim($patient->file_no);
+                    if (!str_starts_with(strtoupper($cleanedFileNo), strtoupper($expectedPrefix))) {
+                        $patient->file_no = $expectedPrefix . ltrim($cleanedFileNo, '- ');
+                    }
+                }
+
                 $patient->dhis_consult_tracker_id = $trackedEntityInstanceId;
                 $patient->dhis_consult_enrollment_id = $enrollmentId;
 

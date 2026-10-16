@@ -221,10 +221,15 @@
                     <div class="balance-label">Account Balance</div>
                     <div class="balance-value" id="header-balance-amount">₦0.00</div>
                 </div>
-                <button class="btn-expand-patient mt-2" id="btn-expand-patient" title="Show more details">
-                    <span class="btn-expand-text">more biodata</span>
-                    <i class="mdi mdi-chevron-down"></i>
-                </button>
+                <div class="d-flex align-items-center gap-2 mt-2">
+                    <button class="btn btn-sm btn-light" id="btn-edit-patient" title="Edit Patient" style="display: none;">
+                        <i class="mdi mdi-pencil"></i> Edit
+                    </button>
+                    <button class="btn-expand-patient" id="btn-expand-patient" title="Show more details">
+                        <span class="btn-expand-text">more biodata</span>
+                        <i class="mdi mdi-chevron-down"></i>
+                    </button>
+                </div>
             </div>
             <div class="patient-details-expanded" id="patient-details-expanded">
                 <div class="patient-details-grid" id="patient-details-grid"></div>

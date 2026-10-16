@@ -445,10 +445,38 @@ function displayPatientInfo(patient) {
             <i class="mdi mdi-hospital-building"></i>
             <span>${patient.hmo} ${patient.hmo_category !== 'N/A' ? '[' + patient.hmo_category + ']' : ''} ${patient.hmo_no !== 'N/A' ? '(' + patient.hmo_no + ')' : ''}</span>
         </div>
+        <div class="patient-meta-item">
+            <i class="mdi mdi-source-branch text-primary"></i>
+            <span>From: <strong>${patient.registration_workbench_label || 'Reception'}</strong></span>
+        </div>
+        <div class="patient-meta-item">
+            <i class="mdi mdi-calendar-clock"></i>
+            <span>Reg: ${patient.registered_on || 'N/A'}</span>
+        </div>
+        <div class="patient-meta-item">
+            <i class="mdi mdi-account-tie"></i>
+            <span>By: ${patient.registered_by_name || 'System / Reception'}</span>
+        </div>
     `);
 
     // Build detailed information grid - show ALL fields
     let detailsHtml = '';
+
+    // Registration Info
+    detailsHtml += `
+        <div class="patient-detail-item">
+            <div class="patient-detail-label"><i class="mdi mdi-source-branch"></i> Registered From</div>
+            <div class="patient-detail-value"><span class="badge bg-soft-primary text-primary">${patient.registration_workbench_label || 'Reception'}</span></div>
+        </div>
+        <div class="patient-detail-item">
+            <div class="patient-detail-label"><i class="mdi mdi-calendar-clock"></i> Registered On</div>
+            <div class="patient-detail-value">${patient.registered_on || 'N/A'}</div>
+        </div>
+        <div class="patient-detail-item">
+            <div class="patient-detail-label"><i class="mdi mdi-account-tie"></i> Registered By</div>
+            <div class="patient-detail-value">${patient.registered_by_name || 'System / Reception'}</div>
+        </div>
+    `;
 
     // Age (detailed)
     detailsHtml += `
@@ -609,6 +637,18 @@ function displayPatientInfo(patient) {
     `;
 
     $('#patient-details-grid').html(detailsHtml);
+
+    // Toggle edit button
+    if (typeof patient.can_edit !== 'undefined') {
+        $('#btn-edit-patient').toggle(!!patient.can_edit);
+    }
+
+    // Wire edit patient button
+    $('#btn-edit-patient').off('click').on('click', function() {
+        if (currentPatientData) {
+            showPatientFormModal('edit', currentPatientData);
+        }
+    });
 
     // Toggle expand/collapse functionality
     $('#btn-expand-patient').off('click').on('click', function() {

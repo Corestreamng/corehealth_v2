@@ -210,7 +210,7 @@ class ImagingWorkbenchController extends Controller
         return response()->json([
             'patient' => [
                 'id' => $patient->id,
-                'name' => $patient->user->surname . ' ' . $patient->user->firstname,
+                'name' => trim($patient->user->surname . ' ' . $patient->user->firstname . ' ' . ($patient->user->othername ?? '')),
                 'file_no' => $patient->file_no,
                 'age' => $ageText,
                 'gender' => $patient->gender ?? 'N/A',
@@ -225,9 +225,18 @@ class ImagingWorkbenchController extends Controller
                 'hmo_category' => $patient->hmo && $patient->hmo->scheme ? $patient->hmo->scheme->name : 'N/A',
                 'hmo_no' => $patient->hmo_no ?? 'N/A',
                 'insurance_scheme' => $patient->insurance_scheme ?? 'N/A',
+                'next_of_kin_name' => $patient->next_of_kin_name ?? '',
+                'next_of_kin_phone' => $patient->next_of_kin_phone ?? '',
+                'next_of_kin_address' => $patient->next_of_kin_address ?? '',
                 'allergies' => $patient->allergies ?? [],
                 'medical_history' => $patient->medical_history ?? 'N/A',
                 'misc' => $patient->misc ?? 'N/A',
+                'registration_workbench' => $patient->registration_workbench ?? 'reception',
+                'registration_workbench_label' => $patient->registration_workbench_label,
+                'registered_on' => $patient->registered_on,
+                'registered_by' => $patient->registered_by,
+                'registered_by_name' => $patient->registered_by_name,
+                'can_edit' => $patient->can_edit,
             ],
             'requests' => [
                 'billing' => $billing,

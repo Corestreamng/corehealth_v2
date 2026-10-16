@@ -488,6 +488,9 @@
                         <i class="mdi mdi-view-dashboard mr-1"></i>Queue
                     </button>
                 </div>
+                <button class="btn btn-primary btn-sm" onclick="showPatientFormModal('create')" title="Register Patient">
+                    <i class="mdi mdi-account-plus"></i> New Patient
+                </button>
                 @if(appsettings()->enable_ei_hmo)
 <button class="btn btn-danger btn-sm" onclick="showEmergencyIntakeModal()">
                     <i class="mdi mdi-ambulance"></i> Emergency Intake
@@ -798,6 +801,9 @@
                                 <div class="pf-detail mb-2" id="pfAgeRow"><i class="mdi mdi-cake-variant"></i> <span id="pfPatientAge"></span></div>
                                 <hr class="my-2">
                                 <div class="text-left">
+                                    <div class="pf-detail mb-1"><i class="mdi mdi-source-branch text-primary"></i> From: <span class="badge bg-soft-primary text-primary" id="pfPatientRegWorkbench">Reception</span></div>
+                                    <div class="pf-detail mb-1"><i class="mdi mdi-calendar-clock"></i> Reg: <span id="pfPatientRegOn">N/A</span></div>
+                                    <div class="pf-detail mb-1"><i class="mdi mdi-account-tie"></i> By: <span id="pfPatientRegBy">System / Reception</span></div>
                                     <div class="pf-detail mb-1"><i class="mdi mdi-hospital-building"></i> HMO: <strong id="pfPatientHmo"></strong></div>
                                     <div class="pf-detail mb-1"><i class="mdi mdi-card-account-details"></i> HMO#: <strong id="pfPatientHmoNo"></strong></div>
                                     <div class="pf-detail mb-1" id="pfSchemeRow" style="display:none;"><i class="mdi mdi-tag-outline"></i> Scheme: <strong id="pfPatientScheme"></strong></div>

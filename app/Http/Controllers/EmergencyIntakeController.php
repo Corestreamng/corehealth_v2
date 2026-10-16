@@ -191,6 +191,8 @@ class EmergencyIntakeController extends Controller
                     ]);
                 }
 
+                $patient->registration_workbench = 'emergency';
+                $patient->registered_by = Auth::id();
                 $patient->save();
 
                 // Create patient account

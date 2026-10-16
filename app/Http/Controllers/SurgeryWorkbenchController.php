@@ -272,6 +272,12 @@ class SurgeryWorkbenchController extends Controller
                 'photo' => $user && $user->filename ? asset('storage/image/user/' . $user->filename) : asset('assets/images/default-avatar.png'),
                 'hmo' => optional($patient->hmo)->hmo_name ?? null,
                 'is_admitted' => in_array($patient->id, $admittedPatientIds),
+                'registration_workbench' => $patient->registration_workbench ?? 'reception',
+                'registration_workbench_label' => $patient->registration_workbench_label,
+                'registered_on' => $patient->registered_on,
+                'registered_by' => $patient->registered_by,
+                'registered_by_name' => $patient->registered_by_name,
+                'can_edit' => $patient->can_edit,
                 // Surgery-specific
                 'active_procedures' => (int) ($byStatus[Procedure::STATUS_IN_PROGRESS] ?? 0),
                 'scheduled_procedures' => (int) ($byStatus[Procedure::STATUS_SCHEDULED] ?? 0),

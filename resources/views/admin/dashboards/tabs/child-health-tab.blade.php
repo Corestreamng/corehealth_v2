@@ -124,9 +124,9 @@
                 </div>
                 @endif
 
-                @if(Route::has('patient.create'))
+                @if(Route::has('reception.workbench'))
                 <div class="col-6 col-md-3">
-                    <a href="{{ route('patient.create', ['type' => 'child']) }}" class="text-decoration-none">
+                    <a href="{{ route('reception.workbench', ['action' => 'new-patient', 'type' => 'child']) }}" class="text-decoration-none">
                         <div class="dash-shortcut" style="background: linear-gradient(145deg, #fff7ed, #ffedd5); border-color: #fed7aa;">
                             <i class="mdi mdi-account-plus-outline dash-shortcut-icon" style="color: #c2410c;"></i>
                             <h6 class="dash-shortcut-title" style="color: #c2410c;">{{ __('dashboard.new_born') }}</h6>

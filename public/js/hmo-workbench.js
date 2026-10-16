@@ -2354,6 +2354,12 @@ $(function() {
                 $('#pfPatientPhoto').attr('src', p.photo);
                 $('#pfPatientName').text(p.name);
                 $('#pfPatientFileNo').text(p.file_no);
+                $('#pfPatientRegWorkbench').text(p.registration_workbench_label || 'Reception');
+                $('#pfPatientRegOn').text(p.registered_on || 'N/A');
+                $('#pfPatientRegBy').text(p.registered_by_name || 'System / Reception');
+                if (typeof p.can_edit !== 'undefined') {
+                    $('#pfEditPatientBtn').toggle(!!p.can_edit);
+                }
                 $('#pfPatientHmo').text(p.hmo_name);
                 $('#pfPatientHmoNo').text(p.hmo_no || 'N/A');
                 $('#pfPatientPhone').text(p.phone);
