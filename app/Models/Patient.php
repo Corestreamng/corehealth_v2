@@ -235,6 +235,18 @@ class Patient extends Model implements Auditable
     }
 
     /**
+     * Originating registration workbench accessor with smart fallback to file number prefix resolution.
+     */
+    public function getRegistrationWorkbenchAttribute($value): ?string
+    {
+        if (!empty($value)) {
+            return $value;
+        }
+
+        return self::resolveWorkbenchFromFileNo($this->file_no) ?? 'reception';
+    }
+
+    /**
      * Get human-readable label for the originating registration workbench.
      */
     public function getRegistrationWorkbenchLabelAttribute(): string
