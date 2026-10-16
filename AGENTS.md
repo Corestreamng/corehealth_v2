@@ -147,3 +147,11 @@ When working on this project, strictly adhere to the following standards across 
 - **Complete Role Coverage**: All 18 supported hospital roles (Receptionist, Biller, Doctor, Nurse, Pharmacist, Store, Lab Scientist, Radiologist, Surgeon, Maternity, Pediatrics, Morgue, HMO Executive, Accountant, Internal Auditor, HR, ESS, Admin) are represented via dynamic perspective switcher pills and direct launcher docks.
 - **Doctor Consultation Deep Link**: Doctor queue items and activities deep link to `encounters/create?patient_id={id}` for active intake, and `encounters?status=waiting` for queue status filtering.
 - **Assets & Verification**: CSS lives in `public/css/dashboard-cockpit.css` (using `--hospital-primary` variables) and JS in `public/js/dashboard-cockpit.js` (verified with `node --check`).
+
+## 14. Universal Workbench Cockpit Scaling Standards
+- **Zero-Scroll Viewport Locking**: All major clinical workbenches declare `@section('is_workbench', true)` and `@section('body_class', 'is-workbench has-workbench')`. This locks the master viewport (`overflow: hidden; height: 100vh;`), suppresses the 50px app layout breadcrumb header (`.content-header`) and marketing footer (`.footer`), and sets `.content-wrapper` padding to `68px 10px 6px 10px` to maximize usable screen real estate.
+- **Universal Scaler Stylesheet**: Workbenches include `public/css/workbench-cockpit-scaling.css`. All inputs and controls scale to high-density tokens (`height: 30px; font-size: 0.8125rem;`), buttons to `height: 28-30px`, and tables to compact rows (`padding: 4px 8px; font-size: 0.79rem;`).
+- **Low-Resolution Responsive Baseline (1366x768 & Lower)**: Workbenches must fit 100% of departmental queue filters and triage tools within the visible viewport on 1366x768 laptop displays without causing outer window scrollbars. Internal panels manage overflow via 4px micro-scrollbars (`-webkit-scrollbar`).
+- **Shared Patient Search Widget**: Patient search containers inside workbenches conform to `height: 30px`, `padding-left: 36px`, and icon positioning `left: 10px` without text clipping.
+- **Documentation & Rollout**: Architecture is documented in `docs/WORKBENCH_COCKPIT_SCALING_ARCHITECTURE.md`.
+

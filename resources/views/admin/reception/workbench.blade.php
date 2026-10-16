@@ -1,9 +1,12 @@
 @extends('admin.layouts.app')
 
 @section('title', 'Reception Workbench')
+@section('is_workbench', true)
+@section('body_class', 'is-workbench has-workbench')
 
 @push('styles')
 <link rel="stylesheet" href="{{ versioned_asset('css/reception-workbench.css') }}">
+<link rel="stylesheet" href="{{ versioned_asset('css/workbench-cockpit-scaling.css') }}">
 <link rel="stylesheet" href="{{ asset('plugins/dataT/datatables.min.css') }}">
 <link rel="stylesheet" href="{{ asset('plugins/fullcalendar/fullcalendar.min.css') }}">
 <link rel="stylesheet" href="{{ asset('css/queue-status.css') }}">

@@ -59,7 +59,7 @@ CoreHealth v2 is designed to streamline hospital operations by integrating clini
 - **Patient Registration** — demographics, dependants, photo, covered by `PatientRegistrationTest`
 - **Queue Management** — doctor queue with priority routing
 - **Appointment Booking** — multi-provider scheduling, check-in, cancel/no-show, rescheduling, and doctor reassignments
-- **Reception Workbench** — real-time dashboard for front-desk staff
+- **Reception Workbench** — real-time zero-scroll cockpit-scaled interface (`workbench-cockpit-scaling.css`) optimized for low-res (1366x768) and high-DPI displays with breadcrumb reclaim, compact doctor queues, and responsive patient workspaces
 
 ### 2. Doctor / Consultation & Referrals
 - **Doctor Dashboard** — assigned patient queue, pending reviews, consultation timers

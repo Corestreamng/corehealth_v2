@@ -1541,7 +1541,7 @@
     @stack('styles')
 </head>
 
-<body id='app'>
+<body id='app' class="@yield('body_class')">
     <div class="container-scroller">
         <!-- partial:partials/_sidebar.html -->
         @include('admin.partials.sidebar')
@@ -1577,6 +1577,7 @@
                             </div>
                         </div>
                     </div> --}}
+                    @if(!View::hasSection('is_workbench'))
                     <section class="content-header">
                         <div class="container-fluid">
                             <div class="row mb-2">
@@ -1610,12 +1611,31 @@
                     <div class="cloud"></div>
                     <div class="cloud"></div>
                     <div class="cloud"></div>
+                    @else
+                        @if ($errors->any())
+                            <div class="workbench-alerts-strip px-3 pt-2">
+                                <div class="alert alert-danger alert-dismissible fade show mb-2 py-1 px-3" style="border-radius: 6px; border-left: 4px solid #dc3545; font-size: 0.82rem;">
+                                    <button type="button" class="close p-1" data-dismiss="alert" aria-hidden="true">×</button>
+                                    <ul class="mb-0 pl-3">
+                                        @foreach ($errors->all() as $error)
+                                            <li>{{ $error }}</li>
+                                        @endforeach
+                                    </ul>
+                                </div>
+                            </div>
+                        @endif
+                        <div class="workbench-alerts-strip">
+                            @include('admin.partials.notification')
+                        </div>
+                    @endif
                     @yield('content')
                 </div>
                 <!-- content-wrapper ends -->
+                @if(!View::hasSection('is_workbench'))
                 <!-- partial:partials/_footer.html -->
                 @include('admin.partials.footer')
                 <!-- partial -->
+                @endif
             </div>
             <!-- main-panel ends -->
         </div>

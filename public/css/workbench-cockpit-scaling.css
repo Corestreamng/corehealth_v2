@@ -1,0 +1,622 @@
+/* ==========================================================================
+   CoreHealth v2 — Universal Workbench Cockpit Scaling Stylesheet
+   Space-Maximizing Zero-Scroll Layout, Low-Res Scaler & Dynamic Theming
+   Applies to all Workbenches: Reception, Doctor, Pharmacy, Lab, Nursing, etc.
+   ========================================================================== */
+
+/* ── 1. Zero-Scroll Viewport Bounding ─────────────────────────────────── */
+html,
+body.is-workbench,
+body.has-workbench {
+    overflow: hidden !important;
+    height: 100vh !important;
+    max-height: 100vh !important;
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
+body.is-workbench .container-scroller,
+body.has-workbench .container-scroller {
+    height: 100vh !important;
+    max-height: 100vh !important;
+    overflow: hidden !important;
+}
+
+body.is-workbench .page-body-wrapper,
+body.has-workbench .page-body-wrapper {
+    margin-left: 260px !important;
+    width: calc(100% - 260px) !important;
+    height: 100vh !important;
+    max-height: 100vh !important;
+    overflow: hidden !important;
+    padding-top: 0 !important;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.sidebar-icon-only.is-workbench .page-body-wrapper,
+.sidebar-icon-only.has-workbench .page-body-wrapper {
+    margin-left: 72px !important;
+    width: calc(100% - 72px) !important;
+}
+
+body.is-workbench .main-panel,
+body.has-workbench .main-panel {
+    display: flex !important;
+    flex-direction: column !important;
+    height: 100vh !important;
+    max-height: 100vh !important;
+    overflow: hidden !important;
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
+@media (max-width: 991.98px) {
+    body.is-workbench .page-body-wrapper,
+    body.has-workbench .page-body-wrapper {
+        margin-left: 0 !important;
+        width: 100% !important;
+    }
+}
+
+/* ── 2. Content-Wrapper Space Reclaim ──────────────────────────────────── */
+body.is-workbench .content-wrapper,
+body.has-workbench .content-wrapper {
+    padding: 68px 10px 6px 10px !important;
+    flex: 1 1 auto !important;
+    min-height: 0 !important;
+    height: 100vh !important;
+    max-height: 100vh !important;
+    overflow: hidden !important;
+    background: #f8fafc !important;
+    box-sizing: border-box !important;
+    display: flex !important;
+    flex-direction: column !important;
+}
+
+/* Breadcrumbs, empty clouds, and marketing footer are eliminated */
+body.is-workbench .content-header,
+body.has-workbench .content-header,
+body.is-workbench .cloud,
+body.has-workbench .cloud,
+body.is-workbench footer,
+body.is-workbench .footer,
+body.has-workbench footer,
+body.has-workbench .footer {
+    display: none !important;
+}
+
+/* Micro Alert Strip if any flash message exists */
+.workbench-alerts-strip {
+    flex-shrink: 0;
+    margin-bottom: 4px;
+    z-index: 10;
+}
+
+.workbench-alerts-strip .alert {
+    padding: 4px 10px !important;
+    font-size: 0.78rem !important;
+    margin-bottom: 4px !important;
+    border-radius: 5px !important;
+}
+
+/* ── 3. High-Density Micro-Scrollbars ───────────────────────────────────── */
+body.is-workbench *::-webkit-scrollbar,
+body.has-workbench *::-webkit-scrollbar {
+    width: 4px !important;
+    height: 4px !important;
+}
+
+body.is-workbench *::-webkit-scrollbar-track,
+body.has-workbench *::-webkit-scrollbar-track {
+    background: transparent !important;
+}
+
+body.is-workbench *::-webkit-scrollbar-thumb,
+body.has-workbench *::-webkit-scrollbar-thumb {
+    background: rgba(148, 163, 184, 0.45) !important;
+    border-radius: 4px !important;
+}
+
+body.is-workbench *::-webkit-scrollbar-thumb:hover,
+body.has-workbench *::-webkit-scrollbar-thumb:hover {
+    background: rgba(100, 116, 139, 0.75) !important;
+}
+
+/* Firefox thin scrollbars */
+body.is-workbench *,
+body.has-workbench * {
+    scrollbar-width: thin !important;
+    scrollbar-color: rgba(148, 163, 184, 0.45) transparent !important;
+}
+
+/* ── 4. Form Controls & Input Scaling (Cockpit-Standard) ───────────────── */
+body.is-workbench .form-control,
+body.is-workbench .form-select,
+body.is-workbench input.form-control,
+body.is-workbench select.form-control,
+body.is-workbench .input-group-text,
+body.has-workbench .form-control,
+body.has-workbench .form-select,
+body.has-workbench input.form-control,
+body.has-workbench select.form-control,
+body.has-workbench .input-group-text {
+    height: 32px !important;
+    min-height: 32px !important;
+    padding: 3px 10px !important;
+    font-size: 0.84rem !important;
+    line-height: 1.4 !important;
+    border-radius: 5px !important;
+    border-color: #cbd5e1;
+}
+
+body.is-workbench textarea.form-control,
+body.has-workbench textarea.form-control {
+    height: auto !important;
+    min-height: 56px !important;
+    font-size: 0.84rem !important;
+    padding: 6px 10px !important;
+}
+
+body.is-workbench .form-control:focus,
+body.is-workbench .form-select:focus,
+body.has-workbench .form-control:focus,
+body.has-workbench .form-select:focus {
+    border-color: var(--hospital-primary, #011b33) !important;
+    box-shadow: 0 0 0 2px rgba(var(--hospital-primary-rgb, 1, 27, 51), 0.15) !important;
+}
+
+body.is-workbench .form-group,
+body.has-workbench .form-group {
+    margin-bottom: 0.5rem !important;
+}
+
+body.is-workbench label,
+body.has-workbench label {
+    font-size: 0.78rem !important;
+    font-weight: 600 !important;
+    margin-bottom: 3px !important;
+    color: #475569 !important;
+}
+
+/* ── 5. Button & Action Scaling ─────────────────────────────────────────── */
+body.is-workbench .btn,
+body.has-workbench .btn {
+    padding: 4px 12px !important;
+    font-size: 0.8125rem !important;
+    line-height: 1.35 !important;
+    border-radius: 5px !important;
+    font-weight: 600 !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 5px !important;
+    transition: all 0.15s ease-in-out !important;
+}
+
+body.is-workbench .btn-sm,
+body.has-workbench .btn-sm {
+    padding: 2px 8px !important;
+    font-size: 0.75rem !important;
+    height: 26px !important;
+    min-height: 26px !important;
+    line-height: 1.25 !important;
+}
+
+body.is-workbench .btn-lg,
+body.has-workbench .btn-lg {
+    padding: 5px 14px !important;
+    font-size: 0.88rem !important;
+    height: 34px !important;
+}
+
+body.is-workbench .btn-action,
+body.is-workbench .quick-action-btn,
+body.has-workbench .btn-action,
+body.has-workbench .quick-action-btn {
+    height: 32px !important;
+    min-height: 32px !important;
+    padding: 3px 10px !important;
+    font-size: 0.8125rem !important;
+    border-radius: 5px !important;
+}
+
+/* Toggle Search and Back to Search Buttons (All Workbenches) */
+body.is-workbench .btn-toggle-search,
+body.is-workbench #btn-toggle-search,
+body.is-workbench .btn-back-to-search,
+body.is-workbench #btn-back-to-search,
+body.has-workbench .btn-toggle-search,
+body.has-workbench #btn-toggle-search,
+body.has-workbench .btn-back-to-search,
+body.has-workbench #btn-back-to-search {
+    height: 30px !important;
+    min-height: 30px !important;
+    padding: 3px 10px !important;
+    font-size: 0.8125rem !important;
+    font-weight: 600 !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 6px !important;
+    border: 1px solid #cbd5e1 !important;
+    border-radius: 5px !important;
+    background: #ffffff !important;
+    color: #334155 !important;
+    cursor: pointer !important;
+    line-height: 1.3 !important;
+    transition: all 0.15s ease-in-out !important;
+}
+
+body.is-workbench .btn-toggle-search i,
+body.is-workbench #btn-toggle-search i,
+body.is-workbench .btn-back-to-search i,
+body.is-workbench #btn-back-to-search i,
+body.has-workbench .btn-toggle-search i,
+body.has-workbench #btn-toggle-search i,
+body.has-workbench .btn-back-to-search i,
+body.has-workbench #btn-back-to-search i {
+    font-size: 0.84rem !important;
+}
+
+body.is-workbench .btn-toggle-search:hover,
+body.is-workbench #btn-toggle-search:hover,
+body.is-workbench .btn-back-to-search:hover,
+body.is-workbench #btn-back-to-search:hover,
+body.has-workbench .btn-toggle-search:hover,
+body.has-workbench #btn-toggle-search:hover,
+body.has-workbench .btn-back-to-search:hover,
+body.has-workbench #btn-back-to-search:hover {
+    border-color: var(--hospital-primary, #011b33) !important;
+    color: var(--hospital-primary, #011b33) !important;
+    background: #f8fafc !important;
+}
+
+/* Workspace Navbar & Actions Scaling */
+body.is-workbench .workspace-navbar,
+body.has-workbench .workspace-navbar {
+    height: 36px !important;
+    min-height: 36px !important;
+    padding: 0 10px !important;
+    border-bottom: 1px solid #e2e8f0 !important;
+    background: #ffffff !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    gap: 8px !important;
+    flex-shrink: 0 !important;
+}
+
+body.is-workbench .workspace-navbar-actions,
+body.has-workbench .workspace-navbar-actions {
+    display: flex !important;
+    align-items: center !important;
+    gap: 6px !important;
+}
+
+body.is-workbench .workspace-navbar-actions .btn,
+body.has-workbench .workspace-navbar-actions .btn {
+    height: 30px !important;
+    min-height: 30px !important;
+    padding: 3px 10px !important;
+    font-size: 0.8rem !important;
+}
+
+/* ── 6. Badges & Pill Counts ────────────────────────────────────────────── */
+body.is-workbench .badge,
+body.has-workbench .badge {
+    font-size: 0.74rem !important;
+    padding: 2px 7px !important;
+    border-radius: 4px !important;
+    font-weight: 700 !important;
+    letter-spacing: 0.2px !important;
+    line-height: 1.25 !important;
+}
+
+/* ── 7. DataTables & Tables Cockpit Density ────────────────────────────── */
+body.is-workbench .dataTables_wrapper,
+body.has-workbench .dataTables_wrapper {
+    font-size: 0.82rem !important;
+}
+
+body.is-workbench table.dataTable,
+body.is-workbench table.table,
+body.has-workbench table.dataTable,
+body.has-workbench table.table {
+    font-size: 0.8rem !important;
+    margin-top: 2px !important;
+    margin-bottom: 4px !important;
+}
+
+body.is-workbench table.dataTable thead th,
+body.is-workbench table.table thead th,
+body.has-workbench table.dataTable thead th,
+body.has-workbench table.table thead th {
+    padding: 5px 8px !important;
+    font-size: 0.74rem !important;
+    font-weight: 700 !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.3px !important;
+    background: #f1f5f9 !important;
+    color: #475569 !important;
+    border-bottom: 1px solid #cbd5e1 !important;
+    white-space: nowrap !important;
+}
+
+body.is-workbench table.dataTable tbody td,
+body.is-workbench table.table tbody td,
+body.has-workbench table.dataTable tbody td,
+body.has-workbench table.table tbody td {
+    padding: 4px 8px !important;
+    font-size: 0.79rem !important;
+    vertical-align: middle !important;
+    border-top: 1px solid #f1f5f9 !important;
+}
+
+body.is-workbench table.dataTable tbody tr:hover,
+body.is-workbench table.table tbody tr:hover,
+body.has-workbench table.dataTable tbody tr:hover,
+body.has-workbench table.table tbody tr:hover {
+    background-color: rgba(var(--hospital-primary-rgb, 1, 27, 51), 0.04) !important;
+}
+
+body.is-workbench .dataTables_info,
+body.is-workbench .dataTables_length,
+body.is-workbench .dataTables_filter,
+body.has-workbench .dataTables_info,
+body.has-workbench .dataTables_length,
+body.has-workbench .dataTables_filter {
+    font-size: 0.75rem !important;
+    padding-top: 3px !important;
+    padding-bottom: 3px !important;
+    color: #64748b !important;
+}
+
+body.is-workbench .dataTables_filter input,
+body.has-workbench .dataTables_filter input {
+    height: 26px !important;
+    font-size: 0.76rem !important;
+    padding: 2px 6px !important;
+    border-radius: 4px !important;
+    margin-left: 4px !important;
+}
+
+body.is-workbench .dataTables_paginate .paginate_button,
+body.has-workbench .dataTables_paginate .paginate_button {
+    padding: 2px 6px !important;
+    font-size: 0.74rem !important;
+    height: 24px !important;
+    line-height: 20px !important;
+    min-width: 22px !important;
+    border-radius: 4px !important;
+}
+
+/* ── 8. Compact Viewport Modals ─────────────────────────────────────────── */
+body.is-workbench .modal-dialog,
+body.has-workbench .modal-dialog {
+    margin: 1.25rem auto !important;
+}
+
+body.is-workbench .modal-header,
+body.has-workbench .modal-header {
+    padding: 8px 14px !important;
+    min-height: 38px !important;
+    border-bottom: 1px solid #e2e8f0 !important;
+}
+
+body.is-workbench .modal-title,
+body.has-workbench .modal-title {
+    font-size: 0.92rem !important;
+    font-weight: 700 !important;
+}
+
+body.is-workbench .modal-body,
+body.has-workbench .modal-body {
+    padding: 12px 14px !important;
+    font-size: 0.8125rem !important;
+    max-height: calc(85vh - 90px) !important;
+    overflow-y: auto !important;
+}
+
+body.is-workbench .modal-footer,
+body.has-workbench .modal-footer {
+    padding: 6px 14px !important;
+    border-top: 1px solid #e2e8f0 !important;
+}
+
+/* ── 9. Shared Patient Search Widget Scaling ────────────────────────────── */
+body.is-workbench .patient-search-widget-container,
+body.has-workbench .patient-search-widget-container {
+    padding: 6px 8px !important;
+    background: #ffffff !important;
+    border-bottom: 1px solid #e2e8f0 !important;
+    flex-shrink: 0 !important;
+}
+
+body.is-workbench .ps-recent-bar,
+body.has-workbench .ps-recent-bar {
+    margin-bottom: 4px !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 4px !important;
+}
+
+body.is-workbench .ps-recent-label,
+body.has-workbench .ps-recent-label {
+    font-size: 0.72rem !important;
+    color: #64748b !important;
+    font-weight: 600 !important;
+}
+
+body.is-workbench .ps-recent-chips .badge,
+body.is-workbench .ps-recent-chips a,
+body.has-workbench .ps-recent-chips .badge,
+body.has-workbench .ps-recent-chips a {
+    font-size: 0.72rem !important;
+    padding: 2px 6px !important;
+    border-radius: 4px !important;
+}
+
+body.is-workbench .ps-search-wrapper,
+body.has-workbench .ps-search-wrapper {
+    position: relative !important;
+}
+
+body.is-workbench .ps-search-input,
+body.is-workbench #patient-search-input,
+body.has-workbench .ps-search-input,
+body.has-workbench #patient-search-input {
+    height: 32px !important;
+    font-size: 0.84rem !important;
+    padding-left: 36px !important;
+    border-radius: 6px !important;
+    line-height: 1.4 !important;
+}
+
+body.is-workbench .ps-search-icon,
+body.has-workbench .ps-search-icon {
+    left: 10px !important;
+    font-size: 1rem !important;
+}
+
+body.is-workbench .ps-search-dropdown,
+body.has-workbench .ps-search-dropdown {
+    font-size: 0.78rem !important;
+    max-height: 280px !important;
+}
+
+/* ── 10. Card and Container Scaling inside Workbenches ──────────────────── */
+body.is-workbench .card,
+body.has-workbench .card {
+    border-radius: 6px !important;
+    margin-bottom: 8px !important;
+}
+
+body.is-workbench .card-header,
+body.has-workbench .card-header {
+    padding: 6px 12px !important;
+    min-height: 34px !important;
+}
+
+body.is-workbench .card-header h5,
+body.is-workbench .card-header h6,
+body.has-workbench .card-header h5,
+body.has-workbench .card-header h6 {
+    font-size: 0.82rem !important;
+    font-weight: 700 !important;
+    margin-bottom: 0 !important;
+}
+
+body.is-workbench .card-body,
+body.has-workbench .card-body {
+    padding: 8px 12px !important;
+}
+
+body.is-workbench .p-4,
+body.has-workbench .p-4 {
+    padding: 0.75rem !important;
+}
+
+/* ── 11. Low-Resolution Responsive Scaler (1366x768 & Lower) ─────────────── */
+@media (max-width: 1440px) {
+    body.is-workbench .content-wrapper,
+    body.has-workbench .content-wrapper {
+        padding: 66px 8px 6px 8px !important;
+    }
+}
+
+@media (max-width: 1366.98px) {
+    body.is-workbench,
+    body.has-workbench {
+        font-size: 0.82rem !important;
+    }
+
+    body.is-workbench .content-wrapper,
+    body.has-workbench .content-wrapper {
+        padding: 66px 8px 6px 8px !important;
+    }
+
+    body.is-workbench .form-control,
+    body.is-workbench .form-select,
+    body.is-workbench input.form-control,
+    body.is-workbench select.form-control,
+    body.has-workbench .form-control,
+    body.has-workbench .form-select,
+    body.has-workbench input.form-control,
+    body.has-workbench select.form-control {
+        height: 30px !important;
+        min-height: 30px !important;
+        font-size: 0.8125rem !important;
+        padding: 2px 8px !important;
+    }
+
+    body.is-workbench .btn,
+    body.has-workbench .btn {
+        padding: 3px 10px !important;
+        font-size: 0.78rem !important;
+        height: 30px !important;
+    }
+
+    body.is-workbench .btn-toggle-search,
+    body.is-workbench .btn-back-to-search,
+    body.has-workbench .btn-toggle-search,
+    body.has-workbench .btn-back-to-search {
+        height: 28px !important;
+        min-height: 28px !important;
+        padding: 2px 8px !important;
+        font-size: 0.76rem !important;
+    }
+
+    body.is-workbench .btn-sm,
+    body.has-workbench .btn-sm {
+        height: 25px !important;
+        min-height: 25px !important;
+        font-size: 0.72rem !important;
+        padding: 1px 6px !important;
+    }
+
+    body.is-workbench table.dataTable thead th,
+    body.is-workbench table.table thead th,
+    body.has-workbench table.dataTable thead th,
+    body.has-workbench table.table thead th {
+        padding: 5px 8px !important;
+        font-size: 0.74rem !important;
+    }
+
+    body.is-workbench table.dataTable tbody td,
+    body.is-workbench table.table tbody td,
+    body.has-workbench table.dataTable tbody td,
+    body.has-workbench table.table tbody td {
+        padding: 4px 8px !important;
+        font-size: 0.79rem !important;
+    }
+}
+
+/* ── 10. Dark Mode Compatibility ────────────────────────────────────────── */
+body.dark-mode.is-workbench .content-wrapper,
+body.dark-mode.has-workbench .content-wrapper {
+    background: #0f172a !important;
+}
+
+body.dark-mode.is-workbench table.dataTable thead th,
+body.dark-mode.is-workbench table.table thead th,
+body.dark-mode.has-workbench table.dataTable thead th,
+body.dark-mode.has-workbench table.table thead th {
+    background: #1e293b !important;
+    color: #94a3b8 !important;
+    border-bottom-color: #334155 !important;
+}
+
+body.dark-mode.is-workbench table.dataTable tbody td,
+body.dark-mode.is-workbench table.table tbody td,
+body.dark-mode.has-workbench table.dataTable tbody td,
+body.dark-mode.has-workbench table.table tbody td {
+    color: #e2e8f0 !important;
+    border-top-color: #1e293b !important;
+}
+
+body.dark-mode.is-workbench .modal-header,
+body.dark-mode.is-workbench .modal-footer,
+body.dark-mode.has-workbench .modal-header,
+body.dark-mode.has-workbench .modal-footer {
+    border-color: #334155 !important;
+}
