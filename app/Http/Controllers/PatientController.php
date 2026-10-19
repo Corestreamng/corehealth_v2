@@ -670,6 +670,7 @@ class PatientController extends Controller
                 $patient->phone_no = $request->phone_no ?? null;
                 $patient->registration_workbench = $request->registration_workbench ?? 'reception';
                 $patient->registered_by = Auth::id();
+                $patient->referred_from = $request->referred_from ?? null;
 
                 // Enforce fixed standardized prefix if registered from a department with a configured prefix
                 $expectedPrefix = patient::getPrefixForWorkbench($patient->registration_workbench);
@@ -1030,6 +1031,7 @@ class PatientController extends Controller
                 $patient->next_of_kin_phone = $request->next_of_kin_phone ?? null;
                 $patient->next_of_kin_address = $request->next_of_kin_address ?? null;
                 $patient->phone_no = $request->phone_no ?? null;
+                $patient->referred_from = $request->referred_from ?? null;
 
                 $patient->update();
                 // Send User an email with set password link

@@ -89,3 +89,7 @@
         </div>
     </div>
 </div>
+
+@include('admin.partials.patient-form-modal')
+@include('admin.partials.hospital_contacts_modal')
+@include('admin.partials.price_list_modal')

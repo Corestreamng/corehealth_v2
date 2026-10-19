@@ -48,4 +48,6 @@ window.INVEST_RES_SOURCE = 'lab_workbench';
 @include('admin.partials.clinical_alerts_modal')
 <script src="{{ asset('js/clinical-alerts-shared.js') }}"></script>
 <script src="{{ versioned_asset('js/clinical-orders-shared.js') }}"></script>
+@include('admin.partials.hospital_contacts_modal')
+@include('admin.partials.price_list_modal')
 @endsection

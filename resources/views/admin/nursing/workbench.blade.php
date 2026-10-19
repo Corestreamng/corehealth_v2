@@ -161,12 +161,6 @@
                 <i class="mdi mdi-file-chart text-primary"></i>
                 <span>Outreach Reports</span>
             </button>
-            @if(appsettings()->enable_ei_nursing)
-<button class="quick-action-btn" onclick="showEmergencyIntakeModal()">
-                <i class="mdi mdi-ambulance text-danger"></i>
-                <span>Emergency Intake</span>
-            </button>
-@endif
         </div>
     </div>
 
@@ -190,6 +184,17 @@
                 <button class="btn-toggle-search" id="btn-toggle-search">
                     <i class="fa fa-bars"></i> Toggle Search
                 </button>
+                <button type="button" class="btn btn-primary" id="btn-nursing-new-patient" onclick="showPatientFormModal('create')" title="Register New Patient">
+                    <i class="mdi mdi-account-plus"></i> New Patient
+                </button>
+                <button type="button" class="btn btn-outline-primary" id="btn-nursing-walkin" onclick="if(typeof openWalkInRegistration==='function'){openWalkInRegistration();}else{showPatientFormModal('create');enableWalkInMode('NUR-');}" title="Register Walk-in Patient">
+                    <i class="mdi mdi-account-plus-outline"></i> Register Walk-in
+                </button>
+                @if(appsettings()->enable_ei_nursing)
+                <button type="button" class="btn btn-danger" onclick="showEmergencyIntakeModal()" title="Emergency Intake">
+                    <i class="mdi mdi-ambulance"></i> Emergency Intake
+                </button>
+                @endif
                 <button class="btn btn-outline-info" data-bs-toggle="modal" data-bs-target="#hospital-contacts-modal" title="Hospital Contacts">
                     <i class="mdi mdi-contacts"></i> Contacts
                 </button>

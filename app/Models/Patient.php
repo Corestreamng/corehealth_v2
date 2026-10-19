@@ -46,6 +46,7 @@ class Patient extends Model implements Auditable
         'hmo_dependent_role',
         'registration_workbench',
         'registered_by',
+        'referred_from',
     ];
 
     protected $appends = [
@@ -376,6 +377,9 @@ class Patient extends Model implements Auditable
         'surgery' => 'SURG-',
         'morgue' => 'MOR-',
         'doctor' => 'DOC-',
+        'walkin' => 'EX-',
+        'reception_walkin' => 'EX-',
+        'reception_walk_in' => 'EX-',
     ];
 
     /**
@@ -392,7 +396,7 @@ class Patient extends Model implements Auditable
         'NUR' => 'nursing',
         'WRD' => 'nursing',
         'EMG' => 'emergency',
-        'EX' => 'emergency',
+        'EX' => 'reception',
         'BIL' => 'billing',
         'HMO' => 'hmo',
         'SURG' => 'surgery',
@@ -411,6 +415,24 @@ class Patient extends Model implements Auditable
         }
 
         return self::WORKBENCH_PREFIXES[strtolower(trim($workbench))] ?? null;
+    }
+
+    /**
+     * Get all recognized prefixes used across workbenches and walk-in modalities.
+     *
+     * @return array<string>
+     */
+    public static function getAllRecognizedPrefixes(): array
+    {
+        $prefixes = array_values(self::WORKBENCH_PREFIXES);
+        foreach (array_keys(self::LEGACY_PREFIX_MAP) as $legacyPrefix) {
+            $withHyphen = $legacyPrefix . '-';
+            if (!in_array($withHyphen, $prefixes, true)) {
+                $prefixes[] = $withHyphen;
+            }
+        }
+
+        return array_values(array_unique($prefixes));
     }
 
     /**

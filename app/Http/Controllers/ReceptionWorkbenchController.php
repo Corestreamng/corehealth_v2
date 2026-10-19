@@ -74,7 +74,21 @@ class ReceptionWorkbenchController extends Controller
                 ->get();
         }
 
-        return view('admin.reception.workbench', compact('clinics', 'hmos', 'registrationServices'));
+        $user = auth()->user();
+        $canBillUser = false;
+        if ($user) {
+            $billingRoles = ['SUPERADMIN', 'SUPER-ADMIN', 'ADMIN', 'ACCOUNTS', 'ACCOUNTANT', 'BILLER', 'BILLING'];
+            $userRoles = $user->roles ? $user->roles->pluck('name')->map(fn ($r) => strtoupper(trim($r)))->toArray() : [];
+            $canBillUser = !empty(array_intersect($billingRoles, $userRoles))
+                || $user->hasAnyRole([
+                    'SUPERADMIN', 'ADMIN', 'ACCOUNTS', 'BILLER', 'super-admin',
+                    'superadmin', 'admin', 'accounts', 'biller', 'billing', 'accountant',
+                    'Biller', 'Billing', 'Accounts', 'Accountant', 'Admin',
+                ])
+                || ($user->can && ($user->can('see-accounts') || $user->can('bill-consumable-from-store')));
+        }
+
+        return view('admin.reception.workbench', compact('clinics', 'hmos', 'registrationServices', 'canBillUser'));
     }
 
     /**
@@ -328,7 +342,7 @@ class ReceptionWorkbenchController extends Controller
 
         $entries = DoctorQueue::whereIn('patient_id', $familyPatientIds)
             ->whereDate('created_at', $today)
-            ->whereIn('status', [QueueStatus::WAITING, QueueStatus::VITALS_PENDING, QueueStatus::READY]) // Only active pre-consultation entries
+            ->whereIn('status', [QueueStatus::WAITING, QueueStatus::VITALS_PENDING, QueueStatus::READY, QueueStatus::SCHEDULED]) // Active pre-consultation and scheduled entries
             ->with(['clinic', 'doctor.user', 'patient.user', 'request_entry.service', 'appointment'])
             ->orderBy('created_at', 'desc')
             ->get()
@@ -339,6 +353,7 @@ class ReceptionWorkbenchController extends Controller
                 $isFamily = ($entry->patient_id != $id);
                 $req = $entry->request_entry;
                 $isPaid = $req && $req->payment_id ? true : false;
+                $payableAmount = $req ? (float)$req->payable_amount : 0;
 
                 return [
                     'id' => $entry->id,
@@ -356,11 +371,12 @@ class ReceptionWorkbenchController extends Controller
                     'created_at' => $entry->created_at->format('H:i'),
                     'wait_time_mins' => $entry->created_at->diffInMinutes(now()),
                     'is_paid' => $isPaid,
-                    'payable_amount' => $req ? $req->payable_amount : 0,
-                    'claims_amount' => $req ? $req->claims_amount : 0,
+                    'payable_amount' => $payableAmount,
+                    'claims_amount' => $req ? (float)$req->claims_amount : 0,
                     'coverage_mode' => $req ? $req->coverage_mode : null,
                     'validation_status' => $req ? $req->validation_status : null, // approval code
                     'service_request_id' => $req ? $req->id : null,
+                    'can_pay' => (!$isPaid && $req && $payableAmount > 0),
                 ];
             });
 
@@ -1070,6 +1086,8 @@ class ReceptionWorkbenchController extends Controller
                         'type' => 'lab',
                         'id' => $labRequest->id,
                         'service_request_id' => $serviceRequest->id,
+                        'payable_amount' => (float)($serviceRequest->payable_amount ?? 0),
+                        'claims_amount' => (float)($serviceRequest->claims_amount ?? 0),
                     ];
 
                 } elseif ($item['type'] === 'imaging') {
@@ -1088,6 +1106,8 @@ class ReceptionWorkbenchController extends Controller
                         'type' => 'imaging',
                         'id' => $imagingRequest->id,
                         'service_request_id' => $serviceRequest->id,
+                        'payable_amount' => (float)($serviceRequest->payable_amount ?? 0),
+                        'claims_amount' => (float)($serviceRequest->claims_amount ?? 0),
                     ];
 
                 } elseif ($item['type'] === 'product') {
@@ -1106,6 +1126,8 @@ class ReceptionWorkbenchController extends Controller
                         'type' => 'product',
                         'id' => $productRequest->id,
                         'service_request_id' => $serviceRequest->id,
+                        'payable_amount' => (float)($serviceRequest->payable_amount ?? 0),
+                        'claims_amount' => (float)($serviceRequest->claims_amount ?? 0),
                     ];
                 }
             }
@@ -1215,6 +1237,42 @@ class ReceptionWorkbenchController extends Controller
      */
     public function quickRegister(Request $request)
     {
+        if (!$request->filled('dob')) {
+            if ($request->filled('age')) {
+                $unit = $request->input('age_unit', 'years');
+                $val = (int) $request->input('age');
+                $d = Carbon::now();
+                if ($unit === 'days') {
+                    $d->subDays($val);
+                } elseif ($unit === 'months') {
+                    $d->subMonths($val);
+                } else {
+                    $d->subYears($val);
+                }
+                $request->merge(['dob' => $d->format('Y-m-d')]);
+            } elseif ($request->filled('age_group')) {
+                $groupYears = [
+                    'toddler' => 3,
+                    'child' => 8,
+                    'adolescent' => 15,
+                    'young_adult' => 25,
+                    'adult' => 45,
+                    'older_adult' => 60,
+                    'elderly' => 70,
+                ];
+                $ag = $request->input('age_group');
+                $d = Carbon::now();
+                if ($ag === 'neonate') {
+                    $d->subDays(14);
+                } elseif ($ag === 'infant') {
+                    $d->subMonths(6);
+                } elseif (isset($groupYears[$ag])) {
+                    $d->subYears($groupYears[$ag]);
+                }
+                $request->merge(['dob' => $d->format('Y-m-d')]);
+            }
+        }
+
         $request->validate([
             'surname' => 'required|min:2|max:150',
             'firstname' => 'required|min:2|max:150',
@@ -1245,7 +1303,15 @@ class ReceptionWorkbenchController extends Controller
             // Create patient
             $patient = new Patient();
             $patient->user_id = $user->id;
-            $patient->file_no = $request->file_no; // Use provided file number
+            $fileNo = trim($request->file_no ?? '');
+            if (empty($fileNo)) {
+                $lastWalkin = Patient::whereNotNull('file_no')
+                    ->where('file_no', 'like', 'EX-%')
+                    ->orderBy('id', 'desc')
+                    ->value('file_no');
+                $fileNo = $lastWalkin ? $this->incrementLastNumericSegment($lastWalkin) : 'EX-0001';
+            }
+            $patient->file_no = $fileNo; // Use provided or auto-generated EX- file number
             $patient->gender = $request->gender;
             $patient->dob = $request->dob;
             $patient->phone_no = $request->phone_no;
@@ -1265,6 +1331,7 @@ class ReceptionWorkbenchController extends Controller
             $patient->hmo_no = $request->hmo_no;
             $patient->registration_workbench = $request->registration_workbench ?? 'reception';
             $patient->registered_by = Auth::id();
+            $patient->referred_from = $request->referred_from ?? null;
 
             $patient->is_family_principal = $request->has('is_family_principal') && filter_var($request->is_family_principal, FILTER_VALIDATE_BOOLEAN) ? 1 : 0;
             $patient->principal_id = $request->principal_id ?? null;
@@ -1453,10 +1520,19 @@ class ReceptionWorkbenchController extends Controller
             $prefix = Patient::getPrefixForWorkbench($workbench);
         }
 
-        // If a prefix is specified, scope query to that prefix
+        // If a prefix is specified, scope query strictly to that prefix.
+        // If NO prefix is specified (normal patient registration), exclude all recognized prefixes
+        // so that walk-in or departmental registrations NEVER affect the normal sequential counter!
         $query = Patient::whereNotNull('file_no')->where('file_no', '!=', '');
         if ($prefix) {
             $query->where('file_no', 'like', $prefix . '%');
+        } else {
+            $recognizedPrefixes = Patient::getAllRecognizedPrefixes();
+            $query->where(function ($q) use ($recognizedPrefixes) {
+                foreach ($recognizedPrefixes as $pfx) {
+                    $q->where('file_no', 'not like', $pfx . '%');
+                }
+            });
         }
 
         $recentPatients = $query->orderBy('id', 'desc')
@@ -1466,13 +1542,13 @@ class ReceptionWorkbenchController extends Controller
         $recentFileNumbers = $recentPatients->pluck('file_no')->toArray();
 
         if ($recentPatients->isEmpty()) {
-            $defaultNo = $prefix ? $prefix . '001' : '1';
+            $defaultNo = $prefix ? $prefix . '0001' : '1';
 
             return response()->json([
                 'file_no' => $defaultNo,
                 'last_file_no' => null,
                 'recent_file_nos' => [],
-                'format_pattern' => $prefix ? $prefix . 'NNN' : null,
+                'format_pattern' => $prefix ? $prefix . 'NNNN' : null,
                 'format_example' => null,
                 'prefix' => $prefix,
                 'workbench' => $workbench,
@@ -2282,22 +2358,29 @@ class ReceptionWorkbenchController extends Controller
         $requests = collect();
 
         // Lab Requests
-        $labRequests = LabServiceRequest::with(['service', 'productOrServiceRequest.payment'])
+        $labRequests = LabServiceRequest::with(['service.price', 'productOrServiceRequest.payment'])
             ->where('patient_id', $patientId)
             ->where('created_at', '>=', $since)
             ->orderBy('created_at', 'desc')
             ->get()
             ->map(function ($req) {
                 $posr = $req->productOrServiceRequest;
+                $isPaid = $posr && $posr->payment_id ? true : false;
+                $payable = $posr ? (float)$posr->payable_amount : (float)(optional(optional($req->service)->price)->sale_price ?? 0);
+                $price = $posr ? (float)($posr->payable_amount + $posr->claims_amount) : (float)(optional(optional($req->service)->price)->sale_price ?? 0);
+                $hmoCovers = (float)($posr->claims_amount ?? 0);
 
                 return [
                     'id' => $req->id,
+                    'service_request_id' => $posr ? $posr->id : null,
+                    'is_paid' => $isPaid,
+                    'can_pay' => (!$isPaid && $posr && $payable > 0),
                     'type' => 'lab',
                     'type_label' => 'Lab Test',
                     'name' => optional($req->service)->service_name ?? 'Unknown Service',
-                    'price' => $posr ? ($posr->payable_amount + $posr->claims_amount) : optional(optional($req->service)->price)->sale_price ?? 0,
-                    'hmo_covers' => $posr->claims_amount ?? 0,
-                    'payable' => $posr->payable_amount ?? optional(optional($req->service)->price)->sale_price ?? 0,
+                    'price' => $price,
+                    'hmo_covers' => $hmoCovers,
+                    'payable' => $payable,
                     'coverage_mode' => $posr->coverage_mode ?? null,
                     'billing_status' => $this->getBillingStatus($req->status, $posr),
                     'delivery_status' => $this->getDeliveryStatus($req->status, 'lab'),
@@ -2307,22 +2390,29 @@ class ReceptionWorkbenchController extends Controller
         $requests = $requests->merge($labRequests);
 
         // Imaging Requests
-        $imagingRequests = ImagingServiceRequest::with(['service', 'productOrServiceRequest.payment'])
+        $imagingRequests = ImagingServiceRequest::with(['service.price', 'productOrServiceRequest.payment'])
             ->where('patient_id', $patientId)
             ->where('created_at', '>=', $since)
             ->orderBy('created_at', 'desc')
             ->get()
             ->map(function ($req) {
                 $posr = $req->productOrServiceRequest;
+                $isPaid = $posr && $posr->payment_id ? true : false;
+                $payable = $posr ? (float)$posr->payable_amount : (float)(optional(optional($req->service)->price)->sale_price ?? 0);
+                $price = $posr ? (float)($posr->payable_amount + $posr->claims_amount) : (float)(optional(optional($req->service)->price)->sale_price ?? 0);
+                $hmoCovers = (float)($posr->claims_amount ?? 0);
 
                 return [
                     'id' => $req->id,
+                    'service_request_id' => $posr ? $posr->id : null,
+                    'is_paid' => $isPaid,
+                    'can_pay' => (!$isPaid && $posr && $payable > 0),
                     'type' => 'imaging',
                     'type_label' => 'Imaging',
                     'name' => optional($req->service)->service_name ?? 'Unknown Service',
-                    'price' => $posr ? ($posr->payable_amount + $posr->claims_amount) : optional(optional($req->service)->price)->sale_price ?? 0,
-                    'hmo_covers' => $posr->claims_amount ?? 0,
-                    'payable' => $posr->payable_amount ?? optional(optional($req->service)->price)->sale_price ?? 0,
+                    'price' => $price,
+                    'hmo_covers' => $hmoCovers,
+                    'payable' => $payable,
                     'coverage_mode' => $posr->coverage_mode ?? null,
                     'billing_status' => $this->getBillingStatus($req->status, $posr),
                     'delivery_status' => $this->getDeliveryStatus($req->status, 'imaging'),
@@ -2339,17 +2429,24 @@ class ReceptionWorkbenchController extends Controller
             ->get()
             ->map(function ($req) {
                 $posr = $req->productOrServiceRequest;
+                $isPaid = $posr && $posr->payment_id ? true : false;
                 $qty = $posr->qty ?? 1;
-                $unitPrice = optional(optional($req->product)->price)->current_sale_price ?? 0;
+                $unitPrice = (float)(optional(optional($req->product)->price)->current_sale_price ?? 0);
+                $payable = $posr ? (float)$posr->payable_amount : (float)($unitPrice * $qty);
+                $price = $posr ? (float)($posr->payable_amount + $posr->claims_amount) : (float)($unitPrice * $qty);
+                $hmoCovers = (float)($posr->claims_amount ?? 0);
 
                 return [
                     'id' => $req->id,
+                    'service_request_id' => $posr ? $posr->id : null,
+                    'is_paid' => $isPaid,
+                    'can_pay' => (!$isPaid && $posr && $payable > 0),
                     'type' => 'product',
                     'type_label' => 'Product',
                     'name' => optional($req->product)->product_name ?? 'Unknown Product',
-                    'price' => $posr ? ($posr->payable_amount + $posr->claims_amount) : ($unitPrice * $qty),
-                    'hmo_covers' => $posr->claims_amount ?? 0,
-                    'payable' => $posr->payable_amount ?? ($unitPrice * $qty),
+                    'price' => $price,
+                    'hmo_covers' => $hmoCovers,
+                    'payable' => $payable,
                     'coverage_mode' => $posr->coverage_mode ?? null,
                     'billing_status' => $this->getProductBillingStatus($req->status, $posr),
                     'delivery_status' => $this->getProductDeliveryStatus($req->status),
@@ -3263,15 +3360,24 @@ class ReceptionWorkbenchController extends Controller
                 ], 400);
             }
 
-            // Check if user can discard (creator of request, receptionist who queued, or admin)
-            $canDiscard = ($posr && $posr->staff_user_id == $currentUserId)
+            // Check if user can discard (creator of request, receptionist who queued, or staff with admin/biller/receptionist roles)
+            $authUser = Auth::user();
+            $userRoleNames = $authUser && $authUser->roles ? $authUser->roles->pluck('name')->map(fn ($r) => strtoupper(trim($r)))->toArray() : [];
+            $allowedDiscardRoles = ['SUPERADMIN', 'SUPER-ADMIN', 'ADMIN', 'RECEPTIONIST', 'BILLER', 'BILLING', 'ACCOUNTS', 'ACCOUNTANT'];
+
+            $canDiscard = !empty(array_intersect($allowedDiscardRoles, $userRoleNames))
+                || ($posr && $posr->staff_user_id == $currentUserId)
                 || ($queue && $queue->receptionist && $queue->receptionist->user_id == $currentUserId)
-                || Auth::user()->hasRole(['SUPERADMIN', 'ADMIN']);
+                || ($authUser && $authUser->hasAnyRole([
+                    'SUPERADMIN', 'ADMIN', 'ACCOUNTS', 'BILLER', 'RECEPTIONIST', 'super-admin',
+                    'superadmin', 'admin', 'accounts', 'biller', 'billing', 'accountant', 'receptionist',
+                ]))
+                || ($authUser && $authUser->is_admin && in_array($authUser->is_admin, [1, 2, 3, 20]));
 
             if (!$canDiscard) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'You can only discard requests that you created.',
+                    'message' => 'You do not have permission to discard this request.',
                 ], 403);
             }
 

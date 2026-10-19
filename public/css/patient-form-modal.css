@@ -1310,12 +1310,18 @@
         font-weight: 500;
         font-size: 0.72rem;
     }
-    .pf-dob-panel { display: none; }
-    .pf-age-panel { display: block; }
+    .pf-dob-panel { display: block; }
+    .pf-age-panel { display: none; }
+    .pf-age-group-panel { display: none; }
     .pf-age-dob-wrapper.mode-dob .pf-dob-panel { display: block; }
     .pf-age-dob-wrapper.mode-dob .pf-age-panel { display: none; }
+    .pf-age-dob-wrapper.mode-dob .pf-age-group-panel { display: none; }
     .pf-age-dob-wrapper.mode-age .pf-dob-panel { display: none; }
     .pf-age-dob-wrapper.mode-age .pf-age-panel { display: block; }
+    .pf-age-dob-wrapper.mode-age .pf-age-group-panel { display: none; }
+    .pf-age-dob-wrapper.mode-age_group .pf-dob-panel { display: none; }
+    .pf-age-dob-wrapper.mode-age_group .pf-age-panel { display: none; }
+    .pf-age-dob-wrapper.mode-age_group .pf-age-group-panel { display: block; }
 
     /* Unidentified patient fields */
     .pf-unidentified-panel {

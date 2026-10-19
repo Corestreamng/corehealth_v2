@@ -288,13 +288,18 @@
                                     </div>
                                     <div class="col-md-4">
                                         <div class="form-group mb-3">
-                                            <label class="form-label mb-1">Age / DOB <span class="text-danger">*</span>
+                                            <label class="form-label mb-1">Date of Birth / Age <span class="text-danger">*</span>
                                                 <span class="pf-age-dob-toggle">
-                                                    <button type="button" class="pf-adt-btn active" data-mode="age">Age</button>
-                                                    <button type="button" class="pf-adt-btn" data-mode="dob">DOB</button>
+                                                    <button type="button" class="pf-adt-btn active" data-mode="dob">DOB</button>
+                                                    <button type="button" class="pf-adt-btn" data-mode="age">Age</button>
+                                                    <button type="button" class="pf-adt-btn" data-mode="age_group">Age Group</button>
                                                 </span>
                                             </label>
-                                            <div class="pf-age-dob-wrapper mode-age">
+                                            <div class="pf-age-dob-wrapper mode-dob">
+                                                {{-- DOB mode (default) --}}
+                                                <div class="pf-dob-panel">
+                                                    <input type="date" class="form-control" id="pf-dob" data-validate="required">
+                                                </div>
                                                 {{-- Age mode --}}
                                                 <div class="pf-age-panel">
                                                     <div class="pf-age-input-group">
@@ -307,9 +312,21 @@
                                                     </div>
                                                     <div class="pf-age-hint" id="pf-age-dob-hint"></div>
                                                 </div>
-                                                {{-- DOB mode --}}
-                                                <div class="pf-dob-panel">
-                                                    <input type="date" class="form-control" id="pf-dob" data-validate="required">
+                                                {{-- Age Group mode --}}
+                                                <div class="pf-age-group-panel">
+                                                    <select class="form-control" id="pf-age-group-select">
+                                                        <option value="">Select Age Group</option>
+                                                        <option value="neonate" data-days="14" data-years="0">Neonate (0 - 28 days)</option>
+                                                        <option value="infant" data-months="6" data-years="0">Infant (1 - 11 months)</option>
+                                                        <option value="toddler" data-years="3">Toddler (1 - 4 years)</option>
+                                                        <option value="child" data-years="8">Child (5 - 11 years)</option>
+                                                        <option value="adolescent" data-years="15">Adolescent (12 - 17 years)</option>
+                                                        <option value="young_adult" data-years="25">Young Adult (18 - 35 years)</option>
+                                                        <option value="adult" data-years="45">Adult (36 - 55 years)</option>
+                                                        <option value="older_adult" data-years="60">Older Adult (56 - 64 years)</option>
+                                                        <option value="elderly" data-years="70">Elderly (65+ years)</option>
+                                                    </select>
+                                                    <div class="pf-age-hint" id="pf-age-group-hint"></div>
                                                 </div>
                                                 <div class="invalid-feedback" id="pf-age-dob-error"></div>
                                                 <small class="form-text" id="pf-age-display"></small>
@@ -339,6 +356,41 @@
                                         <div class="form-group mb-3">
                                             <label class="form-label mb-1">Residential Address</label>
                                             <textarea class="form-control" id="pf-address" rows="2" placeholder="Enter residential address"></textarea>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="row pf-row-referral pf-hide-unidentified">
+                                    <div class="col-12">
+                                        <div class="form-group mb-3">
+                                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                                <label class="form-label mb-0"><i class="mdi mdi-account-arrow-right text-primary me-1"></i> Referred From</label>
+                                                <span class="text-muted" style="font-size: 0.72rem;">Who referred the patient to us?</span>
+                                            </div>
+                                            <div class="input-group">
+                                                <span class="input-group-text bg-light"><i class="mdi mdi-account-switch-outline"></i></span>
+                                                <input type="text" class="form-control" id="pf-referred-from" list="pf-referred-from-suggestions" placeholder="e.g. Dr. Okon, St. Luke Clinic, Self / Walk-in, Family / Friend, Outreach...">
+                                            </div>
+                                            <datalist id="pf-referred-from-suggestions">
+                                                <option value="Self / Walk-in">
+                                                <option value="Family / Friend">
+                                                <option value="Doctor / Physician">
+                                                <option value="Hospital / Clinic">
+                                                <option value="Primary Health Centre (PHC)">
+                                                <option value="Community Outreach">
+                                                <option value="Company / Corporate Partner">
+                                                <option value="HMO Partner">
+                                                <option value="Church / Religious Org">
+                                                <option value="School / Institution">
+                                            </datalist>
+                                            <div class="d-flex flex-wrap gap-1 mt-1 pf-referral-chips">
+                                                <span class="badge bg-light text-secondary border pf-ref-chip" role="button" data-val="Self / Walk-in" style="cursor: pointer;">Self</span>
+                                                <span class="badge bg-light text-secondary border pf-ref-chip" role="button" data-val="Family / Friend" style="cursor: pointer;">Family/Friend</span>
+                                                <span class="badge bg-light text-secondary border pf-ref-chip" role="button" data-val="Dr. " style="cursor: pointer;">Doctor</span>
+                                                <span class="badge bg-light text-secondary border pf-ref-chip" role="button" data-val="Hospital / Clinic: " style="cursor: pointer;">Hospital/Clinic</span>
+                                                <span class="badge bg-light text-secondary border pf-ref-chip" role="button" data-val="Community Outreach" style="cursor: pointer;">Outreach</span>
+                                                <span class="badge bg-light text-secondary border pf-ref-chip" role="button" data-val="Company / Corporate" style="cursor: pointer;">Corporate</span>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
@@ -1142,6 +1194,10 @@
                                             <div class="summary-item full-width">
                                                 <span class="summary-label">Address:</span>
                                                 <span class="summary-value" id="summary-address">-</span>
+                                            </div>
+                                            <div class="summary-item full-width">
+                                                <span class="summary-label">Referred From:</span>
+                                                <span class="summary-value" id="summary-referred-from">-</span>
                                             </div>
                                             <div class="summary-item">
                                                 <span class="summary-label">Passport:</span>

@@ -12,6 +12,21 @@
 @php
     $hosColor = appsettings()->hos_color ?? '#0066cc';
     $sett = appsettings();
+    if (!isset($canBillUser)) {
+        $user = Auth::user();
+        $canBillUser = false;
+        if ($user) {
+            $billingRoles = ['SUPERADMIN', 'SUPER-ADMIN', 'ADMIN', 'ACCOUNTS', 'ACCOUNTANT', 'BILLER', 'BILLING'];
+            $userRoles = $user->roles ? $user->roles->pluck('name')->map(fn($r) => strtoupper(trim($r)))->toArray() : [];
+            $canBillUser = !empty(array_intersect($billingRoles, $userRoles))
+                || $user->hasAnyRole([
+                    'SUPERADMIN', 'ADMIN', 'ACCOUNTS', 'BILLER', 'super-admin',
+                    'superadmin', 'admin', 'accounts', 'biller', 'billing', 'accountant',
+                    'Biller', 'Billing', 'Accounts', 'Accountant', 'Admin'
+                ])
+                || ($user->can && ($user->can('see-accounts') || $user->can('bill-consumable-from-store')));
+        }
+    }
 @endphp
 
 
@@ -70,14 +85,6 @@
                 <i class="mdi mdi-hospital-building text-primary"></i>
                 <span>Ward Dashboard</span>
             </button>
-            <button class="quick-action-btn" id="btn-new-patient">
-                <i class="mdi mdi-account-plus"></i>
-                <span>New Patient</span>
-            </button>
-            <button class="quick-action-btn" id="btn-quick-register">
-                <i class="mdi mdi-account-plus-outline text-success"></i>
-                <span>Quick Register</span>
-            </button>
             <button class="quick-action-btn" id="btn-today-stats">
                 <i class="mdi mdi-chart-bar"></i>
                 <span>Today's Stats</span>
@@ -86,12 +93,6 @@
                 <i class="mdi mdi-file-chart"></i>
                 <span>Reports</span>
             </button>
-            @if(appsettings()->enable_ei_reception)
-<button class="quick-action-btn" onclick="showEmergencyIntakeModal()">
-                <i class="mdi mdi-ambulance text-danger"></i>
-                <span>Emergency Intake</span>
-            </button>
-@endif
             <button class="quick-action-btn" onclick="showMorgueAdmissionModal()">
                 <i class="mdi mdi-emoticon-dead text-dark"></i>
                 <span>Morgue Admission (BID)</span>
@@ -114,6 +115,17 @@
                 <button class="btn-toggle-search" id="btn-toggle-search">
                     <i class="fa fa-bars"></i> Toggle Search
                 </button>
+                <button type="button" class="btn btn-primary" id="btn-new-patient" onclick="showPatientFormModal('create')" title="Register New Patient">
+                    <i class="mdi mdi-account-plus"></i> New Patient
+                </button>
+                <button type="button" class="btn btn-outline-primary" id="btn-quick-register" onclick="showQuickRegisterModal()" title="Register Walk-in Patient">
+                    <i class="mdi mdi-account-plus-outline"></i> Register Walk-in
+                </button>
+                @if(appsettings()->enable_ei_reception)
+                <button type="button" class="btn btn-danger" id="btn-emergency-intake" onclick="showEmergencyIntakeModal()" title="Emergency Intake">
+                    <i class="mdi mdi-ambulance"></i> Emergency Intake
+                </button>
+                @endif
                 <button class="btn btn-outline-info" data-bs-toggle="modal" data-bs-target="#hospital-contacts-modal" title="Hospital Contacts">
                     <i class="mdi mdi-contacts"></i> Contacts
                 </button>
@@ -905,7 +917,7 @@
                                                 Force Re-bill Consultation (ignore cycle duration limits for all selected)
                                             </label>
                                         </div>
-                                        @hasanyrole('SUPERADMIN|ADMIN|ACCOUNTS|BILLER')
+                                        @if($canBillUser)
                                         <button type="submit" class="btn btn-success w-100" id="btn-book-consultation">
                                             <i class="mdi mdi-cart-check"></i> Checkout & Book
                                         </button>
@@ -913,7 +925,7 @@
                                         <button type="submit" class="btn btn-primary w-100" id="btn-book-consultation">
                                             <i class="mdi mdi-check-circle"></i> Book Service
                                         </button>
-                                        @endhasanyrole
+                                        @endif
                                     </form>
                                 </div>
                             </div>
@@ -1064,9 +1076,15 @@
                                                 </tbody>
                                             </table>
                                             <div class="p-3">
+                                                @if($canBillUser)
                                                 <button class="btn btn-success btn-lg w-100" id="btn-submit-walkin" disabled>
+                                                    <i class="mdi mdi-cart-check"></i> Checkout & Pay (Walk-in)
+                                                </button>
+                                                @else
+                                                <button class="btn btn-primary btn-lg w-100" id="btn-submit-walkin" disabled>
                                                     <i class="mdi mdi-send"></i> Create Request (Awaiting Billing)
                                                 </button>
+                                                @endif
                                             </div>
                                         </div>
                                     </div>

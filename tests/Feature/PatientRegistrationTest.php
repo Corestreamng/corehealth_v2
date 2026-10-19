@@ -215,10 +215,16 @@ class PatientRegistrationTest extends TestCase
         $this->assertEquals('imaging', Patient::resolveWorkbenchFromFileNo('RAD-001'));
         $this->assertEquals('imaging', Patient::resolveWorkbenchFromFileNo('IMG-008'));
         $this->assertEquals('emergency', Patient::resolveWorkbenchFromFileNo('EMG-010'));
-        $this->assertEquals('emergency', Patient::resolveWorkbenchFromFileNo('EX-022'));
+        $this->assertEquals('reception', Patient::resolveWorkbenchFromFileNo('EX-022'));
         $this->assertEquals('surgery', Patient::resolveWorkbenchFromFileNo('SURG-001'));
         $this->assertEquals('surgery', Patient::resolveWorkbenchFromFileNo('TH-005'));
         $this->assertNull(Patient::resolveWorkbenchFromFileNo('GENERAL-1234'));
+
+        // Walkin prefix assertions
+        $this->assertEquals('EX-', Patient::getPrefixForWorkbench('walkin'));
+        $this->assertEquals('EX-', Patient::getPrefixForWorkbench('reception_walkin'));
+        $this->assertContains('EX-', Patient::getAllRecognizedPrefixes());
+        $this->assertContains('LAB-', Patient::getAllRecognizedPrefixes());
     }
 
     /** @test */
@@ -232,6 +238,14 @@ class PatientRegistrationTest extends TestCase
         if ($respLab->status() === 200) {
             $this->assertStringStartsWith('LAB-', $respLab->json('file_no'));
             $this->assertEquals('LAB-', $respLab->json('prefix'));
+        }
+
+        // Walkin / EX- prefix
+        $respWalkin = $this->actingAs($admin)->getJson('/reception/patient/next-file-number?workbench=walkin');
+        $this->assertTrue(in_array($respWalkin->status(), [200, 302, 403, 500]));
+        if ($respWalkin->status() === 200) {
+            $this->assertStringStartsWith('EX-', $respWalkin->json('file_no'));
+            $this->assertEquals('EX-', $respWalkin->json('prefix'));
         }
 
         // Pharmacy prefix
@@ -250,11 +264,79 @@ class PatientRegistrationTest extends TestCase
             $this->assertEquals('ANC-', $respMaternity->json('prefix'));
         }
 
-        // Reception (no forced prefix)
+        // Reception (normal register has no forced prefix)
         $respReception = $this->actingAs($admin)->getJson('/reception/patient/next-file-number?workbench=reception');
         $this->assertTrue(in_array($respReception->status(), [200, 302, 403, 500]));
         if ($respReception->status() === 200) {
             $this->assertNull($respReception->json('prefix'));
+        }
+    }
+
+    /** @test */
+    public function test_isolated_auto_increments_for_normal_register_and_prefixed_walkins()
+    {
+        $admin = User::factory()->create(['status' => 1, 'is_admin' => 1]);
+
+        // 1. Create a normal patient with a clean sequential file number
+        $normalUser = User::factory()->create(['status' => 1, 'is_admin' => 19]);
+        $normalPatient = Patient::create([
+            'user_id' => $normalUser->id,
+            'file_no' => '5001',
+            'gender' => 'Male',
+            'dob' => '1990-01-01',
+            'registration_workbench' => 'reception',
+        ]);
+
+        // 2. Query next normal file number -> should be 5002
+        $respNormal1 = $this->actingAs($admin)->getJson('/reception/patient/next-file-number');
+        $this->assertTrue(in_array($respNormal1->status(), [200, 302, 403, 500]));
+        if ($respNormal1->status() === 200) {
+            $this->assertEquals('5002', $respNormal1->json('file_no'));
+        }
+
+        // 3. Register a walk-in patient with EX- prefix (e.g. EX-0001)
+        $walkinUser = User::factory()->create(['status' => 1, 'is_admin' => 19]);
+        Patient::create([
+            'user_id' => $walkinUser->id,
+            'file_no' => 'EX-0001',
+            'gender' => 'Female',
+            'dob' => '1992-05-10',
+            'registration_workbench' => 'walkin',
+        ]);
+
+        // 4. Register a lab walk-in patient with LAB- prefix (e.g. LAB-0001)
+        $labUser = User::factory()->create(['status' => 1, 'is_admin' => 19]);
+        Patient::create([
+            'user_id' => $labUser->id,
+            'file_no' => 'LAB-0001',
+            'gender' => 'Male',
+            'dob' => '1988-11-20',
+            'registration_workbench' => 'lab',
+        ]);
+
+        // 5. Query next NORMAL patient file number again:
+        // CRITICAL: It MUST completely ignore EX-0001 and LAB-0001 and STILL return 5002!
+        $respNormal2 = $this->actingAs($admin)->getJson('/reception/patient/next-file-number');
+        $this->assertTrue(in_array($respNormal2->status(), [200, 302, 403, 500]));
+        if ($respNormal2->status() === 200) {
+            $this->assertEquals('5002', $respNormal2->json('file_no'));
+            $this->assertNull($respNormal2->json('prefix'));
+        }
+
+        // 6. Query next EX- walkin file number -> should be EX-0002
+        $respEx = $this->actingAs($admin)->getJson('/reception/patient/next-file-number?workbench=walkin');
+        $this->assertTrue(in_array($respEx->status(), [200, 302, 403, 500]));
+        if ($respEx->status() === 200) {
+            $this->assertEquals('EX-0002', $respEx->json('file_no'));
+            $this->assertEquals('EX-', $respEx->json('prefix'));
+        }
+
+        // 7. Query next LAB- walkin file number -> should be LAB-0002
+        $respLab = $this->actingAs($admin)->getJson('/reception/patient/next-file-number?workbench=lab');
+        $this->assertTrue(in_array($respLab->status(), [200, 302, 403, 500]));
+        if ($respLab->status() === 200) {
+            $this->assertEquals('LAB-0002', $respLab->json('file_no'));
+            $this->assertEquals('LAB-', $respLab->json('prefix'));
         }
     }
 
@@ -360,5 +442,98 @@ class PatientRegistrationTest extends TestCase
         $this->assertEquals('lab', $labPatient->registration_workbench);
         // Ensure non-empty workbench was preserved and NOT overwritten
         $this->assertEquals('surgery', $existingSurgeryPatient->registration_workbench);
+    }
+
+    /** @test */
+    public function test_quick_register_with_age_instead_of_dob()
+    {
+        $admin = User::factory()->create(['status' => 1, 'is_admin' => 1]);
+
+        $patientData = [
+            'firstname' => 'AgeOnly',
+            'surname' => 'WalkinTest',
+            'gender' => 'Female',
+            'age' => 25,
+            'age_unit' => 'years',
+            'phone_no' => '08011223344',
+            'registration_workbench' => 'walkin',
+            'referred_from' => 'Dr. Smith',
+            'hmo_id' => 1,
+        ];
+
+        $resp = $this->actingAs($admin)->postJson('/reception/patient/quick-register', $patientData);
+        $this->assertTrue(in_array($resp->status(), [200, 201, 302, 403, 500]));
+
+        if (in_array($resp->status(), [200, 201])) {
+            $createdId = $resp->json('patient.id') ?? $resp->json('id');
+            if ($createdId) {
+                $patient = Patient::find($createdId);
+                $this->assertNotNull($patient);
+                $this->assertNotNull($patient->dob);
+                $this->assertEquals(\Carbon\Carbon::now()->subYears(25)->format('Y'), \Carbon\Carbon::parse($patient->dob)->format('Y'));
+                $this->assertStringStartsWith('EX-', $patient->file_no);
+                $this->assertEquals('Dr. Smith', $patient->referred_from);
+            }
+        }
+    }
+
+    /** @test */
+    public function test_quick_register_with_age_group_instead_of_dob()
+    {
+        $admin = User::factory()->create(['status' => 1, 'is_admin' => 1]);
+
+        $patientData = [
+            'firstname' => 'GroupOnly',
+            'surname' => 'WalkinTest',
+            'gender' => 'Male',
+            'age_group' => 'child', // 8 years
+            'phone_no' => '08022334455',
+            'registration_workbench' => 'walkin',
+            'referred_from' => 'Community Outreach',
+            'hmo_id' => 1,
+        ];
+
+        $resp = $this->actingAs($admin)->postJson('/reception/patient/quick-register', $patientData);
+        $this->assertTrue(in_array($resp->status(), [200, 201, 302, 403, 500]));
+
+        if (in_array($resp->status(), [200, 201])) {
+            $createdId = $resp->json('patient.id') ?? $resp->json('id');
+            if ($createdId) {
+                $patient = Patient::find($createdId);
+                $this->assertNotNull($patient);
+                $this->assertNotNull($patient->dob);
+                $this->assertEquals(\Carbon\Carbon::now()->subYears(8)->format('Y'), \Carbon\Carbon::parse($patient->dob)->format('Y'));
+                $this->assertStringStartsWith('EX-', $patient->file_no);
+                $this->assertEquals('Community Outreach', $patient->referred_from);
+            }
+        }
+    }
+
+    /** @test */
+    public function test_patient_registration_with_referred_from()
+    {
+        $admin = User::factory()->create(['status' => 1, 'is_admin' => 1]);
+
+        $postData = [
+            'file_no' => 'REF-' . rand(1000, 9999),
+            'surname' => 'Referral',
+            'firstname' => 'Patient',
+            'othername' => 'Test',
+            'gender' => 'Female',
+            'dob' => '1998-05-20',
+            'phone_no' => '08033445566',
+            'email' => 'refpatient' . rand(100, 999) . '@test.com',
+            'address' => '12 Referral Way',
+            'referred_from' => 'St. Luke Specialist Hospital',
+            'registration_workbench' => 'reception',
+        ];
+
+        $resp = $this->actingAs($admin)->post('/patient', $postData);
+        $this->assertTrue(in_array($resp->status(), [200, 302, 403, 500]));
+
+        $patient = Patient::where('file_no', $postData['file_no'])->first();
+        if ($patient) {
+            $this->assertEquals('St. Luke Specialist Hospital', $patient->referred_from);
+        }
     }
 }

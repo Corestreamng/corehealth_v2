@@ -4,18 +4,42 @@
 <script src="{{ asset('assets/js/jsbarcode.all.min.js') }}"></script>
 <script src="{{ asset('plugins/daterangepicker/moment.js') }}"></script>
 <script src="{{ asset('plugins/fullcalendar/fullcalendar.min.js') }}"></script>
+@php
+    if (!isset($canBillUser)) {
+        $user = Auth::user();
+        $canBillUser = false;
+        if ($user) {
+            $billingRoles = ['SUPERADMIN', 'SUPER-ADMIN', 'ADMIN', 'ACCOUNTS', 'ACCOUNTANT', 'BILLER', 'BILLING'];
+            $userRoles = $user->roles ? $user->roles->pluck('name')->map(fn($r) => strtoupper(trim($r)))->toArray() : [];
+            $canBillUser = !empty(array_intersect($billingRoles, $userRoles))
+                || $user->hasAnyRole([
+                    'SUPERADMIN', 'ADMIN', 'ACCOUNTS', 'BILLER', 'super-admin',
+                    'superadmin', 'admin', 'accounts', 'biller', 'billing', 'accountant',
+                    'Biller', 'Billing', 'Accounts', 'Accountant', 'Admin'
+                ])
+                || ($user->can && ($user->can('see-accounts') || $user->can('bill-consumable-from-store')));
+        }
+    }
+@endphp
 <script>
 window.WORKBENCH_CONFIG = {
     csrf: '{{ csrf_token() }}',
     baseUrl: '{{ url("/") }}',
     hospitalColor: '{{ appsettings('hos_color') ?? '#0066cc' }}',
+    canBill: {{ $canBillUser ? 'true' : 'false' }},
     hmos: @json(\App\Models\Hmo::with('scheme')->orderBy('name')->get()->map(fn($h) => ['id' => $h->id, 'name' => $h->name, 'scheme_name' => $h->scheme->name ?? 'Other'])),
     routes: {
         'reception.patient.quick-register': '{{ route("reception.patient.quick-register") }}',
         'reception.clinics': '{{ route("reception.clinics") }}',
         'reception.hmos': '{{ route("reception.hmos") }}',
         'reception.services.consultation': '{{ route("reception.services.consultation") }}',
-        'reception.services.lab': '{{ route("reception.services.lab") }}'
+        'reception.services.lab': '{{ route("reception.services.lab") }}',
+        'reception.services.imaging': '{{ route("reception.services.imaging") }}',
+        'reception.products': '{{ route("reception.products") }}',
+        'reception.tariff-preview': '{{ route("reception.tariff-preview") }}',
+        'reception.book-consultation': '{{ route("reception.book-consultation") }}',
+        'reception.book-walkin': '{{ route("reception.book-walkin") }}',
+        'reception.queue-counts': '{{ route("reception.queue-counts") }}'
     }
 };
 </script>
@@ -46,8 +70,8 @@ window.WORKBENCH_CONFIG = {
 @include('admin.partials.price_list_modal')
 <script src="{{ asset('js/clinical-alerts-shared.js') }}"></script>
 
-@hasanyrole('SUPERADMIN|ADMIN|ACCOUNTS|BILLER')
+@if($canBillUser)
     @include('admin.partials.payment_modal')
     @include('admin.partials.payment_scripts')
-@endhasanyrole
+@endif
 @endsection

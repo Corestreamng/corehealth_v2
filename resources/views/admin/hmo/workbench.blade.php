@@ -491,11 +491,20 @@
                 <button class="btn btn-primary btn-sm" onclick="showPatientFormModal('create')" title="Register Patient">
                     <i class="mdi mdi-account-plus"></i> New Patient
                 </button>
+                <button class="btn btn-outline-primary btn-sm" onclick="showPatientFormModal('create'); if(typeof enableWalkInMode==='function'){enableWalkInMode('HMO-');}" title="Register Walk-in Patient">
+                    <i class="mdi mdi-account-plus-outline"></i> Register Walk-in
+                </button>
                 @if(appsettings()->enable_ei_hmo)
-<button class="btn btn-danger btn-sm" onclick="showEmergencyIntakeModal()">
+                <button class="btn btn-danger btn-sm" onclick="showEmergencyIntakeModal()" title="Emergency Intake">
                     <i class="mdi mdi-ambulance"></i> Emergency Intake
                 </button>
-@endif
+                @endif
+                <button class="btn btn-outline-info btn-sm" data-bs-toggle="modal" data-bs-target="#hospital-contacts-modal" title="Hospital Contacts">
+                    <i class="mdi mdi-contacts"></i> Contacts
+                </button>
+                <button class="btn btn-outline-success btn-sm" data-bs-toggle="modal" data-bs-target="#workbench-price-list-modal" title="Price List">
+                    <i class="mdi mdi-currency-usd"></i> Price List
+                </button>
                 <span><i class="mdi mdi-calendar mr-1"></i>{{ date('l, F j, Y') }}</span>
             </div>
         </div>
@@ -1223,6 +1232,8 @@
 @include('admin.partials.clinical_context_modal')
 @include('admin.partials.treatment-plan-viewer-modal')
 @include('admin.partials.patient-form-modal')
+@include('admin.partials.hospital_contacts_modal')
+@include('admin.partials.price_list_modal')
 
 {{-- View Details Modal --}}
 @include('admin.hmo.partials._modals')

@@ -66,7 +66,9 @@ const WORKBENCH_PREFIX_MAP = {
     'hmo': 'HMO-',
     'surgery': 'SURG-',
     'morgue': 'MOR-',
-    'doctor': 'DOC-'
+    'doctor': 'DOC-',
+    'walkin': 'EX-',
+    'reception_walkin': 'EX-'
 };
 
 function getWorkbenchPrefix(wb) {
@@ -136,14 +138,17 @@ function resetPatientForm() {
     $('#patient-form-id').val('');
     $('#patient-form-mode').val('create');
 
-    // Reset age/DOB toggle to Age mode
+    // Reset age/DOB toggle to DOB mode (default)
     $('.pf-adt-btn').removeClass('active');
-    $('.pf-adt-btn[data-mode="age"]').addClass('active');
-    $('.pf-age-dob-wrapper').removeClass('mode-dob').addClass('mode-age');
+    $('.pf-adt-btn[data-mode="dob"]').addClass('active');
+    $('.pf-age-dob-wrapper').removeClass('mode-age mode-age_group').addClass('mode-dob');
     $('#pf-age-val').val('');
     $('#pf-age-unit').val('years');
+    $('#pf-age-group-select').val('');
     $('#pf-age-dob-hint').html('');
+    $('#pf-age-group-hint').html('');
     $('#pf-age-dob-error').hide().text('');
+    $('#pf-referred-from').val('');
 
     // Reset duplicate detection
     _dupDismissed = false;
@@ -643,13 +648,14 @@ function populatePatientForm(data) {
         // Switch to DOB mode for edit since we have an exact date
         $('.pf-adt-btn').removeClass('active');
         $('.pf-adt-btn[data-mode="dob"]').addClass('active');
-        $('.pf-age-dob-wrapper').removeClass('mode-age').addClass('mode-dob');
+        $('.pf-age-dob-wrapper').removeClass('mode-age mode-age_group').addClass('mode-dob');
         updatePatientFormAge();
     }
 
     $('#pf-phone').val(data.phone_no || '');
     $('#pf-email').val(data.email || '');
     $('#pf-address').val(data.address || '');
+    $('#pf-referred-from').val(data.referred_from || '');
 
     // Medical info
     $('#pf-blood-group').val(data.blood_group || '');
@@ -865,14 +871,18 @@ function validatePatientFormStep(step) {
             var $ageWrapper = $('.pf-age-dob-wrapper');
             if ($ageWrapper.hasClass('mode-age')) {
                 $('#pf-age-val').addClass('is-invalid');
+            } else if ($ageWrapper.hasClass('mode-age_group')) {
+                $('#pf-age-group-select').addClass('is-invalid');
             } else {
                 $('#pf-dob').addClass('is-invalid');
             }
-            $('#pf-age-dob-error').text('Enter age or date of birth').show();
+            $('#pf-age-dob-error').text('Enter date of birth, age, or age group').show();
             isValid = false;
         } else {
             if ($('.pf-age-dob-wrapper').hasClass('mode-age')) {
                 $('#pf-age-val').addClass('is-valid');
+            } else if ($('.pf-age-dob-wrapper').hasClass('mode-age_group')) {
+                $('#pf-age-group-select').addClass('is-valid');
             } else {
                 $('#pf-dob').addClass('is-valid');
             }
@@ -1005,6 +1015,7 @@ function updatePatientFormSummary() {
     $('#summary-phone').text($('#pf-phone').val() || 'N/A');
     $('#summary-email').text($('#pf-email').val() || 'N/A');
     $('#summary-address').text($('#pf-address').val().trim() || 'N/A');
+    $('#summary-referred-from').text($('#pf-referred-from').val().trim() || 'N/A');
 
     // Date of Birth & Age
     const dob = $('#pf-dob').val();
@@ -1147,6 +1158,7 @@ function submitPatientForm() {
     formData.append('phone_no', $('#pf-phone').val().trim());
     formData.append('email', $('#pf-email').val().trim());
     formData.append('address', $('#pf-address').val().trim());
+    formData.append('referred_from', $('#pf-referred-from').val().trim());
     formData.append('blood_group', $('#pf-blood-group').val());
     formData.append('genotype', $('#pf-genotype').val());
     formData.append('disability', $('#pf-disability').val());
@@ -1279,12 +1291,87 @@ $(document).ready(function() {
     // ---- Age / DOB Toggle Widget ----
     var _pfAgeDobSyncing = false; // prevent infinite loops
 
-    // Toggle between Age and DOB modes
+    function deriveAgeGroupKey(years, months, totalDays) {
+        if (totalDays <= 28) return 'neonate';
+        if (years === 0 && months < 12) return 'infant';
+        if (years >= 1 && years <= 4) return 'toddler';
+        if (years >= 5 && years <= 11) return 'child';
+        if (years >= 12 && years <= 17) return 'adolescent';
+        if (years >= 18 && years <= 35) return 'young_adult';
+        if (years >= 36 && years <= 55) return 'adult';
+        if (years >= 56 && years <= 64) return 'older_adult';
+        if (years >= 65) return 'elderly';
+        return '';
+    }
+
+    // Quick referral source chip click handler
+    $(document).on('click', '.pf-ref-chip', function() {
+        var val = $(this).data('val');
+        var $input = $('#pf-referred-from');
+        $input.val(val).focus();
+    });
+
+    // Toggle between DOB, Age and Age Group modes
     $(document).on('click', '.pf-adt-btn', function() {
         var mode = $(this).data('mode');
         $('.pf-adt-btn').removeClass('active');
         $(this).addClass('active');
-        $('.pf-age-dob-wrapper').removeClass('mode-age mode-dob').addClass('mode-' + mode);
+        $('.pf-age-dob-wrapper').removeClass('mode-age mode-dob mode-age_group').addClass('mode-' + mode);
+    });
+
+    // Age Group select changed → compute approximate DOB → sync
+    $(document).on('change', '#pf-age-group-select', function() {
+        if (_pfAgeDobSyncing) return;
+        _pfAgeDobSyncing = true;
+
+        var $opt = $(this).find('option:selected');
+        var val = $(this).val();
+        if (val) {
+            var d = new Date();
+            var years = parseInt($opt.data('years') || 0);
+            var months = parseInt($opt.data('months') || 0);
+            var days = parseInt($opt.data('days') || 0);
+
+            if (days > 0) {
+                d.setDate(d.getDate() - days);
+            } else if (months > 0) {
+                d.setMonth(d.getMonth() - months);
+            } else if (years > 0) {
+                d.setFullYear(d.getFullYear() - years);
+            }
+
+            var iso = d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+            $('#pf-dob').val(iso).removeClass('is-invalid');
+            $('#pf-age-group-select').removeClass('is-invalid');
+            $('#pf-age-dob-error').hide();
+
+            var label = $opt.text().split('(')[0].trim();
+            var hint = '≈ ' + d.getFullYear() + ' (' + label + ')';
+            $('#pf-age-group-hint').html('<span class="badge bg-light text-secondary">' + hint + '</span>');
+            $('#pf-age-dob-hint').html('<span class="badge bg-light text-secondary">' + hint + '</span>');
+
+            // Sync age numeric inputs
+            if (days > 0) {
+                $('#pf-age-val').val(days);
+                $('#pf-age-unit').val('days');
+            } else if (months > 0) {
+                $('#pf-age-val').val(months);
+                $('#pf-age-unit').val('months');
+            } else {
+                $('#pf-age-val').val(years);
+                $('#pf-age-unit').val('years');
+            }
+
+            updatePatientFormAge();
+            checkDuplicatePatient();
+        } else {
+            $('#pf-dob').val('');
+            $('#pf-age-group-hint').html('');
+            $('#pf-age-dob-hint').html('');
+            $('#pf-age-display').text('');
+            $('#pf-age-val').val('');
+        }
+        _pfAgeDobSyncing = false;
     });
 
     // Age input changed → compute DOB → sync
@@ -1294,30 +1381,47 @@ $(document).ready(function() {
 
         var val = parseInt($('#pf-age-val').val());
         var unit = $('#pf-age-unit').val();
-        if (!isNaN(val) && val>= 0) {
+        if (!isNaN(val) && val >= 0) {
             var d = new Date();
             if (unit === 'years') d.setFullYear(d.getFullYear() - val);
             else if (unit === 'months') d.setMonth(d.getMonth() - val);
             else if (unit === 'days') d.setDate(d.getDate() - val);
 
             var iso = d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
-            $('#pf-dob').val(iso);
+            $('#pf-dob').val(iso).removeClass('is-invalid');
+            $('#pf-age-val').removeClass('is-invalid');
+            $('#pf-age-dob-error').hide();
 
             // Show hint ≈ year
             var hint = unit === 'years' ? '≈ ' + d.getFullYear() : d.toLocaleDateString('en-GB', {day:'numeric', month:'short', year:'numeric'});
             $('#pf-age-dob-hint').html('<span class="badge bg-light text-secondary">' + hint + '</span>');
+
+            // Sync matching age group dropdown
+            var totalDays = unit === 'days' ? val : (unit === 'months' ? Math.round(val * 30.44) : val * 365);
+            var yrs = unit === 'years' ? val : (unit === 'months' ? Math.floor(val / 12) : Math.floor(val / 365));
+            var mos = unit === 'months' ? val : (unit === 'years' ? val * 12 : Math.floor(val / 30.44));
+            var agKey = deriveAgeGroupKey(yrs, mos, totalDays);
+            $('#pf-age-group-select').val(agKey);
+            if (agKey) {
+                var label = $('#pf-age-group-select option:selected').text().split('(')[0].trim();
+                $('#pf-age-group-hint').html('<span class="badge bg-light text-secondary">' + label + '</span>');
+            } else {
+                $('#pf-age-group-hint').html('');
+            }
 
             updatePatientFormAge();
             checkDuplicatePatient();
         } else {
             $('#pf-dob').val('');
             $('#pf-age-dob-hint').html('');
+            $('#pf-age-group-hint').html('');
+            $('#pf-age-group-select').val('');
             $('#pf-age-display').text('');
         }
         _pfAgeDobSyncing = false;
     });
 
-    // DOB change → update age display + back-sync to age input
+    // DOB change → update age display + back-sync to age input & age group select
     $(document).on('change', '#pf-dob', function() {
         updatePatientFormAge();
         checkDuplicatePatient();
@@ -1329,22 +1433,36 @@ $(document).ready(function() {
             var bd = new Date(dob), now = new Date();
             var diffMs = now - bd;
             var totalDays = Math.floor(diffMs / 86400000);
+            var yrs = now.getFullYear() - bd.getFullYear();
+            if (now.getMonth() < bd.getMonth() || (now.getMonth() === bd.getMonth() && now.getDate() < bd.getDate())) yrs--;
+            var mos = Math.floor(totalDays / 30.44);
+
             if (totalDays < 91) {
                 $('#pf-age-val').val(totalDays);
                 $('#pf-age-unit').val('days');
             } else if (totalDays < 730) {
-                $('#pf-age-val').val(Math.floor(totalDays / 30.44));
+                $('#pf-age-val').val(mos);
                 $('#pf-age-unit').val('months');
             } else {
-                var yrs = now.getFullYear() - bd.getFullYear();
-                if (now.getMonth() < bd.getMonth() || (now.getMonth() === bd.getMonth() && now.getDate() < bd.getDate())) yrs--;
                 $('#pf-age-val').val(yrs);
                 $('#pf-age-unit').val('years');
             }
             $('#pf-age-dob-hint').html('');
+
+            // Sync age group select
+            var agKey = deriveAgeGroupKey(yrs, mos, totalDays);
+            $('#pf-age-group-select').val(agKey);
+            if (agKey) {
+                var label = $('#pf-age-group-select option:selected').text().split('(')[0].trim();
+                $('#pf-age-group-hint').html('<span class="badge bg-light text-secondary">' + label + '</span>');
+            } else {
+                $('#pf-age-group-hint').html('');
+            }
         } else {
             $('#pf-age-val').val('');
+            $('#pf-age-group-select').val('');
             $('#pf-age-dob-hint').html('');
+            $('#pf-age-group-hint').html('');
         }
         _pfAgeDobSyncing = false;
 
@@ -1667,7 +1785,11 @@ function enableWalkInMode(prefix) {
 
     const wb = detectRegistrationWorkbench();
     if (!prefix) {
-        prefix = getWorkbenchPrefix(wb) || 'WALK-';
+        if (wb === 'reception' || wb === 'walkin') {
+            prefix = 'EX-';
+        } else {
+            prefix = getWorkbenchPrefix(wb) || 'EX-';
+        }
     }
     if (prefix === 'IMG-') prefix = 'RAD-';
 
@@ -1682,7 +1804,13 @@ function enableWalkInMode(prefix) {
 
 function generatePrefixedFileNumber(prefix, wb) {
     if (!wb) wb = detectRegistrationWorkbench();
-    if (!prefix) prefix = getWorkbenchPrefix(wb) || 'WALK-';
+    if (!prefix) {
+        if (wb === 'reception' || wb === 'walkin') {
+            prefix = 'EX-';
+        } else {
+            prefix = getWorkbenchPrefix(wb) || 'EX-';
+        }
+    }
     if (prefix === 'IMG-') prefix = 'RAD-';
 
     $('#pf-file-no').data('fixedPrefix', prefix);
@@ -2625,6 +2753,7 @@ function disableWalkInMode() {
             formData.append('phone_no', $('#pf-phone').val().trim());
             formData.append('email', $('#pf-email').val().trim());
             formData.append('address', $('#pf-address').val().trim());
+            formData.append('referred_from', $('#pf-referred-from').val().trim());
             formData.append('blood_group', $('#pf-blood-group').val());
             formData.append('genotype', $('#pf-genotype').val());
             formData.append('disability', $('#pf-disability').val());

@@ -23,7 +23,24 @@
                 @endif
             </p>
         </div>
-        <div class="d-flex gap-2 flex-wrap">
+        <div class="d-flex gap-2 flex-wrap align-items-center">
+            <button type="button" class="btn btn-primary btn-sm" onclick="showPatientFormModal('create')" title="Register New Patient">
+                <i class="mdi mdi-account-plus"></i> New Patient
+            </button>
+            <button type="button" class="btn btn-outline-primary btn-sm" onclick="showPatientFormModal('create'); if(typeof enableWalkInMode==='function'){enableWalkInMode('DOC-');}" title="Register Walk-in Patient">
+                <i class="mdi mdi-account-plus-outline"></i> Register Walk-in
+            </button>
+            @if($isDoctor && appsettings()->enable_ei_doctor)
+            <button class="btn btn-danger btn-sm" onclick="showEmergencyIntakeModal()" title="Emergency Intake">
+                <i class="mdi mdi-ambulance"></i> Emergency Intake
+            </button>
+            @endif
+            <button class="btn btn-outline-info btn-sm" data-bs-toggle="modal" data-bs-target="#hospital-contacts-modal" title="Hospital Contacts">
+                <i class="mdi mdi-contacts"></i> Contacts
+            </button>
+            <button class="btn btn-outline-success btn-sm" data-bs-toggle="modal" data-bs-target="#workbench-price-list-modal" title="Price List">
+                <i class="mdi mdi-currency-usd"></i> Price List
+            </button>
             <button class="btn btn-outline-secondary btn-sm" id="ewb-btn-export" title="Export CSV">
                 <i class="mdi mdi-download"></i> Export
             </button>

@@ -43,4 +43,6 @@
 ])
 <script src="{{ versioned_asset('js/imaging-core.js') }}"></script>
 <script src="{{ versioned_asset('js/imaging-results.js') }}"></script>
+@include('admin.partials.hospital_contacts_modal')
+@include('admin.partials.price_list_modal')
 @endsection

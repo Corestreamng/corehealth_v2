@@ -3094,3 +3094,86 @@
         background: #f8f9fa;
         border-radius: 0.5rem;
     }
+
+    /* Multi-select Billing Bars in Reception Recent Panes */
+    .recent-requests-billing-bar,
+    .booking-queue-billing-bar {
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        border-radius: 6px;
+        padding: 8px 12px;
+        margin-bottom: 10px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+    }
+
+    .recent-requests-billing-bar .btn-pay-selected,
+    .booking-queue-billing-bar .btn-pay-selected {
+        font-weight: 600;
+        box-shadow: 0 2px 4px rgba(40, 167, 69, 0.2);
+    }
+
+    .recent-request-item.is-unpaid {
+        border-left: 3px solid #ffc107;
+        background-color: rgba(255, 193, 7, 0.03);
+    }
+
+    .recent-request-item.is-paid {
+        border-left: 3px solid #28a745;
+    }
+
+    .walkin-unpaid-checkbox-wrapper,
+    .booking-unpaid-checkbox-wrapper {
+        display: inline-flex;
+        align-items: center;
+        margin-right: 8px;
+    }
+
+    .walkin-unpaid-checkbox-wrapper input[type="checkbox"],
+    .booking-unpaid-checkbox-wrapper input[type="checkbox"] {
+        width: 17px;
+        height: 17px;
+        cursor: pointer;
+    }
+
+    .btn-pay-single-walkin,
+    .btn-pay-single-booking,
+    .btn-discard-recent-request {
+        font-size: 0.72rem;
+        padding: 0.2rem 0.5rem;
+        border-radius: 4px;
+        font-weight: 600;
+    }
+
+    /* Reception Quick Register Age / DOB / Age Group Toggle */
+    .qr-age-dob-toggle {
+        display: inline-flex;
+        background: #e9ecef;
+        border-radius: 6px;
+        padding: 2px;
+        gap: 2px;
+        vertical-align: middle;
+    }
+    .qr-age-dob-toggle .qr-adt-btn {
+        font-size: 0.72rem;
+        font-weight: 600;
+        padding: 1px 8px;
+        border: none;
+        border-radius: 5px;
+        background: transparent;
+        color: #6c757d;
+        cursor: pointer;
+        transition: all 0.15s;
+        line-height: 1.6;
+    }
+    .qr-age-dob-toggle .qr-adt-btn.active {
+        background: #fff;
+        color: var(--hospital-primary, #28a745);
+        box-shadow: 0 1px 3px rgba(0,0,0,.12);
+    }
+    .qr-age-hint .badge {
+        font-weight: 500;
+        font-size: 0.72rem;
+    }
