@@ -210,7 +210,7 @@
     <div class="modal-dialog modal-lg" role="document">
         <div class="modal-content">
             <div class="modal-header bg-success text-white">
-                <h5 class="modal-title"><i class="mdi mdi-account-plus"></i> Quick Patient Registration</h5>
+                <h5 class="modal-title"><i class="mdi mdi-account-plus"></i> Register Walk-in Patient</h5>
                 <button type="button" data-bs-dismiss="modal" class="btn-close text-white btn-close-white" aria-label="Close"></button>
             </div>
             <form id="quick-register-form">
@@ -235,7 +235,7 @@
                                         <i class="mdi mdi-refresh"></i>
                                     </button>
                                 </div>
-                                <input type="text" class="form-control file-no-input" id="quick-register-file-no" readonly placeholder="Auto-generated">
+                                <input type="text" class="form-control file-no-input" id="quick-register-file-no" readonly placeholder="Auto-generated (e.g. EX-0001)">
                                 <!-- Info panel showing format and recent numbers -->
                                 <div class="file-no-info-panel" id="qr-file-no-info">
                                     <div class="format-display">
@@ -285,9 +285,49 @@
                             </div>
                         </div>
                         <div class="col-md-4">
-                            <div class="form-group">
-                                <label>Date of Birth</label>
-                                <input type="date" class="form-control" id="quick-register-dob">
+                            <div class="form-group mb-3">
+                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                    <label class="form-label mb-0">Age / DOB <span class="text-danger">*</span></label>
+                                    <span class="qr-age-dob-toggle">
+                                        <button type="button" class="qr-adt-btn active" data-mode="age">Age</button>
+                                        <button type="button" class="qr-adt-btn" data-mode="age_group">Group</button>
+                                        <button type="button" class="qr-adt-btn" data-mode="dob">DOB</button>
+                                    </span>
+                                </div>
+                                <div class="qr-age-dob-wrapper mode-age">
+                                    {{-- Age mode (default for quick walk-in) --}}
+                                    <div class="qr-age-panel">
+                                        <div class="input-group">
+                                            <input type="number" class="form-control" id="quick-register-age-val" min="0" max="130" placeholder="Age" inputmode="numeric">
+                                            <select class="form-select form-control" id="quick-register-age-unit" style="max-width: 80px;">
+                                                <option value="years" selected>yrs</option>
+                                                <option value="months">mos</option>
+                                                <option value="days">days</option>
+                                            </select>
+                                        </div>
+                                        <div class="qr-age-hint text-muted mt-1" id="quick-register-age-hint" style="font-size: 0.75rem;"></div>
+                                    </div>
+                                    {{-- Age Group mode --}}
+                                    <div class="qr-age-group-panel" style="display: none;">
+                                        <select class="form-select form-control" id="quick-register-age-group">
+                                            <option value="">Select Age Group</option>
+                                            <option value="neonate" data-days="14" data-years="0">Neonate (0 - 28 days)</option>
+                                            <option value="infant" data-months="6" data-years="0">Infant (1 - 11 months)</option>
+                                            <option value="toddler" data-years="3">Toddler (1 - 4 years)</option>
+                                            <option value="child" data-years="8">Child (5 - 11 years)</option>
+                                            <option value="adolescent" data-years="15">Adolescent (12 - 17 years)</option>
+                                            <option value="young_adult" data-years="25">Young Adult (18 - 35 years)</option>
+                                            <option value="adult" data-years="45">Adult (36 - 55 years)</option>
+                                            <option value="older_adult" data-years="60">Older Adult (56 - 64 years)</option>
+                                            <option value="elderly" data-years="70">Elderly (65+ years)</option>
+                                        </select>
+                                        <div class="qr-age-hint text-muted mt-1" id="quick-register-age-group-hint" style="font-size: 0.75rem;"></div>
+                                    </div>
+                                    {{-- DOB mode --}}
+                                    <div class="qr-dob-panel" style="display: none;">
+                                        <input type="date" class="form-control" id="quick-register-dob">
+                                    </div>
+                                </div>
                             </div>
                         </div>
                         <div class="col-md-4">
@@ -304,6 +344,40 @@
                             <div class="form-group">
                                 <label>HMO Number</label>
                                 <input type="text" class="form-control" id="quick-register-hmo-no" placeholder="Enter HMO enrollment number">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-12">
+                            <div class="form-group mb-2">
+                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                    <label class="form-label mb-0"><i class="mdi mdi-account-arrow-right text-success me-1"></i> Referred From</label>
+                                    <span class="text-muted" style="font-size: 0.72rem;">Who referred the patient to us?</span>
+                                </div>
+                                <div class="input-group">
+                                    <span class="input-group-text bg-light"><i class="mdi mdi-account-switch-outline"></i></span>
+                                    <input type="text" class="form-control" id="quick-register-referred-from" list="qr-referred-from-suggestions" placeholder="e.g. Dr. Okon, St. Luke Clinic, Self / Walk-in, Family / Friend, Outreach...">
+                                </div>
+                                <datalist id="qr-referred-from-suggestions">
+                                    <option value="Self / Walk-in">
+                                    <option value="Family / Friend">
+                                    <option value="Doctor / Physician">
+                                    <option value="Hospital / Clinic">
+                                    <option value="Primary Health Centre (PHC)">
+                                    <option value="Community Outreach">
+                                    <option value="Company / Corporate Partner">
+                                    <option value="HMO Partner">
+                                    <option value="Church / Religious Org">
+                                    <option value="School / Institution">
+                                </datalist>
+                                <div class="d-flex flex-wrap gap-1 mt-1 qr-referral-chips">
+                                    <span class="badge bg-light text-secondary border qr-ref-chip" role="button" data-val="Self / Walk-in" style="cursor: pointer;">Self</span>
+                                    <span class="badge bg-light text-secondary border qr-ref-chip" role="button" data-val="Family / Friend" style="cursor: pointer;">Family/Friend</span>
+                                    <span class="badge bg-light text-secondary border qr-ref-chip" role="button" data-val="Dr. " style="cursor: pointer;">Doctor</span>
+                                    <span class="badge bg-light text-secondary border qr-ref-chip" role="button" data-val="Hospital / Clinic: " style="cursor: pointer;">Hospital/Clinic</span>
+                                    <span class="badge bg-light text-secondary border qr-ref-chip" role="button" data-val="Community Outreach" style="cursor: pointer;">Outreach</span>
+                                    <span class="badge bg-light text-secondary border qr-ref-chip" role="button" data-val="Company / Corporate" style="cursor: pointer;">Corporate</span>
+                                </div>
                             </div>
                         </div>
                     </div>

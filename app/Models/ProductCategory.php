@@ -12,11 +12,11 @@ class ProductCategory extends Model implements Auditable
     use \OwenIt\Auditing\Auditable;
 
     protected $fillable = [
-            'category_name',
-            'category_code',
-            'category_description',
-            'status_id',
-        ];
+        'category_name',
+        'category_code',
+        'category_description',
+        'status',
+    ];
 
     public function products()
     {

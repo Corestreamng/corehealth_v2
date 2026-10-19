@@ -116,10 +116,6 @@ $sett = appsettings();
 
         <div class="quick-actions">
             <h6><i class="mdi mdi-flash text-warning"></i> QUICK ACTIONS</h6>
-            <button class="quick-action-btn" id="btn-register-walkin">
-                <i class="mdi mdi-account-plus text-success"></i>
-                <span>Register Walk-in</span>
-            </button>
             <button class="quick-action-btn" id="btn-enroll-patient">
                 <i class="mdi mdi-clipboard-plus text-primary"></i>
                 <span>New Enrollment</span>
@@ -174,6 +170,18 @@ $sett = appsettings();
             <div class="workspace-navbar-actions">
                 <button class="btn-toggle-search" id="btn-toggle-search">
                     <i class="fa fa-bars"></i>
+                </button>
+                <button type="button" class="btn btn-primary" id="btn-maternity-new-patient" onclick="showPatientFormModal('create')" title="Register New Patient">
+                    <i class="mdi mdi-account-plus"></i> New Patient
+                </button>
+                <button type="button" class="btn btn-outline-primary" id="btn-register-walkin" onclick="if(typeof openWalkInRegistration==='function'){openWalkInRegistration();}else{showPatientFormModal('create');enableWalkInMode('ANC-');}" title="Register Walk-in Patient">
+                    <i class="mdi mdi-account-plus-outline"></i> Register Walk-in
+                </button>
+                <button class="btn btn-outline-info" data-bs-toggle="modal" data-bs-target="#hospital-contacts-modal" title="Hospital Contacts">
+                    <i class="mdi mdi-contacts"></i> Contacts
+                </button>
+                <button class="btn btn-outline-success" data-bs-toggle="modal" data-bs-target="#workbench-price-list-modal" title="Price List">
+                    <i class="mdi mdi-currency-usd"></i> Price List
                 </button>
                 <button class="btn-clinical-context" id="btn-clinical-context" disabled title="Select a patient first">
                     <i class="fa fa-heartbeat"></i> Clinical Context

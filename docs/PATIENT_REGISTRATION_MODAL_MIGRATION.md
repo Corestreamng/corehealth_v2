@@ -118,9 +118,50 @@ Migration `database/migrations/2026_10_16_101455_add_registration_workbench_to_p
      - `test_get_next_file_number_with_workbench_prefix`: Asserts prefix scoping in `/reception/patient/next-file-number`.
      - `test_patient_store_enforces_workbench_prefix`: Asserts backend prefix enforcement when manual input omits prefix.
      - `test_smart_backfill_resolves_prefixes`: Asserts prefix backfilling and preservation of existing non-empty workbenches.
-   - Result: **12/12 tests passing (69 assertions)**.
+     - `test_isolated_auto_increments_for_normal_register_and_prefixed_walkins`: Asserts isolated auto-increments between normal patients and prefixed walk-ins (`EX-`, `LAB-`).
+     - `test_quick_register_with_age_instead_of_dob`: Asserts quick walk-in registration using age and age unit.
+     - `test_quick_register_with_age_group_instead_of_dob`: Asserts quick walk-in registration using clinical age group.
+     - `test_patient_registration_with_referred_from`: Asserts storage and persistence of `referred_from`.
+   - Result: **16/16 tests passing (90 assertions)**.
 2. **Code Style & Linting**:
-   - `composer lint` passed with **0 violations across 1,292 files** (strict PSR-12 standard).
+   - `composer lint` passed with **0 violations across 1,295 files** (strict PSR-12 standard).
 3. **Frontend Verification**:
-   - Verified via `node --check` across `public/js/patient-form-modal.js`, `public/js/imaging-results.js`, `public/js/reception-core.js`, `public/js/billing-core.js`, `public/js/pharmacy-dispensing.js`, `public/js/lab-core.js`, `public/js/imaging-core.js`, `public/js/nursing-core.js`, `public/js/maternity-core.js`, and `public/js/hmo-workbench.js`.
+   - Verified via `node --check` across `public/js/patient-form-modal.js`, `public/js/reception-queue.js`, `public/js/imaging-results.js`, `public/js/reception-core.js`, `public/js/billing-core.js`, `public/js/pharmacy-dispensing.js`, `public/js/lab-core.js`, `public/js/imaging-core.js`, `public/js/nursing-core.js`, `public/js/maternity-core.js`, and `public/js/hmo-workbench.js`.
+
+---
+
+## 8. Isolated Auto-Increment Sequences for Walk-in Prefixes
+
+To prevent walk-in registrations from consuming or polluting normal hospital file numbers:
+- **Reception Walk-in Rebrand**: Reception "Quick Register" rebranded to "Register Walk-in Patient" using `EX-` prefix (`EX-0001`, `EX-0002`).
+- **Domain Prefixes**: Lab walk-in uses `LAB-`, Pharmacy uses `PHARM-`, Nursing uses `NUR-`, etc.
+- **Prefix Isolation Engine**:
+  - `Patient::getAllRecognizedPrefixes()` provides the authoritative list of recognized prefix patterns.
+  - Normal patient sequence queries explicitly exclude all recognized prefixes (`NOT LIKE 'LAB-%'`, `NOT LIKE 'EX-%'`, etc.), maintaining a pure contiguous sequence.
+  - Prefixed queries (`where('file_no', 'like', $prefix . '%')`) increment only within their own prefix namespace.
+
+---
+
+## 9. Age and Age Group Toggle Enhancements
+
+1. **Reception Walk-in Modal (`#quickRegisterModal`)**:
+   - Equipped with a 3-pill toggle (`Age`, `Group`, `DOB`).
+   - Defaults to `Age` mode for fast walk-in intake.
+   - When entering Age or selecting an Age Group (e.g. Neonate, Infant, Toddler, Child, Adolescent, Young Adult, Adult, Older Adult, Elderly), the system automatically calculates a representative DOB and stores it in `#quick-register-dob` with a visual approximate year badge.
+2. **Main Patient Modal (`#patientFormModal`)**:
+   - Defaults to `DOB` mode with `.mode-dob` and `.active` on the `DOB` pill.
+   - Includes a third pill for `Age Group` alongside `DOB` and `Age`.
+   - Full bidirectional synchronization between DOB, Age numeric/unit, and Age Group dropdown.
+
+---
+
+## 10. Intuitive "Referred From" Referral Source Tracking
+
+1. **Database Schema**:
+   - Migration `database/migrations/2026_10_19_120000_add_referred_from_to_patients_table.php` adds `referred_from VARCHAR(255) NULL` to `patients`.
+   - Added `referred_from` to `Patient::$fillable`.
+2. **Interactive UI**:
+   - Integrated into `#quickRegisterModal` and `#patientFormModal` (Step 1 and Step 4 Summary) as well as the full edit page (`admin.patients.edit`).
+   - Autocomplete suggestions powered by `<datalist>`: `Self / Walk-in`, `Family / Friend`, `Doctor / Physician`, `Hospital / Clinic`, `Primary Health Centre (PHC)`, `Community Outreach`, `Company / Corporate Partner`, `HMO Partner`, `Church / Religious Org`, `School / Institution`.
+   - Quick one-click chips (`Self`, `Family/Friend`, `Doctor`, `Hospital/Clinic`, `Outreach`, `Corporate`) allow rapid single-tap selection with immediate focus for additional custom physician or facility names.
 

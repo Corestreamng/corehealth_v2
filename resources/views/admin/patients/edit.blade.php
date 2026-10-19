@@ -294,6 +294,28 @@
                                     </div>
                                 </div>
                             </div>
+                        <div class="row">
+                            <div class="col-md-12">
+                                <div class="form-group">
+                                    <label for="referred_from">Referred From</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text"><i class="mdi mdi-account-arrow-right"></i></span>
+                                        <input type="text" name="referred_from" id="referred_from" class="form-control" list="edit-referred-from-suggestions" value="{{ !empty($patient->referred_from) ? $patient->referred_from : old('referred_from') }}" placeholder="e.g. Dr. Okon, St. Luke Clinic, Self / Walk-in, Family / Friend, Outreach...">
+                                    </div>
+                                    <datalist id="edit-referred-from-suggestions">
+                                        <option value="Self / Walk-in">
+                                        <option value="Family / Friend">
+                                        <option value="Doctor / Physician">
+                                        <option value="Hospital / Clinic">
+                                        <option value="Primary Health Centre (PHC)">
+                                        <option value="Community Outreach">
+                                        <option value="Company / Corporate Partner">
+                                        <option value="HMO Partner">
+                                        <option value="Church / Religious Org">
+                                        <option value="School / Institution">
+                                    </datalist>
+                                </div>
+                            </div>
                         </div>
                         <button type="button" onclick="switch_tab(event,'biodata_tab')" class="btn btn-secondary mr-2">
                             Prev </button>

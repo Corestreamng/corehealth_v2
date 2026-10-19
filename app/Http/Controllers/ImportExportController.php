@@ -16,6 +16,7 @@ use App\Models\Specialization;
 use App\Models\Staff;
 use App\Models\Stock;
 use App\Models\StockBatch;
+use App\Models\StockBatchTransaction;
 use App\Models\Store;
 use App\Models\StoreStock;
 use App\Models\User;
@@ -952,21 +953,33 @@ class ImportExportController extends Controller
                                 $storeQty = $storeStock->current_quantity;
                                 $unbatchedQty = max(0, $storeQty - $existingBatchQty);
                                 if ($unbatchedQty > 0) {
-                                    // Fall back to product buy price if cost_price is 0
-                                    $batchCost = $costPrice > 0 ? $costPrice : (Price::where('product_id', $productId)->value('pr_buy_price') ?? 0);
-                                    StockBatch::create([
+                                    $batchCost = $costPrice;
+                                    $batchNumber = !empty($row['batch_number']) ? trim($row['batch_number']) : ('BATCH-' . now()->format('Ymd') . '-' . strtoupper(Str::random(5)));
+                                    $expiryDate = !empty($row['expiry_date']) ? trim($row['expiry_date']) : now()->addYears(2)->format('Y-m-d');
+
+                                    $batch = StockBatch::create([
                                         'product_id' => $productId,
                                         'store_id' => $storeId,
-                                        'batch_name' => 'Import Reconciliation - ' . now()->format('M d, Y h:i A'),
-                                        'batch_number' => 'IMP-RECON-' . strtoupper(Str::random(6)),
+                                        'batch_name' => 'Opening Stock - ' . $batchNumber,
+                                        'batch_number' => $batchNumber,
                                         'initial_qty' => $unbatchedQty,
                                         'current_qty' => $unbatchedQty,
                                         'sold_qty' => 0,
                                         'cost_price' => $batchCost,
+                                        'expiry_date' => $expiryDate,
                                         'received_date' => now(),
-                                        'source' => 'manual',
+                                        'source' => StockBatch::SOURCE_OPENING_STOCK,
                                         'is_active' => true,
-                                        'created_by' => auth()->id(),
+                                        'created_by' => auth()->id() ?? 1,
+                                    ]);
+
+                                    StockBatchTransaction::create([
+                                        'stock_batch_id' => $batch->id,
+                                        'type' => StockBatchTransaction::TYPE_IN,
+                                        'qty' => $unbatchedQty,
+                                        'balance_after' => $unbatchedQty,
+                                        'notes' => 'Opening stock import reconciliation',
+                                        'performed_by' => auth()->id() ?? 1,
                                     ]);
                                 }
                             }
@@ -1040,21 +1053,33 @@ class ImportExportController extends Controller
 
                                 // Create a StockBatch so batch-aware dispensing works
                                 if ($initialQty > 0) {
-                                    // Fall back to product buy price if cost_price is 0
-                                    $batchCost = $costPrice > 0 ? $costPrice : (Price::where('product_id', $product->id)->value('pr_buy_price') ?? 0);
-                                    StockBatch::create([
+                                    $batchCost = $costPrice;
+                                    $batchNumber = !empty($row['batch_number']) ? trim($row['batch_number']) : ('BATCH-' . now()->format('Ymd') . '-' . strtoupper(Str::random(5)));
+                                    $expiryDate = !empty($row['expiry_date']) ? trim($row['expiry_date']) : now()->addYears(2)->format('Y-m-d');
+
+                                    $batch = StockBatch::create([
                                         'product_id' => $product->id,
                                         'store_id' => $storeId,
-                                        'batch_name' => 'Import - ' . now()->format('M d, Y h:i A'),
-                                        'batch_number' => 'IMP-' . strtoupper(Str::random(6)),
+                                        'batch_name' => 'Opening Stock - ' . $batchNumber,
+                                        'batch_number' => $batchNumber,
                                         'initial_qty' => $initialQty,
                                         'current_qty' => $initialQty,
                                         'sold_qty' => 0,
                                         'cost_price' => $batchCost,
+                                        'expiry_date' => $expiryDate,
                                         'received_date' => now(),
-                                        'source' => 'manual',
+                                        'source' => StockBatch::SOURCE_OPENING_STOCK,
                                         'is_active' => true,
-                                        'created_by' => auth()->id(),
+                                        'created_by' => auth()->id() ?? 1,
+                                    ]);
+
+                                    StockBatchTransaction::create([
+                                        'stock_batch_id' => $batch->id,
+                                        'type' => StockBatchTransaction::TYPE_IN,
+                                        'qty' => $initialQty,
+                                        'balance_after' => $initialQty,
+                                        'notes' => 'Opening stock import',
+                                        'performed_by' => auth()->id() ?? 1,
                                     ]);
                                 }
                             }

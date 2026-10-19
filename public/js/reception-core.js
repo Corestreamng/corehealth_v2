@@ -278,11 +278,16 @@ function initializeEventListeners() {
     // Walk-in Sales tab - Search and selection
     initializeWalkinSales();
 
-    // Walk-in search input
+    // Walk-in search input with debounce
     $('#walkin-search').on('input', function() {
-        const query = $(this).val().toLowerCase();
+        if (typeof walkinSearchDebounce !== 'undefined') clearTimeout(walkinSearchDebounce);
+        const query = $(this).val();
         const activeType = $('#walkin-subtabs .nav-link.active').data('type') || 'lab';
-        searchWalkinServices(query, activeType);
+        walkinSearchDebounce = setTimeout(function() {
+            if (typeof searchWalkinServices === 'function') {
+                searchWalkinServices(query, activeType);
+            }
+        }, 250);
     });
 
     // Walk-in subtab change
@@ -291,8 +296,10 @@ function initializeEventListeners() {
         const type = $(this).data('type');
         $('#walkin-subtabs .nav-link').removeClass('active');
         $(this).addClass('active');
-        const query = $('#walkin-search').val().toLowerCase();
-        searchWalkinServices(query, type);
+        const query = $('#walkin-search').val() || '';
+        if (typeof searchWalkinServices === 'function') {
+            searchWalkinServices(query, type);
+        }
     });
 
     // Quick Register form
@@ -342,6 +349,12 @@ function loadReferenceData() {
     // Load lab services
     $.get(wbRoute('reception.services.lab', '/reception/services/lab'), function(data) {
         cachedServices.lab = Array.isArray(data) ? data : (data.services || []);
+        if ($('#walkin-tab').hasClass('active')) {
+            const activeType = $('#walkin-subtabs .nav-link.active').data('type') || 'lab';
+            if (activeType === 'lab' && typeof searchWalkinServices === 'function') {
+                searchWalkinServices($('#walkin-search').val(), 'lab');
+            }
+        }
     });
 
     // Load imaging services
@@ -910,7 +923,10 @@ function renderQueueCards(entries) {
         // Payment / HMO Details
         let paymentBadge = '';
         let hmoDetails = '';
-        
+        const canBill = (window.WORKBENCH_CONFIG && window.WORKBENCH_CONFIG.canBill) || ($('#paymentModal').length > 0);
+        const payableAmount = parseFloat(entry.payable_amount || 0);
+        const isUnpaid = !entry.is_paid && entry.service_request_id && payableAmount > 0;
+
         if (entry.coverage_mode) {
             paymentBadge = `<span class="badge badge-info"><i class="mdi mdi-shield-check"></i> HMO Covered</span>`;
             hmoDetails = `<div class="mt-1" style="font-size:0.8rem; background:#f0f9ff; padding:4px 8px; border-radius:4px; border-left:3px solid #17a2b8;">
@@ -928,13 +944,32 @@ function renderQueueCards(entries) {
         const familyBadge = entry.is_family ? `<span class="badge badge-secondary ml-2" style="font-size:0.7rem;">Family Member</span>` : '';
         const serviceName = entry.service_name || 'Consultation';
 
+        const checkboxHtml = (canBill && isUnpaid) ? `
+            <div class="booking-unpaid-checkbox-wrapper align-self-center mr-2">
+                <input type="checkbox" class="booking-unpaid-item-checkbox" 
+                       data-service-request-id="${entry.service_request_id}" 
+                       data-payable="${payableAmount}" 
+                       data-name="${serviceName}">
+            </div>
+        ` : '';
+
+        const payBtnHtml = (canBill && isUnpaid) ? `
+            <button class="btn btn-outline-success btn-pay-single-booking ml-2" 
+                    data-service-request-id="${entry.service_request_id}" 
+                    data-payable="${payableAmount}" 
+                    title="Pay Now">
+                <i class="mdi mdi-cash"></i> Pay Now (₦${payableAmount.toLocaleString()})
+            </button>
+        ` : '';
+
         html += `
-            <div class="card-modern shadow-sm border-0 mb-0" style="border-radius: 8px;">
+            <div class="card-modern shadow-sm border-0 mb-0 ${isUnpaid ? 'is-unpaid' : (entry.is_paid ? 'is-paid' : '')}" style="border-radius: 8px;">
                 <div class="card-body p-3">
                     <div class="d-flex justify-content-between align-items-start">
-                        <div class="d-flex">
+                        <div class="d-flex align-items-start">
+                            ${checkboxHtml}
                             <div class="mr-3 mt-1 d-flex justify-content-center align-items-center text-white font-weight-bold" 
-                                style="width:40px; height:40px; border-radius:8px; background:${initialBg}; font-size:1.1rem;">
+                                style="width:40px; height:40px; border-radius:8px; background:${initialBg}; font-size:1.1rem; flex-shrink: 0;">
                                 ${initials}
                             </div>
                             <div>
@@ -956,8 +991,9 @@ function renderQueueCards(entries) {
                                 <h5 class="text-primary mb-0 font-weight-bold">Q-${entry.queue_no || 'N/A'}</h5>
                                 <div class="text-muted" style="font-size:0.75rem;">${entry.appointment_type} &bull; ${entry.created_at}</div>
                             </div>
-                            <div>
+                            <div class="d-flex justify-content-end align-items-center">
                                 ${paymentBadge}
+                                ${payBtnHtml}
                             </div>
                             <div class="mt-1">
                                 <span class="badge ${statusClass}">${statusText}</span>
@@ -999,13 +1035,31 @@ function loadBookingQueueEntries(patientId) {
     $.get(wbUrl(`reception/patient/${patientId}/queue`), function(data) {
         const $container = $('#booking-current-queue');
         const entries = Array.isArray(data) ? data : (data.entries || []);
-        $container.html(renderQueueCards(entries));
+        const canBill = (window.WORKBENCH_CONFIG && window.WORKBENCH_CONFIG.canBill) || ($('#paymentModal').length > 0);
+        const unpaidEntries = entries.filter(e => !e.is_paid && e.service_request_id && parseFloat(e.payable_amount || 0) > 0);
+
+        let toolbarHtml = '';
+        if (canBill && unpaidEntries.length > 0) {
+            toolbarHtml = `
+                <div class="booking-queue-billing-bar">
+                    <div class="custom-control custom-checkbox">
+                        <input type="checkbox" class="custom-control-input" id="booking-select-all-unpaid">
+                        <label class="custom-control-label font-weight-bold" for="booking-select-all-unpaid" style="font-size:0.85rem; cursor:pointer;">
+                            Select All Unpaid (<span id="booking-unpaid-count">${unpaidEntries.length}</span>)
+                        </label>
+                    </div>
+                    <button class="btn btn-sm btn-success btn-pay-selected" id="btn-pay-selected-booking" disabled>
+                        <i class="mdi mdi-cash-register"></i> Pay Selected (<span id="booking-selected-total">₦0</span>)
+                    </button>
+                </div>
+            `;
+        }
+
+        $container.html(toolbarHtml + renderQueueCards(entries));
     }).fail(function() {
         $('#booking-current-queue').html('<p class="text-muted text-danger">Failed to load queue entries</p>');
     });
 }
-
-
 
 // =============================================
 // WORKSPACE TABS
@@ -1020,6 +1074,23 @@ function switchWorkspaceTab(tab) {
     $(`#${tab}-tab`).addClass('active');
 
     // Tab-specific actions
+    if (tab === 'walkin') {
+        const activeType = $('#walkin-subtabs .nav-link.active').data('type') || 'lab';
+        const query = $('#walkin-search').val() || '';
+        if (typeof searchWalkinServices === 'function') {
+            searchWalkinServices(query, activeType);
+        }
+        if (currentPatient && typeof loadRecentRequests === 'function') {
+            loadRecentRequests();
+        }
+    }
+
+    if (tab === 'booking' && currentPatient) {
+        if (typeof loadBookingQueueEntries === 'function') {
+            loadBookingQueueEntries(currentPatient);
+        }
+    }
+
     if (tab === 'history' && currentPatient) {
         if (visitHistoryTable) {
             visitHistoryTable.ajax.reload();
@@ -1940,4 +2011,133 @@ function bookConsultation() {
         }
     });
 }
+
+// =============================================
+// BOOKING QUEUE BILLING HANDLERS
+// =============================================
+$(document).on('change', '#booking-select-all-unpaid', function() {
+    const isChecked = $(this).is(':checked');
+    $('.booking-unpaid-item-checkbox').prop('checked', isChecked);
+    updateBookingSelectedTotal();
+});
+
+$(document).on('change', '.booking-unpaid-item-checkbox', function() {
+    const total = $('.booking-unpaid-item-checkbox').length;
+    const checked = $('.booking-unpaid-item-checkbox:checked').length;
+    $('#booking-select-all-unpaid').prop('checked', total > 0 && total === checked);
+    updateBookingSelectedTotal();
+});
+
+function updateBookingSelectedTotal() {
+    let sum = 0;
+    let count = 0;
+    $('.booking-unpaid-item-checkbox:checked').each(function() {
+        sum += parseFloat($(this).data('payable')) || 0;
+        count++;
+    });
+
+    $('#booking-selected-total').text('₦' + sum.toLocaleString());
+    const $btn = $('#btn-pay-selected-booking');
+    if (count > 0 && sum > 0) {
+        $btn.prop('disabled', false);
+    } else {
+        $btn.prop('disabled', true);
+    }
+}
+
+$(document).on('click', '#btn-pay-selected-booking', function(e) {
+    e.preventDefault();
+    let checkoutItems = [];
+    let totalPayable = 0;
+
+    $('.booking-unpaid-item-checkbox:checked').each(function() {
+        const sId = $(this).data('service-request-id');
+        const payable = parseFloat($(this).data('payable')) || 0;
+        if (sId) {
+            checkoutItems.push({
+                id: sId,
+                qty: 1,
+                discount: 0
+            });
+            totalPayable += payable;
+        }
+    });
+
+    if (checkoutItems.length === 0) {
+        toastr.warning('Please select at least one unpaid booking');
+        return;
+    }
+
+    window.pendingPaymentItems = checkoutItems;
+    window.pendingPaymentPatientId = currentPatient;
+    $('#summary-total').text('₦' + totalPayable.toLocaleString());
+    $('#summary-subtotal').text('₦' + totalPayable.toLocaleString());
+    $('#modal-item-count').text(checkoutItems.length);
+    $('#paymentModal').modal('show');
+});
+
+$(document).on('click', '.btn-pay-single-booking', function(e) {
+    e.preventDefault();
+    const sId = $(this).data('service-request-id');
+    const payable = parseFloat($(this).data('payable')) || 0;
+
+    if (!sId) return;
+
+    window.pendingPaymentItems = [{
+        id: sId,
+        qty: 1,
+        discount: 0
+    }];
+    window.pendingPaymentPatientId = currentPatient;
+    $('#summary-total').text('₦' + payable.toLocaleString());
+    $('#summary-subtotal').text('₦' + payable.toLocaleString());
+    $('#modal-item-count').text(1);
+    $('#paymentModal').modal('show');
+});
+
+// =============================================
+// GLOBAL PAYMENT SUCCESS CALLBACK & STATE RELOAD
+// =============================================
+window.onPaymentSuccess = function() {
+    // 1. Reload queue counts in left panel sidebar
+    if (typeof loadQueueCounts === 'function') {
+        loadQueueCounts();
+    }
+
+    // 2. Reload queue list datatable if open
+    if (typeof queueDataTable !== 'undefined' && queueDataTable) {
+        queueDataTable.ajax.reload(null, false);
+    }
+
+    // 3. Reload current patient queue entries & bookings
+    if (typeof currentPatient !== 'undefined' && currentPatient) {
+        if (typeof loadPatientQueueEntries === 'function') {
+            loadPatientQueueEntries(currentPatient);
+        }
+        if (typeof loadBookingQueueEntries === 'function') {
+            loadBookingQueueEntries(currentPatient);
+        }
+        if (typeof loadRecentRequests === 'function') {
+            loadRecentRequests();
+        }
+        if (typeof reloadServiceRequestsData === 'function') {
+            reloadServiceRequestsData();
+        }
+        if (typeof loadPatientAppointments === 'function') {
+            loadPatientAppointments(currentPatient);
+        }
+        if (typeof loadPatientData === 'function') {
+            loadPatientData(currentPatient);
+        }
+    }
+
+    // 4. Trigger global event for other components
+    $(document).trigger('payment:completed');
+};
+
+$(document).on('payment:success', function() {
+    if (typeof window.onPaymentSuccess === 'function') {
+        window.onPaymentSuccess();
+    }
+});
 

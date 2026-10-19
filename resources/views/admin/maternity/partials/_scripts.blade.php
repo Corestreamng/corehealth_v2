@@ -71,4 +71,6 @@ window.INVEST_RES_SOURCE = 'maternity';
 <script src="{{ versioned_asset('js/maternity-core.js') }}"></script>
 <script src="{{ versioned_asset('js/maternity-anc.js') }}"></script>
 <script src="{{ versioned_asset('js/maternity-delivery.js') }}"></script>
+@include('admin.partials.hospital_contacts_modal')
+@include('admin.partials.price_list_modal')
 @endsection

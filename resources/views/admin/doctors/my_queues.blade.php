@@ -503,13 +503,25 @@
                     </button>
                 </li>
             </ul>
-            @if(appsettings()->enable_ei_doctor)
-            <div class="py-1 pe-2">
-                <button class="btn btn-danger btn-sm font-weight-bold shadow-sm" onclick="showEmergencyIntakeModal()">
+            <div class="py-1 pe-2 d-flex align-items-center gap-1 flex-wrap">
+                <button type="button" class="btn btn-primary btn-sm font-weight-bold shadow-sm" onclick="showPatientFormModal('create')" title="Register New Patient">
+                    <i class="mdi mdi-account-plus"></i> New Patient
+                </button>
+                <button type="button" class="btn btn-outline-primary btn-sm font-weight-bold shadow-sm" onclick="showPatientFormModal('create'); if(typeof enableWalkInMode==='function'){enableWalkInMode('DOC-');}" title="Register Walk-in Patient">
+                    <i class="mdi mdi-account-plus-outline"></i> Register Walk-in
+                </button>
+                @if(appsettings()->enable_ei_doctor)
+                <button class="btn btn-danger btn-sm font-weight-bold shadow-sm" onclick="showEmergencyIntakeModal()" title="Emergency Intake">
                     <i class="mdi mdi-ambulance"></i> Emergency Intake
                 </button>
+                @endif
+                <button class="btn btn-outline-info btn-sm font-weight-bold shadow-sm" data-bs-toggle="modal" data-bs-target="#hospital-contacts-modal" title="Hospital Contacts">
+                    <i class="mdi mdi-contacts"></i> Contacts
+                </button>
+                <button class="btn btn-outline-success btn-sm font-weight-bold shadow-sm" data-bs-toggle="modal" data-bs-target="#workbench-price-list-modal" title="Price List">
+                    <i class="mdi mdi-currency-usd"></i> Price List
+                </button>
             </div>
-            @endif
         </div>
 
         <div class="tab-content">
@@ -1276,5 +1288,8 @@
         </div>
     </div>
 
+@include('admin.partials.patient-form-modal')
+@include('admin.partials.hospital_contacts_modal')
+@include('admin.partials.price_list_modal')
 @endsection
 @include('admin.doctors.partials._queue_scripts')

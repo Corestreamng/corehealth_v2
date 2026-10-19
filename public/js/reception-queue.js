@@ -45,49 +45,104 @@ function initializeWalkinSales() {
 }
 
 let walkinCart = [];
+let walkinSearchDebounce = null;
+let walkinSearchXhr = null;
+
+function safeEscape(str) {
+    if (!str) return '';
+    return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+}
 
 function searchWalkinServices(query, type) {
+    type = type || $('#walkin-subtabs .nav-link.active').data('type') || 'lab';
+    query = (query || '').trim();
     const $container = $('#walkin-search-results');
-    $container.empty();
 
-    let services = [];
-    if (type === 'lab') {
-        services = (cachedServices.lab || []).map(s => ({ ...s, type: 'lab' }));
-    } else if (type === 'imaging') {
-        services = (cachedServices.imaging || []).map(s => ({ ...s, type: 'imaging' }));
+    function renderItems(services, activeType) {
+        $container.empty();
+        if (!services || services.length === 0) {
+            $container.html(`<p class="text-muted text-center py-3">No ${activeType} items found${query ? ' matching "' + safeEscape(query) + '"' : ''}</p>`);
+            return;
+        }
+
+        services.forEach(service => {
+            const price = parseFloat(service.price || 0);
+            const typeLabel = activeType === 'lab' ? 'Lab' : (activeType === 'imaging' ? 'Imaging' : 'Product');
+            const typeClass = activeType === 'lab' ? 'info' : (activeType === 'imaging' ? 'warning' : 'success');
+            const codeBadge = service.code ? `<span class="badge badge-light border ml-1">${safeEscape(service.code)}</span>` : '';
+
+            $container.append(`
+                <div class="walkin-service-item d-flex justify-content-between align-items-center p-2 border-bottom">
+                    <div>
+                        <span class="badge badge-${typeClass}">${typeLabel}</span>
+                        ${codeBadge}
+                        <span class="ml-2 font-weight-bold" style="font-size: 0.9rem;">${safeEscape(service.name)}</span>
+                    </div>
+                    <div class="d-flex align-items-center">
+                        <span class="text-muted mr-3 font-weight-bold">₦${price.toLocaleString()}</span>
+                        <button class="btn btn-sm btn-primary add-to-cart" data-id="${service.id}" data-type="${activeType}" data-name="${safeEscape(service.name)}" data-price="${price}">
+                            <i class="mdi mdi-plus"></i> Add
+                        </button>
+                    </div>
+                </div>
+            `);
+        });
+    }
+
+    // Determine backend endpoint
+    let endpoint = wbRoute('reception.services.lab', '/reception/services/lab');
+    if (type === 'imaging') {
+        endpoint = wbRoute('reception.services.imaging', '/reception/services/imaging');
     } else if (type === 'product') {
-        services = (cachedProducts || []).map(p => ({ ...p, type: 'product' }));
+        endpoint = wbRoute('reception.products', '/reception/products');
     }
 
-    // Filter by query if provided
-    if (query) {
-        services = services.filter(s => s.name.toLowerCase().includes(query));
+    // Fast render from in-memory cache if query is empty and cache is populated
+    if (!query) {
+        let cached = [];
+        if (type === 'lab' && typeof cachedServices !== 'undefined' && cachedServices.lab && cachedServices.lab.length > 0) {
+            cached = cachedServices.lab;
+        } else if (type === 'imaging' && typeof cachedServices !== 'undefined' && cachedServices.imaging && cachedServices.imaging.length > 0) {
+            cached = cachedServices.imaging;
+        } else if (type === 'product' && typeof cachedProducts !== 'undefined' && cachedProducts && cachedProducts.length > 0) {
+            cached = cachedProducts;
+        }
+
+        if (cached.length > 0) {
+            renderItems(cached, type);
+            return;
+        }
     }
 
-    if (services.length === 0) {
-        $container.html('<p class="text-muted text-center py-3">No services found</p>');
-        return;
+    $container.html('<div class="text-center text-muted py-3"><i class="mdi mdi-loading mdi-spin"></i> Loading catalog...</div>');
+
+    if (walkinSearchXhr) {
+        walkinSearchXhr.abort();
     }
 
-    services.slice(0, 20).forEach(service => {
-        const price = parseFloat(service.price || 0);
-        const typeLabel = type === 'lab' ? 'Lab' : (type === 'imaging' ? 'Imaging' : 'Product');
-        const typeClass = type === 'lab' ? 'info' : (type === 'imaging' ? 'warning' : 'success');
-
-        $container.append(`
-            <div class="walkin-service-item d-flex justify-content-between align-items-center p-2 border-bottom">
-                <div>
-                    <span class="badge badge-${typeClass}">${typeLabel}</span>
-                    <span class="ml-2">${service.name}</span>
-                </div>
-                <div>
-                    <span class="text-muted mr-2">₦${price.toLocaleString()}</span>
-                    <button class="btn btn-sm btn-primary add-to-cart" data-id="${service.id}" data-type="${type}" data-name="${service.name}" data-price="${price}">
-                        <i class="mdi mdi-plus"></i>
-                    </button>
-                </div>
-            </div>
-        `);
+    walkinSearchXhr = $.ajax({
+        url: endpoint,
+        method: 'GET',
+        data: { q: query },
+        success: function(data) {
+            const items = Array.isArray(data) ? data : (data.services || data.products || []);
+            if (!query) {
+                if (type === 'lab' && typeof cachedServices !== 'undefined') cachedServices.lab = items;
+                else if (type === 'imaging' && typeof cachedServices !== 'undefined') cachedServices.imaging = items;
+                else if (type === 'product' && typeof cachedProducts !== 'undefined') cachedProducts = items;
+            }
+            renderItems(items, type);
+        },
+        error: function(xhr, status) {
+            if (status !== 'abort') {
+                $container.html('<p class="text-danger text-center py-3"><i class="mdi mdi-alert-circle"></i> Failed to sync items from backend</p>');
+            }
+        }
     });
 }
 
@@ -274,6 +329,34 @@ function submitWalkinServices() {
                 loadRecentRequests();
                 // Switch to recent tab to show the new request
                 $('#walkin-cart-tabs a[href="#walkin-recent-pane"]').tab('show');
+
+                // Trigger payment modal if user has billing rights and there are payable items
+                const canBill = (window.WORKBENCH_CONFIG && window.WORKBENCH_CONFIG.canBill) || ($('#paymentModal').length > 0);
+                if (canBill && response.requests && response.requests.length > 0) {
+                    let checkoutItems = [];
+                    let actualTotal = 0;
+
+                    response.requests.forEach(r => {
+                        const payable = parseFloat(r.payable_amount || 0);
+                        if (r.service_request_id && payable > 0) {
+                            checkoutItems.push({
+                                id: r.service_request_id,
+                                qty: 1,
+                                discount: 0
+                            });
+                            actualTotal += payable;
+                        }
+                    });
+
+                    if (checkoutItems.length > 0) {
+                        window.pendingPaymentItems = checkoutItems;
+                        window.pendingPaymentPatientId = currentPatient;
+                        $('#summary-total').text('₦' + actualTotal.toLocaleString());
+                        $('#summary-subtotal').text('₦' + actualTotal.toLocaleString());
+                        $('#modal-item-count').text(checkoutItems.length);
+                        $('#paymentModal').modal('show');
+                    }
+                }
             } else {
                 toastr.error(response.message || 'Failed to create services');
             }
@@ -290,6 +373,12 @@ function submitWalkinServices() {
 // =============================================
 // RECENT REQUESTS (Last 24 hours)
 // =============================================
+$(document).on('shown.bs.tab', '#walkin-cart-tabs a[href="#walkin-recent-pane"]', function () {
+    if (typeof currentPatient !== 'undefined' && currentPatient) {
+        loadRecentRequests();
+    }
+});
+
 function loadRecentRequests() {
     if (!currentPatient) return;
 
@@ -300,22 +389,77 @@ function loadRecentRequests() {
         url: wbUrl(`reception/patient/${currentPatient}/recent-requests`),
         method: 'GET',
         success: function(response) {
-            if (response.success && response.requests && response.requests.length> 0) {
+            if (response.success && response.requests && response.requests.length > 0) {
+                const canBill = (window.WORKBENCH_CONFIG && window.WORKBENCH_CONFIG.canBill) || ($('#paymentModal').length > 0);
+                const unpaidRequests = response.requests.filter(req => !req.is_paid && req.payable > 0 && req.service_request_id);
+
                 let html = '';
+
+                // Billing multi-select toolbar if user can bill and unpaid items exist
+                if (canBill && unpaidRequests.length > 0) {
+                    html += `
+                        <div class="recent-requests-billing-bar">
+                            <div class="custom-control custom-checkbox">
+                                <input type="checkbox" class="custom-control-input" id="walkin-select-all-unpaid">
+                                <label class="custom-control-label font-weight-bold" for="walkin-select-all-unpaid" style="font-size:0.85rem; cursor:pointer;">
+                                    Select All Unpaid (<span id="walkin-unpaid-count">${unpaidRequests.length}</span>)
+                                </label>
+                            </div>
+                            <button class="btn btn-sm btn-success btn-pay-selected" id="btn-pay-selected-walkin" disabled>
+                                <i class="mdi mdi-cash-register"></i> Pay Selected (<span id="walkin-selected-total">₦0</span>)
+                            </button>
+                        </div>
+                    `;
+                }
+
                 response.requests.forEach(req => {
                     const typeClass = getTypeClass(req.type);
                     const billingClass = getBillingStatusClass(req.billing_status);
                     const deliveryClass = getDeliveryStatusClass(req.delivery_status);
-                    const coverageBadge = req.coverage_mode ? `<span class="badge badge-outline-success ml-1">${req.coverage_mode}</span>` : '';
+                    const coverageBadge = req.coverage_mode ? `<span class="badge badge-outline-success ml-1">${safeEscape(req.coverage_mode)}</span>` : '';
                     const createdAt = new Date(req.created_at).toLocaleString('en-GB', {day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit'});
+                    const isUnpaid = !req.is_paid && req.payable > 0 && req.service_request_id;
+                    const itemStateClass = req.is_paid ? 'is-paid' : (isUnpaid ? 'is-unpaid' : '');
+
+                    const checkboxHtml = (canBill && isUnpaid) ? `
+                        <div class="walkin-unpaid-checkbox-wrapper">
+                            <input type="checkbox" class="walkin-unpaid-item-checkbox" 
+                                   data-service-request-id="${req.service_request_id}" 
+                                   data-payable="${req.payable}" 
+                                   data-name="${safeEscape(req.name)}">
+                        </div>
+                    ` : '';
+
+                    const payBtnHtml = (canBill && isUnpaid) ? `
+                        <button class="btn btn-outline-success btn-pay-single-walkin ml-1" 
+                                data-service-request-id="${req.service_request_id}" 
+                                data-payable="${req.payable}" 
+                                title="Pay Now">
+                            <i class="mdi mdi-cash"></i> Pay
+                        </button>
+                    ` : '';
+
+                    const deleteBtnHtml = !req.is_paid ? `
+                        <button class="btn btn-outline-danger btn-discard-recent-request ml-1" 
+                                data-type="${req.type}" 
+                                data-id="${req.id}" 
+                                data-name="${safeEscape(req.name)}" 
+                                data-request-no="${req.id}" 
+                                title="Delete / Discard Request">
+                            <i class="mdi mdi-trash-can-outline"></i>
+                        </button>
+                    ` : '';
 
                     html += `
-                        <div class="recent-request-item">
+                        <div class="recent-request-item ${itemStateClass}">
                             <div class="recent-request-header">
-                                <div>
-                                    <span class="recent-request-name">${req.name}</span>
-                                    <span class="badge badge-${typeClass} recent-request-type ml-2">${req.type_label}</span>
-                                    ${coverageBadge}
+                                <div class="d-flex align-items-center">
+                                    ${checkboxHtml}
+                                    <div>
+                                        <span class="recent-request-name">${safeEscape(req.name)}</span>
+                                        <span class="badge badge-${typeClass} recent-request-type ml-2">${req.type_label}</span>
+                                        ${coverageBadge}
+                                    </div>
                                 </div>
                                 <small class="text-muted">${createdAt}</small>
                             </div>
@@ -327,16 +471,18 @@ function loadRecentRequests() {
                                     </span>
                                     <span>
                                         <span class="price-label">HMO</span>
-                                        <span class="price-value text-success">${req.hmo_covers> 0 ? '-₦' + parseFloat(req.hmo_covers).toLocaleString() : '-'}</span>
+                                        <span class="price-value text-success">${req.hmo_covers > 0 ? '-₦' + parseFloat(req.hmo_covers).toLocaleString() : '-'}</span>
                                     </span>
                                     <span>
                                         <span class="price-label">Payable</span>
-                                        <span class="price-value text-primary">₦${parseFloat(req.payable || 0).toLocaleString()}</span>
+                                        <span class="price-value text-primary font-weight-bold">₦${parseFloat(req.payable || 0).toLocaleString()}</span>
                                     </span>
                                 </div>
-                                <div class="recent-request-status">
+                                <div class="recent-request-status d-flex align-items-center">
                                     <span class="billing-badge ${billingClass}">${req.billing_status || 'Pending'}</span>
                                     <span class="delivery-badge ${deliveryClass}">${req.delivery_status || 'Pending'}</span>
+                                    ${payBtnHtml}
+                                    ${deleteBtnHtml}
                                 </div>
                             </div>
                         </div>
@@ -362,6 +508,90 @@ function loadRecentRequests() {
         }
     });
 }
+
+// Toggle select all unpaid walkin requests
+$(document).on('change', '#walkin-select-all-unpaid', function() {
+    const isChecked = $(this).is(':checked');
+    $('.walkin-unpaid-item-checkbox').prop('checked', isChecked);
+    updateWalkinSelectedTotal();
+});
+
+// Individual walkin unpaid checkbox change
+$(document).on('change', '.walkin-unpaid-item-checkbox', function() {
+    const total = $('.walkin-unpaid-item-checkbox').length;
+    const checked = $('.walkin-unpaid-item-checkbox:checked').length;
+    $('#walkin-select-all-unpaid').prop('checked', total > 0 && total === checked);
+    updateWalkinSelectedTotal();
+});
+
+function updateWalkinSelectedTotal() {
+    let sum = 0;
+    let count = 0;
+    $('.walkin-unpaid-item-checkbox:checked').each(function() {
+        sum += parseFloat($(this).data('payable')) || 0;
+        count++;
+    });
+
+    $('#walkin-selected-total').text('₦' + sum.toLocaleString());
+    const $btn = $('#btn-pay-selected-walkin');
+    if (count > 0 && sum > 0) {
+        $btn.prop('disabled', false);
+    } else {
+        $btn.prop('disabled', true);
+    }
+}
+
+// Click Pay Selected Walk-in
+$(document).on('click', '#btn-pay-selected-walkin', function(e) {
+    e.preventDefault();
+    let checkoutItems = [];
+    let totalPayable = 0;
+
+    $('.walkin-unpaid-item-checkbox:checked').each(function() {
+        const sId = $(this).data('service-request-id');
+        const payable = parseFloat($(this).data('payable')) || 0;
+        if (sId) {
+            checkoutItems.push({
+                id: sId,
+                qty: 1,
+                discount: 0
+            });
+            totalPayable += payable;
+        }
+    });
+
+    if (checkoutItems.length === 0) {
+        toastr.warning('Please select at least one unpaid item');
+        return;
+    }
+
+    window.pendingPaymentItems = checkoutItems;
+    window.pendingPaymentPatientId = currentPatient;
+    $('#summary-total').text('₦' + totalPayable.toLocaleString());
+    $('#summary-subtotal').text('₦' + totalPayable.toLocaleString());
+    $('#modal-item-count').text(checkoutItems.length);
+    $('#paymentModal').modal('show');
+});
+
+// Click Pay Single Walk-in
+$(document).on('click', '.btn-pay-single-walkin', function(e) {
+    e.preventDefault();
+    const sId = $(this).data('service-request-id');
+    const payable = parseFloat($(this).data('payable')) || 0;
+
+    if (!sId) return;
+
+    window.pendingPaymentItems = [{
+        id: sId,
+        qty: 1,
+        discount: 0
+    }];
+    window.pendingPaymentPatientId = currentPatient;
+    $('#summary-total').text('₦' + payable.toLocaleString());
+    $('#summary-subtotal').text('₦' + payable.toLocaleString());
+    $('#modal-item-count').text(1);
+    $('#paymentModal').modal('show');
+});
 
 function getTypeClass(type) {
     const classes = {
@@ -556,7 +786,20 @@ $(document).on('click', '.discard-request-btn', function() {
 
     $('#discard_service_name').text(serviceName);
     $('#discard_request_no').text(requestNo);
-    $('#discard_reason').val('');
+    $('#discard_reason').val('Erroneous booking / duplicate request');
+    $('#discardRequestModal').modal('show');
+});
+
+$(document).on('click', '.btn-discard-recent-request', function(e) {
+    e.preventDefault();
+    discardRequestType = $(this).data('type');
+    discardRequestId = $(this).data('id');
+    const serviceName = $(this).data('name');
+    const requestNo = $(this).data('request-no');
+
+    $('#discard_service_name').text(serviceName);
+    $('#discard_request_no').text(requestNo);
+    $('#discard_reason').val('Erroneous booking / duplicate request');
     $('#discardRequestModal').modal('show');
 });
 
@@ -596,33 +839,8 @@ $(document).on('click', '.btn-delete-queue', function(e) {
 
     $('#discard_service_name').text(serviceName + ' (Queue Booking)');
     $('#discard_request_no').text('Q-' + queueId);
-    $('#discard_reason').val('');
+    $('#discard_reason').val('Erroneous booking / canceled by patient');
     $('#discardRequestModal').modal('show');
-});
-
-$(document).on('click', '.btn-print-routing', function(e) {
-    e.preventDefault();
-    const queueId = $(this).data('queue-id');
-    
-    toastr.info('Generating routing slip...');
-    
-    $.ajax({
-        url: wbUrl(`reception/queue/${queueId}/routing-slip`),
-        method: 'GET',
-        success: function(response) {
-            if (response.success && response.html) {
-                const printWindow = window.open('', '', 'height=600,width=800');
-                printWindow.document.write(response.html);
-                printWindow.document.close();
-                printWindow.print();
-            } else {
-                toastr.error('Failed to generate routing slip');
-            }
-        },
-        error: function(xhr) {
-            toastr.error(xhr.responseJSON?.message || 'Failed to print routing slip');
-        }
-    });
 });
 
 $('#discardRequestForm').on('submit', function(e) {
@@ -648,8 +866,27 @@ $('#discardRequestForm').on('submit', function(e) {
             $('#discardRequestModal').modal('hide');
             toastr.success(response.message || 'Request discarded successfully');
 
-            // Reload the service requests table
-            reloadServiceRequestsData();
+            // 1. Reload the service requests table if present
+            if (typeof reloadServiceRequestsData === 'function') {
+                reloadServiceRequestsData();
+            }
+            // 2. Reload Recent requests in walk-in tab
+            if (typeof loadRecentRequests === 'function') {
+                loadRecentRequests();
+            }
+            // 3. Reload current patient queue entries & bookings
+            if (typeof currentPatient !== 'undefined' && currentPatient) {
+                if (typeof loadPatientQueueEntries === 'function') {
+                    loadPatientQueueEntries(currentPatient);
+                }
+                if (typeof loadBookingQueueEntries === 'function') {
+                    loadBookingQueueEntries(currentPatient);
+                }
+            }
+            // 4. Update queue counts
+            if (typeof updateQueueCounts === 'function') {
+                updateQueueCounts();
+            }
         },
         error: function(xhr) {
             toastr.error(xhr.responseJSON?.message || 'Failed to discard request');
@@ -703,6 +940,8 @@ function showQuickRegisterModal() {
     $('#quick-register-file-no').prop('readonly', true).removeClass('status-valid status-checking status-duplicate');
     $('#qr-duplicate-warning').hide();
     $('#qr-file-no-hint').removeClass('manual-mode');
+    // Reset Age / Age Group / DOB widget to Age mode
+    resetQRAgeDob();
     // Generate new file number from server
     generateFileNumber();
 }
@@ -714,6 +953,10 @@ function generateFileNumber() {
     $.ajax({
         url: wbUrl('/reception/patient/next-file-number'),
         method: 'GET',
+        data: {
+            prefix: 'EX-',
+            workbench: 'walkin'
+        },
         success: function(response) {
             $input.val(response.file_no).addClass('status-valid');
             $('#qr-next-file-no').text(response.file_no);
@@ -722,13 +965,13 @@ function generateFileNumber() {
             if (response.format_pattern) {
                 $('#qr-format-pattern').text(response.format_pattern);
             } else {
-                $('#qr-format-pattern').text('Sequential');
+                $('#qr-format-pattern').text('EX-NNNN');
             }
 
             // Populate recent file numbers
             const $recentList = $('#qr-recent-file-nos');
             $recentList.empty();
-            if (response.recent_file_nos && response.recent_file_nos.length> 0) {
+            if (response.recent_file_nos && response.recent_file_nos.length > 0) {
                 response.recent_file_nos.forEach(fileNo => {
                     $recentList.append(`<span class="file-no-recent-item qr-recent-item" data-file-no="${fileNo}">${fileNo}</span>`);
                 });
@@ -737,12 +980,12 @@ function generateFileNumber() {
             $('#qr-duplicate-warning').hide();
         },
         error: function() {
-            // Fallback: use timestamp-based number if server fails
+            // Fallback: use timestamp-based number with EX- prefix if server fails
             const now = new Date();
-            const fallbackNo = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(Math.floor(Math.random() * 10000)).padStart(4, '0')}`;
+            const fallbackNo = `EX-${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(Math.floor(Math.random() * 1000)).padStart(3, '0')}`;
             $('#quick-register-file-no').val(fallbackNo);
             $('#qr-next-file-no').text(fallbackNo);
-            $('#qr-format-pattern').text('Auto-generated');
+            $('#qr-format-pattern').text('EX-NNNN');
             $('#qr-recent-file-nos').empty();
             toastr.warning('Could not fetch next file number, using auto-generated');
         }
@@ -879,6 +1122,187 @@ $('#quick-register-file-no').on('input', function() {
     }
 });
 
+var _qrAgeDobSyncing = false;
+
+function resetQRAgeDob() {
+    $('.qr-adt-btn').removeClass('active');
+    $('.qr-adt-btn[data-mode="age"]').addClass('active');
+    $('.qr-age-dob-wrapper').removeClass('mode-dob mode-age_group').addClass('mode-age');
+    $('.qr-age-panel').show();
+    $('.qr-age-group-panel, .qr-dob-panel').hide();
+    $('#quick-register-age-val').val('');
+    $('#quick-register-age-unit').val('years');
+    $('#quick-register-age-group').val('');
+    $('#quick-register-dob').val('');
+    $('#quick-register-age-hint').html('');
+    $('#quick-register-age-group-hint').html('');
+    $('#quick-register-referred-from').val('');
+}
+
+// Quick referral source chip click handler
+$(document).on('click', '.qr-ref-chip', function() {
+    var val = $(this).data('val');
+    var $input = $('#quick-register-referred-from');
+    $input.val(val).focus();
+});
+
+function deriveQRAgeGroup(years, months, totalDays) {
+    if (totalDays <= 28) return 'neonate';
+    if (years === 0 && months < 12) return 'infant';
+    if (years >= 1 && years <= 4) return 'toddler';
+    if (years >= 5 && years <= 11) return 'child';
+    if (years >= 12 && years <= 17) return 'adolescent';
+    if (years >= 18 && years <= 35) return 'young_adult';
+    if (years >= 36 && years <= 55) return 'adult';
+    if (years >= 56 && years <= 64) return 'older_adult';
+    if (years >= 65) return 'elderly';
+    return '';
+}
+
+// Toggle between Age, Group, and DOB in quick register modal
+$(document).on('click', '.qr-adt-btn', function() {
+    var mode = $(this).data('mode');
+    $('.qr-adt-btn').removeClass('active');
+    $(this).addClass('active');
+    $('.qr-age-dob-wrapper').removeClass('mode-age mode-dob mode-age_group').addClass('mode-' + mode);
+    if (mode === 'age') {
+        $('.qr-age-panel').show();
+        $('.qr-age-group-panel, .qr-dob-panel').hide();
+    } else if (mode === 'age_group') {
+        $('.qr-age-group-panel').show();
+        $('.qr-age-panel, .qr-dob-panel').hide();
+    } else if (mode === 'dob') {
+        $('.qr-dob-panel').show();
+        $('.qr-age-panel, .qr-age-group-panel').hide();
+    }
+});
+
+// Age input changed → compute approximate DOB → sync
+$(document).on('input change', '#quick-register-age-val, #quick-register-age-unit', function() {
+    if (_qrAgeDobSyncing) return;
+    _qrAgeDobSyncing = true;
+
+    var val = parseInt($('#quick-register-age-val').val());
+    var unit = $('#quick-register-age-unit').val();
+    if (!isNaN(val) && val >= 0) {
+        var d = new Date();
+        if (unit === 'years') d.setFullYear(d.getFullYear() - val);
+        else if (unit === 'months') d.setMonth(d.getMonth() - val);
+        else if (unit === 'days') d.setDate(d.getDate() - val);
+
+        var iso = d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+        $('#quick-register-dob').val(iso);
+
+        var hint = unit === 'years' ? '≈ ' + d.getFullYear() : d.toLocaleDateString('en-GB', {day:'numeric', month:'short', year:'numeric'});
+        $('#quick-register-age-hint').html('<span class="badge bg-light text-secondary">' + hint + '</span>');
+
+        // Sync matching age group in dropdown
+        var totalDays = unit === 'days' ? val : (unit === 'months' ? Math.round(val * 30.44) : val * 365);
+        var yrs = unit === 'years' ? val : (unit === 'months' ? Math.floor(val / 12) : Math.floor(val / 365));
+        var mos = unit === 'months' ? val : (unit === 'years' ? val * 12 : Math.floor(val / 30.44));
+        var agKey = deriveQRAgeGroup(yrs, mos, totalDays);
+        $('#quick-register-age-group').val(agKey);
+        if (agKey) {
+            var label = $('#quick-register-age-group option:selected').text().split('(')[0].trim();
+            $('#quick-register-age-group-hint').html('<span class="badge bg-light text-secondary">' + label + '</span>');
+        } else {
+            $('#quick-register-age-group-hint').html('');
+        }
+    } else {
+        $('#quick-register-dob').val('');
+        $('#quick-register-age-hint').html('');
+        $('#quick-register-age-group-hint').html('');
+        $('#quick-register-age-group').val('');
+    }
+    _qrAgeDobSyncing = false;
+});
+
+// Age Group selected → compute approximate DOB → sync
+$(document).on('change', '#quick-register-age-group', function() {
+    if (_qrAgeDobSyncing) return;
+    _qrAgeDobSyncing = true;
+
+    var $opt = $(this).find('option:selected');
+    var val = $(this).val();
+    if (val) {
+        var d = new Date();
+        var years = parseInt($opt.data('years') || 0);
+        var months = parseInt($opt.data('months') || 0);
+        var days = parseInt($opt.data('days') || 0);
+
+        if (days > 0) d.setDate(d.getDate() - days);
+        else if (months > 0) d.setMonth(d.getMonth() - months);
+        else if (years > 0) d.setFullYear(d.getFullYear() - years);
+
+        var iso = d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+        $('#quick-register-dob').val(iso);
+
+        var label = $opt.text().split('(')[0].trim();
+        var hint = '≈ ' + d.getFullYear() + ' (' + label + ')';
+        $('#quick-register-age-group-hint').html('<span class="badge bg-light text-secondary">' + hint + '</span>');
+        $('#quick-register-age-hint').html('<span class="badge bg-light text-secondary">' + hint + '</span>');
+
+        if (days > 0) {
+            $('#quick-register-age-val').val(days);
+            $('#quick-register-age-unit').val('days');
+        } else if (months > 0) {
+            $('#quick-register-age-val').val(months);
+            $('#quick-register-age-unit').val('months');
+        } else {
+            $('#quick-register-age-val').val(years);
+            $('#quick-register-age-unit').val('years');
+        }
+    } else {
+        $('#quick-register-dob').val('');
+        $('#quick-register-age-group-hint').html('');
+        $('#quick-register-age-hint').html('');
+        $('#quick-register-age-val').val('');
+    }
+    _qrAgeDobSyncing = false;
+});
+
+// DOB changed directly → sync to age & age group
+$(document).on('change', '#quick-register-dob', function() {
+    if (_qrAgeDobSyncing) return;
+    _qrAgeDobSyncing = true;
+    var dob = $(this).val();
+    if (dob) {
+        var bd = new Date(dob), now = new Date();
+        var diffMs = now - bd;
+        var totalDays = Math.floor(diffMs / 86400000);
+        var yrs = now.getFullYear() - bd.getFullYear();
+        if (now.getMonth() < bd.getMonth() || (now.getMonth() === bd.getMonth() && now.getDate() < bd.getDate())) yrs--;
+        var mos = Math.floor(totalDays / 30.44);
+
+        if (totalDays < 91) {
+            $('#quick-register-age-val').val(totalDays);
+            $('#quick-register-age-unit').val('days');
+        } else if (totalDays < 730) {
+            $('#quick-register-age-val').val(mos);
+            $('#quick-register-age-unit').val('months');
+        } else {
+            $('#quick-register-age-val').val(yrs);
+            $('#quick-register-age-unit').val('years');
+        }
+        $('#quick-register-age-hint').html('');
+
+        var agKey = deriveQRAgeGroup(yrs, mos, totalDays);
+        $('#quick-register-age-group').val(agKey);
+        if (agKey) {
+            var label = $('#quick-register-age-group option:selected').text().split('(')[0].trim();
+            $('#quick-register-age-group-hint').html('<span class="badge bg-light text-secondary">' + label + '</span>');
+        } else {
+            $('#quick-register-age-group-hint').html('');
+        }
+    } else {
+        $('#quick-register-age-val').val('');
+        $('#quick-register-age-group').val('');
+        $('#quick-register-age-hint').html('');
+        $('#quick-register-age-group-hint').html('');
+    }
+    _qrAgeDobSyncing = false;
+});
+
 function submitQuickRegister() {
     const $form = $('#quick-register-form');
     const $btn = $form.find('button[type="submit"]');
@@ -900,6 +1324,12 @@ function submitQuickRegister() {
         return;
     }
 
+    const dob = $('#quick-register-dob').val();
+    if (!dob) {
+        toastr.warning('Please enter age, select an age group, or provide date of birth');
+        return;
+    }
+
     $btn.prop('disabled', true).html('<i class="mdi mdi-loading mdi-spin"></i> Registering...');
 
     $.ajax({
@@ -907,19 +1337,23 @@ function submitQuickRegister() {
         method: 'POST',
         data: {
             _token: (window.WORKBENCH_CONFIG?.csrf || $('meta[name="csrf-token"]').attr('content')),
+            file_no: $('#quick-register-file-no').val() ? $('#quick-register-file-no').val().trim() : '',
             surname: lastName,
             firstname: firstName,
             phone_no: phone,
             gender: gender,
-            dob: $('#quick-register-dob').val(),
+            dob: dob,
             hmo_id: $('#quick-register-hmo').val(),
-            hmo_no: $('#quick-register-hmo-no').val()
+            hmo_no: $('#quick-register-hmo-no').val(),
+            referred_from: $('#quick-register-referred-from').val() ? $('#quick-register-referred-from').val().trim() : '',
+            registration_workbench: 'walkin'
         },
         success: function(response) {
             if (response.success) {
-                toastr.success('Patient registered successfully');
+                toastr.success('Walk-in patient registered successfully');
                 $('#quickRegisterModal').modal('hide');
                 $form[0].reset();
+                resetQRAgeDob();
 
                 // Load the newly registered patient
                 if (response.patient && response.patient.id) {

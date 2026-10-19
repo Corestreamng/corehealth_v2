@@ -6,6 +6,8 @@ use App\Models\Price;
 use App\Models\Product;
 use App\Models\ProductCategory;
 use App\Models\Stock;
+use App\Models\StockBatch;
+use App\Models\StockBatchTransaction;
 use App\Models\Store;
 use App\Models\StoreStock;
 use App\Services\ImportProgressService;
@@ -385,6 +387,37 @@ class ImportProductsJob implements ShouldQueue
                             'reorder_level' => $reorderLevel,
                             'is_active' => true,
                         ]);
+
+                        if ($initialQty > 0) {
+                            $batchCost = $costPrice;
+                            $batchNumber = !empty($row['batch_number']) ? trim($row['batch_number']) : ('BATCH-' . now()->format('Ymd') . '-' . strtoupper(\Illuminate\Support\Str::random(5)));
+                            $expiryDate = !empty($row['expiry_date']) ? trim($row['expiry_date']) : now()->addYears(2)->format('Y-m-d');
+
+                            $batch = StockBatch::create([
+                                'product_id' => $product->id,
+                                'store_id' => $storeId,
+                                'batch_name' => 'Opening Stock - ' . $batchNumber,
+                                'batch_number' => $batchNumber,
+                                'initial_qty' => $initialQty,
+                                'current_qty' => $initialQty,
+                                'sold_qty' => 0,
+                                'cost_price' => $batchCost,
+                                'expiry_date' => $expiryDate,
+                                'received_date' => now(),
+                                'source' => StockBatch::SOURCE_OPENING_STOCK,
+                                'is_active' => true,
+                                'created_by' => $this->userId ?? 1,
+                            ]);
+
+                            StockBatchTransaction::create([
+                                'stock_batch_id' => $batch->id,
+                                'type' => StockBatchTransaction::TYPE_IN,
+                                'qty' => $initialQty,
+                                'balance_after' => $initialQty,
+                                'notes' => 'Opening stock import',
+                                'performed_by' => $this->userId ?? 1,
+                            ]);
+                        }
                     }
 
                     $existingProducts[$productCode] = $product->id;

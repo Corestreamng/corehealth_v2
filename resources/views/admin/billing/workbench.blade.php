@@ -160,12 +160,6 @@ $sett = appsettings();
                 <i class="mdi mdi-wallet"></i>
                 <span>Credit Management (Coming Soon)</span>
             </button>
-            @if(appsettings()->enable_ei_billing)
-            <button class="quick-action-btn" onclick="showEmergencyIntakeModal()">
-                <i class="mdi mdi-ambulance text-danger"></i>
-                <span>Emergency Intake</span>
-            </button>
-            @endif
         </div>
     </div>
 
@@ -180,6 +174,17 @@ $sett = appsettings();
                 <button class="btn-toggle-search" id="btn-toggle-search">
                     <i class="fa fa-bars"></i> Toggle Search
                 </button>
+                <button type="button" class="btn btn-primary" id="btn-billing-new-patient" onclick="showPatientFormModal('create')" title="Register New Patient">
+                    <i class="mdi mdi-account-plus"></i> New Patient
+                </button>
+                <button type="button" class="btn btn-outline-primary" id="btn-register-walkin" onclick="if(typeof openWalkInRegistration==='function'){openWalkInRegistration();}else{showPatientFormModal('create');enableWalkInMode('BIL-');}" title="Register Walk-in Patient">
+                    <i class="mdi mdi-account-plus-outline"></i> Register Walk-in
+                </button>
+                @if(appsettings()->enable_ei_billing)
+                <button type="button" class="btn btn-danger" onclick="showEmergencyIntakeModal()" title="Emergency Intake">
+                    <i class="mdi mdi-ambulance"></i> Emergency Intake
+                </button>
+                @endif
                 <button class="btn btn-outline-info" data-bs-toggle="modal" data-bs-target="#hospital-contacts-modal" title="Hospital Contacts">
                     <i class="mdi mdi-contacts"></i> Contacts
                 </button>

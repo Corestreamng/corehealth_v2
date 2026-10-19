@@ -66,10 +66,6 @@
 
         <div class="quick-actions">
             <h6>⚡ QUICK ACTIONS</h6>
-            <button class="quick-action-btn" id="btn-register-walkin">
-                <i class="mdi mdi-account-plus text-success"></i>
-                <span>Register Walk-in</span>
-            </button>
             <button class="quick-action-btn" id="btn-new-request" style="display: none;">
                 <i class="mdi mdi-plus-circle"></i>
 

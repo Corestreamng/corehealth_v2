@@ -58,10 +58,6 @@
 
         <div class="quick-actions">
             <h6>⚡ QUICK ACTIONS</h6>
-            <button class="quick-action-btn" id="btn-register-walkin">
-                <i class="mdi mdi-account-plus text-success"></i>
-                <span>Register Walk-in</span>
-            </button>
             <button class="quick-action-btn" id="btn-new-request" style="display: none;">
                 <i class="mdi mdi-plus-circle"></i>
                 <span>New Request</span>
@@ -74,12 +70,6 @@
                 <i class="mdi mdi-package-variant"></i>
                 <span>Inventory (Coming Soon)</span>
             </button>
-            @if(appsettings()->enable_ei_imaging)
-<button class="quick-action-btn" onclick="showEmergencyIntakeModal()">
-                <i class="mdi mdi-ambulance text-danger"></i>
-                <span>Emergency Intake</span>
-            </button>
-@endif
         </div>
     </div>
 
@@ -93,6 +83,23 @@
             <div class="workspace-navbar-actions">
                 <button class="btn-toggle-search" id="btn-toggle-search">
                     <i class="fa fa-bars"></i> Toggle Search
+                </button>
+                <button type="button" class="btn btn-primary" id="btn-imaging-new-patient" onclick="showPatientFormModal('create')" title="Register New Patient">
+                    <i class="mdi mdi-account-plus"></i> New Patient
+                </button>
+                <button type="button" class="btn btn-outline-primary" id="btn-register-walkin" onclick="openWalkInRegistration()" title="Register Walk-in Patient">
+                    <i class="mdi mdi-account-plus-outline"></i> Register Walk-in
+                </button>
+                @if(appsettings()->enable_ei_imaging)
+                <button type="button" class="btn btn-danger" onclick="showEmergencyIntakeModal()" title="Emergency Intake">
+                    <i class="mdi mdi-ambulance"></i> Emergency Intake
+                </button>
+                @endif
+                <button class="btn btn-outline-info" data-bs-toggle="modal" data-bs-target="#hospital-contacts-modal" title="Hospital Contacts">
+                    <i class="mdi mdi-contacts"></i> Contacts
+                </button>
+                <button class="btn btn-outline-success" data-bs-toggle="modal" data-bs-target="#workbench-price-list-modal" title="Price List">
+                    <i class="mdi mdi-currency-usd"></i> Price List
                 </button>
                 <button class="btn-clinical-context" id="btn-clinical-context">
                     <i class="fa fa-heartbeat"></i> Clinical Context
