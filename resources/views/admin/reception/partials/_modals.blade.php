@@ -879,3 +879,296 @@
 
 {{-- Medical Report History Modal --}}
 @include('admin.partials.medical_report_history_modal')
+
+{{-- Emergency Intake Modal --}}
+@include('admin.partials.emergency-intake-modal')
+
+{{-- Reschedule Appointment Modal --}}
+<div class="modal fade" id="rescheduleAppointmentModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header bg-warning text-dark">
+                <h5 class="modal-title"><i class="mdi mdi-calendar-edit"></i> Reschedule Appointment</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="reschedule-form">
+                <div class="modal-body">
+                    <input type="hidden" id="reschedule-appt-id">
+                    <div class="alert alert-light border mb-3">
+                        <div class="d-flex justify-content-between">
+                            <span><strong>Patient:</strong> <span id="reschedule-patient-name"></span></span>
+                            <span class="badge bg-secondary" id="reschedule-count-info"></span>
+                        </div>
+                        <div class="text-muted small mt-1">Original: <span id="reschedule-original-date"></span></div>
+                    </div>
+                    <div class="form-group mb-3">
+                        <label><i class="mdi mdi-calendar"></i> New Date <span class="text-danger">*</span></label>
+                        <input type="date" class="form-control" id="reschedule-date" required min="{{ date('Y-m-d') }}">
+                    </div>
+                    <div class="form-group mb-3">
+                        <label><i class="mdi mdi-clock-outline"></i> Time Slot <span class="text-danger">*</span></label>
+                        <div class="d-flex align-items-center gap-2 mb-1">
+                            <div class="form-check form-switch mb-0">
+                                <input class="form-check-input" type="checkbox" id="reschedule-custom-time-toggle">
+                                <label class="form-check-label small text-muted" for="reschedule-custom-time-toggle">Custom time</label>
+                            </div>
+                        </div>
+                        <select class="form-control" id="reschedule-time">
+                            <option value="">-- Select date first --</option>
+                        </select>
+                        <input type="time" class="form-control d-none" id="reschedule-custom-time-input" placeholder="HH:MM">
+                    </div>
+                    <div class="form-group mb-3">
+                        <label><i class="mdi mdi-hospital-building"></i> Clinic</label>
+                        <select class="form-control" id="reschedule-clinic">
+                            @foreach(\App\Models\Clinic::orderBy('name')->get() as $clinic)
+                                <option value="{{ $clinic->id }}">{{ $clinic->name }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div class="form-group mb-3">
+                        <label><i class="mdi mdi-doctor"></i> Doctor</label>
+                        <select class="form-control" id="reschedule-doctor">
+                            <option value="">Same Doctor</option>
+                        </select>
+                    </div>
+                    <div class="form-group mb-3">
+                        <label><i class="mdi mdi-note-text"></i> Reason</label>
+                        <select class="form-control" id="reschedule-reason">
+                            <option value="">-- Select reason --</option>
+                            <option value="Patient requested">Patient requested</option>
+                            <option value="Doctor schedule change">Doctor schedule change</option>
+                            <option value="Emergency rescheduling">Emergency rescheduling</option>
+                            <option value="Clinic unavailable">Clinic unavailable</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-warning btn-sm"><i class="mdi mdi-calendar-edit"></i> Reschedule</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+{{-- Reassign Doctor Modal --}}
+<div class="modal fade" id="reassignDoctorModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header" style="background:#6f42c1; color:#fff;">
+                <h5 class="modal-title"><i class="mdi mdi-account-switch"></i> Reassign Doctor</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="reassign-form">
+                <div class="modal-body">
+                    <input type="hidden" id="reassign-appt-id">
+                    <div class="alert alert-light border mb-3">
+                        <strong>Patient:</strong> <span id="reassign-patient-name"></span><br>
+                        <span class="text-muted small">Current Doctor: <strong id="reassign-current-doctor"></strong></span>
+                    </div>
+                    <div class="form-group mb-3">
+                        <label><i class="mdi mdi-doctor"></i> New Doctor <span class="text-danger">*</span></label>
+                        <select class="form-control" id="reassign-doctor" required>
+                            <option value="">-- Select Doctor --</option>
+                        </select>
+                    </div>
+                    <div class="form-group mb-3">
+                        <label><i class="mdi mdi-note-text"></i> Reason</label>
+                        <select class="form-control" id="reassign-reason">
+                            <option value="">-- Select reason --</option>
+                            <option value="Doctor on leave">Doctor on leave</option>
+                            <option value="Doctor unavailable">Doctor unavailable</option>
+                            <option value="Patient request">Patient request</option>
+                            <option value="Schedule conflict">Schedule conflict</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-sm" style="background:#6f42c1; color:#fff;"><i class="mdi mdi-account-switch"></i> Reassign</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+{{-- Appointment Chain/History Modal --}}
+<div class="modal fade" id="appointmentChainModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header bg-info text-white">
+                <h5 class="modal-title"><i class="mdi mdi-link-variant"></i> Appointment History Chain</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" id="chain-body">
+                <div class="text-center py-4"><i class="mdi mdi-loading mdi-spin mdi-36px"></i></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.appointment-chain-timeline { position: relative; padding-left: 30px; }
+.chain-item { position: relative; padding: 10px 0 10px 20px; border-left: 2px solid #dee2e6; margin-left: 10px; }
+.chain-item:last-child { border-left-color: transparent; }
+.chain-item-active { background: #f0f7ff; border-radius: 8px; margin-right: -10px; padding-right: 10px; }
+.chain-marker { position: absolute; left: -12px; top: 10px; }
+.chain-dot { display: inline-flex; width: 22px; height: 22px; border-radius: 50%; background: #6c757d; color: #fff; align-items: center; justify-content: center; font-size: 11px; font-weight: 600; }
+.chain-dot.active { background: #0d6efd; }
+.badge-sm { font-size: 0.7em; }
+.btn-purple { background: #6f42c1; color: #fff; border-color: #6f42c1; }
+.btn-purple:hover { background: #5a32a3; color: #fff; }
+</style>
+
+{{-- ═══════════════════════════════════════════════════════════════════ --}}
+{{-- Referral Action Modals                                            --}}
+{{-- ═══════════════════════════════════════════════════════════════════ --}}
+
+{{-- Book Referral Appointment Modal --}}
+<div class="modal fade" id="bookReferralModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-success text-white">
+                <h6 class="modal-title"><i class="mdi mdi-calendar-plus me-1"></i> Book Referral Appointment</h6>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="book-ref-id">
+                <input type="hidden" id="book-ref-clinic">
+                <input type="hidden" id="book-ref-doctor">
+                <input type="hidden" id="book-ref-patient">
+                <div class="alert alert-info py-2 mb-3">
+                    <i class="mdi mdi-information-outline me-1"></i>
+                    Schedule an appointment for this internal referral. The patient will be added to the target clinic's queue.
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-bold"><i class="mdi mdi-calendar me-1"></i> Appointment Date <span class="text-danger">*</span></label>
+                    <input type="date" class="form-control" id="book-ref-date" min="{{ date('Y-m-d') }}">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-bold"><i class="mdi mdi-clock-outline me-1"></i> Start Time <span class="text-danger">*</span></label>
+                    <input type="time" class="form-control" id="book-ref-time" value="09:00">
+                </div>
+                <div class="alert alert-light border py-2 mb-3" id="book-ref-target-info" style="display:none;">
+                    <small class="text-muted">Referring doctor requested:</small><br>
+                    <strong id="book-ref-target-text"></strong>
+                </div>
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label fw-bold"><i class="mdi mdi-hospital-building me-1"></i> Clinic</label>
+                        <select class="form-select" id="book-ref-clinic-override">
+                            <option value="">Use referral's target clinic</option>
+                            @foreach(\App\Models\Clinic::orderBy('name')->get() as $clinic)
+                                <option value="{{ $clinic->id }}">{{ $clinic->name }}</option>
+                            @endforeach
+                        </select>
+                        <small class="form-text text-muted">Override only if needed</small>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label fw-bold"><i class="mdi mdi-doctor me-1"></i> Doctor</label>
+                        <select class="form-select" id="book-ref-doctor-override">
+                            <option value="">Use referral's target doctor</option>
+                            @foreach(\App\Models\Staff::whereHas('user', function($q) { $q->whereHas('roles', fn($r) => $r->where('name', 'DOCTOR')); })->with('user:id,surname,firstname,othername')->orderBy('id')->get() as $staff)
+                                <option value="{{ $staff->id }}">{{ $staff->user ? trim(($staff->user->surname ?? '').' '.($staff->user->firstname ?? '').' '.($staff->user->othername ?? '')) : 'Staff #'.$staff->id }}</option>
+                            @endforeach
+                        </select>
+                        <small class="form-text text-muted">Override only if needed</small>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-success btn-sm" id="confirm-book-referral">
+                    <i class="mdi mdi-calendar-check me-1"></i> Confirm Booking
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{{-- Refer Out Modal --}}
+<div class="modal fade" id="referOutModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-info text-white">
+                <h6 class="modal-title"><i class="mdi mdi-arrow-right-bold me-1"></i> Mark as Referred Out</h6>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="refer-out-ref-id">
+                <div class="alert alert-warning py-2 mb-3">
+                    <i class="mdi mdi-alert-outline me-1"></i>
+                    This confirms the patient's referral letter has been given and they have been directed to the external facility. You can print the referral letter after this action.
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-bold"><i class="mdi mdi-note-text me-1"></i> Action Notes</label>
+                    <textarea class="form-control" id="refer-out-notes" rows="3" placeholder="e.g., Letter given to patient, appointment confirmed with facility..."></textarea>
+                    <small class="form-text text-muted">Optional — document handover details for record keeping</small>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-info btn-sm" id="confirm-refer-out">
+                    <i class="mdi mdi-check me-1"></i> Confirm Referred Out
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{{-- Decline Referral Modal --}}
+<div class="modal fade" id="declineReferralModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-warning text-dark">
+                <h6 class="modal-title"><i class="mdi mdi-close-circle me-1"></i> Decline Referral</h6>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="decline-ref-id">
+                <div class="alert alert-danger py-2 mb-3">
+                    <i class="mdi mdi-alert me-1"></i>
+                    Declining will notify the referring doctor. Please provide a clear reason so they can take alternative action for the patient.
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-bold"><i class="mdi mdi-text-box-outline me-1"></i> Reason for Decline <span class="text-danger">*</span></label>
+                    <textarea class="form-control" id="decline-reason" rows="3" placeholder="e.g., Specialist unavailable this week, clinic fully booked..." required></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-warning btn-sm" id="confirm-decline-referral">
+                    <i class="mdi mdi-close-circle me-1"></i> Decline Referral
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{{-- Referral Detail / Print Modal --}}
+<div class="modal fade" id="referralDetailModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-light">
+                <h6 class="modal-title"><i class="mdi mdi-file-document-outline me-1"></i> Referral Details</h6>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-0">
+                <div id="referral-detail-loading" class="text-center py-4">
+                    <i class="fa fa-spinner fa-spin fa-2x"></i>
+                </div>
+                <div id="referral-detail-content" style="display:none;"></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-outline-dark btn-sm" id="btn-print-referral-letter" style="display:none;">
+                    <i class="mdi mdi-printer me-1"></i> Print Referral Letter
+                </button>
+            </div>
+        </div>
+    </div>
+</div>

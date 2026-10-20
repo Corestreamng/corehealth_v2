@@ -25,12 +25,12 @@ if (typeof window.wbRoute !== 'function') {
 
     // Hide all overlapping views - call this before showing any new view
     function hideAllViews() {
-        $('#empty-state').hide();
+        $('#empty-state').hide().css('display', 'none').addClass('d-none hidden');
         $('#queue-view').removeClass('active').hide();
         $('.queue-item').removeClass('active');
         $('#reports-view').removeClass('active').hide();
-        $('#patient-header').removeClass('active');
-        $('#workspace-content').removeClass('active').hide();
+        $('#patient-header').removeClass('active').hide().css('display', 'none').addClass('d-none hidden');
+        $('#workspace-content').removeClass('active').hide().css('display', 'none').addClass('d-none hidden');
     }
 
     // =============================================

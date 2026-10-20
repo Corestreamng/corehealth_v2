@@ -607,8 +607,11 @@ $(document).on('click', '#confirm-book-referral', function() {
     var $btn = $(this);
     $btn.prop('disabled', true).html('<i class="fa fa-spinner fa-spin"></i> Booking...');
 
-    $.post(wbRoute('referrals.book', '/referrals/book').replace('__RID__', refId), {
+    var bookUrl = wbRoute('referrals.book', '/referrals/__RID__/book').replace('__RID__', refId);
+    $.post(bookUrl, {
         _token: (window.WORKBENCH_CONFIG?.csrf || $('meta[name="csrf-token"]').attr('content')),
+        referral_id: refId,
+        id: refId,
         appointment_date: date,
         start_time: time,
         clinic_id: $('#book-ref-clinic-override').val() || $('#book-ref-clinic').val(),
@@ -642,8 +645,11 @@ $(document).on('click', '#confirm-refer-out', function() {
     var $btn = $(this);
     $btn.prop('disabled', true).html('<i class="fa fa-spinner fa-spin"></i> Processing...');
 
-    $.post(wbRoute('referrals.refer-out', '/referrals/refer-out').replace('__RID__', refId), {
+    var referOutUrl = wbRoute('referrals.refer-out', '/referrals/__RID__/refer-out').replace('__RID__', refId);
+    $.post(referOutUrl, {
         _token: (window.WORKBENCH_CONFIG?.csrf || $('meta[name="csrf-token"]').attr('content')),
+        referral_id: refId,
+        id: refId,
         action_notes: $('#refer-out-notes').val()
     }, function(res) {
         if (res.success) {
@@ -678,8 +684,11 @@ $(document).on('click', '#confirm-decline-referral', function() {
     var $btn = $(this);
     $btn.prop('disabled', true).html('<i class="fa fa-spinner fa-spin"></i> Declining...');
 
-    $.post(wbRoute('referrals.decline', '/referrals/decline').replace('__RID__', refId), {
+    var declineUrl = wbRoute('referrals.decline', '/referrals/__RID__/decline').replace('__RID__', refId);
+    $.post(declineUrl, {
         _token: (window.WORKBENCH_CONFIG?.csrf || $('meta[name="csrf-token"]').attr('content')),
+        referral_id: refId,
+        id: refId,
         reason: reason
     }, function(res) {
         if (res.success) {
@@ -700,8 +709,11 @@ $(document).on('click', '.btn-cancel-referral', function() {
     if (!confirm('Cancel this referral? This cannot be undone.')) return;
     var $btn = $(this);
     $btn.prop('disabled', true);
-    $.post(wbRoute('referrals.cancel', '/referrals/cancel').replace('__RID__', refId), {
-        _token: (window.WORKBENCH_CONFIG?.csrf || $('meta[name="csrf-token"]').attr('content'))
+    var cancelUrl = wbRoute('referrals.cancel', '/referrals/__RID__/cancel').replace('__RID__', refId);
+    $.post(cancelUrl, {
+        _token: (window.WORKBENCH_CONFIG?.csrf || $('meta[name="csrf-token"]').attr('content')),
+        referral_id: refId,
+        id: refId
     }, function(res) {
         if (res.success) {
             toastr.success(res.message);
@@ -722,7 +734,8 @@ $(document).on('click', '.btn-view-referral', function() {
     $('#btn-print-referral-letter').hide();
     $('#referralDetailModal').modal('show');
 
-    $.get(wbRoute('referrals.detail', '/referrals/detail').replace('__RID__', refId), function(data) {
+    var detailUrl = wbRoute('referrals.detail', '/referrals/__RID__/detail').replace('__RID__', refId);
+    $.get(detailUrl, { referral_id: refId, id: refId }, function(data) {
         if (!data.success) { toastr.error('Failed to load referral'); return; }
 
         var ref = data.referral;
@@ -790,10 +803,8 @@ $(document).on('click', '.btn-view-referral', function() {
         $('#referral-detail-content').html(html).show();
         $('#referral-detail-loading').hide();
 
-        // Show print button for external referrals
-        if (ref.referral_type === 'external') {
-            $('#btn-print-referral-letter').data('ref-data', data).show();
-        }
+        // Show print button for all referrals (letter for external, slip for internal)
+        $('#btn-print-referral-letter').data('ref-data', data).show();
 
     }).fail(function() {
         $('#referral-detail-loading').hide();
@@ -810,9 +821,15 @@ $(document).on('click', '#btn-print-referral-letter', function() {
 });
 
 // Print referral directly from table
-$(document).on('click', '.btn-print-referral', function() {
-    var refId = $(this).data('id');
-    $.get(wbRoute('referrals.detail', '/referrals/detail').replace('__RID__', refId), function(data) {
+$(document).on('click', '.btn-print-referral', function(e) {
+    e.preventDefault();
+    var refId = $(this).data('id') || $(this).data('referral-id');
+    if (!refId) {
+        toastr.error('Referral ID not found');
+        return;
+    }
+    var detailUrl = wbRoute('referrals.detail', '/referrals/__RID__/detail').replace('__RID__', refId);
+    $.get(detailUrl, { referral_id: refId, id: refId }, function(data) {
         if (data.success) {
             buildAndPrintReferralLetter(data);
         } else {
@@ -823,17 +840,107 @@ $(document).on('click', '.btn-print-referral', function() {
     });
 });
 
+function getReferralLetterPrintStyles() {
+    return '@page { size: A4 portrait; margin: 15mm; }' +
+        '* { box-sizing: border-box; }' +
+        'body { font-family: "Times New Roman", Times, serif; color: #111; background: #fff; margin: 0; padding: 0; font-size: 11pt; line-height: 1.5; }' +
+        '.referral-letter { max-width: 100%; margin: 0 auto; }' +
+        '.letter-header { text-align: center; border-bottom: 2px solid #222; padding-bottom: 8px; margin-bottom: 16px; }' +
+        '.letter-header img { max-height: 55px; margin-bottom: 4px; }' +
+        '.letter-header h2 { margin: 0; font-size: 16pt; font-weight: bold; text-transform: uppercase; color: #111; }' +
+        '.letter-header p { margin: 2px 0; font-size: 9.5pt; color: #444; }' +
+        '.letter-title { text-align: center; font-size: 13pt; font-weight: bold; text-decoration: underline; margin: 12px 0; text-transform: uppercase; letter-spacing: 0.5px; }' +
+        '.letter-meta { display: flex; justify-content: space-between; margin-bottom: 12px; font-size: 9.5pt; }' +
+        '.urgency-stamp { display: inline-block; padding: 2px 10px; font-weight: bold; font-size: 10pt; border: 2px solid; border-radius: 4px; text-transform: uppercase; }' +
+        '.urgency-emergency { color: #dc3545; border-color: #dc3545; }' +
+        '.urgency-urgent { color: #d97706; border-color: #d97706; }' +
+        '.urgency-routine { color: #4b5563; border-color: #4b5563; }' +
+        '.patient-info-table { width: 100%; border-collapse: collapse; margin-bottom: 14px; }' +
+        '.patient-info-table td { padding: 4px 8px; border: 1px solid #999; font-size: 10pt; }' +
+        '.patient-info-table td.label-cell { font-weight: bold; width: 25%; background: #f3f4f6; }' +
+        '.letter-body { margin-bottom: 16px; }' +
+        '.letter-body p { margin: 0 0 8px 0; text-align: justify; }' +
+        '.letter-signature { margin-top: 30px; }' +
+        '.letter-signature .sig-line { border-top: 1px solid #333; width: 220px; margin-top: 35px; padding-top: 5px; font-size: 9.5pt; }' +
+        '.letter-footer { margin-top: 25px; padding-top: 8px; border-top: 1px solid #bbb; font-size: 8pt; color: #666; text-align: center; }';
+}
+
+function executeReferralPrint(htmlContent, title) {
+    var iframeId = 'referral-print-isolated-iframe';
+    var iframe = document.getElementById(iframeId);
+    if (iframe) {
+        iframe.parentNode.removeChild(iframe);
+    }
+    iframe = document.createElement('iframe');
+    iframe.id = iframeId;
+    iframe.name = iframeId;
+    iframe.style.position = 'fixed';
+    iframe.style.right = '0';
+    iframe.style.bottom = '0';
+    iframe.style.width = '0';
+    iframe.style.height = '0';
+    iframe.style.border = '0';
+    iframe.style.opacity = '0';
+    iframe.style.pointerEvents = 'none';
+    document.body.appendChild(iframe);
+
+    var iframeDoc = iframe.contentWindow || iframe.contentDocument;
+    if (iframeDoc.document) iframeDoc = iframeDoc.document;
+
+    var fullHtml = '<!DOCTYPE html><html><head><meta charset="utf-8">' +
+        '<title>' + (title || 'Referral Letter') + '</title>' +
+        '<style>' + getReferralLetterPrintStyles() + '</style>' +
+        '</head><body>' +
+        htmlContent +
+        '</body></html>';
+
+    iframeDoc.open();
+    iframeDoc.write(fullHtml);
+    iframeDoc.close();
+
+    var printed = false;
+    function triggerPrint() {
+        if (printed) return;
+        printed = true;
+        try {
+            iframe.contentWindow.focus();
+            iframe.contentWindow.print();
+        } catch (err) {
+            console.warn('Iframe print failed, falling back to popup window:', err);
+            var printWin = window.open('', '_blank', 'width=850,height=950,scrollbars=yes');
+            if (printWin) {
+                printWin.document.open();
+                printWin.document.write(fullHtml);
+                printWin.document.close();
+                printWin.focus();
+                setTimeout(function() {
+                    printWin.print();
+                    setTimeout(function() { printWin.close(); }, 500);
+                }, 300);
+            }
+        }
+    }
+
+    if (iframe.contentWindow) {
+        iframe.contentWindow.onload = function() {
+            setTimeout(triggerPrint, 200);
+        };
+    }
+    setTimeout(triggerPrint, 400);
+}
+
 function buildAndPrintReferralLetter(data) {
-    var ref = data.referral;
-    var hosp = data.hospital;
+    var ref = data.referral || {};
+    var hosp = data.hospital || {};
     var today = new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
     var urgencyClass = 'urgency-' + (ref.urgency || 'routine');
+    var isInternal = (ref.referral_type === 'internal');
 
     var html = '<div class="referral-letter">';
 
     // Hospital header
     html += '<div class="letter-header">';
-    if (hosp.logo) html += '<img src="' + hosp.logo + '" alt="Logo">';
+    if (hosp.logo) html += '<img src="' + hosp.logo + '" alt="Logo"><br>';
     html += '<h2>' + (hosp.name || 'Hospital') + '</h2>';
     if (hosp.address) html += '<p>' + hosp.address + '</p>';
     var contacts = [];
@@ -843,31 +950,39 @@ function buildAndPrintReferralLetter(data) {
     html += '</div>';
 
     // Title
-    html += '<div class="letter-title">Specialist Referral Letter</div>';
+    var titleText = isInternal ? 'Specialist Referral Slip / Order' : 'Specialist Referral Letter';
+    html += '<div class="letter-title">' + titleText + '</div>';
 
     // Meta row
     html += '<div class="letter-meta">';
     html += '<div><strong>Date:</strong> ' + today + '</div>';
+    html += '<div><strong>Type:</strong> ' + (isInternal ? 'Internal Referral' : 'External Referral') + '</div>';
     html += '<div><strong>Ref #:</strong> REF-' + String(ref.id).padStart(5, '0') + '</div>';
     html += '</div>';
 
     // Urgency stamp
-    if (ref.urgency !== 'routine') {
+    if (ref.urgency && ref.urgency !== 'routine') {
         html += '<div style="text-align:right; margin-bottom:10px;"><span class="urgency-stamp ' + urgencyClass + '">' + ref.urgency + '</span></div>';
     }
 
     // To: section
     html += '<div class="letter-body">';
     html += '<p><strong>To:</strong><br>';
-    if (ref.external_doctor_name) html += ref.external_doctor_name + '<br>';
-    html += (ref.external_facility_name || 'The Receiving Doctor') + '<br>';
-    if (ref.external_facility_address) html += ref.external_facility_address + '<br>';
-    if (ref.external_facility_phone) html += 'Tel: ' + ref.external_facility_phone;
+    if (isInternal) {
+        if (ref.target_doctor) html += 'Dr. ' + ref.target_doctor + '<br>';
+        if (ref.target_clinic) html += ref.target_clinic + ' (Specialty Clinic)<br>';
+        html += (hosp.name || 'This Facility');
+    } else {
+        if (ref.external_doctor_name) html += ref.external_doctor_name + '<br>';
+        html += (ref.external_facility_name || 'The Receiving Doctor / Facility') + '<br>';
+        if (ref.external_facility_address) html += ref.external_facility_address + '<br>';
+        if (ref.external_facility_phone) html += 'Tel: ' + ref.external_facility_phone;
+    }
     html += '</p>';
 
     // Patient info table
     html += '<table class="patient-info-table">';
-    html += '<tr><td class="label-cell">Patient Name</td><td>' + ref.patient_name + '</td><td class="label-cell">File No</td><td>' + ref.patient_file_no + '</td></tr>';
+    html += '<tr><td class="label-cell">Patient Name</td><td>' + (ref.patient_name || '—') + '</td><td class="label-cell">File No</td><td>' + (ref.patient_file_no || '—') + '</td></tr>';
     var row2 = '<tr>';
     row2 += '<td class="label-cell">Gender</td><td>' + (ref.patient_gender || '—') + '</td>';
     row2 += '<td class="label-cell">Date of Birth</td><td>' + (ref.patient_dob || '—') + '</td>';
@@ -876,10 +991,13 @@ function buildAndPrintReferralLetter(data) {
     html += '<tr><td class="label-cell">HMO / Insurance</td><td colspan="3">' + (ref.patient_hmo || '—') + '</td></tr>';
     html += '</table>';
 
-    // Dear Doctor
+    // Salutation & intro
     html += '<p>Dear Colleague,</p>';
-
-    html += '<p>I am writing to refer the above-named patient to your facility for specialist evaluation and management.</p>';
+    if (isInternal) {
+        html += '<p>I am referring the above-named patient to your specialty clinic for further evaluation and specialist management.</p>';
+    } else {
+        html += '<p>I am writing to refer the above-named patient to your facility for specialist evaluation and management.</p>';
+    }
 
     // Diagnosis
     if (ref.provisional_diagnosis) {
@@ -895,7 +1013,6 @@ function buildAndPrintReferralLetter(data) {
     html += '<p><strong>Reason for Referral:</strong><br>' + (ref.reason || 'N/A') + '</p>';
 
     html += '<p>Kindly evaluate and manage as appropriate. I would appreciate feedback on the patient\'s progress and management plan.</p>';
-
     html += '<p>Thank you for your kind attention.</p>';
     html += '</div>';
 
@@ -903,24 +1020,20 @@ function buildAndPrintReferralLetter(data) {
     html += '<div class="letter-signature">';
     html += '<p>Yours faithfully,</p>';
     html += '<div class="sig-line">';
-    html += '<strong>' + ref.referring_doctor + '</strong><br>';
-    html += ref.referring_clinic + '<br>';
+    html += '<strong>' + (ref.referring_doctor || 'Referring Doctor') + '</strong><br>';
+    html += (ref.referring_clinic || '') + '<br>';
     html += (hosp.name || '');
     html += '</div>';
     html += '</div>';
 
     // Footer
     html += '<div class="letter-footer">';
-    html += 'This referral letter was generated electronically by ' + (hosp.name || 'the hospital') + ' on ' + today + '. Ref #REF-' + String(ref.id).padStart(5, '0');
+    html += 'This referral document was generated electronically by ' + (hosp.name || 'the hospital') + ' on ' + today + '. Ref #REF-' + String(ref.id).padStart(5, '0');
     html += '</div>';
 
     html += '</div>';
 
-    $('#referral-print-area').html(html);
-
-    setTimeout(function() {
-        window.print();
-    }, 300);
+    executeReferralPrint(html, titleText + ' - ' + (ref.patient_name || 'Patient'));
 }
 
 // ─── Referral History Toggle ─────────────

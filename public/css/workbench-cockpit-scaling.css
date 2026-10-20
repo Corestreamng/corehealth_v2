@@ -187,11 +187,26 @@ body.has-workbench .btn {
     line-height: 1.35 !important;
     border-radius: 5px !important;
     font-weight: 600 !important;
-    display: inline-flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    gap: 5px !important;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
     transition: all 0.15s ease-in-out !important;
+}
+
+body.is-workbench .btn[style*="display: none"],
+body.is-workbench .btn[style*="display:none"],
+body.is-workbench .btn.d-none,
+body.is-workbench .btn.hidden,
+body.has-workbench .btn[style*="display: none"],
+body.has-workbench .btn[style*="display:none"],
+body.has-workbench .btn.d-none,
+body.has-workbench .btn.hidden,
+body.is-workbench [style*="display: none"],
+body.is-workbench [style*="display:none"],
+body.has-workbench [style*="display: none"],
+body.has-workbench [style*="display:none"] {
+    display: none !important;
 }
 
 body.is-workbench .btn-sm,
@@ -401,6 +416,7 @@ body.has-workbench .modal-header {
     padding: 8px 14px !important;
     min-height: 38px !important;
     border-bottom: 1px solid #e2e8f0 !important;
+    flex-shrink: 0 !important;
 }
 
 body.is-workbench .modal-title,
@@ -419,8 +435,116 @@ body.has-workbench .modal-body {
 
 body.is-workbench .modal-footer,
 body.has-workbench .modal-footer {
-    padding: 6px 14px !important;
+    padding: 8px 16px !important;
     border-top: 1px solid #e2e8f0 !important;
+    flex-shrink: 0 !important;
+}
+
+/* Patient Registration & Intake Modal Specific Scaling (Clean Fixed Header/Footer, Internal Step Scroll) */
+#patientFormModal .modal-dialog {
+    max-width: 920px !important;
+    max-height: calc(100vh - 40px) !important;
+    height: auto !important;
+    margin: 1.25rem auto !important;
+    display: flex !important;
+    flex-direction: column !important;
+}
+
+#patientFormModal .modal-content {
+    max-height: calc(100vh - 40px) !important;
+    height: auto !important;
+    display: flex !important;
+    flex-direction: column !important;
+    border-radius: 12px !important;
+    overflow: hidden !important;
+    box-shadow: 0 25px 50px rgba(0, 0, 0, 0.25) !important;
+    background: #ffffff !important;
+}
+
+#patientFormModal #patient-form-header {
+    flex-shrink: 0 !important;
+    padding: 12px 20px !important;
+    min-height: 48px !important;
+}
+
+#patientFormModal form#patient-form {
+    display: flex !important;
+    flex-direction: column !important;
+    flex: 1 1 auto !important;
+    min-height: 0 !important;
+    overflow: hidden !important;
+    margin: 0 !important;
+}
+
+#patientFormModal .modal-body {
+    display: flex !important;
+    flex-direction: column !important;
+    flex: 1 1 auto !important;
+    min-height: 0 !important;
+    overflow: hidden !important;
+    padding: 0 !important;
+    max-height: none !important;
+}
+
+#patientFormModal .form-stepper {
+    flex-shrink: 0 !important;
+    padding: 0.75rem 1.5rem !important;
+    background: #f8fafc !important;
+    border-bottom: 1px solid #e9ecef !important;
+}
+
+#patientFormModal .form-steps-container {
+    flex: 1 1 auto !important;
+    min-height: 240px !important;
+    max-height: calc(100vh - 290px) !important;
+    height: auto !important;
+    overflow-y: auto !important;
+    padding: 16px 24px !important;
+}
+
+#patientFormModal .modal-footer {
+    flex-shrink: 0 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    padding: 12px 24px !important;
+    background: #f8fafc !important;
+    border-top: 1px solid #e2e8f0 !important;
+    min-height: 62px !important;
+    box-sizing: border-box !important;
+    margin: 0 !important;
+    position: relative !important;
+    z-index: 5 !important;
+}
+
+#patientFormModal .footer-left,
+#patientFormModal .footer-right {
+    display: flex !important;
+    align-items: center !important;
+    gap: 10px !important;
+}
+
+#patientFormModal .modal-footer .btn {
+    height: 36px !important;
+    min-height: 36px !important;
+    padding: 6px 18px !important;
+    font-size: 0.84rem !important;
+    border-radius: 6px !important;
+    font-weight: 600 !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 6px !important;
+    line-height: 1.3 !important;
+}
+
+#patientFormModal #pf-btn-prev[style*="display: none"],
+#patientFormModal #pf-btn-prev[style*="display:none"],
+#patientFormModal #pf-btn-submit[style*="display: none"],
+#patientFormModal #pf-btn-submit[style*="display:none"],
+#patientFormModal #pf-btn-next[style*="display: none"],
+#patientFormModal #pf-btn-next[style*="display:none"] {
+    display: none !important;
 }
 
 /* ── 9. Shared Patient Search Widget Scaling ────────────────────────────── */
@@ -620,3 +744,741 @@ body.dark-mode.has-workbench .modal-header,
 body.dark-mode.has-workbench .modal-footer {
     border-color: #334155 !important;
 }
+
+/* ── 12. Universal Workbench Shell Layout & Components ────────────────────── */
+.workbench-container,
+.billing-workbench-container,
+.nursing-workbench-container,
+.maternity-workbench-container,
+.pharmacy-workbench-container,
+.lab-workbench-container,
+.imaging-workbench-container,
+.reception-workbench-container {
+    display: flex !important;
+    height: 100% !important;
+    max-height: 100% !important;
+    width: 100% !important;
+    overflow: hidden !important;
+    gap: 8px !important;
+    box-sizing: border-box !important;
+    position: relative !important;
+}
+
+/* Left Panel (Patient Search, Queue & Quick Actions) */
+body.is-workbench .left-panel,
+body.has-workbench .left-panel {
+    width: 270px !important;
+    min-width: 270px !important;
+    max-width: 270px !important;
+    flex: 0 0 270px !important;
+    display: flex !important;
+    flex-direction: column !important;
+    height: 100% !important;
+    max-height: 100% !important;
+    overflow: hidden !important;
+    background: #ffffff !important;
+    border: 1px solid #e2e8f0 !important;
+    border-radius: 8px !important;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04) !important;
+    transition: width 0.25s ease, margin 0.25s ease, opacity 0.2s ease !important;
+}
+
+body.is-workbench .left-panel.collapsed,
+body.has-workbench .left-panel.collapsed,
+body.is-workbench .left-panel.hidden,
+body.has-workbench .left-panel.hidden {
+    width: 0 !important;
+    min-width: 0 !important;
+    max-width: 0 !important;
+    margin-left: -278px !important;
+    overflow: hidden !important;
+    border: none !important;
+    padding: 0 !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
+    display: none !important;
+}
+
+body.is-workbench .panel-header,
+body.has-workbench .panel-header {
+    padding: 6px 10px !important;
+    min-height: 36px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    border-bottom: 1px solid #e2e8f0 !important;
+    background: #f8fafc !important;
+}
+
+body.is-workbench .panel-header h5,
+body.has-workbench .panel-header h5 {
+    font-size: 0.84rem !important;
+    font-weight: 700 !important;
+    margin: 0 !important;
+    color: #1e293b !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 6px !important;
+}
+
+/* Queue Widget in Left Panel */
+body.is-workbench .queue-widget,
+body.has-workbench .queue-widget {
+    padding: 6px 8px !important;
+    flex: 1 1 auto !important;
+    overflow-y: auto !important;
+    min-height: 0 !important;
+}
+
+body.is-workbench .queue-widget h6,
+body.has-workbench .queue-widget h6 {
+    font-size: 0.72rem !important;
+    font-weight: 700 !important;
+    letter-spacing: 0.4px !important;
+    text-transform: uppercase !important;
+    color: #64748b !important;
+    margin: 4px 4px 6px 4px !important;
+}
+
+body.is-workbench .queue-item,
+body.has-workbench .queue-item {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    padding: 5px 8px !important;
+    min-height: 28px !important;
+    border-radius: 5px !important;
+    margin-bottom: 3px !important;
+    cursor: pointer !important;
+    font-size: 0.78rem !important;
+    background: #ffffff !important;
+    border: 1px solid #e2e8f0 !important;
+    transition: all 0.15s ease !important;
+}
+
+body.is-workbench .queue-item:hover,
+body.has-workbench .queue-item:hover {
+    background: #f1f5f9 !important;
+    border-color: #cbd5e1 !important;
+}
+
+body.is-workbench .queue-item.active,
+body.has-workbench .queue-item.active {
+    background: rgba(var(--hospital-primary-rgb, 1, 27, 51), 0.08) !important;
+    font-weight: 700 !important;
+    border-color: var(--hospital-primary, #011b33) !important;
+    color: var(--hospital-primary, #011b33) !important;
+}
+
+body.is-workbench .queue-item-label,
+body.has-workbench .queue-item-label {
+    display: flex !important;
+    align-items: center !important;
+    gap: 6px !important;
+}
+
+body.is-workbench .queue-count,
+body.has-workbench .queue-count {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    height: 19px !important;
+    min-width: 22px !important;
+    padding: 0 5px !important;
+    font-size: 0.75rem !important;
+    font-weight: 700 !important;
+    border-radius: 10px !important;
+    background: #64748b !important;
+    color: #ffffff !important;
+}
+
+body.is-workbench .btn-queue-all,
+body.has-workbench .btn-queue-all {
+    width: 100% !important;
+    margin-top: 6px !important;
+    padding: 4px 8px !important;
+    font-size: 0.76rem !important;
+    font-weight: 600 !important;
+    border-radius: 5px !important;
+    border: 1px dashed #cbd5e1 !important;
+    background: #f8fafc !important;
+    color: #475569 !important;
+    cursor: pointer !important;
+    transition: all 0.15s ease !important;
+}
+
+body.is-workbench .btn-queue-all:hover,
+body.has-workbench .btn-queue-all:hover {
+    background: #e2e8f0 !important;
+    color: #1e293b !important;
+}
+
+/* Quick Actions in Left Panel */
+body.is-workbench .quick-actions,
+body.has-workbench .quick-actions {
+    padding: 6px 8px !important;
+    border-top: 1px solid #e2e8f0 !important;
+    background: #f8fafc !important;
+    flex-shrink: 0 !important;
+}
+
+body.is-workbench .quick-actions h6,
+body.has-workbench .quick-actions h6 {
+    font-size: 0.72rem !important;
+    font-weight: 700 !important;
+    letter-spacing: 0.4px !important;
+    text-transform: uppercase !important;
+    color: #64748b !important;
+    margin: 2px 4px 5px 4px !important;
+}
+
+body.is-workbench .quick-action-btn,
+body.has-workbench .quick-action-btn {
+    width: 100% !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+    padding: 4px 8px !important;
+    min-height: 28px !important;
+    border-radius: 5px !important;
+    font-size: 0.78rem !important;
+    margin-bottom: 3px !important;
+    border: 1px solid #e2e8f0 !important;
+    background: #ffffff !important;
+    color: #334155 !important;
+    text-align: left !important;
+    cursor: pointer !important;
+    transition: all 0.15s ease !important;
+}
+
+body.is-workbench .quick-action-btn:hover,
+body.has-workbench .quick-action-btn:hover {
+    background: #f1f5f9 !important;
+    border-color: #cbd5e1 !important;
+    color: #0f172a !important;
+}
+
+/* Main Workspace */
+body.is-workbench .main-workspace,
+body.has-workbench .main-workspace {
+    flex: 1 1 auto !important;
+    min-width: 0 !important;
+    height: 100% !important;
+    max-height: 100% !important;
+    display: flex !important;
+    flex-direction: column !important;
+    overflow: hidden !important;
+    background: #ffffff !important;
+    border: 1px solid #e2e8f0 !important;
+    border-radius: 8px !important;
+    position: relative !important;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04) !important;
+}
+
+/* Patient Header Banner - Signature Hospital Branding Gradient Theme */
+body.is-workbench .workbench-patient-header,
+body.has-workbench .workbench-patient-header,
+body.is-workbench .patient-header,
+body.has-workbench .patient-header {
+    display: none;
+    padding: 6px 14px !important;
+    background: linear-gradient(135deg, var(--hospital-primary, #011b33) 0%, var(--hospital-secondary, #0056b3) 100%) !important;
+    color: #ffffff !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.15) !important;
+    box-shadow: 0 2px 8px rgba(var(--hospital-primary-rgb, 1, 27, 51), 0.28) !important;
+    flex-shrink: 0 !important;
+    position: relative !important;
+    z-index: 10 !important;
+}
+
+body.is-workbench .workbench-patient-header.active,
+body.has-workbench .workbench-patient-header.active,
+body.is-workbench .patient-header.active,
+body.has-workbench .patient-header.active {
+    display: block !important;
+}
+
+body.is-workbench .workbench-patient-header[style*="display: none"],
+body.is-workbench .workbench-patient-header[style*="display:none"],
+body.is-workbench .patient-header[style*="display: none"],
+body.is-workbench .patient-header[style*="display:none"],
+body.has-workbench .workbench-patient-header[style*="display: none"],
+body.has-workbench .workbench-patient-header[style*="display:none"],
+body.has-workbench .patient-header[style*="display: none"],
+body.has-workbench .patient-header[style*="display:none"] {
+    display: none !important;
+}
+
+body.is-workbench .patient-header-top,
+body.has-workbench .patient-header-top {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    gap: 12px !important;
+}
+
+body.is-workbench .patient-avatar-circle,
+body.has-workbench .patient-avatar-circle {
+    width: 38px !important;
+    height: 38px !important;
+    border-radius: 50% !important;
+    background: rgba(255, 255, 255, 0.2) !important;
+    border: 2px solid rgba(255, 255, 255, 0.45) !important;
+    color: #ffffff !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    font-weight: 700 !important;
+    font-size: 1rem !important;
+    backdrop-filter: blur(4px) !important;
+}
+
+body.is-workbench .patient-name,
+body.has-workbench .patient-name {
+    font-size: 1.15rem !important;
+    font-weight: 700 !important;
+    color: #ffffff !important;
+    letter-spacing: -0.2px !important;
+    line-height: 1.25 !important;
+    margin: 0 !important;
+}
+
+body.is-workbench .patient-meta,
+body.has-workbench .patient-meta {
+    font-size: 0.78rem !important;
+    color: rgba(255, 255, 255, 0.95) !important;
+    display: flex !important;
+    align-items: center !important;
+    flex-wrap: wrap !important;
+    gap: 8px !important;
+    margin-top: 2px !important;
+}
+
+body.is-workbench .patient-meta-item,
+body.has-workbench .patient-meta-item {
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 4px !important;
+    color: rgba(255, 255, 255, 0.95) !important;
+    background: rgba(255, 255, 255, 0.14) !important;
+    padding: 1px 7px !important;
+    border-radius: 4px !important;
+    border: 1px solid rgba(255, 255, 255, 0.2) !important;
+    font-size: 0.76rem !important;
+    line-height: 1.3 !important;
+}
+
+body.is-workbench .patient-meta-item i,
+body.has-workbench .patient-meta-item i {
+    font-size: 0.85rem !important;
+    opacity: 0.9 !important;
+    color: #ffffff !important;
+}
+
+body.is-workbench .patient-meta-item strong,
+body.has-workbench .patient-meta-item strong {
+    color: #ffffff !important;
+    font-weight: 700 !important;
+}
+
+body.is-workbench .patient-meta .badge,
+body.has-workbench .patient-meta .badge {
+    background: rgba(255, 255, 255, 0.18) !important;
+    color: #ffffff !important;
+    border: 1px solid rgba(255, 255, 255, 0.25) !important;
+    font-weight: 600 !important;
+    padding: 2px 7px !important;
+}
+
+/* Glassmorphism Balance Card */
+body.is-workbench .patient-account-balance,
+body.has-workbench .patient-account-balance {
+    text-align: right !important;
+    padding: 3px 10px !important;
+    border-radius: 6px !important;
+    background: rgba(255, 255, 255, 0.15) !important;
+    border: 1px solid rgba(255, 255, 255, 0.28) !important;
+    backdrop-filter: blur(4px) !important;
+    min-width: 105px !important;
+}
+
+body.is-workbench .patient-account-balance .balance-label,
+body.has-workbench .patient-account-balance .balance-label {
+    font-size: 0.65rem !important;
+    text-transform: uppercase !important;
+    color: rgba(255, 255, 255, 0.85) !important;
+    font-weight: 600 !important;
+    letter-spacing: 0.4px !important;
+    line-height: 1 !important;
+    margin-bottom: 2px !important;
+}
+
+body.is-workbench .patient-account-balance .balance-value,
+body.has-workbench .patient-account-balance .balance-value {
+    font-size: 1.05rem !important;
+    font-weight: 700 !important;
+    color: #ffffff !important;
+    line-height: 1.2 !important;
+}
+
+body.is-workbench .patient-account-balance .balance-value.text-danger,
+body.has-workbench .patient-account-balance .balance-value.text-danger {
+    color: #ffa39e !important;
+}
+
+body.is-workbench .patient-account-balance .balance-value.text-success,
+body.has-workbench .patient-account-balance .balance-value.text-success {
+    color: #b7eb8f !important;
+}
+
+/* Header Controls & Action Buttons */
+body.is-workbench .patient-header .btn-header-action,
+body.has-workbench .patient-header .btn-header-action {
+    background: rgba(255, 255, 255, 0.18) !important;
+    border: 1px solid rgba(255, 255, 255, 0.3) !important;
+    color: #ffffff !important;
+    padding: 2px 8px !important;
+    font-size: 0.75rem !important;
+    height: 26px !important;
+    border-radius: 5px !important;
+    font-weight: 500 !important;
+}
+
+body.is-workbench .patient-header .btn-header-action:hover,
+body.has-workbench .patient-header .btn-header-action:hover {
+    background: rgba(255, 255, 255, 0.3) !important;
+    border-color: rgba(255, 255, 255, 0.45) !important;
+    color: #ffffff !important;
+}
+
+body.is-workbench .patient-header .btn-header-close,
+body.has-workbench .patient-header .btn-header-close {
+    background: rgba(239, 68, 68, 0.35) !important;
+    border-color: rgba(254, 202, 202, 0.45) !important;
+    color: #ffffff !important;
+}
+
+body.is-workbench .patient-header .btn-header-close:hover,
+body.has-workbench .patient-header .btn-header-close:hover {
+    background: rgba(239, 68, 68, 0.55) !important;
+    color: #ffffff !important;
+}
+
+body.is-workbench .patient-header .btn-manage-alerts,
+body.has-workbench .patient-header .btn-manage-alerts {
+    background: #e11d48 !important;
+    border: 1px solid #fda4af !important;
+    color: #ffffff !important;
+    font-size: 0.72rem !important;
+    padding: 1px 7px !important;
+    height: 22px !important;
+    font-weight: 600 !important;
+}
+
+body.is-workbench .btn-expand-patient,
+body.has-workbench .btn-expand-patient {
+    background: rgba(255, 255, 255, 0.18) !important;
+    border: 1px solid rgba(255, 255, 255, 0.3) !important;
+    color: #ffffff !important;
+    padding: 2px 9px !important;
+    border-radius: 12px !important;
+    cursor: pointer !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 4px !important;
+    font-size: 0.72rem !important;
+    font-weight: 600 !important;
+    height: 24px !important;
+    transition: all 0.2s ease !important;
+}
+
+body.is-workbench .btn-expand-patient:hover,
+body.has-workbench .btn-expand-patient:hover {
+    background: rgba(255, 255, 255, 0.28) !important;
+    border-color: rgba(255, 255, 255, 0.45) !important;
+}
+
+body.is-workbench .btn-expand-patient.expanded i,
+body.has-workbench .btn-expand-patient.expanded i {
+    transform: rotate(180deg) !important;
+}
+
+/* Patient Allergies Alert Strip */
+body.is-workbench .patient-allergies .allergy-alert-badge,
+body.has-workbench .patient-allergies .allergy-alert-badge {
+    background: #e11d48 !important;
+    color: #ffffff !important;
+    font-weight: 700 !important;
+    font-size: 0.72rem !important;
+    border-radius: 4px !important;
+    padding: 2px 8px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 4px !important;
+}
+
+/* Expandable Biodata Grid Styling */
+body.is-workbench .patient-details-expanded,
+body.has-workbench .patient-details-expanded {
+    border-top: 1px solid rgba(255, 255, 255, 0.2) !important;
+    margin-top: 6px !important;
+    padding-top: 6px !important;
+    max-height: 260px !important;
+    overflow-y: auto !important;
+}
+
+body.is-workbench .patient-details-grid,
+body.has-workbench .patient-details-grid {
+    display: grid !important;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)) !important;
+    gap: 6px !important;
+    padding: 2px 0 !important;
+}
+
+body.is-workbench .patient-detail-item,
+body.has-workbench .patient-detail-item {
+    background: rgba(255, 255, 255, 0.12) !important;
+    border: 1px solid rgba(255, 255, 255, 0.18) !important;
+    border-radius: 6px !important;
+    padding: 4px 8px !important;
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: center !important;
+    min-height: 44px !important;
+}
+
+body.is-workbench .patient-detail-label,
+body.has-workbench .patient-detail-label {
+    font-size: 0.65rem !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.4px !important;
+    color: rgba(255, 255, 255, 0.82) !important;
+    font-weight: 700 !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 4px !important;
+    line-height: 1 !important;
+    margin-bottom: 2px !important;
+}
+
+body.is-workbench .patient-detail-value,
+body.has-workbench .patient-detail-value {
+    font-size: 0.82rem !important;
+    font-weight: 600 !important;
+    color: #ffffff !important;
+    line-height: 1.2 !important;
+    word-break: break-word !important;
+}
+
+/* Empty State - Shown when no patient, hidden when patient is loaded */
+body.is-workbench .empty-state,
+body.has-workbench .empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    flex: 1 1 auto;
+    padding: 2rem;
+    text-align: center;
+    color: #64748b;
+}
+
+body.is-workbench .empty-state[style*="display: none"],
+body.is-workbench .empty-state[style*="display:none"],
+body.is-workbench .empty-state.d-none,
+body.is-workbench .empty-state.hidden,
+body.has-workbench .empty-state[style*="display: none"],
+body.has-workbench .empty-state[style*="display:none"],
+body.has-workbench .empty-state.d-none,
+body.has-workbench .empty-state.hidden {
+    display: none !important;
+}
+
+body.is-workbench .empty-state i,
+body.has-workbench .empty-state i {
+    font-size: 3.5rem !important;
+    color: #cbd5e1 !important;
+    margin-bottom: 0.5rem !important;
+}
+
+body.is-workbench .empty-state h3,
+body.is-workbench .empty-state h4,
+body.has-workbench .empty-state h3,
+body.has-workbench .empty-state h4 {
+    font-size: 1.15rem !important;
+    font-weight: 700 !important;
+    color: #334155 !important;
+    margin-bottom: 0.25rem !important;
+}
+
+body.is-workbench .empty-state p,
+body.has-workbench .empty-state p {
+    font-size: 0.84rem !important;
+    color: #64748b !important;
+    max-width: 360px !important;
+}
+
+/* Queue View Drawer */
+body.is-workbench .queue-view,
+body.has-workbench .queue-view {
+    position: absolute !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    background: #ffffff !important;
+    z-index: 50 !important;
+    display: none;
+    flex-direction: column !important;
+    padding: 8px 12px !important;
+}
+
+body.is-workbench .queue-view.active,
+body.has-workbench .queue-view.active {
+    display: flex !important;
+}
+
+body.is-workbench .queue-view-header,
+body.has-workbench .queue-view-header {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    padding-bottom: 6px !important;
+    border-bottom: 1px solid #e2e8f0 !important;
+    margin-bottom: 8px !important;
+    flex-shrink: 0 !important;
+}
+
+/* Workspace Tabs */
+body.is-workbench .workspace-tabs,
+body.has-workbench .workspace-tabs {
+    display: flex !important;
+    align-items: flex-end !important;
+    gap: 3px !important;
+    border-bottom: 1px solid #e2e8f0 !important;
+    background: #f8fafc !important;
+    padding: 4px 10px 0 !important;
+    min-height: 34px !important;
+    flex-shrink: 0 !important;
+    overflow-x: auto !important;
+}
+
+body.is-workbench .workspace-tab,
+body.has-workbench .workspace-tab {
+    padding: 4px 10px !important;
+    font-size: 0.8125rem !important;
+    font-weight: 600 !important;
+    border: none !important;
+    background: transparent !important;
+    color: #64748b !important;
+    cursor: pointer !important;
+    border-radius: 5px 5px 0 0 !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 5px !important;
+    transition: all 0.15s ease !important;
+    white-space: nowrap !important;
+    border-bottom: 2px solid transparent !important;
+}
+
+body.is-workbench .workspace-tab:hover,
+body.has-workbench .workspace-tab:hover {
+    color: #1e293b !important;
+    background: rgba(255, 255, 255, 0.6) !important;
+}
+
+body.is-workbench .workspace-tab.active,
+body.has-workbench .workspace-tab.active {
+    color: var(--hospital-primary, #011b33) !important;
+    background: #ffffff !important;
+    border-bottom: 2px solid var(--hospital-primary, #011b33) !important;
+    font-weight: 700 !important;
+}
+
+body.is-workbench .workspace-tab-badge,
+body.has-workbench .workspace-tab-badge {
+    background: var(--hospital-primary, #011b33) !important;
+    color: #ffffff !important;
+    padding: 1px 5px !important;
+    font-size: 0.68rem !important;
+    border-radius: 8px !important;
+}
+
+/* Workspace Content & Panes - Hidden until active patient */
+body.is-workbench .workspace-content,
+body.has-workbench .workspace-content {
+    display: none;
+    flex: 1 1 auto;
+    min-height: 0;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+body.is-workbench .workspace-content.active,
+body.has-workbench .workspace-content.active {
+    display: flex !important;
+}
+
+body.is-workbench .workspace-content[style*="display: none"],
+body.is-workbench .workspace-content[style*="display:none"],
+body.has-workbench .workspace-content[style*="display: none"],
+body.has-workbench .workspace-content[style*="display:none"] {
+    display: none !important;
+}
+
+body.is-workbench .workspace-tab-content,
+body.has-workbench .workspace-tab-content {
+    display: none;
+    flex: 1 1 auto !important;
+    min-height: 0 !important;
+    overflow-y: auto !important;
+    padding: 8px 10px !important;
+}
+
+body.is-workbench .workspace-tab-content.active,
+body.has-workbench .workspace-tab-content.active {
+    display: flex !important;
+    flex-direction: column !important;
+}
+
+/* Mobile & Tablet Responsiveness */
+@media (min-width: 992px) {
+    #btn-back-to-search,
+    .btn-back-to-search,
+    #btn-view-work-pane,
+    .btn-view-work-pane {
+        display: none !important;
+    }
+}
+
+@media (max-width: 991.98px) {
+    body.is-workbench .left-panel,
+    body.has-workbench .left-panel {
+        width: 100% !important;
+        min-width: 100% !important;
+        max-width: 100% !important;
+        flex: 1 1 auto !important;
+    }
+
+    body.is-workbench .left-panel.hidden,
+    body.has-workbench .left-panel.hidden {
+        display: none !important;
+    }
+
+    body.is-workbench .main-workspace,
+    body.has-workbench .main-workspace {
+        display: none !important;
+        width: 100% !important;
+    }
+
+    body.is-workbench .main-workspace.active,
+    body.has-workbench .main-workspace.active {
+        display: flex !important;
+    }
+
+    #btn-back-to-search,
+    .btn-back-to-search {
+        display: inline-flex !important;
+    }
+}
+

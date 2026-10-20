@@ -16,6 +16,7 @@ window.WORKBENCH_CONFIG = {
 };
 </script>
 <script src="{{ asset('js/workbench-helper.js') }}"></script>
+<script src="{{ versioned_asset('js/workbench-shell.js') }}"></script>
 @include('admin.partials.patient_search_js', ['search_context' => 'billing'])
 <script src="{{ versioned_asset('js/billing-core.js') }}"></script>
 <script src="{{ versioned_asset('js/billing-payments.js') }}"></script>

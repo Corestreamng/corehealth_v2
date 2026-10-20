@@ -765,10 +765,8 @@ class SpecialistReferralController extends Controller
                     $buttons .= '<button class="btn btn-danger btn-cancel-referral" data-id="' . $ref->id . '" title="Cancel Referral"><i class="mdi mdi-delete"></i></button>';
                 }
 
-                // Print for external referrals (any status)
-                if ($ref->referral_type === 'external') {
-                    $buttons .= '<button class="btn btn-outline-dark btn-print-referral" data-id="' . $ref->id . '" title="Print Referral Letter"><i class="mdi mdi-printer"></i></button>';
-                }
+                // Print referral document (letter for external, slip for internal)
+                $buttons .= '<button class="btn btn-outline-dark btn-print-referral" data-id="' . $ref->id . '" title="Print Referral ' . ($ref->referral_type === 'external' ? 'Letter' : 'Slip') . '"><i class="mdi mdi-printer"></i></button>';
 
                 $buttons .= '</div>';
 
@@ -791,8 +789,21 @@ class SpecialistReferralController extends Controller
     /**
      * Get full referral detail for view/print modal.
      */
-    public function getReferralDetail(SpecialistReferral $referral)
+    public function getReferralDetail(Request $request, ?SpecialistReferral $referral = null)
     {
+        if (!$referral || !$referral->exists) {
+            $refId = $request->input('referral_id') ?? $request->input('id') ?? $request->input('ref_id') ?? $request->route('referral');
+            if ($refId instanceof SpecialistReferral) {
+                $referral = $refId;
+            } elseif ($refId) {
+                $referral = SpecialistReferral::find($refId);
+            }
+        }
+
+        if (!$referral || !$referral->exists) {
+            return response()->json(['success' => false, 'message' => 'Referral not found.'], 404);
+        }
+
         $referral->load([
             'patient.user', 'patient.hmo',
             'referringDoctor.user', 'referringClinic',
@@ -851,8 +862,21 @@ class SpecialistReferralController extends Controller
     /**
      * Book an appointment for an internal referral.
      */
-    public function bookReferralAppointment(Request $request, SpecialistReferral $referral)
+    public function bookReferralAppointment(Request $request, ?SpecialistReferral $referral = null)
     {
+        if (!$referral || !$referral->exists) {
+            $refId = $request->input('referral_id') ?? $request->input('id') ?? $request->input('ref_id') ?? $request->route('referral');
+            if ($refId instanceof SpecialistReferral) {
+                $referral = $refId;
+            } elseif ($refId) {
+                $referral = SpecialistReferral::find($refId);
+            }
+        }
+
+        if (!$referral || !$referral->exists) {
+            return response()->json(['success' => false, 'message' => 'Referral not found.'], 404);
+        }
+
         $request->validate([
             'appointment_date' => 'required|date|after_or_equal:today',
             'start_time' => 'required|date_format:H:i',
@@ -924,8 +948,21 @@ class SpecialistReferralController extends Controller
     /**
      * Mark referral as referred out (external).
      */
-    public function referOut(Request $request, SpecialistReferral $referral)
+    public function referOut(Request $request, ?SpecialistReferral $referral = null)
     {
+        if (!$referral || !$referral->exists) {
+            $refId = $request->input('referral_id') ?? $request->input('id') ?? $request->input('ref_id') ?? $request->route('referral');
+            if ($refId instanceof SpecialistReferral) {
+                $referral = $refId;
+            } elseif ($refId) {
+                $referral = SpecialistReferral::find($refId);
+            }
+        }
+
+        if (!$referral || !$referral->exists) {
+            return response()->json(['success' => false, 'message' => 'Referral not found.'], 404);
+        }
+
         $request->validate([
             'action_notes' => 'nullable|string|max:1000',
         ]);
@@ -951,8 +988,21 @@ class SpecialistReferralController extends Controller
     /**
      * Cancel a referral.
      */
-    public function cancelReferral(Request $request, SpecialistReferral $referral)
+    public function cancelReferral(Request $request, ?SpecialistReferral $referral = null)
     {
+        if (!$referral || !$referral->exists) {
+            $refId = $request->input('referral_id') ?? $request->input('id') ?? $request->input('ref_id') ?? $request->route('referral');
+            if ($refId instanceof SpecialistReferral) {
+                $referral = $refId;
+            } elseif ($refId) {
+                $referral = SpecialistReferral::find($refId);
+            }
+        }
+
+        if (!$referral || !$referral->exists) {
+            return response()->json(['success' => false, 'message' => 'Referral not found.'], 404);
+        }
+
         $request->validate([
             'reason' => 'nullable|string|max:500',
         ]);

@@ -32,6 +32,10 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/encounters/referrals/incoming', [SpecialistReferralController::class, 'getIncomingReferrals'])->name('encounters.referrals.incoming.alias');
     Route::get('/encounters/referrals/patient-all', [SpecialistReferralController::class, 'getPatientReferrals'])->name('encounters.referrals.patient-all.alias');
     Route::post('/referrals/decline', [SpecialistReferralController::class, 'declineReferral'])->name('referrals.decline.alias');
+    Route::post('/referrals/book', [SpecialistReferralController::class, 'bookReferralAppointment'])->name('referrals.book.alias');
+    Route::post('/referrals/refer-out', [SpecialistReferralController::class, 'referOut'])->name('referrals.refer-out.alias');
+    Route::post('/referrals/cancel', [SpecialistReferralController::class, 'cancelReferral'])->name('referrals.cancel.alias');
+    Route::get('/referrals/detail', [SpecialistReferralController::class, 'getReferralDetail'])->name('referrals.detail.alias');
 
     // ─── Reception: Referral Management ────────────────────────────────────
     Route::prefix('referrals')->name('referrals.')->group(function () {

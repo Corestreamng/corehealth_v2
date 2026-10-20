@@ -1,8 +1,11 @@
 @extends('admin.layouts.app')
 
 @section('title', 'Billing Workbench')
+@section('is_workbench', true)
+@section('body_class', 'is-workbench has-workbench')
 
 @push('styles')
+<link rel="stylesheet" href="{{ versioned_asset('css/workbench-cockpit-scaling.css') }}">
 <link rel="stylesheet" href="{{ versioned_asset('css/billing-workbench.css') }}">
 <link rel="stylesheet" href="{{ asset('plugins/dataT/datatables.min.css') }}">
 @endpush
@@ -107,7 +110,7 @@ $sett = appsettings();
     </div>
 </div>
 
-<div class="billing-workbench-container">
+<div class="billing-workbench-container workbench-container">
     <!-- Left Panel: Patient Search & Queue -->
     <div class="left-panel" id="left-panel">
         <div class="panel-header">
@@ -165,63 +168,29 @@ $sett = appsettings();
 
     <!-- Main Workspace -->
     <div class="main-workspace" id="main-workspace">
-        <!-- Navigation Bar (Mobile Back Button + Actions) -->
-        <div class="workspace-navbar" id="workspace-navbar">
-            <button class="btn-back-to-search" id="btn-back-to-search">
-                <i class="fa fa-arrow-left"></i> Back to Search
-            </button>
-            <div class="workspace-navbar-actions">
-                <button class="btn-toggle-search" id="btn-toggle-search">
-                    <i class="fa fa-bars"></i> Toggle Search
-                </button>
-                <button type="button" class="btn btn-primary" id="btn-billing-new-patient" onclick="showPatientFormModal('create')" title="Register New Patient">
-                    <i class="mdi mdi-account-plus"></i> New Patient
-                </button>
-                <button type="button" class="btn btn-outline-primary" id="btn-register-walkin" onclick="if(typeof openWalkInRegistration==='function'){openWalkInRegistration();}else{showPatientFormModal('create');enableWalkInMode('BIL-');}" title="Register Walk-in Patient">
-                    <i class="mdi mdi-account-plus-outline"></i> Register Walk-in
-                </button>
-                @if(appsettings()->enable_ei_billing)
-                <button type="button" class="btn btn-danger" onclick="showEmergencyIntakeModal()" title="Emergency Intake">
-                    <i class="mdi mdi-ambulance"></i> Emergency Intake
-                </button>
-                @endif
-                <button class="btn btn-outline-info" data-bs-toggle="modal" data-bs-target="#hospital-contacts-modal" title="Hospital Contacts">
-                    <i class="mdi mdi-contacts"></i> Contacts
-                </button>
-                <button class="btn btn-outline-success" data-bs-toggle="modal" data-bs-target="#workbench-price-list-modal" title="Price List">
-                    <i class="mdi mdi-currency-usd"></i> Price List
-                </button>
-            </div>
-        </div>
+        {{-- Standard Universal Workbench Navbar --}}
+        @include('admin.workbench.partials._navbar', [
+            'module' => 'billing',
+            'walkinPrefix' => 'BIL-',
+            'enableEmergencyIntake' => appsettings()->enable_ei_billing ?? false
+        ])
 
-        <!-- Empty State -->
-        <div class="empty-state" id="empty-state">
-            <i class="mdi mdi-account-cash"></i>
-            <h3>No Patient Selected</h3>
-            <p>Search and select a patient from the queue to begin billing</p>
-            <button class="btn btn-lg btn-primary" id="view-queue-btn">
-                💰 View Payment Queue
-            </button>
-        </div>
+        {{-- Standard Universal Workbench Empty State --}}
+        @include('admin.workbench.partials._empty_state', [
+            'icon' => 'mdi-account-cash',
+            'title' => 'No Patient Selected',
+            'description' => 'Search and select a patient from the queue or search bar to begin billing',
+            'buttonText' => 'View Payment Queue',
+            'buttonIcon' => 'mdi-format-list-bulleted',
+            'buttonId' => 'view-queue-btn'
+        ])
 
-        <!-- Queue View -->
-        <div class="queue-view" id="queue-view">
-            <div class="queue-view-header">
-                <h4 id="queue-view-title"><i class="mdi mdi-format-list-bulleted"></i> Payment Queue</h4>
-                <button class="btn-close-queue" id="btn-close-queue">
-                    <i class="mdi mdi-close"></i> Close
-                </button>
-            </div>
-            <div class="queue-view-content">
-                <table class="table" id="queue-datatable" style="width: 100%">
-                    <thead>
-                        <tr>
-                            <th>Queue Items</th>
-                        </tr>
-                    </thead>
-                </table>
-            </div>
-        </div>
+        {{-- Standard Universal Workbench Queue View Drawer --}}
+        @include('admin.workbench.partials._queue_view', [
+            'title' => 'Payment Queue',
+            'icon' => 'mdi-format-list-bulleted',
+            'tableId' => 'queue-datatable'
+        ])
 
         <!-- Reports View (Full Screen - Global Access) -->
         <div class="queue-view" id="reports-view">
@@ -479,42 +448,13 @@ $sett = appsettings();
             </div>
         </div>
 
-        <!-- Patient Header -->
-        <div class="patient-header" id="patient-header">
-            <div class="patient-header-top">
-                <div style="flex: 1;">
-                    <div class="d-flex align-items-center mb-1">
-                        <div class="patient-name mb-0 me-3" id="patient-name"></div>
-                        <button class="btn btn-sm btn-danger btn-manage-alerts" id="btn-manage-alerts" style="display:none;">
-                            <i class="mdi mdi-alert-octagon"></i> Alerts
-                        </button>
-                    </div>
-                    <div class="patient-meta" id="patient-meta"></div>
-                    <div class="sticky-header-alerts mt-2" style="max-height: 60px; overflow-y: auto;"></div>
-                </div>
-                <div class="d-flex flex-column align-items-end gap-2">
-                    <div class="patient-account-balance" id="patient-header-balance" style="display: none;">
-                        <div class="balance-label">Account Balance</div>
-                        <div class="balance-value" id="header-balance-amount">₦0.00</div>
-                    </div>
-                    <div class="d-flex align-items-center gap-2">
-                        <button class="btn btn-sm btn-light" id="btn-edit-patient" title="Edit Patient" style="display: none;">
-                            <i class="mdi mdi-pencil"></i> Edit
-                        </button>
-                        <button class="btn-expand-patient" id="btn-expand-patient" title="Show more details">
-                            <span class="btn-expand-text">more biodata</span>
-                            <i class="mdi mdi-chevron-down"></i>
-                        </button>
-                    </div>
-                </div>
-            </div>
-            <div class="patient-details-expanded" id="patient-details-expanded">
-                <div class="patient-details-grid" id="patient-details-grid"></div>
-            </div>
-        </div>
+        {{-- Standard Universal Workbench Patient Header --}}
+        @include('admin.workbench.partials._patient_header', [
+            'showBalance' => true
+        ])
 
         <!-- Workspace Content -->
-        <div class="workspace-content" id="workspace-content">
+        <div class="workspace-content" id="workspace-content" style="display: none;">
             <div class="workspace-tabs">
                 <button class="workspace-tab active" data-tab="billing">
                     <i class="mdi mdi-cash-register"></i>

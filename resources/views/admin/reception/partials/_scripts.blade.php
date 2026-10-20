@@ -39,7 +39,21 @@ window.WORKBENCH_CONFIG = {
         'reception.tariff-preview': '{{ route("reception.tariff-preview") }}',
         'reception.book-consultation': '{{ route("reception.book-consultation") }}',
         'reception.book-walkin': '{{ route("reception.book-walkin") }}',
-        'reception.queue-counts': '{{ route("reception.queue-counts") }}'
+        'reception.queue-counts': '{{ route("reception.queue-counts") }}',
+        'referrals.pending': '{{ route("referrals.pending") }}',
+        'referrals.pending-count': '{{ route("referrals.pending-count") }}',
+        'referrals.book': '{{ route("referrals.book", ["referral" => "__RID__"]) }}',
+        'referrals.refer-out': '{{ route("referrals.refer-out", ["referral" => "__RID__"]) }}',
+        'referrals.cancel': '{{ route("referrals.cancel", ["referral" => "__RID__"]) }}',
+        'referrals.decline': '{{ route("referrals.decline", ["referral" => "__RID__"]) }}',
+        'referrals.detail': '{{ route("referrals.detail", ["referral" => "__RID__"]) }}',
+        'appointments.check-in': '{{ route("appointments.check-in", ["appointment" => "__AID__"]) }}',
+        'appointments.cancel': '{{ route("appointments.cancel", ["appointment" => "__AID__"]) }}',
+        'appointments.no-show': '{{ route("appointments.no-show", ["appointment" => "__AID__"]) }}',
+        'appointments.reschedule': '{{ route("appointments.reschedule", ["appointment" => "__AID__"]) }}',
+        'appointments.reassign': '{{ route("appointments.reassign", ["appointment" => "__AID__"]) }}',
+        'appointments.chain': '{{ route("appointments.chain", ["appointment" => "__AID__"]) }}',
+        'appointments.slots': '{{ route("appointments.available-slots") }}'
     }
 };
 </script>

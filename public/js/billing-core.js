@@ -29,7 +29,30 @@ if (typeof window.wbRoute !== 'function') {
     var vitalTooltip = window.vitalTooltip;
 
     $(document).ready(function() {
-        // Initialize
+        // Initialize Universal Workbench Shell Framework
+        if (typeof WorkbenchShell !== 'undefined' && WorkbenchShell.init) {
+            WorkbenchShell.init({
+                module: 'billing',
+                walkinPrefix: 'BIL-',
+                queueCountsUrl: wbRoute('billing.queue-counts', '/billing-workbench/queue-counts'),
+                onPatientSelected: function(patient) {
+                    if (patient && (patient.id || typeof patient === 'number' || typeof patient === 'string')) {
+                        loadPatient(patient.id || patient);
+                    }
+                },
+                onPatientCleared: function() {
+                    hideAllViews();
+                },
+                onTabSwitch: function(tabKey) {
+                    switchWorkspaceTab(tabKey);
+                },
+                onQueueFilter: function(filter) {
+                    showQueue(filter);
+                }
+            });
+        }
+
+        // Initialize legacy/domain billing services
         loadQueueCounts();
         startQueueRefresh();
         initializeEventListeners();
@@ -88,22 +111,34 @@ if (typeof window.wbRoute !== 'function') {
             renderPendingSubtabContent(status);
         });
 
-        // Navigation buttons
-        $('#btn-back-to-search').on('click', function() {
-            // Mobile: go back to search pane
-            $('#main-workspace').removeClass('active');
-            $('#left-panel').removeClass('hidden');
+        // Navigation buttons (delegates to WorkbenchShell)
+        $('#btn-back-to-search').on('click', function(e) {
+            e.preventDefault();
+            if (typeof WorkbenchShell !== 'undefined' && WorkbenchShell.showSearchPaneMobile) {
+                WorkbenchShell.showSearchPaneMobile();
+            } else {
+                $('#main-workspace').removeClass('active');
+                $('#left-panel').removeClass('hidden collapsed');
+            }
         });
 
-        $('#btn-view-work-pane').on('click', function() {
-            // Mobile: switch to work pane without selecting a patient
-            $('#left-panel').addClass('hidden');
-            $('#main-workspace').addClass('active');
+        $('#btn-view-work-pane').on('click', function(e) {
+            e.preventDefault();
+            if (typeof WorkbenchShell !== 'undefined' && WorkbenchShell.showWorkPaneMobile) {
+                WorkbenchShell.showWorkPaneMobile();
+            } else {
+                $('#left-panel').addClass('hidden collapsed');
+                $('#main-workspace').addClass('active');
+            }
         });
 
-        $('#btn-toggle-search').on('click', function() {
-            // Desktop/Tablet: toggle search pane visibility
-            $('#left-panel').toggleClass('hidden');
+        $('#btn-toggle-search').on('click', function(e) {
+            e.preventDefault();
+            if (typeof WorkbenchShell !== 'undefined' && WorkbenchShell.toggleLeftPanel) {
+                WorkbenchShell.toggleLeftPanel();
+            } else {
+                $('#left-panel').toggleClass('hidden collapsed');
+            }
         });
 
         // Queue filter buttons
@@ -216,9 +251,10 @@ if (typeof window.wbRoute !== 'function') {
         // Hide all views to prevent stacking
         hideAllViews();
 
-        // Show patient workspace
-        $('#workspace-content').show().addClass('active');
-        $('#patient-header').addClass('active');
+        // Show patient workspace & hide empty state
+        $('#empty-state').hide().css('display', 'none').addClass('d-none hidden');
+        $('#workspace-content').show().css('display', 'flex').removeClass('d-none hidden').addClass('active');
+        $('#patient-header').show().css('display', 'block').removeClass('d-none hidden').addClass('active');
 
         // Show loading indicator
         $('#patient-name').html('<i class="mdi mdi-loading mdi-spin"></i> Loading...');
@@ -232,8 +268,12 @@ if (typeof window.wbRoute !== 'function') {
         </tr>
     `);
 
-        // Mobile: Switch to work pane
-        $('#left-panel').addClass('hidden');
+        // Close left panel / search sidebar upon patient selection
+        if (typeof WorkbenchShell !== 'undefined' && WorkbenchShell.collapseLeftPanel) {
+            WorkbenchShell.collapseLeftPanel();
+        } else {
+            $('#left-panel').addClass('hidden collapsed');
+        }
         $('#main-workspace').addClass('active');
 
         // Load patient billing data
@@ -277,7 +317,15 @@ if (typeof window.wbRoute !== 'function') {
     }
 
     function displayPatientInfo(patient) {
-        $('#patient-name').text(patient.name);
+        var fullName = [patient.surname, patient.firstname, patient.othername].filter(Boolean).join(' ');
+        if (!fullName && patient.name) {
+            fullName = patient.name;
+        }
+        $('#patient-name').text(fullName || 'Unknown Patient');
+
+        if (typeof WorkbenchShell !== 'undefined' && WorkbenchShell.updatePatientHeader) {
+            WorkbenchShell.updatePatientHeader(patient);
+        }
 
         const metaHtml = `
         <div class="patient-meta-item">

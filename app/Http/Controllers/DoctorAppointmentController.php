@@ -567,8 +567,21 @@ class DoctorAppointmentController extends Controller
     /**
      * Check in a scheduled appointment — creates queue entry and service request.
      */
-    public function checkIn(DoctorAppointment $appointment)
+    public function checkIn(Request $request, ?DoctorAppointment $appointment = null)
     {
+        if (!$appointment || !$appointment->exists) {
+            $apptId = $request->input('appointment_id') ?? $request->input('id') ?? $request->route('appointment');
+            if ($apptId instanceof DoctorAppointment) {
+                $appointment = $apptId;
+            } elseif ($apptId) {
+                $appointment = DoctorAppointment::find($apptId);
+            }
+        }
+
+        if (!$appointment || !$appointment->exists) {
+            return response()->json(['success' => false, 'message' => 'Appointment not found.'], 404);
+        }
+
         if ($appointment->status !== QueueStatus::SCHEDULED) {
             return response()->json(['success' => false, 'message' => 'Only scheduled appointments can be checked in.'], 422);
         }
@@ -660,8 +673,21 @@ class DoctorAppointmentController extends Controller
     /**
      * Cancel a scheduled appointment.
      */
-    public function cancel(Request $request, DoctorAppointment $appointment)
+    public function cancel(Request $request, ?DoctorAppointment $appointment = null)
     {
+        if (!$appointment || !$appointment->exists) {
+            $apptId = $request->input('appointment_id') ?? $request->input('id') ?? $request->route('appointment');
+            if ($apptId instanceof DoctorAppointment) {
+                $appointment = $apptId;
+            } elseif ($apptId) {
+                $appointment = DoctorAppointment::find($apptId);
+            }
+        }
+
+        if (!$appointment || !$appointment->exists) {
+            return response()->json(['success' => false, 'message' => 'Appointment not found.'], 404);
+        }
+
         $request->validate([
             'reason' => 'nullable|string|max:500',
         ]);
@@ -699,8 +725,21 @@ class DoctorAppointmentController extends Controller
     /**
      * Mark appointment as no-show.
      */
-    public function markNoShow(DoctorAppointment $appointment)
+    public function markNoShow(Request $request, ?DoctorAppointment $appointment = null)
     {
+        if (!$appointment || !$appointment->exists) {
+            $apptId = $request->input('appointment_id') ?? $request->input('id') ?? $request->route('appointment');
+            if ($apptId instanceof DoctorAppointment) {
+                $appointment = $apptId;
+            } elseif ($apptId) {
+                $appointment = DoctorAppointment::find($apptId);
+            }
+        }
+
+        if (!$appointment || !$appointment->exists) {
+            return response()->json(['success' => false, 'message' => 'Appointment not found.'], 404);
+        }
+
         if ($appointment->status !== QueueStatus::SCHEDULED) {
             return response()->json(['success' => false, 'message' => 'Only scheduled appointments can be marked as no-show.'], 422);
         }
@@ -718,8 +757,20 @@ class DoctorAppointmentController extends Controller
     /**
      * Reschedule an appointment — creates a new appointment linked to the original.
      */
-    public function reschedule(Request $request, DoctorAppointment $appointment)
+    public function reschedule(Request $request, ?DoctorAppointment $appointment = null)
     {
+        if (!$appointment || !$appointment->exists) {
+            $apptId = $request->input('appointment_id') ?? $request->input('id') ?? $request->route('appointment');
+            if ($apptId instanceof DoctorAppointment) {
+                $appointment = $apptId;
+            } elseif ($apptId) {
+                $appointment = DoctorAppointment::find($apptId);
+            }
+        }
+
+        if (!$appointment || !$appointment->exists) {
+            return response()->json(['success' => false, 'message' => 'Appointment not found.'], 404);
+        }
         $request->validate([
             'appointment_date' => 'required|date|after_or_equal:today',
             'start_time' => 'required|date_format:H:i',
@@ -897,8 +948,21 @@ class DoctorAppointmentController extends Controller
     /**
      * Reassign appointment to a different doctor.
      */
-    public function reassignDoctor(Request $request, DoctorAppointment $appointment)
+    public function reassignDoctor(Request $request, ?DoctorAppointment $appointment = null)
     {
+        if (!$appointment || !$appointment->exists) {
+            $apptId = $request->input('appointment_id') ?? $request->input('id') ?? $request->route('appointment');
+            if ($apptId instanceof DoctorAppointment) {
+                $appointment = $apptId;
+            } elseif ($apptId) {
+                $appointment = DoctorAppointment::find($apptId);
+            }
+        }
+
+        if (!$appointment || !$appointment->exists) {
+            return response()->json(['success' => false, 'message' => 'Appointment not found.'], 404);
+        }
+
         $request->validate([
             'doctor_id' => 'required|exists:staff,id',
             'reason' => 'nullable|string|max:500',
@@ -960,8 +1024,21 @@ class DoctorAppointmentController extends Controller
     /**
      * Get available doctors for a specific appointment slot.
      */
-    public function getAvailableDoctors(Request $request, DoctorAppointment $appointment)
+    public function getAvailableDoctors(Request $request, ?DoctorAppointment $appointment = null)
     {
+        if (!$appointment || !$appointment->exists) {
+            $apptId = $request->input('appointment_id') ?? $request->input('id') ?? $request->route('appointment');
+            if ($apptId instanceof DoctorAppointment) {
+                $appointment = $apptId;
+            } elseif ($apptId) {
+                $appointment = DoctorAppointment::find($apptId);
+            }
+        }
+
+        if (!$appointment || !$appointment->exists) {
+            return response()->json(['success' => false, 'message' => 'Appointment not found.'], 404);
+        }
+
         // Return all doctors for the clinic — the frontend will mark the current doctor
         // Slot-availability filtering is omitted to avoid false-empty results when
         // schedules are not fully configured (slot check uses the existing appointment time)
@@ -997,8 +1074,20 @@ class DoctorAppointmentController extends Controller
     /**
      * Get the full appointment chain (parent → follow-ups, reschedule history).
      */
-    public function getAppointmentChain(DoctorAppointment $appointment)
+    public function getAppointmentChain(Request $request, ?DoctorAppointment $appointment = null)
     {
+        if (!$appointment || !$appointment->exists) {
+            $apptId = $request->input('appointment_id') ?? $request->input('id') ?? $request->route('appointment');
+            if ($apptId instanceof DoctorAppointment) {
+                $appointment = $apptId;
+            } elseif ($apptId) {
+                $appointment = DoctorAppointment::find($apptId);
+            }
+        }
+
+        if (!$appointment || !$appointment->exists) {
+            return response()->json(['success' => false, 'message' => 'Appointment not found.'], 404);
+        }
         // Build chain: find root appointment
         $root = $appointment;
         $visited = [$appointment->id]; // prevent infinite loops

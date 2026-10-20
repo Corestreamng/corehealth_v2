@@ -172,13 +172,35 @@ Tests conducted on Google Chrome via browser subagent across two target display 
 
 ## 5. Automated Test Suite Results
 
-- `make lint` / `composer lint`: **0 errors** across 1,292 files.
+- `make lint` / `composer lint`: **0 errors** across 1,295 files.
+- `vendor/bin/phpunit tests/Feature/Referral/SpecialistReferralTest.php`: **11 tests, 36 assertions — 100% passed**.
 - `vendor/bin/phpunit tests/Feature/Reception/ReceptionQueueTest.php`: **6 tests, 9 assertions — 100% passed**.
 - `vendor/bin/phpunit tests/Feature/PatientRegistrationTest.php`: **12 tests, 69 assertions — 100% passed**.
 
 ---
 
-## 6. Workbench Rollout Standard (Pattern for Other Modules)
+## 6. Reception Workbench Referral Actions & Isolated Printing Architecture
+
+During testing of the Reception Workbench within the zero-scroll cockpit shell, referral lifecycle actions and printing were restored and verified:
+
+1. **Restored Referral & Appointment Modals (`partials/_modals.blade.php`)**:
+   - `#bookReferralModal`: Internal referral booking modal into target clinic/doctor queues.
+   - `#referOutModal`: External referral status handover modal with documented action notes.
+   - `#declineReferralModal`: Referral decline modal with mandatory clinical rationale.
+   - `#referralDetailModal`: Complete referral history and clinical note inspector.
+   - `#rescheduleAppointmentModal`, `#reassignDoctorModal`, `#appointmentChainModal`.
+
+2. **Isolated Print Architecture (`public/js/reception-registration.js`)**:
+   - **Problem**: In zero-scroll workbenches, invoking `window.print()` directly on the main window causes `@media print` styles and container viewport locking (`height: 100vh; overflow: hidden`) to clip or hide referral letters, and freezes or hides open modal backdrops.
+   - **Solution**: Implemented `executeReferralPrint(htmlContent, title)`. It dynamically constructs an isolated, off-screen `<iframe>` with standalone A4 letterhead CSS (`@page { size: A4 portrait; margin: 15mm; }`), writes the referral document, and triggers `iframe.contentWindow.print()` with a popup window fallback.
+   - **Internal vs External Letter Parity**:
+     - **External Referrals**: Renders "Specialist Referral Letter", external facility & doctor details, diagnosis, clinical summary, and signature line.
+     - **Internal Referrals**: Renders "Specialist Referral Slip / Order", target clinic & doctor details within the facility, consultation purpose, and referring doctor signature.
+   - **Table & Modal Print Triggers**: Both internal and external referrals now display dedicated print triggers in the queue datatable (`.btn-print-referral`) and detail modal (`#btn-print-referral-letter`).
+
+---
+
+## 7. Workbench Rollout Standard (Pattern for Other Modules)
 
 To migrate other workbenches (Doctor, Pharmacy, Nursing, Lab, Billing, Morgue) to this framework:
 

@@ -40,6 +40,15 @@ Route::middleware(['auth'])->group(function () {
         // ─── Chain / History ───────────────────────────────────────────────
         Route::get('/{appointment}/chain', [DoctorAppointmentController::class, 'getAppointmentChain'])->name('chain');
 
+        // ─── Direct Flat Aliases (for backward compatibility & direct body posts) ───
+        Route::post('/check-in', [DoctorAppointmentController::class, 'checkIn'])->name('check-in.alias');
+        Route::post('/cancel', [DoctorAppointmentController::class, 'cancel'])->name('cancel.alias');
+        Route::post('/no-show', [DoctorAppointmentController::class, 'markNoShow'])->name('no-show.alias');
+        Route::post('/reschedule', [DoctorAppointmentController::class, 'reschedule'])->name('reschedule.alias');
+        Route::post('/reassign', [DoctorAppointmentController::class, 'reassignDoctor'])->name('reassign.alias');
+        Route::get('/available-doctors', [DoctorAppointmentController::class, 'getAvailableDoctors'])->name('available-doctors.alias');
+        Route::get('/chain', [DoctorAppointmentController::class, 'getAppointmentChain'])->name('chain.alias');
+
         // ─── Availability Slots ────────────────────────────────────────────
         Route::get('/available-slots', [DoctorAppointmentController::class, 'getAvailableSlots'])->name('available-slots');
 
