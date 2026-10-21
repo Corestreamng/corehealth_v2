@@ -3,61 +3,6 @@
     @include('admin.partials.payment_modal')
 @endif
 
-<style>
-/* Receipt Preview Modal */
-.receipt-modal-tabs {
-    display: flex;
-    background: #f8f9fa;
-    border-bottom: 2px solid #dee2e6;
-}
-
-.receipt-modal-tab {
-    flex: 1;
-    padding: 1rem 1.5rem;
-    background: transparent;
-    border: none;
-    border-bottom: 3px solid transparent;
-    cursor: pointer;
-    font-weight: 600;
-    color: #6c757d;
-    transition: all 0.2s;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 0.5rem;
-}
-
-.receipt-modal-tab:hover {
-    background: #e9ecef;
-    color: var(--hospital-primary);
-}
-
-.receipt-modal-tab.active {
-    background: white;
-    color: var(--hospital-primary);
-    border-bottom-color: var(--hospital-primary);
-}
-
-.receipt-modal-content {
-    padding: 1.5rem;
-    background: #f8f9fa;
-    max-height: 60vh;
-    overflow-y: auto;
-}
-
-.receipt-modal-pane {
-    background: white;
-    border-radius: 0.5rem;
-    padding: 1.5rem;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-}
-
-#receiptPreviewModal .modal-footer {
-    justify-content: center;
-    gap: 0.5rem;
-}
-</style>
-
 <!-- Receipt Preview Modal -->
 <div class="modal fade" id="receiptPreviewModal" tabindex="-1" role="dialog" aria-hidden="true">
     <div class="modal-dialog modal-lg modal-dialog-centered" role="document">
