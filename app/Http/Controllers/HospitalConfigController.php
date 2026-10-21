@@ -178,6 +178,15 @@ class HospitalConfigController extends Controller
             'wecare_auto_sync_encounters' => 'nullable|boolean',
             'wecare_auto_sync_labs' => 'nullable|boolean',
             'wecare_allow_patient_lookup' => 'nullable|boolean',
+
+            // Walk-In Sales Settings
+            'walkin_biller_enabled' => 'nullable|boolean',
+            'walkin_reception_enabled' => 'nullable|boolean',
+            'walkin_lab_enabled' => 'nullable|boolean',
+            'walkin_imaging_enabled' => 'nullable|boolean',
+            'walkin_products_enabled' => 'nullable|boolean',
+            'walkin_procedures_enabled' => 'nullable|boolean',
+            'walkin_free_form_enabled' => 'nullable|boolean',
         ]);
 
         $config = ApplicationStatu::first();
@@ -217,7 +226,6 @@ class HospitalConfigController extends Controller
         $validated['strict_encounter_navigation'] = $request->has('strict_encounter_navigation');
         $validated['show_prescription_dose_on_receipt'] = $request->has('show_prescription_dose_on_receipt');
         $validated['allow_doctor_set_procedure_price'] = $request->has('allow_doctor_set_procedure_price');
-
         $validated['enable_ei_reception'] = $request->has('enable_ei_reception');
         $validated['enable_ei_imaging'] = $request->has('enable_ei_imaging');
         $validated['enable_ei_hmo'] = $request->has('enable_ei_hmo');
@@ -232,6 +240,15 @@ class HospitalConfigController extends Controller
         $validated['wecare_auto_sync_encounters'] = $request->has('wecare_auto_sync_encounters');
         $validated['wecare_auto_sync_labs'] = $request->has('wecare_auto_sync_labs');
         $validated['wecare_allow_patient_lookup'] = $request->has('wecare_allow_patient_lookup');
+
+        // Walk-In Sales Checkboxes
+        $validated['walkin_biller_enabled'] = $request->has('walkin_biller_enabled');
+        $validated['walkin_reception_enabled'] = $request->has('walkin_reception_enabled');
+        $validated['walkin_lab_enabled'] = $request->has('walkin_lab_enabled');
+        $validated['walkin_imaging_enabled'] = $request->has('walkin_imaging_enabled');
+        $validated['walkin_products_enabled'] = $request->has('walkin_products_enabled');
+        $validated['walkin_procedures_enabled'] = $request->has('walkin_procedures_enabled');
+        $validated['walkin_free_form_enabled'] = $request->has('walkin_free_form_enabled');
 
         // Handle LLM Config Checkboxes and processing
         if ($request->has('llm_config')) {

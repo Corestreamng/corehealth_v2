@@ -98,9 +98,11 @@ if (typeof window.wbRoute !== 'function') {
         });
 
         // Workspace tabs
-        $('.workspace-tab').on('click', function() {
+        $('.workspace-tab[data-tab]').on('click', function() {
             const tab = $(this).data('tab');
-            switchWorkspaceTab(tab);
+            if (tab) {
+                switchWorkspaceTab(tab);
+            }
         });
 
         // Pending sub-tabs
@@ -251,6 +253,13 @@ if (typeof window.wbRoute !== 'function') {
         // Hide all views to prevent stacking
         hideAllViews();
 
+        // Reset all billing filters & family tabs so previous patient's filters don't hide new bills
+        $('#billing-search-input').val('');
+        $('#billing-category-filter').val('');
+        $('#billing-date-from').val('');
+        $('#billing-date-to').val('');
+        $('#billing-family-tabs').empty().hide();
+
         // Show patient workspace & hide empty state
         $('#empty-state').hide().css('display', 'none').addClass('d-none hidden');
         $('#workspace-content').show().css('display', 'flex').removeClass('d-none hidden').addClass('active');
@@ -261,7 +270,7 @@ if (typeof window.wbRoute !== 'function') {
         $('#patient-meta').html('');
         $('#billing-items-tbody').html(`
         <tr>
-            <td colspan="8" class="text-center text-muted py-5">
+            <td colspan="9" class="text-center text-muted py-5">
                 <i class="mdi mdi-loading mdi-spin" style="font-size: 3rem;"></i>
                 <p>Loading billing items...</p>
             </td>
@@ -296,18 +305,18 @@ if (typeof window.wbRoute !== 'function') {
                     console.error('ClinicalAlerts init error:', e);
                 }
 
+                // Build Family Tabs FIRST so tabs state is accurate
+                buildFamilyTabs(data.patient, data.items);
+
                 // Load billing items for the active Billing tab
                 renderBillingItems(data.items);
                 updateBillingBadge(data.items.length);
 
-                // Build Family Tabs AFTER items are rendered (so applyBillingFilters runs after tabs are built)
-                buildFamilyTabs(data.patient, data.items);
-
                 // Load account balance
                 loadAccountBalance(patientId);
 
-                // Switch to billing tab by default
-                switchWorkspaceTab('billing');
+                // Switch to billing tab without firing a duplicate loadBillingItems AJAX call
+                switchWorkspaceTab('billing', true);
             },
             error: function(xhr) {
                 console.error('Error loading patient:', xhr);
@@ -1000,7 +1009,9 @@ if (typeof window.wbRoute !== 'function') {
         }
     }
 
-    function switchWorkspaceTab(tab) {
+    function switchWorkspaceTab(tab, skipReload) {
+        if (!tab) return;
+
         // Only clear the main workspace nav tabs (those with data-tab), not the family tabs
         $('.workspace-tab[data-tab]').removeClass('active');
         $(`.workspace-tab[data-tab="${tab}"]`).addClass('active');
@@ -1009,7 +1020,7 @@ if (typeof window.wbRoute !== 'function') {
         $(`#${tab}-tab`).addClass('active');
 
         // Load tab-specific data
-        if (!currentPatient) return;
+        if (!currentPatient || skipReload) return;
 
         switch (tab) {
             case 'billing':
@@ -1557,6 +1568,8 @@ if (typeof window.wbRoute !== 'function') {
             const paymentType = receipt.payment_type_label || receipt.payment_type || 'N/A';
             const cashier = receipt.created_by || receipt.cashier || 'N/A';
 
+            const isVoided = Boolean(receipt.is_voided);
+
             // Badge color based on type
             let typeBadge = '';
             if (isDeposit) {
@@ -1564,14 +1577,17 @@ if (typeof window.wbRoute !== 'function') {
             } else {
                 typeBadge = `<span class="badge badge-primary">${paymentType}</span>`;
             }
+            if (isVoided) {
+                typeBadge += ' <span class="badge badge-danger ms-1">VOIDED</span>';
+            }
 
             // Reprint button with proper data attributes
             const reprintBtn = isDeposit ?
                 `<button class="btn btn-sm btn-success reprint-deposit-receipt" data-deposit-id="${receipt.deposit_id}">
                    <i class="mdi mdi-printer"></i> Print
                </button>` :
-                `<button class="btn btn-sm btn-primary reprint-receipt" data-id="${receipt.payment_id}">
-                   <i class="mdi mdi-printer"></i> Reprint
+                `<button class="btn btn-sm ${isVoided ? 'btn-outline-danger' : 'btn-primary'} reprint-receipt" data-id="${receipt.payment_id}">
+                   <i class="mdi mdi-printer"></i> ${isVoided ? 'Voided Receipt' : 'Reprint'}
                </button>`;
 
             // For deposits, show items as "Deposit" indicator
@@ -1579,14 +1595,19 @@ if (typeof window.wbRoute !== 'function') {
                 `<span class="text-success"><i class="mdi mdi-arrow-down"></i> Deposit</span>` :
                 `${itemCount} item(s)`;
 
+            const rowClass = isVoided ? 'table-danger text-muted' : (isDeposit ? 'table-success-light' : '');
+            const totalDisplay = isVoided ?
+                `<span class="text-decoration-line-through text-muted">₦${total.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>` :
+                `₦${total.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+
             const row = `
-            <tr class="${isDeposit ? 'table-success-light' : ''}">
+            <tr class="${rowClass}">
                 <td><input type="checkbox" class="receipt-checkbox" data-id="${recordId}" data-source="${receipt.source || 'payment'}"></td>
                 <td>${referenceNo}</td>
                 <td>${dateValue}</td>
                 <td>${itemsDisplay}</td>
-                <td>₦${total.toLocaleString()}</td>
-                <td>₦${discount.toLocaleString()}</td>
+                <td>${totalDisplay}</td>
+                <td>₦${discount.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
                 <td>${typeBadge}</td>
                 <td>${cashier}</td>
                 <td>${reprintBtn}</td>

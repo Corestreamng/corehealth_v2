@@ -219,11 +219,14 @@ class OpsAuditSurgeryController extends OpsAuditBaseController
     protected function cashbookData(Request $request)
     {
         $query = Payment::with([
-'patient.user',
+            'patient.user',
             'staff_user',
             'bank',
-            'product_or_service_request', 'product_or_service_request.product.category', 'product_or_service_request.service.category',
-])->whereHas('product_or_service_request.procedure');
+            'splits.bank',
+            'product_or_service_request',
+            'product_or_service_request.product.category',
+            'product_or_service_request.service.category',
+        ])->whereHas('product_or_service_request.procedure');
 
         $this->applyDateFilter($query, $request);
         $this->applyShiftFilter($query, $request);
@@ -241,17 +244,19 @@ class OpsAuditSurgeryController extends OpsAuditBaseController
                 'reference' => $row->reference_no ?? '-',
                 'item' => $this->renderPosrItem($row->product_or_service_request, $row->id),
                 'patient' => $this->renderPatient($user, $patient, null),
-                'total' => '₦' . number_format($row->total ?? 0, 2),
-                'method' => $row->payment_method ? '<span class="badge bg-light text-dark border">' . $row->payment_method . '</span>' : '-',
+                'total' => $row->is_voided ? '<span class="text-decoration-line-through text-muted">₦' . number_format($row->total ?? 0, 2) . '</span>' : '₦' . number_format($row->total ?? 0, 2),
+                'method' => $this->renderPaymentMethodBadge($row),
                 'cashier' => $row->staff_user?->firstname ? ($row->staff_user->firstname . ' ' . ($row->staff_user->surname ?? '')) : '-',
                 'bank' => $this->renderBankDetails($row),
                 'entity' => $this->renderPaymentEntityDetails($row),
                 'audit' => $this->renderAuditAction($row, 'Payment'),
             ];
         }, function ($kpiQuery) {
+            $activeQuery = (clone $kpiQuery)->notVoided();
+
             return [
-                ['label' => 'Total Transactions', 'value' => number_format((clone $kpiQuery)->count()), 'color' => '#0d6efd'],
-                ['label' => 'Total Revenue', 'value' => '₦' . number_format((clone $kpiQuery)->sum('total'), 2), 'color' => '#198754'],
+                ['label' => 'Total Transactions', 'value' => number_format((clone $activeQuery)->count()), 'color' => '#0d6efd'],
+                ['label' => 'Total Revenue', 'value' => '₦' . number_format((clone $activeQuery)->sum('total'), 2), 'color' => '#198754'],
             ];
         }, $kpiQuery);
     }

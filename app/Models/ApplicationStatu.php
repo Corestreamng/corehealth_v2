@@ -125,6 +125,15 @@ class ApplicationStatu extends Model implements Auditable
         'wecare_auto_sync_encounters',
         'wecare_auto_sync_labs',
         'wecare_allow_patient_lookup',
+
+        // Walk-In Sales Configuration
+        'walkin_biller_enabled',
+        'walkin_reception_enabled',
+        'walkin_lab_enabled',
+        'walkin_imaging_enabled',
+        'walkin_products_enabled',
+        'walkin_free_form_enabled',
+        'walkin_procedures_enabled',
     ];
 
     protected $casts = [
@@ -135,6 +144,13 @@ class ApplicationStatu extends Model implements Auditable
         'wecare_auto_sync_encounters' => 'boolean',
         'wecare_auto_sync_labs' => 'boolean',
         'wecare_allow_patient_lookup' => 'boolean',
+        'walkin_biller_enabled' => 'boolean',
+        'walkin_reception_enabled' => 'boolean',
+        'walkin_lab_enabled' => 'boolean',
+        'walkin_imaging_enabled' => 'boolean',
+        'walkin_products_enabled' => 'boolean',
+        'walkin_free_form_enabled' => 'boolean',
+        'walkin_procedures_enabled' => 'boolean',
     ];
 
     /**

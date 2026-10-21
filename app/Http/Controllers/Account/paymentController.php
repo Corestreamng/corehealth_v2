@@ -586,7 +586,7 @@ class paymentController extends Controller
         $bank_id = $request->input('bank_id', null);
 
         $query = \App\Models\Payment::query()
-            ->with(['patient', 'patient.user', 'bank'])
+            ->with(['patient', 'patient.user', 'bank', 'splits.bank'])
             ->whereDate('created_at', '>=', $from)
             ->whereDate('created_at', '<=', $to);
 
@@ -600,11 +600,12 @@ class paymentController extends Controller
 
         $transactions = $query->orderBy('created_at', 'desc')->get();
 
-        $total_amount = $transactions->sum('total');
-        $total_discount = $transactions->sum('total_discount');
-        $total_count = $transactions->count();
+        $activeTransactions = $transactions->whereNull('voided_at');
+        $total_amount = $activeTransactions->sum('total');
+        $total_discount = $activeTransactions->sum('total_discount');
+        $total_count = $activeTransactions->count();
 
-        $by_type = $transactions->groupBy('payment_type')->map(function ($group) {
+        $by_type = $activeTransactions->groupBy('payment_type')->map(function ($group) {
             return [
                 'count' => $group->count(),
                 'amount' => $group->sum('total'),
@@ -625,7 +626,7 @@ class paymentController extends Controller
         $payment_type = $request->input('payment_type', null);
 
         $query = \App\Models\Payment::query()
-            ->with(['patient', 'patient.user'])
+            ->with(['patient', 'patient.user', 'bank', 'splits.bank'])
             ->whereDate('created_at', '>=', $from)
             ->whereDate('created_at', '<=', $to)
             ->where('user_id', Auth::id());
@@ -636,17 +637,67 @@ class paymentController extends Controller
 
         $transactions = $query->orderBy('created_at', 'desc')->get();
 
-        $total_amount = $transactions->sum('total');
-        $total_discount = $transactions->sum('total_discount');
-        $total_count = $transactions->count();
+        $activeTransactions = $transactions->whereNull('voided_at');
+        $total_amount = $activeTransactions->sum('total');
+        $total_discount = $activeTransactions->sum('total_discount');
+        $total_count = $activeTransactions->count();
 
-        $by_type = $transactions->groupBy('payment_type')->map(function ($group) {
+        $by_type = $activeTransactions->groupBy('payment_type')->map(function ($group) {
             return [
                 'count' => $group->count(),
                 'amount' => $group->sum('total'),
                 'discount' => $group->sum('total_discount'),
             ];
         });
+
+        if ($request->input('action') === 'print' || $request->input('format') === 'print' || $request->boolean('print')) {
+            $site = appsettings();
+            $staffUser = Auth::user();
+            $staffName = $staffUser ? userfullname($staffUser->id) : 'Current Staff';
+            $summary = [
+                'total_amount' => $total_amount,
+                'total_discount' => $total_discount,
+                'count' => $total_count,
+                'voided_count' => $transactions->whereNotNull('voided_at')->count(),
+                'by_type' => $by_type,
+            ];
+            $transactionsFormatted = $transactions->map(function ($tx) {
+                return [
+                    'id' => $tx->id,
+                    'reference_no' => $tx->reference_no,
+                    'patient_name' => $tx->patient ? userfullname($tx->patient->user_id) : 'Unknown',
+                    'file_no' => $tx->patient?->file_no ?? 'N/A',
+                    'payment_type' => $tx->payment_type,
+                    'payment_method' => $tx->payment_method,
+                    'payment_method_display' => formatPaymentMethod($tx),
+                    'is_split_payment' => (bool) $tx->is_split_payment,
+                    'splits' => $tx->splits->map(fn ($s) => [
+                        'payment_method' => $s->payment_method,
+                        'bank_name' => $s->bank?->name,
+                        'amount' => (float) $s->amount,
+                        'reference_no' => $s->reference_no,
+                    ]),
+                    'bank_name' => $tx->bank ? $tx->bank->name : null,
+                    'total' => (float) $tx->total,
+                    'total_discount' => (float) $tx->total_discount,
+                    'is_voided' => (bool) $tx->voided_at,
+                    'void_reason' => $tx->void_reason,
+                    'items' => [],
+                    'created_at' => $tx->created_at->format('Y-m-d H:i'),
+                ];
+            });
+
+            return view('admin.Accounts.my_transactions_print', [
+                'site' => $site,
+                'staffName' => $staffName,
+                'from' => $from,
+                'to' => $to,
+                'transactions' => $transactions,
+                'transactionsFormatted' => $transactionsFormatted,
+                'summary' => $summary,
+                'paymentType' => $payment_type ?? 'All Methods',
+            ]);
+        }
 
         return view('admin.Accounts.my_transactions', compact('transactions', 'from', 'to', 'payment_type', 'total_amount', 'total_discount', 'total_count', 'by_type'));
     }

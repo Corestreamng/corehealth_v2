@@ -88,12 +88,23 @@
                     </thead>
                     <tbody>
                         @foreach ($transactions as $t)
-                            <tr>
+                            <tr class="@if($t->is_voided) table-danger text-muted @endif">
                                 <td>{{ $t->id }}</td>
                                 <td>{{ $t->created_at }}</td>
-                                <td>{{ $t->patient ? userfullname($t->patient->user_id) : '' }} ({{$patient->file_no ?? ''}})</td>
-                                <td>{{ $t->payment_type }}</td>
-                                <td>&#8358;{{ number_format($t->total, 2) }}</td>
+                                <td>{{ $t->patient ? userfullname($t->patient->user_id) : '' }} ({{$t->patient->file_no ?? ''}})</td>
+                                <td>
+                                    <span class="badge bg-light text-dark border">{{ formatPaymentMethod($t) }}</span>
+                                    @if($t->is_voided)
+                                        <span class="badge bg-danger ms-1">VOIDED</span>
+                                    @endif
+                                </td>
+                                <td>
+                                    @if($t->is_voided)
+                                        <span class="text-decoration-line-through text-muted">&#8358;{{ number_format($t->total, 2) }}</span>
+                                    @else
+                                        &#8358;{{ number_format($t->total, 2) }}
+                                    @endif
+                                </td>
                                 <td>&#8358;{{ number_format($t->total_discount, 2) }}</td>
                                 <td>{{ $t->reference_no }}</td>
                                 <td>

@@ -39,6 +39,7 @@ Route::middleware(['auth'])->prefix('reception')->name('reception.')->group(func
     Route::get('/services/consultation', [ReceptionWorkbenchController::class, 'getConsultationServices'])->name('services.consultation');
     Route::get('/services/lab', [ReceptionWorkbenchController::class, 'getLabServices'])->name('services.lab');
     Route::get('/services/imaging', [ReceptionWorkbenchController::class, 'getImagingServices'])->name('services.imaging');
+    Route::get('/services/procedure', [ReceptionWorkbenchController::class, 'getProcedureServices'])->name('services.procedure');
     Route::get('/products', [ReceptionWorkbenchController::class, 'getProducts'])->name('products');
     Route::get('/hmos', [ReceptionWorkbenchController::class, 'getHmos'])->name('hmos');
 
@@ -51,6 +52,7 @@ Route::middleware(['auth'])->prefix('reception')->name('reception.')->group(func
 
     // Statistics
     Route::get('/today-stats', [ReceptionWorkbenchController::class, 'getTodayStats'])->name('today-stats');
+    Route::get('/my-transactions', [\App\Http\Controllers\BillingWorkbenchController::class, 'getMyTransactions'])->name('my-transactions');
 
     // Reports
     Route::get('/reports/statistics', [ReceptionWorkbenchController::class, 'getReportsStatistics'])->name('reports.statistics');

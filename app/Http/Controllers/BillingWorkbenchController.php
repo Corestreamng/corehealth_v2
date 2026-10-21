@@ -9,6 +9,7 @@ use App\Models\HmoClaim;
 use App\Models\Patient;
 use App\Models\PatientAccount;
 use App\Models\Payment;
+use App\Models\PaymentSplit;
 use App\Models\ProductOrServiceRequest;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -343,15 +344,15 @@ class BillingWorkbenchController extends Controller
         $patient = Patient::with('hmo')->findOrFail($patientId);
 
         $itemsQuery = ProductOrServiceRequest::with([
-                'service.price',
-                'service.category',
-                'product.price',
-                'product.category',
-                'user',
-                'productRequest.treatmentPlan',
-                'labRequest.treatmentPlan',
-                'imagingRequest.treatmentPlan',
-            ])
+            'service.price',
+            'service.category',
+            'product.price',
+            'product.category',
+            'user',
+            'productRequest.treatmentPlan',
+            'labRequest.treatmentPlan',
+            'imagingRequest.treatmentPlan',
+        ])
             ->whereIn('user_id', $patient->family_user_ids)
             ->whereNull('payment_id')
             ->whereNull('invoice_id')
@@ -362,10 +363,13 @@ class BillingWorkbenchController extends Controller
             ->orderBy('created_at', 'desc')
             ->get()
             ->map(function ($row) {
+                $isFreeForm = (bool) $row->is_free_form;
                 $isService = $row->service_id !== null;
-                $basePrice = $isService
-                    ? optional(optional($row->service)->price)->sale_price
-                    : optional(optional($row->product)->price)->current_sale_price;
+                $basePrice = $isFreeForm
+                    ? (float) ($row->payable_amount ?? 0)
+                    : ($isService
+                        ? optional(optional($row->service)->price)->sale_price
+                        : optional(optional($row->product)->price)->current_sale_price);
 
                 $storedQty = $row->qty ?? 1;
                 $totalPayable = $row->payable_amount !== null ? $row->payable_amount : (($basePrice ?? 0) * $storedQty);
@@ -383,10 +387,10 @@ class BillingWorkbenchController extends Controller
 
                 return [
                     'id' => $row->id,
-                    'type' => $isService ? 'service' : 'product',
-                    'name' => $isService ? optional($row->service)->service_name : optional($row->product)->product_name,
-                    'code' => $isService ? optional($row->service)->service_code : optional($row->product)->product_code,
-                    'category' => $isService ? optional(optional($row->service)->category)->category_name : optional(optional($row->product)->category)->category_name,
+                    'type' => $isFreeForm ? 'custom' : ($isService ? 'service' : 'product'),
+                    'name' => getItemDisplayName($row),
+                    'code' => $isFreeForm ? 'CUSTOM' : ($isService ? optional($row->service)->service_code : optional($row->product)->product_code),
+                    'category' => $isFreeForm ? 'Custom Items' : ($isService ? optional(optional($row->service)->category)->category_name : optional(optional($row->product)->category)->category_name),
                     'qty' => $storedQty,
                     'price' => $unitPrice,
                     'unit_price' => $unitPrice,
@@ -465,7 +469,7 @@ class BillingWorkbenchController extends Controller
         $paymentTypeFilter = $request->payment_type;
 
         // 1. Get payments from payment table
-        $paymentQuery = Payment::where('patient_id', $patientId);
+        $paymentQuery = Payment::with(['splits.bank', 'bank'])->where('patient_id', $patientId);
 
         if ($fromDate) {
             $paymentQuery->whereDate('created_at', '>=', $fromDate);
@@ -492,13 +496,16 @@ class BillingWorkbenchController extends Controller
                     'payment_id' => $payment->id,
                     'reference_no' => $payment->reference_no,
                     'payment_type' => $payment->payment_type,
-                    'payment_type_label' => $this->getPaymentTypeLabel($payment->payment_type),
+                    'payment_type_label' => formatPaymentMethod($payment),
                     'total' => $payment->total,
                     'total_discount' => $payment->total_discount ?? 0,
                     'created_at' => $payment->created_at->format('Y-m-d H:i'),
                     'datetime' => $payment->created_at,
                     'created_by' => userfullname($payment->user_id),
                     'item_count' => $items->count(),
+                    'is_voided' => (bool) $payment->is_voided,
+                    'voided_at' => $payment->voided_at ? $payment->voided_at->format('Y-m-d H:i') : null,
+                    'void_reason' => $payment->void_reason,
                 ]);
             }
         }
@@ -533,6 +540,9 @@ class BillingWorkbenchController extends Controller
                     'item_count' => 0,
                     'deposit_type' => $deposit->deposit_type,
                     'payment_method' => $deposit->payment_method,
+                    'is_voided' => false,
+                    'voided_at' => null,
+                    'void_reason' => null,
                 ]);
             }
         }
@@ -540,11 +550,12 @@ class BillingWorkbenchController extends Controller
         // Sort by datetime descending
         $receipts = $receipts->sortByDesc('datetime')->values();
 
-        // Calculate stats
+        // Calculate stats (excluding voided)
+        $activeReceipts = $receipts->where('is_voided', false);
         $stats = [
-            'count' => $receipts->count(),
-            'total' => $receipts->sum('total'),
-            'discounts' => $receipts->sum('total_discount'),
+            'count' => $activeReceipts->count(),
+            'total' => $activeReceipts->sum('total'),
+            'discounts' => $activeReceipts->sum('total_discount'),
         ];
 
         return response()->json([
@@ -804,6 +815,12 @@ class BillingWorkbenchController extends Controller
             'items.*.id' => 'required|integer',
             'items.*.qty' => 'required|numeric|min:1',
             'items.*.discount' => 'nullable|numeric|min:0|max:100',
+            'is_split_payment' => 'nullable|boolean',
+            'splits' => 'nullable|array',
+            'splits.*.payment_method' => 'required_with:splits|string',
+            'splits.*.bank_id' => 'nullable|integer|exists:banks,id',
+            'splits.*.amount' => 'required_with:splits|numeric|min:0.01',
+            'splits.*.reference_no' => 'nullable|string',
         ]);
 
         DB::beginTransaction();
@@ -837,10 +854,13 @@ class BillingWorkbenchController extends Controller
                     throw new \Exception('One of the items is already paid or invoiced.');
                 }
 
+                $isFreeForm = (bool) $row->is_free_form;
                 $isService = $row->service_id !== null;
-                $basePrice = $isService
-                    ? optional(optional($row->service)->price)->sale_price
-                    : optional(optional($row->product)->price)->current_sale_price;
+                $basePrice = $isFreeForm
+                    ? (float) ($row->payable_amount ?? 0)
+                    : ($isService
+                        ? optional(optional($row->service)->price)->sale_price
+                        : optional(optional($row->product)->price)->current_sale_price);
 
                 $storedQty = $row->qty ?? 1;
                 $storedPayable = $row->payable_amount !== null ? $row->payable_amount : (($basePrice ?? 0) * $storedQty);
@@ -865,8 +885,8 @@ class BillingWorkbenchController extends Controller
                 }
 
                 $receiptDetails[] = [
-                    'type' => $isService ? 'Service' : 'Product',
-                    'name' => $isService ? optional($row->service)->service_name : optional($row->product)->product_name,
+                    'type' => $isFreeForm ? 'Custom' : ($isService ? 'Service' : 'Product'),
+                    'name' => getItemDisplayName($row),
                     'patient_name' => userfullname($row->user_id),
                     'patient_user_id' => $row->user_id,
                     'price' => $unitPrice,
@@ -874,7 +894,7 @@ class BillingWorkbenchController extends Controller
                     'discount_percent' => $discountPercent,
                     'discount_amount' => $discountAmount,
                     'amount_paid' => $lineTotal,
-                    'dose' => (!$isService && $row->productRequest) ? $row->productRequest->dose : null,
+                    'dose' => (!$isService && !$isFreeForm && $row->productRequest) ? $row->productRequest->dose : null,
                 ];
             }
 
@@ -950,18 +970,82 @@ class BillingWorkbenchController extends Controller
                 ->forContext('billing')
                 ->first();
 
+            $isSplit = !empty($data['is_split_payment']);
+            if ($isSplit) {
+                if (empty($data['splits']) || count($data['splits']) < 2) {
+                    throw new \Exception('Split payments must have at least two payment method splits.');
+                }
+                $splitSum = collect($data['splits'])->sum(fn ($s) => (float) ($s['amount'] ?? 0));
+                if (abs($splitSum - $total) > 0.05) {
+                    throw new \Exception('Split sum (₦' . number_format($splitSum, 2) . ') does not equal total amount (₦' . number_format($total, 2) . ').');
+                }
+
+                $accountLeg = collect($data['splits'])->firstWhere('payment_method', 'ACCOUNT');
+                if ($accountLeg) {
+                    $legAmount = (float) ($accountLeg['amount'] ?? 0);
+                    if ($legAmount > 0) {
+                        $billingPatientId = $patient->billing_patient_id;
+                        $account = PatientAccount::firstOrCreate(['patient_id' => $billingPatientId], ['balance' => 0]);
+                        $account->balance -= $legAmount;
+                        $account->save();
+
+                        $activeDeposits = PatientDeposit::where('patient_id', $billingPatientId)
+                            ->where('status', 'active')
+                            ->orderBy('deposit_date', 'asc')
+                            ->orderBy('id', 'asc')
+                            ->get();
+
+                        $remainingToApply = $legAmount;
+                        foreach ($activeDeposits as $deposit) {
+                            if ($remainingToApply <= 0) {
+                                break;
+                            }
+                            $availableBalance = $deposit->available_balance;
+                            if ($availableBalance <= 0) {
+                                continue;
+                            }
+                            $applyAmount = min($availableBalance, $remainingToApply);
+                            $depositsToApply->push([
+                                'deposit' => $deposit,
+                                'amount' => $applyAmount,
+                            ]);
+                            $remainingToApply -= $applyAmount;
+                        }
+                    }
+                }
+            }
+
             // Create payment entry
-            $payment = Payment::create([
+            $payment = new Payment([
                 'payment_type' => $paymentType,
-                'payment_method' => $data['payment_method'] ?? $data['payment_type'],
-                'bank_id' => $data['bank_id'] ?? null,
+                'payment_method' => $isSplit ? 'SPLIT' : ($data['payment_method'] ?? $data['payment_type']),
+                'bank_id' => $isSplit ? null : ($data['bank_id'] ?? null),
                 'total' => $paymentTotal,
                 'total_discount' => $totalDiscount,
-                'reference_no' => $data['reference_no'],
+                'reference_no' => $data['reference_no'] ?? ('REF-' . date('YmdHis') . '-' . rand(100, 999)),
                 'user_id' => Auth::id(),
                 'patient_id' => $patient->id,
                 'shift_id' => $activeShift?->id,
+                'is_split_payment' => $isSplit,
             ]);
+
+            if ($isSplit && !empty($data['splits'])) {
+                $payment->pending_splits = collect($data['splits']);
+            }
+
+            $payment->save();
+
+            if ($isSplit && !empty($data['splits'])) {
+                foreach ($data['splits'] as $splitData) {
+                    PaymentSplit::create([
+                        'payment_id' => $payment->id,
+                        'payment_method' => $splitData['payment_method'],
+                        'bank_id' => $splitData['bank_id'] ?? null,
+                        'amount' => $splitData['amount'],
+                        'reference_no' => $splitData['reference_no'] ?? null,
+                    ]);
+                }
+            }
 
             // Update shift counters if we have an active billing shift
             if ($activeShift) {
@@ -1014,7 +1098,7 @@ class BillingWorkbenchController extends Controller
             // Create deposit application entries if paying from account (FIFO)
             // Only create applications for the portion covered by actual deposits
             // Overdraw amounts don't get application entries (they're credit facility usage)
-            if ($payingFromAccount && $depositsToApply->isNotEmpty()) {
+            if (($payingFromAccount || $isSplit) && $depositsToApply->isNotEmpty()) {
                 foreach ($depositsToApply as $depositData) {
                     $deposit = $depositData['deposit'];
                     $applyAmount = $depositData['amount'];
@@ -1061,15 +1145,15 @@ class BillingWorkbenchController extends Controller
             $patientFileNo = $patient->file_no ?? 'N/A';
             $currentUserName = Auth::user() ? userfullname(Auth::id()) : '';
             $date = now()->format('Y-m-d H:i');
-            $ref = $data['reference_no'];
+            $ref = $data['reference_no'] ?? ($payment->reference_no ?? 'REF-' . date('YmdHis'));
 
             // Detect if this is a cross-family payment (items for multiple patients)
             $uniquePatientUserIds = collect($receiptDetails)->pluck('patient_user_id')->unique();
             $isFamilyPayment = $uniquePatientUserIds->count() > 1;
             $familyPatientNames = $isFamilyPayment
                 ? \App\Models\Patient::whereIn('user_id', $uniquePatientUserIds->all())
-                    ->get()->map(fn ($p) => userfullname($p->user_id) . ' (' . $p->file_no . ')')
-                    ->join(', ')
+                ->get()->map(fn ($p) => userfullname($p->user_id) . ' (' . $p->file_no . ')')
+                ->join(', ')
                 : null;
 
             $amountParts = explode('.', number_format((float) $total, 2, '.', ''));
@@ -1089,7 +1173,10 @@ class BillingWorkbenchController extends Controller
                 'totalDiscount' => $totalDiscount,
                 'totalPaid' => $total,
                 'amountInWords' => $amountInWords,
-                'paymentType' => $data['payment_type'],
+                'paymentType' => $isSplit ? 'SPLIT' : $data['payment_type'],
+                'payment' => $payment,
+                'isSplitPayment' => $isSplit,
+                'splits' => $payment->splits,
                 'notes' => '',
                 'currentUserName' => $currentUserName,
             ])->render();
@@ -1106,7 +1193,10 @@ class BillingWorkbenchController extends Controller
                 'totalDiscount' => $totalDiscount,
                 'totalPaid' => $total,
                 'amountInWords' => $amountInWords,
-                'paymentType' => $data['payment_type'],
+                'paymentType' => $isSplit ? 'SPLIT' : $data['payment_type'],
+                'payment' => $payment,
+                'isSplitPayment' => $isSplit,
+                'splits' => $payment->splits,
                 'notes' => '',
                 'currentUserName' => $currentUserName,
                 'thermalWidth' => getThermalPrinterWidth(),
@@ -1115,6 +1205,7 @@ class BillingWorkbenchController extends Controller
             DB::commit();
 
             return response()->json([
+                'success' => true,
                 'payment_id' => $payment->id,
                 'total' => $total,
                 'total_discount' => $totalDiscount,
@@ -1125,7 +1216,10 @@ class BillingWorkbenchController extends Controller
             DB::rollBack();
             Log::error('Billing workbench payment failed', ['error' => $e->getMessage()]);
 
-            return response()->json(['message' => $e->getMessage()], 422);
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage(),
+            ], 422);
         }
     }
 
@@ -1134,13 +1228,23 @@ class BillingWorkbenchController extends Controller
      */
     public function printReceipt(Request $request)
     {
+        if ($request->filled('payment_id') && !$request->filled('payment_ids')) {
+            $request->merge(['payment_ids' => [(int) $request->payment_id]]);
+        }
+        if (!$request->filled('patient_id') && $request->filled('payment_ids')) {
+            $firstPayment = Payment::find($request->payment_ids[0] ?? null);
+            if ($firstPayment && $firstPayment->patient_id) {
+                $request->merge(['patient_id' => $firstPayment->patient_id]);
+            }
+        }
+
         $request->validate([
-            'patient_id' => 'required|integer|exists:patients,id',
+            'patient_id' => 'nullable|integer',
             'payment_ids' => 'required|array|min:1',
             'payment_ids.*' => 'integer|exists:payments,id',
         ]);
 
-        $patient = Patient::findOrFail($request->patient_id);
+        $patient = $request->patient_id ? Patient::find($request->patient_id) : null;
         $payments = Payment::whereIn('id', $request->payment_ids)->get();
 
         // Aggregate items from selected payments
@@ -1154,10 +1258,13 @@ class BillingWorkbenchController extends Controller
         $totalDiscount = 0;
 
         foreach ($allItems as $row) {
+            $isFreeForm = (bool) $row->is_free_form;
             $isService = $row->service_id !== null;
-            $basePrice = $isService
-                ? optional(optional($row->service)->price)->sale_price
-                : optional(optional($row->product)->price)->current_sale_price;
+            $basePrice = $isFreeForm
+                ? (float) ($row->payable_amount ?? 0)
+                : ($isService
+                    ? optional(optional($row->service)->price)->sale_price
+                    : optional(optional($row->product)->price)->current_sale_price);
             $qty = $row->qty ?? 1;
             $storedPayable = $row->payable_amount !== null ? $row->payable_amount : (($basePrice ?? 0) * $qty);
             $unitPrice = $qty > 0 ? $storedPayable / $qty : $storedPayable;
@@ -1169,8 +1276,8 @@ class BillingWorkbenchController extends Controller
             $totalDiscount += $discountAmount;
 
             $receiptDetails[] = [
-                'type' => $isService ? 'Service' : 'Product',
-                'name' => $isService ? optional($row->service)->service_name : optional($row->product)->product_name,
+                'type' => $isFreeForm ? 'Custom' : ($isService ? 'Service' : 'Product'),
+                'name' => getItemDisplayName($row),
                 'patient_name' => userfullname($row->user_id),
                 'patient_user_id' => $row->user_id,
                 'price' => $unitPrice,
@@ -1178,24 +1285,25 @@ class BillingWorkbenchController extends Controller
                 'discount_percent' => $discountPercent,
                 'discount_amount' => $discountAmount,
                 'amount_paid' => $lineTotal,
-                'dose' => (!$isService && $row->productRequest) ? $row->productRequest->dose : null,
+                'dose' => (!$isService && !$isFreeForm && $row->productRequest) ? $row->productRequest->dose : null,
             ];
         }
 
         $site = appsettings();
-        $patientName = userfullname($patient->user_id);
-        $patientFileNo = $patient->file_no ?? 'N/A';
+        $patientName = $patient ? userfullname($patient->user_id) : ($firstPayment?->patient_name ?? ($firstPayment?->user_id ? userfullname($firstPayment->user_id) : 'Walk-in Customer'));
+        $patientFileNo = $patient?->file_no ?? 'WALK-IN';
         $currentUserName = Auth::user() ? userfullname(Auth::id()) : '';
         $date = now()->format('Y-m-d H:i');
-        $ref = $payments->first()->reference_no ?? 'COMBINED';
+        $firstPayment = $payments->first();
+        $ref = $firstPayment->reference_no ?? 'COMBINED';
 
         // Detect if this is a cross-family payment (items for multiple patients)
         $uniquePatientUserIds = collect($receiptDetails)->pluck('patient_user_id')->unique();
         $isFamilyPayment = $uniquePatientUserIds->count() > 1;
         $familyPatientNames = $isFamilyPayment
             ? \App\Models\Patient::whereIn('user_id', $uniquePatientUserIds->all())
-                ->get()->map(fn ($p) => userfullname($p->user_id) . ' (' . $p->file_no . ')')
-                ->join(', ')
+            ->get()->map(fn ($p) => userfullname($p->user_id) . ' (' . $p->file_no . ')')
+            ->join(', ')
             : null;
 
         $amountParts = explode('.', number_format((float) $totalAmount, 2, '.', ''));
@@ -1203,7 +1311,8 @@ class BillingWorkbenchController extends Controller
         $koboWords = ((int) $amountParts[1]) > 0 ? ' and ' . convert_number_to_words((int) $amountParts[1]) . ' Kobo' : '';
         $amountInWords = ucwords($nairaWords . ' Naira' . $koboWords);
 
-        $paymentType = $payments->first()->payment_type ?? 'N/A';
+        $paymentType = $firstPayment ? formatPaymentMethod($firstPayment) : 'N/A';
+        $isSplit = (bool) ($firstPayment?->is_split_payment);
 
         $a4 = View::make('admin.Accounts.receipt_a4', [
             'site' => $site,
@@ -1218,6 +1327,9 @@ class BillingWorkbenchController extends Controller
             'totalPaid' => $totalAmount,
             'amountInWords' => $amountInWords,
             'paymentType' => $paymentType,
+            'payment' => $firstPayment,
+            'isSplitPayment' => $isSplit,
+            'splits' => $firstPayment?->splits,
             'notes' => '',
             'currentUserName' => $currentUserName,
         ])->render();
@@ -1235,6 +1347,9 @@ class BillingWorkbenchController extends Controller
             'totalPaid' => $totalAmount,
             'amountInWords' => $amountInWords,
             'paymentType' => $paymentType,
+            'payment' => $firstPayment,
+            'isSplitPayment' => $isSplit,
+            'splits' => $firstPayment?->splits,
             'notes' => '',
             'currentUserName' => $currentUserName,
             'thermalWidth' => getThermalPrinterWidth(),
@@ -1371,68 +1486,488 @@ class BillingWorkbenchController extends Controller
     }
 
     /**
-     * Get current user's transactions (for report modal)
+     * Get current user's transactions (for report modal) with line items, category KPIs, and filters
      */
     public function getMyTransactions(Request $request)
     {
         $userId = Auth::id();
 
-        $query = Payment::where('user_id', $userId)->with(['patient.user', 'bank']);
+        $query = Payment::where('user_id', $userId)
+            ->with([
+                'patient.user',
+                'bank',
+                'splits.bank',
+                'product_or_service_request' => function ($q) {
+                    $q->with([
+                        'service.category',
+                        'product.category',
+                        'user',
+                    ]);
+                },
+            ]);
 
         // Date filtering - default to today
-        $from = $request->input('from', now()->toDateString());
-        $to = $request->input('to', now()->toDateString());
+        $from = $request->input('from', $request->input('from_date', now()->toDateString()));
+        $to = $request->input('to', $request->input('to_date', now()->toDateString()));
 
         $query->whereBetween('created_at', [
             Carbon::parse($from)->startOfDay(),
             Carbon::parse($to)->endOfDay(),
         ]);
 
-        // Payment type filter
-        if ($request->has('payment_type') && $request->payment_type) {
+        // Payment method / type filter
+        if ($request->filled('payment_method')) {
+            $pm = $request->payment_method;
+            if ($pm === 'SPLIT') {
+                $query->where('is_split_payment', true);
+            } else {
+                $query->where(function ($q) use ($pm) {
+                    $q->where('payment_method', $pm)
+                        ->orWhere('payment_type', $pm)
+                        ->orWhereHas('splits', fn ($sq) => $sq->where('payment_method', $pm));
+                });
+            }
+        } elseif ($request->filled('payment_type')) {
             $query->where('payment_type', $request->payment_type);
         }
 
         // Bank filter
-        if ($request->has('bank_id') && $request->bank_id) {
-            $query->where('bank_id', $request->bank_id);
+        if ($request->filled('bank_id')) {
+            $bankId = $request->bank_id;
+            $query->where(function ($q) use ($bankId) {
+                $q->where('bank_id', $bankId)
+                    ->orWhereHas('splits', fn ($sq) => $sq->where('bank_id', $bankId));
+            });
+        }
+
+        // Item type filter: 'product' or 'service'
+        if ($request->filled('item_type')) {
+            $itemType = strtolower($request->item_type);
+            if ($itemType === 'product') {
+                $query->whereHas('product_or_service_request', function ($q) {
+                    $q->whereNotNull('product_id');
+                });
+            } elseif ($itemType === 'service') {
+                $query->whereHas('product_or_service_request', function ($q) {
+                    $q->whereNotNull('service_id');
+                });
+            }
+        }
+
+        // Product category filter
+        if ($request->filled('product_category_id')) {
+            $catId = $request->product_category_id;
+            $query->whereHas('product_or_service_request.product', function ($q) use ($catId) {
+                $q->where('category_id', $catId)->orWhere('product_category_id', $catId);
+            });
+        }
+
+        // Service category filter
+        if ($request->filled('service_category_id')) {
+            $catId = $request->service_category_id;
+            $query->whereHas('product_or_service_request.service', function ($q) use ($catId) {
+                $q->where('category_id', $catId)->orWhere('service_category_id', $catId);
+            });
+        }
+
+        // Specific product filter
+        if ($request->filled('product_id')) {
+            $prodId = $request->product_id;
+            $query->whereHas('product_or_service_request', function ($q) use ($prodId) {
+                $q->where('product_id', $prodId);
+            });
+        }
+
+        // Specific service filter
+        if ($request->filled('service_id')) {
+            $srvId = $request->service_id;
+            $query->whereHas('product_or_service_request', function ($q) use ($srvId) {
+                $q->where('service_id', $srvId);
+            });
         }
 
         $transactions = $query->orderBy('created_at', 'desc')->get();
 
+        // Calculate Category and Item KPIs
+        $productCategoryKpis = [];
+        $serviceCategoryKpis = [];
+        $productTotalAmount = 0;
+        $productTotalCount = 0;
+        $serviceTotalAmount = 0;
+        $serviceTotalCount = 0;
+
+        foreach ($transactions as $tx) {
+            if ($tx->voided_at) {
+                continue; // Do not sum voided in active KPI totals
+            }
+            foreach ($tx->product_or_service_request as $item) {
+                $amt = (float) ($item->payable_amount ?? 0);
+                if ($item->product_id) {
+                    $productTotalAmount += $amt;
+                    $productTotalCount++;
+                    $catName = $item->product?->category?->name ?? 'Uncategorized';
+                    if (!isset($productCategoryKpis[$catName])) {
+                        $productCategoryKpis[$catName] = ['name' => $catName, 'count' => 0, 'amount' => 0];
+                    }
+                    $productCategoryKpis[$catName]['count']++;
+                    $productCategoryKpis[$catName]['amount'] += $amt;
+                } elseif ($item->service_id) {
+                    $serviceTotalAmount += $amt;
+                    $serviceTotalCount++;
+                    $catName = $item->service?->category?->category_name ?? 'General Services';
+                    if (!isset($serviceCategoryKpis[$catName])) {
+                        $serviceCategoryKpis[$catName] = ['name' => $catName, 'count' => 0, 'amount' => 0];
+                    }
+                    $serviceCategoryKpis[$catName]['count']++;
+                    $serviceCategoryKpis[$catName]['amount'] += $amt;
+                } elseif ($item->is_free_form) {
+                    $serviceTotalAmount += $amt;
+                    $serviceTotalCount++;
+                    $catName = 'Custom Items';
+                    if (!isset($serviceCategoryKpis[$catName])) {
+                        $serviceCategoryKpis[$catName] = ['name' => $catName, 'count' => 0, 'amount' => 0];
+                    }
+                    $serviceCategoryKpis[$catName]['count']++;
+                    $serviceCategoryKpis[$catName]['amount'] += $amt;
+                }
+            }
+        }
+
+        $activeTransactions = $transactions->whereNull('voided_at');
+
         $summary = [
-            'total_amount' => $transactions->sum('total'),
-            'total_discount' => $transactions->sum('total_discount'),
-            'count' => $transactions->count(),
-            'by_type' => $transactions->groupBy('payment_type')->map(function ($group) {
+            'total_amount' => $activeTransactions->sum('total'),
+            'total_discount' => $activeTransactions->sum('total_discount'),
+            'count' => $activeTransactions->count(),
+            'voided_count' => $transactions->whereNotNull('voided_at')->count(),
+            'by_type' => $activeTransactions->groupBy('payment_type')->map(function ($group) {
                 return [
                     'count' => $group->count(),
                     'amount' => $group->sum('total'),
                     'discount' => $group->sum('total_discount'),
                 ];
             }),
+            'product_total' => $productTotalAmount,
+            'service_total' => $serviceTotalAmount,
+            'product_kpi' => [
+                'count' => $productTotalCount,
+                'amount' => $productTotalAmount,
+            ],
+            'service_kpi' => [
+                'count' => $serviceTotalCount,
+                'amount' => $serviceTotalAmount,
+            ],
+            'product_category_kpis' => array_values($productCategoryKpis),
+            'service_category_kpis' => array_values($serviceCategoryKpis),
         ];
 
         $transactionsFormatted = $transactions->map(function ($tx) {
+            $itemsFormatted = $tx->product_or_service_request->map(function ($item) {
+                $isService = (bool) $item->service_id;
+                $isFree = (bool) $item->is_free_form;
+                $qty = (float) ($item->qty ?? 1);
+                $amt = (float) ($item->payable_amount ?? 0);
+                $unitPrice = $qty > 0 ? $amt / $qty : $amt;
+
+                return [
+                    'id' => $item->id,
+                    'type' => $isFree ? 'Custom' : ($isService ? 'Service' : 'Product'),
+                    'name' => getItemDisplayName($item),
+                    'category' => $item->service?->category?->category_name ?? $item->product?->category?->name ?? 'N/A',
+                    'qty' => $qty,
+                    'unit_price' => $unitPrice,
+                    'amount' => $amt,
+                    'discount' => $item->discount ?? 0,
+                    'patient_name' => userfullname($item->user_id),
+                ];
+            });
+
             return [
                 'id' => $tx->id,
                 'reference_no' => $tx->reference_no,
-                'patient_name' => userfullname($tx->patient->user_id),
-                'file_no' => $tx->patient->file_no,
+                'patient_name' => $tx->patient ? userfullname($tx->patient->user_id) : 'Unknown',
+                'file_no' => $tx->patient?->file_no ?? 'N/A',
                 'payment_type' => $tx->payment_type,
                 'payment_method' => $tx->payment_method,
+                'payment_method_display' => formatPaymentMethod($tx),
+                'is_split_payment' => (bool) $tx->is_split_payment,
+                'splits' => $tx->splits->map(function ($s) {
+                    return [
+                        'payment_method' => $s->payment_method,
+                        'bank_name' => $s->bank?->name,
+                        'amount' => (float) $s->amount,
+                        'reference_no' => $s->reference_no,
+                    ];
+                }),
                 'bank_name' => $tx->bank ? $tx->bank->name : null,
-                'total' => $tx->total,
-                'total_discount' => $tx->total_discount,
+                'total' => (float) $tx->total,
+                'total_discount' => (float) $tx->total_discount,
+                'is_voided' => (bool) $tx->voided_at,
+                'voided_at' => $tx->voided_at ? $tx->voided_at->format('Y-m-d H:i') : null,
+                'void_reason' => $tx->void_reason,
+                'items' => $itemsFormatted,
                 'created_at' => $tx->created_at->format('Y-m-d H:i'),
             ];
         });
 
+        // If print requested, return branded A4 printout
+        if ($request->input('action') === 'print' || $request->input('format') === 'print' || $request->boolean('print')) {
+            $site = appsettings();
+            $staffUser = Auth::user();
+            $staffName = $staffUser ? userfullname($staffUser->id) : 'Current Staff';
+
+            return view('admin.Accounts.my_transactions_print', [
+                'site' => $site,
+                'staffName' => $staffName,
+                'from' => $from,
+                'to' => $to,
+                'transactions' => $transactions,
+                'transactionsFormatted' => $transactionsFormatted,
+                'summary' => $summary,
+                'paymentType' => $request->payment_type ?? $request->payment_method ?? 'All Methods',
+            ]);
+        }
+
         return response()->json([
+            'success' => true,
             'transactions' => $transactionsFormatted,
             'summary' => $summary,
             'from' => $from,
             'to' => $to,
+        ]);
+    }
+
+    /**
+     * Get transactions for Manage Transactions DataTables grid
+     */
+    public function getManageTransactions(Request $request)
+    {
+        $user = Auth::user();
+        $isPrivileged = $user->hasAnyRole(['Accountant', 'Admin', 'Super-Admin']);
+
+        $query = Payment::query()->with(['patient.user', 'bank', 'splits.bank', 'staff_user']);
+
+        // Scope: billers see only own transactions; privileged users can toggle 'all' or 'own'
+        $scope = $request->input('scope', $isPrivileged ? 'all' : 'own');
+        if (!$isPrivileged || $scope === 'own') {
+            $query->where('user_id', $user->id);
+        }
+
+        // Date range
+        if ($request->filled('from') && $request->filled('to')) {
+            $query->whereBetween('created_at', [
+                Carbon::parse($request->from)->startOfDay(),
+                Carbon::parse($request->to)->endOfDay(),
+            ]);
+        }
+
+        // Payment method filter
+        if ($request->filled('payment_method')) {
+            $pm = $request->payment_method;
+            if ($pm === 'SPLIT') {
+                $query->where('is_split_payment', true);
+            } else {
+                $query->where(function ($q) use ($pm) {
+                    $q->where('payment_method', $pm)
+                        ->orWhereHas('splits', fn ($sq) => $sq->where('payment_method', $pm));
+                });
+            }
+        }
+
+        // Status filter: all, active, voided
+        if ($request->input('status') === 'voided') {
+            $query->whereNotNull('voided_at');
+        } elseif ($request->input('status') === 'active') {
+            $query->whereNull('voided_at');
+        }
+
+        return datatables()->of($query)
+            ->addColumn('patient_name', function ($p) {
+                return $p->patient ? userfullname($p->patient->user_id) : 'N/A';
+            })
+            ->addColumn('file_no', function ($p) {
+                return $p->patient?->file_no ?? 'N/A';
+            })
+            ->addColumn('payment_method_display', function ($p) {
+                return formatPaymentMethod($p);
+            })
+            ->addColumn('total_formatted', function ($p) {
+                return '₦' . number_format(abs($p->total), 2);
+            })
+            ->addColumn('status_badge', function ($p) {
+                if ($p->voided_at) {
+                    return '<span class="badge badge-danger" title="' . e($p->void_reason) . '">VOIDED</span>';
+                }
+
+                return '<span class="badge badge-success">ACTIVE</span>';
+            })
+            ->addColumn('actions', function ($p) use ($isPrivileged, $user) {
+                $canEdit = !$p->voided_at && ($isPrivileged || $p->user_id === $user->id);
+                $html = '<div class="btn-group btn-group-sm">';
+                $html .= '<button type="button" class="btn btn-outline-info btn-xs btn-view-receipt" data-id="' . $p->id . '" title="View / Print Receipt"><i class="mdi mdi-printer"></i></button>';
+                if ($canEdit) {
+                    $html .= '<button type="button" class="btn btn-outline-warning btn-xs btn-adjust-payment ms-1" data-id="' . $p->id . '" title="Adjust Payment Method"><i class="mdi mdi-tune"></i></button>';
+                    $html .= '<button type="button" class="btn btn-outline-danger btn-xs btn-void-payment ms-1" data-id="' . $p->id . '" title="Void Transaction"><i class="mdi mdi-delete-outline"></i></button>';
+                }
+                $html .= '</div>';
+
+                return $html;
+            })
+            ->rawColumns(['status_badge', 'actions'])
+            ->make(true);
+    }
+
+    /**
+     * Adjust payment method for a transaction
+     */
+    public function adjustPaymentMethod(Request $request, \App\Services\Accounting\PaymentReversalService $reversalService)
+    {
+        if (!$request->filled('reason') && $request->filled('adjustment_reason')) {
+            $request->merge(['reason' => $request->input('adjustment_reason')]);
+        }
+
+        $data = $request->validate([
+            'payment_id' => 'required|integer|exists:payments,id',
+            'reason' => 'required|string|min:5',
+            'is_split' => 'nullable|boolean',
+            'payment_method' => 'nullable|string',
+            'bank_id' => 'nullable|integer|exists:banks,id',
+            'splits' => 'nullable|array',
+            'splits.*.payment_method' => 'required_with:splits|string',
+            'splits.*.bank_id' => 'nullable|integer|exists:banks,id',
+            'splits.*.amount' => 'required_with:splits|numeric|min:0.01',
+            'splits.*.reference_no' => 'nullable|string',
+        ]);
+
+        $payment = Payment::with('splits')->findOrFail($data['payment_id']);
+
+        $user = Auth::user();
+        $isPrivileged = $user->hasAnyRole(['Accountant', 'Admin', 'Super-Admin']);
+
+        if (!$isPrivileged && $payment->user_id !== $user->id) {
+            return response()->json(['message' => 'Unauthorized: You can only adjust your own transactions.'], 403);
+        }
+
+        try {
+            $adjustment = $reversalService->adjustPayment(
+                $payment,
+                $data,
+                $user->id,
+                $data['reason']
+            );
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Payment method adjusted successfully. Journal entry updated.',
+                'adjustment_id' => $adjustment->id,
+                'payment' => [
+                    'id' => $payment->id,
+                    'payment_method_display' => formatPaymentMethod($payment->refresh()),
+                    'is_split_payment' => (bool) $payment->is_split_payment,
+                ],
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Billing workbench adjust payment failed', ['error' => $e->getMessage()]);
+
+            return response()->json(['message' => $e->getMessage()], 422);
+        }
+    }
+
+    /**
+     * Void a transaction
+     */
+    public function voidTransaction(Request $request, \App\Services\Accounting\PaymentReversalService $reversalService)
+    {
+        if (!$request->filled('reason') && $request->filled('void_reason')) {
+            $request->merge(['reason' => $request->input('void_reason')]);
+        }
+
+        $data = $request->validate([
+            'payment_id' => 'required|integer|exists:payments,id',
+            'reason' => 'required|string|min:5',
+        ]);
+
+        $payment = Payment::findOrFail($data['payment_id']);
+
+        $user = Auth::user();
+        $isPrivileged = $user->hasAnyRole(['Accountant', 'Admin', 'Super-Admin']);
+
+        if (!$isPrivileged && $payment->user_id !== $user->id) {
+            return response()->json(['message' => 'Unauthorized: You can only void your own transactions.'], 403);
+        }
+
+        try {
+            $reversalService->voidPayment($payment, $user->id, $data['reason']);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Transaction voided successfully. Journal entries and items reversed.',
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Billing workbench void transaction failed', ['error' => $e->getMessage()]);
+
+            return response()->json(['message' => $e->getMessage()], 422);
+        }
+    }
+
+    /**
+     * Get full details of a payment for modal inspection/adjustment
+     */
+    public function getPaymentDetails($paymentId)
+    {
+        $payment = Payment::with([
+            'patient.user',
+            'bank',
+            'splits.bank',
+            'adjustments.adjuster',
+            'product_or_service_request' => fn ($q) => $q->with(['service', 'product', 'user']),
+        ])->findOrFail($paymentId);
+
+        return response()->json([
+            'id' => $payment->id,
+            'reference_no' => $payment->reference_no,
+            'patient_name' => $payment->patient ? userfullname($payment->patient->user_id) : 'Unknown',
+            'file_no' => $payment->patient?->file_no ?? 'N/A',
+            'payment_type' => $payment->payment_type,
+            'payment_method' => $payment->payment_method,
+            'payment_method_display' => formatPaymentMethod($payment),
+            'bank_id' => $payment->bank_id,
+            'bank_name' => $payment->bank?->name,
+            'total' => (float) $payment->total,
+            'total_discount' => (float) $payment->total_discount,
+            'is_split_payment' => (bool) $payment->is_split_payment,
+            'is_voided' => (bool) $payment->voided_at,
+            'voided_at' => $payment->voided_at ? $payment->voided_at->format('Y-m-d H:i') : null,
+            'void_reason' => $payment->void_reason,
+            'splits' => $payment->splits->map(function ($s) {
+                return [
+                    'id' => $s->id,
+                    'payment_method' => $s->payment_method,
+                    'bank_id' => $s->bank_id,
+                    'bank_name' => $s->bank?->name,
+                    'amount' => (float) $s->amount,
+                    'reference_no' => $s->reference_no,
+                ];
+            }),
+            'items' => $payment->product_or_service_request->map(function ($item) {
+                return [
+                    'id' => $item->id,
+                    'name' => getItemDisplayName($item),
+                    'type' => $item->is_free_form ? 'Custom' : ($item->service_id ? 'Service' : 'Product'),
+                    'qty' => $item->qty,
+                    'amount' => (float) $item->payable_amount,
+                ];
+            }),
+            'adjustments' => $payment->adjustments->map(function ($adj) {
+                return [
+                    'id' => $adj->id,
+                    'original_payment_method' => $adj->original_payment_method,
+                    'new_payment_method' => $adj->new_payment_method,
+                    'reason' => $adj->reason,
+                    'adjusted_by' => $adj->adjuster ? userfullname($adj->adjusted_by) : 'User',
+                    'adjusted_at' => $adj->adjusted_at ? $adj->adjusted_at->format('Y-m-d H:i') : $adj->created_at->format('Y-m-d H:i'),
+                ];
+            }),
         ]);
     }
 
@@ -1820,19 +2355,16 @@ class BillingWorkbenchController extends Controller
         // Include direct payments (CASH, POS, TRANSFER - not from account)
         if ($includePayments) {
             $directPayments = Payment::whereIn('patient_id', $patientIds)
+                ->whereNull('voided_at')
                 ->whereNotIn('payment_type', ['ACC_DEPOSIT', 'ACC_WITHDRAW', 'ACC_ADJUSTMENT'])
                 ->whereBetween('created_at', [$dateFrom, $dateTo])
-                ->with(['product_or_service_request.service', 'product_or_service_request.product'])
+                ->with(['product_or_service_request.service', 'product_or_service_request.product', 'splits.bank', 'bank'])
                 ->orderBy('created_at')
                 ->get();
 
             foreach ($directPayments as $pmt) {
                 $items = $pmt->product_or_service_request->reject(fn ($i) => $i->is_bundle_item)->map(function ($item) {
-                    if ($item->service_id) {
-                        return $item->service?->service_name ?? 'Service';
-                    }
-
-                    return $item->product?->product_name ?? 'Product';
+                    return getItemDisplayName($item);
                 })->implode(', ');
 
                 $transactions->push([
@@ -1843,7 +2375,7 @@ class BillingWorkbenchController extends Controller
                     'reference' => $pmt->reference_no,
                     'type' => 'payment',
                     'type_class' => 'payment',
-                    'type_label' => 'Payment (' . ($pmt->payment_method ?? 'Cash') . ')',
+                    'type_label' => 'Payment (' . formatPaymentMethod($pmt) . ')',
                     'short_type' => 'PAY',
                     'description' => 'Direct payment for services',
                     'items' => $items ?: null,
@@ -1857,6 +2389,7 @@ class BillingWorkbenchController extends Controller
         // Include account withdrawals/payments from balance
         if ($includeWithdrawals) {
             $withdrawals = Payment::whereIn('patient_id', $patientIds)
+                ->whereNull('voided_at')
                 ->whereIn('payment_type', ['ACC_WITHDRAW', 'ACC_ADJUSTMENT'])
                 ->whereBetween('created_at', [$dateFrom, $dateTo])
                 ->orderBy('created_at')
@@ -1939,11 +2472,13 @@ class BillingWorkbenchController extends Controller
             ->sum('amount');
 
         $withdrawalsBeforePeriod = abs(Payment::whereIn('patient_id', $patientIds)
+            ->whereNull('voided_at')
             ->where('payment_type', 'ACC_WITHDRAW')
             ->where('created_at', '<', $dateFrom)
             ->sum('total'));
 
         $adjustmentsBeforePeriod = Payment::whereIn('patient_id', $patientIds)
+            ->whereNull('voided_at')
             ->where('payment_type', 'ACC_ADJUSTMENT')
             ->where('created_at', '<', $dateFrom)
             ->sum('total');

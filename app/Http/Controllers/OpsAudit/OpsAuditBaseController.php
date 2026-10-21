@@ -578,39 +578,45 @@ abstract class OpsAuditBaseController extends Controller
 
             $names = [];
             foreach ($posr as $p) {
-                if ($p->product) {
-                    $names[] = $p->product->product_name;
-                } elseif ($p->service) {
-                    $names[] = $p->service->service_name;
-                } elseif ($p->procedure) {
-                    $names[] = $p->procedure->is_free_form ? $p->procedure->free_form_name : ($p->procedure->service?->service_name ?? '-');
-                }
+                $names[] = getItemDisplayName($p);
             }
 
             return empty($names) ? '-' : implode(', ', $names);
         }
 
-        if ($posr->product) {
-            return $posr->product->product_name;
+        return getItemDisplayName($posr);
+    }
+
+    protected function renderPaymentMethodBadge($payment)
+    {
+        if (!$payment) {
+            return '-';
         }
-        if ($posr->service) {
-            return $posr->service->service_name;
-        }
-        if ($posr->procedure) {
-            return $posr->procedure->is_free_form ? $posr->procedure->free_form_name : ($posr->procedure->service?->service_name ?? '-');
+        $formatted = formatPaymentMethod($payment);
+        $badge = '<span class="badge bg-light text-dark border">' . e($formatted) . '</span>';
+        if ($payment->is_voided) {
+            $badge .= ' <span class="badge bg-danger ms-1">VOIDED</span>';
         }
 
-        return '-';
+        return $badge;
     }
 
     protected function formatPaymentMethodWithChannel($payment)
     {
-        $methodDisplay = $payment->payment_method ?: 'Unknown';
+        if (!$payment) {
+            return '-';
+        }
+
+        $methodDisplay = formatPaymentMethod($payment);
+        if ($payment->is_voided) {
+            $methodDisplay = "<span class='text-decoration-line-through text-muted'>{$methodDisplay}</span> <span class='badge bg-danger ms-1'>VOIDED</span>";
+        }
+
         $channel = '';
         $textClass = 'text-secondary';
         $icon = 'mdi-account-cash';
 
-        $methodLower = strtolower($methodDisplay);
+        $methodLower = strtolower($payment->payment_method ?? '');
         if (str_contains($methodLower, 'transfer') || str_contains($methodLower, 'pos') || str_contains($methodLower, 'bank')) {
             if ($payment->bank) {
                 $channel = 'Bank: ' . $payment->bank->name;
@@ -659,6 +665,12 @@ abstract class OpsAuditBaseController extends Controller
      */
     protected function renderItemDetails($record)
     {
+        if (!$record) {
+            return '-';
+        }
+        if (!empty($record->is_free_form) && !empty($record->free_form_name)) {
+            return "<div class='font-weight-bold text-dark'>" . e($record->free_form_name) . " <span class='badge bg-warning text-dark'>Custom</span></div><small class='badge bg-secondary text-white mt-1'>Unlisted / Free-Form</small>";
+        }
         if (isset($record->product) && $record->product) {
             $name = $record->product->name ?? $record->product->product_name;
             $cat = $record->product->category ? $record->product->category->category_name : 'Uncategorized Product';

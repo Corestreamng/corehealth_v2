@@ -1218,8 +1218,19 @@ body.has-workbench .patient-allergies .allergy-alert-badge {
 }
 
 /* Expandable Biodata Grid Styling */
-body.is-workbench .patient-details-expanded,
-body.has-workbench .patient-details-expanded {
+body.is-workbench .patient-details-expanded:not(.show),
+body.has-workbench .patient-details-expanded:not(.show) {
+    display: none !important;
+    max-height: 0 !important;
+    overflow: hidden !important;
+    border-top: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
+body.is-workbench .patient-details-expanded.show,
+body.has-workbench .patient-details-expanded.show {
+    display: block !important;
     border-top: 1px solid rgba(255, 255, 255, 0.2) !important;
     margin-top: 6px !important;
     padding-top: 6px !important;

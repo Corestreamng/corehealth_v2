@@ -127,9 +127,13 @@ CoreHealth v2 is designed to streamline hospital operations by integrating clini
 
 ### 12. Billing & Revenue Cycle
 - **Billing Workbench** — payment queue, receipts, refunds, materialized queue optimization, covered by `BillingWorkbenchTest`
-- **Multi-Payment** — Cash, Card, Transfer, HMO, Patient Wallet
+- **Split Payments Engine** — split single transactions across Cash, POS, Transfer, and Patient Deposit with automated multi-leg General Ledger entries (`payment_splits`)
+- **Unlisted / Free-Form Billable Items** — interactive custom item entry with price specification across shared clinical orders and walk-in sales
+- **Walk-In Sales** — unified walk-in order and checkout tabs across Reception and Billing workbenches
+- **Enhanced My Transactions** — cashier transaction feed with line item breakdown, category filters (Product/Service/Category/Item), and real-time KPI cards
+- **Payment Method Adjustments** — post-receipt payment method modifications with automated GL reversing and replacement journal entries, audited in `payment_adjustments`
+- **Transaction Voiding** — full financial reversal restoring patient accounts, reversing JEs, unlinking unbilled items, and striking through voided transactions across reports
 - **Patient Deposits** — wallet system with auto-debit on billing
-- **My Transactions** — patient-facing billing portal
 - **Promotions** — discount rules and promo pricing
 
 ### 13. HMO & Insurance

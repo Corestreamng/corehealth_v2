@@ -1305,6 +1305,72 @@
                             </div>
                         </div>
 
+                        <!-- Walk-In Sales Configuration Card -->
+                        <div class="card-modern mb-4" style="border-radius: 12px; border: none; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+                            <div class="card-header bg-white" style="border-bottom: 1px solid #e9ecef;">
+                                <h5 class="mb-0" style="font-weight: 600; color: #1a1a1a;">
+                                    <i class="mdi mdi-walk mr-2" style="color: var(--primary-color);"></i>
+                                    Walk-In Sales Configuration
+                                </h5>
+                            </div>
+                            <div class="card-body" style="padding: 2rem;">
+                                <div class="mb-4">
+                                    <h6 class="text-uppercase text-muted" style="font-size: 11px; font-weight: 700; letter-spacing: 0.5px;">Role Access Control</h6>
+                                    <div class="mb-3">
+                                        <div class="feature-toggle-row" style="display: flex; justify-content: space-between; align-items: center;">
+                                            <div>
+                                                <strong>Billers / Cashiers Can Perform Walk-In Sales</strong>
+                                                <div class="text-muted small">Enables Walk-In Sales booking tab directly inside Billing Workbench</div>
+                                            </div>
+                                            <div class="custom-control custom-switch custom-switch-primary">
+                                                <input type="checkbox" class="custom-control-input" id="walkin_biller_enabled" name="walkin_biller_enabled" value="1" {{ ($config->walkin_biller_enabled ?? true) ? 'checked' : '' }}>
+                                                <label class="custom-control-label" for="walkin_biller_enabled"></label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="mb-3">
+                                        <div class="feature-toggle-row" style="display: flex; justify-content: space-between; align-items: center;">
+                                            <div>
+                                                <strong>Receptionists Can Perform Walk-In Sales</strong>
+                                                <div class="text-muted small">Enables Walk-In Sales booking tab inside Reception Workbench</div>
+                                            </div>
+                                            <div class="custom-control custom-switch custom-switch-primary">
+                                                <input type="checkbox" class="custom-control-input" id="walkin_reception_enabled" name="walkin_reception_enabled" value="1" {{ ($config->walkin_reception_enabled ?? true) ? 'checked' : '' }}>
+                                                <label class="custom-control-label" for="walkin_reception_enabled"></label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="mb-3">
+                                    <h6 class="text-uppercase text-muted" style="font-size: 11px; font-weight: 700; letter-spacing: 0.5px;">Granular Departmental Controls</h6>
+                                    @php
+                                        $walkin_dept_toggles = [
+                                            'walkin_lab_enabled' => ['Lab Investigations', 'Allow booking walk-in laboratory tests'],
+                                            'walkin_imaging_enabled' => ['Imaging & Radiology', 'Allow booking walk-in X-ray, Ultrasound & scans'],
+                                            'walkin_products_enabled' => ['Pharmacy Products', 'Allow OTC / walk-in drug sales'],
+                                            'walkin_procedures_enabled' => ['Minor & Major Procedures', 'Allow booking walk-in procedures & dressings'],
+                                            'walkin_free_form_enabled' => ['Free-Form & Custom Items', 'Allow booking unlisted / custom items with ad-hoc pricing'],
+                                        ];
+                                    @endphp
+                                    @foreach($walkin_dept_toggles as $key => $info)
+                                    <div class="mb-3">
+                                        <div class="feature-toggle-row" style="display: flex; justify-content: space-between; align-items: center;">
+                                            <div>
+                                                <strong>{{ $info[0] }}</strong>
+                                                <div class="text-muted small">{{ $info[1] }}</div>
+                                            </div>
+                                            <div class="custom-control custom-switch custom-switch-primary">
+                                                <input type="checkbox" class="custom-control-input" id="{{ $key }}" name="{{ $key }}" value="1" {{ ($config->$key ?? true) ? 'checked' : '' }}>
+                                                <label class="custom-control-label" for="{{ $key }}"></label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    @endforeach
+                                </div>
+                            </div>
+                        </div>
+
                         <!-- Inventory Settings Card -->
                         <div class="card-modern mb-4" style="border-radius: 12px; border: none; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
                             <div class="card-header bg-white" style="border-bottom: 1px solid #e9ecef;">

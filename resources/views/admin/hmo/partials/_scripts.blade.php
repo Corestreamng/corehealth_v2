@@ -29,5 +29,7 @@
 </script>
 <script src="{{ asset('js/workbench-helper.js') }}"></script>
 <script src="{{ asset('js/clinical-alerts-shared.js') }}"></script>
+@include('admin.partials.admissions-module-js')
 <script src="{{ asset('js/hmo-workbench.js') }}"></script>
 @endsection
+

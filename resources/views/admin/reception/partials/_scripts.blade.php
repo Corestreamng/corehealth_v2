@@ -63,6 +63,8 @@ window.WORKBENCH_CONFIG = {
 <script src="{{ asset('js/request-details.js') }}"></script>
 <script src="{{ versioned_asset('js/reception-core.js') }}"></script>
 <script src="{{ versioned_asset('js/reception-queue.js') }}"></script>
+<script src="{{ versioned_asset('js/walkin-sales-shared.js') }}"></script>
+<script src="{{ versioned_asset('js/billing-my-transactions.js') }}"></script>
 <script src="{{ versioned_asset('js/reception-registration.js') }}"></script>
 {{-- Admission Module JS --}}
 @include('admin.partials.admissions-module-js')
@@ -85,7 +87,7 @@ window.WORKBENCH_CONFIG = {
 <script src="{{ asset('js/clinical-alerts-shared.js') }}"></script>
 
 @if($canBillUser)
-    @include('admin.partials.payment_modal')
+    <script src="{{ versioned_asset('js/billing-split-payments.js') }}"></script>
     @include('admin.partials.payment_scripts')
 @endif
 @endsection

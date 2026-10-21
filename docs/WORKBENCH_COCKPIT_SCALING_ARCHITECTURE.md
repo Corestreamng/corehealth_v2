@@ -222,3 +222,30 @@ To migrate other workbenches (Doctor, Pharmacy, Nursing, Lab, Billing, Morgue) t
    - Panels and content panes: `flex: 1 1 auto; min-height: 0; overflow-y: auto;`
    - Remove any legacy hardcoded `min-height: calc(100vh - 100px);` overrides.
    - Run `node --check` and `make lint` before committing.
+
+---
+
+## 8. Expandable Biodata Drawer & Admission Module Breakdown Architecture
+
+### 1. Expandable Biodata Drawer Scaling Fix (`public/css/workbench-cockpit-scaling.css`)
+- **Root Cause**: The universal workbench scaler stylesheet previously applied an unconditional rule `body.is-workbench .patient-details-expanded { max-height: 260px !important; overflow-y: auto !important; }`. This forced the biodata drawer to remain permanently open across all workbenches regardless of the presence of `.show`, preventing the "more biodata" / "less biodata" button from closing or toggling the drawer.
+- **Solution**: Split into discrete states:
+  - `:not(.show)`: `display: none !important; max-height: 0 !important; overflow: hidden !important; border-top: none !important; margin: 0 !important; padding: 0 !important;`
+  - `.show`: `display: block !important; border-top: 1px solid rgba(255, 255, 255, 0.2) !important; margin-top: 6px !important; padding-top: 6px !important; max-height: 260px !important; overflow-y: auto !important;`
+- **Frontend Button State Sync (`public/js/reception-core.js`)**:
+  - Delegated click handler toggles `.expanded` and `.show`.
+  - Toggles `.btn-expand-text` between `'more biodata'` and `'less biodata'`.
+  - Toggles icon between `mdi-chevron-down` and `mdi-chevron-up`.
+  - `displayPatientInfo(patient)` resets drawer to collapsed on patient load.
+
+### 2. Cross-Workbench Admissions Module Integration & Breakdown Engine
+- **Cross-Workbench Parity**:
+  - Reception Workbench (`reception/workbench`): uses `@include('admin.partials.admissions-module')` and `admin.partials.admissions-module-js`.
+  - Billing Workbench (`billing/workbench`): uses `@include('admin.partials.admissions-module')` with billing receipt preview routing.
+  - HMO Workbench (`hmo/workbench`): included `admin.partials.admissions-module` under `#pf-tab-admissions`; added missing `@include('admin.partials.admissions-module-js')` in `_scripts.blade.php`.
+- **TypeError: Cannot read properties of undefined (reading 'map') Resolution**:
+  - `app/Http/Controllers/AdmissionModuleController.php`: Added `'items' => []` to `$timeline[$dayKey]` array and populated `$timeline[$dayKey]['items'][] = $itemData` alongside category groupings. Removed raw Eloquent model serialization from API payload.
+  - `resources/views/admin/partials/admissions-module-js.blade.php`: Wrapped `renderDetail` in safe try/catch block with fallback defaults. In `renderTimeline` and `renderCategories`, defensively support both flat and categorized items across array or object payloads.
+  - Robust `_container` target resolution and mobile-only list panel collapse (`window.innerWidth < 992`).
+  - Added dedicated `.adm-mod-history-modal` to prevent destroying `.adm-mod-full-detail-modal` DOM content.
+

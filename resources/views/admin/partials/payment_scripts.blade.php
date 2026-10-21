@@ -110,6 +110,21 @@ function processPayment() {
         }
     }
 
+    // Validate split payments
+    let isSplitPayment = (paymentType === 'SPLIT');
+    let splitsData = null;
+    if (isSplitPayment) {
+        if (window.CoreHealth && typeof window.CoreHealth.validateAndGetSplits === 'function') {
+            splitsData = window.CoreHealth.validateAndGetSplits(totalPayable);
+            if (!splitsData) {
+                return;
+            }
+        } else {
+            toastr.error('Split payments engine not loaded.');
+            return;
+        }
+    }
+
     // Show loading state
     const $confirmBtn = $('#confirm-payment-btn');
     const originalText = $confirmBtn.html();
@@ -127,7 +142,9 @@ function processPayment() {
             staff_user_id: paymentType === 'BILL_TO_STAFF' ? $('#payment-staff-id').val() : null,
             organization_id: paymentType === 'BILL_TO_ORGANIZATION' ? $('#payment-organization-id').val() : null,
             reference_no: referenceNo,
-            items: items
+            items: items,
+            is_split_payment: isSplitPayment ? 1 : 0,
+            splits: splitsData
         },
         success: function(response) {
             // Clear pending items
@@ -390,6 +407,7 @@ function loadBanks() {
         success: function(response) {
             if (response.success && response.banks) {
                 availableBanks = response.banks;
+                window.availableBanks = response.banks;
                 populateBankDropdowns();
             }
         },
@@ -415,6 +433,14 @@ function populateBankDropdowns() {
         $transactionBank.append(option);
     });
 }
+
+$(document).on('show.bs.modal shown.bs.modal', '#paymentModal', function() {
+    if (availableBanks.length > 0) {
+        populateBankDropdowns();
+    } else {
+        loadBanks();
+    }
+});
 
 // Global staff cache
 let activeStaffList = [];

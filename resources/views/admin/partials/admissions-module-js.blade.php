@@ -43,7 +43,12 @@ window.AdmissionModule = (function() {
     function init(patientId, opts) {
         opts = opts || {};
         _patientId = patientId;
-        _container = opts.container ? $(opts.container).find('.adm-mod') : $('.adm-mod').first();
+        if (opts.container) {
+            const $c = $(opts.container);
+            _container = $c.hasClass('adm-mod') ? $c : ($c.find('.adm-mod').length ? $c.find('.adm-mod') : $c);
+        } else {
+            _container = $('.adm-mod').first();
+        }
         _onBadgeUpdate = opts.onBadgeUpdate || null;
         _printTarget = opts.printTarget || 'self';
         _selectedAdmissionId = null;
@@ -138,57 +143,63 @@ window.AdmissionModule = (function() {
     }
 
     function renderDetail(data) {
-        const adm = data.admission;
-        const categories = data.categories;
-        const totals = data.totals;
-        const timeline = data.timeline;
-        const hmoClaims = data.hmo_claims;
+        if (!data) return;
+        try {
+            const adm = data.admission || {};
+            const categories = data.categories || [];
+            const totals = data.totals || {};
+            const timeline = data.timeline || [];
+            const hmoClaims = data.hmo_claims;
 
-        // Status badge
-        const badge = _container.find('.adm-mod-status-badge');
-        badge.removeClass('admitted discharged').addClass(adm.status);
-        badge.html(adm.status === 'admitted'
-            ? '<i class="mdi mdi-hospital"></i> Currently Admitted'
-            : '<i class="mdi mdi-check-circle"></i> Discharged');
+            // Status badge
+            const badge = _container.find('.adm-mod-status-badge');
+            badge.removeClass('admitted discharged').addClass(adm.status || 'admitted');
+            badge.html((adm.status === 'admitted')
+                ? '<i class="mdi mdi-hospital"></i> Currently Admitted'
+                : '<i class="mdi mdi-check-circle"></i> Discharged');
 
-        // Info cards
-        _container.find('.adm-mod-admitted-date').text(adm.admitted_date);
-        _container.find('.adm-mod-discharge-date').text(adm.discharge_date);
-        _container.find('.adm-mod-los').text(adm.los);
-        _container.find('.adm-mod-ward-bed').text(adm.ward + ' / ' + adm.bed);
-        _container.find('.adm-mod-doctor').text(adm.doctor);
-        _container.find('.adm-mod-reason').text(adm.reason);
+            // Info cards
+            _container.find('.adm-mod-admitted-date').text(adm.admitted_date || 'N/A');
+            _container.find('.adm-mod-discharge-date').text(adm.discharge_date || 'N/A');
+            _container.find('.adm-mod-los').text(adm.los || 'N/A');
+            _container.find('.adm-mod-ward-bed').text((adm.ward || 'N/A') + ' / ' + (adm.bed || 'N/A'));
+            _container.find('.adm-mod-doctor').text(adm.doctor || 'N/A');
+            _container.find('.adm-mod-reason').text(adm.reason || 'N/A');
 
-        // HMO claims section
-        if (hmoClaims && hmoClaims.total_items> 0) {
-            _container.find('.adm-mod-hmo-section').show();
-            _container.find('.adm-mod-hmo-name').text(hmoClaims.hmo_name || 'N/A');
-            _container.find('.adm-mod-hmo-no').text(hmoClaims.hmo_no || 'N/A');
-            _container.find('.adm-mod-hmo-items').text(hmoClaims.total_items);
-            _container.find('.adm-mod-hmo-approved').text(fmt(hmoClaims.approved));
-            _container.find('.adm-mod-hmo-pending').text(fmt(hmoClaims.pending));
-            _container.find('.adm-mod-hmo-rejected').text(fmt(hmoClaims.rejected));
-            _container.find('.adm-mod-hmo-awaiting').text(fmt(hmoClaims.awaiting_code));
-            _container.find('.adm-mod-hmo-express').text(fmt(hmoClaims.express));
-        } else {
-            _container.find('.adm-mod-hmo-section').hide();
+            // HMO claims section
+            if (hmoClaims && hmoClaims.total_items > 0) {
+                _container.find('.adm-mod-hmo-section').show();
+                _container.find('.adm-mod-hmo-name').text(hmoClaims.hmo_name || 'N/A');
+                _container.find('.adm-mod-hmo-no').text(hmoClaims.hmo_no || 'N/A');
+                _container.find('.adm-mod-hmo-items').text(hmoClaims.total_items || 0);
+                _container.find('.adm-mod-hmo-approved').text(fmt(hmoClaims.approved));
+                _container.find('.adm-mod-hmo-pending').text(fmt(hmoClaims.pending));
+                _container.find('.adm-mod-hmo-rejected').text(fmt(hmoClaims.rejected));
+                _container.find('.adm-mod-hmo-awaiting').text(fmt(hmoClaims.awaiting_code));
+                _container.find('.adm-mod-hmo-express').text(fmt(hmoClaims.express));
+            } else {
+                _container.find('.adm-mod-hmo-section').hide();
+            }
+
+            // Categories
+            renderCategories(categories);
+
+            // Totals
+            _container.find('.adm-mod-gross-total').text(fmt(totals.gross));
+            _container.find('.adm-mod-total-discount').text('-' + fmt(totals.discount));
+            _container.find('.adm-mod-hmo-coverage').text('-' + fmt(totals.hmo));
+            _container.find('.adm-mod-paid-amount').text('-' + fmt(totals.paid));
+            _container.find('.adm-mod-balance-due').text(fmt(totals.balance));
+
+            // Timeline
+            renderTimeline(timeline);
+
+            // Store full data for full detail modal
+            _container.data('admDetailData', data);
+        } catch (e) {
+            console.error('Error rendering admission detail:', e);
+            if (typeof toastr !== 'undefined') toastr.error('Failed to display admission details: ' + e.message);
         }
-
-        // Categories
-        renderCategories(categories);
-
-        // Totals
-        _container.find('.adm-mod-gross-total').text(fmt(totals.gross));
-        _container.find('.adm-mod-total-discount').text('-' + fmt(totals.discount));
-        _container.find('.adm-mod-hmo-coverage').text('-' + fmt(totals.hmo));
-        _container.find('.adm-mod-paid-amount').text('-' + fmt(totals.paid));
-        _container.find('.adm-mod-balance-due').text(fmt(totals.balance));
-
-        // Timeline
-        renderTimeline(timeline);
-
-        // Store full data for full detail modal
-        _container.data('admDetailData', data);
     }
 
     function renderCategories(categories) {
@@ -202,21 +213,23 @@ window.AdmissionModule = (function() {
 
         categories.forEach(function(cat, index) {
             const icon = iconMap[cat.icon] || '📋';
+            const catItems = Array.isArray(cat.items) ? cat.items : (cat.items && typeof cat.items === 'object' ? Object.values(cat.items) : []);
+            const itemCount = cat.count || catItems.length;
             const html = `
                 <div class="bill-category-item" data-adm-cat-index="${index}">
                     <div class="category-info">
                         <span class="category-icon">${icon}</span>
                         <div>
-                            <span class="category-name">${cat.name}</span>
-                            <span class="category-count">${cat.count} item${cat.count> 1 ? 's' : ''}</span>
+                            <span class="category-name">${cat.name || 'Category'}</span>
+                            <span class="category-count">${itemCount} item${itemCount !== 1 ? 's' : ''}</span>
                         </div>
                     </div>
                     <span class="category-amount">${fmt(cat.total)}</span>
                 </div>
                 <div class="category-items" data-adm-cat-items="${index}">
-                    ${cat.items.map(function(item) {
+                    ${catItems.map(function(item) {
                         return '<div class="category-item-row">' +
-                            '<span>' + item.name + (item.qty> 1 ? ' (x' + item.qty + ')' : '') + '</span>' +
+                            '<span>' + (item.name || 'Item') + ((item.qty && item.qty > 1) ? ' (x' + item.qty + ')' : '') + '</span>' +
                             '<span>' + fmt(item.amount) + '</span>' +
                         '</div>';
                     }).join('')}
@@ -236,15 +249,34 @@ window.AdmissionModule = (function() {
         }
 
         timeline.forEach(function(day) {
+            let items = [];
+            if (Array.isArray(day.items)) {
+                items = day.items;
+            } else if (day.items && typeof day.items === 'object') {
+                items = Object.values(day.items);
+            } else if (day.categories) {
+                const cats = Array.isArray(day.categories) ? day.categories : Object.values(day.categories);
+                cats.forEach(function(cat) {
+                    if (cat && cat.items) {
+                        const catSub = Array.isArray(cat.items) ? cat.items : Object.values(cat.items);
+                        items = items.concat(catSub);
+                    }
+                });
+            }
+
+            const itemsHtml = items.length > 0
+                ? items.map(function(item) {
+                    return '<div><span>' + (item.name || 'Item') + '</span><span>' + fmt(item.amount) + '</span></div>';
+                }).join('')
+                : '<div class="text-muted"><span>No items on this day</span></div>';
+
             const html = `
                 <div class="timeline-day">
                     <div class="timeline-day-header">
-                        Day ${day.day_number} - ${day.date} (${fmt(day.total)})
+                        Day ${day.day_number || 1} - ${day.date || ''} (${fmt(day.total)})
                     </div>
                     <div class="timeline-day-items">
-                        ${day.items.map(function(item) {
-                            return '<div><span>' + item.name + '</span><span>' + fmt(item.amount) + '</span></div>';
-                        }).join('')}
+                        ${itemsHtml}
                     </div>
                 </div>
             `;
@@ -375,16 +407,19 @@ window.AdmissionModule = (function() {
     // ============ Event Delegation ============
     $(document).on('click', '.adm-mod .adm-mod-tbody tr[data-adm-mod-id]', function() {
         const admissionId = $(this).data('adm-mod-id');
-        const container = $(this).closest('.adm-mod');
+        _container = $(this).closest('.adm-mod');
+        const container = _container;
         container.find('.adm-mod-tbody tr').removeClass('selected');
         $(this).addClass('selected');
         _selectedAdmissionId = admissionId;
         loadDetail(admissionId);
 
-        // Collapse list panel to give detail panel more space
-        var listPanel = container.find('.admissions-list-panel');
-        listPanel.addClass('collapsed');
-        container.find('.adm-mod-expand-list-btn').show();
+        // Only collapse list panel on mobile screens to give detail panel more space
+        if (window.innerWidth < 992) {
+            var listPanel = container.find('.admissions-list-panel');
+            listPanel.addClass('collapsed');
+            container.find('.adm-mod-expand-list-btn').show();
+        }
     });
 
     // Expand list panel button
@@ -527,11 +562,15 @@ window.AdmissionModule = (function() {
                 }
                 html += '</tbody></table>';
 
-                // Reuse the full-detail modal body temporarily
-                const modal = $('.adm-mod-full-detail-modal');
-                modal.find('.modal-title').html('<i class="mdi mdi-history"></i> Full Admission History');
-                modal.find('.modal-body').html(html);
-                modal.find('.adm-mod-fd-print-btn').hide();
+                // Use the dedicated history modal so full-detail modal is not corrupted
+                const modal = $('.adm-mod-history-modal').length ? $('.adm-mod-history-modal') : $('.adm-mod-full-detail-modal');
+                if (modal.hasClass('adm-mod-history-modal')) {
+                    modal.find('.adm-mod-history-body').html(html);
+                } else {
+                    modal.find('.modal-title').html('<i class="mdi mdi-history"></i> Full Admission History');
+                    modal.find('.modal-body').html(html);
+                    modal.find('.adm-mod-fd-print-btn').hide();
+                }
                 modal.modal('show');
             },
             error: function() {
@@ -543,7 +582,7 @@ window.AdmissionModule = (function() {
     // History modal view button - loads that admission in the split view
     $(document).on('click', '.adm-mod-history-view-btn', function() {
         const id = $(this).data('adm-id');
-        $('.adm-mod-full-detail-modal').modal('hide');
+        $('.adm-mod-history-modal, .adm-mod-full-detail-modal').modal('hide');
         _selectedAdmissionId = id;
 
         // Select the row in the list

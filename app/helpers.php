@@ -300,6 +300,11 @@ if (!function_exists('appsettings')) {
                 'hospital_name' => 'site_name',
                 'hospitalname' => 'site_name',
                 'investigation_service_cat_id' => 'investigation_category_id',
+                'walkin_allow_lab' => 'walkin_lab_enabled',
+                'walkin_allow_imaging' => 'walkin_imaging_enabled',
+                'walkin_allow_pharmacy' => 'walkin_products_enabled',
+                'walkin_allow_procedure' => 'walkin_procedures_enabled',
+                'walkin_allow_free_form' => 'walkin_free_form_enabled',
             ];
 
             $lookupKey = $aliases[$key] ?? $key;
@@ -557,5 +562,122 @@ if (!function_exists('versioned_asset')) {
             : (config('app.version') ?? '1.0');
 
         return asset($relativePath, $secure) . '?v=' . $version;
+    }
+}
+
+if (!function_exists('formatPaymentMethod')) {
+    /**
+     * Format a payment's payment method for display.
+     * Handles split payments by showing the breakdown (e.g., "Split: Cash ₦4,000 + POS ₦6,000").
+     * Used system-wide across receipts, reports, audit workbenches, and dashboards.
+     *
+     * @param  \App\Models\Payment|object  $payment  Payment model or stdClass with payment_method, is_split_payment, splits
+     * @return string
+     */
+    function formatPaymentMethod($payment): string
+    {
+        if (empty($payment)) {
+            return 'N/A';
+        }
+
+        $methodNames = [
+            'CASH' => 'Cash',
+            'POS' => 'POS',
+            'TRANSFER' => 'Bank Transfer',
+            'BANK_TRANSFER' => 'Bank Transfer',
+            'MOBILE' => 'Mobile Money',
+            'BILL_TO_STAFF' => 'Bill to Staff',
+            'BILL_TO_ORGANIZATION' => 'Bill to Organization',
+            'ACCOUNT' => 'Patient Account',
+            'DEPOSIT' => 'Patient Deposit',
+            'ACC_DEPOSIT' => 'Account Deposit',
+            'ACC_WITHDRAW' => 'Patient Account',
+            'ACC_ADJUSTMENT' => 'Account Adjustment',
+            'SPLIT' => 'Split Payment',
+            'CHEQUE' => 'Cheque',
+            'TELLER' => 'Teller',
+        ];
+
+        $formatName = function ($raw) use ($methodNames) {
+            if (!$raw) {
+                return 'Unknown';
+            }
+            $upper = strtoupper(trim((string) $raw));
+            if (isset($methodNames[$upper])) {
+                return $methodNames[$upper];
+            }
+
+            return ucwords(str_replace('_', ' ', strtolower((string) $raw)));
+        };
+
+        $isSplit = false;
+        $splits = null;
+
+        if ($payment instanceof \App\Models\Payment) {
+            $isSplit = (bool) $payment->is_split_payment;
+            $splits = $isSplit ? $payment->splits : null;
+        } elseif (is_array($payment)) {
+            $isSplit = !empty($payment['is_split_payment']);
+            $splits = $isSplit ? ($payment['splits'] ?? null) : null;
+        } elseif (is_object($payment)) {
+            $isSplit = !empty($payment->is_split_payment);
+            $splits = $isSplit ? ($payment->splits ?? null) : null;
+        }
+
+        if ($isSplit && $splits && (is_countable($splits) ? count($splits) : 0) > 0) {
+            $parts = [];
+            foreach ($splits as $s) {
+                $method = is_object($s) ? ($s->payment_method ?? '') : ($s['payment_method'] ?? '');
+                $amount = is_object($s) ? ($s->amount ?? 0) : ($s['amount'] ?? 0);
+                $display = $formatName($method);
+                $parts[] = $display . ' ₦' . number_format((float) $amount, 2);
+            }
+
+            return 'Split: ' . implode(' + ', $parts);
+        }
+
+        $rawMethod = is_array($payment)
+            ? ($payment['payment_method'] ?? $payment['payment_type'] ?? 'Unknown')
+            : (is_object($payment) ? ($payment->payment_method ?? $payment->payment_type ?? 'Unknown') : 'Unknown');
+
+        return $formatName($rawMethod);
+    }
+}
+
+if (!function_exists('getItemDisplayName')) {
+    /**
+     * Get the display name for a ProductOrServiceRequest item.
+     * Handles free-form items, services, and products uniformly.
+     * Used system-wide across receipts, reports, billing queues, audit workbenches, etc.
+     *
+     * @param  \App\Models\ProductOrServiceRequest|object  $item
+     * @return string
+     */
+    function getItemDisplayName($item): string
+    {
+        // Free-form items
+        if (!empty($item->is_free_form) && !empty($item->free_form_name)) {
+            return $item->free_form_name;
+        }
+
+        // Service-linked items
+        if (!empty($item->service_id)) {
+            if ($item->service ?? null) {
+                return $item->service->service_name ?? 'Unknown Service';
+            }
+
+            return 'Service #' . $item->service_id;
+        }
+
+        // Product-linked items
+        if (!empty($item->product_id)) {
+            if ($item->product ?? null) {
+                return $item->product->product_name ?? 'Unknown Product';
+            }
+
+            return 'Product #' . $item->product_id;
+        }
+
+        return 'Unknown Item';
     }
 }

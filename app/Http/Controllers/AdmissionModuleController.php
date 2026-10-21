@@ -337,6 +337,7 @@ class AdmissionModuleController extends Controller
                     'date' => Carbon::parse($item->created_at)->format('D, d M Y'),
                     'day_number' => $dayNumber,
                     'categories' => [],
+                    'items' => [],
                     'total' => 0,
                 ];
             }
@@ -350,7 +351,7 @@ class AdmissionModuleController extends Controller
                 ];
             }
 
-            $timeline[$dayKey]['categories'][$itemCategory]['items'][] = [
+            $itemData = [
                 'name' => $itemName,
                 'qty' => $qty,
                 'price' => $price,
@@ -363,8 +364,10 @@ class AdmissionModuleController extends Controller
                 'billed_to' => $billedToName,
                 'hmo_claims' => $hmo > 0 ? $hmo : null,
                 'category_key' => $itemCategory,
-                'model' => $item,
             ];
+
+            $timeline[$dayKey]['items'][] = $itemData;
+            $timeline[$dayKey]['categories'][$itemCategory]['items'][] = $itemData;
             $timeline[$dayKey]['categories'][$itemCategory]['total'] += $payable;
             $timeline[$dayKey]['total'] += $payable;
 

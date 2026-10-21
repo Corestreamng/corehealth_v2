@@ -54,7 +54,13 @@
             <div class="meta">{{ $site->contact_address }}<br>Phone: {{ $site->contact_phones }}</div>
         </div>
         <hr class="hr-solid">
-        <div class="title">RECEIPT</div>
+        <div class="title @if(!empty($payment) && $payment->is_voided) text-danger @endif">RECEIPT @if(!empty($payment) && $payment->is_voided) (VOIDED) @endif</div>
+        @if(!empty($payment) && $payment->is_voided)
+        <div style="border: 2px solid #000; padding: 4px; text-align: center; font-weight: bold; font-size: 11px; margin: 4px 0;">
+            *** VOIDED TRANSACTION ***
+            @if(!empty($payment->void_reason))<div style="font-size: 8px; font-weight: normal;">Reason: {{ $payment->void_reason }}</div>@endif
+        </div>
+        @endif
         <div class="details">
             <b>{{ $isFamilyPayment ? 'Family Folder:' : 'Patient:' }}</b> {{ $patientName }}<br>
             @if($isFamilyPayment)
@@ -118,7 +124,6 @@
         <div class="receipt-notes">{!! !empty($notes) ? $notes : 'Funds received in good condition.' !!}</div>
         @php
             $paymentTypeNames = [
-                // Uppercase (Billing Workbench)
                 'CASH' => 'Cash',
                 'POS' => 'POS/Card',
                 'TRANSFER' => 'Bank Transfer',
@@ -131,14 +136,23 @@
                 'ACC_ADJUSTMENT' => 'Account Adjustment',
                 'BILL_TO_STAFF' => 'Billed to Staff',
                 'BILL_TO_ORGANIZATION' => 'Billed to Organization',
-                // Lowercase (Accounting Module)
                 'cash' => 'Cash',
                 'pos' => 'POS/Card',
                 'transfer' => 'Bank Transfer',
                 'mobile' => 'Mobile Money',
                 'cheque' => 'Cheque',
             ];
-            $paymentTypeDisplay = $paymentTypeNames[$paymentType] ?? ucfirst($paymentType ?? 'N/A');
+            if (isset($payment)) {
+                $paymentTypeDisplay = formatPaymentMethod($payment);
+            } elseif (!empty($isSplitPayment) && !empty($splits)) {
+                $paymentTypeDisplay = 'Split: ' . collect($splits)->map(function ($s) {
+                    $m = is_array($s) ? ($s['payment_method'] ?? 'Payment') : $s->payment_method;
+                    $amt = is_array($s) ? ($s['amount'] ?? 0) : $s->amount;
+                    return ucfirst(strtolower($m)) . ' ₦' . number_format((float) $amt, 2);
+                })->join(' + ');
+            } else {
+                $paymentTypeDisplay = $paymentTypeNames[$paymentType ?? ''] ?? ucfirst($paymentType ?? 'N/A');
+            }
         @endphp
         <div class="receipt-footer">
             <em>Received via: <strong>{{ $paymentTypeDisplay }}</strong></em><br>

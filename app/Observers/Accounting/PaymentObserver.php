@@ -67,6 +67,15 @@ class PaymentObserver
     public function created(Payment $payment): void
     {
         try {
+            // GUARD: Skip if payment is voided
+            if ($payment->voided_at) {
+                Log::info('PaymentObserver: Skipping JE - payment is voided', [
+                    'payment_id' => $payment->id,
+                ]);
+
+                return;
+            }
+
             // GUARD: Skip if JE already linked (e.g. pharmacy return observer already created the JE)
             if ($payment->journal_entry_id) {
                 Log::info('PaymentObserver: Skipping JE - already linked', [
@@ -109,7 +118,7 @@ class PaymentObserver
      * Create journal entry for patient account transactions (ACC_DEPOSIT, ACC_WITHDRAW, ACC_ADJUSTMENT).
      * This integrates the PatientAccount system with the GL.
      */
-    protected function createPatientAccountJournalEntry(Payment $payment): void
+    public function createPatientAccountJournalEntry(Payment $payment): ?\App\Models\Accounting\JournalEntry
     {
         $accountingService = App::make(AccountingService::class);
 
@@ -120,7 +129,7 @@ class PaymentObserver
                 'payment_id' => $payment->id,
             ]);
 
-            return;
+            return null;
         }
 
         $amount = abs($payment->total);
@@ -132,29 +141,46 @@ class PaymentObserver
             case 'ACC_DEPOSIT':
                 // Patient deposits money into their account
                 // DEBIT: Cash/Bank, CREDIT: Patient Deposits Liability
-                $cashAccount = $this->getCashBankAccount($payment);
-                if (!$cashAccount) {
-                    return;
+                $splits = !empty($payment->pending_splits) ? collect($payment->pending_splits) : $payment->splits;
+                if ($payment->is_split_payment && $splits && $splits->count() > 0) {
+                    foreach ($splits as $split) {
+                        $splitMethod = is_array($split) ? ($split['payment_method'] ?? 'cash') : $split->payment_method;
+                        $splitBankId = is_array($split) ? ($split['bank_id'] ?? null) : $split->bank_id;
+                        $splitAmount = is_array($split) ? (float) ($split['amount'] ?? 0) : (float) $split->amount;
+                        $legAccount = $this->getDebitAccountForLeg($splitMethod, $splitBankId) ?? $this->getCashBankAccount($payment);
+                        if ($legAccount) {
+                            $lines[] = [
+                                'account_id' => $legAccount->id,
+                                'debit_amount' => $splitAmount,
+                                'credit_amount' => 0,
+                                'description' => "Deposit received ({$splitMethod}): {$patientName}",
+                                'patient_id' => $payment->patient_id,
+                                'category' => 'patient_deposit',
+                            ];
+                        }
+                    }
+                } else {
+                    $cashAccount = $this->getCashBankAccount($payment);
+                    if ($cashAccount) {
+                        $lines[] = [
+                            'account_id' => $cashAccount->id,
+                            'debit_amount' => $amount,
+                            'credit_amount' => 0,
+                            'description' => "Deposit received from patient: {$patientName}",
+                            'patient_id' => $payment->patient_id,
+                            'category' => 'patient_deposit',
+                        ];
+                    }
                 }
 
                 $description = "Patient account deposit - {$patientName} | Ref: {$payment->reference_no}";
-                $lines = [
-                    [
-                        'account_id' => $cashAccount->id,
-                        'debit_amount' => $amount,
-                        'credit_amount' => 0,
-                        'description' => "Deposit received from patient: {$patientName}",
-                        'patient_id' => $payment->patient_id,
-                        'category' => 'patient_deposit',
-                    ],
-                    [
-                        'account_id' => $liabilityAccount->id,
-                        'debit_amount' => 0,
-                        'credit_amount' => $amount,
-                        'description' => "Patient deposit liability: {$patientName}",
-                        'patient_id' => $payment->patient_id,
-                        'category' => 'patient_deposit',
-                    ],
+                $lines[] = [
+                    'account_id' => $liabilityAccount->id,
+                    'debit_amount' => 0,
+                    'credit_amount' => $amount,
+                    'description' => "Patient deposit liability: {$patientName}",
+                    'patient_id' => $payment->patient_id,
+                    'category' => 'patient_deposit',
                 ];
 
                 break;
@@ -180,7 +206,7 @@ class PaymentObserver
                             'payment_id' => $payment->id,
                         ]);
 
-                        return;
+                        return null;
                     }
 
                     $description = "Account payment for services - {$patientName} | Ref: {$payment->reference_no}";
@@ -212,7 +238,7 @@ class PaymentObserver
                     // DEBIT: Patient Deposits Liability, CREDIT: Cash/Bank
                     $cashAccount = $this->getCashBankAccount($payment);
                     if (!$cashAccount) {
-                        return;
+                        return null;
                     }
 
                     $description = "Patient account withdrawal - {$patientName} | Ref: {$payment->reference_no}";
@@ -249,7 +275,7 @@ class PaymentObserver
                         ?? Account::where('code', '4000')->first();
 
                     if (!$overageAccount) {
-                        return;
+                        return null;
                     }
 
                     $description = "Patient account adjustment (+) - {$patientName} | Ref: {$payment->reference_no}";
@@ -278,7 +304,7 @@ class PaymentObserver
                         ?? Account::where('code', '5000')->first();
 
                     if (!$shortageAccount) {
-                        return;
+                        return null;
                     }
 
                     $description = "Patient account adjustment (-) - {$patientName} | Ref: {$payment->reference_no}";
@@ -305,11 +331,11 @@ class PaymentObserver
                 break;
 
             default:
-                return;
+                return null;
         }
 
         if (empty($lines)) {
-            return;
+            return null;
         }
 
         $entry = $accountingService->createAndPostAutomatedEntry(
@@ -329,6 +355,8 @@ class PaymentObserver
             'journal_entry_id' => $entry->id,
             'amount' => $payment->total,
         ]);
+
+        return $entry;
     }
 
     /**
@@ -421,7 +449,7 @@ class PaymentObserver
     /**
      * Create journal entry for payment receipt.
      */
-    protected function createPaymentJournalEntry(Payment $payment): void
+    public function createPaymentJournalEntry(Payment $payment): ?\App\Models\Accounting\JournalEntry
     {
         $accountingService = App::make(AccountingService::class);
 
@@ -439,7 +467,7 @@ class PaymentObserver
                 'credit_code' => $creditAccountCode,
             ]);
 
-            return;
+            return null;
         }
 
         // Extract metadata from payment context
@@ -450,20 +478,49 @@ class PaymentObserver
         $lines = [];
 
         // 1. Debit Cash/Bank for the actual amount paid
-        $lines[] = [
-            'account_id' => $debitAccount->id,
-            'debit_amount' => $payment->total,
-            'credit_amount' => 0,
-            'description' => $this->buildLineDescription($payment, 'debit'),
-            // METADATA
-            'product_id' => $metadata['product_id'],
-            'service_id' => $metadata['service_id'],
-            'product_category_id' => $metadata['product_category_id'],
-            'service_category_id' => $metadata['service_category_id'],
-            'hmo_id' => $metadata['hmo_id'],
-            'patient_id' => $payment->patient_id,
-            'category' => $payment->payment_type ?? 'general',
-        ];
+        $splits = !empty($payment->pending_splits) ? collect($payment->pending_splits) : $payment->splits;
+
+        if ($payment->is_split_payment && $splits && $splits->count() > 0) {
+            foreach ($splits as $split) {
+                $splitMethod = is_array($split) ? ($split['payment_method'] ?? 'cash') : $split->payment_method;
+                $splitBankId = is_array($split) ? ($split['bank_id'] ?? null) : $split->bank_id;
+                $splitAmount = is_array($split) ? (float) ($split['amount'] ?? 0) : (float) $split->amount;
+                $splitRef = is_array($split) ? ($split['reference_no'] ?? null) : $split->reference_no;
+
+                $legDebitAccount = $this->getDebitAccountForLeg($splitMethod, $splitBankId) ?? $debitAccount;
+                $legDesc = 'Split (' . ucfirst(strtolower($splitMethod)) . ($splitRef ? " - {$splitRef}" : '') . '): ' . $this->buildLineDescription($payment, 'debit');
+
+                $lines[] = [
+                    'account_id' => $legDebitAccount->id,
+                    'debit_amount' => $splitAmount,
+                    'credit_amount' => 0,
+                    'description' => $legDesc,
+                    // METADATA
+                    'product_id' => $metadata['product_id'],
+                    'service_id' => $metadata['service_id'],
+                    'product_category_id' => $metadata['product_category_id'],
+                    'service_category_id' => $metadata['service_category_id'],
+                    'hmo_id' => $metadata['hmo_id'],
+                    'patient_id' => $payment->patient_id,
+                    'category' => $payment->payment_type ?? 'general',
+                ];
+            }
+        } else {
+            $lines[] = [
+                'account_id' => $debitAccount->id,
+                'debit_amount' => $payment->total,
+                'credit_amount' => 0,
+                'description' => $this->buildLineDescription($payment, 'debit'),
+                // METADATA
+                'product_id' => $metadata['product_id'],
+                'service_id' => $metadata['service_id'],
+                'product_category_id' => $metadata['product_category_id'],
+                'service_category_id' => $metadata['service_category_id'],
+                'hmo_id' => $metadata['hmo_id'],
+                'patient_id' => $payment->patient_id,
+                'category' => $payment->payment_type ?? 'general',
+            ];
+        }
 
         // 2. Debit Discount Allowed if discount exists
         if (floatval($payment->total_discount) > 0) {
@@ -538,6 +595,48 @@ class PaymentObserver
             'journal_entry_id' => $entry->id,
             'amount' => $payment->total,
         ]);
+
+        return $entry;
+    }
+
+    /**
+     * Get Cash/Bank account for an individual payment split leg.
+     */
+    public function getDebitAccountForLeg(string $method, ?int $bankId = null): ?Account
+    {
+        if (in_array(strtolower($method), ['cheque', 'check'])) {
+            return Account::where('code', '1025')->first();
+        }
+
+        if (strtolower($method) === 'account') {
+            return Account::where('code', self::PATIENT_DEPOSITS_LIABILITY)->first();
+        }
+
+        if ($method === 'BILL_TO_STAFF') {
+            return Account::where('code', '1130')->first();
+        }
+
+        if ($method === 'BILL_TO_ORGANIZATION') {
+            return Account::where('code', '1131')->first();
+        }
+
+        if ($bankId) {
+            $bank = \App\Models\bank::find($bankId);
+            if ($bank && $bank->account_id) {
+                $account = Account::find($bank->account_id);
+                if ($account) {
+                    return $account;
+                }
+            }
+        }
+
+        $code = match (strtolower($method)) {
+            'cash' => self::CASH_ACCOUNT,
+            'pos', 'transfer', 'bank', 'bank_transfer', 'card', 'mobile' => self::BANK_ACCOUNT,
+            default => self::CASH_ACCOUNT,
+        };
+
+        return Account::where('code', $code)->first();
     }
 
     /**

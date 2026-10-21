@@ -810,3 +810,22 @@
         </div>
     </div>
 </div>
+
+<!-- History Modal (Dedicated modal so full-detail modal content is never destroyed) -->
+<div class="modal fade adm-mod-history-modal" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="mdi mdi-history"></i> Full Admission History</h5>
+                <button type="button" data-bs-dismiss="modal" class="btn-close" aria-label="Close"></button>
+            </div>
+            <div class="modal-body adm-mod-history-body" style="max-height: 70vh; overflow-y: auto;">
+                <div class="text-center py-4"><i class="mdi mdi-loading mdi-spin" style="font-size:2rem;"></i></div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+

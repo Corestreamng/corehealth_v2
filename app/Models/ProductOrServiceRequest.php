@@ -55,6 +55,10 @@ class ProductOrServiceRequest extends Model implements Auditable
         'audit_notes',
         'removed_by',
         'removed_at',
+        'is_free_form',
+        'free_form_name',
+        'free_form_description',
+        'is_billable',
     ];
 
     public function receptionValidator()

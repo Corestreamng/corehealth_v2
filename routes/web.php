@@ -558,6 +558,16 @@ Route::group(['middleware' => ['auth']], function () {
         Route::post('/billing-workbench/print-receipt', [\App\Http\Controllers\BillingWorkbenchController::class, 'printReceipt'])->name('billing.print-receipt');
         Route::post('/billing-workbench/print-invoice', [\App\Http\Controllers\BillingWorkbenchController::class, 'printInvoice'])->name('billing.print-invoice');
         Route::get('/billing-workbench/my-transactions', [\App\Http\Controllers\BillingWorkbenchController::class, 'getMyTransactions'])->name('billing.my-transactions');
+        Route::get('/billing-workbench/manage-transactions', [\App\Http\Controllers\BillingWorkbenchController::class, 'getManageTransactions'])->name('billing.manage-transactions');
+        Route::post('/billing-workbench/adjust-payment', [\App\Http\Controllers\BillingWorkbenchController::class, 'adjustPaymentMethod'])->name('billing.adjust-payment');
+        Route::post('/billing-workbench/void-transaction', [\App\Http\Controllers\BillingWorkbenchController::class, 'voidTransaction'])->name('billing.void-transaction');
+        Route::get('/billing-workbench/payment/{id}/details', [\App\Http\Controllers\BillingWorkbenchController::class, 'getPaymentDetails'])->name('billing.payment-details');
+        Route::post('/billing-workbench/book-walkin', [\App\Http\Controllers\ReceptionWorkbenchController::class, 'bookWalkinServices'])->name('billing.book-walkin');
+        Route::get('/billing-workbench/services/lab', [\App\Http\Controllers\ReceptionWorkbenchController::class, 'getLabServices'])->name('billing.services.lab');
+        Route::get('/billing-workbench/services/imaging', [\App\Http\Controllers\ReceptionWorkbenchController::class, 'getImagingServices'])->name('billing.services.imaging');
+        Route::get('/billing-workbench/services/procedure', [\App\Http\Controllers\ReceptionWorkbenchController::class, 'getProcedureServices'])->name('billing.services.procedure');
+        Route::get('/billing-workbench/products', [\App\Http\Controllers\ReceptionWorkbenchController::class, 'getProducts'])->name('billing.products');
+        Route::post('/billing-workbench/tariff-preview', [\App\Http\Controllers\ReceptionWorkbenchController::class, 'getTariffPreview'])->name('billing.tariff-preview');
         Route::get('/billing-workbench/patient/{id}/admissions', [\App\Http\Controllers\BillingWorkbenchController::class, 'getAdmissionHistory'])->name('billing.admission-history');
         Route::get('/billing-workbench/admission/{id}/bill', [\App\Http\Controllers\BillingWorkbenchController::class, 'getAdmissionBillDetail'])->name('billing.admission-bill');
         Route::get('/billing-workbench/admission/{id}/print-bill', [\App\Http\Controllers\BillingWorkbenchController::class, 'printAdmissionBill'])->name('billing.print-admission-bill');

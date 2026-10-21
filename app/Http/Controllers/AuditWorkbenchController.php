@@ -155,13 +155,14 @@ class AuditWorkbenchController extends Controller
 
         if ($items && $items->count() > 0) {
             $firstItem = $items->first();
-            $firstName = $firstItem->service->service_name ?? $firstItem->product->product_name ?? 'Medical Request Item';
+            $firstName = getItemDisplayName($firstItem);
             $isService = !empty($firstItem->service_id) || !empty($firstItem->service);
             $isProduct = !empty($firstItem->product_id) || !empty($firstItem->product);
+            $isFreeForm = !empty($firstItem->is_free_form);
 
-            $itemTypeTag = $isService ? 'Service' : ($isProduct ? 'Product' : 'Medical Item');
-            $icon = $isService ? 'mdi-stethoscope text-primary' : ($isProduct ? 'mdi-pill text-info' : 'mdi-medical-bag text-primary');
-            $catName = $firstItem->service->category->category_name ?? $firstItem->service->category->name ?? $firstItem->product->category->category_name ?? $firstItem->product->category->name ?? ($isService ? 'Clinical Service' : ($isProduct ? 'Pharmacy / Inventory' : 'Healthcare'));
+            $itemTypeTag = $isFreeForm ? 'Free-Form' : ($isService ? 'Service' : ($isProduct ? 'Product' : 'Medical Item'));
+            $icon = $isFreeForm ? 'mdi-file-document-edit text-warning' : ($isService ? 'mdi-stethoscope text-primary' : ($isProduct ? 'mdi-pill text-info' : 'mdi-medical-bag text-primary'));
+            $catName = $isFreeForm ? 'Custom / Unlisted' : ($firstItem->service->category->category_name ?? $firstItem->service->category->name ?? $firstItem->product->category->category_name ?? $firstItem->product->category->name ?? ($isService ? 'Clinical Service' : ($isProduct ? 'Pharmacy / Inventory' : 'Healthcare')));
             $subtext = '<small class="text-muted d-block mt-0.5" style="line-height:1.2; font-size:0.75rem;"><i class="mdi ' . $icon . ' me-1"></i> ' . e($itemTypeTag) . ' • ' . e($catName) . '</small>';
 
             if ($items->count() == 1) {
@@ -287,10 +288,23 @@ class AuditWorkbenchController extends Controller
                 'user_id',
                 DB::raw('COUNT(*) as txn_count'),
                 DB::raw('SUM(total) as total_collected'),
-                DB::raw("SUM(CASE WHEN payment_method = 'CASH' THEN total ELSE 0 END) as cash_collected"),
-                DB::raw("SUM(CASE WHEN payment_method IN ('POS', 'CARD', 'BANK_TRANSFER', 'TRANSFER') THEN total ELSE 0 END) as bank_collected"),
-                DB::raw("SUM(CASE WHEN payment_method = 'BILL_TO_STAFF' THEN total ELSE 0 END) as staff_receivable")
+                DB::raw("SUM(CASE 
+                    WHEN (is_split_payment = 0 OR is_split_payment IS NULL) AND payment_method = 'CASH' THEN total 
+                    WHEN is_split_payment = 1 THEN (SELECT COALESCE(SUM(amount), 0) FROM payment_splits WHERE payment_splits.payment_id = payments.id AND payment_splits.payment_method = 'CASH')
+                    ELSE 0 
+                END) as cash_collected"),
+                DB::raw("SUM(CASE 
+                    WHEN (is_split_payment = 0 OR is_split_payment IS NULL) AND payment_method IN ('POS', 'CARD', 'BANK_TRANSFER', 'TRANSFER') THEN total 
+                    WHEN is_split_payment = 1 THEN (SELECT COALESCE(SUM(amount), 0) FROM payment_splits WHERE payment_splits.payment_id = payments.id AND payment_splits.payment_method IN ('POS', 'CARD', 'BANK_TRANSFER', 'TRANSFER'))
+                    ELSE 0 
+                END) as bank_collected"),
+                DB::raw("SUM(CASE 
+                    WHEN (is_split_payment = 0 OR is_split_payment IS NULL) AND payment_method = 'BILL_TO_STAFF' THEN total 
+                    WHEN is_split_payment = 1 THEN (SELECT COALESCE(SUM(amount), 0) FROM payment_splits WHERE payment_splits.payment_id = payments.id AND payment_splits.payment_method = 'BILL_TO_STAFF')
+                    ELSE 0 
+                END) as staff_receivable")
             )
+            ->whereNull('voided_at')
             ->whereBetween('created_at', [$startDate, $endDate])
             ->groupBy('user_id')
             ->get()
@@ -385,9 +399,15 @@ class AuditWorkbenchController extends Controller
         $labServiceCount = LabServiceRequest::whereBetween('created_at', [$startDate, $endDate])->count();
         $imagingServiceCount = ImagingServiceRequest::whereBetween('created_at', [$startDate, $endDate])->count();
 
+        $cashSingle = (float) DB::table('payments')->whereNull('voided_at')->where('payment_method', 'CASH')->where(fn ($q) => $q->where('is_split_payment', 0)->orWhereNull('is_split_payment'))->whereBetween('created_at', [$startDate, $endDate])->sum('total');
+        $cashSplit = (float) DB::table('payment_splits')->join('payments', 'payment_splits.payment_id', '=', 'payments.id')->whereNull('payments.voided_at')->where('payment_splits.payment_method', 'CASH')->whereBetween('payments.created_at', [$startDate, $endDate])->sum('payment_splits.amount');
+
+        $posSingle = (float) DB::table('payments')->whereNull('voided_at')->whereIn('payment_method', ['POS', 'TRANSFER', 'BANK_TRANSFER'])->where(fn ($q) => $q->where('is_split_payment', 0)->orWhereNull('is_split_payment'))->whereBetween('created_at', [$startDate, $endDate])->sum('total');
+        $posSplit = (float) DB::table('payment_splits')->join('payments', 'payment_splits.payment_id', '=', 'payments.id')->whereNull('payments.voided_at')->whereIn('payment_splits.payment_method', ['POS', 'TRANSFER', 'BANK_TRANSFER'])->whereBetween('payments.created_at', [$startDate, $endDate])->sum('payment_splits.amount');
+
         $reconciliationKPIs = [
-            'total_cash_collected' => DB::table('payments')->where('payment_method', 'CASH')->whereBetween('created_at', [$startDate, $endDate])->sum('total'),
-            'total_pos_collected' => DB::table('payments')->whereIn('payment_method', ['POS', 'TRANSFER', 'BANK_TRANSFER'])->whereBetween('created_at', [$startDate, $endDate])->sum('total'),
+            'total_cash_collected' => $cashSingle + $cashSplit,
+            'total_pos_collected' => $posSingle + $posSplit,
             'total_staff_receivables' => StaffBill::whereBetween('created_at', [$startDate, $endDate])->sum('total_amount'),
             'unpaid_staff_receivables' => StaffBill::where('status', 'pending')->sum('outstanding_amount'),
             'reconciled_stamps_count' => AuditStamp::whereBetween('stamped_at', [$startDate, $endDate])->count(),

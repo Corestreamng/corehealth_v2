@@ -96,6 +96,12 @@
                 <i class="mdi mdi-file-chart"></i>
                 <span>Reports</span>
             </button>
+            @if($canBillUser || (Auth::user() && Auth::user()->hasAnyRole(['Biller','Billing','Accountant','Accounts','Admin','Super-Admin','super-admin'])))
+            <button class="quick-action-btn" id="btn-my-transactions" data-toggle="modal" data-bs-toggle="modal" data-target="#myTransactionsModal" data-bs-target="#myTransactionsModal" title="View & Manage Transactions">
+                <i class="mdi mdi-receipt text-warning"></i>
+                <span>My Transactions</span>
+            </button>
+            @endif
             <button class="quick-action-btn" onclick="showMorgueAdmissionModal()">
                 <i class="mdi mdi-emoticon-dead text-dark"></i>
                 <span>Morgue Admission (BID)</span>
@@ -135,6 +141,11 @@
                 <button class="btn btn-outline-success" data-bs-toggle="modal" data-bs-target="#workbench-price-list-modal" title="Price List">
                     <i class="mdi mdi-currency-usd"></i> Price List
                 </button>
+                @if($canBillUser || (Auth::user() && Auth::user()->hasAnyRole(['Biller','Billing','Accountant','Accounts','Admin','Super-Admin','super-admin'])))
+                <button type="button" class="btn btn-outline-warning" id="open-my-transactions-btn" data-toggle="modal" data-bs-toggle="modal" data-target="#myTransactionsModal" data-bs-target="#myTransactionsModal" title="View & Manage Transactions">
+                    <i class="mdi mdi-receipt"></i> Transactions
+                </button>
+                @endif
             </div>
         </div>
 
@@ -979,137 +990,7 @@
 
             <!-- Walk-in Sales Tab -->
             <div class="workspace-tab-content" id="walkin-tab">
-                <div class="walkin-tab-content p-4">
-                    <div class="row">
-                        <div class="col-md-7">
-                            <div class="card-modern">
-                                <div class="card-header">
-                                    <ul class="nav nav-pills card-header-pills" id="walkin-subtabs">
-                                        <li class="nav-item">
-                                            <a class="nav-link active" href="#walkin-lab" data-toggle="pill" data-type="lab">
-                                                <i class="mdi mdi-test-tube"></i> Lab
-                                            </a>
-                                        </li>
-                                        <li class="nav-item">
-                                            <a class="nav-link" href="#walkin-imaging" data-toggle="pill" data-type="imaging">
-                                                <i class="mdi mdi-x-ray"></i> Imaging
-                                            </a>
-                                        </li>
-                                        <li class="nav-item">
-                                            <a class="nav-link" href="#walkin-product" data-toggle="pill" data-type="product">
-                                                <i class="mdi mdi-pill"></i> Products
-                                            </a>
-                                        </li>
-                                    </ul>
-                                </div>
-                                <div class="card-body">
-                                    <div class="form-group mb-3">
-                                        <input type="text" class="form-control" id="walkin-search"
-                                            placeholder="🔍 Search services/products...">
-                                    </div>
-                                    <div class="walkin-search-results" id="walkin-search-results" style="max-height: 300px; overflow-y: auto;">
-                                        <p class="text-muted text-center">Type to search...</p>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-5">
-                            <div class="card-modern">
-                                <!-- Cart Sub-Tabs -->
-                                <div class="card-header p-0">
-                                    <ul class="nav nav-tabs nav-fill" id="walkin-cart-tabs">
-                                        <li class="nav-item">
-                                            <a class="nav-link active" data-toggle="tab" href="#walkin-cart-pane">
-                                                <i class="mdi mdi-cart"></i> Cart
-                                                <span class="badge badge-primary ml-1" id="cart-count-badge">0</span>
-                                            </a>
-                                        </li>
-                                        <li class="nav-item">
-                                            <a class="nav-link" data-toggle="tab" href="#walkin-recent-pane">
-                                                <i class="mdi mdi-clock-outline"></i> Recent (24h)
-                                            </a>
-                                        </li>
-                                    </ul>
-                                </div>
-                                <div class="tab-content">
-                                    <!-- Cart Tab Pane -->
-                                    <div class="tab-pane fade show active" id="walkin-cart-pane">
-                                        <div class="card-body p-0" style="max-height: 300px; overflow-y: auto;">
-                                            <table class="table table-sm mb-0" id="walkin-cart-table">
-                                                <thead class="bg-light">
-                                                    <tr>
-                                                        <th>Item</th>
-                                                        <th class="text-right">Price</th>
-                                                        <th class="text-right text-success">HMO Covers</th>
-                                                        <th class="text-right text-primary">You Pay</th>
-                                                        <th></th>
-                                                    </tr>
-                                                </thead>
-                                                <tbody id="walkin-cart-body">
-                                                    <tr id="walkin-cart-empty">
-                                                        <td colspan="5" class="text-center text-muted py-4">
-                                                            <i class="mdi mdi-cart-outline" style="font-size: 2rem;"></i>
-                                                            <p class="mb-0 mt-2">No items selected</p>
-                                                        </td>
-                                                    </tr>
-                                                </tbody>
-                                            </table>
-                                        </div>
-                                        <!-- Payment Summary -->
-                                        <div class="border-top">
-                                            <table class="table table-sm mb-0" id="walkin-summary-table">
-                                                <tbody>
-                                                    <tr class="bg-light">
-                                                        <td colspan="2"><strong>Subtotal (Original Prices):</strong></td>
-                                                        <td class="text-right" colspan="3"><strong id="walkin-subtotal">₦0</strong></td>
-                                                    </tr>
-                                                    <tr id="walkin-hmo-row" style="display: none;" class="bg-success-light">
-                                                        <td colspan="2">
-                                                            <span class="text-success">
-                                                                <i class="mdi mdi-shield-check"></i> <strong>Total HMO Coverage</strong>
-                                                            </span>
-                                                            <small class="d-block" id="walkin-hmo-name"></small>
-                                                        </td>
-                                                        <td class="text-right text-success" colspan="3"><strong id="walkin-hmo-amount">-₦0</strong></td>
-                                                    </tr>
-                                                    <tr class="table-primary">
-                                                        <td colspan="2"><strong style="font-size: 1.1rem;">Patient Pays:</strong></td>
-                                                        <td class="text-right" colspan="3"><strong style="font-size: 1.1rem;" id="walkin-cart-total">₦0</strong></td>
-                                                    </tr>
-                                                </tbody>
-                                            </table>
-                                            <div class="p-3">
-                                                @if($canBillUser)
-                                                <button class="btn btn-success btn-lg w-100" id="btn-submit-walkin" disabled>
-                                                    <i class="mdi mdi-cart-check"></i> Checkout & Pay (Walk-in)
-                                                </button>
-                                                @else
-                                                <button class="btn btn-primary btn-lg w-100" id="btn-submit-walkin" disabled>
-                                                    <i class="mdi mdi-send"></i> Create Request (Awaiting Billing)
-                                                </button>
-                                                @endif
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <!-- Recent Requests Tab Pane -->
-                                    <div class="tab-pane fade" id="walkin-recent-pane">
-                                        <div class="card-body p-2" style="max-height: 400px; overflow-y: auto;">
-                                            <div class="alert alert-info py-2 px-3 mb-2">
-                                                <small><i class="mdi mdi-information"></i> Requests created in the last 24 hours for this patient</small>
-                                            </div>
-                                            <div id="recent-requests-container">
-                                                <div class="text-center text-muted py-4">
-                                                    <i class="mdi mdi-clock-outline" style="font-size: 2rem;"></i>
-                                                    <p class="mb-0 mt-2">No recent requests</p>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+                @include('admin.shared._walkin_sales_tab')
             </div>
 
             <!-- Visit History Tab -->

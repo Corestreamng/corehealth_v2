@@ -20,6 +20,9 @@ window.WORKBENCH_CONFIG = {
 @include('admin.partials.patient_search_js', ['search_context' => 'billing'])
 <script src="{{ versioned_asset('js/billing-core.js') }}"></script>
 <script src="{{ versioned_asset('js/billing-payments.js') }}"></script>
+<script src="{{ versioned_asset('js/billing-split-payments.js') }}"></script>
+<script src="{{ versioned_asset('js/walkin-sales-shared.js') }}"></script>
+<script src="{{ versioned_asset('js/billing-my-transactions.js') }}"></script>
 <script src="{{ versioned_asset('js/billing-hmo.js') }}"></script>
 {{-- Payment Scripts --}}
 @include("admin.partials.payment_scripts")

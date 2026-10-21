@@ -42,14 +42,15 @@ class OpsAuditBillingController extends OpsAuditBaseController
     protected function paymentsData(Request $request)
     {
         $query = Payment::with([
-'patient.user',
+            'patient.user',
             'patient.hmo.scheme',
             'user', // cashier
             'bank',
+            'splits.bank',
             'organizationBill.organization',
             'staffBill.staffUser',
             'patientAccount', // if it exists
-]);
+        ]);
 
         $this->applyDateFilter($query, $request);
         $this->applyShiftFilter($query, $request);
@@ -93,9 +94,9 @@ class OpsAuditBillingController extends OpsAuditBaseController
                 'patient' => $this->renderPatient($user, $patient, $hmo),
                 'hmo' => $this->renderHmo($hmo),
                 'ref_no' => $row->reference_no ?? '-',
-                'total' => '₦' . number_format($row->total ?? 0, 2),
+                'total' => $row->is_voided ? '<span class="text-decoration-line-through text-muted">₦' . number_format($row->total ?? 0, 2) . '</span>' : '₦' . number_format($row->total ?? 0, 2),
                 'discount' => '₦' . number_format($row->total_discount ?? 0, 2),
-                'method' => '<span class="badge bg-light text-dark border">' . ucfirst(str_replace('_', ' ', $row->payment_method ?? '-')) . '</span>',
+                'method' => $this->renderPaymentMethodBadge($row),
                 'type' => ucfirst(str_replace('_', ' ', $row->payment_type ?? '-')),
                 'bank' => $bankHtml,
                 'entity' => $entity,
@@ -106,14 +107,26 @@ class OpsAuditBillingController extends OpsAuditBaseController
                 'audit' => $this->renderAuditAction($row, 'Payment'),
             ];
         }, function ($kpiQuery) {
+            $activeQuery = (clone $kpiQuery)->notVoided();
+            $paymentIds = (clone $activeQuery)->pluck('id');
+
+            $cashSingle = (clone $activeQuery)->where('is_split_payment', false)->where('payment_method', 'CASH')->sum('total');
+            $cashSplit = \App\Models\PaymentSplit::whereIn('payment_id', $paymentIds)->where('payment_method', 'CASH')->sum('amount');
+
+            $posSingle = (clone $activeQuery)->where('is_split_payment', false)->where('payment_method', 'POS')->sum('total');
+            $posSplit = \App\Models\PaymentSplit::whereIn('payment_id', $paymentIds)->where('payment_method', 'POS')->sum('amount');
+
+            $transferSingle = (clone $activeQuery)->where('is_split_payment', false)->where('payment_method', 'TRANSFER')->sum('total');
+            $transferSplit = \App\Models\PaymentSplit::whereIn('payment_id', $paymentIds)->where('payment_method', 'TRANSFER')->sum('amount');
+
             return [
-                ['label' => 'Total Collected', 'value' => '₦' . number_format((clone $kpiQuery)->sum('total'), 2), 'color' => '#0d6efd'],
-                ['label' => 'Cash', 'value' => '₦' . number_format((clone $kpiQuery)->where('payment_method', 'CASH')->sum('total'), 2), 'color' => '#198754'],
-                ['label' => 'POS', 'value' => '₦' . number_format((clone $kpiQuery)->where('payment_method', 'POS')->sum('total'), 2), 'color' => '#0dcaf0'],
-                ['label' => 'Transfer', 'value' => '₦' . number_format((clone $kpiQuery)->where('payment_method', 'TRANSFER')->sum('total'), 2), 'color' => '#6610f2'],
-                ['label' => 'HMO Full Cover', 'value' => '₦' . number_format((clone $kpiQuery)->where('payment_method', 'HMO_FULL_COVER')->sum('total'), 2), 'color' => '#dc3545'],
-                ['label' => 'Refunds', 'value' => '₦' . number_format((clone $kpiQuery)->where('payment_method', 'REFUND')->sum('total'), 2), 'color' => '#ffc107'],
-                ['label' => 'Total Discounts', 'value' => '₦' . number_format((clone $kpiQuery)->sum('total_discount'), 2), 'color' => '#6c757d'],
+                ['label' => 'Total Collected', 'value' => '₦' . number_format((clone $activeQuery)->sum('total'), 2), 'color' => '#0d6efd'],
+                ['label' => 'Cash', 'value' => '₦' . number_format($cashSingle + $cashSplit, 2), 'color' => '#198754'],
+                ['label' => 'POS', 'value' => '₦' . number_format($posSingle + $posSplit, 2), 'color' => '#0dcaf0'],
+                ['label' => 'Transfer', 'value' => '₦' . number_format($transferSingle + $transferSplit, 2), 'color' => '#6610f2'],
+                ['label' => 'HMO Full Cover', 'value' => '₦' . number_format((clone $activeQuery)->where('payment_method', 'HMO_FULL_COVER')->sum('total'), 2), 'color' => '#dc3545'],
+                ['label' => 'Refunds', 'value' => '₦' . number_format((clone $activeQuery)->where('payment_method', 'REFUND')->sum('total'), 2), 'color' => '#ffc107'],
+                ['label' => 'Total Discounts', 'value' => '₦' . number_format((clone $activeQuery)->sum('total_discount'), 2), 'color' => '#6c757d'],
             ];
         }, $kpiQuery);
     }

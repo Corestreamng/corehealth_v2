@@ -719,6 +719,46 @@ class ReceptionWorkbenchController extends Controller
     }
 
     /**
+     * Get procedure services for walk-in sales
+     */
+    public function getProcedureServices(Request $request)
+    {
+        $search = $request->get('q', '');
+
+        $query = Service::with(['price', 'category'])
+            ->whereHas('category', function ($q) {
+                $q->where('category_name', 'like', '%procedure%')
+                  ->orWhere('category_name', 'like', '%surgery%')
+                  ->orWhere('category_name', 'like', '%theatre%')
+                  ->orWhere('category_name', 'like', '%operation%')
+                  ->orWhere('category_name', 'like', '%dressing%');
+            })
+            ->where('status', 1);
+
+        if ($search) {
+            $query->where(function ($q) use ($search) {
+                $q->where('service_name', 'like', "%{$search}%")
+                  ->orWhere('service_code', 'like', "%{$search}%");
+            });
+        }
+
+        $services = $query->orderBy('service_name')
+            ->limit(50)
+            ->get()
+            ->map(function ($s) {
+                return [
+                    'id' => $s->id,
+                    'name' => $s->service_name,
+                    'code' => $s->service_code,
+                    'price' => $s->price->sale_price ?? 0,
+                    'category' => $s->category->category_name ?? 'Procedure',
+                ];
+            });
+
+        return response()->json($services);
+    }
+
+    /**
      * Get products for walk-in sales
      */
     public function getProducts(Request $request)
@@ -1056,9 +1096,13 @@ class ReceptionWorkbenchController extends Controller
         $request->validate([
             'patient_id' => 'required|exists:patients,id',
             'items' => 'required|array|min:1',
-            'items.*.type' => 'required|in:lab,imaging,product',
-            'items.*.id' => 'required|integer',
+            'items.*.type' => 'required|in:lab,imaging,product,procedure,free_form',
+            'items.*.id' => 'nullable',
             'items.*.qty' => 'nullable|integer|min:1',
+            'items.*.name' => 'nullable|string',
+            'items.*.price' => 'nullable|numeric|min:0',
+            'items.*.is_billable' => 'nullable|boolean',
+            'items.*.description' => 'nullable|string',
         ]);
 
         try {
@@ -1066,11 +1110,30 @@ class ReceptionWorkbenchController extends Controller
 
             $patient = Patient::find($request->patient_id);
             $createdRequests = [];
+            $settings = appsettings();
 
             foreach ($request->items as $item) {
                 $qty = $item['qty'] ?? 1;
+                $type = $item['type'];
 
-                if ($item['type'] === 'lab') {
+                // Granular walkin permission check
+                if ($type === 'lab' && !($settings->walkin_lab_enabled ?? true)) {
+                    throw new \Exception('Walk-in lab orders are currently disabled by administration.');
+                }
+                if ($type === 'imaging' && !($settings->walkin_imaging_enabled ?? true)) {
+                    throw new \Exception('Walk-in imaging orders are currently disabled by administration.');
+                }
+                if ($type === 'product' && !($settings->walkin_products_enabled ?? true)) {
+                    throw new \Exception('Walk-in product sales are currently disabled by administration.');
+                }
+                if ($type === 'procedure' && !($settings->walkin_procedures_enabled ?? true)) {
+                    throw new \Exception('Walk-in procedures are currently disabled by administration.');
+                }
+                if ($type === 'free_form' && !($settings->walkin_free_form_enabled ?? true)) {
+                    throw new \Exception('Walk-in custom/free-form billing is currently disabled by administration.');
+                }
+
+                if ($type === 'lab') {
                     // Create lab service request
                     $serviceRequest = $this->createServiceRequest($patient, $item['id'], null);
 
@@ -1090,7 +1153,7 @@ class ReceptionWorkbenchController extends Controller
                         'claims_amount' => (float)($serviceRequest->claims_amount ?? 0),
                     ];
 
-                } elseif ($item['type'] === 'imaging') {
+                } elseif ($type === 'imaging') {
                     // Create imaging service request
                     $serviceRequest = $this->createServiceRequest($patient, $item['id'], null);
 
@@ -1110,7 +1173,7 @@ class ReceptionWorkbenchController extends Controller
                         'claims_amount' => (float)($serviceRequest->claims_amount ?? 0),
                     ];
 
-                } elseif ($item['type'] === 'product') {
+                } elseif ($type === 'product') {
                     // Create product request
                     $serviceRequest = $this->createServiceRequest($patient, null, $item['id'], $qty);
 
@@ -1128,6 +1191,57 @@ class ReceptionWorkbenchController extends Controller
                         'service_request_id' => $serviceRequest->id,
                         'payable_amount' => (float)($serviceRequest->payable_amount ?? 0),
                         'claims_amount' => (float)($serviceRequest->claims_amount ?? 0),
+                    ];
+
+                } elseif ($type === 'procedure') {
+                    // Create procedure request
+                    $serviceRequest = $this->createServiceRequest($patient, $item['id'], null, $qty);
+
+                    $proc = new \App\Models\Procedure();
+                    $proc->service_id = $item['id'];
+                    $proc->patient_id = $patient->id;
+                    $proc->requested_by = Auth::id();
+                    $proc->requested_on = now();
+                    $proc->priority = 'routine';
+                    $proc->procedure_status = \App\Models\Procedure::STATUS_REQUESTED;
+                    $proc->product_or_service_request_id = $serviceRequest->id;
+                    $proc->save();
+
+                    $createdRequests[] = [
+                        'type' => 'procedure',
+                        'id' => $proc->id,
+                        'service_request_id' => $serviceRequest->id,
+                        'payable_amount' => (float)($serviceRequest->payable_amount ?? 0),
+                        'claims_amount' => (float)($serviceRequest->claims_amount ?? 0),
+                    ];
+
+                } elseif ($type === 'free_form') {
+                    // Create free-form item
+                    $unitPrice = isset($item['price']) ? (float) $item['price'] : 0;
+                    $isBillable = isset($item['is_billable']) ? (bool) $item['is_billable'] : true;
+                    $name = !empty($item['name']) ? $item['name'] : (!empty($item['id']) ? $item['id'] : 'Custom Item');
+
+                    $serviceRequest = new ProductOrServiceRequest();
+                    $serviceRequest->user_id = $patient->user_id;
+                    $serviceRequest->patient_id = $patient->id;
+                    $serviceRequest->staff_user_id = Auth::id();
+                    $serviceRequest->is_free_form = true;
+                    $serviceRequest->free_form_name = $name;
+                    $serviceRequest->free_form_description = $item['description'] ?? null;
+                    $serviceRequest->is_billable = $isBillable;
+                    $serviceRequest->qty = $qty;
+                    $serviceRequest->payable_amount = $isBillable ? ($unitPrice * $qty) : 0;
+                    $serviceRequest->claims_amount = 0;
+                    $serviceRequest->coverage_mode = 'cash';
+                    $serviceRequest->save();
+
+                    $createdRequests[] = [
+                        'type' => 'free_form',
+                        'id' => $serviceRequest->id,
+                        'service_request_id' => $serviceRequest->id,
+                        'name' => $name,
+                        'payable_amount' => (float) $serviceRequest->payable_amount,
+                        'claims_amount' => 0,
                     ];
                 }
             }
@@ -1160,6 +1274,7 @@ class ReceptionWorkbenchController extends Controller
         $serviceRequest->service_id = $serviceId;
         $serviceRequest->product_id = $productId;
         $serviceRequest->user_id = $patient->user_id;
+        $serviceRequest->patient_id = $patient->id;
         $serviceRequest->staff_user_id = Auth::id();
         $serviceRequest->qty = $qty;
 

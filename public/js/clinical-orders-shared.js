@@ -2402,22 +2402,50 @@ window.ClinicalOrdersKit = jQuery.extend(window.ClinicalOrdersKit || {}, (functi
         var $li = $('<li class="list-group-item list-group-item-action text-primary" style="cursor:pointer;"><i class="mdi mdi-plus-circle"></i> Not listed? Add free-form \'' + query + '\'</li>');
         $li.on('click', function() {
             var $modal = $container.closest('.modal');
+            var cleanQuery = (query || '').replace(/"/g, '&quot;');
             var swalOpts = {
                 title: promptTitle,
-                text: promptText,
-                input: 'text',
+                html:
+                    '<div class="text-left" style="text-align:left;">' +
+                    '  <p class="text-muted" style="font-size:12px; margin-bottom:10px;">' + (promptText || 'Enter item details:') + '</p>' +
+                    '  <label style="font-weight:600; font-size:12px; margin-bottom:4px; display:block;">Item Name *</label>' +
+                    '  <input id="swal-ff-name" class="form-control mb-2" style="font-size:13px;" value="' + cleanQuery + '" placeholder="Item or service name">' +
+                    '  <label style="font-weight:600; font-size:12px; margin-bottom:4px; display:block;">Price (₦) <span class="text-muted fw-normal">(Optional)</span></label>' +
+                    '  <input id="swal-ff-price" type="number" step="0.01" min="0" class="form-control mb-2" style="font-size:13px;" placeholder="0.00">' +
+                    '  <div class="form-check mt-2" style="padding-left:1.5rem;">' +
+                    '    <input class="form-check-input" type="checkbox" id="swal-ff-billable" checked style="cursor:pointer;">' +
+                    '    <label class="form-check-label" for="swal-ff-billable" style="cursor:pointer; font-size:13px; font-weight:600;">Is Billable</label>' +
+                    '    <div class="text-muted" style="font-size:11px;">If checked, this item is queued for cashier payment.</div>' +
+                    '  </div>' +
+                    '</div>',
                 showCancelButton: true,
-                confirmButtonText: 'Add',
-                inputValidator: function(value) {
-                    if (!value) return 'You need to write something!';
+                confirmButtonText: 'Add Item',
+                focusConfirm: false,
+                preConfirm: function() {
+                    var nameEl = document.getElementById('swal-ff-name');
+                    var name = nameEl ? nameEl.value.trim() : '';
+                    if (!name) {
+                        Swal.showValidationMessage('Item name is required!');
+                        return false;
+                    }
+                    var priceEl = document.getElementById('swal-ff-price');
+                    var price = priceEl ? (parseFloat(priceEl.value) || 0) : 0;
+                    var billableEl = document.getElementById('swal-ff-billable');
+                    var isBillable = billableEl ? billableEl.checked : true;
+
+                    return {
+                        name: name,
+                        price: price,
+                        is_billable: isBillable ? 1 : 0
+                    };
                 }
             };
             if ($modal.length) {
                 swalOpts.target = $modal[0];
             }
             Swal.fire(swalOpts).then(function(result) {
-                if (result.isConfirmed) {
-                    onConfirm(result.value);
+                if (result.isConfirmed && result.value) {
+                    onConfirm(result.value.name, result.value);
                     if (inputSel) $(inputSel).val('');
                     $container.hide();
                 }

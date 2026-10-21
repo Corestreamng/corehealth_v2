@@ -944,16 +944,19 @@ if (typeof window.wbRoute !== 'function') {
         const tabsContainer = $('#billing-family-tabs');
         tabsContainer.empty();
 
-        if (!patient.family_members || patient.family_members.length <= 1) {
+        if (!patient || !patient.family_members || patient.family_members.length <= 1) {
             tabsContainer.hide();
             return;
         }
 
         tabsContainer.show();
 
-        // Add "Me" tab (active by default)
+        const meHasItems = (items || []).some(item => String(item.user_id) === String(patient.user_id));
+        const defaultIsMe = meHasItems || !items || items.length === 0;
+
+        // Add "Me" tab
         tabsContainer.append(`
-        <button class="workspace-tab active" data-user-id="${patient.user_id}">
+        <button class="workspace-tab ${defaultIsMe ? 'active' : ''}" data-user-id="${patient.user_id}">
             <i class="mdi mdi-account"></i>
             <span>Me</span>
         </button>
@@ -961,7 +964,7 @@ if (typeof window.wbRoute !== 'function') {
 
         // Add "All Family Members" tab
         tabsContainer.append(`
-        <button class="workspace-tab" data-user-id="all">
+        <button class="workspace-tab ${!defaultIsMe ? 'active' : ''}" data-user-id="all">
             <i class="mdi mdi-format-list-bulleted"></i>
             <span>All Family Members</span>
         </button>

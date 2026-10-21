@@ -151,7 +151,7 @@ $sett = appsettings();
                 <i class="mdi mdi-account-plus text-success"></i>
                 <span>Register Walk-in</span>
             </button>
-            <button class="quick-action-btn" id="btn-my-transactions">
+            <button class="quick-action-btn" id="btn-my-transactions" data-toggle="modal" data-bs-toggle="modal" data-target="#myTransactionsModal" data-bs-target="#myTransactionsModal">
                 <i class="mdi mdi-receipt"></i>
                 <span>My Transactions</span>
             </button>
@@ -461,6 +461,10 @@ $sett = appsettings();
                     <span>Billing</span>
                     <span class="workspace-tab-badge" id="billing-badge">0</span>
                 </button>
+                <button class="workspace-tab" data-tab="walkin">
+                    <i class="mdi mdi-walk"></i>
+                    <span>Walk-in Sales</span>
+                </button>
                 <button class="workspace-tab" data-tab="receipts">
                     <i class="mdi mdi-receipt"></i>
                     <span>Receipts</span>
@@ -565,8 +569,12 @@ $sett = appsettings();
                         <span class="cart-badge" id="cart-item-count">0</span>
                         <span class="cart-total" id="cart-total-display">₦0.00</span>
                         <i class="mdi mdi-chevron-up"></i>
-                    </button>
                 </div>
+            </div>
+
+            <!-- Walk-in Sales Tab -->
+            <div class="workspace-tab-content" id="walkin-tab">
+                @include('admin.shared._walkin_sales_tab')
             </div>
 
             <!-- Receipts Tab -->

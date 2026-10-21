@@ -44,12 +44,19 @@ if (typeof window.wbRoute !== 'function') {
         console.log('renderBillingItems called with:', items);
 
         const tbody = $('#billing-items-tbody');
+
+        // Preserve currently checked items across re-renders
+        const previouslyCheckedIds = new Set();
+        tbody.find('.billing-item-checkbox:checked').each(function() {
+            const id = $(this).data('id');
+            if (id !== undefined && id !== null) {
+                previouslyCheckedIds.add(String(id));
+            }
+        });
+
         tbody.empty();
 
-        // Default to 'all' or currently selected tab if any
-        let activeFamilyUserId = $('#billing-family-tabs .workspace-tab.active').data('user-id') || 'all';
-
-        if (items.length === 0) {
+        if (!items || items.length === 0) {
             tbody.html(`
             <tr>
                 <td colspan="9" class="text-center text-muted py-5">
@@ -58,6 +65,7 @@ if (typeof window.wbRoute !== 'function') {
                 </td>
             </tr>
         `);
+            updatePaymentSummary();
             return;
         }
 
@@ -69,9 +77,11 @@ if (typeof window.wbRoute !== 'function') {
                 itemName += ` <br><a href="#" class="tp-view-link badge mt-1" style="background-color: #e0f2f1; color: #00796b; border: 1px solid #00897b; text-decoration: none;" onclick="ClinicalOrdersKit.viewTreatmentPlan(${item.treatment_plan_id}); event.stopPropagation(); return false;"><i class="fa fa-clipboard-list"></i> ${escapeHtml(item.treatment_plan_name)}</a>`;
             }
 
+            const isChecked = previouslyCheckedIds.has(String(item.id)) ? 'checked' : '';
+
             const row = `
             <tr data-item-id="${item.id}" data-user-id="${item.user_id}">
-                <td><input type="checkbox" class="billing-item-checkbox" data-id="${item.id}"></td>
+                <td><input type="checkbox" class="billing-item-checkbox" data-id="${item.id}" ${isChecked}></td>
                 <td class="text-nowrap" style="font-size: 0.85rem;"><i class="mdi mdi-clock-outline text-muted"></i> ${datetime}</td>
                 <td>${itemName}</td>
                 <td>${item.category || 'N/A'}</td>
@@ -86,8 +96,8 @@ if (typeof window.wbRoute !== 'function') {
         });
 
         // Attach event listeners
-        $('.billing-item-checkbox').on('change', updatePaymentSummary);
-        $('#select-all-billing-items').on('change', function() {
+        $('.billing-item-checkbox').off('change').on('change', updatePaymentSummary);
+        $('#select-all-billing-items').off('change').on('change', function() {
             const selectVisibleOnly = $('#select-visible-only').is(':checked');
             if (selectVisibleOnly) {
                 // Only select/deselect visible (not filtered out) items
@@ -103,7 +113,7 @@ if (typeof window.wbRoute !== 'function') {
             }
             updatePaymentSummary();
         });
-        $('.item-qty-input, .item-discount-input').on('input', function() {
+        $('.item-qty-input, .item-discount-input').off('input').on('input', function() {
             const id = $(this).data('id');
             recalculateItemTotal(id);
             updatePaymentSummary();
@@ -113,6 +123,7 @@ if (typeof window.wbRoute !== 'function') {
         populateCategoryFilter(items);
         applyBillingFilters();
         updateBillingFilterStats();
+        updatePaymentSummary();
 
         console.log('Rendered', items.length, 'billing items');
     }
@@ -122,7 +133,7 @@ if (typeof window.wbRoute !== 'function') {
     // Populate category filter dropdown with unique categories from items
     function populateCategoryFilter(items) {
         const select = $('#billing-category-filter');
-        const categories = [...new Set(items.map(item => item.category).filter(c => c))].sort();
+        const categories = [...new Set((items || []).map(item => item.category).filter(c => c))].sort();
 
         select.empty();
         select.append('<option value="">All Categories</option>');
@@ -138,6 +149,11 @@ if (typeof window.wbRoute !== 'function') {
         const dateFrom = $('#billing-date-from').val();
         const dateTo = $('#billing-date-to').val();
 
+        let activeFamilyUserId = 'all';
+        if ($('#billing-family-tabs').is(':visible') && $('#billing-family-tabs').children().length > 0) {
+            activeFamilyUserId = $('#billing-family-tabs .workspace-tab.active').data('user-id') || 'all';
+        }
+
         $('#billing-items-tbody tr').each(function() {
             const row = $(this);
             if (row.find('td').length < 3) return; // Skip empty rows
@@ -147,10 +163,9 @@ if (typeof window.wbRoute !== 'function') {
             const itemDateText = row.find('td:eq(1)').text().trim();
 
             let visible = true;
-            const activeFamilyUserId = $('#billing-family-tabs .workspace-tab.active').data('user-id') || 'all';
 
-            // Family Tab Filter
-            if (activeFamilyUserId !== 'all' && row.data('user-id') != activeFamilyUserId) {
+            // Family Tab Filter - only if family tabs are visible and a specific member is chosen
+            if (activeFamilyUserId !== 'all' && String(row.data('user-id')) !== String(activeFamilyUserId)) {
                 visible = false;
             }
 

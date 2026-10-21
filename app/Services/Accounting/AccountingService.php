@@ -105,10 +105,11 @@ class AccountingService
                 throw new Exception("No open accounting period for date: {$entryDate}");
             }
 
-            // Check if entry already exists for this source
+            // Check if active non-reversal entry already exists for this source
             $existingEntry = JournalEntry::where('reference_type', $sourceType)
                 ->where('reference_id', $sourceId)
                 ->whereNotIn('status', [JournalEntry::STATUS_REVERSED])
+                ->where('entry_type', '!=', JournalEntry::TYPE_REVERSAL)
                 ->first();
 
             if ($existingEntry) {

@@ -20,19 +20,19 @@
             @endphp
             @forelse($payment->product_or_service_request as $idx => $req)
                 @php
-                    $itemName = '-';
+                    $itemName = getItemDisplayName($req);
                     $fallbackPrice = 0;
                     $categoryName = '-';
-                    if ($req->product) {
-                        $itemName = $req->product->product_name;
+                    if (!empty($req->is_free_form)) {
+                        $categoryName = 'Free-Form / Custom';
+                        $fallbackPrice = $req->payable_amount ?? 0;
+                    } elseif ($req->product) {
                         $fallbackPrice = $req->product->price?->sale_price ?? 0;
                         $categoryName = $req->product->category?->category_name ?? 'Product';
                     } elseif ($req->service) {
-                        $itemName = $req->service->service_name;
                         $fallbackPrice = $req->service->price?->sale_price ?? 0;
                         $categoryName = $req->service->category?->category_name ?? 'Service';
                     } elseif ($req->procedure) {
-                        $itemName = $req->procedure->is_free_form ? $req->procedure->free_form_name : ($req->procedure->service?->service_name ?? '-');
                         $fallbackPrice = $req->procedure->service?->price?->sale_price ?? 0;
                         $categoryName = $req->procedure->service?->category?->category_name ?? 'Procedure';
                     }

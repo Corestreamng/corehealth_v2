@@ -155,3 +155,14 @@ When working on this project, strictly adhere to the following standards across 
 - **Shared Patient Search Widget**: Patient search containers inside workbenches conform to `height: 30px`, `padding-left: 36px`, and icon positioning `left: 10px` without text clipping.
 - **Documentation & Rollout**: Architecture is documented in `docs/WORKBENCH_COCKPIT_SCALING_ARCHITECTURE.md`.
 
+## 15. Split Payments, Free-Form Billing & Financial Governance Standards
+- **Split Payments Multi-Leg Ledger**: Payment splits (`payment_splits` table) across Cash, POS, Transfer, Mobile, and Patient Deposit must always enforce multi-leg debit balancing in `PaymentObserver`. In `Payment` model, `$pending_splits` transport property prevents column insert errors.
+- **Universal Name & Method Helpers**:
+  - Item names across reports, receipts, accounts, and audit workbenches MUST use `getItemDisplayName($item)` (PHP) and `window.CoreHealth.getItemDisplayName(item)` (JS).
+  - Payment methods MUST use `formatPaymentMethod($payment)` (matching actual payment modal methods e.g. `CASH`, `POS`, `TRANSFER`, `MOBILE`, `BILL_TO_STAFF`, `BILL_TO_ORGANIZATION`, `ACCOUNT`, `DEPOSIT`).
+- **Free-Form Request Support**: Unlisted/free-form products and services (`is_free_form`, `free_form_name`, `is_billable`) allow custom price billing and display correctly across all reports and receipts.
+- **Payment Adjustments & Voiding**:
+  - Payment method corrections create reversing and replacement Journal Entries via `PaymentReversalService` and are logged in `payment_adjustments`.
+  - Transaction voiding reverses Journal Entries, unlinks items, restores patient account balances, and strikes through/excludes voided payments from all financial and ops audit KPIs (`whereNull('voided_at')`).
+- **Documentation**: Architecture is documented in `docs/BILLING_PAYMENT_ENHANCEMENTS.md`.
+

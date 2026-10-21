@@ -1,6 +1,6 @@
 <!-- Payment Modal -->
-                <div class="modal fade" id="paymentModal" tabindex="-1" role="dialog" aria-labelledby="paymentModalLabel" aria-hidden="true">
-                    <div class="modal-dialog modal-dialog-centered" role="document">
+                <div class="modal fade" id="paymentModal" role="dialog" aria-labelledby="paymentModalLabel" aria-hidden="true">
+                    <div class="modal-dialog modal-lg modal-dialog-centered" role="document" style="max-width: 860px;">
                         <div class="modal-content">
                             <div class="modal-header">
                                 <h5 class="modal-title" id="paymentModalLabel">
@@ -42,6 +42,7 @@
                                             <option value="POS">POS/Card</option>
                                             <option value="TRANSFER">Bank Transfer</option>
                                             <option value="MOBILE">Mobile Money</option>
+                                            <option value="SPLIT">Split Payment (Multiple Methods)</option>
                                             <option value="BILL_TO_STAFF">Bill to Staff</option>
                                             <option value="BILL_TO_ORGANIZATION">Bill to Organization</option>
                                             <option value="ACCOUNT" id="account-payment-option" style="display: none;">Pay from Account Balance</option>
@@ -49,6 +50,31 @@
                                         <small class="text-muted" id="account-payment-note" style="display: none;">
                                             <i class="mdi mdi-information"></i> Payment will be deducted from account balance
                                         </small>
+                                    </div>
+                                    <div class="split-payment-section mt-3 p-2 border rounded bg-light" id="split-payment-section" style="display: none;">
+                                        <div class="d-flex justify-content-between align-items-center mb-2">
+                                            <label class="fw-bold text-primary mb-0"><i class="mdi mdi-call-split"></i> Split Payment Allocation</label>
+                                            <button type="button" class="btn btn-xs btn-outline-primary" id="btn-add-split-leg">
+                                                <i class="mdi mdi-plus"></i> Add Method
+                                            </button>
+                                        </div>
+                                        <div id="split-legs-container">
+                                            <!-- Dynamically populated rows -->
+                                        </div>
+                                        <div class="split-summary-box p-2 mt-2 rounded border bg-white">
+                                            <div class="d-flex justify-content-between text-muted small">
+                                                <span>Total Payable:</span>
+                                                <span id="split-total-target" class="fw-bold">₦0.00</span>
+                                            </div>
+                                            <div class="d-flex justify-content-between text-muted small">
+                                                <span>Total Allocated:</span>
+                                                <span id="split-sum-display" class="fw-bold text-primary">₦0.00</span>
+                                            </div>
+                                            <div class="d-flex justify-content-between small pt-1 border-top mt-1">
+                                                <span>Balance:</span>
+                                                <span id="split-remaining-display" class="fw-bold text-success">₦0.00</span>
+                                            </div>
+                                        </div>
                                     </div>
                                     <div class="staff-selection-section" id="staff-selection-section" style="display: none;">
                                         <label><i class="mdi mdi-account-card-outline"></i> Select Staff to Bill</label>

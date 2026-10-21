@@ -239,14 +239,24 @@ function initializeEventListeners() {
     });
 
     // Expand patient details button
-    $('#btn-expand-patient').on('click', function() {
-        $(this).toggleClass('expanded');
-        $('#patient-details-expanded').toggleClass('show');
-        const $text = $(this).find('.btn-expand-text');
-        if ($(this).hasClass('expanded')) {
-            $text.text('less biodata');
+    $(document).off('click', '#btn-expand-patient, .btn-expand-patient').on('click', '#btn-expand-patient, .btn-expand-patient', function(e) {
+        e.preventDefault();
+        const $btn = $(this);
+        const $drawer = $('#patient-details-expanded');
+        const willExpand = !$drawer.hasClass('show');
+
+        if (willExpand) {
+            $btn.addClass('expanded');
+            $drawer.addClass('show');
+            $btn.find('.btn-expand-text').text('less biodata');
+            $btn.find('i').removeClass('mdi-chevron-down').addClass('mdi-chevron-up');
+            $btn.attr('title', 'Show less details');
         } else {
-            $text.text('more biodata');
+            $btn.removeClass('expanded');
+            $drawer.removeClass('show');
+            $btn.find('.btn-expand-text').text('more biodata');
+            $btn.find('i').removeClass('mdi-chevron-up').addClass('mdi-chevron-down');
+            $btn.attr('title', 'Show more details');
         }
     });
 
@@ -707,6 +717,12 @@ function displayPatientInfo(patient) {
         ` : ''}
     `;
     $('#patient-details-grid').html(expandedDetailsHtml);
+
+    // Reset biodata expand drawer state on patient load
+    $('#btn-expand-patient').removeClass('expanded').attr('title', 'Show more details');
+    $('#btn-expand-patient').find('.btn-expand-text').text('more biodata');
+    $('#btn-expand-patient').find('i').removeClass('mdi-chevron-up').addClass('mdi-chevron-down');
+    $('#patient-details-expanded').removeClass('show');
 
     // Update profile tab with patient details
     updateProfileTab(patient);
