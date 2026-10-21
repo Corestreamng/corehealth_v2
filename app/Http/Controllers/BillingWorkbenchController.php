@@ -1635,18 +1635,111 @@ class BillingWorkbenchController extends Controller
 
         $activeTransactions = $transactions->whereNull('voided_at');
 
+        $paymentMethodKpis = [
+            'CASH' => ['label' => 'Cash', 'count' => 0, 'amount' => 0, 'banks' => []],
+            'POS' => ['label' => 'POS', 'count' => 0, 'amount' => 0, 'banks' => []],
+            'TRANSFER' => ['label' => 'Bank Transfer', 'count' => 0, 'amount' => 0, 'banks' => []],
+            'MOBILE' => ['label' => 'Mobile Money', 'count' => 0, 'amount' => 0, 'banks' => []],
+            'DEPOSIT' => ['label' => 'Patient Deposit', 'count' => 0, 'amount' => 0, 'banks' => []],
+            'OTHER' => ['label' => 'Other Methods', 'count' => 0, 'amount' => 0, 'banks' => []],
+        ];
+
+        $splitTransactionsCount = 0;
+        $splitTransactionsAmount = 0;
+
+        $recordTender = function (string $rawMethod, ?string $bankName, float $amount) use (&$paymentMethodKpis) {
+            $m = strtoupper(trim($rawMethod));
+            if ($m === 'CASH') {
+                $code = 'CASH';
+            } elseif ($m === 'POS') {
+                $code = 'POS';
+            } elseif (in_array($m, ['TRANSFER', 'BANK_TRANSFER'])) {
+                $code = 'TRANSFER';
+            } elseif ($m === 'MOBILE') {
+                $code = 'MOBILE';
+            } elseif (in_array($m, ['DEPOSIT', 'ACC_DEPOSIT', 'ACCOUNT', 'ACC_WITHDRAW'])) {
+                $code = 'DEPOSIT';
+            } else {
+                $code = 'OTHER';
+            }
+
+            $paymentMethodKpis[$code]['count']++;
+            $paymentMethodKpis[$code]['amount'] += $amount;
+
+            // Track bank breakdown under the payment method card for non-cash tenders
+            if (!in_array($code, ['CASH', 'DEPOSIT'])) {
+                $bName = trim($bankName ?: 'Direct');
+                if (!isset($paymentMethodKpis[$code]['banks'][$bName])) {
+                    $paymentMethodKpis[$code]['banks'][$bName] = [
+                        'name' => $bName,
+                        'count' => 0,
+                        'amount' => 0,
+                    ];
+                }
+                $paymentMethodKpis[$code]['banks'][$bName]['count']++;
+                $paymentMethodKpis[$code]['banks'][$bName]['amount'] += $amount;
+            }
+        };
+
+        foreach ($activeTransactions as $tx) {
+            $total = (float) $tx->total;
+            if ($tx->is_split_payment) {
+                $splitTransactionsCount++;
+                $splitTransactionsAmount += $total;
+
+                if ($tx->splits && $tx->splits->isNotEmpty()) {
+                    foreach ($tx->splits as $split) {
+                        $recordTender(
+                            $split->payment_method ?? '',
+                            $split->bank?->name,
+                            (float) ($split->amount ?? 0)
+                        );
+                    }
+                } else {
+                    $recordTender(
+                        $tx->payment_method ?: $tx->payment_type ?: 'OTHER',
+                        $tx->bank?->name,
+                        $total
+                    );
+                }
+            } else {
+                $recordTender(
+                    $tx->payment_method ?: $tx->payment_type ?: 'CASH',
+                    $tx->bank?->name,
+                    $total
+                );
+            }
+        }
+
+        // Convert banks dictionary to indexed list for clean API & view consumption
+        foreach ($paymentMethodKpis as $code => $data) {
+            $paymentMethodKpis[$code]['banks'] = array_values($data['banks']);
+        }
+
+        // Align by_type tender breakdown with actual tender methods and their bank breakdowns
+        $byTypeSummary = collect($paymentMethodKpis)
+            ->filter(function ($kpi) {
+                return $kpi['amount'] > 0 || $kpi['count'] > 0;
+            })
+            ->map(function ($kpi) {
+                return [
+                    'label' => $kpi['label'],
+                    'count' => $kpi['count'],
+                    'amount' => $kpi['amount'],
+                    'banks' => $kpi['banks'],
+                    'discount' => 0,
+                ];
+            });
+
         $summary = [
             'total_amount' => $activeTransactions->sum('total'),
             'total_discount' => $activeTransactions->sum('total_discount'),
             'count' => $activeTransactions->count(),
             'voided_count' => $transactions->whereNotNull('voided_at')->count(),
-            'by_type' => $activeTransactions->groupBy('payment_type')->map(function ($group) {
-                return [
-                    'count' => $group->count(),
-                    'amount' => $group->sum('total'),
-                    'discount' => $group->sum('total_discount'),
-                ];
-            }),
+            'split_transactions_count' => $splitTransactionsCount,
+            'split_transactions_amount' => $splitTransactionsAmount,
+            'by_type' => $byTypeSummary,
+            'payment_method_kpis' => $paymentMethodKpis,
             'product_total' => $productTotalAmount,
             'service_total' => $serviceTotalAmount,
             'product_kpi' => [

@@ -122,12 +122,19 @@ window.CoreHealth.formatPaymentMethod = function(tx) {
     if (tx.is_split_payment && tx.splits && tx.splits.length) {
         return 'Split: ' + tx.splits.map(function(s) {
             var m = window.CoreHealth.formatMethodName(s.payment_method);
+            var bank = (s.bank_name && !['CASH', 'DEPOSIT', 'ACCOUNT', 'ACC_DEPOSIT', 'ACC_WITHDRAW'].includes(String(s.payment_method || '').toUpperCase()))
+                ? ' (' + s.bank_name + ')'
+                : '';
             var amt = parseFloat(s.amount || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-            return m + ' ₦' + amt;
+            return m + bank + ' ₦' + amt;
         }).join(' + ');
     }
     var m = tx.payment_method || tx.payment_type || 'Unknown';
-    return window.CoreHealth.formatMethodName(m);
+    var display = window.CoreHealth.formatMethodName(m);
+    if (tx.bank_name && !['CASH', 'DEPOSIT', 'ACCOUNT', 'ACC_DEPOSIT', 'ACC_WITHDRAW'].includes(String(m).toUpperCase())) {
+        display += ' - ' + tx.bank_name;
+    }
+    return display;
 };
 
 window.CoreHealth.getItemDisplayName = function(item) {

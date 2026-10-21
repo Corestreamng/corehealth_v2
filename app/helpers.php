@@ -629,7 +629,11 @@ if (!function_exists('formatPaymentMethod')) {
             foreach ($splits as $s) {
                 $method = is_object($s) ? ($s->payment_method ?? '') : ($s['payment_method'] ?? '');
                 $amount = is_object($s) ? ($s->amount ?? 0) : ($s['amount'] ?? 0);
+                $bankName = is_object($s) ? ($s->bank?->name ?? ($s->bank_name ?? null)) : ($s['bank_name'] ?? null);
                 $display = $formatName($method);
+                if ($bankName && !in_array(strtoupper((string) $method), ['CASH', 'DEPOSIT', 'ACCOUNT', 'ACC_DEPOSIT', 'ACC_WITHDRAW'])) {
+                    $display .= ' (' . $bankName . ')';
+                }
                 $parts[] = $display . ' ₦' . number_format((float) $amount, 2);
             }
 
@@ -639,8 +643,15 @@ if (!function_exists('formatPaymentMethod')) {
         $rawMethod = is_array($payment)
             ? ($payment['payment_method'] ?? $payment['payment_type'] ?? 'Unknown')
             : (is_object($payment) ? ($payment->payment_method ?? $payment->payment_type ?? 'Unknown') : 'Unknown');
+        $display = $formatName($rawMethod);
+        $bankName = is_array($payment)
+            ? ($payment['bank_name'] ?? null)
+            : (is_object($payment) ? ($payment->bank?->name ?? ($payment->bank_name ?? null)) : null);
+        if ($bankName && !in_array(strtoupper((string) $rawMethod), ['CASH', 'DEPOSIT', 'ACCOUNT', 'ACC_DEPOSIT', 'ACC_WITHDRAW'])) {
+            $display .= ' - ' . $bankName;
+        }
 
-        return $formatName($rawMethod);
+        return $display;
     }
 }
 

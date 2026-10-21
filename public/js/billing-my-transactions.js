@@ -40,6 +40,19 @@
                 self.renderTransactionsList();
             });
 
+            // Interactive Category KPI Pills click
+            $(document).on('click', '.category-kpi-pill', function(e) {
+                e.preventDefault();
+                const selectedCat = String($(this).data('category') || '');
+                const $catFilter = $('#my-trans-category-filter');
+                if ($catFilter.val() === selectedCat) {
+                    $catFilter.val('');
+                } else {
+                    $catFilter.val(selectedCat);
+                }
+                self.renderTransactionsList();
+            });
+
             // Print My Transactions summary
             $(document).on('click', '#btn-print-my-transactions, #print-my-transactions', function(e) {
                 e.preventDefault();
@@ -300,11 +313,24 @@
             $tbody.empty();
 
             let totalVol = 0;
-            let productVol = 0;
-            let serviceVol = 0;
-            let customVol = 0;
-            let splitVol = 0;
-            let count = 0;
+            let totalDiscount = 0;
+            let activeCount = 0;
+
+            let cashVol = 0, cashCount = 0;
+            let posVol = 0, posCount = 0;
+            let transferVol = 0, transferCount = 0;
+            let mobileDepositVol = 0, mobileDepositCount = 0;
+            let otherVol = 0, otherCount = 0;
+            let splitTxCount = 0;
+
+            const posBanksMap = {};
+            const transferBanksMap = {};
+            const depositBanksMap = {};
+
+            const serviceCategoriesMap = {};
+            const productCategoriesMap = {};
+            let serviceTotalAmt = 0, serviceTotalCount = 0;
+            let productTotalAmt = 0, productTotalCount = 0;
 
             const filteredTx = rawTransactions.filter(tx => {
                 if (!itemTypeFilter && !categoryFilter) return true;
@@ -331,23 +357,135 @@
 
             const self = this;
             filteredTx.forEach((tx, idx) => {
-                count++;
                 const txTotal = Math.abs(parseFloat(tx.total || 0));
-                totalVol += txTotal;
+                const txDisc = Math.abs(parseFloat(tx.total_discount || 0));
 
-                if (tx.is_split_payment) {
-                    splitVol += txTotal;
-                }
+                if (!tx.is_voided) {
+                    activeCount++;
+                    totalVol += txTotal;
+                    totalDiscount += txDisc;
 
-                // Calculate product vs service breakdown from items
-                if (tx.items && tx.items.length) {
-                    tx.items.forEach(it => {
-                        const itAmt = parseFloat(it.amount || 0);
-                        const itType = (it.type || '').toLowerCase();
-                        if (itType.includes('product')) productVol += itAmt;
-                        else if (itType.includes('service')) serviceVol += itAmt;
-                        else if (itType.includes('custom')) customVol += itAmt;
-                    });
+                    // Distribute tender amounts into actual payment methods with Bank breakdowns
+                    if (tx.is_split_payment) {
+                        splitTxCount++;
+                        if (tx.splits && tx.splits.length) {
+                            tx.splits.forEach(s => {
+                                const sAmt = Math.abs(parseFloat(s.amount || 0));
+                                const sMethod = String(s.payment_method || '').toUpperCase();
+                                const sBank = s.bank_name ? String(s.bank_name).trim() : 'Direct';
+
+                                if (sMethod === 'CASH') {
+                                    cashVol += sAmt;
+                                    cashCount++;
+                                } else if (sMethod === 'POS') {
+                                    posVol += sAmt;
+                                    posCount++;
+                                    if (!posBanksMap[sBank]) posBanksMap[sBank] = { amount: 0, count: 0 };
+                                    posBanksMap[sBank].amount += sAmt;
+                                    posBanksMap[sBank].count++;
+                                } else if (sMethod === 'TRANSFER' || sMethod === 'BANK_TRANSFER') {
+                                    transferVol += sAmt;
+                                    transferCount++;
+                                    if (!transferBanksMap[sBank]) transferBanksMap[sBank] = { amount: 0, count: 0 };
+                                    transferBanksMap[sBank].amount += sAmt;
+                                    transferBanksMap[sBank].count++;
+                                } else if (['MOBILE', 'DEPOSIT', 'ACC_DEPOSIT', 'ACCOUNT', 'ACC_WITHDRAW'].includes(sMethod)) {
+                                    mobileDepositVol += sAmt;
+                                    mobileDepositCount++;
+                                    if (!depositBanksMap[sBank]) depositBanksMap[sBank] = { amount: 0, count: 0 };
+                                    depositBanksMap[sBank].amount += sAmt;
+                                    depositBanksMap[sBank].count++;
+                                } else {
+                                    otherVol += sAmt;
+                                    otherCount++;
+                                }
+                            });
+                        } else {
+                            const m = String(tx.payment_method || tx.payment_type || 'OTHER').toUpperCase();
+                            const b = tx.bank_name ? String(tx.bank_name).trim() : 'Direct';
+                            if (m === 'CASH') {
+                                cashVol += txTotal;
+                                cashCount++;
+                            } else if (m === 'POS') {
+                                posVol += txTotal;
+                                posCount++;
+                                if (!posBanksMap[b]) posBanksMap[b] = { amount: 0, count: 0 };
+                                posBanksMap[b].amount += txTotal;
+                                posBanksMap[b].count++;
+                            } else if (m === 'TRANSFER' || m === 'BANK_TRANSFER') {
+                                transferVol += txTotal;
+                                transferCount++;
+                                if (!transferBanksMap[b]) transferBanksMap[b] = { amount: 0, count: 0 };
+                                transferBanksMap[b].amount += txTotal;
+                                transferBanksMap[b].count++;
+                            } else if (['MOBILE', 'DEPOSIT', 'ACC_DEPOSIT', 'ACCOUNT', 'ACC_WITHDRAW'].includes(m)) {
+                                mobileDepositVol += txTotal;
+                                mobileDepositCount++;
+                                if (!depositBanksMap[b]) depositBanksMap[b] = { amount: 0, count: 0 };
+                                depositBanksMap[b].amount += txTotal;
+                                depositBanksMap[b].count++;
+                            } else {
+                                otherVol += txTotal;
+                                otherCount++;
+                            }
+                        }
+                    } else {
+                        const m = String(tx.payment_method || tx.payment_type || 'CASH').toUpperCase();
+                        const b = tx.bank_name ? String(tx.bank_name).trim() : 'Direct';
+                        if (m === 'CASH') {
+                            cashVol += txTotal;
+                            cashCount++;
+                        } else if (m === 'POS') {
+                            posVol += txTotal;
+                            posCount++;
+                            if (!posBanksMap[b]) posBanksMap[b] = { amount: 0, count: 0 };
+                            posBanksMap[b].amount += txTotal;
+                            posBanksMap[b].count++;
+                        } else if (m === 'TRANSFER' || m === 'BANK_TRANSFER') {
+                            transferVol += txTotal;
+                            transferCount++;
+                            if (!transferBanksMap[b]) transferBanksMap[b] = { amount: 0, count: 0 };
+                            transferBanksMap[b].amount += txTotal;
+                            transferBanksMap[b].count++;
+                        } else if (['MOBILE', 'DEPOSIT', 'ACC_DEPOSIT', 'ACCOUNT', 'ACC_WITHDRAW'].includes(m)) {
+                            mobileDepositVol += txTotal;
+                            mobileDepositCount++;
+                            if (!depositBanksMap[b]) depositBanksMap[b] = { amount: 0, count: 0 };
+                            depositBanksMap[b].amount += txTotal;
+                            depositBanksMap[b].count++;
+                        } else {
+                            otherVol += txTotal;
+                            otherCount++;
+                        }
+                    }
+
+                    // Product & Service Category categorization
+                    if (tx.items && tx.items.length) {
+                        tx.items.forEach(it => {
+                            const itAmt = parseFloat(it.amount || 0);
+                            const itQty = parseInt(it.qty, 10) || 1;
+                            const itType = (it.type || '').toLowerCase();
+                            const itCat = it.category || 'General';
+
+                            if (itType.includes('product')) {
+                                productTotalAmt += itAmt;
+                                productTotalCount += itQty;
+                                if (!productCategoriesMap[itCat]) {
+                                    productCategoriesMap[itCat] = { count: 0, amount: 0 };
+                                }
+                                productCategoriesMap[itCat].count += itQty;
+                                productCategoriesMap[itCat].amount += itAmt;
+                            } else {
+                                serviceTotalAmt += itAmt;
+                                serviceTotalCount += itQty;
+                                if (!serviceCategoriesMap[itCat]) {
+                                    serviceCategoriesMap[itCat] = { count: 0, amount: 0 };
+                                }
+                                serviceCategoriesMap[itCat].count += itQty;
+                                serviceCategoriesMap[itCat].amount += itAmt;
+                            }
+                        });
+                    }
                 }
 
                 // Render Item Badges / Outlines
@@ -411,13 +549,89 @@
                 `);
             });
 
-            // Update KPI cards
-            $('#kpi-my-count').text(count);
+            // Update KPI cards in Payment Method strip
+            $('#kpi-my-count').text(activeCount);
             $('#kpi-my-total').text(`₦${totalVol.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`);
-            $('#kpi-my-products').text(`₦${productVol.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`);
-            $('#kpi-my-services').text(`₦${serviceVol.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`);
-            $('#kpi-my-custom').text(`₦${customVol.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`);
-            $('#kpi-my-splits').text(`₦${splitVol.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`);
+            $('#kpi-my-cash').text(`₦${cashVol.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`);
+            $('#kpi-my-cash-count').text(cashCount);
+            $('#kpi-my-pos').text(`₦${posVol.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`);
+            $('#kpi-my-pos-count').text(posCount);
+            $('#kpi-my-transfer').text(`₦${transferVol.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`);
+            $('#kpi-my-transfer-count').text(transferCount);
+            $('#kpi-my-deposit').text(`₦${mobileDepositVol.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`);
+            $('#kpi-my-deposit-count').text(mobileDepositCount);
+            $('#kpi-my-discount').text(`₦${totalDiscount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`);
+            $('#kpi-my-splits-count').text(splitTxCount);
+
+            // Render bank breakdowns inside POS, Transfer, and Deposit KPI cards
+            const renderBankBreakdown = function($el, map, emptyText) {
+                const keys = Object.keys(map);
+                if (keys.length === 0) {
+                    $el.html(`<div class="text-muted text-center font-9">${emptyText}</div>`);
+                    return;
+                }
+                let html = '';
+                keys.forEach(bName => {
+                    const item = map[bName];
+                    html += `<div class="d-flex justify-content-between align-items-center mb-0 text-truncate font-10">
+                        <span class="text-truncate me-1 text-dark" title="${self.escapeHtml(bName)}">${self.escapeHtml(bName)} (${item.count}):</span>
+                        <span class="fw-bold text-nowrap">₦${item.amount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                    </div>`;
+                });
+                $el.html(html);
+            };
+
+            renderBankBreakdown($('#kpi-my-pos-banks'), posBanksMap, 'No POS tenders');
+            renderBankBreakdown($('#kpi-my-transfer-banks'), transferBanksMap, 'No Transfer tenders');
+            renderBankBreakdown($('#kpi-my-deposit-banks'), depositBanksMap, 'No Deposit tenders');
+
+            // Update Category Badges & Totals
+            $('#kpi-my-services-total').text(`₦${serviceTotalAmt.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} (${serviceTotalCount} items)`);
+            $('#kpi-my-products-total').text(`₦${productTotalAmt.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} (${productTotalCount} items)`);
+
+            // Populate Service Category Pills
+            const $serviceList = $('#my-trans-service-categories-list');
+            const serviceCatKeys = Object.keys(serviceCategoriesMap);
+            if (serviceCatKeys.length === 0) {
+                $serviceList.html('<span class="text-muted font-11">No services recorded</span>');
+            } else {
+                let servicePillsHtml = '';
+                serviceCatKeys.forEach(catName => {
+                    const cat = serviceCategoriesMap[catName];
+                    const isActive = (categoryFilter === catName);
+                    const btnClass = isActive ? 'btn-info text-white' : 'btn-outline-info';
+                    servicePillsHtml += `
+                        <button type="button" class="btn btn-xs ${btnClass} category-kpi-pill d-inline-flex align-items-center gap-1 font-11 py-0 px-2" data-category="${self.escapeHtml(catName)}" title="Click to filter by ${self.escapeHtml(catName)}">
+                            <span>${self.escapeHtml(catName)}</span>
+                            <span class="badge ${isActive ? 'bg-white text-info' : 'bg-info text-white'} rounded-pill">${cat.count}</span>
+                            <span class="fw-bold">₦${cat.amount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                        </button>
+                    `;
+                });
+                $serviceList.html(servicePillsHtml);
+            }
+
+            // Populate Product Category Pills
+            const $productList = $('#my-trans-product-categories-list');
+            const productCatKeys = Object.keys(productCategoriesMap);
+            if (productCatKeys.length === 0) {
+                $productList.html('<span class="text-muted font-11">No products recorded</span>');
+            } else {
+                let productPillsHtml = '';
+                productCatKeys.forEach(catName => {
+                    const cat = productCategoriesMap[catName];
+                    const isActive = (categoryFilter === catName);
+                    const btnClass = isActive ? 'btn-success text-white' : 'btn-outline-success';
+                    productPillsHtml += `
+                        <button type="button" class="btn btn-xs ${btnClass} category-kpi-pill d-inline-flex align-items-center gap-1 font-11 py-0 px-2" data-category="${self.escapeHtml(catName)}" title="Click to filter by ${self.escapeHtml(catName)}">
+                            <span>${self.escapeHtml(catName)}</span>
+                            <span class="badge ${isActive ? 'bg-white text-success' : 'bg-success text-white'} rounded-pill">${cat.count}</span>
+                            <span class="fw-bold">₦${cat.amount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                        </button>
+                    `;
+                });
+                $productList.html(productPillsHtml);
+            }
         },
 
         initManageDataTable: function() {

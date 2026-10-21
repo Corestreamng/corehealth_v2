@@ -87,42 +87,105 @@
                             </div>
                         </div>
 
-                        <!-- KPI Summary Cards -->
-                        <div class="row g-2 mb-3" id="my-trans-kpi-row">
+                        <!-- Payment Method & Financial Volume KPIs with Bank Breakdowns -->
+                        <div class="row g-2 mb-2" id="my-trans-kpi-row">
                             <div class="col-md-2 col-sm-4 col-6">
-                                <div class="p-2 border rounded bg-white shadow-sm text-center">
-                                    <div class="text-muted small">Transactions</div>
-                                    <div class="fw-bold font-16 text-dark" id="kpi-my-count">0</div>
+                                <div class="p-2 border rounded bg-white shadow-sm text-center h-100 d-flex flex-column justify-content-between">
+                                    <div>
+                                        <div class="text-muted small">Total Volume</div>
+                                        <div class="fw-bold font-15 text-primary" id="kpi-my-total">₦0.00</div>
+                                        <div class="text-muted font-10"><span id="kpi-my-count">0</span> transactions</div>
+                                    </div>
+                                    <div class="border-top pt-1 mt-1 font-10 text-muted fst-italic">Net Inflow</div>
                                 </div>
                             </div>
                             <div class="col-md-2 col-sm-4 col-6">
-                                <div class="p-2 border rounded bg-white shadow-sm text-center">
-                                    <div class="text-muted small">Total Volume</div>
-                                    <div class="fw-bold font-16 text-primary" id="kpi-my-total">₦0.00</div>
+                                <div class="p-2 border rounded bg-white shadow-sm text-center h-100 d-flex flex-column justify-content-between">
+                                    <div>
+                                        <div class="text-muted small"><i class="mdi mdi-cash text-success"></i> Cash</div>
+                                        <div class="fw-bold font-15 text-success" id="kpi-my-cash">₦0.00</div>
+                                        <div class="text-muted font-10"><span id="kpi-my-cash-count">0</span> tenders</div>
+                                    </div>
+                                    <div class="border-top pt-1 mt-1 font-10 text-muted fst-italic">Cash in Drawer</div>
                                 </div>
                             </div>
                             <div class="col-md-2 col-sm-4 col-6">
-                                <div class="p-2 border rounded bg-white shadow-sm text-center">
-                                    <div class="text-muted small"><i class="mdi mdi-pill text-success"></i> Products</div>
-                                    <div class="fw-bold font-15 text-success" id="kpi-my-products">₦0.00</div>
+                                <div class="p-2 border rounded bg-white shadow-sm text-center h-100 d-flex flex-column justify-content-between">
+                                    <div>
+                                        <div class="text-muted small"><i class="mdi mdi-credit-card-outline text-info"></i> POS</div>
+                                        <div class="fw-bold font-15 text-info" id="kpi-my-pos">₦0.00</div>
+                                        <div class="text-muted font-10"><span id="kpi-my-pos-count">0</span> tenders</div>
+                                    </div>
+                                    <div class="border-top pt-1 mt-1 font-10 text-muted text-start" id="kpi-my-pos-banks" style="max-height: 48px; overflow-y: auto;">
+                                        <div class="text-muted text-center font-9">No POS tenders</div>
+                                    </div>
                                 </div>
                             </div>
                             <div class="col-md-2 col-sm-4 col-6">
-                                <div class="p-2 border rounded bg-white shadow-sm text-center">
-                                    <div class="text-muted small"><i class="mdi mdi-stethoscope text-info"></i> Services</div>
-                                    <div class="fw-bold font-15 text-info" id="kpi-my-services">₦0.00</div>
+                                <div class="p-2 border rounded bg-white shadow-sm text-center h-100 d-flex flex-column justify-content-between">
+                                    <div>
+                                        <div class="text-muted small"><i class="mdi mdi-bank-transfer text-purple"></i> Transfer</div>
+                                        <div class="fw-bold font-15 text-purple" id="kpi-my-transfer">₦0.00</div>
+                                        <div class="text-muted font-10"><span id="kpi-my-transfer-count">0</span> tenders</div>
+                                    </div>
+                                    <div class="border-top pt-1 mt-1 font-10 text-muted text-start" id="kpi-my-transfer-banks" style="max-height: 48px; overflow-y: auto;">
+                                        <div class="text-muted text-center font-9">No Transfer tenders</div>
+                                    </div>
                                 </div>
                             </div>
                             <div class="col-md-2 col-sm-4 col-6">
-                                <div class="p-2 border rounded bg-white shadow-sm text-center">
-                                    <div class="text-muted small"><i class="mdi mdi-playlist-edit text-warning"></i> Custom Items</div>
-                                    <div class="fw-bold font-15 text-warning" id="kpi-my-custom">₦0.00</div>
+                                <div class="p-2 border rounded bg-white shadow-sm text-center h-100 d-flex flex-column justify-content-between">
+                                    <div>
+                                        <div class="text-muted small"><i class="mdi mdi-cellphone-wireless text-secondary"></i> Mobile / Deposit</div>
+                                        <div class="fw-bold font-15 text-secondary" id="kpi-my-deposit">₦0.00</div>
+                                        <div class="text-muted font-10"><span id="kpi-my-deposit-count">0</span> tenders</div>
+                                    </div>
+                                    <div class="border-top pt-1 mt-1 font-10 text-muted text-start" id="kpi-my-deposit-banks" style="max-height: 48px; overflow-y: auto;">
+                                        <div class="text-muted text-center font-9">No Deposit tenders</div>
+                                    </div>
                                 </div>
                             </div>
                             <div class="col-md-2 col-sm-4 col-6">
-                                <div class="p-2 border rounded bg-white shadow-sm text-center">
-                                    <div class="text-muted small"><i class="mdi mdi-call-split text-secondary"></i> Splits</div>
-                                    <div class="fw-bold font-15 text-secondary" id="kpi-my-splits">₦0.00</div>
+                                <div class="p-2 border rounded bg-white shadow-sm text-center h-100 d-flex flex-column justify-content-between">
+                                    <div>
+                                        <div class="text-muted small"><i class="mdi mdi-tag-outline text-warning"></i> Discounts / Splits</div>
+                                        <div class="fw-bold font-15 text-warning" id="kpi-my-discount">₦0.00</div>
+                                        <div class="text-muted font-10"><span id="kpi-my-splits-count">0</span> split txs</div>
+                                    </div>
+                                    <div class="border-top pt-1 mt-1 font-10 text-muted fst-italic">Split Tenders</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Product & Service Categories KPI Strip -->
+                        <div class="row g-2 mb-2" id="my-trans-categories-row">
+                            <!-- Clinical & Services Categories -->
+                            <div class="col-md-6 col-12">
+                                <div class="border rounded p-2 bg-light h-100">
+                                    <div class="d-flex justify-content-between align-items-center mb-1 pb-1 border-bottom">
+                                        <span class="fw-bold font-12 text-info">
+                                            <i class="mdi mdi-stethoscope me-1"></i> Clinical & Service Categories
+                                        </span>
+                                        <span class="badge bg-info text-white font-11" id="kpi-my-services-total">₦0.00 (0 items)</span>
+                                    </div>
+                                    <div class="d-flex flex-wrap gap-1 align-items-center" id="my-trans-service-categories-list" style="max-height: 80px; overflow-y: auto;">
+                                        <span class="text-muted font-11">No services recorded</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Pharmacy & Products Categories -->
+                            <div class="col-md-6 col-12">
+                                <div class="border rounded p-2 bg-light h-100">
+                                    <div class="d-flex justify-content-between align-items-center mb-1 pb-1 border-bottom">
+                                        <span class="fw-bold font-12 text-success">
+                                            <i class="mdi mdi-pill me-1"></i> Pharmacy & Product Categories
+                                        </span>
+                                        <span class="badge bg-success text-white font-11" id="kpi-my-products-total">₦0.00 (0 items)</span>
+                                    </div>
+                                    <div class="d-flex flex-wrap gap-1 align-items-center" id="my-trans-product-categories-list" style="max-height: 80px; overflow-y: auto;">
+                                        <span class="text-muted font-11">No products recorded</span>
+                                    </div>
                                 </div>
                             </div>
                         </div>

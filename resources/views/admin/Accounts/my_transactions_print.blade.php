@@ -450,7 +450,37 @@
         </div>
 
         <!-- Tender Breakdown Grid -->
-        @if(!empty($summary['by_type']) && count($summary['by_type']) > 0)
+        @if(!empty($summary['payment_method_kpis']))
+        <div class="section-heading">
+            <span>Payment Tender Breakdown</span>
+            <small style="text-transform: none; font-size: 8.5px; color: var(--muted);">
+                Net Collections by Tender @if(!empty($summary['split_transactions_count']) && $summary['split_transactions_count'] > 0)&bull; (Includes {{ $summary['split_transactions_count'] }} split transaction{{ $summary['split_transactions_count'] > 1 ? 's' : '' }})@endif
+            </small>
+        </div>
+        <div class="tender-grid">
+            @foreach($summary['payment_method_kpis'] as $code => $kpi)
+            @if((!empty($kpi['amount']) && $kpi['amount'] > 0) || (!empty($kpi['count']) && $kpi['count'] > 0))
+            <div class="tender-box">
+                <div class="tender-box-header">
+                    <span>{{ strtoupper($kpi['label'] ?? $code) }}</span>
+                    <span>{{ $kpi['count'] }} tender{{ $kpi['count'] != 1 ? 's' : '' }}</span>
+                </div>
+                <div class="tender-box-val">₦{{ number_format((float) $kpi['amount'], 2) }}</div>
+                @if(!empty($kpi['banks']) && count($kpi['banks']) > 0)
+                <div style="margin-top: 4px; padding-top: 4px; border-top: 1px dotted #ccc; font-size: 8px; color: var(--muted);">
+                    @foreach($kpi['banks'] as $b)
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 1px;">
+                        <span>{{ $b['name'] }} ({{ $b['count'] }}):</span>
+                        <span class="mono" style="font-weight: bold; color: #222;">₦{{ number_format((float) $b['amount'], 2) }}</span>
+                    </div>
+                    @endforeach
+                </div>
+                @endif
+            </div>
+            @endif
+            @endforeach
+        </div>
+        @elseif(!empty($summary['by_type']) && count($summary['by_type']) > 0)
         <div class="section-heading">
             <span>Payment Tender Breakdown</span>
             <small style="text-transform: none; font-size: 8.5px; color: var(--muted);">Net Collections by Tender</small>
@@ -459,10 +489,20 @@
             @foreach($summary['by_type'] as $type => $typeStat)
             <div class="tender-box">
                 <div class="tender-box-header">
-                    <span>{{ strtoupper(str_replace('_', ' ', $type)) }}</span>
+                    <span>{{ strtoupper(str_replace('_', ' ', $typeStat['label'] ?? $type)) }}</span>
                     <span>{{ $typeStat['count'] }} tx</span>
                 </div>
                 <div class="tender-box-val">₦{{ number_format((float) $typeStat['amount'], 2) }}</div>
+                @if(!empty($typeStat['banks']) && count($typeStat['banks']) > 0)
+                <div style="margin-top: 4px; padding-top: 4px; border-top: 1px dotted #ccc; font-size: 8px; color: var(--muted);">
+                    @foreach($typeStat['banks'] as $b)
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 1px;">
+                        <span>{{ $b['name'] }} ({{ $b['count'] }}):</span>
+                        <span class="mono" style="font-weight: bold; color: #222;">₦{{ number_format((float) $b['amount'], 2) }}</span>
+                    </div>
+                    @endforeach
+                </div>
+                @endif
             </div>
             @endforeach
         </div>
@@ -473,7 +513,7 @@
         <div class="section-heading">
             <span>Item Categories Summary</span>
         </div>
-        <div style="display: flex; gap: 12px; margin-bottom: 14px; font-size: 9.5px;">
+        <div style="display: flex; gap: 12px; margin-bottom: 10px; font-size: 9.5px;">
             <div style="flex: 1; background: #f8f9fa; border: 1px solid var(--border); border-radius: 4px; padding: 6px 10px;">
                 <strong>Pharmacy / Products:</strong>
                 <span class="mono" style="color: var(--brand); font-weight: bold; margin-left: 6px;">
@@ -489,6 +529,40 @@
                 <span style="color: var(--muted); margin-left: 4px;">({{ $summary['service_kpi']['count'] ?? 0 }} items)</span>
             </div>
         </div>
+
+        @if(!empty($summary['service_category_kpis']) || !empty($summary['product_category_kpis']))
+        <div style="display: flex; gap: 12px; margin-bottom: 14px; font-size: 8.5px;">
+            @if(!empty($summary['service_category_kpis']) && count($summary['service_category_kpis']) > 0)
+            <div style="flex: 1; background: #fff; border: 1px solid var(--border); border-radius: 4px; padding: 6px 10px;">
+                <div style="font-weight: bold; color: var(--brand); margin-bottom: 4px; text-transform: uppercase; font-size: 8px;">Clinical & Services Categories</div>
+                <table style="width: 100%; border-collapse: collapse;">
+                    @foreach($summary['service_category_kpis'] as $scat)
+                    <tr style="border-bottom: 1px dotted #e9ecef;">
+                        <td style="padding: 2px 0;">{{ $scat['name'] }}</td>
+                        <td style="padding: 2px 4px; text-align: right; color: var(--muted);">{{ $scat['count'] }} item{{ $scat['count'] != 1 ? 's' : '' }}</td>
+                        <td class="mono" style="padding: 2px 0 2px 6px; text-align: right; font-weight: bold;">₦{{ number_format((float) $scat['amount'], 2) }}</td>
+                    </tr>
+                    @endforeach
+                </table>
+            </div>
+            @endif
+
+            @if(!empty($summary['product_category_kpis']) && count($summary['product_category_kpis']) > 0)
+            <div style="flex: 1; background: #fff; border: 1px solid var(--border); border-radius: 4px; padding: 6px 10px;">
+                <div style="font-weight: bold; color: #2e7d32; margin-bottom: 4px; text-transform: uppercase; font-size: 8px;">Pharmacy & Product Categories</div>
+                <table style="width: 100%; border-collapse: collapse;">
+                    @foreach($summary['product_category_kpis'] as $pcat)
+                    <tr style="border-bottom: 1px dotted #e9ecef;">
+                        <td style="padding: 2px 0;">{{ $pcat['name'] }}</td>
+                        <td style="padding: 2px 4px; text-align: right; color: var(--muted);">{{ $pcat['count'] }} item{{ $pcat['count'] != 1 ? 's' : '' }}</td>
+                        <td class="mono" style="padding: 2px 0 2px 6px; text-align: right; font-weight: bold;">₦{{ number_format((float) $pcat['amount'], 2) }}</td>
+                    </tr>
+                    @endforeach
+                </table>
+            </div>
+            @endif
+        </div>
+        @endif
         @endif
 
         <!-- Detailed Transaction Table -->

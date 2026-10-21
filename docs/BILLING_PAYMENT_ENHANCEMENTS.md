@@ -109,7 +109,8 @@ Supported split channels:
   - Frontend equivalent: `window.CoreHealth.getItemDisplayName(item)`.
 - **Payment Method Formatter (`formatPaymentMethod($payment)`)**:
   - Maps methods directly matching the system payment modal (`CASH` -> "Cash", `POS` -> "POS", `TRANSFER` / `BANK_TRANSFER` -> "Bank Transfer", `MOBILE` -> "Mobile Money", `BILL_TO_STAFF` -> "Bill to Staff", `BILL_TO_ORGANIZATION` -> "Bill to Organization", `ACCOUNT` -> "Patient Account", `DEPOSIT` / `ACC_DEPOSIT` -> "Account Deposit", `SPLIT` -> "Split Payment").
-  - Splits: returns `Split: Cash ₦4,000.00 + POS ₦6,000.00`.
+  - Automatically incorporates bank names for non-cash methods (e.g. `POS - Zenith Bank`, `Bank Transfer - Access Bank`).
+  - Splits: returns `Split: Cash ₦4,000.00 + POS (Zenith Bank) ₦6,000.00`.
   - Frontend equivalent: `window.CoreHealth.formatPaymentMethod(tx)`.
 
 ### B. Modular JavaScript Libraries
@@ -124,7 +125,9 @@ Supported split channels:
 - **`public/js/billing-my-transactions.js`**:
   - My Transactions modal with itemized line item summaries.
   - Filters: Product Only, Service Only, Product Category, Service Category, and Item search.
-  - Real-time KPI summaries for total volume, product revenue, service revenue, custom items, and split volume.
+  - True Tender Accounting: Split is recognized as an operational mechanism, not an independent payment method. Split tender legs are accurately distributed and accounted into their respective tender methods (Cash, POS, Bank Transfer, Mobile/Deposit).
+  - Terminal & Bank Breakdown: Displays live bank-specific breakdowns directly inside the POS, Transfer, and Deposit KPI cards (e.g. POS Zenith, POS UBA, Transfer Access) and on printouts.
+  - Dynamic Category KPIs: Interactive pills for each Clinical/Service category and Pharmacy/Product category showing item counts and ₦ totals, clickable to immediately filter the transaction ledger.
   - Manage Transactions DataTables grid with 1-click Payment Adjustment and Void modal flows.
 
 ### C. UI & Master Layout Integration
@@ -167,12 +170,14 @@ node --check public/js/workbench-helper.js
 | :--- | :--- | :--- | :--- | :--- |
 | **Split Payments** | `tests/Feature/Billing/PaymentSplitTest.php` | 2 | 18 | **PASSED** |
 | **Free-Form Billing** | `tests/Feature/Billing/FreeFormBillingTest.php` | 2 | 15 | **PASSED** |
-| **My Transactions & KPIs** | `tests/Feature/Billing/MyTransactionsEnhancedTest.php` | 3 | 20 | **PASSED** |
+| **My Transactions & Bank KPIs** | `tests/Feature/Billing/MyTransactionsEnhancedTest.php` | 5 | 35 | **PASSED** |
+| **Reception My Transactions** | `tests/Feature/Billing/ReceptionMyTransactionsTest.php` | 2 | 11 | **PASSED** |
 | **Adjustment & Voiding** | `tests/Feature/Billing/PaymentAdjustmentAndVoidTest.php` | 3 | 25 | **PASSED** |
 | **Billing Workbench Core**| `tests/Feature/BillingWorkbenchTest.php` | 8 | 23 | **PASSED** |
+| **Full Billing Domain Suite**| `tests/Feature/Billing/` | 59 | 225 | **PASSED** |
 | **Ops Audit Endpoints** | `tests/Feature/OpsAudit/OpsAuditEndpointsTest.php` | 156 | 156 | **PASSED** |
-| **PSR-12 Code Style** | `make lint` | 1306 files | 0 errors | **PASSED** |
-| **JavaScript Syntax** | `node --check` | 5 modules | 0 errors | **PASSED** |
+| **PSR-12 Code Style** | `make lint` | 1307 files | 0 errors | **PASSED** |
+| **JavaScript Syntax** | `node --check` | 6 modules | 0 errors | **PASSED** |
 
 ---
 

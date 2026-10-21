@@ -189,4 +189,85 @@ class MyTransactionsEnhancedTest extends TestCase
         $this->assertArrayHasKey('data', $data);
         $this->assertArrayHasKey('recordsTotal', $data);
     }
+
+    /** @test */
+    public function test_my_transactions_accounts_split_payments_in_respective_tender_methods_and_excludes_split_as_method()
+    {
+        // Create a split payment
+        $splitPayment = Payment::create([
+            'reference_no' => 'REC-SPLIT-' . uniqid(),
+            'total' => 3000,
+            'total_discount' => 0,
+            'payment_type' => 'SPLIT',
+            'payment_method' => 'SPLIT',
+            'is_split_payment' => 1,
+            'patient_id' => $this->patient->id,
+            'user_id' => $this->user->id,
+        ]);
+
+        \App\Models\PaymentSplit::create([
+            'payment_id' => $splitPayment->id,
+            'payment_method' => 'CASH',
+            'amount' => 1000,
+        ]);
+
+        \App\Models\PaymentSplit::create([
+            'payment_id' => $splitPayment->id,
+            'payment_method' => 'POS',
+            'amount' => 2000,
+        ]);
+
+        ProductOrServiceRequest::create([
+            'user_id' => $this->patient->user_id,
+            'staff_user_id' => $this->user->id,
+            'patient_id' => $this->patient->id,
+            'payment_id' => $splitPayment->id,
+            'service_id' => $this->service->id,
+            'qty' => 1,
+            'payable_amount' => 3000,
+            'claims_amount' => 0,
+            'status' => 1,
+        ]);
+
+        $response = $this->actingAs($this->user)->getJson(route('billing.my-transactions', [
+            'from_date' => now()->subDay()->toDateString(),
+            'to_date' => now()->addDay()->toDateString(),
+        ]));
+
+        $this->assertTrue(in_array($response->status(), [200, 302]));
+        $data = $response->json();
+        $summary = $data['summary'];
+
+        // Assert SPLIT is NOT a payment method KPI
+        $this->assertArrayNotHasKey('SPLIT', $summary['payment_method_kpis']);
+
+        // Assert tender methods exist and have positive amounts
+        $this->assertArrayHasKey('CASH', $summary['payment_method_kpis']);
+        $this->assertArrayHasKey('POS', $summary['payment_method_kpis']);
+        $this->assertGreaterThanOrEqual(1000, $summary['payment_method_kpis']['CASH']['amount']);
+        $this->assertGreaterThanOrEqual(2000, $summary['payment_method_kpis']['POS']['amount']);
+
+        // Assert split transaction counter
+        $this->assertGreaterThanOrEqual(1, $summary['split_transactions_count']);
+
+        // Assert category KPIs
+        $this->assertArrayHasKey('product_category_kpis', $summary);
+        $this->assertArrayHasKey('service_category_kpis', $summary);
+    }
+
+    /** @test */
+    public function test_my_transactions_print_view_renders_tender_and_category_breakdowns()
+    {
+        $response = $this->actingAs($this->user)->get(route('billing.my-transactions', [
+            'from_date' => now()->subDay()->toDateString(),
+            'to_date' => now()->addDay()->toDateString(),
+            'action' => 'print',
+        ]));
+
+        $this->assertTrue(in_array($response->status(), [200, 302]));
+        $html = $response->getContent();
+
+        $this->assertStringContainsString('Payment Tender Breakdown', $html);
+        $this->assertStringContainsString('Item Categories Summary', $html);
+    }
 }
