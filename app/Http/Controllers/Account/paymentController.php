@@ -245,6 +245,42 @@ class paymentController extends Controller
                         ->where('user_id', $request->patient_id)
                         ->whereNull('invoice_id')
                         ->update(['payment_id' => $payment->id]);
+
+                    $staffId = Auth::id() ?? $payment->user_id;
+                    $now = now();
+
+                    \App\Models\LabServiceRequest::whereIn('service_request_id', $allSelectedIds)
+                        ->where('status', 1)
+                        ->update([
+                            'status' => 2,
+                            'billed_by' => $staffId,
+                            'billed_date' => $now,
+                            'self_perform_intent' => true,
+                        ]);
+
+                    \App\Models\ImagingServiceRequest::whereIn('service_request_id', $allSelectedIds)
+                        ->where('status', 1)
+                        ->update([
+                            'status' => 2,
+                            'billed_by' => $staffId,
+                            'billed_date' => $now,
+                            'self_perform_intent' => true,
+                        ]);
+
+                    \App\Models\ProductRequest::whereIn('product_request_id', $allSelectedIds)
+                        ->where('status', 1)
+                        ->update([
+                            'status' => 2,
+                            'billed_by' => $staffId,
+                            'billed_date' => $now,
+                        ]);
+
+                    \App\Models\Procedure::whereIn('product_or_service_request_id', $allSelectedIds)
+                        ->whereNull('billed_on')
+                        ->update([
+                            'billed_by' => $staffId,
+                            'billed_on' => $now,
+                        ]);
                 }
 
                 // Create HMO Claim if patient has HMO and there are claims
@@ -505,6 +541,42 @@ class paymentController extends Controller
                 ->where('user_id', $patient->user_id)
                 ->whereNull('invoice_id')
                 ->update(['payment_id' => $payment->id]);
+
+            $staffId = Auth::id() ?? $payment->user_id;
+            $now = now();
+
+            \App\Models\LabServiceRequest::whereIn('service_request_id', $ids)
+                ->where('status', 1)
+                ->update([
+                    'status' => 2,
+                    'billed_by' => $staffId,
+                    'billed_date' => $now,
+                    'self_perform_intent' => true,
+                ]);
+
+            \App\Models\ImagingServiceRequest::whereIn('service_request_id', $ids)
+                ->where('status', 1)
+                ->update([
+                    'status' => 2,
+                    'billed_by' => $staffId,
+                    'billed_date' => $now,
+                    'self_perform_intent' => true,
+                ]);
+
+            \App\Models\ProductRequest::whereIn('product_request_id', $ids)
+                ->where('status', 1)
+                ->update([
+                    'status' => 2,
+                    'billed_by' => $staffId,
+                    'billed_date' => $now,
+                ]);
+
+            \App\Models\Procedure::whereIn('product_or_service_request_id', $ids)
+                ->whereNull('billed_on')
+                ->update([
+                    'billed_by' => $staffId,
+                    'billed_on' => $now,
+                ]);
 
             // Create HMO claim if applicable
             if ($patient->hmo_id && $claimsTotal > 0) {

@@ -82,6 +82,17 @@ class ImagingWorkbenchController extends Controller
      */
     public function getQueueCounts()
     {
+        // Auto-advance paid requests past billing stage directly to results entry (status 2)
+        ImagingServiceRequest::where('status', 1)
+            ->whereHas('productOrServiceRequest', function ($q) {
+                $q->whereNotNull('payment_id');
+            })
+            ->update([
+                'status' => 2,
+                'billed_date' => now(),
+                'self_perform_intent' => true,
+            ]);
+
         // ── Performance: Single aggregate query for all queue counts ──
         $counts = ImagingServiceRequest::selectRaw("
             SUM(CASE WHEN status = 1 AND (is_free_form IS NULL OR is_free_form = 0) THEN 1 ELSE 0 END) as billing,
@@ -113,6 +124,18 @@ class ImagingWorkbenchController extends Controller
     public function getPatientRequests($patientId)
     {
         $patient = Patient::with(['user', 'hmo.scheme'])->findOrFail($patientId);
+
+        // Auto-advance paid requests for this patient past billing stage directly to results entry
+        ImagingServiceRequest::where('patient_id', $patientId)
+            ->where('status', 1)
+            ->whereHas('productOrServiceRequest', function ($q) {
+                $q->whereNotNull('payment_id');
+            })
+            ->update([
+                'status' => 2,
+                'billed_date' => now(),
+                'self_perform_intent' => true,
+            ]);
 
         // Get all pending imaging requests (including approval/rejection statuses)
         $statuses = [1, 2, 5, 6];
@@ -308,6 +331,17 @@ class ImagingWorkbenchController extends Controller
     public function getImagingQueue(Request $request)
     {
         try {
+            // Auto-advance paid requests past billing stage directly to results entry
+            ImagingServiceRequest::where('status', 1)
+                ->whereHas('productOrServiceRequest', function ($q) {
+                    $q->whereNotNull('payment_id');
+                })
+                ->update([
+                    'status' => 2,
+                    'billed_date' => now(),
+                    'self_perform_intent' => true,
+                ]);
+
             // Base query with all necessary relationships
             $query = ImagingServiceRequest::with([
                 'service',

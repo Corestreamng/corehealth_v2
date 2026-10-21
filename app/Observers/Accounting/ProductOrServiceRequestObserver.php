@@ -173,6 +173,19 @@ class ProductOrServiceRequestObserver
                 $request->update(['payment_id' => $payment->id]);
             });
 
+            // Advance associated clinical requests past billing stage
+            \App\Models\LabServiceRequest::where('service_request_id', $request->id)
+                ->where('status', 1)
+                ->update(['status' => 2, 'billed_date' => now(), 'self_perform_intent' => true]);
+
+            \App\Models\ImagingServiceRequest::where('service_request_id', $request->id)
+                ->where('status', 1)
+                ->update(['status' => 2, 'billed_date' => now(), 'self_perform_intent' => true]);
+
+            \App\Models\ProductRequest::where('product_request_id', $request->id)
+                ->where('status', 1)
+                ->update(['status' => 2, 'billed_date' => now()]);
+
             Log::info('ProductOrServiceRequestObserver: Auto-settled fully HMO-covered item', [
                 'request_id' => $request->id,
                 'payment_id' => $payment->id,

@@ -1095,6 +1095,43 @@ class BillingWorkbenchController extends Controller
                 ->whereNull('invoice_id')
                 ->update(['payment_id' => $payment->id]);
 
+            // Auto-advance associated clinical requests past billing stage directly to execution
+            $staffId = Auth::id() ?? $payment->user_id;
+            $now = now();
+
+            \App\Models\LabServiceRequest::whereIn('service_request_id', $ids)
+                ->where('status', 1)
+                ->update([
+                    'status' => 2,
+                    'billed_by' => $staffId,
+                    'billed_date' => $now,
+                    'self_perform_intent' => true,
+                ]);
+
+            \App\Models\ImagingServiceRequest::whereIn('service_request_id', $ids)
+                ->where('status', 1)
+                ->update([
+                    'status' => 2,
+                    'billed_by' => $staffId,
+                    'billed_date' => $now,
+                    'self_perform_intent' => true,
+                ]);
+
+            \App\Models\ProductRequest::whereIn('product_request_id', $ids)
+                ->where('status', 1)
+                ->update([
+                    'status' => 2,
+                    'billed_by' => $staffId,
+                    'billed_date' => $now,
+                ]);
+
+            \App\Models\Procedure::whereIn('product_or_service_request_id', $ids)
+                ->whereNull('billed_on')
+                ->update([
+                    'billed_by' => $staffId,
+                    'billed_on' => $now,
+                ]);
+
             // Create deposit application entries if paying from account (FIFO)
             // Only create applications for the portion covered by actual deposits
             // Overdraw amounts don't get application entries (they're credit facility usage)
@@ -1570,6 +1607,24 @@ class BillingWorkbenchController extends Controller
             });
         }
 
+        // Category filter by category_name (e.g. "Consultation", "Tablets", "Custom Items")
+        if ($request->filled('category')) {
+            $catFilterName = $request->category;
+            $query->whereHas('product_or_service_request', function ($q) use ($catFilterName) {
+                if ($catFilterName === 'Custom Items') {
+                    $q->where('is_free_form', true);
+                } else {
+                    $q->where(function ($sub) use ($catFilterName) {
+                        $sub->whereHas('service.category', function ($sq) use ($catFilterName) {
+                            $sq->where('category_name', $catFilterName);
+                        })->orWhereHas('product.category', function ($pq) use ($catFilterName) {
+                            $pq->where('category_name', $catFilterName);
+                        });
+                    });
+                }
+            });
+        }
+
         // Specific product filter
         if ($request->filled('product_id')) {
             $prodId = $request->product_id;
@@ -1605,7 +1660,7 @@ class BillingWorkbenchController extends Controller
                 if ($item->product_id) {
                     $productTotalAmount += $amt;
                     $productTotalCount++;
-                    $catName = $item->product?->category?->name ?? 'Uncategorized';
+                    $catName = $item->product?->category?->category_name ?? $item->product?->category?->name ?? 'Uncategorized';
                     if (!isset($productCategoryKpis[$catName])) {
                         $productCategoryKpis[$catName] = ['name' => $catName, 'count' => 0, 'amount' => 0];
                     }
@@ -1754,6 +1809,14 @@ class BillingWorkbenchController extends Controller
             'service_category_kpis' => array_values($serviceCategoryKpis),
         ];
 
+        $allServiceCats = \App\Models\ServiceCategory::where('status', 1)->orderBy('category_name')->pluck('category_name')->all();
+        $allProductCats = \App\Models\ProductCategory::where('status', 1)->orderBy('category_name')->pluck('category_name')->all();
+
+        $summary['all_categories'] = [
+            'services' => $allServiceCats,
+            'products' => $allProductCats,
+        ];
+
         $transactionsFormatted = $transactions->map(function ($tx) {
             $itemsFormatted = $tx->product_or_service_request->map(function ($item) {
                 $isService = (bool) $item->service_id;
@@ -1762,11 +1825,13 @@ class BillingWorkbenchController extends Controller
                 $amt = (float) ($item->payable_amount ?? 0);
                 $unitPrice = $qty > 0 ? $amt / $qty : $amt;
 
+                $catName = $isFree ? 'Custom Items' : ($item->service?->category?->category_name ?? $item->product?->category?->category_name ?? $item->product?->category?->name ?? 'General Items');
+
                 return [
                     'id' => $item->id,
                     'type' => $isFree ? 'Custom' : ($isService ? 'Service' : 'Product'),
                     'name' => getItemDisplayName($item),
-                    'category' => $item->service?->category?->category_name ?? $item->product?->category?->name ?? 'N/A',
+                    'category' => $catName,
                     'qty' => $qty,
                     'unit_price' => $unitPrice,
                     'amount' => $amt,
@@ -1825,6 +1890,10 @@ class BillingWorkbenchController extends Controller
             'success' => true,
             'transactions' => $transactionsFormatted,
             'summary' => $summary,
+            'all_categories' => [
+                'services' => $allServiceCats,
+                'products' => $allProductCats,
+            ],
             'from' => $from,
             'to' => $to,
         ]);

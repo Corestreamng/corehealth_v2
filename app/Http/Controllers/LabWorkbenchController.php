@@ -82,6 +82,17 @@ class LabWorkbenchController extends Controller
      */
     public function getQueueCounts()
     {
+        // Auto-advance paid requests past billing stage directly to sample collection (status 2)
+        LabServiceRequest::where('status', 1)
+            ->whereHas('productOrServiceRequest', function ($q) {
+                $q->whereNotNull('payment_id');
+            })
+            ->update([
+                'status' => 2,
+                'billed_date' => now(),
+                'self_perform_intent' => true,
+            ]);
+
         // ── Performance: Single aggregate query for all queue counts ──
         $counts = LabServiceRequest::selectRaw("
             SUM(CASE WHEN status = 1 AND (is_free_form IS NULL OR is_free_form = 0) THEN 1 ELSE 0 END) as billing,
@@ -119,6 +130,18 @@ class LabWorkbenchController extends Controller
     public function getPatientRequests($patientId)
     {
         $patient = Patient::with(['user', 'hmo.scheme'])->findOrFail($patientId);
+
+        // Auto-advance paid requests for this patient past billing stage directly to sample collection
+        LabServiceRequest::where('patient_id', $patientId)
+            ->where('status', 1)
+            ->whereHas('productOrServiceRequest', function ($q) {
+                $q->whereNotNull('payment_id');
+            })
+            ->update([
+                'status' => 2,
+                'billed_date' => now(),
+                'self_perform_intent' => true,
+            ]);
 
         // Get all pending investigation requests (including approval/rejection statuses)
         $statuses = [1, 2, 3, 5, 6];
@@ -318,6 +341,17 @@ class LabWorkbenchController extends Controller
     public function getLabQueue(Request $request)
     {
         try {
+            // Auto-advance paid requests past billing stage directly to sample collection
+            LabServiceRequest::where('status', 1)
+                ->whereHas('productOrServiceRequest', function ($q) {
+                    $q->whereNotNull('payment_id');
+                })
+                ->update([
+                    'status' => 2,
+                    'billed_date' => now(),
+                    'self_perform_intent' => true,
+                ]);
+
             // Base query with all necessary relationships
             $query = LabServiceRequest::with([
                 'service',
