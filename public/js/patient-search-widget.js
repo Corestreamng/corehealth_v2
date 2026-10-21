@@ -192,6 +192,13 @@ const PatientSearchWidget = (function() {
             }
 
             function selectPatient(patientData) {
+                // Sync global patient context across workbenches
+                if (patientData && patientData.id) {
+                    window.currentPatient = patientData.id;
+                    window.currentPatientId = patientData.id;
+                    window.currentPatientData = patientData;
+                }
+
                 // Save to recent
                 addRecentPatient(patientData);
                 

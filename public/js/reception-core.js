@@ -24,8 +24,11 @@ if (typeof window.wbRoute !== 'function') {
 // =============================================
 
 // Global state
-let currentPatient = null;
-let currentPatientData = null;
+window.currentPatient = window.currentPatient || null;
+window.currentPatientId = window.currentPatientId || null;
+window.currentPatientData = window.currentPatientData || null;
+let currentPatient = window.currentPatient;
+let currentPatientData = window.currentPatientData;
 let queueRefreshInterval = null;
 let queueDataTable = null;
 let visitHistoryTable = null;
@@ -188,7 +191,11 @@ function initializeEventListeners() {
         const patientId = $(this).data('id');
         if (patientId) {
             hideReports();
-            selectPatient(patientId);
+            if (typeof loadPatient === 'function') {
+                loadPatient(patientId);
+            } else if (typeof selectPatient === 'function') {
+                selectPatient(patientId);
+            }
         }
     });
 
@@ -499,13 +506,15 @@ function updateServiceTypeUI(type) {
 // =============================================
 function loadPatient(patientId) {
     currentPatient = patientId;
+    window.currentPatient = patientId;
+    window.currentPatientId = patientId;
 
     // Hide all views to prevent stacking
     hideAllViews();
 
     // Show patient workspace
-    $('#workspace-content').show().addClass('active');
-    $('#patient-header').addClass('active');
+    $('#workspace-content').show().addClass('active').data('patient-id', patientId);
+    $('#patient-header').addClass('active').data('patient-id', patientId);
 
     // Show loading indicator
     $('#patient-name').html('<i class="mdi mdi-loading mdi-spin"></i> Loading...');
@@ -521,6 +530,7 @@ function loadPatient(patientId) {
         method: 'GET',
         success: function(data) {
             currentPatientData = data.patient;
+            window.currentPatientData = data.patient;
             displayPatientInfo(data.patient);
 
             // Initialize Clinical Alerts
@@ -563,6 +573,14 @@ function loadPatient(patientId) {
 }
 
 function displayPatientInfo(patient) {
+    currentPatient = patient.id;
+    currentPatientData = patient;
+    window.currentPatient = patient.id;
+    window.currentPatientId = patient.id;
+    window.currentPatientData = patient;
+    $('#workspace-content').data('patient-id', patient.id);
+    $('#patient-header').data('patient-id', patient.id);
+
     $('#patient-name').text(patient.name);
 
     // Parse allergies

@@ -568,6 +568,8 @@ Route::group(['middleware' => ['auth']], function () {
         Route::get('/billing-workbench/services/procedure', [\App\Http\Controllers\ReceptionWorkbenchController::class, 'getProcedureServices'])->name('billing.services.procedure');
         Route::get('/billing-workbench/products', [\App\Http\Controllers\ReceptionWorkbenchController::class, 'getProducts'])->name('billing.products');
         Route::post('/billing-workbench/tariff-preview', [\App\Http\Controllers\ReceptionWorkbenchController::class, 'getTariffPreview'])->name('billing.tariff-preview');
+        Route::get('/billing-workbench/patient/{id}/recent-requests', [\App\Http\Controllers\ReceptionWorkbenchController::class, 'getRecentRequests'])->name('billing.patient-recent-requests');
+        Route::delete('/billing-workbench/request/{type}/{id}/discard', [\App\Http\Controllers\ReceptionWorkbenchController::class, 'discardServiceRequest'])->name('billing.request.discard');
         Route::get('/billing-workbench/patient/{id}/admissions', [\App\Http\Controllers\BillingWorkbenchController::class, 'getAdmissionHistory'])->name('billing.admission-history');
         Route::get('/billing-workbench/admission/{id}/bill', [\App\Http\Controllers\BillingWorkbenchController::class, 'getAdmissionBillDetail'])->name('billing.admission-bill');
         Route::get('/billing-workbench/admission/{id}/print-bill', [\App\Http\Controllers\BillingWorkbenchController::class, 'printAdmissionBill'])->name('billing.print-admission-bill');

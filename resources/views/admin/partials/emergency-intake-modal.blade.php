@@ -601,7 +601,13 @@
 (function() {
     'use strict';
 
-    let emergencySearchTimeout = null;
+    function initEmergencyIntake() {
+        if (typeof $ === 'undefined' || typeof jQuery === 'undefined') {
+            setTimeout(initEmergencyIntake, 50);
+            return;
+        }
+
+        let emergencySearchTimeout = null;
     let emergencyServiceSearchTimeout = null;
     let emergencyDirectServices = []; // [{type, id, name}]
     let emiTimerInterval = null;
@@ -1230,10 +1236,16 @@
         goToStep(1);
     }
 
-    // Reset when modal is closed
-    $('#emergencyIntakeModal').on('hidden.bs.modal', function() {
-        resetEmergencyForm();
-    });
+        // Reset when modal is closed
+        $('#emergencyIntakeModal').on('hidden.bs.modal', function() {
+            resetEmergencyForm();
+        });
+    }
 
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initEmergencyIntake);
+    } else {
+        initEmergencyIntake();
+    }
 })();
 </script>

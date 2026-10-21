@@ -152,3 +152,4 @@
 </div>
 
 @include('admin.partials.patient-form-modal')
+@include('admin.shared.modals.discard_request_modal')

@@ -1099,9 +1099,12 @@ class ReceptionWorkbenchController extends Controller
             'items.*.type' => 'required|in:lab,imaging,product,procedure,free_form',
             'items.*.id' => 'nullable',
             'items.*.qty' => 'nullable|integer|min:1',
+            'items.*.quantity' => 'nullable|integer|min:1',
             'items.*.name' => 'nullable|string',
             'items.*.price' => 'nullable|numeric|min:0',
-            'items.*.is_billable' => 'nullable|boolean',
+            'items.*.base_price' => 'nullable|numeric|min:0',
+            'items.*.payable_amount' => 'nullable|numeric|min:0',
+            'items.*.is_billable' => 'nullable',
             'items.*.description' => 'nullable|string',
         ]);
 
@@ -1113,7 +1116,7 @@ class ReceptionWorkbenchController extends Controller
             $settings = appsettings();
 
             foreach ($request->items as $item) {
-                $qty = $item['qty'] ?? 1;
+                $qty = isset($item['qty']) ? (int) $item['qty'] : (isset($item['quantity']) ? (int) $item['quantity'] : 1);
                 $type = $item['type'];
 
                 // Granular walkin permission check
@@ -1137,12 +1140,18 @@ class ReceptionWorkbenchController extends Controller
                     // Create lab service request
                     $serviceRequest = $this->createServiceRequest($patient, $item['id'], null);
 
+                    $isFullyCovered = ($serviceRequest->payable_amount !== null && (float) $serviceRequest->payable_amount <= 0) || !empty($serviceRequest->payment_id);
                     $labRequest = new LabServiceRequest();
                     $labRequest->service_request_id = $serviceRequest->id;
                     $labRequest->service_id = $item['id'];
                     $labRequest->patient_id = $patient->id;
                     $labRequest->doctor_id = null; // Walk-in, no doctor
-                    $labRequest->status = 1; // Awaiting billing
+                    $labRequest->status = $isFullyCovered ? 2 : 1; // Advance to sample collection if already covered
+                    if ($isFullyCovered) {
+                        $labRequest->billed_by = Auth::id();
+                        $labRequest->billed_date = now();
+                        $labRequest->self_perform_intent = true;
+                    }
                     $labRequest->save();
 
                     $createdRequests[] = [
@@ -1157,12 +1166,18 @@ class ReceptionWorkbenchController extends Controller
                     // Create imaging service request
                     $serviceRequest = $this->createServiceRequest($patient, $item['id'], null);
 
+                    $isFullyCovered = ($serviceRequest->payable_amount !== null && (float) $serviceRequest->payable_amount <= 0) || !empty($serviceRequest->payment_id);
                     $imagingRequest = new ImagingServiceRequest();
                     $imagingRequest->service_request_id = $serviceRequest->id;
                     $imagingRequest->service_id = $item['id'];
                     $imagingRequest->patient_id = $patient->id;
                     $imagingRequest->doctor_id = null;
-                    $imagingRequest->status = 1; // Awaiting billing
+                    $imagingRequest->status = $isFullyCovered ? 2 : 1; // Advance to results/investigations if already covered
+                    if ($isFullyCovered) {
+                        $imagingRequest->billed_by = Auth::id();
+                        $imagingRequest->billed_date = now();
+                        $imagingRequest->self_perform_intent = true;
+                    }
                     $imagingRequest->save();
 
                     $createdRequests[] = [
@@ -1177,12 +1192,17 @@ class ReceptionWorkbenchController extends Controller
                     // Create product request
                     $serviceRequest = $this->createServiceRequest($patient, null, $item['id'], $qty);
 
+                    $isFullyCovered = ($serviceRequest->payable_amount !== null && (float) $serviceRequest->payable_amount <= 0) || !empty($serviceRequest->payment_id);
                     $productRequest = new ProductRequest();
                     $productRequest->product_request_id = $serviceRequest->id;
                     $productRequest->product_id = $item['id'];
                     $productRequest->patient_id = $patient->id;
                     $productRequest->doctor_id = null;
-                    $productRequest->status = 1; // Awaiting billing
+                    $productRequest->status = $isFullyCovered ? 2 : 1; // Advance to ready to dispense if already covered
+                    if ($isFullyCovered) {
+                        $productRequest->billed_by = Auth::id();
+                        $productRequest->billed_date = now();
+                    }
                     $productRequest->save();
 
                     $createdRequests[] = [
@@ -1217,8 +1237,8 @@ class ReceptionWorkbenchController extends Controller
 
                 } elseif ($type === 'free_form') {
                     // Create free-form item
-                    $unitPrice = isset($item['price']) ? (float) $item['price'] : 0;
-                    $isBillable = isset($item['is_billable']) ? (bool) $item['is_billable'] : true;
+                    $unitPrice = isset($item['price']) ? (float) $item['price'] : (isset($item['base_price']) ? (float) $item['base_price'] : (isset($item['payable_amount']) ? (float) $item['payable_amount'] : 0));
+                    $isBillable = isset($item['is_billable']) ? (filter_var($item['is_billable'], FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE) ?? true) : true;
                     $name = !empty($item['name']) ? $item['name'] : (!empty($item['id']) ? $item['id'] : 'Custom Item');
 
                     $serviceRequest = new ProductOrServiceRequest();
@@ -1230,6 +1250,7 @@ class ReceptionWorkbenchController extends Controller
                     $serviceRequest->free_form_description = $item['description'] ?? null;
                     $serviceRequest->is_billable = $isBillable;
                     $serviceRequest->qty = $qty;
+                    $serviceRequest->amount = $unitPrice * $qty;
                     $serviceRequest->payable_amount = $isBillable ? ($unitPrice * $qty) : 0;
                     $serviceRequest->claims_amount = 0;
                     $serviceRequest->coverage_mode = 'cash';
@@ -1242,6 +1263,7 @@ class ReceptionWorkbenchController extends Controller
                         'name' => $name,
                         'payable_amount' => (float) $serviceRequest->payable_amount,
                         'claims_amount' => 0,
+                        'is_billable' => (bool) $isBillable,
                     ];
                 }
             }
@@ -2570,6 +2592,71 @@ class ReceptionWorkbenchController extends Controller
             });
         $requests = $requests->merge($productRequests);
 
+        // Procedure Requests
+        $procedureRequests = \App\Models\Procedure::with(['service.price', 'productOrServiceRequest.payment'])
+            ->where('patient_id', $patientId)
+            ->where('created_at', '>=', $since)
+            ->orderBy('created_at', 'desc')
+            ->get()
+            ->map(function ($req) {
+                $posr = $req->productOrServiceRequest;
+                $isPaid = $posr && $posr->payment_id ? true : false;
+                $payable = $posr ? (float)$posr->payable_amount : (float)(optional(optional($req->service)->price)->sale_price ?? 0);
+                $price = $posr ? (float)($posr->payable_amount + $posr->claims_amount) : (float)(optional(optional($req->service)->price)->sale_price ?? 0);
+                $hmoCovers = (float)($posr->claims_amount ?? 0);
+
+                return [
+                    'id' => $req->id,
+                    'service_request_id' => $posr ? $posr->id : null,
+                    'is_paid' => $isPaid,
+                    'can_pay' => (!$isPaid && $posr && $payable > 0),
+                    'type' => 'procedure',
+                    'type_label' => 'Procedure',
+                    'name' => optional($req->service)->service_name ?? 'Unknown Procedure',
+                    'price' => $price,
+                    'hmo_covers' => $hmoCovers,
+                    'payable' => $payable,
+                    'coverage_mode' => $posr->coverage_mode ?? null,
+                    'billing_status' => $isPaid ? 'Paid' : 'Pending',
+                    'delivery_status' => $req->procedure_status ?? 'Pending',
+                    'created_at' => $req->created_at,
+                ];
+            });
+        $requests = $requests->merge($procedureRequests);
+
+        // Free-Form Requests
+        $freeFormRequests = ProductOrServiceRequest::with(['payment'])
+            ->where('patient_id', $patientId)
+            ->where('is_free_form', true)
+            ->where('created_at', '>=', $since)
+            ->orderBy('created_at', 'desc')
+            ->get()
+            ->map(function ($posr) {
+                $isPaid = $posr->payment_id ? true : false;
+                $payable = (float)($posr->payable_amount ?? 0);
+                $price = $posr->amount !== null ? (float)$posr->amount : (float)($posr->payable_amount + ($posr->claims_amount ?? 0));
+                $hmoCovers = (float)($posr->claims_amount ?? 0);
+
+                return [
+                    'id' => $posr->id,
+                    'service_request_id' => $posr->id,
+                    'is_paid' => $isPaid,
+                    'can_pay' => (!$isPaid && $payable > 0),
+                    'is_billable' => (bool)$posr->is_billable,
+                    'type' => 'free_form',
+                    'type_label' => 'Custom Item',
+                    'name' => $posr->free_form_name ?? 'Custom Item',
+                    'price' => $price,
+                    'hmo_covers' => $hmoCovers,
+                    'payable' => $payable,
+                    'coverage_mode' => $posr->coverage_mode ?? null,
+                    'billing_status' => $isPaid ? 'Paid' : ($posr->is_billable ? ($payable > 0 ? 'Pending' : 'Billed') : 'Non-Billable'),
+                    'delivery_status' => 'Pending',
+                    'created_at' => $posr->created_at,
+                ];
+            });
+        $requests = $requests->merge($freeFormRequests);
+
         // Sort all requests by created_at desc
         $requests = $requests->sortByDesc('created_at')->values();
 
@@ -3462,6 +3549,15 @@ class ReceptionWorkbenchController extends Controller
                             $posr = null; // Unlink POSR so we don't try to delete or check payment on it
                         }
                     }
+
+                    break;
+                case 'procedure':
+                    $serviceRequest = \App\Models\Procedure::with('productOrServiceRequest')->findOrFail($id);
+                    $posr = $serviceRequest->productOrServiceRequest;
+
+                    break;
+                case 'free_form':
+                    $posr = ProductOrServiceRequest::where('is_free_form', true)->findOrFail($id);
 
                     break;
                 default:

@@ -233,44 +233,7 @@
 </div>
 
 @include('admin.shared.modals.request_details')
-<!-- Discard Request Modal -->
-<div class="modal fade" id="discardRequestModal" tabindex="-1" role="dialog">
-    <div class="modal-dialog" role="document">
-        <div class="modal-content">
-            <div class="modal-header bg-danger text-white">
-                <h5 class="modal-title"><i class="mdi mdi-delete-alert"></i> Discard Request</h5>
-                <button type="button" data-bs-dismiss="modal" class="btn-close text-white btn-close-white" aria-label="Close"></button>
-            </div>
-            <form id="discardRequestForm">
-                <div class="modal-body">
-                    <div class="alert alert-warning">
-                        <i class="mdi mdi-alert"></i>
-                        <strong>Warning:</strong> This action will discard the request. This cannot be undone easily.
-                    </div>
-                    <div class="mb-3">
-                        <p><strong>Service:</strong> <span id="discard_service_name"></span></p>
-                        <p><strong>Request No:</strong> <span id="discard_request_no"></span></p>
-                    </div>
-                    <div class="form-group">
-                        <label for="discard_reason">Reason for Discarding <span class="text-danger">*</span></label>
-                        <textarea class="form-control" id="discard_reason" name="reason" rows="3"
-                                  placeholder="Please provide a reason for discarding this request (minimum 10 characters)"
-                                  required minlength="10"></textarea>
-                        <small class="form-text text-muted">This reason will be logged for audit purposes.</small>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-                        <i class="mdi mdi-close"></i> Cancel
-                    </button>
-                    <button type="submit" class="btn btn-danger" id="confirmDiscardBtn">
-                        <i class="mdi mdi-delete"></i> Discard Request
-                    </button>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
+@include('admin.shared.modals.discard_request_modal')
 
 <!-- Hospital Patient Card Modal -->
 <div class="modal fade" id="hospitalCardModal" tabindex="-1" role="dialog">

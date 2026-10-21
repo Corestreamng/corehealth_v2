@@ -23,6 +23,11 @@ if (typeof window.wbRoute !== 'function') {
 // WALK-IN SALES
 // =============================================
 function initializeWalkinSales() {
+    // If unified walkin-sales-shared.js is loaded, let it manage cart & submissions
+    if (window.CoreHealth && window.CoreHealth.WalkinSales) {
+        return;
+    }
+
     // Add to cart
     $(document).on('click', '.add-to-cart', function() {
         const serviceId = $(this).data('id');
@@ -147,7 +152,12 @@ function searchWalkinServices(query, type) {
 }
 
 function addToWalkinCart(id, type, name, price) {
-    if (!currentPatient) {
+    if (window.CoreHealth && window.CoreHealth.WalkinSales && typeof window.CoreHealth.WalkinSales.addItem === 'function') {
+        return window.CoreHealth.WalkinSales.addItem(id, type, name, price);
+    }
+
+    const patientId = window.currentPatient || window.currentPatientId || currentPatient || $('#workspace-content').data('patient-id');
+    if (!patientId) {
         toastr.warning('Please select a patient first');
         return;
     }
@@ -204,6 +214,9 @@ function addToWalkinCart(id, type, name, price) {
 }
 
 function removeFromWalkinCart(index) {
+    if (window.CoreHealth && window.CoreHealth.WalkinSales && typeof window.CoreHealth.WalkinSales.removeItem === 'function') {
+        return window.CoreHealth.WalkinSales.removeItem(index);
+    }
     walkinCart.splice(index, 1);
     updateWalkinCartUI();
 }
@@ -298,7 +311,12 @@ function updateWalkinCartUI() {
 }
 
 function submitWalkinServices() {
-    if (!currentPatient) {
+    if (window.CoreHealth && window.CoreHealth.WalkinSales && typeof window.CoreHealth.WalkinSales.submitCart === 'function') {
+        return window.CoreHealth.WalkinSales.submitCart();
+    }
+
+    const patientId = window.currentPatient || window.currentPatientId || currentPatient || $('#workspace-content').data('patient-id');
+    if (!patientId) {
         toastr.warning('Please select a patient first');
         return;
     }
@@ -372,226 +390,13 @@ function submitWalkinServices() {
 
 // =============================================
 // RECENT REQUESTS (Last 24 hours)
+// Unified through window.CoreHealth.WalkinSales
 // =============================================
-$(document).on('shown.bs.tab', '#walkin-cart-tabs a[href="#walkin-recent-pane"]', function () {
-    if (typeof currentPatient !== 'undefined' && currentPatient) {
-        loadRecentRequests();
-    }
-});
-
 function loadRecentRequests() {
-    if (!currentPatient) return;
-
-    const $container = $('#recent-requests-container');
-    $container.html('<div class="text-center py-3"><i class="mdi mdi-loading mdi-spin"></i> Loading...</div>');
-
-    $.ajax({
-        url: wbUrl(`reception/patient/${currentPatient}/recent-requests`),
-        method: 'GET',
-        success: function(response) {
-            if (response.success && response.requests && response.requests.length > 0) {
-                const canBill = (window.WORKBENCH_CONFIG && window.WORKBENCH_CONFIG.canBill) || ($('#paymentModal').length > 0);
-                const unpaidRequests = response.requests.filter(req => !req.is_paid && req.payable > 0 && req.service_request_id);
-
-                let html = '';
-
-                // Billing multi-select toolbar if user can bill and unpaid items exist
-                if (canBill && unpaidRequests.length > 0) {
-                    html += `
-                        <div class="recent-requests-billing-bar">
-                            <div class="custom-control custom-checkbox">
-                                <input type="checkbox" class="custom-control-input" id="walkin-select-all-unpaid">
-                                <label class="custom-control-label font-weight-bold" for="walkin-select-all-unpaid" style="font-size:0.85rem; cursor:pointer;">
-                                    Select All Unpaid (<span id="walkin-unpaid-count">${unpaidRequests.length}</span>)
-                                </label>
-                            </div>
-                            <button class="btn btn-sm btn-success btn-pay-selected" id="btn-pay-selected-walkin" disabled>
-                                <i class="mdi mdi-cash-register"></i> Pay Selected (<span id="walkin-selected-total">₦0</span>)
-                            </button>
-                        </div>
-                    `;
-                }
-
-                response.requests.forEach(req => {
-                    const typeClass = getTypeClass(req.type);
-                    const billingClass = getBillingStatusClass(req.billing_status);
-                    const deliveryClass = getDeliveryStatusClass(req.delivery_status);
-                    const coverageBadge = req.coverage_mode ? `<span class="badge badge-outline-success ml-1">${safeEscape(req.coverage_mode)}</span>` : '';
-                    const createdAt = new Date(req.created_at).toLocaleString('en-GB', {day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit'});
-                    const isUnpaid = !req.is_paid && req.payable > 0 && req.service_request_id;
-                    const itemStateClass = req.is_paid ? 'is-paid' : (isUnpaid ? 'is-unpaid' : '');
-
-                    const checkboxHtml = (canBill && isUnpaid) ? `
-                        <div class="walkin-unpaid-checkbox-wrapper">
-                            <input type="checkbox" class="walkin-unpaid-item-checkbox" 
-                                   data-service-request-id="${req.service_request_id}" 
-                                   data-payable="${req.payable}" 
-                                   data-name="${safeEscape(req.name)}">
-                        </div>
-                    ` : '';
-
-                    const payBtnHtml = (canBill && isUnpaid) ? `
-                        <button class="btn btn-outline-success btn-pay-single-walkin ml-1" 
-                                data-service-request-id="${req.service_request_id}" 
-                                data-payable="${req.payable}" 
-                                title="Pay Now">
-                            <i class="mdi mdi-cash"></i> Pay
-                        </button>
-                    ` : '';
-
-                    const deleteBtnHtml = !req.is_paid ? `
-                        <button class="btn btn-outline-danger btn-discard-recent-request ml-1" 
-                                data-type="${req.type}" 
-                                data-id="${req.id}" 
-                                data-name="${safeEscape(req.name)}" 
-                                data-request-no="${req.id}" 
-                                title="Delete / Discard Request">
-                            <i class="mdi mdi-trash-can-outline"></i>
-                        </button>
-                    ` : '';
-
-                    html += `
-                        <div class="recent-request-item ${itemStateClass}">
-                            <div class="recent-request-header">
-                                <div class="d-flex align-items-center">
-                                    ${checkboxHtml}
-                                    <div>
-                                        <span class="recent-request-name">${safeEscape(req.name)}</span>
-                                        <span class="badge badge-${typeClass} recent-request-type ml-2">${req.type_label}</span>
-                                        ${coverageBadge}
-                                    </div>
-                                </div>
-                                <small class="text-muted">${createdAt}</small>
-                            </div>
-                            <div class="recent-request-details">
-                                <div class="recent-request-pricing">
-                                    <span>
-                                        <span class="price-label">Price</span>
-                                        <span class="price-value">₦${parseFloat(req.price || 0).toLocaleString()}</span>
-                                    </span>
-                                    <span>
-                                        <span class="price-label">HMO</span>
-                                        <span class="price-value text-success">${req.hmo_covers > 0 ? '-₦' + parseFloat(req.hmo_covers).toLocaleString() : '-'}</span>
-                                    </span>
-                                    <span>
-                                        <span class="price-label">Payable</span>
-                                        <span class="price-value text-primary font-weight-bold">₦${parseFloat(req.payable || 0).toLocaleString()}</span>
-                                    </span>
-                                </div>
-                                <div class="recent-request-status d-flex align-items-center">
-                                    <span class="billing-badge ${billingClass}">${req.billing_status || 'Pending'}</span>
-                                    <span class="delivery-badge ${deliveryClass}">${req.delivery_status || 'Pending'}</span>
-                                    ${payBtnHtml}
-                                    ${deleteBtnHtml}
-                                </div>
-                            </div>
-                        </div>
-                    `;
-                });
-                $container.html(html);
-            } else {
-                $container.html(`
-                    <div class="text-center text-muted py-4">
-                        <i class="mdi mdi-clock-outline" style="font-size: 2rem;"></i>
-                        <p class="mb-0 mt-2">No recent requests</p>
-                    </div>
-                `);
-            }
-        },
-        error: function() {
-            $container.html(`
-                <div class="text-center text-muted py-4">
-                    <i class="mdi mdi-alert-circle" style="font-size: 2rem;"></i>
-                    <p class="mb-0 mt-2">Failed to load recent requests</p>
-                </div>
-            `);
-        }
-    });
-}
-
-// Toggle select all unpaid walkin requests
-$(document).on('change', '#walkin-select-all-unpaid', function() {
-    const isChecked = $(this).is(':checked');
-    $('.walkin-unpaid-item-checkbox').prop('checked', isChecked);
-    updateWalkinSelectedTotal();
-});
-
-// Individual walkin unpaid checkbox change
-$(document).on('change', '.walkin-unpaid-item-checkbox', function() {
-    const total = $('.walkin-unpaid-item-checkbox').length;
-    const checked = $('.walkin-unpaid-item-checkbox:checked').length;
-    $('#walkin-select-all-unpaid').prop('checked', total > 0 && total === checked);
-    updateWalkinSelectedTotal();
-});
-
-function updateWalkinSelectedTotal() {
-    let sum = 0;
-    let count = 0;
-    $('.walkin-unpaid-item-checkbox:checked').each(function() {
-        sum += parseFloat($(this).data('payable')) || 0;
-        count++;
-    });
-
-    $('#walkin-selected-total').text('₦' + sum.toLocaleString());
-    const $btn = $('#btn-pay-selected-walkin');
-    if (count > 0 && sum > 0) {
-        $btn.prop('disabled', false);
-    } else {
-        $btn.prop('disabled', true);
+    if (window.CoreHealth && window.CoreHealth.WalkinSales) {
+        window.CoreHealth.WalkinSales.loadRecentRequests();
     }
 }
-
-// Click Pay Selected Walk-in
-$(document).on('click', '#btn-pay-selected-walkin', function(e) {
-    e.preventDefault();
-    let checkoutItems = [];
-    let totalPayable = 0;
-
-    $('.walkin-unpaid-item-checkbox:checked').each(function() {
-        const sId = $(this).data('service-request-id');
-        const payable = parseFloat($(this).data('payable')) || 0;
-        if (sId) {
-            checkoutItems.push({
-                id: sId,
-                qty: 1,
-                discount: 0
-            });
-            totalPayable += payable;
-        }
-    });
-
-    if (checkoutItems.length === 0) {
-        toastr.warning('Please select at least one unpaid item');
-        return;
-    }
-
-    window.pendingPaymentItems = checkoutItems;
-    window.pendingPaymentPatientId = currentPatient;
-    $('#summary-total').text('₦' + totalPayable.toLocaleString());
-    $('#summary-subtotal').text('₦' + totalPayable.toLocaleString());
-    $('#modal-item-count').text(checkoutItems.length);
-    $('#paymentModal').modal('show');
-});
-
-// Click Pay Single Walk-in
-$(document).on('click', '.btn-pay-single-walkin', function(e) {
-    e.preventDefault();
-    const sId = $(this).data('service-request-id');
-    const payable = parseFloat($(this).data('payable')) || 0;
-
-    if (!sId) return;
-
-    window.pendingPaymentItems = [{
-        id: sId,
-        qty: 1,
-        discount: 0
-    }];
-    window.pendingPaymentPatientId = currentPatient;
-    $('#summary-total').text('₦' + payable.toLocaleString());
-    $('#summary-subtotal').text('₦' + payable.toLocaleString());
-    $('#modal-item-count').text(1);
-    $('#paymentModal').modal('show');
-});
 
 function getTypeClass(type) {
     const classes = {
@@ -790,19 +595,6 @@ $(document).on('click', '.discard-request-btn', function() {
     $('#discardRequestModal').modal('show');
 });
 
-$(document).on('click', '.btn-discard-recent-request', function(e) {
-    e.preventDefault();
-    discardRequestType = $(this).data('type');
-    discardRequestId = $(this).data('id');
-    const serviceName = $(this).data('name');
-    const requestNo = $(this).data('request-no');
-
-    $('#discard_service_name').text(serviceName);
-    $('#discard_request_no').text(requestNo);
-    $('#discard_reason').val('Erroneous booking / duplicate request');
-    $('#discardRequestModal').modal('show');
-});
-
 $(document).on('click', '.btn-print-routing', function(e) {
     e.preventDefault();
     const queueId = $(this).data('queue-id');
@@ -844,6 +636,10 @@ $(document).on('click', '.btn-delete-queue', function(e) {
 });
 
 $('#discardRequestForm').on('submit', function(e) {
+    // Only handle queue discards in this listener; walk-in requests are handled by WalkinSales
+    if (typeof discardRequestType === 'undefined' || discardRequestType !== 'queue') {
+        return;
+    }
     e.preventDefault();
 
     const reason = $('#discard_reason').val();

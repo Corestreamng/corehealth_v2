@@ -174,7 +174,7 @@
                         </div>
                     </div>
                     <div class="tab-pane fade" id="walkin-recent-pane">
-                        <div class="card-body p-2" style="max-height: 380px; overflow-y: auto;">
+                        <div class="card-body p-2 dash-scrollable" style="max-height: 420px; overflow-y: auto;">
                             <div class="alert alert-info py-1 px-2 mb-2 font-11">
                                 <i class="mdi mdi-information"></i> Walk-in requests created in the last 24 hours for this patient
                             </div>
