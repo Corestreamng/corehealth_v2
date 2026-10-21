@@ -1,14 +1,12 @@
 <style>
-    /* Make lab/imaging result entry CKEditor taller */
-    #investResModal .ck-editor__editable {
-        min-height: 55vh !important;
-        max-height: calc(100vh - 280px) !important;
-        overflow-y: auto !important;
-    }
+    #investResModal .modal-dialog { max-width: min(1380px, 94vw) !important; width: 100% !important; }
+    #investResModal .ck-editor__editable { min-height: 55vh !important; max-height: calc(100vh - 260px) !important; overflow-y: auto !important; }
+    #investResModal .ck.ck-editor, #investResModal .ck-content table { width: 100% !important; }
+    #investResModal .ck-content figure.table { width: 100% !important; margin: 0 0 1rem 0 !important; }
 </style>
 <div class="modal fade" id="investResModal" tabindex="-1" role="dialog" aria-labelledby="investResModalLabel"
     aria-hidden="true">
-    <div class="modal-dialog modal-lg" role="document">
+    <div class="modal-dialog modal-xl modal-dialog-centered" role="document">
         <div class="modal-content">
             <form action="{{ route(!empty($save_route) ? $save_route : 'service-save-result') }}" method="post" enctype="multipart/form-data" id="investResForm">
                 @csrf
@@ -44,7 +42,7 @@
                     <!-- V1 Template Selector (only shown for V1 templates) -->
                     <div id="v1_template_selector_container" class="mb-3" style="display:none;">
                         <div class="d-flex align-items-center gap-2 w-100">
-                            <div style="flex: 1; max-width: 500px;">
+                            <div style="flex: 1; max-width: 650px;">
                                 <select class="form-control" id="v1_result_template_select" style="width: 100%;">
                                     <option value="">-- Search and Insert Template --</option>
                                 </select>

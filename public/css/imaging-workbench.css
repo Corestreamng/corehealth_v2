@@ -2942,3 +2942,32 @@
         transform: scale(1.1);
         box-shadow: 0 6px 20px rgba(240, 147, 251, 0.6);
     }
+
+    /* Result Entry & Investigation View Modals (Wide Format for Multi-Column Clinical Tables) */
+    #investResModal .modal-dialog,
+    #investResViewModal .modal-dialog,
+    #investResViewImagingModal .modal-dialog,
+    #bulkResultEntryModal .modal-dialog {
+        max-width: min(1380px, 94vw) !important;
+        width: 100% !important;
+    }
+
+    #investResModal .ck-editor__editable,
+    #bulkResultEntryModal .ck-editor__editable {
+        min-height: 55vh !important;
+        max-height: calc(100vh - 260px) !important;
+        overflow-y: auto !important;
+    }
+
+    #investResModal .ck.ck-editor,
+    #investResModal .ck-content table,
+    #bulkResultEntryModal .ck.ck-editor,
+    #bulkResultEntryModal .ck-content table {
+        width: 100% !important;
+    }
+
+    #investResModal .ck-content figure.table,
+    #bulkResultEntryModal .ck-content figure.table {
+        width: 100% !important;
+        margin: 0 0 1rem 0 !important;
+    }

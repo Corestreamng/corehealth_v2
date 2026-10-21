@@ -1,7 +1,7 @@
 @if(empty($skipOldInvestResModal))
 <div class="modal fade" id="investResModal" tabindex="-1" role="dialog" aria-labelledby="investResModalLabel"
     aria-hidden="true">
-    <div class="modal-dialog modal-lg" role="document">
+    <div class="modal-dialog modal-xl modal-dialog-centered" role="document">
         <div class="modal-content">
             <form action="{{ route('service-save-result') }}" method="post" enctype="multipart/form-data" onsubmit="copyResTemplateToField()">
                 @csrf

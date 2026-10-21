@@ -77,10 +77,10 @@ const PatientSearchWidget = (function() {
             const photoUrl = p.photo || wbUrl('assets/images/default-avatar.png');
             const $chip = $(`
                 <span class="ps-recent-chip" data-id="${p.id}" style="
-                    display: inline-flex; align-items: center; background: #f1f3f5; padding: 4px 10px; border-radius: 16px; cursor: pointer; font-size: 0.85rem; transition: background 0.2s;">
-                    <img src="${escHtml(photoUrl)}" alt="" style="width: 20px; height: 20px; border-radius: 50%; object-fit: cover; margin-right: 6px;">
-                    <span style="font-weight: 500; color: #333;">${shortName}</span>
-                    ${p.file_no ? `<small style="color: #6c757d; margin-left: 4px;">${escHtml(p.file_no)}</small>` : ''}
+                    display: inline-flex; align-items: center; background: #f1f3f5; padding: 2px 7px; border-radius: 12px; cursor: pointer; font-size: 0.75rem; transition: background 0.2s;">
+                    <img class="ps-recent-chip-img" src="${escHtml(photoUrl)}" alt="" style="width: 16px; height: 16px; border-radius: 50%; object-fit: cover; margin-right: 4px;">
+                    <span class="ps-recent-chip-name" style="font-weight: 500; color: #333;">${shortName}</span>
+                    ${p.file_no ? `<small class="ps-recent-chip-fileno" style="color: #6c757d; margin-left: 3px;">${escHtml(p.file_no)}</small>` : ''}
                 </span>
             `);
             $chip.data('patient', p);
@@ -164,15 +164,15 @@ const PatientSearchWidget = (function() {
                                 else if (context === 'imaging') badgeLabel = 'Imaging';
                                 else if (context === 'billing') badgeLabel = 'Bills';
 
-                                badgeHtml = `<span style="background: var(--bs-danger, #dc3545); color: white; padding: 2px 8px; border-radius: 12px; font-size: 0.75rem; font-weight: bold; margin-left: auto;">${p.pending_count} ${badgeLabel}</span>`;
+                                badgeHtml = `<span class="ps-search-item-badge badge bg-danger" style="background: var(--bs-danger, #dc3545); color: white; padding: 1px 6px; border-radius: 8px; font-size: 0.68rem; font-weight: bold; margin-left: auto;">${p.pending_count} ${badgeLabel}</span>`;
                             }
 
                             const $item = $(`
-                                <div class="ps-search-item" data-patient='${JSON.stringify(p).replace(/'/g, "&apos;")}' style="padding: 10px; border-bottom: 1px solid #f1f3f5; cursor: pointer; display: flex; align-items: center; transition: background 0.2s;">
-                                    <img src="${photo}" style="width: 40px; height: 40px; border-radius: 50%; object-fit: cover; margin-right: 12px;" alt="">
-                                    <div style="display: flex; flex-direction: column; flex: 1;">
-                                        <span style="font-weight: 600; color: #333;">${name}</span>
-                                        <span style="font-size: 0.8rem; color: #6c757d;">
+                                <div class="ps-search-item" data-patient='${JSON.stringify(p).replace(/'/g, "&apos;")}' style="padding: 5px 8px; border-bottom: 1px solid #f1f3f5; cursor: pointer; display: flex; align-items: center; transition: background 0.2s;">
+                                    <img class="ps-search-item-img" src="${photo}" style="width: 24px; height: 24px; border-radius: 50%; object-fit: cover; margin-right: 8px; flex-shrink: 0;" alt="">
+                                    <div class="ps-search-item-info" style="display: flex; flex-direction: column; flex: 1; min-width: 0;">
+                                        <span class="ps-search-item-name" style="font-weight: 600; color: #333; font-size: 0.79rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${name}</span>
+                                        <span class="ps-search-item-meta" style="font-size: 0.70rem; color: #6c757d; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
                                             ${fileNo ? `<strong>${fileNo}</strong> &bull; ` : ''} 
                                             ${phone} &bull; ${escHtml(p.gender || 'N/A')}
                                         </span>

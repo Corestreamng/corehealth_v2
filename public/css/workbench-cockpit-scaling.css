@@ -440,6 +440,35 @@ body.has-workbench .modal-footer {
     flex-shrink: 0 !important;
 }
 
+/* Result Entry & Investigation View Modals (Wide Format for Multi-Column Clinical Tables) */
+#investResModal .modal-dialog,
+#investResViewModal .modal-dialog,
+#investResViewImagingModal .modal-dialog,
+#bulkResultEntryModal .modal-dialog {
+    max-width: min(1380px, 94vw) !important;
+    width: 100% !important;
+}
+
+#investResModal .ck-editor__editable,
+#bulkResultEntryModal .ck-editor__editable {
+    min-height: 55vh !important;
+    max-height: calc(100vh - 260px) !important;
+    overflow-y: auto !important;
+}
+
+#investResModal .ck.ck-editor,
+#investResModal .ck-content table,
+#bulkResultEntryModal .ck.ck-editor,
+#bulkResultEntryModal .ck-content table {
+    width: 100% !important;
+}
+
+#investResModal .ck-content figure.table,
+#bulkResultEntryModal .ck-content figure.table {
+    width: 100% !important;
+    margin: 0 0 1rem 0 !important;
+}
+
 /* Patient Registration & Intake Modal Specific Scaling (Clean Fixed Header/Footer, Internal Step Scroll) */
 #patientFormModal .modal-dialog {
     max-width: 920px !important;
@@ -569,13 +598,78 @@ body.has-workbench .ps-recent-label {
     font-size: 0.72rem !important;
     color: #64748b !important;
     font-weight: 600 !important;
+    margin-right: 4px !important;
+}
+
+body.is-workbench .ps-recent-chips,
+body.has-workbench .ps-recent-chips {
+    display: inline-flex !important;
+    flex-wrap: wrap !important;
+    gap: 3px !important;
+    align-items: center !important;
+}
+
+body.is-workbench .ps-recent-chip,
+body.has-workbench .ps-recent-chip {
+    display: inline-flex !important;
+    align-items: center !important;
+    background: #f1f5f9 !important;
+    border: 1px solid #e2e8f0 !important;
+    padding: 2px 7px !important;
+    border-radius: 12px !important;
+    cursor: pointer !important;
+    font-size: 0.72rem !important;
+    line-height: 1.2 !important;
+    transition: background 0.15s ease, border-color 0.15s ease !important;
+    max-width: 100% !important;
+}
+
+body.is-workbench .ps-recent-chip:hover,
+body.has-workbench .ps-recent-chip:hover {
+    background: #e2e8f0 !important;
+    border-color: #cbd5e1 !important;
+}
+
+body.is-workbench .ps-recent-chip img,
+body.is-workbench .ps-recent-chip .ps-recent-chip-img,
+body.has-workbench .ps-recent-chip img,
+body.has-workbench .ps-recent-chip .ps-recent-chip-img {
+    width: 16px !important;
+    height: 16px !important;
+    border-radius: 50% !important;
+    object-fit: cover !important;
+    margin-right: 4px !important;
+    flex-shrink: 0 !important;
+}
+
+body.is-workbench .ps-recent-chip span,
+body.is-workbench .ps-recent-chip .ps-recent-chip-name,
+body.has-workbench .ps-recent-chip span,
+body.has-workbench .ps-recent-chip .ps-recent-chip-name {
+    font-weight: 600 !important;
+    font-size: 0.72rem !important;
+    color: #334155 !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    max-width: 95px !important;
+}
+
+body.is-workbench .ps-recent-chip small,
+body.is-workbench .ps-recent-chip .ps-recent-chip-fileno,
+body.has-workbench .ps-recent-chip small,
+body.has-workbench .ps-recent-chip .ps-recent-chip-fileno {
+    font-size: 0.67rem !important;
+    color: #64748b !important;
+    margin-left: 3px !important;
+    white-space: nowrap !important;
 }
 
 body.is-workbench .ps-recent-chips .badge,
 body.is-workbench .ps-recent-chips a,
 body.has-workbench .ps-recent-chips .badge,
 body.has-workbench .ps-recent-chips a {
-    font-size: 0.72rem !important;
+    font-size: 0.71rem !important;
     padding: 2px 6px !important;
     border-radius: 4px !important;
 }
@@ -605,7 +699,190 @@ body.has-workbench .ps-search-icon {
 body.is-workbench .ps-search-dropdown,
 body.has-workbench .ps-search-dropdown {
     font-size: 0.78rem !important;
-    max-height: 280px !important;
+    max-height: 240px !important;
+    overflow-y: auto !important;
+    border-radius: 6px !important;
+    border: 1px solid #cbd5e1 !important;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.12) !important;
+    z-index: 1060 !important;
+    scrollbar-width: thin !important;
+}
+
+body.is-workbench .ps-search-dropdown::-webkit-scrollbar,
+body.has-workbench .ps-search-dropdown::-webkit-scrollbar {
+    width: 4px !important;
+}
+
+body.is-workbench .ps-search-dropdown::-webkit-scrollbar-thumb,
+body.has-workbench .ps-search-dropdown::-webkit-scrollbar-thumb {
+    background: #cbd5e1 !important;
+    border-radius: 2px !important;
+}
+
+body.is-workbench .ps-search-item,
+body.has-workbench .ps-search-item {
+    padding: 5px 8px !important;
+    border-bottom: 1px solid #f1f5f9 !important;
+    cursor: pointer !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+    min-height: 36px !important;
+    transition: background 0.15s ease !important;
+}
+
+body.is-workbench .ps-search-item:last-child,
+body.has-workbench .ps-search-item:last-child {
+    border-bottom: none !important;
+}
+
+body.is-workbench .ps-search-item:hover,
+body.has-workbench .ps-search-item:hover {
+    background: #f8fafc !important;
+}
+
+body.is-workbench .ps-search-item img,
+body.is-workbench .ps-search-item .ps-search-item-img,
+body.has-workbench .ps-search-item img,
+body.has-workbench .ps-search-item .ps-search-item-img {
+    width: 24px !important;
+    height: 24px !important;
+    border-radius: 50% !important;
+    object-fit: cover !important;
+    margin-right: 0 !important;
+    flex-shrink: 0 !important;
+}
+
+body.is-workbench .ps-search-item > div,
+body.is-workbench .ps-search-item .ps-search-item-info,
+body.has-workbench .ps-search-item > div,
+body.has-workbench .ps-search-item .ps-search-item-info {
+    display: flex !important;
+    flex-direction: column !important;
+    flex: 1 !important;
+    min-width: 0 !important;
+    line-height: 1.25 !important;
+}
+
+body.is-workbench .ps-search-item > div > span:first-child,
+body.is-workbench .ps-search-item .ps-search-item-name,
+body.has-workbench .ps-search-item > div > span:first-child,
+body.has-workbench .ps-search-item .ps-search-item-name {
+    font-weight: 600 !important;
+    font-size: 0.79rem !important;
+    color: #1e293b !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+}
+
+body.is-workbench .ps-search-item > div > span:last-child,
+body.is-workbench .ps-search-item .ps-search-item-meta,
+body.has-workbench .ps-search-item > div > span:last-child,
+body.has-workbench .ps-search-item .ps-search-item-meta {
+    font-size: 0.70rem !important;
+    color: #64748b !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+}
+
+body.is-workbench .ps-search-item .badge,
+body.is-workbench .ps-search-item span[style*="background: var(--bs-danger"],
+body.is-workbench .ps-search-item .ps-search-item-badge,
+body.has-workbench .ps-search-item .badge,
+body.has-workbench .ps-search-item span[style*="background: var(--bs-danger"],
+body.has-workbench .ps-search-item .ps-search-item-badge {
+    padding: 1px 6px !important;
+    font-size: 0.67rem !important;
+    font-weight: 600 !important;
+    border-radius: 8px !important;
+    white-space: nowrap !important;
+    margin-left: auto !important;
+}
+
+/* HMO Workbench Recent Patients & Focus Search */
+body.is-workbench .pf-recent-bar,
+body.has-workbench .pf-recent-bar {
+    margin-top: 4px !important;
+    margin-bottom: 4px !important;
+    gap: 4px !important;
+    display: flex !important;
+    align-items: center !important;
+    flex-wrap: wrap !important;
+}
+
+body.is-workbench .pf-recent-chip,
+body.has-workbench .pf-recent-chip {
+    padding: 2px 7px !important;
+    font-size: 0.72rem !important;
+    border-radius: 12px !important;
+    gap: 4px !important;
+    line-height: 1.2 !important;
+    display: inline-flex !important;
+    align-items: center !important;
+}
+
+body.is-workbench .pf-recent-chip img,
+body.has-workbench .pf-recent-chip img {
+    width: 16px !important;
+    height: 16px !important;
+    border-radius: 50% !important;
+    object-fit: cover !important;
+}
+
+body.is-workbench .pf-recent-chip small,
+body.has-workbench .pf-recent-chip small {
+    font-size: 0.67rem !important;
+    margin-left: 3px !important;
+}
+
+body.is-workbench .pf-search-wrap .pf-results,
+body.has-workbench .pf-search-wrap .pf-results {
+    max-height: 240px !important;
+    font-size: 0.78rem !important;
+    overflow-y: auto !important;
+    border-radius: 6px !important;
+    border: 1px solid #cbd5e1 !important;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.12) !important;
+    scrollbar-width: thin !important;
+}
+
+body.is-workbench .pf-search-wrap .pf-results::-webkit-scrollbar,
+body.has-workbench .pf-search-wrap .pf-results::-webkit-scrollbar {
+    width: 4px !important;
+}
+
+body.is-workbench .pf-results .pf-result-item,
+body.has-workbench .pf-results .pf-result-item {
+    padding: 5px 8px !important;
+    gap: 8px !important;
+    min-height: 36px !important;
+}
+
+body.is-workbench .pf-results .pf-result-item img,
+body.has-workbench .pf-results .pf-result-item img {
+    width: 24px !important;
+    height: 24px !important;
+    border-radius: 50% !important;
+    object-fit: cover !important;
+}
+
+body.is-workbench .pf-results .pf-result-item .pf-ri-name,
+body.has-workbench .pf-results .pf-result-item .pf-ri-name {
+    font-size: 0.79rem !important;
+    font-weight: 600 !important;
+}
+
+body.is-workbench .pf-results .pf-result-item .pf-ri-meta,
+body.has-workbench .pf-results .pf-result-item .pf-ri-meta {
+    font-size: 0.70rem !important;
+}
+
+body.is-workbench .pf-results .pf-result-item .pf-ri-badge,
+body.has-workbench .pf-results .pf-result-item .pf-ri-badge {
+    font-size: 0.67rem !important;
+    padding: 1px 6px !important;
 }
 
 /* ── 10. Card and Container Scaling inside Workbenches ──────────────────── */
