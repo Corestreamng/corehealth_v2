@@ -52,7 +52,7 @@ Thank you for contributing to the CoreHealth v2 Hospital Management System. Plea
    - `test:` — Adding or updating tests
    - `docs:` — Documentation changes
 
-5. Tag completed milestones starting from `v2.5.0.0` using semantic versioning.
+5. Tag completed milestones using semantic versioning, dynamically querying the highest existing tag (`git tag -l "v*" --sort=-v:refname | head -n 1`) to increment the patch version.
 
 ---
 

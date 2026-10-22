@@ -1,7 +1,7 @@
 # Patient Registration Modal Migration & Route Deprecation
 
 **Date**: 2026-10-16  
-**Git Release Tag**: `v2.5.0.8`
+**Git Release Tag**: `v2.6.0.52`
 
 ---
 

@@ -558,7 +558,7 @@ vendor/bin/phpunit tests/Feature/Pharmacy/
 - **Automated CI Workflow** ([.github/workflows/ci.yml](.github/workflows/ci.yml)): GitHub Actions pipeline running PHP 8.3, setting up a MySQL 8.0 container, importing `_corehealth_db_v2_test.sql.gz`, running PHP CS Fixer lint checks, executing PHPUnit tests, building assets, and auditing security.
 - **Structured JSON Logging**: Configured via Monolog `JsonFormatter` channel in `config/logging.php`.
 - **Dependabot**: Configured in [.github/dependabot.yml](.github/dependabot.yml) for weekly Composer and NPM dependency security checks.
-- **Semantic Version Tags**: Tagged across 41 historic milestones starting from `v2.0.0.0` through `v2.5.0.8`.
+- **Semantic Version Tags**: Tagged across historic milestones starting from `v2.0.0.0` through `v2.6.0.53`.
 
 ---
 

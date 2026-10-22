@@ -80,7 +80,13 @@ When working on this project, strictly adhere to the following standards across 
   - Major architectural changes, test updates, and sprint progress must be documented in `docs/<FEATURE_NAME>.md`, `README.md`, `AGENTS.md`, and `GEMINI.md`.
 
 ## 9. Version Tagging
-- **Semantic Tagging**: Whenever completing a feature or milestone, tag the repository using `git tag` starting from `v2.5.0.4` (`git tag -a v2.X.Y.Z`). Major version increments require explicit instruction from the user.
+- **Semantic Tagging & Dynamic Highest Tag Verification**:
+  - Never hardcode or assume an arbitrary starting tag.
+  - Before creating any release tag, ALWAYS query the repository dynamically for the absolute highest semver tag using:
+    `git tag -l "v*" --sort=-v:refname | head -n 1`
+  - Determine the next sequential patch release tag based on that highest tag (e.g., if the highest tag is `v2.6.0.52`, the next is `v2.6.0.53`).
+  - Major or minor version increments (e.g., `v2.6` to `v2.7`) require explicit instruction from the user.
+  - All tags must be annotated tags with a descriptive release summary: `git tag -a v2.X.Y.Z -m "Release v2.X.Y.Z: <Summary>"`.
 
 ## 10. CoreHMS SuperAdmin Synchronization, Contract Parity & Co-Development Standards
 - **Mandatory Co-Development Loop**: CoreHealth v2 (hospital instance) and CoreHMS SuperAdmin (`Corehealth-Super-Admin/`, central multi-tenant administrative platform) operate as an integrated ecosystem. Whenever adding, modifying, or refactoring clinical domains, entities, or controllers (e.g., Patients, Consultations/Encounters, Pharmacy Dispensing, Laboratory/Imaging, Surgical Procedures, Ward Admissions, Staff, Backups, or Metrics), CoreHMS SuperAdmin MUST be kept in the loop in lockstep.

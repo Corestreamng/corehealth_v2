@@ -1,7 +1,7 @@
 # CoreHealth v2 — Billing, Split Payments, Free-Form Requests & Financial Governance Enhancements
 
-**Date**: 2026-10-21  
-**Git Release Tag**: `v2.5.0.9`  
+**Date**: 2026-10-22  
+**Git Release Tag**: `v2.6.0.53`  
 **Status**: Completed & Verified  
 
 ---
