@@ -1441,3 +1441,267 @@
         font-size: 0.9rem;
         margin-top: 0.5rem;
     }
+
+/* ==========================================================================
+   Maternity Workbench Signature Distinct Pink Theme
+   Vibrant Identity: #e91e8a | Hover: #d8157d | Dark: #ad1457 | Soft: #fce4ec / #fdf2f8
+   ========================================================================== */
+
+body.is-maternity-workbench .main-panel,
+body.is-maternity-workbench .content-wrapper,
+body.is-maternity-workbench .maternity-workbench-container,
+.maternity-workbench-container {
+    --maternity-pink: #e91e8a;
+    --maternity-pink-rgb: 233, 30, 138;
+    --maternity-pink-hover: #d8157d;
+    --maternity-pink-dark: #ad1457;
+    --maternity-pink-light: #fce4ec;
+    --hospital-primary: #e91e8a !important;
+    --hospital-primary-rgb: 233, 30, 138 !important;
+    --hospital-secondary: #ad1457 !important;
+    --primary-color: #e91e8a !important;
+}
+
+/* 1. Left Panel Branding & Header */
+body.is-maternity-workbench .left-panel .panel-header {
+    background: linear-gradient(135deg, #fdf2f8 0%, #fce4ec 100%) !important;
+    border-bottom: 1px solid #fbcfe8 !important;
+}
+
+body.is-maternity-workbench .left-panel .panel-header h5 {
+    color: #ad1457 !important;
+    font-weight: 700 !important;
+}
+
+body.is-maternity-workbench .left-panel .panel-header h5 i {
+    color: #e91e8a !important;
+}
+
+body.is-maternity-workbench #patient-search-input:focus {
+    border-color: #e91e8a !important;
+    box-shadow: 0 0 0 3px rgba(233, 30, 138, 0.15) !important;
+}
+
+body.is-maternity-workbench .recent-search-chip:hover {
+    background: #fce4ec !important;
+    border-color: #f472b6 !important;
+    color: #ad1457 !important;
+}
+
+/* 2. Patient Queues with Distinct Character & Border Indicators */
+body.is-maternity-workbench .queue-widget h6 {
+    color: #ad1457 !important;
+}
+
+body.is-maternity-workbench .queue-item {
+    border-left: 3px solid #cbd5e1 !important;
+    transition: all 0.2s ease !important;
+}
+
+body.is-maternity-workbench .queue-item[data-filter="active-anc"] { border-left-color: #e91e8a !important; }
+body.is-maternity-workbench .queue-item[data-filter="due-visits"] { border-left-color: #c026d3 !important; }
+body.is-maternity-workbench .queue-item[data-filter="upcoming-edd"] { border-left-color: #f43f5e !important; }
+body.is-maternity-workbench .queue-item[data-filter="postnatal"] { border-left-color: #db2777 !important; }
+body.is-maternity-workbench .queue-item[data-filter="overdue-immunization"] { border-left-color: #be123c !important; }
+body.is-maternity-workbench .queue-item[data-filter="high-risk"] { border-left-color: #dc2626 !important; }
+body.is-maternity-workbench .queue-item[data-filter="bed-requests"] { border-left-color: #0284c7 !important; }
+body.is-maternity-workbench .queue-item[data-filter="discharge-requests"] { border-left-color: #f59e0b !important; }
+body.is-maternity-workbench .queue-item[data-filter="admitted-patients"] { border-left-color: #7c3aed !important; }
+
+body.is-maternity-workbench .queue-item:hover {
+    border-color: #f472b6 !important;
+    background: #fdf2f8 !important;
+    transform: translateX(3px) !important;
+}
+
+body.is-maternity-workbench .queue-item.active {
+    background: #fdf2f8 !important;
+    border-left: 3px solid #e91e8a !important;
+    border-color: #f472b6 !important;
+    color: #9d174d !important;
+    font-weight: 700 !important;
+}
+
+/* 3. Distinct Queue Count Badges */
+body.is-maternity-workbench .queue-count.anc {
+    background: #e91e8a !important;
+    color: #ffffff !important;
+}
+
+body.is-maternity-workbench .queue-count.due-visit {
+    background: #c026d3 !important;
+    color: #ffffff !important;
+}
+
+body.is-maternity-workbench .queue-count.edd {
+    background: #f43f5e !important;
+    color: #ffffff !important;
+}
+
+body.is-maternity-workbench .queue-count.postnatal {
+    background: #db2777 !important;
+    color: #ffffff !important;
+}
+
+body.is-maternity-workbench .queue-count.overdue {
+    background: #be123c !important;
+    color: #ffffff !important;
+}
+
+body.is-maternity-workbench .queue-count.high-risk {
+    background: #dc2626 !important;
+    color: #ffffff !important;
+}
+
+body.is-maternity-workbench .queue-count.admitted {
+    background: #7c3aed !important;
+    color: #ffffff !important;
+}
+
+body.is-maternity-workbench .btn-queue-all {
+    border-color: #fbcfe8 !important;
+    color: #be185d !important;
+    background: #fdf2f8 !important;
+}
+
+body.is-maternity-workbench .btn-queue-all:hover {
+    background: #fce4ec !important;
+    border-color: #e91e8a !important;
+    color: #9d174d !important;
+}
+
+/* 4. Quick Actions */
+body.is-maternity-workbench .quick-actions h6 {
+    color: #ad1457 !important;
+}
+
+body.is-maternity-workbench .quick-action-btn:hover {
+    background: #fdf2f8 !important;
+    border-color: #f472b6 !important;
+    color: #9d174d !important;
+}
+
+body.is-maternity-workbench #btn-enroll-patient i {
+    color: #e91e8a !important;
+}
+
+/* 5. Main Workspace Navbar & Action Buttons */
+body.is-maternity-workbench .workspace-navbar {
+    border-bottom: 1px solid #fbcfe8 !important;
+    background: #ffffff !important;
+}
+
+body.is-maternity-workbench .btn-primary,
+body.is-maternity-workbench #btn-maternity-new-patient {
+    background: linear-gradient(135deg, #e91e8a 0%, #d8157d 100%) !important;
+    border-color: #d8157d !important;
+    color: #ffffff !important;
+    box-shadow: 0 2px 6px rgba(233, 30, 138, 0.3) !important;
+}
+
+body.is-maternity-workbench .btn-primary:hover,
+body.is-maternity-workbench #btn-maternity-new-patient:hover {
+    background: linear-gradient(135deg, #d8157d 0%, #ad1457 100%) !important;
+    border-color: #ad1457 !important;
+    box-shadow: 0 4px 10px rgba(233, 30, 138, 0.4) !important;
+}
+
+body.is-maternity-workbench .btn-outline-primary,
+body.is-maternity-workbench #btn-register-walkin {
+    border-color: #e91e8a !important;
+    color: #e91e8a !important;
+    background: transparent !important;
+}
+
+body.is-maternity-workbench .btn-outline-primary:hover,
+body.is-maternity-workbench #btn-register-walkin:hover {
+    background: #e91e8a !important;
+    border-color: #e91e8a !important;
+    color: #ffffff !important;
+}
+
+body.is-maternity-workbench .btn-toggle-search:hover,
+body.is-maternity-workbench #btn-toggle-search:hover {
+    border-color: #e91e8a !important;
+    color: #e91e8a !important;
+    background: #fdf2f8 !important;
+}
+
+/* 6. Signature Patient Header Banner (Maternity Pink Gradient) */
+body.is-maternity-workbench .patient-header,
+body.is-maternity-workbench .workbench-patient-header {
+    background: linear-gradient(135deg, #e91e8a 0%, #ad1457 100%) !important;
+    color: #ffffff !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.25) !important;
+    box-shadow: 0 2px 10px rgba(233, 30, 138, 0.35) !important;
+}
+
+/* 7. Workspace Tabs */
+body.is-maternity-workbench .workspace-tabs {
+    border-bottom: 1px solid #fbcfe8 !important;
+    background: #fdf2f8 !important;
+}
+
+body.is-maternity-workbench .workspace-tab {
+    color: #64748b !important;
+}
+
+body.is-maternity-workbench .workspace-tab:hover {
+    color: #ad1457 !important;
+    background: rgba(253, 242, 248, 0.8) !important;
+}
+
+body.is-maternity-workbench .workspace-tab.active {
+    color: #e91e8a !important;
+    background: #ffffff !important;
+    border-bottom: 2px solid #e91e8a !important;
+    font-weight: 700 !important;
+}
+
+body.is-maternity-workbench .workspace-tab-badge {
+    background: #e91e8a !important;
+    color: #ffffff !important;
+}
+
+/* 8. Empty State Icon & Action Button */
+body.is-maternity-workbench .empty-state i.mdi-baby-buggy {
+    color: #f472b6 !important;
+    opacity: 0.8 !important;
+}
+
+body.is-maternity-workbench .empty-state #view-queue-btn {
+    background: linear-gradient(135deg, #e91e8a 0%, #ad1457 100%) !important;
+    color: #ffffff !important;
+    border: none !important;
+    box-shadow: 0 4px 14px rgba(233, 30, 138, 0.35) !important;
+}
+
+body.is-maternity-workbench .empty-state #view-queue-btn:hover {
+    background: linear-gradient(135deg, #d8157d 0%, #880e4f 100%) !important;
+    box-shadow: 0 6px 18px rgba(233, 30, 138, 0.45) !important;
+    transform: translateY(-1px) !important;
+}
+
+/* 9. Sub-tabs, Reports & Navigation Badges */
+body.is-maternity-workbench .nav-tabs .nav-link.active,
+body.is-maternity-workbench #maternity-report-tabs .nav-link.active {
+    color: #e91e8a !important;
+    border-color: #fbcfe8 #fbcfe8 #ffffff !important;
+    font-weight: 700 !important;
+}
+
+body.is-maternity-workbench .date-preset-btn.active {
+    background: #e91e8a !important;
+    border-color: #d8157d !important;
+    color: #ffffff !important;
+}
+
+body.is-maternity-workbench .date-preset-btn:hover:not(.active) {
+    border-color: #e91e8a !important;
+    color: #e91e8a !important;
+}
+
+body.is-maternity-workbench #btn-apply-mat-dates {
+    background: #e91e8a !important;
+    border-color: #d8157d !important;
+}

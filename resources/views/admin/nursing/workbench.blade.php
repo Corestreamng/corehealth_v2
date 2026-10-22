@@ -75,32 +75,32 @@
         <div class="queue-widget">
             <h6><i class="mdi mdi-clipboard-text"></i> PATIENT QUEUES</h6>
             <div class="queue-item" data-filter="admitted">
-                <span class="queue-item-label"><i class="mdi mdi-hotel"></i> Admitted Patients</span>
+                <span class="queue-item-label"><i class="mdi mdi-hotel text-primary"></i> Admitted Patients</span>
                 <span class="queue-count billing" id="queue-admitted-count">0</span>
             </div>
             <div class="queue-item" data-filter="vitals">
-                <span class="queue-item-label"><i class="mdi mdi-heart-pulse"></i> Vitals Queue</span>
+                <span class="queue-item-label"><i class="mdi mdi-heart-pulse text-danger"></i> Vitals Queue</span>
                 <span class="queue-count sample" id="queue-vitals-count">0</span>
             </div>
             <div class="queue-item" data-filter="bed-requests">
-                <span class="queue-item-label"><i class="mdi mdi-bed-empty"></i> Bed Requests</span>
+                <span class="queue-item-label"><i class="mdi mdi-bed-empty text-info"></i> Bed Requests</span>
                 <span class="queue-count info" id="queue-bed-count">0</span>
             </div>
             <div class="queue-item" data-filter="discharge-requests">
-                <span class="queue-item-label"><i class="mdi mdi-account-minus"></i> Discharge Requests</span>
+                <span class="queue-item-label"><i class="mdi mdi-account-minus text-warning"></i> Discharge Requests</span>
                 <span class="queue-count results" id="queue-discharge-count">0</span>
             </div>
             <div class="queue-item" data-filter="medication-due">
-                <span class="queue-item-label"><i class="mdi mdi-pill"></i> Medication Due</span>
+                <span class="queue-item-label"><i class="mdi mdi-pill text-success"></i> Medication Due</span>
                 <span class="queue-count results" id="queue-medication-count">0</span>
             </div>
             <div class="queue-item" data-filter="emergency" style="border-left: 3px solid #dc3545;">
-                <span class="queue-item-label"><i class="mdi mdi-ambulance"></i> Emergency Queue</span>
-                <span class="queue-count" id="queue-emergency-count" style="background: #dc3545; color: #fff;">0</span>
+                <span class="queue-item-label"><i class="mdi mdi-ambulance text-danger"></i> Emergency Queue</span>
+                <span class="queue-count emergency" id="queue-emergency-count">0</span>
             </div>
             <div class="queue-item" data-filter="deceased" style="border-left: 3px solid #6c757d;">
-                <span class="queue-item-label"><i class="mdi mdi-emoticon-dead-outline"></i> Deceased (Last Office)</span>
-                <span class="queue-count" id="queue-deceased-count" style="background: #6c757d; color: #fff;">0</span>
+                <span class="queue-item-label"><i class="mdi mdi-emoticon-dead-outline text-secondary"></i> Deceased (Last Office)</span>
+                <span class="queue-count deceased" id="queue-deceased-count">0</span>
             </div>
             <button class="btn-queue-all" id="refresh-queues-btn">
                 <i class="mdi mdi-refresh"></i> Refresh Queues

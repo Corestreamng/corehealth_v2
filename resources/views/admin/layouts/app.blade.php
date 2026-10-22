@@ -43,6 +43,9 @@
     <!-- Navbar & Global Search Styles -->
     <link rel="stylesheet" href="{{ versioned_asset('css/navbar.css') }}">
 
+    <!-- Universal High-Density UI Tokens & Workbench Cockpit Scaling -->
+    <link rel="stylesheet" href="{{ versioned_asset('css/workbench-cockpit-scaling.css') }}">
+
     @php
         $primaryColor = appsettings()->hos_color ?? '#011b33';
         $hoverColor = adjustBrightness($primaryColor, 20);
@@ -110,8 +113,8 @@
             box-shadow: none;
             z-index: 1035;
             position: fixed;
-            left: 250px;
-            width: calc(100% - 250px);
+            left: 260px;
+            width: calc(100% - 260px);
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
@@ -249,8 +252,8 @@
 
         /* Page Body Wrapper */
         .page-body-wrapper {
-            margin-left: 250px;
-            width: calc(100% - 250px);
+            margin-left: 260px;
+            width: calc(100% - 260px);
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             padding-top: 0;
         }
@@ -377,8 +380,8 @@
             margin: 0;
             position: fixed;
             bottom: 0;
-            left: 250px;
-            width: calc(100% - 250px);
+            left: 260px;
+            width: calc(100% - 260px);
             z-index: 998;
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }

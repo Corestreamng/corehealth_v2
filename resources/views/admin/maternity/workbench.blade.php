@@ -2,7 +2,7 @@
 
 @section('title', 'Maternity Workbench')
 @section('is_workbench', true)
-@section('body_class', 'is-workbench has-workbench')
+@section('body_class', 'is-workbench has-workbench is-maternity-workbench')
 
 @push('styles')
 <link rel="stylesheet" href="{{ versioned_asset('css/workbench-cockpit-scaling.css') }}">

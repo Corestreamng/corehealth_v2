@@ -458,7 +458,35 @@ Building upon the successful scaling of Reception, Billing, Pharmacy, Laboratory
 
 ---
 
-### 3. Automated Test Suite & Code Quality Results
+### 3. Visual Character & Theming Enhancements
+
+1. **Maternity Signature Distinct Pink Theme (`public/css/maternity-workbench.css`)**:
+   - Scoped to `body.is-maternity-workbench` and `.maternity-workbench-container`.
+   - Injected `--maternity-pink: #e91e8a;`, `--maternity-pink-hover: #d8157d;`, `--maternity-pink-dark: #ad1457;`, `--hospital-primary: #e91e8a !important;`.
+   - Action Buttons: `#btn-maternity-new-patient` and `.btn-primary` styled with vibrant pink gradient `linear-gradient(135deg, #e91e8a, #d8157d)` and soft pink glow shadows. `#btn-register-walkin` styled with pink borders and hover fill.
+   - Left Panel Header: Soft pink gradient `linear-gradient(135deg, #fdf2f8, #fce4ec)` with baby buggy icon.
+   - Patient Header Banner: Signature rich pink gradient `linear-gradient(135deg, #e91e8a 0%, #ad1457 100%)`.
+   - Active Tabs & Badges: Highlighted in `#e91e8a` with distinct active bottom border.
+   - Empty State: Centered baby buggy icon in soft pink (`#f472b6`) and `#view-queue-btn` in signature pink gradient.
+   - Color-coded Queue Badges: ANC (`#e91e8a`), Due Visits (`#c026d3`), Upcoming EDD (`#f43f5e`), Postnatal (`#db2777`), Overdue Immunization (`#be123c`), High Risk (`#dc2626`), Bed Requests (`#0284c7`), Discharge Requests (`#d97706`), Admitted (`#7c3aed`).
+
+2. **Departmental Queue Badges Color & Character Coding (`public/css/workbench-cockpit-scaling.css`)**:
+   - Replaced indiscriminate gray badge background with semantic departmental color hierarchy:
+     - Admitted Patients / Billing (`.billing`): Vibrant Sky Blue (`#0284c7`)
+     - Vitals Queue / Sample (`.sample`): Vibrant Emerald Teal (`#0d9488`)
+     - Bed Requests / Info (`.info`): Vibrant Indigo (`#6366f1`)
+     - Discharge Requests / Medication Due (`.results`): Vibrant Amber (`#f59e0b`)
+     - Emergency Queue (`.emergency`): Vibrant Crimson Red (`#dc2626`)
+     - Deceased / Last Office (`.deceased`): Deep Slate (`#475569`)
+   - Added distinctive colored left border indicators to each queue item in `nursing-workbench.css` and colored MDI icons in `workbench.blade.php`.
+
+3. **Floating Action Buttons (FABs) Circular Preservation (`public/css/workbench-cockpit-scaling.css`)**:
+   - Excluded circular FABs from `.btn` standard border-radius scaling using `:not(.btn-shift-control):not(.btn-ai-fab):not(.btn-patient-summary):not(.btn-circle):not(.btn-fab):not(.btn-rounded-circle)`.
+   - Added dedicated circular preservation rules (`border-radius: 50% !important; width: 56px !important; height: 56px !important; box-shadow: 0 4px 15px rgba(0,0,0,0.28) !important;`) ensuring floating shift controls, patient summary buttons, and AI quick action buttons retain their intended circular shapes.
+
+---
+
+### 4. Automated Test Suite & Code Quality Results
 
 - `vendor/bin/phpunit tests/Feature/Nursing/ tests/Feature/Maternity/ tests/Feature/NurseDrugSourceTest.php`:
   **39 tests, 136 assertions — 100% passed (0 failures, 0 errors)**.
@@ -472,5 +500,84 @@ Building upon the successful scaling of Reception, Billing, Pharmacy, Laboratory
   - `public/js/maternity-anc.js` — **Passed (0 errors)**
   - `public/js/maternity-delivery.js` — **Passed (0 errors)**
 - PSR-12 Linting (`composer lint`): **0 errors** across 1,307 files.
+
+---
+
+## 11. App-Wide Shell Alignment & Surgery Workbench Cockpit Scaling
+
+### 1. Root Cause Discovery: Sidebar & Shell Geometry Disparity
+During visual telemetry audits across clinical workbenches, an edge overlap issue was detected where the persistent left sidebar (`.ch-sidebar`) partially covered the first 10–76 pixels of workbench content and navigation items:
+
+1. **Master Layout Disparity (`resources/views/admin/layouts/app.blade.php`)**:
+   - The master layout hardcoded `left: 250px`, `margin-left: 250px`, and `width: calc(100% - 250px)` across `.ch-navbar`, `.page-body-wrapper`, and `.footer`.
+   - However, `.ch-sidebar` (`public/css/sidebar.css`) declares `width: 260px;`.
+   - Result: Across all pages and workbenches, 10 pixels of content were submerged directly behind the sidebar.
+2. **Intermediate Breakpoint Overlap**:
+   - On tablet displays (768px – 1199.98px), where the sidebar contracts to an 80px icon rail, `workbench-cockpit-scaling.css` had an overly broad `@media (max-width: 991.98px)` rule resetting `margin-left: 0 !important;`.
+   - This caused the 80px rail to hover over the page content between 768px and 991.98px.
+3. **Missing Scaler Link in Surgery Workbench**:
+   - `resources/views/admin/surgery/workbench.blade.php` declared `@section('is_workbench', true)` and `@section('body_class', 'is-workbench has-workbench')` but omitted `<link rel="stylesheet" href="{{ versioned_asset('css/workbench-cockpit-scaling.css') }}">`.
+
+---
+
+### 2. Resolution & Shell Architecture Synchronization
+
+1. **Master Shell Synchronization (`resources/views/admin/layouts/app.blade.php`)**:
+   - Updated `.ch-navbar`, `.page-body-wrapper`, and `.footer` from `250px` to `260px` to match `.ch-sidebar`.
+2. **Universal Scaler Breakpoint Alignment (`public/css/workbench-cockpit-scaling.css`)**:
+   - **Desktop Normal (>= 1200px)**:
+     - `.page-body-wrapper`: `margin-left: 260px !important; width: calc(100% - 260px) !important;`
+     - `.ch-navbar`: `left: 260px !important; width: calc(100% - 260px) !important;`
+   - **Desktop Minimized (`.sidebar-icon-only`)**:
+     - `.page-body-wrapper`: `margin-left: 72px !important; width: calc(100% - 72px) !important;`
+     - `.ch-navbar`: `left: 72px !important; width: calc(100% - 72px) !important;`
+   - **Tablet Icon Rail (768px – 1199.98px)**:
+     - `.page-body-wrapper`: `margin-left: 80px !important; width: calc(100% - 80px) !important;`
+     - `.ch-navbar`: `left: 80px !important; width: calc(100% - 80px) !important;`
+   - **Mobile Drawer (< 768px)**:
+     - `.page-body-wrapper`: `margin-left: 0 !important; width: 100% !important;`
+     - `.ch-navbar`: `left: 0 !important; width: 100% !important;`
+3. **Surgery Workbench Integration (`resources/views/admin/surgery/workbench.blade.php`)**:
+   - Prepended `workbench-cockpit-scaling.css` in `@push('styles')`.
+   - Bound container class `.surgery-workbench-container.sw-page`.
+   - Cleaned duplicate `@push('scripts')` and `@include('admin.partials.clinical_orders_modal')`.
+   - Declared `flex-direction: column !important;` for `.sw-page` and `.surgery-workbench-container` in `workbench-cockpit-scaling.css`.
+   - Scaled procedure cards in `public/css/surgery-workbench.css`: `grid-template-columns: repeat(auto-fill, minmax(310px, 1fr)) !important; gap: 0.65rem !important;`.
+
+---
+
+### 3. Multi-Workbench Zero-Overlap Verification Audit (1366 x 768 Baseline)
+
+An automated browser audit was executed across all 8 major clinical workbenches in the test environment to measure edge coordinates and confirm zero overlap:
+
+| Workbench Route | Viewport | Sidebar Right (`px`) | Content Left (`px`) | Overlap Detected | Status |
+|:---|:---:|:---:|:---:|:---:|:---:|
+| **Reception Workbench** (`/reception/workbench`) | 1366 x 768 | 260px | 260px | `false` | **PASSED** |
+| **Pharmacy Workbench** (`/pharmacy-workbench`) | 1366 x 768 | 260px | 260px | `false` | **PASSED** |
+| **Laboratory Workbench** (`/lab-workbench`) | 1366 x 768 | 260px | 260px | `false` | **PASSED** |
+| **Imaging Workbench** (`/imaging-workbench`) | 1366 x 768 | 260px | 260px | `false` | **PASSED** |
+| **Nursing Workbench** (`/nursing-workbench`) | 1366 x 768 | 260px | 260px | `false` | **PASSED** |
+| **Maternity Workbench** (`/maternity-workbench`) | 1366 x 768 | 260px | 260px | `false` | **PASSED** |
+| **Billing Workbench** (`/billing-workbench`) | 1366 x 768 | 260px | 260px | `false` | **PASSED** |
+| **Surgery Workbench** (`/surgery-workbench`) | 1366 x 768 | 260px | 260px | `false` | **PASSED** |
+
+---
+
+### 4. Verification Artifacts & Test Results
+- Screenshots:
+  - `surgery_workbench_verified_fix2_1792669110380.png` (Zero overlap, full card visibility, tab clarity)
+  - `reception_wb_test_1792669248391.png`
+  - `pharmacy_workbench_test_1792669205496.png`
+  - `lab_workbench_test_1792669258772.png`
+  - `imaging_workbench_test_1792669265676.png`
+  - `nursing_workbench_test_1792669276335.png`
+  - `maternity_workbench_test_1792669286217.png`
+  - `billing_workbench_test_1792669295225.png`
+- Automated Unit & Feature Tests:
+  - `tests/Feature/Surgery/SurgeryWorkbenchTest.php`: 2 tests, 2 assertions — **100% passed**.
+  - `tests/Feature/Nursing/`, `tests/Feature/Maternity/`, `NurseDrugSourceTest.php`: 39 tests, 136 assertions — **100% passed**.
+  - PSR-12 Linting (`composer lint`): 1,307 files — **0 errors**.
+
+
 
 

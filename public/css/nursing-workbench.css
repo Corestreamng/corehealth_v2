@@ -228,11 +228,21 @@
         margin-bottom: 0.5rem;
         cursor: pointer;
         transition: all 0.2s;
+        border-left: 3px solid #cbd5e1;
     }
 
+    .queue-item[data-filter="admitted"] { border-left-color: #0284c7 !important; }
+    .queue-item[data-filter="vitals"] { border-left-color: #0d9488 !important; }
+    .queue-item[data-filter="bed-requests"] { border-left-color: #6366f1 !important; }
+    .queue-item[data-filter="discharge-requests"] { border-left-color: #f59e0b !important; }
+    .queue-item[data-filter="medication-due"] { border-left-color: #10b981 !important; }
+    .queue-item[data-filter="emergency"] { border-left-color: #dc2626 !important; }
+    .queue-item[data-filter="deceased"] { border-left-color: #64748b !important; }
+
     .queue-item:hover {
-        transform: translateX(5px);
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        transform: translateX(3px);
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+        background: #f8fafc;
     }
 
     .queue-item-label {
