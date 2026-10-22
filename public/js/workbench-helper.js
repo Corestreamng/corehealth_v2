@@ -151,4 +151,70 @@ window.CoreHealth.getItemDisplayName = function(item) {
     return item.service_name || item.product_name || item.name || 'Custom Item';
 };
 
+// =========================================================================
+// UNIVERSAL WORKBENCH DRAWER CLOSE CONTROLLER
+// Handles close buttons on all queue, reports, and overlay drawers across all workbenches:
+// Reception, Maternity, Nursing, Pharmacy, Billing, Lab, Imaging, Surgery.
+// =========================================================================
+$(function() {
+    $(document).on('click', '.btn-close-queue, #btn-close-queue, #btn-close-reports, #btn-close-pharmacy-reports, #btn-close-nursing-reports, #btn-close-ward-dashboard, #btn-close-appointments-view, #btn-close-hmo-validation, [data-dismiss="queue-view"]', function(e) {
+        var $btn = $(this);
+        var btnId = $btn.attr('id') || '';
+
+        // 1. Resolve target drawer
+        var $pane = $btn.closest('.queue-view, .workbench-queue-view, [id$="-view"]');
+        if (!$pane.length) {
+            if (btnId === 'btn-close-reports' || btnId === 'btn-close-pharmacy-reports' || btnId === 'btn-close-nursing-reports') {
+                $pane = $('#reports-view, #pharmacy-reports-view, #nursing-reports-view');
+            } else if (btnId === 'btn-close-ward-dashboard') {
+                $pane = $('#ward-dashboard-view');
+            } else if (btnId === 'btn-close-hmo-validation') {
+                $pane = $('#hmo-validation-view');
+            } else if (btnId === 'btn-close-appointments-view') {
+                $pane = $('#appointments-view, #appointments-calendar-view');
+            } else {
+                $pane = $('#queue-view');
+            }
+        }
+
+        // 2. Hide and deactivate drawer
+        if ($pane && $pane.length) {
+            $pane.removeClass('active').hide().css('display', '');
+        }
+
+        // Deactivate all queue selection pills
+        $('.queue-item').removeClass('active');
+
+        // 3. Trigger module-specific teardown if available
+        if (typeof window.hideQueue === 'function' && (btnId === 'btn-close-queue' || $btn.hasClass('btn-close-queue'))) {
+            try { window.hideQueue(); } catch (err) {}
+        }
+        if (typeof window.hideReports === 'function' && (btnId === 'btn-close-reports' || btnId === 'btn-close-pharmacy-reports')) {
+            try { window.hideReports(); } catch (err) {}
+        }
+        if (typeof window.hidePharmacyReports === 'function' && btnId === 'btn-close-pharmacy-reports') {
+            try { window.hidePharmacyReports(); } catch (err) {}
+        }
+
+        // 4. Restore workspace visibility based on patient selection state
+        var curPatient = window.currentPatient || window.currentPatientId;
+        if (curPatient) {
+            $('#patient-header').addClass('active').show();
+            $('#workspace-content').addClass('active').show();
+            $('#empty-state').hide();
+        } else {
+            $('#patient-header').removeClass('active').hide();
+            $('#workspace-content').removeClass('active').hide();
+            $('#empty-state').show();
+        }
+
+        // 5. Mobile responsive restore
+        if (window.innerWidth < 768) {
+            $('#main-workspace').removeClass('active');
+            $('#left-panel').removeClass('hidden');
+        }
+    });
+});
+
+
 

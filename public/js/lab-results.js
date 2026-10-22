@@ -1007,15 +1007,18 @@ function showQueue(filter) {
 }
 
 function hideQueue() {
-    $('#queue-view').removeClass('active');
+    $('#queue-view').removeClass('active').hide().css('display', '');
     $('.queue-item').removeClass('active');
 
     if (currentPatient) {
         // If patient was selected, show their workspace
-        $('#patient-header').addClass('active');
-        $('#workspace-content').addClass('active');
+        $('#patient-header').addClass('active').show();
+        $('#workspace-content').addClass('active').show();
+        $('#empty-state').hide();
     } else {
         // Otherwise show empty state
+        $('#patient-header').removeClass('active').hide();
+        $('#workspace-content').removeClass('active').hide();
         $('#empty-state').show();
     }
 

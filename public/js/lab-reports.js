@@ -54,8 +54,16 @@ function showReports() {
 }
 
 function hideReports() {
-    $('#reports-view').removeClass('active');
-    $('#empty-state').show();
+    $('#reports-view').removeClass('active').hide().css('display', '');
+    if (currentPatient) {
+        $('#patient-header').addClass('active').show();
+        $('#workspace-content').addClass('active').show();
+        $('#empty-state').hide();
+    } else {
+        $('#patient-header').removeClass('active').hide();
+        $('#workspace-content').removeClass('active').hide();
+        $('#empty-state').show();
+    }
 
     // On mobile, go back to search pane
     if (window.innerWidth < 768) {

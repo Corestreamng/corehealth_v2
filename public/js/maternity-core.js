@@ -217,12 +217,15 @@ if (typeof window.wbRoute !== 'function') {
     }
 
     function hideQueue() {
-        $('#queue-view').removeClass('active').css('display', 'none');
+        $('#queue-view').removeClass('active').hide().css('display', '');
         $('.queue-item').removeClass('active');
         if (currentPatient) {
-            $('#patient-header').addClass('active');
+            $('#patient-header').addClass('active').show();
             $('#workspace-content').show().addClass('active');
+            $('#empty-state').hide();
         } else {
+            $('#patient-header').removeClass('active').hide();
+            $('#workspace-content').removeClass('active').hide();
             $('#empty-state').show();
         }
         if (window.innerWidth < 768) {
@@ -230,6 +233,14 @@ if (typeof window.wbRoute !== 'function') {
             $('#left-panel').removeClass('hidden');
         }
     }
+
+    window.hideQueue = hideQueue;
+    window.showQueue = showQueue;
+    window.hideAllViews = hideAllViews;
+
+    $(document).on('click', '#btn-close-queue', function() {
+        hideQueue();
+    });
 
     // ═══════════════════════════════════════════════════════════════
     // QUEUE DATA (maternity-specific endpoints, shared card pattern)

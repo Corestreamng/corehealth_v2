@@ -352,13 +352,16 @@ function showReports() {
 }
 
 function hideReports() {
-    $('#reports-view').removeClass('active');
+    $('#reports-view').removeClass('active').hide().css('display', '');
 
     // Show appropriate view based on patient selection state
     if (currentPatient) {
-        $('#patient-header').addClass('active');
+        $('#patient-header').addClass('active').show();
         $('#workspace-content').show().addClass('active');
+        $('#empty-state').hide();
     } else {
+        $('#patient-header').removeClass('active').hide();
+        $('#workspace-content').removeClass('active').hide();
         $('#empty-state').show();
     }
 
@@ -897,7 +900,17 @@ const NursingReports = (function() {
 
     // Hide reports view
     function hide() {
-        $('#nursing-reports-view').hide();
+        $('#nursing-reports-view').removeClass('active').hide().css('display', '');
+        var curPat = window.currentPatient || window.currentPatientId;
+        if (curPat) {
+            $('#patient-header').addClass('active').show();
+            $('#workspace-content').show().addClass('active');
+            $('#empty-state').hide();
+        } else {
+            $('#patient-header').removeClass('active').hide();
+            $('#workspace-content').removeClass('active').hide();
+            $('#empty-state').show();
+        }
     }
 
     // Set default date range (last 7 days)

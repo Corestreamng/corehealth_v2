@@ -83,7 +83,7 @@ $('#btn-pharmacy-reports').on('click', function() {
 });
 
 // Close pharmacy reports view
-$('#btn-close-pharmacy-reports').on('click', function() {
+$('#btn-close-pharmacy-reports, #btn-close-reports').on('click', function() {
     hidePharmacyReports();
 });
 

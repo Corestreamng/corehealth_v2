@@ -1848,7 +1848,7 @@ body.has-workbench .queue-view {
     bottom: 0 !important;
     background: #ffffff !important;
     z-index: 50 !important;
-    display: none;
+    display: none !important;
     flex-direction: column !important;
     padding: 8px 12px !important;
 }
@@ -1863,10 +1863,103 @@ body.has-workbench .queue-view-header {
     display: flex !important;
     align-items: center !important;
     justify-content: space-between !important;
-    padding-bottom: 6px !important;
-    border-bottom: 1px solid #e2e8f0 !important;
+    padding: 6px 10px !important;
+    background: #f8fafc !important;
+    border: 1px solid #e2e8f0 !important;
+    border-radius: 6px !important;
     margin-bottom: 8px !important;
     flex-shrink: 0 !important;
+}
+
+body.is-workbench .queue-view-header h4,
+body.has-workbench .queue-view-header h4 {
+    margin: 0 !important;
+    font-size: 0.88rem !important;
+    font-weight: 700 !important;
+    color: #1e293b !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 6px !important;
+}
+
+/* Universal High-Visibility Close Button for All Queue & Reports Panes */
+body.is-workbench .queue-view-header .btn-close-queue,
+body.has-workbench .queue-view-header .btn-close-queue,
+body.is-workbench .queue-view .btn-close-queue,
+body.has-workbench .queue-view .btn-close-queue,
+body.is-workbench #btn-close-queue,
+body.has-workbench #btn-close-queue,
+body.is-workbench #btn-close-reports,
+body.has-workbench #btn-close-reports,
+body.is-workbench #btn-close-pharmacy-reports,
+body.has-workbench #btn-close-pharmacy-reports,
+body.is-workbench #btn-close-nursing-reports,
+body.has-workbench #btn-close-nursing-reports,
+body.is-workbench #btn-close-ward-dashboard,
+body.has-workbench #btn-close-ward-dashboard,
+body.is-workbench #btn-close-appointments-view,
+body.has-workbench #btn-close-appointments-view,
+body.is-workbench #btn-close-hmo-validation,
+body.has-workbench #btn-close-hmo-validation {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 5px !important;
+    height: 26px !important;
+    min-height: 26px !important;
+    padding: 0 10px !important;
+    font-size: 0.76rem !important;
+    font-weight: 600 !important;
+    color: #334155 !important;
+    background: #ffffff !important;
+    border: 1px solid #cbd5e1 !important;
+    border-radius: 4px !important;
+    cursor: pointer !important;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05) !important;
+    transition: all 0.15s ease-in-out !important;
+    text-decoration: none !important;
+    line-height: 1 !important;
+}
+
+body.is-workbench .queue-view-header .btn-close-queue:hover,
+body.has-workbench .queue-view-header .btn-close-queue:hover,
+body.is-workbench .queue-view .btn-close-queue:hover,
+body.has-workbench .queue-view .btn-close-queue:hover,
+body.is-workbench #btn-close-queue:hover,
+body.has-workbench #btn-close-queue:hover,
+body.is-workbench #btn-close-reports:hover,
+body.has-workbench #btn-close-reports:hover,
+body.is-workbench #btn-close-pharmacy-reports:hover,
+body.has-workbench #btn-close-pharmacy-reports:hover,
+body.is-workbench #btn-close-nursing-reports:hover,
+body.has-workbench #btn-close-nursing-reports:hover,
+body.is-workbench #btn-close-ward-dashboard:hover,
+body.has-workbench #btn-close-ward-dashboard:hover,
+body.is-workbench #btn-close-appointments-view:hover,
+body.has-workbench #btn-close-appointments-view:hover,
+body.is-workbench #btn-close-hmo-validation:hover,
+body.has-workbench #btn-close-hmo-validation:hover {
+    color: #dc2626 !important;
+    background: #fef2f2 !important;
+    border-color: #fca5a5 !important;
+    box-shadow: 0 1px 3px rgba(220, 38, 38, 0.15) !important;
+}
+
+body.is-workbench .queue-view-header .btn-close-queue:active,
+body.has-workbench .queue-view-header .btn-close-queue:active,
+body.is-workbench .btn-close-queue:active,
+body.has-workbench .btn-close-queue:active {
+    transform: translateY(1px) !important;
+    background: #fee2e2 !important;
+}
+
+body.is-workbench .queue-view-header .btn-close-queue i,
+body.has-workbench .queue-view-header .btn-close-queue i,
+body.is-workbench .btn-close-queue i,
+body.has-workbench .btn-close-queue i {
+    font-size: 0.92rem !important;
+    line-height: 1 !important;
+    color: inherit !important;
 }
 
 /* Workspace Tabs */

@@ -576,8 +576,35 @@ An automated browser audit was executed across all 8 major clinical workbenches 
 - Automated Unit & Feature Tests:
   - `tests/Feature/Surgery/SurgeryWorkbenchTest.php`: 2 tests, 2 assertions — **100% passed**.
   - `tests/Feature/Nursing/`, `tests/Feature/Maternity/`, `NurseDrugSourceTest.php`: 39 tests, 136 assertions — **100% passed**.
+  - `tests/Feature/Pharmacy/`: 43 tests, 158 assertions — **100% passed**.
+  - `tests/Feature/Reception/ReceptionQueueTest.php`: 7 tests, 16 assertions — **100% passed**.
+  - `tests/Feature/BillingWorkbenchTest.php`: 8 tests, 23 assertions — **100% passed**.
   - PSR-12 Linting (`composer lint`): 1,307 files — **0 errors**.
 
+---
 
+### 5. Universal Queue & Reports Drawer State Management & Close Button Refactor
 
+Across 7 core clinical workbenches (**Reception**, **Maternity**, **Nursing**, **Pharmacy**, **Billing**, **Laboratory**, and **Imaging**), queue and report drawers follow a unified overlay pattern (`.queue-view`). A critical usability issue existed where:
+1. **Low Contrast / Invisible Close Buttons**: Module CSS originally styled `.btn-close-queue` with white text on a semi-transparent white background (`color: white; background: rgba(255, 255, 255, 0.2)`). Under cockpit scaling, the `.queue-view-header` background is crisp light/white (`#ffffff`), rendering the close button invisible (white-on-white).
+2. **Display Specificity Overrides**: `body.is-workbench .queue-view` previously had `display: none;` without `!important`. Dynamic jQuery calls (`.show()` or `.css('display', 'flex')`) placed inline styles that prevented removing `.active` from hiding the drawer.
+3. **Submodule Scoping & Event Binding Gaps**: In Maternity, `hideQueue` was private to `maternity-core.js` and unavailable in `maternity-delivery.js`. In Pharmacy, `_pharmacy_reports_view.blade.php` used `#btn-close-pharmacy-reports`, while `pharmacy-stock.js` bound `#btn-close-reports`. In Nursing, `#btn-close-nursing-reports` called `.hide()` without restoring patient workspace content.
 
+#### Solution Implemented:
+1. **Universal High-Contrast Styling (`public/css/workbench-cockpit-scaling.css`)**:
+   - Universal high-specificity selector covering `.btn-close-queue`, `#btn-close-queue`, `#btn-close-reports`, `#btn-close-pharmacy-reports`, `#btn-close-nursing-reports`, `#btn-close-ward-dashboard`, `#btn-close-appointments-view`, and `#btn-close-hmo-validation`.
+   - High-contrast slate theme: `#334155` text on `#ffffff` background with `#cbd5e1` 1px solid border and subtle box shadow (`0 1px 2px rgba(0, 0, 0, 0.05)`).
+   - Hover state: soft red accent (`#dc2626` text, `#fef2f2` background, `#fca5a5` border).
+   - Strict CSS drawer gating: `body.is-workbench .queue-view:not(.active)` has `display: none !important;` and `body.is-workbench .queue-view.active` has `display: flex !important;`.
+2. **Standardized Module CSS (`public/css/*.css`)**:
+   - Synchronized `.btn-close-queue` styles in `reception-workbench.css`, `maternity-workbench.css`, `nursing-workbench.css`, `pharmacy-workbench.css`, `billing-workbench.css`, `lab-workbench.css`, and `imaging-workbench.css`.
+3. **Universal Delegated Event Controller (`public/js/workbench-helper.js`)**:
+   - Added a top-level document event listener catching all close clicks (`.btn-close-queue, #btn-close-queue, ...`).
+   - Automatically determines target drawer via `$(this).closest('.queue-view')`, removes `.active`, calls `.hide().css('display', '')`, and intelligently restores the active patient header/workspace or empty-state placeholder.
+   - Emits a custom document event `workbench:queue-closed`.
+4. **Submodule Integration & Scope Exports**:
+   - Maternity (`maternity-core.js`, `maternity-delivery.js`): Globally exposed `window.hideQueue`, `window.showQueue`, and `window.hideAllViews`.
+   - Reception (`reception-core.js`): Updated `hideQueue()` and `hideReports()` to manage `.active` and restore workspace.
+   - Nursing (`nursing-core.js`, `nursing-vitals.js`): Restored empty-state or patient view upon closing nursing reports or ward dashboard.
+   - Pharmacy (`pharmacy-stock.js`, `pharmacy-reports.js`): Bound `#btn-close-pharmacy-reports, #btn-close-reports` to `hidePharmacyReports()`.
+   - Billing (`billing-hmo.js`), Lab (`lab-results.js`, `lab-reports.js`), Imaging (`imaging-results.js`): Standardized drawer closing and display resetting.

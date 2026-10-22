@@ -725,7 +725,13 @@ if (typeof window.wbRoute !== 'function') {
         $('#refresh-queues-btn').on('click', loadQueueCounts);
 
         // Close queue (SHARED)
-        $('#btn-close-queue').on('click', hideQueue);
+        $('#btn-close-queue').on('click', function() {
+            if (typeof window.hideQueue === 'function') {
+                window.hideQueue();
+            } else if (typeof hideQueue === 'function') {
+                hideQueue();
+            }
+        });
 
         // View queue from empty state
         $('#view-queue-btn').on('click', function() {
@@ -827,11 +833,14 @@ if (typeof window.wbRoute !== 'function') {
         });
 
         $('#btn-close-reports').on('click', function() {
-            $('#reports-view').removeClass('active').hide();
+            $('#reports-view').removeClass('active').hide().css('display', '');
             if (currentPatient) {
-                $('#patient-header').addClass('active');
+                $('#patient-header').addClass('active').show();
                 $('#workspace-content').show().addClass('active');
+                $('#empty-state').hide();
             } else {
+                $('#patient-header').removeClass('active').hide();
+                $('#workspace-content').removeClass('active').hide();
                 $('#empty-state').show();
             }
         });

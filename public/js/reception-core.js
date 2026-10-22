@@ -1232,12 +1232,16 @@ function showQueue(filter) {
 }
 
 function hideQueue() {
-    $('#queue-view').removeClass('active');
+    $('#queue-view').removeClass('active').hide().css('display', '');
+    $('.queue-item').removeClass('active');
 
     if (currentPatient) {
-        $('#workspace-content').addClass('active');
-        $('#patient-header').addClass('active');
+        $('#patient-header').addClass('active').show();
+        $('#workspace-content').addClass('active').show();
+        $('#empty-state').hide();
     } else {
+        $('#patient-header').removeClass('active').hide();
+        $('#workspace-content').removeClass('active').hide();
         $('#empty-state').show();
     }
 }
@@ -1318,13 +1322,16 @@ function showReports() {
 }
 
 function hideReports() {
-    $('#reports-view').hide().removeClass('active');
+    $('#reports-view').removeClass('active').hide().css('display', '');
 
     // Show appropriate view based on patient selection state
     if (currentPatient) {
-        $('#patient-header').addClass('active');
+        $('#patient-header').addClass('active').show();
         $('#workspace-content').show().addClass('active');
+        $('#empty-state').hide();
     } else {
+        $('#patient-header').removeClass('active').hide();
+        $('#workspace-content').removeClass('active').hide();
         $('#empty-state').show();
     }
 

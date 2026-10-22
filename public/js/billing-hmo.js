@@ -72,15 +72,18 @@ if (typeof window.wbRoute !== 'function') {
     }
 
     function hideQueue() {
-        $('#queue-view').removeClass('active');
+        $('#queue-view').removeClass('active').hide().css('display', '');
         $('.queue-item').removeClass('active');
 
         if (currentPatient) {
             // If patient was selected, show their workspace
-            $('#patient-header').addClass('active');
-            $('#workspace-content').addClass('active');
+            $('#patient-header').addClass('active').show();
+            $('#workspace-content').addClass('active').show();
+            $('#empty-state').hide();
         } else {
             // Otherwise show empty state
+            $('#patient-header').removeClass('active').hide();
+            $('#workspace-content').removeClass('active').hide();
             $('#empty-state').show();
         }
 
@@ -191,8 +194,16 @@ if (typeof window.wbRoute !== 'function') {
     }
 
     function hideReports() {
-        $('#reports-view').removeClass('active');
-        $('#empty-state').show();
+        $('#reports-view').removeClass('active').hide().css('display', '');
+        if (currentPatient) {
+            $('#patient-header').addClass('active').show();
+            $('#workspace-content').addClass('active').show();
+            $('#empty-state').hide();
+        } else {
+            $('#patient-header').removeClass('active').hide();
+            $('#workspace-content').removeClass('active').hide();
+            $('#empty-state').show();
+        }
 
         // On mobile, go back to search pane
         if (window.innerWidth < 768) {

@@ -136,17 +136,18 @@ function showQueue(filter) {
     loadQueueData(filter);
 }
 
-// Hide queue view
 function hideQueue() {
-    $('#queue-view').removeClass('active').css('display', 'none');
+    $('#queue-view').removeClass('active').hide().css('display', '');
     $('.queue-item').removeClass('active');
 
     if (currentPatient) {
         // If patient was selected, show their workspace
-        $('#patient-header').addClass('active');
+        $('#patient-header').addClass('active').show();
         $('#workspace-content').show().addClass('active');
+        $('#empty-state').hide();
     } else {
-        // Otherwise show empty state
+        $('#patient-header').removeClass('active').hide();
+        $('#workspace-content').removeClass('active').hide();
         $('#empty-state').show();
     }
 
