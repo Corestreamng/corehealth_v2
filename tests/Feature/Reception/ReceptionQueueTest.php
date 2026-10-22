@@ -59,4 +59,25 @@ class ReceptionQueueTest extends TestCase
             $response->assertSee('openMedicalReportHistory');
         }
     }
+
+    /** @test */
+    public function test_receptionist_without_billing_role_can_access_workbench()
+    {
+        // User with no billing role or permission
+        $user = User::factory()->create(['status' => 1]);
+        $response = $this->actingAs($user)->get('/reception/workbench');
+        $this->assertTrue(in_array($response->status(), [200, 302, 403, 404, 500]));
+        $this->assertNotEquals(500, $response->status());
+        $response->assertStatus(200);
+        $response->assertViewHas('canBillUser', false);
+
+        // Receptionist role in DB
+        $role = \Spatie\Permission\Models\Role::firstOrCreate(['name' => 'RECEPTIONIST']);
+        $receptionist = User::factory()->create(['status' => 1]);
+        $receptionist->assignRole($role);
+        $recResponse = $this->actingAs($receptionist)->get('/reception/workbench');
+        $this->assertTrue(in_array($recResponse->status(), [200, 302, 403, 404, 500]));
+        $this->assertNotEquals(500, $recResponse->status());
+        $recResponse->assertStatus(200);
+    }
 }

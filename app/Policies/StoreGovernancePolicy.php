@@ -82,7 +82,7 @@ class StoreGovernancePolicy
      * @param  Store $sourceStore  the store that will fulfill this requisition
      * @return Response
      */
-    public function canApproveRequisitionForStore(User $user, Store $sourceStore): Response
+    public function canApproveRequisitionForStore(User $user, ?Store $sourceStore = null): Response
     {
         if ($user->hasRole(['ADMIN', 'SUPERADMIN', 'super-admin'])) {
             return Response::allow();
@@ -90,6 +90,10 @@ class StoreGovernancePolicy
 
         if (!$user->hasPermissionTo('can-approve-requisition-for-store')) {
             return Response::deny('You do not have permission to approve requisitions.');
+        }
+
+        if (!$sourceStore) {
+            return Response::allow();
         }
 
         // Path A — static store manager assignment
@@ -124,10 +128,10 @@ class StoreGovernancePolicy
      * The store must allow direct patient dispense AND be a pharmacy-class store.
      *
      * @param  User  $user
-     * @param  Store $store  the pharmacy store being dispensed from
+     * @param  Store|null $store  the pharmacy store being dispensed from
      * @return Response
      */
-    public function dispenseFromStore(User $user, Store $store): Response
+    public function dispenseFromStore(User $user, ?Store $store = null): Response
     {
         if ($user->hasRole(['ADMIN', 'SUPERADMIN', 'super-admin'])) {
             return Response::allow();
@@ -135,6 +139,10 @@ class StoreGovernancePolicy
 
         if (!$user->hasPermissionTo('dispense-from-store')) {
             return Response::deny('You do not have permission to dispense from any store.');
+        }
+
+        if (!$store) {
+            return Response::allow();
         }
 
         if (!$store->canDispenseToPatient()) {
@@ -158,10 +166,10 @@ class StoreGovernancePolicy
      * Blocks if the store requires an active shift and the user has none.
      *
      * @param  User  $user
-     * @param  Store $store  the ward/department store
+     * @param  Store|null $store  the ward/department store
      * @return Response
      */
-    public function administerFromStore(User $user, Store $store): Response
+    public function administerFromStore(User $user, ?Store $store = null): Response
     {
         if ($user->hasRole(['ADMIN', 'SUPERADMIN', 'super-admin'])) {
             return Response::allow();
@@ -172,7 +180,7 @@ class StoreGovernancePolicy
         }
 
         // Plan §7.5.2: if requires_shift_context, active shift must exist
-        if ($store->requires_shift_context) {
+        if ($store && $store->requires_shift_context) {
             $activeShift = \App\Models\NursingShift::where('user_id', $user->id)
                 ->where('status', 'active')
                 ->exists();
@@ -195,10 +203,10 @@ class StoreGovernancePolicy
      * Plan §6.5 Tab 1, §7.5.4, §B7
      *
      * @param  User  $user
-     * @param  Store $store
+     * @param  Store|null $store
      * @return Response
      */
-    public function billConsumableFromStore(User $user, Store $store): Response
+    public function billConsumableFromStore(User $user, ?Store $store = null): Response
     {
         if ($user->hasRole(['ADMIN', 'SUPERADMIN', 'super-admin'])) {
             return Response::allow();
@@ -208,7 +216,7 @@ class StoreGovernancePolicy
             return Response::deny('You do not have permission to bill consumables from store stock.');
         }
 
-        if ($store->requires_shift_context) {
+        if ($store && $store->requires_shift_context) {
             $activeShift = \App\Models\NursingShift::where('user_id', $user->id)
                 ->where('status', 'active')
                 ->exists();

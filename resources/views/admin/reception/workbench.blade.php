@@ -27,7 +27,7 @@
                     'superadmin', 'admin', 'accounts', 'biller', 'billing', 'accountant',
                     'Biller', 'Billing', 'Accounts', 'Accountant', 'Admin'
                 ])
-                || ($user->can && ($user->can('see-accounts') || $user->can('bill-consumable-from-store')));
+                || $user->can('see-accounts');
         }
     }
 @endphp
