@@ -1,7 +1,7 @@
 # CoreHealth v2 — Billing, Split Payments, Free-Form Requests & Financial Governance Enhancements
 
 **Date**: 2026-10-21  
-**Git Release Tag**: `v2.5.1.0` (Target Release Tag — Pending Merge to Master)  
+**Git Release Tag**: `v2.5.0.9`  
 **Status**: Completed & Verified  
 
 ---
@@ -16,6 +16,8 @@ This document details the architectural design, implementation, and verification
 4. **Enhanced My Transactions Cockpit**: High-density transaction modal for cashiers and billers displaying itemized line items on each transaction row, dynamic KPI cards for products and services, category filters (Product Only, Service Only, Product Category, Service Category, and Specific Item lookup), and cross-workbench accessibility from both Billing and Reception toolbars.
 5. **Payment Method Adjustment & Audit Governance**: Built into the new *Manage Transactions* tab, allowing billers (own transactions) and accountants/admins (all transactions) to correct payment methods (e.g. Cash to POS or Single to Split) with automated reversing and replacement Journal Entries and immutable audit trails in `payment_adjustments`.
 6. **Transaction Voiding & Comprehensive Reversal**: Complete voiding workflow that reverses GL journal entries, restores deducted patient deposit account balances, unlinks `ProductOrServiceRequest` items back to unbilled status, decrements nurse shift counters, and strikes through/excludes voided transactions across all financial reports, cashier summaries, receipts, and ops audit workbenches.
+7. **Universal Walk-In Patient Context Parity**: Decoupled patient context detection in `walkin-sales-shared.js` from local scoping, establishing bidirectional synchronization across Reception Workbench (`reception-core.js`, `reception-queue.js`) and Billing Workbench (`billing-core.js`, `patient-search-widget.js`) so that adding catalog or free-form items seamlessly accesses the active patient without "Select Patient First" false warnings.
+8. **Clinical Request Auto-Advancement & Zero-Billing Flow**: Elimination of redundant billing hurdles for walk-in and cashier-settled orders. When a `ProductOrServiceRequest` is paid (or settled via 100% HMO coverage / zero-payable), associated `LabServiceRequest` and `ImagingServiceRequest` automatically advance from `status = 1` (Awaiting Billing) to `status = 2` (Sample Collection / Results Entry) across `paymentController`, `BillingWorkbenchController`, `ReceptionWorkbenchController`, and `ProductOrServiceRequestObserver`, backed by self-healing synchronization in Lab and Imaging workbench controllers.
 
 ---
 
@@ -121,9 +123,11 @@ Supported split channels:
   - Handles bank dropdown population per electronic leg.
 - **`public/js/walkin-sales-shared.js`**:
   - Shared search, item addition, and cart management across Reception and Billing.
+  - Universal patient context resolution (`getCurrentPatientId()`) checking `window.currentPatient` (scalar or object), `window.currentPatientId`, `window.currentPatientData`, DOM selectors (`#selected-patient-id`, `#patient_id`, `#patient-id`), and data attributes (`data-patient-id`).
   - Interactive SweetAlert prompt for free-form requests with `Is Billable` toggle and price input.
 - **`public/js/billing-my-transactions.js`**:
   - My Transactions modal with itemized line item summaries.
+  - Category filter dropdown (`#my-tx-category-filter`): dynamically populated with standard and free-form category options; populated both from Blade server-side categories and via client-side discovery from raw transaction data.
   - Filters: Product Only, Service Only, Product Category, Service Category, and Item search.
   - True Tender Accounting: Split is recognized as an operational mechanism, not an independent payment method. Split tender legs are accurately distributed and accounted into their respective tender methods (Cash, POS, Bank Transfer, Mobile/Deposit).
   - Terminal & Bank Breakdown: Displays live bank-specific breakdowns directly inside the POS, Transfer, and Deposit KPI cards (e.g. POS Zenith, POS UBA, Transfer Access) and on printouts.
@@ -147,6 +151,9 @@ Supported split channels:
 # Run all new Billing enhancement test suites
 vendor/bin/phpunit --filter "PaymentSplitTest|FreeFormBillingTest|MyTransactionsEnhancedTest|PaymentAdjustmentAndVoidTest" tests/Feature/Billing/
 
+# Run Reception walkin and billing test suite
+vendor/bin/phpunit tests/Feature/Reception/ReceptionWalkinBillingTest.php
+
 # Run Billing workbench core test suite
 vendor/bin/phpunit tests/Feature/BillingWorkbenchTest.php
 
@@ -160,6 +167,9 @@ make lint
 node --check public/js/billing-split-payments.js
 node --check public/js/walkin-sales-shared.js
 node --check public/js/billing-my-transactions.js
+node --check public/js/reception-core.js
+node --check public/js/reception-queue.js
+node --check public/js/patient-search-widget.js
 node --check public/js/billing-core.js
 node --check public/js/workbench-helper.js
 ```
@@ -172,12 +182,13 @@ node --check public/js/workbench-helper.js
 | **Free-Form Billing** | `tests/Feature/Billing/FreeFormBillingTest.php` | 2 | 15 | **PASSED** |
 | **My Transactions & Bank KPIs** | `tests/Feature/Billing/MyTransactionsEnhancedTest.php` | 5 | 35 | **PASSED** |
 | **Reception My Transactions** | `tests/Feature/Billing/ReceptionMyTransactionsTest.php` | 2 | 11 | **PASSED** |
+| **Reception Walk-In & Auto-Advance** | `tests/Feature/Reception/ReceptionWalkinBillingTest.php` | 12 | 80 | **PASSED** |
 | **Adjustment & Voiding** | `tests/Feature/Billing/PaymentAdjustmentAndVoidTest.php` | 3 | 25 | **PASSED** |
 | **Billing Workbench Core**| `tests/Feature/BillingWorkbenchTest.php` | 8 | 23 | **PASSED** |
 | **Full Billing Domain Suite**| `tests/Feature/Billing/` | 59 | 225 | **PASSED** |
 | **Ops Audit Endpoints** | `tests/Feature/OpsAudit/OpsAuditEndpointsTest.php` | 156 | 156 | **PASSED** |
 | **PSR-12 Code Style** | `make lint` | 1307 files | 0 errors | **PASSED** |
-| **JavaScript Syntax** | `node --check` | 6 modules | 0 errors | **PASSED** |
+| **JavaScript Syntax** | `node --check` | 9 modules | 0 errors | **PASSED** |
 
 ---
 

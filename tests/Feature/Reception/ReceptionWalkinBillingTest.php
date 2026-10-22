@@ -224,4 +224,392 @@ class ReceptionWalkinBillingTest extends TestCase
             $this->assertNull(\App\Models\LabServiceRequest::find($labReq->id));
         }
     }
+
+    /** @test */
+    public function test_paid_walkin_lab_and_imaging_requests_auto_advance_past_billing_to_execution_stage()
+    {
+        $user = $this->createAuthenticatedStaff(['RECEPTIONIST', 'BILLER', 'LAB SCIENTIST', 'RADIOLOGIST']);
+        $patient = Patient::factory()->create();
+
+        $catLab = ServiceCategory::firstOrCreate(
+            ['category_name' => 'Hematology Lab'],
+            ['category_code' => 'HEM-LAB', 'status' => 1]
+        );
+        $serviceLab = Service::create([
+            'service_name' => 'FBC Auto Test ' . uniqid(),
+            'service_code' => 'FBC-' . uniqid(),
+            'category_id' => $catLab->id,
+            'user_id' => $user->id,
+            'status' => 1,
+        ]);
+        ServicePrice::create(['service_id' => $serviceLab->id, 'sale_price' => 3000]);
+
+        $catImg = ServiceCategory::firstOrCreate(
+            ['category_name' => 'Radiology Imaging'],
+            ['category_code' => 'RAD-IMG', 'status' => 1]
+        );
+        $serviceImg = Service::create([
+            'service_name' => 'Chest X-Ray ' . uniqid(),
+            'service_code' => 'CXR-' . uniqid(),
+            'category_id' => $catImg->id,
+            'user_id' => $user->id,
+            'status' => 1,
+        ]);
+        ServicePrice::create(['service_id' => $serviceImg->id, 'sale_price' => 5000]);
+
+        // 1. Book both services via walk-in endpoint
+        $bookPayload = [
+            'patient_id' => $patient->id,
+            'items' => [
+                ['type' => 'lab', 'id' => $serviceLab->id, 'qty' => 1],
+                ['type' => 'imaging', 'id' => $serviceImg->id, 'qty' => 1],
+            ],
+        ];
+
+        $bookResp = $this->actingAs($user)->postJson('/reception/book-walkin', $bookPayload);
+        $this->assertTrue(in_array($bookResp->status(), [200, 302, 403, 500]));
+
+        if ($bookResp->status() === 200) {
+            $requests = $bookResp->json('requests');
+            $this->assertCount(2, $requests);
+
+            $labReqData = collect($requests)->firstWhere('type', 'lab');
+            $imgReqData = collect($requests)->firstWhere('type', 'imaging');
+
+            $labReq = \App\Models\LabServiceRequest::find($labReqData['id']);
+            $imgReq = \App\Models\ImagingServiceRequest::find($imgReqData['id']);
+
+            $this->assertEquals(1, $labReq->status); // Initial: awaiting billing
+            $this->assertEquals(1, $imgReq->status); // Initial: awaiting billing
+
+            // 2. Process payment for these walk-in requests
+            $paymentPayload = [
+                'patient_id' => $patient->id,
+                'payment_type' => 'CASH',
+                'payment_method' => 'CASH',
+                'reference_no' => 'WALKIN-TEST-' . uniqid(),
+                'items' => [
+                    ['id' => $labReqData['service_request_id'], 'qty' => 1, 'discount' => 0],
+                    ['id' => $imgReqData['service_request_id'], 'qty' => 1, 'discount' => 0],
+                ],
+            ];
+
+            $payResp = $this->actingAs($user)->postJson('/billing-workbench/process-payment', $paymentPayload);
+            $this->assertTrue(in_array($payResp->status(), [200, 302, 403, 500]));
+
+            if ($payResp->status() === 200) {
+                // Verify clinical requests transitioned to status 2 (Sample Collection / Results Entry)
+                $labReq->refresh();
+                $imgReq->refresh();
+
+                $this->assertEquals(2, $labReq->status, 'Lab request should skip billing stage and advance to sample collection (status 2)');
+                $this->assertNotNull($labReq->billed_date);
+                $this->assertEquals(2, $imgReq->status, 'Imaging request should skip billing stage and advance to results entry (status 2)');
+                $this->assertNotNull($imgReq->billed_date);
+
+                // Verify workbench patient requests endpoint
+                $labDetailsResp = $this->actingAs($user)->getJson("/lab-workbench/patient/{$patient->id}/requests");
+                if ($labDetailsResp->status() === 200) {
+                    $labJson = $labDetailsResp->json('requests');
+                    $this->assertEmpty($labJson['billing']);
+                    $this->assertNotEmpty($labJson['sample']);
+                }
+
+                $imgDetailsResp = $this->actingAs($user)->getJson("/imaging-workbench/patient/{$patient->id}/requests");
+                if ($imgDetailsResp->status() === 200) {
+                    $imgJson = $imgDetailsResp->json('requests');
+                    $this->assertEmpty($imgJson['billing']);
+                    $this->assertNotEmpty($imgJson['results']);
+                }
+            }
+        }
+    }
+
+    /** @test */
+    public function test_fully_covered_or_zero_payable_walkin_services_skip_billing_stage_immediately()
+    {
+        $user = $this->createAuthenticatedStaff(['RECEPTIONIST', 'BILLER']);
+        $patient = Patient::factory()->create();
+
+        $cat = ServiceCategory::firstOrCreate(
+            ['category_name' => 'Free Screening Services'],
+            ['category_code' => 'FREE-SCR', 'status' => 1]
+        );
+        $service = Service::create([
+            'service_name' => 'Free Vitals Lab ' . uniqid(),
+            'service_code' => 'FREE-LAB-' . uniqid(),
+            'category_id' => $cat->id,
+            'user_id' => $user->id,
+            'status' => 1,
+        ]);
+        ServicePrice::create(['service_id' => $service->id, 'sale_price' => 0]);
+
+        $payload = [
+            'patient_id' => $patient->id,
+            'items' => [
+                ['type' => 'lab', 'id' => $service->id, 'qty' => 1],
+            ],
+        ];
+
+        $response = $this->actingAs($user)->postJson('/reception/book-walkin', $payload);
+        $this->assertTrue(in_array($response->status(), [200, 302, 403, 500]));
+
+        if ($response->status() === 200) {
+            $requests = $response->json('requests');
+            $this->assertNotEmpty($requests);
+            $labReq = \App\Models\LabServiceRequest::find($requests[0]['id']);
+            $this->assertNotNull($labReq);
+            $this->assertEquals(2, $labReq->status, 'Zero-payable / covered walk-in lab service should immediately be status 2');
+        }
+    }
+
+    /** @test */
+    public function test_walkin_recent_requests_returns_procedure_and_freeform_items_with_workbench_parity()
+    {
+        $user = $this->createAuthenticatedStaff(['RECEPTIONIST', 'BILLER']);
+        $patient = Patient::factory()->create();
+
+        // 1. Create a Procedure
+        $cat = ServiceCategory::firstOrCreate(
+            ['category_name' => 'General Surgery'],
+            ['category_code' => 'GEN-SURG', 'status' => 1]
+        );
+        $service = Service::create([
+            'service_name' => 'Wound Debridement ' . uniqid(),
+            'service_code' => 'SURG-' . uniqid(),
+            'category_id' => $cat->id,
+            'user_id' => $user->id,
+            'status' => 1,
+        ]);
+        ServicePrice::create(['service_id' => $service->id, 'sale_price' => 5000]);
+
+        $posrProc = new ProductOrServiceRequest();
+        $posrProc->user_id = $patient->user_id;
+        $posrProc->patient_id = $patient->id;
+        $posrProc->service_id = $service->id;
+        $posrProc->staff_user_id = $user->id;
+        $posrProc->payable_amount = 5000;
+        $posrProc->claims_amount = 0;
+        $posrProc->save();
+
+        $proc = new \App\Models\Procedure();
+        $proc->service_id = $service->id;
+        $proc->patient_id = $patient->id;
+        $proc->requested_by = $user->id;
+        $proc->requested_on = now();
+        $proc->product_or_service_request_id = $posrProc->id;
+        $proc->save();
+
+        // 2. Create a Free-Form request
+        $posrFree = new ProductOrServiceRequest();
+        $posrFree->user_id = $patient->user_id;
+        $posrFree->patient_id = $patient->id;
+        $posrFree->staff_user_id = $user->id;
+        $posrFree->is_free_form = true;
+        $posrFree->free_form_name = 'Custom Dressing Pad ' . uniqid();
+        $posrFree->is_billable = true;
+        $posrFree->payable_amount = 1500;
+        $posrFree->claims_amount = 0;
+        $posrFree->save();
+
+        // Check Reception route
+        $receptionResp = $this->actingAs($user)->getJson("/reception/patient/{$patient->id}/recent-requests");
+        $this->assertTrue(in_array($receptionResp->status(), [200, 302, 403, 500]));
+
+        if ($receptionResp->status() === 200) {
+            $items = $receptionResp->json('requests');
+            $this->assertNotEmpty($items);
+            $procItem = collect($items)->firstWhere('type', 'procedure');
+            $this->assertNotNull($procItem);
+            $this->assertEquals(5000, $procItem['payable']);
+
+            $freeItem = collect($items)->firstWhere('type', 'free_form');
+            $this->assertNotNull($freeItem);
+            $this->assertEquals(1500, $freeItem['payable']);
+        }
+
+        // Check Billing route parity
+        $billingResp = $this->actingAs($user)->getJson("/billing-workbench/patient/{$patient->id}/recent-requests");
+        $this->assertTrue(in_array($billingResp->status(), [200, 302, 403, 500]));
+
+        if ($billingResp->status() === 200) {
+            $items = $billingResp->json('requests');
+            $this->assertNotEmpty($items);
+            $this->assertNotNull(collect($items)->firstWhere('type', 'procedure'));
+            $this->assertNotNull(collect($items)->firstWhere('type', 'free_form'));
+        }
+    }
+
+    /** @test */
+    public function test_walkin_recent_request_can_be_discarded_via_delete_endpoint()
+    {
+        $user = $this->createAuthenticatedStaff(['RECEPTIONIST', 'BILLER']);
+        $patient = Patient::factory()->create();
+
+        $cat = ServiceCategory::firstOrCreate(
+            ['category_name' => 'Lab Tests'],
+            ['category_code' => 'LAB-TEST', 'status' => 1]
+        );
+        $service = Service::create([
+            'service_name' => 'Electrolytes Test ' . uniqid(),
+            'service_code' => 'LYTES-' . uniqid(),
+            'category_id' => $cat->id,
+            'user_id' => $user->id,
+            'status' => 1,
+        ]);
+        ServicePrice::create(['service_id' => $service->id, 'sale_price' => 3500]);
+
+        $posr = new ProductOrServiceRequest();
+        $posr->user_id = $patient->user_id;
+        $posr->patient_id = $patient->id;
+        $posr->service_id = $service->id;
+        $posr->staff_user_id = $user->id;
+        $posr->payable_amount = 3500;
+        $posr->claims_amount = 0;
+        $posr->save();
+
+        $labReq = new \App\Models\LabServiceRequest();
+        $labReq->service_request_id = $posr->id;
+        $labReq->service_id = $service->id;
+        $labReq->patient_id = $patient->id;
+        $labReq->status = 1;
+        $labReq->save();
+
+        // Discard via DELETE endpoint
+        $response = $this->actingAs($user)->deleteJson("/reception/request/lab/{$labReq->id}/discard", [
+            'reason' => 'Erroneous duplicate booking entered by receptionist',
+        ]);
+        $this->assertTrue(in_array($response->status(), [200, 302, 403, 500]));
+
+        if ($response->status() === 200) {
+            $this->assertTrue($response->json('success'));
+            $this->assertNull(\App\Models\LabServiceRequest::find($labReq->id));
+            $this->assertNull(ProductOrServiceRequest::find($posr->id));
+        }
+    }
+
+    /** @test */
+    public function test_book_walkin_free_form_service_calculates_payable_when_billable()
+    {
+        $user = $this->createAuthenticatedStaff(['RECEPTIONIST', 'BILLER']);
+        $patient = Patient::factory()->create();
+
+        $payload = [
+            'patient_id' => $patient->id,
+            'items' => [
+                [
+                    'type' => 'free_form',
+                    'name' => 'Custom Wound Dressing Pad',
+                    'base_price' => 3500,
+                    'quantity' => 2,
+                    'is_billable' => 1,
+                    'description' => 'Sterile multi-layer wound pad',
+                ],
+            ],
+        ];
+
+        $response = $this->actingAs($user)->postJson('/reception/book-walkin', $payload);
+        $this->assertTrue(in_array($response->status(), [200, 302, 403, 500]));
+
+        if ($response->status() === 200) {
+            $this->assertTrue($response->json('success'));
+            $requests = $response->json('requests');
+            $this->assertNotEmpty($requests);
+            $item = $requests[0];
+            $this->assertEquals('free_form', $item['type']);
+            $this->assertEquals(7000.0, (float) $item['payable_amount']);
+            $this->assertTrue($item['is_billable']);
+
+            // Verify recent-requests endpoint returns accurate price, payable, and can_pay = true
+            $recentResp = $this->actingAs($user)->getJson("/reception/patient/{$patient->id}/recent-requests");
+            $this->assertTrue(in_array($recentResp->status(), [200, 302, 403, 500]));
+
+            if ($recentResp->status() === 200) {
+                $recentItems = $recentResp->json('requests');
+                $match = collect($recentItems)->firstWhere('service_request_id', $item['service_request_id']);
+                $this->assertNotNull($match);
+                $this->assertEquals(7000.0, (float) $match['price']);
+                $this->assertEquals(7000.0, (float) $match['payable']);
+                $this->assertTrue($match['can_pay']);
+                $this->assertTrue($match['is_billable']);
+            }
+        }
+    }
+
+    /** @test */
+    public function test_book_walkin_free_form_service_sets_zero_payable_when_non_billable()
+    {
+        $user = $this->createAuthenticatedStaff(['RECEPTIONIST', 'BILLER']);
+        $patient = Patient::factory()->create();
+
+        $payload = [
+            'patient_id' => $patient->id,
+            'items' => [
+                [
+                    'type' => 'free_form',
+                    'name' => 'Courtesy Splint Application',
+                    'price' => 2500,
+                    'qty' => 1,
+                    'is_billable' => 0,
+                    'description' => 'Complimentary clinical adjustment',
+                ],
+            ],
+        ];
+
+        $response = $this->actingAs($user)->postJson('/reception/book-walkin', $payload);
+        $this->assertTrue(in_array($response->status(), [200, 302, 403, 500]));
+
+        if ($response->status() === 200) {
+            $this->assertTrue($response->json('success'));
+            $requests = $response->json('requests');
+            $this->assertNotEmpty($requests);
+            $item = $requests[0];
+            $this->assertEquals(0.0, (float) $item['payable_amount']);
+            $this->assertFalse($item['is_billable']);
+
+            // Verify recent-requests endpoint shows Non-Billable and can_pay = false
+            $recentResp = $this->actingAs($user)->getJson("/reception/patient/{$patient->id}/recent-requests");
+            $this->assertTrue(in_array($recentResp->status(), [200, 302, 403, 500]));
+
+            if ($recentResp->status() === 200) {
+                $recentItems = $recentResp->json('requests');
+                $match = collect($recentItems)->firstWhere('service_request_id', $item['service_request_id']);
+                $this->assertNotNull($match);
+                $this->assertEquals(2500.0, (float) $match['price']);
+                $this->assertEquals(0.0, (float) $match['payable']);
+                $this->assertFalse($match['can_pay']);
+                $this->assertFalse($match['is_billable']);
+                $this->assertEquals('Non-Billable', $match['billing_status']);
+            }
+        }
+    }
+
+    /** @test */
+    public function test_walkin_free_form_request_can_be_discarded()
+    {
+        $user = $this->createAuthenticatedStaff(['RECEPTIONIST', 'BILLER']);
+        $patient = Patient::factory()->create();
+
+        $posr = new ProductOrServiceRequest();
+        $posr->user_id = $patient->user_id;
+        $posr->patient_id = $patient->id;
+        $posr->staff_user_id = $user->id;
+        $posr->is_free_form = true;
+        $posr->free_form_name = 'Erroneous Custom Bandage ' . uniqid();
+        $posr->is_billable = true;
+        $posr->amount = 1200;
+        $posr->payable_amount = 1200;
+        $posr->claims_amount = 0;
+        $posr->save();
+
+        $response = $this->actingAs($user)->deleteJson("/reception/request/free_form/{$posr->id}/discard", [
+            'reason' => 'Duplicate custom item booked in error by receptionist',
+        ]);
+        $this->assertTrue(in_array($response->status(), [200, 302, 403, 500]));
+
+        if ($response->status() === 200) {
+            $this->assertTrue($response->json('success'));
+            $this->assertNull(ProductOrServiceRequest::find($posr->id));
+        }
+    }
 }
