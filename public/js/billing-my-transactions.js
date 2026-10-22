@@ -35,19 +35,36 @@
                 self.loadMyTransactions();
             });
 
-            // Filter changes inside My Transactions tab
-            $(document).on('change', '#my-trans-payment-type, #my-trans-item-type, #my-trans-category-filter', function() {
+            // Item type filter changes inside My Transactions tab
+            $(document).on('change', '#my-trans-item-type', function() {
+                self.updateCategoriesDropdown();
                 self.renderTransactionsList();
+            });
+
+            // Filter changes inside My Transactions tab
+            $(document).on('change', '#my-trans-payment-type, #my-trans-category-filter', function() {
+                self.renderTransactionsList();
+            });
+
+            // Auto-load and populate categories when modal opens
+            $(document).on('shown.bs.modal', '#myTransactionsModal', function() {
+                self.updateCategoriesDropdown();
+                if (!rawTransactions || rawTransactions.length === 0) {
+                    self.loadMyTransactions();
+                }
             });
 
             // Interactive Category KPI Pills click
             $(document).on('click', '.category-kpi-pill', function(e) {
                 e.preventDefault();
-                const selectedCat = String($(this).data('category') || '');
+                const selectedCat = String($(this).data('category') || '').trim();
                 const $catFilter = $('#my-trans-category-filter');
                 if ($catFilter.val() === selectedCat) {
                     $catFilter.val('');
                 } else {
+                    if (!$catFilter.find(`option[value="${selectedCat}"]`).length) {
+                        $catFilter.append(`<option value="${self.escapeHtml(selectedCat)}">${self.escapeHtml(selectedCat)}</option>`);
+                    }
                     $catFilter.val(selectedCat);
                 }
                 self.renderTransactionsList();
@@ -278,7 +295,8 @@
                 data: { from: from, to: to, payment_type: paymentType },
                 success: function(res) {
                     rawTransactions = res.transactions || [];
-                    self.updateCategoriesDropdown();
+                    const allCats = res.all_categories || (res.summary ? res.summary.all_categories : null);
+                    self.updateCategoriesDropdown(allCats);
                     self.renderTransactionsList();
                 },
                 error: function() {
@@ -287,23 +305,107 @@
             });
         },
 
-        updateCategoriesDropdown: function() {
-            const categories = new Set();
-            rawTransactions.forEach(tx => {
-                if (tx.items && tx.items.length) {
-                    tx.items.forEach(it => {
-                        if (it.category) categories.add(it.category);
-                    });
-                }
-            });
+        cachedAllCategories: null,
+
+        updateCategoriesDropdown: function(allCategoriesData) {
+            const self = this;
+            if (allCategoriesData) {
+                self.cachedAllCategories = allCategoriesData;
+            }
 
             const $catFilter = $('#my-trans-category-filter');
-            const currentCat = $catFilter.val();
-            $catFilter.find('option:not(:first)').remove();
-            categories.forEach(cat => {
-                $catFilter.append(`<option value="${cat}">${cat}</option>`);
-            });
-            if (currentCat) $catFilter.val(currentCat);
+            if (!$catFilter.length) return;
+
+            const selectedCat = $catFilter.val() || '';
+            const itemTypeFilter = ($('#my-trans-item-type').val() || '').toLowerCase();
+
+            // Extract all categories active in current transactions with counts
+            const activeCatCounts = {};
+            if (rawTransactions && rawTransactions.length) {
+                rawTransactions.forEach(tx => {
+                    if (tx.items && tx.items.length) {
+                        tx.items.forEach(it => {
+                            const c = it.category;
+                            if (c && c !== 'N/A') {
+                                activeCatCounts[c] = (activeCatCounts[c] || 0) + 1;
+                            }
+                        });
+                    }
+                });
+            }
+
+            // Retrieve service and product category lists
+            let serviceCats = (self.cachedAllCategories && self.cachedAllCategories.services) ? [...self.cachedAllCategories.services] : [];
+            let productCats = (self.cachedAllCategories && self.cachedAllCategories.products) ? [...self.cachedAllCategories.products] : [];
+
+            // Fallback: extract existing options from DOM if cachedAllCategories not yet populated
+            if (!serviceCats.length && !productCats.length) {
+                $catFilter.find('option[data-type="service"]').each(function() {
+                    const v = $(this).val();
+                    if (v && v !== 'Custom Items' && !serviceCats.includes(v)) serviceCats.push(v);
+                });
+                $catFilter.find('option[data-type="product"]').each(function() {
+                    const v = $(this).val();
+                    if (v && !productCats.includes(v)) productCats.push(v);
+                });
+                if (serviceCats.length || productCats.length) {
+                    self.cachedAllCategories = {
+                        services: serviceCats,
+                        products: productCats
+                    };
+                }
+            }
+
+            // Build fresh option list
+            let optionsHtml = '<option value="">All Categories</option>';
+
+            // 1. In Current Results (if active transactions exist)
+            const activeKeys = Object.keys(activeCatCounts);
+            if (activeKeys.length > 0) {
+                optionsHtml += '<optgroup label="★ In Current Results">';
+                activeKeys.sort().forEach(cat => {
+                    const cnt = activeCatCounts[cat];
+                    optionsHtml += `<option value="${self.escapeHtml(cat)}">${self.escapeHtml(cat)} (${cnt} tx)</option>`;
+                });
+                optionsHtml += '</optgroup>';
+            }
+
+            // 2. Clinical & Services
+            if (!itemTypeFilter || itemTypeFilter === 'service' || itemTypeFilter === 'all') {
+                optionsHtml += '<optgroup label="Clinical &amp; Services">';
+                serviceCats.forEach(cat => {
+                    optionsHtml += `<option value="${self.escapeHtml(cat)}" data-type="service">${self.escapeHtml(cat)}</option>`;
+                });
+                optionsHtml += '<option value="Custom Items" data-type="custom">Custom Items</option>';
+                optionsHtml += '</optgroup>';
+            }
+
+            // 3. Pharmacy & Products
+            if (!itemTypeFilter || itemTypeFilter === 'product' || itemTypeFilter === 'all') {
+                optionsHtml += '<optgroup label="Pharmacy &amp; Products">';
+                productCats.forEach(cat => {
+                    optionsHtml += `<option value="${self.escapeHtml(cat)}" data-type="product">${self.escapeHtml(cat)}</option>`;
+                });
+                optionsHtml += '</optgroup>';
+            }
+
+            // 4. Custom Items
+            if (itemTypeFilter === 'custom') {
+                optionsHtml += '<optgroup label="Custom / Free-form">';
+                optionsHtml += '<option value="Custom Items" data-type="custom">Custom Items</option>';
+                optionsHtml += '</optgroup>';
+            }
+
+            $catFilter.html(optionsHtml);
+
+            // Restore previously selected category if present
+            if (selectedCat) {
+                if ($catFilter.find(`option[value="${selectedCat}"]`).length) {
+                    $catFilter.val(selectedCat);
+                } else {
+                    $catFilter.val('');
+                }
+            }
         },
 
         renderTransactionsList: function() {

@@ -71,6 +71,17 @@
                                         <label class="small text-muted mb-0">Category</label>
                                         <select class="form-select form-select-sm" id="my-trans-category-filter">
                                             <option value="">All Categories</option>
+                                            <optgroup label="Clinical &amp; Services" id="optgroup-services">
+                                                @foreach(\App\Models\ServiceCategory::where('status', 1)->orderBy('category_name')->get() as $scat)
+                                                    <option value="{{ $scat->category_name }}" data-type="service">{{ $scat->category_name }}</option>
+                                                @endforeach
+                                                <option value="Custom Items" data-type="custom">Custom Items</option>
+                                            </optgroup>
+                                            <optgroup label="Pharmacy &amp; Products" id="optgroup-products">
+                                                @foreach(\App\Models\ProductCategory::where('status', 1)->orderBy('category_name')->get() as $pcat)
+                                                    <option value="{{ $pcat->category_name }}" data-type="product">{{ $pcat->category_name }}</option>
+                                                @endforeach
+                                            </optgroup>
                                         </select>
                                     </div>
                                     <div class="col-md-2 col-sm-6 text-end">
