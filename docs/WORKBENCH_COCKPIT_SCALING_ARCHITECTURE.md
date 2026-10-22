@@ -426,3 +426,51 @@ The integration will follow this strict 3-phase execution order:
 - Total Domain Test Suite: **43 tests, 158 assertions — 100% passed, 0 failures**
 - PSR-12 Linting (`composer lint`): **0 errors** across 1,307 files.
 
+---
+
+## 10. Universal Cockpit Scaling: Nursing & Maternity Workbenches
+
+### 1. Architectural Strategy & Minimal Footprint
+Building upon the successful scaling of Reception, Billing, Pharmacy, Laboratory, and Imaging, the **Nursing** (`/nursing-workbench`) and **Maternity** (`/maternity-workbench`) workbenches have been seamlessly integrated into the Universal Workbench Cockpit Scaling architecture:
+
+1. **Blade Layout Declarations**:
+   - `resources/views/admin/nursing/workbench.blade.php`: Declared `@section('is_workbench', true)` and `@section('body_class', 'is-workbench has-workbench')`, and prepended `workbench-cockpit-scaling.css`.
+   - `resources/views/admin/maternity/workbench.blade.php`: Declared `@section('is_workbench', true)` and `@section('body_class', 'is-workbench has-workbench')`, prepended `workbench-cockpit-scaling.css`, and bound container class `.maternity-workbench-container`.
+2. **Container Flex-Scaling & Store Banner Handling**:
+   - Both workbenches feature dynamic store context banners (`#store-context-badge` / `#store-context-banner`) for ward/maternity stock governance.
+   - Updated `public/css/workbench-cockpit-scaling.css` to flex-scale `.nursing-workbench-container` and `.maternity-workbench-container` (`flex: 1 1 auto; min-height: 0; height: auto;`).
+   - Added wrapper zero-padding rule for `div:has(> #store-context-badge)` so store badges sit flush at the top with 0 unnecessary padding.
+3. **Left Panel & Quick Action Density**:
+   - Nursing left panel features 7 departmental queues (Admitted Patients, Vitals, Bed Requests, Discharge Requests, Medication Due, Emergency, Deceased) and 9 quick action buttons.
+   - Maternity left panel features 9 departmental queues (Active ANC, Due Visits, Upcoming EDD, Postnatal, Overdue Immunizations, High Risk, Bed Requests, Discharge Requests, Admitted Patients) and 8 quick action buttons.
+   - Added `max-height: 48% !important; overflow-y: auto !important;` to `.quick-actions` to prevent vertical pushout on low-resolution laptop baseline viewports (1366x768).
+4. **Desktop Navigation Cleanliness**:
+   - Disentangled `.btn-back-to-search` from `.btn-toggle-search` in `workbench-cockpit-scaling.css` and added high-specificity hide rules (`@media (min-width: 992px) { ... display: none !important; }`), ensuring `.btn-back-to-search` stays hidden on desktop displays while remaining available on mobile/tablet screens.
+
+---
+
+### 2. Zero-Scroll Viewport Measurements (1366 x 768 Workstation Baseline)
+
+| Workbench | Viewport Dimensions | `window.scrollY` | `scrollHeight` vs `innerHeight` | Outer Window Scrollbar | Console Errors | Verification Status |
+|---|---|---|---|---|---|---|
+| **Nursing Workbench** | `1366 x 768` | `0px` | `637px <= 637px` | **None (Hidden)** | `0 errors` | **VERIFIED & PASSED** |
+| **Maternity Workbench** | `1366 x 768` | `0px` | `637px <= 637px` | **None (Hidden)** | `0 errors` | **VERIFIED & PASSED** |
+
+---
+
+### 3. Automated Test Suite & Code Quality Results
+
+- `vendor/bin/phpunit tests/Feature/Nursing/ tests/Feature/Maternity/ tests/Feature/NurseDrugSourceTest.php`:
+  **39 tests, 136 assertions — 100% passed (0 failures, 0 errors)**.
+- JavaScript Syntax Checks (`node --check`):
+  - `public/js/nursing-core.js` — **Passed (0 errors)**
+  - `public/js/nursing-vitals.js` — **Passed (0 errors)**
+  - `public/js/nursing-medication-chart.js` — **Passed (0 errors)**
+  - `public/js/nursing-notes.js` — **Passed (0 errors)**
+  - `public/js/nursing-clinical-requests.js` — **Passed (0 errors)**
+  - `public/js/maternity-core.js` — **Passed (0 errors)**
+  - `public/js/maternity-anc.js` — **Passed (0 errors)**
+  - `public/js/maternity-delivery.js` — **Passed (0 errors)**
+- PSR-12 Linting (`composer lint`): **0 errors** across 1,307 files.
+
+

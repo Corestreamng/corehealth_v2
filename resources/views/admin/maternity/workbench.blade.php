@@ -1,8 +1,11 @@
 @extends('admin.layouts.app')
 
 @section('title', 'Maternity Workbench')
+@section('is_workbench', true)
+@section('body_class', 'is-workbench has-workbench')
 
 @push('styles')
+<link rel="stylesheet" href="{{ versioned_asset('css/workbench-cockpit-scaling.css') }}">
 <link rel="stylesheet" href="{{ versioned_asset('css/maternity-workbench.css') }}">
 <link rel="stylesheet" href="{{ asset('plugins/dataT/datatables.min.css') }}">
 <link rel="stylesheet" href="{{ asset('css/clinical-orders-shared.css') }}">
@@ -57,7 +60,7 @@ $sett = appsettings();
 </div>
 @endif
 
-<div class="nursing-workbench-container">
+<div class="maternity-workbench-container nursing-workbench-container">
 
     <!-- ── Left Panel: Patient Search & Queue (SHARED PATTERN) ── -->
     <div class="left-panel" id="left-panel">
