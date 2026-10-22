@@ -200,52 +200,195 @@ During testing of the Reception Workbench within the zero-scroll cockpit shell, 
 
 ---
 
-## 7. Workbench Rollout Standard (Pattern for Other Modules)
+## 9. Phased Integration Blueprint: Scaling Pharmacy, Laboratory, and Imaging Workbenches
 
-To migrate other workbenches (Doctor, Pharmacy, Nursing, Lab, Billing, Morgue) to this framework:
+### 1. Architectural Objectives & Non-Breaking Principles
+Following the verified deployment of Universal Workbench Cockpit Scaling on the **Reception** and **Billing** workbenches, this blueprint details the exact strategy to scale the remaining primary clinical service workbenches:
+1. **Pharmacy Workbench** (`admin/pharmacy/workbench`)
+2. **Laboratory Workbench** (`admin/lab/workbench`)
+3. **Imaging / Radiology Workbench** (`admin/imaging/workbench`)
 
-1. **In the workbench Blade view (`<module>/workbench.blade.php`)**:
-   ```blade
-   @extends('admin.layouts.app')
-   @section('title', '<Module> Workbench')
-   @section('is_workbench', true)
-   @section('body_class', 'is-workbench has-workbench')
-
-   @push('styles')
-   <link rel="stylesheet" href="{{ versioned_asset('css/workbench-cockpit-scaling.css') }}">
-   <link rel="stylesheet" href="{{ versioned_asset('css/<module>-workbench.css') }}">
-   ...
-   @endpush
-   ```
-2. **In the module-specific CSS (`public/css/<module>-workbench.css`)**:
-   - Bounding master container: `height: 100% !important; max-height: 100% !important; overflow: hidden;`
-   - Panels and content panes: `flex: 1 1 auto; min-height: 0; overflow-y: auto;`
-   - Remove any legacy hardcoded `min-height: calc(100vh - 100px);` overrides.
-   - Run `node --check` and `make lint` before committing.
+The foundational mandates for this rollout:
+- **Zero-Scroll Viewport Locking**: Ensure the entire workbench fits within `height: 100vh; overflow: hidden;` on low-resolution 1366x768 workstation baseline displays, eliminating outer window scrollbars (`scrollY == 0`).
+- **Internal Overflow Management**: Panel scrolling is restricted strictly to internal scroll panes using high-density 4px micro-scrollbars (`.dash-scrollable`).
+- **100% Feature Parity & JS Invariance**: ZERO domain-specific JavaScript code or DOM event handlers may be broken or lost. All DOM element IDs, classes, data attributes, DataTables definitions, modal triggers, and AJAX route URLs must be preserved with exact character-for-character fidelity.
+- **Architectural Cleanup**: Remediate legacy file structure anomalies (e.g., Lab workbench HTML mistakenly split across `_modals.blade.php`).
 
 ---
 
-## 8. Expandable Biodata Drawer & Admission Module Breakdown Architecture
+### 2. Module 1: Pharmacy Workbench Cockpit Scaling
 
-### 1. Expandable Biodata Drawer Scaling Fix (`public/css/workbench-cockpit-scaling.css`)
-- **Root Cause**: The universal workbench scaler stylesheet previously applied an unconditional rule `body.is-workbench .patient-details-expanded { max-height: 260px !important; overflow-y: auto !important; }`. This forced the biodata drawer to remain permanently open across all workbenches regardless of the presence of `.show`, preventing the "more biodata" / "less biodata" button from closing or toggling the drawer.
-- **Solution**: Split into discrete states:
-  - `:not(.show)`: `display: none !important; max-height: 0 !important; overflow: hidden !important; border-top: none !important; margin: 0 !important; padding: 0 !important;`
-  - `.show`: `display: block !important; border-top: 1px solid rgba(255, 255, 255, 0.2) !important; margin-top: 6px !important; padding-top: 6px !important; max-height: 260px !important; overflow-y: auto !important;`
-- **Frontend Button State Sync (`public/js/reception-core.js`)**:
-  - Delegated click handler toggles `.expanded` and `.show`.
-  - Toggles `.btn-expand-text` between `'more biodata'` and `'less biodata'`.
-  - Toggles icon between `mdi-chevron-down` and `mdi-chevron-up`.
-  - `displayPatientInfo(patient)` resets drawer to collapsed on patient load.
+#### A. Layout Geometry & Viewport Locking
+1. **Blade Declarations (`resources/views/admin/pharmacy/workbench.blade.php`)**:
+   - Add `@section('is_workbench', true)` and `@section('body_class', 'is-workbench has-workbench')`.
+   - Include universal scaling stylesheet in `@push('styles')`:
+     ```blade
+     <link rel="stylesheet" href="{{ versioned_asset('css/workbench-cockpit-scaling.css') }}">
+     <link rel="stylesheet" href="{{ versioned_asset('css/pharmacy-workbench.css') }}">
+     ```
+   - Omit `.content-header` and `.footer` automatically through layout condition in `admin.layouts.app`.
+2. **Store Context Banner Integration**:
+   - **Challenge**: The store context banner (`#store-context-badge` / `#store-context-banner`) is conditionally rendered above the flex container. If `.pharmacy-workbench-container` is styled as `height: 100%`, the banner would push the container down by ~34px, creating an outer window scrollbar.
+   - **Solution**: Set `.pharmacy-workbench-container` to `flex: 1 1 auto; min-height: 0; height: auto; max-height: 100%; display: flex; overflow: hidden;`. This allows the banner to act as a `flex-shrink: 0` element and the container to automatically fill the remaining viewport height.
 
-### 2. Cross-Workbench Admissions Module Integration & Breakdown Engine
-- **Cross-Workbench Parity**:
-  - Reception Workbench (`reception/workbench`): uses `@include('admin.partials.admissions-module')` and `admin.partials.admissions-module-js`.
-  - Billing Workbench (`billing/workbench`): uses `@include('admin.partials.admissions-module')` with billing receipt preview routing.
-  - HMO Workbench (`hmo/workbench`): included `admin.partials.admissions-module` under `#pf-tab-admissions`; added missing `@include('admin.partials.admissions-module-js')` in `_scripts.blade.php`.
-- **TypeError: Cannot read properties of undefined (reading 'map') Resolution**:
-  - `app/Http/Controllers/AdmissionModuleController.php`: Added `'items' => []` to `$timeline[$dayKey]` array and populated `$timeline[$dayKey]['items'][] = $itemData` alongside category groupings. Removed raw Eloquent model serialization from API payload.
-  - `resources/views/admin/partials/admissions-module-js.blade.php`: Wrapped `renderDetail` in safe try/catch block with fallback defaults. In `renderTimeline` and `renderCategories`, defensively support both flat and categorized items across array or object payloads.
-  - Robust `_container` target resolution and mobile-only list panel collapse (`window.innerWidth < 992`).
-  - Added dedicated `.adm-mod-history-modal` to prevent destroying `.adm-mod-full-detail-modal` DOM content.
+#### B. Component & Panel Density Scaling
+1. **Left Panel (`.left-panel`)**:
+   - Width locked to `270px; flex: 0 0 270px;` with smooth CSS transition on `#btn-toggle-search` collapse.
+   - Patient Search Widget conforms to shared `height: 30px; font-size: 0.8125rem;` standards.
+   - Prescription Queue Widget (`.queue-widget`): Scale all 6 queue filters (`emergency`, `all`, `unbilled`, `billed`, `hmo`, `freeform`) to `min-height: 28px; padding: 4px 8px; font-size: 0.78rem;` and badge to `height: 19px; min-width: 22px; font-size: 0.75rem;`.
+   - Quick Actions (`.quick-actions`): Scale buttons to `min-height: 28px; font-size: 0.78rem; padding: 3px 8px;` so all 7 actions (Walk-in, My Transactions, Reports, Returns, Damages, Stock Reports, Summary) fit on screen without vertical overflow.
+2. **Main Workspace (`.main-workspace`)**:
+   - Navbar Ribbon (`.workspace-navbar`): Locked to `height: 36px; padding: 0 10px;`. Action buttons (`#btn-pharmacy-new-patient`, walk-in, emergency intake, contacts, price list, clinical context) scaled to `height: 30px; font-size: 0.8rem;`.
+   - Patient Header Banner (`#patient-header`): Retain compact signature gradient (~56px). Support expandable biodata drawer (`.patient-details-expanded`) with `:not(.show)` collapsed state and smooth chevron flip.
+   - Workspace Tabs (`.workspace-tabs`): Locked to `height: 34px;` for Checkout, New Request, History, Procedures.
+3. **Prescription Checkout & Till Integration**:
+   - The unified prescription container (`#pharmacy-presc-container`) renders subtabs (Awaiting Billing, Pending Payment/HMO, Dispense Ready).
+   - DataTables (`#presc_billing_table`, `#presc_pending_table`, `#presc_dispense_table`) scale to compact rows (`padding: 4px 8px; font-size: 0.79rem;`).
+   - Floating Till Cart (`#floating-cart`) and Dispense Summary Card (`#dispense-summary-card`): Scale z-index to float above tab content without occluding bottom action buttons.
+4. **Overlay Panels (Full Screen Views)**:
+   - `#queue-view`, `#pharmacy-reports-view`, `#pharmacy-returns-panel`, `#pharmacy-damages-panel`, `#pharmacy-stock-reports-panel` positioned absolute inside `.main-workspace` with `top: 0; left: 0; right: 0; bottom: 0; z-index: 50; display: flex; flex-direction: column;`. Header stays fixed; body content scrolls via 4px micro-scrollbars.
 
+#### C. Non-Breaking JS Preservation Catalog
+- All 11 event handlers in `public/js/pharmacy-core.js` for returns and damages must maintain exact IDs: `#qtyAdjustmentModal`, `#priceAdjustmentModal`, `#overrideStoreContextModal`, `#select-all-pending-returns`, `#btn-bulk-approve-returns`, etc.
+- In `public/js/pharmacy-dispensing.js`: `loadPatient(patientId)`, `pharmBagClearAll()`, `pharmApplyTillState()`, `openCartReviewModal()`, `billPrescItems()`, `dispensePrescItems()` rely on exact DOM nodes `#cart-item-count`, `#cart-total-display`, `#dispense-count`, `#btn-manage-alerts`, `#patient-header-balance`.
+- In `public/js/pharmacy-returns.js`: `loadPatientReceipts()`, `initializeHistoryDataTable(patientId)` must bind to `#receipts-table` and `#receipts-tbody` without interruption.
+
+---
+
+### 3. Module 2: Laboratory Workbench Cockpit Scaling
+
+#### A. Structural Remediation & File Modularization
+- **Defect Discovery**: In `resources/views/admin/lab/workbench.blade.php`, the file was prematurely cut at line 71 inside `<div class="quick-actions">`, while lines 1 to 538 of `resources/views/admin/lab/partials/_modals.blade.php` contained the remainder of the left panel, the entire main workspace, patient header, workspace tabs, pending subtabs, new request form, history, and procedures content.
+- **Architectural Fix**:
+  - Relocate lines 1 to 538 from `_modals.blade.php` back into `workbench.blade.php` so that `workbench.blade.php` owns the complete HTML DOM structure.
+  - Keep `_modals.blade.php` dedicated solely to modal dialogs (`#sampleCollectionModal`, `#deleteReasonModal`, `#dismissReasonModal`, `#approvalReviewModal`, etc.).
+  - Add `@section('is_workbench', true)` and `@section('body_class', 'is-workbench has-workbench')`.
+  - Include `workbench-cockpit-scaling.css` in `@push('styles')`.
+
+#### B. Component & Panel Density Scaling
+1. **Left Panel (`.left-panel`)**:
+   - Standard 270px width.
+   - Pending Queue Widget (`.queue-widget`): Scale all 7 queue filters (`emergency`, `billing`, `sample`, `results`, `completed`, `freeform`, `approval`) to high-density items (`min-height: 28px; padding: 4px 8px; font-size: 0.78rem;`) with count badges (`height: 19px; min-width: 22px;`).
+   - Quick Actions: Scale `#btn-new-request`, `#btn-view-reports`, `#btn-my-transactions` to 28px height.
+2. **Main Workspace & Subtabs (`.main-workspace`)**:
+   - Workspace Navbar: 36px ribbon with 30px buttons (`#btn-lab-new-patient`, walk-in, emergency intake, contacts, price list, clinical context).
+   - Empty State: `#empty-state` centered; suppressed automatically when patient is loaded.
+   - Patient Header Banner: Signature gradient, patient file details, expandable biodata drawer.
+   - Pending Tab Subtabs Ribbon (`.pending-subtabs`):
+     - Sized to `min-height: 32px; height: 32px;` with compact pills for `All Pending`, `Awaiting Billing`, `Awaiting Sample`, `Awaiting Results`, `Free-Form`, `Awaiting Approval`.
+     - Count badges: `font-size: 0.68rem; padding: 1px 5px; border-radius: 8px;`.
+3. **Sample Collection & Results Entry Workflow Modals**:
+   - Sample Collection Modal (`#sampleCollectionModal`): Sized to compact modal dialog with high-density inputs (`#sample_lab_number`, `#btnAutoLabNumber`, `#btnManualLabNumber`, `#sampleItemsList` scrollable container max-height 160px).
+   - Single & Bulk Results Entry Modals (`invest_res_modal`, `bulk_result_entry_modal`): Conforms to modal cockpit tokens (`max-height: calc(85vh - 90px); padding: 12px 14px;`).
+4. **Lab Reports View (`#reports-view`)**:
+   - Fixed 36px header with close button `#btn-close-reports`.
+   - Subtabs: Overview, Detailed Report, Analytics.
+   - `#reports-datatable` sized with compact headers and cells.
+
+#### C. Non-Breaking JS Preservation Catalog
+- In `public/js/lab-core.js`:
+  - `loadPatient(patientId)`: Preserves AJAX calls to `/lab-workbench/patient/${patientId}/requests`, initializes `ClinicalAlerts.init(patientId, 'lab_imaging')`, and calls `displayPendingRequests()`.
+  - Event listeners on `#btn-view-work-pane`, `#btn-toggle-search`, `#btn-back-to-search`, `#show-all-queue-btn`, `.queue-item[data-filter]`.
+  - Sample lab number check timeout: `window._labNumCheckTimeout` querying `lab.checkLabNumber`.
+- In `public/js/lab-results.js`:
+  - `recordBilling(requestIds)`, `collectSample(requestIds)`, `autoGenerateLabNumber()`, `confirmCollectSample()`, `saveResult()`.
+  - Selection preservation: `saveCheckedItemsState()`, `restoreCheckedItemsState()`, `checkedItemsState.billing`, `checkedItemsState.sample`.
+- In `public/js/lab-reports.js`:
+  - Filters form `#reports-filter-form`, sub-tabs `#reports-tabs`, Chart.js canvas `#status-chart` and `#trends-chart`.
+
+---
+
+### 4. Module 3: Imaging / Radiology Workbench Cockpit Scaling
+
+#### A. Layout Geometry & Viewport Locking
+1. **Blade Declarations (`resources/views/admin/imaging/workbench.blade.php`)**:
+   - Add `@section('is_workbench', true)` and `@section('body_class', 'is-workbench has-workbench')`.
+   - Include universal scaling stylesheet in `@push('styles')`:
+     ```blade
+     <link rel="stylesheet" href="{{ versioned_asset('css/workbench-cockpit-scaling.css') }}">
+     <link rel="stylesheet" href="{{ versioned_asset('css/imaging-workbench.css') }}">
+     ```
+   - Omit `.content-header` and `.footer` automatically.
+2. **Container Sizing**:
+   - `.imaging-workbench-container`: Set to `flex: 1 1 auto; min-height: 0; height: 100%; display: flex; overflow: hidden; gap: 8px;`.
+
+#### B. Component & Panel Density Scaling
+1. **Left Panel (`.left-panel`)**:
+   - Standard 270px width.
+   - Modality Queue Widget (`.queue-widget`): Scale all 5 queue filters (`emergency`, `billing`, `results`, `freeform`, `approval`) to 28px items with count badges.
+   - Quick Actions: Scale `#btn-new-request`, `#btn-view-reports`, and `#trashPanel` triggers.
+2. **Workspace Subtabs & Radiologist Tools**:
+   - Pending Tab Subtabs: `All Pending`, `Awaiting Billing`, `Awaiting Results`, `Free-Form`, `Pending Approval`. Note: Imaging skips sample collection and proceeds directly to results/scan.
+   - Request Cards (`.request-card`): Compact 2-row layout with service name, urgency pill, scan notes, and action triggers (`.btn-enter-results`, `.btn-view-results`, `.btn-upload-scan`).
+3. **Diagnostic Viewer & Dedicated Modals**:
+   - Result Entry Modal: `@include('admin.partials.invest_res_modal', ['save_route' => 'imaging.saveResult'])`.
+   - Dedicated Imaging View Modal (`invest_res_view_imaging_modal`): Renders DICOM / scan image carousel with full contrast controls in compact dialog.
+   - Approval Modals: `#approvalReviewModal`, `#rejectionReasonModal`, `#approveConfirmModal`, `#reverseApprovalModal`.
+   - Trash & Dismissed Aside Drawer (`#trashPanel`): Positioned absolute on the right or slide-over with tabs for Dismissed and Deleted requests, driven by `#dismissed-table` and `#deleted-table`.
+
+#### C. Non-Breaking JS Preservation Catalog
+- In `public/js/imaging-core.js`:
+  - `loadPatient(patientId)` querying `/imaging-workbench/patient/${patientId}/requests`.
+  - Queue filters, search widget binding, patient header population.
+  - History DataTable `#investigation_history_list` and procedures `#procedures_history_list`.
+- In `public/js/imaging-results.js`:
+  - `loadTrashData()`, `createTrashCard()`, `#dismissReasonModal`, `#deleteReasonModal`.
+  - Approval queue handlers: `#btn-approve-result`, `#btn-reject-result`, `#btn-confirm-reverse`.
+
+---
+
+### 5. Implementation Sequence & Quality Gates
+
+The integration will follow this strict 3-phase execution order:
+
+```
++-------------------------------------------------------------------------------+
+| PHASE 1: Laboratory Workbench Modularization & Scaling                        |
+| - Move main workspace markup from _modals.blade.php to workbench.blade.php    |
+| - Add is_workbench & body_class declarations + link scaler CSS               |
+| - Tune lab-workbench.css for flex layout and 1366x768 low-res baseline        |
+| - Verify zero JS errors (lab-core.js, lab-results.js, lab-reports.js)        |
++-------------------------------------------------------------------------------+
+                                        |
+                                        v
++-------------------------------------------------------------------------------+
+| PHASE 2: Imaging Workbench Scaling                                            |
+| - Add is_workbench & body_class declarations + link scaler CSS               |
+| - Tune imaging-workbench.css for flex layout and diagnostic image viewer     |
+| - Verify zero JS errors (imaging-core.js, imaging-results.js)                 |
++-------------------------------------------------------------------------------+
+                                        |
+                                        v
++-------------------------------------------------------------------------------+
+| PHASE 3: Pharmacy Workbench Scaling                                           |
+| - Add is_workbench & body_class declarations + link scaler CSS               |
+| - Harmonize Store Context Banner with flex: 1 1 auto container                |
+| - Tune till cart, dispensing datatables, returns & damages panels            |
+| - Verify zero JS errors (pharmacy-dispensing.js, pharmacy-core.js)            |
++-------------------------------------------------------------------------------+
+                                        |
+                                        v
++-------------------------------------------------------------------------------+
+| VERIFICATION & REGRESSION SUITE                                               |
+| - Node JS syntax verification (node --check public/js/*.js)                  |
+| - PHP CS Fixer compliance (composer lint)                                    |
+| - Full PHPUnit domain test run (Pharmacy, Lab, Imaging: 43+ tests passing)   |
+| - Browser subagent automated zero-scroll viewport measurement (1366 x 768)   |
++-------------------------------------------------------------------------------+
+```
+
+---
+
+### 6. Verification Checklist & Success Criteria
+
+| Checkpoint | Requirement | Verification Method |
+|---|---|---|
+| **Zero-Scroll Outer Window** | `window.scrollY == 0`, `scrollHeight <= innerHeight` on 1366x768 | Browser subagent viewport measurement |
+| **Header & Footer Reclaim** | `.content-header` and `.footer` omitted from HTML DOM | Blade `@if(!View::hasSection('is_workbench'))` |
+| **All Queue Items Visible** | All 5-7 queue items visible simultaneously without panel scroll | Visual inspection at 1366x768 |
+| **Patient Header Compact** | Banner height ~56px with collapsible biodata drawer | DOM inspection and `.show` state toggle |
+| **Patient Search Widget** | 30px height, 36px left padding, 10px icon offset | CSS computed styles check |
+| **Store Context Banner** | Spans full width without causing vertical page overflow | Visual inspection on Pharmacy workbench |
+| **Lab Workbench Architecture** | Main workspace in `workbench.blade.php`, only modals in `_modals.blade.php` | Code review and PSR-12 linting |
+| **JS Intactness** | No console errors, DataTables load, modals fire, AJAX saves work | `node --check` and browser subagent interaction |
+| **Automated Tests** | 100% pass on `tests/Feature/Pharmacy/`, `tests/Feature/Lab/`, `tests/Feature/Imaging/` | `vendor/bin/phpunit` |
