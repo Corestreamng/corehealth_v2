@@ -3,8 +3,12 @@
     /* Main Layout */
     .lab-workbench-container {
         display: flex;
-        min-height: calc(100vh - 100px);
-        gap: 0;
+        height: 100% !important;
+        max-height: 100% !important;
+        flex: 1 1 auto;
+        min-height: 0;
+        overflow: hidden;
+        gap: 8px;
     }
 
     /* Left Panel - Patient Search */

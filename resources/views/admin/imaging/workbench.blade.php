@@ -1,8 +1,11 @@
 @extends('admin.layouts.app')
 
 @section('title', 'Imaging Workbench')
+@section('is_workbench', true)
+@section('body_class', 'is-workbench has-workbench')
 
 @push('styles')
+<link rel="stylesheet" href="{{ versioned_asset('css/workbench-cockpit-scaling.css') }}">
 <link rel="stylesheet" href="{{ versioned_asset('css/imaging-workbench.css') }}">
 <link rel="stylesheet" href="{{ asset('plugins/dataT/datatables.min.css') }}">
 @endpush

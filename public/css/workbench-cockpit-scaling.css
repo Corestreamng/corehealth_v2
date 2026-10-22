@@ -1041,6 +1041,22 @@ body.dark-mode.has-workbench .modal-footer {
     position: relative !important;
 }
 
+body.is-workbench .pharmacy-workbench-container,
+body.has-workbench .pharmacy-workbench-container {
+    flex: 1 1 auto !important;
+    min-height: 0 !important;
+    height: auto !important;
+}
+
+body.is-workbench #store-context-badge,
+body.is-workbench #store-context-banner,
+body.has-workbench #store-context-badge,
+body.has-workbench #store-context-banner {
+    margin-bottom: 4px !important;
+    font-size: 0.78rem !important;
+    padding: 3px 8px !important;
+}
+
 /* Left Panel (Patient Search, Queue & Quick Actions) */
 body.is-workbench .left-panel,
 body.has-workbench .left-panel {
