@@ -8,7 +8,13 @@
         <h5 class="font-weight-bold mb-0"><i class="mdi mdi-cash-multiple text-primary me-1"></i> Billing & Cashier Audit</h5>
         <small class="text-muted">Payments, staff bills, and organization bills</small>
     </div>
-    <div class="d-flex gap-2">
+    <div class="d-flex gap-2 flex-wrap">
+        <button type="button" class="btn btn-sm btn-outline-dark font-weight-bold" data-bs-toggle="modal" data-bs-target="#myTransactionsModal" data-toggle="modal" data-target="#myTransactionsModal" title="Open cashier transactions and receipt reprints">
+            <i class="mdi mdi-receipt me-1 text-primary"></i> Transactions Console
+        </button>
+        <button type="button" class="btn btn-sm btn-outline-primary font-weight-bold" onclick="openShiftServiceSummaryPrint()" title="Duty Shift Service Handover Printout (General, Inpatient, Insured / Schemes)">
+            <i class="mdi mdi-file-document-box-outline me-1"></i> Shift Handover Summary
+        </button>
         <button class="btn btn-sm btn-outline-success font-weight-bold" onclick="openUniversalStampModal('bulk')">
             <i class="mdi mdi-check-all me-1"></i> Bulk Stamp
         </button>
@@ -30,15 +36,26 @@
             <input type="date" name="end_date" class="form-control" value="{{ now()->format('Y-m-d') }}">
         </div>
         <div class="col-md-auto">
-            <label>Shift</label>
+            <label>Shift (AM till 1pm)</label>
             <div class="d-flex gap-1">
-                <button type="button" class="btn btn-outline-secondary shift-btn" data-shift="morning"><i class="mdi mdi-weather-sunny"></i> AM</button>
-                <button type="button" class="btn btn-outline-secondary shift-btn" data-shift="afternoon"><i class="mdi mdi-weather-partly-cloudy"></i> PM</button>
-                <button type="button" class="btn btn-outline-secondary shift-btn" data-shift="night"><i class="mdi mdi-weather-night"></i> Night</button>
-                <button type="button" class="btn btn-outline-secondary shift-btn" data-shift="all"><i class="mdi mdi-clock-outline"></i> All</button>
+                <button type="button" class="btn btn-outline-secondary shift-btn" data-shift="morning" title="Morning (till 1:00 PM)"><i class="mdi mdi-weather-sunny"></i> AM</button>
+                <button type="button" class="btn btn-outline-secondary shift-btn" data-shift="afternoon" title="Afternoon (1:00 PM to 6:00 PM)"><i class="mdi mdi-weather-partly-cloudy"></i> PM</button>
+                <button type="button" class="btn btn-outline-secondary shift-btn" data-shift="night" title="Night / Overnight (6:00 PM onwards)"><i class="mdi mdi-weather-night"></i> Night</button>
+                <button type="button" class="btn btn-outline-secondary shift-btn active btn-primary" data-shift="all"><i class="mdi mdi-clock-outline"></i> All</button>
             </div>
+            <input type="hidden" name="shift" value="all">
             <input type="hidden" name="shift_start" value="">
             <input type="hidden" name="shift_end" value="">
+        </div>
+        <div class="col-md-auto">
+            <label>Care Stream</label>
+            <div class="d-flex gap-1">
+                <button type="button" class="btn btn-primary care-stream-btn active" data-stream="all"><i class="mdi mdi-layers-outline"></i> All</button>
+                <button type="button" class="btn btn-outline-secondary care-stream-btn" data-stream="general"><i class="mdi mdi-cash"></i> General</button>
+                <button type="button" class="btn btn-outline-secondary care-stream-btn" data-stream="inpatient"><i class="mdi mdi-bed"></i> Inpatient</button>
+                <button type="button" class="btn btn-outline-secondary care-stream-btn" data-stream="nhis" title="Insured Patients Pool (HMO, NHIA, State Health Schemes, Retainerships)"><i class="mdi mdi-shield-account"></i> Insured / Schemes</button>
+            </div>
+            <input type="hidden" name="care_stream" value="all">
         </div>
         <div class="col-md-2">
             <label>Cashier</label>
@@ -130,6 +147,13 @@
                 </select>
             </div>
 
+            <div class="col-md-2">
+                <select name="department_id" class="form-select form-select-sm ops-tab-filter" data-tab="payments">
+                    <option value="">All Departments</option>
+                    @php $activeDepts = \App\Models\Department::where('is_active', true)->orderBy('name')->get(); @endphp
+                    @foreach($activeDepts as $d) <option value="{{ $d->id }}">{{ $d->name }}</option> @endforeach
+                </select>
+            </div>
             <div class="col-md-2">
                 <select name="is_audited" class="form-select form-select-sm ops-tab-filter" data-tab="payments">
                     <option value="">Audit Status</option>

@@ -57,6 +57,7 @@ class OpsAuditBillingController extends OpsAuditBaseController
 
         $this->applyPaymentFilters($query, $request, 'self_payment');
         $this->applyItemFilters($query, $request, 'product_or_service_request');
+        $this->applyCareStreamFilter($query, $request, 'self_payment');
 
         if ($request->filled('payment_type')) {
             $query->where('payment_type', $request->payment_type);

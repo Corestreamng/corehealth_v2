@@ -71,6 +71,17 @@
         <option value="">All Services</option>
     </select>
 </div>
+<div class="col-md-2">
+    <select name="department_id" class="form-select form-select-sm ops-tab-filter" data-tab="{{ $tab }}">
+        <option value="">All Departments</option>
+        @php
+            $activeAuditDepts = \App\Models\Department::where('is_active', true)->orderBy('name')->get();
+        @endphp
+        @foreach($activeAuditDepts as $d)
+            <option value="{{ $d->id }}">{{ $d->name }}</option>
+        @endforeach
+    </select>
+</div>
 
 @push('scripts')
 <script>

@@ -221,6 +221,10 @@
     .shift-btn { font-size: 0.72rem; padding: 0.25rem 0.6rem; border-radius: 20px; }
     .shift-btn.active { background-color: #0d6efd !important; color: #fff !important; border-color: #0d6efd !important; }
 
+    /* Care Stream buttons */
+    .care-stream-btn { font-size: 0.72rem; padding: 0.25rem 0.6rem; border-radius: 20px; }
+    .care-stream-btn.active { background-color: #198754 !important; color: #fff !important; border-color: #198754 !important; }
+
     /* Responsive */
     @media (max-width: 768px) {
         .audit-layout {
@@ -494,15 +498,19 @@
         if (shift === 'morning') {
             form.find('[name="shift_start"]').val('00:00');
             form.find('[name="shift_end"]').val('12:59');
+            form.find('[name="shift"]').val('morning');
         } else if (shift === 'afternoon') {
             form.find('[name="shift_start"]').val('13:00');
             form.find('[name="shift_end"]').val('17:59');
+            form.find('[name="shift"]').val('afternoon');
         } else if (shift === 'night') {
             form.find('[name="shift_start"]').val('18:00');
             form.find('[name="shift_end"]').val('23:59');
+            form.find('[name="shift"]').val('night');
         } else {
             form.find('[name="shift_start"]').val('');
             form.find('[name="shift_end"]').val('');
+            form.find('[name="shift"]').val('all');
         }
 
         // Trigger table reload
@@ -512,6 +520,47 @@
             }
         });
     });
+
+    // Care Stream filter buttons
+    $(document).on('click', '.care-stream-btn', function() {
+        var stream = $(this).data('stream');
+        var form = $(this).closest('.ops-filter-bar');
+
+        $(this).siblings('.care-stream-btn').removeClass('active btn-primary').addClass('btn-outline-secondary');
+        $(this).addClass('active btn-primary').removeClass('btn-outline-secondary');
+
+        form.find('[name="care_stream"]').val(stream);
+
+        // Trigger table reload
+        $('.ops-datatable:visible').each(function() {
+            if ($.fn.DataTable.isDataTable(this)) {
+                $(this).DataTable().ajax.reload();
+            }
+        });
+    });
+
+    // Executive Duty Shift Service Handover Summary
+    window.openShiftServiceSummaryPrint = function() {
+        var form = $('#ops_audit_filter_form');
+        var startDate = form.find('[name="start_date"]').val() || '';
+        var endDate = form.find('[name="end_date"]').val() || '';
+        var shift = form.find('.shift-btn.active').data('shift') || form.find('[name="shift"]').val() || 'all';
+        var careStream = form.find('[name="care_stream"]').val() || 'all';
+        var cashierId = form.find('[name="cashier_id"]').val() || '';
+        var departmentId = form.find('[name="department_id"]').val() || '';
+
+        var params = new URLSearchParams({
+            start_date: startDate,
+            end_date: endDate,
+            shift: shift,
+            care_stream: careStream,
+            cashier_id: cashierId,
+            department_id: departmentId
+        });
+
+        var url = '/ops-audit/shift-service-summary?' + params.toString();
+        window.open(url, '_blank', 'width=1150,height=900,menubar=no,toolbar=no,location=no,status=no,scrollbars=yes');
+    };
 
     // Green Audit Tick — identical to audit_workbench
     function markAudited(arg1, arg2, arg3) {
@@ -1126,6 +1175,10 @@
     </div>
 </div>
 
+{{-- Transactions Console Modal --}}
+@include('admin.shared._my_transactions_modal')
+
 @push('scripts')
+<script src="{{ asset('js/billing-my-transactions.js') }}"></script>
 @stack('ops_audit_scripts')
 @endpush

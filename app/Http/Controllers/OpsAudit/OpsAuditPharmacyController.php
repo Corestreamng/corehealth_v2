@@ -82,6 +82,7 @@ class OpsAuditPharmacyController extends OpsAuditBaseController
         }
 
         $this->applyItemFilters($query, $request, '', ['product']);
+        $this->applyCareStreamFilter($query, $request, 'productOrServiceRequest');
 
         $kpiQuery = clone $query;
 
@@ -246,6 +247,7 @@ class OpsAuditPharmacyController extends OpsAuditBaseController
         $this->applyShiftFilter($query, $request);
         $this->applyPaymentFilters($query, $request, 'self_payment');
         $this->applyItemFilters($query, $request, 'product_or_service_request');
+        $this->applyCareStreamFilter($query, $request, 'self_payment');
 
         $kpiQuery = clone $query;
 

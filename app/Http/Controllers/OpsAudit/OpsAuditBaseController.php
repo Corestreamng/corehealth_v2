@@ -21,11 +21,28 @@ abstract class OpsAuditBaseController extends Controller
 
     /**
      * Shared helper to apply shift filtering.
+     * Supports calibrated AM, PM/Late, and Night shifts (including overnight cross-midnight).
      */
     protected function applyShiftFilter($query, Request $request, $column = 'created_at')
     {
         if ($request->filled('shift_start') && $request->filled('shift_end')) {
-            $query->whereRaw("TIME($column) BETWEEN ? AND ?", [$request->shift_start, $request->shift_end]);
+            $start = $request->shift_start;
+            $end = $request->shift_end;
+            if ($start > $end) {
+                // Overnight cross-midnight shift (e.g. 20:00 to 07:59 or 20:00 to 08:00)
+                $query->whereRaw("(TIME($column) >= ? OR TIME($column) <= ?)", [$start, $end]);
+            } else {
+                $query->whereRaw("TIME($column) BETWEEN ? AND ?", [$start, $end]);
+            }
+        } elseif ($request->filled('shift')) {
+            $shift = strtolower($request->shift);
+            if (in_array($shift, ['morning', 'am'])) {
+                $query->whereRaw("TIME($column) BETWEEN '00:00:00' AND '12:59:59'");
+            } elseif (in_array($shift, ['afternoon', 'pm', 'late'])) {
+                $query->whereRaw("TIME($column) BETWEEN '13:00:00' AND '17:59:59'");
+            } elseif ($shift === 'night') {
+                $query->whereRaw("(TIME($column) >= '18:00:00' OR TIME($column) < '08:00:00')");
+            }
         }
     }
 
@@ -695,13 +712,26 @@ abstract class OpsAuditBaseController extends Controller
      */
     protected function applyItemFilters($query, Request $request, $relationPath = '', $allowedTypes = ['product', 'service'])
     {
-        $hasFilters = $request->filled('product_id') || $request->filled('service_id') || $request->filled('product_category_id') || $request->filled('service_category_id');
+        $hasFilters = $request->filled('product_id') || $request->filled('service_id') || $request->filled('product_category_id') || $request->filled('service_category_id') || $request->filled('department_id');
 
         if (!$hasFilters) {
             return $query;
         }
 
         $apply = function ($q) use ($request, $allowedTypes) {
+            if ($request->filled('department_id')) {
+                $deptId = $request->department_id;
+                $q->where(function ($sub) use ($deptId, $allowedTypes) {
+                    $sub->where('department_id', $deptId);
+                    if (in_array('service', $allowedTypes)) {
+                        $sub->orWhereHas('service', fn ($sq) => $sq->where('department_id', $deptId)->orWhereHas('category', fn ($c) => $c->where('department_id', $deptId)));
+                    }
+                    if (in_array('product', $allowedTypes)) {
+                        $sub->orWhereHas('product', fn ($pq) => $pq->where('department_id', $deptId)->orWhereHas('category', fn ($c) => $c->where('department_id', $deptId)));
+                    }
+                });
+            }
+
             if (in_array('product', $allowedTypes)) {
                 if ($request->filled('product_id')) {
                     $q->where('product_id', $request->product_id);
@@ -800,6 +830,434 @@ abstract class OpsAuditBaseController extends Controller
         }
 
         return $query;
+    }
+
+    /**
+     * Shared helper to apply Care Stream filtering (General / Inpatient / NHIS)
+     *
+     * @param \Illuminate\Database\Eloquent\Builder $query
+     * @param Request $request
+     * @param string $context ('self_posr', 'self_payment', 'productOrServiceRequest', etc.)
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+    protected function applyCareStreamFilter($query, Request $request, $context = 'self_posr')
+    {
+        if (!$request->filled('care_stream')) {
+            return $query;
+        }
+
+        $stream = strtolower($request->care_stream);
+        if ($stream === 'all' || empty($stream)) {
+            return $query;
+        }
+
+        $applyToPosr = function ($q) use ($stream) {
+            if ($stream === 'general') {
+                $q->where(function ($sub) {
+                    $sub->whereNull('hmo_id')
+                        ->where(function ($hmoSub) {
+                            $hmoSub->whereNull('claims_amount')->orWhere('claims_amount', '<=', 0);
+                        });
+                })->where(function ($sub) {
+                    $sub->whereNull('admission_request_id')
+                        ->whereNotExists(function ($sq) {
+                            $sq->select(\Illuminate\Support\Facades\DB::raw(1))
+                               ->from('admission_requests')
+                               ->join('patients', 'patients.id', '=', 'admission_requests.patient_id')
+                               ->whereColumn('patients.user_id', 'product_or_service_requests.user_id')
+                               ->whereRaw('product_or_service_requests.created_at >= admission_requests.created_at')
+                               ->whereRaw('product_or_service_requests.created_at <= COALESCE(admission_requests.discharge_date, NOW())');
+                        });
+                });
+            } elseif ($stream === 'inpatient') {
+                $q->where(function ($sub) {
+                    $sub->whereNotNull('admission_request_id')
+                        ->orWhereExists(function ($sq) {
+                            $sq->select(\Illuminate\Support\Facades\DB::raw(1))
+                               ->from('admission_requests')
+                               ->join('patients', 'patients.id', '=', 'admission_requests.patient_id')
+                               ->whereColumn('patients.user_id', 'product_or_service_requests.user_id')
+                               ->whereRaw('product_or_service_requests.created_at >= admission_requests.created_at')
+                               ->whereRaw('product_or_service_requests.created_at <= COALESCE(admission_requests.discharge_date, NOW())');
+                        });
+                });
+            } elseif ($stream === 'nhis' || $stream === 'hmo' || $stream === 'insured' || $stream === 'schemes') {
+                $q->where(function ($sub) {
+                    $sub->whereNotNull('hmo_id')
+                        ->orWhere('claims_amount', '>', 0);
+                });
+            }
+        };
+
+        if ($context === 'self_posr') {
+            $applyToPosr($query);
+        } elseif ($context === 'self_payment') {
+            if ($stream === 'general') {
+                $query->whereNull('hmo_id')
+                      ->whereNotIn('payment_method', ['HMO_FULL_COVER', 'HMO_COPAY'])
+                      ->where(function ($q) use ($applyToPosr) {
+                          $q->whereDoesntHave('product_or_service_request')
+                            ->orWhereHas('product_or_service_request', $applyToPosr);
+                      });
+            } elseif ($stream === 'inpatient') {
+                $query->whereHas('product_or_service_request', $applyToPosr);
+            } elseif ($stream === 'nhis' || $stream === 'hmo' || $stream === 'insured' || $stream === 'schemes') {
+                $query->where(function ($q) use ($applyToPosr) {
+                    $q->whereNotNull('hmo_id')
+                      ->orWhereIn('payment_method', ['HMO_FULL_COVER', 'HMO_COPAY'])
+                      ->orWhereHas('product_or_service_request', $applyToPosr);
+                });
+            }
+        } elseif ($context === 'productOrServiceRequest') {
+            $query->whereHas('productOrServiceRequest', $applyToPosr);
+        } else {
+            $query->whereHas($context, $applyToPosr);
+        }
+
+        return $query;
+    }
+
+    /**
+     * Executive Duty Shift Service Handover Summary
+     * Answers HOD Audit need: summary print out for each service (Drugs, Labs, Imaging, etc.)
+     * segmented by Care Streams (General, Inpatient, NHIS) for AM, Late/PM, and Night duties separately.
+     */
+    public function shiftServiceSummary(Request $request)
+    {
+        $site = appsettings();
+        $startDate = $request->filled('start_date') ? Carbon::parse($request->start_date)->startOfDay() : now()->startOfDay();
+        $endDate = $request->filled('end_date') ? Carbon::parse($request->end_date)->endOfDay() : now()->endOfDay();
+        $shift = $request->input('shift', 'all');
+        $cashierId = $request->input('cashier_id');
+        $careStream = $request->input('care_stream', 'all');
+        $departmentId = $request->input('department_id');
+        $itemScope = $request->input('item_scope', 'all');
+
+        $shiftNames = [
+            'morning' => 'AM Duty (Morning — till 1:00 PM)',
+            'am' => 'AM Duty (Morning — till 1:00 PM)',
+            'afternoon' => 'Late / PM Duty (Afternoon — 1:00 PM to 6:00 PM)',
+            'pm' => 'Late / PM Duty (Afternoon — 1:00 PM to 6:00 PM)',
+            'late' => 'Late / PM Duty (Afternoon — 1:00 PM to 6:00 PM)',
+            'night' => 'Night Duty (Night / Overnight — 6:00 PM onwards)',
+            'all' => 'Full Handover (All Shifts)',
+        ];
+        $shiftLabel = $shiftNames[strtolower($shift)] ?? 'Custom Shift Window';
+
+        // 1. Build Base POSR Query
+        $basePosr = \App\Models\ProductOrServiceRequest::query()
+            ->whereBetween('created_at', [$startDate, $endDate]);
+
+        $this->applyShiftFilter($basePosr, $request);
+        $this->applyCareStreamFilter($basePosr, $request, 'self_posr');
+
+        if ($request->filled('department_id')) {
+            $basePosr->where('department_id', $departmentId);
+        }
+        if ($request->filled('cashier_id')) {
+            $basePosr->whereHas('payment', fn ($pq) => $pq->where('user_id', $cashierId));
+        }
+        if ($itemScope === 'product') {
+            $basePosr->whereNotNull('product_id');
+        } elseif ($itemScope === 'service') {
+            $basePosr->whereNotNull('service_id');
+        }
+
+        // Definition of Service Matrix Categories
+        $definitions = [
+            'drugs' => [
+                'name' => 'Drugs & Pharmaceuticals',
+                'code' => 'PHARM',
+                'icon' => 'mdi-pill',
+                'filter' => fn ($q) => $q->whereNotNull('product_id'),
+            ],
+            'lab' => [
+                'name' => 'Laboratory Investigations',
+                'code' => 'LAB',
+                'icon' => 'mdi-flask',
+                'filter' => fn ($q) => $q->whereNotNull('service_id')->where(function ($sub) {
+                    $sub->whereHas('service.category', fn ($c) => $c->where('category_name', 'like', '%lab%')->orWhere('category_name', 'like', '%investig%'))
+                        ->orWhereHas('department', fn ($d) => $d->where('name', 'like', '%lab%'));
+                }),
+            ],
+            'imaging' => [
+                'name' => 'Diagnostic Imaging & Radiology',
+                'code' => 'RAD',
+                'icon' => 'mdi-radiology-box',
+                'filter' => fn ($q) => $q->whereNotNull('service_id')->where(function ($sub) {
+                    $sub->whereHas('service.category', fn ($c) => $c->where('category_name', 'like', '%imag%')->orWhere('category_name', 'like', '%radio%')->orWhere('category_name', 'like', '%x-ray%')->orWhere('category_name', 'like', '%ultra%'))
+                        ->orWhereHas('department', fn ($d) => $d->where('name', 'like', '%imag%')->orWhere('name', 'like', '%radio%'));
+                }),
+            ],
+            'consultation' => [
+                'name' => 'Clinical Consultations & Clinics',
+                'code' => 'CONS',
+                'icon' => 'mdi-doctor',
+                'filter' => fn ($q) => $q->whereNotNull('service_id')->where(function ($sub) {
+                    $sub->whereHas('service.category', fn ($c) => $c->where('category_name', 'like', '%consult%'))
+                        ->orWhereHas('department', fn ($d) => $d->where('name', 'like', '%consult%'));
+                }),
+            ],
+            'wards' => [
+                'name' => 'Ward Accommodation & Nursing Bed',
+                'code' => 'WARD',
+                'icon' => 'mdi-bed',
+                'filter' => fn ($q) => $q->whereNotNull('service_id')->where(function ($sub) {
+                    $sub->whereHas('service.category', fn ($c) => $c->where('category_name', 'like', '%bed%')->orWhere('category_name', 'like', '%ward%')->orWhere('category_name', 'like', '%nurs%'))
+                        ->orWhereHas('department', fn ($d) => $d->where('name', 'like', '%ward%')->orWhere('name', 'like', '%nurs%'));
+                }),
+            ],
+            'procedures' => [
+                'name' => 'Surgical & Minor Procedures',
+                'code' => 'SURG',
+                'icon' => 'mdi-needle',
+                'filter' => fn ($q) => $q->whereNotNull('service_id')->where(function ($sub) {
+                    $sub->whereHas('service.category', fn ($c) => $c->where('category_name', 'like', '%proced%')->orWhere('category_name', 'like', '%surg%'))
+                        ->orWhereHas('department', fn ($d) => $d->where('name', 'like', '%theatre%')->orWhere('name', 'like', '%surg%'));
+                }),
+            ],
+            'others' => [
+                'name' => 'Other Clinical & General Services',
+                'code' => 'OTHER',
+                'icon' => 'mdi-medical-bag',
+                'filter' => fn ($q) => $q->whereNotNull('service_id')->where(function ($sub) {
+                    $sub->whereDoesntHave('service.category', fn ($c) => $c->where('category_name', 'like', '%lab%')
+                        ->orWhere('category_name', 'like', '%investig%')
+                        ->orWhere('category_name', 'like', '%imag%')
+                        ->orWhere('category_name', 'like', '%radio%')
+                        ->orWhere('category_name', 'like', '%x-ray%')
+                        ->orWhere('category_name', 'like', '%ultra%')
+                        ->orWhere('category_name', 'like', '%consult%')
+                        ->orWhere('category_name', 'like', '%bed%')
+                        ->orWhere('category_name', 'like', '%ward%')
+                        ->orWhere('category_name', 'like', '%nurs%')
+                        ->orWhere('category_name', 'like', '%surg%')
+                        ->orWhere('category_name', 'like', '%proced%'))
+                    ->whereDoesntHave('department', fn ($d) => $d->where('name', 'like', '%lab%')
+                        ->orWhere('name', 'like', '%imag%')
+                        ->orWhere('name', 'like', '%radio%')
+                        ->orWhere('name', 'like', '%consult%')
+                        ->orWhere('name', 'like', '%ward%')
+                        ->orWhere('name', 'like', '%nurs%')
+                        ->orWhere('name', 'like', '%theatre%')
+                        ->orWhere('name', 'like', '%surg%'));
+                }),
+            ],
+        ];
+
+        $serviceMatrix = [];
+        $grandTotals = [
+            'gen_amount' => 0.0,
+            'gen_count' => 0,
+            'inpatient_amount' => 0.0,
+            'inpatient_count' => 0,
+            'nhis_claims' => 0.0,
+            'nhis_copay' => 0.0,
+            'nhis_count' => 0,
+            'total_gross' => 0.0,
+            'total_volume' => 0,
+        ];
+
+        foreach ($definitions as $key => $def) {
+            $catQuery = clone $basePosr;
+            ($def['filter'])($catQuery);
+
+            // 1. NHIS / HMO (Strictly HMO enrollees / claims)
+            $nhisQ = (clone $catQuery)->where(function ($s) {
+                $s->whereNotNull('hmo_id')->orWhere('claims_amount', '>', 0);
+            });
+            $nhisClaims = (float) $nhisQ->sum('claims_amount');
+            $nhisCopay = (float) $nhisQ->sum('payable_amount');
+            $nhisCount = (int) $nhisQ->count();
+
+            // 2. Inpatient (Private Wards / Admitted Patients)
+            $inpatientQ = (clone $catQuery)->whereNull('hmo_id')
+                ->where(function ($s) {
+                    $s->whereNull('claims_amount')->orWhere('claims_amount', '<=', 0);
+                })
+                ->where(function ($s) {
+                    $s->whereNotNull('admission_request_id')
+                      ->orWhereExists(function ($sq) {
+                          $sq->select(\Illuminate\Support\Facades\DB::raw(1))
+                             ->from('admission_requests')
+                             ->join('patients', 'patients.id', '=', 'admission_requests.patient_id')
+                             ->whereColumn('patients.user_id', 'product_or_service_requests.user_id')
+                             ->whereRaw('product_or_service_requests.created_at >= admission_requests.created_at')
+                             ->whereRaw('product_or_service_requests.created_at <= COALESCE(admission_requests.discharge_date, NOW())');
+                      });
+                });
+            $inpatientAmount = (float) $inpatientQ->sum('payable_amount');
+            $inpatientCount = (int) $inpatientQ->count();
+
+            // 3. General Outpatient (Private Walk-in / Self-pay Cash)
+            $genQ = (clone $catQuery)->whereNull('hmo_id')
+                ->where(function ($s) {
+                    $s->whereNull('claims_amount')->orWhere('claims_amount', '<=', 0);
+                })
+                ->whereNull('admission_request_id')
+                ->whereNotExists(function ($sq) {
+                    $sq->select(\Illuminate\Support\Facades\DB::raw(1))
+                       ->from('admission_requests')
+                       ->join('patients', 'patients.id', '=', 'admission_requests.patient_id')
+                       ->whereColumn('patients.user_id', 'product_or_service_requests.user_id')
+                       ->whereRaw('product_or_service_requests.created_at >= admission_requests.created_at')
+                       ->whereRaw('product_or_service_requests.created_at <= COALESCE(admission_requests.discharge_date, NOW())');
+                });
+            $genAmount = (float) $genQ->sum('payable_amount');
+            $genCount = (int) $genQ->count();
+
+            $totalGross = $genAmount + $inpatientAmount + $nhisClaims + $nhisCopay;
+            $totalVol = $genCount + $inpatientCount + $nhisCount;
+
+            $row = [
+                'key' => $key,
+                'name' => $def['name'],
+                'code' => $def['code'],
+                'icon' => $def['icon'],
+                'gen_amount' => $genAmount,
+                'gen_count' => $genCount,
+                'inpatient_amount' => $inpatientAmount,
+                'inpatient_count' => $inpatientCount,
+                'nhis_claims' => $nhisClaims,
+                'nhis_copay' => $nhisCopay,
+                'nhis_count' => $nhisCount,
+                'total_gross' => $totalGross,
+                'total_volume' => $totalVol,
+            ];
+
+            $serviceMatrix[] = $row;
+
+            $grandTotals['gen_amount'] += $genAmount;
+            $grandTotals['gen_count'] += $genCount;
+            $grandTotals['inpatient_amount'] += $inpatientAmount;
+            $grandTotals['inpatient_count'] += $inpatientCount;
+            $grandTotals['nhis_claims'] += $nhisClaims;
+            $grandTotals['nhis_copay'] += $nhisCopay;
+            $grandTotals['nhis_count'] += $nhisCount;
+            $grandTotals['total_gross'] += $totalGross;
+            $grandTotals['total_volume'] += $totalVol;
+        }
+
+        // 2. Build Tender & Payment Summary
+        $payQuery = \App\Models\Payment::query()
+            ->whereBetween('created_at', [$startDate, $endDate])
+            ->whereNull('voided_at');
+
+        $this->applyShiftFilter($payQuery, $request);
+        $this->applyCareStreamFilter($payQuery, $request, 'self_payment');
+
+        if ($request->filled('cashier_id')) {
+            $payQuery->where('user_id', $cashierId);
+        }
+        if ($request->filled('department_id')) {
+            $payQuery->whereHas('product_or_service_request', fn ($pq) => $pq->where('department_id', $departmentId));
+        }
+
+        $allPayments = (clone $payQuery)->with(['splits.bank', 'bank'])->get();
+        $paymentIds = $allPayments->pluck('id')->toArray();
+
+        $cashSingle = $allPayments->where('is_split_payment', false)->where('payment_method', 'CASH')->sum('total');
+        $cashSplit = \App\Models\PaymentSplit::whereIn('payment_id', $paymentIds)->where('payment_method', 'CASH')->sum('amount');
+        $cashTotal = (float) ($cashSingle + $cashSplit);
+
+        $cashInflowPayments = $allPayments->filter(fn ($p) => (float) $p->total > 0 && ($p->payment_method === 'CASH' || $p->payment_type === 'CASH' || $p->payment_type === 'ACC_DEPOSIT'));
+        $cashInflows = (float) $allPayments->where('is_split_payment', false)->where('payment_method', 'CASH')->where('total', '>', 0)->sum('total') + (float) $cashSplit;
+        $cashInflowCount = $allPayments->where('payment_method', 'CASH')->where('total', '>', 0)->count();
+
+        // Comprehensive refund and withdrawal detection (negative cash/deposit disbursements)
+        $refundPayments = $allPayments->filter(fn ($p) => (float) $p->total < 0 || in_array($p->payment_type, ['ACC_WITHDRAW', 'REFUND']) || $p->payment_method === 'REFUND');
+        $refundTotal = (float) $refundPayments->sum('total');
+        $refundCount = $refundPayments->count();
+
+        $posSingle = $allPayments->where('is_split_payment', false)->where('payment_method', 'POS')->sum('total');
+        $posSplit = \App\Models\PaymentSplit::whereIn('payment_id', $paymentIds)->where('payment_method', 'POS')->sum('amount');
+        $posTotal = (float) ($posSingle + $posSplit);
+
+        $transferSingle = $allPayments->where('is_split_payment', false)->where('payment_method', 'TRANSFER')->sum('total');
+        $transferSplit = \App\Models\PaymentSplit::whereIn('payment_id', $paymentIds)->where('payment_method', 'TRANSFER')->sum('amount');
+        $transferTotal = (float) ($transferSingle + $transferSplit);
+
+        $mobileSingle = $allPayments->where('is_split_payment', false)->where('payment_method', 'MOBILE')->sum('total');
+        $mobileSplit = \App\Models\PaymentSplit::whereIn('payment_id', $paymentIds)->where('payment_method', 'MOBILE')->sum('amount');
+        $mobileTotal = (float) ($mobileSingle + $mobileSplit);
+
+        $depositTotal = (float) $allPayments->whereIn('payment_type', ['ACC_DEPOSIT', 'DEPOSIT'])->where('total', '>', 0)->sum('total');
+        $staffBillTotal = (float) $allPayments->where('payment_method', 'BILL_TO_STAFF')->sum('total');
+        $orgBillTotal = (float) $allPayments->where('payment_method', 'BILL_TO_ORGANIZATION')->sum('total');
+
+        $netTenderHandover = $cashTotal + $posTotal + $transferTotal + $mobileTotal;
+
+        // POS Terminal breakdown
+        $posBankBreakdown = [];
+        foreach ($allPayments->where('is_split_payment', false)->where('payment_method', 'POS') as $p) {
+            $bankName = $p->bank?->name ?? 'Default POS';
+            $posBankBreakdown[$bankName] = ($posBankBreakdown[$bankName] ?? 0.0) + (float) $p->total;
+        }
+        $splitPosLegs = \App\Models\PaymentSplit::with('bank')->whereIn('payment_id', $paymentIds)->where('payment_method', 'POS')->get();
+        foreach ($splitPosLegs as $sp) {
+            $bankName = $sp->bank?->name ?? 'Default POS';
+            $posBankBreakdown[$bankName] = ($posBankBreakdown[$bankName] ?? 0.0) + (float) $sp->amount;
+        }
+
+        // Bank Transfer breakdown
+        $transferBankBreakdown = [];
+        foreach ($allPayments->where('is_split_payment', false)->where('payment_method', 'TRANSFER') as $p) {
+            $bankName = $p->bank?->name ?? 'Default Bank';
+            $transferBankBreakdown[$bankName] = ($transferBankBreakdown[$bankName] ?? 0.0) + (float) $p->total;
+        }
+        $splitTransferLegs = \App\Models\PaymentSplit::with('bank')->whereIn('payment_id', $paymentIds)->where('payment_method', 'TRANSFER')->get();
+        foreach ($splitTransferLegs as $sp) {
+            $bankName = $sp->bank?->name ?? 'Default Bank';
+            $transferBankBreakdown[$bankName] = ($transferBankBreakdown[$bankName] ?? 0.0) + (float) $sp->amount;
+        }
+
+        $cashierName = 'All Shift Cashiers';
+        if ($request->filled('cashier_id')) {
+            $cashierUser = \App\Models\User::find($cashierId);
+            if ($cashierUser) {
+                $cashierName = trim($cashierUser->firstname . ' ' . ($cashierUser->othername ?? '') . ' ' . $cashierUser->surname);
+            }
+        }
+
+        $viewData = [
+            'site' => $site,
+            'appsettings' => $site,
+            'startDate' => $startDate,
+            'endDate' => $endDate,
+            'shift' => $shift,
+            'shiftLabel' => $shiftLabel,
+            'careStream' => $careStream,
+            'cashierName' => $cashierName,
+            'cashierId' => $cashierId,
+            'serviceMatrix' => $serviceMatrix,
+            'grandTotals' => $grandTotals,
+            'tender' => [
+                'cash' => $cashTotal,
+                'cash_inflow' => $cashInflows,
+                'cash_inflow_count' => $cashInflowCount,
+                'cash_outflow' => $refundTotal,
+                'refunds' => $refundTotal,
+                'refunds_count' => $refundCount,
+                'pos' => $posTotal,
+                'pos_banks' => $posBankBreakdown,
+                'transfer' => $transferTotal,
+                'transfer_banks' => $transferBankBreakdown,
+                'mobile' => $mobileTotal,
+                'deposit' => $depositTotal,
+                'staff_bill' => $staffBillTotal,
+                'org_bill' => $orgBillTotal,
+                'net_tender' => $netTenderHandover,
+                'total_payments_count' => count($allPayments),
+            ],
+            'printDate' => now()->format('d M Y H:i'),
+            'printedBy' => userfullname(\Illuminate\Support\Facades\Auth::id()) ?: 'Auditor',
+        ];
+
+        if ($request->wantsJson() || $request->input('action') === 'json') {
+            return response()->json($viewData);
+        }
+
+        return view('admin.ops_audit.shift_service_summary_print', $viewData);
     }
 
     /**
