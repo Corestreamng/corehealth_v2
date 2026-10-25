@@ -68,7 +68,18 @@
                         @endforeach
                     </select>
                 </div>
-                <div class="col-md-3 d-flex align-items-end">
+                <div class="col-md-2">
+                    <label class="form-label">Department</label>
+                    <select name="department_id" class="form-select">
+                        <option value="">All Departments</option>
+                        @foreach(($departments ?? []) as $dept)
+                            <option value="{{ $dept->id }}" {{ request('department_id') == $dept->id ? 'selected' : '' }}>
+                                {{ $dept->name }}
+                            </option>
+                        @endforeach
+                    </select>
+                </div>
+                <div class="col-md-1 d-flex align-items-end">
                     <button type="submit" class="btn btn-primary me-2">
                         <i class="fas fa-search me-1"></i> Generate
                     </button>
@@ -110,6 +121,7 @@
                                     <th>Date</th>
                                     <th>Entry #</th>
                                     <th>Description</th>
+                                    <th>Department</th>
                                     <th>Reference</th>
                                     <th class="text-end">Debit</th>
                                     <th class="text-end">Credit</th>
@@ -126,6 +138,7 @@
                                             </a>
                                         </td>
                                         <td>{{ Str::limit($transaction['description'], 40) }}</td>
+                                        <td><span class="badge bg-light text-dark border">{{ $transaction['department_name'] ?? 'General' }}</span></td>
                                         <td>{{ $transaction['source_type'] ?? '-' }}</td>
                                         <td class="text-end">
                                             {{ $transaction['debit']> 0 ? number_format($transaction['debit'], 2) : '-' }}

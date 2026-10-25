@@ -227,8 +227,10 @@ class ReportController extends Controller
             : now();
 
         $accountId = $request->account_id;
+        $departmentId = $request->filled('department_id') ? (int) $request->department_id : null;
         $accounts = Account::where('is_active', true)->orderBy('code')->get();
         $fiscalPeriods = AccountingPeriod::orderBy('start_date', 'desc')->get();
+        $departments = \App\Models\Department::where('is_active', true)->orderBy('name')->get();
 
         $report = null;
         $ledgerData = [];
@@ -237,12 +239,15 @@ class ReportController extends Controller
         if ($accountId) {
             // Single account selected
             $selectedAccount = Account::findOrFail($accountId);
-            $report = $this->reportService->generateGeneralLedger($accountId, $startDate->format('Y-m-d'), $endDate->format('Y-m-d'));
+            $report = $this->reportService->generateGeneralLedger($accountId, $startDate->format('Y-m-d'), $endDate->format('Y-m-d'), $departmentId);
             $ledgerData = [$report]; // Wrap in array for view iteration
         } else {
             // All accounts - get accounts with activity in the date range
             $accountsWithActivity = Account::where('is_active', true)
-                ->whereHas('journalLines', function ($q) use ($startDate, $endDate) {
+                ->whereHas('journalLines', function ($q) use ($startDate, $endDate, $departmentId) {
+                    if ($departmentId) {
+                        $q->where('department_id', $departmentId);
+                    }
                     $q->whereHas('journalEntry', function ($q2) use ($startDate, $endDate) {
                         $q2->where('status', \App\Models\Accounting\JournalEntry::STATUS_POSTED)
                             ->whereBetween('entry_date', [$startDate->format('Y-m-d'), $endDate->format('Y-m-d')]);
@@ -252,7 +257,7 @@ class ReportController extends Controller
                 ->get();
 
             foreach ($accountsWithActivity as $account) {
-                $ledgerData[] = $this->reportService->generateGeneralLedger($account->id, $startDate->format('Y-m-d'), $endDate->format('Y-m-d'));
+                $ledgerData[] = $this->reportService->generateGeneralLedger($account->id, $startDate->format('Y-m-d'), $endDate->format('Y-m-d'), $departmentId);
             }
         }
 
@@ -271,7 +276,7 @@ class ReportController extends Controller
             }
         }
 
-        return view('accounting.reports.general-ledger', compact('report', 'ledgerData', 'selectedAccount', 'accounts', 'startDate', 'endDate', 'fiscalPeriods'));
+        return view('accounting.reports.general-ledger', compact('report', 'ledgerData', 'selectedAccount', 'accounts', 'startDate', 'endDate', 'fiscalPeriods', 'departments'));
     }
 
     /**

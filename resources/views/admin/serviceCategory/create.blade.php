@@ -37,6 +37,23 @@
                 </div>
 
                 <div class="form-group row">
+                    <label for="department_id" class="col-md-2 col-form-label">{{ __('Department') }}</label>
+                    <div class="col-md-10">
+                        <select name="department_id" id="department_id" class="form-control">
+                            <option value="">-- {{ __('Select Operating Department (Optional)') }} --</option>
+                            @if(isset($departments))
+                                @foreach($departments as $dept)
+                                    <option value="{{ $dept->id }}" {{ old('department_id') == $dept->id ? 'selected' : '' }}>
+                                        {{ $dept->name }} {{ $dept->code ? "({$dept->code})" : '' }}
+                                    </option>
+                                @endforeach
+                            @endif
+                        </select>
+                        <small class="form-text text-muted">{{ __('Services under this category will default to this department for revenue attribution and reporting.') }}</small>
+                    </div>
+                </div>
+
+                <div class="form-group row">
                     <label for="category_description " class="col-md-2 col-form-label">{{ __('Description') }}</label>
                     <div class="col-md-10">
                         {!! Form::textarea('category_description', null, [

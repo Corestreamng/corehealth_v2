@@ -192,7 +192,7 @@ class ReportService
      * @param string $toDate
      * @return array
      */
-    public function generateGeneralLedger(int $accountId, string $fromDate, string $toDate): array
+    public function generateGeneralLedger(int $accountId, string $fromDate, string $toDate, ?int $departmentId = null): array
     {
         $account = Account::with('accountGroup.accountClass')->findOrFail($accountId);
 
@@ -200,13 +200,18 @@ class ReportService
         $openingBalance = $account->getBalance(null, date('Y-m-d', strtotime($fromDate) - 86400));
 
         // Get all posted journal lines for this account
-        $lines = JournalEntryLine::with(['journalEntry'])
+        $linesQuery = JournalEntryLine::with(['journalEntry', 'department'])
             ->where('account_id', $accountId)
             ->whereHas('journalEntry', function ($q) use ($fromDate, $toDate) {
                 $q->where('status', JournalEntry::STATUS_POSTED)
                     ->whereBetween('entry_date', [$fromDate, $toDate]);
-            })
-            ->get()
+            });
+
+        if ($departmentId) {
+            $linesQuery->where('department_id', $departmentId);
+        }
+
+        $lines = $linesQuery->get()
             ->sortBy(function ($line) {
                 return $line->journalEntry->entry_date . $line->journalEntry->entry_number;
             });
@@ -227,6 +232,8 @@ class ReportService
                 'entry_number' => $line->journalEntry->entry_number,
                 'entry_id' => $line->journalEntry->id,
                 'description' => $line->description ?: $line->journalEntry->description,
+                'department_id' => $line->department_id,
+                'department_name' => $line->department?->name ?? 'General',
                 'debit' => round($line->debit, 2),
                 'credit' => round($line->credit, 2),
                 'running_balance' => round($runningBalance, 2),

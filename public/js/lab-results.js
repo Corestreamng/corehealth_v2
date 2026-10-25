@@ -1060,6 +1060,7 @@ function initializeQueueDataTable(filter) {
             url: wbUrl('/lab-workbench/queue'),
             data: function(d) {
                 d.status = status;
+                d.department_id = window.selectedLabDepartmentId || '';
                 if (startDate && endDate) {
                     d.start_date = startDate;
                     d.end_date = endDate;
@@ -1153,5 +1154,16 @@ function initializeQueueDataTable(filter) {
         loadPatient(patientId);
     });
 }
+
+// Dynamic Bench Filter Pills Handler
+$(document).on('click', '.lab-bench-btn', function(e) {
+    e.preventDefault();
+    $('.lab-bench-btn').removeClass('btn-primary active').addClass('btn-outline-secondary');
+    $(this).removeClass('btn-outline-secondary').addClass('btn-primary active');
+    window.selectedLabDepartmentId = $(this).data('dept-id') || '';
+    if (typeof queueDataTable !== 'undefined' && queueDataTable) {
+        queueDataTable.ajax.reload();
+    }
+});
 
 // ==========================================

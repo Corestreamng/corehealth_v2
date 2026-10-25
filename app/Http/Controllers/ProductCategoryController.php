@@ -16,15 +16,17 @@ class ProductCategoryController extends Controller
      */
     public function listProductCategories()
     {
-
-        $productCat = ProductCategory::where('status', '>', 0)->orderBy('id', 'ASC')->get();
+        $productCat = ProductCategory::with('department')->where('status', '>', 0)->orderBy('id', 'ASC')->get();
 
         return Datatables::of($productCat)
             ->addIndexColumn()
             ->addColumn('category_code', function ($productCat) {
-                $category_code = '<span class="badge badge-pill badge-dark">' . $productCat->category_code . '</sapn>';
+                $category_code = '<span class="badge badge-pill badge-dark">' . $productCat->category_code . '</span>';
 
                 return $category_code;
+            })
+            ->addColumn('department', function ($productCat) {
+                return $productCat->department ? '<span class="badge badge-pill badge-info">' . e($productCat->department->name) . '</span>' : '<span class="text-muted">Unassigned</span>';
             })
             ->editColumn('status', function ($productCat) {
 
@@ -71,7 +73,7 @@ class ProductCategoryController extends Controller
             //         return $label;
             //     }
             // })
-            ->rawColumns(['category_code', 'status', 'view', 'edit'])
+            ->rawColumns(['category_code', 'department', 'status', 'view', 'edit'])
             ->make(true);
     }
 
@@ -92,7 +94,9 @@ class ProductCategoryController extends Controller
      */
     public function create()
     {
-        return view('admin.productCategory.create');
+        $departments = \App\Models\Department::where('is_active', true)->orderBy('name')->get();
+
+        return view('admin.productCategory.create', compact('departments'));
     }
 
     /**
@@ -107,19 +111,19 @@ class ProductCategoryController extends Controller
             'category_name' => 'required',
             'category_code' => 'required',
             'category_description' => 'required',
+            'department_id' => 'nullable|exists:departments,id',
         ];
 
         $v = validator()->make($request->all(), $rules);
 
         if ($v->fails()) {
-
             return redirect()->back()->withInput()->with('errors', $v->messages()->all())->withInput();
         } else {
-
             $category = new ProductCategory();
             $category->category_name = $request->category_name;
             $category->category_code = $request->category_code;
             $category->category_description = $request->category_description;
+            $category->department_id = $request->department_id ?: null;
 
             if ($category->save()) {
                 $msg = 'The ProductCategory ' . $request->category_name . ' was saved successfully.';
@@ -160,10 +164,10 @@ class ProductCategoryController extends Controller
      */
     public function edit($id)
     {
-
         $productCat = ProductCategory::whereId($id)->first();
+        $departments = \App\Models\Department::where('is_active', true)->orderBy('name')->get();
 
-        return view('admin.productCategory.edit', compact('productCat'));
+        return view('admin.productCategory.edit', compact('productCat', 'departments'));
     }
 
     /**
@@ -179,19 +183,19 @@ class ProductCategoryController extends Controller
             'category_name' => 'required',
             'category_code' => 'required',
             'category_description' => 'required',
+            'department_id' => 'nullable|exists:departments,id',
         ];
 
         $v = validator()->make($request->all(), $rules);
 
         if ($v->fails()) {
-
             return redirect()->back()->withInput()->with('errors', $v->messages()->all())->withInput();
         } else {
-
             $category = ProductCategory::find($id);
             $category->category_name = $request->category_name;
             $category->category_code = $request->category_code;
             $category->category_description = $request->category_description;
+            $category->department_id = $request->department_id ?: null;
 
             if ($category->save()) {
                 $msg = 'The ProductCategory ' . $request->category_name . ' was updated successfully.';

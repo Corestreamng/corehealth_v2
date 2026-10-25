@@ -24,6 +24,40 @@ class LabWorkbenchController extends Controller
     use ClinicalOrdersTrait;
 
     /**
+     * Get dynamic list of active departments associated with laboratory / benches
+     */
+    public static function getLabDepartments()
+    {
+        $labCatId = appsettings('investigation_category_id', 2);
+        $deptIdsFromServices = \App\Models\Service::where('category_id', $labCatId)
+            ->whereNotNull('department_id')
+            ->pluck('department_id');
+
+        $deptIdFromCategory = \App\Models\ServiceCategory::find($labCatId)?->department_id;
+
+        return \App\Models\Department::where('is_active', true)
+            ->where(function ($q) use ($deptIdsFromServices, $deptIdFromCategory) {
+                if ($deptIdFromCategory) {
+                    $q->orWhere('id', $deptIdFromCategory);
+                }
+                if ($deptIdsFromServices->isNotEmpty()) {
+                    $q->orWhereIn('id', $deptIdsFromServices);
+                }
+                $q->orWhere('name', 'like', '%laborat%')
+                  ->orWhere('name', 'like', '%haematolog%')
+                  ->orWhere('name', 'like', '%patholog%')
+                  ->orWhere('name', 'like', '%microbiolog%')
+                  ->orWhere('name', 'like', '%parasitolog%')
+                  ->orWhere('name', 'like', '%blood bank%')
+                  ->orWhere('name', 'like', '%chemistry%')
+                  ->orWhere('code', 'LAB')
+                  ->orWhere('code', 'BB');
+            })
+            ->orderBy('name')
+            ->get(['id', 'name', 'code']);
+    }
+
+    /**
      * Display the lab workbench main page
      */
     public function index()
@@ -37,8 +71,9 @@ class LabWorkbenchController extends Controller
         $staff = $user->staff_profile;
         $isApprover = ($staff && ($staff->is_unit_head || $staff->is_dept_head)) || $user->hasAnyRole(['SUPERADMIN', 'ADMIN', 'super-admin']);
         $requiresApproval = (bool) appsettings('lab_results_require_approval');
+        $labDepartments = self::getLabDepartments();
 
-        return view('admin.lab.workbench', compact('isApprover', 'requiresApproval'));
+        return view('admin.lab.workbench', compact('isApprover', 'requiresApproval', 'labDepartments'));
     }
 
     /**
@@ -386,6 +421,20 @@ class LabWorkbenchController extends Controller
                 $startDate = \Carbon\Carbon::parse($request->start_date)->startOfDay();
                 $endDate = \Carbon\Carbon::parse($request->end_date)->endOfDay();
                 $query->whereBetween('created_at', [$startDate, $endDate]);
+            }
+
+            // Filter by department if provided (Dynamic Bench filter)
+            if ($request->filled('department_id')) {
+                $deptId = $request->department_id;
+                $query->where(function ($q) use ($deptId) {
+                    $q->whereHas('productOrServiceRequest', function ($sub) use ($deptId) {
+                        $sub->where('department_id', $deptId)
+                            ->orWhereHas('service', fn ($sq) => $sq->where('department_id', $deptId)->orWhereHas('category', fn ($c) => $c->where('department_id', $deptId)));
+                    })->orWhereHas('service', function ($sub) use ($deptId) {
+                        $sub->where('department_id', $deptId)
+                            ->orWhereHas('category', fn ($c) => $c->where('department_id', $deptId));
+                    });
+                });
             }
 
             $query->orderByRaw("FIELD(IFNULL(priority,'routine'), 'emergency', 'urgent', 'routine') ASC")
@@ -1982,9 +2031,20 @@ class LabWorkbenchController extends Controller
 
             $query = \App\Models\Service::orderBy('service_name');
 
-            // Filter by lab/investigation category if configured
-            if ($labCategoryId) {
-                $query->where('service_cat_id', $labCategoryId);
+            // Filter by lab/investigation category or department
+            if ($request->filled('department_id')) {
+                $deptId = $request->department_id;
+                $query->where(function ($sub) use ($deptId) {
+                    $sub->where('department_id', $deptId)
+                        ->orWhereHas('category', fn ($c) => $c->where('department_id', $deptId));
+                });
+            } elseif ($labCategoryId) {
+                $query->where(function ($sub) use ($labCategoryId) {
+                    $sub->where('service_cat_id', $labCategoryId)
+                        ->orWhere('category_id', $labCategoryId)
+                        ->orWhereHas('category', fn ($c) => $c->where('id', $labCategoryId)->orWhere('category_name', 'like', '%lab%'))
+                        ->orWhereHas('department', fn ($d) => $d->where('name', 'like', '%laborat%')->orWhere('name', 'like', '%haematolog%')->orWhere('name', 'like', '%patholog%'));
+                });
             }
 
             $services = $query->get()

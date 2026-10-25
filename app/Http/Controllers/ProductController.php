@@ -345,8 +345,10 @@ class ProductController extends Controller
     {
         $application = ApplicationStatu::whereId(1)->first();
         $category = ProductCategory::where('status', '=', 1)->pluck('category_name', 'id')->all();
+        $departments = \App\Models\Department::where('is_active', true)->orderBy('name')->get();
+        $categoryDepartmentMap = ProductCategory::where('status', 1)->pluck('department_id', 'id')->all();
 
-        return view('admin.product.create', compact('category', 'application'));
+        return view('admin.product.create', compact('category', 'application', 'departments', 'categoryDepartmentMap'));
     }
 
     /**
@@ -361,6 +363,7 @@ class ProductController extends Controller
 
         $rules = [
             'category_id' => 'required',
+            'department_id' => 'nullable|exists:departments,id',
             'product_name' => 'required',
             'product_code' => 'required',
             'reorder_alert' => 'required',
@@ -401,6 +404,7 @@ class ProductController extends Controller
             $myproduct = new Product();
             $myproduct->user_id = Auth::user()->id;
             $myproduct->category_id = $request->category_id;
+            $myproduct->department_id = $request->department_id ?: null;
             $myproduct->product_name = trim($request->product_name);
             $myproduct->product_code = $request->product_code;
             $myproduct->reorder_alert = $request->reorder_alert;
@@ -485,8 +489,10 @@ class ProductController extends Controller
                 $q->orderBy('level');
             }])->findOrFail($id);
             $category = ProductCategory::where('status', '=', 1)->pluck('category_name', 'id')->all();
+            $departments = \App\Models\Department::where('is_active', true)->orderBy('name')->get();
+            $categoryDepartmentMap = ProductCategory::where('status', 1)->pluck('department_id', 'id')->all();
 
-            return view('admin.product.edit', compact('product', 'application', 'category'));
+            return view('admin.product.edit', compact('product', 'application', 'category', 'departments', 'categoryDepartmentMap'));
         } catch (\Exception $e) {
             return redirect()->back()->withInput()->withMessage("An error occurred " . $e->getMessage());
         }
@@ -506,6 +512,7 @@ class ProductController extends Controller
 
             $rules = [
                 'category_id' => 'required',
+                'department_id' => 'nullable|exists:departments,id',
                 'product_name' => 'required',
                 'product_code' => 'required',
                 'reorder_alert' => 'required',
@@ -545,6 +552,7 @@ class ProductController extends Controller
             $myproduct = Product::withoutGlobalScopes()->whereId($id)->first();
             $myproduct->user_id = Auth::user()->id;
             $myproduct->category_id = $request->category_id;
+            $myproduct->department_id = $request->department_id ?: null;
             $myproduct->product_name = $request->product_name;
             $myproduct->product_code = $request->product_code;
             $myproduct->reorder_alert = $request->reorder_alert;

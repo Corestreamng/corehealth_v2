@@ -507,7 +507,11 @@ function initializeQueueDataTable(filter) {
         processing: true,
         ajax: {
             url: wbRoute('imaging.queue', '/imaging/queue'),
-            data: { status: status }
+            data: function(d) {
+                d.status = status;
+                d.department_id = window.selectedImagingDepartmentId || '';
+                return d;
+            }
         },
         columns: [
             {
@@ -1930,3 +1934,14 @@ function showBundleRemove(btn) {
         }
     });
 }
+
+// Dynamic Modality Filter Pills Handler
+$(document).on('click', '.imaging-modality-btn', function(e) {
+    e.preventDefault();
+    $('.imaging-modality-btn').removeClass('btn-primary active').addClass('btn-outline-secondary');
+    $(this).removeClass('btn-outline-secondary').addClass('btn-primary active');
+    window.selectedImagingDepartmentId = $(this).data('dept-id') || '';
+    if (typeof queueDataTable !== 'undefined' && queueDataTable) {
+        queueDataTable.ajax.reload();
+    }
+});

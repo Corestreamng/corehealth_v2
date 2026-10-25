@@ -110,6 +110,20 @@
                                                     'required' => 'true'
                                                 ]) !!}
                                             </div>
+                                            <div class="col-lg-12 mt-3">
+                                                <label class="form-label-modern">Operating Department <small class="text-muted">(Auto-set from category, override if needed)</small></label>
+                                                <select name="department_id" id="product_department_id" class="form-control form-control-modern">
+                                                    <option value="">-- Inherit from Category / General --</option>
+                                                    @if(isset($departments))
+                                                        @foreach($departments as $dept)
+                                                            <option value="{{ $dept->id }}" {{ (old('department_id', $product->department_id)) == $dept->id ? 'selected' : '' }}>
+                                                                {{ $dept->name }} {{ $dept->code ? "({$dept->code})" : '' }}
+                                                            </option>
+                                                        @endforeach
+                                                    @endif
+                                                </select>
+                                                <small class="text-muted mt-1 d-block"><i class="mdi mdi-information-outline"></i> Revenue and stock reporting for this product will be attributed to this department.</small>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
@@ -236,6 +250,15 @@
             this.classList.add('active');
             this.querySelector('input[type="radio"]').checked = true;
         });
+    });
+
+    // Auto-prepopulate department from category on change
+    const categoryDepartmentMap = @json($categoryDepartmentMap ?? []);
+    $('#category_id').on('change', function() {
+        const catId = $(this).val();
+        if (catId && categoryDepartmentMap[catId]) {
+            $('#product_department_id').val(categoryDepartmentMap[catId]);
+        }
     });
 
     // Load existing packagings into repeater

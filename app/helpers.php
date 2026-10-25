@@ -398,15 +398,19 @@ if (!function_exists('userfullname')) {
             return 'Unknown';
         }
 
-        $user = User::find($id);
-        if ($user) {
-            $othername = ($user->othername) ? $user->othername : ' ';
-            $fullname = $user->surname . ' ' . $user->firstname . ' ' . $othername;
-
-            return  ucwords($fullname);
-        } else {
-            return 'Unknown';
+        static $userNames = [];
+        if (!isset($userNames[$id])) {
+            $user = User::find($id);
+            if ($user) {
+                $othername = ($user->othername) ? $user->othername : ' ';
+                $fullname = $user->surname . ' ' . $user->firstname . ' ' . $othername;
+                $userNames[$id] = ucwords($fullname);
+            } else {
+                $userNames[$id] = 'Unknown';
+            }
         }
+
+        return $userNames[$id];
     }
 }
 

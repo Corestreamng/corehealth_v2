@@ -23,6 +23,40 @@ class ImagingWorkbenchController extends Controller
     use ClinicalOrdersTrait;
 
     /**
+     * Get dynamic list of active departments associated with imaging / radiology
+     */
+    public static function getImagingDepartments()
+    {
+        $imagingCatId = appsettings('imaging_category_id', 6);
+        $deptIdsFromServices = \App\Models\Service::where('category_id', $imagingCatId)
+            ->whereNotNull('department_id')
+            ->pluck('department_id');
+
+        $deptIdFromCategory = \App\Models\ServiceCategory::find($imagingCatId)?->department_id;
+
+        return \App\Models\Department::where('is_active', true)
+            ->where(function ($q) use ($deptIdsFromServices, $deptIdFromCategory) {
+                if ($deptIdFromCategory) {
+                    $q->orWhere('id', $deptIdFromCategory);
+                }
+                if ($deptIdsFromServices->isNotEmpty()) {
+                    $q->orWhereIn('id', $deptIdsFromServices);
+                }
+                $q->orWhere('name', 'like', '%radiolog%')
+                  ->orWhere('name', 'like', '%imaging%')
+                  ->orWhere('name', 'like', '%scan%')
+                  ->orWhere('name', 'like', '%x-ray%')
+                  ->orWhere('name', 'like', '%ultrasound%')
+                  ->orWhere('name', 'like', '%mri%')
+                  ->orWhere('name', 'like', '%ct%')
+                  ->orWhere('code', 'RAD')
+                  ->orWhere('code', 'SR');
+            })
+            ->orderBy('name')
+            ->get(['id', 'name', 'code']);
+    }
+
+    /**
      * Display the imaging workbench main page
      */
     public function index()
@@ -36,8 +70,9 @@ class ImagingWorkbenchController extends Controller
         $staff = $user->staff_profile;
         $isApprover = ($staff && ($staff->is_unit_head || $staff->is_dept_head)) || $user->hasAnyRole(['SUPERADMIN', 'ADMIN', 'super-admin']);
         $requiresApproval = (bool) appsettings('imaging_results_require_approval');
+        $imagingDepartments = self::getImagingDepartments();
 
-        return view('admin.imaging.workbench', compact('isApprover', 'requiresApproval'));
+        return view('admin.imaging.workbench', compact('isApprover', 'requiresApproval', 'imagingDepartments'));
     }
 
     /**
@@ -376,6 +411,20 @@ class ImagingWorkbenchController extends Controller
                 $startDate = \Carbon\Carbon::parse($request->start_date)->startOfDay();
                 $endDate = \Carbon\Carbon::parse($request->end_date)->endOfDay();
                 $query->whereBetween('created_at', [$startDate, $endDate]);
+            }
+
+            // Filter by department if provided (Dynamic Modality filter)
+            if ($request->filled('department_id')) {
+                $deptId = $request->department_id;
+                $query->where(function ($q) use ($deptId) {
+                    $q->whereHas('productOrServiceRequest', function ($sub) use ($deptId) {
+                        $sub->where('department_id', $deptId)
+                            ->orWhereHas('service', fn ($sq) => $sq->where('department_id', $deptId)->orWhereHas('category', fn ($c) => $c->where('department_id', $deptId)));
+                    })->orWhereHas('service', function ($sub) use ($deptId) {
+                        $sub->where('department_id', $deptId)
+                            ->orWhereHas('category', fn ($c) => $c->where('department_id', $deptId));
+                    });
+                });
             }
 
             $query->orderByRaw("FIELD(IFNULL(priority,'routine'), 'emergency', 'urgent', 'routine') ASC")
@@ -1500,9 +1549,19 @@ class ImagingWorkbenchController extends Controller
             ->where('service_name', 'like', "%{$term}%")
             ->where('status', 1);
 
-        // Filter by imaging category if set
-        if ($imagingCategory) {
-            $query->where('category_id', $imagingCategory);
+        // Filter by department if specified, or by imaging category / imaging department
+        if ($request->filled('department_id')) {
+            $deptId = $request->department_id;
+            $query->where(function ($sub) use ($deptId) {
+                $sub->where('department_id', $deptId)
+                    ->orWhereHas('category', fn ($c) => $c->where('department_id', $deptId));
+            });
+        } elseif ($imagingCategory) {
+            $query->where(function ($sub) use ($imagingCategory) {
+                $sub->where('category_id', $imagingCategory)
+                    ->orWhereHas('category', fn ($c) => $c->where('id', $imagingCategory)->orWhere('category_name', 'like', '%imaging%'))
+                    ->orWhereHas('department', fn ($d) => $d->where('name', 'like', '%radiolog%')->orWhere('name', 'like', '%imaging%')->orWhere('name', 'like', '%scan%')->orWhere('name', 'like', '%x-ray%')->orWhere('name', 'like', '%ultrasound%'));
+            });
         }
 
         $directServices = $query->limit(15)->get();

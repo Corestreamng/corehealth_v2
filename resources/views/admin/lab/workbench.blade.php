@@ -177,6 +177,18 @@
                 <div id="approval-queue-hint" class="alert alert-info" style="display: none; font-size: 0.9rem; margin-top: 1rem; border-left: 4px solid #0dcaf0;">
                     <i class="mdi mdi-information"></i> <strong>Note:</strong> Once approved, requests are moved to the <strong>Completed</strong> list. You can reverse your recent approvals from there.
                 </div>
+                <!-- Dynamic Bench Filter Bar -->
+                <div class="px-2 py-1 mb-2 bg-light border rounded d-flex align-items-center gap-1 flex-wrap" id="lab-bench-filter-bar">
+                    <span class="small font-weight-bold text-muted me-2"><i class="mdi mdi-test-tube"></i> Bench:</span>
+                    <button type="button" class="btn btn-xs btn-primary lab-bench-btn active py-0 px-2 font-11" data-dept-id="">
+                        All Benches
+                    </button>
+                    @foreach(($labDepartments ?? []) as $dept)
+                        <button type="button" class="btn btn-xs btn-outline-secondary lab-bench-btn py-0 px-2 font-11" data-dept-id="{{ $dept->id }}">
+                            {{ $dept->name }}
+                        </button>
+                    @endforeach
+                </div>
                 <!-- DataTable -->
                 <table class="table" id="queue-datatable" style="width: 100%">
                     <thead>

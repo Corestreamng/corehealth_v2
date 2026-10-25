@@ -88,6 +88,20 @@
                                                 <label class="form-label-modern">Service Code</label>
                                                 <input type="text" class="form-control form-control-modern" name="service_code" value="{{ old('service_code', $product->service_code) }}" placeholder="e.g. FBC-001">
                                             </div>
+                                            <div class="col-lg-12 mt-3">
+                                                <label class="form-label-modern">Operating Department <small class="text-muted">(Auto-set from category, override if needed)</small></label>
+                                                <select name="department_id" id="service_department_id" class="form-control form-control-modern">
+                                                    <option value="">-- Inherit from Category / General --</option>
+                                                    @if(isset($departments))
+                                                        @foreach($departments as $dept)
+                                                            <option value="{{ $dept->id }}" {{ (old('department_id', $product->department_id)) == $dept->id ? 'selected' : '' }}>
+                                                                {{ $dept->name }} {{ $dept->code ? "({$dept->code})" : '' }}
+                                                            </option>
+                                                        @endforeach
+                                                    @endif
+                                                </select>
+                                                <small class="text-muted mt-1 d-block"><i class="mdi mdi-information-outline"></i> Revenue and operational reporting for this service will be attributed to this department.</small>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
@@ -261,6 +275,17 @@
         const $procedureFields = $('#procedure-fields');
         const $consultFields = $('#consult-fields');
         const $procedureCategorySelect = $('#procedure_category_id');
+        const categoryDepartmentMap = @json($categoryDepartmentMap ?? []);
+
+        function syncDepartmentFromCategory(force = false) {
+            const selectedCategoryId = parseInt($('input[name="category_id"]:checked').val());
+            if (selectedCategoryId && categoryDepartmentMap[selectedCategoryId]) {
+                const targetDept = categoryDepartmentMap[selectedCategoryId];
+                if (force || !$('#service_department_id').val()) {
+                    $('#service_department_id').val(targetDept);
+                }
+            }
+        }
 
         // Category card selector
         document.querySelectorAll('.cat-option').forEach(function(opt) {
@@ -269,6 +294,7 @@
                 this.classList.add('active');
                 this.querySelector('input[type="radio"]').checked = true;
                 toggleProcedureFields();
+                syncDepartmentFromCategory(true);
             });
         });
 

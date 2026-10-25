@@ -123,10 +123,22 @@
         <!-- Queue View -->
         <div class="queue-view" id="queue-view">
             <div class="queue-view-header">
-                <h4 id="queue-view-title"><i class="mdi mdi-format-list-bulleted"></i> Lab Queue</h4>
+                <h4 id="queue-view-title"><i class="mdi mdi-format-list-bulleted"></i> Imaging Queue</h4>
                 <button class="btn-close-queue" id="btn-close-queue">
                     <i class="mdi mdi-close"></i> Close
                 </button>
+            </div>
+            <!-- Dynamic Modality Filter Bar -->
+            <div class="px-3 py-2 bg-light border-bottom d-flex align-items-center gap-1 flex-wrap" id="imaging-modality-filter-bar">
+                <span class="small font-weight-bold text-muted me-2"><i class="mdi mdi-filter-variant"></i> Modality:</span>
+                <button type="button" class="btn btn-xs btn-primary imaging-modality-btn active py-0 px-2 font-11" data-dept-id="">
+                    All Modalities
+                </button>
+                @foreach(($imagingDepartments ?? []) as $dept)
+                    <button type="button" class="btn btn-xs btn-outline-secondary imaging-modality-btn py-0 px-2 font-11" data-dept-id="{{ $dept->id }}">
+                        {{ $dept->name }}
+                    </button>
+                @endforeach
             </div>
             <div class="queue-view-content">
                 <!-- Approval Queue Hint -->

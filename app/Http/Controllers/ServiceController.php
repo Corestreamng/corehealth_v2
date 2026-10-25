@@ -118,6 +118,7 @@ class ServiceController extends Controller
 
         $rules = [
             'category_id' => 'required',
+            'department_id' => 'nullable|exists:departments,id',
             'service_name' => 'required',
             'service_code' => 'required',
         ];
@@ -140,6 +141,7 @@ class ServiceController extends Controller
             $myservice = new Service();
             $myservice->user_id = Auth::user()->id;
             $myservice->category_id = $request->category_id;
+            $myservice->department_id = $request->department_id ?: null;
             $myservice->service_name = trim($request->service_name);
             $myservice->service_code = $request->service_code;
             $myservice->consult_cycle_duration = $request->consult_cycle_duration;
@@ -190,6 +192,7 @@ class ServiceController extends Controller
 
             $rules = [
                 'category_id' => 'required',
+                'department_id' => 'nullable|exists:departments,id',
                 'service_name' => 'required',
                 'service_code' => 'required',
             ];
@@ -211,6 +214,7 @@ class ServiceController extends Controller
             $myservice = Service::withoutGlobalScopes()->whereId($id)->first();
             $oldCategoryId = $myservice->category_id;
             $myservice->category_id = $request->category_id;
+            $myservice->department_id = $request->department_id ?: null;
             $myservice->service_name = $request->service_name;
             $myservice->service_code = $request->service_code;
             $myservice->consult_cycle_duration = $request->consult_cycle_duration;
@@ -277,8 +281,10 @@ class ServiceController extends Controller
         $procedureCategories = ProcedureCategory::where('status', 1)->orderBy('name')->get();
         $procedureCategoryId = appsettings('procedure_category_id');
         $consultationCategoryId = appsettings('consultation_category_id');
+        $departments = \App\Models\Department::where('is_active', true)->orderBy('name')->get();
+        $categoryDepartmentMap = ServiceCategory::where('status', 1)->pluck('department_id', 'id')->all();
 
-        return view('admin.service.create', compact('category', 'procedureCategories', 'procedureCategoryId', 'consultationCategoryId', 'selectedCategory'));
+        return view('admin.service.create', compact('category', 'procedureCategories', 'procedureCategoryId', 'consultationCategoryId', 'selectedCategory', 'departments', 'categoryDepartmentMap'));
     }
 
     public function edit(Request $request, $id)
@@ -290,8 +296,10 @@ class ServiceController extends Controller
         $consultationCategoryId = appsettings('consultation_category_id');
         $procedure = $product->procedureDefinition;
         $selectedCategory = $product->category_id;
+        $departments = \App\Models\Department::where('is_active', true)->orderBy('name')->get();
+        $categoryDepartmentMap = ServiceCategory::where('status', 1)->pluck('department_id', 'id')->all();
 
-        return view('admin.service.edit', compact('product', 'category', 'procedureCategories', 'procedureCategoryId', 'consultationCategoryId', 'procedure', 'selectedCategory'));
+        return view('admin.service.edit', compact('product', 'category', 'procedureCategories', 'procedureCategoryId', 'consultationCategoryId', 'procedure', 'selectedCategory', 'departments', 'categoryDepartmentMap'));
     }
 
     public function show($id)
