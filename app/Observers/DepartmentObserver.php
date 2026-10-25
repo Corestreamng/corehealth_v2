@@ -40,9 +40,14 @@ class DepartmentObserver
             return;
         }
 
-        $code = $department->code
-            ? Str::upper($department->code) . '_DS'
-            : 'D' . $department->id . '_DS';
+        $basePrefix = $department->code
+            ? Str::upper(substr(preg_replace('/[^A-Za-z0-9]/', '', $department->code), 0, 7))
+            : 'D' . substr((string) $department->id, 0, 6);
+        $code = Str::substr($basePrefix . '_DS', 0, 10);
+
+        if (Store::where('code', $code)->exists()) {
+            $code = Str::substr('DS_' . $department->id . '_' . Str::random(2), 0, 10);
+        }
 
         Store::create([
             'store_name' => $department->name . ' Store',

@@ -229,6 +229,7 @@ class PaymentObserver
                             'service_id' => $metadata['service_id'],
                             'product_category_id' => $metadata['product_category_id'],
                             'service_category_id' => $metadata['service_category_id'],
+                            'department_id' => $metadata['department_id'],
                             'hmo_id' => $metadata['hmo_id'],
                             'category' => 'account_payment',
                         ],
@@ -500,6 +501,7 @@ class PaymentObserver
                     'service_id' => $metadata['service_id'],
                     'product_category_id' => $metadata['product_category_id'],
                     'service_category_id' => $metadata['service_category_id'],
+                    'department_id' => $metadata['department_id'],
                     'hmo_id' => $metadata['hmo_id'],
                     'patient_id' => $payment->patient_id,
                     'category' => $payment->payment_type ?? 'general',
@@ -516,6 +518,7 @@ class PaymentObserver
                 'service_id' => $metadata['service_id'],
                 'product_category_id' => $metadata['product_category_id'],
                 'service_category_id' => $metadata['service_category_id'],
+                'department_id' => $metadata['department_id'],
                 'hmo_id' => $metadata['hmo_id'],
                 'patient_id' => $payment->patient_id,
                 'category' => $payment->payment_type ?? 'general',
@@ -551,6 +554,7 @@ class PaymentObserver
                     'service_id' => $metadata['service_id'],
                     'product_category_id' => $metadata['product_category_id'],
                     'service_category_id' => $metadata['service_category_id'],
+                    'department_id' => $metadata['department_id'],
                     'hmo_id' => $metadata['hmo_id'],
                     'patient_id' => $payment->patient_id,
                     'category' => $payment->payment_type ?? 'general',
@@ -574,6 +578,7 @@ class PaymentObserver
             'service_id' => $metadata['service_id'],
             'product_category_id' => $metadata['product_category_id'],
             'service_category_id' => $metadata['service_category_id'],
+            'department_id' => $metadata['department_id'],
             'hmo_id' => $metadata['hmo_id'],
             'patient_id' => $payment->patient_id,
             'category' => $payment->payment_type ?? 'general',
@@ -649,6 +654,7 @@ class PaymentObserver
             'service_id' => null,
             'product_category_id' => null,
             'service_category_id' => null,
+            'department_id' => null,
             'hmo_id' => null,
         ];
 
@@ -668,6 +674,7 @@ class PaymentObserver
                 $metadata['service_id'] = $psr->service_id;
                 $metadata['product_category_id'] = $psr->product?->product_category_id ?? $psr->product?->category_id;
                 $metadata['service_category_id'] = $psr->service?->service_category_id ?? $psr->service?->category_id;
+                $metadata['department_id'] = $psr->department_id ?? ($psr->service?->getEffectiveDepartmentId() ?? $psr->product?->getEffectiveDepartmentId());
                 if ($psr->hmo_id) {
                     $metadata['hmo_id'] = $psr->hmo_id;
                 }
@@ -682,6 +689,7 @@ class PaymentObserver
                 $metadata['service_id'] = $items->service_id;
                 $metadata['product_category_id'] = $items->product?->product_category_id ?? $items->product?->category_id;
                 $metadata['service_category_id'] = $items->service?->service_category_id ?? $items->service?->category_id;
+                $metadata['department_id'] = $items->department_id ?? ($items->service?->getEffectiveDepartmentId() ?? $items->product?->getEffectiveDepartmentId());
             }
         }
 

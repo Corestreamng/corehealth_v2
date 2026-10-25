@@ -58,4 +58,29 @@ class Department extends Model implements Auditable
     {
         return $query->orderBy('name');
     }
+
+    public function serviceCategories()
+    {
+        return $this->hasMany(ServiceCategory::class, 'department_id', 'id');
+    }
+
+    public function productCategories()
+    {
+        return $this->hasMany(ProductCategory::class, 'department_id', 'id');
+    }
+
+    public function services()
+    {
+        return $this->hasMany(Service::class, 'department_id', 'id');
+    }
+
+    public function products()
+    {
+        return $this->hasMany(Product::class, 'department_id', 'id');
+    }
+
+    public function requests()
+    {
+        return $this->hasMany(ProductOrServiceRequest::class, 'department_id', 'id');
+    }
 }

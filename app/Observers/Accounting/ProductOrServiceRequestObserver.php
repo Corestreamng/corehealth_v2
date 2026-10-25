@@ -51,6 +51,24 @@ class ProductOrServiceRequestObserver
     }
 
     /**
+     * Handle the ProductOrServiceRequest "creating" event.
+     * Automatically stamps the department_id from the effective department
+     * of the associated service or product if not explicitly provided.
+     */
+    public function creating(ProductOrServiceRequest $request): void
+    {
+        if (empty($request->department_id)) {
+            if ($request->service_id) {
+                $service = $request->service ?? \App\Models\Service::find($request->service_id);
+                $request->department_id = $service?->getEffectiveDepartmentId();
+            } elseif ($request->product_id) {
+                $product = $request->product ?? \App\Models\Product::find($request->product_id);
+                $request->department_id = $product?->getEffectiveDepartmentId();
+            }
+        }
+    }
+
+    /**
      * Handle the ProductOrServiceRequest "created" event.
      *
      * Auto-settles fully HMO-covered items (express, approved, payable = 0)
@@ -295,6 +313,9 @@ class ProductOrServiceRequestObserver
         $productCategoryId = $request->product?->product_category_id ?? $request->product?->category_id ?? null;
         $serviceCategoryId = $request->service?->service_category_id ?? $request->service?->category_id ?? null;
 
+        // Get department ID
+        $departmentId = $request->department_id ?? ($request->service?->getEffectiveDepartmentId() ?? $request->product?->getEffectiveDepartmentId());
+
         $description = $this->buildDescription($request);
 
         // Build lines WITH METADATA for granular filtering
@@ -310,6 +331,7 @@ class ProductOrServiceRequestObserver
                 'service_id' => $request->service_id,
                 'product_category_id' => $productCategoryId,
                 'service_category_id' => $serviceCategoryId,
+                'department_id' => $departmentId,
                 'hmo_id' => $request->hmo_id,
                 'patient_id' => $request->patient_id,
                 'category' => $category,
@@ -325,6 +347,7 @@ class ProductOrServiceRequestObserver
                 'service_id' => $request->service_id,
                 'product_category_id' => $productCategoryId,
                 'service_category_id' => $serviceCategoryId,
+                'department_id' => $departmentId,
                 'hmo_id' => $request->hmo_id,
                 'patient_id' => $request->patient_id,
                 'category' => $category,

@@ -29,6 +29,7 @@ class ProductOrServiceRequest extends Model implements Auditable
         'qty',
         'amount',
         'service_id',
+        'department_id',
         'discount',
         'payable_amount',
         'claims_amount',
@@ -130,6 +131,11 @@ class ProductOrServiceRequest extends Model implements Auditable
     public function imagingRequest()
     {
         return $this->hasOne(ImagingServiceRequest::class, 'service_request_id', 'id');
+    }
+
+    public function department()
+    {
+        return $this->belongsTo(Department::class, 'department_id', 'id');
     }
 
     /**

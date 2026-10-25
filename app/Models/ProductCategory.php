@@ -15,8 +15,14 @@ class ProductCategory extends Model implements Auditable
         'category_name',
         'category_code',
         'category_description',
+        'department_id',
         'status',
     ];
+
+    public function department()
+    {
+        return $this->belongsTo(Department::class, 'department_id', 'id');
+    }
 
     public function products()
     {

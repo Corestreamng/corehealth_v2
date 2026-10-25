@@ -26,6 +26,7 @@ class Product extends Model implements Auditable
     protected $fillable = [
         'user_id',
         'category_id',
+        'department_id',
         'product_name',
         'product_code',
         'reorder_alert',
@@ -82,6 +83,23 @@ class Product extends Model implements Auditable
     public function category()
     {
         return $this->belongsTo(ProductCategory::class, 'category_id', 'id');
+    }
+
+    public function department()
+    {
+        return $this->belongsTo(Department::class, 'department_id', 'id');
+    }
+
+    /**
+     * Get the effective department ID: explicit product override first, fallback to category default.
+     */
+    public function getEffectiveDepartmentId(): ?int
+    {
+        if ($this->department_id) {
+            return (int) $this->department_id;
+        }
+
+        return $this->category && $this->category->department_id ? (int) $this->category->department_id : null;
     }
 
     public function requests()
