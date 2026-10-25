@@ -4,12 +4,12 @@
 @endif
 
 <!-- Receipt Preview Modal -->
-<div class="modal fade" id="receiptPreviewModal" tabindex="-1" role="dialog" aria-hidden="true">
-    <div class="modal-dialog modal-lg modal-dialog-centered" role="document">
+<div class="modal fade" id="receiptPreviewModal" tabindex="-1" role="dialog" aria-hidden="true" style="z-index: 1070;">
+    <div class="modal-dialog modal-lg modal-dialog-centered" role="document" style="z-index: 1071;">
         <div class="modal-content">
             <div class="modal-header bg-primary text-white">
                 <h5 class="modal-title"><i class="mdi mdi-receipt"></i> Receipt Preview</h5>
-                <button type="button" data-bs-dismiss="modal" class="btn-close text-white btn-close-white" aria-label="Close"></button>
+                <button type="button" data-dismiss="modal" data-bs-dismiss="modal" class="btn-close text-white btn-close-white" aria-label="Close"></button>
             </div>
             <div class="modal-body p-0">
                 <div class="receipt-modal-tabs">
@@ -32,9 +32,9 @@
                 <button type="button" class="btn btn-info" id="modal-print-thermal">
                     <i class="mdi mdi-printer"></i> Print Thermal
                 </button>
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-                        <i class="fa fa-times"></i> Close
-                    </button>
+                <button type="button" class="btn btn-secondary" data-dismiss="modal" data-bs-dismiss="modal">
+                    <i class="fa fa-times"></i> Close
+                </button>
             </div>
         </div>
     </div>

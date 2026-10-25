@@ -4,13 +4,19 @@ namespace App\Http\Controllers;
 
 use App\Models\Accounting\PatientDeposit;
 use App\Models\Accounting\PatientDepositApplication;
+use App\Models\Department;
 use App\Models\Hmo;
 use App\Models\HmoClaim;
 use App\Models\Patient;
 use App\Models\PatientAccount;
 use App\Models\Payment;
 use App\Models\PaymentSplit;
+use App\Models\Product;
+use App\Models\ProductCategory;
 use App\Models\ProductOrServiceRequest;
+use App\Models\Service;
+use App\Models\ServiceCategory;
+use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -1527,296 +1533,550 @@ class BillingWorkbenchController extends Controller
      */
     public function getMyTransactions(Request $request)
     {
-        $userId = Auth::id();
-
-        $query = Payment::where('user_id', $userId)
-            ->with([
-                'patient.user',
-                'bank',
-                'splits.bank',
-                'product_or_service_request' => function ($q) {
-                    $q->with([
-                        'service.category',
-                        'product.category',
-                        'user',
-                    ]);
-                },
-            ]);
-
-        // Date filtering - default to today
-        $from = $request->input('from', $request->input('from_date', now()->toDateString()));
-        $to = $request->input('to', $request->input('to_date', now()->toDateString()));
-
-        $query->whereBetween('created_at', [
-            Carbon::parse($from)->startOfDay(),
-            Carbon::parse($to)->endOfDay(),
+        $query = Payment::with([
+            'patient.user',
+            'bank',
+            'splits.bank',
+            'product_or_service_request' => function ($q) {
+                $q->with([
+                    'service.category.department',
+                    'service.department',
+                    'product.category.department',
+                    'product.department',
+                    'department',
+                    'user',
+                ]);
+            },
         ]);
+
+        $isAuditUser = $request->boolean('is_audit')
+            || (Auth::check() && (
+                Auth::user()->hasAnyRole(['SUPERADMIN', 'ADMIN', 'ACCOUNTS', 'INTERNAL AUDITOR', 'AUDITOR'])
+                || Auth::user()->can('view-audit')
+            ));
+
+        $cashierId = $request->input('cashier_id');
+        $staffName = 'All Cashiers';
+
+        if ($isAuditUser) {
+            if ($request->filled('cashier_id') && $cashierId !== 'all') {
+                $query->where('payments.user_id', $cashierId);
+                $cashierUser = User::find($cashierId);
+                $staffName = $cashierUser
+                    ? ($cashierUser->surname . ' ' . $cashierUser->firstname . ($cashierUser->othername ? ' ' . $cashierUser->othername : ''))
+                    : ('Cashier #' . $cashierId);
+            } else {
+                $staffName = 'All Cashiers (Facility-Wide)';
+            }
+        } else {
+            $query->where('payments.user_id', Auth::id());
+            $staffUser = Auth::user();
+            $staffName = $staffUser
+                ? ($staffUser->surname . ' ' . $staffUser->firstname . ($staffUser->othername ? ' ' . $staffUser->othername : ''))
+                : 'Current Staff';
+        }
+
+        // Date filtering - default to today, preserving time if provided (e.g. datetime-local format)
+        $from = $request->input('from', $request->input('from_date', now()->format('Y-m-d 00:00:00')));
+        $to = $request->input('to', $request->input('to_date', now()->format('Y-m-d 23:59:59')));
+
+        $fromCarbon = (str_contains($from, ':') || str_contains($from, 'T'))
+            ? Carbon::parse(str_replace('T', ' ', $from))
+            : Carbon::parse($from)->startOfDay();
+
+        $toCarbon = (str_contains($to, ':') || str_contains($to, 'T'))
+            ? Carbon::parse(str_replace('T', ' ', $to))
+            : Carbon::parse($to)->endOfDay();
+
+        $query->whereBetween('payments.created_at', [$fromCarbon, $toCarbon]);
 
         // Payment method / type filter
         if ($request->filled('payment_method')) {
             $pm = $request->payment_method;
             if ($pm === 'SPLIT') {
-                $query->where('is_split_payment', true);
+                $query->where('payments.is_split_payment', true);
+            } elseif ($pm === 'REFUND') {
+                $query->where(function ($q) {
+                    $q->where('payments.total', '<', 0)
+                        ->orWhereIn('payments.payment_type', ['ACC_WITHDRAW', 'REFUND'])
+                        ->orWhere('payments.payment_method', 'REFUND');
+                });
             } else {
                 $query->where(function ($q) use ($pm) {
-                    $q->where('payment_method', $pm)
-                        ->orWhere('payment_type', $pm)
-                        ->orWhereHas('splits', fn ($sq) => $sq->where('payment_method', $pm));
+                    $q->where('payments.payment_method', $pm)
+                        ->orWhere('payments.payment_type', $pm)
+                        ->orWhereHas('splits', fn ($sq) => $sq->where('payment_splits.payment_method', $pm));
                 });
             }
         } elseif ($request->filled('payment_type')) {
-            $query->where('payment_type', $request->payment_type);
+            $pt = $request->payment_type;
+            if ($pt === 'SPLIT') {
+                $query->where('payments.is_split_payment', true);
+            } elseif ($pt === 'REFUND') {
+                $query->where(function ($q) {
+                    $q->where('payments.total', '<', 0)
+                        ->orWhereIn('payments.payment_type', ['ACC_WITHDRAW', 'REFUND'])
+                        ->orWhere('payments.payment_method', 'REFUND');
+                });
+            } else {
+                $query->where(function ($q) use ($pt) {
+                    $q->where('payments.payment_type', $pt)
+                        ->orWhere('payments.payment_method', $pt)
+                        ->orWhereHas('splits', fn ($sq) => $sq->where('payment_splits.payment_method', $pt));
+                });
+            }
         }
 
         // Bank filter
         if ($request->filled('bank_id')) {
             $bankId = $request->bank_id;
             $query->where(function ($q) use ($bankId) {
-                $q->where('bank_id', $bankId)
-                    ->orWhereHas('splits', fn ($sq) => $sq->where('bank_id', $bankId));
+                $q->where('payments.bank_id', $bankId)
+                    ->orWhereHas('splits', fn ($sq) => $sq->where('payment_splits.bank_id', $bankId));
             });
         }
 
-        // Item type filter: 'product' or 'service'
+        // Department filter - pre-resolve matching service and product IDs to eliminate nested subqueries
+        if ($request->filled('department_id')) {
+            $deptId = $request->department_id;
+            $serviceCatIds = ServiceCategory::where('department_id', $deptId)->pluck('id');
+            $serviceIds = Service::where('department_id', $deptId)
+                ->when($serviceCatIds->isNotEmpty(), fn ($q) => $q->orWhereIn('category_id', $serviceCatIds))
+                ->pluck('id');
+
+            $productCatIds = ProductCategory::where('department_id', $deptId)->pluck('id');
+            $productIds = Product::where('department_id', $deptId)
+                ->when($productCatIds->isNotEmpty(), fn ($q) => $q->orWhereIn('category_id', $productCatIds))
+                ->pluck('id');
+
+            $query->whereHas('product_or_service_request', function ($q) use ($deptId, $serviceIds, $productIds) {
+                $q->where('department_id', $deptId)
+                    ->when($serviceIds->isNotEmpty(), fn ($sq) => $sq->orWhereIn('service_id', $serviceIds))
+                    ->when($productIds->isNotEmpty(), fn ($pq) => $pq->orWhereIn('product_id', $productIds));
+            });
+        }
+
+        // Item type filter: 'product', 'service', or 'custom'
         if ($request->filled('item_type')) {
             $itemType = strtolower($request->item_type);
             if ($itemType === 'product') {
-                $query->whereHas('product_or_service_request', function ($q) {
-                    $q->whereNotNull('product_id');
-                });
+                $query->whereHas('product_or_service_request', fn ($q) => $q->whereNotNull('product_id'));
             } elseif ($itemType === 'service') {
-                $query->whereHas('product_or_service_request', function ($q) {
-                    $q->whereNotNull('service_id');
-                });
+                $query->whereHas('product_or_service_request', fn ($q) => $q->whereNotNull('service_id'));
+            } elseif ($itemType === 'custom') {
+                $query->whereHas('product_or_service_request', fn ($q) => $q->where('is_free_form', true));
             }
         }
 
         // Product category filter
         if ($request->filled('product_category_id')) {
             $catId = $request->product_category_id;
-            $query->whereHas('product_or_service_request.product', function ($q) use ($catId) {
-                $q->where('category_id', $catId)->orWhere('product_category_id', $catId);
-            });
+            $prodIds = Product::where('category_id', $catId)->orWhere('product_category_id', $catId)->pluck('id');
+            $query->whereHas('product_or_service_request', fn ($q) => $q->whereIn('product_id', $prodIds));
         }
 
         // Service category filter
         if ($request->filled('service_category_id')) {
             $catId = $request->service_category_id;
-            $query->whereHas('product_or_service_request.service', function ($q) use ($catId) {
-                $q->where('category_id', $catId)->orWhere('service_category_id', $catId);
-            });
+            $srvIds = Service::where('category_id', $catId)->pluck('id');
+            $query->whereHas('product_or_service_request', fn ($q) => $q->whereIn('service_id', $srvIds));
         }
 
         // Category filter by category_name (e.g. "Consultation", "Tablets", "Custom Items")
         if ($request->filled('category')) {
             $catFilterName = $request->category;
-            $query->whereHas('product_or_service_request', function ($q) use ($catFilterName) {
-                if ($catFilterName === 'Custom Items') {
-                    $q->where('is_free_form', true);
-                } else {
-                    $q->where(function ($sub) use ($catFilterName) {
-                        $sub->whereHas('service.category', function ($sq) use ($catFilterName) {
-                            $sq->where('category_name', $catFilterName);
-                        })->orWhereHas('product.category', function ($pq) use ($catFilterName) {
-                            $pq->where('category_name', $catFilterName);
-                        });
-                    });
-                }
-            });
+            if ($catFilterName === 'Custom Items') {
+                $query->whereHas('product_or_service_request', fn ($q) => $q->where('is_free_form', true));
+            } else {
+                $scatIds = ServiceCategory::where('category_name', $catFilterName)->pluck('id');
+                $srvIds = Service::whereIn('category_id', $scatIds)->pluck('id');
+                $pcatIds = ProductCategory::where('category_name', $catFilterName)->pluck('id');
+                $prodIds = Product::whereIn('category_id', $pcatIds)->pluck('id');
+
+                $query->whereHas('product_or_service_request', function ($q) use ($srvIds, $prodIds) {
+                    $q->when($srvIds->isNotEmpty(), fn ($sq) => $sq->whereIn('service_id', $srvIds))
+                        ->when($prodIds->isNotEmpty(), fn ($pq) => $pq->orWhereIn('product_id', $prodIds));
+                });
+            }
         }
 
         // Specific product filter
         if ($request->filled('product_id')) {
             $prodId = $request->product_id;
-            $query->whereHas('product_or_service_request', function ($q) use ($prodId) {
-                $q->where('product_id', $prodId);
-            });
+            $query->whereHas('product_or_service_request', fn ($q) => $q->where('product_id', $prodId));
         }
 
         // Specific service filter
         if ($request->filled('service_id')) {
             $srvId = $request->service_id;
-            $query->whereHas('product_or_service_request', function ($q) use ($srvId) {
-                $q->where('service_id', $srvId);
-            });
+            $query->whereHas('product_or_service_request', fn ($q) => $q->where('service_id', $srvId));
         }
 
-        $transactions = $query->orderBy('created_at', 'desc')->get();
+        // Catalog lookups for category dropdowns and department filter pills
+        $allServiceCats = \App\Models\ServiceCategory::where('status', 1)->orderBy('category_name')->pluck('category_name')->all();
+        $allProductCats = \App\Models\ProductCategory::where('status', 1)->orderBy('category_name')->pluck('category_name')->all();
+        $allDepartments = \App\Models\Department::where('is_active', true)->orderBy('name')->get(['id', 'name', 'code'])->toArray();
 
-        // Calculate Category and Item KPIs
-        $productCategoryKpis = [];
-        $serviceCategoryKpis = [];
-        $productTotalAmount = 0;
-        $productTotalCount = 0;
-        $serviceTotalAmount = 0;
-        $serviceTotalCount = 0;
+        // If request is from Yajra DataTables (server-side pagination, sorting & search)
+        if ($request->has('draw')) {
+            $summary = $this->calculateMyTransactionsSqlSummary($query, $allServiceCats, $allProductCats, $allDepartments);
 
-        foreach ($transactions as $tx) {
-            if ($tx->voided_at) {
-                continue; // Do not sum voided in active KPI totals
-            }
-            foreach ($tx->product_or_service_request as $item) {
-                $amt = (float) ($item->payable_amount ?? 0);
-                if ($item->product_id) {
-                    $productTotalAmount += $amt;
-                    $productTotalCount++;
-                    $catName = $item->product?->category?->category_name ?? $item->product?->category?->name ?? 'Uncategorized';
-                    if (!isset($productCategoryKpis[$catName])) {
-                        $productCategoryKpis[$catName] = ['name' => $catName, 'count' => 0, 'amount' => 0];
+            return datatables()->of($query)
+                ->addIndexColumn()
+                ->editColumn('created_at', function ($p) {
+                    return $p->created_at ? $p->created_at->format('Y-m-d H:i') : '-';
+                })
+                ->addColumn('reference_badge', function ($p) {
+                    $void = $p->voided_at ? ' <span class="badge bg-danger text-white font-10 ms-1">VOIDED</span>' : '';
+
+                    return '<span class="fw-bold font-11">' . e($p->reference_no ?: '-') . '</span>' . $void;
+                })
+                ->addColumn('patient_info', function ($p) {
+                    $patientUser = $p->patient?->user;
+                    $name = $patientUser
+                        ? ($patientUser->surname . ' ' . $patientUser->firstname . ($patientUser->othername ? ' ' . $patientUser->othername : ''))
+                        : ($p->patient ? userfullname($p->patient->user_id) : 'Unknown');
+                    $fileNo = $p->patient?->file_no ?? 'N/A';
+
+                    return '<div class="fw-bold font-11">' . e($name) . '</div><small class="text-muted font-10">File: ' . e($fileNo) . '</small>';
+                })
+                ->addColumn('payment_method_badge', function ($p) {
+                    if ((float) $p->total < 0 || in_array($p->payment_type, ['ACC_WITHDRAW', 'REFUND']) || $p->payment_method === 'REFUND') {
+                        $badgeLabel = ($p->payment_type === 'ACC_WITHDRAW') ? 'DEPOSIT WITHDRAWAL' : 'REFUND / PAYOUT';
+
+                        return '<span class="badge bg-danger text-white font-11"><i class="mdi mdi-cash-refund me-1"></i>' . $badgeLabel . '</span>';
                     }
-                    $productCategoryKpis[$catName]['count']++;
-                    $productCategoryKpis[$catName]['amount'] += $amt;
-                } elseif ($item->service_id) {
-                    $serviceTotalAmount += $amt;
-                    $serviceTotalCount++;
-                    $catName = $item->service?->category?->category_name ?? 'General Services';
-                    if (!isset($serviceCategoryKpis[$catName])) {
-                        $serviceCategoryKpis[$catName] = ['name' => $catName, 'count' => 0, 'amount' => 0];
+
+                    $display = formatPaymentMethod($p);
+                    if ($p->is_split_payment && $p->splits && $p->splits->isNotEmpty()) {
+                        $splitLines = $p->splits->map(function ($s) {
+                            $mName = $s->payment_method;
+                            $bName = $s->bank?->name ? ' (' . $s->bank->name . ')' : '';
+
+                            return $mName . $bName . ': ₦' . number_format($s->amount, 2);
+                        })->implode(', ');
+
+                        return '<span class="badge bg-purple text-white font-11" title="' . e($splitLines) . '">Split (' . $p->splits->count() . ' tenders)</span><small class="d-block font-10 text-muted">' . e($splitLines) . '</small>';
                     }
-                    $serviceCategoryKpis[$catName]['count']++;
-                    $serviceCategoryKpis[$catName]['amount'] += $amt;
-                } elseif ($item->is_free_form) {
-                    $serviceTotalAmount += $amt;
-                    $serviceTotalCount++;
-                    $catName = 'Custom Items';
-                    if (!isset($serviceCategoryKpis[$catName])) {
-                        $serviceCategoryKpis[$catName] = ['name' => $catName, 'count' => 0, 'amount' => 0];
+
+                    return '<span class="badge bg-secondary font-11">' . e($display) . '</span>';
+                })
+                ->addColumn('items_summary', function ($p) {
+                    $items = $p->product_or_service_request;
+                    if (!$items || $items->isEmpty()) {
+                        return '<span class="text-muted fst-italic font-11">No item details</span>';
                     }
-                    $serviceCategoryKpis[$catName]['count']++;
-                    $serviceCategoryKpis[$catName]['amount'] += $amt;
-                }
-            }
+                    $count = $items->count();
+                    $badgeList = $items->map(function ($it) {
+                        $type = $it->is_free_form ? 'Custom' : ($it->service_id ? 'Service' : 'Product');
+                        $typeClass = $it->is_free_form ? 'bg-warning text-dark' : ($it->service_id ? 'bg-info text-white' : 'bg-success text-white');
+                        $effectiveDept = $it->department
+                            ?? $it->service?->department
+                            ?? $it->service?->category?->department
+                            ?? $it->product?->department
+                            ?? $it->product?->category?->department;
+                        $deptName = $effectiveDept?->name;
+                        $deptBadge = $deptName ? ' <span class="badge bg-light text-dark border font-10 ms-1"><i class="mdi mdi-domain me-1"></i>' . e($deptName) . '</span>' : '';
+                        $itemName = getItemDisplayName($it);
+                        $qty = $it->qty ?? 1;
+                        $amt = number_format($it->payable_amount ?? 0, 2);
+
+                        return '<div class="mb-1 d-flex justify-content-between align-items-center"><span><span class="badge ' . $typeClass . ' font-10">' . $type . '</span>' . $deptBadge . ' <strong>' . e($itemName) . '</strong> <small class="text-muted">(Qty: ' . $qty . ')</small></span><span class="text-primary fw-bold font-11 ms-2">₦' . $amt . '</span></div>';
+                    })->implode('');
+
+                    $boxId = 'dt-items-box-' . $p->id;
+
+                    return '<div class="items-summary-container">'
+                        . '<div class="d-flex align-items-center justify-content-between">'
+                        . '<span class="font-11 text-dark fw-bold">' . $count . ' item(s)</span>'
+                        . '<button type="button" class="btn btn-xs btn-outline-primary btn-toggle-items-breakdown py-0 px-1 font-11" data-details-target="#' . $boxId . '" data-target="#' . $boxId . '" data-bs-target="#' . $boxId . '">Details <i class="mdi mdi-chevron-down"></i></button>'
+                        . '</div>'
+                        . '<div class="p-2 border rounded bg-light mt-1 font-11 dt-items-box shadow-sm" id="' . $boxId . '" style="display: none; max-height: 250px; overflow-y: auto;">'
+                        . $badgeList
+                        . '</div>'
+                        . '</div>';
+                })
+                ->addColumn('total_formatted', function ($p) {
+                    $val = (float) $p->total;
+                    if ($val < 0 || in_array($p->payment_type, ['ACC_WITHDRAW', 'REFUND']) || $p->payment_method === 'REFUND') {
+                        return '<span class="text-end font-12 fw-bold text-danger d-block">-₦' . number_format(abs($val), 2) . '</span>';
+                    }
+
+                    return '<span class="text-end font-12 fw-bold text-primary d-block">₦' . number_format($val, 2) . '</span>';
+                })
+                ->addColumn('actions', function ($p) {
+                    return '<div class="text-center"><button class="btn btn-xs btn-outline-info btn-print-tx-receipt" data-id="' . $p->id . '" title="Print Receipt"><i class="mdi mdi-printer"></i></button></div>';
+                })
+                ->filterColumn('patient_info', function ($query, $keyword) {
+                    $query->where(function ($q) use ($keyword) {
+                        $q->whereHas('patient.user', function ($uq) use ($keyword) {
+                            $uq->where('firstname', 'like', "%{$keyword}%")
+                                ->orWhere('surname', 'like', "%{$keyword}%")
+                                ->orWhere('othername', 'like', "%{$keyword}%");
+                        })->orWhereHas('patient', function ($pq) use ($keyword) {
+                            $pq->where('file_no', 'like', "%{$keyword}%");
+                        });
+                    });
+                })
+                ->filterColumn('reference_badge', function ($query, $keyword) {
+                    $query->where('payments.reference_no', 'like', "%{$keyword}%");
+                })
+                ->setRowClass(function ($p) {
+                    if ($p->voided_at) {
+                        return 'table-danger';
+                    }
+                    if ((float) $p->total < 0 || in_array($p->payment_type, ['ACC_WITHDRAW', 'REFUND']) || $p->payment_method === 'REFUND') {
+                        return 'table-warning';
+                    }
+
+                    return '';
+                })
+                ->rawColumns(['reference_badge', 'patient_info', 'payment_method_badge', 'items_summary', 'total_formatted', 'actions'])
+                ->with('summary', $summary)
+                ->with('all_departments', $allDepartments)
+                ->with('all_categories', [
+                    'services' => $allServiceCats,
+                    'products' => $allProductCats,
+                ])
+                ->make(true);
         }
 
-        $activeTransactions = $transactions->whereNull('voided_at');
+        // High-performance thresholding: count total records
+        $limit = min((int) $request->input('limit', 250), 500);
+        $totalCount = (clone $query)->count();
+        $isTruncated = ($totalCount > $limit);
 
-        $paymentMethodKpis = [
-            'CASH' => ['label' => 'Cash', 'count' => 0, 'amount' => 0, 'banks' => []],
-            'POS' => ['label' => 'POS', 'count' => 0, 'amount' => 0, 'banks' => []],
-            'TRANSFER' => ['label' => 'Bank Transfer', 'count' => 0, 'amount' => 0, 'banks' => []],
-            'MOBILE' => ['label' => 'Mobile Money', 'count' => 0, 'amount' => 0, 'banks' => []],
-            'DEPOSIT' => ['label' => 'Patient Deposit', 'count' => 0, 'amount' => 0, 'banks' => []],
-            'OTHER' => ['label' => 'Other Methods', 'count' => 0, 'amount' => 0, 'banks' => []],
-        ];
+        if ($isTruncated) {
+            // For large datasets, compute accurate period KPIs via direct SQL aggregation (<1.5s vs 30s timeout)
+            $summary = $this->calculateMyTransactionsSqlSummary($query, $allServiceCats, $allProductCats, $allDepartments);
+            $transactions = (clone $query)->orderBy('payments.created_at', 'desc')->limit($limit)->get();
+        } else {
+            // For typical day-to-day ranges (<=250 tx), load records and compute in-memory (<15ms)
+            $transactions = (clone $query)->orderBy('payments.created_at', 'desc')->get();
 
-        $splitTransactionsCount = 0;
-        $splitTransactionsAmount = 0;
+            $productCategoryKpis = [];
+            $serviceCategoryKpis = [];
+            $departmentKpis = [];
+            $productTotalAmount = 0;
+            $productTotalCount = 0;
+            $serviceTotalAmount = 0;
+            $serviceTotalCount = 0;
 
-        $recordTender = function (string $rawMethod, ?string $bankName, float $amount) use (&$paymentMethodKpis) {
-            $m = strtoupper(trim($rawMethod));
-            if ($m === 'CASH') {
-                $code = 'CASH';
-            } elseif ($m === 'POS') {
-                $code = 'POS';
-            } elseif (in_array($m, ['TRANSFER', 'BANK_TRANSFER'])) {
-                $code = 'TRANSFER';
-            } elseif ($m === 'MOBILE') {
-                $code = 'MOBILE';
-            } elseif (in_array($m, ['DEPOSIT', 'ACC_DEPOSIT', 'ACCOUNT', 'ACC_WITHDRAW'])) {
-                $code = 'DEPOSIT';
-            } else {
-                $code = 'OTHER';
-            }
-
-            $paymentMethodKpis[$code]['count']++;
-            $paymentMethodKpis[$code]['amount'] += $amount;
-
-            // Track bank breakdown under the payment method card for non-cash tenders
-            if (!in_array($code, ['CASH', 'DEPOSIT'])) {
-                $bName = trim($bankName ?: 'Direct');
-                if (!isset($paymentMethodKpis[$code]['banks'][$bName])) {
-                    $paymentMethodKpis[$code]['banks'][$bName] = [
-                        'name' => $bName,
-                        'count' => 0,
-                        'amount' => 0,
-                    ];
+            foreach ($transactions as $tx) {
+                if ($tx->voided_at) {
+                    continue; // Exclude voided from active KPI totals
                 }
-                $paymentMethodKpis[$code]['banks'][$bName]['count']++;
-                $paymentMethodKpis[$code]['banks'][$bName]['amount'] += $amount;
+                foreach ($tx->product_or_service_request as $item) {
+                    $amt = (float) ($item->payable_amount ?? 0);
+
+                    // Department revenue attribution rollup
+                    $effectiveDept = $item->department
+                        ?? $item->service?->department
+                        ?? $item->service?->category?->department
+                        ?? $item->product?->department
+                        ?? $item->product?->category?->department;
+                    $deptId = $effectiveDept ? (int) $effectiveDept->id : 0;
+                    $deptName = $effectiveDept ? $effectiveDept->name : 'General / Unassigned';
+                    if (!isset($departmentKpis[$deptId])) {
+                        $departmentKpis[$deptId] = [
+                            'id' => $deptId,
+                            'name' => $deptName,
+                            'count' => 0,
+                            'amount' => 0,
+                        ];
+                    }
+                    $departmentKpis[$deptId]['count']++;
+                    $departmentKpis[$deptId]['amount'] += $amt;
+
+                    if ($item->product_id) {
+                        $productTotalAmount += $amt;
+                        $productTotalCount++;
+                        $catName = $item->product?->category?->category_name ?? $item->product?->category?->name ?? 'Uncategorized';
+                        if (!isset($productCategoryKpis[$catName])) {
+                            $productCategoryKpis[$catName] = ['name' => $catName, 'count' => 0, 'amount' => 0];
+                        }
+                        $productCategoryKpis[$catName]['count']++;
+                        $productCategoryKpis[$catName]['amount'] += $amt;
+                    } elseif ($item->service_id) {
+                        $serviceTotalAmount += $amt;
+                        $serviceTotalCount++;
+                        $catName = $item->service?->category?->category_name ?? 'General Services';
+                        if (!isset($serviceCategoryKpis[$catName])) {
+                            $serviceCategoryKpis[$catName] = ['name' => $catName, 'count' => 0, 'amount' => 0];
+                        }
+                        $serviceCategoryKpis[$catName]['count']++;
+                        $serviceCategoryKpis[$catName]['amount'] += $amt;
+                    } elseif ($item->is_free_form) {
+                        $serviceTotalAmount += $amt;
+                        $serviceTotalCount++;
+                        $catName = 'Custom Items';
+                        if (!isset($serviceCategoryKpis[$catName])) {
+                            $serviceCategoryKpis[$catName] = ['name' => $catName, 'count' => 0, 'amount' => 0];
+                        }
+                        $serviceCategoryKpis[$catName]['count']++;
+                        $serviceCategoryKpis[$catName]['amount'] += $amt;
+                    }
+                }
             }
-        };
 
-        foreach ($activeTransactions as $tx) {
-            $total = (float) $tx->total;
-            if ($tx->is_split_payment) {
-                $splitTransactionsCount++;
-                $splitTransactionsAmount += $total;
+            $activeTransactions = $transactions->whereNull('voided_at');
 
-                if ($tx->splits && $tx->splits->isNotEmpty()) {
-                    foreach ($tx->splits as $split) {
+            $refundAmount = 0.0;
+            $refundCount = 0;
+            $cashInflowAmount = 0.0;
+            $cashInflowCount = 0;
+
+            foreach ($activeTransactions as $tx) {
+                $total = (float) $tx->total;
+                $isRefund = ($total < 0 || in_array($tx->payment_type, ['ACC_WITHDRAW', 'REFUND']) || $tx->payment_method === 'REFUND');
+                if ($isRefund) {
+                    $refundCount++;
+                    $refundAmount -= abs($total);
+                } else {
+                    $m = strtoupper(trim($tx->payment_method ?: $tx->payment_type ?: 'CASH'));
+                    if ($m === 'CASH') {
+                        $cashInflowCount++;
+                        $cashInflowAmount += $total;
+                    } elseif ($tx->is_split_payment && $tx->splits) {
+                        foreach ($tx->splits as $split) {
+                            if (strtoupper(trim($split->payment_method ?? '')) === 'CASH') {
+                                $cashInflowCount++;
+                                $cashInflowAmount += (float) ($split->amount ?? 0);
+                            }
+                        }
+                    }
+                }
+            }
+
+            $paymentMethodKpis = [
+                'CASH' => ['label' => 'Cash in Till', 'count' => 0, 'amount' => 0, 'banks' => []],
+                'POS' => ['label' => 'POS', 'count' => 0, 'amount' => 0, 'banks' => []],
+                'TRANSFER' => ['label' => 'Bank Transfer', 'count' => 0, 'amount' => 0, 'banks' => []],
+                'MOBILE' => ['label' => 'Mobile Money', 'count' => 0, 'amount' => 0, 'banks' => []],
+                'DEPOSIT' => ['label' => 'Patient Deposit', 'count' => 0, 'amount' => 0, 'banks' => []],
+                'REFUND' => ['label' => 'Refunds & Withdrawals', 'count' => $refundCount, 'amount' => $refundAmount, 'banks' => []],
+                'OTHER' => ['label' => 'Other Methods', 'count' => 0, 'amount' => 0, 'banks' => []],
+            ];
+
+            $splitTransactionsCount = 0;
+            $splitTransactionsAmount = 0;
+
+            $recordTender = function (string $rawMethod, ?string $bankName, float $amount) use (&$paymentMethodKpis) {
+                $m = strtoupper(trim($rawMethod));
+                if ($m === 'CASH') {
+                    $code = 'CASH';
+                } elseif ($m === 'POS') {
+                    $code = 'POS';
+                } elseif (in_array($m, ['TRANSFER', 'BANK_TRANSFER'])) {
+                    $code = 'TRANSFER';
+                } elseif ($m === 'MOBILE') {
+                    $code = 'MOBILE';
+                } elseif (in_array($m, ['DEPOSIT', 'ACC_DEPOSIT', 'ACCOUNT'])) {
+                    $code = 'DEPOSIT';
+                } elseif (in_array($m, ['REFUND', 'ACC_WITHDRAW']) || $amount < 0) {
+                    $code = 'REFUND';
+                } else {
+                    $code = 'OTHER';
+                }
+
+                if ($code !== 'REFUND') {
+                    $paymentMethodKpis[$code]['count']++;
+                    $paymentMethodKpis[$code]['amount'] += $amount;
+                }
+
+                if (!in_array($code, ['CASH', 'DEPOSIT', 'REFUND'])) {
+                    $bName = trim($bankName ?: 'Direct');
+                    if (!isset($paymentMethodKpis[$code]['banks'][$bName])) {
+                        $paymentMethodKpis[$code]['banks'][$bName] = [
+                            'name' => $bName,
+                            'count' => 0,
+                            'amount' => 0,
+                        ];
+                    }
+                    $paymentMethodKpis[$code]['banks'][$bName]['count']++;
+                    $paymentMethodKpis[$code]['banks'][$bName]['amount'] += $amount;
+                }
+            };
+
+            foreach ($activeTransactions as $tx) {
+                $total = (float) $tx->total;
+                if ($tx->is_split_payment) {
+                    $splitTransactionsCount++;
+                    $splitTransactionsAmount += $total;
+
+                    if ($tx->splits && $tx->splits->isNotEmpty()) {
+                        foreach ($tx->splits as $split) {
+                            $recordTender(
+                                $split->payment_method ?? '',
+                                $split->bank?->name,
+                                (float) ($split->amount ?? 0)
+                            );
+                        }
+                    } else {
                         $recordTender(
-                            $split->payment_method ?? '',
-                            $split->bank?->name,
-                            (float) ($split->amount ?? 0)
+                            $tx->payment_method ?: $tx->payment_type ?: 'OTHER',
+                            $tx->bank?->name,
+                            $total
                         );
                     }
                 } else {
                     $recordTender(
-                        $tx->payment_method ?: $tx->payment_type ?: 'OTHER',
+                        $tx->payment_method ?: $tx->payment_type ?: 'CASH',
                         $tx->bank?->name,
                         $total
                     );
                 }
-            } else {
-                $recordTender(
-                    $tx->payment_method ?: $tx->payment_type ?: 'CASH',
-                    $tx->bank?->name,
-                    $total
-                );
             }
-        }
 
-        // Convert banks dictionary to indexed list for clean API & view consumption
-        foreach ($paymentMethodKpis as $code => $data) {
-            $paymentMethodKpis[$code]['banks'] = array_values($data['banks']);
-        }
+            foreach ($paymentMethodKpis as $code => $data) {
+                $paymentMethodKpis[$code]['banks'] = array_values($data['banks']);
+            }
 
-        // Align by_type tender breakdown with actual tender methods and their bank breakdowns
-        $byTypeSummary = collect($paymentMethodKpis)
-            ->filter(function ($kpi) {
-                return $kpi['amount'] > 0 || $kpi['count'] > 0;
-            })
-            ->map(function ($kpi) {
-                return [
+            $byTypeSummary = collect($paymentMethodKpis)
+                ->filter(fn ($kpi) => $kpi['amount'] != 0 || $kpi['count'] > 0)
+                ->map(fn ($kpi) => [
                     'label' => $kpi['label'],
                     'count' => $kpi['count'],
                     'amount' => $kpi['amount'],
                     'banks' => $kpi['banks'],
                     'discount' => 0,
-                ];
-            });
+                ]);
 
-        $summary = [
-            'total_amount' => $activeTransactions->sum('total'),
-            'total_discount' => $activeTransactions->sum('total_discount'),
-            'count' => $activeTransactions->count(),
-            'voided_count' => $transactions->whereNotNull('voided_at')->count(),
-            'split_transactions_count' => $splitTransactionsCount,
-            'split_transactions_amount' => $splitTransactionsAmount,
-            'by_type' => $byTypeSummary,
-            'payment_method_kpis' => $paymentMethodKpis,
-            'product_total' => $productTotalAmount,
-            'service_total' => $serviceTotalAmount,
-            'product_kpi' => [
-                'count' => $productTotalCount,
-                'amount' => $productTotalAmount,
-            ],
-            'service_kpi' => [
-                'count' => $serviceTotalCount,
-                'amount' => $serviceTotalAmount,
-            ],
-            'product_category_kpis' => array_values($productCategoryKpis),
-            'service_category_kpis' => array_values($serviceCategoryKpis),
-        ];
+            $summary = [
+                'total_amount' => (float) $activeTransactions->sum('total'),
+                'total_discount' => (float) $activeTransactions->sum('total_discount'),
+                'count' => (int) $activeTransactions->count(),
+                'voided_count' => (int) $transactions->whereNotNull('voided_at')->count(),
+                'refund_amount' => $refundAmount,
+                'refund_count' => $refundCount,
+                'cash_inflow' => $cashInflowAmount,
+                'cash_inflow_count' => $cashInflowCount,
+                'split_transactions_count' => $splitTransactionsCount,
+                'split_transactions_amount' => $splitTransactionsAmount,
+                'by_type' => $byTypeSummary,
+                'payment_method_kpis' => $paymentMethodKpis,
+                'product_total' => $productTotalAmount,
+                'service_total' => $serviceTotalAmount,
+                'product_kpi' => [
+                    'count' => $productTotalCount,
+                    'amount' => $productTotalAmount,
+                ],
+                'service_kpi' => [
+                    'count' => $serviceTotalCount,
+                    'amount' => $serviceTotalAmount,
+                ],
+                'product_category_kpis' => array_values($productCategoryKpis),
+                'service_category_kpis' => array_values($serviceCategoryKpis),
+                'department_kpis' => array_values($departmentKpis),
+                'all_categories' => [
+                    'services' => $allServiceCats,
+                    'products' => $allProductCats,
+                ],
+                'all_departments' => $allDepartments,
+            ];
+        }
 
-        $allServiceCats = \App\Models\ServiceCategory::where('status', 1)->orderBy('category_name')->pluck('category_name')->all();
-        $allProductCats = \App\Models\ProductCategory::where('status', 1)->orderBy('category_name')->pluck('category_name')->all();
-
-        $summary['all_categories'] = [
-            'services' => $allServiceCats,
-            'products' => $allProductCats,
-        ];
-
+        // Format transactions for list view using preloaded relations to eliminate N+1 queries
         $transactionsFormatted = $transactions->map(function ($tx) {
             $itemsFormatted = $tx->product_or_service_request->map(function ($item) {
                 $isService = (bool) $item->service_id;
@@ -1827,23 +2087,40 @@ class BillingWorkbenchController extends Controller
 
                 $catName = $isFree ? 'Custom Items' : ($item->service?->category?->category_name ?? $item->product?->category?->category_name ?? $item->product?->category?->name ?? 'General Items');
 
+                $effectiveDept = $item->department
+                    ?? $item->service?->department
+                    ?? $item->service?->category?->department
+                    ?? $item->product?->department
+                    ?? $item->product?->category?->department;
+
+                $itemUserName = $item->user
+                    ? ($item->user->surname . ' ' . $item->user->firstname . ($item->user->othername ? ' ' . $item->user->othername : ''))
+                    : userfullname($item->user_id);
+
                 return [
                     'id' => $item->id,
                     'type' => $isFree ? 'Custom' : ($isService ? 'Service' : 'Product'),
                     'name' => getItemDisplayName($item),
                     'category' => $catName,
+                    'department_id' => $effectiveDept?->id,
+                    'department_name' => $effectiveDept?->name ?? 'General',
                     'qty' => $qty,
                     'unit_price' => $unitPrice,
                     'amount' => $amt,
                     'discount' => $item->discount ?? 0,
-                    'patient_name' => userfullname($item->user_id),
+                    'patient_name' => $itemUserName,
                 ];
             });
+
+            $patientUser = $tx->patient?->user;
+            $patientName = $patientUser
+                ? ($patientUser->surname . ' ' . $patientUser->firstname . ($patientUser->othername ? ' ' . $patientUser->othername : ''))
+                : ($tx->patient ? userfullname($tx->patient->user_id) : 'Unknown');
 
             return [
                 'id' => $tx->id,
                 'reference_no' => $tx->reference_no,
-                'patient_name' => $tx->patient ? userfullname($tx->patient->user_id) : 'Unknown',
+                'patient_name' => $patientName,
                 'file_no' => $tx->patient?->file_no ?? 'N/A',
                 'payment_type' => $tx->payment_type,
                 'payment_method' => $tx->payment_method,
@@ -1871,8 +2148,6 @@ class BillingWorkbenchController extends Controller
         // If print requested, return branded A4 printout
         if ($request->input('action') === 'print' || $request->input('format') === 'print' || $request->boolean('print')) {
             $site = appsettings();
-            $staffUser = Auth::user();
-            $staffName = $staffUser ? userfullname($staffUser->id) : 'Current Staff';
 
             return view('admin.Accounts.my_transactions_print', [
                 'site' => $site,
@@ -1883,20 +2158,272 @@ class BillingWorkbenchController extends Controller
                 'transactionsFormatted' => $transactionsFormatted,
                 'summary' => $summary,
                 'paymentType' => $request->payment_type ?? $request->payment_method ?? 'All Methods',
+                'isTruncated' => $isTruncated,
             ]);
         }
 
         return response()->json([
             'success' => true,
+            'is_truncated' => $isTruncated,
+            'total_count' => $totalCount,
+            'showing_count' => $transactions->count(),
             'transactions' => $transactionsFormatted,
             'summary' => $summary,
             'all_categories' => [
                 'services' => $allServiceCats,
                 'products' => $allProductCats,
             ],
+            'all_departments' => $allDepartments,
             'from' => $from,
             'to' => $to,
         ]);
+    }
+
+    /**
+     * Compute summary KPIs via direct SQL aggregation for large datasets
+     */
+    protected function calculateMyTransactionsSqlSummary($query, $allServiceCats, $allProductCats, $allDepartments)
+    {
+        $activeQuery = (clone $query)->whereNull('payments.voided_at');
+
+        // 1. Overall active & voided totals
+        $overall = (clone $activeQuery)
+            ->selectRaw('COUNT(*) as count, COALESCE(SUM(payments.total), 0) as total_amount, COALESCE(SUM(payments.total_discount), 0) as total_discount')
+            ->first();
+
+        $voidedCount = (clone $query)->whereNotNull('payments.voided_at')->count();
+
+        // 2. Split transaction stats
+        $splitStats = (clone $activeQuery)
+            ->where('payments.is_split_payment', true)
+            ->selectRaw('COUNT(*) as count, COALESCE(SUM(payments.total), 0) as amount')
+            ->first();
+
+        $splitTransactionsCount = (int) ($splitStats->count ?? 0);
+        $splitTransactionsAmount = (float) ($splitStats->amount ?? 0);
+
+        // 2b. Refunds / Withdrawals stats
+        $refundStats = (clone $activeQuery)
+            ->where(function ($q) {
+                $q->where('payments.total', '<', 0)
+                    ->orWhereIn('payments.payment_type', ['ACC_WITHDRAW', 'REFUND'])
+                    ->orWhere('payments.payment_method', 'REFUND');
+            })
+            ->selectRaw('COUNT(*) as count, COALESCE(SUM(payments.total), 0) as amount')
+            ->first();
+
+        $refundCount = (int) ($refundStats->count ?? 0);
+        $refundAmount = (float) ($refundStats->amount ?? 0);
+        if ($refundAmount > 0) {
+            $refundAmount = -$refundAmount;
+        }
+
+        // 2c. Gross Cash Inflow stats (positive cash payments excluding refunds/withdrawals)
+        $cashInflowStats = (clone $activeQuery)
+            ->where('payments.total', '>', 0)
+            ->whereNotIn('payments.payment_type', ['ACC_WITHDRAW', 'REFUND'])
+            ->where('payments.payment_method', '!=', 'REFUND')
+            ->where(function ($q) {
+                $q->where(function ($sq) {
+                    $sq->where(function ($nq) {
+                        $nq->whereNull('payments.is_split_payment')->orWhere('payments.is_split_payment', false);
+                    })->whereRaw("UPPER(COALESCE(payments.payment_method, payments.payment_type, 'CASH')) = 'CASH'");
+                })->orWhereHas('splits', function ($sq) {
+                    $sq->whereRaw("UPPER(COALESCE(payment_splits.payment_method, '')) = 'CASH'");
+                });
+            })
+            ->selectRaw('COUNT(*) as count, COALESCE(SUM(payments.total), 0) as amount')
+            ->first();
+
+        $cashInflowCount = (int) ($cashInflowStats->count ?? 0);
+        $cashInflowAmount = (float) ($cashInflowStats->amount ?? 0);
+
+        // 3. Payment Method KPIs (non-split & split)
+        $paymentMethodKpis = [
+            'CASH' => ['label' => 'Cash in Till', 'count' => 0, 'amount' => 0, 'banks' => []],
+            'POS' => ['label' => 'POS', 'count' => 0, 'amount' => 0, 'banks' => []],
+            'TRANSFER' => ['label' => 'Bank Transfer', 'count' => 0, 'amount' => 0, 'banks' => []],
+            'MOBILE' => ['label' => 'Mobile Money', 'count' => 0, 'amount' => 0, 'banks' => []],
+            'DEPOSIT' => ['label' => 'Patient Deposit', 'count' => 0, 'amount' => 0, 'banks' => []],
+            'REFUND' => ['label' => 'Refunds & Withdrawals', 'count' => $refundCount, 'amount' => $refundAmount, 'banks' => []],
+            'OTHER' => ['label' => 'Other Methods', 'count' => 0, 'amount' => 0, 'banks' => []],
+        ];
+
+        $recordTender = function (string $rawMethod, ?string $bankName, float $amount, int $count = 1) use (&$paymentMethodKpis) {
+            $m = strtoupper(trim($rawMethod));
+            if ($m === 'CASH') {
+                $code = 'CASH';
+            } elseif ($m === 'POS') {
+                $code = 'POS';
+            } elseif (in_array($m, ['TRANSFER', 'BANK_TRANSFER'])) {
+                $code = 'TRANSFER';
+            } elseif ($m === 'MOBILE') {
+                $code = 'MOBILE';
+            } elseif (in_array($m, ['DEPOSIT', 'ACC_DEPOSIT', 'ACCOUNT'])) {
+                $code = 'DEPOSIT';
+            } elseif (in_array($m, ['REFUND', 'ACC_WITHDRAW']) || $amount < 0) {
+                $code = 'REFUND';
+            } else {
+                $code = 'OTHER';
+            }
+
+            if ($code !== 'REFUND') {
+                $paymentMethodKpis[$code]['count'] += $count;
+                $paymentMethodKpis[$code]['amount'] += $amount;
+            }
+
+            if (!in_array($code, ['CASH', 'DEPOSIT', 'REFUND'])) {
+                $bName = trim($bankName ?: 'Direct');
+                if (!isset($paymentMethodKpis[$code]['banks'][$bName])) {
+                    $paymentMethodKpis[$code]['banks'][$bName] = [
+                        'name' => $bName,
+                        'count' => 0,
+                        'amount' => 0,
+                    ];
+                }
+                $paymentMethodKpis[$code]['banks'][$bName]['count'] += $count;
+                $paymentMethodKpis[$code]['banks'][$bName]['amount'] += $amount;
+            }
+        };
+
+        // Non-split payments aggregation
+        $nonSplitTenders = (clone $activeQuery)
+            ->where(function ($q) {
+                $q->whereNull('payments.is_split_payment')->orWhere('payments.is_split_payment', false);
+            })
+            ->leftJoin('banks', 'payments.bank_id', '=', 'banks.id')
+            ->selectRaw("UPPER(COALESCE(payments.payment_method, payments.payment_type, 'CASH')) as method, banks.name as bank_name, COUNT(*) as cnt, COALESCE(SUM(payments.total), 0) as amt")
+            ->groupBy(DB::raw("UPPER(COALESCE(payments.payment_method, payments.payment_type, 'CASH'))"), 'banks.name')
+            ->get();
+
+        foreach ($nonSplitTenders as $row) {
+            $recordTender($row->method, $row->bank_name, (float) $row->amt, (int) $row->cnt);
+        }
+
+        // Split payments aggregation
+        $filteredPaymentSubquery = (clone $activeQuery)->select('payments.id');
+
+        $splitTenders = DB::table('payment_splits')
+            ->joinSub($filteredPaymentSubquery, 'filtered_p', 'payment_splits.payment_id', '=', 'filtered_p.id')
+            ->leftJoin('banks', 'payment_splits.bank_id', '=', 'banks.id')
+            ->selectRaw("UPPER(COALESCE(payment_splits.payment_method, 'OTHER')) as method, banks.name as bank_name, COUNT(*) as cnt, COALESCE(SUM(payment_splits.amount), 0) as amt")
+            ->groupBy(DB::raw("UPPER(COALESCE(payment_splits.payment_method, 'OTHER'))"), 'banks.name')
+            ->get();
+
+        foreach ($splitTenders as $row) {
+            $recordTender($row->method, $row->bank_name, (float) $row->amt, (int) $row->cnt);
+        }
+
+        foreach ($paymentMethodKpis as $code => $data) {
+            $paymentMethodKpis[$code]['banks'] = array_values($data['banks']);
+        }
+
+        $byTypeSummary = collect($paymentMethodKpis)
+            ->filter(fn ($kpi) => $kpi['amount'] != 0 || $kpi['count'] > 0)
+            ->map(fn ($kpi) => [
+                'label' => $kpi['label'],
+                'count' => $kpi['count'],
+                'amount' => $kpi['amount'],
+                'banks' => $kpi['banks'],
+                'discount' => 0,
+            ]);
+
+        // 4. Items aggregation scoped to matching payments
+        $productCats = DB::table('product_or_service_requests as posr')
+            ->joinSub($filteredPaymentSubquery, 'filtered_p', 'posr.payment_id', '=', 'filtered_p.id')
+            ->leftJoin('products as pr', 'posr.product_id', '=', 'pr.id')
+            ->leftJoin('product_categories as pc', 'pr.category_id', '=', 'pc.id')
+            ->whereNotNull('posr.product_id')
+            ->selectRaw("COALESCE(pc.category_name, 'Uncategorized') as name, COUNT(*) as count, COALESCE(SUM(posr.payable_amount), 0) as amount")
+            ->groupBy(DB::raw("COALESCE(pc.category_name, 'Uncategorized')"))
+            ->get();
+
+        $productCategoryKpis = $productCats->map(fn ($r) => [
+            'name' => $r->name,
+            'count' => (int) $r->count,
+            'amount' => (float) $r->amount,
+        ])->all();
+
+        $productTotalAmount = (float) $productCats->sum('amount');
+        $productTotalCount = (int) $productCats->sum('count');
+
+        $serviceCats = DB::table('product_or_service_requests as posr')
+            ->joinSub($filteredPaymentSubquery, 'filtered_p', 'posr.payment_id', '=', 'filtered_p.id')
+            ->leftJoin('services as s', 'posr.service_id', '=', 's.id')
+            ->leftJoin('service_categories as sc', 's.category_id', '=', 'sc.id')
+            ->where(function ($q) {
+                $q->whereNotNull('posr.service_id')->orWhere('posr.is_free_form', 1);
+            })
+            ->selectRaw("CASE WHEN posr.is_free_form = 1 THEN 'Custom Items' ELSE COALESCE(sc.category_name, 'General Services') END as name, COUNT(*) as count, COALESCE(SUM(posr.payable_amount), 0) as amount")
+            ->groupBy(DB::raw("CASE WHEN posr.is_free_form = 1 THEN 'Custom Items' ELSE COALESCE(sc.category_name, 'General Services') END"))
+            ->get();
+
+        $serviceCategoryKpis = $serviceCats->map(fn ($r) => [
+            'name' => $r->name,
+            'count' => (int) $r->count,
+            'amount' => (float) $r->amount,
+        ])->all();
+
+        $serviceTotalAmount = (float) $serviceCats->sum('amount');
+        $serviceTotalCount = (int) $serviceCats->sum('count');
+
+        // Department breakdown
+        $deptRaw = DB::table('product_or_service_requests as posr')
+            ->joinSub($filteredPaymentSubquery, 'filtered_p', 'posr.payment_id', '=', 'filtered_p.id')
+            ->leftJoin('services as s', 'posr.service_id', '=', 's.id')
+            ->leftJoin('service_categories as sc', 's.category_id', '=', 'sc.id')
+            ->leftJoin('products as pr', 'posr.product_id', '=', 'pr.id')
+            ->leftJoin('product_categories as pc', 'pr.category_id', '=', 'pc.id')
+            ->selectRaw('COALESCE(posr.department_id, s.department_id, sc.department_id, pr.department_id, pc.department_id, 0) as dept_id, COUNT(*) as count, COALESCE(SUM(posr.payable_amount), 0) as amount')
+            ->groupBy(DB::raw('COALESCE(posr.department_id, s.department_id, sc.department_id, pr.department_id, pc.department_id, 0)'))
+            ->get();
+
+        $deptIds = $deptRaw->pluck('dept_id')->filter()->all();
+        $deptNames = Department::whereIn('id', $deptIds)->pluck('name', 'id');
+
+        $departmentKpis = $deptRaw->map(function ($r) use ($deptNames) {
+            $id = (int) $r->dept_id;
+
+            return [
+                'id' => $id,
+                'name' => ($id && isset($deptNames[$id])) ? $deptNames[$id] : 'General / Unassigned',
+                'count' => (int) $r->count,
+                'amount' => (float) $r->amount,
+            ];
+        })->all();
+
+        return [
+            'total_amount' => (float) ($overall->total_amount ?? 0),
+            'total_discount' => (float) ($overall->total_discount ?? 0),
+            'count' => (int) ($overall->count ?? 0),
+            'voided_count' => $voidedCount,
+            'refund_amount' => $refundAmount,
+            'refund_count' => $refundCount,
+            'cash_inflow' => $cashInflowAmount,
+            'cash_inflow_count' => $cashInflowCount,
+            'split_transactions_count' => $splitTransactionsCount,
+            'split_transactions_amount' => $splitTransactionsAmount,
+            'by_type' => $byTypeSummary,
+            'payment_method_kpis' => $paymentMethodKpis,
+            'product_total' => $productTotalAmount,
+            'service_total' => $serviceTotalAmount,
+            'product_kpi' => [
+                'count' => $productTotalCount,
+                'amount' => $productTotalAmount,
+            ],
+            'service_kpi' => [
+                'count' => $serviceTotalCount,
+                'amount' => $serviceTotalAmount,
+            ],
+            'product_category_kpis' => $productCategoryKpis,
+            'service_category_kpis' => $serviceCategoryKpis,
+            'department_kpis' => $departmentKpis,
+            'all_categories' => [
+                'services' => $allServiceCats,
+                'products' => $allProductCats,
+            ],
+            'all_departments' => $allDepartments,
+        ];
     }
 
     /**
@@ -1934,6 +2461,16 @@ class BillingWorkbenchController extends Controller
                         ->orWhereHas('splits', fn ($sq) => $sq->where('payment_method', $pm));
                 });
             }
+        }
+
+        // Department filter
+        if ($request->filled('department_id')) {
+            $deptId = $request->department_id;
+            $query->whereHas('product_or_service_request', function ($q) use ($deptId) {
+                $q->where('department_id', $deptId)
+                    ->orWhereHas('service', fn ($sq) => $sq->where('department_id', $deptId)->orWhereHas('category', fn ($c) => $c->where('department_id', $deptId)))
+                    ->orWhereHas('product', fn ($pq) => $pq->where('department_id', $deptId)->orWhereHas('category', fn ($c) => $c->where('department_id', $deptId)));
+            });
         }
 
         // Status filter: all, active, voided

@@ -1,4 +1,16 @@
 <!-- Shared My Transactions & Manage Transactions Modal -->
+@php
+    $isAuditContext = request()->is('ops-audit*')
+        || (auth()->check() && (
+            auth()->user()->hasAnyRole(['SUPERADMIN', 'ADMIN', 'ACCOUNTS', 'INTERNAL AUDITOR', 'AUDITOR'])
+            || auth()->user()->can('view-audit')
+        ));
+    $allCashiers = $isAuditContext ? \App\Models\User::whereHas('roles', function($q) {
+        $q->whereIn('name', ['SUPERADMIN', 'ADMIN', 'ACCOUNTS', 'BILLER', 'RECEPTIONIST']);
+    })->orWhereIn('id', function($sq) {
+        $sq->select('user_id')->from('payments')->whereNotNull('user_id');
+    })->orderBy('surname')->get() : collect();
+@endphp
 <div class="modal fade" id="myTransactionsModal" role="dialog" aria-labelledby="myTransactionsModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-xl modal-dialog-scrollable" role="document">
         <div class="modal-content">
@@ -37,15 +49,28 @@
                         <div class="card bg-light border mb-3">
                             <div class="card-body p-2">
                                 <div class="row g-2 align-items-end">
-                                    <div class="col-md-2 col-sm-6">
+                                    <div class="col-lg-2 col-md-4 col-sm-6">
                                         <label class="small text-muted mb-0">From</label>
-                                        <input type="date" class="form-control form-control-sm" id="my-trans-from-date">
+                                        <input type="datetime-local" class="form-control form-control-sm" id="my-trans-from-date">
                                     </div>
-                                    <div class="col-md-2 col-sm-6">
+                                    <div class="col-lg-2 col-md-4 col-sm-6">
                                         <label class="small text-muted mb-0">To</label>
-                                        <input type="date" class="form-control form-control-sm" id="my-trans-to-date">
+                                        <input type="datetime-local" class="form-control form-control-sm" id="my-trans-to-date">
                                     </div>
-                                    <div class="col-md-2 col-sm-6">
+                                    @if($isAuditContext)
+                                    <div class="col-lg-2 col-md-4 col-sm-6" id="my-trans-cashier-filter-col">
+                                        <label class="small text-muted mb-0">Cashier / Staff</label>
+                                        <select class="form-select form-select-sm" id="my-trans-cashier-filter">
+                                            <option value="">All Cashiers (Facility)</option>
+                                            @foreach($allCashiers as $cashier)
+                                                <option value="{{ $cashier->id }}" {{ (!request()->is('ops-audit*') && auth()->id() == $cashier->id) ? 'selected' : '' }}>
+                                                    {{ $cashier->surname }} {{ $cashier->firstname }}{{ $cashier->othername ? ' ' . $cashier->othername : '' }}
+                                                </option>
+                                            @endforeach
+                                        </select>
+                                    </div>
+                                    @endif
+                                    <div class="col-lg-2 col-md-4 col-sm-6">
                                         <label class="small text-muted mb-0">Method</label>
                                         <select class="form-select form-select-sm" id="my-trans-payment-type">
                                             <option value="">All Methods</option>
@@ -54,11 +79,21 @@
                                             <option value="TRANSFER">Bank Transfer</option>
                                             <option value="MOBILE">Mobile Money</option>
                                             <option value="SPLIT">Split Payment</option>
+                                            <option value="REFUND">Refunds &amp; Withdrawals</option>
                                             <option value="ACC_DEPOSIT">Deposit</option>
                                             <option value="ACC_WITHDRAW">Withdrawal</option>
                                         </select>
                                     </div>
-                                    <div class="col-md-2 col-sm-6">
+                                    <div class="col-lg-2 col-md-4 col-sm-6">
+                                        <label class="small text-muted mb-0">Department</label>
+                                        <select class="form-select form-select-sm" id="my-trans-department-filter">
+                                            <option value="">All Departments</option>
+                                            @foreach(\App\Models\Department::where('is_active', true)->orderBy('name')->get() as $dept)
+                                                <option value="{{ $dept->id }}">{{ $dept->name }}</option>
+                                            @endforeach
+                                        </select>
+                                    </div>
+                                    <div class="col-lg-2 col-md-4 col-sm-6">
                                         <label class="small text-muted mb-0">Item Scope</label>
                                         <select class="form-select form-select-sm" id="my-trans-item-type">
                                             <option value="">All Items</option>
@@ -67,7 +102,7 @@
                                             <option value="custom">Custom / Free-form</option>
                                         </select>
                                     </div>
-                                    <div class="col-md-2 col-sm-6">
+                                    <div class="col-lg-2 col-md-4 col-sm-6">
                                         <label class="small text-muted mb-0">Category</label>
                                         <select class="form-select form-select-sm" id="my-trans-category-filter">
                                             <option value="">All Categories</option>
@@ -84,23 +119,21 @@
                                             </optgroup>
                                         </select>
                                     </div>
-                                    <div class="col-md-2 col-sm-6 text-end">
-                                        <div class="btn-group w-100">
-                                            <button class="btn btn-sm btn-primary" id="btn-load-my-transactions">
-                                                <i class="mdi mdi-filter"></i> Load
-                                            </button>
-                                            <button class="btn btn-sm btn-outline-secondary" id="btn-print-my-transactions" title="Print Summary">
-                                                <i class="mdi mdi-printer"></i>
-                                            </button>
-                                        </div>
-                                    </div>
+                                </div>
+                                <div class="d-flex justify-content-end gap-2 mt-2 pt-1 border-top">
+                                    <button class="btn btn-sm btn-primary px-3" id="btn-load-my-transactions">
+                                        <i class="mdi mdi-filter"></i> Load Transactions
+                                    </button>
+                                    <button class="btn btn-sm btn-outline-secondary px-3" id="btn-print-my-transactions" title="Print Summary">
+                                        <i class="mdi mdi-printer"></i> Print Summary
+                                    </button>
                                 </div>
                             </div>
                         </div>
 
                         <!-- Payment Method & Financial Volume KPIs with Bank Breakdowns -->
                         <div class="row g-2 mb-2" id="my-trans-kpi-row">
-                            <div class="col-md-2 col-sm-4 col-6">
+                            <div class="col-xl col-md-3 col-sm-6 col-6">
                                 <div class="p-2 border rounded bg-white shadow-sm text-center h-100 d-flex flex-column justify-content-between">
                                     <div>
                                         <div class="text-muted small">Total Volume</div>
@@ -110,17 +143,29 @@
                                     <div class="border-top pt-1 mt-1 font-10 text-muted fst-italic">Net Inflow</div>
                                 </div>
                             </div>
-                            <div class="col-md-2 col-sm-4 col-6">
+                            <div class="col-xl col-md-3 col-sm-6 col-6">
                                 <div class="p-2 border rounded bg-white shadow-sm text-center h-100 d-flex flex-column justify-content-between">
                                     <div>
-                                        <div class="text-muted small"><i class="mdi mdi-cash text-success"></i> Cash</div>
+                                        <div class="text-muted small"><i class="mdi mdi-cash text-success"></i> Cash in Till</div>
                                         <div class="fw-bold font-15 text-success" id="kpi-my-cash">₦0.00</div>
                                         <div class="text-muted font-10"><span id="kpi-my-cash-count">0</span> tenders</div>
                                     </div>
-                                    <div class="border-top pt-1 mt-1 font-10 text-muted fst-italic">Cash in Drawer</div>
+                                    <div class="border-top pt-1 mt-1 font-10 text-muted">
+                                        Inflow: <span class="fw-bold text-dark" id="kpi-my-cash-inflow">₦0.00</span>
+                                    </div>
                                 </div>
                             </div>
-                            <div class="col-md-2 col-sm-4 col-6">
+                            <div class="col-xl col-md-3 col-sm-6 col-6">
+                                <div class="p-2 border rounded bg-white shadow-sm text-center h-100 d-flex flex-column justify-content-between" style="border-left: 3px solid #dc3545 !important;">
+                                    <div>
+                                        <div class="text-danger small fw-semibold"><i class="mdi mdi-cash-refund text-danger"></i> Refunds / Payouts</div>
+                                        <div class="fw-bold font-15 text-danger" id="kpi-my-refund">₦0.00</div>
+                                        <div class="text-muted font-10"><span id="kpi-my-refund-count">0</span> vouchers</div>
+                                    </div>
+                                    <div class="border-top pt-1 mt-1 font-10 text-danger fst-italic">Disbursed Funds</div>
+                                </div>
+                            </div>
+                            <div class="col-xl col-md-3 col-sm-6 col-6">
                                 <div class="p-2 border rounded bg-white shadow-sm text-center h-100 d-flex flex-column justify-content-between">
                                     <div>
                                         <div class="text-muted small"><i class="mdi mdi-credit-card-outline text-info"></i> POS</div>
@@ -132,7 +177,7 @@
                                     </div>
                                 </div>
                             </div>
-                            <div class="col-md-2 col-sm-4 col-6">
+                            <div class="col-xl col-md-3 col-sm-6 col-6">
                                 <div class="p-2 border rounded bg-white shadow-sm text-center h-100 d-flex flex-column justify-content-between">
                                     <div>
                                         <div class="text-muted small"><i class="mdi mdi-bank-transfer text-purple"></i> Transfer</div>
@@ -144,7 +189,7 @@
                                     </div>
                                 </div>
                             </div>
-                            <div class="col-md-2 col-sm-4 col-6">
+                            <div class="col-xl col-md-3 col-sm-6 col-6">
                                 <div class="p-2 border rounded bg-white shadow-sm text-center h-100 d-flex flex-column justify-content-between">
                                     <div>
                                         <div class="text-muted small"><i class="mdi mdi-cellphone-wireless text-secondary"></i> Mobile / Deposit</div>
@@ -156,7 +201,7 @@
                                     </div>
                                 </div>
                             </div>
-                            <div class="col-md-2 col-sm-4 col-6">
+                            <div class="col-xl col-md-3 col-sm-6 col-6">
                                 <div class="p-2 border rounded bg-white shadow-sm text-center h-100 d-flex flex-column justify-content-between">
                                     <div>
                                         <div class="text-muted small"><i class="mdi mdi-tag-outline text-warning"></i> Discounts / Splits</div>
@@ -164,6 +209,21 @@
                                         <div class="text-muted font-10"><span id="kpi-my-splits-count">0</span> split txs</div>
                                     </div>
                                     <div class="border-top pt-1 mt-1 font-10 text-muted fst-italic">Split Tenders</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Department Revenue Attribution KPI Strip -->
+                        <div class="card bg-light border mb-2" id="my-trans-departments-card">
+                            <div class="card-body p-2">
+                                <div class="d-flex justify-content-between align-items-center mb-1 pb-1 border-bottom">
+                                    <span class="fw-bold font-12 text-primary">
+                                        <i class="mdi mdi-domain me-1"></i> Revenue by Department
+                                    </span>
+                                    <span class="badge bg-primary text-white font-11" id="kpi-my-departments-total">₦0.00 (0 items)</span>
+                                </div>
+                                <div class="d-flex flex-wrap gap-1 align-items-center" id="my-trans-department-categories-list" style="max-height: 80px; overflow-y: auto;">
+                                    <span class="text-muted font-11">No departmental revenue recorded</span>
                                 </div>
                             </div>
                         </div>
@@ -201,12 +261,21 @@
                             </div>
                         </div>
 
-                        <!-- Transactions Grid with Item Outlines -->
-                        <div class="table-responsive border rounded bg-white" style="max-height: 440px; overflow-y: auto;">
-                            <table class="table table-sm table-hover align-middle mb-0 font-12" id="my-transactions-table">
-                                <thead class="table-light sticky-top">
+                        <!-- Large Dataset Truncation Alert -->
+                        <div id="my-trans-truncated-alert" class="alert alert-info py-1 px-2 mb-2 font-11 d-flex align-items-center justify-content-between" style="display: none;">
+                            <div>
+                                <i class="mdi mdi-information me-1"></i>
+                                <span id="my-trans-truncated-message">Showing latest 250 transactions. Summary cards and category rollups reflect all transactions for this period.</span>
+                            </div>
+                            <span class="badge bg-primary text-white" id="my-trans-truncated-badge">Active Sample</span>
+                        </div>
+
+                        <!-- Transactions DataTable Grid with Item Outlines -->
+                        <div class="table-responsive border rounded bg-white p-2">
+                            <table class="table table-sm table-striped table-hover align-middle w-100 font-12" id="my-transactions-table">
+                                <thead class="table-light">
                                     <tr>
-                                        <th width="30"></th>
+                                        <th width="30">#</th>
                                         <th>Date/Time</th>
                                         <th>Receipt / Ref</th>
                                         <th>Patient</th>
@@ -216,14 +285,7 @@
                                         <th class="text-center" width="70">Action</th>
                                     </tr>
                                 </thead>
-                                <tbody id="my-transactions-tbody">
-                                    <tr>
-                                        <td colspan="8" class="text-center text-muted py-5">
-                                            <i class="mdi mdi-information-outline font-24"></i>
-                                            <p class="mb-0">Click "Load" to fetch your transactions</p>
-                                        </td>
-                                    </tr>
-                                </tbody>
+                                <tbody id="my-transactions-tbody"></tbody>
                             </table>
                         </div>
                     </div>
@@ -236,15 +298,15 @@
                         <div class="card bg-light border mb-3">
                             <div class="card-body p-2">
                                 <div class="row g-2 align-items-end">
-                                    <div class="col-md-2 col-sm-6">
+                                    <div class="col-lg-2 col-md-4 col-sm-6">
                                         <label class="small text-muted mb-0">From</label>
                                         <input type="date" class="form-control form-control-sm" id="manage-trans-from">
                                     </div>
-                                    <div class="col-md-2 col-sm-6">
+                                    <div class="col-lg-2 col-md-4 col-sm-6">
                                         <label class="small text-muted mb-0">To</label>
                                         <input type="date" class="form-control form-control-sm" id="manage-trans-to">
                                     </div>
-                                    <div class="col-md-2 col-sm-6">
+                                    <div class="col-lg-2 col-md-4 col-sm-6">
                                         <label class="small text-muted mb-0">Method</label>
                                         <select class="form-select form-select-sm" id="manage-trans-method">
                                             <option value="">All Methods</option>
@@ -255,7 +317,16 @@
                                             <option value="SPLIT">Split Payment</option>
                                         </select>
                                     </div>
-                                    <div class="col-md-2 col-sm-6">
+                                    <div class="col-lg-2 col-md-4 col-sm-6">
+                                        <label class="small text-muted mb-0">Department</label>
+                                        <select class="form-select form-select-sm" id="manage-trans-department">
+                                            <option value="">All Departments</option>
+                                            @foreach(\App\Models\Department::where('is_active', true)->orderBy('name')->get() as $dept)
+                                                <option value="{{ $dept->id }}">{{ $dept->name }}</option>
+                                            @endforeach
+                                        </select>
+                                    </div>
+                                    <div class="col-lg-2 col-md-4 col-sm-6">
                                         <label class="small text-muted mb-0">Status</label>
                                         <select class="form-select form-select-sm" id="manage-trans-status">
                                             <option value="">All</option>
@@ -267,7 +338,7 @@
                                         $isPrivileged = Auth::user() && Auth::user()->hasAnyRole(['Accountant', 'Admin', 'Super-Admin', 'super-admin']);
                                     @endphp
                                     @if($isPrivileged)
-                                    <div class="col-md-2 col-sm-6">
+                                    <div class="col-lg-2 col-md-4 col-sm-6">
                                         <label class="small text-muted mb-0">Scope</label>
                                         <select class="form-select form-select-sm" id="manage-trans-scope">
                                             <option value="all" selected>All Cashiers</option>
@@ -275,11 +346,11 @@
                                         </select>
                                     </div>
                                     @endif
-                                    <div class="{{ $isPrivileged ? 'col-md-2' : 'col-md-4' }} col-sm-6 text-end">
-                                        <button class="btn btn-sm btn-primary w-100" id="btn-refresh-manage-transactions">
-                                            <i class="mdi mdi-refresh"></i> Filter
-                                        </button>
-                                    </div>
+                                </div>
+                                <div class="d-flex justify-content-end mt-2 pt-1 border-top">
+                                    <button class="btn btn-sm btn-primary px-3" id="btn-refresh-manage-transactions">
+                                        <i class="mdi mdi-refresh"></i> Apply Filters
+                                    </button>
                                 </div>
                             </div>
                         </div>
@@ -414,3 +485,28 @@
         </div>
     </div>
 </div>
+
+<!-- Receipt Preview Modal for Reprinting -->
+@if(!isset($hasReceiptPreviewModal))
+@php $hasReceiptPreviewModal = true; @endphp
+<div class="modal fade" id="receiptPreviewModal" tabindex="-1" role="dialog" aria-hidden="true" style="z-index: 1070;">
+    <div class="modal-dialog modal-md modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div class="modal-header py-2" style="background: var(--hospital-primary, #011b33); color: white;">
+                <h5 class="modal-title font-14 mb-0"><i class="mdi mdi-printer"></i> Receipt Preview</h5>
+                <button type="button" class="close btn-close text-white btn-close-white" data-dismiss="modal" data-bs-dismiss="modal" aria-label="Close" style="opacity: 0.9; font-size: 1.5rem; line-height: 1;">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body p-2" id="receiptPreviewModalBody" style="max-height: 75vh; overflow-y: auto;">
+                <div class="text-center py-4 text-muted"><i class="mdi mdi-loading mdi-spin font-24"></i><div class="mt-2">Loading receipt...</div></div>
+            </div>
+            <div class="modal-footer py-1">
+                <button type="button" class="btn btn-sm btn-secondary" data-dismiss="modal" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-sm btn-primary" id="btnPrintReceiptFromModal"><i class="mdi mdi-printer"></i> Print</button>
+            </div>
+        </div>
+    </div>
+</div>
+@endif
+

@@ -2215,3 +2215,40 @@ body.has-workbench .workspace-tab-content.active {
 .btn-discard-recent-request:hover {
     box-shadow: 0 1px 3px rgba(220, 53, 69, 0.25);
 }
+
+/* ── 22. Multi-Modal Stacking & Row Details Breakdown ───────────────────── */
+#receiptPreviewModal {
+    z-index: 1070 !important;
+}
+
+#receiptPreviewModal .modal-dialog {
+    z-index: 1071 !important;
+}
+
+body.has-receipt-modal-open .modal-backdrop:last-of-type,
+.modal-backdrop.receipt-modal-backdrop {
+    z-index: 1065 !important;
+}
+
+.items-summary-container {
+    position: relative;
+    width: 100%;
+}
+
+.btn-toggle-items-breakdown {
+    cursor: pointer;
+    user-select: none;
+    white-space: nowrap;
+}
+
+.btn-toggle-items-breakdown i {
+    pointer-events: none;
+    transition: transform 0.15s ease-in-out;
+}
+
+.dt-items-box {
+    transition: all 0.2s ease-in-out;
+    background-color: #f8fafc !important;
+    border: 1px solid #e2e8f0 !important;
+    border-radius: 4px;
+}

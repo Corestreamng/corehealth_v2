@@ -3224,6 +3224,19 @@
         box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     }
 
+    #receiptPreviewModal {
+        z-index: 1070 !important;
+    }
+
+    #receiptPreviewModal .modal-dialog {
+        z-index: 1071 !important;
+    }
+
+    body.has-receipt-modal-open .modal-backdrop:last-of-type,
+    .modal-backdrop.receipt-modal-backdrop {
+        z-index: 1065 !important;
+    }
+
     #receiptPreviewModal .modal-footer {
         justify-content: center;
         gap: 0.5rem;

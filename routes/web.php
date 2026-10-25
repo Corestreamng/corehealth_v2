@@ -1355,9 +1355,10 @@ Route::middleware(['auth'])->prefix('audit-workbench')->name('audit.')->group(fu
 // Ops Audit Workbench (12 modules)
 // ============================================================
 Route::middleware(['auth'])->prefix('ops-audit')->name('ops-audit.')->group(function () {
-    // Shared AJAX
+    // Shared AJAX & Summary Reports
     Route::get('/search-entities', [\App\Http\Controllers\OpsAudit\OpsAuditBillingController::class, 'searchEntities'])->name('search-entities');
     Route::get('/details/{type}/{id}', [\App\Http\Controllers\OpsAudit\OpsAuditBillingController::class, 'getRecordDetails'])->name('details');
+    Route::get('/shift-service-summary', [\App\Http\Controllers\OpsAudit\OpsAuditBillingController::class, 'shiftServiceSummary'])->name('shift-service-summary');
 
     // Module 1: Reception
     Route::get('/reception', [\App\Http\Controllers\OpsAudit\OpsAuditReceptionController::class, 'index'])->name('reception');

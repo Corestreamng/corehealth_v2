@@ -125,7 +125,7 @@
         /* KPI Matrix */
         .kpi-matrix {
             display: grid;
-            grid-template-columns: repeat(4, 1fr);
+            grid-template-columns: repeat(5, 1fr);
             gap: 8px;
             margin-bottom: 14px;
         }
@@ -140,6 +140,8 @@
         }
 
         .kpi-card.total { border-left-color: var(--success); }
+        .kpi-card.inflow { border-left-color: var(--brand); }
+        .kpi-card.refund { border-left-color: var(--danger); }
         .kpi-card.count { border-left-color: var(--info); }
         .kpi-card.discount { border-left-color: var(--warning); }
         .kpi-card.voided { border-left-color: var(--danger); }
@@ -153,7 +155,7 @@
         }
 
         .kpi-val {
-            font-size: 15px;
+            font-size: 14px;
             font-weight: 800;
             color: var(--ink);
             margin-top: 2px;
@@ -161,6 +163,8 @@
         }
 
         .kpi-card.total .kpi-val { color: var(--success); }
+        .kpi-card.inflow .kpi-val { color: var(--brand); }
+        .kpi-card.refund .kpi-val { color: var(--danger); }
         .kpi-card.discount .kpi-val { color: #856404; }
         .kpi-card.voided .kpi-val { color: var(--danger); }
 
@@ -407,7 +411,7 @@
             <div class="doc-meta">
                 <div class="doc-title">Cashier Transactions Report</div>
                 <div class="doc-subtitle">
-                    Period: <strong>{{ \Carbon\Carbon::parse($from)->format('M d, Y') }}</strong> to <strong>{{ \Carbon\Carbon::parse($to)->format('M d, Y') }}</strong><br>
+                    Period: <strong>{{ (str_contains($from, 'T') || str_contains($from, ':')) ? \Carbon\Carbon::parse(str_replace('T', ' ', $from))->format('M d, Y h:i A') : \Carbon\Carbon::parse($from)->format('M d, Y') }}</strong> to <strong>{{ (str_contains($to, 'T') || str_contains($to, ':')) ? \Carbon\Carbon::parse(str_replace('T', ' ', $to))->format('M d, Y h:i A') : \Carbon\Carbon::parse($to)->format('M d, Y') }}</strong><br>
                     Generated: {{ now()->format('d/m/Y h:i A') }}
                 </div>
             </div>
@@ -429,11 +433,19 @@
             </div>
         </div>
 
-        <!-- 4-Card Financial KPI Matrix -->
+        <!-- 5-Card Financial KPI Matrix -->
         <div class="kpi-matrix">
             <div class="kpi-card total">
-                <div class="kpi-label">Total Amount Collected</div>
+                <div class="kpi-label">Net Inflow Collected</div>
                 <div class="kpi-val">₦{{ number_format((float) ($summary['total_amount'] ?? 0), 2) }}</div>
+            </div>
+            <div class="kpi-card inflow">
+                <div class="kpi-label">Gross Cash Inflow</div>
+                <div class="kpi-val">₦{{ number_format((float) ($summary['cash_inflow'] ?? 0), 2) }}</div>
+            </div>
+            <div class="kpi-card refund">
+                <div class="kpi-label">Refunds &amp; Withdrawals</div>
+                <div class="kpi-val">-₦{{ number_format((float) ($summary['refund_amount'] ?? 0), 2) }}</div>
             </div>
             <div class="kpi-card count">
                 <div class="kpi-label">Active Transactions</div>
@@ -442,10 +454,6 @@
             <div class="kpi-card discount">
                 <div class="kpi-label">Total Discounts</div>
                 <div class="kpi-val">₦{{ number_format((float) ($summary['total_discount'] ?? 0), 2) }}</div>
-            </div>
-            <div class="kpi-card voided">
-                <div class="kpi-label">Voided Payments</div>
-                <div class="kpi-val">{{ number_format($summary['voided_count'] ?? 0) }}</div>
             </div>
         </div>
 
@@ -565,10 +573,35 @@
         @endif
         @endif
 
+        <!-- Department Revenue Attribution Summary -->
+        @if(!empty($summary['department_kpis']) && count($summary['department_kpis']) > 0)
+        <div class="section-heading">
+            <span>Department Revenue Attribution Summary</span>
+        </div>
+        <div style="background: #fff; border: 1px solid var(--border); border-radius: 4px; padding: 6px 10px; margin-bottom: 14px; font-size: 8.5px;">
+            <div style="font-weight: bold; color: var(--brand); margin-bottom: 4px; text-transform: uppercase; font-size: 8px;">Revenue by Department</div>
+            <table style="width: 100%; border-collapse: collapse;">
+                @foreach($summary['department_kpis'] as $dkpi)
+                <tr style="border-bottom: 1px dotted #e9ecef;">
+                    <td style="padding: 2px 0; font-weight: 600;">{{ $dkpi['name'] }}</td>
+                    <td style="padding: 2px 4px; text-align: right; color: var(--muted);">{{ $dkpi['count'] }} item{{ $dkpi['count'] != 1 ? 's' : '' }}</td>
+                    <td class="mono" style="padding: 2px 0 2px 6px; text-align: right; font-weight: bold; color: var(--brand);">₦{{ number_format((float) $dkpi['amount'], 2) }}</td>
+                </tr>
+                @endforeach
+            </table>
+        </div>
+        @endif
+
         <!-- Detailed Transaction Table -->
         <div class="section-heading">
             <span>Transaction Itemization</span>
-            <small style="text-transform: none; font-size: 8.5px; color: var(--muted);">Showing {{ count($transactionsFormatted ?? []) }} entries</small>
+            <small style="text-transform: none; font-size: 8.5px; color: var(--muted);">
+                @if(!empty($isTruncated))
+                    Showing latest {{ count($transactionsFormatted ?? []) }} of {{ number_format($totalCount ?? 0) }} entries &bull; Summary totals reflect all {{ number_format($totalCount ?? 0) }} records
+                @else
+                    Showing {{ count($transactionsFormatted ?? []) }} entries
+                @endif
+            </small>
         </div>
 
         <table class="trans-table">
@@ -586,7 +619,10 @@
             </thead>
             <tbody>
                 @forelse($transactionsFormatted as $idx => $tx)
-                <tr class="{{ $tx['is_voided'] ? 'row-voided' : '' }}">
+                @php
+                    $isRefund = ($tx['total'] < 0) || (!empty($tx['payment_type']) && in_array($tx['payment_type'], ['ACC_WITHDRAW', 'REFUND'])) || str_contains(strtoupper($tx['payment_method_display'] ?? ''), 'REFUND') || str_contains(strtoupper($tx['payment_method_display'] ?? ''), 'WITHDRAWAL');
+                @endphp
+                <tr class="{{ $tx['is_voided'] ? 'row-voided' : ($isRefund ? 'row-refund' : '') }}" @if($isRefund && !$tx['is_voided']) style="background: #fff8f8;" @endif>
                     <td class="text-center no-strike">{{ $idx + 1 }}</td>
                     <td class="mono no-strike">{{ $tx['created_at'] }}</td>
                     <td class="mono">
@@ -600,7 +636,11 @@
                         <div style="color: var(--muted); font-size: 8.5px;">File: {{ $tx['file_no'] }}</div>
                     </td>
                     <td>
-                        <span class="badge badge-method no-strike">{{ $tx['payment_method_display'] }}</span>
+                        @if($isRefund)
+                            <span class="badge no-strike" style="background: #ffe3e3; color: #c92a2a; border: 1px solid #ffa8a8; font-weight: 700;">REFUND / WITHDRAWAL</span>
+                        @else
+                            <span class="badge badge-method no-strike">{{ $tx['payment_method_display'] }}</span>
+                        @endif
                         @if(!empty($tx['bank_name']))
                             <div style="font-size: 8px; color: var(--muted); margin-top: 1px;">Bank: {{ $tx['bank_name'] }}</div>
                         @endif
@@ -613,7 +653,11 @@
                         @endif
                     </td>
                     <td class="text-end mono">
-                        ₦{{ number_format((float) $tx['total'], 2) }}
+                        @if($isRefund)
+                            <span style="color: var(--danger); font-weight: bold;">-₦{{ number_format(abs((float) $tx['total']), 2) }}</span>
+                        @else
+                            ₦{{ number_format((float) $tx['total'], 2) }}
+                        @endif
                     </td>
                     <td class="text-end mono">
                         ₦{{ number_format((float) $tx['total_discount'], 2) }}

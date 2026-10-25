@@ -8,6 +8,7 @@
     window.CoreHealth = window.CoreHealth || {};
 
     let rawTransactions = [];
+    let myTransactionsDataTable = null;
     let manageDataTable = null;
     let currentAdjustPayment = null;
 
@@ -20,8 +21,12 @@
 
         initDefaultDates: function() {
             const today = new Date().toISOString().split('T')[0];
-            if (!$('#my-trans-from-date').val()) $('#my-trans-from-date').val(today);
-            if (!$('#my-trans-to-date').val()) $('#my-trans-to-date').val(today);
+            const isDateTimeFrom = $('#my-trans-from-date').attr('type') === 'datetime-local';
+            const defaultFrom = isDateTimeFrom ? `${today}T00:00` : today;
+            const defaultTo = isDateTimeFrom ? `${today}T23:59` : today;
+
+            if (!$('#my-trans-from-date').val()) $('#my-trans-from-date').val(defaultFrom);
+            if (!$('#my-trans-to-date').val()) $('#my-trans-to-date').val(defaultTo);
             if (!$('#manage-trans-from').val()) $('#manage-trans-from').val(today);
             if (!$('#manage-trans-to').val()) $('#manage-trans-to').val(today);
         },
@@ -35,23 +40,14 @@
                 self.loadMyTransactions();
             });
 
-            // Item type filter changes inside My Transactions tab
-            $(document).on('change', '#my-trans-item-type', function() {
-                self.updateCategoriesDropdown();
-                self.renderTransactionsList();
-            });
-
             // Filter changes inside My Transactions tab
-            $(document).on('change', '#my-trans-payment-type, #my-trans-category-filter', function() {
-                self.renderTransactionsList();
+            $(document).on('change', '#my-trans-item-type, #my-trans-payment-type, #my-trans-category-filter, #my-trans-department-filter, #my-trans-cashier-filter', function() {
+                self.loadMyTransactions();
             });
 
             // Auto-load and populate categories when modal opens
             $(document).on('shown.bs.modal', '#myTransactionsModal', function() {
-                self.updateCategoriesDropdown();
-                if (!rawTransactions || rawTransactions.length === 0) {
-                    self.loadMyTransactions();
-                }
+                self.loadMyTransactions();
             });
 
             // Interactive Category KPI Pills click
@@ -67,7 +63,20 @@
                     }
                     $catFilter.val(selectedCat);
                 }
-                self.renderTransactionsList();
+                self.loadMyTransactions();
+            });
+
+            // Interactive Department KPI Pills click
+            $(document).on('click', '.department-kpi-pill', function(e) {
+                e.preventDefault();
+                const selectedDept = String($(this).data('department-id') || '').trim();
+                const $deptFilter = $('#my-trans-department-filter');
+                if ($deptFilter.val() === selectedDept) {
+                    $deptFilter.val('');
+                } else {
+                    $deptFilter.val(selectedDept);
+                }
+                self.loadMyTransactions();
             });
 
             // Print My Transactions summary
@@ -216,12 +225,87 @@
                 self.submitAdjustment();
             });
 
-            // Toggle item breakdown details accordion
+            // Toggle item breakdown details accordion (handles DataTables server-side & responsive child rows)
             $(document).on('click', '.btn-toggle-items-breakdown', function(e) {
                 e.preventDefault();
-                const target = $(this).data('target');
-                $(target).slideToggle(150);
-                $(this).find('i').toggleClass('mdi-chevron-down mdi-chevron-up');
+                e.stopPropagation();
+                const $btn = $(this);
+                const targetSelector = $btn.attr('data-details-target') || $btn.attr('data-target') || $btn.attr('data-bs-target') || $btn.data('details-target') || $btn.data('target');
+                let $target = null;
+
+                // Priority 1: Check in the closest items-summary container or table cell (handles responsive child rows & normal rows)
+                const $container = $btn.closest('.items-summary-container, td, .dtr-data');
+                if ($container.length) {
+                    const $local = $container.find('.dt-items-box, [id^="dt-items-box-"], [id^="tx-items-box-"]');
+                    if ($local.length) {
+                        $target = $local;
+                    }
+                }
+
+                // Priority 2: Use selector if local lookup didn't match
+                if ((!$target || !$target.length) && targetSelector) {
+                    $target = $(targetSelector);
+                }
+
+                // Priority 3: Fallback to next sibling container
+                if (!$target || !$target.length) {
+                    $target = $btn.parent().next('.dt-items-box, [id^="dt-items-box-"], [id^="tx-items-box-"]');
+                }
+
+                if ($target && $target.length) {
+                    const isVisible = $target.is(':visible');
+                    const $icon = $btn.find('i');
+                    if (isVisible) {
+                        $target.stop(true, true).slideUp(150, function() {
+                            $(this).hide();
+                        });
+                        $icon.removeClass('mdi-chevron-up').addClass('mdi-chevron-down');
+                        $btn.removeClass('active');
+                    } else {
+                        $target.stop(true, true).slideDown(150, function() {
+                            $(this).css({
+                                'display': 'block',
+                                'max-height': '250px',
+                                'overflow-y': 'auto'
+                            });
+                        });
+                        $icon.removeClass('mdi-chevron-down').addClass('mdi-chevron-up');
+                        $btn.addClass('active');
+                    }
+                }
+            });
+
+            // Modal stacking & layering handlers: Ensure Receipt Preview appears prominently above Transactions Console
+            $(document).on('show.bs.modal', '#receiptPreviewModal', function() {
+                $('body').addClass('has-receipt-modal-open');
+                $(this).css('z-index', 1070);
+                $(this).find('.modal-dialog').css('z-index', 1071);
+            });
+
+            $(document).on('shown.bs.modal', '#receiptPreviewModal', function() {
+                const $modal = $(this);
+                $modal.css('z-index', 1070);
+                $modal.find('.modal-dialog').css('z-index', 1071);
+
+                // Elevate top backdrop for stacked modal appearance
+                const $backdrops = $('.modal-backdrop');
+                if ($backdrops.length > 1) {
+                    $backdrops.not(':last').css('z-index', 1040);
+                    $backdrops.last().addClass('receipt-modal-backdrop').css('z-index', 1065);
+                } else if ($('#myTransactionsModal').is(':visible')) {
+                    $backdrops.last().addClass('receipt-modal-backdrop').css('z-index', 1065);
+                }
+            });
+
+            $(document).on('hidden.bs.modal', '#receiptPreviewModal', function() {
+                $('body').removeClass('has-receipt-modal-open');
+                $('.modal-backdrop').removeClass('receipt-modal-backdrop');
+
+                // If myTransactionsModal is still open, preserve scrollability and interaction
+                if ($('#myTransactionsModal').hasClass('show') || $('#myTransactionsModal').is(':visible')) {
+                    $('body').addClass('modal-open');
+                    $('.modal-backdrop').last().css('z-index', 1040);
+                }
             });
 
             // Tab switching for console tabs
@@ -244,6 +328,13 @@
                 e.preventDefault();
                 if (typeof $ !== 'undefined' && typeof $('#myTransactionsModal').modal === 'function') {
                     $('#myTransactionsModal').modal('hide');
+                }
+            });
+
+            $(document).on('click', '#receiptPreviewModal [data-bs-dismiss="modal"], #receiptPreviewModal [data-dismiss="modal"], #receiptPreviewModal .btn-close', function(e) {
+                e.preventDefault();
+                if (typeof $ !== 'undefined' && typeof $('#receiptPreviewModal').modal === 'function') {
+                    $('#receiptPreviewModal').modal('hide');
                 }
             });
 
@@ -279,30 +370,203 @@
         },
 
         loadMyTransactions: function() {
-            const from = $('#my-trans-from-date').val();
-            const to = $('#my-trans-to-date').val();
-            const paymentType = $('#my-trans-payment-type').val();
-            const $tbody = $('#my-transactions-tbody');
-
-            $tbody.html('<tr><td colspan="8" class="text-center py-4 text-muted"><i class="mdi mdi-loading mdi-spin font-24"></i><p class="mb-0">Loading transactions...</p></td></tr>');
-
             const self = this;
-            const url = '/billing-workbench/my-transactions';
+            if (myTransactionsDataTable) {
+                myTransactionsDataTable.ajax.reload();
+            } else {
+                self.initMyTransactionsDataTable();
+            }
+        },
 
-            $.ajax({
-                url: url,
-                method: 'GET',
-                data: { from: from, to: to, payment_type: paymentType },
-                success: function(res) {
-                    rawTransactions = res.transactions || [];
-                    const allCats = res.all_categories || (res.summary ? res.summary.all_categories : null);
-                    self.updateCategoriesDropdown(allCats);
-                    self.renderTransactionsList();
+        initMyTransactionsDataTable: function() {
+            const self = this;
+            if (myTransactionsDataTable) {
+                myTransactionsDataTable.destroy();
+            }
+
+            myTransactionsDataTable = $('#my-transactions-table').DataTable({
+                processing: true,
+                serverSide: true,
+                ajax: {
+                    url: '/billing-workbench/my-transactions',
+                    data: function(d) {
+                        d.from = $('#my-trans-from-date').val();
+                        d.to = $('#my-trans-to-date').val();
+                        d.payment_type = $('#my-trans-payment-type').val();
+                        d.department_id = $('#my-trans-department-filter').val();
+                        d.category = $('#my-trans-category-filter').val();
+                        d.item_type = $('#my-trans-item-type').val();
+                        if ($('#my-trans-cashier-filter').length) {
+                            d.cashier_id = $('#my-trans-cashier-filter').val() || '';
+                            d.is_audit = 1;
+                        }
+                    }
                 },
-                error: function() {
-                    $tbody.html('<tr><td colspan="8" class="text-center py-4 text-danger"><i class="mdi mdi-alert-circle font-24"></i><p class="mb-0">Failed to load transactions</p></td></tr>');
+                columns: [
+                    { data: 'DT_RowIndex', name: 'id', orderable: false, searchable: false, className: 'text-center font-11 text-muted', width: '30px' },
+                    { data: 'created_at', name: 'payments.created_at', className: 'font-11 text-nowrap' },
+                    { data: 'reference_badge', name: 'payments.reference_no', className: 'font-11 text-nowrap' },
+                    { data: 'patient_info', name: 'patient_info', className: 'font-11' },
+                    { data: 'payment_method_badge', name: 'payments.payment_method', className: 'font-11' },
+                    { data: 'items_summary', name: 'items_summary', orderable: false, searchable: false, className: 'font-11', width: '240px' },
+                    { data: 'total_formatted', name: 'payments.total', className: 'text-end font-12 fw-bold text-primary' },
+                    { data: 'actions', name: 'actions', orderable: false, searchable: false, className: 'text-center', width: '70px' }
+                ],
+                order: [[1, 'desc']],
+                pageLength: 25,
+                lengthMenu: [[10, 25, 50, 100], [10, 25, 50, 100]],
+                responsive: true,
+                drawCallback: function(settings) {
+                    const api = this.api();
+                    const json = api.ajax.json();
+                    if (json && json.summary) {
+                        self.serverSummary = json.summary;
+                        self.renderSummaryCards(json.summary, json.all_departments, json.all_categories);
+                    }
                 }
             });
+        },
+
+        renderSummaryCards: function(ss, allDepartments, allCategories) {
+            if (!ss) return;
+            const self = this;
+            const pmKpis = ss.payment_method_kpis || {};
+
+            const departmentFilter = $('#my-trans-department-filter').val() || '';
+            const categoryFilter = $('#my-trans-category-filter').val() || '';
+
+            $('#kpi-my-count').text(Number(ss.count || 0).toLocaleString());
+            $('#kpi-my-total').text(`₦${parseFloat(ss.total_amount || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`);
+
+            const cashKpi = pmKpis.CASH || { amount: 0, count: 0 };
+            $('#kpi-my-cash').text(`₦${parseFloat(cashKpi.amount || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`);
+            $('#kpi-my-cash-count').text(cashKpi.count || 0);
+
+            // Gross Cash Inflow
+            const cashInflow = parseFloat(ss.cash_inflow || 0);
+            $('#kpi-my-cash-inflow').text(`₦${cashInflow.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`);
+
+            // Refunds & Disbursed Payouts
+            const refundAmount = parseFloat(ss.refund_amount || 0);
+            const refundCount = parseInt(ss.refund_count || 0, 10);
+            $('#kpi-my-refund').text(`₦${refundAmount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`);
+            $('#kpi-my-refund-count').text(refundCount.toLocaleString());
+
+            const posKpi = pmKpis.POS || { amount: 0, count: 0, banks: [] };
+            $('#kpi-my-pos').text(`₦${parseFloat(posKpi.amount || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`);
+            $('#kpi-my-pos-count').text(posKpi.count || 0);
+
+            const transferKpi = pmKpis.TRANSFER || { amount: 0, count: 0, banks: [] };
+            $('#kpi-my-transfer').text(`₦${parseFloat(transferKpi.amount || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`);
+            $('#kpi-my-transfer-count').text(transferKpi.count || 0);
+
+            const depositKpi = pmKpis.DEPOSIT || { amount: 0, count: 0, banks: [] };
+            $('#kpi-my-deposit').text(`₦${parseFloat(depositKpi.amount || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`);
+            $('#kpi-my-deposit-count').text(depositKpi.count || 0);
+
+            $('#kpi-my-discount').text(`₦${parseFloat(ss.total_discount || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`);
+            $('#kpi-my-splits-count').text(ss.split_transactions_count || 0);
+
+            // Render bank breakdowns
+            const renderBankArray = function($el, banksList, emptyText) {
+                if (!banksList || banksList.length === 0) {
+                    $el.html(`<div class="text-muted text-center font-9">${emptyText}</div>`);
+                    return;
+                }
+                let html = '';
+                banksList.forEach(item => {
+                    html += `<div class="d-flex justify-content-between align-items-center mb-0 text-truncate font-10">
+                        <span class="text-truncate me-1 text-dark" title="${self.escapeHtml(item.name)}">${self.escapeHtml(item.name)} (${item.count}):</span>
+                        <span class="fw-bold text-nowrap">₦${parseFloat(item.amount || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                    </div>`;
+                });
+                $el.html(html);
+            };
+
+            renderBankArray($('#kpi-my-pos-banks'), posKpi.banks, 'No POS tenders');
+            renderBankArray($('#kpi-my-transfer-banks'), transferKpi.banks, 'No Transfer tenders');
+            renderBankArray($('#kpi-my-deposit-banks'), depositKpi.banks, 'No Deposit tenders');
+
+            // Update Category Badges & Totals
+            const sTotal = parseFloat(ss.service_total || 0);
+            const sCount = (ss.service_kpi && ss.service_kpi.count) || 0;
+            $('#kpi-my-services-total').text(`₦${sTotal.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} (${sCount} items)`);
+
+            const pTotal = parseFloat(ss.product_total || 0);
+            const pCount = (ss.product_kpi && ss.product_kpi.count) || 0;
+            $('#kpi-my-products-total').text(`₦${pTotal.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} (${pCount} items)`);
+
+            // Update Department Badges & Totals
+            const deptListKpis = ss.department_kpis || [];
+            const deptSumAmount = deptListKpis.reduce((acc, d) => acc + (parseFloat(d.amount) || 0), 0);
+            const deptSumCount = deptListKpis.reduce((acc, d) => acc + (parseInt(d.count, 10) || 0), 0);
+            $('#kpi-my-departments-total').text(`₦${deptSumAmount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} (${deptSumCount} items)`);
+
+            const $deptList = $('#my-trans-department-categories-list');
+            if (deptListKpis.length === 0) {
+                $deptList.html('<span class="text-muted font-11">No departmental revenue recorded</span>');
+            } else {
+                let deptPillsHtml = '';
+                deptListKpis.forEach(dept => {
+                    const dId = String(dept.id);
+                    const isActive = (departmentFilter === dId);
+                    const btnClass = isActive ? 'btn-primary text-white' : 'btn-outline-primary';
+                    deptPillsHtml += `
+                        <button type="button" class="btn btn-xs ${btnClass} department-kpi-pill d-inline-flex align-items-center gap-1 font-11 py-0 px-2" data-department-id="${self.escapeHtml(dId)}" title="Click to filter by ${self.escapeHtml(dept.name)}">
+                            <span>${self.escapeHtml(dept.name)}</span>
+                            <span class="badge ${isActive ? 'bg-white text-primary' : 'bg-primary text-white'} rounded-pill">${dept.count}</span>
+                            <span class="fw-bold">₦${parseFloat(dept.amount || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                        </button>
+                    `;
+                });
+                $deptList.html(deptPillsHtml);
+            }
+
+            // Populate Service Category Pills
+            const serviceListKpis = ss.service_category_kpis || [];
+            const $serviceList = $('#my-trans-service-categories-list');
+            if (serviceListKpis.length === 0) {
+                $serviceList.html('<span class="text-muted font-11">No services recorded</span>');
+            } else {
+                let servicePillsHtml = '';
+                serviceListKpis.forEach(cat => {
+                    const isActive = (categoryFilter === cat.name);
+                    const btnClass = isActive ? 'btn-info text-white' : 'btn-outline-info';
+                    servicePillsHtml += `
+                        <button type="button" class="btn btn-xs ${btnClass} category-kpi-pill d-inline-flex align-items-center gap-1 font-11 py-0 px-2" data-category="${self.escapeHtml(cat.name)}" title="Click to filter by ${self.escapeHtml(cat.name)}">
+                            <span>${self.escapeHtml(cat.name)}</span>
+                            <span class="badge ${isActive ? 'bg-white text-info' : 'bg-info text-white'} rounded-pill">${cat.count}</span>
+                            <span class="fw-bold">₦${parseFloat(cat.amount || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                        </button>
+                    `;
+                });
+                $serviceList.html(servicePillsHtml);
+            }
+
+            // Populate Product Category Pills
+            const productListKpis = ss.product_category_kpis || [];
+            const $productList = $('#my-trans-product-categories-list');
+            if (productListKpis.length === 0) {
+                $productList.html('<span class="text-muted font-11">No products recorded</span>');
+            } else {
+                let productPillsHtml = '';
+                productListKpis.forEach(cat => {
+                    const isActive = (categoryFilter === cat.name);
+                    const btnClass = isActive ? 'btn-success text-white' : 'btn-outline-success';
+                    productPillsHtml += `
+                        <button type="button" class="btn btn-xs ${btnClass} category-kpi-pill d-inline-flex align-items-center gap-1 font-11 py-0 px-2" data-category="${self.escapeHtml(cat.name)}" title="Click to filter by ${self.escapeHtml(cat.name)}">
+                            <span>${self.escapeHtml(cat.name)}</span>
+                            <span class="badge ${isActive ? 'bg-white text-success' : 'bg-success text-white'} rounded-pill">${cat.count}</span>
+                            <span class="fw-bold">₦${parseFloat(cat.amount || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                        </button>
+                    `;
+                });
+                $productList.html(productPillsHtml);
+            }
+
+            if (allCategories) {
+                self.updateCategoriesDropdown(allCategories);
+            }
         },
 
         cachedAllCategories: null,
@@ -409,10 +673,25 @@
         },
 
         renderTransactionsList: function() {
+            const self = this;
             const itemTypeFilter = $('#my-trans-item-type').val();
             const categoryFilter = $('#my-trans-category-filter').val();
+            const departmentFilter = $('#my-trans-department-filter').val();
+            const hasSubFilter = !!(itemTypeFilter || categoryFilter || departmentFilter);
             const $tbody = $('#my-transactions-tbody');
             $tbody.empty();
+
+            // Handle Truncated Alert Banner
+            const $alert = $('#my-trans-truncated-alert');
+            const $alertMsg = $('#my-trans-truncated-message');
+            if (self.isTruncated) {
+                const countFormatted = Number(self.totalCount || 0).toLocaleString();
+                const showingFormatted = Number(self.showingCount || 0).toLocaleString();
+                $alertMsg.html(`Showing latest <strong>${showingFormatted}</strong> of <strong>${countFormatted}</strong> transactions for this period. Summary KPI cards and category strips reflect all <strong>${countFormatted}</strong> transactions. Use <em>Manage Transactions</em> for complete historical search.`);
+                $alert.show();
+            } else {
+                $alert.hide();
+            }
 
             let totalVol = 0;
             let totalDiscount = 0;
@@ -431,11 +710,13 @@
 
             const serviceCategoriesMap = {};
             const productCategoriesMap = {};
+            const departmentsMap = {};
             let serviceTotalAmt = 0, serviceTotalCount = 0;
             let productTotalAmt = 0, productTotalCount = 0;
+            let departmentTotalAmt = 0, departmentTotalCount = 0;
 
             const filteredTx = rawTransactions.filter(tx => {
-                if (!itemTypeFilter && !categoryFilter) return true;
+                if (!itemTypeFilter && !categoryFilter && !departmentFilter) return true;
 
                 if (!tx.items || !tx.items.length) return false;
 
@@ -449,7 +730,11 @@
                     if (categoryFilter) {
                         matchCat = (it.category === categoryFilter);
                     }
-                    return matchType && matchCat;
+                    let matchDept = true;
+                    if (departmentFilter) {
+                        matchDept = (String(it.department_id || '') === String(departmentFilter));
+                    }
+                    return matchType && matchCat && matchDept;
                 });
             });
 
@@ -457,7 +742,6 @@
                 $tbody.html('<tr><td colspan="8" class="text-center py-5 text-muted"><i class="mdi mdi-receipt-text-outline font-28"></i><p class="mb-0">No transactions match your current filters</p></td></tr>');
             }
 
-            const self = this;
             filteredTx.forEach((tx, idx) => {
                 const txTotal = Math.abs(parseFloat(tx.total || 0));
                 const txDisc = Math.abs(parseFloat(tx.total_discount || 0));
@@ -561,13 +845,24 @@
                         }
                     }
 
-                    // Product & Service Category categorization
+                    // Product & Service Category and Department categorization
                     if (tx.items && tx.items.length) {
                         tx.items.forEach(it => {
                             const itAmt = parseFloat(it.amount || 0);
                             const itQty = parseInt(it.qty, 10) || 1;
                             const itType = (it.type || '').toLowerCase();
                             const itCat = it.category || 'General';
+                            const itDeptId = it.department_id ? String(it.department_id) : '0';
+                            const itDeptName = it.department_name || 'General / Unassigned';
+
+                            // Department attribution
+                            departmentTotalAmt += itAmt;
+                            departmentTotalCount += itQty;
+                            if (!departmentsMap[itDeptId]) {
+                                departmentsMap[itDeptId] = { id: itDeptId, name: itDeptName, count: 0, amount: 0 };
+                            }
+                            departmentsMap[itDeptId].count += itQty;
+                            departmentsMap[itDeptId].amount += itAmt;
 
                             if (itType.includes('product')) {
                                 productTotalAmt += itAmt;
@@ -601,21 +896,27 @@
                                 ? '<span class="badge bg-success font-10">Product</span>'
                                 : '<span class="badge bg-info font-10">Service</span>');
 
+                        const deptBadge = it.department_name
+                            ? `<span class="badge bg-light text-dark border font-10 ms-1" title="Department"><i class="mdi mdi-domain me-1"></i>${self.escapeHtml(it.department_name)}</span>`
+                            : '';
+
                         return `<div class="mb-1 d-flex justify-content-between align-items-center">
-                            <span>${typeBadge} <strong>${self.escapeHtml(it.name)}</strong> <small class="text-muted">(Qty: ${it.qty || 1})</small></span>
+                            <span>${typeBadge}${deptBadge} <strong>${self.escapeHtml(it.name)}</strong> <small class="text-muted">(Qty: ${it.qty || 1})</small></span>
                             <span class="text-primary fw-bold font-11">₦${parseFloat(it.amount || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                         </div>`;
                     }).join('');
 
-                    itemsListHtml = `<div class="p-2 border rounded bg-light mt-1 font-11" id="tx-items-box-${idx}" style="display: none;">${badgeList}</div>`;
+                    itemsListHtml = `<div class="p-2 border rounded bg-light mt-1 font-11 dt-items-box shadow-sm" id="tx-items-box-${idx}" style="display: none; max-height: 250px; overflow-y: auto;">${badgeList}</div>`;
                     itemsSummaryHtml = `
-                        <div class="d-flex align-items-center justify-content-between">
-                            <span class="font-11 text-dark fw-bold">${tx.items.length} item(s)</span>
-                            <button type="button" class="btn btn-xs btn-outline-primary btn-toggle-items-breakdown py-0 px-1 font-11" data-target="#tx-items-box-${idx}">
-                                Details <i class="mdi mdi-chevron-down"></i>
-                            </button>
+                        <div class="items-summary-container">
+                            <div class="d-flex align-items-center justify-content-between">
+                                <span class="font-11 text-dark fw-bold">${tx.items.length} item(s)</span>
+                                <button type="button" class="btn btn-xs btn-outline-primary btn-toggle-items-breakdown py-0 px-1 font-11" data-details-target="#tx-items-box-${idx}" data-target="#tx-items-box-${idx}">
+                                    Details <i class="mdi mdi-chevron-down"></i>
+                                </button>
+                            </div>
+                            ${itemsListHtml}
                         </div>
-                        ${itemsListHtml}
                     `;
                 }
 
@@ -651,88 +952,236 @@
                 `);
             });
 
-            // Update KPI cards in Payment Method strip
-            $('#kpi-my-count').text(activeCount);
-            $('#kpi-my-total').text(`₦${totalVol.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`);
-            $('#kpi-my-cash').text(`₦${cashVol.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`);
-            $('#kpi-my-cash-count').text(cashCount);
-            $('#kpi-my-pos').text(`₦${posVol.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`);
-            $('#kpi-my-pos-count').text(posCount);
-            $('#kpi-my-transfer').text(`₦${transferVol.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`);
-            $('#kpi-my-transfer-count').text(transferCount);
-            $('#kpi-my-deposit').text(`₦${mobileDepositVol.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`);
-            $('#kpi-my-deposit-count').text(mobileDepositCount);
-            $('#kpi-my-discount').text(`₦${totalDiscount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`);
-            $('#kpi-my-splits-count').text(splitTxCount);
+            // If truncated and not sub-filtered, populate KPI cards directly from exact SQL server summary
+            if (self.isTruncated && !hasSubFilter && self.serverSummary) {
+                const ss = self.serverSummary;
+                const pmKpis = ss.payment_method_kpis || {};
 
-            // Render bank breakdowns inside POS, Transfer, and Deposit KPI cards
-            const renderBankBreakdown = function($el, map, emptyText) {
-                const keys = Object.keys(map);
-                if (keys.length === 0) {
-                    $el.html(`<div class="text-muted text-center font-9">${emptyText}</div>`);
-                    return;
+                $('#kpi-my-count').text(Number(ss.count || 0).toLocaleString());
+                $('#kpi-my-total').text(`₦${parseFloat(ss.total_amount || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`);
+
+                const cashKpi = pmKpis.CASH || { amount: 0, count: 0 };
+                $('#kpi-my-cash').text(`₦${parseFloat(cashKpi.amount || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`);
+                $('#kpi-my-cash-count').text(cashKpi.count || 0);
+
+                const posKpi = pmKpis.POS || { amount: 0, count: 0, banks: [] };
+                $('#kpi-my-pos').text(`₦${parseFloat(posKpi.amount || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`);
+                $('#kpi-my-pos-count').text(posKpi.count || 0);
+
+                const transferKpi = pmKpis.TRANSFER || { amount: 0, count: 0, banks: [] };
+                $('#kpi-my-transfer').text(`₦${parseFloat(transferKpi.amount || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`);
+                $('#kpi-my-transfer-count').text(transferKpi.count || 0);
+
+                const depositKpi = pmKpis.DEPOSIT || { amount: 0, count: 0, banks: [] };
+                $('#kpi-my-deposit').text(`₦${parseFloat(depositKpi.amount || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`);
+                $('#kpi-my-deposit-count').text(depositKpi.count || 0);
+
+                $('#kpi-my-discount').text(`₦${parseFloat(ss.total_discount || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`);
+                $('#kpi-my-splits-count').text(ss.split_transactions_count || 0);
+
+                // Render bank breakdowns
+                const renderBankArray = function($el, banksList, emptyText) {
+                    if (!banksList || banksList.length === 0) {
+                        $el.html(`<div class="text-muted text-center font-9">${emptyText}</div>`);
+                        return;
+                    }
+                    let html = '';
+                    banksList.forEach(item => {
+                        html += `<div class="d-flex justify-content-between align-items-center mb-0 text-truncate font-10">
+                            <span class="text-truncate me-1 text-dark" title="${self.escapeHtml(item.name)}">${self.escapeHtml(item.name)} (${item.count}):</span>
+                            <span class="fw-bold text-nowrap">₦${parseFloat(item.amount || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                        </div>`;
+                    });
+                    $el.html(html);
+                };
+
+                renderBankArray($('#kpi-my-pos-banks'), posKpi.banks, 'No POS tenders');
+                renderBankArray($('#kpi-my-transfer-banks'), transferKpi.banks, 'No Transfer tenders');
+                renderBankArray($('#kpi-my-deposit-banks'), depositKpi.banks, 'No Deposit tenders');
+
+                // Update Category Badges & Totals
+                const sTotal = parseFloat(ss.service_total || 0);
+                const sCount = (ss.service_kpi && ss.service_kpi.count) || 0;
+                $('#kpi-my-services-total').text(`₦${sTotal.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} (${sCount} items)`);
+
+                const pTotal = parseFloat(ss.product_total || 0);
+                const pCount = (ss.product_kpi && ss.product_kpi.count) || 0;
+                $('#kpi-my-products-total').text(`₦${pTotal.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} (${pCount} items)`);
+
+                // Update Department Badges & Totals
+                const deptListKpis = ss.department_kpis || [];
+                const deptSumAmount = deptListKpis.reduce((acc, d) => acc + (parseFloat(d.amount) || 0), 0);
+                const deptSumCount = deptListKpis.reduce((acc, d) => acc + (parseInt(d.count, 10) || 0), 0);
+                $('#kpi-my-departments-total').text(`₦${deptSumAmount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} (${deptSumCount} items)`);
+
+                const $deptList = $('#my-trans-department-categories-list');
+                if (deptListKpis.length === 0) {
+                    $deptList.html('<span class="text-muted font-11">No departmental revenue recorded</span>');
+                } else {
+                    let deptPillsHtml = '';
+                    deptListKpis.forEach(dept => {
+                        const dId = String(dept.id);
+                        const isActive = (departmentFilter === dId);
+                        const btnClass = isActive ? 'btn-primary text-white' : 'btn-outline-primary';
+                        deptPillsHtml += `
+                            <button type="button" class="btn btn-xs ${btnClass} department-kpi-pill d-inline-flex align-items-center gap-1 font-11 py-0 px-2" data-department-id="${self.escapeHtml(dId)}" title="Click to filter by ${self.escapeHtml(dept.name)}">
+                                <span>${self.escapeHtml(dept.name)}</span>
+                                <span class="badge ${isActive ? 'bg-white text-primary' : 'bg-primary text-white'} rounded-pill">${dept.count}</span>
+                                <span class="fw-bold">₦${parseFloat(dept.amount || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                            </button>
+                        `;
+                    });
+                    $deptList.html(deptPillsHtml);
                 }
-                let html = '';
-                keys.forEach(bName => {
-                    const item = map[bName];
-                    html += `<div class="d-flex justify-content-between align-items-center mb-0 text-truncate font-10">
-                        <span class="text-truncate me-1 text-dark" title="${self.escapeHtml(bName)}">${self.escapeHtml(bName)} (${item.count}):</span>
-                        <span class="fw-bold text-nowrap">₦${item.amount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
-                    </div>`;
-                });
-                $el.html(html);
-            };
 
-            renderBankBreakdown($('#kpi-my-pos-banks'), posBanksMap, 'No POS tenders');
-            renderBankBreakdown($('#kpi-my-transfer-banks'), transferBanksMap, 'No Transfer tenders');
-            renderBankBreakdown($('#kpi-my-deposit-banks'), depositBanksMap, 'No Deposit tenders');
+                // Populate Service Category Pills
+                const serviceListKpis = ss.service_category_kpis || [];
+                const $serviceList = $('#my-trans-service-categories-list');
+                if (serviceListKpis.length === 0) {
+                    $serviceList.html('<span class="text-muted font-11">No services recorded</span>');
+                } else {
+                    let servicePillsHtml = '';
+                    serviceListKpis.forEach(cat => {
+                        const isActive = (categoryFilter === cat.name);
+                        const btnClass = isActive ? 'btn-info text-white' : 'btn-outline-info';
+                        servicePillsHtml += `
+                            <button type="button" class="btn btn-xs ${btnClass} category-kpi-pill d-inline-flex align-items-center gap-1 font-11 py-0 px-2" data-category="${self.escapeHtml(cat.name)}" title="Click to filter by ${self.escapeHtml(cat.name)}">
+                                <span>${self.escapeHtml(cat.name)}</span>
+                                <span class="badge ${isActive ? 'bg-white text-info' : 'bg-info text-white'} rounded-pill">${cat.count}</span>
+                                <span class="fw-bold">₦${parseFloat(cat.amount || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                            </button>
+                        `;
+                    });
+                    $serviceList.html(servicePillsHtml);
+                }
 
-            // Update Category Badges & Totals
-            $('#kpi-my-services-total').text(`₦${serviceTotalAmt.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} (${serviceTotalCount} items)`);
-            $('#kpi-my-products-total').text(`₦${productTotalAmt.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} (${productTotalCount} items)`);
-
-            // Populate Service Category Pills
-            const $serviceList = $('#my-trans-service-categories-list');
-            const serviceCatKeys = Object.keys(serviceCategoriesMap);
-            if (serviceCatKeys.length === 0) {
-                $serviceList.html('<span class="text-muted font-11">No services recorded</span>');
+                // Populate Product Category Pills
+                const productListKpis = ss.product_category_kpis || [];
+                const $productList = $('#my-trans-product-categories-list');
+                if (productListKpis.length === 0) {
+                    $productList.html('<span class="text-muted font-11">No products recorded</span>');
+                } else {
+                    let productPillsHtml = '';
+                    productListKpis.forEach(cat => {
+                        const isActive = (categoryFilter === cat.name);
+                        const btnClass = isActive ? 'btn-success text-white' : 'btn-outline-success';
+                        productPillsHtml += `
+                            <button type="button" class="btn btn-xs ${btnClass} category-kpi-pill d-inline-flex align-items-center gap-1 font-11 py-0 px-2" data-category="${self.escapeHtml(cat.name)}" title="Click to filter by ${self.escapeHtml(cat.name)}">
+                                <span>${self.escapeHtml(cat.name)}</span>
+                                <span class="badge ${isActive ? 'bg-white text-success' : 'bg-success text-white'} rounded-pill">${cat.count}</span>
+                                <span class="fw-bold">₦${parseFloat(cat.amount || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                            </button>
+                        `;
+                    });
+                    $productList.html(productPillsHtml);
+                }
             } else {
-                let servicePillsHtml = '';
-                serviceCatKeys.forEach(catName => {
-                    const cat = serviceCategoriesMap[catName];
-                    const isActive = (categoryFilter === catName);
-                    const btnClass = isActive ? 'btn-info text-white' : 'btn-outline-info';
-                    servicePillsHtml += `
-                        <button type="button" class="btn btn-xs ${btnClass} category-kpi-pill d-inline-flex align-items-center gap-1 font-11 py-0 px-2" data-category="${self.escapeHtml(catName)}" title="Click to filter by ${self.escapeHtml(catName)}">
-                            <span>${self.escapeHtml(catName)}</span>
-                            <span class="badge ${isActive ? 'bg-white text-info' : 'bg-info text-white'} rounded-pill">${cat.count}</span>
-                            <span class="fw-bold">₦${cat.amount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
-                        </button>
-                    `;
-                });
-                $serviceList.html(servicePillsHtml);
-            }
+                // Update KPI cards from in-memory calculations (standard day-to-day or filtered results)
+                $('#kpi-my-count').text(activeCount);
+                $('#kpi-my-total').text(`₦${totalVol.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`);
+                $('#kpi-my-cash').text(`₦${cashVol.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`);
+                $('#kpi-my-cash-count').text(cashCount);
+                $('#kpi-my-pos').text(`₦${posVol.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`);
+                $('#kpi-my-pos-count').text(posCount);
+                $('#kpi-my-transfer').text(`₦${transferVol.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`);
+                $('#kpi-my-transfer-count').text(transferCount);
+                $('#kpi-my-deposit').text(`₦${mobileDepositVol.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`);
+                $('#kpi-my-deposit-count').text(mobileDepositCount);
+                $('#kpi-my-discount').text(`₦${totalDiscount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`);
+                $('#kpi-my-splits-count').text(splitTxCount);
 
-            // Populate Product Category Pills
-            const $productList = $('#my-trans-product-categories-list');
-            const productCatKeys = Object.keys(productCategoriesMap);
-            if (productCatKeys.length === 0) {
-                $productList.html('<span class="text-muted font-11">No products recorded</span>');
-            } else {
-                let productPillsHtml = '';
-                productCatKeys.forEach(catName => {
-                    const cat = productCategoriesMap[catName];
-                    const isActive = (categoryFilter === catName);
-                    const btnClass = isActive ? 'btn-success text-white' : 'btn-outline-success';
-                    productPillsHtml += `
-                        <button type="button" class="btn btn-xs ${btnClass} category-kpi-pill d-inline-flex align-items-center gap-1 font-11 py-0 px-2" data-category="${self.escapeHtml(catName)}" title="Click to filter by ${self.escapeHtml(catName)}">
-                            <span>${self.escapeHtml(catName)}</span>
-                            <span class="badge ${isActive ? 'bg-white text-success' : 'bg-success text-white'} rounded-pill">${cat.count}</span>
-                            <span class="fw-bold">₦${cat.amount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
-                        </button>
-                    `;
-                });
-                $productList.html(productPillsHtml);
+                // Render bank breakdowns inside POS, Transfer, and Deposit KPI cards
+                const renderBankBreakdown = function($el, map, emptyText) {
+                    const keys = Object.keys(map);
+                    if (keys.length === 0) {
+                        $el.html(`<div class="text-muted text-center font-9">${emptyText}</div>`);
+                        return;
+                    }
+                    let html = '';
+                    keys.forEach(bName => {
+                        const item = map[bName];
+                        html += `<div class="d-flex justify-content-between align-items-center mb-0 text-truncate font-10">
+                            <span class="text-truncate me-1 text-dark" title="${self.escapeHtml(bName)}">${self.escapeHtml(bName)} (${item.count}):</span>
+                            <span class="fw-bold text-nowrap">₦${item.amount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                        </div>`;
+                    });
+                    $el.html(html);
+                };
+
+                renderBankBreakdown($('#kpi-my-pos-banks'), posBanksMap, 'No POS tenders');
+                renderBankBreakdown($('#kpi-my-transfer-banks'), transferBanksMap, 'No Transfer tenders');
+                renderBankBreakdown($('#kpi-my-deposit-banks'), depositBanksMap, 'No Deposit tenders');
+
+                // Update Category Badges & Totals
+                $('#kpi-my-services-total').text(`₦${serviceTotalAmt.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} (${serviceTotalCount} items)`);
+                $('#kpi-my-products-total').text(`₦${productTotalAmt.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} (${productTotalCount} items)`);
+
+                // Update Department Badges & Totals
+                $('#kpi-my-departments-total').text(`₦${departmentTotalAmt.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} (${departmentTotalCount} items)`);
+                const $deptList = $('#my-trans-department-categories-list');
+                const deptKeys = Object.keys(departmentsMap);
+                if (deptKeys.length === 0) {
+                    $deptList.html('<span class="text-muted font-11">No departmental revenue recorded</span>');
+                } else {
+                    let deptPillsHtml = '';
+                    deptKeys.forEach(dId => {
+                        const dept = departmentsMap[dId];
+                        const isActive = (departmentFilter === dId);
+                        const btnClass = isActive ? 'btn-primary text-white' : 'btn-outline-primary';
+                        deptPillsHtml += `
+                            <button type="button" class="btn btn-xs ${btnClass} department-kpi-pill d-inline-flex align-items-center gap-1 font-11 py-0 px-2" data-department-id="${self.escapeHtml(dId)}" title="Click to filter by ${self.escapeHtml(dept.name)}">
+                                <span>${self.escapeHtml(dept.name)}</span>
+                                <span class="badge ${isActive ? 'bg-white text-primary' : 'bg-primary text-white'} rounded-pill">${dept.count}</span>
+                                <span class="fw-bold">₦${dept.amount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                            </button>
+                        `;
+                    });
+                    $deptList.html(deptPillsHtml);
+                }
+
+                // Populate Service Category Pills
+                const $serviceList = $('#my-trans-service-categories-list');
+                const serviceCatKeys = Object.keys(serviceCategoriesMap);
+                if (serviceCatKeys.length === 0) {
+                    $serviceList.html('<span class="text-muted font-11">No services recorded</span>');
+                } else {
+                    let servicePillsHtml = '';
+                    serviceCatKeys.forEach(catName => {
+                        const cat = serviceCategoriesMap[catName];
+                        const isActive = (categoryFilter === catName);
+                        const btnClass = isActive ? 'btn-info text-white' : 'btn-outline-info';
+                        servicePillsHtml += `
+                            <button type="button" class="btn btn-xs ${btnClass} category-kpi-pill d-inline-flex align-items-center gap-1 font-11 py-0 px-2" data-category="${self.escapeHtml(catName)}" title="Click to filter by ${self.escapeHtml(catName)}">
+                                <span>${self.escapeHtml(catName)}</span>
+                                <span class="badge ${isActive ? 'bg-white text-info' : 'bg-info text-white'} rounded-pill">${cat.count}</span>
+                                <span class="fw-bold">₦${cat.amount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                            </button>
+                        `;
+                    });
+                    $serviceList.html(servicePillsHtml);
+                }
+
+                // Populate Product Category Pills
+                const $productList = $('#my-trans-product-categories-list');
+                const productCatKeys = Object.keys(productCategoriesMap);
+                if (productCatKeys.length === 0) {
+                    $productList.html('<span class="text-muted font-11">No products recorded</span>');
+                } else {
+                    let productPillsHtml = '';
+                    productCatKeys.forEach(catName => {
+                        const cat = productCategoriesMap[catName];
+                        const isActive = (categoryFilter === catName);
+                        const btnClass = isActive ? 'btn-success text-white' : 'btn-outline-success';
+                        productPillsHtml += `
+                            <button type="button" class="btn btn-xs ${btnClass} category-kpi-pill d-inline-flex align-items-center gap-1 font-11 py-0 px-2" data-category="${self.escapeHtml(catName)}" title="Click to filter by ${self.escapeHtml(catName)}">
+                                <span>${self.escapeHtml(catName)}</span>
+                                <span class="badge ${isActive ? 'bg-white text-success' : 'bg-success text-white'} rounded-pill">${cat.count}</span>
+                                <span class="fw-bold">₦${cat.amount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                            </button>
+                        `;
+                    });
+                    $productList.html(productPillsHtml);
+                }
             }
         },
 
@@ -751,6 +1200,7 @@
                         d.from = $('#manage-trans-from').val();
                         d.to = $('#manage-trans-to').val();
                         d.payment_method = $('#manage-trans-method').val();
+                        d.department_id = $('#manage-trans-department').val();
                         d.status = $('#manage-trans-status').val();
                         d.scope = $('#manage-trans-scope').length ? $('#manage-trans-scope').val() : 'own';
                     }
@@ -1085,10 +1535,10 @@
                             $('#modal-receipt-thermal').hide();
 
                             // Elevate receipt preview modal above myTransactionsModal
-                            $('#receiptPreviewModal').css('z-index', 1070).modal('show');
-                            setTimeout(function() {
-                                $('.modal-backdrop').last().css('z-index', 1065);
-                            }, 50);
+                            $('body').addClass('has-receipt-modal-open');
+                            $('#receiptPreviewModal').css('z-index', 1070);
+                            $('#receiptPreviewModal .modal-dialog').css('z-index', 1071);
+                            $('#receiptPreviewModal').modal('show');
                         } else {
                             self.directPrintHtml(res.receipt_a4);
                         }
@@ -1133,6 +1583,8 @@
             const from = $('#my-trans-from-date').val() || '';
             const to = $('#my-trans-to-date').val() || '';
             const paymentType = $('#my-trans-payment-type').val() || '';
+            const departmentId = $('#my-trans-department-filter').val() || '';
+            const category = $('#my-trans-category-filter').val() || '';
             const itemType = $('#my-trans-item-type').val() || '';
 
             const params = new URLSearchParams({
@@ -1142,7 +1594,18 @@
             });
 
             if (paymentType) params.append('payment_type', paymentType);
+            if (departmentId) params.append('department_id', departmentId);
+            if (category) params.append('category', category);
             if (itemType) params.append('item_type', itemType);
+
+            const $cashierFilter = $('#my-trans-cashier-filter');
+            if ($cashierFilter.length) {
+                const cashierVal = $cashierFilter.val();
+                if (cashierVal) {
+                    params.append('cashier_id', cashierVal);
+                }
+                params.append('is_audit', '1');
+            }
 
             const printUrl = '/billing-workbench/my-transactions?' + params.toString();
             window.open(printUrl, '_blank', 'width=1050,height=850,menubar=no,toolbar=no,location=no,status=no,scrollbars=yes');
