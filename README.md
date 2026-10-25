@@ -133,6 +133,7 @@ CoreHealth v2 is designed to streamline hospital operations by integrating clini
 - **Enhanced My Transactions** — cashier transaction feed with line item breakdown, category filters (Product/Service/Category/Item), and real-time KPI cards
 - **Payment Method Adjustments** — post-receipt payment method modifications with automated GL reversing and replacement journal entries, audited in `payment_adjustments`
 - **Transaction Voiding** — full financial reversal restoring patient accounts, reversing JEs, unlinking unbilled items, and striking through voided transactions across reports
+- **Global Department Revenue Attribution** — dual-tier department mapping on services/products with category inheritance, dynamic modality/bench filter pills across Imaging and Lab workbenches, real-time department KPI strips, and GL line-level revenue tagging
 - **Patient Deposits** — wallet system with auto-debit on billing
 - **Promotions** — discount rules and promo pricing
 
@@ -185,8 +186,12 @@ CoreHealth v2 is designed to streamline hospital operations by integrating clini
 - **Clinical Note Polish** — rewrites raw dictated notes into structured medical formats
 - **Connectivity Testing** — administrator panel for testing API keys and listing supported models
 
-### 20. Internal Audit Workbench
+### 20. Internal Audit Workbench & Ops Audit
 - **Audit Responsibility Worksheets** — Cash Book/Billing, Bank Reconciliation, HMO verification, Disclosures/Refunds, Payroll/Expenses, Clinical patient flow, Ward income, Theatre bundles, Diagnostics, and Inventory
+- **Duty Shift Service Handover Audit** — calibrated shift windows (AM till 1:00 PM, Afternoon/PM 1:00 PM to 6:00 PM, Night 6:00 PM onwards) generating 1-page A4 executive handover certificates with tri-party certification signatures
+- **Care Stream Segmentation** — cleanly segregates clinical revenue and volume across General (Outpatient Walk-in / Self-pay), Inpatient (Private Wards / Admitted Stays), and Insured / Schemes Pool (NHIA, State Health Contributory Schemes, HMOs, and Corporate Retainerships)
+- **Cashier Till & Deficit Reconciliation** — tracks gross cash collections versus deposit refunds/withdrawals (`ACC_WITHDRAW`) to reconcile net drawer balances against electronic tenders (POS, Transfer, Mobile)
+- **Integrated Cashier Transactions Console** — datetime-precision transaction query and reprint console with auditor cashier scoping, refund highlight badges, and cashier summary printing
 - **Digital Approvals (Audit Stamps)** — seals audited periods/responsibility domains to freeze modifications and establish accountability
 - **Staff Receivables Settlement** — sequential payment allocation across outstanding staff bills with bank/discount overrides
 

@@ -172,3 +172,19 @@ When working on this project, strictly adhere to the following standards across 
   - Transaction voiding reverses Journal Entries, unlinks items, restores patient account balances, and strikes through/excludes voided payments from all financial and ops audit KPIs (`whereNull('voided_at')`).
 - **Documentation**: Architecture is documented in `docs/BILLING_PAYMENT_ENHANCEMENTS.md`.
 
+## 16. Global Department Revenue Attribution & Dynamic Workbench Filters
+- **Dual-Tier Resolution Chain**: `Service`/`Product` `department_id` takes precedence over parent `ServiceCategory`/`ProductCategory` `department_id`, which defaults to General (null). Auto-prepopulates in admin create/edit views upon category selection while allowing manual override.
+- **Observer Auto-Stamping**: `ProductOrServiceRequestObserver` stamps effective `department_id` into POSR records and HMO claim journal lines; `PaymentObserver` stamps `department_id` across double-entry debits and credits on all payment-generated journal entry lines.
+- **Dynamic Modality & Bench Filters**: Imaging (`ImagingWorkbenchController::getImagingDepartments()`) and Lab (`LabWorkbenchController::getLabDepartments()`) discover active departments from catalog bindings and domain roles, rendering interactive pill buttons without hardcoding.
+- **Omni-Channel Reporting**: Department filtering, real-time KPI pill strip, and badges are integrated into My Transactions modal (`_my_transactions_modal.blade.php`), Manage Transactions datatable, printable cashier receipts (`my_transactions_print.blade.php`), OpsAudit billing toolbar, and Accounting General Ledger.
+- **Data Backfill Engine**: Zero-downtime retroactive mapping command `php artisan corehealth:backfill-departments` with progress tracking and `--dry-run` flag.
+- **Documentation**: Architecture is documented in `docs/DEPARTMENT_REVENUE_ATTRIBUTION.md`.
+
+## 17. Ops Audit Duty Shift Handover & Care Stream Reconciliation
+- **Duty Shift Operational Boundaries**: Standardized shift windows across `applyShiftFilter`: AM Duty till 1:00 PM (`00:00:00` - `12:59:59`), Afternoon / Late PM Duty (`13:00:00` - `17:59:59`), and Night Duty (`18:00:00` - `07:59:59` cross-midnight).
+- **Mutually Exclusive Care Streams**: Cleanly partitions clinical service revenue and volume into General (Outpatient Walk-in / Self-pay), Inpatient (Private Wards / Admitted Stays), and Insured / Schemes Pool (representing all insured enrollees across NHIA, State Health Schemes like PLASCHEMA, HMOs, and Corporate Retainerships, tracking both Claims AR and patient co-pays).
+- **Executive 1-Page A4 Handover Certificate**: Provides unified service domain breakdown (Drugs, Labs, Imaging, Consultations, Wards, Procedures, Others) with full tender reconciliation (Cash in till, POS by bank, Transfers by bank) and tri-party certification signature blocks (Outgoing Cashier, Incoming Cashier, Internal Audit / HOD).
+- **Inflow vs Outflow Till Accounting**: Detailed tracking of cash collections vs deposit disbursements/refunds (`ACC_WITHDRAW`) to clearly explain till balance movements.
+- **Embedded Transactions Console**: Cashier Transactions Console (`_my_transactions_modal.blade.php`) integrated directly into Ops Audit layout and workbenches.
+- **Documentation**: Architecture is documented in `docs/OPS_AUDIT_DUTY_SHIFT_RECONCILIATION.md`.
+
