@@ -41,7 +41,7 @@
             });
 
             // Filter changes inside My Transactions tab
-            $(document).on('change', '#my-trans-item-type, #my-trans-payment-type, #my-trans-category-filter, #my-trans-department-filter, #my-trans-cashier-filter', function() {
+            $(document).on('change', '#my-trans-from-date, #my-trans-to-date, #my-trans-item-type, #my-trans-payment-type, #my-trans-category-filter, #my-trans-department-filter, #my-trans-cashier-filter', function() {
                 self.loadMyTransactions();
             });
 

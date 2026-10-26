@@ -1,6 +1,6 @@
 # CoreHealth v2 — Global Department-Level Revenue Attribution & Dynamic Workbench Filters
 
-**Date**: 2026-10-25  
+**Date**: 2026-10-26  
 **Git Release Tag**: `v2.6.0.54`  
 **Status**: Completed & Verified  
 
@@ -238,5 +238,40 @@ When cashiers or billers click "Print Receipt" (`.btn-print-tx-receipt`) from wi
   2. **Idempotent Shell Event Binding**: `WorkbenchShell.bindEvents()` now enforces `this.state.eventsBound` guard and unbinds prior handlers (`$(document).off('click', ...).on('click', ...)`).
   3. **Event Stop-Propagation**: `billing-core.js` calls `e.stopPropagation()` and `.off('click')` on `#btn-toggle-search`, `#btn-back-to-search`, and `#btn-view-work-pane`.
   4. **Scoped Fallbacks**: Defined `hideAllViews` and `clearPatient` in `billing-core.js` and exposed on `window` to prevent `ReferenceError` during patient clear/reset workflows.
+
+---
+
+## 14. Free-Form Billing Attribution, Orphaned Catalog Resolution & Cashier Filter Governance
+
+### A. Root Cause Analysis: Skane Revenue Discrepancy
+Following the initial run of `scripts/streamline_skane_departments.php` on the target hospital server, the *Transactions Console* modal (`#myTransactionsModal`) appeared to report **"No departmental revenue recorded"** and ₦0.00 total volume when accessed by system administrators.
+
+Deep forensic review of the database and UI revealed two compounding causes:
+1. **Admin User Pre-Selection in Cashier Filter Dropdown**:
+   - In `resources/views/admin/shared/_my_transactions_modal.blade.php`, the cashier dropdown (`#my-trans-cashier-filter`) rendered an option for each cashier and pre-selected `auth()->id()` whenever `!request()->is('ops-audit*') && auth()->id() == $cashier->id`.
+   - When an Administrator or non-cashier staff (`sysadmin@mail.com`, ID 1) logged in, their own user account was automatically marked `selected`.
+   - Because administrators do not ring up cash sales at patient cashpoints, `payments.user_id = 1` returned 0 transactions. The modal loaded with `cashier_id = 1`, resulting in zero records and triggering the fallback label: *"No departmental revenue recorded"*.
+   - **Solution**: The cashier option `selected` check now inspects `auth()->check() && \App\Models\Payment::where('user_id', auth()->id())->exists()`. Administrators and staff who have never processed cashier transactions automatically default to `value=""` (*"All Cashiers (Facility)"*), instantly displaying full facility-wide telemetry and all active department revenue pills upon opening. Actual cashiers continue to see their own active shift/till pre-selected.
+
+2. **Unassigned Historical Free-Form / Custom Items (`is_free_form = 1`)**:
+   - In `_corehealth_db_v2_skane`, 46 billing requests totaling **₦550,150.00** were processed using custom line items (`DRUGS`, `PHARMACY`, `LAB SERVICES`, `CONSULTATION`, `NURSEBAY`, `DISCHARGE BILL`, `CONSUMABLE`, `PROCEDURE`, `X-RAY`, `ABD USS`, `ULTRASOUND`, `CON`).
+   - Because these records had `service_id IS NULL` and `product_id IS NULL`, initial catalog-join backfills skipped them, leaving `posr.department_id = NULL` and grouping ₦550,150.00 under *General / Unassigned*.
+   - **Solution**: Enhanced both `scripts/streamline_skane_departments.php` and `app/Console/Commands/BackfillDepartmentIds.php` with pattern-matching attribution rules:
+     - `%DRUG%`, `%PHARM%` &rarr; Pharmacy (`department_id = 11`)
+     - `%LAB%` &rarr; Laboratory (`department_id = 9`)
+     - `%CONSULT%`, `CON` &rarr; Consultation / Clinic (`department_id = 1`)
+     - `%X-RAY%`, `%XRAY%`, `%RADIOLOGY%` &rarr; X-ray (`department_id = 10`)
+     - `%USS%`, `%SCAN%`, `%ULTRASOUND%` &rarr; Ultrasound (`department_id = 39`)
+     - `%NURSE%`, `%CONSUMABLE%`, `%DISCHARGE%`, `%PROCEDURE%` &rarr; Nursing (`department_id = 8`)
+
+3. **Orphaned Registration Catalog Entries (`service_id = 286`)**:
+   - 7 historical registration requests (₦15,000.00 total) referenced legacy service ID 286, which was superseded during catalog import.
+   - Attributed directly to Health Records (`department_id = 12`) matching `application_status.registration_category_id = 7`.
+
+4. **Double-Entry Journal Ledger Updates**:
+   - Following POSR attribution, 92 corresponding `journal_entry_lines` (linked via `payments` and `product_or_service_requests`) had their `department_id` backfilled, achieving **100% attribution parity (0 unassigned records)** across both operational and accounting layers.
+
+5. **Instant Reactivity on Date Input Adjustments**:
+   - Added `#my-trans-from-date, #my-trans-to-date` to the filter `change` event listener in `billing-my-transactions.js`, ensuring instant DataTables reloading without requiring explicit button clicks.
 
 

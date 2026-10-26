@@ -492,7 +492,59 @@ if (Schema::hasColumn('product_or_service_requests', 'department_id') && Schema:
         DB::update("UPDATE product_or_service_requests posr JOIN products p ON posr.product_id = p.id SET posr.department_id = p.department_id WHERE posr.department_id IS NULL AND p.department_id IS NOT NULL");
     }
 
-    // 8.3. Backfill JEL for POSR
+    // 8.3. Backfill Free-Form / Custom Requests (is_free_form = 1)
+    echo "    [*] Scanning and attributing free-form billing items...\n";
+    $freeFormPatterns = [
+        'pharmacy' => ['%DRUG%', '%PHARM%'],
+        'lab' => ['%LAB%'],
+        'consultation' => ['%CONSULT%', 'CON'],
+        'xray' => ['%X-RAY%', '%XRAY%', '%RADIOLOGY%'],
+        'ultrasound' => ['%USS%', '%SCAN%', '%ULTRASOUND%'],
+        'nursing' => ['%NURSE%', '%CONSUMABLE%', '%DISCHARGE%', '%PROCEDURE%'],
+    ];
+
+    $freeFormTotal = 0;
+    foreach ($freeFormPatterns as $deptKey => $patterns) {
+        if (!isset($deptMap[$deptKey])) continue;
+        $dId = $deptMap[$deptKey];
+        $ffQuery = DB::table('product_or_service_requests')
+            ->where('is_free_form', 1)
+            ->whereNull('department_id')
+            ->where(function ($sub) use ($patterns) {
+                foreach ($patterns as $pattern) {
+                    if ($pattern === 'CON') {
+                        $sub->orWhere('free_form_name', '=', 'CON');
+                    } else {
+                        $sub->orWhere('free_form_name', 'like', $pattern);
+                    }
+                }
+            });
+        $cnt = $ffQuery->count();
+        if ($cnt > 0) {
+            echo "        [→] Free-form items attributed to {$deptKey} (Dept #{$dId}): {$cnt} items\n";
+            if (!$isDryRun) {
+                $ffQuery->update(['department_id' => $dId]);
+            }
+            $freeFormTotal += $cnt;
+        }
+    }
+    echo "    [•] Total free-form requests attributed: {$freeFormTotal}\n";
+
+    // 8.4. Backfill Orphaned Registration Service Requests (service_id = 286)
+    if (isset($deptMap['health_records'])) {
+        $regOrphanQuery = DB::table('product_or_service_requests')
+            ->whereNull('department_id')
+            ->where('service_id', 286);
+        $regOrphanCnt = $regOrphanQuery->count();
+        if ($regOrphanCnt > 0) {
+            echo "    [•] Orphaned registration requests attributed to Health Records: {$regOrphanCnt} items\n";
+            if (!$isDryRun) {
+                $regOrphanQuery->update(['department_id' => $deptMap['health_records']]);
+            }
+        }
+    }
+
+    // 8.5. Backfill JEL for POSR
     $jelPosrQuery = DB::table('journal_entry_lines as jel')
         ->join('journal_entries as je', function ($join) {
             $join->on('jel.journal_entry_id', '=', 'je.id')
@@ -507,7 +559,7 @@ if (Schema::hasColumn('product_or_service_requests', 'department_id') && Schema:
         DB::update("UPDATE journal_entry_lines jel JOIN journal_entries je ON jel.journal_entry_id = je.id AND je.reference_type = 'App\\\\Models\\\\ProductOrServiceRequest' JOIN product_or_service_requests posr ON posr.id = je.reference_id SET jel.department_id = posr.department_id WHERE jel.department_id IS NULL AND posr.department_id IS NOT NULL");
     }
 
-    // 8.4. Backfill JEL for Payments
+    // 8.6. Backfill JEL for Payments
     $jelPaymentQuery = DB::table('journal_entry_lines as jel')
         ->join('journal_entries as je', function ($join) {
             $join->on('jel.journal_entry_id', '=', 'je.id')
@@ -559,6 +611,40 @@ foreach ($activeDepts as $d) {
 }
 
 echo "================================================================================\n";
+
+if (Schema::hasColumn('product_or_service_requests', 'department_id')) {
+    echo "\n================================================================================\n";
+    echo "  HISTORICAL TRANSACTION ATTRIBUTION AUDIT (POSR)                               \n";
+    echo "================================================================================\n";
+    printf("%-26s | %-12s | %-18s\n", "Department", "Items Count", "Attributed Revenue");
+    echo str_repeat("-", 62) . "\n";
+
+    $posrRollup = DB::table('product_or_service_requests as posr')
+        ->leftJoin('departments as d', 'posr.department_id', '=', 'd.id')
+        ->selectRaw("COALESCE(d.name, 'General / Unassigned') as dept_name, COUNT(*) as cnt, COALESCE(SUM(posr.payable_amount), 0) as total_amt")
+        ->groupBy(DB::raw("COALESCE(d.name, 'General / Unassigned')"))
+        ->orderByDesc('total_amt')
+        ->get();
+
+    foreach ($posrRollup as $r) {
+        printf("%-26s | %-12d | ₦%-18s\n",
+            Str::limit($r->dept_name, 26),
+            $r->cnt,
+            number_format($r->total_amt, 2)
+        );
+    }
+
+    $unassignedPosrCount = DB::table('product_or_service_requests')->whereNull('department_id')->count();
+    $unassignedPosrAmt = DB::table('product_or_service_requests')->whereNull('department_id')->sum('payable_amount');
+    echo str_repeat("-", 62) . "\n";
+    if ($unassignedPosrCount === 0) {
+        echo "[✓] SUCCESS: 100% of all billing items are attributed to active departments! (0 unassigned)\n";
+    } else {
+        echo "[!] WARNING: {$unassignedPosrCount} items remain unassigned (₦" . number_format($unassignedPosrAmt, 2) . ")!\n";
+    }
+    echo "================================================================================\n";
+}
+
 if ($isDryRun) {
     echo "DRY-RUN COMPLETE: Run without --dry-run to commit changes to {$targetDb}.\n";
 } else {

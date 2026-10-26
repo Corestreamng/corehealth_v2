@@ -110,6 +110,66 @@ class BackfillDepartmentIds extends Command
             DB::update("UPDATE product_or_service_requests posr JOIN products p ON posr.product_id = p.id SET posr.department_id = p.department_id WHERE posr.department_id IS NULL AND p.department_id IS NOT NULL");
         }
 
+        // 6b. Free-Form / Custom Requests (is_free_form = 1)
+        $pharmacyDeptId = DB::table('departments')->where('code', 'PHAR')->orWhere('name', 'like', '%pharmacy%')->value('id') ?? 11;
+        $labDeptId = DB::table('departments')->where('code', 'LAB')->orWhere('name', 'like', '%laboratory%')->value('id') ?? 9;
+        $consultDeptId = DB::table('departments')->where('code', 'CONS')->orWhere('name', 'like', '%consultation%')->value('id') ?? 1;
+        $xrayDeptId = DB::table('departments')->where('code', 'XRY')->orWhere('name', 'like', '%x-ray%')->orWhere('name', 'like', '%radiology%')->value('id') ?? 10;
+        $ussDeptId = DB::table('departments')->where('code', 'USS')->orWhere('name', 'like', '%ultrasound%')->value('id') ?? 39;
+        $nursingDeptId = DB::table('departments')->where('code', 'NURS')->orWhere('name', 'like', '%nursing%')->value('id') ?? 8;
+        $recordsDeptId = DB::table('departments')->where('code', 'HRD')->orWhere('name', 'like', '%records%')->orWhere('name', 'like', '%reception%')->value('id') ?? 12;
+
+        $freeFormRules = [
+            $pharmacyDeptId => ['%DRUG%', '%PHARM%'],
+            $labDeptId => ['%LAB%'],
+            $consultDeptId => ['%CONSULT%', 'CON'],
+            $xrayDeptId => ['%X-RAY%', '%XRAY%', '%RADIOLOGY%'],
+            $ussDeptId => ['%USS%', '%SCAN%', '%ULTRASOUND%'],
+            $nursingDeptId => ['%NURSE%', '%CONSUMABLE%', '%DISCHARGE%', '%PROCEDURE%'],
+        ];
+
+        $pendingPosrFreeForm = 0;
+        foreach ($freeFormRules as $dId => $patterns) {
+            if (!$dId) {
+                continue;
+            }
+            $q = DB::table('product_or_service_requests')
+                ->where('is_free_form', 1)
+                ->whereNull('department_id')
+                ->where(function ($sub) use ($patterns) {
+                    foreach ($patterns as $pattern) {
+                        if ($pattern === 'CON') {
+                            $sub->orWhere('free_form_name', '=', 'CON');
+                        } else {
+                            $sub->orWhere('free_form_name', 'like', $pattern);
+                        }
+                    }
+                });
+            $cnt = $q->count();
+            if ($cnt > 0) {
+                $pendingPosrFreeForm += $cnt;
+                if (!$isDryRun) {
+                    $q->update(['department_id' => $dId]);
+                }
+            }
+        }
+        $this->line("Found {$pendingPosrFreeForm} free-form custom requests to backfill.");
+
+        // 6c. Orphaned Registration Service Requests (e.g. service_id = 286)
+        $pendingPosrOrphans = DB::table('product_or_service_requests')
+            ->whereNull('department_id')
+            ->where('service_id', 286)
+            ->count();
+        if ($pendingPosrOrphans > 0) {
+            $this->line("Found {$pendingPosrOrphans} orphaned registration requests to backfill.");
+            if (!$isDryRun) {
+                DB::table('product_or_service_requests')
+                    ->whereNull('department_id')
+                    ->where('service_id', 286)
+                    ->update(['department_id' => $recordsDeptId]);
+            }
+        }
+
         // 7. Journal Entry Lines for POSR
         $pendingJelPosr = DB::table('journal_entry_lines as jel')
             ->join('journal_entries as je', function ($join) {
@@ -150,6 +210,8 @@ class BackfillDepartmentIds extends Command
                 ['Products', $pendingProducts, $isDryRun ? 'Previewed' : 'Updated'],
                 ['ProductOrServiceRequest (Services)', $pendingPosrServices, $isDryRun ? 'Previewed' : 'Updated'],
                 ['ProductOrServiceRequest (Products)', $pendingPosrProducts, $isDryRun ? 'Previewed' : 'Updated'],
+                ['ProductOrServiceRequest (Free-Form)', $pendingPosrFreeForm, $isDryRun ? 'Previewed' : 'Updated'],
+                ['ProductOrServiceRequest (Orphans)', $pendingPosrOrphans, $isDryRun ? 'Previewed' : 'Updated'],
                 ['JournalEntryLines (POSR)', $pendingJelPosr, $isDryRun ? 'Previewed' : 'Updated'],
                 ['JournalEntryLines (Payments)', $pendingJelPayment, $isDryRun ? 'Previewed' : 'Updated'],
             ]

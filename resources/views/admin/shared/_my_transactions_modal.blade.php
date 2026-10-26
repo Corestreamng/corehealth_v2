@@ -10,6 +10,7 @@
     })->orWhereIn('id', function($sq) {
         $sq->select('user_id')->from('payments')->whereNotNull('user_id');
     })->orderBy('surname')->get() : collect();
+    $userHasPayments = auth()->check() ? \App\Models\Payment::where('user_id', auth()->id())->exists() : false;
 @endphp
 <div class="modal fade" id="myTransactionsModal" role="dialog" aria-labelledby="myTransactionsModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-xl modal-dialog-scrollable" role="document">
@@ -63,7 +64,7 @@
                                         <select class="form-select form-select-sm" id="my-trans-cashier-filter">
                                             <option value="">All Cashiers (Facility)</option>
                                             @foreach($allCashiers as $cashier)
-                                                <option value="{{ $cashier->id }}" {{ (!request()->is('ops-audit*') && auth()->id() == $cashier->id) ? 'selected' : '' }}>
+                                                <option value="{{ $cashier->id }}" {{ (!request()->is('ops-audit*') && $userHasPayments && auth()->id() == $cashier->id) ? 'selected' : '' }}>
                                                     {{ $cashier->surname }} {{ $cashier->firstname }}{{ $cashier->othername ? ' ' . $cashier->othername : '' }}
                                                 </option>
                                             @endforeach
