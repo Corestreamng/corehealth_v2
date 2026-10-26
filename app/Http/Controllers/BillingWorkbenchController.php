@@ -350,8 +350,13 @@ class BillingWorkbenchController extends Controller
         $patient = Patient::with('hmo')->findOrFail($patientId);
 
         $itemsQuery = ProductOrServiceRequest::with([
+            'department',
+            'service.department',
+            'service.category.department',
             'service.price',
             'service.category',
+            'product.department',
+            'product.category.department',
             'product.price',
             'product.category',
             'user',
@@ -397,6 +402,8 @@ class BillingWorkbenchController extends Controller
                     'name' => getItemDisplayName($row),
                     'code' => $isFreeForm ? 'CUSTOM' : ($isService ? optional($row->service)->service_code : optional($row->product)->product_code),
                     'category' => $isFreeForm ? 'Custom Items' : ($isService ? optional(optional($row->service)->category)->category_name : optional(optional($row->product)->category)->category_name),
+                    'department_id' => $row->getEffectiveDepartmentId(),
+                    'department_name' => $row->getEffectiveDepartmentName(),
                     'qty' => $storedQty,
                     'price' => $unitPrice,
                     'unit_price' => $unitPrice,
@@ -492,9 +499,21 @@ class BillingWorkbenchController extends Controller
             $payments = $paymentQuery->orderBy('created_at', 'desc')->get();
 
             foreach ($payments as $payment) {
-                $items = ProductOrServiceRequest::with(['service', 'product'])
+                $items = ProductOrServiceRequest::with([
+                    'department',
+                    'service.department',
+                    'service.category.department',
+                    'product.department',
+                    'product.category.department',
+                    'service',
+                    'product',
+                ])
                     ->where('payment_id', $payment->id)
                     ->get();
+
+                $departments = $items->map(function ($item) {
+                    return $item->getEffectiveDepartmentName();
+                })->unique()->filter()->values()->all();
 
                 $receipts->push([
                     'id' => 'pay_' . $payment->id,
@@ -509,6 +528,8 @@ class BillingWorkbenchController extends Controller
                     'datetime' => $payment->created_at,
                     'created_by' => userfullname($payment->user_id),
                     'item_count' => $items->count(),
+                    'departments' => $departments,
+                    'department_summary' => !empty($departments) ? implode(', ', $departments) : 'General',
                     'is_voided' => (bool) $payment->is_voided,
                     'voided_at' => $payment->voided_at ? $payment->voided_at->format('Y-m-d H:i') : null,
                     'void_reason' => $payment->void_reason,

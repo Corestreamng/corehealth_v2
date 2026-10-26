@@ -198,3 +198,45 @@ When cashiers or billers click "Print Receipt" (`.btn-print-tx-receipt`) from wi
 - **Scroll & Focus Retention**:
   - Upon closing `#receiptPreviewModal`, `hidden.bs.modal` checks for active background modals and re-applies `.modal-open` to `<body>`, restoring smooth scrolling and complete interactivity to `#myTransactionsModal`.
 
+---
+
+## 11. Walk-in Sales Benefiting Department, Cart Telemetry & Receipt Preview Governance
+
+### A. Custom / Free-Form Benefiting Department Selection
+- **Intuitive UI Dropdown**: In `resources/views/admin/shared/_walkin_sales_tab.blade.php`, the Custom / Free-Form tab incorporates a prominent Benefiting Department selector (`#walkin-freeform-dept`) populated from active departments (`Department::where('is_active', true)->orderBy('name')->get()`).
+- **Validation & Clinical Guidance**: Requires selection prior to cart addition with helper note (*"Revenue and clinical fulfillment will be attributed to this department"*).
+- **Explicit Persistence**: Stamped on creation into `ProductOrServiceRequest.department_id`, preserving explicit cashier intent over default category fallbacks.
+
+### B. Benefiting Department Visibility in Cart & Recent (24h)
+- **Walk-in Cart**: `#walkin-cart-table` header updated to `Item & Department`; items render with department pill badges (`<span class="badge bg-light text-secondary border"><i class="mdi mdi-office-building"></i> {Dept}</span>`).
+- **Recent 24h List**: `recent-requests-container` renders benefiting department pill badge alongside clinical modality badges and displays `Dept: <strong>...</strong>` in the item metadata strip.
+- **Automatic Cart Tab Switching**: Whenever a new catalog item or custom free-form item is added (`WalkinSales.addItem`, `WalkinSales.handleFreeFormSubmit`), the UI automatically switches focus back from the Recent (24h) tab to `#walkin-cart-pane` (`WalkinSales.switchToCartTab`), ensuring seamless real-time visual confirmation across Billing and Reception workbenches.
+
+### C. Canonical Billing Receipt Reprint Modal Governance
+- **Single Source of Truth**: The canonical Billing Receipt Reprint Modal (`#receiptPreviewModal` with `#modal-receipt-a4`, `#modal-receipt-thermal`, format tabs, and print triggers) is maintained without shadow duplication.
+- **Resolution of Infinite Loading Spinner**: Removed redundant dummy `#receiptPreviewModal` from `resources/views/admin/shared/_my_transactions_modal.blade.php`, ensuring payment confirmations and receipt reprints in Billing and Reception (walk-in sales & consultations) immediately render live A4 and Thermal receipt previews without spinning.
+
+---
+
+## 12. Standalone Facility Department Streamlining & Catalog Backfill Script
+
+- **Target Facility**: Standalone script located at `scripts/streamline_skane_departments.php` configured for target facility databases (e.g. `_corehealth_db_v2_skane`).
+- **Department Streamlining**: Consolidates active departments down to 11 active cost centers: Ultrasound (code `USS`), X-Ray (code `XRY`), Consultation / Clinic (code `CONS`), Health Records (code `HRD`), Laboratory (code `LAB`), Nursing (code `NURS`), Pharmacy (code `PHAR`), Administration (code `ADMIN`), Finance & Accounts (code `FIN`), Billing (code `BILL`), and Store & Inventory (code `STOR`). Deactivates 28 non-applicable departments (`is_active = 0`).
+- **Complete Catalog Mapping**:
+  - Maps 100% of imported service catalog items (Ultrasound: 16 items, X-ray: 16 items, Laboratory: 89 items, Consultation: 1 item, Health Records: 1 item).
+  - Maps 100% of imported pharmacy items (99 products across 18 product categories).
+  - Maps internal store locations (Pharmacy Store to Pharmacy, Central Store to Store & Inventory).
+- **Zero-Downtime Idempotency**: Safe to execute repeatedly with full transaction rollback on error and `--dry-run` inspection support.
+
+---
+
+## 13. Universal Workbench Shell Topbar Toggle Search & Event Bubbling Governance
+
+- **Root Cause**: On the Billing Workbench topbar ribbon, `#btn-toggle-search` was registered via a delegated document click listener in `workbench-shell.js` while concurrently bound with a direct click listener in `billing-core.js`. Unstopped event bubbling caused double execution (`toggleLeftPanel` collapse immediately followed by expand in under 1ms), causing the button to appear completely dead/unresponsive.
+- **Architectural Solution**:
+  1. **Debounce / Throttle Guard in WorkbenchShell**: Added 300ms execution lock (`Date.now() - this.state._lastToggle < 300`) inside `WorkbenchShell.toggleLeftPanel()`, ensuring only a single toggle occurs regardless of event bubbling or duplicate click triggers.
+  2. **Idempotent Shell Event Binding**: `WorkbenchShell.bindEvents()` now enforces `this.state.eventsBound` guard and unbinds prior handlers (`$(document).off('click', ...).on('click', ...)`).
+  3. **Event Stop-Propagation**: `billing-core.js` calls `e.stopPropagation()` and `.off('click')` on `#btn-toggle-search`, `#btn-back-to-search`, and `#btn-view-work-pane`.
+  4. **Scoped Fallbacks**: Defined `hideAllViews` and `clearPatient` in `billing-core.js` and exposed on `window` to prevent `ReferenceError` during patient clear/reset workflows.
+
+

@@ -28,6 +28,31 @@ if (typeof window.wbRoute !== 'function') {
     var queueRefreshInterval = null;
     var vitalTooltip = window.vitalTooltip;
 
+    function hideAllViews() {
+        $('#empty-state').hide().css('display', 'none').addClass('d-none hidden');
+        $('#queue-view').removeClass('active').hide();
+        $('.queue-item').removeClass('active');
+        $('#reports-view').removeClass('active').hide();
+        $('#patient-header').removeClass('active').hide().css('display', 'none').addClass('d-none hidden');
+        $('#workspace-content').removeClass('active').hide().css('display', 'none').addClass('d-none hidden');
+    }
+    window.hideAllViews = hideAllViews;
+
+    function clearPatient() {
+        window.currentPatient = null;
+        currentPatient = null;
+        window.currentPatientData = null;
+        currentPatientData = null;
+        hideAllViews();
+        $('#patient-name').text('');
+        $('#patient-meta').empty();
+        $('#empty-state').show().css('display', 'flex').removeClass('d-none hidden');
+        if ($.fn.DataTable && $.fn.DataTable.isDataTable('#billing-items-table')) {
+            $('#billing-items-table').DataTable().clear().draw();
+        }
+    }
+    window.clearPatient = clearPatient;
+
     $(document).ready(function() {
         // Initialize Universal Workbench Shell Framework
         if (typeof WorkbenchShell !== 'undefined' && WorkbenchShell.init) {
@@ -41,7 +66,7 @@ if (typeof window.wbRoute !== 'function') {
                     }
                 },
                 onPatientCleared: function() {
-                    hideAllViews();
+                    clearPatient();
                 },
                 onTabSwitch: function(tabKey) {
                     switchWorkspaceTab(tabKey);
@@ -113,9 +138,10 @@ if (typeof window.wbRoute !== 'function') {
             renderPendingSubtabContent(status);
         });
 
-        // Navigation buttons (delegates to WorkbenchShell)
-        $('#btn-back-to-search').on('click', function(e) {
+        // Navigation buttons (delegates to WorkbenchShell with stopPropagation)
+        $('#btn-back-to-search').off('click').on('click', function(e) {
             e.preventDefault();
+            e.stopPropagation();
             if (typeof WorkbenchShell !== 'undefined' && WorkbenchShell.showSearchPaneMobile) {
                 WorkbenchShell.showSearchPaneMobile();
             } else {
@@ -124,8 +150,9 @@ if (typeof window.wbRoute !== 'function') {
             }
         });
 
-        $('#btn-view-work-pane').on('click', function(e) {
+        $('#btn-view-work-pane').off('click').on('click', function(e) {
             e.preventDefault();
+            e.stopPropagation();
             if (typeof WorkbenchShell !== 'undefined' && WorkbenchShell.showWorkPaneMobile) {
                 WorkbenchShell.showWorkPaneMobile();
             } else {
@@ -134,8 +161,9 @@ if (typeof window.wbRoute !== 'function') {
             }
         });
 
-        $('#btn-toggle-search').on('click', function(e) {
+        $('#btn-toggle-search').off('click').on('click', function(e) {
             e.preventDefault();
+            e.stopPropagation();
             if (typeof WorkbenchShell !== 'undefined' && WorkbenchShell.toggleLeftPanel) {
                 WorkbenchShell.toggleLeftPanel();
             } else {
@@ -1590,10 +1618,14 @@ if (typeof window.wbRoute !== 'function') {
                    <i class="mdi mdi-printer"></i> ${isVoided ? 'Voided Receipt' : 'Reprint'}
                </button>`;
 
-            // For deposits, show items as "Deposit" indicator
+            // For deposits, show items as "Deposit" indicator; for payments, show count and benefiting departments
+            let deptsBadge = '';
+            if (receipt.departments && receipt.departments.length > 0) {
+                deptsBadge = '<div class="mt-1">' + receipt.departments.map(d => `<span class="badge badge-light border text-secondary font-weight-normal me-1" style="font-size:0.7rem;"><i class="mdi mdi-office-building"></i> ${escapeHtml(d)}</span>`).join(' ') + '</div>';
+            }
             const itemsDisplay = isDeposit ?
                 `<span class="text-success"><i class="mdi mdi-arrow-down"></i> Deposit</span>` :
-                `${itemCount} item(s)`;
+                `<span>${itemCount} item(s)</span>${deptsBadge}`;
 
             const rowClass = isVoided ? 'table-danger text-muted' : (isDeposit ? 'table-success-light' : '');
             const totalDisplay = isVoided ?

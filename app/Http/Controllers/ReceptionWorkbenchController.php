@@ -88,7 +88,9 @@ class ReceptionWorkbenchController extends Controller
                 || $user->can('see-accounts');
         }
 
-        return view('admin.reception.workbench', compact('clinics', 'hmos', 'registrationServices', 'canBillUser'));
+        $departments = \App\Models\Department::where('is_active', true)->orderBy('name')->get();
+
+        return view('admin.reception.workbench', compact('clinics', 'hmos', 'registrationServices', 'canBillUser', 'departments'));
     }
 
     /**
@@ -647,7 +649,7 @@ class ReceptionWorkbenchController extends Controller
     {
         $search = $request->get('q', '');
 
-        $query = Service::with(['price', 'category'])
+        $query = Service::with(['price', 'category.department', 'department'])
             ->whereHas('category', function ($q) {
                 $q->where('category_name', 'like', '%lab%')
                   ->orWhere('category_name', 'like', '%investigation%')
@@ -672,6 +674,8 @@ class ReceptionWorkbenchController extends Controller
                     'code' => $s->service_code,
                     'price' => $s->price->sale_price ?? 0,
                     'category' => $s->category->category_name ?? 'Lab',
+                    'department_id' => $s->getEffectiveDepartmentId(),
+                    'department_name' => $s->getEffectiveDepartmentName('Laboratory'),
                 ];
             });
 
@@ -685,7 +689,7 @@ class ReceptionWorkbenchController extends Controller
     {
         $search = $request->get('q', '');
 
-        $query = Service::with(['price', 'category'])
+        $query = Service::with(['price', 'category.department', 'department'])
             ->whereHas('category', function ($q) {
                 $q->where('category_name', 'like', '%imaging%')
                   ->orWhere('category_name', 'like', '%radiology%')
@@ -712,6 +716,8 @@ class ReceptionWorkbenchController extends Controller
                     'code' => $s->service_code,
                     'price' => $s->price->sale_price ?? 0,
                     'category' => $s->category->category_name ?? 'Imaging',
+                    'department_id' => $s->getEffectiveDepartmentId(),
+                    'department_name' => $s->getEffectiveDepartmentName('Radiology & Imaging'),
                 ];
             });
 
@@ -725,7 +731,7 @@ class ReceptionWorkbenchController extends Controller
     {
         $search = $request->get('q', '');
 
-        $query = Service::with(['price', 'category'])
+        $query = Service::with(['price', 'category.department', 'department'])
             ->whereHas('category', function ($q) {
                 $q->where('category_name', 'like', '%procedure%')
                   ->orWhere('category_name', 'like', '%surgery%')
@@ -752,6 +758,8 @@ class ReceptionWorkbenchController extends Controller
                     'code' => $s->service_code,
                     'price' => $s->price->sale_price ?? 0,
                     'category' => $s->category->category_name ?? 'Procedure',
+                    'department_id' => $s->getEffectiveDepartmentId(),
+                    'department_name' => $s->getEffectiveDepartmentName('Surgical / Theatre'),
                 ];
             });
 
@@ -765,7 +773,7 @@ class ReceptionWorkbenchController extends Controller
     {
         $search = $request->get('q', '');
 
-        $query = Product::with(['price', 'category'])
+        $query = Product::with(['price', 'category.department', 'department'])
             ->walkInSellable()
             ->where('status', 1);
 
@@ -789,6 +797,8 @@ class ReceptionWorkbenchController extends Controller
                     'price' => $p->price->current_sale_price ?? 0,
                     'category' => $p->category->category_name ?? 'Product',
                     'stock' => $p->current_quantity ?? 0,
+                    'department_id' => $p->getEffectiveDepartmentId(),
+                    'department_name' => $p->getEffectiveDepartmentName('Pharmacy'),
                 ];
             });
 
@@ -814,18 +824,24 @@ class ReceptionWorkbenchController extends Controller
         // Get base price
         $basePrice = 0;
         $itemName = '';
+        $departmentId = null;
+        $departmentName = null;
 
         if ($serviceId) {
-            $service = Service::with('price')->find($serviceId);
+            $service = Service::with(['price', 'category.department', 'department'])->find($serviceId);
             if ($service) {
                 $basePrice = $service->price->sale_price ?? 0;
                 $itemName = $service->service_name;
+                $departmentId = $service->getEffectiveDepartmentId();
+                $departmentName = $service->getEffectiveDepartmentName('General');
             }
         } elseif ($productId) {
-            $product = Product::with('price')->find($productId);
+            $product = Product::with(['price', 'category.department', 'department'])->find($productId);
             if ($product) {
                 $basePrice = $product->price->current_sale_price ?? 0;
                 $itemName = $product->product_name;
+                $departmentId = $product->getEffectiveDepartmentId();
+                $departmentName = $product->getEffectiveDepartmentName('Pharmacy');
             }
         }
 
@@ -872,6 +888,8 @@ class ReceptionWorkbenchController extends Controller
             'validation_status' => $validationStatus,
             'validation_required' => in_array($coverageMode, ['primary', 'secondary']),
             'hmo_name' => $patient->hmo->name ?? 'Private',
+            'department_id' => $departmentId,
+            'department_name' => $departmentName,
         ]);
     }
 
@@ -1098,6 +1116,7 @@ class ReceptionWorkbenchController extends Controller
             'items' => 'required|array|min:1',
             'items.*.type' => 'required|in:lab,imaging,product,procedure,free_form',
             'items.*.id' => 'nullable',
+            'items.*.department_id' => 'nullable|integer',
             'items.*.qty' => 'nullable|integer|min:1',
             'items.*.quantity' => 'nullable|integer|min:1',
             'items.*.name' => 'nullable|string',
@@ -1118,6 +1137,7 @@ class ReceptionWorkbenchController extends Controller
             foreach ($request->items as $item) {
                 $qty = isset($item['qty']) ? (int) $item['qty'] : (isset($item['quantity']) ? (int) $item['quantity'] : 1);
                 $type = $item['type'];
+                $deptId = !empty($item['department_id']) ? (int) $item['department_id'] : null;
 
                 // Granular walkin permission check
                 if ($type === 'lab' && !($settings->walkin_lab_enabled ?? true)) {
@@ -1138,7 +1158,7 @@ class ReceptionWorkbenchController extends Controller
 
                 if ($type === 'lab') {
                     // Create lab service request
-                    $serviceRequest = $this->createServiceRequest($patient, $item['id'], null);
+                    $serviceRequest = $this->createServiceRequest($patient, $item['id'], null, 1, $deptId);
 
                     $isFullyCovered = ($serviceRequest->payable_amount !== null && (float) $serviceRequest->payable_amount <= 0) || !empty($serviceRequest->payment_id);
                     $labRequest = new LabServiceRequest();
@@ -1160,11 +1180,13 @@ class ReceptionWorkbenchController extends Controller
                         'service_request_id' => $serviceRequest->id,
                         'payable_amount' => (float)($serviceRequest->payable_amount ?? 0),
                         'claims_amount' => (float)($serviceRequest->claims_amount ?? 0),
+                        'department_id' => $serviceRequest->getEffectiveDepartmentId(),
+                        'department_name' => $serviceRequest->getEffectiveDepartmentName('Laboratory'),
                     ];
 
                 } elseif ($type === 'imaging') {
                     // Create imaging service request
-                    $serviceRequest = $this->createServiceRequest($patient, $item['id'], null);
+                    $serviceRequest = $this->createServiceRequest($patient, $item['id'], null, 1, $deptId);
 
                     $isFullyCovered = ($serviceRequest->payable_amount !== null && (float) $serviceRequest->payable_amount <= 0) || !empty($serviceRequest->payment_id);
                     $imagingRequest = new ImagingServiceRequest();
@@ -1186,11 +1208,13 @@ class ReceptionWorkbenchController extends Controller
                         'service_request_id' => $serviceRequest->id,
                         'payable_amount' => (float)($serviceRequest->payable_amount ?? 0),
                         'claims_amount' => (float)($serviceRequest->claims_amount ?? 0),
+                        'department_id' => $serviceRequest->getEffectiveDepartmentId(),
+                        'department_name' => $serviceRequest->getEffectiveDepartmentName('Radiology & Imaging'),
                     ];
 
                 } elseif ($type === 'product') {
                     // Create product request
-                    $serviceRequest = $this->createServiceRequest($patient, null, $item['id'], $qty);
+                    $serviceRequest = $this->createServiceRequest($patient, null, $item['id'], $qty, $deptId);
 
                     $isFullyCovered = ($serviceRequest->payable_amount !== null && (float) $serviceRequest->payable_amount <= 0) || !empty($serviceRequest->payment_id);
                     $productRequest = new ProductRequest();
@@ -1211,11 +1235,13 @@ class ReceptionWorkbenchController extends Controller
                         'service_request_id' => $serviceRequest->id,
                         'payable_amount' => (float)($serviceRequest->payable_amount ?? 0),
                         'claims_amount' => (float)($serviceRequest->claims_amount ?? 0),
+                        'department_id' => $serviceRequest->getEffectiveDepartmentId(),
+                        'department_name' => $serviceRequest->getEffectiveDepartmentName('Pharmacy'),
                     ];
 
                 } elseif ($type === 'procedure') {
                     // Create procedure request
-                    $serviceRequest = $this->createServiceRequest($patient, $item['id'], null, $qty);
+                    $serviceRequest = $this->createServiceRequest($patient, $item['id'], null, $qty, $deptId);
 
                     $proc = new \App\Models\Procedure();
                     $proc->service_id = $item['id'];
@@ -1233,6 +1259,8 @@ class ReceptionWorkbenchController extends Controller
                         'service_request_id' => $serviceRequest->id,
                         'payable_amount' => (float)($serviceRequest->payable_amount ?? 0),
                         'claims_amount' => (float)($serviceRequest->claims_amount ?? 0),
+                        'department_id' => $serviceRequest->getEffectiveDepartmentId(),
+                        'department_name' => $serviceRequest->getEffectiveDepartmentName('Surgery / Theatre'),
                     ];
 
                 } elseif ($type === 'free_form') {
@@ -1248,6 +1276,9 @@ class ReceptionWorkbenchController extends Controller
                     $serviceRequest->is_free_form = true;
                     $serviceRequest->free_form_name = $name;
                     $serviceRequest->free_form_description = $item['description'] ?? null;
+                    if (!empty($deptId)) {
+                        $serviceRequest->department_id = $deptId;
+                    }
                     $serviceRequest->is_billable = $isBillable;
                     $serviceRequest->qty = $qty;
                     $serviceRequest->amount = $unitPrice * $qty;
@@ -1264,6 +1295,8 @@ class ReceptionWorkbenchController extends Controller
                         'payable_amount' => (float) $serviceRequest->payable_amount,
                         'claims_amount' => 0,
                         'is_billable' => (bool) $isBillable,
+                        'department_id' => $serviceRequest->getEffectiveDepartmentId(),
+                        'department_name' => $serviceRequest->getEffectiveDepartmentName('General'),
                     ];
                 }
             }
@@ -1290,7 +1323,7 @@ class ReceptionWorkbenchController extends Controller
     /**
      * Helper to create ProductOrServiceRequest with HMO tariff
      */
-    private function createServiceRequest($patient, $serviceId = null, $productId = null, $qty = 1)
+    private function createServiceRequest($patient, $serviceId = null, $productId = null, $qty = 1, $departmentId = null)
     {
         $serviceRequest = new ProductOrServiceRequest();
         $serviceRequest->service_id = $serviceId;
@@ -1299,6 +1332,9 @@ class ReceptionWorkbenchController extends Controller
         $serviceRequest->patient_id = $patient->id;
         $serviceRequest->staff_user_id = Auth::id();
         $serviceRequest->qty = $qty;
+        if (!empty($departmentId)) {
+            $serviceRequest->department_id = (int)$departmentId;
+        }
 
         // Apply HMO tariff if applicable
         if ($patient->hmo_id && $patient->hmo_id > 1) {
@@ -2495,7 +2531,7 @@ class ReceptionWorkbenchController extends Controller
         $requests = collect();
 
         // Lab Requests
-        $labRequests = LabServiceRequest::with(['service.price', 'productOrServiceRequest.payment'])
+        $labRequests = LabServiceRequest::with(['service.department', 'service.category.department', 'service.price', 'productOrServiceRequest.department', 'productOrServiceRequest.payment'])
             ->where('patient_id', $patientId)
             ->where('created_at', '>=', $since)
             ->orderBy('created_at', 'desc')
@@ -2515,6 +2551,8 @@ class ReceptionWorkbenchController extends Controller
                     'type' => 'lab',
                     'type_label' => 'Lab Test',
                     'name' => optional($req->service)->service_name ?? 'Unknown Service',
+                    'department_id' => $posr ? $posr->getEffectiveDepartmentId() : ($req->service ? $req->service->getEffectiveDepartment()?->id : null),
+                    'department_name' => $posr ? $posr->getEffectiveDepartmentName('Laboratory') : ($req->service ? $req->service->getEffectiveDepartmentName('Laboratory') : 'Laboratory'),
                     'price' => $price,
                     'hmo_covers' => $hmoCovers,
                     'payable' => $payable,
@@ -2527,7 +2565,7 @@ class ReceptionWorkbenchController extends Controller
         $requests = $requests->merge($labRequests);
 
         // Imaging Requests
-        $imagingRequests = ImagingServiceRequest::with(['service.price', 'productOrServiceRequest.payment'])
+        $imagingRequests = ImagingServiceRequest::with(['service.department', 'service.category.department', 'service.price', 'productOrServiceRequest.department', 'productOrServiceRequest.payment'])
             ->where('patient_id', $patientId)
             ->where('created_at', '>=', $since)
             ->orderBy('created_at', 'desc')
@@ -2547,6 +2585,8 @@ class ReceptionWorkbenchController extends Controller
                     'type' => 'imaging',
                     'type_label' => 'Imaging',
                     'name' => optional($req->service)->service_name ?? 'Unknown Service',
+                    'department_id' => $posr ? $posr->getEffectiveDepartmentId() : ($req->service ? $req->service->getEffectiveDepartment()?->id : null),
+                    'department_name' => $posr ? $posr->getEffectiveDepartmentName('Radiology & Imaging') : ($req->service ? $req->service->getEffectiveDepartmentName('Radiology & Imaging') : 'Radiology & Imaging'),
                     'price' => $price,
                     'hmo_covers' => $hmoCovers,
                     'payable' => $payable,
@@ -2559,7 +2599,7 @@ class ReceptionWorkbenchController extends Controller
         $requests = $requests->merge($imagingRequests);
 
         // Product Requests
-        $productRequests = ProductRequest::with(['product.price', 'productOrServiceRequest.payment'])
+        $productRequests = ProductRequest::with(['product.department', 'product.category.department', 'product.price', 'productOrServiceRequest.department', 'productOrServiceRequest.payment'])
             ->where('patient_id', $patientId)
             ->where('created_at', '>=', $since)
             ->orderBy('created_at', 'desc')
@@ -2581,6 +2621,8 @@ class ReceptionWorkbenchController extends Controller
                     'type' => 'product',
                     'type_label' => 'Product',
                     'name' => optional($req->product)->product_name ?? 'Unknown Product',
+                    'department_id' => $posr ? $posr->getEffectiveDepartmentId() : ($req->product ? $req->product->getEffectiveDepartment()?->id : null),
+                    'department_name' => $posr ? $posr->getEffectiveDepartmentName('Pharmacy') : ($req->product ? $req->product->getEffectiveDepartmentName('Pharmacy') : 'Pharmacy'),
                     'price' => $price,
                     'hmo_covers' => $hmoCovers,
                     'payable' => $payable,
@@ -2593,7 +2635,7 @@ class ReceptionWorkbenchController extends Controller
         $requests = $requests->merge($productRequests);
 
         // Procedure Requests
-        $procedureRequests = \App\Models\Procedure::with(['service.price', 'productOrServiceRequest.payment'])
+        $procedureRequests = \App\Models\Procedure::with(['service.department', 'service.category.department', 'service.price', 'productOrServiceRequest.department', 'productOrServiceRequest.payment'])
             ->where('patient_id', $patientId)
             ->where('created_at', '>=', $since)
             ->orderBy('created_at', 'desc')
@@ -2613,6 +2655,8 @@ class ReceptionWorkbenchController extends Controller
                     'type' => 'procedure',
                     'type_label' => 'Procedure',
                     'name' => optional($req->service)->service_name ?? 'Unknown Procedure',
+                    'department_id' => $posr ? $posr->getEffectiveDepartmentId() : ($req->service ? $req->service->getEffectiveDepartment()?->id : null),
+                    'department_name' => $posr ? $posr->getEffectiveDepartmentName('Surgery / Theatre') : ($req->service ? $req->service->getEffectiveDepartmentName('Surgery / Theatre') : 'Surgery / Theatre'),
                     'price' => $price,
                     'hmo_covers' => $hmoCovers,
                     'payable' => $payable,
@@ -2625,7 +2669,7 @@ class ReceptionWorkbenchController extends Controller
         $requests = $requests->merge($procedureRequests);
 
         // Free-Form Requests
-        $freeFormRequests = ProductOrServiceRequest::with(['payment'])
+        $freeFormRequests = ProductOrServiceRequest::with(['department', 'payment'])
             ->where('patient_id', $patientId)
             ->where('is_free_form', true)
             ->where('created_at', '>=', $since)
@@ -2646,6 +2690,8 @@ class ReceptionWorkbenchController extends Controller
                     'type' => 'free_form',
                     'type_label' => 'Custom Item',
                     'name' => $posr->free_form_name ?? 'Custom Item',
+                    'department_id' => $posr->getEffectiveDepartmentId(),
+                    'department_name' => $posr->getEffectiveDepartmentName('General'),
                     'price' => $price,
                     'hmo_covers' => $hmoCovers,
                     'payable' => $payable,
@@ -2691,7 +2737,7 @@ class ReceptionWorkbenchController extends Controller
 
         // Lab Requests
         if (!$typeFilter || $typeFilter === 'lab') {
-            $labQuery = LabServiceRequest::with(['service.price', 'productOrServiceRequest.payment', 'doctor'])
+            $labQuery = LabServiceRequest::with(['service.department', 'service.category.department', 'service.price', 'productOrServiceRequest.department', 'productOrServiceRequest.payment', 'doctor'])
                 ->where('patient_id', $patientId);
 
             if ($dateFrom) {
@@ -2712,6 +2758,8 @@ class ReceptionWorkbenchController extends Controller
                         'type' => 'lab',
                         'type_label' => 'Lab Test',
                         'name' => optional($req->service)->service_name ?? 'Unknown Service',
+                        'department_id' => $posr ? $posr->getEffectiveDepartmentId() : ($req->service ? $req->service->getEffectiveDepartment()?->id : null),
+                        'department_name' => $posr ? $posr->getEffectiveDepartmentName('Laboratory') : ($req->service ? $req->service->getEffectiveDepartmentName('Laboratory') : 'Laboratory'),
                         'price' => $posr ? ($posr->payable_amount + $posr->claims_amount) : $basePrice,
                         'hmo_covers' => $posr->claims_amount ?? 0,
                         'payable' => $posr->payable_amount ?? $basePrice,
@@ -2732,7 +2780,7 @@ class ReceptionWorkbenchController extends Controller
 
         // Imaging Requests
         if (!$typeFilter || $typeFilter === 'imaging') {
-            $imagingQuery = ImagingServiceRequest::with(['service.price', 'productOrServiceRequest.payment', 'doctor'])
+            $imagingQuery = ImagingServiceRequest::with(['service.department', 'service.category.department', 'service.price', 'productOrServiceRequest.department', 'productOrServiceRequest.payment', 'doctor'])
                 ->where('patient_id', $patientId);
 
             if ($dateFrom) {
@@ -2753,6 +2801,8 @@ class ReceptionWorkbenchController extends Controller
                         'type' => 'imaging',
                         'type_label' => 'Imaging',
                         'name' => optional($req->service)->service_name ?? 'Unknown Service',
+                        'department_id' => $posr ? $posr->getEffectiveDepartmentId() : ($req->service ? $req->service->getEffectiveDepartment()?->id : null),
+                        'department_name' => $posr ? $posr->getEffectiveDepartmentName('Radiology & Imaging') : ($req->service ? $req->service->getEffectiveDepartmentName('Radiology & Imaging') : 'Radiology & Imaging'),
                         'price' => $posr ? ($posr->payable_amount + $posr->claims_amount) : $basePrice,
                         'hmo_covers' => $posr->claims_amount ?? 0,
                         'payable' => $posr->payable_amount ?? $basePrice,
@@ -2773,7 +2823,7 @@ class ReceptionWorkbenchController extends Controller
 
         // Product Requests
         if (!$typeFilter || $typeFilter === 'product') {
-            $productQuery = ProductRequest::with(['product.price', 'productOrServiceRequest.payment', 'doctor'])
+            $productQuery = ProductRequest::with(['product.department', 'product.category.department', 'product.price', 'productOrServiceRequest.department', 'productOrServiceRequest.payment', 'doctor'])
                 ->where('patient_id', $patientId);
 
             if ($dateFrom) {
@@ -2796,6 +2846,8 @@ class ReceptionWorkbenchController extends Controller
                         'type' => 'product',
                         'type_label' => 'Product',
                         'name' => optional($req->product)->product_name ?? 'Unknown Product',
+                        'department_id' => $posr ? $posr->getEffectiveDepartmentId() : ($req->product ? $req->product->getEffectiveDepartment()?->id : null),
+                        'department_name' => $posr ? $posr->getEffectiveDepartmentName('Pharmacy') : ($req->product ? $req->product->getEffectiveDepartmentName('Pharmacy') : 'Pharmacy'),
                         'price' => $posr ? ($posr->payable_amount + $posr->claims_amount) : $basePrice,
                         'hmo_covers' => $posr->claims_amount ?? 0,
                         'payable' => $posr->payable_amount ?? $basePrice,
@@ -2814,9 +2866,9 @@ class ReceptionWorkbenchController extends Controller
             $allRequests = $allRequests->merge($productRequests);
         }
 
-        // Pure Services & Products (POSR only)
-        if (!$typeFilter || in_array($typeFilter, ['service', 'product'])) {
-            $posrQuery = ProductOrServiceRequest::with(['service.price', 'product.price', 'payment', 'staff', 'sale'])
+        // Pure Services & Products & Custom Items (POSR only)
+        if (!$typeFilter || in_array($typeFilter, ['service', 'product', 'free_form'])) {
+            $posrQuery = ProductOrServiceRequest::with(['department', 'service.department', 'service.category.department', 'service.price', 'product.department', 'product.category.department', 'product.price', 'payment', 'staff', 'sale'])
                 ->where('user_id', $patient->user_id)
                 ->where('is_bundle_item', false)
                 ->whereDoesntHave('productRequest')
@@ -2836,24 +2888,37 @@ class ReceptionWorkbenchController extends Controller
 
             $posrRequests = $posrQuery->orderBy('created_at', 'desc')->get()
                 ->map(function ($posr) use ($typeFilter) {
+                    $isFreeForm = (bool) $posr->is_free_form;
                     $isProduct = !is_null($posr->product_id);
-                    $type = $isProduct ? 'product' : 'service';
+
+                    if ($isFreeForm) {
+                        $type = 'free_form';
+                        $typeLabel = 'Custom Item';
+                        $name = $posr->free_form_name ?? 'Custom Item';
+                        $prefix = 'CST-';
+                    } elseif ($isProduct) {
+                        $type = 'product';
+                        $typeLabel = 'Product';
+                        $name = optional($posr->product)->product_name ?? 'Unknown Product';
+                        $prefix = 'PRD-';
+                    } else {
+                        $type = 'service';
+                        $typeLabel = 'Service';
+                        $name = optional($posr->service)->service_name ?? 'Unknown Service';
+                        $prefix = 'SVC-';
+                    }
 
                     if ($typeFilter && $typeFilter !== $type) {
                         return null;
                     }
 
                     $qty = $posr->qty ?? 1;
-                    $unitPrice = $isProduct
-                        ? (optional(optional($posr->product)->price)->current_sale_price ?? 0)
-                        : (optional(optional($posr->service)->price)->sale_price ?? 0);
+                    $unitPrice = $isFreeForm
+                        ? (float) ($posr->payable_amount ?? 0)
+                        : ($isProduct
+                            ? (optional(optional($posr->product)->price)->current_sale_price ?? 0)
+                            : (optional(optional($posr->service)->price)->sale_price ?? 0));
                     $basePrice = $unitPrice * $qty;
-
-                    $name = $isProduct
-                        ? (optional($posr->product)->product_name ?? 'Unknown Product')
-                        : (optional($posr->service)->service_name ?? 'Unknown Service');
-
-                    $prefix = $isProduct ? 'PRD-' : 'SVC-';
 
                     $deliveryStatus = 'Pending Billing';
                     $deliveryStatusCode = 'pending';
@@ -2876,8 +2941,10 @@ class ReceptionWorkbenchController extends Controller
                         'id' => $posr->id,
                         'request_no' => $prefix . str_pad($posr->id, 6, '0', STR_PAD_LEFT),
                         'type' => $type,
-                        'type_label' => $isProduct ? 'Product' : 'Service',
+                        'type_label' => $typeLabel,
                         'name' => $name,
+                        'department_id' => $posr->getEffectiveDepartmentId(),
+                        'department_name' => $posr->getEffectiveDepartmentName('General'),
                         'price' => $posr->payable_amount + $posr->claims_amount,
                         'hmo_covers' => $posr->claims_amount ?? 0,
                         'payable' => $posr->payable_amount ?? $basePrice,
@@ -2895,6 +2962,15 @@ class ReceptionWorkbenchController extends Controller
                 })->filter();
 
             $allRequests = $allRequests->merge($posrRequests);
+        }
+
+        // Apply department filter
+        if ($request->department_filter) {
+            $deptFilter = $request->department_filter;
+            $allRequests = $allRequests->filter(function ($req) use ($deptFilter) {
+                return (string)($req['department_id'] ?? '') === (string)$deptFilter
+                    || strcasecmp((string)($req['department_name'] ?? ''), (string)$deptFilter) === 0;
+            });
         }
 
         // Apply billing filter
@@ -2917,6 +2993,11 @@ class ReceptionWorkbenchController extends Controller
         return DataTables::of($allRequests)
             ->addColumn('date_formatted', function ($row) {
                 return Carbon::parse($row['created_at'])->format('d M Y H:i');
+            })
+            ->addColumn('department_badge', function ($row) {
+                $deptName = htmlspecialchars($row['department_name'] ?? 'General');
+
+                return '<span class="badge badge-light border text-dark font-weight-medium" style="font-size: 0.75rem;"><i class="mdi mdi-office-building mr-1 text-muted"></i>' . $deptName . '</span>';
             })
             ->addColumn('price_formatted', function ($row) {
                 return '₦' . number_format($row['price'], 2);
@@ -2950,6 +3031,8 @@ class ReceptionWorkbenchController extends Controller
                     'lab' => 'badge-info',
                     'imaging' => 'badge-warning',
                     'product' => 'badge-success',
+                    'procedure' => 'badge-primary',
+                    'free_form' => 'badge-secondary',
                 ];
 
                 return '<span class="badge ' . ($typeColors[$row['type']] ?? 'badge-secondary') . '">' . $row['type_label'] . '</span>';
@@ -2975,7 +3058,7 @@ class ReceptionWorkbenchController extends Controller
 
                 return $actions;
             })
-            ->rawColumns(['billing_badge', 'delivery_badge', 'type_badge', 'actions'])
+            ->rawColumns(['department_badge', 'billing_badge', 'delivery_badge', 'type_badge', 'actions'])
             ->make(true);
     }
 
@@ -2989,6 +3072,7 @@ class ReceptionWorkbenchController extends Controller
         // Date filters
         $dateFrom = $request->date_from ? Carbon::parse($request->date_from)->startOfDay() : null;
         $dateTo = $request->date_to ? Carbon::parse($request->date_to)->endOfDay() : null;
+        $deptFilter = $request->department_filter;
 
         $stats = [
             'total_requests' => 0,
@@ -3005,6 +3089,18 @@ class ReceptionWorkbenchController extends Controller
         }
         if ($dateTo) {
             $labQuery->where('created_at', '<=', $dateTo);
+        }
+        if ($deptFilter) {
+            $labQuery->where(function ($q) use ($deptFilter) {
+                $q->whereHas('productOrServiceRequest', function ($pq) use ($deptFilter) {
+                    $pq->where('department_id', $deptFilter);
+                })->orWhereHas('service', function ($sq) use ($deptFilter) {
+                    $sq->where('department_id', $deptFilter)
+                       ->orWhereHas('category', function ($cq) use ($deptFilter) {
+                           $cq->where('department_id', $deptFilter);
+                       });
+                });
+            });
         }
         $labRequests = $labQuery->get();
 
@@ -3026,6 +3122,18 @@ class ReceptionWorkbenchController extends Controller
         if ($dateTo) {
             $imagingQuery->where('created_at', '<=', $dateTo);
         }
+        if ($deptFilter) {
+            $imagingQuery->where(function ($q) use ($deptFilter) {
+                $q->whereHas('productOrServiceRequest', function ($pq) use ($deptFilter) {
+                    $pq->where('department_id', $deptFilter);
+                })->orWhereHas('service', function ($sq) use ($deptFilter) {
+                    $sq->where('department_id', $deptFilter)
+                       ->orWhereHas('category', function ($cq) use ($deptFilter) {
+                           $cq->where('department_id', $deptFilter);
+                       });
+                });
+            });
+        }
         $imagingRequests = $imagingQuery->get();
 
         $stats['total_requests'] += $imagingRequests->count();
@@ -3045,6 +3153,18 @@ class ReceptionWorkbenchController extends Controller
         }
         if ($dateTo) {
             $productQuery->where('created_at', '<=', $dateTo);
+        }
+        if ($deptFilter) {
+            $productQuery->where(function ($q) use ($deptFilter) {
+                $q->whereHas('productOrServiceRequest', function ($pq) use ($deptFilter) {
+                    $pq->where('department_id', $deptFilter);
+                })->orWhereHas('product', function ($pq) use ($deptFilter) {
+                    $pq->where('department_id', $deptFilter)
+                       ->orWhereHas('category', function ($cq) use ($deptFilter) {
+                           $cq->where('department_id', $deptFilter);
+                       });
+                });
+            });
         }
         $productRequests = $productQuery->get();
 
@@ -3073,6 +3193,23 @@ class ReceptionWorkbenchController extends Controller
         }
         if ($dateTo) {
             $posrQuery->where('created_at', '<=', $dateTo);
+        }
+        if ($deptFilter) {
+            $posrQuery->where(function ($q) use ($deptFilter) {
+                $q->where('department_id', $deptFilter)
+                    ->orWhereHas('service', function ($sq) use ($deptFilter) {
+                        $sq->where('department_id', $deptFilter)
+                           ->orWhereHas('category', function ($cq) use ($deptFilter) {
+                               $cq->where('department_id', $deptFilter);
+                           });
+                    })
+                    ->orWhereHas('product', function ($pq) use ($deptFilter) {
+                        $pq->where('department_id', $deptFilter)
+                           ->orWhereHas('category', function ($cq) use ($deptFilter) {
+                               $cq->where('department_id', $deptFilter);
+                           });
+                    });
+            });
         }
 
         $posrRequests = $posrQuery->get();

@@ -105,7 +105,9 @@
                 const type = $(this).data('type');
                 const name = $(this).data('name');
                 const price = parseFloat($(this).data('price')) || 0;
-                self.addItem(id, type, name, price);
+                const deptId = $(this).data('department-id');
+                const deptName = $(this).data('department-name');
+                self.addItem(id, type, name, price, deptId, deptName);
             });
 
             // Free-form submission
@@ -247,6 +249,8 @@
             items.forEach(function(item) {
                 const price = parseFloat(item.price || item.current_sale_price || 0);
                 const codeBadge = item.code ? `<span class="badge bg-light text-dark border ms-1 font-11">${self.escapeHtml(item.code)}</span>` : '';
+                const deptName = item.department_name || (type === 'lab' ? 'Laboratory' : (type === 'imaging' ? 'Radiology & Imaging' : (type === 'product' ? 'Pharmacy' : 'General')));
+                const deptBadge = `<span class="badge bg-light text-secondary border ms-1 font-11" title="Benefiting Department"><i class="mdi mdi-office-building font-10"></i> ${self.escapeHtml(deptName)}</span>`;
 
                 $container.append(`
                     <div class="walkin-service-item d-flex justify-content-between align-items-center p-2 border-bottom">
@@ -254,6 +258,7 @@
                             <span class="badge bg-${typeMeta.badge} text-white font-11">${typeMeta.label}</span>
                             ${codeBadge}
                             <span class="ms-2 fw-bold font-13">${self.escapeHtml(item.name || item.product_name || item.service_name)}</span>
+                            ${deptBadge}
                         </div>
                         <div class="d-flex align-items-center">
                             <span class="text-muted me-3 fw-bold font-13">₦${price.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
@@ -261,7 +266,9 @@
                                     data-id="${item.id}"
                                     data-type="${type}"
                                     data-name="${self.escapeHtml(item.name || item.product_name || item.service_name)}"
-                                    data-price="${price}">
+                                    data-price="${price}"
+                                    data-department-id="${item.department_id || ''}"
+                                    data-department-name="${self.escapeHtml(deptName)}">
                                 <i class="mdi mdi-plus"></i> Add
                             </button>
                         </div>
@@ -270,7 +277,7 @@
             });
         },
 
-        addItem: function(id, type, name, price) {
+        addItem: function(id, type, name, price, deptId, deptName) {
             const patientId = this.getCurrentPatientId();
             if (!patientId) {
                 if (typeof toastr !== 'undefined') toastr.warning('Please select a patient first');
@@ -302,6 +309,8 @@
                         id: id,
                         type: type,
                         name: name,
+                        department_id: data.department_id || deptId || null,
+                        department_name: data.department_name || deptName || null,
                         base_price: parseFloat(data.base_price || price),
                         payable_amount: parseFloat(data.payable_amount !== undefined ? data.payable_amount : price),
                         claims_amount: parseFloat(data.claims_amount || 0),
@@ -311,6 +320,7 @@
                         is_billable: 1
                     });
                     self.updateCartUI();
+                    self.switchToCartTab();
                     if (typeof toastr !== 'undefined') toastr.success(`Added "${name}" to cart`);
                 },
                 error: function() {
@@ -318,6 +328,8 @@
                         id: id,
                         type: type,
                         name: name,
+                        department_id: deptId || null,
+                        department_name: deptName || null,
                         base_price: parseFloat(price),
                         payable_amount: parseFloat(price),
                         claims_amount: 0,
@@ -327,8 +339,20 @@
                         is_billable: 1
                     });
                     self.updateCartUI();
+                    self.switchToCartTab();
                 }
             });
+        },
+
+        switchToCartTab: function() {
+            const $cartTab = $('#walkin-cart-tabs a[href="#walkin-cart-pane"]');
+            if ($cartTab.length) {
+                if (typeof $cartTab.tab === 'function') {
+                    $cartTab.tab('show');
+                } else if (typeof bootstrap !== 'undefined' && bootstrap.Tab) {
+                    bootstrap.Tab.getOrCreateInstance($cartTab[0]).show();
+                }
+            }
         },
 
         handleFreeFormSubmit: function() {
@@ -339,6 +363,8 @@
             }
 
             const name = $('#walkin-freeform-name').val().trim();
+            const deptId = $('#walkin-freeform-dept').val();
+            const deptName = $('#walkin-freeform-dept option:selected').data('name') || $('#walkin-freeform-dept option:selected').text();
             const desc = $('#walkin-freeform-desc').val().trim();
             const price = parseFloat($('#walkin-freeform-price').val()) || 0;
             const qty = parseInt($('#walkin-freeform-qty').val(), 10) || 1;
@@ -346,6 +372,13 @@
 
             if (!name) {
                 if (typeof toastr !== 'undefined') toastr.warning('Item name is required');
+                $('#walkin-freeform-name').focus();
+                return;
+            }
+
+            if (!deptId) {
+                if (typeof toastr !== 'undefined') toastr.warning('Please select a benefiting department');
+                $('#walkin-freeform-dept').focus();
                 return;
             }
 
@@ -361,6 +394,8 @@
                 type: 'free_form',
                 is_free_form: 1,
                 name: name,
+                department_id: parseInt(deptId, 10),
+                department_name: deptName,
                 description: desc,
                 price: price,
                 base_price: price,
@@ -377,10 +412,11 @@
 
             // Reset form
             $('#walkin-freeform-form')[0].reset();
+            $('#walkin-freeform-dept').val('');
             $('#walkin-freeform-billable').prop('checked', true);
 
             // Switch to cart pane
-            $('#walkin-cart-tabs a[href="#walkin-cart-pane"]').tab('show');
+            this.switchToCartTab();
 
             if (typeof toastr !== 'undefined') toastr.success(`Added custom item "${name}" to cart`);
         },
@@ -432,12 +468,13 @@
                 }
 
                 const freeFormBadge = item.is_free_form ? '<span class="badge bg-secondary text-white font-10 ms-1">Custom</span>' : '';
+                const deptBadge = item.department_name ? `<span class="badge bg-light text-secondary border font-10 ms-1" title="Benefiting Department"><i class="mdi mdi-office-building font-10"></i> ${self.escapeHtml(item.department_name)}</span>` : '';
                 const unbillableBadge = !item.is_billable ? '<span class="badge bg-warning text-dark font-10 ms-1">Non-billable</span>' : '';
 
                 $body.append(`
                     <tr>
                         <td class="font-12">
-                            <div class="fw-bold">${self.escapeHtml(item.name)} ${freeFormBadge} ${unbillableBadge}</div>
+                            <div class="fw-bold">${self.escapeHtml(item.name)} ${freeFormBadge} ${deptBadge} ${unbillableBadge}</div>
                             <small class="text-muted">Qty: ${item.quantity}</small>
                         </td>
                         <td class="text-end font-12">₦${itemSubtotal.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
@@ -821,6 +858,7 @@
                             const billingClass = self.getBillingStatusClass(req.billing_status);
                             const deliveryClass = self.getDeliveryStatusClass(req.delivery_status);
                             const coverageBadge = req.coverage_mode ? `<span class="badge bg-success-subtle text-success border border-success-subtle ms-1 font-10">${self.escapeHtml(req.coverage_mode)}</span>` : '';
+                            const deptBadge = req.department_name ? `<span class="badge bg-light text-dark border ms-1 font-10" title="Benefiting Department"><i class="mdi mdi-office-building"></i> ${self.escapeHtml(req.department_name)}</span>` : '';
                             const createdAt = req.created_at ? new Date(req.created_at).toLocaleString('en-GB', {day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit'}) : '';
                             const isUnpaid = !req.is_paid && req.payable > 0 && req.service_request_id;
                             const itemStateClass = req.is_paid ? 'is-paid' : (isUnpaid ? 'is-unpaid' : '');
@@ -844,9 +882,9 @@
 
                             const payBtnHtml = (canBill && isUnpaid) ? `
                                 <button class="btn btn-sm btn-outline-success btn-pay-single-walkin" 
-                                        data-service-request-id="${req.service_request_id}" 
-                                        data-payable="${req.payable}" 
-                                        title="Pay Now">
+                                       data-service-request-id="${req.service_request_id}" 
+                                       data-payable="${req.payable}" 
+                                       title="Pay Now">
                                     <i class="mdi mdi-cash"></i> Pay
                                 </button>
                             ` : '';
@@ -875,6 +913,7 @@
                                             <span class="badge bg-${typeClass} text-white recent-request-type ms-1 flex-shrink-0">${self.escapeHtml(req.type_label || req.type)}</span>
                                             ${billableBadge}
                                             ${coverageBadge}
+                                            ${deptBadge}
                                         </div>
                                         <small class="text-muted font-11 flex-shrink-0">${createdAt}</small>
                                     </div>
@@ -883,6 +922,7 @@
                                             <span class="font-11 text-muted">Price: <strong class="text-dark">₦${priceFormatted}</strong></span>
                                             ${hmoCoversFormatted ? `<span class="font-11 text-success">HMO: -₦${hmoCoversFormatted}</span>` : ''}
                                             <span class="font-11 text-muted">Pay: <strong class="${req.payable > 0 ? 'text-primary' : 'text-muted'}">₦${payableFormatted}</strong></span>
+                                            <span class="font-11 text-muted">Dept: <strong class="text-dark">${self.escapeHtml(req.department_name || 'General')}</strong></span>
                                         </div>
                                         <div class="recent-request-status d-flex align-items-center gap-1 flex-shrink-0">
                                             <span class="badge ${billingClass} font-10">${self.escapeHtml(req.billing_status || 'Pending')}</span>

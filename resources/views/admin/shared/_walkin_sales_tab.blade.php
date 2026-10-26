@@ -78,6 +78,20 @@
                                     <input type="text" class="form-control form-control-sm" id="walkin-freeform-name" placeholder="e.g., Special Dressing Procedure or Custom Splint" required>
                                 </div>
                                 <div class="mb-3">
+                                    <label class="form-label small fw-bold">
+                                        <i class="mdi mdi-domain text-primary me-1"></i> Benefiting Department <span class="text-danger">*</span>
+                                    </label>
+                                    <select class="form-select form-control form-control-sm" id="walkin-freeform-dept" required>
+                                        <option value="" disabled selected>-- Select Benefiting Department --</option>
+                                        @foreach(\App\Models\Department::where('is_active', true)->orderBy('name')->get() as $dept)
+                                            <option value="{{ $dept->id }}" data-name="{{ $dept->name }}">{{ $dept->name }}</option>
+                                        @endforeach
+                                    </select>
+                                    <div class="form-text text-muted font-11 mt-1">
+                                        <i class="mdi mdi-information-outline"></i> Revenue and clinical fulfillment will be attributed to this department.
+                                    </div>
+                                </div>
+                                <div class="mb-3">
                                     <label class="form-label small fw-bold">Description / Clinical Notes (Optional)</label>
                                     <textarea class="form-control form-control-sm" id="walkin-freeform-desc" rows="2" placeholder="Additional details or justification..."></textarea>
                                 </div>
@@ -131,7 +145,7 @@
                             <table class="table table-sm mb-0" id="walkin-cart-table">
                                 <thead class="table-light">
                                     <tr>
-                                        <th>Item</th>
+                                        <th>Item &amp; Department</th>
                                         <th class="text-end">Price</th>
                                         <th class="text-end text-success">HMO</th>
                                         <th class="text-end text-primary">Payable</th>

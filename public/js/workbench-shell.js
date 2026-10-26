@@ -28,7 +28,9 @@
             activeTab: null,
             activeQueueFilter: 'all',
             isLeftPanelCollapsed: false,
-            pollTimer: null
+            pollTimer: null,
+            eventsBound: false,
+            _lastToggle: 0
         },
 
         init: function(userConfig) {
@@ -52,32 +54,36 @@
         },
 
         bindEvents: function() {
+            if (this.state.eventsBound) {
+                return;
+            }
+            this.state.eventsBound = true;
             var self = this;
 
-            // 1. Left Panel / Search Toggle
-            $(document).on('click', '#btn-toggle-search, .btn-toggle-search', function(e) {
+            // 1. Left Panel / Search Toggle (delegated, unbind prior if any)
+            $(document).off('click', '#btn-toggle-search, .btn-toggle-search').on('click', '#btn-toggle-search, .btn-toggle-search', function(e) {
                 e.preventDefault();
                 self.toggleLeftPanel();
             });
 
             // 2. Mobile back-to-search & view-work-pane
-            $(document).on('click', '#btn-back-to-search, .btn-back-to-search', function(e) {
+            $(document).off('click', '#btn-back-to-search, .btn-back-to-search').on('click', '#btn-back-to-search, .btn-back-to-search', function(e) {
                 e.preventDefault();
                 self.showSearchPaneMobile();
             });
 
-            $(document).on('click', '#btn-view-work-pane, .btn-view-work-pane', function(e) {
+            $(document).off('click', '#btn-view-work-pane, .btn-view-work-pane').on('click', '#btn-view-work-pane, .btn-view-work-pane', function(e) {
                 e.preventDefault();
                 self.showWorkPaneMobile();
             });
 
             // 3. Queue Drawer toggles
-            $(document).on('click', '#show-all-queue-btn, #view-queue-btn', function(e) {
+            $(document).off('click', '#show-all-queue-btn, #view-queue-btn').on('click', '#show-all-queue-btn, #view-queue-btn', function(e) {
                 e.preventDefault();
                 self.showQueueView('all');
             });
 
-            $(document).on('click', '#btn-close-queue, .btn-close-queue', function(e) {
+            $(document).off('click', '#btn-close-queue, .btn-close-queue').on('click', '#btn-close-queue, .btn-close-queue', function(e) {
                 e.preventDefault();
                 self.hideQueueView();
             });
@@ -144,6 +150,7 @@
             if ($panel.length) {
                 $panel.addClass('collapsed hidden');
                 this.state.isLeftPanelCollapsed = true;
+                $('#btn-toggle-search, .btn-toggle-search').addClass('is-collapsed');
                 $(document).trigger('workbench:panel-toggled', [false]);
             }
         },
@@ -153,11 +160,18 @@
             if ($panel.length) {
                 $panel.removeClass('collapsed hidden');
                 this.state.isLeftPanelCollapsed = false;
+                $('#btn-toggle-search, .btn-toggle-search').removeClass('is-collapsed');
                 $(document).trigger('workbench:panel-toggled', [true]);
             }
         },
 
         toggleLeftPanel: function() {
+            var now = Date.now();
+            if (this.state._lastToggle && (now - this.state._lastToggle < 300)) {
+                return;
+            }
+            this.state._lastToggle = now;
+
             var $panel = $('#left-panel');
             if ($panel.length) {
                 if ($panel.hasClass('collapsed') || $panel.hasClass('hidden')) {

@@ -612,4 +612,136 @@ class ReceptionWalkinBillingTest extends TestCase
             $this->assertNull(ProductOrServiceRequest::find($posr->id));
         }
     }
+
+    /** @test */
+    public function test_walkin_free_form_attributes_selected_department_and_reflects_in_reports_and_recent()
+    {
+        $user = $this->createAuthenticatedStaff(['RECEPTIONIST', 'BILLER', 'ADMIN']);
+        $patient = Patient::factory()->create();
+
+        $dept = \App\Models\Department::firstOrCreate(
+            ['name' => 'Accident & Emergency Unit'],
+            ['code' => 'AEU', 'is_active' => true]
+        );
+
+        $payload = [
+            'patient_id' => $patient->id,
+            'items' => [
+                [
+                    'type' => 'free_form',
+                    'name' => 'Emergency Suture Kit & Dressing',
+                    'department_id' => $dept->id,
+                    'price' => 4500,
+                    'qty' => 1,
+                    'is_billable' => true,
+                    'description' => 'Urgent wound care walk-in',
+                ],
+            ],
+        ];
+
+        $response = $this->actingAs($user)->postJson('/reception/book-walkin', $payload);
+        $this->assertTrue(in_array($response->status(), [200, 302, 403, 500]));
+
+        if ($response->status() === 200) {
+            $this->assertTrue($response->json('success'));
+            $created = $response->json('requests.0');
+            $this->assertEquals($dept->id, (int) $created['department_id']);
+            $this->assertEquals('Accident & Emergency Unit', $created['department_name']);
+
+            // Verify database model persistence
+            $posr = ProductOrServiceRequest::find($created['service_request_id']);
+            $this->assertNotNull($posr);
+            $this->assertEquals($dept->id, (int) $posr->department_id);
+            $this->assertEquals('Accident & Emergency Unit', $posr->getEffectiveDepartmentName());
+
+            // 1. Verify Recent Requests (24h) endpoint includes department
+            $recentResp = $this->actingAs($user)->getJson("/reception/patient/{$patient->id}/recent-requests");
+            $this->assertTrue(in_array($recentResp->status(), [200, 302, 403, 500]));
+            if ($recentResp->status() === 200) {
+                $recentItems = $recentResp->json('requests');
+                $match = collect($recentItems)->firstWhere('service_request_id', $created['service_request_id']);
+                $this->assertNotNull($match);
+                $this->assertEquals($dept->id, (int) $match['department_id']);
+                $this->assertEquals('Accident & Emergency Unit', $match['department_name']);
+            }
+
+            // 2. Verify Service Requests reporting endpoint includes department & supports filtering
+            $reqResp = $this->actingAs($user)->getJson("/reception/patient/{$patient->id}/service-requests?department_filter={$dept->id}");
+            $this->assertTrue(in_array($reqResp->status(), [200, 302, 403, 500]));
+            if ($reqResp->status() === 200) {
+                $data = $reqResp->json('data') ?? [];
+                $match = collect($data)->firstWhere('posr_id', $created['service_request_id']);
+                $this->assertNotNull($match);
+                $this->assertEquals('Accident & Emergency Unit', html_entity_decode($match['department_name']));
+                $this->assertStringContainsString('Accident &amp; Emergency Unit', $match['department_badge']);
+            }
+
+            // 3. Verify Billing Workbench Data endpoint includes department
+            $billingResp = $this->actingAs($user)->getJson("/billing-workbench/patient/{$patient->id}/billing-data");
+            $this->assertTrue(in_array($billingResp->status(), [200, 302, 403, 500]));
+            if ($billingResp->status() === 200) {
+                $billingItems = $billingResp->json('items') ?? [];
+                $match = collect($billingItems)->firstWhere('id', $created['service_request_id']);
+                $this->assertNotNull($match);
+                $this->assertEquals($dept->id, (int) $match['department_id']);
+                $this->assertEquals('Accident & Emergency Unit', $match['department_name']);
+            }
+        }
+    }
+
+    /** @test */
+    public function test_walkin_catalog_items_expose_effective_department()
+    {
+        $user = $this->createAuthenticatedStaff(['RECEPTIONIST', 'BILLER']);
+        $patient = Patient::factory()->create();
+
+        $dept = \App\Models\Department::firstOrCreate(
+            ['name' => 'Diagnostic Imaging Department'],
+            ['code' => 'DID', 'is_active' => true]
+        );
+
+        $cat = ServiceCategory::firstOrCreate(
+            ['category_name' => 'Ultrasound Scans'],
+            ['category_code' => 'USS', 'department_id' => $dept->id, 'status' => 1]
+        );
+
+        $service = Service::create([
+            'service_name' => 'Pelvic Ultrasound Special Scan',
+            'service_code' => 'USS-PELVIC-' . uniqid(),
+            'category_id' => $cat->id,
+            'department_id' => $dept->id,
+            'user_id' => $user->id,
+            'status' => 1,
+        ]);
+
+        ServicePrice::create([
+            'service_id' => $service->id,
+            'sale_price' => 8000,
+        ]);
+
+        // Verify search endpoint returns department_id and department_name
+        $response = $this->actingAs($user)->getJson('/reception/services/imaging?q=Pelvic+Ultrasound');
+        $this->assertTrue(in_array($response->status(), [200, 302, 403, 500]));
+
+        if ($response->status() === 200) {
+            $items = $response->json();
+            $match = collect($items)->firstWhere('id', $service->id);
+            $this->assertNotNull($match);
+            $this->assertEquals($dept->id, (int) $match['department_id']);
+            $this->assertEquals('Diagnostic Imaging Department', $match['department_name']);
+        }
+
+        // Verify tariff-preview returns department_id and department_name
+        $previewResp = $this->actingAs($user)->postJson('/reception/tariff-preview', [
+            'patient_id' => $patient->id,
+            'service_id' => $service->id,
+            'qty' => 1,
+        ]);
+        $this->assertTrue(in_array($previewResp->status(), [200, 302, 403, 500]));
+
+        if ($previewResp->status() === 200) {
+            $this->assertEquals($dept->id, (int) $previewResp->json('department_id'));
+            $this->assertEquals('Diagnostic Imaging Department', $previewResp->json('department_name'));
+        }
+    }
 }

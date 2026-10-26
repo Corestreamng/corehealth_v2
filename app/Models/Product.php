@@ -102,6 +102,26 @@ class Product extends Model implements Auditable
         return $this->category && $this->category->department_id ? (int) $this->category->department_id : null;
     }
 
+    /**
+     * Get the effective department model.
+     */
+    public function getEffectiveDepartment(): ?Department
+    {
+        if ($this->department) {
+            return $this->department;
+        }
+
+        return $this->category?->department;
+    }
+
+    /**
+     * Get the effective department name with fallback.
+     */
+    public function getEffectiveDepartmentName(string $fallback = 'Pharmacy'): string
+    {
+        return $this->getEffectiveDepartment()?->name ?? $fallback;
+    }
+
     public function requests()
     {
         return $this->hasMany(ProductOrServiceRequest::class, 'product_id', 'id');

@@ -194,6 +194,7 @@ function addToWalkinCart(id, type, name, price) {
                 quantity: 1
             });
             updateWalkinCartUI();
+            $('#walkin-cart-tabs a[href="#walkin-cart-pane"]').tab('show');
         },
         error: function() {
             // Fallback without HMO
@@ -209,6 +210,7 @@ function addToWalkinCart(id, type, name, price) {
                 quantity: 1
             });
             updateWalkinCartUI();
+            $('#walkin-cart-tabs a[href="#walkin-cart-pane"]').tab('show');
         }
     });
 }
@@ -263,10 +265,13 @@ function updateWalkinCartUI() {
         }
 
         // Coverage info
-        const hasHmoCoverage = itemClaims> 0;
+        const hasHmoCoverage = itemClaims > 0;
         const coverageLabel = item.coverage_mode ? item.coverage_mode.charAt(0).toUpperCase() + item.coverage_mode.slice(1) : '';
         const coverageBadge = hasHmoCoverage
             ? `<span class="badge badge-success" style="font-size: 0.7rem;">${coverageLabel}</span>`
+            : '';
+        const deptBadge = item.department_name
+            ? `<span class="badge badge-light border text-secondary font-weight-normal ml-1" style="font-size: 0.7rem;"><i class="mdi mdi-office-building"></i> ${item.department_name}</span>`
             : '';
 
         $container.append(`
@@ -276,6 +281,7 @@ function updateWalkinCartUI() {
                     <br>
                     <small class="text-muted">${item.type}</small>
                     ${coverageBadge}
+                    ${deptBadge}
                 </td>
                 <td class="text-right">
                     <span>₦${itemSubtotal.toLocaleString()}</span>
@@ -457,6 +463,7 @@ function initializeServiceRequestsTable(patientId) {
                 d.date_from = $('#req-date-from').val();
                 d.date_to = $('#req-date-to').val();
                 d.type_filter = $('#req-type-filter').val();
+                d.department_filter = $('#req-dept-filter').val();
                 d.billing_filter = $('#req-billing-filter').val();
                 d.delivery_filter = $('#req-delivery-filter').val();
             }
@@ -466,6 +473,7 @@ function initializeServiceRequestsTable(patientId) {
             { data: 'request_no', name: 'request_no' },
             { data: 'type_badge', name: 'type' },
             { data: 'name', name: 'name' },
+            { data: 'department_badge', name: 'department_name' },
             { data: 'price_formatted', name: 'price', className: 'text-right' },
             { data: 'hmo_covers_formatted', name: 'hmo_covers', className: 'text-right text-success' },
             { data: 'payable_formatted', name: 'payable', className: 'text-right text-primary font-weight-bold' },
@@ -495,6 +503,7 @@ function loadServiceRequestsStats(patientId) {
             date_from: $('#req-date-from').val(),
             date_to: $('#req-date-to').val(),
             type_filter: $('#req-type-filter').val(),
+            department_filter: $('#req-dept-filter').val(),
             billing_filter: $('#req-billing-filter').val(),
             delivery_filter: $('#req-delivery-filter').val()
         },
@@ -528,7 +537,7 @@ $(document).on('click', '#clear-req-filters', function() {
     const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0);
     $('#req-date-from').val(firstDay.toISOString().split('T')[0]);
     $('#req-date-to').val(lastDay.toISOString().split('T')[0]);
-    $('#req-type-filter, #req-billing-filter, #req-delivery-filter').val('');
+    $('#req-type-filter, #req-dept-filter, #req-billing-filter, #req-delivery-filter').val('');
     reloadServiceRequestsData();
 });
 

@@ -73,6 +73,26 @@ class Service extends Model implements Auditable
     }
 
     /**
+     * Get the effective department model.
+     */
+    public function getEffectiveDepartment(): ?Department
+    {
+        if ($this->department) {
+            return $this->department;
+        }
+
+        return $this->category?->department;
+    }
+
+    /**
+     * Get the effective department name with fallback.
+     */
+    public function getEffectiveDepartmentName(string $fallback = 'General'): string
+    {
+        return $this->getEffectiveDepartment()?->name ?? $fallback;
+    }
+
+    /**
      * Get the prices that owns the service
      *
      */

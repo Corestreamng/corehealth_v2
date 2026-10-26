@@ -139,6 +139,42 @@ class ProductOrServiceRequest extends Model implements Auditable
     }
 
     /**
+     * Get the effective department model.
+     */
+    public function getEffectiveDepartment(): ?Department
+    {
+        if ($this->department) {
+            return $this->department;
+        }
+
+        if ($this->service_id && $this->service) {
+            return $this->service->getEffectiveDepartment();
+        }
+
+        if ($this->product_id && $this->product) {
+            return $this->product->getEffectiveDepartment();
+        }
+
+        return null;
+    }
+
+    /**
+     * Get the effective department ID.
+     */
+    public function getEffectiveDepartmentId(): ?int
+    {
+        return $this->getEffectiveDepartment()?->id ?? $this->department_id;
+    }
+
+    /**
+     * Get the effective department name with fallback.
+     */
+    public function getEffectiveDepartmentName(string $fallback = 'General'): string
+    {
+        return $this->getEffectiveDepartment()?->name ?? $fallback;
+    }
+
+    /**
      * Get the HMO remittance associated with this request.
      */
     public function remittance()

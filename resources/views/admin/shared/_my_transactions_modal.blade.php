@@ -486,27 +486,4 @@
     </div>
 </div>
 
-<!-- Receipt Preview Modal for Reprinting -->
-@if(!isset($hasReceiptPreviewModal))
-@php $hasReceiptPreviewModal = true; @endphp
-<div class="modal fade" id="receiptPreviewModal" tabindex="-1" role="dialog" aria-hidden="true" style="z-index: 1070;">
-    <div class="modal-dialog modal-md modal-dialog-centered" role="document">
-        <div class="modal-content">
-            <div class="modal-header py-2" style="background: var(--hospital-primary, #011b33); color: white;">
-                <h5 class="modal-title font-14 mb-0"><i class="mdi mdi-printer"></i> Receipt Preview</h5>
-                <button type="button" class="close btn-close text-white btn-close-white" data-dismiss="modal" data-bs-dismiss="modal" aria-label="Close" style="opacity: 0.9; font-size: 1.5rem; line-height: 1;">
-                    <span aria-hidden="true">&times;</span>
-                </button>
-            </div>
-            <div class="modal-body p-2" id="receiptPreviewModalBody" style="max-height: 75vh; overflow-y: auto;">
-                <div class="text-center py-4 text-muted"><i class="mdi mdi-loading mdi-spin font-24"></i><div class="mt-2">Loading receipt...</div></div>
-            </div>
-            <div class="modal-footer py-1">
-                <button type="button" class="btn btn-sm btn-secondary" data-dismiss="modal" data-bs-dismiss="modal">Close</button>
-                <button type="button" class="btn btn-sm btn-primary" id="btnPrintReceiptFromModal"><i class="mdi mdi-printer"></i> Print</button>
-            </div>
-        </div>
-    </div>
-</div>
-@endif
 

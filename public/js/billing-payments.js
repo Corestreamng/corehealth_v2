@@ -78,17 +78,23 @@ if (typeof window.wbRoute !== 'function') {
             }
 
             const isChecked = previouslyCheckedIds.has(String(item.id)) ? 'checked' : '';
+            const deptBadge = item.department_name
+                ? `<div class="mt-1"><span class="badge badge-light border text-secondary" style="font-size: 0.72rem;"><i class="mdi mdi-office-building"></i> ${escapeHtml(item.department_name)}</span></div>`
+                : '';
 
             const row = `
             <tr data-item-id="${item.id}" data-user-id="${item.user_id}">
                 <td><input type="checkbox" class="billing-item-checkbox" data-id="${item.id}" ${isChecked}></td>
                 <td class="text-nowrap" style="font-size: 0.85rem;"><i class="mdi mdi-clock-outline text-muted"></i> ${datetime}</td>
                 <td>${itemName}</td>
-                <td>${item.category || 'N/A'}</td>
+                <td>
+                    <div>${item.category || 'N/A'}</div>
+                    ${deptBadge}
+                </td>
                 <td>₦${parseFloat(item.price).toLocaleString()}</td>
                 <td><input type="number" class="form-control item-qty-input" value="${item.qty}" min="1" data-id="${item.id}"></td>
                 <td><input type="number" class="form-control item-discount-input" value="${item.discount || 0}" min="0" max="100" data-id="${item.id}"></td>
-                <td>${item.claims_amount> 0 ? `<span class="hmo-badge">₦${parseFloat(item.claims_amount).toLocaleString()}</span>` : '-'}</td>
+                <td>${item.claims_amount > 0 ? `<span class="hmo-badge">₦${parseFloat(item.claims_amount).toLocaleString()}</span>` : '-'}</td>
                 <td class="item-total" data-id="${item.id}">₦${calculateItemTotal(item).toLocaleString()}</td>
             </tr>
         `;

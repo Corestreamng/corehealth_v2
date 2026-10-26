@@ -1102,6 +1102,22 @@
                                             <option value="imaging">Imaging</option>
                                             <option value="product">Product/Drug</option>
                                             <option value="procedure">Procedure</option>
+                                            <option value="free_form">Custom Item</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-group col-md-2">
+                                        <label class="small mb-1">Department</label>
+                                        <select class="form-control form-control-sm" id="req-dept-filter">
+                                            <option value="">All Departments</option>
+                                            @if(isset($departments))
+                                                @foreach($departments as $dept)
+                                                    <option value="{{ $dept->id }}">{{ $dept->name }}</option>
+                                                @endforeach
+                                            @else
+                                                @foreach(\App\Models\Department::where('is_active', true)->orderBy('name')->get() as $dept)
+                                                    <option value="{{ $dept->id }}">{{ $dept->name }}</option>
+                                                @endforeach
+                                            @endif
                                         </select>
                                     </div>
                                     <div class="form-group col-md-2">
@@ -1122,14 +1138,14 @@
                                             <option value="completed">Completed</option>
                                         </select>
                                     </div>
-                                    <div class="form-group col-md-2 d-flex align-items-end">
-                                        <button type="button" class="btn btn-sm btn-secondary mr-2" id="clear-req-filters">
-                                            <i class="mdi mdi-refresh"></i>
-                                        </button>
-                                        <button type="submit" class="btn btn-sm btn-primary">
-                                            <i class="mdi mdi-filter"></i> Apply
-                                        </button>
-                                    </div>
+                                </div>
+                                <div class="d-flex justify-content-end mt-1">
+                                    <button type="button" class="btn btn-sm btn-secondary mr-2" id="clear-req-filters">
+                                        <i class="mdi mdi-refresh"></i> Reset
+                                    </button>
+                                    <button type="submit" class="btn btn-sm btn-primary">
+                                        <i class="mdi mdi-filter"></i> Apply Filters
+                                    </button>
                                 </div>
                             </form>
                         </div>
@@ -1160,6 +1176,7 @@
                                             <th>Request #</th>
                                             <th>Type</th>
                                             <th>Service/Item</th>
+                                            <th>Department</th>
                                             <th class="text-right">Price</th>
                                             <th class="text-right">HMO Covers</th>
                                             <th class="text-right">Payable</th>
