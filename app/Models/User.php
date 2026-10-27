@@ -21,7 +21,6 @@ class User extends Authenticatable implements Auditable
     use Notifiable;
     use HasRoles;
     use Messagable;
-    use \OwenIt\Auditing\Auditable;
 
     protected static function booted()
     {
@@ -111,7 +110,14 @@ class User extends Authenticatable implements Auditable
 
     public function staff_profile()
     {
-        return $this->hasOne(Staff::class, 'user_id', 'id');
+        return $this->hasOne(Staff::class, 'user_id', 'id')->withDefault([
+            'status' => 1,
+            'employment_status' => 'active',
+            'employment_type' => 'locum',
+            'is_unit_head' => false,
+            'is_dept_head' => false,
+            'can_see_clinic_queues' => [],
+        ]);
     }
 
     /**

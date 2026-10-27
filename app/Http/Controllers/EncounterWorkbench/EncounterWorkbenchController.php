@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\EncounterWorkbench;
 
 use App\Http\Controllers\EncounterWorkbench\Tabs\ClinicAnalyticsTab;
+use App\Http\Controllers\EncounterWorkbench\Tabs\ConsultationLogBookTab;
 use App\Http\Controllers\EncounterWorkbench\Tabs\DoctorProductivityTab;
 use App\Http\Controllers\EncounterWorkbench\Tabs\EncounterKpiTab;
 use App\Http\Controllers\EncounterWorkbench\Tabs\EncounterListTab;
@@ -47,6 +48,8 @@ class EncounterWorkbenchController extends EncounterWorkbenchBaseController
         // Build WORKBENCH_CONFIG for JS
         $config = [
             'routes' => [
+                'logbook' => route('encounter.workbench.logbook'),
+                'logbookDrilldown' => route('encounter.workbench.logbook-drilldown'),
                 'list' => route('encounter.workbench.list'),
                 'kpi' => route('encounter.workbench.kpi'),
                 'kpiStrip' => route('encounter.workbench.kpi-strip'),
@@ -78,6 +81,16 @@ class EncounterWorkbenchController extends EncounterWorkbenchBaseController
     }
 
     // ─── Tab Endpoints ────────────────────────────────────────────────────────
+
+    public function logbookData(Request $request)
+    {
+        return (new ConsultationLogBookTab())->getData($request);
+    }
+
+    public function logbookDrilldown(Request $request)
+    {
+        return (new ConsultationLogBookTab())->getDrilldown($request);
+    }
 
     public function listData(Request $request)
     {

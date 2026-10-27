@@ -286,6 +286,8 @@ Route::group(['middleware' => ['auth']], function () {
 
         // AJAX tab endpoints
         Route::prefix('encounter-workbench')->name('encounter.workbench.')->group(function () {
+            Route::get('logbook', [\App\Http\Controllers\EncounterWorkbench\EncounterWorkbenchController::class, 'logbookData'])->name('logbook');
+            Route::get('logbook-drilldown', [\App\Http\Controllers\EncounterWorkbench\EncounterWorkbenchController::class, 'logbookDrilldown'])->name('logbook-drilldown');
             Route::get('list', [\App\Http\Controllers\EncounterWorkbench\EncounterWorkbenchController::class, 'listData'])->name('list');
             Route::get('kpi', [\App\Http\Controllers\EncounterWorkbench\EncounterWorkbenchController::class, 'kpiData'])->name('kpi');
             Route::get('kpi-strip', [\App\Http\Controllers\EncounterWorkbench\EncounterWorkbenchController::class, 'kpiStrip'])->name('kpi-strip');

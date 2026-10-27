@@ -242,6 +242,50 @@ class EncounterWorkbenchTest extends TestCase
         $this->assertContains($response->status(), [404, 500]);
     }
 
+    // ─── Consultation Log Book Endpoints ─────────────────────────────────────
+
+    /** @test */
+    public function logbook_endpoint_returns_valid_response_for_admin(): void
+    {
+        $user = $this->getOrCreateAdminUser();
+        if (!$user) {
+            $this->markTestSkipped('No admin user found.');
+        }
+
+        $response = $this->actingAs($user)->getJson(route('encounter.workbench.logbook'));
+
+        $this->assertContains($response->status(), self::WORKBENCH_STATUSES);
+
+        if ($response->status() === 200) {
+            $json = $response->json();
+            $this->assertArrayHasKey('data', $json);
+            $this->assertArrayHasKey('kpis', $json);
+            $this->assertArrayHasKey('period', $json);
+        }
+    }
+
+    /** @test */
+    public function logbook_drilldown_endpoint_returns_valid_response(): void
+    {
+        $user = $this->getOrCreateAdminUser();
+        if (!$user) {
+            $this->markTestSkipped('No admin user found.');
+        }
+
+        $response = $this->actingAs($user)->getJson(route('encounter.workbench.logbook-drilldown', [
+            'doctor_id' => $user->id,
+            'clinic_id' => 1,
+        ]));
+
+        $this->assertContains($response->status(), self::WORKBENCH_STATUSES);
+
+        if ($response->status() === 200) {
+            $json = $response->json();
+            $this->assertArrayHasKey('meta', $json);
+            $this->assertArrayHasKey('data', $json);
+        }
+    }
+
     // ─── Helpers ──────────────────────────────────────────────────────────────
 
     private function getOrCreateAdminUser(): ?User

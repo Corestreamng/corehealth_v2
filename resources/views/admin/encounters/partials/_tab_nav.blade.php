@@ -2,7 +2,16 @@
 <ul class="nav nav-tabs ewb-nav-tabs mb-0" id="ewb-tabs" role="tablist">
 
     <li class="nav-item" role="presentation">
-        <button class="nav-link active ewb-tab-btn" id="ewb-tab-list"
+        <button class="nav-link active ewb-tab-btn" id="ewb-tab-logbook"
+            data-bs-toggle="tab" data-bs-target="#ewb-pane-logbook"
+            type="button" role="tab" data-tab="logbook">
+            <i class="mdi mdi-book-open-page-variant"></i>
+            <span>Consultation Log Book</span>
+        </button>
+    </li>
+
+    <li class="nav-item" role="presentation">
+        <button class="nav-link ewb-tab-btn" id="ewb-tab-list"
             data-bs-toggle="tab" data-bs-target="#ewb-pane-list"
             type="button" role="tab" data-tab="list">
             <i class="mdi mdi-format-list-bulleted"></i>

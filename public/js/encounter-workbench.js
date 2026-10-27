@@ -242,8 +242,7 @@ var EWB = (function () {
             $('#ewb-lm-hmo').val('');
             $('.ewb-lm-tag').prop('checked', false);
 
-            var modal = new bootstrap.Modal(document.getElementById('ewb-list-modal'));
-            modal.show();
+            $('#ewb-list-modal').modal('show');
             
             _initTable();
         }
@@ -286,6 +285,142 @@ var EWB = (function () {
         }
 
         return { open: open, init: init };
+    })();
+
+    // ─── Consultation Log Book Tab ───────────────────────────────────────────
+    var LogbookTab = (function () {
+        var _dt = null;
+
+        function load() {
+            $('#ewb-logbook-kpis').html('<div class="col-12 py-3 text-center"><div class="spinner-border spinner-border-sm text-primary"></div> <span class="ms-1 text-muted small">Loading consultation log book...</span></div>');
+
+            $.get(Config.route('logbook'), Filters.get(), function (res) {
+                _renderKpis(res.kpis || []);
+                if (res.period) {
+                    $('#ewb-logbook-period-badge').text(res.period.start + ' — ' + res.period.end);
+                }
+                _initTable(res.data || []);
+            }).fail(function () {
+                $('#ewb-logbook-kpis').html('<div class="col-12"><div class="alert alert-danger py-2 small">Failed to load consultation log book.</div></div>');
+            });
+        }
+
+        function _renderKpis(kpis) {
+            var html = kpis.map(function (k) {
+                return '<div class="col-6 col-md">' +
+                    '<div class="card-modern p-3 text-center mb-2" style="border-top:3px solid ' + k.color + '">' +
+                    '<i class="mdi ' + k.icon + '" style="font-size:1.5rem;color:' + k.color + '"></i>' +
+                    '<div class="h5 font-weight-bold mb-0 mt-1" style="color:' + k.color + '">' + k.value + '</div>' +
+                    '<div class="small text-muted font-weight-bold">' + k.label + '</div>' +
+                    (k.sub ? '<div class="small text-muted" style="font-size:0.75rem;">' + k.sub + '</div>' : '') +
+                    '</div></div>';
+            }).join('');
+            $('#ewb-logbook-kpis').html(html);
+        }
+
+        function _initTable(rows) {
+            if (_dt) {
+                _dt.destroy();
+                _dt = null;
+            }
+            _dt = $('#ewb-table-logbook').DataTable({
+                data: rows,
+                dom: 'Bfrtip',
+                buttons: ['pageLength', 'csv', 'excel'],
+                order: [[6, 'desc']], // sort by total consult value desc
+                pageLength: 25,
+                columns: [
+                    { data: 'clinician' },
+                    { data: 'activity', className: 'text-center' },
+                    { data: 'financials', className: 'text-end' },
+                    { data: 'action', orderable: false, searchable: false, className: 'text-center' },
+                ],
+                language: {
+                    emptyTable: '<div class="text-center text-muted py-4"><i class="mdi mdi-book-open-page-variant" style="font-size:2rem;"></i><br>No consultation log entries found for the selected filter period.</div>',
+                },
+            });
+        }
+
+        function reload() {
+            load();
+        }
+
+        function init() {
+            $('#ewb-table-logbook').on('click', '.ewb-drill-logbook', function () {
+                var docId = $(this).data('doctor-id');
+                var clinicId = $(this).data('clinic-id');
+                var docName = $(this).data('doctor-name');
+                var clinicName = $(this).data('clinic-name');
+                LogbookDrilldownModal.open(docId, clinicId, docName, clinicName);
+            });
+        }
+
+        return { init: init, load: load, reload: reload };
+    })();
+
+    // ─── Logbook Drilldown Modal ──────────────────────────────────────────────
+    var LogbookDrilldownModal = (function () {
+        var _dt = null;
+
+        function open(docId, clinicId, docName, clinicName) {
+            $('#ewb-lb-modal-doctor-name').text(docName || 'Clinician');
+            $('#ewb-lb-modal-clinic-name').text(clinicName || 'All Clinics');
+            $('#ewb-lb-modal-period').text('Loading...');
+
+            $('#ewb-lb-kpi-visits').text('...');
+            $('#ewb-lb-kpi-notes').text('...');
+            $('#ewb-lb-kpi-patients').text('...');
+            $('#ewb-lb-kpi-paid').text('...');
+            $('#ewb-lb-kpi-claims').text('...');
+            $('#ewb-lb-kpi-total').text('...');
+
+            $('#ewb-logbook-drilldown-modal').modal('show');
+
+            var params = $.extend({}, Filters.get(), {
+                doctor_id: docId,
+                clinic_id: clinicId
+            });
+
+            $.get(Config.route('logbookDrilldown'), params, function (res) {
+                var meta = res.meta || {};
+                $('#ewb-lb-modal-doctor-name').text(meta.doctor_name || docName);
+                $('#ewb-lb-modal-clinic-name').text(meta.clinic_name || clinicName);
+                $('#ewb-lb-modal-period').text(meta.period || '');
+
+                $('#ewb-lb-kpi-visits').text(meta.unique_visits != null ? meta.unique_visits : 0);
+                $('#ewb-lb-kpi-notes').text(meta.total_notes != null ? meta.total_notes : 0);
+                $('#ewb-lb-kpi-patients').text(meta.unique_patients != null ? meta.unique_patients : 0);
+                $('#ewb-lb-kpi-paid').text(meta.total_paid_formatted || '₦0.00');
+                $('#ewb-lb-kpi-claims').text(meta.total_claims_formatted || '₦0.00');
+                $('#ewb-lb-kpi-total').text(meta.total_funds_formatted || '₦0.00');
+
+                if (_dt) {
+                    _dt.destroy();
+                    _dt = null;
+                }
+
+                _dt = $('#ewb-table-logbook-drilldown').DataTable({
+                    data: res.data || [],
+                    dom: 'Bfrtip',
+                    buttons: ['pageLength', 'csv', 'excel'],
+                    pageLength: 25,
+                    order: [[0, 'desc']],
+                    columns: [
+                        { data: 'patient_info' },
+                        { data: 'scheme_note' },
+                        { data: 'financials', className: 'text-end' },
+                        { data: 'actions', orderable: false, searchable: false, className: 'text-center' },
+                    ],
+                    language: {
+                        emptyTable: '<div class="text-center text-muted py-4"><i class="mdi mdi-account-off" style="font-size:2rem;"></i><br>No patient consultations recorded for this doctor and clinic in this period.</div>',
+                    },
+                });
+            }).fail(function () {
+                alert('Failed to load patient consultations for this clinician.');
+            });
+        }
+
+        return { open: open };
     })();
 
     // ─── KPI Strip ────────────────────────────────────────────────────────────
@@ -373,7 +508,7 @@ var EWB = (function () {
             // KPI strip is handled by KpiStrip module; skip if already rendered
         }
 
-        return { init: init, reload: reload };
+        return { init: init, load: function () { if (!_loaded) init(); }, reload: reload };
     })();
 
     // ─── KPI Tab ──────────────────────────────────────────────────────────────
@@ -821,17 +956,20 @@ var EWB = (function () {
             Filters.init();
             Modal.init();
             DrilldownModal.init();
+            LogbookTab.init();
             DoctorTab.init();
             RevenueTab.init();
             PatientsTab.init();
 
-            // Initial data load
-            ListTab.init();
+            // Initial data load - Logbook is the default primary active tab
+            LogbookTab.load();
             KpiStrip.load();
 
             // Tab lazy loading
             $('#ewb-tabs button[data-bs-toggle="tab"]').on('shown.bs.tab', function (e) {
                 var tab = $(e.target).data('tab');
+                if (tab === 'logbook')  LogbookTab.load();
+                if (tab === 'list')     ListTab.load();
                 if (tab === 'kpi')      KpiTab.load();
                 if (tab === 'clinic')   ClinicTab.load();
                 if (tab === 'doctor')   DoctorTab.load();
@@ -843,6 +981,7 @@ var EWB = (function () {
             Filters.onChange(function () {
                 KpiStrip.load();
                 var activeTab = $('#ewb-tabs button.active').data('tab');
+                if (activeTab === 'logbook')  LogbookTab.reload();
                 if (activeTab === 'list')     ListTab.reload();
                 if (activeTab === 'kpi')      KpiTab.reload();
                 if (activeTab === 'clinic')   ClinicTab.reload();

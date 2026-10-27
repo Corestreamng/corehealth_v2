@@ -64,8 +64,38 @@
     {{-- ══ Tab Content ═════════════════════════════════════════════════════ --}}
     <div class="tab-content ewb-tab-content" id="ewb-tab-content">
 
+        {{-- Tab 0: Consultation Log Book (Primary View) --}}
+        <div class="tab-pane fade show active" id="ewb-pane-logbook" role="tabpanel">
+            <div class="row mb-3" id="ewb-logbook-kpis"></div>
+            <div class="card-modern">
+                <div class="card-header bg-white py-2 px-3 border-bottom d-flex justify-content-between align-items-center flex-wrap gap-2">
+                    <div>
+                        <h6 class="mb-0 font-weight-bold"><i class="mdi mdi-book-open-page-variant text-primary me-1"></i> Clinician Consultation Log Book</h6>
+                        <small class="text-muted">Summary of patient consultations seen per doctor and clinic with audited fund breakdown (duplicate notes on one visit counted strictly once)</small>
+                    </div>
+                    <div class="d-flex align-items-center gap-2">
+                        <span class="badge bg-light text-dark border" id="ewb-logbook-period-badge">Selected Period</span>
+                    </div>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table id="ewb-table-logbook" class="table table-sm table-hover ewb-datatable w-100">
+                            <thead class="ewb-thead">
+                                <tr>
+                                    <th>Clinician &amp; Clinic</th>
+                                    <th class="text-center">Consultation Volume</th>
+                                    <th class="text-end">Revenue &amp; Settlement</th>
+                                    <th class="text-center" style="width: 140px;">Action</th>
+                                </tr>
+                            </thead>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         {{-- Tab 1: Encounter List --}}
-        <div class="tab-pane fade show active" id="ewb-pane-list" role="tabpanel">
+        <div class="tab-pane fade" id="ewb-pane-list" role="tabpanel">
             <div class="card-modern">
                 <div class="card-body p-0">
                     <div class="table-responsive">
