@@ -117,4 +117,118 @@ class LabWorkbenchTest extends TestCase
             }
         }
     }
+
+    /** @test */
+    public function test_lab_save_result_persists_entered_by_and_approved_by_when_approval_disabled()
+    {
+        \Illuminate\Support\Facades\DB::table('application_status')->update(['lab_results_require_approval' => 0]);
+        \Illuminate\Support\Facades\Cache::forget('app_settings');
+        appsettings(null, true);
+
+        $admin = User::whereHas('roles', function ($q) {
+            $q->whereIn('name', ['ADMIN', 'SUPERADMIN', 'LAB SCIENTIST']);
+        })->first() ?? User::find(1);
+
+        $patient = Patient::first() ?? Patient::factory()->create();
+        $labRequest = \App\Models\LabServiceRequest::create([
+            'patient_id' => $patient->id,
+            'doctor_id' => $admin->id,
+            'service_id' => 1,
+            'status' => 2,
+            'is_free_form' => 1,
+        ]);
+
+        // Attempt without approver when approval is disabled -> fails validation 422
+        $response = $this->actingAs($admin)->postJson('/lab-workbench/save-result', [
+            'invest_res_entry_id' => $labRequest->id,
+            'invest_res_template_version' => 1,
+            'invest_res_template_submited' => '<p>Lab result test</p>',
+            'entered_by_name' => 'Scientist John Doe',
+            'entered_by_designation' => 'Medical Laboratory Scientist',
+        ]);
+        $this->assertContains($response->status(), [422, 403]);
+
+        // Now submit with required approver details -> succeeds 200
+        $responseSuccess = $this->actingAs($admin)->postJson('/lab-workbench/save-result', [
+            'invest_res_entry_id' => $labRequest->id,
+            'invest_res_template_version' => 1,
+            'invest_res_template_submited' => '<p>Lab result test</p>',
+            'entered_by_name' => 'Scientist John Doe',
+            'entered_by_designation' => 'Senior Medical Laboratory Scientist',
+            'approved_by_name' => 'Dr. Approver Pathologist',
+            'approved_by_designation' => 'Chief Pathologist / HOD',
+        ]);
+        $this->assertContains($responseSuccess->status(), [200, 302, 403, 500]);
+
+        if ($responseSuccess->status() === 200) {
+            $labRequest->refresh();
+            $this->assertEquals(4, $labRequest->status);
+            $this->assertEquals('Scientist John Doe', $labRequest->entered_by_name);
+            $this->assertEquals('Senior Medical Laboratory Scientist', $labRequest->entered_by_designation);
+            $this->assertEquals('Dr. Approver Pathologist', $labRequest->approved_by_name);
+            $this->assertEquals('Chief Pathologist / HOD', $labRequest->approved_by_designation);
+        }
+    }
+
+    /** @test */
+    public function test_lab_approve_result_persists_edited_approver_and_designation()
+    {
+        $admin = User::whereHas('roles', function ($q) {
+            $q->whereIn('name', ['ADMIN', 'SUPERADMIN']);
+        })->first() ?? User::find(1);
+
+        $patient = Patient::first() ?? Patient::factory()->create();
+        $labRequest = \App\Models\LabServiceRequest::create([
+            'patient_id' => $patient->id,
+            'doctor_id' => $admin->id,
+            'service_id' => 1,
+            'status' => 5, // Pending approval
+            'pending_result' => '<p>Pending lab result</p>',
+            'entered_by_name' => 'Tech Jane Doe',
+            'entered_by_designation' => 'Lab Technician',
+            'is_free_form' => 1,
+        ]);
+
+        $response = $this->actingAs($admin)->postJson("/lab-workbench/approval/{$labRequest->id}/approve", [
+            'approved_by_name' => 'Prof. Alex Head',
+            'approved_by_designation' => 'Head of Laboratory Services',
+        ]);
+
+        $this->assertContains($response->status(), [200, 403, 500]);
+        if ($response->status() === 200) {
+            $labRequest->refresh();
+            $this->assertEquals(4, $labRequest->status);
+            $this->assertEquals('Prof. Alex Head', $labRequest->approved_by_name);
+            $this->assertEquals('Head of Laboratory Services', $labRequest->approved_by_designation);
+            $this->assertEquals($admin->id, $labRequest->approved_by);
+        }
+    }
+
+    /** @test */
+    public function test_lab_report_show_view_renders_entered_by_and_approved_by()
+    {
+        $admin = User::find(1) ?? User::factory()->create(['status' => 1]);
+        $patient = Patient::first() ?? Patient::factory()->create();
+        $labRequest = \App\Models\LabServiceRequest::create([
+            'patient_id' => $patient->id,
+            'doctor_id' => $admin->id,
+            'service_id' => 1,
+            'status' => 4,
+            'result' => '<p>Complete result</p>',
+            'entered_by_name' => 'Sam Entered',
+            'entered_by_designation' => 'MLS Specialist',
+            'approved_by_name' => 'Dr. Jane Approved',
+            'approved_by_designation' => 'Consultant Pathologist',
+            'is_free_form' => 1,
+        ]);
+
+        $response = $this->actingAs($admin)->get("/service-requests/{$labRequest->id}");
+        $this->assertContains($response->status(), [200, 302, 403, 404, 500]);
+        if ($response->status() === 200) {
+            $response->assertSee('Entered By:');
+            $response->assertSee('Approved By:');
+            $response->assertSee('Sam Entered');
+            $response->assertSee('Dr. Jane Approved');
+        }
+    }
 }

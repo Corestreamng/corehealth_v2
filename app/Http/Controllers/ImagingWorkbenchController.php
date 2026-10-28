@@ -825,6 +825,12 @@ class ImagingWorkbenchController extends Controller
                     'firstname' => $request->doctor->firstname ?? 'N/A',
                     'surname' => $request->doctor->surname ?? 'N/A',
                 ],
+                'request_type' => 'imaging',
+                'requires_approval' => (bool) appsettings('imaging_results_require_approval'),
+                'entered_by_name' => $request->entered_by_name,
+                'entered_by_designation' => $request->entered_by_designation,
+                'approved_by_name' => $request->approved_by_name,
+                'approved_by_designation' => $request->approved_by_designation,
             ]);
         } catch (\Exception $e) {
             return response()->json([
@@ -875,13 +881,24 @@ class ImagingWorkbenchController extends Controller
     public function saveResult(Request $request)
     {
         try {
-            $request->validate([
+            $requiresApproval = (bool) appsettings('imaging_results_require_approval');
+
+            $validationRules = [
                 'invest_res_template_submited' => 'nullable|string',
                 'invest_res_entry_id' => 'required',
                 'invest_res_template_version' => 'required|in:1,2',
                 'invest_res_template_data' => 'nullable|string',
                 'result_attachments.*' => 'nullable|file|max:10240|mimes:pdf,jpg,jpeg,png,doc,docx',
-            ]);
+                'entered_by_name' => 'nullable|string|max:255',
+                'entered_by_designation' => 'nullable|string|max:255',
+            ];
+
+            if (!$requiresApproval) {
+                $validationRules['approved_by_name'] = 'required|string|max:255';
+                $validationRules['approved_by_designation'] = 'required|string|max:255';
+            }
+
+            $request->validate($validationRules);
 
             $imagingRequest = ImagingServiceRequest::findOrFail($request->invest_res_entry_id);
 
@@ -1030,7 +1047,13 @@ class ImagingWorkbenchController extends Controller
                 'doctor_encounter', 'doctor', 'nursing', 'nursing_workbench', 'maternity', 'procedure', 'self_perform',
             ]);
 
-            $requiresApproval = (bool) appsettings('imaging_results_require_approval');
+            // Resolve staff specialization / cadre for Entered By
+            $staffProfile = $user->staff_profile ?? $user->staff;
+            $userCadre = $staffProfile?->specialization?->name
+                ?: ($staffProfile?->cadre?->name
+                ?: ($staffProfile?->job_title ?: 'Radiologist / Imaging Technician'));
+            $enteredByName = $request->input('entered_by_name') ?: userfullname($user->id);
+            $enteredByDesignation = $request->input('entered_by_designation') ?: $userCadre;
 
             // Self-approval bypass check:
             // ONLY applies if performed by clinician in their own clinical workbench (doctor encounter, nursing, etc.)
@@ -1061,6 +1084,10 @@ class ImagingWorkbenchController extends Controller
                     'status' => 4, // Completed & Approved
                     'approved_by' => Auth::id(),
                     'approved_at' => now(),
+                    'approved_by_name' => userfullname(Auth::id()),
+                    'approved_by_designation' => $userCadre,
+                    'entered_by_name' => $enteredByName,
+                    'entered_by_designation' => $enteredByDesignation,
                     'result_date' => now(),
                     'result_by' => Auth::id(),
                     'self_perform_intent' => true,
@@ -1080,6 +1107,8 @@ class ImagingWorkbenchController extends Controller
                     'status' => 5, // Pending Approval
                     'result_date' => now(),
                     'result_by' => Auth::id(),
+                    'entered_by_name' => $enteredByName,
+                    'entered_by_designation' => $enteredByDesignation,
                     // Clear any previous rejection
                     'rejected_by' => null,
                     'rejected_at' => null,
@@ -1092,7 +1121,15 @@ class ImagingWorkbenchController extends Controller
                     'result_data' => $resultData,
                     'attachments' => !empty($allAttachments) ? json_encode($allAttachments) : null,
                     'status' => 4, // Completed
+                    'entered_by_name' => $enteredByName,
+                    'entered_by_designation' => $enteredByDesignation,
                 ];
+
+                // If approval workflow is disabled, record the typed approver
+                if (!$requiresApproval) {
+                    $updateData['approved_by_name'] = $request->input('approved_by_name');
+                    $updateData['approved_by_designation'] = $request->input('approved_by_designation');
+                }
 
                 if (!$isEdit) {
                     $updateData['result_date'] = now();
@@ -1156,6 +1193,12 @@ class ImagingWorkbenchController extends Controller
                 'success' => true,
                 'message' => $message,
             ]);
+        } catch (\Illuminate\Validation\ValidationException $ve) {
+            return response()->json([
+                'success' => false,
+                'message' => $ve->getMessage(),
+                'errors' => $ve->errors(),
+            ], 422);
         } catch (\Exception $e) {
             DB::rollBack();
 
@@ -1902,24 +1945,33 @@ class ImagingWorkbenchController extends Controller
                 return response()->json(['success' => false, 'message' => 'This result is not pending approval.'], 422);
             }
 
+            $approver = Auth::user();
+            $approverStaff = $approver->staff_profile ?? $approver->staff;
+            $approverCadre = $approverStaff?->specialization?->name
+                ?: ($approverStaff?->cadre?->name
+                ?: ($approverStaff?->job_title ?: 'Consultant Radiologist / HOD Imaging'));
+
             return response()->json([
                 'success' => true,
                 'data' => [
                     'id' => $item->id,
                     'service_name' => $item->service_name,
                     'patient_name' => $item->patient && $item->patient->user
-                        ? $item->patient->user->surname . ' ' . $item->patient->user->firstname
+                        ? userfullname($item->patient->user->id)
                         : 'N/A',
                     'patient_id' => $item->patient_id,
                     'encounter_id' => $item->encounter_id,
                     'result_html' => $item->pending_result,
                     'result_data' => $item->pending_result_data,
                     'attachments' => $item->pending_attachments,
-                    'entered_by' => $item->result_by ? userfullname($item->result_by) : 'N/A',
+                    'entered_by' => $item->entered_by_name ?: ($item->result_by ? userfullname($item->result_by) : 'N/A'),
+                    'entered_by_designation' => $item->entered_by_designation,
+                    'approved_by_name' => $item->approved_by_name ?: userfullname(Auth::id()),
+                    'approved_by_designation' => $item->approved_by_designation ?: $approverCadre,
                     'result_date' => $item->result_date ? date('d M Y H:i', strtotime($item->result_date)) : null,
                     'status' => $item->status,
                     'rejection_reason' => $item->rejection_reason,
-                    'rejected_by_name' => $item->rejector ? ($item->rejector->surname . ' ' . $item->rejector->firstname) : null,
+                    'rejected_by_name' => $item->rejector ? userfullname($item->rejector->id) : null,
                     'rejected_at' => $item->rejected_at ? date('d M Y H:i', strtotime($item->rejected_at)) : null,
                 ],
             ]);
@@ -1944,6 +1996,15 @@ class ImagingWorkbenchController extends Controller
 
             DB::beginTransaction();
 
+            $approver = Auth::user();
+            $approverStaff = $approver->staff_profile ?? $approver->staff;
+            $approverCadre = $approverStaff?->specialization?->name
+                ?: ($approverStaff?->cadre?->name
+                ?: ($approverStaff?->job_title ?: 'Consultant Radiologist / HOD Imaging'));
+
+            $approvedByName = request('approved_by_name') ?: ($imagingRequest->approved_by_name ?: userfullname(Auth::id()));
+            $approvedByDesignation = request('approved_by_designation') ?: ($imagingRequest->approved_by_designation ?: $approverCadre);
+
             $imagingRequest->update([
                 'result' => $imagingRequest->pending_result,
                 'result_data' => $imagingRequest->pending_result_data,
@@ -1953,6 +2014,8 @@ class ImagingWorkbenchController extends Controller
                 'pending_attachments' => null,
                 'approved_by' => Auth::id(),
                 'approved_at' => now(),
+                'approved_by_name' => $approvedByName,
+                'approved_by_designation' => $approvedByDesignation,
                 'status' => 4,
             ]);
 

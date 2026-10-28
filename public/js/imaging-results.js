@@ -1705,7 +1705,32 @@ function openApprovalReview(requestId) {
             </div>
 
             ${attachmentsHtml}
+
+            <div class="card border border-success-subtle bg-light p-3 mt-3">
+                <div class="d-flex align-items-center mb-2">
+                    <i class="mdi mdi-certificate text-success me-2 fs-5"></i>
+                    <strong class="text-dark small text-uppercase">Approver Sign-Off (Right Signature Line)</strong>
+                </div>
+                <div class="row">
+                    <div class="col-md-6 form-group mb-2 mb-md-0">
+                        <label class="form-label small text-muted mb-1" for="review_imaging_approved_by_name">
+                            Approver Name <span class="text-danger">*</span>
+                        </label>
+                        <input type="text" class="form-control form-control-sm" id="review_imaging_approved_by_name" value="${d.approved_by_name || ''}">
+                    </div>
+                    <div class="col-md-6 form-group mb-0">
+                        <label class="form-label small text-muted mb-1" for="review_imaging_approved_by_designation">
+                            Approver Specialization / Cadre <span class="text-danger">*</span>
+                        </label>
+                        <input type="text" class="form-control form-control-sm" id="review_imaging_approved_by_designation" value="${d.approved_by_designation || ''}">
+                        <small class="text-muted" style="font-size: 0.72rem;">Pre-filled from staff profile; editable prior to approving.</small>
+                    </div>
+                </div>
+            </div>
         `);
+
+        $('#confirm_imaging_approved_by_name').val(d.approved_by_name || '');
+        $('#confirm_imaging_approved_by_designation').val(d.approved_by_designation || '');
 
         // Show footer only if status is pending approval (5)
         if (d.status === 5) {
@@ -1720,6 +1745,10 @@ function openApprovalReview(requestId) {
 
 function approveImagingResult() {
     if (!currentApprovalId) return;
+    var name = $('#review_imaging_approved_by_name').val();
+    var desig = $('#review_imaging_approved_by_designation').val();
+    if (name) $('#confirm_imaging_approved_by_name').val(name);
+    if (desig) $('#confirm_imaging_approved_by_designation').val(desig);
     $('#approvalReviewModal').modal('hide');
     $('#approveConfirmModal').modal('show');
 }
@@ -1727,12 +1756,24 @@ function approveImagingResult() {
 function confirmApproveImagingResult() {
     if (!currentApprovalId) return;
 
+    var approverName = $('#confirm_imaging_approved_by_name').val() || $('#review_imaging_approved_by_name').val();
+    var approverDesignation = $('#confirm_imaging_approved_by_designation').val() || $('#review_imaging_approved_by_designation').val();
+
+    if (!approverName || !approverDesignation) {
+        toastr.warning('Please enter both Approver Name and Specialization / Cadre.');
+        return;
+    }
+
     $('#btn-confirm-approve').prop('disabled', true).html('<i class="mdi mdi-loading mdi-spin"></i> Approving...');
 
     $.ajax({
         url: wbUrl('/imaging-workbench/approval/' + currentApprovalId + '/approve'),
         type: 'POST',
-        data: { _token: (window.WORKBENCH_CONFIG?.csrf || $('meta[name="csrf-token"]').attr('content') || '')},
+        data: {
+            _token: (window.WORKBENCH_CONFIG?.csrf || $('meta[name="csrf-token"]').attr('content') || ''),
+            approved_by_name: approverName,
+            approved_by_designation: approverDesignation
+        },
         success: function(response) {
             $('#approveConfirmModal').modal('hide');
             if (response.success) {

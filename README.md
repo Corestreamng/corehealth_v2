@@ -218,6 +218,12 @@ CoreHealth v2 is designed to streamline hospital operations by integrating clini
 - **Non-Repudiation Audit & Auto-Revocation** — cryptographic PIN hashing, TTL-based automatic expiration, manual shift extension (+4h), and instant revocation with audit logging
 - **Consultation Log Book & Finalization** — high-density encounter visit summaries with non-duplication financial tracking and resilient consultation conclusion modal flow
 
+### 24. Diagnostic Result Signatures & Approval Governance
+- **Balanced Dual Attestation Layout** — "Entered By" (operator/scientist/technologist) on the left and "Approved By" (consultant/unit head/HOD) on the right across all Laboratory and Imaging report views, printouts, and inspection modals
+- **Dynamic Cadre & Specialization Pre-population** — Automatically discovers the operator's clinical designation from their staff profile (`specialization->name ?: (cadre->name ?: job_title)`) into an editable field
+- **Strict Approval-Gated vs Direct Mode Enforcement** — When approval workflows are disabled (`lab_results_require_approval = 0`, `imaging_results_require_approval = 0`), side-by-side attestation blocks enforce mandatory entry of the approver's name and designation prior to completion; when enabled, supervisors review, edit, and sign off via the approval queue
+- **Audit-Compliant Diagnostic Attestation** — Persistent capture of `entered_by_name`, `entered_by_designation`, `approved_by_name`, and `approved_by_designation` on both `lab_service_requests` and `imaging_service_requests`
+
 ---
 
 ## System Architecture

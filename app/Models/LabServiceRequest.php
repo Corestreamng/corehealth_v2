@@ -60,6 +60,10 @@ class LabServiceRequest extends Model implements Auditable
             'nhmis_outcome',
             'nhmis_outcome_raw',
             'nhmis_classified_at',
+            'entered_by_name',
+            'entered_by_designation',
+            'approved_by_name',
+            'approved_by_designation',
         ];
 
     protected $appends = ['service_name'];

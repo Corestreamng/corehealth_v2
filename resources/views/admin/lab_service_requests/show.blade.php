@@ -35,11 +35,13 @@
     }
 
     $labNumber = $req->lab_number ?? str_pad($req->id, 7, '0', STR_PAD_LEFT);
-    $resultByName = $req->resultBy ? userfullname($req->resultBy->id) : null;
-    $approverName = ($req->approver) ? userfullname($req->approver->id) : null;
+    $resultByName = $req->entered_by_name ?: ($req->resultBy ? userfullname($req->resultBy->id) : null);
+    $resultByCadre = $req->entered_by_designation ?: ($req->resultBy?->staff_profile?->specialization?->name ?: ($req->resultBy?->staff_profile?->cadre?->name ?: ($req->resultBy?->staff_profile?->job_title ?: 'Medical Laboratory Scientist')));
+    $effectiveApproverName = $req->approved_by_name ?: ($req->approver ? userfullname($req->approver->id) : null);
+    $effectiveApproverCadre = $req->approved_by_designation ?: ($req->approver?->staff_profile?->specialization?->name ?: ($req->approver?->staff_profile?->cadre?->name ?: ($req->approver?->staff_profile?->job_title ?: 'Pathologist / Head of Laboratory')));
     $sampleDate = $req->sample_date ? \Carbon\Carbon::parse($req->sample_date)->format('d M Y, h:i A') : null;
     $resultDate = $req->result_date ? \Carbon\Carbon::parse($req->result_date)->format('d M Y, h:i A') : null;
-    $approvedDate = ($req->approved_at) ? \Carbon\Carbon::parse($req->approved_at)->format('d M Y, h:i A') : null;
+    $approvedDate = ($req->approved_at) ? \Carbon\Carbon::parse($req->approved_at)->format('d M Y, h:i A') : ($req->approved_by_name ? $resultDate : null);
     $serviceName = $req->service->service_name ?? 'Laboratory Test';
     $priority = $req->priority ?? null;
     $note = $req->note ?? null;
@@ -118,11 +120,15 @@
         .att-list span { margin-right: 16px; }
 
         /* ─── Signatures ─── */
-        .sig-section { display: flex; justify-content: space-between; padding: 20px 24px 8px; }
-        .sig-box { text-align: center; min-width: 160px; }
-        .sig-line { border-top: 1.5px solid #333; margin-top: 30px; padding-top: 4px; }
+        .sig-section { display: flex; justify-content: space-between; padding: 25px 24px 8px; }
+        .sig-box { min-width: 200px; max-width: 300px; }
+        .sig-box-left { text-align: left; }
+        .sig-box-right { text-align: right; }
+        .sig-title { font-size: 9.5px; font-weight: 700; text-transform: uppercase; color: #444; margin-bottom: 25px; letter-spacing: 0.5px; }
+        .sig-line { border-top: 1.5px solid #333; padding-top: 4px; }
         .sig-name { font-size: 10.5px; font-weight: 700; color: #111; }
-        .sig-role { font-size: 9px; color: #666; }
+        .sig-role { font-size: 9px; color: #555; margin-top: 1px; }
+        .sig-date { font-size: 8.5px; color: #777; margin-top: 1px; }
 
         /* ─── Footer ─── */
         .rpt-footer { padding: 8px 24px; text-align: center; font-size: 9px; color: #999; border-top: 1px solid #ddd; }
@@ -205,8 +211,8 @@
                     <span class="val {{ strtolower($priority) === 'urgent' ? 'priority-urgent' : (strtolower($priority) === 'stat' ? 'priority-stat' : '') }}">{{ strtoupper($priority) }}</span>
                 </div>
             @endif
-            @if($approverName)
-                <div class="meta-item"><span class="lbl">Approved by:</span> <span class="val">{{ $approverName }}</span></div>
+            @if($effectiveApproverName)
+                <div class="meta-item"><span class="lbl">Approved by:</span> <span class="val">{{ $effectiveApproverName }}</span></div>
             @endif
             @if($approvedDate)
                 <div class="meta-item"><span class="lbl">Approved:</span> <span class="val">{{ $approvedDate }}</span></div>
@@ -334,33 +340,33 @@
 
         {{-- ═══ Signatures ═══ --}}
         <div class="sig-section">
-            @if($resultByName)
-                <div class="sig-box">
-                    <div class="sig-line">
-                        <div class="sig-name">{{ $resultByName }}</div>
-                        <div class="sig-role">Medical Laboratory Scientist</div>
-                    </div>
-                </div>
-            @endif
-            @if($approverName)
-                <div class="sig-box">
-                    <div class="sig-line">
-                        <div class="sig-name">{{ $approverName }}</div>
-                        <div class="sig-role">Approved &bull; {{ $approvedDate }}</div>
-                    </div>
-                </div>
-            @endif
-            <div class="sig-box">
+            <div class="sig-box sig-box-left">
+                <div class="sig-title">Entered By:</div>
                 <div class="sig-line">
-                    <div class="sig-name">Authorized Signature</div>
-                    <div class="sig-role">{{ $resultDate ?? now()->format('d M Y') }}</div>
+                    <div class="sig-name">{{ $resultByName ?? 'Medical Laboratory Scientist' }}</div>
+                    <div class="sig-role">{{ $resultByCadre ?? 'Medical Laboratory Scientist' }}</div>
+                    @if($resultDate)
+                        <div class="sig-date">{{ $resultDate }}</div>
+                    @endif
+                </div>
+            </div>
+            <div class="sig-box sig-box-right">
+                <div class="sig-title">Approved By:</div>
+                <div class="sig-line">
+                    <div class="sig-name">{{ $effectiveApproverName ?? 'Authorized Approver' }}</div>
+                    <div class="sig-role">{{ $effectiveApproverCadre ?? 'Pathologist / Lab Manager' }}</div>
+                    @if($approvedDate)
+                        <div class="sig-date">{{ $approvedDate }}</div>
+                    @elseif(!$effectiveApproverName)
+                        <div class="sig-date" style="font-style: italic; color: #999;">(Pending Approval)</div>
+                    @endif
                 </div>
             </div>
         </div>
 
         {{-- ═══ Footer ═══ --}}
         <div class="rpt-footer">
-            <p>This is a computer-generated laboratory report. Results should be interpreted in the context of clinical findings.</p>
+            <p>This laboratory report was electronically generated and authorized. Results should be interpreted in the context of clinical findings.</p>
             <p>{{ $sett->contact_phones ?? '' }} &bull; {{ $sett->contact_emails ?? '' }}</p>
             <p>Printed: {{ date('d M Y H:i') }}</p>
         </div>

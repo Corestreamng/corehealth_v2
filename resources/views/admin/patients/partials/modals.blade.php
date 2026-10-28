@@ -377,17 +377,25 @@
                         </div>
                     </div>
 
-                    <!-- Footer Section -->
-                    <div class="imaging-result-section" style="padding-top: 40px;">
-                        <div style="display: flex; justify-content: space-between; border-top: 2px solid #eee; padding-top: 20px;">
-                            <div>
-                                <div style="margin-bottom: 5px;"><strong>Results By:</strong></div>
-                                <div id="imaging_result_by" style="color: #666;"></div>
+                    <!-- Signatures Section -->
+                    <div class="imaging-result-section" style="padding-top: 30px;">
+                        <div style="display: flex; justify-content: space-between; border-top: 2px solid #eee; padding-top: 15px;">
+                            <div style="min-width: 220px; max-width: 320px; text-align: left;">
+                                <div style="font-size: 0.8rem; font-weight: 700; color: #495057; text-transform: uppercase; margin-bottom: 25px; letter-spacing: 0.5px;">Entered By:</div>
+                                <div style="border-top: 1.5px solid #333; padding-top: 4px;">
+                                    <div id="imaging_entered_by_name" style="font-weight: 700; font-size: 0.9rem; color: #111;"></div>
+                                    <div id="imaging_entered_by_cadre" style="font-size: 0.8rem; color: #555; margin-top: 1px;"></div>
+                                    <div id="imaging_entered_by_date" style="font-size: 0.75rem; color: #777; margin-top: 1px;"></div>
+                                    <span id="imaging_result_by" style="display:none;"></span>
+                                </div>
                             </div>
-                            <div style="text-align: right;">
-                                <div style="margin-bottom: 5px;"><strong>Authorized Signature:</strong></div>
-                                <div style="border-top: 1px solid #333; min-width: 200px; padding-top: 5px;">
-                                    <span id="imaging_signature_date"></span>
+                            <div style="min-width: 220px; max-width: 320px; text-align: right;">
+                                <div style="font-size: 0.8rem; font-weight: 700; color: #495057; text-transform: uppercase; margin-bottom: 25px; letter-spacing: 0.5px;">Approved By:</div>
+                                <div style="border-top: 1.5px solid #333; padding-top: 4px;">
+                                    <div id="imaging_approved_by_name" style="font-weight: 700; font-size: 0.9rem; color: #111;"></div>
+                                    <div id="imaging_approved_by_cadre" style="font-size: 0.8rem; color: #555; margin-top: 1px;"></div>
+                                    <div id="imaging_approved_by_date" style="font-size: 0.75rem; color: #777; margin-top: 1px;"></div>
+                                    <span id="imaging_signature_date" style="display:none;"></span>
                                 </div>
                             </div>
                         </div>
@@ -397,7 +405,9 @@
                     <div class="imaging-result-footer">
                         <div>{{ $sett->site_name ?? 'Hospital Name' }} | {{ $sett->contact_address ?? '' }}</div>
                         <div>{{ $sett->contact_phones ?? '' }} | {{ $sett->contact_emails ?? '' }}</div>
-                        <div style="margin-top: 10px; font-size: 11px;">This is a computer-generated document. Report generated on <span id="imaging_generated_date"></span></div>
+                        <div style="margin-top: 10px; font-size: 11px;">
+                            This imaging report was electronically generated and authorized. Results should be interpreted in the context of clinical findings. <span class="d-block mt-1 text-muted">Report generated on <span id="imaging_generated_date"></span></span>
+                        </div>
                     </div>
                 </div>
             </div>

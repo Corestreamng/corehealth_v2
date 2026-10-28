@@ -118,12 +118,31 @@ function setImagingResViewInModal(obj) {
     $('#imaging_test_id').html(res_obj.id);
     $('#imaging_result_date').html(res_obj.result_date || 'N/A');
 
-    // Results person — null-safe
-    let resultByName = 'N/A';
-    if (res_obj.results_person) {
-        resultByName = res_obj.results_person.firstname + ' ' + res_obj.results_person.surname;
+    // Results Entered By & Approved By
+    let enteredByName = res_obj.entered_by_name || '';
+    if (!enteredByName && res_obj.results_person) {
+        enteredByName = res_obj.results_person.firstname + ' ' + res_obj.results_person.surname + (res_obj.results_person.othername ? ' ' + res_obj.results_person.othername : '');
+    } else if (!enteredByName && res_obj.result_by) {
+        enteredByName = 'Staff #' + res_obj.result_by;
     }
-    $('#imaging_result_by').html(resultByName);
+    let enteredByCadre = res_obj.entered_by_designation || (res_obj.results_person && res_obj.results_person.staff_profile && res_obj.results_person.staff_profile.specialization ? res_obj.results_person.staff_profile.specialization.name : 'Radiologist / Imaging Technician');
+    let enteredByDate = res_obj.result_date || '';
+
+    $('#imaging_entered_by_name').text(enteredByName || 'Entered By');
+    $('#imaging_entered_by_cadre').text(enteredByCadre);
+    $('#imaging_entered_by_date').text(enteredByDate);
+    $('#imaging_result_by').html(enteredByName || 'N/A');
+
+    let approvedByName = res_obj.approved_by_name || '';
+    if (!approvedByName && res_obj.approver) {
+        approvedByName = res_obj.approver.firstname + ' ' + res_obj.approver.surname + (res_obj.approver.othername ? ' ' + res_obj.approver.othername : '');
+    }
+    let approvedByCadre = res_obj.approved_by_designation || (res_obj.approver && res_obj.approver.staff_profile && res_obj.approver.staff_profile.specialization ? res_obj.approver.staff_profile.specialization.name : (approvedByName ? 'Consultant Radiologist / HOD Imaging' : ''));
+    let approvedByDate = res_obj.approved_at || (res_obj.approved_by_name ? (res_obj.result_date || '') : '');
+
+    $('#imaging_approved_by_name').text(approvedByName || (res_obj.status == 5 ? '(Pending Approval)' : 'Authorized Approver'));
+    $('#imaging_approved_by_cadre').text(approvedByCadre);
+    $('#imaging_approved_by_date').text(approvedByDate);
 
     // Status
     let statusBadge = '';

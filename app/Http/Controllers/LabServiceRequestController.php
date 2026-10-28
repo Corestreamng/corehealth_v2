@@ -38,13 +38,24 @@ class LabServiceRequestController extends Controller
     {
         // dd($request->all());
         try {
-            $request->validate([
+            $requiresApproval = (bool) appsettings('lab_results_require_approval');
+
+            $validationRules = [
                 'invest_res_template_submited' => 'nullable|string',
                 'invest_res_entry_id' => 'required',
                 'invest_res_template_version' => 'required|in:1,2',
                 'invest_res_template_data' => 'nullable|string',
                 'result_attachments.*' => 'nullable|file|max:10240|mimes:pdf,jpg,jpeg,png,doc,docx',
-            ]);
+                'entered_by_name' => 'nullable|string|max:255',
+                'entered_by_designation' => 'nullable|string|max:255',
+            ];
+
+            if (!$requiresApproval) {
+                $validationRules['approved_by_name'] = 'required|string|max:255';
+                $validationRules['approved_by_designation'] = 'required|string|max:255';
+            }
+
+            $request->validate($validationRules);
 
             $labRequest = LabServiceRequest::findOrFail($request->invest_res_entry_id);
             $isEdit = $request->invest_res_is_edit == '1';
@@ -170,7 +181,15 @@ class LabServiceRequestController extends Controller
 
             DB::beginTransaction();
 
-            $requiresApproval = appsettings('lab_results_require_approval');
+            $requiresApproval = (bool) appsettings('lab_results_require_approval');
+
+            $user = Auth::user();
+            $staffProfile = $user?->staff_profile ?? $user?->staff;
+            $userCadre = $staffProfile?->specialization?->name
+                ?: ($staffProfile?->cadre?->name
+                ?: ($staffProfile?->job_title ?: 'Medical Laboratory Scientist'));
+            $enteredByName = $request->input('entered_by_name') ?: ($user ? userfullname($user->id) : '');
+            $enteredByDesignation = $request->input('entered_by_designation') ?: $userCadre;
 
             if ($requiresApproval && !$isEdit) {
                 // Save to pending columns — result not visible until approved
@@ -181,6 +200,8 @@ class LabServiceRequestController extends Controller
                     'status' => 5, // Pending Approval
                     'result_date' => date('Y-m-d H:i:s'),
                     'result_by' => Auth::id(),
+                    'entered_by_name' => $enteredByName,
+                    'entered_by_designation' => $enteredByDesignation,
                     'rejected_by' => null,
                     'rejected_at' => null,
                     'rejection_reason' => null,
@@ -192,7 +213,15 @@ class LabServiceRequestController extends Controller
                     'result_data' => $resultData,
                     'attachments' => !empty($allAttachments) ? json_encode($allAttachments) : null,
                     'status' => 4,
+                    'entered_by_name' => $enteredByName,
+                    'entered_by_designation' => $enteredByDesignation,
                 ];
+
+                // If approval workflow is disabled, record the typed approver
+                if (!$requiresApproval) {
+                    $updateData['approved_by_name'] = $request->input('approved_by_name');
+                    $updateData['approved_by_designation'] = $request->input('approved_by_designation');
+                }
 
                 // Only update result_date and result_by if this is not an edit
                 if (!$isEdit) {

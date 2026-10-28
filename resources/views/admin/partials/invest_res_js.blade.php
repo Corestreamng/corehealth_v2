@@ -11,7 +11,25 @@
             'onSaveSuccess'     => JS callback name to call after successful save (optional)
 --}}
 
+@php
+    $currUser = Auth::user();
+    $currStaff = $currUser ? ($currUser->staff_profile ?? $currUser->staff) : null;
+    $currUserName = $currUser ? userfullname($currUser->id) : '';
+    $currUserCadre = $currStaff
+        ? ($currStaff->specialization?->name ?: ($currStaff->cadre?->name ?: ($currStaff->job_title ?: '')))
+        : '';
+    $labRequiresApproval = (bool) appsettings('lab_results_require_approval');
+    $imagingRequiresApproval = (bool) appsettings('imaging_results_require_approval');
+@endphp
+
 <script>
+window.INVEST_RES_CONFIG = {
+    currentUserName: @json($currUserName),
+    currentUserCadre: @json($currUserCadre),
+    labRequiresApproval: {{ $labRequiresApproval ? 'true' : 'false' }},
+    imagingRequiresApproval: {{ $imagingRequiresApproval ? 'true' : 'false' }},
+};
+
 /**
  * InvestResultEntry – shared module for lab / imaging result entry & editing.
  * Works with V1 (CKEditor WYSIWYG) and V2 (structured JSON) templates.
@@ -146,6 +164,9 @@ window.InvestResultEntry = (function() {
 
         // Load NHMIS Outcome delegation & setup real-time auto-sense bar
         _setupNhmisOutcome(request);
+
+        // Load Attestation & Signatures (Entered By on Left, Approved By on Right)
+        _setupSignaturesAndAttestation(request);
     }
 
     /**
@@ -559,6 +580,31 @@ window.InvestResultEntry = (function() {
                 }
             }
 
+            // Attestation Validation: Entered By Specialization / Cadre is required
+            var enteredDesig = ($('#entered_by_designation').val() || '').trim();
+            if (!enteredDesig) {
+                toastr.warning('Please specify your Specialization / Cadre under Entered By.');
+                $('#entered_by_designation').focus();
+                return false;
+            }
+
+            // Attestation Validation: If approval gate is disabled, Approver Name & Designation are mandatory
+            var isApprovalDisabled = $('#manual_approval_fields').is(':visible');
+            if (isApprovalDisabled) {
+                var approverName = ($('#approved_by_name').val() || '').trim();
+                var approverDesig = ($('#approved_by_designation').val() || '').trim();
+                if (!approverName) {
+                    toastr.warning('Approver Name is required when approval workflow is disabled.');
+                    $('#approved_by_name').focus();
+                    return false;
+                }
+                if (!approverDesig) {
+                    toastr.warning('Approver Designation / Cadre is required when approval workflow is disabled.');
+                    $('#approved_by_designation').focus();
+                    return false;
+                }
+            }
+
             const formData = new FormData(this);
             const $submitBtn = $(this).find('button[type="submit"]');
             const originalBtnHtml = $submitBtn.html();
@@ -598,6 +644,59 @@ window.InvestResultEntry = (function() {
                 }
             });
         });
+    }
+
+    /**
+     * Attestation & Signatures Setup (Entered By on Left, Approved By on Right)
+     */
+    function _setupSignaturesAndAttestation(request) {
+        var cfg = window.INVEST_RES_CONFIG || {};
+
+        // Detect if this request is imaging or lab
+        var formAction = $('#investResForm').attr('action') || '';
+        var isImaging = (request.request_type === 'imaging')
+            || (formAction.indexOf('imaging') !== -1)
+            || (request.service && request.service.category && String(request.service.category).toLowerCase().indexOf('imaging') !== -1);
+
+        // Check if approval workflow is enabled
+        var requiresApproval = false;
+        if (typeof request.requires_approval !== 'undefined') {
+            requiresApproval = !!request.requires_approval;
+        } else if (isImaging) {
+            requiresApproval = !!cfg.imagingRequiresApproval;
+        } else {
+            requiresApproval = !!cfg.labRequiresApproval;
+        }
+
+        // 1. Setup "Entered By" (Left column)
+        var defaultEnteredByName = cfg.currentUserName || '';
+        var defaultCadre = cfg.currentUserCadre || (isImaging ? 'Radiologist / Imaging Technician' : 'Medical Laboratory Scientist');
+
+        $('#entered_by_name').val(request.entered_by_name || defaultEnteredByName);
+        $('#entered_by_designation').val(request.entered_by_designation || defaultCadre);
+
+        // 2. Setup "Approved By" (Right column)
+        if (requiresApproval) {
+            // Approval workflow enabled: will route to approval queue
+            $('#manual_approval_fields').hide();
+            $('#workflow_approval_notice').show();
+            $('#approved_by_name').prop('required', false);
+            $('#approved_by_designation').prop('required', false);
+            $('#approval_status_badge')
+                .removeClass('bg-secondary bg-warning')
+                .addClass('bg-purple text-white')
+                .html('<i class="mdi mdi-shield-check"></i> Approval Gate: Enabled');
+        } else {
+            // Approval workflow disabled: manual typing is mandatory
+            $('#manual_approval_fields').show();
+            $('#workflow_approval_notice').hide();
+            $('#approved_by_name').prop('required', true).val(request.approved_by_name || '');
+            $('#approved_by_designation').prop('required', true).val(request.approved_by_designation || '');
+            $('#approval_status_badge')
+                .removeClass('bg-purple')
+                .addClass('bg-secondary text-white')
+                .html('<i class="mdi mdi-shield-off"></i> Approval Gate: Disabled');
+        }
     }
 
     /**

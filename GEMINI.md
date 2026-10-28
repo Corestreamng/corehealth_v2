@@ -196,4 +196,9 @@ When working on this project, strictly adhere to the following standards across 
 - **Conclude Consultation Modal Resilience**: Finalize handlers in `_modals.blade.php` use safe resolution (`getActiveEncounterId()`, `getActiveQueueId()`), SweetAlert2 confirmations with native fallback, and safe error/success alerting with auto-redirect.
 - **Documentation**: Architecture is documented in `docs/LOCUM_ACCESS_AND_CONSULTATION_LOGBOOK.md`.
 
-
+## 19. Investigation Result Signatures & Approval Governance Standards
+- **Balanced Dual Signature Block**: All Laboratory and Imaging diagnostic report views (`lab_service_requests/show.blade.php`, `imaging_service_requests/show.blade.php`), inspection modals (`invest_res_view_modal.blade.php`, `invest_res_view_imaging_modal.blade.php`), and entry modals must render a dual signature line: "Entered By" on the left and "Approved By" on the right.
+- **Staff Cadre & Specialization Auto-Populate**: Result entry modals must auto-populate the operator's designation from their staff profile (`specialization->name ?: (cadre->name ?: job_title)`) into an editable field (`entered_by_designation`).
+- **Direct Entry Approver Enforcement**: When approval workflows are disabled (`lab_results_require_approval = 0` or `imaging_results_require_approval = 0`), the operator must explicitly enter the approver's name and designation before the result can be completed (`status = 4`). Controller validation rules strictly enforce `approved_by_name` and `approved_by_designation` as required.
+- **Supervisor Review & Approval Workflow**: When approval workflows are enabled (`status = 5`), the approval queue modals allow the approving supervisor to review and edit their sign-off name and designation before final completion.
+- **Documentation**: Architecture is documented in `docs/INVESTIGATION_RESULT_SIGNATURES_AND_APPROVAL_GOVERNANCE.md`.

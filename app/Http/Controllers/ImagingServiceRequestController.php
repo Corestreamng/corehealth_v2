@@ -36,13 +36,24 @@ class ImagingServiceRequestController extends Controller
     public function saveResult(Request $request)
     {
         try {
-            $request->validate([
+            $requiresApproval = (bool) appsettings('imaging_results_require_approval');
+
+            $validationRules = [
                 'imaging_res_template_submited' => 'required|string',
                 'imaging_res_entry_id' => 'required',
                 'imaging_res_template_version' => 'required|in:1,2',
                 'imaging_res_template_data' => 'nullable|string',
                 'result_attachments.*' => 'nullable|file|max:10240|mimes:pdf,jpg,jpeg,png,doc,docx',
-            ]);
+                'entered_by_name' => 'nullable|string|max:255',
+                'entered_by_designation' => 'nullable|string|max:255',
+            ];
+
+            if (!$requiresApproval) {
+                $validationRules['approved_by_name'] = 'required|string|max:255';
+                $validationRules['approved_by_designation'] = 'required|string|max:255';
+            }
+
+            $request->validate($validationRules);
 
             $imagingRequest = ImagingServiceRequest::findOrFail($request->imaging_res_entry_id);
 
@@ -175,16 +186,62 @@ class ImagingServiceRequestController extends Controller
 
             DB::beginTransaction();
 
-            $updateData = [
-                'result' => $resultHtml,
-                'result_data' => $resultData,
-                'attachments' => !empty($allAttachments) ? json_encode($allAttachments) : null,
-                'status' => 4,
-            ];
+            $requiresApproval = (bool) appsettings('imaging_results_require_approval');
 
-            if (!$isEdit) {
-                $updateData['result_date'] = date('Y-m-d H:i:s');
-                $updateData['result_by'] = Auth::id();
+            $user = Auth::user();
+            $staffProfile = $user?->staff_profile ?? $user?->staff;
+            $userCadre = $staffProfile?->specialization?->name
+                ?: ($staffProfile?->cadre?->name
+                ?: ($staffProfile?->job_title ?: 'Radiologist / Imaging Technician'));
+            $enteredByName = $request->input('entered_by_name') ?: ($user ? userfullname($user->id) : '');
+            $enteredByDesignation = $request->input('entered_by_designation') ?: $userCadre;
+
+            if ($requiresApproval && !$isEdit) {
+                // Save to pending columns — result not visible until approved
+                $updateData = [
+                    'pending_result' => $resultHtml,
+                    'pending_result_data' => $resultData,
+                    'pending_attachments' => !empty($allAttachments) ? json_encode($allAttachments) : null,
+                    'status' => 5, // Pending Approval
+                    'result_date' => now(),
+                    'result_by' => Auth::id(),
+                    'entered_by_name' => $enteredByName,
+                    'entered_by_designation' => $enteredByDesignation,
+                    'rejected_by' => null,
+                    'rejected_at' => null,
+                    'rejection_reason' => null,
+                ];
+            } else {
+                // Original behavior — save directly to live columns
+                $updateData = [
+                    'result' => $resultHtml,
+                    'result_data' => $resultData,
+                    'attachments' => !empty($allAttachments) ? json_encode($allAttachments) : null,
+                    'status' => 4,
+                    'entered_by_name' => $enteredByName,
+                    'entered_by_designation' => $enteredByDesignation,
+                ];
+
+                // If approval workflow is disabled, record the typed approver
+                if (!$requiresApproval) {
+                    $updateData['approved_by_name'] = $request->input('approved_by_name');
+                    $updateData['approved_by_designation'] = $request->input('approved_by_designation');
+                }
+
+                if (!$isEdit) {
+                    $updateData['result_date'] = date('Y-m-d H:i:s');
+                    $updateData['result_by'] = Auth::id();
+                }
+
+                // If re-submitting after rejection, clear pending columns
+                if ($imagingRequest->status == 6) {
+                    $updateData['pending_result'] = null;
+                    $updateData['pending_result_data'] = null;
+                    $updateData['pending_attachments'] = null;
+                    $updateData['rejected_by'] = null;
+                    $updateData['rejected_at'] = null;
+                    $updateData['rejection_reason'] = null;
+                }
             }
 
             // Only classify for NHMIS if the service is mapped to an NHMIS indicator
@@ -218,7 +275,7 @@ class ImagingServiceRequestController extends Controller
             $imagingRequest->update($updateData);
             DB::commit();
 
-            $message = $isEdit ? "Results Updated Successfully" : "Results Saved Successfully";
+            $message = $isEdit ? "Results Updated Successfully" : ($requiresApproval ? "Results saved — pending approval" : "Results Saved Successfully");
 
             return redirect()->back()->with(['message' => $message, 'message_type' => 'success']);
         } catch (\Exception $e) {

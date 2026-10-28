@@ -503,12 +503,30 @@
                 <h5 class="modal-title"><i class="mdi mdi-check-decagram"></i> Confirm Approval</h5>
                 <button type="button" data-bs-dismiss="modal" class="btn- btn-close btn-close-white" aria-label="Close"></button>
             </div>
-            <div class="modal-body text-center py-4">
-                <div style="font-size: 3rem; color: #28a745;"><i class="mdi mdi-clipboard-check-outline"></i></div>
-                <h5 class="mt-2 mb-1">Approve this result?</h5>
-                <p class="text-muted mb-0">This will make the result visible to doctors and patients. You can reverse this later if needed.</p>
+            <div class="modal-body py-3 px-4">
+                <div class="text-center mb-3">
+                    <div style="font-size: 2.2rem; color: #28a745;"><i class="mdi mdi-clipboard-check-outline"></i></div>
+                    <h5 class="mt-1 mb-1">Approve this result?</h5>
+                    <p class="text-muted small mb-0">Confirm and sign off this investigation result for longitudinal EHR release.</p>
+                </div>
+
+                <div class="card bg-light border-0 p-3 mb-2">
+                    <div class="form-group mb-2">
+                        <label class="form-label small fw-bold text-dark mb-1" for="confirm_lab_approved_by_name">
+                            Approver Name <span class="text-danger">*</span>
+                        </label>
+                        <input type="text" class="form-control form-control-sm" id="confirm_lab_approved_by_name" name="approved_by_name" required placeholder="Full Name of Approver">
+                    </div>
+                    <div class="form-group mb-0">
+                        <label class="form-label small fw-bold text-dark mb-1" for="confirm_lab_approved_by_designation">
+                            Approver Specialization / Cadre <span class="text-danger">*</span>
+                        </label>
+                        <input type="text" class="form-control form-control-sm" id="confirm_lab_approved_by_designation" name="approved_by_designation" required placeholder="e.g. Consultant Pathologist / Head of Laboratory">
+                        <small class="text-muted" style="font-size: 0.72rem;">Pre-filled from your staff profile; editable prior to signing.</small>
+                    </div>
+                </div>
             </div>
-            <div class="modal-footer justify-content-center" style="border-top: 1px solid #eee;">
+            <div class="modal-footer justify-content-between" style="border-top: 1px solid #eee;">
                 <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal"><i class="mdi mdi-close"></i> Cancel</button>
                 <button type="button" class="btn btn-success" id="btn-confirm-approve">
                     <i class="mdi mdi-check-bold"></i> Yes, Approve
