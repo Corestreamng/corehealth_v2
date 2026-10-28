@@ -211,7 +211,7 @@ $('#deletionReasonSelect').on('change', function() {
                     <h5 class="modal-title" id="concludeEncounterModalLabel">
                         <i class="fa fa-check-circle"></i> Conclude Encounter
                     </h5>
-                    <button type="button" data-bs-dismiss="modal" class="btn- btn-close btn-close-white" aria-label="Close"></button>
+                    <button type="button" data-bs-dismiss="modal" class="btn-close btn-close-white" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
                     <!-- Encounter Summary -->
@@ -400,6 +400,32 @@ $('#deletionReasonSelect').on('change', function() {
     </div>
 
 <script>
+    function showEncounterModalMessage(elementId, message, type) {
+        type = type || 'success';
+        const element = document.getElementById(elementId);
+        if (!element) {
+            console.log('[' + type + '] ' + message);
+            return;
+        }
+        const typeMap = { success: 'alert-success', error: 'alert-danger', warning: 'alert-warning', info: 'alert-info' };
+        const alertClass = typeMap[type] || 'alert-info';
+        element.innerHTML = '<div class="alert ' + alertClass + ' alert-dismissible fade show mt-2" role="alert">' +
+            message +
+            '<button type="button" class="btn-close" data-bs-dismiss="alert"></button>' +
+        '</div>';
+    }
+    if (typeof window.showMessage !== 'function') {
+        window.showMessage = showEncounterModalMessage;
+    }
+
+    function getActiveEncounterId() {
+        return window.encounterId || (window.WORKBENCH_CONFIG && window.WORKBENCH_CONFIG.encounterId) || (typeof encounterId !== 'undefined' ? encounterId : null) || $('#encounter_id__').val();
+    }
+
+    function getActiveQueueId() {
+        return (window.WORKBENCH_CONFIG && window.WORKBENCH_CONFIG.queueId) ? window.WORKBENCH_CONFIG.queueId : (typeof queueId !== 'undefined' ? queueId : null);
+    }
+
     // Update modal summary when modal is opened
     $('#concludeEncounterModal').on('show.bs.modal', function() {
         updateModalSummary();
@@ -407,85 +433,122 @@ $('#deletionReasonSelect').on('change', function() {
 
     // Finalize encounter from modal
     function finalizeEncounterFromModal() {
-        if (!confirm('Are you sure you want to complete this encounter?')) {
+        const activeEncId = getActiveEncounterId();
+        if (!activeEncId) {
+            showEncounterModalMessage('modal_finalize_message', 'No active consultation session found to conclude.', 'error');
             return;
         }
 
-        const btn = document.getElementById('modal_finalize_encounter_btn');
-        btn.disabled = true;
-        btn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Completing...';
-
-        // First: schedule follow-up if opted in
-        var followUpPromise = Promise.resolve();
-        if ($('#schedule-followup-check').is(':checked')) {
-            var fuDate = $('#followup-date').val();
-            var fuSlot = $('#followup-time-slot').val();
-            if (!fuDate) {
-                showMessage('modal_finalize_message', 'Please select a follow-up date', 'error');
-                btn.disabled = false;
-                btn.innerHTML = '<i class="fa fa-check-circle"></i> Complete Encounter';
-                return;
+        const proceedWithFinalization = function() {
+            const btn = document.getElementById('modal_finalize_encounter_btn');
+            if (btn) {
+                btn.disabled = true;
+                btn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Completing...';
             }
-            followUpPromise = new Promise(function(resolve, reject) {
+
+            // First: schedule follow-up if opted in
+            var followUpPromise = Promise.resolve();
+            if ($('#schedule-followup-check').is(':checked')) {
+                var fuDate = $('#followup-date').val();
+                var fuSlot = $('#followup-time-slot').val();
+                if (!fuDate) {
+                    showEncounterModalMessage('modal_finalize_message', 'Please select a follow-up date', 'error');
+                    if (btn) {
+                        btn.disabled = false;
+                        btn.innerHTML = '<i class="fa fa-check-circle"></i> Complete Encounter';
+                    }
+                    return;
+                }
+                followUpPromise = new Promise(function(resolve, reject) {
+                    $.ajax({
+                        url: "{{ route('encounters.schedule-followup', ['encounter' => '__EID__']) }}".replace('__EID__', encodeURIComponent(activeEncId)),
+                        method: 'POST',
+                        data: {
+                            appointment_date: fuDate,
+                            start_time: fuSlot || null,
+                            priority: $('#followup-priority').val(),
+                            reason: $('#followup-notes').val(),
+                            is_prepaid: $('#followup-prepaid').is(':checked') ? 1 : 0,
+                            _token: $('meta[name="csrf-token"]').attr('content')
+                        },
+                        success: function(res) {
+                            resolve(res);
+                        },
+                        error: function(xhr) {
+                            console.warn('Follow-up scheduling failed:', xhr.responseJSON?.message);
+                            resolve(null);
+                        }
+                    });
+                });
+            }
+
+            followUpPromise.then(function(followUpResult) {
                 $.ajax({
-                    url: "{{ route('encounters.schedule-followup', ['encounter' => '__EID__']) }}".replace('__EID__', encounterId),
+                    url: "{{ url('/encounters') }}/" + encodeURIComponent(activeEncId) + "/finalize",
                     method: 'POST',
                     data: {
-                        appointment_date: fuDate,
-                        start_time: fuSlot || null,
-                        priority: $('#followup-priority').val(),
-                        reason: $('#followup-notes').val(),
-                        is_prepaid: $('#followup-prepaid').is(':checked') ? 1 : 0,
+                        end_consultation: 1,
+                        consult_admit: 0,
+                        admit_note: '',
+                        queue_id: getActiveQueueId(),
+                        outcome: $('#encounter-outcome').val(),
+                        death_record: ($('#encounter-outcome').val() && $('#encounter-outcome').val().startsWith('death')) ? {
+                            date: $('#death-date').val(),
+                            time: $('#death-time').val(),
+                            cause: $('#death-cause').val(),
+                            certified_by: {{ Auth::id() ?: 'null' }}
+                        } : null,
                         _token: $('meta[name="csrf-token"]').attr('content')
                     },
-                    success: function(res) {
-                        resolve(res);
+                    success: function(response) {
+                        var msg = response.message || 'Encounter completed successfully';
+                        if (followUpResult && followUpResult.appointment) {
+                            msg += ' Follow-up scheduled for ' + followUpResult.appointment.appointment_date + '.';
+                        }
+                        showEncounterModalMessage('modal_finalize_message', msg, 'success');
+                        if (btn) {
+                            btn.innerHTML = '<i class="fa fa-check-circle"></i> Completed!';
+                        }
+                        setTimeout(() => {
+                            try {
+                                $('#concludeEncounterModal').modal('hide');
+                            } catch (e) {}
+                            window.location.href = response.redirect || "{{ route('encounters.index') }}";
+                        }, 1200);
                     },
                     error: function(xhr) {
-                        // Non-critical — log but continue with finalization
-                        console.warn('Follow-up scheduling failed:', xhr.responseJSON?.message);
-                        resolve(null);
+                        const message = xhr.responseJSON?.message || 'Error completing encounter';
+                        showEncounterModalMessage('modal_finalize_message', message, 'error');
+                        if (btn) {
+                            btn.disabled = false;
+                            btn.innerHTML = '<i class="fa fa-check-circle"></i> Complete Encounter';
+                        }
                     }
                 });
             });
-        }
+        };
 
-        followUpPromise.then(function(followUpResult) {
-            $.ajax({
-                url: `{{ url('/encounters/${encounterId}/finalize') }}`,
-                method: 'POST',
-                data: {
-                    end_consultation: 1,
-                    consult_admit: 0,
-                    admit_note: '',
-                    queue_id: typeof queueId !== 'undefined' ? queueId : null,
-                    outcome: $('#encounter-outcome').val(),
-                    death_record: ($('#encounter-outcome').val() && $('#encounter-outcome').val().startsWith('death')) ? {
-                        date: $('#death-date').val(),
-                        time: $('#death-time').val(),
-                        cause: $('#death-cause').val(),
-                        certified_by: {{ Auth::id() }}
-                    } : null,
-                    _token: $('meta[name="csrf-token"]').attr('content')
-                },
-                success: function(response) {
-                    var msg = response.message;
-                    if (followUpResult && followUpResult.appointment) {
-                        msg += ' Follow-up scheduled for ' + followUpResult.appointment.appointment_date + '.';
-                    }
-                    showMessage('modal_finalize_message', msg, 'success');
-                    setTimeout(() => {
-                        window.location.href = response.redirect;
-                    }, 1500);
-                },
-                error: function(xhr) {
-                    const message = xhr.responseJSON?.message || 'Error completing encounter';
-                    showMessage('modal_finalize_message', message, 'error');
-                    btn.disabled = false;
-                    btn.innerHTML = '<i class="fa fa-check-circle"></i> Complete Encounter';
+        if (typeof Swal !== 'undefined') {
+            Swal.fire({
+                title: 'Complete Encounter?',
+                text: 'Are you sure you want to finalize this consultation?',
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonColor: '{{ appsettings('hos_color', '#007bff') }}',
+                cancelButtonColor: '#6c757d',
+                confirmButtonText: '<i class="fa fa-check-circle"></i> Yes, Complete',
+                cancelButtonText: 'Cancel'
+            }).then(function(result) {
+                if (result.isConfirmed) {
+                    proceedWithFinalization();
                 }
             });
-        });
+        } else {
+            if (!confirm('Are you sure you want to complete this encounter?')) {
+                return;
+            }
+            proceedWithFinalization();
+        }
     }
 
     // Toggle encounter outcome death fields
@@ -499,17 +562,21 @@ $('#deletionReasonSelect').on('change', function() {
 
     // Update modal summary (similar to updateSummary but targets modal elements)
     function updateModalSummary() {
+        const activeEncId = getActiveEncounterId();
+        if (!activeEncId) {
+            return;
+        }
         $.ajax({
-            url: `{{ url('/encounters/${encounterId}/summary') }}`,
+            url: "{{ url('/encounters') }}/" + encodeURIComponent(activeEncId) + "/summary",
             method: 'GET',
             success: function(response) {
                 if (response.success) {
                     const data = response.data;
 
                     // Update diagnosis summary
-                    if (data.diagnosis.saved) {
+                    if (data.diagnosis && data.diagnosis.saved) {
                         const notesPreview = data.diagnosis.notes ?
-                            (data.diagnosis.notes.substring(0, 100) + (data.diagnosis.notes.length> 100 ? '...' : '')) :
+                            (data.diagnosis.notes.substring(0, 100) + (data.diagnosis.notes.length > 100 ? '...' : '')) :
                             'Saved';
                         $('#modal_summary_diagnosis').html(`
                             <span class="text-success"><i class="fa fa-check-circle"></i> <strong>Saved</strong></span>

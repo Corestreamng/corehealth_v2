@@ -34,9 +34,14 @@
                     </h2>
                     <p class="text-muted mb-0">Manage all staff members and their information</p>
                 </div>
-                <a href="{{ route('staff.create') }}" class="btn btn-primary btn-sm">
-                    <i class="mdi mdi-plus"></i> Add New Staff
-                </a>
+                <div class="d-flex align-items-center">
+                    <a href="{{ route('locum.index') }}" class="btn btn-outline-primary btn-sm mr-2" id="btn-locum-management">
+                        <i class="mdi mdi-badge-account-outline"></i> Locum Management & Passes
+                    </a>
+                    <a href="{{ route('staff.create') }}" class="btn btn-primary btn-sm">
+                        <i class="mdi mdi-plus"></i> Add New Staff
+                    </a>
+                </div>
             </div>
 
             <div class="card-body">

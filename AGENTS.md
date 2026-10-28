@@ -188,3 +188,12 @@ When working on this project, strictly adhere to the following standards across 
 - **Embedded Transactions Console**: Cashier Transactions Console (`_my_transactions_modal.blade.php`) integrated directly into Ops Audit layout and workbenches.
 - **Documentation**: Architecture is documented in `docs/OPS_AUDIT_DUTY_SHIFT_RECONCILIATION.md`.
 
+## 18. Locum Staff Access Management & Consultation Log Book Standards
+- **Ephemeral Smart Passes (JIT Provisioning)**: Locum clinicians (Doctors, Visiting Radiologists, External Scientists) receive shift-bounded passes (`locum_passes`) with 6-digit PIN login, clinic scoping (`allowed_clinic_ids`), automatic expiration (TTL), and instant revocation.
+- **Role Assignment at Creation**: When creating a locum profile, Spatie roles (`role_id`) and cadre templates (`cadre_type`) are assigned immediately, giving locum staff instant permission to operate in their workbench upon issuance.
+- **Zero-Breakage EHR & Observer Compliance**: Locum users are registered as first-class `users` with `is_locum = 1`. `User::staff_profile()` utilizes `withDefault()` to protect against null pointer exceptions across all hospital modules.
+- **Consultation Log Book**: High-density 4-column summary grid and patient drill-down console on `/allPrevEncounters` (`encounter.workbench`). Enforces strict non-duplication of funds when multiple encounter notes exist on a single visit.
+- **Conclude Consultation Modal Resilience**: Finalize handlers in `_modals.blade.php` use safe resolution (`getActiveEncounterId()`, `getActiveQueueId()`), SweetAlert2 confirmations with native fallback, and safe error/success alerting with auto-redirect.
+- **Documentation**: Architecture is documented in `docs/LOCUM_ACCESS_AND_CONSULTATION_LOGBOOK.md`.
+
+

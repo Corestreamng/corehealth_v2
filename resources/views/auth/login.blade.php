@@ -243,65 +243,133 @@
                 <p>{{ __('auth.enter_credentials') }}</p>
             </div>
 
-            <form method="POST" action="{{ route('login') }}">
-                @csrf
+            <ul class="nav nav-pills nav-fill mb-3" id="loginTypeTabs" role="tablist">
+                <li class="nav-item">
+                    <a class="nav-link {{ old('login_mode') === 'locum' ? '' : 'active' }} py-2 font-weight-bold" id="tab-standard-login" data-toggle="pill" data-bs-toggle="pill" href="#pane-standard-login" data-bs-target="#pane-standard-login" role="tab" aria-controls="pane-standard-login" aria-selected="{{ old('login_mode') === 'locum' ? 'false' : 'true' }}">
+                        <i class="mdi mdi-account-lock-outline me-1"></i> Standard Login
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link {{ old('login_mode') === 'locum' ? 'active' : '' }} py-2 font-weight-bold" id="tab-locum-login" data-toggle="pill" data-bs-toggle="pill" href="#pane-locum-login" data-bs-target="#pane-locum-login" role="tab" aria-controls="pane-locum-login" aria-selected="{{ old('login_mode') === 'locum' ? 'true' : 'false' }}">
+                        <i class="mdi mdi-badge-account-outline me-1"></i> Locum Shift Pass
+                    </a>
+                </li>
+            </ul>
 
-                <div class="mb-3">
-                    <label for="email" class="form-label">{{ __('auth.email_address') }}</label>
-                    <input id="email" type="email" class="form-control @error('email') is-invalid @enderror"
-                           name="email" value="{{ old('email') }}" required autocomplete="email" autofocus
-                           placeholder="{{ __('auth.enter_your_email') }}">
+            <div class="tab-content">
+                {{-- Standard Login Pane --}}
+                <div class="tab-pane fade {{ old('login_mode') === 'locum' ? '' : 'show active' }}" id="pane-standard-login" role="tabpanel">
+                    <form method="POST" action="{{ route('login') }}">
+                        @csrf
 
-                    @error('email')
-                        <span class="invalid-feedback" role="alert">
-                            <strong>{{ $message }}</strong>
-                        </span>
-                    @enderror
+                        <div class="mb-3">
+                            <label for="email" class="form-label">{{ __('auth.email_address') }}</label>
+                            <input id="email" type="email" class="form-control @error('email') is-invalid @enderror"
+                                   name="email" value="{{ old('email') }}" required autocomplete="email" autofocus
+                                   placeholder="{{ __('auth.enter_your_email') }}">
+
+                            @error('email')
+                                <span class="invalid-feedback" role="alert">
+                                    <strong>{{ $message }}</strong>
+                                </span>
+                            @enderror
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="password" class="form-label">{{ __('auth.password_label') }}</label>
+                            <input id="password" type="password" class="form-control @error('password') is-invalid @enderror"
+                                   name="password" required autocomplete="current-password"
+                                   placeholder="{{ __('auth.enter_your_password') }}">
+
+                            @error('password')
+                                <span class="invalid-feedback" role="alert">
+                                    <strong>{{ $message }}</strong>
+                                </span>
+                            @enderror
+                        </div>
+
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="remember" id="remember"
+                                       {{ old('remember') ? 'checked' : '' }}>
+                                <label class="form-check-label" for="remember">
+                                    {{ __('auth.remember_me') }}
+                                </label>
+                            </div>
+
+                            @if (Route::has('password.request'))
+                                <a class="auth-link" href="{{ route('password.request') }}">
+                                    {{ __('auth.forgot_password') }}
+                                </a>
+                            @endif
+                        </div>
+
+                        <button type="submit" class="btn btn-auth-primary">
+                            {{ __('auth.sign_in') }}
+                        </button>
+
+                        @if (Route::has('register'))
+                            <div class="text-center mt-4">
+                                <span class="text-muted">{{ __('auth.no_account') }} </span>
+                                <a class="auth-link" href="{{ route('register') }}">
+                                    {{ __('auth.sign_up') }}
+                                </a>
+                            </div>
+                        @endif
+                    </form>
                 </div>
 
-                <div class="mb-3">
-                    <label for="password" class="form-label">{{ __('auth.password_label') }}</label>
-                    <input id="password" type="password" class="form-control @error('password') is-invalid @enderror"
-                           name="password" required autocomplete="current-password"
-                           placeholder="{{ __('auth.enter_your_password') }}">
+                {{-- Locum Shift Pass Pane --}}
+                <div class="tab-pane fade {{ old('login_mode') === 'locum' ? 'show active' : '' }}" id="pane-locum-login" role="tabpanel">
+                    <form method="POST" action="{{ route('login.locum-pass') }}">
+                        @csrf
+                        <input type="hidden" name="login_mode" value="locum">
 
-                    @error('password')
-                        <span class="invalid-feedback" role="alert">
-                            <strong>{{ $message }}</strong>
-                        </span>
-                    @enderror
+                        <div class="mb-3">
+                            <label for="locum_identifier" class="form-label">Phone Number or Email</label>
+                            <input id="locum_identifier" type="text" class="form-control @error('identifier') is-invalid @enderror"
+                                   name="identifier" value="{{ old('identifier') }}" required
+                                   placeholder="e.g. 08012345678 or doc@hospital.com">
+                            @error('identifier')
+                                <span class="invalid-feedback d-block" role="alert">
+                                    <strong>{{ $message }}</strong>
+                                </span>
+                            @enderror
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="locum_pin" class="form-label">6-Digit Shift Pass PIN</label>
+                            <input id="locum_pin" type="password" maxlength="6" pattern="[0-9]{6}" inputmode="numeric"
+                                   class="form-control text-center @error('pin') is-invalid @enderror"
+                                   style="font-size: 1.5rem; letter-spacing: 6px; font-weight: 700;"
+                                   name="pin" required placeholder="••••••">
+                            @error('pin')
+                                <span class="invalid-feedback d-block" role="alert">
+                                    <strong>{{ $message }}</strong>
+                                </span>
+                            @enderror
+                            <small class="text-muted d-block mt-1">Shift-bounded PIN issued by your Medical Director or HOD.</small>
+                        </div>
+
+                        <div class="form-check mb-3">
+                            <input class="form-check-input" type="checkbox" name="remember" id="locum_remember">
+                            <label class="form-check-label" for="locum_remember">
+                                Keep workbench session active during shift
+                            </label>
+                        </div>
+
+                        <button type="submit" class="btn btn-auth-primary">
+                            <i class="mdi mdi-login me-1"></i> Sign In With Shift Pass
+                        </button>
+
+                        <div class="text-center mt-3 text-muted small">
+                            <i class="mdi mdi-shield-check text-success"></i> Regulatory & HIPAA Non-Repudiation Verified.
+                        </div>
+                    </form>
                 </div>
-
-                <div class="d-flex justify-content-between align-items-center mb-3">
-                    <div class="form-check">
-                        <input class="form-check-input" type="checkbox" name="remember" id="remember"
-                               {{ old('remember') ? 'checked' : '' }}>
-                        <label class="form-check-label" for="remember">
-                            {{ __('auth.remember_me') }}
-                        </label>
-                    </div>
-
-                    @if (Route::has('password.request'))
-                        <a class="auth-link" href="{{ route('password.request') }}">
-                            {{ __('auth.forgot_password') }}
-                        </a>
-                    @endif
-                </div>
-
-                <button type="submit" class="btn btn-auth-primary">
-                    {{ __('auth.sign_in') }}
-                </button>
-
-                @if (Route::has('register'))
-                    <div class="text-center mt-4">
-                        <span class="text-muted">{{ __('auth.no_account') }} </span>
-                        <a class="auth-link" href="{{ route('register') }}">
-                            {{ __('auth.sign_up') }}
-                        </a>
-                    </div>
-                @endif
-            </form>
+            </div>
         </div>
     </div>
 </div>
+<script src="{{ asset('js/auth-login.js') }}"></script>
 @endsection

@@ -59,6 +59,7 @@ class User extends Authenticatable implements Auditable
         'assignRole',
         'assignPermission',
         'status',
+        'is_locum',
         'email',
         'password',
     ];
@@ -101,6 +102,7 @@ class User extends Authenticatable implements Auditable
      */
     protected $casts = [
         'email_verified_at' => 'datetime',
+        'is_locum' => 'boolean',
     ];
 
     public function category()
@@ -152,5 +154,57 @@ class User extends Authenticatable implements Auditable
     public function staffBills()
     {
         return $this->hasMany(StaffBill::class, 'staff_user_id');
+    }
+
+    /**
+     * Locum professional profile (licensing, regulatory council, cadre).
+     */
+    public function locum_profile()
+    {
+        return $this->hasOne(LocumProfile::class, 'user_id', 'id');
+    }
+
+    /**
+     * All shift-bounded passes issued to this practitioner.
+     */
+    public function locum_passes()
+    {
+        return $this->hasMany(LocumPass::class, 'user_id', 'id');
+    }
+
+    /**
+     * The most recent shift pass.
+     */
+    public function latest_locum_pass()
+    {
+        return $this->hasOne(LocumPass::class, 'user_id', 'id')->latestOfMany();
+    }
+
+    /**
+     * The currently active shift pass.
+     */
+    public function active_locum_pass()
+    {
+        return $this->hasOne(LocumPass::class, 'user_id', 'id')
+            ->whereNull('revoked_at')
+            ->where('starts_at', '<=', now())
+            ->where('expires_at', '>=', now())
+            ->latestOfMany();
+    }
+
+    /**
+     * Check if user is registered as a locum practitioner.
+     */
+    public function isLocum(): bool
+    {
+        return (bool) ($this->is_locum || $this->locum_profile()->exists());
+    }
+
+    /**
+     * Check if this locum currently holds an active, unexpired shift pass.
+     */
+    public function hasActiveLocumPass(): bool
+    {
+        return $this->active_locum_pass()->exists();
     }
 }

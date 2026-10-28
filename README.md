@@ -64,6 +64,8 @@ CoreHealth v2 is designed to streamline hospital operations by integrating clini
 ### 2. Doctor / Consultation & Referrals
 - **Doctor Dashboard** — assigned patient queue, pending reviews, consultation timers
 - **Encounter Management** — diagnosis (ICD-10), prescriptions, lab/imaging orders, procedures, referrals, and template-based chief complaint capture
+- **Consultation Log Book** — clinician-by-clinic patient visit summaries, exact consult payment and HMO claims attribution, and interactive drill-down with fund non-duplication enforcement
+- **Locum & Visiting Clinician Access** — ephemeral shift-bounded smart passes (`locum_passes`) with 6-digit PIN login, clinic restriction scoping, and automatic session TTL
 - **Incremental Save** — encounter sections auto-save via AJAX
 - **Specialist Referrals** — creation from consultations, reception-side referral booking, doctor acceptance/declination, and patient referral histories
 
@@ -208,6 +210,13 @@ CoreHealth v2 is designed to streamline hospital operations by integrating clini
 - **Liveness & Health Monitoring** — lightweight `/api/corehms/ping` and detailed `/api/corehms/health` endpoints inspecting database latency and queue health
 - **Retroactive Historical Ingest & CLI Backfill** — backfill CLI (`php artisan corehms:backfill`) and SuperAdmin retroactive fetch modal with SHA1 deduplication
 - **Automated Database Backups** — endpoint `/api/corehms/backup` providing automated SQL dump streaming and central retention in SuperAdmin
+
+### 23. Locum Staff Access Management & Consultation Log Book
+- **Ephemeral Shift Passes (JIT Provisioning)** — secure, shift-bounded PIN credentials for visiting locum doctors, radiologists, and laboratory scientists eliminating shared logins
+- **Spatie Role Assignment at Creation** — immediate assignment of professional roles (`DOCTOR`, `RADIOLOGIST`, `LAB SCIENTIST`, `NURSE`, `PHARMACIST`) and regulatory body credentials (MDCN, RRBN, MLSCN, NMCN, PCN)
+- **Fast 6-Digit PIN & Thermal Slip Dispatch** — instant modal slip preview, thermal receipt printing, and dedicated PIN authentication tab
+- **Non-Repudiation Audit & Auto-Revocation** — cryptographic PIN hashing, TTL-based automatic expiration, manual shift extension (+4h), and instant revocation with audit logging
+- **Consultation Log Book & Finalization** — high-density encounter visit summaries with non-duplication financial tracking and resilient consultation conclusion modal flow
 
 ---
 

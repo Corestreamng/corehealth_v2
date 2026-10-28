@@ -1,7 +1,7 @@
 {{-- ========================================
      INTERNAL AUDIT SECTION
      ======================================== --}}
-@if(Auth::user()->hasAnyRole(['SUPERADMIN', 'ADMIN', 'super-admin', 'AUDITOR', 'AUDIT']))
+@if(Auth::user() && Auth::user()->hasAnyRole(['SUPERADMIN', 'ADMIN', 'super-admin', 'AUDITOR', 'AUDIT']))
 <li class="ch-sidebar-section-header pt-2 pb-1">
     <span class="nav-item-head">{{ __('sidebar.internal_audit') }}</span>
 </li>

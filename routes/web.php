@@ -97,10 +97,23 @@ Route::group(['middleware' => ['auth']], function () {
     Route::get('/messages/create', [MessagesController::class, 'create'])->name('messages.create');
 
     Route::group(['middleware' => ['auth']], function () {
-        // Creating and Listing Users
-        // Route::put('staff/{id}',[StaffController::class, 'update'])->name('staff.update');
         Route::resource('staff', StaffController::class);
         Route::get('liststaff', [StaffController::class, 'listStaff'])->name('listStaff');
+
+        // Locum Practitioners & Ephemeral Shift Passes (accessible via /locum and /admin/locum)
+        $registerLocumRoutes = function () {
+            Route::get('/', [\App\Http\Controllers\Admin\LocumManagementController::class, 'index'])->name('index');
+            Route::get('/data', [\App\Http\Controllers\Admin\LocumManagementController::class, 'data'])->name('data');
+            Route::post('/', [\App\Http\Controllers\Admin\LocumManagementController::class, 'store'])->name('store');
+            Route::post('/{user}/issue-pass', [\App\Http\Controllers\Admin\LocumManagementController::class, 'issuePass'])->name('issue-pass');
+            Route::post('/pass/{pass}/revoke', [\App\Http\Controllers\Admin\LocumManagementController::class, 'revokePass'])->name('revoke-pass');
+            Route::post('/pass/{pass}/extend', [\App\Http\Controllers\Admin\LocumManagementController::class, 'extendPass'])->name('extend-pass');
+            Route::get('/pass/{pass}/print', [\App\Http\Controllers\Admin\LocumManagementController::class, 'printPass'])->name('print-pass');
+            Route::get('/pass/{pass}/details', [\App\Http\Controllers\Admin\LocumManagementController::class, 'passDetails'])->name('pass-details');
+        };
+
+        Route::prefix('locum')->name('locum.')->group($registerLocumRoutes);
+        Route::prefix('admin/locum')->name('admin.locum.')->group($registerLocumRoutes);
     });
 
     Route::group(['middleware' => ['auth']], function () {
@@ -1149,6 +1162,7 @@ Route::group(['middleware' => ['auth']], function () {
 });
 
 Auth::routes();
+Route::post('/login/locum-pass', [\App\Http\Controllers\Auth\LocumPassAuthController::class, 'loginWithPass'])->name('login.locum-pass');
 
 // Global Navigation Search
 Route::middleware(['auth'])->group(function () {

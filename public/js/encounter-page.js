@@ -2570,6 +2570,10 @@ if (typeof window.wbRoute !== 'function') {
         // Helper function to show messages
         function showMessage(elementId, message, type = 'success') {
             const element = document.getElementById(elementId);
+            if (!element) {
+                console.log(`[showMessage ${type}] ${message}`);
+                return;
+            }
             const typeMap = { success: 'alert-success', error: 'alert-danger', warning: 'alert-warning', info: 'alert-info' };
             const alertClass = typeMap[type] || 'alert-info';
             element.innerHTML = `<div class="alert ${alertClass} alert-dismissible fade show" role="alert">
@@ -2580,6 +2584,7 @@ if (typeof window.wbRoute !== 'function') {
             element.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
             setTimeout(() => { element.innerHTML = ''; }, 5000);
         }
+        window.showMessage = showMessage;
 
         // Helper function to disable/enable button
         function setButtonLoading(buttonId, loading) {

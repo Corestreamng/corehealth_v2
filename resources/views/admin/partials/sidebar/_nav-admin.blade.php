@@ -133,6 +133,12 @@
         <span class="menu-title">{{ __('sidebar.staff_management') }}</span>
     </a>
 </li>
+<li class="nav-item {{ request()->routeIs('locum.*') ? 'active' : '' }}">
+    <a class="nav-link {{ request()->routeIs('locum.*') ? 'active' : '' }}" href="{{ route('locum.index') }}" id="sidebar-admin-locum-management">
+        <i class="mdi mdi-badge-account-outline menu-icon"></i>
+        <span class="menu-title">Locum Passes</span>
+    </a>
+</li>
 <li class="nav-item {{ request()->routeIs('specializations.*') ? 'active' : '' }}">
     <a class="nav-link {{ request()->routeIs('specializations.*') ? 'active' : '' }}" href="{{ route('specializations.index') }}" id="sidebar-admin-specializations">
         <i class="mdi mdi-briefcase-outline menu-icon"></i>

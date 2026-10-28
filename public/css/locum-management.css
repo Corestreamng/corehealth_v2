@@ -1,0 +1,201 @@
+/* CoreHealth v2 - Locum Ephemeral Access & Shift Passes Management */
+
+:root {
+    --locum-primary: var(--hospital-primary, #011b33);
+    --locum-primary-rgb: var(--hospital-primary-rgb, 1, 27, 51);
+}
+
+.locum-kpi-card {
+    background: #ffffff;
+    border-radius: 8px;
+    border: 1px solid #e2e8f0;
+    padding: 1rem 1.25rem;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.locum-kpi-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+.locum-kpi-icon {
+    width: 44px;
+    height: 44px;
+    border-radius: 8px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.4rem;
+}
+
+.locum-avatar {
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    background: rgba(var(--locum-primary-rgb), 0.12);
+    color: var(--locum-primary);
+    font-weight: 700;
+    font-size: 0.95rem;
+    flex-shrink: 0;
+}
+
+.locum-pin-tag {
+    background: #f1f5f9;
+    border: 1px dashed #cbd5e1;
+    color: #0f172a;
+    font-weight: 700;
+    font-size: 0.9rem;
+    letter-spacing: 2px;
+    padding: 2px 8px;
+    border-radius: 4px;
+    user-select: all;
+}
+
+.locum-table th {
+    font-weight: 600;
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: #64748b;
+    background: #f8fafc;
+    vertical-align: middle;
+}
+
+.locum-table td {
+    vertical-align: middle !important;
+}
+
+.locum-filter-strip {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 14px 18px 6px 18px;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.locum-filter-strip .filter-label {
+    font-size: 0.875rem;
+    color: #475569;
+    letter-spacing: 0.3px;
+    display: inline-flex;
+    align-items: center;
+}
+
+.locum-filter-strip .filter-item {
+    margin-right: 16px;
+    margin-bottom: 8px;
+}
+
+.locum-filter-strip .filter-item .form-control {
+    height: 36px;
+    font-size: 0.85rem;
+    border-color: #cbd5e1;
+    border-radius: 6px;
+    background-color: #ffffff;
+}
+
+.locum-filter-strip .filter-item .form-control:focus {
+    border-color: var(--locum-primary, #011b33);
+    box-shadow: 0 0 0 2px rgba(var(--locum-primary-rgb, 1, 27, 51), 0.15);
+}
+
+/* Thermal Pass Slip Preview */
+.locum-slip-box {
+    width: 320px;
+    margin: 0 auto;
+    background: #ffffff;
+    border: 2px dashed #94a3b8;
+    padding: 16px;
+    border-radius: 6px;
+    font-family: 'Courier New', Courier, monospace;
+    color: #000000;
+}
+
+.locum-slip-box .slip-header {
+    text-align: center;
+    border-bottom: 1px solid #000000;
+    padding-bottom: 8px;
+    margin-bottom: 12px;
+}
+
+.locum-slip-box .slip-pin-hero {
+    background: #f1f5f9;
+    border: 2px solid #000000;
+    text-align: center;
+    padding: 8px;
+    margin: 12px 0;
+}
+
+.locum-slip-box .slip-pin-hero h2 {
+    font-size: 2rem;
+    font-weight: 900;
+    letter-spacing: 6px;
+    margin: 0;
+}
+
+/* Fix Select2 z-index and dropdown appearance in modals */
+.select2-container--open {
+    z-index: 99999 !important;
+}
+.select2-dropdown {
+    z-index: 99999 !important;
+}
+.select2-search__field {
+    z-index: 99999 !important;
+}
+.select2-container--open .select2-search--dropdown .select2-search__field {
+    pointer-events: auto !important;
+}
+.modal .select2-container {
+    width: 100% !important;
+}
+
+/* Modal close button styling and cursor */
+.modal-header .btn-close {
+    cursor: pointer;
+    background-color: transparent;
+}
+
+/* Print Thermal Slip Formatting */
+@media print {
+    body * {
+        visibility: hidden !important;
+    }
+    #modal-slip-preview,
+    #modal-slip-preview * {
+        visibility: visible !important;
+    }
+    #modal-slip-preview {
+        position: absolute !important;
+        left: 0 !important;
+        top: 0 !important;
+        width: 100% !important;
+        background: transparent !important;
+        box-shadow: none !important;
+        border: none !important;
+    }
+    #modal-slip-preview .modal-dialog {
+        max-width: 100% !important;
+        margin: 0 auto !important;
+    }
+    #modal-slip-preview .modal-header,
+    #modal-slip-preview .modal-footer {
+        display: none !important;
+    }
+    #modal-slip-preview .modal-content {
+        border: none !important;
+        box-shadow: none !important;
+        background: transparent !important;
+    }
+    .locum-slip-box {
+        margin: 20px auto !important;
+        border: 2px solid #000000 !important;
+        box-shadow: none !important;
+    }
+}
+
+

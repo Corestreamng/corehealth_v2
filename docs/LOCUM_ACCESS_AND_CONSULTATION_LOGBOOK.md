@@ -201,10 +201,47 @@ ORDER BY total_funds DESC;
 
 ## 5. Verification & Test Suite
 
-- **PHPUnit Feature Tests**: `tests/Feature/Encounters/EncounterWorkbenchTest.php`
-  - `logbook_endpoint_returns_valid_response_for_admin`: Verified HTTP 200 with `data`, `kpis`, and `period`.
-  - `logbook_drilldown_endpoint_returns_valid_response`: Verified HTTP 200 with `meta` and `data`.
-  - All 15 tests passed with 29 assertions.
+- **PHPUnit Feature Tests**:
+  - `tests/Feature/Locum/LocumManagementTest.php`:
+    - `test_unauthenticated_user_cannot_access_locum_console`: Verified redirect to login.
+    - `test_unauthorized_user_cannot_access_locum_console`: Verified HTTP 403.
+    - `test_admin_can_access_locum_console`: Verified HTTP 200 with KPI summary counts.
+    - `test_locum_datatable_endpoint_returns_json`: Verified JSON response structure.
+    - `test_admin_can_register_locum_and_assign_roles_immediately`: Verified Spatie role assignment (`DOCTOR`), `is_locum = 1`, and `locum_passes` row.
+    - `test_issue_pass_to_existing_locum_supersedes_previous`: Verified previous active pass revocation and single-active-pass enforcement.
+    - `test_pass_can_be_extended_by_admin`: Verified expiry timestamp extension.
+    - `test_pass_can_be_revoked_by_admin`: Verified immediate revocation timestamp and reason logging.
+    - `test_locum_user_can_authenticate_with_pin_during_active_shift`: Verified fast PIN login session creation and role redirection.
+    - `test_locum_user_cannot_authenticate_with_expired_or_revoked_pass`: Verified authentication rejection.
+    - `test_print_slip_endpoint_renders_thermal_receipt`: Verified thermal receipt view rendering.
+    - **Result**: 11 / 11 tests passed with 48 assertions.
+  - `tests/Feature/Encounters/EncounterWorkbenchTest.php`:
+    - `logbook_endpoint_returns_valid_response_for_admin`: Verified HTTP 200 with `data`, `kpis`, and `period`.
+    - `logbook_drilldown_endpoint_returns_valid_response`: Verified HTTP 200 with `meta` and `data`.
+    - **Result**: All 15 tests passed with 29 assertions.
 - **Code Style Linting**:
-  - `composer lint`: Passed with 0 errors across 1,313 files.
+  - `composer lint`: Passed with 0 errors across 1,320 files (PSR-12 compliant).
+  - `node --check public/js/locum-management.js`: Passed with 0 syntax errors.
+  - `node --check public/js/auth-login.js`: Passed with 0 syntax errors.
   - `node --check public/js/encounter-workbench.js`: Passed with 0 syntax errors.
+  - `node --check public/js/encounter-page.js`: Passed with 0 syntax errors.
+
+---
+
+## 6. Conclude Consultation Modal & Encounter Finalization Fix
+
+### 6.1 Root Cause Analysis
+During encounter completion testing on `encounters/create?patient_id=X`:
+1. **Missing Message Helper**: In `resources/views/admin/doctors/partials/modals.blade.php`, `showMessage(...)` was referenced directly in AJAX completion handlers (`success` and `error`), but `showMessage` was scoped locally inside an IIFE in `public/js/encounter-page.js` and was not attached to `window`. When finalization finished, the script threw `Uncaught ReferenceError: showMessage is not defined`, preventing execution from reaching the redirect instruction `window.location.href = response.redirect;`.
+2. **Lexical Scope Resolution**: Bare identifier `encounterId` was used in `modals.blade.php`, which failed in contexts where `window.encounterId` was not declared as a global variable.
+3. **Certified By Fallback**: `certified_by: {{ Auth::id() }}` evaluated to `certified_by: ` when null, producing a JavaScript syntax error.
+4. **Modal Typo**: Header close button had `class="btn- btn-close btn-close-white"` causing styling/dismissal inconsistencies.
+
+### 6.2 Architectural Fixes
+1. **Safe Encounter & Queue ID Resolution**: Implemented `getActiveEncounterId()` and `getActiveQueueId()` falling back across `window.encounterId`, `window.WORKBENCH_CONFIG`, and `#encounter_id__`.
+2. **Global & Modal Message Helper**: Defined `showEncounterModalMessage()` and exported `window.showMessage` safely with fallback alert rendering.
+3. **Certified By Safeguard**: Guarded with `certified_by: {{ Auth::id() ?: 'null' }}`.
+4. **SweetAlert2 & Confirm Integration**: Integrated styled confirmation dialog using `Swal.fire` with fallback to `confirm()`.
+5. **Clean Dismissal & Transition**: On success, displays `Encounter completed successfully`, sets button state to `Completed!`, closes modal cleanly, and redirects to `response.redirect` or `route('encounters.index')`.
+
+

@@ -150,6 +150,7 @@ class Staff extends Model implements Auditable
     public const EMPLOYMENT_PART_TIME = 'part_time';
     public const EMPLOYMENT_CONTRACT = 'contract';
     public const EMPLOYMENT_INTERN = 'intern';
+    public const EMPLOYMENT_LOCUM = 'locum';
 
     // Employment Statuses
     public const STATUS_ACTIVE = 'active';
