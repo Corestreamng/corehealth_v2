@@ -194,6 +194,7 @@
                     <option value="">All Statuses</option>
                     <option value="pending">Pending</option>
                     <option value="approved">Approved</option>
+                    <option value="partial">Partially Fulfilled</option>
                     <option value="fulfilled">Fulfilled</option>
                     <option value="rejected">Rejected</option>
                 </select>

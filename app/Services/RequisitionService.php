@@ -463,6 +463,9 @@ class RequisitionService
                 $requisition->fulfilled_at = now();
             } else {
                 $requisition->status = StoreRequisition::STATUS_PARTIAL;
+                if (!$requisition->fulfilled_by && auth()->check()) {
+                    $requisition->fulfilled_by = auth()->id();
+                }
             }
             $requisition->save();
 

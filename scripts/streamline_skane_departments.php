@@ -27,9 +27,9 @@ $app = require_once __DIR__ . '/../bootstrap/app.php';
 $kernel = $app->make(Illuminate\Contracts\Console\Kernel::class);
 $kernel->bootstrap();
 
+use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
-use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Str;
 
 // Parse options
@@ -45,7 +45,7 @@ if (isset($options['help'])) {
 }
 
 $isDryRun = isset($options['dry-run']);
-$targetDb = $options['db'] ?? ($options['database'] ?? '_corehealth_db_v2_skane');
+$targetDb = $options['db'] ?? ($options['database'] ?? (env('DB_DATABASE') ?: '_corehealth_db_v2_skane'));
 
 echo "================================================================================\n";
 echo "  COREHEALTH v2 - SKANE DEPARTMENT STREAMLINING & ATTRIBUTION BACKFILL          \n";
@@ -505,7 +505,9 @@ if (Schema::hasColumn('product_or_service_requests', 'department_id') && Schema:
 
     $freeFormTotal = 0;
     foreach ($freeFormPatterns as $deptKey => $patterns) {
-        if (!isset($deptMap[$deptKey])) continue;
+        if (!isset($deptMap[$deptKey])) {
+            continue;
+        }
         $dId = $deptMap[$deptKey];
         $ffQuery = DB::table('product_or_service_requests')
             ->where('is_free_form', 1)
@@ -600,7 +602,8 @@ foreach ($activeDepts as $d) {
 
     $itemCountStr = $srvCnt > 0 ? "{$srvCnt} srv" : ($prodCnt > 0 ? "{$prodCnt} prd" : "-");
 
-    printf("%-4d | %-24s | %-6s | %-8s | %-6d | %-8s\n",
+    printf(
+        "%-4d | %-24s | %-6s | %-8s | %-6d | %-8s\n",
         $d->id,
         Str::limit($d->name, 24),
         $d->code,
@@ -627,7 +630,8 @@ if (Schema::hasColumn('product_or_service_requests', 'department_id')) {
         ->get();
 
     foreach ($posrRollup as $r) {
-        printf("%-26s | %-12d | ₦%-18s\n",
+        printf(
+            "%-26s | %-12d | ₦%-18s\n",
             Str::limit($r->dept_name, 26),
             $r->cnt,
             number_format($r->total_amt, 2)

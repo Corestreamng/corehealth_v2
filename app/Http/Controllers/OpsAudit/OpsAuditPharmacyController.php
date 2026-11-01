@@ -204,7 +204,11 @@ class OpsAuditPharmacyController extends OpsAuditBaseController
         $kpiQuery = clone $query;
 
         return $this->buildDataTableResponse($query, $request, fn ($q) => $q, function ($row) {
-            $statusColors = ['pending' => 'warning text-dark', 'approved' => 'info', 'fulfilled' => 'success', 'rejected' => 'danger'];
+            $statusColors = ['pending' => 'warning text-dark', 'approved' => 'info', 'partial' => 'warning text-dark', 'fulfilled' => 'success', 'rejected' => 'danger'];
+            $statusLabel = match ($row->status) {
+                'partial' => 'Partially Fulfilled',
+                default => ucfirst($row->status ?? '-'),
+            };
 
             return [
                 'date' => $row->created_at ? Carbon::parse($row->created_at)->format('d M Y') : '-',
@@ -213,7 +217,7 @@ class OpsAuditPharmacyController extends OpsAuditBaseController
                 'requested_qty' => $row->requested_qty ?? '-',
                 'approved_qty' => $row->approved_qty ?? '-',
                 'fulfilled_qty' => $row->fulfilled_qty ?? '-',
-                'status' => '<span class="badge bg-' . ($statusColors[$row->status] ?? 'secondary') . '">' . ucfirst($row->status ?? '-') . '</span>',
+                'status' => '<span class="badge bg-' . ($statusColors[$row->status] ?? 'secondary') . '">' . $statusLabel . '</span>',
                 'payment_info' => $this->renderPaymentInfo($row),
                 'audit' => $this->renderAuditAction($row, 'StoreRequisitionItem'),
             ];
@@ -221,6 +225,7 @@ class OpsAuditPharmacyController extends OpsAuditBaseController
             return [
                 ['label' => 'Total Items Req', 'value' => number_format((clone $kpiQuery)->count()), 'color' => '#0d6efd'],
                 ['label' => 'Fulfilled', 'value' => number_format((clone $kpiQuery)->where('status', 'fulfilled')->count()), 'color' => '#198754'],
+                ['label' => 'Partially Fulfilled', 'value' => number_format((clone $kpiQuery)->where('status', 'partial')->count()), 'color' => '#fd7e14'],
                 ['label' => 'Pending', 'value' => number_format((clone $kpiQuery)->where('status', 'pending')->count()), 'color' => '#ffc107'],
             ];
         }, $kpiQuery);

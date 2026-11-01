@@ -195,6 +195,7 @@ CoreHealth v2 is designed to streamline hospital operations by integrating clini
 - **Cashier Till & Deficit Reconciliation** — tracks gross cash collections versus deposit refunds/withdrawals (`ACC_WITHDRAW`) to reconcile net drawer balances against electronic tenders (POS, Transfer, Mobile)
 - **Integrated Cashier Transactions Console** — datetime-precision transaction query and reprint console with auditor cashier scoping, refund highlight badges, and cashier summary printing
 - **Digital Approvals (Audit Stamps)** — seals audited periods/responsibility domains to freeze modifications and establish accountability
+- **Store Requisitions & Partial Fulfillment Accountability** — full status filter parity (pending, approved, partial, fulfilled, rejected, cancelled), zero-cost batch fallback to product master buy price, 6-card mathematically balanced KPI strip (Requested, Approved, Fulfilled, Pending/Partial Balance, Rejected), top-level store filter propagation, and interim fulfiller attribution
 - **Staff Receivables Settlement** — sequential payment allocation across outstanding staff bills with bank/discount overrides
 
 ### 21. Administration

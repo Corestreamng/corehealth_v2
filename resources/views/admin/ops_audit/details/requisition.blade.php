@@ -7,10 +7,10 @@
                     if($requisition->status === 'approved') $statusColor = 'primary';
                     if($requisition->status === 'fulfilled') $statusColor = 'success';
                     if($requisition->status === 'rejected') $statusColor = 'danger';
-                    if($requisition->status === 'partial') $statusColor = 'warning';
+                    if($requisition->status === 'partial') $statusColor = 'warning text-dark';
                 @endphp
                 <div class="badge bg-white text-{{ $statusColor }} border border-{{ $statusColor }} p-2 fs-6 text-uppercase">
-                    <i class="mdi mdi-circle-medium"></i> {{ $requisition->status }}
+                    <i class="mdi mdi-circle-medium"></i> {{ $requisition->status === 'partial' ? 'Partially Fulfilled' : $requisition->status }}
                 </div>
                 <div class="badge bg-white text-dark border p-2 fs-6">
                     <strong>#{{ $requisition->requisition_number }}</strong>
@@ -43,6 +43,14 @@
             @if($requisition->fulfilled_at)
             <div class="text-muted small mt-2"><i class="mdi mdi-truck-delivery text-success"></i> Fulfilled By</div>
             <div class="font-weight-bold">{{ optional($requisition->fulfiller)->firstname }} {{ optional($requisition->fulfiller)->surname }} <br><small class="text-muted">{{ $requisition->fulfilled_at->format('d/m/Y H:i') }}</small></div>
+            @elseif($requisition->status === 'partial')
+            @php
+                $partialFulfiller = $requisition->fulfiller ?? $requisition->items->first(fn($i) => $i->destinationBatch?->creator)?->destinationBatch?->creator;
+            @endphp
+            @if($partialFulfiller)
+            <div class="text-muted small mt-2"><i class="mdi mdi-truck-delivery text-warning"></i> Partially Fulfilled By</div>
+            <div class="font-weight-bold">{{ $partialFulfiller->firstname }} {{ $partialFulfiller->surname }} <br><small class="text-muted">(Interim Fulfillment)</small></div>
+            @endif
             @endif
         </div>
     </div>

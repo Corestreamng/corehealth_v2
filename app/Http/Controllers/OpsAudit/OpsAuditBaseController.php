@@ -1333,6 +1333,7 @@ abstract class OpsAuditBaseController extends Controller
             'fulfiller',
             'items.product.price',
             'items.sourceBatch',
+            'items.destinationBatch.creator',
         ]);
 
         $this->applyDateFilter($query, $request);
@@ -1342,6 +1343,12 @@ abstract class OpsAuditBaseController extends Controller
         }
         if ($request->filled('to_store_id')) {
             $query->where('to_store_id', $request->to_store_id);
+        }
+        if ($request->filled('store_id') && !$request->filled('from_store_id') && !$request->filled('to_store_id')) {
+            $query->where(function ($q) use ($request) {
+                $q->where('from_store_id', $request->store_id)
+                    ->orWhere('to_store_id', $request->store_id);
+            });
         }
         if ($request->filled('status')) {
             $query->where('status', $request->status);
@@ -1378,28 +1385,52 @@ abstract class OpsAuditBaseController extends Controller
             });
         }
 
+        $getCost = function ($i) {
+            $batchCost = (float)($i->sourceBatch?->cost_price ?? $i->destinationBatch?->cost_price ?? 0.0);
+            if ($batchCost > 0) {
+                return $batchCost;
+            }
+
+            return (float)($i->product?->price?->pr_buy_price ?? 0.0);
+        };
+
         $kpiQuery = clone $query;
 
-        return $this->buildDataTableResponse($query, $request, fn ($q) => $q, function ($row) {
-            $statusColors = ['pending' => 'warning text-dark', 'approved' => 'info', 'fulfilled' => 'success', 'rejected' => 'danger', 'partial' => 'warning'];
+        return $this->buildDataTableResponse($query, $request, fn ($q) => $q, function ($row) use ($getCost) {
+            $statusColors = [
+                'pending' => 'warning text-dark',
+                'approved' => 'info',
+                'partial' => 'warning text-dark',
+                'fulfilled' => 'success',
+                'rejected' => 'danger',
+                'cancelled' => 'secondary',
+            ];
             $sColor = $statusColors[$row->status] ?? 'secondary';
+            $statusLabel = match ($row->status) {
+                'partial' => 'Partially Fulfilled',
+                default => ucfirst($row->status ?? '-'),
+            };
 
-            $getCost = fn ($i) => ($i->sourceBatch || $i->destinationBatch) ? (float)($i->sourceBatch?->cost_price ?? $i->destinationBatch?->cost_price ?? 0.0) : (float)($i->product->price->pr_buy_price ?? 0.0);
-
-            $reqValue = $row->items ? $row->items->sum(fn ($i) => $i->status !== 'rejected' ? (($i->requested_qty ?? 0) * $getCost($i)) : 0) : 0;
-            $apprValue = $row->items ? $row->items->sum(fn ($i) => $i->status !== 'rejected' ? (($i->approved_qty ?? 0) * $getCost($i)) : 0) : 0;
-            $fulValue = $row->items ? $row->items->sum(fn ($i) => $i->status !== 'rejected' ? (($i->fulfilled_qty ?? 0) * $getCost($i)) : 0) : 0;
+            $reqValue = $row->items ? $row->items->sum(fn ($i) => !in_array($i->status, ['rejected', 'cancelled']) ? (($i->requested_qty ?? 0) * $getCost($i)) : 0) : 0;
+            $apprValue = $row->items ? $row->items->sum(fn ($i) => !in_array($i->status, ['rejected', 'cancelled']) ? (($i->approved_qty ?? 0) * $getCost($i)) : 0) : 0;
+            $fulValue = $row->items ? $row->items->sum(fn ($i) => !in_array($i->status, ['rejected', 'cancelled']) ? (($i->fulfilled_qty ?? 0) * $getCost($i)) : 0) : 0;
             $rejValue = $row->items ? $row->items->sum(fn ($i) => $i->status === 'rejected' ? (($i->requested_qty ?? 0) * $getCost($i)) : 0) : 0;
+
+            $fulfillerUser = $row->fulfiller ?? $row->items?->first(fn ($i) => $i->destinationBatch?->creator)?->destinationBatch?->creator;
+            $fulfilledByName = $fulfillerUser?->firstname ? trim($fulfillerUser->surname . ' ' . $fulfillerUser->firstname . ' ' . ($fulfillerUser->othername ?? '')) : '-';
+            if (!$row->fulfiller && $fulfillerUser && $row->status === 'partial') {
+                $fulfilledByName .= ' <small class="text-muted d-block">(Interim)</small>';
+            }
 
             return [
                 'date' => $row->created_at ? \Carbon\Carbon::parse($row->created_at)->format('d M Y') : '-',
                 'req_no' => $row->requisition_number ?? '-',
                 'from_store' => $row->fromStore ? ($row->fromStore->store_name . '<br><small class="text-muted">' . $row->fromStore->distributionRoleLabel() . '</small>') : '-',
                 'to_store' => $row->toStore ? ($row->toStore->store_name . '<br><small class="text-muted">' . $row->toStore->distributionRoleLabel() . '</small>') : '-',
-                'status' => '<span class="badge bg-' . $sColor . '">' . ucfirst($row->status ?? '-') . '</span>',
+                'status' => '<span class="badge bg-' . $sColor . '">' . $statusLabel . '</span>',
                 'requested_by' => $row->requester?->firstname ? trim($row->requester->surname . ' ' . $row->requester->firstname . ' ' . ($row->requester->othername ?? '')) : '-',
                 'approved_by' => $row->approver?->firstname ? trim($row->approver->surname . ' ' . $row->approver->firstname . ' ' . ($row->approver->othername ?? '')) : '-',
-                'fulfilled_by' => $row->fulfiller?->firstname ? trim($row->fulfiller->surname . ' ' . $row->fulfiller->firstname . ' ' . ($row->fulfiller->othername ?? '')) : '-',
+                'fulfilled_by' => $fulfilledByName,
                 'items_count' => $row->items ? $row->items->count() : '-',
                 'req_value' => '₦' . number_format($reqValue, 2),
                 'appr_value' => '₦' . number_format($apprValue, 2),
@@ -1408,28 +1439,29 @@ abstract class OpsAuditBaseController extends Controller
                 'payment_info' => $this->renderPaymentInfo($row),
                 'audit' => $this->renderAuditAction($row, 'StoreRequisition'),
             ];
-        }, function ($kpiQuery) {
+        }, function ($kpiQuery) use ($getCost) {
             $all = $kpiQuery->get();
-            $getCost = fn ($i) => ($i->sourceBatch || $i->destinationBatch) ? (float)($i->sourceBatch?->cost_price ?? $i->destinationBatch?->cost_price ?? 0.0) : (float)($i->product->price->pr_buy_price ?? 0.0);
 
             $totalReqCost = $all->sum(function ($req) use ($getCost) {
-                return $req->items ? $req->items->sum(fn ($i) => $i->status !== 'rejected' ? (($i->requested_qty ?? 0) * $getCost($i)) : 0) : 0;
+                return $req->items ? $req->items->sum(fn ($i) => !in_array($i->status, ['rejected', 'cancelled']) ? (($i->requested_qty ?? 0) * $getCost($i)) : 0) : 0;
             });
             $totalApprCost = $all->sum(function ($req) use ($getCost) {
-                return $req->items ? $req->items->sum(fn ($i) => $i->status !== 'rejected' ? (($i->approved_qty ?? 0) * $getCost($i)) : 0) : 0;
+                return $req->items ? $req->items->sum(fn ($i) => !in_array($i->status, ['rejected', 'cancelled']) ? (($i->approved_qty ?? 0) * $getCost($i)) : 0) : 0;
             });
             $totalFulCost = $all->sum(function ($req) use ($getCost) {
-                return $req->items ? $req->items->sum(fn ($i) => $i->status !== 'rejected' ? (($i->fulfilled_qty ?? 0) * $getCost($i)) : 0) : 0;
+                return $req->items ? $req->items->sum(fn ($i) => !in_array($i->status, ['rejected', 'cancelled']) ? (($i->fulfilled_qty ?? 0) * $getCost($i)) : 0) : 0;
             });
             $totalRejCost = $all->sum(function ($req) use ($getCost) {
                 return $req->items ? $req->items->sum(fn ($i) => $i->status === 'rejected' ? (($i->requested_qty ?? 0) * $getCost($i)) : 0) : 0;
             });
+            $pendingBalCost = max(0, $totalApprCost - $totalFulCost);
 
             return [
                 ['label' => 'Total Requisitions', 'value' => number_format($all->count()), 'color' => '#0d6efd'],
                 ['label' => 'Req Value (Cost)', 'value' => '₦' . number_format($totalReqCost, 2), 'color' => '#17a2b8'],
                 ['label' => 'Appr Value (Cost)', 'value' => '₦' . number_format($totalApprCost, 2), 'color' => '#ffc107'],
                 ['label' => 'Ful Value (Cost)', 'value' => '₦' . number_format($totalFulCost, 2), 'color' => '#28a745'],
+                ['label' => 'Pending/Partial Bal', 'value' => '₦' . number_format($pendingBalCost, 2), 'color' => '#fd7e14'],
                 ['label' => 'Rej Value (Cost)', 'value' => '₦' . number_format($totalRejCost, 2), 'color' => '#dc3545'],
             ];
         }, $kpiQuery);
@@ -1511,6 +1543,7 @@ abstract class OpsAuditBaseController extends Controller
             'items.product.packagings',
             'items.product.price',
             'items.sourceBatch',
+            'items.destinationBatch.creator',
             'fromStore',
             'toStore',
             'requester',
