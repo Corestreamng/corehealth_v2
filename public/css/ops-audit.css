@@ -1,0 +1,635 @@
+/* ==========================================================================
+   CoreHealth v2 — Ops Audit Workbench Stylesheet
+   Governed by Hospital Theme CSS Variable Provider Mechanism
+   ========================================================================== */
+
+:root {
+    --ops-primary: var(--hospital-primary, #011b33);
+    --ops-primary-rgb: var(--hospital-primary-rgb, 1, 27, 51);
+    --ops-secondary: var(--hospital-secondary, #0d6efd);
+    --ops-accent: #10b981;
+    --ops-warning: #f59e0b;
+    --ops-danger: #ef4444;
+    --ops-card-bg: #ffffff;
+    --ops-border: #e2e8f0;
+}
+
+/* Base Audit Layout */
+.audit-layout {
+    display: flex;
+    min-height: calc(100vh - 120px);
+    background-color: #f8f9fa;
+    margin: -1.5rem -1.5rem 0 -1.5rem;
+}
+
+.audit-sidebar {
+    width: 250px;
+    background: #ffffff;
+    border-right: 1px solid #e9ecef;
+    display: flex;
+    flex-direction: column;
+    flex-shrink: 0;
+}
+
+.audit-sidebar-header {
+    padding: 1.25rem 1rem;
+    border-bottom: 1px solid #e9ecef;
+    background: linear-gradient(135deg, var(--ops-primary, #0f172a) 0%, #1e293b 100%);
+    text-align: center;
+}
+
+.audit-sidebar-header h5 {
+    margin: 0;
+    font-weight: 700;
+    color: #ffffff;
+    font-size: 0.95rem;
+}
+
+.audit-sidebar-header small {
+    color: #94a3b8;
+    font-size: 0.7rem;
+}
+
+.audit-sidebar-menu {
+    flex-grow: 1;
+    overflow-y: auto;
+    padding: 0.75rem 0;
+}
+
+.audit-sidebar-menu .nav-item {
+    padding: 0 0.75rem;
+    margin-bottom: 0.15rem;
+}
+
+.audit-sidebar-menu .nav-link {
+    color: #495057;
+    padding: 0.55rem 0.85rem;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    transition: all 0.2s ease-in-out;
+    font-weight: 500;
+    font-size: 0.85rem;
+}
+
+.audit-sidebar-menu .nav-link i {
+    margin-right: 8px;
+    font-size: 1rem;
+    width: 20px;
+    text-align: center;
+    color: #6c757d;
+}
+
+.audit-sidebar-menu .nav-link:hover,
+.audit-sidebar-menu .nav-link.active {
+    background-color: rgba(var(--ops-primary-rgb, 1, 27, 51), 0.08);
+    color: var(--ops-primary, #011b33);
+    font-weight: 700;
+}
+
+.audit-sidebar-menu .nav-link:hover i,
+.audit-sidebar-menu .nav-link.active i {
+    color: var(--ops-primary, #011b33);
+}
+
+.audit-sidebar-menu .menu-section {
+    font-size: 0.68rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: #adb5bd;
+    font-weight: 700;
+    margin: 1rem 1rem 0.35rem;
+}
+
+.audit-content {
+    flex-grow: 1;
+    padding: 1.25rem 1.5rem;
+    overflow-y: auto;
+    background-color: #f4f6f9;
+    width: calc(100% - 250px) !important;
+    max-width: calc(100% - 250px) !important;
+}
+
+/* ==========================================================================
+   Stepped Storyboard Ribbon (Option B: Progressive 4-Step Architecture)
+   Step 1: Time Horizon -> Step 2: Duty Window -> Step 3: Scoping -> Step 4: Cockpit
+   ========================================================================== */
+
+.ops-story-ribbon {
+    background: #ffffff;
+    border: 1px solid var(--ops-border, #e2e8f0);
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+    padding: 1rem 1.25rem;
+    margin-bottom: 1.25rem;
+}
+
+.ops-step-card {
+    background: #f8fafc;
+    border: 1px solid #edf2f7;
+    border-radius: 8px;
+    padding: 0.75rem 0.85rem;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.ops-step-card:hover {
+    border-color: #cbd5e1;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.03);
+}
+
+.ops-step-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 0.55rem;
+    padding-bottom: 0.35rem;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+.ops-step-title {
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    color: #334155;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+}
+
+.ops-step-num {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: var(--ops-primary, #011b33);
+    color: #ffffff;
+    font-size: 0.68rem;
+    font-weight: 800;
+}
+
+.ops-step-subtext {
+    font-size: 0.68rem;
+    color: #64748b;
+    font-weight: 500;
+}
+
+/* Quick Date Chips */
+.ops-date-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.25rem;
+    margin-bottom: 0.45rem;
+}
+
+.ops-chip {
+    font-size: 0.7rem;
+    font-weight: 600;
+    padding: 0.2rem 0.55rem;
+    border-radius: 12px;
+    border: 1px solid #cbd5e1;
+    background: #ffffff;
+    color: #475569;
+    cursor: pointer;
+    transition: all 0.15s ease-in-out;
+    line-height: 1.2;
+}
+
+.ops-chip:hover {
+    background: #f1f5f9;
+    border-color: #94a3b8;
+    color: #1e293b;
+}
+
+.ops-chip.active {
+    background: var(--ops-primary, #011b33);
+    border-color: var(--ops-primary, #011b33);
+    color: #ffffff;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
+}
+
+/* Step 2 Shift & Care Stream Pills */
+.shift-btn, .care-stream-btn {
+    font-size: 0.72rem;
+    font-weight: 600;
+    padding: 0.25rem 0.6rem;
+    border-radius: 20px;
+    border: 1px solid #cbd5e1;
+    background: #ffffff;
+    color: #475569;
+    transition: all 0.15s ease-in-out;
+}
+
+.shift-btn:hover, .care-stream-btn:hover {
+    background: #f1f5f9;
+    border-color: #94a3b8;
+}
+
+.shift-btn.active {
+    background-color: var(--ops-primary, #011b33) !important;
+    color: #ffffff !important;
+    border-color: var(--ops-primary, #011b33) !important;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
+}
+
+.care-stream-btn.active {
+    background-color: #059669 !important;
+    color: #ffffff !important;
+    border-color: #059669 !important;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
+}
+
+.ops-time-range-row {
+    background: #f8fafc;
+    border: 1px solid rgba(var(--hospital-primary-rgb, 1, 27, 51), 0.12);
+    border-radius: 6px;
+    padding: 4px 6px;
+}
+
+.ops-time-input {
+    font-size: 0.76rem;
+    height: 26px;
+    padding: 1px 4px;
+    border: 1px solid #cbd5e1;
+    border-radius: 4px;
+    background-color: #ffffff;
+    color: #0f172a;
+    font-weight: 600;
+}
+
+.ops-time-input:focus {
+    border-color: var(--hospital-primary, #011b33);
+    box-shadow: 0 0 0 2px rgba(var(--hospital-primary-rgb, 1, 27, 51), 0.15);
+    background-color: #ffffff;
+}
+
+/* Live Audit Scope Narrative Context Banner */
+.ops-context-banner {
+    background: #f8fafc;
+    border-radius: 6px;
+    padding: 6px 12px;
+    border: 1px solid rgba(var(--hospital-primary-rgb, 1, 27, 51), 0.12);
+    box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.02);
+}
+
+.ops-context-badge {
+    background-color: var(--hospital-primary, #011b33) !important;
+    color: #ffffff !important;
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    padding: 3px 8px;
+    border-radius: 4px;
+    display: inline-flex;
+    align-items: center;
+    margin-right: 0.4rem;
+}
+
+.ops-context-narrative {
+    color: var(--hospital-primary, #011b33);
+    font-size: 0.8125rem;
+    line-height: 1.3;
+}
+
+.ops-context-narrative strong {
+    color: #0f172a;
+}
+
+.ops-context-explainer {
+    color: #64748b;
+    font-size: 0.74rem;
+    line-height: 1.3;
+}
+
+/* Step 3 Scoping Container & Badges */
+.ops-scope-strip {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.ops-scope-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    font-size: 0.7rem;
+    font-weight: 700;
+    padding: 0.25rem 0.6rem;
+    border-radius: 12px;
+    background: #e2e8f0;
+    color: #475569;
+}
+
+.ops-scope-badge.has-active {
+    background: #dbeafe;
+    color: #1e40af;
+    border: 1px solid #bfdbfe;
+}
+
+.btn-clear-scopes {
+    font-size: 0.68rem;
+    font-weight: 600;
+    padding: 0.15rem 0.45rem;
+    color: #dc2626;
+    background: transparent;
+    border: 1px solid #fca5a5;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.15s;
+}
+
+.btn-clear-scopes:hover {
+    background: #fee2e2;
+}
+
+/* Step 4 High-Efficiency Audit Action Bar */
+.ops-action-bar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.btn-stamp-page {
+    background: linear-gradient(135deg, #059669 0%, #047857 100%);
+    color: #ffffff !important;
+    border: 1px solid #065f46;
+    font-weight: 700;
+    font-size: 0.78rem;
+    padding: 0.38rem 0.85rem;
+    border-radius: 6px;
+    box-shadow: 0 2px 4px rgba(4, 120, 87, 0.2);
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    transition: all 0.15s ease-in-out;
+}
+
+.btn-stamp-page:hover {
+    background: linear-gradient(135deg, #047857 0%, #065f46 100%);
+    box-shadow: 0 3px 6px rgba(4, 120, 87, 0.3);
+    transform: translateY(-1px);
+}
+
+.btn-stamp-page:disabled {
+    opacity: 0.6;
+    transform: none;
+    cursor: not-allowed;
+}
+
+.btn-stamp-page .badge {
+    background: rgba(255, 255, 255, 0.25);
+    color: #ffffff;
+    font-size: 0.7rem;
+    padding: 0.15rem 0.4rem;
+    border-radius: 10px;
+}
+
+/* Standard Filter Form Controls */
+.ops-filter-bar label {
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    font-weight: 700;
+    color: #64748b;
+    letter-spacing: 0.3px;
+    margin-bottom: 0.2rem;
+}
+
+.ops-filter-bar .form-control,
+.ops-filter-bar .form-select {
+    font-size: 0.8rem;
+    padding: 0.3rem 0.5rem;
+    border-radius: 6px;
+    border: 1px solid #cbd5e1;
+}
+
+.ops-filter-bar .form-control:focus,
+.ops-filter-bar .form-select:focus {
+    border-color: var(--ops-primary, #011b33);
+    box-shadow: 0 0 0 2px rgba(var(--ops-primary-rgb, 1, 27, 51), 0.15);
+}
+
+/* Tabs */
+.ops-tabs {
+    border-bottom: 2px solid #e2e8f0;
+}
+
+.ops-tabs .nav-link {
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: #64748b;
+    padding: 0.55rem 1.15rem;
+    border-radius: 8px 8px 0 0;
+    border: 1px solid transparent;
+    transition: all 0.15s;
+}
+
+.ops-tabs .nav-link:hover {
+    color: var(--ops-primary, #011b33);
+    border-color: #e2e8f0 #e2e8f0 transparent;
+}
+
+.ops-tabs .nav-link.active {
+    color: var(--ops-primary, #011b33);
+    background-color: #ffffff;
+    border-color: #e2e8f0 #e2e8f0 #ffffff;
+    border-bottom: 2px solid #ffffff;
+    margin-bottom: -2px;
+    font-weight: 700;
+}
+
+/* KPI Cards & Daily Operations Story */
+.ops-kpi-story-strip {
+    background: #f8fafc;
+    border: 1px solid rgba(var(--hospital-primary-rgb, 1, 27, 51), 0.08);
+    border-radius: 6px;
+    margin-bottom: 4px;
+}
+
+.ops-kpi-row .kpi-card {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 0.65rem 0.85rem;
+    text-align: center;
+    transition: transform 0.15s, box-shadow 0.15s;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.ops-kpi-row .kpi-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+}
+
+.kpi-story-tag {
+    font-size: 0.64rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: #64748b;
+    margin-bottom: 0.25rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #f8fafc;
+    padding: 2px 6px;
+    border-radius: 4px;
+}
+
+.ops-kpi-row .kpi-value {
+    font-size: 1.35rem;
+    font-weight: 800;
+    color: #1e293b;
+    line-height: 1.2;
+}
+
+.ops-kpi-row .kpi-label {
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    color: #475569;
+    font-weight: 700;
+    margin-top: 0.2rem;
+}
+
+.kpi-context-subtext {
+    font-size: 0.68rem;
+    color: #94a3b8;
+    line-height: 1.2;
+    margin-top: 0.35rem;
+    border-top: 1px dashed #e2e8f0;
+    padding-top: 0.35rem;
+    white-space: normal;
+}
+
+/* Dense DataTables Grid */
+.table-responsive {
+    width: 100% !important;
+}
+
+table.dataTable {
+    width: 100% !important;
+    margin-top: 0 !important;
+    margin-bottom: 0 !important;
+    border-collapse: collapse !important;
+}
+
+table.dataTable thead th {
+    background-color: #f8fafc;
+    color: #334155;
+    font-weight: 700;
+    font-size: 0.74rem;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    border-bottom: 2px solid #cbd5e1 !important;
+    padding: 0.55rem 0.5rem !important;
+    white-space: nowrap;
+}
+
+table.dataTable tbody td {
+    padding: 0.45rem 0.5rem !important;
+    vertical-align: middle !important;
+    font-size: 0.81rem;
+    border-bottom: 1px solid #f1f5f9 !important;
+}
+
+table.dataTable tbody tr:hover {
+    background-color: #f8fafc !important;
+}
+
+.audit-tick-btn {
+    transition: all 0.15s ease-in-out;
+}
+
+.audit-tick-btn:hover {
+    transform: scale(1.05);
+}
+
+/* In-place mutated audited state */
+.btn-audited-stamped {
+    background-color: #10b981 !important;
+    border-color: #059669 !important;
+    color: #ffffff !important;
+    font-weight: 600 !important;
+    pointer-events: auto !important;
+}
+
+/* Select2 Adjustments */
+.select2-container--default .select2-selection--single {
+    border-radius: 6px;
+    border: 1px solid #cbd5e1;
+    height: 34px;
+}
+
+.select2-container--default .select2-selection--single .select2-selection__rendered {
+    line-height: 32px;
+    font-size: 0.82rem;
+}
+
+.select2-container--default .select2-selection--single .select2-selection__arrow {
+    height: 32px;
+}
+
+.ajax-entity-search + .select2-container {
+    min-width: 200px !important;
+}
+
+/* Responsive Scaling */
+@media (max-width: 768px) {
+    .audit-layout {
+        flex-direction: column;
+    }
+    .audit-sidebar {
+        width: 100%;
+        border-right: none;
+        border-bottom: 1px solid #e9ecef;
+    }
+    .audit-content {
+        width: 100% !important;
+        max-width: 100% !important;
+        padding: 1rem;
+    }
+    .ops-step-card {
+        margin-bottom: 0.75rem;
+    }
+}
+
+/* Print Styles */
+@media print {
+    body { background: #ffffff !important; }
+    .audit-sidebar, .ops-story-ribbon, .ops-filter-bar, .ops-tabs, .btn, footer, header, .navbar, .dataTables_length, .dataTables_filter, .dataTables_paginate, .dataTables_info {
+        display: none !important;
+    }
+    .audit-content {
+        width: 100% !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        max-width: 100% !important;
+        background: #ffffff !important;
+    }
+    .ops-kpi-row {
+        display: flex !important;
+        flex-wrap: wrap !important;
+        margin-bottom: 15px !important;
+    }
+    .ops-kpi-row .col-md-3 { width: 25% !important; float: left; }
+    .ops-kpi-row .col-md-2 { width: 16.66% !important; float: left; }
+    .kpi-card { border: 1px solid #cccccc !important; break-inside: avoid; }
+    table.dataTable { width: 100% !important; border-collapse: collapse !important; }
+    table.dataTable th, table.dataTable td {
+        border: 1px solid #dddddd !important;
+        padding: 4px !important;
+        font-size: 9pt !important;
+    }
+    @page { size: landscape; margin: 1cm; }
+}

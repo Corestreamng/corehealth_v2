@@ -26,10 +26,10 @@ abstract class OpsAuditBaseController extends Controller
     protected function applyShiftFilter($query, Request $request, $column = 'created_at')
     {
         if ($request->filled('shift_start') && $request->filled('shift_end')) {
-            $start = $request->shift_start;
-            $end = $request->shift_end;
+            $start = strlen($request->shift_start) === 5 ? $request->shift_start . ':00' : $request->shift_start;
+            $end = strlen($request->shift_end) === 5 ? $request->shift_end . ':59' : $request->shift_end;
             if ($start > $end) {
-                // Overnight cross-midnight shift (e.g. 20:00 to 07:59 or 20:00 to 08:00)
+                // Overnight cross-midnight shift (e.g. 18:00 to 07:59)
                 $query->whereRaw("(TIME($column) >= ? OR TIME($column) <= ?)", [$start, $end]);
             } else {
                 $query->whereRaw("TIME($column) BETWEEN ? AND ?", [$start, $end]);
@@ -41,7 +41,7 @@ abstract class OpsAuditBaseController extends Controller
             } elseif (in_array($shift, ['afternoon', 'pm', 'late'])) {
                 $query->whereRaw("TIME($column) BETWEEN '13:00:00' AND '17:59:59'");
             } elseif ($shift === 'night') {
-                $query->whereRaw("(TIME($column) >= '18:00:00' OR TIME($column) < '08:00:00')");
+                $query->whereRaw("(TIME($column) >= '18:00:00' OR TIME($column) <= '07:59:59')");
             }
         }
     }
@@ -224,7 +224,7 @@ abstract class OpsAuditBaseController extends Controller
             if ($latestAudit) {
                 $html .= '<button class="btn btn-sm btn-success px-2 py-1 text-nowrap" onclick="viewTimeline(\'' . addslashes($fullModelClass) . '\', ' . $record->id . ')" title="View Audit Timeline"><i class="mdi mdi-check-decagram me-1"></i> Audited</button>';
             } else {
-                $html .= '<button class="btn btn-sm btn-outline-success audit-tick-btn px-2 py-1 text-nowrap" onclick="markAudited(this, \'' . addslashes($fullModelClass) . '\', ' . $record->id . ')"><i class="mdi mdi-check me-1"></i> Stamp</button>';
+                $html .= '<button class="btn btn-sm btn-outline-success audit-tick-btn px-2 py-1 text-nowrap" data-model-type="' . htmlspecialchars($fullModelClass, ENT_QUOTES) . '" data-model-id="' . $record->id . '" onclick="markAudited(this, \'' . addslashes($fullModelClass) . '\', ' . $record->id . ')"><i class="mdi mdi-check me-1"></i> Stamp</button>';
             }
             $html .= '<button class="btn btn-sm btn-outline-warning px-2 py-1 text-nowrap" onclick="openRaiseQueryModal(\'' . addslashes($fullModelClass) . '\', ' . $record->id . ')"><i class="mdi mdi-flag me-1"></i> Flag</button>';
         }

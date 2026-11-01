@@ -195,6 +195,11 @@ CoreHealth v2 is designed to streamline hospital operations by integrating clini
 - **Cashier Till & Deficit Reconciliation** — tracks gross cash collections versus deposit refunds/withdrawals (`ACC_WITHDRAW`) to reconcile net drawer balances against electronic tenders (POS, Transfer, Mobile)
 - **Integrated Cashier Transactions Console** — datetime-precision transaction query and reprint console with auditor cashier scoping, refund highlight badges, and cashier summary printing
 - **Digital Approvals (Audit Stamps)** — seals audited periods/responsibility domains to freeze modifications and establish accountability
+- **Stepped Storyboard Workflow Ribbon** — unified 4-step progressive ribbon across all 12 modules (Time Horizon -> Duty Window -> Advanced Scoping -> Audit Cockpit Actions) with 5 quick date horizon chips (Today, Yest, 7D, 30D, Month) and active scope tracking
+- **Duty Window Time Ranges & Default Custom Time Window** — provides explicit shift time boundaries (AM: 00:00 - 12:59, PM: 13:00 - 17:59, Night: 18:00 - 07:59, All: 24h) with live time range indicator badge and default visible custom time controls (Time From / Time To) that automatically sync and filter active tables without page jumps
+- **Visible Page Stamping Engine** — high-efficiency 1-click batch stamping of all visible records on current page (`stampCurrentPage`) with immediate tactile UI feedback and automatic deduplication
+- **Non-Resetting Pagination Architecture** — prevents DataTable pagination reset (`opsReloadActiveTables(false)`) upon stamping or query resolution, allowing auditors to progress across high-volume pages without being kicked back to page 1
+- **Elimination of Duplicate Page-Level Filters** — strictly isolates tab-specific filters and suppresses redundant ribbon controls across all 12 modules
 - **Store Requisitions & Partial Fulfillment Accountability** — full status filter parity (pending, approved, partial, fulfilled, rejected, cancelled), zero-cost batch fallback to product master buy price, 6-card mathematically balanced KPI strip (Requested, Approved, Fulfilled, Pending/Partial Balance, Rejected), top-level store filter propagation, and interim fulfiller attribution
 - **Staff Receivables Settlement** — sequential payment allocation across outstanding staff bills with bank/discount overrides
 

@@ -3,72 +3,40 @@
 @section('title', 'Ops Audit — Imaging')
 
 @section('ops_audit_content')
-<div class="d-flex justify-content-between align-items-center mb-3">
-    <div>
-        <h5 class="font-weight-bold mb-0"><i class="mdi mdi-radiology-box text-primary me-1"></i> Imaging Audit</h5>
-        <small class="text-muted">All Imaging Requests, Billed Scans, Cashbook</small>
-    </div>
-    <div class="d-flex gap-2">
-        <button class="btn btn-sm btn-outline-success font-weight-bold" onclick="openUniversalStampModal('bulk')">
-            <i class="mdi mdi-check-all me-1"></i> Bulk Stamp
-        </button>
-        <button class="btn btn-sm btn-outline-info font-weight-bold" onclick="printCurrentTab()">
-            <i class="mdi mdi-printer me-1"></i> Print
-        </button>
-    </div>
+<div class="mb-3">
+    <h5 class="font-weight-bold mb-0"><i class="mdi mdi-radiology-box text-primary me-1"></i> Imaging Audit</h5>
+    <small class="text-muted">All Imaging Requests, Billed Scans, Cashbook</small>
 </div>
 
-{{-- Filter Bar --}}
-<form id="ops_audit_filter_form" class="ops-filter-bar">
-    <div class="row g-2 align-items-end">
-        <div class="col-md-2">
-            <label>Start Date</label>
-            <input type="date" name="start_date" class="form-control" value="{{ now()->subDays(30)->format('Y-m-d') }}">
-        </div>
-        <div class="col-md-2">
-            <label>End Date</label>
-            <input type="date" name="end_date" class="form-control" value="{{ now()->format('Y-m-d') }}">
-        </div>
-        <div class="col-md-auto">
-            <label>Shift</label>
-            <div class="d-flex gap-1">
-                <button type="button" class="btn btn-outline-secondary shift-btn" data-shift="morning"><i class="mdi mdi-weather-sunny"></i> AM</button>
-                <button type="button" class="btn btn-outline-secondary shift-btn" data-shift="afternoon"><i class="mdi mdi-weather-partly-cloudy"></i> PM</button>
-                <button type="button" class="btn btn-outline-secondary shift-btn" data-shift="night"><i class="mdi mdi-weather-night"></i> Night</button>
-                <button type="button" class="btn btn-outline-secondary shift-btn" data-shift="all"><i class="mdi mdi-clock-outline"></i> All</button>
-            </div>
-            <input type="hidden" name="shift_start" value="">
-            <input type="hidden" name="shift_end" value="">
-        </div>
-        <div class="col-md-2">
-            <label>HMO</label>
-            <select name="hmo_id" class="form-control form-control-modern select2 ops-hmo-select2" style="width: 100%;">
-                <option value="">All HMOs</option>
-                @foreach($hmos as $schemeName => $schemeHmos)
-                    <optgroup label="{{ $schemeName }}">
-                        @foreach($schemeHmos as $hmo)
-                            <option value="{{ $hmo->id }}">{{ $hmo->name }}</option>
-                        @endforeach
-                    </optgroup>
-                @endforeach
-            </select>
-        </div>
-        <div class="col-md-2">
-            <label>Cashier</label>
-            <select name="cashier_id" class="form-select">
-                <option value="">All Cashiers</option>
-                @foreach($cashiers as $id => $name)
-                    <option value="{{ $id }}">{{ $name }}</option>
-                @endforeach
-            </select>
-        </div>
-        <div class="col-md-auto">
-            <button type="button" class="btn btn-primary btn-sm font-weight-bold px-3" id="btnApplyFilters">
-                <i class="mdi mdi-filter me-1"></i> Apply
-            </button>
-        </div>
+{{-- Stepped Storyboard Ribbon --}}
+@component('admin.ops_audit.partials._stepped_story_bar', [
+    'startDate' => now()->subDays(30)->format('Y-m-d'),
+    'endDate' => now()->format('Y-m-d'),
+    'hasCareStream' => false,
+])
+    <div class="col-6">
+        <label class="small text-muted mb-1">Cashier</label>
+        <select name="cashier_id" class="form-select form-select-sm">
+            <option value="">All Cashiers</option>
+            @foreach($cashiers as $id => $name)
+                <option value="{{ $id }}">{{ $name }}</option>
+            @endforeach
+        </select>
     </div>
-</form>
+    <div class="col-6">
+        <label class="small text-muted mb-1">HMO</label>
+        <select name="hmo_id" class="form-control form-control-modern select2 ops-hmo-select2" style="width: 100%;">
+            <option value="">All HMOs</option>
+            @foreach($hmos as $schemeName => $schemeHmos)
+                <optgroup label="{{ $schemeName }}">
+                    @foreach($schemeHmos as $hmo)
+                        <option value="{{ $hmo->id }}">{{ $hmo->name }}</option>
+                    @endforeach
+                </optgroup>
+            @endforeach
+        </select>
+    </div>
+@endcomponent
 
 {{-- Tabs --}}
 <ul class="nav nav-tabs ops-tabs mb-0" id="imagingTabs" role="tablist">

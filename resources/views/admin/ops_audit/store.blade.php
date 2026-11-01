@@ -3,48 +3,27 @@
 @section('title', 'Ops Audit — Store & Inventory')
 
 @section('ops_audit_content')
-<div class="d-flex justify-content-between align-items-center mb-3">
-    <div>
-        <h5 class="font-weight-bold mb-0"><i class="mdi mdi-store text-primary me-1"></i> Store & Inventory Audit</h5>
-        <small class="text-muted">Requisitions, purchase orders, and batch entries</small>
-    </div>
-    <div class="d-flex gap-2">
-        <button class="btn btn-sm btn-outline-success font-weight-bold" onclick="openUniversalStampModal('bulk')">
-            <i class="mdi mdi-check-all me-1"></i> Bulk Stamp
-        </button>
-        <button class="btn btn-sm btn-outline-info font-weight-bold" onclick="printCurrentTab()">
-            <i class="mdi mdi-printer me-1"></i> Print
-        </button>
-    </div>
+<div class="mb-3">
+    <h5 class="font-weight-bold mb-0"><i class="mdi mdi-store text-primary me-1"></i> Store & Inventory Audit</h5>
+    <small class="text-muted">Requisitions, purchase orders, and batch entries</small>
 </div>
 
-{{-- Filter Bar --}}
-<form id="ops_audit_filter_form" class="ops-filter-bar">
-    <div class="row g-2 align-items-end">
-        <div class="col-md-2">
-            <label>Start Date</label>
-            <input type="date" name="start_date" class="form-control" value="{{ now()->subDays(30)->format('Y-m-d') }}">
-        </div>
-        <div class="col-md-2">
-            <label>End Date</label>
-            <input type="date" name="end_date" class="form-control" value="{{ now()->format('Y-m-d') }}">
-        </div>
-        <div class="col-md-2">
-            <label>Store</label>
-            <select name="store_id" class="form-select">
-                <option value="">All Stores</option>
-                @foreach($stores as $id => $name)
-                    <option value="{{ $id }}">{{ $name }}</option>
-                @endforeach
-            </select>
-        </div>
-        <div class="col-md-auto">
-            <button type="button" class="btn btn-primary btn-sm font-weight-bold px-3" id="btnApplyFilters">
-                <i class="mdi mdi-filter me-1"></i> Apply
-            </button>
-        </div>
+{{-- Stepped Storyboard Ribbon --}}
+@component('admin.ops_audit.partials._stepped_story_bar', [
+    'startDate' => now()->subDays(30)->format('Y-m-d'),
+    'endDate' => now()->format('Y-m-d'),
+    'hasCareStream' => false,
+])
+    <div class="col-12">
+        <label class="small text-muted mb-1">Target Store</label>
+        <select name="store_id" class="form-select form-select-sm">
+            <option value="">All Stores</option>
+            @foreach($stores as $id => $name)
+                <option value="{{ $id }}">{{ $name }}</option>
+            @endforeach
+        </select>
     </div>
-</form>
+@endcomponent
 
 {{-- Tabs --}}
 <ul class="nav nav-tabs ops-tabs mb-0" id="storeTabs" role="tablist">
@@ -232,14 +211,6 @@
         <div class="row g-2 mb-3 ops-kpi-row" id="kpi-batches"></div>
 
         <div class="row g-2 mb-2">
-            <div class="col-md-2">
-                <select name="store_id" class="form-select form-select-sm ops-tab-filter" data-tab="batches">
-                    <option value="">Store</option>
-                    @foreach($stores as $id => $name)
-                        <option value="{{ $id }}">{{ $name }}</option>
-                    @endforeach
-                </select>
-            </div>
             <div class="col-md-2">
                 <select name="product_id" class="form-select form-select-sm ops-tab-filter" data-tab="batches">
                     <option value="">Product</option>

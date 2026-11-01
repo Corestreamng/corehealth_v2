@@ -12,6 +12,7 @@
         <option value="TRANSFER">Transfer</option>
     </select>
 </div>
+@if(empty($hideCashier) && !isset($users) && !isset($cashiers))
 <div class="col-md-2">
     <select name="cashier_id" class="form-select form-select-sm ops-tab-filter" data-tab="{{ $tab }}">
         <option value="">All Cashiers</option>
@@ -23,6 +24,7 @@
         @endforeach
     </select>
 </div>
+@endif
 <div class="col-md-2">
     <select name="bank_id" class="form-select form-select-sm ops-tab-filter" data-tab="{{ $tab }}">
         <option value="">All Banks</option>
