@@ -33,52 +33,60 @@
 {{-- Quick Stats --}}
 <div class="row g-4 mb-4">
     <div class="col-xl-3 col-lg-6">
-        <div class="dash-stat-card" style="background: linear-gradient(145deg, #0284c7, #0ea5e9);">
-            <div class="dash-stat-body">
-                <div>
-                    <p class="dash-stat-label">{{ __('dashboard.immunizations_today') }}</p>
-                    <h2 class="dash-stat-value" id="child-stat-today">0</h2>
-                    <span class="dash-stat-hint"><i class="mdi mdi-needle me-1"></i>{{ __('dashboard.scheduled_shots') }}</span>
+        <a href="{{ Route::has('vaccine-schedule.index') ? route('vaccine-schedule.index') : route('patient.index') }}" class="dash-stat-card-link">
+            <div class="dash-stat-card" style="background: linear-gradient(145deg, #0284c7, #0ea5e9);">
+                <div class="dash-stat-body">
+                    <div>
+                        <p class="dash-stat-label">{{ __('dashboard.immunizations_today') }}</p>
+                        <h2 class="dash-stat-value" id="child-stat-today">0</h2>
+                        <span class="dash-stat-hint"><i class="mdi mdi-needle me-1"></i>{{ __('dashboard.scheduled_shots') }}</span>
+                    </div>
+                    <div class="dash-stat-icon"><i class="mdi mdi-needle"></i></div>
                 </div>
-                <div class="dash-stat-icon"><i class="mdi mdi-needle"></i></div>
             </div>
-        </div>
+        </a>
     </div>
     <div class="col-xl-3 col-lg-6">
-        <div class="dash-stat-card" style="background: linear-gradient(145deg, #be123c, #e11d48);">
-            <div class="dash-stat-body">
-                <div>
-                    <p class="dash-stat-label">{{ __('dashboard.overdue_shots') }}</p>
-                    <h2 class="dash-stat-value" id="child-stat-overdue">0</h2>
-                    <span class="dash-stat-hint"><i class="mdi mdi-alert-circle-outline me-1"></i>{{ __('dashboard.missed_appointments') }}</span>
+        <a href="{{ Route::has('vaccine-schedule.index') ? route('vaccine-schedule.index') : route('patient.index') }}" class="dash-stat-card-link">
+            <div class="dash-stat-card" style="background: linear-gradient(145deg, #be123c, #e11d48);">
+                <div class="dash-stat-body">
+                    <div>
+                        <p class="dash-stat-label">{{ __('dashboard.overdue_shots') }}</p>
+                        <h2 class="dash-stat-value" id="child-stat-overdue">0</h2>
+                        <span class="dash-stat-hint"><i class="mdi mdi-alert-circle-outline me-1"></i>{{ __('dashboard.missed_appointments') }}</span>
+                    </div>
+                    <div class="dash-stat-icon"><i class="mdi mdi-alert-circle-outline"></i></div>
                 </div>
-                <div class="dash-stat-icon"><i class="mdi mdi-alert-circle-outline"></i></div>
             </div>
-        </div>
+        </a>
     </div>
     <div class="col-xl-3 col-lg-6">
-        <div class="dash-stat-card" style="background: linear-gradient(145deg, #059669, #10b981);">
-            <div class="dash-stat-body">
-                <div>
-                    <p class="dash-stat-label">{{ __('dashboard.growth_monitoring') }}</p>
-                    <h2 class="dash-stat-value" id="child-stat-growth">0</h2>
-                    <span class="dash-stat-hint"><i class="mdi mdi-chart-line me-1"></i>{{ __('dashboard.weight_height_checks') }}</span>
+        <a href="{{ route('patient.index') }}" class="dash-stat-card-link">
+            <div class="dash-stat-card" style="background: linear-gradient(145deg, #059669, #10b981);">
+                <div class="dash-stat-body">
+                    <div>
+                        <p class="dash-stat-label">{{ __('dashboard.growth_monitoring') }}</p>
+                        <h2 class="dash-stat-value" id="child-stat-growth">0</h2>
+                        <span class="dash-stat-hint"><i class="mdi mdi-chart-line me-1"></i>{{ __('dashboard.weight_height_checks') }}</span>
+                    </div>
+                    <div class="dash-stat-icon"><i class="mdi mdi-chart-line"></i></div>
                 </div>
-                <div class="dash-stat-icon"><i class="mdi mdi-chart-line"></i></div>
             </div>
-        </div>
+        </a>
     </div>
     <div class="col-xl-3 col-lg-6">
-        <div class="dash-stat-card" style="background: linear-gradient(145deg, #7e22ce, #9333ea);">
-            <div class="dash-stat-body">
-                <div>
-                    <p class="dash-stat-label">{{ __('dashboard.new_enrolments') }}</p>
-                    <h2 class="dash-stat-value" id="child-stat-new">0</h2>
-                    <span class="dash-stat-hint"><i class="mdi mdi-baby-face-outline me-1"></i>{{ __('dashboard.this_month') }}</span>
+        <a href="{{ route('patient.index') }}" class="dash-stat-card-link">
+            <div class="dash-stat-card" style="background: linear-gradient(145deg, #7e22ce, #9333ea);">
+                <div class="dash-stat-body">
+                    <div>
+                        <p class="dash-stat-label">{{ __('dashboard.new_enrolments') }}</p>
+                        <h2 class="dash-stat-value" id="child-stat-new">0</h2>
+                        <span class="dash-stat-hint"><i class="mdi mdi-baby-face-outline me-1"></i>{{ __('dashboard.this_month') }}</span>
+                    </div>
+                    <div class="dash-stat-icon"><i class="mdi mdi-baby-face-outline"></i></div>
                 </div>
-                <div class="dash-stat-icon"><i class="mdi mdi-baby-face-outline"></i></div>
             </div>
-        </div>
+        </a>
     </div>
 </div>
 

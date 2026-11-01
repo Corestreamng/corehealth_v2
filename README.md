@@ -48,12 +48,19 @@ CoreHealth v2 is designed to streamline hospital operations by integrating clini
 
 ## Core Modules
 
-### 0. Operational Cockpit Dashboard (`/home`)
-- **Zero-Scroll Viewport Geometry** — space-maximizing command center locked to `calc(100vh - 62px)` on desktop with 3px micro-scrollbars (`.dash-scrollable`).
-- **Tri-Column Division** — Pipeline (28%), Telemetry & Micro-Charts (44%), and Real-Time Activity Stream + All-Role Workbench Dock (28%).
-- **All 18 Hospital Roles Covered** — Reception, Doctor, Nursing, Pharmacy, Lab, Radiology, Surgery, Maternity, Pediatrics, Store, Billing, HMO, Accounts, Audit, HR, ESS, Morgue, Admin.
-- **Deep-Linking & Instant Intake** — direct deep-linking into workbenches; Doctor consults open directly in `encounters/create?patient_id={id}`, and queues filter automatically via URL query params (`status=waiting`, `tab=pending`).
-- **Responsive Parity** — optimized for desktop, tablet portrait/landscape, and mobile (< 768px segmented view switcher) with zero loss of data or clinical visibility.
+### 0. Dual Dashboard Experience (`/home`) & Hospital Configuration
+- **Operational Cockpit Dashboard (`cockpit`)**:
+  - **Zero-Scroll Viewport Geometry** — space-maximizing command center locked to `calc(100vh - 62px)` on desktop with 3px micro-scrollbars (`.dash-scrollable`).
+  - **Tri-Column Division** — Pipeline (28%), Telemetry & Micro-Charts (44%), and Real-Time Activity Stream + All-Role Workbench Dock (28%).
+  - **All 18 Hospital Roles Covered** — Reception, Doctor, Nursing, Pharmacy, Lab, Radiology, Surgery, Maternity, Pediatrics, Store, Billing, HMO, Accounts, Audit, HR, ESS, Morgue, Admin.
+  - **Deep-Linking & Instant Intake** — direct deep-linking into workbenches; Doctor consults open directly in `encounters/create?patient_id={id}`, and queues filter automatically via URL query params (`status=waiting`, `tab=pending`).
+  - **Responsive Parity** — optimized for desktop, tablet portrait/landscape, and mobile (< 768px segmented view switcher) with zero loss of data or clinical visibility.
+- **Classic Operations Dashboard (`classic`)**:
+  - **Multi-Role Tabbed Interface** — restored 18-role comprehensive dashboard with dedicated departmental tabs (`admin/dashboards/tabs/*`), live AJAX queues, Chart.js trend visualizations, and deep audit logging.
+  - **Modular Architecture & High-Density Condensed Scaling** — fully modularized into `public/css/dashboard-classic.css` and `public/js/dashboard-classic.js` (no inline scripts/styles exceeding 10 lines) adhering to `--hospital-primary` dynamic branding with compact padding and fonts.
+- **Hospital Configuration & Dynamic Previews**:
+  - **Global Setting** — configured via `admin/hospital-config` under General Information (`application_status.dashboard_mode` column, default: `'cockpit'`).
+  - **Interactive Mode Switchers** — both layouts feature quick-switch header pills allowing staff to preview or toggle between modes on the fly (`/home?mode=cockpit` $\leftrightarrow$ `/home?mode=classic`).
 
 ### 1. Reception & Patient Management
 - **Patient Registration** — demographics, dependants, photo, covered by `PatientRegistrationTest`
@@ -229,6 +236,11 @@ CoreHealth v2 is designed to streamline hospital operations by integrating clini
 - **Dynamic Cadre & Specialization Pre-population** — Automatically discovers the operator's clinical designation from their staff profile (`specialization->name ?: (cadre->name ?: job_title)`) into an editable field
 - **Strict Approval-Gated vs Direct Mode Enforcement** — When approval workflows are disabled (`lab_results_require_approval = 0`, `imaging_results_require_approval = 0`), side-by-side attestation blocks enforce mandatory entry of the approver's name and designation prior to completion; when enabled, supervisors review, edit, and sign off via the approval queue
 - **Audit-Compliant Diagnostic Attestation** — Persistent capture of `entered_by_name`, `entered_by_designation`, `approved_by_name`, and `approved_by_designation` on both `lab_service_requests` and `imaging_service_requests`
+
+### 25. Operational Cockpit & Dual Dashboard System
+- **Dual Dashboard Modes** — Hospital-wide default setting in Hospital Config (`dashboard_mode` in `application_status`) supporting `'cockpit'` (default zero-scroll operational triage) and `'classic'` (condensed 18-role tabbed operations center) with instant mode preview toggle pills (`/home?mode=cockpit` and `/home?mode=classic`).
+- **Zero-Dash KPI Metric Standard** — Eradicated placeholder dashes across all 18 classic role tabs in favor of clean numeric zeros (`0`), formatted currency (`₦0`), or percentages (`0%`).
+- **Modern Workbench Routing & Legacy Deprecation** — Eliminated legacy `/add-to-queue` links and modal triggers across all dashboard views, partials, and forms; all intake, registration, and triage flows navigate directly to `reception.workbench` (`?action=new-patient` and `?queue_filter=waiting`). Legacy endpoint `/add-to-queue` automatically redirects to `reception.workbench`.
 
 ---
 

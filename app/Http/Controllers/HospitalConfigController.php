@@ -88,6 +88,7 @@ class HospitalConfigController extends Controller
             'language' => 'nullable|string|in:en,fr,nl,es,pt,ar,zh',
             'currency_symbol' => 'nullable|string|max:10',
             'thermal_printer_width' => 'nullable|string|in:xp58,w58,w76,w80,w112',
+            'dashboard_mode' => 'nullable|string|in:cockpit,classic',
 
             // Integration Settings
             'client_id' => 'nullable|string',
@@ -249,6 +250,7 @@ class HospitalConfigController extends Controller
         $validated['walkin_products_enabled'] = $request->has('walkin_products_enabled');
         $validated['walkin_procedures_enabled'] = $request->has('walkin_procedures_enabled');
         $validated['walkin_free_form_enabled'] = $request->has('walkin_free_form_enabled');
+        $validated['dashboard_mode'] = $request->input('dashboard_mode', 'cockpit') ?: 'cockpit';
 
         // Handle LLM Config Checkboxes and processing
         if ($request->has('llm_config')) {

@@ -186,6 +186,9 @@
             <li class="nav-item">
                 <a class="nav-link" href="{{ route('patient.index') }}" id="sidebar-admin-patient-all">{{ __('sidebar.all_patients') }}</a>
             </li>
+            <li class="nav-item">
+                <a class="nav-link" href="{{ route('reception.workbench', ['action' => 'new-patient']) }}" id="sidebar-admin-patient-new">{{ __('sidebar.add_patient') }} (Workbench)</a>
+            </li>
         </ul>
     </div>
 </li>

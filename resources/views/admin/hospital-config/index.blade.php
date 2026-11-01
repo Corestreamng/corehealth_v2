@@ -92,6 +92,19 @@
                                     </div>
 
                                     <div class="col-md-6 mb-3">
+                                        <label class="form-label" style="font-weight: 600; color: #495057;">Default Dashboard Experience</label>
+                                        <select class="form-control" name="dashboard_mode" style="border-radius: 8px; padding: 0.75rem;">
+                                            <option value="cockpit" {{ old('dashboard_mode', $config->dashboard_mode ?? 'cockpit') === 'cockpit' ? 'selected' : '' }}>
+                                                Operational Cockpit (Condensed Zero-Scroll Tri-Column)
+                                            </option>
+                                            <option value="classic" {{ old('dashboard_mode', $config->dashboard_mode ?? 'cockpit') === 'classic' ? 'selected' : '' }}>
+                                                Classic Operations Dashboard (Multi-Role Tabs & Detailed Charts)
+                                            </option>
+                                        </select>
+                                        <small class="text-muted">Choose the default landing dashboard layout for staff and clinical administrators.</small>
+                                    </div>
+
+                                    <div class="col-md-6 mb-3">
                                         <label class="form-label" style="font-weight: 600; color: #495057;">Notification Sound</label>
                                         <div class="custom-control custom-switch mt-2">
                                             <input type="checkbox" class="custom-control-input" id="notificationSoundSwitch" name="notification_sound" value="1" {{ $config->notification_sound ? 'checked' : '' }}>

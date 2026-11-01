@@ -33,52 +33,60 @@
 {{-- Quick Stats --}}
 <div class="row g-4 mb-4">
     <div class="col-xl-3 col-lg-6">
-        <div class="dash-stat-card" style="background: linear-gradient(145deg, #be123c, #e11d48);">
-            <div class="dash-stat-body">
-                <div>
-                    <p class="dash-stat-label">{{ __('dashboard.active_enrolments') }}</p>
-                    <h2 class="dash-stat-value" id="mat-stat-active">0</h2>
-                    <span class="dash-stat-hint"><i class="mdi mdi-account-multiple me-1"></i>{{ __('dashboard.currently_enrolled') }}</span>
+        <a href="{{ route('maternity-workbench.index') }}" class="dash-stat-card-link">
+            <div class="dash-stat-card" style="background: linear-gradient(145deg, #be123c, #e11d48);">
+                <div class="dash-stat-body">
+                    <div>
+                        <p class="dash-stat-label">{{ __('dashboard.active_enrolments') }}</p>
+                        <h2 class="dash-stat-value" id="mat-stat-active">0</h2>
+                        <span class="dash-stat-hint"><i class="mdi mdi-account-multiple me-1"></i>{{ __('dashboard.currently_enrolled') }}</span>
+                    </div>
+                    <div class="dash-stat-icon"><i class="mdi mdi-mother-nurse"></i></div>
                 </div>
-                <div class="dash-stat-icon"><i class="mdi mdi-mother-nurse"></i></div>
             </div>
-        </div>
+        </a>
     </div>
     <div class="col-xl-3 col-lg-6">
-        <div class="dash-stat-card" style="background: linear-gradient(145deg, #1e40af, #3b82f6);">
-            <div class="dash-stat-body">
-                <div>
-                    <p class="dash-stat-label">{{ __('dashboard.anc_visits_today') }}</p>
-                    <h2 class="dash-stat-value" id="mat-stat-anc">0</h2>
-                    <span class="dash-stat-hint"><i class="mdi mdi-calendar-check me-1"></i>{{ __('dashboard.antenatal_care') }}</span>
+        <a href="{{ url('maternity-workbench?filter=anc') }}" class="dash-stat-card-link">
+            <div class="dash-stat-card" style="background: linear-gradient(145deg, #1e40af, #3b82f6);">
+                <div class="dash-stat-body">
+                    <div>
+                        <p class="dash-stat-label">{{ __('dashboard.anc_visits_today') }}</p>
+                        <h2 class="dash-stat-value" id="mat-stat-anc">0</h2>
+                        <span class="dash-stat-hint"><i class="mdi mdi-calendar-check me-1"></i>{{ __('dashboard.antenatal_care') }}</span>
+                    </div>
+                    <div class="dash-stat-icon"><i class="mdi mdi-hospital-building"></i></div>
                 </div>
-                <div class="dash-stat-icon"><i class="mdi mdi-hospital-building"></i></div>
             </div>
-        </div>
+        </a>
     </div>
     <div class="col-xl-3 col-lg-6">
-        <div class="dash-stat-card" style="background: linear-gradient(145deg, #7e22ce, #9333ea);">
-            <div class="dash-stat-body">
-                <div>
-                    <p class="dash-stat-label">{{ __('dashboard.deliveries_today') }}</p>
-                    <h2 class="dash-stat-value" id="mat-stat-deliveries">0</h2>
-                    <span class="dash-stat-hint"><i class="mdi mdi-baby-carriage me-1"></i>{{ __('dashboard.births_recorded') }}</span>
+        <a href="{{ url('maternity-workbench?filter=deliveries') }}" class="dash-stat-card-link">
+            <div class="dash-stat-card" style="background: linear-gradient(145deg, #7e22ce, #9333ea);">
+                <div class="dash-stat-body">
+                    <div>
+                        <p class="dash-stat-label">{{ __('dashboard.deliveries_today') }}</p>
+                        <h2 class="dash-stat-value" id="mat-stat-deliveries">0</h2>
+                        <span class="dash-stat-hint"><i class="mdi mdi-baby-carriage me-1"></i>{{ __('dashboard.births_recorded') }}</span>
+                    </div>
+                    <div class="dash-stat-icon"><i class="mdi mdi-baby-carriage"></i></div>
                 </div>
-                <div class="dash-stat-icon"><i class="mdi mdi-baby-carriage"></i></div>
             </div>
-        </div>
+        </a>
     </div>
     <div class="col-xl-3 col-lg-6">
-        <div class="dash-stat-card" style="background: linear-gradient(145deg, #059669, #10b981);">
-            <div class="dash-stat-body">
-                <div>
-                    <p class="dash-stat-label">{{ __('dashboard.postnatal_care') }}</p>
-                    <h2 class="dash-stat-value" id="mat-stat-pnc">0</h2>
-                    <span class="dash-stat-hint"><i class="mdi mdi-check-circle-outline me-1"></i>{{ __('dashboard.follow_ups') }}</span>
+        <a href="{{ url('maternity-workbench?filter=pnc') }}" class="dash-stat-card-link">
+            <div class="dash-stat-card" style="background: linear-gradient(145deg, #059669, #10b981);">
+                <div class="dash-stat-body">
+                    <div>
+                        <p class="dash-stat-label">{{ __('dashboard.postnatal_care') }}</p>
+                        <h2 class="dash-stat-value" id="mat-stat-pnc">0</h2>
+                        <span class="dash-stat-hint"><i class="mdi mdi-check-circle-outline me-1"></i>{{ __('dashboard.follow_ups') }}</span>
+                    </div>
+                    <div class="dash-stat-icon"><i class="mdi mdi-human-female-boy"></i></div>
                 </div>
-                <div class="dash-stat-icon"><i class="mdi mdi-human-female-boy"></i></div>
             </div>
-        </div>
+        </a>
     </div>
 </div>
 

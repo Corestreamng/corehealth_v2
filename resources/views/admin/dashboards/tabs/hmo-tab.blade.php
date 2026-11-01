@@ -30,55 +30,63 @@
 {{-- Quick Stats --}}
 <div class="row g-4 mb-4">
     <div class="col-xl-3 col-lg-6">
-        <div class="dash-stat-card" style="background: linear-gradient(145deg, #2d1b4e, #7c3aed);">
-            <div class="dash-stat-body">
-                <div>
-                    <p class="dash-stat-label">{{ __('dashboard.hmo_patients') }}</p>
-                    <h2 class="dash-stat-value" id="hmo-stat-patients">—</h2>
-                    <span class="dash-stat-hint"><i class="mdi mdi-account-group me-1"></i>{{ __('dashboard.active_enrollees') }}</span>
+        <a href="{{ route('hmo.workbench') }}" class="dash-stat-card-link">
+            <div class="dash-stat-card" style="background: linear-gradient(145deg, #2d1b4e, #7c3aed);">
+                <div class="dash-stat-body">
+                    <div>
+                        <p class="dash-stat-label">{{ __('dashboard.hmo_patients') }}</p>
+                        <h2 class="dash-stat-value" id="hmo-stat-patients">0</h2>
+                        <span class="dash-stat-hint"><i class="mdi mdi-account-group me-1"></i>{{ __('dashboard.active_enrollees') }}</span>
+                    </div>
+                    <div class="dash-stat-icon"><i class="mdi mdi-account-group"></i></div>
                 </div>
-                <div class="dash-stat-icon"><i class="mdi mdi-account-group"></i></div>
             </div>
-        </div>
+        </a>
     </div>
 
     <div class="col-xl-3 col-lg-6">
-        <div class="dash-stat-card" style="background: linear-gradient(145deg, #92400e, #f59e0b);">
-            <div class="dash-stat-body">
-                <div>
-                    <p class="dash-stat-label">{{ __('dashboard.pending_claims') }}</p>
-                    <h2 class="dash-stat-value" id="hmo-stat-pending-claims">—</h2>
-                    <span class="dash-stat-hint"><i class="mdi mdi-clipboard-alert me-1"></i>{{ __('dashboard.awaiting_review') }}</span>
+        <a href="{{ url('hmo-workbench?tab=claims') }}" class="dash-stat-card-link">
+            <div class="dash-stat-card" style="background: linear-gradient(145deg, #92400e, #f59e0b);">
+                <div class="dash-stat-body">
+                    <div>
+                        <p class="dash-stat-label">{{ __('dashboard.pending_claims') }}</p>
+                        <h2 class="dash-stat-value" id="hmo-stat-pending-claims">0</h2>
+                        <span class="dash-stat-hint"><i class="mdi mdi-clipboard-alert me-1"></i>{{ __('dashboard.awaiting_review') }}</span>
+                    </div>
+                    <div class="dash-stat-icon"><i class="mdi mdi-clipboard-alert"></i></div>
                 </div>
-                <div class="dash-stat-icon"><i class="mdi mdi-clipboard-alert"></i></div>
             </div>
-        </div>
+        </a>
     </div>
 
     <div class="col-xl-3 col-lg-6">
-        <div class="dash-stat-card" style="background: linear-gradient(145deg, #065f46, #10b981);">
-            <div class="dash-stat-body">
-                <div>
-                    <p class="dash-stat-label">{{ __('dashboard.approved_claims') }}</p>
-                    <h2 class="dash-stat-value" id="hmo-stat-approved-claims">—</h2>
-                    <span class="dash-stat-hint"><i class="mdi mdi-check-circle me-1"></i>{{ __('dashboard.this_month') }}</span>
+        <a href="{{ url('hmo-workbench?tab=approved') }}" class="dash-stat-card-link">
+            <div class="dash-stat-card" style="background: linear-gradient(145deg, #065f46, #10b981);">
+                <div class="dash-stat-body">
+                    <div>
+                        <p class="dash-stat-label">{{ __('dashboard.approved_claims') }}</p>
+                        <h2 class="dash-stat-value" id="hmo-stat-approved-claims">0</h2>
+                        <span class="dash-stat-hint"><i class="mdi mdi-check-circle me-1"></i>{{ __('dashboard.this_month') }}</span>
+                    </div>
+                    <div class="dash-stat-icon"><i class="mdi mdi-check-circle"></i></div>
                 </div>
-                <div class="dash-stat-icon"><i class="mdi mdi-check-circle"></i></div>
             </div>
-        </div>
+        </a>
     </div>
 
     <div class="col-xl-3 col-lg-6">
-        <div class="dash-stat-card" style="background: linear-gradient(145deg, #581c87, #a855f7);">
-            <div class="dash-stat-body">
-                <div>
-                    <p class="dash-stat-label">{{ __('dashboard.total_hmos') }}</p>
-                    <h2 class="dash-stat-value" id="hmo-stat-total-hmos">—</h2>
-                    <span class="dash-stat-hint"><i class="mdi mdi-hospital-building me-1"></i>{{ __('dashboard.partner_providers') }}</span>
+        <a href="{{ route('hmo.workbench') }}" class="dash-stat-card-link">
+            <div class="dash-stat-card" style="background: linear-gradient(145deg, #581c87, #a855f7);">
+                <div class="dash-stat-body">
+                    <div>
+                        <p class="dash-stat-label">{{ __('dashboard.total_hmos') }}</p>
+                        <h2 class="dash-stat-value" id="hmo-stat-total-hmos">0</h2>
+                        <span class="dash-stat-hint"><i class="mdi mdi-hospital-building me-1"></i>{{ __('dashboard.partner_providers') }}</span>
+                    </div>
+                    <div class="dash-stat-icon"><i class="mdi mdi-hospital-building"></i></div>
                 </div>
-                <div class="dash-stat-icon"><i class="mdi mdi-hospital-building"></i></div>
             </div>
-        </div>
+        </a>
     </div>
 </div>
 

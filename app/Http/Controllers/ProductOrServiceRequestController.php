@@ -244,7 +244,7 @@ class ProductOrServiceRequestController extends Controller
                         DB::commit();
                         $msg = 'Request(s) saved successfully';
 
-                        return redirect()->route('add-to-queue')->withMessage($msg)->withMessageType('success')->withInput();
+                        return redirect()->route('reception.workbench')->withMessage($msg)->withMessageType('success')->withInput();
                     } else {
                         $msg = 'Please specify a clinic for all patients for whom you specified a service';
 
@@ -267,7 +267,7 @@ class ProductOrServiceRequestController extends Controller
                 //         $req->staff_user_id = Auth::id();
                 //         if ($req->save()) {
                 //             $msg = "Request(s) saved successfully";
-                //             return redirect()->route('add-to-queue')->withMessage($msg)->withMessageType('success')->withInput();
+                //             return redirect()->route('reception.workbench')->withMessage($msg)->withMessageType('success')->withInput();
                 //         } else {
                 //             $msg = "An error occured while saving the request, please try again later";
                 //             return redirect()->back()->withInput()->withMessage($msg)->withMessageType('danger')->withInput();

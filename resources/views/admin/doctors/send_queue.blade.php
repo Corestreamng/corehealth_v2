@@ -70,8 +70,8 @@
                                     </div>
                                 @endforeach
                             </div>
-                            <button type="subimt" class="btn btn-primary">Submit</button>
-                            <a href="{{route('add-to-queue')}}" class="btn btn-warning">Back</a>
+                            <button type="submit" class="btn btn-primary">Submit</button>
+                            <a href="{{route('reception.workbench')}}" class="btn btn-warning">Back</a>
                         </form>
                     </div>
                 </div>
@@ -104,8 +104,8 @@
                                     </div>
                                 @endforeach
                             </div>
-                            <button type="subimt" class="btn btn-primary">Submit</button>
-                            <a href="{{route('add-to-queue')}}" class="btn btn-warning">Back</a>
+                            <button type="submit" class="btn btn-primary">Submit</button>
+                            <a href="{{route('reception.workbench')}}" class="btn btn-warning">Back</a>
                         </form>
                     </div>
                 </div>

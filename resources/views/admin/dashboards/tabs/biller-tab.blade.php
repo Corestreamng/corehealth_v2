@@ -30,52 +30,60 @@
 {{-- Quick Stats --}}
 <div class="row g-4 mb-4">
     <div class="col-xl-3 col-lg-6">
-        <div class="dash-stat-card" style="background: linear-gradient(145deg, #065f46, #059669);">
-            <div class="dash-stat-body">
-                <div>
-                    <p class="dash-stat-label">{{ __('dashboard.todays_revenue') }}</p>
-                    <h2 class="dash-stat-value" id="biller-stat-revenue">—</h2>
-                    <span class="dash-stat-hint"><i class="mdi mdi-clock-outline me-1"></i>{{ __('dashboard.updated_live') }}</span>
+        <a href="{{ route('billing.workbench') }}" class="dash-stat-card-link">
+            <div class="dash-stat-card" style="background: linear-gradient(145deg, #065f46, #059669);">
+                <div class="dash-stat-body">
+                    <div>
+                        <p class="dash-stat-label">{{ __('dashboard.todays_revenue') }}</p>
+                        <h2 class="dash-stat-value" id="biller-stat-revenue">₦0</h2>
+                        <span class="dash-stat-hint"><i class="mdi mdi-clock-outline me-1"></i>{{ __('dashboard.updated_live') }}</span>
+                    </div>
+                    <div class="dash-stat-icon"><i class="mdi mdi-cash-multiple"></i></div>
                 </div>
-                <div class="dash-stat-icon"><i class="mdi mdi-cash-multiple"></i></div>
             </div>
-        </div>
+        </a>
     </div>
     <div class="col-xl-3 col-lg-6">
-        <div class="dash-stat-card" style="background: linear-gradient(145deg, #7e22ce, #a855f7);">
-            <div class="dash-stat-body">
-                <div>
-                    <p class="dash-stat-label">{{ __('dashboard.payment_requests') }}</p>
-                    <h2 class="dash-stat-value" id="biller-stat-payment-requests">—</h2>
-                    <span class="dash-stat-hint"><i class="mdi mdi-clipboard-text me-1"></i>{{ __('dashboard.awaiting_action') }}</span>
+        <a href="{{ url('billing-workbench?filter=all') }}" class="dash-stat-card-link">
+            <div class="dash-stat-card" style="background: linear-gradient(145deg, #7e22ce, #a855f7);">
+                <div class="dash-stat-body">
+                    <div>
+                        <p class="dash-stat-label">{{ __('dashboard.payment_requests') }}</p>
+                        <h2 class="dash-stat-value" id="biller-stat-payment-requests">0</h2>
+                        <span class="dash-stat-hint"><i class="mdi mdi-clipboard-text me-1"></i>{{ __('dashboard.awaiting_action') }}</span>
+                    </div>
+                    <div class="dash-stat-icon"><i class="mdi mdi-clipboard-text"></i></div>
                 </div>
-                <div class="dash-stat-icon"><i class="mdi mdi-clipboard-text"></i></div>
             </div>
-        </div>
+        </a>
     </div>
     <div class="col-xl-3 col-lg-6">
-        <div class="dash-stat-card" style="background: linear-gradient(145deg, #334155, #475569);">
-            <div class="dash-stat-body">
-                <div>
-                    <p class="dash-stat-label">{{ __('dashboard.my_payments') }}</p>
-                    <h2 class="dash-stat-value" id="biller-stat-my-payments">—</h2>
-                    <span class="dash-stat-hint"><i class="mdi mdi-cash-multiple me-1"></i>{{ __('dashboard.processed_today') }}</span>
+        <a href="{{ route('billing.workbench') }}" class="dash-stat-card-link">
+            <div class="dash-stat-card" style="background: linear-gradient(145deg, #334155, #475569);">
+                <div class="dash-stat-body">
+                    <div>
+                        <p class="dash-stat-label">{{ __('dashboard.my_payments') }}</p>
+                        <h2 class="dash-stat-value" id="biller-stat-my-payments">0</h2>
+                        <span class="dash-stat-hint"><i class="mdi mdi-cash-multiple me-1"></i>{{ __('dashboard.processed_today') }}</span>
+                    </div>
+                    <div class="dash-stat-icon"><i class="mdi mdi-receipt"></i></div>
                 </div>
-                <div class="dash-stat-icon"><i class="mdi mdi-receipt"></i></div>
             </div>
-        </div>
+        </a>
     </div>
     <div class="col-xl-3 col-lg-6">
-        <div class="dash-stat-card" style="background: linear-gradient(145deg, #991b1b, #dc2626);">
-            <div class="dash-stat-body">
-                <div>
-                    <p class="dash-stat-label">{{ __('dashboard.consultations') }}</p>
-                    <h2 class="dash-stat-value" id="biller-stat-consultations">—</h2>
-                    <span class="dash-stat-hint"><i class="mdi mdi-stethoscope me-1"></i>{{ __('dashboard.todays_encounters') }}</span>
+        <a href="{{ url('encounters') }}" class="dash-stat-card-link">
+            <div class="dash-stat-card" style="background: linear-gradient(145deg, #991b1b, #dc2626);">
+                <div class="dash-stat-body">
+                    <div>
+                        <p class="dash-stat-label">{{ __('dashboard.consultations') }}</p>
+                        <h2 class="dash-stat-value" id="biller-stat-consultations">0</h2>
+                        <span class="dash-stat-hint"><i class="mdi mdi-stethoscope me-1"></i>{{ __('dashboard.todays_encounters') }}</span>
+                    </div>
+                    <div class="dash-stat-icon"><i class="mdi mdi-stethoscope"></i></div>
                 </div>
-                <div class="dash-stat-icon"><i class="mdi mdi-stethoscope"></i></div>
             </div>
-        </div>
+        </a>
     </div>
 </div>
 

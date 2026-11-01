@@ -30,55 +30,63 @@
 {{-- Quick Stats --}}
 <div class="row g-4 mb-4">
     <div class="col-xl-3 col-lg-6">
-        <div class="dash-stat-card" style="background: linear-gradient(145deg, #3730a3, #4f46e5);">
-            <div class="dash-stat-body">
-                <div>
-                    <p class="dash-stat-label">{{ __('dashboard.pending_scans') }}</p>
-                    <h2 class="dash-stat-value" id="imaging-stat-pending">—</h2>
-                    <span class="dash-stat-hint"><i class="mdi mdi-clock-outline me-1"></i>{{ __('dashboard.todays_queue') }}</span>
+        <a href="{{ url('imaging-workbench?queue_filter=results') }}" class="dash-stat-card-link">
+            <div class="dash-stat-card" style="background: linear-gradient(145deg, #3730a3, #4f46e5);">
+                <div class="dash-stat-body">
+                    <div>
+                        <p class="dash-stat-label">{{ __('dashboard.pending_scans') }}</p>
+                        <h2 class="dash-stat-value" id="imaging-stat-pending">0</h2>
+                        <span class="dash-stat-hint"><i class="mdi mdi-clock-outline me-1"></i>{{ __('dashboard.todays_queue') }}</span>
+                    </div>
+                    <div class="dash-stat-icon"><i class="mdi mdi-radiobox-marked"></i></div>
                 </div>
-                <div class="dash-stat-icon"><i class="mdi mdi-radiobox-marked"></i></div>
             </div>
-        </div>
+        </a>
     </div>
 
     <div class="col-xl-3 col-lg-6">
-        <div class="dash-stat-card" style="background: linear-gradient(145deg, #166534, #16a34a);">
-            <div class="dash-stat-body">
-                <div>
-                    <p class="dash-stat-label">{{ __('dashboard.completed_today') }}</p>
-                    <h2 class="dash-stat-value" id="imaging-stat-completed">—</h2>
-                    <span class="dash-stat-hint"><i class="mdi mdi-check-circle me-1"></i>{{ __('dashboard.finalized_scans') }}</span>
+        <a href="{{ url('imaging-workbench?queue_filter=completed') }}" class="dash-stat-card-link">
+            <div class="dash-stat-card" style="background: linear-gradient(145deg, #166534, #16a34a);">
+                <div class="dash-stat-body">
+                    <div>
+                        <p class="dash-stat-label">{{ __('dashboard.completed_today') }}</p>
+                        <h2 class="dash-stat-value" id="imaging-stat-completed">0</h2>
+                        <span class="dash-stat-hint"><i class="mdi mdi-check-circle me-1"></i>{{ __('dashboard.finalized_scans') }}</span>
+                    </div>
+                    <div class="dash-stat-icon"><i class="mdi mdi-check-circle"></i></div>
                 </div>
-                <div class="dash-stat-icon"><i class="mdi mdi-check-circle"></i></div>
             </div>
-        </div>
+        </a>
     </div>
 
     <div class="col-xl-3 col-lg-6">
-        <div class="dash-stat-card" style="background: linear-gradient(145deg, #1e3a8a, #1d4ed8);">
-            <div class="dash-stat-body">
-                <div>
-                    <p class="dash-stat-label">{{ __('dashboard.monthly_volume') }}</p>
-                    <h2 class="dash-stat-value" id="imaging-stat-month">—</h2>
-                    <span class="dash-stat-hint"><i class="mdi mdi-chart-line me-1"></i>{{ __('dashboard.current_month') }}</span>
+        <a href="{{ route('imaging.workbench') }}" class="dash-stat-card-link">
+            <div class="dash-stat-card" style="background: linear-gradient(145deg, #1e3a8a, #1d4ed8);">
+                <div class="dash-stat-body">
+                    <div>
+                        <p class="dash-stat-label">{{ __('dashboard.monthly_volume') }}</p>
+                        <h2 class="dash-stat-value" id="imaging-stat-month">0</h2>
+                        <span class="dash-stat-hint"><i class="mdi mdi-chart-line me-1"></i>{{ __('dashboard.current_month') }}</span>
+                    </div>
+                    <div class="dash-stat-icon"><i class="mdi mdi-image-multiple"></i></div>
                 </div>
-                <div class="dash-stat-icon"><i class="mdi mdi-image-multiple"></i></div>
             </div>
-        </div>
+        </a>
     </div>
 
     <div class="col-xl-3 col-lg-6">
-        <div class="dash-stat-card" style="background: linear-gradient(145deg, #86198f, #a21caf);">
-            <div class="dash-stat-body">
-                <div>
-                    <p class="dash-stat-label">{{ __('dashboard.available_scans') }}</p>
-                    <h2 class="dash-stat-value" id="imaging-stat-services">—</h2>
-                    <span class="dash-stat-hint"><i class="mdi mdi-format-list-bulleted me-1"></i>{{ __('dashboard.catalog_size') }}</span>
+        <a href="{{ route('imaging.workbench') }}" class="dash-stat-card-link">
+            <div class="dash-stat-card" style="background: linear-gradient(145deg, #86198f, #a21caf);">
+                <div class="dash-stat-body">
+                    <div>
+                        <p class="dash-stat-label">{{ __('dashboard.available_scans') }}</p>
+                        <h2 class="dash-stat-value" id="imaging-stat-services">0</h2>
+                        <span class="dash-stat-hint"><i class="mdi mdi-format-list-bulleted me-1"></i>{{ __('dashboard.catalog_size') }}</span>
+                    </div>
+                    <div class="dash-stat-icon"><i class="mdi mdi-format-list-bulleted"></i></div>
                 </div>
-                <div class="dash-stat-icon"><i class="mdi mdi-format-list-bulleted"></i></div>
             </div>
-        </div>
+        </a>
     </div>
 </div>
 

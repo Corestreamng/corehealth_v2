@@ -816,7 +816,7 @@ class DashboardDataController extends Controller
                         ['label' => 'Reception Workbench', 'url' => route('reception.workbench'), 'icon' => 'mdi-desktop-mac-dashboard', 'sub' => 'Front Desk Central', 'color' => 'primary'],
                         ['label' => '+ Register Patient', 'url' => route('reception.workbench', ['action' => 'new-patient']), 'icon' => 'mdi-account-plus', 'sub' => 'New Patient File', 'color' => 'success'],
                         ['label' => 'Patient Directory', 'url' => route('patient.index'), 'icon' => 'mdi-account-search', 'sub' => 'Folder Lookup', 'color' => 'purple'],
-                        ['label' => 'Add to Doctor Queue', 'url' => route('add-to-queue'), 'icon' => 'mdi-clipboard-arrow-right', 'sub' => 'Route Patient', 'color' => 'warning'],
+                        ['label' => 'Intake & Triage Queue', 'url' => route('reception.workbench', ['queue_filter' => 'waiting']), 'icon' => 'mdi-clipboard-arrow-right', 'sub' => 'Workbench Queue', 'color' => 'warning'],
                     ],
                     'queue_title' => 'Reception Waiting & Triage Queue',
                     'queue_badge' => 'Intake List',
@@ -1548,7 +1548,7 @@ class DashboardDataController extends Controller
      * ============================ */
     public function essData()
     {
-        $userId = auth()->id();
+        $userId = (int) (auth()->id() ?? 0);
 
         return Cache::remember('dash:ess:' . $userId . ':' . date('Y-m-d-H-i-') . floor(date('s') / 180), self::CACHE_TTL, function () use ($userId) {
             $svc = new EssDashboardService();

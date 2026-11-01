@@ -5,10 +5,22 @@
 <li class="ch-sidebar-section-header pt-2 pb-1">
     <span class="nav-item-head">{{ __('sidebar.health_records') }}</span>
 </li>
-<li class="nav-item {{ request()->routeIs('reception.workbench') ? 'active' : '' }}">
-    <a class="nav-link {{ request()->routeIs('reception.workbench') ? 'active' : '' }}" href="{{ route('reception.workbench') }}" id="sidebar-receptionist-workbench">
+<li class="nav-item {{ request()->routeIs('reception.workbench') && !request('action') && !request('queue_filter') ? 'active' : '' }}">
+    <a class="nav-link {{ request()->routeIs('reception.workbench') && !request('action') && !request('queue_filter') ? 'active' : '' }}" href="{{ route('reception.workbench') }}" id="sidebar-receptionist-workbench">
         <i class="mdi mdi-desktop-mac-dashboard menu-icon"></i>
         <span class="menu-title">{{ __('sidebar.health_records_workbench') }}</span>
+    </a>
+</li>
+<li class="nav-item {{ request()->routeIs('reception.workbench') && request('action') === 'new-patient' ? 'active' : '' }}">
+    <a class="nav-link {{ request()->routeIs('reception.workbench') && request('action') === 'new-patient' ? 'active' : '' }}" href="{{ route('reception.workbench', ['action' => 'new-patient']) }}" id="sidebar-receptionist-new-patient">
+        <i class="mdi mdi-account-plus menu-icon"></i>
+        <span class="menu-title">New Patient</span>
+    </a>
+</li>
+<li class="nav-item {{ request()->routeIs('reception.workbench') && request('queue_filter') === 'waiting' ? 'active' : '' }}">
+    <a class="nav-link {{ request()->routeIs('reception.workbench') && request('queue_filter') === 'waiting' ? 'active' : '' }}" href="{{ route('reception.workbench', ['queue_filter' => 'waiting']) }}" id="sidebar-receptionist-queue">
+        <i class="mdi mdi-clipboard-arrow-right menu-icon"></i>
+        <span class="menu-title">Triage &amp; Intake Queue</span>
     </a>
 </li>
 <li class="nav-item {{ request()->routeIs('allPrevEncounters') ? 'active' : '' }}">

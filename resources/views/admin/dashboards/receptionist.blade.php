@@ -123,7 +123,7 @@
                         </a>
                     </div>
                     <div class="col-6 col-md-4">
-                        <a href="{{ route('add-to-queue') }}" class="btn btn-outline-info w-100 rounded-pill py-2 text-start">
+                        <a href="{{ route('reception.workbench', ['queue_filter' => 'waiting']) }}" class="btn btn-outline-info w-100 rounded-pill py-2 text-start">
                             <i class="mdi mdi-account-arrow-right me-2"></i>Queue Patient
                         </a>
                     </div>
@@ -181,8 +181,8 @@
                         </a>
                     </div>
                     <div class="col-6 col-md-4">
-                        <a href="{{ route('add-to-queue') }}" class="btn btn-outline-warning w-100 rounded-pill py-2 text-start">
-                            <i class="mdi mdi-account-arrow-right me-2"></i>Patient Lookup
+                        <a href="{{ route('reception.workbench') }}" class="btn btn-outline-warning w-100 rounded-pill py-2 text-start">
+                            <i class="mdi mdi-account-search me-2"></i>Patient Lookup
                         </a>
                     </div>
                 </div>

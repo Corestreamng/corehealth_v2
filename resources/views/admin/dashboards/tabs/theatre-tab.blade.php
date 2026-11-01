@@ -33,52 +33,60 @@
 {{-- Quick Stats --}}
 <div class="row g-4 mb-4">
     <div class="col-xl-3 col-lg-6">
-        <div class="dash-stat-card" style="background: linear-gradient(145deg, #1e40af, #3b82f6);">
-            <div class="dash-stat-body">
-                <div>
-                    <p class="dash-stat-label">{{ __('dashboard.scheduled_today') }}</p>
-                    <h2 class="dash-stat-value" id="theatre-stat-scheduled">0</h2>
-                    <span class="dash-stat-hint"><i class="mdi mdi-calendar-clock me-1"></i>{{ __('dashboard.planned_surgeries') }}</span>
+        <a href="{{ route('surgery-workbench.index') }}" class="dash-stat-card-link">
+            <div class="dash-stat-card" style="background: linear-gradient(145deg, #1e40af, #3b82f6);">
+                <div class="dash-stat-body">
+                    <div>
+                        <p class="dash-stat-label">{{ __('dashboard.scheduled_today') }}</p>
+                        <h2 class="dash-stat-value" id="theatre-stat-scheduled">0</h2>
+                        <span class="dash-stat-hint"><i class="mdi mdi-calendar-clock me-1"></i>{{ __('dashboard.planned_surgeries') }}</span>
+                    </div>
+                    <div class="dash-stat-icon"><i class="mdi mdi-calendar-clock"></i></div>
                 </div>
-                <div class="dash-stat-icon"><i class="mdi mdi-calendar-clock"></i></div>
             </div>
-        </div>
+        </a>
     </div>
     <div class="col-xl-3 col-lg-6">
-        <div class="dash-stat-card" style="background: linear-gradient(145deg, #be123c, #e11d48);">
-            <div class="dash-stat-body">
-                <div>
-                    <p class="dash-stat-label">{{ __('dashboard.ongoing_surgery') }}</p>
-                    <h2 class="dash-stat-value" id="theatre-stat-ongoing">0</h2>
-                    <span class="dash-stat-hint"><i class="mdi mdi-pulse me-1"></i>{{ __('dashboard.currently_in_theatre') }}</span>
+        <a href="{{ route('surgery-workbench.index') }}" class="dash-stat-card-link">
+            <div class="dash-stat-card" style="background: linear-gradient(145deg, #be123c, #e11d48);">
+                <div class="dash-stat-body">
+                    <div>
+                        <p class="dash-stat-label">{{ __('dashboard.ongoing_surgery') }}</p>
+                        <h2 class="dash-stat-value" id="theatre-stat-ongoing">0</h2>
+                        <span class="dash-stat-hint"><i class="mdi mdi-pulse me-1"></i>{{ __('dashboard.currently_in_theatre') }}</span>
+                    </div>
+                    <div class="dash-stat-icon"><i class="mdi mdi-pulse"></i></div>
                 </div>
-                <div class="dash-stat-icon"><i class="mdi mdi-pulse"></i></div>
             </div>
-        </div>
+        </a>
     </div>
     <div class="col-xl-3 col-lg-6">
-        <div class="dash-stat-card" style="background: linear-gradient(145deg, #059669, #10b981);">
-            <div class="dash-stat-body">
-                <div>
-                    <p class="dash-stat-label">{{ __('dashboard.completed_today') }}</p>
-                    <h2 class="dash-stat-value" id="theatre-stat-completed">0</h2>
-                    <span class="dash-stat-hint"><i class="mdi mdi-check-circle-outline me-1"></i>{{ __('dashboard.post_op_stage') }}</span>
+        <a href="{{ route('surgery-workbench.index') }}" class="dash-stat-card-link">
+            <div class="dash-stat-card" style="background: linear-gradient(145deg, #059669, #10b981);">
+                <div class="dash-stat-body">
+                    <div>
+                        <p class="dash-stat-label">{{ __('dashboard.completed_today') }}</p>
+                        <h2 class="dash-stat-value" id="theatre-stat-completed">0</h2>
+                        <span class="dash-stat-hint"><i class="mdi mdi-check-circle-outline me-1"></i>{{ __('dashboard.post_op_stage') }}</span>
+                    </div>
+                    <div class="dash-stat-icon"><i class="mdi mdi-check-circle-outline"></i></div>
                 </div>
-                <div class="dash-stat-icon"><i class="mdi mdi-check-circle-outline"></i></div>
             </div>
-        </div>
+        </a>
     </div>
     <div class="col-xl-3 col-lg-6">
-        <div class="dash-stat-card" style="background: linear-gradient(145deg, #b45309, #f59e0b);">
-            <div class="dash-stat-body">
-                <div>
-                    <p class="dash-stat-label">{{ __('dashboard.pending_start') }}</p>
-                    <h2 class="dash-stat-value" id="theatre-stat-pending">0</h2>
-                    <span class="dash-stat-hint"><i class="mdi mdi-clock-outline me-1"></i>{{ __('dashboard.awaiting_prep') }}</span>
+        <a href="{{ route('surgery-workbench.index') }}" class="dash-stat-card-link">
+            <div class="dash-stat-card" style="background: linear-gradient(145deg, #b45309, #f59e0b);">
+                <div class="dash-stat-body">
+                    <div>
+                        <p class="dash-stat-label">{{ __('dashboard.pending_start') }}</p>
+                        <h2 class="dash-stat-value" id="theatre-stat-pending">0</h2>
+                        <span class="dash-stat-hint"><i class="mdi mdi-clock-outline me-1"></i>{{ __('dashboard.awaiting_prep') }}</span>
+                    </div>
+                    <div class="dash-stat-icon"><i class="mdi mdi-clock-outline"></i></div>
                 </div>
-                <div class="dash-stat-icon"><i class="mdi mdi-clock-outline"></i></div>
             </div>
-        </div>
+        </a>
     </div>
 </div>
 

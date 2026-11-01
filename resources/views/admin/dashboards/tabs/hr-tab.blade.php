@@ -33,52 +33,60 @@
 {{-- Quick Stats --}}
 <div class="row g-4 mb-4">
     <div class="col-xl-3 col-lg-6">
-        <div class="dash-stat-card" style="background: linear-gradient(145deg, #1e40af, #3b82f6);">
-            <div class="dash-stat-body">
-                <div>
-                    <p class="dash-stat-label">{{ __('dashboard.total_staff') }}</p>
-                    <h2 class="dash-stat-value" id="hr-stat-total">0</h2>
-                    <span class="dash-stat-hint"><i class="mdi mdi-account-group me-1"></i>{{ __('dashboard.active_employees') }}</span>
+        <a href="{{ Route::has('hr.workbench.index') ? route('hr.workbench.index') : url('hr/workbench') }}" class="dash-stat-card-link">
+            <div class="dash-stat-card" style="background: linear-gradient(145deg, #1e40af, #3b82f6);">
+                <div class="dash-stat-body">
+                    <div>
+                        <p class="dash-stat-label">{{ __('dashboard.total_staff') }}</p>
+                        <h2 class="dash-stat-value" id="hr-stat-total">0</h2>
+                        <span class="dash-stat-hint"><i class="mdi mdi-account-group me-1"></i>{{ __('dashboard.active_employees') }}</span>
+                    </div>
+                    <div class="dash-stat-icon"><i class="mdi mdi-account-group"></i></div>
                 </div>
-                <div class="dash-stat-icon"><i class="mdi mdi-account-group"></i></div>
             </div>
-        </div>
+        </a>
     </div>
     <div class="col-xl-3 col-lg-6">
-        <div class="dash-stat-card" style="background: linear-gradient(145deg, #059669, #10b981);">
-            <div class="dash-stat-body">
-                <div>
-                    <p class="dash-stat-label">{{ __('dashboard.on_leave_today') }}</p>
-                    <h2 class="dash-stat-value" id="hr-stat-leave">0</h2>
-                    <span class="dash-stat-hint"><i class="mdi mdi-palm-tree me-1"></i>{{ __('dashboard.approved_leave') }}</span>
+        <a href="{{ Route::has('hr.workbench.index') ? route('hr.workbench.index', ['filter' => 'leave']) : url('hr/workbench?filter=leave') }}" class="dash-stat-card-link">
+            <div class="dash-stat-card" style="background: linear-gradient(145deg, #059669, #10b981);">
+                <div class="dash-stat-body">
+                    <div>
+                        <p class="dash-stat-label">{{ __('dashboard.on_leave_today') }}</p>
+                        <h2 class="dash-stat-value" id="hr-stat-leave">0</h2>
+                        <span class="dash-stat-hint"><i class="mdi mdi-palm-tree me-1"></i>{{ __('dashboard.approved_leave') }}</span>
+                    </div>
+                    <div class="dash-stat-icon"><i class="mdi mdi-palm-tree"></i></div>
                 </div>
-                <div class="dash-stat-icon"><i class="mdi mdi-palm-tree"></i></div>
             </div>
-        </div>
+        </a>
     </div>
     <div class="col-xl-3 col-lg-6">
-        <div class="dash-stat-card" style="background: linear-gradient(145deg, #b45309, #f59e0b);">
-            <div class="dash-stat-body">
-                <div>
-                    <p class="dash-stat-label">{{ __('dashboard.pending_requests') }}</p>
-                    <h2 class="dash-stat-value" id="hr-stat-pending">0</h2>
-                    <span class="dash-stat-hint"><i class="mdi mdi-clock-outline me-1"></i>{{ __('dashboard.awaiting_approval') }}</span>
+        <a href="{{ Route::has('hr.workbench.index') ? route('hr.workbench.index', ['filter' => 'pending']) : url('hr/workbench?filter=pending') }}" class="dash-stat-card-link">
+            <div class="dash-stat-card" style="background: linear-gradient(145deg, #b45309, #f59e0b);">
+                <div class="dash-stat-body">
+                    <div>
+                        <p class="dash-stat-label">{{ __('dashboard.pending_requests') }}</p>
+                        <h2 class="dash-stat-value" id="hr-stat-pending">0</h2>
+                        <span class="dash-stat-hint"><i class="mdi mdi-clock-outline me-1"></i>{{ __('dashboard.awaiting_approval') }}</span>
+                    </div>
+                    <div class="dash-stat-icon"><i class="mdi mdi-clock-outline"></i></div>
                 </div>
-                <div class="dash-stat-icon"><i class="mdi mdi-clock-outline"></i></div>
             </div>
-        </div>
+        </a>
     </div>
     <div class="col-xl-3 col-lg-6">
-        <div class="dash-stat-card" style="background: linear-gradient(145deg, #7e22ce, #9333ea);">
-            <div class="dash-stat-body">
-                <div>
-                    <p class="dash-stat-label">{{ __('dashboard.new_hires') }}</p>
-                    <h2 class="dash-stat-value" id="hr-stat-new">0</h2>
-                    <span class="dash-stat-hint"><i class="mdi mdi-account-plus me-1"></i>{{ __('dashboard.this_month') }}</span>
+        <a href="{{ Route::has('hr.workbench.index') ? route('hr.workbench.index') : url('hr/workbench') }}" class="dash-stat-card-link">
+            <div class="dash-stat-card" style="background: linear-gradient(145deg, #7e22ce, #9333ea);">
+                <div class="dash-stat-body">
+                    <div>
+                        <p class="dash-stat-label">{{ __('dashboard.new_hires') }}</p>
+                        <h2 class="dash-stat-value" id="hr-stat-new">0</h2>
+                        <span class="dash-stat-hint"><i class="mdi mdi-account-plus me-1"></i>{{ __('dashboard.this_month') }}</span>
+                    </div>
+                    <div class="dash-stat-icon"><i class="mdi mdi-account-plus"></i></div>
                 </div>
-                <div class="dash-stat-icon"><i class="mdi mdi-account-plus"></i></div>
             </div>
-        </div>
+        </a>
     </div>
 </div>
 

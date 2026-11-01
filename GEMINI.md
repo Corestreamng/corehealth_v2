@@ -144,15 +144,25 @@ When working on this project, strictly adhere to the following standards across 
 - **Self-Contained Documentation & Guides**: Each repository must maintain its own independent setup, testing, and operation guides under its own `docs/` folder (dated and tagged).
 - **Generic Documentation**: All documentation, guides, and testing references must use generic names (e.g., `General Hospital Example`, `Integrated Healthcare Facility`) and generic identifiers.
 
-## 13. Operational Cockpit Dashboard Standards
-- **Zero-Scroll Viewport Layout**: The default `/home` route renders a space-maximizing operational cockpit (`dash-cockpit-viewport`) locked to `calc(100vh - 62px)` on desktop. Overflow within columns is managed using `.dash-scrollable` micro-scrollbars.
+## 13. Operational Cockpit & Dual Dashboard Standards
+- **Dual Dashboard Architecture & Mode Selection**:
+  - Hospital default experience is configured in Hospital Config (`application_status.dashboard_mode`), supporting `'cockpit'` (default) and `'classic'`.
+  - `HomeController@index` dynamically resolves layout via `$request->query('mode', appsettings('dashboard_mode', 'cockpit'))`, allowing instant staff preview and mode switching via header pills without modifying hospital-wide defaults.
+- **Zero-Scroll Viewport Layout (Cockpit)**: The `/home` route renders a space-maximizing operational cockpit (`dash-cockpit-viewport`) locked to `calc(100vh - 62px)` on desktop. Overflow within columns is managed using `.dash-scrollable` micro-scrollbars.
 - **Tri-Column Division**:
   - Column 1 (`dash-col-pipeline`, 28%): High-density triage and departmental queues with live counts.
   - Column 2 (`dash-col-telemetry`, 44%): 2x3 KPI matrix, dual Chart.js sparkline charts (Hourly Inflow & 7-Day Revenue Trend), and operational insights strip.
   - Column 3 (`dash-col-ledger`, 28%): Real-time multi-department activity feed with direct deep-linking and persistent 18-role workbench launchpad dock.
-- **Complete Role Coverage**: All 18 supported hospital roles (Receptionist, Biller, Doctor, Nurse, Pharmacist, Store, Lab Scientist, Radiologist, Surgeon, Maternity, Pediatrics, Morgue, HMO Executive, Accountant, Internal Auditor, HR, ESS, Admin) are represented via dynamic perspective switcher pills and direct launcher docks.
-- **Doctor Consultation Deep Link**: Doctor queue items and activities deep link to `encounters/create?patient_id={id}` for active intake, and `encounters?status=waiting` for queue status filtering.
-- **Assets & Verification**: CSS lives in `public/css/dashboard-cockpit.css` (using `--hospital-primary` variables) and JS in `public/js/dashboard-cockpit.js` (verified with `node --check`).
+- **Classic Operations Dashboard (Restored & Condensed)**:
+  - 18-role multi-tab operations center (`admin/dashboards/tabs/*`) restored with condensed high-density styling (`public/css/dashboard-classic.css`) and modular event-driven JS (`public/js/dashboard-classic.js`).
+  - Strictly adheres to Rule 1 (< 10 lines of inline scripts/styles in Blade) and `--hospital-primary` dynamic branding variables.
+  - Zero-dash KPI metric standard: All placeholder dashes (`—`) are eradicated in favor of clean numeric zeros (`0`), formatted currency (`₦0`), or percentages (`0%`).
+- **Complete Role Coverage**: All 18 supported hospital roles (Receptionist, Biller, Doctor, Nurse, Pharmacist, Store, Lab Scientist, Radiologist, Surgeon, Maternity, Pediatrics, Morgue, HMO Executive, Accountant, Internal Auditor, HR, ESS, Admin) are represented via dynamic perspective switcher pills, tab bars, and direct launcher docks.
+- **Modern Workbench Routing & Legacy Deprecation**:
+  - Doctor Consultation Deep Link: Doctor queue items and activities deep link to `encounters/create?patient_id={id}` for active intake, and `encounters?status=waiting` for queue status filtering.
+  - Zero Direct `/add-to-queue` Links: All dashboard, doctor tab, receptionist tab, send-queue, and request links to `/add-to-queue` have been replaced with modern Reception Workbench routes (`reception.workbench?action=new-patient` and `reception.workbench?queue_filter=waiting`). Route `/add-to-queue` automatically redirects to `reception.workbench`.
+  - Classic Patient Form Modal Removal: Dashboard views do not include `#patientFormModal`; all "New Patient" buttons route directly to the Reception Workbench.
+- **Assets & Verification**: Cockpit assets in `public/css/dashboard-cockpit.css` & `public/js/dashboard-cockpit.js`; Classic assets in `public/css/dashboard-classic.css` & `public/js/dashboard-classic.js` (verified with `node --check`). Documented in `docs/DASHBOARD_DUAL_MODE_CONFIGURATION.md`.
 
 ## 14. Universal Workbench Cockpit Scaling Standards
 - **Zero-Scroll Viewport Locking**: All major clinical workbenches declare `@section('is_workbench', true)` and `@section('body_class', 'is-workbench has-workbench')`. This locks the master viewport (`overflow: hidden; height: 100vh;`), suppresses the 50px app layout breadcrumb header (`.content-header`) and marketing footer (`.footer`), and sets `.content-wrapper` padding to `68px 10px 6px 10px` to maximize usable screen real estate.

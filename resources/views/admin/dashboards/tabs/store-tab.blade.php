@@ -34,52 +34,60 @@
 {{-- Quick Stats --}}
 <div class="row g-4 mb-4">
     <div class="col-xl-3 col-lg-6">
-        <div class="dash-stat-card" style="background: linear-gradient(145deg, #9a3412, #c2410c);">
-            <div class="dash-stat-body">
-                <div>
-                    <p class="dash-stat-label">{{ __('dashboard.pending_requisitions') }}</p>
-                    <h2 class="dash-stat-value" id="store-stat-pending-reqs">0</h2>
-                    <span class="dash-stat-hint"><i class="mdi mdi-swap-horizontal me-1"></i>{{ __('dashboard.internal_requests') }}</span>
+        <a href="{{ Route::has('inventory.requisitions.index') ? route('inventory.requisitions.index', ['filter' => 'pending']) : url('inventory/requisitions') }}" class="dash-stat-card-link">
+            <div class="dash-stat-card" style="background: linear-gradient(145deg, #9a3412, #c2410c);">
+                <div class="dash-stat-body">
+                    <div>
+                        <p class="dash-stat-label">{{ __('dashboard.pending_requisitions') }}</p>
+                        <h2 class="dash-stat-value" id="store-stat-pending-reqs">0</h2>
+                        <span class="dash-stat-hint"><i class="mdi mdi-swap-horizontal me-1"></i>{{ __('dashboard.internal_requests') }}</span>
+                    </div>
+                    <div class="dash-stat-icon"><i class="mdi mdi-swap-horizontal"></i></div>
                 </div>
-                <div class="dash-stat-icon"><i class="mdi mdi-swap-horizontal"></i></div>
             </div>
-        </div>
+        </a>
     </div>
     <div class="col-xl-3 col-lg-6">
-        <div class="dash-stat-card" style="background: linear-gradient(145deg, #1e40af, #3b82f6);">
-            <div class="dash-stat-body">
-                <div>
-                    <p class="dash-stat-label">{{ __('dashboard.pending_pos') }}</p>
-                    <h2 class="dash-stat-value" id="store-stat-pending-pos">0</h2>
-                    <span class="dash-stat-hint"><i class="mdi mdi-cart-arrow-down me-1"></i>{{ __('dashboard.procurement') }}</span>
+        <a href="{{ Route::has('inventory.purchase-orders.index') ? route('inventory.purchase-orders.index', ['filter' => 'submitted']) : url('inventory/purchase-orders') }}" class="dash-stat-card-link">
+            <div class="dash-stat-card" style="background: linear-gradient(145deg, #1e40af, #3b82f6);">
+                <div class="dash-stat-body">
+                    <div>
+                        <p class="dash-stat-label">{{ __('dashboard.pending_pos') }}</p>
+                        <h2 class="dash-stat-value" id="store-stat-pending-pos">0</h2>
+                        <span class="dash-stat-hint"><i class="mdi mdi-cart-arrow-down me-1"></i>{{ __('dashboard.procurement') }}</span>
+                    </div>
+                    <div class="dash-stat-icon"><i class="mdi mdi-cart-arrow-down"></i></div>
                 </div>
-                <div class="dash-stat-icon"><i class="mdi mdi-cart-arrow-down"></i></div>
             </div>
-        </div>
+        </a>
     </div>
     <div class="col-xl-3 col-lg-6">
-        <div class="dash-stat-card" style="background: linear-gradient(145deg, #7e22ce, #9333ea);">
-            <div class="dash-stat-body">
-                <div>
-                    <p class="dash-stat-label">{{ __('dashboard.approved_pos') }}</p>
-                    <h2 class="dash-stat-value" id="store-stat-approved-pos">0</h2>
-                    <span class="dash-stat-hint"><i class="mdi mdi-check-circle-outline me-1"></i>{{ __('dashboard.awaiting_delivery') }}</span>
+        <a href="{{ Route::has('inventory.purchase-orders.index') ? route('inventory.purchase-orders.index', ['filter' => 'approved']) : url('inventory/purchase-orders') }}" class="dash-stat-card-link">
+            <div class="dash-stat-card" style="background: linear-gradient(145deg, #7e22ce, #9333ea);">
+                <div class="dash-stat-body">
+                    <div>
+                        <p class="dash-stat-label">{{ __('dashboard.approved_pos') }}</p>
+                        <h2 class="dash-stat-value" id="store-stat-approved-pos">0</h2>
+                        <span class="dash-stat-hint"><i class="mdi mdi-check-circle-outline me-1"></i>{{ __('dashboard.awaiting_delivery') }}</span>
+                    </div>
+                    <div class="dash-stat-icon"><i class="mdi mdi-check-circle-outline"></i></div>
                 </div>
-                <div class="dash-stat-icon"><i class="mdi mdi-check-circle-outline"></i></div>
             </div>
-        </div>
+        </a>
     </div>
     <div class="col-xl-3 col-lg-6">
-        <div class="dash-stat-card" style="background: linear-gradient(145deg, #059669, #10b981);">
-            <div class="dash-stat-body">
-                <div>
-                    <p class="dash-stat-label">{{ __('dashboard.to_fulfill') }}</p>
-                    <h2 class="dash-stat-value" id="store-stat-fulfill">0</h2>
-                    <span class="dash-stat-hint"><i class="mdi mdi-truck-delivery me-1"></i>{{ __('dashboard.ready_for_dispatch') }}</span>
+        <a href="{{ Route::has('inventory.requisitions.pending-fulfillment') ? route('inventory.requisitions.pending-fulfillment') : url('inventory/requisitions') }}" class="dash-stat-card-link">
+            <div class="dash-stat-card" style="background: linear-gradient(145deg, #059669, #10b981);">
+                <div class="dash-stat-body">
+                    <div>
+                        <p class="dash-stat-label">{{ __('dashboard.to_fulfill') }}</p>
+                        <h2 class="dash-stat-value" id="store-stat-fulfill">0</h2>
+                        <span class="dash-stat-hint"><i class="mdi mdi-truck-delivery me-1"></i>{{ __('dashboard.ready_for_dispatch') }}</span>
+                    </div>
+                    <div class="dash-stat-icon"><i class="mdi mdi-truck-delivery"></i></div>
                 </div>
-                <div class="dash-stat-icon"><i class="mdi mdi-truck-delivery"></i></div>
             </div>
-        </div>
+        </a>
     </div>
 </div>
 

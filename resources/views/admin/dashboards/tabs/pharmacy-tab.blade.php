@@ -30,55 +30,63 @@
 {{-- Quick Stats --}}
 <div class="row g-4 mb-4">
     <div class="col-xl-3 col-lg-6">
-        <div class="dash-stat-card" style="background: linear-gradient(145deg, #b45309, #d97706);">
-            <div class="dash-stat-body">
-                <div>
-                    <p class="dash-stat-label">{{ __('dashboard.queue_today') }}</p>
-                    <h2 class="dash-stat-value" id="pharm-stat-queue">—</h2>
-                    <span class="dash-stat-hint"><i class="mdi mdi-cart me-1"></i>{{ __('dashboard.awaiting_dispensing') }}</span>
+        <a href="{{ route('pharmacy.workbench') }}" class="dash-stat-card-link">
+            <div class="dash-stat-card" style="background: linear-gradient(145deg, #b45309, #d97706);">
+                <div class="dash-stat-body">
+                    <div>
+                        <p class="dash-stat-label">{{ __('dashboard.queue_today') }}</p>
+                        <h2 class="dash-stat-value" id="pharm-stat-queue">0</h2>
+                        <span class="dash-stat-hint"><i class="mdi mdi-cart me-1"></i>{{ __('dashboard.awaiting_dispensing') }}</span>
+                    </div>
+                    <div class="dash-stat-icon"><i class="mdi mdi-cart"></i></div>
                 </div>
-                <div class="dash-stat-icon"><i class="mdi mdi-cart"></i></div>
             </div>
-        </div>
+        </a>
     </div>
 
     <div class="col-xl-3 col-lg-6">
-        <div class="dash-stat-card" style="background: linear-gradient(145deg, #166534, #22c55e);">
-            <div class="dash-stat-body">
-                <div>
-                    <p class="dash-stat-label">{{ __('dashboard.dispensed_today') }}</p>
-                    <h2 class="dash-stat-value" id="pharm-stat-dispensed">—</h2>
-                    <span class="dash-stat-hint"><i class="mdi mdi-pill me-1"></i>{{ __('dashboard.completed_orders') }}</span>
+        <a href="{{ url('pharmacy-workbench?tab=dispensed') }}" class="dash-stat-card-link">
+            <div class="dash-stat-card" style="background: linear-gradient(145deg, #166534, #22c55e);">
+                <div class="dash-stat-body">
+                    <div>
+                        <p class="dash-stat-label">{{ __('dashboard.dispensed_today') }}</p>
+                        <h2 class="dash-stat-value" id="pharm-stat-dispensed">0</h2>
+                        <span class="dash-stat-hint"><i class="mdi mdi-pill me-1"></i>{{ __('dashboard.completed_orders') }}</span>
+                    </div>
+                    <div class="dash-stat-icon"><i class="mdi mdi-pill"></i></div>
                 </div>
-                <div class="dash-stat-icon"><i class="mdi mdi-pill"></i></div>
             </div>
-        </div>
+        </a>
     </div>
 
     <div class="col-xl-3 col-lg-6">
-        <div class="dash-stat-card" style="background: linear-gradient(145deg, #6d28d9, #8b5cf6);">
-            <div class="dash-stat-body">
-                <div>
-                    <p class="dash-stat-label">{{ __('dashboard.total_products') }}</p>
-                    <h2 class="dash-stat-value" id="pharm-stat-products">—</h2>
-                    <span class="dash-stat-hint"><i class="mdi mdi-package-variant me-1"></i>{{ __('dashboard.in_inventory') }}</span>
+        <a href="{{ route('inventory.store-workbench.index') }}" class="dash-stat-card-link">
+            <div class="dash-stat-card" style="background: linear-gradient(145deg, #6d28d9, #8b5cf6);">
+                <div class="dash-stat-body">
+                    <div>
+                        <p class="dash-stat-label">{{ __('dashboard.total_products') }}</p>
+                        <h2 class="dash-stat-value" id="pharm-stat-products">0</h2>
+                        <span class="dash-stat-hint"><i class="mdi mdi-package-variant me-1"></i>{{ __('dashboard.in_inventory') }}</span>
+                    </div>
+                    <div class="dash-stat-icon"><i class="mdi mdi-package-variant"></i></div>
                 </div>
-                <div class="dash-stat-icon"><i class="mdi mdi-package-variant"></i></div>
             </div>
-        </div>
+        </a>
     </div>
 
     <div class="col-xl-3 col-lg-6">
-        <div class="dash-stat-card" style="background: linear-gradient(145deg, #991b1b, #dc2626);">
-            <div class="dash-stat-body">
-                <div>
-                    <p class="dash-stat-label">{{ __('dashboard.low_stock') }}</p>
-                    <h2 class="dash-stat-value" id="pharm-stat-low-stock">—</h2>
-                    <span class="dash-stat-hint"><i class="mdi mdi-alert me-1"></i>{{ __('dashboard.reorder_needed') }}</span>
+        <a href="{{ url('inventory/store-workbench?filter=low-stock') }}" class="dash-stat-card-link">
+            <div class="dash-stat-card" style="background: linear-gradient(145deg, #991b1b, #dc2626);">
+                <div class="dash-stat-body">
+                    <div>
+                        <p class="dash-stat-label">{{ __('dashboard.low_stock') }}</p>
+                        <h2 class="dash-stat-value" id="pharm-stat-low-stock">0</h2>
+                        <span class="dash-stat-hint"><i class="mdi mdi-alert me-1"></i>{{ __('dashboard.reorder_needed') }}</span>
+                    </div>
+                    <div class="dash-stat-icon"><i class="mdi mdi-alert"></i></div>
                 </div>
-                <div class="dash-stat-icon"><i class="mdi mdi-alert"></i></div>
             </div>
-        </div>
+        </a>
     </div>
 </div>
 

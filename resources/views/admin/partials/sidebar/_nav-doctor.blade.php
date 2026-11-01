@@ -16,6 +16,9 @@
             <li class="nav-item">
                 <a class="nav-link" href="{{ route('encounters.index') }}" id="sidebar-doctor-encounters">{{ __('sidebar.all_encounters') }}</a>
             </li>
+            <li class="nav-item">
+                <a class="nav-link" href="{{ route('encounters.index', ['status' => 'waiting']) }}" id="sidebar-doctor-waiting-queue"><i class="mdi mdi-account-clock"></i> Waiting Queue</a>
+            </li>
         </ul>
     </div>
 </li>

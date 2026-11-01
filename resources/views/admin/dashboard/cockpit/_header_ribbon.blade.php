@@ -146,9 +146,9 @@
         @endif
 
         @if($isAdmin || $user->hasAnyRole(['RECEPTIONIST', 'Receptionist']))
-            <button type="button" class="dash-btn-primary" data-bs-toggle="modal" data-bs-target="#patientFormModal" data-toggle="modal" data-target="#patientFormModal" onclick="if(typeof showPatientFormModal==='function'){showPatientFormModal('create');}" title="Register New Patient">
+            <a href="{{ route('reception.workbench', ['action' => 'new-patient']) }}" class="dash-btn-primary text-decoration-none" title="Register New Patient in Reception Workbench">
                 <i class="mdi mdi-account-plus me-1"></i> New Patient
-            </button>
+            </a>
         @endif
 
         <span class="dash-sync-badge" id="dash-sync-indicator" title="Live Auto-Sync Status">
@@ -158,5 +158,9 @@
         <button type="button" class="dash-btn-refresh" id="dash-btn-refresh" title="Refresh Live Cockpit">
             <i class="mdi mdi-refresh"></i>
         </button>
+
+        <a href="{{ route('home', ['mode' => 'classic']) }}" class="dash-btn-refresh text-decoration-none" title="Switch to Classic Tabbed Operations Dashboard" style="display:inline-flex;align-items:center;padding:0 8px;font-size:0.75rem;font-weight:600;width:auto;color:#475569;gap:4px;">
+            <i class="mdi mdi-view-dashboard-variant-outline"></i> Classic
+        </a>
     </div>
 </div>

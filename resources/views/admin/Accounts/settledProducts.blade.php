@@ -15,7 +15,7 @@
                         </div>
                         <div class="col-md-6">
                             {{-- @if (auth()->user()->can('user-create')) --}}
-                            {{-- <a href="{{ route('add-to-queue') }}" id="loading-btn" data-loading-text="Loading..."
+                            {{-- <a href="{{ route('reception.workbench') }}" id="loading-btn" data-loading-text="Loading..."
                                 class="btn btn-primary btn-sm float-right">
                                 <i class="fa fa-plus"></i>
                                 New Request

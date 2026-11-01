@@ -374,7 +374,7 @@ class PatientController extends Controller
 
     public function addToQueue()
     {
-        return view('admin.receptionist.add_to_queue');
+        return redirect()->route('reception.workbench');
     }
 
     public function getMyDependants($user_id)

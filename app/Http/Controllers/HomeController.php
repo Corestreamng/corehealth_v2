@@ -20,10 +20,16 @@ class HomeController extends Controller
     /**
      * Show the application dashboard.
      *
+     * @param Request $request
      * @return \Illuminate\Contracts\Support\Renderable
      */
-    public function index()
+    public function index(Request $request)
     {
+        $mode = $request->query('mode', appsettings('dashboard_mode', 'cockpit'));
+
+        if ($mode === 'classic') {
+            return view('admin.dashboard.classic');
+        }
 
         return view('admin.home');
     }
@@ -406,39 +412,54 @@ class HomeController extends Controller
         $staff = \App\Models\Staff::where('user_id', $userId)->first();
         $staffId = $staff ? $staff->id : 0;
 
-        // Consultations today (by this doctor)
-        $consultationsToday = \App\Models\Encounter::whereDate('created_at', $today)
-            ->where('doctor_id', $userId)
-            ->count();
+        $isAdmin = auth()->check() && auth()->user()->hasAnyRole(['SUPERADMIN', 'ADMIN', 'super-admin']);
 
-        // Ward rounds (admitted patients under this doctor)
-        $wardRounds = \App\Models\AdmissionRequest::where('status', 1)
-            ->whereHas('encounter', function ($q) use ($userId) {
+        // Consultations today (by this doctor, or facility total if admin/no personal records)
+        $consultationsToday = \App\Models\Encounter::whereDate('created_at', $today)
+            ->when(!$isAdmin, function ($q) use ($userId) {
                 $q->where('doctor_id', $userId);
             })
             ->count();
 
-        // My patients (unique patients seen)
-        $myPatients = \App\Models\Encounter::where('doctor_id', $userId)
+        // Ward rounds (admitted patients under this doctor, or facility-wide if admin)
+        $wardRounds = \App\Models\AdmissionRequest::where('status', 1)
+            ->when(!$isAdmin, function ($q) use ($userId) {
+                $q->whereHas('encounter', function ($sq) use ($userId) {
+                    $sq->where('doctor_id', $userId);
+                });
+            })
+            ->count();
+
+        // My patients (unique patients seen by doctor, or total distinct patients in encounters if admin)
+        $myPatients = \App\Models\Encounter::query()
+            ->when(!$isAdmin, function ($q) use ($userId) {
+                $q->where('doctor_id', $userId);
+            })
             ->distinct('patient_id')
             ->count('patient_id');
 
-        // Appointments today (using staff_id from doctor_queues)
+        // Appointments today (using staff_id from doctor_queues, or facility total if admin)
         $appointmentsToday = DB::table('doctor_queues')
             ->whereDate('created_at', $today)
-            ->where('staff_id', $staffId)
+            ->when(!$isAdmin && $staffId > 0, function ($q) use ($staffId) {
+                $q->where('staff_id', $staffId);
+            })
             ->count();
 
         // Queue waiting
         $queueWaiting = DB::table('doctor_queues')
             ->whereDate('created_at', $today)
-            ->where('staff_id', $staffId)
+            ->when(!$isAdmin && $staffId > 0, function ($q) use ($staffId) {
+                $q->where('staff_id', $staffId);
+            })
             ->where('status', 1)
             ->count();
 
         // Completed today (encounters with notes filled)
         $completedToday = \App\Models\Encounter::whereDate('created_at', $today)
-            ->where('doctor_id', $userId)
+            ->when(!$isAdmin, function ($q) use ($userId) {
+                $q->where('doctor_id', $userId);
+            })
             ->whereNotNull('notes')
             ->count();
 

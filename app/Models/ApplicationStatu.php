@@ -13,6 +13,7 @@ class ApplicationStatu extends Model implements Auditable
 
     protected $fillable = [
         'site_name',
+        'dashboard_mode',
         'header_text',
         'footer_text',
         'logo',

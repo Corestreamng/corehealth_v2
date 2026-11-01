@@ -33,52 +33,60 @@
 {{-- Quick Stats --}}
 <div class="row g-4 mb-4">
     <div class="col-xl-3 col-lg-6">
-        <div class="dash-stat-card" style="background: linear-gradient(145deg, #0284c7, #0ea5e9);">
-            <div class="dash-stat-body">
-                <div>
-                    <p class="dash-stat-label">{{ __('dashboard.leave_balance') }}</p>
-                    <h2 class="dash-stat-value" id="ess-stat-balance">0</h2>
-                    <span class="dash-stat-hint"><i class="mdi mdi-wallet-membership me-1"></i>{{ __('dashboard.days_remaining') }}</span>
+        <a href="{{ Route::has('hr.ess.my-leave') ? route('hr.ess.my-leave') : url('hr/ess') }}" class="dash-stat-card-link">
+            <div class="dash-stat-card" style="background: linear-gradient(145deg, #0284c7, #0ea5e9);">
+                <div class="dash-stat-body">
+                    <div>
+                        <p class="dash-stat-label">{{ __('dashboard.leave_balance') }}</p>
+                        <h2 class="dash-stat-value" id="ess-stat-balance">0</h2>
+                        <span class="dash-stat-hint"><i class="mdi mdi-wallet-membership me-1"></i>{{ __('dashboard.days_remaining') }}</span>
+                    </div>
+                    <div class="dash-stat-icon"><i class="mdi mdi-wallet-membership"></i></div>
                 </div>
-                <div class="dash-stat-icon"><i class="mdi mdi-wallet-membership"></i></div>
             </div>
-        </div>
+        </a>
     </div>
     <div class="col-xl-3 col-lg-6">
-        <div class="dash-stat-card" style="background: linear-gradient(145deg, #b45309, #f59e0b);">
-            <div class="dash-stat-body">
-                <div>
-                    <p class="dash-stat-label">{{ __('dashboard.pending_requests') }}</p>
-                    <h2 class="dash-stat-value" id="ess-stat-pending">0</h2>
-                    <span class="dash-stat-hint"><i class="mdi mdi-clock-outline me-1"></i>{{ __('dashboard.awaiting_approval') }}</span>
+        <a href="{{ Route::has('hr.ess.my-leave') ? route('hr.ess.my-leave') : url('hr/ess') }}" class="dash-stat-card-link">
+            <div class="dash-stat-card" style="background: linear-gradient(145deg, #b45309, #f59e0b);">
+                <div class="dash-stat-body">
+                    <div>
+                        <p class="dash-stat-label">{{ __('dashboard.pending_requests') }}</p>
+                        <h2 class="dash-stat-value" id="ess-stat-pending">0</h2>
+                        <span class="dash-stat-hint"><i class="mdi mdi-clock-outline me-1"></i>{{ __('dashboard.awaiting_approval') }}</span>
+                    </div>
+                    <div class="dash-stat-icon"><i class="mdi mdi-clock-outline"></i></div>
                 </div>
-                <div class="dash-stat-icon"><i class="mdi mdi-clock-outline"></i></div>
             </div>
-        </div>
+        </a>
     </div>
     <div class="col-xl-3 col-lg-6">
-        <div class="dash-stat-card" style="background: linear-gradient(145deg, #059669, #10b981);">
-            <div class="dash-stat-body">
-                <div>
-                    <p class="dash-stat-label">{{ __('dashboard.upcoming_leave') }}</p>
-                    <h2 class="dash-stat-value" id="ess-stat-upcoming">0</h2>
-                    <span class="dash-stat-hint"><i class="mdi mdi-calendar-check me-1"></i>{{ __('dashboard.approved_trips') }}</span>
+        <a href="{{ Route::has('hr.ess.my-leave') ? route('hr.ess.my-leave') : url('hr/ess') }}" class="dash-stat-card-link">
+            <div class="dash-stat-card" style="background: linear-gradient(145deg, #059669, #10b981);">
+                <div class="dash-stat-body">
+                    <div>
+                        <p class="dash-stat-label">{{ __('dashboard.upcoming_leave') }}</p>
+                        <h2 class="dash-stat-value" id="ess-stat-upcoming">0</h2>
+                        <span class="dash-stat-hint"><i class="mdi mdi-calendar-check me-1"></i>{{ __('dashboard.approved_trips') }}</span>
+                    </div>
+                    <div class="dash-stat-icon"><i class="mdi mdi-calendar-check"></i></div>
                 </div>
-                <div class="dash-stat-icon"><i class="mdi mdi-calendar-check"></i></div>
             </div>
-        </div>
+        </a>
     </div>
     <div class="col-xl-3 col-lg-6">
-        <div class="dash-stat-card" style="background: linear-gradient(145deg, #4f46e5, #6366f1);">
-            <div class="dash-stat-body">
-                <div>
-                    <p class="dash-stat-label">{{ __('dashboard.recent_payslip') }}</p>
-                    <h2 class="dash-stat-value" id="ess-stat-payslip">—</h2>
-                    <span class="dash-stat-hint"><i class="mdi mdi-cash-multiple me-1"></i>{{ __('dashboard.last_generated') }}</span>
+        <a href="{{ Route::has('hr.ess.my-payslips') ? route('hr.ess.my-payslips') : url('hr/ess') }}" class="dash-stat-card-link">
+            <div class="dash-stat-card" style="background: linear-gradient(145deg, #4f46e5, #6366f1);">
+                <div class="dash-stat-body">
+                    <div>
+                        <p class="dash-stat-label">{{ __('dashboard.recent_payslip') }}</p>
+                        <h2 class="dash-stat-value" id="ess-stat-payslip">Ready</h2>
+                        <span class="dash-stat-hint"><i class="mdi mdi-cash-multiple me-1"></i>{{ __('dashboard.last_generated') }}</span>
+                    </div>
+                    <div class="dash-stat-icon"><i class="mdi mdi-cash-multiple"></i></div>
                 </div>
-                <div class="dash-stat-icon"><i class="mdi mdi-cash-multiple"></i></div>
             </div>
-        </div>
+        </a>
     </div>
 </div>
 

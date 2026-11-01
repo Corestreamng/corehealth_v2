@@ -30,52 +30,60 @@
 {{-- Quick Stats --}}
 <div class="row g-4 mb-4">
     <div class="col-xl-3 col-lg-6">
-        <div class="dash-stat-card" style="background: linear-gradient(145deg, #065f46, #059669);">
-            <div class="dash-stat-body">
-                <div>
-                    <p class="dash-stat-label">{{ __('dashboard.todays_revenue') }}</p>
-                    <h2 class="dash-stat-value" id="audit-stat-revenue">—</h2>
-                    <span class="dash-stat-hint"><i class="mdi mdi-cash-check me-1"></i>{{ __('dashboard.total_sales_today') }}</span>
+        <a href="{{ url('ops-audit/billing') }}" class="dash-stat-card-link">
+            <div class="dash-stat-card" style="background: linear-gradient(145deg, #065f46, #059669);">
+                <div class="dash-stat-body">
+                    <div>
+                        <p class="dash-stat-label">{{ __('dashboard.todays_revenue') }}</p>
+                        <h2 class="dash-stat-value" id="audit-stat-revenue">₦0</h2>
+                        <span class="dash-stat-hint"><i class="mdi mdi-cash-check me-1"></i>{{ __('dashboard.total_sales_today') }}</span>
+                    </div>
+                    <div class="dash-stat-icon"><i class="mdi mdi-cash-multiple"></i></div>
                 </div>
-                <div class="dash-stat-icon"><i class="mdi mdi-cash-multiple"></i></div>
             </div>
-        </div>
+        </a>
     </div>
     <div class="col-xl-3 col-lg-6">
-        <div class="dash-stat-card" style="background: linear-gradient(145deg, #1e40af, #3b82f6);">
-            <div class="dash-stat-body">
-                <div>
-                    <p class="dash-stat-label">{{ __('dashboard.active_admissions') }}</p>
-                    <h2 class="dash-stat-value" id="audit-stat-admissions">—</h2>
-                    <span class="dash-stat-hint"><i class="mdi mdi-hospital-building me-1"></i>{{ __('dashboard.currently_admitted') }}</span>
+        <a href="{{ url('ops-audit/admission') }}" class="dash-stat-card-link">
+            <div class="dash-stat-card" style="background: linear-gradient(145deg, #1e40af, #3b82f6);">
+                <div class="dash-stat-body">
+                    <div>
+                        <p class="dash-stat-label">{{ __('dashboard.active_admissions') }}</p>
+                        <h2 class="dash-stat-value" id="audit-stat-admissions">0</h2>
+                        <span class="dash-stat-hint"><i class="mdi mdi-hospital-building me-1"></i>{{ __('dashboard.currently_admitted') }}</span>
+                    </div>
+                    <div class="dash-stat-icon"><i class="mdi mdi-bed"></i></div>
                 </div>
-                <div class="dash-stat-icon"><i class="mdi mdi-bed"></i></div>
             </div>
-        </div>
+        </a>
     </div>
     <div class="col-xl-3 col-lg-6">
-        <div class="dash-stat-card" style="background: linear-gradient(145deg, #991b1b, #dc2626);">
-            <div class="dash-stat-body">
-                <div>
-                    <p class="dash-stat-label">{{ __('dashboard.pending_requisitions') }}</p>
-                    <h2 class="dash-stat-value" id="audit-stat-requisitions">—</h2>
-                    <span class="dash-stat-hint"><i class="mdi mdi-alert me-1"></i>{{ __('dashboard.unfulfilled_requests') }}</span>
+        <a href="{{ url('ops-audit/store') }}" class="dash-stat-card-link">
+            <div class="dash-stat-card" style="background: linear-gradient(145deg, #991b1b, #dc2626);">
+                <div class="dash-stat-body">
+                    <div>
+                        <p class="dash-stat-label">{{ __('dashboard.pending_requisitions') }}</p>
+                        <h2 class="dash-stat-value" id="audit-stat-requisitions">0</h2>
+                        <span class="dash-stat-hint"><i class="mdi mdi-alert me-1"></i>{{ __('dashboard.unfulfilled_requests') }}</span>
+                    </div>
+                    <div class="dash-stat-icon"><i class="mdi mdi-cart-arrow-right"></i></div>
                 </div>
-                <div class="dash-stat-icon"><i class="mdi mdi-cart-arrow-right"></i></div>
             </div>
-        </div>
+        </a>
     </div>
     <div class="col-xl-3 col-lg-6">
-        <div class="dash-stat-card" style="background: linear-gradient(145deg, #7e22ce, #a855f7);">
-            <div class="dash-stat-body">
-                <div>
-                    <p class="dash-stat-label">{{ __('dashboard.diagnostic_orders') }}</p>
-                    <h2 class="dash-stat-value" id="audit-stat-diagnostics">—</h2>
-                    <span class="dash-stat-hint"><i class="mdi mdi-microscope me-1"></i>{{ __('dashboard.lab_imaging_today') }}</span>
+        <a href="{{ url('ops-audit/lab') }}" class="dash-stat-card-link">
+            <div class="dash-stat-card" style="background: linear-gradient(145deg, #7e22ce, #a855f7);">
+                <div class="dash-stat-body">
+                    <div>
+                        <p class="dash-stat-label">{{ __('dashboard.diagnostic_orders') }}</p>
+                        <h2 class="dash-stat-value" id="audit-stat-diagnostics">0</h2>
+                        <span class="dash-stat-hint"><i class="mdi mdi-microscope me-1"></i>{{ __('dashboard.lab_imaging_today') }}</span>
+                    </div>
+                    <div class="dash-stat-icon"><i class="mdi mdi-flask"></i></div>
                 </div>
-                <div class="dash-stat-icon"><i class="mdi mdi-flask"></i></div>
             </div>
-        </div>
+        </a>
     </div>
 </div>
 
@@ -171,13 +179,13 @@
                     <div>
                         <h6 class="mb-0 text-muted">{{ __('dashboard.system_discounts') }}</h6>
                     </div>
-                    <h4 class="mb-0 text-warning" id="audit-stat-discounts">—</h4>
+                    <h4 class="mb-0 text-warning" id="audit-stat-discounts">₦0</h4>
                 </div>
                 <div class="d-flex justify-content-between align-items-center p-3 border-bottom border-light">
                     <div>
                         <h6 class="mb-0 text-muted">{{ __('dashboard.payment_refunds') }}</h6>
                     </div>
-                    <h4 class="mb-0 text-danger" id="audit-stat-refunds">—</h4>
+                    <h4 class="mb-0 text-danger" id="audit-stat-refunds">₦0</h4>
                 </div>
                 <div class="p-3 text-center">
                     <a href="{{ route('audit.workbench') }}" class="btn btn-sm btn-outline-dark">{{ __('dashboard.investigate_now') }} <i class="mdi mdi-arrow-right"></i></a>

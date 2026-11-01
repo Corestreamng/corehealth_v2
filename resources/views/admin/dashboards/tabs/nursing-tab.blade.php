@@ -30,55 +30,63 @@
 {{-- Quick Stats --}}
 <div class="row g-4 mb-4">
     <div class="col-xl-3 col-lg-6">
-        <div class="dash-stat-card" style="background: linear-gradient(145deg, #991b1b, #b91c1c);">
-            <div class="dash-stat-body">
-                <div>
-                    <p class="dash-stat-label">{{ __('dashboard.vitals_queue') }}</p>
-                    <h2 class="dash-stat-value" id="nurs-stat-vitals-queue">—</h2>
-                    <span class="dash-stat-hint"><i class="mdi mdi-thermometer me-1"></i>{{ __('dashboard.pending_vitals') }}</span>
+        <a href="{{ url('nursing-workbench?filter=vitals') }}" class="dash-stat-card-link">
+            <div class="dash-stat-card" style="background: linear-gradient(145deg, #991b1b, #b91c1c);">
+                <div class="dash-stat-body">
+                    <div>
+                        <p class="dash-stat-label">{{ __('dashboard.vitals_queue') }}</p>
+                        <h2 class="dash-stat-value" id="nurs-stat-vitals-queue">0</h2>
+                        <span class="dash-stat-hint"><i class="mdi mdi-thermometer me-1"></i>{{ __('dashboard.pending_vitals') }}</span>
+                    </div>
+                    <div class="dash-stat-icon"><i class="mdi mdi-thermometer"></i></div>
                 </div>
-                <div class="dash-stat-icon"><i class="mdi mdi-thermometer"></i></div>
             </div>
-        </div>
+        </a>
     </div>
 
     <div class="col-xl-3 col-lg-6">
-        <div class="dash-stat-card" style="background: linear-gradient(145deg, #9a3412, #c2410c);">
-            <div class="dash-stat-body">
-                <div>
-                    <p class="dash-stat-label">{{ __('dashboard.bed_requests') }}</p>
-                    <h2 class="dash-stat-value" id="nurs-stat-bed-requests">—</h2>
-                    <span class="dash-stat-hint"><i class="mdi mdi-bed me-1"></i>{{ __('dashboard.awaiting_allocation') }}</span>
+        <a href="{{ url('nursing-workbench?filter=bed-requests') }}" class="dash-stat-card-link">
+            <div class="dash-stat-card" style="background: linear-gradient(145deg, #9a3412, #c2410c);">
+                <div class="dash-stat-body">
+                    <div>
+                        <p class="dash-stat-label">{{ __('dashboard.bed_requests') }}</p>
+                        <h2 class="dash-stat-value" id="nurs-stat-bed-requests">0</h2>
+                        <span class="dash-stat-hint"><i class="mdi mdi-bed me-1"></i>{{ __('dashboard.awaiting_allocation') }}</span>
+                    </div>
+                    <div class="dash-stat-icon"><i class="mdi mdi-bed"></i></div>
                 </div>
-                <div class="dash-stat-icon"><i class="mdi mdi-bed"></i></div>
             </div>
-        </div>
+        </a>
     </div>
 
     <div class="col-xl-3 col-lg-6">
-        <div class="dash-stat-card" style="background: linear-gradient(145deg, #7e22ce, #9333ea);">
-            <div class="dash-stat-body">
-                <div>
-                    <p class="dash-stat-label">{{ __('dashboard.medication_due') }}</p>
-                    <h2 class="dash-stat-value" id="nurs-stat-medication-due">—</h2>
-                    <span class="dash-stat-hint"><i class="mdi mdi-pill me-1"></i>{{ __('dashboard.to_administer') }}</span>
+        <a href="{{ url('nursing-workbench?filter=medication-due') }}" class="dash-stat-card-link">
+            <div class="dash-stat-card" style="background: linear-gradient(145deg, #7e22ce, #9333ea);">
+                <div class="dash-stat-body">
+                    <div>
+                        <p class="dash-stat-label">{{ __('dashboard.medication_due') }}</p>
+                        <h2 class="dash-stat-value" id="nurs-stat-medication-due">0</h2>
+                        <span class="dash-stat-hint"><i class="mdi mdi-pill me-1"></i>{{ __('dashboard.to_administer') }}</span>
+                    </div>
+                    <div class="dash-stat-icon"><i class="mdi mdi-pill"></i></div>
                 </div>
-                <div class="dash-stat-icon"><i class="mdi mdi-pill"></i></div>
             </div>
-        </div>
+        </a>
     </div>
 
     <div class="col-xl-3 col-lg-6">
-        <div class="dash-stat-card" style="background: linear-gradient(145deg, #0e7490, #0891b2);">
-            <div class="dash-stat-body">
-                <div>
-                    <p class="dash-stat-label">{{ __('dashboard.admitted_patients') }}</p>
-                    <h2 class="dash-stat-value" id="nurs-stat-admitted">—</h2>
-                    <span class="dash-stat-hint"><i class="mdi mdi-hospital-building me-1"></i>{{ __('dashboard.currently_admitted') }}</span>
+        <a href="{{ route('nursing-workbench.index', ['filter' => 'admitted']) }}" class="dash-stat-card-link">
+            <div class="dash-stat-card" style="background: linear-gradient(145deg, #0e7490, #0891b2);">
+                <div class="dash-stat-body">
+                    <div>
+                        <p class="dash-stat-label">{{ __('dashboard.admitted_patients') }}</p>
+                        <h2 class="dash-stat-value" id="nurs-stat-admitted">0</h2>
+                        <span class="dash-stat-hint"><i class="mdi mdi-hospital-building me-1"></i>{{ __('dashboard.currently_admitted') }}</span>
+                    </div>
+                    <div class="dash-stat-icon"><i class="mdi mdi-hospital-building"></i></div>
                 </div>
-                <div class="dash-stat-icon"><i class="mdi mdi-hospital-building"></i></div>
             </div>
-        </div>
+        </a>
     </div>
 </div>
 
