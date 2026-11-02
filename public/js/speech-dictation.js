@@ -169,7 +169,7 @@ class SpeechDictationKit {
             this.summaryButton.addEventListener('click', (e) => {
                 e.preventDefault();
                 
-                let patId = window.currentPatientId;
+                let patId = window.currentPatientId || window.patientId || (window.WORKBENCH_CONFIG ? window.WORKBENCH_CONFIG.patientId : null) || (typeof currentPatient !== 'undefined' ? currentPatient : null);
                 if (typeof window.patientSummary !== 'undefined') {
                     patId = patId || window.patientSummary.patientId;
                 }
@@ -183,7 +183,7 @@ class SpeechDictationKit {
                     return;
                 }
 
-                let encId = window.currentEncounterId || window.patientSummary.encounterId;
+                let encId = window.currentEncounterId || window.encounterId || (window.WORKBENCH_CONFIG ? window.WORKBENCH_CONFIG.encounterId : null) || (window.patientSummary ? window.patientSummary.encounterId : null);
                 window.patientSummary.updateContext(patId, encId);
                 window.patientSummary.openAndLoad();
             });
@@ -529,49 +529,44 @@ class SpeechDictationKit {
                 // Check if we should use LLM or fallback to local NLP
                 let usedLlm = false;
                 // Rely on globals set by the pages incorporating the dictation kit
-                let encId = window.currentEncounterId || (window.patientSummary ? window.patientSummary.encounterId : null);
-                let patId = window.currentPatientId || (window.patientSummary ? window.patientSummary.patientId : null);
+                let encId = window.currentEncounterId || window.encounterId || (window.WORKBENCH_CONFIG ? window.WORKBENCH_CONFIG.encounterId : null) || (window.patientSummary ? window.patientSummary.encounterId : null) || null;
+                let patId = window.currentPatientId || window.patientId || (window.WORKBENCH_CONFIG ? window.WORKBENCH_CONFIG.patientId : null) || (window.patientSummary ? window.patientSummary.patientId : null) || (typeof currentPatient !== 'undefined' ? currentPatient : null) || null;
 
-                if (patId && encId) {
-                    try {
-                        const response = await fetch('/llm/polish-note', {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json',
-                                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
-                            },
-                            body: JSON.stringify({
-                                note_content: polished,
-                                patient_id: patId,
-                                encounter_id: encId
-                            })
-                        });
-                        const data = await response.json();
-                        if (data.success && data.polished_content) {
-                            if (this.editorType === 'ckeditor') {
-                                // Basic markdown to HTML (since LLM might return Markdown)
-                                polished = data.polished_content
-                                    .replace(/^### (.*$)/gim, '<h3>$1</h3>')
-                                    .replace(/^## (.*$)/gim, '<h2>$1</h2>')
-                                    .replace(/^# (.*$)/gim, '<h1>$1</h1>')
-                                    .replace(/\*\*(.*)\*\*/gim, '<strong>$1</strong>')
-                                    .replace(/\*(.*)\*/gim, '<em>$1</em>')
-                                    .replace(/^- (.*$)/gim, '<ul><li>$1</li></ul>')
-                                    .replace(/<\/ul>\n<ul>/gim, '')
-                                    .replace(/\n/gim, '<br>');
-                            } else {
-                                polished = data.polished_content;
-                            }
-                            usedLlm = true;
+                try {
+                    const response = await fetch('/llm/polish-note', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                        },
+                        body: JSON.stringify({
+                            note_content: polished,
+                            patient_id: patId ? parseInt(patId, 10) : null,
+                            encounter_id: encId ? parseInt(encId, 10) : null
+                        })
+                    });
+                    const data = await response.json();
+                    if (data.success && data.polished_content) {
+                        if (this.editorType === 'ckeditor') {
+                            // Basic markdown to HTML (since LLM might return Markdown)
+                            polished = data.polished_content
+                                .replace(/^### (.*$)/gim, '<h3>$1</h3>')
+                                .replace(/^## (.*$)/gim, '<h2>$1</h2>')
+                                .replace(/^# (.*$)/gim, '<h1>$1</h1>')
+                                .replace(/\*\*(.*)\*\*/gim, '<strong>$1</strong>')
+                                .replace(/\*(.*)\*/gim, '<em>$1</em>')
+                                .replace(/^- (.*$)/gim, '<ul><li>$1</li></ul>')
+                                .replace(/<\/ul>\n<ul>/gim, '')
+                                .replace(/\n/gim, '<br>');
                         } else {
-                            throw new Error(data.message || 'LLM polishing failed');
+                            polished = data.polished_content;
                         }
-                    } catch (llmError) {
-                        console.warn('LLM Polish Note failed, falling back to local NLP:', llmError);
-                        polished = await this.scribe.process(polished);
+                        usedLlm = true;
+                    } else {
+                        throw new Error(data.message || 'LLM polishing failed');
                     }
-                } else {
-                    // Offline / Local processing fallback
+                } catch (llmError) {
+                    console.warn('LLM Polish Note failed, falling back to local NLP:', llmError);
                     polished = await this.scribe.process(polished);
                 }
 

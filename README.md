@@ -194,8 +194,9 @@ CoreHealth v2 is designed to streamline hospital operations by integrating clini
 
 ### 19. AI/LLM Clinical Assistant
 - **Multi-Provider Gateway** — supports Google Gemini, OpenAI, Anthropic Claude, Hugging Face, and local Ollama
-- **Longitudinal EHR Summaries** — generates physician-level patient briefings by parsing 14 data vectors with intelligent caching
-- **Clinical Note Polish** — rewrites raw dictated notes into structured medical formats
+- **Longitudinal EHR Summaries** — generates physician-level patient briefings by parsing 14 data vectors with intelligent caching and multi-tier context discovery
+- **Clinical Note Polish** — rewrites raw dictated notes into structured medical formats with patient-level semantic history awareness across Doctor New Encounter and Nursing Workbench
+- **Offline NLP Resilience** — graceful client fallback to Retext NLP if the LLM provider is offline or unreachable
 - **Connectivity Testing** — administrator panel for testing API keys and listing supported models
 
 ### 20. Internal Audit Workbench & Ops Audit

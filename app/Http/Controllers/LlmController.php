@@ -94,7 +94,7 @@ class LlmController extends Controller
     {
         $request->validate([
             'note_content' => 'required|string',
-            'patient_id' => 'required|integer',
+            'patient_id' => 'nullable|integer',
             'encounter_id' => 'nullable|integer',
         ]);
 
@@ -106,12 +106,18 @@ class LlmController extends Controller
             $config = $this->gateway->getConfig();
             $systemPrompt = $config['system_prompts']['polish_note'] ?? config('llm.prompts.polish_note');
 
-            // Generate full context to help LLM understand abbreviations and clinical history
-            $context = $this->contextService->getPatientContext($request->patient_id, $request->encounter_id);
+            $context = '';
+            if ($request->filled('patient_id') && (int) $request->patient_id > 0) {
+                $context = $this->contextService->getPatientContext((int) $request->patient_id, $request->encounter_id ? (int) $request->encounter_id : null);
+            }
 
-            $userMessage = "PATIENT CONTEXT (Do not include this in your output, just use it for understanding abbreviations/history):\n" .
-                $context . "\n\n" .
-                "---\nNOTE TO POLISH:\n" . $request->note_content;
+            if (!empty($context)) {
+                $userMessage = "PATIENT CONTEXT (Do not include this in your output, just use it for understanding abbreviations/history):\n" .
+                    $context . "\n\n" .
+                    "---\nNOTE TO POLISH:\n" . $request->note_content;
+            } else {
+                $userMessage = "NOTE TO POLISH:\n" . $request->note_content;
+            }
 
             $response = $this->gateway->complete($systemPrompt, $userMessage, [
                 'max_tokens' => 2000,

@@ -3788,17 +3788,17 @@ if (typeof window.wbRoute !== 'function') {
     });
 
 
-            $(document).ready(function() {
-                if (typeof PatientSummaryManager !== 'undefined') {
-                    window.patientSummary = new PatientSummaryManager({
-                        patientId: (window.WORKBENCH_CONFIG ? window.WORKBENCH_CONFIG.patientId : ''),
-                        encounterId: '',
-                        autoOpen: '',
-                        voiceEnabled: '',
-                        voiceRate: ''
-                    });
-                }
+    $(document).ready(function() {
+        if (typeof PatientSummaryManager !== 'undefined') {
+            window.patientSummary = new PatientSummaryManager({
+                patientId: (window.WORKBENCH_CONFIG ? window.WORKBENCH_CONFIG.patientId : window.currentPatientId || ''),
+                encounterId: (window.WORKBENCH_CONFIG ? window.WORKBENCH_CONFIG.encounterId : window.currentEncounterId || ''),
+                autoOpen: false,
+                voiceEnabled: true,
+                voiceRate: 1.0
             });
+        }
+    });
 
     
     $(document).ready(function() {

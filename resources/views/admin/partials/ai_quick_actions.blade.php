@@ -153,7 +153,7 @@ document.addEventListener('DOMContentLoaded', function() {
         summaryBtn.addEventListener('click', function(e) {
             e.preventDefault();
             
-            let patId = window.currentPatientId;
+            let patId = window.currentPatientId || window.patientId || (window.WORKBENCH_CONFIG ? window.WORKBENCH_CONFIG.patientId : null) || (typeof currentPatient !== 'undefined' ? currentPatient : null);
             if (typeof window.patientSummary !== 'undefined') {
                 patId = patId || window.patientSummary.patientId;
             }
@@ -167,7 +167,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 return;
             }
 
-            let encId = window.currentEncounterId || window.patientSummary.encounterId;
+            let encId = window.currentEncounterId || window.encounterId || (window.WORKBENCH_CONFIG ? window.WORKBENCH_CONFIG.encounterId : null) || (window.patientSummary ? window.patientSummary.encounterId : null);
             window.patientSummary.updateContext(patId, encId);
             window.patientSummary.openAndLoad();
         });

@@ -48,6 +48,8 @@
     window.INVEST_RES_SOURCE = 'doctor_encounter';
     window.encounterId = '{{ $encId }}';
     window.patientId = '{{ $pId }}';
+    window.currentPatientId = '{{ $pId }}';
+    window.currentEncounterId = '{{ $encId }}';
 </script>
 <script src="{{ asset('js/workbench-helper.js') }}"></script>
 <script src="{{ asset('js/clinical-orders-shared.js') }}"></script>
@@ -70,6 +72,7 @@
 @include('admin.partials.admit_discharge_modal')
 @include('admin.partials.clinical_alerts_modal')
 @include('admin.patients.partials.nurse_chart_scripts_enhanced')
+<script src="{{ asset('js/patient-summary.js') }}"></script>
 <script src="{{ asset('js/speech-dictation.js') }}"></script>
 <script src="{{ asset('js/workbench-notes-shared.js') }}"></script>
 <script src="{{ asset('js/encounter-procedures.js') }}"></script>

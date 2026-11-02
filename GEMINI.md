@@ -245,3 +245,9 @@ When working on this project, strictly adhere to the following standards across 
   - Standalone assets `public/css/staff-directory.css` and `public/js/staff-directory.js` comply with Rule 1 (< 10 lines inline script rule; verified via `node --check`).
 - **Documentation**: Architecture is documented in `docs/STAFF_DEACTIVATION_AND_STATUS_GOVERNANCE.md`.
 
+## 23. LLM Clinical Note Polishing & Patient Summary Alignment Standards
+- **Multi-Tier Context Discovery**: Note polishing (`public/js/speech-dictation.js`) and AI summary actions (`public/js/patient-summary.js`, `resources/views/admin/partials/ai_quick_actions.blade.php`) dynamically resolve active patient and encounter context across multi-tier globals (`currentPatientId`, `patientId`, `WORKBENCH_CONFIG.patientId`, `patientSummary.patientId`, `currentPatient`, and respective encounter keys).
+- **Decoupled Note Polishing**: `LlmController::polishNote` allows `patient_id` and `encounter_id` to be nullable. Notes can be polished with patient-level semantic context (allergies, diagnoses, medications, history, vitals) even when `encounter_id` is null (such as in Nursing Workbench or unsaved Doctor New Encounter consultations), or as standalone medical documentation without patient context.
+- **Mandatory Script Inclusion in Clinical Views**: Any view incorporating `@include('admin.partials.patient_summary_overlay')` or `@include('admin.partials.ai_quick_actions')` (such as `_encounter_scripts.blade.php`, `nursing/partials/_scripts.blade.php`, `maternity/partials/_scripts.blade.php`) MUST load `<script src="{{ asset('js/patient-summary.js') }}"></script>` to guarantee `PatientSummaryManager` instantiation and prevent false "No Patient Selected" validation errors.
+- **Documentation**: Architecture is documented in `docs/LLM_NOTE_POLISHING_AND_CLINICAL_SUMMARY_ALIGNMENT.md`.
+
