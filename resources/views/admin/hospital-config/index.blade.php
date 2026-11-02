@@ -1210,6 +1210,21 @@
                                     </div>
                                     <small class="text-muted">Used for sidebar, buttons, and accents</small>
                                 </div>
+
+                                <div class="mb-3 pt-3 border-top">
+                                    <div class="feature-toggle-row">
+                                        <div>
+                                            <label for="show_branded_homepage" class="mb-0" style="font-weight: 600; cursor: pointer;">
+                                                Show Branded Homepage
+                                            </label>
+                                            <small class="text-muted d-block">When enabled, welcome page (route /) displays hospital branding, logo, and colors. When disabled, displays clean unbranded CoreHealth demo page.</small>
+                                        </div>
+                                        <label class="toggle-switch">
+                                            <input type="checkbox" name="show_branded_homepage" id="show_branded_homepage" value="1" {{ ($config->show_branded_homepage ?? true) ? 'checked' : '' }}>
+                                            <span class="toggle-slider"></span>
+                                        </label>
+                                    </div>
+                                </div>
                             </div>
                         </div>
 

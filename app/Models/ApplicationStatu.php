@@ -13,6 +13,7 @@ class ApplicationStatu extends Model implements Auditable
 
     protected $fillable = [
         'site_name',
+        'show_branded_homepage',
         'dashboard_mode',
         'header_text',
         'footer_text',
@@ -139,6 +140,7 @@ class ApplicationStatu extends Model implements Auditable
 
     protected $casts = [
         'llm_config' => 'array',
+        'show_branded_homepage' => 'boolean',
         'show_prescription_dose_on_receipt' => 'boolean',
         'allow_doctor_set_procedure_price' => 'boolean',
         'wecare_enabled' => 'boolean',

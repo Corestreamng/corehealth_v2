@@ -246,6 +246,12 @@ CoreHealth v2 is designed to streamline hospital operations by integrating clini
 - **Zero-Dash KPI Metric Standard** — Eradicated placeholder dashes across all 18 classic role tabs in favor of clean numeric zeros (`0`), formatted currency (`₦0`), or percentages (`0%`).
 - **Modern Workbench Routing & Legacy Deprecation** — Eliminated legacy `/add-to-queue` links and modal triggers across all dashboard views, partials, and forms; all intake, registration, and triage flows navigate directly to `reception.workbench` (`?action=new-patient` and `?queue_filter=waiting`). Legacy endpoint `/add-to-queue` automatically redirects to `reception.workbench`.
 
+### 26. Branded Homepage & Demo Mode System
+- **Dual Presentation Experience** — Route `/` serves an interactive landing page (`welcome.blade.php`, `public/css/welcome.css`) that dynamically adapts between a customized hospital branded experience and an unbranded CoreHealth product showcase.
+- **Hospital Configuration Toggle** — Governed by `application_status.show_branded_homepage` (default: ON / `1`), configurable in Hospital Settings under the Branding tab.
+- **Full Hospital Co-Branding** — When enabled, automatically injects hospital name, logo, primary color scheme (`--hospital-primary`), facility contact channels, and staff portal links (`/login` or `/home`).
+- **Demo Instance Isolation** — When disabled (or previewed via `/?branded=0` or `/?demo=1`), renders a clean, neutral CoreHealth ecosystem landing page without hospital branding, perfectly suited for demo instances.
+
 ---
 
 ## System Architecture

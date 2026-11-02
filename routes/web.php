@@ -66,8 +66,16 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
-Route::get('/', function () {
-    return view('welcome');
+Route::get('/', function (\Illuminate\Http\Request $request) {
+    $showBrandedHomepage = (bool) (appsettings('show_branded_homepage') ?? true);
+
+    if ($request->has('branded')) {
+        $showBrandedHomepage = $request->boolean('branded');
+    } elseif ($request->has('demo')) {
+        $showBrandedHomepage = !$request->boolean('demo');
+    }
+
+    return view('welcome', compact('showBrandedHomepage'));
 });
 
 //token refresh route

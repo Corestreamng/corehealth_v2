@@ -342,6 +342,7 @@ if (!function_exists('appsettings')) {
                     'note_edit_window' => 30,
                     'result_edit_duration' => 60,
                     'consultation_cycle_duration' => 24,
+                    'show_branded_homepage' => 1,
                 ];
 
                 $envValue = env($envKey, $defaults[$lookupKey] ?? null);

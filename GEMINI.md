@@ -251,3 +251,14 @@ When working on this project, strictly adhere to the following standards across 
 - **Mandatory Script Inclusion in Clinical Views**: Any view incorporating `@include('admin.partials.patient_summary_overlay')` or `@include('admin.partials.ai_quick_actions')` (such as `_encounter_scripts.blade.php`, `nursing/partials/_scripts.blade.php`, `maternity/partials/_scripts.blade.php`) MUST load `<script src="{{ asset('js/patient-summary.js') }}"></script>` to guarantee `PatientSummaryManager` instantiation and prevent false "No Patient Selected" validation errors.
 - **Documentation**: Architecture is documented in `docs/LLM_NOTE_POLISHING_AND_CLINICAL_SUMMARY_ALIGNMENT.md`.
 
+## 24. Branded Homepage & Demo Mode Standards
+- **Dual Presentation Architecture**: Route `/` serves an interactive landing page (`resources/views/welcome.blade.php`, `public/css/welcome.css`) that dynamically adapts between a customized hospital branded experience and an unbranded CoreHealth product showcase.
+- **Hospital Configuration Toggle**: Governed by `application_status.show_branded_homepage` (boolean, default ON / `1`), configurable in Hospital Settings under the Branding card.
+- **Hospital Co-Branding & Dynamic Theming**:
+  - Automatically injects hospital name (`site_name`), logo (`logo`), primary color scheme (`--hospital-primary` dynamically overriding `--navy`), facility contact channels (`contact_address`, `contact_emails`, `contact_phones`), and staff portal links (`/login` or `/home`).
+  - Strict Rule 1 compliance: all styles reside in `public/css/welcome.css`, with less than 5 lines of inline theme CSS variable injection in Blade.
+- **Demo Mode Isolation & Query Overrides**:
+  - When `show_branded_homepage` is 0 (OFF), route `/` renders a clean, neutral CoreHealth ecosystem landing page without hospital branding, perfectly suited for demo instances and public presentations.
+  - Query parameter overrides (`/?branded=0`, `/?demo=1`, `/?branded=1`) allow instant real-time mode preview without altering database configurations.
+- **Documentation & Testing**: Architecture is documented in `docs/BRANDED_HOMEPAGE_CONFIGURATION.md`. Covered by PHPUnit feature tests in `tests/Feature/Homepage/WelcomePageTest.php`.
+
