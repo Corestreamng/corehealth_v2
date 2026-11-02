@@ -146,9 +146,9 @@
         @endif
 
         @if($isAdmin || $user->hasAnyRole(['RECEPTIONIST', 'Receptionist']))
-            <a href="{{ route('reception.workbench', ['action' => 'new-patient']) }}" class="dash-btn-primary text-decoration-none" title="Register New Patient in Reception Workbench">
+            <button type="button" class="dash-btn-primary" data-bs-toggle="modal" data-bs-target="#patientFormModal" data-toggle="modal" data-target="#patientFormModal" onclick="if(typeof showPatientFormModal==='function'){showPatientFormModal('create');}" title="Register New Patient">
                 <i class="mdi mdi-account-plus me-1"></i> New Patient
-            </a>
+            </button>
         @endif
 
         <span class="dash-sync-badge" id="dash-sync-indicator" title="Live Auto-Sync Status">

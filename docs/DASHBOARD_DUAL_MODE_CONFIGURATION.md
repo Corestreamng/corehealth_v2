@@ -1,7 +1,7 @@
 # Dual Dashboard Architecture & Hospital Configuration Standard
 
-**Date**: 2026-11-01  
-**Git Release Tag**: v2.6.0.59  
+**Date**: 2026-11-02  
+**Git Release Tag**: v2.6.0.60  
 **Status**: Production Ready  
 **Target Environments**: CoreHealth v2 (Hospital Instance)  
 
@@ -96,9 +96,10 @@ In alignment with modern workbench architecture:
 1. **Zero Direct Links to `/add-to-queue`**:
    - All links pointing to `/add-to-queue` on the Cockpit pipeline, ribbon, classic Doctor tab, Receptionist dashboard, send queue forms, and request tables have been removed and replaced with direct routes to `reception.workbench` (e.g. `route('reception.workbench', ['queue_filter' => 'waiting'])`).
    - Legacy endpoint `GET /add-to-queue` automatically returns an HTTP 302 redirect to `reception.workbench`.
-2. **Classic Patient Create Form Modal Removal**:
-   - Removed classic patient modal includes (`@include('admin.partials.patient-form-modal')`) from both dashboard views (`resources/views/admin/dashboard/cockpit/_modals.blade.php` and `resources/views/admin/dashboard/classic.blade.php`).
-   - Updated header ribbon "New Patient" buttons and patient index "Add Patient" buttons to deep-link directly to `route('reception.workbench', ['action' => 'new-patient'])`.
+2. **Unified Patient Form Modal Integration in Header Ribbons**:
+   - Patient Form Modal (`#patientFormModal`) remains fully preserved across all modern workbenches, dashboards, and header ribbons (`@include('admin.partials.patient-form-modal')`).
+   - The Cockpit Header Ribbon, pipeline quick actions, and Patients index trigger the registration modal directly via `showPatientFormModal('create')`.
+   - All legacy full-page redirects to `patient/create` remain deprecated in favor of the rapid registration modal and modern Reception Workbench intake.
 3. **Sidebar Modern Workbench Integration**:
    - `_nav-reception.blade.php`: Added direct sidebar navigation to `New Patient` (`reception.workbench?action=new-patient`) and `Triage & Intake Queue` (`reception.workbench?queue_filter=waiting`).
    - `_nav-admin.blade.php`: Added `New Patient (Workbench)` under Admin Patients menu.
@@ -117,13 +118,13 @@ Comprehensive feature test suite in `tests/Feature/Dashboard/DashboardModeSwitch
 - `test_hospital_config_updates_dashboard_mode_setting_successfully()`
 - `test_add_to_queue_route_redirects_to_reception_workbench()`
 - `test_patient_create_route_redirects_to_reception_workbench()`
-- `test_dashboard_routes_exclude_add_to_queue_and_patient_form_modal()`
+- `test_dashboard_routes_exclude_add_to_queue_and_include_patient_form_modal()`
 - `test_sidebar_contains_modern_reception_workbench_links()`
 
 Full suite execution:
 ```bash
 vendor/bin/phpunit tests/Feature/Dashboard/
-# Result: 23 tests, 429 assertions — OK (100% pass)
+# Result: 23 tests, 430 assertions — OK (100% pass)
 ```
 
 ### 7.2 Linting & Asset Validation

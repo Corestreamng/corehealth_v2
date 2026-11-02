@@ -250,6 +250,8 @@
             </div>
         </div>
     @endif
+
+    @include('admin.partials.patient-form-modal')
 @endsection
 
 @push('scripts')

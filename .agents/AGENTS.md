@@ -161,7 +161,7 @@ When working on this project, strictly adhere to the following standards across 
 - **Modern Workbench Routing & Legacy Deprecation**:
   - Doctor Consultation Deep Link: Doctor queue items and activities deep link to `encounters/create?patient_id={id}` for active intake, and `encounters?status=waiting` for queue status filtering.
   - Zero Direct `/add-to-queue` Links: All dashboard, doctor tab, receptionist tab, send-queue, and request links to `/add-to-queue` have been replaced with modern Reception Workbench routes (`reception.workbench?action=new-patient` and `reception.workbench?queue_filter=waiting`). Route `/add-to-queue` automatically redirects to `reception.workbench`.
-  - Classic Patient Form Modal Removal: Dashboard views do not include `#patientFormModal`; all "New Patient" buttons route directly to the Reception Workbench.
+  - Unified Patient Form Modal: Dashboards and header ribbons open the rapid registration modal (`#patientFormModal`, `showPatientFormModal('create')`), eliminating legacy full-page redirects to `patient/create`.
 - **Assets & Verification**: Cockpit assets in `public/css/dashboard-cockpit.css` & `public/js/dashboard-cockpit.js`; Classic assets in `public/css/dashboard-classic.css` & `public/js/dashboard-classic.js` (verified with `node --check`). Documented in `docs/DASHBOARD_DUAL_MODE_CONFIGURATION.md`.
 
 ## 14. Universal Workbench Cockpit Scaling Standards

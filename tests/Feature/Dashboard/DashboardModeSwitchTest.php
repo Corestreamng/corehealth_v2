@@ -123,7 +123,7 @@ class DashboardModeSwitchTest extends TestCase
     }
 
     /** @test */
-    public function test_dashboard_routes_exclude_add_to_queue_and_patient_form_modal()
+    public function test_dashboard_routes_exclude_add_to_queue_and_include_patient_form_modal()
     {
         $adminRole = Role::firstOrCreate(['name' => 'SUPERADMIN', 'guard_name' => 'web']);
         $admin = User::factory()->create(['status' => 1]);
@@ -133,16 +133,17 @@ class DashboardModeSwitchTest extends TestCase
         $cockpitResponse = $this->actingAs($admin)->get('/home?mode=cockpit');
         if ($cockpitResponse->status() === 200) {
             $cockpitResponse->assertDontSee('/add-to-queue');
-            $cockpitResponse->assertDontSee('patientFormModal');
-            $cockpitResponse->assertSee(route('reception.workbench', ['action' => 'new-patient']));
+            $cockpitResponse->assertDontSee('/patient/create');
+            $cockpitResponse->assertSee('patientFormModal');
+            $cockpitResponse->assertSee('showPatientFormModal');
         }
 
         // Classic view
         $classicResponse = $this->actingAs($admin)->get('/home?mode=classic');
         if ($classicResponse->status() === 200) {
             $classicResponse->assertDontSee('/add-to-queue');
-            $classicResponse->assertDontSee('patientFormModal');
-            $classicResponse->assertDontSee('#patientFormModal');
+            $classicResponse->assertDontSee('/patient/create');
+            $classicResponse->assertSee('patientFormModal');
         }
     }
 

@@ -50,9 +50,9 @@
                 <div class="card-header-modern d-flex justify-content-between align-items-center">
                     <h3 class="card-title mb-0"><i class="mdi mdi-account-group mr-2"></i>Patients</h3>
                     @can('patient-create')
-                        <a href="{{ route('reception.workbench', ['action' => 'new-patient']) }}" class="btn btn-primary btn-sm" id="btn-add-patient">
+                        <button type="button" class="btn btn-primary btn-sm" id="btn-add-patient" onclick="showPatientFormModal('create')">
                             <i class="mdi mdi-account-plus mr-1"></i> Add Patient
-                        </a>
+                        </button>
                     @endcan
                 </div>
 
