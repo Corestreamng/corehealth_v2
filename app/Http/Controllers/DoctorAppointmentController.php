@@ -1044,12 +1044,37 @@ class DoctorAppointmentController extends Controller
         // schedules are not fully configured (slot check uses the existing appointment time)
         // Include doctors whose primary clinic matches OR who have the clinic
         // in their can_see_clinic_queues list
-        $doctors = Staff::where(function ($q) use ($appointment) {
-            $q->where('clinic_id', $appointment->clinic_id)
-              ->orWhereJsonContains('can_see_clinic_queues', (int) $appointment->clinic_id);
-        })
-            ->whereHas('user')
+        $doctors = Staff::with(['user', 'user.active_locum_pass'])
+            ->where(function ($q) use ($appointment) {
+                $q->where('clinic_id', $appointment->clinic_id)
+                  ->orWhereJsonContains('can_see_clinic_queues', (int) $appointment->clinic_id);
+            })
+            ->where(function ($q) {
+                $q->whereIn('employment_status', [Staff::STATUS_ACTIVE, Staff::STATUS_PROBATION])
+                  ->orWhereNull('employment_status');
+            })
+            ->where(function ($q) {
+                $q->where('status', '!=', 0)->orWhereNull('status');
+            })
+            ->whereHas('user', function ($uq) {
+                $uq->where('status', '!=', 0);
+            })
             ->get()
+            ->filter(function ($doctor) use ($appointment) {
+                if ($doctor->isLocum()) {
+                    if (!$doctor->user || !$doctor->user->hasActiveLocumPass()) {
+                        return false;
+                    }
+                    $activePass = $doctor->user->active_locum_pass;
+                    if ($activePass && !empty($activePass->allowed_clinic_ids)) {
+                        if (!in_array((int) $appointment->clinic_id, array_map('intval', $activePass->allowed_clinic_ids))) {
+                            return false;
+                        }
+                    }
+                }
+
+                return true;
+            })
             ->map(function ($doctor) {
                 return [
                     'id' => $doctor->id,
@@ -1058,12 +1083,25 @@ class DoctorAppointmentController extends Controller
             })
             ->values();
 
-        // Fallback: if clinic has no staff, broaden to any staff with a user
+        // Fallback: if clinic has no staff, broaden to active staff with a user
         if ($doctors->isEmpty()) {
-            $doctors = Staff::whereHas('user')->get()->map(fn ($d) => [
-                'id' => $d->id,
-                'name' => userfullname($d->user_id),
-            ])->values();
+            $doctors = Staff::with('user')
+                ->where(function ($q) {
+                    $q->whereIn('employment_status', [Staff::STATUS_ACTIVE, Staff::STATUS_PROBATION])
+                      ->orWhereNull('employment_status');
+                })
+                ->where(function ($q) {
+                    $q->where('status', '!=', 0)->orWhereNull('status');
+                })
+                ->whereHas('user', function ($uq) {
+                    $uq->where('status', '!=', 0);
+                })
+                ->get()
+                ->map(fn ($d) => [
+                    'id' => $d->id,
+                    'name' => userfullname($d->user_id),
+                ])
+                ->values();
         }
 
         return response()->json(['success' => true, 'doctors' => $doctors]);

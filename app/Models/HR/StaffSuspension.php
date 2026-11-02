@@ -59,15 +59,53 @@ class StaffSuspension extends Model implements Auditable
             }
         });
 
-        // When suspension is created, update staff employment status
+        // When suspension is created, update staff employment status, deactivate user, and revoke locum passes
         static::created(function ($model) {
-            $model->staff->update([
-                'employment_status' => 'suspended',
-                'suspended_at' => now(),
-                'suspended_by' => $model->issued_by,
-                'suspension_reason' => $model->reason,
-                'suspension_end_date' => $model->end_date,
-            ]);
+            $staff = $model->staff;
+            if ($staff) {
+                $staff->update([
+                    'employment_status' => Staff::STATUS_SUSPENDED,
+                    'status' => 0,
+                    'suspended_at' => now(),
+                    'suspended_by' => $model->issued_by,
+                    'suspension_reason' => $model->reason,
+                    'suspension_end_date' => $model->end_date,
+                ]);
+
+                if ($staff->user) {
+                    $staff->user->update(['status' => 0]);
+                    if ($staff->user->isLocum()) {
+                        \App\Models\LocumPass::where('user_id', $staff->user->id)
+                            ->whereNull('revoked_at')
+                            ->update([
+                                'revoked_at' => now(),
+                                'revoked_by' => $model->issued_by ?: auth()->id() ?: 1,
+                                'revocation_reason' => 'Staff suspended by HR disciplinary action',
+                            ]);
+                    }
+                }
+            }
+        });
+
+        // When suspension is lifted, automatically restore staff and user status to active
+        static::updated(function ($model) {
+            if ($model->wasChanged('status') && $model->status === self::STATUS_LIFTED) {
+                $staff = $model->staff;
+                if ($staff) {
+                    $staff->update([
+                        'employment_status' => Staff::STATUS_ACTIVE,
+                        'status' => 1,
+                        'suspended_at' => null,
+                        'suspended_by' => null,
+                        'suspension_reason' => null,
+                        'suspension_end_date' => null,
+                    ]);
+
+                    if ($staff->user) {
+                        $staff->user->update(['status' => 1]);
+                    }
+                }
+            }
         });
     }
 
@@ -158,12 +196,17 @@ class StaffSuspension extends Model implements Auditable
 
         // Update staff status
         $this->staff->update([
-            'employment_status' => 'active',
+            'employment_status' => Staff::STATUS_ACTIVE,
+            'status' => 1,
             'suspended_at' => null,
             'suspended_by' => null,
             'suspension_reason' => null,
             'suspension_end_date' => null,
         ]);
+
+        if ($this->staff->user) {
+            $this->staff->user->update(['status' => 1]);
+        }
     }
 
     /**

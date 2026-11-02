@@ -255,6 +255,34 @@ class LocumManagementService
             ];
         }
 
+        // Check if user account is deactivated
+        if ((int) $user->status === 0) {
+            return [
+                'success' => false,
+                'message' => 'This locum account has been deactivated. Please contact administration.',
+            ];
+        }
+
+        // Check staff profile status and suspension
+        if ($user->staff_profile) {
+            $staff = $user->staff_profile;
+            if ($staff->isSuspended()) {
+                $reason = $staff->suspension_reason ? ': ' . $staff->suspension_reason : '.';
+
+                return [
+                    'success' => false,
+                    'message' => 'This locum practitioner is currently suspended' . $reason,
+                ];
+            }
+
+            if (in_array($staff->employment_status, ['terminated', 'resigned', 'retired']) || (int) $staff->status === 0) {
+                return [
+                    'success' => false,
+                    'message' => 'This locum practitioner account is inactive (' . ucfirst($staff->employment_status) . ').',
+                ];
+            }
+        }
+
         // Get latest pass
         $pass = LocumPass::where('user_id', $user->id)->latest('id')->first();
 

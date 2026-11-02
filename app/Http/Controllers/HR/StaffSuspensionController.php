@@ -243,12 +243,7 @@ class StaffSuspensionController extends Controller
         }
 
         try {
-            $suspension->update([
-                'status' => 'lifted',
-                'lifted_by' => auth()->id(),
-                'lifted_at' => now(),
-                'lift_reason' => $request->notes,
-            ]);
+            $suspension->lift(auth()->id() ?: 1, $request->notes ?: 'Suspension lifted by HR');
 
             if ($request->ajax()) {
                 return response()->json([

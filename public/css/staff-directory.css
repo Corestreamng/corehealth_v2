@@ -1,0 +1,42 @@
+/* Staff Directory & Quick Status Governance */
+.filter-bar {
+    background: #f8f9fa;
+    padding: 12px 16px;
+    border-radius: 8px;
+    margin-bottom: 16px;
+}
+.filter-bar select {
+    max-width: 180px;
+    display: inline-block;
+}
+.staff-table th {
+    font-weight: 600;
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: #6b7280;
+    background: #f9fafb;
+}
+.staff-table td {
+    vertical-align: middle !important;
+}
+.btn-group .btn {
+    padding: 0.35rem 0.65rem;
+}
+.badge {
+    font-weight: 500;
+    padding: 0.35rem 0.65rem;
+}
+.btn-quick-status {
+    border-color: #f59e0b;
+    color: #b45309;
+}
+.btn-quick-status:hover {
+    background-color: #f59e0b;
+    color: #ffffff;
+}
+.badge-outline-danger {
+    color: #dc3545;
+    border: 1px solid #dc3545;
+    background: transparent;
+}

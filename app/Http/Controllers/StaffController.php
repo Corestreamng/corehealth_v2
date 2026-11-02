@@ -7,7 +7,10 @@ use App\Models\Clinic;
 use App\Models\Department;
 use App\Models\HR\Cadre;
 use App\Models\HR\GradeLevel;
+use App\Models\HR\StaffSuspension;
+use App\Models\HR\StaffTermination;
 use App\Models\HR\Unit;
+use App\Models\LocumPass;
 use App\Models\Specialization;
 use App\Models\Staff;
 use App\Models\User;
@@ -42,15 +45,15 @@ class StaffController extends Controller
 
     public function listStaff(Request $request)
     {
-        $query = User::with(['category' => function ($q) {
-            $q->select(['id', 'name']);
-        }, 'staff_profile' => function ($q) {
-            $q->select(['id', 'user_id', 'department_id', 'job_title', 'phone_number', 'employment_status', 'is_dept_head', 'is_unit_head']);
-        }, 'staff_profile.department' => function ($q) {
-            $q->select(['id', 'name']);
-        }, 'roles' => function ($q) {
-            $q->select(['roles.id', 'roles.name']);
-        }])->whereHas('staff_profile')->where('status', '>', 0)->orderBy('id', 'ASC');
+        $query = User::with([
+            'category:id,name',
+            'staff_profile:id,user_id,department_id,job_title,phone_number,employment_status,employment_type,is_dept_head,is_unit_head,status,suspension_reason,suspension_end_date,suspended_at',
+            'staff_profile.department:id,name',
+            'roles:id,name',
+            'locum_profile',
+            'active_locum_pass',
+            'latest_locum_pass',
+        ])->whereHas('staff_profile')->orderBy('id', 'ASC');
 
         // Department filter
         if ($request->filled('department_id') && $request->department_id !== 'all') {
@@ -64,18 +67,42 @@ class StaffController extends Controller
             $query->where('is_admin', $request->category_id);
         }
 
+        // Employment type filter
+        if ($request->filled('employment_type') && $request->employment_type !== 'all') {
+            if ($request->employment_type === 'locum') {
+                $query->where(function ($q) {
+                    $q->where('is_locum', true)
+                      ->orWhereHas('locum_profile')
+                      ->orWhereHas('staff_profile', function ($sq) {
+                          $sq->where('employment_type', 'locum');
+                      });
+                });
+            } else {
+                $query->whereHas('staff_profile', function ($q) use ($request) {
+                    $q->where('employment_type', $request->employment_type);
+                });
+            }
+        }
+
         // Employment status filter
         if ($request->filled('employment_status') && $request->employment_status !== 'all') {
             $status = $request->employment_status;
-            $query->whereHas('staff_profile', function ($q) use ($status) {
-                if ($status === 'active') {
-                    $q->where(function ($qq) {
-                        $qq->where('employment_status', 'active')->orWhereNull('employment_status');
+            if ($status === 'active') {
+                $query->where('status', 1)->whereHas('staff_profile', function ($q) {
+                    $q->whereIn('employment_status', ['active', 'probation'])
+                      ->orWhereNull('employment_status');
+                });
+            } elseif ($status === 'inactive') {
+                $query->where(function ($q) {
+                    $q->where('status', 0)->orWhereHas('staff_profile', function ($sq) {
+                        $sq->where('status', 0)->orWhereIn('employment_status', ['suspended', 'terminated', 'resigned', 'retired']);
                     });
-                } else {
+                });
+            } else {
+                $query->whereHas('staff_profile', function ($q) use ($status) {
                     $q->where('employment_status', $status);
-                }
-            });
+                });
+            }
         }
 
         return DataTables::of($query)
@@ -136,7 +163,24 @@ class StaffController extends Controller
             })
             ->addColumn('category_roles', function ($user) {
                 $category = $user->category->name ?? 'N/A';
-                $html = '<div><span class="badge badge-secondary" style="font-size:0.75rem;">' . e($category) . '</span></div>';
+                $html = '<div><span class="badge badge-secondary" style="font-size:0.75rem;">' . e($category) . '</span>';
+
+                // Locum practitioner badge and shift pass badge
+                if ($user->isLocum()) {
+                    $html .= ' <span class="badge badge-info" style="font-size:0.7rem;"><i class="mdi mdi-badge-account-outline"></i> Locum</span>';
+
+                    if ($user->hasActiveLocumPass()) {
+                        $html .= ' <span class="badge badge-success" style="font-size:0.68rem;" title="Shift Pass Active: ' . e($user->active_locum_pass?->time_remaining ?? '') . '"><i class="mdi mdi-key-variant"></i> Pass Active</span>';
+                    } elseif ($user->latest_locum_pass && $user->latest_locum_pass->isRevoked()) {
+                        $html .= ' <span class="badge badge-danger" style="font-size:0.68rem;" title="Shift Pass Revoked"><i class="mdi mdi-cancel"></i> Pass Revoked</span>';
+                    } elseif ($user->latest_locum_pass && $user->latest_locum_pass->isExpired()) {
+                        $html .= ' <span class="badge badge-secondary" style="font-size:0.68rem;" title="Shift Pass Expired"><i class="mdi mdi-key-remove"></i> Pass Expired</span>';
+                    } else {
+                        $html .= ' <span class="badge badge-light text-muted border" style="font-size:0.68rem;" title="No Shift Pass"><i class="mdi mdi-key-outline"></i> No Pass</span>';
+                    }
+                }
+                $html .= '</div>';
+
                 if ($user->roles->isNotEmpty()) {
                     $roles = $user->roles->map(function ($role) {
                         return '<span class="badge badge-outline-primary" style="font-size:0.7rem;margin:1px;">' . e($role->name) . '</span>';
@@ -147,19 +191,42 @@ class StaffController extends Controller
                 return $html;
             })
             ->addColumn('status_info', function ($user) {
-                $status = $user->staff_profile?->employment_status ?? 'active';
-                $statusClass = match($status) {
+                $staff = $user->staff_profile;
+                $status = $staff?->employment_status ?? 'active';
+                $reason = $staff?->suspension_reason ? ' title="' . e($staff->suspension_reason) . '"' : '';
+
+                $badgeClass = match($status) {
                     'active' => 'badge-success',
+                    'probation' => 'badge-info',
+                    'on_leave' => 'badge-warning text-dark',
                     'suspended' => 'badge-danger',
-                    'resigned', 'terminated' => 'badge-secondary',
+                    'terminated' => 'badge-dark',
+                    'resigned', 'retired' => 'badge-secondary',
                     default => 'badge-secondary'
                 };
-                $html = '<span class="badge ' . $statusClass . '">' . ucfirst($status) . '</span>';
-                if ($user->staff_profile) {
-                    if ($user->staff_profile->is_dept_head) {
+
+                $icon = match($status) {
+                    'active' => 'mdi-check-circle',
+                    'probation' => 'mdi-clock-outline',
+                    'on_leave' => 'mdi-airplane',
+                    'suspended' => 'mdi-alert-circle',
+                    'terminated' => 'mdi-account-remove',
+                    'resigned' => 'mdi-logout',
+                    'retired' => 'mdi-account-arrow-right',
+                    default => 'mdi-information-outline'
+                };
+
+                $html = '<span class="badge ' . $badgeClass . '"' . $reason . '><i class="mdi ' . $icon . '"></i> ' . ucfirst(str_replace('_', ' ', $status)) . '</span>';
+
+                if ((int) $user->status === 0) {
+                    $html .= '<br><span class="badge badge-outline-danger" style="font-size:0.68rem;margin-top:2px;" title="User account deactivated"><i class="mdi mdi-lock"></i> Deactivated</span>';
+                }
+
+                if ($staff) {
+                    if ($staff->is_dept_head) {
                         $html .= '<br><span class="badge badge-warning" title="Department Head"><i class="mdi mdi-account-star"></i> Dept Head</span>';
                     }
-                    if ($user->staff_profile->is_unit_head) {
+                    if ($staff->is_unit_head) {
                         $html .= '<br><span class="badge badge-info" title="Unit Head"><i class="mdi mdi-shield-account"></i> Unit Head</span>';
                     }
                 }
@@ -169,16 +236,177 @@ class StaffController extends Controller
             ->addColumn('actions', function ($user) {
                 $viewUrl = route('staff.show', $user->id);
                 $editUrl = route('staff.edit', $user->id);
+                $staff = $user->staff_profile;
+                $status = $staff?->employment_status ?? 'active';
+                $reason = $staff?->suspension_reason ?? '';
+                $endDate = $staff?->suspension_end_date ? $staff->suspension_end_date->format('Y-m-d') : '';
+                $name = $user->surname . ' ' . $user->firstname . ($user->othername ? ' ' . $user->othername : '');
 
                 return '
                     <div class="btn-group" role="group">
                         <a href="' . $viewUrl . '" class="btn btn-outline-primary btn-sm" title="View"><i class="mdi mdi-eye"></i></a>
                         <a href="' . $editUrl . '" class="btn btn-outline-info btn-sm" title="Edit"><i class="mdi mdi-pencil"></i></a>
+                        <button type="button" class="btn btn-outline-warning btn-sm btn-quick-status"
+                            data-user-id="' . $user->id . '"
+                            data-staff-id="' . ($staff?->id ?? '') . '"
+                            data-name="' . e($name) . '"
+                            data-status="' . e($status) . '"
+                            data-user-status="' . (int) $user->status . '"
+                            data-is-locum="' . ($user->isLocum() ? '1' : '0') . '"
+                            data-reason="' . e($reason) . '"
+                            data-end-date="' . e($endDate) . '"
+                            data-toggle="modal"
+                            data-bs-toggle="modal"
+                            data-target="#quickStatusModal"
+                            data-bs-target="#quickStatusModal"
+                            title="Quick Status / Deactivate">
+                            <i class="mdi mdi-account-settings"></i>
+                        </button>
                     </div>
                 ';
             })
             ->rawColumns(['staff_info', 'dept_info', 'contact', 'category_roles', 'status_info', 'actions'])
             ->make(true);
+    }
+
+    /**
+     * AJAX endpoint to quickly update staff employment status, sync user status,
+     * record disciplinary/termination history, and handle locum shift passes.
+     */
+    public function updateEmploymentStatus(Request $request, $id)
+    {
+        $request->validate([
+            'employment_status' => 'required|in:active,probation,on_leave,suspended,resigned,terminated,retired',
+            'reason' => 'nullable|string|max:1000',
+            'suspension_end_date' => 'nullable|date',
+            'effective_date' => 'nullable|date',
+        ]);
+
+        $user = User::findOrFail($id);
+        $staff = $user->staff_profile;
+        if (!$staff) {
+            return response()->json(['success' => false, 'message' => 'Staff profile not found.'], 404);
+        }
+
+        $newStatus = $request->employment_status;
+        $reason = trim((string) $request->input('reason', ''));
+        $authId = Auth::id() ?: 1;
+
+        DB::beginTransaction();
+
+        try {
+            $staff->employment_status = $newStatus;
+
+            // Non-loginable exit/disciplinary statuses
+            if (in_array($newStatus, [Staff::STATUS_SUSPENDED, Staff::STATUS_TERMINATED, Staff::STATUS_RESIGNED, Staff::STATUS_RETIRED])) {
+                $staff->status = 0;
+                $user->status = 0;
+
+                if ($newStatus === Staff::STATUS_SUSPENDED) {
+                    $staff->suspended_at = now();
+                    $staff->suspended_by = $authId;
+                    $staff->suspension_reason = $reason ?: 'Suspended by administrator';
+                    $staff->suspension_end_date = $request->suspension_end_date ?: null;
+
+                    // Create StaffSuspension record if none active
+                    if (!$staff->activeSuspension) {
+                        StaffSuspension::create([
+                            'staff_id' => $staff->id,
+                            'type' => StaffSuspension::TYPE_UNPAID,
+                            'start_date' => $request->effective_date ?: now(),
+                            'end_date' => $request->suspension_end_date ?: null,
+                            'reason' => $reason ?: 'Suspended by administrator',
+                            'suspension_message' => 'Your account has been suspended: ' . ($reason ?: 'Please contact HR.'),
+                            'status' => StaffSuspension::STATUS_ACTIVE,
+                            'issued_by' => $authId,
+                        ]);
+                    }
+                } elseif (in_array($newStatus, [Staff::STATUS_TERMINATED, Staff::STATUS_RESIGNED, Staff::STATUS_RETIRED])) {
+                    // Lift any existing suspension
+                    if ($staff->isSuspended() && $staff->activeSuspension) {
+                        $staff->activeSuspension->update(['status' => StaffSuspension::STATUS_LIFTED]);
+                    }
+
+                    // Create termination record if not exists
+                    if (!$staff->termination) {
+                        $terminationType = match($newStatus) {
+                            Staff::STATUS_RESIGNED => StaffTermination::TYPE_VOLUNTARY,
+                            Staff::STATUS_RETIRED => StaffTermination::TYPE_RETIREMENT,
+                            default => StaffTermination::TYPE_INVOLUNTARY,
+                        };
+                        $reasonCategory = match($newStatus) {
+                            Staff::STATUS_RESIGNED => StaffTermination::REASON_RESIGNATION,
+                            Staff::STATUS_RETIRED => StaffTermination::REASON_RETIREMENT,
+                            default => StaffTermination::REASON_OTHER,
+                        };
+
+                        StaffTermination::create([
+                            'staff_id' => $staff->id,
+                            'type' => $terminationType,
+                            'reason_category' => $reasonCategory,
+                            'reason_details' => $reason ?: ucfirst($newStatus) . ' recorded by administrator',
+                            'notice_date' => now(),
+                            'effective_date' => $request->effective_date ?: now(),
+                            'last_working_day' => $request->effective_date ?: now(),
+                            'processed_by' => $authId,
+                        ]);
+                    }
+                }
+
+                // If locum, revoke all active shift passes immediately
+                if ($user->isLocum()) {
+                    LocumPass::where('user_id', $user->id)
+                        ->whereNull('revoked_at')
+                        ->update([
+                            'revoked_at' => now(),
+                            'revoked_by' => $authId,
+                            'revocation_reason' => $reason ?: 'Locum account ' . $newStatus,
+                        ]);
+                }
+            } else {
+                // Active, Probation, or On Leave
+                $staff->status = 1;
+                $user->status = 1;
+
+                // If previously suspended, lift suspension
+                if ($staff->isSuspended() || $staff->suspended_at) {
+                    $staff->suspended_at = null;
+                    $staff->suspended_by = null;
+                    $staff->suspension_reason = null;
+                    $staff->suspension_end_date = null;
+
+                    if ($staff->activeSuspension) {
+                        $staff->activeSuspension->update([
+                            'status' => StaffSuspension::STATUS_LIFTED,
+                            'lifted_by' => $authId,
+                            'lifted_at' => now(),
+                            'lift_reason' => $reason ?: 'Reinstated by administrator',
+                        ]);
+                    }
+                }
+            }
+
+            $staff->save();
+            $user->save();
+
+            DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Status for ' . userfullname($user->id) . ' updated to ' . ucfirst(str_replace('_', ' ', $newStatus)) . '.',
+                'status' => $newStatus,
+                'user_status' => (int) $user->status,
+                'is_locum' => (bool) $user->isLocum(),
+            ]);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Failed to update staff employment status: ' . $e->getMessage(), ['exception' => $e]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to update employment status: ' . $e->getMessage(),
+            ], 500);
+        }
     }
 
     public function my_profile()
@@ -880,9 +1108,46 @@ class StaffController extends Controller
 
                 // HR Fields
                 $staff->employee_id = $request->employee_id ?: ($staff->employee_id ?? null);
-                $staff->date_hired = $request->date_hired ?: ($staff->date_hired ?? null);
                 $staff->employment_type = $request->employment_type ?: ($staff->employment_type ?? 'full_time');
                 $staff->employment_status = $request->employment_status ?: ($staff->employment_status ?? 'active');
+
+                // Suspension fields & locum governance
+                if ($staff->employment_status === Staff::STATUS_SUSPENDED) {
+                    $staff->status = 0;
+                    $staff->suspended_at = $staff->suspended_at ?: now();
+                    $staff->suspended_by = Auth::id() ?: 1;
+                    if ($request->filled('suspension_reason')) {
+                        $staff->suspension_reason = $request->suspension_reason;
+                    }
+                    if ($request->filled('suspension_end_date')) {
+                        $staff->suspension_end_date = $request->suspension_end_date;
+                    }
+                    if ($user->isLocum()) {
+                        LocumPass::where('user_id', $user->id)
+                            ->whereNull('revoked_at')
+                            ->update([
+                                'revoked_at' => now(),
+                                'revoked_by' => Auth::id() ?: 1,
+                                'revocation_reason' => 'Staff suspended by administrator',
+                            ]);
+                    }
+                } elseif (in_array($staff->employment_status, [Staff::STATUS_TERMINATED, Staff::STATUS_RESIGNED, Staff::STATUS_RETIRED])) {
+                    $staff->status = 0;
+                    if ($user->isLocum()) {
+                        LocumPass::where('user_id', $user->id)
+                            ->whereNull('revoked_at')
+                            ->update([
+                                'revoked_at' => now(),
+                                'revoked_by' => Auth::id() ?: 1,
+                                'revocation_reason' => 'Employment ended (' . $staff->employment_status . ')',
+                            ]);
+                    }
+                } elseif (in_array($staff->employment_status, [Staff::STATUS_ACTIVE, Staff::STATUS_PROBATION, Staff::STATUS_ON_LEAVE])) {
+                    $staff->status = 1;
+                    $staff->suspension_reason = null;
+                    $staff->suspension_end_date = null;
+                }
+
                 $staff->job_title = $request->job_title ?: ($staff->job_title ?? null);
                 $staff->department_id = $request->department_id ?: ($staff->department_id ?? null);
 

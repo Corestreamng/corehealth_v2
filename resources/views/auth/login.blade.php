@@ -243,6 +243,37 @@
                 <p>{{ __('auth.enter_credentials') }}</p>
             </div>
 
+            @if ($errors->has('email'))
+                <div class="alert alert-danger d-flex align-items-start mb-3 p-3 shadow-sm rounded" role="alert" style="background-color: #fff5f5; border: 1px solid #fed7d7; border-left: 4px solid #e53e3e;">
+                    <i class="mdi mdi-alert-circle text-danger mr-2" style="font-size: 1.4rem; line-height: 1.2;"></i>
+                    <div style="flex: 1;">
+                        <strong class="d-block text-danger mb-1" style="font-size: 0.95rem;">
+                            @if(str_contains(strtolower($errors->first('email')), 'suspend'))
+                                <i class="mdi mdi-account-off mr-1"></i> Account Suspended
+                            @elseif(str_contains(strtolower($errors->first('email')), 'terminat') || str_contains(strtolower($errors->first('email')), 'resign') || str_contains(strtolower($errors->first('email')), 'retir'))
+                                <i class="mdi mdi-account-remove mr-1"></i> Employment Concluded
+                            @elseif(str_contains(strtolower($errors->first('email')), 'deactivat') || str_contains(strtolower($errors->first('email')), 'inactive'))
+                                <i class="mdi mdi-account-lock mr-1"></i> Account Deactivated
+                            @elseif(str_contains(strtolower($errors->first('email')), 'locum') || str_contains(strtolower($errors->first('email')), 'shift pass'))
+                                <i class="mdi mdi-badge-account-alert-outline mr-1"></i> Locum Shift Pass Notice
+                            @else
+                                Authentication Alert
+                            @endif
+                        </strong>
+                        <div class="text-dark" style="font-size: 0.875rem; line-height: 1.45;">{{ $errors->first('email') }}</div>
+                    </div>
+                </div>
+            @endif
+
+            @if (session('status'))
+                <div class="alert alert-success mb-3 p-3 rounded shadow-sm" style="background-color: #f0fff4; border: 1px solid #c6f6d5; border-left: 4px solid #38a169;">
+                    <div class="d-flex align-items-center">
+                        <i class="mdi mdi-check-circle text-success mr-2" style="font-size: 1.25rem;"></i>
+                        <span class="text-dark" style="font-size: 0.875rem;">{{ session('status') }}</span>
+                    </div>
+                </div>
+            @endif
+
             <ul class="nav nav-pills nav-fill mb-3" id="loginTypeTabs" role="tablist">
                 <li class="nav-item">
                     <a class="nav-link {{ old('login_mode') === 'locum' ? '' : 'active' }} py-2 font-weight-bold" id="tab-standard-login" data-toggle="pill" data-bs-toggle="pill" href="#pane-standard-login" data-bs-target="#pane-standard-login" role="tab" aria-controls="pane-standard-login" aria-selected="{{ old('login_mode') === 'locum' ? 'false' : 'true' }}">

@@ -28,7 +28,7 @@ class User extends Authenticatable implements Auditable
             // is_admin 19 is Patient. Any other category is considered staff.
             if ($user->is_admin && $user->is_admin != 19 && !$user->staff_profile()->exists()) {
                 try {
-                    $staffData = ['user_id' => $user->id, 'status' => 1];
+                    $staffData = ['user_id' => $user->id, 'status' => (int) ($user->status ?? 1)];
                     // employment_status exists in newer schema versions
                     $columns = \Illuminate\Support\Facades\Schema::getColumnListing('staff');
                     if (in_array('employment_status', $columns)) {
@@ -39,6 +39,12 @@ class User extends Authenticatable implements Auditable
                     // Silently ignore staff profile creation failures during testing
                     // when schema versions differ
                     \Illuminate\Support\Facades\Log::debug('Staff profile auto-create skipped: ' . $e->getMessage());
+                }
+            } elseif ($user->isDirty('status') && $user->staff_profile()->exists()) {
+                $staff = $user->staff_profile;
+                $targetStatus = (int) $user->status === 1 ? 1 : 0;
+                if ((int) $staff->status !== $targetStatus) {
+                    $staff->updateQuietly(['status' => $targetStatus]);
                 }
             }
         });
@@ -206,5 +212,29 @@ class User extends Authenticatable implements Auditable
     public function hasActiveLocumPass(): bool
     {
         return $this->active_locum_pass()->exists();
+    }
+
+    /**
+     * Check if user account is active.
+     */
+    public function isActive(): bool
+    {
+        return (int) $this->status === 1;
+    }
+
+    /**
+     * Check if user can log in based on status, staff profile, and locum constraints.
+     */
+    public function canLogin(): bool
+    {
+        if ((int) $this->status !== 1) {
+            return false;
+        }
+
+        if ($this->staff_profile()->exists() && !$this->staff_profile->canLogin()) {
+            return false;
+        }
+
+        return true;
     }
 }

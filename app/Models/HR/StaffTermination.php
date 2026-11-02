@@ -72,14 +72,49 @@ class StaffTermination extends Model implements Auditable
             }
         });
 
-        // When termination is created, update staff employment status
+        // When termination is created, update staff employment status, deactivate user, and revoke locum passes
         static::created(function ($model) {
-            $status = $model->type === self::TYPE_VOLUNTARY ? 'resigned' : 'terminated';
-            $model->staff->update(['employment_status' => $status]);
+            $status = match ($model->reason_category) {
+                self::REASON_RETIREMENT => 'retired',
+                self::REASON_RESIGNATION => 'resigned',
+                default => ($model->type === self::TYPE_VOLUNTARY ? 'resigned' : 'terminated'),
+            };
 
-            // Also deactivate the user account
-            if ($model->staff->user) {
-                $model->staff->user->update(['status' => 0]);
+            $staff = $model->staff;
+            if ($staff) {
+                $staff->update([
+                    'employment_status' => $status,
+                    'status' => 0,
+                ]);
+
+                // Also deactivate user account and revoke locum passes
+                if ($staff->user) {
+                    $staff->user->update(['status' => 0]);
+                    if ($staff->user->isLocum()) {
+                        \App\Models\LocumPass::where('user_id', $staff->user->id)
+                            ->whereNull('revoked_at')
+                            ->update([
+                                'revoked_at' => now(),
+                                'revoked_by' => $model->processed_by ?: auth()->id() ?: 1,
+                                'revocation_reason' => 'Employment concluded (' . $status . ') via HR disciplinary/exit workflow',
+                            ]);
+                    }
+                }
+            }
+        });
+
+        // When termination is deleted/reverted, restore staff and user status
+        static::deleted(function ($model) {
+            $staff = $model->staff;
+            if ($staff && in_array($staff->employment_status, ['terminated', 'resigned', 'retired'])) {
+                $staff->update([
+                    'employment_status' => 'active',
+                    'status' => 1,
+                ]);
+
+                if ($staff->user) {
+                    $staff->user->update(['status' => 1]);
+                }
             }
         });
     }

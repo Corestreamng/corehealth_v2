@@ -99,6 +99,7 @@ Route::group(['middleware' => ['auth']], function () {
     Route::group(['middleware' => ['auth']], function () {
         Route::resource('staff', StaffController::class);
         Route::get('liststaff', [StaffController::class, 'listStaff'])->name('listStaff');
+        Route::post('staff/{id}/update-status', [StaffController::class, 'updateEmploymentStatus'])->name('staff.updateStatus');
 
         // Locum Practitioners & Ephemeral Shift Passes (accessible via /locum and /admin/locum)
         $registerLocumRoutes = function () {

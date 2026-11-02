@@ -39,6 +39,7 @@ class Kernel extends HttpKernel
             \Illuminate\Routing\Middleware\SubstituteBindings::class,
             \App\Http\Middleware\DatabaseQueryTagger::class,
             \App\Http\Middleware\LocalizationMiddleware::class,
+            \App\Http\Middleware\CheckSuspension::class,
         ],
 
         'api' => [
@@ -71,5 +72,6 @@ class Kernel extends HttpKernel
         'permission' => \Spatie\Permission\Middlewares\PermissionMiddleware::class,
         'role_or_permission' => \Spatie\Permission\Middlewares\RoleOrPermissionMiddleware::class,
         'auth.basic.sha256' => \App\Http\Middleware\BasicAuthSha256::class,
+        'check.suspension' => \App\Http\Middleware\CheckSuspension::class,
     ];
 }

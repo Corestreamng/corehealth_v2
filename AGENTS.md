@@ -230,3 +230,18 @@ When working on this project, strictly adhere to the following standards across 
 - **Elimination of Duplicate Page-Level Filters**: No tab-level filter may duplicate controls in the main ribbon. Redundant controls (such as secondary `store_id` in store batches or duplicate `cashier_id` in payment filters) are suppressed or excluded.
 - **Documentation**: Architecture is documented in `docs/OPS_AUDIT_STEPPED_STORYBOARD_WORKFLOW.md`.
 
+## 22. Staff Deactivation, Employment Status Governance & Locum Integration Standards
+- **Standardized Employment Status Matrix**: Seven explicit employment states (`active`, `probation`, `on_leave`, `suspended`, `resigned`, `terminated`, `retired`). Disciplinary and exit statuses (`suspended`, `terminated`, `resigned`, `retired`) immediately set `staff.status = 0`, `user.status = 0`, block login authentication, terminate active sessions, and revoke all active locum shift passes.
+- **Bidirectional Lifecycle Synchronization**: `Staff` and `User` models synchronize status transitions automatically via `booted()` lifecycle hooks (`syncUserAndStaffStatus()`), preventing access divergence between authentication tables and HR records.
+- **Middleware & Login Security Enforcement**:
+  - `CheckSuspension` middleware runs globally on the `web` stack, inspecting `user.status`, `staff.employment_status`, and locum pass validity on every request, instantly revoking in-flight sessions upon deactivation.
+  - `LoginController::authenticated` intercepts blocked logins, compiling detailed context (suspension reason, expected reinstatement date, HR clearance procedures).
+  - Login interface (`resources/views/auth/login.blade.php`) displays an alert banner at the top of the form with distinct MDI iconography (`mdi-account-off`, `mdi-account-remove`, `mdi-account-lock`).
+- **Locum Shift Pass Lifecycle & Revocation**: Locum practitioners require an active, non-expired, and non-revoked `LocumPass`. Suspending or deactivating a locum practitioner automatically revokes all associated passes, blocks PIN authentication in `LocumManagementService::authenticatePass`, and evicts expired shifts in middleware.
+- **Clinical Intake & Roster Protection**: `ReceptionWorkbenchController::getDoctorsByClinic`, `DoctorAppointmentController::getDoctorsForClinic`, and clinic schedules exclude suspended, inactive, or on-leave clinicians. Locum doctors are strictly restricted to assigned clinics with valid shift passes.
+- **Staff Directory Quick Action & Modular Architecture**:
+  - `/staff` DataTable list (`StaffController::listStaff`) displays all staff (including deactivated/suspended) with multi-criteria filters (Department, Category, Employment Type, Status).
+  - Quick action modal (`#quickStatusModal`, `_quick_status_modal.blade.php`) and endpoint `POST /staff/{id}/update-status` (`staff.updateStatus`) allow rapid status transitions with automatic audit logging (`staff_suspensions`, `staff_terminations`).
+  - Standalone assets `public/css/staff-directory.css` and `public/js/staff-directory.js` comply with Rule 1 (< 10 lines inline script rule; verified via `node --check`).
+- **Documentation**: Architecture is documented in `docs/STAFF_DEACTIVATION_AND_STATUS_GOVERNANCE.md`.
+

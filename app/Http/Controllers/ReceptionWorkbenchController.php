@@ -593,19 +593,45 @@ class ReceptionWorkbenchController extends Controller
     {
         // Include doctors whose primary clinic matches OR who have this clinic
         // in their can_see_clinic_queues visibility list.
-        $doctors = Staff::with('user')
+        $doctors = Staff::with(['user', 'user.active_locum_pass'])
             ->where(function ($q) use ($clinicId) {
                 $q->where('clinic_id', $clinicId)
                   ->orWhereJsonContains('can_see_clinic_queues', (int) $clinicId);
             })
-            ->whereHas('user')
+            ->where(function ($q) {
+                $q->whereIn('employment_status', [Staff::STATUS_ACTIVE, Staff::STATUS_PROBATION])
+                  ->orWhereNull('employment_status');
+            })
+            ->where(function ($q) {
+                $q->where('status', '!=', 0)->orWhereNull('status');
+            })
+            ->whereHas('user', function ($uq) {
+                $uq->where('status', '!=', 0);
+            })
             ->get()
+            ->filter(function ($staff) use ($clinicId) {
+                // If staff is locum, verify active shift pass and allowed clinic permissions
+                if ($staff->isLocum()) {
+                    if (!$staff->user || !$staff->user->hasActiveLocumPass()) {
+                        return false;
+                    }
+                    $activePass = $staff->user->active_locum_pass;
+                    if ($activePass && !empty($activePass->allowed_clinic_ids)) {
+                        if (!in_array((int) $clinicId, array_map('intval', $activePass->allowed_clinic_ids))) {
+                            return false;
+                        }
+                    }
+                }
+
+                return true;
+            })
             ->map(function ($staff) use ($clinicId) {
                 return [
                     'id' => $staff->id,
                     'user_id' => $staff->user_id,
                     'name' => userfullname($staff->user_id),
                     'primary' => (int) $staff->clinic_id === (int) $clinicId,
+                    'is_locum' => $staff->isLocum(),
                 ];
             })
             ->sortByDesc('primary')

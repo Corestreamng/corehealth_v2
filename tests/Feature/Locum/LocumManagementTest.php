@@ -22,9 +22,22 @@ class LocumManagementTest extends TestCase
         $this->adminUser = User::find(1)
             ?: User::role(['ADMIN', 'SUPERADMIN', 'super-admin'])->first()
             ?: User::where('is_admin', 21)->first();
-        if ($this->adminUser && !$this->adminUser->hasRole('ADMIN')) {
-            Role::firstOrCreate(['name' => 'ADMIN', 'guard_name' => 'web']);
-            $this->adminUser->assignRole('ADMIN');
+        if ($this->adminUser) {
+            $this->adminUser->status = 1;
+            $this->adminUser->save();
+            if ($this->adminUser->staff_profile) {
+                $this->adminUser->staff_profile->update([
+                    'status' => 1,
+                    'employment_status' => 'active',
+                    'suspended_at' => null,
+                    'suspended_by' => null,
+                    'suspension_reason' => null,
+                ]);
+            }
+            if (!$this->adminUser->hasRole('ADMIN')) {
+                Role::firstOrCreate(['name' => 'ADMIN', 'guard_name' => 'web']);
+                $this->adminUser->assignRole('ADMIN');
+            }
         }
     }
 

@@ -79,6 +79,55 @@
                                 </div>
                             </div>
 
+                            <!-- Dedicated Employment Status & Access Governance Card -->
+                            <div class="card-modern mb-3" style="border-left: 4px solid var(--primary-color);">
+                                <div class="card-header-modern py-3 d-flex justify-content-between align-items-center">
+                                    <h5 class="card-title-modern mb-0 font-weight-bold">
+                                        <i class="mdi mdi-account-settings text-primary"></i> Employment Status
+                                    </h5>
+                                    @php
+                                        $curEmpStatus = $user->staff_profile?->employment_status ?? 'active';
+                                        $empBadgeClass = match($curEmpStatus) {
+                                            'active' => 'badge-success',
+                                            'probation' => 'badge-info',
+                                            'on_leave' => 'badge-warning text-dark',
+                                            'suspended' => 'badge-danger',
+                                            'terminated' => 'badge-dark',
+                                            'resigned' => 'badge-secondary',
+                                            'retired' => 'badge-secondary',
+                                            default => 'badge-light',
+                                        };
+                                    @endphp
+                                    <span class="badge {{ $empBadgeClass }}" id="edit_emp_status_badge">{{ strtoupper(str_replace('_', ' ', $curEmpStatus)) }}</span>
+                                </div>
+                                <div class="card-body p-3">
+                                    <div class="form-group mb-2">
+                                        <label class="form-label-modern font-weight-bold">Status <span class="text-danger">*</span></label>
+                                        <select class="form-control form-control-modern" name="employment_status" id="edit_employment_status" required>
+                                            <option value="active" {{ ($user->staff_profile?->employment_status ?? old('employment_status', 'active')) == 'active' ? 'selected' : '' }}>Active (Full Access)</option>
+                                            <option value="probation" {{ ($user->staff_profile?->employment_status ?? old('employment_status')) == 'probation' ? 'selected' : '' }}>Probation (Active Review)</option>
+                                            <option value="on_leave" {{ ($user->staff_profile?->employment_status ?? old('employment_status')) == 'on_leave' ? 'selected' : '' }}>On Leave (Portal Only)</option>
+                                            <option value="suspended" {{ ($user->staff_profile?->employment_status ?? old('employment_status')) == 'suspended' ? 'selected' : '' }}>Suspended (Login Blocked)</option>
+                                            <option value="resigned" {{ ($user->staff_profile?->employment_status ?? old('employment_status')) == 'resigned' ? 'selected' : '' }}>Resigned (Access Revoked)</option>
+                                            <option value="terminated" {{ ($user->staff_profile?->employment_status ?? old('employment_status')) == 'terminated' ? 'selected' : '' }}>Terminated (Access Revoked)</option>
+                                            <option value="retired" {{ ($user->staff_profile?->employment_status ?? old('employment_status')) == 'retired' ? 'selected' : '' }}>Retired (Access Revoked)</option>
+                                        </select>
+                                    </div>
+                                    <small id="edit_status_help" class="form-text text-muted mb-2 d-block" style="font-size:0.75rem;line-height:1.3;"></small>
+
+                                    <div id="edit_suspension_section" class="mt-2 pt-2 border-top" style="{{ ($user->staff_profile?->employment_status ?? '') === 'suspended' ? '' : 'display:none;' }}">
+                                        <div class="form-group mb-2">
+                                            <label class="form-label-modern font-weight-bold" style="font-size:0.8rem;">Suspension End Date</label>
+                                            <input type="date" class="form-control form-control-sm form-control-modern" name="suspension_end_date" value="{{ $user->staff_profile?->suspension_end_date ? $user->staff_profile->suspension_end_date->format('Y-m-d') : old('suspension_end_date') }}">
+                                        </div>
+                                        <div class="form-group mb-0">
+                                            <label class="form-label-modern font-weight-bold" style="font-size:0.8rem;">Suspension Reason</label>
+                                            <textarea class="form-control form-control-sm form-control-modern" name="suspension_reason" rows="2" placeholder="Reason for suspension...">{{ $user->staff_profile?->suspension_reason ?? old('suspension_reason') }}</textarea>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
                             <div class="card-modern">
                                 <div class="card-header-modern py-3">
                                     <h5 class="card-title-modern mb-0 font-weight-bold">
@@ -254,16 +303,15 @@
                                                         <option value="part_time" {{ ($user->staff_profile?->employment_type ?? old('employment_type')) == 'part_time' ? 'selected' : '' }}>Part Time</option>
                                                         <option value="contract" {{ ($user->staff_profile?->employment_type ?? old('employment_type')) == 'contract' ? 'selected' : '' }}>Contract</option>
                                                         <option value="intern" {{ ($user->staff_profile?->employment_type ?? old('employment_type')) == 'intern' ? 'selected' : '' }}>Intern</option>
+                                                        <option value="locum" {{ ($user->staff_profile?->employment_type ?? old('employment_type')) == 'locum' ? 'selected' : '' }}>Locum Practitioner</option>
                                                     </select>
                                                 </div>
                                                 <div class="col-lg-4 col-md-6">
-                                                    <label class="form-label-modern">Employment Status <span class="text-danger">*</span></label>
-                                                    <select class="form-control form-control-modern" name="employment_status" required>
-                                                        <option value="active" {{ ($user->staff_profile?->employment_status ?? old('employment_status', 'active')) == 'active' ? 'selected' : '' }}>Active</option>
-                                                        <option value="suspended" {{ ($user->staff_profile?->employment_status ?? old('employment_status')) == 'suspended' ? 'selected' : '' }}>Suspended</option>
-                                                        <option value="resigned" {{ ($user->staff_profile?->employment_status ?? old('employment_status')) == 'resigned' ? 'selected' : '' }}>Resigned</option>
-                                                        <option value="terminated" {{ ($user->staff_profile?->employment_status ?? old('employment_status')) == 'terminated' ? 'selected' : '' }}>Terminated</option>
-                                                    </select>
+                                                    <label class="form-label-modern">Employment Status</label>
+                                                    <div class="p-2 bg-white border rounded d-flex align-items-center justify-content-between" style="min-height: 38px;">
+                                                        <span class="badge {{ $empBadgeClass }}" id="edit_emp_status_badge_tab">{{ strtoupper(str_replace('_', ' ', $curEmpStatus)) }}</span>
+                                                        <small class="text-primary font-weight-bold"><i class="mdi mdi-arrow-left"></i> Configured in Status Card</small>
+                                                    </div>
                                                 </div>
                                                 <div class="col-lg-4 col-md-6">
                                                     <label class="form-label-modern">Date Hired</label>
@@ -477,6 +525,29 @@
 
         document.querySelector('#filename').addEventListener('change', function() {
             readURL()
+        });
+
+        // Employment Status live badge and suspension section toggle
+        $('#edit_employment_status').on('change', function() {
+            var val = $(this).val();
+            var badgeClasses = {
+                'active': 'badge-success',
+                'probation': 'badge-info',
+                'on_leave': 'badge-warning text-dark',
+                'suspended': 'badge-danger',
+                'terminated': 'badge-dark',
+                'resigned': 'badge-secondary',
+                'retired': 'badge-secondary'
+            };
+            var cls = badgeClasses[val] || 'badge-light';
+            var txt = val.toUpperCase().replace('_', ' ');
+            $('#edit_emp_status_badge, #edit_emp_status_badge_tab').attr('class', 'badge ' + cls).text(txt);
+
+            if (val === 'suspended') {
+                $('#edit_suspension_section').slideDown(150);
+            } else {
+                $('#edit_suspension_section').slideUp(150);
+            }
         });
     </script>
 @endsection

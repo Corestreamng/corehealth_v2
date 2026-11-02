@@ -31,11 +31,12 @@ class ClinicScheduleController extends Controller
     public function index()
     {
         $clinics = Clinic::orderBy('name')->get();
-        $doctors = Staff::whereHas('user', function ($q) {
-            $q->whereHas('roles', function ($rq) {
-                $rq->where('name', 'DOCTOR');
-            });
-        })->with('user:id,surname,firstname,othername')->orderBy('id')->get();
+        $doctors = Staff::active()
+            ->whereHas('user', function ($q) {
+                $q->where('status', '!=', 0)->whereHas('roles', function ($rq) {
+                    $rq->where('name', 'DOCTOR');
+                });
+            })->with('user:id,surname,firstname,othername')->orderBy('id')->get();
 
         return view('admin.clinic-schedules.index', compact('clinics', 'doctors'));
     }

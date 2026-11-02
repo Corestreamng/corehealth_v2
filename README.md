@@ -181,8 +181,11 @@ CoreHealth v2 is designed to streamline hospital operations by integrating clini
 - **Liability Schedules** — long-term liability management
 - **Statutory Remittances** — tax, pension, NHIS obligations
 
-### 18. Human Resources
+### 18. Human Resources & Staff Governance
 - **HR Workbench** — employee dashboard, org chart
+- **Staff Deactivation & Status Governance** — seven standardized employment statuses (`active`, `probation`, `on_leave`, `suspended`, `resigned`, `terminated`, `retired`) with bidirectional `Staff` <-> `User` status synchronization, automatic session termination middleware (`CheckSuspension`), and context-rich login rejection alerts
+- **Locum Shift Pass Lifecycle** — real-time TTL enforcement, instant revocation on locum deactivation, PIN authentication protection, and clinic restriction
+- **Staff Directory Quick Status Modal** — rapid status updates directly from `/staff` DataTable with multi-criteria filtering and full audit trail capture (`staff_suspensions`, `staff_terminations`)
 - **Leave Management** — types, requests, balances, calendar, approval workflow
 - **Payroll** — salary profiles, pay heads, batch processing, payslip generation
 - **Disciplinary** — query management, hearings, outcomes

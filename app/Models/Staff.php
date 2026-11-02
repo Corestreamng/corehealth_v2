@@ -32,6 +32,37 @@ class Staff extends Model implements Auditable
     use HasFactory;
     use \OwenIt\Auditing\Auditable;
 
+    protected static function booted()
+    {
+        static::saving(function ($staff) {
+            $nonLoginableStatuses = [
+                self::STATUS_SUSPENDED,
+                self::STATUS_RESIGNED,
+                self::STATUS_TERMINATED,
+                self::STATUS_RETIRED,
+            ];
+
+            if (in_array($staff->employment_status, $nonLoginableStatuses)) {
+                $staff->status = 0;
+            } elseif (in_array($staff->employment_status, [self::STATUS_ACTIVE, self::STATUS_PROBATION, self::STATUS_ON_LEAVE])) {
+                if ($staff->isDirty('employment_status') && !in_array($staff->getOriginal('employment_status'), [self::STATUS_ACTIVE, self::STATUS_PROBATION, self::STATUS_ON_LEAVE])) {
+                    $staff->status = 1;
+                }
+            }
+        });
+
+        static::saved(function ($staff) {
+            if ($staff->isDirty('employment_status') || $staff->isDirty('status')) {
+                if ($staff->user_id && $staff->user) {
+                    $targetUserStatus = (int) $staff->status === 1 ? 1 : 0;
+                    if ((int) $staff->user->status !== $targetUserStatus) {
+                        $staff->user->update(['status' => $targetUserStatus]);
+                    }
+                }
+            }
+        });
+    }
+
     protected $fillable = [
         // Original fields
         'user_id',
@@ -154,9 +185,12 @@ class Staff extends Model implements Auditable
 
     // Employment Statuses
     public const STATUS_ACTIVE = 'active';
+    public const STATUS_PROBATION = 'probation';
+    public const STATUS_ON_LEAVE = 'on_leave';
     public const STATUS_SUSPENDED = 'suspended';
     public const STATUS_RESIGNED = 'resigned';
     public const STATUS_TERMINATED = 'terminated';
+    public const STATUS_RETIRED = 'retired';
 
     // Marital Statuses
     public const MARITAL_SINGLE = 'single';
@@ -487,20 +521,78 @@ class Staff extends Model implements Auditable
     }
 
     /**
-     * Check if staff is active
+     * Check if staff is active (active or probation, and status not 0)
      */
     public function isActive(): bool
     {
-        return $this->employment_status === self::STATUS_ACTIVE ||
-               $this->employment_status === null; // Legacy compatibility
+        $activeStatus = in_array($this->employment_status, [self::STATUS_ACTIVE, self::STATUS_PROBATION, null]);
+
+        return $activeStatus && (int) ($this->status ?? 1) === 1;
     }
 
     /**
-     * Check if staff can login (not suspended or terminated)
+     * Check if staff can login (active, probation, or on_leave, and status not 0)
      */
     public function canLogin(): bool
     {
-        return in_array($this->employment_status, [self::STATUS_ACTIVE, null]);
+        $allowedStatuses = [self::STATUS_ACTIVE, self::STATUS_PROBATION, self::STATUS_ON_LEAVE, null];
+
+        return in_array($this->employment_status, $allowedStatuses) && (int) ($this->status ?? 1) === 1;
+    }
+
+    /**
+     * Check if staff is a locum practitioner
+     */
+    public function isLocum(): bool
+    {
+        return $this->employment_type === self::EMPLOYMENT_LOCUM
+            || ($this->user ? $this->user->isLocum() : false);
+    }
+
+    /**
+     * Check if this staff member is available for clinical duty
+     * (active, user active, not on leave or suspended/terminated/resigned/retired, and if locum, has active pass)
+     */
+    public function isAvailableForClinicalDuty(): bool
+    {
+        if (!$this->isActive() || $this->employment_status === self::STATUS_ON_LEAVE) {
+            return false;
+        }
+
+        if ($this->user && (int) $this->user->status !== 1) {
+            return false;
+        }
+
+        if ($this->isLocum()) {
+            return $this->user ? $this->user->hasActiveLocumPass() : false;
+        }
+
+        return true;
+    }
+
+    /**
+     * Synchronize Staff status and User status according to employment_status
+     */
+    public function syncUserAndStaffStatus(): void
+    {
+        $nonLoginableStatuses = [
+            self::STATUS_SUSPENDED,
+            self::STATUS_RESIGNED,
+            self::STATUS_TERMINATED,
+            self::STATUS_RETIRED,
+        ];
+
+        if (in_array($this->employment_status, $nonLoginableStatuses)) {
+            $this->status = 0;
+            if ($this->user_id && $this->user) {
+                $this->user->update(['status' => 0]);
+            }
+        } elseif (in_array($this->employment_status, [self::STATUS_ACTIVE, self::STATUS_PROBATION, self::STATUS_ON_LEAVE])) {
+            $this->status = 1;
+            if ($this->user_id && $this->user) {
+                $this->user->update(['status' => 1]);
+            }
+        }
     }
 
     /**
@@ -544,6 +636,7 @@ class Staff extends Model implements Auditable
             self::EMPLOYMENT_PART_TIME => 'Part Time',
             self::EMPLOYMENT_CONTRACT => 'Contract',
             self::EMPLOYMENT_INTERN => 'Intern',
+            self::EMPLOYMENT_LOCUM => 'Locum',
         ];
     }
 
@@ -554,9 +647,12 @@ class Staff extends Model implements Auditable
     {
         return [
             self::STATUS_ACTIVE => 'Active',
+            self::STATUS_PROBATION => 'Probation',
+            self::STATUS_ON_LEAVE => 'On Leave',
             self::STATUS_SUSPENDED => 'Suspended',
             self::STATUS_RESIGNED => 'Resigned',
             self::STATUS_TERMINATED => 'Terminated',
+            self::STATUS_RETIRED => 'Retired',
         ];
     }
 
@@ -566,9 +662,23 @@ class Staff extends Model implements Auditable
     public function scopeActive($query)
     {
         return $query->where(function ($q) {
-            $q->where('employment_status', self::STATUS_ACTIVE)
+            $q->whereIn('employment_status', [self::STATUS_ACTIVE, self::STATUS_PROBATION])
               ->orWhereNull('employment_status');
+        })->where(function ($q) {
+            $q->where('status', '!=', 0)->orWhereNull('status');
         });
+    }
+
+    /**
+     * Scope for clinical duty staff (active, not on leave, user status = 1)
+     */
+    public function scopeClinicalDuty($query)
+    {
+        return $query->active()
+            ->where('employment_status', '!=', self::STATUS_ON_LEAVE)
+            ->whereHas('user', function ($uq) {
+                $uq->where('status', '!=', 0);
+            });
     }
 
     /**
@@ -577,6 +687,17 @@ class Staff extends Model implements Auditable
     public function scopeSuspended($query)
     {
         return $query->where('employment_status', self::STATUS_SUSPENDED);
+    }
+
+    /**
+     * Scope for locum staff
+     */
+    public function scopeLocum($query)
+    {
+        return $query->where('employment_type', self::EMPLOYMENT_LOCUM)
+            ->orWhereHas('user', function ($uq) {
+                $uq->where('is_locum', true)->orWhereHas('locum_profile');
+            });
     }
 
     /**
