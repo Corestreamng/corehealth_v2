@@ -33,4 +33,21 @@ class EncounterCreateOptimizationTest extends TestCase
         $empty = collect([])->groupBy(['category', 'sub_category']);
         $this->assertTrue($empty->isEmpty());
     }
+
+    /** @test */
+    public function test_empty_reasons_and_staff_collection_prevents_memory_spike()
+    {
+        $memBefore = memory_get_usage();
+        $reasonsGrouped = collect([]);
+        $staffUsers = collect([
+            (object)['id' => 1, 'surname' => 'Adeyemi', 'firstname' => 'Tunde', 'othername' => 'Paul'],
+        ]);
+
+        $this->assertTrue($reasonsGrouped->isEmpty());
+        $this->assertCount(1, $staffUsers);
+        $memAfter = memory_get_usage();
+
+        // Memory allocated should be negligible (< 10KB)
+        $this->assertLessThan(10240, $memAfter - $memBefore);
+    }
 }

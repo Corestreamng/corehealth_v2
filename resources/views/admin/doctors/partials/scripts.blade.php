@@ -1,484 +1,507 @@
 {{-- JavaScript functions for delete functionality --}}
 <script>
-let currentDeleteItem = null;
+    let currentDeleteItem = null;
 
-// Delete Lab Request
-function deleteLabRequest(labId, encounterId, serviceName) {
-    ClinicalOrdersKit.showDeleteConfirmation({
-        type: 'lab',
-        itemName: serviceName,
-        onConfirm: function (reason, callback) {
-            $.ajax({
-                url: `{{ url('/encounters/${encounterId}/labs/${labId}') }}`,
-                type: 'DELETE',
-                headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') },
-                data: { reason: reason },
-                success: function(response) {
-                    callback(true);
-                    if (response.success) {
-                        toastr.success('Request deleted successfully');
+    // Delete Lab Request
+    function deleteLabRequest(labId, encounterId, serviceName) {
+        ClinicalOrdersKit.showDeleteConfirmation({
+            type: 'lab',
+            itemName: serviceName,
+            onConfirm: function(reason, callback) {
+                $.ajax({
+                    url: `{{ url('/encounters/${encounterId}/labs/${labId}') }}`,
+                    type: 'DELETE',
+                    headers: {
+                        'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                    },
+                    data: {
+                        reason: reason
+                    },
+                    success: function(response) {
+                        callback(true);
+                        if (response.success) {
+                            toastr.success('Request deleted successfully');
+                            if ($.fn.DataTable.isDataTable('#investigation_history_list')) $('#investigation_history_list').DataTable().ajax.reload();
+                        }
+                    },
+                    error: function(xhr) {
+                        callback(false);
+                        var msg = xhr.responseJSON ? (xhr.responseJSON.message || 'Error deleting') : 'Error deleting';
+                        toastr.error(msg);
+                    }
+                });
+            }
+        });
+    }
+
+    // Delete Imaging Request
+    function deleteImagingRequest(imagingId, encounterId, serviceName) {
+        ClinicalOrdersKit.showDeleteConfirmation({
+            type: 'imaging',
+            itemName: serviceName,
+            onConfirm: function(reason, callback) {
+                $.ajax({
+                    url: `{{ url('/encounters/${encounterId}/imaging/${imagingId}') }}`,
+                    type: 'DELETE',
+                    headers: {
+                        'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                    },
+                    data: {
+                        reason: reason
+                    },
+                    success: function(response) {
+                        callback(true);
+                        if (response.success) {
+                            toastr.success('Request deleted successfully');
+                            if ($.fn.DataTable.isDataTable('#imaging_history_list')) $('#imaging_history_list').DataTable().ajax.reload();
+                        }
+                    },
+                    error: function(xhr) {
+                        callback(false);
+                        var msg = xhr.responseJSON ? (xhr.responseJSON.message || 'Error deleting') : 'Error deleting';
+                        toastr.error(msg);
+                    }
+                });
+            }
+        });
+    }
+
+    // Delete Prescription
+    function deletePrescription(prescriptionId, encounterId, productName) {
+        ClinicalOrdersKit.showDeleteConfirmation({
+            type: 'prescription',
+            itemName: productName,
+            onConfirm: function(reason, callback) {
+                $.ajax({
+                    url: `{{ url('/encounters/${encounterId}/prescriptions/${prescriptionId}') }}`,
+                    type: 'DELETE',
+                    headers: {
+                        'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                    },
+                    data: {
+                        reason: reason
+                    },
+                    success: function(response) {
+                        callback(true);
+                        if (response.success) {
+                            toastr.success('Request deleted successfully');
+                            if ($.fn.DataTable.isDataTable('#presc_history_list')) $('#presc_history_list').DataTable().ajax.reload();
+                        }
+                    },
+                    error: function(xhr) {
+                        callback(false);
+                        var msg = xhr.responseJSON ? (xhr.responseJSON.message || 'Error deleting') : 'Error deleting';
+                        toastr.error(msg);
+                    }
+                });
+            }
+        });
+    }
+
+    // Confirm Delete Button Handler
+    $('#confirmDeleteBtn').on('click', function() {
+        const reasonSelect = $('#deletionReasonSelect').val();
+        const reasonOther = $('#deletionReasonOther').val();
+        const notes = $('#deletionNotes').val();
+
+        // Validate reason
+        if (!reasonSelect) {
+            alert('Please select a reason for deletion');
+            return;
+        }
+
+        if (reasonSelect === 'Other' && !reasonOther) {
+            alert('Please specify the reason');
+            return;
+        }
+
+        // Build final reason text
+        let finalReason = reasonSelect;
+        if (reasonSelect === 'Other' && reasonOther) {
+            finalReason = reasonOther;
+        }
+        if (notes) {
+            finalReason += '. Additional notes: ' + notes;
+        }
+
+        // Determine the URL based on type
+        let url = '';
+        if (currentDeleteItem._nurseRoute) {
+            // Nurse-created item — use nursing-workbench route
+            url = currentDeleteItem._nurseRoute;
+        } else if (currentDeleteItem.type === 'lab') {
+            url = `/encounters/${currentDeleteItem.encounterId}/labs/${currentDeleteItem.id}`;
+        } else if (currentDeleteItem.type === 'imaging') {
+            url = `/encounters/${currentDeleteItem.encounterId}/imaging/${currentDeleteItem.id}`;
+        } else if (currentDeleteItem.type === 'prescription') {
+            url = `/encounters/${currentDeleteItem.encounterId}/prescriptions/${currentDeleteItem.id}`;
+        } else if (currentDeleteItem.type === 'procedure') {
+            url = `/encounters/${currentDeleteItem.encounterId}/procedures/${currentDeleteItem.id}`;
+        } else if (currentDeleteItem.type === 'encounter') {
+            url = `/encounters/${currentDeleteItem.id}`;
+        }
+
+        // Disable button and show loading
+        $('#confirmDeleteBtn').prop('disabled', true).html('<i class="fa fa-spinner fa-spin"></i> Deleting...');
+
+        // Send AJAX DELETE request
+        $.ajax({
+            url: url,
+            type: 'DELETE',
+            headers: {
+                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+            },
+            data: {
+                reason: finalReason
+            },
+            success: function(response) {
+                if (response.success) {
+                    // Close modal
+                    $('#deleteConfirmModal').modal('hide');
+
+                    // Show success message
+                    alert('Request deleted successfully');
+
+                    // Reload the appropriate DataTable (doctor encounter + nurse workbench variants)
+                    if (currentDeleteItem.type === 'lab') {
                         if ($.fn.DataTable.isDataTable('#investigation_history_list')) $('#investigation_history_list').DataTable().ajax.reload();
-                    }
-                },
-                error: function(xhr) {
-                    callback(false);
-                    var msg = xhr.responseJSON ? (xhr.responseJSON.message || 'Error deleting') : 'Error deleting';
-                    toastr.error(msg);
-                }
-            });
-        }
-    });
-}
-
-// Delete Imaging Request
-function deleteImagingRequest(imagingId, encounterId, serviceName) {
-    ClinicalOrdersKit.showDeleteConfirmation({
-        type: 'imaging',
-        itemName: serviceName,
-        onConfirm: function (reason, callback) {
-            $.ajax({
-                url: `{{ url('/encounters/${encounterId}/imaging/${imagingId}') }}`,
-                type: 'DELETE',
-                headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') },
-                data: { reason: reason },
-                success: function(response) {
-                    callback(true);
-                    if (response.success) {
-                        toastr.success('Request deleted successfully');
+                        if ($.fn.DataTable.isDataTable('#cr_lab_history_list')) $('#cr_lab_history_list').DataTable().ajax.reload();
+                    } else if (currentDeleteItem.type === 'imaging') {
                         if ($.fn.DataTable.isDataTable('#imaging_history_list')) $('#imaging_history_list').DataTable().ajax.reload();
-                    }
-                },
-                error: function(xhr) {
-                    callback(false);
-                    var msg = xhr.responseJSON ? (xhr.responseJSON.message || 'Error deleting') : 'Error deleting';
-                    toastr.error(msg);
-                }
-            });
-        }
-    });
-}
-
-// Delete Prescription
-function deletePrescription(prescriptionId, encounterId, productName) {
-    ClinicalOrdersKit.showDeleteConfirmation({
-        type: 'prescription',
-        itemName: productName,
-        onConfirm: function (reason, callback) {
-            $.ajax({
-                url: `{{ url('/encounters/${encounterId}/prescriptions/${prescriptionId}') }}`,
-                type: 'DELETE',
-                headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') },
-                data: { reason: reason },
-                success: function(response) {
-                    callback(true);
-                    if (response.success) {
-                        toastr.success('Request deleted successfully');
+                        if ($.fn.DataTable.isDataTable('#cr_imaging_history_list')) $('#cr_imaging_history_list').DataTable().ajax.reload();
+                    } else if (currentDeleteItem.type === 'prescription') {
                         if ($.fn.DataTable.isDataTable('#presc_history_list')) $('#presc_history_list').DataTable().ajax.reload();
+                        if ($.fn.DataTable.isDataTable('#cr_presc_history_list')) $('#cr_presc_history_list').DataTable().ajax.reload();
+                    } else if (currentDeleteItem.type === 'procedure') {
+                        if ($.fn.DataTable.isDataTable('#procedure_history_list')) $('#procedure_history_list').DataTable().ajax.reload();
+                        if ($.fn.DataTable.isDataTable('#cr_proc_history_list')) $('#cr_proc_history_list').DataTable().ajax.reload();
+                    } else if (currentDeleteItem.type === 'encounter') {
+                        if ($.fn.DataTable.isDataTable('#encounter_history_list')) $('#encounter_history_list').DataTable().ajax.reload();
                     }
-                },
-                error: function(xhr) {
-                    callback(false);
-                    var msg = xhr.responseJSON ? (xhr.responseJSON.message || 'Error deleting') : 'Error deleting';
-                    toastr.error(msg);
+
+                    // Reset form
+                    resetDeleteModal();
                 }
-            });
-        }
-    });
-}
+            },
+            error: function(xhr) {
+                const response = xhr.responseJSON;
 
-// Confirm Delete Button Handler
-$('#confirmDeleteBtn').on('click', function() {
-    const reasonSelect = $('#deletionReasonSelect').val();
-    const reasonOther = $('#deletionReasonOther').val();
-    const notes = $('#deletionNotes').val();
+                // Check if it's a permission/validation error
+                if (xhr.status === 403 && response.reason) {
+                    // Close confirm modal
+                    $('#deleteConfirmModal').modal('hide');
 
-    // Validate reason
-    if (!reasonSelect) {
-        alert('Please select a reason for deletion');
-        return;
-    }
+                    // Show denial modal
+                    $('#deleteDeniedReason').html('<strong>' + response.message + '</strong>');
+                    $('#deleteDeniedModal').modal('show');
 
-    if (reasonSelect === 'Other' && !reasonOther) {
-        alert('Please specify the reason');
-        return;
-    }
-
-    // Build final reason text
-    let finalReason = reasonSelect;
-    if (reasonSelect === 'Other' && reasonOther) {
-        finalReason = reasonOther;
-    }
-    if (notes) {
-        finalReason += '. Additional notes: ' + notes;
-    }
-
-    // Determine the URL based on type
-    let url = '';
-    if (currentDeleteItem._nurseRoute) {
-        // Nurse-created item — use nursing-workbench route
-        url = currentDeleteItem._nurseRoute;
-    } else if (currentDeleteItem.type === 'lab') {
-        url = `/encounters/${currentDeleteItem.encounterId}/labs/${currentDeleteItem.id}`;
-    } else if (currentDeleteItem.type === 'imaging') {
-        url = `/encounters/${currentDeleteItem.encounterId}/imaging/${currentDeleteItem.id}`;
-    } else if (currentDeleteItem.type === 'prescription') {
-        url = `/encounters/${currentDeleteItem.encounterId}/prescriptions/${currentDeleteItem.id}`;
-    } else if (currentDeleteItem.type === 'procedure') {
-        url = `/encounters/${currentDeleteItem.encounterId}/procedures/${currentDeleteItem.id}`;
-    } else if (currentDeleteItem.type === 'encounter') {
-        url = `/encounters/${currentDeleteItem.id}`;
-    }
-
-    // Disable button and show loading
-    $('#confirmDeleteBtn').prop('disabled', true).html('<i class="fa fa-spinner fa-spin"></i> Deleting...');
-
-    // Send AJAX DELETE request
-    $.ajax({
-        url: url,
-        type: 'DELETE',
-        headers: {
-            'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
-        },
-        data: {
-            reason: finalReason
-        },
-        success: function(response) {
-            if (response.success) {
-                // Close modal
-                $('#deleteConfirmModal').modal('hide');
-
-                // Show success message
-                alert('Request deleted successfully');
-
-                // Reload the appropriate DataTable (doctor encounter + nurse workbench variants)
-                if (currentDeleteItem.type === 'lab') {
-                    if ($.fn.DataTable.isDataTable('#investigation_history_list')) $('#investigation_history_list').DataTable().ajax.reload();
-                    if ($.fn.DataTable.isDataTable('#cr_lab_history_list')) $('#cr_lab_history_list').DataTable().ajax.reload();
-                } else if (currentDeleteItem.type === 'imaging') {
-                    if ($.fn.DataTable.isDataTable('#imaging_history_list')) $('#imaging_history_list').DataTable().ajax.reload();
-                    if ($.fn.DataTable.isDataTable('#cr_imaging_history_list')) $('#cr_imaging_history_list').DataTable().ajax.reload();
-                } else if (currentDeleteItem.type === 'prescription') {
-                    if ($.fn.DataTable.isDataTable('#presc_history_list')) $('#presc_history_list').DataTable().ajax.reload();
-                    if ($.fn.DataTable.isDataTable('#cr_presc_history_list')) $('#cr_presc_history_list').DataTable().ajax.reload();
-                } else if (currentDeleteItem.type === 'procedure') {
-                    if ($.fn.DataTable.isDataTable('#procedure_history_list')) $('#procedure_history_list').DataTable().ajax.reload();
-                    if ($.fn.DataTable.isDataTable('#cr_proc_history_list')) $('#cr_proc_history_list').DataTable().ajax.reload();
-                } else if (currentDeleteItem.type === 'encounter') {
-                    if ($.fn.DataTable.isDataTable('#encounter_history_list')) $('#encounter_history_list').DataTable().ajax.reload();
+                    resetDeleteModal();
+                } else {
+                    alert('Error: ' + (response && response.message ? response.message : 'Failed to delete request'));
+                    $('#confirmDeleteBtn').prop('disabled', false).html('<i class="fa fa-trash-alt"></i> Delete Request');
                 }
-
-                // Reset form
-                resetDeleteModal();
             }
-        },
-        error: function(xhr) {
-            const response = xhr.responseJSON;
-
-            // Check if it's a permission/validation error
-            if (xhr.status === 403 && response.reason) {
-                // Close confirm modal
-                $('#deleteConfirmModal').modal('hide');
-
-                // Show denial modal
-                $('#deleteDeniedReason').html('<strong>' + response.message + '</strong>');
-                $('#deleteDeniedModal').modal('show');
-
-                resetDeleteModal();
-            } else {
-                alert('Error: ' + (response && response.message ? response.message : 'Failed to delete request'));
-                $('#confirmDeleteBtn').prop('disabled', false).html('<i class="fa fa-trash-alt"></i> Delete Request');
-            }
-        }
+        });
     });
-});
 
-// Reset delete modal
-function resetDeleteModal() {
-    $('#deletionReasonSelect').val('');
-    $('#deletionReasonOther').val('');
-    $('#deletionNotes').val('');
-    $('#otherReasonGroup').hide();
-    $('#confirmDeleteBtn').prop('disabled', false).html('<i class="fa fa-trash-alt"></i> Delete Request');
-    currentDeleteItem = null;
-}
+    // Reset delete modal
+    function resetDeleteModal() {
+        $('#deletionReasonSelect').val('');
+        $('#deletionReasonOther').val('');
+        $('#deletionNotes').val('');
+        $('#otherReasonGroup').hide();
+        $('#confirmDeleteBtn').prop('disabled', false).html('<i class="fa fa-trash-alt"></i> Delete Request');
+        currentDeleteItem = null;
+    }
 
-// Reset modal when closed
-$('#deleteConfirmModal').on('hidden.bs.modal', function() {
-    resetDeleteModal();
-});
+    // Reset modal when closed
+    $('#deleteConfirmModal').on('hidden.bs.modal', function() {
+        resetDeleteModal();
+    });
 
-/**
- * Delete a nurse-created clinical request (encounter_id = NULL).
- * Uses the nursing-workbench DELETE routes instead of the encounter routes.
- *
- * @param {string} type  One of: lab, imaging, prescription, procedure
- * @param {number} id    The model primary key
- * @param {string} name  Display name for the confirmation dialog
- */
-function deleteNurseClinicalRequest(type, id, name) {
-    var pathMap = {
-        lab:          'labs',
-        imaging:      'imaging',
-        prescription: 'prescriptions',
-        procedure:    'procedures'
-    };
-    ClinicalOrdersKit.showDeleteConfirmation({
-        type: type,
-        itemName: name,
-        onConfirm: function (reason, callback) {
-            $.ajax({
-                url: '{{ url('/nursing-workbench/clinical-requests') }}/' + pathMap[type] + '/' + id,
-                type: 'DELETE',
-                headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') },
-                data: { reason: reason },
-                success: function(response) {
-                    callback(true);
-                    if (response.success) {
-                        toastr.success('Request deleted successfully');
-                        var tableMap = {
-                            lab:          '#cr_lab_history_list',
-                            imaging:      '#cr_imaging_history_list',
-                            prescription: '#cr_presc_history_list',
-                            procedure:    '#cr_proc_history_list'
-                        };
-                        var tableId = tableMap[type];
-                        if (tableId && $.fn.DataTable.isDataTable(tableId)) $(tableId).DataTable().ajax.reload();
+    /**
+     * Delete a nurse-created clinical request (encounter_id = NULL).
+     * Uses the nursing-workbench DELETE routes instead of the encounter routes.
+     *
+     * @param {string} type  One of: lab, imaging, prescription, procedure
+     * @param {number} id    The model primary key
+     * @param {string} name  Display name for the confirmation dialog
+     */
+    function deleteNurseClinicalRequest(type, id, name) {
+        var pathMap = {
+            lab: 'labs',
+            imaging: 'imaging',
+            prescription: 'prescriptions',
+            procedure: 'procedures'
+        };
+        ClinicalOrdersKit.showDeleteConfirmation({
+            type: type,
+            itemName: name,
+            onConfirm: function(reason, callback) {
+                $.ajax({
+                    url: '{{ url(' / nursing - workbench / clinical - requests ') }}/' + pathMap[type] + '/' + id,
+                    type: 'DELETE',
+                    headers: {
+                        'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                    },
+                    data: {
+                        reason: reason
+                    },
+                    success: function(response) {
+                        callback(true);
+                        if (response.success) {
+                            toastr.success('Request deleted successfully');
+                            var tableMap = {
+                                lab: '#cr_lab_history_list',
+                                imaging: '#cr_imaging_history_list',
+                                prescription: '#cr_presc_history_list',
+                                procedure: '#cr_proc_history_list'
+                            };
+                            var tableId = tableMap[type];
+                            if (tableId && $.fn.DataTable.isDataTable(tableId)) $(tableId).DataTable().ajax.reload();
+                        }
+                    },
+                    error: function(xhr) {
+                        callback(false);
+                        var msg = xhr.responseJSON ? (xhr.responseJSON.message || 'Error deleting') : 'Error deleting';
+                        toastr.error(msg);
                     }
-                },
-                error: function(xhr) {
-                    callback(false);
-                    var msg = xhr.responseJSON ? (xhr.responseJSON.message || 'Error deleting') : 'Error deleting';
-                    toastr.error(msg);
-                }
-            });
-        }
-    });
-}
+                });
+            }
+        });
+    }
 
-// Delete Encounter Note
-function deleteEncounter(encounterId, encounterDate) {
-    currentDeleteItem = {
-        type: 'encounter',
-        id: encounterId,
-        name: `Encounter from ${encounterDate}`
-    };
+    // Delete Encounter Note
+    function deleteEncounter(encounterId, encounterDate) {
+        currentDeleteItem = {
+            type: 'encounter',
+            id: encounterId,
+            name: `Encounter from ${encounterDate}`
+        };
 
-    $('#deleteItemInfo').html(`
+        $('#deleteItemInfo').html(`
         <strong>Encounter:</strong> ${encounterDate}<br>
         <strong>Type:</strong> Clinical Note
     `);
 
-    $('#deleteConfirmModal').modal('show');
-}
-
-// Edit Encounter Note - Populate modal with full functionality
-if (typeof editEncounterEditorInstance === 'undefined') {
-    var editEncounterEditorInstance = null;
-}
-
-function editEncounterNote(btn) {
-    const $btn = $(btn);
-    const id = $btn.data('id');
-    const notes = $btn.data('notes');
-    const reasons = $btn.attr('data-reasons'); // Use attr to ensure string
-    const comment1 = $btn.data('comment1');
-    const comment2 = $btn.data('comment2');
-    const isWardRound = $btn.data('is-ward-round');
-
-    // Store the encounter ID
-    $('#editEncounterId').val(id);
-
-    // Populate diagnosis selection if available
-    @if(appsettings('requirediagnosis', 0))
-    if (reasons && reasons.trim() !== '') {
-        // Split by comma and trim each value
-        const reasonsArray = reasons.split(',').map(r => r.trim());
-        $('#editEncounterReasons').val(reasonsArray).trigger('change');
-
-        // Uncheck Not Applicable
-        $('#editEncounterNotApplicable').prop('checked', false).trigger('change');
-    } else {
-        $('#editEncounterReasons').val([]).trigger('change');
-
-        // Check Not Applicable if no reasons, or if it's a ward round (default behavior requested)
-        // Logic: If reasons are empty, we assume N/A.
-        $('#editEncounterNotApplicable').prop('checked', true).trigger('change');
+        $('#deleteConfirmModal').modal('show');
     }
 
-    $('#editEncounterComment1').val(comment1 || 'NA');
-    $('#editEncounterComment2').val(comment2 || 'NA');
-    @endif
+    // Edit Encounter Note - Populate modal with full functionality
+    if (typeof editEncounterEditorInstance === 'undefined') {
+        var editEncounterEditorInstance = null;
+    }
 
-    // Store notes to set after editor initialization
-    const notesContent = notes || '';
+    function editEncounterNote(btn) {
+        const $btn = $(btn);
+        const id = $btn.data('id');
+        const notes = $btn.data('notes');
+        const reasons = $btn.attr('data-reasons'); // Use attr to ensure string
+        const comment1 = $btn.data('comment1');
+        const comment2 = $btn.data('comment2');
+        const isWardRound = $btn.data('is-ward-round');
 
-    // Show the modal first
-    $('#editEncounterModal').modal('show');
+        // Store the encounter ID
+        $('#editEncounterId').val(id);
 
-    // Initialize ClassicEditor (CKEditor 5) after modal is shown
-    // Wait a bit to ensure modal DOM is ready
-    setTimeout(function() {
-        // Destroy existing editor instance if any
+        // Populate diagnosis selection if available
+        @if(appsettings('requirediagnosis', 0))
+        if (reasons && reasons.trim() !== '') {
+            // Split by comma and trim each value
+            const reasonsArray = reasons.split(',').map(r => r.trim());
+            $('#editEncounterReasons').empty();
+            reasonsArray.forEach(function(r) {
+                if (r) {
+                    var newOption = new Option(r, r, true, true);
+                    $('#editEncounterReasons').append(newOption);
+                }
+            });
+            $('#editEncounterReasons').trigger('change');
+
+            // Uncheck Not Applicable
+            $('#editEncounterNotApplicable').prop('checked', false).trigger('change');
+        } else {
+            $('#editEncounterReasons').empty().trigger('change');
+
+            // Check Not Applicable if no reasons, or if it's a ward round (default behavior requested)
+            // Logic: If reasons are empty, we assume N/A.
+            $('#editEncounterNotApplicable').prop('checked', true).trigger('change');
+        }
+
+        $('#editEncounterComment1').val(comment1 || 'NA');
+        $('#editEncounterComment2').val(comment2 || 'NA');
+        @endif
+
+        // Store notes to set after editor initialization
+        const notesContent = notes || '';
+
+        // Show the modal first
+        $('#editEncounterModal').modal('show');
+
+        // Initialize ClassicEditor (CKEditor 5) after modal is shown
+        // Wait a bit to ensure modal DOM is ready
+        setTimeout(function() {
+            // Destroy existing editor instance if any
+            if (editEncounterEditorInstance) {
+                editEncounterEditorInstance.destroy()
+                    .then(() => {
+                        initializeEditEncounterEditor(notesContent);
+                    })
+                    .catch(error => {
+                        console.error('Error destroying editor:', error);
+                        initializeEditEncounterEditor(notesContent);
+                    });
+            } else {
+                initializeEditEncounterEditor(notesContent);
+            }
+        }, 300);
+    }
+
+    function initializeEditEncounterEditor(content) {
+        const editorElement = document.querySelector('#editEncounterNotes');
+
+        if (!editorElement) {
+            console.error('Editor element not found');
+            return;
+        }
+
+        ClassicEditor
+            .create(editorElement, {
+                toolbar: {
+                    items: [
+                        'undo', 'redo',
+                        '|', 'heading',
+                        '|', 'bold', 'italic',
+                        '|', 'link', 'uploadImage', 'insertTable', 'mediaEmbed',
+                        '|', 'bulletedList', 'numberedList', 'outdent', 'indent'
+                    ]
+                }
+            })
+            .then(editor => {
+                editEncounterEditorInstance = editor;
+                // Set the content
+                editor.setData(content);
+            })
+            .catch(error => {
+                console.error('Error initializing editor:', error);
+                // Fallback to plain textarea
+                $('#editEncounterNotes').val(content);
+            });
+    }
+
+    // Save Encounter Edit
+    $('#saveEncounterEditBtn').on('click', function() {
+        const encounterId = $('#editEncounterId').val();
+
+        // Get notes from ClassicEditor or textarea
+        let notes = '';
+        if (editEncounterEditorInstance) {
+            notes = editEncounterEditorInstance.getData();
+        } else {
+            notes = $('#editEncounterNotes').val();
+        }
+
+        @if(appsettings('requirediagnosis', 0))
+        const notApplicable = $('#editEncounterNotApplicable').is(':checked');
+        let reasons = [];
+        let comment1 = 'NA';
+        let comment2 = 'NA';
+
+        if (!notApplicable) {
+            reasons = $('#editEncounterReasons').val();
+            comment1 = $('#editEncounterComment1').val();
+            comment2 = $('#editEncounterComment2').val();
+
+            if (!reasons || reasons.length === 0) {
+                alert('Please select at least one diagnosis reason or check "Diagnosis Not Applicable".');
+                return;
+            }
+
+            if (!comment1 || !comment2) {
+                alert('Please select both diagnosis comments.');
+                return;
+            }
+        }
+        @endif
+
+        if (!notes || !notes.trim()) {
+            alert('Clinical notes are required.');
+            return;
+        }
+
+        $(this).prop('disabled', true).html('<i class="fa fa-spinner fa-spin"></i> Saving...');
+
+        $.ajax({
+            url: `{{ url('/encounters/${encounterId}/notes') }}`,
+            type: 'PUT',
+            headers: {
+                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+            },
+            data: {
+                notes: notes,
+                @if(appsettings('requirediagnosis', 0))
+                reasons_for_encounter: notApplicable ? '' : reasons.join(','),
+                reasons_for_encounter_comment_1: notApplicable ? 'NA' : comment1,
+                reasons_for_encounter_comment_2: notApplicable ? 'NA' : comment2
+                @endif
+            },
+            success: function(response) {
+                if (response.success) {
+                    $('#editEncounterModal').modal('hide');
+                    $('#encounter_history_list').DataTable().ajax.reload();
+                    alert('Encounter note updated successfully!');
+                } else {
+                    alert(response.message || 'Failed to update encounter note');
+                }
+            },
+            error: function(xhr) {
+                const errorMsg = xhr.responseJSON?.message || 'An error occurred while updating the encounter note';
+                alert(errorMsg);
+            },
+            complete: function() {
+                $('#saveEncounterEditBtn').prop('disabled', false).html('<i class="fa fa-save"></i> Save Changes');
+            }
+        });
+    });
+
+    // Cleanup ClassicEditor when modal is closed
+    $('#editEncounterModal').on('hidden.bs.modal', function() {
         if (editEncounterEditorInstance) {
             editEncounterEditorInstance.destroy()
                 .then(() => {
-                    initializeEditEncounterEditor(notesContent);
+                    editEncounterEditorInstance = null;
                 })
                 .catch(error => {
-                    console.error('Error destroying editor:', error);
-                    initializeEditEncounterEditor(notesContent);
+                    console.error('Error destroying editor on modal close:', error);
+                    editEncounterEditorInstance = null;
                 });
-        } else {
-            initializeEditEncounterEditor(notesContent);
-        }
-    }, 300);
-}
-
-function initializeEditEncounterEditor(content) {
-    const editorElement = document.querySelector('#editEncounterNotes');
-
-    if (!editorElement) {
-        console.error('Editor element not found');
-        return;
-    }
-
-    ClassicEditor
-        .create(editorElement, {
-            toolbar: {
-                items: [
-                    'undo', 'redo',
-                    '|', 'heading',
-                    '|', 'bold', 'italic',
-                    '|', 'link', 'uploadImage', 'insertTable', 'mediaEmbed',
-                    '|', 'bulletedList', 'numberedList', 'outdent', 'indent'
-                ]
-            }
-        })
-        .then(editor => {
-            editEncounterEditorInstance = editor;
-            // Set the content
-            editor.setData(content);
-        })
-        .catch(error => {
-            console.error('Error initializing editor:', error);
-            // Fallback to plain textarea
-            $('#editEncounterNotes').val(content);
-        });
-}
-
-// Save Encounter Edit
-$('#saveEncounterEditBtn').on('click', function() {
-    const encounterId = $('#editEncounterId').val();
-
-    // Get notes from ClassicEditor or textarea
-    let notes = '';
-    if (editEncounterEditorInstance) {
-        notes = editEncounterEditorInstance.getData();
-    } else {
-        notes = $('#editEncounterNotes').val();
-    }
-
-    @if(appsettings('requirediagnosis', 0))
-    const notApplicable = $('#editEncounterNotApplicable').is(':checked');
-    let reasons = [];
-    let comment1 = 'NA';
-    let comment2 = 'NA';
-
-    if (!notApplicable) {
-        reasons = $('#editEncounterReasons').val();
-        comment1 = $('#editEncounterComment1').val();
-        comment2 = $('#editEncounterComment2').val();
-
-        if (!reasons || reasons.length === 0) {
-            alert('Please select at least one diagnosis reason or check "Diagnosis Not Applicable".');
-            return;
-        }
-
-        if (!comment1 || !comment2) {
-            alert('Please select both diagnosis comments.');
-            return;
-        }
-    }
-    @endif
-
-    if (!notes || !notes.trim()) {
-        alert('Clinical notes are required.');
-        return;
-    }
-
-    $(this).prop('disabled', true).html('<i class="fa fa-spinner fa-spin"></i> Saving...');
-
-    $.ajax({
-        url: `{{ url('/encounters/${encounterId}/notes') }}`,
-        type: 'PUT',
-        headers: {
-            'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
-        },
-        data: {
-            notes: notes,
-            @if(appsettings('requirediagnosis', 0))
-            reasons_for_encounter: notApplicable ? '' : reasons.join(','),
-            reasons_for_encounter_comment_1: notApplicable ? 'NA' : comment1,
-            reasons_for_encounter_comment_2: notApplicable ? 'NA' : comment2
-            @endif
-        },
-        success: function(response) {
-            if (response.success) {
-                $('#editEncounterModal').modal('hide');
-                $('#encounter_history_list').DataTable().ajax.reload();
-                alert('Encounter note updated successfully!');
-            } else {
-                alert(response.message || 'Failed to update encounter note');
-            }
-        },
-        error: function(xhr) {
-            const errorMsg = xhr.responseJSON?.message || 'An error occurred while updating the encounter note';
-            alert(errorMsg);
-        },
-        complete: function() {
-            $('#saveEncounterEditBtn').prop('disabled', false).html('<i class="fa fa-save"></i> Save Changes');
         }
     });
-});
 
-// Cleanup ClassicEditor when modal is closed
-$('#editEncounterModal').on('hidden.bs.modal', function() {
-    if (editEncounterEditorInstance) {
-        editEncounterEditorInstance.destroy()
-            .then(() => {
-                editEncounterEditorInstance = null;
-            })
-            .catch(error => {
-                console.error('Error destroying editor on modal close:', error);
-                editEncounterEditorInstance = null;
+    // Initialize Select2 for the edit modal diagnosis selection
+    $(document).ready(function() {
+        if ($('#editEncounterReasons').length > 0) {
+            $('#editEncounterReasons').select2({
+                placeholder: "Select Reason(s)",
+                allowClear: true,
+                tags: true, // Allow custom reasons
+                dropdownParent: $('#editEncounterModal') // Important for Select2 in Bootstrap modal
             });
-    }
-});
-
-// Initialize Select2 for the edit modal diagnosis selection
-$(document).ready(function() {
-    if ($('#editEncounterReasons').length> 0) {
-        $('#editEncounterReasons').select2({
-            placeholder: "Select Reason(s)",
-            allowClear: true,
-            tags: true, // Allow custom reasons
-            dropdownParent: $('#editEncounterModal') // Important for Select2 in Bootstrap modal
-        });
-    }
-
-    // Handle Not Applicable Checkbox
-    $('#editEncounterNotApplicable').on('change', function() {
-        const isChecked = $(this).is(':checked');
-        if (isChecked) {
-            $('#editEncounterReasonsGroup').hide();
-            $('#editEncounterCommentsGroup').hide();
-            $('#editEncounterReasons').val(null).trigger('change');
-            $('#editEncounterComment1').val('NA');
-            $('#editEncounterComment2').val('NA');
-        } else {
-            $('#editEncounterReasonsGroup').show();
-            $('#editEncounterCommentsGroup').show();
         }
+
+        // Handle Not Applicable Checkbox
+        $('#editEncounterNotApplicable').on('change', function() {
+            const isChecked = $(this).is(':checked');
+            if (isChecked) {
+                $('#editEncounterReasonsGroup').hide();
+                $('#editEncounterCommentsGroup').hide();
+                $('#editEncounterReasons').val(null).trigger('change');
+                $('#editEncounterComment1').val('NA');
+                $('#editEncounterComment2').val('NA');
+            } else {
+                $('#editEncounterReasonsGroup').show();
+                $('#editEncounterCommentsGroup').show();
+            }
+        });
     });
-});
 </script>

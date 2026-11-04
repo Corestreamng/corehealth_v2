@@ -118,20 +118,6 @@
                     </label>
                     <select name="editEncounterReasons[]" id="editEncounterReasons" class="form-control text-lg"
                         multiple="multiple" required style="width: 100%; display:block;">
-                        @if (!empty($reasonsGrouped))
-                            @foreach ($reasonsGrouped as $category => $subCategories)
-                                <optgroup label="{{ $category }}">
-                                    @foreach ($subCategories as $subCategory => $items)
-                                        <option disabled style="font-weight: bold;">{{ $subCategory }}</option>
-                                        @foreach ($items as $reason_item)
-                                            <option value="{{ $reason_item->code }}-{{ $reason_item->name }}">
-                                                &emsp;{{ $reason_item->code }} {{ $reason_item->name }}
-                                            </option>
-                                        @endforeach
-                                    @endforeach
-                                </optgroup>
-                            @endforeach
-                        @endif
                     </select>
                 </div>
 

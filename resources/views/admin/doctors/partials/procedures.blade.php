@@ -145,13 +145,13 @@
                     <div class="row g-2 mb-2">
                         <div class="col-md-6">
                             @php
-                                $staffUsers = \App\Models\User::with('category:id,name')
+                                $staffUsers = \App\Models\Staff::with(['user:id,surname,firstname,othername', 'user.category:id,name'])
                                     ->where('status', 1)
-                                    ->where('is_admin', '!=', 19)
-                                    ->select(['id', 'surname', 'firstname', 'othername', 'is_admin'])
-                                    ->orderBy('surname')
-                                    ->orderBy('firstname')
-                                    ->get();
+                                    ->get()
+                                    ->map(fn ($s) => $s->user)
+                                    ->filter()
+                                    ->sortBy('surname')
+                                    ->values();
                             @endphp
                             <label for="team_member_user" class="form-label small fw-bold">Staff Member</label>
                             <select class="form-select form-select-sm" id="team_member_user">
