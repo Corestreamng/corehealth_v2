@@ -145,9 +145,10 @@
                     <div class="row g-2 mb-2">
                         <div class="col-md-6">
                             @php
-                                $staffUsers = \App\Models\User::with(['category', 'staff_profile.specialization'])
+                                $staffUsers = \App\Models\User::with('category:id,name')
                                     ->where('status', 1)
                                     ->where('is_admin', '!=', 19)
+                                    ->select(['id', 'surname', 'firstname', 'othername', 'is_admin'])
                                     ->orderBy('surname')
                                     ->orderBy('firstname')
                                     ->get();

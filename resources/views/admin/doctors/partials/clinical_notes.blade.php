@@ -109,6 +109,7 @@
                             @include('admin.partials.speech_dictation', [
                                 'targetId' => 'doctor_diagnosis_text',
                                 'editorType' => 'ckeditor',
+                                'noteType' => 'doctor',
                                 'defaultLang' => 'en-US',
                                 'showLangSelect' => true
                             ])

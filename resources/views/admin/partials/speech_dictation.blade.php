@@ -4,6 +4,7 @@
     $uniqueId = $targetId . '_' . uniqid();
     $showLangSelect = $showLangSelect ?? true;
     $editorType = $editorType ?? 'textarea';
+    $noteType = $noteType ?? 'auto';
     $defaultLang = $defaultLang ?? 'en-US';
     $hosColor = appsettings('hos_color') ?? '#0066cc';
     $llmConfig = is_string(appsettings('llm_config')) ? json_decode(appsettings('llm_config'), true) : (is_array(appsettings('llm_config')) ? appsettings('llm_config') : []);
@@ -551,6 +552,7 @@ document.addEventListener('DOMContentLoaded', function() {
             historyTextSelector: '#speech-history-text-{{ $uniqueId }}',
             langSelectSelector: '#select-speech-lang-{{ $uniqueId }}',
             editorType: '{{ $editorType }}',
+            noteType: '{{ $noteType }}',
             defaultLang: '{{ $defaultLang }}',
             onResultCallback: function(text) {
                 const targetEl = document.getElementById('{{ $targetId }}');

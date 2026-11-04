@@ -995,9 +995,9 @@
                                                 <small class="text-muted d-block mt-1">This prompt instructs the LLM on how to analyze the RAG context and format the patient's clinical summary.</small>
                                             </div>
                                             <div class="col-md-12 mb-3">
-                                                <label class="form-label" style="font-weight: 600;">Note Polishing Prompt</label>
-                                                <textarea class="form-control" name="llm_config[system_prompts][polish_note]" rows="3" style="border-radius: 8px;" placeholder="System instructions for NLP offline polishing...">{{ $llmConfig['system_prompts']['polish_note'] ?? config('llm.prompts.polish_note') }}</textarea>
-                                                <small class="text-muted d-block mt-1">This prompt is used when the "Polish Note" button is clicked in the dictation toolbar to clean up grammar and medically format the raw text.</small>
+                                                <label class="form-label" style="font-weight: 600;">Note Polishing System Prompt</label>
+                                                <textarea class="form-control" name="llm_config[system_prompts][polish_note]" rows="8" style="border-radius: 8px;" placeholder="System instructions for clinical note polishing...">{{ $llmConfig['system_prompts']['polish_note'] ?? config('llm.prompts.polish_note') }}</textarea>
+                                                <small class="text-muted d-block mt-1">This prompt instructs the LLM on how to polish and format doctor-patient conversations, chaotic nurse dictations, and physician memos with zero clinical context loss.</small>
                                             </div>
                                         </div>
                                     </div>

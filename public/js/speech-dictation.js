@@ -87,6 +87,7 @@ class SpeechDictationKit {
         this.summaryButton = document.querySelector(options.summaryButtonSelector);
 
         this.editorType = options.editorType || 'textarea'; // 'textarea' or 'ckeditor'
+        this.noteType = options.noteType || 'auto'; // 'auto', 'doctor', 'nurse', 'memo'
         this.defaultLang = options.defaultLang || 'en-US';
         this.onResultCallback = options.onResultCallback || null;
 
@@ -506,6 +507,106 @@ class SpeechDictationKit {
         return null;
     }
 
+    markdownToHtml(md) {
+        if (!md) return '';
+
+        // Strip code block fences if returned by LLM
+        let text = md.replace(/^```[a-z]*\n?/gim, '').replace(/\n?```$/gim, '').trim();
+
+        // Convert line by line to semantic CKEditor 5 HTML
+        const lines = text.split('\n');
+        let html = '';
+        let inUl = false;
+        let inOl = false;
+
+        const closeLists = () => {
+            if (inUl) {
+                html += '</ul>';
+                inUl = false;
+            }
+            if (inOl) {
+                html += '</ol>';
+                inOl = false;
+            }
+        };
+
+        for (let i = 0; i < lines.length; i++) {
+            let line = lines[i].trim();
+
+            if (!line) {
+                closeLists();
+                continue;
+            }
+
+            // Headers
+            if (/^####\s+(.*$)/.test(line)) {
+                closeLists();
+                html += '<h4>' + this.formatInlineMarkdown(line.replace(/^####\s+/, '')) + '</h4>';
+                continue;
+            }
+            if (/^###\s+(.*$)/.test(line)) {
+                closeLists();
+                html += '<h3>' + this.formatInlineMarkdown(line.replace(/^###\s+/, '')) + '</h3>';
+                continue;
+            }
+            if (/^##\s+(.*$)/.test(line)) {
+                closeLists();
+                html += '<h2>' + this.formatInlineMarkdown(line.replace(/^##\s+/, '')) + '</h2>';
+                continue;
+            }
+            if (/^#\s+(.*$)/.test(line)) {
+                closeLists();
+                html += '<h1>' + this.formatInlineMarkdown(line.replace(/^#\s+/, '')) + '</h1>';
+                continue;
+            }
+
+            // Unordered list items (- or * )
+            if (/^[-*]\s+(.*$)/.test(line)) {
+                if (inOl) {
+                    html += '</ol>';
+                    inOl = false;
+                }
+                if (!inUl) {
+                    html += '<ul>';
+                    inUl = true;
+                }
+                html += '<li>' + this.formatInlineMarkdown(line.replace(/^[-*]\s+/, '')) + '</li>';
+                continue;
+            }
+
+            // Ordered list items (1. 2. etc)
+            if (/^\d+\.\s+(.*$)/.test(line)) {
+                if (inUl) {
+                    html += '</ul>';
+                    inUl = false;
+                }
+                if (!inOl) {
+                    html += '<ol>';
+                    inOl = true;
+                }
+                html += '<li>' + this.formatInlineMarkdown(line.replace(/^\d+\.\s+/, '')) + '</li>';
+                continue;
+            }
+
+            // Regular paragraph line
+            closeLists();
+            html += '<p>' + this.formatInlineMarkdown(line) + '</p>';
+        }
+
+        closeLists();
+        return html;
+    }
+
+    formatInlineMarkdown(text) {
+        if (!text) return '';
+        // Bold: **text** or __text__
+        text = text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+        text = text.replace(/__(.*?)__/g, '<strong>$1</strong>');
+        // Italics: *text* or _text_
+        text = text.replace(/(?<!\*)\*(?!\*)(.*?)(?<!\*)\*(?!\*)/g, '<em>$1</em>');
+        return text;
+    }
+
     async manualFormat() {
         if (!this.formatButton) return;
 
@@ -514,20 +615,18 @@ class SpeechDictationKit {
         this.formatButton.innerHTML = '<span class="speech-format-icon-wrapper"><i class="fa fa-spinner fa-spin"></i></span> Polishing...';
 
         try {
-            let text = '';
+            let rawText = '';
             if (this.editorType === 'ckeditor') {
                 const editor = this.getEditorInstance();
-                if (editor) text = editor.getData();
+                if (editor) rawText = editor.getData();
             } else {
-                text = this.target.value;
+                rawText = this.target.value;
             }
 
-            if (text && text.trim() !== '') {
-                // SOAP/Clinical Auto-paragraphing
-                let polished = this.formatMedicalStructure(text);
-
-                // Check if we should use LLM or fallback to local NLP
+            if (rawText && rawText.trim() !== '') {
+                let polished = '';
                 let usedLlm = false;
+
                 // Rely on globals set by the pages incorporating the dictation kit
                 let encId = window.currentEncounterId || window.encounterId || (window.WORKBENCH_CONFIG ? window.WORKBENCH_CONFIG.encounterId : null) || (window.patientSummary ? window.patientSummary.encounterId : null) || null;
                 let patId = window.currentPatientId || window.patientId || (window.WORKBENCH_CONFIG ? window.WORKBENCH_CONFIG.patientId : null) || (window.patientSummary ? window.patientSummary.patientId : null) || (typeof currentPatient !== 'undefined' ? currentPatient : null) || null;
@@ -540,26 +639,19 @@ class SpeechDictationKit {
                             'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
                         },
                         body: JSON.stringify({
-                            note_content: polished,
+                            note_content: rawText,
                             patient_id: patId ? parseInt(patId, 10) : null,
-                            encounter_id: encId ? parseInt(encId, 10) : null
+                            encounter_id: encId ? parseInt(encId, 10) : null,
+                            note_type: this.noteType || 'auto'
                         })
                     });
                     const data = await response.json();
                     if (data.success && data.polished_content) {
                         if (this.editorType === 'ckeditor') {
-                            // Basic markdown to HTML (since LLM might return Markdown)
-                            polished = data.polished_content
-                                .replace(/^### (.*$)/gim, '<h3>$1</h3>')
-                                .replace(/^## (.*$)/gim, '<h2>$1</h2>')
-                                .replace(/^# (.*$)/gim, '<h1>$1</h1>')
-                                .replace(/\*\*(.*)\*\*/gim, '<strong>$1</strong>')
-                                .replace(/\*(.*)\*/gim, '<em>$1</em>')
-                                .replace(/^- (.*$)/gim, '<ul><li>$1</li></ul>')
-                                .replace(/<\/ul>\n<ul>/gim, '')
-                                .replace(/\n/gim, '<br>');
+                            polished = this.markdownToHtml(data.polished_content);
                         } else {
-                            polished = data.polished_content;
+                            // Plain text target - remove html tags if LLM returned any
+                            polished = data.polished_content.replace(/<[^>]*>?/gm, '');
                         }
                         usedLlm = true;
                     } else {
@@ -567,11 +659,8 @@ class SpeechDictationKit {
                     }
                 } catch (llmError) {
                     console.warn('LLM Polish Note failed, falling back to local NLP:', llmError);
+                    polished = this.formatMedicalStructure(rawText);
                     polished = await this.scribe.process(polished);
-                }
-
-                // Clean general spacing and punctuation issues ONLY if using local NLP
-                if (!usedLlm) {
                     polished = this.cleanSpacingAndCasing(polished);
                 }
 

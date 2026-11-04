@@ -18,7 +18,7 @@ class ChildHealthDashboardService
 
         return [
             'today' => PatientImmunizationSchedule::whereIn('status', ['pending', 'due'])
-                ->whereBetween('scheduled_date', [$today->copy()->startOfDay(), $today->copy()->endOfDay()])
+                ->whereBetween('due_date', [$today->copy()->startOfDay(), $today->copy()->endOfDay()])
                 ->count(),
             'overdue' => PatientImmunizationSchedule::where('status', 'overdue')
                 ->count(),

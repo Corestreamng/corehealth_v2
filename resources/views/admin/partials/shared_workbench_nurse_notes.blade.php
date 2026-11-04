@@ -38,6 +38,7 @@
                                 @include('admin.partials.speech_dictation', [
                                     'targetId' => $editorId,
                                     'editorType' => 'ckeditor',
+                                    'noteType' => 'nurse',
                                     'showLangSelect' => true
                                 ])
                             </div>

@@ -2965,23 +2965,36 @@ class EncounterController extends Controller
     public function create(Request $request)
     {
         try {
+            if (!$request->filled('patient_id')) {
+                return redirect()->route('encounters.index')->with('error', 'Please select a patient from the queue to start a consultation.');
+            }
+
             $doctor = Staff::where('user_id', Auth::id())->first();
-            $patient = Patient::with('user')->find(request()->get('patient_id'));
+            if (!$doctor) {
+                return redirect()->route('encounters.index')->with('error', 'Active staff record not found for the logged in user.');
+            }
+
+            $patient = Patient::with('user')->find($request->get('patient_id'));
+            if (!$patient) {
+                return redirect()->route('encounters.index')->with('error', 'Patient record not found.');
+            }
+
             $queue_id = $request->get('queue_id');
             $doctorQueue = $queue_id ? DoctorQueue::with('clinic')->find($queue_id) : null;
-            $clinic = ($doctorQueue && $doctorQueue->clinic) ? $doctorQueue->clinic : Clinic::find($doctor->clinic_id);
-            $req_entry = ProductOrServiceRequest::find(request()->get('req_entry_id'));
+            $clinic = ($doctorQueue && $doctorQueue->clinic) ? $doctorQueue->clinic : ($doctor->clinic_id ? Clinic::find($doctor->clinic_id) : null);
+            $req_entry = ProductOrServiceRequest::find($request->get('req_entry_id'));
             if (!$req_entry && $doctorQueue && $doctorQueue->request_entry_id) {
                 $req_entry = ProductOrServiceRequest::find($doctorQueue->request_entry_id);
             }
-            $admission_exists = AdmissionRequest::where('patient_id', request()->get('patient_id'))->where('discharged', 0)->first();
+            $admission_exists = AdmissionRequest::where('patient_id', $request->get('patient_id'))->where('discharged', 0)->first();
 
-            // Single query — derive categories/subcategories in memory
-            $reasons_for_encounter_list = ReasonForEncounter::all();
-            $reasons_for_encounter_cat_list = $reasons_for_encounter_list->unique('category')->values();
-            $reasons_for_encounter_sub_cat_list = $reasons_for_encounter_list->unique(fn ($r) => $r->sub_category . '|' . $r->category)->values();
-
-            // dd($reasons_for_encounter_cat_list);
+            // Lightweight grouped query for ICPC reasons (O(N) grouping, avoids millions of nested Blade loop iterations)
+            $reasonsGrouped = ReasonForEncounter::select('code', 'name', 'category', 'sub_category')
+                ->orderBy('category')
+                ->orderBy('sub_category')
+                ->orderBy('name')
+                ->get()
+                ->groupBy(['category', 'sub_category']);
 
             // Find or create encounter specific to this service request/queue
             $encounterQuery = Encounter::where('doctor_id', $doctor->id)
@@ -3051,8 +3064,8 @@ class EncounterController extends Controller
                 }
 
                 // Pre-load data for inline blade queries (avoid N+1 in view)
-                $allClinics = Clinic::orderBy('name')->get();
-                $doctorStaffList = Staff::whereHas('user', function ($q) {
+                $allClinics = Clinic::select(['id', 'name', 'vitals_template'])->orderBy('name')->get();
+                $doctorStaffList = Staff::select(['id', 'user_id', 'clinic_id'])->whereHas('user', function ($q) {
                     $q->whereHas('roles', fn ($r) => $r->where('name', 'DOCTOR'));
                 })->with('user:id,surname,firstname,othername')->orderBy('id')->get();
                 $patientWeight = \App\Models\VitalSign::where('patient_id', $patient->id)
@@ -3120,9 +3133,10 @@ class EncounterController extends Controller
                         'admission_exists_' => $admission_exists_,
                         'encounter' => $encounter,
                         'doctorQueue' => $doctorQueue,
-                        'reasons_for_encounter_list' => $reasons_for_encounter_list,
-                        'reasons_for_encounter_cat_list' => $reasons_for_encounter_cat_list,
-                        'reasons_for_encounter_sub_cat_list' => $reasons_for_encounter_sub_cat_list,
+                        'reasonsGrouped' => $reasonsGrouped,
+                        'reasons_for_encounter_list' => collect([]),
+                        'reasons_for_encounter_cat_list' => collect([]),
+                        'reasons_for_encounter_sub_cat_list' => collect([]),
                         'allClinics' => $allClinics,
                         'doctorStaffList' => $doctorStaffList,
                         'patientWeight' => $patientWeight,
@@ -3139,9 +3153,10 @@ class EncounterController extends Controller
                         'admission_exists_' => $admission_exists_,
                         'encounter' => $encounter,
                         'doctorQueue' => $doctorQueue,
-                        'reasons_for_encounter_list' => $reasons_for_encounter_list,
-                        'reasons_for_encounter_cat_list' => $reasons_for_encounter_cat_list,
-                        'reasons_for_encounter_sub_cat_list' => $reasons_for_encounter_sub_cat_list,
+                        'reasonsGrouped' => $reasonsGrouped,
+                        'reasons_for_encounter_list' => collect([]),
+                        'reasons_for_encounter_cat_list' => collect([]),
+                        'reasons_for_encounter_sub_cat_list' => collect([]),
                         'allClinics' => $allClinics,
                         'doctorStaffList' => $doctorStaffList,
                         'patientWeight' => $patientWeight,
@@ -3151,10 +3166,10 @@ class EncounterController extends Controller
                     ]);
                 }
             }
-        } catch (\Exception $e) {
-            Log::error($e->getMessage(), ['exception' => $e]);
+        } catch (\Throwable $e) {
+            Log::error('Encounter create failed: ' . $e->getMessage(), ['exception' => $e]);
 
-            return redirect()->back()->withInput()->withMessage('An error occurred ' . $e->getMessage());
+            return redirect()->route('encounters.index')->with('error', 'An error occurred while opening consultation: ' . $e->getMessage());
         }
     }
 

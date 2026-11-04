@@ -96,6 +96,7 @@ class LlmController extends Controller
             'note_content' => 'required|string',
             'patient_id' => 'nullable|integer',
             'encounter_id' => 'nullable|integer',
+            'note_type' => 'nullable|string',
         ]);
 
         if (!$this->gateway->isEnabled()) {
@@ -104,24 +105,41 @@ class LlmController extends Controller
 
         try {
             $config = $this->gateway->getConfig();
-            $systemPrompt = $config['system_prompts']['polish_note'] ?? config('llm.prompts.polish_note');
+            $systemPrompt = !empty(trim($config['system_prompts']['polish_note'] ?? ''))
+                ? $config['system_prompts']['polish_note']
+                : config('llm.prompts.polish_note');
 
             $context = '';
             if ($request->filled('patient_id') && (int) $request->patient_id > 0) {
                 $context = $this->contextService->getPatientContext((int) $request->patient_id, $request->encounter_id ? (int) $request->encounter_id : null);
             }
 
-            if (!empty($context)) {
-                $userMessage = "PATIENT CONTEXT (Do not include this in your output, just use it for understanding abbreviations/history):\n" .
-                    $context . "\n\n" .
-                    "---\nNOTE TO POLISH:\n" . $request->note_content;
-            } else {
-                $userMessage = "NOTE TO POLISH:\n" . $request->note_content;
+            // Clean any raw HTML passed from rich-text editors (e.g. CKEditor)
+            $rawContent = (string) $request->note_content;
+            if (preg_match('/<[a-z][\s\S]*>/i', $rawContent)) {
+                $rawContent = preg_replace('/<br\s*\/?>/i', "\n", $rawContent);
+                $rawContent = preg_replace('/<\/(p|div|h[1-6]|li)>/i', "\n\n", $rawContent);
+                $rawContent = strip_tags($rawContent);
+                $rawContent = html_entity_decode($rawContent, ENT_QUOTES | ENT_HTML5, 'UTF-8');
+                $rawContent = preg_replace("/\n{3,}/", "\n\n", trim($rawContent));
             }
 
+            $userMessage = '';
+            if (!empty($context)) {
+                $userMessage .= "PATIENT CONTEXT (Do not include this in your output, just use it for understanding abbreviations/history):\n" .
+                    $context . "\n\n---\n";
+            }
+
+            $noteType = trim($request->input('note_type', 'auto'));
+            if (!empty($noteType) && $noteType !== 'auto') {
+                $userMessage .= "TARGET CLINICAL PERSPECTIVE / NOTE TYPE: " . strtoupper($noteType) . "\n\n";
+            }
+
+            $userMessage .= "NOTE TO POLISH:\n" . $rawContent;
+
             $response = $this->gateway->complete($systemPrompt, $userMessage, [
-                'max_tokens' => 2000,
-                'temperature' => 0.3,
+                'max_tokens' => 4096,
+                'temperature' => 0.2,
             ]);
 
             return response()->json([
