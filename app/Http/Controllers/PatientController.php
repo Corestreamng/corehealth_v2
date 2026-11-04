@@ -18,7 +18,6 @@ use App\Models\PatientAccount;
 use App\Models\Product;
 use App\Models\ProductOrServiceRequest;
 use App\Models\ProductRequest;
-use App\Models\ReasonForEncounter;
 use App\Models\Service;
 use App\Models\User;
 use App\Models\UserCategory;
@@ -808,9 +807,9 @@ class PatientController extends Controller
 
             $others_record_template = NursingNoteType::find(5);
 
-            $reasons_for_encounter_list = ReasonForEncounter::all();
-            $reasons_for_encounter_cat_list = ReasonForEncounter::select('category')->distinct()->get();
-            $reasons_for_encounter_sub_cat_list = ReasonForEncounter::select('category', 'sub_category')->distinct()->get();
+            $reasons_for_encounter_list = collect([]);
+            $reasons_for_encounter_cat_list = collect([]);
+            $reasons_for_encounter_sub_cat_list = collect([]);
 
             // Dynamic ranges (Plan §B.1)
             $ageDays = $patient->dob ? now()->diffInDays($patient->dob) : null;

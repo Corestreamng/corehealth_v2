@@ -67,8 +67,10 @@ class WelcomePageTest extends TestCase
 
         $this->assertTrue(in_array($response->status(), [200, 302]));
         if ($response->status() === 200) {
-            $response->assertSee('CoreHealth — AI‑Powered Healthcare Management Ecosystem');
+            $response->assertSee('CoreHealth — The AI-Powered Operating System for Healthcare');
             $response->assertSee('Corestream Networks and Robotics Limited');
+            $response->assertSee('Start free');
+            $response->assertSee('Book a demo');
             $response->assertDontSee('Powered by Core');
         }
 
@@ -85,14 +87,15 @@ class WelcomePageTest extends TestCase
         $responseDemo = $this->get('/?branded=0');
         $this->assertTrue(in_array($responseDemo->status(), [200, 302]));
         if ($responseDemo->status() === 200) {
-            $responseDemo->assertSee('CoreHealth — AI‑Powered Healthcare Management Ecosystem');
+            $responseDemo->assertSee('CoreHealth — The AI-Powered Operating System for Healthcare');
+            $responseDemo->assertSee('Start free');
         }
 
         // Force demo via ?demo=1
         $responseDemo2 = $this->get('/?demo=1');
         $this->assertTrue(in_array($responseDemo2->status(), [200, 302]));
         if ($responseDemo2->status() === 200) {
-            $responseDemo2->assertSee('CoreHealth — AI‑Powered Healthcare Management Ecosystem');
+            $responseDemo2->assertSee('CoreHealth — The AI-Powered Operating System for Healthcare');
         }
 
         // Force branded via ?branded=1
@@ -100,6 +103,8 @@ class WelcomePageTest extends TestCase
         $this->assertTrue(in_array($responseBranded->status(), [200, 302]));
         if ($responseBranded->status() === 200) {
             $responseBranded->assertSee('Powered by Core');
+            $responseBranded->assertSee('Clinical Services');
+            $responseBranded->assertSee('Staff Portal');
         }
     }
 

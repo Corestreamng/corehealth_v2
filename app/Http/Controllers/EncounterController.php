@@ -2988,13 +2988,8 @@ class EncounterController extends Controller
             }
             $admission_exists = AdmissionRequest::where('patient_id', $request->get('patient_id'))->where('discharged', 0)->first();
 
-            // Lightweight grouped query for ICPC reasons (O(N) grouping, avoids millions of nested Blade loop iterations)
-            $reasonsGrouped = ReasonForEncounter::select('code', 'name', 'category', 'sub_category')
-                ->orderBy('category')
-                ->orderBy('sub_category')
-                ->orderBy('name')
-                ->get()
-                ->groupBy(['category', 'sub_category']);
+            // Grouped reasons collection (reasons are searched on-demand via AJAX /live-search-reasons to eliminate memory overhead)
+            $reasonsGrouped = collect([]);
 
             // Find or create encounter specific to this service request/queue
             $encounterQuery = Encounter::where('doctor_id', $doctor->id)
@@ -4324,11 +4319,11 @@ class EncounterController extends Controller
      */
     public function liveSearchReasons(Request $request)
     {
-        $request->validate([
-            'q' => 'required|string|min:2',
-        ]);
+        $searchTerm = trim($request->input('q', $request->input('term', '')));
 
-        $searchTerm = $request->q;
+        if (strlen($searchTerm) < 2) {
+            return response()->json([]);
+        }
 
         $reasons = ReasonForEncounter::where(function ($query) use ($searchTerm) {
             $query->where('name', 'LIKE', "%{$searchTerm}%")

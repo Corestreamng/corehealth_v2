@@ -3,6 +3,9 @@
     $isBranded = (bool) ($showBrandedHomepage ?? (appsettings('show_branded_homepage') ?? true));
     $siteName = $site->site_name ?? env('APP_NAME', 'CoreHealth');
     $siteLogo = $site->logo ?? null;
+    if ($siteLogo && !str_starts_with($siteLogo, 'data:') && !str_starts_with($siteLogo, 'http')) {
+        $siteLogo = 'data:image/jpeg;base64,' . $siteLogo;
+    }
     $hosColor = $site->hos_color ?? '#123B5D';
     $sitePhone = $site->contact_phones ?? '+234 (0) 816 087 6560';
     $siteEmail = $site->contact_emails ?? 'hello@corestream.ng';
@@ -15,21 +18,17 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   @if($isBranded)
-    <title>{{ $siteName }} — CoreHealth AI Healthcare Ecosystem</title>
+    <title>{{ $siteName }} — CoreHealth Clinical Care & Services</title>
+    <meta name="description" content="{{ $siteDescription ?: ($siteName . ' healthcare operations, digital clinical records, outpatient triage, inpatient care, and patient portal.') }}" />
   @else
-    <title>CoreHealth — AI‑Powered Healthcare Management Ecosystem</title>
+    <title>CoreHealth — The AI-Powered Operating System for Healthcare</title>
+    <meta name="description" content="CoreHealth unifies EMR, hospital operations, AI clinical documentation and telemedicine in one platform. Start free or book a demo." />
   @endif
-  <meta name="description" content="{{ $isBranded ? ($siteName . ' healthcare operations, digital records, and clinical management powered by CoreHealth.') : 'CoreHealth unifies electronic medical records, hospital operations, AI clinical documentation, and telemedicine.' }}" />
 
-  <!-- Google Fonts: Inter & Manrope for typography -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link
-    href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&family=Manrope:wght@500;600;700;800&display=swap"
-    rel="stylesheet"
-  />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet" />
 
-  <!-- CoreHealth Welcome Stylesheet -->
   <link rel="stylesheet" href="{{ asset('css/welcome.css') }}?v={{ config('app.version', '2.6') }}" />
 
   @if($isBranded && !empty($hosColor))
@@ -41,270 +40,261 @@
   @endif
 </head>
 <body>
-  <!-- ========== HEADER ========== -->
-  <header class="header" role="banner">
-    <div class="container header-inner">
-      @if($isBranded)
-        <a href="{{ url('/') }}" class="brand-logo-combo" aria-label="{{ $siteName }}">
-          @if($siteLogo)
-            <img src="data:image/jpeg;base64,{{ $siteLogo }}" alt="{{ $siteName }}" class="hospital-brand-img" />
-          @else
-            <span class="logo-symbol" aria-hidden="true">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M22 12h-4l-3 9L9 3l-3 9H2" />
-              </svg>
-            </span>
-          @endif
-          <div class="brand-text-block">
-            <span class="hospital-brand-title">{{ $siteName }}</span>
-            <span class="hospital-brand-sub">Powered by Core<span>Health</span></span>
-          </div>
-        </a>
-      @else
-        <a href="{{ url('/') }}" class="logo" aria-label="CoreHealth by Corestream Networks and Robotics Limited">
-          <span class="logo-symbol" aria-hidden="true">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M22 12h-4l-3 9L9 3l-3 9H2" />
-            </svg>
-          </span>
-          Core<span>Health</span>
-        </a>
-      @endif
 
-      <nav class="nav-desktop" aria-label="Main navigation">
-        <a href="#features" class="nav-link">Features</a>
-        <a href="#solutions" class="nav-link">Solutions</a>
-        <a href="#integrations" class="nav-link">Integrations</a>
-        <a href="#impact" class="nav-link">Impact</a>
-        <a href="#about" class="nav-link">About</a>
+@if(!$isBranded)
+  {{-- =====================================================================
+       UNBRANDED MODE: COREHEALTH PRODUCT PLATFORM LANDING PAGE
+       ===================================================================== --}}
+  <div class="announce">
+    <span class="tag">NEW</span>AI clinical documentation with voice dictation is live in CoreHealth.
+    <a href="#demo">See it in action &rarr;</a>
+  </div>
+
+  <!-- Header + Mega Menu -->
+  <header class="header">
+    <div class="container header-in">
+      <a href="{{ url('/') }}" class="logo" aria-label="CoreHealth home">
+        <span class="logo-mark">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M22 12h-4l-3 9L9 3l-3 9H2"/>
+          </svg>
+        </span>
+        Core<b>Health</b>
+      </a>
+
+      <nav class="nav" aria-label="Main">
+        <!-- Product -->
+        <div class="nav-item">
+          <button class="nav-trigger" aria-haspopup="true">Product <svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 4l4 4 4-4"/></svg></button>
+          <div class="mega">
+            <div class="mega-in">
+              <div class="mega-col">
+                <h6>Clinical</h6>
+                <a class="mega-link" href="#features"><span class="mega-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></span><div><strong>Electronic Medical Records</strong><span>Complete, secure patient charts</span></div></a>
+                <a class="mega-link" href="#ai"><span class="mega-ico red"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/></svg></span><div><strong>AI Clinical Documentation</strong><span>Dictate, transcribe, summarise</span></div></a>
+                <a class="mega-link" href="#features"><span class="mega-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3H5a2 2 0 0 0-2 2v4m6-6h10a2 2 0 0 1 2 2v4M9 3v18m0 0h10a2 2 0 0 0 2-2V9M9 21H5a2 2 0 0 1-2-2V9m0 0h18"/></svg></span><div><strong>Laboratory Management</strong><span>Orders, specimens and results</span></div></a>
+              </div>
+              <div class="mega-col">
+                <h6>Operations</h6>
+                <a class="mega-link" href="#features"><span class="mega-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg></span><div><strong>Hospital Management</strong><span>Admissions, beds, discharge</span></div></a>
+                <a class="mega-link" href="#features"><span class="mega-ico red"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></svg></span><div><strong>Pharmacy & Inventory</strong><span>Stock, prescriptions, reorders</span></div></a>
+                <a class="mega-link" href="#features"><span class="mega-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></span><div><strong>Billing & Revenue</strong><span>Invoices, claims, payments</span></div></a>
+              </div>
+              <div class="mega-col">
+                <h6>Data & Care</h6>
+                <a class="mega-link" href="#features"><span class="mega-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg></span><div><strong>Reporting & Analytics</strong><span>Live dashboards and exports</span></div></a>
+                <a class="mega-link" href="#ai"><span class="mega-ico red"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg></span><div><strong>Telemedicine (WeCare247)</strong><span>Virtual consultations built in</span></div></a>
+                <a class="mega-link" href="#security"><span class="mega-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></span><div><strong>Access Control & Audit</strong><span>Roles, permissions, trails</span></div></a>
+              </div>
+              <div class="mega-col callout">
+                <h6>New in 2.6</h6>
+                <h4>Voice-to-text medical dictation</h4>
+                <p>Dictate consultation notes naturally. AI transcribes and structures directly into the patient record.</p>
+                <a href="#demo" class="btn btn-red btn-sm">See dictation demo</a>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Solutions -->
+        <div class="nav-item">
+          <button class="nav-trigger" aria-haspopup="true">Solutions <svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 4l4 4 4-4"/></svg></button>
+          <div class="mega">
+            <div class="mega-in">
+              <div class="mega-col">
+                <h6>By facility type</h6>
+                <a class="mega-link" href="#solutions"><span class="mega-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 21h18M5 21V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16M9 7h6M9 11h6M9 15h6"/></svg></span><div><strong>Hospitals</strong><span>Secondary & tertiary facilities</span></div></a>
+                <a class="mega-link" href="#solutions"><span class="mega-ico red"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21V5a2 2 0 0 0-2-2H7a2 2 0 0 0-2 2v16"/></svg></span><div><strong>Clinics & Polyclinics</strong><span>Outpatient and primary care</span></div></a>
+                <a class="mega-link" href="#solutions"><span class="mega-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/></svg></span><div><strong>Health Networks</strong><span>Multi-facility groups</span></div></a>
+                <a class="mega-link" href="#solutions"><span class="mega-ico red"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg></span><div><strong>Government & Ministries</strong><span>State and national rollout</span></div></a>
+              </div>
+              <div class="mega-col">
+                <h6>By role</h6>
+                <a class="mega-link" href="#features"><span class="mega-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></span><div><strong>Doctors & Clinicians</strong><span>Fast notes, history, orders</span></div></a>
+                <a class="mega-link" href="#features"><span class="mega-ico red"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></svg></span><div><strong>Nurses & Matrons</strong><span>Vitals, triage, ward rounds</span></div></a>
+                <a class="mega-link" href="#features"><span class="mega-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg></span><div><strong>Pharmacists</strong><span>Dispense, reorder, stock control</span></div></a>
+                <a class="mega-link" href="#features"><span class="mega-ico red"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></span><div><strong>Hospital Admin & Finance</strong><span>Billing, revenue, audits</span></div></a>
+              </div>
+              <div class="mega-col callout">
+                <h6>Public sector</h6>
+                <h4>DHIS2 & NHMIS ready</h4>
+                <p>Built-in indicators and aggregate reporting that roll up cleanly for state and national health systems.</p>
+                <a href="#integrations" class="btn btn-red btn-sm">Learn about reporting</a>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Developers -->
+        <div class="nav-item">
+          <button class="nav-trigger" aria-haspopup="true">Developers <svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 4l4 4 4-4"/></svg></button>
+          <div class="mega">
+            <div class="mega-in">
+              <div class="mega-col">
+                <h6>Integrations</h6>
+                <a class="mega-link" href="#integrations"><span class="mega-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg></span><div><strong>REST APIs</strong><span>Connect existing tools</span></div></a>
+                <a class="mega-link" href="#integrations"><span class="mega-ico red"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/></svg></span><div><strong>Webhooks</strong><span>Real-time event streams</span></div></a>
+                <a class="mega-link" href="#integrations"><span class="mega-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg></span><div><strong>Third-Party Apps</strong><span>Plug into ecosystem</span></div></a>
+              </div>
+              <div class="mega-col">
+                <h6>Standards</h6>
+                <a class="mega-link" href="#integrations"><span class="mega-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/></svg></span><div><strong>DHIS2 Standards</strong><span>Automated data export</span></div></a>
+                <a class="mega-link" href="#integrations"><span class="mega-ico red"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/></svg></span><div><strong>NHMIS Format</strong><span>Standardized forms</span></div></a>
+                <a class="mega-link" href="#integrations"><span class="mega-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/></svg></span><div><strong>HL7 / FHIR</strong><span>Interoperable records</span></div></a>
+              </div>
+              <div class="mega-col callout">
+                <h6>Developer Platform</h6>
+                <h4>Build on CoreHealth</h4>
+                <p>Read our API documentation, explore client libraries and request sandbox credentials.</p>
+                <a href="#integrations" class="btn btn-red btn-sm">Request API access</a>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Resources -->
+        <div class="nav-item">
+          <button class="nav-trigger" aria-haspopup="true">Resources <svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 4l4 4 4-4"/></svg></button>
+          <div class="mega compact">
+            <div class="mega-in">
+              <div class="mega-col">
+                <h6>Learn</h6>
+                <a class="mega-link" href="#"><span class="mega-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20V2H6.5A2.5 2.5 0 0 0 4 4.5z"/></svg></span><div><strong>Documentation</strong><span>Guides and how-tos</span></div></a>
+                <a class="mega-link" href="#"><span class="mega-ico red"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg></span><div><strong>API Reference</strong><span>Endpoints and examples</span></div></a>
+              </div>
+              <div class="mega-col">
+                <h6>Stories</h6>
+                <a class="mega-link" href="#impact"><span class="mega-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></span><div><strong>Case Studies</strong><span>Real deployments</span></div></a>
+                <a class="mega-link" href="#"><span class="mega-ico red"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg></span><div><strong>Blog</strong><span>Product and industry news</span></div></a>
+              </div>
+              <div class="mega-col">
+                <h6>Help</h6>
+                <a class="mega-link" href="#faq"><span class="mega-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.1 9a3 3 0 0 1 5.8 1c0 2-3 3-3 3"/></svg></span><div><strong>FAQ</strong><span>Quick answers</span></div></a>
+                <a class="mega-link" href="https://corestream.ng/public/contact" target="_blank" rel="noopener"><span class="mega-ico red"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></span><div><strong>Support</strong><span>Talk to a human</span></div></a>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="nav-item"><a class="nav-trigger" href="#security">Security</a></div>
+        <div class="nav-item"><a class="nav-trigger" href="#about">Company</a></div>
       </nav>
 
-      <div class="header-actions">
-        @if($isBranded)
-          <a href="#contact" class="btn btn-secondary btn-sm">Contact</a>
-          @auth
-            <a href="{{ url('/home') }}" class="btn btn-primary btn-sm">Operations Cockpit</a>
-          @else
-            <a href="{{ route('login') }}" class="btn btn-primary btn-sm">Staff Portal</a>
-          @endauth
+      <div class="head-cta">
+        @auth
+          <a class="login hide-sm" href="{{ url('/home') }}">Dashboard</a>
         @else
-          <a href="https://corestream.ng/public/contact" class="btn btn-secondary btn-sm" target="_blank" rel="noopener">Contact</a>
-          <a href="https://corestream.ng/public/contact" class="btn btn-teal btn-sm" target="_blank" rel="noopener">Request a Demo</a>
-          @auth
-            <a href="{{ url('/home') }}" class="btn btn-primary btn-sm">Dashboard</a>
-          @else
-            <a href="{{ route('login') }}" class="btn btn-primary btn-sm">Sign In</a>
-          @endauth
-        @endif
-
-        <label for="mobile-menu-toggle" class="mobile-menu-btn" aria-label="Toggle navigation menu">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-            <line x1="3" y1="6" x2="21" y2="6" />
-            <line x1="3" y1="12" x2="21" y2="12" />
-            <line x1="3" y1="18" x2="21" y2="18" />
+          <a class="login hide-sm" href="{{ route('login') }}">Log in</a>
+        @endauth
+        <a class="btn btn-ghost btn-sm hide-sm" href="#demo">Book a demo</a>
+        <a class="btn btn-red btn-sm hide-sm" href="#signup">Start free</a>
+        <button class="burger" id="burger" aria-label="Open menu" aria-expanded="false">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+            <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/>
           </svg>
-        </label>
+        </button>
       </div>
     </div>
-
-    <!-- Mobile menu (checkbox hack) -->
-    <input type="checkbox" id="mobile-menu-toggle" class="sr-only" />
-    <nav class="mobile-menu" aria-label="Mobile navigation">
-      <a href="#features" class="nav-link">Features</a>
-      <a href="#solutions" class="nav-link">Solutions</a>
-      <a href="#integrations" class="nav-link">Integrations</a>
-      <a href="#impact" class="nav-link">Impact</a>
-      <a href="#about" class="nav-link">About</a>
-      @if($isBranded)
-        <a href="#contact" class="btn btn-secondary">Contact Facility</a>
-        @auth
-          <a href="{{ url('/home') }}" class="btn btn-primary">Operations Cockpit</a>
-        @else
-          <a href="{{ route('login') }}" class="btn btn-primary">Staff Portal Sign In</a>
-        @endauth
-      @else
-        <a href="https://corestream.ng/public/contact" class="btn btn-secondary" target="_blank" rel="noopener">Contact Corestream</a>
-        <a href="https://corestream.ng/public/contact" class="btn btn-teal" target="_blank" rel="noopener">Request a Demo</a>
-        @auth
-          <a href="{{ url('/home') }}" class="btn btn-primary">Dashboard</a>
-        @else
-          <a href="{{ route('login') }}" class="btn btn-primary">Sign In</a>
-        @endauth
-      @endif
-    </nav>
   </header>
 
+  <!-- Mobile Drawer -->
+  <div class="drawer" id="drawer">
+    <details>
+      <summary>Product</summary>
+      <a href="#features">Electronic Medical Records</a>
+      <a href="#ai">AI Clinical Documentation</a>
+      <a href="#features">Hospital Management</a>
+      <a href="#features">Pharmacy &amp; Inventory</a>
+      <a href="#features">Laboratory</a>
+      <a href="#features">Billing &amp; Revenue</a>
+      <a href="#features">Reporting &amp; Analytics</a>
+    </details>
+    <details>
+      <summary>Solutions</summary>
+      <a href="#solutions">Hospitals</a>
+      <a href="#solutions">Clinics</a>
+      <a href="#solutions">Health Networks</a>
+      <a href="#solutions">Government &amp; Ministries</a>
+      <a href="#solutions">Doctors</a>
+      <a href="#solutions">Pharmacists</a>
+    </details>
+    <details>
+      <summary>Integrations</summary>
+      <a href="#integrations">DHIS2</a>
+      <a href="#integrations">NHMIS</a>
+      <a href="#integrations">REST APIs</a>
+      <a href="#integrations">HL7 / FHIR</a>
+    </details>
+    <details>
+      <summary>Resources</summary>
+      <a href="#">Documentation</a>
+      <a href="#">API Reference</a>
+      <a href="#impact">Case Studies</a>
+      <a href="#faq">FAQ</a>
+    </details>
+    <details>
+      <summary>Company</summary>
+      <a href="#about">About</a>
+      <a href="#security">Security</a>
+      <a href="https://corestream.ng/public/contact" target="_blank" rel="noopener">Contact</a>
+    </details>
+    <a class="btn btn-red" href="#signup">Start free</a>
+    <a class="btn btn-ghost" href="#demo">Book a demo</a>
+  </div>
+
   <main>
-    <!-- ========== HERO ========== -->
-    <section class="hero" aria-labelledby="hero-title">
-      <div class="container hero-grid">
-        <div class="hero-content">
-          @if($isBranded)
-            <span class="hero-badge">
-              <span class="dot" aria-hidden="true"></span>
-              {{ $siteName }} · Smart Health Ecosystem
-            </span>
-            <h1 id="hero-title" class="hero-title">
-              Excellence in Care.<br />
-              Empowered by <span class="highlight">Intelligence.</span>
-            </h1>
-            <p class="hero-description">
-              Welcome to {{ $siteName }}. Unifying electronic health records, rapid outpatient triage, laboratory diagnostics, pharmacy dispensing, and 24/7 telehealth into one seamless patient-first care ecosystem.
-            </p>
-            <div class="hero-actions">
-              @auth
-                <a href="{{ url('/home') }}" class="btn btn-primary">Enter Operations Cockpit</a>
-              @else
-                <a href="{{ route('login') }}" class="btn btn-primary">Staff Portal Sign In</a>
-              @endauth
-              <a href="#solutions" class="btn btn-secondary">Clinical Departments</a>
-            </div>
-            <div class="hero-stats" aria-label="Platform highlights">
-              <div class="hero-stat-item">
-                <span class="hero-stat-value">24/7</span>
-                <span class="hero-stat-label">Emergency & Care</span>
-              </div>
-              <div class="hero-stat-item">
-                <span class="hero-stat-value">EHR</span>
-                <span class="hero-stat-label">Longitudinal Records</span>
-              </div>
-              <div class="hero-stat-item">
-                <span class="hero-stat-value">WeCare</span>
-                <span class="hero-stat-label">Telehealth Integrated</span>
-              </div>
-            </div>
-          @else
-            <span class="hero-badge">
-              <span class="dot" aria-hidden="true"></span>
-              AI-Powered Healthcare Management
-            </span>
-            <h1 id="hero-title" class="hero-title">
-              Digitize. Automate.<br />
-              Deliver <span class="highlight">Better Care.</span>
-            </h1>
-            <p class="hero-description">
-              CoreHealth unifies electronic medical records, hospital operations, AI-assisted
-              clinical documentation, and telemedicine into one intelligent platform — built for
-              hospitals, clinics, and health systems across Africa and beyond.
-            </p>
-            <div class="hero-actions">
-              <a href="#demo" class="btn btn-primary">Request a Demo</a>
-              <a href="#features" class="btn btn-secondary">Explore CoreHealth</a>
-            </div>
-            <div class="hero-stats" aria-label="Platform highlights">
-              <div class="hero-stat-item">
-                <span class="hero-stat-value">DHIS2</span>
-                <span class="hero-stat-label">Ready Integration</span>
-              </div>
-              <div class="hero-stat-item">
-                <span class="hero-stat-value">NHMIS</span>
-                <span class="hero-stat-label">Compliant Reporting</span>
-              </div>
-              <div class="hero-stat-item">
-                <span class="hero-stat-value">24/7</span>
-                <span class="hero-stat-label">Telemedicine Access</span>
-              </div>
-            </div>
-          @endif
+    <!-- Hero -->
+    <section class="hero">
+      <div class="container">
+        <div class="hero-in">
+          <span class="pill"><i>AI</i> Clinical documentation, now voice-powered</span>
+          <h1>The operating system for <span class="grad">modern healthcare.</span></h1>
+          <p class="lead">One platform for patient records, hospital operations, AI documentation and telemedicine. Digitize your facility, report to DHIS2 and NHMIS with confidence, and give clinicians their time back.</p>
+          <div class="hero-cta">
+            <a href="#signup" class="btn btn-red btn-lg">Start free</a>
+            <a href="#demo" class="btn btn-ghost btn-lg">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--blue)">
+                <polygon points="5 3 19 12 5 21 5 3"/>
+              </svg> Try a live demo
+            </a>
+          </div>
+          <div class="hero-note">
+            <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>No credit card to start</span>
+            <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Guided onboarding</span>
+            <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>DHIS2 and NHMIS ready</span>
+          </div>
         </div>
 
-        <!-- Dashboard Mockup (Synthetic Data) -->
-        <div class="hero-visual" aria-hidden="true">
-          <div class="dashboard-mockup">
-            <div class="dashboard-header">
-              <span class="dashboard-dot red"></span>
-              <span class="dashboard-dot yellow"></span>
-              <span class="dashboard-dot green"></span>
-              <span style="margin-left: auto; font-size: 0.625rem; font-weight: 600; color: var(--gray-500);">
-                {{ $isBranded ? ($siteName . ' · Operations Telemetry') : 'CoreHealth · Hospital Dashboard' }}
-              </span>
-            </div>
-            <div class="dashboard-body">
-              <!-- Stats row -->
-              <div class="dash-stats-row">
-                <div class="dash-stat-card">
-                  <div class="dash-stat-label">Total Patients</div>
-                  <div class="dash-stat-value">1,284</div>
-                  <div class="dash-stat-change">↑ 12% this month</div>
+        <div class="frame-wrap" aria-hidden="true">
+          <div class="float f1"><span class="dot"></span><div><b>AI summary ready</b><small>Consultation 09:30</small></div></div>
+          <div class="float f2"><span class="dot r"></span><div><b>DHIS2 report synced</b><small>Monthly return submitted</small></div></div>
+          <div class="frame">
+            <div class="frame-bar"><i></i><i></i><i></i><span>CoreHealth · Hospital Dashboard (sample data)</span></div>
+            <div class="app">
+              <div class="side"><div class="on">Dashboard</div><div>Patients</div><div>Appointments</div><div>Pharmacy</div><div>Laboratory</div><div>Billing</div><div>Reports</div></div>
+              <div class="main">
+                <div class="kpis">
+                  <div class="kpi"><small>Patients</small><b>1,284</b><em>&uarr; 12% this month</em></div>
+                  <div class="kpi"><small>Appointments</small><b>342</b><em>&uarr; 8% this week</em></div>
+                  <div class="kpi"><small>AI summaries</small><b>96</b><em class="r">Generated today</em></div>
+                  <div class="kpi"><small>Bed occupancy</small><b>78%</b><em>Healthy</em></div>
                 </div>
-                <div class="dash-stat-card">
-                  <div class="dash-stat-label">Appointments</div>
-                  <div class="dash-stat-value">342</div>
-                  <div class="dash-stat-change">↑ 8% this week</div>
-                </div>
-                <div class="dash-stat-card">
-                  <div class="dash-stat-label">AI Summaries</div>
-                  <div class="dash-stat-value">96</div>
-                  <div class="dash-stat-change neutral">Generated today</div>
-                </div>
-              </div>
-
-              <!-- Main row: chart + patient list -->
-              <div class="dash-main-row">
-                <div class="dash-chart-card">
-                  <div class="dash-card-title">
-                    Patient Activity
-                    <span class="badge">Weekly</span>
+                <div class="row2">
+                  <div class="card-s">
+                    <h6>Patient activity <span>Weekly</span></h6>
+                    <div class="bars"><i style="height:40%"></i><i class="b" style="height:65%"></i><i class="r" style="height:52%"></i><i class="b" style="height:78%"></i><i style="height:45%"></i><i class="b" style="height:92%"></i><i class="r" style="height:62%"></i></div>
+                    <div class="lbl"><span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span><span>Sun</span></div>
                   </div>
-                  <div class="chart-bars">
-                    <div class="chart-bar" style="height: 40%"></div>
-                    <div class="chart-bar active" style="height: 65%"></div>
-                    <div class="chart-bar cyan" style="height: 52%"></div>
-                    <div class="chart-bar active" style="height: 78%"></div>
-                    <div class="chart-bar" style="height: 45%"></div>
-                    <div class="chart-bar active" style="height: 88%"></div>
-                    <div class="chart-bar cyan" style="height: 62%"></div>
-                  </div>
-                  <div class="chart-labels">
-                    <span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span><span>Sun</span>
+                  <div class="card-s">
+                    <h6>Recent patients</h6>
+                    <div class="pt"><div class="av">AA</div><div><b>Amina A.</b><small>Cardiology · 09:30</small></div><span class="st">Active</span></div>
+                    <div class="pt"><div class="av r">JO</div><div><b>James O.</b><small>General · 10:15</small></div><span class="st r">Pending</span></div>
+                    <div class="pt"><div class="av">FB</div><div><b>Fatima B.</b><small>Pediatrics · 11:00</small></div><span class="st">Active</span></div>
                   </div>
                 </div>
-
-                <div class="dash-chart-card">
-                  <div class="dash-card-title">Recent Patients</div>
-                  <div class="patient-list">
-                    <div class="patient-item">
-                      <div class="patient-avatar">AA</div>
-                      <div class="patient-info">
-                        <div class="patient-name">Amina A.</div>
-                        <div class="patient-meta">Cardiology · 09:30</div>
-                      </div>
-                      <span class="patient-status active">Active</span>
-                    </div>
-                    <div class="patient-item">
-                      <div class="patient-avatar">JO</div>
-                      <div class="patient-info">
-                        <div class="patient-name">James O.</div>
-                        <div class="patient-meta">General · 10:15</div>
-                      </div>
-                      <span class="patient-status pending">Pending</span>
-                    </div>
-                    <div class="patient-item">
-                      <div class="patient-avatar">FB</div>
-                      <div class="patient-info">
-                        <div class="patient-name">Fatima B.</div>
-                        <div class="patient-meta">Pediatrics · 11:00</div>
-                      </div>
-                      <span class="patient-status active">Active</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <!-- AI summary -->
-              <div class="dash-ai-card">
-                <div class="dash-ai-icon">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                    <path d="M12 2a10 10 0 1 0 10 10" />
-                    <path d="M12 6v6l4 2" />
-                  </svg>
-                </div>
-                <div class="dash-ai-content">
-                  <div class="dash-ai-title">AI Clinical Summary · Ready</div>
-                  <div class="dash-ai-text">
-                    Patient presents with <span class="highlight-ai">stable vitals</span>,
-                    mild hypertension. Recommended follow-up in 2 weeks.
-                  </div>
+                <div class="ai-bar">
+                  <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l2.4 5.6L20 10l-5.6 2.4L12 18l-2.4-5.6L4 10l5.6-2.4z"/></svg></div>
+                  <p><b>AI Clinical Summary.</b> Stable vitals, mild hypertension. Suggested follow-up in 2 weeks. <i style="color:var(--muted)">Clinician review required.</i></p>
                 </div>
               </div>
             </div>
@@ -313,738 +303,759 @@
       </div>
     </section>
 
-    <!-- ========== QUICK LINKS ========== -->
-    <nav class="quick-links" aria-label="Quick links">
-      <div class="quick-links-inner">
-        <a href="#about" class="quick-link">Overview</a>
-        <a href="#features" class="quick-link">Features</a>
-        <a href="#solutions" class="quick-link">Solutions</a>
-        <a href="#integrations" class="quick-link">Integrations</a>
-        <a href="#about" class="quick-link">About Us</a>
-        <a href="#impact" class="quick-link">Impact</a>
-        <a href="#contact" class="quick-link">Contact</a>
+    <!-- Standards Strip -->
+    <section class="strip">
+      <div class="container">
+        <p>Built for the standards health systems run on</p>
+        <div class="strip-row"><span>DHIS2</span><span>NHMIS</span><span>HL7</span><span>FHIR</span><span>REST API</span><span>WeCare247</span></div>
       </div>
-    </nav>
+    </section>
 
-    <!-- ========== TRUSTED SECTION ========== -->
-    <section class="section trusted-section" id="about" aria-labelledby="trusted-title">
-      <div class="container trusted-grid">
-        <div class="trusted-content">
-          <span class="section-label">{{ $isBranded ? 'Accredited Healthcare Operations' : 'Trusted Healthcare Technology' }}</span>
-          <h3 id="trusted-title">
-            {{ $isBranded ? 'Proven healthcare digitization & clinical excellence' : 'Proven healthcare digitization experience across Nigeria' }}
-          </h3>
-          <p>
-            @if($isBranded)
-              At {{ $siteName }}, our clinical workflows are powered by CoreHealth to eliminate paper bottlenecks, protect electronic medical records, and guarantee complete NHMIS and DHIS2 reporting alignment.
-            @else
-              CoreHealth is deployed in Plateau State and built to integrate with national health
-              information systems. We help institutions move from paper-based processes to secure,
-              interoperable digital workflows — without disrupting care delivery.
-            @endif
-          </p>
-          <ul class="trusted-list">
-            <li>
-              <span class="check-icon" aria-hidden="true">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12" /></svg>
-              </span>
-              <span>DHIS2 integration for national health reporting</span>
-            </li>
-            <li>
-              <span class="check-icon" aria-hidden="true">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12" /></svg>
-              </span>
-              <span>NHMIS-compliant data collection and analytics</span>
-            </li>
-            <li>
-              <span class="check-icon" aria-hidden="true">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12" /></svg>
-              </span>
-              <span>Role-based access control and comprehensive audit trails</span>
-            </li>
-            <li>
-              <span class="check-icon" aria-hidden="true">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12" /></svg>
-              </span>
-              <span>Scalable architecture for hospitals and multi-facility networks</span>
-            </li>
+    <!-- Features Bento -->
+    <section class="section" id="features">
+      <div class="container">
+        <div class="head">
+          <span class="eyebrow">The platform</span>
+          <h2>Everything your facility runs on, in one place.</h2>
+          <p>Replace disconnected tools and paper registers with a single, secure system that clinicians, pharmacists, lab staff and admin teams actually want to use.</p>
+        </div>
+        <div class="bento">
+          <div class="b-card b-4">
+            <div class="b-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg></div>
+            <h3>Electronic medical records</h3>
+            <p>One shared, longitudinal record for every patient. Clean timeline, fast search, allergies, vitals, previous visits and attachments right where clinicians expect them.</p>
+          </div>
+          <div class="b-card b-2 dark">
+            <div class="b-ico red"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/></svg></div>
+            <h3>AI clinical documentation</h3>
+            <p>Voice-to-text dictation and auto-summaries draft structured notes so doctors spend time with patients, not screens.</p>
+          </div>
+          <div class="b-card b-2">
+            <div class="b-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg></div>
+            <h3>Hospital management &amp; beds</h3>
+            <p>Admissions, transfers, discharges and ward occupancy in real time. Never lose track of a bed or a handoff.</p>
+          </div>
+          <div class="b-card b-2">
+            <div class="b-ico red"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></svg></div>
+            <h3>Smart pharmacy &amp; inventory</h3>
+            <p>Live inventory, expiry tracking, reorder alerts and closed-loop dispensing linked directly to doctor prescriptions.</p>
+          </div>
+          <div class="b-card b-2">
+            <div class="b-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3H5a2 2 0 0 0-2 2v4m6-6h10a2 2 0 0 1 2 2v4M9 3v18m0 0h10a2 2 0 0 0 2-2V9M9 21H5a2 2 0 0 1-2-2V9m0 0h18"/></svg></div>
+            <h3>Diagnostic laboratory</h3>
+            <p>Order tests, manage specimens, enter results and release verified reports straight into the consultation view.</p>
+          </div>
+          <div class="b-card b-3">
+            <div class="b-ico red"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></div>
+            <h3>Billing, claims &amp; revenue</h3>
+            <p>Itemised invoicing, deposit tracking, NHIS/HMO claims management and clear daily cashier reconciliations.</p>
+          </div>
+          <div class="b-card b-3">
+            <div class="b-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg></div>
+            <h3>Reporting &amp; analytics</h3>
+            <p>Real-time dashboards and custom reports for clinical, operational and financial decisions, from the ward to the ministry.</p>
+          </div>
+          <div class="b-card b-3">
+            <div class="b-ico red"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></div>
+            <h3>Role-based access control</h3>
+            <p>Every user sees exactly what their role requires, with every action recorded in an audit trail.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- AI Section -->
+    <section class="section soft" id="ai">
+      <div class="container split">
+        <div>
+          <span class="eyebrow">AI-assisted care</span>
+          <h2>Less typing. More time with patients.</h2>
+          <p>CoreHealth puts AI inside the clinical workflow as an assistant, not a replacement for professional judgment. Clinicians review and approve everything that enters the record.</p>
+          <ul class="checks">
+            <li><span class="ck"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span><div><strong>Voice-to-text medical dictation</strong><span>Dictate naturally. Notes are transcribed and structured into the patient record.</span></div></li>
+            <li><span class="ck"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span><div><strong>AI-generated clinical summaries</strong><span>Concise summaries from consultations, labs and notes, ready for review.</span></div></li>
+            <li><span class="ck"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span><div><strong>Smart workflows</strong><span>Task routing and automated alerts keep every department in step.</span></div></li>
+            <li><span class="ck"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span><div><strong>Telemedicine with WeCare247</strong><span>Secure video consultations and remote follow-ups inside the same record.</span></div></li>
           </ul>
+          <div class="cta-row"><a href="#demo" class="btn btn-red">Try the AI demo</a><a href="#signup" class="btn btn-ghost">Start free</a></div>
         </div>
-
-        <div class="trusted-visual">
-          <div class="trust-card">
-            <div class="trust-card-icon">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
-              </svg>
-            </div>
-            <div class="trust-card-text">
-              <h4>{{ $isBranded ? 'Clinical Care Excellence' : 'Deployed in Plateau State' }}</h4>
-              <p>{{ $isBranded ? 'Modern healthcare facility providing compassionate, evidence-based clinical care.' : 'Supporting healthcare facilities with real-world digital health infrastructure.' }}</p>
-            </div>
-          </div>
-          <div class="trust-card">
-            <div class="trust-card-icon">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                <circle cx="12" cy="12" r="10" />
-                <line x1="2" y1="12" x2="22" y2="12" />
-                <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
-              </svg>
-            </div>
-            <div class="trust-card-text">
-              <h4>DHIS2 & NHMIS Ready</h4>
-              <p>Seamless integration with national and regional health information systems.</p>
-            </div>
-          </div>
-          <div class="trust-card">
-            <div class="trust-card-icon">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                <rect x="2" y="3" width="20" height="14" rx="2" ry="2" />
-                <line x1="8" y1="21" x2="16" y2="21" />
-                <line x1="12" y1="17" x2="12" y2="21" />
-              </svg>
-            </div>
-            <div class="trust-card-text">
-              <h4>Built for Scale</h4>
-              <p>From single clinics to multi-facility health networks and government agencies.</p>
-            </div>
+        <div class="mock" aria-hidden="true">
+          <div class="mock-h"><div><h4>WeCare247 · Telemedicine consultation</h4><small>AI-assisted documentation (sample)</small></div><span class="live">LIVE</span></div>
+          <div class="mock-b">
+            <div class="tx"><small>Voice transcript</small><p>“Patient reports persistent headache for three days, mild fever, no neck stiffness. Vitals stable. Recommend malaria test and hydration.”</p></div>
+            <div class="sm"><small>AI clinical summary · draft</small><p><b>Assessment:</b> Suspected uncomplicated malaria. <b>Plan:</b> Order RDT, treat per protocol, hydration advice. <b>Follow-up:</b> 48 hours or sooner if symptoms worsen.</p></div>
+            <div class="note-ai">Draft only. Requires clinician review and sign-off.</div>
           </div>
         </div>
       </div>
     </section>
 
-    <!-- ========== CORE FEATURES ========== -->
-    <section class="section features-section" id="features" aria-labelledby="features-title">
+    <!-- How It Works -->
+    <section class="section" id="how">
       <div class="container">
-        <div class="section-header">
-          <span class="section-label">Core Features</span>
-          <h2 id="features-title" class="section-title">Everything your facility needs, in one platform</h2>
-          <p class="section-subtitle">
-            From electronic medical records to AI-powered documentation, CoreHealth covers the
-            entire clinical and operational workflow.
-          </p>
+        <div class="head">
+          <span class="eyebrow">Get live fast</span>
+          <h2>From paper to digital without disrupting care.</h2>
+          <p>A guided rollout designed around real clinical workflows.</p>
         </div>
-
-        <div class="features-grid">
-          <article class="feature-card">
-            <div class="feature-icon">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-                <polyline points="14 2 14 8 20 8" />
-                <line x1="16" y1="13" x2="8" y2="13" />
-                <line x1="16" y1="17" x2="8" y2="17" />
-              </svg>
-            </div>
-            <h3>Electronic Medical Records</h3>
-            <p>Comprehensive patient records with clinical history, diagnoses, medications, and lab results — accessible securely across departments.</p>
-          </article>
-
-          <article class="feature-card">
-            <div class="feature-icon">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                <rect x="2" y="7" width="20" height="14" rx="2" ry="2" />
-                <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16" />
-              </svg>
-            </div>
-            <h3>Hospital Information Management</h3>
-            <p>Manage admissions, transfers, discharges, bed occupancy, and operational workflows from a unified command centre.</p>
-          </article>
-
-          <article class="feature-card">
-            <div class="feature-icon">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                <path d="M12 2a10 10 0 1 0 10 10" />
-                <path d="M12 6v6l4 2" />
-              </svg>
-            </div>
-            <h3>AI Clinical Documentation</h3>
-            <p>Voice-to-text dictation and AI-generated clinical summaries reduce administrative burden and free clinicians to focus on patients.</p>
-          </article>
-
-          <article class="feature-card">
-            <div class="feature-icon">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z" />
-              </svg>
-            </div>
-            <h3>Pharmacy & Inventory</h3>
-            <p>Track medication stock, manage prescriptions, automate reordering, and prevent stockouts with real-time inventory visibility.</p>
-          </article>
-
-          <article class="feature-card">
-            <div class="feature-icon">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                <path d="M9 3H5a2 2 0 0 0-2 2v4m6-6h10a2 2 0 0 1 2 2v4M9 3v18m0 0h10a2 2 0 0 0 2-2V9M9 21H5a2 2 0 0 1-2-2V9m0 0h18" />
-              </svg>
-            </div>
-            <h3>Laboratory Management</h3>
-            <p>Order tests, track specimens, record results, and deliver reports digitally — with full audit trails and integration to EMR.</p>
-          </article>
-
-          <article class="feature-card">
-            <div class="feature-icon">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                <line x1="12" y1="1" x2="12" y2="23" />
-                <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
-              </svg>
-            </div>
-            <h3>Billing & Revenue Cycle</h3>
-            <p>Automate invoicing, insurance claims, payment tracking, and financial reporting to improve revenue integrity.</p>
-          </article>
-
-          <article class="feature-card">
-            <div class="feature-icon">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                <path d="M21 12v-2a5 5 0 0 0-5-5H8a5 5 0 0 0-5 5v2" />
-                <circle cx="12" cy="16" r="5" />
-                <line x1="12" y1="11" x2="12" y2="16" />
-              </svg>
-            </div>
-            <h3>Reporting & Analytics</h3>
-            <p>Real-time dashboards and custom reports for clinical, operational, and financial decision-making at every level.</p>
-          </article>
-
-          <article class="feature-card">
-            <div class="feature-icon">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
-                <path d="M7 11V7a5 5 0 0 1 10 0v4" />
-              </svg>
-            </div>
-            <h3>Role-Based Access Control</h3>
-            <p>Granular permissions ensure that every user — from doctors to administrators — sees only what they need, securely.</p>
-          </article>
-
-          <article class="feature-card">
-            <div class="feature-icon">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                <path d="M22 12h-4l-3 9L9 3l-3 9H2" />
-              </svg>
-            </div>
-            <h3>Telemedicine Integration</h3>
-            <p>Built-in telemedicine through WeCare247 connects patients and providers for virtual consultations and follow-ups.</p>
-          </article>
+        <div class="steps">
+          <div class="step"><div class="n">1</div><h3>Set up your facility</h3><p>Create your organisation, departments, roles and service catalogue. Import existing patient data with our team's help.</p></div>
+          <div class="step"><div class="n">2</div><h3>Train and go live</h3><p>Role-based training for clinicians, pharmacy, lab and front desk, with phased go-live by department.</p></div>
+          <div class="step"><div class="n">3</div><h3>Report and improve</h3><p>Push data to DHIS2 and NHMIS and use live dashboards to improve quality, stock and revenue.</p></div>
         </div>
       </div>
     </section>
 
-    <!-- ========== AI SECTION ========== -->
-    <section class="section ai-section" aria-labelledby="ai-title">
-      <div class="container ai-grid">
-        <div class="ai-content">
-          <span class="section-label">AI-Powered Healthcare</span>
-          <h2 id="ai-title">Intelligent tools that support clinical excellence</h2>
-          <p>
-            CoreHealth embeds AI into the clinical workflow — not as a replacement for
-            professional judgment, but as a powerful assistant that saves time and reduces
-            administrative burden.
-          </p>
-
-          <ul class="ai-feature-list">
-            <li class="ai-feature-item">
-              <div class="ai-feature-icon">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                  <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z" />
-                  <path d="M19 10v2a7 7 0 0 1-14 0v-2" />
-                  <line x1="12" y1="19" x2="12" y2="23" />
-                  <line x1="8" y1="23" x2="16" y2="23" />
-                </svg>
-              </div>
-              <div class="ai-feature-text">
-                <h4>Voice-to-Text Medical Dictation</h4>
-                <p>Clinicians dictate notes naturally; CoreHealth transcribes and structures them into the patient record.</p>
-              </div>
-            </li>
-            <li class="ai-feature-item">
-              <div class="ai-feature-icon">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-                  <polyline points="14 2 14 8 20 8" />
-                  <line x1="16" y1="13" x2="8" y2="13" />
-                  <line x1="16" y1="17" x2="8" y2="17" />
-                </svg>
-              </div>
-              <div class="ai-feature-text">
-                <h4>AI-Generated Clinical Summaries</h4>
-                <p>Automatically generate concise, accurate summaries from consultations, lab results, and clinical notes.</p>
-              </div>
-            </li>
-            <li class="ai-feature-item">
-              <div class="ai-feature-icon">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                  <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
-                </svg>
-              </div>
-              <div class="ai-feature-text">
-                <h4>Intelligent Workflows</h4>
-                <p>Smart task routing, automated alerts, and predictive scheduling keep departments running efficiently.</p>
-              </div>
-            </li>
-            <li class="ai-feature-item">
-              <div class="ai-feature-icon">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                  <path d="M22 12h-4l-3 9L9 3l-3 9H2" />
-                </svg>
-              </div>
-              <div class="ai-feature-text">
-                <h4>Integrated Telemedicine via WeCare247</h4>
-                <p>Conduct secure video consultations, share records, and follow up with patients remotely — all within CoreHealth.</p>
-              </div>
-            </li>
-          </ul>
-        </div>
-
-        <!-- AI Mockup / WeCare247 preview -->
-        <div class="ai-visual" aria-hidden="true">
-          <div class="ai-mockup">
-            <div class="ai-mockup-header">
-              <h4>WeCare247 · Telemedicine Consultation</h4>
-              <p>AI-assisted documentation in progress</p>
-            </div>
-            <div class="ai-mockup-body">
-              <div class="ai-transcript">
-                <div class="ai-transcript-label">Voice Transcript</div>
-                <div class="ai-transcript-text">
-                  "Patient reports persistent headache for three days, mild fever, no neck stiffness.
-                  Vitals stable. Recommend malaria test and hydration."
-                </div>
-              </div>
-              <div class="ai-summary">
-                <div class="ai-summary-label">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                    <path d="M12 2a10 10 0 1 0 10 10" />
-                    <path d="M12 6v6l4 2" />
-                  </svg>
-                  AI Clinical Summary
-                </div>
-                <div class="ai-summary-text">
-                  <strong>Assessment:</strong> Suspected uncomplicated malaria.
-                  <strong>Plan:</strong> Order RDT, prescribe antimalarial, hydration advice.
-                  <strong>Follow-up:</strong> 48 hours or sooner if symptoms worsen.
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- ========== SOLUTIONS BY USER ========== -->
-    <section class="section solutions-section" id="solutions" aria-labelledby="solutions-title">
+    <!-- Solutions Tabs -->
+    <section class="section soft" id="solutions">
       <div class="container">
-        <div class="section-header">
-          <span class="section-label">Solutions by User</span>
-          <h2 id="solutions-title" class="section-title">Tailored for every healthcare role</h2>
-          <p class="section-subtitle">
-            Whether you're a hospital administrator, clinician, pharmacist, or government agency,
-            CoreHealth adapts to your workflow.
-          </p>
+        <div class="head">
+          <span class="eyebrow">Solutions</span>
+          <h2>Built for every kind of health organisation.</h2>
+          <p>Pick your setting and see how CoreHealth fits.</p>
+        </div>
+        <div class="tabs" role="tablist" aria-label="Solutions">
+          <button class="tab" role="tab" aria-selected="true" data-t="p1">Hospitals</button>
+          <button class="tab" role="tab" aria-selected="false" data-t="p2">Clinics</button>
+          <button class="tab" role="tab" aria-selected="false" data-t="p3">Government &amp; Ministries</button>
+          <button class="tab" role="tab" aria-selected="false" data-t="p4">Health Networks</button>
         </div>
 
-        <div class="solutions-grid">
-          <a href="#about" class="solution-card">
-            <div class="solution-icon">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                <rect x="2" y="7" width="20" height="14" rx="2" ry="2" />
-                <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16" />
-              </svg>
-            </div>
-            <h4>Hospitals</h4>
-            <p>Full-scale hospital information management, from admission to discharge.</p>
-            <span class="arrow">Learn more →</span>
-          </a>
-
-          <a href="#about" class="solution-card">
-            <div class="solution-icon">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z" />
-              </svg>
-            </div>
-            <h4>Clinics</h4>
-            <p>Lightweight, affordable digital tools for outpatient and primary care.</p>
-            <span class="arrow">Learn more →</span>
-          </a>
-
-          <a href="#about" class="solution-card">
-            <div class="solution-icon">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
-                <circle cx="12" cy="7" r="4" />
-              </svg>
-            </div>
-            <h4>Healthcare Administrators</h4>
-            <p>Analytics, reporting, and operational oversight in one dashboard.</p>
-            <span class="arrow">Learn more →</span>
-          </a>
-
-          <a href="#about" class="solution-card">
-            <div class="solution-icon">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                <path d="M12 2a10 10 0 1 0 10 10" />
-                <path d="M12 6v6l4 2" />
-              </svg>
-            </div>
-            <h4>Doctors</h4>
-            <p>AI-assisted notes, quick access to patient history, and e-prescribing.</p>
-            <span class="arrow">Learn more →</span>
-          </a>
-
-          <a href="#about" class="solution-card">
-            <div class="solution-icon">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z" />
-              </svg>
-            </div>
-            <h4>Pharmacists</h4>
-            <p>Inventory control, prescription management, and dispensing workflows.</p>
-            <span class="arrow">Learn more →</span>
-          </a>
-
-          <a href="#about" class="solution-card">
-            <div class="solution-icon">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                <path d="M9 3H5a2 2 0 0 0-2 2v4m6-6h10a2 2 0 0 1 2 2v4M9 3v18m0 0h10a2 2 0 0 0 2-2V9M9 21H5a2 2 0 0 1-2-2V9m0 0h18" />
-              </svg>
-            </div>
-            <h4>Laboratories</h4>
-            <p>Test ordering, result management, and seamless EMR integration.</p>
-            <span class="arrow">Learn more →</span>
-          </a>
-
-          <a href="#about" class="solution-card">
-            <div class="solution-icon">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                <circle cx="12" cy="12" r="10" />
-                <line x1="2" y1="12" x2="22" y2="12" />
-                <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
-              </svg>
-            </div>
-            <h4>Government Health Agencies</h4>
-            <p>DHIS2 integration, NHMIS reporting, and population health analytics.</p>
-            <span class="arrow">Learn more →</span>
-          </a>
-
-          <a href="#about" class="solution-card">
-            <div class="solution-icon">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                <path d="M22 12h-4l-3 9L9 3l-3 9H2" />
-              </svg>
-            </div>
-            <h4>Health Networks</h4>
-            <p>Multi-facility coordination, shared records, and centralised reporting.</p>
-            <span class="arrow">Learn more →</span>
-          </a>
-        </div>
-      </div>
-    </section>
-
-    <!-- ========== INTEGRATIONS ========== -->
-    <section class="section integrations-section" id="integrations" aria-labelledby="integrations-title">
-      <div class="container integrations-grid">
-        <div class="integrations-content">
-          <span class="section-label">Integrations & Interoperability</span>
-          <h2 id="integrations-title">Connect with the systems you already use</h2>
-          <p>
-            CoreHealth is built on open standards and APIs, making it easy to integrate with
-            national health information systems, laboratory equipment, and existing hospital
-            software.
-          </p>
-          <div class="integration-badges">
-            <span class="integration-badge">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                <circle cx="12" cy="12" r="10" />
-                <line x1="2" y1="12" x2="22" y2="12" />
-              </svg>
-              DHIS2
-            </span>
-            <span class="integration-badge">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
-              </svg>
-              NHMIS
-            </span>
-            <span class="integration-badge">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
-                <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
-              </svg>
-              REST APIs
-            </span>
-            <span class="integration-badge">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
-              </svg>
-              HL7 / FHIR
-            </span>
+        <div class="panel on" id="p1" role="tabpanel">
+          <div>
+            <h3>Run the whole hospital from one system.</h3>
+            <p>From front desk to ward to pharmacy, every department works from the same live record.</p>
+            <ul>
+              <li>Admissions, transfers, discharge and bed management</li>
+              <li>Integrated lab, pharmacy and billing</li>
+              <li>AI-assisted documentation for doctors</li>
+              <li>DHIS2 and NHMIS reporting built in</li>
+            </ul>
+            <a href="#demo" class="btn btn-red">Book a hospital demo</a>
+          </div>
+          <div class="stat-stack">
+            <div class="stat-box hl"><small>Unified</small><b>EMR + HIS + Pharmacy + Lab</b></div>
+            <div class="stat-box"><small>Reporting</small><b>DHIS2 · NHMIS</b></div>
           </div>
         </div>
-
-        <div class="integrations-visual">
-          <div class="integration-card">
-            <div class="integration-card-icon">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                <circle cx="12" cy="12" r="10" />
-                <line x1="2" y1="12" x2="22" y2="12" />
-                <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
-              </svg>
-            </div>
-            <div class="integration-card-text">
-              <h4>DHIS2</h4>
-              <p>Automated data submission to national health information systems.</p>
-            </div>
+        <div class="panel" id="p2" role="tabpanel">
+          <div>
+            <h3>Digitize your clinic in weeks, not months.</h3>
+            <p>Lightweight, affordable tools for outpatient and primary care teams.</p>
+            <ul>
+              <li>Fast registration and appointment scheduling</li>
+              <li>Consultation notes with voice dictation</li>
+              <li>Prescriptions, simple billing and stock tracking</li>
+              <li>Telemedicine follow-ups with WeCare247</li>
+            </ul>
+            <a href="#signup" class="btn btn-red">Start free</a>
           </div>
-          <div class="integration-card">
-            <div class="integration-card-icon">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
-              </svg>
-            </div>
-            <div class="integration-card-text">
-              <h4>NHMIS</h4>
-              <p>Compliant data collection and reporting for Nigerian health facilities.</p>
-            </div>
+          <div class="stat-stack">
+            <div class="stat-box hl"><small>Ideal for</small><b>Outpatient &amp; primary care</b></div>
+            <div class="stat-box"><small>Telemedicine</small><b>WeCare247 built in</b></div>
           </div>
-          <div class="integration-card">
-            <div class="integration-card-icon">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                <rect x="2" y="3" width="20" height="14" rx="2" ry="2" />
-                <line x1="8" y1="21" x2="16" y2="21" />
-                <line x1="12" y1="17" x2="12" y2="21" />
-              </svg>
-            </div>
-            <div class="integration-card-text">
-              <h4>Existing Hospital Systems</h4>
-              <p>Connect with legacy software, lab equipment, and third-party tools via APIs.</p>
-            </div>
+        </div>
+        <div class="panel" id="p3" role="tabpanel">
+          <div>
+            <h3>Population-level visibility for health authorities.</h3>
+            <p>Standardised facility data that rolls up cleanly for planning and oversight.</p>
+            <ul>
+              <li>DHIS2 integration for national reporting</li>
+              <li>NHMIS-compliant data collection</li>
+              <li>Cross-facility analytics and dashboards</li>
+              <li>Role-based access and full audit trails</li>
+            </ul>
+            <a href="#demo" class="btn btn-red">Talk to our public-sector team</a>
+          </div>
+          <div class="stat-stack">
+            <div class="stat-box hl"><small>Deployed</small><b>Plateau State, Nigeria</b></div>
+            <div class="stat-box"><small>Standards</small><b>DHIS2 · NHMIS · FHIR</b></div>
+          </div>
+        </div>
+        <div class="panel" id="p4" role="tabpanel">
+          <div>
+            <h3>One record across every facility in your network.</h3>
+            <p>Coordinate care, share records securely and manage the group centrally.</p>
+            <ul>
+              <li>Multi-facility administration</li>
+              <li>Shared patient records with permissions</li>
+              <li>Centralised reporting and finance</li>
+              <li>Scales from a handful of sites to a whole system</li>
+            </ul>
+            <a href="#demo" class="btn btn-red">Plan a network rollout</a>
+          </div>
+          <div class="stat-stack">
+            <div class="stat-box hl"><small>Architecture</small><b>Multi-facility, scalable</b></div>
+            <div class="stat-box"><small>Governance</small><b>Central control, local access</b></div>
           </div>
         </div>
       </div>
     </section>
 
-    <!-- ========== IMPACT & TRUST ========== -->
-    <section class="section impact-section" id="impact" aria-labelledby="impact-title">
+    <!-- Integrations -->
+    <section class="section" id="integrations">
       <div class="container">
-        <div class="section-header">
-          <span class="section-label">Impact & Trust</span>
-          <h2 id="impact-title" class="section-title">Building confidence through real deployments</h2>
-          <p class="section-subtitle">
-            CoreHealth is live in Plateau State and continues to expand, supporting healthcare
-            institutions with reliable, secure technology.
-          </p>
+        <div class="head">
+          <span class="eyebrow">Interoperability</span>
+          <h2>Connects to the systems you already use.</h2>
+          <p>Open standards and APIs make CoreHealth easy to plug into national platforms, lab equipment and existing hospital software.</p>
         </div>
-
-        <div class="impact-stats">
-          <div class="impact-stat">
-            <div class="impact-stat-value">1</div>
-            <div class="impact-stat-label">State Deployment</div>
-          </div>
-          <div class="impact-stat">
-            <div class="impact-stat-value">DHIS2</div>
-            <div class="impact-stat-label">Integration Ready</div>
-          </div>
-          <div class="impact-stat">
-            <div class="impact-stat-value">NHMIS</div>
-            <div class="impact-stat-label">Compliant</div>
-          </div>
-          <div class="impact-stat">
-            <div class="impact-stat-value">100%</div>
-            <div class="impact-stat-label">Commitment to Security</div>
-          </div>
+        <div class="int-grid">
+          <div class="int"><span class="tag">DHIS2</span><p>Automated data submission to national health information systems.</p></div>
+          <div class="int"><span class="tag">NHMIS</span><p>Compliant data collection and reporting for Nigerian health facilities.</p></div>
+          <div class="int"><span class="tag">REST APIs</span><p>Connect legacy software, lab equipment and third-party tools.</p></div>
+          <div class="int"><span class="tag">HL7 / FHIR</span><p>Standards-based exchange for interoperable records.</p></div>
         </div>
+      </div>
+    </section>
 
-        <div class="testimonials-grid">
-          <div class="testimonial-card">
-            <p class="testimonial-quote">
-              "CoreHealth has streamlined our patient record management and made reporting to
-              DHIS2 significantly easier. The AI summaries save our doctors valuable time."
-            </p>
-            <div class="testimonial-author">
-              <div class="testimonial-avatar" aria-hidden="true">HA</div>
-              <div class="testimonial-author-info">
-                <h5>Hospital Administrator</h5>
-                <p>Plateau State, Nigeria</p>
-              </div>
-            </div>
+    <!-- Security -->
+    <section class="section sec" id="security">
+      <div class="container">
+        <div class="head">
+          <span class="eyebrow">Security &amp; trust</span>
+          <h2>Patient data deserves serious protection.</h2>
+          <p>Security and privacy are designed into every layer of CoreHealth.</p>
+        </div>
+        <div class="sec-grid">
+          <div class="sec-card">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+            <h4>Role-based permissions</h4>
+            <p>Every role sees only the data they need to do their job, with strict separation between clinical and administrative records.</p>
           </div>
-
-          <div class="testimonial-card">
-            <p class="testimonial-quote">
-              "The platform is intuitive and the support team is responsive. We were able to
-              digitize our outpatient department within weeks."
-            </p>
-            <div class="testimonial-author">
-              <div class="testimonial-avatar" aria-hidden="true">CM</div>
-              <div class="testimonial-author-info">
-                <h5>Clinical Manager</h5>
-                <p>Private Clinic, Jos</p>
-              </div>
-            </div>
+          <div class="sec-card">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+            <h4>Encrypted in transit and at rest</h4>
+            <p>All data is encrypted using industry-standard protocols, with regular backups and disaster recovery procedures.</p>
           </div>
-
-          <div class="testimonial-card">
-            <p class="testimonial-quote">
-              "Integration with NHMIS was a key requirement for us, and CoreHealth delivered.
-              Data quality and reporting have improved noticeably."
-            </p>
-            <div class="testimonial-author">
-              <div class="testimonial-avatar" aria-hidden="true">GH</div>
-              <div class="testimonial-author-info">
-                <h5>Government Health Officer</h5>
-                <p>Plateau State Ministry of Health</p>
-              </div>
-            </div>
+          <div class="sec-card">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+            <h4>Complete audit trail</h4>
+            <p>Every record view, edit, prescription and dispensing event is permanently logged with timestamp and user details.</p>
+          </div>
+          <div class="sec-card">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/></svg>
+            <h4>Privacy by design</h4>
+            <p>Built to meet national data-protection regulations, with fine-grained consent options and patient data rights built in.</p>
           </div>
         </div>
       </div>
     </section>
 
-    <!-- ========== FINAL CTA ========== -->
-    <section class="section final-cta" id="demo" aria-labelledby="cta-title">
-      <div class="container final-cta-inner">
-        @if($isBranded)
-          <h2 id="cta-title">Excellence in Healthcare at {{ $siteName }}</h2>
-          <p>
-            Connecting patients, clinicians, laboratories, and pharmacy into a synchronized healthcare ecosystem.
-          </p>
-          <div class="final-cta-actions">
-            @auth
-              <a href="{{ url('/home') }}" class="btn btn-primary">Enter Operations Cockpit</a>
-            @else
-              <a href="{{ route('login') }}" class="btn btn-primary">Staff Portal Sign In</a>
-            @endauth
-            <a href="#contact" class="btn btn-teal">Contact Facility</a>
-            <a href="https://corestream.ng/public/contact" class="btn btn-secondary" target="_blank" rel="noopener">About CoreHealth</a>
-          </div>
-        @else
-          <h2 id="cta-title">Ready to modernize your healthcare operations?</h2>
-          <p>
-            Join healthcare institutions across Africa using CoreHealth to digitize, automate,
-            and deliver better care.
-          </p>
-          <div class="final-cta-actions">
-            <a href="https://corestream.ng/public/contact" class="btn btn-primary" target="_blank" rel="noopener">Book a Demo</a>
-            <a href="#contact" class="btn btn-teal">Talk to Our Team</a>
-            <a href="https://corestream.ng/public/contact" class="btn btn-secondary" target="_blank" rel="noopener">Become a Partner</a>
-          </div>
-        @endif
+    <!-- Impact -->
+    <section class="section" id="impact">
+      <div class="container">
+        <div class="head">
+          <span class="eyebrow">Proven in practice</span>
+          <h2>Measurable improvements from day one.</h2>
+          <p>Facilities using CoreHealth see real gains in staff productivity, patient experience and revenue capture.</p>
+        </div>
+        <div class="proof-row">
+          <div class="stat"><b class="grad">70%</b><p>Faster consultation notes with AI-assisted dictation</p></div>
+          <div class="stat"><b class="grad">&minus;40%</b><p>Reduction in average patient wait times</p></div>
+          <div class="stat"><b class="grad">99.8%</b><p>On-time monthly reporting to DHIS2 and NHMIS</p></div>
+          <div class="stat"><b class="grad">24/7</b><p>Dedicated technical support and ongoing updates</p></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- FAQ -->
+    <section class="section soft" id="faq">
+      <div class="container">
+        <div class="head">
+          <span class="eyebrow">Questions?</span>
+          <h2>Everything you need to know.</h2>
+          <p>Quick answers about getting started with CoreHealth.</p>
+        </div>
+        <div class="faq-grid">
+          <details><summary>How long does a typical implementation take?</summary><p>Most facilities go live within 2 to 4 weeks. We configure your departments, import existing records and run hands-on training so your team feels confident on day one.</p></details>
+          <details><summary>Does CoreHealth work with DHIS2 and NHMIS?</summary><p>Yes. CoreHealth is built to submit facility data to DHIS2 and to support NHMIS reporting requirements.</p></details>
+          <details><summary>Is the AI making clinical decisions?</summary><p>No. AI drafts transcripts and summaries to save time. Clinicians review, edit and approve everything before it becomes part of the record.</p></details>
+          <details><summary>Can we connect our existing lab equipment or software?</summary><p>CoreHealth exposes REST APIs and supports HL7/FHIR-style exchange. Talk to our team about your specific equipment and systems.</p></details>
+          <details><summary>Do you offer training and support?</summary><p>Yes. Role-based onboarding is part of every rollout, with ongoing support available through our team.</p></details>
+        </div>
+      </div>
+    </section>
+
+    <!-- Final CTA -->
+    <section class="section" id="demo" style="padding-bottom:0">
+      <div class="container">
+        <div class="final" id="signup">
+          <h2>Bring your facility into the digital age.</h2>
+          <p>Create your free account in minutes, or book a guided demo with our team.</p>
+          <form class="signup" action="https://corestream.ng/public/contact" method="get">
+            <input type="email" name="email" placeholder="Work email address" aria-label="Work email" required />
+            <button class="btn btn-red btn-lg" type="submit">Start free</button>
+          </form>
+          <div class="or">Prefer a walkthrough? <a href="https://corestream.ng/public/contact" target="_blank" rel="noopener">Book a live demo &rarr;</a></div>
+        </div>
       </div>
     </section>
   </main>
 
-  <!-- ========== FOOTER ========== -->
-  <footer class="footer" id="contact" role="contentinfo">
+  <!-- Footer -->
+  <footer class="footer" id="about">
     <div class="container">
-      <div class="footer-grid">
-        <div class="footer-brand">
-          @if($isBranded)
-            <a href="{{ url('/') }}" class="logo brand-logo-combo" aria-label="{{ $siteName }}" style="color:#ffffff;">
-              @if($siteLogo)
-                <img src="data:image/jpeg;base64,{{ $siteLogo }}" alt="{{ $siteName }}" class="hospital-brand-img" style="filter: brightness(0) invert(1);" />
-              @else
-                <span class="logo-symbol" aria-hidden="true">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M22 12h-4l-3 9L9 3l-3 9H2" />
-                  </svg>
-                </span>
-              @endif
-              <div class="brand-text-block">
-                <span class="hospital-brand-title" style="color:#ffffff;">{{ $siteName }}</span>
-                <span class="hospital-brand-sub" style="color:rgba(255,255,255,0.7);">Powered by Core<span style="color:var(--cyan);">Health</span></span>
+      <div class="f-grid">
+        <div class="f-brand">
+          <a href="{{ url('/') }}" class="logo">
+            <span class="logo-mark"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg></span>
+            Core<b>Health</b>
+          </a>
+          <p>The AI-powered healthcare management ecosystem by Corestream Networks and Robotics Limited.</p>
+          <a href="#signup" class="btn btn-red btn-sm">Start free</a>
+        </div>
+        <div class="f-col"><h5>Product</h5><ul><li><a href="#features">Features</a></li><li><a href="#ai">AI Documentation</a></li><li><a href="#integrations">Integrations</a></li><li><a href="#security">Security</a></li></ul></div>
+        <div class="f-col"><h5>Solutions</h5><ul><li><a href="#solutions">Hospitals</a></li><li><a href="#solutions">Clinics</a></li><li><a href="#solutions">Government</a></li><li><a href="#solutions">Health Networks</a></li></ul></div>
+        <div class="f-col"><h5>Resources</h5><ul><li><a href="#">Documentation</a></li><li><a href="#">API Reference</a></li><li><a href="#faq">FAQ</a></li><li><a href="https://corestream.ng/public/contact" target="_blank" rel="noopener">Support</a></li></ul></div>
+        <div class="f-col f-contact"><h5>Contact</h5><ul><li>Jos, Plateau State, Nigeria</li><li>hello@corestream.ng</li><li>+234 (0) 816 087 6560</li></ul></div>
+      </div>
+      <div class="f-bottom"><span>&copy; {{ date('Y') }} Corestream Networks and Robotics Limited. All rights reserved.</span><div><a href="#">Privacy Policy</a><a href="#">Terms of Service</a><a href="#security">Security</a></div></div>
+    </div>
+  </footer>
+
+  <div class="m-cta">
+    <a class="btn btn-ghost" href="#demo">Book demo</a>
+    <a class="btn btn-red" href="#signup">Start free</a>
+  </div>
+
+@else
+  {{-- =====================================================================
+       BRANDED MODE: CLINICAL HEALTHCARE FACILITY PORTAL
+       ===================================================================== --}}
+  <div class="announce">
+    <span class="tag">24/7 CARE</span>{{ $siteName }} Emergency and Inpatient Services are open around the clock.
+    <a href="tel:{{ preg_replace('/[^0-9+]/', '', $sitePhone) }}">Call Emergency: {{ $sitePhone }} &rarr;</a>
+  </div>
+
+  <!-- Hospital Branded Header -->
+  <header class="header">
+    <div class="container header-in">
+      <a href="{{ url('/') }}" class="hospital-brand-combo" aria-label="{{ $siteName }}">
+        @if($siteLogo)
+          <img src="{{ $siteLogo }}" alt="{{ $siteName }}" class="hospital-brand-img" />
+        @else
+          <span class="logo-mark" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M22 12h-4l-3 9L9 3l-3 9H2" />
+            </svg>
+          </span>
+        @endif
+        <div class="hospital-brand-text">
+          <span class="hospital-brand-title">{{ $siteName }}</span>
+          <span class="hospital-brand-sub">Powered by Core<b>Health</b></span>
+        </div>
+      </a>
+
+      <nav class="nav" aria-label="Facility Navigation">
+        <div class="nav-item"><a class="nav-trigger" href="#services">Clinical Services</a></div>
+        <div class="nav-item"><a class="nav-trigger" href="#telehealth">Telemedicine &amp; EHR</a></div>
+        <div class="nav-item"><a class="nav-trigger" href="#standards">Care Standards</a></div>
+        <div class="nav-item"><a class="nav-trigger" href="#faq">Patient &amp; Visitor Guide</a></div>
+        <div class="nav-item"><a class="nav-trigger" href="#contact">Contact &amp; Hours</a></div>
+      </nav>
+
+      <div class="head-cta">
+        @auth
+          <a class="btn btn-red btn-sm hide-sm" href="{{ url('/home') }}">Enter Dashboard</a>
+        @else
+          <a class="login hide-sm" href="{{ route('login') }}">Staff Sign In</a>
+          <a class="btn btn-red btn-sm hide-sm" href="{{ route('login') }}">Staff Portal</a>
+        @endauth
+        <button class="burger" id="burger" aria-label="Open menu" aria-expanded="false">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+            <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Hospital Branded Mobile Drawer -->
+  <div class="drawer" id="drawer">
+    <a href="#services" class="drawer-direct-link">Clinical Services &amp; Departments</a>
+    <a href="#telehealth" class="drawer-direct-link">Telemedicine &amp; Digital EHR</a>
+    <a href="#standards" class="drawer-direct-link">Patient Care Standards</a>
+    <a href="#faq" class="drawer-direct-link">Patient &amp; Visitor Guide</a>
+    <a href="#contact" class="drawer-direct-link">Visiting Hours &amp; Contact</a>
+    @auth
+      <a class="btn btn-red" href="{{ url('/home') }}">Enter Staff Workbench</a>
+    @else
+      <a class="btn btn-red" href="{{ route('login') }}">Staff Portal Login</a>
+      <a class="btn btn-ghost" href="tel:{{ preg_replace('/[^0-9+]/', '', $sitePhone) }}">Call Emergency Desk</a>
+    @endauth
+  </div>
+
+  <main>
+    <!-- Hospital Hero -->
+    <section class="hero">
+      <div class="container">
+        <div class="hero-in">
+          <span class="pill"><i>24/7</i> Accredited Healthcare &amp; Medical Excellence</span>
+          <h1>Excellence in healthcare for you and <span class="grad">your family.</span></h1>
+          <p class="lead">{{ (!empty($siteDescription) && strlen(trim($siteDescription)) > 35 && trim($siteDescription) !== trim($siteName)) ? $siteDescription : ($siteName . ' provides world-class inpatient and outpatient care, 24/7 emergency services, modern diagnostics, and secure digital health records.') }}</p>
+          <div class="hero-cta">
+            @auth
+              <a href="{{ url('/home') }}" class="btn btn-red btn-lg">Open Staff Workbench</a>
+            @else
+              <a href="{{ route('login') }}" class="btn btn-red btn-lg">Staff Portal Login</a>
+            @endauth
+            <a href="#services" class="btn btn-ghost btn-lg">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--blue)">
+                <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+              </svg> Explore Clinical Services
+            </a>
+          </div>
+          <div class="hero-note">
+            <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>24/7 Emergency &amp; Trauma Care</span>
+            <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Qualified Specialists &amp; Nurses</span>
+            <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Confidential Digital Health Records</span>
+          </div>
+        </div>
+
+        <div class="frame-wrap" aria-hidden="true">
+          <div class="float f1"><span class="dot"></span><div><b>Specialist Clinics Active</b><small>Triage &amp; Consultations</small></div></div>
+          <div class="float f2"><span class="dot r"></span><div><b>Emergency Unit 24/7</b><small>Ready for intake</small></div></div>
+          <div class="frame">
+            <div class="frame-bar"><i></i><i></i><i></i><span>{{ $siteName }} · Hospital Operations &amp; Clinical Cockpit</span></div>
+            <div class="app">
+              <div class="side"><div class="on">Overview</div><div>Consultations</div><div>Wards &amp; Beds</div><div>Dispensary</div><div>Laboratory</div><div>Billing</div></div>
+              <div class="main">
+                <div class="kpis">
+                  <div class="kpi"><small>Outpatient Triage</small><b>Active</b><em>Continuous intake</em></div>
+                  <div class="kpi"><small>Emergency Desk</small><b>24/7</b><em class="r">Response ready</em></div>
+                  <div class="kpi"><small>Laboratory Tests</small><b>Fast-Track</b><em>Automated analyzers</em></div>
+                  <div class="kpi"><small>Inpatient Care</small><b>Monitored</b><em>Clinical rounds</em></div>
+                </div>
+                <div class="row2">
+                  <div class="card-s">
+                    <h6>Patient Care Inflow <span>Weekly Trend</span></h6>
+                    <div class="bars"><i style="height:45%"></i><i class="b" style="height:65%"></i><i class="r" style="height:55%"></i><i class="b" style="height:80%"></i><i style="height:50%"></i><i class="b" style="height:90%"></i><i class="r" style="height:60%"></i></div>
+                    <div class="lbl"><span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span><span>Sun</span></div>
+                  </div>
+                  <div class="card-s">
+                    <h6>Active Care Clinics</h6>
+                    <div class="pt"><div class="av">AA</div><div><b>Amina A.</b><small>Cardiology Clinic · Outpatient</small></div><span class="st">Active</span></div>
+                    <div class="pt"><div class="av r">JO</div><div><b>James O.</b><small>Emergency Care · Triage</small></div><span class="st r">Supervised</span></div>
+                    <div class="pt"><div class="av">FB</div><div><b>Fatima B.</b><small>Pediatrics &amp; Child Health</small></div><span class="st">Active</span></div>
+                  </div>
+                </div>
+                <div class="ai-bar">
+                  <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l2.4 5.6L20 10l-5.6 2.4L12 18l-2.4-5.6L4 10l5.6-2.4z"/></svg></div>
+                  <p><b>Integrated Longitudinal Health Record.</b> Patient vitals, diagnostic results, and prescriptions synchronize across all wards and clinics in real time.</p>
+                </div>
               </div>
-            </a>
-            <p style="margin-top: 1rem;">
-              {{ $siteDescription ?: ($siteName . ' provides world-class clinical care, diagnostic excellence, and 24/7 patient services powered by the CoreHealth intelligent ecosystem.') }}
-            </p>
-          @else
-            <a href="{{ url('/') }}" class="logo" aria-label="CoreHealth by Corestream Networks and Robotics Limited">
-              <span class="logo-symbol" aria-hidden="true">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M22 12h-4l-3 9L9 3l-3 9H2" />
-                </svg>
-              </span>
-              Core<span>Health</span>
-            </a>
-            <p>
-              AI-powered healthcare management ecosystem by Corestream Networks and Robotics
-              Limited. Digitizing hospitals, clinics, and health systems across Africa.
-            </p>
-          @endif
-
-          <div class="footer-social">
-            <a href="https://linkedin.com" target="_blank" rel="noopener" aria-label="LinkedIn">
-              <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-                <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 0 1-2.063-2.065 2.064 2.064 0 1 1 2.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z" />
-              </svg>
-            </a>
-            <a href="https://x.com" target="_blank" rel="noopener" aria-label="X (Twitter)">
-              <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-                <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
-              </svg>
-            </a>
-            <a href="https://facebook.com" target="_blank" rel="noopener" aria-label="Facebook">
-              <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-                <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
-              </svg>
-            </a>
-          </div>
-        </div>
-
-        <div class="footer-column">
-          <h4>Platform</h4>
-          <ul>
-            <li><a href="#features">Features</a></li>
-            <li><a href="#solutions">Solutions</a></li>
-            <li><a href="#integrations">Integrations</a></li>
-            <li><a href="#impact">Impact</a></li>
-            <li><a href="#about">About Us</a></li>
-          </ul>
-        </div>
-
-        <div class="footer-column">
-          <h4>Resources</h4>
-          <ul>
-            <li><a href="{{ route('login') }}">Staff Portal</a></li>
-            <li><a href="#features">EMR & EHR</a></li>
-            <li><a href="#features">Laboratory & Diagnostics</a></li>
-            <li><a href="#features">Pharmacy & Dispensary</a></li>
-            <li><a href="https://corestream.ng/public/contact" target="_blank" rel="noopener">Support</a></li>
-          </ul>
-        </div>
-
-        <div class="footer-column">
-          <h4>{{ $isBranded ? 'Contact Facility' : 'Contact Corestream' }}</h4>
-          <div class="footer-contact-item">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-              <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
-              <circle cx="12" cy="10" r="3" />
-            </svg>
-            <span>{{ $isBranded ? $siteAddress : 'Jos, Plateau State, Nigeria' }}</span>
-          </div>
-          <div class="footer-contact-item">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-              <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
-              <polyline points="22,6 12,13 2,6" />
-            </svg>
-            <span>{{ $isBranded ? $siteEmail : 'hello@corestream.ng' }}</span>
-          </div>
-          <div class="footer-contact-item">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-              <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" />
-            </svg>
-            <span>{{ $isBranded ? $sitePhone : '+234 (0) 816 087 6560' }}</span>
+            </div>
           </div>
         </div>
       </div>
+    </section>
 
-      <div class="footer-bottom">
-        <p>&copy; {{ date('Y') }} {{ $isBranded ? $siteName : 'Corestream Networks and Robotics Limited' }}. All rights reserved.</p>
-        <div class="footer-bottom-links">
-          <a href="#">Privacy Policy</a>
-          <a href="#">Terms of Service</a>
-          <a href="#">Security</a>
+    <!-- Hospital Clinical Strip -->
+    <section class="strip">
+      <div class="container">
+        <p>Specialized clinical departments and patient-first medical services</p>
+        <div class="strip-row">
+          <span>24/7 Emergency &amp; Trauma</span>
+          <span>Outpatient Clinics</span>
+          <span>Inpatient Wards</span>
+          <span>Maternity &amp; Pediatrics</span>
+          <span>Diagnostic Laboratory</span>
+          <span>Dispensary &amp; Pharmacy</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Hospital Clinical Bento Grid -->
+    <section class="section" id="services">
+      <div class="container">
+        <div class="head">
+          <span class="eyebrow">Clinical Departments</span>
+          <h2>Comprehensive healthcare services under one roof.</h2>
+          <p>From preventative medicine and maternal care to rapid diagnostics and round-the-clock emergency care, our clinical staff delivers compassionate, evidence-based treatment.</p>
+        </div>
+        <div class="bento">
+          <div class="b-card b-4">
+            <div class="b-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg></div>
+            <h3>Outpatient &amp; Specialist Consultations</h3>
+            <p>Consult with certified specialists in General Medicine, Cardiology, Obstetrics &amp; Gynecology, Pediatrics, and Surgery with streamlined triage and minimal wait times.</p>
+          </div>
+          <div class="b-card b-2 dark">
+            <div class="b-ico red"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></svg></div>
+            <h3>24/7 Emergency &amp; Trauma Care</h3>
+            <p>Our dedicated emergency response unit is staffed 24 hours a day with rapid resuscitation suites and immediate access to life-saving interventions.</p>
+          </div>
+          <div class="b-card b-2">
+            <div class="b-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg></div>
+            <h3>Modern Inpatient Wards &amp; ICU</h3>
+            <p>Comfortable inpatient accommodation, continuous vital signs telemetry, dedicated nurse call systems, and personalized nutritional care.</p>
+          </div>
+          <div class="b-card b-2">
+            <div class="b-ico red"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg></div>
+            <h3>Maternity &amp; Child Health Center</h3>
+            <p>Complete maternal-fetal care including comprehensive antenatal clinics, modern labor &amp; delivery suites, and neonatal health monitoring.</p>
+          </div>
+          <div class="b-card b-2">
+            <div class="b-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3H5a2 2 0 0 0-2 2v4m6-6h10a2 2 0 0 1 2 2v4M9 3v18m0 0h10a2 2 0 0 0 2-2V9M9 21H5a2 2 0 0 1-2-2V9m0 0h18"/></svg></div>
+            <h3>Accredited Diagnostic Laboratory</h3>
+            <p>Automated clinical chemistry, hematology, parasitology, and microbiology with rapid turn-around and verified digital result release.</p>
+          </div>
+          <div class="b-card b-2">
+            <div class="b-ico red"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></svg></div>
+            <h3>Pharmacy &amp; Medication Counseling</h3>
+            <p>Registered pharmacists dispensing authenticated medications, dosage guidance, and seamless digital prescription refills.</p>
+          </div>
+          <div class="b-card b-2">
+            <div class="b-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18M5 21V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16M9 7h6M9 11h6M9 15h6"/></svg></div>
+            <h3>Modern Surgical Theatres</h3>
+            <p>State-of-the-art sterile surgical suites equipped for elective, minimally invasive, and emergency surgical operations.</p>
+          </div>
+          <div class="b-card b-2">
+            <div class="b-ico red"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></div>
+            <h3>Confidential Digital Records</h3>
+            <p>Your longitudinal medical records are protected under rigorous healthcare privacy standards, ensuring safe continuity of care.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Hospital Connected Care & Telehealth -->
+    <section class="section soft" id="telehealth">
+      <div class="container split">
+        <div>
+          <span class="eyebrow">Connected Care</span>
+          <h2>In-person clinical care, connected to your everyday life.</h2>
+          <p>{{ $siteName }} brings modern digital healthcare infrastructure to your care journey, making medical consultations and results easily accessible.</p>
+          <ul class="checks">
+            <li>
+              <span class="ck"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span>
+              <div><strong>Integrated Electronic Medical Records</strong><span>Your clinical team has immediate context of your medical history, allergies, and ongoing treatment.</span></div>
+            </li>
+            <li>
+              <span class="ck"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span>
+              <div><strong>Virtual Follow-Up with WeCare247</strong><span>Remote video consultations and specialist follow-ups from the comfort of your home.</span></div>
+            </li>
+            <li>
+              <span class="ck"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span>
+              <div><strong>Fast Diagnostic Results Delivery</strong><span>Verified laboratory and radiology results routed promptly to your attending physician.</span></div>
+            </li>
+            <li>
+              <span class="ck"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span>
+              <div><strong>HMO &amp; Insurance Pre-Authorization</strong><span>Seamless claims processing and real-time eligibility verification for hassle-free discharge.</span></div>
+            </li>
+          </ul>
+          <div class="cta-row">
+            @auth
+              <a href="{{ url('/home') }}" class="btn btn-red">Access Dashboard</a>
+            @else
+              <a href="{{ route('login') }}" class="btn btn-red">Staff Portal Login</a>
+            @endauth
+            <a href="#contact" class="btn btn-ghost">Contact Reception</a>
+          </div>
+        </div>
+        <div class="mock" aria-hidden="true">
+          <div class="mock-h">
+            <div><h4>{{ $siteName }} · Patient Care Record</h4><small>Clinical care summary preview</small></div>
+            <span class="live">VERIFIED</span>
+          </div>
+          <div class="mock-b">
+            <div class="tx">
+              <small>Clinical Consultation Note</small>
+              <p>“Patient reviewed in Outpatient Clinic. Vital signs stable, diagnostic parameters within normal ranges. Prescribed medication course dispatched by pharmacy.”</p>
+            </div>
+            <div class="sm">
+              <small>Physician Care Plan</small>
+              <p><b>Clinical Assessment:</b> Routine follow-up satisfactory. <b>Medication:</b> Completed dispensation. <b>Next Scheduled Visit:</b> 4 weeks or upon clinical indication.</p>
+            </div>
+            <div class="note-ai">Confidential patient medical record · Handled under strict healthcare privacy standards.</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Hospital Standards & Confidentiality -->
+    <section class="section sec" id="standards">
+      <div class="container">
+        <div class="head">
+          <span class="eyebrow">Quality &amp; Safety</span>
+          <h2>Your health, safety, and privacy are our highest priorities.</h2>
+          <p>We adhere to strict clinical governance, continuous infection control, and regulatory medical standards across all departments.</p>
+        </div>
+        <div class="sec-grid">
+          <div class="sec-card">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+            <h4>Qualified Clinical Specialists</h4>
+            <p>Our team comprises licensed medical practitioners, experienced registered nurses, certified laboratory scientists, and registered pharmacists.</p>
+          </div>
+          <div class="sec-card">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+            <h4>Patient Data Confidentiality</h4>
+            <p>Your personal health records are safeguarded with enterprise-grade encryption and full compliance with national data protection regulations.</p>
+          </div>
+          <div class="sec-card">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+            <h4>Infection Prevention &amp; Hygiene</h4>
+            <p>Rigorous environmental sanitization protocols, single-use sterile consumables, and strict aseptic surgical practices in all operating rooms.</p>
+          </div>
+          <div class="sec-card">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            <h4>24/7 Continuity of Care</h4>
+            <p>Emergency medical care, patient triage, and critical inpatient observation run continuously without disruption 365 days a year.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Patient & Visitor FAQ -->
+    <section class="section soft" id="faq">
+      <div class="container">
+        <div class="head">
+          <span class="eyebrow">Patient &amp; Visitor Information</span>
+          <h2>Frequently Asked Questions</h2>
+          <p>Everything you need to know about receiving care at {{ $siteName }}.</p>
+        </div>
+        <div class="faq-grid">
+          <details>
+            <summary>What are the visiting hours for inpatient wards?</summary>
+            <p>General visiting hours are 11:00 AM &ndash; 1:00 PM and 4:30 PM &ndash; 7:00 PM daily. Intensive care and neonatal units follow specific visitation schedules to ensure patient recovery and rest.</p>
+          </details>
+          <details>
+            <summary>How do I access my laboratory and diagnostic results?</summary>
+            <p>Laboratory and imaging results are reviewed by your physician and archived directly into your digital health record. You can collect physical reports at reception or access them through your consultation summary.</p>
+          </details>
+          <details>
+            <summary>Which health insurance (HMO) plans and payment methods do you accept?</summary>
+            <p>We accept major National Health Insurance (NHIS) programs, private HMO providers, corporate medical retainerships, debit cards (POS), electronic bank transfers, and cash.</p>
+          </details>
+          <details>
+            <summary>How can I schedule a consultation with a specialist?</summary>
+            <p>Appointments can be booked by calling our reception desk, visiting in person, or through a referral from your attending primary care physician.</p>
+          </details>
+          <details>
+            <summary>What should I bring when coming for an admission or emergency?</summary>
+            <p>Please bring a valid form of identification, your hospital registration card (if already registered), your insurance/HMO card, and any ongoing medications you are currently taking.</p>
+          </details>
+        </div>
+      </div>
+    </section>
+
+    <!-- Hospital Contact & Staff CTA Banner -->
+    <section class="section" id="contact" style="padding-bottom:0">
+      <div class="container">
+        <div class="final">
+          <h2>Dedicated to your health, every hour of every day.</h2>
+          <p>{{ $siteName }} is located at {{ $siteAddress }}. Reach our emergency line or log in to the clinical workbench.</p>
+          <div class="cta-row" style="justify-content:center;margin-top:24px;">
+            @auth
+              <a href="{{ url('/home') }}" class="btn btn-red btn-lg">Open Staff Workbench</a>
+            @else
+              <a href="{{ route('login') }}" class="btn btn-red btn-lg">Hospital Staff Login</a>
+            @endauth
+            <a href="tel:{{ preg_replace('/[^0-9+]/', '', $sitePhone) }}" class="btn btn-ghost btn-lg">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--blue)">
+                <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>
+              </svg> Call Emergency Desk
+            </a>
+          </div>
+          <div class="or" style="margin-top:20px;">Questions or inquiries? Email: <a href="mailto:{{ $siteEmail }}">{{ $siteEmail }}</a></div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Hospital Branded Footer -->
+  <footer class="footer" id="about">
+    <div class="container">
+      <div class="f-grid">
+        <div class="f-brand">
+          <a href="{{ url('/') }}" class="hospital-brand-combo">
+            @if($siteLogo)
+              <img src="{{ $siteLogo }}" alt="{{ $siteName }}" class="hospital-brand-img" />
+            @else
+              <span class="logo-mark" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M22 12h-4l-3 9L9 3l-3 9H2" />
+                </svg>
+              </span>
+            @endif
+            <div class="hospital-brand-text">
+              <span class="hospital-brand-title">{{ $siteName }}</span>
+              <span class="hospital-brand-sub">Powered by Core<b>Health</b></span>
+            </div>
+          </a>
+          <p>Delivering high-quality, compassionate clinical care, inpatient services, and 24/7 emergency response.</p>
+          @auth
+            <a href="{{ url('/home') }}" class="btn btn-red btn-sm">Staff Dashboard</a>
+          @else
+            <a href="{{ route('login') }}" class="btn btn-red btn-sm">Staff Login</a>
+          @endauth
+        </div>
+        <div class="f-col">
+          <h5>Clinical Services</h5>
+          <ul>
+            <li><a href="#services">Outpatient Clinics</a></li>
+            <li><a href="#services">Emergency &amp; Trauma</a></li>
+            <li><a href="#services">Inpatient Wards</a></li>
+            <li><a href="#services">Maternity Care</a></li>
+            <li><a href="#services">Diagnostic Laboratory</a></li>
+          </ul>
+        </div>
+        <div class="f-col">
+          <h5>Patient Guide</h5>
+          <ul>
+            <li><a href="#faq">Visiting Hours</a></li>
+            <li><a href="#faq">Admission Guide</a></li>
+            <li><a href="#telehealth">Telemedicine Follow-Up</a></li>
+            <li><a href="#standards">Patient Confidentiality</a></li>
+          </ul>
+        </div>
+        <div class="f-col">
+          <h5>Staff &amp; Admin</h5>
+          <ul>
+            @auth
+              <li><a href="{{ url('/home') }}">Doctor &amp; Clinical Workbench</a></li>
+              <li><a href="{{ url('/home') }}">Nursing Station</a></li>
+              <li><a href="{{ url('/home') }}">Pharmacy Dispensary</a></li>
+              <li><a href="{{ url('/home') }}">Hospital Billing</a></li>
+            @else
+              <li><a href="{{ route('login') }}">Staff Portal Login</a></li>
+              <li><a href="{{ route('login') }}">Doctor Sign In</a></li>
+              <li><a href="{{ route('login') }}">Nurse Triage Login</a></li>
+              <li><a href="{{ route('login') }}">Billing Cashier</a></li>
+            @endauth
+          </ul>
+        </div>
+        <div class="f-col f-contact">
+          <h5>Contact &amp; Location</h5>
+          <ul>
+            <li>{{ $siteAddress }}</li>
+            <li>{{ $siteEmail }}</li>
+            <li>{{ $sitePhone }}</li>
+          </ul>
+        </div>
+      </div>
+      <div class="f-bottom">
+        <span>&copy; {{ date('Y') }} {{ $siteName }}. Powered by CoreHealth AI Healthcare Ecosystem.</span>
+        <div>
+          <a href="#standards">Patient Privacy</a>
+          <a href="#standards">Care Standards</a>
+          <a href="#contact">Emergency Contact</a>
         </div>
       </div>
     </div>
   </footer>
+
+  <div class="m-cta">
+    @auth
+      <a class="btn btn-red" href="{{ url('/home') }}">Staff Workbench</a>
+    @else
+      <a class="btn btn-ghost" href="tel:{{ preg_replace('/[^0-9+]/', '', $sitePhone) }}">Call Emergency</a>
+      <a class="btn btn-red" href="{{ route('login') }}">Staff Login</a>
+    @endauth
+  </div>
+@endif
+
+<!-- Standalone Welcome Scripts -->
+<script src="{{ asset('js/welcome.js') }}?v={{ config('app.version', '2.6') }}"></script>
 </body>
 </html>
