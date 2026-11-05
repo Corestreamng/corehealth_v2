@@ -17,7 +17,7 @@
         "intervention/image": "^2.7",
         "laravel/framework": "^8.75",
         "laravel/sanctum": "^2.11",
-        "laravel/tinker": "^2.5",
+        "laravel/tinker": "^3.0",
         "laravel/ui": "^3.4",
         "laravelcollective/html": "^6.3",
         "laraveldaily/laravel-invoices": "^3.1",
