@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Helpers\ClinicalSearchHelper;
 use App\Http\Traits\ClinicalOrdersTrait;
 use App\Models\Product;
 use App\Models\Service;
@@ -33,7 +34,25 @@ class TreatmentPlanController extends Controller
             ->withCount('items');
 
         if ($search = $request->input('search')) {
-            $query->where('name', 'LIKE', "%{$search}%");
+            $tokens = ClinicalSearchHelper::tokenize($search);
+            $expandedTokens = ClinicalSearchHelper::expandTokens($tokens);
+
+            $query->where(function ($q) use ($search, $tokens, $expandedTokens) {
+                $q->where('name', 'LIKE', "%{$search}%");
+                if (!empty($tokens)) {
+                    $q->orWhere(function ($sub) use ($tokens, $expandedTokens) {
+                        foreach ($tokens as $idx => $token) {
+                            $syn = $expandedTokens[$idx] ?? null;
+                            $sub->where(function ($tokQ) use ($token, $syn) {
+                                $tokQ->where('name', 'LIKE', "%{$token}%");
+                                if ($syn && $syn !== $token) {
+                                    $tokQ->orWhere('name', 'LIKE', "%{$syn}%");
+                                }
+                            });
+                        }
+                    });
+                }
+            });
         }
 
         $plans = $query->orderBy('name')->paginate(20);

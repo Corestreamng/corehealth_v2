@@ -888,26 +888,29 @@ Route::group(['middleware' => ['auth']], function () {
 
         // Service Combo Search (Web Route for Encounter selection)
         Route::get('service-combos/search', function (Illuminate\Http\Request $request) {
-            $term = $request->term;
-            $combos = App\Models\Service::with(['bundleItems.service', 'bundleItems.product', 'price'])
+            $term = (string) ($request->term ?? $request->q ?? '');
+            $query = App\Models\Service::with(['bundleItems.service', 'bundleItems.product', 'price'])
                 ->where('is_combo', true)
-                ->where('status', 1)
-                ->where('service_name', 'LIKE', "%{$term}%")
-                ->get()
-                ->map(function ($combo) {
-                    $items = $combo->bundleItems->map(function ($i) {
-                        return $i->item_type === 'service'
-                            ? (optional($i->service)->service_name ?? 'Service')
-                            : (optional($i->product)->product_name ?? 'Product');
-                    })->implode(', ');
+                ->where('status', 1);
 
-                    return [
-                        'id' => $combo->id,
-                        'service_name' => $combo->service_name,
-                        'price' => optional($combo->price)->sale_price ?? 0,
-                        'items_summary' => $items,
-                    ];
-                });
+            if ($term !== '') {
+                \App\Helpers\ClinicalSearchHelper::applyComboSearch($query, $term);
+            }
+
+            $combos = $query->limit(25)->get()->map(function ($combo) {
+                $items = $combo->bundleItems->map(function ($i) {
+                    return $i->item_type === 'service'
+                        ? (optional($i->service)->service_name ?? 'Service')
+                        : (optional($i->product)->product_name ?? 'Product');
+                })->implode(', ');
+
+                return [
+                    'id' => $combo->id,
+                    'service_name' => $combo->service_name,
+                    'price' => optional($combo->price)->sale_price ?? 0,
+                    'items_summary' => $items,
+                ];
+            });
 
             return response()->json($combos);
         })->name('api.service-combos.search');

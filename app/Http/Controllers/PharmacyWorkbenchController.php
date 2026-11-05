@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Helpers\BatchHelper;
+use App\Helpers\ClinicalSearchHelper;
 use App\Helpers\HmoHelper;
 use App\Jobs\DispatchCoreHmsSyncJob;
 use App\Models\AdmissionRequest;
@@ -1991,14 +1992,13 @@ class PharmacyWorkbenchController extends Controller
             $patient = Patient::find($patientId);
         }
 
-        $products = Product::with(['category', 'price', 'stock', 'packagings'])
+        $query = Product::with(['category', 'price', 'stock', 'packagings'])
             ->drugsOnly()
-            ->where(function ($q) use ($term) {
-                $q->where('product_name', 'like', "%{$term}%")
-                  ->orWhere('product_code', 'like', "%{$term}%");
-            })
-            ->where('status', 1) // Active products only
-            ->orderBy('product_name')
+            ->where('status', 1);
+
+        ClinicalSearchHelper::applyProductSearch($query, $term);
+
+        $products = $query->orderBy('product_name')
             ->limit(20)
             ->get()
             ->map(function ($product) use ($patient) {

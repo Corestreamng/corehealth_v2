@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Helpers\ClinicalSearchHelper;
 use App\Models\ApplicationStatu;
 use App\Models\Product;
 use App\Models\ProductCategory;
@@ -164,16 +165,10 @@ class ProductController extends Controller
 
         $query = Product::query()->where('status', 1);
 
-        // Optional type filter
-        if ($request->filled('type')) {
-            $query->where('product_type', $request->type);
-        }
-
         if ($request->filled('term')) {
-            $query->where(function ($q) use ($request) {
-                $q->where('product_name', 'LIKE', "%{$request->term}%")
-                    ->orWhere('product_code', 'LIKE', "%{$request->term}%");
-            });
+            ClinicalSearchHelper::applyProductSearch($query, $request->term, null, $request->type);
+        } elseif ($request->filled('type')) {
+            $query->where('product_type', $request->type);
         }
 
         $pc = $query
@@ -222,19 +217,9 @@ class ProductController extends Controller
         // Also return service combos containing matching products
         $combos = collect();
         if ($request->filled('term')) {
-            $combos = \App\Models\Service::with(['price', 'category', 'bundleItems.service', 'bundleItems.product'])
-                ->where('is_combo', true)
-                ->where('status', 1)
-                ->where(function ($q) use ($request) {
-                    // Match by combo name OR by bundle item product names
-                    $q->where('service_name', 'LIKE', "%{$request->term}%")
-                      ->orWhereHas('bundleItems', function ($bq) use ($request) {
-                          $bq->where('item_type', 'product')
-                             ->whereHas('product', function ($pQ) use ($request) {
-                                 $pQ->where('product_name', 'LIKE', "%{$request->term}%");
-                             });
-                      });
-                })
+            $combosQuery = \App\Models\Service::with(['price', 'category', 'bundleItems.service', 'bundleItems.product']);
+            ClinicalSearchHelper::applyComboSearch($combosQuery, $request->term);
+            $combos = $combosQuery
                 // Combo must contain at least one product item (medications combos)
                 ->whereHas('bundleItems', function ($q) {
                     $q->where('item_type', 'product');

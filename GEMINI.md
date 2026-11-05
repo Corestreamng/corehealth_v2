@@ -279,3 +279,11 @@ When working on this project, strictly adhere to the following standards across 
 - **PHP 8 Throwable Exception Safety**: High-traffic consultation controllers must wrap pre-consultation setup in `catch (\Throwable $e)` to safely catch engine `\Error` and `\TypeError` exceptions, preventing unhandled FastCGI crashes.
 - **Documentation & Testing**: Architecture is documented in `docs/ENCOUNTER_WORKBENCH_MEMORY_OPTIMIZATION.md`. Covered by unit tests in `tests/Unit/Encounter/EncounterCreateOptimizationTest.php`.
 
+## 27. Clinical Consumables & Kits Multi-Token Search Architecture
+- **Multi-Token & Middle-of-String Matching**: All medical searches across services, products, and combos leverage `App\Helpers\ClinicalSearchHelper`. Eliminates single contiguous `LIKE "%{$term}%"` failures by tokenizing queries, stripping non-alphanumeric punctuation, and matching across all keyword tokens regardless of ordering, hyphens, or double spaces.
+- **Clinical Abbreviation & Typo Resilience**: `ClinicalSearchHelper::getSynonyms()` maps common medical abbreviations and phonetic variations (`wond` &rarr; `wound`, `inj` &rarr; `injection`, `canula` &rarr; `cannula`, `tab` &rarr; `tablet`, `syr` &rarr; `syrup`, `susp` &rarr; `suspension`, `paracet` &rarr; `paracetamol`, etc.).
+- **Consumable & Service Discovery in Nursing**: In `NursingWorkbenchController@searchProducts`, searches return products as well as consumable nursing procedures (Categories 4, 8, 5) with clear visual type badges (`[Product]` / `[Service]`). Selecting a service automatically switches `BillingKit` to the Services tab with pre-populated details, ensuring seamless ward billing without inventory batch errors.
+- **Deep Clinical Kit & Service Combo Discovery**: `service-combos/search` and combo searches in `ServiceController` and `ProductController` search both the combo title and child bundle items (`bundleItems.service` / `bundleItems.product`), allowing staff to find kits by typing any contained drug, test, or consumable.
+- **Documentation & Testing**: Architecture is documented in `docs/CLINICAL_CONSUMABLES_AND_KITS_SEARCH_ENHANCEMENT.md`. Covered by PHPUnit feature tests in `tests/Feature/Nursing/ConsumableAndClinicalKitSearchTest.php`.
+
+

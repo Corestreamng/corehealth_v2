@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Enums\QueueStatus;
+use App\Helpers\ClinicalSearchHelper;
 use App\Http\Traits\ClinicalOrdersTrait;
 use App\Models\AdmissionRequest;
 use App\Models\AncInvestigation;
@@ -3897,13 +3898,8 @@ class MaternityWorkbenchController extends Controller
             ->where('status', 1);
 
         if ($term) {
-            $query->where(function ($q) use ($term) {
-                $q->where('service_name', 'like', "%{$term}%")
-                  ->orWhere('service_code', 'like', "%{$term}%");
-            });
-        }
-
-        if ($categoryId) {
+            ClinicalSearchHelper::applyServiceSearch($query, $term, $categoryId);
+        } elseif ($categoryId) {
             $query->where('category_id', $categoryId);
         }
 
@@ -3912,24 +3908,9 @@ class MaternityWorkbenchController extends Controller
         // Also find combos that contain matching items (if term provided and no category filter)
         $relatedCombos = collect();
         if ($term && !isset($categoryId)) {
-            $relatedCombos = Service::with(['price', 'category', 'bundleItems.service', 'bundleItems.product'])
-                ->where('is_combo', true)
-                ->where('status', 1)
-                ->whereHas('bundleItems', function ($q) use ($term) {
-                    $q->where(function ($subQ) use ($term) {
-                        $subQ->where('item_type', 'service')
-                            ->whereHas('service', function ($sQ) use ($term) {
-                                $sQ->where('service_name', 'like', "%{$term}%");
-                            });
-                    })->orWhere(function ($subQ) use ($term) {
-                        $subQ->where('item_type', 'product')
-                            ->whereHas('product', function ($pQ) use ($term) {
-                                $pQ->where('product_name', 'like', "%{$term}%");
-                            });
-                    });
-                })
-                ->limit(10)
-                ->get();
+            $combosQuery = Service::with(['price', 'category', 'bundleItems.service', 'bundleItems.product']);
+            ClinicalSearchHelper::applyComboSearch($combosQuery, $term);
+            $relatedCombos = $combosQuery->limit(10)->get();
         }
 
         // Batch-load HMO tariffs in one query instead of N+1

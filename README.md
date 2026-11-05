@@ -606,7 +606,8 @@ vendor/bin/phpunit tests/Feature/Pharmacy/
 - **Automated CI Workflow** ([.github/workflows/ci.yml](.github/workflows/ci.yml)): GitHub Actions pipeline running PHP 8.3, setting up a MySQL 8.0 container, importing `_corehealth_db_v2_test.sql.gz`, running PHP CS Fixer lint checks, executing PHPUnit tests, building assets, and auditing security.
 - **Structured JSON Logging**: Configured via Monolog `JsonFormatter` channel in `config/logging.php`.
 - **Dependabot**: Configured in [.github/dependabot.yml](.github/dependabot.yml) for weekly Composer and NPM dependency security checks.
-- **Semantic Version Tags**: Tagged across historic milestones starting from `v2.0.0.0` through `v2.6.0.64`.
+- **Semantic Version Tags**: Tagged across historic milestones starting from `v2.0.0.0` through `v2.6.0.67`.
+- **Clinical Consumables & Kits Multi-Token Search**: Multi-keyword tokenized search engine (`ClinicalSearchHelper`), clinical abbreviation and phonetic typo expansion, nursing consumable service discovery, and deep service combo bundle matching ([docs/CLINICAL_CONSUMABLES_AND_KITS_SEARCH_ENHANCEMENT.md](docs/CLINICAL_CONSUMABLES_AND_KITS_SEARCH_ENHANCEMENT.md)).
 
 ---
 

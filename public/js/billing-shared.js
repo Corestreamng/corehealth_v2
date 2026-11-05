@@ -381,7 +381,7 @@ window.BillingKit = (function ($) {
 
     function _renderSearchResults(results, $container, onSelectFn) {
         if (!results || !Array.isArray(results) || !results.length) {
-            $container.html('<li class="list-group-item billing-search-no-results text-muted">No services found</li>').show();
+            $container.html('<li class="list-group-item billing-search-no-results text-muted">No items found</li>').show();
             return;
         }
         let html = '';
@@ -394,15 +394,20 @@ window.BillingKit = (function ($) {
             const category = svc.category?.category_name || svc.category || '';
             const code = svc.service_code || svc.product_code || svc.code || '';
             const stock = svc.stock?.current_quantity ?? svc.current_quantity ?? null;
+            const isService = !!svc.is_service;
 
             const rawName = svc.name || svc.service_name || svc.product_name || '';
             const name = _escHtml(rawName);
             const escapedName = rawName.replace(/'/g, "\\'").replace(/\n/g, ' ').replace(/\r/g, ' ');
+            const escapedCode = String(code).replace(/'/g, "\\'");
             const modeClass = mode ? (' mode-' + mode.replace(/[^a-z0-9_-]/g, '')) : '';
             const showCoverage = !!mode || claims > 0 || payable !== price;
+            const typeBadge = isService
+                ? '<span class="badge bg-primary text-white ms-2" style="font-size:0.7rem;vertical-align:middle;"><i class="mdi mdi-medical-bag"></i> Service</span>'
+                : (svc.product_type ? '<span class="badge bg-info text-white ms-2" style="font-size:0.7rem;vertical-align:middle;"><i class="mdi mdi-package-variant"></i> Product</span>' : '');
 
-            html += '<li class="list-group-item list-group-item-action" onclick="' + onSelectFn + '(' + svc.id + ', \'' + escapedName + '\', ' + payable + ')" style="cursor:pointer;">' +
-                '<div class="billing-search-item-name"><b>' + name + '</b></div>' +
+            html += '<li class="list-group-item list-group-item-action" onclick="' + onSelectFn + '(' + svc.id + ', \'' + escapedName + '\', ' + payable + ', \'' + escapedCode + '\', ' + (isService ? 'true' : 'false') + ')" style="cursor:pointer;">' +
+                '<div class="billing-search-item-name"><b>' + name + '</b>' + typeBadge + '</div>' +
                 '<div class="billing-search-item-meta">' +
                     '<span class="billing-search-item-price">' + (showCoverage ? '<s style="color:#999;font-weight:400">₦' + price.toLocaleString() + '</s>' : '₦' + price.toLocaleString()) + '</span>' +
                     (category ? '<span class="billing-search-item-badge">' + _escHtml(category) + '</span>' : '') +
@@ -468,7 +473,16 @@ window.BillingKit = (function ($) {
        CONSUMABLE TAB
        ═══════════════════════════════════════════════════════════ */
 
-    function _selectConsumable(id, name, unitPrice, code) {
+    function _selectConsumable(id, name, unitPrice, code, isService) {
+        if (isService) {
+            // Selected a nursing service / procedure from the consumable search box
+            $('#billing-services-tab').tab('show');
+            _selectService(id, name, unitPrice);
+            $('#consumable-search-results').hide();
+            _notify('info', 'Switched to Services tab for ' + name);
+            return;
+        }
+
         const storeId = $('#consumable-store').val();
         if (!storeId) { _notify('warning', 'Please select a store first'); $('#consumable-store').focus(); return; }
 

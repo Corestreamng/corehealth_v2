@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Helpers\ClinicalSearchHelper;
 use App\Models\ProcedureCategory;
 use App\Models\ProcedureDefinition;
 use App\Models\Product;
@@ -327,6 +328,9 @@ class ServiceController extends Controller
         $patientId = $request->input('patient_id');
         $context = strtolower((string) ($request->input('context', $request->input('type', 'all'))));
 
+        $allowedCategoryIds = [];
+        $procCatId = (int) (appsettings('procedure_category_id', 8) ?: 8);
+
         // When category_id is not explicitly provided, deduce it from context/type using appsettings
         if (empty($categoryId)) {
             if (in_array($context, ['lab', 'labs', 'investigation', 'investigations'])) {
@@ -334,22 +338,25 @@ class ServiceController extends Controller
             } elseif (in_array($context, ['imaging', 'radiology'])) {
                 $categoryId = (int) (appsettings('imaging_category_id', 6) ?: 6);
             } elseif (in_array($context, ['procedure', 'procedures', 'surgery'])) {
-                $categoryId = (int) (appsettings('procedure_category_id', 8) ?: 8);
+                // Allow both official procedures (8) and nursing procedures / bedside care (4)
+                $allowedCategoryIds = array_unique([$procCatId, 4]);
             }
+        } elseif ((int) $categoryId === $procCatId) {
+            // When procedure category is requested, also include nursing bedside procedures/dressings (4)
+            $allowedCategoryIds = array_unique([$procCatId, 4]);
+            $categoryId = null;
         }
 
         // PART 1: Direct service/combo matches
         $query = Service::with(['price', 'category', 'bundleItems.service', 'bundleItems.product', 'procedureDefinition.procedureCategory'])
             ->where('status', 1);
 
-        if (!empty($categoryId)) {
-            $query->where('category_id', $categoryId);
-        }
         if ($term) {
-            $query->where(function ($q) use ($term) {
-                $q->where('service_name', 'LIKE', "%{$term}%")
-                  ->orWhere('service_code', 'LIKE', "%{$term}%");
-            });
+            ClinicalSearchHelper::applyServiceSearch($query, $term, $categoryId, $allowedCategoryIds);
+        } elseif (!empty($categoryId)) {
+            $query->where('category_id', $categoryId);
+        } elseif (!empty($allowedCategoryIds)) {
+            $query->whereIn('category_id', $allowedCategoryIds);
         }
 
         $directServices = $query->limit(20)->get();
@@ -357,40 +364,8 @@ class ServiceController extends Controller
         // PART 2: Combos that contain matching services/products (or match by name)
         $relatedCombos = collect();
         if ($term) {
-            $combosQuery = Service::with(['price', 'category', 'bundleItems.service', 'bundleItems.product', 'procedureDefinition.procedureCategory'])
-                ->where('is_combo', true)
-                ->where('status', 1)
-                ->where(function ($q) use ($term) {
-                    // Match by combo name OR by bundle item names
-                    $q->where('service_name', 'LIKE', "%{$term}%")
-                      ->orWhereHas('bundleItems', function ($bq) use ($term) {
-                          $bq->where(function ($subQ) use ($term) {
-                              $subQ->where('item_type', 'service')
-                                  ->whereHas('service', function ($sQ) use ($term) {
-                                      $sQ->where('service_name', 'LIKE', "%{$term}%");
-                                  });
-                          })->orWhere(function ($subQ) use ($term) {
-                              $subQ->where('item_type', 'product')
-                                  ->whereHas('product', function ($pQ) use ($term) {
-                                      $pQ->where('product_name', 'LIKE', "%{$term}%");
-                                  });
-                          });
-                      });
-                });
-
-            // When searching within a specific category (e.g. imaging, lab), only show combos
-            // that match that category or contain at least one service item belonging to that category
-            if (!empty($categoryId)) {
-                $combosQuery->where(function ($cq) use ($categoryId) {
-                    $cq->where('category_id', $categoryId)
-                       ->orWhereHas('bundleItems', function ($q) use ($categoryId) {
-                           $q->where('item_type', 'service')
-                             ->whereHas('service', function ($sQ) use ($categoryId) {
-                                 $sQ->where('category_id', $categoryId);
-                             });
-                       });
-                });
-            }
+            $combosQuery = Service::with(['price', 'category', 'bundleItems.service', 'bundleItems.product', 'procedureDefinition.procedureCategory']);
+            ClinicalSearchHelper::applyComboSearch($combosQuery, $term, $categoryId);
 
             // Exclude combos already returned as direct results
             $directIds = $directServices->pluck('id')->toArray();

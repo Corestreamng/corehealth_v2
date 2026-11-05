@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Enums\QueueStatus;
 use App\Helpers\BatchHelper;
+use App\Helpers\ClinicalSearchHelper;
 use App\Helpers\HmoHelper;
 use App\Http\Traits\ClinicalOrdersTrait;
 use App\Jobs\DispatchCoreHmsSyncJob;
@@ -1550,13 +1551,8 @@ class NursingWorkbenchController extends Controller
             ->where('status', 1);
 
         if ($term) {
-            $query->where(function ($q) use ($term) {
-                $q->where('service_name', 'like', "%{$term}%")
-                  ->orWhere('service_code', 'like', "%{$term}%");
-            });
-        }
-
-        if ($categoryId) {
+            ClinicalSearchHelper::applyServiceSearch($query, $term, $categoryId);
+        } elseif ($categoryId) {
             $query->where('category_id', $categoryId);
         }
 
@@ -1565,24 +1561,9 @@ class NursingWorkbenchController extends Controller
         // Also find combos that contain matching items (if term provided and no category filter)
         $relatedCombos = collect();
         if ($term && !isset($categoryId)) {
-            $relatedCombos = Service::with(['price', 'category', 'bundleItems.service', 'bundleItems.product'])
-                ->where('is_combo', true)
-                ->where('status', 1)
-                ->whereHas('bundleItems', function ($q) use ($term) {
-                    $q->where(function ($subQ) use ($term) {
-                        $subQ->where('item_type', 'service')
-                            ->whereHas('service', function ($sQ) use ($term) {
-                                $sQ->where('service_name', 'like', "%{$term}%");
-                            });
-                    })->orWhere(function ($subQ) use ($term) {
-                        $subQ->where('item_type', 'product')
-                            ->whereHas('product', function ($pQ) use ($term) {
-                                $pQ->where('product_name', 'like', "%{$term}%");
-                            });
-                    });
-                })
-                ->limit(10)
-                ->get();
+            $combosQuery = Service::with(['price', 'category', 'bundleItems.service', 'bundleItems.product']);
+            ClinicalSearchHelper::applyComboSearch($combosQuery, $term);
+            $relatedCombos = $combosQuery->limit(10)->get();
         }
 
         // Batch-load HMO tariffs for all results
@@ -1668,7 +1649,7 @@ class NursingWorkbenchController extends Controller
     }
 
     /**
-     * Search for products (consumables).
+     * Search for products (consumables) and related consumable nursing services.
      */
     public function searchProducts(Request $request)
     {
@@ -1681,51 +1662,74 @@ class NursingWorkbenchController extends Controller
             ->where('status', 1);
 
         if ($term) {
-            $query->where(function ($q) use ($term) {
-                $q->where('product_name', 'like', "%{$term}%")
-                  ->orWhere('product_code', 'like', "%{$term}%");
-            });
-        }
-
-        if ($categoryId) {
+            ClinicalSearchHelper::applyProductSearch($query, $term, $categoryId);
+        } elseif ($categoryId) {
             $query->where('category_id', $categoryId);
         }
 
         $products = $query->limit(15)->get();
 
+        // Also search consumable services (e.g. wound dressings, ward procedures, nursing care)
+        // when term is provided and no specific product category is forced
+        $consumableServices = collect();
+        if ($term && !$categoryId) {
+            $consumableServices = ClinicalSearchHelper::findConsumableServices($term, 10);
+        }
+
         // Batch-load HMO tariffs in one query instead of N+1
-        $hmoMap = [];
+        $hmoProductMap = [];
+        $hmoServiceMap = [];
         if ($patientId) {
             $patient = Patient::find($patientId);
             if ($patient && $patient->hmo_id) {
                 $productIds = $products->pluck('id')->toArray();
-                $tariffs = HmoTariff::where('hmo_id', $patient->hmo_id)
-                    ->whereIn('product_id', $productIds)
-                    ->whereNull('service_id')
-                    ->get()
-                    ->keyBy('product_id');
+                if (!empty($productIds)) {
+                    $tariffs = HmoTariff::where('hmo_id', $patient->hmo_id)
+                        ->whereIn('product_id', $productIds)
+                        ->whereNull('service_id')
+                        ->get()
+                        ->keyBy('product_id');
 
-                foreach ($tariffs as $pid => $tariff) {
-                    $hmoMap[$pid] = [
-                        'payable' => $tariff->payable_amount,
-                        'claims' => $tariff->claims_amount,
-                        'mode' => $tariff->coverage_mode,
-                    ];
+                    foreach ($tariffs as $pid => $tariff) {
+                        $hmoProductMap[$pid] = [
+                            'payable' => $tariff->payable_amount,
+                            'claims' => $tariff->claims_amount,
+                            'mode' => $tariff->coverage_mode,
+                        ];
+                    }
+                }
+
+                $serviceIds = $consumableServices->pluck('id')->toArray();
+                if (!empty($serviceIds)) {
+                    $svcTariffs = HmoTariff::where('hmo_id', $patient->hmo_id)
+                        ->whereIn('service_id', $serviceIds)
+                        ->whereNull('product_id')
+                        ->get()
+                        ->keyBy('service_id');
+
+                    foreach ($svcTariffs as $sid => $tariff) {
+                        $hmoServiceMap[$sid] = [
+                            'payable' => $tariff->payable_amount,
+                            'claims' => $tariff->claims_amount,
+                            'mode' => $tariff->coverage_mode,
+                        ];
+                    }
                 }
             }
         }
 
-        $results = $products->map(function ($product) use ($hmoMap) {
+        $productResults = $products->map(function ($product) use ($hmoProductMap) {
             return [
                 'id' => $product->id,
                 'name' => $product->product_name,
                 'code' => $product->product_code,
-                'product_type' => $product->product_type ?? 'drug',
+                'product_type' => $product->product_type ?? 'consumable',
+                'is_service' => false,
                 'base_unit_name' => $product->base_unit_name ?? 'Piece',
                 'price' => $product->price ? $product->price->current_sale_price : 0,
                 'stock' => $product->stock ? $product->stock->current_quantity : 0,
                 'category' => $product->category ? $product->category->category_name : 'N/A',
-                'hmo' => $hmoMap[$product->id] ?? null,
+                'hmo' => $hmoProductMap[$product->id] ?? null,
                 'packagings' => $product->packagings->sortBy('level')->map(function ($pkg) {
                     return [
                         'id' => $pkg->id,
@@ -1740,7 +1744,25 @@ class NursingWorkbenchController extends Controller
             ];
         });
 
-        return response()->json($results);
+        $serviceResults = $consumableServices->map(function ($service) use ($hmoServiceMap) {
+            $basePrice = $service->price ? $service->price->sale_price : 0;
+
+            return [
+                'id' => $service->id,
+                'name' => $service->service_name,
+                'code' => $service->service_code,
+                'product_type' => 'service',
+                'is_service' => true,
+                'base_unit_name' => 'Service',
+                'price' => $basePrice,
+                'stock' => null,
+                'category' => $service->category ? $service->category->category_name : 'Nursing Service',
+                'hmo' => $hmoServiceMap[$service->id] ?? null,
+                'packagings' => [],
+            ];
+        });
+
+        return response()->json($productResults->concat($serviceResults)->values());
     }
 
     // ===== BATCH-BASED INVENTORY METHODS FOR NURSING =====
