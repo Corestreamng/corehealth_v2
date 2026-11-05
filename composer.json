@@ -12,7 +12,7 @@
         "barryvdh/laravel-dompdf": "^2.2",
         "cmgmyr/messenger": "^2.29",
         "doctrine/dbal": "^4.4",
-        "fruitcake/laravel-cors": "^2.0",
+        "fruitcake/laravel-cors": "^3.0",
         "guzzlehttp/guzzle": "^7.0.1",
         "intervention/image": "^2.7",
         "laravel/framework": "^8.75",
