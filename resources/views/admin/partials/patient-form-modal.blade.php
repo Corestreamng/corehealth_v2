@@ -205,6 +205,10 @@
                                             </div>
                                             <div class="input-group pf-fileno-input-group" id="pf-fileno-input-group">
                                                 <span class="input-group-text pf-fileno-prefix-addon" id="pf-fileno-prefix-addon" style="display: none;"></span>
+                                                <div class="pf-fileno-prefix-switch" id="pf-fileno-prefix-switch" style="display: none;">
+                                                    <button type="button" class="btn pf-prefix-btn active" data-prefix="ANC-">ANC-</button>
+                                                    <button type="button" class="btn pf-prefix-btn" data-prefix="PANC-">PANC-</button>
+                                                </div>
                                                 <input type="text" class="form-control file-no-input" id="pf-file-no" readonly placeholder="Auto-generated">
                                             </div>
                                             <!-- Info panel showing format and recent numbers -->

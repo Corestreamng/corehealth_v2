@@ -79,37 +79,45 @@ if (typeof window.wbRoute !== 'function') {
         }
     };
 
-    function openAncPatientRegistration() {
+    function openAncPatientRegistration(initialPrefix = 'ANC-') {
         // Show modal in create mode
         showPatientFormModal('create');
 
-        // After modal is shown, switch to ANC file number mode
+        // After modal is shown, switch to ANC/PANC file number mode
         $('#patientFormModal').one('shown.bs.modal', function() {
-            // Hide auto/manual toggle — ANC mode uses prefix hint instead
+            // Hide auto/manual toggle — ANC/PANC mode uses prefix toggle instead
             $('.file-no-btn-group').hide();
             $('#pf-file-no-info').hide();
 
-            // Set file number field as editable with ANC prefix
+            // Set file number field as editable with chosen prefix
             var $input = $('#pf-file-no');
             $input.prop('readonly', false);
+            $input.data('fixedPrefix', initialPrefix);
 
-            // Generate ANC file number
-            generateAncFileNumber();
+            // Show prefix switcher with ANC- and PANC-
+            $('#pf-fileno-prefix-addon').text('').hide();
+            $('#pf-fileno-prefix-switch').show();
+            $('.pf-prefix-btn').removeClass('active');
+            $(`.pf-prefix-btn[data-prefix="${initialPrefix}"]`).addClass('active');
+
+            // Generate initial file number
+            generateAncFileNumber(initialPrefix);
 
             // Update modal title
-            $('#patient-form-title').html('<i class="mdi mdi-clipboard-plus"></i> New ANC Patient Registration');
+            var prefixName = initialPrefix.replace(/[-_]/g, '');
+            $('#patient-form-title').html('<i class="mdi mdi-clipboard-plus"></i> New ' + prefixName + ' Patient Registration');
 
             // Pre-select Female gender
             $('#pf-gender').val('Female');
         });
     }
 
-    function generateAncFileNumber() {
+    function generateAncFileNumber(prefix = 'ANC-') {
         $.ajax({
             url: wbUrl('/reception/patient/next-file-number'),
             method: 'GET',
             data: {
-                prefix: 'ANC-'
+                prefix: prefix
             },
             success: function(response) {
                 var nextFileNo = response.file_no;
@@ -117,18 +125,19 @@ if (typeof window.wbRoute !== 'function') {
                 $('#pf-next-file-no').text(nextFileNo);
                 $('#pf-duplicate-warning').hide();
 
-                // Show last 2 ANC numbers as hint
+                // Show last 2 numbers as hint
                 var recent = response.recent_file_nos || [];
                 var lastTwo = recent.slice(0, 2);
-                if (lastTwo.length> 0) {
+                if (lastTwo.length > 0) {
                     $('#pf-file-no-hint').html('<small class="text-muted">Recent: ' + lastTwo.join(', ') + '</small>').show();
                 } else {
                     $('#pf-file-no-hint').html('').hide();
                 }
             },
             error: function() {
-                $('#pf-file-no').val('ANC-001');
-                $('#pf-next-file-no').text('ANC-001');
+                var fallback = prefix + '001';
+                $('#pf-file-no').val(fallback);
+                $('#pf-next-file-no').text(fallback);
             }
         });
     }
@@ -1296,10 +1305,10 @@ if (typeof window.wbRoute !== 'function') {
                     <div class="row">
                         <div class="col-md-4 mb-3">
                             <label class="form-label">Entry Point <span class="text-danger">*</span></label>
-                            <select name="entry_point" class="form-select" required>
-                                <option value="anc" selected>ANC (Antenatal Care)</option>
+                            <select name="entry_point" class="form-select" id="enroll-entry-point" required>
+                                <option value="anc" selected>ANC (Antenatal Care - ANC)</option>
                                 <option value="delivery">Delivery (Labour Ward)</option>
-                                <option value="postnatal">Postnatal</option>
+                                <option value="postnatal">Postnatal (Postnatal Care - PANC)</option>
                             </select>
                         </div>
                     </div>

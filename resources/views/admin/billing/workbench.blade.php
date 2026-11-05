@@ -710,6 +710,67 @@ $sett = appsettings();
                         </div>
                     </div>
 
+                    <!-- Account Transaction Panel (Deposit/Withdraw/Adjust) -->
+                    <div class="account-transaction-panel" id="account-transaction-panel" style="display: none;">
+                        <div class="transaction-panel-header" id="transaction-panel-header">
+                            <h5><i class="mdi mdi-cash-plus" id="transaction-panel-icon"></i> <span id="transaction-panel-title">Make Deposit</span></h5>
+                            <button class="btn btn-sm btn-link" id="close-transaction-panel">
+                                <i class="mdi mdi-close"></i>
+                            </button>
+                        </div>
+                        <div class="transaction-panel-body">
+                            <form id="account-transaction-form" class="transaction-form-inline">
+                                <input type="hidden" id="transaction-type" value="deposit">
+                                <div class="form-group">
+                                    <label>Amount</label>
+                                    <div class="input-group">
+                                        <div class="input-group-prepend">
+                                            <span class="input-group-text">₦</span>
+                                        </div>
+                                        <input type="number" step="0.01" class="form-control form-control-lg" id="transaction-amount" placeholder="0.00" required>
+                                    </div>
+                                    <small class="form-text text-muted" id="transaction-amount-help">Enter amount to deposit</small>
+                                </div>
+                                <div class="form-group" id="transaction-payment-method-group">
+                                    <label>Payment Method</label>
+                                    <select class="form-control" id="transaction-payment-method">
+                                        <option value="CASH">Cash</option>
+                                        <option value="POS">POS/Card</option>
+                                        <option value="TRANSFER">Bank Transfer</option>
+                                        <option value="MOBILE">Mobile Money</option>
+                                    </select>
+                                </div>
+                                <div class="form-group" id="transaction-bank-group" style="display: none;">
+                                    <label>Select Bank</label>
+                                    <select class="form-control" id="transaction-bank">
+                                        <option value="">-- Select Bank --</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label>Description <small class="text-muted">(Required for adjustments)</small></label>
+                                    <input type="text" class="form-control" id="transaction-description" placeholder="e.g., Cash deposit, Refund, Correction, etc.">
+                                </div>
+                                <div class="transaction-actions">
+                                    <button type="submit" class="btn btn-block" id="transaction-submit-btn">
+                                        <i class="mdi mdi-check"></i> <span id="transaction-submit-text">Confirm Deposit</span>
+                                    </button>
+                                </div>
+                            </form>
+
+                            <!-- Balance Preview -->
+                            <div class="balance-preview" id="balance-preview">
+                                <div class="balance-preview-row">
+                                    <span>Current Balance:</span>
+                                    <span id="preview-current-balance">₦0.00</span>
+                                </div>
+                                <div class="balance-preview-row">
+                                    <span id="preview-change-label">After Deposit:</span>
+                                    <span id="preview-new-balance">₦0.00</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
                     <!-- Account Stats Dashboard -->
                     <div class="account-stats-grid">
                         <div class="account-stat-card deposits">
@@ -754,67 +815,6 @@ $sett = appsettings();
                         <button class="btn btn-primary btn-lg" id="create-account-btn">
                             <i class="mdi mdi-plus-circle"></i> Create Account
                         </button>
-                    </div>
-                </div>
-
-                <!-- Account Transaction Panel (Deposit/Withdraw/Adjust) -->
-                <div class="account-transaction-panel" id="account-transaction-panel" style="display: none;">
-                    <div class="transaction-panel-header" id="transaction-panel-header">
-                        <h5><i class="mdi mdi-cash-plus" id="transaction-panel-icon"></i> <span id="transaction-panel-title">Make Deposit</span></h5>
-                        <button class="btn btn-sm btn-link" id="close-transaction-panel">
-                            <i class="mdi mdi-close"></i>
-                        </button>
-                    </div>
-                    <div class="transaction-panel-body">
-                        <form id="account-transaction-form" class="transaction-form-inline">
-                            <input type="hidden" id="transaction-type" value="deposit">
-                            <div class="form-group">
-                                <label>Amount</label>
-                                <div class="input-group">
-                                    <div class="input-group-prepend">
-                                        <span class="input-group-text">₦</span>
-                                    </div>
-                                    <input type="number" step="0.01" class="form-control form-control-lg" id="transaction-amount" placeholder="0.00" required>
-                                </div>
-                                <small class="form-text text-muted" id="transaction-amount-help">Enter amount to deposit</small>
-                            </div>
-                            <div class="form-group" id="transaction-payment-method-group">
-                                <label>Payment Method</label>
-                                <select class="form-control" id="transaction-payment-method">
-                                    <option value="CASH">Cash</option>
-                                    <option value="POS">POS/Card</option>
-                                    <option value="TRANSFER">Bank Transfer</option>
-                                    <option value="MOBILE">Mobile Money</option>
-                                </select>
-                            </div>
-                            <div class="form-group" id="transaction-bank-group" style="display: none;">
-                                <label>Select Bank</label>
-                                <select class="form-control" id="transaction-bank">
-                                    <option value="">-- Select Bank --</option>
-                                </select>
-                            </div>
-                            <div class="form-group">
-                                <label>Description <small class="text-muted">(Required for adjustments)</small></label>
-                                <input type="text" class="form-control" id="transaction-description" placeholder="e.g., Cash deposit, Refund, Correction, etc.">
-                            </div>
-                            <div class="transaction-actions">
-                                <button type="submit" class="btn btn-block" id="transaction-submit-btn">
-                                    <i class="mdi mdi-check"></i> <span id="transaction-submit-text">Confirm Deposit</span>
-                                </button>
-                            </div>
-                        </form>
-
-                        <!-- Balance Preview -->
-                        <div class="balance-preview" id="balance-preview">
-                            <div class="balance-preview-row">
-                                <span>Current Balance:</span>
-                                <span id="preview-current-balance">₦0.00</span>
-                            </div>
-                            <div class="balance-preview-row">
-                                <span id="preview-change-label">After Deposit:</span>
-                                <span id="preview-new-balance">₦0.00</span>
-                            </div>
-                        </div>
                     </div>
                 </div>
 

@@ -406,6 +406,29 @@ class Patient extends Model implements Auditable
     ];
 
     /**
+     * Multiple prefix options supported per clinical workbench.
+     */
+    public const WORKBENCH_PREFIX_OPTIONS = [
+        'maternity' => ['ANC-', 'PANC-'],
+    ];
+
+    /**
+     * Get prefix options for a given workbench.
+     *
+     * @return array<string>
+     */
+    public static function getPrefixOptionsForWorkbench(?string $workbench): array
+    {
+        if (!$workbench) {
+            return [];
+        }
+
+        $wb = strtolower(trim($workbench));
+
+        return self::WORKBENCH_PREFIX_OPTIONS[$wb] ?? (isset(self::WORKBENCH_PREFIXES[$wb]) ? [self::WORKBENCH_PREFIXES[$wb]] : []);
+    }
+
+    /**
      * Get the authoritative fixed prefix for a given workbench.
      */
     public static function getPrefixForWorkbench(?string $workbench): ?string

@@ -2252,3 +2252,94 @@ body.has-receipt-modal-open .modal-backdrop:last-of-type,
     border: 1px solid #e2e8f0 !important;
     border-radius: 4px;
 }
+
+/* ── 23. Billing Account Tab Cockpit Scaling ────────────────────────────── */
+body.is-workbench #account-tab .account-hero-balance,
+body.has-workbench #account-tab .account-hero-balance {
+    padding: 10px 14px !important;
+    margin: 6px 8px !important;
+    gap: 12px !important;
+    border-radius: 6px !important;
+}
+
+body.is-workbench #account-tab .hero-balance-icon,
+body.has-workbench #account-tab .hero-balance-icon {
+    width: 44px !important;
+    height: 44px !important;
+    font-size: 1.5rem !important;
+}
+
+body.is-workbench #account-tab .hero-balance-amount,
+body.has-workbench #account-tab .hero-balance-amount {
+    font-size: 1.75rem !important;
+    line-height: 1.1 !important;
+}
+
+body.is-workbench #account-tab .hero-balance-label,
+body.has-workbench #account-tab .hero-balance-label {
+    font-size: 0.72rem !important;
+}
+
+body.is-workbench #account-tab .hero-balance-status,
+body.has-workbench #account-tab .hero-balance-status {
+    font-size: 0.78rem !important;
+    margin-top: 0 !important;
+}
+
+body.is-workbench #account-tab .hero-balance-actions .btn,
+body.has-workbench #account-tab .hero-balance-actions .btn {
+    height: 26px !important;
+    line-height: 24px !important;
+    padding: 0 8px !important;
+    font-size: 0.75rem !important;
+}
+
+body.is-workbench #account-tab .account-stats-grid,
+body.has-workbench #account-tab .account-stats-grid {
+    padding: 0 8px 6px !important;
+    gap: 6px !important;
+}
+
+body.is-workbench #account-tab .account-stat-card,
+body.has-workbench #account-tab .account-stat-card {
+    padding: 6px 10px !important;
+    gap: 8px !important;
+    border-radius: 4px !important;
+}
+
+body.is-workbench #account-tab .account-stat-card .stat-icon,
+body.has-workbench #account-tab .account-stat-card .stat-icon {
+    width: 30px !important;
+    height: 30px !important;
+    font-size: 1.1rem !important;
+    border-radius: 6px !important;
+}
+
+body.is-workbench #account-tab .account-stat-card .stat-value,
+body.has-workbench #account-tab .account-stat-card .stat-value {
+    font-size: 0.95rem !important;
+}
+
+body.is-workbench #account-tab .account-stat-card .stat-label,
+body.has-workbench #account-tab .account-stat-card .stat-label {
+    font-size: 0.72rem !important;
+}
+
+body.is-workbench #account-tab .account-transaction-panel,
+body.has-workbench #account-tab .account-transaction-panel {
+    margin: 4px 8px 8px !important;
+    border-radius: 6px !important;
+    position: relative !important;
+    z-index: 10 !important;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12) !important;
+}
+
+body.is-workbench #account-tab .transaction-panel-header,
+body.has-workbench #account-tab .transaction-panel-header {
+    padding: 6px 12px !important;
+}
+
+body.is-workbench #account-tab .transaction-panel-body,
+body.has-workbench #account-tab .transaction-panel-body {
+    padding: 8px 12px !important;
+}

@@ -1331,8 +1331,12 @@ if (typeof window.wbRoute !== 'function') {
             $('#transaction-amount').removeAttr('min');
         }
 
-        panel.slideDown();
-        $('#transaction-amount').focus();
+        panel.slideDown(250, function() {
+            if (panel.length && panel[0].scrollIntoView) {
+                panel[0].scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            }
+            $('#transaction-amount').focus();
+        });
     }
 
     // Transaction payment method change handler

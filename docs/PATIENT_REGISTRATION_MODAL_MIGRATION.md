@@ -165,3 +165,22 @@ To prevent walk-in registrations from consuming or polluting normal hospital fil
    - Autocomplete suggestions powered by `<datalist>`: `Self / Walk-in`, `Family / Friend`, `Doctor / Physician`, `Hospital / Clinic`, `Primary Health Centre (PHC)`, `Community Outreach`, `Company / Corporate Partner`, `HMO Partner`, `Church / Religious Org`, `School / Institution`.
    - Quick one-click chips (`Self`, `Family/Friend`, `Doctor`, `Hospital/Clinic`, `Outreach`, `Corporate`) allow rapid single-tap selection with immediate focus for additional custom physician or facility names.
 
+---
+
+## 11. Dual Prefix Selection for Maternity & ANC Enrollment (`ANC-` and `PANC-`)
+
+**Date**: 2026-11-05  
+**Git Release Tag**: `v2.6.0.66`
+
+1. **Prefix Options Architecture**:
+   - `App\Models\Patient::WORKBENCH_PREFIX_OPTIONS`: Maps clinical workbenches to supported prefix choices (e.g., `'maternity' => ['ANC-', 'PANC-']`).
+   - `App\Models\Patient::getPrefixOptionsForWorkbench(?string $workbench)`: Programmatically inspects prefix options.
+   - `App\Models\Patient::resolveWorkbenchFromFileNo(?string $fileNo)`: Resolves both `ANC` and `PANC` prefixes to the `maternity` domain.
+2. **Interactive Prefix Switcher UI**:
+   - In `#patientFormModal` (`resources/views/admin/partials/patient-form-modal.blade.php`), added `#pf-fileno-prefix-switch` with segmented toggle buttons (`[ANC-]` / `[PANC-]`).
+   - Dynamically displays in place of static `#pf-fileno-prefix-addon` when multiple prefixes exist for the active workbench.
+   - Real-time click handler (`.pf-prefix-btn`) updates the active prefix, recalculates the auto-generated sequential number via `/reception/patient/next-file-number?prefix=...`, and updates modal titles (`New ANC Patient Registration` vs `New PANC Patient Registration`).
+3. **Maternity Workbench Integration**:
+   - `openAncPatientRegistration(initialPrefix = 'ANC-')` in `public/js/maternity-core.js` accepts prefix arguments and activates the interactive prefix switcher.
+   - Maternity enrollment tab (`renderEnrollmentForm()`) explicitly displays `ANC (Antenatal Care - ANC)` and `Postnatal (Postnatal Care - PANC)` options mapped to their clinical entry points.
+

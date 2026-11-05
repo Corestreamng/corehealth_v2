@@ -177,7 +177,7 @@ $sett = appsettings();
                 <button type="button" class="btn btn-primary" id="btn-maternity-new-patient" onclick="showPatientFormModal('create')" title="Register New Patient">
                     <i class="mdi mdi-account-plus"></i> New Patient
                 </button>
-                <button type="button" class="btn btn-outline-primary" id="btn-register-walkin" onclick="if(typeof openWalkInRegistration==='function'){openWalkInRegistration();}else{showPatientFormModal('create');enableWalkInMode('ANC-');}" title="Register Walk-in Patient">
+                <button type="button" class="btn btn-outline-primary" id="btn-register-walkin" onclick="if(typeof openAncPatientRegistration==='function'){openAncPatientRegistration('ANC-');}else if(typeof openWalkInRegistration==='function'){openWalkInRegistration();}else{showPatientFormModal('create');enableWalkInMode('ANC-');}" title="Register Walk-in Patient">
                     <i class="mdi mdi-account-plus-outline"></i> Register Walk-in
                 </button>
                 <button class="btn btn-outline-info" data-bs-toggle="modal" data-bs-target="#hospital-contacts-modal" title="Hospital Contacts">

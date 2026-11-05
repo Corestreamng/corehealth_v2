@@ -207,3 +207,21 @@ node --check public/js/workbench-helper.js
    ```bash
    composer dump-autoload -o
    ```
+
+---
+
+## 7. Account Tab Cockpit Scaling & Inline Form Stacking Architecture
+
+**Date**: 2026-11-05  
+**Git Release Tag**: `v2.6.0.66`
+
+1. **Problem Analysis**:
+   - In Billing Workbench (`#account-tab`), the transaction panel (`#account-transaction-panel`) was previously positioned after the entire `#account-hero-section` (which contained the 4 KPI cards).
+   - In viewport-locked cockpit mode (1366x768 screens), the unscaled hero balance and KPI grid pushed `#account-transaction-panel` below the visible viewport, causing deposit and withdrawal forms to be hidden behind/below the KPI cards.
+2. **DOM Restructuring & Vertical Hierarchy**:
+   - Relocated `<div class="account-transaction-panel" id="account-transaction-panel">` inside `#account-hero-section` between `#account-hero-balance` and `#account-stats-grid`.
+   - When "+ Deposit", "- Withdraw", or "Adjust" is triggered, the panel smoothly slides down directly below the purple balance card and *above* the KPI cards (`z-index: 10`, `position: relative`).
+   - Smooth viewport auto-scroll (`scrollIntoView({ behavior: 'smooth', block: 'nearest' })`) ensures immediate focus and total visibility on smaller displays.
+3. **High-Density Cockpit Scaling**:
+   - Scaled `.account-hero-balance` (padding `1.1rem 1.5rem`, margin `0.75rem 1rem`), `.hero-balance-icon` (`56px` / `44px` in cockpit), and `.hero-balance-amount` (`2.25rem` / `1.75rem` in cockpit).
+   - Scaled `.account-stats-grid` and `.account-stat-card` (`padding: 6px 10px`, icon `30px`) to preserve 100% of visible telemetry above the fold without scrollbar clipping.

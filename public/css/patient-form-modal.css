@@ -530,6 +530,59 @@
         border-left: none;
     }
 
+    .pf-fileno-prefix-switch {
+        background: #eef3f8;
+        border: 2px solid #e9ecef;
+        border-right: none;
+        border-top-left-radius: 0.5rem;
+        border-bottom-left-radius: 0.5rem;
+        display: inline-flex;
+        align-items: center;
+        padding: 2px;
+        gap: 2px;
+        transition: all 0.2s ease;
+    }
+
+    .pf-prefix-btn {
+        border: none;
+        background: transparent;
+        font-weight: 700;
+        font-size: 0.8125rem;
+        padding: 0.35rem 0.65rem;
+        color: #495057;
+        border-radius: 0.35rem;
+        cursor: pointer;
+        line-height: 1.2;
+        transition: all 0.2s ease;
+    }
+
+    .pf-prefix-btn:hover {
+        background: rgba(0, 0, 0, 0.06);
+        color: #212529;
+    }
+
+    .pf-prefix-btn.active {
+        background: var(--hospital-primary, #011b33);
+        color: #fff;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
+    }
+
+    .pf-fileno-input-group:has(.file-no-input[readonly]) .pf-fileno-prefix-switch {
+        border-color: #28a745;
+        background: #e8f5e9;
+    }
+
+    .pf-fileno-input-group:has(.file-no-input:not([readonly])) .pf-fileno-prefix-switch {
+        border-color: #fd7e14;
+        background: #fff3e6;
+    }
+
+    .pf-fileno-input-group .pf-fileno-prefix-switch:not([style*="display: none"]) + .file-no-input {
+        border-top-left-radius: 0;
+        border-bottom-left-radius: 0;
+        border-left: none;
+    }
+
     .file-no-input {
         border: 2px solid #e9ecef;
         border-radius: 0.5rem;

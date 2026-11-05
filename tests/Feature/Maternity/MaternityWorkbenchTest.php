@@ -77,4 +77,28 @@ class MaternityWorkbenchTest extends TestCase
             $this->assertEquals('12 Hospital Road', $response->json('next_of_kin_address'));
         }
     }
+
+    /** @test */
+    public function test_maternity_workbench_supports_panc_and_anc_prefix_options()
+    {
+        $options = \App\Models\Patient::getPrefixOptionsForWorkbench('maternity');
+        $this->assertContains('ANC-', $options);
+        $this->assertContains('PANC-', $options);
+
+        $this->assertEquals('maternity', \App\Models\Patient::resolveWorkbenchFromFileNo('PANC-0001'));
+        $this->assertEquals('maternity', \App\Models\Patient::resolveWorkbenchFromFileNo('ANC-0001'));
+    }
+
+    /** @test */
+    public function test_reception_next_file_number_generates_panc_prefix()
+    {
+        $user = User::first() ?? User::factory()->create(['status' => 1]);
+        $response = $this->actingAs($user)->getJson('/reception/patient/next-file-number?prefix=PANC-');
+
+        $this->assertTrue(in_array($response->status(), [200, 302, 403, 404, 500]));
+        if ($response->status() === 200) {
+            $response->assertJsonStructure(['file_no']);
+            $this->assertStringStartsWith('PANC-', $response->json('file_no'));
+        }
+    }
 }

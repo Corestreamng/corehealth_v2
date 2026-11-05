@@ -71,6 +71,17 @@ const WORKBENCH_PREFIX_MAP = {
     'reception_walkin': 'EX-'
 };
 
+// Workbenches with multiple selectable prefix options
+const WORKBENCH_PREFIX_OPTIONS = {
+    'maternity': ['ANC-', 'PANC-']
+};
+
+function getWorkbenchPrefixOptions(wb) {
+    if (!wb) wb = detectRegistrationWorkbench();
+    if (!wb) return [];
+    return WORKBENCH_PREFIX_OPTIONS[String(wb).toLowerCase()] || [];
+}
+
 function getWorkbenchPrefix(wb) {
     if (!wb) wb = detectRegistrationWorkbench();
     if (!wb) return null;
@@ -105,6 +116,7 @@ function showPatientFormModal(mode = 'create', patientData = null) {
         $('#patient-form-header').addClass('edit-mode');
         $('#pf-submit-text').text('Update Patient');
         $('#pf-fileno-prefix-addon').text('').hide();
+        $('#pf-fileno-prefix-switch').hide();
         $('#pf-file-no').removeData('fixedPrefix');
 
         if (typeof patientData === 'object' && (patientData.firstname || patientData.name)) {
@@ -165,11 +177,24 @@ function resetPatientForm() {
     $('#pf-file-no-hint').html('<i class="mdi mdi-information-outline"></i> Next number: <strong id="pf-last-file-no">--</strong> + 1 = <strong id="pf-next-file-no">--</strong>').removeClass('manual-mode');
 
     const wb = detectRegistrationWorkbench();
-    const prefix = getWorkbenchPrefix(wb);
-    if (prefix) {
+    const prefixOptions = getWorkbenchPrefixOptions(wb);
+    let prefix = $('#pf-file-no').data('fixedPrefix') || getWorkbenchPrefix(wb);
+    if (!prefix && prefixOptions.length > 0) {
+        prefix = prefixOptions[0];
+    }
+
+    if (prefixOptions.length > 1) {
+        $('#pf-fileno-prefix-addon').text('').hide();
+        $('#pf-fileno-prefix-switch').show();
+        $('.pf-prefix-btn').removeClass('active');
+        $(`.pf-prefix-btn[data-prefix="${prefix}"]`).addClass('active');
+        $('#pf-file-no').data('fixedPrefix', prefix);
+    } else if (prefix) {
+        $('#pf-fileno-prefix-switch').hide();
         $('#pf-file-no').data('fixedPrefix', prefix);
         $('#pf-fileno-prefix-addon').text(prefix).show();
     } else {
+        $('#pf-fileno-prefix-switch').hide();
         $('#pf-file-no').removeData('fixedPrefix');
         $('#pf-fileno-prefix-addon').text('').hide();
     }
@@ -236,13 +261,25 @@ function generatePatientFormFileNumber() {
     $input.removeClass('status-valid status-checking status-duplicate');
 
     const wb = detectRegistrationWorkbench();
-    const prefix = getWorkbenchPrefix(wb);
+    const prefixOptions = getWorkbenchPrefixOptions(wb);
+    let prefix = $input.data('fixedPrefix') || getWorkbenchPrefix(wb);
+    if (!prefix && prefixOptions.length > 0) {
+        prefix = prefixOptions[0];
+    }
 
-    if (prefix) {
+    if (prefixOptions.length > 1) {
         $input.data('fixedPrefix', prefix);
+        $('#pf-fileno-prefix-addon').text('').hide();
+        $('#pf-fileno-prefix-switch').show();
+        $('.pf-prefix-btn').removeClass('active');
+        $(`.pf-prefix-btn[data-prefix="${prefix}"]`).addClass('active');
+    } else if (prefix) {
+        $input.data('fixedPrefix', prefix);
+        $('#pf-fileno-prefix-switch').hide();
         $('#pf-fileno-prefix-addon').text(prefix).show();
     } else {
         $input.removeData('fixedPrefix');
+        $('#pf-fileno-prefix-switch').hide();
         $('#pf-fileno-prefix-addon').text('').hide();
     }
 
@@ -514,8 +551,19 @@ function toggleFileNumberEdit(mode) {
         $input.prop('readonly', false);
         $hint.addClass('manual-mode');
 
+        const wb = detectRegistrationWorkbench();
+        const prefixOptions = getWorkbenchPrefixOptions(wb);
+
         if (fixedPrefix) {
-            $('#pf-fileno-prefix-addon').text(fixedPrefix).show();
+            if (prefixOptions.length > 1) {
+                $('#pf-fileno-prefix-addon').text('').hide();
+                $('#pf-fileno-prefix-switch').show();
+                $('.pf-prefix-btn').removeClass('active');
+                $(`.pf-prefix-btn[data-prefix="${fixedPrefix}"]`).addClass('active');
+            } else {
+                $('#pf-fileno-prefix-switch').hide();
+                $('#pf-fileno-prefix-addon').text(fixedPrefix).show();
+            }
             let curVal = ($input.val() || '').trim();
             if (curVal.toUpperCase().startsWith(fixedPrefix.toUpperCase())) {
                 curVal = curVal.substring(fixedPrefix.length);
@@ -529,6 +577,7 @@ function toggleFileNumberEdit(mode) {
             }
         } else {
             $('#pf-fileno-prefix-addon').text('').hide();
+            $('#pf-fileno-prefix-switch').hide();
             $input.attr('placeholder', 'Enter file number');
             $input.focus().select();
         }
@@ -541,10 +590,21 @@ function toggleFileNumberEdit(mode) {
         // Auto mode - readonly with generated number
         $input.prop('readonly', true).attr('placeholder', 'Auto-generated');
         $hint.removeClass('manual-mode');
+        const wb = detectRegistrationWorkbench();
+        const prefixOptions = getWorkbenchPrefixOptions(wb);
         if (fixedPrefix) {
-            $('#pf-fileno-prefix-addon').text(fixedPrefix).show();
+            if (prefixOptions.length > 1) {
+                $('#pf-fileno-prefix-addon').text('').hide();
+                $('#pf-fileno-prefix-switch').show();
+                $('.pf-prefix-btn').removeClass('active');
+                $(`.pf-prefix-btn[data-prefix="${fixedPrefix}"]`).addClass('active');
+            } else {
+                $('#pf-fileno-prefix-switch').hide();
+                $('#pf-fileno-prefix-addon').text(fixedPrefix).show();
+            }
         } else {
             $('#pf-fileno-prefix-addon').text('').hide();
+            $('#pf-fileno-prefix-switch').hide();
         }
         generatePatientFormFileNumber();
     }
@@ -1761,6 +1821,24 @@ $(document).ready(function() {
             $(this).removeClass('has-value');
         }
     });
+
+    // Prefix switch button handler (e.g., ANC- vs PANC-)
+    $(document).on('click', '.pf-prefix-btn', function(e) {
+        e.preventDefault();
+        const selectedPrefix = $(this).data('prefix');
+        $('.pf-prefix-btn').removeClass('active');
+        $(this).addClass('active');
+
+        const wb = detectRegistrationWorkbench();
+        $('#pf-file-no').data('fixedPrefix', selectedPrefix);
+
+        generatePrefixedFileNumber(selectedPrefix, wb);
+
+        if (wb === 'maternity') {
+            const cleanName = selectedPrefix.replace(/[-_]/g, '');
+            $('#patient-form-title').html('<i class="mdi mdi-clipboard-plus"></i> New ' + cleanName + ' Patient Registration');
+        }
+    });
 });
 
 // =============================================
@@ -1793,8 +1871,17 @@ function enableWalkInMode(prefix) {
     }
     if (prefix === 'IMG-') prefix = 'RAD-';
 
+    const prefixOptions = getWorkbenchPrefixOptions(wb);
     $('#pf-file-no').data('fixedPrefix', prefix);
-    $('#pf-fileno-prefix-addon').text(prefix).show();
+    if (prefixOptions.length > 1) {
+        $('#pf-fileno-prefix-addon').text('').hide();
+        $('#pf-fileno-prefix-switch').show();
+        $('.pf-prefix-btn').removeClass('active');
+        $(`.pf-prefix-btn[data-prefix="${prefix}"]`).addClass('active');
+    } else {
+        $('#pf-fileno-prefix-switch').hide();
+        $('#pf-fileno-prefix-addon').text(prefix).show();
+    }
     
     // Update total steps for navigation
     window._pfTotalSteps = pfStepSequence.length;
@@ -1813,8 +1900,17 @@ function generatePrefixedFileNumber(prefix, wb) {
     }
     if (prefix === 'IMG-') prefix = 'RAD-';
 
+    const prefixOptions = getWorkbenchPrefixOptions(wb);
     $('#pf-file-no').data('fixedPrefix', prefix);
-    $('#pf-fileno-prefix-addon').text(prefix).show();
+    if (prefixOptions.length > 1) {
+        $('#pf-fileno-prefix-addon').text('').hide();
+        $('#pf-fileno-prefix-switch').show();
+        $('.pf-prefix-btn').removeClass('active');
+        $(`.pf-prefix-btn[data-prefix="${prefix}"]`).addClass('active');
+    } else {
+        $('#pf-fileno-prefix-switch').hide();
+        $('#pf-fileno-prefix-addon').text(prefix).show();
+    }
 
     $.ajax({
         url: wbUrl('/reception/patient/next-file-number'),
@@ -1857,11 +1953,24 @@ function disableWalkInMode() {
     $('#patient-form-title').html('<i class="mdi mdi-account-plus"></i> New Patient Registration');
     
     const wb = detectRegistrationWorkbench();
-    const prefix = getWorkbenchPrefix(wb);
-    if (prefix) {
+    const prefixOptions = getWorkbenchPrefixOptions(wb);
+    let prefix = $('#pf-file-no').data('fixedPrefix') || getWorkbenchPrefix(wb);
+    if (!prefix && prefixOptions.length > 0) {
+        prefix = prefixOptions[0];
+    }
+
+    if (prefixOptions.length > 1) {
+        $('#pf-fileno-prefix-addon').text('').hide();
+        $('#pf-fileno-prefix-switch').show();
+        $('.pf-prefix-btn').removeClass('active');
+        $(`.pf-prefix-btn[data-prefix="${prefix}"]`).addClass('active');
+        $('#pf-file-no').data('fixedPrefix', prefix);
+    } else if (prefix) {
+        $('#pf-fileno-prefix-switch').hide();
         $('#pf-file-no').data('fixedPrefix', prefix);
         $('#pf-fileno-prefix-addon').text(prefix).show();
     } else {
+        $('#pf-fileno-prefix-switch').hide();
         $('#pf-file-no').removeData('fixedPrefix');
         $('#pf-fileno-prefix-addon').text('').hide();
     }
