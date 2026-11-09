@@ -1,622 +1,163 @@
 # CoreHealth v2 - Hospital Management Information System
 
-CoreHealth v2 is a comprehensive, enterprise-grade Hospital Management Information System (HMIS) built on Laravel. It provides an integrated platform for managing all aspects of healthcare facility operations, from patient care and clinical workflows to financial management, human resources, multi-store inventory, and AI-assisted clinical summarization.
-
-## Table of Contents
-
-- [Overview](#overview)
-- [Core Modules](#core-modules)
-- [System Architecture](#system-architecture)
-- [CoreHMS SuperAdmin Integration & Sync](#corehms-superadmin-integration--sync)
-- [WeCare247 Telehealth Integration & Sync](#wecare247-telehealth-integration--sync)
-- [Installation & Setup](#installation--setup)
-- [Docker Deployment](#docker-deployment)
-- [Developer Ergonomics & Makefile](#developer-ergonomics--makefile)
-- [Code Style & Linting](#code-style--linting)
-- [Artisan Commands](#artisan-commands)
-- [Testing & Application Classification](#testing--application-classification)
-- [CI/CD & Governance](#cicd--governance)
-- [Contributing](#contributing)
-- [Security](#security)
-- [License](#license)
-
-## Overview
-
-CoreHealth v2 is designed to streamline hospital operations by integrating clinical, administrative, and financial processes into a unified system. Built with modern web technologies and best practices, it offers scalability, security, and reliability for healthcare institutions of all sizes.
-
-### Key Technologies
-
-| Component       | Technology                                     |
-|-----------------|------------------------------------------------|
-| **Framework**   | Laravel 8.x (PHP 8.3 target)                   |
-| **Container**   | Docker & Docker Compose (PHP 8.3 FPM + Nginx + MySQL 8.0 + Redis 7) |
-| **CI/CD**       | GitHub Actions Automated Pipeline (PHPUnit + CS Fixer Lint + Audit) |
-| **Code Style**  | PSR-12 Enforced via `friendsofphp/php-cs-fixer` in `tools/` |
-| **Ergonomics**  | `Makefile` for 1-command local development & Docker orchestration |
-| **Frontend**    | Blade Templates (Modular Partials), Vanilla CSS, jQuery, Select2, Chart.js |
-| **Database**    | MySQL 8.0 / MariaDB                            |
-| **Architecture**| MVC with Service-Observer pattern (46 observers) |
-| **Auth & RBAC** | Laravel UI + Spatie Permission                 |
-| **DataTables**  | Yajra Laravel DataTables (server-side)         |
-| **Logging**     | Structured Monolog JSON Channel                |
-| **Auditing**    | owen-it/laravel-auditing                       |
-| **Assets**      | Laravel Mix (Webpack)                          |
-| **PDF/Invoices**| DomPDF, laraveldaily/laravel-invoices           |
-| **Excel**       | Maatwebsite/Excel (PhpSpreadsheet)             |
+CoreHealth v2 is an enterprise-grade Hospital Management Information System (HMIS) built on Laravel 8.x (PHP 8.3 target). It provides an integrated platform for healthcare facilities of all sizes, orchestrating longitudinal patient pathways, high-density clinical workbenches, double-entry general ledger accounting, multi-store FIFO inventory, and centralized multi-tenant cloud synchronization.
 
 ---
 
-## Core Modules
+## 1. System Overview & Key Technologies
 
-### 0. Dual Dashboard Experience (`/home`) & Hospital Configuration
-- **Operational Cockpit Dashboard (`cockpit`)**:
-  - **Zero-Scroll Viewport Geometry** — space-maximizing command center locked to `calc(100vh - 62px)` on desktop with 3px micro-scrollbars (`.dash-scrollable`).
-  - **Tri-Column Division** — Pipeline (28%), Telemetry & Micro-Charts (44%), and Real-Time Activity Stream + All-Role Workbench Dock (28%).
-  - **All 18 Hospital Roles Covered** — Reception, Doctor, Nursing, Pharmacy, Lab, Radiology, Surgery, Maternity, Pediatrics, Store, Billing, HMO, Accounts, Audit, HR, ESS, Morgue, Admin.
-  - **Deep-Linking & Instant Intake** — direct deep-linking into workbenches; Doctor consults open directly in `encounters/create?patient_id={id}`, and queues filter automatically via URL query params (`status=waiting`, `tab=pending`).
-  - **Responsive Parity** — optimized for desktop, tablet portrait/landscape, and mobile (< 768px segmented view switcher) with zero loss of data or clinical visibility.
-- **Classic Operations Dashboard (`classic`)**:
-  - **Multi-Role Tabbed Interface** — restored 18-role comprehensive dashboard with dedicated departmental tabs (`admin/dashboards/tabs/*`), live AJAX queues, Chart.js trend visualizations, and deep audit logging.
-  - **Modular Architecture & High-Density Condensed Scaling** — fully modularized into `public/css/dashboard-classic.css` and `public/js/dashboard-classic.js` (no inline scripts/styles exceeding 10 lines) adhering to `--hospital-primary` dynamic branding with compact padding and fonts.
-- **Hospital Configuration & Dynamic Previews**:
-  - **Global Setting** — configured via `admin/hospital-config` under General Information (`application_status.dashboard_mode` column, default: `'cockpit'`).
-  - **Interactive Mode Switchers** — both layouts feature quick-switch header pills allowing staff to preview or toggle between modes on the fly (`/home?mode=cockpit` $\leftrightarrow$ `/home?mode=classic`).
+CoreHealth v2 unifies clinical, administrative, and revenue operations into distraction-free, zero-scroll operational cockpits optimized for standard hospital displays ($1366 \times 768$).
 
-### 1. Reception & Patient Management
-- **Patient Registration** — demographics, dependants, photo, covered by `PatientRegistrationTest`
-- **Queue Management** — doctor queue with priority routing
-- **Appointment Booking** — multi-provider scheduling, check-in, cancel/no-show, rescheduling, and doctor reassignments
-- **Reception Workbench** — real-time zero-scroll cockpit-scaled interface (`workbench-cockpit-scaling.css`) optimized for low-res (1366x768) and high-DPI displays with breadcrumb reclaim, compact doctor queues, and responsive patient workspaces
-
-### 2. Doctor / Consultation & Referrals
-- **Doctor Dashboard** — assigned patient queue, pending reviews, consultation timers
-- **Encounter Management** — diagnosis (ICD-10), prescriptions, lab/imaging orders, procedures, referrals, and template-based chief complaint capture
-- **Consultation Log Book** — clinician-by-clinic patient visit summaries, exact consult payment and HMO claims attribution, and interactive drill-down with fund non-duplication enforcement
-- **Locum & Visiting Clinician Access** — ephemeral shift-bounded smart passes (`locum_passes`) with 6-digit PIN login, clinic restriction scoping, and automatic session TTL
-- **Incremental Save** — encounter sections auto-save via AJAX
-- **Specialist Referrals** — creation from consultations, reception-side referral booking, doctor acceptance/declination, and patient referral histories
-
-### 3. Emergency Intake
-- **Walk-in & Emergency Triage** — rapid patient intake from any workbench
-- **Triage & Disposition** — rapid triage scoring, emergency bed search and assignment, and direct disposition routing (admission or consulting clinic)
-
-### 4. Nursing
-- **Nursing Workbench** — modularized into partials (`_modals.blade.php`, `_scripts.blade.php`), vitals, medication chart, care plans, I&O charts
-- **Medication Administration** — scheduling, administration logging, PRN
-- **Intake & Output Charts** — fluid balance tracking
-- **Nursing Notes** — typed notes with customisable templates
-- **Shift Handover & Management** — shift start/end, per-shift activity reports, shift calendars, and multi-nurse handover acknowledgement
-- **Injection & Immunization** — vaccination schedule tracking
-- **Deceased Queue & Last Office** — clinical workflow routing and Last Office completions
-
-### 5. Maternity Module (ANC & Wellness)
-- **ANC Enrollment** — Antenatal Care (ANC) registration, obstetric/medical history, and previous pregnancy logs
-- **ANC Visits** — progress monitoring, vitals, labs, imaging, prescriptions, and ANC cards/Road-to-Health card printing
-- **Delivery & Partograph** — delivery records, baby registration (wellness, growth charts), and digital partograph entry
-- **Postnatal & Immunizations** — postnatal visits and child immunization schedules synchronized with the nursing system
-
-### 6. Surgery / Theatre Workbench
-- **Theatre Queues** — patient procedure tracking and surgical queue metrics
-- **Procedure Management** — surgical checklist tracking, inline procedure logs, and surgical team assignments
-- **Theatre Billing** — inline billing for surgery services and consumables
-
-### 7. Laboratory (LIS)
-- **Lab Workbench** — sample collection $\rightarrow$ processing $\rightarrow$ results $\rightarrow$ verification
-- **Lab Templates** — structured result templates (ranges, flags)
-- **WYSIWYG Results** — rich-text editor for free-form reports
-- **Audit Trail** — result edit history with approval workflow
-
-### 8. Imaging / Radiology
-- **Imaging Workbench** — request queue, result capture, report generation
-- **Service Requests** — imaging orders linked to encounters
-- **Result Management** — upload findings, radiologist review
-
-### 9. Pharmacy
-- **Pharmacy Workbench** — modularized into partials (`_modals.blade.php`, `_scripts.blade.php`, `_damages.blade.php`, `_returns.blade.php`), prescription queue, dispensing, FIFO batch tracking
-- **Pharmacy Quick Actions** — returns (good/wrong_item/damaged/expired), damage reports
-- **Pharmacy Reports** — revenue, stock value, daily sales, dispensing trends
-- **Damage Reports** — auto-batch assignment, JE on approval (DR Expense, CR Inventory)
-- **Returns** — restock for good/wrong_item, JE preview, refund via Patient Wallet (2200)
-- **Stock Sync** — three-tier sync: `stock_batches` $\rightarrow$ `store_stocks` $\rightarrow$ `stocks` + `prices`
-
-### 10. Inventory & Procurement
-- **Multi-Store Support** — pharmacy stores, general stores, sub-stores
-- **Stock Batches (FIFO)** — per-batch cost tracking, expiry monitoring
-- **Purchase Orders** — create $\rightarrow$ approve $\rightarrow$ receive $\rightarrow$ batch creation
-- **Store Requisitions & Returns** — inter-store transfer requests, approval workflows, and store/PO return processes
-- **Stock Transfers** — FIFO or specific-batch transfers, weighted-average cost
-- **Delivery Guards** — validation rules for receiving goods
-
-### 11. Store Governance & Advanced Administration
-- **Store Role Catalog** — definition of store roles (Central, Pharmacy Hub, Pharmacy Satellite, Lab, Imaging, Ward)
-- **Lane Policy Matrix** — matrix rules regulating transfers between store roles (with none, manager, or admin approval requirements)
-- **Context Resolution Rules** — automated store resolution based on user roles and department overrides (e.g. NURSE resolve to Ward store)
-- **Test Resolution Panel** — simulation and resolution tracing panel for debugging resolve paths
-- **Manager KPIs** — custom KPI widgets for Pharmacy, Wards, and Central Stores
-
-### 12. Billing & Revenue Cycle
-- **Billing Workbench** — payment queue, receipts, refunds, materialized queue optimization, covered by `BillingWorkbenchTest`
-- **Split Payments Engine** — split single transactions across Cash, POS, Transfer, and Patient Deposit with automated multi-leg General Ledger entries (`payment_splits`)
-- **Unlisted / Free-Form Billable Items** — interactive custom item entry with price specification across shared clinical orders and walk-in sales
-- **Walk-In Sales** — unified walk-in order and checkout tabs across Reception and Billing workbenches
-- **Enhanced My Transactions** — cashier transaction feed with line item breakdown, category filters (Product/Service/Category/Item), and real-time KPI cards
-- **Payment Method Adjustments** — post-receipt payment method modifications with automated GL reversing and replacement journal entries, audited in `payment_adjustments`
-- **Transaction Voiding** — full financial reversal restoring patient accounts, reversing JEs, unlinking unbilled items, and striking through voided transactions across reports
-- **Global Department Revenue Attribution** — dual-tier department mapping on services/products with category inheritance, dynamic modality/bench filter pills across Imaging and Lab workbenches, real-time department KPI strips, and GL line-level revenue tagging
-- **Patient Deposits** — wallet system with auto-debit on billing
-- **Promotions** — discount rules and promo pricing
-
-### 13. HMO & Insurance
-- **HMO Workbench** — claims approval workflow (submitted $\rightarrow$ approved $\rightarrow$ paid)
-- **Tariff Management** — per-HMO tariffs for products and services, import/export
-- **Claims & Remittances** — batch claiming, payment reconciliation
-- **Auto-Tariff Sync** — PriceObserver creates/updates HMO tariffs on price changes
-
-### 14. Accounting & Finance
-- **Double-Entry Accounting** — full General Ledger with Chart of Accounts
-- **Journal Entries** — manual JEs + auto-generated by 30 observers
-- **Financial Reports** — Trial Balance, P&L, Balance Sheet, Cash Flow
-- **Bank Reconciliation** — statement import (CSV/OFX), auto-matching
-- **Petty Cash** — fund management with reconciliation
-- **Patient Deposits** — wallet-based prepayment system
-- **Credit Notes** — issuance and application
-- **Inter-Account Transfers** — bank-to-bank, cash-to-bank
-
-### 15. Fixed Assets (IAS 16 Compliant)
-- **Asset Register** — acquisition, categories, locations, depreciation schedules
-- **Depreciation** — straight-line auto-calculation, monthly runs
-- **Disposal** — gain/loss on sale, JE generation
-- **Void** — for registration errors (no depreciation recorded)
-- **CAPEX Projects** — capital expenditure tracking with budget integration
-
-### 16. Budgeting & KPIs
-- **Budget Management** — fiscal-year budgets with line items
-- **CAPEX Budgets** — project-level capital budgeting
-- **Cost Centers** — departmental cost tracking
-- **Financial KPIs** — configurable performance indicators
-
-### 17. Leases & Liabilities
-- **Lease Management** — IFRS 16 compliant lease tracking
-- **Payment Schedules** — auto-generated amortisation
-- **Liability Schedules** — long-term liability management
-- **Statutory Remittances** — tax, pension, NHIS obligations
-
-### 18. Human Resources & Staff Governance
-- **HR Workbench** — employee dashboard, org chart
-- **Staff Deactivation & Status Governance** — seven standardized employment statuses (`active`, `probation`, `on_leave`, `suspended`, `resigned`, `terminated`, `retired`) with bidirectional `Staff` <-> `User` status synchronization, automatic session termination middleware (`CheckSuspension`), and context-rich login rejection alerts
-- **Locum Shift Pass Lifecycle** — real-time TTL enforcement, instant revocation on locum deactivation, PIN authentication protection, and clinic restriction
-- **Staff Directory Quick Status Modal** — rapid status updates directly from `/staff` DataTable with multi-criteria filtering and full audit trail capture (`staff_suspensions`, `staff_terminations`)
-- **Leave Management** — types, requests, balances, calendar, approval workflow
-- **Payroll** — salary profiles, pay heads, batch processing, payslip generation
-- **Disciplinary** — query management, hearings, outcomes
-- **Suspensions & Terminations** — workflow with document attachments
-- **Employee Self-Service (ESS)** — leave requests, payslips, profile
-
-### 19. AI/LLM Clinical Assistant
-- **Multi-Provider Gateway** — supports Google Gemini, OpenAI, Anthropic Claude, Hugging Face, and local Ollama
-- **Longitudinal EHR Summaries** — generates physician-level patient briefings by parsing 14 data vectors with intelligent caching and multi-tier context discovery
-- **Clinical Note Polish** — rewrites raw dictated notes into structured medical formats with patient-level semantic history awareness across Doctor New Encounter and Nursing Workbench
-- **Offline NLP Resilience** — graceful client fallback to Retext NLP if the LLM provider is offline or unreachable
-- **Connectivity Testing** — administrator panel for testing API keys and listing supported models
-
-### 20. Internal Audit Workbench & Ops Audit
-- **Audit Responsibility Worksheets** — Cash Book/Billing, Bank Reconciliation, HMO verification, Disclosures/Refunds, Payroll/Expenses, Clinical patient flow, Ward income, Theatre bundles, Diagnostics, and Inventory
-- **Duty Shift Service Handover Audit** — calibrated shift windows (AM till 1:00 PM, Afternoon/PM 1:00 PM to 6:00 PM, Night 6:00 PM onwards) generating 1-page A4 executive handover certificates with tri-party certification signatures
-- **Care Stream Segmentation** — cleanly segregates clinical revenue and volume across General (Outpatient Walk-in / Self-pay), Inpatient (Private Wards / Admitted Stays), and Insured / Schemes Pool (NHIA, State Health Contributory Schemes, HMOs, and Corporate Retainerships)
-- **Cashier Till & Deficit Reconciliation** — tracks gross cash collections versus deposit refunds/withdrawals (`ACC_WITHDRAW`) to reconcile net drawer balances against electronic tenders (POS, Transfer, Mobile)
-- **Integrated Cashier Transactions Console** — datetime-precision transaction query and reprint console with auditor cashier scoping, refund highlight badges, and cashier summary printing
-- **Digital Approvals (Audit Stamps)** — seals audited periods/responsibility domains to freeze modifications and establish accountability
-- **Stepped Storyboard Workflow Ribbon** — unified 4-step progressive ribbon across all 12 modules (Time Horizon -> Duty Window -> Advanced Scoping -> Audit Cockpit Actions) with 5 quick date horizon chips (Today, Yest, 7D, 30D, Month) and active scope tracking
-- **Duty Window Time Ranges & Default Custom Time Window** — provides explicit shift time boundaries (AM: 00:00 - 12:59, PM: 13:00 - 17:59, Night: 18:00 - 07:59, All: 24h) with live time range indicator badge and default visible custom time controls (Time From / Time To) that automatically sync and filter active tables without page jumps
-- **Visible Page Stamping Engine** — high-efficiency 1-click batch stamping of all visible records on current page (`stampCurrentPage`) with immediate tactile UI feedback and automatic deduplication
-- **Non-Resetting Pagination Architecture** — prevents DataTable pagination reset (`opsReloadActiveTables(false)`) upon stamping or query resolution, allowing auditors to progress across high-volume pages without being kicked back to page 1
-- **Elimination of Duplicate Page-Level Filters** — strictly isolates tab-specific filters and suppresses redundant ribbon controls across all 12 modules
-- **Store Requisitions & Partial Fulfillment Accountability** — full status filter parity (pending, approved, partial, fulfilled, rejected, cancelled), zero-cost batch fallback to product master buy price, 6-card mathematically balanced KPI strip (Requested, Approved, Fulfilled, Pending/Partial Balance, Rejected), top-level store filter propagation, and interim fulfiller attribution
-- **Staff Receivables Settlement** — sequential payment allocation across outstanding staff bills with bank/discount overrides
-
-### 21. Administration
-- **Role-Based Access Control** — Spatie permissions, per-module
-- **Hospital Configuration** — settings, departments, clinics, specialisations
-- **Audit Logs** — full audit trail with export capability
-- **Import/Export** — bulk data (products, services, staff, patients)
-- **Chat/Messaging** — internal messaging system
-
-### 22. CoreHMS SuperAdmin Integration & Central Monitoring
-- **Real-Time Clinical Sync** — non-blocking queued synchronization of patients, consultations, pharmacy dispenses, labs, procedures, admissions, and staff via `DispatchCoreHmsSyncJob`
-- **Contract Parity** — interface-driven payloads shared across CoreHealth (`app/Contracts/CoreHms/*`) and SuperAdmin (`Corehealth-Super-Admin/includes/contracts/*`)
-- **Liveness & Health Monitoring** — lightweight `/api/corehms/ping` and detailed `/api/corehms/health` endpoints inspecting database latency and queue health
-- **Retroactive Historical Ingest & CLI Backfill** — backfill CLI (`php artisan corehms:backfill`) and SuperAdmin retroactive fetch modal with SHA1 deduplication
-- **Automated Database Backups** — endpoint `/api/corehms/backup` providing automated SQL dump streaming and central retention in SuperAdmin
-
-### 23. Locum Staff Access Management & Consultation Log Book
-- **Ephemeral Shift Passes (JIT Provisioning)** — secure, shift-bounded PIN credentials for visiting locum doctors, radiologists, and laboratory scientists eliminating shared logins
-- **Spatie Role Assignment at Creation** — immediate assignment of professional roles (`DOCTOR`, `RADIOLOGIST`, `LAB SCIENTIST`, `NURSE`, `PHARMACIST`) and regulatory body credentials (MDCN, RRBN, MLSCN, NMCN, PCN)
-- **Fast 6-Digit PIN & Thermal Slip Dispatch** — instant modal slip preview, thermal receipt printing, and dedicated PIN authentication tab
-- **Non-Repudiation Audit & Auto-Revocation** — cryptographic PIN hashing, TTL-based automatic expiration, manual shift extension (+4h), and instant revocation with audit logging
-- **Consultation Log Book & Finalization** — high-density encounter visit summaries with non-duplication financial tracking and resilient consultation conclusion modal flow
-
-### 24. Diagnostic Result Signatures & Approval Governance
-- **Balanced Dual Attestation Layout** — "Entered By" (operator/scientist/technologist) on the left and "Approved By" (consultant/unit head/HOD) on the right across all Laboratory and Imaging report views, printouts, and inspection modals
-- **Dynamic Cadre & Specialization Pre-population** — Automatically discovers the operator's clinical designation from their staff profile (`specialization->name ?: (cadre->name ?: job_title)`) into an editable field
-- **Strict Approval-Gated vs Direct Mode Enforcement** — When approval workflows are disabled (`lab_results_require_approval = 0`, `imaging_results_require_approval = 0`), side-by-side attestation blocks enforce mandatory entry of the approver's name and designation prior to completion; when enabled, supervisors review, edit, and sign off via the approval queue
-- **Audit-Compliant Diagnostic Attestation** — Persistent capture of `entered_by_name`, `entered_by_designation`, `approved_by_name`, and `approved_by_designation` on both `lab_service_requests` and `imaging_service_requests`
-
-### 25. Operational Cockpit & Dual Dashboard System
-- **Dual Dashboard Modes** — Hospital-wide default setting in Hospital Config (`dashboard_mode` in `application_status`) supporting `'cockpit'` (default zero-scroll operational triage) and `'classic'` (condensed 18-role tabbed operations center) with instant mode preview toggle pills (`/home?mode=cockpit` and `/home?mode=classic`).
-- **Zero-Dash KPI Metric Standard** — Eradicated placeholder dashes across all 18 classic role tabs in favor of clean numeric zeros (`0`), formatted currency (`₦0`), or percentages (`0%`).
-- **Modern Workbench Routing & Legacy Deprecation** — Eliminated legacy `/add-to-queue` links and modal triggers across all dashboard views, partials, and forms; all intake, registration, and triage flows navigate directly to `reception.workbench` (`?action=new-patient` and `?queue_filter=waiting`). Legacy endpoint `/add-to-queue` automatically redirects to `reception.workbench`.
-
-### 26. Branded Homepage & Demo Mode System
-- **Dual Presentation Experience** — Route `/` serves an interactive landing page (`welcome.blade.php`, `public/css/welcome.css`) that dynamically adapts between a customized hospital branded experience and an unbranded CoreHealth product showcase.
-- **Hospital Configuration Toggle** — Governed by `application_status.show_branded_homepage` (default: ON / `1`), configurable in Hospital Settings under the Branding tab.
-- **Full Hospital Co-Branding** — When enabled, automatically injects hospital name, logo, primary color scheme (`--hospital-primary`), facility contact channels, and staff portal links (`/login` or `/home`).
-- **Demo Instance Isolation** — When disabled (or previewed via `/?branded=0` or `/?demo=1`), renders a clean, neutral CoreHealth ecosystem landing page without hospital branding, perfectly suited for demo instances.
+| Component | Technology & Implementation |
+|---|---|
+| **Framework & Runtime** | Laravel 8.x on **PHP 8.3 FPM** |
+| **Container Stack** | Multi-container Docker (**PHP 8.3 FPM**, **Nginx**, **MySQL 8.0**, **Redis 7**) |
+| **Ergonomics & Automation** | Unified [`Makefile`](Makefile) for 1-command Docker management, testing, and linting |
+| **Documentation Engine** | Modern VitePress documentation portal under `docs/` (`npm run docs:dev`) |
+| **Frontend Architecture** | Viewport-locked Blade views, dynamic CSS custom properties, standalone JS modules |
+| **Database & ORM** | MySQL 8.0 / MariaDB 10.5+ with 46+ Eloquent Observers enforcing GL balancing |
+| **Access Control (RBAC)** | Role-Based Access Control via Spatie Permission with strict blade navigation guards |
+| **Code Style & Quality** | PSR-12 standard enforced via isolated `friendsofphp/php-cs-fixer` in `tools/` |
+| **Automated Testing** | 35 domain-specific PHPUnit feature suites running on live MySQL schema `_corehealth_db_v2_test` |
+| **External Integrations** | WeCare247 Telehealth sync and CoreHMS SuperAdmin central multi-facility monitoring |
 
 ---
 
-## System Architecture
+## 2. Comprehensive Documentation Engine (VitePress)
 
-```
-app/
-├── Console/Commands/     # 5 artisan commands (including CoreHmsBackfillCommand)
-├── Contracts/            # Typed interfaces
-│   └── CoreHms/          # 9 synchronization contract interfaces
-├── Events/               # Domain events
-├── Exceptions/           # Custom exception handlers
-├── Helpers/              # Utility functions + BatchHelper
-├── Http/Controllers/     # 100+ controllers across 7 subfolders
-│   ├── Account/          # Legacy patient accounts
-│   ├── Accounting/       # 19 controllers (GL, assets, leases, CAPEX, etc.)
-│   ├── Admin/            # Tariff management
-│   ├── API/              # Data endpoints (including CoreHms health & backup APIs)
-│   ├── Auth/             # Authentication (6 controllers)
-│   ├── Doctor/           # Doctor dashboard & consultations
-│   ├── HR/               # 12 controllers (leave, payroll, disciplinary, ESS)
-│   └── Product/          # Legacy product controller
-├── Jobs/                 # Queued jobs (including DispatchCoreHmsSyncJob)
-├── Models/               # 199 Eloquent models
-│   ├── Accounting/       # 38 models (JE, assets, leases, budgets, etc.)
-│   └── HR/               # 22 models (leave, payroll, disciplinary)
-├── Observers/            # 46 observers (auto JE, stock sync, HMO tariffs)
-│   ├── Accounting/       # 30 accounting-specific observers
-│   └── HR/               # 3 HR-specific observers
-├── Policies/             # Authorization policies
-├── Providers/            # Service + event providers
-└── Services/             # 47 services
-    ├── Accounting/       # 12 accounting services
-    ├── CoreHms/          # CoreHMS event payload services & generators
-    └── Dashboard/        # 17 dashboard-specific services
-
-Corehealth-Super-Admin/   # Central Multi-Tenant Administration Platform
-├── ajax/                 # Facility liveness pinging, backups & retro-fetch endpoints
-├── api/                  # Event notification receiver (api/event-notification.php)
-├── assets/               # Facility monitoring JS and UI assets
-└── includes/contracts/   # Interface contract parity mirror
-
-database/
-├── migrations/           # Schema history
-└── seeders/              # Sample data
-
-docker/                   # Docker environment configs (Nginx & Supervisor)
-resources/views/admin/    # Blade templates (workbenches modularized into partials)
-routes/                   # 15 route files (web, accounting, hr, nursing, etc.)
-tests/                    # 35 domain-specific PHPUnit feature and unit test suites
-tools/                    # Isolated tooling environment (friendsofphp/php-cs-fixer)
-Makefile                  # Unified developer command suite
-docs/                     # 30+ documentation files
-```
-
----
-
-## CoreHMS SuperAdmin Integration & Sync
-
-CoreHealth v2 (hospital instance) operates in tandem with **CoreHMS SuperAdmin** (`Corehealth-Super-Admin/`), the central multi-tenant cloud platform that aggregates healthcare analytics, tracks facility liveness, provides centralized backup archives, and enables longitudinal reporting across healthcare institutions.
-
-### Architecture & Synchronization Subsystem
-
-```
-CoreHealth v2 (Facility Instance)                CoreHMS SuperAdmin (Central Cloud)
-┌─────────────────────────────────┐               ┌─────────────────────────────────┐
-│ Clinical Workbenches            │               │ Event Notification Ingest       │
-│ (Reception, Doctor, Pharmacy,   │               │ api/event-notification.php      │
-│  Nursing, Lab, Surgery, Staff)  │               └───────────────┬─────────────────┘
-└────────────────┬────────────────┘                               │
-                 │ Event Dispatch                                 ▼
-                 ▼                               ┌─────────────────────────────────┐
-┌─────────────────────────────────┐               │ Idempotency & Dedup Engine      │
-│ DispatchCoreHmsSyncJob (Queue)  │──────────────>│ sha1(fac_id:type:source_id)     │
-│ - BaseCoreHmsEvent              │ (cURL/HTTP)   │ facility_sync_events            │
-│ - Typed Event Payload Contracts │               └───────────────┬─────────────────┘
-└─────────────────────────────────┘                               │
-                                                                  ▼
-┌─────────────────────────────────┐               ┌─────────────────────────────────┐
-│ Health & Liveness Endpoints     │<──────────────│ Central Facility Monitor        │
-│ - GET /api/corehms/ping         │  Heartbeat    │ - ajax/ping-facility.php        │
-│ - GET /api/corehms/health       │  Inspections  │ - assets/js/facility-monitor.js │
-└─────────────────────────────────┘               └─────────────────────────────────┘
-                                                                  ▲
-┌─────────────────────────────────┐                               │
-│ Central Backups & Retro-Ingest  │───────────────────────────────┘
-│ - GET /api/corehms/backup       │  (Streaming Backups & Retroactive Pulls)
-│ - php artisan corehms:backfill  │
-└─────────────────────────────────┘
-```
-
-#### 1. Real-Time Clinical Event Synchronization
-Whenever clinical or operational changes occur in CoreHealth modern workbenches, asynchronous background jobs (`DispatchCoreHmsSyncJob`) are queued into the Laravel database queue (`QUEUE_CONNECTION=database`):
-- **Patient Registrations / Edits**: [PatientController.php](app/Http/Controllers/PatientController.php) $\rightarrow$ `PatientSyncEvent`
-- **Clinical Encounters & Consultations**: [EncounterController.php](app/Http/Controllers/EncounterController.php) & [ReceptionWorkbenchController.php](app/Http/Controllers/ReceptionWorkbenchController.php) $\rightarrow$ `ConsultationSyncEvent`
-- **Pharmacy Dispensing**: [PharmacyWorkbenchController.php](app/Http/Controllers/PharmacyWorkbenchController.php) $\rightarrow$ `DispenseSyncEvent`
-- **Lab & Imaging Investigations**: [LabWorkbenchController.php](app/Http/Controllers/LabWorkbenchController.php) $\rightarrow$ `LabSyncEvent`
-- **Surgical Procedures**: [PatientProcedureController.php](app/Http/Controllers/PatientProcedureController.php) $\rightarrow$ `ProcedureSyncEvent`
-- **Ward Admissions & Nursing**: [NursingWorkbenchController.php](app/Http/Controllers/NursingWorkbenchController.php) $\rightarrow$ `AdmissionSyncEvent`
-- **Staff Onboarding & Updates**: [StaffController.php](app/Http/Controllers/StaffController.php) $\rightarrow$ `StaffSyncEvent`
-
-#### 2. Event Payload Contracts & Typed Parity
-Both sides maintain strict contract parity through typed interfaces:
-- **CoreHealth Contracts** (`app/Contracts/CoreHms/`): `CoreHmsSyncEventInterface`, `PatientSyncEventInterface`, `ConsultationSyncEventInterface`, `DispenseSyncEventInterface`, `LabSyncEventInterface`, `ProcedureSyncEventInterface`, `AdmissionSyncEventInterface`, `StaffSyncEventInterface`, `HeartbeatSyncEventInterface`.
-- **CoreHMS SuperAdmin Contracts** (`Corehealth-Super-Admin/includes/contracts/`): `CoreHmsEventInterface`, `PatientEventInterface`, `ConsultationEventInterface`, `DispenseEventInterface`, `LabEventInterface`, `ProcedureEventInterface`, `AdmissionEventInterface`, `StaffEventInterface`, `HeartbeatEventInterface`.
-
-#### 3. Idempotency & SHA1 Deduplication Engine
-Network retries, queue re-attempts, and historical backfills never generate duplicate statistics:
-- **Deterministic Deduplication Key**: `sha1(facility_id + ':' + event_type + ':' + source_id)`.
-- **Event Audit**: Recorded in `facility_sync_events` with unique index on `dedup_key`.
-- **Aggregated Analytics**: Updated in `facility_clinical_records` and `total_statistics`.
-
-#### 4. Facility Liveness Monitoring & Health Diagnostics
-- **`GET /api/corehms/ping`**: High-frequency ping endpoint returning instant pong, facility ID, and timestamp.
-- **`GET /api/corehms/health`**: Deep health diagnostics inspecting facility registration, database connectivity, database latency in milliseconds, queue connection driver, and pending/failed job counts.
-- **SuperAdmin Facility Monitor**: `assets/js/facility-monitor.js` and `ajax/ping-facility.php` provide live single/bulk health checks, latency badges, and automated status tagging (`Online (<15m)`, `Idle (<24h)`, `Offline (>24h)`).
-
-#### 5. Retroactive Historical Sync & Backfill
-- **CLI Backfill Command**:
-  ```bash
-  php artisan corehms:backfill --module=all
-  ```
-  Supports backfilling individual modules (`--module=patients`, `--module=dispenses`, etc.) or all clinical domains with progress bars and batch dispatching.
-- **SuperAdmin Retroactive Pull**: Interactive modal in SuperAdmin `view-facility.php` pulling paginated records from CoreHealth export endpoints (`/api/get-facility-dispenses`, `/api/get-facility-investigations`, `/api/get-facility-procedures`, `/api/get-facility-patients`, `/api/get-facility-consultations`).
-
-#### 6. Central Automated Backup Archives
-- **CoreHealth Endpoint**: `GET /api/corehms/backup` triggers dynamic `mysqldump`, gzip compression, and streams database dumps directly to authorized administrative requesters.
-- **SuperAdmin Backup Management**: `backups.php` enables central backup generation, tracking, and direct cPanel server downloads.
-
-#### 7. Co-Development Mandate: Keeping CoreHMS SuperAdmin in the Loop
-- **Lockstep Development**: Any change to clinical workflows, database schema, or domain models in CoreHealth must be mirrored in CoreHMS SuperAdmin contracts and ingestion logic.
-- **Unified Coding Standards**: Code written for `Corehealth-Super-Admin/` must adhere to the exact same standards as CoreHealth:
-  - **PSR-12 code style** verified with `make lint` / `composer lint`.
-  - **MySQL 8.0 / MariaDB** compatibility using parameterized PDO queries.
-  - **Modular UI architecture** with standalone CSS/JS (no inline scripts/styles > 10 lines).
-  - **Zero regressions** verified by feature tests in `tests/Feature/CoreHms/`.
-
----
-
-## WeCare247 Telehealth Integration & Sync
-
-CoreHealth v2 maintains real-time bidirectional synchronization with **WeCare247** (`wecare247/`), a multi-tenant telehealth platform connecting healthcare facilities, virtual teleconsultants, diagnostic centers, and patients.
-
-### Integration Topology
-
-```mermaid
-sequenceDiagram
-    autonumber
-    actor Admin as Facility Admin
-    participant WC as WeCare247 (Next.js / MongoDB)
-    actor Patient as Patient
-    participant CH as CoreHealth v2 (Laravel / MySQL)
-
-    Note over Admin,CH: 1. Setup & Connectivity Probe
-    Admin->>CH: Configure WeCare URL & Master Switch (Hospital Settings)
-    Admin->>WC: Configure CoreHealth URL, Client ID, Secret
-    WC->>CH: GET /api/corehealth/ping
-    CH-->>WC: { status: true, wecare_enabled: true, latency_ms: 8 }
-
-    Note over Admin,Patient: 2. Patient Onboarding & Autofill
-    Admin->>WC: Invite Patient (Input Hospital File No)
-    WC->>CH: GET /api/corehealth/patient/lookup?file_no=CH/2026/0491
-    CH-->>WC: Returns patient demographics (Name, Phone, DOB, Gender)
-    WC->>Patient: Tokenized Signup Link with sync_uuid
-
-    Note over Patient,CH: 3. Registration & Identity Binding
-    Patient->>WC: Completes registration
-    WC->>CH: POST /api/corehealth/sync/patient-linked
-    CH->>CH: Update patients.wecare_patient_id & wecare_sync_active=1
-
-    Note over Patient,CH: 4. Bidirectional Clinical Sync
-    Patient->>WC: Virtual Tele-Consultation with Doctor
-    WC->>CH: POST /api/corehealth/sync/encounter (Notes, ICD-10, Vitals)
-    CH->>CH: Ingests into longitudinal EHR encounter timeline
-    CH->>WC: Webhook: Lab / Investigation Results Approved
-    WC->>Patient: Patient portal receives verified hospital lab report
-```
-
-### Key Capabilities & Policy Controls
-
-1. **Hospital Settings Master Switch**:
-   - Configured in `Hospital Settings > WeCare247` tab.
-   - Allows turning the entire integration **ON or OFF** via the `wecare_enabled` toggle in `application_status`.
-   - When turned off, all integration endpoints reject requests with **HTTP 403** (`WECARE_INTEGRATION_DISABLED`), and outbound lab result webhooks are immediately suppressed.
-   - Granular policy switches:
-     - `wecare_auto_sync_encounters`: Automatically ingest tele-consultations into the hospital encounter timeline.
-     - `wecare_auto_sync_labs`: Automatically dispatch approved lab & imaging results to WeCare.
-     - `wecare_allow_patient_lookup`: Allow WeCare facility admins to query patient demographics by file number or phone.
-   - **Interactive Probe**: *"Test Connection"* button sends live probe to WeCare (`/api/ping`) and measures roundtrip latency.
-
-2. **Shared Identity Contract**:
-   - `corehealth_file_no`: Hospital Medical Record Number (MRN), e.g. `CH/2026/0491`.
-   - `corehealth_patient_id`: Primary key in MySQL `patients.id`.
-   - `corehealth_sync_uuid`: Canonical hash: `sha1(facility_id + ':' + patient_id + ':' + file_no)`.
-   - `wecare_patient_id`: MongoDB ObjectId in `users._id`.
-   - `wecare_sync_active`: Status flag (`1` = active sync, `0` = unlinked).
-
-3. **Endpoints Reference**:
-   | Method | Endpoint | Auth | Purpose |
-   |---|---|---|---|
-   | `GET` | `/api/corehealth/ping` | None | Public liveness probe & `wecare_enabled` status |
-   | `GET` | `/api/corehealth/patient/lookup` | SHA-256 Basic | Demographic query by `file_no` or `phone_no` |
-   | `POST` | `/api/corehealth/sync/patient-linked` | SHA-256 Basic | Callback activating bidirectional sync |
-   | `POST` | `/api/corehealth/sync/encounter` | SHA-256 Basic | Ingests tele-consultation into EHR timeline |
-   | `POST` | `/api/corehealth/sync/patient-unlink` | SHA-256 Basic | Safely unlinks WeCare binding |
-   | `POST` | `/admin/hospital-config/test-wecare` | Web Session | Internal AJAX connectivity probe to WeCare |
-
-4. **Testing & Code Quality**:
-   - Covered by [WeCareIntegrationAndSettingsTest.php](tests/Feature/WeCare/WeCareIntegrationAndSettingsTest.php) (`vendor/bin/phpunit tests/Feature/WeCare/ --testdox`).
-   - Settings frontend logic isolated in [public/js/wecare-config.js](public/js/wecare-config.js), verified with `node --check`.
-
----
-
-## Installation & Setup
-
-### Prerequisites
-
-- PHP >= 8.3
-- Composer
-- MySQL >= 8.0 or MariaDB >= 10.3
-- Node.js >= 18.x
-- npm
-
-### Quick Setup with Makefile
+All module-specific clinical stories, user manuals, and technical API references are maintained in the modern VitePress documentation engine under [`docs/`](docs/):
 
 ```bash
-# Clone repository
-git clone https://github.com/Corestreamng/corehealth_v2.git
-cd corehealth_v2
+# Launch interactive local documentation portal
+npm run docs:dev
 
-# Start Docker environment in 1 command
+# Build static documentation bundle
+npm run docs:build
+```
+
+### Documentation Tracks
+
+- **User Story & Operational Guides** (`docs/user-guides/workbenches/*.md`): Real-world clinical workflows, step-by-step procedures, and authentic UI screenshots for hospital personnel.
+- **Developer API Reference** (`docs/developer/workbenches/*.md`): Paystack-style API contracts, route tables, database schemas, observer triggers, and PHPUnit suites for engineers.
+- **Clinical Pathway** ([`docs/user-guides/clinical-pathway.md`](docs/user-guides/clinical-pathway.md)): End-to-end patient journey from intake to discharge.
+- **Legacy Planning Archive** ([`docs_archive/README.md`](docs_archive/README.md)): Historical engineering specifications and sprint records.
+
+---
+
+## 3. Core Clinical & Operational Workbenches
+
+Every hospital department operates within a dedicated zero-scroll workbench adhering to CoreHealth's 4-part modular structure:
+
+| Department / Role | Primary Workbench Route | Role Guard | User Guide | Developer API |
+|---|---|---|---|---|
+| **Reception & Records** | `/reception/workbench` | `SUPERADMIN\|ADMIN\|RECEPTIONIST` | [Reception Guide](docs/user-guides/workbenches/reception.md) | [Reception API](docs/developer/workbenches/reception.md) |
+| **Doctor Consultation** | `/encounters?status=waiting` | `SUPERADMIN\|ADMIN\|DOCTOR` | [Doctor Guide](docs/user-guides/workbenches/doctor.md) | [Doctor API](docs/developer/workbenches/doctor.md) |
+| **Nursing & Inpatient Care** | `/nursing-workbench` | `SUPERADMIN\|ADMIN\|NURSE` | [Nursing Guide](docs/user-guides/workbenches/nursing.md) | [Nursing API](docs/developer/workbenches/nursing.md) |
+| **Pharmacy & Dispensary** | `/pharmacy/workbench` | `SUPERADMIN\|ADMIN\|PHARMACIST` | [Pharmacy Guide](docs/user-guides/workbenches/pharmacy.md) | [Pharmacy API](docs/developer/workbenches/pharmacy.md) |
+| **Medical Laboratory (LIS)** | `/lab/workbench` | `SUPERADMIN\|ADMIN\|LAB_SCIENTIST` | [Lab Guide](docs/user-guides/workbenches/laboratory.md) | [Lab API](docs/developer/workbenches/laboratory.md) |
+| **Imaging & Radiology (RIS)** | `/imaging/workbench` | `SUPERADMIN\|ADMIN\|RADIOLOGIST` | [Imaging Guide](docs/user-guides/workbenches/imaging.md) | [Imaging API](docs/developer/workbenches/imaging.md) |
+| **Theatre & Surgery** | `/theatre/workbench` | `SUPERADMIN\|ADMIN\|SURGEON` | [Theatre Guide](docs/user-guides/workbenches/theatre.md) | [Theatre API](docs/developer/workbenches/theatre.md) |
+| **Maternity (ANC/PANC)** | `/maternity/workbench` | `SUPERADMIN\|ADMIN\|MIDWIFE` | [Maternity Guide](docs/user-guides/workbenches/maternity.md) | [Maternity API](docs/developer/workbenches/maternity.md) |
+| **Inpatient Wards** | `/beds` | `SUPERADMIN\|ADMIN\|NURSE` | [Inpatient Guide](docs/user-guides/workbenches/inpatient.md) | [Inpatient API](docs/developer/workbenches/inpatient.md) |
+| **Billing & Cashier** | `/billing/workbench` | `SUPERADMIN\|ADMIN\|BILLER` | [Billing Guide](docs/user-guides/workbenches/billing.md) | [Billing API](docs/developer/workbenches/billing.md) |
+| **HMO & Managed Care** | `/hmo/workbench` | `SUPERADMIN\|ADMIN\|HMO_OFFICER` | [HMO Guide](docs/user-guides/workbenches/hmo.md) | [HMO API](docs/developer/workbenches/hmo.md) |
+| **Store & Inventory** | `/store/workbench` | `SUPERADMIN\|ADMIN\|STORE_KEEPER` | [Store Guide](docs/user-guides/workbenches/inventory.md) | [Store API](docs/developer/workbenches/inventory.md) |
+| **Internal Audit & OpsAudit** | `/ops-audit/workbench` | `SUPERADMIN\|ADMIN\|INTERNAL_AUDITOR` | [Audit Guide](docs/user-guides/workbenches/ops-audit.md) | [Audit API](docs/developer/workbenches/ops-audit.md) |
+| **Human Resources (HRMS)** | `/hr/workbench` | `SUPERADMIN\|ADMIN\|HR_OFFICER` | [HRMS Guide](docs/user-guides/workbenches/hr.md) | [HRMS API](docs/developer/workbenches/hr.md) |
+| **Mortuary & Last Office** | `/mortuary/workbench` | `SUPERADMIN\|ADMIN\|MORTUARY_ATTENDANT` | [Mortuary Guide](docs/user-guides/workbenches/mortuary.md) | [Mortuary API](docs/developer/workbenches/mortuary.md) |
+| **Operational Cockpit** | `/home?mode=cockpit` | *All Authenticated Roles* | [Cockpit Guide](docs/user-guides/workbenches/cockpit.md) | [Cockpit API](docs/developer/workbenches/cockpit.md) |
+
+---
+
+## 4. Quick Start & Developer Ergonomics
+
+The project includes a comprehensive [`Makefile`](Makefile) providing standardized one-command workflows:
+
+### Launch with Docker (Recommended)
+
+```bash
+# Build and start Docker services (PHP 8.3 FPM, Nginx, MySQL 8.0, Redis 7)
 make up
 
-# Or set up locally:
+# Execute full automated test suite inside Docker
+make test
+
+# View container logs
+make logs
+
+# Stop all services
+make down
+```
+
+### Local Environment Setup
+
+```bash
+# Install PHP & Node dependencies
 composer install
 npm install
+
+# Configure environment and encryption keys
 cp .env.example .env
 php artisan key:generate
+
+# Import pre-seeded test database
 make import-test-db
-composer dump-autoload -o
-```
 
----
-
-## Docker Deployment
-
-CoreHealth v2 includes a complete containerized environment for development and production based on **PHP 8.3 FPM**, **Nginx**, **MySQL 8.0**, and **Redis 7**.
-
-### Launching with Docker Compose / Makefile
-
-```bash
-# Build and start all services via Makefile
-make build
-
-# Or via Docker Compose directly:
-docker compose up -d --build
-
-# Execute tests in container
-make test
-
-# View logs
-make logs
-```
-
----
-
-## Developer Ergonomics & Makefile
-
-The project includes a comprehensive [Makefile](Makefile) providing simple, standardized developer commands:
-
-| Command | Description |
-|---------|-------------|
-| `make help` | Display available targets and documentation |
-| `make up` | Start all Docker containers in background |
-| `make build` | Rebuild and launch Docker stack |
-| `make down` | Stop all Docker containers |
-| `make test` | Execute full PHPUnit test suite inside Docker |
-| `make test-local` | Run PHPUnit test suite locally |
-| `make lint` | Run CS Fixer code style checks in dry-run mode |
-| `make lint-fix` | Automatically format all PHP code to PSR-12 standard |
-| `make audit` | Perform security audits (`composer audit`, `npm audit`) |
-| `make fresh` | Drop tables and re-run migrations |
-| `make shell` | Open a interactive bash session inside PHP container |
-
----
-
-## Code Style & Linting
-
-Code quality and formatting are enforced via **PHP CS Fixer** configured in [.php-cs-fixer.php](.php-cs-fixer.php):
-
-- **Standard**: Strictly follows PSR-12 code style guidelines across `app/`, `config/`, `database/`, `routes/`, and `tests/`.
-- **Isolated Environment**: Maintained in an isolated `tools/` folder (`tools/vendor/bin/php-cs-fixer`) to prevent dependency conflicts with Laravel 8 core packages.
-- **Commands**:
-  ```bash
-  composer lint     # or make lint (dry-run check)
-  composer lint-fix # or make lint-fix (auto-fix formatting)
-  ```
-- **Automated Gating**: Enforced automatically on all pushes and pull requests via GitHub Actions.
-
----
-
-## Artisan Commands
-
-CoreHealth v2 provides domain-specific Artisan commands for system maintenance, price synchronization, and CoreHMS multi-tenant backfilling:
-
-| Command | Description |
-|---------|-------------|
-| `php artisan corehms:backfill --module=all` | Retroactively synchronize historical clinical events (patients, encounters, dispenses, labs, procedures, admissions, staff) to CoreHMS SuperAdmin |
-| `php artisan app:sync-prices` | Synchronize base product and service prices across hospital price lists and HMO tariffs |
-| `php artisan corehealth:optimize` | Clear and rebuild route, config, view, and compiled application caches |
-
----
-
-## Testing & Application Classification
-
-> [!NOTE]
-> **Application Classification**: CoreHealth v2 is a fullstack Laravel-based Hospital Management Information System (HMIS) monolithic web application. Database fixtures and test schemas are maintained under `database/dumps/_corehealth_db_v2_test.sql.gz`.
-
-### Automated Testing Suite (35 Domain Test Suites)
-
-The codebase features **35 domain-specific PHPUnit test suites** containing **155+ test methods**, verified against the live MySQL test database schema (`database/dumps/_corehealth_db_v2_test.sql.gz`).
-
-#### Key Test Suites
-- **`PatientRegistrationTest.php`** — Covers reception workbench view, patient creation, and file search.
-- **`BillingWorkbenchTest.php`** — Covers cash, HMO, wallet payments, observer triggers, and datatable queue responses.
-- **`AuthBootstrapTest.php` & `RolePermissionTest.php`** — Covers Spatie permission guards and authentication flows.
-- **`FifoDispenseTest.php` & `PharmacyReturnsTest.php`** — Covers stock sync, FIFO dispensing, and inventory returns.
-- **`CoreHmsMonitoringAndSyncTest.php`** — Covers CoreHMS SuperAdmin ping, health inspection, export endpoints, and backfill command.
-
-#### Running Tests
-
-```bash
-# Option 1: Run via Makefile locally
+# Run tests locally
 make test-local
 
-# Option 2: Run via Makefile inside Docker containers
-make test
-
-# Option 3: Run via Composer script
-composer test
-
-# Option 4: Run via PHPUnit directly with testdox output
-vendor/bin/phpunit --testdox
-
-# Option 5: Run a specific domain suite (e.g. Pharmacy)
-vendor/bin/phpunit tests/Feature/Pharmacy/
+# Documentation Engine (VitePress)
+npm run docs:dev      # Launch local dev server with hot reload
+npm run docs:build    # Build static docs into public/docs/
+# Access docs in browser via Laravel server at http://localhost:8000/docs/
+# (Mermaid diagrams render 100% offline with zero CDN dependencies)
 ```
 
 ---
 
-## CI/CD & Governance
+## 5. Architecture Invariants & Standards
 
-- **Automated CI Workflow** ([.github/workflows/ci.yml](.github/workflows/ci.yml)): GitHub Actions pipeline running PHP 8.3, setting up a MySQL 8.0 container, importing `_corehealth_db_v2_test.sql.gz`, running PHP CS Fixer lint checks, executing PHPUnit tests, building assets, and auditing security.
-- **Structured JSON Logging**: Configured via Monolog `JsonFormatter` channel in `config/logging.php`.
-- **Dependabot**: Configured in [.github/dependabot.yml](.github/dependabot.yml) for weekly Composer and NPM dependency security checks.
-- **Semantic Version Tags**: Tagged across historic milestones starting from `v2.0.0.0` through `v2.6.0.67`.
-- **Clinical Consumables & Kits Multi-Token Search**: Multi-keyword tokenized search engine (`ClinicalSearchHelper`), clinical abbreviation and phonetic typo expansion, nursing consumable service discovery, and deep service combo bundle matching ([docs/CLINICAL_CONSUMABLES_AND_KITS_SEARCH_ENHANCEMENT.md](docs/CLINICAL_CONSUMABLES_AND_KITS_SEARCH_ENHANCEMENT.md)).
+Contributors and automated agents must strictly adhere to the project invariants defined in [`AGENTS.md`](AGENTS.md):
+
+1. **Modular Workbench Architecture**: Viewport locked (`@section('is_workbench', true)`), structural HTML only in main blade view, modals in `partials/_modals.blade.php`, `window.WORKBENCH_CONFIG` in `partials/_scripts.blade.php`, and standalone JavaScript in `public/js/<module>-workbench.js`.
+2. **Double-Entry Observers**: 46+ Eloquent Observers manage double-entry General Ledger postings, FIFO batch tracking, and audit trails. **Never bypass Eloquent models with raw DB queries (`DB::table(...)`) on watched entities.**
+3. **Database Compatibility**: MySQL 8.0 / MariaDB 10.5+. Standard SQL `LIKE` or `App\Helpers\ClinicalSearchHelper` for multi-token keyword resolution. Never use PostgreSQL syntax.
+4. **Testing Invariants**: All tests extend `Tests\TestCase` (includes `DatabaseTransactions`) against the live schema `_corehealth_db_v2_test`. **Never use `RefreshDatabase` or SQLite.**
+5. **PSR-12 Isolated Linting**: Code style is enforced via `friendsofphp/php-cs-fixer` in `tools/`. Run `make lint` or `make lint-fix`.
+6. **Mandatory Documentation & Screenshots**: Every UI or workflow modification requires updating documentation under `docs/` and capturing/refreshing authentic screenshots in `docs/public/images/workbenches/` following `docs/developer/screenshot-guide.md` ($1 \le \text{visuals} \le 5$ per page).
 
 ---
 
-## Contributing
+## 6. Directory Structure
 
-1. Review [CONTRIBUTING.md](CONTRIBUTING.md) for PR requirements, branch workflow, and testing rules.
-2. Follow PSR-12 coding standards using `make lint` / `composer lint`.
-3. Run `composer dump-autoload -o` after adding new classes.
-4. Ensure 100% of test suites pass cleanly (`make test`) before opening pull requests.
+```
+app/                      # Domain logic, Controllers, 199 Eloquent Models, 46 Observers, Services
+Corehealth-Super-Admin/   # Central Multi-Tenant Administration Cloud Platform
+database/                 # Migrations, Seeders, and _corehealth_db_v2_test.sql.gz test schema
+docker/                   # Multi-container Docker configurations (PHP 8.3 FPM, Nginx, Redis)
+docs/                     # VitePress Documentation Engine (User Stories & Developer APIs)
+docs_archive/             # Historical engineering specifications and sprint records
+public/                   # Static compiled assets, standalone modular JS and CSS
+resources/views/admin/    # High-density modular blade views and workbench cockpits
+routes/                   # 15 domain-specific route definitions (web, reception, hr, etc.)
+tests/                    # 35 domain-specific PHPUnit test suites (DatabaseTransactions)
+tools/                    # Isolated PHP CS Fixer tooling environment
+Makefile                  # Unified developer orchestration commands
+AGENTS.md                 # Authoritative architecture invariants and developer rules
+```
+
+---
+
+## 7. Releases & Semantic Versioning
+
+CoreHealth v2 follows semantic versioning (`v2.X.Y.Z`). Releases are queried dynamically before tagging:
+
+```bash
+# Query highest release tag
+git tag -l "v*" --sort=-v:refname | head -n 1
+```
+
+Release history, changelogs, and upgrade notes are documented under [`docs/releases/`](docs/releases/index.md).
 
 ---
 

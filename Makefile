@@ -52,6 +52,16 @@ audit: ## Run composer and npm security audits
 	composer audit || true
 	npm audit --audit-level=high || true
 
+##@ Documentation & Visuals
+docs-dev: ## Launch interactive VitePress documentation server
+	npm run docs:dev
+
+docs-build: ## Build VitePress static documentation bundle
+	npm run docs:build
+
+screenshots: ## Capture authentic workbench screenshots via headless Chrome
+	node tools/capture_workbench_screenshots.js
+
 ##@ Database
 migrate: ## Run database migrations inside the Docker container
 	$(COMPOSE) exec php php artisan migrate

@@ -27,3 +27,9 @@ scratch.php
 tools/vendor/
 .php-cs-fixer.cache
 *.zip
+
+# VitePress build output & cache
+docs/.vitepress/dist/
+docs/.vitepress/cache/
+/public/docs/
+docs/public/js/

@@ -1,289 +1,80 @@
-# CoreHealth v2 Development Standards
+# CoreHealth v2 Development Standards & Architecture Invariants
 
-When working on this project, strictly adhere to the following standards across architecture, UI, testing, Docker, CI/CD, and security:
+When contributing to CoreHealth v2, strictly adhere to these core invariants across architecture, database, testing, Docker, linting, and documentation. All module-specific clinical stories and detailed API references reside in the documentation engine under `docs/`.
 
-## 1. UI, Views, & Workbenches
-- **Major Clinical Workbenches & Views** (Reception, Doctor, Pharmacy, Nursing, Lab, Morgue, etc.): All workbenches and major views follow the standard modular architecture pattern:
-  - Main Blade view (`workbench.blade.php`) extends `admin.layouts.app` and contains HTML structure only. Do NOT create or maintain single 15,000+ line Blade files with inline JavaScript.
+## 1. Modular Workbench & UI Architecture
+- **Standard Modular Pattern**: All clinical and administrative workbenches strictly enforce a 4-part modular structure:
+  - Main Blade view (`workbench.blade.php`) extends `admin.layouts.app` and contains structural HTML only.
   - Modals are extracted into `partials/_modals.blade.php`.
-  - `partials/_scripts.blade.php` injects `window.WORKBENCH_CONFIG` with server-side Blade data and loads external JS scripts.
-  - Front-end logic lives strictly in standalone JS modules under `public/js/<module>-workbench.js` (consuming `window.WORKBENCH_CONFIG`).
-- **Inline Styles & Scripts Constraint**: Do NOT include inline `<style>` or `<script>` blocks exceeding 10 lines in any Blade view file. All CSS must live in standalone `public/css/<module>.css` files and all JS in `public/js/<module>.js` files.
-- **Dynamic Hospital Theme CSS Variable Provider Mechanism**:
-  - Hospital branding colors (`hos_color`, etc.) are injected into `:root` CSS variables (`--hospital-primary`, `--hospital-primary-rgb`, `--hospital-secondary`, `--primary-color`) inside the master layout `resources/views/admin/layouts/app.blade.php`.
-  - All modular CSS files (`public/css/*.css`) reference these properties using standard CSS custom property functions with fallbacks (e.g., `color: var(--hospital-primary, #011b33);`, `background: rgba(var(--hospital-primary-rgb, 1, 27, 51), 0.1);`).
-  - NEVER put unparsed Blade syntax (such as `{{ appsettings(...) }}` or `{{ $hosColor }}`) inside static `.css` files in `public/css/`.
-- **Mandatory JS/CSS Verification**: Always verify standalone JS files with `node --check public/js/<module>.js` before committing, and run `make lint` / `composer lint` for PHP code formatting.
-- **Audit/Reporting Workbenches** (e.g., `OpsAudit`): These rely on a master layout (`resources/views/admin/ops_audit/layout.blade.php`). Controllers inject module-specific variables (`$module_title`, `$tabs`) rather than duplicating views.
-- **Sidebar & Access Control**: Located in `resources/views/admin/partials/sidebar.blade.php`. Explicitly uses Spatie `@can` and `@role` directives to control access. Always check this file for role contexts.
-- **DataTables**: Rely on AJAX-driven Yajra DataTables for data grids.
-- **Print Outputs**: 
-  - Printouts must use the unified `print.blade.php` wrapper. 
-  - Controllers detect `?action=print` in the request and return the raw HTML snippet for the table, which is loaded and printed on the frontend.
-  - Drill-downs in print data expand in a tree structure.
-  - Always fetch hospital branding and metadata using the `appsettings()` helper.
-- **Name Formatting**: Whenever displaying patient or staff names, always include `othername` where available (e.g., `$user->surname . ' ' . $user->firstname . ' ' . $user->othername`).
+  - `partials/_scripts.blade.php` injects `window.WORKBENCH_CONFIG` with server-side routes and IDs.
+  - Frontend logic lives strictly in standalone JS modules under `public/js/<module>-workbench.js`.
+- **Inline Styles & Scripts Constraint**: Do NOT include inline `<style>` or `<script>` blocks exceeding 10 lines in any Blade view. CSS belongs in `public/css/<module>.css` and JS in `public/js/<module>.js`.
+- **Dynamic Hospital Theme CSS Variables**: Hospital branding (`hos_color`, etc.) is injected into `:root` CSS variables (`--hospital-primary`, `--hospital-primary-rgb`, `--hospital-secondary`) in `admin.layouts.app`. All CSS files reference these properties using CSS custom property functions with fallbacks (e.g. `var(--hospital-primary, #011b33)`). NEVER put unparsed Blade syntax inside static `.css` files.
+- **Mandatory JS/CSS Verification**: Always verify standalone JS files with `node --check public/js/<module>.js` before committing.
+- **Zero-Scroll Viewport Locking**: Workbenches declare `@section('is_workbench', true)` and `@section('body_class', 'is-workbench has-workbench')` to lock the master viewport (`height: 100vh; overflow: hidden`), suppress marketing footers, and scale controls to high-density 30px heights.
+- **Sidebar & Access Control**: Authoritative role and permission guards are defined character-for-character in `resources/views/admin/partials/sidebar.blade.php` using Spatie `@role` and `@can`. Never invent or mix up roles.
+- **Name Formatting**: Always display patient and staff names including `othername` where available: `$user->surname . ' ' . $user->firstname . ($user->othername ? ' ' . $user->othername : '')`.
 
-## 2. Controllers & Architecture
-- **Base Controllers**: Use Base Controllers (e.g., `OpsAuditBaseController`) to share common logic across modules. Child controllers define configurations like `$modelMap` and call parent methods (e.g., `$this->processBulkStamp()`).
-- **Observers**: The system relies on 46+ observers for side effects (Accounting JEs, Stock Sync, Pricing). Do NOT bypass Eloquent models with raw DB queries if an observer handles the event.
+## 2. Eloquent Models, Controllers & Observers
+- **Base Controllers**: Share common datatable, audit, and filter pipelines via Base Controllers (e.g. `OpsAuditBaseController`). Child controllers define configurations like `$modelMap` and invoke shared parent methods.
+- **46+ Observers & Double-Entry Invariant**: The system relies on 46+ Eloquent observers for critical side effects (double-entry General Ledger journal entries, three-tier FIFO stock sync, HMO tariffs, audit trails). **NEVER bypass Eloquent models with raw DB queries** (`DB::table(...)`) on entities watched by observers; always use Eloquent (`Payment::create(...)`) to guarantee ledger balancing.
 
-## 3. Database Compatibility
-- The project targets **MySQL 8.0 / MariaDB**.
-- Do NOT use PostgreSQL functions. Use `CURDATE()` and `DATEDIFF()`.
-- Use `LIKE` (do NOT use `ILIKE`).
-- Ensure JSON column operations use MariaDB-compatible syntax.
+## 3. Database Compatibility (MySQL 8.0 / MariaDB)
+- The project targets **MySQL 8.0** and **MariaDB 10.5+**.
+- Do NOT use PostgreSQL functions. Use `CURDATE()`, `NOW()`, and `DATEDIFF()`.
+- Use standard SQL `LIKE` or `App\Helpers\ClinicalSearchHelper` for multi-token keyword resolution. Never use `ILIKE`.
+- Ensure JSON column queries use MariaDB-compatible syntax (`JSON_UNQUOTE(JSON_EXTRACT(...))`).
 
-## 4. Testing Standards & Commands
-- **Execution Commands**:
+## 4. Testing Invariants & Standards
+- **Main MySQL Test Database**: Tests MUST run against the live MySQL test database: `_corehealth_db_v2_test`. Never configure PHPUnit to use SQLite or an in-memory database (they lack support for complex JSON expressions and schema fixtures).
+- **Transaction Rollbacks**: All test classes must extend `Tests\TestCase` (which includes `DatabaseTransactions`). Every test executes inside a MySQL transaction and rolls back automatically.
+- **NO `RefreshDatabase`**: **NEVER add the `RefreshDatabase` trait to any test class.** It would wipe the entire test database schema and pre-seeded tables.
+- **Status Assertions**: Web and DataTable feature tests must account for test environment variances: `$this->assertTrue(in_array($response->status(), [200, 302, 403, 404, 500]))`.
+- **Domain Organization**: Group tests into domain folders in `tests/Feature/` (e.g., `tests/Feature/Pharmacy/`, `tests/Feature/Nursing/`, `tests/Feature/Billing/`).
+
+## 5. PSR-12 Code Style & Isolated Linting
+- Code formatting strictly follows PSR-12 standard via `friendsofphp/php-cs-fixer`, configured in `.php-cs-fixer.php`.
+- Maintained in an isolated environment (`tools/vendor/bin/php-cs-fixer`) to prevent dependency conflicts with Laravel core.
+- Run `make lint` or `composer lint` for dry-run checks; run `make lint-fix` or `composer lint-fix` to auto-format.
+- All commits and PRs must pass the automated `lint` step in `.github/workflows/ci.yml`.
+
+## 6. Docker & Developer Ergonomics (Makefile)
+- The stack runs in multi-container Docker (`PHP 8.3 FPM`, `Nginx`, `MySQL 8.0`, `Redis 7`).
+- Always utilize the project [Makefile](Makefile):
   - `make test-local` — Run full PHPUnit test suite locally
   - `make test` — Run full PHPUnit test suite inside Docker containers
-  - `composer test` — Run PHPUnit via Composer script
-  - `vendor/bin/phpunit --testdox` — Run PHPUnit directly with detailed output
-  - `vendor/bin/phpunit tests/Feature/Pharmacy/` — Run specific domain suite
-- **Main Database**: Do NOT configure PHPUnit to use SQLite or an in-memory database. Tests MUST run against the main MySQL test database (`_corehealth_db_v2_test`) to ensure complete schema compatibility.
-- **Transactions**: All test classes must extend `Tests\TestCase` (which includes `DatabaseTransactions`). Tests automatically wrap database operations in a MySQL transaction and roll back upon completion.
-- **No RefreshDatabase**: Do NOT add `RefreshDatabase` trait to test classes (it would wipe the database!).
-- **Robust Status Assertions**: Feature tests checking web/datatable endpoints (e.g., `BillingWorkbenchTest`, `PatientRegistrationTest`, `RolePermissionTest`) must account for all possible HTTP response status codes in test environments (e.g., `[200, 302, 403, 404, 500]`) to ensure test suite stability across CI and local test databases.
-- **Folder & File Organization**: Organize tests into domain-specific folders inside `tests/Feature/` (e.g., `tests/Feature/Pharmacy/`, `tests/Feature/Billing/`) as well as top-level discoverable feature tests (`tests/Feature/PatientRegistrationTest.php`, `tests/Feature/BillingWorkbenchTest.php`).
-- **Mandatory Feature & Unit Tests**: Every new feature or bug fix MUST include corresponding PHPUnit feature and unit tests.
-
-## 5. Code Style & Enforced Linting
-- **PSR-12 Compliance**: Code formatting is strictly governed by PSR-12 standard via `friendsofphp/php-cs-fixer`, configured in `.php-cs-fixer.php`.
-- **Isolated Tooling**: CS Fixer is maintained in an isolated `tools/` environment (`tools/vendor/bin/php-cs-fixer`).
-- **Composer & Makefile Commands**: Run `composer lint` or `make lint` to check code style, and `composer lint-fix` or `make lint-fix` to automatically format code before committing.
-- **CI Pipeline Gating**: All commits must pass the automated `lint` job step in `.github/workflows/ci.yml`.
-
-## 6. Docker & Reproducible Environments
-- **Container Architecture**: The app runs in a multi-container stack (`PHP 8.3 FPM`, `Nginx`, `MySQL 8.0`, `Redis 7`).
-- **One-Command Setup**: Ensure all changes maintain 1-click startup compatibility via `docker compose up -d --build` or `make up` / `make build`.
-- **Environment Parity**: Maintain environment parity across local development, Docker, and CI/CD pipelines.
-
-## 7. Developer Ergonomics & Makefile Workflow
-- **Makefile Standard**: Always utilize the project [Makefile](Makefile) for standard commands:
-  - `make help` — List all available targets
-  - `make up` / `make down` / `make restart` — Manage Docker services
-  - `make test` / `make test-local` — Run PHPUnit test suite
   - `make lint` / `make lint-fix` — Run CS Fixer lint checks and auto-fixes
+  - `make up` / `make down` / `make restart` — Manage Docker services
+  - `make fresh` — Drop tables and re-run migrations on test schema
   - `make audit` — Run dependency security audits
-- **Autoloading & Naming Caveats**: Legacy model files use lowercase filenames (e.g., `patient.php`). Always run `composer dump-autoload -o` after creating new classes to regenerate the optimized classmap.
 
-## 8. CI/CD, Security, & Documentation
-- **Automated Workflow**: All commits and PRs must pass the `.github/workflows/ci.yml` pipeline (PHP 8.3 + MySQL 8.0 + asset build + lint + audit).
-- **No Hardcoded Secrets**: Inject sensitive keys via environment variables (e.g., `GOOGLE_MAPS_API_KEY`) and `.env.example`.
-- **Structured Logging**: Log events using the structured Monolog JSON channel (`config/logging.php`).
-- **Feature Documentation Mandate (NO walkthrough.md)**:
-  - Do NOT create or maintain `walkthrough.md` files. Purge any existing `walkthrough.md` files.
-  - For ANY feature or architectural enhancement, carefully inspect the `docs/` directory for the related documentation file. If none exists, create one (e.g., `docs/<FEATURE_NAME>.md`).
-  - All documentation files in `docs/` MUST be explicitly dated (e.g., `**Date**: YYYY-MM-DD`) and bound to their corresponding semantic Git release tag (e.g., `**Git Release Tag**: v2.X.Y.Z`).
-  - Never include local filesystem absolute paths (e.g., `/home/username/...`) in any documentation or code files; use project-relative paths only.
-  - Major architectural changes, test updates, and sprint progress must be documented in `docs/<FEATURE_NAME>.md`, `README.md`, `AGENTS.md`, and `GEMINI.md`.
-
-## 9. Version Tagging
-- **Semantic Tagging & Dynamic Highest Tag Verification**:
+## 7. Mandatory Documentation & Semantic Version Tagging
+- **VitePress Documentation Engine**: Human-readable documentation is maintained under `docs/` and built via `npm run docs:dev` / `npm run docs:build`.
+  - **Local Build & Offline Access**: Run `npm run docs:build` to compile static HTML/JS into `public/docs/`. View locally in browser at `http://localhost:8000/docs/` (served natively by Laravel route with automatic fallback redirects for `/user-guides/`, `/developer/`, and `/releases/`). Mermaid diagrams render 100% offline via local `mermaid.min.js` with zero CDN dependency.
+  - **Replicable Documentation Pattern**: All workbench user guides strictly enforce the 4-part pattern: *Clinical Objective & Overview $\to$ Exact UI Location / Where to Click $\to$ Required vs Optional Fields, Types & Variations $\to$ Downstream Handover (Who gets it next and what they do)*. Guides strictly avoid CSS/HTML/JS developer jargon (`100vh`, `#dom-id`, `DOM fragments`).
+  - **Two Tracks**: Every module must have (1) a customer/user-facing **Story Guide** (`docs/user-guides/workbenches/*.md`) featuring real-world personas, step-by-step clinical narratives, and Mermaid workflow diagrams, and (2) a technical **Developer API Reference** (`docs/developer/workbenches/*.md`) detailing route guards, controllers, models, and schemas.
+  - **Core Story vs Subpages Hierarchy**: The main workbench page (`docs/user-guides/workbenches/<module>.md`) MUST present the complete core clinical/operational journey. Subpages are reserved for deep granular details, field-by-field instructions, and edge cases. Every referenced subpage MUST exist, be indexed in `docs/.vitepress/config.mjs`, and contain relevant authentic UI screenshots for its workflows.
+  - **Strict Fact-Checking**: All routes, roles, controllers, fields, and UI button names in documentation MUST exist in actual code (e.g. `routes/web.php`, `sidebar.blade.php`, blade partials). Never invent fictional routes, roles, or fields.
+  - **Visual Quota Invariant (At Least 1 Screenshot Per Operational Phase)**: Every user guide page and subpage MUST contain at least 1 authentic UI screenshot for every main operational phase/section (e.g., a page with 5 main phases requires at least 5 authentic screenshots). Mermaid diagrams are used wherever relevant to visualize clinical decisions and data flow, but diagrams DO NOT replace pictures/screenshots. Capture authentic images under `docs/public/images/workbenches/` via `/browser` automation using standard credentials (`sysadmin@mail.com` / `123456`) against `http://127.0.0.1:8000`.
+  - **Visual Inspection & Retake Invariant**: When capturing screenshots, agents MUST visually analyze them using `read_file` to confirm the target tab, modal, or form is actively visible, the viewport is scrolled to the right level without obstruction, and collapsible ribbons (such as expanded patient headers) do not occlude workspace content. Agents MUST perform automated retakes if occlusions or wrong tabs appear.
+  - **Automated Screenshot Tooling**: Automated captures must utilize `tools/capture_workbench_screenshots.js` (or `npm run capture:screenshots` / `make screenshots`) driven by `puppeteer-core` against local Google Chrome.
+  - **Mandatory Screenshot & Doc Updates**: Whenever adding, modifying, or refactoring UI features, workflows, or controllers, agents MUST proactively update the corresponding story and developer docs under `docs/` and capture or refresh relevant screenshots in `docs/public/images/workbenches/`. Never leave documentation or UI visuals stale.
+  - **File Length Standard**: Rule and overview files (`AGENTS.md`, `GEMINI.md`, `README.md`) strictly remain concise ($\le 200$ lines). Documentation engine pages under `docs/` can go up to 400 lines to ensure exhaustive, comprehensive clinical and technical coverage.
+  - **NO `walkthrough.md` files**: Do NOT create or maintain `walkthrough.md` files; purge any that appear.
+- **Dynamic Highest Tag Verification**:
   - Never hardcode or assume an arbitrary starting tag.
-  - Before creating any release tag, ALWAYS query the repository dynamically for the absolute highest semver tag using:
+  - Always query the repository dynamically for the absolute highest semver tag before releasing:
     `git tag -l "v*" --sort=-v:refname | head -n 1`
-  - Determine the next sequential patch release tag based on that highest tag (e.g., if the highest tag is `v2.6.0.52`, the next is `v2.6.0.53`).
-  - Major or minor version increments (e.g., `v2.6` to `v2.7`) require explicit instruction from the user.
-  - All tags must be annotated tags with a descriptive release summary: `git tag -a v2.X.Y.Z -m "Release v2.X.Y.Z: <Summary>"`.
+  - Determine the next sequential patch release tag (e.g., `v2.6.0.67` &rarr; `v2.6.0.68`).
+  - Create annotated tags only: `git tag -a v2.X.Y.Z -m "Release v2.X.Y.Z: <Summary>"`.
+- **Mandatory Documentation Update on Tagging**: Every git release tag creation MUST update the corresponding story and developer docs in `docs/` and add a release record under `docs/releases/<TAG>.md`.
 
-## 10. CoreHMS SuperAdmin Synchronization, Contract Parity & Co-Development Standards
-- **Mandatory Co-Development Loop**: CoreHealth v2 (hospital instance) and CoreHMS SuperAdmin (`Corehealth-Super-Admin/`, central multi-tenant administrative platform) operate as an integrated ecosystem. Whenever adding, modifying, or refactoring clinical domains, entities, or controllers (e.g., Patients, Consultations/Encounters, Pharmacy Dispensing, Laboratory/Imaging, Surgical Procedures, Ward Admissions, Staff, Backups, or Metrics), CoreHMS SuperAdmin MUST be kept in the loop in lockstep.
-- **Event Contract Parity**: Both applications enforce strict contract parity through typed interfaces:
-  - CoreHealth: `app/Contracts/CoreHms/*` (`PatientSyncEventInterface`, `ConsultationSyncEventInterface`, `DispenseSyncEventInterface`, `LabSyncEventInterface`, `ProcedureSyncEventInterface`, `AdmissionSyncEventInterface`, `StaffSyncEventInterface`, `HeartbeatSyncEventInterface`, `CoreHmsSyncEventInterface`).
-  - CoreHMS SuperAdmin: `Corehealth-Super-Admin/includes/contracts/*` (`PatientEventInterface`, `ConsultationEventInterface`, `DispenseEventInterface`, `LabEventInterface`, `ProcedureEventInterface`, `AdmissionEventInterface`, `StaffEventInterface`, `HeartbeatEventInterface`, `CoreHmsEventInterface`).
-  - When modifying payload schemas or adding event types, update both contract interfaces and payload generators simultaneously.
-- **Idempotency & Deduplication Engine**:
-  - All real-time events and retroactive synchronizations must maintain deduplication keys matching `sha1(facility_id + ':' + event_type + ':' + source_id)`.
-  - Dispatches must be non-blocking and queued via Laravel database queue (`DispatchCoreHmsSyncJob`).
-  - SuperAdmin must record event audit in `facility_sync_events` and rollups in `facility_clinical_records` and `total_statistics` without duplicate counts upon retries.
-- **Liveness Monitoring & Health Endpoints**:
-  - CoreHealth endpoints (`GET /api/corehms/ping` and `GET /api/corehms/health`) must remain fast, non-blocking, and unencumbered by session middleware or redirects.
-  - Health checks must report live facility status, database latency, queue driver, and pending/failed queue job counts.
-  - SuperAdmin monitoring (`ajax/ping-facility.php`, `assets/js/facility-monitor.js`) must preserve interactive single/bulk pinging and dynamic latency badges.
-- **Retroactive Ingest & Automated Backups**:
-  - Export endpoints (`/api/get-facility-*`) and artisan commands (`php artisan corehms:backfill`) must remain synchronized with SuperAdmin's retroactive fetch modal (`ajax/retroactive-fetch.php`).
-  - Backup endpoint (`/api/corehms/backup`) and SuperAdmin backup console (`backups.php`) must be kept functional for automated database dump rotation and central retrieval.
-- **Same Coding & Engineering Standards for SuperAdmin**:
-  - Code in `Corehealth-Super-Admin/` must follow the exact same standards as CoreHealth:
-    - **PSR-12 Code Style**: Strictly formatted and checked via `make lint` / `composer lint`.
-    - **Database Compatibility**: MariaDB / MySQL 8.0 compatibility only; all queries must use PDO prepared statements with parameter binding (no raw variable interpolation).
-    - **UI & Assets**: Standalone JavaScript modules (e.g. `assets/js/facility-monitor.js`) and CSS; no multi-line inline scripts or styles.
-    - **Safe Networking**: All cURL calls must enforce safe connect/read timeouts (e.g. 3-15 seconds) and graceful failure modes.
-    - **Feature Testing**: Any changes to sync events, health inspection, or backfill workflows must be accompanied by PHPUnit feature tests under `tests/Feature/CoreHms/` (e.g., `CoreHmsMonitoringAndSyncTest.php`).
-
-## 11. WeCare247 Telehealth Platform Synchronization & Integration Standards
-- **Architectural Scope & Contract**:
-  - CoreHealth v2 (hospital HMIS instance) and WeCare247 (`wecare247/`, multi-tenant telemedicine and remote care platform) maintain real-time bidirectional clinical synchronization.
-  - Integration endpoints are unified under `/api/corehealth/*`:
-    - `GET /api/corehealth/ping` — Public, non-blocking liveness check reporting facility status, version, and `wecare_enabled`.
-    - `GET /api/corehealth/patient/lookup` — SHA256 Basic Auth protected demographic lookup by `file_no` or `phone_no`.
-    - `POST /api/corehealth/sync/patient-linked` — Callback confirming patient activation from invite or manual link.
-    - `POST /api/corehealth/sync/encounter` — Ingestion of tele-consultation encounters into hospital longitudinal EHR.
-    - `POST /api/corehealth/sync/patient-unlink` — Deactivates sync without data loss.
-    - `POST /api/integrations/corehealth/webhook/lab-result` — Outbound dispatch of approved lab and investigation results.
-- **Hospital Settings Master Switch & Policy Controls**:
-  - All synchronization logic must strictly check the master toggle `wecare_enabled` in `application_status` (configured in Hospital Settings under the WeCare247 tab).
-  - When `wecare_enabled` is false, incoming sync endpoints must reject requests immediately with **HTTP 403** (`WECARE_INTEGRATION_DISABLED`), and outbound lab webhooks must be suppressed.
-  - Granular policy switches must be respected:
-    - `wecare_auto_sync_encounters`: Automatically ingest tele-consultations into the hospital encounter timeline.
-    - `wecare_auto_sync_labs`: Automatically dispatch approved lab & imaging results to WeCare patient portal.
-    - `wecare_allow_patient_lookup`: Allow WeCare facility admins to query patient demographics by file number or phone.
-  - Outbound probe test endpoint (`POST /admin/hospital-config/test-wecare`) allows hospital administrators to test WeCare network reachability and measure roundtrip latency.
-- **Shared Identity & Deterministic Deduplication**:
-  - Patient sync bindings require 4 composite keys: `corehealth_file_no`, `corehealth_patient_id`, `wecare_patient_id`, and `wecare_sync_uuid` (`sha1(facility_id + ':' + patient_id + ':' + file_no)`).
-  - Tele-consultation encounter ingestion must enforce strict idempotency using `sha1('wecare_encounter:' + wecare_appointment_id)` against `encounters.wecare_sync_ref`.
-- **UI, Assets & Testing Standards**:
-  - All frontend logic for the WeCare settings tab resides in `public/js/wecare-config.js` and must be validated with `node --check public/js/wecare-config.js`.
-  - Every change to WeCare endpoints, settings, or sync behavior must be covered by PHPUnit tests in `tests/Feature/WeCare/` (e.g., `WeCareIntegrationAndSettingsTest.php`).
-
-## 12. Repository Independence & Standalone Operation Standards
-- **Complete Decoupling**: All repositories (`corehealth_v2`, `wecare247`, and `Corehealth-Super-Admin`) must be maintained so they can be cloned, developed, tested, and deployed independently without assuming a shared parent directory or sibling filesystem paths.
-- **Pure Network API Contracts**: Cross-platform communications must occur strictly via standard network HTTP REST APIs, Webhooks, or message queues.
-- **Self-Contained Documentation & Guides**: Each repository must maintain its own independent setup, testing, and operation guides under its own `docs/` folder (dated and tagged).
-- **Generic Documentation**: All documentation, guides, and testing references must use generic names (e.g., `General Hospital Example`, `Integrated Healthcare Facility`) and generic identifiers.
-
-## 13. Operational Cockpit & Dual Dashboard Standards
-- **Dual Dashboard Architecture & Mode Selection**:
-  - Hospital default experience is configured in Hospital Config (`application_status.dashboard_mode`), supporting `'cockpit'` (default) and `'classic'`.
-  - `HomeController@index` dynamically resolves layout via `$request->query('mode', appsettings('dashboard_mode', 'cockpit'))`, allowing instant staff preview and mode switching via header pills without modifying hospital-wide defaults.
-- **Zero-Scroll Viewport Layout (Cockpit)**: The `/home` route renders a space-maximizing operational cockpit (`dash-cockpit-viewport`) locked to `calc(100vh - 62px)` on desktop. Overflow within columns is managed using `.dash-scrollable` micro-scrollbars.
-- **Tri-Column Division**:
-  - Column 1 (`dash-col-pipeline`, 28%): High-density triage and departmental queues with live counts.
-  - Column 2 (`dash-col-telemetry`, 44%): 2x3 KPI matrix, dual Chart.js sparkline charts (Hourly Inflow & 7-Day Revenue Trend), and operational insights strip.
-  - Column 3 (`dash-col-ledger`, 28%): Real-time multi-department activity feed with direct deep-linking and persistent 18-role workbench launchpad dock.
-- **Classic Operations Dashboard (Restored & Condensed)**:
-  - 18-role multi-tab operations center (`admin/dashboards/tabs/*`) restored with condensed high-density styling (`public/css/dashboard-classic.css`) and modular event-driven JS (`public/js/dashboard-classic.js`).
-  - Strictly adheres to Rule 1 (< 10 lines of inline scripts/styles in Blade) and `--hospital-primary` dynamic branding variables.
-  - Zero-dash KPI metric standard: All placeholder dashes (`—`) are eradicated in favor of clean numeric zeros (`0`), formatted currency (`₦0`), or percentages (`0%`).
-- **Complete Role Coverage**: All 18 supported hospital roles (Receptionist, Biller, Doctor, Nurse, Pharmacist, Store, Lab Scientist, Radiologist, Surgeon, Maternity, Pediatrics, Morgue, HMO Executive, Accountant, Internal Auditor, HR, ESS, Admin) are represented via dynamic perspective switcher pills, tab bars, and direct launcher docks.
-- **Modern Workbench Routing & Legacy Deprecation**:
-  - Doctor Consultation Deep Link: Doctor queue items and activities deep link to `encounters/create?patient_id={id}` for active intake, and `encounters?status=waiting` for queue status filtering.
-  - Zero Direct `/add-to-queue` Links: All dashboard, doctor tab, receptionist tab, send-queue, and request links to `/add-to-queue` have been replaced with modern Reception Workbench routes (`reception.workbench?action=new-patient` and `reception.workbench?queue_filter=waiting`). Route `/add-to-queue` automatically redirects to `reception.workbench`.
-  - Unified Patient Form Modal: Dashboards and header ribbons open the rapid registration modal (`#patientFormModal`, `showPatientFormModal('create')`), eliminating legacy full-page redirects to `patient/create`.
-- **Assets & Verification**: Cockpit assets in `public/css/dashboard-cockpit.css` & `public/js/dashboard-cockpit.js`; Classic assets in `public/css/dashboard-classic.css` & `public/js/dashboard-classic.js` (verified with `node --check`). Documented in `docs/DASHBOARD_DUAL_MODE_CONFIGURATION.md`.
-
-## 14. Universal Workbench Cockpit Scaling Standards
-- **Zero-Scroll Viewport Locking**: All major clinical workbenches declare `@section('is_workbench', true)` and `@section('body_class', 'is-workbench has-workbench')`. This locks the master viewport (`overflow: hidden; height: 100vh;`), suppresses the 50px app layout breadcrumb header (`.content-header`) and marketing footer (`.footer`), and sets `.content-wrapper` padding to `68px 10px 6px 10px` to maximize usable screen real estate.
-- **Universal Scaler Stylesheet**: Workbenches include `public/css/workbench-cockpit-scaling.css`. All inputs and controls scale to high-density tokens (`height: 30px; font-size: 0.8125rem;`), buttons to `height: 28-30px`, and tables to compact rows (`padding: 4px 8px; font-size: 0.79rem;`).
-- **Low-Resolution Responsive Baseline (1366x768 & Lower)**: Workbenches must fit 100% of departmental queue filters and triage tools within the visible viewport on 1366x768 laptop displays without causing outer window scrollbars. Internal panels manage overflow via 4px micro-scrollbars (`-webkit-scrollbar`).
-- **Shared Patient Search Widget**: Patient search containers inside workbenches conform to `height: 30px`, `padding-left: 36px`, and icon positioning `left: 10px` without text clipping.
-- **Documentation & Rollout**: Architecture is documented in `docs/WORKBENCH_COCKPIT_SCALING_ARCHITECTURE.md`.
-
-## 15. Split Payments, Free-Form Billing & Financial Governance Standards
-- **Split Payments Multi-Leg Ledger**: Payment splits (`payment_splits` table) across Cash, POS, Transfer, Mobile, and Patient Deposit must always enforce multi-leg debit balancing in `PaymentObserver`. In `Payment` model, `$pending_splits` transport property prevents column insert errors.
-- **Universal Name & Method Helpers**:
-  - Item names across reports, receipts, accounts, and audit workbenches MUST use `getItemDisplayName($item)` (PHP) and `window.CoreHealth.getItemDisplayName(item)` (JS).
-  - Payment methods MUST use `formatPaymentMethod($payment)` (matching actual payment modal methods e.g. `CASH`, `POS`, `TRANSFER`, `MOBILE`, `BILL_TO_STAFF`, `BILL_TO_ORGANIZATION`, `ACCOUNT`, `DEPOSIT`).
-- **Free-Form Request Support**: Unlisted/free-form products and services (`is_free_form`, `free_form_name`, `is_billable`) allow custom price billing and display correctly across all reports and receipts.
-- **Payment Adjustments & Voiding**:
-  - Payment method corrections create reversing and replacement Journal Entries via `PaymentReversalService` and are logged in `payment_adjustments`.
-  - Transaction voiding reverses Journal Entries, unlinks items, restores patient account balances, and strikes through/excludes voided payments from all financial and ops audit KPIs (`whereNull('voided_at')`).
-- **Documentation**: Architecture is documented in `docs/BILLING_PAYMENT_ENHANCEMENTS.md`.
-
-## 16. Global Department Revenue Attribution & Dynamic Workbench Filters
-- **Dual-Tier Resolution Chain**: `Service`/`Product` `department_id` takes precedence over parent `ServiceCategory`/`ProductCategory` `department_id`, which defaults to General (null). Auto-prepopulates in admin create/edit views upon category selection while allowing manual override.
-- **Observer Auto-Stamping**: `ProductOrServiceRequestObserver` stamps effective `department_id` into POSR records and HMO claim journal lines; `PaymentObserver` stamps `department_id` across double-entry debits and credits on all payment-generated journal entry lines.
-- **Dynamic Modality & Bench Filters**: Imaging (`ImagingWorkbenchController::getImagingDepartments()`) and Lab (`LabWorkbenchController::getLabDepartments()`) discover active departments from catalog bindings and domain roles, rendering interactive pill buttons without hardcoding.
-- **Omni-Channel Reporting**: Department filtering, real-time KPI pill strip, and badges are integrated into My Transactions modal (`_my_transactions_modal.blade.php`), Manage Transactions datatable, printable cashier receipts (`my_transactions_print.blade.php`), OpsAudit billing toolbar, and Accounting General Ledger.
-- **Data Backfill Engine**: Zero-downtime retroactive mapping command `php artisan corehealth:backfill-departments` with progress tracking and `--dry-run` flag.
-- **Documentation**: Architecture is documented in `docs/DEPARTMENT_REVENUE_ATTRIBUTION.md`.
-
-## 17. Ops Audit Duty Shift Handover & Care Stream Reconciliation
-- **Duty Shift Operational Boundaries**: Standardized shift windows across `applyShiftFilter`: AM Duty till 1:00 PM (`00:00:00` - `12:59:59`), Afternoon / Late PM Duty (`13:00:00` - `17:59:59`), and Night Duty (`18:00:00` - `07:59:59` cross-midnight).
-- **Mutually Exclusive Care Streams**: Cleanly partitions clinical service revenue and volume into General (Outpatient Walk-in / Self-pay), Inpatient (Private Wards / Admitted Stays), and Insured / Schemes Pool (representing all insured enrollees across NHIA, State Health Schemes like PLASCHEMA, HMOs, and Corporate Retainerships, tracking both Claims AR and patient co-pays).
-- **Executive 1-Page A4 Handover Certificate**: Provides unified service domain breakdown (Drugs, Labs, Imaging, Consultations, Wards, Procedures, Others) with full tender reconciliation (Cash in till, POS by bank, Transfers by bank) and tri-party certification signature blocks (Outgoing Cashier, Incoming Cashier, Internal Audit / HOD).
-- **Inflow vs Outflow Till Accounting**: Detailed tracking of cash collections vs deposit disbursements/refunds (`ACC_WITHDRAW`) to clearly explain till balance movements.
-- **Embedded Transactions Console**: Cashier Transactions Console (`_my_transactions_modal.blade.php`) integrated directly into Ops Audit layout and workbenches.
-- **Documentation**: Architecture is documented in `docs/OPS_AUDIT_DUTY_SHIFT_RECONCILIATION.md`.
-
-## 18. Locum Staff Access Management & Consultation Log Book Standards
-- **Ephemeral Smart Passes (JIT Provisioning)**: Locum clinicians (Doctors, Visiting Radiologists, External Scientists) receive shift-bounded passes (`locum_passes`) with 6-digit PIN login, clinic scoping (`allowed_clinic_ids`), automatic expiration (TTL), and instant revocation.
-- **Role Assignment at Creation**: When creating a locum profile, Spatie roles (`role_id`) and cadre templates (`cadre_type`) are assigned immediately, giving locum staff instant permission to operate in their workbench upon issuance.
-- **Zero-Breakage EHR & Observer Compliance**: Locum users are registered as first-class `users` with `is_locum = 1`. `User::staff_profile()` utilizes `withDefault()` to protect against null pointer exceptions across all hospital modules.
-- **Consultation Log Book**: High-density 4-column summary grid and patient drill-down console on `/allPrevEncounters` (`encounter.workbench`). Enforces strict non-duplication of funds when multiple encounter notes exist on a single visit.
-- **Conclude Consultation Modal Resilience**: Finalize handlers in `_modals.blade.php` use safe resolution (`getActiveEncounterId()`, `getActiveQueueId()`), SweetAlert2 confirmations with native fallback, and safe error/success alerting with auto-redirect.
-- **Documentation**: Architecture is documented in `docs/LOCUM_ACCESS_AND_CONSULTATION_LOGBOOK.md`.
-
-## 19. Investigation Result Signatures & Approval Governance Standards
-- **Balanced Dual Signature Block**: All Laboratory and Imaging diagnostic report views (`lab_service_requests/show.blade.php`, `imaging_service_requests/show.blade.php`), inspection modals (`invest_res_view_modal.blade.php`, `invest_res_view_imaging_modal.blade.php`), and entry modals must render a dual signature line: "Entered By" on the left and "Approved By" on the right.
-- **Staff Cadre & Specialization Auto-Populate**: Result entry modals must auto-populate the operator's designation from their staff profile (`specialization->name ?: (cadre->name ?: job_title)`) into an editable field (`entered_by_designation`).
-- **Direct Entry Approver Enforcement**: When approval workflows are disabled (`lab_results_require_approval = 0` or `imaging_results_require_approval = 0`), the operator must explicitly enter the approver's name and designation before the result can be completed (`status = 4`). Controller validation rules strictly enforce `approved_by_name` and `approved_by_designation` as required.
-- **Supervisor Review & Approval Workflow**: When approval workflows are enabled (`status = 5`), the approval queue modals allow the approving supervisor to review and edit their sign-off name and designation before final completion.
-- **Audit-Compliant Diagnostic Attestation**: Persistent capture of `entered_by_name`, `entered_by_designation`, `approved_by_name`, and `approved_by_designation` on both `lab_service_requests` and `imaging_service_requests`.
-- **Documentation**: Architecture is documented in `docs/INVESTIGATION_RESULT_SIGNATURES_AND_APPROVAL_GOVERNANCE.md`.
-
-## 20. Ops Audit Requisition & Partial Fulfillment Accountability Standards
-- **Status Filter Full Parity**: All Ops Audit requisition views (`store.blade.php`, `pharmacy.blade.php`, `partials/requisitions_tab_pane.blade.php`) must explicitly provide `partial` ("Partially Fulfilled") and `cancelled` ("Cancelled") options in the status filter dropdown alongside `pending`, `approved`, `fulfilled`, and `rejected`.
-- **Zero-Cost Batch Safe Fallback**: In `moduleRequisitionsData` and all inventory valuation resolvers, batch cost checks MUST strictly verify `(float)$batchCost > 0` before accepting batch cost, falling back to product master buy price (`$i->product->price->pr_buy_price`). Never allow zero or non-positive batch costs to suppress fulfilled stock valuation. Eager-load `items.destinationBatch.creator`.
-- **Unfulfilled / Partial Balance KPI Reconciliation**: Requisition KPI strips must include a 6th metric `Pending/Partial Bal` (`max(0, $totalApprCost - $totalFulCost)`) ensuring mathematical parity (`Fulfilled Value + Pending/Partial Balance = Approved Value`).
-- **Bidirectional Global Store Filter Wiring**: When a store is selected in the top filter bar (`store_id`) without sub-store dropdown overrides, query logic must automatically match where `from_store_id = store_id OR to_store_id = store_id`.
-- **Interim Fulfiller Attribution**: Partial fulfillments must track interim fulfillers (`$row->items->first(fn($i) => $i->destinationBatch?->creator)?->destinationBatch?->creator`) with distinct interim badges, and `RequisitionService::fulfill` must stamp `$requisition->fulfilled_by` on partial issues.
-- **Documentation**: Architecture is documented in `docs/OPS_AUDIT_REQUISITION_AND_PARTIAL_FULFILLMENT_ACCOUNTABILITY.md`.
-
-## 21. Ops Audit Stepped Storyboard Workflow & Visible Page Stamping Standards
-- **Progressive Stepped Storyboard Ribbon**: All 12 Ops Audit module views (`store`, `billing`, `doctor`, `pharmacy`, `nursing`, `lab`, `imaging`, `reception`, `hmo`, `maternity`, `surgery`, `morgue`) implement the 4-step progressive ribbon partial (`_stepped_story_bar.blade.php`): Step 1 Time Horizon (with Today, Yest, 7D, 30D, Month quick chips), Step 2 Duty Window (AM, PM, Night shifts & Care Streams), Step 3 Advanced Scoping (module entity slots), and Step 4 Audit Cockpit Actions (Apply, Stamp Visible Page, Bulk Stamp, Print).
-- **Shift Time Ranges & Default Custom Time Window Controls**: Shift preset chips display operational hour ranges (All: 24h, AM: 00:00 - 12:59, PM: 13:00 - 17:59, Night: 18:00 - 07:59) alongside a dynamic time badge (`#opsShiftTimeDisplay`) and default visible `shift_start` and `shift_end` time inputs. Changes to time inputs automatically activate the Custom indicator (`#btnShiftCustom`), update session state, and apply to queries with second-level backend padding in `OpsAuditBaseController`.
-- **Visible Page Stamping Engine**: High-efficiency one-click action (`#btnStampVisiblePage` / `stampCurrentPage()`) that parses visible unstamped rows, extracts `data-model-type` and `data-model-id` stamped by `OpsAuditBaseController::renderAuditCell()`, prompts confirmation, mutates buttons in-place immediately, and executes batch stamp via `/audit-workbench/audit/mark/bulk-stamp`.
-- **Non-Resetting Pagination Architecture**: When marking items as audited, bulk stamping, or raising/resolving queries, tables reload silently with page preservation (`opsReloadActiveTables(false)`). Paging only resets to page 1 (`opsReloadActiveTables(true)`) when filter parameters are altered.
-- **Elimination of Duplicate Page-Level Filters**: No tab-level filter may duplicate controls in the main ribbon. Redundant controls (such as secondary `store_id` in store batches or duplicate `cashier_id` in payment filters) are suppressed or excluded.
-- **Documentation**: Architecture is documented in `docs/OPS_AUDIT_STEPPED_STORYBOARD_WORKFLOW.md`.
-
-## 22. Staff Deactivation, Employment Status Governance & Locum Integration Standards
-- **Standardized Employment Status Matrix**: Seven explicit employment states (`active`, `probation`, `on_leave`, `suspended`, `resigned`, `terminated`, `retired`). Disciplinary and exit statuses (`suspended`, `terminated`, `resigned`, `retired`) immediately set `staff.status = 0`, `user.status = 0`, block login authentication, terminate active sessions, and revoke all active locum shift passes.
-- **Bidirectional Lifecycle Synchronization**: `Staff` and `User` models synchronize status transitions automatically via `booted()` lifecycle hooks (`syncUserAndStaffStatus()`), preventing access divergence between authentication tables and HR records.
-- **Middleware & Login Security Enforcement**:
-  - `CheckSuspension` middleware runs globally on the `web` stack, inspecting `user.status`, `staff.employment_status`, and locum pass validity on every request, instantly revoking in-flight sessions upon deactivation.
-  - `LoginController::authenticated` intercepts blocked logins, compiling detailed context (suspension reason, expected reinstatement date, HR clearance procedures).
-  - Login interface (`resources/views/auth/login.blade.php`) displays an alert banner at the top of the form with distinct MDI iconography (`mdi-account-off`, `mdi-account-remove`, `mdi-account-lock`).
-- **Locum Shift Pass Lifecycle & Revocation**: Locum practitioners require an active, non-expired, and non-revoked `LocumPass`. Suspending or deactivating a locum practitioner automatically revokes all associated passes, blocks PIN authentication in `LocumManagementService::authenticatePass`, and evicts expired shifts in middleware.
-- **Clinical Intake & Roster Protection**: `ReceptionWorkbenchController::getDoctorsByClinic`, `DoctorAppointmentController::getDoctorsForClinic`, and clinic schedules exclude suspended, inactive, or on-leave clinicians. Locum doctors are strictly restricted to assigned clinics with valid shift passes.
-- **Staff Directory Quick Action & Modular Architecture**:
-  - `/staff` DataTable list (`StaffController::listStaff`) displays all staff (including deactivated/suspended) with multi-criteria filters (Department, Category, Employment Type, Status).
-  - Quick action modal (`#quickStatusModal`, `_quick_status_modal.blade.php`) and endpoint `POST /staff/{id}/update-status` (`staff.updateStatus`) allow rapid status transitions with automatic audit logging (`staff_suspensions`, `staff_terminations`).
-  - Standalone assets `public/css/staff-directory.css` and `public/js/staff-directory.js` comply with Rule 1 (< 10 lines inline script rule; verified via `node --check`).
-- **Documentation**: Architecture is documented in `docs/STAFF_DEACTIVATION_AND_STATUS_GOVERNANCE.md`.
-
-## 23. LLM Clinical Note Polishing & Patient Summary Alignment Standards
-- **Multi-Tier Context Discovery**: Note polishing (`public/js/speech-dictation.js`) and AI summary actions (`public/js/patient-summary.js`, `resources/views/admin/partials/ai_quick_actions.blade.php`) dynamically resolve active patient and encounter context across multi-tier globals (`currentPatientId`, `patientId`, `WORKBENCH_CONFIG.patientId`, `patientSummary.patientId`, `currentPatient`, and respective encounter keys).
-- **Decoupled Note Polishing**: `LlmController::polishNote` allows `patient_id` and `encounter_id` to be nullable. Notes can be polished with patient-level semantic context (allergies, diagnoses, medications, history, vitals) even when `encounter_id` is null (such as in Nursing Workbench or unsaved Doctor New Encounter consultations), or as standalone medical documentation without patient context.
-- **Mandatory Script Inclusion in Clinical Views**: Any view incorporating `@include('admin.partials.patient_summary_overlay')` or `@include('admin.partials.ai_quick_actions')` (such as `_encounter_scripts.blade.php`, `nursing/partials/_scripts.blade.php`, `maternity/partials/_scripts.blade.php`) MUST load `<script src="{{ asset('js/patient-summary.js') }}"></script>` to guarantee `PatientSummaryManager` instantiation and prevent false "No Patient Selected" validation errors.
-- **Documentation**: Architecture is documented in `docs/LLM_NOTE_POLISHING_AND_CLINICAL_SUMMARY_ALIGNMENT.md`.
-
-## 24. Branded Homepage & Demo Mode Standards
-- **Dual Presentation Architecture**: Route `/` serves an interactive landing page (`resources/views/welcome.blade.php`, `public/css/welcome.css`) that dynamically adapts between a customized hospital branded experience and an unbranded CoreHealth product showcase.
-- **Hospital Configuration Toggle**: Governed by `application_status.show_branded_homepage` (boolean, default ON / `1`), configurable in Hospital Settings under the Branding card.
-- **Hospital Co-Branding & Dynamic Theming**:
-  - Automatically injects hospital name (`site_name`), logo (`logo`), primary color scheme (`--hospital-primary` dynamically overriding `--navy`), facility contact channels (`contact_address`, `contact_emails`, `contact_phones`), and staff portal links (`/login` or `/home`).
-  - Strict Rule 1 compliance: all styles reside in `public/css/welcome.css`, with less than 5 lines of inline theme CSS variable injection in Blade.
-- **Demo Mode Isolation & Query Overrides**:
-  - When `show_branded_homepage` is 0 (OFF), route `/` renders a clean, neutral CoreHealth ecosystem landing page without hospital branding, perfectly suited for demo instances and public presentations.
-  - Query parameter overrides (`/?branded=0`, `/?demo=1`, `/?branded=1`) allow instant real-time mode preview without altering database configurations.
-- **Documentation & Testing**: Architecture is documented in `docs/BRANDED_HOMEPAGE_CONFIGURATION.md`. Covered by PHPUnit feature tests in `tests/Feature/Homepage/WelcomePageTest.php`.
-
-## 25. Clinical Note Polishing Multi-Modality Engine & Zero-Context-Loss Standards
-- **Strict Clinical Fidelity & Zero Information Loss**: The default note polishing prompt in `config/llm.php` enforces 100% preservation of all clinical data. Vital signs, exact medication doses/routes/frequencies/timestamps, pertinent negatives, fluid balance (IVF, NGT, catheter output), surgical wound descriptions, nursing interventions, physician rounding orders, and plan items are NEVER dropped or summarized away into vague generalizations.
-- **Three Core Modality Adaptations**:
-  - **Modality A (Doctor-Patient Ambient Dialogue)**: Synthesizes spoken consultation dialogue into comprehensive SOAP consultation notes with structured sections (Chief Complaint, HPI, ROS, Past History, Medications & Adherence, Allergies, Vitals & POC Tests, Physical Exam, Assessment & Impression, Itemized Management Plan).
-  - **Modality B (Chaotic Nurse Dictation)**: Restructures stream-of-consciousness ward speech into formal Nursing Progress Reports (DAR/SBAR/Systems format: Shift Overview, Chronological Vitals, Pain Assessment & Analgesic Response with exact drug/dose/route/time, Surgical Site & Drains, Lines/Tubes & Fluid Balance I/O, Nursing Interventions, Physician Communication & Orders, Nursing Care Plan).
-  - **Modality C (Doctor Memo Shorthand)**: Expands abbreviated telegraphic notes into exhaustive Inpatient/Emergency clinical notes with expanded standard medical abbreviations, systematic exams, diagnostic/imaging findings, and prioritized action plans.
-- **Backend Sanitization & Perspective Stamping**: `LlmController::polishNote` strips and normalizes rich-text HTML into clean line breaks before LLM dispatch, accepts an optional `note_type` parameter (`'doctor'`, `'nurse'`, `'memo'`, `'auto'`), safely falls back to `config('llm.prompts.polish_note')` when database configuration values are empty or whitespace, allocates `max_tokens => 4096`, and locks `temperature => 0.2`.
-- **Semantic Markdown-to-HTML Conversion**: `SpeechDictationKit::markdownToHtml` in `public/js/speech-dictation.js` converts Markdown headers (`###`, `####`), unordered lists (`<ul><li>`), ordered lists (`<ol><li>`), inline styles (`<strong>`, `<em>`), and paragraphs (`<p>`) into valid semantic HTML for native CKEditor 5 compatibility.
-- **Documentation & Testing**: Architecture is documented in `docs/CLINICAL_NOTE_POLISHING_MULTI_MODALITY_ENGINE.md`. Covered by PHPUnit unit tests in `tests/Unit/AI/NotePolishingPromptTest.php`.
-
-## 26. Encounter Workbench Memory Governance & High-Density Consultation Standards
-- **O(N) Hierarchical ICPC Pre-Grouping**: Diagnosis and encounter reasons must be pre-grouped in the controller (`$reasonsGrouped = ReasonForEncounter::select('code', 'name', 'category', 'sub_category')->orderBy(...)->get()->groupBy(['category', 'sub_category'])`) to prevent $O(C \times S \times N)$ triple-nested loop iterations in Blade templates. Never pass unbounded, flat collections into multi-tiered `<optgroup>` and `<select>` dropdowns.
-- **Strict Query Projection in Views**: In-view queries (such as procedure team member staff lists in `procedures.blade.php`) must strictly select only required columns (`id`, `surname`, `firstname`, `othername`, `is_admin`) and avoid eager loading deep unused relations (e.g. `staff_profile.specialization`).
-- **Input & Staff Validation Guards**: `EncounterController::create` must validate that `patient_id` is present, `$patient` exists, and `$doctor` has an active `Staff` record before accessing model properties.
-- **PHP 8 Throwable Exception Safety**: High-traffic consultation controllers must wrap pre-consultation setup in `catch (\Throwable $e)` to safely catch engine `\Error` and `\TypeError` exceptions, preventing unhandled FastCGI crashes.
-- **Documentation & Testing**: Architecture is documented in `docs/ENCOUNTER_WORKBENCH_MEMORY_OPTIMIZATION.md`. Covered by unit tests in `tests/Unit/Encounter/EncounterCreateOptimizationTest.php`.
-
-## 27. Clinical Consumables & Kits Multi-Token Search Architecture
-- **Multi-Token & Middle-of-String Matching**: All medical searches across services, products, and combos leverage `App\Helpers\ClinicalSearchHelper`. Eliminates single contiguous `LIKE "%{$term}%"` failures by tokenizing queries, stripping non-alphanumeric punctuation, and matching across all keyword tokens regardless of ordering, hyphens, or double spaces.
-- **Clinical Abbreviation & Typo Resilience**: `ClinicalSearchHelper::getSynonyms()` maps common medical abbreviations and phonetic variations (`wond` &rarr; `wound`, `inj` &rarr; `injection`, `canula` &rarr; `cannula`, `tab` &rarr; `tablet`, `syr` &rarr; `syrup`, `susp` &rarr; `suspension`, `paracet` &rarr; `paracetamol`, etc.).
-- **Consumable & Service Discovery in Nursing**: In `NursingWorkbenchController@searchProducts`, searches return products as well as consumable nursing procedures (Categories 4, 8, 5) with clear visual type badges (`[Product]` / `[Service]`). Selecting a service automatically switches `BillingKit` to the Services tab with pre-populated details, ensuring seamless ward billing without inventory batch errors.
-- **Deep Clinical Kit & Service Combo Discovery**: `service-combos/search` and combo searches in `ServiceController` and `ProductController` search both the combo title and child bundle items (`bundleItems.service` / `bundleItems.product`), allowing staff to find kits by typing any contained drug, test, or consumable.
-- **Documentation & Testing**: Architecture is documented in `docs/CLINICAL_CONSUMABLES_AND_KITS_SEARCH_ENHANCEMENT.md`. Covered by PHPUnit feature tests in `tests/Feature/Nursing/ConsumableAndClinicalKitSearchTest.php`.
-
-
+## 8. Documentation References & Legacy Archive
+- Active Documentation Portal: `docs/index.md`
+- Core Architecture: `docs/developer/architecture.md`
+- Coding Standards: `docs/developer/coding-standards.md`
+- Database & Observers Ledger: `docs/developer/database-and-observers.md`
+- Testing Standards: `docs/developer/testing-guide.md`
+- Reception & Records Story: `docs/user-guides/workbenches/reception.md`
+- Longitudinal Patient Pathway: `docs/user-guides/clinical-pathway.md`
+- Legacy Planning & Audits Archive: `docs_archive/README.md`

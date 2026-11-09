@@ -1474,3 +1474,36 @@ Route::middleware(['auth'])->group(function () {
 
 // Observability & Health Monitoring
 Route::get('/metrics', [\App\Http\Controllers\MetricsController::class, 'index'])->name('metrics');
+
+// Static Documentation Engine (VitePress production build)
+Route::get('/docs/{any?}', function ($any = null) {
+    if (!$any || $any === '/') {
+        return response()->file(public_path('docs/index.html'));
+    }
+    $clean = trim($any, '/');
+    $path = public_path('docs/' . $clean);
+    if (file_exists($path) && is_file($path)) {
+        return response()->file($path);
+    }
+    if (file_exists($path . '.html') && is_file($path . '.html')) {
+        return response()->file($path . '.html');
+    }
+    if (file_exists($path . '/index.html') && is_file($path . '/index.html')) {
+        return response()->file($path . '/index.html');
+    }
+
+    return response()->file(public_path('docs/index.html'));
+})->where('any', '.*')->name('docs.viewer');
+
+// Documentation Fallback Redirects (ensures links without /docs prefix resolve seamlessly)
+Route::get('/user-guides/{any?}', function ($any = null) {
+    return redirect('/docs/user-guides/' . ($any ? trim($any, '/') : ''));
+})->where('any', '.*');
+
+Route::get('/developer/{any?}', function ($any = null) {
+    return redirect('/docs/developer/' . ($any ? trim($any, '/') : ''));
+})->where('any', '.*');
+
+Route::get('/releases/{any?}', function ($any = null) {
+    return redirect('/docs/releases/' . ($any ? trim($any, '/') : ''));
+})->where('any', '.*');
