@@ -214,4 +214,40 @@ class NotePolishingPromptTest extends TestCase
         $response = $controller->polishNote($request);
         $this->assertEquals(403, $response->getStatusCode());
     }
+
+    /**
+     * Test that LlmController accepts raw_note alias and returns both polished_content and polished_note.
+     */
+    public function test_llm_controller_accepts_raw_note_alias_and_returns_both_keys()
+    {
+        $gateway = Mockery::mock(LlmGatewayService::class);
+        $contextService = Mockery::mock(PatientContextService::class);
+
+        $gateway->shouldReceive('isEnabled')->andReturn(true);
+        $gateway->shouldReceive('getConfig')->andReturn([
+            'system_prompts' => ['polish_note' => 'System prompt'],
+        ]);
+
+        $gateway->shouldReceive('complete')
+            ->once()
+            ->andReturn([
+                'content' => "Polished clinical note text.",
+                'model' => 'test-model',
+                'provider' => 'test-provider',
+            ]);
+
+        $controller = new LlmController($gateway, $contextService);
+
+        // Sending with 'raw_note' alias instead of 'note_content'
+        $request = Request::create('/llm/polish-note', 'POST', [
+            'raw_note' => 'Quick raw note from clinician.',
+        ]);
+
+        $response = $controller->polishNote($request);
+        $data = $response->getData(true);
+
+        $this->assertTrue($data['success']);
+        $this->assertEquals('Polished clinical note text.', $data['polished_content']);
+        $this->assertEquals('Polished clinical note text.', $data['polished_note']);
+    }
 }

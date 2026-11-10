@@ -637,26 +637,42 @@ class SpeechDictationKit {
                 let patId = window.currentPatientId || window.patientId || (window.WORKBENCH_CONFIG ? window.WORKBENCH_CONFIG.patientId : null) || (window.patientSummary ? window.patientSummary.patientId : null) || (typeof currentPatient !== 'undefined' ? currentPatient : null) || null;
 
                 try {
+                    const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content
+                        || (window.WORKBENCH_CONFIG ? window.WORKBENCH_CONFIG.csrf : '');
                     const response = await fetch('/llm/polish-note', {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
-                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                            'Accept': 'application/json',
+                            'X-CSRF-TOKEN': csrfToken
                         },
                         body: JSON.stringify({
                             note_content: rawText,
+                            raw_note: rawText,
                             patient_id: patId ? parseInt(patId, 10) : null,
                             encounter_id: encId ? parseInt(encId, 10) : null,
                             note_type: this.noteType || 'auto'
                         })
                     });
+                    if (!response.ok) {
+                        const errText = await response.text();
+                        let errMsg = 'LLM polishing failed';
+                        try {
+                            const errJson = JSON.parse(errText);
+                            errMsg = errJson.message || errMsg;
+                        } catch (_) {
+                            errMsg = `Server error (${response.status})`;
+                        }
+                        throw new Error(errMsg);
+                    }
                     const data = await response.json();
-                    if (data.success && data.polished_content) {
+                    const polishedResult = data.polished_content || data.polished_note;
+                    if (data.success && polishedResult) {
                         if (this.editorType === 'ckeditor') {
-                            polished = this.markdownToHtml(data.polished_content);
+                            polished = this.markdownToHtml(polishedResult);
                         } else {
                             // Plain text target - remove html tags if LLM returned any
-                            polished = data.polished_content.replace(/<[^>]*>?/gm, '');
+                            polished = polishedResult.replace(/<[^>]*>?/gm, '');
                         }
                         usedLlm = true;
                     } else {

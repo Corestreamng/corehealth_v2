@@ -2487,9 +2487,28 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 async function quickPolishNote(btn) {
-    if (!ClinicalAiScribeStudio.instance) return;
-    const studio = ClinicalAiScribeStudio.instance;
-    const currentText = studio.getEditorContent();
+    const studio = window.ClinicalAiScribeStudio ? window.ClinicalAiScribeStudio.instance : null;
+    const targetSelector = btn.getAttribute('data-target');
+    const editorType = btn.getAttribute('data-editor-type') || (studio ? studio.editorType : 'ckeditor');
+
+    let currentText = '';
+    if (editorType === 'ckeditor') {
+        const targetEl = targetSelector ? document.querySelector(targetSelector) : null;
+        const targetId = targetEl ? targetEl.id : (studio ? studio.targetEditorSelector?.replace('#', '') : null);
+        if (targetId && window.CKEDITOR && window.CKEDITOR.instances && window.CKEDITOR.instances[targetId]) {
+            currentText = window.CKEDITOR.instances[targetId].getData();
+        } else if (studio) {
+            currentText = studio.getEditorContent();
+        }
+    } else {
+        const targetEl = targetSelector ? document.querySelector(targetSelector) : null;
+        if (targetEl) {
+            currentText = targetEl.value;
+        } else if (studio) {
+            currentText = studio.getEditorContent();
+        }
+    }
+
     const cleanText = (currentText || '').replace(/<[^>]*>/g, '').replace(/&nbsp;/g, ' ').trim();
 
     if (!cleanText) {
@@ -2503,25 +2522,78 @@ async function quickPolishNote(btn) {
     btn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Polishing...';
     btn.disabled = true;
 
+    function applyPolishedText(content) {
+        if (editorType === 'ckeditor') {
+            const targetEl = targetSelector ? document.querySelector(targetSelector) : null;
+            const targetId = targetEl ? targetEl.id : (studio ? studio.targetEditorSelector?.replace('#', '') : null);
+            const html = (typeof marked !== 'undefined' && typeof marked.parse === 'function')
+                ? marked.parse(content)
+                : (studio ? studio.formatMarkdown(content) : content.replace(/\n/g, '<br>'));
+
+            if (targetId && window.CKEDITOR && window.CKEDITOR.instances && window.CKEDITOR.instances[targetId]) {
+                window.CKEDITOR.instances[targetId].setData(html);
+            } else if (studio) {
+                studio.setEditorContent(html);
+            }
+        } else {
+            const plain = content.replace(/<[^>]*>/g, '');
+            const targetEl = targetSelector ? document.querySelector(targetSelector) : null;
+            if (targetEl) {
+                targetEl.value = plain;
+                targetEl.dispatchEvent(new Event('input', { bubbles: true }));
+                targetEl.dispatchEvent(new Event('change', { bubbles: true }));
+            } else if (studio) {
+                studio.setEditorContent(plain);
+            }
+        }
+    }
+
     try {
-        const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content;
+        const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content
+            || (window.WORKBENCH_CONFIG ? window.WORKBENCH_CONFIG.csrf : '');
+        const patId = (studio ? studio.patientId : null)
+            || window.currentPatientId
+            || window.patientId
+            || (window.WORKBENCH_CONFIG ? window.WORKBENCH_CONFIG.patientId : null);
+        const encId = (studio ? studio.encounterId : null)
+            || window.currentEncounterId
+            || window.encounterId
+            || (window.WORKBENCH_CONFIG ? window.WORKBENCH_CONFIG.encounterId : null);
+
         const response = await fetch('/llm/polish-note', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
+                'Accept': 'application/json',
                 'X-CSRF-TOKEN': csrfToken
             },
             body: JSON.stringify({
+                note_content: currentText,
                 raw_note: currentText,
-                modality: studio.role || 'doctor'
+                patient_id: patId ? parseInt(patId, 10) : null,
+                encounter_id: encId ? parseInt(encId, 10) : null,
+                note_type: (studio ? studio.taxonomy : null) || 'clerking'
             })
         });
 
+        if (!response.ok) {
+            const errText = await response.text();
+            let errMsg = 'Failed to polish note.';
+            try {
+                const errJson = JSON.parse(errText);
+                errMsg = errJson.message || errMsg;
+            } catch (_) {
+                errMsg = `Server error (${response.status})`;
+            }
+            throw new Error(errMsg);
+        }
+
         const data = await response.json();
-        if (data && data.polished_note) {
-            studio.setEditorContent(data.polished_note);
+        const polishedText = data.polished_content || data.polished_note;
+        if (data && data.success && polishedText) {
+            applyPolishedText(polishedText);
             if (typeof toastr !== 'undefined') {
-                toastr.success('Note polished in-place.');
+                toastr.success('Clinical note polished in-place.');
             }
         } else {
             throw new Error(data.message || 'Failed to polish note.');

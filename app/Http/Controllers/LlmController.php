@@ -102,6 +102,11 @@ class LlmController extends Controller
      */
     public function polishNote(Request $request)
     {
+        // Support both note_content and raw_note parameter names
+        if (!$request->has('note_content') && $request->has('raw_note')) {
+            $request->merge(['note_content' => $request->input('raw_note')]);
+        }
+
         $request->validate([
             'note_content' => 'required|string',
             'patient_id' => 'nullable|integer',
@@ -156,6 +161,7 @@ class LlmController extends Controller
             return response()->json([
                 'success' => true,
                 'polished_content' => $response['content'],
+                'polished_note' => $response['content'],
                 'model_used' => $response['model'],
             ]);
         } catch (\Exception $e) {
