@@ -1,144 +1,105 @@
-{{-- Patient Summary Overlay (Reuses Speech Dictation Styling) --}}
+{{-- Patient Brief Offcanvas Drawer (Longitudinal Clinical AI Briefing) --}}
 @php
     $hosColor = appsettings('hos_color') ?? '#0066cc';
-    // Get LLM config to check if voice is enabled and default rate
     $llmConfig = is_string(appsettings('llm_config')) ? json_decode(appsettings('llm_config'), true) : (is_array(appsettings('llm_config')) ? appsettings('llm_config') : []);
     $voiceEnabled = $llmConfig['summary_voice_enabled'] ?? true;
     $voiceRate = $llmConfig['summary_voice_rate'] ?? 1.0;
 @endphp
 
-<div id="patient-summary-overlay" class="speech-overlay-fullscreen d-none" style="--hos-color: {{ $hosColor }}; z-index: 1060; overflow-y: auto;">
-    {{-- Muted Header Info --}}
-    <div class="speech-overlay-header" style="position: sticky; top: 0; background: inherit; z-index: 10;">
-        <div class="speech-header-left">ENCOUNTER • PATIENT BRIEFING</div>
-        <div class="speech-header-center">AI CLINICAL SUMMARY</div>
-        <div class="speech-header-right d-flex align-items-center gap-3">
-            <button type="button" class="btn btn-sm btn-outline-primary d-flex flex-column align-items-center p-1 px-2 btn-regenerate-summary" id="btn-regenerate-summary">
-                <i class="mdi mdi-refresh fs-5" style="line-height: 1;"></i>
-                <span style="font-size: 0.65rem; font-weight: 600; margin-top: 2px;">Regenerate</span>
+{{-- Semi-transparent backdrop for smooth dismissal --}}
+<div id="patient-summary-backdrop" class="patient-brief-backdrop d-none"></div>
+
+{{-- Offcanvas Slide-Out Clinical Drawer --}}
+<div id="patient-summary-overlay" class="patient-brief-drawer d-none" style="--hos-color: {{ $hosColor }};" role="dialog" aria-modal="true" aria-labelledby="patient-brief-drawer-title">
+    {{-- Header --}}
+    <div class="patient-brief-header">
+        <div class="patient-brief-header-title">
+            <div class="d-flex align-items-center gap-2 mb-1">
+                <span class="patient-brief-pill"><i class="mdi mdi-creation"></i> Longitudinal AI Brief</span>
+                @if(isset($patient))
+                    <span class="patient-brief-tag">{{ $patient->first_name ?? $patient->firstname ?? '' }} {{ $patient->last_name ?? $patient->surname ?? '' }} &bull; #{{ $patient->file_no ?? $patient->id }}</span>
+                @endif
+            </div>
+            <h5 class="patient-brief-heading" id="patient-brief-drawer-title">Longitudinal Patient Summary</h5>
+        </div>
+        <div class="patient-brief-header-actions">
+            <button type="button" class="btn btn-sm btn-outline-primary btn-regenerate-summary" id="btn-regenerate-summary" title="Regenerate brief with fresh records">
+                <i class="mdi mdi-refresh"></i>
+                <span>Refresh</span>
             </button>
-            <button type="button" class="btn btn-sm text-danger btn-close-summary d-flex flex-column align-items-center p-1" aria-label="Close">
-                <i class="mdi mdi-close fs-3" style="line-height: 1;"></i>
-                <span style="font-size: 0.65rem; font-weight: bold; margin-top: 0px;">Close</span>
+            <button type="button" class="btn btn-sm btn-light btn-close-summary" aria-label="Close" title="Close drawer (Esc)">
+                <i class="mdi mdi-close fs-5"></i>
             </button>
         </div>
     </div>
     
-    <div class="speech-overlay-content" style="padding-top: 5vh; padding-bottom: 120px;">
-        
-        {{-- Loading State --}}
-        <div id="summary-loading" class="text-center w-100" style="display: none;">
-            <div class="spinner-border text-primary" role="status" style="width: 3rem; height: 3rem;">
+    {{-- Drawer Body --}}
+    <div class="patient-brief-body">
+        {{-- Loading Skeleton State --}}
+        <div id="summary-loading" class="patient-brief-loading" style="display: none;">
+            <div class="spinner-border text-primary" role="status" style="width: 2.2rem; height: 2.2rem;">
                 <span class="visually-hidden">Loading...</span>
             </div>
-            <h5 class="mt-3 text-muted">Analyzing patient history...</h5>
-            <p class="small text-muted">Retrieving and synthesizing clinical data</p>
+            <h6 class="mt-3 font-weight-bold text-dark">Synthesizing Longitudinal EHR Records...</h6>
+            <p class="small text-muted mb-0">Analyzing past encounters, active diagnoses, lab trends, vitals, and medication history.</p>
         </div>
 
         {{-- Error State --}}
-        <div id="summary-error" class="alert alert-danger mx-auto" style="max-width: 600px; display: none;">
-            <i class="mdi mdi-alert-circle me-2"></i> <span id="summary-error-text">Failed to generate summary.</span>
+        <div id="summary-error" class="alert alert-danger mx-3 my-3" style="display: none;">
+            <i class="mdi mdi-alert-circle me-2"></i> <span id="summary-error-text">Failed to generate patient brief.</span>
         </div>
 
-        {{-- Summary Content Area --}}
-        <div id="summary-content" class="mx-auto" style="max-width: 800px; text-align: left; font-size: 1.1rem; line-height: 1.6; display: none;">
-            <div class="p-4 rounded-4" style="background: var(--bs-body-bg); border: 1px solid rgba(255,255,255,0.1); box-shadow: 0 10px 30px rgba(0,0,0,0.1);">
-                {{-- Content injected via JS --}}
+        {{-- Content State --}}
+        <div id="summary-content" class="patient-brief-content-wrapper" style="display: none;">
+            <div class="patient-brief-card">
                 <div id="summary-text-container" class="markdown-content"></div>
                 
-                <div class="mt-4 pt-3 border-top d-flex justify-content-between align-items-center text-muted small">
-                    <span id="summary-meta-info"><i class="mdi mdi-robot-outline"></i> Generated by AI</span>
-                    <button type="button" class="btn btn-sm btn-outline-secondary rounded-pill btn-copy-summary">
-                        <i class="mdi mdi-content-copy"></i> Copy to Note
+                <div class="patient-brief-card-meta mt-3 pt-2 border-top d-flex justify-content-between align-items-center">
+                    <span id="summary-meta-info" class="text-muted small"><i class="mdi mdi-robot-outline"></i> Synthesized by Clinical AI</span>
+                    <button type="button" class="btn btn-xs btn-outline-secondary btn-copy-summary">
+                        <i class="mdi mdi-content-copy me-1"></i> Copy to Note
                     </button>
                 </div>
             </div>
-        </div> <!-- End of #summary-content -->
-    </div> <!-- End of .speech-overlay-content -->
-        
-    {{-- Floating Capsule Control Bar (Sticky Footer) --}}
-        <div class="speech-capsule-bar" id="summary-capsule-bar" style="display: none;">
-            <div class="capsule-left flex-grow-1">
-                <span class="speech-sparkle-icon" id="summary-voice-status-icon"><i class="mdi mdi-volume-high"></i></span>
-                <div id="summary-voice-status-text" class="speech-overlay-text text-truncate" style="max-width: 300px;">
-                    Ready to read...
-                </div>
+        </div>
+    </div>
+
+    {{-- Footer Controls (TTS + Scribe Studio Link) --}}
+    <div class="patient-brief-footer" id="summary-capsule-bar" style="display: none;">
+        @if($voiceEnabled)
+        <div class="patient-brief-voice-strip">
+            <div class="voice-status">
+                <span class="voice-status-icon" id="summary-voice-status-icon"><i class="mdi mdi-volume-high"></i></span>
+                <span class="voice-status-text" id="summary-voice-status-text">Audio Ready</span>
             </div>
             
-            @if($voiceEnabled)
-            <div class="capsule-center d-flex align-items-center gap-3 px-3 border-start border-end border-secondary border-opacity-25">
-                <button type="button" class="btn btn-icon text-dark summary-voice-btn d-flex flex-column align-items-center" id="btn-summary-play" title="Play/Pause" style="width: 55px; height: 55px; justify-content: center; background: rgba(0,0,0,0.05); border-radius: 50%;">
-                    <i class="mdi mdi-play fs-2" style="line-height: 1;"></i>
-                    <span style="font-size: 0.55rem; font-weight: bold; margin-top: -2px;">Play</span>
+            <div class="voice-controls">
+                <button type="button" class="btn btn-icon btn-sm voice-action-btn" id="btn-summary-play" title="Play Narration">
+                    <i class="mdi mdi-play"></i>
                 </button>
-                <button type="button" class="btn btn-icon text-dark summary-voice-btn d-flex flex-column align-items-center" id="btn-summary-stop" title="Stop" style="width: 55px; height: 55px; justify-content: center; background: rgba(0,0,0,0.05); border-radius: 50%;">
-                    <i class="mdi mdi-stop fs-2" style="line-height: 1;"></i>
-                    <span style="font-size: 0.55rem; font-weight: bold; margin-top: -2px;">Stop</span>
+                <button type="button" class="btn btn-icon btn-sm voice-action-btn" id="btn-summary-stop" title="Stop Narration">
+                    <i class="mdi mdi-stop"></i>
                 </button>
-                <div class="d-flex flex-column align-items-center ms-2" style="background: rgba(0,0,0,0.03); border-radius: 12px; padding: 4px 8px;">
-                    <span style="font-size: 0.55rem; font-weight: bold; text-transform: uppercase; color: #666;">Speed</span>
-                    <div class="d-flex align-items-center">
-                        <i class="mdi mdi-speedometer text-secondary fs-4" title="Playback Speed"></i>
-                        <select id="summary-voice-rate" class="form-select bg-transparent text-dark border-0 py-0 pe-4 ps-1" style="width: 70px; cursor: pointer; font-weight: 600; font-size: 1rem; box-shadow: none;">
-                            <option class="text-dark" value="0.8">0.8x</option>
-                            <option class="text-dark" value="1.0" selected>1.0x</option>
-                            <option class="text-dark" value="1.2">1.2x</option>
-                            <option class="text-dark" value="1.5">1.5x</option>
-                        </select>
-                    </div>
+                <div class="voice-speed-wrapper">
+                    <label for="summary-voice-rate" class="voice-speed-label">Speed</label>
+                    <select id="summary-voice-rate" class="form-select form-select-sm voice-speed-select">
+                        <option value="0.8">0.8x</option>
+                        <option value="1.0" selected>1.0x</option>
+                        <option value="1.2">1.2x</option>
+                        <option value="1.5">1.5x</option>
+                    </select>
                 </div>
             </div>
-            @endif
+        </div>
+        @endif
 
-            <div class="capsule-right ps-3 d-flex align-items-center">
-                <button type="button" class="btn-capsule-stop btn-close-summary d-flex flex-column align-items-center text-dark" title="Dismiss" style="background: transparent; border: none;">
-                    <i class="mdi mdi-check-circle fs-2 text-success" style="line-height: 1;"></i>
-                    <span style="font-size: 0.55rem; font-weight: bold; margin-top: 2px;">Dismiss</span>
-                </button>
-            </div>
-        </div> <!-- End of #summary-capsule-bar -->
-</div> <!-- End of #patient-summary-overlay -->
-
-<style>
-/* Markdown Content Styling for the summary */
-.markdown-content h1, .markdown-content h2, .markdown-content h3 {
-    margin-top: 1.5rem;
-    margin-bottom: 0.75rem;
-    color: var(--bs-heading-color);
-    font-weight: 600;
-}
-.markdown-content h1 { font-size: 1.5rem; }
-.markdown-content h2 { font-size: 1.25rem; border-bottom: 1px solid rgba(128,128,128,0.2); padding-bottom: 0.3rem; }
-.markdown-content h3 { font-size: 1.1rem; }
-.markdown-content p { margin-bottom: 1rem; }
-.markdown-content ul { padding-left: 1.5rem; margin-bottom: 1rem; }
-.markdown-content li { margin-bottom: 0.25rem; }
-.markdown-content strong { color: var(--bs-heading-color); }
-
-/* Ensure summary overlay is above modals if triggered inside one */
-#patient-summary-overlay {
-    backdrop-filter: blur(8px);
-    -webkit-backdrop-filter: blur(8px);
-}
-
-#summary-capsule-bar {
-    position: sticky !important;
-    bottom: 30px !important;
-    margin: 0 auto !important;
-    z-index: 1050 !important;
-    box-shadow: 0 15px 35px rgba(0,0,0,0.2) !important;
-}
-
-.summary-voice-btn {
-    border-radius: 50%;
-    width: 32px;
-    height: 32px;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    transition: all 0.2s;
-}
-.summary-voice-btn:hover {
-    background: rgba(255,255,255,0.1);
-}
-</style>
+        <div class="patient-brief-bottom-actions">
+            <button type="button" class="btn btn-sm btn-outline-secondary btn-close-summary flex-grow-1">
+                Dismiss
+            </button>
+            <button type="button" class="btn btn-sm btn-primary flex-grow-1 btn-open-studio-from-brief" id="btn-open-studio-from-brief">
+                <i class="mdi mdi-microphone me-1"></i> Open Scribe Studio (F9)
+            </button>
+        </div>
+    </div>
+</div>

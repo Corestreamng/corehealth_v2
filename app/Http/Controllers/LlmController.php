@@ -23,11 +23,11 @@ class LlmController extends Controller
     public function __construct(
         LlmGatewayService $gateway,
         PatientContextService $contextService,
-        OrderCatalogRegistryService $catalogRegistry
+        ?OrderCatalogRegistryService $catalogRegistry = null
     ) {
         $this->gateway = $gateway;
         $this->contextService = $contextService;
-        $this->catalogRegistry = $catalogRegistry;
+        $this->catalogRegistry = $catalogRegistry ?? app(OrderCatalogRegistryService::class);
     }
 
     /**
@@ -135,6 +135,7 @@ class LlmController extends Controller
             }
 
             $userMessage = '';
+            $userMessage .= "TODAY'S CLINICAL DATE: " . now()->format('l, F j, Y') . "\n\n";
             if (!empty($context)) {
                 $userMessage .= "PATIENT CONTEXT (Do not include this in your output, just use it for understanding abbreviations/history):\n" .
                     $context . "\n\n---\n";
@@ -235,6 +236,8 @@ class LlmController extends Controller
             'taxonomy' => 'nullable|string',
             'transcript' => 'nullable|string',
             'editor_content' => 'nullable|string',
+            'existing_sections' => 'nullable',
+            'existing_orders' => 'nullable',
             'language' => 'nullable|string',
         ]);
 
@@ -283,18 +286,40 @@ class LlmController extends Controller
                 }
             }
 
-            // Retrieve Catalog Categories context
-            $catalogContext = $this->catalogRegistry->getCategoryPromptContext();
+            $patientSummary = $request->input('patient_summary');
+            if (!empty($patientSummary)) {
+                $patientContext .= "\n\nLONGITUDINAL PATIENT SUMMARY & EHR BRIEF (Context only):\n" . trim($patientSummary);
+            }
+
+            // Existing sections and orders from previous structuring or current draft
+            $existingSections = $request->input('existing_sections', []);
+            $existingOrders = $request->input('existing_orders', []);
+            if (!is_array($existingSections)) {
+                $existingSections = json_decode((string) $existingSections, true) ?: [];
+            }
+            if (!is_array($existingOrders)) {
+                $existingOrders = json_decode((string) $existingOrders, true) ?: [];
+            }
+
+            // Retrieve Compressed Catalog and dynamic context matches
+            $combinedSearchText = $transcript . ' ' . $editorContent;
+            if (!empty($existingSections)) {
+                foreach ($existingSections as $sec) {
+                    $combinedSearchText .= ' ' . ($sec['content'] ?? '');
+                }
+            }
+            $catalogContext = $this->catalogRegistry->getCatalogPromptContext($combinedSearchText);
 
             // Build Prompts
             $config = $this->gateway->getConfig();
             $systemPrompt = $config['system_prompts']['clinical_scribe'] ?? config('llm.prompts.clinical_scribe');
 
-            $userMessage = "TARGET PERSPECTIVE: ROLE=" . strtoupper($role) . ", TAXONOMY=" . strtoupper($taxonomy) . "\n\n";
+            $userMessage = "TARGET PERSPECTIVE: ROLE=" . strtoupper($role) . ", TAXONOMY=" . strtoupper($taxonomy) . "\n";
+            $userMessage .= "TODAY'S CLINICAL ENCOUNTER DATE & TIME: " . now()->format('l, F j, Y g:i A') . " (" . now()->toDateString() . ")\n\n";
             $userMessage .= $catalogContext . "\n\n";
 
             if (!empty($patientContext)) {
-                $userMessage .= "PATIENT CLINICAL CONTEXT (Use for history/abbreviations, do not echo verbatim):\n" .
+                $userMessage .= "PATIENT CLINICAL CONTEXT & HISTORY (Background context only — do NOT echo this verbatim into the consultation note; the clinician's spoken dictation and live encounter observations take absolute precedence):\n" .
                     $patientContext . "\n\n---\n";
             }
 
@@ -303,36 +328,123 @@ class LlmController extends Controller
                     $editorContent . "\n\n---\n";
             }
 
+            if (!empty($existingSections)) {
+                $userMessage .= "CURRENT STRUCTURED CONSULTATION NOTE (The clinician is adding new dictation/orders or amending this note; maintain established structure and update sections seamlessly):\n" .
+                    json_encode($existingSections, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) . "\n\n---\n";
+            }
+
             if (!empty($transcript)) {
                 $userMessage .= "NEW SPOKEN AUDIO DICTATION / TRANSCRIPT TO INCORPORATE:\n" .
                     $transcript . "\n\n";
             }
 
             $response = $this->gateway->complete($systemPrompt, $userMessage, [
-                'max_tokens' => 4096,
+                'max_tokens' => 8192,
                 'temperature' => 0.15,
+                'json_mode' => true,
+                'thinking_budget' => 0,
             ]);
 
             $content = trim($response['content']);
 
             // Parse JSON response (safely handle markdown fence wrapping if emitted)
             $parsed = $this->extractJsonPayload($content);
-            if (!$parsed || !isset($parsed['structured_sections'])) {
-                Log::warning('LLM Scribe returned malformed JSON, constructing fallback', ['raw' => $content]);
+            $rawOrders = $parsed['extracted_orders'] ?? [];
+
+            // If parsed payload lacks extracted_orders, attempt regex salvage from response text
+            if (empty($rawOrders)) {
+                if (preg_match('/"extracted_orders"\s*:\s*\[([\s\S]*?)\]/', $content, $ordersBlock)) {
+                    $ordersJson = '[' . trim($ordersBlock[1]) . ']';
+                    $ordersJson = preg_replace('/,\s*\]$/', ']', $ordersJson);
+                    $decodedOrders = json_decode($ordersJson, true);
+                    if (is_array($decodedOrders) && !empty($decodedOrders)) {
+                        $rawOrders = $decodedOrders;
+                    }
+                }
+            }
+
+            if (!$parsed || !isset($parsed['structured_sections']) || empty($parsed['structured_sections'])) {
+                Log::warning('LLM Scribe returned malformed or empty structured sections, constructing fallback', ['raw' => $content]);
+
+                // Strip raw JSON artifacts so raw JSON code never leaks into clinical note view
+                $cleanText = $content;
+                if (str_contains($cleanText, '"structured_sections"') || str_contains($cleanText, '```json')) {
+                    $cleanText = preg_replace('/```(?:json)?/i', '', $cleanText);
+                    $cleanText = preg_replace('/"summary_headline"\s*:\s*"[^"]*",?/', '', $cleanText);
+                    $cleanText = preg_replace('/"(?:key|title|content|taxonomy_type)"\s*:\s*/', '', $cleanText);
+                    $cleanText = preg_replace('/[{\[\]}",]/', ' ', $cleanText);
+                    $cleanText = preg_replace('/\s+/', ' ', trim($cleanText));
+                }
+
+                $sections = !empty($existingSections) ? $existingSections : [];
+                if (!empty($sections) && !empty($transcript)) {
+                    // Seamlessly append the new dictation addendum to the Plan section
+                    $planUpdated = false;
+                    foreach ($sections as &$sec) {
+                        if (in_array(strtoupper($sec['key'] ?? ''), ['PLAN', 'P', 'R', 'A'])) {
+                            $sec['content'] = rtrim($sec['content']) . "\n\nAddendum: " . trim($transcript);
+                            $planUpdated = true;
+
+                            break;
+                        }
+                    }
+                    unset($sec);
+                    if (!$planUpdated) {
+                        $sections[] = [
+                            'key' => 'ADDENDUM',
+                            'title' => 'Consultation Addendum',
+                            'content' => trim($transcript),
+                        ];
+                    }
+                } elseif (empty($sections)) {
+                    $sections = [
+                        ['key' => 'NOTE', 'title' => 'Clinical Note', 'content' => $cleanText ?: ($transcript ?: 'No note content generated.')],
+                    ];
+                }
+
                 $parsed = [
-                    'summary_headline' => 'Clinical Note (' . strtoupper($taxonomy) . ')',
+                    'summary_headline' => $parsed['summary_headline'] ?? ('Clinical Note (' . strtoupper($taxonomy) . ')'),
                     'taxonomy_type' => $taxonomy,
-                    'structured_sections' => [
-                        ['key' => 'NOTE', 'title' => 'Clinical Note', 'content' => $content],
-                    ],
-                    'formatted_markdown' => $content,
-                    'extracted_orders' => [],
+                    'structured_sections' => $sections,
+                    'extracted_orders' => $rawOrders,
                 ];
+            } else {
+                $parsed['extracted_orders'] = $rawOrders;
+            }
+
+            // Ensure formatted_markdown is synthesized if not emitted
+            if (empty($parsed['formatted_markdown']) && !empty($parsed['structured_sections'])) {
+                $md = '';
+                foreach ($parsed['structured_sections'] as $sec) {
+                    $md .= "### " . ($sec['title'] ?? 'Section') . "\n" . ($sec['content'] ?? '') . "\n\n";
+                }
+                $parsed['formatted_markdown'] = trim($md);
             }
 
             // Ground extracted orders against CoreHealth Products and Services Catalogs
             $rawOrders = $parsed['extracted_orders'] ?? [];
             $groundedOrders = $this->catalogRegistry->groundOrders($rawOrders, $patientAllergies);
+
+            // Merge with existing orders if any so previously grounded items are preserved
+            if (!empty($existingOrders)) {
+                $mergedOrders = [];
+                $seenKeys = [];
+
+                foreach ($existingOrders as $eOrd) {
+                    $k = ($eOrd['order_type'] ?? '') . ':' . ($eOrd['catalog_id'] ?? '') . ':' . strtolower(trim($eOrd['item_name'] ?? ''));
+                    $mergedOrders[] = $eOrd;
+                    $seenKeys[$k] = true;
+                }
+
+                foreach ($groundedOrders as $gOrd) {
+                    $k = ($gOrd['order_type'] ?? '') . ':' . ($gOrd['catalog_id'] ?? '') . ':' . strtolower(trim($gOrd['item_name'] ?? ''));
+                    if (!isset($seenKeys[$k])) {
+                        $mergedOrders[] = $gOrd;
+                        $seenKeys[$k] = true;
+                    }
+                }
+                $groundedOrders = $mergedOrders;
+            }
 
             // Filter any safety warnings
             $safetyWarnings = [];
@@ -381,7 +493,8 @@ class LlmController extends Controller
                 ? $request->current_sections
                 : json_decode($request->current_sections, true);
 
-            $systemPrompt = config('llm.prompts.convert_taxonomy');
+            $config = $this->gateway->getConfig();
+            $systemPrompt = $config['system_prompts']['convert_taxonomy'] ?? config('llm.prompts.convert_taxonomy');
             $userMessage = "CONVERT CLINICAL NOTE FROM TAXONOMY '" . strtoupper($request->from_taxonomy) .
                 "' TO TARGET TAXONOMY '" . strtoupper($request->to_taxonomy) . "'.\n\n" .
                 "CURRENT STRUCTURED SECTIONS (PRESERVE 100% OF DATA):\n" .
@@ -482,6 +595,81 @@ class LlmController extends Controller
             $decoded = json_decode($matches[0], true);
             if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
                 return $decoded;
+            }
+        }
+
+        // Repair truncated JSON if the model response was cut off mid-stream
+        $repaired = $this->repairTruncatedJson($clean);
+        if ($repaired !== null) {
+            return $repaired;
+        }
+
+        return null;
+    }
+
+    /**
+     * Attempt to repair and salvage truncated JSON streams.
+     */
+    protected function repairTruncatedJson(string $raw): ?array
+    {
+        $str = trim($raw);
+        if (!str_starts_with($str, '{')) {
+            $start = strpos($str, '{');
+            if ($start === false) {
+                return null;
+            }
+            $str = substr($str, $start);
+        }
+
+        // Strip trailing uncompleted elements e.g. , { ... or , "key": ... or trailing comma
+        $cleanStr = preg_replace('/,\s*\{\s*(?:"[^"]*"\s*:\s*(?:"[^"]*"|[^,}\]]*))?$/s', '', $str);
+        $cleanStr = preg_replace('/,\s*"[^"]*"\s*:\s*(?:"[^"]*)?$/s', '', $cleanStr);
+        $cleanStr = preg_replace('/,\s*$/s', '', $cleanStr);
+
+        // Count unclosed brackets and braces
+        $openBraces = substr_count($cleanStr, '{') - substr_count($cleanStr, '}');
+        $openBrackets = substr_count($cleanStr, '[') - substr_count($cleanStr, ']');
+
+        if ($openBraces > 0 || $openBrackets > 0) {
+            $closing = str_repeat(']', max(0, $openBrackets)) . str_repeat('}', max(0, $openBraces));
+            $attempt = $cleanStr . $closing;
+
+            $decoded = json_decode($attempt, true);
+            if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
+                Log::info('Successfully repaired truncated LLM JSON payload');
+
+                return $decoded;
+            }
+        }
+
+        // Regex salvage individual sections if whole JSON cannot be balanced
+        if (preg_match_all('/\{\s*"key"\s*:\s*"([^"]+)"\s*,\s*"title"\s*:\s*"([^"]+)"\s*,\s*"content"\s*:\s*"((?:[^"\x5C]|\\.)*)"\s*\}/s', $raw, $matches, PREG_SET_ORDER)) {
+            $salvagedSections = [];
+            foreach ($matches as $m) {
+                $salvagedSections[] = [
+                    'key' => $m[1],
+                    'title' => $m[2],
+                    'content' => stripcslashes($m[3]),
+                ];
+            }
+            $salvagedOrders = [];
+            if (preg_match('/"extracted_orders"\s*:\s*\[([\s\S]*?)\]/', $raw, $ordersBlock)) {
+                $ordersJson = '[' . trim($ordersBlock[1]) . ']';
+                $ordersJson = preg_replace('/,\s*\]$/', ']', $ordersJson);
+                $decodedOrders = json_decode($ordersJson, true);
+                if (is_array($decodedOrders) && !empty($decodedOrders)) {
+                    $salvagedOrders = $decodedOrders;
+                }
+            }
+            if (!empty($salvagedSections)) {
+                Log::info('Salvaged ' . count($salvagedSections) . ' structured sections from malformed JSON');
+
+                return [
+                    'summary_headline' => 'Amended Clinical Consultation',
+                    'taxonomy_type' => 'clerking',
+                    'structured_sections' => $salvagedSections,
+                    'extracted_orders' => $salvagedOrders,
+                ];
             }
         }
 

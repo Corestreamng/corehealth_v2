@@ -22,6 +22,14 @@ class ClinicalAiScribeStudio {
 
         // DOM elements
         this.overlay = document.getElementById('clinical-ai-scribe-overlay');
+        this.workspaceGrid = document.getElementById('scribe-workspace-grid');
+        this.cardDictation = document.getElementById('scribe-card-dictation');
+        this.cardNote = document.getElementById('scribe-card-note');
+        this.stepNav = document.getElementById('scribe-step-nav');
+        this.summaryDeck = document.getElementById('scribe-summary-deck');
+        this.summaryContent = document.getElementById('scribe-summary-content');
+        this.summaryPreviewTicker = document.getElementById('scribe-summary-preview-ticker');
+        this.btnSummaryAudio = document.getElementById('btn-summary-audio-narrate');
         this.transcriptContainer = document.getElementById('scribe-live-transcript');
         this.waveformContainer = document.getElementById('scribe-waveform-container');
         this.recordingBadge = document.getElementById('scribe-recording-badge');
@@ -30,14 +38,40 @@ class ClinicalAiScribeStudio {
         this.ordersTableBody = document.getElementById('scribe-orders-tbody');
         this.ordersDeck = document.getElementById('scribe-orders-deck');
         this.ordersCountBadge = document.getElementById('scribe-orders-count-badge');
+        this.ordersFreeformCount = document.getElementById('scribe-orders-freeform-count');
+        this.ordersPreviewTicker = document.getElementById('scribe-orders-preview-ticker');
+        this.stepOrdersCount = document.getElementById('scribe-step-orders-count');
+        this.matcherModal = document.getElementById('scribe-catalog-matcher-modal');
+        this.matcherSearchInput = document.getElementById('scribe-matcher-search-input');
+        this.matcherResultsContainer = document.getElementById('scribe-matcher-results');
+        this.matcherSubtitle = document.getElementById('scribe-matcher-subtitle');
         this.safetyWarningsContainer = document.getElementById('scribe-safety-warnings');
         this.draftNotice = document.getElementById('scribe-draft-notice');
         this.langSelect = document.getElementById('scribe-lang-select');
         this.headlineEl = document.getElementById('scribe-headline-text');
+        this.briefStrip = document.getElementById('scribe-brief-strip');
+        this.briefHighlight = document.getElementById('scribe-brief-highlight');
+        this.briefExpandedPanel = document.getElementById('scribe-brief-expanded-panel');
+        this.briefExpandedContent = document.getElementById('scribe-brief-expanded-content');
+        this.btnToggleBrief = document.getElementById('btn-toggle-brief-expand');
+        this.btnCollapseBrief = document.getElementById('btn-collapse-brief-panel');
 
         // State
+        this.cockpitMode = 'dictate'; // 'summary', 'dictate', 'note', 'orders', 'balanced'
+        this.summaryDeckState = 'docked'; // 'docked', 'expanded', 'maximized'
+        this.ordersDeckState = 'docked'; // 'docked', 'expanded', 'maximized'
+        this.cardFoldStates = { dictate: false, note: false };
+        this.isNarrating = false;
+        this.speechUtterance = null;
+        this.activeMatchingOrderIndex = null;
+        this.activeMatcherFilter = 'all';
+        this.matcherDebounceTimer = null;
+        this._currentSearchResults = [];
         this.isListening = false;
         this.isPaused = false;
+        this.isNetworkError = false;
+        this.networkRetryAttempts = 0;
+        this.restartTimer = null;
         this.recognition = null;
         this.audioContext = null;
         this.audioAnalyser = null;
@@ -47,6 +81,8 @@ class ClinicalAiScribeStudio {
         this.secondsRecorded = 0;
         this.finalTranscript = '';
         this.baselineEditorContent = '';
+        this.cachedPatientBrief = '';
+        this.dispatchedOrderKeys = new Set();
         this.structuredSections = [];
         this.groundedOrders = [];
         this.isEditing = false;
@@ -63,6 +99,7 @@ class ClinicalAiScribeStudio {
         if (config.encounterId !== undefined) this.encounterId = config.encounterId;
         if (config.taxonomy) this.taxonomy = config.taxonomy;
         this.updateTaxonomyPills();
+        this.syncPatientBriefFromCache();
     }
 
     init() {
@@ -71,7 +108,106 @@ class ClinicalAiScribeStudio {
         this.initSpeechRecognition();
         this.bindEvents();
         this.updateTaxonomyPills();
+        this.setCockpitMode(this.cockpitMode);
+        this.setSummaryDeckState(this.summaryDeckState);
+        this.setOrdersDeckState(this.ordersDeckState);
+        this.updateSignButtonBadges();
         this.restoreDraftIfAvailable();
+        this.syncPatientBriefFromCache();
+    }
+
+    syncPatientBriefFromCache() {
+        const pId = this.patientId || window.currentPatientId || window.patientId || (window.WORKBENCH_CONFIG ? window.WORKBENCH_CONFIG.patientId : null);
+        const cached = window.cachedPatientSummary || (pId ? sessionStorage.getItem(`patient_brief_${pId}`) : null);
+        if (cached) {
+            this.setPatientBrief(cached);
+        }
+    }
+
+    setPatientBrief(briefText) {
+        if (!briefText || !briefText.trim()) return;
+        this.cachedPatientBrief = briefText;
+        if (this.summaryDeck) {
+            this.summaryDeck.style.display = 'block';
+        }
+        if (this.briefStrip) {
+            this.briefStrip.style.display = 'flex';
+        }
+        // Extract 1-2 highlight lines for summary deck ticker and brief strip
+        const cleanForTicker = (str) => {
+            return str.replace(/[*#_~`>-]/g, '').replace(/\s+/g, ' ').trim();
+        };
+        const lines = briefText.split('\n')
+            .map(l => cleanForTicker(l))
+            .filter(l => l.length > 5);
+        const highlightText = lines.slice(0, 2).join(' • ') || 'Longitudinal EHR history linked';
+        if (this.summaryPreviewTicker) {
+            this.summaryPreviewTicker.textContent = highlightText;
+            this.summaryPreviewTicker.title = highlightText;
+        }
+        if (this.summaryContent) {
+            this.summaryContent.innerHTML = this.formatMarkdown(briefText);
+        }
+        if (this.briefHighlight) {
+            this.briefHighlight.textContent = highlightText;
+            this.briefHighlight.title = highlightText;
+        }
+        if (this.briefExpandedContent) {
+            this.briefExpandedContent.innerHTML = this.formatMarkdown(briefText);
+        }
+    }
+
+    formatMarkdown(text) {
+        if (!text) return '';
+        if (typeof marked !== 'undefined' && typeof marked.parse === 'function') {
+            return marked.parse(text);
+        }
+        return text
+            .replace(/^### (.*$)/gim, '<h3>$1</h3>')
+            .replace(/^## (.*$)/gim, '<h2>$1</h2>')
+            .replace(/^# (.*$)/gim, '<h1>$1</h1>')
+            .replace(/\*\*(.*)\*\*/gim, '<strong>$1</strong>')
+            .replace(/\*(.*)\*/gim, '<em>$1</em>')
+            .replace(/^\- (.*$)/gim, '<ul><li>$1</li></ul>')
+            .replace(/<\/ul>\n<ul>/gim, '')
+            .replace(/\n/gim, '<br>');
+    }
+
+    getOrderKey(ord) {
+        return `${ord.order_type || 'ORDER'}_${ord.catalog_id || ord.item_name.toLowerCase().trim()}`;
+    }
+
+    mergeGroundedOrders(incomingOrders) {
+        const map = new Map();
+        
+        // Preserve existing orders already loaded
+        this.groundedOrders.forEach(o => {
+            const key = this.getOrderKey(o);
+            map.set(key, o);
+        });
+
+        // Merge incoming grounded orders deduplicated
+        incomingOrders.forEach(incoming => {
+            const key = this.getOrderKey(incoming);
+            if (map.has(key)) {
+                const existing = map.get(key);
+                if (this.dispatchedOrderKeys.has(key) || existing.is_dispatched) {
+                    existing.is_dispatched = true;
+                    existing.is_selected = false;
+                } else {
+                    if (incoming.dosage) existing.dosage = incoming.dosage;
+                    if (incoming.instructions) existing.instructions = incoming.instructions;
+                    if (incoming.indication) existing.indication = incoming.indication;
+                }
+            } else {
+                const isDispatched = this.dispatchedOrderKeys.has(key);
+                incoming.is_dispatched = isDispatched;
+                incoming.is_selected = !isDispatched;
+                map.set(key, incoming);
+            }
+        });
+
+        this.groundedOrders = Array.from(map.values());
     }
 
     initSpeechRecognition() {
@@ -88,14 +224,45 @@ class ClinicalAiScribeStudio {
 
         this.recognition.onstart = () => {
             this.isListening = true;
+            this.isPaused = false;
+            if (this.isNetworkError) {
+                this.isNetworkError = false;
+                this.networkRetryAttempts = 0;
+                if (typeof toastr !== 'undefined') {
+                    toastr.success('Voice dictation network connection restored.', 'Voice Reconnected');
+                }
+            }
             this.updateRecordingUI(true);
             this.startTimer();
             this.startWaveformVisualizer();
         };
 
         this.recognition.onend = () => {
+            if (this.restartTimer) {
+                clearTimeout(this.restartTimer);
+                this.restartTimer = null;
+            }
+
             if (this.isListening && !this.isPaused) {
-                try { this.recognition.start(); } catch (e) {}
+                // If ending due to a network glitch, retry with gradual backoff; otherwise restart promptly for next sentence
+                const delay = this.isNetworkError
+                    ? Math.min(1200 * Math.pow(1.5, Math.max(0, this.networkRetryAttempts - 1)), 5000)
+                    : 180;
+
+                this.restartTimer = setTimeout(() => {
+                    if (this.isListening && !this.isPaused) {
+                        try {
+                            this.recognition.start();
+                        } catch (e) {
+                            console.warn('Deferred speech recognition restart:', e);
+                            setTimeout(() => {
+                                if (this.isListening && !this.isPaused) {
+                                    try { this.recognition.start(); } catch (err) {}
+                                }
+                            }, 300);
+                        }
+                    }
+                }, delay);
             } else {
                 this.updateRecordingUI(false);
                 this.stopTimer();
@@ -105,6 +272,38 @@ class ClinicalAiScribeStudio {
 
         this.recognition.onerror = (e) => {
             console.warn('Speech recognition error:', e.error);
+
+            if (e.error === 'network') {
+                this.isNetworkError = true;
+                this.networkRetryAttempts++;
+                if (this.networkRetryAttempts <= 1 && typeof toastr !== 'undefined') {
+                    toastr.warning('Speech recognition service network glitch. Automatically reconnecting...', 'Voice Network Error');
+                }
+                if (this.transcriptContainer && !this.finalTranscript.trim()) {
+                    this.transcriptContainer.innerHTML = '<span class="text-warning"><i class="mdi mdi-wifi-off"></i> Speech recognition service connection interrupted. Reconnecting...<br><small class="text-muted">You can also type your notes directly here.</small></span>';
+                }
+            } else if (e.error === 'not-allowed' || e.error === 'service-not-allowed') {
+                this.isListening = false;
+                this.updateRecordingUI(false);
+                this.stopTimer();
+                this.stopWaveformVisualizer();
+                if (typeof toastr !== 'undefined') {
+                    toastr.error('Microphone access blocked. Please enable microphone permissions in your browser.', 'Microphone Blocked');
+                }
+                if (this.transcriptContainer && !this.finalTranscript.trim()) {
+                    this.transcriptContainer.innerHTML = '<span class="text-danger"><i class="mdi mdi-microphone-off"></i> Microphone access blocked. Please allow microphone access or type notes directly.</span>';
+                }
+            } else if (e.error === 'audio-capture') {
+                this.isListening = false;
+                this.updateRecordingUI(false);
+                this.stopTimer();
+                this.stopWaveformVisualizer();
+                if (typeof toastr !== 'undefined') {
+                    toastr.warning('Microphone unavailable or in use by another application.', 'Audio Capture');
+                }
+            } else if (e.error === 'no-speech') {
+                // Prolonged silence detected during consultation. onend will fire and restart with 180ms delay.
+            }
         };
 
         this.recognition.onresult = (event) => {
@@ -145,23 +344,20 @@ class ClinicalAiScribeStudio {
             btnProcess.addEventListener('click', () => this.processSession());
         }
 
-        // Accept & Sign Button
-        const btnSign = document.getElementById('btn-scribe-sign');
-        if (btnSign) {
-            btnSign.addEventListener('click', () => this.acceptAndSign());
-        }
+        // Master & Card Accept & Sign Buttons (Always Available & Synchronized)
+        document.querySelectorAll('.btn-scribe-sign, #btn-master-sign, #btn-scribe-sign').forEach(btn => {
+            btn.addEventListener('click', () => this.acceptAndSign());
+        });
 
-        // Edit Toggle Button
-        const btnEdit = document.getElementById('btn-scribe-edit');
-        if (btnEdit) {
-            btnEdit.addEventListener('click', () => this.toggleInlineEdit());
-        }
+        // Master & Card Edit Toggle Buttons
+        document.querySelectorAll('.btn-scribe-edit, #btn-master-edit, #btn-scribe-edit').forEach(btn => {
+            btn.addEventListener('click', () => this.toggleInlineEdit());
+        });
 
-        // Reject / Discard Button
-        const btnReject = document.getElementById('btn-scribe-reject');
-        if (btnReject) {
-            btnReject.addEventListener('click', () => this.discardDraft());
-        }
+        // Master & Card Discard Buttons
+        document.querySelectorAll('.btn-scribe-reject, #btn-master-reject, #btn-scribe-reject').forEach(btn => {
+            btn.addEventListener('click', () => this.discardDraft());
+        });
 
         // Language Select
         if (this.langSelect) {
@@ -185,6 +381,195 @@ class ClinicalAiScribeStudio {
                 }
             });
         });
+
+        // Pillar 1: Summary Deck Toggle & Maximize
+        const btnToggleSummaryHeader = document.getElementById('btn-toggle-summary-deck-header');
+        if (btnToggleSummaryHeader) {
+            btnToggleSummaryHeader.addEventListener('click', () => this.toggleSummaryDeck());
+        }
+
+        const btnFoldSummaryDeck = document.getElementById('btn-fold-summary-deck');
+        if (btnFoldSummaryDeck) {
+            btnFoldSummaryDeck.addEventListener('click', (e) => {
+                e.stopPropagation();
+                this.toggleSummaryDeck();
+            });
+        }
+
+        const btnMaximizeSummaryDeck = document.getElementById('btn-maximize-summary-deck');
+        if (btnMaximizeSummaryDeck) {
+            btnMaximizeSummaryDeck.addEventListener('click', (e) => {
+                e.stopPropagation();
+                this.toggleMaximizeSummaryDeck();
+            });
+        }
+
+        const btnSummaryAudio = document.getElementById('btn-summary-audio-narrate');
+        if (btnSummaryAudio) {
+            btnSummaryAudio.addEventListener('click', (e) => {
+                e.stopPropagation();
+                this.toggleSummaryAudioNarration();
+            });
+        }
+
+        // Patient Brief Toggle & Events
+        if (this.btnToggleBrief && this.briefExpandedPanel) {
+            this.btnToggleBrief.addEventListener('click', () => {
+                this.briefExpandedPanel.classList.toggle('open');
+            });
+        }
+
+        if (this.btnCollapseBrief && this.briefExpandedPanel) {
+            this.btnCollapseBrief.addEventListener('click', () => {
+                this.briefExpandedPanel.classList.remove('open');
+            });
+        }
+
+        // Workflow Step Navigation
+        if (this.stepNav) {
+            this.stepNav.querySelectorAll('.scribe-step-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const step = btn.getAttribute('data-step');
+                    if (step) this.setCockpitMode(step);
+                });
+            });
+        }
+
+        // Card Focus & Fold Controls
+        const btnFocusDictate = document.getElementById('btn-focus-dictate');
+        if (btnFocusDictate) {
+            btnFocusDictate.addEventListener('click', (e) => {
+                e.stopPropagation();
+                this.setCockpitMode('dictate');
+            });
+        }
+
+        const btnFoldDictate = document.getElementById('btn-fold-dictate');
+        if (btnFoldDictate) {
+            btnFoldDictate.addEventListener('click', (e) => {
+                e.stopPropagation();
+                this.toggleCardFold('dictate');
+            });
+        }
+
+        if (this.cardDictation) {
+            this.cardDictation.addEventListener('click', () => {
+                if (this.cardFoldStates.dictate) {
+                    this.toggleCardFold('dictate');
+                }
+            });
+        }
+
+        const btnFocusNote = document.getElementById('btn-focus-note');
+        if (btnFocusNote) {
+            btnFocusNote.addEventListener('click', (e) => {
+                e.stopPropagation();
+                this.setCockpitMode('note');
+            });
+        }
+
+        const btnFoldNote = document.getElementById('btn-fold-note');
+        if (btnFoldNote) {
+            btnFoldNote.addEventListener('click', (e) => {
+                e.stopPropagation();
+                this.toggleCardFold('note');
+            });
+        }
+
+        if (this.cardNote) {
+            this.cardNote.addEventListener('click', () => {
+                if (this.cardFoldStates.note) {
+                    this.toggleCardFold('note');
+                }
+            });
+        }
+
+        // Orders Deck Toggle & Maximize
+        const btnToggleDeckHeader = document.getElementById('btn-toggle-orders-deck-header');
+        if (btnToggleDeckHeader) {
+            btnToggleDeckHeader.addEventListener('click', () => this.toggleOrdersDeck());
+        }
+
+        const btnFoldOrdersDeck = document.getElementById('btn-fold-orders-deck');
+        if (btnFoldOrdersDeck) {
+            btnFoldOrdersDeck.addEventListener('click', (e) => {
+                e.stopPropagation();
+                this.toggleOrdersDeck();
+            });
+        }
+
+        const btnMaximizeOrdersDeck = document.getElementById('btn-maximize-orders-deck');
+        if (btnMaximizeOrdersDeck) {
+            btnMaximizeOrdersDeck.addEventListener('click', (e) => {
+                e.stopPropagation();
+                this.toggleMaximizeOrdersDeck();
+            });
+        }
+
+        // Catalog Matcher Modal Events
+        const btnCloseMatcher = document.getElementById('btn-close-matcher');
+        if (btnCloseMatcher) {
+            btnCloseMatcher.addEventListener('click', () => this.closeCatalogMatcher());
+        }
+
+        const matcherBackdrop = document.getElementById('scribe-matcher-backdrop');
+        if (matcherBackdrop) {
+            matcherBackdrop.addEventListener('click', () => this.closeCatalogMatcher());
+        }
+
+        if (this.matcherSearchInput) {
+            this.matcherSearchInput.addEventListener('input', () => {
+                clearTimeout(this.matcherDebounceTimer);
+                this.matcherDebounceTimer = setTimeout(() => {
+                    this.executeCatalogSearch(this.matcherSearchInput.value, this.activeMatcherFilter);
+                }, 300);
+            });
+
+            this.matcherSearchInput.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    clearTimeout(this.matcherDebounceTimer);
+                    this.executeCatalogSearch(this.matcherSearchInput.value, this.activeMatcherFilter);
+                }
+            });
+        }
+
+        const btnMatcherSearchExec = document.getElementById('btn-matcher-search-exec');
+        if (btnMatcherSearchExec) {
+            btnMatcherSearchExec.addEventListener('click', () => {
+                if (this.matcherSearchInput) {
+                    this.executeCatalogSearch(this.matcherSearchInput.value, this.activeMatcherFilter);
+                }
+            });
+        }
+
+        document.querySelectorAll('.matcher-filter-chip').forEach(chip => {
+            chip.addEventListener('click', () => {
+                document.querySelectorAll('.matcher-filter-chip').forEach(c => c.classList.remove('active'));
+                chip.classList.add('active');
+                this.activeMatcherFilter = chip.getAttribute('data-filter') || 'all';
+                const q = this.matcherSearchInput ? this.matcherSearchInput.value : '';
+                this.executeCatalogSearch(q, this.activeMatcherFilter);
+            });
+        });
+
+        // Live transcript direct typing & manual editing sync
+        if (this.transcriptContainer) {
+            this.transcriptContainer.addEventListener('input', () => {
+                const clone = this.transcriptContainer.cloneNode(true);
+                clone.querySelectorAll('.transcript-interim, .transcript-caret').forEach(el => el.remove());
+                let text = clone.innerText || '';
+                text = text.replace(/Listening for consultation dialogue\.\.\./g, '').trim();
+                this.finalTranscript = text;
+                this.scheduleDebouncedDraftSave();
+            });
+        }
+
+        window.addEventListener('patient-brief-loaded', (e) => {
+            if (e.detail && e.detail.summary) {
+                this.setPatientBrief(e.detail.summary);
+            }
+        });
     }
 
     open() {
@@ -198,8 +583,18 @@ class ClinicalAiScribeStudio {
         this.baselineEditorContent = this.getEditorContent();
         this.renderBaselineNoteContext();
 
+        // Sync latest patient brief context
+        this.syncPatientBriefFromCache();
+
         this.overlay.classList.add('active');
         document.body.style.overflow = 'hidden';
+
+        // Apply active cockpit step layout, summary deck & orders deck state
+        this.setCockpitMode(this.cockpitMode || 'dictate');
+        this.setSummaryDeckState(this.summaryDeckState || 'docked');
+        this.setOrdersDeckState(this.ordersDeckState || (this.groundedOrders.length > 0 ? 'expanded' : 'docked'));
+        this.updateOrdersDeckSummaryTicker();
+        this.updateSignButtonBadges();
 
         // Auto-start dictation if supported
         this.startRecording();
@@ -208,14 +603,28 @@ class ClinicalAiScribeStudio {
     close() {
         if (!this.overlay) return;
         this.stopRecording();
+        if (this.isNarrating && window.speechSynthesis) {
+            window.speechSynthesis.cancel();
+            this.isNarrating = false;
+            const textAudio = document.getElementById('text-summary-audio');
+            const iconAudio = document.getElementById('icon-summary-audio');
+            if (textAudio) textAudio.textContent = 'Listen';
+            if (iconAudio) iconAudio.className = 'mdi mdi-volume-high';
+        }
         this.overlay.classList.remove('active');
         document.body.style.overflow = '';
     }
 
     startRecording() {
+        if (this.restartTimer) {
+            clearTimeout(this.restartTimer);
+            this.restartTimer = null;
+        }
         if (this.recognition && !this.isListening) {
             try {
                 this.isPaused = false;
+                this.isNetworkError = false;
+                this.networkRetryAttempts = 0;
                 this.recognition.start();
             } catch (e) {
                 console.warn('Recognition start exception:', e);
@@ -224,9 +633,14 @@ class ClinicalAiScribeStudio {
     }
 
     stopRecording() {
-        if (this.recognition && this.isListening) {
-            this.isListening = false;
-            this.isPaused = false;
+        if (this.restartTimer) {
+            clearTimeout(this.restartTimer);
+            this.restartTimer = null;
+        }
+        this.isListening = false;
+        this.isPaused = false;
+        this.isNetworkError = false;
+        if (this.recognition) {
             try { this.recognition.stop(); } catch (e) {}
         }
         this.stopWaveformVisualizer();
@@ -283,38 +697,79 @@ class ClinicalAiScribeStudio {
         this.recordingTimerEl.textContent = `${mins}:${secs}`;
     }
 
+    getRawTranscriptText() {
+        if (this.finalTranscript && this.finalTranscript.trim()) {
+            return this.finalTranscript.trim();
+        }
+        if (this.transcriptContainer) {
+            const clone = this.transcriptContainer.cloneNode(true);
+            clone.querySelectorAll('.transcript-interim, .transcript-caret').forEach(el => el.remove());
+            let text = clone.innerText || '';
+            text = text.replace(/Listening for consultation dialogue\.\.\./g, '').trim();
+            if (text) return text;
+        }
+        return '';
+    }
+
     renderLiveTranscript(interim = '') {
         if (!this.transcriptContainer) return;
         const combined = this.finalTranscript + (interim ? `<span class="transcript-interim">${interim}</span>` : '');
         this.transcriptContainer.innerHTML = combined
             ? `${combined} <span class="transcript-caret"></span>`
-            : '<span class="text-muted">Listening for consultation dialogue...</span> <span class="transcript-caret"></span>';
+            : '<span class="text-muted">Listening for consultation dialogue... (Speak or type directly here)</span> <span class="transcript-caret"></span>';
         this.transcriptContainer.scrollTop = this.transcriptContainer.scrollHeight;
     }
 
     async startWaveformVisualizer() {
-        if (this.audioContext) return;
+        if (this.audioContext && this.audioContext.state !== 'closed') {
+            if (this.audioContext.state === 'suspended') {
+                try { await this.audioContext.resume(); } catch (e) {}
+            }
+            return;
+        }
+
         try {
             const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
             this.audioStream = stream;
             const AudioContextClass = window.AudioContext || window.webkitAudioContext;
             this.audioContext = new AudioContextClass();
+            if (this.audioContext.state === 'suspended') {
+                try { await this.audioContext.resume(); } catch (e) {}
+            }
+
             const source = this.audioContext.createMediaStreamSource(stream);
             this.audioAnalyser = this.audioContext.createAnalyser();
             this.audioAnalyser.fftSize = 64;
+            this.audioAnalyser.smoothingTimeConstant = 0.45; // Snappy vocal volume and pitch response
             source.connect(this.audioAnalyser);
 
             const bufferLength = this.audioAnalyser.frequencyBinCount;
             const dataArray = new Uint8Array(bufferLength);
             const bars = document.querySelectorAll('.scribe-waveform-bar');
+            const totalBars = bars.length || 24;
 
             const draw = () => {
-                if (!this.audioAnalyser) return;
+                if (!this.audioAnalyser || !this.isListening || this.isPaused) return;
                 this.audioAnalyser.getByteFrequencyData(dataArray);
 
+                // Sample human voice spectrum (approx bins 1..10)
+                let vocalSum = 0;
+                let vocalCount = 0;
+                for (let k = 1; k < Math.min(12, bufferLength); k++) {
+                    vocalSum += dataArray[k];
+                    vocalCount++;
+                }
+                const avgVocal = vocalCount > 0 ? (vocalSum / vocalCount) : 0;
+
                 bars.forEach((bar, index) => {
-                    const val = dataArray[index % bufferLength] || 0;
-                    const height = Math.max(6, Math.min(50, (val / 255) * 55));
+                    const distFromCenter = Math.abs(index - (totalBars - 1) / 2) / ((totalBars - 1) / 2);
+                    const weight = Math.cos(distFromCenter * Math.PI * 0.42); // Center-weighted curve
+                    const binIdx = Math.min(bufferLength - 1, Math.floor(1 + (1 - distFromCenter) * 8) + (index % 2));
+                    const binVal = dataArray[binIdx] || 0;
+
+                    const combined = (binVal * 0.65) + (avgVocal * 0.35);
+                    const scaled = (combined / 255) * weight * 54;
+                    const height = Math.max(6, Math.min(52, 6 + scaled));
                     bar.style.height = `${height}px`;
                 });
 
@@ -323,8 +778,33 @@ class ClinicalAiScribeStudio {
 
             draw();
         } catch (e) {
-            console.warn('Web Audio visualizer could not start:', e);
+            console.warn('Web Audio visualizer could not start (falling back to dynamic pulse):', e);
+            this.startSyntheticWaveform();
         }
+    }
+
+    startSyntheticWaveform() {
+        if (this.animFrameId) return;
+        const bars = document.querySelectorAll('.scribe-waveform-bar');
+        const totalBars = bars.length || 24;
+        let step = 0;
+
+        const drawSynth = () => {
+            if (!this.isListening || this.isPaused) return;
+            step += 0.12;
+
+            bars.forEach((bar, index) => {
+                const distFromCenter = Math.abs(index - (totalBars - 1) / 2) / ((totalBars - 1) / 2);
+                const weight = Math.cos(distFromCenter * Math.PI * 0.42);
+                const wave = Math.sin(step + index * 0.35);
+                const height = Math.max(6, 6 + (wave + 1) * 8 * weight);
+                bar.style.height = `${height}px`;
+            });
+
+            this.animFrameId = requestAnimationFrame(drawSynth);
+        };
+
+        this.animFrameId = requestAnimationFrame(drawSynth);
     }
 
     stopWaveformVisualizer() {
@@ -333,7 +813,9 @@ class ClinicalAiScribeStudio {
             this.animFrameId = null;
         }
         if (this.audioStream) {
-            this.audioStream.getTracks().forEach(track => track.stop());
+            try {
+                this.audioStream.getTracks().forEach(track => track.stop());
+            } catch (e) {}
             this.audioStream = null;
         }
         if (this.audioContext) {
@@ -561,12 +1043,15 @@ class ClinicalAiScribeStudio {
                     'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
                 },
                 body: JSON.stringify({
-                    patient_id: this.patientId,
-                    encounter_id: this.encounterId,
+                    patient_id: this.getPatientId(),
+                    encounter_id: this.getEncounterId(),
                     role: this.role,
                     taxonomy: this.taxonomy,
-                    transcript: this.finalTranscript,
+                    transcript: this.getRawTranscriptText(),
                     editor_content: this.baselineEditorContent,
+                    existing_sections: this.structuredSections,
+                    existing_orders: this.groundedOrders,
+                    patient_summary: window.cachedPatientSummary || this.cachedPatientBrief || '',
                     language: this.langSelect ? this.langSelect.value : this.defaultLanguage
                 })
             });
@@ -578,15 +1063,33 @@ class ClinicalAiScribeStudio {
             }
 
             this.structuredSections = data.structured_sections || [];
-            this.groundedOrders = data.grounded_orders || [];
+            
+            // Deduplicate incoming orders against existing items and dispatch records
+            this.mergeGroundedOrders(data.grounded_orders || []);
+
             if (this.headlineEl && data.summary_headline) {
                 this.headlineEl.textContent = data.summary_headline;
             }
+
+            // Clear the consumed dictation transcript now that it has been synthesized into the structured note
+            this.finalTranscript = '';
+            this.interimTranscript = '';
+            this.secondsRecorded = 0;
+            this.renderLiveTranscript('');
+            this.updateTimerText();
 
             this.renderStructuredSections();
             this.renderOrdersDeck();
             this.renderSafetyWarnings(data.safety_warnings || []);
             this.scheduleDebouncedDraftSave();
+
+            // Step-adaptive cockpit focus: expand orders deck and focus note card so both are visible
+            if (this.groundedOrders && this.groundedOrders.length > 0) {
+                this.setOrdersDeckState('expanded');
+                this.setCockpitMode('note');
+            } else {
+                this.setCockpitMode('note');
+            }
 
             if (typeof toastr !== 'undefined') {
                 toastr.success('Clinical note polished and structured.');
@@ -627,9 +1130,27 @@ class ClinicalAiScribeStudio {
             title.className = 'scribe-section-title';
             title.textContent = sec.title || sec.key;
 
+            let displayContent = sec.content || '';
+            if (typeof displayContent === 'string' && (displayContent.startsWith('```json') || displayContent.startsWith('{ "summary_headline"') || displayContent.startsWith('{"summary_headline"'))) {
+                try {
+                    const cleanJson = displayContent.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/i, '').trim();
+                    const parsedObj = JSON.parse(cleanJson);
+                    if (parsedObj.structured_sections && Array.isArray(parsedObj.structured_sections) && parsedObj.structured_sections.length > 0) {
+                        this.structuredSections = parsedObj.structured_sections;
+                        setTimeout(() => this.renderStructuredSections(), 0);
+                        return;
+                    }
+                } catch (e) {
+                    displayContent = displayContent.replace(/```(?:json)?/gi, '')
+                        .replace(/"(?:summary_headline|taxonomy_type|key|title|content)"\s*:\s*/g, '')
+                        .replace(/[{\[\]}"]/g, '')
+                        .trim();
+                }
+            }
+
             const text = document.createElement('p');
             text.className = 'scribe-section-text';
-            text.textContent = sec.content || '';
+            text.textContent = displayContent;
             text.setAttribute('contenteditable', this.isEditing ? 'true' : 'false');
             text.addEventListener('blur', () => {
                 sec.content = text.textContent;
@@ -660,28 +1181,67 @@ class ClinicalAiScribeStudio {
 
         this.ordersDeck.style.display = 'block';
 
+        // Toggle visibility of the Free-Form Warning Banner
+        const warningBanner = document.getElementById('scribe-free-form-warning-banner');
+        const hasFreeForm = this.groundedOrders.some(o => o.is_free_form || !o.catalog_id);
+        if (warningBanner) {
+            warningBanner.style.display = hasFreeForm ? 'flex' : 'none';
+        }
+
         this.groundedOrders.forEach((ord, idx) => {
             const tr = document.createElement('tr');
-            tr.className = 'scribe-order-row';
+            tr.className = 'scribe-order-row' + (ord.is_dispatched ? ' order-row-dispatched' : '');
 
-            const catClass = ord.order_type === 'PRODUCT' ? 'cat-product' : (ord.order_type === 'REFERRAL' ? 'cat-referral' : (ord.order_type === 'FOLLOW_UP' ? 'cat-followup' : 'cat-service'));
+            // Refined categorical badges mapped to appsettings service types
+            let catClass = 'cat-service';
+            let catLabel = ord.category_name || ord.order_type;
+
+            if (ord.order_type === 'PRODUCT') {
+                catClass = 'cat-product';
+                catLabel = 'PRESCRIPTION';
+            } else if (ord.order_type === 'REFERRAL') {
+                catClass = 'cat-referral';
+                catLabel = 'REFERRAL';
+            } else if (ord.order_type === 'FOLLOW_UP') {
+                catClass = 'cat-followup';
+                catLabel = 'REVIEW';
+            } else if (ord.order_type === 'SERVICE') {
+                if (ord.service_type === 'lab' || ord.target_queue === 'lab_queue') {
+                    catClass = 'cat-lab';
+                    catLabel = 'LABORATORY';
+                } else if (ord.service_type === 'imaging' || ord.target_queue === 'imaging_queue') {
+                    catClass = 'cat-imaging';
+                    catLabel = 'IMAGING / X-RAY';
+                } else if (ord.service_type === 'procedure' || ord.target_queue === 'procedure_queue') {
+                    catClass = 'cat-procedure';
+                    catLabel = 'PROCEDURE';
+                } else if (ord.service_type === 'nursing' || ord.target_queue === 'nursing_queue') {
+                    catClass = 'cat-nursing';
+                    catLabel = 'NURSING';
+                } else if (ord.service_type === 'consultation' || ord.target_queue === 'consultation_queue') {
+                    catClass = 'cat-consultation';
+                    catLabel = 'CONSULTATION';
+                }
+            }
+
             const isProduct = (ord.order_type === 'PRODUCT');
             const isReferral = (ord.order_type === 'REFERRAL');
             const isFollowUp = (ord.order_type === 'FOLLOW_UP');
+            const isDispatched = !!ord.is_dispatched;
 
             let col4Html = '';
             if (isProduct) {
                 const val = this.escapeHtml(ord.dosage || '');
-                col4Html = `<input type="text" class="order-inline-input order-spec-input" data-idx="${idx}" data-field="dosage" value="${val}" placeholder="500mg | TID | 3 days | Oral">`;
+                col4Html = `<input type="text" class="order-inline-input order-spec-input" data-idx="${idx}" data-field="dosage" value="${val}" placeholder="500mg | TID | 3 days | Oral" ${isDispatched ? 'disabled' : ''}>`;
             } else if (isReferral) {
                 const val = this.escapeHtml(ord.specialization || '');
-                col4Html = `<input type="text" class="order-inline-input order-spec-input" data-idx="${idx}" data-field="specialization" value="${val}" placeholder="e.g. General Surgery / Cardiology">`;
+                col4Html = `<input type="text" class="order-inline-input order-spec-input" data-idx="${idx}" data-field="specialization" value="${val}" placeholder="e.g. General Surgery / Cardiology" ${isDispatched ? 'disabled' : ''}>`;
             } else if (isFollowUp) {
                 const val = this.escapeHtml(ord.duration_days ? `${ord.duration_days} days` : '7 days');
-                col4Html = `<input type="text" class="order-inline-input order-spec-input" data-idx="${idx}" data-field="duration_days" value="${val}" placeholder="e.g. 7 days / 2 weeks">`;
+                col4Html = `<input type="text" class="order-inline-input order-spec-input" data-idx="${idx}" data-field="duration_days" value="${val}" placeholder="e.g. 7 days / 2 weeks" ${isDispatched ? 'disabled' : ''}>`;
             } else {
                 const val = this.escapeHtml(ord.indication || ord.reason || '');
-                col4Html = `<input type="text" class="order-inline-input order-spec-input" data-idx="${idx}" data-field="indication" value="${val}" placeholder="e.g. Confirm appendicitis / Rule out anemia">`;
+                col4Html = `<input type="text" class="order-inline-input order-spec-input" data-idx="${idx}" data-field="indication" value="${val}" placeholder="e.g. Confirm appendicitis / Rule out anemia" ${isDispatched ? 'disabled' : ''}>`;
             }
 
             const cleanInst = (ord.instructions && !['instructions...', 'routine', 'none', 'n/a'].includes(ord.instructions.toLowerCase()))
@@ -690,18 +1250,46 @@ class ClinicalAiScribeStudio {
             const instPlaceholder = isProduct
                 ? 'e.g. Take after meals / Stat / Before bed'
                 : 'e.g. Fasting sample / Stat / Pelvic prep';
-            const col5Html = `<input type="text" class="order-inline-input order-instruction-input" data-idx="${idx}" data-field="instructions" value="${cleanInst}" placeholder="${instPlaceholder}">`;
+            const col5Html = `<input type="text" class="order-inline-input order-instruction-input" data-idx="${idx}" data-field="instructions" value="${cleanInst}" placeholder="${instPlaceholder}" ${isDispatched ? 'disabled' : ''}>`;
+
+            const statusBadge = isDispatched
+                ? `<span class="badge bg-success-subtle text-success border border-success-subtle px-1 py-0 ms-1" style="font-size: 0.65rem; font-weight: 700;"><i class="mdi mdi-check-all"></i> DISPATCHED</span>`
+                : `<span class="badge bg-light text-muted border px-1 py-0 ms-1" style="font-size: 0.65rem;">Pending</span>`;
+
+            // Explicit Free-Form vs Matched Catalog indicator
+            const isFreeForm = !!(ord.is_free_form || !ord.catalog_id);
+            const catalogPill = !isFreeForm
+                ? `<span class="badge bg-success-subtle text-success border border-success-subtle ms-1" title="Hospital Catalog ID: #${this.escapeHtml(String(ord.catalog_id))}"><i class="mdi mdi-check-circle"></i> #${this.escapeHtml(String(ord.catalog_id))}</span> <button type="button" class="btn btn-xs btn-link text-muted p-0 ms-1 btn-open-catalog-matcher" data-idx="${idx}" title="Change catalog item link"><i class="mdi mdi-swap-horizontal"></i> Change</button>`
+                : `<span class="badge bg-warning text-dark border border-warning ms-1 fw-bold" title="Free-form item: Not found in hospital catalog"><i class="mdi mdi-alert-circle"></i> FREE-FORM</span> <button type="button" class="btn btn-xs btn-outline-primary rounded-pill py-0 px-2 ms-2 btn-open-catalog-matcher" data-idx="${idx}" title="Search and link to official hospital catalog item"><i class="mdi mdi-database-search"></i> Match Catalog</button>`;
+
+            const queueFriendly = ord.target_queue === 'lab_queue' ? 'Laboratory Queue'
+                : (ord.target_queue === 'imaging_queue' ? 'Radiology / Imaging Queue'
+                : (ord.target_queue === 'procedure_queue' ? 'Procedure Suite'
+                : (ord.target_queue === 'dispensing_queue' ? 'Pharmacy Dispensing'
+                : (ord.target_queue === 'referral_queue' ? 'Specialist Referral'
+                : (ord.target_queue === 'appointment_queue' ? 'Appointment Queue' : 'General Queue')))));
+
+            const chkHtml = isDispatched
+                ? `<input type="checkbox" class="order-chk" data-idx="${idx}" disabled checked title="Order already dispatched to hospital queue">`
+                : `<input type="checkbox" class="order-chk" data-idx="${idx}" ${ord.is_selected ? 'checked' : ''}>`;
+
+            const delHtml = isDispatched
+                ? `<span class="text-muted small" title="Dispatched"><i class="mdi mdi-lock-outline"></i></span>`
+                : `<button type="button" class="btn-order-action btn-del-order" data-idx="${idx}" title="Remove Order"><i class="mdi mdi-close"></i></button>`;
 
             tr.innerHTML = `
                 <td style="width: 35px; text-align: center;">
-                    <input type="checkbox" class="order-chk" data-idx="${idx}" ${ord.is_selected ? 'checked' : ''}>
+                    ${chkHtml}
                 </td>
-                <td style="width: 120px;">
-                    <span class="scribe-order-cat-badge ${catClass}">${ord.category_name || ord.order_type}</span>
+                <td style="width: 130px;">
+                    <span class="scribe-order-cat-badge ${catClass}">${catLabel}</span>
                 </td>
                 <td style="min-width: 180px;">
-                    <strong class="d-block text-dark">${this.escapeHtml(ord.item_name)}</strong>
-                    ${ord.catalog_id ? `<small class="text-muted d-block">ID: #${ord.catalog_id} · ${ord.target_queue}</small>` : ''}
+                    <div class="d-flex align-items-center">
+                        <strong class="text-dark">${this.escapeHtml(ord.item_name)}</strong>
+                        ${statusBadge}
+                    </div>
+                    <small class="text-muted d-block">${catalogPill} · ${queueFriendly}</small>
                 </td>
                 <td style="min-width: 240px; width: 280px;">
                     ${col4Html}
@@ -710,32 +1298,36 @@ class ClinicalAiScribeStudio {
                     ${col5Html}
                 </td>
                 <td style="width: 45px; text-align: center;">
-                    <button type="button" class="btn-order-action btn-del-order" data-idx="${idx}" title="Remove Order"><i class="mdi mdi-close"></i></button>
+                    ${delHtml}
                 </td>
             `;
 
             this.ordersTableBody.appendChild(tr);
         });
 
-        // Select All checkbox
+        // Select All checkbox (affects non-dispatched pending items only)
         const chkAll = document.getElementById('chk-all-orders');
+        const pendingOrders = this.groundedOrders.filter(o => !o.is_dispatched);
         if (chkAll) {
-            chkAll.checked = this.groundedOrders.every(o => o.is_selected);
+            chkAll.checked = pendingOrders.length > 0 && pendingOrders.every(o => o.is_selected);
+            chkAll.disabled = pendingOrders.length === 0;
             chkAll.onchange = (e) => {
                 const checked = e.target.checked;
-                this.groundedOrders.forEach(o => o.is_selected = checked);
-                this.ordersTableBody.querySelectorAll('.order-chk').forEach(c => c.checked = checked);
+                pendingOrders.forEach(o => o.is_selected = checked);
+                this.ordersTableBody.querySelectorAll('.order-chk:not([disabled])').forEach(c => c.checked = checked);
+                this.updateSignButtonBadges();
                 this.scheduleDebouncedDraftSave();
             };
         }
 
         // Bind interactive events
-        this.ordersTableBody.querySelectorAll('.order-chk').forEach(chk => {
+        this.ordersTableBody.querySelectorAll('.order-chk:not([disabled])').forEach(chk => {
             chk.addEventListener('change', (e) => {
                 const i = parseInt(e.target.getAttribute('data-idx'));
-                if (this.groundedOrders[i]) {
+                if (this.groundedOrders[i] && !this.groundedOrders[i].is_dispatched) {
                     this.groundedOrders[i].is_selected = e.target.checked;
-                    if (chkAll) chkAll.checked = this.groundedOrders.every(o => o.is_selected);
+                    if (chkAll) chkAll.checked = pendingOrders.every(o => o.is_selected);
+                    this.updateSignButtonBadges();
                     this.scheduleDebouncedDraftSave();
                 }
             });
@@ -760,6 +1352,19 @@ class ClinicalAiScribeStudio {
                 this.scheduleDebouncedDraftSave();
             });
         });
+
+        // Catalog Matcher Popover Triggers for Free-Form items
+        this.ordersTableBody.querySelectorAll('.btn-open-catalog-matcher').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                const i = parseInt(btn.getAttribute('data-idx'));
+                this.openCatalogMatcher(i);
+            });
+        });
+
+        this.updateOrdersDeckSummaryTicker();
+        this.updateSignButtonBadges();
     }
 
     renderSafetyWarnings(warnings = []) {
@@ -777,11 +1382,10 @@ class ClinicalAiScribeStudio {
 
     toggleInlineEdit() {
         this.isEditing = !this.isEditing;
-        const btnEdit = document.getElementById('btn-scribe-edit');
-        if (btnEdit) {
-            btnEdit.textContent = this.isEditing ? 'Done Editing' : 'Edit';
-            btnEdit.classList.toggle('btn-primary', this.isEditing);
-        }
+        document.querySelectorAll('.btn-scribe-edit, #btn-master-edit, #btn-scribe-edit').forEach(btn => {
+            btn.textContent = this.isEditing ? 'Done Editing' : 'Edit';
+            btn.classList.toggle('btn-primary', this.isEditing);
+        });
         document.querySelectorAll('.scribe-section-text').forEach(t => {
             t.setAttribute('contenteditable', this.isEditing ? 'true' : 'false');
         });
@@ -795,8 +1399,17 @@ class ClinicalAiScribeStudio {
             return;
         }
 
-        const btnSign = document.getElementById('btn-scribe-sign');
-        if (btnSign) btnSign.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Committing...';
+        const signBtns = document.querySelectorAll('.btn-scribe-sign, #btn-master-sign, #btn-scribe-sign');
+        signBtns.forEach(b => {
+            if (!b.getAttribute('data-original-label')) {
+                const labelSpan = b.querySelector('.sign-btn-label') || b.querySelector('span');
+                if (labelSpan && labelSpan.textContent.trim()) {
+                    b.setAttribute('data-original-label', labelSpan.textContent.trim());
+                }
+            }
+            b.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Committing...';
+            b.disabled = true;
+        });
 
         try {
             // Build semantic HTML string for target CKEditor
@@ -805,11 +1418,14 @@ class ClinicalAiScribeStudio {
                 finalHtml += `<h3>${this.escapeHtml(sec.title || sec.key)}</h3><p>${sec.content}</p>`;
             });
 
+            // Filter newly selected orders to dispatch and deduplicate against already dispatched items
+            const newlySelectedOrders = this.groundedOrders.filter(o => o.is_selected && !o.is_dispatched);
+            const allDispatchedOrders = this.groundedOrders.filter(o => o.is_dispatched || (o.is_selected && !o.is_dispatched));
+
             // Dispatched Orders & Requests manifest appended below a dividing rule
-            const selectedOrders = this.groundedOrders.filter(o => o.is_selected);
-            if (selectedOrders.length > 0) {
+            if (allDispatchedOrders.length > 0) {
                 finalHtml += '<hr><h4 style="margin-top: 1.25rem; color: #1e293b;">Dispatched Clinical Orders & Requests:</h4><ul>';
-                selectedOrders.forEach(ord => {
+                allDispatchedOrders.forEach(ord => {
                     if (ord.order_type === 'PRODUCT') {
                         const spec = ord.dosage ? ` &mdash; <strong>${this.escapeHtml(ord.dosage)}</strong>` : '';
                         const inst = ord.instructions ? ` (${this.escapeHtml(ord.instructions)})` : '';
@@ -838,8 +1454,17 @@ class ClinicalAiScribeStudio {
             // Completely replace active Editor content with the unified polished note + manifest
             this.setEditorContent(finalHtml);
 
-            // Dispatch selected orders through CoreHealth standard workbench APIs
-            await this.dispatchOrdersThroughStandardApis(selectedOrders);
+            // Dispatch only newly selected orders through CoreHealth standard workbench APIs
+            if (newlySelectedOrders.length > 0) {
+                await this.dispatchOrdersThroughStandardApis(newlySelectedOrders);
+                newlySelectedOrders.forEach(ord => {
+                    const key = this.getOrderKey(ord);
+                    ord.is_dispatched = true;
+                    ord.is_selected = false;
+                    this.dispatchedOrderKeys.add(key);
+                });
+                this.renderOrdersDeck();
+            }
 
             // Record signed audit trail
             await fetch('/llm/clinical-scribe/sign', {
@@ -849,15 +1474,15 @@ class ClinicalAiScribeStudio {
                     'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
                 },
                 body: JSON.stringify({
-                    patient_id: this.patientId,
-                    encounter_id: this.encounterId,
+                    patient_id: this.getPatientId(),
+                    encounter_id: this.getEncounterId(),
                     role: this.role,
                     taxonomy_type: this.taxonomy,
                     final_signed_note: finalHtml,
-                    original_transcript: this.finalTranscript,
+                    original_transcript: this.getRawTranscriptText(),
                     baseline_editor_content: this.baselineEditorContent,
                     structured_note_json: this.structuredSections,
-                    orders_dispatched_json: selectedOrders
+                    orders_dispatched_json: allDispatchedOrders
                 })
             });
 
@@ -873,46 +1498,162 @@ class ClinicalAiScribeStudio {
                 toastr.error(e.message, 'Sign-off Error');
             }
         } finally {
-            if (btnSign) btnSign.innerHTML = '<i class="mdi mdi-check-circle"></i> Accept & sign';
+            const signBtns = document.querySelectorAll('.btn-scribe-sign, #btn-master-sign, #btn-scribe-sign');
+            signBtns.forEach(b => {
+                const origLabel = b.getAttribute('data-original-label') || 'Accept & sign';
+                b.innerHTML = `<i class="mdi mdi-check-circle"></i> <span class="sign-btn-label">${origLabel}</span> <span class="badge bg-white text-success rounded-pill ms-1 scribe-sign-orders-badge" style="display: none;">0</span>`;
+                b.disabled = false;
+            });
+            this.updateSignButtonBadges();
         }
+    }
+
+    getEncounterId() {
+        return this.encounterId ||
+            window.currentEncounterId ||
+            window.encounterId ||
+            (window.WORKBENCH_CONFIG ? window.WORKBENCH_CONFIG.encounterId : null) ||
+            (typeof encounterId !== 'undefined' ? encounterId : null) ||
+            (window.$ ? ($('#encounter_id__').val() || $('#editEncounterId').val()) : null) ||
+            null;
+    }
+
+    getPatientId() {
+        return this.patientId ||
+            window.currentPatientId ||
+            window.patientId ||
+            (window.WORKBENCH_CONFIG ? window.WORKBENCH_CONFIG.patientId : null) ||
+            (typeof patientId !== 'undefined' ? patientId : null) ||
+            (window.$ ? $('#patient_id__').val() : null) ||
+            null;
     }
 
     async dispatchOrdersThroughStandardApis(orders) {
         if (!orders || orders.length === 0) return;
 
+        const encId = this.getEncounterId();
+        const patId = this.getPatientId();
+        const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content || (window.WORKBENCH_CONFIG ? window.WORKBENCH_CONFIG.csrf : '');
+
         for (const ord of orders) {
             try {
-                if (this.role === 'doctor' && this.encounterId) {
-                    // Match standard Doctor Encounter manual APIs
-                    if (ord.order_type === 'SERVICE' && ord.catalog_id) {
-                        const isLab = (ord.target_queue === 'lab_queue');
-                        const isImaging = (ord.target_queue === 'imaging_queue');
-                        const url = isLab
-                            ? `/encounters/${this.encounterId}/add-lab`
-                            : (isImaging ? `/encounters/${this.encounterId}/add-imaging` : `/encounters/${this.encounterId}/add-procedure`);
+                const targetRefId = ord.catalog_id ? ord.catalog_id : ('FF_' + ord.item_name);
 
-                        await fetch(url, {
+                if (this.role === 'doctor') {
+                    if (ord.order_type === 'PRODUCT') {
+                        // 1. Transactional Prescription subtab integration (creates ProductRequest & populates #selected-products)
+                        if (typeof window.setSearchValProd === 'function') {
+                            window.setSearchValProd(
+                                ord.item_name,
+                                targetRefId,
+                                ord.unit_price || 0,
+                                null,
+                                null,
+                                null,
+                                ord.dosage || ''
+                            );
+                        } else if (encId) {
+                            const resp = await fetch(`/encounters/${encId}/add-prescription`, {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                    'Accept': 'application/json',
+                                    'X-CSRF-TOKEN': csrfToken
+                                },
+                                body: JSON.stringify({
+                                    product_id: String(targetRefId),
+                                    dose: ord.dosage || ''
+                                })
+                            });
+                            const result = await resp.json().catch(() => ({}));
+                            if (!resp.ok || !result.success) {
+                                console.warn('add-prescription warning:', result);
+                            }
+                        }
+                    } else if (ord.order_type === 'SERVICE') {
+                        const isLab = (ord.service_type === 'lab' || ord.target_queue === 'lab_queue' || (ord.category_name && ord.category_name.toLowerCase().includes('lab')));
+                        const isImaging = (ord.service_type === 'imaging' || ord.target_queue === 'imaging_queue' || (ord.category_name && (ord.category_name.toLowerCase().includes('imag') || ord.category_name.toLowerCase().includes('radio') || ord.category_name.toLowerCase().includes('x-ray'))));
+
+                        if (isLab) {
+                            // 2. Transactional Lab subtab integration (creates LabServiceRequest & populates #selected-services)
+                            if (typeof window.setSearchValSer === 'function') {
+                                window.setSearchValSer(ord.item_name, targetRefId, ord.unit_price || 0);
+                                if (ord.instructions || ord.indication) {
+                                    setTimeout(() => {
+                                        const noteInput = document.querySelector(`#selected-services tr[data-service-id="${targetRefId}"] input[name="consult_invest_note[]"]`);
+                                        if (noteInput) {
+                                            noteInput.value = ord.instructions || ord.indication;
+                                            noteInput.dispatchEvent(new Event('blur'));
+                                        }
+                                    }, 200);
+                                }
+                            } else if (encId) {
+                                await fetch(`/encounters/${encId}/add-lab`, {
+                                    method: 'POST',
+                                    headers: {
+                                        'Content-Type': 'application/json',
+                                        'Accept': 'application/json',
+                                        'X-CSRF-TOKEN': csrfToken
+                                    },
+                                    body: JSON.stringify({
+                                        service_id: String(targetRefId),
+                                        note: ord.instructions || ord.indication || ''
+                                    })
+                                });
+                            }
+                        } else if (isImaging) {
+                            // 3. Transactional Imaging subtab integration (creates LabServiceRequest with is_imaging & populates #selected-imaging-services)
+                            if (typeof window.setSearchValImaging === 'function') {
+                                window.setSearchValImaging(ord.item_name, targetRefId, ord.unit_price || 0);
+                                if (ord.instructions || ord.indication) {
+                                    setTimeout(() => {
+                                        const noteInput = document.querySelector(`#selected-imaging-services tr[data-service-id="${targetRefId}"] input[name="consult_imaging_note[]"]`);
+                                        if (noteInput) {
+                                            noteInput.value = ord.instructions || ord.indication;
+                                            noteInput.dispatchEvent(new Event('blur'));
+                                        }
+                                    }, 200);
+                                }
+                            } else if (encId) {
+                                await fetch(`/encounters/${encId}/add-imaging`, {
+                                    method: 'POST',
+                                    headers: {
+                                        'Content-Type': 'application/json',
+                                        'Accept': 'application/json',
+                                        'X-CSRF-TOKEN': csrfToken
+                                    },
+                                    body: JSON.stringify({
+                                        service_id: String(targetRefId),
+                                        note: ord.instructions || ord.indication || ''
+                                    })
+                                });
+                            }
+                        } else {
+                            // Procedure or other clinical service
+                            if (encId) {
+                                await fetch(`/encounters/${encId}/add-procedure`, {
+                                    method: 'POST',
+                                    headers: {
+                                        'Content-Type': 'application/json',
+                                        'Accept': 'application/json',
+                                        'X-CSRF-TOKEN': csrfToken
+                                    },
+                                    body: JSON.stringify({
+                                        service_id: String(targetRefId),
+                                        priority: 'routine',
+                                        pre_notes: ord.instructions || ord.indication || ''
+                                    })
+                                });
+                            }
+                        }
+                    } else if (ord.order_type === 'REFERRAL' && encId) {
+                        await fetch(`/encounters/${encId}/referrals`, {
                             method: 'POST',
-                            headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content },
-                            body: JSON.stringify({ service_id: ord.catalog_id, note: ord.instructions || ord.indication || '' })
-                        });
-                    } else if (ord.order_type === 'PRODUCT' && ord.catalog_id) {
-                        await fetch(`/encounters/${this.encounterId}/add-prescription`, {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content },
-                            body: JSON.stringify({
-                                product_id: ord.catalog_id,
-                                dose: ord.dosage || '1 unit',
-                                frequency: ord.frequency || 'PRN',
-                                duration: ord.duration || '3 days',
-                                quantity: ord.quantity || 1,
-                                note: ord.instructions || ''
-                            })
-                        });
-                    } else if (ord.order_type === 'REFERRAL') {
-                        await fetch(`/encounters/${this.encounterId}/referrals`, {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content },
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'Accept': 'application/json',
+                                'X-CSRF-TOKEN': csrfToken
+                            },
                             body: JSON.stringify({
                                 referral_type: 'internal',
                                 reason: ord.reason || ord.item_name,
@@ -920,14 +1661,18 @@ class ClinicalAiScribeStudio {
                                 clinical_summary: ord.clinical_summary || ''
                             })
                         });
-                    } else if (ord.order_type === 'FOLLOW_UP') {
+                    } else if (ord.order_type === 'FOLLOW_UP' && encId) {
                         const targetDate = new Date();
                         targetDate.setDate(targetDate.getDate() + (ord.duration_days || 7));
                         const dateStr = targetDate.toISOString().split('T')[0];
 
-                        await fetch(`/encounters/${this.encounterId}/schedule-followup`, {
+                        await fetch(`/encounters/${encId}/schedule-followup`, {
                             method: 'POST',
-                            headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content },
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'Accept': 'application/json',
+                                'X-CSRF-TOKEN': csrfToken
+                            },
                             body: JSON.stringify({
                                 appointment_date: dateStr,
                                 reason: ord.reason || 'Routine follow-up'
@@ -935,25 +1680,104 @@ class ClinicalAiScribeStudio {
                         });
                     }
                 } else if (this.role === 'nurse') {
-                    // Match Nursing Workbench billing & task APIs
-                    if (ord.order_type === 'SERVICE' && ord.catalog_id) {
-                        await fetch('/nursing-workbench/billing/add-service', {
+                    // Match Nursing Workbench billing & clinical request APIs
+                    if (ord.order_type === 'SERVICE') {
+                        await fetch('/nursing-workbench/add-lab', {
                             method: 'POST',
-                            headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content },
-                            body: JSON.stringify({ patient_id: this.patientId, service_id: ord.catalog_id, quantity: 1 })
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'Accept': 'application/json',
+                                'X-CSRF-TOKEN': csrfToken
+                            },
+                            body: JSON.stringify({
+                                patient_id: patId,
+                                service_id: targetRefId,
+                                note: ord.instructions || ord.indication || ''
+                            })
                         });
-                    } else if (ord.order_type === 'PRODUCT' && ord.catalog_id) {
-                        await fetch('/nursing-workbench/billing/add-consumable', {
+                    } else if (ord.order_type === 'PRODUCT') {
+                        await fetch('/nursing-workbench/clinical-requests/add-prescription', {
                             method: 'POST',
-                            headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content },
-                            body: JSON.stringify({ patient_id: this.patientId, product_id: ord.catalog_id, quantity: ord.quantity || 1 })
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'Accept': 'application/json',
+                                'X-CSRF-TOKEN': csrfToken
+                            },
+                            body: JSON.stringify({
+                                patient_id: patId,
+                                product_id: targetRefId,
+                                dose: ord.dosage || ''
+                            })
                         });
+                    }
+                } else if (this.role === 'maternity') {
+                    const enrollmentId = window.enrollmentId || (window.WORKBENCH_CONFIG ? window.WORKBENCH_CONFIG.enrollmentId : null);
+                    if (enrollmentId) {
+                        if (ord.order_type === 'PRODUCT') {
+                            await fetch(`/maternity-workbench/enrollment/${enrollmentId}/add-prescription`, {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                    'Accept': 'application/json',
+                                    'X-CSRF-TOKEN': csrfToken
+                                },
+                                body: JSON.stringify({
+                                    product_id: targetRefId,
+                                    dose: ord.dosage || ''
+                                })
+                            });
+                        } else if (ord.order_type === 'SERVICE') {
+                            await fetch(`/maternity-workbench/enrollment/${enrollmentId}/add-lab`, {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                    'Accept': 'application/json',
+                                    'X-CSRF-TOKEN': csrfToken
+                                },
+                                body: JSON.stringify({
+                                    service_id: targetRefId,
+                                    note: ord.instructions || ord.indication || ''
+                                })
+                            });
+                        }
                     }
                 }
             } catch (err) {
                 console.warn('Dispatch order error for item:', ord.item_name, err);
             }
         }
+
+        // Synchronize and reload all active history DataTables immediately
+        if (window.$ && $.fn && $.fn.DataTable) {
+            if ($.fn.DataTable.isDataTable('#presc_history_list')) {
+                $('#presc_history_list').DataTable().ajax.reload(null, false);
+            }
+            if ($.fn.DataTable.isDataTable('#investigation_history_list')) {
+                $('#investigation_history_list').DataTable().ajax.reload(null, false);
+            }
+            if ($.fn.DataTable.isDataTable('#imaging_history_list')) {
+                $('#imaging_history_list').DataTable().ajax.reload(null, false);
+            }
+            if ($.fn.DataTable.isDataTable('#procedure_history_list')) {
+                $('#procedure_history_list').DataTable().ajax.reload(null, false);
+            }
+            // Nursing workbench DataTables
+            if ($.fn.DataTable.isDataTable('#cr_presc_history_list')) {
+                $('#cr_presc_history_list').DataTable().ajax.reload(null, false);
+            }
+            if ($.fn.DataTable.isDataTable('#cr_lab_history_list')) {
+                $('#cr_lab_history_list').DataTable().ajax.reload(null, false);
+            }
+            if ($.fn.DataTable.isDataTable('#cr_imaging_history_list')) {
+                $('#cr_imaging_history_list').DataTable().ajax.reload(null, false);
+            }
+        }
+
+        // Notify workbench listeners
+        if (window.$) {
+            $(document).trigger('clinical-orders-dispatched', [orders]);
+        }
+        window.dispatchEvent(new CustomEvent('clinical-orders-dispatched', { detail: { orders } }));
     }
 
     getDraftStorageKey() {
@@ -974,8 +1798,13 @@ class ClinicalAiScribeStudio {
             finalTranscript: this.finalTranscript,
             secondsRecorded: this.secondsRecorded,
             taxonomy: this.taxonomy,
+            cockpitMode: this.cockpitMode,
+            summaryDeckState: this.summaryDeckState,
+            ordersDeckState: this.ordersDeckState,
+            cardFoldStates: this.cardFoldStates,
             structuredSections: this.structuredSections,
-            groundedOrders: this.groundedOrders
+            groundedOrders: this.groundedOrders,
+            dispatchedOrderKeys: Array.from(this.dispatchedOrderKeys)
         };
         try {
             sessionStorage.setItem(key, JSON.stringify(state));
@@ -993,16 +1822,29 @@ class ClinicalAiScribeStudio {
 
         try {
             const state = JSON.parse(raw);
-            if (state && (state.finalTranscript || (state.structuredSections && state.structuredSections.length > 0))) {
+            if (state && (state.finalTranscript || (state.structuredSections && state.structuredSections.length > 0) || (state.groundedOrders && state.groundedOrders.length > 0))) {
                 this.finalTranscript = state.finalTranscript || '';
                 this.secondsRecorded = state.secondsRecorded || 0;
                 if (state.taxonomy) this.taxonomy = state.taxonomy;
+                if (state.cockpitMode) this.cockpitMode = state.cockpitMode;
+                if (state.summaryDeckState) this.summaryDeckState = state.summaryDeckState;
+                if (state.ordersDeckState) this.ordersDeckState = state.ordersDeckState;
+                if (state.cardFoldStates) this.cardFoldStates = state.cardFoldStates;
                 this.structuredSections = state.structuredSections || [];
                 this.groundedOrders = state.groundedOrders || [];
+                if (state.dispatchedOrderKeys && Array.isArray(state.dispatchedOrderKeys)) {
+                    this.dispatchedOrderKeys = new Set(state.dispatchedOrderKeys);
+                }
 
                 this.renderLiveTranscript('');
                 this.updateTimerText();
                 this.updateTaxonomyPills();
+                this.setCockpitMode(this.cockpitMode);
+                this.setSummaryDeckState(this.summaryDeckState);
+                this.setOrdersDeckState(this.ordersDeckState);
+                this.updateSignButtonBadges();
+                if (this.cardFoldStates.dictate) this.cardDictation?.classList.add('card-folded');
+                if (this.cardFoldStates.note) this.cardNote?.classList.add('card-folded');
                 this.renderStructuredSections();
                 this.renderOrdersDeck();
 
@@ -1022,10 +1864,25 @@ class ClinicalAiScribeStudio {
 
     discardDraft() {
         this.clearPersistedDraft();
+        if (this.isNarrating && window.speechSynthesis) {
+            window.speechSynthesis.cancel();
+            this.isNarrating = false;
+            const textAudio = document.getElementById('text-summary-audio');
+            const iconAudio = document.getElementById('icon-summary-audio');
+            if (textAudio) textAudio.textContent = 'Listen';
+            if (iconAudio) iconAudio.className = 'mdi mdi-volume-high';
+        }
         this.finalTranscript = '';
         this.structuredSections = [];
         this.groundedOrders = [];
         this.secondsRecorded = 0;
+        this.cardFoldStates = { dictate: false, note: false };
+        this.cardDictation?.classList.remove('card-folded');
+        this.cardNote?.classList.remove('card-folded');
+        this.setCockpitMode('dictate');
+        this.setSummaryDeckState('docked');
+        this.setOrdersDeckState('docked');
+        this.updateSignButtonBadges();
         this.renderLiveTranscript('');
         this.updateTimerText();
         this.renderStructuredSections();
@@ -1033,6 +1890,545 @@ class ClinicalAiScribeStudio {
         if (this.draftNotice) this.draftNotice.textContent = '';
         if (typeof toastr !== 'undefined') {
             toastr.info('Draft cleared.');
+        }
+    }
+
+    setCockpitMode(mode = 'dictate') {
+        this.cockpitMode = mode;
+        if (!this.workspaceGrid) this.workspaceGrid = document.getElementById('scribe-workspace-grid');
+        if (!this.workspaceGrid) return;
+
+        // Reset folded cards if user switches step mode
+        if (this.cardFoldStates.dictate) {
+            this.cardFoldStates.dictate = false;
+            this.cardDictation?.classList.remove('card-folded');
+        }
+        if (this.cardFoldStates.note) {
+            this.cardFoldStates.note = false;
+            this.cardNote?.classList.remove('card-folded');
+        }
+
+        // Update step buttons UI
+        document.querySelectorAll('.scribe-step-btn').forEach(btn => {
+            btn.classList.toggle('active', btn.getAttribute('data-step') === mode);
+        });
+
+        if (mode === 'summary') {
+            this.workspaceGrid.className = 'scribe-workspace-grid grid-balanced';
+            this.setSummaryDeckState('maximized');
+            if (this.ordersDeckState === 'maximized') {
+                this.setOrdersDeckState('docked');
+            }
+        } else if (mode === 'dictate') {
+            this.workspaceGrid.className = 'scribe-workspace-grid grid-focus-dictate';
+            if (this.summaryDeckState === 'maximized') {
+                this.setSummaryDeckState('docked');
+            }
+            if (this.ordersDeckState === 'maximized') {
+                this.setOrdersDeckState('docked');
+            }
+        } else if (mode === 'note') {
+            this.workspaceGrid.className = 'scribe-workspace-grid grid-focus-note';
+            if (this.summaryDeckState === 'maximized') {
+                this.setSummaryDeckState('docked');
+            }
+            if (this.ordersDeckState === 'maximized') {
+                this.setOrdersDeckState(this.groundedOrders.length > 0 ? 'expanded' : 'docked');
+            }
+        } else if (mode === 'orders') {
+            this.workspaceGrid.className = 'scribe-workspace-grid grid-balanced';
+            if (this.summaryDeckState === 'maximized') {
+                this.setSummaryDeckState('docked');
+            }
+            this.setOrdersDeckState('maximized');
+        } else if (mode === 'balanced') {
+            this.workspaceGrid.className = 'scribe-workspace-grid grid-balanced';
+            if (this.summaryDeckState === 'maximized') {
+                this.setSummaryDeckState('docked');
+            }
+            if (this.ordersDeckState === 'maximized') {
+                this.setOrdersDeckState(this.groundedOrders.length > 0 ? 'expanded' : 'docked');
+            }
+        }
+        this.scheduleDebouncedDraftSave();
+    }
+
+    toggleCardFold(cardKey = 'dictate') {
+        if (!this.workspaceGrid) this.workspaceGrid = document.getElementById('scribe-workspace-grid');
+        if (!this.workspaceGrid) return;
+
+        if (cardKey === 'dictate') {
+            this.cardFoldStates.dictate = !this.cardFoldStates.dictate;
+            if (this.cardDictation) {
+                this.cardDictation.classList.toggle('card-folded', this.cardFoldStates.dictate);
+            }
+            if (this.cardFoldStates.dictate) {
+                this.cardFoldStates.note = false;
+                this.cardNote?.classList.remove('card-folded');
+                this.workspaceGrid.className = 'scribe-workspace-grid grid-dictate-folded';
+            } else {
+                this.setCockpitMode(this.cockpitMode);
+            }
+        } else if (cardKey === 'note') {
+            this.cardFoldStates.note = !this.cardFoldStates.note;
+            if (this.cardNote) {
+                this.cardNote.classList.toggle('card-folded', this.cardFoldStates.note);
+            }
+            if (this.cardFoldStates.note) {
+                this.cardFoldStates.dictate = false;
+                this.cardDictation?.classList.remove('card-folded');
+                this.workspaceGrid.className = 'scribe-workspace-grid grid-note-folded';
+            } else {
+                this.setCockpitMode(this.cockpitMode);
+            }
+        }
+        this.scheduleDebouncedDraftSave();
+    }
+
+    setSummaryDeckState(state = 'docked') {
+        this.summaryDeckState = state;
+        if (!this.summaryDeck) this.summaryDeck = document.getElementById('scribe-summary-deck');
+        if (!this.summaryDeck) return;
+
+        this.summaryDeck.classList.remove('summary-docked', 'summary-expanded', 'summary-maximized');
+        this.summaryDeck.classList.add(`summary-${state}`);
+
+        const textFold = document.getElementById('text-fold-summary-deck');
+        const iconFold = document.getElementById('icon-fold-summary-deck');
+        const iconMax = document.getElementById('icon-max-summary-deck');
+
+        if (this.overlay) {
+            this.overlay.classList.toggle('cockpit-summary-focus', state === 'maximized');
+        }
+
+        if (state === 'docked') {
+            if (textFold) textFold.textContent = 'Expand';
+            if (iconFold) iconFold.className = 'mdi mdi-chevron-down';
+            if (iconMax) iconMax.className = 'mdi mdi-arrow-expand';
+            if (this.cockpitMode === 'summary') {
+                this.setCockpitMode('dictate');
+            }
+        } else if (state === 'expanded') {
+            if (textFold) textFold.textContent = 'Dock';
+            if (iconFold) iconFold.className = 'mdi mdi-chevron-up';
+            if (iconMax) iconMax.className = 'mdi mdi-arrow-expand';
+            if (this.cockpitMode === 'summary') {
+                this.setCockpitMode('dictate');
+            }
+        } else if (state === 'maximized') {
+            if (textFold) textFold.textContent = 'Dock';
+            if (iconFold) iconFold.className = 'mdi mdi-chevron-up';
+            if (iconMax) iconMax.className = 'mdi mdi-arrow-collapse';
+            document.querySelectorAll('.scribe-step-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.getAttribute('data-step') === 'summary');
+            });
+        }
+
+        this.scheduleDebouncedDraftSave();
+    }
+
+    toggleSummaryDeck() {
+        if (this.summaryDeckState === 'docked') {
+            this.setSummaryDeckState('expanded');
+        } else {
+            this.setSummaryDeckState('docked');
+        }
+    }
+
+    toggleMaximizeSummaryDeck() {
+        if (this.summaryDeckState === 'maximized') {
+            this.setSummaryDeckState('expanded');
+        } else {
+            this.setSummaryDeckState('maximized');
+        }
+    }
+
+    toggleSummaryAudioNarration() {
+        if (!('speechSynthesis' in window)) {
+            if (typeof toastr !== 'undefined') {
+                toastr.warning('Speech synthesis is not supported by your browser.');
+            }
+            return;
+        }
+
+        const textAudio = document.getElementById('text-summary-audio');
+        const iconAudio = document.getElementById('icon-summary-audio');
+
+        if (this.isNarrating) {
+            window.speechSynthesis.cancel();
+            this.isNarrating = false;
+            if (textAudio) textAudio.textContent = 'Listen';
+            if (iconAudio) iconAudio.className = 'mdi mdi-volume-high';
+            return;
+        }
+
+        let summaryText = this.cachedPatientBrief || (this.summaryContent ? this.summaryContent.innerText : '');
+        if (!summaryText || !summaryText.trim()) {
+            if (typeof toastr !== 'undefined') {
+                toastr.info('No patient summary content available to narrate.');
+            }
+            return;
+        }
+
+        // Clean markdown tokens from text before speaking
+        summaryText = summaryText
+            .replace(/[#*_~`>-]/g, ' ')
+            .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
+            .replace(/\s+/g, ' ')
+            .trim();
+
+        window.speechSynthesis.cancel();
+        this.speechUtterance = new SpeechSynthesisUtterance(summaryText);
+        this.speechUtterance.lang = this.langSelect?.value || 'en-NG';
+        this.speechUtterance.rate = 1.0;
+
+        this.speechUtterance.onstart = () => {
+            this.isNarrating = true;
+            if (textAudio) textAudio.textContent = 'Stop';
+            if (iconAudio) iconAudio.className = 'mdi mdi-stop-circle text-danger';
+        };
+
+        this.speechUtterance.onend = () => {
+            this.isNarrating = false;
+            if (textAudio) textAudio.textContent = 'Listen';
+            if (iconAudio) iconAudio.className = 'mdi mdi-volume-high';
+        };
+
+        this.speechUtterance.onerror = (e) => {
+            console.warn('Speech synthesis error:', e);
+            this.isNarrating = false;
+            if (textAudio) textAudio.textContent = 'Listen';
+            if (iconAudio) iconAudio.className = 'mdi mdi-volume-high';
+        };
+
+        window.speechSynthesis.speak(this.speechUtterance);
+    }
+
+    setOrdersDeckState(state = 'docked') {
+        this.ordersDeckState = state;
+        if (!this.ordersDeck) this.ordersDeck = document.getElementById('scribe-orders-deck');
+        if (!this.ordersDeck) return;
+
+        this.ordersDeck.classList.remove('orders-docked', 'orders-expanded', 'orders-maximized');
+        this.ordersDeck.classList.add(`orders-${state}`);
+
+        const textFold = document.getElementById('text-fold-orders-deck');
+        const iconFold = document.getElementById('icon-fold-orders-deck');
+        const iconMax = document.getElementById('icon-max-orders-deck');
+
+        if (this.overlay) {
+            this.overlay.classList.toggle('cockpit-orders-focus', state === 'maximized');
+        }
+
+        if (state === 'docked') {
+            if (textFold) textFold.textContent = 'Expand';
+            if (iconFold) iconFold.className = 'mdi mdi-chevron-up';
+            if (iconMax) iconMax.className = 'mdi mdi-arrow-expand';
+            if (this.cockpitMode === 'orders') {
+                this.setCockpitMode('note');
+            }
+        } else if (state === 'expanded') {
+            if (textFold) textFold.textContent = 'Dock';
+            if (iconFold) iconFold.className = 'mdi mdi-chevron-down';
+            if (iconMax) iconMax.className = 'mdi mdi-arrow-expand';
+            if (this.cockpitMode === 'orders') {
+                this.setCockpitMode('note');
+            }
+        } else if (state === 'maximized') {
+            if (textFold) textFold.textContent = 'Dock';
+            if (iconFold) iconFold.className = 'mdi mdi-chevron-down';
+            if (iconMax) iconMax.className = 'mdi mdi-arrow-collapse';
+            document.querySelectorAll('.scribe-step-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.getAttribute('data-step') === 'orders');
+            });
+        }
+
+        this.updateOrdersDeckSummaryTicker();
+        this.scheduleDebouncedDraftSave();
+    }
+
+    toggleOrdersDeck() {
+        if (this.ordersDeckState === 'docked') {
+            this.setOrdersDeckState('expanded');
+        } else {
+            this.setOrdersDeckState('docked');
+        }
+    }
+
+    toggleMaximizeOrdersDeck() {
+        if (this.ordersDeckState === 'maximized') {
+            this.setOrdersDeckState('expanded');
+        } else {
+            this.setOrdersDeckState('maximized');
+        }
+    }
+
+    updateOrdersDeckSummaryTicker() {
+        const count = this.groundedOrders ? this.groundedOrders.length : 0;
+        const freeFormCount = this.groundedOrders ? this.groundedOrders.filter(o => o.is_free_form || !o.catalog_id).length : 0;
+
+        if (this.ordersCountBadge) {
+            this.ordersCountBadge.textContent = `${count} RECOMMENDED`;
+        }
+        if (this.stepOrdersCount) {
+            this.stepOrdersCount.textContent = `${count}`;
+        }
+        if (this.ordersFreeformCount) {
+            if (freeFormCount > 0) {
+                this.ordersFreeformCount.style.display = 'inline-block';
+                this.ordersFreeformCount.textContent = `${freeFormCount} Free-form`;
+            } else {
+                this.ordersFreeformCount.style.display = 'none';
+            }
+        }
+        if (this.ordersPreviewTicker) {
+            if (count === 0) {
+                this.ordersPreviewTicker.textContent = 'Docked · No orders';
+            } else {
+                const itemNames = this.groundedOrders.slice(0, 3).map(o => o.item_name).join(', ');
+                const moreSuffix = count > 3 ? ` +${count - 3} more` : '';
+                const stateNotice = this.ordersDeckState === 'docked' ? 'Click to expand' : (this.ordersDeckState === 'maximized' ? 'Orders focused' : 'Expanded');
+                this.ordersPreviewTicker.textContent = `${itemNames}${moreSuffix} · ${stateNotice}`;
+            }
+        }
+    }
+
+    updateSignButtonBadges() {
+        const count = this.groundedOrders ? this.groundedOrders.filter(o => o.is_selected && !o.is_dispatched).length : 0;
+        document.querySelectorAll('.scribe-sign-orders-badge').forEach(badge => {
+            if (count > 0) {
+                badge.textContent = `+${count} order${count === 1 ? '' : 's'}`;
+                badge.style.display = 'inline-block';
+            } else {
+                badge.style.display = 'none';
+            }
+        });
+    }
+
+    openCatalogMatcher(orderIndex) {
+        this.activeMatchingOrderIndex = orderIndex;
+        const ord = this.groundedOrders[orderIndex];
+        if (!ord) return;
+
+        if (!this.matcherModal) {
+            this.matcherModal = document.getElementById('scribe-catalog-matcher-modal');
+        }
+        if (!this.matcherModal) return;
+
+        const sub = document.getElementById('scribe-matcher-subtitle');
+        if (sub) {
+            sub.textContent = `Linking: "${ord.item_name}" (${ord.category_name || ord.order_type})`;
+        }
+
+        let initFilter = 'all';
+        if (ord.order_type === 'PRODUCT') {
+            initFilter = 'product';
+        } else if (ord.service_type === 'lab') {
+            initFilter = 'lab';
+        } else if (ord.service_type === 'imaging') {
+            initFilter = 'imaging';
+        } else if (ord.service_type === 'procedure') {
+            initFilter = 'procedure';
+        }
+        this.activeMatcherFilter = initFilter;
+
+        document.querySelectorAll('.matcher-filter-chip').forEach(chip => {
+            chip.classList.toggle('active', chip.getAttribute('data-filter') === initFilter);
+        });
+
+        if (this.matcherSearchInput) {
+            this.matcherSearchInput.value = ord.item_name;
+        }
+
+        this.matcherModal.style.display = 'flex';
+        this.executeCatalogSearch(ord.item_name, initFilter);
+
+        setTimeout(() => {
+            if (this.matcherSearchInput) {
+                this.matcherSearchInput.focus();
+                this.matcherSearchInput.select();
+            }
+        }, 100);
+    }
+
+    closeCatalogMatcher() {
+        if (this.matcherModal) {
+            this.matcherModal.style.display = 'none';
+        }
+        this.activeMatchingOrderIndex = null;
+        this._currentSearchResults = [];
+    }
+
+    async executeCatalogSearch(query = '', filter = 'all') {
+        if (!this.matcherResultsContainer) {
+            this.matcherResultsContainer = document.getElementById('scribe-matcher-results');
+        }
+        if (!this.matcherResultsContainer) return;
+
+        this.matcherResultsContainer.innerHTML = '<div class="text-center py-4 text-muted"><i class="fa fa-spinner fa-spin me-2"></i> Searching hospital catalog...</div>';
+
+        const pId = this.getPatientId();
+        const cleanQuery = (query || '').trim();
+
+        try {
+            const promises = [];
+
+            // Services search (lab, imaging, procedure, or all)
+            if (filter === 'all' || ['lab', 'imaging', 'procedure'].includes(filter)) {
+                const contextParam = filter === 'all' ? 'all' : filter;
+                const url = `/live-search-services?term=${encodeURIComponent(cleanQuery)}&context=${contextParam}${pId ? `&patient_id=${pId}` : ''}`;
+                promises.push(
+                    fetch(url)
+                        .then(r => r.json())
+                        .then(items => (Array.isArray(items) ? items : []).map(item => ({ ...item, _type: 'service' })))
+                        .catch(err => {
+                            console.warn('live-search-services error:', err);
+                            return [];
+                        })
+                );
+            }
+
+            // Products search (medications / pharmacy)
+            if (filter === 'all' || filter === 'product') {
+                const url = `/live-search-products?term=${encodeURIComponent(cleanQuery)}&type=drug${pId ? `&patient_id=${pId}` : ''}`;
+                promises.push(
+                    fetch(url)
+                        .then(r => r.json())
+                        .then(items => (Array.isArray(items) ? items : []).map(item => ({ ...item, _type: 'product' })))
+                        .catch(err => {
+                            console.warn('live-search-products error:', err);
+                            return [];
+                        })
+                );
+            }
+
+            const resultsArrays = await Promise.all(promises);
+            const allResults = resultsArrays.flat();
+
+            if (allResults.length === 0) {
+                this.matcherResultsContainer.innerHTML = `
+                    <div class="text-center py-4 text-muted">
+                        <i class="mdi mdi-alert-circle-outline fs-3 text-secondary opacity-50 d-block mb-1"></i>
+                        No catalog items found matching "<strong>${this.escapeHtml(cleanQuery)}</strong>".
+                        <div class="small mt-1">Try another keyword, or keep as a verified free-form order.</div>
+                    </div>
+                `;
+                return;
+            }
+
+            let html = '';
+            allResults.forEach((item, idx) => {
+                const isProd = (item._type === 'product');
+                const name = isProd ? item.product_name : item.service_name;
+                const code = isProd ? (item.product_code || '') : (item.service_code || '');
+                const catName = isProd ? 'Pharmacy / Medication' : (item.category || (item.category_id ? `Category #${item.category_id}` : 'General Service'));
+                const priceVal = isProd ? (item.payable_amount ?? item.price?.initial_sale_price ?? 0) : (item.payable_amount ?? item.base_price ?? 0);
+                const priceFormatted = Number(priceVal).toLocaleString('en-NG', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+                let badgeClass = 'cat-service';
+                let badgeLabel = 'SERVICE';
+                if (isProd) {
+                    badgeClass = 'cat-product';
+                    badgeLabel = 'MEDICATION';
+                } else if (filter === 'lab' || (catName && catName.toLowerCase().includes('lab'))) {
+                    badgeClass = 'cat-lab';
+                    badgeLabel = 'LABORATORY';
+                } else if (filter === 'imaging' || (catName && (catName.toLowerCase().includes('imag') || catName.toLowerCase().includes('radio') || catName.toLowerCase().includes('x-ray')))) {
+                    badgeClass = 'cat-imaging';
+                    badgeLabel = 'IMAGING';
+                } else if (filter === 'procedure' || (catName && (catName.toLowerCase().includes('proc') || catName.toLowerCase().includes('surg')))) {
+                    badgeClass = 'cat-procedure';
+                    badgeLabel = 'PROCEDURE';
+                }
+
+                html += `
+                    <div class="matcher-result-item" data-res-idx="${idx}">
+                        <div class="matcher-result-meta">
+                            <div class="matcher-result-name">
+                                <span>${this.escapeHtml(name)}</span>
+                                <span class="scribe-order-cat-badge ${badgeClass}" style="font-size: 0.65rem;">${badgeLabel}</span>
+                            </div>
+                            <div class="matcher-result-sub">
+                                <span>${this.escapeHtml(catName)}</span>
+                                ${code ? `<span>· Code: ${this.escapeHtml(code)}</span>` : ''}
+                                <span class="fw-bold text-success">· ₦${priceFormatted}</span>
+                            </div>
+                        </div>
+                        <div>
+                            <button type="button" class="btn-select-catalog-item" data-res-idx="${idx}">
+                                <i class="mdi mdi-link-variant"></i> Link & Ground
+                            </button>
+                        </div>
+                    </div>
+                `;
+            });
+
+            this.matcherResultsContainer.innerHTML = html;
+            this._currentSearchResults = allResults;
+
+            this.matcherResultsContainer.querySelectorAll('.btn-select-catalog-item').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const rIdx = parseInt(btn.getAttribute('data-res-idx'));
+                    const selItem = this._currentSearchResults[rIdx];
+                    if (selItem) {
+                        this.applyCatalogMatch(selItem, selItem._type);
+                    }
+                });
+            });
+        } catch (err) {
+            console.error('Catalog search failure:', err);
+            this.matcherResultsContainer.innerHTML = `<div class="text-center py-4 text-danger"><i class="mdi mdi-alert"></i> Error searching catalog: ${this.escapeHtml(err.message)}</div>`;
+        }
+    }
+
+    applyCatalogMatch(selectedItem, itemType) {
+        if (this.activeMatchingOrderIndex === null || !this.groundedOrders[this.activeMatchingOrderIndex]) {
+            this.closeCatalogMatcher();
+            return;
+        }
+
+        const ord = this.groundedOrders[this.activeMatchingOrderIndex];
+        const isProd = (itemType === 'product');
+
+        ord.catalog_id = selectedItem.id;
+        ord.item_name = isProd ? selectedItem.product_name : selectedItem.service_name;
+        ord.is_free_form = false;
+        ord.unit_price = isProd
+            ? (selectedItem.payable_amount ?? selectedItem.price?.initial_sale_price ?? 0)
+            : (selectedItem.payable_amount ?? selectedItem.base_price ?? 0);
+
+        if (isProd) {
+            ord.order_type = 'PRODUCT';
+            ord.target_queue = 'dispensing_queue';
+            ord.category_name = 'Prescription';
+        } else {
+            ord.order_type = 'SERVICE';
+            const cat = (selectedItem.category || '').toLowerCase();
+            if (cat.includes('lab') || cat.includes('investig')) {
+                ord.service_type = 'lab';
+                ord.target_queue = 'lab_queue';
+                ord.category_name = 'Laboratory Investigation';
+            } else if (cat.includes('imag') || cat.includes('radio') || cat.includes('x-ray') || cat.includes('scan')) {
+                ord.service_type = 'imaging';
+                ord.target_queue = 'imaging_queue';
+                ord.category_name = 'Imaging / Radiology';
+            } else if (cat.includes('proc') || cat.includes('surg')) {
+                ord.service_type = 'procedure';
+                ord.target_queue = 'procedure_queue';
+                ord.category_name = 'Clinical Procedure';
+            } else {
+                ord.service_type = 'procedure';
+                ord.target_queue = 'procedure_queue';
+                ord.category_name = selectedItem.category || 'Hospital Service';
+            }
+        }
+
+        this.closeCatalogMatcher();
+        this.renderOrdersDeck();
+        this.scheduleDebouncedDraftSave();
+
+        if (typeof toastr !== 'undefined') {
+            toastr.success(`Linked to catalog item: ${ord.item_name} (#${ord.catalog_id})`);
         }
     }
 

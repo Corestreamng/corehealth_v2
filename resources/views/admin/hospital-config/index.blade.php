@@ -999,6 +999,16 @@
                                                 <textarea class="form-control" name="llm_config[system_prompts][polish_note]" rows="8" style="border-radius: 8px;" placeholder="System instructions for clinical note polishing...">{{ $llmConfig['system_prompts']['polish_note'] ?? config('llm.prompts.polish_note') }}</textarea>
                                                 <small class="text-muted d-block mt-1">This prompt instructs the LLM on how to polish and format doctor-patient conversations, chaotic nurse dictations, and physician memos with zero clinical context loss.</small>
                                             </div>
+                                            <div class="col-md-12 mb-3">
+                                                <label class="form-label" style="font-weight: 600;">Clinical Scribe Studio System Prompt</label>
+                                                <textarea class="form-control" name="llm_config[system_prompts][clinical_scribe]" rows="10" style="border-radius: 8px;" placeholder="System instructions for ambient clinical scribe, taxonomy structuring, and order extraction...">{{ $llmConfig['system_prompts']['clinical_scribe'] ?? config('llm.prompts.clinical_scribe') }}</textarea>
+                                                <small class="text-muted d-block mt-1">This prompt instructs the LLM on how to parse live ambient audio dictations, merge existing chart notes, adapt to physician/nurse/maternity taxonomies, and extract catalog-grounded orders.</small>
+                                            </div>
+                                            <div class="col-md-12 mb-3">
+                                                <label class="form-label" style="font-weight: 600;">Taxonomy Translation System Prompt</label>
+                                                <textarea class="form-control" name="llm_config[system_prompts][convert_taxonomy]" rows="6" style="border-radius: 8px;" placeholder="System instructions for lossless note format translation...">{{ $llmConfig['system_prompts']['convert_taxonomy'] ?? config('llm.prompts.convert_taxonomy') }}</textarea>
+                                                <small class="text-muted d-block mt-1">This prompt instructs the LLM on lossless translation between clinical note taxonomies (SOAP, Traditional Nigerian Clerking, POMR, Focus DAR, SBAR, SOAPIE).</small>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>

@@ -112,9 +112,10 @@ class PatientContextService
         $gender = $patient->gender ?? 'Unknown';
         $bg = $patient->blood_group ?? 'Unknown';
         $geno = $patient->genotype ?? 'Unknown';
+        $today = now()->format('Y-m-d (l, F j, Y)');
 
-        return "--- PATIENT DEMOGRAPHICS ---\n" .
-               "Age: {$age} | Gender: {$gender} | Blood Group: {$bg} | Genotype: {$geno}";
+        return "--- PATIENT DEMOGRAPHICS & CLINICAL DATE ---\n" .
+               "Current Date: {$today} | Age: {$age} | Gender: {$gender} | Blood Group: {$bg} | Genotype: {$geno}";
     }
 
     protected function buildAllergiesChunk(Patient $patient): ?string

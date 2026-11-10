@@ -237,9 +237,9 @@ body.has-workbench label {
 }
 
 /* ── 5. Button & Action Scaling (Global App-Wide Density) ───────────────── */
-.btn:not(.btn-shift-control):not(.btn-ai-fab):not(.btn-patient-summary):not(.btn-circle):not(.btn-fab):not(.btn-rounded-circle),
-body.is-workbench .btn:not(.btn-shift-control):not(.btn-ai-fab):not(.btn-patient-summary):not(.btn-circle):not(.btn-fab):not(.btn-rounded-circle),
-body.has-workbench .btn:not(.btn-shift-control):not(.btn-ai-fab):not(.btn-patient-summary):not(.btn-circle):not(.btn-fab):not(.btn-rounded-circle) {
+.btn:not(.btn-shift-control):not(.btn-ai-fab):not(.btn-circle):not(.btn-fab):not(.btn-rounded-circle),
+body.is-workbench .btn:not(.btn-shift-control):not(.btn-ai-fab):not(.btn-circle):not(.btn-fab):not(.btn-rounded-circle),
+body.has-workbench .btn:not(.btn-shift-control):not(.btn-ai-fab):not(.btn-circle):not(.btn-fab):not(.btn-rounded-circle) {
     padding: 4px 12px !important;
     font-size: 0.8125rem !important;
     line-height: 1.35 !important;
@@ -257,7 +257,6 @@ body.has-workbench .btn:not(.btn-shift-control):not(.btn-ai-fab):not(.btn-patien
 .shift-fab-main .btn,
 .shift-control-fab button,
 .btn-ai-fab,
-.btn-patient-summary,
 .ai-fab-container .btn,
 .btn-circle,
 .btn-rounded-circle,
@@ -265,7 +264,6 @@ body.is-workbench .btn-shift-control,
 body.is-workbench .shift-fab-main .btn,
 body.is-workbench .shift-control-fab button,
 body.is-workbench .btn-ai-fab,
-body.is-workbench .btn-patient-summary,
 body.is-workbench .ai-fab-container .btn,
 body.is-workbench .btn-circle,
 body.is-workbench .btn-rounded-circle,
@@ -273,7 +271,6 @@ body.has-workbench .btn-shift-control,
 body.has-workbench .shift-fab-main .btn,
 body.has-workbench .shift-control-fab button,
 body.has-workbench .btn-ai-fab,
-body.has-workbench .btn-patient-summary,
 body.has-workbench .ai-fab-container .btn,
 body.has-workbench .btn-circle,
 body.has-workbench .btn-rounded-circle {

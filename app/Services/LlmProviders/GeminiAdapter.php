@@ -19,8 +19,32 @@ class GeminiAdapter implements LlmProviderInterface
 
     public function complete(string $model, string $systemPrompt, string $userMessage, array $options = []): string
     {
-        $maxTokens = $options['max_tokens'] ?? 2048;
-        $temperature = $options['temperature'] ?? 0.3;
+        $maxTokens = $options['max_tokens'] ?? 8192;
+        $temperature = $options['temperature'] ?? 0.2;
+
+        $generationConfig = [
+            'maxOutputTokens' => $maxTokens,
+            'temperature' => $temperature,
+        ];
+
+        // Enable structured JSON mode if requested
+        if (!empty($options['response_mime_type'])) {
+            $generationConfig['responseMimeType'] = $options['response_mime_type'];
+        } elseif (!empty($options['json_mode'])) {
+            $generationConfig['responseMimeType'] = 'application/json';
+        }
+
+        // On Gemini 2.5 / reasoning models, thinkingBudget: 0 disables reasoning latency
+        // and prevents output truncation caused by thought token starvation.
+        if (isset($options['thinking_budget'])) {
+            $generationConfig['thinkingConfig'] = [
+                'thinkingBudget' => (int) $options['thinking_budget'],
+            ];
+        } elseif (str_contains(strtolower($model), '2.5') || str_contains(strtolower($model), 'flash')) {
+            $generationConfig['thinkingConfig'] = [
+                'thinkingBudget' => 0,
+            ];
+        }
 
         $response = Http::timeout(120)
             ->withHeaders(['Content-Type' => 'application/json'])
@@ -34,10 +58,7 @@ class GeminiAdapter implements LlmProviderInterface
                         'parts' => [['text' => $userMessage]],
                     ],
                 ],
-                'generationConfig' => [
-                    'maxOutputTokens' => $maxTokens,
-                    'temperature' => $temperature,
-                ],
+                'generationConfig' => $generationConfig,
             ]);
 
         if ($response->failed()) {
@@ -49,7 +70,28 @@ class GeminiAdapter implements LlmProviderInterface
 
         $data = $response->json();
 
-        return $data['candidates'][0]['content']['parts'][0]['text'] ?? '';
+        // Concatenate all text parts, skipping internal thoughts if returned
+        $parts = $data['candidates'][0]['content']['parts'] ?? [];
+        $text = '';
+        foreach ($parts as $part) {
+            if (!empty($part['thought'])) {
+                continue;
+            }
+            if (isset($part['text'])) {
+                $text .= $part['text'];
+            }
+        }
+
+        $finishReason = $data['candidates'][0]['finishReason'] ?? null;
+        if ($finishReason && $finishReason !== 'STOP') {
+            Log::warning('Gemini completion finished with non-STOP status', [
+                'model' => $model,
+                'finish_reason' => $finishReason,
+                'length' => mb_strlen($text),
+            ]);
+        }
+
+        return $text;
     }
 
     public function listModels(): array

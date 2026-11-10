@@ -13,12 +13,13 @@ class PatientSummaryManager {
 
         this.patientId = config.patientId;
         this.encounterId = config.encounterId;
-        this.autoOpen = config.autoOpen !== undefined ? config.autoOpen : true;
+        this.autoOpen = false; // Never auto-pop full drawer, proactively prefetch in background instead
         this.voiceEnabled = config.voiceEnabled !== undefined ? config.voiceEnabled : true;
         this.defaultRate = config.voiceRate || 1.0;
         
         // DOM Elements
         this.overlay = document.getElementById('patient-summary-overlay');
+        this.backdrop = document.getElementById('patient-summary-backdrop');
         this.loadingState = document.getElementById('summary-loading');
         this.errorState = document.getElementById('summary-error');
         this.errorText = document.getElementById('summary-error-text');
@@ -26,6 +27,7 @@ class PatientSummaryManager {
         this.textContent = document.getElementById('summary-text-container');
         this.capsuleBar = document.getElementById('summary-capsule-bar');
         this.metaInfo = document.getElementById('summary-meta-info');
+        this.btnOpenStudio = document.getElementById('btn-open-studio-from-brief');
         
         // Audio Elements
         this.btnPlay = document.getElementById('btn-summary-play');
@@ -51,7 +53,7 @@ class PatientSummaryManager {
     updateConfig(config) {
         this.patientId = config.patientId;
         this.encounterId = config.encounterId;
-        this.autoOpen = config.autoOpen !== undefined ? config.autoOpen : true;
+        this.autoOpen = false;
         this.voiceEnabled = config.voiceEnabled !== undefined ? config.voiceEnabled : true;
         if (config.voiceRate) this.defaultRate = config.voiceRate;
         
@@ -59,12 +61,9 @@ class PatientSummaryManager {
         this.summaryText = '';
         if (this.textContent) this.textContent.innerHTML = '';
         if (this.metaInfo) this.metaInfo.innerHTML = '';
-        
-        // Check autoOpen logic for the new patient
-        const sessionKey = `summary_shown_${this.patientId}_${this.encounterId}`;
-        if (this.autoOpen && !sessionStorage.getItem(sessionKey)) {
-            sessionStorage.setItem(sessionKey, '1');
-            setTimeout(() => this.openAndLoad(), 1000);
+
+        if (this.patientId) {
+            this.prefetchSummary();
         }
     }
 
@@ -75,6 +74,21 @@ class PatientSummaryManager {
         document.querySelectorAll('.btn-close-summary').forEach(btn => {
             btn.addEventListener('click', () => this.close());
         });
+
+        if (this.backdrop) {
+            this.backdrop.addEventListener('click', () => this.close());
+        }
+
+        if (this.btnOpenStudio) {
+            this.btnOpenStudio.addEventListener('click', () => {
+                this.close();
+                if (window.ClinicalAiScribeStudio && window.ClinicalAiScribeStudio.instance) {
+                    window.ClinicalAiScribeStudio.instance.open();
+                } else if (window.aiScribeStudio) {
+                    window.aiScribeStudio.open();
+                }
+            });
+        }
 
         const copyBtn = document.querySelector('.btn-copy-summary');
         if (copyBtn) {
@@ -98,6 +112,13 @@ class PatientSummaryManager {
             }
         });
 
+        // Keyboard navigation (Escape closes drawer)
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && this.overlay && !this.overlay.classList.contains('d-none')) {
+                this.close();
+            }
+        });
+
         // Bind Audio Events
         if (this.voiceEnabled && this.synth) {
             if (this.btnPlay) {
@@ -111,7 +132,6 @@ class PatientSummaryManager {
                 this.rateSelect.addEventListener('change', (e) => {
                     if (this.utterance) {
                         this.utterance.rate = parseFloat(e.target.value);
-                        // Changing rate while playing requires restart on some browsers
                         if (this.isPlaying) {
                             this.stopAudio();
                             this.playAudio();
@@ -121,27 +141,47 @@ class PatientSummaryManager {
             }
         }
 
-        // Check session storage to see if we already showed it this session
-        const sessionKey = `summary_shown_${this.patientId}_${this.encounterId}`;
-        if (this.autoOpen && !sessionStorage.getItem(sessionKey)) {
-            sessionStorage.setItem(sessionKey, '1');
-            // Slight delay so the page can render first
-            setTimeout(() => this.openAndLoad(), 1000);
+        // Proactively prefetch patient brief in background on page load
+        if (this.patientId) {
+            setTimeout(() => this.prefetchSummary(), 500);
         }
+    }
+
+    prefetchSummary() {
+        if (this.hasLoaded || this.isFetching) return;
+
+        // Check session storage first
+        const sessionKey = `patient_brief_${this.patientId}`;
+        const cached = sessionStorage.getItem(sessionKey);
+        if (cached) {
+            this.summaryText = cached;
+            window.cachedPatientSummary = cached;
+            this.renderSummary(cached);
+            this.hasLoaded = true;
+            window.dispatchEvent(new CustomEvent('patient-brief-loaded', {
+                detail: { summary: cached, patientId: this.patientId }
+            }));
+            return;
+        }
+
+        // Otherwise fetch in background
+        this.fetchSummary({ background: true });
     }
 
     openAndLoad() {
         if (!this.overlay) return;
         
-        // Prevent body scroll
+        // Prevent background body scroll while drawer is open
         document.body.style.overflow = 'hidden';
+        if (this.backdrop) this.backdrop.classList.remove('d-none');
         this.overlay.classList.remove('d-none');
         
         if (!this.hasLoaded) {
-            this.fetchSummary();
+            this.fetchSummary({ background: false });
         } else {
-            // Already loaded, just show it and maybe auto-play?
-            // Optionally auto-play when reopened
+            if (this.loadingState) this.loadingState.style.display = 'none';
+            if (this.contentArea) this.contentArea.style.display = 'block';
+            if (this.capsuleBar) this.capsuleBar.style.display = 'flex';
         }
     }
 
@@ -149,14 +189,16 @@ class PatientSummaryManager {
         if (this.patientId !== patientId || this.encounterId !== encounterId) {
             this.patientId = patientId;
             this.encounterId = encounterId;
-            this.hasLoaded = false; // Force a fresh fetch next time openAndLoad is called
-            this.currentText = '';
-            if (this.textContainer) this.textContainer.innerHTML = '';
+            this.hasLoaded = false;
+            this.summaryText = '';
+            if (this.textContent) this.textContent.innerHTML = '';
+            this.prefetchSummary();
         }
     }
 
     close() {
-        this.overlay.classList.add('d-none');
+        if (this.overlay) this.overlay.classList.add('d-none');
+        if (this.backdrop) this.backdrop.classList.add('d-none');
         document.body.style.overflow = '';
         this.stopAudio();
     }
@@ -165,23 +207,43 @@ class PatientSummaryManager {
         this.isForceRegenerate = true;
         this.stopAudio();
         this.hasLoaded = false;
-        this.currentText = '';
+        this.summaryText = '';
         if (this.textContent) this.textContent.innerHTML = '';
-        this.fetchSummary();
+        this.fetchSummary({ background: false });
     }
 
-    async fetchSummary() {
-        this.loadingState.style.display = 'block';
-        this.errorState.style.display = 'none';
-        this.contentArea.style.display = 'none';
-        this.capsuleBar.style.display = 'none';
+    renderSummary(text, modelUsed = null) {
+        if (!this.textContent) return;
+        let formattedHtml = this.formatMarkdown(text);
+        this.textContent.innerHTML = formattedHtml;
+        if (modelUsed && this.metaInfo) {
+            this.metaInfo.innerHTML = `<i class="mdi mdi-robot-outline"></i> Synthesized by ${modelUsed}`;
+        }
+        if (this.loadingState) this.loadingState.style.display = 'none';
+        if (this.contentArea) this.contentArea.style.display = 'block';
+        if (this.capsuleBar) this.capsuleBar.style.display = 'flex';
+        this.setupAudio();
+    }
+
+    async fetchSummary(options = { background: false }) {
+        if (this.isFetching) return;
+        this.isFetching = true;
+
+        const isBackground = options && options.background;
+        if (!isBackground) {
+            if (this.loadingState) this.loadingState.style.display = 'block';
+            if (this.errorState) this.errorState.style.display = 'none';
+            if (this.contentArea) this.contentArea.style.display = 'none';
+            if (this.capsuleBar) this.capsuleBar.style.display = 'none';
+        }
 
         try {
+            const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content;
             const response = await fetch('/llm/patient-summary', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                    'X-CSRF-TOKEN': csrfToken || ''
                 },
                 body: JSON.stringify({
                     patient_id: this.patientId,
@@ -190,8 +252,7 @@ class PatientSummaryManager {
                 })
             });
 
-            this.isForceRegenerate = false; // Reset the flag after request is dispatched
-
+            this.isForceRegenerate = false;
             const data = await response.json();
 
             if (!data.success) {
@@ -199,30 +260,35 @@ class PatientSummaryManager {
             }
 
             this.summaryText = data.summary_text;
-            
-            // Format markdown to simple HTML (basic support)
-            let formattedHtml = this.formatMarkdown(this.summaryText);
-            this.textContent.innerHTML = formattedHtml;
-            
-            if (data.model_used) {
-                this.metaInfo.innerHTML = `<i class="mdi mdi-robot-outline"></i> Generated by ${data.model_used}`;
+            window.cachedPatientSummary = data.summary_text;
+            sessionStorage.setItem(`patient_brief_${this.patientId}`, data.summary_text);
+            this.hasLoaded = true;
+
+            this.renderSummary(data.summary_text, data.model_used);
+
+            // Notify Scribe Studio and other subscribers
+            window.dispatchEvent(new CustomEvent('patient-brief-loaded', {
+                detail: { summary: this.summaryText, patientId: this.patientId }
+            }));
+
+            // Subtle toastr notification for background completion
+            if (isBackground && typeof toastr !== 'undefined') {
+                toastr.info('Longitudinal AI Patient Brief synthesized in background.', 'Clinical AI Ready', {
+                    timeOut: 3500,
+                    closeButton: true,
+                    progressBar: true
+                });
             }
 
-            this.hasLoaded = true;
-            this.loadingState.style.display = 'none';
-            this.contentArea.style.display = 'block';
-            this.capsuleBar.style.display = 'flex';
-
-            this.setupAudio();
-            
-            // Auto-play feature can be added here if desired
-            // this.playAudio();
-
         } catch (error) {
-            this.loadingState.style.display = 'none';
-            this.errorState.style.display = 'block';
-            this.errorText.textContent = error.message;
+            if (!isBackground) {
+                if (this.loadingState) this.loadingState.style.display = 'none';
+                if (this.errorState) this.errorState.style.display = 'block';
+                if (this.errorText) this.errorText.textContent = error.message;
+            }
             console.error('Summary Error:', error);
+        } finally {
+            this.isFetching = false;
         }
     }
 

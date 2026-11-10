@@ -31,20 +31,24 @@ body.dark-mode {
     left: 0;
     width: 100vw;
     height: 100vh;
+    max-height: 100vh;
     background: var(--scribe-bg);
     background: radial-gradient(circle at 50% 105%, color-mix(in srgb, var(--hospital-primary, #0066cc) 12%, transparent) 0%, transparent 60%), var(--scribe-bg);
     z-index: 999999;
     display: flex;
     flex-direction: column;
-    padding: 1.25rem 2rem;
-    overflow-y: auto;
-    overflow-x: hidden;
+    padding: 0.75rem 1.25rem;
+    overflow: hidden;
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
     opacity: 0;
     visibility: hidden;
     transition: opacity 0.3s cubic-bezier(0.16, 1, 0.3, 1), visibility 0.3s;
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+
+.clinical-ai-scribe-overlay:not(.active) {
+    display: none !important;
 }
 
 .clinical-ai-scribe-overlay.active {
@@ -83,6 +87,19 @@ body.dark-mode {
     align-items: center;
     gap: 0.5rem;
     flex-wrap: wrap;
+}
+
+.scribe-header-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.scribe-header-divider {
+    width: 1px;
+    height: 24px;
+    background: var(--scribe-card-border);
+    margin: 0 4px;
 }
 
 .scribe-pill-badge {
@@ -131,12 +148,12 @@ body.dark-mode {
     color: #ef4444;
 }
 
-/* Taxonomy Switcher Ribbon */
-.scribe-taxonomy-bar {
+/* Workflow Step Ribbon */
+.scribe-workflow-bar, .scribe-taxonomy-bar {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    margin-bottom: 1rem;
+    margin-bottom: 0.65rem;
     gap: 1rem;
     flex-wrap: wrap;
 }
@@ -173,6 +190,32 @@ body.dark-mode {
     box-shadow: 0 2px 8px color-mix(in srgb, var(--hospital-primary, #0066cc) 40%, transparent);
 }
 
+/* Clerking Method inside Dictate Card */
+.scribe-card-clerking-bar {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: var(--scribe-badge-bg);
+    padding: 4px 10px;
+    border-radius: 8px;
+    margin-bottom: 0.75rem;
+    border: 1px solid var(--scribe-card-border);
+    flex-wrap: wrap;
+    min-height: 32px;
+}
+
+.clerking-label {
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: var(--scribe-text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    white-space: nowrap;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
 .scribe-draft-notice {
     font-size: 0.72rem;
     color: var(--scribe-text-secondary);
@@ -181,19 +224,268 @@ body.dark-mode {
     gap: 0.5rem;
 }
 
-/* Studio Workspace Grid (Dual Pane) */
-.scribe-workspace-grid {
-    display: grid;
-    grid-template-columns: 1fr 1.15fr;
-    gap: 1.25rem;
-    flex-grow: 1;
-    min-height: 0;
+/* Workflow Step Navigator */
+.scribe-step-nav {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    background: var(--scribe-card-bg);
+    padding: 3px 6px;
+    border-radius: 50px;
+    border: 1px solid var(--scribe-card-border);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
 }
 
-@media (max-width: 1024px) {
-    .scribe-workspace-grid {
-        grid-template-columns: 1fr;
-    }
+.scribe-step-btn {
+    border: none;
+    background: transparent;
+    color: var(--scribe-text-secondary);
+    font-size: 0.75rem;
+    font-weight: 700;
+    padding: 4px 12px;
+    border-radius: 50px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.scribe-step-btn:hover {
+    color: var(--scribe-text-primary);
+    background: var(--scribe-badge-bg);
+}
+
+.scribe-step-btn.active {
+    background: var(--hospital-primary, #0066cc);
+    color: #ffffff;
+    box-shadow: 0 2px 8px color-mix(in srgb, var(--hospital-primary, #0066cc) 35%, transparent);
+}
+
+.scribe-step-btn .badge {
+    font-size: 0.65rem;
+    padding: 2px 6px;
+    border-radius: 50px;
+    font-weight: 700;
+    min-width: 18px;
+    text-align: center;
+}
+
+.scribe-step-btn.active .badge {
+    background: rgba(255, 255, 255, 0.25) !important;
+    color: #ffffff !important;
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   PILLAR 1: PATIENT LONGITUDINAL SUMMARY DECK (DOCKABLE / MAXIMIZABLE)
+   ═══════════════════════════════════════════════════════════════════ */
+.scribe-summary-deck {
+    margin-bottom: 0.65rem;
+    background: var(--scribe-card-bg);
+    border: 1px solid var(--scribe-card-border);
+    border-radius: 14px;
+    box-shadow: var(--scribe-card-shadow);
+    padding: 0.85rem 1.15rem;
+    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    position: relative;
+    overflow: hidden;
+}
+
+/* Docked State: 42px minimal bar showing summary ticker */
+.scribe-summary-deck.summary-docked {
+    height: 42px;
+    min-height: 42px;
+    max-height: 42px;
+    padding: 6px 14px;
+    flex: 0 0 42px;
+}
+
+.scribe-summary-deck.summary-docked .scribe-summary-header {
+    margin-bottom: 0;
+}
+
+.scribe-summary-deck.summary-docked #scribe-summary-body-wrap {
+    display: none !important;
+}
+
+/* Expanded State: ~260px view for reading patient summary */
+.scribe-summary-deck.summary-expanded {
+    height: clamp(240px, 32vh, 420px);
+    flex: 0 0 clamp(240px, 32vh, 420px);
+    padding: 8px 14px;
+    display: flex;
+    flex-direction: column;
+}
+
+.scribe-summary-deck.summary-expanded .scribe-summary-header {
+    margin-bottom: 0.5rem;
+    flex-shrink: 0;
+}
+
+.scribe-summary-deck.summary-expanded #scribe-summary-body-wrap {
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 auto;
+    min-height: 0;
+    max-height: 100%;
+    overflow: hidden;
+}
+
+.scribe-summary-deck.summary-expanded .scribe-summary-scroll-area {
+    flex: 1 1 auto;
+    overflow-y: auto !important;
+    min-height: 0;
+    max-height: 100%;
+    padding-right: 8px;
+}
+
+/* Maximized State: Summary focused view taking ~58vh when Step 1 is active */
+.scribe-summary-deck.summary-maximized {
+    height: clamp(380px, 60vh, 680px);
+    flex: 0 0 clamp(380px, 60vh, 680px);
+    padding: 10px 16px;
+    display: flex;
+    flex-direction: column;
+}
+
+.scribe-summary-deck.summary-maximized .scribe-summary-header {
+    margin-bottom: 0.65rem;
+    flex-shrink: 0;
+}
+
+.scribe-summary-deck.summary-maximized #scribe-summary-body-wrap {
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 auto;
+    min-height: 0;
+    max-height: 100%;
+    overflow: hidden;
+}
+
+.scribe-summary-deck.summary-maximized .scribe-summary-scroll-area {
+    flex: 1 1 auto;
+    overflow-y: auto !important;
+    min-height: 0;
+    max-height: 100%;
+    padding-right: 8px;
+}
+
+.scribe-summary-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 0.85rem;
+}
+
+.scribe-summary-title {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: var(--scribe-text-primary);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: opacity 0.2s;
+}
+
+.scribe-summary-title:hover {
+    opacity: 0.85;
+}
+
+.scribe-summary-scroll-area {
+    font-size: 0.85rem;
+    line-height: 1.55;
+    color: var(--scribe-text-primary);
+    flex: 1 1 auto;
+    overflow-y: auto !important;
+    overflow-x: hidden;
+    min-height: 0;
+    max-height: 100%;
+    padding-right: 8px;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(0, 0, 0, 0.25) transparent;
+}
+
+.scribe-summary-scroll-area::-webkit-scrollbar {
+    width: 6px;
+}
+
+.scribe-summary-scroll-area::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.03);
+    border-radius: 4px;
+}
+
+.scribe-summary-scroll-area::-webkit-scrollbar-thumb {
+    background: rgba(0, 0, 0, 0.25);
+    border-radius: 4px;
+}
+
+.scribe-summary-scroll-area::-webkit-scrollbar-thumb:hover {
+    background: var(--hospital-primary, #0066cc);
+}
+
+.scribe-summary-scroll-area h1,
+.scribe-summary-scroll-area h2,
+.scribe-summary-scroll-area h3 {
+    font-size: 0.92rem;
+    font-weight: 700;
+    color: var(--hospital-primary, #0066cc);
+    margin-top: 8px;
+    margin-bottom: 4px;
+    border-bottom: 1px dashed var(--scribe-card-border);
+    padding-bottom: 2px;
+}
+
+.scribe-summary-scroll-area ul {
+    padding-left: 18px;
+    margin-bottom: 8px;
+}
+
+/* When Summary Deck is maximized, keep upper grid and orders deck compact */
+.clinical-ai-scribe-overlay:has(.scribe-summary-deck.summary-maximized) .scribe-workspace-grid,
+.clinical-ai-scribe-overlay.cockpit-summary-focus .scribe-workspace-grid {
+    flex: 0 0 140px !important;
+    min-height: 120px !important;
+    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.clinical-ai-scribe-overlay:has(.scribe-summary-deck.summary-maximized) .scribe-orders-deck,
+.clinical-ai-scribe-overlay.cockpit-summary-focus .scribe-orders-deck {
+    height: 42px !important;
+    min-height: 42px !important;
+    max-height: 42px !important;
+    flex: 0 0 42px !important;
+}
+
+/* Studio Workspace Grid (Dynamic Step Adaptive & Foldable) */
+.scribe-workspace-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    flex: 1 1 auto;
+    min-height: 160px;
+    overflow: hidden;
+    transition: grid-template-columns 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.scribe-workspace-grid.grid-balanced {
+    grid-template-columns: 1fr 1fr;
+}
+
+.scribe-workspace-grid.grid-focus-dictate {
+    grid-template-columns: 1.8fr 1fr;
+}
+
+.scribe-workspace-grid.grid-focus-note {
+    grid-template-columns: 1fr 1.8fr;
+}
+
+.scribe-workspace-grid.grid-dictate-folded {
+    grid-template-columns: 46px 1fr;
+}
+
+.scribe-workspace-grid.grid-note-folded {
+    grid-template-columns: 1fr 46px;
 }
 
 /* Studio Cards Common */
@@ -204,9 +496,60 @@ body.dark-mode {
     box-shadow: var(--scribe-card-shadow);
     display: flex;
     flex-direction: column;
-    padding: 1.25rem;
+    padding: 1rem 1.15rem;
     overflow: hidden;
     position: relative;
+    min-height: 0;
+    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Folded Card Styles */
+.scribe-card.card-folded {
+    padding: 0.75rem 0.35rem;
+    align-items: center;
+    background: color-mix(in srgb, var(--hospital-primary, #0066cc) 4%, var(--scribe-card-bg));
+    border-color: color-mix(in srgb, var(--hospital-primary, #0066cc) 25%, var(--scribe-card-border));
+    cursor: pointer;
+}
+
+.scribe-card.card-folded .scribe-card-header {
+    flex-direction: column;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 0;
+    width: 100%;
+}
+
+.scribe-card.card-folded .scribe-card-title {
+    writing-mode: vertical-rl;
+    transform: rotate(180deg);
+    font-size: 0.85rem;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    margin-top: 1rem;
+    white-space: nowrap;
+}
+
+.scribe-card.card-folded .scribe-card-title span {
+    margin-top: 0.5rem;
+}
+
+.scribe-card.card-folded .scribe-recording-badge,
+.scribe-card.card-folded .scribe-review-badge,
+.scribe-card.card-folded .btn-card-focus,
+.scribe-card.card-folded .scribe-waveform-container,
+.scribe-card.card-folded .scribe-transcript-scroll-area,
+.scribe-card.card-folded .scribe-left-footer,
+.scribe-card.card-folded .scribe-sections-container,
+.scribe-card.card-folded .scribe-actions-row,
+.scribe-card.card-folded #scribe-safety-warnings,
+.scribe-card.card-folded #btn-scribe-toggle-rec,
+.scribe-card.card-folded #btn-scribe-restart-rec {
+    display: none !important;
+}
+
+.scribe-card.card-folded .btn-card-fold i {
+    transform: rotate(180deg);
 }
 
 .scribe-card-header {
@@ -269,10 +612,11 @@ body.dark-mode {
 
 .scribe-waveform-bar {
     width: 5px;
-    height: 8px;
+    height: 6px;
+    min-height: 6px;
     background: var(--hospital-primary, #0066cc);
     border-radius: 10px;
-    transition: height 0.08s ease;
+    will-change: height;
     opacity: 0.85;
 }
 
@@ -559,14 +903,116 @@ body.dark-mode {
     transform: translateY(-1px);
 }
 
-/* Detailed Orders Deck */
+/* Detailed Orders Deck (Foldable, Step-Adaptive Cockpit Pillar 4) */
 .scribe-orders-deck {
-    margin-top: 1.25rem;
+    margin-top: 0.65rem;
     background: var(--scribe-card-bg);
     border: 1px solid var(--scribe-card-border);
-    border-radius: 16px;
+    border-radius: 14px;
     box-shadow: var(--scribe-card-shadow);
-    padding: 1.15rem 1.25rem;
+    padding: 0.85rem 1.15rem;
+    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    position: relative;
+    overflow: hidden;
+}
+
+/* Docked State: 42px minimal bar that preserves full visibility without pushing other pillars */
+.scribe-orders-deck.orders-docked {
+    height: 42px;
+    min-height: 42px;
+    max-height: 42px;
+    padding: 6px 14px;
+    flex: 0 0 42px;
+}
+
+.scribe-orders-deck.orders-docked .scribe-orders-header {
+    margin-bottom: 0;
+}
+
+.scribe-orders-deck.orders-docked #scribe-orders-body-wrap {
+    display: none !important;
+}
+
+/* Expanded State: ~240px balanced view for reviewing & editing orders */
+.scribe-orders-deck.orders-expanded {
+    height: clamp(200px, 28vh, 320px);
+    flex: 0 0 clamp(200px, 28vh, 320px);
+    padding: 8px 14px;
+    display: flex;
+    flex-direction: column;
+}
+
+.scribe-orders-deck.orders-expanded .scribe-orders-header {
+    margin-bottom: 0.5rem;
+    flex-shrink: 0;
+}
+
+.scribe-orders-deck.orders-expanded #scribe-orders-body-wrap {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
+}
+
+.scribe-orders-deck.orders-expanded .scribe-orders-table-wrapper {
+    flex: 1;
+    overflow-y: auto;
+    min-height: 0;
+}
+
+/* Maximized State: Orders focused view taking ~58vh with compact upper grid */
+.scribe-orders-deck.orders-maximized {
+    height: clamp(360px, 58vh, 650px);
+    flex: 0 0 clamp(360px, 58vh, 650px);
+    padding: 10px 16px;
+    display: flex;
+    flex-direction: column;
+}
+
+.scribe-orders-deck.orders-maximized .scribe-orders-header {
+    margin-bottom: 0.65rem;
+    flex-shrink: 0;
+}
+
+.scribe-orders-deck.orders-maximized #scribe-orders-body-wrap {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
+}
+
+.scribe-orders-deck.orders-maximized .scribe-orders-table-wrapper {
+    flex: 1;
+    overflow-y: auto;
+    min-height: 0;
+}
+
+/* When Orders Deck is maximized, keep upper grid compact so Dictation & Note remain present & visible */
+.clinical-ai-scribe-overlay:has(.scribe-orders-deck.orders-maximized) .scribe-workspace-grid,
+.clinical-ai-scribe-overlay.cockpit-orders-focus .scribe-workspace-grid {
+    flex: 0 0 150px !important;
+    min-height: 130px !important;
+    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.clinical-ai-scribe-overlay:has(.scribe-orders-deck.orders-maximized) .scribe-waveform-container,
+.clinical-ai-scribe-overlay.cockpit-orders-focus .scribe-waveform-container {
+    height: 28px !important;
+    margin-bottom: 0.35rem !important;
+}
+
+.clinical-ai-scribe-overlay:has(.scribe-orders-deck.orders-maximized) .scribe-transcript-scroll-area,
+.clinical-ai-scribe-overlay.cockpit-orders-focus .scribe-transcript-scroll-area {
+    min-height: 60px !important;
+    max-height: 80px !important;
+}
+
+.clinical-ai-scribe-overlay:has(.scribe-orders-deck.orders-maximized) .scribe-sections-container,
+.clinical-ai-scribe-overlay.cockpit-orders-focus .scribe-sections-container {
+    min-height: 60px !important;
+    max-height: 80px !important;
 }
 
 .scribe-orders-header {
@@ -583,6 +1029,11 @@ body.dark-mode {
     display: flex;
     align-items: center;
     gap: 0.5rem;
+    transition: opacity 0.2s;
+}
+
+.scribe-orders-title:hover {
+    opacity: 0.85;
 }
 
 .scribe-order-table {
@@ -622,6 +1073,11 @@ body.dark-mode {
 }
 
 .cat-service { background: rgba(59, 130, 246, 0.12); color: #2563eb; }
+.cat-lab { background: rgba(16, 185, 129, 0.14); color: #059669; border: 1px solid rgba(16, 185, 129, 0.25); }
+.cat-imaging { background: rgba(139, 92, 246, 0.14); color: #7c3aed; border: 1px solid rgba(139, 92, 246, 0.25); }
+.cat-procedure { background: rgba(239, 68, 68, 0.14); color: #dc2626; border: 1px solid rgba(239, 68, 68, 0.25); }
+.cat-nursing { background: rgba(14, 165, 233, 0.14); color: #0284c7; border: 1px solid rgba(14, 165, 233, 0.25); }
+.cat-consultation { background: rgba(99, 102, 241, 0.14); color: #4f46e5; border: 1px solid rgba(99, 102, 241, 0.25); }
 .cat-product { background: rgba(16, 185, 129, 0.12); color: #059669; }
 .cat-referral { background: rgba(139, 92, 246, 0.12); color: #7c3aed; }
 .cat-followup { background: rgba(245, 158, 11, 0.12); color: #d97706; }
@@ -755,4 +1211,553 @@ body.dark-mode {
     font-size: 0.78rem;
     color: var(--hospital-primary, #0066cc);
 }
+
+/* ═══════════════════════════════════════════════════════════════════
+   PATIENT BRIEF OFFCANVAS CLINICAL DRAWER & BACKDROP
+   ═══════════════════════════════════════════════════════════════════ */
+.patient-brief-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.4);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    z-index: 1060;
+    opacity: 1;
+    transition: opacity 0.25s ease;
+}
+
+.patient-brief-backdrop.d-none {
+    display: none !important;
+}
+
+.patient-brief-drawer {
+    position: fixed;
+    top: 0;
+    right: 0;
+    width: 540px;
+    max-width: 92vw;
+    height: 100vh;
+    background: #ffffff;
+    z-index: 1065;
+    display: flex;
+    flex-direction: column;
+    box-shadow: -10px 0 35px rgba(0, 0, 0, 0.16);
+    transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.patient-brief-drawer.d-none {
+    display: none !important;
+    transform: translateX(100%);
+}
+
+.patient-brief-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 20px;
+    border-bottom: 1px solid #e2e8f0;
+    background: #ffffff;
+    flex-shrink: 0;
+}
+
+.patient-brief-header-title {
+    display: flex;
+    flex-direction: column;
+}
+
+.patient-brief-pill {
+    background: color-mix(in srgb, var(--hospital-primary, #0066cc) 12%, transparent);
+    color: var(--hospital-primary, #0066cc);
+    font-size: 0.68rem;
+    font-weight: 700;
+    border-radius: 20px;
+    padding: 2px 8px;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+}
+
+.patient-brief-tag {
+    background: #f1f5f9;
+    color: #475569;
+    font-size: 0.72rem;
+    font-weight: 600;
+    border-radius: 6px;
+    padding: 2px 7px;
+}
+
+.patient-brief-heading {
+    margin: 0;
+    font-size: 1.05rem;
+    font-weight: 800;
+    color: #0f172a;
+    letter-spacing: -0.2px;
+}
+
+.patient-brief-header-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.patient-brief-header-actions .btn-close-summary {
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    border-radius: 8px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: #64748b;
+    border: 1px solid #e2e8f0;
+    transition: all 0.15s ease;
+}
+
+.patient-brief-header-actions .btn-close-summary:hover {
+    background: #fee2e2;
+    color: #ef4444;
+    border-color: #fca5a5;
+}
+
+.patient-brief-body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 18px 20px;
+    background: #f8fafc;
+    scroll-behavior: smooth;
+}
+
+.patient-brief-loading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 60px 20px;
+    text-align: center;
+}
+
+.patient-brief-card {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 18px 20px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+
+.patient-brief-card .markdown-content {
+    font-size: 0.88rem;
+    line-height: 1.6;
+    color: #334155;
+}
+
+.patient-brief-card .markdown-content h1,
+.patient-brief-card .markdown-content h2,
+.patient-brief-card .markdown-content h3 {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: var(--hospital-primary, #0066cc);
+    margin-top: 14px;
+    margin-bottom: 6px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    border-bottom: 1px dashed #e2e8f0;
+    padding-bottom: 4px;
+}
+
+.patient-brief-card .markdown-content ul {
+    padding-left: 18px;
+    margin-bottom: 10px;
+}
+
+.patient-brief-card .markdown-content li {
+    margin-bottom: 4px;
+}
+
+.patient-brief-card .markdown-content strong {
+    color: #0f172a;
+}
+
+.patient-brief-card-meta {
+    font-size: 0.75rem;
+}
+
+.patient-brief-footer {
+    padding: 12px 20px;
+    background: #ffffff;
+    border-top: 1px solid #e2e8f0;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    flex-shrink: 0;
+}
+
+.patient-brief-voice-strip {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: #f1f5f9;
+    border-radius: 8px;
+    padding: 6px 12px;
+}
+
+.voice-status {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: #334155;
+}
+
+.voice-status-icon {
+    color: var(--hospital-primary, #0066cc);
+}
+
+.voice-controls {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.voice-action-btn {
+    width: 28px;
+    height: 28px;
+    padding: 0;
+    border-radius: 6px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: #ffffff;
+    border: 1px solid #cbd5e1;
+    color: #1e293b;
+    transition: all 0.15s ease;
+}
+
+.voice-action-btn:hover {
+    background: #e2e8f0;
+}
+
+.voice-speed-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    margin-left: 4px;
+}
+
+.voice-speed-label {
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: #64748b;
+    margin-bottom: 0;
+}
+
+.voice-speed-select {
+    padding: 2px 6px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    border-radius: 6px;
+    width: 65px;
+}
+
+.patient-brief-bottom-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   SCRIBE STUDIO AT-A-GLANCE PATIENT BRIEF CONTEXT STRIP
+   ═══════════════════════════════════════════════════════════════════ */
+.scribe-brief-strip {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: color-mix(in srgb, var(--hospital-primary, #0066cc) 6%, #ffffff);
+    border: 1px solid color-mix(in srgb, var(--hospital-primary, #0066cc) 22%, #e2e8f0);
+    border-radius: 8px;
+    padding: 6px 12px;
+    margin-bottom: 12px;
+    font-size: 0.8rem;
+    gap: 10px;
+    transition: all 0.2s ease;
+}
+
+.scribe-brief-strip-left {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex: 1;
+    min-width: 0;
+}
+
+.scribe-brief-badge {
+    background: color-mix(in srgb, var(--hospital-primary, #0066cc) 15%, transparent);
+    color: var(--hospital-primary, #0066cc);
+    font-weight: 700;
+    font-size: 0.72rem;
+    padding: 2px 7px;
+    border-radius: 4px;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    white-space: nowrap;
+}
+
+.scribe-brief-text {
+    color: #334155;
+    font-size: 0.78rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.scribe-brief-strip-right {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+}
+
+.btn-toggle-brief-expand {
+    font-size: 0.72rem;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 4px;
+    border: 1px solid color-mix(in srgb, var(--hospital-primary, #0066cc) 30%, #cbd5e1);
+    background: #ffffff;
+    color: var(--hospital-primary, #0066cc);
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.btn-toggle-brief-expand:hover {
+    background: color-mix(in srgb, var(--hospital-primary, #0066cc) 10%, #ffffff);
+}
+
+.scribe-brief-expanded-panel {
+    display: none;
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 12px 14px;
+    margin-bottom: 12px;
+    font-size: 0.82rem;
+    max-height: 180px;
+    overflow-y: auto;
+    box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.03);
+}
+
+.scribe-brief-expanded-panel.open {
+    display: block;
+    animation: fadeIn 0.2s ease;
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   CATALOG MATCHER MODAL & FREE-FORM IDENTIFICATION DIALOG
+   ═══════════════════════════════════════════════════════════════════ */
+.scribe-catalog-matcher-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 1000010;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    animation: fadeIn 0.2s ease-out;
+}
+
+.scribe-matcher-backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.55);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+}
+
+.scribe-matcher-dialog {
+    position: relative;
+    width: 680px;
+    max-width: 95vw;
+    max-height: 85vh;
+    background: var(--scribe-card-bg, #ffffff);
+    border-radius: 16px;
+    box-shadow: 0 20px 45px rgba(0, 0, 0, 0.28);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    border: 1px solid var(--scribe-card-border, #e2e8f0);
+    z-index: 1;
+}
+
+.scribe-matcher-header {
+    padding: 14px 20px;
+    border-bottom: 1px solid var(--scribe-card-border, #e2e8f0);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: color-mix(in srgb, var(--hospital-primary, #0066cc) 4%, var(--scribe-card-bg, #ffffff));
+}
+
+.scribe-matcher-title {
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: var(--scribe-text-primary, #0f172a);
+    margin: 0;
+}
+
+.btn-close-matcher {
+    background: transparent;
+    border: none;
+    font-size: 1.25rem;
+    color: var(--scribe-text-secondary, #64748b);
+    cursor: pointer;
+    padding: 4px 8px;
+    border-radius: 6px;
+    transition: all 0.15s ease;
+}
+
+.btn-close-matcher:hover {
+    background: rgba(239, 68, 68, 0.1);
+    color: #ef4444;
+}
+
+.scribe-matcher-body {
+    padding: 16px 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
+    background: var(--scribe-card-bg, #ffffff);
+}
+
+.scribe-matcher-search-bar .input-group {
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.scribe-matcher-filter-chips {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+}
+
+.matcher-filter-chip {
+    border: 1px solid var(--scribe-card-border, #cbd5e1);
+    background: var(--scribe-badge-bg, #ffffff);
+    color: var(--scribe-text-secondary, #475569);
+    font-size: 0.75rem;
+    font-weight: 600;
+    padding: 3px 12px;
+    border-radius: 50px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.matcher-filter-chip:hover {
+    background: color-mix(in srgb, var(--hospital-primary, #0066cc) 8%, var(--scribe-badge-bg, #ffffff));
+    color: var(--scribe-text-primary, #0f172a);
+}
+
+.matcher-filter-chip.active {
+    background: var(--hospital-primary, #0066cc);
+    color: #ffffff;
+    border-color: var(--hospital-primary, #0066cc);
+    box-shadow: 0 2px 6px color-mix(in srgb, var(--hospital-primary, #0066cc) 35%, transparent);
+}
+
+.scribe-matcher-results {
+    flex: 1;
+    min-height: 0;
+    max-height: 380px;
+    overflow-y: auto;
+    border: 1px solid var(--scribe-card-border, #e2e8f0);
+    border-radius: 10px;
+    background: var(--scribe-badge-bg, #f8fafc);
+    padding: 8px;
+}
+
+.matcher-result-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 14px;
+    background: var(--scribe-card-bg, #ffffff);
+    border: 1px solid var(--scribe-card-border, #e2e8f0);
+    border-radius: 8px;
+    margin-bottom: 6px;
+    transition: all 0.15s ease;
+}
+
+.matcher-result-item:hover {
+    border-color: var(--hospital-primary, #0066cc);
+    box-shadow: 0 2px 8px color-mix(in srgb, var(--hospital-primary, #0066cc) 12%, transparent);
+}
+
+.matcher-result-meta {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    flex: 1;
+    min-width: 0;
+    padding-right: 12px;
+}
+
+.matcher-result-name {
+    font-size: 0.88rem;
+    font-weight: 700;
+    color: var(--scribe-text-primary, #0f172a);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.matcher-result-sub {
+    font-size: 0.74rem;
+    color: var(--scribe-text-secondary, #64748b);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.btn-select-catalog-item {
+    font-size: 0.78rem;
+    font-weight: 700;
+    padding: 5px 14px;
+    border-radius: 50px;
+    background: var(--hospital-primary, #0066cc);
+    color: #ffffff;
+    border: none;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    white-space: nowrap;
+}
+
+.btn-select-catalog-item:hover {
+    filter: brightness(1.1);
+    transform: translateY(-1px);
+}
+
+body.dark-mode .scribe-matcher-search-bar input {
+    background: #1e293b;
+    color: #f8fafc;
+    border-color: rgba(255, 255, 255, 0.15);
+}
+
+body.dark-mode .scribe-matcher-search-bar .input-group-text {
+    background: #1e293b;
+    border-color: rgba(255, 255, 255, 0.15);
+}
+
+
+
 
