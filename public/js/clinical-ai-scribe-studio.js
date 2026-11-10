@@ -1043,5 +1043,103 @@ class ClinicalAiScribeStudio {
     }
 }
 
+// Global trigger bindings & keyboard shortcuts
+document.addEventListener('DOMContentLoaded', () => {
+    // 1. Studio trigger buttons
+    document.addEventListener('click', (e) => {
+        const studioBtn = e.target.closest('.btn-speech-studio, #btn-open-scribe-studio, .fab-scribe-btn');
+        if (studioBtn) {
+            e.preventDefault();
+            const targetSelector = studioBtn.getAttribute('data-target-editor');
+            if (targetSelector && ClinicalAiScribeStudio.instance) {
+                ClinicalAiScribeStudio.instance.targetEditorSelector = targetSelector;
+            }
+            if (ClinicalAiScribeStudio.instance) {
+                ClinicalAiScribeStudio.instance.open();
+            }
+        }
+
+        // 2. Quick Polish button
+        const polishBtn = e.target.closest('.btn-speech-format');
+        if (polishBtn) {
+            e.preventDefault();
+            quickPolishNote(polishBtn);
+        }
+    });
+
+    // 3. Global hotkeys: F9 or Alt+S toggles Studio, Escape closes it
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'F9' || (e.altKey && (e.key === 's' || e.key === 'S'))) {
+            e.preventDefault();
+            if (ClinicalAiScribeStudio.instance) {
+                const overlay = ClinicalAiScribeStudio.instance.overlay;
+                if (overlay && overlay.classList.contains('active')) {
+                    ClinicalAiScribeStudio.instance.close();
+                } else {
+                    ClinicalAiScribeStudio.instance.open();
+                }
+            }
+        } else if (e.key === 'Escape') {
+            if (ClinicalAiScribeStudio.instance) {
+                const overlay = ClinicalAiScribeStudio.instance.overlay;
+                if (overlay && overlay.classList.contains('active')) {
+                    ClinicalAiScribeStudio.instance.close();
+                }
+            }
+        }
+    });
+});
+
+async function quickPolishNote(btn) {
+    if (!ClinicalAiScribeStudio.instance) return;
+    const studio = ClinicalAiScribeStudio.instance;
+    const currentText = studio.getEditorContent();
+    const cleanText = (currentText || '').replace(/<[^>]*>/g, '').replace(/&nbsp;/g, ' ').trim();
+
+    if (!cleanText) {
+        if (typeof toastr !== 'undefined') {
+            toastr.warning('Please enter or dictate a note to polish.');
+        }
+        return;
+    }
+
+    const originalHtml = btn.innerHTML;
+    btn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Polishing...';
+    btn.disabled = true;
+
+    try {
+        const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content;
+        const response = await fetch('/llm/polish-note', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': csrfToken
+            },
+            body: JSON.stringify({
+                raw_note: currentText,
+                modality: studio.role || 'doctor'
+            })
+        });
+
+        const data = await response.json();
+        if (data && data.polished_note) {
+            studio.setEditorContent(data.polished_note);
+            if (typeof toastr !== 'undefined') {
+                toastr.success('Note polished in-place.');
+            }
+        } else {
+            throw new Error(data.message || 'Failed to polish note.');
+        }
+    } catch (err) {
+        console.error('Quick polish error:', err);
+        if (typeof toastr !== 'undefined') {
+            toastr.error(err.message, 'Polish Error');
+        }
+    } finally {
+        btn.innerHTML = originalHtml;
+        btn.disabled = false;
+    }
+}
+
 window.ClinicalAiScribeStudio = ClinicalAiScribeStudio;
 

@@ -683,3 +683,76 @@ body.dark-mode {
     gap: 6px;
 }
 
+/* Streamlined Clinical AI Toolbar Buttons */
+.speech-dictation-wrapper {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.btn-speech-studio {
+    background: linear-gradient(135deg, var(--hospital-primary, #0066cc) 0%, #1e293b 100%) !important;
+    color: #ffffff !important;
+    border: none !important;
+    border-radius: 50px !important;
+    padding: 4px 14px 4px 8px !important;
+    font-size: 0.78rem !important;
+    font-weight: 700 !important;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    box-shadow: 0 2px 8px color-mix(in srgb, var(--hospital-primary, #0066cc) 30%, transparent) !important;
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+
+.btn-speech-studio:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 14px color-mix(in srgb, var(--hospital-primary, #0066cc) 45%, transparent) !important;
+    filter: brightness(1.1);
+}
+
+.speech-studio-icon-wrapper {
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.2);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.82rem;
+    color: #ffd700;
+}
+
+.btn-speech-format {
+    background: #ffffff !important;
+    color: var(--hospital-primary, #0066cc) !important;
+    border: 1px solid color-mix(in srgb, var(--hospital-primary, #0066cc) 35%, #e2e8f0) !important;
+    border-radius: 50px !important;
+    padding: 4px 14px 4px 8px !important;
+    font-size: 0.78rem !important;
+    font-weight: 700 !important;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05) !important;
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+
+.btn-speech-format:hover {
+    background: color-mix(in srgb, var(--hospital-primary, #0066cc) 8%, #ffffff) !important;
+    border-color: var(--hospital-primary, #0066cc) !important;
+    transform: translateY(-1px);
+}
+
+.speech-format-icon-wrapper {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: rgba(0, 102, 204, 0.1);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.78rem;
+    color: var(--hospital-primary, #0066cc);
+}
+

@@ -65,7 +65,6 @@
 @include('admin.partials.bundle_view_modal')
 @include('admin.partials.bundle_remove_modal')
 @include('admin.partials.patient_summary_overlay')
-@include('admin.partials.ai_quick_actions')
 @include('admin.partials.clinical_ai_scribe_studio', [
     'role' => 'doctor',
     'targetEditorId' => 'doctor_diagnosis_text',

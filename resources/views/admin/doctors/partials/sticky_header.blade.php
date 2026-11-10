@@ -502,6 +502,9 @@
             <button type="button" class="btn btn-danger text-white btn-manage-alerts" data-patient-id="{{ $patient->id }}" title="Alerts">
                 <i class="mdi mdi-alert-octagon"></i><span>Alerts</span>
             </button>
+            <button type="button" class="btn btn-info text-white btn-patient-summary" data-patient-id="{{ $patient->id }}" title="AI Longitudinal Patient Briefing">
+                <i class="mdi mdi-creation"></i><span>AI Brief</span>
+            </button>
             <button type="button" class="btn btn-secondary text-white" onclick="openReportBuilder()" title="Report">
                 <i class="mdi mdi-file-document"></i><span>Report</span>
             </button>
@@ -680,6 +683,9 @@
 
             <button type="button" class="btn btn-danger text-white d-flex align-items-center shadow-sm btn-manage-alerts" data-patient-id="{{ $patient->id }}">
                 <i class="mdi mdi-alert-octagon me-1"></i> Alerts
+            </button>
+            <button type="button" class="btn btn-info text-white d-flex align-items-center shadow-sm btn-patient-summary" data-patient-id="{{ $patient->id }}" title="AI Longitudinal Patient Briefing">
+                <i class="mdi mdi-creation me-1"></i> AI Brief
             </button>
             <button type="button" class="btn btn-secondary text-white d-flex align-items-center shadow-sm" onclick="openReportBuilder()">
                 <i class="mdi mdi-file-document me-1"></i> Report

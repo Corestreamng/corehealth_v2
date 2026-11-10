@@ -66,7 +66,6 @@ window.INVEST_RES_SOURCE = 'maternity';
 @include('admin.partials.perform_investigation_modal')
 @include('admin.partials.combo_confirm_modal')
 @include('admin.partials.patient_summary_overlay')
-@include('admin.partials.ai_quick_actions')
 @include('admin.partials.clinical_ai_scribe_studio', [
     'role' => 'maternity',
     'targetEditorId' => 'maternity-note-editor',

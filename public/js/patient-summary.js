@@ -85,6 +85,19 @@ class PatientSummaryManager {
             this.btnRegenerate.addEventListener('click', () => this.regenerate());
         }
 
+        // Delegated trigger for all AI Brief / Patient Summary buttons across headers & toolbars
+        document.addEventListener('click', (e) => {
+            const btn = e.target.closest('.btn-patient-summary, #btn-ai-summary, #sch-expanded-ai-brief, #sch-compact-ai-brief');
+            if (btn) {
+                e.preventDefault();
+                const pId = btn.getAttribute('data-patient-id');
+                if (pId && pId != this.patientId) {
+                    this.updateContext(pId, this.encounterId);
+                }
+                this.openAndLoad();
+            }
+        });
+
         // Bind Audio Events
         if (this.voiceEnabled && this.synth) {
             if (this.btnPlay) {
