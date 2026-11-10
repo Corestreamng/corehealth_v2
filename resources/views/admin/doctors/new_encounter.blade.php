@@ -11,6 +11,7 @@
     <link rel="stylesheet" href="{{ asset('css/clinical-orders-shared.css') }}">
     <link rel="stylesheet" href="{{ asset('css/encounter-procedures.css') }}">
     <link rel="stylesheet" href="{{ asset('css/nursing-workbench.css') }}">
+    <link rel="stylesheet" href="{{ asset('css/clinical-ai-scribe-studio.css') }}">
     <style>
         /* Fix for modals inside overflow containers */
         .modal {

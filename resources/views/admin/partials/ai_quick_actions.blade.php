@@ -8,6 +8,12 @@
 
 @if($aiEnabled && $wandEnabled)
 <div id="ai-quick-actions-fab" class="ai-fab-container d-none">
+    {{-- Full AI Scribe Studio Button --}}
+    <button type="button" class="btn btn-ai-fab btn-ai-scribe" id="fab-scribe-btn" title="Open Clinical AI Scribe Studio">
+        <div class="ai-fab-icon-wrapper"><i class="mdi mdi-creation ai-fab-icon"></i></div>
+        <span class="ai-fab-label">AI Scribe Studio</span>
+    </button>
+
     {{-- Patient Summary Button (Always visible) --}}
     <button type="button" class="btn btn-ai-fab btn-ai-summary btn-patient-summary" id="fab-summary-btn" title="Generate AI Patient Summary">
         <div class="ai-fab-icon-wrapper"><i class="fa fa-magic ai-fab-icon"></i></div>
@@ -101,6 +107,14 @@
     background: linear-gradient(135deg, {{ $hosColor }}, color-mix(in srgb, {{ $hosColor }} 70%, #3b82f6));
 }
 
+.btn-ai-scribe {
+    background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+    border: 1px solid rgba(245, 158, 11, 0.4);
+}
+.btn-ai-scribe .ai-fab-icon-wrapper {
+    color: #f59e0b;
+}
+
 .btn-ai-fab:hover {
     width: 220px; /* Expanded width for text */
     transform: scale(1.03) translateY(-3px);
@@ -141,12 +155,25 @@
 document.addEventListener('DOMContentLoaded', function() {
     const fabContainer = document.getElementById('ai-quick-actions-fab');
     const summaryBtn = document.getElementById('fab-summary-btn');
+    const scribeBtn = document.getElementById('fab-scribe-btn');
     
     // Make container visible after slight delay
     setTimeout(() => {
         fabContainer.classList.remove('d-none');
         fabContainer.classList.add('visible');
     }, 1000);
+
+    // Handle AI Scribe Studio Click
+    if (scribeBtn) {
+        scribeBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            if (window.aiScribeStudio) {
+                window.aiScribeStudio.open();
+            } else {
+                console.warn('AI Scribe Studio not initialized on this page.');
+            }
+        });
+    }
 
     // Handle Summary Click
     if (summaryBtn) {

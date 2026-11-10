@@ -11,6 +11,9 @@ Every release tag is bound directly to documentation updates, PHPUnit verificati
 
 ## Recent Milestones
 
+- **[v2.6.0.68 — Clinical AI Scribe Studio ("Full AI Mode")](/releases/v2.6.0.68)**  
+  Ambient clinical documentation cockpit, 60 FPS hospital-themed waveform, multi-dialect matrix (`en-NG`, `pcm`, `ha`, `yo`, `ig`, `fr`, `es`, `ar`, etc.), dynamic clinical taxonomy switcher (Nigerian Clerking default, SOAP, POMR, DAR, SBAR, SOAPIE), catalog-grounded orders deck, and session/local draft persistence.
+
 - **[v2.6.0.67 — Clinical Consumables & Multi-Token Search Engine](/releases/v2.6.0.67)**  
   `ClinicalSearchHelper` multi-token query parsing, medical typo resilience (`wond` $\rightarrow$ `wound`), nursing consumable service discovery with `[Product]` and `[Service]` badges, and clinical kit combo bundle inspection.
 

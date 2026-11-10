@@ -865,6 +865,9 @@ Route::group(['middleware' => ['auth']], function () {
         // LLM Integration Routes
         Route::post('llm/patient-summary', [\App\Http\Controllers\LlmController::class, 'generatePatientSummary'])->name('llm.patient-summary');
         Route::post('llm/polish-note', [\App\Http\Controllers\LlmController::class, 'polishNote'])->name('llm.polish-note');
+        Route::post('llm/clinical-scribe/process', [\App\Http\Controllers\LlmController::class, 'processScribeSession'])->name('llm.clinical-scribe.process');
+        Route::post('llm/clinical-scribe/convert-format', [\App\Http\Controllers\LlmController::class, 'convertFormat'])->name('llm.clinical-scribe.convert-format');
+        Route::post('llm/clinical-scribe/sign', [\App\Http\Controllers\LlmController::class, 'signScribeSession'])->name('llm.clinical-scribe.sign');
         Route::get('llm/providers', [\App\Http\Controllers\LlmController::class, 'getProviders'])->name('llm.providers')->middleware('role:SUPERADMIN|ADMIN');
         Route::get('llm/models/{provider}', [\App\Http\Controllers\LlmController::class, 'getModels'])->name('llm.models')->middleware('role:SUPERADMIN|ADMIN');
         Route::post('llm/test-connection', [\App\Http\Controllers\LlmController::class, 'testConnection'])->name('llm.test-connection')->middleware('role:SUPERADMIN|ADMIN');

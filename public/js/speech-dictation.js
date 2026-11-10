@@ -161,7 +161,12 @@ class SpeechDictationKit {
         if (this.formatButton) {
             this.formatButton.addEventListener('click', (e) => {
                 e.preventDefault();
-                this.manualFormat();
+                if (window.aiScribeStudio) {
+                    window.aiScribeStudio.open();
+                    window.aiScribeStudio.processSession();
+                } else {
+                    this.manualFormat();
+                }
             });
         }
 

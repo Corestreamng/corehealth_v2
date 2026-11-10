@@ -67,7 +67,23 @@ window.INVEST_RES_SOURCE = 'maternity';
 @include('admin.partials.combo_confirm_modal')
 @include('admin.partials.patient_summary_overlay')
 @include('admin.partials.ai_quick_actions')
+@include('admin.partials.clinical_ai_scribe_studio', [
+    'role' => 'maternity',
+    'targetEditorId' => 'maternity-note-editor',
+    'editorType' => 'ckeditor'
+])
 <script src="{{ asset('js/patient-summary.js') }}"></script>
+<script src="{{ asset('js/clinical-ai-scribe-studio.js') }}"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        window.aiScribeStudio = new ClinicalAiScribeStudio({
+            role: 'maternity',
+            targetEditorSelector: '#maternity-note-editor',
+            editorType: 'ckeditor',
+            taxonomy: 'anc'
+        });
+    });
+</script>
 <script src="{{ versioned_asset('js/maternity-core.js') }}"></script>
 <script src="{{ versioned_asset('js/maternity-anc.js') }}"></script>
 <script src="{{ versioned_asset('js/maternity-delivery.js') }}"></script>

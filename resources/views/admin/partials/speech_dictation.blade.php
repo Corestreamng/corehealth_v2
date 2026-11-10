@@ -17,6 +17,14 @@
 @if($aiEnabled)
 <div class="speech-dictation-wrapper d-inline-flex flex-column {{ $class ?? '' }}" id="speech-wrapper-{{ $uniqueId }}">
     <div class="d-flex align-items-center gap-2 flex-wrap">
+        {{-- Full AI Scribe Mode Button --}}
+        <button type="button" 
+                id="btn-ai-scribe-studio-{{ $uniqueId }}" 
+                class="btn btn-speech-kit btn-speech-studio d-flex align-items-center gap-2"
+                title="Open Clinical AI Scribe Studio (Full AI Mode with Dual-Pane Dictation, Structuring & Orders)">
+            <span class="speech-studio-icon-wrapper"><i class="mdi mdi-creation"></i></span> AI Scribe Mode
+        </button>
+
         {{-- Dictate Button --}}
         @if($dictationEnabled)
         <button type="button" 
@@ -49,13 +57,21 @@
         @if($showLangSelect)
             <select id="select-speech-lang-{{ $uniqueId }}" 
                     class="form-select form-select-sm rounded-pill py-0 px-2 select-speech-lang" 
-                    style="width: 105px; height: 32px; font-size: 0.75rem; cursor: pointer;" 
+                    style="width: 110px; height: 32px; font-size: 0.75rem; cursor: pointer;" 
                     title="Select Dictation Language">
-                <option value="en-US" {{ $defaultLang === 'en-US' ? 'selected' : '' }}>English (US)</option>
-                <option value="en-GB" {{ $defaultLang === 'en-GB' ? 'selected' : '' }}>English (UK)</option>
                 <option value="en-NG" {{ $defaultLang === 'en-NG' ? 'selected' : '' }}>English (NG)</option>
-                <option value="es-ES" {{ $defaultLang === 'es-ES' ? 'selected' : '' }}>Español</option>
+                <option value="en-GB" {{ $defaultLang === 'en-GB' ? 'selected' : '' }}>English (UK)</option>
+                <option value="en-US" {{ $defaultLang === 'en-US' ? 'selected' : '' }}>English (US)</option>
+                <option value="pcm-NG">Pidgin (pcm)</option>
+                <option value="ha-NG">Hausa</option>
+                <option value="yo-NG">Yoruba</option>
+                <option value="ig-NG">Igbo</option>
                 <option value="fr-FR" {{ $defaultLang === 'fr-FR' ? 'selected' : '' }}>Français</option>
+                <option value="es-ES" {{ $defaultLang === 'es-ES' ? 'selected' : '' }}>Español</option>
+                <option value="ar-SA">العربية</option>
+                <option value="pt-PT">Português</option>
+                <option value="nl-NL">Nederlands</option>
+                <option value="zh-CN">中文</option>
             </select>
         @endif
     </div>
@@ -250,6 +266,36 @@
 .btn-speech-summary:hover .speech-summary-icon-wrapper {
     color: #0066cc;
     transform: scale(1.15);
+}
+
+/* State: AI Scribe Studio Button */
+.btn-speech-studio {
+    background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%) !important;
+    color: #ffffff !important;
+    border-color: rgba(255, 255, 255, 0.15) !important;
+    box-shadow: 0 4px 14px rgba(15, 23, 42, 0.25) !important;
+}
+.btn-speech-studio .speech-studio-icon-wrapper {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 22px;
+    height: 22px;
+    background: linear-gradient(135deg, #f59e0b 0%, #ef4444 100%);
+    border-radius: 50%;
+    color: #ffffff;
+    font-size: 0.75rem;
+    box-shadow: 0 2px 6px rgba(245, 158, 11, 0.4);
+    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+.btn-speech-studio:hover {
+    transform: scale(1.08) translateY(-1px);
+    background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%) !important;
+    border-color: #f59e0b !important;
+    box-shadow: 0 6px 20px rgba(245, 158, 11, 0.3) !important;
+}
+.btn-speech-studio:hover .speech-studio-icon-wrapper {
+    transform: scale(1.2) rotate(15deg);
 }
 
 @keyframes dictatingPulse {
@@ -564,6 +610,16 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             }
         });
+
+        const studioBtn = document.getElementById('btn-ai-scribe-studio-{{ $uniqueId }}');
+        if (studioBtn) {
+            studioBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                if (window.aiScribeStudio) {
+                    window.aiScribeStudio.open();
+                }
+            });
+        }
     }
     
     if (typeof SpeechDictationKit === 'undefined') {

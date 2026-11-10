@@ -1695,6 +1695,10 @@ setTimeout(initNursingNoteCKEditor, 1000);
 function loadNotesHistory(patientId) {
     if (!patientId) return;
 
+    if (window.aiScribeStudio) {
+        window.aiScribeStudio.updateConfig({ patientId: patientId, role: 'nurse' });
+    }
+
     var notesUrl = (typeof wbUrl === 'function') 
         ? wbUrl('/nursing-workbench/patient/' + patientId + '/nursing-notes')
         : `/nursing-workbench/patient/${patientId}/nursing-notes`;

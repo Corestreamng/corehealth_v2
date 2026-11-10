@@ -14,6 +14,9 @@ The **Active Clinical Intake Cockpit** is the physician's core consultation char
 ### Clinical Notes & Diagnosis Workspace (Compact Header View)
 ![Doctor Clinical Notes Workspace](/images/workbenches/doctor-clinical-notes.jpg)
 
+### Clinical AI Scribe Studio ("Full AI Mode") Dual-Pane Cockpit
+![Clinical AI Scribe Studio Live Interface](/images/workbenches/clinical-ai-scribe-studio.jpg)
+
 > [!TIP]
 > **Collapsing Header for Maximum Typing Space**:
 > Clicking the **Details / Less** button on the right edge of the top blue header bar shrinks the expanded demographic and vitals box into a slim 45px strip. This keeps patient identity and emergency actions visible while unlocking maximum vertical space for charting.
@@ -142,6 +145,13 @@ flowchart LR
 ### C. Clinical Patient Summary (`AI Summary`)
 - Click **AI Summary** (<i class="fa fa-file-text-o"></i>) on the dictation bar.
 - The system reviews the patient's longitudinal record—past encounters, chronic illnesses, recurring prescriptions, and allergies—synthesizing an executive briefing before the physical examination begins.
+
+### D. Clinical AI Scribe Studio ("Full AI Mode")
+For high-volume outpatient sessions, complex patient encounters, or multi-order consults, clinicians can launch the full-screen **Clinical AI Scribe Studio**:
+- **Trigger**: Click the **`AI Scribe Mode`** button on the clinical notes toolbar or click the floating purple **`AI Quick Actions FAB`** in the bottom-right corner.
+- **Dual-Pane Ambient Cockpit**: Real-time microphone audio visualizer in hospital primary color (`var(--hospital-primary)`) on the left, with dynamic taxonomy pills (`Clerking (Default)`, `SOAP`, `POMR`) on the right.
+- **Closed-Loop Catalog-Grounded Orders**: Automatically parses spoken requests into staged laboratory tests, imaging scans, surgical procedures, and pharmacy prescriptions with dosage instructions directly linked to hospital fulfillment queues.
+- 👉 **Exhaustive Deep Dive**: See the dedicated [Clinical AI Scribe Studio User Guide](/user-guides/workbenches/doctor/clinical-ai-scribe).
 
 ---
 

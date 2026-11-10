@@ -93,8 +93,24 @@ window.BILLING_KIT_CONFIG = {
 @include('admin.partials.clinical_alerts_modal')
 @include('admin.partials.patient_summary_overlay')
 @include('admin.partials.ai_quick_actions')
+@include('admin.partials.clinical_ai_scribe_studio', [
+    'role' => 'nurse',
+    'targetEditorId' => 'nursing-note-editor',
+    'editorType' => 'ckeditor'
+])
 @include('admin.partials.hospital_contacts_modal')
 @include('admin.partials.price_list_modal')
 <script src="{{ asset('js/clinical-alerts-shared.js') }}"></script>
 <script src="{{ asset('js/patient-summary.js') }}"></script>
+<script src="{{ asset('js/clinical-ai-scribe-studio.js') }}"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        window.aiScribeStudio = new ClinicalAiScribeStudio({
+            role: 'nurse',
+            targetEditorSelector: '#nursing-note-editor',
+            editorType: 'ckeditor',
+            taxonomy: 'dar'
+        });
+    });
+</script>
 @endsection

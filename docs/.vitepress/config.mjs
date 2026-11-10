@@ -57,6 +57,7 @@ export default defineConfig({
                 { text: 'Core Story & Clinical Cockpit', link: '/user-guides/workbenches/doctor' },
                 { text: 'My Queues & Triage Filtering', link: '/user-guides/workbenches/doctor/consultation-queue' },
                 { text: 'Active Clinical Intake & AI Notes', link: '/user-guides/workbenches/doctor/clinical-encounter' },
+                { text: 'Clinical AI Scribe Studio', link: '/user-guides/workbenches/doctor/clinical-ai-scribe' },
                 { text: 'Multi-Department Order Sets', link: '/user-guides/workbenches/doctor/clinical-orders' },
                 { text: 'Referrals, Admission & Conclude', link: '/user-guides/workbenches/doctor/referrals-and-discharge' },
               ]
@@ -179,6 +180,7 @@ export default defineConfig({
               collapsed: false,
               items: [
                 { text: 'Architecture & Route Blueprint', link: '/developer/workbenches/doctor' },
+                { text: 'Clinical AI Scribe & Catalog API', link: '/developer/workbenches/clinical-ai-scribe' },
                 { text: 'Encounter API & Save Contracts', link: '/developer/workbenches/doctor/api-contracts' },
                 { text: 'Database Models, Queues & Observers', link: '/developer/workbenches/doctor/database-and-models' },
               ]
@@ -255,6 +257,7 @@ export default defineConfig({
           text: 'Release Milestones',
           items: [
             { text: 'Release History Index', link: '/releases/index' },
+            { text: 'v2.6.0.68 (Clinical AI Scribe Studio)', link: '/releases/v2.6.0.68' },
             { text: 'v2.6.0.67 (Clinical Search Engine)', link: '/releases/v2.6.0.67' },
             { text: 'v2.6.0.66 (Billing & Dual ANC/PANC)', link: '/releases/v2.6.0.66' },
             { text: 'v2.6.0.65 (Branded Homepage & Memory)', link: '/releases/v2.6.0.65' },

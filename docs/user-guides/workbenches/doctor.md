@@ -94,6 +94,7 @@ Before eliciting history, glance at the top sticky header:
 Navigate to the **Clinical Notes / Diagnosis** tab:
 - **Presenting Complaint & History (HPI)**: Click **Start Dictation** (Beta) to activate hands-free clinical voice capture, or type directly into the rich text editor.
 - **AI Note Polishing**: Click **Polish Note** to transform conversational or dictated speech into professional medical terminology, standardizing acronyms (`BP`, `ECG`), structured paragraphs, and dosage notations.
+- **Full AI Scribe Mode**: Click **AI Scribe Mode** (or the purple AI FAB) to open the dual-pane ambient scribing studio with real-time waveform visualizer, multi-dialect recognition, Nigerian Clerking / SOAP taxonomy conversion, and automated catalog-grounded orders extraction.
 - **Clinical Templates**: Click **Insert Template** to inject standardized departmental clinical templates (e.g. Antenatal Initial Booking, Hypertensive Review, Well-Child Examination).
 - **ICPC-2 Reason for Encounter & ICD-10 Diagnosis**: Toggle **Diagnosis Applicable?** and search diagnostic codes. Flag diagnoses as **Confirmed** or **Provisional**. Frequently paired diagnoses can be saved or loaded using **Favorites**.
 
@@ -150,6 +151,7 @@ Click **Conclude** (<i class="fa fa-check-circle"></i>) on the top ribbon to ope
 For exhaustive field-by-field instructions, workflow parameters, and clinical configurations:
 - 👉 **[Consultation Queue & Triage Filtering](/user-guides/workbenches/doctor/consultation-queue)** — Roster management, 7 KPI cards, multi-dimensional filters, calendar vs table view, and historical rosters.
 - 👉 **[Active Clinical Intake & AI Notes](/user-guides/workbenches/doctor/clinical-encounter)** — Sticky patient header, 13 clinical tabs, voice dictation, SOAP documentation, and AI note polishing.
+- 👉 **[Clinical AI Scribe Studio ("Full AI Mode")](/user-guides/workbenches/doctor/clinical-ai-scribe)** — Ambient voice scribing, real-time waveform visualizer, multi-taxonomy note structuring, and catalog-grounded order extraction.
 - 👉 **[Multi-Department Diagnostic Orders & E-Prescriptions](/user-guides/workbenches/doctor/clinical-orders)** — Step-by-step guide to ordering lab panels, imaging studies, e-prescriptions, and bedside procedures.
 - 👉 **[Clinical Referrals, Inpatient Admissions & Discharge](/user-guides/workbenches/doctor/referrals-and-discharge)** — Specialist transfers, inpatient admission orders, encounter sign-off audit, and discharge summaries.
 

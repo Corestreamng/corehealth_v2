@@ -1,0 +1,685 @@
+/**
+ * Clinical AI Scribe Studio ("Full AI Mode") Stylesheet
+ * High-performance, zero-scroll cockpit overlay for ambient clinical documentation.
+ * Conforms to CoreHealth v2 Dynamic Hospital Theme Variables & Cockpit Scaling Standards.
+ */
+
+:root {
+    --scribe-bg: #f8fafc;
+    --scribe-card-bg: #ffffff;
+    --scribe-card-border: rgba(0, 0, 0, 0.08);
+    --scribe-card-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
+    --scribe-text-primary: #1e293b;
+    --scribe-text-secondary: #64748b;
+    --scribe-badge-bg: #f1f5f9;
+}
+
+body.dark-mode {
+    --scribe-bg: #0b0f19;
+    --scribe-card-bg: #151b28;
+    --scribe-card-border: rgba(255, 255, 255, 0.08);
+    --scribe-card-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+    --scribe-text-primary: #f8fafc;
+    --scribe-text-secondary: #94a3b8;
+    --scribe-badge-bg: rgba(255, 255, 255, 0.06);
+}
+
+/* Fullscreen Overlay Container */
+.clinical-ai-scribe-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: var(--scribe-bg);
+    background: radial-gradient(circle at 50% 105%, color-mix(in srgb, var(--hospital-primary, #0066cc) 12%, transparent) 0%, transparent 60%), var(--scribe-bg);
+    z-index: 999999;
+    display: flex;
+    flex-direction: column;
+    padding: 1.25rem 2rem;
+    overflow-y: auto;
+    overflow-x: hidden;
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s cubic-bezier(0.16, 1, 0.3, 1), visibility 0.3s;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+
+.clinical-ai-scribe-overlay.active {
+    opacity: 1;
+    visibility: visible;
+}
+
+/* Studio Header Ribbon */
+.scribe-studio-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-bottom: 0.85rem;
+    border-bottom: 1px solid var(--scribe-card-border);
+    margin-bottom: 1rem;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+.scribe-header-title-box {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.scribe-studio-title {
+    font-size: 1.35rem;
+    font-weight: 700;
+    color: var(--scribe-text-primary);
+    margin: 0;
+    letter-spacing: -0.3px;
+}
+
+.scribe-header-badges {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.scribe-pill-badge {
+    padding: 4px 12px;
+    border-radius: 50px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    background: var(--scribe-badge-bg);
+    color: var(--scribe-text-secondary);
+    border: 1px solid var(--scribe-card-border);
+}
+
+.scribe-pill-badge.active-session {
+    background: rgba(16, 185, 129, 0.1);
+    color: #10b981;
+    border-color: rgba(16, 185, 129, 0.25);
+}
+
+.scribe-user-avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: var(--hospital-primary, #0066cc);
+    color: #ffffff;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+}
+
+.btn-close-scribe {
+    background: transparent;
+    border: none;
+    font-size: 1.25rem;
+    color: var(--scribe-text-secondary);
+    cursor: pointer;
+    padding: 4px 8px;
+    border-radius: 8px;
+    transition: all 0.2s;
+}
+
+.btn-close-scribe:hover {
+    background: rgba(239, 68, 68, 0.1);
+    color: #ef4444;
+}
+
+/* Taxonomy Switcher Ribbon */
+.scribe-taxonomy-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1rem;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+.scribe-taxonomy-pills {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    background: var(--scribe-card-bg);
+    padding: 3px;
+    border-radius: 50px;
+    border: 1px solid var(--scribe-card-border);
+}
+
+.taxonomy-pill-btn {
+    border: none;
+    background: transparent;
+    color: var(--scribe-text-secondary);
+    font-size: 0.75rem;
+    font-weight: 600;
+    padding: 4px 14px;
+    border-radius: 50px;
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.taxonomy-pill-btn:hover {
+    color: var(--scribe-text-primary);
+}
+
+.taxonomy-pill-btn.active {
+    background: var(--hospital-primary, #0066cc);
+    color: #ffffff;
+    box-shadow: 0 2px 8px color-mix(in srgb, var(--hospital-primary, #0066cc) 40%, transparent);
+}
+
+.scribe-draft-notice {
+    font-size: 0.72rem;
+    color: var(--scribe-text-secondary);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+/* Studio Workspace Grid (Dual Pane) */
+.scribe-workspace-grid {
+    display: grid;
+    grid-template-columns: 1fr 1.15fr;
+    gap: 1.25rem;
+    flex-grow: 1;
+    min-height: 0;
+}
+
+@media (max-width: 1024px) {
+    .scribe-workspace-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Studio Cards Common */
+.scribe-card {
+    background: var(--scribe-card-bg);
+    border: 1px solid var(--scribe-card-border);
+    border-radius: 16px;
+    box-shadow: var(--scribe-card-shadow);
+    display: flex;
+    flex-direction: column;
+    padding: 1.25rem;
+    overflow: hidden;
+    position: relative;
+}
+
+.scribe-card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1rem;
+}
+
+.scribe-card-title {
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: var(--scribe-text-primary);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin: 0;
+}
+
+/* Recording Status Capsule */
+.scribe-recording-badge {
+    background: rgba(239, 68, 68, 0.1);
+    color: #ef4444;
+    border: 1px solid rgba(239, 68, 68, 0.2);
+    border-radius: 50px;
+    padding: 3px 10px;
+    font-size: 0.72rem;
+    font-weight: 700;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.recording-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #ef4444;
+    animation: recordingPulse 1.2s infinite ease-in-out;
+}
+
+@keyframes recordingPulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.4; transform: scale(1.3); }
+}
+
+/* Real-Time Waveform (Hospital Primary Color) */
+.scribe-waveform-container {
+    height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    margin-bottom: 1rem;
+    background: var(--scribe-badge-bg);
+    border-radius: 12px;
+    padding: 0 1rem;
+    overflow: hidden;
+}
+
+.scribe-waveform-bar {
+    width: 5px;
+    height: 8px;
+    background: var(--hospital-primary, #0066cc);
+    border-radius: 10px;
+    transition: height 0.08s ease;
+    opacity: 0.85;
+}
+
+/* Combined Transcript & Baseline Context Box */
+.scribe-transcript-scroll-area {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    min-height: 220px;
+    max-height: 420px;
+    overflow-y: auto;
+    padding-right: 4px;
+}
+
+.scribe-baseline-box {
+    background: var(--scribe-card-bg);
+    border: 1px solid var(--scribe-card-border);
+    border-left: 3px solid var(--hospital-primary, #0066cc);
+    border-radius: 8px;
+    padding: 10px 14px;
+    margin-bottom: 0.75rem;
+    max-height: 160px;
+    overflow-y: auto;
+}
+
+.scribe-baseline-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 0.74rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: var(--scribe-text-secondary);
+    margin-bottom: 6px;
+    letter-spacing: 0.03em;
+}
+
+.scribe-baseline-badge {
+    background: rgba(59, 130, 246, 0.12);
+    color: #2563eb;
+    padding: 2px 8px;
+    border-radius: 20px;
+    font-size: 0.68rem;
+    font-weight: 600;
+}
+
+.scribe-baseline-body {
+    font-size: 0.88rem;
+    line-height: 1.55;
+    color: var(--scribe-text-primary);
+}
+
+.scribe-baseline-body p {
+    margin-bottom: 0.35rem;
+}
+
+.scribe-context-divider {
+    display: flex;
+    align-items: center;
+    text-align: center;
+    margin: 0.65rem 0 0.85rem 0;
+}
+
+.scribe-context-divider::before,
+.scribe-context-divider::after {
+    content: '';
+    flex: 1;
+    border-bottom: 1px dashed var(--scribe-card-border);
+}
+
+.scribe-divider-label {
+    padding: 0 10px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    color: var(--hospital-primary, #0066cc);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+/* Live Transcript Box */
+.scribe-transcript-box {
+    flex-grow: 1;
+    background: var(--scribe-badge-bg);
+    border-radius: 12px;
+    padding: 1.15rem;
+    overflow-y: auto;
+    font-size: 1.05rem;
+    line-height: 1.65;
+    color: var(--scribe-text-primary);
+    min-height: 140px;
+    border: 1px solid var(--scribe-card-border);
+}
+
+.transcript-interim {
+    color: var(--scribe-text-secondary);
+    font-style: italic;
+}
+
+.transcript-caret {
+    display: inline-block;
+    width: 2px;
+    height: 1.2em;
+    background: var(--hospital-primary, #0066cc);
+    vertical-align: text-bottom;
+    margin-left: 2px;
+    animation: caretBlink 1s infinite;
+}
+
+@keyframes caretBlink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0; }
+}
+
+/* Left Pane Footer / Language Bar */
+.scribe-left-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 1rem;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+    font-size: 0.72rem;
+    color: var(--scribe-text-secondary);
+}
+
+.scribe-lang-select {
+    border-radius: 50px;
+    padding: 3px 10px;
+    font-size: 0.72rem;
+    font-weight: 600;
+    border: 1px solid var(--scribe-card-border);
+    background: var(--scribe-card-bg);
+    color: var(--scribe-text-primary);
+    cursor: pointer;
+}
+
+/* Right Pane: Structured Summary Cards */
+.scribe-review-badge {
+    background: rgba(245, 158, 11, 0.12);
+    color: #d97706;
+    border: 1px solid rgba(245, 158, 11, 0.25);
+    border-radius: 50px;
+    padding: 3px 12px;
+    font-size: 0.72rem;
+    font-weight: 600;
+    letter-spacing: 0.3px;
+}
+
+.scribe-sections-container {
+    flex-grow: 1;
+    overflow-y: auto;
+    max-height: 480px;
+    padding-right: 4px;
+    display: flex;
+    flex-direction: column;
+    gap: 0.85rem;
+}
+
+.scribe-section-block {
+    display: flex;
+    gap: 0.85rem;
+    align-items: flex-start;
+    padding: 0.85rem;
+    background: var(--scribe-badge-bg);
+    border-radius: 12px;
+    border: 1px solid var(--scribe-card-border);
+}
+
+.scribe-section-tag {
+    width: 28px;
+    height: 28px;
+    border-radius: 8px;
+    background: #0f172a;
+    color: #ffffff;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.75rem;
+    font-weight: 700;
+    flex-shrink: 0;
+    margin-top: 2px;
+}
+
+.scribe-section-body {
+    flex-grow: 1;
+}
+
+.scribe-section-title {
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: var(--hospital-primary, #0066cc);
+    margin-bottom: 0.25rem;
+    text-transform: capitalize;
+}
+
+.scribe-section-text {
+    font-size: 0.95rem;
+    line-height: 1.55;
+    color: var(--scribe-text-primary);
+    margin: 0;
+}
+
+.scribe-section-text[contenteditable="true"] {
+    background: var(--scribe-card-bg);
+    border: 1px dashed var(--hospital-primary, #0066cc);
+    padding: 6px;
+    border-radius: 6px;
+    outline: none;
+}
+
+/* Actions Row */
+.scribe-actions-row {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-top: 1rem;
+    padding-top: 0.85rem;
+    border-top: 1px solid var(--scribe-card-border);
+    flex-wrap: wrap;
+}
+
+.btn-scribe-sign {
+    background: #10b981;
+    color: #ffffff;
+    border: none;
+    border-radius: 50px;
+    padding: 7px 22px;
+    font-size: 0.85rem;
+    font-weight: 700;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.25);
+}
+
+.btn-scribe-sign:hover {
+    background: #059669;
+    transform: translateY(-1px);
+    box-shadow: 0 6px 16px rgba(16, 185, 129, 0.35);
+}
+
+.btn-scribe-edit, .btn-scribe-reject, .btn-scribe-process {
+    border-radius: 50px;
+    padding: 6px 16px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.btn-scribe-edit {
+    background: var(--scribe-card-bg);
+    border: 1px solid var(--scribe-card-border);
+    color: var(--scribe-text-primary);
+}
+
+.btn-scribe-edit:hover {
+    background: var(--scribe-badge-bg);
+}
+
+.btn-scribe-reject {
+    background: transparent;
+    border: 1px solid rgba(239, 68, 68, 0.4);
+    color: #ef4444;
+}
+
+.btn-scribe-reject:hover {
+    background: rgba(239, 68, 68, 0.08);
+}
+
+.btn-scribe-process {
+    background: var(--hospital-primary, #0066cc);
+    color: #ffffff;
+    border: none;
+    box-shadow: 0 4px 12px color-mix(in srgb, var(--hospital-primary, #0066cc) 30%, transparent);
+}
+
+.btn-scribe-process:hover {
+    transform: translateY(-1px);
+}
+
+/* Detailed Orders Deck */
+.scribe-orders-deck {
+    margin-top: 1.25rem;
+    background: var(--scribe-card-bg);
+    border: 1px solid var(--scribe-card-border);
+    border-radius: 16px;
+    box-shadow: var(--scribe-card-shadow);
+    padding: 1.15rem 1.25rem;
+}
+
+.scribe-orders-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 0.85rem;
+}
+
+.scribe-orders-title {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: var(--scribe-text-primary);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.scribe-order-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0 6px;
+    font-size: 0.82rem;
+}
+
+.scribe-order-row {
+    background: var(--scribe-badge-bg);
+    border-radius: 8px;
+    transition: background 0.2s;
+}
+
+.scribe-order-row td {
+    padding: 8px 12px;
+    vertical-align: middle;
+}
+
+.scribe-order-row td:first-child {
+    border-top-left-radius: 8px;
+    border-bottom-left-radius: 8px;
+}
+
+.scribe-order-row td:last-child {
+    border-top-right-radius: 8px;
+    border-bottom-right-radius: 8px;
+}
+
+.scribe-order-cat-badge {
+    padding: 3px 8px;
+    border-radius: 6px;
+    font-size: 0.68rem;
+    font-weight: 700;
+    text-transform: uppercase;
+}
+
+.cat-service { background: rgba(59, 130, 246, 0.12); color: #2563eb; }
+.cat-product { background: rgba(16, 185, 129, 0.12); color: #059669; }
+.cat-referral { background: rgba(139, 92, 246, 0.12); color: #7c3aed; }
+.cat-followup { background: rgba(245, 158, 11, 0.12); color: #d97706; }
+
+.order-inline-input {
+    width: 100%;
+    min-height: 38px;
+    background: var(--scribe-card-bg);
+    border: 1px solid var(--scribe-card-border);
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-size: 0.86rem;
+    color: var(--scribe-text-primary);
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+}
+
+.order-inline-input::placeholder {
+    color: var(--scribe-text-secondary);
+    font-size: 0.80rem;
+    font-style: italic;
+    opacity: 0.7;
+}
+
+.order-inline-input:hover {
+    border-color: color-mix(in srgb, var(--hospital-primary, #0066cc) 40%, var(--scribe-card-border));
+}
+
+.order-inline-input:focus {
+    background: var(--scribe-card-bg);
+    border-color: var(--hospital-primary, #0066cc);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--hospital-primary, #0066cc) 18%, transparent);
+    outline: none;
+}
+
+.btn-order-action {
+    background: transparent;
+    border: none;
+    color: var(--scribe-text-secondary);
+    cursor: pointer;
+    padding: 2px 6px;
+    border-radius: 4px;
+}
+
+.btn-order-action:hover {
+    color: #ef4444;
+}
+
+.scribe-alert-conflict {
+    background: rgba(239, 68, 68, 0.08);
+    border: 1px solid rgba(239, 68, 68, 0.2);
+    border-radius: 8px;
+    padding: 6px 12px;
+    font-size: 0.75rem;
+    color: #dc2626;
+    margin-top: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+

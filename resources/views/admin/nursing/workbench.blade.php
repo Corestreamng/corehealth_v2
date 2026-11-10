@@ -8,6 +8,7 @@
 <link rel="stylesheet" href="{{ versioned_asset('css/workbench-cockpit-scaling.css') }}">
 <link rel="stylesheet" href="{{ versioned_asset('css/nursing-workbench.css') }}">
 <link rel="stylesheet" href="{{ versioned_asset('css/nursing-shift.css') }}">
+<link rel="stylesheet" href="{{ versioned_asset('css/clinical-ai-scribe-studio.css') }}">
     
 <link rel="stylesheet" href="{{ asset('plugins/dataT/datatables.min.css') }}">
 <link rel="stylesheet" href="{{ asset('css/clinical-orders-shared.css') }}">

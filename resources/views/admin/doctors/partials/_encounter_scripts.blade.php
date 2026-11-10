@@ -66,6 +66,11 @@
 @include('admin.partials.bundle_remove_modal')
 @include('admin.partials.patient_summary_overlay')
 @include('admin.partials.ai_quick_actions')
+@include('admin.partials.clinical_ai_scribe_studio', [
+    'role' => 'doctor',
+    'targetEditorId' => 'doctor_diagnosis_text',
+    'editorType' => 'ckeditor'
+])
 @include('admin.doctors.partials.modals')
 @include('admin.partials.treatment-plan-viewer-modal')
 @include('admin.doctors.partials.report_builder')
@@ -74,6 +79,19 @@
 @include('admin.patients.partials.nurse_chart_scripts_enhanced')
 <script src="{{ asset('js/patient-summary.js') }}"></script>
 <script src="{{ asset('js/speech-dictation.js') }}"></script>
+<script src="{{ asset('js/clinical-ai-scribe-studio.js') }}"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        window.aiScribeStudio = new ClinicalAiScribeStudio({
+            role: 'doctor',
+            targetEditorSelector: '#doctor_diagnosis_text',
+            editorType: 'ckeditor',
+            patientId: window.patientId,
+            encounterId: window.encounterId,
+            taxonomy: 'clerking'
+        });
+    });
+</script>
 <script src="{{ asset('js/workbench-notes-shared.js') }}"></script>
 <script src="{{ asset('js/encounter-procedures.js') }}"></script>
 <script src="{{ asset('js/encounter-page.js') }}"></script>
