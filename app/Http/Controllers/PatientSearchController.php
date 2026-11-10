@@ -36,10 +36,38 @@ class PatientSearchController extends Controller
             ->limit(20)
             ->get();
 
+        // Also search by lab_number across LabServiceRequests
+        $normalizedQ = str_replace(' ', '', $q);
+        $strippedQ = str_replace([' ', '-'], '', $q);
+        $labMatchingRequests = \App\Models\LabServiceRequest::whereNotNull('lab_number')
+            ->where('lab_number', '!=', '')
+            ->where(function ($query) use ($q, $normalizedQ, $strippedQ) {
+                $query->where('lab_number', 'like', "%{$q}%")
+                      ->orWhereRaw("REPLACE(lab_number, ' ', '') LIKE ?", ["%{$normalizedQ}%"])
+                      ->orWhereRaw("REPLACE(REPLACE(lab_number, ' ', ''), '-', '') LIKE ?", ["%{$strippedQ}%"]);
+            })
+            ->orderBy('id', 'desc')
+            ->limit(15)
+            ->get(['id', 'patient_id', 'lab_number']);
+
+        $labPatientIds = $labMatchingRequests->pluck('patient_id')->unique()->filter()->values()->toArray();
+
+        if (!empty($labPatientIds)) {
+            $existingIds = $merged->pluck('id')->toArray();
+            $additionalIds = array_diff($labPatientIds, $existingIds);
+
+            if (!empty($additionalIds)) {
+                $additionalPatients = Patient::with(['user', 'hmo', 'account'])
+                    ->whereIn('id', array_slice($additionalIds, 0, 10))
+                    ->get();
+                $merged = $merged->merge($additionalPatients);
+            }
+        }
+
         $context = $request->get('context', 'reception');
 
-        $results = $merged->map(function ($patient) use ($context) {
-            return $this->mapPatient($patient, $context);
+        $results = $merged->map(function ($patient) use ($context, $labMatchingRequests) {
+            return $this->mapPatient($patient, $context, $labMatchingRequests);
         });
 
         return response()->json($results->values());
@@ -49,12 +77,28 @@ class PatientSearchController extends Controller
     //  MAPPING
     // ================================================================
 
-    private function mapPatient(patient $patient, string $context): array
+    private function mapPatient(Patient $patient, string $context, $labMatchingRequests = null): array
     {
+        $user = $patient->user;
+        $name = $user
+            ? ($user->surname . ' ' . $user->firstname . ($user->othername ? ' ' . $user->othername : ''))
+            : userfullname($patient->user_id);
+
+        $matchedReq = $labMatchingRequests ? $labMatchingRequests->firstWhere('patient_id', $patient->id) : null;
+        $latestLabNumber = $matchedReq ? $matchedReq->lab_number : null;
+
+        if (!$latestLabNumber && ($context === 'lab' || ($labMatchingRequests && $labMatchingRequests->isNotEmpty()))) {
+            $latestLabNumber = \App\Models\LabServiceRequest::where('patient_id', $patient->id)
+                ->whereNotNull('lab_number')
+                ->where('lab_number', '!=', '')
+                ->orderBy('id', 'desc')
+                ->value('lab_number');
+        }
+
         $base = [
             'id' => $patient->id,
             'user_id' => $patient->user_id,
-            'name' => userfullname($patient->user_id),
+            'name' => $name,
             'file_no' => $patient->file_no ?? 'N/A',
             'phone' => $patient->phone_no ?? 'N/A',
             'gender' => $patient->gender ?? 'N/A',
@@ -67,6 +111,8 @@ class PatientSearchController extends Controller
                             ? asset('storage/image/user/' . $patient->user->filename)
                             : asset('assets/images/default-avatar.png'),
             'balance' => optional($patient->account)->balance ?? 0,
+            'latest_lab_number' => $latestLabNumber,
+            'matched_by_lab' => $matchedReq !== null,
         ];
 
         // Domain‑specific extras

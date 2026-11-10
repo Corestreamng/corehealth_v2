@@ -11,6 +11,9 @@ Every release tag is bound directly to documentation updates, PHPUnit verificati
 
 ## Recent Milestones
 
+- **[v2.6.0.69 — LIS Specimen Auto-Increment, Collision Guards & Lab Number Search Engine](/releases/v2.6.0.69)**  
+  Overhaul of the Laboratory Workbench accession numbering engine: collision-free sequential auto-increment with whitespace normalization, server-side cross-patient duplicate rejection (422), patient lookup by lab number, sample collect button lifecycle state restoration, and prominent accession visibility across queues, cards, and datatables.
+
 - **[v2.6.0.68 — Clinical AI Scribe Studio ("Full AI Mode")](/releases/v2.6.0.68)**  
   Ambient clinical documentation cockpit, 60 FPS hospital-themed waveform, multi-dialect matrix (`en-NG`, `pcm`, `ha`, `yo`, `ig`, `fr`, `es`, `ar`, etc.), dynamic clinical taxonomy switcher (Nigerian Clerking default, SOAP, POMR, DAR, SBAR, SOAPIE), catalog-grounded orders deck, and session/local draft persistence.
 

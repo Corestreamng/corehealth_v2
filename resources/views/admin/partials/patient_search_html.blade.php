@@ -19,9 +19,9 @@
             id="{{ $id ?? 'patient-search' }}-input" 
             placeholder="{{ $placeholder ?? 'Search patient by file no, name or phone...' }}" 
             autocomplete="off"
-            data-route="{{ route('patient-search') }}"
-            data-callback="onLegacyPatientSelected"
-            data-context="{{ $search_context ?? '' }}"
+            data-route="{{ $route ?? route('patient-search') }}"
+            data-callback="{{ $callback ?? 'onLegacyPatientSelected' }}"
+            data-context="{{ $search_context ?? ($context ?? '') }}"
             style="padding-left: 40px; border-radius: 20px;"
         >
         <button type="button" class="ps-search-clear" id="{{ $id ?? 'patient-search' }}-clear" style="display:none; position:absolute; right:12px; top:50%; transform:translateY(-50%); background:rgba(0,0,0,.1); border:none; border-radius:50%; width:22px; height:22px; line-height:1; padding:0; cursor:pointer; color:#333; font-size:14px;" aria-label="Clear search">&times;</button>

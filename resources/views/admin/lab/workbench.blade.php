@@ -28,7 +28,11 @@
             </button>
         </div>
 
-        @include('admin.partials.patient_search_html')
+        @include('admin.partials.patient_search_html', [
+            'search_context' => 'lab',
+            'route' => route('lab.search-patients'),
+            'placeholder' => 'Search patient by file no, name, phone or lab number...'
+        ])
 
         <div class="queue-widget">
             <h6>📊 PENDING QUEUE</h6>
@@ -416,6 +420,7 @@
                                             <thead>
                                                 <tr>
                                                     <th>Date</th>
+                                                    <th>Lab No</th>
                                                     <th>File No</th>
                                                     <th>Patient</th>
                                                     <th>Service</th>

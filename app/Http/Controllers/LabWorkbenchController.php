@@ -81,31 +81,78 @@ class LabWorkbenchController extends Controller
      */
     public function searchPatients(Request $request)
     {
-        $term = $request->get('term', '');
+        $term = trim($request->get('term', ''));
 
         if (strlen($term) < 2) {
             return response()->json([]);
         }
 
+        // 1. Search patients by standard name / file_no / phone
         $patients = Patient::with('user')
             ->searchByTerm($term)
             ->limit(10)
             ->get();
 
-        $results = $patients->map(function ($patient) {
+        // 2. Also search by lab_number across LabServiceRequests
+        $normalizedTerm = str_replace(' ', '', $term);
+        $strippedTerm = str_replace([' ', '-'], '', $term);
+        $labMatchingRequests = LabServiceRequest::whereNotNull('lab_number')
+            ->where('lab_number', '!=', '')
+            ->where(function ($q) use ($term, $normalizedTerm, $strippedTerm) {
+                $q->where('lab_number', 'like', "%{$term}%")
+                  ->orWhereRaw("REPLACE(lab_number, ' ', '') LIKE ?", ["%{$normalizedTerm}%"])
+                  ->orWhereRaw("REPLACE(REPLACE(lab_number, ' ', ''), '-', '') LIKE ?", ["%{$strippedTerm}%"]);
+            })
+            ->orderBy('id', 'desc')
+            ->limit(15)
+            ->get(['id', 'patient_id', 'lab_number']);
+
+        $labPatientIds = $labMatchingRequests->pluck('patient_id')->unique()->filter()->values()->toArray();
+
+        // Merge patients found via lab number if not already present
+        if (!empty($labPatientIds)) {
+            $existingIds = $patients->pluck('id')->toArray();
+            $additionalIds = array_diff($labPatientIds, $existingIds);
+
+            if (!empty($additionalIds)) {
+                $additionalPatients = Patient::with('user')
+                    ->whereIn('id', array_slice($additionalIds, 0, 10))
+                    ->get();
+                $patients = $patients->merge($additionalPatients);
+            }
+        }
+
+        $results = $patients->map(function ($patient) use ($labMatchingRequests) {
             $pendingCount = LabServiceRequest::where('patient_id', $patient->id)
                 ->whereIn('status', [1, 2, 3])
                 ->count();
 
+            // Find matching or latest lab number for this patient
+            $matchedReq = $labMatchingRequests->firstWhere('patient_id', $patient->id);
+            $latestLabNumber = $matchedReq ? $matchedReq->lab_number : null;
+
+            if (!$latestLabNumber) {
+                $latestLabNumber = LabServiceRequest::where('patient_id', $patient->id)
+                    ->whereNotNull('lab_number')
+                    ->where('lab_number', '!=', '')
+                    ->orderBy('id', 'desc')
+                    ->value('lab_number');
+            }
+
+            $user = $patient->user;
+            $fullName = $user ? ($user->surname . ' ' . $user->firstname . ($user->othername ? ' ' . $user->othername : '')) : 'Unknown';
+
             return [
                 'id' => $patient->id,
-                'name' => $patient->user->surname . ' ' . $patient->user->firstname . ' ' . $patient->user->othername,
+                'name' => $fullName,
                 'file_no' => $patient->file_no,
                 'age' => $patient->dob ? \Carbon\Carbon::parse($patient->dob)->age : 'N/A',
                 'gender' => $patient->gender ?? 'N/A',
                 'phone' => $patient->phone_no ?? 'N/A',
-                'photo' => $patient->user && $patient->user->filename ? asset('storage/image/user/' . $patient->user->filename) : asset('assets/images/default-avatar.png'),
+                'photo' => $user && $user->filename ? asset('storage/image/user/' . $user->filename) : asset('assets/images/default-avatar.png'),
                 'pending_count' => $pendingCount,
+                'latest_lab_number' => $latestLabNumber,
+                'matched_by_lab' => $matchedReq !== null,
             ];
         });
 
@@ -274,6 +321,9 @@ class LabWorkbenchController extends Controller
             $ageText = !empty($ageParts) ? implode(' ', $ageParts) : '0d';
         }
 
+        $latestLabNumber = $requests->whereNotNull('lab_number')->where('lab_number', '!=', '')->first()?->lab_number
+            ?? LabServiceRequest::where('patient_id', $patientId)->whereNotNull('lab_number')->where('lab_number', '!=', '')->orderBy('id', 'desc')->value('lab_number');
+
         return response()->json([
             'patient' => [
                 'id' => $patient->id,
@@ -304,6 +354,7 @@ class LabWorkbenchController extends Controller
                 'registered_by' => $patient->registered_by,
                 'registered_by_name' => $patient->registered_by_name,
                 'can_edit' => $patient->can_edit,
+                'latest_lab_number' => $latestLabNumber,
             ],
             'requests' => [
                 'billing' => $billing,
@@ -513,7 +564,8 @@ class LabWorkbenchController extends Controller
                     ];
                 })
                 ->filterColumn('card_data', function ($query, $keyword) {
-                    $query->where(function ($q) use ($keyword) {
+                    $cleanKeyword = str_replace(' ', '', $keyword);
+                    $query->where(function ($q) use ($keyword, $cleanKeyword) {
                         $q->whereHas('patient.user', function ($qu) use ($keyword) {
                             $qu->where('surname', 'like', "%{$keyword}%")
                                ->orWhere('firstname', 'like', "%{$keyword}%");
@@ -521,7 +573,8 @@ class LabWorkbenchController extends Controller
                             $qp->where('file_no', 'like', "%{$keyword}%");
                         })->orWhereHas('service', function ($qs) use ($keyword) {
                             $qs->where('service_name', 'like', "%{$keyword}%");
-                        })->orWhere('lab_number', 'like', "%{$keyword}%");
+                        })->orWhere('lab_number', 'like', "%{$keyword}%")
+                          ->orWhereRaw("REPLACE(lab_number, ' ', '') LIKE ?", ["%{$cleanKeyword}%"]);
                     });
                 })
                 ->rawColumns(['card_data', 'service_name'])
@@ -863,6 +916,27 @@ class LabWorkbenchController extends Controller
                 'lab_number' => 'required|string|max:50',
             ]);
 
+            $labNumber = trim($request->lab_number);
+            $normalizedLabNo = str_replace(' ', '', $labNumber);
+
+            // Cross-patient duplicate collision guard
+            $conflict = LabServiceRequest::whereRaw("REPLACE(lab_number, ' ', '') = ?", [$normalizedLabNo])
+                ->where('patient_id', '!=', $request->patient_id)
+                ->with(['patient.user'])
+                ->first();
+
+            if ($conflict) {
+                $otherName = $conflict->patient && $conflict->patient->user
+                    ? $conflict->patient->user->surname . ' ' . $conflict->patient->user->firstname
+                    : 'another patient';
+                $otherFileNo = $conflict->patient ? $conflict->patient->file_no : 'N/A';
+
+                return response()->json([
+                    'success' => false,
+                    'message' => "Lab number '{$labNumber}' is already assigned to {$otherName} (File No: {$otherFileNo}). Lab numbers cannot be reused across different patients.",
+                ], 422);
+            }
+
             DB::beginTransaction();
 
             foreach ($request->request_ids as $requestId) {
@@ -886,11 +960,11 @@ class LabWorkbenchController extends Controller
                     'sample_taken_by' => Auth::id(),
                     'sample_date' => now(),
                     'sample_taken' => true,
-                    'lab_number' => $request->lab_number,
+                    'lab_number' => $labNumber,
                 ]);
 
                 // Log audit
-                $this->logAudit($labRequest->id, 'sample_collection', 'Sample collected with Lab# ' . $request->lab_number);
+                $this->logAudit($labRequest->id, 'sample_collection', 'Sample collected with Lab# ' . $labNumber);
             }
 
             DB::commit();
@@ -1927,11 +2001,16 @@ class LabWorkbenchController extends Controller
 
             if ($request->filled('patient_search')) {
                 $search = $request->patient_search;
-                $query->whereHas('patient', function ($q) use ($search) {
-                    $q->where('file_no', 'like', "%{$search}%")
-                        ->orWhereHas('user', function ($uq) use ($search) {
-                            $uq->where('surname', 'like', "%{$search}%")
-                                ->orWhere('firstname', 'like', "%{$search}%");
+                $cleanSearch = str_replace(' ', '', $search);
+                $query->where(function ($q) use ($search, $cleanSearch) {
+                    $q->where('lab_number', 'like', "%{$search}%")
+                        ->orWhereRaw("REPLACE(lab_number, ' ', '') LIKE ?", ["%{$cleanSearch}%"])
+                        ->orWhereHas('patient', function ($pq) use ($search) {
+                            $pq->where('file_no', 'like', "%{$search}%")
+                                ->orWhereHas('user', function ($uq) use ($search) {
+                                    $uq->where('surname', 'like', "%{$search}%")
+                                        ->orWhere('firstname', 'like', "%{$search}%");
+                                });
                         });
                 });
             }
@@ -1940,6 +2019,11 @@ class LabWorkbenchController extends Controller
                 ->addIndexColumn()
                 ->editColumn('created_at', function ($row) {
                     return $this->formatDateTime($row->created_at);
+                })
+                ->addColumn('lab_number', function ($row) {
+                    return $row->lab_number
+                        ? '<span class="badge bg-info text-white font-monospace">' . htmlspecialchars($row->lab_number) . '</span>'
+                        : '<span class="text-muted">—</span>';
                 })
                 ->addColumn('file_no', function ($row) {
                     return $row->patient->file_no ?? 'N/A';
@@ -1991,7 +2075,7 @@ class LabWorkbenchController extends Controller
                         <i class="mdi mdi-eye"></i>
                     </button>';
                 })
-                ->rawColumns(['status_badge', 'actions', 'service_name'])
+                ->rawColumns(['status_badge', 'actions', 'service_name', 'lab_number'])
                 ->make(true);
         } catch (\Exception $e) {
             return response()->json([
@@ -2294,6 +2378,7 @@ class LabWorkbenchController extends Controller
                         ? $item->patient->user->surname . ' ' . $item->patient->user->firstname
                         : 'N/A',
                     'patient_id' => $item->patient_id,
+                    'lab_number' => $item->lab_number,
                     'entered_by' => $item->result_by ? userfullname($item->result_by) : 'N/A',
                     'result_date' => $item->result_date ? date('d M Y H:i', strtotime($item->result_date)) : null,
                     'status' => $item->status,
@@ -2371,6 +2456,7 @@ class LabWorkbenchController extends Controller
                         ? userfullname($item->patient->user->id)
                         : 'N/A',
                     'patient_id' => $item->patient_id,
+                    'lab_number' => $item->lab_number,
                     'encounter_id' => $item->encounter_id,
                     'result_html' => $item->pending_result,
                     'result_data' => $item->pending_result_data,
@@ -2638,33 +2724,60 @@ class LabWorkbenchController extends Controller
 
     /**
      * Get the next sequential lab number.
-     * Uses the same increment-last-numeric-segment pattern as reception file numbers.
-     * Format examples: LAB-0001, LAB-0002 or whatever the facility already uses.
+     * Uses intelligent pattern recognition, finds true maximum sequence across active formats,
+     * and guarantees collision avoidance across the entire database.
+     * Also checks if the selected patient already has an active lab number today to offer reuse.
      */
-    public function getNextLabNumber()
+    public function getNextLabNumber(Request $request)
     {
-        // Get the last 5 lab numbers for reference
+        $patientId = $request->input('patient_id');
+        $patientExistingLabNo = null;
+
+        if ($patientId) {
+            // Check if this patient already has a lab number assigned today
+            $todayPatientLab = LabServiceRequest::where('patient_id', $patientId)
+                ->whereNotNull('lab_number')
+                ->where('lab_number', '!=', '')
+                ->where(function ($q) {
+                    $q->whereDate('sample_date', Carbon::today())
+                      ->orWhereDate('created_at', Carbon::today());
+                })
+                ->orderBy('id', 'desc')
+                ->first();
+
+            if ($todayPatientLab) {
+                $patientExistingLabNo = $todayPatientLab->lab_number;
+            }
+        }
+
+        // Fetch recent requests with lab numbers ordered by recent activity (sample_date or created_at)
         $recentRequests = LabServiceRequest::whereNotNull('lab_number')
             ->where('lab_number', '!=', '')
-            ->orderBy('id', 'desc')
-            ->limit(5)
-            ->get(['id', 'lab_number']);
+            ->orderByRaw('COALESCE(sample_date, updated_at, created_at) DESC')
+            ->limit(100)
+            ->get(['id', 'lab_number', 'sample_date', 'created_at']);
 
-        $recentLabNumbers = $recentRequests->pluck('lab_number')->unique()->values()->toArray();
+        $recentLabNumbers = $recentRequests->pluck('lab_number')->unique()->values()->take(5)->toArray();
 
         if ($recentRequests->isEmpty()) {
-            // No existing lab numbers — seed with default format LAB-0001
+            $year = date('y');
+            $defaultNo = "LAB{$year} - 0001";
+
             return response()->json([
-                'lab_number' => 'LAB-0001',
+                'lab_number' => $defaultNo,
                 'last_lab_number' => null,
                 'recent_lab_numbers' => [],
-                'format_pattern' => 'LAB-####',
-                'format_example' => 'LAB-0001',
+                'patient_existing_lab_number' => $patientExistingLabNo,
+                'format_pattern' => "LAB{$year} - ####",
+                'format_example' => "LAB{$year} - 0001",
             ]);
         }
 
-        $lastLabNo = $recentRequests->first()->lab_number;
-        $nextLabNo = $this->incrementLastNumericSegment($lastLabNo);
+        $latestRecord = $recentRequests->first();
+        $lastLabNo = $latestRecord->lab_number;
+
+        // Calculate next sequential number strictly higher than any existing number in this pattern
+        $nextLabNo = $this->calculateNextLabNumber($recentRequests, $lastLabNo);
 
         // Detect and describe the format pattern
         $formatInfo = $this->detectLabNumberFormat($lastLabNo);
@@ -2673,26 +2786,118 @@ class LabWorkbenchController extends Controller
             'lab_number' => $nextLabNo,
             'last_lab_number' => $lastLabNo,
             'recent_lab_numbers' => $recentLabNumbers,
+            'patient_existing_lab_number' => $patientExistingLabNo,
             'format_pattern' => $formatInfo['pattern'],
             'format_example' => $formatInfo['example'],
         ]);
     }
 
     /**
-     * Check if a lab number already exists
+     * Calculate the next sequential lab number ensuring zero collisions
+     */
+    private function calculateNextLabNumber($recentRequests, string $referenceLabNo): string
+    {
+        // Parse reference format: prefix + numeric + suffix
+        if (!preg_match('/^(.*?)(\d+)(\D*)$/', $referenceLabNo, $matches)) {
+            return $this->incrementLastNumericSegment($referenceLabNo);
+        }
+
+        $prefix = $matches[1];
+        $refNumber = $matches[2];
+        $suffix = $matches[3];
+        $numLength = strlen($refNumber);
+
+        // Normalized prefix for matching (strip spaces and lowercase)
+        $cleanPrefix = strtolower(str_replace(' ', '', $prefix));
+
+        // Scan recent requests to find the TRUE maximum integer sequence for this prefix
+        $maxSeq = intval($refNumber);
+        foreach ($recentRequests as $req) {
+            $val = trim($req->lab_number);
+            if (preg_match('/^(.*?)(\d+)(\D*)$/', $val, $m)) {
+                $curCleanPrefix = strtolower(str_replace(' ', '', $m[1]));
+                // Compare prefixes ignoring whitespace differences (e.g. "LAB26 - " vs "LAB26-")
+                if ($curCleanPrefix === $cleanPrefix) {
+                    $curSeq = intval($m[2]);
+                    // Guard against anomalies (length check ensures we don't accidentally match phone numbers or timestamps)
+                    if (strlen($m[2]) <= $numLength + 2 && $curSeq > $maxSeq) {
+                        $maxSeq = $curSeq;
+                    }
+                }
+            }
+        }
+
+        // Generate candidate
+        $candidateSeq = $maxSeq + 1;
+        $candidate = $prefix . str_pad($candidateSeq, $numLength, '0', STR_PAD_LEFT) . $suffix;
+
+        // Guaranteed collision avoidance: check against the entire database
+        // Normalizing whitespace so "LAB26 - 11628" matches "LAB26-11628"
+        $normalizedCandidate = str_replace(' ', '', $candidate);
+        while (LabServiceRequest::whereRaw("REPLACE(lab_number, ' ', '') = ?", [$normalizedCandidate])->exists()) {
+            $candidateSeq++;
+            $candidate = $prefix . str_pad($candidateSeq, $numLength, '0', STR_PAD_LEFT) . $suffix;
+            $normalizedCandidate = str_replace(' ', '', $candidate);
+        }
+
+        return $candidate;
+    }
+
+    /**
+     * Check if a lab number already exists, with space normalization and patient differentiation
      */
     public function checkLabNumberExists(Request $request)
     {
-        $labNo = $request->input('lab_number');
+        $labNo = trim($request->input('lab_number', ''));
+        $patientId = $request->input('patient_id');
 
-        $existing = LabServiceRequest::where('lab_number', $labNo)
+        if (empty($labNo)) {
+            return response()->json([
+                'exists' => false,
+                'count' => 0,
+                'items' => [],
+                'belongs_to_current_patient' => false,
+                'belongs_to_other_patient' => false,
+                'other_patient_name' => null,
+            ]);
+        }
+
+        $normalized = str_replace(' ', '', $labNo);
+
+        $existing = LabServiceRequest::where(function ($q) use ($labNo, $normalized) {
+            $q->where('lab_number', $labNo)
+              ->orWhereRaw("REPLACE(lab_number, ' ', '') = ?", [$normalized]);
+        })
             ->with(['patient.user', 'service'])
-            ->limit(5)
+            ->limit(10)
             ->get();
+
+        $belongsToCurrent = false;
+        $belongsToOther = false;
+        $otherPatientName = null;
+
+        if ($patientId && $existing->isNotEmpty()) {
+            $belongsToCurrent = $existing->where('patient_id', $patientId)->isNotEmpty();
+            $otherRequests = $existing->where('patient_id', '!=', $patientId);
+            $belongsToOther = $otherRequests->isNotEmpty();
+            if ($belongsToOther) {
+                $firstOther = $otherRequests->first();
+                $otherPatientName = $firstOther->patient && $firstOther->patient->user
+                    ? $firstOther->patient->user->surname . ' ' . $firstOther->patient->user->firstname
+                    : 'Another Patient';
+            }
+        } elseif ($existing->isNotEmpty()) {
+            $belongsToOther = true;
+            $firstOther = $existing->first();
+            $otherPatientName = $firstOther->patient && $firstOther->patient->user
+                ? $firstOther->patient->user->surname . ' ' . $firstOther->patient->user->firstname
+                : 'Another Patient';
+        }
 
         $items = $existing->map(function ($req) {
             return [
                 'id' => $req->id,
+                'patient_id' => $req->patient_id,
                 'patient_name' => $req->patient && $req->patient->user
                     ? $req->patient->user->surname . ' ' . $req->patient->user->firstname
                     : 'Unknown',
@@ -2705,6 +2910,9 @@ class LabWorkbenchController extends Controller
             'exists' => $existing->isNotEmpty(),
             'count' => $existing->count(),
             'items' => $items,
+            'belongs_to_current_patient' => $belongsToCurrent,
+            'belongs_to_other_patient' => $belongsToOther,
+            'other_patient_name' => $otherPatientName,
         ]);
     }
 

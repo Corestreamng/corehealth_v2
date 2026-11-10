@@ -171,23 +171,35 @@ function initializeEventListeners() {
     $('#sample_lab_number').on('input', function() {
         let val = $(this).val().trim();
         $('#labNumberError').addClass('d-none');
-        $('#labNumberDuplicateWarning').addClass('d-none');
+        $('#labNumberDuplicateWarning').addClass('d-none').removeClass('text-danger text-info fw-bold');
         $('#btnConfirmCollectSample').prop('disabled', val.length === 0);
 
         // Check for duplicates after typing stops
         clearTimeout(window._labNumCheckTimeout);
-        if (val.length> 0) {
+        if (val.length > 0) {
             window._labNumCheckTimeout = setTimeout(function() {
-                $.get(wbRoute('lab.checkLabNumber', '/lab-workbench/check-lab-number'), { lab_number: val }, function(data) {
-                    if (data.exists) {
-                        let warn = 'This lab number is already used by ' + data.count + ' item(s)';
-                        if (data.items && data.items.length> 0) {
-                            warn += ': ' + data.items.map(i => i.service_name).join(', ');
-                        }
-                        $('#labNumberDuplicateWarning').removeClass('d-none').text(warn);
+                $.get(wbRoute('lab.checkLabNumber', '/lab-workbench/check-lab-number'), {
+                    lab_number: val,
+                    patient_id: (typeof currentPatient !== 'undefined' ? currentPatient : null)
+                }, function(data) {
+                    if (data.belongs_to_other_patient) {
+                        let warn = '<i class="mdi mdi-alert-circle"></i> Collision Alert: Already assigned to ' + (data.other_patient_name || 'another patient') + ' (' + data.count + ' test(s)). Reusing across different patients is prohibited!';
+                        $('#labNumberDuplicateWarning').removeClass('d-none').addClass('text-danger fw-bold').html(warn);
+                        $('#btnConfirmCollectSample').prop('disabled', true);
+                    } else if (data.belongs_to_current_patient) {
+                        let info = '<i class="mdi mdi-information"></i> Matches this patient\'s existing lab number for today (' + data.count + ' item(s)). Tests will share this accession.';
+                        $('#labNumberDuplicateWarning').removeClass('d-none').addClass('text-info').html(info);
+                        $('#btnConfirmCollectSample').prop('disabled', false);
+                    } else if (data.exists) {
+                        let warn = 'This lab number is already used in ' + data.count + ' test(s)';
+                        $('#labNumberDuplicateWarning').removeClass('d-none').addClass('text-warning').text(warn);
+                        $('#btnConfirmCollectSample').prop('disabled', false);
+                    } else {
+                        $('#labNumberDuplicateWarning').addClass('d-none').text('');
+                        $('#btnConfirmCollectSample').prop('disabled', false);
                     }
                 });
-            }, 500);
+            }, 400);
         }
     });
 
@@ -338,6 +350,11 @@ function initializeProceduresDataTable(patientId) {
 function displayPatientInfo(patient) {
     $('#patient-name').text(`${patient.name} (#${patient.file_no})`);
     $('#patient-meta').html(`
+        ${patient.latest_lab_number ? `
+        <div class="patient-meta-item">
+            <i class="mdi mdi-tag-text text-info"></i>
+            <span>Lab#: <strong class="badge bg-info text-white font-monospace">${escapeHtml(patient.latest_lab_number)}</strong></span>
+        </div>` : ''}
         <div class="patient-meta-item">
             <i class="mdi mdi-account"></i>
             <span>${patient.age} ${patient.gender}</span>
@@ -1079,9 +1096,17 @@ function createRequestCard(request, section) {
             <div class="request-card-content">
                 <div class="request-card-header">
                     <div>
-                        <div class="request-service-name">${serviceName}${freeFormBadge}</div>
+                        <div class="request-service-name">
+                            ${serviceName}${freeFormBadge}
+                            ${request.lab_number ? `<span class="badge bg-info text-white font-monospace ms-2" style="font-size: 0.76rem;" title="Lab Number"><i class="mdi mdi-tag-text"></i> ${escapeHtml(request.lab_number)}</span>` : ''}
+                        </div>
                         ${bundledHtml}
                         <div class="request-card-meta">
+                            ${request.lab_number ? `
+                            <div class="request-meta-item text-info fw-bold">
+                                <i class="mdi mdi-tag-text"></i>
+                                <span>Lab#: ${escapeHtml(request.lab_number)}</span>
+                            </div>` : ''}
                             <div class="request-meta-item">
                                 <i class="mdi mdi-doctor"></i>
                                 <span>${doctorName}</span>

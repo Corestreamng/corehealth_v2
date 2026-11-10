@@ -136,7 +136,7 @@ const PatientSearchWidget = (function() {
             let inputBuffer = '';
 
             function doSearch(term, autoSelect = false) {
-                $.get(route, { term: term }, function(res) {
+                $.get(route, { term: term, q: term, context: context }, function(res) {
                     $dropdown.empty();
                     
                     if (autoSelect && res && res.length === 1) {
@@ -167,15 +167,32 @@ const PatientSearchWidget = (function() {
                                 badgeHtml = `<span class="ps-search-item-badge badge bg-danger" style="background: var(--bs-danger, #dc3545); color: white; padding: 1px 6px; border-radius: 8px; font-size: 0.68rem; font-weight: bold; margin-left: auto;">${p.pending_count} ${badgeLabel}</span>`;
                             }
 
+                            // Line 2 demographics: File number, Gender, Phone
+                            const genderStr = escHtml(p.gender || '');
+                            const metaParts = [];
+                            if (fileNo) metaParts.push(`<strong style="color: #495057;">${fileNo}</strong>`);
+                            if (genderStr) metaParts.push(genderStr);
+                            if (phone) metaParts.push(phone);
+                            const metaLine = metaParts.join(' &bull; ');
+
+                            // Line 3: Dedicated Lab Number badge when present
+                            const labLine = p.latest_lab_number 
+                                ? `<div class="ps-search-item-lab" style="margin-top: 2px;">
+                                       <span class="badge bg-info text-white font-monospace" style="font-size: 0.65rem; padding: 1px 5px; border-radius: 4px; font-weight: 600;">
+                                           <i class="mdi mdi-test-tube" style="font-size: 0.70rem;"></i> Lab# ${escHtml(p.latest_lab_number)}
+                                       </span>
+                                   </div>` 
+                                : '';
+
                             const $item = $(`
-                                <div class="ps-search-item" data-patient='${JSON.stringify(p).replace(/'/g, "&apos;")}' style="padding: 5px 8px; border-bottom: 1px solid #f1f3f5; cursor: pointer; display: flex; align-items: center; transition: background 0.2s;">
-                                    <img class="ps-search-item-img" src="${photo}" style="width: 24px; height: 24px; border-radius: 50%; object-fit: cover; margin-right: 8px; flex-shrink: 0;" alt="">
+                                <div class="ps-search-item" data-patient='${JSON.stringify(p).replace(/'/g, "&apos;")}' style="padding: 6px 8px; border-bottom: 1px solid #f1f3f5; cursor: pointer; display: flex; align-items: center; transition: background 0.2s;">
+                                    <img class="ps-search-item-img" src="${photo}" style="width: 26px; height: 26px; border-radius: 50%; object-fit: cover; margin-right: 8px; flex-shrink: 0;" alt="">
                                     <div class="ps-search-item-info" style="display: flex; flex-direction: column; flex: 1; min-width: 0;">
-                                        <span class="ps-search-item-name" style="font-weight: 600; color: #333; font-size: 0.79rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${name}</span>
-                                        <span class="ps-search-item-meta" style="font-size: 0.70rem; color: #6c757d; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
-                                            ${fileNo ? `<strong>${fileNo}</strong> &bull; ` : ''} 
-                                            ${phone} &bull; ${escHtml(p.gender || 'N/A')}
+                                        <span class="ps-search-item-name" style="font-weight: 600; color: #333; font-size: 0.80rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${name}</span>
+                                        <span class="ps-search-item-meta" style="font-size: 0.70rem; color: #6c757d; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 1px;">
+                                            ${metaLine || 'N/A'}
                                         </span>
+                                        ${labLine}
                                     </div>
                                     ${badgeHtml}
                                 </div>

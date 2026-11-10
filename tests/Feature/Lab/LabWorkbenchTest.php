@@ -231,4 +231,167 @@ class LabWorkbenchTest extends TestCase
             $response->assertSee('Dr. Jane Approved');
         }
     }
+
+    /** @test */
+    public function test_get_next_lab_number_auto_increments_and_avoids_collisions()
+    {
+        $admin = User::find(1) ?? User::factory()->create(['status' => 1]);
+        $patient = Patient::first() ?? Patient::factory()->create();
+
+        // Seed a high lab number
+        $year = date('y');
+        $labNo = "LAB{$year} - 9901";
+        \App\Models\LabServiceRequest::create([
+            'patient_id' => $patient->id,
+            'doctor_id' => $admin->id,
+            'service_id' => 1,
+            'status' => 3,
+            'lab_number' => $labNo,
+            'sample_date' => now(),
+        ]);
+
+        $response = $this->actingAs($admin)->get('/lab-workbench/next-lab-number');
+        $response->assertStatus(200);
+        $data = $response->json();
+
+        $this->assertArrayHasKey('lab_number', $data);
+        $this->assertNotEquals($labNo, $data['lab_number']);
+        // Verify it's greater or equal to 9902
+        $this->assertStringContainsString("LAB{$year}", $data['lab_number']);
+    }
+
+    /** @test */
+    public function test_collect_sample_prevents_duplicate_lab_number_across_different_patients()
+    {
+        $admin = User::find(1) ?? User::factory()->create(['status' => 1]);
+        $patientA = Patient::factory()->create();
+        $patientB = Patient::factory()->create();
+
+        $year = date('y');
+        $uniqueLabNo = "LAB{$year} - " . rand(80000, 89999);
+
+        // Assign to Patient A
+        \App\Models\LabServiceRequest::create([
+            'patient_id' => $patientA->id,
+            'doctor_id' => $admin->id,
+            'service_id' => 1,
+            'status' => 3,
+            'lab_number' => $uniqueLabNo,
+            'sample_date' => now(),
+        ]);
+
+        // Create request for Patient B
+        $reqB = \App\Models\LabServiceRequest::create([
+            'patient_id' => $patientB->id,
+            'doctor_id' => $admin->id,
+            'service_id' => 1,
+            'status' => 2,
+        ]);
+
+        // Attempt to collect sample for Patient B with same lab number (with or without spaces)
+        $response = $this->actingAs($admin)->postJson('/lab-workbench/collect-sample', [
+            'request_ids' => [$reqB->id],
+            'patient_id' => $patientB->id,
+            'lab_number' => str_replace(' ', '', $uniqueLabNo),
+        ]);
+
+        $response->assertStatus(422);
+        $this->assertFalse($response->json('success'));
+        $this->assertStringContainsString('already assigned', $response->json('message'));
+    }
+
+    /** @test */
+    public function test_collect_sample_allows_shared_lab_number_for_same_patient()
+    {
+        $admin = User::find(1) ?? User::factory()->create(['status' => 1]);
+        $patient = Patient::factory()->create();
+
+        $year = date('y');
+        $sharedLabNo = "LAB{$year} - " . rand(70000, 79999);
+
+        $req1 = \App\Models\LabServiceRequest::create([
+            'patient_id' => $patient->id,
+            'doctor_id' => $admin->id,
+            'service_id' => 1,
+            'status' => 2,
+        ]);
+
+        $req2 = \App\Models\LabServiceRequest::create([
+            'patient_id' => $patient->id,
+            'doctor_id' => $admin->id,
+            'service_id' => 1,
+            'status' => 2,
+        ]);
+
+        $response = $this->actingAs($admin)->postJson('/lab-workbench/collect-sample', [
+            'request_ids' => [$req1->id, $req2->id],
+            'patient_id' => $patient->id,
+            'lab_number' => $sharedLabNo,
+        ]);
+
+        $response->assertStatus(200);
+        $this->assertTrue($response->json('success'));
+
+        $this->assertEquals($sharedLabNo, $req1->fresh()->lab_number);
+        $this->assertEquals($sharedLabNo, $req2->fresh()->lab_number);
+    }
+
+    /** @test */
+    public function test_search_patients_supports_searching_by_lab_number()
+    {
+        $admin = User::find(1) ?? User::factory()->create(['status' => 1]);
+        $patient = Patient::factory()->create();
+
+        $year = date('y');
+        $testLabNo = "LAB{$year} - " . rand(60000, 69999);
+
+        \App\Models\LabServiceRequest::create([
+            'patient_id' => $patient->id,
+            'doctor_id' => $admin->id,
+            'service_id' => 1,
+            'status' => 3,
+            'lab_number' => $testLabNo,
+            'sample_date' => now(),
+        ]);
+
+        // Search by full lab number
+        $response = $this->actingAs($admin)->getJson('/lab-workbench/patient-search?term=' . urlencode($testLabNo));
+        $response->assertStatus(200);
+        $data = $response->json();
+
+        $found = collect($data)->firstWhere('id', $patient->id);
+        $this->assertNotNull($found, 'Patient should be found when searching by lab number');
+        $this->assertEquals($testLabNo, $found['latest_lab_number']);
+    }
+
+    /** @test */
+    public function test_approval_queue_and_detail_includes_lab_number()
+    {
+        $approver = User::whereHas('roles', function ($q) {
+            $q->whereIn('name', ['ADMIN', 'SUPERADMIN']);
+        })->first() ?? User::find(1);
+
+        $patient = Patient::first() ?? Patient::factory()->create();
+        $testLabNo = 'LAB-TEST-APPROVE';
+
+        $req = \App\Models\LabServiceRequest::create([
+            'patient_id' => $patient->id,
+            'doctor_id' => $approver->id,
+            'service_id' => 1,
+            'status' => 5,
+            'lab_number' => $testLabNo,
+            'pending_result' => '<p>Pending verification</p>',
+            'result_date' => now(),
+        ]);
+
+        $response = $this->actingAs($approver)->getJson('/lab-workbench/approval-queue');
+        $response->assertStatus(200);
+        $item = collect($response->json('data'))->firstWhere('id', $req->id);
+        $this->assertNotNull($item);
+        $this->assertEquals($testLabNo, $item['lab_number']);
+
+        $detailResponse = $this->actingAs($approver)->getJson("/lab-workbench/approval/{$req->id}");
+        $detailResponse->assertStatus(200);
+        $this->assertEquals($testLabNo, $detailResponse->json('data.lab_number'));
+    }
 }

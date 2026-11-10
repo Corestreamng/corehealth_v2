@@ -247,6 +247,7 @@ function initializeReportsDataTable() {
         },
         columns: [
             { data: 'created_at', name: 'created_at' },
+            { data: 'lab_number', name: 'lab_number' },
             { data: 'file_no', name: 'patient.file_no' },
             { data: 'patient_name', name: 'patient_name', orderable: false },
             { data: 'service_name', name: 'service.service_name' },
@@ -1152,6 +1153,10 @@ function openApprovalReview(requestId) {
                 <div class="approval-meta-item">
                     <label>Patient</label>
                     <span>${d.patient_name}</span>
+                </div>
+                <div class="approval-meta-item">
+                    <label>Lab Number</label>
+                    <span>${d.lab_number ? `<strong class="badge bg-info text-white font-monospace">${escapeHtml(d.lab_number)}</strong>` : '<span class="text-muted">N/A</span>'}</span>
                 </div>
                 <div class="approval-meta-item">
                     <label>Entered By</label>

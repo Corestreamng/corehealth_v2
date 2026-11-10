@@ -257,6 +257,7 @@ export default defineConfig({
           text: 'Release Milestones',
           items: [
             { text: 'Release History Index', link: '/releases/index' },
+            { text: 'v2.6.0.69 (LIS Auto-Increment & Search)', link: '/releases/v2.6.0.69' },
             { text: 'v2.6.0.68 (Clinical AI Scribe Studio)', link: '/releases/v2.6.0.68' },
             { text: 'v2.6.0.67 (Clinical Search Engine)', link: '/releases/v2.6.0.67' },
             { text: 'v2.6.0.66 (Billing & Dual ANC/PANC)', link: '/releases/v2.6.0.66' },

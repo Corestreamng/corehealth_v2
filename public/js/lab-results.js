@@ -57,13 +57,13 @@ function collectSample(requestIds) {
     // Store IDs for the modal confirm action
     window._pendingSampleIds = requestIds;
 
-    // Reset modal state
+    // Reset modal state & button
     $('#sample_lab_number').val('').prop('readonly', true);
     $('#labNumberError').addClass('d-none').text('');
     $('#labNumberDuplicateWarning').addClass('d-none').text('');
     $('#labNumberFormatHint').text('');
     $('#recentLabNumbersBox').addClass('d-none');
-    $('#btnConfirmCollectSample').prop('disabled', true);
+    $('#btnConfirmCollectSample').prop('disabled', true).html('<i class="mdi mdi-test-tube"></i> Collect Sample');
 
     // Build items preview list
     let itemsHtml = '';
@@ -95,13 +95,20 @@ function autoGenerateLabNumber() {
     $.ajax({
         url: wbRoute('lab.nextLabNumber', '/lab-workbench/next-lab-number'),
         method: 'GET',
+        data: {
+            patient_id: typeof currentPatient !== 'undefined' ? currentPatient : null
+        },
         success: function(data) {
             $('#sample_lab_number').val(data.lab_number);
-            $('#labNumberFormatHint').text('Format: ' + (data.format_example || data.lab_number));
+            let hint = 'Format: ' + (data.format_example || data.lab_number);
+            if (data.patient_existing_lab_number) {
+                hint += ` &bull; <span class="text-info fw-bold">Active Lab# today: ${data.patient_existing_lab_number}</span> (<a href="javascript:void(0)" id="btnUsePatientExistingLabNo" data-lab-no="${data.patient_existing_lab_number}">Reuse Active</a>)`;
+            }
+            $('#labNumberFormatHint').html(hint);
             $('#btnConfirmCollectSample').prop('disabled', false);
 
             // Show recent lab numbers
-            if (data.recent_lab_numbers && data.recent_lab_numbers.length> 0) {
+            if (data.recent_lab_numbers && data.recent_lab_numbers.length > 0) {
                 let recentHtml = '';
                 data.recent_lab_numbers.forEach(function(num) {
                     recentHtml += `<span class="badge bg-light text-dark border">${num}</span>`;
@@ -116,6 +123,15 @@ function autoGenerateLabNumber() {
         }
     });
 }
+
+$(document).off('click', '#btnUsePatientExistingLabNo').on('click', '#btnUsePatientExistingLabNo', function() {
+    let existingNo = $(this).data('lab-no');
+    if (existingNo) {
+        $('#sample_lab_number').val(existingNo);
+        $('#labNumberDuplicateWarning').removeClass('d-none text-danger fw-bold').addClass('text-info').text("Reusing patient's active lab number for today.");
+        $('#btnConfirmCollectSample').prop('disabled', false);
+    }
+});
 
 // Confirm sample collection from modal
 function confirmCollectSample() {
@@ -162,10 +178,22 @@ function confirmCollectSample() {
                     confirmButtonColor: '#3085d6'
                 });
             }
+        },
+        complete: function() {
             $('#btnConfirmCollectSample').prop('disabled', false).html('<i class="mdi mdi-test-tube"></i> Collect Sample');
         }
     });
 }
+
+// Reset sample collection modal on close to avoid stale button/spinner state
+$(document).on('hidden.bs.modal', '#sampleCollectionModal', function() {
+    $('#btnConfirmCollectSample').prop('disabled', false).html('<i class="mdi mdi-test-tube"></i> Collect Sample');
+    $('#sample_lab_number').val('').prop('readonly', true);
+    $('#labNumberError').addClass('d-none').text('');
+    $('#labNumberDuplicateWarning').addClass('d-none').text('');
+    $('#labNumberFormatHint').text('');
+    window._pendingSampleIds = null;
+});
 
 function dismissRequests(requestIds, section) {
     $.ajax({
@@ -642,6 +670,7 @@ function createTrashCard(data, type) {
                 </div>
                 <small>
                     <div><strong>Patient:</strong> ${patientName} (${fileNo})</div>
+                    ${data.lab_number ? `<div><strong>Lab Number:</strong> <span class="badge bg-info text-white font-monospace">${escapeHtml(data.lab_number)}</span></div>` : ''}
                     <div><strong>Doctor:</strong> ${doctorName}</div>
                     <div><strong>${type === 'deleted' ? 'Deleted' : 'Dismissed'}:</strong> ${date}</div>
                     <div><strong>Reason:</strong> ${reason}</div>
@@ -1112,17 +1141,23 @@ function initializeQueueDataTable(filter) {
                         tpBadge = ` <br><a href="#" class="tp-view-link badge mt-1" style="background-color: #e0f2f1; color: #00796b; border: 1px solid #00897b; text-decoration: none;" onclick="ClinicalOrdersKit.viewTreatmentPlan(${cardData.treatment_plan_id}); event.stopPropagation(); return false;"><i class="fa fa-clipboard-list"></i> ${escapeHtml(cardData.treatment_plan_name)}</a>`;
                     }
 
+                    let labBadge = cardData.lab_number
+                        ? `<span class="badge bg-info text-white font-monospace ms-1" style="font-size: 0.75rem;"><i class="mdi mdi-tag-text"></i> ${escapeHtml(cardData.lab_number)}</span>`
+                        : '';
+
                     return `
                         <div class="queue-patient-item" data-patient-id="${cardData.patient_id}" style="cursor: pointer; padding: 1rem; border-bottom: 1px solid #e9ecef;">
-                            <div style="display: flex; align-items: center; gap: 0.75rem;">
+                            <div style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
                                 <div style="font-weight: 600; font-size: 1rem; color: #212529;">${escapeHtml(cardData.patient_name)}</div>
                                 <span class="badge badge-primary">${cardData.file_no}</span>
+                                ${labBadge}
                                 ${reverseBtn}
                                 ${inlineActionBtn}
                             </div>
                             <div style="margin-top: 0.5rem; font-size: 0.9rem; color: #6c757d;">
                                 <i class="mdi mdi-flask-outline"></i> ${escapeHtml(cardData.service_name)}${tpBadge}
                                 ${statusBadge ? '<br>' + statusBadge : ''}
+                                ${cardData.lab_number ? `<br><small class="text-info fw-bold"><i class="mdi mdi-tag-text"></i> Lab#: ${escapeHtml(cardData.lab_number)}</small>` : ''}
                                 <br><small class="text-muted"><i class="mdi mdi-account-clock"></i> Req: ${escapeHtml(cardData.requested_by)} on ${cardData.requested_at}</small>
                                 ${cardData.approved_at ? `<br><small class="text-muted"><i class="mdi mdi-clock-check-outline"></i> Approved: ${cardData.approved_at}</small>` : ''}
                                 ${cardData.hmo && cardData.hmo !== 'N/A' ? `<br><small><i class="mdi mdi-hospital-building"></i> ${escapeHtml(cardData.hmo)}</small>` : ''}
