@@ -1516,24 +1516,7 @@ Route::get('/releases/{any?}', function ($any = null) {
 | OpenEMR Compatibility Routes (/apis/default/...)
 |--------------------------------------------------------------------------
 */
-Route::prefix('apis/default')->middleware('api')->group(function () {
-    Route::get('api/patient', [\App\Interoperability\Http\Controllers\OpenEmr\OpenEmrCompatibilityController::class, 'patient'])->name('openemr.patient.index');
-    Route::get('api/encounter', [\App\Interoperability\Http\Controllers\OpenEmr\OpenEmrCompatibilityController::class, 'encounter'])->name('openemr.encounter.index');
-    Route::get('api/vital_signs', [\App\Interoperability\Http\Controllers\OpenEmr\OpenEmrCompatibilityController::class, 'vitals'])->name('openemr.vitals.index');
-    Route::get('api/ccda/{patientId}', [\App\Interoperability\Http\Controllers\OpenEmr\OpenEmrCompatibilityController::class, 'ccda'])->name('openemr.ccda.export');
-
-    Route::get('fhir/Patient', [\App\Interoperability\Http\Controllers\Fhir\FhirPatientController::class, 'index'])->name('openemr.fhir.patient.index');
-    Route::get('fhir/Patient/{id}', [\App\Interoperability\Http\Controllers\Fhir\FhirPatientController::class, 'show'])->name('openemr.fhir.patient.read');
-    Route::get('fhir/Observation', [\App\Interoperability\Http\Controllers\Fhir\FhirObservationController::class, 'index'])->name('openemr.fhir.observation.index');
-    Route::get('fhir/Encounter', [\App\Interoperability\Http\Controllers\Fhir\FhirEncounterController::class, 'index'])->name('openemr.fhir.encounter.index');
-});
-
-/*
-|--------------------------------------------------------------------------
-| OpenEMR Compatibility Routes (/apis/default/...)
-|--------------------------------------------------------------------------
-*/
-Route::prefix('apis/default')->middleware('api')->group(function () {
+Route::prefix('apis/default')->middleware(['api', 'interop.auth', 'interop.ndpa'])->group(function () {
     Route::get('api/patient', [\App\Interoperability\Http\Controllers\OpenEmr\OpenEmrCompatibilityController::class, 'patient'])->name('openemr.patient.index');
     Route::get('api/encounter', [\App\Interoperability\Http\Controllers\OpenEmr\OpenEmrCompatibilityController::class, 'encounter'])->name('openemr.encounter.index');
     Route::get('api/vital_signs', [\App\Interoperability\Http\Controllers\OpenEmr\OpenEmrCompatibilityController::class, 'vitals'])->name('openemr.vitals.index');

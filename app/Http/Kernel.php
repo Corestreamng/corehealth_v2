@@ -73,5 +73,7 @@ class Kernel extends HttpKernel
         'role_or_permission' => \Spatie\Permission\Middlewares\RoleOrPermissionMiddleware::class,
         'auth.basic.sha256' => \App\Http\Middleware\BasicAuthSha256::class,
         'check.suspension' => \App\Http\Middleware\CheckSuspension::class,
+        'interop.auth' => \App\Interoperability\Http\Middleware\AuthenticateInterop::class,
+        'interop.ndpa' => \App\Interoperability\Http\Middleware\CheckNdpaConsent::class,
     ];
 }
