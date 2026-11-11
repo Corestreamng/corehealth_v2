@@ -6,10 +6,20 @@ use App\Interoperability\Models\InteropTerminologyMap;
 use App\Interoperability\Models\PatientConsent;
 use App\Interoperability\Services\NdprSanitizerService;
 use App\Models\Patient;
+use App\Models\User;
 use Tests\TestCase;
 
 class NdpaConsentAndSanitizerTest extends TestCase
 {
+    protected function setUp(): void
+    {
+        parent::setUp();
+        $user = User::first();
+        if ($user) {
+            $this->actingAs($user, 'sanctum');
+        }
+    }
+
     /**
      * Test recording patient consent per NDPA 2023.
      */
@@ -91,7 +101,38 @@ class NdpaConsentAndSanitizerTest extends TestCase
     }
 
     /**
-     * Test NDPR Sanitizer strips direct PII (name, phone, email, NIN, MRN).
+     * Test recording pediatric minor consent with guardian details per NDPA Section 31.
+     */
+    public function test_minor_pediatric_consent_recording(): void
+    {
+        $patient = Patient::first();
+        if (!$patient) {
+            $this->markTestSkipped('No patient found in test database.');
+        }
+
+        $payload = [
+            'patient_id' => $patient->id,
+            'consent_type' => 'RESEARCH',
+            'ndpa_lawful_basis' => 'EXPLICIT_CONSENT',
+            'parent_guardian_name' => 'Dr. Emeka Okoye',
+            'parent_guardian_nin' => '98765432109',
+            'parent_guardian_relationship' => 'Father',
+            'notes' => 'Parental consent granted for pediatric clinical trial.',
+        ];
+
+        $response = $this->postJson('/api/ndpa/v1/consent', $payload);
+
+        $this->assertTrue(in_array($response->status(), [200, 201]));
+        $this->assertDatabaseHas('patient_consents', [
+            'patient_id' => $patient->id,
+            'parent_guardian_name' => 'Dr. Emeka Okoye',
+            'parent_guardian_nin' => '98765432109',
+            'parent_guardian_relationship' => 'Father',
+        ]);
+    }
+
+    /**
+     * Test NDPR Sanitizer strips direct PII (name, phone, email, NIN, BVN, MRN, honorifics).
      */
     public function test_ndpr_sanitizer_redacts_direct_pii_from_clinical_notes(): void
     {
@@ -102,17 +143,20 @@ class NdpaConsentAndSanitizerTest extends TestCase
 
         $sanitizer = new NdprSanitizerService();
 
-        $rawText = "Patient {$patient->user->surname} presented with fever. Call relative on 08031234567 or email doctor@hospital.com. NIN: 12345678901. Chart: PAT-9921.";
+        $rawText = "Patient {$patient->user->surname} presented with fever. Call relative Mr. Chukwuma Obi on 08031234567 or email doctor@hospital.com. NIN: 12345678901. BVN: 99887766554. Chart: PAT-9921.";
         $cleaned = $sanitizer->sanitizeClinicalText($rawText, $patient);
 
         $this->assertStringNotContainsString($patient->user->surname, $cleaned);
         $this->assertStringNotContainsString('08031234567', $cleaned);
         $this->assertStringNotContainsString('doctor@hospital.com', $cleaned);
         $this->assertStringNotContainsString('12345678901', $cleaned);
+        $this->assertStringNotContainsString('99887766554', $cleaned);
         $this->assertStringNotContainsString('PAT-9921', $cleaned);
         $this->assertStringContainsString('[REDACTED_PHONE]', $cleaned);
         $this->assertStringContainsString('[REDACTED_EMAIL]', $cleaned);
         $this->assertStringContainsString('[REDACTED_NIN]', $cleaned);
+        $this->assertStringContainsString('[REDACTED_BVN]', $cleaned);
+        $this->assertStringContainsString('[REDACTED_NAME]', $cleaned);
     }
 
     /**

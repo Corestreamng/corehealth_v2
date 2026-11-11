@@ -5,16 +5,41 @@ namespace Tests\Feature\Interoperability;
 use App\Models\Patient;
 use App\Models\Product;
 use App\Models\Service;
+use App\Models\User;
 use App\Models\VitalSign;
 use Tests\TestCase;
 
 class FhirR4ApiTest extends TestCase
 {
+    protected function setUp(): void
+    {
+        parent::setUp();
+        $user = User::first();
+        if ($user) {
+            $this->actingAs($user, 'sanctum');
+        }
+    }
+
     /**
-     * Test FHIR R4 CapabilityStatement Metadata endpoint.
+     * Test unauthenticated access is strictly rejected with 401 and OperationOutcome.
+     */
+    public function test_unauthenticated_requests_are_rejected(): void
+    {
+        app('auth')->forgetGuards();
+
+        $response = $this->getJson('/api/fhir/r4/Patient');
+        $response->assertStatus(401);
+        $response->assertJsonPath('resourceType', 'OperationOutcome');
+        $response->assertHeader('WWW-Authenticate', 'Bearer realm="CoreHealth Interoperability API"');
+    }
+
+    /**
+     * Test FHIR R4 CapabilityStatement Metadata endpoint is public.
      */
     public function test_capability_statement_metadata(): void
     {
+        app('auth')->forgetGuards();
+
         $response = $this->getJson('/api/fhir/r4/metadata');
 
         $response->assertStatus(200);

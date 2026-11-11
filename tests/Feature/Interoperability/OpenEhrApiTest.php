@@ -5,10 +5,20 @@ namespace Tests\Feature\Interoperability;
 use App\Interoperability\Models\InteropExternalIdentifier;
 use App\Models\Encounter;
 use App\Models\Patient;
+use App\Models\User;
 use Tests\TestCase;
 
 class OpenEhrApiTest extends TestCase
 {
+    protected function setUp(): void
+    {
+        parent::setUp();
+        $user = User::first();
+        if ($user) {
+            $this->actingAs($user, 'sanctum');
+        }
+    }
+
     /**
      * Test creating and reading an EHR.
      */

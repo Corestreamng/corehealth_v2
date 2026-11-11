@@ -3,10 +3,20 @@
 namespace Tests\Feature\Interoperability;
 
 use App\Models\Patient;
+use App\Models\User;
 use Tests\TestCase;
 
 class OpenEmrCompatibilityTest extends TestCase
 {
+    protected function setUp(): void
+    {
+        parent::setUp();
+        $user = User::first();
+        if ($user) {
+            $this->actingAs($user, 'sanctum');
+        }
+    }
+
     /**
      * Test OpenEMR patient_data table format API.
      */
