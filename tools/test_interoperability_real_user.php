@@ -373,17 +373,19 @@ $client->assert(
 );
 
 // 4.3 Inbound Create Patient (Proxies PatientController@store)
-$newPatientEmail = 'interop.test.' . time() . '@hospital.org';
+$randomSuffix = rand(10000, 99999);
+$newPatientEmail = 'interop.test.' . time() . '.' . $randomSuffix . '@hospital.org';
+$uniqueSurname = 'Balogun' . $randomSuffix;
 $fhirPatientPayload = [
     'resourceType' => 'Patient',
     'name' => [
         [
-            'family' => 'Balogun',
+            'family' => $uniqueSurname,
             'given' => ['Folake', 'Grace'],
         ],
     ],
     'telecom' => [
-        ['system' => 'phone', 'value' => '08091234567'],
+        ['system' => 'phone', 'value' => '0809' . rand(1000000, 9999999)],
         ['system' => 'email', 'value' => $newPatientEmail],
     ],
     'gender' => 'female',
@@ -395,7 +397,7 @@ $fhirPatientPayload = [
 $res = $client->request('POST', '/api/fhir/r4/Patient', $fhirPatientPayload);
 $client->assert(
     'Inbound FHIR Patient creation proxies PatientController@store (HTTP 201)',
-    in_array($res['status'], [200, 201]) && ($res['body']['name'][0]['family'] ?? '') === 'Balogun',
+    in_array($res['status'], [200, 201]) && ($res['body']['name'][0]['family'] ?? '') === $uniqueSurname,
     "Status was {$res['status']}"
 );
 $createdPatientLocalId = $res['body']['id'] ?? $targetPatient->id;
