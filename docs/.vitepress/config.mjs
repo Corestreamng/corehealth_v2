@@ -249,6 +249,22 @@ export default defineConfig({
             { text: 'WeCare247 API Contracts', link: '/developer/workbenches/wecare' },
             { text: 'CoreHMS SuperAdmin Contracts', link: '/developer/workbenches/corehms' },
           ]
+        },
+        {
+          text: 'Interoperability & Data Standards',
+          collapsed: false,
+          items: [
+            { text: 'Multi-Standard 5-Level Architecture', link: '/developer/interoperability/multi-standard-5level-architecture' },
+            { text: 'REST API Endpoints Master Registry', link: '/developer/interoperability/rest-api-crud-endpoints' },
+            { text: 'HL7 FHIR R4 Endpoints Reference', link: '/developer/interoperability/fhir-r4-endpoints-reference' },
+            { text: 'openEHR REST Endpoints Reference', link: '/developer/interoperability/openehr-rest-endpoints-reference' },
+            { text: 'OpenEMR & C-CDA XML Reference', link: '/developer/interoperability/openemr-ccda-endpoints-reference' },
+            { text: 'NDPA Consent Endpoints Reference', link: '/developer/interoperability/ndpa-consent-endpoints-reference' },
+            { text: 'HL7 FHIR R4 Architecture Specs', link: '/developer/interoperability/fhir-r4-specifications' },
+            { text: 'openEHR Archetype Specifications', link: '/developer/interoperability/openehr-archetype-specifications' },
+            { text: 'OpenEMR Compatibility Specs', link: '/developer/interoperability/openemr-compatibility-specifications' },
+            { text: 'NDPA 2023 & Health Privacy Standards', link: '/developer/interoperability/ndpa-compliance-specifications' },
+          ]
         }
       ],
 

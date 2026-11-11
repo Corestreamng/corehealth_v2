@@ -42,7 +42,7 @@ graph TD
 
 ## 3. Order Catalog Registry Service (`OrderCatalogRegistryService`)
 
-Located in [`app/Services/OrderCatalogRegistryService.php`](file:///home/mrapollos/Documents/work/corehealth_v2/app/Services/OrderCatalogRegistryService.php):
+Located in `app/Services/OrderCatalogRegistryService.php`:
 
 - **Category Prompt Indexing**: `getCategoryPromptContext()` provides a token-efficient summary of active `ServiceCategory` and `ProductCategory` records cached in memory (`CACHE_TTL = 3600` seconds).
 - **Fuzzy Item Matching**: `matchCatalogItem($itemName, $orderType)` resolves suggested test and drug names against real catalog rows (`Service::where('status', 1)` and `Product::where('status', 1)`), extracting active pricing, codes, and target queues.
@@ -52,7 +52,7 @@ Located in [`app/Services/OrderCatalogRegistryService.php`](file:///home/mrapoll
 
 ## 4. Database Schema: `ai_scribe_audits` Table
 
-Migration: [`database/migrations/2026_11_10_010000_create_ai_scribe_audits_table.php`](file:///home/mrapollos/Documents/work/corehealth_v2/database/migrations/2026_11_10_010000_create_ai_scribe_audits_table.php)
+Migration: `database/migrations/2026_11_10_010000_create_ai_scribe_audits_table.php`
 
 ```sql
 CREATE TABLE `ai_scribe_audits` (
@@ -86,10 +86,10 @@ CREATE TABLE `ai_scribe_audits` (
 
 ![Clinical AI Scribe Studio Live Interface](/images/workbenches/clinical-ai-scribe-studio.jpg)
 
-- **Blade Structure**: [`resources/views/admin/partials/clinical_ai_scribe_studio.blade.php`](file:///home/mrapollos/Documents/work/corehealth_v2/resources/views/admin/partials/clinical_ai_scribe_studio.blade.php).
-- **Standalone Stylesheet**: [`public/css/clinical-ai-scribe-studio.css`](file:///home/mrapollos/Documents/work/corehealth_v2/public/css/clinical-ai-scribe-studio.css).
+- **Blade Structure**: `resources/views/admin/partials/clinical_ai_scribe_studio.blade.php`.
+- **Standalone Stylesheet**: `public/css/clinical-ai-scribe-studio.css`.
   - Uses CSS variable `--hospital-primary` and radial ambient glow.
-- **Standalone JavaScript Module**: [`public/js/clinical-ai-scribe-studio.js`](file:///home/mrapollos/Documents/work/corehealth_v2/public/js/clinical-ai-scribe-studio.js).
+- **Standalone JavaScript Module**: `public/js/clinical-ai-scribe-studio.js`.
   - `ClinicalAiScribeStudio` singleton.
   - Web Audio API 60 FPS visualizer utilizing `AnalyserNode.getByteFrequencyData()`.
   - Debounced auto-save to `sessionStorage` and `localStorage` with crash recovery banner.
