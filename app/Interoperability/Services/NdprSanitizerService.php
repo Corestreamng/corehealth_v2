@@ -50,11 +50,25 @@ class NdprSanitizerService
         // 2. Email Addresses
         $sanitized = preg_replace('/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/', '[REDACTED_EMAIL]', $sanitized);
 
-        // 3. National Identity Numbers (NIN: 11 consecutive digits)
+        // 3. National Identity Numbers (NIN: 11 consecutive digits) & Bank Verification Numbers (BVN)
+        $sanitized = preg_replace_callback('/\b(NIN|BVN)[\s:#]*\d{11}\b/i', function ($m) {
+            return '[REDACTED_' . strtoupper($m[1]) . ']';
+        }, $sanitized);
         $sanitized = preg_replace('/\b\d{11}\b/', '[REDACTED_NIN]', $sanitized);
 
-        // 4. File / Chart Number Patterns (e.g., PAT-12345, MRN/2026/001)
+        // 4. Bank Account Numbers (NUBAN: 10 digits with keyword context)
+        $sanitized = preg_replace('/\b(acct|account|nuban)[\s#:]*\d{10}\b/i', '[REDACTED_ACCOUNT]', $sanitized);
+
+        // 5. File / Chart Number Patterns (e.g., PAT-12345, MRN/2026/001)
         $sanitized = preg_replace('/\b(PAT|MRN|FILE|CH2)[-\/]\w+\b/i', '[REDACTED_FILE_NO]', $sanitized);
+
+        // 6. Honorific + Personal Name Patterns (e.g., Mr. John Doe, Dr. Jane)
+        $sanitized = preg_replace('/\b(Mr|Mrs|Ms|Miss|Dr|Prof|Professor|Alhaji|Hajia|Chief|Pastor|Elder|Reverend|Rev|Sister|Brother)\.?\s+[A-Z][a-z]+(?:\s+[A-Z][a-z]+)?\b/', '[REDACTED_NAME]', $sanitized);
+
+        // 7. Kinship / Next of Kin Named References
+        $sanitized = preg_replace_callback('/\b(next of kin|father|mother|brother|sister|uncle|aunt|husband|wife|son|daughter|guardian|sponsor)[\s:]+([A-Z][a-z]+(?:\s+[A-Z][a-z]+)?)\b/i', function ($matches) {
+            return $matches[1] . ': [REDACTED_NAME]';
+        }, $sanitized);
 
         return $sanitized;
     }

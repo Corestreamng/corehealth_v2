@@ -21,11 +21,16 @@ class PatientConsent extends Model
         'granted_by',
         'ip_address',
         'notes',
+        'parent_guardian_name',
+        'parent_guardian_nin',
+        'parent_guardian_relationship',
+        'is_minor',
         'granted_at',
         'revoked_at',
     ];
 
     protected $casts = [
+        'is_minor' => 'boolean',
         'granted_at' => 'datetime',
         'revoked_at' => 'datetime',
     ];
