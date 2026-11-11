@@ -255,6 +255,7 @@ export default defineConfig({
           collapsed: false,
           items: [
             { text: 'Multi-Standard 5-Level Architecture', link: '/developer/interoperability/multi-standard-5level-architecture' },
+            { text: 'Statutory NDPA & Interop Audit Report', link: '/developer/interoperability/interop-and-ndpr-audit-report' },
             { text: 'REST API Endpoints Master Registry', link: '/developer/interoperability/rest-api-crud-endpoints' },
             { text: 'HL7 FHIR R4 Endpoints Reference', link: '/developer/interoperability/fhir-r4-endpoints-reference' },
             { text: 'openEHR REST Endpoints Reference', link: '/developer/interoperability/openehr-rest-endpoints-reference' },
