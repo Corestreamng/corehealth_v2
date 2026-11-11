@@ -25,8 +25,16 @@ class FhirPatientController extends Controller
 
         if ($request->filled('identifier')) {
             $identifier = $request->input('identifier');
-            $query->where('file_no', $identifier)
-                ->orWhere('hmo_no', $identifier);
+            if (str_contains($identifier, '|')) {
+                [$system, $val] = explode('|', $identifier, 2);
+                $query->where(function ($q) use ($val) {
+                    $q->where('file_no', $val)->orWhere('hmo_no', $val);
+                });
+            } else {
+                $query->where(function ($q) use ($identifier) {
+                    $q->where('file_no', $identifier)->orWhere('hmo_no', $identifier);
+                });
+            }
         }
 
         if ($request->filled('gender')) {
@@ -104,6 +112,26 @@ class FhirPatientController extends Controller
                     ],
                 ],
             ], 404, ['Content-Type' => 'application/fhir+json; charset=UTF-8']);
+        }
+
+        // BOLA / IDOR Verification: Ensure patient-level tokens only access their own compartment
+        $user = auth()->user();
+        if ($user) {
+            $patientProfile = $user->patient_profile ?? Patient::where('user_id', $user->id)->first();
+            if ($patientProfile && !$user->hasAnyRole(['SUPERADMIN', 'ADMIN', 'DOCTOR', 'NURSE', 'RECEPTIONIST', 'RECORD_OFFICER'])) {
+                if ($patientProfile->id !== $patient->id) {
+                    return response()->json([
+                        'resourceType' => 'OperationOutcome',
+                        'issue' => [
+                            [
+                                'severity' => 'error',
+                                'code' => 'security',
+                                'diagnostics' => 'Access denied. Patient compartment restriction enforced under BOLA security guidelines.',
+                            ],
+                        ],
+                    ], 403, ['Content-Type' => 'application/fhir+json; charset=UTF-8']);
+                }
+            }
         }
 
         return response()->json(PatientTransformer::toFhir($patient), 200, [
