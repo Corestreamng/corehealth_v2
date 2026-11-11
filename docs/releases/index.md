@@ -11,6 +11,9 @@ Every release tag is bound directly to documentation updates, PHPUnit verificati
 
 ## Recent Milestones
 
+- **[v2.6.0.70 — Multi-Standard Health Interoperability (HL7 FHIR R4, openEHR, OpenEMR, C-CDA) & NDPA Statutory Privacy Engine](/releases/v2.6.0.70)**  
+  Enterprise multi-standard health data interoperability and statutory privacy framework: HL7 FHIR R4 (Levels 1–4 REST API), openEHR ITS-REST (COMPOSITION & AQL Archetype Query Engine), OpenEMR table-parity REST endpoints, and HL7 C-CDA Continuity of Care Document XML generator. Fully governed by the Controller Proxy Pattern (guaranteeing all 46+ Eloquent observers, double-entry General Ledger balancing, and FIFO inventory sync), Zero Core Schema Mutation Invariant, NDPA 2023 statutory consent gatekeeper (Section 30), pediatric minor guardian validation (Section 31), OWASP BOLA compartment isolation, and high-precision clinical PII sanitization.
+
 - **[v2.6.0.69 — LIS Specimen Auto-Increment, Collision Guards & Lab Number Search Engine](/releases/v2.6.0.69)**  
   Overhaul of the Laboratory Workbench accession numbering engine: collision-free sequential auto-increment with whitespace normalization, server-side cross-patient duplicate rejection (422), patient lookup by lab number, sample collect button lifecycle state restoration, and prominent accession visibility across queues, cards, and datatables.
 
