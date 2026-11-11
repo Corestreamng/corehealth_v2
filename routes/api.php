@@ -394,3 +394,10 @@ Route::prefix('mobile/patient/chat')->middleware('auth:sanctum')->group(function
     Route::get('unread-count', [MobileChatController::class, 'unreadCount']);
     Route::delete('messages/{messageId}', [MobileChatController::class, 'deleteMessage']);
 });
+
+/*
+|--------------------------------------------------------------------------
+| Multi-Standard Interoperability Routes (FHIR R4, openEHR, OpenEMR, NDPA)
+|--------------------------------------------------------------------------
+*/
+require __DIR__ . '/interop.php';
