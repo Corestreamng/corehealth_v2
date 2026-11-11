@@ -19,6 +19,7 @@ CoreHealth v2 unifies clinical, administrative, and revenue operations into dist
 | **Access Control (RBAC)** | Role-Based Access Control via Spatie Permission with strict blade navigation guards |
 | **Code Style & Quality** | PSR-12 standard enforced via isolated `friendsofphp/php-cs-fixer` in `tools/` |
 | **Automated Testing** | 35 domain-specific PHPUnit feature suites running on live MySQL schema `_corehealth_db_v2_test` |
+| **Health Interoperability** | **HL7 FHIR R4** (v4.0.1), **openEHR** (Rel 1.1.0+), **OpenEMR** (v7.0+), and **NDPA 2023** via Controller Proxies |
 | **External Integrations** | WeCare247 Telehealth sync and CoreHMS SuperAdmin central multi-facility monitoring |
 
 ---
@@ -39,6 +40,7 @@ npm run docs:build
 
 - **User Story & Operational Guides** (`docs/user-guides/workbenches/*.md`): Real-world clinical workflows, step-by-step procedures, and authentic UI screenshots for hospital personnel.
 - **Developer API Reference** (`docs/developer/workbenches/*.md`): Paystack-style API contracts, route tables, database schemas, observer triggers, and PHPUnit suites for engineers.
+- **Health Interoperability Reference** ([`docs/developer/interoperability/rest-api-crud-endpoints.md`](docs/developer/interoperability/rest-api-crud-endpoints.md)): Full CRUD specifications for HL7 FHIR R4, openEHR ITS-REST, OpenEMR compatibility, and NDPA 2023 consent APIs.
 - **Clinical Pathway** ([`docs/user-guides/clinical-pathway.md`](docs/user-guides/clinical-pathway.md)): End-to-end patient journey from intake to discharge.
 - **Legacy Planning Archive** ([`docs_archive/README.md`](docs_archive/README.md)): Historical engineering specifications and sprint records.
 
@@ -125,6 +127,7 @@ Contributors and automated agents must strictly adhere to the project invariants
 4. **Testing Invariants**: All tests extend `Tests\TestCase` (includes `DatabaseTransactions`) against the live schema `_corehealth_db_v2_test`. **Never use `RefreshDatabase` or SQLite.**
 5. **PSR-12 Isolated Linting**: Code style is enforced via `friendsofphp/php-cs-fixer` in `tools/`. Run `make lint` or `make lint-fix`.
 6. **Mandatory Documentation & Screenshots**: Every UI or workflow modification requires updating documentation under `docs/` and capturing/refreshing authentic screenshots in `docs/public/images/workbenches/` following `docs/developer/screenshot-guide.md` ($1 \le \text{visuals} \le 5$ per page).
+7. **Health Interoperability Parity**: Inbound FHIR, openEHR, and OpenEMR writes proxy production controllers (Local Work Parity) to guarantee all 46+ observers fire, zero core schema mutations, LOINC/UCUM/ATC bindings, and NDPA 2023 consent compliance.
 
 ---
 
@@ -132,6 +135,7 @@ Contributors and automated agents must strictly adhere to the project invariants
 
 ```
 app/                      # Domain logic, Controllers, 199 Eloquent Models, 46 Observers, Services
+app/Interoperability/     # Multi-standard layer: FHIR R4, openEHR, OpenEMR, NDPA Sanitizer
 Corehealth-Super-Admin/   # Central Multi-Tenant Administration Cloud Platform
 database/                 # Migrations, Seeders, and _corehealth_db_v2_test.sql.gz test schema
 docker/                   # Multi-container Docker configurations (PHP 8.3 FPM, Nginx, Redis)
@@ -139,8 +143,8 @@ docs/                     # VitePress Documentation Engine (User Stories & Devel
 docs_archive/             # Historical engineering specifications and sprint records
 public/                   # Static compiled assets, standalone modular JS and CSS
 resources/views/admin/    # High-density modular blade views and workbench cockpits
-routes/                   # 15 domain-specific route definitions (web, reception, hr, etc.)
-tests/                    # 35 domain-specific PHPUnit test suites (DatabaseTransactions)
+routes/                   # 16 domain route files including routes/interop.php
+tests/                    # 36 domain-specific PHPUnit test suites (DatabaseTransactions)
 tools/                    # Isolated PHP CS Fixer tooling environment
 Makefile                  # Unified developer orchestration commands
 AGENTS.md                 # Authoritative architecture invariants and developer rules

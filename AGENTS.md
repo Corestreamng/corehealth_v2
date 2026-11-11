@@ -69,12 +69,20 @@ When contributing to CoreHealth v2, strictly adhere to these core invariants acr
   - Create annotated tags only: `git tag -a v2.X.Y.Z -m "Release v2.X.Y.Z: <Summary>"`.
 - **Mandatory Documentation Update on Tagging**: Every git release tag creation MUST update the corresponding story and developer docs in `docs/` and add a release record under `docs/releases/<TAG>.md`.
 
-## 8. Documentation References & Legacy Archive
+## 8. Multi-Standard Interoperability & Privacy Invariants
+- **Controller Proxy Pattern (Local Work Parity)**: Inbound mutations (`POST`, `PUT`, `PATCH`) across HL7 FHIR R4, openEHR, and OpenEMR MUST mutate payloads to proxy existing hospital controller methods (`PatientController@store`, `VitalSignController@store`, `EncounterController@addSinglePrescriptionRequest`, `EncounterController@addSingleLabRequest`, `BillingWorkbenchController@processPayment`). NEVER bypass controllers with raw database queries on watched entities; this guarantees that all 46+ Eloquent observers execute, double-entry General Ledger journal entries balance, and FIFO inventory decrements occur without code drift.
+- **Zero Core Schema Mutation**: Never alter existing production MySQL tables (all 199 core models untouched). Interoperability mappings use isolated auxiliary metadata tables (`interop_terminology_maps`, `interop_external_identifiers`, `patient_consents`).
+- **NDPA 2023 Statutory Privacy**: Enforce affirmative consent for sensitive data under Section 30 via `CheckNdpaConsent` middleware (`X-NDPA-Consent-Status`), and PII sanitization / deterministic pseudonymization via `NdprSanitizerService` before cloud or external handoff.
+- **Standard Terminologies**: Bind clinical parameters strictly to LOINC & UCUM for vitals/labs, WHO ATC for medications, and ICD-10 for diagnoses.
+
+## 9. Documentation References & Legacy Archive
 - Active Documentation Portal: `docs/index.md`
 - Core Architecture: `docs/developer/architecture.md`
 - Coding Standards: `docs/developer/coding-standards.md`
 - Database & Observers Ledger: `docs/developer/database-and-observers.md`
 - Testing Standards: `docs/developer/testing-guide.md`
+- Interoperability Architecture: `docs/developer/interoperability/multi-standard-5level-architecture.md`
+- Interoperability REST Registry: `docs/developer/interoperability/rest-api-crud-endpoints.md`
 - Reception & Records Story: `docs/user-guides/workbenches/reception.md`
 - Longitudinal Patient Pathway: `docs/user-guides/clinical-pathway.md`
 - Legacy Planning & Audits Archive: `docs_archive/README.md`
