@@ -255,7 +255,8 @@ $(function() {
                         'Cost: ₦' + parseFloat(batch.cost_price || 0).toFixed(2) +
                         '</div>' +
                         '<div class="mt-2">' +
-                        '<a href="/inventory/store-workbench/batch/' + batch.id + '/adjust" class="btn btn-xs btn-outline-secondary">Adjust</a> ' +
+                        '<a href="/inventory/store-workbench/batch/' + batch.id + '/adjust" class="btn btn-xs btn-outline-secondary"><i class="mdi mdi-pencil"></i> Adjust</a> ' +
+                        '<a href="/inventory/store-workbench/product-batches/' + productId + '?store_id=' + storeId + '" class="btn btn-xs btn-outline-primary ml-1" title="Edit Batch Details"><i class="mdi mdi-pencil-box-outline"></i> Edit Batch</a>' +
                         '</div>' +
                         '</div>' +
                         '</div>';

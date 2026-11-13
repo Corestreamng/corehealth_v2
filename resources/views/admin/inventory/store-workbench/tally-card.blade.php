@@ -1139,6 +1139,9 @@ $hosColor = appsettings('hos_color') ?? '#0066cc';
         <button class="toolbar-btn" id="tb-return-po" style="background:#6366f1; color:#fff;">
             <i class="mdi mdi-truck-delivery-outline"></i> Return PO Items
         </button>
+        <button class="toolbar-btn" id="tb-edit-batch" style="background:#0284c7; color:#fff;" title="Edit Batch Details (Quantity Locked)">
+            <i class="mdi mdi-pencil-box-outline"></i> Edit Batch
+        </button>
         <button class="toolbar-btn" id="tb-return-batch" style="background:#7c3aed; color:#fff;" title="Return Manual / Store Batch to Supplier">
             <i class="mdi mdi-undo-variant"></i> Return Batch
         </button>
@@ -2174,6 +2177,14 @@ $hosColor = appsettings('hos_color') ?? '#0066cc';
                         <div>
                             <strong>Quantity is locked:</strong> Batch stock count cannot be edited directly here. To change quantities, please use the audited <strong>Adjust Stock (+/-)</strong> flow.
                         </div>
+                    </div>
+
+                    {{-- Batch Selector (shown when opened from floating toolbar) --}}
+                    <div class="form-group mb-3" id="edit-batch-picker-group" style="display:none;">
+                        <label class="small font-weight-bold">Select Batch to Edit <span class="text-danger">*</span></label>
+                        <select id="edit-batch-picker" class="form-control" style="border-radius:8px;">
+                            <option value="">— Choose a Batch from this Store —</option>
+                        </select>
                     </div>
 
                     <div class="row">

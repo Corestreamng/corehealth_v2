@@ -396,7 +396,21 @@ if (typeof window.wbRoute !== 'function') {
                         ? '<span class="badge badge-success" style="font-size:0.68rem; font-weight:600;"><i class="mdi mdi-gift-outline mr-1"></i>Donation (₦0.00)</span>'
                         : 'Cost: ₦' + parseFloat(r.cost_price).toLocaleString(undefined, {minimumFractionDigits:2});
 
-                    var batchCell = '<div><code style="font-size:0.82rem; color:#0f172a;">' + escHtml(r.batch_number) + '</code></div>' +
+                    var editBatchBtn = '';
+                    if (r.batch_id) {
+                        editBatchBtn = '<button class="btn btn-link btn-xs p-0 text-primary ml-1 btn-row-edit-batch" title="Edit Batch Details (Quantity Locked)" ' +
+                            'data-bid="' + r.batch_id + '" ' +
+                            'data-bnum="' + escHtml(r.batch_number || '') + '" ' +
+                            'data-bname="' + escHtml(r.batch_name || '') + '" ' +
+                            'data-supid="' + (r.supplier_id || '') + '" ' +
+                            'data-cost="' + (r.cost_price || 0) + '" ' +
+                            'data-exp="' + (r.expiry_date && r.expiry_date !== '—' ? r.expiry_date : '') + '" ' +
+                            'data-qty="' + (r.current_qty || r.in_qty || 0) + '" ' +
+                            'data-notes="' + escHtml(r.notes || '') + '">' +
+                            '<i class="mdi mdi-pencil" style="font-size:0.95rem; color:#3b82f6;"></i></button>';
+                    }
+
+                    var batchCell = '<div><code style="font-size:0.82rem; color:#0f172a;">' + escHtml(r.batch_number) + '</code>' + editBatchBtn + '</div>' +
                                     '<div style="font-size:0.72rem; color:#64748b;">Exp: ' + escHtml(r.expiry_date) + '</div>' +
                                     '<div style="font-size:0.72rem; color:' + (isDonationBatch ? '#15803d' : '#059669') + '; font-weight:600;">' + costText + '</div>';
 
@@ -409,25 +423,41 @@ if (typeof window.wbRoute !== 'function') {
 
                     var voidAdjBtn = '';
                     if (r.raw_type === 'adjustment' && !r.is_voided) {
-                        voidAdjBtn = '<button class="btn btn-outline-warning btn-xs px-1 py-0 ml-1 btn-row-void-adj" title="Void Adjustment (Recorded in Error)" data-txid="' + (r.id || '') + '" data-pid="' + (r.product_id || '') + '" data-pname="' + escHtml(r.product_name || '') + '" data-bnum="' + escHtml(r.batch_number || '') + '" data-qty="' + (r.in_qty > 0 ? r.in_qty : r.out_qty) + '" data-type="' + (r.in_qty > 0 ? 'Positive (+)' : 'Negative (-)') + '" data-notes="' + escHtml(r.notes || '') + '"><i class="mdi mdi-undo-variant mr-1"></i>Void</button>';
+                        voidAdjBtn = '<button class="btn btn-outline-warning btn-xs px-1 py-0 ml-1 btn-row-void-adj" style="font-size:0.7rem; border-radius:4px;" title="Void Adjustment (Recorded in Error)" data-txid="' + (r.id || '') + '" data-pid="' + (r.product_id || '') + '" data-pname="' + escHtml(r.product_name || '') + '" data-bnum="' + escHtml(r.batch_number || '') + '" data-qty="' + (r.in_qty > 0 ? r.in_qty : r.out_qty) + '" data-type="' + (r.in_qty > 0 ? 'Positive (+)' : 'Negative (-)') + '" data-notes="' + escHtml(r.notes || '') + '"><i class="mdi mdi-undo-variant mr-1"></i>Void</button>';
                     } else if (r.is_voided) {
                         voidAdjBtn = '<span class="badge badge-secondary ml-1" style="font-size:0.65rem;" title="Voided: ' + escHtml(r.void_reason || '') + '">Voided</span>';
                     }
 
                     var returnBatchBtn = '';
                     if (r.batch_id && (r.current_qty > 0 || r.in_qty > 0) && !r.is_voided) {
-                        returnBatchBtn = '<button class="btn btn-link btn-xs p-0 text-purple ml-1 btn-row-return-batch" title="Return Batch to Supplier" data-bid="' + r.batch_id + '" data-bnum="' + escHtml(r.batch_number || '') + '" data-pname="' + escHtml(r.product_name || '') + '" data-qty="' + (r.current_qty || r.in_qty || 0) + '" data-cost="' + (r.cost_price || 0) + '" data-supid="' + (r.supplier_id || '') + '" data-supname="' + escHtml(r.supplier_name || 'Supplier') + '"><i class="mdi mdi-undo-variant" style="font-size:1.1rem; color:#7c3aed;"></i></button>';
+                        returnBatchBtn = '<button class="btn btn-xs btn-outline-purple px-1 py-0 ml-1 btn-row-return-batch" style="color:#7c3aed; border-color:#c4b5fd; font-size:0.7rem; border-radius:4px;" title="Return Batch to Supplier" data-bid="' + r.batch_id + '" data-bnum="' + escHtml(r.batch_number || '') + '" data-pname="' + escHtml(r.product_name || '') + '" data-qty="' + (r.current_qty || r.in_qty || 0) + '" data-cost="' + (r.cost_price || 0) + '" data-supid="' + (r.supplier_id || '') + '" data-supname="' + escHtml(r.supplier_name || 'Supplier') + '"><i class="mdi mdi-undo-variant mr-1"></i>Return</button>';
                     }
 
                     var voidBatchBtn = '';
                     if (r.batch_id && (r.raw_type === 'in' || r.source === 'manual') && !r.is_voided && (r.current_qty > 0 || r.in_qty > 0)) {
-                        voidBatchBtn = '<button class="btn btn-link btn-xs p-0 text-danger ml-1 btn-row-void-batch" title="Void Batch (Recorded in Error)" data-bid="' + r.batch_id + '" data-bnum="' + escHtml(r.batch_number || '') + '" data-qty="' + (r.current_qty || r.in_qty || 0) + '" data-cost="' + (r.cost_price || 0) + '"><i class="mdi mdi-close-octagon-outline" style="font-size:1.1rem; color:#dc2626;"></i></button>';
+                        voidBatchBtn = '<button class="btn btn-xs btn-outline-danger px-1 py-0 ml-1 btn-row-void-batch" style="color:#dc2626; border-color:#fca5a5; font-size:0.7rem; border-radius:4px;" title="Void Batch (Recorded in Error)" data-bid="' + r.batch_id + '" data-bnum="' + escHtml(r.batch_number || '') + '" data-qty="' + (r.current_qty || r.in_qty || 0) + '" data-cost="' + (r.cost_price || 0) + '"><i class="mdi mdi-close-octagon-outline mr-1"></i>Void</button>';
                     }
 
-                    var actions = '<div class="text-right btn-group align-items-center">' +
-                        '<button class="btn btn-link btn-xs p-0 text-danger btn-row-damage" title="Record Damage" data-pid="' + (r.product_id || '') + '" data-pname="' + escHtml(r.product_name || '') + '" data-bid="' + (r.batch_id || '') + '" data-bnum="' + escHtml(r.batch_number || '') + '">' +
-                            '<i class="mdi mdi-alert-octagon" style="font-size:1.1rem;"></i>' +
-                        '</button>' +
+                    var editActionBtn = '';
+                    if (r.batch_id) {
+                        editActionBtn = '<button class="btn btn-xs btn-outline-primary px-1 py-0 ml-1 btn-row-edit-batch" style="font-size:0.7rem; border-radius:4px;" title="Edit Batch Details" ' +
+                            'data-bid="' + r.batch_id + '" ' +
+                            'data-bnum="' + escHtml(r.batch_number || '') + '" ' +
+                            'data-bname="' + escHtml(r.batch_name || '') + '" ' +
+                            'data-supid="' + (r.supplier_id || '') + '" ' +
+                            'data-cost="' + (r.cost_price || 0) + '" ' +
+                            'data-exp="' + (r.expiry_date && r.expiry_date !== '—' ? r.expiry_date : '') + '" ' +
+                            'data-qty="' + (r.current_qty || r.in_qty || 0) + '" ' +
+                            'data-notes="' + escHtml(r.notes || '') + '">' +
+                            '<i class="mdi mdi-pencil mr-1"></i>Edit</button>';
+                    }
+
+                    var damageBtn = '<button class="btn btn-xs btn-outline-danger px-1 py-0 ml-1 btn-row-damage" style="font-size:0.7rem; border-radius:4px;" title="Record Store Damage" data-pid="' + (r.product_id || '') + '" data-pname="' + escHtml(r.product_name || '') + '" data-bid="' + (r.batch_id || '') + '" data-bnum="' + escHtml(r.batch_number || '') + '">' +
+                        '<i class="mdi mdi-alert-octagon mr-1"></i>Damage</button>';
+
+                    var actions = '<div class="text-right d-flex justify-content-end align-items-center gap-1 flex-wrap">' +
+                        editActionBtn +
+                        damageBtn +
                         returnBatchBtn +
                         voidBatchBtn +
                         voidAdjBtn +
@@ -2779,6 +2809,31 @@ if (typeof window.wbRoute !== 'function') {
             });
         });
 
+        // ─── Modal 10: Edit Batch Details from row ───────────────────────
+        $(document).on('click', '.btn-row-edit-batch', function(e) {
+            e.preventDefault();
+            $('#edit-batch-picker-group').hide();
+            var bid = $(this).data('bid');
+            var bnum = $(this).data('bnum');
+            var bname = $(this).data('bname');
+            var supid = $(this).data('supid');
+            var cost = parseFloat($(this).data('cost')) || 0;
+            var exp = $(this).data('exp');
+            var qty = $(this).data('qty');
+            var notes = $(this).data('notes');
+
+            $('#edit-batch-id').val(bid);
+            $('#edit-batch-number').val(bnum);
+            $('#edit-batch-name').val(bname);
+            $('#edit-batch-supplier').val(supid).trigger('change');
+            $('#edit-batch-cost-price').val(cost.toFixed(2));
+            $('#edit-batch-expiry-date').val(exp);
+            $('#edit-batch-qty-display').val(qty + ' units (Locked)');
+            $('#edit-batch-notes').val(notes);
+
+            $('#modal-edit-batch').modal('show');
+        });
+
         // ─── Modal 11: Void Batch (Recorded in Error) from row ────────────
         $(document).on('click', '.btn-row-void-batch', function(e) {
             e.preventDefault();
@@ -2901,6 +2956,78 @@ if (typeof window.wbRoute !== 'function') {
             }
             if (typeof window.updateReturnGLPreview === 'function') {
                 window.updateReturnGLPreview();
+            }
+        });
+
+        // ─── Floating Toolbar: Edit Batch Details ─────────────────────────
+        $('#tb-edit-batch').on('click', function(e) {
+            e.preventDefault();
+            var storeId = $('#filter-store').val() || currentStoreId;
+            var productId = $('#filter-product').val() || '';
+
+            if (!storeId) {
+                toast('Please select a store to view batches', 'error');
+                return;
+            }
+
+            $('#edit-batch-picker').empty().append('<option value="">— Loading store batches… —</option>');
+            $('#edit-batch-picker-group').show();
+            $('#edit-batch-id').val('');
+            $('#edit-batch-number').val('');
+            $('#edit-batch-name').val('');
+            $('#edit-batch-supplier').val('').trigger('change');
+            $('#edit-batch-cost-price').val('');
+            $('#edit-batch-expiry-date').val('');
+            $('#edit-batch-qty-display').val('—');
+            $('#edit-batch-notes').val('');
+
+            $('#modal-edit-batch').modal('show');
+
+            $.get(wbRoute('inventory.store-workbench.store-batches', '/inventory/store-workbench/ajax/store-batches'), {
+                store_id: storeId,
+                product_id: productId
+            }).done(function(res) {
+                var $picker = $('#edit-batch-picker').empty();
+                $picker.append('<option value="">— Select a Batch to Edit (' + (res.batches ? res.batches.length : 0) + ' active) —</option>');
+                if (res.batches && res.batches.length > 0) {
+                    $.each(res.batches, function(_, b) {
+                        var optText = b.product_name + ' | Batch: ' + b.batch_number + ' (' + b.current_qty + ' ' + (b.base_unit_name || 'units') + ' avail) - ' + (b.supplier_name || 'Supplier');
+                        var $opt = $('<option>', {
+                            value: b.id,
+                            text: optText
+                        }).data('batch', b);
+                        $picker.append($opt);
+                    });
+                } else {
+                    $picker.append('<option value="" disabled>No active batches found in this store</option>');
+                }
+            }).fail(function() {
+                $('#edit-batch-picker').empty().append('<option value="">Failed to load batches</option>');
+            });
+        });
+
+        // Edit Batch Picker Change Handler
+        $('#edit-batch-picker').on('change', function() {
+            var selectedOpt = $(this).find('option:selected');
+            var b = selectedOpt.data('batch');
+            if (b) {
+                $('#edit-batch-id').val(b.id);
+                $('#edit-batch-number').val(b.batch_number || '');
+                $('#edit-batch-name').val(b.batch_name || '');
+                $('#edit-batch-supplier').val(b.supplier_id || '').trigger('change');
+                $('#edit-batch-cost-price').val(parseFloat(b.cost_price || 0).toFixed(2));
+                $('#edit-batch-expiry-date').val(b.expiry_date || '');
+                $('#edit-batch-qty-display').val(b.current_qty + ' units (Locked)');
+                $('#edit-batch-notes').val(b.notes || '');
+            } else {
+                $('#edit-batch-id').val('');
+                $('#edit-batch-number').val('');
+                $('#edit-batch-name').val('');
+                $('#edit-batch-supplier').val('').trigger('change');
+                $('#edit-batch-cost-price').val('');
+                $('#edit-batch-expiry-date').val('');
+                $('#edit-batch-qty-display').val('—');
+                $('#edit-batch-notes').val('');
             }
         });
 

@@ -276,9 +276,19 @@ async function runBrowserVerification() {
 
     await page.evaluate(() => {
       $('#modal-add-batch').modal('hide');
-      if (typeof loadTally === 'function') loadTally();
+      const filterStore = document.getElementById('filter-store');
+      if (filterStore && filterStore.options.length > 1) {
+        filterStore.selectedIndex = 1;
+        $(filterStore).trigger('change');
+      }
+      const filterProd = document.getElementById('filter-product');
+      if (filterProd && filterProd.options.length > 1) {
+        filterProd.selectedIndex = 1;
+        $(filterProd).trigger('change');
+      }
+      $('#btn-apply-filter').click();
     });
-    await delay(2500);
+    await delay(3000);
 
     // 3b. Test Floating Button: #tb-return-batch on Tally Card
     console.log('\n[Step 3b] Testing Floating Toolbar Button (#tb-return-batch)...');
@@ -330,6 +340,33 @@ async function runBrowserVerification() {
 
       await page.evaluate(() => {
         $('#modal-void-batch').modal('hide');
+      });
+      await delay(1000);
+    }
+
+    // 3d. Test Row Action: .btn-row-edit-batch on Tally Card
+    console.log('\n[Step 3d] Testing Row Action (.btn-row-edit-batch) on Tally Card...');
+    const editBatchRowClicked = await page.evaluate(() => {
+      const btn = document.querySelector('.btn-row-edit-batch');
+      if (btn) {
+        btn.click();
+        return true;
+      }
+      return false;
+    });
+
+    if (editBatchRowClicked) {
+      await delay(1500);
+      const isLocked = await page.evaluate(() => {
+        const qtyDisplay = document.getElementById('edit-batch-qty-display');
+        return qtyDisplay ? qtyDisplay.disabled : false;
+      });
+      console.log(`[Step 3d] Edit Batch Modal opened from Tally Row. Quantity locked status: ${isLocked}`);
+      await page.screenshot({ path: path.join(OUTPUT_DIR, 'store-tally-edit-batch-modal.jpg'), quality: 92 });
+      console.log('[Step 3d] Captured Modal 10 (Edit Batch Details from Tally Row with Locked Quantity).');
+
+      await page.evaluate(() => {
+        $('#modal-edit-batch').modal('hide');
       });
       await delay(1000);
     }

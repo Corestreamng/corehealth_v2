@@ -112,9 +112,14 @@
                         <div class="row">
                             <div class="col-md-6">
                                 <div class="form-group">
-                                    <label for="supplier_id" id="manual_supplier_label">Supplier / Donor</label>
-                                    <select name="supplier_id" id="supplier_id" class="form-control supplier-select @error('supplier_id') is-invalid @enderror">
-                                        <option value="">Select supplier / donor (optional)...</option>
+                                    <label for="supplier_id" id="manual_supplier_label">Supplier <span class="text-danger">*</span></label>
+                                    <select name="supplier_id" id="supplier_id" class="form-control select2 supplier-select @error('supplier_id') is-invalid @enderror" required onchange="updateManualBatchGLPreview()">
+                                        <option value="">— Select Supplier / Donor —</option>
+                                        @foreach($suppliers as $sup)
+                                        <option value="{{ $sup->id }}" {{ old('supplier_id') == $sup->id ? 'selected' : '' }}>
+                                            {{ $sup->company_name }}{{ $sup->contact_person ? ' (' . $sup->contact_person . ')' : '' }}
+                                        </option>
+                                        @endforeach
                                     </select>
                                     @error('supplier_id')
                                     <div class="invalid-feedback">{{ $message }}</div>
@@ -143,13 +148,38 @@
                             </div>
                         </div>
 
+                        {{-- Acquisition Type (General Ledger Impact) --}}
+                        <div class="row">
+                            <div class="col-12">
+                                <div class="form-group mb-3">
+                                    <label class="font-weight-bold">Acquisition Type (General Ledger Impact) <span class="text-danger">*</span></label>
+                                    <div class="btn-group btn-group-toggle d-flex" data-toggle="buttons">
+                                        <label class="btn btn-outline-primary btn-sm active" style="border-radius:8px 0 0 8px; font-weight:600;">
+                                            <input type="radio" name="acquisition_type" value="credit" checked onchange="updateManualBatchGLPreview()">
+                                            <i class="mdi mdi-credit-card-outline mr-1"></i>On Credit (AP Debt)
+                                        </label>
+                                        <label class="btn btn-outline-info btn-sm" style="font-weight:600;">
+                                            <input type="radio" name="acquisition_type" value="cash" onchange="updateManualBatchGLPreview()">
+                                            <i class="mdi mdi-cash-multiple mr-1"></i>Petty Cash / Till
+                                        </label>
+                                        <label class="btn btn-outline-secondary btn-sm" style="border-radius:0 8px 8px 0; font-weight:600;">
+                                            <input type="radio" name="acquisition_type" value="opening_stock" onchange="updateManualBatchGLPreview()">
+                                            <i class="mdi mdi-book-open-outline mr-1"></i>Opening Stock (Equity)
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
                         <div class="row">
                             <div class="col-md-3">
                                 <div class="form-group">
-                                    <label for="quantity">Quantity <span class="text-danger">*</span></label>
-                                    <input type="number" name="quantity" id="quantity"
+                                    <label for="packaging_qty">Quantity <span class="text-danger">*</span></label>
+                                    <input type="number" name="packaging_qty" id="packaging_qty"
                                         class="form-control @error('quantity') is-invalid @enderror"
-                                        value="{{ old('quantity', 1) }}" min="1" required>
+                                        value="{{ old('packaging_qty', old('quantity', 1)) }}" min="1" required
+                                        placeholder="0" oninput="calculateManualBatchBaseQty()">
+                                    <input type="hidden" name="quantity" id="quantity" value="{{ old('quantity', 1) }}">
                                     @error('quantity')
                                     <div class="invalid-feedback">{{ $message }}</div>
                                     @enderror
@@ -244,6 +274,31 @@
                             <label for="notes">Notes</label>
                             <textarea name="notes" id="notes" rows="2" class="form-control" placeholder="Any additional notes about this batch...">{{ old('notes') }}</textarea>
                         </div>
+
+                        {{-- Real-Time Double-Entry General Ledger Impact Preview --}}
+                        <div class="row mt-3 mb-2">
+                            <div class="col-12">
+                                <div id="manual-journal-preview-card" style="background:#f8fafc; border:1px solid #cbd5e1; border-radius:10px; padding:12px 16px; font-size:0.85rem;">
+                                    <div class="d-flex justify-content-between align-items-center mb-1">
+                                        <span style="font-weight:700; color:#334155; text-transform:uppercase; font-size:0.75rem; letter-spacing:0.4px;">
+                                            <i class="mdi mdi-scale-balance mr-1 text-primary"></i>Real-time Ledger Impact (Double-Entry)
+                                        </span>
+                                        <span class="badge badge-success px-2 py-1" style="font-size:0.72rem;">Balanced (DR = CR)</span>
+                                    </div>
+                                    <div class="d-flex justify-content-between align-items-center py-1" style="border-bottom:1px dashed #e2e8f0;">
+                                        <span class="text-muted"><i class="mdi mdi-arrow-up-bold-circle text-success mr-1"></i><strong>DEBIT:</strong> <span id="manual-preview-dr-acc">1310 - Inventory - Medical Supplies</span></span>
+                                        <strong class="text-success" id="manual-preview-dr-amt">+₦0.00</strong>
+                                    </div>
+                                    <div class="d-flex justify-content-between align-items-center py-1">
+                                        <span class="text-muted"><i class="mdi mdi-arrow-down-bold-circle text-danger mr-1"></i><strong>CREDIT:</strong> <span id="manual-preview-cr-acc">2110 - Accounts Payable (Select Supplier)</span></span>
+                                        <strong class="text-danger" id="manual-preview-cr-amt">+₦0.00</strong>
+                                    </div>
+                                    <small class="text-muted d-block mt-2" id="manual-preview-explanation" style="font-size:0.75rem;">
+                                        Increases inventory asset and creates accounts payable liability owed to selected supplier.
+                                    </small>
+                                </div>
+                            </div>
+                        </div>
                     </div>
 
                     <div class="form-section">
@@ -303,28 +358,12 @@
 
         // Supplier search with Select2
         var supplierSelect = $('#supplier_id').select2({
-            placeholder: 'Select supplier...',
+            placeholder: '— Select Supplier / Donor —',
             allowClear: true,
-            minimumInputLength: 1,
-            ajax: {
-                url: '{{ route("suppliers.search") }}',
-                dataType: 'json',
-                delay: 250,
-                data: function(params) {
-                    return {
-                        q: params.term
-                    };
-                },
-                processResults: function(data) {
-                    return {
-                        results: data.map(function(item) {
-                            return {
-                                id: item.id,
-                                text: item.text
-                            };
-                        })
-                    };
-                }
+            width: '100%'
+        }).on('change', function() {
+            if (typeof window.updateManualBatchGLPreview === 'function') {
+                window.updateManualBatchGLPreview();
             }
         });
 
@@ -411,6 +450,24 @@
             });
         });
 
+        window.calculateManualBatchBaseQty = function() {
+            var pkgQty = parseFloat($('#packaging_qty').val()) || 0;
+            var base = parseFloat($('#batch_packaging').find(':selected').data('base')) || 1;
+            var baseQty = Math.round(pkgQty * base);
+            $('#quantity').val(baseQty);
+            $('#batch-base-qty').text(baseQty);
+            if (base > 1 && pkgQty > 0) {
+                $('#batch-base-equiv').show();
+            } else {
+                $('#batch-base-equiv').hide();
+            }
+            if (typeof window.updateManualBatchGLPreview === 'function') {
+                window.updateManualBatchGLPreview();
+            }
+        };
+
+        window.updateBatchBaseEquiv = window.calculateManualBatchBaseQty;
+
         function handlePackagingChange() {
             var select = $('#batch_packaging');
             var prevFactor = parseFloat(select.data('prev-factor')) || 1;
@@ -437,14 +494,71 @@
             }
 
             select.data('prev-factor', newFactor);
-            updateBatchBaseEquiv();
+            calculateManualBatchBaseQty();
         }
 
         $('#batch_packaging').on('change', function() {
             handlePackagingChange();
             updateManualBatchCostPreview();
+            updateManualBatchGLPreview();
         });
-        $('#quantity').on('change input', updateBatchBaseEquiv);
+        $('#packaging_qty').on('change input', function() {
+            calculateManualBatchBaseQty();
+            updateManualBatchGLPreview();
+        });
+        $('#cost_price, #store_id').on('input change', function() {
+            updateManualBatchCostPreview();
+            updateManualBatchGLPreview();
+        });
+
+        // Real-Time Double-Entry General Ledger Impact Preview
+        window.updateManualBatchGLPreview = function() {
+            var rawQty = parseFloat($('#packaging_qty').val() || $('#quantity').val()) || 0;
+            var isDonation = $('#manual_is_donation').is(':checked') || $('#reference_type').val() === 'donation';
+            var unitCost = isDonation ? 0 : (parseFloat($('#cost_price').val()) || 0);
+            var totalVal = rawQty * unitCost;
+            var formatted = '₦' + totalVal.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
+
+            var acqType = $('input[name="acquisition_type"]:checked').val() || 'credit';
+            var supText = $('#supplier_id option:selected').text().trim();
+            if (supText.indexOf('Select') !== -1 || supText === '—') supText = '';
+
+            // Detect store inventory account
+            var storeText = ($('#store_id option:selected').text() || '').toLowerCase();
+            var invAccountCode = '1310';
+            var invAccountName = 'Inventory - Medical Supplies';
+            if (storeText.indexOf('pharmacy') !== -1 || storeText.indexOf('drug') !== -1) {
+                invAccountCode = '1300';
+                invAccountName = 'Inventory - Pharmacy Stock';
+            }
+
+            if (isDonation) {
+                $('#manual-preview-dr-acc').text(invAccountCode + ' - ' + invAccountName);
+                $('#manual-preview-dr-amt').text('₦0.00');
+                $('#manual-preview-cr-acc').text('No Financial Payable (Donation / Grant Stock)');
+                $('#manual-preview-cr-amt').text('₦0.00');
+                $('#manual-preview-explanation').text('Donation / free program stock logged at ₦0.00. Increases physical inventory count without creating a supplier liability or cash outflow.');
+            } else if (acqType === 'credit') {
+                $('#manual-preview-dr-acc').text(invAccountCode + ' - ' + invAccountName);
+                $('#manual-preview-dr-amt').text(totalVal > 0 ? '+' + formatted : '₦0.00');
+                var crLabel = '2110 - Accounts Payable' + (supText ? ' (' + supText + ')' : ' (Select Supplier)');
+                $('#manual-preview-cr-acc').text(crLabel);
+                $('#manual-preview-cr-amt').text(totalVal > 0 ? '+' + formatted : '₦0.00');
+                $('#manual-preview-explanation').text('Creates a formal accounts payable liability owed to ' + (supText || 'the supplier') + ' in General Ledger Account 2110, increasing inventory asset in Account ' + invAccountCode + '.');
+            } else if (acqType === 'cash') {
+                $('#manual-preview-dr-acc').text(invAccountCode + ' - ' + invAccountName);
+                $('#manual-preview-dr-amt').text(totalVal > 0 ? '+' + formatted : '₦0.00');
+                $('#manual-preview-cr-acc').text('1030 - Petty Cash / Cash Till');
+                $('#manual-preview-cr-amt').text(totalVal > 0 ? '-' + formatted : '₦0.00');
+                $('#manual-preview-explanation').text('Records immediate payment from the cash till / petty cash fund (Account 1030), increasing inventory asset in Account ' + invAccountCode + ' with zero accounts payable liability.');
+            } else if (acqType === 'opening_stock') {
+                $('#manual-preview-dr-acc').text(invAccountCode + ' - ' + invAccountName);
+                $('#manual-preview-dr-amt').text(totalVal > 0 ? '+' + formatted : '₦0.00');
+                $('#manual-preview-cr-acc').text('3100 - Opening Balance Equity / Retained Earnings');
+                $('#manual-preview-cr-amt').text(totalVal > 0 ? '+' + formatted : '₦0.00');
+                $('#manual-preview-explanation').text('Balances against Opening Equity (Account 3100) for historical or go-live stock intake without creating a supplier payable or cash outflow.');
+            }
+        };
 
         // Reference type sync with donation
         $('#reference_type').on('change', function() {
@@ -457,6 +571,7 @@
                 $('#manual_is_donation').prop('checked', false);
                 window.toggleManualDonation($('#manual_is_donation')[0]);
             }
+            updateManualBatchGLPreview();
         });
 
         // Initialize donation state on load if checked or donation selected
@@ -498,26 +613,17 @@
             }
         };
 
-        // Convert to base units before form submission
+        // Form submission: ensure base quantities and donation costs are synced
         $('form').on('submit', function() {
             var isDonation = $('#manual_is_donation').is(':checked') || $('#reference_type').val() === 'donation';
             if (isDonation) {
                 $('#cost_price').val('0.00');
             }
-            var base = parseFloat($('#batch_packaging').find(':selected').data('base')) || 1;
-            if (base > 1) {
-                var qty = parseFloat($('#quantity').val()) || 0;
-                var cost = parseFloat($('#cost_price').val()) || 0;
-
-                // Convert quantity to pieces
-                $('#quantity').val(Math.round(qty * base));
-
-                // Convert cost price to cost per piece
-                if (cost > 0 && !isDonation) {
-                    $('#cost_price').val((cost / base).toFixed(4));
-                }
-            }
+            calculateManualBatchBaseQty();
         });
+
+        // Initial GL preview call
+        updateManualBatchGLPreview();
     });
 
     window.toggleManualDonation = function(checkbox) {
@@ -563,6 +669,9 @@
             if (typeof window.updateManualBatchCostPreview === 'function') {
                 window.updateManualBatchCostPreview();
             }
+        }
+        if (typeof window.updateManualBatchGLPreview === 'function') {
+            window.updateManualBatchGLPreview();
         }
     };
 </script>

@@ -386,6 +386,21 @@
                         <label class="small font-weight-bold">Reason for Voiding <span class="text-danger">*</span></label>
                         <textarea name="reason" id="void-batch-reason" class="form-control" rows="2" required placeholder="Why did this batch never physically exist?"></textarea>
                     </div>
+
+                    {{-- Live Void Reversal Preview --}}
+                    <div id="void-journal-preview-card" class="mt-3" style="background:#fff; border:1px solid #cbd5e1; border-radius:8px; padding:10px 12px; font-size:0.8rem;">
+                        <span style="font-weight:700; color:#475569; font-size:0.7rem; text-transform:uppercase;">
+                            <i class="mdi mdi-undo mr-1 text-primary"></i>Reversal Journal Impact
+                        </span>
+                        <div class="d-flex justify-content-between py-1 border-bottom">
+                            <span class="text-muted">DEBIT: AP / Petty Cash (Reverses debt)</span>
+                            <strong class="text-success" id="void-preview-dr-amt">+₦0.00</strong>
+                        </div>
+                        <div class="d-flex justify-content-between py-1">
+                            <span class="text-muted">CREDIT: Inventory (Removes stock asset)</span>
+                            <strong class="text-danger" id="void-preview-cr-amt">-₦0.00</strong>
+                        </div>
+                    </div>
                 </div>
                 <div class="modal-footer bg-light">
                     <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
@@ -455,6 +470,27 @@
                     <div class="form-group mb-0">
                         <label class="small font-weight-bold">Notes / Waybill</label>
                         <textarea name="return_notes" id="return-notes" class="form-control" rows="2" placeholder="Waybill info or reason details…"></textarea>
+                    </div>
+
+                    {{-- Live Return Journal Impact Preview --}}
+                    <div id="return-journal-preview-card" class="mt-3" style="background:#f8fafc; border:1px solid #cbd5e1; border-radius:10px; padding:10px 14px; font-size:0.82rem;">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <span style="font-weight:700; color:#334155; text-transform:uppercase; font-size:0.72rem; letter-spacing:0.4px;">
+                                <i class="mdi mdi-scale-balance mr-1 text-primary"></i>Real-time Return Impact (Double-Entry)
+                            </span>
+                            <span class="badge badge-success px-2 py-0" style="font-size:0.7rem;">Balanced (DR = CR)</span>
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center py-1" style="border-bottom:1px dashed #e2e8f0;">
+                            <span class="text-muted"><i class="mdi mdi-arrow-up-bold-circle text-success mr-1"></i><strong>DEBIT:</strong> <span id="return-preview-dr-acc">2110 - Accounts Payable (Debt Reduction)</span></span>
+                            <strong class="text-success" id="return-preview-dr-amt">+₦0.00</strong>
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center py-1">
+                            <span class="text-muted"><i class="mdi mdi-arrow-down-bold-circle text-danger mr-1"></i><strong>CREDIT:</strong> <span id="return-preview-cr-acc">1310 - Store Inventory</span></span>
+                            <strong class="text-danger" id="return-preview-cr-amt">-₦0.00</strong>
+                        </div>
+                        <small class="text-muted d-block mt-1" id="return-preview-explanation" style="font-size:0.75rem;">
+                            Reduces supplier debt via AP credit note and removes stock asset from store inventory.
+                        </small>
                     </div>
                 </div>
                 <div class="modal-footer bg-light">
@@ -558,12 +594,16 @@ function openVoidBatchModal(id, batchNumber, qty, value) {
     $('#void-batch-id').val(id);
     $('#void-batch-number-display').text(batchNumber);
     $('#void-batch-qty-display').text(qty + ' units');
-    $('#void-batch-value-display').text('₦' + parseFloat(value).toLocaleString('en-US', {minimumFractionDigits: 2}));
+    var formatted = '₦' + parseFloat(value).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+    $('#void-batch-value-display').text(formatted);
+    $('#void-preview-dr-amt').text('+' + formatted);
+    $('#void-preview-cr-amt').text('-' + formatted);
     $('#void-batch-reason').val('');
     $('#modal-void-batch').modal('show');
 }
 
 function openReturnBatchModal(id, batchNumber, productName, qty, unitCost, supplierId, supplierName) {
+    $('#modal-return-batch').data('unit-cost', parseFloat(unitCost) || 0);
     $('#return-batch-id').val(id);
     $('#return-batch-supplier-id').val(supplierId || '');
     $('#return-product-name').text(productName);
@@ -571,8 +611,47 @@ function openReturnBatchModal(id, batchNumber, productName, qty, unitCost, suppl
     $('#return-available-qty').text(qty);
     $('#return-qty').val(1).attr('max', qty);
     $('#return-notes').val('');
+    updateProductBatchReturnPreview();
     $('#modal-return-batch').modal('show');
 }
+
+function updateProductBatchReturnPreview() {
+    var qty = parseFloat($('#return-qty').val()) || 0;
+    var unitCost = parseFloat($('#modal-return-batch').data('unit-cost')) || 0;
+    var totalVal = qty * unitCost;
+    var formatted = '₦' + totalVal.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+    var settlement = $('#return-settlement-type').val();
+
+    if (settlement === 'ap_credit_note') {
+        $('#return-preview-dr-acc').text('2110 - Accounts Payable (Debt Reduction)');
+        $('#return-preview-dr-amt').text(totalVal > 0 ? '+' + formatted : '₦0.00');
+        $('#return-preview-cr-acc').text('1310 - Store Inventory (Removes Stock Asset)');
+        $('#return-preview-cr-amt').text(totalVal > 0 ? '-' + formatted : '₦0.00');
+        $('#return-preview-explanation').text('Reduces supplier debt via AP credit note and removes stock asset from store inventory.');
+    } else if (settlement === 'cash_refund') {
+        $('#return-preview-dr-acc').text('1010 - Operating Cash / Bank (Direct Inflow)');
+        $('#return-preview-dr-amt').text(totalVal > 0 ? '+' + formatted : '₦0.00');
+        $('#return-preview-cr-acc').text('1310 - Store Inventory (Removes Stock Asset)');
+        $('#return-preview-cr-amt').text(totalVal > 0 ? '-' + formatted : '₦0.00');
+        $('#return-preview-explanation').text('Records immediate cash / bank refund returned by supplier and removes stock asset from store inventory.');
+    } else if (settlement === 'receivable') {
+        $('#return-preview-dr-acc').text('1120 - Supplier Refund Receivable (Pending Inflow)');
+        $('#return-preview-dr-amt').text(totalVal > 0 ? '+' + formatted : '₦0.00');
+        $('#return-preview-cr-acc').text('1310 - Store Inventory (Removes Stock Asset)');
+        $('#return-preview-cr-amt').text(totalVal > 0 ? '-' + formatted : '₦0.00');
+        $('#return-preview-explanation').text('Debits accounts receivable owed by supplier until payment is recovered, removing stock asset from store inventory.');
+    } else {
+        $('#return-preview-dr-acc').text('No Financial Impact (Donation)');
+        $('#return-preview-dr-amt').text('₦0.00');
+        $('#return-preview-cr-acc').text('Physical Stock Decrement (Donation Return)');
+        $('#return-preview-cr-amt').text('₦0.00');
+        $('#return-preview-explanation').text('Returns donated stock to donor at ₦0.00. Reduces physical stock count with zero General Ledger debit/credit balance.');
+    }
+}
+
+$(document).on('input change', '#return-qty, #return-settlement-type', function() {
+    updateProductBatchReturnPreview();
+});
 
 function writeOffBatch(batchId) {
     var reason = prompt('Enter write-off reason:');

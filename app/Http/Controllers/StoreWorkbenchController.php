@@ -736,12 +736,13 @@ class StoreWorkbenchController extends Controller
         }
 
         $products = Product::where('status', 1)->orderBy('product_name')->get();
+        $suppliers = Supplier::orderBy('company_name')->get();
 
         // Pre-select product if coming from products page
         $selectedProductId = $request->get('product_id');
         $selectedProduct = $selectedProductId ? Product::find($selectedProductId) : null;
 
-        return view('admin.inventory.store-workbench.manual-batch-form', compact('store', 'stores', 'products', 'selectedProduct'));
+        return view('admin.inventory.store-workbench.manual-batch-form', compact('store', 'stores', 'products', 'suppliers', 'selectedProduct'));
     }
 
     /**
@@ -786,19 +787,22 @@ class StoreWorkbenchController extends Controller
             // The user enters cost per packaging unit (e.g. cost per Box of 100 tablets).
             // We divide by base_unit_qty to get cost per single base unit (e.g. per Tablet).
             $packagingId = $request->packaging_id ?? $request->batch_packaging;
+            $packaging = $packagingId ? \App\Models\ProductPackaging::find($packagingId) : null;
             $costPrice = $isDonation ? (float) ($request->cost_price ?? 0) : (float) $request->cost_price;
-            if ($packagingId && $costPrice > 0) {
-                $packaging = \App\Models\ProductPackaging::find($packagingId);
-                if ($packaging && $packaging->base_unit_qty > 1) {
-                    $costPrice = $costPrice / $packaging->base_unit_qty;
-                }
+            if ($packaging && $packaging->base_unit_qty > 1 && $costPrice > 0) {
+                $costPrice = $costPrice / $packaging->base_unit_qty;
+            }
+
+            $baseQty = (int) $request->quantity;
+            if ($packaging && $packaging->base_unit_qty > 1 && $request->filled('packaging_qty') && (int)$request->quantity === (int)$request->packaging_qty) {
+                $baseQty = (int) ($request->packaging_qty * $packaging->base_unit_qty);
             }
 
             $batch = $this->stockService->createBatch([
                 'product_id' => $request->product_id,
                 'store_id' => $request->store_id,
                 'supplier_id' => $request->supplier_id,
-                'qty' => $request->quantity,
+                'qty' => $baseQty,
                 'cost_price' => $costPrice,
                 'expiry_date' => $request->expiry_date,
                 'batch_name' => $request->batch_name,
@@ -1352,6 +1356,7 @@ class StoreWorkbenchController extends Controller
                 'direction' => $direction,
                 'batch_id' => $tx->stock_batch_id,
                 'batch_number' => $batchNumber,
+                'batch_name' => $tx->stockBatch?->batch_name ?? '',
                 'expiry_date' => $expiryDate,
                 'cost_price' => $costPrice,
                 'supplier_id' => $tx->stockBatch?->supplier_id,
@@ -1554,6 +1559,8 @@ class StoreWorkbenchController extends Controller
             return [
                 'id' => $batch->id,
                 'batch_number' => $batch->batch_number ?? 'N/A',
+                'batch_name' => $batch->batch_name ?? '',
+                'notes' => $batch->notes ?? '',
                 'product_id' => $batch->product_id,
                 'product_name' => $batch->product?->product_name ?? 'Unknown',
                 'product_code' => $batch->product?->product_code ?? null,
