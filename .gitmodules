@@ -10,3 +10,9 @@
 [submodule "native_clients/patient_app"]
 	path = native_clients/patient_app
 	url = https://github.com/Corestream-Networks-and-Robotics-LTD/corehealth-patient-app
+[submodule "sdks/js-scribe-sdk"]
+	path = sdks/js-scribe-sdk
+	url = https://github.com/Corestream-Networks-and-Robotics-LTD/corehealth-scribe-js-sdk.git
+[submodule "sdks/python-scribe-sdk"]
+	path = sdks/python-scribe-sdk
+	url = https://github.com/Corestream-Networks-and-Robotics-LTD/corehealth-scribe-python-sdk.git

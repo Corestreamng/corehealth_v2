@@ -1,0 +1,499 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Corehealth by CorestreamNG \u2014 Interoperability & AI Scribe API",
+    "description": "Enterprise API for Multi-Standard Healthcare Interoperability (HL7 FHIR R4, openEHR ITS-REST, OpenEMR Compatibility, NDPA 2023 Statutory Privacy) and the CoreHealth AI Scribe Embeddable SDK.",
+    "version": "2.6.0",
+    "contact": {
+      "name": "Corehealth by CorestreamNG",
+      "email": "hello@corestream.ng",
+      "url": "https://corestream.ng"
+    }
+  },
+  "servers": [
+    {
+      "url": "http://127.0.0.1:8000",
+      "description": "Local Edge Node / Development Server"
+    },
+    {
+      "url": "https://api.corehealth.ng",
+      "description": "CoreHealth Cloud Gateway"
+    }
+  ],
+  "components": {
+    "securitySchemes": {
+      "SanctumBearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "description": "Laravel Sanctum Personal Access Token (PAT) for server-to-server or authenticated sessions."
+      },
+      "SdkSessionToken": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT",
+        "description": "Short-lived ephemeral SDK session token (SKT_...) minted via /api/sdk/auth/token."
+      },
+      "BasicAuth": {
+        "type": "http",
+        "scheme": "basic",
+        "description": "SHA-256 encrypted Basic Auth for automated system sync pipelines."
+      }
+    },
+    "schemas": {
+      "OperationOutcome": {
+        "type": "object",
+        "properties": {
+          "resourceType": {
+            "type": "string",
+            "example": "OperationOutcome"
+          },
+          "issue": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "severity": {
+                  "type": "string",
+                  "example": "error"
+                },
+                "code": {
+                  "type": "string",
+                  "example": "security"
+                },
+                "diagnostics": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "message": {
+            "type": "string"
+          }
+        }
+      },
+      "SdkTokenRequest": {
+        "type": "object",
+        "required": [
+          "client_id",
+          "client_secret"
+        ],
+        "properties": {
+          "client_id": {
+            "type": "string",
+            "example": "partner-emr-dev"
+          },
+          "client_secret": {
+            "type": "string",
+            "example": "partner_dev_secret_2026"
+          },
+          "patient_id": {
+            "type": "integer",
+            "example": 492
+          },
+          "encounter_id": {
+            "type": "integer",
+            "example": 1017
+          },
+          "clinician_id": {
+            "type": "integer",
+            "example": 38
+          },
+          "scope": {
+            "type": "string",
+            "example": "scribe:process scribe:sign interop:compositions"
+          },
+          "ttl": {
+            "type": "integer",
+            "example": 3600
+          }
+        }
+      },
+      "SdkTokenResponse": {
+        "type": "object",
+        "properties": {
+          "sdk_token": {
+            "type": "string",
+            "example": "SKT_eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9..."
+          },
+          "token_type": {
+            "type": "string",
+            "example": "Bearer"
+          },
+          "expires_in": {
+            "type": "integer",
+            "example": 3600
+          },
+          "scope": {
+            "type": "string",
+            "example": "scribe:process scribe:sign interop:compositions"
+          },
+          "patient_id": {
+            "type": "integer",
+            "example": 492
+          },
+          "encounter_id": {
+            "type": "integer",
+            "example": 1017
+          },
+          "clinician_id": {
+            "type": "integer",
+            "example": 38
+          },
+          "ndpa_consent_status": {
+            "type": "string",
+            "example": "ACTIVE"
+          }
+        }
+      },
+      "CompositionsHandoffResponse": {
+        "type": "object",
+        "properties": {
+          "session_token_jti": {
+            "type": "string"
+          },
+          "patient_id": {
+            "type": "integer",
+            "example": 492
+          },
+          "encounter_id": {
+            "type": "integer",
+            "example": 1017
+          },
+          "signed_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "final_signed_note": {
+            "type": "string"
+          },
+          "openehr_composition": {
+            "type": "object",
+            "description": "Standard openEHR COMPOSITION.encounter.v1 JSON structure"
+          },
+          "fhir_bundle": {
+            "type": "object",
+            "description": "Standard HL7 FHIR R4 Transaction Bundle JSON"
+          }
+        }
+      }
+    }
+  },
+  "paths": {
+    "/api/sdk/auth/token": {
+      "post": {
+        "summary": "Issue Ephemeral SDK Session Token",
+        "description": "Partner backend exchanges client credentials for a signed short-lived SKT_ token scoped to an encounter/patient.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SdkTokenRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Token successfully minted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SdkTokenResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Invalid client credentials",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OperationOutcome"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/sdk/auth/revoke": {
+      "post": {
+        "summary": "Revoke SDK Session Token",
+        "description": "Invalidate an active SDK token immediately.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "token": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Token revocation status"
+          }
+        }
+      }
+    },
+    "/api/sdk/scribe/session": {
+      "post": {
+        "summary": "Initialize AI Scribe Session",
+        "security": [
+          {
+            "SdkSessionToken": []
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Session context established"
+          },
+          "401": {
+            "description": "Unauthenticated"
+          }
+        }
+      }
+    },
+    "/api/sdk/scribe/process": {
+      "post": {
+        "summary": "Process Audio Dictation / Transcript into Structured SOAP",
+        "security": [
+          {
+            "SdkSessionToken": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "transcript": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Structured SOAP sections and extracted orders"
+          }
+        }
+      }
+    },
+    "/api/sdk/scribe/sign": {
+      "post": {
+        "summary": "Sign Consultation Note & Archive Audit Record",
+        "security": [
+          {
+            "SdkSessionToken": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "final_signed_note"
+                ],
+                "properties": {
+                  "final_signed_note": {
+                    "type": "string"
+                  },
+                  "original_transcript": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Note successfully signed and archived"
+          }
+        }
+      }
+    },
+    "/api/sdk/scribe/session/{token}/compositions": {
+      "post": {
+        "summary": "Fetch openEHR Composition & HL7 FHIR R4 Bundle Handoff",
+        "security": [
+          {
+            "SdkSessionToken": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "token",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "cross_border": {
+                    "type": "boolean",
+                    "default": false
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Standardized clinical data payload",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CompositionsHandoffResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/fhir/r4/metadata": {
+      "get": {
+        "summary": "FHIR R4 CapabilityStatement (Public)",
+        "responses": {
+          "200": {
+            "description": "Conformance statement"
+          }
+        }
+      }
+    },
+    "/api/fhir/r4/Patient": {
+      "get": {
+        "summary": "Search Patients",
+        "security": [
+          {
+            "SanctumBearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Bundle of Patient resources"
+          }
+        }
+      },
+      "post": {
+        "summary": "Create Patient (Proxies PatientController@store)",
+        "security": [
+          {
+            "SanctumBearerAuth": []
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Created Patient"
+          }
+        }
+      }
+    },
+    "/api/fhir/r4/Observation": {
+      "get": {
+        "summary": "Search Observations",
+        "security": [
+          {
+            "SanctumBearerAuth": []
+          }
+        ]
+      },
+      "post": {
+        "summary": "Record Vital Signs (Proxies VitalSignController@store)",
+        "security": [
+          {
+            "SanctumBearerAuth": []
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Created Observation"
+          }
+        }
+      }
+    },
+    "/api/fhir/r4/MedicationRequest": {
+      "post": {
+        "summary": "Prescribe Medication via WHO ATC (Proxies EncounterController@addSinglePrescriptionRequest)",
+        "security": [
+          {
+            "SanctumBearerAuth": []
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Created MedicationRequest"
+          }
+        }
+      }
+    },
+    "/api/openehr/v1/ehr": {
+      "post": {
+        "summary": "Create EHR for Subject",
+        "security": [
+          {
+            "SanctumBearerAuth": []
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Created EHR with ehr_id"
+          }
+        }
+      }
+    },
+    "/api/openehr/v1/query/aql": {
+      "post": {
+        "summary": "Execute Archetype Query Language (AQL) Query",
+        "security": [
+          {
+            "SanctumBearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "AQL Query Result Set"
+          }
+        }
+      }
+    },
+    "/api/ndpa/v1/consent": {
+      "post": {
+        "summary": "Record Statutory NDPA 2023 Consent",
+        "security": [
+          {
+            "SanctumBearerAuth": []
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Consent record created"
+          }
+        }
+      }
+    }
+  }
+}

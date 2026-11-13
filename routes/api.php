@@ -401,3 +401,10 @@ Route::prefix('mobile/patient/chat')->middleware('auth:sanctum')->group(function
 |--------------------------------------------------------------------------
 */
 require __DIR__ . '/interop.php';
+
+/*
+|--------------------------------------------------------------------------
+| AI Scribe Embeddable SDK Routes (/api/sdk/*)
+|--------------------------------------------------------------------------
+*/
+require __DIR__ . '/sdk.php';

@@ -75,5 +75,6 @@ class Kernel extends HttpKernel
         'check.suspension' => \App\Http\Middleware\CheckSuspension::class,
         'interop.auth' => \App\Interoperability\Http\Middleware\AuthenticateInterop::class,
         'interop.ndpa' => \App\Interoperability\Http\Middleware\CheckNdpaConsent::class,
+        'interop.sdk' => \App\Interoperability\Http\Middleware\AuthenticateSdkToken::class,
     ];
 }

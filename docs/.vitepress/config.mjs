@@ -266,6 +266,16 @@ export default defineConfig({
             { text: 'OpenEMR Compatibility Specs', link: '/developer/interoperability/openemr-compatibility-specifications' },
             { text: 'NDPA 2023 & Health Privacy Standards', link: '/developer/interoperability/ndpa-compliance-specifications' },
           ]
+        },
+        {
+          text: 'AI Scribe Embeddable SDK & Tooling',
+          collapsed: false,
+          items: [
+            { text: 'SDK Embeddable Integration Guide', link: '/developer/interoperability/sdk-embeddable-integration-guide' },
+            { text: 'SDK iFrame Track & postMessage', link: '/developer/interoperability/sdk-iframe-integration-guide' },
+            { text: 'Vanilla JS Reference Demo', link: '/developer/interoperability/sdk-vanilla-demo-walkthrough' },
+            { text: 'Postman Collection Guide', link: '/developer/interoperability/postman-collection-guide' },
+          ]
         }
       ],
 

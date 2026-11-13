@@ -1,0 +1,924 @@
+{
+    "info": {
+        "_postman_id": "7b8e19a4-2391-4c91-9e52-19e3dfa92911",
+        "name": "Corehealth by CorestreamNG \u2014 Interoperability API & AI Scribe SDK",
+        "description": "Comprehensive Postman collection for Corehealth by CorestreamNG Multi-Standard Interoperability (HL7 FHIR R4, openEHR ITS-REST, OpenEMR REST, NDPA 2023 Statutory Privacy) and the CoreHealth AI Scribe Embeddable SDK. Contact: hello@corestream.ng",
+        "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+    },
+    "variable": [
+        {
+            "key": "base_url",
+            "value": "http://127.0.0.1:8000",
+            "type": "string"
+        },
+        {
+            "key": "token",
+            "value": "",
+            "type": "string"
+        },
+        {
+            "key": "sdk_token",
+            "value": "",
+            "type": "string"
+        },
+        {
+            "key": "patient_id",
+            "value": "492",
+            "type": "string"
+        },
+        {
+            "key": "encounter_id",
+            "value": "1017",
+            "type": "string"
+        },
+        {
+            "key": "ehr_id",
+            "value": "",
+            "type": "string"
+        },
+        {
+            "key": "client_id",
+            "value": "partner-emr-dev",
+            "type": "string"
+        },
+        {
+            "key": "client_secret",
+            "value": "partner_dev_secret_2026",
+            "type": "string"
+        }
+    ],
+    "item": [
+        {
+            "name": "00. Authentication",
+            "item": [
+                {
+                    "name": "POST Acquire Sanctum PAT",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "exec": [
+                                    "pm.test(\"Status is 200\", function () {",
+                                    "    pm.response.to.have.status(200);",
+                                    "});",
+                                    "const tokenText = pm.response.text();",
+                                    "if (tokenText) {",
+                                    "    try {",
+                                    "        const json = JSON.parse(tokenText);",
+                                    "        if (json.token) pm.environment.set(\"token\", json.token);",
+                                    "        else pm.environment.set(\"token\", tokenText);",
+                                    "    } catch(e) {",
+                                    "        pm.environment.set(\"token\", tokenText);",
+                                    "    }",
+                                    "}"
+                                ],
+                                "type": "text/javascript"
+                            }
+                        }
+                    ],
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"email\": \"sysadmin@mail.com\",\n    \"password\": \"123456\",\n    \"device_name\": \"postman-interop-test\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/sanctum/token",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "sanctum",
+                                "token"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "GET Verify Token (Current User)",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{token}}"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/user",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "user"
+                            ]
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "name": "01. NDPA 2023 Statutory Privacy",
+            "item": [
+                {
+                    "name": "POST Record Patient Consent (TREATMENT)",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{token}}"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"patient_id\": {{patient_id}},\n    \"consent_type\": \"TREATMENT\",\n    \"ndpa_lawful_basis\": \"EXPLICIT_CONSENT\",\n    \"notes\": \"Patient signed explicit informed consent for clinical treatment and routine EHR processing.\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/api/ndpa/v1/consent",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "ndpa",
+                                "v1",
+                                "consent"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "POST Record Patient Consent (CLOUD_AI)",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{token}}"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"patient_id\": {{patient_id}},\n    \"consent_type\": \"CLOUD_AI\",\n    \"ndpa_lawful_basis\": \"EXPLICIT_CONSENT\",\n    \"notes\": \"Patient consented to de-identified cloud LLM speech-to-text dictation per NDPA 2023 Sec 41-43.\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/api/ndpa/v1/consent",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "ndpa",
+                                "v1",
+                                "consent"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "GET List Consents for Patient",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{token}}"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/ndpa/v1/consent/{{patient_id}}",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "ndpa",
+                                "v1",
+                                "consent",
+                                "{{patient_id}}"
+                            ]
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "name": "02. HL7 FHIR R4",
+            "item": [
+                {
+                    "name": "02.1 CapabilityStatement (Public Metadata)",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/fhir+json"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/fhir/r4/metadata",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "fhir",
+                                "r4",
+                                "metadata"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "02.2 Patient Index",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{token}}"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application/fhir+json"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/fhir/r4/Patient?name=Oladipo",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "fhir",
+                                "r4",
+                                "Patient"
+                            ],
+                            "query": [
+                                {
+                                    "key": "name",
+                                    "value": "Oladipo"
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "02.3 Patient Read",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{token}}"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application/fhir+json"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/fhir/r4/Patient/{{patient_id}}",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "fhir",
+                                "r4",
+                                "Patient",
+                                "{{patient_id}}"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "02.4 Observation Create (Blood Pressure Panel)",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{token}}"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/fhir+json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application/fhir+json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"resourceType\": \"Observation\",\n    \"status\": \"final\",\n    \"code\": {\n        \"coding\": [\n            {\n                \"system\": \"http://loinc.org\",\n                \"code\": \"55284-4\",\n                \"display\": \"Blood pressure systolic and diastolic\"\n            }\n        ]\n    },\n    \"subject\": {\n        \"reference\": \"Patient/{{patient_id}}\"\n    },\n    \"effectiveDateTime\": \"2026-11-13T09:15:00+01:00\",\n    \"component\": [\n        {\n            \"code\": {\n                \"coding\": [\n                    {\n                        \"system\": \"http://loinc.org\",\n                        \"code\": \"8480-6\",\n                        \"display\": \"Systolic\"\n                    }\n                ]\n            },\n            \"valueQuantity\": {\n                \"value\": 128,\n                \"unit\": \"mm[Hg]\",\n                \"system\": \"http://unitsofmeasure.org\"\n            }\n        },\n        {\n            \"code\": {\n                \"coding\": [\n                    {\n                        \"system\": \"http://loinc.org\",\n                        \"code\": \"8462-4\",\n                        \"display\": \"Diastolic\"\n                    }\n                ]\n            },\n            \"valueQuantity\": {\n                \"value\": 82,\n                \"unit\": \"mm[Hg]\",\n                \"system\": \"http://unitsofmeasure.org\"\n            }\n        }\n    ]\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/api/fhir/r4/Observation",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "fhir",
+                                "r4",
+                                "Observation"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "02.5 MedicationRequest Create (WHO ATC)",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{token}}"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/fhir+json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application/fhir+json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"resourceType\": \"MedicationRequest\",\n    \"status\": \"active\",\n    \"intent\": \"order\",\n    \"medicationCodeableConcept\": {\n        \"coding\": [\n            {\n                \"system\": \"http://www.whocc.no/atc\",\n                \"code\": \"A10BA02\",\n                \"display\": \"Metformin\"\n            }\n        ]\n    },\n    \"subject\": {\n        \"reference\": \"Patient/{{patient_id}}\"\n    },\n    \"encounter\": {\n        \"reference\": \"Encounter/{{encounter_id}}\"\n    },\n    \"dosageInstruction\": [\n        {\n            \"text\": \"500mg twice daily with meals\"\n        }\n    ]\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/api/fhir/r4/MedicationRequest",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "fhir",
+                                "r4",
+                                "MedicationRequest"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "02.6 ServiceRequest Create (LOINC Lab Order)",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{token}}"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/fhir+json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application/fhir+json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"resourceType\": \"ServiceRequest\",\n    \"status\": \"active\",\n    \"intent\": \"order\",\n    \"code\": {\n        \"coding\": [\n            {\n                \"system\": \"http://loinc.org\",\n                \"code\": \"58410-2\",\n                \"display\": \"Complete blood count (CBC) panel\"\n            }\n        ]\n    },\n    \"subject\": {\n        \"reference\": \"Patient/{{patient_id}}\"\n    },\n    \"encounter\": {\n        \"reference\": \"Encounter/{{encounter_id}}\"\n    }\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/api/fhir/r4/ServiceRequest",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "fhir",
+                                "r4",
+                                "ServiceRequest"
+                            ]
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "name": "03. openEHR ITS-REST",
+            "item": [
+                {
+                    "name": "03.1 EHR Create",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "exec": [
+                                    "const json = pm.response.json();",
+                                    "if (json.ehr_id) {",
+                                    "    pm.environment.set(\"ehr_id\", json.ehr_id);",
+                                    "}"
+                                ],
+                                "type": "text/javascript"
+                            }
+                        }
+                    ],
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{token}}"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"subject\": {\n        \"externalRef\": {\n            \"id\": \"PATIENT-{{patient_id}}\",\n            \"namespace\": \"corehealth\",\n            \"type\": \"PERSON\"\n        }\n    }\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/api/openehr/v1/ehr",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "openehr",
+                                "v1",
+                                "ehr"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "03.2 EHR Read",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{token}}"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/openehr/v1/ehr/{{ehr_id}}",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "openehr",
+                                "v1",
+                                "ehr",
+                                "{{ehr_id}}"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "03.3 AQL Query (Blood Pressure Panel)",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{token}}"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"q\": \"SELECT e/ehr_id/value, o/data[at0001]/events[at0006]/data[at0003]/items[at0004]/value/magnitude AS systolic, o/data[at0001]/events[at0006]/data[at0003]/items[at0005]/value/magnitude AS diastolic FROM EHR e CONTAINS OBSERVATION o[openEHR-EHR-OBSERVATION.blood_pressure.v2]\",\n    \"offset\": 0,\n    \"fetch\": 20\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/api/openehr/v1/query/aql",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "openehr",
+                                "v1",
+                                "query",
+                                "aql"
+                            ]
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "name": "04. OpenEMR REST Compatibility",
+            "item": [
+                {
+                    "name": "04.1 Patient List",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{token}}"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/apis/default/api/patient",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "apis",
+                                "default",
+                                "api",
+                                "patient"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "04.2 C-CDA XML Export",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{token}}"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application/xml"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/apis/default/api/ccda/{{patient_id}}",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "apis",
+                                "default",
+                                "api",
+                                "ccda",
+                                "{{patient_id}}"
+                            ]
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "name": "05. AI Scribe SDK",
+            "item": [
+                {
+                    "name": "05.1 POST Issue SDK Session Token",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "exec": [
+                                    "pm.test(\"Status is 200\", function () {",
+                                    "    pm.response.to.have.status(200);",
+                                    "});",
+                                    "const json = pm.response.json();",
+                                    "if (json.sdk_token) {",
+                                    "    pm.environment.set(\"sdk_token\", json.sdk_token);",
+                                    "}"
+                                ],
+                                "type": "text/javascript"
+                            }
+                        }
+                    ],
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"client_id\": \"{{client_id}}\",\n    \"client_secret\": \"{{client_secret}}\",\n    \"patient_id\": {{patient_id}},\n    \"encounter_id\": {{encounter_id}},\n    \"clinician_id\": 38,\n    \"scope\": \"scribe:process scribe:sign interop:compositions\",\n    \"ttl\": 3600\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/api/sdk/auth/token",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "sdk",
+                                "auth",
+                                "token"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "05.2 POST Initialize Scribe Session",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{sdk_token}}"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"locale\": \"en-NG\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/api/sdk/scribe/session",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "sdk",
+                                "scribe",
+                                "session"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "05.3 GET Scribe Session Status",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{sdk_token}}"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/sdk/scribe/session/{{sdk_token}}",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "sdk",
+                                "scribe",
+                                "session",
+                                "{{sdk_token}}"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "05.4 POST Process Dictation into Structured SOAP",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{sdk_token}}"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"transcript\": \"Patient complains of recurrent throbbing headache for 3 days. BP recorded as 130/85 mmHg. Plan to initiate Amlodipine 5mg OD oral and order Full Blood Count test.\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/api/sdk/scribe/process",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "sdk",
+                                "scribe",
+                                "process"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "05.5 POST Sign Scribe Consultation Note",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{sdk_token}}"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"final_signed_note\": \"Patient presented with 3-day history of throbbing headache. Examination: BP 130/85 mmHg, afebrile. Assessment: Essential hypertension stage 1. Plan: Amlodipine 5mg OD oral, FBC investigation, review in 4 weeks.\",\n    \"original_transcript\": \"Patient complains of recurrent throbbing headache for 3 days...\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/api/sdk/scribe/sign",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "sdk",
+                                "scribe",
+                                "sign"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "05.6 POST Fetch openEHR Composition + FHIR Bundle",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{sdk_token}}"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"cross_border\": false\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/api/sdk/scribe/session/{{sdk_token}}/compositions",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "sdk",
+                                "scribe",
+                                "session",
+                                "{{sdk_token}}",
+                                "compositions"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "05.7 POST Fetch FHIR-only Transaction Bundle",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{sdk_token}}"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/api/sdk/scribe/session/{{sdk_token}}/fhir-bundle",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "sdk",
+                                "scribe",
+                                "session",
+                                "{{sdk_token}}",
+                                "fhir-bundle"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "05.8 POST Revoke SDK Session Token",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"token\": \"{{sdk_token}}\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/api/sdk/auth/revoke",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "sdk",
+                                "auth",
+                                "revoke"
+                            ]
+                        }
+                    }
+                }
+            ]
+        }
+    ]
+}

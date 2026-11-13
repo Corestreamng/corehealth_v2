@@ -1527,3 +1527,10 @@ Route::prefix('apis/default')->middleware(['api', 'interop.auth', 'interop.ndpa'
     Route::get('fhir/Observation', [\App\Interoperability\Http\Controllers\Fhir\FhirObservationController::class, 'index'])->name('openemr.fhir.observation.index');
     Route::get('fhir/Encounter', [\App\Interoperability\Http\Controllers\Fhir\FhirEncounterController::class, 'index'])->name('openemr.fhir.encounter.index');
 });
+
+/*
+|--------------------------------------------------------------------------
+| AI Scribe Embed Vanity URL (/scribe?token=...)
+|--------------------------------------------------------------------------
+*/
+Route::get('scribe', [\App\Interoperability\Http\Controllers\Sdk\SdkScribeSessionController::class, 'embed'])->name('sdk.scribe.embed.direct');
