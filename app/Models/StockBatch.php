@@ -44,11 +44,18 @@ class StockBatch extends Model implements Auditable
         'expiry_date',
         'received_date',
         'source',
+        'acquisition_type',
+        'payment_account_code',
         'purchase_order_item_id',
         'source_requisition_id',
         'created_by',
         'is_active',
         'is_donation',
+        'journal_entry_id',
+        'voided_at',
+        'voided_by',
+        'void_reason',
+        'void_reversal_je_id',
     ];
 
     protected $casts = [
@@ -60,6 +67,7 @@ class StockBatch extends Model implements Auditable
         'received_date' => 'date',
         'is_active' => 'boolean',
         'is_donation' => 'boolean',
+        'voided_at' => 'datetime',
     ];
 
     /**
@@ -69,6 +77,14 @@ class StockBatch extends Model implements Auditable
     public const SOURCE_MANUAL = 'manual';
     public const SOURCE_TRANSFER_IN = 'transfer_in';
     public const SOURCE_OPENING_STOCK = 'opening_stock';
+
+    /**
+     * Acquisition type constants
+     */
+    public const ACQUISITION_CREDIT = 'credit';
+    public const ACQUISITION_CASH = 'cash';
+    public const ACQUISITION_DONATION = 'donation';
+    public const ACQUISITION_OPENING_STOCK = 'opening_stock';
 
     /**
      * Boot method for model events
@@ -182,6 +198,46 @@ class StockBatch extends Model implements Auditable
     public function productRequests()
     {
         return $this->hasMany(ProductRequest::class, 'dispensed_from_batch_id');
+    }
+
+    /**
+     * Get the journal entry for batch intake
+     */
+    public function journalEntry()
+    {
+        return $this->belongsTo(\App\Models\Accounting\JournalEntry::class, 'journal_entry_id');
+    }
+
+    /**
+     * Get the journal entry reversing this batch intake (if voided)
+     */
+    public function voidReversalJournalEntry()
+    {
+        return $this->belongsTo(\App\Models\Accounting\JournalEntry::class, 'void_reversal_je_id');
+    }
+
+    /**
+     * Get the user who voided this batch
+     */
+    public function voidedByUser()
+    {
+        return $this->belongsTo(User::class, 'voided_by');
+    }
+
+    /**
+     * Get all returns for this batch
+     */
+    public function returns()
+    {
+        return $this->hasMany(StockBatchReturn::class, 'stock_batch_id');
+    }
+
+    /**
+     * Check if batch has been voided as recorded in error
+     */
+    public function isVoided(): bool
+    {
+        return !is_null($this->voided_at);
     }
 
     // ===== SCOPES =====

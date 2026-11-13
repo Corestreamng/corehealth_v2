@@ -178,6 +178,11 @@ class AppServiceProvider extends ServiceProvider
 
         // NEW: StockBatch observer — auto-syncs store_stocks and global stocks
         StockBatch::observe(StockBatchObserver::class);
+        StockBatch::observe(\App\Observers\Accounting\StockBatchAccountingObserver::class);
+        StockBatch::observe(\App\Observers\Accounting\StockBatchVoidObserver::class);
+        \App\Models\StockBatchTransaction::observe(\App\Observers\Accounting\StockAdjustmentAccountingObserver::class);
+        \App\Models\StockBatchReturn::observe(\App\Observers\Accounting\StockBatchReturnObserver::class);
+        \App\Models\StockUtilization::observe(\App\Observers\Accounting\StockUtilizationObserver::class);
 
         // NEW: CAPEX Expense observer - creates JE when CAPEX expenses are recorded/approved
         CapexProjectExpense::observe(CapexExpenseObserver::class);

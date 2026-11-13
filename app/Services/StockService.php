@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\Product;
 use App\Models\StockBatch;
+use App\Models\StockBatchReturn;
 use App\Models\StockBatchTransaction;
 use App\Models\Store;
 use App\Models\StoreDamage;
@@ -288,6 +289,8 @@ class StockService
                 'expiry_date' => $data['expiry_date'] ?? null,
                 'received_date' => $data['received_date'] ?? now(),
                 'source' => $data['source'] ?? StockBatch::SOURCE_MANUAL,
+                'acquisition_type' => $data['acquisition_type'] ?? StockBatch::ACQUISITION_CREDIT,
+                'payment_account_code' => $data['payment_account_code'] ?? null,
                 'purchase_order_item_id' => $data['purchase_order_item_id'] ?? null,
                 'source_requisition_id' => $data['source_requisition_id'] ?? null,
                 'created_by' => $data['created_by'] ?? auth()->id(),
@@ -517,6 +520,206 @@ class StockService
             $this->syncStoreStock($batch->product_id, $batch->store_id);
 
             return $transaction;
+        });
+    }
+
+    /**
+     * Update editable metadata on a stock batch (supplier, batch number, name, expiry, cost price).
+     * Note: Does NOT modify batch quantities; adjustments must use adjustStock().
+     *
+     * @param int $batchId
+     * @param array $data
+     * @return StockBatch
+     */
+    public function updateBatchMetadata(int $batchId, array $data): StockBatch
+    {
+        return DB::transaction(function () use ($batchId, $data) {
+            $batch = StockBatch::findOrFail($batchId);
+
+            $fillable = array_intersect_key($data, array_flip([
+                'supplier_id',
+                'batch_number',
+                'batch_name',
+                'expiry_date',
+                'cost_price',
+                'notes',
+            ]));
+
+            if (isset($fillable['cost_price']) && is_numeric($fillable['cost_price'])) {
+                $fillable['cost_price'] = (float) $fillable['cost_price'];
+            }
+
+            // Strictly protect current_qty & initial_qty from direct edits!
+            $batch->update($fillable);
+
+            $this->syncStoreStock($batch->product_id, $batch->store_id);
+
+            return $batch;
+        });
+    }
+
+    /**
+     * Void a stock batch recorded in error (non-existent stock).
+     * Reverses physical stock and triggers GL intake reversal.
+     *
+     * @param int $batchId
+     * @param string $reason
+     * @param int $userId
+     * @return StockBatch
+     * @throws \Exception
+     */
+    public function voidBatch(int $batchId, string $reason, int $userId): StockBatch
+    {
+        return DB::transaction(function () use ($batchId, $reason, $userId) {
+            $batch = StockBatch::findOrFail($batchId);
+
+            if ($batch->isVoided()) {
+                throw new \Exception("This batch has already been voided.");
+            }
+
+            if ($batch->sold_qty > 0) {
+                throw new \Exception("Cannot void batch {$batch->batch_number}: {$batch->sold_qty} unit(s) have already been dispensed or consumed. Please use Batch Return or Stock Adjustment instead.");
+            }
+
+            $voidQty = $batch->current_qty;
+
+            // Record void audit transaction
+            StockBatchTransaction::create([
+                'stock_batch_id' => $batch->id,
+                'type' => StockBatchTransaction::TYPE_VOID,
+                'qty' => $voidQty,
+                'balance_after' => 0,
+                'notes' => "Batch voided (recorded in error): {$reason}",
+                'performed_by' => $userId,
+            ]);
+
+            $batch->current_qty = 0;
+            $batch->is_active = false;
+            $batch->voided_at = now();
+            $batch->voided_by = $userId;
+            $batch->void_reason = $reason;
+            $batch->save();
+
+            $this->syncStoreStock($batch->product_id, $batch->store_id);
+
+            return $batch;
+        });
+    }
+
+    /**
+     * Void a stock adjustment recorded in error.
+     * Restores batch quantity balance and triggers GL gain/loss reversal.
+     *
+     * @param int $transactionId
+     * @param string $reason
+     * @param int $userId
+     * @return StockBatchTransaction
+     * @throws \Exception
+     */
+    public function voidAdjustment(int $transactionId, string $reason, int $userId): StockBatchTransaction
+    {
+        return DB::transaction(function () use ($transactionId, $reason, $userId) {
+            $tx = StockBatchTransaction::with('stockBatch')->findOrFail($transactionId);
+
+            if ($tx->type !== StockBatchTransaction::TYPE_ADJUSTMENT) {
+                throw new \Exception("Only adjustment transactions can be voided with this action.");
+            }
+
+            if ($tx->is_voided) {
+                throw new \Exception("This adjustment has already been voided.");
+            }
+
+            $batch = $tx->stockBatch;
+            if (!$batch) {
+                throw new \Exception("Target stock batch not found.");
+            }
+
+            $isPositive = str_contains(strtolower($tx->notes ?? ''), 'positive');
+
+            if ($isPositive) {
+                // Original added stock: voiding removes that surplus
+                if ($batch->current_qty < $tx->qty) {
+                    throw new \Exception("Cannot void positive adjustment: Available batch balance ({$batch->current_qty}) is less than adjustment quantity ({$tx->qty}). Some units may have already been consumed.");
+                }
+                $batch->current_qty -= $tx->qty;
+            } else {
+                // Original deducted stock: voiding restores that stock
+                $batch->current_qty += $tx->qty;
+            }
+
+            $batch->save();
+
+            // Record reversing transaction
+            StockBatchTransaction::create([
+                'stock_batch_id' => $batch->id,
+                'type' => StockBatchTransaction::TYPE_VOID_ADJUSTMENT,
+                'qty' => $tx->qty,
+                'balance_after' => $batch->current_qty,
+                'reference_type' => StockBatchTransaction::class,
+                'reference_id' => $tx->id,
+                'notes' => "Reversal of adjustment #{$tx->id} ({$reason})",
+                'performed_by' => $userId,
+            ]);
+
+            // Mark original transaction as voided (triggers StockAdjustmentAccountingObserver to reverse JE)
+            $tx->is_voided = true;
+            $tx->voided_at = now();
+            $tx->voided_by = $userId;
+            $tx->void_reason = $reason;
+            $tx->save();
+
+            $this->syncStoreStock($batch->product_id, $batch->store_id);
+
+            return $tx;
+        });
+    }
+
+    /**
+     * Process a manual batch return to supplier.
+     * Deducts stock and creates credit note/refund journal entry via observer.
+     *
+     * @param int $batchId
+     * @param array $data
+     * @param int $userId
+     * @return StockBatchReturn
+     * @throws \Exception
+     */
+    public function returnBatch(int $batchId, array $data, int $userId): StockBatchReturn
+    {
+        return DB::transaction(function () use ($batchId, $data, $userId) {
+            $batch = StockBatch::findOrFail($batchId);
+            $qty = (int) $data['qty_returned'];
+
+            if ($qty <= 0) {
+                throw new \Exception("Return quantity must be at least 1.");
+            }
+
+            if ($qty > $batch->current_qty) {
+                throw new \Exception("Cannot return {$qty} units. Only {$batch->current_qty} units available in batch {$batch->batch_number}.");
+            }
+
+            $unitCost = (float) ($data['unit_cost'] ?? $batch->cost_price);
+            $totalValue = round($unitCost * $qty, 2);
+
+            $return = StockBatchReturn::create([
+                'stock_batch_id' => $batch->id,
+                'product_id' => $batch->product_id,
+                'store_id' => $batch->store_id,
+                'supplier_id' => $data['supplier_id'] ?? $batch->supplier_id,
+                'qty_returned' => $qty,
+                'unit_cost' => $unitCost,
+                'total_value' => $totalValue,
+                'return_reason' => $data['return_reason'] ?? StockBatchReturn::REASON_OTHER,
+                'settlement_type' => $data['settlement_type'] ?? StockBatchReturn::SETTLEMENT_AP_CREDIT_NOTE,
+                'return_notes' => $data['return_notes'] ?? null,
+                'status' => StockBatchReturn::STATUS_APPROVED,
+                'created_by' => $userId,
+                'approved_by' => $userId,
+                'approved_at' => now(),
+                'approval_notes' => 'Direct batch return processed by storekeeper',
+            ]);
+
+            return $return;
         });
     }
 

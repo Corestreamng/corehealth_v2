@@ -222,7 +222,139 @@ Returns paginated, immutable stock ledger movements.
 
 ---
 
-## 5. Damages, Returns & Governance Endpoints
+## 5. Express Stock Intake, Batch Governance & Return Endpoints
+
+### `POST /inventory/store-workbench/manual-batch`
+Executes Practice A direct stock intake with automated double-entry GL posting.
+
+**Request Payload:**
+```json
+{
+  "store_id": 1,
+  "product_id": 142,
+  "supplier_id": 8, // Mandatory registered vendor
+  "batch_number": "LOT-TRC-901",
+  "batch_name": "Emergency Appendectomy Stock",
+  "quantity": 20,
+  "cost_price": 8500.00,
+  "acquisition_type": "credit", // credit | cash | opening_stock | donation
+  "payment_account_code": "1030", // Required if cash
+  "expiry_date": "2029-05-31",
+  "notes": "Direct vendor delivery intake"
+}
+```
+
+**Response (200 OK):**
+```json
+{
+  "success": true,
+  "message": "Batch LOT-TRC-901 created successfully",
+  "batch_id": 742,
+  "journal_entry_id": 1540
+}
+```
+
+---
+
+### `POST /inventory/store-workbench/batch/{batch}/update`
+Updates editable metadata on a stock batch lot. Strictly locks stock quantities (`current_qty` and `initial_qty`).
+
+**Request Payload:**
+```json
+{
+  "supplier_id": 8,
+  "batch_number": "LOT-TRC-901-REV",
+  "batch_name": "Laparoscopic Trocar 10mm Box",
+  "expiry_date": "2029-06-30",
+  "cost_price": 8600.00
+}
+```
+
+**Response (200 OK):**
+```json
+{
+  "success": true,
+  "message": "Batch metadata updated successfully (quantity preserved)",
+  "batch": { "id": 742, "current_qty": 20 }
+}
+```
+
+---
+
+### `POST /inventory/store-workbench/batch/{batch}/void`
+Voids a batch entered by mistake that never physically existed. Zeroes batch quantity and cleanly reverses intake journal entry.
+
+**Payload & Response:**
+```json
+// POST /inventory/store-workbench/batch/742/void
+{ "reason": "Duplicate invoice entered by operator in error" }
+
+// Response (200 OK)
+{ "success": true, "message": "Batch voided successfully", "void_reversal_je_id": 1541 }
+```
+
+---
+
+### `POST /inventory/store-workbench/adjustment/{transaction}/void`
+Voids an erroneous physical count adjustment, restores the original batch balance, and reverses the variance GL entry.
+
+**Payload & Response:**
+```json
+// POST /inventory/store-workbench/adjustment/812/void
+{ "reason": "Count adjusted on wrong batch in error" }
+
+// Response (200 OK)
+{ "success": true, "message": "Adjustment voided and variance ledger entry reversed", "new_balance": 20 }
+```
+
+---
+
+### `POST /inventory/store-workbench/batch/{batch}/return`
+Processes an audited return of batch stock to a supplier with automated settlement accounting.
+
+**Payload & Response:**
+```json
+// POST /inventory/store-workbench/batch/742/return
+{
+  "supplier_id": 8,
+  "qty_returned": 5,
+  "return_reason": "damaged", // damaged | expired_near | recalled | wrong_item | excess | quality_issue | other
+  "settlement_type": "ap_credit_note", // ap_credit_note | cash_refund | receivable | no_financial_impact
+  "return_notes": "Return delivery waybill #WB-99012"
+}
+
+// Response (200 OK)
+{ "success": true, "message": "Batch return #RET-BAT-20261112-0001 processed successfully", "new_balance": 15 }
+```
+
+---
+
+### `POST /inventory/store-workbench/journal-preview`
+Calculates real-time double-entry debit and credit impact preview for workbench modals.
+
+**Payload & Response:**
+```json
+// POST /inventory/store-workbench/journal-preview
+{ "action": "intake", "acquisition_type": "credit", "store_id": 1, "supplier_id": 8, "qty": 10, "cost_price": 8500.00 }
+
+// Response (200 OK)
+{
+  "success": true,
+  "preview": {
+    "total_value": 85000.00,
+    "debit_account": "1310 - Inventory - Medical Supplies",
+    "debit_amount": 85000.00,
+    "credit_account": "2110 - Accounts Payable (Apollos Technologies Sub-Account)",
+    "credit_amount": 85000.00,
+    "explanation": "Increases inventory asset and creates accounts payable liability owed to Apollos Technologies.",
+    "is_monetary": true
+  }
+}
+```
+
+---
+
+## 6. Damages, Returns & Governance Endpoints
 
 ### `POST /inventory/store-damages`
 Logs compromised items for disposal.

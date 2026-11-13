@@ -274,6 +274,7 @@ export default defineConfig({
           text: 'Release Milestones',
           items: [
             { text: 'Release History Index', link: '/releases/index' },
+            { text: 'v2.6.0.71 (Express Stock Intake & Tally Accounting)', link: '/releases/v2.6.0.71' },
             { text: 'v2.6.0.70 (Multi-Standard Interoperability & NDPA)', link: '/releases/v2.6.0.70' },
             { text: 'v2.6.0.69 (LIS Auto-Increment & Search)', link: '/releases/v2.6.0.69' },
             { text: 'v2.6.0.68 (Clinical AI Scribe Studio)', link: '/releases/v2.6.0.68' },

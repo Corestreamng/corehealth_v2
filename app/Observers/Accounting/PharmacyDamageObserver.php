@@ -54,35 +54,50 @@ class PharmacyDamageObserver
     private const THEFT_SHRINKAGE = '5050';
 
     /**
+     * Handle the PharmacyDamage "created" event.
+     */
+    public function created(PharmacyDamage $damage): void
+    {
+        if ($damage->status === 'approved') {
+            $this->processApprovedDamage($damage);
+        }
+    }
+
+    /**
      * Handle the PharmacyDamage "updated" event.
      */
     public function updated(PharmacyDamage $damage): void
     {
         // Only process when status changes to 'approved'
         if ($damage->isDirty('status') && $damage->status === 'approved') {
-            try {
-                // DUPLICATE CHECK: Skip if JE already exists
-                if ($damage->journal_entry_id) {
-                    Log::info('PharmacyDamageObserver: Journal entry already exists, skipping', [
-                        'damage_id' => $damage->id,
-                        'existing_je_id' => $damage->journal_entry_id,
-                    ]);
+            $this->processApprovedDamage($damage);
+        }
+    }
 
-                    return;
-                }
-
-                // Use DB transaction to ensure both JE and stock deduction succeed
-                DB::transaction(function () use ($damage) {
-                    $this->createDamageJournalEntry($damage);
-                    $this->deductStock($damage);
-                });
-            } catch (\Exception $e) {
-                Log::error('PharmacyDamageObserver: Failed to process damage approval', [
+    protected function processApprovedDamage(PharmacyDamage $damage): void
+    {
+        try {
+            // DUPLICATE CHECK: Skip if JE already exists
+            if ($damage->journal_entry_id) {
+                Log::info('PharmacyDamageObserver: Journal entry already exists, skipping', [
                     'damage_id' => $damage->id,
-                    'error' => $e->getMessage(),
-                    'trace' => $e->getTraceAsString(),
+                    'existing_je_id' => $damage->journal_entry_id,
                 ]);
+
+                return;
             }
+
+            // Use DB transaction to ensure both JE and stock deduction succeed
+            DB::transaction(function () use ($damage) {
+                $this->createDamageJournalEntry($damage);
+                $this->deductStock($damage);
+            });
+        } catch (\Exception $e) {
+            Log::error('PharmacyDamageObserver: Failed to process damage approval', [
+                'damage_id' => $damage->id,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
         }
     }
 

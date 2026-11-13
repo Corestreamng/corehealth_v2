@@ -6,10 +6,13 @@ use App\Helpers\BatchHelper;
 use App\Models\Product;
 use App\Models\PurchaseOrder;
 use App\Models\StockBatch;
+use App\Models\StockBatchTransaction;
 use App\Models\Store;
 use App\Models\StoreContextRule;
+use App\Models\StoreDamage;
 use App\Models\StoreRequisition;
 use App\Models\StoreStock;
+use App\Models\Supplier;
 use App\Services\PurchaseOrderService;
 use App\Services\RequisitionService;
 use App\Services\StockService;
@@ -341,6 +344,7 @@ class StoreWorkbenchController extends Controller
         // Calculate totals
         $totalStock = $batches->sum('current_qty');
         $totalBatches = $batches->count();
+        $suppliers = Supplier::orderBy('company_name')->get();
 
         return view('admin.inventory.store-workbench.product-batches', compact(
             'product',
@@ -348,7 +352,8 @@ class StoreWorkbenchController extends Controller
             'stores',
             'selectedStore',
             'totalStock',
-            'totalBatches'
+            'totalBatches',
+            'suppliers'
         ));
     }
 
@@ -402,16 +407,38 @@ class StoreWorkbenchController extends Controller
         ]);
 
         try {
-            $transaction = $this->stockService->writeOffExpired(
-                $batchId,
-                $request->qty,
-                $request->notes
-            );
+            $batch = StockBatch::findOrFail($batchId);
+            $qty = $request->qty ?? $batch->current_qty;
+
+            if ($qty > $batch->current_qty) {
+                return response()->json([
+                    'success' => false,
+                    'message' => "Cannot write off {$qty} units. Only {$batch->current_qty} units available.",
+                ], 400);
+            }
+
+            $damage = StoreDamage::create([
+                'product_id' => $batch->product_id,
+                'store_id' => $batch->store_id,
+                'batch_id' => $batch->id,
+                'qty_damaged' => $qty,
+                'unit_cost' => $batch->cost_price,
+                'total_value' => round($batch->cost_price * $qty, 2),
+                'damage_type' => 'expired',
+                'damage_reason' => $request->notes ?? 'Expired stock write-off',
+                'discovered_date' => now()->toDateString(),
+                'status' => StoreDamage::STATUS_APPROVED,
+                'created_by' => auth()->id() ?? 1,
+                'approved_by' => auth()->id() ?? 1,
+                'approved_at' => now(),
+                'approval_notes' => 'Direct tally card expired write-off',
+            ]);
 
             return response()->json([
                 'success' => true,
-                'message' => 'Expired stock written off',
-                'new_balance' => $transaction->balance_after,
+                'message' => 'Expired stock written off and journal entry created',
+                'new_balance' => $batch->fresh()->current_qty,
+                'damage_id' => $damage->id,
             ]);
         } catch (\Exception $e) {
             return response()->json([
@@ -432,16 +459,38 @@ class StoreWorkbenchController extends Controller
         ]);
 
         try {
-            $transaction = $this->stockService->writeOffDamaged(
-                $batchId,
-                $request->qty,
-                $request->reason
-            );
+            $batch = StockBatch::findOrFail($batchId);
+            $qty = (int) $request->qty;
+
+            if ($qty > $batch->current_qty) {
+                return response()->json([
+                    'success' => false,
+                    'message' => "Cannot write off {$qty} units. Only {$batch->current_qty} units available.",
+                ], 400);
+            }
+
+            $damage = StoreDamage::create([
+                'product_id' => $batch->product_id,
+                'store_id' => $batch->store_id,
+                'batch_id' => $batch->id,
+                'qty_damaged' => $qty,
+                'unit_cost' => $batch->cost_price,
+                'total_value' => round($batch->cost_price * $qty, 2),
+                'damage_type' => 'damaged',
+                'damage_reason' => $request->reason,
+                'discovered_date' => now()->toDateString(),
+                'status' => StoreDamage::STATUS_APPROVED,
+                'created_by' => auth()->id() ?? 1,
+                'approved_by' => auth()->id() ?? 1,
+                'approved_at' => now(),
+                'approval_notes' => 'Direct tally card damage write-off',
+            ]);
 
             return response()->json([
                 'success' => true,
-                'message' => 'Damaged stock written off',
-                'new_balance' => $transaction->balance_after,
+                'message' => 'Damaged stock written off and journal entry created',
+                'new_balance' => $batch->fresh()->current_qty,
+                'damage_id' => $damage->id,
             ]);
         } catch (\Exception $e) {
             return response()->json([
@@ -449,6 +498,220 @@ class StoreWorkbenchController extends Controller
                 'message' => $e->getMessage(),
             ], 400);
         }
+    }
+
+    /**
+     * Update metadata on an existing stock batch
+     */
+    public function updateBatch(Request $request, $batch)
+    {
+        $batchId = (int) $batch;
+        $request->validate([
+            'supplier_id' => 'required|exists:suppliers,id',
+            'batch_number' => 'required|string|max:100',
+            'batch_name' => 'nullable|string|max:100',
+            'expiry_date' => 'nullable|date',
+            'cost_price' => 'required|numeric|min:0',
+            'notes' => 'nullable|string|max:500',
+        ]);
+
+        try {
+            $batch = $this->stockService->updateBatchMetadata($batchId, $request->all());
+
+            return response()->json([
+                'success' => true,
+                'message' => "Batch {$batch->batch_number} updated successfully",
+                'batch' => $batch,
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to update batch: ' . $e->getMessage(),
+            ], 400);
+        }
+    }
+
+    /**
+     * Void a stock batch recorded in error (reverses physical stock & GL intake)
+     */
+    public function voidBatch(Request $request, $batch)
+    {
+        $batchId = (int) $batch;
+        $request->validate([
+            'reason' => 'required|string|max:500',
+        ]);
+
+        try {
+            $batch = $this->stockService->voidBatch($batchId, $request->reason, auth()->id() ?? 1);
+
+            return response()->json([
+                'success' => true,
+                'message' => "Batch {$batch->batch_number} has been voided and ledger intake reversed.",
+                'batch' => $batch,
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to void batch: ' . $e->getMessage(),
+            ], 400);
+        }
+    }
+
+    /**
+     * Void an adjustment transaction recorded in error
+     */
+    public function voidAdjustment(Request $request, $transaction)
+    {
+        $transactionId = (int) $transaction;
+        $request->validate([
+            'reason' => 'required|string|max:500',
+        ]);
+
+        try {
+            $tx = $this->stockService->voidAdjustment($transactionId, $request->reason, auth()->id() ?? 1);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Stock adjustment voided and variance ledger entry reversed.',
+                'new_balance' => $tx->stockBatch->fresh()->current_qty,
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to void adjustment: ' . $e->getMessage(),
+            ], 400);
+        }
+    }
+
+    /**
+     * Process a manual batch return to supplier
+     */
+    public function returnBatch(Request $request, $batch)
+    {
+        $batchId = (int) $batch;
+        $request->validate([
+            'qty_returned' => 'required|integer|min:1',
+            'return_reason' => 'required|string|in:damaged,expired_near,recalled,wrong_item,excess,quality_issue,other',
+            'settlement_type' => 'required|string|in:ap_credit_note,cash_refund,receivable,no_financial_impact',
+            'return_notes' => 'nullable|string|max:500',
+            'supplier_id' => 'nullable|exists:suppliers,id',
+        ]);
+
+        try {
+            $return = $this->stockService->returnBatch($batchId, $request->all(), auth()->id() ?? 1);
+
+            return response()->json([
+                'success' => true,
+                'message' => "Batch return #{$return->return_number} processed successfully.",
+                'return' => $return,
+                'new_balance' => $return->stockBatch->fresh()->current_qty,
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to process batch return: ' . $e->getMessage(),
+            ], 400);
+        }
+    }
+
+    /**
+     * Preview real-time General Ledger impact for storekeeper UI modals
+     */
+    public function previewJournalImpact(Request $request)
+    {
+        $action = $request->action ?? $request->operation; // intake, adjustment, damage, return, void_batch, void_adjustment
+        $storeId = $request->store_id;
+        $qty = (int) ($request->qty ?? 1);
+        $costPrice = (float) ($request->cost_price ?? 0);
+        $total = round($qty * $costPrice, 2);
+
+        $store = Store::find($storeId);
+        $isPharmacy = $store && in_array($store->distribution_role, [Store::ROLE_PHARMACY_HUB, Store::ROLE_PHARMACY_SATELLITE], true);
+        $isLab = $store && $store->distribution_role === Store::ROLE_LAB;
+        $invName = $isPharmacy ? '1300 - Inventory - Pharmacy' : ($isLab ? '1320 - Inventory - Laboratory' : '1310 - Inventory - Medical Supplies');
+
+        $preview = [
+            'total_value' => $total,
+            'debit_account' => '',
+            'debit_amount' => $total,
+            'credit_account' => '',
+            'credit_amount' => $total,
+            'explanation' => '',
+            'is_monetary' => $total > 0,
+        ];
+
+        if ($action === 'intake') {
+            $acq = $request->acquisition_type ?? 'credit';
+            $supplier = Supplier::find($request->supplier_id);
+            $supName = $supplier ? $supplier->company_name : 'Selected Supplier';
+
+            if ($acq === 'credit') {
+                $preview['debit_account'] = $invName;
+                $preview['credit_account'] = "2110 - Accounts Payable ({$supName} Sub-Account)";
+                $preview['explanation'] = "Increases inventory asset and creates accounts payable liability owed to {$supName}.";
+            } elseif ($acq === 'cash') {
+                $preview['debit_account'] = $invName;
+                $preview['credit_account'] = '1030 - Petty Cash / Till';
+                $preview['explanation'] = 'Increases inventory asset and reduces cash in till.';
+            } elseif ($acq === 'opening_stock') {
+                $preview['debit_account'] = $invName;
+                $preview['credit_account'] = '3100 - Retained Earnings (Opening Equity)';
+                $preview['explanation'] = 'Initial inventory capitalization via opening balance equity.';
+            } elseif ($acq === 'donation') {
+                $preview['debit_account'] = "{$invName} (₦0.00)";
+                $preview['credit_account'] = 'No Financial Payable (Logged Program Stock)';
+                $preview['is_monetary'] = false;
+                $preview['explanation'] = 'Physical stock is increased without generating financial liability.';
+            }
+        } elseif ($action === 'adjustment') {
+            $type = $request->adjustment_type; // add or subtract
+            if ($type === 'add') {
+                $preview['debit_account'] = $invName;
+                $preview['credit_account'] = '4230 - Stock Variance Surplus Gain (Other Income)';
+                $preview['explanation'] = 'Recognizes surplus physical stock found as non-operating inventory gain.';
+            } else {
+                $preview['debit_account'] = '5050 - Inventory Shrinkage Loss (Operating Expense)';
+                $preview['credit_account'] = $invName;
+                $preview['explanation'] = 'Writes off missing stock to shrinkage operating expense and reduces inventory asset.';
+            }
+        } elseif ($action === 'damage') {
+            $dmgType = $request->damage_type ?? 'damaged';
+            $expAccount = $dmgType === 'expired' ? '5040 - Expired Stock Write-off' : '5030 - Damaged Goods Write-off';
+            $preview['debit_account'] = "{$expAccount} (Operating Loss)";
+            $preview['credit_account'] = $invName;
+            $preview['explanation'] = "Recognizes unrecoverable {$dmgType} stock as an operating expense loss.";
+        } elseif ($action === 'return') {
+            $settle = $request->settlement_type ?? 'ap_credit_note';
+            $supplier = Supplier::find($request->supplier_id);
+            $supName = $supplier ? $supplier->company_name : 'Selected Supplier';
+
+            if ($settle === 'cash_refund') {
+                $preview['debit_account'] = '1010 - Cash in Hand / Petty Cash';
+                $preview['credit_account'] = $invName;
+                $preview['explanation'] = 'Cash refund received back from vendor and inventory removed.';
+            } elseif ($settle === 'receivable') {
+                $preview['debit_account'] = "1200 - Accounts Receivable ({$supName})";
+                $preview['credit_account'] = $invName;
+                $preview['explanation'] = 'Vendor owes hospital a refund and inventory is removed.';
+            } else {
+                $preview['debit_account'] = "2110 - Accounts Payable ({$supName} Credit Note)";
+                $preview['credit_account'] = $invName;
+                $preview['explanation'] = "Reduces outstanding liability owed to {$supName} and removes inventory.";
+            }
+        } elseif ($action === 'void_batch') {
+            $preview['debit_account'] = '2110 AP / 1030 Cash (Original Credit Source)';
+            $preview['credit_account'] = $invName;
+            $preview['explanation'] = 'Clean reversal of original intake entry. Does not hit shrinkage or loss accounts.';
+        } elseif ($action === 'void_adjustment') {
+            $preview['debit_account'] = 'Reverses Variance Gain/Loss Entry';
+            $preview['credit_account'] = 'Restores Inventory Balance';
+            $preview['explanation'] = 'Cleanses erroneous count adjustment and restores original batch quantity.';
+        }
+
+        return response()->json([
+            'success' => true,
+            'preview' => $preview,
+        ]);
     }
 
     /**
@@ -503,12 +766,14 @@ class StoreWorkbenchController extends Controller
         $isDonation = $request->boolean('is_donation') || $request->reference_type === 'donation';
 
         $request->validate([
-            'supplier_id' => 'nullable|exists:suppliers,id',
+            'supplier_id' => 'required|exists:suppliers,id',
             'quantity' => 'required|integer|min:1',
             'cost_price' => $isDonation ? 'nullable|numeric|min:0' : 'required|numeric|gt:0',
             'expiry_date' => 'nullable|date|after:today',
             'batch_name' => 'nullable|string|max:100',
             'batch_number' => 'required|string|max:100|unique:stock_batches,batch_number',
+            'acquisition_type' => 'nullable|string|in:credit,cash,donation,opening_stock',
+            'payment_account_code' => 'nullable|string|max:20',
             'notes' => 'nullable|string|max:500',
             'packaging_id' => 'nullable|exists:product_packagings,id',
             'batch_packaging' => 'nullable|exists:product_packagings,id',
@@ -539,6 +804,8 @@ class StoreWorkbenchController extends Controller
                 'batch_name' => $request->batch_name,
                 'batch_number' => $request->batch_number,
                 'source' => StockBatch::SOURCE_MANUAL,
+                'acquisition_type' => $request->acquisition_type ?? StockBatch::ACQUISITION_CREDIT,
+                'payment_account_code' => $request->payment_account_code,
                 'notes' => $request->notes ?? ($isDonation ? 'Donation received' : 'Manual entry'),
                 'packaging_id' => $packagingId,
                 'packaging_qty' => $request->packaging_qty,
@@ -1037,6 +1304,8 @@ class StoreWorkbenchController extends Controller
                 }
             }
 
+            $isVoided = !empty($tx->voided_at);
+
             // Determine direction and labels
             if ($type === 'in' && ($tx->stockBatch?->is_donation || $refType === 'donation')) {
                 $direction = 'donation_in';
@@ -1056,16 +1325,24 @@ class StoreWorkbenchController extends Controller
                 $badgeType = 'in';
             } elseif ($type === 'adjustment') {
                 $direction = 'adjustment';
-                $typeLabel = $inQty > 0 ? 'Adj (+)' : 'Adj (-)';
+                $typeLabel = ($inQty > 0 ? 'Adj (+)' : 'Adj (-)') . ($isVoided ? ' (Voided)' : '');
                 $badgeType = $inQty > 0 ? 'adjustment_in' : 'adjustment_out';
+            } elseif ($type === 'void' || $type === 'void_adjustment') {
+                $direction = 'adjustment';
+                $typeLabel = 'Void / Reversal';
+                $badgeType = 'adjustment_out';
             } else {
                 $direction = $type;
-                $typeLabel = $typeLabelMap[$type] ?? ucwords(str_replace('_', ' ', $type));
+                $typeLabel = ($typeLabelMap[$type] ?? ucwords(str_replace('_', ' ', $type))) . ($isVoided ? ' (Voided)' : '');
                 $badgeType = $type;
             }
 
             return [
                 'id' => $tx->id,
+                'raw_type' => $type,
+                'is_voided' => $isVoided,
+                'void_reason' => $tx->void_reason,
+                'journal_entry_id' => $tx->journal_entry_id,
                 'datetime' => $tx->created_at->format('d M Y H:i'),
                 'product_id' => $productId,
                 'product_name' => $productName,
@@ -1077,6 +1354,10 @@ class StoreWorkbenchController extends Controller
                 'batch_number' => $batchNumber,
                 'expiry_date' => $expiryDate,
                 'cost_price' => $costPrice,
+                'supplier_id' => $tx->stockBatch?->supplier_id,
+                'supplier_name' => $tx->stockBatch?->supplier?->company_name,
+                'current_qty' => (int) ($tx->stockBatch?->current_qty ?? 0),
+                'source' => $tx->stockBatch?->source,
                 'bal_before' => $balBefore,
                 'in_qty' => $inQty,
                 'out_qty' => $outQty,
@@ -1261,7 +1542,7 @@ class StoreWorkbenchController extends Controller
         $query = StockBatch::where('store_id', $request->store_id)
             ->active()
             ->where('current_qty', '>', 0)
-            ->with(['product'])
+            ->with(['product', 'supplier'])
             ->orderBy('expiry_date')
             ->orderBy('created_at');
 
@@ -1278,6 +1559,8 @@ class StoreWorkbenchController extends Controller
                 'product_code' => $batch->product?->product_code ?? null,
                 'base_unit_name' => $batch->product?->base_unit_name ?? 'Piece',
                 'current_qty' => $batch->current_qty,
+                'supplier_id' => $batch->supplier_id,
+                'supplier_name' => $batch->supplier?->company_name ?? '—',
                 'expiry_date' => $batch->expiry_date?->format('Y-m-d'),
                 'expiry_label' => $batch->expiry_date?->format('M d, Y') ?? 'No expiry',
                 'cost_price' => (float) ($batch->cost_price ?? 0),

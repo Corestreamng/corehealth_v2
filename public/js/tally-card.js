@@ -407,10 +407,31 @@ if (typeof window.wbRoute !== 'function') {
                     var notes = r.notes ? '<small class="text-muted" title="' + escHtml(r.notes) + '">' +
                         escHtml(r.notes.substring(0, 40)) + (r.notes.length > 40 ? '…' : '') + '</small>' : '—';
 
-                    var actions = `<div class="text-right btn-group">
-                        <button class="btn btn-link btn-xs p-0 text-danger btn-row-damage" title="Record Damage" data-pid="${r.product_id || ''}" data-pname="${escHtml(r.product_name) || ''}" data-bid="${r.batch_id || ''}" data-bnum="${escHtml(r.batch_number) || ''}">
-                            <i class="mdi mdi-alert-octagon" style="font-size:1.1rem;"></i>
-                        </button></div>`;
+                    var voidAdjBtn = '';
+                    if (r.raw_type === 'adjustment' && !r.is_voided) {
+                        voidAdjBtn = '<button class="btn btn-outline-warning btn-xs px-1 py-0 ml-1 btn-row-void-adj" title="Void Adjustment (Recorded in Error)" data-txid="' + (r.id || '') + '" data-pid="' + (r.product_id || '') + '" data-pname="' + escHtml(r.product_name || '') + '" data-bnum="' + escHtml(r.batch_number || '') + '" data-qty="' + (r.in_qty > 0 ? r.in_qty : r.out_qty) + '" data-type="' + (r.in_qty > 0 ? 'Positive (+)' : 'Negative (-)') + '" data-notes="' + escHtml(r.notes || '') + '"><i class="mdi mdi-undo-variant mr-1"></i>Void</button>';
+                    } else if (r.is_voided) {
+                        voidAdjBtn = '<span class="badge badge-secondary ml-1" style="font-size:0.65rem;" title="Voided: ' + escHtml(r.void_reason || '') + '">Voided</span>';
+                    }
+
+                    var returnBatchBtn = '';
+                    if (r.batch_id && (r.current_qty > 0 || r.in_qty > 0) && !r.is_voided) {
+                        returnBatchBtn = '<button class="btn btn-link btn-xs p-0 text-purple ml-1 btn-row-return-batch" title="Return Batch to Supplier" data-bid="' + r.batch_id + '" data-bnum="' + escHtml(r.batch_number || '') + '" data-pname="' + escHtml(r.product_name || '') + '" data-qty="' + (r.current_qty || r.in_qty || 0) + '" data-cost="' + (r.cost_price || 0) + '" data-supid="' + (r.supplier_id || '') + '" data-supname="' + escHtml(r.supplier_name || 'Supplier') + '"><i class="mdi mdi-undo-variant" style="font-size:1.1rem; color:#7c3aed;"></i></button>';
+                    }
+
+                    var voidBatchBtn = '';
+                    if (r.batch_id && (r.raw_type === 'in' || r.source === 'manual') && !r.is_voided && (r.current_qty > 0 || r.in_qty > 0)) {
+                        voidBatchBtn = '<button class="btn btn-link btn-xs p-0 text-danger ml-1 btn-row-void-batch" title="Void Batch (Recorded in Error)" data-bid="' + r.batch_id + '" data-bnum="' + escHtml(r.batch_number || '') + '" data-qty="' + (r.current_qty || r.in_qty || 0) + '" data-cost="' + (r.cost_price || 0) + '"><i class="mdi mdi-close-octagon-outline" style="font-size:1.1rem; color:#dc2626;"></i></button>';
+                    }
+
+                    var actions = '<div class="text-right btn-group align-items-center">' +
+                        '<button class="btn btn-link btn-xs p-0 text-danger btn-row-damage" title="Record Damage" data-pid="' + (r.product_id || '') + '" data-pname="' + escHtml(r.product_name || '') + '" data-bid="' + (r.batch_id || '') + '" data-bnum="' + escHtml(r.batch_number || '') + '">' +
+                            '<i class="mdi mdi-alert-octagon" style="font-size:1.1rem;"></i>' +
+                        '</button>' +
+                        returnBatchBtn +
+                        voidBatchBtn +
+                        voidAdjBtn +
+                    '</div>';
 
                     if (axis === 'product') {
                         html += '<tr class="' + dirClass + '">' +
@@ -1173,6 +1194,7 @@ if (typeof window.wbRoute !== 'function') {
                 if (isDonation || (rawVal !== '' && costEntered === 0)) {
                     $previewText.html('<i class="mdi mdi-gift-outline text-success mr-1"></i><strong>' + (isDonation ? 'Donation Batch' : 'Zero-Cost Batch') + ':</strong> Cost price is fixed at <strong>₦0.00</strong>');
                     $preview.show();
+                    if (typeof window.updateTallyBatchGLPreview === 'function') window.updateTallyBatchGLPreview();
                     return;
                 }
 
@@ -1189,6 +1211,7 @@ if (typeof window.wbRoute !== 'function') {
                 } else {
                     $preview.hide();
                 }
+                if (typeof window.updateTallyBatchGLPreview === 'function') window.updateTallyBatchGLPreview();
             };
 
             window.loadProductPackaging = function(productId, baseUnit, $pkgSelect) {
@@ -1234,6 +1257,9 @@ if (typeof window.wbRoute !== 'function') {
                                 } else {
                                     $manualCost.val('0.00');
                                 }
+                                if (typeof window.updateTallyBatchGLPreview === 'function') {
+                                    window.updateTallyBatchGLPreview();
+                                }
                             }
 
                             // Check if we are in PO row
@@ -1261,6 +1287,7 @@ if (typeof window.wbRoute !== 'function') {
                 } else {
                     $('#dmg-qty-hint').text('');
                 }
+                if (typeof window.updateDamageGLPreview === 'function') window.updateDamageGLPreview();
             };
 
             window.calculatePoBaseQty = function(index) {
@@ -1333,6 +1360,7 @@ if (typeof window.wbRoute !== 'function') {
                     }
                     if (adjSelectedType && qty > 0) $('#btn-apply-adjustment').prop('disabled', false);
                 }
+                if (typeof window.updateAdjGLPreview === 'function') window.updateAdjGLPreview();
                 if (typeof checkAdjFormReady === 'function') checkAdjFormReady();
             };
 
@@ -2462,6 +2490,418 @@ if (typeof window.wbRoute !== 'function') {
                     window.updateBatchCostPreview();
                 }
             }
+            if (typeof window.updateTallyBatchGLPreview === 'function') {
+                window.updateTallyBatchGLPreview();
+            }
         };
+
+        // ─── Real-Time Double-Entry Journal Previews ─────────────────────────────
+        window.updateTallyBatchGLPreview = function() {
+            var rawQty = parseFloat($('#batch-qty').val()) || 0;
+            var $pkg = $('#batch-packaging option:selected');
+            var factor = parseFloat($pkg.data('qty')) || 1;
+            var isDonation = $('#tally_is_donation').is(':checked');
+            var unitCost = isDonation ? 0 : (parseFloat($('#batch-cost-price').val()) || 0);
+            var totalVal = rawQty * unitCost;
+            var formatted = '₦' + totalVal.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
+
+            var acqType = $('input[name="acquisition_type"]:checked').val() || 'credit';
+            var supText = $('#tally-batch-supplier option:selected').text().trim();
+            if (supText.indexOf('Select') !== -1 || supText === '—') supText = '';
+
+            // Detect store inventory account
+            var storeText = ($('#batch-store option:selected').text() || '').toLowerCase();
+            var invAccountCode = '1310';
+            var invAccountName = 'Inventory - Medical Supplies';
+            if (storeText.indexOf('pharmacy') !== -1 || storeText.indexOf('drug') !== -1) {
+                invAccountCode = '1300';
+                invAccountName = 'Inventory - Pharmacy Stock';
+            }
+
+            if (isDonation) {
+                $('#preview-dr-acc').text(invAccountCode + ' - ' + invAccountName);
+                $('#preview-dr-amt').text('₦0.00');
+                $('#preview-cr-acc').text('No Financial Payable (Donation / Grant Stock)');
+                $('#preview-cr-amt').text('₦0.00');
+                $('#preview-explanation').text('Donation / free program stock logged at ₦0.00. Increases physical inventory count without creating a supplier liability or cash outflow.');
+            } else if (acqType === 'credit') {
+                $('#preview-dr-acc').text(invAccountCode + ' - ' + invAccountName);
+                $('#preview-dr-amt').text(totalVal > 0 ? '+' + formatted : '₦0.00');
+                var crLabel = '2110 - Accounts Payable' + (supText ? ' (' + supText + ')' : ' (Select Supplier)');
+                $('#preview-cr-acc').text(crLabel);
+                $('#preview-cr-amt').text(totalVal > 0 ? '+' + formatted : '₦0.00');
+                if (rawQty <= 0 && unitCost <= 0) {
+                    $('#preview-explanation').text('Enter quantity and cost price to calculate the Accounts Payable liability owed to ' + (supText || 'the selected supplier') + '.');
+                } else if (rawQty <= 0) {
+                    $('#preview-explanation').text('Enter batch quantity to calculate the Accounts Payable liability owed to ' + (supText || 'the selected supplier') + '.');
+                } else if (unitCost <= 0) {
+                    $('#preview-explanation').text('Enter unit cost price to compute the Accounts Payable liability owed to ' + (supText || 'the selected supplier') + '.');
+                } else {
+                    $('#preview-explanation').text('Increases inventory asset and creates an accounts payable liability owed to ' + (supText || 'the selected supplier') + '.');
+                }
+            } else if (acqType === 'cash') {
+                $('#preview-dr-acc').text(invAccountCode + ' - ' + invAccountName);
+                $('#preview-dr-amt').text(totalVal > 0 ? '+' + formatted : '₦0.00');
+                $('#preview-cr-acc').text('1030 - Petty Cash / Store Till');
+                $('#preview-cr-amt').text(totalVal > 0 ? '+' + formatted : '₦0.00');
+                if (rawQty <= 0 || unitCost <= 0) {
+                    $('#preview-explanation').text('Enter quantity and cost price to calculate the immediate cash / till disbursement.');
+                } else {
+                    $('#preview-explanation').text('Increases inventory asset and records an immediate cash/till disbursement.');
+                }
+            } else if (acqType === 'opening_stock') {
+                $('#preview-dr-acc').text(invAccountCode + ' - ' + invAccountName);
+                $('#preview-dr-amt').text(totalVal > 0 ? '+' + formatted : '₦0.00');
+                $('#preview-cr-acc').text('3100 - Retained Earnings (Opening Equity)');
+                $('#preview-cr-amt').text(totalVal > 0 ? '+' + formatted : '₦0.00');
+                if (rawQty <= 0 || unitCost <= 0) {
+                    $('#preview-explanation').text('Enter quantity and cost price to calculate the opening equity valuation.');
+                } else {
+                    $('#preview-explanation').text('Recognizes initial inventory valuation against retained earnings equity without debt.');
+                }
+            }
+        };
+
+        window.updateAdjGLPreview = function() {
+            var qty = parseFloat($('#adj-base-qty-hidden').val()) || 0;
+            var cost = (adjSelectedBatch && adjSelectedBatch.cost_price) ? parseFloat(adjSelectedBatch.cost_price) : 0;
+            var total = qty * cost;
+            var formatted = '₦' + total.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
+
+            if (adjSelectedType === 'add') {
+                $('#adj-preview-dr').text('1310 - Inventory - Medical Supplies');
+                $('#adj-preview-dr-amt').text(qty > 0 ? '+' + formatted : '₦0.00');
+                $('#adj-preview-cr').text('4230 - Stock Variance Gain');
+                $('#adj-preview-cr-amt').text(qty > 0 ? '+' + formatted : '₦0.00');
+            } else {
+                $('#adj-preview-dr').text('5050 - Inventory Shrinkage Loss');
+                $('#adj-preview-dr-amt').text(qty > 0 ? '+' + formatted : '₦0.00');
+                $('#adj-preview-cr').text('1310 - Inventory - Medical Supplies');
+                $('#adj-preview-cr-amt').text(qty > 0 ? '-' + formatted : '₦0.00');
+            }
+        };
+
+        window.updateDamageGLPreview = function() {
+            var baseQty = parseFloat($('#dmg-base-qty-hidden').val()) || 0;
+            var unitCost = parseFloat($('#damage-unit-cost').val()) || 0;
+            var total = baseQty * unitCost;
+            var formatted = '₦' + total.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
+            var dmgType = $('#damage-type').val();
+            var drLabel = (dmgType === 'expired') ? '5040 - Expired Stock Write-off' : '5030 - Damaged Goods Write-off';
+
+            $('#dmg-preview-dr').text(drLabel);
+            $('#dmg-preview-dr-amt').text(baseQty > 0 ? '+' + formatted : '₦0.00');
+            $('#dmg-preview-cr-amt').text(baseQty > 0 ? '-' + formatted : '₦0.00');
+        };
+
+        window.updateReturnGLPreview = function() {
+            var qty = parseFloat($('#return-qty').val()) || 0;
+            var cost = parseFloat($('#modal-return-batch').data('cost-price')) || 0;
+            var total = qty * cost;
+            var formatted = '₦' + total.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
+            var settlement = $('#return-settlement-type').val();
+
+            var drLabel = '2110 - Accounts Payable (Supplier Credit Note)';
+            if (settlement === 'cash_refund') {
+                drLabel = '1010 - Cash in Hand (Cash Refund Received)';
+            } else if (settlement === 'receivable') {
+                drLabel = '1200 - Accounts Receivable (Supplier Refund Due)';
+            } else if (settlement === 'no_financial_impact') {
+                drLabel = 'No Financial Impact (Donation Stock)';
+            }
+
+            $('#return-preview-dr').text(drLabel);
+            $('#return-preview-dr-amt').text(qty > 0 ? '+' + formatted : '₦0.00');
+            $('#return-preview-cr').text('1310 - Inventory - Medical Supplies');
+            $('#return-preview-cr-amt').text(qty > 0 ? '-' + formatted : '₦0.00');
+        };
+
+        // Wire inputs to live GL previews
+        $(document).on('input change select2:select select2:clear', '#batch-qty, #batch-cost-price, #tally-batch-supplier, #batch-store, #batch-product, #batch-packaging, input[name="acquisition_type"], #tally_is_donation', function() {
+            window.updateTallyBatchGLPreview();
+        });
+
+        $(document).on('input change select2:select select2:clear', '#return-qty, #return-settlement-type', function() {
+            window.updateReturnGLPreview();
+        });
+
+        $(document).on('input change select2:select select2:clear', '#damage-qty, #dmg-packaging, #damage-type, #damage-unit-cost', function() {
+            if (typeof window.calculateDmgBaseQty === 'function') window.calculateDmgBaseQty();
+            window.updateDamageGLPreview();
+        });
+
+        $(document).on('input change select2:select select2:clear', '#adj-qty, #adj-packaging, input[name="adjustment_type"], #adj-reason', function() {
+            if (typeof window.calculateAdjBaseQty === 'function') window.calculateAdjBaseQty();
+            window.updateAdjGLPreview();
+        });
+
+        // ─── Modal Form Handlers: Edit, Void Batch, Return, Void Adjustment ────────
+        // Modal 10: Edit Batch
+        $('#form-edit-batch').on('submit', function(e) {
+            e.preventDefault();
+            var batchId = $('#edit-batch-id').val();
+            var $btn = $('#btn-submit-edit-batch').prop('disabled', true).html('<span class="spinner-border spinner-border-sm"></span> Saving…');
+            var postUrl = wbRoute('inventory.store-workbench.batch.update', '/inventory/store-workbench/batch/' + batchId + '/update').replace(':id', batchId);
+
+            $.ajax({
+                url: postUrl,
+                method: 'POST',
+                data: $(this).serialize(),
+                dataType: 'json'
+            })
+            .done(function(res) {
+                if (res.success) {
+                    toast(res.message || 'Batch updated successfully');
+                    $('#modal-edit-batch').modal('hide');
+                    loadTally();
+                } else {
+                    toast(res.message || 'Error updating batch', 'error');
+                }
+            })
+            .fail(function(xhr) {
+                var msg = (xhr.responseJSON && xhr.responseJSON.message) ? xhr.responseJSON.message : 'Failed to update batch';
+                toast(msg, 'error');
+            })
+            .always(function() {
+                $btn.prop('disabled', false).html('<i class="mdi mdi-check mr-1"></i>Save Changes');
+            });
+        });
+
+        // Modal 11: Void Batch (Recorded in Error)
+        $('#form-void-batch').on('submit', function(e) {
+            e.preventDefault();
+            var batchId = $('#void-batch-id').val();
+            var $btn = $('#btn-submit-void-batch').prop('disabled', true).html('<span class="spinner-border spinner-border-sm"></span> Voiding…');
+            var postUrl = wbRoute('inventory.store-workbench.batch.void', '/inventory/store-workbench/batch/' + batchId + '/void').replace(':id', batchId);
+
+            $.ajax({
+                url: postUrl,
+                method: 'POST',
+                data: $(this).serialize(),
+                dataType: 'json'
+            })
+            .done(function(res) {
+                if (res.success) {
+                    toast(res.message || 'Batch voided successfully');
+                    $('#modal-void-batch').modal('hide');
+                    loadTally();
+                } else {
+                    toast(res.message || 'Error voiding batch', 'error');
+                }
+            })
+            .fail(function(xhr) {
+                var msg = (xhr.responseJSON && xhr.responseJSON.message) ? xhr.responseJSON.message : 'Failed to void batch';
+                toast(msg, 'error');
+            })
+            .always(function() {
+                $btn.prop('disabled', false).html('<i class="mdi mdi-close-octagon mr-1"></i>Confirm Void Batch');
+            });
+        });
+
+        // Modal 12: Return Batch to Supplier
+        $('#form-return-batch').on('submit', function(e) {
+            e.preventDefault();
+            var batchId = $('#return-batch-id').val();
+            var $btn = $('#btn-submit-return-batch').prop('disabled', true).html('<span class="spinner-border spinner-border-sm"></span> Processing…');
+            var postUrl = wbRoute('inventory.store-workbench.batch.return', '/inventory/store-workbench/batch/' + batchId + '/return').replace(':id', batchId);
+
+            $.ajax({
+                url: postUrl,
+                method: 'POST',
+                data: $(this).serialize(),
+                dataType: 'json'
+            })
+            .done(function(res) {
+                if (res.success) {
+                    toast(res.message || 'Return processed successfully');
+                    $('#modal-return-batch').modal('hide');
+                    loadTally();
+                } else {
+                    toast(res.message || 'Error processing return', 'error');
+                }
+            })
+            .fail(function(xhr) {
+                var msg = (xhr.responseJSON && xhr.responseJSON.message) ? xhr.responseJSON.message : 'Failed to process return';
+                toast(msg, 'error');
+            })
+            .always(function() {
+                $btn.prop('disabled', false).html('<i class="mdi mdi-check mr-1"></i>Process Return');
+            });
+        });
+
+        // Modal 13: Void Adjustment (Recorded in Error)
+        $(document).on('click', '.btn-row-void-adj', function(e) {
+            e.preventDefault();
+            var txId = $(this).data('txid');
+            var pName = $(this).data('pname');
+            var bNum = $(this).data('bnum');
+            var qty = $(this).data('qty');
+            var type = $(this).data('type');
+            var notes = $(this).data('notes');
+
+            $('#void-adj-tx-id').val(txId);
+            $('#void-adj-tx-id-display').text('#' + txId);
+            $('#void-adj-type-display').text(type + ' (' + (pName ? pName + ' - ' : '') + 'Batch #' + bNum + ')');
+            $('#void-adj-qty-display').text(qty + ' units');
+            $('#void-adj-notes-display').text(notes || 'None recorded');
+            $('#void-adj-reason').val('');
+
+            $('#modal-void-adjustment').modal('show');
+        });
+
+        $('#form-void-adjustment').on('submit', function(e) {
+            e.preventDefault();
+            var txId = $('#void-adj-tx-id').val();
+            var $btn = $('#btn-submit-void-adj').prop('disabled', true).html('<span class="spinner-border spinner-border-sm"></span> Voiding…');
+            var postUrl = wbRoute('inventory.store-workbench.adjustment.void', '/inventory/store-workbench/adjustment/' + txId + '/void').replace(':id', txId);
+
+            $.ajax({
+                url: postUrl,
+                method: 'POST',
+                data: $(this).serialize(),
+                dataType: 'json'
+            })
+            .done(function(res) {
+                if (res.success) {
+                    toast(res.message || 'Adjustment voided and reversed successfully');
+                    $('#modal-void-adjustment').modal('hide');
+                    loadTally();
+                } else {
+                    toast(res.message || 'Error voiding adjustment', 'error');
+                }
+            })
+            .fail(function(xhr) {
+                var msg = (xhr.responseJSON && xhr.responseJSON.message) ? xhr.responseJSON.message : 'Failed to void adjustment';
+                toast(msg, 'error');
+            })
+            .always(function() {
+                $btn.prop('disabled', false).html('<i class="mdi mdi-undo mr-1"></i>Confirm Void Adjustment');
+            });
+        });
+
+        // ─── Modal 11: Void Batch (Recorded in Error) from row ────────────
+        $(document).on('click', '.btn-row-void-batch', function(e) {
+            e.preventDefault();
+            var bid = $(this).data('bid');
+            var bnum = $(this).data('bnum');
+            var qty = parseFloat($(this).data('qty')) || 0;
+            var cost = parseFloat($(this).data('cost')) || 0;
+            var totalVal = qty * cost;
+
+            $('#void-batch-id').val(bid);
+            $('#void-batch-number-display').text(bnum);
+            $('#void-batch-qty-display').text(qty + ' units');
+            var formatted = '₦' + totalVal.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
+            $('#void-batch-value-display').text(formatted);
+            $('#void-preview-dr-amt').text('+' + formatted);
+            $('#void-preview-cr-amt').text('-' + formatted);
+            $('#void-batch-reason').val('');
+
+            $('#modal-void-batch').modal('show');
+        });
+
+        // ─── Modal 12: Return Batch to Supplier from row ─────────────────
+        $(document).on('click', '.btn-row-return-batch', function(e) {
+            e.preventDefault();
+            var bid = $(this).data('bid');
+            var bnum = $(this).data('bnum');
+            var pname = $(this).data('pname');
+            var qty = parseFloat($(this).data('qty')) || 1;
+            var cost = parseFloat($(this).data('cost')) || 0;
+            var supid = $(this).data('supid');
+            var supname = $(this).data('supname') || 'Supplier';
+
+            $('#return-batch-picker-group').hide();
+            $('#return-batch-id').val(bid);
+            $('#return-batch-supplier-id').val(supid);
+            $('#return-product-name').text(pname);
+            $('#return-batch-supplier-info').text(bnum + ' (' + supname + ')');
+            $('#return-available-qty').text(qty);
+            $('#return-qty').val(Math.min(1, qty)).attr('max', qty);
+            $('#return-max-hint').text('Max ' + qty + ' units');
+            $('#modal-return-batch').data('cost-price', cost);
+            $('#return-notes').val('');
+
+            if (typeof window.updateReturnGLPreview === 'function') {
+                window.updateReturnGLPreview();
+            }
+
+            $('#modal-return-batch').modal('show');
+        });
+
+        // ─── Floating Toolbar: Return Batch to Supplier ───────────────────
+        $('#tb-return-batch').on('click', function(e) {
+            e.preventDefault();
+            var storeId = $('#filter-store').val() || currentStoreId;
+            var productId = $('#filter-product').val() || '';
+
+            if (!storeId) {
+                toast('Please select a store to view returnable batches', 'error');
+                return;
+            }
+
+            $('#return-batch-picker').empty().append('<option value="">— Loading store batches… —</option>');
+            $('#return-batch-picker-group').show();
+            $('#return-product-name').text('—');
+            $('#return-batch-supplier-info').text('—');
+            $('#return-available-qty').text('0');
+            $('#return-qty').val(1).removeAttr('max');
+            $('#return-max-hint').text('');
+            $('#modal-return-batch').data('cost-price', 0);
+            $('#return-batch-id').val('');
+            $('#return-batch-supplier-id').val('');
+            if (typeof window.updateReturnGLPreview === 'function') {
+                window.updateReturnGLPreview();
+            }
+
+            $('#modal-return-batch').modal('show');
+
+            $.get(wbRoute('inventory.store-workbench.store-batches', '/inventory/store-workbench/ajax/store-batches'), {
+                store_id: storeId,
+                product_id: productId
+            }).done(function(res) {
+                var $picker = $('#return-batch-picker').empty();
+                $picker.append('<option value="">— Select a Batch to Return (' + (res.batches ? res.batches.length : 0) + ' active) —</option>');
+                if (res.batches && res.batches.length > 0) {
+                    $.each(res.batches, function(_, b) {
+                        var optText = b.product_name + ' | Batch: ' + b.batch_number + ' (' + b.current_qty + ' ' + (b.base_unit_name || 'units') + ' avail) - ' + (b.supplier_name || 'Supplier');
+                        var $opt = $('<option>', {
+                            value: b.id,
+                            text: optText
+                        }).data('batch', b);
+                        $picker.append($opt);
+                    });
+                } else {
+                    $picker.append('<option value="" disabled>No active batches with stock found in this store</option>');
+                }
+            }).fail(function() {
+                $('#return-batch-picker').empty().append('<option value="">Failed to load batches</option>');
+            });
+        });
+
+        // Batch Picker Change Handler
+        $('#return-batch-picker').on('change', function() {
+            var selectedOpt = $(this).find('option:selected');
+            var b = selectedOpt.data('batch');
+            if (b) {
+                $('#return-batch-id').val(b.id);
+                $('#return-batch-supplier-id').val(b.supplier_id || '');
+                $('#return-product-name').text(b.product_name);
+                $('#return-batch-supplier-info').text(b.batch_number + ' (' + (b.supplier_name || 'Supplier') + ')');
+                $('#return-available-qty').text(b.current_qty);
+                $('#return-qty').val(Math.min(1, b.current_qty)).attr('max', b.current_qty);
+                $('#return-max-hint').text('Max ' + b.current_qty + ' units');
+                $('#modal-return-batch').data('cost-price', b.cost_price || 0);
+            } else {
+                $('#return-batch-id').val('');
+                $('#return-product-name').text('—');
+                $('#return-batch-supplier-info').text('—');
+                $('#return-available-qty').text('0');
+                $('#modal-return-batch').data('cost-price', 0);
+            }
+            if (typeof window.updateReturnGLPreview === 'function') {
+                window.updateReturnGLPreview();
+            }
+        });
 
     })();

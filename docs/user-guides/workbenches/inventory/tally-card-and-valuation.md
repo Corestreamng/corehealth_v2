@@ -92,7 +92,99 @@ From the Expiry Report, supervisors can directly execute:
 
 ---
 
-## 5. Multi-Store Stock Overview & Batch Drilldown
+## 5. Express Stock Intake, Batch Governance & Double-Entry Accounting
+
+CoreHealth v2 implements **Practice A: Express Stock Receipt / Direct Purchase**, empowering storekeepers to perform fast 1-step direct receipts while automatically posting balanced General Ledger entries in real time.
+
+```mermaid
+flowchart TD
+    A["Storekeeper Opens Modal: Add Batch / Direct Intake"] --> B["Select Product, Store, Mandatory Supplier, Batch #, Expiry, Qty, Cost"]
+    B --> C{"Select Acquisition Mode"}
+    
+    C -->|"On Credit (Default)"| D["DR 1310 Inventory Asset<br/>CR 2100 Accounts Payable (Supplier Sub-Account)"]
+    C -->|"Petty Cash / Till"| E["DR 1310 Inventory Asset<br/>CR 1030 Petty Cash / Till Asset"]
+    C -->|"Opening Stock (Audit/Setup)"| F["DR 1310 Inventory Asset<br/>CR 3100 Retained Earnings (Equity)"]
+    C -->|"Free Donation (₦0 Cost)"| G["DR 1310 Inventory Asset @ ₦0.00<br/>No Financial Payable (Program Logged)"]
+    
+    D --> H["Live GL Preview Confirms Double-Entry Balance in UI"]
+    E --> H
+    F --> H
+    G --> H
+    H --> I["Batch Created & Store Stock Balance Synchronized"]
+```
+
+### 1. Mandatory Supplier & Acquisition Type Selector
+- **Strict Supplier Requirement**: Storekeepers must select a verified vendor from the registered supplier catalog (`supplier_id`). Direct walk-ins or unregistered suppliers cannot bypass accounting controls.
+- **Acquisition Modes**:
+  - **On Credit (AP Debt)**: Immediately debits Store Inventory (`1310`/`1300`) and credits Accounts Payable (`2100`) tagged to the vendor's dedicated subsidiary ledger sub-account.
+  - **Petty Cash / Till**: Immediately credits the store's petty cash till (`1030`/`1010`), verifying that goods were disbursed directly from on-hand cash.
+  - **Opening Stock (Equity)**: Reconciles baseline opening inventory against retained earnings (`3100`), capitalizing starting warehouse assets without creating spurious supplier liabilities.
+  - **Donation / Government Program**: Locks unit cost to `₦0.00`, logging physical inventory increments without generating unpayable financial liabilities.
+- **Real-Time Double-Entry Preview Card**: Displays live debit and credit account codes, dynamic monetary totals ($\text{Qty} \times \text{Cost}$), and operational explanations before submission.
+
+### 2. Batch Metadata Editing & Locked Quantity Invariant
+- **Action**: Click **Edit Batch** on any active lot card in Product Batches (`/inventory/store-workbench/products/{id}/batches`).
+- **Editable Attributes**: Manufacturer Lot Number, Batch Label/Name, Expiry Date, Supplier Assignment, and Unit Cost Price.
+- **Quantity Lock Invariant**: The `current_qty` and `initial_qty` fields are strictly locked against direct modification. Any physical stock correction must pass through the audited count adjustment pipeline.
+
+---
+
+## 6. Stock Count Adjustments & "Recorded in Error" Voiding
+
+```mermaid
+flowchart LR
+    A["Tally Card Row"] --> B{"Operation Type"}
+    
+    B -->|"Count Surplus (+)"| C["DR 1310 Inventory<br/>CR 4230 Stock Variance Gain"]
+    B -->|"Count Shortage (-)"| D["DR 5050 Inventory Shrinkage<br/>CR 1310 Inventory"]
+    B -->|"Batch Recorded in Error"| E["Void Batch:<br/>Zeroes Non-Existent Stock<br/>Reverses Intake JE (CR Inventory / DR AP)"]
+    B -->|"Adjustment in Error"| F["Void Adjustment:<br/>Restores Lot Count<br/>Reverses Variance JE"]
+```
+
+### 1. Physical Count Adjustments (+ / -)
+Storekeepers performing periodic bin audits execute count adjustments via **Adjust Stock** (`Modal 6`):
+- **Positive Variance (Surplus Items Found)**:
+  - System increases batch count.
+  - Posts **DR 1310 Inventory Asset** / **CR 4230 Stock Variance Gain (Other Income)**.
+- **Negative Variance (Missing Items / Shortage)**:
+  - System decreases batch count.
+  - Posts **DR 5050 Inventory Shrinkage Loss** / **CR 1310 Inventory Asset**.
+
+### 2. "Recorded in Error" Voiding Architecture
+When an operator accidentally enters a batch or count adjustment that never physically existed (e.g. duplicated invoice entry or wrong drug selected):
+- **Void Batch (`Modal 11`)**:
+  - Requires mandatory justification note explaining the data-entry error.
+  - Zeroes remaining lot quantity and deactivates the batch.
+  - Automatically invokes `AccountingService::reverseEntry` to reverse the intake journal entry (swapping debits and credits) and marking the original entry as `STATUS_REVERSED`.
+  - **Prevents False Shrinkage**: Does NOT inflate operating loss metrics or shrinkage expenses for non-existent stock.
+- **Void Adjustment (`Modal 13`)**:
+  - Accessible directly from the Tally Card transaction history via the <i class="mdi mdi-undo-variant"></i> **Void** button.
+  - Restores original batch quantity and cleanly reverses the variance gain/loss journal entry.
+
+---
+
+## 7. Manual Batch Returns to Suppliers
+
+Storekeepers can return non-PO direct intake batches directly to suppliers (`Modal 12`):
+- **Return Reasons**: Damaged in Transit, Short Expiry Shelf Life, Manufacturer Recall, Wrong Item Delivered, or Quality Defect.
+- **Settlement Modes**:
+  - **AP Credit Note (Debt Reduction)**: **DR 2100 Accounts Payable** / **CR 1310 Inventory** (reduces outstanding debt on supplier sub-account).
+  - **Cash Refund Received**: **DR 1010 Cash in Hand** / **CR 1310 Inventory**.
+  - **Supplier Refund Pending**: **DR 1200 Accounts Receivable** / **CR 1310 Inventory** (tracks claim pending reimbursement).
+  - **No Financial Impact**: Reverses physical count for donated or program stock without financial credit.
+
+---
+
+## 8. Departmental Consumption & Ward Stock Accounting
+
+When ward or clinical department stock is consumed without direct patient billing (e.g. inpatient wound dressings, cleansing antiseptics, immunization program consumables):
+- Tracked via `StockUtilization` records with `is_billed = false`.
+- Automatically posts **DR 5020 Cost of Medical Supplies Used (Departmental Expense)** and **CR 1310 Inventory - Medical Supplies**.
+- When dispensed or billed directly to patients, billing and dispensing observers recognize patient revenue and Cost of Goods Sold (`5010 COGS`).
+
+---
+
+## 9. Multi-Store Stock Overview & Batch Drilldown
 
 ![Multi-Store Stock Overview](/images/workbenches/store-stock-overview.jpg)
 

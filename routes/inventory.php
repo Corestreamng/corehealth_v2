@@ -115,6 +115,13 @@ Route::middleware(['auth'])->prefix('inventory')->name('inventory.')->group(func
         Route::post('/batch/{batch}/write-off-expired', [StoreWorkbenchController::class, 'writeOffExpired'])->name('write-off-expired');
         Route::post('/batch/{batch}/write-off-damaged', [StoreWorkbenchController::class, 'writeOffDamaged'])->name('write-off-damaged');
 
+        // Batch modification, voiding, and returns
+        Route::post('/batch/{batch}/update', [StoreWorkbenchController::class, 'updateBatch'])->name('batch.update');
+        Route::post('/batch/{batch}/void', [StoreWorkbenchController::class, 'voidBatch'])->name('batch.void');
+        Route::post('/batch/{batch}/return', [StoreWorkbenchController::class, 'returnBatch'])->name('batch.return');
+        Route::post('/adjustment/{transaction}/void', [StoreWorkbenchController::class, 'voidAdjustment'])->name('adjustment.void');
+        Route::post('/journal-preview', [StoreWorkbenchController::class, 'previewJournalImpact'])->name('journal-preview');
+
         // Manual batch entry
         Route::get('/manual-batch', [StoreWorkbenchController::class, 'manualBatchForm'])->name('manual-batch-form');
         Route::post('/manual-batch', [StoreWorkbenchController::class, 'createManualBatch'])->name('create-manual-batch');

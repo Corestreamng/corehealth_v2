@@ -1139,6 +1139,9 @@ $hosColor = appsettings('hos_color') ?? '#0066cc';
         <button class="toolbar-btn" id="tb-return-po" style="background:#6366f1; color:#fff;">
             <i class="mdi mdi-truck-delivery-outline"></i> Return PO Items
         </button>
+        <button class="toolbar-btn" id="tb-return-batch" style="background:#7c3aed; color:#fff;" title="Return Manual / Store Batch to Supplier">
+            <i class="mdi mdi-undo-variant"></i> Return Batch
+        </button>
     </div>
 </div>
 
@@ -1297,7 +1300,7 @@ $hosColor = appsettings('hos_color') ?? '#0066cc';
                         <div class="col-md-4">
                             <div class="form-group">
                                 <label class="small font-weight-bold">Batch Number <span class="text-danger">*</span></label>
-                                <input type="text" name="batch_number" class="form-control" maxlength="100" required style="border-radius:8px;" placeholder="e.g. BTN-001">
+                                <input type="text" name="batch_number" id="batch-number" class="form-control" maxlength="100" required style="border-radius:8px;" placeholder="e.g. BTN-001">
                             </div>
                         </div>
                         <div class="col-md-4">
@@ -1345,7 +1348,27 @@ $hosColor = appsettings('hos_color') ?? '#0066cc';
                         <div class="col-md-4">
                             <div class="form-group">
                                 <label class="small font-weight-bold">Expiry Date</label>
-                                <input type="date" name="expiry_date" class="form-control" style="border-radius:8px;">
+                                <input type="date" name="expiry_date" id="batch-expiry-date" class="form-control" style="border-radius:8px;">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row mt-2">
+                        <div class="col-12">
+                            <label class="small font-weight-bold d-block mb-1">Acquisition Type (General Ledger Impact) <span class="text-danger">*</span></label>
+                            <div class="btn-group btn-group-toggle w-100" data-toggle="buttons" id="tally-acquisition-pills">
+                                <label class="btn btn-outline-primary btn-sm active" style="border-radius:8px 0 0 8px; font-weight:600;">
+                                    <input type="radio" name="acquisition_type" value="credit" checked onchange="updateTallyBatchGLPreview()">
+                                    <i class="mdi mdi-credit-card-outline mr-1"></i>On Credit (AP Debt)
+                                </label>
+                                <label class="btn btn-outline-info btn-sm" style="font-weight:600;">
+                                    <input type="radio" name="acquisition_type" value="cash" onchange="updateTallyBatchGLPreview()">
+                                    <i class="mdi mdi-cash mr-1"></i>Petty Cash / Till
+                                </label>
+                                <label class="btn btn-outline-secondary btn-sm" style="border-radius:0 8px 8px 0; font-weight:600;">
+                                    <input type="radio" name="acquisition_type" value="opening_stock" onchange="updateTallyBatchGLPreview()">
+                                    <i class="mdi mdi-book-open-outline mr-1"></i>Opening Stock (Equity)
+                                </label>
                             </div>
                         </div>
                     </div>
@@ -1353,15 +1376,15 @@ $hosColor = appsettings('hos_color') ?? '#0066cc';
                     <div class="row mt-2">
                         <div class="col-md-5">
                             <div class="form-group">
-                                <label class="small font-weight-bold" id="tally-supplier-label">Supplier / Donor</label>
-                                <select name="supplier_id" id="tally-batch-supplier" class="form-control" style="border-radius:8px;">
-                                    <option value="">— Select Supplier / Donor —</option>
+                                <label class="small font-weight-bold" id="tally-supplier-label">Supplier <span class="text-danger">*</span></label>
+                                <select name="supplier_id" id="tally-batch-supplier" class="form-control" required style="border-radius:8px;" onchange="updateTallyBatchGLPreview()">
+                                    <option value="">— Select Supplier —</option>
                                     @foreach ($suppliers as $sup)
                                     <option value="{{ $sup->id }}">{{ $sup->company_name }}</option>
                                     @endforeach
                                 </select>
                                 <small class="text-muted" id="tally-supplier-hint" style="display:block; font-size:0.75rem; margin-top:3px;">
-                                    <a href="{{ route('suppliers.create') }}" target="_blank">+ Add new supplier / Donor</a>
+                                    <a href="{{ route('suppliers.create') }}" target="_blank">+ Add new supplier</a>
                                 </small>
                             </div>
                         </div>
@@ -1369,6 +1392,31 @@ $hosColor = appsettings('hos_color') ?? '#0066cc';
                             <div class="form-group">
                                 <label class="small font-weight-bold">Notes</label>
                                 <textarea name="notes" class="form-control" rows="1" maxlength="500" placeholder="Optional notes…" style="border-radius:8px;"></textarea>
+                            </div>
+                        </div>
+                    </div>
+
+                    {{-- Live General Ledger Impact Preview --}}
+                    <div class="row mt-1">
+                        <div class="col-12">
+                            <div id="tally-journal-preview-card" style="background:#f8fafc; border:1px solid #cbd5e1; border-radius:10px; padding:10px 14px; font-size:0.82rem;">
+                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                    <span style="font-weight:700; color:#334155; text-transform:uppercase; font-size:0.72rem; letter-spacing:0.4px;">
+                                        <i class="mdi mdi-scale-balance mr-1 text-primary"></i>Real-time Ledger Impact (Double-Entry)
+                                    </span>
+                                    <span class="badge badge-success px-2 py-0" style="font-size:0.7rem;">Balanced (DR = CR)</span>
+                                </div>
+                                <div class="d-flex justify-content-between align-items-center py-1" style="border-bottom:1px dashed #e2e8f0;">
+                                    <span class="text-muted"><i class="mdi mdi-arrow-up-bold-circle text-success mr-1"></i><strong>DEBIT:</strong> <span id="preview-dr-acc">1310 - Inventory - Medical Supplies</span></span>
+                                    <strong class="text-success" id="preview-dr-amt">+₦0.00</strong>
+                                </div>
+                                <div class="d-flex justify-content-between align-items-center py-1">
+                                    <span class="text-muted"><i class="mdi mdi-arrow-down-bold-circle text-danger mr-1"></i><strong>CREDIT:</strong> <span id="preview-cr-acc">2110 - Accounts Payable (Select Supplier)</span></span>
+                                    <strong class="text-danger" id="preview-cr-amt">+₦0.00</strong>
+                                </div>
+                                <small class="text-muted d-block mt-1" id="preview-explanation" style="font-size:0.75rem;">
+                                    Increases inventory asset and creates accounts payable liability owed to selected supplier.
+                                </small>
                             </div>
                         </div>
                     </div>
@@ -1679,6 +1727,28 @@ $hosColor = appsettings('hos_color') ?? '#0066cc';
                             <label for="adj-notes">Additional Notes</label>
                             <textarea name="notes" id="adj-notes" class="form-control" rows="2" placeholder="Optional details…"></textarea>
                         </div>
+
+                        {{-- Live Adjustment GL Preview --}}
+                        <div class="row mb-2">
+                            <div class="col-12">
+                                <div id="adj-journal-preview-card" style="background:#f8fafc; border:1px solid #cbd5e1; border-radius:10px; padding:10px 14px; font-size:0.82rem;">
+                                    <div class="d-flex justify-content-between align-items-center mb-1">
+                                        <span style="font-weight:700; color:#475569; text-transform:uppercase; font-size:0.72rem;">
+                                            <i class="mdi mdi-scale-balance mr-1 text-warning"></i>General Ledger Posting Preview
+                                        </span>
+                                        <span class="badge badge-warning px-2 py-0" style="font-size:0.7rem;">Audited Variance</span>
+                                    </div>
+                                    <div class="d-flex justify-content-between align-items-center py-1" style="border-bottom:1px dashed #e2e8f0;">
+                                        <span class="text-muted"><i class="mdi mdi-arrow-up-bold-circle text-success mr-1"></i><strong>DEBIT:</strong> <span id="adj-preview-dr">1310 - Inventory</span></span>
+                                        <strong class="text-success" id="adj-preview-dr-amt">+₦0.00</strong>
+                                    </div>
+                                    <div class="d-flex justify-content-between align-items-center py-1">
+                                        <span class="text-muted"><i class="mdi mdi-arrow-down-bold-circle text-danger mr-1"></i><strong>CREDIT:</strong> <span id="adj-preview-cr">4230 - Stock Variance Gain</span></span>
+                                        <strong class="text-danger" id="adj-preview-cr-amt">+₦0.00</strong>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </form>
 
                     <button id="adj-back-btn" class="btn btn-link btn-sm text-muted px-0 mb-2">
@@ -1803,6 +1873,28 @@ $hosColor = appsettings('hos_color') ?? '#0066cc';
                                     <label>Damage Reason <span class="text-danger">*</span></label>
                                     <input type="text" name="damage_reason" class="form-control" minlength="10" placeholder="Describe the damage… (min 10 characters)" required>
                                     <small class="form-text text-muted">Minimum 10 characters required.</small>
+                                </div>
+                            </div>
+                        </div>
+
+                        {{-- Live Damage Write-off GL Preview --}}
+                        <div class="row mb-2">
+                            <div class="col-12">
+                                <div id="dmg-journal-preview-card" style="background:#fef2f2; border:1px solid #fecaca; border-radius:10px; padding:10px 14px; font-size:0.82rem;">
+                                    <div class="d-flex justify-content-between align-items-center mb-1">
+                                        <span style="font-weight:700; color:#991b1b; text-transform:uppercase; font-size:0.72rem;">
+                                            <i class="mdi mdi-scale-balance mr-1 text-danger"></i>Operating Loss Ledger Impact
+                                        </span>
+                                        <span class="badge badge-danger px-2 py-0" style="font-size:0.7rem;">Expense Write-off</span>
+                                    </div>
+                                    <div class="d-flex justify-content-between align-items-center py-1" style="border-bottom:1px dashed #fee2e2;">
+                                        <span class="text-muted"><i class="mdi mdi-arrow-up-bold-circle text-danger mr-1"></i><strong>DEBIT:</strong> <span id="dmg-preview-dr">5030 - Damaged Goods Write-off</span></span>
+                                        <strong class="text-danger" id="dmg-preview-dr-amt">+₦0.00</strong>
+                                    </div>
+                                    <div class="d-flex justify-content-between align-items-center py-1">
+                                        <span class="text-muted"><i class="mdi mdi-arrow-down-bold-circle text-muted mr-1"></i><strong>CREDIT:</strong> <span id="dmg-preview-cr">1310 - Inventory - Medical Supplies</span></span>
+                                        <strong class="text-muted" id="dmg-preview-cr-amt">-₦0.00</strong>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -2057,6 +2149,330 @@ $hosColor = appsettings('hos_color') ?? '#0066cc';
                     <i class="mdi mdi-check mr-1"></i>Submit Return
                 </button>
             </div>
+        </div>
+    </div>
+</div>
+{{-- ═══════════════════════════════════════════════════════════
+     MODAL 10 — Edit Batch Metadata
+═══════════════════════════════════════════════════════════ --}}
+<div class="modal fade" id="modal-edit-batch" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content" style="border-radius:12px; border:none; box-shadow:0 10px 25px rgba(0,0,0,0.1);">
+            <div class="modal-header" style="background:#f8fafc; border-bottom:1px solid #e2e8f0; border-radius:12px 12px 0 0;">
+                <h5 class="modal-title" style="color:#1e293b; font-weight:700;">
+                    <i class="mdi mdi-pencil-box-outline mr-2" style="color:#3b82f6;"></i>Edit Batch Details
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="form-edit-batch">
+                @csrf
+                <input type="hidden" name="batch_id" id="edit-batch-id">
+                <div class="modal-body" style="padding:1.5rem;">
+                    {{-- Quantity Lock Notice --}}
+                    <div class="alert alert-warning py-2 px-3 mb-3 d-flex align-items-center" style="border-radius:8px; font-size:0.83rem;">
+                        <i class="mdi mdi-lock-outline mr-2" style="font-size:1.3rem;"></i>
+                        <div>
+                            <strong>Quantity is locked:</strong> Batch stock count cannot be edited directly here. To change quantities, please use the audited <strong>Adjust Stock (+/-)</strong> flow.
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label class="small font-weight-bold">Batch Number <span class="text-danger">*</span></label>
+                                <input type="text" name="batch_number" id="edit-batch-number" class="form-control" required style="border-radius:8px;">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label class="small font-weight-bold">Batch Label / Name</label>
+                                <input type="text" name="batch_name" id="edit-batch-name" class="form-control" style="border-radius:8px;">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row mt-2">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label class="small font-weight-bold">Supplier <span class="text-danger">*</span></label>
+                                <select name="supplier_id" id="edit-batch-supplier" class="form-control" required style="border-radius:8px;">
+                                    <option value="">— Select Supplier —</option>
+                                    @foreach ($suppliers as $sup)
+                                    <option value="{{ $sup->id }}">{{ $sup->company_name }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="form-group">
+                                <label class="small font-weight-bold">Cost Price (₦) <span class="text-danger">*</span></label>
+                                <input type="number" name="cost_price" id="edit-batch-cost-price" class="form-control" step="0.01" min="0" required style="border-radius:8px;">
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="form-group">
+                                <label class="small font-weight-bold">Current Stock (Locked)</label>
+                                <input type="text" id="edit-batch-qty-display" class="form-control bg-light" disabled style="border-radius:8px; font-weight:700; color:#3b82f6;">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row mt-2">
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label class="small font-weight-bold">Expiry Date</label>
+                                <input type="date" name="expiry_date" id="edit-batch-expiry-date" class="form-control" style="border-radius:8px;">
+                            </div>
+                        </div>
+                        <div class="col-md-8">
+                            <div class="form-group">
+                                <label class="small font-weight-bold">Notes</label>
+                                <textarea name="notes" id="edit-batch-notes" class="form-control" rows="1" maxlength="500" style="border-radius:8px;"></textarea>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer" style="background:#f8fafc; border-top:1px solid #e2e8f0; border-radius:0 0 12px 12px; padding:1rem 1.5rem;">
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal" style="border-radius:8px; font-weight:600; color:#64748b;">Cancel</button>
+                    <button type="submit" class="btn btn-primary" id="btn-submit-edit-batch" style="border-radius:8px; font-weight:600; padding:0.5rem 1.5rem;">
+                        <i class="mdi mdi-check mr-1"></i>Save Changes
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+{{-- ═══════════════════════════════════════════════════════════
+     MODAL 11 — Void Batch (Recorded in Error)
+═══════════════════════════════════════════════════════════ --}}
+<div class="modal fade" id="modal-void-batch" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-md" role="document">
+        <div class="modal-content" style="border-radius:12px; border:none; box-shadow:0 10px 25px rgba(0,0,0,0.15);">
+            <div class="modal-header" style="background:#fef2f2; border-bottom:1px solid #fee2e2; border-radius:12px 12px 0 0;">
+                <h5 class="modal-title" style="color:#991b1b; font-weight:700;">
+                    <i class="mdi mdi-close-octagon-outline mr-2" style="color:#dc2626;"></i>Void Batch (Recorded in Error)
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="form-void-batch">
+                @csrf
+                <input type="hidden" name="batch_id" id="void-batch-id">
+                <div class="modal-body" style="padding:1.5rem;">
+                    <div class="alert alert-danger py-2 px-3 mb-3" style="border-radius:8px; font-size:0.83rem;">
+                        <i class="mdi mdi-alert-circle mr-1"></i>
+                        <strong>Data Entry Correction:</strong> Use this ONLY for batches entered by mistake that never physically existed. This zeroes the batch and automatically reverses the intake General Ledger entry.
+                    </div>
+
+                    <div id="void-batch-summary" class="p-3 mb-3 rounded" style="background:#f8fafc; border:1px solid #e2e8f0; font-size:0.85rem;">
+                        <div class="d-flex justify-content-between mb-1">
+                            <span class="text-muted">Batch Number:</span>
+                            <strong id="void-batch-number-display">—</strong>
+                        </div>
+                        <div class="d-flex justify-content-between mb-1">
+                            <span class="text-muted">Current Quantity:</span>
+                            <strong id="void-batch-qty-display" class="text-danger">—</strong>
+                        </div>
+                        <div class="d-flex justify-content-between">
+                            <span class="text-muted">Total Value to Reverse:</span>
+                            <strong id="void-batch-value-display">—</strong>
+                        </div>
+                    </div>
+
+                    <div class="form-group mb-3">
+                        <label class="small font-weight-bold">Reason for Voiding <span class="text-danger">*</span></label>
+                        <textarea name="reason" id="void-batch-reason" class="form-control" rows="2" required placeholder="State why this batch never physically existed (e.g., duplicated invoice entry, wrong drug chosen)…" style="border-radius:8px;"></textarea>
+                    </div>
+
+                    {{-- Live Void Reversal Preview --}}
+                    <div id="void-journal-preview-card" style="background:#fff; border:1px solid #cbd5e1; border-radius:8px; padding:10px 12px; font-size:0.8rem;">
+                        <span style="font-weight:700; color:#475569; font-size:0.7rem; text-transform:uppercase;">
+                            <i class="mdi mdi-undo mr-1 text-primary"></i>Reversal Journal Impact
+                        </span>
+                        <div class="d-flex justify-content-between py-1 border-bottom">
+                            <span class="text-muted">DEBIT: AP / Petty Cash (Reverses debt)</span>
+                            <strong class="text-success" id="void-preview-dr-amt">+₦0.00</strong>
+                        </div>
+                        <div class="d-flex justify-content-between py-1">
+                            <span class="text-muted">CREDIT: Inventory (Removes stock asset)</span>
+                            <strong class="text-danger" id="void-preview-cr-amt">-₦0.00</strong>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer" style="background:#f8fafc; border-top:1px solid #e2e8f0; border-radius:0 0 12px 12px; padding:1rem 1.5rem;">
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal" style="border-radius:8px; font-weight:600; color:#64748b;">Cancel</button>
+                    <button type="submit" class="btn btn-danger" id="btn-submit-void-batch" style="border-radius:8px; font-weight:600; padding:0.5rem 1.5rem;">
+                        <i class="mdi mdi-close-octagon mr-1"></i>Confirm Void Batch
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+{{-- ═══════════════════════════════════════════════════════════
+     MODAL 12 — Return Batch to Supplier
+═══════════════════════════════════════════════════════════ --}}
+<div class="modal fade" id="modal-return-batch" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content" style="border-radius:12px; border:none; box-shadow:0 10px 25px rgba(0,0,0,0.1);">
+            <div class="modal-header" style="background:#f8fafc; border-bottom:1px solid #e2e8f0; border-radius:12px 12px 0 0;">
+                <h5 class="modal-title" style="color:#1e293b; font-weight:700;">
+                    <i class="mdi mdi-undo-variant mr-2" style="color:#8b5cf6;"></i>Return Batch to Supplier
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="form-return-batch">
+                @csrf
+                <input type="hidden" name="batch_id" id="return-batch-id">
+                <input type="hidden" name="supplier_id" id="return-batch-supplier-id">
+                <div class="modal-body" style="padding:1.5rem;">
+                    {{-- Batch Selector (shown when opened from floating toolbar) --}}
+                    <div class="form-group mb-3" id="return-batch-picker-group" style="display:none;">
+                        <label class="small font-weight-bold">Select Store Batch to Return <span class="text-danger">*</span></label>
+                        <select id="return-batch-picker" class="form-control" style="border-radius:8px;">
+                            <option value="">— Choose a Batch from this Store —</option>
+                        </select>
+                    </div>
+
+                    <div id="return-batch-summary" class="p-3 mb-3 rounded" style="background:#f1f5f9; border:1px solid #e2e8f0; font-size:0.85rem;">
+                        <div class="row">
+                            <div class="col-md-4">
+                                <span class="text-muted small d-block">PRODUCT</span>
+                                <strong id="return-product-name">—</strong>
+                            </div>
+                            <div class="col-md-4">
+                                <span class="text-muted small d-block">BATCH # / SUPPLIER</span>
+                                <strong id="return-batch-supplier-info">—</strong>
+                            </div>
+                            <div class="col-md-4 text-right">
+                                <span class="text-muted small d-block">AVAILABLE UNITS</span>
+                                <strong id="return-available-qty" class="text-primary font-weight-bold" style="font-size:1.1rem;">0</strong>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label class="small font-weight-bold">Quantity to Return <span class="text-danger">*</span></label>
+                                <input type="number" name="qty_returned" id="return-qty" class="form-control" min="1" required style="border-radius:8px;" oninput="updateReturnGLPreview()">
+                                <small class="text-muted" id="return-max-hint"></small>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label class="small font-weight-bold">Return Reason <span class="text-danger">*</span></label>
+                                <select name="return_reason" id="return-reason" class="form-control" required style="border-radius:8px;">
+                                    <option value="damaged">Damaged / Broken in Transit</option>
+                                    <option value="expired_near">Near Expiry / Short Shelf Life</option>
+                                    <option value="recalled">Manufacturer Recall</option>
+                                    <option value="wrong_item">Wrong Product Delivered</option>
+                                    <option value="excess">Excess Delivery</option>
+                                    <option value="quality_issue">Quality / Discoloration Issue</option>
+                                    <option value="other">Other</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label class="small font-weight-bold">Settlement Mode <span class="text-danger">*</span></label>
+                                <select name="settlement_type" id="return-settlement-type" class="form-control" required style="border-radius:8px;" onchange="updateReturnGLPreview()">
+                                    <option value="ap_credit_note">AP Credit Note (Reduce Supplier Debt)</option>
+                                    <option value="cash_refund">Cash Refund Received</option>
+                                    <option value="receivable">Supplier Refund Due (Accounts Receivable)</option>
+                                    <option value="no_financial_impact">No Financial Impact (Donation Stock)</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group mt-2">
+                        <label class="small font-weight-bold">Return Notes / Courier Waybill</label>
+                        <textarea name="return_notes" id="return-notes" class="form-control" rows="2" placeholder="Waybill number, driver info, return delivery notes…" style="border-radius:8px;"></textarea>
+                    </div>
+
+                    {{-- Return Ledger Impact Preview --}}
+                    <div id="return-journal-preview-card" style="background:#f8fafc; border:1px solid #cbd5e1; border-radius:10px; padding:10px 14px; font-size:0.82rem;" class="mt-2">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <span style="font-weight:700; color:#334155; text-transform:uppercase; font-size:0.72rem;">
+                                <i class="mdi mdi-scale-balance mr-1 text-primary"></i>Return Ledger Posting Preview
+                            </span>
+                            <span class="badge badge-primary px-2 py-0" style="font-size:0.7rem;">Balanced Return</span>
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center py-1 border-bottom">
+                            <span class="text-muted"><i class="mdi mdi-arrow-up-bold-circle text-success mr-1"></i><strong>DEBIT:</strong> <span id="return-preview-dr">2110 - Accounts Payable (Supplier Credit Note)</span></span>
+                            <strong class="text-success" id="return-preview-dr-amt">+₦0.00</strong>
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center py-1">
+                            <span class="text-muted"><i class="mdi mdi-arrow-down-bold-circle text-danger mr-1"></i><strong>CREDIT:</strong> <span id="return-preview-cr">1310 - Inventory - Medical Supplies</span></span>
+                            <strong class="text-danger" id="return-preview-cr-amt">-₦0.00</strong>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer" style="background:#f8fafc; border-top:1px solid #e2e8f0; border-radius:0 0 12px 12px; padding:1rem 1.5rem;">
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal" style="border-radius:8px; font-weight:600; color:#64748b;">Cancel</button>
+                    <button type="submit" class="btn btn-primary" id="btn-submit-return-batch" style="border-radius:8px; font-weight:600; padding:0.5rem 1.5rem; background:#8b5cf6; border-color:#8b5cf6;">
+                        <i class="mdi mdi-check mr-1"></i>Process Return
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+{{-- ═══════════════════════════════════════════════════════════
+     MODAL 13 — Void Stock Adjustment (Recorded in Error)
+═══════════════════════════════════════════════════════════ --}}
+<div class="modal fade" id="modal-void-adjustment" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-md" role="document">
+        <div class="modal-content" style="border-radius:12px; border:none; box-shadow:0 10px 25px rgba(0,0,0,0.15);">
+            <div class="modal-header" style="background:#fef2f2; border-bottom:1px solid #fee2e2; border-radius:12px 12px 0 0;">
+                <h5 class="modal-title" style="color:#991b1b; font-weight:700;">
+                    <i class="mdi mdi-undo-variant mr-2" style="color:#dc2626;"></i>Void Adjustment (Recorded in Error)
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="form-void-adjustment">
+                @csrf
+                <input type="hidden" name="transaction_id" id="void-adj-tx-id">
+                <div class="modal-body" style="padding:1.5rem;">
+                    <div class="alert alert-warning py-2 px-3 mb-3" style="border-radius:8px; font-size:0.83rem;">
+                        <i class="mdi mdi-alert-circle mr-1"></i>
+                        This action cancels an erroneous physical count adjustment, restores the original batch balance, and reverses the General Ledger variance gain or shrinkage entry.
+                    </div>
+
+                    <div id="void-adj-summary" class="p-3 mb-3 rounded" style="background:#f8fafc; border:1px solid #e2e8f0; font-size:0.85rem;">
+                        <div class="d-flex justify-content-between mb-1">
+                            <span class="text-muted">Transaction ID:</span>
+                            <strong id="void-adj-tx-id-display">—</strong>
+                        </div>
+                        <div class="d-flex justify-content-between mb-1">
+                            <span class="text-muted">Adjustment Type:</span>
+                            <strong id="void-adj-type-display">—</strong>
+                        </div>
+                        <div class="d-flex justify-content-between mb-1">
+                            <span class="text-muted">Quantity:</span>
+                            <strong id="void-adj-qty-display">—</strong>
+                        </div>
+                        <div class="d-flex justify-content-between">
+                            <span class="text-muted">Original Notes:</span>
+                            <span id="void-adj-notes-display" class="text-muted italic">—</span>
+                        </div>
+                    </div>
+
+                    <div class="form-group mb-3">
+                        <label class="small font-weight-bold">Reason for Voiding Adjustment <span class="text-danger">*</span></label>
+                        <textarea name="reason" id="void-adj-reason" class="form-control" rows="2" required placeholder="State why this count adjustment was erroneous…" style="border-radius:8px;"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer" style="background:#f8fafc; border-top:1px solid #e2e8f0; border-radius:0 0 12px 12px; padding:1rem 1.5rem;">
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal" style="border-radius:8px; font-weight:600; color:#64748b;">Cancel</button>
+                    <button type="submit" class="btn btn-danger" id="btn-submit-void-adj" style="border-radius:8px; font-weight:600; padding:0.5rem 1.5rem;">
+                        <i class="mdi mdi-undo mr-1"></i>Confirm Void Adjustment
+                    </button>
+                </div>
+            </form>
         </div>
     </div>
 </div>
