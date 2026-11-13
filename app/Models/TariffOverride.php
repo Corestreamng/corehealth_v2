@@ -16,6 +16,7 @@ class TariffOverride extends Model
         'target_id',
         'override_type',
         'amount',
+        'coverage_mode',
         'is_active',
     ];
 

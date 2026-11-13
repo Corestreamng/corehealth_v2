@@ -1548,6 +1548,8 @@ class TariffManagementController extends Controller
                 'target_name' => $o->target_name,
                 'override_type' => ucfirst($o->override_type),
                 'amount' => $o->override_type === 'percentage' ? $o->amount . '%' : '₦' . number_format($o->amount, 2),
+                'coverage_mode' => $o->coverage_mode ? ucfirst($o->coverage_mode) : 'Inherit Tariff',
+                'raw_coverage_mode' => $o->coverage_mode,
                 'is_active' => $o->is_active ? 'Active' : 'Inactive',
             ];
         });
@@ -1564,6 +1566,7 @@ class TariffManagementController extends Controller
             'target_id' => 'required_unless:target_type,all_products,all_services|integer|nullable',
             'override_type' => 'required|in:percentage,fixed',
             'amount' => 'required|numeric|min:0',
+            'coverage_mode' => 'nullable|in:express,primary,secondary',
         ]);
 
         $targetId = in_array($request->target_type, ['all_products', 'all_services']) ? 0 : $request->target_id;
@@ -1579,6 +1582,7 @@ class TariffManagementController extends Controller
                 [
                     'override_type' => $request->override_type,
                     'amount' => $request->amount,
+                    'coverage_mode' => $request->coverage_mode ?: null,
                     'is_active' => 1,
                 ]
             );

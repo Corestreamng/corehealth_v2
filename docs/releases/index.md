@@ -11,6 +11,9 @@ Every release tag is bound directly to documentation updates, PHPUnit verificati
 
 ## Recent Milestones
 
+- **[v2.6.0.72 — HMO Tariff Overrides Engine & Coverage Mode Interception](/releases/v2.6.0.72)**  
+  Resolves scope-matching omissions for global catalog overrides (`All Products` and `All Services`), establishes a 6-tier mathematical specificity hierarchy (Item > Category > All Items with HMO > Scheme), and introduces direct Coverage Mode Interception (`express`, `primary`, `secondary`, or `inherit`) across the database schema, models, controllers, calculation engine (`HmoHelper`), and administrative UI.
+
 - **[v2.6.0.71 — Express Stock Intake, Tally Card Double-Entry Accounting, Voiding & Batch Returns](/releases/v2.6.0.71)**  
   Implements "Practice A: Express Stock Receipt / Direct Purchase", allowing hospital storekeepers to preserve their 1-step direct receipt flow while the system automatically handles double-entry GL accounting behind the scenes (`DR 1310/1300 Inventory`, `CR 2100 Accounts Payable` + supplier sub-account / `1030 Cash` / `3100 Equity`). Enforces mandatory supplier selection and the Locked Quantity Invariant on batch metadata editing. Features audited physical count variance accounting (`4230 Variance Gain` / `5050 Shrinkage Loss`), a dedicated "Recorded in Error" voiding mechanism for non-existent batches and adjustments (clean intake JE reversal without false shrinkage distortion), manual batch supplier returns with 4 settlement modes, unbilled ward consumption (`5020 Medical Supplies Used`), and real-time double-entry UI preview cards across all storekeeper modals.
 

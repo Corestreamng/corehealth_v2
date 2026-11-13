@@ -115,6 +115,7 @@
                             <th class="font-weight-bold text-uppercase text-secondary text-xs">Target Name</th>
                             <th class="font-weight-bold text-uppercase text-secondary text-xs">Override Type</th>
                             <th class="font-weight-bold text-uppercase text-secondary text-xs">Payable Amount</th>
+                            <th class="font-weight-bold text-uppercase text-secondary text-xs">Coverage Mode</th>
                             <th class="font-weight-bold text-uppercase text-secondary text-xs">Status</th>
                             <th class="font-weight-bold text-uppercase text-secondary text-xs">Actions</th>
                         </tr>
@@ -233,6 +234,18 @@
                                             <small class="text-muted d-block mt-2" id="amount_hint">If 20%, patient pays 20% and HMO pays 80%.</small>
                                         </div>
                                     </div>
+                                    <div class="row mt-3 pt-3 border-top">
+                                        <div class="col-md-12 form-group mb-0">
+                                            <label class="font-weight-bold text-dark small">Coverage Mode Override (Optional)</label>
+                                            <select name="coverage_mode" id="coverage_mode" class="form-control form-control-solid select2">
+                                                <option value="">Inherit from Underlying Tariff (Default)</option>
+                                                <option value="express">Express (Auto-Approved / Immediate)</option>
+                                                <option value="primary">Primary (Requires HMO Validation)</option>
+                                                <option value="secondary">Secondary (Requires Validation + Auth Code)</option>
+                                            </select>
+                                            <small class="text-muted d-block mt-1" id="coverage_mode_hint">Leave as default to retain each item's tariff coverage mode, or force an override mode for all matching items.</small>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -329,6 +342,12 @@
                 { data: 'target_name' },
                 { data: 'override_type' },
                 { data: 'amount' },
+                { data: 'coverage_mode', render: function(data, type, row) {
+                    if (row.raw_coverage_mode === 'express') return '<span class="badge badge-success"><i class="mdi mdi-flash mr-1"></i>Express</span>';
+                    if (row.raw_coverage_mode === 'primary') return '<span class="badge badge-warning"><i class="mdi mdi-clock-outline mr-1"></i>Primary</span>';
+                    if (row.raw_coverage_mode === 'secondary') return '<span class="badge badge-danger"><i class="mdi mdi-shield-key mr-1"></i>Secondary</span>';
+                    return '<span class="badge badge-light border text-muted">Inherit Tariff</span>';
+                }},
                 { data: 'is_active', render: function(data) {
                     return data === 'Active' ? '<span class="badge badge-success">Active</span>' : '<span class="badge badge-secondary">Inactive</span>';
                 }},
@@ -410,6 +429,18 @@
             
             var isCategory = (targetType === 'product_category' || targetType === 'service_category' || targetType === 'all_products' || targetType === 'all_services');
 
+            var covMode = $('#coverage_mode').val();
+            var covText = '';
+            if (covMode === 'express') {
+                covText = ' Additionally, coverage mode will be overridden to <strong class="text-success"><i class="mdi mdi-flash"></i> Express (Auto-Approved)</strong>.';
+            } else if (covMode === 'primary') {
+                covText = ' Additionally, coverage mode will be overridden to <strong class="text-warning"><i class="mdi mdi-clock-outline"></i> Primary (Requires HMO Validation)</strong>.';
+            } else if (covMode === 'secondary') {
+                covText = ' Additionally, coverage mode will be overridden to <strong class="text-danger"><i class="mdi mdi-shield-key"></i> Secondary (Requires Validation + Pre-Auth Code)</strong>.';
+            } else {
+                covText = ' Coverage mode will <strong class="text-secondary">inherit from each item\'s underlying tariff</strong> (or fallback to Express if unlisted).';
+            }
+
             if (isCategory) {
                 $('#preview_base_price').text('Varies by Item');
                 
@@ -422,13 +453,13 @@
                     $('#preview_patient_pays').html('<span class="text-dark small">Varies</span> (' + amt + '%)');
                     $('#preview_hmo_pays').html('<span class="text-dark small">Varies</span> (' + (100 - amt) + '%)');
                     
-                    var story = `When a patient under the <strong>${contextText}</strong> ${cText} accesses ${targetTextDisplay}, the patient will be charged <strong>${amt}%</strong> of its base retail price, while the remaining <strong>${100 - amt}%</strong> will be sent to the HMO as a claim.`;
+                    var story = `When a patient under the <strong>${contextText}</strong> ${cText} accesses ${targetTextDisplay}, the patient will be charged <strong>${amt}%</strong> of its base retail price, while the remaining <strong>${100 - amt}%</strong> will be sent to the HMO as a claim.${covText}`;
                     $('#preview_story').html(story);
                 } else {
                     $('#preview_patient_pays').text('₦' + amt.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2}));
                     $('#preview_hmo_pays').html('<span class="text-dark small">Remaining Balance</span>');
                     
-                    var story = `When a patient under the <strong>${contextText}</strong> ${cText} accesses ${targetTextDisplay}, the patient will be charged exactly <strong>₦${amt.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</strong>, while any remaining balance of the item's cost will be sent to the HMO as a claim.`;
+                    var story = `When a patient under the <strong>${contextText}</strong> ${cText} accesses ${targetTextDisplay}, the patient will be charged exactly <strong>₦${amt.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</strong>, while any remaining balance of the item's cost will be sent to the HMO as a claim.${covText}`;
                     $('#preview_story').html(story);
                 }
             } else {
@@ -447,13 +478,13 @@
                 var strAmount = type === 'percentage' ? amt + '% (₦' + patientPays.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2}) + ')' : '₦' + patientPays.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
                 var strHmoPays = '₦' + hmoPays.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
                 
-                var story = `When a patient under the <strong>${contextText}</strong> ${cText} comes to access <strong>${targetText}</strong>, the patient will be charged <strong>${strAmount}</strong>, while the remaining <strong>${strHmoPays}</strong> will be sent to the HMO as a claim.`;
+                var story = `When a patient under the <strong>${contextText}</strong> ${cText} comes to access <strong>${targetText}</strong>, the patient will be charged <strong>${strAmount}</strong>, while the remaining <strong>${strHmoPays}</strong> will be sent to the HMO as a claim.${covText}`;
                 $('#preview_story').html(story);
             }
         }
 
         $('#amount').on('input', updateLivePreview);
-        $('#context_id').change(updateLivePreview);
+        $('#context_id, #coverage_mode').change(updateLivePreview);
 
         $('#target_type, #target_id, #context_id').change(function() {
             var targetType = $('#target_type').val();

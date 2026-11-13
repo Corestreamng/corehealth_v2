@@ -166,18 +166,23 @@ class HmoHelper
             $basePrice = $service->price->sale_price ?? 0;
         }
 
+        $allTargetType = 'all_' . $targetType . 's';
+
         $overrides = \App\Models\TariffOverride::where('is_active', 1)
             ->where(function ($q) use ($hmoId, $schemeId) {
                 $q->where('hmo_id', $hmoId)
                   ->orWhere('hmo_scheme_id', $schemeId);
             })
-            ->where(function ($q) use ($targetType, $targetId, $categoryId) {
+            ->where(function ($q) use ($targetType, $targetId, $categoryId, $allTargetType) {
                 $q->where(function ($q2) use ($targetType, $targetId) {
                     $q2->where('target_type', $targetType)->where('target_id', $targetId);
-                })
-                ->orWhere(function ($q2) use ($targetType, $categoryId) {
-                    $q2->where('target_type', $targetType . '_category')->where('target_id', $categoryId);
                 });
+                if ($categoryId) {
+                    $q->orWhere(function ($q2) use ($targetType, $categoryId) {
+                        $q2->where('target_type', $targetType . '_category')->where('target_id', $categoryId);
+                    });
+                }
+                $q->orWhere('target_type', $allTargetType);
             })
             ->get();
 
@@ -185,11 +190,13 @@ class HmoHelper
             return null;
         }
 
-        // Sort overrides by priority:
-        // 1. Exact HMO + Exact Product/Service
-        // 2. Exact HMO + Category
-        // 3. Scheme + Exact Product/Service
-        // 4. Scheme + Category
+        // Sort overrides by specificity priority:
+        // 1. Exact HMO + Exact Product/Service (score: 15)
+        // 2. Exact HMO + Category (score: 13)
+        // 3. Exact HMO + All Products/Services (score: 11)
+        // 4. Scheme + Exact Product/Service (score: 5)
+        // 5. Scheme + Category (score: 3)
+        // 6. Scheme + All Products/Services (score: 1)
         $override = $overrides->sortBy(function ($o) use ($targetType) {
             $score = 0;
             if ($o->hmo_id) {
@@ -197,6 +204,10 @@ class HmoHelper
             }
             if ($o->target_type === $targetType) {
                 $score += 5;
+            } elseif (str_ends_with($o->target_type, '_category')) {
+                $score += 3;
+            } else {
+                $score += 1;
             }
 
             return -$score;
@@ -216,19 +227,28 @@ class HmoHelper
 
         $claimsAmount = max(0, $basePrice - $payableAmount);
 
-        // Fallback coverage mode to express
-        $coverageMode = 'express';
-        $existingTariff = \App\Models\HmoTariff::where('hmo_id', $hmoId)
-            ->where(function ($q) use ($productId, $serviceId) {
-                if ($productId) {
-                    $q->where('product_id', $productId)->whereNull('service_id');
-                } else {
-                    $q->where('service_id', $serviceId)->whereNull('product_id');
-                }
-            })->first();
+        // Determine coverage mode:
+        // 1. If override explicitly defines coverage_mode, use it
+        // 2. Otherwise inherit from existing underlying tariff in hmo_tariffs
+        // 3. Fallback to 'express' if no tariff exists
+        $coverageMode = null;
+        if (!empty($override->coverage_mode)) {
+            $coverageMode = $override->coverage_mode;
+        } else {
+            $existingTariff = \App\Models\HmoTariff::where('hmo_id', $hmoId)
+                ->where(function ($q) use ($productId, $serviceId) {
+                    if ($productId) {
+                        $q->where('product_id', $productId)->whereNull('service_id');
+                    } else {
+                        $q->where('service_id', $serviceId)->whereNull('product_id');
+                    }
+                })->first();
 
-        if ($existingTariff) {
-            $coverageMode = $existingTariff->coverage_mode;
+            if ($existingTariff && !empty($existingTariff->coverage_mode)) {
+                $coverageMode = $existingTariff->coverage_mode;
+            } else {
+                $coverageMode = 'express';
+            }
         }
 
         return [
