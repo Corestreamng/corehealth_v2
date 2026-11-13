@@ -45,11 +45,19 @@ class StockBatchTransaction extends Model implements Auditable
         'reference_id',
         'notes',
         'performed_by',
+        'is_voided',
+        'voided_at',
+        'voided_by',
+        'void_reason',
+        'journal_entry_id',
+        'void_reversal_je_id',
     ];
 
     protected $casts = [
         'qty' => 'integer',
         'balance_after' => 'integer',
+        'is_voided' => 'boolean',
+        'voided_at' => 'datetime',
     ];
 
     /**
@@ -65,6 +73,9 @@ class StockBatchTransaction extends Model implements Auditable
     public const TYPE_DAMAGED = 'damaged';
     public const TYPE_PO_RETURN = 'po_return';    // Supplier return — stock deducted, AP/expense reversed
     public const TYPE_REQ_RETURN = 'req_return';  // Requisition return — stock moves back to origin store
+    public const TYPE_BATCH_RETURN = 'po_return'; // Manual batch supplier return (outbound deduction)
+    public const TYPE_VOID = 'adjustment';        // Batch voided (recorded in error count zeroing)
+    public const TYPE_VOID_ADJUSTMENT = 'adjustment'; // Adjustment voided (recorded in error count restoration)
 
     /**
      * Get all transaction types
@@ -82,6 +93,9 @@ class StockBatchTransaction extends Model implements Auditable
             self::TYPE_DAMAGED => 'Damaged',
             self::TYPE_PO_RETURN => 'PO Return',
             self::TYPE_REQ_RETURN => 'Requisition Return',
+            self::TYPE_BATCH_RETURN => 'Batch Return',
+            self::TYPE_VOID => 'Voided Batch',
+            self::TYPE_VOID_ADJUSTMENT => 'Voided Adjustment',
         ];
     }
 
@@ -109,6 +123,38 @@ class StockBatchTransaction extends Model implements Auditable
     public function reference()
     {
         return $this->morphTo();
+    }
+
+    /**
+     * Get the journal entry for this transaction (e.g. stock adjustment)
+     */
+    public function journalEntry()
+    {
+        return $this->belongsTo(\App\Models\Accounting\JournalEntry::class, 'journal_entry_id');
+    }
+
+    /**
+     * Get the reversal journal entry if voided
+     */
+    public function voidReversalJournalEntry()
+    {
+        return $this->belongsTo(\App\Models\Accounting\JournalEntry::class, 'void_reversal_je_id');
+    }
+
+    /**
+     * Get the user who voided this transaction
+     */
+    public function voidedByUser()
+    {
+        return $this->belongsTo(User::class, 'voided_by');
+    }
+
+    /**
+     * Check if this transaction has been voided
+     */
+    public function isVoided(): bool
+    {
+        return (bool) $this->is_voided;
     }
 
     // ===== SCOPES =====

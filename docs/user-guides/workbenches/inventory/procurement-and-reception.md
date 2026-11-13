@@ -136,30 +136,38 @@ Click **`Process Payment`**. The transaction executes:
 
 ## 6. Manual Batch Reception (Non-PO Stock Intake)
 
-![Manual Batch Receipt Form](/images/workbenches/store-manual-batch.jpg)
+![Manual Batch Intake with Real-Time Double-Entry Ledger Preview](/images/workbenches/classic-manual-batch-preview.jpg)
 
-For items entering the hospital without an electronic purchase order (e.g. World Health Organization donated vaccine vials, free clinical trial samples, or legacy baseline stock):
+For items entering the hospital without an electronic purchase order (e.g. World Health Organization donated vaccine vials, free clinical trial samples, direct vendor purchases, or legacy baseline stock):
 
 ### 1. Clinical & Operational Objective
-Ingest un-ordered physical stock into specific stores while establishing verified batch lots, unit costs, and expiry dates.
+Ingest un-ordered physical stock into specific stores while establishing verified batch lots, unit costs, and expiry dates, with instant double-entry General Ledger balancing.
 
 ### 2. Exact UI Location / Where to Click
 - Navigate to **Store Workbench** (`/inventory/store-workbench`).
-- In the Quick Actions grid, click **`Add Batch`** (`/inventory/store-workbench/manual-batch`).
+- In the Quick Actions grid, click **`Add Batch`** (`/inventory/store-workbench/manual-batch`), or click **`+ Add Batch`** on the Tally Card floating action toolbar.
 
-### 3. Required Fields
+### 3. Required Fields & Accounting Classifications
 - **Destination Store (*Required)**: Select target holding store (e.g. `Pharmacy Main Store`).
 - **Product (*Required)**: Select product from catalog (e.g. `Aceclofenac 100mg Tablets`).
+- **Registered Supplier (*Required)**: Select verified vendor from catalog (e.g. `Apollos Technologies`).
+- **Acquisition Type (*Required)**:
+  - `On Credit (AP Debt)`: Generates accounts payable tagged to vendor sub-account.
+  - `Petty Cash / Till`: Disbursed from store cash till.
+  - `Opening Stock`: Capitalized against retained earnings equity (`3100`).
+  - `Direct Donation`: Free inventory @ `₦0.00` without payable liability.
 - **Batch / Lot Number (*Required)**: Manufacturer lot number (e.g. `LOT-ACE-2026-04`).
-- **Quantity In (*Required)**: Number of physical units (e.g. `500 tablets`).
-- **Cost Price Per Unit (*Required)**: `₦25.00` (or `₦0.00` with Donation ledger classification).
+- **Batch Name / Label (*Optional)**: Descriptive alias (e.g. `Emergency Relief Consignments`).
+- **Quantity In (*Required)**: Number of physical packaging units or base units (e.g. `500 tablets`).
+- **Packaging Unit & Factor**: Translates packaging units (e.g. `Packs of 10`) into base piece equivalents.
+- **Cost Price Per Unit (*Required)**: Cost per packaging unit (e.g. `₦25.00`, or `₦0.00` for donations).
 - **Selling / Tariff Price (*Required)**: Standard retail price `₦50.00`.
 - **Manufacturing Date (*Optional)**: `01 Oct 2026`.
 - **Expiry Date (*Required)**: `30 Sep 2029`.
-- **Source / Acquisition Type (*Required)**: Select `Opening Stock`, `Direct Donation`, or `Emergency Local Purchase`.
+- **Real-Time Double-Entry Preview Card**: Displays live debit and credit accounts and monetary balance before form submission.
 
 ### 4. Downstream Handover
-Click **`Create Batch & Update Stock`**. The batch is assigned to the selected store and immediately enters the Electronic Tally Card and FEFO dispensing queue.
+Click **`Create Batch & Update Stock`**. The batch is assigned to the selected store and immediately enters the Electronic Tally Card and FEFO dispensing queue. Stock and ledger balance in real time.
 
 ---
 

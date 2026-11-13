@@ -18,6 +18,11 @@
         'inventory.po-returns.search-pos' => route('inventory.po-returns.search-pos'),
         'inventory.po-returns.po-items' => route('inventory.po-returns.po-items'),
         'inventory.po-returns.store' => route('inventory.po-returns.store'),
+        'inventory.store-workbench.batch.update' => route('inventory.store-workbench.batch.update', ['batch' => ':id']),
+        'inventory.store-workbench.batch.void' => route('inventory.store-workbench.batch.void', ['batch' => ':id']),
+        'inventory.store-workbench.batch.return' => route('inventory.store-workbench.batch.return', ['batch' => ':id']),
+        'inventory.store-workbench.adjustment.void' => route('inventory.store-workbench.adjustment.void', ['transaction' => ':id']),
+        'inventory.store-workbench.journal-preview' => route('inventory.store-workbench.journal-preview'),
     ];
 @endphp
 @section('scripts')

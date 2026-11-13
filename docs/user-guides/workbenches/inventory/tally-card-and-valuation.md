@@ -8,10 +8,10 @@ The **Stock Ledger & Valuation** subsystem replaces physical paper bin cards wit
 
 ## 1. Visual Tour: Electronic Tally Card Ledger
 
-![Electronic Tally Card](/images/workbenches/store-tally-card.jpg)
+![Electronic Tally Card Ledger with Row Actions](/images/workbenches/store-tally-table-with-edit-controls.jpg)
 
 > [!NOTE]
-> The **Electronic Tally Card** (`/inventory/store-workbench/tally-card`) provides a live, forensic stock ledger. Note the dual View Axis (by Product or by Store), live aggregate KPI pills (Total IN, Total OUT, Net Movement, Balance), the pending actions queue cards, and the persistent floating action console.
+> The **Electronic Tally Card** (`/inventory/store-workbench/tally-card`) provides a live, forensic stock ledger. Note the dual View Axis (by Product or by Store), live aggregate KPI pills (Total IN, Total OUT, Net Movement, Balance), row-level action badges (`[ ✎ Edit ]`, `[ ⚠ Damage ]`, `[ ⮌ Return ]`, `[ ⊘ Void ]`), and the persistent floating action console with rapid shortcuts for Requisitions, Purchases, Adjustments, and Batch Editing.
 
 ---
 
@@ -33,6 +33,8 @@ flowchart TD
 ---
 
 ## 3. Electronic Tally Card (Perpetual Bin Card)
+
+![Electronic Tally Card Cockpit View](/images/workbenches/store-tally-card-cockpit.jpg)
 
 In hospital store operations, paper tally cards frequently suffer from lost entries, illegible handwriting, and backdated falsifications. CoreHealth v2 replaces them with an automated, tamper-proof electronic ledger:
 
@@ -92,7 +94,123 @@ From the Expiry Report, supervisors can directly execute:
 
 ---
 
-## 5. Multi-Store Stock Overview & Batch Drilldown
+## 5. Express Stock Intake, Batch Governance & Double-Entry Accounting
+
+CoreHealth v2 implements **Practice A: Express Stock Receipt / Direct Purchase**, empowering storekeepers to perform fast 1-step direct receipts while automatically posting balanced General Ledger entries in real time.
+
+```mermaid
+flowchart TD
+    A["Storekeeper Opens Modal: Add Batch / Direct Intake"] --> B["Select Product, Store, Mandatory Supplier, Batch #, Expiry, Qty, Cost"]
+    B --> C{"Select Acquisition Mode"}
+    
+    C -->|"On Credit (Default)"| D["DR 1310 Inventory Asset<br/>CR 2100 Accounts Payable (Supplier Sub-Account)"]
+    C -->|"Petty Cash / Till"| E["DR 1310 Inventory Asset<br/>CR 1030 Petty Cash / Till Asset"]
+    C -->|"Opening Stock (Audit/Setup)"| F["DR 1310 Inventory Asset<br/>CR 3100 Retained Earnings (Equity)"]
+    C -->|"Free Donation (₦0 Cost)"| G["DR 1310 Inventory Asset @ ₦0.00<br/>No Financial Payable (Program Logged)"]
+    
+    D --> H["Live GL Preview Confirms Double-Entry Balance in UI"]
+    E --> H
+    F --> H
+    G --> H
+    H --> I["Batch Created & Store Stock Balance Synchronized"]
+```
+
+### 1. Mandatory Supplier & Acquisition Type Selector
+
+![Express Stock Receipt Modal with Live GL Preview](/images/workbenches/store-tally-add-batch-modal.jpg)
+
+- **Strict Supplier Requirement**: Storekeepers must select a verified vendor from the registered supplier catalog (`supplier_id`). Direct walk-ins or unregistered suppliers cannot bypass accounting controls.
+- **Acquisition Modes**:
+  - **On Credit (AP Debt)**: Immediately debits Store Inventory (`1310`/`1300`) and credits Accounts Payable (`2100`) tagged to the vendor's dedicated subsidiary ledger sub-account.
+  - **Petty Cash / Till**: Immediately credits the store's petty cash till (`1030`/`1010`), verifying that goods were disbursed directly from on-hand cash.
+  - **Opening Stock (Equity)**: Reconciles baseline opening inventory against retained earnings (`3100`), capitalizing starting warehouse assets without creating spurious supplier liabilities.
+  - **Donation / Government Program**: Locks unit cost to `₦0.00`, logging physical inventory increments without generating unpayable financial liabilities.
+- **Real-Time Double-Entry Preview Card**: Displays live debit and credit account codes, dynamic monetary totals ($\text{Qty} \times \text{Cost}$), and operational explanations before submission.
+
+### 2. Batch Metadata Editing & Locked Quantity Invariant
+
+![Batch Metadata Editing Modal (Locked Quantity)](/images/workbenches/store-tally-edit-batch-modal.jpg)
+
+- **Action**: Click **`[ ✎ Edit ]`** on any transaction row in Tally Card, click **`[ ✎ Edit Batch ]`** on the floating action toolbar, or open lot cards in Product Batches (`/inventory/store-workbench/products/{id}/batches`).
+
+![Floating Toolbar Batch Edit Console with Dynamic Store Lot Selector](/images/workbenches/store-tally-floating-edit-batch.jpg)
+
+- **Editable Attributes**: Manufacturer Lot Number, Batch Label/Name, Expiry Date, Supplier Assignment, and Unit Cost Price.
+- **Quantity Lock Invariant**: The `current_qty` and `initial_qty` fields are strictly locked against direct modification. Any physical stock correction must pass through the audited count adjustment pipeline.
+
+---
+
+## 6. Stock Count Adjustments & "Recorded in Error" Voiding
+
+```mermaid
+flowchart LR
+    A["Tally Card Row"] --> B{"Operation Type"}
+    
+    B -->|"Count Surplus (+)"| C["DR 1310 Inventory<br/>CR 4230 Stock Variance Gain"]
+    B -->|"Count Shortage (-)"| D["DR 5050 Inventory Shrinkage<br/>CR 1310 Inventory"]
+    B -->|"Batch Recorded in Error"| E["Void Batch:<br/>Zeroes Non-Existent Stock<br/>Reverses Intake JE (CR Inventory / DR AP)"]
+    B -->|"Adjustment in Error"| F["Void Adjustment:<br/>Restores Lot Count<br/>Reverses Variance JE"]
+```
+
+### 1. Physical Count Adjustments (+ / -)
+
+![Stock Adjustment with Real-Time General Ledger Posting Preview](/images/workbenches/classic-adjustment-preview.jpg)
+
+Storekeepers performing periodic bin audits execute count adjustments via **Adjust Stock** (`Modal 4` or `/inventory/store-workbench/batch/{id}/adjust`):
+- **Positive Variance (Surplus Items Found)**:
+  - System increases batch count.
+  - Posts **DR 1310 Inventory Asset** / **CR 4230 Stock Variance Gain (Other Income)**.
+- **Negative Variance (Missing Items / Shortage)**:
+  - System decreases batch count.
+  - Posts **DR 5050 Inventory Shrinkage Loss** / **CR 1310 Inventory Asset**.
+
+### 2. "Recorded in Error" Voiding Architecture
+
+![Void Batch Recorded in Error Modal with Reversal Preview](/images/workbenches/store-tally-void-batch-modal.jpg)
+
+When an operator accidentally enters a batch or count adjustment that never physically existed (e.g. duplicated invoice entry or wrong drug selected):
+- **Void Batch (`Modal 11` & Product Batches Cockpit)**:
+  - Accessible directly from Tally Card rows (`[ ⊘ Void ]`) or from the lot actions menu in **Product Batches** (`/inventory/store-workbench/products/{id}/batches`).
+  - Requires mandatory justification note explaining the data-entry error.
+  - Zeroes remaining lot quantity and deactivates the batch.
+  - Automatically invokes `AccountingService::reverseEntry` to reverse the intake journal entry (swapping debits and credits) and marking the original entry as `STATUS_REVERSED`.
+  - **Prevents False Shrinkage**: Does NOT inflate operating loss metrics or shrinkage expenses for non-existent stock.
+
+![Void Batch Confirmation on Product Batches Detail View](/images/workbenches/product-batches-void-preview.jpg)
+
+- **Void Adjustment (`Modal 13`)**:
+  - Accessible directly from the Tally Card transaction history via the <i class="mdi mdi-undo-variant"></i> **Void** button.
+  - Restores original batch quantity and cleanly reverses the variance gain/loss journal entry.
+
+---
+
+## 7. Manual Batch Returns to Suppliers
+
+![Return Batch to Supplier Modal with Live Settlement Preview](/images/workbenches/store-tally-return-batch-modal.jpg)
+
+Storekeepers can return non-PO direct intake batches directly to suppliers (`Modal 12`, floating toolbar `Return Batch`, or the Product Batches management screen):
+
+![Return Batch Modal on Product Batches Screen](/images/workbenches/product-batches-return-preview.jpg)
+
+- **Return Reasons**: Damaged in Transit, Short Expiry Shelf Life, Manufacturer Recall, Wrong Item Delivered, or Quality Defect.
+- **Settlement Modes**:
+  - **AP Credit Note (Debt Reduction)**: **DR 2100 Accounts Payable** / **CR 1310 Inventory** (reduces outstanding debt on supplier sub-account).
+  - **Cash Refund Received**: **DR 1010 Cash in Hand** / **CR 1310 Inventory**.
+  - **Supplier Refund Pending**: **DR 1200 Accounts Receivable** / **CR 1310 Inventory** (tracks claim pending reimbursement).
+  - **No Financial Impact**: Reverses physical count for donated or program stock without financial credit.
+
+---
+
+## 8. Departmental Consumption & Ward Stock Accounting
+
+When ward or clinical department stock is consumed without direct patient billing (e.g. inpatient wound dressings, cleansing antiseptics, immunization program consumables):
+- Tracked via `StockUtilization` records with `is_billed = false`.
+- Automatically posts **DR 5020 Cost of Medical Supplies Used (Departmental Expense)** and **CR 1310 Inventory - Medical Supplies**.
+- When dispensed or billed directly to patients, billing and dispensing observers recognize patient revenue and Cost of Goods Sold (`5010 COGS`).
+
+---
+
+## 9. Multi-Store Stock Overview & Batch Drilldown
 
 ![Multi-Store Stock Overview](/images/workbenches/store-stock-overview.jpg)
 
@@ -113,7 +231,7 @@ Provide warehouse controllers a consolidated catalog view of all 315+ pharmaceut
 
 ---
 
-## 6. Stock Valuation Report & General Ledger Reconciliation
+## 10. Stock Valuation Report & General Ledger Reconciliation
 
 ![Stock Valuation Report](/images/workbenches/store-stock-value.jpg)
 

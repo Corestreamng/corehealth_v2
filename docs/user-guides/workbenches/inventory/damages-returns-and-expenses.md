@@ -36,6 +36,8 @@ flowchart TD
 
 ## 3. Store Damages & Defective Batch Disposal
 
+![Record Store Damage Modal with Double-Entry Accounting Preview](/images/workbenches/store-tally-record-damage-modal.jpg)
+
 In a high-volume hospital, fragile glass ampoules, compromised sterile packs, or temperature-abused vaccines must be safely disposed of:
 
 ### 1. Clinical & Operational Objective
@@ -157,6 +159,9 @@ Located at `/inventory/config/store-governance`, this administrative module esta
 - Assigns designated Store Officers and Custodians with Spatie permission validation.
 
 ### 2. Lane Policy Matrix (`/inventory/config/store-governance/lane-matrix`)
+
+![Lane Policy Matrix Governance Rule Grid](/images/workbenches/store-lane-matrix.jpg)
+
 - Establishes a mathematical rule grid governing whether Store $A$ is permitted to issue stock to Store $B$.
 - Defines required approval tiers (`No Approval Required`, `Storekeeper Sign-off`, `Medical Director Approval`).
 

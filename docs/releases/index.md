@@ -11,6 +11,9 @@ Every release tag is bound directly to documentation updates, PHPUnit verificati
 
 ## Recent Milestones
 
+- **[v2.6.0.71 — Express Stock Intake, Tally Card Double-Entry Accounting, Voiding & Batch Returns](/releases/v2.6.0.71)**  
+  Implements "Practice A: Express Stock Receipt / Direct Purchase", allowing hospital storekeepers to preserve their 1-step direct receipt flow while the system automatically handles double-entry GL accounting behind the scenes (`DR 1310/1300 Inventory`, `CR 2100 Accounts Payable` + supplier sub-account / `1030 Cash` / `3100 Equity`). Enforces mandatory supplier selection and the Locked Quantity Invariant on batch metadata editing. Features audited physical count variance accounting (`4230 Variance Gain` / `5050 Shrinkage Loss`), a dedicated "Recorded in Error" voiding mechanism for non-existent batches and adjustments (clean intake JE reversal without false shrinkage distortion), manual batch supplier returns with 4 settlement modes, unbilled ward consumption (`5020 Medical Supplies Used`), and real-time double-entry UI preview cards across all storekeeper modals.
+
 - **[v2.6.0.70 — Multi-Standard Health Interoperability (HL7 FHIR R4, openEHR, OpenEMR, C-CDA) & NDPA Statutory Privacy Engine](/releases/v2.6.0.70)**  
   Enterprise multi-standard health data interoperability and statutory privacy framework: HL7 FHIR R4 (Levels 1–4 REST API), openEHR ITS-REST (COMPOSITION & AQL Archetype Query Engine), OpenEMR table-parity REST endpoints, and HL7 C-CDA Continuity of Care Document XML generator. Fully governed by the Controller Proxy Pattern (guaranteeing all 46+ Eloquent observers, double-entry General Ledger balancing, and FIFO inventory sync), Zero Core Schema Mutation Invariant, NDPA 2023 statutory consent gatekeeper (Section 30), pediatric minor guardian validation (Section 31), OWASP BOLA compartment isolation, and high-precision clinical PII sanitization.
 

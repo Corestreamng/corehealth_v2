@@ -36,12 +36,22 @@ class StoreDamageObserver
     private const EXPIRED_STOCK = '5040';
     private const THEFT_SHRINKAGE = '5050';
 
+    public function created(StoreDamage $damage): void
+    {
+        if ($damage->status === 'approved') {
+            $this->processApprovedDamage($damage);
+        }
+    }
+
     public function updated(StoreDamage $damage): void
     {
-        if (!($damage->isDirty('status') && $damage->status === 'approved')) {
-            return;
+        if ($damage->isDirty('status') && $damage->status === 'approved') {
+            $this->processApprovedDamage($damage);
         }
+    }
 
+    protected function processApprovedDamage(StoreDamage $damage): void
+    {
         try {
             if ($damage->journal_entry_id) {
                 Log::info('StoreDamageObserver: JE already exists, skipping', ['damage_id' => $damage->id]);

@@ -182,6 +182,27 @@
                                   placeholder="Optional additional details...">{{ old('notes') }}</textarea>
                     </div>
 
+                    <!-- Real-Time General Ledger Posting Preview -->
+                    <div id="adj-journal-preview-card" class="mb-3" style="background:#f8fafc; border:1px solid #cbd5e1; border-radius:10px; padding:12px 14px; font-size:0.83rem;">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <span style="font-weight:700; color:#334155; text-transform:uppercase; font-size:0.72rem; letter-spacing:0.4px;">
+                                <i class="mdi mdi-scale-balance mr-1 text-primary"></i>Real-time Ledger Impact (Double-Entry)
+                            </span>
+                            <span class="badge badge-success px-2 py-0" style="font-size:0.7rem;">Balanced (DR = CR)</span>
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center py-1" style="border-bottom:1px dashed #e2e8f0;">
+                            <span class="text-muted"><i class="mdi mdi-arrow-up-bold-circle text-success mr-1"></i><strong>DEBIT:</strong> <span id="adj-preview-dr-acc">1310 - Store Inventory</span></span>
+                            <strong class="text-success" id="adj-preview-dr-amt">+₦0.00</strong>
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center py-1">
+                            <span class="text-muted"><i class="mdi mdi-arrow-down-bold-circle text-danger mr-1"></i><strong>CREDIT:</strong> <span id="adj-preview-cr-acc">4230 - Inventory Variance Gain</span></span>
+                            <strong class="text-danger" id="adj-preview-cr-amt">+₦0.00</strong>
+                        </div>
+                        <small class="text-muted d-block mt-1" id="adj-preview-explanation" style="font-size:0.75rem;">
+                            Select an adjustment type (Add or Subtract) to preview double-entry journal posting.
+                        </small>
+                    </div>
+
                     <hr>
 
                     <div class="d-flex justify-content-between">
@@ -215,9 +236,45 @@ function selectType(type) {
     document.getElementById('type-' + type).checked = true;
 
     updateMaxQty();
+    updateAdjustmentGLPreview();
 
     // Enable submit button
     document.getElementById('submitBtn').disabled = false;
+}
+
+function updateAdjustmentGLPreview() {
+    const qtyInput = document.getElementById('qty');
+    const pkgSelect = document.getElementById('packaging_id');
+    const baseFactor = parseFloat(pkgSelect.options[pkgSelect.selectedIndex]?.dataset.base) || 1;
+    const qtyValue = parseFloat(qtyInput.value) || 0;
+    const baseQty = Math.round(qtyValue * baseFactor);
+    const unitCost = {{ (float) ($batch->cost_price ?? 0) }};
+    const totalVal = baseQty * unitCost;
+    const formatted = '₦' + totalVal.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
+
+    const isPharmacy = '{{ strtolower($batch->store->store_name ?? '') }}'.indexOf('pharmacy') !== -1 || '{{ strtolower($batch->store->store_name ?? '') }}'.indexOf('drug') !== -1;
+    const invCode = isPharmacy ? '1300' : '1310';
+    const invName = isPharmacy ? 'Inventory - Pharmacy Stock' : 'Inventory - Medical Supplies';
+
+    if (selectedTypeVar === 'add') {
+        document.getElementById('adj-preview-dr-acc').textContent = invCode + ' - ' + invName;
+        document.getElementById('adj-preview-dr-amt').textContent = '+' + formatted;
+        document.getElementById('adj-preview-cr-acc').textContent = '4230 - Inventory Variance Gain (Surplus Found)';
+        document.getElementById('adj-preview-cr-amt').textContent = '+' + formatted;
+        document.getElementById('adj-preview-explanation').textContent = 'Physical stock surplus found during count. Increases inventory asset in Account ' + invCode + ' and credits inventory variance gain in Account 4230.';
+    } else if (selectedTypeVar === 'subtract') {
+        document.getElementById('adj-preview-dr-acc').textContent = '5050 - Inventory Shrinkage & Loss (Shortage/Loss)';
+        document.getElementById('adj-preview-dr-amt').textContent = '+' + formatted;
+        document.getElementById('adj-preview-cr-acc').textContent = invCode + ' - ' + invName;
+        document.getElementById('adj-preview-cr-amt').textContent = '-' + formatted;
+        document.getElementById('adj-preview-explanation').textContent = 'Physical stock reduction / discrepancy. Debits inventory shrinkage & loss operating expense in Account 5050 and reduces inventory asset in Account ' + invCode + '.';
+    } else {
+        document.getElementById('adj-preview-dr-acc').textContent = invCode + ' - ' + invName;
+        document.getElementById('adj-preview-dr-amt').textContent = '₦0.00';
+        document.getElementById('adj-preview-cr-acc').textContent = '—';
+        document.getElementById('adj-preview-cr-amt').textContent = '₦0.00';
+        document.getElementById('adj-preview-explanation').textContent = 'Select an adjustment type (Add or Subtract) to preview double-entry journal posting.';
+    }
 }
 
 function updateMaxQty() {
@@ -225,7 +282,7 @@ function updateMaxQty() {
     
     const qtyInput = document.getElementById('qty');
     const pkgSelect = document.getElementById('packaging_id');
-    const baseFactor = parseFloat(pkgSelect.options[pkgSelect.selectedIndex].dataset.base) || 1;
+    const baseFactor = parseFloat(pkgSelect.options[pkgSelect.selectedIndex]?.dataset.base) || 1;
     const maxHint = document.getElementById('max-qty-hint');
     
     if (selectedTypeVar === 'subtract') {
@@ -241,12 +298,13 @@ function updateMaxQty() {
     }
     
     updateBaseEquiv();
+    updateAdjustmentGLPreview();
 }
 
 function updateBaseEquiv() {
     const qtyInput = document.getElementById('qty');
     const pkgSelect = document.getElementById('packaging_id');
-    const baseFactor = parseFloat(pkgSelect.options[pkgSelect.selectedIndex].dataset.base) || 1;
+    const baseFactor = parseFloat(pkgSelect.options[pkgSelect.selectedIndex]?.dataset.base) || 1;
     const hint = document.getElementById('base-equiv-hint');
     const qtyValue = parseFloat(qtyInput.value) || 0;
     
@@ -256,6 +314,7 @@ function updateBaseEquiv() {
     } else {
         hint.style.display = 'none';
     }
+    updateAdjustmentGLPreview();
 }
 
 // Load packaging options

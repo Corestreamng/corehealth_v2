@@ -89,10 +89,27 @@ Whenever physical inventory is received, utilized, damaged, or returned, the sys
 5. PURCHASE ORDER RETURN (Supplier Credit Note):
    DR 2010 Accounts Payable (Vendor)
    CR 1210 Central Medical Store Inventory
+
+6. DIRECT / EXPRESS STOCK INTAKE (Practice A):
+   - On Credit: DR 1310/1300 Inventory / CR 2110 Accounts Payable (Supplier Sub-Account)
+   - Petty Cash: DR 1310/1300 Inventory / CR 1030 Petty Cash Asset
+   - Opening Stock: DR 1310/1300 Inventory / CR 3100 Retained Earnings (Equity)
+   - Donation: DR 1310/1300 Inventory @ ₦0.00 (Zero Financial Payable)
+
+7. PHYSICAL COUNT ADJUSTMENTS:
+   - Surplus (+): DR 1310 Inventory / CR 4230 Stock Variance Gain (Other Income)
+   - Shortage (-): DR 5050 Inventory Shrinkage Loss / CR 1310 Inventory
+
+8. MANUAL BATCH SUPPLIER RETURNS:
+   - AP Credit Note: DR 2110 Accounts Payable / CR 1310 Inventory
+   - Cash Refund: DR 1010 Cash in Hand / CR 1310 Inventory
+
+9. "RECORDED IN ERROR" VOIDING:
+   - Cleanly reverses original intake/adjustment entry by swapping debits and credits, marking entry as STATUS_REVERSED without inflating shrinkage or operating loss.
 ```
 
 > [!CAUTION]
-> **Observer Invariant**: NEVER bypass Eloquent models with raw SQL insertions (`DB::table('store_stocks')->update(...)` or `DB::table('purchase_orders')->insert(...)`). Doing so bypasses `PurchaseOrderObserver` and `StockBatchObserver`, desynchronizing physical bin counts from General Ledger asset account `1210` and breaking the statutory Balance Sheet.
+> **Observer Invariant**: NEVER bypass Eloquent models with raw SQL insertions (`DB::table('store_stocks')->update(...)` or `DB::table('purchase_orders')->insert(...)`). Doing so bypasses `PurchaseOrderObserver`, `StockBatchAccountingObserver`, `StockBatchVoidObserver`, `StockAdjustmentAccountingObserver`, and `StockBatchReturnObserver`, desynchronizing physical bin counts from General Ledger asset accounts and breaking the statutory Balance Sheet.
 
 ---
 
@@ -134,6 +151,9 @@ vendor/bin/phpunit tests/Feature/Inventory/PurchaseOrderTest.php
 
 # Run Store Requisitions & Lane Policy Tests
 vendor/bin/phpunit tests/Feature/Inventory/StoreRequisitionTest.php
+
+# Run Express Stock Intake & Tally Accounting Feature Tests
+vendor/bin/phpunit tests/Feature/Inventory/ExpressStockAndTallyAccountingTest.php
 
 # Run Stock Utilization & Patient Billing Tests
 vendor/bin/phpunit tests/Feature/Inventory/StockUtilizationTest.php

@@ -160,12 +160,32 @@ CREATE TABLE `purchase_orders` (
     - **`DR 2010 Accounts Payable`**
     - **`CR 1020 Zenith Bank Operating`**
 
-### 3. `StockBatchObserver`
-- **Trigger**: Fired on `StockBatch::saving` and `StockBatch::updated`.
+### 3. `StockBatchAccountingObserver` (`App\Observers\Accounting\StockBatchAccountingObserver`)
+- **Trigger**: Fired on `StockBatch::created` when `source = manual` or `opening_stock`.
+- **Double-Entry Impact**:
+  - **On Credit**: `DR 1310/1300 Inventory` / `CR 2100 Accounts Payable` (tagged to supplier sub-account).
+  - **Cash/Till**: `DR 1310/1300 Inventory` / `CR 1030 Petty Cash / Till`.
+  - **Opening Stock**: `DR 1310/1300 Inventory` / `CR 3100 Retained Earnings`.
+  - **Donation**: Zero financial payable generated.
+
+### 4. `StockBatchVoidObserver` (`App\Observers\Accounting\StockBatchVoidObserver`)
+- **Trigger**: Fired on `StockBatch::updated` when `voided_at` is populated.
+- **Side Effect**: Calls `AccountingService::reverseEntry` to cleanly reverse intake JE (`STATUS_REVERSED`) and zeroes lot stock.
+
+### 5. `StockAdjustmentAccountingObserver` (`App\Observers\Accounting\StockAdjustmentAccountingObserver`)
+- **Trigger**: Fired on `StockBatchTransaction::created` and `updated`.
 - **Side Effect**:
-  - Recalculates store-level aggregated inventory in `store_stocks`.
-  - Automatically flags status as `EXPIRED` if `expiry_date < CURDATE()`.
-  - Updates running inventory valuation.
+  - Positive (+): `DR 1310 Inventory` / `CR 4230 Stock Variance Gain (Other Income)`.
+  - Negative (-): `DR 5050 Inventory Shrinkage Loss` / `CR 1310 Inventory`.
+  - Void Adjustment: Swaps debits and credits to cleanly reverse the variance JE.
+
+### 6. `StockBatchReturnObserver` (`App\Observers\Accounting\StockBatchReturnObserver`)
+- **Trigger**: Fired on `StockBatchReturn::created` and `updated` when `status = approved`.
+- **Side Effect**: Deducts lot stock and creates balancing settlement entry (`DR 2100 AP Credit Note` or `DR 1010 Cash` / `CR 1310 Inventory`).
+
+### 7. `StockUtilizationObserver` (`App\Observers\Accounting\StockUtilizationObserver`)
+- **Trigger**: Fired on `StockUtilization::created` when `is_billed = false`.
+- **Side Effect**: Posts `DR 5020 Cost of Medical Supplies Used (Department Expense)` / `CR 1310 Inventory`.
 
 ---
 
